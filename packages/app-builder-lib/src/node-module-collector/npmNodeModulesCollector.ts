@@ -1,8 +1,6 @@
-import { log } from "builder-util"
-import * as path from "path"
-import { NodeModulesCollector } from "./nodeModulesCollector"
-import { PM } from "./packageManager"
-import { NpmDependency, PackageJson } from "./types"
+import { NodeModulesCollector } from "./nodeModulesCollector.js"
+import { PM } from "./packageManager.js"
+import { NpmDependency } from "./types.js"
 
 export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency, string> {
   public readonly installOptions = {
@@ -11,25 +9,19 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
   }
 
   protected getArgs(): string[] {
-    return ["list", "-a", "--include", "prod", "--include", "optional", "--omit", "dev", "--json", "--long", "--silent"]
-  }
-
-  protected async getDependenciesTree(pm: PM): Promise<NpmDependency> {
-    try {
-      return await super.getDependenciesTree(pm)
-    } catch (error: any) {
-      log.info({ pm: this.installOptions.manager, parser: PM.NPM, error: error.message }, "unable to process dependency tree, falling back to using manual node_modules traversal")
-    }
-    // node_modules linker fallback. (Slower due to system ops, so we only use it as a fallback) [such as when corepack env will not allow npm CLI to extract tree]
-    return this.buildNodeModulesTreeManually(this.rootDir)
+    return ["list", "-a", "--include", "prod", "--include", "optional", "--omit", "dev", "--json", "--long", "--silent", "--loglevel=error"]
   }
 
   protected async collectAllDependencies(tree: NpmDependency) {
-    for (const [, value] of Object.entries(tree.dependencies || {})) {
+    for (const [key, value] of Object.entries(tree.dependencies || {})) {
       if (this.isDuplicatedNpmDependency(value)) {
         continue
       }
-      this.allDependencies.set(this.packageVersionString(value), value)
+      // Use the key (alias name) instead of value.name for npm aliased packages
+      // e.g., { "foo": { name: "@scope/bar", ... } } should be stored as "foo@version"
+      // This ensures aliased packages are copied to the correct location in node_modules
+      const normalizedDep: NpmDependency = key !== value.name ? { ...value, name: key } : value
+      this.allDependencies.set(this.packageVersionString(normalizedDep), normalizedDep)
       await this.collectAllDependencies(value)
     }
   }
@@ -40,22 +32,29 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     }
 
     const isDuplicateDep = this.isDuplicatedNpmDependency(tree)
-    const resolvedDeps = isDuplicateDep ? this.allDependencies.get(dependencyId)?.dependencies : tree.dependencies
+    const targetTree = isDuplicateDep ? this.allDependencies.get(dependencyId) : tree
+
     // Initialize with empty dependencies array first to mark this dependency as "in progress"
     // After initialization, if there are libraries with the same name+version later, they will not be searched recursively again
     // This will prevents infinite loops when circular dependencies are encountered.
     this.productionGraph[dependencyId] = { dependencies: [] }
-    const productionDeps = Object.entries(resolvedDeps || {})
-      .filter(([packageName]) => this.isProdDependency(packageName, tree))
-      .map(async ([, dependency]) => {
-        const childDependencyId = this.packageVersionString(dependency)
-        await this.extractProductionDependencyGraph(dependency, childDependencyId)
-        return childDependencyId
-      })
 
     const collectedDependencies: string[] = []
-    for (const dep of productionDeps) {
-      collectedDependencies.push(await dep)
+    if (targetTree?.dependencies) {
+      for (const packageName in targetTree.dependencies) {
+        // Check against matching _dependencies
+        if (!this.isProdDependency(packageName, targetTree)) {
+          continue
+        }
+        const dependency = targetTree.dependencies[packageName]
+        // Match first version's empty check
+        if (Object.keys(dependency).length === 0) {
+          continue
+        }
+        const childDependencyId = this.packageVersionString({ name: packageName, version: dependency.version })
+        await this.extractProductionDependencyGraph(dependency, childDependencyId)
+        collectedDependencies.push(childDependencyId)
+      }
     }
     this.productionGraph[dependencyId] = { dependencies: collectedDependencies }
   }
@@ -68,92 +67,8 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     return isDuplicateDep
   }
 
+  // `npm list` provides explicit list of deps in _dependencies
   protected isProdDependency(packageName: string, tree: NpmDependency) {
     return tree._dependencies?.[packageName] != null
-  }
-
-  /**
-   * Builds a dependency tree using only package.json dependencies and optionalDependencies.
-   * This skips devDependencies and uses Node.js module resolution (require.resolve).
-   */
-  protected buildNodeModulesTreeManually(baseDir: string): Promise<NpmDependency> {
-    // Track visited packages by their resolved path to prevent infinite loops
-    const visited = new Set<string>()
-
-    /**
-     * Recursively builds dependency tree starting from a package directory.
-     */
-    const buildFromPackage = async (packageDir: string): Promise<NpmDependency> => {
-      const pkgPath = path.join(packageDir, "package.json")
-
-      log.debug({ pkgPath }, "building dependency node from package.json")
-
-      if (!(await this.cache.exists[pkgPath])) {
-        throw new Error(`package.json not found at ${pkgPath}`)
-      }
-
-      const pkg: PackageJson = await this.cache.packageJson[pkgPath]
-      const resolvedPackageDir = await this.cache.realPath[packageDir]
-
-      // Use resolved path as the unique identifier to prevent circular dependencies
-      if (visited.has(resolvedPackageDir)) {
-        log.debug({ name: pkg.name, version: pkg.version, path: resolvedPackageDir }, "skipping already visited package")
-        return {
-          name: pkg.name,
-          version: pkg.version,
-          path: resolvedPackageDir,
-        }
-      }
-
-      visited.add(resolvedPackageDir)
-
-      const prodDeps: Record<string, NpmDependency> = {}
-      const allProdDepNames = {
-        ...pkg.dependencies,
-        ...pkg.optionalDependencies,
-      }
-
-      // Process all production and optional dependencies
-      for (const [depName, depVersion] of Object.entries(allProdDepNames)) {
-        try {
-          const depPath = await this.locatePackageVersion(resolvedPackageDir, depName, depVersion)
-
-          if (!depPath || depPath.packageDir.length === 0) {
-            log.warn({ package: pkg.name, dependency: depName, version: depVersion }, "dependency not found, skipping")
-            continue
-          }
-
-          const resolvedDepPath = await this.cache.realPath[depPath.packageDir]
-          const logFields = { package: pkg.name, dependency: depName, resolvedPath: resolvedDepPath }
-
-          // Skip if this dependency resolves to the base directory or any parent we're already processing
-          if (resolvedDepPath === resolvedPackageDir || resolvedDepPath === (await this.cache.realPath[baseDir])) {
-            log.debug(logFields, "skipping self-referential dependency")
-            continue
-          }
-
-          log.debug(logFields, "processing production dependency")
-
-          // Recursively build the dependency tree for this dependency
-          prodDeps[depName] = await buildFromPackage(resolvedDepPath)
-        } catch (error: any) {
-          log.warn({ package: pkg.name, dependency: depName, error: error.message }, "failed to process dependency, skipping")
-        }
-      }
-
-      return {
-        name: pkg.name,
-        version: pkg.version,
-        path: resolvedPackageDir,
-        dependencies: Object.keys(prodDeps).length > 0 ? prodDeps : undefined,
-        optionalDependencies: pkg.optionalDependencies,
-      }
-    }
-
-    return buildFromPackage(baseDir)
-  }
-
-  protected async parseDependenciesTree(jsonBlob: string): Promise<NpmDependency> {
-    return Promise.resolve(JSON.parse(jsonBlob))
   }
 }

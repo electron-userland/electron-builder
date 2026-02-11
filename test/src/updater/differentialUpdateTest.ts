@@ -1,6 +1,5 @@
 import { Arch, Configuration, Platform } from "app-builder-lib"
-import { getBinFromUrl } from "app-builder-lib/out/binDownload"
-import { doSpawn, getArchSuffix } from "builder-util"
+import { archFromString, doSpawn, getArchSuffix } from "builder-util"
 import { GenericServerOptions, Nullish, S3Options } from "builder-util-runtime"
 import { AppImageUpdater, BaseUpdater, MacUpdater, NsisUpdater } from "electron-updater"
 import { EventEmitter } from "events"
@@ -12,13 +11,15 @@ import { EXTENDED_TIMEOUT, PackedContext, assertPack, removeUnstableProperties }
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, testAppCacheDirName, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { mockForNodeRequire } from "vitest-mock-commonjs"
 import { ExpectStatic } from "vitest"
+import { getRanLocalServerPath } from "../helpers/launchAppCrossPlatform"
+import { ToolsetConfig } from "app-builder-lib/src/configuration"
 
 async function doBuild(
   expect: ExpectStatic,
   outDirs: Array<string>,
   targets: Map<Platform, Map<Arch, Array<string>>>,
   tmpDir: TmpDir,
-  isWindows: boolean,
+  toolsets?: ToolsetConfig | null,
   extraConfig?: Configuration | null
 ) {
   async function buildApp(
@@ -33,6 +34,7 @@ async function doBuild(
       {
         targets,
         config: {
+          toolsets,
           extraMetadata: {
             version,
           },
@@ -46,7 +48,7 @@ async function doBuild(
         },
       },
       {
-        signedWin: isWindows,
+        signedWin: toolsets?.winCodeSign != null,
         packed,
       }
     )
@@ -68,29 +70,39 @@ async function doBuild(
   }
 }
 
-test.ifWindows("web installer", { retry: 2 }, async ({ expect }) => {
-  const outDirs: Array<string> = []
-  const tmpDir = new TmpDir("differential-updater-test")
-  await doBuild(expect, outDirs, Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64), tmpDir, true)
+const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0"]
 
-  const oldDir = outDirs[0]
-  await move(path.join(oldDir, "nsis-web", `TestApp-${OLD_VERSION_NUMBER}-x64.nsis.7z`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "package.7z"))
+for (const winCodeSign of winCodeSignVersions) {
+  describe(`winCodeSign: ${winCodeSign}`, { sequential: true }, () => {
+    test.ifWindows("web installer", async ({ expect }) => {
+      const outDirs: Array<string> = []
+      const tmpDir = new TmpDir("differential-updater-test")
+      // need to build both in order for this to run on both arm64 and x64 windows
+      await doBuild(expect, outDirs, Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64, Arch.arm64), tmpDir, { winCodeSign })
 
-  await testBlockMap(expect, outDirs[0], path.join(outDirs[1], "nsis-web"), NsisUpdater, Platform.WINDOWS, Arch.x64)
-})
+      const oldDir = outDirs[0]
+      await move(
+        path.join(oldDir, "nsis-web", `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(archFromString(process.arch), "universal")}.nsis.7z`),
+        path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "package.7z")
+      )
 
-test.ifWindows("nsis", async ({ expect }) => {
-  const outDirs: Array<string> = []
-  const tmpDir = new TmpDir("differential-updater-test")
-  await doBuild(expect, outDirs, Platform.WINDOWS.createTarget(["nsis"], Arch.x64), tmpDir, true)
+      await testBlockMap(expect, outDirs[0], path.join(outDirs[1], "nsis-web"), NsisUpdater, Platform.WINDOWS, archFromString(process.arch))
+    })
 
-  const oldDir = outDirs[0]
-  // move to new dir so that localhost server can read both blockmaps
-  await move(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "installer.exe"))
-  await move(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe.blockmap`), path.join(outDirs[1], "Test App ßW Setup 1.0.0.exe.blockmap"))
+    test.ifWindows("nsis", async ({ expect }) => {
+      const outDirs: Array<string> = []
+      const tmpDir = new TmpDir("differential-updater-test")
+      await doBuild(expect, outDirs, Platform.WINDOWS.createTarget(["nsis"], Arch.x64), tmpDir, { winCodeSign })
 
-  await testBlockMap(expect, outDirs[0], outDirs[1], NsisUpdater, Platform.WINDOWS, Arch.x64)
-})
+      const oldDir = outDirs[0]
+      // move to new dir so that localhost server can read both blockmaps
+      await move(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "installer.exe"))
+      await move(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe.blockmap`), path.join(outDirs[1], "Test App ßW Setup 1.0.0.exe.blockmap"))
+
+      await testBlockMap(expect, outDirs[0], outDirs[1], NsisUpdater, Platform.WINDOWS, Arch.x64)
+    })
+  })
+}
 
 async function testLinux(expect: ExpectStatic, arch: Arch) {
   process.env.TEST_UPDATER_ARCH = Arch[arch]
@@ -98,7 +110,7 @@ async function testLinux(expect: ExpectStatic, arch: Arch) {
   const outDirs: Array<string> = []
   const tmpDir = new TmpDir("differential-updater-test")
   try {
-    await doBuild(expect, outDirs, Platform.LINUX.createTarget(["appimage"], arch), tmpDir, false)
+    await doBuild(expect, outDirs, Platform.LINUX.createTarget(["appimage"], arch), tmpDir, null)
 
     process.env.APPIMAGE = path.join(outDirs[0], `Test App ßW-${OLD_VERSION_NUMBER}${arch === Arch.ia32 ? "-i386" : ""}.AppImage`)
     await testBlockMap(expect, outDirs[0], outDirs[1], AppImageUpdater, Platform.LINUX, arch)
@@ -110,7 +122,7 @@ async function testLinux(expect: ExpectStatic, arch: Arch) {
 test.ifLinux("AppImage", ({ expect }) => testLinux(expect, Arch.x64))
 
 // Skipped, electron no longer ships ia32 linux binaries
-test.ifLinux.skip("AppImage ia32", ({ expect }) => testLinux(expect, Arch.ia32))
+test.skip("AppImage ia32", ({ expect }) => testLinux(expect, Arch.ia32))
 
 async function testMac(expect: ExpectStatic, arch: Arch) {
   process.env.TEST_UPDATER_ARCH = Arch[arch]
@@ -118,7 +130,7 @@ async function testMac(expect: ExpectStatic, arch: Arch) {
   const outDirs: Array<string> = []
   const tmpDir = new TmpDir("differential-updater-test")
   try {
-    await doBuild(expect, outDirs, Platform.MAC.createTarget(["zip"], arch), tmpDir, false, {
+    await doBuild(expect, outDirs, Platform.MAC.createTarget(["zip"], arch), tmpDir, null, {
       mac: {
         electronUpdaterCompatibility: ">=2.17.0",
       },
@@ -137,7 +149,8 @@ async function testMac(expect: ExpectStatic, arch: Arch) {
 }
 
 test.ifMac("Mac Intel", ({ expect }) => testMac(expect, Arch.x64))
-test.ifMac("Mac universal", { timeout: EXTENDED_TIMEOUT }, ({ expect }) => testMac(expect, Arch.universal))
+// builds 2 archs, so double the timeout?
+test.ifMac("Mac universal", { timeout: 2 * EXTENDED_TIMEOUT }, ({ expect }) => testMac(expect, Arch.universal))
 
 // only run on arm64 macs, otherwise of course no files can be found to be updated to (due to arch mismatch)
 test.ifMac.ifEnv(process.arch === "arm64")("Mac arm64", ({ expect }) => testMac(expect, Arch.arm64))
@@ -188,8 +201,8 @@ async function testBlockMap(expect: ExpectStatic, oldDir: string, newDir: string
   )
   const port = 8000 + (updaterClass.name.charCodeAt(0) as number) + Math.floor(Math.random() * 10000)
 
-  const serverBin = await getBinFromUrl("ran-0.1.3", "ran-0.1.3.7z", "imfA3LtT6umMM0BuQ29MgO3CJ9uleN5zRBi3sXzcTbMOeYZ6SQeN7eKr3kXZikKnVOIwbH+DDO43wkiR/qTdkg==")
-  const httpServerProcess = doSpawn(path.join(serverBin, process.platform, "ran"), [`-root=${newDir}`, `-port=${port}`, "-gzip=false", "-listdir=true"])
+  const serverBin = await getRanLocalServerPath()
+  const httpServerProcess = doSpawn(serverBin, [`-root=${newDir}`, `-port=${port}`, "-gzip=false", "-listdir=true"])
 
   // Mac uses electron's native autoUpdater to serve updates to, we mock here since electron API isn't available within jest runtime
   const mockNativeUpdater = new TestNativeUpdater()

@@ -15,7 +15,7 @@
     extends: [
       ":noUnscheduledUpdates",
       ":maintainLockFilesWeekly",
-      "npm:unpublishSafe",
+      "security:minimumReleaseAgeNpm",
       "helpers:disableTypesNodeMajor",
     ],
     schedule: ["before 3am on the first day of the month"],
@@ -28,19 +28,6 @@
           "/^eslint-config-/",
           "/^eslint-plugin-/",
         ],
-      },
-    ],
-  },
-  circleci: {
-    enabled: true,
-    schedule: ["before 3am on the first day of the month"],
-    pinDigests: true,
-    semanticCommitScope: "docker",
-    semanticCommitType: "ci",
-    packageRules: [
-      {
-        groupName: "Node Docker digests in CircleCI",
-        matchPackageNames: ["circleci/node", "node"],
       },
     ],
   },

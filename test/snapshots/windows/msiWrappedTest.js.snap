@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`msiWrapped allows capitalized nsis target 1`] = `
+exports[`msiWrapped > winCodeSign: 0.0.0 > msiWrapped allows capitalized nsis target 1`] = `
 {
   "win": [
     {
@@ -29,7 +29,7 @@ exports[`msiWrapped allows capitalized nsis target 1`] = `
 }
 `;
 
-exports[`msiWrapped impersonate no if not provided 1`] = `
+exports[`msiWrapped > winCodeSign: 0.0.0 > msiWrapped impersonate no if not provided 1`] = `
 {
   "win": [
     {
@@ -58,7 +58,7 @@ exports[`msiWrapped impersonate no if not provided 1`] = `
 }
 `;
 
-exports[`msiWrapped impersonate yes if true 1`] = `
+exports[`msiWrapped > winCodeSign: 0.0.0 > msiWrapped impersonate yes if true 1`] = `
 {
   "win": [
     {
@@ -87,7 +87,7 @@ exports[`msiWrapped impersonate yes if true 1`] = `
 }
 `;
 
-exports[`msiWrapped includes packaged exe 1`] = `
+exports[`msiWrapped > winCodeSign: 0.0.0 > msiWrapped includes packaged exe 1`] = `
 {
   "win": [
     {
@@ -116,7 +116,297 @@ exports[`msiWrapped includes packaged exe 1`] = `
 }
 `;
 
-exports[`msiWrapped wrappedInstallerArgs provided 1`] = `
+exports[`msiWrapped > winCodeSign: 0.0.0 > msiWrapped wrappedInstallerArgs provided 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "MSIWrappingEXE Setup 1.1.0.exe",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "MSIWrappingEXE 1.1.0.msi",
+      "safeArtifactName": "MSIWrappingEXE-1.1.0.msi",
+    },
+    {
+      "file": "MSIWrappingEXE Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`msiWrapped > winCodeSign: 1.0.0 > msiWrapped allows capitalized nsis target 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test MSI Setup 1.1.0.exe",
+      "safeArtifactName": "Test-MSI-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "Test MSI 1.1.0.msi",
+      "safeArtifactName": "Test-MSI-1.1.0.msi",
+    },
+    {
+      "file": "Test MSI Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "Test-MSI-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`msiWrapped > winCodeSign: 1.0.0 > msiWrapped impersonate no if not provided 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "MSIWrappingEXE Setup 1.1.0.exe",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "MSIWrappingEXE 1.1.0.msi",
+      "safeArtifactName": "MSIWrappingEXE-1.1.0.msi",
+    },
+    {
+      "file": "MSIWrappingEXE Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`msiWrapped > winCodeSign: 1.0.0 > msiWrapped impersonate yes if true 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "MSIWrappingEXE Setup 1.1.0.exe",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "MSIWrappingEXE 1.1.0.msi",
+      "safeArtifactName": "MSIWrappingEXE-1.1.0.msi",
+    },
+    {
+      "file": "MSIWrappingEXE Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`msiWrapped > winCodeSign: 1.0.0 > msiWrapped includes packaged exe 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "MSIWrappingEXE Setup 1.1.0.exe",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "MSIWrappingEXE 1.1.0.msi",
+      "safeArtifactName": "MSIWrappingEXE-1.1.0.msi",
+    },
+    {
+      "file": "MSIWrappingEXE Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`msiWrapped > winCodeSign: 1.0.0 > msiWrapped wrappedInstallerArgs provided 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "MSIWrappingEXE Setup 1.1.0.exe",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "MSIWrappingEXE 1.1.0.msi",
+      "safeArtifactName": "MSIWrappingEXE-1.1.0.msi",
+    },
+    {
+      "file": "MSIWrappingEXE Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`msiWrapped > winCodeSign: 1.1.0 > msiWrapped allows capitalized nsis target 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test MSI Setup 1.1.0.exe",
+      "safeArtifactName": "Test-MSI-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "Test MSI 1.1.0.msi",
+      "safeArtifactName": "Test-MSI-1.1.0.msi",
+    },
+    {
+      "file": "Test MSI Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "Test-MSI-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`msiWrapped > winCodeSign: 1.1.0 > msiWrapped impersonate no if not provided 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "MSIWrappingEXE Setup 1.1.0.exe",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "MSIWrappingEXE 1.1.0.msi",
+      "safeArtifactName": "MSIWrappingEXE-1.1.0.msi",
+    },
+    {
+      "file": "MSIWrappingEXE Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`msiWrapped > winCodeSign: 1.1.0 > msiWrapped impersonate yes if true 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "MSIWrappingEXE Setup 1.1.0.exe",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "MSIWrappingEXE 1.1.0.msi",
+      "safeArtifactName": "MSIWrappingEXE-1.1.0.msi",
+    },
+    {
+      "file": "MSIWrappingEXE Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`msiWrapped > winCodeSign: 1.1.0 > msiWrapped includes packaged exe 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "MSIWrappingEXE Setup 1.1.0.exe",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "MSIWrappingEXE 1.1.0.msi",
+      "safeArtifactName": "MSIWrappingEXE-1.1.0.msi",
+    },
+    {
+      "file": "MSIWrappingEXE Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`msiWrapped > winCodeSign: 1.1.0 > msiWrapped wrappedInstallerArgs provided 1`] = `
 {
   "win": [
     {

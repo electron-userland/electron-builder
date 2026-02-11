@@ -874,6 +874,528 @@ exports[`Electron autoupdate (fresh install & update) > linux > fedora - (zypper
 }
 `;
 
+exports[`Electron autoupdate (fresh install & update) > mac - arm64 1`] = `
+{
+  "mac": [
+    {
+      "arch": "arm64",
+      "file": "TestApp.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp.zip.blockmap",
+      "safeArtifactName": "TestApp.zip.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-mac.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.zip",
+          },
+        ],
+        "path": "TestApp.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Electron autoupdate (fresh install & update) > mac - arm64 2`] = `
+{
+  "CFBundleDisplayName": "TestApp",
+  "CFBundleExecutable": "TestApp",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "com.test.app",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "TestApp",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.0.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": {
+      "127.0.0.1": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`Electron autoupdate (fresh install & update) > mac - arm64 3`] = `
+{
+  "mac": [
+    {
+      "arch": "arm64",
+      "file": "TestApp.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp.zip.blockmap",
+      "safeArtifactName": "TestApp.zip.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-mac.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.zip",
+          },
+        ],
+        "path": "TestApp.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Electron autoupdate (fresh install & update) > mac - arm64 4`] = `
+{
+  "CFBundleDisplayName": "TestApp",
+  "CFBundleExecutable": "TestApp",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "com.test.app",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "TestApp",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.0.1",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": {
+      "127.0.0.1": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`Electron autoupdate (fresh install & update) > mac - universal 1`] = `
+{
+  "mac": [
+    {
+      "arch": "universal",
+      "file": "TestApp.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp.zip.blockmap",
+      "safeArtifactName": "TestApp.zip.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-mac.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.zip",
+          },
+        ],
+        "path": "TestApp.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Electron autoupdate (fresh install & update) > mac - universal 2`] = `
+{
+  "CFBundleDisplayName": "TestApp",
+  "CFBundleExecutable": "TestApp",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "com.test.app",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "TestApp",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.0.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": {
+      "127.0.0.1": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`Electron autoupdate (fresh install & update) > mac - universal 3`] = `
+{
+  "mac": [
+    {
+      "arch": "universal",
+      "file": "TestApp.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp.zip.blockmap",
+      "safeArtifactName": "TestApp.zip.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-mac.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.zip",
+          },
+        ],
+        "path": "TestApp.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Electron autoupdate (fresh install & update) > mac - universal 4`] = `
+{
+  "CFBundleDisplayName": "TestApp",
+  "CFBundleExecutable": "TestApp",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "com.test.app",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "TestApp",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.0.1",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": {
+      "127.0.0.1": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`Electron autoupdate (fresh install & update) > mac - x64 1`] = `
+{
+  "mac": [
+    {
+      "arch": "x64",
+      "file": "TestApp.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp.zip.blockmap",
+      "safeArtifactName": "TestApp.zip.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-mac.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.zip",
+          },
+        ],
+        "path": "TestApp.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Electron autoupdate (fresh install & update) > mac - x64 2`] = `
+{
+  "CFBundleDisplayName": "TestApp",
+  "CFBundleExecutable": "TestApp",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "com.test.app",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "TestApp",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.0.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": {
+      "127.0.0.1": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`Electron autoupdate (fresh install & update) > mac - x64 3`] = `
+{
+  "mac": [
+    {
+      "arch": "x64",
+      "file": "TestApp.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp.zip.blockmap",
+      "safeArtifactName": "TestApp.zip.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-mac.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.zip",
+          },
+        ],
+        "path": "TestApp.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Electron autoupdate (fresh install & update) > mac - x64 4`] = `
+{
+  "CFBundleDisplayName": "TestApp",
+  "CFBundleExecutable": "TestApp",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "com.test.app",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "TestApp",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.0.1",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": {
+      "127.0.0.1": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
 exports[`Electron autoupdate (fresh install & update) > win 1`] = `
 {
   "win": [
@@ -1123,6 +1645,1454 @@ exports[`Electron autoupdate from 1.0.0 to 1.0.1 (live test) > win 2`] = `
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux > debian - (apt) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.deb",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.deb",
+          },
+        ],
+        "path": "TestApp.deb",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux > debian - (apt) 2`] = `
+[
+  "/",
+  "/opt/",
+  "/usr/",
+  "/opt/TestApp/",
+  "/opt/TestApp/chrome-sandbox",
+  "/opt/TestApp/chrome_100_percent.pak",
+  "/opt/TestApp/chrome_200_percent.pak",
+  "/opt/TestApp/chrome_crashpad_handler",
+  "/opt/TestApp/icudtl.dat",
+  "/opt/TestApp/libEGL.so",
+  "/opt/TestApp/libffmpeg.so",
+  "/opt/TestApp/libGLESv2.so",
+  "/opt/TestApp/libvk_swiftshader.so",
+  "/opt/TestApp/libvulkan.so.1",
+  "/opt/TestApp/LICENSE.electron.txt",
+  "/opt/TestApp/LICENSES.chromium.html",
+  "/opt/TestApp/resources.pak",
+  "/opt/TestApp/snapshot_blob.bin",
+  "/opt/TestApp/TestApp",
+  "/opt/TestApp/v8_context_snapshot.bin",
+  "/opt/TestApp/vk_swiftshader_icd.json",
+  "/usr/share/",
+  "/opt/TestApp/resources/",
+  "/opt/TestApp/resources/app-update.yml",
+  "/opt/TestApp/resources/app.asar",
+  "/opt/TestApp/resources/apparmor-profile",
+  "/opt/TestApp/resources/package-type",
+  "/usr/share/applications/",
+  "/usr/share/applications/TestApp.desktop",
+  "/usr/share/doc/",
+  "/usr/share/icons/",
+  "/opt/TestApp/resources/app.asar.unpacked/",
+  "/usr/share/doc/testapp/",
+  "/usr/share/doc/testapp/changelog.gz",
+  "/usr/share/icons/hicolor/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/",
+  "/usr/share/icons/hicolor/128x128/",
+  "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/256x256/",
+  "/usr/share/icons/hicolor/32x32/",
+  "/usr/share/icons/hicolor/48x48/",
+  "/usr/share/icons/hicolor/512x512/",
+  "/usr/share/icons/hicolor/64x64/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/LICENSE",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/package.json",
+  "/usr/share/icons/hicolor/128x128/apps/",
+  "/usr/share/icons/hicolor/128x128/apps/TestApp.png",
+  "/usr/share/icons/hicolor/16x16/apps/",
+  "/usr/share/icons/hicolor/16x16/apps/TestApp.png",
+  "/usr/share/icons/hicolor/256x256/apps/",
+  "/usr/share/icons/hicolor/256x256/apps/TestApp.png",
+  "/usr/share/icons/hicolor/32x32/apps/",
+  "/usr/share/icons/hicolor/32x32/apps/TestApp.png",
+  "/usr/share/icons/hicolor/48x48/apps/",
+  "/usr/share/icons/hicolor/48x48/apps/TestApp.png",
+  "/usr/share/icons/hicolor/512x512/apps/",
+  "/usr/share/icons/hicolor/512x512/apps/TestApp.png",
+  "/usr/share/icons/hicolor/64x64/apps/",
+  "/usr/share/icons/hicolor/64x64/apps/TestApp.png",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/common-sqlite.gypi",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/extract.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/sqlite-autoconf-3440200.tar.gz",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/sqlite3.gyp",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/sqlite3-binding.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/sqlite3.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/trace.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/async.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/backup.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/database.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/gcc-preinclude.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/macros.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/statement.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/threading.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/Release/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/Release/node_sqlite3.node",
+]
+`;
+
+exports[`linux > debian - (apt) 3`] = `
+{
+  "Architecture": "amd64",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
+  "Homepage": "http://foo.example.com",
+  "License": "MIT",
+  "Maintainer": "Foo Bar <foo@example.com>",
+  "Package": "testapp",
+  "Priority": "optional",
+  "Recommends": "libappindicator3-1",
+  "Section": "default",
+  "Vendor": "Foo Bar <foo@example.com>",
+}
+`;
+
+exports[`linux > debian - (apt) 4`] = `"Test Application (test quite “ #378)"`;
+
+exports[`linux > debian - (apt) 5`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.deb",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.deb",
+          },
+        ],
+        "path": "TestApp.deb",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux > debian - (apt) 6`] = `
+[
+  "/",
+  "/opt/",
+  "/usr/",
+  "/opt/TestApp/",
+  "/opt/TestApp/chrome-sandbox",
+  "/opt/TestApp/chrome_100_percent.pak",
+  "/opt/TestApp/chrome_200_percent.pak",
+  "/opt/TestApp/chrome_crashpad_handler",
+  "/opt/TestApp/icudtl.dat",
+  "/opt/TestApp/libEGL.so",
+  "/opt/TestApp/libffmpeg.so",
+  "/opt/TestApp/libGLESv2.so",
+  "/opt/TestApp/libvk_swiftshader.so",
+  "/opt/TestApp/libvulkan.so.1",
+  "/opt/TestApp/LICENSE.electron.txt",
+  "/opt/TestApp/LICENSES.chromium.html",
+  "/opt/TestApp/resources.pak",
+  "/opt/TestApp/snapshot_blob.bin",
+  "/opt/TestApp/TestApp",
+  "/opt/TestApp/v8_context_snapshot.bin",
+  "/opt/TestApp/vk_swiftshader_icd.json",
+  "/usr/share/",
+  "/opt/TestApp/resources/",
+  "/opt/TestApp/resources/app-update.yml",
+  "/opt/TestApp/resources/app.asar",
+  "/opt/TestApp/resources/apparmor-profile",
+  "/opt/TestApp/resources/package-type",
+  "/usr/share/applications/",
+  "/usr/share/applications/TestApp.desktop",
+  "/usr/share/doc/",
+  "/usr/share/icons/",
+  "/opt/TestApp/resources/app.asar.unpacked/",
+  "/usr/share/doc/testapp/",
+  "/usr/share/doc/testapp/changelog.gz",
+  "/usr/share/icons/hicolor/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/",
+  "/usr/share/icons/hicolor/128x128/",
+  "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/256x256/",
+  "/usr/share/icons/hicolor/32x32/",
+  "/usr/share/icons/hicolor/48x48/",
+  "/usr/share/icons/hicolor/512x512/",
+  "/usr/share/icons/hicolor/64x64/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/LICENSE",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/package.json",
+  "/usr/share/icons/hicolor/128x128/apps/",
+  "/usr/share/icons/hicolor/128x128/apps/TestApp.png",
+  "/usr/share/icons/hicolor/16x16/apps/",
+  "/usr/share/icons/hicolor/16x16/apps/TestApp.png",
+  "/usr/share/icons/hicolor/256x256/apps/",
+  "/usr/share/icons/hicolor/256x256/apps/TestApp.png",
+  "/usr/share/icons/hicolor/32x32/apps/",
+  "/usr/share/icons/hicolor/32x32/apps/TestApp.png",
+  "/usr/share/icons/hicolor/48x48/apps/",
+  "/usr/share/icons/hicolor/48x48/apps/TestApp.png",
+  "/usr/share/icons/hicolor/512x512/apps/",
+  "/usr/share/icons/hicolor/512x512/apps/TestApp.png",
+  "/usr/share/icons/hicolor/64x64/apps/",
+  "/usr/share/icons/hicolor/64x64/apps/TestApp.png",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/common-sqlite.gypi",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/extract.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/sqlite-autoconf-3440200.tar.gz",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/sqlite3.gyp",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/sqlite3-binding.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/sqlite3.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/trace.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/async.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/backup.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/database.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/gcc-preinclude.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/macros.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/statement.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/threading.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/Release/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/Release/node_sqlite3.node",
+]
+`;
+
+exports[`linux > debian - (apt) 7`] = `
+{
+  "Architecture": "amd64",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
+  "Homepage": "http://foo.example.com",
+  "License": "MIT",
+  "Maintainer": "Foo Bar <foo@example.com>",
+  "Package": "testapp",
+  "Priority": "optional",
+  "Recommends": "libappindicator3-1",
+  "Section": "default",
+  "Vendor": "Foo Bar <foo@example.com>",
+}
+`;
+
+exports[`linux > debian - (apt) 8`] = `"Test Application (test quite “ #378)"`;
+
+exports[`linux > debian - (dpkg) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.deb",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.deb",
+          },
+        ],
+        "path": "TestApp.deb",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux > debian - (dpkg) 2`] = `
+[
+  "/",
+  "/opt/",
+  "/usr/",
+  "/opt/TestApp/",
+  "/opt/TestApp/chrome-sandbox",
+  "/opt/TestApp/chrome_100_percent.pak",
+  "/opt/TestApp/chrome_200_percent.pak",
+  "/opt/TestApp/chrome_crashpad_handler",
+  "/opt/TestApp/icudtl.dat",
+  "/opt/TestApp/libEGL.so",
+  "/opt/TestApp/libffmpeg.so",
+  "/opt/TestApp/libGLESv2.so",
+  "/opt/TestApp/libvk_swiftshader.so",
+  "/opt/TestApp/libvulkan.so.1",
+  "/opt/TestApp/LICENSE.electron.txt",
+  "/opt/TestApp/LICENSES.chromium.html",
+  "/opt/TestApp/resources.pak",
+  "/opt/TestApp/snapshot_blob.bin",
+  "/opt/TestApp/TestApp",
+  "/opt/TestApp/v8_context_snapshot.bin",
+  "/opt/TestApp/vk_swiftshader_icd.json",
+  "/usr/share/",
+  "/opt/TestApp/resources/",
+  "/opt/TestApp/resources/app-update.yml",
+  "/opt/TestApp/resources/app.asar",
+  "/opt/TestApp/resources/apparmor-profile",
+  "/opt/TestApp/resources/package-type",
+  "/usr/share/applications/",
+  "/usr/share/applications/TestApp.desktop",
+  "/usr/share/doc/",
+  "/usr/share/icons/",
+  "/opt/TestApp/resources/app.asar.unpacked/",
+  "/usr/share/doc/testapp/",
+  "/usr/share/doc/testapp/changelog.gz",
+  "/usr/share/icons/hicolor/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/",
+  "/usr/share/icons/hicolor/128x128/",
+  "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/256x256/",
+  "/usr/share/icons/hicolor/32x32/",
+  "/usr/share/icons/hicolor/48x48/",
+  "/usr/share/icons/hicolor/512x512/",
+  "/usr/share/icons/hicolor/64x64/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/LICENSE",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/package.json",
+  "/usr/share/icons/hicolor/128x128/apps/",
+  "/usr/share/icons/hicolor/128x128/apps/TestApp.png",
+  "/usr/share/icons/hicolor/16x16/apps/",
+  "/usr/share/icons/hicolor/16x16/apps/TestApp.png",
+  "/usr/share/icons/hicolor/256x256/apps/",
+  "/usr/share/icons/hicolor/256x256/apps/TestApp.png",
+  "/usr/share/icons/hicolor/32x32/apps/",
+  "/usr/share/icons/hicolor/32x32/apps/TestApp.png",
+  "/usr/share/icons/hicolor/48x48/apps/",
+  "/usr/share/icons/hicolor/48x48/apps/TestApp.png",
+  "/usr/share/icons/hicolor/512x512/apps/",
+  "/usr/share/icons/hicolor/512x512/apps/TestApp.png",
+  "/usr/share/icons/hicolor/64x64/apps/",
+  "/usr/share/icons/hicolor/64x64/apps/TestApp.png",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/common-sqlite.gypi",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/extract.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/sqlite-autoconf-3440200.tar.gz",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/sqlite3.gyp",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/sqlite3-binding.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/sqlite3.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/trace.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/async.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/backup.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/database.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/gcc-preinclude.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/macros.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/statement.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/threading.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/Release/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/Release/node_sqlite3.node",
+]
+`;
+
+exports[`linux > debian - (dpkg) 3`] = `
+{
+  "Architecture": "amd64",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
+  "Homepage": "http://foo.example.com",
+  "License": "MIT",
+  "Maintainer": "Foo Bar <foo@example.com>",
+  "Package": "testapp",
+  "Priority": "optional",
+  "Recommends": "libappindicator3-1",
+  "Section": "default",
+  "Vendor": "Foo Bar <foo@example.com>",
+}
+`;
+
+exports[`linux > debian - (dpkg) 4`] = `"Test Application (test quite “ #378)"`;
+
+exports[`linux > debian - (dpkg) 5`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.deb",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.deb",
+          },
+        ],
+        "path": "TestApp.deb",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux > debian - (dpkg) 6`] = `
+[
+  "/",
+  "/opt/",
+  "/usr/",
+  "/opt/TestApp/",
+  "/opt/TestApp/chrome-sandbox",
+  "/opt/TestApp/chrome_100_percent.pak",
+  "/opt/TestApp/chrome_200_percent.pak",
+  "/opt/TestApp/chrome_crashpad_handler",
+  "/opt/TestApp/icudtl.dat",
+  "/opt/TestApp/libEGL.so",
+  "/opt/TestApp/libffmpeg.so",
+  "/opt/TestApp/libGLESv2.so",
+  "/opt/TestApp/libvk_swiftshader.so",
+  "/opt/TestApp/libvulkan.so.1",
+  "/opt/TestApp/LICENSE.electron.txt",
+  "/opt/TestApp/LICENSES.chromium.html",
+  "/opt/TestApp/resources.pak",
+  "/opt/TestApp/snapshot_blob.bin",
+  "/opt/TestApp/TestApp",
+  "/opt/TestApp/v8_context_snapshot.bin",
+  "/opt/TestApp/vk_swiftshader_icd.json",
+  "/usr/share/",
+  "/opt/TestApp/resources/",
+  "/opt/TestApp/resources/app-update.yml",
+  "/opt/TestApp/resources/app.asar",
+  "/opt/TestApp/resources/apparmor-profile",
+  "/opt/TestApp/resources/package-type",
+  "/usr/share/applications/",
+  "/usr/share/applications/TestApp.desktop",
+  "/usr/share/doc/",
+  "/usr/share/icons/",
+  "/opt/TestApp/resources/app.asar.unpacked/",
+  "/usr/share/doc/testapp/",
+  "/usr/share/doc/testapp/changelog.gz",
+  "/usr/share/icons/hicolor/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/",
+  "/usr/share/icons/hicolor/128x128/",
+  "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/256x256/",
+  "/usr/share/icons/hicolor/32x32/",
+  "/usr/share/icons/hicolor/48x48/",
+  "/usr/share/icons/hicolor/512x512/",
+  "/usr/share/icons/hicolor/64x64/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/LICENSE",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/package.json",
+  "/usr/share/icons/hicolor/128x128/apps/",
+  "/usr/share/icons/hicolor/128x128/apps/TestApp.png",
+  "/usr/share/icons/hicolor/16x16/apps/",
+  "/usr/share/icons/hicolor/16x16/apps/TestApp.png",
+  "/usr/share/icons/hicolor/256x256/apps/",
+  "/usr/share/icons/hicolor/256x256/apps/TestApp.png",
+  "/usr/share/icons/hicolor/32x32/apps/",
+  "/usr/share/icons/hicolor/32x32/apps/TestApp.png",
+  "/usr/share/icons/hicolor/48x48/apps/",
+  "/usr/share/icons/hicolor/48x48/apps/TestApp.png",
+  "/usr/share/icons/hicolor/512x512/apps/",
+  "/usr/share/icons/hicolor/512x512/apps/TestApp.png",
+  "/usr/share/icons/hicolor/64x64/apps/",
+  "/usr/share/icons/hicolor/64x64/apps/TestApp.png",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/common-sqlite.gypi",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/extract.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/sqlite-autoconf-3440200.tar.gz",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/sqlite3.gyp",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/sqlite3-binding.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/sqlite3.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/trace.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/async.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/backup.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/database.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/gcc-preinclude.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/macros.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/statement.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/threading.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/Release/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/Release/node_sqlite3.node",
+]
+`;
+
+exports[`linux > debian - (dpkg) 7`] = `
+{
+  "Architecture": "amd64",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
+  "Homepage": "http://foo.example.com",
+  "License": "MIT",
+  "Maintainer": "Foo Bar <foo@example.com>",
+  "Package": "testapp",
+  "Priority": "optional",
+  "Recommends": "libappindicator3-1",
+  "Section": "default",
+  "Vendor": "Foo Bar <foo@example.com>",
+}
+`;
+
+exports[`linux > debian - (dpkg) 8`] = `"Test Application (test quite “ #378)"`;
+
+exports[`linux > fedora - (dnf) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "path": "TestApp.rpm",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux > fedora - (dnf) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "path": "TestApp.rpm",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux > fedora - (rpm) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "path": "TestApp.rpm",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux > fedora - (rpm) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "path": "TestApp.rpm",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux > fedora - (yum) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "path": "TestApp.rpm",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux > fedora - (yum) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "path": "TestApp.rpm",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux > fedora - (zypper) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "path": "TestApp.rpm",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux > fedora - (zypper) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "path": "TestApp.rpm",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`mac > mac - universal 1`] = `
+{
+  "mac": [
+    {
+      "arch": "universal",
+      "file": "TestApp.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp.zip.blockmap",
+      "safeArtifactName": "TestApp.zip.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-mac.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.zip",
+          },
+        ],
+        "path": "TestApp.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`mac > mac - universal 2`] = `
+{
+  "CFBundleDisplayName": "TestApp",
+  "CFBundleExecutable": "TestApp",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "com.test.app",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "TestApp",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.0.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": {
+      "127.0.0.1": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`mac > mac - universal 3`] = `
+{
+  "mac": [
+    {
+      "arch": "universal",
+      "file": "TestApp.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp.zip.blockmap",
+      "safeArtifactName": "TestApp.zip.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-mac.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.zip",
+          },
+        ],
+        "path": "TestApp.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`mac > mac - universal 4`] = `
+{
+  "CFBundleDisplayName": "TestApp",
+  "CFBundleExecutable": "TestApp",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "com.test.app",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "TestApp",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.0.1",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": {
+      "127.0.0.1": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`mac > mac - x64 1`] = `
+{
+  "mac": [
+    {
+      "arch": "x64",
+      "file": "TestApp.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp.zip.blockmap",
+      "safeArtifactName": "TestApp.zip.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-mac.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.zip",
+          },
+        ],
+        "path": "TestApp.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`mac > mac - x64 2`] = `
+{
+  "CFBundleDisplayName": "TestApp",
+  "CFBundleExecutable": "TestApp",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "com.test.app",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "TestApp",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.0.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": {
+      "127.0.0.1": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`mac > mac - x64 3`] = `
+{
+  "mac": [
+    {
+      "arch": "x64",
+      "file": "TestApp.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp.zip.blockmap",
+      "safeArtifactName": "TestApp.zip.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-mac.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.zip",
+          },
+        ],
+        "path": "TestApp.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`mac > mac - x64 4`] = `
+{
+  "CFBundleDisplayName": "TestApp",
+  "CFBundleExecutable": "TestApp",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "com.test.app",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "TestApp",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.0.1",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": {
+      "127.0.0.1": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`winCodeSign: 0.0.0 > windows > nsis 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe",
+      "safeArtifactName": "TestApp-Setup.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp Setup.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp Setup.exe",
+          },
+        ],
+        "path": "TestApp Setup.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 0.0.0 > windows > nsis 2`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe",
+      "safeArtifactName": "TestApp-Setup.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp Setup.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp Setup.exe",
+          },
+        ],
+        "path": "TestApp Setup.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.0.0 > windows > nsis 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe",
+      "safeArtifactName": "TestApp-Setup.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp Setup.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp Setup.exe",
+          },
+        ],
+        "path": "TestApp Setup.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.0.0 > windows > nsis 2`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe",
+      "safeArtifactName": "TestApp-Setup.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp Setup.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp Setup.exe",
+          },
+        ],
+        "path": "TestApp Setup.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > windows > nsis 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe",
+      "safeArtifactName": "TestApp-Setup.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp Setup.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp Setup.exe",
+          },
+        ],
+        "path": "TestApp Setup.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > windows > nsis 2`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe",
+      "safeArtifactName": "TestApp-Setup.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp Setup.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp Setup.exe",
+          },
+        ],
+        "path": "TestApp Setup.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`windows > nsis 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe",
+      "safeArtifactName": "TestApp-Setup.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp Setup.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp Setup.exe",
+          },
+        ],
+        "path": "TestApp Setup.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`windows > nsis 2`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe",
+      "safeArtifactName": "TestApp-Setup.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp Setup.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp Setup.exe",
+          },
+        ],
+        "path": "TestApp Setup.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
       },
     },
   ],

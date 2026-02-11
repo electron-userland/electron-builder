@@ -4,7 +4,7 @@ import { Configuration, Platform } from "electron-builder"
 import { CliOptions, configureBuildCommand, createYargs, normalizeOptions } from "electron-builder/out/builder"
 import { app, appThrows, linuxDirTarget } from "./helpers/packTester"
 
-test.ifDevOrLinuxCi("validation", ({ expect }) =>
+test.ifNotWindows("validation", ({ expect }) =>
   appThrows(
     expect,
     {
@@ -21,7 +21,7 @@ test.ifDevOrLinuxCi("validation", ({ expect }) =>
   )
 )
 
-test.ifDevOrLinuxCi("appId as object", ({ expect }) =>
+test.ifNotWindows("appId as object", ({ expect }) =>
   appThrows(expect, {
     targets: linuxDirTarget,
     config: {
@@ -31,7 +31,7 @@ test.ifDevOrLinuxCi("appId as object", ({ expect }) =>
 )
 
 // https://github.com/electron-userland/electron-builder/issues/1302
-test.ifDevOrLinuxCi("extraFiles", ({ expect }) =>
+test.ifNotWindows("extraFiles", ({ expect }) =>
   app(expect, {
     targets: Platform.LINUX.createTarget("appimage", Arch.x64),
     config: {
@@ -61,7 +61,7 @@ test.ifDevOrLinuxCi("extraFiles", ({ expect }) =>
   })
 )
 
-test.ifDevOrLinuxCi("files", ({ expect }) => {
+test.ifNotWindows("files", () => {
   return validateConfiguration(
     {
       appId: "com.example.myapp",
@@ -75,7 +75,7 @@ test.ifDevOrLinuxCi("files", ({ expect }) => {
   )
 })
 
-test.ifDevOrLinuxCi("null string as null", async ({ expect }) => {
+test.ifNotWindows("null string as null", async ({ expect }) => {
   const yargs = configureBuildCommand(createYargs())
   const options = normalizeOptions(yargs.parse(["-c.mac.identity=null", "--config.mac.hardenedRuntime=false"]) as CliOptions)
   const config = options.config as Configuration

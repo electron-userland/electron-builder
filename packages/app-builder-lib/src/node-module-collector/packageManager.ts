@@ -9,6 +9,7 @@ export enum PM {
   YARN_BERRY = "yarn-berry",
   BUN = "bun",
   NPM = "npm",
+  TRAVERSAL = "traversal",
 }
 
 // Cache for resolved paths
@@ -18,6 +19,7 @@ const pmPathCache: Record<PM, string | null | undefined> = {
   [PM.PNPM]: undefined,
   [PM.YARN_BERRY]: undefined,
   [PM.BUN]: undefined,
+  [PM.TRAVERSAL]: undefined,
 }
 
 function resolveCommand(pm: PM): string {

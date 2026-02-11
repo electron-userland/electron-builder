@@ -8,7 +8,7 @@ import * as path from "path"
 import { SignManager } from "./codeSign/signManager"
 import { signWindows, WindowsSignOptions } from "./codeSign/windowsCodeSign"
 import { WindowsSignAzureManager } from "./codeSign/windowsSignAzureManager"
-import { FileCodeSigningInfo, getSignVendorPath, WindowsSignToolManager } from "./codeSign/windowsSignToolManager"
+import { FileCodeSigningInfo, WindowsSignToolManager } from "./codeSign/windowsSignToolManager"
 import { AfterPackContext } from "./configuration"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOptions"
@@ -26,6 +26,7 @@ import { isBuildCacheEnabled } from "./util/flags"
 import { time } from "./util/timer"
 import { getWindowsVm, VmManager } from "./vm/vm"
 import { execWine } from "./wine"
+import { getRceditBundle } from "./toolsets/windows"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))
@@ -42,6 +43,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     await manager.initialize()
     return manager
   })
+  private signingQueue = Promise.resolve(true)
 
   get isForceCodeSigningVerification(): boolean {
     return this.platformSpecificBuildOptions.verifyUpdateCodeSignature !== false
@@ -120,11 +122,17 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   }
 
   async signIf(file: string): Promise<boolean> {
+    const logFields = { file: log.filePath(file) }
     if (!this.shouldSignFile(file, true)) {
-      log.info({ file: log.filePath(file) }, "file signing skipped via signExts configuration")
+      log.info(logFields, "file signing skipped via signExts configuration")
       return false
     }
 
+    this.signingQueue = this.signingQueue.then(() => this._sign(file))
+    return this.signingQueue
+  }
+
+  private async _sign(file: string): Promise<boolean> {
     const signOptions: WindowsSignOptions = {
       path: file,
       options: this.platformSpecificBuildOptions,
@@ -208,8 +216,8 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     if (process.platform === "win32" || process.platform === "darwin") {
       await executeAppBuilder(["rcedit", "--args", JSON.stringify(args)], undefined /* child-process */, {}, 3 /* retry three times */)
     } else if (this.info.framework.name === "electron") {
-      const vendorPath = await getSignVendorPath()
-      await execWine(path.join(vendorPath, "rcedit-ia32.exe"), path.join(vendorPath, "rcedit-x64.exe"), args)
+      const vendor = await getRceditBundle(this.config.toolsets?.winCodeSign)
+      await execWine(vendor.x86, vendor.x64, args)
     }
 
     await this.signIf(file)

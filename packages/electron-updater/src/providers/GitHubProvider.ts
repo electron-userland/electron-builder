@@ -81,7 +81,9 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
             const hrefElement = hrefRegExp.exec(element.element("link").attribute("href"))!
 
             // If this is null then something is wrong and skip this release
-            if (hrefElement === null) continue
+            if (hrefElement === null) {
+              continue
+            }
 
             // This Release's Tag
             const hrefTag = hrefElement[1]
@@ -222,7 +224,7 @@ export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangel
   for (const release of feed.getElements("entry")) {
     // noinspection TypeScriptValidateJSTypes
     const versionRelease = /\/tag\/v?([^/]+)$/.exec(release.element("link").attribute("href"))![1]
-    if (semver.lt(currentVersion, versionRelease)) {
+    if (semver.valid(versionRelease) && semver.lt(currentVersion, versionRelease)) {
       releaseNotes.push({
         version: versionRelease,
         note: getNoteValue(release),

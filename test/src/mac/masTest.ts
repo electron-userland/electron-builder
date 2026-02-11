@@ -3,10 +3,10 @@ import * as path from "path"
 import { CheckingMacPackager } from "../helpers/CheckingPackager"
 import { assertPack, createMacTargetTest, signed } from "../helpers/packTester"
 
-describe.runIf(process.platform === "darwin" && process.env.CSC_KEY_PASSWORD != null)("mas", () => {
+describe.ifEnv(process.platform === "darwin" && process.env.CSC_KEY_PASSWORD != null)("mas", () => {
   test("mas", ({ expect }) => createMacTargetTest(expect, ["mas"]))
-  test.ifNotCi("dev", ({ expect }) => createMacTargetTest(expect, ["mas-dev"]))
-  test.ifNotCi("mas and 7z", ({ expect }) => createMacTargetTest(expect, ["mas", "7z"]))
+  test.ifMac("dev", ({ expect }) => createMacTargetTest(expect, ["mas-dev"]))
+  test.ifMac("mas and 7z", ({ expect }) => createMacTargetTest(expect, ["mas", "7z"]))
 
   const entitlement = (fileName: string) => path.join("build", fileName)
   const entitlementsConfig = {
@@ -24,7 +24,7 @@ describe.runIf(process.platform === "darwin" && process.env.CSC_KEY_PASSWORD != 
       "test-app-one",
       signed({
         targets,
-        platformPackagerFactory: (packager, platform) => (platformPackager = new CheckingMacPackager(packager)),
+        platformPackagerFactory: (packager, _platform) => (platformPackager = new CheckingMacPackager(packager)),
         config: {
           mac: {
             target: ["mas"],
@@ -33,7 +33,7 @@ describe.runIf(process.platform === "darwin" && process.env.CSC_KEY_PASSWORD != 
         },
       }),
       {
-        checkMacApp(appDir, info) {
+        checkMacApp(appDir, _info) {
           const appEntitlements = (filePath: string) => platformPackager!.effectiveSignOptions?.optionsForFile?.(filePath)
           expect(appEntitlements(appDir)?.entitlements).toBe(entitlementsConfig.entitlements)
           expect(appEntitlements("Library/LoginItems")?.entitlements).toBe(entitlementsConfig.entitlementsLoginHelper)
@@ -53,13 +53,13 @@ describe.runIf(process.platform === "darwin" && process.env.CSC_KEY_PASSWORD != 
       "test-app-one",
       signed({
         targets,
-        platformPackagerFactory: (packager, platform) => (platformPackager = new CheckingMacPackager(packager)),
+        platformPackagerFactory: (packager, _platform) => (platformPackager = new CheckingMacPackager(packager)),
         config: {
           mac: entitlementsConfig,
         },
       }),
       {
-        checkMacApp(appDir, info) {
+        checkMacApp(appDir, _info) {
           const appEntitlements = (filePath: string) => platformPackager!.effectiveSignOptions?.optionsForFile?.(filePath)
           expect(appEntitlements(appDir)?.entitlements).toBe(entitlementsConfig.entitlements)
           expect(appEntitlements("Library/LoginItems")?.entitlements).toBe(entitlementsConfig.entitlementsLoginHelper)
@@ -79,10 +79,10 @@ describe.runIf(process.platform === "darwin" && process.env.CSC_KEY_PASSWORD != 
       "test-app-one",
       signed({
         targets,
-        platformPackagerFactory: (packager, platform) => (platformPackager = new CheckingMacPackager(packager)),
+        platformPackagerFactory: (packager, _platform) => (platformPackager = new CheckingMacPackager(packager)),
       }),
       {
-        checkMacApp(appDir, info) {
+        checkMacApp(appDir, _info) {
           const appEntitlements = (filePath: string) => platformPackager!.effectiveSignOptions?.optionsForFile?.(filePath)
           expect(appEntitlements(appDir)?.entitlements).toBe(entitlementsConfig.entitlements)
           expect(appEntitlements("Library/LoginItems")?.entitlements).toBe(entitlementsConfig.entitlements)

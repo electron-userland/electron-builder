@@ -1,12 +1,12 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`bun workspace --linker=hoisted - multiple conflicting versions 1`] = `
+exports[`Package Managers > bun workspace --linker=hoisted - multiple conflicting versions 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`bun workspace --linker=hoisted - multiple conflicting versions 2`] = `
+exports[`Package Managers > bun workspace --linker=hoisted - multiple conflicting versions 2`] = `
 {
   "files": {
     "index.js": {
@@ -177,13 +177,13 @@ exports[`bun workspace --linker=hoisted - multiple conflicting versions 2`] = `
 }
 `;
 
-exports[`bun workspace --linker=hoisted 1`] = `
+exports[`Package Managers > bun workspace --linker=hoisted 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`bun workspace --linker=hoisted 2`] = `
+exports[`Package Managers > bun workspace --linker=hoisted 2`] = `
 {
   "files": {
     "index.js": {
@@ -326,13 +326,13 @@ exports[`bun workspace --linker=hoisted 2`] = `
 }
 `;
 
-exports[`bun workspace --linker=isolated - multiple conflicting versions 1`] = `
+exports[`Package Managers > bun workspace --linker=isolated - multiple conflicting versions 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`bun workspace --linker=isolated - multiple conflicting versions 2`] = `
+exports[`Package Managers > bun workspace --linker=isolated - multiple conflicting versions 2`] = `
 {
   "files": {
     "index.js": {
@@ -503,13 +503,13 @@ exports[`bun workspace --linker=isolated - multiple conflicting versions 2`] = `
 }
 `;
 
-exports[`bun workspace --linker=isolated 1`] = `
+exports[`Package Managers > bun workspace --linker=isolated 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`bun workspace --linker=isolated 2`] = `
+exports[`Package Managers > bun workspace --linker=isolated 2`] = `
 {
   "files": {
     "index.js": {
@@ -652,37 +652,43 @@ exports[`bun workspace --linker=isolated 2`] = `
 }
 `;
 
-exports[`local file:// protocol with npm for project outside workspace 1`] = `
+exports[`Package Managers > local file:// protocol with npm for project outside workspace 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`local file:// protocol with pnpm for project outside workspace 1`] = `
+exports[`Package Managers > local file:// protocol with pnpm for project outside workspace 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`local file:// protocol with yarn for project outside workspace 1`] = `
+exports[`Package Managers > local file:// protocol with traversal for project outside workspace 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`local file:// protocol with yarn-berry for project outside workspace 1`] = `
+exports[`Package Managers > local file:// protocol with yarn for project outside workspace 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`npm 1`] = `
+exports[`Package Managers > local file:// protocol with yarn-berry for project outside workspace 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`npm 2`] = `
+exports[`Package Managers > npm 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`Package Managers > npm 2`] = `
 {
   "files": {
     "app": {
@@ -769,13 +775,13 @@ exports[`npm 2`] = `
 }
 `;
 
-exports[`pnpm 1`] = `
+exports[`Package Managers > pnpm 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`pnpm 2`] = `
+exports[`Package Managers > pnpm 2`] = `
 {
   "files": {
     "app": {
@@ -862,118 +868,13 @@ exports[`pnpm 2`] = `
 }
 `;
 
-exports[`yarn 1`] = `
+exports[`Package Managers > traversal hoisted 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`yarn 2`] = `
-{
-  "files": {
-    "index.html": {
-      "offset": "29309",
-      "size": 378,
-    },
-    "index.js": {
-      "offset": "29687",
-      "size": 619,
-    },
-    "node_modules": {
-      "files": {
-        "debug": {
-          "files": {
-            "LICENSE": {
-              "offset": "0",
-              "size": 1139,
-            },
-            "node_modules": {
-              "files": {
-                "ms": {
-                  "files": {
-                    "index.js": {
-                      "offset": "20109",
-                      "size": 3024,
-                    },
-                    "license.md": {
-                      "offset": "23133",
-                      "size": 1079,
-                    },
-                    "package.json": {
-                      "offset": "24212",
-                      "size": 497,
-                    },
-                  },
-                },
-              },
-            },
-            "package.json": {
-              "offset": "1139",
-              "size": 910,
-            },
-            "src": {
-              "files": {
-                "browser.js": {
-                  "offset": "2049",
-                  "size": 6103,
-                },
-                "common.js": {
-                  "offset": "8152",
-                  "size": 6915,
-                },
-                "index.js": {
-                  "offset": "15067",
-                  "size": 314,
-                },
-                "node.js": {
-                  "offset": "15381",
-                  "size": 4728,
-                },
-              },
-            },
-          },
-        },
-        "ms": {
-          "files": {
-            "index.js": {
-              "offset": "24709",
-              "size": 3024,
-            },
-            "license.md": {
-              "offset": "27733",
-              "size": 1079,
-            },
-            "package.json": {
-              "offset": "28812",
-              "size": 497,
-            },
-          },
-        },
-      },
-    },
-    "package.json": {
-      "offset": "30306",
-      "size": 339,
-    },
-    "path": {
-      "files": {
-        "app.asar": {
-          "offset": "30645",
-          "size": 714,
-        },
-      },
-    },
-  },
-}
-`;
-
-exports[`yarn berry 1`] = `
-{
-  "linux": [],
-}
-`;
-
-exports[`yarn berry 2`] = `
+exports[`Package Managers > traversal hoisted 2`] = `
 {
   "files": {
     "index.html": {
@@ -1052,13 +953,90 @@ exports[`yarn berry 2`] = `
 }
 `;
 
-exports[`yarn berry multi-package workspace 1`] = `
+exports[`Package Managers > traversal multi-package workspace 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`yarn berry multi-package workspace 2`] = `
+exports[`Package Managers > traversal multi-package workspace 2`] = `
+{
+  "files": {
+    "index.html": {
+      "offset": "24709",
+      "size": 841,
+    },
+    "index.js": {
+      "offset": "25550",
+      "size": 2501,
+    },
+    "node_modules": {
+      "files": {
+        "debug": {
+          "files": {
+            "LICENSE": {
+              "offset": "0",
+              "size": 1139,
+            },
+            "package.json": {
+              "offset": "1139",
+              "size": 910,
+            },
+            "src": {
+              "files": {
+                "browser.js": {
+                  "offset": "2049",
+                  "size": 6103,
+                },
+                "common.js": {
+                  "offset": "8152",
+                  "size": 6915,
+                },
+                "index.js": {
+                  "offset": "15067",
+                  "size": 314,
+                },
+                "node.js": {
+                  "offset": "15381",
+                  "size": 4728,
+                },
+              },
+            },
+          },
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "offset": "20109",
+              "size": 3024,
+            },
+            "license.md": {
+              "offset": "23133",
+              "size": 1079,
+            },
+            "package.json": {
+              "offset": "24212",
+              "size": 497,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "28051",
+      "size": 323,
+    },
+  },
+}
+`;
+
+exports[`Package Managers > traversal workspace 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`Package Managers > traversal workspace 2`] = `
 {
   "files": {
     "index.html": {
@@ -1129,13 +1107,183 @@ exports[`yarn berry multi-package workspace 2`] = `
 }
 `;
 
-exports[`yarn berry workspace 1`] = `
+exports[`Package Managers > yarn 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`yarn berry workspace 2`] = `
+exports[`Package Managers > yarn 2`] = `
+{
+  "files": {
+    "index.html": {
+      "offset": "24709",
+      "size": 378,
+    },
+    "index.js": {
+      "offset": "25087",
+      "size": 619,
+    },
+    "node_modules": {
+      "files": {
+        "debug": {
+          "files": {
+            "LICENSE": {
+              "offset": "0",
+              "size": 1139,
+            },
+            "package.json": {
+              "offset": "1139",
+              "size": 910,
+            },
+            "src": {
+              "files": {
+                "browser.js": {
+                  "offset": "2049",
+                  "size": 6103,
+                },
+                "common.js": {
+                  "offset": "8152",
+                  "size": 6915,
+                },
+                "index.js": {
+                  "offset": "15067",
+                  "size": 314,
+                },
+                "node.js": {
+                  "offset": "15381",
+                  "size": 4728,
+                },
+              },
+            },
+          },
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "offset": "20109",
+              "size": 3024,
+            },
+            "license.md": {
+              "offset": "23133",
+              "size": 1079,
+            },
+            "package.json": {
+              "offset": "24212",
+              "size": 497,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "25706",
+      "size": 339,
+    },
+    "path": {
+      "files": {
+        "app.asar": {
+          "offset": "26045",
+          "size": 714,
+        },
+      },
+    },
+  },
+}
+`;
+
+exports[`Package Managers > yarn berry 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`Package Managers > yarn berry 2`] = `
+{
+  "files": {
+    "index.html": {
+      "offset": "24709",
+      "size": 378,
+    },
+    "index.js": {
+      "offset": "25087",
+      "size": 619,
+    },
+    "node_modules": {
+      "files": {
+        "debug": {
+          "files": {
+            "LICENSE": {
+              "offset": "0",
+              "size": 1139,
+            },
+            "package.json": {
+              "offset": "1139",
+              "size": 910,
+            },
+            "src": {
+              "files": {
+                "browser.js": {
+                  "offset": "2049",
+                  "size": 6103,
+                },
+                "common.js": {
+                  "offset": "8152",
+                  "size": 6915,
+                },
+                "index.js": {
+                  "offset": "15067",
+                  "size": 314,
+                },
+                "node.js": {
+                  "offset": "15381",
+                  "size": 4728,
+                },
+              },
+            },
+          },
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "offset": "20109",
+              "size": 3024,
+            },
+            "license.md": {
+              "offset": "23133",
+              "size": 1079,
+            },
+            "package.json": {
+              "offset": "24212",
+              "size": 497,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "25706",
+      "size": 307,
+    },
+    "path": {
+      "files": {
+        "app.asar": {
+          "offset": "26013",
+          "size": 714,
+        },
+      },
+    },
+  },
+}
+`;
+
+exports[`Package Managers > yarn berry multi-package workspace 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`Package Managers > yarn berry multi-package workspace 2`] = `
 {
   "files": {
     "index.html": {
@@ -1206,21 +1354,21 @@ exports[`yarn berry workspace 2`] = `
 }
 `;
 
-exports[`yarn multi-package workspace 1`] = `
+exports[`Package Managers > yarn berry workspace 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`yarn multi-package workspace 2`] = `
+exports[`Package Managers > yarn berry workspace 2`] = `
 {
   "files": {
     "index.html": {
-      "offset": "24581",
+      "offset": "24709",
       "size": 841,
     },
     "index.js": {
-      "offset": "25422",
+      "offset": "25550",
       "size": 2501,
     },
     "node_modules": {
@@ -1257,51 +1405,116 @@ exports[`yarn multi-package workspace 2`] = `
             },
           },
         },
-        "foo": {
-          "files": {
-            "index.js": {
-              "offset": "20109",
-              "size": 35,
-            },
-            "package.json": {
-              "offset": "20144",
-              "size": 127,
-            },
-          },
-        },
         "ms": {
           "files": {
             "index.js": {
-              "offset": "20271",
-              "size": 2764,
+              "offset": "20109",
+              "size": 3024,
             },
             "license.md": {
-              "offset": "23035",
-              "size": 1077,
+              "offset": "23133",
+              "size": 1079,
             },
             "package.json": {
-              "offset": "24112",
-              "size": 469,
+              "offset": "24212",
+              "size": 497,
             },
           },
         },
       },
     },
     "package.json": {
-      "offset": "27923",
+      "offset": "28051",
+      "size": 321,
+    },
+  },
+}
+`;
+
+exports[`Package Managers > yarn multi-package workspace 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`Package Managers > yarn multi-package workspace 2`] = `
+{
+  "files": {
+    "index.html": {
+      "offset": "24709",
+      "size": 841,
+    },
+    "index.js": {
+      "offset": "25550",
+      "size": 2501,
+    },
+    "node_modules": {
+      "files": {
+        "debug": {
+          "files": {
+            "LICENSE": {
+              "offset": "0",
+              "size": 1139,
+            },
+            "package.json": {
+              "offset": "1139",
+              "size": 910,
+            },
+            "src": {
+              "files": {
+                "browser.js": {
+                  "offset": "2049",
+                  "size": 6103,
+                },
+                "common.js": {
+                  "offset": "8152",
+                  "size": 6915,
+                },
+                "index.js": {
+                  "offset": "15067",
+                  "size": 314,
+                },
+                "node.js": {
+                  "offset": "15381",
+                  "size": 4728,
+                },
+              },
+            },
+          },
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "offset": "20109",
+              "size": 3024,
+            },
+            "license.md": {
+              "offset": "23133",
+              "size": 1079,
+            },
+            "package.json": {
+              "offset": "24212",
+              "size": 497,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "28051",
       "size": 353,
     },
   },
 }
 `;
 
-exports[`yarn workspace 1`] = `
+exports[`Package Managers > yarn workspace 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`yarn workspace 2`] = `
+exports[`Package Managers > yarn workspace 2`] = `
 {
   "files": {
     "index.html": {

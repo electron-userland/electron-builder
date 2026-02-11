@@ -34,9 +34,7 @@ function doLoadAutoUpdater(): AppUpdater {
       if (!existsSync(identity)) {
         return _autoUpdater
       }
-      console.info("Checking for beta autoupdate feature for deb/rpm distributions")
       const fileType = readFileSync(identity).toString().trim()
-      console.info("Found package-type:", fileType)
       switch (fileType) {
         case "deb":
           _autoUpdater = new (require("./DebUpdater").DebUpdater)()

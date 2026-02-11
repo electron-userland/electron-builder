@@ -23,11 +23,7 @@ export class Logger {
   // clean up logs since concurrent tests are impossible to track logic execution with console concurrency "noise"
   private readonly shouldDisableNonErrorLoggingVitest = process.env.VITEST && !this.isDebugEnabled
 
-  constructor(protected readonly stream: WritableStream) {
-    if (this.shouldDisableNonErrorLoggingVitest) {
-      this.log(`non-error logging is silenced during VITEST workflow when DEBUG=electron-builder flag is not set`)
-    }
-  }
+  constructor(protected readonly stream: WritableStream) {}
 
   messageTransformer: (message: string, level: LogLevel) => string = it => it
 
@@ -71,7 +67,7 @@ export class Logger {
     if (this.shouldDisableNonErrorLoggingVitest) {
       if (
         [
-          // "warn", // is actually a bit too noisy
+          // "warn", // is sometimes a bit too noisy
           "error",
         ].includes(level)
       ) {

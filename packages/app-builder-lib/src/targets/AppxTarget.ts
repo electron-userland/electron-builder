@@ -3,12 +3,14 @@ import { Nullish } from "builder-util-runtime"
 import { emptyDir, readdir, readFile, writeFile } from "fs-extra"
 import * as path from "path"
 import { AppXOptions } from "../"
-import { getSignVendorPath, isOldWin6 } from "../codeSign/windowsSignToolManager"
+import { getWindowsKitsBundle } from "../toolsets/windows"
 import { Target } from "../core"
 import { getTemplatePath } from "../util/pathManager"
 import { VmManager } from "../vm/vm"
 import { WinPackager } from "../winPackager"
 import { createStageDir } from "./targetUtil"
+import { isOldWin6 } from "../toolsets/windows"
+import { CAPABILITIES, isValidCapabilityName } from "./AppxCapabilities"
 
 const APPX_ASSETS_DIR_NAME = "appx"
 
@@ -73,7 +75,7 @@ export default class AppXTarget extends Target {
       arch,
     })
 
-    const vendorPath = await getSignVendorPath()
+    const vendorPath = await getWindowsKitsBundle({ winCodeSign: this.packager.config.toolsets?.winCodeSign, arch: arch })
     const vm = await packager.vm.value
 
     const stageDir = await createStageDir(this, packager, arch)
@@ -98,7 +100,7 @@ export default class AppXTarget extends Target {
     )
 
     const userAssetDir = await this.packager.getResource(undefined, APPX_ASSETS_DIR_NAME)
-    const assetInfo = await AppXTarget.computeUserAssets(vm, vendorPath, userAssetDir)
+    const assetInfo = await AppXTarget.computeUserAssets(vm, vendorPath.appxAssets, userAssetDir)
     const userAssets = assetInfo.userAssets
 
     const manifestFile = stageDir.getTempFile("AppxManifest.xml")
@@ -107,11 +109,10 @@ export default class AppXTarget extends Target {
     await packager.info.emitAppxManifestCreated(manifestFile)
     mappingList.push(assetInfo.mappings)
     mappingList.push([`"${vm.toVmFile(manifestFile)}" "AppxManifest.xml"`])
-    const signToolArch = arch === Arch.arm64 ? "x64" : Arch[arch]
 
     if (isScaledAssetsProvided(userAssets)) {
       const outFile = vm.toVmFile(stageDir.getTempFile("resources.pri"))
-      const makePriPath = vm.toVmFile(path.join(vendorPath, "windows-10", signToolArch, "makepri.exe"))
+      const makePriPath = vm.toVmFile(path.join(vendorPath.kit, "makepri.exe"))
 
       const assetRoot = stageDir.getTempFile("appx/assets")
       await emptyDir(assetRoot)
@@ -148,7 +149,7 @@ export default class AppXTarget extends Target {
       makeAppXArgs.push(...this.options.makeappxArgs)
     }
     this.buildQueueManager.add(async () => {
-      await vm.exec(vm.toVmFile(path.join(vendorPath, "windows-10", signToolArch, "makeappx.exe")), makeAppXArgs)
+      await vm.exec(vm.toVmFile(path.join(vendorPath.kit, "makeappx.exe")), makeAppXArgs)
       await packager.signIf(artifactPath)
 
       await stageDir.cleanup()
@@ -201,6 +202,7 @@ export default class AppXTarget extends Target {
     const options = this.options
     const executable = `app\\${appInfo.productFilename}.exe`
     const displayName = options.displayName || appInfo.productName
+    const capabilities = this.getCapabilities()
     const extensions = await this.getExtensions(executable, displayName)
     const archSpecificMinVersion = arch === Arch.arm64 ? "10.0.16299.0" : "10.0.14316.0"
 
@@ -244,13 +246,13 @@ export default class AppXTarget extends Target {
           }
 
           if (result.length < 1 || result.length > 64) {
-            const message = `Appx Application.Id with a value between 1 and 64 characters in length`
+            const message = `Appx Application.Id must be between 1 and 64 characters in length: ${result}`
             throw new InvalidConfigurationError(message)
           } else if (!validCharactersRegex.test(result)) {
-            const message = `AppX Application.Id can not be consists of alpha-numeric and period"`
+            const message = `AppX Application.Id cannot contain alpha-numeric, period, and dash characters: ${result}"`
             throw new InvalidConfigurationError(message)
           } else if (restrictedApplicationIdValues.includes(result.toUpperCase())) {
-            const message = `AppX identityName.Id can not include restricted values: ${JSON.stringify(restrictedApplicationIdValues)}`
+            const message = `AppX Application.Id cannot contain restricted values ${JSON.stringify(restrictedApplicationIdValues)}: ${result}`
             throw new InvalidConfigurationError(message)
           } else if (result == null && options.applicationId == null) {
             const message = `Please set appx.applicationId (or correct appx.identityName or name)`
@@ -264,13 +266,13 @@ export default class AppXTarget extends Target {
           const result = options.identityName || appInfo.name
           const validCharactersRegex = /^[a-zA-Z0-9.-]+$/
           if (result.length < 3 || result.length > 50) {
-            const message = `Appx identityName.Id with a value between 3 and 50 characters in length`
+            const message = `Appx identityName.Id must be between 3 and 50 characters in length: ${result}`
             throw new InvalidConfigurationError(message)
           } else if (!validCharactersRegex.test(result)) {
-            const message = `AppX identityName.Id cat be consists of alpha-numeric, period, and dash characters"`
+            const message = `AppX identityName.Id cannot contain of alpha-numeric, period, and dash characters: ${result}`
             throw new InvalidConfigurationError(message)
           } else if (restrictedApplicationIdValues.includes(result.toUpperCase())) {
-            const message = `AppX identityName.Id can not be some values`
+            const message = `AppX identityName.Id cannot contain restricted values ${JSON.stringify(restrictedApplicationIdValues)}: ${result}`
             throw new InvalidConfigurationError(message)
           } else if (result == null && options.identityName == null) {
             const message = `Please set appx.identityName or name`
@@ -316,6 +318,9 @@ export default class AppXTarget extends Target {
         case "resourceLanguages":
           return resourceLanguageTag(asArray(options.languages))
 
+        case "capabilities":
+          return capabilities
+
         case "extensions":
           return extensions
 
@@ -330,6 +335,25 @@ export default class AppXTarget extends Target {
       }
     })
     await writeFile(outFile, manifest)
+  }
+
+  private getCapabilities(): string {
+    const caps = asArray(this.options.capabilities)
+
+    const capSet = new Set(caps)
+
+    const invalid = Array.from(capSet).filter(cap => !isValidCapabilityName(cap))
+    if (invalid.length > 0) {
+      throw new Error(`invalid windows capabilit${invalid.length === 1 ? "y" : "ies"} specified: ${invalid.join(", ")}`)
+    }
+
+    // Ensure runFullTrust is always included
+    capSet.add("runFullTrust")
+
+    // Filter and map in one pass
+    const capabilityStrings = CAPABILITIES.filter(cap => capSet.has(cap.name)).map(cap => `  ${cap.toXMLString()}`)
+
+    return `<Capabilities>\n${capabilityStrings.join("\n")}\n</Capabilities>`
   }
 
   private async getExtensions(executable: string, displayName: string): Promise<string> {
@@ -395,7 +419,7 @@ function resourceLanguageTag(userLanguages: Array<string> | Nullish): string {
   if (userLanguages == null || userLanguages.length === 0) {
     userLanguages = [DEFAULT_RESOURCE_LANG]
   }
-  return userLanguages.map(it => `<Resource Language="${it.replace(/_/g, "-")}" />`).join("\n")
+  return userLanguages.map(it => `<Resource Language="${it.trim().replace(/_/g, "-")}" />`).join("\n")
 }
 
 function lockScreenTag(userAssets: Array<string>): string {

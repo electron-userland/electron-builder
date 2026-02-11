@@ -57,7 +57,6 @@ exports[`electronDist as callback function for path to locally unzipped 2`] = `
 [
   "LICENSE.electron.txt",
   "LICENSES.chromium.html",
-  "Test App ßW",
   "chrome-sandbox",
   "chrome_100_percent.pak",
   "chrome_200_percent.pak",
@@ -72,8 +71,8 @@ exports[`electronDist as callback function for path to locally unzipped 2`] = `
   "resources",
   "resources.pak",
   "snapshot_blob.bin",
+  "testapp",
   "v8_context_snapshot.bin",
-  "version",
   "vk_swiftshader_icd.json",
 ]
 `;
@@ -94,7 +93,6 @@ exports[`electronDist as standard path to node_modules electron 2`] = `
 [
   "LICENSE.electron.txt",
   "LICENSES.chromium.html",
-  "Test App ßW",
   "chrome-sandbox",
   "chrome_100_percent.pak",
   "chrome_200_percent.pak",
@@ -109,6 +107,7 @@ exports[`electronDist as standard path to node_modules electron 2`] = `
   "resources",
   "resources.pak",
   "snapshot_blob.bin",
+  "testapp",
   "v8_context_snapshot.bin",
   "version",
   "vk_swiftshader_icd.json",
@@ -118,6 +117,21 @@ exports[`electronDist as standard path to node_modules electron 2`] = `
 exports[`override targets in the config - only arch 1`] = `
 {
   "win": [
+    {
+      "arch": "ia32",
+      "file": "beta-TestApp.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "beta-TestApp.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
     {
       "file": "beta.yml",
       "fileContent": {
@@ -132,21 +146,6 @@ exports[`override targets in the config - only arch 1`] = `
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.0.0-beta.1",
-      },
-    },
-    {
-      "arch": "ia32",
-      "file": "beta-TestApp.exe",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "beta-TestApp.exe.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
       },
     },
   ],

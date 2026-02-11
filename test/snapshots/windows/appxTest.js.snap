@@ -1,54 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`AppX 1`] = `
-{
-  "win": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW 1.1.0.appx",
-      "safeArtifactName": "TestApp-1.1.0.appx",
-    },
-  ],
-}
-`;
-
-exports[`application id 1`] = `
-{
-  "win": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW 1.1.0.appx",
-      "safeArtifactName": "TestApp-1.1.0.appx",
-    },
-  ],
-}
-`;
-
-exports[`auto launch 1`] = `
-{
-  "win": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW 1.1.0.appx",
-      "safeArtifactName": "TestApp-1.1.0.appx",
-    },
-  ],
-}
-`;
-
-exports[`certificateSubjectName 1`] = `
-{
-  "win": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0.appx",
-      "safeArtifactName": "TestApp-1.1.0.appx",
-    },
-  ],
-}
-`;
-
-exports[`custom raw appmanifest.xml 1`] = `
+exports[`AppX > winCodeSign: 0.0.0 > custom raw appmanifest.xml 1`] = `
 "<?xml version="1.0" encoding="utf-8"?>
 <!--suppress XmlUnusedNamespaceDeclaration -->
 <Package
@@ -99,7 +51,7 @@ exports[`custom raw appmanifest.xml 1`] = `
 "
 `;
 
-exports[`custom raw appmanifest.xml 2`] = `
+exports[`AppX > winCodeSign: 0.0.0 > custom raw appmanifest.xml 2`] = `
 {
   "win": [
     {
@@ -111,7 +63,7 @@ exports[`custom raw appmanifest.xml 2`] = `
 }
 `;
 
-exports[`custom template appmanifest.xml 1`] = `
+exports[`AppX > winCodeSign: 0.0.0 > custom template appmanifest.xml 1`] = `
 "<?xml version="1.0" encoding="utf-8"?>
 <!--suppress XmlUnusedNamespaceDeclaration -->
 <Package
@@ -165,7 +117,7 @@ exports[`custom template appmanifest.xml 1`] = `
 "
 `;
 
-exports[`custom template appmanifest.xml 2`] = `
+exports[`AppX > winCodeSign: 0.0.0 > custom template appmanifest.xml 2`] = `
 {
   "win": [
     {
@@ -177,7 +129,172 @@ exports[`custom template appmanifest.xml 2`] = `
 }
 `;
 
-exports[`languages and not signed (windows store only) 1`] = `
+exports[`AppX > winCodeSign: 1.0.0 > AppX 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+  ],
+}
+`;
+
+exports[`AppX > winCodeSign: 1.0.0 > application id 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+  ],
+}
+`;
+
+exports[`AppX > winCodeSign: 1.0.0 > auto launch 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+  ],
+}
+`;
+
+exports[`AppX > winCodeSign: 1.0.0 > custom raw appmanifest.xml 1`] = `
+"<?xml version="1.0" encoding="utf-8"?>
+<!--suppress XmlUnusedNamespaceDeclaration -->
+<Package
+   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+   xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+   xmlns:desktop2="http://schemas.microsoft.com/appx/manifest/desktop/windows10/2"
+   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+   >
+  <!-- use single quotes to avoid double quotes escaping in the publisher value  -->
+  <Identity Name="TestApp"
+    ProcessorArchitecture="x64"
+    Publisher='CN=ms'
+    Version="1.1.0.0" />
+  <Properties>
+    <DisplayName>Test App ßW</DisplayName>
+    <PublisherDisplayName>Foo Bar</PublisherDisplayName>
+    <Description>Test Application (test quite “ #378)</Description>
+    <Logo>assets\\StoreLogo.png</Logo>
+  </Properties>
+  <Resources>
+    <Resource Language="en-US" />
+  </Resources>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.14316.0" MaxVersionTested="10.0.14316.0" />
+  </Dependencies>
+  <Capabilities>
+    <Capability Name="internetClient"/>
+    <Capability Name="privateNetworkClientServer"/>
+    <rescap:Capability Name="runFullTrust"/>
+  </Capabilities>
+  <Applications>
+    <Application Id="TestApp" Executable="app\\Test App ßW.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+       BackgroundColor="#464646"
+       DisplayName="Test App ßW"
+       Square150x150Logo="assets\\Square150x150Logo.png"
+       Square44x44Logo="assets\\Square44x44Logo.png"
+       Description="Test Application (test quite “ #378)">
+        
+        <uap:DefaultTile Wide310x150Logo="assets\\Wide310x150Logo.png" />
+        
+      </uap:VisualElements>
+      
+    </Application>
+  </Applications>
+</Package>
+"
+`;
+
+exports[`AppX > winCodeSign: 1.0.0 > custom raw appmanifest.xml 2`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+  ],
+}
+`;
+
+exports[`AppX > winCodeSign: 1.0.0 > custom template appmanifest.xml 1`] = `
+"<?xml version="1.0" encoding="utf-8"?>
+<!--suppress XmlUnusedNamespaceDeclaration -->
+<Package
+   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+   xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+   xmlns:desktop2="http://schemas.microsoft.com/appx/manifest/desktop/windows10/2"
+   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
+  <!-- use single quotes to avoid double quotes escaping in the publisher value  -->
+  <Identity Name="TestApp"
+    ProcessorArchitecture="x64"
+    Publisher='CN=ms'
+    Version="1.1.0.0" />
+  <Properties>
+    <DisplayName>Test App ßW</DisplayName>
+    <PublisherDisplayName>Foo Bar</PublisherDisplayName>
+    <Description>Test Application (test quite “ #378)</Description>
+    <Logo>assets\\StoreLogo.png</Logo>
+  </Properties>
+  <Resources>
+    <Resource Language="en-US" />
+  </Resources>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.14316.0" MaxVersionTested="10.0.14316.0" />
+  </Dependencies>
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust"/>
+  </Capabilities>
+  <Applications>
+    <Application Id="TestApp" Executable="app\\Test App ßW.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+       BackgroundColor="#464646"
+       DisplayName="Test App ßW"
+       Square150x150Logo="assets\\Square150x150Logo.png"
+       Square44x44Logo="assets\\Square44x44Logo.png"
+       Description="Test Application (test quite “ #378)">
+        
+        <uap:DefaultTile Wide310x150Logo="assets\\Wide310x150Logo.png" />
+        
+      </uap:VisualElements>
+      <!-- <Extensions>
+        <desktop2:Extension Category="windows.firewallRules">
+          <desktop2:FirewallRules Executable="app\\Test App ßW.exe">
+            <desktop2:Rule Direction="in" Profile="private" IPProtocol="TCP" LocalPortMin="22022" LocalPortMax="24044"/>
+          </desktop2:FirewallRules>
+        </desktop2:Extension>
+      </Extensions> -->
+    </Application>
+  </Applications>
+</Package>
+"
+`;
+
+exports[`AppX > winCodeSign: 1.0.0 > custom template appmanifest.xml 2`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+  ],
+}
+`;
+
+exports[`AppX > winCodeSign: 1.0.0 > languages and not signed (windows store only) 1`] = `
 {
   "win": [
     {
@@ -185,6 +302,212 @@ exports[`languages and not signed (windows store only) 1`] = `
       "file": "Test App ßW 1.1.0 ia32.appx",
       "safeArtifactName": "TestApp-1.1.0.appx",
     },
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+  ],
+}
+`;
+
+exports[`AppX > winCodeSign: 1.0.0 > valid capabilities (windows store only) 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+  ],
+}
+`;
+
+exports[`AppX > winCodeSign: 1.1.0 > AppX 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+  ],
+}
+`;
+
+exports[`AppX > winCodeSign: 1.1.0 > application id 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+  ],
+}
+`;
+
+exports[`AppX > winCodeSign: 1.1.0 > auto launch 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+  ],
+}
+`;
+
+exports[`AppX > winCodeSign: 1.1.0 > custom raw appmanifest.xml 1`] = `
+"<?xml version="1.0" encoding="utf-8"?>
+<!--suppress XmlUnusedNamespaceDeclaration -->
+<Package
+   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+   xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+   xmlns:desktop2="http://schemas.microsoft.com/appx/manifest/desktop/windows10/2"
+   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+   >
+  <!-- use single quotes to avoid double quotes escaping in the publisher value  -->
+  <Identity Name="TestApp"
+    ProcessorArchitecture="x64"
+    Publisher='CN=ms'
+    Version="1.1.0.0" />
+  <Properties>
+    <DisplayName>Test App ßW</DisplayName>
+    <PublisherDisplayName>Foo Bar</PublisherDisplayName>
+    <Description>Test Application (test quite “ #378)</Description>
+    <Logo>assets\\StoreLogo.png</Logo>
+  </Properties>
+  <Resources>
+    <Resource Language="en-US" />
+  </Resources>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.14316.0" MaxVersionTested="10.0.14316.0" />
+  </Dependencies>
+  <Capabilities>
+    <Capability Name="internetClient"/>
+    <Capability Name="privateNetworkClientServer"/>
+    <rescap:Capability Name="runFullTrust"/>
+  </Capabilities>
+  <Applications>
+    <Application Id="TestApp" Executable="app\\Test App ßW.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+       BackgroundColor="#464646"
+       DisplayName="Test App ßW"
+       Square150x150Logo="assets\\Square150x150Logo.png"
+       Square44x44Logo="assets\\Square44x44Logo.png"
+       Description="Test Application (test quite “ #378)">
+        
+        <uap:DefaultTile Wide310x150Logo="assets\\Wide310x150Logo.png" />
+        
+      </uap:VisualElements>
+      
+    </Application>
+  </Applications>
+</Package>
+"
+`;
+
+exports[`AppX > winCodeSign: 1.1.0 > custom raw appmanifest.xml 2`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+  ],
+}
+`;
+
+exports[`AppX > winCodeSign: 1.1.0 > custom template appmanifest.xml 1`] = `
+"<?xml version="1.0" encoding="utf-8"?>
+<!--suppress XmlUnusedNamespaceDeclaration -->
+<Package
+   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+   xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+   xmlns:desktop2="http://schemas.microsoft.com/appx/manifest/desktop/windows10/2"
+   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
+  <!-- use single quotes to avoid double quotes escaping in the publisher value  -->
+  <Identity Name="TestApp"
+    ProcessorArchitecture="x64"
+    Publisher='CN=ms'
+    Version="1.1.0.0" />
+  <Properties>
+    <DisplayName>Test App ßW</DisplayName>
+    <PublisherDisplayName>Foo Bar</PublisherDisplayName>
+    <Description>Test Application (test quite “ #378)</Description>
+    <Logo>assets\\StoreLogo.png</Logo>
+  </Properties>
+  <Resources>
+    <Resource Language="en-US" />
+  </Resources>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.14316.0" MaxVersionTested="10.0.14316.0" />
+  </Dependencies>
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust"/>
+  </Capabilities>
+  <Applications>
+    <Application Id="TestApp" Executable="app\\Test App ßW.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+       BackgroundColor="#464646"
+       DisplayName="Test App ßW"
+       Square150x150Logo="assets\\Square150x150Logo.png"
+       Square44x44Logo="assets\\Square44x44Logo.png"
+       Description="Test Application (test quite “ #378)">
+        
+        <uap:DefaultTile Wide310x150Logo="assets\\Wide310x150Logo.png" />
+        
+      </uap:VisualElements>
+      <!-- <Extensions>
+        <desktop2:Extension Category="windows.firewallRules">
+          <desktop2:FirewallRules Executable="app\\Test App ßW.exe">
+            <desktop2:Rule Direction="in" Profile="private" IPProtocol="TCP" LocalPortMin="22022" LocalPortMax="24044"/>
+          </desktop2:FirewallRules>
+        </desktop2:Extension>
+      </Extensions> -->
+    </Application>
+  </Applications>
+</Package>
+"
+`;
+
+exports[`AppX > winCodeSign: 1.1.0 > custom template appmanifest.xml 2`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+  ],
+}
+`;
+
+exports[`AppX > winCodeSign: 1.1.0 > languages and not signed (windows store only) 1`] = `
+{
+  "win": [
+    {
+      "arch": "ia32",
+      "file": "Test App ßW 1.1.0 ia32.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+  ],
+}
+`;
+
+exports[`AppX > winCodeSign: 1.1.0 > valid capabilities (windows store only) 1`] = `
+{
+  "win": [
     {
       "arch": "x64",
       "file": "Test App ßW 1.1.0.appx",

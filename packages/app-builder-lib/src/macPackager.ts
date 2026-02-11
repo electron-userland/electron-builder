@@ -471,7 +471,6 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
         requirements: requirements || undefined,
         additionalArguments: customSignOptions.additionalArguments || [],
       }
-      log.debug({ file: log.filePath(filePath), ...args }, "selecting signing options")
       return args
     }
     return optionsForFile
@@ -581,6 +580,11 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     const extendInfo = this.platformSpecificBuildOptions.extendInfo
     if (extendInfo != null) {
       Object.assign(appPlist, extendInfo)
+    }
+    for (const [k, v] of Object.entries(appPlist)) {
+      if (v === null || v === undefined) {
+        delete appPlist[k]
+      }
     }
   }
 

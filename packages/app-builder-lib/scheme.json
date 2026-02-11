@@ -185,12 +185,26 @@
             "string"
           ]
         },
+        "capabilities": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The list of [capabilities](https://learn.microsoft.com/en-us/windows/uwp/packaging/app-capability-declarations) to be added to an `appmanifest.xml`.\nThe `runFullTrust` capability is obligatory for electron apps and will be auto added if not specified here.\nDefaults to `['runFullTrust']` if omitted\nExample:  `['runFullTrust', 'privateNetworkClientServer', 'webcam']`"
+        },
         "customExtensionsPath": {
           "description": "Relative path to custom extensions xml to be included in an `appmanifest.xml`.",
           "type": "string"
         },
         "customManifestPath": {
-          "description": "(Advanced Option) Relative path to custom `appmanifest.xml` (file name doesn't matter, it'll be renamed) located in build resources directory.\nSupports the following template macros:\n\n- ${publisher}\n- ${publisherDisplayName}\n- ${version}\n- ${applicationId}\n- ${identityName}\n- ${executable}\n- ${displayName}\n- ${description}\n- ${backgroundColor}\n- ${logo}\n- ${square150x150Logo}\n- ${square44x44Logo}\n- ${lockScreen}\n- ${defaultTile}\n- ${splashScreen}\n- ${arch}\n- ${resourceLanguages}\n- ${extensions}\n- ${minVersion}\n- ${maxVersionTested}",
+          "description": "(Advanced Option) Relative path to custom `appmanifest.xml` (file name doesn't matter, it'll be renamed) located in build resources directory.\nSupports the following template macros:\n\n- ${publisher}\n- ${publisherDisplayName}\n- ${version}\n- ${applicationId}\n- ${identityName}\n- ${executable}\n- ${displayName}\n- ${description}\n- ${backgroundColor}\n- ${logo}\n- ${square150x150Logo}\n- ${square44x44Logo}\n- ${lockScreen}\n- ${defaultTile}\n- ${splashScreen}\n- ${arch}\n- ${resourceLanguages}\n- ${capabilities}\n- ${extensions}\n- ${minVersion}\n- ${maxVersionTested}",
           "type": "string"
         },
         "displayName": {
@@ -870,6 +884,13 @@
             "string"
           ]
         },
+        "badgeIcon": {
+          "description": "The path to DMG icon (badge icon), which will be shown when mounted, relative to the [build resources](./contents.md#extraresources) or to the project directory.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "contents": {
           "description": "The content — to customize icon locations. The x and y coordinates refer to the position of the **center** of the icon (at 1x scale), and do not take the label into account.",
           "items": {
@@ -961,10 +982,22 @@
             }
           ]
         },
+        "shrink": {
+          "default": true,
+          "description": "Whether to shrink the DMG filesystem to the minimum size after copying files.\nSet to `false` to preserve the explicit `size` you specified.",
+          "type": "boolean"
+        },
         "sign": {
           "default": false,
           "description": "Whether to sign the DMG or not. Signing is not required and will lead to unwanted errors in combination with notarization requirements.",
           "type": "boolean"
+        },
+        "size": {
+          "description": "The initial size of the DMG filesystem. Accepts the same syntax as the `-size` argument to `hdiutil`, e.g. `\"150m\"`, `\"4g\"`.\nIf not specified, the size is calculated automatically.\nSet this explicitly for large apps or apps with sparse files to avoid \"No space left on device\" errors.",
+          "type": [
+            "null",
+            "string"
+          ]
         },
         "title": {
           "default": "${productName} ${version}",
@@ -6429,6 +6462,30 @@
       ],
       "type": "object"
     },
+    "ToolsetConfig": {
+      "additionalProperties": false,
+      "description": "Configuration of toolsets utilized by electron-builder",
+      "properties": {
+        "winCodeSign": {
+          "anyOf": [
+            {
+              "enum": [
+                "0.0.0",
+                "1.0.0",
+                "1.1.0"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "0.0.0",
+          "description": "`win-codesign` version to use for signing Windows artifacts.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=win-codesign&expanded=true\n\nStable:\nv0.0.0 (winCodeSign)\n\nBeta:\nWindows Kits 10.0.26100.0\nv1.0.0, v1.1.0"
+        }
+      },
+      "type": "object"
+    },
     "WindowsAzureSigningConfiguration": {
       "additionalProperties": {
         "type": [
@@ -7897,6 +7954,17 @@
           ]
         }
       ]
+    },
+    "toolsets": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ToolsetConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Configuration of toolsets utilized by electron-builder"
     },
     "win": {
       "anyOf": [

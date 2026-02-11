@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`rpm and tar.gz 1`] = `
+exports[`fpm > rpm and tar.gz 1`] = `
 {
   "linux": [
     {
@@ -15,7 +15,7 @@ exports[`rpm and tar.gz 1`] = `
 }
 `;
 
-exports[`targets 1`] = `
+exports[`fpm > targets 1`] = `
 {
   "linux": [
     {

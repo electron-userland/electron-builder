@@ -1,4 +1,4 @@
-import { AsyncTaskManager, FileCopier, FileTransformer, Link, log, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
+import { AsyncTaskManager, FileCopier, FileTransformer, isEmptyOrSpaces, Link, log, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
 import { Stats } from "fs"
 import { ensureSymlink } from "fs-extra"
 import { mkdir, readlink } from "fs/promises"
@@ -13,7 +13,7 @@ import { PlatformPackager } from "../platformPackager"
 import { AppFileWalker } from "./AppFileWalker"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper"
 import { NodeModuleInfo } from "./packageDependencies"
-import { getNodeModules } from "../node-module-collector"
+import { getNodeModules, PM } from "../node-module-collector"
 
 const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
 /** @internal */
@@ -182,21 +182,24 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   const { tempDirManager, cancellationToken, appDir, projectDir } = packager
 
   let deps: Array<NodeModuleInfo> = []
-  const searchDirectories = Array.from(new Set([projectDir, appDir, await packager.getWorkspaceRoot()])).filter((it): it is string => it != null)
-  for (const dir of searchDirectories) {
-    if (cancellationToken.cancelled) {
-      throw new Error("user cancelled")
+  const searchDirectories = Array.from(new Set([appDir, projectDir, await packager.getWorkspaceRoot()])).filter((it): it is string => isEmptyOrSpaces(it) === false)
+  const pmApproaches = [await packager.getPackageManager(), PM.TRAVERSAL]
+  for (const pm of pmApproaches) {
+    for (const dir of searchDirectories) {
+      log.info({ pm, searchDir: dir }, "searching for node modules")
+      const options = { rootDir: dir, tempDirManager, cancellationToken, packageName: packager.metadata.name! }
+      deps = await getNodeModules(pm, options)
+      if (deps.length > 0) {
+        break
+      }
+      const attempt = searchDirectories.indexOf(dir)
+      if (attempt < searchDirectories.length - 1) {
+        log.info({ searchDir: dir, attempt }, "no node modules found in collection, trying next search directory")
+      }
     }
-
-    const dirDeps = await getNodeModules(await packager.getPackageManager(), { rootDir: dir, tempDirManager, cancellationToken, packageName: packager.metadata.name! })
-    if (dirDeps.length > 0) {
-      log.debug({ dir, nodeModules: dirDeps }, "collected node modules")
-      deps = dirDeps
+    if (deps.length > 0) {
+      log.debug({ pm, nodeModules: deps }, "collected node modules")
       break
-    }
-    const attempt = searchDirectories.indexOf(dir)
-    if (attempt < searchDirectories.length - 1) {
-      log.info({ searchDir: dir, attempt }, "no node modules found in collection, trying next search directory")
     }
   }
   if (deps.length === 0) {
@@ -217,7 +220,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     const files = await copier.collectNodeModules(dep, nodeModuleExcludedExts, path.relative(mainMatcher.to, destination))
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
 
-    log.debug({ dep: dep.name, from: log.filePath(source), to: log.filePath(destination), filesCount: files.length }, "prepared to copy node module")
+    log.debug({ dep: dep.name, from: log.filePath(source), to: log.filePath(destination), filesCount: files.length }, "identified module")
 
     if (dep.dependencies) {
       for (const c of dep.dependencies) {

@@ -1,7 +1,8 @@
-import { Platform } from "electron-builder"
+import { Arch, Platform } from "electron-builder"
 import { XMLParser } from "fast-xml-parser"
 import * as fs from "fs"
 import { app, appThrows } from "../helpers/packTester"
+import { ToolsetConfig } from "app-builder-lib/src/configuration"
 
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -9,155 +10,167 @@ const parser = new XMLParser({
   parseTagValue: true,
 })
 
-test.ifDevOrWinCi("msiWrapped requires nsis", ({ expect }) =>
-  appThrows(
-    expect,
-    {
-      targets: Platform.WINDOWS.createTarget("msiWrapped"),
-      config: {
-        appId: "build.electron.test.msi.oneClick.perMachine",
-        extraMetadata: {
-          // version: "1.0.0",
-        },
-        productName: "Test MSI",
-        win: {
-          target: ["msiWrapped"],
-        },
-        electronFuses: {
-          runAsNode: true,
-          enableCookieEncryption: true,
-          enableNodeOptionsEnvironmentVariable: true,
-          enableNodeCliInspectArguments: true,
-          enableEmbeddedAsarIntegrityValidation: true,
-          onlyLoadAppFromAsar: true,
-          loadBrowserProcessSpecificV8Snapshot: true,
-          grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
-        },
-      },
-    },
-    {},
-    error => {
-      expect(error).toBeInstanceOf(Error)
-      expect(error.message).toBe("No nsis target found! Please specify an nsis target")
-    }
-  )
-)
+const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0"]
+const wrappedTarget = Platform.WINDOWS.createTarget(["NSIS", "msiWrapped"], Arch.x64)
 
-test.ifDevOrWinCi("msiWrapped allows capitalized nsis target", ({ expect }) =>
-  app(
-    expect,
-    {
-      targets: Platform.WINDOWS.createTarget(["msiWrapped", "NSIS"]),
-      config: {
-        appId: "build.electron.test.msi.oneClick.perMachine",
-        extraMetadata: {
-          // version: "1.0.0",
-        },
-        productName: "Test MSI",
-        win: {
-          target: ["msiWrapped", "NSIS"],
-        },
-      },
-    },
-    {}
-  )
-)
+describe.ifWindows("msiWrapped", { sequential: true }, () => {
+  for (const winCodeSign of winCodeSignVersions) {
+    describe(`winCodeSign: ${winCodeSign}`, () => {
+      const toolsets: ToolsetConfig = {
+        winCodeSign,
+      }
+      test("msiWrapped requires nsis", ({ expect }) =>
+        appThrows(
+          expect,
+          {
+            targets: Platform.WINDOWS.createTarget("msiWrapped", Arch.x64),
+            config: {
+              toolsets,
+              appId: "build.electron.test.msi.oneClick.perMachine",
+              extraMetadata: {
+                // version: "1.0.0",
+              },
+              productName: "Test MSI",
+              win: {
+                target: ["msiWrapped"],
+              },
+            },
+          },
+          {},
+          error => {
+            expect(error).toBeInstanceOf(Error)
+            expect(error.message).toBe("No nsis target found! Please specify an nsis target")
+          }
+        ))
 
-test.ifDevOrWinCi("msiWrapped includes packaged exe", ({ expect }) =>
-  app(expect, {
-    targets: Platform.WINDOWS.createTarget(["msiWrapped", "nsis"]),
-    config: {
-      appId: "build.electron.test.msi.oneClick.perMachine",
-      extraMetadata: {
-        // version: "1.0.0",
-      },
-      productName: "MSIWrappingEXE",
-      win: {
-        target: ["msiWrapped", "nsis"],
-      },
-      msiProjectCreated: async path => {
-        const msiContents = await fs.promises.readFile(path, "utf8")
+      test("msiWrapped allows capitalized nsis target", ({ expect }) =>
+        app(
+          expect,
+          {
+            targets: wrappedTarget,
+            config: {
+              toolsets,
+              appId: "build.electron.test.msi.oneClick.perMachine",
+              extraMetadata: {
+                // version: "1.0.0",
+              },
+              productName: "Test MSI",
+              win: {
+                target: ["msiWrapped", "NSIS"],
+              },
+              electronFuses: {
+                runAsNode: true,
+                enableCookieEncryption: true,
+                enableNodeOptionsEnvironmentVariable: true,
+                enableNodeCliInspectArguments: true,
+                enableEmbeddedAsarIntegrityValidation: true,
+                onlyLoadAppFromAsar: true,
+                loadBrowserProcessSpecificV8Snapshot: true,
+                grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+              },
+            },
+          },
+          {}
+        ))
 
-        const contents = parser.parse(msiContents)
+      test("msiWrapped includes packaged exe", ({ expect }) =>
+        app(expect, {
+          targets: wrappedTarget,
+          config: {
+            toolsets,
+            appId: "build.electron.test.msi.oneClick.perMachine",
+            extraMetadata: {
+              // version: "1.0.0",
+            },
+            productName: "MSIWrappingEXE",
+            win: {
+              target: ["msiWrapped", "nsis"],
+            },
+            msiProjectCreated: async path => {
+              const msiContents = await fs.promises.readFile(path, "utf8")
 
-        expect(contents["Wix"]["Product"]["Binary"]["@_SourceFile"]).toMatch(/^.*\.(exe|EXE)/)
-        expect(contents["Wix"]["Product"]["InstallExecuteSequence"]).toBeTruthy()
-      },
-    },
-  })
-)
+              const contents = parser.parse(msiContents)
 
-test.ifDevOrWinCi("msiWrapped impersonate no if not provided", ({ expect }) =>
-  app(expect, {
-    targets: Platform.WINDOWS.createTarget(["msiWrapped", "nsis"]),
-    config: {
-      appId: "build.electron.test.msi.oneClick.perMachine",
-      extraMetadata: {
-        // version: "1.0.0",
-      },
-      productName: "MSIWrappingEXE",
-      win: {
-        target: ["msiWrapped", "nsis"],
-      },
-      msiProjectCreated: async path => {
-        const msiContents = await fs.promises.readFile(path, "utf8")
+              expect(contents["Wix"]["Product"]["Binary"]["@_SourceFile"]).toMatch(/^.*\.(exe|EXE)/)
+              expect(contents["Wix"]["Product"]["InstallExecuteSequence"]).toBeTruthy()
+            },
+          },
+        }))
 
-        const contents = parser.parse(msiContents)
+      test("msiWrapped impersonate no if not provided", ({ expect }) =>
+        app(expect, {
+          targets: wrappedTarget,
+          config: {
+            toolsets,
+            appId: "build.electron.test.msi.oneClick.perMachine",
+            extraMetadata: {
+              // version: "1.0.0",
+            },
+            productName: "MSIWrappingEXE",
+            win: {
+              target: ["msiWrapped", "nsis"],
+            },
+            msiProjectCreated: async path => {
+              const msiContents = await fs.promises.readFile(path, "utf8")
 
-        expect(contents["Wix"]["Product"]["CustomAction"]["@_Impersonate"]).toEqual("no")
-      },
-    },
-  })
-)
+              const contents = parser.parse(msiContents)
 
-test.ifDevOrWinCi("msiWrapped impersonate yes if true", ({ expect }) =>
-  app(expect, {
-    targets: Platform.WINDOWS.createTarget(["msiWrapped", "nsis"]),
-    config: {
-      appId: "build.electron.test.msi.oneClick.perMachine",
-      extraMetadata: {
-        // version: "1.0.0",
-      },
-      productName: "MSIWrappingEXE",
-      win: {
-        target: ["msiWrapped", "nsis"],
-      },
-      msiWrapped: {
-        impersonate: true,
-      },
-      msiProjectCreated: async path => {
-        const msiContents = await fs.promises.readFile(path, "utf8")
+              expect(contents["Wix"]["Product"]["CustomAction"]["@_Impersonate"]).toEqual("no")
+            },
+          },
+        }))
 
-        const contents = parser.parse(msiContents)
+      test("msiWrapped impersonate yes if true", ({ expect }) =>
+        app(expect, {
+          targets: wrappedTarget,
+          config: {
+            toolsets,
+            appId: "build.electron.test.msi.oneClick.perMachine",
+            extraMetadata: {
+              // version: "1.0.0",
+            },
+            productName: "MSIWrappingEXE",
+            win: {
+              target: ["msiWrapped", "nsis"],
+            },
+            msiWrapped: {
+              impersonate: true,
+            },
+            msiProjectCreated: async path => {
+              const msiContents = await fs.promises.readFile(path, "utf8")
 
-        expect(contents["Wix"]["Product"]["CustomAction"]["@_Impersonate"]).toEqual("yes")
-      },
-    },
-  })
-)
+              const contents = parser.parse(msiContents)
 
-test.ifDevOrWinCi("msiWrapped wrappedInstallerArgs provided", ({ expect }) =>
-  app(expect, {
-    targets: Platform.WINDOWS.createTarget(["msiWrapped", "nsis"]),
-    config: {
-      appId: "build.electron.test.msi.oneClick.perMachine",
-      extraMetadata: {
-        // version: "1.0.0",
-      },
-      productName: "MSIWrappingEXE",
-      win: {
-        target: ["msiWrapped", "nsis"],
-      },
-      msiWrapped: {
-        wrappedInstallerArgs: "/currentuser /S /wut",
-      },
-      msiProjectCreated: async path => {
-        const msiContents = await fs.promises.readFile(path, "utf8")
+              expect(contents["Wix"]["Product"]["CustomAction"]["@_Impersonate"]).toEqual("yes")
+            },
+          },
+        }))
 
-        const contents = parser.parse(msiContents)
+      test("msiWrapped wrappedInstallerArgs provided", ({ expect }) =>
+        app(expect, {
+          targets: wrappedTarget,
+          config: {
+            toolsets,
+            appId: "build.electron.test.msi.oneClick.perMachine",
+            extraMetadata: {
+              // version: "1.0.0",
+            },
+            productName: "MSIWrappingEXE",
+            win: {
+              target: ["msiWrapped", "nsis"],
+            },
+            msiWrapped: {
+              wrappedInstallerArgs: "/currentuser /S /wut",
+            },
+            msiProjectCreated: async path => {
+              const msiContents = await fs.promises.readFile(path, "utf8")
 
-        expect(contents["Wix"]["Product"]["CustomAction"]["@_ExeCommand"]).toEqual("/currentuser /S /wut")
-      },
-    },
-  })
-)
+              const contents = parser.parse(msiContents)
+
+              expect(contents["Wix"]["Product"]["CustomAction"]["@_ExeCommand"]).toEqual("/currentuser /S /wut")
+            },
+          },
+        }))
+    })
+  }
+})
