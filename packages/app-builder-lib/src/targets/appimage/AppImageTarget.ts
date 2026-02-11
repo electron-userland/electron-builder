@@ -1,4 +1,4 @@
-import { IconInfo } from "app-builder-lib/src/platformPackager"
+import { IconInfo } from "../../platformPackager"
 import { Arch, log, serializeToYaml } from "builder-util"
 import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -12,7 +12,7 @@ import { getNotLocalizedLicenseFile } from "../../util/license"
 import { LinuxTargetHelper } from "../LinuxTargetHelper"
 import { createStageDir, StageDir } from "../targetUtil"
 import { buildAppImage } from "./appImageUtil"
-import { BlockMapDataHolder } from "builder-util-runtime/src"
+import { BlockMapDataHolder } from "builder-util-runtime"
 
 // https://unix.stackexchange.com/questions/375191/append-to-sub-directory-inside-squashfs-file
 
@@ -68,6 +68,7 @@ export default class AppImageTarget extends Target {
     }
 
     if (this.packager.packagerOptions.effectiveOptionComputed != null && (await this.packager.packagerOptions.effectiveOptionComputed({ desktop: desktopEntry }))) {
+      await stageDir.cleanup()
       return
     }
 

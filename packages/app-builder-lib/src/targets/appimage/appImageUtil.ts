@@ -1,4 +1,4 @@
-import { Arch, copyDir, copyFile, exec, log } from "builder-util"
+import { Arch, copyDir, copyFile, exec, exists, InvalidConfigurationError, log } from "builder-util"
 import * as fs from "fs-extra"
 import * as path from "path"
 import { FileAssociation } from "../../options/FileAssociation"
@@ -6,7 +6,7 @@ import { IconInfo } from "../../platformPackager"
 import { getAppImageTools } from "../../toolsets/linux"
 import { copyIcons, copyMimeTypes } from "./appLauncher"
 import { appendBlockmap } from "../differentialUpdateInfoBuilder"
-import { BlockMapDataHolder } from "builder-util-runtime/src"
+import { BlockMapDataHolder } from "builder-util-runtime"
 import { APP_RUN_ENTRYPOINT } from "./AppImageTarget"
 
 interface Options {
@@ -90,11 +90,29 @@ async function writeRuntimeData(filePath: string, runtimeData: Buffer): Promise<
 }
 
 /**
- * Validates that a string is safe to use in shell scripts
+ * Escapes a string for safe use in shell scripts by wrapping in single quotes
+ * and escaping any single quotes within the string.
+ *
+ * This allows strings with spaces, special characters, etc. to be safely used.
  */
-function validateShellSafeString(str: string, fieldName: string): void {
-  if (/[`$"'\\]/.test(str)) {
-    throw new Error(`${fieldName} contains shell metacharacters that could cause security issues: ${str}`)
+function escapeShellString(str: string): string {
+  // Escape single quotes by replacing ' with '\''
+  // Then wrap the whole string in single quotes
+  return `'${str.replace(/'/g, "'\\''")}'`
+}
+
+/**
+ * Validates that critical executable/filename fields don't contain dangerous characters
+ * that could break paths or cause security issues even when escaped.
+ */
+function validateCriticalPathString(str: string, fieldName: string): void {
+  // Only reject characters that would break filesystem paths or cause severe issues
+  // Allow quotes, spaces, etc. since they can be escaped
+  if (/[`${}|&;<>\n\r\0]/.test(str) || str.includes("/") || str.includes("\\")) {
+    throw new InvalidConfigurationError(
+      `${fieldName} contains characters that cannot be safely used in file paths: ${str}. ` +
+        `Please use only alphanumeric characters, hyphens, underscores, dots, spaces, and quotes.`
+    )
   }
 }
 
@@ -104,14 +122,14 @@ async function writeAppLauncherAndRelatedFiles(opts: AppImageBuilderOptions): Pr
     options: { license, executableName, productFilename, productName, desktopEntry },
   } = opts
 
-  // Validate shell-safe strings
-  validateShellSafeString(executableName, "executableName")
-  validateShellSafeString(productFilename, "productFilename")
-  validateShellSafeString(productName, "productName")
+  // Validate only critical path fields for severe path-breaking characters
+  // productName and productFilename can contain quotes, spaces, etc. - they'll be escaped
+  validateCriticalPathString(executableName, "executableName")
+  validateCriticalPathString(productFilename, "productFilename")
 
   // Write desktop file
   const desktopFileName = `${executableName}.desktop`
-  await fs.writeFile(path.join(stageDir, desktopFileName), desktopEntry, { mode: 0o666 })
+  await fs.writeFile(path.join(stageDir, desktopFileName), desktopEntry, { mode: 0o644 })
   await copyIcons(opts)
 
   const templateConfig: AppRunScriptBase = {
@@ -132,16 +150,15 @@ async function writeAppLauncherAndRelatedFiles(opts: AppImageBuilderOptions): Pr
   // Copy license file if provided
   if (license) {
     // Validate license file exists
-    const exists = await fs.pathExists(license)
-    if (!exists) {
-      throw new Error(`License file not found: ${license}`)
+    if (!(await exists(license))) {
+      throw new InvalidConfigurationError(`License file not found: ${license}`)
     }
 
     const licenseBaseName = path.basename(license)
     const ext = path.extname(license).toLowerCase()
 
-    // Validate license filename for shell safety
-    validateShellSafeString(licenseBaseName, "licenseBaseName")
+    // Validate license filename for path safety
+    validateCriticalPathString(licenseBaseName, "licenseBaseName")
 
     // Validate extension
     if (![".txt", ".html"].includes(ext)) {
@@ -197,7 +214,7 @@ if [ -z "$APPDIR" ] ; then
   # This assumes that this script resides inside the AppDir or a subdirectory.
   # If this script is run inside an AppImage, then the AppImage runtime likely has already set $APPDIR
   path="$(dirname "$(readlink -f "\${THIS}")")"
-  while [[ "$path" != "" && ! -e "$path/$1" ]]; do
+  while [[ "$path" != "" && ! -e "$path/${APP_RUN_ENTRYPOINT}" ]]; do
     path=\${path%/*}
   done
   APPDIR="$path"
@@ -268,7 +285,7 @@ check_dep()
 }
 
 if [ -z "$APPIMAGE" ] ; then
-  APPIMAGE="$APPDIR/AppRun"
+  APPIMAGE="$APPDIR/${APP_RUN_ENTRYPOINT}"
   # not running from within an AppImage; hence using the AppRun for Exec=
 fi
 
@@ -282,10 +299,10 @@ ${
     if [ -x /usr/bin/zenity ] ; then
       # on cancel simply exits and our trap handler launches app, so, $isEulaAccepted is set here to 0 and then to 1 if EULA accepted
       isEulaAccepted=0
-      LD_LIBRARY_PATH="" zenity --text-info --title="${config.ProductName}" --filename="$APPDIR/${config.EulaFile}" --ok-label=Agree --cancel-label=Disagree ${config.IsHtmlEula ? "--html" : ""}
+      LD_LIBRARY_PATH="" zenity --text-info --title=${escapeShellString(config.ProductName)} --filename="$APPDIR/${config.EulaFile}" --ok-label=Agree --cancel-label=Disagree ${config.IsHtmlEula ? "--html" : ""}
     elif [ -x /usr/bin/Xdialog ] ; then
       isEulaAccepted=0
-      LD_LIBRARY_PATH="" Xdialog --title "${config.ProductName}" --textbox "$APPDIR/${config.EulaFile}" 30 80 --ok-label Agree --cancel-label Disagree
+      LD_LIBRARY_PATH="" Xdialog --title ${escapeShellString(config.ProductName)} --textbox "$APPDIR/${config.EulaFile}" 30 80 --ok-label Agree --cancel-label Disagree
     elif [ -x /usr/bin/kdialog ] ; then
       # cannot find any option to force Agree/Disagree buttons for kdialog. And official example exactly with OK button https://techbase.kde.org/Development/Tutorials/Shell_Scripting_with_KDE_Dialogs#Example_21._--textbox_dialog_box
       # in any case we pass labels text

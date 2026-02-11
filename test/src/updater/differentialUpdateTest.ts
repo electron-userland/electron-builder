@@ -104,13 +104,13 @@ for (const winCodeSign of winCodeSignVersions) {
   })
 }
 
-async function testLinux(expect: ExpectStatic, arch: Arch) {
+async function testLinux(expect: ExpectStatic, arch: Arch, toolset: ToolsetConfig["appimage"]) {
   process.env.TEST_UPDATER_ARCH = Arch[arch]
 
   const outDirs: Array<string> = []
   const tmpDir = new TmpDir("differential-updater-test")
   try {
-    await doBuild(expect, outDirs, Platform.LINUX.createTarget(["appimage"], arch), tmpDir, null)
+    await doBuild(expect, outDirs, Platform.LINUX.createTarget(["appimage"], arch), tmpDir, { appimage: toolset })
 
     process.env.APPIMAGE = path.join(outDirs[0], `Test App ßW-${OLD_VERSION_NUMBER}${arch === Arch.ia32 ? "-i386" : ""}.AppImage`)
     await testBlockMap(expect, outDirs[0], outDirs[1], AppImageUpdater, Platform.LINUX, arch)
@@ -129,7 +129,7 @@ const supportedArchs = [
 describe.ifLinux("AppImage", { sequential: true }, () => {
   for (const appimage of appimageToolsetVersions) {
     for (const arch of supportedArchs) {
-      test(`${Arch[arch]} - toolset: ${appimage}`, ({ expect }) => testLinux(expect, arch))
+      test(`${Arch[arch]} - toolset: ${appimage}`, ({ expect }) => testLinux(expect, arch, appimage))
     }
   }
 })

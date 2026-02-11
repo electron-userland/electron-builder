@@ -107,7 +107,8 @@ export async function copyMimeTypes(options: AppImageBuilderOptions): Promise<st
 
   const xmlContent = ['<?xml version="1.0"?>', '<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">', ...mimeTypeParts, "</mime-info>"].join("\n")
 
-  await fs.writeFile(mimeTypeFile, xmlContent, { mode: 0o666 })
+  // Use 0o644 (rw-r--r--) instead of 0o666 to avoid world-writable permissions
+  await fs.writeFile(mimeTypeFile, xmlContent, { mode: 0o644 })
 
   return path.join(MIME_TYPE_DIR_RELATIVE_PATH, fileName)
 }
