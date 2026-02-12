@@ -67,7 +67,13 @@ export async function appendBlockmap(file: string): Promise<BlockMapDataHolder> 
   return await executeAppBuilderAsJson<BlockMapDataHolder>(["blockmap", "--input", file, "--compression", "deflate"])
 }
 
-export async function createBlockmap(file: string, target: Target, packager: PlatformPackager<any>, safeArtifactName: string | null, arch: Arch | null = null): Promise<BlockMapDataHolder> {
+export async function createBlockmap(
+  file: string,
+  target: Target,
+  packager: PlatformPackager<any>,
+  safeArtifactName: string | null,
+  arch: Arch | null = null
+): Promise<BlockMapDataHolder> {
   const blockMapFile = `${file}${BLOCK_MAP_FILE_SUFFIX}`
   log.info({ blockMapFile: log.filePath(blockMapFile) }, "building block map")
   const updateInfo = await executeAppBuilderAsJson<BlockMapDataHolder>(["blockmap", "--input", file, "--output", blockMapFile])
