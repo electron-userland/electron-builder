@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`AppImage - default icon, custom executable and custom desktop 1`] = `
+exports[`LinuxPackager > AppImage toolset 0.0.0 > AppImage - default icon, custom executable and custom desktop 1`] = `
 "[Desktop Entry]
 Name=Test App ßW
 Exec=AppRun --no-sandbox %U
@@ -23,7 +23,7 @@ Icon=fooview-new
 "
 `;
 
-exports[`AppImage - default icon, custom executable and custom desktop 2`] = `
+exports[`LinuxPackager > AppImage toolset 0.0.0 > AppImage - default icon, custom executable and custom desktop 2`] = `
 {
   "linux": [
     {
@@ -40,9 +40,9 @@ exports[`AppImage - default icon, custom executable and custom desktop 2`] = `
 }
 `;
 
-exports[`AppImage - deprecated systemIntegration 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
+exports[`LinuxPackager > AppImage toolset 0.0.0 > AppImage - deprecated systemIntegration 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
 
-exports[`AppImage 1`] = `
+exports[`LinuxPackager > AppImage toolset 0.0.0 > AppImage 1`] = `
 {
   "linux": [
     {
@@ -76,7 +76,7 @@ exports[`AppImage 1`] = `
 }
 `;
 
-exports[`AppImage arm, max compression 1`] = `
+exports[`LinuxPackager > AppImage toolset 0.0.0 > AppImage arm, max compression 1`] = `
 {
   "linux": [
     {
@@ -110,9 +110,9 @@ exports[`AppImage arm, max compression 1`] = `
 }
 `;
 
-exports[`forbid desktop.Exec 1`] = `"Please specify executable name as linux.executableName instead of linux.desktop.Exec"`;
+exports[`LinuxPackager > AppImage toolset 0.0.0 > forbid desktop.Exec 1`] = `"Please specify executable name as linux.executableName instead of linux.desktop.Exec"`;
 
-exports[`html license 1`] = `
+exports[`LinuxPackager > AppImage toolset 0.0.0 > html license 1`] = `
 {
   "linux": [
     {
@@ -129,7 +129,7 @@ exports[`html license 1`] = `
 }
 `;
 
-exports[`icons dir with images without size in the filename 1`] = `
+exports[`LinuxPackager > AppImage toolset 0.0.0 > icons dir with images without size in the filename 1`] = `
 {
   "linux": [
     {
@@ -146,7 +146,7 @@ exports[`icons dir with images without size in the filename 1`] = `
 }
 `;
 
-exports[`icons from ICNS (mac) 1`] = `
+exports[`LinuxPackager > AppImage toolset 0.0.0 > icons from ICNS (mac) 1`] = `
 {
   "linux": [
     {
@@ -162,7 +162,7 @@ exports[`icons from ICNS (mac) 1`] = `
 }
 `;
 
-exports[`icons from ICNS 1`] = `
+exports[`LinuxPackager > AppImage toolset 0.0.0 > icons from ICNS 1`] = `
 {
   "linux": [
     {
@@ -179,7 +179,7 @@ exports[`icons from ICNS 1`] = `
 }
 `;
 
-exports[`icons from ICNS if nothing specified 1`] = `
+exports[`LinuxPackager > AppImage toolset 0.0.0 > icons from ICNS if nothing specified 1`] = `
 {
   "linux": [
     {
@@ -196,7 +196,7 @@ exports[`icons from ICNS if nothing specified 1`] = `
 }
 `;
 
-exports[`icons from dir and one icon with suffix 1`] = `
+exports[`LinuxPackager > AppImage toolset 0.0.0 > icons from dir and one icon with suffix 1`] = `
 {
   "linux": [
     {
@@ -213,7 +213,7 @@ exports[`icons from dir and one icon with suffix 1`] = `
 }
 `;
 
-exports[`no-author-email 1`] = `
+exports[`LinuxPackager > AppImage toolset 0.0.0 > no-author-email 1`] = `
 "Please specify author 'email' in the application package.json
 
 See https://docs.npmjs.com/files/package.json#people-fields-author-contributors
@@ -223,7 +223,247 @@ It is required to set Linux .deb package maintainer. Or you can set maintainer i
 "
 `;
 
-exports[`text license and file associations 1`] = `
+exports[`LinuxPackager > AppImage toolset 0.0.0 > text license and file associations 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0.AppImage",
+      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`LinuxPackager > AppImage toolset 1.0.2 > AppImage - default icon, custom executable and custom desktop 1`] = `
+"[Desktop Entry]
+Name=Test App ßW
+Exec=AppRun --no-sandbox %U
+Terminal=true
+Type=Application
+Icon=Foo
+StartupWMClass=Test App ßW
+X-Foo=bar
+Comment=Test Application (test quite “ #378)
+Categories=Development;
+
+[Desktop Action Gallery]
+Exec=fooview --gallery
+Name=Browse Gallery
+
+[Desktop Action Create]
+Exec=fooview --create-new
+Name=Create a new Foo!
+Icon=fooview-new
+"
+`;
+
+exports[`LinuxPackager > AppImage toolset 1.0.2 > AppImage - default icon, custom executable and custom desktop 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "boo-Test App ßW",
+      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`LinuxPackager > AppImage toolset 1.0.2 > AppImage - deprecated systemIntegration 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
+
+exports[`LinuxPackager > AppImage toolset 1.0.2 > AppImage 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0.AppImage",
+      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.1.0.AppImage",
+          },
+        ],
+        "path": "Test App ßW-1.1.0.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.1.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`LinuxPackager > AppImage toolset 1.0.2 > AppImage arm, max compression 1`] = `
+{
+  "linux": [
+    {
+      "arch": "armv7l",
+      "file": "Test App ßW-1.1.0-armv7l.AppImage",
+      "safeArtifactName": "TestApp-1.1.0-armv7l.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux-arm.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.1.0-armv7l.AppImage",
+          },
+        ],
+        "path": "Test App ßW-1.1.0-armv7l.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.1.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`LinuxPackager > AppImage toolset 1.0.2 > forbid desktop.Exec 1`] = `"Please specify executable name as linux.executableName instead of linux.desktop.Exec"`;
+
+exports[`LinuxPackager > AppImage toolset 1.0.2 > html license 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0.AppImage",
+      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`LinuxPackager > AppImage toolset 1.0.2 > icons dir with images without size in the filename 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0.AppImage",
+      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`LinuxPackager > AppImage toolset 1.0.2 > icons from ICNS (mac) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "app-1.1.0-x86_64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`LinuxPackager > AppImage toolset 1.0.2 > icons from ICNS 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0.AppImage",
+      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`LinuxPackager > AppImage toolset 1.0.2 > icons from ICNS if nothing specified 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0.AppImage",
+      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`LinuxPackager > AppImage toolset 1.0.2 > icons from dir and one icon with suffix 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0.AppImage",
+      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`LinuxPackager > AppImage toolset 1.0.2 > no-author-email 1`] = `
+"Please specify author 'email' in the application package.json
+
+See https://docs.npmjs.com/files/package.json#people-fields-author-contributors
+
+It is required to set Linux .deb package maintainer. Or you can set maintainer in the custom linux options.
+(see https://www.electron.build/linux).
+"
+`;
+
+exports[`LinuxPackager > AppImage toolset 1.0.2 > text license and file associations 1`] = `
 {
   "linux": [
     {

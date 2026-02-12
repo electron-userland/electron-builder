@@ -73,8 +73,8 @@ async function doBuild(
 const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0"]
 
 for (const winCodeSign of winCodeSignVersions) {
-  describe(`winCodeSign: ${winCodeSign}`, { sequential: true }, () => {
-    test.ifWindows("web installer", async ({ expect }) => {
+  describe.ifWindows(`winCodeSign: ${winCodeSign}`, { sequential: true }, () => {
+    test("web installer", async ({ expect }) => {
       const outDirs: Array<string> = []
       const tmpDir = new TmpDir("differential-updater-test")
       // need to build both in order for this to run on both arm64 and x64 windows
@@ -89,7 +89,7 @@ for (const winCodeSign of winCodeSignVersions) {
       await testBlockMap(expect, outDirs[0], path.join(outDirs[1], "nsis-web"), NsisUpdater, Platform.WINDOWS, archFromString(process.arch))
     })
 
-    test.ifWindows("nsis", async ({ expect }) => {
+    test("nsis", async ({ expect }) => {
       const outDirs: Array<string> = []
       const tmpDir = new TmpDir("differential-updater-test")
       await doBuild(expect, outDirs, Platform.WINDOWS.createTarget(["nsis"], Arch.x64), tmpDir, { winCodeSign })
@@ -104,13 +104,13 @@ for (const winCodeSign of winCodeSignVersions) {
   })
 }
 
-async function testLinux(expect: ExpectStatic, arch: Arch) {
+async function testLinux(expect: ExpectStatic, arch: Arch, toolset: ToolsetConfig["appimage"]) {
   process.env.TEST_UPDATER_ARCH = Arch[arch]
 
   const outDirs: Array<string> = []
   const tmpDir = new TmpDir("differential-updater-test")
   try {
-    await doBuild(expect, outDirs, Platform.LINUX.createTarget(["appimage"], arch), tmpDir, null)
+    await doBuild(expect, outDirs, Platform.LINUX.createTarget(["appimage"], arch), tmpDir, { appimage: toolset })
 
     process.env.APPIMAGE = path.join(outDirs[0], `Test App ßW-${OLD_VERSION_NUMBER}${arch === Arch.ia32 ? "-i386" : ""}.AppImage`)
     await testBlockMap(expect, outDirs[0], outDirs[1], AppImageUpdater, Platform.LINUX, arch)
@@ -119,10 +119,19 @@ async function testLinux(expect: ExpectStatic, arch: Arch) {
   }
 }
 
-test.ifLinux("AppImage", ({ expect }) => testLinux(expect, Arch.x64))
-
-// Skipped, electron no longer ships ia32 linux binaries
-test.skip("AppImage ia32", ({ expect }) => testLinux(expect, Arch.ia32))
+const appimageToolsetVersions: ToolsetConfig["appimage"][] = ["0.0.0", "1.0.2"]
+const supportedArchs = [
+  Arch.x64,
+  Arch.arm64,
+  // Arch.ia32 // Skipped, electron no longer ships ia32 linux binaries
+]
+describe.ifLinux("AppImage", { sequential: true }, () => {
+  for (const appimage of appimageToolsetVersions) {
+    for (const arch of supportedArchs) {
+      test(`${Arch[arch]} - toolset: ${appimage}`, ({ expect }) => testLinux(expect, arch, appimage))
+    }
+  }
+})
 
 async function testMac(expect: ExpectStatic, arch: Arch) {
   process.env.TEST_UPDATER_ARCH = Arch[arch]
