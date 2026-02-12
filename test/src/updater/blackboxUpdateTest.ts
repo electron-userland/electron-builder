@@ -1,7 +1,7 @@
 import { ToolsetConfig } from "app-builder-lib"
 import { PM } from "app-builder-lib/src/node-module-collector"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
-import { archFromString, doSpawn, getArchSuffix, isEmptyOrSpaces, log, spawn, TmpDir } from "builder-util/out/util"
+import { archFromString, doSpawn, getArchSuffix, log, spawn, TmpDir } from "builder-util/out/util"
 import { execFileSync, execSync } from "child_process"
 import { Arch, Configuration, Platform } from "electron-builder"
 import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
@@ -46,13 +46,13 @@ const appImageToolVersions: ToolsetConfig["appimage"][] = ["0.0.0", "1.0.2"]
 // must be sequential in order for process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER to be respected per-test
 describe.heavy.ifLinux("linux", { sequential: true }, () => {
   for (const appimage of appImageToolVersions) {
-    describe(`appimage tool: ${appimage}`, () => {
-      test.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true" && process.arch === "arm64")("AppImage - arm64", async context => {
+    describe.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true")(`appimage tool: ${appimage}`, () => {
+      test.ifEnv(process.arch === "arm64")("AppImage - arm64", async context => {
         await runTest(context, "AppImage", "appimage", Arch.arm64, { appimage })
       })
 
       // only works on x64, so this will fail on arm64 macs due to arch mismatch
-      test.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true" && process.arch === "x64")("AppImage - x64", async context => {
+      test.ifEnv(process.arch === "x64")("AppImage - x64", async context => {
         await runTest(context, "AppImage", "appimage", Arch.x64, { appimage })
       })
     })
@@ -60,18 +60,16 @@ describe.heavy.ifLinux("linux", { sequential: true }, () => {
 
   // package manager tests specific to each distro (and corresponding docker image)
   for (const distro in packageManagerMap) {
+    const shouldSkip = !determineEnvironment(distro)
     const { pms, target } = packageManagerMap[distro as keyof typeof packageManagerMap]
     for (const pm of pms) {
-      test(`${distro} - (${pm})`, { sequential: true }, async context => {
-        if (!determineEnvironment(distro)) {
-          context.skip()
+      test.ifEnv(shouldSkip).ifEnv(process.env.PACKAGE_MANAGER_TO_TEST === pm || !process.env.PACKAGE_MANAGER_TO_TEST)(
+        `${distro} - (${pm})`,
+        { sequential: true },
+        async context => {
+          await runTest(context, target, pm, Arch.x64)
         }
-        // skip if already set to avoid interfering with other package manager tests
-        if (!isEmptyOrSpaces(process.env.PACKAGE_MANAGER_TO_TEST) && process.env.PACKAGE_MANAGER_TO_TEST !== pm) {
-          context.skip()
-        }
-        await runTest(context, target, pm, Arch.x64)
-      })
+      )
     }
   }
 })
