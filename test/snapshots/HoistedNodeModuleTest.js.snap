@@ -1011,6 +1011,111 @@ exports[`node_module collectors > conflict versions 2`] = `
 }
 `;
 
+exports[`node_module collectors > npm electron-clear-data 1`] = `
+{
+  "win": [],
+}
+`;
+
+exports[`node_module collectors > npm electron-clear-data 2`] = `
+{
+  "files": {
+    "index.html": {
+      "offset": "26472",
+      "size": 378,
+    },
+    "index.js": {
+      "offset": "26850",
+      "size": 619,
+    },
+    "node_modules": {
+      "files": {
+        "debug": {
+          "files": {
+            "LICENSE": {
+              "offset": "0",
+              "size": 1107,
+            },
+            "Makefile": {
+              "offset": "1107",
+              "size": 1234,
+            },
+            "node.js": {
+              "offset": "2341",
+              "size": 40,
+            },
+            "package.json": {
+              "offset": "2381",
+              "size": 830,
+            },
+            "src": {
+              "files": {
+                "browser.js": {
+                  "offset": "3211",
+                  "size": 5707,
+                },
+                "debug.js": {
+                  "offset": "8918",
+                  "size": 4889,
+                },
+                "index.js": {
+                  "offset": "13807",
+                  "size": 263,
+                },
+                "node.js": {
+                  "offset": "14070",
+                  "size": 4339,
+                },
+              },
+            },
+          },
+        },
+        "electron-clear-data": {
+          "files": {
+            "LICENSE.md": {
+              "offset": "18409",
+              "size": 1059,
+            },
+            "dist": {
+              "files": {
+                "main.js": {
+                  "offset": "19468",
+                  "size": 1734,
+                },
+              },
+            },
+            "package.json": {
+              "offset": "21202",
+              "size": 960,
+            },
+          },
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "offset": "22162",
+              "size": 2764,
+            },
+            "license.md": {
+              "offset": "24926",
+              "size": 1077,
+            },
+            "package.json": {
+              "offset": "26003",
+              "size": 469,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "27469",
+      "size": 426,
+    },
+  },
+}
+`;
+
 exports[`node_module collectors > npm tar 1`] = `
 {
   "linux": [],
