@@ -114,12 +114,25 @@ export class GitlabPublisher extends HttpPublisher {
   }
 
   private async createRelease(): Promise<GitlabReleaseInfo> {
-    const releaseName = this.info.vPrefixedTagName === false ? this.version : `v${this.version}`
+    const defaultName = this.info.vPrefixedTagName === false ? this.version : `v${this.version}`
+    const releaseName = this.info.releaseName || defaultName
     const branchName = await this.getDefaultBranch()
+
+    let description = `Release ${releaseName}`
+    if (this.info.releaseBody) {
+      const maxLength = 100000
+      if (this.info.releaseBody.length > maxLength) {
+        log.warn({ length: this.info.releaseBody.length, maxLength }, "release body exceeds GitLab limit, truncating")
+        description = this.info.releaseBody.substring(0, maxLength)
+      } else {
+        description = this.info.releaseBody
+      }
+    }
+
     const releaseData = {
       tag_name: this.tag,
       name: releaseName,
-      description: `Release ${releaseName}`,
+      description,
       ref: branchName,
     }
 

@@ -144,6 +144,25 @@ export interface GithubOptions extends PublishConfiguration {
    * @default draft
    */
   releaseType?: "draft" | "prerelease" | "release" | null
+
+  /**
+   * The release body (markdown). Used as the description of the GitHub release.
+   *
+   * If not set explicitly, it is resolved from `releaseInfo` configuration:
+   * - `releaseInfo.releaseNotes` — inline release notes string
+   * - `releaseInfo.releaseNotesFile` — path to a file containing release notes
+   * - Or auto-detected from `release-notes.md` in the project directory
+   *
+   * Truncated to 100000 characters with a warning if exceeded.
+   */
+  readonly releaseBody?: string | null
+
+  /**
+   * The release name/title. If not set, defaults to the version string (e.g. `1.0.0`).
+   *
+   * If not set explicitly, resolved from `releaseInfo.releaseName`.
+   */
+  readonly releaseName?: string | null
 }
 
 /** @private */
@@ -206,6 +225,25 @@ export interface GitlabOptions extends PublishConfiguration {
    * @default "project_upload"
    */
   readonly uploadTarget?: "project_upload" | "generic_package" | null
+
+  /**
+   * The release description (markdown). Used as the description of the GitLab release.
+   *
+   * If not set explicitly, it is resolved from `releaseInfo` configuration:
+   * - `releaseInfo.releaseNotes` — inline release notes string
+   * - `releaseInfo.releaseNotesFile` — path to a file containing release notes
+   * - Or auto-detected from `release-notes.md` in the project directory
+   *
+   * Truncated to 100000 characters with a warning if exceeded.
+   */
+  readonly releaseBody?: string | null
+
+  /**
+   * The release name/title. If not set, defaults to the tag name (e.g. `v1.0.0`).
+   *
+   * If not set explicitly, resolved from `releaseInfo.releaseName`.
+   */
+  readonly releaseName?: string | null
 }
 
 /**
