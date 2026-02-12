@@ -39,7 +39,7 @@ runs:
           vitest-smart-cache-${{ github.ref_name }}-
 
     - name: Set up Vitest smart cache reset flag
-      run: echo "RESET_VITEST_SNAPSHOT=${{ inputs.reset-vitest-smart-cache }}" >> $GITHUB_ENV
+      run: echo "RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}" >> $GITHUB_ENV
       shell: bash
 
     - name: Log cache status

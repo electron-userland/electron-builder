@@ -1,5 +1,6 @@
+import { Arch } from "builder-util"
 import * as path from "path"
-import { getBinFromUrl } from "../binDownload"
+import { downloadArtifact, getBinFromUrl } from "../binDownload"
 
 // It's just easier to copy the map of checksums here rather than adding them to within each if-statement. Also, easy copy-paste from the releases page
 const fpmChecksums = {
@@ -41,4 +42,26 @@ export async function getFpmPath() {
   const filename = getKey()
   const fpmPath = await getBinFromUrl("fpm@2.1.4", filename, fpmChecksums[filename])
   return path.join(fpmPath, exec)
+}
+
+export async function getAppImageTools(targetArch: Arch) {
+  const override = process.env.APPIMAGE_TOOLS_PATH?.trim()
+  const artifactPath =
+    override ||
+    (await downloadArtifact({
+      releaseName: "appimage@1.0.2",
+      filenameWithExt: "appimage-tools-runtime-20251108.tar.gz",
+      checksums: {
+        "appimage-tools-runtime-20251108.tar.gz": "a784a8c26331ec2e945c23d6bdb14af5c9df27f5939825d84b8709c61dc81eb0",
+      },
+      githubOrgRepo: "electron-userland/electron-builder-binaries",
+    }))
+
+  const runtimeArch = targetArch === Arch.armv7l ? "arm32" : targetArch === Arch.arm64 ? "arm64" : targetArch === Arch.ia32 ? "ia32" : "x64"
+  return {
+    mksquashfs: path.join(artifactPath, "mksquashfs"),
+    desktopFileValidate: path.join(artifactPath, "desktop-file-validate"),
+    runtime: path.join(artifactPath, "runtimes", `runtime-${runtimeArch}`),
+    runtimeLibraries: path.join(artifactPath, "lib", runtimeArch),
+  }
 }
