@@ -40,9 +40,8 @@ export class TraversalNodeModulesCollector extends NodeModulesCollector<Traverse
     const collectedDependencies: string[] = []
     for (const packageName in prodDependencies) {
       const dependency = prodDependencies[packageName]
-      const normalizedDep = this.normalizePackageVersion(packageName, dependency)
-      const childDependencyId = normalizedDep.id
-      await this.extractProductionDependencyGraph(normalizedDep.pkgOverride, childDependencyId)
+      const { id: childDependencyId, pkgOverride } = this.normalizePackageVersion(packageName, dependency)
+      await this.extractProductionDependencyGraph(pkgOverride, childDependencyId)
       collectedDependencies.push(childDependencyId)
     }
     this.productionGraph[dependencyId] = { dependencies: collectedDependencies }

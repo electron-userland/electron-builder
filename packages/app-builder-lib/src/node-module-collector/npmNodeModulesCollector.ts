@@ -14,12 +14,22 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
 
   protected async collectAllDependencies(tree: NpmDependency) {
     for (const [key, value] of Object.entries(tree.dependencies || {})) {
+      const { id: childDependencyId, pkgOverride } = this.normalizePackageVersion(key, value)
+
+      // Only skip if this exact version is already collected AND it's a duplicate reference
+      // We need to collect nested versions even if a different version exists at top level
       if (this.isDuplicatedNpmDependency(value)) {
+        // This is a reference to a package already defined elsewhere in the tree
+        // Still add it to allDependencies if we haven't seen this exact version yet
+        if (!this.allDependencies.has(childDependencyId)) {
+          this.allDependencies.set(childDependencyId, pkgOverride)
+        }
         continue
       }
-      const normalizedDep = this.normalizePackageVersion(key, value)
-      this.allDependencies.set(normalizedDep.id, normalizedDep.pkgOverride)
-      await this.collectAllDependencies(value)
+
+      // Always store this dependency and recurse into its children
+      this.allDependencies.set(childDependencyId, pkgOverride)
+      await this.collectAllDependencies(pkgOverride)
     }
   }
 
@@ -48,9 +58,8 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
         if (Object.keys(dependency).length === 0) {
           continue
         }
-        const normalizedDep = this.normalizePackageVersion(packageName, dependency)
-        const childDependencyId = normalizedDep.id
-        await this.extractProductionDependencyGraph(normalizedDep.pkgOverride, childDependencyId)
+        const { id: childDependencyId, pkgOverride } = this.normalizePackageVersion(packageName, dependency)
+        await this.extractProductionDependencyGraph(pkgOverride, childDependencyId)
         collectedDependencies.push(childDependencyId)
       }
     }

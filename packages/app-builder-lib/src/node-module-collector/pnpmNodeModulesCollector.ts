@@ -41,9 +41,8 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
           return undefined
         }
       }
-      const normalizedDep = this.normalizePackageVersion(packageName, dependency)
-      const childDependencyId = normalizedDep.id
-      await this.extractProductionDependencyGraph(normalizedDep.pkgOverride, childDependencyId)
+      const { id: childDependencyId, pkgOverride } = this.normalizePackageVersion(packageName, dependency)
+      await this.extractProductionDependencyGraph(pkgOverride, childDependencyId)
       return childDependencyId
     })
 
