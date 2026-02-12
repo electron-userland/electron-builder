@@ -186,8 +186,8 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return `${pkg.name}::${pkg.version}::${rel ?? "."}`
   }
 
-  protected packageVersionString(pkg: Pick<ProdDepType, "name" | "version">): string {
-    return `${pkg.name}@${pkg.version}`
+  protected normalizePackageVersion(key: string, pkg: ProdDepType) {
+    return { id: `${key}@${pkg.version}`, pkgOverride: { ...pkg, name: key } }
   }
 
   /**

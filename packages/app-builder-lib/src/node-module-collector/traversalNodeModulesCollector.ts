@@ -21,8 +21,9 @@ export class TraversalNodeModulesCollector extends NodeModulesCollector<Traverse
   }
 
   protected async collectAllDependencies(tree: TraversedDependency, appPackageName: string) {
-    for (const [, value] of Object.entries({ ...tree.dependencies, ...tree.optionalDependencies })) {
-      this.allDependencies.set(this.packageVersionString(value), value)
+    for (const [packageKey, value] of Object.entries({ ...tree.dependencies, ...tree.optionalDependencies })) {
+      const normalizedDep = this.normalizePackageVersion(packageKey, value)
+      this.allDependencies.set(normalizedDep.id, normalizedDep.pkgOverride)
       await this.collectAllDependencies(value, appPackageName)
     }
   }
@@ -39,8 +40,9 @@ export class TraversalNodeModulesCollector extends NodeModulesCollector<Traverse
     const collectedDependencies: string[] = []
     for (const packageName in prodDependencies) {
       const dependency = prodDependencies[packageName]
-      const childDependencyId = this.packageVersionString(dependency)
-      await this.extractProductionDependencyGraph(dependency, childDependencyId)
+      const normalizedDep = this.normalizePackageVersion(packageName, dependency)
+      const childDependencyId = normalizedDep.id
+      await this.extractProductionDependencyGraph(normalizedDep.pkgOverride, childDependencyId)
       collectedDependencies.push(childDependencyId)
     }
     this.productionGraph[dependencyId] = { dependencies: collectedDependencies }

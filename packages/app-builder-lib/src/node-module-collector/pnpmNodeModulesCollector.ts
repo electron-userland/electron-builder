@@ -41,8 +41,9 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
           return undefined
         }
       }
-      const childDependencyId = this.packageVersionString(dependency)
-      await this.extractProductionDependencyGraph(dependency, childDependencyId)
+      const normalizedDep = this.normalizePackageVersion(packageName, dependency)
+      const childDependencyId = normalizedDep.id
+      await this.extractProductionDependencyGraph(normalizedDep.pkgOverride, childDependencyId)
       return childDependencyId
     })
 
@@ -70,11 +71,6 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       this.allDependencies.set(`${key}@${value.version}`, { ...value, path: pkg?.packageDir ?? value.path })
       await this.collectAllDependencies(value)
     }
-  }
-
-  protected packageVersionString(pkg: PnpmDependency): string {
-    // we use 'from' field because 'name' may be different in case of aliases
-    return `${pkg.from}@${pkg.version}`
   }
 
   protected parseDependenciesTree(jsonBlob: string): PnpmDependency {

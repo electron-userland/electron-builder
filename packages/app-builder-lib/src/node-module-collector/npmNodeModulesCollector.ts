@@ -17,11 +17,8 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       if (this.isDuplicatedNpmDependency(value)) {
         continue
       }
-      // Use the key (alias name) instead of value.name for npm aliased packages
-      // e.g., { "foo": { name: "@scope/bar", ... } } should be stored as "foo@version"
-      // This ensures aliased packages are copied to the correct location in node_modules
-      const normalizedDep: NpmDependency = key !== value.name ? { ...value, name: key } : value
-      this.allDependencies.set(this.packageVersionString(normalizedDep), normalizedDep)
+      const normalizedDep = this.normalizePackageVersion(key, value)
+      this.allDependencies.set(normalizedDep.id, normalizedDep.pkgOverride)
       await this.collectAllDependencies(value)
     }
   }
@@ -51,8 +48,9 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
         if (Object.keys(dependency).length === 0) {
           continue
         }
-        const childDependencyId = this.packageVersionString({ name: packageName, version: dependency.version })
-        await this.extractProductionDependencyGraph(dependency, childDependencyId)
+        const normalizedDep = this.normalizePackageVersion(packageName, dependency)
+        const childDependencyId = normalizedDep.id
+        await this.extractProductionDependencyGraph(normalizedDep.pkgOverride, childDependencyId)
         collectedDependencies.push(childDependencyId)
       }
     }
