@@ -3876,9 +3876,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 12297.329625
         },
         "linux": {
           "runs": 1,
@@ -4023,9 +4023,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 13550.419333
         },
         "linux": {
           "runs": 1,
@@ -4763,9 +4763,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 16638.174083
         },
         "linux": {
           "runs": 1,
@@ -4803,9 +4803,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 18859.114709
         },
         "linux": {
           "runs": 1,
@@ -4883,9 +4883,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 18858.434999999998
         },
         "linux": {
           "runs": 1,
@@ -4983,9 +4983,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 3588.6702909999985
         },
         "linux": {
           "runs": 1,
@@ -5003,9 +5003,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 8683.388708999999
         },
         "linux": {
           "runs": 1,
@@ -5023,9 +5023,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 3621.1377919999977
         },
         "linux": {
           "runs": 1,
@@ -5043,9 +5043,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 1499.1001250000008
         },
         "linux": {
           "runs": 1,
@@ -5063,9 +5063,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 1855.9597499999982
         },
         "linux": {
           "runs": 1,
@@ -5083,9 +5083,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 13297.555417
         },
         "linux": {
           "runs": 1,
@@ -5123,9 +5123,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 5384.395874999998
         },
         "linux": {
           "runs": 1,
@@ -5143,9 +5143,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 11496.687083
         },
         "linux": {
           "runs": 1,
@@ -5183,9 +5183,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 12391.737000000001
         },
         "linux": {
           "runs": 1,
@@ -5203,9 +5203,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 11364.815332999999
         },
         "linux": {
           "runs": 1,
@@ -5263,9 +5263,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 4080.422875000004
         },
         "linux": {
           "runs": 1,
@@ -5283,9 +5283,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 4250.248165999998
         },
         "linux": {
           "runs": 1,
@@ -5303,9 +5303,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 12549.602834000001
         },
         "linux": {
           "runs": 1,
@@ -5323,9 +5323,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 7670.395958000001
         },
         "linux": {
           "runs": 1,
@@ -5363,9 +5363,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 7038.839083999999
         },
         "linux": {
           "runs": 1,
@@ -12029,9 +12029,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 5554.4913750000005
         },
         "linux": {
           "runs": 1,
@@ -12049,9 +12049,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 5557.876292
         },
         "linux": {
           "runs": 1,
@@ -12069,9 +12069,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 7338.912791
         },
         "linux": {
           "runs": 1,
@@ -12089,7 +12089,7 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
           "avgMs": 0
         },
@@ -12109,9 +12109,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 5552.643333
         },
         "linux": {
           "runs": 1,
@@ -12129,9 +12129,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 5212.827292
         },
         "linux": {
           "runs": 1,
@@ -12149,9 +12149,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 6851.810583999999
         },
         "linux": {
           "runs": 1,
@@ -12169,9 +12169,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 7086.209959000002
         },
         "linux": {
           "runs": 1,
@@ -12189,9 +12189,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 14325.677583
         },
         "linux": {
           "runs": 1,
@@ -12209,7 +12209,7 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
           "avgMs": 0
         },
@@ -12229,7 +12229,7 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
           "avgMs": 0
         },
@@ -12249,9 +12249,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 31802.222917000003
         },
         "linux": {
           "runs": 1,
@@ -12269,9 +12269,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 13675.000750000001
         },
         "linux": {
           "runs": 1,
@@ -12289,9 +12289,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 30242.588624999997
         },
         "linux": {
           "runs": 1,
@@ -12309,9 +12309,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 22518.546708000005
         },
         "linux": {
           "runs": 1,
@@ -12329,9 +12329,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 10126.900875
         },
         "linux": {
           "runs": 1,
@@ -12349,9 +12349,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 5055.005957999994
         },
         "linux": {
           "runs": 1,
@@ -12389,9 +12389,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 5012.361959000002
         },
         "linux": {
           "runs": 1,
@@ -12409,9 +12409,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 17746.065375000002
         },
         "linux": {
           "runs": 1,
@@ -12449,9 +12449,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 4297.924832999997
         },
         "linux": {
           "runs": 1,
@@ -12469,9 +12469,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 4495.183790999996
         },
         "linux": {
           "runs": 1,
@@ -12489,9 +12489,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 17913.36725
         },
         "linux": {
           "runs": 1,
@@ -12509,9 +12509,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 3992.639292
         },
         "linux": {
           "runs": 1,
@@ -12529,9 +12529,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 5180.294541000003
         },
         "linux": {
           "runs": 1,
@@ -12549,9 +12549,9 @@
           "avgMs": 0
         },
         "darwin": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 19820.688875
         },
         "linux": {
           "runs": 1,
@@ -13780,6 +13780,206 @@
         }
       },
       "heavy": false
+    },
+    "GitHub Provider > computeReleaseNotes > returns an array of release notes between currentVersion (exclusive) and latestVersion (inclusive), sorted desc": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 18,
+          "fails": 18,
+          "avgMs": 3.2695137222185715
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "GitHub Provider > computeReleaseNotes > returns single release notes string when full changelog is false": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 18,
+          "fails": 0,
+          "avgMs": 3.3979167222257933
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "GitHub Provider > computeReleaseNotes > treats \"No content.\" as empty string when full changelog is false": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 18,
+          "fails": 0,
+          "avgMs": 3.3326318333336085
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "GitHub Provider > computeReleaseNotes > returns empty array when latest release tag cannot be parsed to a version": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 18,
+          "fails": 0,
+          "avgMs": 3.2769583888887865
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "GitHub Provider > includes prerelease entries when they are > currentVersion and <= latestVersion": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 7,
+          "fails": 7,
+          "avgMs": 6.86375000001174
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "GitHub Provider > excludes versions that are <= currentVersion": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 7,
+          "fails": 7,
+          "avgMs": 6.879982000011036
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "GitHub Provider > supports tags with build metadata and sorts results correctly": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 7,
+          "fails": 7,
+          "avgMs": 6.868583285722967
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "GitHub Provider > ignores entries whose link does not contain /tag/ (regex mismatch)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 7,
+          "fails": 7,
+          "avgMs": 6.85878571428397
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "GitHub Provider > handles missing <content> element when full changelog is false": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 7,
+          "fails": 0,
+          "avgMs": 7.065916571417152
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "GitHub Provider > includes entry that is equal to latestVersion (latest included)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 7,
+          "fails": 7,
+          "avgMs": 1.8150177142792276
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
     }
   },
   "files": {
@@ -14047,7 +14247,11 @@
           "fails": 0,
           "avgMs": 0
         },
-        "darwin": 2,
+        "darwin": {
+          "runs": null,
+          "fails": null,
+          "avgMs": null
+        },
         "linux": {
           "runs": null,
           "fails": null,
@@ -14179,7 +14383,11 @@
           "fails": 0,
           "avgMs": 0
         },
-        "darwin": 2,
+        "darwin": {
+          "runs": null,
+          "fails": null,
+          "avgMs": null
+        },
         "linux": {
           "runs": null,
           "fails": null,
@@ -14685,6 +14893,27 @@
           "runs": 1,
           "fails": 0,
           "avgMs": 899706.8963680001
+        }
+      }
+    },
+    "updateUtilTest.ts": {
+      "unstable": true,
+      "hasHeavyTests": false,
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 18,
+          "fails": 311,
+          "avgMs": 197.2734713333301
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
         }
       }
     }

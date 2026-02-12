@@ -6,7 +6,7 @@ import { ResolvedUpdateFileInfo } from "../types"
 import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util"
 import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider"
 
-const hrefRegExp = /\/tag\/([^/]+)$/
+const hrefRegExp = /\/tag\/(v?[^/]+)$/
 
 interface GithubUpdateInfo extends UpdateInfo {
   tag: string
@@ -225,30 +225,34 @@ export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangel
   if (!isFullChangelog) {
     return getNoteValue(latestRelease)
   }
-  const tagVersionRegex = /\/tag\/v?([^/]+)$/
 
-  let latestVersion: string | undefined
+  let latestVersion: string | undefined = undefined
   try {
-    latestVersion = tagVersionRegex.exec(latestRelease.element("link").attribute("href"))![1]
-  } catch (e: any) {
-    latestVersion = undefined
+    latestVersion = hrefRegExp.exec(latestRelease.element("link").attribute("href"))![1]
+    latestVersion = semver.valid(latestVersion) ? latestVersion : undefined
+  } catch {
+    // If we cannot parse the latest version, cntinue and return all release notes without filtering by version
+  }
+
+  if (latestVersion == null) {
+    return null
   }
 
   const releaseNotes: Array<ReleaseNoteInfo> = []
   for (const release of feed.getElements("entry")) {
-    let versionRelease: string | undefined
+    let versionRelease: string | undefined = undefined
     try {
-      versionRelease = tagVersionRegex.exec(release.element("link").attribute("href"))![1]
-    } catch (e: any) {
+      versionRelease = hrefRegExp.exec(release.element("link").attribute("href"))![1]
+    } catch {
       continue
     }
     // check `semver.valid` to validate if an electron release, because some repositories can contain also non-electron releases (for example, with documentation or website updates)
-    if (!semver.valid(versionRelease) || !semver.valid(latestVersion)) {
+    if (!semver.valid(versionRelease)) {
       continue
     }
 
-    const isGreaterThanCurrent = semver.gt(versionRelease, currentVersion)
-    const isLessOrEqualThanLatest = semver.lte(versionRelease, latestVersion!)
+    const isGreaterThanCurrent = semver.gt(versionRelease, currentVersion.raw)
+    const isLessOrEqualThanLatest = semver.lte(versionRelease, latestVersion)
     if (isGreaterThanCurrent && isLessOrEqualThanLatest) {
       releaseNotes.push({
         version: versionRelease,
