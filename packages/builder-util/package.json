@@ -1,6 +1,6 @@
 {
   "name": "builder-util",
-  "version": "26.4.1",
+  "version": "26.8.0",
   "main": "out/util.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",

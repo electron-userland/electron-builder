@@ -70,7 +70,7 @@ describe.heavy.ifLinux("linux", { sequential: true }, () => {
         if (!isEmptyOrSpaces(process.env.PACKAGE_MANAGER_TO_TEST) && process.env.PACKAGE_MANAGER_TO_TEST !== pm) {
           context.skip()
         }
-          await runTest(context, target, pm, Arch.x64)
+        await runTest(context, target, pm, Arch.x64)
       })
     }
   }
