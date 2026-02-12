@@ -342,31 +342,15 @@ export async function createPublisher(
   const provider = publishConfig.provider
   switch (provider) {
     case "github": {
-      const githubOptions = { ...publishConfig } as GithubOptions
-      if (githubOptions.releaseBody == null) {
-        const body = await resolveReleaseBody(packager)
-        if (body) {
-          ;(githubOptions as any).releaseBody = body
-        }
-      }
-      if (githubOptions.releaseName == null && packager.config.releaseInfo?.releaseName) {
-        ;(githubOptions as any).releaseName = packager.config.releaseInfo.releaseName
-      }
-      return new GitHubPublisher(context, githubOptions, version, options)
+      const releaseBody = (publishConfig as GithubOptions).releaseBody ?? (await resolveReleaseBody(packager))
+      const releaseName = (publishConfig as GithubOptions).releaseName ?? packager.config.releaseInfo?.releaseName ?? null
+      return new GitHubPublisher(context, { ...publishConfig, releaseBody, releaseName } as GithubOptions, version, options)
     }
 
     case "gitlab": {
-      const gitlabOptions = { ...publishConfig } as GitlabOptions
-      if (gitlabOptions.releaseBody == null) {
-        const body = await resolveReleaseBody(packager)
-        if (body) {
-          ;(gitlabOptions as any).releaseBody = body
-        }
-      }
-      if (gitlabOptions.releaseName == null && packager.config.releaseInfo?.releaseName) {
-        ;(gitlabOptions as any).releaseName = packager.config.releaseInfo.releaseName
-      }
-      return new GitlabPublisher(context, gitlabOptions, version)
+      const releaseBody = (publishConfig as GitlabOptions).releaseBody ?? (await resolveReleaseBody(packager))
+      const releaseName = (publishConfig as GitlabOptions).releaseName ?? packager.config.releaseInfo?.releaseName ?? null
+      return new GitlabPublisher(context, { ...publishConfig, releaseBody, releaseName } as GitlabOptions, version)
     }
 
     case "keygen":
