@@ -645,4 +645,28 @@ describe.ifNotWindows("node_module collectors", () => {
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
       }
     ))
+
+  test("yarn berry version conflict with hoisted dependencies", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-yarn-workspace-version-conflict",
+      {
+        targets: linuxDirTarget,
+        projectDir: "packages/test-app",
+      },
+      {
+        storeDepsLockfileSnapshot: true,
+        packageManager: PM.YARN_BERRY,
+        projectDirCreated: async projectDir => {
+          const subAppDir = path.join(projectDir, "packages", "test-app")
+          return modifyPackageJson(subAppDir, data => {
+            data.dependencies = {
+              jsdom: "^27.4.0",
+              "markdown-it": "^14.1.0",
+            }
+          })
+        },
+        packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      }
+    ))
 })

@@ -186,8 +186,10 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return `${pkg.name}::${pkg.version}::${rel ?? "."}`
   }
 
-  protected packageVersionString(pkg: Pick<ProdDepType, "name" | "version">): string {
-    return `${pkg.name}@${pkg.version}`
+  // We use the key (alias name) instead of value.name for npm aliased packages
+  // e.g., { "foo": { name: "@scope/bar", ... } } should be stored as "foo@version"
+  protected normalizePackageVersion(key: string, pkg: ProdDepType) {
+    return { id: `${key}@${pkg.version}`, pkgOverride: { ...pkg, name: key } }
   }
 
   /**
