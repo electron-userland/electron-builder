@@ -1,15 +1,8 @@
-import { exists, isEmptyOrSpaces, log } from "builder-util"
+import { exists, isEmptyOrSpaces, log, LogLevel } from "builder-util"
 import { PackageJson } from "./types"
 import * as fs from "fs-extra"
 import * as path from "path"
 import * as semver from "semver"
-
-// export const PKG_DUPLICATE_REF_LOG_KEY = "duplicate dependency references"
-// export const PKG_NOT_FOUND_LOG_KEY = "cannot find path for dependency"
-// export const PKG_NOT_ON_DISK_LOG_KEY = "dependency not found on disk"
-// export const PKG_SELF_REF_LOG_KEY = "self-referential dependencies"
-// export const PKG_OPTIONAL_NOT_INSTALLED_LOG_KEY = "missing optional dependencies"
-// export const PKG_COLLECTOR_LOG_KEY = "collector output"
 
 export enum LogMessageByKey {
   PKG_DUPLICATE_REF = "duplicate dependency references",
@@ -17,16 +10,17 @@ export enum LogMessageByKey {
   PKG_NOT_ON_DISK = "dependency not found on disk",
   PKG_SELF_REF = "self-referential dependencies",
   PKG_OPTIONAL_NOT_INSTALLED = "missing optional dependencies",
-  PKG_COLLECTOR_OUTPUT = "collector output",
+  PKG_COLLECTOR_OUTPUT = "collector stderr output",
+}
+export const logMessageLevelByKey: Record<LogMessageByKey, LogLevel> = {
+  [LogMessageByKey.PKG_DUPLICATE_REF]: "info",
+  [LogMessageByKey.PKG_NOT_FOUND]: "warn",
+  [LogMessageByKey.PKG_NOT_ON_DISK]: "warn",
+  [LogMessageByKey.PKG_SELF_REF]: "debug",
+  [LogMessageByKey.PKG_OPTIONAL_NOT_INSTALLED]: "info",
+  [LogMessageByKey.PKG_COLLECTOR_OUTPUT]: "warn",
 }
 
-// type CacheKey =
-//   | typeof PKG_DUPLICATE_REF_LOG_KEY
-//   | typeof PKG_NOT_FOUND_LOG_KEY
-//   | typeof PKG_NOT_ON_DISK_LOG_KEY
-//   | typeof PKG_SELF_REF_LOG_KEY
-//   | typeof PKG_OPTIONAL_NOT_INSTALLED_LOG_KEY
-//   | typeof PKG_COLLECTOR_LOG_KEY
 export type Package = { packageDir: string; packageJson: PackageJson }
 
 // Type aliases for clarity

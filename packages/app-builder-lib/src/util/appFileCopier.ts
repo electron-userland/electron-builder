@@ -9,7 +9,7 @@ import { Platform } from "../core"
 import { excludedExts, FileMatcher } from "../fileMatcher"
 import { createElectronCompilerHost, NODE_MODULES_PATTERN } from "../fileTransformer"
 import { getCollectorByPackageManager, PM } from "../node-module-collector"
-import { ModuleManager } from "../node-module-collector/moduleManager"
+import { LogMessageByKey, logMessageLevelByKey, ModuleManager } from "../node-module-collector/moduleManager"
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
 import { AppFileWalker } from "./AppFileWalker"
@@ -243,7 +243,8 @@ async function collectNodeModulesWithLogging(platformPackager: PlatformPackager<
 
   const summary = Object.entries(deps.logSummary ?? {}).filter(([, dependencies]) => Array.isArray(dependencies) && dependencies.length > 0)
   for (const [errorMessage, dependencies] of summary) {
-    log.warn({ dependencies }, errorMessage)
+    const logLevel = logMessageLevelByKey[errorMessage as LogMessageByKey] || "debug"
+    log[logLevel]({ dependencies }, errorMessage)
   }
 
   return deps.nodeModules
