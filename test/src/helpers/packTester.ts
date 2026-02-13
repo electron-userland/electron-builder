@@ -1,5 +1,5 @@
 import { PublishManager } from "app-builder-lib"
-import { readAsar } from "app-builder-lib/out/asar/asar"
+import { verifyAsarFileTree as _verifyAsarFileTree } from "./asarVerifier"
 import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetFactory"
 import { getLinuxToolsPath } from "app-builder-lib/out/toolsets/linux"
 import { parsePlistFile, PlistObject } from "app-builder-lib/out/util/plist"
@@ -787,22 +787,7 @@ export function removeUnstableProperties(data: any) {
 }
 
 export async function verifyAsarFileTree(expect: ExpectStatic, resourceDir: string) {
-  const fs = await readAsar(path.join(resourceDir, "app.asar"))
-
-  const stableHeader = JSON.parse(
-    JSON.stringify(fs.header, (name, value) => {
-      // Keep existing test coverage
-      if (value.integrity) {
-        delete value.integrity
-      }
-      if (name === "size" || name === "Size") {
-        // size can be different on different platforms, we stub here to ensure that some property exists
-        return "@size"
-      }
-      return value
-    })
-  )
-  expect(stableHeader).toMatchSnapshot()
+  return _verifyAsarFileTree(expect, resourceDir)
 }
 
 export function toSystemIndependentPath(s: string): string {

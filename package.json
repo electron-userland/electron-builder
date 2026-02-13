@@ -11,7 +11,7 @@
     "prettier": "prettier 'packages/**/*.{ts,js}' 'test/{vitest-scripts,src}/**/*.ts' --write",
     "///": "Please see https://github.com/electron-userland/electron-builder/blob/master/CONTRIBUTING.md#run-test-using-cli how to run particular test instead full (and very slow) run",
     "test-all": "pnpm compile && pnpm pretest && pnpm ci:test",
-    "test-linux": "docker run --rm -e CI=\"${CI:-false}\" -e DEBUG=${DEBUG:-} -e VITEST_SHARD_INDEX=${VITEST_SHARD_INDEX:-} -e VITEST_SHARD_COUNT=${VITEST_SHARD_COUNT:-} -e UPDATE_SNAPSHOT=\"${UPDATE_SNAPSHOT:-false}\" -e TEST_FILES=\"${TEST_FILES:-}\" -w /project -v $(pwd):/project -v $(pwd)-node-modules:/project/node_modules -v $HOME/Library/Caches/electron:/root/.cache/electron -v $HOME/Library/Caches/electron-builder:/root/.cache/electron-builder ${ADDITIONAL_DOCKER_ARGS} ${TEST_RUNNER_IMAGE_TAG:-electronuserland/builder:22-wine-mono} /bin/bash -c \"bash ./docker/test-in-docker.sh\"",
+    "test-linux": "docker run --rm -e CI=${CI:-false} -e DEBUG=${DEBUG:-} -e VITEST_SHARD_INDEX=${VITEST_SHARD_INDEX:-} -e VITEST_SHARD_COUNT=${VITEST_SHARD_COUNT:-} -e UPDATE_SNAPSHOT=\"${UPDATE_SNAPSHOT:-false}\" -e TEST_FILES=\"${TEST_FILES:-}\" -w /project -v $(pwd):/project -v $(pwd)-node-modules:/project/node_modules -v $HOME/Library/Caches/electron:/root/.cache/electron -v $HOME/Library/Caches/electron-builder:/root/.cache/electron-builder ${ADDITIONAL_DOCKER_ARGS} ${TEST_RUNNER_IMAGE_TAG:-electronuserland/builder:22-wine-mono} /bin/bash -c \"bash ./docker/test-in-docker.sh\"",
     "ci:test": "ts-node test/vitest-scripts/run-vitest.ts",
     "ci:test:count": "ts-node test/vitest-scripts/smart-shard-count.ts",
     "ci:validate": "pnpm compile && pnpm pretest && pnpm generate-all",
