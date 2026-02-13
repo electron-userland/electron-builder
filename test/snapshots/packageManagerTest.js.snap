@@ -10,8 +10,8 @@ exports[`Package Managers > bun workspace --linker=hoisted - multiple conflictin
 {
   "files": {
     "index.js": {
-      "offset": 31280,
-      "size": 40,
+      "offset": 31270,
+      "size": 30,
     },
     "node_modules": {
       "files": {
@@ -23,18 +23,18 @@ exports[`Package Managers > bun workspace --linker=hoisted - multiple conflictin
             },
             "LICENSE": {
               "offset": 140,
-              "size": 1080,
+              "size": 1070,
             },
             "index.js": {
-              "offset": 1220,
-              "size": 380,
+              "offset": 1210,
+              "size": 370,
             },
             "package.json": {
               "offset": 1580,
-              "size": 1160,
+              "size": 1170,
             },
             "tsconfig.json": {
-              "offset": 2760,
+              "offset": 2750,
               "size": 120,
             },
           },
@@ -42,24 +42,24 @@ exports[`Package Managers > bun workspace --linker=hoisted - multiple conflictin
         "is-bigint": {
           "files": {
             ".nycrc": {
-              "offset": 2880,
+              "offset": 2870,
               "size": 140,
             },
             "LICENSE": {
-              "offset": 3020,
-              "size": 1080,
+              "offset": 3010,
+              "size": 1070,
             },
             "index.js": {
               "offset": 4080,
               "size": 840,
             },
             "package.json": {
-              "offset": 4920,
+              "offset": 4930,
               "size": 1400,
             },
             "tsconfig.json": {
               "offset": 6320,
-              "size": 120,
+              "size": 110,
             },
           },
         },
@@ -71,11 +71,11 @@ exports[`Package Managers > bun workspace --linker=hoisted - multiple conflictin
             },
             "index.js": {
               "offset": 6940,
-              "size": 1460,
+              "size": 1470,
             },
             "package.json": {
-              "offset": 8400,
-              "size": 460,
+              "offset": 8410,
+              "size": 470,
             },
             "perf": {
               "files": {
@@ -88,14 +88,14 @@ exports[`Package Managers > bun workspace --linker=hoisted - multiple conflictin
                   "size": 220,
                 },
                 "perf.js": {
-                  "offset": 9340,
+                  "offset": 9330,
                   "size": 1440,
                 },
               },
             },
             "test.js": {
-              "offset": 10780,
-              "size": 4000,
+              "offset": 10770,
+              "size": 4010,
             },
           },
         },
@@ -107,15 +107,15 @@ exports[`Package Managers > bun workspace --linker=hoisted - multiple conflictin
             },
             "index.js": {
               "offset": 14800,
-              "size": 40,
+              "size": 50,
             },
             "node_modules": {
               "files": {
                 "is-bigint": {
                   "files": {
                     ".eslintignore": {
-                      "offset": 14980,
-                      "size": 20,
+                      "offset": 14990,
+                      "size": 10,
                     },
                     ".nycrc": {
                       "offset": 15000,
@@ -123,14 +123,14 @@ exports[`Package Managers > bun workspace --linker=hoisted - multiple conflictin
                     },
                     "LICENSE": {
                       "offset": 15140,
-                      "size": 1080,
+                      "size": 1070,
                     },
                     "index.js": {
-                      "offset": 16200,
+                      "offset": 16210,
                       "size": 740,
                     },
                     "package.json": {
-                      "offset": 16940,
+                      "offset": 16950,
                       "size": 960,
                     },
                   },
@@ -138,7 +138,7 @@ exports[`Package Managers > bun workspace --linker=hoisted - multiple conflictin
               },
             },
             "package.json": {
-              "offset": 14840,
+              "offset": 14850,
               "size": 140,
             },
           },
@@ -158,12 +158,12 @@ exports[`Package Managers > bun workspace --linker=hoisted - multiple conflictin
               "size": 100,
             },
             "package.json": {
-              "offset": 24520,
-              "size": 440,
+              "offset": 24510,
+              "size": 450,
             },
             "test.js": {
               "offset": 24960,
-              "size": 6320,
+              "size": 6310,
             },
           },
         },
@@ -171,7 +171,7 @@ exports[`Package Managers > bun workspace --linker=hoisted - multiple conflictin
     },
     "package.json": {
       "offset": 31300,
-      "size": 320,
+      "size": 330,
     },
   },
 }
@@ -187,8 +187,8 @@ exports[`Package Managers > bun workspace --linker=hoisted 2`] = `
 {
   "files": {
     "index.js": {
-      "offset": 28340,
-      "size": 40,
+      "offset": 28330,
+      "size": 30,
     },
     "node_modules": {
       "files": {
@@ -200,18 +200,18 @@ exports[`Package Managers > bun workspace --linker=hoisted 2`] = `
             },
             "LICENSE": {
               "offset": 140,
-              "size": 1080,
+              "size": 1070,
             },
             "index.js": {
-              "offset": 1220,
-              "size": 380,
+              "offset": 1210,
+              "size": 370,
             },
             "package.json": {
               "offset": 1580,
-              "size": 1160,
+              "size": 1170,
             },
             "tsconfig.json": {
-              "offset": 2760,
+              "offset": 2750,
               "size": 120,
             },
           },
@@ -219,24 +219,24 @@ exports[`Package Managers > bun workspace --linker=hoisted 2`] = `
         "is-bigint": {
           "files": {
             ".nycrc": {
-              "offset": 2880,
+              "offset": 2870,
               "size": 140,
             },
             "LICENSE": {
-              "offset": 3020,
-              "size": 1080,
+              "offset": 3010,
+              "size": 1070,
             },
             "index.js": {
               "offset": 4080,
               "size": 840,
             },
             "package.json": {
-              "offset": 4920,
+              "offset": 4930,
               "size": 1400,
             },
             "tsconfig.json": {
               "offset": 6320,
-              "size": 120,
+              "size": 110,
             },
           },
         },
@@ -248,11 +248,11 @@ exports[`Package Managers > bun workspace --linker=hoisted 2`] = `
             },
             "index.js": {
               "offset": 6940,
-              "size": 1460,
+              "size": 1470,
             },
             "package.json": {
-              "offset": 8400,
-              "size": 460,
+              "offset": 8410,
+              "size": 470,
             },
             "perf": {
               "files": {
@@ -265,14 +265,14 @@ exports[`Package Managers > bun workspace --linker=hoisted 2`] = `
                   "size": 220,
                 },
                 "perf.js": {
-                  "offset": 9340,
+                  "offset": 9330,
                   "size": 1440,
                 },
               },
             },
             "test.js": {
-              "offset": 10780,
-              "size": 4000,
+              "offset": 10770,
+              "size": 4010,
             },
           },
         },
@@ -284,11 +284,11 @@ exports[`Package Managers > bun workspace --linker=hoisted 2`] = `
             },
             "index.js": {
               "offset": 14800,
-              "size": 40,
+              "size": 50,
             },
             "package.json": {
-              "offset": 14840,
-              "size": 120,
+              "offset": 14850,
+              "size": 110,
             },
           },
         },
@@ -307,20 +307,20 @@ exports[`Package Managers > bun workspace --linker=hoisted 2`] = `
               "size": 100,
             },
             "package.json": {
-              "offset": 21580,
-              "size": 440,
+              "offset": 21570,
+              "size": 450,
             },
             "test.js": {
               "offset": 22020,
-              "size": 6320,
+              "size": 6310,
             },
           },
         },
       },
     },
     "package.json": {
-      "offset": 28360,
-      "size": 320,
+      "offset": 28370,
+      "size": 330,
     },
   },
 }
@@ -336,8 +336,8 @@ exports[`Package Managers > bun workspace --linker=isolated - multiple conflicti
 {
   "files": {
     "index.js": {
-      "offset": 31280,
-      "size": 40,
+      "offset": 31270,
+      "size": 30,
     },
     "node_modules": {
       "files": {
@@ -349,18 +349,18 @@ exports[`Package Managers > bun workspace --linker=isolated - multiple conflicti
             },
             "LICENSE": {
               "offset": 140,
-              "size": 1080,
+              "size": 1070,
             },
             "index.js": {
-              "offset": 1220,
-              "size": 380,
+              "offset": 1210,
+              "size": 370,
             },
             "package.json": {
               "offset": 1580,
-              "size": 1160,
+              "size": 1170,
             },
             "tsconfig.json": {
-              "offset": 2760,
+              "offset": 2750,
               "size": 120,
             },
           },
@@ -368,24 +368,24 @@ exports[`Package Managers > bun workspace --linker=isolated - multiple conflicti
         "is-bigint": {
           "files": {
             ".nycrc": {
-              "offset": 2880,
+              "offset": 2870,
               "size": 140,
             },
             "LICENSE": {
-              "offset": 3020,
-              "size": 1080,
+              "offset": 3010,
+              "size": 1070,
             },
             "index.js": {
               "offset": 4080,
               "size": 840,
             },
             "package.json": {
-              "offset": 4920,
+              "offset": 4930,
               "size": 1400,
             },
             "tsconfig.json": {
               "offset": 6320,
-              "size": 120,
+              "size": 110,
             },
           },
         },
@@ -397,11 +397,11 @@ exports[`Package Managers > bun workspace --linker=isolated - multiple conflicti
             },
             "index.js": {
               "offset": 6940,
-              "size": 1460,
+              "size": 1470,
             },
             "package.json": {
-              "offset": 8400,
-              "size": 460,
+              "offset": 8410,
+              "size": 470,
             },
             "perf": {
               "files": {
@@ -414,14 +414,14 @@ exports[`Package Managers > bun workspace --linker=isolated - multiple conflicti
                   "size": 220,
                 },
                 "perf.js": {
-                  "offset": 9340,
+                  "offset": 9330,
                   "size": 1440,
                 },
               },
             },
             "test.js": {
-              "offset": 10780,
-              "size": 4000,
+              "offset": 10770,
+              "size": 4010,
             },
           },
         },
@@ -433,15 +433,15 @@ exports[`Package Managers > bun workspace --linker=isolated - multiple conflicti
             },
             "index.js": {
               "offset": 14800,
-              "size": 40,
+              "size": 50,
             },
             "node_modules": {
               "files": {
                 "is-bigint": {
                   "files": {
                     ".eslintignore": {
-                      "offset": 14980,
-                      "size": 20,
+                      "offset": 14990,
+                      "size": 10,
                     },
                     ".nycrc": {
                       "offset": 15000,
@@ -449,14 +449,14 @@ exports[`Package Managers > bun workspace --linker=isolated - multiple conflicti
                     },
                     "LICENSE": {
                       "offset": 15140,
-                      "size": 1080,
+                      "size": 1070,
                     },
                     "index.js": {
-                      "offset": 16200,
+                      "offset": 16210,
                       "size": 740,
                     },
                     "package.json": {
-                      "offset": 16940,
+                      "offset": 16950,
                       "size": 960,
                     },
                   },
@@ -464,7 +464,7 @@ exports[`Package Managers > bun workspace --linker=isolated - multiple conflicti
               },
             },
             "package.json": {
-              "offset": 14840,
+              "offset": 14850,
               "size": 140,
             },
           },
@@ -484,12 +484,12 @@ exports[`Package Managers > bun workspace --linker=isolated - multiple conflicti
               "size": 100,
             },
             "package.json": {
-              "offset": 24520,
-              "size": 440,
+              "offset": 24510,
+              "size": 450,
             },
             "test.js": {
               "offset": 24960,
-              "size": 6320,
+              "size": 6310,
             },
           },
         },
@@ -497,7 +497,7 @@ exports[`Package Managers > bun workspace --linker=isolated - multiple conflicti
     },
     "package.json": {
       "offset": 31300,
-      "size": 320,
+      "size": 330,
     },
   },
 }
@@ -513,8 +513,8 @@ exports[`Package Managers > bun workspace --linker=isolated 2`] = `
 {
   "files": {
     "index.js": {
-      "offset": 28340,
-      "size": 40,
+      "offset": 28330,
+      "size": 30,
     },
     "node_modules": {
       "files": {
@@ -526,18 +526,18 @@ exports[`Package Managers > bun workspace --linker=isolated 2`] = `
             },
             "LICENSE": {
               "offset": 140,
-              "size": 1080,
+              "size": 1070,
             },
             "index.js": {
-              "offset": 1220,
-              "size": 380,
+              "offset": 1210,
+              "size": 370,
             },
             "package.json": {
               "offset": 1580,
-              "size": 1160,
+              "size": 1170,
             },
             "tsconfig.json": {
-              "offset": 2760,
+              "offset": 2750,
               "size": 120,
             },
           },
@@ -545,24 +545,24 @@ exports[`Package Managers > bun workspace --linker=isolated 2`] = `
         "is-bigint": {
           "files": {
             ".nycrc": {
-              "offset": 2880,
+              "offset": 2870,
               "size": 140,
             },
             "LICENSE": {
-              "offset": 3020,
-              "size": 1080,
+              "offset": 3010,
+              "size": 1070,
             },
             "index.js": {
               "offset": 4080,
               "size": 840,
             },
             "package.json": {
-              "offset": 4920,
+              "offset": 4930,
               "size": 1400,
             },
             "tsconfig.json": {
               "offset": 6320,
-              "size": 120,
+              "size": 110,
             },
           },
         },
@@ -574,11 +574,11 @@ exports[`Package Managers > bun workspace --linker=isolated 2`] = `
             },
             "index.js": {
               "offset": 6940,
-              "size": 1460,
+              "size": 1470,
             },
             "package.json": {
-              "offset": 8400,
-              "size": 460,
+              "offset": 8410,
+              "size": 470,
             },
             "perf": {
               "files": {
@@ -591,14 +591,14 @@ exports[`Package Managers > bun workspace --linker=isolated 2`] = `
                   "size": 220,
                 },
                 "perf.js": {
-                  "offset": 9340,
+                  "offset": 9330,
                   "size": 1440,
                 },
               },
             },
             "test.js": {
-              "offset": 10780,
-              "size": 4000,
+              "offset": 10770,
+              "size": 4010,
             },
           },
         },
@@ -610,11 +610,11 @@ exports[`Package Managers > bun workspace --linker=isolated 2`] = `
             },
             "index.js": {
               "offset": 14800,
-              "size": 40,
+              "size": 50,
             },
             "package.json": {
-              "offset": 14840,
-              "size": 120,
+              "offset": 14850,
+              "size": 110,
             },
           },
         },
@@ -633,20 +633,20 @@ exports[`Package Managers > bun workspace --linker=isolated 2`] = `
               "size": 100,
             },
             "package.json": {
-              "offset": 21580,
-              "size": 440,
+              "offset": 21570,
+              "size": 450,
             },
             "test.js": {
               "offset": 22020,
-              "size": 6320,
+              "size": 6310,
             },
           },
         },
       },
     },
     "package.json": {
-      "offset": 28360,
-      "size": 320,
+      "offset": 28370,
+      "size": 330,
     },
   },
 }
@@ -696,8 +696,8 @@ exports[`Package Managers > npm 2`] = `
         "package.json": {
           "files": {
             "readme.md": {
-              "offset": 24700,
-              "size": 40,
+              "offset": 24710,
+              "size": 30,
             },
           },
         },
@@ -725,25 +725,25 @@ exports[`Package Managers > npm 2`] = `
             },
             "package.json": {
               "offset": 1140,
-              "size": 920,
+              "size": 910,
             },
             "src": {
               "files": {
                 "browser.js": {
-                  "offset": 2040,
+                  "offset": 2050,
                   "size": 6100,
                 },
                 "common.js": {
-                  "offset": 8160,
+                  "offset": 8150,
                   "size": 6920,
                 },
                 "index.js": {
-                  "offset": 15060,
-                  "size": 320,
+                  "offset": 15070,
+                  "size": 310,
                 },
                 "node.js": {
                   "offset": 15380,
-                  "size": 4720,
+                  "size": 4730,
                 },
               },
             },
@@ -752,15 +752,15 @@ exports[`Package Managers > npm 2`] = `
         "ms": {
           "files": {
             "index.js": {
-              "offset": 20100,
+              "offset": 20110,
               "size": 3020,
             },
             "license.md": {
-              "offset": 23140,
+              "offset": 23130,
               "size": 1080,
             },
             "package.json": {
-              "offset": 24220,
+              "offset": 24210,
               "size": 500,
             },
           },
@@ -769,7 +769,7 @@ exports[`Package Managers > npm 2`] = `
     },
     "package.json": {
       "offset": 29840,
-      "size": 360,
+      "size": 370,
     },
   },
 }
@@ -789,8 +789,8 @@ exports[`Package Managers > pnpm 2`] = `
         "package.json": {
           "files": {
             "readme.md": {
-              "offset": 24700,
-              "size": 40,
+              "offset": 24710,
+              "size": 30,
             },
           },
         },
@@ -818,25 +818,25 @@ exports[`Package Managers > pnpm 2`] = `
             },
             "package.json": {
               "offset": 1140,
-              "size": 920,
+              "size": 910,
             },
             "src": {
               "files": {
                 "browser.js": {
-                  "offset": 2040,
+                  "offset": 2050,
                   "size": 6100,
                 },
                 "common.js": {
-                  "offset": 8160,
+                  "offset": 8150,
                   "size": 6920,
                 },
                 "index.js": {
-                  "offset": 15060,
-                  "size": 320,
+                  "offset": 15070,
+                  "size": 310,
                 },
                 "node.js": {
                   "offset": 15380,
-                  "size": 4720,
+                  "size": 4730,
                 },
               },
             },
@@ -845,15 +845,15 @@ exports[`Package Managers > pnpm 2`] = `
         "ms": {
           "files": {
             "index.js": {
-              "offset": 20100,
+              "offset": 20110,
               "size": 3020,
             },
             "license.md": {
-              "offset": 23140,
+              "offset": 23130,
               "size": 1080,
             },
             "package.json": {
-              "offset": 24220,
+              "offset": 24210,
               "size": 500,
             },
           },
@@ -862,7 +862,7 @@ exports[`Package Managers > pnpm 2`] = `
     },
     "package.json": {
       "offset": 29840,
-      "size": 500,
+      "size": 510,
     },
   },
 }
@@ -878,11 +878,11 @@ exports[`Package Managers > traversal hoisted 2`] = `
 {
   "files": {
     "index.html": {
-      "offset": 24700,
+      "offset": 24710,
       "size": 380,
     },
     "index.js": {
-      "offset": 25080,
+      "offset": 25090,
       "size": 620,
     },
     "node_modules": {
@@ -895,25 +895,25 @@ exports[`Package Managers > traversal hoisted 2`] = `
             },
             "package.json": {
               "offset": 1140,
-              "size": 920,
+              "size": 910,
             },
             "src": {
               "files": {
                 "browser.js": {
-                  "offset": 2040,
+                  "offset": 2050,
                   "size": 6100,
                 },
                 "common.js": {
-                  "offset": 8160,
+                  "offset": 8150,
                   "size": 6920,
                 },
                 "index.js": {
-                  "offset": 15060,
-                  "size": 320,
+                  "offset": 15070,
+                  "size": 310,
                 },
                 "node.js": {
                   "offset": 15380,
-                  "size": 4720,
+                  "size": 4730,
                 },
               },
             },
@@ -922,15 +922,15 @@ exports[`Package Managers > traversal hoisted 2`] = `
         "ms": {
           "files": {
             "index.js": {
-              "offset": 20100,
+              "offset": 20110,
               "size": 3020,
             },
             "license.md": {
-              "offset": 23140,
+              "offset": 23130,
               "size": 1080,
             },
             "package.json": {
-              "offset": 24220,
+              "offset": 24210,
               "size": 500,
             },
           },
@@ -938,14 +938,14 @@ exports[`Package Managers > traversal hoisted 2`] = `
       },
     },
     "package.json": {
-      "offset": 25700,
-      "size": 300,
+      "offset": 25710,
+      "size": 310,
     },
     "path": {
       "files": {
         "app.asar": {
-          "offset": 26020,
-          "size": 720,
+          "offset": 26010,
+          "size": 710,
         },
       },
     },
@@ -963,11 +963,11 @@ exports[`Package Managers > traversal multi-package workspace 2`] = `
 {
   "files": {
     "index.html": {
-      "offset": 24700,
+      "offset": 24710,
       "size": 840,
     },
     "index.js": {
-      "offset": 25560,
+      "offset": 25550,
       "size": 2500,
     },
     "node_modules": {
@@ -980,25 +980,25 @@ exports[`Package Managers > traversal multi-package workspace 2`] = `
             },
             "package.json": {
               "offset": 1140,
-              "size": 920,
+              "size": 910,
             },
             "src": {
               "files": {
                 "browser.js": {
-                  "offset": 2040,
+                  "offset": 2050,
                   "size": 6100,
                 },
                 "common.js": {
-                  "offset": 8160,
+                  "offset": 8150,
                   "size": 6920,
                 },
                 "index.js": {
-                  "offset": 15060,
-                  "size": 320,
+                  "offset": 15070,
+                  "size": 310,
                 },
                 "node.js": {
                   "offset": 15380,
-                  "size": 4720,
+                  "size": 4730,
                 },
               },
             },
@@ -1007,15 +1007,15 @@ exports[`Package Managers > traversal multi-package workspace 2`] = `
         "ms": {
           "files": {
             "index.js": {
-              "offset": 20100,
+              "offset": 20110,
               "size": 3020,
             },
             "license.md": {
-              "offset": 23140,
+              "offset": 23130,
               "size": 1080,
             },
             "package.json": {
-              "offset": 24220,
+              "offset": 24210,
               "size": 500,
             },
           },
@@ -1023,7 +1023,7 @@ exports[`Package Managers > traversal multi-package workspace 2`] = `
       },
     },
     "package.json": {
-      "offset": 28060,
+      "offset": 28050,
       "size": 320,
     },
   },
@@ -1040,11 +1040,11 @@ exports[`Package Managers > traversal workspace 2`] = `
 {
   "files": {
     "index.html": {
-      "offset": 24700,
+      "offset": 24710,
       "size": 840,
     },
     "index.js": {
-      "offset": 25560,
+      "offset": 25550,
       "size": 2500,
     },
     "node_modules": {
@@ -1057,25 +1057,25 @@ exports[`Package Managers > traversal workspace 2`] = `
             },
             "package.json": {
               "offset": 1140,
-              "size": 920,
+              "size": 910,
             },
             "src": {
               "files": {
                 "browser.js": {
-                  "offset": 2040,
+                  "offset": 2050,
                   "size": 6100,
                 },
                 "common.js": {
-                  "offset": 8160,
+                  "offset": 8150,
                   "size": 6920,
                 },
                 "index.js": {
-                  "offset": 15060,
-                  "size": 320,
+                  "offset": 15070,
+                  "size": 310,
                 },
                 "node.js": {
                   "offset": 15380,
-                  "size": 4720,
+                  "size": 4730,
                 },
               },
             },
@@ -1084,15 +1084,15 @@ exports[`Package Managers > traversal workspace 2`] = `
         "ms": {
           "files": {
             "index.js": {
-              "offset": 20100,
+              "offset": 20110,
               "size": 3020,
             },
             "license.md": {
-              "offset": 23140,
+              "offset": 23130,
               "size": 1080,
             },
             "package.json": {
-              "offset": 24220,
+              "offset": 24210,
               "size": 500,
             },
           },
@@ -1100,7 +1100,7 @@ exports[`Package Managers > traversal workspace 2`] = `
       },
     },
     "package.json": {
-      "offset": 28060,
+      "offset": 28050,
       "size": 320,
     },
   },
@@ -1117,11 +1117,11 @@ exports[`Package Managers > yarn 2`] = `
 {
   "files": {
     "index.html": {
-      "offset": 24700,
+      "offset": 24710,
       "size": 380,
     },
     "index.js": {
-      "offset": 25080,
+      "offset": 25090,
       "size": 620,
     },
     "node_modules": {
@@ -1134,25 +1134,25 @@ exports[`Package Managers > yarn 2`] = `
             },
             "package.json": {
               "offset": 1140,
-              "size": 920,
+              "size": 910,
             },
             "src": {
               "files": {
                 "browser.js": {
-                  "offset": 2040,
+                  "offset": 2050,
                   "size": 6100,
                 },
                 "common.js": {
-                  "offset": 8160,
+                  "offset": 8150,
                   "size": 6920,
                 },
                 "index.js": {
-                  "offset": 15060,
-                  "size": 320,
+                  "offset": 15070,
+                  "size": 310,
                 },
                 "node.js": {
                   "offset": 15380,
-                  "size": 4720,
+                  "size": 4730,
                 },
               },
             },
@@ -1161,15 +1161,15 @@ exports[`Package Managers > yarn 2`] = `
         "ms": {
           "files": {
             "index.js": {
-              "offset": 20100,
+              "offset": 20110,
               "size": 3020,
             },
             "license.md": {
-              "offset": 23140,
+              "offset": 23130,
               "size": 1080,
             },
             "package.json": {
-              "offset": 24220,
+              "offset": 24210,
               "size": 500,
             },
           },
@@ -1177,14 +1177,14 @@ exports[`Package Managers > yarn 2`] = `
       },
     },
     "package.json": {
-      "offset": 25700,
+      "offset": 25710,
       "size": 340,
     },
     "path": {
       "files": {
         "app.asar": {
-          "offset": 26040,
-          "size": 720,
+          "offset": 26050,
+          "size": 710,
         },
       },
     },
@@ -1202,11 +1202,11 @@ exports[`Package Managers > yarn berry 2`] = `
 {
   "files": {
     "index.html": {
-      "offset": 24700,
+      "offset": 24710,
       "size": 380,
     },
     "index.js": {
-      "offset": 25080,
+      "offset": 25090,
       "size": 620,
     },
     "node_modules": {
@@ -1219,25 +1219,25 @@ exports[`Package Managers > yarn berry 2`] = `
             },
             "package.json": {
               "offset": 1140,
-              "size": 920,
+              "size": 910,
             },
             "src": {
               "files": {
                 "browser.js": {
-                  "offset": 2040,
+                  "offset": 2050,
                   "size": 6100,
                 },
                 "common.js": {
-                  "offset": 8160,
+                  "offset": 8150,
                   "size": 6920,
                 },
                 "index.js": {
-                  "offset": 15060,
-                  "size": 320,
+                  "offset": 15070,
+                  "size": 310,
                 },
                 "node.js": {
                   "offset": 15380,
-                  "size": 4720,
+                  "size": 4730,
                 },
               },
             },
@@ -1246,15 +1246,15 @@ exports[`Package Managers > yarn berry 2`] = `
         "ms": {
           "files": {
             "index.js": {
-              "offset": 20100,
+              "offset": 20110,
               "size": 3020,
             },
             "license.md": {
-              "offset": 23140,
+              "offset": 23130,
               "size": 1080,
             },
             "package.json": {
-              "offset": 24220,
+              "offset": 24210,
               "size": 500,
             },
           },
@@ -1262,14 +1262,14 @@ exports[`Package Managers > yarn berry 2`] = `
       },
     },
     "package.json": {
-      "offset": 25700,
-      "size": 300,
+      "offset": 25710,
+      "size": 310,
     },
     "path": {
       "files": {
         "app.asar": {
-          "offset": 26020,
-          "size": 720,
+          "offset": 26010,
+          "size": 710,
         },
       },
     },
@@ -1287,11 +1287,11 @@ exports[`Package Managers > yarn berry multi-package workspace 2`] = `
 {
   "files": {
     "index.html": {
-      "offset": 24700,
+      "offset": 24710,
       "size": 840,
     },
     "index.js": {
-      "offset": 25560,
+      "offset": 25550,
       "size": 2500,
     },
     "node_modules": {
@@ -1304,25 +1304,25 @@ exports[`Package Managers > yarn berry multi-package workspace 2`] = `
             },
             "package.json": {
               "offset": 1140,
-              "size": 920,
+              "size": 910,
             },
             "src": {
               "files": {
                 "browser.js": {
-                  "offset": 2040,
+                  "offset": 2050,
                   "size": 6100,
                 },
                 "common.js": {
-                  "offset": 8160,
+                  "offset": 8150,
                   "size": 6920,
                 },
                 "index.js": {
-                  "offset": 15060,
-                  "size": 320,
+                  "offset": 15070,
+                  "size": 310,
                 },
                 "node.js": {
                   "offset": 15380,
-                  "size": 4720,
+                  "size": 4730,
                 },
               },
             },
@@ -1331,15 +1331,15 @@ exports[`Package Managers > yarn berry multi-package workspace 2`] = `
         "ms": {
           "files": {
             "index.js": {
-              "offset": 20100,
+              "offset": 20110,
               "size": 3020,
             },
             "license.md": {
-              "offset": 23140,
+              "offset": 23130,
               "size": 1080,
             },
             "package.json": {
-              "offset": 24220,
+              "offset": 24210,
               "size": 500,
             },
           },
@@ -1347,7 +1347,7 @@ exports[`Package Managers > yarn berry multi-package workspace 2`] = `
       },
     },
     "package.json": {
-      "offset": 28060,
+      "offset": 28050,
       "size": 320,
     },
   },
@@ -1364,11 +1364,11 @@ exports[`Package Managers > yarn berry workspace 2`] = `
 {
   "files": {
     "index.html": {
-      "offset": 24700,
+      "offset": 24710,
       "size": 840,
     },
     "index.js": {
-      "offset": 25560,
+      "offset": 25550,
       "size": 2500,
     },
     "node_modules": {
@@ -1381,25 +1381,25 @@ exports[`Package Managers > yarn berry workspace 2`] = `
             },
             "package.json": {
               "offset": 1140,
-              "size": 920,
+              "size": 910,
             },
             "src": {
               "files": {
                 "browser.js": {
-                  "offset": 2040,
+                  "offset": 2050,
                   "size": 6100,
                 },
                 "common.js": {
-                  "offset": 8160,
+                  "offset": 8150,
                   "size": 6920,
                 },
                 "index.js": {
-                  "offset": 15060,
-                  "size": 320,
+                  "offset": 15070,
+                  "size": 310,
                 },
                 "node.js": {
                   "offset": 15380,
-                  "size": 4720,
+                  "size": 4730,
                 },
               },
             },
@@ -1408,15 +1408,15 @@ exports[`Package Managers > yarn berry workspace 2`] = `
         "ms": {
           "files": {
             "index.js": {
-              "offset": 20100,
+              "offset": 20110,
               "size": 3020,
             },
             "license.md": {
-              "offset": 23140,
+              "offset": 23130,
               "size": 1080,
             },
             "package.json": {
-              "offset": 24220,
+              "offset": 24210,
               "size": 500,
             },
           },
@@ -1424,7 +1424,7 @@ exports[`Package Managers > yarn berry workspace 2`] = `
       },
     },
     "package.json": {
-      "offset": 28060,
+      "offset": 28050,
       "size": 320,
     },
   },
@@ -1441,11 +1441,11 @@ exports[`Package Managers > yarn multi-package workspace 2`] = `
 {
   "files": {
     "index.html": {
-      "offset": 24700,
+      "offset": 24710,
       "size": 840,
     },
     "index.js": {
-      "offset": 25560,
+      "offset": 25550,
       "size": 2500,
     },
     "node_modules": {
@@ -1458,25 +1458,25 @@ exports[`Package Managers > yarn multi-package workspace 2`] = `
             },
             "package.json": {
               "offset": 1140,
-              "size": 920,
+              "size": 910,
             },
             "src": {
               "files": {
                 "browser.js": {
-                  "offset": 2040,
+                  "offset": 2050,
                   "size": 6100,
                 },
                 "common.js": {
-                  "offset": 8160,
+                  "offset": 8150,
                   "size": 6920,
                 },
                 "index.js": {
-                  "offset": 15060,
-                  "size": 320,
+                  "offset": 15070,
+                  "size": 310,
                 },
                 "node.js": {
                   "offset": 15380,
-                  "size": 4720,
+                  "size": 4730,
                 },
               },
             },
@@ -1485,15 +1485,15 @@ exports[`Package Managers > yarn multi-package workspace 2`] = `
         "ms": {
           "files": {
             "index.js": {
-              "offset": 20100,
+              "offset": 20110,
               "size": 3020,
             },
             "license.md": {
-              "offset": 23140,
+              "offset": 23130,
               "size": 1080,
             },
             "package.json": {
-              "offset": 24220,
+              "offset": 24210,
               "size": 500,
             },
           },
@@ -1501,8 +1501,8 @@ exports[`Package Managers > yarn multi-package workspace 2`] = `
       },
     },
     "package.json": {
-      "offset": 28060,
-      "size": 360,
+      "offset": 28050,
+      "size": 350,
     },
   },
 }
@@ -1518,11 +1518,11 @@ exports[`Package Managers > yarn workspace 2`] = `
 {
   "files": {
     "index.html": {
-      "offset": 24700,
+      "offset": 24710,
       "size": 840,
     },
     "index.js": {
-      "offset": 25560,
+      "offset": 25550,
       "size": 2500,
     },
     "node_modules": {
@@ -1535,25 +1535,25 @@ exports[`Package Managers > yarn workspace 2`] = `
             },
             "package.json": {
               "offset": 1140,
-              "size": 920,
+              "size": 910,
             },
             "src": {
               "files": {
                 "browser.js": {
-                  "offset": 2040,
+                  "offset": 2050,
                   "size": 6100,
                 },
                 "common.js": {
-                  "offset": 8160,
+                  "offset": 8150,
                   "size": 6920,
                 },
                 "index.js": {
-                  "offset": 15060,
-                  "size": 320,
+                  "offset": 15070,
+                  "size": 310,
                 },
                 "node.js": {
                   "offset": 15380,
-                  "size": 4720,
+                  "size": 4730,
                 },
               },
             },
@@ -1562,15 +1562,15 @@ exports[`Package Managers > yarn workspace 2`] = `
         "ms": {
           "files": {
             "index.js": {
-              "offset": 20100,
+              "offset": 20110,
               "size": 3020,
             },
             "license.md": {
-              "offset": 23140,
+              "offset": 23130,
               "size": 1080,
             },
             "package.json": {
-              "offset": 24220,
+              "offset": 24210,
               "size": 500,
             },
           },
@@ -1578,8 +1578,8 @@ exports[`Package Managers > yarn workspace 2`] = `
       },
     },
     "package.json": {
-      "offset": 28060,
-      "size": 360,
+      "offset": 28050,
+      "size": 350,
     },
   },
 }

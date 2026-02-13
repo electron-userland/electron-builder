@@ -2,7 +2,7 @@ import { readAsar } from "app-builder-lib/src/asar/asar"
 import path from "path"
 import { expect, ExpectStatic } from "vitest"
 
-const defaultTolerance = 20 // this will innately round sizes/offsets to nearest 20 bytes, which should be enough to avoid snapshot churn while still catching major regressions
+const defaultTolerance = 10 // this will innately round sizes/offsets to nearest 10 bytes, which should be enough to avoid snapshot churn while still catching major regressions
 export async function verifyAsarFileTree(expectSnapshot: ExpectStatic, resourceDir: string, tolerances = { size: defaultTolerance, offset: defaultTolerance }) {
   const fs = await readAsar(path.join(resourceDir, "app.asar"))
 

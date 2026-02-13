@@ -462,20 +462,3 @@ It is required to set Linux .deb package maintainer. Or you can set maintainer i
 (see https://www.electron.build/linux).
 "
 `;
-
-exports[`LinuxPackager > AppImage toolset 1.0.2 > text license and file associations 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0.AppImage",
-      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
-}
-`;
