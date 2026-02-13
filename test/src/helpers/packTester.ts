@@ -795,6 +795,10 @@ export async function verifyAsarFileTree(expect: ExpectStatic, resourceDir: stri
       if (value.integrity) {
         delete value.integrity
       }
+      if (name === "size" || name === "Size") {
+        // size can be different on different platforms, we stub here to ensure that some property exists
+        return "@size"
+      }
       return value
     })
   )
