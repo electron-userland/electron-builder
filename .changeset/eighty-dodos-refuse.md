@@ -1,5 +1,5 @@
 ---
-"app-builder-lib": minor
+"app-builder-lib": patch
 ---
 
-fix: fix mime type directory in AppDir
+fix(AppImage): fix mime type directory in AppDir
