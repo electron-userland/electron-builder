@@ -34,7 +34,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   constructor(
     protected readonly rootDir: string,
     private readonly tempDirManager: TmpDir
-  ) { }
+  ) {}
 
   /**
    * Retrieves and collects all Node.js modules for a given package.

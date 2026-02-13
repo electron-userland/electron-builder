@@ -82,7 +82,7 @@ export class ModuleManager {
         return this.logSummaryMap.has(key)
       },
       // Add these to make Object.entries() work
-      ownKeys: (_) => {
+      ownKeys: _ => {
         return Array.from(this.logSummaryMap.keys())
       },
       getOwnPropertyDescriptor: (_, key) => {
