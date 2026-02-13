@@ -234,13 +234,25 @@ fi
 
 isEulaAccepted=1
 
+HAVE_NO_SANDBOX=0
+for arg in "\${args[@]}" ; do
+  if [ "$arg" = --no-sandbox ] ; then
+    HAVE_NO_SANDBOX=1
+    break
+  fi
+done
+NO_SANDBOX=
+if [ $HAVE_NO_SANDBOX -eq 0 ] && ! unshare -Ur true 2>/dev/null ; then
+  NO_SANDBOX=--no-sandbox
+fi
+
 atexit()
 {
   if [ $isEulaAccepted == 1 ] ; then
     if [ $NUMBER_OF_ARGS -eq 0 ] ; then
-      exec "$BIN"
+      exec "$BIN" $NO_SANDBOX
     else
-      exec "$BIN" "\${args[@]}"
+      exec "$BIN" $NO_SANDBOX "\${args[@]}"
     fi
   fi
 }
