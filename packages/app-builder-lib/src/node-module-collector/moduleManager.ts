@@ -4,21 +4,29 @@ import * as fs from "fs-extra"
 import * as path from "path"
 import * as semver from "semver"
 
-export const PKG_DUPLICATE_REF_LOG_KEY = "duplicate dependency references"
-export const PKG_NOT_FOUND_LOG_KEY = "cannot find path for dependency"
-export const PKG_NOT_ON_DISK_LOG_KEY = "dependency not found on disk"
-export const PKG_SELF_REF_LOG_KEY = "self-referential dependencies"
-export const PKG_OPTIONAL_NOT_INSTALLED_LOG_KEY = "missing optional dependencies"
-export const PKG_COLLECTOR_LOG_KEY = "collector output"
+// export const PKG_DUPLICATE_REF_LOG_KEY = "duplicate dependency references"
+// export const PKG_NOT_FOUND_LOG_KEY = "cannot find path for dependency"
+// export const PKG_NOT_ON_DISK_LOG_KEY = "dependency not found on disk"
+// export const PKG_SELF_REF_LOG_KEY = "self-referential dependencies"
+// export const PKG_OPTIONAL_NOT_INSTALLED_LOG_KEY = "missing optional dependencies"
+// export const PKG_COLLECTOR_LOG_KEY = "collector output"
 
-type CacheKey =
-  | typeof PKG_DUPLICATE_REF_LOG_KEY
-  | typeof PKG_NOT_FOUND_LOG_KEY
-  | typeof PKG_NOT_ON_DISK_LOG_KEY
-  | typeof PKG_SELF_REF_LOG_KEY
-  | typeof PKG_OPTIONAL_NOT_INSTALLED_LOG_KEY
-  | typeof PKG_COLLECTOR_LOG_KEY
+export enum LogMessageByKey {
+  PKG_DUPLICATE_REF = "duplicate dependency references",
+  PKG_NOT_FOUND = "cannot find path for dependency",
+  PKG_NOT_ON_DISK = "dependency not found on disk",
+  PKG_SELF_REF = "self-referential dependencies",
+  PKG_OPTIONAL_NOT_INSTALLED = "missing optional dependencies",
+  PKG_COLLECTOR_OUTPUT = "collector output",
+}
 
+// type CacheKey =
+//   | typeof PKG_DUPLICATE_REF_LOG_KEY
+//   | typeof PKG_NOT_FOUND_LOG_KEY
+//   | typeof PKG_NOT_ON_DISK_LOG_KEY
+//   | typeof PKG_SELF_REF_LOG_KEY
+//   | typeof PKG_OPTIONAL_NOT_INSTALLED_LOG_KEY
+//   | typeof PKG_COLLECTOR_LOG_KEY
 export type Package = { packageDir: string; packageJson: PackageJson }
 
 // Type aliases for clarity
@@ -27,7 +35,7 @@ type RealPathCache = Record<string, Promise<string>>
 type ExistsCache = Record<string, Promise<boolean>>
 type LstatCache = Record<string, Promise<fs.Stats | null>>
 type PackageCache = Record<string, Promise<Package | null>>
-type LogSummaryCache = Record<CacheKey, string[]>
+type LogSummaryCache = Record<LogMessageByKey, string[]>
 
 export class ModuleManager {
   /** Cache for package.json contents (readJson) */
@@ -48,24 +56,10 @@ export class ModuleManager {
   private readonly existsMap: Map<string, boolean> = new Map()
   private readonly lstatMap: Map<string, fs.Stats | null> = new Map()
   private readonly packageDataMap: Map<string, Package | null> = new Map()
-  private readonly logSummaryMap: Map<CacheKey, string[]> = new Map()
+  private readonly logSummaryMap: Map<LogMessageByKey, string[]> = new Map()
 
   constructor() {
-    this.logSummary = new Proxy({} as LogSummaryCache, {
-      get: (_, key: CacheKey) => {
-        if (!this.logSummaryMap.has(key)) {
-          this.logSummaryMap.set(key, [])
-        }
-        return this.logSummaryMap.get(key)!
-      },
-      set: (_, key: CacheKey, value: string[]) => {
-        this.logSummaryMap.set(key, value)
-        return true
-      },
-      has: (_, key: CacheKey) => {
-        return this.logSummaryMap.has(key)
-      },
-    })
+    this.logSummary = this.createLogSummarySyncProxy()
 
     this.exists = this.createAsyncProxy(this.existsMap, (p: string) => exists(p))
     this.json = this.createAsyncProxy(this.jsonMap, (p: string) => fs.readJson(p).catch(() => null))
@@ -75,6 +69,37 @@ export class ModuleManager {
       const filePath = path.resolve(p)
       const stat = await this.lstat[filePath]
       return stat?.isSymbolicLink() ? fs.realpath(filePath) : filePath
+    })
+  }
+
+  private createLogSummarySyncProxy(): LogSummaryCache {
+    return new Proxy({} as LogSummaryCache, {
+      get: (_, key: LogMessageByKey) => {
+        if (!this.logSummaryMap.has(key)) {
+          this.logSummaryMap.set(key, [])
+        }
+        return this.logSummaryMap.get(key)!
+      },
+      set: (_, key: LogMessageByKey, value: string[]) => {
+        this.logSummaryMap.set(key, value)
+        return true
+      },
+      has: (_, key: LogMessageByKey) => {
+        return this.logSummaryMap.has(key)
+      },
+      // Add these to make Object.entries() work
+      ownKeys: (_) => {
+        return Array.from(this.logSummaryMap.keys())
+      },
+      getOwnPropertyDescriptor: (_, key) => {
+        if (this.logSummaryMap.has(key as LogMessageByKey)) {
+          return {
+            enumerable: true,
+            configurable: true,
+          }
+        }
+        return undefined
+      },
     })
   }
 

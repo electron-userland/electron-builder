@@ -1,4 +1,4 @@
-import { PKG_DUPLICATE_REF_LOG_KEY } from "./moduleManager.js"
+import { LogMessageByKey } from "./moduleManager.js"
 import { NodeModulesCollector } from "./nodeModulesCollector.js"
 import { PM } from "./packageManager.js"
 import { NpmDependency } from "./types.js"
@@ -25,7 +25,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
         if (!this.allDependencies.has(childDependencyId)) {
           this.allDependencies.set(childDependencyId, pkgOverride)
         }
-        this.cache.logSummary[PKG_DUPLICATE_REF_LOG_KEY].push(childDependencyId)
+        this.cache.logSummary[LogMessageByKey.PKG_DUPLICATE_REF].push(childDependencyId)
         continue
       }
 

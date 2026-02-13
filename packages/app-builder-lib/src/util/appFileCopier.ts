@@ -241,7 +241,7 @@ async function collectNodeModulesWithLogging(platformPackager: PlatformPackager<
     return []
   }
 
-  const summary = Object.entries(deps.logSummary ?? {})
+  const summary = Object.entries(deps.logSummary ?? {}).filter(([, dependencies]) => Array.isArray(dependencies) && dependencies.length > 0)
   for (const [errorMessage, dependencies] of summary) {
     log.warn({ dependencies }, errorMessage)
   }

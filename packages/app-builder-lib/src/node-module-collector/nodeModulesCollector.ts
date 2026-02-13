@@ -5,7 +5,7 @@ import { createWriteStream } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { hoist, type HoisterResult, type HoisterTree } from "./hoist"
-import { ModuleManager, PKG_COLLECTOR_LOG_KEY, PKG_NOT_FOUND_LOG_KEY, PKG_NOT_ON_DISK_LOG_KEY } from "./moduleManager"
+import { LogMessageByKey, ModuleManager } from "./moduleManager"
 import { getPackageManagerCommand, PM } from "./packageManager"
 import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types"
 
@@ -34,7 +34,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   constructor(
     protected readonly rootDir: string,
     private readonly tempDirManager: TmpDir
-  ) {}
+  ) { }
 
   /**
    * Retrieves and collects all Node.js modules for a given package.
@@ -46,12 +46,11 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * 4. Building a production dependency graph
    * 5. Hoisting the dependencies to their final locations
    * 6. Resolving and returning module information
-   *
-   * @param options - Configuration object
-   * @param options.packageName - The name of the package to collect modules for
-   * @returns Promise resolving to an array of NodeModuleInfo objects representing all collected modules
    */
-  public async getNodeModules({ packageName }: { packageName: string }) {
+  public async getNodeModules({ packageName }: { packageName: string }): Promise<{
+    nodeModules: NodeModuleInfo[]
+    logSummary: ModuleManager["logSummary"]
+  }> {
     const tree: ProdDepType = await this.getDependenciesTree(this.installOptions.manager)
 
     await this.collectAllDependencies(tree, packageName)
@@ -84,10 +83,6 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * Executes the appropriate package manager command to fetch the dependency tree and writes
    * the output to a temporary file. Includes retry logic to handle transient failures such as
    * incomplete JSON output or missing files. Will retry up to 1 time with exponential backoff.
-   *
-   * @param pm - The package manager to use (npm, yarn, pnpm, etc.)
-   * @returns Promise resolving to the parsed dependency tree
-   * @throws {Error} If the dependency tree cannot be retrieved after retries
    */
   protected async getDependenciesTree(pm: PM): Promise<ProdDepType> {
     const command = getPackageManagerCommand(pm)
@@ -292,14 +287,14 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       const key = `${d.name}@${reference}`
       const p = this.allDependencies.get(key)?.path
       if (p === undefined) {
-        this.cache.logSummary[PKG_NOT_FOUND_LOG_KEY].push(key)
+        this.cache.logSummary[LogMessageByKey.PKG_NOT_FOUND].push(key)
         continue
       }
 
       // fix npm list issue
       // https://github.com/npm/cli/issues/8535
       if (!(await this.cache.exists[p])) {
-        this.cache.logSummary[PKG_NOT_ON_DISK_LOG_KEY].push(key)
+        this.cache.logSummary[LogMessageByKey.PKG_NOT_ON_DISK].push(key)
         continue
       }
 
@@ -390,7 +385,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         }
         if (stderr.length > 0) {
           log.debug({ stderr }, "note: there was node module collector output on stderr")
-          this.cache.logSummary[PKG_COLLECTOR_LOG_KEY].push(stderr)
+          this.cache.logSummary[LogMessageByKey.PKG_COLLECTOR_OUTPUT].push(stderr)
         }
         const shouldResolve = code === 0 || shouldIgnore
         return shouldResolve ? resolve() : reject(new Error(`Node module collector process exited with code ${code}:\n${stderr}`))
