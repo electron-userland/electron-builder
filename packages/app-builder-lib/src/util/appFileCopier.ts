@@ -8,12 +8,13 @@ import { isLibOrExe } from "../asar/unpackDetector"
 import { Platform } from "../core"
 import { excludedExts, FileMatcher } from "../fileMatcher"
 import { createElectronCompilerHost, NODE_MODULES_PATTERN } from "../fileTransformer"
+import { getCollectorByPackageManager, PM } from "../node-module-collector"
+import { ModuleManager } from "../node-module-collector/moduleManager"
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
 import { AppFileWalker } from "./AppFileWalker"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper"
 import { NodeModuleInfo } from "./packageDependencies"
-import { getNodeModules, PM } from "../node-module-collector"
 
 const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
 /** @internal */
@@ -178,34 +179,7 @@ function validateFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
 
 /** @internal */
 export async function computeNodeModuleFileSets(platformPackager: PlatformPackager<any>, mainMatcher: FileMatcher): Promise<Array<ResolvedFileSet>> {
-  const packager = platformPackager.info
-  const { tempDirManager, cancellationToken, appDir, projectDir } = packager
-
-  let deps: Array<NodeModuleInfo> = []
-  const searchDirectories = Array.from(new Set([appDir, projectDir, await packager.getWorkspaceRoot()])).filter((it): it is string => isEmptyOrSpaces(it) === false)
-  const pmApproaches = [await packager.getPackageManager(), PM.TRAVERSAL]
-  for (const pm of pmApproaches) {
-    for (const dir of searchDirectories) {
-      log.info({ pm, searchDir: dir }, "searching for node modules")
-      const options = { rootDir: dir, tempDirManager, cancellationToken, packageName: packager.metadata.name! }
-      deps = await getNodeModules(pm, options)
-      if (deps.length > 0) {
-        break
-      }
-      const attempt = searchDirectories.indexOf(dir)
-      if (attempt < searchDirectories.length - 1) {
-        log.info({ searchDir: dir, attempt }, "no node modules found in collection, trying next search directory")
-      }
-    }
-    if (deps.length > 0) {
-      log.debug({ pm, nodeModules: deps }, "collected node modules")
-      break
-    }
-  }
-  if (deps.length === 0) {
-    log.warn({ searchDirectories: searchDirectories.map(it => log.filePath(it)) }, "no node modules returned while searching directories")
-    return []
-  }
+  const deps = await collectNodeModulesWithLogging(platformPackager)
 
   const nodeModuleExcludedExts = getNodeModuleExcludedExts(platformPackager)
   // serial execution because copyNodeModules is concurrent and so, no need to increase queue/pressure
@@ -234,6 +208,45 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     await collectNodeModules(dep, destination)
   }
   return result
+}
+
+async function collectNodeModulesWithLogging(platformPackager: PlatformPackager<any>) {
+  const packager = platformPackager.info
+  const { tempDirManager, appDir, projectDir } = packager
+
+  let deps: { nodeModules: NodeModuleInfo[]; logSummary: ModuleManager["logSummary"] } | undefined = undefined
+
+  const searchDirectories = Array.from(new Set([appDir, projectDir, await packager.getWorkspaceRoot()])).filter((it): it is string => isEmptyOrSpaces(it) === false)
+  const pmApproaches = [await packager.getPackageManager(), PM.TRAVERSAL]
+  for (const pm of pmApproaches) {
+    for (const dir of searchDirectories) {
+      log.info({ pm, searchDir: dir }, "searching for node modules")
+      const collector = getCollectorByPackageManager(pm, dir, tempDirManager)
+      deps = await collector.getNodeModules({ packageName: packager.metadata.name! })
+      if (deps.nodeModules.length > 0) {
+        break
+      }
+      const attempt = searchDirectories.indexOf(dir)
+      if (attempt < searchDirectories.length - 1) {
+        log.info({ searchDir: dir, attempt }, "no node modules found in collection, trying next search directory")
+      }
+    }
+    if (deps?.nodeModules?.length) {
+      log.debug({ pm, nodeModules: deps.nodeModules }, "collected node modules")
+      break
+    }
+  }
+  if (!deps?.nodeModules?.length) {
+    log.warn({ searchDirectories: searchDirectories.map(it => log.filePath(it)) }, "no node modules returned while searching directories")
+    return []
+  }
+
+  const summary = Object.entries(deps.logSummary ?? {})
+  for (const [errorMessage, dependencies] of summary) {
+    log.warn({ dependencies }, errorMessage)
+  }
+
+  return deps.nodeModules
 }
 
 async function compileUsingElectronCompile(mainFileSet: ResolvedFileSet, packager: Packager): Promise<ResolvedFileSet> {

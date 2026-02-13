@@ -3,6 +3,7 @@ import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager.js"
 import { TraversedDependency } from "./types.js"
 import * as path from "path"
+import { PKG_SELF_REF_LOG_KEY, PKG_OPTIONAL_NOT_INSTALLED_LOG_KEY } from "./moduleManager"
 
 // manual traversal of node_modules for package managers without CLI support for dependency tree extraction (e.g., bun) OR as a fallback (e.g. corepack enabled w/ strict mode)
 export class TraversalNodeModulesCollector extends NodeModulesCollector<TraversedDependency, TraversedDependency> {
@@ -103,7 +104,7 @@ export class TraversalNodeModulesCollector extends NodeModulesCollector<Traverse
 
           // Skip if this dependency resolves to the base directory or any parent we're already processing
           if (pkg.packageDir === resolvedPackageDir || pkg.packageDir === resolvedBaseDir) {
-            log.debug({ ...logFields, resolvedPath: pkg.packageDir }, "skipping self-referential dependency")
+            this.cache.logSummary[PKG_SELF_REF_LOG_KEY].push(`${depName}@${depVersion}`)
             continue
           }
 
@@ -118,8 +119,9 @@ export class TraversalNodeModulesCollector extends NodeModulesCollector<Traverse
         throw new Error(`Production dependency ${depName} not found for package ${moduleName}`)
       })
 
-      const optionalDeps = await buildPackage(pkg.optionalDependencies, (depName: string) => {
+      const optionalDeps = await buildPackage(pkg.optionalDependencies, (depName: string, version: string) => {
         log.debug({ parent: moduleName, dependency: depName }, "optional dependency not installed, skipping")
+        this.cache.logSummary[PKG_OPTIONAL_NOT_INSTALLED_LOG_KEY].push(`${depName}@${version}`)
       })
 
       return {

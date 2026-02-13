@@ -4,6 +4,21 @@ import * as fs from "fs-extra"
 import * as path from "path"
 import * as semver from "semver"
 
+export const PKG_DUPLICATE_REF_LOG_KEY = "duplicate dependency references"
+export const PKG_NOT_FOUND_LOG_KEY = "cannot find path for dependency"
+export const PKG_NOT_ON_DISK_LOG_KEY = "dependency not found on disk"
+export const PKG_SELF_REF_LOG_KEY = "self-referential dependencies"
+export const PKG_OPTIONAL_NOT_INSTALLED_LOG_KEY = "missing optional dependencies"
+export const PKG_COLLECTOR_LOG_KEY = "collector output"
+
+type CacheKey =
+  | typeof PKG_DUPLICATE_REF_LOG_KEY
+  | typeof PKG_NOT_FOUND_LOG_KEY
+  | typeof PKG_NOT_ON_DISK_LOG_KEY
+  | typeof PKG_SELF_REF_LOG_KEY
+  | typeof PKG_OPTIONAL_NOT_INSTALLED_LOG_KEY
+  | typeof PKG_COLLECTOR_LOG_KEY
+
 export type Package = { packageDir: string; packageJson: PackageJson }
 
 // Type aliases for clarity
@@ -12,6 +27,7 @@ type RealPathCache = Record<string, Promise<string>>
 type ExistsCache = Record<string, Promise<boolean>>
 type LstatCache = Record<string, Promise<fs.Stats | null>>
 type PackageCache = Record<string, Promise<Package | null>>
+type LogSummaryCache = Record<CacheKey, string[]>
 
 export class ModuleManager {
   /** Cache for package.json contents (readJson) */
@@ -24,14 +40,33 @@ export class ModuleManager {
   readonly lstat: LstatCache
   /** Cache for package lookups (key: "packageName||fromDir||semverRange"). Use helper function `versionedCacheKey` */
   readonly packageData: PackageCache
+  /** For logging purposes, just track all dependencies for each key */
+  readonly logSummary: LogSummaryCache
 
   private readonly jsonMap: Map<string, PackageJson | null> = new Map()
   private readonly realPathMap: Map<string, string> = new Map()
   private readonly existsMap: Map<string, boolean> = new Map()
   private readonly lstatMap: Map<string, fs.Stats | null> = new Map()
   private readonly packageDataMap: Map<string, Package | null> = new Map()
+  private readonly logSummaryMap: Map<CacheKey, string[]> = new Map()
 
   constructor() {
+    this.logSummary = new Proxy({} as LogSummaryCache, {
+      get: (_, key: CacheKey) => {
+        if (!this.logSummaryMap.has(key)) {
+          this.logSummaryMap.set(key, [])
+        }
+        return this.logSummaryMap.get(key)!
+      },
+      set: (_, key: CacheKey, value: string[]) => {
+        this.logSummaryMap.set(key, value)
+        return true
+      },
+      has: (_, key: CacheKey) => {
+        return this.logSummaryMap.has(key)
+      },
+    })
+
     this.exists = this.createAsyncProxy(this.existsMap, (p: string) => exists(p))
     this.json = this.createAsyncProxy(this.jsonMap, (p: string) => fs.readJson(p).catch(() => null))
     this.lstat = this.createAsyncProxy(this.lstatMap, (p: string) => fs.lstat(p).catch(() => null))

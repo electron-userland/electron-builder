@@ -5,7 +5,7 @@ import { createWriteStream } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { hoist, type HoisterResult, type HoisterTree } from "./hoist"
-import { ModuleManager } from "./moduleManager"
+import { ModuleManager, PKG_COLLECTOR_LOG_KEY, PKG_NOT_FOUND_LOG_KEY, PKG_NOT_ON_DISK_LOG_KEY } from "./moduleManager"
 import { getPackageManagerCommand, PM } from "./packageManager"
 import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types"
 
@@ -51,7 +51,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * @param options.packageName - The name of the package to collect modules for
    * @returns Promise resolving to an array of NodeModuleInfo objects representing all collected modules
    */
-  public async getNodeModules({ packageName }: { packageName: string }): Promise<NodeModuleInfo[]> {
+  public async getNodeModules({ packageName }: { packageName: string }) {
     const tree: ProdDepType = await this.getDependenciesTree(this.installOptions.manager)
 
     await this.collectAllDependencies(tree, packageName)
@@ -63,9 +63,10 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     })
 
     await this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
+
     log.debug({ packageName, depCount: this.nodeModules.length }, "node modules collection complete")
 
-    return this.nodeModules
+    return { nodeModules: this.nodeModules, logSummary: this.cache.logSummary }
   }
 
   public abstract readonly installOptions: {
@@ -288,16 +289,17 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
     for (const d of dependencies.values()) {
       const reference = [...d.references][0]
-      const p = this.allDependencies.get(`${d.name}@${reference}`)?.path
+      const key = `${d.name}@${reference}`
+      const p = this.allDependencies.get(key)?.path
       if (p === undefined) {
-        log.warn({ name: d.name, reference }, "cannot find path for dependency")
+        this.cache.logSummary[PKG_NOT_FOUND_LOG_KEY].push(key)
         continue
       }
 
       // fix npm list issue
       // https://github.com/npm/cli/issues/8535
       if (!(await this.cache.exists[p])) {
-        log.debug({ name: d.name, reference, p }, "dependency path does not exist")
+        this.cache.logSummary[PKG_NOT_ON_DISK_LOG_KEY].push(key)
         continue
       }
 
@@ -388,6 +390,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         }
         if (stderr.length > 0) {
           log.debug({ stderr }, "note: there was node module collector output on stderr")
+          this.cache.logSummary[PKG_COLLECTOR_LOG_KEY].push(stderr)
         }
         const shouldResolve = code === 0 || shouldIgnore
         return shouldResolve ? resolve() : reject(new Error(`Node module collector process exited with code ${code}:\n${stderr}`))
