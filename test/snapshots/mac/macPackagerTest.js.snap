@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`macPackager > Build macOS on Windows is not supported 1`] = `"ERR_DLOPEN_FAILED"`;
+exports[`macPackager > Build macOS on Windows is not supported 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
 
 exports[`macPackager > multiple asar resources 1`] = `
 {
