@@ -23,12 +23,13 @@ function normalizeWithTolerance(header: any, tolerances: { size: number; offset:
       if (typeof value === "object" && value != null) {
         const { integrity, ...rest } = value
 
-        // Round size and offset to tolerance boundaries
+        // Round size and offset to tolerance boundaries. Always use `ceil` to avoid underestimating sizes/offsets, which could hide regressions.
+        // Only one file should allow an offset of 0, which is the first file in the archive. All others should be > 0, so rounding up is safe.
         if ("size" in rest) {
-          rest.size = Math.round(Number(rest.size) / tolerances.size) * tolerances.size
+          rest.size = Math.ceil(Number(rest.size) / tolerances.size) * tolerances.size
         }
         if ("offset" in rest) {
-          rest.offset = Math.round(Number(rest.offset) / tolerances.offset) * tolerances.offset
+          rest.offset = Math.ceil(Number(rest.offset) / tolerances.offset) * tolerances.offset
         }
 
         return rest

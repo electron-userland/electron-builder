@@ -18,14 +18,14 @@ exports[`asarUnpack and files ignore 2`] = `
       "size": 3550,
     },
     "package.json": {
-      "offset": 4030,
-      "size": 220,
+      "offset": 4040,
+      "size": 230,
     },
     "path": {
       "files": {
         "app.asar": {
           "offset": 4260,
-          "size": 710,
+          "size": 720,
         },
       },
     },
@@ -19786,12 +19786,12 @@ exports[`link 3`] = `
           "files": {
             "readme.md": {
               "offset": 0,
-              "size": 30,
+              "size": 40,
             },
           },
         },
         "readme.md": {
-          "offset": 30,
+          "offset": 40,
           "size": 80,
         },
       },
@@ -19801,11 +19801,11 @@ exports[`link 3`] = `
     },
     "index.html": {
       "offset": 110,
-      "size": 840,
+      "size": 850,
     },
     "index.js": {
-      "offset": 950,
-      "size": 4180,
+      "offset": 960,
+      "size": 4190,
     },
     "package.json": {
       "offset": 5140,
@@ -20070,11 +20070,11 @@ exports[`unpackDir 2`] = `
           "unpacked": true,
         },
         "file1": {
-          "size": 0,
+          "size": 10,
           "unpacked": true,
         },
         "file2": {
-          "size": 0,
+          "size": 10,
           "unpacked": true,
         },
         "subdir": {
@@ -20084,7 +20084,7 @@ exports[`unpackDir 2`] = `
               "unpacked": true,
             },
             "file3": {
-              "size": 0,
+              "size": 10,
               "unpacked": true,
             },
           },
@@ -20094,7 +20094,7 @@ exports[`unpackDir 2`] = `
     "b2": {
       "files": {
         "file": {
-          "size": 0,
+          "size": 10,
           "unpacked": true,
         },
       },
@@ -20109,7 +20109,7 @@ exports[`unpackDir 2`] = `
                   "files": {
                     "file-in-asar": {
                       "offset": 0,
-                      "size": 0,
+                      "size": 10,
                     },
                   },
                 },
@@ -20118,12 +20118,12 @@ exports[`unpackDir 2`] = `
           },
         },
         "file.json": {
-          "size": 0,
+          "size": 10,
           "unpacked": true,
         },
         "must-be-not-unpacked": {
-          "offset": 0,
-          "size": 0,
+          "offset": 10,
+          "size": 10,
         },
       },
     },
@@ -20131,7 +20131,7 @@ exports[`unpackDir 2`] = `
       "link": "assets/subdir/file3",
     },
     "index.html": {
-      "offset": 0,
+      "offset": 10,
       "size": 490,
     },
     "index.js": {
@@ -20140,13 +20140,13 @@ exports[`unpackDir 2`] = `
     },
     "package.json": {
       "offset": 4040,
-      "size": 220,
+      "size": 230,
     },
     "path": {
       "files": {
         "app.asar": {
           "offset": 4260,
-          "size": 710,
+          "size": 720,
         },
       },
     },
@@ -20169,12 +20169,12 @@ exports[`unpackDir one 2`] = `
           "files": {
             "readme.md": {
               "offset": 0,
-              "size": 30,
+              "size": 40,
             },
           },
         },
         "readme.md": {
-          "offset": 30,
+          "offset": 40,
           "size": 80,
         },
       },
@@ -20186,11 +20186,11 @@ exports[`unpackDir one 2`] = `
           "unpacked": true,
         },
         "file1": {
-          "size": 0,
+          "size": 10,
           "unpacked": true,
         },
         "file2": {
-          "size": 0,
+          "size": 10,
           "unpacked": true,
         },
         "subdir": {
@@ -20200,7 +20200,7 @@ exports[`unpackDir one 2`] = `
               "unpacked": true,
             },
             "file3": {
-              "size": 0,
+              "size": 10,
               "unpacked": true,
             },
           },
@@ -20210,7 +20210,7 @@ exports[`unpackDir one 2`] = `
     "b2": {
       "files": {
         "file": {
-          "size": 0,
+          "size": 10,
           "unpacked": true,
         },
       },
@@ -20225,7 +20225,7 @@ exports[`unpackDir one 2`] = `
                   "files": {
                     "file-in-asar": {
                       "offset": 110,
-                      "size": 0,
+                      "size": 10,
                     },
                   },
                 },
@@ -20234,12 +20234,12 @@ exports[`unpackDir one 2`] = `
           },
         },
         "file.json": {
-          "size": 0,
+          "size": 10,
           "unpacked": true,
         },
         "must-be-not-unpacked": {
-          "offset": 110,
-          "size": 0,
+          "offset": 120,
+          "size": 10,
         },
       },
     },
@@ -20247,12 +20247,12 @@ exports[`unpackDir one 2`] = `
       "link": "assets/subdir/file3",
     },
     "index.html": {
-      "offset": 110,
-      "size": 840,
+      "offset": 120,
+      "size": 850,
     },
     "index.js": {
       "offset": 960,
-      "size": 4180,
+      "size": 4190,
     },
     "package.json": {
       "offset": 5140,
