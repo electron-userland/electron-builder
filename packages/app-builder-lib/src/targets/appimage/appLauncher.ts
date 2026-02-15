@@ -4,7 +4,7 @@ import { copyOrLinkFile, log } from "builder-util"
 import { AppImageBuilderOptions } from "./appImageUtil"
 
 const ICON_DIR_RELATIVE_PATH = "usr/share/icons/hicolor"
-const MIME_TYPE_DIR_RELATIVE_PATH = "usr/share/mime"
+const MIME_TYPE_DIR_RELATIVE_PATH = "usr/share/mime/packages"
 
 /**
  * Escapes special XML characters to prevent injection
