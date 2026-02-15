@@ -1,6 +1,6 @@
 import * as path from "path"
 import { loadCache } from "./cache"
-import { DEFAULT_FILE_MS, SupportedPlatforms, TARGET_MS, TargetPlatform } from "./smart-config"
+import { DEFAULT_FILE_MS, SAFEGUARD_MAX_SHARDS, SupportedPlatforms, TARGET_MS, TargetPlatform } from "./smart-config"
 
 export interface WeightedFile {
   filename: string
@@ -19,15 +19,8 @@ export function buildWeightedFiles(files: string[], targetPlatform: TargetPlatfo
     const basename = path.basename(file)
     const stat = cache.files[basename]
 
-    // Use platform-specific average if available, otherwise fall back to overall average
-    let base = DEFAULT_FILE_MS
-    if (stat?.platformAvgMs?.[currentPlatform] && stat?.platformRuns?.[currentPlatform]) {
-      base = stat.platformAvgMs[currentPlatform]
-    } else if (stat?.avgMs) {
-      base = stat.avgMs
-    }
-
     // Apply flaky multiplier if needed to prioritize fail-fast files
+    const base = stat?.platformRuns?.[currentPlatform]?.avgMs ?? DEFAULT_FILE_MS
     const weight = stat?.unstable ? base * 1.5 : base
 
     return { filename: basename, weight, filepath: file }
@@ -43,7 +36,9 @@ export function computeShardCount(files: WeightedFile[]): number {
   }
 
   const total = files.reduce((a, b) => a + b.weight, 0)
-  return Math.max(1, Math.ceil(total / TARGET_MS))
+  const actualShardCount = Math.max(1, Math.ceil(total / TARGET_MS))
+  const safeguardedShardCount = Math.min(actualShardCount, SAFEGUARD_MAX_SHARDS)
+  return safeguardedShardCount
 }
 
 /**

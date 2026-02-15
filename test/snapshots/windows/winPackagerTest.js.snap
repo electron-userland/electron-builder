@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`beta version 1`] = `
+exports[`winCodeSign: 0.0.0 > beta version 1`] = `
 {
   "win": [
     {
@@ -41,11 +41,23 @@ exports[`beta version 1`] = `
 }
 `;
 
-exports[`icon < 256 1`] = `"ERR_ICON_TOO_SMALL"`;
+exports[`winCodeSign: 0.0.0 > icon < 256 1`] = `"ERR_ICON_TOO_SMALL"`;
 
-exports[`icon not an image 1`] = `"ERR_ICON_UNKNOWN_FORMAT"`;
+exports[`winCodeSign: 0.0.0 > icon not an image 1`] = `"ERR_ICON_UNKNOWN_FORMAT"`;
 
-exports[`win zip 1`] = `
+exports[`winCodeSign: 0.0.0 > legacy win-codesign 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-win.zip",
+      "safeArtifactName": "TestApp-1.1.0-win.zip",
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 0.0.0 > win zip 1`] = `
 {
   "win": [
     {
@@ -62,7 +74,7 @@ exports[`win zip 1`] = `
 }
 `;
 
-exports[`win zip 2`] = `
+exports[`winCodeSign: 0.0.0 > win zip 2`] = `
 [
   "chrome_100_percent.pak",
   "chrome_200_percent.pak",
@@ -89,7 +101,7 @@ exports[`win zip 2`] = `
 ]
 `;
 
-exports[`win zip 3`] = `
+exports[`winCodeSign: 0.0.0 > win zip 3`] = `
 [
   {
     "alg": "SHA256",
@@ -109,7 +121,7 @@ exports[`win zip 3`] = `
 ]
 `;
 
-exports[`win zip 4`] = `
+exports[`winCodeSign: 0.0.0 > win zip 4`] = `
 [
   "chrome_100_percent.pak",
   "chrome_200_percent.pak",
@@ -136,7 +148,7 @@ exports[`win zip 4`] = `
 ]
 `;
 
-exports[`win zip 5`] = `
+exports[`winCodeSign: 0.0.0 > win zip 5`] = `
 [
   {
     "alg": "SHA256",
@@ -156,7 +168,367 @@ exports[`win zip 5`] = `
 ]
 `;
 
-exports[`zip artifactName 1`] = `
+exports[`winCodeSign: 0.0.0 > zip artifactName 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-win-x64.zip",
+      "safeArtifactName": "TestApp-1.1.0-win.zip",
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.0.0 > beta version 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 3.0.0-beta.2.exe",
+      "safeArtifactName": "TestApp-Setup-3.0.0-beta.2.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "arm64",
+      "file": "Test App ßW Setup 3.0.0-beta.2-arm64.exe",
+      "safeArtifactName": "TestApp-Setup-3.0.0-beta.2-arm64.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 3.0.0-beta.2-arm64.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-3.0.0-beta.2-arm64.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 3.0.0-beta.2.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-3.0.0-beta.2.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.0.0 > icon < 256 1`] = `"ERR_ICON_TOO_SMALL"`;
+
+exports[`winCodeSign: 1.0.0 > icon not an image 1`] = `"ERR_ICON_UNKNOWN_FORMAT"`;
+
+exports[`winCodeSign: 1.0.0 > legacy win-codesign 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-win.zip",
+      "safeArtifactName": "TestApp-1.1.0-win.zip",
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.0.0 > win zip 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-win.zip",
+      "safeArtifactName": "TestApp-1.1.0-win.zip",
+    },
+    {
+      "arch": "arm64",
+      "file": "Test App ßW-1.1.0-arm64-win.zip",
+      "safeArtifactName": "TestApp-1.1.0-arm64-win.zip",
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.0.0 > win zip 2`] = `
+[
+  "chrome_100_percent.pak",
+  "chrome_200_percent.pak",
+  "d3dcompiler_47.dll",
+  "ffmpeg.dll",
+  "icudtl.dat",
+  "libEGL.dll",
+  "libGLESv2.dll",
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
+  "locales/",
+  "resources/",
+  "resources/app.asar",
+  "resources/extraAsar.asar",
+  "resources/subdir/",
+  "resources/subdir/extraAsar2.asar",
+  "resources.pak",
+  "snapshot_blob.bin",
+  "Test App ßW.exe",
+  "v8_context_snapshot.bin",
+  "vk_swiftshader.dll",
+  "vk_swiftshader_icd.json",
+  "vulkan-1.dll",
+]
+`;
+
+exports[`winCodeSign: 1.0.0 > win zip 3`] = `
+[
+  {
+    "alg": "SHA256",
+    "file": "resources\\app.asar",
+    "value": "hash",
+  },
+  {
+    "alg": "SHA256",
+    "file": "resources\\extraAsar.asar",
+    "value": "hash",
+  },
+  {
+    "alg": "SHA256",
+    "file": "resources\\subdir\\extraAsar2.asar",
+    "value": "hash",
+  },
+]
+`;
+
+exports[`winCodeSign: 1.0.0 > win zip 4`] = `
+[
+  "chrome_100_percent.pak",
+  "chrome_200_percent.pak",
+  "d3dcompiler_47.dll",
+  "ffmpeg.dll",
+  "icudtl.dat",
+  "libEGL.dll",
+  "libGLESv2.dll",
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
+  "locales/",
+  "resources/",
+  "resources/app.asar",
+  "resources/extraAsar.asar",
+  "resources/subdir/",
+  "resources/subdir/extraAsar2.asar",
+  "resources.pak",
+  "snapshot_blob.bin",
+  "Test App ßW.exe",
+  "v8_context_snapshot.bin",
+  "vk_swiftshader.dll",
+  "vk_swiftshader_icd.json",
+  "vulkan-1.dll",
+]
+`;
+
+exports[`winCodeSign: 1.0.0 > win zip 5`] = `
+[
+  {
+    "alg": "SHA256",
+    "file": "resources\\app.asar",
+    "value": "hash",
+  },
+  {
+    "alg": "SHA256",
+    "file": "resources\\extraAsar.asar",
+    "value": "hash",
+  },
+  {
+    "alg": "SHA256",
+    "file": "resources\\subdir\\extraAsar2.asar",
+    "value": "hash",
+  },
+]
+`;
+
+exports[`winCodeSign: 1.0.0 > zip artifactName 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-win-x64.zip",
+      "safeArtifactName": "TestApp-1.1.0-win.zip",
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > beta version 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 3.0.0-beta.2.exe",
+      "safeArtifactName": "TestApp-Setup-3.0.0-beta.2.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "arm64",
+      "file": "Test App ßW Setup 3.0.0-beta.2-arm64.exe",
+      "safeArtifactName": "TestApp-Setup-3.0.0-beta.2-arm64.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 3.0.0-beta.2-arm64.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-3.0.0-beta.2-arm64.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 3.0.0-beta.2.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-3.0.0-beta.2.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > icon < 256 1`] = `"ERR_ICON_TOO_SMALL"`;
+
+exports[`winCodeSign: 1.1.0 > icon not an image 1`] = `"ERR_ICON_UNKNOWN_FORMAT"`;
+
+exports[`winCodeSign: 1.1.0 > legacy win-codesign 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-win.zip",
+      "safeArtifactName": "TestApp-1.1.0-win.zip",
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > win zip 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-win.zip",
+      "safeArtifactName": "TestApp-1.1.0-win.zip",
+    },
+    {
+      "arch": "arm64",
+      "file": "Test App ßW-1.1.0-arm64-win.zip",
+      "safeArtifactName": "TestApp-1.1.0-arm64-win.zip",
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > win zip 2`] = `
+[
+  "chrome_100_percent.pak",
+  "chrome_200_percent.pak",
+  "d3dcompiler_47.dll",
+  "ffmpeg.dll",
+  "icudtl.dat",
+  "libEGL.dll",
+  "libGLESv2.dll",
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
+  "locales/",
+  "resources/",
+  "resources/app.asar",
+  "resources/extraAsar.asar",
+  "resources/subdir/",
+  "resources/subdir/extraAsar2.asar",
+  "resources.pak",
+  "snapshot_blob.bin",
+  "Test App ßW.exe",
+  "v8_context_snapshot.bin",
+  "vk_swiftshader.dll",
+  "vk_swiftshader_icd.json",
+  "vulkan-1.dll",
+]
+`;
+
+exports[`winCodeSign: 1.1.0 > win zip 3`] = `
+[
+  {
+    "alg": "SHA256",
+    "file": "resources\\app.asar",
+    "value": "hash",
+  },
+  {
+    "alg": "SHA256",
+    "file": "resources\\extraAsar.asar",
+    "value": "hash",
+  },
+  {
+    "alg": "SHA256",
+    "file": "resources\\subdir\\extraAsar2.asar",
+    "value": "hash",
+  },
+]
+`;
+
+exports[`winCodeSign: 1.1.0 > win zip 4`] = `
+[
+  "chrome_100_percent.pak",
+  "chrome_200_percent.pak",
+  "d3dcompiler_47.dll",
+  "ffmpeg.dll",
+  "icudtl.dat",
+  "libEGL.dll",
+  "libGLESv2.dll",
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
+  "locales/",
+  "resources/",
+  "resources/app.asar",
+  "resources/extraAsar.asar",
+  "resources/subdir/",
+  "resources/subdir/extraAsar2.asar",
+  "resources.pak",
+  "snapshot_blob.bin",
+  "Test App ßW.exe",
+  "v8_context_snapshot.bin",
+  "vk_swiftshader.dll",
+  "vk_swiftshader_icd.json",
+  "vulkan-1.dll",
+]
+`;
+
+exports[`winCodeSign: 1.1.0 > win zip 5`] = `
+[
+  {
+    "alg": "SHA256",
+    "file": "resources\\app.asar",
+    "value": "hash",
+  },
+  {
+    "alg": "SHA256",
+    "file": "resources\\extraAsar.asar",
+    "value": "hash",
+  },
+  {
+    "alg": "SHA256",
+    "file": "resources\\subdir\\extraAsar2.asar",
+    "value": "hash",
+  },
+]
+`;
+
+exports[`winCodeSign: 1.1.0 > zip artifactName 1`] = `
 {
   "win": [
     {

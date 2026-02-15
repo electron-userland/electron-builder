@@ -19,6 +19,11 @@ on:
         required: false
         type: boolean
         default: false
+      reset-vitest-smart-cache:
+        description: "Reset Vitest smart cache (will cause all tests to run without caching for this run, then cache will be repopulated for future runs)"
+        required: false
+        type: boolean
+        default: false
 
 # concurrency:
 # group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -79,6 +84,7 @@ jobs:
         with:
           cache-key: v-35.7.5-linux-electron
           cache-path: ~/.cache/electron
+          reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
 
       - id: plan
         run: |
@@ -136,6 +142,7 @@ jobs:
         with:
           cache-path: ${{ matrix.cache-path }}
           cache-key: ${{ matrix.cache-key }}
+          reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
 
       - name: Download test-runner if exists
         if: needs.run-docker-build.result == 'success'
@@ -156,7 +163,7 @@ jobs:
           pnpm test-linux
         env:
           CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
-          ADDITIONAL_DOCKER_ARGS: "-e CSC_KEY_PASSWORD=${{ secrets.WIN_CSC_KEY_PASSWORD }} -e VITEST_SHARD_INDEX=${{ matrix.shard }} -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json"
+          ADDITIONAL_DOCKER_ARGS: "-e CSC_KEY_PASSWORD=${{ secrets.WIN_CSC_KEY_PASSWORD }} -e VITEST_SHARD_INDEX=${{ matrix.shard }} -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}"
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
 
       - name: Upload smart cache artifact
@@ -190,6 +197,7 @@ jobs:
         with:
           cache-key: ${{ matrix.cache-key }}
           cache-path: ${{ matrix.cache-path }}
+          reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
 
       - name: Run shard
         run: pnpm ci:test
@@ -229,6 +237,7 @@ jobs:
         with:
           cache-path: ${{ matrix.cache-path }}
           cache-key: ${{ matrix.cache-key }}
+          reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
 
       - name: Install toolset via brew
         run: |
@@ -276,6 +285,7 @@ jobs:
         with:
           cache-path: ~/.cache/electron
           cache-key: v-35.7.5-update-electron
+          reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
 
       - name: Download test-runner if exists
         if: needs.run-docker-build.result == 'success'
@@ -297,7 +307,7 @@ jobs:
         env:
           TEST_FILES: nsisUpdaterTest,PublishManagerTest,differentialUpdateTest,GitlabPublisherTest,GitlabPublisher.integration.test
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
-          ADDITIONAL_DOCKER_ARGS: "-e KEYGEN_TOKEN=${{ secrets.KEYGEN_TOKEN }} -e BITBUCKET_TOKEN=${{ secrets.BITBUCKET_TOKEN }} -e GH_TOKEN=${{ secrets.GH_TOKEN }} -e GITLAB_TOKEN=${{ secrets.GITLAB_TOKEN }}"
+          ADDITIONAL_DOCKER_ARGS: "-e KEYGEN_TOKEN=${{ secrets.KEYGEN_TOKEN }} -e BITBUCKET_TOKEN=${{ secrets.BITBUCKET_TOKEN }} -e GH_TOKEN=${{ secrets.GH_TOKEN }} -e GITLAB_TOKEN=${{ secrets.GITLAB_TOKEN }} -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}"
 
       - name: Upload smart cache artifact
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
@@ -323,6 +333,7 @@ jobs:
         with:
           cache-path: ~/.cache/electron
           cache-key: v-35.7.5-native-electron
+          reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
 
       - name: Install dependencies
         run: |
@@ -338,6 +349,8 @@ jobs:
           pnpm ci:test
         env:
           TEST_FILES: flatpakTest,snapHeavyTest
+          VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
+          RESET_VITEST_SHARD_CACHE: ${{ inputs.reset-vitest-smart-cache }}
 
       - name: Upload smart cache artifact
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
@@ -389,16 +402,20 @@ jobs:
         with:
           cache-path: ~/.cache/electron
           cache-key: v-35.7.5-linux-e2e-electron
+          reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
+
+      - name: docker build
+        run: |
+          docker build --platform=linux/amd64 -t ${{ matrix.test_config.file }} -f ./test/src/updater/${{ matrix.test_config.file }} .
 
       - name: e2e Linux Updater tests (install, auto-update, uninstall)
         run: |
-          docker build --platform=linux/amd64 -t ${{ matrix.test_config.file }} -f ./test/src/updater/${{ matrix.test_config.file }} .
           pnpm test-linux
         env:
           TEST_RUNNER_IMAGE_TAG: ${{ matrix.test_config.file }}
           TEST_FILES: blackboxUpdateTest,linuxUpdaterTest
           DEBUG: electron-updater,electron-builder
-          ADDITIONAL_DOCKER_ARGS: "-e PACKAGE_MANAGER_TO_TEST=${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST }} -e RUN_APP_IMAGE_TEST=${{ matrix.test_config.env.RUN_APP_IMAGE_TEST || false }}"
+          ADDITIONAL_DOCKER_ARGS: "-e PACKAGE_MANAGER_TO_TEST=${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST }} -e RUN_APP_IMAGE_TEST=${{ matrix.test_config.env.RUN_APP_IMAGE_TEST || false }} -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}"
 
       - name: Upload smart cache artifact
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
@@ -510,3 +527,4 @@ jobs:
         with:
           path: merged-cache/_vitest-smart-cache.json
           key: vitest-smart-cache-${{ github.ref_name }}-${{ github.sha }}
+

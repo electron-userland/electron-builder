@@ -12,7 +12,19 @@ exports[`allowElevation false, app requestedExecutionLevel admin 1`] = `
 }
 `;
 
-exports[`allowToChangeInstallationDirectory 1`] = `
+exports[`assisted > winCodeSign: 0.0.0 > allowElevation false, app requestedExecutionLevel admin 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "test Setup 1.1.0.exe",
+      "safeArtifactName": "test-Setup-1.1.0.exe",
+    },
+  ],
+}
+`;
+
+exports[`assisted > winCodeSign: 0.0.0 > allowToChangeInstallationDirectory 1`] = `
 {
   "win": [
     {
@@ -55,7 +67,7 @@ without features",
 }
 `;
 
-exports[`allowToChangeInstallationDirectory 2`] = `
+exports[`assisted > winCodeSign: 0.0.0 > allowToChangeInstallationDirectory 2`] = `
 {
   "owner": "foo",
   "provider": "github",
@@ -64,7 +76,7 @@ exports[`allowToChangeInstallationDirectory 2`] = `
 }
 `;
 
-exports[`assisted 1`] = `
+exports[`assisted > winCodeSign: 0.0.0 > assisted 1`] = `
 {
   "win": [
     {
@@ -88,13 +100,13 @@ exports[`assisted 1`] = `
 }
 `;
 
-exports[`assisted, MUI_HEADER 1`] = `
+exports[`assisted > winCodeSign: 0.0.0 > assisted, MUI_HEADER 1`] = `
 {
   "win": [],
 }
 `;
 
-exports[`assisted, MUI_HEADER as option 1`] = `
+exports[`assisted > winCodeSign: 0.0.0 > assisted, MUI_HEADER as option 1`] = `
 {
   "win": [
     {
@@ -105,7 +117,7 @@ exports[`assisted, MUI_HEADER as option 1`] = `
 }
 `;
 
-exports[`assisted, only perMachine 1`] = `
+exports[`assisted > winCodeSign: 0.0.0 > assisted, only perMachine 1`] = `
 {
   "win": [
     {
@@ -129,7 +141,317 @@ exports[`assisted, only perMachine 1`] = `
 }
 `;
 
-exports[`assisted, only perMachine and elevated 1`] = `
+exports[`assisted > winCodeSign: 0.0.0 > assisted, only perMachine and elevated 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": {
+        "isAdminRightsRequired": true,
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "isAdminRightsRequired": true,
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`assisted > winCodeSign: 1.0.0 > allowElevation false, app requestedExecutionLevel admin 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "test Setup 1.1.0.exe",
+      "safeArtifactName": "test-Setup-1.1.0.exe",
+    },
+  ],
+}
+`;
+
+exports[`assisted > winCodeSign: 1.0.0 > allowToChangeInstallationDirectory 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test Custom Installation Dir Setup 1.1.0.exe",
+      "safeArtifactName": "Test-Custom-Installation-Dir-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test Custom Installation Dir Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "Test-Custom-Installation-Dir-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test-Custom-Installation-Dir-Setup-1.1.0.exe",
+          },
+        ],
+        "path": "Test-Custom-Installation-Dir-Setup-1.1.0.exe",
+        "releaseDate": "@releaseDate",
+        "releaseNotes": "New release with new bugs and
+
+without features",
+        "sha512": "@sha512",
+        "version": "1.1.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`assisted > winCodeSign: 1.0.0 > allowToChangeInstallationDirectory 2`] = `
+{
+  "owner": "foo",
+  "provider": "github",
+  "repo": "bar",
+  "updaterCacheDirName": "test-custom-inst-dir-updater",
+}
+`;
+
+exports[`assisted > winCodeSign: 1.0.0 > assisted 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`assisted > winCodeSign: 1.0.0 > assisted, MUI_HEADER 1`] = `
+{
+  "win": [],
+}
+`;
+
+exports[`assisted > winCodeSign: 1.0.0 > assisted, MUI_HEADER as option 1`] = `
+{
+  "win": [
+    {
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+    },
+  ],
+}
+`;
+
+exports[`assisted > winCodeSign: 1.0.0 > assisted, only perMachine 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`assisted > winCodeSign: 1.0.0 > assisted, only perMachine and elevated 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": {
+        "isAdminRightsRequired": true,
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "isAdminRightsRequired": true,
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`assisted > winCodeSign: 1.1.0 > allowElevation false, app requestedExecutionLevel admin 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "test Setup 1.1.0.exe",
+      "safeArtifactName": "test-Setup-1.1.0.exe",
+    },
+  ],
+}
+`;
+
+exports[`assisted > winCodeSign: 1.1.0 > allowToChangeInstallationDirectory 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test Custom Installation Dir Setup 1.1.0.exe",
+      "safeArtifactName": "Test-Custom-Installation-Dir-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test Custom Installation Dir Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "Test-Custom-Installation-Dir-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test-Custom-Installation-Dir-Setup-1.1.0.exe",
+          },
+        ],
+        "path": "Test-Custom-Installation-Dir-Setup-1.1.0.exe",
+        "releaseDate": "@releaseDate",
+        "releaseNotes": "New release with new bugs and
+
+without features",
+        "sha512": "@sha512",
+        "version": "1.1.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`assisted > winCodeSign: 1.1.0 > allowToChangeInstallationDirectory 2`] = `
+{
+  "owner": "foo",
+  "provider": "github",
+  "repo": "bar",
+  "updaterCacheDirName": "test-custom-inst-dir-updater",
+}
+`;
+
+exports[`assisted > winCodeSign: 1.1.0 > assisted 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`assisted > winCodeSign: 1.1.0 > assisted, MUI_HEADER 1`] = `
+{
+  "win": [],
+}
+`;
+
+exports[`assisted > winCodeSign: 1.1.0 > assisted, MUI_HEADER as option 1`] = `
+{
+  "win": [
+    {
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+    },
+  ],
+}
+`;
+
+exports[`assisted > winCodeSign: 1.1.0 > assisted, only perMachine 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`assisted > winCodeSign: 1.1.0 > assisted, only perMachine and elevated 1`] = `
 {
   "win": [
     {

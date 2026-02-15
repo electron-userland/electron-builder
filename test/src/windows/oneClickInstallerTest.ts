@@ -333,7 +333,7 @@ test.ifNotWindows("file associations per user", { timeout: EXTENDED_TIMEOUT }, (
   })
 )
 
-test.skip("custom exec name", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+test.ifWindows.skip("custom exec name", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(expect, {
     targets: nsisTarget,
     config: {
@@ -359,7 +359,7 @@ test.skip("custom exec name", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   })
 )
 
-test.skip("top-level custom exec name", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+test.ifWindows.skip("top-level custom exec name", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(expect, {
     targets: nsisTarget,
     config: {
