@@ -284,6 +284,18 @@ export interface ToolsetConfig {
    * @default "0.0.0"
    */
   readonly winCodeSign?: "0.0.0" | "1.0.0" | "1.1.0" | null
+
+  /**
+   * `appimage` bundle version to use for Appimage packaging and runtime.
+   * Located at https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage&expanded=true
+   * 0.0.0 - legacy toolset (appimage)
+   *
+   * Beta:
+   * 1.0.2 - Runtime 20251108
+   *
+   * @default "0.0.0"
+   */
+  readonly appimage?: "0.0.0" | "1.0.2" | null
 }
 
 export interface Hooks {
