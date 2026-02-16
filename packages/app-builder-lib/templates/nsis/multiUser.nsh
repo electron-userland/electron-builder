@@ -28,19 +28,15 @@ Var installMode
       StrCpy $INSTDIR $perUserInstallationFolder
     ${else}
       StrCpy $0 "$LocalAppData\Programs"
-
-      !ifdef WINDOWS_SEVEN_COMPATIBILITY
-        System::Store S
-        # Win7 has a per-user programfiles known folder and this can be a non-default location
-        System::Call 'SHELL32::SHGetKnownFolderPath(g "${FOLDERID_UserProgramFiles}", i ${KF_FLAG_CREATE}, p 0, *p .r2)i.r1'
-        ${If} $1 == 0
-          System::Call '*$2(&w${NSIS_MAX_STRLEN} .s)'
-          StrCpy $0 $1
-          System::Call 'OLE32::CoTaskMemFree(p r2)'
-        ${endif}
-        System::Store L
-      !endif
-
+      System::Store S
+      # Win7 has a per-user programfiles known folder and this can be a non-default location
+      System::Call 'SHELL32::SHGetKnownFolderPath(g "${FOLDERID_UserProgramFiles}", i ${KF_FLAG_CREATE}, p 0, *p .r2)i.r1'
+      ${If} $1 == 0
+        System::Call '*$2(&w${NSIS_MAX_STRLEN} .s)'
+        StrCpy $0 $1
+        System::Call 'OLE32::CoTaskMemFree(p r2)'
+      ${endif}
+      System::Store L
       StrCpy $INSTDIR "$0\${APP_FILENAME}"
     ${endif}
 
