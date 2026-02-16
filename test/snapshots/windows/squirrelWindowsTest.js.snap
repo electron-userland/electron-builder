@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`squirrel.windows > Squirrel.Windows 1`] = `
+exports[`squirrel-windows > winCodeSign: 0.0.0 > Squirrel.Windows 1`] = `
 {
   "win": [
     {
@@ -20,7 +20,7 @@ exports[`squirrel.windows > Squirrel.Windows 1`] = `
 }
 `;
 
-exports[`squirrel.windows > Squirrel.Windows 2`] = `
+exports[`squirrel-windows > winCodeSign: 0.0.0 > Squirrel.Windows 2`] = `
 [
   "lib/",
   "lib/net45/",
@@ -56,7 +56,7 @@ exports[`squirrel.windows > Squirrel.Windows 2`] = `
 ]
 `;
 
-exports[`squirrel.windows > artifactName 1`] = `
+exports[`squirrel-windows > winCodeSign: 0.0.0 > artifactName 1`] = `
 {
   "win": [
     {
@@ -81,7 +81,7 @@ exports[`squirrel.windows > artifactName 1`] = `
 }
 `;
 
-exports[`squirrel.windows > artifactName 2`] = `
+exports[`squirrel-windows > winCodeSign: 0.0.0 > artifactName 2`] = `
 [
   "lib/",
   "lib/net45/",
@@ -117,7 +117,7 @@ exports[`squirrel.windows > artifactName 2`] = `
 ]
 `;
 
-exports[`squirrel.windows > squirrel window arm64 msi 1`] = `
+exports[`squirrel-windows > winCodeSign: 0.0.0 > squirrel window arm64 msi 1`] = `
 {
   "win": [
     {
@@ -142,7 +142,7 @@ exports[`squirrel.windows > squirrel window arm64 msi 1`] = `
 }
 `;
 
-exports[`squirrel.windows > squirrel window arm64 msi 2`] = `
+exports[`squirrel-windows > winCodeSign: 0.0.0 > squirrel window arm64 msi 2`] = `
 [
   "lib/",
   "lib/net45/",
@@ -178,7 +178,7 @@ exports[`squirrel.windows > squirrel window arm64 msi 2`] = `
 ]
 `;
 
-exports[`squirrel.windows > squirrel window ia32 msi 1`] = `
+exports[`squirrel-windows > winCodeSign: 0.0.0 > squirrel window ia32 msi 1`] = `
 {
   "win": [
     {
@@ -203,7 +203,7 @@ exports[`squirrel.windows > squirrel window ia32 msi 1`] = `
 }
 `;
 
-exports[`squirrel.windows > squirrel window ia32 msi 2`] = `
+exports[`squirrel-windows > winCodeSign: 0.0.0 > squirrel window ia32 msi 2`] = `
 [
   "lib/",
   "lib/net45/",
@@ -239,7 +239,7 @@ exports[`squirrel.windows > squirrel window ia32 msi 2`] = `
 ]
 `;
 
-exports[`squirrel.windows > squirrel window x64 msi 1`] = `
+exports[`squirrel-windows > winCodeSign: 0.0.0 > squirrel window x64 msi 1`] = `
 {
   "win": [
     {
@@ -264,7 +264,607 @@ exports[`squirrel.windows > squirrel window x64 msi 1`] = `
 }
 `;
 
-exports[`squirrel.windows > squirrel window x64 msi 2`] = `
+exports[`squirrel-windows > winCodeSign: 0.0.0 > squirrel window x64 msi 2`] = `
+[
+  "lib/",
+  "lib/net45/",
+  "lib/net45/chrome_100_percent.pak",
+  "lib/net45/chrome_200_percent.pak",
+  "lib/net45/d3dcompiler_47.dll",
+  "lib/net45/ffmpeg.dll",
+  "lib/net45/icudtl.dat",
+  "lib/net45/libEGL.dll",
+  "lib/net45/libGLESv2.dll",
+  "lib/net45/LICENSE.electron.txt",
+  "lib/net45/LICENSES.chromium.html",
+  "lib/net45/resources.pak",
+  "lib/net45/snapshot_blob.bin",
+  "lib/net45/squirrel.exe",
+  "lib/net45/Test App ßW.exe",
+  "lib/net45/Test App ßW_ExecutionStub.exe",
+  "lib/net45/v8_context_snapshot.bin",
+  "lib/net45/vk_swiftshader.dll",
+  "lib/net45/vk_swiftshader_icd.json",
+  "lib/net45/vulkan-1.dll",
+  "lib/net45/locales/en-US.pak",
+  "lib/net45/resources/",
+  "lib/net45/resources/app.asar",
+  "package/",
+  "package/services/",
+  "package/services/metadata/",
+  "package/services/metadata/core-properties/",
+  "TestApp.nuspec",
+  "[Content_Types].xml",
+  "_rels/",
+  "_rels/.rels",
+]
+`;
+
+exports[`squirrel-windows > winCodeSign: 1.0.0 > Squirrel.Windows 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-full.nupkg",
+    },
+    {
+      "arch": "x64",
+      "file": "RELEASES",
+    },
+  ],
+}
+`;
+
+exports[`squirrel-windows > winCodeSign: 1.0.0 > Squirrel.Windows 2`] = `
+[
+  "lib/",
+  "lib/net45/",
+  "lib/net45/chrome_100_percent.pak",
+  "lib/net45/chrome_200_percent.pak",
+  "lib/net45/d3dcompiler_47.dll",
+  "lib/net45/ffmpeg.dll",
+  "lib/net45/icudtl.dat",
+  "lib/net45/libEGL.dll",
+  "lib/net45/libGLESv2.dll",
+  "lib/net45/LICENSE.electron.txt",
+  "lib/net45/LICENSES.chromium.html",
+  "lib/net45/resources.pak",
+  "lib/net45/snapshot_blob.bin",
+  "lib/net45/squirrel.exe",
+  "lib/net45/test with spaces.exe",
+  "lib/net45/test with spaces_ExecutionStub.exe",
+  "lib/net45/v8_context_snapshot.bin",
+  "lib/net45/vk_swiftshader.dll",
+  "lib/net45/vk_swiftshader_icd.json",
+  "lib/net45/vulkan-1.dll",
+  "lib/net45/locales/en-US.pak",
+  "lib/net45/resources/",
+  "lib/net45/resources/app.asar",
+  "package/",
+  "package/services/",
+  "package/services/metadata/",
+  "package/services/metadata/core-properties/",
+  "TestApp.nuspec",
+  "[Content_Types].xml",
+  "_rels/",
+  "_rels/.rels",
+]
+`;
+
+exports[`squirrel-windows > winCodeSign: 1.0.0 > artifactName 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test TestApp foo.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+    },
+    {
+      "arch": "x64",
+      "file": "Test TestApp foo.zip",
+      "safeArtifactName": "Test-TestApp-foo.zip",
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-full.nupkg",
+    },
+    {
+      "arch": "x64",
+      "file": "RELEASES",
+    },
+  ],
+}
+`;
+
+exports[`squirrel-windows > winCodeSign: 1.0.0 > artifactName 2`] = `
+[
+  "lib/",
+  "lib/net45/",
+  "lib/net45/chrome_100_percent.pak",
+  "lib/net45/chrome_200_percent.pak",
+  "lib/net45/d3dcompiler_47.dll",
+  "lib/net45/ffmpeg.dll",
+  "lib/net45/icudtl.dat",
+  "lib/net45/libEGL.dll",
+  "lib/net45/libGLESv2.dll",
+  "lib/net45/LICENSE.electron.txt",
+  "lib/net45/LICENSES.chromium.html",
+  "lib/net45/resources.pak",
+  "lib/net45/snapshot_blob.bin",
+  "lib/net45/squirrel.exe",
+  "lib/net45/Test App ßW.exe",
+  "lib/net45/Test App ßW_ExecutionStub.exe",
+  "lib/net45/v8_context_snapshot.bin",
+  "lib/net45/vk_swiftshader.dll",
+  "lib/net45/vk_swiftshader_icd.json",
+  "lib/net45/vulkan-1.dll",
+  "lib/net45/locales/en-US.pak",
+  "lib/net45/resources/",
+  "lib/net45/resources/app.asar",
+  "package/",
+  "package/services/",
+  "package/services/metadata/",
+  "package/services/metadata/core-properties/",
+  "TestApp.nuspec",
+  "[Content_Types].xml",
+  "_rels/",
+  "_rels/.rels",
+]
+`;
+
+exports[`squirrel-windows > winCodeSign: 1.0.0 > squirrel window arm64 msi 1`] = `
+{
+  "win": [
+    {
+      "arch": "arm64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0-arm64.exe",
+    },
+    {
+      "arch": "arm64",
+      "file": "Test App ßW Setup 1.1.0.msi",
+      "safeArtifactName": "TestApp-Setup-1.1.0-arm64.msi",
+    },
+    {
+      "arch": "arm64",
+      "file": "TestApp-1.1.0-full.nupkg",
+    },
+    {
+      "arch": "arm64",
+      "file": "RELEASES",
+    },
+  ],
+}
+`;
+
+exports[`squirrel-windows > winCodeSign: 1.0.0 > squirrel window arm64 msi 2`] = `
+[
+  "lib/",
+  "lib/net45/",
+  "lib/net45/chrome_100_percent.pak",
+  "lib/net45/chrome_200_percent.pak",
+  "lib/net45/d3dcompiler_47.dll",
+  "lib/net45/ffmpeg.dll",
+  "lib/net45/icudtl.dat",
+  "lib/net45/libEGL.dll",
+  "lib/net45/libGLESv2.dll",
+  "lib/net45/LICENSE.electron.txt",
+  "lib/net45/LICENSES.chromium.html",
+  "lib/net45/resources.pak",
+  "lib/net45/snapshot_blob.bin",
+  "lib/net45/squirrel.exe",
+  "lib/net45/Test App ßW.exe",
+  "lib/net45/Test App ßW_ExecutionStub.exe",
+  "lib/net45/v8_context_snapshot.bin",
+  "lib/net45/vk_swiftshader.dll",
+  "lib/net45/vk_swiftshader_icd.json",
+  "lib/net45/vulkan-1.dll",
+  "lib/net45/locales/en-US.pak",
+  "lib/net45/resources/",
+  "lib/net45/resources/app.asar",
+  "package/",
+  "package/services/",
+  "package/services/metadata/",
+  "package/services/metadata/core-properties/",
+  "TestApp.nuspec",
+  "[Content_Types].xml",
+  "_rels/",
+  "_rels/.rels",
+]
+`;
+
+exports[`squirrel-windows > winCodeSign: 1.0.0 > squirrel window ia32 msi 1`] = `
+{
+  "win": [
+    {
+      "arch": "ia32",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0-ia32.exe",
+    },
+    {
+      "arch": "ia32",
+      "file": "Test App ßW Setup 1.1.0.msi",
+      "safeArtifactName": "TestApp-Setup-1.1.0-ia32.msi",
+    },
+    {
+      "arch": "ia32",
+      "file": "TestApp-1.1.0-full.nupkg",
+    },
+    {
+      "arch": "ia32",
+      "file": "RELEASES",
+    },
+  ],
+}
+`;
+
+exports[`squirrel-windows > winCodeSign: 1.0.0 > squirrel window ia32 msi 2`] = `
+[
+  "lib/",
+  "lib/net45/",
+  "lib/net45/chrome_100_percent.pak",
+  "lib/net45/chrome_200_percent.pak",
+  "lib/net45/d3dcompiler_47.dll",
+  "lib/net45/ffmpeg.dll",
+  "lib/net45/icudtl.dat",
+  "lib/net45/libEGL.dll",
+  "lib/net45/libGLESv2.dll",
+  "lib/net45/LICENSE.electron.txt",
+  "lib/net45/LICENSES.chromium.html",
+  "lib/net45/resources.pak",
+  "lib/net45/snapshot_blob.bin",
+  "lib/net45/squirrel.exe",
+  "lib/net45/Test App ßW.exe",
+  "lib/net45/Test App ßW_ExecutionStub.exe",
+  "lib/net45/v8_context_snapshot.bin",
+  "lib/net45/vk_swiftshader.dll",
+  "lib/net45/vk_swiftshader_icd.json",
+  "lib/net45/vulkan-1.dll",
+  "lib/net45/locales/en-US.pak",
+  "lib/net45/resources/",
+  "lib/net45/resources/app.asar",
+  "package/",
+  "package/services/",
+  "package/services/metadata/",
+  "package/services/metadata/core-properties/",
+  "TestApp.nuspec",
+  "[Content_Types].xml",
+  "_rels/",
+  "_rels/.rels",
+]
+`;
+
+exports[`squirrel-windows > winCodeSign: 1.0.0 > squirrel window x64 msi 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+    },
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.msi",
+      "safeArtifactName": "TestApp-Setup-1.1.0.msi",
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-full.nupkg",
+    },
+    {
+      "arch": "x64",
+      "file": "RELEASES",
+    },
+  ],
+}
+`;
+
+exports[`squirrel-windows > winCodeSign: 1.0.0 > squirrel window x64 msi 2`] = `
+[
+  "lib/",
+  "lib/net45/",
+  "lib/net45/chrome_100_percent.pak",
+  "lib/net45/chrome_200_percent.pak",
+  "lib/net45/d3dcompiler_47.dll",
+  "lib/net45/ffmpeg.dll",
+  "lib/net45/icudtl.dat",
+  "lib/net45/libEGL.dll",
+  "lib/net45/libGLESv2.dll",
+  "lib/net45/LICENSE.electron.txt",
+  "lib/net45/LICENSES.chromium.html",
+  "lib/net45/resources.pak",
+  "lib/net45/snapshot_blob.bin",
+  "lib/net45/squirrel.exe",
+  "lib/net45/Test App ßW.exe",
+  "lib/net45/Test App ßW_ExecutionStub.exe",
+  "lib/net45/v8_context_snapshot.bin",
+  "lib/net45/vk_swiftshader.dll",
+  "lib/net45/vk_swiftshader_icd.json",
+  "lib/net45/vulkan-1.dll",
+  "lib/net45/locales/en-US.pak",
+  "lib/net45/resources/",
+  "lib/net45/resources/app.asar",
+  "package/",
+  "package/services/",
+  "package/services/metadata/",
+  "package/services/metadata/core-properties/",
+  "TestApp.nuspec",
+  "[Content_Types].xml",
+  "_rels/",
+  "_rels/.rels",
+]
+`;
+
+exports[`squirrel-windows > winCodeSign: 1.1.0 > Squirrel.Windows 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-full.nupkg",
+    },
+    {
+      "arch": "x64",
+      "file": "RELEASES",
+    },
+  ],
+}
+`;
+
+exports[`squirrel-windows > winCodeSign: 1.1.0 > Squirrel.Windows 2`] = `
+[
+  "lib/",
+  "lib/net45/",
+  "lib/net45/chrome_100_percent.pak",
+  "lib/net45/chrome_200_percent.pak",
+  "lib/net45/d3dcompiler_47.dll",
+  "lib/net45/ffmpeg.dll",
+  "lib/net45/icudtl.dat",
+  "lib/net45/libEGL.dll",
+  "lib/net45/libGLESv2.dll",
+  "lib/net45/LICENSE.electron.txt",
+  "lib/net45/LICENSES.chromium.html",
+  "lib/net45/resources.pak",
+  "lib/net45/snapshot_blob.bin",
+  "lib/net45/squirrel.exe",
+  "lib/net45/test with spaces.exe",
+  "lib/net45/test with spaces_ExecutionStub.exe",
+  "lib/net45/v8_context_snapshot.bin",
+  "lib/net45/vk_swiftshader.dll",
+  "lib/net45/vk_swiftshader_icd.json",
+  "lib/net45/vulkan-1.dll",
+  "lib/net45/locales/en-US.pak",
+  "lib/net45/resources/",
+  "lib/net45/resources/app.asar",
+  "package/",
+  "package/services/",
+  "package/services/metadata/",
+  "package/services/metadata/core-properties/",
+  "TestApp.nuspec",
+  "[Content_Types].xml",
+  "_rels/",
+  "_rels/.rels",
+]
+`;
+
+exports[`squirrel-windows > winCodeSign: 1.1.0 > artifactName 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test TestApp foo.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+    },
+    {
+      "arch": "x64",
+      "file": "Test TestApp foo.zip",
+      "safeArtifactName": "Test-TestApp-foo.zip",
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-full.nupkg",
+    },
+    {
+      "arch": "x64",
+      "file": "RELEASES",
+    },
+  ],
+}
+`;
+
+exports[`squirrel-windows > winCodeSign: 1.1.0 > artifactName 2`] = `
+[
+  "lib/",
+  "lib/net45/",
+  "lib/net45/chrome_100_percent.pak",
+  "lib/net45/chrome_200_percent.pak",
+  "lib/net45/d3dcompiler_47.dll",
+  "lib/net45/ffmpeg.dll",
+  "lib/net45/icudtl.dat",
+  "lib/net45/libEGL.dll",
+  "lib/net45/libGLESv2.dll",
+  "lib/net45/LICENSE.electron.txt",
+  "lib/net45/LICENSES.chromium.html",
+  "lib/net45/resources.pak",
+  "lib/net45/snapshot_blob.bin",
+  "lib/net45/squirrel.exe",
+  "lib/net45/Test App ßW.exe",
+  "lib/net45/Test App ßW_ExecutionStub.exe",
+  "lib/net45/v8_context_snapshot.bin",
+  "lib/net45/vk_swiftshader.dll",
+  "lib/net45/vk_swiftshader_icd.json",
+  "lib/net45/vulkan-1.dll",
+  "lib/net45/locales/en-US.pak",
+  "lib/net45/resources/",
+  "lib/net45/resources/app.asar",
+  "package/",
+  "package/services/",
+  "package/services/metadata/",
+  "package/services/metadata/core-properties/",
+  "TestApp.nuspec",
+  "[Content_Types].xml",
+  "_rels/",
+  "_rels/.rels",
+]
+`;
+
+exports[`squirrel-windows > winCodeSign: 1.1.0 > squirrel window arm64 msi 1`] = `
+{
+  "win": [
+    {
+      "arch": "arm64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0-arm64.exe",
+    },
+    {
+      "arch": "arm64",
+      "file": "Test App ßW Setup 1.1.0.msi",
+      "safeArtifactName": "TestApp-Setup-1.1.0-arm64.msi",
+    },
+    {
+      "arch": "arm64",
+      "file": "TestApp-1.1.0-full.nupkg",
+    },
+    {
+      "arch": "arm64",
+      "file": "RELEASES",
+    },
+  ],
+}
+`;
+
+exports[`squirrel-windows > winCodeSign: 1.1.0 > squirrel window arm64 msi 2`] = `
+[
+  "lib/",
+  "lib/net45/",
+  "lib/net45/chrome_100_percent.pak",
+  "lib/net45/chrome_200_percent.pak",
+  "lib/net45/d3dcompiler_47.dll",
+  "lib/net45/ffmpeg.dll",
+  "lib/net45/icudtl.dat",
+  "lib/net45/libEGL.dll",
+  "lib/net45/libGLESv2.dll",
+  "lib/net45/LICENSE.electron.txt",
+  "lib/net45/LICENSES.chromium.html",
+  "lib/net45/resources.pak",
+  "lib/net45/snapshot_blob.bin",
+  "lib/net45/squirrel.exe",
+  "lib/net45/Test App ßW.exe",
+  "lib/net45/Test App ßW_ExecutionStub.exe",
+  "lib/net45/v8_context_snapshot.bin",
+  "lib/net45/vk_swiftshader.dll",
+  "lib/net45/vk_swiftshader_icd.json",
+  "lib/net45/vulkan-1.dll",
+  "lib/net45/locales/en-US.pak",
+  "lib/net45/resources/",
+  "lib/net45/resources/app.asar",
+  "package/",
+  "package/services/",
+  "package/services/metadata/",
+  "package/services/metadata/core-properties/",
+  "TestApp.nuspec",
+  "[Content_Types].xml",
+  "_rels/",
+  "_rels/.rels",
+]
+`;
+
+exports[`squirrel-windows > winCodeSign: 1.1.0 > squirrel window ia32 msi 1`] = `
+{
+  "win": [
+    {
+      "arch": "ia32",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0-ia32.exe",
+    },
+    {
+      "arch": "ia32",
+      "file": "Test App ßW Setup 1.1.0.msi",
+      "safeArtifactName": "TestApp-Setup-1.1.0-ia32.msi",
+    },
+    {
+      "arch": "ia32",
+      "file": "TestApp-1.1.0-full.nupkg",
+    },
+    {
+      "arch": "ia32",
+      "file": "RELEASES",
+    },
+  ],
+}
+`;
+
+exports[`squirrel-windows > winCodeSign: 1.1.0 > squirrel window ia32 msi 2`] = `
+[
+  "lib/",
+  "lib/net45/",
+  "lib/net45/chrome_100_percent.pak",
+  "lib/net45/chrome_200_percent.pak",
+  "lib/net45/d3dcompiler_47.dll",
+  "lib/net45/ffmpeg.dll",
+  "lib/net45/icudtl.dat",
+  "lib/net45/libEGL.dll",
+  "lib/net45/libGLESv2.dll",
+  "lib/net45/LICENSE.electron.txt",
+  "lib/net45/LICENSES.chromium.html",
+  "lib/net45/resources.pak",
+  "lib/net45/snapshot_blob.bin",
+  "lib/net45/squirrel.exe",
+  "lib/net45/Test App ßW.exe",
+  "lib/net45/Test App ßW_ExecutionStub.exe",
+  "lib/net45/v8_context_snapshot.bin",
+  "lib/net45/vk_swiftshader.dll",
+  "lib/net45/vk_swiftshader_icd.json",
+  "lib/net45/vulkan-1.dll",
+  "lib/net45/locales/en-US.pak",
+  "lib/net45/resources/",
+  "lib/net45/resources/app.asar",
+  "package/",
+  "package/services/",
+  "package/services/metadata/",
+  "package/services/metadata/core-properties/",
+  "TestApp.nuspec",
+  "[Content_Types].xml",
+  "_rels/",
+  "_rels/.rels",
+]
+`;
+
+exports[`squirrel-windows > winCodeSign: 1.1.0 > squirrel window x64 msi 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+    },
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.msi",
+      "safeArtifactName": "TestApp-Setup-1.1.0.msi",
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-full.nupkg",
+    },
+    {
+      "arch": "x64",
+      "file": "RELEASES",
+    },
+  ],
+}
+`;
+
+exports[`squirrel-windows > winCodeSign: 1.1.0 > squirrel window x64 msi 2`] = `
 [
   "lib/",
   "lib/net45/",

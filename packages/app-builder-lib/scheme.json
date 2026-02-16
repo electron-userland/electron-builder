@@ -6462,6 +6462,46 @@
       ],
       "type": "object"
     },
+    "ToolsetConfig": {
+      "additionalProperties": false,
+      "description": "Configuration of toolsets utilized by electron-builder",
+      "properties": {
+        "appimage": {
+          "anyOf": [
+            {
+              "enum": [
+                "0.0.0",
+                "1.0.2"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "0.0.0",
+          "description": "`appimage` bundle version to use for Appimage packaging and runtime.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage&expanded=true\n0.0.0 - legacy toolset (appimage)\n\nBeta:\n1.0.2 - Runtime 20251108"
+        },
+        "winCodeSign": {
+          "anyOf": [
+            {
+              "enum": [
+                "0.0.0",
+                "1.0.0",
+                "1.1.0"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "0.0.0",
+          "description": "`win-codesign` version to use for signing Windows artifacts.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=win-codesign&expanded=true\n\nStable:\nv0.0.0 (winCodeSign)\n\nBeta:\nWindows Kits 10.0.26100.0\nv1.0.0, v1.1.0"
+        }
+      },
+      "type": "object"
+    },
     "WindowsAzureSigningConfiguration": {
       "additionalProperties": {
         "type": [
@@ -7930,6 +7970,17 @@
           ]
         }
       ]
+    },
+    "toolsets": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ToolsetConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Configuration of toolsets utilized by electron-builder"
     },
     "win": {
       "anyOf": [

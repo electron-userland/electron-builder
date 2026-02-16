@@ -1,0 +1,34 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`snap core test: core24 > snap full (armhf) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "armv7l",
+      "file": "se-wo-template_1.1.0_armhf.snap",
+    },
+  ],
+}
+`;
+
+exports[`snap core test: core24 > snap full 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "se-wo-template_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snap full 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "se-wo-template_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
