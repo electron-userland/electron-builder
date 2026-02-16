@@ -1,5 +1,22 @@
 # electron-builder-squirrel-windows
 
+## 26.8.1
+
+### Patch Changes
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`4edd695`](https://github.com/electron-userland/electron-builder/commit/4edd6950454d369ef8994e5a1ad64f1d0c7b7643) [`8940ec6`](https://github.com/electron-userland/electron-builder/commit/8940ec63bac6450ed9b7c5e761954f08e6fa4242) [`4edd695`](https://github.com/electron-userland/electron-builder/commit/4edd6950454d369ef8994e5a1ad64f1d0c7b7643) [`dde4309`](https://github.com/electron-userland/electron-builder/commit/dde4309b9114e06d0826e8badc2cb968ceb75642)
+
+</small>
+
+- `app-builder-lib@26.8.1`
+- `builder-util@26.8.1`
+
+</details>
+
 ## 26.8.0
 
 ### Patch Changes
