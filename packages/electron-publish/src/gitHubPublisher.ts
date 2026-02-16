@@ -7,6 +7,7 @@ import { parse as parseUrl, UrlWithStringQuery } from "url"
 import { HttpPublisher } from "./httpPublisher"
 import { PublishContext, PublishOptions } from "./index"
 import { getCiTag } from "./publisher"
+import { trimStringWithWarn } from "./util"
 
 export interface Release {
   id: number
@@ -237,13 +238,7 @@ export class GitHubPublisher extends HttpPublisher {
       prerelease: this.releaseType === "prerelease",
     }
     if (this.info.releaseBody) {
-      const maxLength = 100000
-      if (this.info.releaseBody.length > maxLength) {
-        log.warn({ length: this.info.releaseBody.length, maxLength }, "release body exceeds GitHub API limit, truncating")
-        data.body = this.info.releaseBody.substring(0, maxLength)
-      } else {
-        data.body = this.info.releaseBody
-      }
+      data.body = trimStringWithWarn(this.info.releaseBody, 100000, "release body exceeds GitHub API limit, truncating")
     }
     return this.githubRequest<Release>(`/repos/${this.info.owner}/${this.info.repo}/releases`, this.token, data)
   }
