@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`AppImage 1`] = `
+exports[`AppImage > appimage x64 - toolset: 0.0.0 1`] = `
 {
   "linux": [
     {
@@ -34,7 +34,7 @@ exports[`AppImage 1`] = `
 }
 `;
 
-exports[`AppImage 2`] = `
+exports[`AppImage > appimage x64 - toolset: 0.0.0 2`] = `
 {
   "linux": [
     {
@@ -68,7 +68,7 @@ exports[`AppImage 2`] = `
 }
 `;
 
-exports[`AppImage 3`] = `
+exports[`AppImage > appimage x64 - toolset: 0.0.0 3`] = `
 {
   "files": [
     {
@@ -84,7 +84,457 @@ exports[`AppImage 3`] = `
 }
 `;
 
-exports[`AppImage 4`] = `
+exports[`AppImage > appimage x64 - toolset: 0.0.0 4`] = `
+[
+  "Test App ßW-1.0.1.AppImage",
+]
+`;
+
+exports[`AppImage > appimage x64 - toolset: 1.0.2 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.0.0.AppImage",
+      "safeArtifactName": "TestApp-1.0.0-x86_64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.0.AppImage",
+          },
+        ],
+        "path": "Test App ßW-1.0.0.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage > appimage x64 - toolset: 1.0.2 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.0.1.AppImage",
+      "safeArtifactName": "TestApp-1.0.1-x86_64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.1.AppImage",
+          },
+        ],
+        "path": "Test App ßW-1.0.1.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage > appimage x64 - toolset: 1.0.2 3`] = `
+{
+  "files": [
+    {
+      "blockMapSize": "@blockMapSize",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  ],
+  "path": "Test App ßW-1.0.1.AppImage",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
+
+exports[`AppImage > appimage x64 - toolset: 1.0.2 4`] = `
+[
+  "Test App ßW-1.0.1.AppImage",
+]
+`;
+
+exports[`AppImage > arm64 - toolset: 0.0.0 1`] = `
+{
+  "linux": [
+    {
+      "arch": "arm64",
+      "file": "Test App ßW-1.0.0-arm64.AppImage",
+      "safeArtifactName": "TestApp-1.0.0-arm64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux-arm64.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.0-arm64.AppImage",
+          },
+        ],
+        "path": "Test App ßW-1.0.0-arm64.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage > arm64 - toolset: 0.0.0 2`] = `
+{
+  "linux": [
+    {
+      "arch": "arm64",
+      "file": "Test App ßW-1.0.1-arm64.AppImage",
+      "safeArtifactName": "TestApp-1.0.1-arm64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux-arm64.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.1-arm64.AppImage",
+          },
+        ],
+        "path": "Test App ßW-1.0.1-arm64.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage > arm64 - toolset: 0.0.0 3`] = `
+{
+  "files": [
+    {
+      "blockMapSize": "@blockMapSize",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  ],
+  "path": "Test App ßW-1.0.1-arm64.AppImage",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
+
+exports[`AppImage > arm64 - toolset: 0.0.0 4`] = `
+[
+  "Test App ßW-1.0.1-arm64.AppImage",
+]
+`;
+
+exports[`AppImage > arm64 - toolset: 1.0.2 1`] = `
+{
+  "linux": [
+    {
+      "arch": "arm64",
+      "file": "Test App ßW-1.0.0-arm64.AppImage",
+      "safeArtifactName": "TestApp-1.0.0-arm64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux-arm64.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.0-arm64.AppImage",
+          },
+        ],
+        "path": "Test App ßW-1.0.0-arm64.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage > arm64 - toolset: 1.0.2 2`] = `
+{
+  "linux": [
+    {
+      "arch": "arm64",
+      "file": "Test App ßW-1.0.1-arm64.AppImage",
+      "safeArtifactName": "TestApp-1.0.1-arm64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux-arm64.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.1-arm64.AppImage",
+          },
+        ],
+        "path": "Test App ßW-1.0.1-arm64.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage > arm64 - toolset: 1.0.2 3`] = `
+{
+  "files": [
+    {
+      "blockMapSize": "@blockMapSize",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  ],
+  "path": "Test App ßW-1.0.1-arm64.AppImage",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
+
+exports[`AppImage > arm64 - toolset: 1.0.2 4`] = `
+[
+  "Test App ßW-1.0.1-arm64.AppImage",
+]
+`;
+
+exports[`AppImage > x64 - toolset: 0.0.0 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.0.0.AppImage",
+      "safeArtifactName": "TestApp-1.0.0-x86_64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.0.AppImage",
+          },
+        ],
+        "path": "Test App ßW-1.0.0.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage > x64 - toolset: 0.0.0 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.0.1.AppImage",
+      "safeArtifactName": "TestApp-1.0.1-x86_64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.1.AppImage",
+          },
+        ],
+        "path": "Test App ßW-1.0.1.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage > x64 - toolset: 0.0.0 3`] = `
+{
+  "files": [
+    {
+      "blockMapSize": "@blockMapSize",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  ],
+  "path": "Test App ßW-1.0.1.AppImage",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
+
+exports[`AppImage > x64 - toolset: 0.0.0 4`] = `
+[
+  "Test App ßW-1.0.1.AppImage",
+]
+`;
+
+exports[`AppImage > x64 - toolset: 1.0.2 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.0.0.AppImage",
+      "safeArtifactName": "TestApp-1.0.0-x86_64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.0.AppImage",
+          },
+        ],
+        "path": "Test App ßW-1.0.0.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage > x64 - toolset: 1.0.2 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.0.1.AppImage",
+      "safeArtifactName": "TestApp-1.0.1-x86_64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.1.AppImage",
+          },
+        ],
+        "path": "Test App ßW-1.0.1.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage > x64 - toolset: 1.0.2 3`] = `
+{
+  "files": [
+    {
+      "blockMapSize": "@blockMapSize",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  ],
+  "path": "Test App ßW-1.0.1.AppImage",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
+
+exports[`AppImage > x64 - toolset: 1.0.2 4`] = `
 [
   "Test App ßW-1.0.1.AppImage",
 ]
