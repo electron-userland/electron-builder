@@ -98,14 +98,14 @@ describe.ifNotWindows("node_module collectors", () => {
         projectDirCreated: async (projectDir, _tmpDir, testEnv) => {
           await modifyPackageJson(projectDir, data => {
             data.dependencies = {
-              "electron-updater": "6",
-              express: "4",
-              "patch-package": "^8.0.0",
+              "electron-updater": "6.8.3",
+              express: "4.0.0",
             }
             data.devDependencies = {
               electron: "23.2.0",
-              "electron-builder": "26",
-              "fs-extra": "11",
+              "electron-builder": "26.8.1",
+              "fs-extra": "11.0.0",
+              "patch-package": "8.0.0",
             }
             data.build.directories = {
               app: "app",
@@ -151,14 +151,14 @@ describe.ifNotWindows("node_module collectors", () => {
         projectDirCreated: async (projectDir, _tmpDir, testEnv) => {
           await modifyPackageJson(projectDir, data => {
             data.dependencies = {
-              "electron-updater": "6",
-              express: "4",
-              "patch-package": "^8.0.0",
+              "electron-updater": "6.8.3",
+              express: "4.0.0",
+              "patch-package": "8.0.0",
             }
             data.devDependencies = {
               electron: "23.2.0",
-              "electron-builder": "26",
-              "fs-extra": "11",
+              "electron-builder": "26.8.1",
+              "fs-extra": "11.0.0",
             }
             data.build.directories = {
               app: "app",
