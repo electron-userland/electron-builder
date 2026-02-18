@@ -41,11 +41,15 @@ function createBuildResourcesTest(expect: ExpectStatic, packagerOptions: Package
   )
 }
 
-test.ifNotWindows("custom buildResources and output dirs: mac", ({ expect }) => createBuildResourcesTest(expect, { mac: ["dir"] }))
-test.ifNotCiMac("custom buildResources and output dirs: win", ({ expect }) => createBuildResourcesTest(expect, { win: ["nsis"] }))
-test.ifNotWindows("custom buildResources and output dirs: linux", ({ expect }) => createBuildResourcesTest(expect, { linux: ["appimage"] }))
+test.ifNotWindows("custom buildResources and output dirs: mac", ({ expect }) =>
+  createBuildResourcesTest(expect, {
+    targets: Platform.MAC.createTarget("dir", Arch.x64),
+  })
+)
+test.ifNotMac("custom buildResources and output dirs: win", ({ expect }) => createBuildResourcesTest(expect, { targets: Platform.WINDOWS.createTarget("nsis", Arch.x64) }))
+test.ifLinux("custom buildResources and output dirs: linux", ({ expect }) => createBuildResourcesTest(expect, { targets: Platform.LINUX.createTarget("appimage", Arch.x64) }))
 
-test.ifLinuxOrDevMac("prepackaged", ({ expect }) =>
+test.ifNotWindows("prepackaged", ({ expect }) =>
   app(
     expect,
     {
@@ -74,7 +78,7 @@ test.ifLinuxOrDevMac("prepackaged", ({ expect }) =>
   )
 )
 
-test.ifLinuxOrDevMac("retrieve latest electron version", ({ expect }) =>
+test.ifNotWindows("retrieve latest electron version", ({ expect }) =>
   app(
     expect,
     {
@@ -93,7 +97,7 @@ test.ifLinuxOrDevMac("retrieve latest electron version", ({ expect }) =>
   )
 )
 
-test.ifLinuxOrDevMac("retrieve latest electron-nightly version", ({ expect }) =>
+test.ifNotWindows("retrieve latest electron-nightly version", ({ expect }) =>
   app(
     expect,
     {
@@ -138,7 +142,7 @@ test.ifNotWindows("override targets in the config", ({ expect }) =>
 )
 
 // test https://github.com/electron-userland/electron-builder/issues/1182 also
-test.ifDevOrWinCi("override targets in the config - only arch", ({ expect }) =>
+test.ifWindows("override targets in the config - only arch", ({ expect }) =>
   app(
     expect,
     {
@@ -261,7 +265,7 @@ const overridePublishChannel: any = {
   channel: "beta",
 }
 
-test.ifDevOrLinuxCi("overriding the publish channel", ({ expect }) =>
+test.ifNotWindows("overriding the publish channel", ({ expect }) =>
   app(
     expect,
     {

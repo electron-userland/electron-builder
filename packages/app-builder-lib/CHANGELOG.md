@@ -1,5 +1,82 @@
 # app-builder-lib
 
+## 26.8.1
+
+### Patch Changes
+
+- Chore: add logging summary to end of node collector to flag any special cases/alerts _[`#9587`](https://github.com/electron-userland/electron-builder/pull/9587) [`4edd695`](https://github.com/electron-userland/electron-builder/commit/4edd6950454d369ef8994e5a1ad64f1d0c7b7643) [@mmaietta](https://github.com/mmaietta)_
+- Fix(AppImage): fix mime type directory in AppDir _[`#9589`](https://github.com/electron-userland/electron-builder/pull/9589) [`8940ec6`](https://github.com/electron-userland/electron-builder/commit/8940ec63bac6450ed9b7c5e761954f08e6fa4242) [@sabonerune](https://github.com/sabonerune)_
+- Fix: use package key when reading from dependency list instead of package `from` to not mislabel package-version strings _[`#9583`](https://github.com/electron-userland/electron-builder/pull/9583) [`dde4309`](https://github.com/electron-userland/electron-builder/commit/dde4309b9114e06d0826e8badc2cb968ceb75642) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 4 dependencies</summary>
+
+<small>
+
+[`4edd695`](https://github.com/electron-userland/electron-builder/commit/4edd6950454d369ef8994e5a1ad64f1d0c7b7643)
+
+</small>
+
+- `builder-util@26.8.1`
+- `dmg-builder@26.8.1`
+- `electron-builder-squirrel-windows@26.8.1`
+- `electron-publish@26.8.1`
+
+</details>
+
+## 26.8.0
+
+### Minor Changes
+
+- Feat: adding support for static appimage runtime via new toolset _[`#9558`](https://github.com/electron-userland/electron-builder/pull/9558) [`c18f0eb`](https://github.com/electron-userland/electron-builder/commit/c18f0eb26bd9ba366b45e0ff9e85cdee0daba4ef) [@mmaietta](https://github.com/mmaietta)_
+- Feat(win): adding support for latest artifacts for win-codesign tooling to be pulled from `electron-builder-binaries` _[`#9430`](https://github.com/electron-userland/electron-builder/pull/9430) [`1b39a8e`](https://github.com/electron-userland/electron-builder/commit/1b39a8e23c019a0e61fbe1fe5e973113036d255b) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Chore: silence test console logging and throw more helpful error in msiWrapped targetr _[`#9572`](https://github.com/electron-userland/electron-builder/pull/9572) [`cd7c0d9`](https://github.com/electron-userland/electron-builder/commit/cd7c0d9a73cf63e2125ef5873bd0c2f392c211dc) [@mmaietta](https://github.com/mmaietta)_
+- Fix: Windows build failure due to Node.js path with spaces _[`#9566`](https://github.com/electron-userland/electron-builder/pull/9566) [`769b608`](https://github.com/electron-userland/electron-builder/commit/769b6080a7258205e2ea7cac74526765b80f7e0f) [@copilot-swe-agent](https://github.com/apps/copilot-swe-agent)_
+- Refactor: simplify YarnNodeModulesCollector by extending NpmNodeModulesCollector _[`#9506`](https://github.com/electron-userland/electron-builder/pull/9506) [`1b113b7`](https://github.com/electron-userland/electron-builder/commit/1b113b758dffa346df8dce91185800293a68b6fd) [@beyondkmp](https://github.com/beyondkmp)_
+
+<details><summary>Updated 4 dependencies</summary>
+
+<small>
+
+[`cd7c0d9`](https://github.com/electron-userland/electron-builder/commit/cd7c0d9a73cf63e2125ef5873bd0c2f392c211dc) [`9ba36f9`](https://github.com/electron-userland/electron-builder/commit/9ba36f98791bc8d2393297dbca1133d03be6260a)
+
+</small>
+
+- `builder-util@26.8.0`
+- `dmg-builder@26.8.0`
+- `electron-builder-squirrel-windows@26.8.0`
+- `electron-publish@26.8.0`
+
+</details>
+
+## 26.7.0
+
+### Minor Changes
+
+- Feat: add `size` and `shrink` options to DmgOptions for explicit DMG filesystem size control _[`#9543`](https://github.com/electron-userland/electron-builder/pull/9543) [`bfee115`](https://github.com/electron-userland/electron-builder/commit/bfee115b185fa4dcb14b0fae6ccee1adc4d4590e) [@BarakXYZ](https://github.com/BarakXYZ)_
+- Adding optional config property `capabilities` to AppxOptions (#9436) _[`#9437`](https://github.com/electron-userland/electron-builder/pull/9437) [`3fa2d89`](https://github.com/electron-userland/electron-builder/commit/3fa2d894ac609d0d819d7adb80ff50bfca08039f) [@regnete](https://github.com/regnete)_
+
+### Patch Changes
+
+- Fix(linux): after-install.tpl: Fix `stdio` redirects in `update-alternative` invocation _[`#9536`](https://github.com/electron-userland/electron-builder/pull/9536) [`ec9e2db`](https://github.com/electron-userland/electron-builder/commit/ec9e2dbbd864f0858cf0d3b719ad75a84c59f29c) [@joshtriplett](https://github.com/joshtriplett)_
+- Fix: properly detecting npm duplicate entries and correlating `_dependencies` property against any duplicated `dependencies`. (npm collector also covers yarn berry) _[`#9548`](https://github.com/electron-userland/electron-builder/pull/9548) [`aec9157`](https://github.com/electron-userland/electron-builder/commit/aec9157b5124acf9409a46461eca86cb1212831b) [@mmaietta](https://github.com/mmaietta)_
+- Chore(deps): update `tar` again _[`#9547`](https://github.com/electron-userland/electron-builder/pull/9547) [`64b40fe`](https://github.com/electron-userland/electron-builder/commit/64b40fe75a5464db19721e5a6dd9a6930196aaac) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`bfee115`](https://github.com/electron-userland/electron-builder/commit/bfee115b185fa4dcb14b0fae6ccee1adc4d4590e)
+
+</small>
+
+- `dmg-builder@26.7.0`
+- `electron-builder-squirrel-windows@26.7.0`
+
+</details>
+
 ## 26.6.0
 
 ### Minor Changes

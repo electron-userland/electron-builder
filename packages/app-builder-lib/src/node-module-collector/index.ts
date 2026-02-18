@@ -1,17 +1,16 @@
 import { Nullish } from "builder-util-runtime"
 import { TmpDir } from "temp-file"
-import { NpmNodeModulesCollector } from "./npmNodeModulesCollector.js"
-import { detectPackageManager, getPackageManagerCommand, PM } from "./packageManager.js"
-import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector.js"
-import { NodeModuleInfo } from "./types.js"
-import { YarnBerryNodeModulesCollector } from "./yarnBerryNodeModulesCollector.js"
-import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector.js"
-import { BunNodeModulesCollector } from "./bunNodeModulesCollector.js"
+import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
+import { detectPackageManager, getPackageManagerCommand, PM } from "./packageManager"
+import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector"
+import { YarnBerryNodeModulesCollector } from "./yarnBerryNodeModulesCollector"
+import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector"
+import { BunNodeModulesCollector } from "./bunNodeModulesCollector"
 import { Lazy } from "lazy-val"
 import { spawn, log, exists, isEmptyOrSpaces } from "builder-util"
 import * as fs from "fs-extra"
 import * as path from "path"
-import { TraversalNodeModulesCollector } from "./traversalNodeModulesCollector.js"
+import { TraversalNodeModulesCollector } from "./traversalNodeModulesCollector"
 
 export { getPackageManagerCommand, PM }
 
@@ -30,22 +29,6 @@ export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirMan
     case PM.TRAVERSAL:
       return new TraversalNodeModulesCollector(rootDir, tempDirManager)
   }
-}
-
-export function getNodeModules(
-  pm: PM,
-  {
-    rootDir,
-    tempDirManager,
-    packageName,
-  }: {
-    rootDir: string
-    tempDirManager: TmpDir
-    packageName: string
-  }
-): Promise<NodeModuleInfo[]> {
-  const collector = getCollectorByPackageManager(pm, rootDir, tempDirManager)
-  return collector.getNodeModules({ packageName })
 }
 
 export const determinePackageManagerEnv = ({ projectDir, appDir, workspaceRoot }: { projectDir: string; appDir: string; workspaceRoot: string | Nullish }) =>

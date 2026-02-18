@@ -7,7 +7,7 @@ const packagerOptions = {
   targets: createTargets([Platform.LINUX, Platform.MAC], DIR_TARGET),
 }
 
-test.ifLinuxOrDevMac("invalid main in the app package.json", ({ expect }) =>
+test.ifNotWindows("invalid main in the app package.json", ({ expect }) =>
   appTwoThrows(expect, packagerOptions, {
     projectDirCreated: projectDir =>
       modifyPackageJson(
@@ -20,7 +20,7 @@ test.ifLinuxOrDevMac("invalid main in the app package.json", ({ expect }) =>
   })
 )
 
-test.ifLinuxOrDevMac("invalid main in the app package.json (no asar)", ({ expect }) =>
+test.ifNotWindows("invalid main in the app package.json (no asar)", ({ expect }) =>
   appTwoThrows(expect, packagerOptions, {
     projectDirCreated: projectDir => {
       return Promise.all([
@@ -39,7 +39,7 @@ test.ifLinuxOrDevMac("invalid main in the app package.json (no asar)", ({ expect
   })
 )
 
-test.ifLinuxOrDevMac("invalid main in the app package.json (custom asar)", ({ expect }) =>
+test.ifNotWindows("invalid main in the app package.json (custom asar)", ({ expect }) =>
   appTwoThrows(expect, packagerOptions, {
     projectDirCreated: projectDir => {
       return Promise.all([
@@ -58,7 +58,7 @@ test.ifLinuxOrDevMac("invalid main in the app package.json (custom asar)", ({ ex
   })
 )
 
-test.ifLinuxOrDevMac("main in the app package.json (no asar)", ({ expect }) =>
+test.ifNotWindows("main in the app package.json (no asar)", ({ expect }) =>
   assertPack(expect, "test-app", packagerOptions, {
     projectDirCreated: projectDir => {
       return Promise.all([
@@ -78,7 +78,7 @@ test.ifLinuxOrDevMac("main in the app package.json (no asar)", ({ expect }) =>
   })
 )
 
-test.ifLinuxOrDevMac("main in the app package.json (custom asar)", ({ expect }) =>
+test.ifNotWindows("main in the app package.json (custom asar)", ({ expect }) =>
   assertPack(expect, "test-app", packagerOptions, {
     projectDirCreated: projectDir => {
       return Promise.all([

@@ -15,7 +15,7 @@ export function setPrinter(value: ((message: string) => void) | null) {
   printer = value
 }
 
-export type LogLevel = "info" | "warn" | "debug" | "notice" | "error"
+export type LogLevel = "info" | "warn" | "debug" | "error"
 
 export const PADDING = 2
 
@@ -23,11 +23,7 @@ export class Logger {
   // clean up logs since concurrent tests are impossible to track logic execution with console concurrency "noise"
   private readonly shouldDisableNonErrorLoggingVitest = process.env.VITEST && !this.isDebugEnabled
 
-  constructor(protected readonly stream: WritableStream) {
-    if (this.shouldDisableNonErrorLoggingVitest) {
-      this.log(`non-error logging is silenced during VITEST workflow when DEBUG=electron-builder flag is not set`)
-    }
-  }
+  constructor(protected readonly stream: WritableStream) {}
 
   messageTransformer: (message: string, level: LogLevel) => string = it => it
 

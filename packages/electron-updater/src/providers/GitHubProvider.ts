@@ -224,7 +224,7 @@ export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangel
   for (const release of feed.getElements("entry")) {
     // noinspection TypeScriptValidateJSTypes
     const versionRelease = /\/tag\/v?([^/]+)$/.exec(release.element("link").attribute("href"))![1]
-    if (semver.lt(currentVersion, versionRelease)) {
+    if (semver.valid(versionRelease) && semver.lt(currentVersion, versionRelease)) {
       releaseNotes.push({
         version: versionRelease,
         note: getNoteValue(release),

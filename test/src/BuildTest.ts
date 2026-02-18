@@ -1,18 +1,18 @@
 import { checkBuildRequestOptions } from "app-builder-lib"
-import { doMergeConfigs } from "app-builder-lib"
+import { doMergeConfigs } from "app-builder-lib/out/util/config/config"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
-import { createYargs } from "electron-builder"
+import { createYargs } from "electron-builder/out/builder"
 import { promises as fs } from "fs"
 import { outputFile, outputJson } from "fs-extra"
 import * as path from "path"
-import { app, appTwo, appTwoThrows, assertPack, getFixtureDir, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester.js"
-import { ELECTRON_VERSION } from "./helpers/testConfig.js"
-import { verifySmartUnpack } from "./helpers/verifySmartUnpack.js"
-import { PM } from "app-builder-lib"
+import { app, appTwo, appTwoThrows, assertPack, getFixtureDir, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
+import { ELECTRON_VERSION } from "./helpers/testConfig"
+import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
+import { PM } from "app-builder-lib/out/node-module-collector/packageManager"
 
 test.ifLinux("cli", ({ expect }) => {
   // because these methods are internal
-  const { configureBuildCommand, normalizeOptions } = require("electron-builder/out/builder.js")
+  const { configureBuildCommand, normalizeOptions } = require("electron-builder/out/builder")
   const yargs = createYargs()
   configureBuildCommand(yargs)
 
@@ -148,7 +148,7 @@ test("relative index", ({ expect }) =>
     }
   ))
 
-it.ifDevOrLinuxCi("electron version from electron-prebuilt dependency", ({ expect }) =>
+it.ifNotWindows("electron version from electron-prebuilt dependency", ({ expect }) =>
   app(
     expect,
     {
@@ -169,7 +169,7 @@ it.ifDevOrLinuxCi("electron version from electron-prebuilt dependency", ({ expec
   )
 )
 
-test.ifDevOrLinuxCi("electron version from electron dependency", ({ expect }) =>
+test.ifNotWindows("electron version from electron dependency", ({ expect }) =>
   app(
     expect,
     {
@@ -190,7 +190,7 @@ test.ifDevOrLinuxCi("electron version from electron dependency", ({ expect }) =>
   )
 )
 
-test.ifDevOrLinuxCi("electron version from build", ({ expect }) =>
+test.ifNotWindows("electron version from build", ({ expect }) =>
   app(
     expect,
     {
@@ -217,7 +217,7 @@ test("www as default dir", ({ expect }) =>
     }
   ))
 
-test.ifLinuxOrDevMac("hooks as functions", ({ expect }) => {
+test.ifNotWindows("hooks as functions", ({ expect }) => {
   let artifactBuildStartedCalled = 0
   let artifactBuildCompletedCalled = 0
   let beforePackCalled = 0
@@ -263,7 +263,7 @@ test.ifLinuxOrDevMac("hooks as functions", ({ expect }) => {
   )
 })
 
-test.ifLinuxOrDevMac("hooks as file - cjs", async ({ expect }) => {
+test.ifNotWindows("hooks as file - cjs", async ({ expect }) => {
   const hookScript = path.join(getFixtureDir(), "build-hook.cjs")
   return assertPack(expect, "test-app-one", {
     targets: createTargets([Platform.LINUX, Platform.MAC], "zip", "x64"),
@@ -277,7 +277,7 @@ test.ifLinuxOrDevMac("hooks as file - cjs", async ({ expect }) => {
   })
 })
 
-test.ifLinuxOrDevMac("hooks as file - mjs exported functions", async ({ expect }) => {
+test.ifNotWindows("hooks as file - mjs exported functions", async ({ expect }) => {
   const hookScript = path.join(getFixtureDir(), "build-hook.mjs")
   return assertPack(expect, "test-app-one", {
     targets: createTargets([Platform.LINUX, Platform.MAC], "zip", "x64"),
@@ -315,7 +315,7 @@ test.ifWindows("afterSign", ({ expect }) => {
   )
 })
 
-test.ifLinuxOrDevMac("beforeBuild", ({ expect }) => {
+test.ifNotWindows("beforeBuild", ({ expect }) => {
   let called = 0
   return assertPack(
     expect,
@@ -340,7 +340,7 @@ test.ifLinuxOrDevMac("beforeBuild", ({ expect }) => {
 })
 
 // https://github.com/electron-userland/electron-builder/issues/1738
-test.ifDevOrLinuxCi("win smart unpack", ({ expect }) => {
+test.ifNotWindows("win smart unpack", ({ expect }) => {
   // test onNodeModuleFile hook
   const nodeModuleFiles: Array<string> = []
   let p = ""

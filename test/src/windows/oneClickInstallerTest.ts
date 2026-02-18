@@ -131,7 +131,7 @@ test("html license", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   )
 )
 
-test.ifDevOrWinCi("createDesktopShortcut always", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+test("createDesktopShortcut always", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(expect, {
     targets: Platform.WINDOWS.createTarget("nsis", Arch.x64),
     config: {
@@ -143,7 +143,7 @@ test.ifDevOrWinCi("createDesktopShortcut always", { timeout: EXTENDED_TIMEOUT },
   })
 )
 
-test.ifDevOrLinuxCi("perMachine, no run after finish", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+test.ifNotWindows("perMachine, no run after finish", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(
     expect,
     {
@@ -209,7 +209,7 @@ test.skip("installerHeaderIcon", { timeout: EXTENDED_TIMEOUT }, ({ expect }) => 
   )
 })
 
-test.ifDevOrLinuxCi("custom include", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+test.ifNotWindows("custom include", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(
     expect,
     { targets: nsisTarget },
@@ -245,7 +245,7 @@ test.skip("big file pack", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   )
 )
 
-test.ifDevOrLinuxCi("custom script", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+test.ifNotWindows("custom script", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(
     expect,
     { targets: nsisTarget },
@@ -318,7 +318,7 @@ test("string menuCategory", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   )
 )
 
-test.ifDevOrLinuxCi("file associations per user", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+test.ifNotWindows("file associations per user", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(expect, {
     targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
     config: {

@@ -10,7 +10,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
   }
 
   protected getArgs(): string[] {
-    return ["list", "--prod", "--json", "--depth", "Infinity"]
+    return ["list", "--prod", "--json", "--depth", "Infinity", "--silent", "--loglevel=error"]
   }
 
   protected async extractProductionDependencyGraph(tree: PnpmDependency, dependencyId: string) {
@@ -41,8 +41,8 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
           return undefined
         }
       }
-      const childDependencyId = this.packageVersionString(dependency)
-      await this.extractProductionDependencyGraph(dependency, childDependencyId)
+      const { id: childDependencyId, pkgOverride } = this.normalizePackageVersion(packageName, dependency)
+      await this.extractProductionDependencyGraph(pkgOverride, childDependencyId)
       return childDependencyId
     })
 
@@ -70,11 +70,6 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       this.allDependencies.set(`${key}@${value.version}`, { ...value, path: pkg?.packageDir ?? value.path })
       await this.collectAllDependencies(value)
     }
-  }
-
-  protected packageVersionString(pkg: PnpmDependency): string {
-    // we use 'from' field because 'name' may be different in case of aliases
-    return `${pkg.from}@${pkg.version}`
   }
 
   protected parseDependenciesTree(jsonBlob: string): PnpmDependency {

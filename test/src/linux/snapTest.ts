@@ -1,7 +1,7 @@
 import { Arch, Platform } from "electron-builder"
 import { app, assertPack, snapTarget } from "../helpers/packTester"
 
-test.ifDevOrLinuxCi("snap", ({ expect }) =>
+test.ifNotWindows("snap", ({ expect }) =>
   app(expect, {
     targets: snapTarget,
     config: {
@@ -23,7 +23,7 @@ test.ifDevOrLinuxCi("snap", ({ expect }) =>
   })
 )
 
-test.ifDevOrLinuxCi("arm", ({ expect }) =>
+test.ifNotWindows("arm", ({ expect }) =>
   app(expect, {
     targets: Platform.LINUX.createTarget("snap", Arch.armv7l),
     config: {
@@ -35,7 +35,7 @@ test.ifDevOrLinuxCi("arm", ({ expect }) =>
   })
 )
 
-test.ifDevOrLinuxCi("default stagePackages", async ({ expect }) => {
+test.ifNotWindows("default stagePackages", async ({ expect }) => {
   for (const p of [["default"], ["default", "custom"], ["custom", "default"], ["foo1", "default", "foo2"]]) {
     await assertPack(expect, "test-app-one", {
       targets: snapTarget,
@@ -62,7 +62,7 @@ test.ifDevOrLinuxCi("default stagePackages", async ({ expect }) => {
   }
 })
 
-test.ifDevOrLinuxCi("classic confinement", ({ expect }) =>
+test.ifNotWindows("classic confinement", ({ expect }) =>
   app(expect, {
     targets: snapTarget,
     config: {
@@ -77,7 +77,7 @@ test.ifDevOrLinuxCi("classic confinement", ({ expect }) =>
   })
 )
 
-test.ifDevOrLinuxCi("buildPackages", async ({ expect }) => {
+test.ifNotWindows("buildPackages", async ({ expect }) => {
   await assertPack(expect, "test-app-one", {
     targets: snapTarget,
     config: {
@@ -99,7 +99,7 @@ test.ifDevOrLinuxCi("buildPackages", async ({ expect }) => {
   })
 })
 
-test.ifDevOrLinuxCi("plugs option", async ({ expect }) => {
+test.ifNotWindows("plugs option", async ({ expect }) => {
   for (const p of [
     [
       {
@@ -137,7 +137,7 @@ test.ifDevOrLinuxCi("plugs option", async ({ expect }) => {
   }
 })
 
-test.ifDevOrLinuxCi("slots option", async ({ expect }) => {
+test.ifNotWindows("slots option", async ({ expect }) => {
   for (const slots of [
     ["foo", "bar"],
     [
@@ -169,7 +169,7 @@ test.ifDevOrLinuxCi("slots option", async ({ expect }) => {
   }
 })
 
-test.ifDevOrLinuxCi("custom env", ({ expect }) =>
+test.ifNotWindows("custom env", ({ expect }) =>
   app(expect, {
     targets: snapTarget,
     config: {
@@ -190,7 +190,7 @@ test.ifDevOrLinuxCi("custom env", ({ expect }) =>
   })
 )
 
-test.ifDevOrLinuxCi("custom after, no desktop", ({ expect }) =>
+test.ifNotWindows("custom after, no desktop", ({ expect }) =>
   app(expect, {
     targets: snapTarget,
     config: {
@@ -209,7 +209,7 @@ test.ifDevOrLinuxCi("custom after, no desktop", ({ expect }) =>
   })
 )
 
-test.ifDevOrLinuxCi("no desktop plugs", ({ expect }) =>
+test.ifNotWindows("no desktop plugs", ({ expect }) =>
   app(expect, {
     targets: snapTarget,
     config: {
@@ -229,7 +229,7 @@ test.ifDevOrLinuxCi("no desktop plugs", ({ expect }) =>
   })
 )
 
-test.ifDevOrLinuxCi("auto start", ({ expect }) =>
+test.ifNotWindows("auto start", ({ expect }) =>
   app(expect, {
     targets: snapTarget,
     config: {
@@ -249,7 +249,7 @@ test.ifDevOrLinuxCi("auto start", ({ expect }) =>
   })
 )
 
-test.ifDevOrLinuxCi("default compression", ({ expect }) =>
+test.ifNotWindows("default compression", ({ expect }) =>
   app(expect, {
     targets: snapTarget,
     config: {
@@ -265,7 +265,7 @@ test.ifDevOrLinuxCi("default compression", ({ expect }) =>
   })
 )
 
-test.ifDevOrLinuxCi("compression option", ({ expect }) =>
+test.ifNotWindows("compression option", ({ expect }) =>
   app(expect, {
     targets: snapTarget,
     config: {
@@ -287,7 +287,7 @@ test.ifDevOrLinuxCi("compression option", ({ expect }) =>
   })
 )
 
-test.ifDevOrLinuxCi("default base", ({ expect }) =>
+test.ifNotWindows("default base", ({ expect }) =>
   app(expect, {
     targets: snapTarget,
     config: {
@@ -301,7 +301,7 @@ test.ifDevOrLinuxCi("default base", ({ expect }) =>
   })
 )
 
-test.ifDevOrLinuxCi("base option", ({ expect }) =>
+test.ifNotWindows("base option", ({ expect }) =>
   app(expect, {
     targets: snapTarget,
     config: {
@@ -318,7 +318,7 @@ test.ifDevOrLinuxCi("base option", ({ expect }) =>
   })
 )
 
-test.ifDevOrLinuxCi("use template app", ({ expect }) =>
+test.ifNotWindows("use template app", ({ expect }) =>
   app(expect, {
     targets: snapTarget,
     config: {

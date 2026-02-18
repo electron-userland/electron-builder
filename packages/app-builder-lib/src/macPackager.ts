@@ -471,7 +471,6 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
         requirements: requirements || undefined,
         additionalArguments: customSignOptions.additionalArguments || [],
       }
-      log.debug({ file: log.filePath(filePath), ...args }, "selecting signing options")
       return args
     }
     return optionsForFile

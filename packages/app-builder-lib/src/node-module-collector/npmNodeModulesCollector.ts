@@ -1,3 +1,4 @@
+import { LogMessageByKey } from "./moduleManager.js"
 import { NodeModulesCollector } from "./nodeModulesCollector.js"
 import { PM } from "./packageManager.js"
 import { NpmDependency } from "./types.js"
@@ -9,20 +10,28 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
   }
 
   protected getArgs(): string[] {
-    return ["list", "-a", "--include", "prod", "--include", "optional", "--omit", "dev", "--json", "--long", "--silent"]
+    return ["list", "-a", "--include", "prod", "--include", "optional", "--omit", "dev", "--json", "--long", "--silent", "--loglevel=error"]
   }
 
   protected async collectAllDependencies(tree: NpmDependency) {
     for (const [key, value] of Object.entries(tree.dependencies || {})) {
+      const { id: childDependencyId, pkgOverride } = this.normalizePackageVersion(key, value)
+
+      // Only skip if this exact version is already collected AND it's a duplicate reference
+      // We need to collect nested versions even if a different version exists at top level
       if (this.isDuplicatedNpmDependency(value)) {
+        // This is a reference to a package already defined elsewhere in the tree
+        // Still add it to allDependencies if we haven't seen this exact version yet
+        if (!this.allDependencies.has(childDependencyId)) {
+          this.allDependencies.set(childDependencyId, pkgOverride)
+        }
+        this.cache.logSummary[LogMessageByKey.PKG_DUPLICATE_REF].push(childDependencyId)
         continue
       }
-      // Use the key (alias name) instead of value.name for npm aliased packages
-      // e.g., { "foo": { name: "@scope/bar", ... } } should be stored as "foo@version"
-      // This ensures aliased packages are copied to the correct location in node_modules
-      const normalizedDep: NpmDependency = key !== value.name ? { ...value, name: key } : value
-      this.allDependencies.set(this.packageVersionString(normalizedDep), normalizedDep)
-      await this.collectAllDependencies(value)
+
+      // Always store this dependency and recurse into its children
+      this.allDependencies.set(childDependencyId, pkgOverride)
+      await this.collectAllDependencies(pkgOverride)
     }
   }
 
@@ -32,21 +41,27 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     }
 
     const isDuplicateDep = this.isDuplicatedNpmDependency(tree)
-    const resolvedDeps = isDuplicateDep ? this.allDependencies.get(dependencyId)?.dependencies : tree.dependencies
+    const targetTree = isDuplicateDep ? this.allDependencies.get(dependencyId) : tree
+
     // Initialize with empty dependencies array first to mark this dependency as "in progress"
     // After initialization, if there are libraries with the same name+version later, they will not be searched recursively again
     // This will prevents infinite loops when circular dependencies are encountered.
     this.productionGraph[dependencyId] = { dependencies: [] }
 
     const collectedDependencies: string[] = []
-    if (resolvedDeps && Object.keys(resolvedDeps).length > 0) {
-      for (const packageName in resolvedDeps) {
-        if (!this.isProdDependency(packageName, tree)) {
+    if (targetTree?.dependencies) {
+      for (const packageName in targetTree.dependencies) {
+        // Check against matching _dependencies
+        if (!this.isProdDependency(packageName, targetTree)) {
           continue
         }
-        const dependency = resolvedDeps[packageName]
-        const childDependencyId = this.packageVersionString({ name: packageName, version: dependency.version })
-        await this.extractProductionDependencyGraph(dependency, childDependencyId)
+        const dependency = targetTree.dependencies[packageName]
+        // Match first version's empty check
+        if (Object.keys(dependency).length === 0) {
+          continue
+        }
+        const { id: childDependencyId, pkgOverride } = this.normalizePackageVersion(packageName, dependency)
+        await this.extractProductionDependencyGraph(pkgOverride, childDependencyId)
         collectedDependencies.push(childDependencyId)
       }
     }

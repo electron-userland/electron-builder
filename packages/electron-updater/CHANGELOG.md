@@ -1,5 +1,17 @@
 ## 4.3.0
 
+## 6.8.3
+
+### Patch Changes
+
+- Chore: Remove console logs for autoupdate checks _[`#9561`](https://github.com/electron-userland/electron-builder/pull/9561) [`9c67fd3`](https://github.com/electron-userland/electron-builder/commit/9c67fd31ce982d11c82aae71263ba1f0055a77cc) [@Kilian](https://github.com/Kilian)_
+
+## 6.8.2
+
+### Patch Changes
+
+- Fix(updater): ignore releases with non-semver tags when collecting full changelog _[`#9550`](https://github.com/electron-userland/electron-builder/pull/9550) [`8aee1e6`](https://github.com/electron-userland/electron-builder/commit/8aee1e6944afae05a60d2a392743a78f818ee6de) [@AbdulrhmanGoni](https://github.com/AbdulrhmanGoni)_
+
 ## 6.8.1
 
 ### Patch Changes

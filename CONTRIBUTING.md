@@ -99,15 +99,14 @@ popd
 
 ## Pull Requests
 
-To check that your contributions match the project coding style make sure `pnpm test` passes.
-To build project run: `pnpm i && pnpm compile`
+To check that your contributions match the project coding style make sure `pnpm ci:validate` passes.
+To build project run: `pnpm i && pnpm compile` (add `--watch` for faster dev iteration)
 
-> If you get strange compilation errors, try to remove all `node_modules` directories in the project (especially under `packages/*`).
+> If you get strange compilation errors, try to remove all `node_modules` directories in the project (especially under `packages/*`). `git clean -xfd` from root is a simply method; pre-validate via `--dry-run` additional flag.
 
 ### Git Commit Guidelines
 
-We use [semantic-release](https://github.com/semantic-release/semantic-release), so we have very precise rules over how
-our git [commit messages can be formatted](https://gist.github.com/develar/273e2eb938792cf5f86451fbac2bcd51).
+We use [semantic-release](https://github.com/semantic-release/semantic-release), so we have very precise rules over how our git [commit messages can be formatted](https://gist.github.com/develar/273e2eb938792cf5f86451fbac2bcd51).
 
 ## Documentation
 

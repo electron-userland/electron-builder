@@ -1,8 +1,7 @@
 {
   "name": "builder-util",
-  "version": "26.4.1",
-  "type": "module",
-  "exports": "./out/util.js",
+  "version": "26.8.1",
+  "main": "out/util.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {
@@ -34,9 +33,6 @@
     "tiny-async-pool": "1.3.0"
   },
   "typings": "./out/util.d.ts",
-  "engines": {
-    "node": ">=22.12.0"
-  },
   "devDependencies": {
     "@types/cross-spawn": "6.0.6",
     "@types/fs-extra": "^9.0.11",
