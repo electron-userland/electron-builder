@@ -1,5 +1,28 @@
 # app-builder-lib
 
+## 26.8.1
+
+### Patch Changes
+
+- Chore: add logging summary to end of node collector to flag any special cases/alerts _[`#9587`](https://github.com/electron-userland/electron-builder/pull/9587) [`4edd695`](https://github.com/electron-userland/electron-builder/commit/4edd6950454d369ef8994e5a1ad64f1d0c7b7643) [@mmaietta](https://github.com/mmaietta)_
+- Fix(AppImage): fix mime type directory in AppDir _[`#9589`](https://github.com/electron-userland/electron-builder/pull/9589) [`8940ec6`](https://github.com/electron-userland/electron-builder/commit/8940ec63bac6450ed9b7c5e761954f08e6fa4242) [@sabonerune](https://github.com/sabonerune)_
+- Fix: use package key when reading from dependency list instead of package `from` to not mislabel package-version strings _[`#9583`](https://github.com/electron-userland/electron-builder/pull/9583) [`dde4309`](https://github.com/electron-userland/electron-builder/commit/dde4309b9114e06d0826e8badc2cb968ceb75642) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 4 dependencies</summary>
+
+<small>
+
+[`4edd695`](https://github.com/electron-userland/electron-builder/commit/4edd6950454d369ef8994e5a1ad64f1d0c7b7643)
+
+</small>
+
+- `builder-util@26.8.1`
+- `dmg-builder@26.8.1`
+- `electron-builder-squirrel-windows@26.8.1`
+- `electron-publish@26.8.1`
+
+</details>
+
 ## 26.8.0
 
 ### Minor Changes
