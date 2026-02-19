@@ -57,11 +57,22 @@ export async function getAppImageTools(targetArch: Arch) {
       githubOrgRepo: "electron-userland/electron-builder-binaries",
     }))
 
-  const runtimeArch = targetArch === Arch.armv7l ? "arm32" : targetArch === Arch.arm64 ? "arm64" : targetArch === Arch.ia32 ? "ia32" : "x64"
+  const runtimeArch =
+    targetArch === Arch.armv7l
+      ? "arm32"
+      : targetArch === Arch.arm64
+      ? "arm64"
+      : targetArch === Arch.ia32
+      ? "ia32"
+      : "x64"
+
+  const root = path.resolve(artifactPath)
+  const binDir = path.join(root, "linux", runtimeArch)
+
   return {
-    mksquashfs: path.join(artifactPath, "mksquashfs"),
-    desktopFileValidate: path.join(artifactPath, "desktop-file-validate"),
-    runtime: path.join(artifactPath, "runtimes", `runtime-${runtimeArch}`),
-    runtimeLibraries: path.join(artifactPath, "lib", runtimeArch),
+    mksquashfs: path.join(binDir, "mksquashfs"),
+    desktopFileValidate: path.join(binDir, "desktop-file-validate"),
+    runtime: path.join(root, "runtimes", `runtime-${runtimeArch}`),
+    runtimeLibraries: path.join(root, "lib", runtimeArch),
   }
 }
