@@ -88,9 +88,16 @@ async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
 }
 
 async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOptions) {
-  const {
-    packager: { config, platformSpecificBuildOptions },
-  } = options
+  const { packager, appOutDir } = options
+  const { config, platformSpecificBuildOptions, platform } = packager
+
+  const getLocalesConfig = () => {
+    if (platform === Platform.MAC) {
+      return { dirs: [packager.getResourcesDir(appOutDir), packager.getMacOsElectronFrameworkResourcesDir(appOutDir)], langFileExt: ".lproj" }
+    }
+    return { dirs: [path.join(packager.getResourcesDir(appOutDir), "..", "locales")], langFileExt: ".pak" }
+  }
+
   const wantedLanguages = asArray(platformSpecificBuildOptions.electronLanguages || config.electronLanguages)
     .map(it => it.trim().toLowerCase())
     .filter(it => it.length > 0)
@@ -98,7 +105,7 @@ async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOption
     return
   }
 
-  const { dirs, langFileExt } = getLocalesConfig(options)
+  const { dirs, langFileExt } = getLocalesConfig()
   // noinspection SpellCheckingInspection
   const deleteNonMatchedLanguages: (dir: string) => Promise<Promise<void>[] | undefined> = async (dir: string) => {
     const files = await readdir(dir)
@@ -123,20 +130,12 @@ async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOption
       return rm(path.join(dir, file), { recursive: true, force: true })
     })
   }
-  const allDeletedFiles = (await Promise.all(dirs.map(deleteNonMatchedLanguages))).flat().filter(it => it != null)
+  const allDeletedFiles = (await Promise.all(dirs.map(deleteNonMatchedLanguages))).flat().filter((it): it is Promise<void> => it != null)
   if (allDeletedFiles.length === 0) {
     log.warn({ electronLanguages: wantedLanguages }, "no locales found matching wanted languages, skipping cleanup")
     return
   }
   await asyncPool(MAX_FILE_REQUESTS, allDeletedFiles, it => it)
-
-  function getLocalesConfig(options: BeforeCopyExtraFilesOptions) {
-    const { appOutDir, packager } = options
-    if (packager.platform === Platform.MAC) {
-      return { dirs: [packager.getResourcesDir(appOutDir), packager.getMacOsElectronFrameworkResourcesDir(appOutDir)], langFileExt: ".lproj" }
-    }
-    return { dirs: [path.join(packager.getResourcesDir(appOutDir), "..", "locales")], langFileExt: ".pak" }
-  }
 }
 
 class ElectronFramework implements Framework {
