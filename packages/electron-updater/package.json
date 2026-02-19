@@ -3,7 +3,9 @@
   "version": "6.8.3",
   "description": "Cross platform updater for electron applications",
   "type": "module",
-  "exports": "./out/index.js",
+  "exports": {
+    ".": "./out/index.js"
+  },
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {

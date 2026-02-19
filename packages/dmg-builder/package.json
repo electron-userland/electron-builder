@@ -1,7 +1,11 @@
 {
 	"name": "dmg-builder",
 	"version": "26.8.1",
-	"main": "out/dmgUtil.js",
+  "type": "module",
+	"exports": {
+    ".": "./out/dmgUtil.js"
+  },
+  "description": "dmg builder for electron-builder",
 	"author": "Vladimir Krivosheev",
 	"license": "MIT",
 	"repository": {

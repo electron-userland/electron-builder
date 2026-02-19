@@ -1,9 +1,9 @@
-import { ToolsetConfig } from "app-builder-lib/src/configuration"
+import { ToolsetConfig } from "app-builder-lib"
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { CheckingWinPackager } from "../helpers/CheckingPackager"
-import { app, appThrows, assertPack, platform } from "../helpers/packTester"
+import { CheckingWinPackager } from "../helpers/CheckingPackager.js"
+import { app, appThrows, assertPack, platform } from "../helpers/packTester.js"
 
 const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0"]
 

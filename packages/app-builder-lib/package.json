@@ -2,7 +2,10 @@
   "name": "app-builder-lib",
   "description": "electron-builder lib",
   "version": "26.8.1",
-  "main": "out/index.js",
+  "type": "module",
+  "exports": {
+    ".": "./out/index.js"
+  },
   "files": [
     "out",
     "templates",

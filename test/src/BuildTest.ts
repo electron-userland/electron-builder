@@ -1,7 +1,7 @@
 import { checkBuildRequestOptions } from "app-builder-lib"
 import { doMergeConfigs } from "app-builder-lib/out/util/config/config"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
-import { createYargs } from "electron-builder/out/builder"
+import { createYargs } from "electron-builder"
 import { promises as fs } from "fs"
 import { outputFile, outputJson } from "fs-extra"
 import * as path from "path"
