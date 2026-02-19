@@ -1126,11 +1126,11 @@ exports[`node_module collectors > npm tar 2`] = `
 {
   "files": {
     "index.html": {
-      "offset": 1613000,
+      "offset": 1693890,
       "size": 380,
     },
     "index.js": {
-      "offset": 1613370,
+      "offset": 1694270,
       "size": 620,
     },
     "node_modules": {
@@ -1253,28 +1253,28 @@ exports[`node_module collectors > npm tar 2`] = `
         },
         "minipass": {
           "files": {
-            "LICENSE": {
+            "LICENSE.md": {
               "offset": 111060,
-              "size": 790,
+              "size": 1560,
             },
             "dist": {
               "files": {
                 "commonjs": {
                   "files": {
                     "index.d.ts.map": {
-                      "offset": 111850,
-                      "size": 8770,
+                      "offset": 112620,
+                      "size": 48070,
                     },
                     "index.js": {
-                      "offset": 120610,
-                      "size": 33800,
+                      "offset": 160680,
+                      "size": 34050,
                     },
                     "index.js.map": {
-                      "offset": 154410,
-                      "size": 66340,
+                      "offset": 194730,
+                      "size": 66970,
                     },
                     "package.json": {
-                      "offset": 220740,
+                      "offset": 261690,
                       "size": 30,
                     },
                   },
@@ -1282,19 +1282,19 @@ exports[`node_module collectors > npm tar 2`] = `
                 "esm": {
                   "files": {
                     "index.d.ts.map": {
-                      "offset": 220760,
-                      "size": 8770,
+                      "offset": 261720,
+                      "size": 48070,
                     },
                     "index.js": {
-                      "offset": 229530,
-                      "size": 33230,
+                      "offset": 309780,
+                      "size": 33330,
                     },
                     "index.js.map": {
-                      "offset": 262750,
-                      "size": 66340,
+                      "offset": 343100,
+                      "size": 66920,
                     },
                     "package.json": {
-                      "offset": 329090,
+                      "offset": 410020,
                       "size": 30,
                     },
                   },
@@ -1302,15 +1302,15 @@ exports[`node_module collectors > npm tar 2`] = `
               },
             },
             "package.json": {
-              "offset": 329120,
-              "size": 1500,
+              "offset": 410040,
+              "size": 1470,
             },
           },
         },
         "minizlib": {
           "files": {
             "LICENSE": {
-              "offset": 330610,
+              "offset": 411510,
               "size": 1340,
             },
             "dist": {
@@ -1318,31 +1318,31 @@ exports[`node_module collectors > npm tar 2`] = `
                 "commonjs": {
                   "files": {
                     "constants.d.ts.map": {
-                      "offset": 331950,
+                      "offset": 412850,
                       "size": 150,
                     },
                     "constants.js": {
-                      "offset": 332100,
+                      "offset": 412990,
                       "size": 4300,
                     },
                     "constants.js.map": {
-                      "offset": 336400,
+                      "offset": 417290,
                       "size": 7300,
                     },
                     "index.d.ts.map": {
-                      "offset": 343690,
+                      "offset": 424590,
                       "size": 3130,
                     },
                     "index.js": {
-                      "offset": 346820,
+                      "offset": 427710,
                       "size": 14870,
                     },
                     "index.js.map": {
-                      "offset": 361690,
+                      "offset": 442580,
                       "size": 24390,
                     },
                     "package.json": {
-                      "offset": 386070,
+                      "offset": 466970,
                       "size": 30,
                     },
                   },
@@ -1350,31 +1350,31 @@ exports[`node_module collectors > npm tar 2`] = `
                 "esm": {
                   "files": {
                     "constants.d.ts.map": {
-                      "offset": 386100,
+                      "offset": 466990,
                       "size": 150,
                     },
                     "constants.js": {
-                      "offset": 386240,
+                      "offset": 467140,
                       "size": 4040,
                     },
                     "constants.js.map": {
-                      "offset": 390280,
+                      "offset": 471170,
                       "size": 7330,
                     },
                     "index.d.ts.map": {
-                      "offset": 397600,
+                      "offset": 478500,
                       "size": 3130,
                     },
                     "index.js": {
-                      "offset": 400720,
+                      "offset": 481620,
                       "size": 12250,
                     },
                     "index.js.map": {
-                      "offset": 412970,
+                      "offset": 493860,
                       "size": 24370,
                     },
                     "package.json": {
-                      "offset": 437340,
+                      "offset": 518230,
                       "size": 30,
                     },
                   },
@@ -1382,7 +1382,7 @@ exports[`node_module collectors > npm tar 2`] = `
               },
             },
             "package.json": {
-              "offset": 437360,
+              "offset": 518260,
               "size": 1390,
             },
           },
@@ -1390,7 +1390,7 @@ exports[`node_module collectors > npm tar 2`] = `
         "tar": {
           "files": {
             "LICENSE.md": {
-              "offset": 438740,
+              "offset": 519640,
               "size": 1560,
             },
             "dist": {
@@ -1398,355 +1398,355 @@ exports[`node_module collectors > npm tar 2`] = `
                 "commonjs": {
                   "files": {
                     "create.d.ts.map": {
-                      "offset": 440290,
+                      "offset": 521190,
                       "size": 200,
                     },
                     "create.js": {
-                      "offset": 440480,
+                      "offset": 521380,
                       "size": 2580,
                     },
                     "create.js.map": {
-                      "offset": 443060,
+                      "offset": 523960,
                       "size": 5200,
                     },
                     "cwd-error.d.ts.map": {
-                      "offset": 448250,
+                      "offset": 529150,
                       "size": 290,
                     },
                     "cwd-error.js": {
-                      "offset": 448530,
+                      "offset": 529430,
                       "size": 440,
                     },
                     "cwd-error.js.map": {
-                      "offset": 448970,
+                      "offset": 529870,
                       "size": 740,
                     },
                     "extract.d.ts.map": {
-                      "offset": 449710,
+                      "offset": 530600,
                       "size": 200,
                     },
                     "extract.js": {
-                      "offset": 449900,
+                      "offset": 530800,
                       "size": 3450,
                     },
                     "extract.js.map": {
-                      "offset": 453350,
+                      "offset": 534240,
                       "size": 3550,
                     },
                     "get-write-flag.d.ts.map": {
-                      "offset": 456890,
+                      "offset": 537790,
                       "size": 170,
                     },
                     "get-write-flag.js": {
-                      "offset": 457060,
+                      "offset": 537950,
                       "size": 1310,
                     },
                     "get-write-flag.js.map": {
-                      "offset": 458360,
+                      "offset": 539260,
                       "size": 1910,
                     },
                     "header.d.ts.map": {
-                      "offset": 460270,
+                      "offset": 541170,
                       "size": 1830,
                     },
                     "header.js": {
-                      "offset": 462100,
+                      "offset": 543000,
                       "size": 12640,
                     },
                     "header.js.map": {
-                      "offset": 474740,
+                      "offset": 555630,
                       "size": 25090,
                     },
                     "index.d.ts.map": {
-                      "offset": 499820,
+                      "offset": 580720,
                       "size": 830,
                     },
                     "index.js": {
-                      "offset": 500650,
+                      "offset": 581540,
                       "size": 3140,
                     },
                     "index.js.map": {
-                      "offset": 503780,
+                      "offset": 584680,
                       "size": 1470,
                     },
                     "large-numbers.d.ts.map": {
-                      "offset": 505250,
+                      "offset": 586150,
                       "size": 240,
                     },
                     "large-numbers.js": {
-                      "offset": 505480,
+                      "offset": 586380,
                       "size": 2740,
                     },
                     "large-numbers.js.map": {
-                      "offset": 508220,
+                      "offset": 589110,
                       "size": 5930,
                     },
                     "list.d.ts.map": {
-                      "offset": 514150,
+                      "offset": 595040,
                       "size": 300,
                     },
                     "list.js": {
-                      "offset": 514440,
+                      "offset": 595340,
                       "size": 5440,
                     },
                     "list.js.map": {
-                      "offset": 519880,
+                      "offset": 600780,
                       "size": 7510,
                     },
                     "make-command.d.ts.map": {
-                      "offset": 527390,
+                      "offset": 608280,
                       "size": 4490,
                     },
                     "make-command.js": {
-                      "offset": 531880,
+                      "offset": 612770,
                       "size": 2050,
                     },
                     "make-command.js.map": {
-                      "offset": 533920,
+                      "offset": 614820,
                       "size": 9060,
                     },
                     "mkdir.d.ts.map": {
-                      "offset": 542970,
+                      "offset": 623870,
                       "size": 780,
                     },
                     "mkdir.js": {
-                      "offset": 543750,
+                      "offset": 624650,
                       "size": 6810,
                     },
                     "mkdir.js.map": {
-                      "offset": 550550,
+                      "offset": 631450,
                       "size": 13070,
                     },
                     "mode-fix.d.ts.map": {
-                      "offset": 563620,
+                      "offset": 644520,
                       "size": 190,
                     },
                     "mode-fix.js": {
-                      "offset": 563810,
+                      "offset": 644710,
                       "size": 880,
                     },
                     "mode-fix.js.map": {
-                      "offset": 564690,
+                      "offset": 645580,
                       "size": 1410,
                     },
                     "normalize-unicode.d.ts.map": {
-                      "offset": 566100,
+                      "offset": 646990,
                       "size": 190,
                     },
                     "normalize-unicode.js": {
-                      "offset": 566280,
+                      "offset": 647180,
                       "size": 1160,
                     },
                     "normalize-unicode.js.map": {
-                      "offset": 567440,
+                      "offset": 648340,
                       "size": 2050,
                     },
                     "normalize-windows-path.d.ts.map": {
-                      "offset": 569480,
+                      "offset": 650380,
                       "size": 190,
                     },
                     "normalize-windows-path.js": {
-                      "offset": 569660,
+                      "offset": 650560,
                       "size": 610,
                     },
                     "normalize-windows-path.js.map": {
-                      "offset": 570270,
+                      "offset": 651160,
                       "size": 950,
                     },
                     "options.d.ts.map": {
-                      "offset": 571210,
+                      "offset": 652110,
                       "size": 6190,
                     },
                     "options.js": {
-                      "offset": 577400,
+                      "offset": 658290,
                       "size": 2120,
                     },
                     "options.js.map": {
-                      "offset": 579510,
+                      "offset": 660410,
                       "size": 27230,
                     },
                     "pack.d.ts.map": {
-                      "offset": 606740,
+                      "offset": 687640,
                       "size": 3840,
                     },
                     "pack.js": {
-                      "offset": 610580,
+                      "offset": 691480,
                       "size": 16430,
                     },
                     "pack.js.map": {
-                      "offset": 627010,
+                      "offset": 707900,
                       "size": 30260,
                     },
                     "package.json": {
-                      "offset": 657260,
+                      "offset": 738160,
                       "size": 30,
                     },
                     "parse.d.ts.map": {
-                      "offset": 657290,
+                      "offset": 738180,
                       "size": 3730,
                     },
                     "parse.js": {
-                      "offset": 661010,
+                      "offset": 741910,
                       "size": 23040,
                     },
                     "parse.js.map": {
-                      "offset": 684050,
+                      "offset": 764950,
                       "size": 41960,
                     },
                     "path-reservations.d.ts.map": {
-                      "offset": 726010,
+                      "offset": 806900,
                       "size": 420,
                     },
                     "path-reservations.js": {
-                      "offset": 726430,
+                      "offset": 807320,
                       "size": 5720,
                     },
                     "path-reservations.js.map": {
-                      "offset": 732140,
+                      "offset": 813040,
                       "size": 10830,
                     },
                     "pax.d.ts.map": {
-                      "offset": 742970,
+                      "offset": 823870,
                       "size": 890,
                     },
                     "pax.js": {
-                      "offset": 743850,
+                      "offset": 824750,
                       "size": 4910,
                     },
                     "pax.js.map": {
-                      "offset": 748750,
+                      "offset": 829650,
                       "size": 10050,
                     },
                     "read-entry.d.ts.map": {
-                      "offset": 758800,
+                      "offset": 839700,
                       "size": 1180,
                     },
                     "read-entry.js": {
-                      "offset": 759980,
+                      "offset": 840880,
                       "size": 4460,
                     },
                     "read-entry.js.map": {
-                      "offset": 764440,
+                      "offset": 845330,
                       "size": 8160,
                     },
                     "replace.d.ts.map": {
-                      "offset": 772600,
+                      "offset": 853490,
                       "size": 150,
                     },
                     "replace.js": {
-                      "offset": 772740,
+                      "offset": 853640,
                       "size": 7880,
                     },
                     "replace.js.map": {
-                      "offset": 780620,
+                      "offset": 861510,
                       "size": 15110,
                     },
                     "strip-absolute-path.d.ts.map": {
-                      "offset": 795720,
+                      "offset": 876620,
                       "size": 190,
                     },
                     "strip-absolute-path.js": {
-                      "offset": 795910,
+                      "offset": 876800,
                       "size": 1240,
                     },
                     "strip-absolute-path.js.map": {
-                      "offset": 797140,
+                      "offset": 878040,
                       "size": 1920,
                     },
                     "strip-trailing-slashes.d.ts.map": {
-                      "offset": 799050,
+                      "offset": 879950,
                       "size": 190,
                     },
                     "strip-trailing-slashes.js": {
-                      "offset": 799240,
+                      "offset": 880140,
                       "size": 660,
                     },
                     "strip-trailing-slashes.js.map": {
-                      "offset": 799890,
+                      "offset": 880790,
                       "size": 1080,
                     },
                     "symlink-error.d.ts.map": {
-                      "offset": 800970,
+                      "offset": 881860,
                       "size": 330,
                     },
                     "symlink-error.js": {
-                      "offset": 801290,
+                      "offset": 882180,
                       "size": 530,
                     },
                     "symlink-error.js.map": {
-                      "offset": 801810,
+                      "offset": 882710,
                       "size": 850,
                     },
                     "types.d.ts.map": {
-                      "offset": 802660,
+                      "offset": 883560,
                       "size": 810,
                     },
                     "types.js": {
-                      "offset": 803470,
+                      "offset": 884360,
                       "size": 1480,
                     },
                     "types.js.map": {
-                      "offset": 804940,
+                      "offset": 885840,
                       "size": 3510,
                     },
                     "unpack.d.ts.map": {
-                      "offset": 808450,
+                      "offset": 889340,
                       "size": 3970,
                     },
                     "unpack.js": {
-                      "offset": 812410,
+                      "offset": 893310,
                       "size": 34880,
                     },
                     "unpack.js.map": {
-                      "offset": 847280,
+                      "offset": 928180,
                       "size": 60750,
                     },
                     "update.d.ts.map": {
-                      "offset": 908030,
+                      "offset": 988930,
                       "size": 140,
                     },
                     "update.js": {
-                      "offset": 908170,
+                      "offset": 989070,
                       "size": 1230,
                     },
                     "update.js.map": {
-                      "offset": 909400,
+                      "offset": 990300,
                       "size": 2260,
                     },
                     "warn-method.d.ts.map": {
-                      "offset": 911660,
+                      "offset": 992560,
                       "size": 1140,
                     },
                     "warn-method.js": {
-                      "offset": 912790,
+                      "offset": 993690,
                       "size": 930,
                     },
                     "warn-method.js.map": {
-                      "offset": 913720,
+                      "offset": 994620,
                       "size": 2610,
                     },
                     "winchars.d.ts.map": {
-                      "offset": 916330,
+                      "offset": 997230,
                       "size": 210,
                     },
                     "winchars.js": {
-                      "offset": 916540,
+                      "offset": 997430,
                       "size": 710,
                     },
                     "winchars.js.map": {
-                      "offset": 917240,
+                      "offset": 998140,
                       "size": 1670,
                     },
                     "write-entry.d.ts.map": {
-                      "offset": 918910,
+                      "offset": 999810,
                       "size": 4830,
                     },
                     "write-entry.js": {
-                      "offset": 923740,
+                      "offset": 1004640,
                       "size": 25370,
                     },
                     "write-entry.js.map": {
-                      "offset": 949110,
+                      "offset": 1030010,
                       "size": 48230,
                     },
                   },
@@ -1754,355 +1754,355 @@ exports[`node_module collectors > npm tar 2`] = `
                 "esm": {
                   "files": {
                     "create.d.ts.map": {
-                      "offset": 997340,
+                      "offset": 1078230,
                       "size": 200,
                     },
                     "create.js": {
-                      "offset": 997530,
+                      "offset": 1078430,
                       "size": 2170,
                     },
                     "create.js.map": {
-                      "offset": 999690,
+                      "offset": 1080590,
                       "size": 5330,
                     },
                     "cwd-error.d.ts.map": {
-                      "offset": 1005020,
+                      "offset": 1085920,
                       "size": 290,
                     },
                     "cwd-error.js": {
-                      "offset": 1005300,
+                      "offset": 1086200,
                       "size": 310,
                     },
                     "cwd-error.js.map": {
-                      "offset": 1005610,
+                      "offset": 1086510,
                       "size": 730,
                     },
                     "extract.d.ts.map": {
-                      "offset": 1006340,
+                      "offset": 1087240,
                       "size": 200,
                     },
                     "extract.js": {
-                      "offset": 1006530,
+                      "offset": 1087430,
                       "size": 1700,
                     },
                     "extract.js.map": {
-                      "offset": 1008230,
+                      "offset": 1089120,
                       "size": 3640,
                     },
                     "get-write-flag.d.ts.map": {
-                      "offset": 1011860,
+                      "offset": 1092760,
                       "size": 170,
                     },
                     "get-write-flag.js": {
-                      "offset": 1012030,
+                      "offset": 1092930,
                       "size": 1020,
                     },
                     "get-write-flag.js.map": {
-                      "offset": 1013050,
+                      "offset": 1093940,
                       "size": 1940,
                     },
                     "header.d.ts.map": {
-                      "offset": 1014980,
+                      "offset": 1095870,
                       "size": 1830,
                     },
                     "header.js": {
-                      "offset": 1016810,
+                      "offset": 1097700,
                       "size": 11100,
                     },
                     "header.js.map": {
-                      "offset": 1027900,
+                      "offset": 1108800,
                       "size": 25120,
                     },
                     "index.d.ts.map": {
-                      "offset": 1053020,
+                      "offset": 1133920,
                       "size": 830,
                     },
                     "index.js": {
-                      "offset": 1053850,
+                      "offset": 1134740,
                       "size": 650,
                     },
                     "index.js.map": {
-                      "offset": 1054490,
+                      "offset": 1135390,
                       "size": 1640,
                     },
                     "large-numbers.d.ts.map": {
-                      "offset": 1056130,
+                      "offset": 1137020,
                       "size": 240,
                     },
                     "large-numbers.js": {
-                      "offset": 1056360,
+                      "offset": 1137250,
                       "size": 2590,
                     },
                     "large-numbers.js.map": {
-                      "offset": 1058940,
+                      "offset": 1139840,
                       "size": 5910,
                     },
                     "list.d.ts.map": {
-                      "offset": 1064840,
+                      "offset": 1145740,
                       "size": 300,
                     },
                     "list.js": {
-                      "offset": 1065140,
+                      "offset": 1146040,
                       "size": 3450,
                     },
                     "list.js.map": {
-                      "offset": 1068580,
+                      "offset": 1149480,
                       "size": 7590,
                     },
                     "make-command.d.ts.map": {
-                      "offset": 1076170,
+                      "offset": 1157070,
                       "size": 4490,
                     },
                     "make-command.js": {
-                      "offset": 1080660,
+                      "offset": 1161560,
                       "size": 1870,
                     },
                     "make-command.js.map": {
-                      "offset": 1082530,
+                      "offset": 1163430,
                       "size": 9080,
                     },
                     "mkdir.d.ts.map": {
-                      "offset": 1091610,
+                      "offset": 1172500,
                       "size": 780,
                     },
                     "mkdir.js": {
-                      "offset": 1092380,
+                      "offset": 1173280,
                       "size": 5740,
                     },
                     "mkdir.js.map": {
-                      "offset": 1098120,
+                      "offset": 1179020,
                       "size": 13150,
                     },
                     "mode-fix.d.ts.map": {
-                      "offset": 1111270,
+                      "offset": 1192160,
                       "size": 190,
                     },
                     "mode-fix.js": {
-                      "offset": 1111460,
+                      "offset": 1192350,
                       "size": 760,
                     },
                     "mode-fix.js.map": {
-                      "offset": 1112210,
+                      "offset": 1193110,
                       "size": 1400,
                     },
                     "normalize-unicode.d.ts.map": {
-                      "offset": 1113600,
+                      "offset": 1194500,
                       "size": 190,
                     },
                     "normalize-unicode.js": {
-                      "offset": 1113790,
+                      "offset": 1194680,
                       "size": 1010,
                     },
                     "normalize-unicode.js.map": {
-                      "offset": 1114800,
+                      "offset": 1195690,
                       "size": 2030,
                     },
                     "normalize-windows-path.d.ts.map": {
-                      "offset": 1116820,
+                      "offset": 1197710,
                       "size": 190,
                     },
                     "normalize-windows-path.js": {
-                      "offset": 1117000,
+                      "offset": 1197900,
                       "size": 490,
                     },
                     "normalize-windows-path.js.map": {
-                      "offset": 1117490,
+                      "offset": 1198390,
                       "size": 950,
                     },
                     "options.d.ts.map": {
-                      "offset": 1118440,
+                      "offset": 1199340,
                       "size": 6190,
                     },
                     "options.js": {
-                      "offset": 1124630,
+                      "offset": 1205530,
                       "size": 1640,
                     },
                     "options.js.map": {
-                      "offset": 1126270,
+                      "offset": 1207160,
                       "size": 27120,
                     },
                     "pack.d.ts.map": {
-                      "offset": 1153380,
+                      "offset": 1234280,
                       "size": 3840,
                     },
                     "pack.js": {
-                      "offset": 1157220,
+                      "offset": 1238120,
                       "size": 14410,
                     },
                     "pack.js.map": {
-                      "offset": 1171620,
+                      "offset": 1252520,
                       "size": 30430,
                     },
                     "package.json": {
-                      "offset": 1202050,
+                      "offset": 1282950,
                       "size": 30,
                     },
                     "parse.d.ts.map": {
-                      "offset": 1202070,
+                      "offset": 1282970,
                       "size": 3730,
                     },
                     "parse.js": {
-                      "offset": 1205800,
+                      "offset": 1286700,
                       "size": 22800,
                     },
                     "parse.js.map": {
-                      "offset": 1228600,
+                      "offset": 1309490,
                       "size": 42140,
                     },
                     "path-reservations.d.ts.map": {
-                      "offset": 1270730,
+                      "offset": 1351630,
                       "size": 420,
                     },
                     "path-reservations.js": {
-                      "offset": 1271150,
+                      "offset": 1352050,
                       "size": 5450,
                     },
                     "path-reservations.js.map": {
-                      "offset": 1276600,
+                      "offset": 1357490,
                       "size": 10890,
                     },
                     "pax.d.ts.map": {
-                      "offset": 1287480,
+                      "offset": 1368380,
                       "size": 890,
                     },
                     "pax.js": {
-                      "offset": 1288360,
+                      "offset": 1369260,
                       "size": 4760,
                     },
                     "pax.js.map": {
-                      "offset": 1293120,
+                      "offset": 1374020,
                       "size": 10090,
                     },
                     "read-entry.d.ts.map": {
-                      "offset": 1303200,
+                      "offset": 1384100,
                       "size": 1180,
                     },
                     "read-entry.js": {
-                      "offset": 1304380,
+                      "offset": 1385280,
                       "size": 4180,
                     },
                     "read-entry.js.map": {
-                      "offset": 1308560,
+                      "offset": 1389450,
                       "size": 8190,
                     },
                     "replace.d.ts.map": {
-                      "offset": 1316750,
+                      "offset": 1397640,
                       "size": 150,
                     },
                     "replace.js": {
-                      "offset": 1316890,
+                      "offset": 1397790,
                       "size": 7210,
                     },
                     "replace.js.map": {
-                      "offset": 1324090,
+                      "offset": 1404990,
                       "size": 15300,
                     },
                     "strip-absolute-path.d.ts.map": {
-                      "offset": 1339390,
+                      "offset": 1420290,
                       "size": 190,
                     },
                     "strip-absolute-path.js": {
-                      "offset": 1339570,
+                      "offset": 1420470,
                       "size": 1060,
                     },
                     "strip-absolute-path.js.map": {
-                      "offset": 1340630,
+                      "offset": 1421530,
                       "size": 1930,
                     },
                     "strip-trailing-slashes.d.ts.map": {
-                      "offset": 1342560,
+                      "offset": 1423450,
                       "size": 190,
                     },
                     "strip-trailing-slashes.js": {
-                      "offset": 1342750,
+                      "offset": 1423640,
                       "size": 490,
                     },
                     "strip-trailing-slashes.js.map": {
-                      "offset": 1343230,
+                      "offset": 1424130,
                       "size": 1060,
                     },
                     "symlink-error.d.ts.map": {
-                      "offset": 1344290,
+                      "offset": 1425190,
                       "size": 330,
                     },
                     "symlink-error.js": {
-                      "offset": 1344610,
+                      "offset": 1425510,
                       "size": 390,
                     },
                     "symlink-error.js.map": {
-                      "offset": 1345000,
+                      "offset": 1425900,
                       "size": 840,
                     },
                     "types.d.ts.map": {
-                      "offset": 1345840,
+                      "offset": 1426740,
                       "size": 810,
                     },
                     "types.js": {
-                      "offset": 1346640,
+                      "offset": 1427540,
                       "size": 1280,
                     },
                     "types.js.map": {
-                      "offset": 1347920,
+                      "offset": 1428820,
                       "size": 3510,
                     },
                     "unpack.d.ts.map": {
-                      "offset": 1351420,
+                      "offset": 1432320,
                       "size": 3970,
                     },
                     "unpack.js": {
-                      "offset": 1355390,
+                      "offset": 1436280,
                       "size": 31840,
                     },
                     "unpack.js.map": {
-                      "offset": 1387220,
+                      "offset": 1468120,
                       "size": 60880,
                     },
                     "update.d.ts.map": {
-                      "offset": 1448100,
+                      "offset": 1528990,
                       "size": 140,
                     },
                     "update.js": {
-                      "offset": 1448240,
+                      "offset": 1529130,
                       "size": 1010,
                     },
                     "update.js.map": {
-                      "offset": 1449240,
+                      "offset": 1530140,
                       "size": 2330,
                     },
                     "warn-method.d.ts.map": {
-                      "offset": 1451570,
+                      "offset": 1532460,
                       "size": 1140,
                     },
                     "warn-method.js": {
-                      "offset": 1452700,
+                      "offset": 1533600,
                       "size": 800,
                     },
                     "warn-method.js.map": {
-                      "offset": 1453490,
+                      "offset": 1534390,
                       "size": 2600,
                     },
                     "winchars.d.ts.map": {
-                      "offset": 1456090,
+                      "offset": 1536980,
                       "size": 210,
                     },
                     "winchars.js": {
-                      "offset": 1456290,
+                      "offset": 1537190,
                       "size": 550,
                     },
                     "winchars.js.map": {
-                      "offset": 1456840,
+                      "offset": 1537740,
                       "size": 1650,
                     },
                     "write-entry.d.ts.map": {
-                      "offset": 1458480,
+                      "offset": 1539380,
                       "size": 4830,
                     },
                     "write-entry.js": {
-                      "offset": 1463310,
+                      "offset": 1544210,
                       "size": 22790,
                     },
                     "write-entry.js.map": {
-                      "offset": 1486090,
+                      "offset": 1566990,
                       "size": 48390,
                     },
                   },
@@ -2110,7 +2110,7 @@ exports[`node_module collectors > npm tar 2`] = `
               },
             },
             "package.json": {
-              "offset": 1534480,
+              "offset": 1615380,
               "size": 6620,
             },
           },
@@ -2118,7 +2118,7 @@ exports[`node_module collectors > npm tar 2`] = `
         "yallist": {
           "files": {
             "LICENSE.md": {
-              "offset": 1541090,
+              "offset": 1621990,
               "size": 1770,
             },
             "dist": {
@@ -2126,19 +2126,19 @@ exports[`node_module collectors > npm tar 2`] = `
                 "commonjs": {
                   "files": {
                     "index.d.ts.map": {
-                      "offset": 1542850,
+                      "offset": 1623750,
                       "size": 2420,
                     },
                     "index.js": {
-                      "offset": 1545270,
+                      "offset": 1626160,
                       "size": 9920,
                     },
                     "index.js.map": {
-                      "offset": 1555180,
+                      "offset": 1636080,
                       "size": 22200,
                     },
                     "package.json": {
-                      "offset": 1577370,
+                      "offset": 1658270,
                       "size": 30,
                     },
                   },
@@ -2146,19 +2146,19 @@ exports[`node_module collectors > npm tar 2`] = `
                 "esm": {
                   "files": {
                     "index.d.ts.map": {
-                      "offset": 1577400,
+                      "offset": 1658290,
                       "size": 2420,
                     },
                     "index.js": {
-                      "offset": 1579810,
+                      "offset": 1660710,
                       "size": 9770,
                     },
                     "index.js.map": {
-                      "offset": 1589570,
+                      "offset": 1670470,
                       "size": 22180,
                     },
                     "package.json": {
-                      "offset": 1611740,
+                      "offset": 1692640,
                       "size": 30,
                     },
                   },
@@ -2166,7 +2166,7 @@ exports[`node_module collectors > npm tar 2`] = `
               },
             },
             "package.json": {
-              "offset": 1611770,
+              "offset": 1692660,
               "size": 1230,
             },
           },
@@ -2174,7 +2174,7 @@ exports[`node_module collectors > npm tar 2`] = `
       },
     },
     "package.json": {
-      "offset": 1613990,
+      "offset": 1694890,
       "size": 360,
     },
   },
@@ -51016,11 +51016,11 @@ exports[`node_module collectors > yarn ms 2`] = `
 {
   "files": {
     "index.html": {
-      "offset": 50811950,
+      "offset": 50814400,
       "size": 380,
     },
     "index.js": {
-      "offset": 50812330,
+      "offset": 50814780,
       "size": 620,
     },
     "node_modules": {
@@ -72780,24 +72780,24 @@ exports[`node_module collectors > yarn ms 2`] = `
               "files": {
                 "acorn.d.mts": {
                   "offset": 49686440,
-                  "size": 21990,
+                  "size": 22020,
                 },
                 "acorn.js": {
-                  "offset": 49708430,
-                  "size": 241580,
+                  "offset": 49708460,
+                  "size": 242820,
                 },
                 "acorn.mjs": {
-                  "offset": 49950010,
-                  "size": 229800,
+                  "offset": 49951280,
+                  "size": 230980,
                 },
                 "bin.js": {
-                  "offset": 50179800,
+                  "offset": 50182250,
                   "size": 3330,
                 },
               },
             },
             "package.json": {
-              "offset": 50183130,
+              "offset": 50185580,
               "size": 1000,
             },
           },
@@ -72805,29 +72805,29 @@ exports[`node_module collectors > yarn ms 2`] = `
         "acorn-import-attributes": {
           "files": {
             "LICENSE": {
-              "offset": 50184120,
+              "offset": 50186580,
               "size": 1070,
             },
             "lib": {
               "files": {
                 "index.js": {
-                  "offset": 50185190,
+                  "offset": 50187650,
                   "size": 10490,
                 },
                 "index.mjs": {
-                  "offset": 50195680,
+                  "offset": 50198130,
                   "size": 9400,
                 },
               },
             },
             "package.json": {
-              "offset": 50205080,
+              "offset": 50207530,
               "size": 1010,
             },
             "src": {
               "files": {
                 "index.js": {
-                  "offset": 50206080,
+                  "offset": 50208530,
                   "size": 9400,
                 },
               },
@@ -72838,29 +72838,29 @@ exports[`node_module collectors > yarn ms 2`] = `
           "files": {
             "LICENSE": {
               "executable": true,
-              "offset": 50215480,
+              "offset": 50217930,
               "size": 1090,
             },
             "dist": {
               "files": {
                 "lexer.js": {
-                  "offset": 50216560,
+                  "offset": 50219020,
                   "size": 33510,
                 },
                 "lexer.mjs": {
-                  "offset": 50250070,
+                  "offset": 50252520,
                   "size": 33480,
                 },
               },
             },
             "lexer.js": {
               "executable": true,
-              "offset": 50283550,
+              "offset": 50286000,
               "size": 53720,
             },
             "package.json": {
               "executable": true,
-              "offset": 50337260,
+              "offset": 50339720,
               "size": 830,
             },
           },
@@ -72868,29 +72868,29 @@ exports[`node_module collectors > yarn ms 2`] = `
         "debug": {
           "files": {
             "LICENSE": {
-              "offset": 50338090,
+              "offset": 50340550,
               "size": 1140,
             },
             "package.json": {
-              "offset": 50339230,
+              "offset": 50341680,
               "size": 910,
             },
             "src": {
               "files": {
                 "browser.js": {
-                  "offset": 50340140,
+                  "offset": 50342590,
                   "size": 6110,
                 },
                 "common.js": {
-                  "offset": 50346240,
+                  "offset": 50348700,
                   "size": 6920,
                 },
                 "index.js": {
-                  "offset": 50353160,
+                  "offset": 50355610,
                   "size": 320,
                 },
                 "node.js": {
-                  "offset": 50353470,
+                  "offset": 50355930,
                   "size": 4730,
                 },
               },
@@ -72900,39 +72900,39 @@ exports[`node_module collectors > yarn ms 2`] = `
         "deepmerge": {
           "files": {
             ".editorconfig": {
-              "offset": 50358200,
+              "offset": 50360650,
               "size": 120,
             },
             ".eslintcache": {
-              "offset": 50358310,
+              "offset": 50360770,
               "size": 390,
             },
             "dist": {
               "files": {
                 "cjs.js": {
-                  "offset": 50358700,
+                  "offset": 50361150,
                   "size": 4050,
                 },
                 "umd.js": {
-                  "offset": 50362740,
+                  "offset": 50365200,
                   "size": 4420,
                 },
               },
             },
             "index.js": {
-              "offset": 50367160,
+              "offset": 50369620,
               "size": 3300,
             },
             "license.txt": {
-              "offset": 50370460,
+              "offset": 50372910,
               "size": 1120,
             },
             "package.json": {
-              "offset": 50371570,
+              "offset": 50374030,
               "size": 730,
             },
             "rollup.config.js": {
-              "offset": 50372300,
+              "offset": 50374760,
               "size": 350,
             },
           },
@@ -72940,19 +72940,19 @@ exports[`node_module collectors > yarn ms 2`] = `
         "electron-clear-data": {
           "files": {
             "LICENSE.md": {
-              "offset": 50372650,
+              "offset": 50375100,
               "size": 1060,
             },
             "dist": {
               "files": {
                 "main.js": {
-                  "offset": 50373700,
+                  "offset": 50376160,
                   "size": 1740,
                 },
               },
             },
             "package.json": {
-              "offset": 50375440,
+              "offset": 50377890,
               "size": 960,
             },
           },
@@ -72960,27 +72960,27 @@ exports[`node_module collectors > yarn ms 2`] = `
         "forwarded-parse": {
           "files": {
             "LICENSE": {
-              "offset": 50376400,
+              "offset": 50378850,
               "size": 1060,
             },
             "index.js": {
-              "offset": 50377450,
+              "offset": 50379910,
               "size": 4200,
             },
             "lib": {
               "files": {
                 "ascii.js": {
-                  "offset": 50381650,
+                  "offset": 50384100,
                   "size": 2230,
                 },
                 "error.js": {
-                  "offset": 50383880,
+                  "offset": 50386330,
                   "size": 470,
                 },
               },
             },
             "package.json": {
-              "offset": 50384340,
+              "offset": 50386790,
               "size": 470,
             },
           },
@@ -72988,23 +72988,23 @@ exports[`node_module collectors > yarn ms 2`] = `
         "function-bind": {
           "files": {
             ".nycrc": {
-              "offset": 50384810,
+              "offset": 50387260,
               "size": 220,
             },
             "LICENSE": {
-              "offset": 50385020,
+              "offset": 50387470,
               "size": 1060,
             },
             "implementation.js": {
-              "offset": 50386070,
+              "offset": 50388530,
               "size": 2050,
             },
             "index.js": {
-              "offset": 50388120,
+              "offset": 50390570,
               "size": 130,
             },
             "package.json": {
-              "offset": 50388240,
+              "offset": 50390700,
               "size": 1330,
             },
           },
@@ -73012,23 +73012,23 @@ exports[`node_module collectors > yarn ms 2`] = `
         "hasown": {
           "files": {
             ".nycrc": {
-              "offset": 50389570,
+              "offset": 50392020,
               "size": 220,
             },
             "LICENSE": {
-              "offset": 50389790,
+              "offset": 50392240,
               "size": 1090,
             },
             "index.js": {
-              "offset": 50390870,
+              "offset": 50393320,
               "size": 210,
             },
             "package.json": {
-              "offset": 50391080,
+              "offset": 50393530,
               "size": 1480,
             },
             "tsconfig.json": {
-              "offset": 50392550,
+              "offset": 50395000,
               "size": 80,
             },
           },
@@ -73036,79 +73036,79 @@ exports[`node_module collectors > yarn ms 2`] = `
         "import-in-the-middle": {
           "files": {
             ".editorconfig": {
-              "offset": 50392620,
+              "offset": 50395080,
               "size": 220,
             },
             ".eslintrc.yaml": {
-              "offset": 50392840,
+              "offset": 50395290,
               "size": 560,
             },
             ".release-please-manifest.json": {
-              "offset": 50393390,
+              "offset": 50395840,
               "size": 20,
             },
             "CODE_OF_CONDUCT.md": {
-              "offset": 50393410,
+              "offset": 50395860,
               "size": 150,
             },
             "CONTRIBUTING.md": {
-              "offset": 50393560,
+              "offset": 50396010,
               "size": 1410,
             },
             "GOVERNANCE.md": {
-              "offset": 50394970,
+              "offset": 50397420,
               "size": 1270,
             },
             "LICENSE": {
-              "offset": 50396230,
+              "offset": 50398690,
               "size": 11360,
             },
             "LICENSE-3rdparty.csv": {
-              "offset": 50407590,
+              "offset": 50410040,
               "size": 210,
             },
             "NOTICE": {
-              "offset": 50407790,
+              "offset": 50410250,
               "size": 1500,
             },
             "hook.js": {
-              "offset": 50409280,
+              "offset": 50411740,
               "size": 14810,
             },
             "hook.mjs": {
-              "offset": 50424090,
+              "offset": 50426550,
               "size": 420,
             },
             "index.js": {
-              "offset": 50424510,
+              "offset": 50426960,
               "size": 4720,
             },
             "lib": {
               "files": {
                 "get-esm-exports.js": {
-                  "offset": 50429220,
+                  "offset": 50431680,
                   "size": 3450,
                 },
                 "get-exports.js": {
-                  "offset": 50432660,
+                  "offset": 50435120,
                   "size": 6410,
                 },
                 "register.js": {
-                  "offset": 50439070,
+                  "offset": 50441520,
                   "size": 1720,
                 },
               },
             },
             "package.json": {
-              "offset": 50440780,
+              "offset": 50443230,
               "size": 1400,
             },
             "release-please-config.json": {
-              "offset": 50442180,
+              "offset": 50444630,
               "size": 300,
             },
             "tsconfig.json": {
-              "offset": 50442480,
+              "offset": 50444930,
               "size": 310,
             },
           },
@@ -73116,23 +73116,23 @@ exports[`node_module collectors > yarn ms 2`] = `
         "is-core-module": {
           "files": {
             ".nycrc": {
-              "offset": 50442780,
+              "offset": 50445240,
               "size": 140,
             },
             "LICENSE": {
-              "offset": 50442920,
+              "offset": 50445380,
               "size": 1080,
             },
             "core.json": {
-              "offset": 50444000,
+              "offset": 50446450,
               "size": 5960,
             },
             "index.js": {
-              "offset": 50449950,
+              "offset": 50452410,
               "size": 1770,
             },
             "package.json": {
-              "offset": 50451720,
+              "offset": 50454170,
               "size": 1240,
             },
           },
@@ -73140,15 +73140,15 @@ exports[`node_module collectors > yarn ms 2`] = `
         "module-details-from-path": {
           "files": {
             "LICENSE": {
-              "offset": 50452960,
+              "offset": 50455410,
               "size": 1100,
             },
             "index.js": {
-              "offset": 50454050,
+              "offset": 50456500,
               "size": 970,
             },
             "package.json": {
-              "offset": 50455010,
+              "offset": 50457470,
               "size": 680,
             },
           },
@@ -73156,15 +73156,15 @@ exports[`node_module collectors > yarn ms 2`] = `
         "ms": {
           "files": {
             "index.js": {
-              "offset": 50455690,
+              "offset": 50458140,
               "size": 3030,
             },
             "license.md": {
-              "offset": 50458710,
+              "offset": 50461160,
               "size": 1080,
             },
             "package.json": {
-              "offset": 50459790,
+              "offset": 50462240,
               "size": 500,
             },
           },
@@ -73172,15 +73172,15 @@ exports[`node_module collectors > yarn ms 2`] = `
         "path-parse": {
           "files": {
             "LICENSE": {
-              "offset": 50460290,
+              "offset": 50462740,
               "size": 1080,
             },
             "index.js": {
-              "offset": 50461370,
+              "offset": 50463820,
               "size": 1900,
             },
             "package.json": {
-              "offset": 50463260,
+              "offset": 50465710,
               "size": 370,
             },
           },
@@ -73188,15 +73188,15 @@ exports[`node_module collectors > yarn ms 2`] = `
         "pg-int8": {
           "files": {
             "LICENSE": {
-              "offset": 50463620,
+              "offset": 50466080,
               "size": 750,
             },
             "index.js": {
-              "offset": 50464370,
+              "offset": 50466830,
               "size": 1580,
             },
             "package.json": {
-              "offset": 50465940,
+              "offset": 50468400,
               "size": 410,
             },
           },
@@ -73204,81 +73204,81 @@ exports[`node_module collectors > yarn ms 2`] = `
         "pg-protocol": {
           "files": {
             "LICENSE": {
-              "offset": 50466350,
+              "offset": 50468800,
               "size": 1080,
             },
             "dist": {
               "files": {
                 "b.js": {
-                  "offset": 50467420,
+                  "offset": 50469880,
                   "size": 640,
                 },
                 "b.js.map": {
-                  "offset": 50468060,
+                  "offset": 50470510,
                   "size": 800,
                 },
                 "buffer-reader.js": {
-                  "offset": 50468850,
+                  "offset": 50471300,
                   "size": 1640,
                 },
                 "buffer-reader.js.map": {
-                  "offset": 50470490,
+                  "offset": 50472940,
                   "size": 1750,
                 },
                 "buffer-writer.js": {
-                  "offset": 50472240,
+                  "offset": 50474690,
                   "size": 2780,
                 },
                 "buffer-writer.js.map": {
-                  "offset": 50475010,
+                  "offset": 50477460,
                   "size": 3090,
                 },
                 "inbound-parser.test.js": {
-                  "offset": 50478100,
+                  "offset": 50480550,
                   "size": 19520,
                 },
                 "inbound-parser.test.js.map": {
-                  "offset": 50497610,
+                  "offset": 50500060,
                   "size": 14940,
                 },
                 "index.js": {
-                  "offset": 50512550,
+                  "offset": 50515000,
                   "size": 800,
                 },
                 "index.js.map": {
-                  "offset": 50513340,
+                  "offset": 50515790,
                   "size": 530,
                 },
                 "messages.js": {
-                  "offset": 50513860,
+                  "offset": 50516320,
                   "size": 4980,
                 },
                 "messages.js.map": {
-                  "offset": 50518840,
+                  "offset": 50521290,
                   "size": 3390,
                 },
                 "outbound-serializer.test.js": {
-                  "offset": 50522220,
+                  "offset": 50524670,
                   "size": 11070,
                 },
                 "outbound-serializer.test.js.map": {
-                  "offset": 50533280,
+                  "offset": 50535740,
                   "size": 10280,
                 },
                 "parser.js": {
-                  "offset": 50543560,
+                  "offset": 50546010,
                   "size": 13450,
                 },
                 "parser.js.map": {
-                  "offset": 50557000,
+                  "offset": 50559460,
                   "size": 10480,
                 },
                 "serializer.js": {
-                  "offset": 50567480,
+                  "offset": 50569930,
                   "size": 6940,
                 },
                 "serializer.js.map": {
-                  "offset": 50574410,
+                  "offset": 50576870,
                   "size": 7130,
                 },
               },
@@ -73286,61 +73286,61 @@ exports[`node_module collectors > yarn ms 2`] = `
             "esm": {
               "files": {
                 "index.js": {
-                  "offset": 50581540,
+                  "offset": 50583990,
                   "size": 330,
                 },
               },
             },
             "package.json": {
-              "offset": 50581860,
+              "offset": 50584320,
               "size": 880,
             },
             "src": {
               "files": {
                 "b.ts": {
-                  "offset": 50582730,
+                  "offset": 50585190,
                   "size": 480,
                 },
                 "buffer-reader.ts": {
-                  "offset": 50583210,
+                  "offset": 50585660,
                   "size": 1440,
                 },
                 "buffer-writer.ts": {
-                  "offset": 50584650,
+                  "offset": 50587100,
                   "size": 2510,
                 },
                 "inbound-parser.test.ts": {
-                  "offset": 50587150,
+                  "offset": 50589600,
                   "size": 15410,
                 },
                 "index.ts": {
-                  "offset": 50602560,
+                  "offset": 50605010,
                   "size": 450,
                 },
                 "messages.ts": {
-                  "offset": 50603000,
+                  "offset": 50605450,
                   "size": 6460,
                 },
                 "outbound-serializer.test.ts": {
-                  "offset": 50609460,
+                  "offset": 50611910,
                   "size": 8570,
                 },
                 "parser.ts": {
-                  "offset": 50618020,
+                  "offset": 50620470,
                   "size": 12990,
                 },
                 "serializer.ts": {
-                  "offset": 50631010,
+                  "offset": 50633460,
                   "size": 7200,
                 },
                 "testing": {
                   "files": {
                     "buffer-list.ts": {
-                      "offset": 50638200,
+                      "offset": 50640650,
                       "size": 1730,
                     },
                     "test-buffers.ts": {
-                      "offset": 50639930,
+                      "offset": 50642380,
                       "size": 4360,
                     },
                   },
@@ -73352,39 +73352,39 @@ exports[`node_module collectors > yarn ms 2`] = `
         "pg-types": {
           "files": {
             "Makefile": {
-              "offset": 50644290,
+              "offset": 50646740,
               "size": 240,
             },
             "index.js": {
-              "offset": 50644520,
+              "offset": 50646970,
               "size": 1220,
             },
             "index.test-d.ts": {
-              "offset": 50645730,
+              "offset": 50648190,
               "size": 760,
             },
             "lib": {
               "files": {
                 "arrayParser.js": {
-                  "offset": 50646490,
+                  "offset": 50648950,
                   "size": 210,
                 },
                 "binaryParsers.js": {
-                  "offset": 50646700,
+                  "offset": 50649150,
                   "size": 6070,
                 },
                 "builtins.js": {
-                  "offset": 50652760,
+                  "offset": 50655220,
                   "size": 1570,
                 },
                 "textParsers.js": {
-                  "offset": 50654330,
+                  "offset": 50656780,
                   "size": 5370,
                 },
               },
             },
             "package.json": {
-              "offset": 50659700,
+              "offset": 50662150,
               "size": 710,
             },
           },
@@ -73392,15 +73392,15 @@ exports[`node_module collectors > yarn ms 2`] = `
         "postgres-array": {
           "files": {
             "index.js": {
-              "offset": 50660400,
+              "offset": 50662860,
               "size": 2320,
             },
             "license": {
-              "offset": 50662720,
+              "offset": 50665180,
               "size": 1120,
             },
             "package.json": {
-              "offset": 50663830,
+              "offset": 50666290,
               "size": 530,
             },
           },
@@ -73408,15 +73408,15 @@ exports[`node_module collectors > yarn ms 2`] = `
         "postgres-bytea": {
           "files": {
             "index.js": {
-              "offset": 50664360,
+              "offset": 50666810,
               "size": 870,
             },
             "license": {
-              "offset": 50665220,
+              "offset": 50667680,
               "size": 1120,
             },
             "package.json": {
-              "offset": 50666330,
+              "offset": 50668790,
               "size": 480,
             },
           },
@@ -73424,15 +73424,15 @@ exports[`node_module collectors > yarn ms 2`] = `
         "postgres-date": {
           "files": {
             "index.js": {
-              "offset": 50666810,
+              "offset": 50669270,
               "size": 2680,
             },
             "license": {
-              "offset": 50669490,
+              "offset": 50671940,
               "size": 1120,
             },
             "package.json": {
-              "offset": 50670600,
+              "offset": 50673050,
               "size": 490,
             },
           },
@@ -73440,15 +73440,15 @@ exports[`node_module collectors > yarn ms 2`] = `
         "postgres-interval": {
           "files": {
             "index.js": {
-              "offset": 50671090,
+              "offset": 50673540,
               "size": 3420,
             },
             "license": {
-              "offset": 50674500,
+              "offset": 50676950,
               "size": 1120,
             },
             "package.json": {
-              "offset": 50675610,
+              "offset": 50678060,
               "size": 540,
             },
           },
@@ -73456,15 +73456,15 @@ exports[`node_module collectors > yarn ms 2`] = `
         "require-in-the-middle": {
           "files": {
             "LICENSE": {
-              "offset": 50676150,
+              "offset": 50678600,
               "size": 1200,
             },
             "index.js": {
-              "offset": 50677340,
+              "offset": 50679790,
               "size": 14150,
             },
             "package.json": {
-              "offset": 50691490,
+              "offset": 50693940,
               "size": 970,
             },
           },
@@ -73472,80 +73472,80 @@ exports[`node_module collectors > yarn ms 2`] = `
         "resolve": {
           "files": {
             ".editorconfig": {
-              "offset": 50692460,
+              "offset": 50694910,
               "size": 610,
             },
             "LICENSE": {
-              "offset": 50693060,
+              "offset": 50695520,
               "size": 1080,
             },
             "SECURITY.md": {
-              "offset": 50694140,
+              "offset": 50696590,
               "size": 360,
             },
             "async.js": {
-              "offset": 50694490,
+              "offset": 50696950,
               "size": 60,
             },
             "bin": {
               "files": {
                 "resolve": {
                   "executable": true,
-                  "offset": 50694550,
+                  "offset": 50697000,
                   "size": 1540,
                 },
               },
             },
             "index.js": {
-              "offset": 50696080,
+              "offset": 50698540,
               "size": 180,
             },
             "lib": {
               "files": {
                 "async.js": {
-                  "offset": 50696260,
+                  "offset": 50698710,
                   "size": 11520,
                 },
                 "caller.js": {
-                  "offset": 50707770,
+                  "offset": 50710230,
                   "size": 360,
                 },
                 "core.js": {
-                  "offset": 50708130,
+                  "offset": 50710580,
                   "size": 310,
                 },
                 "core.json": {
-                  "offset": 50708440,
+                  "offset": 50710890,
                   "size": 5960,
                 },
                 "homedir.js": {
-                  "offset": 50714390,
+                  "offset": 50716840,
                   "size": 810,
                 },
                 "is-core.js": {
-                  "offset": 50715200,
+                  "offset": 50717650,
                   "size": 120,
                 },
                 "node-modules-paths.js": {
-                  "offset": 50715310,
+                  "offset": 50717760,
                   "size": 1370,
                 },
                 "normalize-options.js": {
-                  "offset": 50716680,
+                  "offset": 50719130,
                   "size": 350,
                 },
                 "sync.js": {
-                  "offset": 50717020,
+                  "offset": 50719480,
                   "size": 7150,
                 },
               },
             },
             "package.json": {
-              "offset": 50724170,
+              "offset": 50726620,
               "size": 1320,
             },
             "sync.js": {
-              "offset": 50725490,
+              "offset": 50727940,
               "size": 60,
             },
           },
@@ -73553,14 +73553,14 @@ exports[`node_module collectors > yarn ms 2`] = `
         "semver": {
           "files": {
             "LICENSE": {
-              "offset": 50725540,
+              "offset": 50728000,
               "size": 770,
             },
             "bin": {
               "files": {
                 "semver.js": {
                   "executable": true,
-                  "offset": 50726310,
+                  "offset": 50728760,
                   "size": 4750,
                 },
               },
@@ -73568,19 +73568,19 @@ exports[`node_module collectors > yarn ms 2`] = `
             "classes": {
               "files": {
                 "comparator.js": {
-                  "offset": 50731060,
+                  "offset": 50733510,
                   "size": 3640,
                 },
                 "index.js": {
-                  "offset": 50734690,
+                  "offset": 50737140,
                   "size": 150,
                 },
                 "range.js": {
-                  "offset": 50734830,
+                  "offset": 50737280,
                   "size": 14980,
                 },
                 "semver.js": {
-                  "offset": 50749810,
+                  "offset": 50752260,
                   "size": 9480,
                 },
               },
@@ -73588,191 +73588,191 @@ exports[`node_module collectors > yarn ms 2`] = `
             "functions": {
               "files": {
                 "clean.js": {
-                  "offset": 50759290,
+                  "offset": 50761740,
                   "size": 210,
                 },
                 "cmp.js": {
-                  "offset": 50759490,
+                  "offset": 50761950,
                   "size": 970,
                 },
                 "coerce.js": {
-                  "offset": 50760450,
+                  "offset": 50762910,
                   "size": 2010,
                 },
                 "compare-build.js": {
-                  "offset": 50762460,
+                  "offset": 50764910,
                   "size": 290,
                 },
                 "compare-loose.js": {
-                  "offset": 50762740,
+                  "offset": 50765190,
                   "size": 140,
                 },
                 "compare.js": {
-                  "offset": 50762870,
+                  "offset": 50765320,
                   "size": 170,
                 },
                 "diff.js": {
-                  "offset": 50763040,
+                  "offset": 50765490,
                   "size": 1430,
                 },
                 "eq.js": {
-                  "offset": 50764460,
+                  "offset": 50766920,
                   "size": 130,
                 },
                 "gt.js": {
-                  "offset": 50764590,
+                  "offset": 50767040,
                   "size": 130,
                 },
                 "gte.js": {
-                  "offset": 50764710,
+                  "offset": 50767170,
                   "size": 130,
                 },
                 "inc.js": {
-                  "offset": 50764840,
+                  "offset": 50767290,
                   "size": 480,
                 },
                 "lt.js": {
-                  "offset": 50765320,
+                  "offset": 50767770,
                   "size": 130,
                 },
                 "lte.js": {
-                  "offset": 50765440,
+                  "offset": 50767900,
                   "size": 130,
                 },
                 "major.js": {
-                  "offset": 50765570,
+                  "offset": 50768020,
                   "size": 140,
                 },
                 "minor.js": {
-                  "offset": 50765710,
+                  "offset": 50768160,
                   "size": 140,
                 },
                 "neq.js": {
-                  "offset": 50765840,
+                  "offset": 50768300,
                   "size": 130,
                 },
                 "parse.js": {
-                  "offset": 50765970,
+                  "offset": 50768420,
                   "size": 340,
                 },
                 "patch.js": {
-                  "offset": 50766300,
+                  "offset": 50768750,
                   "size": 140,
                 },
                 "prerelease.js": {
-                  "offset": 50766440,
+                  "offset": 50768890,
                   "size": 240,
                 },
                 "rcompare.js": {
-                  "offset": 50766670,
+                  "offset": 50769120,
                   "size": 140,
                 },
                 "rsort.js": {
-                  "offset": 50766800,
+                  "offset": 50769260,
                   "size": 170,
                 },
                 "satisfies.js": {
-                  "offset": 50766970,
+                  "offset": 50769420,
                   "size": 250,
                 },
                 "sort.js": {
-                  "offset": 50767210,
+                  "offset": 50769670,
                   "size": 170,
                 },
                 "valid.js": {
-                  "offset": 50767370,
+                  "offset": 50769830,
                   "size": 180,
                 },
               },
             },
             "index.js": {
-              "offset": 50767550,
+              "offset": 50770000,
               "size": 2630,
             },
             "internal": {
               "files": {
                 "constants.js": {
-                  "offset": 50770180,
+                  "offset": 50772630,
                   "size": 880,
                 },
                 "debug.js": {
-                  "offset": 50771050,
+                  "offset": 50773510,
                   "size": 240,
                 },
                 "identifiers.js": {
-                  "offset": 50771290,
+                  "offset": 50773750,
                   "size": 530,
                 },
                 "lrucache.js": {
-                  "offset": 50771820,
+                  "offset": 50774270,
                   "size": 810,
                 },
                 "parse-options.js": {
-                  "offset": 50772620,
+                  "offset": 50775070,
                   "size": 340,
                 },
                 "re.js": {
-                  "offset": 50772960,
+                  "offset": 50775410,
                   "size": 8140,
                 },
               },
             },
             "package.json": {
-              "offset": 50781100,
+              "offset": 50783550,
               "size": 1350,
             },
             "preload.js": {
-              "offset": 50782450,
+              "offset": 50784900,
               "size": 90,
             },
             "range.bnf": {
-              "offset": 50782530,
+              "offset": 50784980,
               "size": 620,
             },
             "ranges": {
               "files": {
                 "gtr.js": {
-                  "offset": 50783150,
+                  "offset": 50785600,
                   "size": 240,
                 },
                 "intersects.js": {
-                  "offset": 50783380,
+                  "offset": 50785830,
                   "size": 230,
                 },
                 "ltr.js": {
-                  "offset": 50783600,
+                  "offset": 50786060,
                   "size": 230,
                 },
                 "max-satisfying.js": {
-                  "offset": 50783830,
+                  "offset": 50786280,
                   "size": 600,
                 },
                 "min-satisfying.js": {
-                  "offset": 50784420,
+                  "offset": 50786880,
                   "size": 600,
                 },
                 "min-version.js": {
-                  "offset": 50785010,
+                  "offset": 50787470,
                   "size": 1520,
                 },
                 "outside.js": {
-                  "offset": 50786530,
+                  "offset": 50788980,
                   "size": 2210,
                 },
                 "simplify.js": {
-                  "offset": 50788730,
+                  "offset": 50791190,
                   "size": 1360,
                 },
                 "subset.js": {
-                  "offset": 50790090,
+                  "offset": 50792540,
                   "size": 7530,
                 },
                 "to-comparators.js": {
-                  "offset": 50797610,
+                  "offset": 50800060,
                   "size": 290,
                 },
                 "valid.js": {
-                  "offset": 50797890,
+                  "offset": 50800350,
                   "size": 330,
                 },
               },
@@ -73782,15 +73782,15 @@ exports[`node_module collectors > yarn ms 2`] = `
         "shimmer": {
           "files": {
             "LICENSE": {
-              "offset": 50798220,
+              "offset": 50800670,
               "size": 1330,
             },
             "index.js": {
-              "offset": 50799550,
+              "offset": 50802000,
               "size": 2950,
             },
             "package.json": {
-              "offset": 50802490,
+              "offset": 50804940,
               "size": 410,
             },
           },
@@ -73798,23 +73798,23 @@ exports[`node_module collectors > yarn ms 2`] = `
         "supports-preserve-symlinks-flag": {
           "files": {
             ".nycrc": {
-              "offset": 50802890,
+              "offset": 50805350,
               "size": 140,
             },
             "LICENSE": {
-              "offset": 50803030,
+              "offset": 50805480,
               "size": 1070,
             },
             "browser.js": {
-              "offset": 50804100,
+              "offset": 50806550,
               "size": 40,
             },
             "index.js": {
-              "offset": 50804140,
+              "offset": 50806590,
               "size": 300,
             },
             "package.json": {
-              "offset": 50804430,
+              "offset": 50806880,
               "size": 1270,
             },
           },
@@ -73822,11 +73822,11 @@ exports[`node_module collectors > yarn ms 2`] = `
         "undici-types": {
           "files": {
             "LICENSE": {
-              "offset": 50805700,
+              "offset": 50808150,
               "size": 1090,
             },
             "package.json": {
-              "offset": 50806790,
+              "offset": 50809240,
               "size": 330,
             },
           },
@@ -73834,23 +73834,23 @@ exports[`node_module collectors > yarn ms 2`] = `
         "xtend": {
           "files": {
             "LICENSE": {
-              "offset": 50807110,
+              "offset": 50809560,
               "size": 1080,
             },
             "immutable.js": {
-              "offset": 50808190,
+              "offset": 50810640,
               "size": 390,
             },
             "mutable.js": {
-              "offset": 50808570,
+              "offset": 50811030,
               "size": 370,
             },
             "package.json": {
-              "offset": 50808940,
+              "offset": 50811390,
               "size": 710,
             },
             "test.js": {
-              "offset": 50809640,
+              "offset": 50812100,
               "size": 2310,
             },
           },
@@ -73858,7 +73858,7 @@ exports[`node_module collectors > yarn ms 2`] = `
       },
     },
     "package.json": {
-      "offset": 50812950,
+      "offset": 50815400,
       "size": 410,
     },
   },
@@ -73875,11 +73875,11 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
 {
   "files": {
     "index.html": {
-      "offset": 522080,
+      "offset": 522170,
       "size": 380,
     },
     "index.js": {
-      "offset": 522460,
+      "offset": 522540,
       "size": 620,
     },
     "node_modules": {
@@ -74006,22 +74006,22 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
               "files": {
                 "bn.js": {
                   "offset": 51820,
-                  "size": 87780,
+                  "size": 87870,
                 },
               },
             },
             "package.json": {
-              "offset": 139590,
+              "offset": 139680,
               "size": 490,
             },
             "util": {
               "files": {
                 "genCombMulTo.js": {
-                  "offset": 140080,
+                  "offset": 140160,
                   "size": 2030,
                 },
                 "genCombMulTo10.js": {
-                  "offset": 142100,
+                  "offset": 142180,
                   "size": 2120,
                 },
               },
@@ -74031,87 +74031,87 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "browserify-aes": {
           "files": {
             "LICENSE": {
-              "offset": 144220,
+              "offset": 144300,
               "size": 1100,
             },
             "aes.js": {
-              "offset": 145310,
+              "offset": 145400,
               "size": 6250,
             },
             "authCipher.js": {
-              "offset": 151560,
+              "offset": 151640,
               "size": 3020,
             },
             "browser.js": {
-              "offset": 154580,
+              "offset": 154660,
               "size": 500,
             },
             "decrypter.js": {
-              "offset": 155080,
+              "offset": 155160,
               "size": 3220,
             },
             "encrypter.js": {
-              "offset": 158290,
+              "offset": 158380,
               "size": 2870,
             },
             "ghash.js": {
-              "offset": 161160,
+              "offset": 161240,
               "size": 1960,
             },
             "incr32.js": {
-              "offset": 163120,
+              "offset": 163200,
               "size": 260,
             },
             "index.js": {
-              "offset": 163380,
+              "offset": 163460,
               "size": 360,
             },
             "modes": {
               "files": {
                 "cbc.js": {
-                  "offset": 163730,
+                  "offset": 163820,
                   "size": 350,
                 },
                 "cfb.js": {
-                  "offset": 164070,
+                  "offset": 164160,
                   "size": 870,
                 },
                 "cfb1.js": {
-                  "offset": 164940,
+                  "offset": 165030,
                   "size": 920,
                 },
                 "cfb8.js": {
-                  "offset": 165860,
+                  "offset": 165940,
                   "size": 520,
                 },
                 "ctr.js": {
-                  "offset": 166380,
+                  "offset": 166460,
                   "size": 910,
                 },
                 "ecb.js": {
-                  "offset": 167290,
+                  "offset": 167370,
                   "size": 180,
                 },
                 "index.js": {
-                  "offset": 167460,
+                  "offset": 167550,
                   "size": 370,
                 },
                 "list.json": {
-                  "offset": 167830,
+                  "offset": 167910,
                   "size": 3090,
                 },
                 "ofb.js": {
-                  "offset": 170910,
+                  "offset": 171000,
                   "size": 420,
                 },
               },
             },
             "package.json": {
-              "offset": 171330,
+              "offset": 171410,
               "size": 700,
             },
             "streamCipher.js": {
-              "offset": 172020,
+              "offset": 172110,
               "size": 660,
             },
           },
@@ -74119,23 +74119,23 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "buffer-xor": {
           "files": {
             "LICENSE": {
-              "offset": 172680,
+              "offset": 172770,
               "size": 1090,
             },
             "index.js": {
-              "offset": 173760,
+              "offset": 173850,
               "size": 210,
             },
             "inline.js": {
-              "offset": 173970,
+              "offset": 174050,
               "size": 40,
             },
             "inplace.js": {
-              "offset": 174010,
+              "offset": 174090,
               "size": 190,
             },
             "package.json": {
-              "offset": 174190,
+              "offset": 174280,
               "size": 430,
             },
           },
@@ -74143,27 +74143,27 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "call-bind": {
           "files": {
             ".eslintignore": {
-              "offset": 174610,
+              "offset": 174700,
               "size": 10,
             },
             ".nycrc": {
-              "offset": 174620,
+              "offset": 174710,
               "size": 140,
             },
             "LICENSE": {
-              "offset": 174760,
+              "offset": 174850,
               "size": 1080,
             },
             "callBound.js": {
-              "offset": 175830,
+              "offset": 175920,
               "size": 420,
             },
             "index.js": {
-              "offset": 176250,
+              "offset": 176330,
               "size": 650,
             },
             "package.json": {
-              "offset": 176890,
+              "offset": 176970,
               "size": 1510,
             },
           },
@@ -74171,43 +74171,43 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "call-bind-apply-helpers": {
           "files": {
             ".nycrc": {
-              "offset": 178390,
+              "offset": 178480,
               "size": 140,
             },
             "LICENSE": {
-              "offset": 178530,
+              "offset": 178620,
               "size": 1080,
             },
             "actualApply.js": {
-              "offset": 179600,
+              "offset": 179690,
               "size": 280,
             },
             "applyBind.js": {
-              "offset": 179880,
+              "offset": 179970,
               "size": 270,
             },
             "functionApply.js": {
-              "offset": 180150,
+              "offset": 180230,
               "size": 100,
             },
             "functionCall.js": {
-              "offset": 180250,
+              "offset": 180330,
               "size": 100,
             },
             "index.js": {
-              "offset": 180340,
+              "offset": 180430,
               "size": 520,
             },
             "package.json": {
-              "offset": 180860,
+              "offset": 180940,
               "size": 1850,
             },
             "reflectApply.js": {
-              "offset": 182700,
+              "offset": 182780,
               "size": 140,
             },
             "tsconfig.json": {
-              "offset": 182830,
+              "offset": 182910,
               "size": 120,
             },
           },
@@ -74215,23 +74215,23 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "call-bound": {
           "files": {
             ".nycrc": {
-              "offset": 182940,
+              "offset": 183030,
               "size": 140,
             },
             "LICENSE": {
-              "offset": 183080,
+              "offset": 183170,
               "size": 1080,
             },
             "index.js": {
-              "offset": 184150,
+              "offset": 184240,
               "size": 690,
             },
             "package.json": {
-              "offset": 184840,
+              "offset": 184930,
               "size": 1690,
             },
             "tsconfig.json": {
-              "offset": 186530,
+              "offset": 186610,
               "size": 140,
             },
           },
@@ -74239,15 +74239,15 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "cipher-base": {
           "files": {
             "LICENSE": {
-              "offset": 186670,
+              "offset": 186750,
               "size": 1100,
             },
             "index.js": {
-              "offset": 187760,
+              "offset": 187850,
               "size": 2270,
             },
             "package.json": {
-              "offset": 190030,
+              "offset": 190120,
               "size": 1080,
             },
           },
@@ -74255,19 +74255,19 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "core-util-is": {
           "files": {
             "LICENSE": {
-              "offset": 191110,
+              "offset": 191190,
               "size": 1080,
             },
             "lib": {
               "files": {
                 "util.js": {
-                  "offset": 192180,
+                  "offset": 192270,
                   "size": 3040,
                 },
               },
             },
             "package.json": {
-              "offset": 195220,
+              "offset": 195310,
               "size": 410,
             },
           },
@@ -74275,27 +74275,27 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "create-hash": {
           "files": {
             "LICENSE": {
-              "offset": 195620,
+              "offset": 195710,
               "size": 1100,
             },
             "browser.js": {
-              "offset": 196720,
+              "offset": 196800,
               "size": 630,
             },
             "index.js": {
-              "offset": 197350,
+              "offset": 197430,
               "size": 50,
             },
             "md5.js": {
-              "offset": 197390,
+              "offset": 197480,
               "size": 120,
             },
             "package.json": {
-              "offset": 197500,
+              "offset": 197590,
               "size": 680,
             },
             "test.js": {
-              "offset": 198170,
+              "offset": 198260,
               "size": 1470,
             },
           },
@@ -74303,23 +74303,23 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "create-hmac": {
           "files": {
             "LICENSE": {
-              "offset": 199640,
+              "offset": 199720,
               "size": 1100,
             },
             "browser.js": {
-              "offset": 200730,
+              "offset": 200820,
               "size": 1590,
             },
             "index.js": {
-              "offset": 202320,
+              "offset": 202400,
               "size": 50,
             },
             "legacy.js": {
-              "offset": 202360,
+              "offset": 202450,
               "size": 970,
             },
             "package.json": {
-              "offset": 203330,
+              "offset": 203420,
               "size": 760,
             },
           },
@@ -74327,23 +74327,23 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "define-data-property": {
           "files": {
             ".nycrc": {
-              "offset": 204090,
+              "offset": 204170,
               "size": 220,
             },
             "LICENSE": {
-              "offset": 204300,
+              "offset": 204390,
               "size": 1080,
             },
             "index.js": {
-              "offset": 205370,
+              "offset": 205460,
               "size": 2340,
             },
             "package.json": {
-              "offset": 207710,
+              "offset": 207790,
               "size": 2080,
             },
             "tsconfig.json": {
-              "offset": 209780,
+              "offset": 209870,
               "size": 4890,
             },
           },
@@ -74351,27 +74351,27 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "dunder-proto": {
           "files": {
             ".nycrc": {
-              "offset": 214660,
+              "offset": 214750,
               "size": 220,
             },
             "LICENSE": {
-              "offset": 214880,
+              "offset": 214960,
               "size": 1080,
             },
             "get.js": {
-              "offset": 215950,
+              "offset": 216040,
               "size": 980,
             },
             "package.json": {
-              "offset": 216930,
+              "offset": 217020,
               "size": 1450,
             },
             "set.js": {
-              "offset": 218380,
+              "offset": 218470,
               "size": 1280,
             },
             "tsconfig.json": {
-              "offset": 219660,
+              "offset": 219740,
               "size": 120,
             },
           },
@@ -74379,23 +74379,23 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "es-define-property": {
           "files": {
             ".nycrc": {
-              "offset": 219780,
+              "offset": 219860,
               "size": 140,
             },
             "LICENSE": {
-              "offset": 219910,
+              "offset": 220000,
               "size": 1080,
             },
             "index.js": {
-              "offset": 220990,
+              "offset": 221070,
               "size": 290,
             },
             "package.json": {
-              "offset": 221270,
+              "offset": 221360,
               "size": 1340,
             },
             "tsconfig.json": {
-              "offset": 222610,
+              "offset": 222700,
               "size": 140,
             },
           },
@@ -74403,43 +74403,43 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "es-errors": {
           "files": {
             "LICENSE": {
-              "offset": 222750,
+              "offset": 222830,
               "size": 1080,
             },
             "eval.js": {
-              "offset": 223820,
+              "offset": 223900,
               "size": 80,
             },
             "index.js": {
-              "offset": 223900,
+              "offset": 223980,
               "size": 70,
             },
             "package.json": {
-              "offset": 223960,
+              "offset": 224050,
               "size": 1340,
             },
             "range.js": {
-              "offset": 225300,
+              "offset": 225380,
               "size": 80,
             },
             "ref.js": {
-              "offset": 225370,
+              "offset": 225460,
               "size": 80,
             },
             "syntax.js": {
-              "offset": 225450,
+              "offset": 225540,
               "size": 80,
             },
             "tsconfig.json": {
-              "offset": 225530,
+              "offset": 225610,
               "size": 3170,
             },
             "type.js": {
-              "offset": 228700,
+              "offset": 228780,
               "size": 80,
             },
             "uri.js": {
-              "offset": 228780,
+              "offset": 228860,
               "size": 80,
             },
           },
@@ -74447,31 +74447,31 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "es-object-atoms": {
           "files": {
             "LICENSE": {
-              "offset": 228850,
+              "offset": 228930,
               "size": 1080,
             },
             "RequireObjectCoercible.js": {
-              "offset": 229920,
+              "offset": 230000,
               "size": 320,
             },
             "ToObject.js": {
-              "offset": 230230,
+              "offset": 230320,
               "size": 250,
             },
             "index.js": {
-              "offset": 230480,
+              "offset": 230570,
               "size": 70,
             },
             "isObject.js": {
-              "offset": 230550,
+              "offset": 230630,
               "size": 170,
             },
             "package.json": {
-              "offset": 230710,
+              "offset": 230790,
               "size": 1430,
             },
             "tsconfig.json": {
-              "offset": 232130,
+              "offset": 232220,
               "size": 90,
             },
           },
@@ -74479,15 +74479,15 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "evp_bytestokey": {
           "files": {
             "LICENSE": {
-              "offset": 232210,
+              "offset": 232300,
               "size": 1100,
             },
             "index.js": {
-              "offset": 233310,
+              "offset": 233400,
               "size": 1200,
             },
             "package.json": {
-              "offset": 234500,
+              "offset": 234590,
               "size": 680,
             },
           },
@@ -74495,27 +74495,27 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "for-each": {
           "files": {
             ".editorconfig": {
-              "offset": 235180,
+              "offset": 235260,
               "size": 290,
             },
             ".nycrc": {
-              "offset": 235460,
+              "offset": 235550,
               "size": 130,
             },
             "LICENSE": {
-              "offset": 235590,
+              "offset": 235680,
               "size": 1080,
             },
             "index.js": {
-              "offset": 236670,
+              "offset": 236750,
               "size": 2380,
             },
             "package.json": {
-              "offset": 239040,
+              "offset": 239130,
               "size": 1150,
             },
             "tsconfig.json": {
-              "offset": 240190,
+              "offset": 240270,
               "size": 100,
             },
           },
@@ -74523,23 +74523,23 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "function-bind": {
           "files": {
             ".nycrc": {
-              "offset": 240280,
+              "offset": 240370,
               "size": 220,
             },
             "LICENSE": {
-              "offset": 240500,
+              "offset": 240580,
               "size": 1060,
             },
             "implementation.js": {
-              "offset": 241550,
+              "offset": 241640,
               "size": 2050,
             },
             "index.js": {
-              "offset": 243590,
+              "offset": 243680,
               "size": 130,
             },
             "package.json": {
-              "offset": 243720,
+              "offset": 243800,
               "size": 1330,
             },
           },
@@ -74547,19 +74547,19 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "get-intrinsic": {
           "files": {
             ".nycrc": {
-              "offset": 245050,
+              "offset": 245130,
               "size": 140,
             },
             "LICENSE": {
-              "offset": 245190,
+              "offset": 245270,
               "size": 1080,
             },
             "index.js": {
-              "offset": 246260,
+              "offset": 246340,
               "size": 14440,
             },
             "package.json": {
-              "offset": 260700,
+              "offset": 260780,
               "size": 1870,
             },
           },
@@ -74567,31 +74567,31 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "get-proto": {
           "files": {
             ".nycrc": {
-              "offset": 262560,
+              "offset": 262650,
               "size": 140,
             },
             "LICENSE": {
-              "offset": 262700,
+              "offset": 262790,
               "size": 1080,
             },
             "Object.getPrototypeOf.js": {
-              "offset": 263770,
+              "offset": 263860,
               "size": 160,
             },
             "Reflect.getPrototypeOf.js": {
-              "offset": 263930,
+              "offset": 264010,
               "size": 150,
             },
             "index.js": {
-              "offset": 264080,
+              "offset": 264160,
               "size": 830,
             },
             "package.json": {
-              "offset": 264900,
+              "offset": 264980,
               "size": 1430,
             },
             "tsconfig.json": {
-              "offset": 266320,
+              "offset": 266410,
               "size": 120,
             },
           },
@@ -74599,23 +74599,23 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "gopd": {
           "files": {
             "LICENSE": {
-              "offset": 266440,
+              "offset": 266530,
               "size": 1080,
             },
             "gOPD.js": {
-              "offset": 267510,
+              "offset": 267600,
               "size": 100,
             },
             "index.js": {
-              "offset": 267610,
+              "offset": 267690,
               "size": 210,
             },
             "package.json": {
-              "offset": 267820,
+              "offset": 267900,
               "size": 1310,
             },
             "tsconfig.json": {
-              "offset": 269130,
+              "offset": 269210,
               "size": 120,
             },
           },
@@ -74623,19 +74623,19 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "has-property-descriptors": {
           "files": {
             ".nycrc": {
-              "offset": 269240,
+              "offset": 269330,
               "size": 140,
             },
             "LICENSE": {
-              "offset": 269380,
+              "offset": 269460,
               "size": 1070,
             },
             "index.js": {
-              "offset": 270450,
+              "offset": 270530,
               "size": 590,
             },
             "package.json": {
-              "offset": 271040,
+              "offset": 271120,
               "size": 1330,
             },
           },
@@ -74643,27 +74643,27 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "has-symbols": {
           "files": {
             ".nycrc": {
-              "offset": 272360,
+              "offset": 272450,
               "size": 140,
             },
             "LICENSE": {
-              "offset": 272500,
+              "offset": 272590,
               "size": 1080,
             },
             "index.js": {
-              "offset": 273570,
+              "offset": 273660,
               "size": 450,
             },
             "package.json": {
-              "offset": 274020,
+              "offset": 274110,
               "size": 1800,
             },
             "shams.js": {
-              "offset": 275810,
+              "offset": 275900,
               "size": 1930,
             },
             "tsconfig.json": {
-              "offset": 277740,
+              "offset": 277820,
               "size": 150,
             },
           },
@@ -74671,27 +74671,27 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "has-tostringtag": {
           "files": {
             ".nycrc": {
-              "offset": 277880,
+              "offset": 277960,
               "size": 220,
             },
             "LICENSE": {
-              "offset": 278090,
+              "offset": 278180,
               "size": 1070,
             },
             "index.js": {
-              "offset": 279160,
+              "offset": 279250,
               "size": 200,
             },
             "package.json": {
-              "offset": 279360,
+              "offset": 279440,
               "size": 1700,
             },
             "shams.js": {
-              "offset": 281060,
+              "offset": 281140,
               "size": 190,
             },
             "tsconfig.json": {
-              "offset": 281240,
+              "offset": 281330,
               "size": 3620,
             },
           },
@@ -74699,19 +74699,19 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "hash-base": {
           "files": {
             "LICENSE": {
-              "offset": 284860,
+              "offset": 284940,
               "size": 1090,
             },
             "index.js": {
-              "offset": 285940,
+              "offset": 286020,
               "size": 2290,
             },
             "package.json": {
-              "offset": 288220,
+              "offset": 288300,
               "size": 1110,
             },
             "to-buffer.js": {
-              "offset": 289330,
+              "offset": 289410,
               "size": 630,
             },
           },
@@ -74719,23 +74719,23 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "hasown": {
           "files": {
             ".nycrc": {
-              "offset": 289950,
+              "offset": 290040,
               "size": 220,
             },
             "LICENSE": {
-              "offset": 290170,
+              "offset": 290250,
               "size": 1090,
             },
             "index.js": {
-              "offset": 291250,
+              "offset": 291330,
               "size": 210,
             },
             "package.json": {
-              "offset": 291460,
+              "offset": 291540,
               "size": 1480,
             },
             "tsconfig.json": {
-              "offset": 292930,
+              "offset": 293010,
               "size": 80,
             },
           },
@@ -74743,19 +74743,19 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "inherits": {
           "files": {
             "LICENSE": {
-              "offset": 293000,
+              "offset": 293090,
               "size": 750,
             },
             "inherits.js": {
-              "offset": 293750,
+              "offset": 293840,
               "size": 250,
             },
             "inherits_browser.js": {
-              "offset": 294000,
+              "offset": 294090,
               "size": 760,
             },
             "package.json": {
-              "offset": 294760,
+              "offset": 294840,
               "size": 400,
             },
           },
@@ -74763,23 +74763,23 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "is-callable": {
           "files": {
             ".editorconfig": {
-              "offset": 295150,
+              "offset": 295230,
               "size": 460,
             },
             ".nycrc": {
-              "offset": 295610,
+              "offset": 295690,
               "size": 140,
             },
             "LICENSE": {
-              "offset": 295750,
+              "offset": 295830,
               "size": 1090,
             },
             "index.js": {
-              "offset": 296830,
+              "offset": 296910,
               "size": 3230,
             },
             "package.json": {
-              "offset": 300050,
+              "offset": 300140,
               "size": 1840,
             },
           },
@@ -74787,27 +74787,27 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "is-typed-array": {
           "files": {
             ".editorconfig": {
-              "offset": 301890,
+              "offset": 301970,
               "size": 290,
             },
             ".nycrc": {
-              "offset": 302170,
+              "offset": 302260,
               "size": 140,
             },
             "LICENSE": {
-              "offset": 302310,
+              "offset": 302400,
               "size": 1090,
             },
             "index.js": {
-              "offset": 303400,
+              "offset": 303480,
               "size": 180,
             },
             "package.json": {
-              "offset": 303580,
+              "offset": 303660,
               "size": 2310,
             },
             "tsconfig.json": {
-              "offset": 305880,
+              "offset": 305970,
               "size": 70,
             },
           },
@@ -74815,15 +74815,15 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "isarray": {
           "files": {
             "LICENSE": {
-              "offset": 305950,
+              "offset": 306030,
               "size": 1100,
             },
             "index.js": {
-              "offset": 307050,
+              "offset": 307130,
               "size": 140,
             },
             "package.json": {
-              "offset": 307180,
+              "offset": 307260,
               "size": 880,
             },
           },
@@ -74831,79 +74831,79 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "math-intrinsics": {
           "files": {
             "LICENSE": {
-              "offset": 308060,
+              "offset": 308140,
               "size": 1080,
             },
             "abs.js": {
-              "offset": 309130,
+              "offset": 309220,
               "size": 80,
             },
             "constants": {
               "files": {
                 "maxArrayLength.js": {
-                  "offset": 309200,
+                  "offset": 309290,
                   "size": 110,
                 },
                 "maxSafeInteger.js": {
-                  "offset": 309310,
+                  "offset": 309400,
                   "size": 240,
                 },
                 "maxValue.js": {
-                  "offset": 309550,
+                  "offset": 309630,
                   "size": 200,
                 },
               },
             },
             "floor.js": {
-              "offset": 309740,
+              "offset": 309830,
               "size": 80,
             },
             "isFinite.js": {
-              "offset": 309820,
+              "offset": 309900,
               "size": 270,
             },
             "isInteger.js": {
-              "offset": 310080,
+              "offset": 310170,
               "size": 410,
             },
             "isNaN.js": {
-              "offset": 310490,
+              "offset": 310580,
               "size": 130,
             },
             "isNegativeZero.js": {
-              "offset": 310610,
+              "offset": 310700,
               "size": 150,
             },
             "max.js": {
-              "offset": 310760,
+              "offset": 310840,
               "size": 80,
             },
             "min.js": {
-              "offset": 310830,
+              "offset": 310910,
               "size": 80,
             },
             "mod.js": {
-              "offset": 310900,
+              "offset": 310990,
               "size": 220,
             },
             "package.json": {
-              "offset": 311120,
+              "offset": 311200,
               "size": 1940,
             },
             "pow.js": {
-              "offset": 313050,
+              "offset": 313140,
               "size": 80,
             },
             "round.js": {
-              "offset": 313130,
+              "offset": 313210,
               "size": 80,
             },
             "sign.js": {
-              "offset": 313200,
+              "offset": 313290,
               "size": 220,
             },
             "tsconfig.json": {
-              "offset": 313420,
+              "offset": 313500,
               "size": 40,
             },
           },
@@ -74911,15 +74911,15 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "md5.js": {
           "files": {
             "LICENSE": {
-              "offset": 313450,
+              "offset": 313540,
               "size": 1090,
             },
             "index.js": {
-              "offset": 314530,
+              "offset": 314620,
               "size": 4610,
             },
             "package.json": {
-              "offset": 319140,
+              "offset": 319220,
               "size": 630,
             },
           },
@@ -74927,15 +74927,15 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "minimalistic-assert": {
           "files": {
             "LICENSE": {
-              "offset": 319770,
+              "offset": 319850,
               "size": 730,
             },
             "index.js": {
-              "offset": 320500,
+              "offset": 320580,
               "size": 260,
             },
             "package.json": {
-              "offset": 320750,
+              "offset": 320830,
               "size": 350,
             },
           },
@@ -74943,27 +74943,27 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "parse-asn1": {
           "files": {
             "LICENSE": {
-              "offset": 321090,
+              "offset": 321170,
               "size": 750,
             },
             "aesid.json": {
-              "offset": 321840,
+              "offset": 321920,
               "size": 510,
             },
             "asn1.js": {
-              "offset": 322340,
+              "offset": 322420,
               "size": 3170,
             },
             "certificate.js": {
-              "offset": 325500,
+              "offset": 325590,
               "size": 2380,
             },
             "fixProc.js": {
-              "offset": 327880,
+              "offset": 327970,
               "size": 1240,
             },
             "index.js": {
-              "offset": 329120,
+              "offset": 329200,
               "size": 3510,
             },
             "node_modules": {
@@ -74971,15 +74971,15 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
                 "hash-base": {
                   "files": {
                     "LICENSE": {
-                      "offset": 333690,
+                      "offset": 333780,
                       "size": 1090,
                     },
                     "index.js": {
-                      "offset": 334780,
+                      "offset": 334860,
                       "size": 4050,
                     },
                     "package.json": {
-                      "offset": 338820,
+                      "offset": 338910,
                       "size": 650,
                     },
                   },
@@ -74987,7 +74987,7 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
               },
             },
             "package.json": {
-              "offset": 332620,
+              "offset": 332700,
               "size": 1080,
             },
           },
@@ -74995,51 +74995,51 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "pbkdf2": {
           "files": {
             ".nycrc": {
-              "offset": 339470,
+              "offset": 339550,
               "size": 150,
             },
             "LICENSE": {
-              "offset": 339620,
+              "offset": 339700,
               "size": 1090,
             },
             "browser.js": {
-              "offset": 340700,
+              "offset": 340780,
               "size": 100,
             },
             "index.js": {
-              "offset": 340800,
+              "offset": 340880,
               "size": 1360,
             },
             "lib": {
               "files": {
                 "async.js": {
-                  "offset": 342150,
+                  "offset": 342240,
                   "size": 2940,
                 },
                 "default-encoding.js": {
-                  "offset": 345090,
+                  "offset": 345180,
                   "size": 410,
                 },
                 "precondition.js": {
-                  "offset": 345500,
+                  "offset": 345580,
                   "size": 570,
                 },
                 "sync-browser.js": {
-                  "offset": 346060,
+                  "offset": 346140,
                   "size": 2960,
                 },
                 "sync.js": {
-                  "offset": 349010,
+                  "offset": 349090,
                   "size": 1650,
                 },
                 "to-buffer.js": {
-                  "offset": 350660,
+                  "offset": 350740,
                   "size": 620,
                 },
               },
             },
             "package.json": {
-              "offset": 351270,
+              "offset": 351350,
               "size": 1390,
             },
           },
@@ -75047,19 +75047,19 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "possible-typed-array-names": {
           "files": {
             "LICENSE": {
-              "offset": 352650,
+              "offset": 352740,
               "size": 1080,
             },
             "index.js": {
-              "offset": 353730,
+              "offset": 353810,
               "size": 270,
             },
             "package.json": {
-              "offset": 353990,
+              "offset": 354070,
               "size": 1300,
             },
             "tsconfig.json": {
-              "offset": 355280,
+              "offset": 355360,
               "size": 120,
             },
           },
@@ -75067,15 +75067,15 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "process-nextick-args": {
           "files": {
             "index.js": {
-              "offset": 355400,
+              "offset": 355480,
               "size": 1090,
             },
             "license.md": {
-              "offset": 356480,
+              "offset": 356560,
               "size": 1070,
             },
             "package.json": {
-              "offset": 357540,
+              "offset": 357630,
               "size": 440,
             },
           },
@@ -75083,15 +75083,15 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "readable-stream": {
           "files": {
             "CONTRIBUTING.md": {
-              "offset": 357980,
+              "offset": 358070,
               "size": 1450,
             },
             "GOVERNANCE.md": {
-              "offset": 359430,
+              "offset": 359510,
               "size": 5550,
             },
             "LICENSE": {
-              "offset": 364980,
+              "offset": 365060,
               "size": 2340,
             },
             "doc": {
@@ -75099,7 +75099,7 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
                 "wg-meetings": {
                   "files": {
                     "2015-01-30.md": {
-                      "offset": 367310,
+                      "offset": 367400,
                       "size": 2280,
                     },
                   },
@@ -75107,33 +75107,33 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
               },
             },
             "duplex-browser.js": {
-              "offset": 369590,
+              "offset": 369680,
               "size": 60,
             },
             "duplex.js": {
-              "offset": 369650,
+              "offset": 369730,
               "size": 50,
             },
             "lib": {
               "files": {
                 "_stream_duplex.js": {
-                  "offset": 369690,
+                  "offset": 369780,
                   "size": 4020,
                 },
                 "_stream_passthrough.js": {
-                  "offset": 373710,
+                  "offset": 373790,
                   "size": 1760,
                 },
                 "_stream_readable.js": {
-                  "offset": 375460,
+                  "offset": 375540,
                   "size": 31430,
                 },
                 "_stream_transform.js": {
-                  "offset": 406890,
+                  "offset": 406970,
                   "size": 7750,
                 },
                 "_stream_writable.js": {
-                  "offset": 414630,
+                  "offset": 414710,
                   "size": 20340,
                 },
                 "internal": {
@@ -75141,19 +75141,19 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
                     "streams": {
                       "files": {
                         "BufferList.js": {
-                          "offset": 434960,
+                          "offset": 435050,
                           "size": 2010,
                         },
                         "destroy.js": {
-                          "offset": 436970,
+                          "offset": 437060,
                           "size": 2180,
                         },
                         "stream-browser.js": {
-                          "offset": 439150,
+                          "offset": 439230,
                           "size": 50,
                         },
                         "stream.js": {
-                          "offset": 439200,
+                          "offset": 439280,
                           "size": 40,
                         },
                       },
@@ -75167,23 +75167,23 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
                 "isarray": {
                   "files": {
                     "Makefile": {
-                      "offset": 441700,
+                      "offset": 441780,
                       "size": 60,
                     },
                     "component.json": {
-                      "offset": 441750,
+                      "offset": 441840,
                       "size": 470,
                     },
                     "index.js": {
-                      "offset": 442220,
+                      "offset": 442310,
                       "size": 140,
                     },
                     "package.json": {
-                      "offset": 442360,
+                      "offset": 442440,
                       "size": 850,
                     },
                     "test.js": {
-                      "offset": 443200,
+                      "offset": 443290,
                       "size": 320,
                     },
                   },
@@ -75191,15 +75191,15 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
                 "safe-buffer": {
                   "files": {
                     "LICENSE": {
-                      "offset": 443520,
+                      "offset": 443610,
                       "size": 1090,
                     },
                     "index.js": {
-                      "offset": 444600,
+                      "offset": 444690,
                       "size": 1530,
                     },
                     "package.json": {
-                      "offset": 446130,
+                      "offset": 446220,
                       "size": 500,
                     },
                   },
@@ -75207,31 +75207,31 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
               },
             },
             "package.json": {
-              "offset": 439230,
+              "offset": 439320,
               "size": 970,
             },
             "passthrough.js": {
-              "offset": 440190,
+              "offset": 440280,
               "size": 60,
             },
             "readable-browser.js": {
-              "offset": 440240,
+              "offset": 440330,
               "size": 360,
             },
             "readable.js": {
-              "offset": 440590,
+              "offset": 440680,
               "size": 780,
             },
             "transform.js": {
-              "offset": 441370,
+              "offset": 441450,
               "size": 50,
             },
             "writable-browser.js": {
-              "offset": 441410,
+              "offset": 441500,
               "size": 60,
             },
             "writable.js": {
-              "offset": 441470,
+              "offset": 441550,
               "size": 230,
             },
           },
@@ -75239,15 +75239,15 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "ripemd160": {
           "files": {
             "LICENSE": {
-              "offset": 446630,
+              "offset": 446720,
               "size": 1090,
             },
             "index.js": {
-              "offset": 447720,
+              "offset": 447800,
               "size": 4580,
             },
             "package.json": {
-              "offset": 452290,
+              "offset": 452380,
               "size": 980,
             },
           },
@@ -75255,15 +75255,15 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "safe-buffer": {
           "files": {
             "LICENSE": {
-              "offset": 453260,
+              "offset": 453350,
               "size": 1090,
             },
             "index.js": {
-              "offset": 454340,
+              "offset": 454430,
               "size": 1670,
             },
             "package.json": {
-              "offset": 456010,
+              "offset": 456100,
               "size": 780,
             },
           },
@@ -75271,27 +75271,27 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "set-function-length": {
           "files": {
             ".nycrc": {
-              "offset": 456790,
+              "offset": 456870,
               "size": 220,
             },
             "LICENSE": {
-              "offset": 457000,
+              "offset": 457090,
               "size": 1090,
             },
             "env.js": {
-              "offset": 458090,
+              "offset": 458170,
               "size": 870,
             },
             "index.js": {
-              "offset": 458950,
+              "offset": 459040,
               "size": 1280,
             },
             "package.json": {
-              "offset": 460230,
+              "offset": 460310,
               "size": 1960,
             },
             "tsconfig.json": {
-              "offset": 462180,
+              "offset": 462260,
               "size": 120,
             },
           },
@@ -75299,48 +75299,48 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "sha.js": {
           "files": {
             "LICENSE": {
-              "offset": 462300,
+              "offset": 462380,
               "size": 2560,
             },
             "bin.js": {
               "executable": true,
-              "offset": 464850,
+              "offset": 464940,
               "size": 1040,
             },
             "hash.js": {
-              "offset": 465890,
+              "offset": 465980,
               "size": 1900,
             },
             "index.js": {
-              "offset": 467790,
+              "offset": 467880,
               "size": 520,
             },
             "package.json": {
-              "offset": 468310,
+              "offset": 468390,
               "size": 1170,
             },
             "sha.js": {
-              "offset": 469470,
+              "offset": 469550,
               "size": 1950,
             },
             "sha1.js": {
-              "offset": 471420,
+              "offset": 471500,
               "size": 2070,
             },
             "sha224.js": {
-              "offset": 473490,
+              "offset": 473570,
               "size": 1120,
             },
             "sha256.js": {
-              "offset": 474600,
+              "offset": 474680,
               "size": 3370,
             },
             "sha384.js": {
-              "offset": 477970,
+              "offset": 478050,
               "size": 1190,
             },
             "sha512.js": {
-              "offset": 479150,
+              "offset": 479240,
               "size": 7280,
             },
           },
@@ -75348,13 +75348,13 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "string_decoder": {
           "files": {
             "LICENSE": {
-              "offset": 486430,
+              "offset": 486520,
               "size": 2340,
             },
             "lib": {
               "files": {
                 "string_decoder.js": {
-                  "offset": 488770,
+                  "offset": 488850,
                   "size": 9470,
                 },
               },
@@ -75364,15 +75364,15 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
                 "safe-buffer": {
                   "files": {
                     "LICENSE": {
-                      "offset": 498750,
+                      "offset": 498830,
                       "size": 1090,
                     },
                     "index.js": {
-                      "offset": 499830,
+                      "offset": 499910,
                       "size": 1530,
                     },
                     "package.json": {
-                      "offset": 501360,
+                      "offset": 501440,
                       "size": 500,
                     },
                   },
@@ -75380,7 +75380,7 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
               },
             },
             "package.json": {
-              "offset": 498240,
+              "offset": 498320,
               "size": 520,
             },
           },
@@ -75388,15 +75388,15 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "to-buffer": {
           "files": {
             "LICENSE": {
-              "offset": 501860,
+              "offset": 501940,
               "size": 1080,
             },
             "index.js": {
-              "offset": 502940,
+              "offset": 503020,
               "size": 3050,
             },
             "package.json": {
-              "offset": 505990,
+              "offset": 506070,
               "size": 1170,
             },
           },
@@ -75404,23 +75404,23 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "typed-array-buffer": {
           "files": {
             ".nycrc": {
-              "offset": 507160,
+              "offset": 507240,
               "size": 220,
             },
             "LICENSE": {
-              "offset": 507370,
+              "offset": 507460,
               "size": 1080,
             },
             "index.js": {
-              "offset": 508440,
+              "offset": 508530,
               "size": 600,
             },
             "package.json": {
-              "offset": 509040,
+              "offset": 509120,
               "size": 1600,
             },
             "tsconfig.json": {
-              "offset": 510630,
+              "offset": 510710,
               "size": 120,
             },
           },
@@ -75428,23 +75428,23 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "util-deprecate": {
           "files": {
             "History.md": {
-              "offset": 510740,
+              "offset": 510830,
               "size": 290,
             },
             "LICENSE": {
-              "offset": 511030,
+              "offset": 511110,
               "size": 1110,
             },
             "browser.js": {
-              "offset": 512130,
+              "offset": 512210,
               "size": 1620,
             },
             "node.js": {
-              "offset": 513740,
+              "offset": 513830,
               "size": 130,
             },
             "package.json": {
-              "offset": 513870,
+              "offset": 513950,
               "size": 440,
             },
           },
@@ -75452,27 +75452,27 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
         "which-typed-array": {
           "files": {
             ".editorconfig": {
-              "offset": 514300,
+              "offset": 514390,
               "size": 290,
             },
             ".nycrc": {
-              "offset": 514590,
+              "offset": 514670,
               "size": 220,
             },
             "LICENSE": {
-              "offset": 514810,
+              "offset": 514890,
               "size": 1090,
             },
             "index.js": {
-              "offset": 515890,
+              "offset": 515970,
               "size": 3770,
             },
             "package.json": {
-              "offset": 519650,
+              "offset": 519740,
               "size": 2310,
             },
             "tsconfig.json": {
-              "offset": 521960,
+              "offset": 522040,
               "size": 130,
             },
           },
@@ -75480,7 +75480,7 @@ exports[`node_module collectors > yarn parse-asn1 2`] = `
       },
     },
     "package.json": {
-      "offset": 523080,
+      "offset": 523160,
       "size": 370,
     },
   },
