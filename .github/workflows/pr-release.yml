@@ -4,7 +4,8 @@ on:
   push:
     branches:
       - master
-      - release/v*
+      - release/v27
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
