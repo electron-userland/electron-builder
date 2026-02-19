@@ -92,26 +92,43 @@ async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOption
     packager: { config, platformSpecificBuildOptions },
   } = options
   const wantedLanguages = asArray(platformSpecificBuildOptions.electronLanguages || config.electronLanguages)
+    .map(it => it.trim().toLowerCase())
+    .filter(it => it.length > 0)
   if (!wantedLanguages.length) {
     return
   }
 
   const { dirs, langFileExt } = getLocalesConfig(options)
   // noinspection SpellCheckingInspection
-  const deletedFiles = async (dir: string) => {
-    await asyncPool(MAX_FILE_REQUESTS, await readdir(dir), async file => {
+  const deleteNonMatchedLanguages: (dir: string) => Promise<Promise<void>[] | undefined> = async (dir: string) => {
+    const files = await readdir(dir)
+    return files.map(async file => {
       if (path.extname(file) !== langFileExt) {
         return
       }
 
-      const language = path.basename(file, langFileExt)
-      if (!wantedLanguages.includes(language)) {
-        return rm(path.join(dir, file), { recursive: true, force: true })
+      const language = path.basename(file, langFileExt).toLowerCase()
+      const isWantedLocale = wantedLanguages.some(
+        wantedLanguage =>
+          // exact file
+          wantedLanguage === language ||
+          // prefix (e.g. "en" matches "en-US")
+          wantedLanguage.startsWith(`${language}-`) ||
+          // prefix (e.g. "en" matches "en_US")
+          wantedLanguage.startsWith(`${language}_`)
+      )
+      if (isWantedLocale) {
+        return undefined
       }
-      return
+      return rm(path.join(dir, file), { recursive: true, force: true })
     })
   }
-  await Promise.all(dirs.map(deletedFiles))
+  const allDeletedFiles = (await Promise.all(dirs.map(deleteNonMatchedLanguages))).flat().filter(it => it != null)
+  if (allDeletedFiles.length === 0) {
+    log.warn({ electronLanguages: wantedLanguages }, "no locales found matching wanted languages, skipping cleanup")
+    return
+  }
+  await asyncPool(MAX_FILE_REQUESTS, allDeletedFiles, it => it)
 
   function getLocalesConfig(options: BeforeCopyExtraFilesOptions) {
     const { appOutDir, packager } = options
