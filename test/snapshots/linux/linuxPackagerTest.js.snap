@@ -243,7 +243,7 @@ exports[`LinuxPackager > AppImage toolset 0.0.0 > text license and file associat
 exports[`LinuxPackager > AppImage toolset 1.0.2 > AppImage - default icon, custom executable and custom desktop 1`] = `
 "[Desktop Entry]
 Name=Test App ßW
-Exec=AppRun --no-sandbox %U
+Exec=AppRun  %U
 Terminal=true
 Type=Application
 Icon=Foo
