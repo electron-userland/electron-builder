@@ -530,6 +530,13 @@ export class NsisTarget extends Target {
       defines.allowToChangeInstallationDirectory = null
     }
 
+    if (options.allowToAddShortcut) {
+      if (oneClick) {
+        throw new InvalidConfigurationError("allowToAddShortcut makes sense only for assisted installer (please set oneClick to false)")
+      }
+      defines.ALLOW_TO_ADD_SHORTCUT = null
+    }
+
     if (options.removeDefaultUninstallWelcomePage) {
       defines.removeDefaultUninstallWelcomePage = null
     }
