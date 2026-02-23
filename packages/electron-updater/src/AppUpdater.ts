@@ -355,13 +355,18 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     return checkForUpdatesPromise
   }
 
-  public isUpdaterActive(): boolean {
+  isUpdaterActive(): boolean {
     const isEnabled = this.app.isPackaged || this.forceDevUpdateConfig
     if (!isEnabled) {
       this._logger.info("Skip checkForUpdates because application is not packed and dev update config is not forced")
       return false
     }
     return true
+  }
+
+  async clearDownloadCache(): Promise<void> {
+    const it = await this.getOrCreateDownloadHelper()
+    return await it.clear()
   }
 
   // noinspection JSUnusedGlobalSymbols
