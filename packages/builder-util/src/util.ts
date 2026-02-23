@@ -316,6 +316,35 @@ export function addValue<K, T>(map: Map<K, Array<T>>, key: K, value: T) {
   }
 }
 
+export function isArrayEqualRegardlessOfSort(a: Array<string>, b: Array<string>) {
+  a = a.slice()
+  b = b.slice()
+  a.sort()
+  b.sort()
+  return a.length === b.length && a.every((value, index) => value === b[index])
+}
+
+/**
+ * Recursively removes all undefined and null values from an object
+ */
+export function removeNullish<T>(obj: T): T {
+  if (obj === null || typeof obj !== "object") {
+    return obj
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(removeNullish) as T
+  }
+
+  const result: Record<string, any> = {}
+  for (const [key, value] of Object.entries(obj)) {
+    if (value != null) {
+      result[key] = removeNullish(value)
+    }
+  }
+  return result as T
+}
+
 export function replaceDefault(inList: Array<string> | Nullish, defaultList: Array<string>): Array<string> {
   if (inList == null || (inList.length === 1 && inList[0] === "default")) {
     return defaultList

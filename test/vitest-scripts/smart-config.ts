@@ -26,10 +26,9 @@ export const UNSTABLE_FAIL_RATIO = 0.2
 // TODO: FIX ALL OF THESE 😅
 export const skippedTests = [
   // General instability
-  "snapHeavyTest",
 ]
 export const skipPerOSTests: Record<SupportedPlatforms, string[]> = {
   darwin: ["fpmTest", "macUpdaterTest", "blackboxUpdateTest"],
-  linux: ["flatpakTest"],
+  linux: [],
   win32: [],
 }
