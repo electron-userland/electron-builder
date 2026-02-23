@@ -400,3 +400,11 @@ export interface MasConfiguration extends MacConfiguration {
    */
   readonly binaries?: Array<string> | null
 }
+
+export interface ZipOptions extends TargetSpecificOptions {
+  /**
+   * @private
+   * @default true
+   */
+  writeUpdateInfo?: boolean
+}

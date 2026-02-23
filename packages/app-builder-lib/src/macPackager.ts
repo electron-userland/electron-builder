@@ -118,7 +118,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
 
         case "zip":
           // https://github.com/electron-userland/electron-builder/issues/2313
-          mapper(name, outDir => new ArchiveTarget(name, outDir, this, true))
+          mapper(name, outDir => new ArchiveTarget(name, outDir, this))
           break
 
         case "pkg":
