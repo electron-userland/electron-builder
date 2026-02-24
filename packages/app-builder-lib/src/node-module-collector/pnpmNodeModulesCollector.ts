@@ -19,6 +19,17 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     }
     this.productionGraph[dependencyId] = { dependencies: [] }
 
+    if (tree.dedupedDependenciesCount && tree.dedupedDependenciesCount > 0) {
+      const depKey = tree.from || tree.name
+      const realDep = this.allDependencies.get(`${depKey}@${tree.version}`)
+      if (realDep) {
+        tree = realDep
+      } else {
+        log.error(`Could not find real dependency for ${depKey}@${tree.version}`)
+        return
+      }
+    }
+
     const packageName = tree.name || tree.from
     const { packageJson } = (await this.cache.locatePackageVersion({ pkgName: packageName, parentDir: this.rootDir, requiredRange: tree.version })) || {}
 
@@ -59,6 +70,9 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
   protected async collectAllDependencies(tree: PnpmDependency) {
     // Collect regular dependencies
     for (const [key, value] of Object.entries(tree.dependencies || {})) {
+      if (value?.dedupedDependenciesCount && value.dedupedDependenciesCount > 0) {
+        continue
+      }
       const pkg = await this.cache.locatePackageVersion({ pkgName: key, parentDir: this.rootDir, requiredRange: value.version })
       this.allDependencies.set(`${key}@${value.version}`, { ...value, path: pkg?.packageDir ?? value.path })
       await this.collectAllDependencies(value)
@@ -66,6 +80,9 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
 
     // Collect optional dependencies if they exist
     for (const [key, value] of Object.entries(tree.optionalDependencies || {})) {
+      if (value?.dedupedDependenciesCount && value.dedupedDependenciesCount > 0) {
+        continue
+      }
       const pkg = await this.cache.locatePackageVersion({ pkgName: key, parentDir: this.rootDir, requiredRange: value.version })
       this.allDependencies.set(`${key}@${value.version}`, { ...value, path: pkg?.packageDir ?? value.path })
       await this.collectAllDependencies(value)

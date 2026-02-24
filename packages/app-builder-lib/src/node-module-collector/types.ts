@@ -28,6 +28,7 @@ export type ParsedDependencyTree = {
 export interface PnpmDependency extends Dependency<PnpmDependency, PnpmDependency> {
   readonly from: string
   readonly resolved: string
+  readonly dedupedDependenciesCount?: number
 }
 
 export interface NpmDependency extends Dependency<NpmDependency, string> {
