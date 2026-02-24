@@ -226,9 +226,11 @@ export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangel
     return getNoteValue(latestRelease)
   }
 
+  const releaseVersionRegExp = /\/tag\/v?([^/]+)$/
+
   let latestVersion: string | undefined = undefined
   try {
-    latestVersion = hrefRegExp.exec(latestRelease.element("link").attribute("href"))![1]
+    latestVersion = releaseVersionRegExp.exec(latestRelease.element("link").attribute("href"))![1]
     latestVersion = semver.valid(latestVersion) ? latestVersion : undefined
   } catch {
     // If we cannot parse the latest version, cntinue and return all release notes without filtering by version
@@ -242,7 +244,7 @@ export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangel
   for (const release of feed.getElements("entry")) {
     let versionRelease: string | undefined = undefined
     try {
-      versionRelease = hrefRegExp.exec(release.element("link").attribute("href"))![1]
+      versionRelease = releaseVersionRegExp.exec(release.element("link").attribute("href"))![1]
     } catch {
       continue
     }
