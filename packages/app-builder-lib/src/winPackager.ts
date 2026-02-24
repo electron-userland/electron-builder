@@ -1,10 +1,11 @@
-import { Arch, CopyFileTransformer, executeAppBuilder, FileTransformer, InvalidConfigurationError, log, use, walk } from "builder-util"
+import { Arch, CopyFileTransformer, executeAppBuilder, exists, FileTransformer, InvalidConfigurationError, log, use, walk } from "builder-util"
 import { Nullish } from "builder-util-runtime"
+import { isCI } from "ci-info"
 import { createHash } from "crypto"
 import { readdir } from "fs/promises"
-import { isCI } from "ci-info"
 import { Lazy } from "lazy-val"
 import * as path from "path"
+import { readAsarHeader } from "./asar/asar"
 import { SignManager } from "./codeSign/signManager"
 import { signWindows, WindowsSignOptions } from "./codeSign/windowsCodeSign"
 import { WindowsSignAzureManager } from "./codeSign/windowsSignAzureManager"
@@ -21,12 +22,12 @@ import { NsisTarget } from "./targets/nsis/NsisTarget"
 import { AppPackageHelper, CopyElevateHelper } from "./targets/nsis/nsisUtil"
 import { WebInstallerTarget } from "./targets/nsis/WebInstallerTarget"
 import { createCommonTarget } from "./targets/targetFactory"
+import { getRceditBundle } from "./toolsets/windows"
 import { BuildCacheManager, digest } from "./util/cacheManager"
 import { isBuildCacheEnabled } from "./util/flags"
 import { time } from "./util/timer"
 import { getWindowsVm, VmManager } from "./vm/vm"
 import { execWine } from "./wine"
-import { getRceditBundle } from "./toolsets/windows"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))
@@ -202,6 +203,13 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       hash.update(JSON.stringify(args))
       hash.update(this.platformSpecificBuildOptions.signtoolOptions?.certificateSha1 || "no certificateSha1")
       hash.update(this.platformSpecificBuildOptions.signtoolOptions?.certificateSubjectName || "no subjectName")
+
+      const asar = path.resolve(this.getResourcesDir(outDir), "app.asar")
+      if (await exists(asar)) {
+        hash.update((await readAsarHeader(asar)).header)
+      } else {
+        hash.update("no asar")
+      }
 
       buildCacheManager = new BuildCacheManager(outDir, file, arch)
       if (await buildCacheManager.copyIfValid(await digest(hash, files))) {

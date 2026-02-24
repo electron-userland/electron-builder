@@ -98,14 +98,14 @@ describe.ifNotWindows("node_module collectors", () => {
         projectDirCreated: async (projectDir, _tmpDir, testEnv) => {
           await modifyPackageJson(projectDir, data => {
             data.dependencies = {
-              "electron-updater": "6",
-              express: "4",
-              "patch-package": "^8.0.0",
+              "electron-updater": "6.8.3",
+              express: "4.0.0",
             }
             data.devDependencies = {
               electron: "23.2.0",
-              "electron-builder": "26",
-              "fs-extra": "11",
+              "electron-builder": "26.8.1",
+              "fs-extra": "11.0.0",
+              "patch-package": "8.0.0",
             }
             data.build.directories = {
               app: "app",
@@ -151,14 +151,14 @@ describe.ifNotWindows("node_module collectors", () => {
         projectDirCreated: async (projectDir, _tmpDir, testEnv) => {
           await modifyPackageJson(projectDir, data => {
             data.dependencies = {
-              "electron-updater": "6",
-              express: "4",
-              "patch-package": "^8.0.0",
+              "electron-updater": "6.8.3",
+              express: "4.0.0",
+              "patch-package": "8.0.0",
             }
             data.devDependencies = {
               electron: "23.2.0",
-              "electron-builder": "26",
-              "fs-extra": "11",
+              "electron-builder": "26.8.1",
+              "fs-extra": "11.0.0",
             }
             data.build.directories = {
               app: "app",
@@ -297,7 +297,7 @@ describe.ifNotWindows("node_module collectors", () => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
               data.dependencies = {
-                "electron-clear-data": "^1.0.5",
+                "electron-clear-data": "1.0.5",
               }
               data.optionalDependencies = {
                 debug: "3.1.0",
@@ -323,7 +323,7 @@ describe.ifNotWindows("node_module collectors", () => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
               data.dependencies = {
-                "electron-clear-data": "^1.0.5",
+                "electron-clear-data": "1.0.5",
               }
               data.optionalDependencies = {
                 "node-mac-permissions": "2.3.0",
@@ -350,7 +350,7 @@ describe.ifNotWindows("node_module collectors", () => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
               data.dependencies = {
-                "electron-clear-data": "^1.0.5",
+                "electron-clear-data": "1.0.5",
               }
               data.optionalDependencies = {
                 debug: "3.1.0",
@@ -376,7 +376,7 @@ describe.ifNotWindows("node_module collectors", () => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
               data.dependencies = {
-                "electron-clear-data": "^1.0.5",
+                "electron-clear-data": "1.0.5",
               }
               data.optionalDependencies = {
                 debug: "3.1.0",
@@ -426,7 +426,7 @@ describe.ifNotWindows("node_module collectors", () => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
               data.dependencies = {
-                "npm-run-all": "^4.1.5",
+                "npm-run-all": "4.1.5",
               }
             }),
           ])
@@ -449,7 +449,7 @@ describe.ifNotWindows("node_module collectors", () => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
               data.dependencies = {
-                "npm-run-all": "^4.1.5",
+                "npm-run-all": "4.1.5",
               }
             }),
           ])
@@ -473,7 +473,7 @@ describe.ifNotWindows("node_module collectors", () => {
           await modifyPackageJson(projectDir, data => {
             data.dependencies = {
               "@sentry/electron": "5.11.0",
-              "electron-clear-data": "^1.0.5",
+              "electron-clear-data": "1.0.5",
             }
             data.devDependencies = {
               electron: "34.0.2",
@@ -633,7 +633,7 @@ describe.ifNotWindows("node_module collectors", () => {
           return Promise.all([
             modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => {
               data.dependencies = {
-                "better-sqlite3": "^11.10.0",
+                "better-sqlite3": "11.10.0",
                 debug: "4.4.3",
               }
               data.devDependencies = {
@@ -661,8 +661,8 @@ describe.ifNotWindows("node_module collectors", () => {
           const subAppDir = path.join(projectDir, "packages", "test-app")
           return modifyPackageJson(subAppDir, data => {
             data.dependencies = {
-              jsdom: "^27.4.0",
-              "markdown-it": "^14.1.0",
+              jsdom: "27.4.0",
+              "markdown-it": "14.1.0",
             }
           })
         },
