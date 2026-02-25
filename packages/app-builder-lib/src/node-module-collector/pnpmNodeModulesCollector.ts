@@ -1,4 +1,4 @@
-import { log } from "builder-util"
+import { LogMessageByKey } from "./moduleManager"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager"
 import { PnpmDependency } from "./types"
@@ -19,13 +19,13 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     }
     this.productionGraph[dependencyId] = { dependencies: [] }
 
-    if (tree.dedupedDependenciesCount && tree.dedupedDependenciesCount > 0) {
-      const depKey = tree.from || tree.name
-      const realDep = this.allDependencies.get(`${depKey}@${tree.version}`)
+    if ((tree.dedupedDependenciesCount ?? 0) > 0) {
+      const realDep = this.allDependencies.get(dependencyId)
       if (realDep) {
+        this.cache.logSummary[LogMessageByKey.PKG_DUPLICATE_REF].push(dependencyId)
         tree = realDep
       } else {
-        log.error(`Could not find real dependency for ${depKey}@${tree.version}`)
+        this.cache.logSummary[LogMessageByKey.PKG_DUPLICATE_REF_UNRESOLVED].push(dependencyId)
         return
       }
     }
@@ -48,7 +48,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       if (optional[packageName]) {
         const pkg = await this.cache.locatePackageVersion({ pkgName: packageName, parentDir: this.rootDir, requiredRange: dependency.version })
         if (!pkg) {
-          log.debug({ name: packageName, version: dependency.version, path: dependency.path }, `optional dependency doesn't exist, skipping - likely not installed`)
+          this.cache.logSummary[LogMessageByKey.PKG_OPTIONAL_NOT_INSTALLED].push(`${packageName}@${dependency.version}`)
           return undefined
         }
       }
