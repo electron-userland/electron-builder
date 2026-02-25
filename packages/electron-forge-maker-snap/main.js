@@ -12,6 +12,6 @@ module.exports = class extends MakerBase {
   }
 
   async make(options) {
-    return buildForge(options, { linux: [`snap:${options.targetArch}`] })
+    return buildForge(options, { linux: [`snap:${options.targetArch}`], config: this.config })
   }
 }

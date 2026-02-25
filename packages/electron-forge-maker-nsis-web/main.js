@@ -12,6 +12,6 @@ module.exports = class extends MakerBase {
   }
 
   async make(options) {
-    return buildForge(options, { win: [`nsis-web:${options.targetArch}`] })
+    return buildForge(options, { win: [`nsis-web:${options.targetArch}`], config: this.config })
   }
 }
