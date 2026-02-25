@@ -175,7 +175,7 @@ function mockGithubRequest(publisher: GitHubPublisher): { getData: () => any } {
 }
 
 test("GitHub createRelease sends body when releaseBody is set", async ({ expect }) => {
-  const publisher = new GitHubPublisher(publishContext, { provider: "github", owner: "test", repo: "test", token: "__test__", releaseBody: "## Changes\n\n- Feature A" }, "1.0.0")
+  const publisher = new GitHubPublisher(publishContext, { provider: "github", owner: "test", repo: "test", token: "__test__" }, "1.0.0", {}, "## Changes\n\n- Feature A")
   const mock = mockGithubRequest(publisher)
 
   await (publisher as any).createRelease()
@@ -196,7 +196,7 @@ test("GitHub createRelease omits body when releaseBody is not set", async ({ exp
 })
 
 test("GitHub createRelease uses releaseName when set", async ({ expect }) => {
-  const publisher = new GitHubPublisher(publishContext, { provider: "github", owner: "test", repo: "test", token: "__test__", releaseName: "My App v1.0.0" }, "1.0.0")
+  const publisher = new GitHubPublisher(publishContext, { provider: "github", owner: "test", repo: "test", token: "__test__" }, "1.0.0", {}, null, "My App v1.0.0")
   const mock = mockGithubRequest(publisher)
 
   await (publisher as any).createRelease()
@@ -206,7 +206,7 @@ test("GitHub createRelease uses releaseName when set", async ({ expect }) => {
 
 test("GitHub createRelease truncates body exceeding limit", async ({ expect }) => {
   const longBody = "x".repeat(130000)
-  const publisher = new GitHubPublisher(publishContext, { provider: "github", owner: "test", repo: "test", token: "__test__", releaseBody: longBody }, "1.0.0")
+  const publisher = new GitHubPublisher(publishContext, { provider: "github", owner: "test", repo: "test", token: "__test__" }, "1.0.0", {}, longBody)
   const mock = mockGithubRequest(publisher)
 
   await (publisher as any).createRelease()

@@ -42,7 +42,9 @@ export class GitHubPublisher extends HttpPublisher {
     context: PublishContext,
     private readonly info: GithubOptions,
     private readonly version: string,
-    private readonly options: PublishOptions = {}
+    private readonly options: PublishOptions = {},
+    private readonly releaseBody?: string | null,
+    private readonly releaseName?: string | null
   ) {
     super(context, true)
 
@@ -233,12 +235,12 @@ export class GitHubPublisher extends HttpPublisher {
   private createRelease() {
     const data: Record<string, any> = {
       tag_name: this.tag,
-      name: this.info.releaseName || this.version,
+      name: this.releaseName || this.version,
       draft: this.releaseType === "draft",
       prerelease: this.releaseType === "prerelease",
     }
-    if (this.info.releaseBody) {
-      data.body = trimStringWithWarn(this.info.releaseBody, 100000, "release body exceeds GitHub API limit, truncating")
+    if (this.releaseBody) {
+      data.body = trimStringWithWarn(this.releaseBody, 100000, "release body exceeds GitHub API limit, truncating")
     }
     return this.githubRequest<Release>(`/repos/${this.info.owner}/${this.info.repo}/releases`, this.token, data)
   }

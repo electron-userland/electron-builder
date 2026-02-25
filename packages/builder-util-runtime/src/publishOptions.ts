@@ -73,34 +73,13 @@ export interface CustomPublishOptions extends PublishConfiguration {
   [index: string]: any
 }
 
-export interface PublishReleaseInfo {
-  /**
-   * The release body (markdown). Used as the description of the release.
-   *
-   * If not set explicitly, it is resolved from `releaseInfo` configuration:
-   * - `releaseInfo.releaseNotes` — inline release notes string
-   * - `releaseInfo.releaseNotesFile` — path to a file containing release notes
-   * - Or auto-detected from `release-notes.md` in the project directory
-   *
-   * Truncated to 100000 characters with a warning if exceeded.
-   */
-  readonly releaseBody?: string | null
-
-  /**
-   * The release name/title. If not set, defaults to the version string.
-   *
-   * If not set explicitly, resolved from `releaseInfo.releaseName`.
-   */
-  readonly releaseName?: string | null
-}
-
 /**
  * [GitHub](https://help.github.com/articles/about-releases/) options.
  *
  * GitHub [personal access token](https://help.github.com/articles/creating-an-access-token-for-command-line-use/) is required. You can generate by going to [https://github.com/settings/tokens/new](https://github.com/settings/tokens/new). The access token should have the repo scope/permission.
  * Define `GH_TOKEN` environment variable.
  */
-export interface GithubOptions extends PublishConfiguration, PublishReleaseInfo {
+export interface GithubOptions extends PublishConfiguration {
   /**
    * The provider. Must be `github`.
    */
@@ -188,7 +167,7 @@ export function githubTagPrefix(options: GithubOptions) {
  * GitLab [personal access token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html) is required for private repositories. You can generate one by going to your GitLab profile settings.
  * Define `GITLAB_TOKEN` environment variable.
  */
-export interface GitlabOptions extends PublishConfiguration, PublishReleaseInfo {
+export interface GitlabOptions extends PublishConfiguration {
   /**
    * The provider. Must be `gitlab`.
    */

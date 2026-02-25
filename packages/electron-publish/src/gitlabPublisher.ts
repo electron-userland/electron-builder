@@ -30,7 +30,9 @@ export class GitlabPublisher extends HttpPublisher {
   constructor(
     context: PublishContext,
     private readonly info: GitlabOptions,
-    private readonly version: string
+    private readonly version: string,
+    private readonly releaseBody?: string | null,
+    private readonly releaseName?: string | null
   ) {
     super(context, true)
 
@@ -116,11 +118,11 @@ export class GitlabPublisher extends HttpPublisher {
 
   private async createRelease(): Promise<GitlabReleaseInfo> {
     const defaultName = this.info.vPrefixedTagName === false ? this.version : `v${this.version}`
-    const releaseName = this.info.releaseName || defaultName
+    const releaseName = this.releaseName || defaultName
     const branchName = await this.getDefaultBranch()
 
-    const description = this.info.releaseBody
-      ? trimStringWithWarn(this.info.releaseBody, 100000, "release body exceeds GitLab limit, truncating")
+    const description = this.releaseBody
+      ? trimStringWithWarn(this.releaseBody, 100000, "release body exceeds GitLab limit, truncating")
       : `Release ${releaseName}`
 
     const releaseData = {

@@ -31,7 +31,6 @@ export {
   KeygenOptions,
   PublishConfiguration,
   PublishProvider,
-  PublishReleaseInfo,
   S3Options,
   SnapStoreOptions,
   SpacesOptions,
