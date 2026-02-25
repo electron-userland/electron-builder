@@ -12,6 +12,6 @@ module.exports = class extends MakerBase {
   }
 
   async make(options) {
-    return [await buildForge(options, { linux: [`appimage:${options.targetArch}`] })]
+    return buildForge(options, { linux: [`appimage:${options.targetArch}`] })
   }
 }
