@@ -1,13 +1,17 @@
 "use strict"
 
-Object.defineProperty(exports, "__esModule", {
-  value: true,
-})
-
+const MakerBase = require("@electron-forge/maker-base").default
 const buildForge = require("app-builder-lib").buildForge
 
-exports.isSupportedOnCurrentPlatform = () => Promise.resolve(true)
+module.exports = class extends MakerBase {
+  name = "appimage"
+  defaultPlatforms = ["linux"]
 
-exports.default = function (options) {
-  return buildForge(options, { linux: [`appimage:${options.targetArch}`] })
+  isSupportedOnCurrentPlatform() {
+    return true
+  }
+
+  async make(options) {
+    return [await buildForge(options, { linux: [`appimage:${options.targetArch}`] })]
+  }
 }
