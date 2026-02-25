@@ -1,7 +1,7 @@
 import { PublishManager } from "app-builder-lib"
-import { readAsar } from "app-builder-lib/out/asar/asar"
+import { verifyAsarFileTree as _verifyAsarFileTree } from "./asarVerifier"
 import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetFactory"
-import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
+import { getLinuxToolsPath } from "app-builder-lib/out/toolsets/linux"
 import { parsePlistFile, PlistObject } from "app-builder-lib/out/util/plist"
 import { AsarIntegrity } from "app-builder-lib/out/asar/integrity"
 import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, log, USE_HARD_LINKS, walk } from "builder-util"
@@ -124,7 +124,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
   const customTmpDir = process.env.TEST_APP_TMP_DIR
   const tmpDir = checkOptions.tmpDir || new TmpDir(`pack-tester: ${fixtureName}`)
   // non-macOS test uses the same dir as macOS test, but we cannot share node_modules (because tests executed in parallel)
-  const dir = customTmpDir == null ? await tmpDir.createTempDir({ prefix: "test-project" }) : path.resolve(customTmpDir)
+  const dir = customTmpDir == null ? await tmpDir.createTempDir({ prefix: "test_project" }) : path.resolve(customTmpDir)
   if (customTmpDir != null) {
     await emptyDir(dir)
     log.info({ customTmpDir }, "custom temp dir used")
@@ -787,18 +787,7 @@ export function removeUnstableProperties(data: any) {
 }
 
 export async function verifyAsarFileTree(expect: ExpectStatic, resourceDir: string) {
-  const fs = await readAsar(path.join(resourceDir, "app.asar"))
-
-  const stableHeader = JSON.parse(
-    JSON.stringify(fs.header, (name, value) => {
-      // Keep existing test coverage
-      if (value.integrity) {
-        delete value.integrity
-      }
-      return value
-    })
-  )
-  expect(stableHeader).toMatchSnapshot()
+  return _verifyAsarFileTree(expect, resourceDir)
 }
 
 export function toSystemIndependentPath(s: string): string {

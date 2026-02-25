@@ -7,43 +7,17 @@ inputs:
   cache-path:
     description: 'The path to the electron cache'
     required: true
+  reset-vitest-smart-cache:
+    description: "Reset Vitest smart cache (will cause all tests to run without caching for this run, then cache will be repopulated for future runs)"
+    required: false
+    type: boolean
+    default: false
 
 runs:
   using: 'composite'
   steps:
-    - name: Enable Corepack for pnpm
-      run: |
-        corepack enable
-        corepack prepare pnpm@10.18.0 --activate
-      shell: bash
-
-    - name: Setup python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-      with:
-        python-version: '3.13'
-
-    - name: Setup node
-      uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
-      with:
-        node-version: '22'
-        cache: 'pnpm'
-
-    - name: Install bun globally
-      run: |
-        npm install -g bun@1.3.2
-      shell: bash
-
-    - name: Update npm to mirror pr-release workflow environment
-      run: npm install -g npm@11.6.2
-      shell: bash
-
-    - name: Verify updated npm version
-      run: npm -v
-      shell: bash
-
-    - name: Install dependencies
-      run: pnpm install --frozen-lockfile
-      shell: bash
+    - name: Setup PNPM and install dependencies
+      uses: ./.github/actions/pnpm
 
     - name: Compile
       run: pnpm compile
@@ -54,6 +28,30 @@ runs:
       with:
         path: ${{ inputs.cache-path }}
         key: ${{ inputs.cache-key }}
+
+    - name: Restore Vitest Smart Cache
+      id: cache-restore
+      uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+      with:
+        path: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
+        key: vitest-smart-cache-${{ github.ref_name }}-${{ github.sha }}
+        restore-keys: |
+          vitest-smart-cache-${{ github.ref_name }}-
+
+    - name: Set up Vitest smart cache reset flag
+      run: echo "RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Log cache status
+      run: |
+        if [ "${{ steps.cache-restore.outputs.cache-hit }}" == "true" ]; then
+          echo "✓ Restored smart cache from previous run"
+        elif [ -f "${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json" ]; then
+          echo "✓ Using repo-committed smart cache file"
+        else
+          echo "ℹ No smart cache available (will be created after test run)"
+        fi
+      shell: bash
 
 ## Usage
 # - name: Setup Tests

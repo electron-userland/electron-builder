@@ -36,7 +36,7 @@ function keygenPublisher(): KeygenOptions {
   }
 }
 
-test.ifNotWindows.ifDevOrLinuxCi("generic, github and spaces", ({ expect }) =>
+test.ifNotWindows("generic, github and spaces", ({ expect }) =>
   app(expect, {
     targets: Platform.MAC.createTarget("zip", Arch.x64),
     config: {
@@ -49,9 +49,9 @@ test.ifNotWindows.ifDevOrLinuxCi("generic, github and spaces", ({ expect }) =>
   })
 )
 
-test.ifNotWindows.ifDevOrLinuxCi("github and spaces (publishAutoUpdate)", ({ expect }) =>
+test.ifNotWindows("github and spaces (publishAutoUpdate)", ({ expect }) =>
   app(expect, {
-    targets: Platform.LINUX.createTarget("AppImage"),
+    targets: Platform.LINUX.createTarget("AppImage", Arch.x64),
     config: {
       mac: {
         electronUpdaterCompatibility: ">=2.16",
@@ -61,11 +61,11 @@ test.ifNotWindows.ifDevOrLinuxCi("github and spaces (publishAutoUpdate)", ({ exp
   })
 )
 
-test.ifMac("mac artifactName ", ({ expect }) =>
+test.ifEnv(process.env.KEYGEN_TOKEN)("mac artifactName ", ({ expect }) =>
   app(
     expect,
     {
-      targets: Platform.MAC.createTarget("zip", Arch.x64),
+      targets: Platform.LINUX.createTarget("zip", Arch.x64),
       config: {
         // tslint:disable-next-line:no-invalid-template-strings
         artifactName: "${productName}_${version}_${os}.${ext}",
@@ -88,7 +88,7 @@ test.ifNotWindows("os macro", ({ expect }) =>
   app(
     expect,
     {
-      targets: createTargets([Platform.LINUX, Platform.MAC], "zip"),
+      targets: createTargets([Platform.LINUX, Platform.MAC], "zip", "x64"),
       config: {
         publish: {
           provider: "s3",
@@ -116,11 +116,11 @@ test.ifNotWindows("os macro", ({ expect }) =>
 // disable on ifNotCi for now - slow on CircleCI
 // error should be ignored because publish: never
 // https://github.com/electron-userland/electron-builder/issues/2670
-test.ifNotCi("dotted s3 bucket", ({ expect }) =>
+test("dotted s3 bucket", ({ expect }) =>
   app(
     expect,
     {
-      targets: createTargets([Platform.LINUX], "zip"),
+      targets: createTargets([Platform.LINUX], "zip", "x64"),
       config: {
         publish: {
           provider: "s3",
@@ -131,15 +131,14 @@ test.ifNotCi("dotted s3 bucket", ({ expect }) =>
     {
       publish: "never",
     }
-  )
-)
+  ))
 
 // https://github.com/electron-userland/electron-builder/issues/3261
 test.ifNotWindows("custom provider", ({ expect }) =>
   app(
     expect,
     {
-      targets: createTargets([Platform.LINUX], "deb"),
+      targets: createTargets([Platform.LINUX], "deb", "x64"),
       config: {
         publish: {
           provider: "custom",

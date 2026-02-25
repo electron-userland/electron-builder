@@ -1,12 +1,12 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`yarn berry workspace 1`] = `
+exports[`Rebuilder Test > yarn berry workspace 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`yarn berry workspace 2`] = `
+exports[`Rebuilder Test > yarn berry workspace 2`] = `
 {
   "files": {
     "index.html": {
@@ -1067,7 +1067,7 @@ exports[`yarn berry workspace 2`] = `
 }
 `;
 
-exports[`yarn berry workspace 3`] = `
+exports[`Rebuilder Test > yarn berry workspace 3`] = `
 [
   "app.asar",
   "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/LICENSE",
@@ -1146,13 +1146,13 @@ exports[`yarn berry workspace 3`] = `
 ]
 `;
 
-exports[`yarn workspace 1`] = `
+exports[`Rebuilder Test > yarn workspace 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`yarn workspace 2`] = `
+exports[`Rebuilder Test > yarn workspace 2`] = `
 {
   "files": {
     "index.html": {
@@ -2213,7 +2213,7 @@ exports[`yarn workspace 2`] = `
 }
 `;
 
-exports[`yarn workspace 3`] = `
+exports[`Rebuilder Test > yarn workspace 3`] = `
 [
   "app.asar",
   "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/LICENSE",

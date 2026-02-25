@@ -1,5 +1,18 @@
 # builder-util
 
+## 26.8.1
+
+### Patch Changes
+
+- Chore: removing unused `notice` LogLevel _[`#9587`](https://github.com/electron-userland/electron-builder/pull/9587) [`4edd695`](https://github.com/electron-userland/electron-builder/commit/4edd6950454d369ef8994e5a1ad64f1d0c7b7643) [@mmaietta](https://github.com/mmaietta)_
+
+## 26.8.0
+
+### Patch Changes
+
+- Chore: silence test console logging and throw more helpful error in msiWrapped targetr _[`#9572`](https://github.com/electron-userland/electron-builder/pull/9572) [`cd7c0d9`](https://github.com/electron-userland/electron-builder/commit/cd7c0d9a73cf63e2125ef5873bd0c2f392c211dc) [@mmaietta](https://github.com/mmaietta)_
+- Chore: allow `link:` support for package detection to mirror current `file:` parsing _[`#9578`](https://github.com/electron-userland/electron-builder/pull/9578) [`9ba36f9`](https://github.com/electron-userland/electron-builder/commit/9ba36f98791bc8d2393297dbca1133d03be6260a) [@mmaietta](https://github.com/mmaietta)_
+
 ## 26.4.1
 
 ### Patch Changes

@@ -5,7 +5,7 @@ import { createWriteStream } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { hoist, type HoisterResult, type HoisterTree } from "./hoist"
-import { ModuleManager } from "./moduleManager"
+import { LogMessageByKey, ModuleManager } from "./moduleManager"
 import { getPackageManagerCommand, PM } from "./packageManager"
 import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types"
 
@@ -46,12 +46,11 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * 4. Building a production dependency graph
    * 5. Hoisting the dependencies to their final locations
    * 6. Resolving and returning module information
-   *
-   * @param options - Configuration object
-   * @param options.packageName - The name of the package to collect modules for
-   * @returns Promise resolving to an array of NodeModuleInfo objects representing all collected modules
    */
-  public async getNodeModules({ packageName }: { packageName: string }): Promise<NodeModuleInfo[]> {
+  public async getNodeModules({ packageName }: { packageName: string }): Promise<{
+    nodeModules: NodeModuleInfo[]
+    logSummary: ModuleManager["logSummary"]
+  }> {
     const tree: ProdDepType = await this.getDependenciesTree(this.installOptions.manager)
 
     await this.collectAllDependencies(tree, packageName)
@@ -63,9 +62,10 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     })
 
     await this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
+
     log.debug({ packageName, depCount: this.nodeModules.length }, "node modules collection complete")
 
-    return this.nodeModules
+    return { nodeModules: this.nodeModules, logSummary: this.cache.logSummary }
   }
 
   public abstract readonly installOptions: {
@@ -83,10 +83,6 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * Executes the appropriate package manager command to fetch the dependency tree and writes
    * the output to a temporary file. Includes retry logic to handle transient failures such as
    * incomplete JSON output or missing files. Will retry up to 1 time with exponential backoff.
-   *
-   * @param pm - The package manager to use (npm, yarn, pnpm, etc.)
-   * @returns Promise resolving to the parsed dependency tree
-   * @throws {Error} If the dependency tree cannot be retrieved after retries
    */
   protected async getDependenciesTree(pm: PM): Promise<ProdDepType> {
     const command = getPackageManagerCommand(pm)
@@ -186,8 +182,10 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return `${pkg.name}::${pkg.version}::${rel ?? "."}`
   }
 
-  protected packageVersionString(pkg: Pick<ProdDepType, "name" | "version">): string {
-    return `${pkg.name}@${pkg.version}`
+  // We use the key (alias name) instead of value.name for npm aliased packages
+  // e.g., { "foo": { name: "@scope/bar", ... } } should be stored as "foo@version"
+  protected normalizePackageVersion(key: string, pkg: ProdDepType) {
+    return { id: `${key}@${pkg.version}`, pkgOverride: { ...pkg, name: key } }
   }
 
   /**
@@ -286,16 +284,17 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
     for (const d of dependencies.values()) {
       const reference = [...d.references][0]
-      const p = this.allDependencies.get(`${d.name}@${reference}`)?.path
+      const key = `${d.name}@${reference}`
+      const p = this.allDependencies.get(key)?.path
       if (p === undefined) {
-        log.warn({ name: d.name, reference }, "cannot find path for dependency")
+        this.cache.logSummary[LogMessageByKey.PKG_NOT_FOUND].push(key)
         continue
       }
 
       // fix npm list issue
       // https://github.com/npm/cli/issues/8535
       if (!(await this.cache.exists[p])) {
-        log.debug({ name: d.name, reference, p }, "dependency path does not exist")
+        this.cache.logSummary[LogMessageByKey.PKG_NOT_ON_DISK].push(key)
         continue
       }
 
@@ -348,7 +347,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       // If the command is a Windows script file (.cmd), we need to wrap it in a .bat file to ensure it runs correctly with cmd.exe
       // This is necessary because .cmd files are not directly executable in the same way as .bat files.
       // We create a temporary .bat file that calls the .cmd file with the provided arguments. The .bat file will be executed by cmd.exe.
-      // Note: This is a workaround for Windows command execution quirks for specifically when `shell: false`
+      // Note: This is a workaround for Windows command execution quirks when using `shell: true`
       const tempBatFile = await this.tempDirManager.getTempFile({
         prefix: execName,
         suffix: ".bat",
@@ -356,7 +355,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       const batScript = `@echo off\r\n"${command}" %*\r\n` // <-- CRLF required for .bat
       await fs.writeFile(tempBatFile, batScript, { encoding: "utf8" })
       command = "cmd.exe"
-      args = ["/c", tempBatFile, ...args]
+      args = ["/c", `"${tempBatFile}"`, ...args]
     }
 
     await new Promise<void>((resolve, reject) => {
@@ -386,6 +385,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         }
         if (stderr.length > 0) {
           log.debug({ stderr }, "note: there was node module collector output on stderr")
+          this.cache.logSummary[LogMessageByKey.PKG_COLLECTOR_OUTPUT].push(stderr)
         }
         const shouldResolve = code === 0 || shouldIgnore
         return shouldResolve ? resolve() : reject(new Error(`Node module collector process exited with code ${code}:\n${stderr}`))
