@@ -17,10 +17,10 @@ module.exports = class extends MakerBase {
       linux: [`appimage:${options.targetArch}`],
       config: {
         directories: {
-          output: path.resolve(options.makeDir, "appimage", options.targetArch)
+          output: path.resolve(options.makeDir, "appimage", options.targetArch),
         },
-        ...this.config
-      }
+        ...this.config,
+      },
     })
   }
 }

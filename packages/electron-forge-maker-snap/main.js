@@ -17,10 +17,10 @@ module.exports = class extends MakerBase {
       linux: [`snap:${options.targetArch}`],
       config: {
         directories: {
-          output: path.resolve(options.makeDir, "snap", options.targetArch)
+          output: path.resolve(options.makeDir, "snap", options.targetArch),
         },
-        ...this.config
-      }
+        ...this.config,
+      },
     })
   }
 }

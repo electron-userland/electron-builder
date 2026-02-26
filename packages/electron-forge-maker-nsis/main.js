@@ -17,10 +17,10 @@ module.exports = class extends MakerBase {
       win: [`nsis:${options.targetArch}`],
       config: {
         directories: {
-          output: path.resolve(options.makeDir, "nsis", options.targetArch)
+          output: path.resolve(options.makeDir, "nsis", options.targetArch),
         },
-        ...this.config
-      }
+        ...this.config,
+      },
     })
   }
 }
