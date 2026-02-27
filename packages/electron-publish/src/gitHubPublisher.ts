@@ -27,6 +27,7 @@ interface Asset {
 
 export class GitHubPublisher extends HttpPublisher {
   private readonly tag: string
+  private readonly targetCommitish: string | undefined
   readonly _release = new Lazy(() => (this.token === "__test__" ? Promise.resolve(null as any) : this.getOrCreateRelease()))
 
   private readonly token: string
@@ -66,6 +67,11 @@ export class GitHubPublisher extends HttpPublisher {
     }
 
     this.tag = githubTagPrefix(info) + version
+
+    this.targetCommitish = info.targetCommitish ?? process.env.EP_TARGET_COMMITISH ?? process.env.GITHUB_SHA ?? undefined
+    if (this.targetCommitish != null && this.targetCommitish.length > 0) {
+      log.info({ targetCommitish: this.targetCommitish }, "GitHub release target_commitish is set")
+    }
 
     if (isEnvTrue(process.env.EP_DRAFT)) {
       this.releaseType = "draft"
@@ -230,12 +236,16 @@ export class GitHubPublisher extends HttpPublisher {
   }
 
   private createRelease() {
-    return this.githubRequest<Release>(`/repos/${this.info.owner}/${this.info.repo}/releases`, this.token, {
+    const body: Record<string, any> = {
       tag_name: this.tag,
       name: this.version,
       draft: this.releaseType === "draft",
       prerelease: this.releaseType === "prerelease",
-    })
+    }
+    if (this.targetCommitish != null && this.targetCommitish.length > 0) {
+      body.target_commitish = this.targetCommitish
+    }
+    return this.githubRequest<Release>(`/repos/${this.info.owner}/${this.info.repo}/releases`, this.token, body)
   }
 
   // test only
