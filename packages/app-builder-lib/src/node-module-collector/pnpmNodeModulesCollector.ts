@@ -70,7 +70,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
   protected async collectAllDependencies(tree: PnpmDependency) {
     // Collect regular dependencies
     for (const [key, value] of Object.entries(tree.dependencies || {})) {
-      if (value?.dedupedDependenciesCount && value.dedupedDependenciesCount > 0) {
+      if ((value?.dedupedDependenciesCount ?? 0) > 0) {
         continue
       }
       const pkg = await this.cache.locatePackageVersion({ pkgName: key, parentDir: this.rootDir, requiredRange: value.version })
@@ -80,7 +80,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
 
     // Collect optional dependencies if they exist
     for (const [key, value] of Object.entries(tree.optionalDependencies || {})) {
-      if (value?.dedupedDependenciesCount && value.dedupedDependenciesCount > 0) {
+      if ((value?.dedupedDependenciesCount ?? 0) > 0) {
         continue
       }
       const pkg = await this.cache.locatePackageVersion({ pkgName: key, parentDir: this.rootDir, requiredRange: value.version })
