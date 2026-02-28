@@ -1,13 +1,26 @@
 "use strict"
 
-Object.defineProperty(exports, "__esModule", {
-  value: true,
-})
-
+const path = require("path")
+const MakerBase = require("@electron-forge/maker-base").default
 const buildForge = require("app-builder-lib").buildForge
 
-exports.isSupportedOnCurrentPlatform = () => Promise.resolve(true)
+module.exports = class extends MakerBase {
+  name = "nsis-web"
+  defaultPlatforms = ["win32"]
 
-exports.default = function (options) {
-  return buildForge(options, { win: [`nsis-web:${options.targetArch}`] })
+  isSupportedOnCurrentPlatform() {
+    return true
+  }
+
+  async make(options) {
+    return buildForge(options, {
+      win: [`nsis-web:${options.targetArch}`],
+      config: {
+        directories: {
+          output: path.resolve(options.makeDir, "nsis-web", options.targetArch),
+        },
+        ...this.config,
+      },
+    })
+  }
 }
