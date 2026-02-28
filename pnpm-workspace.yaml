@@ -7,3 +7,5 @@ minimumReleaseAge: 10080
 minimumReleaseAgeExclude:
   - "tar"
   - "@electron/rebuild"
+  # Renovate security update: minimatch@10.2.3
+  - minimatch@10.2.3
