@@ -59,14 +59,7 @@ export async function getAppImageTools(targetArch: Arch) {
 
   artifactPath = path.resolve(artifactPath)
 
-  const runtimeArch =
-    targetArch === Arch.armv7l
-      ? "arm32"
-      : targetArch === Arch.arm64
-      ? "arm64"
-      : targetArch === Arch.ia32
-      ? "ia32"
-      : "x64"
+  const runtimeArch = targetArch === Arch.armv7l ? "arm32" : targetArch === Arch.arm64 ? "arm64" : targetArch === Arch.ia32 ? "ia32" : "x64"
 
   return {
     mksquashfs: path.join(artifactPath, "mksquashfs"),

@@ -1,5 +1,23 @@
 # electron-builder-squirrel-windows
 
+## 26.8.2
+
+### Patch Changes
+
+- Fix(squirrel-windows): remove spurious default vendor warning _[`#9595`](https://github.com/electron-userland/electron-builder/pull/9595) [`5d4651d`](https://github.com/electron-userland/electron-builder/commit/5d4651dbb29d0730d0fb3be96de79d9348c0a99c) [@t3chguy](https://github.com/t3chguy)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`b348df0`](https://github.com/electron-userland/electron-builder/commit/b348df0ba409fee488288ead097ac900141a6dad) [`f2c0547`](https://github.com/electron-userland/electron-builder/commit/f2c0547d2fa63d42636713415d4100aceb443e00) [`52dc667`](https://github.com/electron-userland/electron-builder/commit/52dc6676f8fb8157e60a55df8021988bf6c48286) [`4e83aeb`](https://github.com/electron-userland/electron-builder/commit/4e83aeb610aad811413bfd626656dabc081957a3) [`02a9105`](https://github.com/electron-userland/electron-builder/commit/02a9105d1c4420e418d740dfa0bbbd22d5b44735)
+
+</small>
+
+- `app-builder-lib@26.8.2`
+
+</details>
+
 ## 26.8.1
 
 ### Patch Changes
