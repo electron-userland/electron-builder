@@ -28,6 +28,9 @@ export type ParsedDependencyTree = {
 export interface PnpmDependency extends Dependency<PnpmDependency, PnpmDependency> {
   readonly from: string
   readonly resolved: string
+  // Present in pnpm 10.29.3+ `pnpm list --json` output for deduped references.
+  // Context: https://github.com/pnpm/pnpm/issues/10601
+  readonly dedupedDependenciesCount?: number
 }
 
 export interface NpmDependency extends Dependency<NpmDependency, string> {
