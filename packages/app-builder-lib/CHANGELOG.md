@@ -1,5 +1,28 @@
 # app-builder-lib
 
+## 26.8.2
+
+### Patch Changes
+
+- Fix: handle pnpm deduped dependencies correctly in node module collector _[`#9618`](https://github.com/electron-userland/electron-builder/pull/9618) [`b348df0`](https://github.com/electron-userland/electron-builder/commit/b348df0ba409fee488288ead097ac900141a6dad) [@beyondkmp](https://github.com/beyondkmp)_
+- Fix: filter electronLanguages with startsWith filter for generous matching _[`#9605`](https://github.com/electron-userland/electron-builder/pull/9605) [`f2c0547`](https://github.com/electron-userland/electron-builder/commit/f2c0547d2fa63d42636713415d4100aceb443e00) [@mmaietta](https://github.com/mmaietta)_
+- Fix mksquashfs ENOENT when appimage tool paths are relative _[`#9610`](https://github.com/electron-userland/electron-builder/pull/9610) [`52dc667`](https://github.com/electron-userland/electron-builder/commit/52dc6676f8fb8157e60a55df8021988bf6c48286) [@f-io](https://github.com/f-io)_
+- Fix: regenerate schema to unblock CI _[`#9608`](https://github.com/electron-userland/electron-builder/pull/9608) [`4e83aeb`](https://github.com/electron-userland/electron-builder/commit/4e83aeb610aad811413bfd626656dabc081957a3) [@mmaietta](https://github.com/mmaietta)_
+- Fix(win): regenerate app exe if header of the asar has changed so that asar integrity properly matches _[`#9607`](https://github.com/electron-userland/electron-builder/pull/9607) [`02a9105`](https://github.com/electron-userland/electron-builder/commit/02a9105d1c4420e418d740dfa0bbbd22d5b44735) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`5d4651d`](https://github.com/electron-userland/electron-builder/commit/5d4651dbb29d0730d0fb3be96de79d9348c0a99c)
+
+</small>
+
+- `electron-builder-squirrel-windows@26.8.2`
+- `dmg-builder@26.8.2`
+
+</details>
+
 ## 26.8.1
 
 ### Patch Changes
