@@ -33,6 +33,9 @@
     "tiny-async-pool": "1.3.0"
   },
   "typings": "./out/util.d.ts",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "devDependencies": {
     "@types/cross-spawn": "6.0.6",
     "@types/fs-extra": "^9.0.11",

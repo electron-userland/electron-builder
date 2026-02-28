@@ -22,6 +22,9 @@
 		"iconv-lite": "^0.6.2",
 		"js-yaml": "^4.1.0"
 	},
+  "engines": {
+    "node": ">=22.12.0"
+  },
 	"optionalDependencies": {
 		"dmg-license": "^1.0.11"
 	},
