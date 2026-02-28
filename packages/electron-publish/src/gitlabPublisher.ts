@@ -10,6 +10,7 @@ import * as FormData from "form-data"
 import { URL } from "url"
 import { HttpPublisher } from "./httpPublisher"
 import { PublishContext } from "./index"
+import { trimStringWithWarn } from "./util"
 
 type RequestProcessor = (request: ClientRequest, reject: (error: Error) => void) => void
 
@@ -29,7 +30,9 @@ export class GitlabPublisher extends HttpPublisher {
   constructor(
     context: PublishContext,
     private readonly info: GitlabOptions,
-    private readonly version: string
+    private readonly version: string,
+    private readonly releaseBody?: string | null,
+    private readonly releaseName?: string | null
   ) {
     super(context, true)
 
@@ -114,12 +117,18 @@ export class GitlabPublisher extends HttpPublisher {
   }
 
   private async createRelease(): Promise<GitlabReleaseInfo> {
-    const releaseName = this.info.vPrefixedTagName === false ? this.version : `v${this.version}`
+    const defaultName = this.info.vPrefixedTagName === false ? this.version : `v${this.version}`
+    const releaseName = this.releaseName || defaultName
     const branchName = await this.getDefaultBranch()
+
+    const description = this.releaseBody
+      ? trimStringWithWarn(this.releaseBody, 100000, "release body exceeds GitLab limit, truncating")
+      : `Release ${releaseName}`
+
     const releaseData = {
       tag_name: this.tag,
       name: releaseName,
-      description: `Release ${releaseName}`,
+      description,
       ref: branchName,
     }
 
