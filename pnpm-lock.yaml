@@ -87,8 +87,8 @@ importers:
         specifier: ^0.26.7
         version: 0.26.11(typescript@5.8.2)
       typedoc-plugin-markdown:
-        specifier: 4.2.8
-        version: 4.2.8(typedoc@0.26.11(typescript@5.8.2))
+        specifier: 4.10.0
+        version: 4.10.0(typedoc@0.26.11(typescript@5.8.2))
       typescript:
         specifier: ^5.6.2
         version: 5.8.2
@@ -3493,11 +3493,12 @@ packages:
 
   glob@10.5.0:
     resolution: {integrity: sha512-DfXN8DfhJ7NH3Oe7cFmu3NCu1wKbkReJ8TorzSAFbSKrlNaQSKfIzqYqVY8zlbs2NLBbWpRiU52GX2PbaBVNkg==}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
-    deprecated: Glob versions prior to v9 are no longer supported
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   global-agent@3.0.0:
     resolution: {integrity: sha512-PT6XReJ+D07JvGoxQMkT6qji/jVNfX/h364XHZOWeRzy64sSFr+xJ5OX7LI3b4MPQzdL4H8Y8M0xzPpsVMwA8Q==}
@@ -4705,6 +4706,7 @@ packages:
   tar@7.5.7:
     resolution: {integrity: sha512-fov56fJiRuThVFXD6o6/Q354S7pnWMJIVlDBYijsTNx6jKSE4pvrDTs6lUnmGvNyfJwFQQwWy3owKz1ucIhveQ==}
     engines: {node: '>=18'}
+    deprecated: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   temp-dir@3.0.0:
     resolution: {integrity: sha512-nHc6S/bwIilKHNRgK/3jlhDoIHcp45YgyiwcAk46Tr0LfEqGBVpmiAyuiuxeVE44m3mXnEeVhaipLOEWmH+Njw==}
@@ -4829,11 +4831,11 @@ packages:
     resolution: {integrity: sha512-w2IGJU1tIgcrepg9ZJ82d8UmItNQtOFJG0HCUE3SzMokKkTsruVDALl2fAdiEzJlfduoU+VyXJWIIUZ+6jV+nw==}
     engines: {node: '>=16'}
 
-  typedoc-plugin-markdown@4.2.8:
-    resolution: {integrity: sha512-1EDsc66jaCjZtxdYy+Rl0KDU1WY/iyuCOOPaeFzcYFZ81FNXV8CmgUDOHri20WGmYnkEM5nQ+ooxj1vyuQo0Lg==}
+  typedoc-plugin-markdown@4.10.0:
+    resolution: {integrity: sha512-psrg8Rtnv4HPWCsoxId+MzEN8TVK5jeKCnTbnGAbTBqcDapR9hM41bJT/9eAyKn9C2MDG9Qjh3MkltAYuLDoXg==}
     engines: {node: '>= 18'}
     peerDependencies:
-      typedoc: 0.26.x
+      typedoc: 0.28.x
 
   typedoc@0.26.11:
     resolution: {integrity: sha512-sFEgRRtrcDl2FxVP58Ze++ZK2UQAEvtvvH8rRlig1Ja3o7dDaMHmaBfvJmdGnNEFaLTpQsN8dpvZaTqJSu/Ugw==}
@@ -9899,7 +9901,7 @@ snapshots:
 
   type-fest@4.39.0: {}
 
-  typedoc-plugin-markdown@4.2.8(typedoc@0.26.11(typescript@5.8.2)):
+  typedoc-plugin-markdown@4.10.0(typedoc@0.26.11(typescript@5.8.2)):
     dependencies:
       typedoc: 0.26.11(typescript@5.8.2)
 
