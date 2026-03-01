@@ -22,7 +22,7 @@
     "sax": "^1.2.4"
   },
   "devDependencies": {
-    "@types/debug": "4.1.7",
+    "@types/debug": "4.1.12",
     "@types/sax": "1.2.3"
   },
   "types": "./out/index.d.ts"
