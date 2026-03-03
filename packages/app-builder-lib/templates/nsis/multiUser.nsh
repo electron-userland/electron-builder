@@ -30,7 +30,7 @@ Var installMode
     ${else}
       StrCpy $0 "$LocalAppData\Programs"
 
-      ${If} ${IsWin7}
+      ${IfNot} ${AtLeastWin8}
         System::Store S
         # Win7 has a per-user programfiles known folder and this can be a non-default location
         System::Call 'SHELL32::SHGetKnownFolderPath(g "${FOLDERID_UserProgramFiles}", i ${KF_FLAG_CREATE}, p 0, *p .r2)i.r1'
