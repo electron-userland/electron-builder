@@ -46,7 +46,7 @@ export async function getFpmPath() {
 
 export async function getAppImageTools(targetArch: Arch) {
   const override = process.env.APPIMAGE_TOOLS_PATH?.trim()
-  const artifactPath =
+  let artifactPath =
     override ||
     (await downloadArtifact({
       releaseName: "appimage@1.0.2",
@@ -57,7 +57,17 @@ export async function getAppImageTools(targetArch: Arch) {
       githubOrgRepo: "electron-userland/electron-builder-binaries",
     }))
 
-  const runtimeArch = targetArch === Arch.armv7l ? "arm32" : targetArch === Arch.arm64 ? "arm64" : targetArch === Arch.ia32 ? "ia32" : "x64"
+  artifactPath = path.resolve(artifactPath)
+
+  const runtimeArch =
+    targetArch === Arch.armv7l
+      ? "arm32"
+      : targetArch === Arch.arm64
+      ? "arm64"
+      : targetArch === Arch.ia32
+      ? "ia32"
+      : "x64"
+
   return {
     mksquashfs: path.join(artifactPath, "mksquashfs"),
     desktopFileValidate: path.join(artifactPath, "desktop-file-validate"),

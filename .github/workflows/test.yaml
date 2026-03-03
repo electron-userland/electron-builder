@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - release/v*
   pull_request:
   workflow_call:
     inputs:
@@ -287,6 +288,9 @@ jobs:
           cache-key: v-35.7.5-update-electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
 
+      - name: Verify Docs Generation
+        run: pnpm generate-all
+
       - name: Download test-runner if exists
         if: needs.run-docker-build.result == 'success'
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
@@ -340,9 +344,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y rpm flatpak flatpak-builder snapd
           sudo snap install snapcraft --classic
-
-      - name: Verify Docs Generation
-        run: pnpm generate-all
 
       - name: Test
         run: |
