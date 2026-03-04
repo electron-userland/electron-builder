@@ -1011,6 +1011,111 @@ exports[`node_module collectors > conflict versions 2`] = `
 }
 `;
 
+exports[`node_module collectors > npm electron-clear-data 1`] = `
+{
+  "win": [],
+}
+`;
+
+exports[`node_module collectors > npm electron-clear-data 2`] = `
+{
+  "files": {
+    "index.html": {
+      "offset": 26480,
+      "size": 380,
+    },
+    "index.js": {
+      "offset": 26850,
+      "size": 620,
+    },
+    "node_modules": {
+      "files": {
+        "debug": {
+          "files": {
+            "LICENSE": {
+              "offset": 0,
+              "size": 1110,
+            },
+            "Makefile": {
+              "offset": 1110,
+              "size": 1240,
+            },
+            "node.js": {
+              "offset": 2350,
+              "size": 40,
+            },
+            "package.json": {
+              "offset": 2390,
+              "size": 830,
+            },
+            "src": {
+              "files": {
+                "browser.js": {
+                  "offset": 3220,
+                  "size": 5710,
+                },
+                "debug.js": {
+                  "offset": 8920,
+                  "size": 4890,
+                },
+                "index.js": {
+                  "offset": 13810,
+                  "size": 270,
+                },
+                "node.js": {
+                  "offset": 14070,
+                  "size": 4340,
+                },
+              },
+            },
+          },
+        },
+        "electron-clear-data": {
+          "files": {
+            "LICENSE.md": {
+              "offset": 18410,
+              "size": 1060,
+            },
+            "dist": {
+              "files": {
+                "main.js": {
+                  "offset": 19470,
+                  "size": 1740,
+                },
+              },
+            },
+            "package.json": {
+              "offset": 21210,
+              "size": 960,
+            },
+          },
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "offset": 22170,
+              "size": 2770,
+            },
+            "license.md": {
+              "offset": 24930,
+              "size": 1080,
+            },
+            "package.json": {
+              "offset": 26010,
+              "size": 470,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": 27470,
+      "size": 430,
+    },
+  },
+}
+`;
+
 exports[`node_module collectors > npm tar 1`] = `
 {
   "linux": [],
@@ -36942,6 +37047,111 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
     "package.json": {
       "offset": 18217510,
       "size": 320,
+    },
+  },
+}
+`;
+
+exports[`node_module collectors > yarn electron-clear-data 1`] = `
+{
+  "win": [],
+}
+`;
+
+exports[`node_module collectors > yarn electron-clear-data 2`] = `
+{
+  "files": {
+    "index.html": {
+      "offset": 26480,
+      "size": 380,
+    },
+    "index.js": {
+      "offset": 26850,
+      "size": 620,
+    },
+    "node_modules": {
+      "files": {
+        "debug": {
+          "files": {
+            "LICENSE": {
+              "offset": 0,
+              "size": 1110,
+            },
+            "Makefile": {
+              "offset": 1110,
+              "size": 1240,
+            },
+            "node.js": {
+              "offset": 2350,
+              "size": 40,
+            },
+            "package.json": {
+              "offset": 2390,
+              "size": 830,
+            },
+            "src": {
+              "files": {
+                "browser.js": {
+                  "offset": 3220,
+                  "size": 5710,
+                },
+                "debug.js": {
+                  "offset": 8920,
+                  "size": 4890,
+                },
+                "index.js": {
+                  "offset": 13810,
+                  "size": 270,
+                },
+                "node.js": {
+                  "offset": 14070,
+                  "size": 4340,
+                },
+              },
+            },
+          },
+        },
+        "electron-clear-data": {
+          "files": {
+            "LICENSE.md": {
+              "offset": 18410,
+              "size": 1060,
+            },
+            "dist": {
+              "files": {
+                "main.js": {
+                  "offset": 19470,
+                  "size": 1740,
+                },
+              },
+            },
+            "package.json": {
+              "offset": 21210,
+              "size": 960,
+            },
+          },
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "offset": 22170,
+              "size": 2770,
+            },
+            "license.md": {
+              "offset": 24930,
+              "size": 1080,
+            },
+            "package.json": {
+              "offset": 26010,
+              "size": 470,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": 27470,
+      "size": 430,
     },
   },
 }
