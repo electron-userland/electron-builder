@@ -1,5 +1,6 @@
 import { AllPublishOptions, newError, PackageFileInfo, CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME } from "builder-util-runtime"
 import * as path from "path"
+import * as childProcess from "child_process"
 import { AppAdapter } from "./AppAdapter"
 import { DownloadUpdateOptions } from "./AppUpdater"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater"
@@ -11,6 +12,23 @@ import { findFile, Provider } from "./providers/Provider"
 import { unlink } from "fs-extra"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
 import { URL } from "url"
+
+type InstallMode = "allusers" | "currentuser"
+
+interface ResolvedInstallMode {
+  readonly mode: InstallMode | null
+  readonly source: "admin-required" | "registry" | "path-fallback" | "none"
+}
+
+interface RegistryUninstallEntry {
+  readonly installLocation?: string
+  readonly displayIcon?: string
+  readonly quietUninstallString?: string
+  readonly uninstallString?: string
+}
+
+const REGISTRY_QUERY_TIMEOUT_MS = 5000
+const REGISTRY_QUERY_MAX_BUFFER = 10 * 1024 * 1024
 
 export class NsisUpdater extends BaseUpdater {
   /**
@@ -135,6 +153,12 @@ export class NsisUpdater extends BaseUpdater {
       args.push("/S")
     }
 
+    const installMode = this.resolveInstallMode(options)
+    if (installMode.mode != null) {
+      args.push(`/${installMode.mode}`)
+    }
+    this._logger.info(`NSIS install mode: ${installMode.mode ?? "none"} (source: ${installMode.source})`)
+
     if (options.isForceRunAfter) {
       args.push("--force-run")
     }
@@ -154,8 +178,12 @@ export class NsisUpdater extends BaseUpdater {
       this.spawnLog(path.join(process.resourcesPath, "elevate.exe"), [installerPath].concat(args)).catch(e => this.dispatchError(e))
     }
 
-    if (options.isAdminRightsRequired) {
-      this._logger.info("isAdminRightsRequired is set to true, run installer using elevate.exe")
+    if (options.isAdminRightsRequired || installMode.mode === "allusers") {
+      if (options.isAdminRightsRequired) {
+        this._logger.info("isAdminRightsRequired is set to true, run installer using elevate.exe")
+      } else {
+        this._logger.info("NSIS install mode is allusers, run installer using elevate.exe")
+      }
       callUsingElevation()
       return true
     }
@@ -178,6 +206,239 @@ export class NsisUpdater extends BaseUpdater {
       }
     })
     return true
+  }
+
+  private resolveInstallMode(options: InstallOptions): ResolvedInstallMode {
+    if (options.isAdminRightsRequired) {
+      return {
+        mode: "allusers",
+        source: "admin-required",
+      }
+    }
+
+    const currentPlatform = this._testOnlyOptions?.platform ?? process.platform
+    if (currentPlatform !== "win32") {
+      return {
+        mode: null,
+        source: "none",
+      }
+    }
+
+    try {
+      const installModeFromRegistry = this.detectInstallModeFromRegistry(process.execPath)
+      if (installModeFromRegistry != null) {
+        return {
+          mode: installModeFromRegistry,
+          source: "registry",
+        }
+      }
+    } catch (e: any) {
+      this._logger.warn(`Cannot detect NSIS install mode from registry, fallback to path detection: ${e.message || e}`)
+    }
+
+    const installModeFromPath = this.detectInstallModeFromPath(process.execPath)
+    if (installModeFromPath != null) {
+      return {
+        mode: installModeFromPath,
+        source: "path-fallback",
+      }
+    }
+
+    return {
+      mode: null,
+      source: "none",
+    }
+  }
+
+  private detectInstallModeFromRegistry(executablePath: string): InstallMode | null {
+    const executableDirectory = path.win32.dirname(executablePath)
+    let weakMatchMode: InstallMode | null = null
+    for (const queryArgs of this.getRegistryQueryArguments()) {
+      for (const entry of this.parseUninstallRegistryEntries(this.queryRegistry(queryArgs))) {
+        const installMode = this.parseInstallModeFromUninstallString(entry.quietUninstallString) || this.parseInstallModeFromUninstallString(entry.uninstallString)
+        if (installMode == null) {
+          continue
+        }
+
+        const matchConfidence = this.computeRegistryEntryMatchConfidence(entry, executablePath, executableDirectory)
+        if (matchConfidence === 2) {
+          return installMode
+        }
+        if (matchConfidence === 1) {
+          weakMatchMode = installMode
+        }
+      }
+    }
+    return weakMatchMode
+  }
+
+  private getRegistryQueryArguments(): Array<Array<string>> {
+    const keyPath = "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
+    return [
+      ["query", `HKCU\\${keyPath}`, "/s"],
+      ["query", `HKLM\\${keyPath}`, "/s", "/reg:64"],
+      ["query", `HKLM\\${keyPath}`, "/s", "/reg:32"],
+    ]
+  }
+
+  private queryRegistry(args: Array<string>): string {
+    const response = childProcess.spawnSync("reg", args, {
+      encoding: "utf8",
+      windowsHide: true,
+      timeout: REGISTRY_QUERY_TIMEOUT_MS,
+      maxBuffer: REGISTRY_QUERY_MAX_BUFFER,
+    })
+    if (response.error != null) {
+      const error = response.error as NodeJS.ErrnoException
+      if (error.code === "ETIMEDOUT") {
+        throw new Error(`reg ${args.join(" ")} timed out after ${REGISTRY_QUERY_TIMEOUT_MS}ms`)
+      }
+      throw response.error
+    }
+    if (response.status !== 0) {
+      return ""
+    }
+    return response.stdout
+  }
+
+  private parseUninstallRegistryEntries(output: string): Array<RegistryUninstallEntry> {
+    const entries: Array<RegistryUninstallEntry> = []
+    let currentEntry: { installLocation?: string; displayIcon?: string; quietUninstallString?: string; uninstallString?: string } | null = null
+
+    for (const line of output.split(/\r?\n/)) {
+      const trimmedLine = line.trim()
+      if (trimmedLine.length === 0) {
+        continue
+      }
+
+      if (!line.startsWith(" ") && !line.startsWith("\t")) {
+        if (currentEntry != null) {
+          entries.push(currentEntry)
+        }
+        currentEntry = {}
+        continue
+      }
+
+      if (currentEntry == null) {
+        continue
+      }
+
+      const valueMatch = /^([^\s]+)\s+REG_\w+\s*(.*)$/i.exec(trimmedLine)
+      if (valueMatch == null) {
+        continue
+      }
+
+      const valueName = valueMatch[1]
+      const value = valueMatch[2]
+      if (valueName === "InstallLocation") {
+        currentEntry.installLocation = value
+      } else if (valueName === "DisplayIcon") {
+        currentEntry.displayIcon = value
+      } else if (valueName === "QuietUninstallString") {
+        currentEntry.quietUninstallString = value
+      } else if (valueName === "UninstallString") {
+        currentEntry.uninstallString = value
+      }
+    }
+
+    if (currentEntry != null) {
+      entries.push(currentEntry)
+    }
+
+    return entries
+  }
+
+  private computeRegistryEntryMatchConfidence(entry: RegistryUninstallEntry, executablePath: string, executableDirectory: string): number {
+    if (entry.installLocation != null && this.isPathEqual(entry.installLocation, executableDirectory)) {
+      return 2
+    }
+
+    if (entry.displayIcon != null) {
+      const executablePathFromDisplayIcon = this.parseDisplayIconPath(entry.displayIcon)
+      if (executablePathFromDisplayIcon != null && this.isPathEqual(executablePathFromDisplayIcon, executablePath)) {
+        return 1
+      }
+    }
+
+    return 0
+  }
+
+  private parseDisplayIconPath(displayIcon: string): string | null {
+    const trimmedDisplayIcon = displayIcon.trim()
+    if (trimmedDisplayIcon.length === 0) {
+      return null
+    }
+
+    if (trimmedDisplayIcon.startsWith('"')) {
+      const quoteEndIndex = trimmedDisplayIcon.indexOf('"', 1)
+      if (quoteEndIndex > 1) {
+        return trimmedDisplayIcon.substring(1, quoteEndIndex)
+      }
+    }
+
+    const commaIndex = trimmedDisplayIcon.indexOf(",")
+    return commaIndex === -1 ? trimmedDisplayIcon : trimmedDisplayIcon.substring(0, commaIndex)
+  }
+
+  private parseInstallModeFromUninstallString(uninstallString: string | undefined): InstallMode | null {
+    if (uninstallString == null) {
+      return null
+    }
+    if (/(^|\s)\/allusers(\s|$)/i.test(uninstallString)) {
+      return "allusers"
+    }
+    if (/(^|\s)\/currentuser(\s|$)/i.test(uninstallString)) {
+      return "currentuser"
+    }
+    return null
+  }
+
+  private detectInstallModeFromPath(executablePath: string): InstallMode | null {
+    const localAppDataPath = this.getEnvironmentValue("LOCALAPPDATA")
+    if (localAppDataPath != null && this.isPathInside(localAppDataPath, executablePath)) {
+      return "currentuser"
+    }
+
+    for (const envKey of ["ProgramW6432", "ProgramFiles", "ProgramFiles(x86)"] as const) {
+      const programFilesPath = this.getEnvironmentValue(envKey)
+      if (programFilesPath != null && this.isPathInside(programFilesPath, executablePath)) {
+        return "allusers"
+      }
+    }
+
+    return null
+  }
+
+  private getEnvironmentValue(name: string): string | undefined {
+    const directMatch = process.env[name]
+    if (directMatch != null) {
+      return directMatch
+    }
+    const caseInsensitiveKey = Object.keys(process.env).find(it => it.toLowerCase() === name.toLowerCase())
+    return caseInsensitiveKey == null ? undefined : process.env[caseInsensitiveKey]
+  }
+
+  private isPathInside(parentPath: string, childPath: string): boolean {
+    try {
+      const normalizedParent = this.normalizePath(parentPath)
+      const normalizedChild = this.normalizePath(childPath)
+      const relativePath = path.win32.relative(normalizedParent, normalizedChild)
+      return relativePath === "" || (!relativePath.startsWith("..") && !path.win32.isAbsolute(relativePath))
+    } catch {
+      return false
+    }
+  }
+
+  private isPathEqual(pathA: string, pathB: string): boolean {
+    try {
+      return this.normalizePath(pathA) === this.normalizePath(pathB)
+    } catch {
+      return false
+    }
+  }
+
+  private normalizePath(input: string): string {
+    return path.win32.resolve(input).replace(/[\\/]+$/, "").toLowerCase()
   }
 
   private async differentialDownloadWebPackage(
