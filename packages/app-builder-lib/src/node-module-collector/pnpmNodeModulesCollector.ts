@@ -1,4 +1,4 @@
-import { log } from "builder-util"
+import { LogMessageByKey } from "./moduleManager"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager"
 import { PnpmDependency } from "./types"
@@ -19,6 +19,17 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     }
     this.productionGraph[dependencyId] = { dependencies: [] }
 
+    if ((tree.dedupedDependenciesCount ?? 0) > 0) {
+      const realDep = this.allDependencies.get(dependencyId)
+      if (realDep) {
+        this.cache.logSummary[LogMessageByKey.PKG_DUPLICATE_REF].push(dependencyId)
+        tree = realDep
+      } else {
+        this.cache.logSummary[LogMessageByKey.PKG_DUPLICATE_REF_UNRESOLVED].push(dependencyId)
+        return
+      }
+    }
+
     const packageName = tree.name || tree.from
     const { packageJson } = (await this.cache.locatePackageVersion({ pkgName: packageName, parentDir: this.rootDir, requiredRange: tree.version })) || {}
 
@@ -37,7 +48,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       if (optional[packageName]) {
         const pkg = await this.cache.locatePackageVersion({ pkgName: packageName, parentDir: this.rootDir, requiredRange: dependency.version })
         if (!pkg) {
-          log.debug({ name: packageName, version: dependency.version, path: dependency.path }, `optional dependency doesn't exist, skipping - likely not installed`)
+          this.cache.logSummary[LogMessageByKey.PKG_OPTIONAL_NOT_INSTALLED].push(`${packageName}@${dependency.version}`)
           return undefined
         }
       }
@@ -59,6 +70,9 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
   protected async collectAllDependencies(tree: PnpmDependency) {
     // Collect regular dependencies
     for (const [key, value] of Object.entries(tree.dependencies || {})) {
+      if ((value?.dedupedDependenciesCount ?? 0) > 0) {
+        continue
+      }
       const pkg = await this.cache.locatePackageVersion({ pkgName: key, parentDir: this.rootDir, requiredRange: value.version })
       this.allDependencies.set(`${key}@${value.version}`, { ...value, path: pkg?.packageDir ?? value.path })
       await this.collectAllDependencies(value)
@@ -66,6 +80,9 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
 
     // Collect optional dependencies if they exist
     for (const [key, value] of Object.entries(tree.optionalDependencies || {})) {
+      if ((value?.dedupedDependenciesCount ?? 0) > 0) {
+        continue
+      }
       const pkg = await this.cache.locatePackageVersion({ pkgName: key, parentDir: this.rootDir, requiredRange: value.version })
       this.allDependencies.set(`${key}@${value.version}`, { ...value, path: pkg?.packageDir ?? value.path })
       await this.collectAllDependencies(value)

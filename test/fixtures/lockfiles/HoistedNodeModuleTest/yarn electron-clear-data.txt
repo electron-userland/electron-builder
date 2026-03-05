@@ -9,7 +9,7 @@ debug@3.1.0:
   dependencies:
     ms "2.0.0"
 
-electron-clear-data@^1.0.5:
+electron-clear-data@1.0.5:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/electron-clear-data/-/electron-clear-data-1.0.5.tgz#bc636f6850f57b1e8ed3fe2e57ca877e30d31bc9"
   integrity sha512-vynYILZ2F+S5qnc81bnTOfh8uCVlxP6j42T7h/ELaDL+vxmlT1QNgte8KNuXb+s9ed+Qx4IIRbMRUcbAJa/8rA==
