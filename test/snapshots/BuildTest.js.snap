@@ -1362,6 +1362,9 @@ exports[`posix smart unpack 3`] = `
             "SECURITY.md": {
               "size": "<size>",
             },
+            "empty.js": {
+              "size": "<size>",
+            },
             "index.js": {
               "size": "<size>",
             },
