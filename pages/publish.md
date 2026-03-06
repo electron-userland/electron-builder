@@ -53,6 +53,23 @@ win:
     - bitbucket
 ```
 
+To create GitHub releases from a specific branch or commit (instead of the default branch), use `targetCommitish`:
+
+```json
+{
+  "build": {
+    "publish": {
+      "provider": "github",
+      "owner": "my-org",
+      "repo": "my-app",
+      "targetCommitish": "development"
+    }
+  }
+}
+```
+
+Or via env in CI: `EP_TARGET_COMMITISH` or `GITHUB_SHA` (GitHub Actions).
+
 You can also configure publishing using CLI arguments, for example, to force publishing snap not to Snap Store, but to GitHub: `-c.snap.publish=github`
 
 [Custom](https://github.com/electron-userland/electron-builder/issues/3261) publish provider can be used if need.

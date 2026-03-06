@@ -144,6 +144,15 @@ export interface GithubOptions extends PublishConfiguration {
    * @default draft
    */
   releaseType?: "draft" | "prerelease" | "release" | null
+
+  /**
+   * The branch or commit to create the release from.
+   * By default, GitHub creates the release tag on the default branch (e.g. `main`).
+   * Use this to target a specific branch (e.g. `development`) or commit SHA.
+   *
+   * Can be set via `EP_TARGET_COMMITISH` env var, or `GITHUB_SHA` in GitHub Actions (current commit).
+   */
+  readonly targetCommitish?: string | null
 }
 
 /** @private */
