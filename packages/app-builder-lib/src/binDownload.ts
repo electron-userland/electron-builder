@@ -72,7 +72,8 @@ export function getCacheDirectory(isAvoidSystemOnWindows = false): string {
 export async function downloadArtifact(options: { releaseName: string; filenameWithExt: string; checksums: Record<string, string>; githubOrgRepo?: string }): Promise<string> {
   const { releaseName, filenameWithExt, checksums, githubOrgRepo = "electron-userland/electron-builder-binaries" } = options
 
-  const file = await _downloadArtifact(`https://github.com/${githubOrgRepo}/releases/download/`, releaseName, filenameWithExt, checksums)
+  const baseUrl = getBinariesMirrorUrl(githubOrgRepo)
+  const file = await _downloadArtifact(baseUrl, releaseName, filenameWithExt, checksums)
 
   return file
 }
@@ -177,6 +178,20 @@ async function _downloadArtifact(baseUrl: string, releaseName: string, filenameW
 
 const versionToPromise = new Map<string, Promise<string>>()
 
+/**
+ * Get the binaries mirror URL from environment variables.
+ * Supports various npm config formats and falls back to GitHub.
+ */
+function getBinariesMirrorUrl(githubOrgRepo: string): string {
+  return (
+    process.env.NPM_CONFIG_ELECTRON_BUILDER_BINARIES_MIRROR ||
+    process.env.npm_config_electron_builder_binaries_mirror ||
+    process.env.npm_package_config_electron_builder_binaries_mirror ||
+    process.env.ELECTRON_BUILDER_BINARIES_MIRROR ||
+    `https://github.com/${githubOrgRepo}/releases/download/`
+  )
+}
+
 export function download(url: string, output: string, checksum?: string | null): Promise<void> {
   const args = ["download", "--url", url, "--output", output]
   if (checksum != null) {
@@ -195,12 +210,7 @@ export function getBinFromUrl(releaseName: string, filenameWithExt: string, chec
   if (process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL) {
     url = process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL + "/" + filenameWithExt
   } else {
-    const baseUrl =
-      process.env.NPM_CONFIG_ELECTRON_BUILDER_BINARIES_MIRROR ||
-      process.env.npm_config_electron_builder_binaries_mirror ||
-      process.env.npm_package_config_electron_builder_binaries_mirror ||
-      process.env.ELECTRON_BUILDER_BINARIES_MIRROR ||
-      `https://github.com/${githubOrgRepo}/releases/download/`
+    const baseUrl = getBinariesMirrorUrl(githubOrgRepo)
     const middleUrl =
       process.env.NPM_CONFIG_ELECTRON_BUILDER_BINARIES_CUSTOM_DIR ||
       process.env.npm_config_electron_builder_binaries_custom_dir ||
