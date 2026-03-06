@@ -242,6 +242,16 @@ for arg in "\${args[@]}" ; do
   fi
 done
 NO_SANDBOX=
+# Use `unshare -Ur true` as a heuristic to detect whether user namespaces are available.
+# Notes:
+#   - When running as root, this check will always succeed even if the sandbox configuration
+#     actually relies on unprivileged user namespaces. In practice, Chrome/Electron usually
+#     disables or adjusts the sandbox separately when running as root, so this probe is mostly
+#     a no-op in that scenario.
+#   - On minimal systems (e.g. Alpine or stripped-down containers) `unshare` may not exist.
+#     In that case the shell will return exit code 127 ("command not found"), which will cause
+#     us to add `--no-sandbox`. This is an intentional fail-safe: we prefer the app to start
+#     without sandboxing rather than crash on startup.
 if [ $HAVE_NO_SANDBOX -eq 0 ] && ! unshare -Ur true 2>/dev/null ; then
   NO_SANDBOX=--no-sandbox
 fi
