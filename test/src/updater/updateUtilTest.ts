@@ -58,7 +58,7 @@ describe("GitHub Provider", () => {
       const latest = entries[0] // v1.3.0
       const result = computeReleaseNotes(semver.parse("1.0.0")!, true, feed, latest)
       expect(result).deep.equal([
-        { version: "v1.3.0", note: "Notes v1.3.0" },
+        { version: "1.3.0", note: "Notes v1.3.0" },
         { version: "1.2.0", note: "Notes 1.2.0" },
       ])
     })
@@ -115,7 +115,7 @@ describe("GitHub Provider", () => {
     const latest = feed.getElements("entry")[0]
     const result = computeReleaseNotes(semver.parse("1.0.0")!, true, feed, latest) as any[]
     expect(result).deep.equal([
-      { version: "v1.2.0", note: "Release v1.2.0" },
+      { version: "1.2.0", note: "Release v1.2.0" },
       { version: "1.2.0-beta.2", note: "Beta notes" },
       { version: "1.1.0", note: "1.1.0 notes" },
     ])
@@ -159,7 +159,7 @@ describe("GitHub Provider", () => {
     const latest = feed.getElements("entry")[2]
     const result = computeReleaseNotes(semver.parse("1.2.0")!, true, feed, latest) as any[]
     expect(result).deep.equal([
-      { version: "v1.3.0+build.1", note: "1.3.0 build" },
+      { version: "1.3.0+build.1", note: "1.3.0 build" },
       { version: "1.3.0", note: "latest" },
       { version: "1.2.5+exp.sha.5114f85", note: "1.2.5 exp" },
     ])
