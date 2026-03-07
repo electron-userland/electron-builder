@@ -2,6 +2,12 @@
 
 exports[`macPackager > Build macOS on Windows is not supported 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
 
+exports[`macPackager > electronDist 1`] = `
+{
+  "mac": [],
+}
+`;
+
 exports[`macPackager > multiple asar resources 1`] = `
 {
   "mac": [
