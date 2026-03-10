@@ -1,6 +1,6 @@
 import * as semver from "semver"
 import { parseXml } from "builder-util-runtime"
-import { computeReleaseNotes } from "../../../packages/electron-updater/src/providers/GitHubProvider"
+import { computeReleaseNotes } from "electron-updater/src/providers/GitHubProvider"
 import { expect } from "vitest"
 
 describe("GitHub Provider", () => {
