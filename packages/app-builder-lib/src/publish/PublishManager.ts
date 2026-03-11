@@ -30,7 +30,7 @@ import {
   UploadTask,
 } from "electron-publish"
 import { MultiProgress } from "electron-publish/out/multiProgress"
-import { writeFile } from "fs/promises"
+import { readFile, writeFile } from "fs/promises"
 import { isCI } from "ci-info"
 import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
@@ -308,6 +308,26 @@ export async function getPublishConfigsForUpdateInfo(
   return publishConfigs
 }
 
+async function resolveReleaseBody(packager: Packager): Promise<string | null> {
+  const releaseInfo = packager.config.releaseInfo
+  if (releaseInfo?.releaseNotes) {
+    return releaseInfo.releaseNotes
+  }
+  if (releaseInfo?.releaseNotesFile) {
+    try {
+      return await readFile(path.resolve(packager.projectDir, releaseInfo.releaseNotesFile), "utf-8")
+    } catch (e: any) {
+      log.warn({ file: releaseInfo.releaseNotesFile, error: e.message }, "cannot read release notes file")
+      return null
+    }
+  }
+  try {
+    return await readFile(path.resolve(packager.projectDir, "release-notes.md"), "utf-8")
+  } catch {
+    return null
+  }
+}
+
 export async function createPublisher(
   context: PublishContext,
   version: string,
@@ -321,11 +341,17 @@ export async function createPublisher(
 
   const provider = publishConfig.provider
   switch (provider) {
-    case "github":
-      return new GitHubPublisher(context, publishConfig as GithubOptions, version, options)
+    case "github": {
+      const releaseBody = await resolveReleaseBody(packager)
+      const releaseName = packager.config.releaseInfo?.releaseName ?? null
+      return new GitHubPublisher(context, publishConfig as GithubOptions, version, options, releaseBody, releaseName)
+    }
 
-    case "gitlab":
-      return new GitlabPublisher(context, publishConfig as GitlabOptions, version)
+    case "gitlab": {
+      const releaseBody = await resolveReleaseBody(packager)
+      const releaseName = packager.config.releaseInfo?.releaseName ?? null
+      return new GitlabPublisher(context, publishConfig as GitlabOptions, version, releaseBody, releaseName)
+    }
 
     case "keygen":
       return new KeygenPublisher(context, publishConfig as KeygenOptions, version)
