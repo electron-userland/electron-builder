@@ -898,6 +898,14 @@
           },
           "type": "array"
         },
+        "filesystem": {
+          "default": "APFS",
+          "description": "The filesystem for the DMG volume (e.g. `\"APFS\"` or `\"HFS+\"`). APFS is the default and recommended on macOS 10.13+.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "format": {
           "default": "UDZO",
           "description": "The disk image format. `ULFO` (lzfse-compressed image (OS X 10.11+ only)).",
