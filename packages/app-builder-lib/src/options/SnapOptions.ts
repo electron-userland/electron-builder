@@ -1,9 +1,90 @@
 import { TargetSpecificOptions } from "../core"
+import { SnapcraftYAML } from "../targets/snap/snapcraft"
 import { CommonLinuxOptions } from "./linuxOptions"
 
-export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
+export interface SnapOptions extends TargetSpecificOptions {
   /**
-   * A snap of type base to be used as the execution environment for this snap. Examples: `core`, `core18`, `core20`, `core22`. Defaults to `core20`
+   * A snap of type base to be used as the execution environment for this snap. Examples: `core18`, `core20`, `core22`, `core24`.
+   * @default core24
+   */
+  readonly core: "core18" | "core20" | "core22" | "core24" | "custom"
+  readonly core18?: SnapOptionsLegacy | null
+  readonly core20?: SnapOptionsLegacy | null
+  readonly core22?: SnapOptionsLegacy | null
+  readonly core24?: SnapOptions24 | null
+  readonly custom?: SnapcraftYAML | null
+}
+
+export interface SnapOptionsLegacy extends SnapBaseOptions {
+  /**
+   * Whether to use template snap. Defaults to `true` if `stagePackages` is not specified.
+   */
+  readonly useTemplateApp?: boolean
+}
+
+export interface RemoteBuildOptions {
+  // Whether to enable remote build. Explicit true/false required.
+  enabled: boolean
+
+  // Your Launchpad ID
+  launchpadUsername?: string
+
+  // Remote build (multi-architecture)
+  // Example - buildFor: ['amd64', 'arm64', 'armhf']
+  buildFor?: string[] // Target architectures
+
+  // Auto-accept public upload
+  acceptPublicUpload?: boolean
+
+  // Remote build with private project
+  privateProject?: string
+
+  // Example: Remote build with credentials file (for CI/CD)
+  sshKeyPath?: string
+  // OR, generate credentials: snapcraft export-login credentials.txt
+  credentialsFile?: string
+
+  // Resume interrupted build
+  recover?: boolean
+
+  // Build timeout in seconds
+  timeout?: number
+
+  strategy?: "disable-fallback" | "force-fallback"
+
+  /**
+   * Allow running the program with native wayland support with --ozone-platform=wayland.
+   * Disabled by default because of this issue in older Electron/Snap versions: https://github.com/electron-userland/electron-builder/issues/4007
+   * @default false
+   */
+  readonly allowNativeWayland?: boolean | null
+}
+
+export interface SnapOptions24 extends SnapBaseOptions {
+  /**
+   * The list of debian packages needs to be installed for building this snap.
+   * @default ["gnome"]
+   */
+  readonly extensions?: Array<string> | null
+
+  readonly useGnomeExtension?: boolean | null
+
+  readonly remoteBuild?: RemoteBuildOptions | null
+
+  useLXD?: boolean | null
+  readonly useMultipass?: boolean | null
+  useDestructiveMode?: boolean | null
+
+  /**
+   * Whether or not to enable Wayland support natively.
+   * @default true
+   */
+  readonly allowNativeWayland?: boolean | null
+}
+
+export interface SnapBaseOptions extends CommonLinuxOptions {
+  /**
+   * A snap of type base to be used as the execution environment for this snap. Examples: `core`, `core18`, `core20`, `core22`, `core24`. Defaults to `core24`
    */
   readonly base?: string | null
 
@@ -104,11 +185,6 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
   readonly after?: Array<string> | null
 
   /**
-   * Whether to use template snap. Defaults to `true` if `stagePackages` not specified.
-   */
-  readonly useTemplateApp?: boolean
-
-  /**
    * Whether or not the snap should automatically start on login.
    * @default false
    */
@@ -122,7 +198,7 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
   /**
    * Specifies which files from the app part to stage and which to exclude. Individual files, directories, wildcards, globstars, and exclusions are accepted. See [Snapcraft filesets](https://snapcraft.io/docs/snapcraft-filesets) to learn more about the format.
    *
-   * The defaults can be found in [snap.ts](https://github.com/electron-userland/electron-builder/blob/master/packages/app-builder-lib/templates/snap/snapcraft.yaml#L29).
+   * The defaults can be found in [snapcraft.ts](https://github.com/electron-userland/electron-builder/blob/master/packages/app-builder-lib/src/targets/snap/snapcraft.ts).
    */
   readonly appPartStage?: Array<string> | null
 
@@ -137,8 +213,7 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
   readonly compression?: "xz" | "lzo" | null
 
   /**
-   * Allow running the program with native wayland support with --ozone-platform=wayland.
-   * Disabled by default because of this issue in older Electron/Snap versions: https://github.com/electron-userland/electron-builder/issues/4007
+   * Allow running the program with native wayland support.
    */
   readonly allowNativeWayland?: boolean | null
 }
