@@ -6,6 +6,7 @@ import * as semver from "semver"
 
 export enum LogMessageByKey {
   PKG_DUPLICATE_REF = "duplicate dependency references",
+  PKG_DUPLICATE_REF_UNRESOLVED = "unresolved duplicate dependency references",
   PKG_NOT_FOUND = "cannot find path for dependency",
   PKG_NOT_ON_DISK = "dependency not found on disk",
   PKG_SELF_REF = "self-referential dependencies",
@@ -14,6 +15,7 @@ export enum LogMessageByKey {
 }
 export const logMessageLevelByKey: Record<LogMessageByKey, LogLevel> = {
   [LogMessageByKey.PKG_DUPLICATE_REF]: "info",
+  [LogMessageByKey.PKG_DUPLICATE_REF_UNRESOLVED]: "warn",
   [LogMessageByKey.PKG_NOT_FOUND]: "warn",
   [LogMessageByKey.PKG_NOT_ON_DISK]: "warn",
   [LogMessageByKey.PKG_SELF_REF]: "debug",
