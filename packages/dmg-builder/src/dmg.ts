@@ -159,7 +159,7 @@ export class DmgTarget extends Target {
   // public to test
   async computeDmgOptions(appPath: string): Promise<DmgOptions> {
     const packager = this.packager
-    const specification: DmgOptions = { ...this.options }
+    const specification: DmgOptions = { ...this.options, filesystem: this.options.filesystem ?? "APFS" }
     if (specification.icon == null && specification.icon !== null) {
       specification.icon = await packager.getIconPath()
     }
