@@ -366,7 +366,7 @@ export class NsisTarget extends Target {
       if (this.isWebInstaller) {
         updateInfo = createNsisWebDifferentialUpdateInfo(installerPath, packageFiles)
       } else if (this.isBuildDifferentialAware) {
-        updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName)
+        updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName, primaryArch)
       }
 
       if (updateInfo != null && isPerMachine && (oneClick || options.packElevateHelper)) {
