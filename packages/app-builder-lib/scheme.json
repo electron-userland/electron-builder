@@ -7055,6 +7055,66 @@
         }
       },
       "type": "object"
+    },
+    "ZipOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "artifactName": {
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "$ref": "#/definitions/BitbucketOptions"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllPublishOptions"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "writeUpdateInfo": {
+          "default": true,
+          "type": "boolean"
+        }
+      },
+      "type": "object"
     }
   },
   "properties": {
@@ -7992,6 +8052,17 @@
         }
       ],
       "description": "Options related to how build Windows targets."
+    },
+    "zip": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ZipOptions"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "macOS zip options."
     },
     "$schema": {
       "description": "JSON Schema for this document.",
