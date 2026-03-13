@@ -7,6 +7,7 @@ import { getBinFromCustomLoc, getBinFromUrl } from "../../binDownload"
 import { getTemplatePath } from "../../util/pathManager"
 import { NsisOptions } from "./nsisOptions"
 import { NsisTarget } from "./NsisTarget"
+import { UUID } from "builder-util-runtime"
 
 export const nsisTemplatesDir = getTemplatePath("nsis")
 
@@ -287,5 +288,31 @@ export class UninstallerReader {
     }
     await fs.writeFile(uninstallerPath, executable)
     await fs.appendFile(uninstallerPath, innerBuffer)
+  }
+}
+
+export class ProgIdMaker {
+  private readonly program: string
+  private readonly guid: Buffer
+
+  constructor(guid: string, productFilename: string) {
+    this.guid = UUID.parse(guid)
+    let program = this.sanitize(productFilename)
+    if (program === "") {
+      program = this.sanitize(`App${guid}`)
+    } else if (program.match(/^\d/)) {
+      program = `App${program}`
+    }
+    this.program = program.slice(0, 19)
+  }
+
+  progId(nameOrExt: string): string {
+    const componentPrefix = this.sanitize(nameOrExt).slice(0, 31 - this.program.length)
+    const componentUuid = this.sanitize(UUID.v5(nameOrExt, this.guid))
+    return `${this.program}.${componentPrefix}${componentUuid}`.slice(0, 39)
+  }
+
+  private sanitize(value: string) {
+    return value.replace(/[^A-Za-z0-9]/g, "")
   }
 }
