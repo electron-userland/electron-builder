@@ -132,7 +132,7 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
     "text-size": iconTextSize,
 
     "compression-level": Number(process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || "9"),
-    // filesystem: specification.filesystem || "HFS+",
+    filesystem: specification.filesystem || "APFS",
     format: specification.format,
     size: specification.size,
     shrink: specification.shrink,
