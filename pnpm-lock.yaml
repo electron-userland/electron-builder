@@ -199,7 +199,7 @@ importers:
         version: 7.7.3
       tar:
         specifier: ^7.5.7
-        version: 7.5.10
+        version: 7.5.11
       temp-file:
         specifier: ^3.4.0
         version: 3.4.0
@@ -4706,8 +4706,8 @@ packages:
     resolution: {integrity: sha512-MeQTA1r0litLUf0Rp/iisCaL8761lKAZHaimlbGK4j0HysC4PLfqygQj9srcs0m2RdtDYnF8UuYyKpbjHYp7Jw==}
     engines: {node: ^14.18.0 || >=16.0.0}
 
-  tar@7.5.10:
-    resolution: {integrity: sha512-8mOPs1//5q/rlkNSPcCegA6hiHJYDmSLEI8aMH/CdSQJNWztHC9WHNam5zdQlfpTwB9Xp7IBEsHfV5LKMJGVAw==}
+  tar@7.5.11:
+    resolution: {integrity: sha512-ChjMH33/KetonMTAtpYdgUFr0tbz69Fp2v7zWxQfYZX4g5ZN2nOBXm1R2xyA+lMIKrLKIoKAwFj93jE/avX9cQ==}
     engines: {node: '>=18'}
 
   temp-dir@3.0.0:
@@ -6500,7 +6500,7 @@ snapshots:
       ora: 5.4.1
       read-binary-file-arch: 1.0.6
       semver: 7.7.3
-      tar: 7.5.10
+      tar: 7.5.11
       yargs: 17.7.2
     transitivePeerDependencies:
       - supports-color
@@ -7661,7 +7661,7 @@ snapshots:
       minipass-pipeline: 1.2.4
       p-map: 7.0.3
       ssri: 12.0.0
-      tar: 7.5.10
+      tar: 7.5.11
       unique-filename: 4.0.0
 
   cacheable-lookup@5.0.4: {}
@@ -9161,7 +9161,7 @@ snapshots:
       nopt: 8.1.0
       proc-log: 5.0.0
       semver: 7.7.3
-      tar: 7.5.10
+      tar: 7.5.11
       tinyglobby: 0.2.14
       which: 5.0.0
     transitivePeerDependencies:
@@ -9771,7 +9771,7 @@ snapshots:
     dependencies:
       '@pkgr/core': 0.2.9
 
-  tar@7.5.10:
+  tar@7.5.11:
     dependencies:
       '@isaacs/fs-minipass': 4.0.1
       chownr: 3.0.0
