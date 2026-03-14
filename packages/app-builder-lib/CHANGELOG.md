@@ -1,5 +1,40 @@
 # app-builder-lib
 
+## 26.9.0
+
+### Minor Changes
+
+- Feat: If necessary, start with --no-sandbox _[`#9590`](https://github.com/electron-userland/electron-builder/pull/9590) [`ed422f3`](https://github.com/electron-userland/electron-builder/commit/ed422f36540a93e9bd2a19bc7a5e729bf2b033ea) [@sabonerune](https://github.com/sabonerune)_
+- Feat(nsis): detect windows version and exclude win 7 compatibility logic when not needed _[`#9564`](https://github.com/electron-userland/electron-builder/pull/9564) [`13d8535`](https://github.com/electron-userland/electron-builder/commit/13d85355b6d37bd82d5153d260ba11de71323875) [@JPCrounse](https://github.com/JPCrounse)_
+- Feat: pass release notes to GitHub/GitLab release body via `releaseBody` and `releaseName` options _[`#9581`](https://github.com/electron-userland/electron-builder/pull/9581) [`b7df0bc`](https://github.com/electron-userland/electron-builder/commit/b7df0bcef5790814fd6df187346dcec625dc681e) [@asamofal](https://github.com/asamofal)_
+
+### Patch Changes
+
+- Fix: respect electron*builder_binaries_mirror in downloadArtifact *[`#9631`](https://github.com/electron-userland/electron-builder/pull/9631) [`0c8fc41`](https://github.com/electron-userland/electron-builder/commit/0c8fc415debf0dc7e19e8ffd9c06db100ef41f11) [@ysansan98](https://github.com/ysansan98)\_
+
+  downloadArtifact() was ignoring electron_builder_binaries_mirror and falling back
+  to electron_mirror due to @electron/get behavior. This affected dmg-builder
+  (macOS) and appimage-tools (Linux) downloads.
+  - Extract getBinariesMirrorUrl() to share mirror URL resolution
+  - Use the helper in both downloadArtifact() and getBinFromUrl()
+  - Ensure custom mirrors are respected for all binary downloads
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`b7df0bc`](https://github.com/electron-userland/electron-builder/commit/b7df0bcef5790814fd6df187346dcec625dc681e)
+
+</small>
+
+- `electron-publish@26.9.0`
+- `builder-util-runtime@9.6.0`
+- `dmg-builder@26.9.0`
+- `electron-builder-squirrel-windows@26.9.0`
+- `builder-util@26.9.0`
+
+</details>
+
 ## 26.8.2
 
 ### Patch Changes
