@@ -5,6 +5,15 @@ Var oldDesktopLink
 Var oldShortcutName
 Var oldMenuDirectory
 
+!ifndef BUILD_UNINSTALLER
+  !ifndef ONE_CLICK
+    !ifdef ALLOW_TO_ADD_SHORTCUT
+      Var USER_DESKTOP_SHORTCUT_CHOICE
+      Var USER_STARTMENU_SHORTCUT_CHOICE
+    !endif
+  !endif
+!endif
+
 !include "common.nsh"
 !include "MUI2.nsh"
 !include "multiUser.nsh"
