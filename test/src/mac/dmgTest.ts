@@ -127,9 +127,10 @@ describe.heavy.ifMac("dmg", { sequential: true }, () => {
             const totalBytes = stats.bsize * stats.blocks
 
             // 500m should give ~524,288,000 bytes (500 * 1024 * 1024)
-            // Allow margin for filesystem overhead (450MB to 700MB).
+            // Allow margin for filesystem overhead. APFS can report larger sizes than HFS+ due to
+            // different block sizing and allocation, so use a wide range (450MB–1GB).
             const minBytes = 450 * 1024 * 1024
-            const maxBytes = 700 * 1024 * 1024
+            const maxBytes = 1024 * 1024 * 1024
 
             expect(totalBytes).toBeGreaterThan(minBytes)
             expect(totalBytes).toBeLessThan(maxBytes)
