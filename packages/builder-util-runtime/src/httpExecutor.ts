@@ -156,6 +156,8 @@ export abstract class HttpExecutor<T extends Request> {
       debug(`Response: ${response.statusCode} ${response.statusMessage}, request options: ${safeStringifyJson(options)}`)
     }
 
+    response.on("error", reject)
+
     // we handle any other >= 400 error on request end (read detailed message in the response body)
     if (response.statusCode === 404) {
       // error is clear, we don't need to read detailed error description
@@ -191,7 +193,6 @@ Please double check that your authentication token is correct. Due to security r
     response.setEncoding("utf8")
 
     let data = ""
-    response.on("error", reject)
     response.on("data", (chunk: string) => (data += chunk))
     response.on("end", () => {
       try {
@@ -265,6 +266,8 @@ Please double check that your authentication token is correct. Due to security r
 
   protected doDownload(requestOptions: RequestOptions, options: DownloadCallOptions, redirectCount: number) {
     const request = this.createRequest(requestOptions, (response: IncomingMessage) => {
+      response.on("error", options.callback)
+
       if (response.statusCode! >= 400) {
         options.callback(
           new Error(
@@ -273,10 +276,6 @@ Please double check that your authentication token is correct. Due to security r
         )
         return
       }
-
-      // It is possible for the response stream to fail, e.g. when a network is lost while
-      // response stream is in progress. Stop waiting and reject so consumer can catch the error.
-      response.on("error", options.callback)
 
       // this code not relevant for Electron (redirect event instead handled)
       const redirectUrl = safeGetHeader(response, "location")
