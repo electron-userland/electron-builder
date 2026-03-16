@@ -340,12 +340,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const nullizePromise = () => (this.checkForUpdatesPromise = null)
 
     this._logger.info("Checking for update")
-    checkForUpdatesPromise = retry(() => this.doCheckForUpdates(), {
-      retries: 3,
-      interval: 2000,
-      backoff: 2,
-      shouldRetry: isRetryableError,
-    })
+    checkForUpdatesPromise = this.doCheckForUpdates()
       .then(it => {
         nullizePromise()
         return it
@@ -583,23 +578,13 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return e
     }
 
-    this.downloadPromise = retry(
-      () =>
-        this.doDownloadUpdate({
-          updateInfoAndProvider,
-          requestHeaders: this.computeRequestHeaders(updateInfoAndProvider.provider),
-          cancellationToken,
-          disableWebInstaller: this.disableWebInstaller,
-          disableDifferentialDownload: this.disableDifferentialDownload,
-        }),
-      {
-        retries: 3,
-        interval: 2000,
-        backoff: 2,
-        shouldRetry: isRetryableError,
-        cancellationToken,
-      }
-    )
+    this.downloadPromise = this.doDownloadUpdate({
+      updateInfoAndProvider,
+      requestHeaders: this.computeRequestHeaders(updateInfoAndProvider.provider),
+      cancellationToken,
+      disableWebInstaller: this.disableWebInstaller,
+      disableDifferentialDownload: this.disableDifferentialDownload,
+    })
       .catch((e: any) => {
         throw errorHandler(e)
       })
@@ -913,24 +898,6 @@ export interface DownloadUpdateOptions {
 function hasPrereleaseComponents(version: SemVer) {
   const versionPrereleaseComponent = getVersionPreleaseComponents(version)
   return versionPrereleaseComponent != null && versionPrereleaseComponent.length > 0
-}
-
-function isRetryableError(e: any): boolean {
-  if (e instanceof CancellationError) {
-    return false
-  }
-
-  const code = e.code
-  if (code != null && (code.startsWith("NET::ERR_") || code.startsWith("net::ERR_") || ["ECONNRESET", "ETIMEDOUT", "ENOTFOUND", "ECONNREFUSED"].includes(code))) {
-    return true
-  }
-
-  const message = e.message
-  if (message != null && (message.includes("net::ERR_") || message.includes("NET::ERR_"))) {
-    return true
-  }
-
-  return false
 }
 
 /** @private */
