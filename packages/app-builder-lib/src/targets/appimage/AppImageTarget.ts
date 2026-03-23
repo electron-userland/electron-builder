@@ -12,6 +12,7 @@ import { getNotLocalizedLicenseFile } from "../../util/license"
 import { LinuxTargetHelper } from "../LinuxTargetHelper"
 import { createStageDir, StageDir } from "../targetUtil"
 import { buildAppImage } from "./appImageUtil"
+import { signAppImage } from "./appImageSign"
 import { BlockMapDataHolder } from "builder-util-runtime"
 
 // https://unix.stackexchange.com/questions/375191/append-to-sub-directory-inside-squashfs-file
@@ -102,15 +103,44 @@ export default class AppImageTarget extends Target {
     }
     await stageDir.cleanup()
 
-    await packager.info.emitArtifactBuildCompleted({
-      file: artifactPath,
-      safeArtifactName: packager.computeSafeArtifactName(artifactName, "AppImage", arch, false),
-      target: this,
-      arch,
-      packager,
-      isWriteUpdateInfo: true,
-      updateInfo,
-    })
+    // Sign AppImage if configured
+    await signAppImage(artifactPath, options)
+
+    const artifacts: Array<Promise<void>> = []
+
+    artifacts.push(
+      packager.info.emitArtifactBuildCompleted({
+        file: artifactPath,
+        safeArtifactName: packager.computeSafeArtifactName(artifactName, "AppImage", arch, false),
+        target: this,
+        arch,
+        packager,
+        isWriteUpdateInfo: true,
+        updateInfo,
+      })
+    )
+
+    // Emit detached signature as a separate artifact if it was generated
+    const signOpts = typeof options.sign === "object" && options.sign != null ? options.sign : null
+    if (signOpts?.detachedSigFile) {
+      const sigPath = `${artifactPath}.sig`
+      const sigExists = await import("fs-extra").then(fs => fs.pathExists(sigPath))
+      if (sigExists) {
+        artifacts.push(
+          packager.info.emitArtifactBuildCompleted({
+            file: sigPath,
+            safeArtifactName: packager.computeSafeArtifactName(`${artifactName}.sig`, "AppImage", arch, false),
+            target: this,
+            arch,
+            packager,
+            isWriteUpdateInfo: false,
+            updateInfo: {} as any,
+          })
+        )
+      }
+    }
+
+    await Promise.all(artifacts)
   }
 
   private async buildFuse2AppImage(props: {
