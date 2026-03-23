@@ -60,6 +60,17 @@ function resolveSignConfig(options: AppImageOptions): ResolvedSignConfig | null 
 /**
  * Signs an AppImage by embedding a GPG detached signature into its `.sha256_sig` ELF section,
  * following the AppImage signing specification.
+ *
+ * Specification: https://docs.appimage.org/packaging-guide/optional/signatures.html
+ * ELF section layout: https://github.com/AppImage/AppImageSpec/blob/master/draft.md#signatures
+ *
+ * The process:
+ * 1. Locate the `.sha256_sig` section (pre-allocated in the AppImage runtime, typically 1024 bytes)
+ * 2. Zero the section so the signature covers the file without a previous signature
+ * 3. Create an ASCII-armored GPG detached signature of the file
+ * 4. Write the signature back into the `.sha256_sig` section
+ *
+ * The resulting AppImage can be verified with: ./<name>.AppImage --appimage-signature
  */
 export async function signAppImage(appImagePath: string, options: AppImageOptions): Promise<void> {
   const config = resolveSignConfig(options)
