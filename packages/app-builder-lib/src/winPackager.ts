@@ -129,8 +129,9 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       return false
     }
 
-    this.signingQueue = this.signingQueue.then(() => this._sign(file))
-    return this.signingQueue
+    const promise = this.signingQueue.then(() => this._sign(file))
+    this.signingQueue = promise.catch(() => false)
+    return promise
   }
 
   private async _sign(file: string): Promise<boolean> {
