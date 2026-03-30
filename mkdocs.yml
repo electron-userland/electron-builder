@@ -1,3 +1,4 @@
+docs_dir: pages
 site_name: electron-builder
 site_url: https://www.electron.build
 use_directory_urls: false
