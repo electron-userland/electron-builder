@@ -97,7 +97,7 @@ importers:
         version: 0.64.0
       vitest:
         specifier: ^3.2.2
-        version: 3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.4))(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
+        version: 3.2.4(@types/debug@4.1.13)(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.4))(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
 
   packages/app-builder-lib:
     dependencies:
@@ -268,8 +268,8 @@ importers:
         specifier: 7.24.7
         version: 7.24.7(@babel/core@7.24.9)
       '@types/debug':
-        specifier: 4.1.7
-        version: 4.1.7
+        specifier: 4.1.13
+        version: 4.1.13
       '@types/ejs':
         specifier: 3.1.0
         version: 3.1.0
@@ -381,8 +381,8 @@ importers:
         version: 1.4.1
     devDependencies:
       '@types/debug':
-        specifier: 4.1.7
-        version: 4.1.7
+        specifier: 4.1.13
+        version: 4.1.13
       '@types/sax':
         specifier: 1.2.3
         version: 1.2.3
@@ -695,7 +695,7 @@ importers:
         version: 1.6.3
       vitest:
         specifier: ^3.0.4
-        version: 3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.4))(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
+        version: 3.2.4(@types/debug@4.1.13)(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.4))(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
       vitest-mock-commonjs:
         specifier: ^1.0.2
         version: 1.0.2
@@ -2273,6 +2273,9 @@ packages:
   '@types/cross-spawn@6.0.6':
     resolution: {integrity: sha512-fXRhhUkG4H3TQk5dBhQ7m/JDdSNHKwR2BBia62lhwEIq9xGiQKLxd6LymNhn47SjXhsUEPmxi+PKw2OkW4LLjA==}
 
+  '@types/debug@4.1.13':
+    resolution: {integrity: sha512-KSVgmQmzMwPlmtljOomayoR89W4FynCAi3E8PPs7vmDVPe84hT+vGPKkJfThkmXs0x0jAaa9U8uW8bbfyS2fWw==}
+
   '@types/debug@4.1.7':
     resolution: {integrity: sha512-9AonUzyTjXXhEOa0DnqpzZi6VHlqKMswga9EXjpXnnqxwLtdvPPtlO8evrI5D9S6asFRCQ6v+wpiUKbw+vKqyg==}
 
@@ -2571,6 +2574,7 @@ packages:
   '@xmldom/xmldom@0.8.10':
     resolution: {integrity: sha512-2WALfTl4xo2SkGCYRt6rDTFfk9R1czmBvUQy12gK2KuRKIpWEhcbbzy8EZXtz/jkRqHX8bFEc6FC1HjX4TUWYw==}
     engines: {node: '>=10.0.0'}
+    deprecated: this version has critical issues, please update to the latest version
 
   abbrev@3.0.1:
     resolution: {integrity: sha512-AO2ac6pjRB3SJmGJo+v5/aK6Omggp6fsLrs6wN9bd35ulu4cCwaAU9+7ZhXjeqHVkaHThLuzH0nZr0YpCDhygg==}
@@ -7067,6 +7071,10 @@ snapshots:
     dependencies:
       '@types/node': 22.13.17
 
+  '@types/debug@4.1.13':
+    dependencies:
+      '@types/ms': 2.1.0
+
   '@types/debug@4.1.7':
     dependencies:
       '@types/ms': 2.1.0
@@ -7390,7 +7398,7 @@ snapshots:
       sirv: 3.0.1
       tinyglobby: 0.2.14
       tinyrainbow: 2.0.0
-      vitest: 3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.4))(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
+      vitest: 3.2.4(@types/debug@4.1.13)(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.4))(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
 
   '@vitest/utils@3.0.4':
     dependencies:
@@ -10069,7 +10077,7 @@ snapshots:
 
   vitest-mock-commonjs@1.0.2: {}
 
-  vitest@3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.4))(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1):
+  vitest@3.2.4(@types/debug@4.1.13)(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.4))(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1):
     dependencies:
       '@types/chai': 5.2.2
       '@vitest/expect': 3.2.4
@@ -10095,6 +10103,7 @@ snapshots:
       vite-node: 3.2.4(@types/node@22.13.17)(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
       why-is-node-running: 2.3.0
     optionalDependencies:
+      '@types/debug': 4.1.13
       '@types/node': 22.13.17
       '@vitest/ui': 3.0.4(vitest@3.2.4)
     transitivePeerDependencies:
