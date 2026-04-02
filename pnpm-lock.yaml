@@ -47,9 +47,6 @@ importers:
       '@typescript-eslint/parser':
         specifier: 8.17.0
         version: 8.17.0(eslint@9.39.2(jiti@2.4.2))(typescript@5.8.2)
-      '@vitest/ui':
-        specifier: 3.0.4
-        version: 3.0.4(vitest@3.2.4)
       chalk:
         specifier: ^4.1.2
         version: 4.1.2
@@ -74,9 +71,6 @@ importers:
       fs-extra:
         specifier: 10.1.0
         version: 10.1.0
-      is-ci:
-        specifier: ^4.1.0
-        version: 4.1.0
       prettier:
         specifier: 3.7.4
         version: 3.7.4
@@ -95,9 +89,6 @@ importers:
       typescript-json-schema:
         specifier: 0.64.0
         version: 0.64.0
-      vitest:
-        specifier: ^3.2.2
-        version: 3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.4))(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
 
   packages/app-builder-lib:
     dependencies:
@@ -3664,10 +3655,6 @@ packages:
   is-arrayish@0.2.1:
     resolution: {integrity: sha512-zz06S8t0ozoDXMG+ube26zeCTNXcKIPJZJi8hBrF4idCLms4CG9QtK7qBl1boi5ODzFpjswb5JPmHCbMpjaYzg==}
 
-  is-ci@4.1.0:
-    resolution: {integrity: sha512-Ab9bQDQ11lWootZUI5qxgN2ZXwxNI5hTwnsvOc1wyxQ7zQ8OkEDw79mI0+9jI3x432NfwbVRru+3noJfXF6lSQ==}
-    hasBin: true
-
   is-core-module@2.16.1:
     resolution: {integrity: sha512-UfoeMA6fIJ8wTYFEUjelnaGI67v6+N7qXJEvQuIGa99l4xsCruSYOVSQ0uPANn4dAzm8lkYPaKLrrijLq7x23w==}
     engines: {node: '>= 0.4'}
@@ -6909,7 +6896,8 @@ snapshots:
 
   '@pkgr/core@0.2.9': {}
 
-  '@polka/url@1.0.0-next.28': {}
+  '@polka/url@1.0.0-next.28':
+    optional: true
 
   '@rollup/rollup-android-arm-eabi@4.39.0':
     optional: true
@@ -7360,6 +7348,7 @@ snapshots:
   '@vitest/pretty-format@3.0.4':
     dependencies:
       tinyrainbow: 2.0.0
+    optional: true
 
   '@vitest/pretty-format@3.2.4':
     dependencies:
@@ -7391,12 +7380,14 @@ snapshots:
       tinyglobby: 0.2.14
       tinyrainbow: 2.0.0
       vitest: 3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.4))(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
+    optional: true
 
   '@vitest/utils@3.0.4':
     dependencies:
       '@vitest/pretty-format': 3.0.4
       loupe: 3.2.1
       tinyrainbow: 2.0.0
+    optional: true
 
   '@vitest/utils@3.2.4':
     dependencies:
@@ -8323,7 +8314,8 @@ snapshots:
     optionalDependencies:
       picomatch: 4.0.2
 
-  fflate@0.8.2: {}
+  fflate@0.8.2:
+    optional: true
 
   file-entry-cache@8.0.0:
     dependencies:
@@ -8688,10 +8680,6 @@ snapshots:
       sprintf-js: 1.1.3
 
   is-arrayish@0.2.1: {}
-
-  is-ci@4.1.0:
-    dependencies:
-      ci-info: 4.3.1
 
   is-core-module@2.16.1:
     dependencies:
@@ -9113,7 +9101,8 @@ snapshots:
 
   mri@1.2.0: {}
 
-  mrmime@2.0.1: {}
+  mrmime@2.0.1:
+    optional: true
 
   ms@2.1.3: {}
 
@@ -9636,6 +9625,7 @@ snapshots:
       '@polka/url': 1.0.0-next.28
       mrmime: 2.0.1
       totalist: 3.0.1
+    optional: true
 
   slash@3.0.0: {}
 
@@ -9838,7 +9828,8 @@ snapshots:
 
   toml@3.0.0: {}
 
-  totalist@3.0.1: {}
+  totalist@3.0.1:
+    optional: true
 
   tr46@0.0.3: {}
 

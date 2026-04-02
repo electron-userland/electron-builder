@@ -201,7 +201,7 @@ function fixBundleDependenciesField(data: any) {
         if (!data.dependencies) {
           data.dependencies = {}
         }
-        if (!("bd" in data.dependencies)) {
+        if (!(bd in data.dependencies)) {
           data.dependencies[bd] = "*"
         }
         return true
