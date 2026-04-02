@@ -56,7 +56,9 @@
     "typedoc": "^0.26.7",
     "typedoc-plugin-markdown": "4.2.8",
     "typescript": "^5.6.2",
-    "typescript-json-schema": "0.64.0"
+    "typescript-json-schema": "0.64.0",
+    "is-ci": "^3.0.1",
+    "vitest": "^1.6.0"
   },
   "engines": {
     "node": ">=14.14",
