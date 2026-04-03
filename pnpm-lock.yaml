@@ -47,6 +47,9 @@ importers:
       '@typescript-eslint/parser':
         specifier: 8.17.0
         version: 8.17.0(eslint@9.39.2(jiti@2.4.2))(typescript@5.8.2)
+      '@vitest/ui':
+        specifier: 3.0.4
+        version: 3.0.4(vitest@3.2.4)
       chalk:
         specifier: ^4.1.2
         version: 4.1.2
@@ -71,6 +74,9 @@ importers:
       fs-extra:
         specifier: 10.1.0
         version: 10.1.0
+      is-ci:
+        specifier: ^4.1.0
+        version: 4.1.0
       prettier:
         specifier: 3.7.4
         version: 3.7.4
@@ -89,6 +95,9 @@ importers:
       typescript-json-schema:
         specifier: 0.64.0
         version: 0.64.0
+      vitest:
+        specifier: ^3.2.2
+        version: 3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.4))(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
 
   packages/app-builder-lib:
     dependencies:
@@ -678,21 +687,15 @@ importers:
       '@types/which':
         specifier: ^3.0.4
         version: 3.0.4
-      '@vitest/ui':
-        specifier: 3.0.4
-        version: 3.0.4(vitest@3.2.4)
       fast-xml-parser:
         specifier: 4.4.1
         version: 4.4.1
-      is-ci:
-        specifier: ^4.1.0
-        version: 4.1.0
       sanitize-filename:
         specifier: ^1.6.3
         version: 1.6.3
       vitest:
         specifier: ^3.0.4
-        version: 3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4)(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
+        version: 3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.4))(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
       vitest-mock-commonjs:
         specifier: ^1.0.2
         version: 1.0.2
@@ -7387,7 +7390,7 @@ snapshots:
       sirv: 3.0.1
       tinyglobby: 0.2.14
       tinyrainbow: 2.0.0
-      vitest: 3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4)(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
+      vitest: 3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.4))(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
 
   '@vitest/utils@3.0.4':
     dependencies:
@@ -10066,7 +10069,7 @@ snapshots:
 
   vitest-mock-commonjs@1.0.2: {}
 
-  vitest@3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4)(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1):
+  vitest@3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.4))(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1):
     dependencies:
       '@types/chai': 5.2.2
       '@vitest/expect': 3.2.4
