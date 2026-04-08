@@ -1,5 +1,5 @@
 import { checkBuildRequestOptions } from "app-builder-lib"
-import { doMergeConfigs } from "app-builder-lib/out/util/config/config.js"
+import { doMergeConfigs } from "app-builder-lib"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { createYargs } from "electron-builder"
 import { promises as fs } from "fs"

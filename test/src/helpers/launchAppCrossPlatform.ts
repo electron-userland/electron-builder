@@ -1,4 +1,4 @@
-import { getBinFromUrl } from "app-builder-lib/src/binDownload"
+import { getBinFromUrl } from "app-builder-lib"
 import { isEmptyOrSpaces } from "builder-util"
 import { ChildProcess, spawn } from "child_process"
 import { chmodSync } from "fs"

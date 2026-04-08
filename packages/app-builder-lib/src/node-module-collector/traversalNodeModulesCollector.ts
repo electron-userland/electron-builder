@@ -1,7 +1,7 @@
 import { log } from "builder-util"
 import * as path from "path"
-import { LogMessageByKey } from "./moduleManager"
-import { NodeModulesCollector } from "./nodeModulesCollector"
+import { LogMessageByKey } from "./moduleManager.js"
+import { NodeModulesCollector } from "./nodeModulesCollector.js"
 import { PM } from "./packageManager.js"
 import { TraversedDependency } from "./types.js"
 

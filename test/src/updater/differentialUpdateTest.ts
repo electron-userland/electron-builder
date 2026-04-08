@@ -12,7 +12,7 @@ import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, testAppCacheDirName, tuneTestUp
 import { mockForNodeRequire } from "vitest-mock-commonjs"
 import { ExpectStatic } from "vitest"
 import { getRanLocalServerPath } from "../helpers/launchAppCrossPlatform.js"
-import { ToolsetConfig } from "app-builder-lib/src/configuration.js"
+import { ToolsetConfig } from "app-builder-lib/out/configuration.js"
 
 async function doBuild(
   expect: ExpectStatic,

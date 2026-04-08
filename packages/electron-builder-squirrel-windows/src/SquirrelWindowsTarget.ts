@@ -1,12 +1,9 @@
-import { InvalidConfigurationError, log, isEmptyOrSpaces, exists } from "builder-util"
-import { execWine } from "app-builder-lib"
-import { getBinFromUrl } from "app-builder-lib"
-import { sanitizeFileName } from "builder-util/out/filename"
-import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
-import * as path from "path"
+import { Arch, execWine, getArchSuffix, getBinFromUrl, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
+import { exists, InvalidConfigurationError, isEmptyOrSpaces, log, sanitizeFileName } from "builder-util"
+import { convertVersion, createWindowsInstaller, Options as SquirrelOptions } from "electron-winstaller"
 import * as fs from "fs"
 import * as os from "os"
-import { Options as SquirrelOptions, createWindowsInstaller, convertVersion } from "electron-winstaller"
+import * as path from "path"
 
 export default class SquirrelWindowsTarget extends Target {
   //tslint:disable-next-line:no-object-literal-type-assertion

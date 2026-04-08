@@ -78,6 +78,9 @@ export { getConfig } from "./util/config/config.js"
 export { getElectronVersion } from "./electron/electronVersion.js"
 export { execWine } from "./wine.js"
 export { getBinFromUrl } from "./binDownload.js"
+export { PM } from "./node-module-collector/packageManager.js"
+export { doMergeConfigs } from "./util/config/config.js"
+export { getWindowsKitsBundle } from "./toolsets/windows.js"
 
 const expectedOptions = new Set(["publish", "targets", "mac", "win", "linux", "projectDir", "platformPackagerFactory", "config", "effectiveOptionComputed", "prepackaged"])
 
