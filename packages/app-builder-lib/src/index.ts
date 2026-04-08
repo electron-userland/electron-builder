@@ -69,6 +69,15 @@ export { PlatformPackager } from "./platformPackager.js"
 export { PublishManager } from "./publish/PublishManager.js"
 export { WinPackager } from "./winPackager.js"
 export { readAsar } from "./asar/asar.js"
+export { installOrRebuild } from "./util/yarn.js"
+export { PACKAGE_VERSION } from "./version.js"
+export { createLazyProductionDeps } from "./util/packageDependencies.js"
+export { determinePackageManagerEnv } from "./node-module-collector/index.js"
+export { computeDefaultAppDirectory } from "./util/config/config.js"
+export { getConfig } from "./util/config/config.js"
+export { getElectronVersion } from "./electron/electronVersion.js"
+export { execWine } from "./wine.js"
+export { getBinFromUrl } from "./binDownload.js"
 
 const expectedOptions = new Set(["publish", "targets", "mac", "win", "linux", "projectDir", "platformPackagerFactory", "config", "effectiveOptionComputed", "prepackaged"])
 
