@@ -19,7 +19,7 @@ import { BlockMapDataHolder } from "builder-util-runtime"
 export const APP_RUN_ENTRYPOINT = "AppRun"
 
 export default class AppImageTarget extends Target {
-  readonly options: AppImageOptions = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
+  readonly options: AppImageOptions
 
   private readonly desktopEntry: Lazy<string>
 
@@ -30,6 +30,7 @@ export default class AppImageTarget extends Target {
     readonly outDir: string
   ) {
     super("appImage")
+    this.options = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
 
     this.desktopEntry = new Lazy<string>(() => {
       const appimageTool = packager.config.toolsets?.appimage

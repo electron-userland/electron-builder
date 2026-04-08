@@ -1,7 +1,7 @@
 import * as path from "path"
 import * as fs from "fs-extra"
 import { copyOrLinkFile, log } from "builder-util"
-import { AppImageBuilderOptions } from "./appImageUtil"
+import { AppImageBuilderOptions } from "./appImageUtil.js"
 
 const ICON_DIR_RELATIVE_PATH = "usr/share/icons/hicolor"
 const MIME_TYPE_DIR_RELATIVE_PATH = "usr/share/mime/packages"
