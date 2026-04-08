@@ -1,7 +1,7 @@
-import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
-import { execWine } from "app-builder-lib"
-import { getBinFromUrl } from "app-builder-lib"
-import { sanitizeFileName } from "builder-util"
+import { InvalidConfigurationError, log, isEmptyOrSpaces, exists } from "builder-util"
+import { execWine } from "app-builder-lib/out/wine"
+import { getBinFromUrl } from "app-builder-lib/out/binDownload"
+import { sanitizeFileName } from "builder-util/out/filename"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
 import * as path from "path"
 import * as fs from "fs"
@@ -9,7 +9,8 @@ import * as os from "os"
 import { Options as SquirrelOptions, createWindowsInstaller, convertVersion } from "electron-winstaller"
 
 export default class SquirrelWindowsTarget extends Target {
-  readonly options: SquirrelWindowsOptions
+  //tslint:disable-next-line:no-object-literal-type-assertion
+  readonly options: SquirrelWindowsOptions = { ...this.packager.platformSpecificBuildOptions, ...this.packager.config.squirrelWindows } as SquirrelWindowsOptions
 
   isAsyncSupported = false
 
@@ -18,30 +19,26 @@ export default class SquirrelWindowsTarget extends Target {
     readonly outDir: string
   ) {
     super("squirrel")
-    this.options = { ...this.packager.platformSpecificBuildOptions, ...this.packager.config.squirrelWindows }
   }
 
   private async prepareSignedVendorDirectory(): Promise<string> {
     const customSquirrelVendorDirectory = this.options.customSquirrelVendorDir
     const tmpVendorDirectory = await this.packager.info.tempDirManager.createTempDir({ prefix: "squirrel-windows-vendor" })
 
-    if (isEmptyOrSpaces(customSquirrelVendorDirectory) || !fs.existsSync(customSquirrelVendorDirectory)) {
-      log.warn({ customSquirrelVendorDirectory: customSquirrelVendorDirectory }, "unable to access custom Squirrel.Windows vendor directory, falling back to default vendor ")
-      const windowInstallerPackage = require.resolve("electron-winstaller/package.json")
-      const vendorDirectory = path.join(path.dirname(windowInstallerPackage), "vendor")
-
-      const squirrelBin = await getBinFromUrl(
-        "squirrel.windows@1.0.0",
-        "squirrel.windows-2.0.1-patched.7z",
-        "DWijIRRElidu/Rq0yegAKqo2g6aVJUPvcRyvkzUoBPbRasIk61P6xY2fBMdXw6wT17md7NzrTI9/zA1wT9vEqg=="
-      )
-
-      await fs.promises.cp(vendorDirectory, tmpVendorDirectory, { recursive: true })
-      // copy the patched squirrel to tmp vendor directory
-      await fs.promises.cp(path.join(squirrelBin, "electron-winstaller", "vendor"), tmpVendorDirectory, { recursive: true })
-    } else {
-      // copy the custom squirrel vendor directory to tmp vendor directory
+    if (customSquirrelVendorDirectory && (await exists(customSquirrelVendorDirectory))) {
       await fs.promises.cp(customSquirrelVendorDirectory, tmpVendorDirectory, { recursive: true })
+    } else {
+      if (!isEmptyOrSpaces(customSquirrelVendorDirectory)) {
+        log.warn({ customSquirrelVendorDirectory }, "unable to access custom Squirrel.Windows vendor directory, falling back to default vendor")
+      }
+
+      const windowInstallerPackage = require.resolve("electron-winstaller/package.json")
+      const [squirrelBin] = await Promise.all([
+        getBinFromUrl("squirrel.windows@1.0.0", "squirrel.windows-2.0.1-patched.7z", "DWijIRRElidu/Rq0yegAKqo2g6aVJUPvcRyvkzUoBPbRasIk61P6xY2fBMdXw6wT17md7NzrTI9/zA1wT9vEqg=="),
+        fs.promises.cp(path.join(path.dirname(windowInstallerPackage), "vendor"), tmpVendorDirectory, { recursive: true }),
+      ])
+
+      await fs.promises.cp(path.join(squirrelBin, "electron-winstaller", "vendor"), tmpVendorDirectory, { recursive: true })
     }
 
     const files = await fs.promises.readdir(tmpVendorDirectory)

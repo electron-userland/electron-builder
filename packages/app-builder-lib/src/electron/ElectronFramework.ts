@@ -88,38 +88,54 @@ async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
 }
 
 async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOptions) {
-  const {
-    packager: { config, platformSpecificBuildOptions },
-  } = options
-  const wantedLanguages = asArray(platformSpecificBuildOptions.electronLanguages || config.electronLanguages)
-  if (!wantedLanguages.length) {
-    return
-  }
+  const { packager, appOutDir } = options
+  const { config, platformSpecificBuildOptions, platform } = packager
 
-  const { dirs, langFileExt } = getLocalesConfig(options)
-  // noinspection SpellCheckingInspection
-  const deletedFiles = async (dir: string) => {
-    await asyncPool(MAX_FILE_REQUESTS, await readdir(dir), async file => {
-      if (path.extname(file) !== langFileExt) {
-        return
-      }
-
-      const language = path.basename(file, langFileExt)
-      if (!wantedLanguages.includes(language)) {
-        return rm(path.join(dir, file), { recursive: true, force: true })
-      }
-      return
-    })
-  }
-  await Promise.all(dirs.map(deletedFiles))
-
-  function getLocalesConfig(options: BeforeCopyExtraFilesOptions) {
-    const { appOutDir, packager } = options
-    if (packager.platform === Platform.MAC) {
+  const getLocalesConfig = () => {
+    if (platform === Platform.MAC) {
       return { dirs: [packager.getResourcesDir(appOutDir), packager.getMacOsElectronFrameworkResourcesDir(appOutDir)], langFileExt: ".lproj" }
     }
     return { dirs: [path.join(packager.getResourcesDir(appOutDir), "..", "locales")], langFileExt: ".pak" }
   }
+
+  const wantedLanguages = asArray(platformSpecificBuildOptions.electronLanguages || config.electronLanguages)
+    .map(it => it.trim().toLowerCase())
+    .filter(it => it.length > 0)
+  if (!wantedLanguages.length) {
+    return
+  }
+
+  const { dirs, langFileExt } = getLocalesConfig()
+  // noinspection SpellCheckingInspection
+  const deleteNonMatchedLanguages: (dir: string) => Promise<Promise<void>[] | undefined> = async (dir: string) => {
+    const files = await readdir(dir)
+    return files.map(async file => {
+      if (path.extname(file) !== langFileExt) {
+        return
+      }
+
+      const language = path.basename(file, langFileExt).toLowerCase()
+      const isWantedLocale = wantedLanguages.some(
+        wantedLanguage =>
+          // exact file
+          wantedLanguage === language ||
+          // prefix (e.g. "en" matches "en-US")
+          wantedLanguage.startsWith(`${language}-`) ||
+          // prefix (e.g. "en" matches "en_US")
+          wantedLanguage.startsWith(`${language}_`)
+      )
+      if (isWantedLocale) {
+        return undefined
+      }
+      return rm(path.join(dir, file), { recursive: true, force: true })
+    })
+  }
+  const allDeletedFiles = (await Promise.all(dirs.map(deleteNonMatchedLanguages))).flat().filter((it): it is Promise<void> => it != null)
+  if (allDeletedFiles.length === 0) {
+    log.warn({ electronLanguages: wantedLanguages }, "no locales found matching wanted languages, skipping cleanup")
+    return
+  }
+  await asyncPool(MAX_FILE_REQUESTS, allDeletedFiles, it => it)
 }
 
 class ElectronFramework implements Framework {

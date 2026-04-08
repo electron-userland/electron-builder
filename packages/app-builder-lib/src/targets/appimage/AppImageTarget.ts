@@ -32,8 +32,11 @@ export default class AppImageTarget extends Target {
     super("appImage")
 
     this.desktopEntry = new Lazy<string>(() => {
-      const args = this.options.executableArgs?.join(" ") || "--no-sandbox"
-      return helper.computeDesktopEntry(this.options, `${APP_RUN_ENTRYPOINT} ${args} %U`, {
+      const appimageTool = packager.config.toolsets?.appimage
+      const defaultArgs = appimageTool == null || appimageTool === "0.0.0" ? ["--no-sandbox"] : []
+      const args = this.options.executableArgs ?? defaultArgs
+      const exec = [APP_RUN_ENTRYPOINT, ...args, "%U"].join(" ")
+      return helper.computeDesktopEntry(this.options, exec, {
         "X-AppImage-Version": `${packager.appInfo.buildVersion}`,
       })
     })
