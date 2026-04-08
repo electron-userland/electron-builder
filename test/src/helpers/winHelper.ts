@@ -1,7 +1,7 @@
 import { readAsarJson } from "app-builder-lib"
 import { walk } from "builder-util"
 import { Arch, Platform } from "electron-builder"
-import { outputFile } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
@@ -91,7 +91,7 @@ export async function doTest(
 
   // run installer again to test uninstall
   const appDataFile = path.join(wine.userDir!, "Application Data", name, "doNotDeleteMe")
-  await outputFile(appDataFile, "app data must be not removed")
+  await fsExtra.outputFile(appDataFile, "app data must be not removed")
   fsBefore = await listFiles()
   await wine.exec(path.join(outDir, `${productFilename} Setup 1.1.0.exe`), "/S")
   fsAfter = await listFiles()

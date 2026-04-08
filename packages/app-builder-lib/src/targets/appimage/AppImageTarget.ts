@@ -1,6 +1,6 @@
 import { IconInfo } from "../../platformPackager.js"
 import { Arch, log, serializeToYaml } from "builder-util"
-import { outputFile } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../../core.js"
@@ -68,7 +68,7 @@ export default class AppImageTarget extends Target {
     ])
 
     if (publishConfig != null) {
-      await outputFile(path.join(packager.getResourcesDir(appOutDir), "app-update.yml"), serializeToYaml(publishConfig))
+      await fsExtra.outputFile(path.join(packager.getResourcesDir(appOutDir), "app-update.yml"), serializeToYaml(publishConfig))
     }
 
     if (this.packager.packagerOptions.effectiveOptionComputed != null && (await this.packager.packagerOptions.effectiveOptionComputed({ desktop: desktopEntry }))) {

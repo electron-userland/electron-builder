@@ -9,7 +9,7 @@ import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { convertVersion } from "electron-winstaller"
 import { PublishPolicy } from "electron-publish"
-import { copyFile, emptyDir, mkdir, writeJson } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
@@ -155,7 +155,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
   // non-macOS test uses the same dir as macOS test, but we cannot share node_modules (because tests executed in parallel)
   const dir = customTmpDir == null ? await tmpDir.createTempDir({ prefix: "test_project" }) : path.resolve(customTmpDir)
   if (customTmpDir != null) {
-    await emptyDir(dir)
+    await fsExtra.emptyDir(dir)
     log.info({ customTmpDir }, "custom temp dir used")
   }
 
@@ -242,7 +242,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       const shouldUpdateLockfiles = !!process.env.UPDATE_LOCKFILE_FIXTURES && !!checkOptions.storeDepsLockfileSnapshot
       // check for lockfile fixture so we can use `--frozen-lockfile`
       if ((await exists(testFixtureLockfile)) && !shouldUpdateLockfiles) {
-        await copyFile(testFixtureLockfile, destLockfile)
+        await fsExtra.copyFile(testFixtureLockfile, destLockfile)
         lockfileFixtureApplied = true
       }
 
@@ -277,9 +277,9 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       if (shouldUpdateLockfiles) {
         const fixtureDir = path.dirname(testFixtureLockfile)
         if (!(await exists(fixtureDir))) {
-          await mkdir(fixtureDir)
+          await fsExtra.mkdir(fixtureDir)
         }
-        await copyFile(destLockfile, testFixtureLockfile)
+        await fsExtra.copyFile(destLockfile, testFixtureLockfile)
       }
 
       if (packagerOptions.projectDir != null) {
@@ -758,7 +758,7 @@ export async function modifyPackageJson(projectDir: string, task: (data: any) =>
   await fs.unlink(file)
 
   await fs.writeFile(path.join(projectDir, ".yarnrc.yml"), "nodeLinker: node-modules")
-  return await writeJson(file, data, { spaces: 2 })
+  return await fsExtra.writeJson(file, data, { spaces: 2 })
 }
 
 export function platform(platform: Platform): PackagerOptions {

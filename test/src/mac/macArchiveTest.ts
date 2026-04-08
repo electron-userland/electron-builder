@@ -1,7 +1,7 @@
 import { Arch, exec } from "builder-util"
 import { parseXml } from "builder-util-runtime"
 import { Platform } from "electron-builder"
-import { outputFile } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
 import pathSorter from "path-sort"
@@ -54,7 +54,7 @@ test.ifMac("extraDistFiles", ({ expect }) =>
     {
       signed: false,
       projectDirCreated: projectDir => {
-        return Promise.all([outputFile(path.join(projectDir, "extra.txt"), "test")])
+        return Promise.all([fsExtra.outputFile(path.join(projectDir, "extra.txt"), "test")])
       },
     }
   )

@@ -1,6 +1,6 @@
 import { Platform } from "app-builder-lib"
 import { PM } from "app-builder-lib/src/node-module-collector"
-import { copyFile, outputFile, rm, writeFile } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { app, assertPack, getFixtureDir, getPackageManagerWithVersion, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
@@ -48,10 +48,10 @@ describe.ifNotWindows("Package Managers", () => {
             false
           )
           await modifyPackageJson(projectDir, data => packageConfig(data, yarnVersion), true)
-          await writeFile(path.join(projectDir, "yarn.lock"), "")
-          await writeFile(path.join(projectDir, "app", "yarn.lock"), "")
-          await copyFile(path.join(getFixtureDir(), ".pnp.cjs"), path.join(projectDir, ".pnp.cjs"))
-          await rm(path.join(projectDir, ".yarnrc.yml"))
+          await fsExtra.writeFile(path.join(projectDir, "yarn.lock"), "")
+          await fsExtra.writeFile(path.join(projectDir, "app", "yarn.lock"), "")
+          await fsExtra.copyFile(path.join(getFixtureDir(), ".pnp.cjs"), path.join(projectDir, ".pnp.cjs"))
+          await fsExtra.rm(path.join(projectDir, ".yarnrc.yml"))
           await spawn("yarn", ["install"], {
             cwd: projectDir,
             env: testEnv,
@@ -85,9 +85,9 @@ describe.ifNotWindows("Package Managers", () => {
             false
           )
           await modifyPackageJson(projectDir, data => packageConfig(data, yarnBerryVersion), true)
-          await writeFile(path.join(projectDir, "yarn.lock"), "")
-          await writeFile(path.join(projectDir, "app", "yarn.lock"), "")
-          await copyFile(path.join(getFixtureDir(), ".pnp.cjs"), path.join(projectDir, ".pnp.cjs"))
+          await fsExtra.writeFile(path.join(projectDir, "yarn.lock"), "")
+          await fsExtra.writeFile(path.join(projectDir, "app", "yarn.lock"), "")
+          await fsExtra.copyFile(path.join(getFixtureDir(), ".pnp.cjs"), path.join(projectDir, ".pnp.cjs"))
           await spawn("yarn", ["install"], {
             cwd: projectDir,
             env: testEnv,
@@ -255,7 +255,7 @@ describe.ifNotWindows("Package Managers", () => {
                 "left-pad": "1.3.0",
               }
             }),
-            outputFile(path.join(projectDir, "bunfig.toml"), '[install]\nlinker = "isolated"\n'),
+            fsExtra.outputFile(path.join(projectDir, "bunfig.toml"), '[install]\nlinker = "isolated"\n'),
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
@@ -298,7 +298,7 @@ describe.ifNotWindows("Package Managers", () => {
                 "is-bigint": "1.0.4",
               }
             }),
-            outputFile(path.join(projectDir, "bunfig.toml"), '[install]\nlinker = "isolated"\n'),
+            fsExtra.outputFile(path.join(projectDir, "bunfig.toml"), '[install]\nlinker = "isolated"\n'),
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
@@ -339,7 +339,7 @@ describe.ifNotWindows("Package Managers", () => {
                 "left-pad": "1.3.0",
               }
             }),
-            outputFile(path.join(projectDir, "bunfig.toml"), '[install]\nlinker = "hoisted"\n'),
+            fsExtra.outputFile(path.join(projectDir, "bunfig.toml"), '[install]\nlinker = "hoisted"\n'),
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
@@ -382,7 +382,7 @@ describe.ifNotWindows("Package Managers", () => {
                 "is-bigint": "1.0.4",
               }
             }),
-            outputFile(path.join(projectDir, "bunfig.toml"), '[install]\nlinker = "hoisted"\n'),
+            fsExtra.outputFile(path.join(projectDir, "bunfig.toml"), '[install]\nlinker = "hoisted"\n'),
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
@@ -409,8 +409,8 @@ describe.ifNotWindows("Package Managers", () => {
             false
           )
           await modifyPackageJson(projectDir, data => packageConfig(data, yarnBerryVersion), true)
-          await writeFile(path.join(projectDir, "yarn.lock"), "")
-          await writeFile(path.join(projectDir, "app", "yarn.lock"), "")
+          await fsExtra.writeFile(path.join(projectDir, "yarn.lock"), "")
+          await fsExtra.writeFile(path.join(projectDir, "app", "yarn.lock"), "")
         },
       }
     ))
@@ -477,8 +477,8 @@ describe.ifNotWindows("Package Managers", () => {
             projectDirCreated: async (projectDir, tmpDir, testEnv) => {
               const tempDir = await tmpDir.getTempDir()
               const localPath = path.join(tempDir, "foo")
-              await outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT","dependencies":{"ms":"2.0.0"}}`)
-              await outputFile(path.join(localPath, "index.js"), `module.exports = require("ms")`)
+              await fsExtra.outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT","dependencies":{"ms":"2.0.0"}}`)
+              await fsExtra.outputFile(path.join(localPath, "index.js"), `module.exports = require("ms")`)
 
               const pmCommand = getPackageManagerWithVersion(pm).cli
               await spawn(pmCommand, ["install"], {

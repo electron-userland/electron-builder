@@ -1,5 +1,5 @@
 import { executeAppBuilder } from "builder-util"
-import { emptyDir } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import { chmod, mkdir, rename, writeFile } from "fs/promises"
 import * as path from "path"
 import { AfterPackContext } from "../configuration.js"
@@ -29,7 +29,7 @@ export class LibUiFramework implements Framework {
   ) {}
 
   async prepareApplicationStageDirectory(options: PrepareApplicationStageDirectoryOptions) {
-    await emptyDir(options.appOutDir)
+    await fsExtra.emptyDir(options.appOutDir)
 
     const packager = options.packager
     const platform = packager.platform

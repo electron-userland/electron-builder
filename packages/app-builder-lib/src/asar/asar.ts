@@ -1,5 +1,5 @@
-import { createFromBuffer } from "chromium-pickle-js"
-import { close, open, read, readFile, Stats } from "fs-extra"
+import * as chromiumPickleJs from "chromium-pickle-js"
+import * as fsExtra from "fs-extra"
 import * as path from "path"
 
 export interface ReadAsarHeader {
@@ -88,7 +88,7 @@ export class AsarFilesystem {
     return result
   }
 
-  addFileNode(file: string, dirNode: Node, size: number, unpacked: boolean, stat: Stats, integrity?: NodeIntegrity): Node {
+  addFileNode(file: string, dirNode: Node, size: number, unpacked: boolean, stat: fsExtra.Stats, integrity?: NodeIntegrity): Node {
     if (size > 4294967295) {
       throw new Error(`${file}: file size cannot be larger than 4.2GB`)
     }
@@ -147,26 +147,26 @@ export class AsarFilesystem {
 }
 
 export async function readAsarHeader(archive: string): Promise<ReadAsarHeader> {
-  const fd = await open(archive, "r")
+  const fd = await fsExtra.open(archive, "r")
   let size: number
   let headerBuf
   try {
     const sizeBuf = Buffer.allocUnsafe(8)
-    if ((await read(fd, sizeBuf, 0, 8, null as any)).bytesRead !== 8) {
+    if ((await fsExtra.read(fd, sizeBuf, 0, 8, null as any)).bytesRead !== 8) {
       throw new Error("Unable to read header size")
     }
 
-    const sizePickle = createFromBuffer(sizeBuf)
+    const sizePickle = chromiumPickleJs.createFromBuffer(sizeBuf)
     size = sizePickle.createIterator().readUInt32()
     headerBuf = Buffer.allocUnsafe(size)
-    if ((await read(fd, headerBuf, 0, size, null as any)).bytesRead !== size) {
+    if ((await fsExtra.read(fd, headerBuf, 0, size, null as any)).bytesRead !== size) {
       throw new Error("Unable to read header")
     }
   } finally {
-    await close(fd)
+    await fsExtra.close(fd)
   }
 
-  const headerPickle = createFromBuffer(headerBuf)
+  const headerPickle = chromiumPickleJs.createFromBuffer(headerBuf)
   return { header: headerPickle.createIterator().readString(), size }
 }
 
@@ -188,15 +188,15 @@ async function readFileFromAsar(filesystem: AsarFilesystem, filename: string, in
   }
 
   if (info.unpacked) {
-    return await readFile(path.join(`${filesystem.src}.unpacked`, filename))
+    return await fsExtra.readFile(path.join(`${filesystem.src}.unpacked`, filename))
   }
 
-  const fd = await open(filesystem.src, "r")
+  const fd = await fsExtra.open(filesystem.src, "r")
   try {
     const offset = 8 + filesystem.headerSize + parseInt(info.offset!, 10)
-    await read(fd, buffer, 0, size, offset)
+    await fsExtra.read(fd, buffer, 0, size, offset)
   } finally {
-    await close(fd)
+    await fsExtra.close(fd)
   }
   return buffer
 }

@@ -3,7 +3,7 @@ import { doMergeConfigs } from "app-builder-lib"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { createYargs } from "electron-builder"
 import { promises as fs } from "fs"
-import { outputFile, outputJson } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import * as path from "path"
 import { app, appTwo, appTwoThrows, assertPack, getFixtureDir, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester.js"
 import { ELECTRON_VERSION } from "./helpers/testConfig.js"
@@ -161,7 +161,7 @@ it.ifNotWindows("electron version from electron-prebuilt dependency", ({ expect 
           data.devDependencies = {}
         })
         return () =>
-          outputJson(path.join(projectDir, "node_modules", "electron-prebuilt", "package.json"), {
+          fsExtra.outputJson(path.join(projectDir, "node_modules", "electron-prebuilt", "package.json"), {
             version: ELECTRON_VERSION,
           })
       },
@@ -182,7 +182,7 @@ test.ifNotWindows("electron version from electron dependency", ({ expect }) =>
           data.devDependencies = {}
         })
         return () =>
-          outputJson(path.join(projectDir, "node_modules", "electron", "package.json"), {
+          fsExtra.outputJson(path.join(projectDir, "node_modules", "electron", "package.json"), {
             version: ELECTRON_VERSION,
           })
       },
@@ -399,8 +399,8 @@ test("smart unpack local module with dll file", ({ expect }) => {
       projectDirCreated: async (projectDir, tmpDir) => {
         const tmpPath = await tmpDir.getTempDir()
         const localPath = path.join(tmpPath, "foo")
-        await outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}`)
-        await outputFile(path.join(localPath, "test.dll"), `test`)
+        await fsExtra.outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}`)
+        await fsExtra.outputFile(path.join(localPath, "test.dll"), `test`)
         await modifyPackageJson(projectDir, data => {
           data.dependencies = {
             debug: "3.1.0",

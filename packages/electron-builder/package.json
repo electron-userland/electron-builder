@@ -57,7 +57,7 @@
     "chalk": "^4.1.2",
     "ci-info": "^4.2.0",
     "dmg-builder": "workspace:*",
-    "fs-extra": "^10.1.0",
+    "fs-extra": "^11.3.4",
     "lazy-val": "^1.0.5",
     "simple-update-notifier": "2.0.0",
     "yargs": "^17.6.2"

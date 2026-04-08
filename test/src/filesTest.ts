@@ -1,9 +1,9 @@
 import { TmpDir, archFromString, copyDir } from "builder-util"
 import { DIR_TARGET, Platform } from "electron-builder"
-import { outputFile } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { Mode, RWX } from "stat-mode"
+import statMode from "stat-mode"
 import { assertThat } from "./helpers/fileAssert.js"
 import { app, appThrows, assertPack, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
 import { ExpectStatic } from "vitest"
@@ -35,10 +35,10 @@ test.ifNotWindows("files", ({ expect }) =>
     {
       projectDirCreated: projectDir =>
         Promise.all([
-          outputFile(path.join(projectDir, "ignoreMe", "foo"), "data"),
-          outputFile(path.join(projectDir, "ignoreEmptyDir", "bar"), "data"),
-          outputFile(path.join(projectDir, "test.h"), "test that"),
-          outputFile(path.join(projectDir, "dist/electron/foo.js"), "data"),
+          fsExtra.outputFile(path.join(projectDir, "ignoreMe", "foo"), "data"),
+          fsExtra.outputFile(path.join(projectDir, "ignoreEmptyDir", "bar"), "data"),
+          fsExtra.outputFile(path.join(projectDir, "test.h"), "test that"),
+          fsExtra.outputFile(path.join(projectDir, "dist/electron/foo.js"), "data"),
         ]),
       packed: context => {
         const resources = path.join(context.getResources(Platform.LINUX), "app")
@@ -100,7 +100,7 @@ test.ifNotWindows("map resources", ({ expect }) =>
       },
     },
     {
-      projectDirCreated: projectDir => Promise.all([outputFile(path.join(projectDir, "foo", "old"), "data"), outputFile(path.join(projectDir, "license.txt"), "data")]),
+      projectDirCreated: projectDir => Promise.all([fsExtra.outputFile(path.join(projectDir, "foo", "old"), "data"), fsExtra.outputFile(path.join(projectDir, "license.txt"), "data")]),
       packed: context => {
         const resources = context.getResources(Platform.LINUX)
         return Promise.all([
@@ -132,13 +132,13 @@ async function doExtraResourcesTest(expect: ExpectStatic, platform: Platform) {
     {
       projectDirCreated: async projectDir => {
         return Promise.all([
-          outputFile(path.resolve(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
-          outputFile(path.resolve(projectDir, "bar/hello.txt"), "data"),
-          outputFile(path.resolve(projectDir, "dir-relative/f.txt"), "data"),
-          outputFile(path.resolve(projectDir, `bar/${process.arch}.txt`), "data"),
-          outputFile(path.resolve(projectDir, `${osName}/${process.arch}.txt`), "data"),
-          outputFile(path.resolve(projectDir, "platformSpecificR"), "platformSpecificR"),
-          outputFile(path.resolve(projectDir, "ignoreMe.txt"), "ignoreMe"),
+          fsExtra.outputFile(path.resolve(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
+          fsExtra.outputFile(path.resolve(projectDir, "bar/hello.txt"), "data"),
+          fsExtra.outputFile(path.resolve(projectDir, "dir-relative/f.txt"), "data"),
+          fsExtra.outputFile(path.resolve(projectDir, `bar/${process.arch}.txt`), "data"),
+          fsExtra.outputFile(path.resolve(projectDir, `${osName}/${process.arch}.txt`), "data"),
+          fsExtra.outputFile(path.resolve(projectDir, "platformSpecificR"), "platformSpecificR"),
+          fsExtra.outputFile(path.resolve(projectDir, "ignoreMe.txt"), "ignoreMe"),
         ])
       },
       packed: async context => {
@@ -188,14 +188,14 @@ test.ifNotWindows("extraResources - two-package", ({ expect }) => {
     {
       projectDirCreated: projectDir => {
         return Promise.all([
-          outputFile(path.join(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
-          outputFile(path.join(projectDir, "bar/hello.txt"), "data", { mode: 0o400 }),
-          outputFile(path.join(projectDir, `bar/${process.arch}.txt`), "data"),
-          outputFile(path.join(projectDir, `${osName}/${process.arch}.txt`), "data"),
-          outputFile(path.join(projectDir, "platformSpecificR"), "platformSpecificR"),
-          outputFile(path.join(projectDir, "ignoreMe.txt"), "ignoreMe"),
-          outputFile(path.join(projectDir, "executable"), "executable", { mode: 0o755 }),
-          outputFile(path.join(projectDir, "executableOnlyOwner"), "executable", { mode: 0o740 }),
+          fsExtra.outputFile(path.join(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
+          fsExtra.outputFile(path.join(projectDir, "bar/hello.txt"), "data", { mode: 0o400 }),
+          fsExtra.outputFile(path.join(projectDir, `bar/${process.arch}.txt`), "data"),
+          fsExtra.outputFile(path.join(projectDir, `${osName}/${process.arch}.txt`), "data"),
+          fsExtra.outputFile(path.join(projectDir, "platformSpecificR"), "platformSpecificR"),
+          fsExtra.outputFile(path.join(projectDir, "ignoreMe.txt"), "ignoreMe"),
+          fsExtra.outputFile(path.join(projectDir, "executable"), "executable", { mode: 0o755 }),
+          fsExtra.outputFile(path.join(projectDir, "executableOnlyOwner"), "executable", { mode: 0o740 }),
         ])
       },
       packed: async context => {
@@ -236,7 +236,7 @@ test.ifNotWindows("postpone symlink", async () => {
   const source = await tmpDir.getTempDir()
   const aSourceFile = path.join(source, "z", "Z")
   const bSourceFileLink = path.join(source, "B")
-  await outputFile(aSourceFile, "test")
+  await fsExtra.outputFile(aSourceFile, "test")
   await fs.symlink(aSourceFile, bSourceFileLink)
 
   const dest = await tmpDir.getTempDir()
@@ -246,15 +246,15 @@ test.ifNotWindows("postpone symlink", async () => {
 })
 
 async function allCan(file: string, execute: boolean) {
-  const mode = new Mode(await fs.stat(file))
+  const mode = new statMode.Mode(await fs.stat(file))
 
-  function checkExecute(value: RWX) {
+  function checkExecute(value: statMode.RWX) {
     if (value.execute !== execute) {
       throw new Error(`${file} is ${execute ? "not " : ""}executable`)
     }
   }
 
-  function checkRead(value: RWX) {
+  function checkRead(value: statMode.RWX) {
     if (!value.read) {
       throw new Error(`${file} is not readable`)
     }

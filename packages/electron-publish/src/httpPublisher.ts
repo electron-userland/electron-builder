@@ -1,5 +1,5 @@
 import { Arch } from "builder-util"
-import { stat } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import { ClientRequest } from "http"
 import { basename } from "path"
 import { PublishContext, UploadTask } from "./index.js"
@@ -35,7 +35,7 @@ export abstract class HttpPublisher extends Publisher {
       return
     }
 
-    const fileStat = await stat(task.file)
+    const fileStat = await fsExtra.stat(task.file)
 
     const progressBar = this.createProgressBar(fileName, fileStat.size)
     return this.doUpload(

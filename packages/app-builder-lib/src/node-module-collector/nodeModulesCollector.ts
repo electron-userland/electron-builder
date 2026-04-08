@@ -1,7 +1,7 @@
 import { exists, log, retry, TmpDir } from "builder-util"
 import * as childProcess from "child_process"
 import * as fs from "fs-extra"
-import { createWriteStream } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { hoist, type HoisterResult, type HoisterTree } from "./hoist.js"
@@ -359,7 +359,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     }
 
     await new Promise<void>((resolve, reject) => {
-      const outStream = createWriteStream(tempOutputFile)
+      const outStream = fsExtra.createWriteStream(tempOutputFile)
 
       const child = childProcess.spawn(command, args, {
         cwd,

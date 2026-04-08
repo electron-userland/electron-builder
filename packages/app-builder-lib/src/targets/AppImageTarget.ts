@@ -1,5 +1,5 @@
 import { Arch, serializeToYaml } from "builder-util"
-import { outputFile } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../core.js"
@@ -59,7 +59,7 @@ export default class AppImageTarget extends Target {
 
     const publishConfig = c[2]
     if (publishConfig != null) {
-      await outputFile(path.join(packager.getResourcesDir(stageDir.dir), "app-update.yml"), serializeToYaml(publishConfig))
+      await fsExtra.outputFile(path.join(packager.getResourcesDir(stageDir.dir), "app-update.yml"), serializeToYaml(publishConfig))
     }
 
     if (

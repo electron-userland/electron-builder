@@ -1,5 +1,5 @@
 import { debug7z, exec, exists, getPath7za, log, statOrNull, unlinkIfExists } from "builder-util"
-import { move } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import * as path from "path"
 import { create } from "tar"
 import { TmpDir } from "temp-file"
@@ -37,7 +37,7 @@ export async function tar(compression: CompressionLevel | any, format: string, o
     }
     await exec(lzipPath, [compression === "store" ? "-1" : "-9", "--keep" /* keep (don't delete) input files */, tarFile])
     // bloody lzip creates file in the same dir where input file with postfix `.lz`, option --output doesn't work
-    await move(`${tarFile}.lz`, outFile)
+    await fsExtra.move(`${tarFile}.lz`, outFile)
     return
   }
 

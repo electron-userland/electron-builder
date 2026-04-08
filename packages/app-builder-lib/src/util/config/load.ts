@@ -8,7 +8,7 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { resolveModule } from "../resolve.js"
 
-const jiti = createJiti(__filename)
+const jiti = createJiti(import.meta.filename)
 
 export interface ReadConfigResult<T> {
   readonly result: T

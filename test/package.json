@@ -17,7 +17,7 @@
     "electron-publish": "workspace:*",
     "electron-updater": "workspace:*",
     "electron-winstaller": "5.4.0",
-    "fs-extra": "^10.1.0",
+    "fs-extra": "^11.3.4",
     "js-yaml": "^4.1.0",
     "lazy-val": "^1.0.5",
     "path-sort": "^0.1.0",

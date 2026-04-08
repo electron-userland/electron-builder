@@ -1,7 +1,7 @@
 import { PlatformPackager } from "app-builder-lib"
 import { log } from "builder-util"
 import { dmgLicenseFromJSON } from "dmg-license"
-import { readFile, readJson } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import { load } from "js-yaml"
 import { getLicenseButtonsFile } from "./licenseButtons.js"
 import { getLicenseFiles } from "app-builder-lib"
@@ -40,7 +40,7 @@ export async function addLicenseToDmg(packager: PlatformPackager<any>, dmgPath: 
 
   for (const button of licenseButtonFiles) {
     const filepath = button.file
-    const label = filepath.endsWith(".yml") ? load(await readFile(filepath, "utf-8")) : await readJson(filepath)
+    const label = filepath.endsWith(".yml") ? load(await fsExtra.readFile(filepath, "utf-8")) : await fsExtra.readJson(filepath)
     if (label.description) {
       // to support original button file format
       label.message = label.description

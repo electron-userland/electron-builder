@@ -1,6 +1,6 @@
 import { DebugLogger, deepAssign, InvalidConfigurationError, log, safeStringifyJson, statOrNull } from "builder-util"
 import { Nullish } from "builder-util-runtime"
-import { readJson } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Configuration } from "../../configuration.js"
@@ -8,7 +8,7 @@ import { FileSet } from "../../options/PlatformSpecificBuildOptions.js"
 import { reactCra } from "../../presets/rectCra.js"
 import { PACKAGE_VERSION } from "../../version.js"
 import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load.js"
-const validateSchema = require("@develar/schema-utils")
+import validateSchema from "@develar/schema-utils"
 
 // https://github.com/electron-userland/electron-builder/issues/1847
 function mergePublish(config: Configuration, configFromOptions: Configuration) {
@@ -37,7 +37,7 @@ export async function getConfig(
   projectDir: string,
   configPath: string | null,
   configFromOptions: Configuration | Nullish,
-  packageMetadata: Lazy<Record<string, any> | null> = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))
+  packageMetadata: Lazy<Record<string, any> | null> = new Lazy(() => orNullIfFileNotExist(fsExtra.readJson(path.join(projectDir, "package.json"))))
 ): Promise<Configuration> {
   const configRequest: ReadConfigRequest = { packageKey: "build", configFilename: "electron-builder", projectDir, packageMetadata }
   const configAndEffectiveFile = await _getConfig<Configuration>(configRequest, configPath)
@@ -214,7 +214,7 @@ function getDefaultConfig(): Configuration {
   }
 }
 
-const schemeDataPromise = new Lazy(() => readJson(path.join(__dirname, "..", "..", "..", "scheme.json")))
+const schemeDataPromise = new Lazy(() => fsExtra.readJson(path.join(__dirname, "..", "..", "..", "scheme.json")))
 
 export async function validateConfiguration(config: Configuration, debugLogger: DebugLogger) {
   const extraMetadata = config.extraMetadata

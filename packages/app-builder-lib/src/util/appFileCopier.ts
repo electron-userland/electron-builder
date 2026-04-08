@@ -1,6 +1,6 @@
 import { AsyncTaskManager, FileCopier, FileTransformer, isEmptyOrSpaces, Link, log, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
 import { Stats } from "fs"
-import { ensureSymlink } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import { mkdir, readlink } from "fs/promises"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
@@ -74,7 +74,7 @@ export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager,
     await taskManager.awaitTasks()
   }
 
-  await asyncPool(MAX_FILE_REQUESTS, links, it => ensureSymlink(it.link, it.file))
+  await asyncPool(MAX_FILE_REQUESTS, links, it => fsExtra.ensureSymlink(it.link, it.file))
 }
 
 // os path separator is used

@@ -1,7 +1,7 @@
 import { readAsarJson } from "app-builder-lib"
 import { Platform } from "electron-builder"
 import { coerceTypes } from "electron-builder"
-import { readJson } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert.js"
 import { app, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
@@ -44,7 +44,7 @@ function createExtraMetadataTest(expect: ExpectStatic, asar: boolean) {
         if (asar) {
           expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "package.json")).toMatchSnapshot()
         } else {
-          expect(await readJson(path.join(context.getResources(Platform.LINUX), "app", "package.json"))).toMatchSnapshot()
+          expect(await fsExtra.readJson(path.join(context.getResources(Platform.LINUX), "app", "package.json"))).toMatchSnapshot()
         }
       },
     }

@@ -8,7 +8,7 @@ import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDo
 import { DOWNLOAD_PROGRESS } from "./types.js"
 import { VerifyUpdateCodeSignature } from "./main.js"
 import { findFile, Provider } from "./providers/Provider.js"
-import { unlink } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier.js"
 import { URL } from "url"
 
@@ -90,7 +90,7 @@ export class NsisUpdater extends BaseUpdater {
               })
             } catch (e: any) {
               try {
-                await unlink(packageFile)
+                await fsExtra.unlink(packageFile)
               } catch (_ignored) {
                 // ignore
               }

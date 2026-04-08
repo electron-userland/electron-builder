@@ -1,5 +1,5 @@
 import { orNullIfFileNotExist } from "builder-util"
-import { readFile } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import GitHost, { fromUrl } from "hosted-git-info"
 import * as path from "path"
 import { SourceRepositoryInfo } from "../core.js"
@@ -10,7 +10,7 @@ export function getRepositoryInfo(projectDir: string, metadata?: Metadata, devMe
 }
 
 async function getGitUrlFromGitConfig(projectDir: string): Promise<string | null> {
-  const data = await orNullIfFileNotExist(readFile(path.join(projectDir, ".git", "config"), "utf8"))
+  const data = await orNullIfFileNotExist(fsExtra.readFile(path.join(projectDir, ".git", "config"), "utf8"))
   if (data == null) {
     return null
   }

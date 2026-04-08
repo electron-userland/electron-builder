@@ -1,6 +1,6 @@
 import { GenericServerOptions } from "builder-util-runtime"
 import { Arch, build, Platform } from "electron-builder"
-import { outputFile } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
@@ -107,7 +107,7 @@ describe.ifNotWindows("LinuxPackager", () => {
           },
           {
             projectDirCreated: projectDir => {
-              return outputFile(
+              return fsExtra.outputFile(
                 path.join(projectDir, "build", "license.html"),
                 `
         <html lang="en">

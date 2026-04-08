@@ -16,7 +16,7 @@ import {
   TmpDir,
 } from "builder-util"
 import { CancellationToken, retry } from "builder-util-runtime"
-import { chmod, mkdirs, outputFile } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import { isCI } from "ci-info"
 import { Lazy } from "lazy-val"
 import { release as getOsRelease } from "os"
@@ -424,7 +424,7 @@ export class Packager {
     if (!isCI && (process.stdout as any).isTTY) {
       const effectiveConfigFile = path.join(commonOutDirWithoutPossibleOsMacro, "builder-effective-config.yaml")
       log.info({ file: log.filePath(effectiveConfigFile) }, "writing effective config")
-      await outputFile(effectiveConfigFile, getSafeEffectiveConfig(this.config))
+      await fsExtra.outputFile(effectiveConfigFile, getSafeEffectiveConfig(this.config))
     }
 
     // because artifact event maybe dispatched several times for different publish providers
@@ -669,8 +669,8 @@ function createOutDirIfNeed(targetList: Array<Target>, createdOutDirs: Set<strin
     Array.from(ourDirs)
       .sort()
       .map(dir => {
-        return mkdirs(dir)
-          .then(() => chmod(dir, 0o755) /* set explicitly */)
+        return fsExtra.mkdirs(dir)
+          .then(() => fsExtra.chmod(dir, 0o755) /* set explicitly */)
           .then(() => createdOutDirs.add(dir))
       })
   )

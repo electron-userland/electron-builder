@@ -1,5 +1,5 @@
 import { asArray, log, spawn } from "builder-util"
-import { pathExists } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import { homedir } from "os"
 import * as path from "path"
@@ -28,7 +28,7 @@ export async function installOrRebuild(
   let isDependenciesInstalled = false
 
   for (const fileOrDir of ["node_modules", ".pnp.js"]) {
-    if ((await pathExists(path.join(projectDir, fileOrDir))) || (await pathExists(path.join(appDir, fileOrDir)))) {
+    if ((await fsExtra.pathExists(path.join(projectDir, fileOrDir))) || (await fsExtra.pathExists(path.join(appDir, fileOrDir)))) {
       isDependenciesInstalled = true
 
       break

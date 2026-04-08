@@ -75,8 +75,8 @@ importers:
         specifier: ^5.2.1
         version: 5.5.4(eslint-config-prettier@9.1.2(eslint@9.39.2(jiti@2.4.2)))(eslint@9.39.2(jiti@2.4.2))(prettier@3.7.4)
       fs-extra:
-        specifier: 10.1.0
-        version: 10.1.0
+        specifier: ^11.3.4
+        version: 11.3.4
       is-ci:
         specifier: ^4.1.0
         version: 4.1.0
@@ -165,8 +165,8 @@ importers:
         specifier: workspace:*
         version: link:../electron-publish
       fs-extra:
-        specifier: ^10.1.0
-        version: 10.1.0
+        specifier: ^11.3.4
+        version: 11.3.4
       hosted-git-info:
         specifier: ^4.1.0
         version: 4.1.0
@@ -331,8 +331,8 @@ importers:
         specifier: ^4.3.4
         version: 4.4.3
       fs-extra:
-        specifier: ^10.1.0
-        version: 10.1.0
+        specifier: ^11.3.4
+        version: 11.3.4
       http-proxy-agent:
         specifier: ^7.0.0
         version: 7.0.2
@@ -399,8 +399,8 @@ importers:
         specifier: workspace:*
         version: link:../builder-util
       fs-extra:
-        specifier: ^10.1.0
-        version: 10.1.0
+        specifier: ^11.3.4
+        version: 11.3.4
       iconv-lite:
         specifier: ^0.6.2
         version: 0.6.3
@@ -443,8 +443,8 @@ importers:
         specifier: workspace:*
         version: link:../dmg-builder
       fs-extra:
-        specifier: ^10.1.0
-        version: 10.1.0
+        specifier: ^11.3.4
+        version: 11.3.4
       lazy-val:
         specifier: ^1.0.5
         version: 1.0.5
@@ -523,8 +523,8 @@ importers:
         specifier: ^4.0.5
         version: 4.0.5
       fs-extra:
-        specifier: ^10.1.0
-        version: 10.1.0
+        specifier: ^11.3.4
+        version: 11.3.4
       lazy-val:
         specifier: ^1.0.5
         version: 1.0.5
@@ -542,8 +542,8 @@ importers:
         specifier: workspace:*
         version: link:../builder-util-runtime
       fs-extra:
-        specifier: ^10.1.0
-        version: 10.1.0
+        specifier: ^11.3.4
+        version: 11.3.4
       js-yaml:
         specifier: ^4.1.0
         version: 4.1.1
@@ -627,8 +627,8 @@ importers:
         specifier: 5.4.0
         version: 5.4.0
       fs-extra:
-        specifier: ^10.1.0
-        version: 10.1.0
+        specifier: ^11.3.4
+        version: 11.3.4
       js-yaml:
         specifier: ^4.1.0
         version: 4.1.1
@@ -3425,8 +3425,8 @@ packages:
     resolution: {integrity: sha512-oRXApq54ETRj4eMiFzGnHWGy+zo5raudjuxN0b8H7s/RU2oW0Wvsx9O0ACRN/kRq9E8Vu/ReskGB5o3ji+FzHQ==}
     engines: {node: '>=12'}
 
-  fs-extra@11.3.0:
-    resolution: {integrity: sha512-Z4XaCL6dUDHfP/jT25jJKMmtxvuwbkrD1vNSMFlo9lNLY2c5FHYSQgHPRZUjAB26TpDEoW9HCOgplrdbaPV/ew==}
+  fs-extra@11.3.4:
+    resolution: {integrity: sha512-CTXd6rk/M3/ULNQj8FBqBWHYBVYybQ3VPBw0xGKFe3tuH7ytT6ACnvzpIQ3UZtB8yvUKC2cXn1a+x+5EVQLovA==}
     engines: {node: '>=14.14'}
 
   fs-extra@7.0.1:
@@ -6517,7 +6517,7 @@ snapshots:
       '@malept/cross-spawn-promise': 2.0.0
       debug: 4.4.3
       dir-compare: 4.2.0
-      fs-extra: 11.3.0
+      fs-extra: 11.3.4
       minimatch: 9.0.5
       plist: 3.1.0
     transitivePeerDependencies:
@@ -6527,7 +6527,7 @@ snapshots:
     dependencies:
       cross-dirname: 0.1.0
       debug: 4.4.3
-      fs-extra: 11.3.0
+      fs-extra: 11.3.4
       minimist: 1.2.8
       postject: 1.0.0-alpha.6
     transitivePeerDependencies:
@@ -8399,7 +8399,7 @@ snapshots:
       jsonfile: 6.1.0
       universalify: 2.0.1
 
-  fs-extra@11.3.0:
+  fs-extra@11.3.4:
     dependencies:
       graceful-fs: 4.2.11
       jsonfile: 6.1.0
@@ -10001,7 +10001,7 @@ snapshots:
     dependencies:
       bluebird: 3.7.2
       duplexer2: 0.1.4
-      fs-extra: 11.3.0
+      fs-extra: 11.3.4
       graceful-fs: 4.2.11
       node-int64: 0.4.0
 

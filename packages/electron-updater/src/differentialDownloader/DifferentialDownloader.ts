@@ -1,6 +1,6 @@
 import { BlockMapDataHolder, createHttpError, DigestTransform, HttpExecutor, configureRequestUrl, configureRequestOptions } from "builder-util-runtime"
 import { BlockMap } from "builder-util-runtime"
-import { close, open } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import { createWriteStream } from "fs"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { ProgressInfo, CancellationToken } from "builder-util-runtime"
@@ -90,7 +90,7 @@ export abstract class DifferentialDownloader {
     const closeFiles = (): Promise<Array<void>> => {
       return Promise.all(
         fdList.map(openedFile => {
-          return close(openedFile.descriptor).catch((e: any) => {
+          return fsExtra.close(openedFile.descriptor).catch((e: any) => {
             this.logger.error(`cannot close file "${openedFile.path}": ${e}`)
           })
         })
@@ -121,9 +121,9 @@ export abstract class DifferentialDownloader {
   }
 
   private async doDownloadFile(tasks: Array<Operation>, fdList: Array<OpenedFile>): Promise<any> {
-    const oldFileFd = await open(this.options.oldFile, "r")
+    const oldFileFd = await fsExtra.open(this.options.oldFile, "r")
     fdList.push({ descriptor: oldFileFd, path: this.options.oldFile })
-    const newFileFd = await open(this.options.newFile, "w")
+    const newFileFd = await fsExtra.open(this.options.newFile, "w")
     fdList.push({ descriptor: newFileFd, path: this.options.newFile })
     const fileOut = createWriteStream(this.options.newFile, { fd: newFileFd })
     await new Promise((resolve, reject) => {

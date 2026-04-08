@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import * as path from "path"
 import { AppUpdater } from "./AppUpdater.js"
 
@@ -39,10 +39,10 @@ function doLoadAutoUpdater(): AppUpdater {
     _autoUpdater = new (require("./AppImageUpdater").AppImageUpdater)()
     try {
       const identity = path.join(process.resourcesPath, "package-type")
-      if (!existsSync(identity)) {
+      if (!fsExtra.existsSync(identity)) {
         return _autoUpdater
       }
-      const fileType = readFileSync(identity).toString().trim()
+      const fileType = fsExtra.readFileSync(identity).toString().trim()
       switch (fileType) {
         case "deb":
           _autoUpdater = new (require("./DebUpdater").DebUpdater)()

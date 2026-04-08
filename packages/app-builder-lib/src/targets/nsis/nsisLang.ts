@@ -1,6 +1,6 @@
 import { asArray } from "builder-util"
 import _debug from "debug"
-import { outputFile, readFile } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
 import { PlatformPackager } from "../../platformPackager.js"
@@ -63,12 +63,12 @@ export function createAddLangsMacro(scriptGenerator: NsisScriptGenerator, langCo
 
 async function writeCustomLangFile(data: string, packager: PlatformPackager<any>) {
   const file = await packager.getTempFile("messages.nsh")
-  await outputFile(file, data)
+  await fsExtra.outputFile(file, data)
   return file
 }
 
 export async function addCustomMessageFileInclude(input: string, packager: PlatformPackager<any>, scriptGenerator: NsisScriptGenerator, langConfigurator: LangConfigurator) {
-  const data = load(await readFile(path.join(nsisTemplatesDir, input), "utf-8"))
+  const data = load(await fsExtra.readFile(path.join(nsisTemplatesDir, input), "utf-8"))
   const instructions = computeCustomMessageTranslations(data, langConfigurator).join("\n")
   debug(instructions)
   scriptGenerator.include(await writeCustomLangFile(instructions, packager))

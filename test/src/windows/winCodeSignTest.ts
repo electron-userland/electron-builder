@@ -1,6 +1,6 @@
 import { parseDn } from "builder-util-runtime"
 import { DIR_TARGET, Platform } from "electron-builder"
-import { outputFile } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
@@ -36,7 +36,7 @@ for (const winCodeSign of winCodeSignVersions) {
         {
           signedWin: true,
           projectDirCreated: async projectDir => {
-            await outputFile(path.join(projectDir, "assets", "nested", "nested", "file.exe"), "invalid PE file")
+            await fsExtra.outputFile(path.join(projectDir, "assets", "nested", "nested", "file.exe"), "invalid PE file")
           },
         },
         error => {

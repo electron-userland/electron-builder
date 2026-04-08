@@ -70,7 +70,7 @@
     "dotenv-expand": "^11.0.6",
     "ejs": "^3.1.8",
     "electron-publish": "workspace:*",
-    "fs-extra": "^10.1.0",
+    "fs-extra": "^11.3.4",
     "hosted-git-info": "^4.1.0",
     "isbinaryfile": "^5.0.0",
     "jiti": "^2.4.2",

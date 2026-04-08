@@ -1,7 +1,7 @@
 import { PlatformPackager } from "app-builder-lib"
 import { getLicenseAssets } from "app-builder-lib"
 import { log } from "builder-util"
-import { readFile } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import * as iconv from "iconv-lite"
 import { load } from "js-yaml"
 import { serializeString } from "./dmgUtil.js"
@@ -34,7 +34,7 @@ export async function getLicenseButtons(licenseButtonFiles: Array<LicenseButtons
     }
 
     try {
-      const fileData = load(await readFile(item.file, "utf-8")) as any
+      const fileData = load(await fsExtra.readFile(item.file, "utf-8")) as any
       const buttonsStr =
         labelToHex(fileData.lang, item.lang, item.langWithRegion) +
         labelToHex(fileData.agree, item.lang, item.langWithRegion) +

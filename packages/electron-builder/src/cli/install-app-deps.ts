@@ -1,7 +1,7 @@
 #! /usr/bin/env node
 import { computeDefaultAppDirectory, createLazyProductionDeps, determinePackageManagerEnv, getConfig, getElectronVersion, installOrRebuild, PACKAGE_VERSION } from "app-builder-lib"
 import { getArchCliNames, log, orNullIfFileNotExist, printErrorAndExit } from "builder-util"
-import { readJson } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Argv } from "yargs"
@@ -39,7 +39,7 @@ export async function installAppDeps(args: any) {
   }
 
   const projectDir = process.cwd()
-  const packageMetadata = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))
+  const packageMetadata = new Lazy(() => orNullIfFileNotExist(fsExtra.readJson(path.join(projectDir, "package.json"))))
   const config = await getConfig(projectDir, null, null, packageMetadata)
   const [appDir, version] = await Promise.all<string>([computeDefaultAppDirectory(projectDir, config.directories?.app), getElectronVersion(projectDir, config)])
 
