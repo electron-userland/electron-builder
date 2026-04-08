@@ -1,6 +1,7 @@
 import { Arch } from "builder-util"
 import * as path from "path"
 import { downloadArtifact, getBinFromUrl } from "../binDownload"
+import { ToolsetConfig } from "../configuration"
 
 // It's just easier to copy the map of checksums here rather than adding them to within each if-statement. Also, easy copy-paste from the releases page
 const fpmChecksums = {
@@ -9,6 +10,18 @@ const fpmChecksums = {
   "fpm-1.17.0-ruby-3.4.3-linux-amd64.7z": "7miGWr6dfJSzXDD9ALqkwxvGACp7s7GR50NPcU0YwzbJL825H1SLwGJSGME+v57BxDI2xac47gFEkRZf5u9EtA==",
   "fpm-1.17.0-ruby-3.4.3-linux-arm64v8.7z": "moRNjg6Q2iSXpkrm5sGNL2F6KilGNPagbefxhtr3VEqvAUSg2k2pMLr5xXUo0L4rZ4V+uETbwmbDCpeO3pmLyQ==",
   "fpm-1.17.0-ruby-3.4.3-linux-i386.7z": "UPzsXhkW2T7+oHSKgFsZsFUxxmPC9lNZHsQbT+OeoTbIGsb6+qf3m7c6uP0XvRFnJiu3MM3lE1xAWQOctvajWA==",
+} as const
+
+export const appimageChecksums = {
+  "0.0.0": {
+    // legacy
+  },
+  "1.0.2": {
+    "appimage-tools-runtime-20251108.tar.gz": "aDRiYN1XSmP+2rAW/25bMC1S7Z/wfgUf7pf8k8gA5BA3oLXUkTp9YTGa1K9ATsCf1+3enS3z6W4yHZW+n5LygQ==",
+  },
+  "1.0.3": {
+    "appimage-tools-runtime-20251108.tar.gz": "vkGxGf+aV4KQDk8DxhNEk7miFqI6nWu14riHyRkDRabVi8mHWI5m4xpqvRnCIyPBDAA6oPyiI9cb0hoUXZMSAA==",
+  },
 } as const
 
 export function getLinuxToolsPath() {
@@ -44,15 +57,23 @@ export async function getFpmPath() {
   return path.join(fpmPath, exec)
 }
 
-export async function getAppImageTools(targetArch: Arch) {
+export async function getAppImageTools(appimageToolVersion: ToolsetConfig["appimage"], targetArch: Arch) {
+  // nullish and 0.0.0 are both considered legacy, but utilize an upstream dependency to download runtimes, so thus, we ignore logic here
+  if (appimageToolVersion == null || appimageToolVersion === "0.0.0") {
+    throw new Error(
+      "Legacy AppImage toolset was selected, but electron-builder is attempting to download newer runtime. Please file a GH issue if you see this error. Exiting early"
+    )
+  }
+
   const override = process.env.APPIMAGE_TOOLS_PATH?.trim()
+  const filenameWithExt = "appimage-tools-runtime-20251108.tar.gz"
   let artifactPath =
     override ||
     (await downloadArtifact({
-      releaseName: "appimage@1.0.2",
-      filenameWithExt: "appimage-tools-runtime-20251108.tar.gz",
+      releaseName: `appimage@${appimageToolVersion}`,
+      filenameWithExt,
       checksums: {
-        "appimage-tools-runtime-20251108.tar.gz": "a784a8c26331ec2e945c23d6bdb14af5c9df27f5939825d84b8709c61dc81eb0",
+        [filenameWithExt]: appimageChecksums[appimageToolVersion][filenameWithExt],
       },
       githubOrgRepo: "electron-userland/electron-builder-binaries",
     }))
