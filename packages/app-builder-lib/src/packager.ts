@@ -16,7 +16,7 @@ import {
   TmpDir,
 } from "builder-util"
 import { CancellationToken, retry } from "builder-util-runtime"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { isCI } from "ci-info"
 import { Lazy } from "lazy-val"
 import { release as getOsRelease } from "os"

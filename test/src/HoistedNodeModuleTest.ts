@@ -4,7 +4,7 @@ import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as path from "path"
 import { appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 
 describe.ifNotWindows("node_module collectors", () => {
   test("yarn workspace", ({ expect }) =>

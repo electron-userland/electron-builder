@@ -1,5 +1,5 @@
 import { Arch, serializeToYaml } from "builder-util"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../core.js"

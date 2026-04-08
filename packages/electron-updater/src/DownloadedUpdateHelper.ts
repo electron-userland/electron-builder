@@ -5,7 +5,7 @@ import { createReadStream } from "fs"
 import * as isEqual from "lodash.isequal"
 import { ResolvedUpdateFileInfo } from "./types.js"
 import { Logger } from "./types.js"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
 
 /** @private **/

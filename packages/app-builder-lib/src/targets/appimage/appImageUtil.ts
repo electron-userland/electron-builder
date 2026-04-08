@@ -1,5 +1,5 @@
 import { Arch, copyDir, copyFile, exec, exists, InvalidConfigurationError, log } from "builder-util"
-import * as fs from "fs-extra"
+import fs from "fs-extra"
 import * as path from "path"
 import { FileAssociation } from "../../options/FileAssociation.js"
 import { IconInfo } from "../../platformPackager.js"

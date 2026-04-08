@@ -6,7 +6,7 @@ export type SupportedPlatforms = Exclude<TargetPlatform, "current">
 export const TEST_ROOT = "test/src"
 export const TEST_FILES_PATTERN = process.env.TEST_FILES?.trim() || "*Test,*test"
 
-export const CACHE_FILE = process.env.VITEST_SMART_CACHE_FILE || path.resolve(__dirname, "_vitest-smart-cache.json")
+export const CACHE_FILE = process.env.VITEST_SMART_CACHE_FILE || path.resolve(import.meta.dirname, "_vitest-smart-cache.json")
 
 export const DEFAULT_FILE_MS = 2 * 60 * 1000
 export const DEFAULT_TARGET_MS = 30 * 60 * 1000

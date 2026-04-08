@@ -8,7 +8,7 @@ export function assertThat(expect: ExpectStatic, actual: any): Assertions {
   return new Assertions(expect, actual)
 }
 
-const appVersion = require(path.join(__dirname, "../../../packages/app-builder-lib/package.json")).version
+const appVersion = require(path.join(import.meta.dirname, "../../../packages/app-builder-lib/package.json")).version
 
 class Assertions {
   constructor(

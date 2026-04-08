@@ -1,4 +1,4 @@
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
 import { AppUpdater } from "./AppUpdater.js"
 

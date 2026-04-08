@@ -1,6 +1,6 @@
 import { Arch, copyFile, log, orNullIfFileNotExist } from "builder-util"
 import { Hash } from "crypto"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { mkdir, readFile } from "fs/promises"
 import * as path from "path"
 

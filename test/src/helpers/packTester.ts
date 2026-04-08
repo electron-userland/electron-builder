@@ -9,7 +9,7 @@ import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { convertVersion } from "electron-winstaller"
 import { PublishPolicy } from "electron-publish"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
@@ -147,7 +147,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
     packagerOptions = deepAssign({}, packagerOptions, { config: { mac: { identity: null } } })
   }
 
-  let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
+  let projectDir = path.join(import.meta.dirname, "..", "..", "fixtures", fixtureName)
   // const isDoNotUseTempDir = platform === "darwin"
   const customTmpDir = process.env.TEST_APP_TMP_DIR
   const tmpDir = checkOptions.tmpDir || new TmpDir(`pack-tester: ${fixtureName}`)
@@ -160,7 +160,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
 
   const state = expect.getState()
   const lockfileFixtureName = path.basename(state.testPath!, path.extname(state.testPath!))
-  const lockfilePathPrefix = path.join(__dirname, "..", "..", "fixtures", "lockfiles", lockfileFixtureName)
+  const lockfilePathPrefix = path.join(import.meta.dirname, "..", "..", "fixtures", "lockfiles", lockfileFixtureName)
   const lockfileFixtureNameCandidates = getLockfileFixtureNameCandidates(state.currentTestName || "")
   if (lockfileFixtureNameCandidates.length === 0) {
     lockfileFixtureNameCandidates.push("unknown-test")
@@ -327,7 +327,7 @@ export function copyTestAsset(name: string, destination: string): Promise<void> 
 }
 
 export function getFixtureDir() {
-  return path.join(__dirname, "..", "..", "fixtures")
+  return path.join(import.meta.dirname, "..", "..", "fixtures")
 }
 
 /**

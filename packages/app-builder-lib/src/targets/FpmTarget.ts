@@ -1,6 +1,6 @@
 import { Arch, asArray, exec, getArchSuffix, log, serializeToYaml, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
 import { Nullish } from "builder-util-runtime"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { mkdir, readFile } from "fs/promises"
 import * as path from "path"
 import { smarten } from "../appInfo.js"

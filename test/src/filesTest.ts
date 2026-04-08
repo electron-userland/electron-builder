@@ -1,6 +1,6 @@
 import { TmpDir, archFromString, copyDir } from "builder-util"
 import { DIR_TARGET, Platform } from "electron-builder"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
 import statMode from "stat-mode"

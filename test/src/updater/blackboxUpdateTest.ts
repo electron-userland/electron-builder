@@ -5,7 +5,7 @@ import { archFromString, doSpawn, getArchSuffix, isEmptyOrSpaces, log, spawn, Tm
 import { execFileSync, execSync } from "child_process"
 import { Arch, Configuration, Platform } from "electron-builder"
 import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { homedir } from "os"
 import path from "path"
 import { ExpectStatic, TestContext } from "vitest"
@@ -236,7 +236,7 @@ async function doBuild(
                 electron: ELECTRON_VERSION,
                 "node-addon-api": "^8",
               }
-              const electronUpdaterPath = (pkg: string) => path.resolve(__dirname, "../../../packages", pkg)
+              const electronUpdaterPath = (pkg: string) => path.resolve(import.meta.dirname, "../../../packages", pkg)
               data.dependencies = {
                 ...data.dependencies,
                 sqlite3: "5.1.7", // for testing native dependency handling in auto-update

@@ -1,6 +1,6 @@
 import { Arch, asArray, copyOrLinkFile, deepAssign, InvalidConfigurationError, log, walk } from "builder-util"
 import { Nullish } from "builder-util-runtime"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
 import { AppXOptions } from "../index.js"
 import { getWindowsKitsBundle } from "../toolsets/windows.js"

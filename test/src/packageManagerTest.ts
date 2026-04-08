@@ -1,6 +1,6 @@
 import { Platform } from "app-builder-lib"
 import { PM } from "app-builder-lib/src/node-module-collector"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { app, assertPack, getFixtureDir, getPackageManagerWithVersion, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"

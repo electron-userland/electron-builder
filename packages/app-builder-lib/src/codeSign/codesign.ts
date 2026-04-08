@@ -1,5 +1,5 @@
 import { InvalidConfigurationError, statOrNull } from "builder-util"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { homedir } from "os"
 import * as path from "path"
 import { TmpDir } from "temp-file"

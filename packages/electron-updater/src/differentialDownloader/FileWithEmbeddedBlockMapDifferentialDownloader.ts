@@ -1,5 +1,5 @@
 import { BlockMap } from "builder-util-runtime"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { DifferentialDownloader } from "./DifferentialDownloader.js"
 import { inflateRawSync } from "zlib"
 

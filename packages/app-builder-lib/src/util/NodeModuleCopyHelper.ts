@@ -1,6 +1,6 @@
 import { FilterStats, MAX_FILE_REQUESTS } from "builder-util"
 import { realpathSync } from "fs"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
 import { excludedNames, FileMatcher } from "../fileMatcher.js"

@@ -1,5 +1,5 @@
 import { asArray, log, spawn } from "builder-util"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import { homedir } from "os"
 import * as path from "path"

@@ -4,7 +4,7 @@ import * as path from "path"
 import { gte } from "semver"
 import { ELECTRON_VERSION, getElectronCacheDir } from "./testConfig.js"
 
-const executeAppBuilder: (options: any) => Promise<any> = require(path.join(__dirname, "../../..", "packages/builder-util")).executeAppBuilder
+const executeAppBuilder: (options: any) => Promise<any> = require(path.join(import.meta.dirname, "../../..", "packages/builder-util")).executeAppBuilder
 
 export async function deleteOldElectronVersion(): Promise<any> {
   // on CircleCi no need to clean manually
@@ -47,7 +47,7 @@ export function downloadAllRequiredElectronVersions(): Promise<any> {
         ? ["x64"]
         : platform === "win32"
           ? ["ia32", "x64"]
-          : require(`${path.join(__dirname, "../../..")}/packages/builder-util/out/util.js`).getArchCliNames()
+          : require(`${path.join(import.meta.dirname, "../../..")}/packages/builder-util/out/util.js`).getArchCliNames()
     for (const arch of archs) {
       if (gte(ELECTRON_VERSION, "19.0.0") && platform === "linux" && arch === "ia32") {
         // Chromium dropped support for ia32 linux binaries in 102.0.4999.0

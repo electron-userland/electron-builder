@@ -1,5 +1,5 @@
 import { exec, safeStringifyJson, unlinkIfExists } from "builder-util"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import { homedir } from "os"
 import * as path from "path"

@@ -50,11 +50,11 @@ async function main() {
 
     // Allow test metadata
     includeTaskLocation: true,
-    setupFiles: [__dirname + "/vitest-setup.ts", __dirname + "/vitest-heavy-mutex.ts"],
+    setupFiles: [import.meta.dirname + "/vitest-setup.ts", import.meta.dirname + "/vitest-heavy-mutex.ts"],
     include: [`test/src/**/${includeRegex}.ts`],
 
     printConsoleTrace: true,
-    reporters: ["default", __dirname + "/vitest-smart-reporter.ts"],
+    reporters: ["default", import.meta.dirname + "/vitest-smart-reporter.ts"],
 
     maxWorkers: "50%",
     minWorkers: 1,

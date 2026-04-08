@@ -1,5 +1,5 @@
 import { log } from "builder-util"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import { release as osRelease } from "os"
 import * as semver from "semver"

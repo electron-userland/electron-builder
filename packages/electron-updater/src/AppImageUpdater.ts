@@ -1,6 +1,6 @@
 import { AllPublishOptions, newError } from "builder-util-runtime"
 import { execFileSync } from "child_process"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { unlinkSync } from "fs"
 import * as path from "path"
 import { DownloadUpdateOptions } from "./AppUpdater.js"

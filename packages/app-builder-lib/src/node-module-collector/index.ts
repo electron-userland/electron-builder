@@ -8,7 +8,7 @@ import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector.js"
 import { BunNodeModulesCollector } from "./bunNodeModulesCollector.js"
 import { Lazy } from "lazy-val"
 import { spawn, log, exists, isEmptyOrSpaces } from "builder-util"
-import * as fs from "fs-extra"
+import fs from "fs-extra"
 import * as path from "path"
 import { TraversalNodeModulesCollector } from "./traversalNodeModulesCollector.js"
 

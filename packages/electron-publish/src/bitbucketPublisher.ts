@@ -2,7 +2,7 @@ import { Arch, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, log } f
 import { configureRequestOptions, HttpExecutor } from "builder-util-runtime"
 import { BitbucketOptions } from "builder-util-runtime"
 import FormData from "form-data"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { ClientRequest, RequestOptions } from "http"
 import { PublishContext } from "./index.js"
 import { HttpPublisher } from "./httpPublisher.js"

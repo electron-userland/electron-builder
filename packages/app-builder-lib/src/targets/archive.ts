@@ -1,5 +1,5 @@
 import { debug7z, exec, exists, getPath7za, log, statOrNull, unlinkIfExists } from "builder-util"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
 import { create } from "tar"
 import { TmpDir } from "temp-file"

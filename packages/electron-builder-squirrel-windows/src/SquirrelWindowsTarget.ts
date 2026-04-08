@@ -157,7 +157,7 @@ export default class SquirrelWindowsTarget extends Target {
   }
 
   private async createNuspecTemplateWithProjectUrl() {
-    const templatePath = path.resolve(__dirname, "..", "template.nuspectemplate")
+    const templatePath = path.resolve(import.meta.dirname, "..", "template.nuspectemplate")
     const projectUrl = await this.packager.appInfo.computePackageUrl()
     if (projectUrl != null) {
       const nuspecTemplate = await this.packager.info.tempDirManager.getTempFile({ prefix: "template", suffix: ".nuspectemplate" })

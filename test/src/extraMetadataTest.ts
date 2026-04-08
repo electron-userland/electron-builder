@@ -1,7 +1,7 @@
 import { readAsarJson } from "app-builder-lib"
 import { Platform } from "electron-builder"
 import { coerceTypes } from "electron-builder"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert.js"
 import { app, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"

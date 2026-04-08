@@ -1,5 +1,5 @@
 import { asArray, exists, isEmptyOrSpaces, log } from "builder-util"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import { join } from "path"
 import { LinuxPackager } from "../linuxPackager.js"

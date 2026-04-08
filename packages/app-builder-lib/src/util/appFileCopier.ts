@@ -1,6 +1,6 @@
 import { AsyncTaskManager, FileCopier, FileTransformer, isEmptyOrSpaces, Link, log, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
 import { Stats } from "fs"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { mkdir, readlink } from "fs/promises"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
@@ -295,7 +295,7 @@ async function compileUsingElectronCompile(mainFileSet: ResolvedFileSet, package
     mainFileSet.files.length - 1,
     `
 'use strict';
-require('electron-compile').init(__dirname, require('path').resolve(__dirname, '${packager.metadata.main || "index"}'), true);
+require('electron-compile').init(import.meta.dirname, require('path').resolve(import.meta.dirname, '${packager.metadata.main || "index"}'), true);
 `
   )
   return { src: electronCompileCache, files: cacheFiles, metadata, destination: mainFileSet.destination }

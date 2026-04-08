@@ -1,6 +1,6 @@
 import { DebugLogger, deepAssign, InvalidConfigurationError, log, safeStringifyJson, statOrNull } from "builder-util"
 import { Nullish } from "builder-util-runtime"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Configuration } from "../../configuration.js"
@@ -214,7 +214,7 @@ function getDefaultConfig(): Configuration {
   }
 }
 
-const schemeDataPromise = new Lazy(() => fsExtra.readJson(path.join(__dirname, "..", "..", "..", "scheme.json")))
+const schemeDataPromise = new Lazy(() => fsExtra.readJson(path.join(import.meta.dirname, "..", "..", "..", "scheme.json")))
 
 export async function validateConfiguration(config: Configuration, debugLogger: DebugLogger) {
   const extraMetadata = config.extraMetadata

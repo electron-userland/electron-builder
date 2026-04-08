@@ -8,7 +8,7 @@ import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDo
 import { DOWNLOAD_PROGRESS } from "./types.js"
 import { VerifyUpdateCodeSignature } from "./main.js"
 import { findFile, Provider } from "./providers/Provider.js"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier.js"
 import { URL } from "url"
 

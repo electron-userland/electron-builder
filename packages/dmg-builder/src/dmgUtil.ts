@@ -1,14 +1,14 @@
 import { DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
 import { downloadArtifact } from "app-builder-lib"
 import { exec, executeFinally, exists, isEmptyOrSpaces, TmpDir } from "builder-util"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
 import { DmgBuildConfig } from "./dmg.js"
 import { hdiUtil, hdiutilTransientExitCodes } from "./hdiuil.js"
 
 export { DmgTarget } from "./dmg.js"
 
-const root = path.join(__dirname, "..")
+const root = path.join(import.meta.dirname, "..")
 
 export function getDmgTemplatePath() {
   return path.join(root, "templates")

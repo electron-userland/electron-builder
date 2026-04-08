@@ -19,7 +19,7 @@ async function assertIcon(expect: ExpectStatic, platformPackager: CheckingMacPac
 
 const targets = Platform.MAC.createTarget(DIR_TARGET, Arch.x64)
 
-const iconComposerFixture = path.join(__dirname, "..", "..", "fixtures", "macos-icon-composer-assets", "electron.icon")
+const iconComposerFixture = path.join(import.meta.dirname, "..", "..", "fixtures", "macos-icon-composer-assets", "electron.icon")
 
 test.ifMac("icon composer generate asset catalog", ({ expect }) => {
   return app(

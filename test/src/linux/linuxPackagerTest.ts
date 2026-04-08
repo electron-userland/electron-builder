@@ -1,6 +1,6 @@
 import { GenericServerOptions } from "builder-util-runtime"
 import { Arch, build, Platform } from "electron-builder"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"

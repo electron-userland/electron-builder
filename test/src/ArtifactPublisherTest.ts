@@ -17,8 +17,8 @@ function versionNumber() {
 
 //noinspection SpellCheckingInspection
 const token = Buffer.from("Y2Y5NDdhZDJhYzJlMzg1OGNiNzQzYzcwOWZhNGI0OTk2NWQ4ZDg3Yg==", "base64").toString()
-const iconPath = path.join(__dirname, "..", "fixtures", "test-app", "build", "icon.icns")
-const icoPath = path.join(__dirname, "..", "fixtures", "test-app", "build", "icon.ico")
+const iconPath = path.join(import.meta.dirname, "..", "fixtures", "test-app", "build", "icon.icns")
+const icoPath = path.join(import.meta.dirname, "..", "fixtures", "test-app", "build", "icon.ico")
 
 const publishContext: PublishContext = {
   cancellationToken: new CancellationToken(),

@@ -1,5 +1,5 @@
 import * as chromiumPickleJs from "chromium-pickle-js"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
 
 export interface ReadAsarHeader {

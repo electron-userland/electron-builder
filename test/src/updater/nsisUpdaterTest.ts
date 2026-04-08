@@ -1,7 +1,7 @@
 import { BitbucketOptions, GenericServerOptions, GithubOptions, GitlabOptions, KeygenOptions, S3Options, SpacesOptions } from "builder-util-runtime"
 import { BitbucketPublisher } from "electron-publish"
 import { UpdateCheckResult } from "electron-updater"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { tmpdir } from "os"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"

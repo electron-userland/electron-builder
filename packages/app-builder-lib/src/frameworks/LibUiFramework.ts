@@ -1,5 +1,5 @@
 import { executeAppBuilder } from "builder-util"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { chmod, mkdir, rename, writeFile } from "fs/promises"
 import * as path from "path"
 import { AfterPackContext } from "../configuration.js"

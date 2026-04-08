@@ -1,6 +1,6 @@
 import { GenericServerOptions, GithubOptions, KeygenOptions, SpacesOptions } from "builder-util-runtime"
 import { Arch, createTargets, Platform } from "electron-builder"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert.js"
 import { app, checkDirContents } from "./helpers/packTester.js"

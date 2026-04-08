@@ -1,7 +1,7 @@
 #! /usr/bin/env node
 import { computeDefaultAppDirectory, createLazyProductionDeps, determinePackageManagerEnv, getConfig, getElectronVersion, installOrRebuild, PACKAGE_VERSION } from "app-builder-lib"
 import { getArchCliNames, log, orNullIfFileNotExist, printErrorAndExit } from "builder-util"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Argv } from "yargs"

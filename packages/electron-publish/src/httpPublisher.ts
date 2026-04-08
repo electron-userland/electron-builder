@@ -1,5 +1,5 @@
 import { Arch } from "builder-util"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { ClientRequest } from "http"
 import { basename } from "path"
 import { PublishContext, UploadTask } from "./index.js"

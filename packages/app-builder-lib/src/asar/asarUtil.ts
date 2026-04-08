@@ -1,7 +1,7 @@
 import { AsarDirectory, AsarStreamType, createPackageFromStreams } from "@electron/asar"
 import { exists, Filter, FilterStats, isEmptyOrSpaces, log } from "builder-util"
 import * as fs from "fs/promises"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import * as os from "os"
 import * as path from "path"
 import { Readable } from "stream"

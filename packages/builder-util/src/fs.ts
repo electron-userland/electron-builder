@@ -1,6 +1,6 @@
 import { Nullish } from "builder-util-runtime"
 import { Stats } from "fs"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { access, chmod, link, lstat, mkdir, readdir, readlink, stat, symlink, unlink, writeFile } from "fs/promises"
 import { platform } from "os"
 import * as path from "path"

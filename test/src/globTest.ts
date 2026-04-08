@@ -1,7 +1,7 @@
 import { Platform } from "app-builder-lib"
 import { readAsar } from "app-builder-lib"
 import { PM } from "app-builder-lib"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { ExpectStatic } from "vitest"

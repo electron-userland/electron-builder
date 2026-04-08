@@ -1,7 +1,7 @@
 import { readAsarJson } from "app-builder-lib"
 import { walk } from "builder-util"
 import { Arch, Platform } from "electron-builder"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"

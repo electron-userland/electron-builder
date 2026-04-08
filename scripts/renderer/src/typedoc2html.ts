@@ -1,4 +1,4 @@
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { rm } from "fs/promises"
 import * as path from "path"
 import * as process from "process"

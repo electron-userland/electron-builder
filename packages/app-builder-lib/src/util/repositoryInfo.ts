@@ -1,5 +1,5 @@
 import { orNullIfFileNotExist } from "builder-util"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import GitHost, { fromUrl } from "hosted-git-info"
 import * as path from "path"
 import { SourceRepositoryInfo } from "../core.js"

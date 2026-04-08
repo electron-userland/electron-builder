@@ -1,6 +1,6 @@
 import { asArray } from "builder-util"
 import _debug from "debug"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
 import { PlatformPackager } from "../../platformPackager.js"

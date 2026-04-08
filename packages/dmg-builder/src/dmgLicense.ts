@@ -1,7 +1,7 @@
 import { PlatformPackager } from "app-builder-lib"
 import { log } from "builder-util"
 import { dmgLicenseFromJSON } from "dmg-license"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { load } from "js-yaml"
 import { getLicenseButtonsFile } from "./licenseButtons.js"
 import { getLicenseFiles } from "app-builder-lib"

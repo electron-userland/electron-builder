@@ -1,4 +1,4 @@
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { serializeToYaml } from "./util.js"
 import { mapToObject } from "./mapper.js"
 

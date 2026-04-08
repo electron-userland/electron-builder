@@ -1,6 +1,6 @@
 import { BlockMapDataHolder, createHttpError, DigestTransform, HttpExecutor, configureRequestUrl, configureRequestOptions } from "builder-util-runtime"
 import { BlockMap } from "builder-util-runtime"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { createWriteStream } from "fs"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { ProgressInfo, CancellationToken } from "builder-util-runtime"

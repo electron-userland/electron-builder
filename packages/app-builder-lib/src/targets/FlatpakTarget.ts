@@ -1,6 +1,6 @@
 import { bundle as bundleFlatpak, FlatpakBundlerBuildOptions, FlatpakManifest } from "@malept/flatpak-bundler"
 import { Arch, copyFile, toLinuxArchString } from "builder-util"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
 import { Target } from "../core.js"
 import { LinuxPackager } from "../linuxPackager.js"

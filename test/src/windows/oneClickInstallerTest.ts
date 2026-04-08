@@ -1,5 +1,5 @@
 import { Arch, Platform } from "electron-builder"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, assertPack, copyTestAsset, EXTENDED_TIMEOUT, modifyPackageJson } from "../helpers/packTester"

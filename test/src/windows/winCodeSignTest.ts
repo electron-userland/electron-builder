@@ -1,6 +1,6 @@
 import { parseDn } from "builder-util-runtime"
 import { DIR_TARGET, Platform } from "electron-builder"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
@@ -86,7 +86,7 @@ for (const winCodeSign of winCodeSignVersions) {
       }))
     test("certificateFile/password - sign as Promise", ({ expect }) => testCustomSign(expect, () => Promise.resolve()))
     test("certificateFile/password - sign as function", async ({ expect }) => testCustomSign(expect, (await import("../helpers/customWindowsSign.js")).default))
-    test("certificateFile/password - sign as path", ({ expect }) => testCustomSign(expect, path.join(__dirname, "../helpers/customWindowsSign.mjs")))
+    test("certificateFile/password - sign as path", ({ expect }) => testCustomSign(expect, path.join(import.meta.dirname, "../helpers/customWindowsSign.mjs")))
 
     test("custom sign if no code sign info", ({ expect }) => {
       let called = false
