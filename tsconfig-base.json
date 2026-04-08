@@ -1,8 +1,6 @@
 {
   "extends": "@tsconfig/node22/tsconfig.json",
   "compilerOptions": {
-    "lib": ["es2024", "WebWorker", "esnext"],
-
     "forceConsistentCasingInFileNames": true,
 
     "noUnusedLocals": true,
