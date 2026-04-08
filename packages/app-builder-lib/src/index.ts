@@ -96,6 +96,7 @@ export { DoPackOptions} from "./platformPackager.js"
 export { parsePlistFile, PlistObject } from "./util/plist.js"
 export { expandMacro } from "./util/macroExpander.js"
 export { getRepositoryInfo } from "./util/repositoryInfo.js"
+export { createKeychain, removeKeychain } from "./codeSign/macCodeSign.js"
 
 const expectedOptions = new Set(["publish", "targets", "mac", "win", "linux", "projectDir", "platformPackagerFactory", "config", "effectiveOptionComputed", "prepackaged"])
 
