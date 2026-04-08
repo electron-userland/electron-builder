@@ -3,7 +3,7 @@ import * as path from "path"
 import { TypeScript } from "typedoc"
 import * as TJS from "typescript-json-schema"
 
-const rootDir = path.resolve(import.meta.dirname, "../packages")
+const rootDir = path.resolve(__dirname, "../packages")
 
 const compilerOptions: TJS.CompilerOptions = {
   target: TypeScript.ScriptTarget.ES2022 as any,
@@ -88,5 +88,5 @@ schema!.properties!["$schema"] = {
   type: ["null", "string"],
 }
 
-const schemaFile = path.join(import.meta.dirname, "../packages/app-builder-lib/scheme.json")
+const schemaFile = path.join(__dirname, "../packages/app-builder-lib/scheme.json")
 fs.writeFileSync(schemaFile, JSON.stringify(schema, null, 2))
