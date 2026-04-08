@@ -3,7 +3,7 @@ import { decodeCscLinkBase64, InvalidConfigurationError, resolveCscLinkPath, sta
 
 =======
 import { InvalidConfigurationError, statOrNull } from "builder-util"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { homedir } from "os"
 import * as path from "path"
 >>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)

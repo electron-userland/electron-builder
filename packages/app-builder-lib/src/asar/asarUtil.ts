@@ -14,7 +14,7 @@ import { readlink } from "fs-extra"
 >>>>>>> c92b22265 (tmp save for .js extension migration)
 =======
 import * as fs from "fs/promises"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import * as os from "os"
 >>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as path from "path"

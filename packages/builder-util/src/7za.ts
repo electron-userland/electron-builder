@@ -1,6 +1,6 @@
 import { path7x, path7za } from "7zip-bin"
 import * as fs from "fs"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 
 export async function getPath7za(): Promise<string> {
   if (fs.existsSync(path7za)) {

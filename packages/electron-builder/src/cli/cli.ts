@@ -16,7 +16,7 @@ import { loadEnv } from "app-builder-lib/out/util/config/load"
 import { nodeGypRebuild } from "app-builder-lib/out/util/yarn"
 import { ExecError, InvalidConfigurationError, log } from "builder-util"
 import * as chalk from "chalk"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { isCI } from "ci-info"
 import * as path from "path"
 import { build, configureBuildCommand, createYargs } from "../builder.js"
@@ -94,7 +94,7 @@ async function checkIsOutdated() {
     return
   }
 
-  const pkg = await fsExtra.readJson(path.join(__dirname, "..", "..", "package.json"))
+  const pkg = await fsExtra.readJson(path.join(import.meta.dirname, "..", "..", "package.json"))
   if (pkg.version === "0.0.0-semantic-release") {
     return
   }

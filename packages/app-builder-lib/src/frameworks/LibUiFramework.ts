@@ -6,7 +6,7 @@ import { chmod, copyFile, mkdir, rename, writeFile } from "fs/promises"
 import * as https from "https"
 =======
 import { executeAppBuilder } from "builder-util"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { chmod, mkdir, rename, writeFile } from "fs/promises"
 >>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as path from "path"

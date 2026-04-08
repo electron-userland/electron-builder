@@ -3,7 +3,7 @@ import { asArray, log, retry, spawn, stripSensitiveEnvVars } from "builder-util"
 
 =======
 import { asArray, log, spawn } from "builder-util"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 >>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { homedir } from "os"

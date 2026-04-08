@@ -6,7 +6,7 @@ import { InvalidConfigurationError } from "builder-util"
 import { getLicenseFiles } from "app-builder-lib/out/util/license"
 import { log } from "builder-util"
 import { dmgLicenseFromJSON } from "dmg-license"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { load } from "js-yaml"
 <<<<<<< HEAD
 import { getLicenseButtonsFile } from "./licenseButtons.js.js"

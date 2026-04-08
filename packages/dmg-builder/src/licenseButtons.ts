@@ -11,7 +11,7 @@ export interface LicenseButtonsFile {
 =======
 import { getLicenseAssets } from "app-builder-lib/out/util/license"
 import { log } from "builder-util"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import * as iconv from "iconv-lite"
 import { load } from "js-yaml"
 <<<<<<< HEAD

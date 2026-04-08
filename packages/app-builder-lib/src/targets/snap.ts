@@ -1,6 +1,6 @@
 import { replaceDefault as _replaceDefault, Arch, deepAssign, executeAppBuilder, InvalidConfigurationError, log, serializeToYaml, toLinuxArchString } from "builder-util"
 import { asArray, Nullish, SnapStoreOptions } from "builder-util-runtime"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
 import * as semver from "semver"
