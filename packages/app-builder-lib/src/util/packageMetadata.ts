@@ -1,6 +1,6 @@
 import { InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { Nullish } from "builder-util-runtime"
-import * as fsExtra from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
 import * as semver from "semver"
 import { Metadata } from "../options/metadata.js"

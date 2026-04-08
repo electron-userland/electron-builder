@@ -1,6 +1,6 @@
 import { getWindowsKitsBundle } from "app-builder-lib"
 import { archFromString, exec, log, spawn, TmpDir, unlinkIfExists } from "builder-util"
-import { sanitizeFileName } from "builder-util/out/filename"
+import { sanitizeFileName } from "builder-util"
 import * as chalk from "chalk"
 import { mkdir } from "fs/promises"
 import * as path from "path"
