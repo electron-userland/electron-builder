@@ -1,7 +1,11 @@
 import asyncPool from "tiny-async-pool"
 import { Arch, log, safeStringifyJson, serializeToYaml } from "builder-util"
 import { GenericServerOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
+<<<<<<< HEAD
 import fsExtra from "fs-extra"
+=======
+import * as fsExtra from "fs-extra"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import * as semver from "semver"

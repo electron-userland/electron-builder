@@ -1,6 +1,11 @@
+<<<<<<< HEAD
 import { asArray, exists, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { deepAssign } from "builder-util-runtime"
 
+=======
+import { asArray, exists, isEmptyOrSpaces, log } from "builder-util"
+import * as fsExtra from "fs-extra"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { Lazy } from "lazy-val"
 import { join } from "path"
 <<<<<<< HEAD
@@ -189,7 +194,7 @@ export class LinuxTargetHelper {
     }
 
     const file = await this.packager.getTempFile(".xml")
-    await outputFile(
+    await fsExtra.outputFile(
       file,
       '<?xml version="1.0" encoding="utf-8"?>\n<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">\n' + items.join("\n") + "\n</mime-info>"
     )
@@ -240,7 +245,7 @@ export class LinuxTargetHelper {
   async writeDesktopEntry(targetSpecificOptions: CommonLinuxOptions, exec?: string, destination?: string | null, extra?: Record<string, string>): Promise<string> {
     const data = await this.computeDesktopEntry(targetSpecificOptions, exec, extra)
     const file = destination || (await this.packager.getTempFile(`${this.packager.appInfo.productFilename}.desktop`))
-    await outputFile(file, data)
+    await fsExtra.outputFile(file, data)
     return file
   }
 

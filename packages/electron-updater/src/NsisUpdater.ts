@@ -31,7 +31,7 @@ import { verifySignature } from "./windowsExecutableCodeSignatureVerifier.js.js"
 =======
 import { VerifyUpdateCodeSignature } from "./main.js"
 import { findFile, Provider } from "./providers/Provider.js"
-import { unlink } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier.js"
 >>>>>>> c92b22265 (tmp save for .js extension migration)
 import { URL } from "url"

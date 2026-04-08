@@ -142,6 +142,7 @@ export { getBinFromUrl } from "./binDownload.js"
 export { Publish } from "./core.js"
 export { computeSafeArtifactNameIfNeeded } from "./platformPackager.js"
 export { createPublisher } from "./publish/PublishManager.js"
+<<<<<<< HEAD
 export { createBlockmap } from "./targets/differentialUpdateInfoBuilder.js"
 export { execWine } from "./wine.js"
 
@@ -151,6 +152,11 @@ export { readAsarJson, readAsar, AsarFilesystem } from "./asar/asar.js"
 
 export { computeArchToTargetNamesMap } from "./targets/targetFactory.js"
 
+=======
+export { Identity } from "./codeSign/macCodeSign.js"
+export { DoPackOptions } from "./platformPackager.js"
+export { parsePlistFile, PlistObject } from "./util/plist.js"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 export { expandMacro } from "./util/macroExpander.js"
 export { hoist, HoisterTree, HoisterResult, HoisterDependencyKind } from "./node-module-collector/hoist.js"
 export { getLinuxToolsPath } from "./targets/tools.js"

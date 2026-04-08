@@ -1,8 +1,13 @@
 import { log, PADDING } from "builder-util"
 import { ProgressCallbackTransform, PublishProvider } from "builder-util-runtime"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import chalk from "chalk"
 import fsExtra from "fs-extra"
+=======
+import * as chalk from "chalk"
+import * as fsExtra from "fs-extra"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { PublishContext, UploadTask } from "./index.js"
 import { ProgressBar } from "./progress.js"
 =======

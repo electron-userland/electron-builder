@@ -1,5 +1,9 @@
 import { orNullIfFileNotExist } from "builder-util"
+<<<<<<< HEAD
 import fsExtra from "fs-extra"
+=======
+import * as fsExtra from "fs-extra"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import GitHost, { fromUrl } from "hosted-git-info"
 import * as path from "path"
 import { SourceRepositoryInfo } from "../core.js"

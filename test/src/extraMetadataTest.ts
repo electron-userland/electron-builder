@@ -7,8 +7,12 @@ import fsExtra from "fs-extra"
 import { readAsarJson } from "app-builder-lib"
 import { Platform } from "electron-builder"
 import { coerceTypes } from "electron-builder"
+<<<<<<< HEAD
 import { readJson } from "fs-extra"
 >>>>>>> fb7cff668 (esm complete on tests as well?)
+=======
+import * as fsExtra from "fs-extra"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert.js"
 import { app, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"

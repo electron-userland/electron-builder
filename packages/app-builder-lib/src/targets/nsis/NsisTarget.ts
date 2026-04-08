@@ -16,7 +16,11 @@ import {
 import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, deepAssign, PackageFileInfo, UUID } from "builder-util-runtime"
 import _debug from "debug"
 import * as fs from "fs"
+<<<<<<< HEAD
 
+=======
+import * as fsExtra from "fs-extra"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as path from "path"
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -382,6 +386,7 @@ export class NsisTarget extends Target {
 
     this.buildQueueManager.add(async () => {
       const sharedHeader = await this.computeCommonInstallerScriptHeader()
+<<<<<<< HEAD
       let rawScript: string
       let isCustomScript = false
       if (isPortable) {
@@ -391,14 +396,24 @@ export class NsisTarget extends Target {
         rawScript = result.script
         isCustomScript = result.isCustomScript
       }
+=======
+      const script = isPortable
+        ? await fsExtra.readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8")
+        : await this.computeScriptAndSignUninstaller(definesUninstaller, commandsUninstaller, installerPath, sharedHeader, archs)
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 
       // copy outfile name into main options, as the computeScriptAndSignUninstaller function was kind enough to add important data to temporary defines.
       defines.UNINSTALLER_OUT_FILE = definesUninstaller.UNINSTALLER_OUT_FILE
 
+<<<<<<< HEAD
       // Skip size verification for portable (NSIS recompresses the archive, installer < archive is normal)
       // and for custom scripts (may not embed archives).
       await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(rawScript, true, archs)), { skipSizeVerification: isPortable || isCustomScript })
       await Promise.all<any>([packager.signIf(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
+=======
+      await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(script, true, archs)))
+      await Promise.all<any>([packager.signIf(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : fsExtra.unlink(defines.UNINSTALLER_OUT_FILE)])
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 
       const safeArtifactName = computeSafeArtifactNameIfNeeded(installerFilename, () => this.generateGitHubInstallerName(primaryArch, defaultArch))
       let updateInfo: any
@@ -448,7 +463,7 @@ export class NsisTarget extends Target {
   ): Promise<{ script: string; isCustomScript: boolean }> {
     const packager = this.packager
     const customScriptPath = await packager.getResource(this.options.script, "installer.nsi")
-    const script = await readFile(customScriptPath || path.join(nsisTemplatesDir, "installer.nsi"), "utf8")
+    const script = await fsExtra.readFile(customScriptPath || path.join(nsisTemplatesDir, "installer.nsi"), "utf8")
 
     if (customScriptPath != null) {
       log.info({ reason: "custom NSIS script is used" }, "uninstaller is not signed by electron-builder")
@@ -886,7 +901,7 @@ async function ensureNotBusy(outFile: string): Promise<void> {
 async function createPackageFileInfo(file: string): Promise<PackageFileInfo> {
   return {
     path: file,
-    size: (await stat(file)).size,
+    size: (await fsExtra.stat(file)).size,
     sha512: await hashFile(file),
   }
 }

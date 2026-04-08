@@ -53,7 +53,12 @@
     "eslint": "9.39.2",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
+<<<<<<< HEAD
     "fs-extra": "^10.1.0",
+=======
+    "fs-extra": "^11.3.4",
+    "is-ci": "^4.1.0",
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
     "prettier": "3.7.4",
     "tsx": "^4.0.0",
     "typedoc": "^0.28.19",

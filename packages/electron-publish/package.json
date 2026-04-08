@@ -47,7 +47,11 @@
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.2",
     "form-data": "^4.0.5",
+<<<<<<< HEAD
     "fs-extra": "^11.3.0",
+=======
+    "fs-extra": "^11.3.4",
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
     "lazy-val": "^1.0.5",
     "mime": "^2.5.2"
   },

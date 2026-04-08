@@ -37,7 +37,11 @@
     "chalk": "^4.1.2",
     "cross-spawn": "^7.0.6",
     "debug": "^4.3.4",
+<<<<<<< HEAD
     "fs-extra": "^11.3.0",
+=======
+    "fs-extra": "^11.3.4",
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
     "http-proxy-agent": "^7.0.0",
     "https-proxy-agent": "^7.0.0",
     "js-yaml": "^4.1.0",

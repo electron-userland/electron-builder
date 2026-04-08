@@ -1,6 +1,10 @@
 import { Nullish } from "builder-util-runtime"
 import { Stats } from "fs"
+<<<<<<< HEAD
 import fsExtra from "fs-extra"
+=======
+import * as fsExtra from "fs-extra"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { access, chmod, link, lstat, mkdir, readdir, readlink, stat, symlink, unlink, writeFile } from "fs/promises"
 import { platform } from "os"
 import * as path from "path"

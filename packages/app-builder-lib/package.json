@@ -89,7 +89,11 @@
     "dotenv-expand": "^11.0.6",
     "ejs": "^3.1.8",
     "electron-publish": "workspace:*",
+<<<<<<< HEAD
     "fs-extra": "^11.3.0",
+=======
+    "fs-extra": "^11.3.4",
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
     "hosted-git-info": "^4.1.0",
     "isbinaryfile": "^5.0.0",
     "jiti": "^2.4.2",

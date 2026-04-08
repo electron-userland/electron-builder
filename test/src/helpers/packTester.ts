@@ -13,8 +13,12 @@ import { execSync } from "child_process"
 >>>>>>> fb7cff668 (esm complete on tests as well?)
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { PublishPolicy } from "electron-publish"
+<<<<<<< HEAD
 import { convertVersion } from "electron-winstaller"
 import { copyFile, emptyDir, mkdir, writeJson } from "fs-extra"
+=======
+import * as fsExtra from "fs-extra"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as fs from "fs/promises"
 import { realpath as realpathCb } from "fs"
 import { load } from "js-yaml"
@@ -200,7 +204,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
   // `/var` → `/private/var`) and churn unrelated path-sensitive tests.
   const dir = process.platform === "win32" ? await realpathNative(rawDir).catch(() => rawDir) : rawDir
   if (customTmpDir != null) {
-    await emptyDir(dir)
+    await fsExtra.emptyDir(dir)
     log.info({ customTmpDir }, "custom temp dir used")
   }
 
@@ -296,7 +300,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       const shouldUpdateLockfiles = process.env.UPDATE_LOCKFILE_FIXTURES === "true" && !!checkOptions.storeDepsLockfileSnapshot
       // check for lockfile fixture so we can use `--frozen-lockfile`
       if ((await exists(testFixtureLockfile)) && !shouldUpdateLockfiles) {
-        await copyFile(testFixtureLockfile, destLockfile)
+        await fsExtra.copyFile(testFixtureLockfile, destLockfile)
         lockfileFixtureApplied = true
       }
 
@@ -331,9 +335,13 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       if (shouldUpdateLockfiles) {
         const fixtureDir = path.dirname(testFixtureLockfile)
         if (!(await exists(fixtureDir))) {
+<<<<<<< HEAD
           await mkdir(fixtureDir, { recursive: true })
+=======
+          await fsExtra.mkdir(fixtureDir)
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
         }
-        await copyFile(destLockfile, testFixtureLockfile)
+        await fsExtra.copyFile(destLockfile, testFixtureLockfile)
       }
 
       if (packagerOptions.projectDir != null) {
@@ -844,7 +852,7 @@ export async function modifyPackageJson(projectDir: string, task: (data: any) =>
   await fs.unlink(file)
 
   await fs.writeFile(path.join(projectDir, ".yarnrc.yml"), "nodeLinker: node-modules")
-  return await writeJson(file, data, { spaces: 2 })
+  return await fsExtra.writeJson(file, data, { spaces: 2 })
 }
 
 export function platform(platform: Platform): PackagerOptions {

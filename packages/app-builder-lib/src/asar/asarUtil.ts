@@ -1,6 +1,7 @@
 <<<<<<< HEAD
 import type { AsarStreamType, AsarDirectory } from "@electron/asar"
 import { exists, Filter, FilterStats, isEmptyOrSpaces, log } from "builder-util"
+<<<<<<< HEAD
 import { dynamicImport } from "../util/dynamicImport.js"
 import fs from "fs-extra"
 
@@ -11,6 +12,11 @@ import { exists, Filter } from "builder-util"
 import * as fs from "fs-extra"
 import { readlink } from "fs-extra"
 >>>>>>> c92b22265 (tmp save for .js extension migration)
+=======
+import * as fs from "fs/promises"
+import * as fsExtra from "fs-extra"
+import * as os from "os"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as path from "path"
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -223,7 +229,7 @@ export class AsarPackager {
   private async processFileOrSymlink(options: {
     file: string
     destination: string
-    stat: fs.Stats
+    stat: fsExtra.Stats
     fileSet: ResolvedFileSet
     transformedData: string | Buffer | undefined
     isUnpacked: (dir: string, file?: string, stat?: FilterStats) => boolean
@@ -259,7 +265,7 @@ export class AsarPackager {
 
     const baseConfig = {
       path: destination,
-      streamGenerator: () => fs.createReadStream(file),
+      streamGenerator: () => fsExtra.createReadStream(file),
       unpacked,
       stat,
     }
@@ -270,7 +276,7 @@ export class AsarPackager {
     }
 
     // Handle symlinks - make relative to source location
-    let link = await readlink(file)
+    let link = await fsExtra.readlink(file)
     if (path.isAbsolute(link)) {
       link = path.relative(path.dirname(file), link)
     }

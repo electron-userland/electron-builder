@@ -1,8 +1,14 @@
+<<<<<<< HEAD
 import { InvalidConfigurationError } from "builder-util"
 import _fsExtra from "fs-extra"
 const { copy, emptyDir } = _fsExtra
 import { chmod, copyFile, mkdir, rename, writeFile } from "fs/promises"
 import * as https from "https"
+=======
+import { executeAppBuilder } from "builder-util"
+import * as fsExtra from "fs-extra"
+import { chmod, mkdir, rename, writeFile } from "fs/promises"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as path from "path"
 import { AfterPackContext } from "../configuration.js"
 import { Platform } from "../core.js"
@@ -64,7 +70,7 @@ export class LibUiFramework implements Framework {
   }
 
   async prepareApplicationStageDirectory(options: PrepareApplicationStageDirectoryOptions) {
-    await emptyDir(options.appOutDir)
+    await fsExtra.emptyDir(options.appOutDir)
 
     const packager = options.packager
     const platform = packager.platform

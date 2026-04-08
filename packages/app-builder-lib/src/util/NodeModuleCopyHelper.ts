@@ -1,6 +1,10 @@
 import { FilterStats, MAX_FILE_REQUESTS } from "builder-util"
 import { realpathSync } from "fs"
+<<<<<<< HEAD
 import fsExtra from "fs-extra"
+=======
+import * as fsExtra from "fs-extra"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
 <<<<<<< HEAD

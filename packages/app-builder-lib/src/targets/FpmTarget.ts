@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 import { Arch, asArray, exec, getArchSuffix, log, serializeToYaml, stripSensitiveEnvVars, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
 import { deepAssign, Nullish } from "builder-util-runtime"
 
+=======
+import { Arch, asArray, exec, getArchSuffix, log, serializeToYaml, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
+import { Nullish } from "builder-util-runtime"
+import * as fsExtra from "fs-extra"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { mkdir, readFile } from "fs/promises"
 import * as path from "path"
 <<<<<<< HEAD
@@ -209,16 +215,16 @@ export default class FpmTarget extends Target {
       : null
     if (publishConfig != null) {
       log.info({ resourceDir: log.filePath(resourceDir) }, `adding autoupdate files for: ${target}`)
-      await outputFile(path.join(resourceDir, "app-update.yml"), serializeToYaml(publishConfig))
+      await fsExtra.outputFile(path.join(resourceDir, "app-update.yml"), serializeToYaml(publishConfig))
       // Extra file needed for auto-updater to detect installation method
-      await outputFile(path.join(resourceDir, "package-type"), target)
+      await fsExtra.outputFile(path.join(resourceDir, "package-type"), target)
     }
 
     const scripts = await this.scriptFiles
 
     // Install AppArmor support for ubuntu 24+
     // https://github.com/electron-userland/electron-builder/issues/8635
-    await copyFile(scripts.appArmor, path.join(resourceDir, "apparmor-profile"))
+    await fsExtra.copyFile(scripts.appArmor, path.join(resourceDir, "apparmor-profile"))
 
     const appInfo = packager.appInfo
     const options = this.options
@@ -346,7 +352,7 @@ export default class FpmTarget extends Target {
         isWriteUpdateInfo: true,
         updateInfo: {
           sha512: await hashFile(artifactPath),
-          size: (await stat(artifactPath)).size,
+          size: (await fsExtra.stat(artifactPath)).size,
         },
       }
     }
@@ -478,6 +484,6 @@ async function writeConfigFile(tmpDir: TmpDir, templatePath: string, options: an
   })
 
   const outputPath = await tmpDir.getTempFile({ suffix: path.basename(templatePath, ".tpl") })
-  await outputFile(outputPath, config)
+  await fsExtra.outputFile(outputPath, config)
   return outputPath
 }

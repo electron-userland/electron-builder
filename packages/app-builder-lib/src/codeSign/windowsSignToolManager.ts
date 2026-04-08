@@ -1,8 +1,12 @@
 import { asArray, InvalidConfigurationError, log, retry } from "builder-util"
 import { MemoLazy, parseDn } from "builder-util-runtime"
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import { rename } from "fs-extra"
+=======
+import * as fsExtra from "fs-extra"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { Lazy } from "lazy-val"
 import * as os from "os"
 import * as path from "path"
@@ -261,7 +265,7 @@ export class WindowsSignToolManager implements SignManager {
       )
       isNest = true
       if (taskConfiguration.resultOutputPath != null) {
-        await rename(taskConfiguration.resultOutputPath, options.path)
+        await fsExtra.rename(taskConfiguration.resultOutputPath, options.path)
       }
     }
 

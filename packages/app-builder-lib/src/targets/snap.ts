@@ -1,6 +1,6 @@
 import { replaceDefault as _replaceDefault, Arch, deepAssign, executeAppBuilder, InvalidConfigurationError, log, serializeToYaml, toLinuxArchString } from "builder-util"
 import { asArray, Nullish, SnapStoreOptions } from "builder-util-runtime"
-import { outputFile, readFile } from "fs-extra"
+import * as fsExtra from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
 import * as semver from "semver"
@@ -72,7 +72,7 @@ export default class SnapTarget extends Target {
       adapter: "none",
     }
 
-    const snap: any = load(await readFile(path.join(getTemplatePath("snap"), "snapcraft.yaml"), "utf-8"))
+    const snap: any = load(await fsExtra.readFile(path.join(getTemplatePath("snap"), "snapcraft.yaml"), "utf-8"))
     if (this.isUseTemplateApp) {
       delete appDescriptor.adapter
     }
@@ -252,7 +252,7 @@ export default class SnapTarget extends Target {
       return
     }
 
-    await outputFile(path.join(snapMetaDir, this.isUseTemplateApp ? "snap.yaml" : "snapcraft.yaml"), serializeToYaml(snap))
+    await fsExtra.outputFile(path.join(snapMetaDir, this.isUseTemplateApp ? "snap.yaml" : "snapcraft.yaml"), serializeToYaml(snap))
 
     const hooksDir = await packager.getResource(options.hooks, "snap-hooks")
     if (hooksDir != null) {

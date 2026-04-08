@@ -2,7 +2,13 @@ import { getBinFromUrl } from "app-builder-lib"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
 import { archFromString, doSpawn, getArchSuffix, isEmptyOrSpaces, log, TmpDir } from "builder-util"
 import { Arch, Configuration, Platform } from "electron-builder"
+<<<<<<< HEAD
 import fs, { existsSync, outputFile } from "fs-extra"
+=======
+import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
+import * as fsExtra from "fs-extra"
+import { homedir } from "os"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import path from "path"
 import { afterAll, beforeAll, describe, ExpectStatic, TestContext } from "vitest"
 import { launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
@@ -100,7 +106,7 @@ async function runTest(context: TestContext, target: string, packageManager: str
   // Setup tests by installing the previous version
   const appPath = await handleInitialInstallPerOS({ target, dirPath, arch })
 
-  if (!existsSync(appPath)) {
+  if (!fsExtra.existsSync(appPath)) {
     throw new Error(`App not found: ${appPath}`)
   }
 
@@ -108,7 +114,11 @@ async function runTest(context: TestContext, target: string, packageManager: str
   try {
     await runTestWithinServer(async (rootDirectory: string, updateConfigPath: string) => {
       // Move app update to the root directory of the server
+<<<<<<< HEAD
       await fs.copy(newAppDir.dir, rootDirectory, { recursive: true, overwrite: true })
+=======
+      await fsExtra.copy(newAppDir.dir, rootDirectory, { recursive: true, overwrite: true })
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 
       const verifyAppVersion = async (expectedVersion: string) =>
         await launchAndWaitForQuit({ appPath, timeoutMs: 2 * 60 * 1000, updateConfigPath, expectedVersion, packageManagerToTest: packageManager })
@@ -199,6 +209,7 @@ async function doBuild(
         signed: true,
         signedWin: isWindows,
         packed,
+<<<<<<< HEAD
         projectDirCreated: async projectDir => {
           await Promise.all([
             outputFile(path.join(projectDir, "package-lock.json"), "{}"),
@@ -243,18 +254,73 @@ async function doBuild(
             ),
           ])
           execSync("npm install", { cwd: projectDir, stdio: "inherit" })
+=======
+        packageManager: PM.PNPM,
+        projectDirCreated: async (projectDir, _tmpDir, runtimeEnv) => {
+          // await outputFile(path.join(projectDir, "package-lock.json"), "{}")
+          await fsExtra.outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted")
+
+          await modifyPackageJson(
+            projectDir,
+            data => {
+              data.devDependencies = {
+                electron: ELECTRON_VERSION,
+                "node-addon-api": "^8",
+              }
+              const electronUpdaterPath = (pkg: string) => path.resolve(__dirname, "../../../packages", pkg)
+              data.dependencies = {
+                ...data.dependencies,
+                sqlite3: "5.1.7", // for testing native dependency handling in auto-update
+                "@electron/remote": "2.1.3", // for debugging live application with GUI so that app.getVersion is accessible in renderer process
+                "electron-updater": `link:${electronUpdaterPath("electron-updater")}`,
+                ...fsExtra.readJsonSync(path.join(electronUpdaterPath("electron-updater"), "package.json")).dependencies,
+                "builder-util-runtime": `link:${electronUpdaterPath("builder-util-runtime")}`, // needs to be last to overwrite electron-updater's builder-util-runtime dependency for testing with workspace version of builder-util-runtime (workspace:* doesn't resolve and needs to be linked explicitly)
+                ...fsExtra.readJsonSync(path.join(electronUpdaterPath("builder-util-runtime"), "package.json")).dependencies,
+              }
+            },
+            true
+          )
+          await modifyPackageJson(
+            projectDir,
+            data => {
+              data.pnpm = {
+                supportedArchitectures: {
+                  os: ["current"],
+                  cpu: ["x64", "arm64"],
+                },
+              }
+            },
+            false
+          )
+          await spawn("pnpm", ["install"], { cwd: projectDir, stdio: "inherit", env: runtimeEnv })
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
         },
       }
     )
   }
 
   const build = (version: string) =>
+<<<<<<< HEAD
     buildApp(version, targets, extraConfig, async context => {
       // move dist temporarily out of project dir so each downloader can reference it
       const dir = await tmpDir.getTempDir({ prefix: version })
       await fs.move(context.outDir, dir)
       const appPath = path.join(dir, path.relative(context.outDir, context.getAppPath(Platform.current(), archFromString(process.arch))))
       outDirs.push({ dir, appPath })
+=======
+    buildApp({
+      version,
+      target,
+      arch,
+      extraConfig,
+      packed: async context => {
+        // move dist temporarily out of project dir so each downloader can reference it
+        const dir = await tmpDir.getTempDir({ prefix: version })
+        await fsExtra.move(context.outDir, dir)
+        const appPath = path.join(dir, path.relative(context.outDir, context.getAppPath(Platform.current(), archFromString(process.arch))))
+        outDirs.push({ dir, appPath })
+      },
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
     })
   try {
     await build(OLD_VERSION_NUMBER)
@@ -306,7 +372,7 @@ async function handleInitialInstallPerOS({ target, dirPath, arch }: { target: st
     // this is to clear dev environment when not running on an ephemeral GH runner.
     // Reinstallation will otherwise fail due to "uninstall" message prompt, so we must uninstall first (hence the setTimeout delay)
     const uninstaller = path.join(localProgramsPath, "Uninstall TestApp.exe")
-    if (existsSync(uninstaller)) {
+    if (fsExtra.existsSync(uninstaller)) {
       console.log("Uninstalling", uninstaller)
       execFileSync(uninstaller, ["/S", "/C", "exit"], { stdio: "inherit" })
       await new Promise(resolve => setTimeout(resolve, 5000))

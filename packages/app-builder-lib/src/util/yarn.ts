@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 import { asArray, log, retry, spawn, stripSensitiveEnvVars } from "builder-util"
 
+=======
+import { asArray, log, spawn } from "builder-util"
+import * as fsExtra from "fs-extra"
+import { Lazy } from "lazy-val"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { homedir } from "os"
 import * as path from "path"
 <<<<<<< HEAD
@@ -49,7 +55,11 @@ export async function installOrRebuild(
 
   const dirsToCheck = [...new Set([projectDir, appDir, workspaceRoot].filter((d): d is string => !!d))]
   for (const fileOrDir of ["node_modules", ".pnp.js"]) {
+<<<<<<< HEAD
     if ((await Promise.all(dirsToCheck.map(d => pathExists(path.join(d, fileOrDir))))).some(Boolean)) {
+=======
+    if ((await fsExtra.pathExists(path.join(projectDir, fileOrDir))) || (await fsExtra.pathExists(path.join(appDir, fileOrDir)))) {
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
       isDependenciesInstalled = true
 
       break

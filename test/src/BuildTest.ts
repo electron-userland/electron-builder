@@ -9,7 +9,11 @@ import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { createYargs } from "electron-builder"
 >>>>>>> fb7cff668 (esm complete on tests as well?)
 import { promises as fs } from "fs"
+<<<<<<< HEAD
 import fsExtra from "fs-extra"
+=======
+import * as fsExtra from "fs-extra"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as path from "path"
 import { app, appTwo, appTwoThrows, assertPack, getFixtureDir, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester.js"
 import { ELECTRON_VERSION } from "./helpers/testConfig.js"

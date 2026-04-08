@@ -1,11 +1,16 @@
 import { exists, log, retry, stripSensitiveEnvVars, TmpDir } from "builder-util"
 import * as childProcess from "child_process"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { createWriteStream } from "node:fs"
 import _fsExtra from "fs-extra"
 =======
 import { createWriteStream } from "fs-extra"
 >>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
+=======
+import * as fs from "fs-extra"
+import * as fsExtra from "fs-extra"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { Lazy } from "lazy-val"
 import { hoist, type HoisterResult, type HoisterTree } from "./hoist.js"
 import { ModuleCache } from "./moduleCache.js"
@@ -807,7 +812,7 @@ export function buildPowerShellEncodedArgs(command: string, args: string[]): str
     }
 
     await new Promise<void>((resolve, reject) => {
-      const outStream = createWriteStream(tempOutputFile)
+      const outStream = fsExtra.createWriteStream(tempOutputFile)
 
       const child = childProcess.spawn(command, args, {
         cwd,

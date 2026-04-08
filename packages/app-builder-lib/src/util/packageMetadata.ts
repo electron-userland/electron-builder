@@ -1,6 +1,10 @@
 import { InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { Nullish } from "builder-util-runtime"
+<<<<<<< HEAD
 import fsExtra from "fs-extra"
+=======
+import * as fsExtra from "fs-extra"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as path from "path"
 import * as semver from "semver"
 <<<<<<< HEAD
@@ -127,7 +131,11 @@ function checkDependencies(dependencies: Record<string, string> | Nullish, error
     for (const prefix of prefixes) {
       if (updaterVersion.startsWith(prefix)) {
         const normalized = path.normalize(updaterVersion.substring(prefix.length))
+<<<<<<< HEAD
         const packageJsonPath = path.isAbsolute(normalized) ? normalized : path.resolve(process.cwd(), normalized)
+=======
+        const packageJsonPath = path.isAbsolute(normalized) ? normalized : path.resolve(__dirname, normalized)
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
         const json = fsExtra.readJsonSync(path.join(packageJsonPath, "package.json"))
         updaterVersion = json.version
         break

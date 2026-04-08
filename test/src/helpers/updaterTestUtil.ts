@@ -6,8 +6,12 @@ import { NoOpLogger, TestOnlyUpdaterOptions } from "electron-updater/src/AppUpda
 import fsExtra from "fs-extra"
 =======
 import { NoOpLogger, TestOnlyUpdaterOptions } from "electron-updater"
+<<<<<<< HEAD
 import { outputFile, writeFile } from "fs-extra"
 >>>>>>> fb7cff668 (esm complete on tests as well?)
+=======
+import * as fsExtra from "fs-extra"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as path from "path"
 import { assertThat } from "./fileAssert.js"
 import { TestAppAdapter } from "./TestAppAdapter.js"

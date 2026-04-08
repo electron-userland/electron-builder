@@ -1,5 +1,9 @@
 import { Arch, log, serializeToYaml } from "builder-util"
+<<<<<<< HEAD
 
+=======
+import * as fsExtra from "fs-extra"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../../core.js"
@@ -67,7 +71,7 @@ export default class AppImageTarget extends Target {
     ])
 
     if (publishConfig != null) {
-      await outputFile(path.join(packager.getResourcesDir(appOutDir), "app-update.yml"), serializeToYaml(publishConfig))
+      await fsExtra.outputFile(path.join(packager.getResourcesDir(appOutDir), "app-update.yml"), serializeToYaml(publishConfig))
     }
 
     // Validated once here; throws InvalidConfigurationError for path traversal / NUL.

@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 import { Arch, asArray, copyOrLinkFile, InvalidConfigurationError, log, walk } from "builder-util"
 import { deepAssign, Nullish } from "builder-util-runtime"
 
+=======
+import { Arch, asArray, copyOrLinkFile, deepAssign, InvalidConfigurationError, log, walk } from "builder-util"
+import { Nullish } from "builder-util-runtime"
+import * as fsExtra from "fs-extra"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as path from "path"
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -136,7 +142,7 @@ export default class AppXTarget extends Target {
       const makePriPath = vm.toVmFile(path.join(vendorPath.kit, "makepri.exe"))
 
       const assetRoot = stageDir.getTempFile("appx/assets")
-      await emptyDir(assetRoot)
+      await fsExtra.emptyDir(assetRoot)
       await Promise.all(assetInfo.allAssets.map(it => copyOrLinkFile(it, path.join(assetRoot, path.basename(it)))))
 
       await vm.exec(makePriPath, [
@@ -153,7 +159,7 @@ export default class AppXTarget extends Target {
       ])
 
       // in addition to resources.pri, resources.scale-140.pri and other such files will be generated
-      for (const resourceFile of (await readdir(stageDir.dir)).filter(it => it.startsWith("resources.")).sort()) {
+      for (const resourceFile of (await fsExtra.readdir(stageDir.dir)).filter(it => it.startsWith("resources.")).sort()) {
         mappingList.push([`"${vm.toVmFile(stageDir.getTempFile(resourceFile))}" "${resourceFile}"`])
       }
       makeAppXArgs.push("/l")
@@ -163,7 +169,7 @@ export default class AppXTarget extends Target {
     for (const list of mappingList) {
       mapping += "\r\n" + list.join("\r\n")
     }
-    await writeFile(mappingFile, mapping)
+    await fsExtra.writeFile(mappingFile, mapping)
     packager.debugLogger.add("appx.mapping", mapping)
 
     if (this.options.makeappxArgs != null) {
@@ -193,7 +199,7 @@ export default class AppXTarget extends Target {
     if (userAssetDir == null) {
       userAssets = []
     } else {
-      userAssets = (await readdir(userAssetDir)).filter(it => !it.startsWith(".") && !it.endsWith(".db") && it.includes("."))
+      userAssets = (await fsExtra.readdir(userAssetDir)).filter(it => !it.startsWith(".") && !it.endsWith(".db") && it.includes("."))
       for (const name of userAssets) {
         mappings.push(`"${vm.toVmFile(userAssetDir)}${vm.pathSep}${name}" "assets\\${name}"`)
         allAssets.push(path.join(userAssetDir, name))
@@ -231,7 +237,7 @@ export default class AppXTarget extends Target {
     if (customManifestPath) {
       log.info({ manifestPath: log.filePath(customManifestPath) }, "custom appx manifest found")
     }
-    const manifestFileContent = await readFile(customManifestPath || path.join(getTemplatePath("appx"), "appxmanifest.xml"), "utf8")
+    const manifestFileContent = await fsExtra.readFile(customManifestPath || path.join(getTemplatePath("appx"), "appxmanifest.xml"), "utf8")
     const manifest = manifestFileContent.replace(/\${([a-zA-Z0-9]+)}/g, (match, p1): string => {
       switch (p1) {
         case "publisher":
@@ -355,7 +361,7 @@ export default class AppXTarget extends Target {
           throw new Error(`Macro ${p1} is not defined`)
       }
     })
-    await writeFile(outFile, manifest)
+    await fsExtra.writeFile(outFile, manifest)
   }
 
   private getCapabilities(): string {
@@ -427,7 +433,7 @@ export default class AppXTarget extends Target {
 
     if (this.options.customExtensionsPath !== undefined) {
       const extensionsPath = path.resolve(this.packager.info.appDir, this.options.customExtensionsPath)
-      extensions += await readFile(extensionsPath, "utf8")
+      extensions += await fsExtra.readFile(extensionsPath, "utf8")
     }
 
     extensions += "</Extensions>"

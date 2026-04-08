@@ -1,6 +1,10 @@
 import { asArray } from "builder-util"
 import _debug from "debug"
+<<<<<<< HEAD
 import fsExtra from "fs-extra"
+=======
+import * as fsExtra from "fs-extra"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { load } from "js-yaml"
 import * as path from "path"
 <<<<<<< HEAD

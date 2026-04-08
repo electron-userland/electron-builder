@@ -1,6 +1,10 @@
 import { AllPublishOptions, newError } from "builder-util-runtime"
 import { execFileSync } from "child_process"
+<<<<<<< HEAD
 import fsExtra from "fs-extra"
+=======
+import * as fsExtra from "fs-extra"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { unlinkSync } from "fs"
 import * as path from "path"
 <<<<<<< HEAD

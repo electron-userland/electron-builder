@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 import { debug7z, exec, exists, log, statOrNull, unlinkIfExists } from "builder-util"
+=======
+import { debug7z, exec, exists, getPath7za, log, statOrNull, unlinkIfExists } from "builder-util"
+import * as fsExtra from "fs-extra"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as path from "path"
 import { create } from "tar"
 import type { TarOptionsWithAliasesAsync } from "tar"
@@ -64,8 +69,13 @@ export async function tar({ compression, format, outFile, dirToArchive, isMacApp
   if (format === "tar.lz") {
     const lzipPath = process.platform === "darwin" ? (await getLinuxToolsMacToolset()).lzip : "lzip"
     await exec(lzipPath, [compression === "store" ? "-1" : "-9", "--keep" /* keep (don't delete) input files */, tarFile])
+<<<<<<< HEAD
     // lzip creates the output file in the same directory as the input with a .lz suffix
     await move(`${tarFile}.lz`, outFile)
+=======
+    // bloody lzip creates file in the same dir where input file with postfix `.lz`, option --output doesn't work
+    await fsExtra.move(`${tarFile}.lz`, outFile)
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
     return
   }
 

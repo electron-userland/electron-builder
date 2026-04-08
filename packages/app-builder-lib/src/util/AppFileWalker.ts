@@ -1,5 +1,9 @@
 import { FileConsumer, Filter, FilterStats } from "builder-util"
+<<<<<<< HEAD
 import fsExtra from "fs-extra"
+=======
+import * as fsExtra from "fs-extra"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as path from "path"
 import { FileMatcher } from "../fileMatcher.js"
 import { Packager } from "../packager.js"

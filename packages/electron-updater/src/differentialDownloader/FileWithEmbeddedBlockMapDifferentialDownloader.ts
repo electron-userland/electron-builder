@@ -1,6 +1,10 @@
 <<<<<<< HEAD
 import { BlockMap } from "builder-util-runtime"
+<<<<<<< HEAD
 import fsExtra from "fs-extra"
+=======
+import * as fsExtra from "fs-extra"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { DifferentialDownloader } from "./DifferentialDownloader.js"
 =======
 import { BlockMap } from "builder-util-runtime/out/blockMapApi"

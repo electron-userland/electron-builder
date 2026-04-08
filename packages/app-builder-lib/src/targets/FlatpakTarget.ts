@@ -1,6 +1,10 @@
 import { bundle as bundleFlatpak, FlatpakBundlerBuildOptions, FlatpakManifest } from "@malept/flatpak-bundler"
 import { Arch, copyFile, toLinuxArchString } from "builder-util"
+<<<<<<< HEAD
 
+=======
+import * as fsExtra from "fs-extra"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as path from "path"
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -93,8 +97,8 @@ export default class FlatpakTarget extends Target {
   private async createSandboxBinWrapper(stageDir: StageDir) {
     const useWaylandFlags = !!this.options.useWaylandFlags
     const electronWrapperPath = stageDir.getTempFile(path.join("bin", "electron-wrapper"))
-    await outputFile(electronWrapperPath, getElectronWrapperScript(this.packager.executableName, this.options.executableArgs, useWaylandFlags))
-    await chmod(electronWrapperPath, 0o755)
+    await fsExtra.outputFile(electronWrapperPath, getElectronWrapperScript(this.packager.executableName, this.options.executableArgs, useWaylandFlags))
+    await fsExtra.chmod(electronWrapperPath, 0o755)
   }
 
   private async createDesktopFile(stageDir: StageDir) {

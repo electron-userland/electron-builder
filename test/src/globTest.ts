@@ -6,8 +6,12 @@ import fsExtra from "fs-extra"
 =======
 import { readAsar } from "app-builder-lib"
 import { PM } from "app-builder-lib"
+<<<<<<< HEAD
 import { outputFile } from "fs-extra"
 >>>>>>> fb7cff668 (esm complete on tests as well?)
+=======
+import * as fsExtra from "fs-extra"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as fs from "fs/promises"
 import * as path from "path"
 import { ExpectStatic } from "vitest"

@@ -1,10 +1,15 @@
 import { parseDn } from "builder-util-runtime"
+<<<<<<< HEAD
 import { ToolInfo, WinPackager, WindowsSignToolManager } from "app-builder-lib"
 import { Configuration, CustomWindowsSign, ToolsetConfig } from "app-builder-lib/internal"
 import { AsyncTaskManager } from "builder-util"
 import { Arch, DIR_TARGET, Platform, Target } from "electron-builder"
 import { Packager } from "electron-builder"
 import { outputFile } from "fs-extra"
+=======
+import { DIR_TARGET, Platform } from "electron-builder"
+import * as fsExtra from "fs-extra"
+>>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { load } from "js-yaml"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
@@ -90,7 +95,7 @@ for (const winCodeSign of winCodeSignVersions) {
         {
           signedWin: true,
           projectDirCreated: async projectDir => {
-            await outputFile(path.join(projectDir, "assets", "nested", "nested", "file.exe"), "invalid PE file")
+            await fsExtra.outputFile(path.join(projectDir, "assets", "nested", "nested", "file.exe"), "invalid PE file")
           },
         },
         error => {
