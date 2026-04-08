@@ -1,18 +1,18 @@
 #! /usr/bin/env node
 
-import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
-import { loadEnv } from "app-builder-lib/out/util/config/load"
-import { nodeGypRebuild } from "app-builder-lib/out/util/yarn"
+import { getElectronVersion } from "app-builder-lib"
+import { loadEnv } from "app-builder-lib"
+import { nodeGypRebuild } from "app-builder-lib"
 import { ExecError, InvalidConfigurationError, log } from "builder-util"
 import * as chalk from "chalk"
 import { readJson } from "fs-extra"
 import { isCI } from "ci-info"
 import * as path from "path"
-import { build, configureBuildCommand, createYargs } from "../builder"
-import { configurePublishCommand, publish } from "../publish"
-import { createSelfSignedCert } from "./create-self-signed-cert"
-import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps"
-import { start } from "./start"
+import { build, configureBuildCommand, createYargs } from "../builder.js"
+import { configurePublishCommand, publish } from "../publish.js"
+import { createSelfSignedCert } from "./create-self-signed-cert.js"
+import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps.js"
+import { start } from "./start.js"
 
 // tslint:disable:no-unused-expression
 void createYargs()

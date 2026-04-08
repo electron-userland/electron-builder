@@ -6,13 +6,13 @@ import { EventEmitter } from "events"
 import { move } from "fs-extra"
 import * as path from "path"
 import { TmpDir } from "temp-file"
-import { TestAppAdapter } from "../helpers/TestAppAdapter"
-import { EXTENDED_TIMEOUT, PackedContext, assertPack, removeUnstableProperties } from "../helpers/packTester"
-import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, testAppCacheDirName, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { TestAppAdapter } from "../helpers/TestAppAdapter.js"
+import { EXTENDED_TIMEOUT, PackedContext, assertPack, removeUnstableProperties } from "../helpers/packTester.js"
+import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, testAppCacheDirName, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 import { mockForNodeRequire } from "vitest-mock-commonjs"
 import { ExpectStatic } from "vitest"
-import { getRanLocalServerPath } from "../helpers/launchAppCrossPlatform"
-import { ToolsetConfig } from "app-builder-lib/src/configuration"
+import { getRanLocalServerPath } from "../helpers/launchAppCrossPlatform.js"
+import { ToolsetConfig } from "app-builder-lib/out/configuration.js"
 
 async function doBuild(
   expect: ExpectStatic,

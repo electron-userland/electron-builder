@@ -1,6 +1,5 @@
 import * as path from "path"
-// @ts-ignore
-import * as _sanitizeFileName from "sanitize-filename"
+import _sanitizeFileName from "sanitize-filename"
 
 export function sanitizeFileName(s: string, normalizeNfd = false): string {
   const sanitized = _sanitizeFileName(s)

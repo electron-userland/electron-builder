@@ -2,8 +2,8 @@ import { log, PADDING } from "builder-util"
 import { ProgressCallbackTransform, PublishProvider } from "builder-util-runtime"
 import * as chalk from "chalk"
 import { createReadStream, Stats } from "fs-extra"
-import { PublishContext, UploadTask } from "."
-import { ProgressBar } from "./progress"
+import { PublishContext, UploadTask } from "./index.js"
+import { ProgressBar } from "./progress.js"
 
 const progressBarOptions = {
   incomplete: " ",

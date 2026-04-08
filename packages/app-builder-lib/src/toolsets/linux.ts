@@ -1,6 +1,6 @@
 import { Arch } from "builder-util"
 import * as path from "path"
-import { downloadArtifact, getBinFromUrl } from "../binDownload"
+import { downloadArtifact, getBinFromUrl } from "../binDownload.js"
 
 // It's just easier to copy the map of checksums here rather than adding them to within each if-statement. Also, easy copy-paste from the releases page
 const fpmChecksums = {
@@ -46,7 +46,7 @@ export async function getFpmPath() {
 
 export async function getAppImageTools(targetArch: Arch) {
   const override = process.env.APPIMAGE_TOOLS_PATH?.trim()
-  const artifactPath =
+  let artifactPath =
     override ||
     (await downloadArtifact({
       releaseName: "appimage@1.0.2",
@@ -57,7 +57,10 @@ export async function getAppImageTools(targetArch: Arch) {
       githubOrgRepo: "electron-userland/electron-builder-binaries",
     }))
 
+  artifactPath = path.resolve(artifactPath)
+
   const runtimeArch = targetArch === Arch.armv7l ? "arm32" : targetArch === Arch.arm64 ? "arm64" : targetArch === Arch.ia32 ? "ia32" : "x64"
+
   return {
     mksquashfs: path.join(artifactPath, "mksquashfs"),
     desktopFileValidate: path.join(artifactPath, "desktop-file-validate"),

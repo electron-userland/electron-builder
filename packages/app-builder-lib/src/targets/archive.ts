@@ -3,9 +3,9 @@ import { move } from "fs-extra"
 import * as path from "path"
 import { create } from "tar"
 import { TmpDir } from "temp-file"
-import { CompressionLevel } from "../core"
-import { getLinuxToolsPath } from "../toolsets/linux"
-import { TarOptionsWithAliasesAsync } from "tar/dist/commonjs/options"
+import { CompressionLevel } from "../core.js"
+import { getLinuxToolsPath } from "../toolsets/linux.js"
+import { TarOptionsWithAliasesAsync } from "tar"
 
 /** @internal */
 export async function tar(compression: CompressionLevel | any, format: string, outFile: string, dirToArchive: string, isMacApp: boolean, tempDirManager: TmpDir): Promise<void> {

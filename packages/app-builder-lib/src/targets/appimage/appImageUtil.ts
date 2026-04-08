@@ -1,13 +1,13 @@
 import { Arch, copyDir, copyFile, exec, exists, InvalidConfigurationError, log } from "builder-util"
 import * as fs from "fs-extra"
 import * as path from "path"
-import { FileAssociation } from "../../options/FileAssociation"
-import { IconInfo } from "../../platformPackager"
-import { getAppImageTools } from "../../toolsets/linux"
-import { copyIcons, copyMimeTypes } from "./appLauncher"
-import { appendBlockmap } from "../differentialUpdateInfoBuilder"
+import { FileAssociation } from "../../options/FileAssociation.js"
+import { IconInfo } from "../../platformPackager.js"
+import { getAppImageTools } from "../../toolsets/linux.js"
+import { copyIcons, copyMimeTypes } from "./appLauncher.js"
+import { appendBlockmap } from "../differentialUpdateInfoBuilder.js"
 import { BlockMapDataHolder } from "builder-util-runtime"
-import { APP_RUN_ENTRYPOINT } from "./AppImageTarget"
+import { APP_RUN_ENTRYPOINT } from "./AppImageTarget.js"
 
 interface Options {
   productName: string
@@ -234,13 +234,35 @@ fi
 
 isEulaAccepted=1
 
+HAVE_NO_SANDBOX=0
+for arg in "\${args[@]}" ; do
+  if [ "$arg" = --no-sandbox ] ; then
+    HAVE_NO_SANDBOX=1
+    break
+  fi
+done
+NO_SANDBOX=
+# Use 'unshare -Ur true' as a heuristic to detect whether user namespaces are available.
+# Notes:
+#   - When running as root, this check will always succeed even if the sandbox configuration
+#     actually relies on unprivileged user namespaces. In practice, Chrome/Electron usually
+#     disables or adjusts the sandbox separately when running as root, so this probe is mostly
+#     a no-op in that scenario.
+#   - On minimal systems (e.g. Alpine or stripped-down containers) 'unshare' may not exist.
+#     In that case the shell will return exit code 127 ("command not found"), which will cause
+#     us to add '--no-sandbox'. This is an intentional fail-safe: we prefer the app to start
+#     without sandboxing rather than crash on startup.
+if [ $HAVE_NO_SANDBOX -eq 0 ] && ! unshare -Ur true 2>/dev/null ; then
+  NO_SANDBOX=--no-sandbox
+fi
+
 atexit()
 {
   if [ $isEulaAccepted == 1 ] ; then
     if [ $NUMBER_OF_ARGS -eq 0 ] ; then
-      exec "$BIN"
+      exec "$BIN" $NO_SANDBOX
     else
-      exec "$BIN" "\${args[@]}"
+      exec "$BIN" $NO_SANDBOX "\${args[@]}"
     fi
   fi
 }

@@ -1,17 +1,17 @@
-import { IconInfo } from "../../platformPackager"
+import { IconInfo } from "../../platformPackager.js"
 import { Arch, log, serializeToYaml } from "builder-util"
 import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { Target } from "../../core"
-import { LinuxPackager } from "../../linuxPackager"
-import { AppImageOptions } from "../../options/linuxOptions"
-import { getAppUpdatePublishConfiguration } from "../../publish/PublishManager"
-import { executeAppBuilderAsJson, objectToArgs } from "../../util/appBuilder"
-import { getNotLocalizedLicenseFile } from "../../util/license"
-import { LinuxTargetHelper } from "../LinuxTargetHelper"
-import { createStageDir, StageDir } from "../targetUtil"
-import { buildAppImage } from "./appImageUtil"
+import { Target } from "../../core.js"
+import { LinuxPackager } from "../../linuxPackager.js"
+import { AppImageOptions } from "../../options/linuxOptions.js"
+import { getAppUpdatePublishConfiguration } from "../../publish/PublishManager.js"
+import { executeAppBuilderAsJson, objectToArgs } from "../../util/appBuilder.js"
+import { getNotLocalizedLicenseFile } from "../../util/license.js"
+import { LinuxTargetHelper } from "../LinuxTargetHelper.js"
+import { createStageDir, StageDir } from "../targetUtil.js"
+import { buildAppImage } from "./appImageUtil.js"
 import { BlockMapDataHolder } from "builder-util-runtime"
 
 // https://unix.stackexchange.com/questions/375191/append-to-sub-directory-inside-squashfs-file
@@ -19,7 +19,7 @@ import { BlockMapDataHolder } from "builder-util-runtime"
 export const APP_RUN_ENTRYPOINT = "AppRun"
 
 export default class AppImageTarget extends Target {
-  readonly options: AppImageOptions = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
+  readonly options: AppImageOptions
 
   private readonly desktopEntry: Lazy<string>
 
@@ -30,10 +30,14 @@ export default class AppImageTarget extends Target {
     readonly outDir: string
   ) {
     super("appImage")
+    this.options = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
 
     this.desktopEntry = new Lazy<string>(() => {
-      const args = this.options.executableArgs?.join(" ") || "--no-sandbox"
-      return helper.computeDesktopEntry(this.options, `${APP_RUN_ENTRYPOINT} ${args} %U`, {
+      const appimageTool = packager.config.toolsets?.appimage
+      const defaultArgs = appimageTool == null || appimageTool === "0.0.0" ? ["--no-sandbox"] : []
+      const args = this.options.executableArgs ?? defaultArgs
+      const exec = [APP_RUN_ENTRYPOINT, ...args, "%U"].join(" ")
+      return helper.computeDesktopEntry(this.options, exec, {
         "X-AppImage-Version": `${packager.appInfo.buildVersion}`,
       })
     })

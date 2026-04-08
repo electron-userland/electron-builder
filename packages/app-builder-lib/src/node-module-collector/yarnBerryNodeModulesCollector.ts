@@ -1,8 +1,8 @@
 import { log } from "builder-util"
 import { Lazy } from "lazy-val"
-import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
-import { PM } from "./packageManager"
-import { NpmDependency } from "./types"
+import { NpmNodeModulesCollector } from "./npmNodeModulesCollector.js"
+import { PM } from "./packageManager.js"
+import { NpmDependency } from "./types.js"
 
 type YarnSetupInfo = {
   yarnVersion: string | null

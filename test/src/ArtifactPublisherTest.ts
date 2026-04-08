@@ -1,5 +1,5 @@
 import { Platform } from "app-builder-lib"
-import { createPublisher } from "app-builder-lib/out/publish/PublishManager"
+import { createPublisher } from "app-builder-lib"
 import { Arch } from "builder-util"
 import { BitbucketOptions, CancellationToken, HttpError, KeygenOptions, S3Options, SpacesOptions } from "builder-util-runtime"
 import { publishArtifactsWithOptions } from "electron-builder"
@@ -161,4 +161,55 @@ test.ifEnv(process.env.BITBUCKET_TOKEN)("Bitbucket upload", async ({ expect }) =
     timeout,
   } as BitbucketOptions)
   expect(await publisher.upload({ file: iconPath, arch: Arch.x64, timeout })).toThrowError("Request timed out")
+})
+
+const mockRelease = { id: 1, tag_name: "v1.0.0", draft: true, prerelease: false, published_at: "", upload_url: "https://uploads.github.com/{?name}" }
+
+function mockGithubRequest(publisher: GitHubPublisher): { getData: () => any } {
+  let capturedData: any = null
+  ;(publisher as any).githubRequest = (_path: string, _token: string, data: any) => {
+    capturedData = data
+    return Promise.resolve(mockRelease)
+  }
+  return { getData: () => capturedData }
+}
+
+test("GitHub createRelease sends body when releaseBody is set", async ({ expect }) => {
+  const publisher = new GitHubPublisher(publishContext, { provider: "github", owner: "test", repo: "test", token: "__test__" }, "1.0.0", {}, "## Changes\n\n- Feature A")
+  const mock = mockGithubRequest(publisher)
+
+  await (publisher as any).createRelease()
+
+  expect(mock.getData().body).toBe("## Changes\n\n- Feature A")
+  expect(mock.getData().tag_name).toBe("v1.0.0")
+  expect(mock.getData().draft).toBe(true)
+})
+
+test("GitHub createRelease omits body when releaseBody is not set", async ({ expect }) => {
+  const publisher = new GitHubPublisher(publishContext, { provider: "github", owner: "test", repo: "test", token: "__test__" }, "1.0.0")
+  const mock = mockGithubRequest(publisher)
+
+  await (publisher as any).createRelease()
+
+  expect(mock.getData().body).toBeUndefined()
+  expect(mock.getData().name).toBe("1.0.0")
+})
+
+test("GitHub createRelease uses releaseName when set", async ({ expect }) => {
+  const publisher = new GitHubPublisher(publishContext, { provider: "github", owner: "test", repo: "test", token: "__test__" }, "1.0.0", {}, null, "My App v1.0.0")
+  const mock = mockGithubRequest(publisher)
+
+  await (publisher as any).createRelease()
+
+  expect(mock.getData().name).toBe("My App v1.0.0")
+})
+
+test("GitHub createRelease truncates body exceeding limit", async ({ expect }) => {
+  const longBody = "x".repeat(130000)
+  const publisher = new GitHubPublisher(publishContext, { provider: "github", owner: "test", repo: "test", token: "__test__" }, "1.0.0", {}, longBody)
+  const mock = mockGithubRequest(publisher)
+
+  await (publisher as any).createRelease()
+
+  expect(mock.getData().body.length).toBe(100000)
 })

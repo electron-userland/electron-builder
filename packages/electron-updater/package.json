@@ -2,7 +2,10 @@
   "name": "electron-updater",
   "version": "6.8.3",
   "description": "Cross platform updater for electron applications",
-  "main": "out/main.js",
+  "type": "module",
+  "exports": {
+    ".": "./out/index.js"
+  },
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {
@@ -36,5 +39,8 @@
   "typings": "./out/main.d.ts",
   "publishConfig": {
     "tag": "next"
+  },
+  "engines": {
+    "node": ">=22.12.0"
   }
 }

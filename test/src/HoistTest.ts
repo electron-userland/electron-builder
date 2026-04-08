@@ -1,5 +1,5 @@
 // copy from https://github.com/yarnpkg/berry/blob/master/packages/yarnpkg-nm/tests/hoist.test.ts
-import { hoist, HoisterTree, HoisterResult, HoisterDependencyKind } from "app-builder-lib/out/node-module-collector/hoist"
+import { hoist, HoisterTree, HoisterResult, HoisterDependencyKind } from "app-builder-lib"
 import { expect } from "vitest"
 
 const toTree = (obj: any, key: string = `.`, nodes = new Map()): HoisterTree => {

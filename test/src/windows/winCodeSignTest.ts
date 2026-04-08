@@ -6,7 +6,7 @@ import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows } from "../helpers/packTester"
 import { ExpectStatic } from "vitest"
-import { ToolsetConfig } from "app-builder-lib/src/configuration"
+import { ToolsetConfig } from "app-builder-lib"
 
 test("parseDn", ({ expect }) => {
   expect(parseDn("CN=7digital Limited, O=7digital Limited, L=London, C=GB")).toMatchSnapshot()
@@ -85,7 +85,7 @@ for (const winCodeSign of winCodeSignVersions) {
         return Promise.resolve()
       }))
     test("certificateFile/password - sign as Promise", ({ expect }) => testCustomSign(expect, () => Promise.resolve()))
-    test("certificateFile/password - sign as function", async ({ expect }) => testCustomSign(expect, (await import("../helpers/customWindowsSign")).default))
+    test("certificateFile/password - sign as function", async ({ expect }) => testCustomSign(expect, (await import("../helpers/customWindowsSign.js")).default))
     test("certificateFile/password - sign as path", ({ expect }) => testCustomSign(expect, path.join(__dirname, "../helpers/customWindowsSign.mjs")))
 
     test("custom sign if no code sign info", ({ expect }) => {

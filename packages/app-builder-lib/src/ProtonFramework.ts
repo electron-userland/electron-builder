@@ -1,9 +1,9 @@
 import { FileTransformer, log } from "builder-util"
 import { safeStringifyJson } from "builder-util-runtime"
-import { Platform } from "./core"
-import { NODE_MODULES_PATTERN } from "./fileTransformer"
-import { LibUiFramework } from "./frameworks/LibUiFramework"
-import { getTemplatePath } from "./util/pathManager"
+import { Platform } from "./core.js"
+import { NODE_MODULES_PATTERN } from "./fileTransformer.js"
+import { LibUiFramework } from "./frameworks/LibUiFramework.js"
+import { getTemplatePath } from "./util/pathManager.js"
 
 export class ProtonFramework extends LibUiFramework {
   readonly name = "proton"
