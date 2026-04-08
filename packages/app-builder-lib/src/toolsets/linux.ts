@@ -17,10 +17,10 @@ export const appimageChecksums = {
     // legacy
   },
   "1.0.2": {
-    "appimage-tools-runtime-20251108.tar.gz": "aDRiYN1XSmP+2rAW/25bMC1S7Z/wfgUf7pf8k8gA5BA3oLXUkTp9YTGa1K9ATsCf1+3enS3z6W4yHZW+n5LygQ==",
+    "appimage-tools-runtime-20251108.tar.gz": "sha256:a784a8c26331ec2e945c23d6bdb14af5c9df27f5939825d84b8709c61dc81eb0",
   },
   "1.0.3": {
-    "appimage-tools-runtime-20251108.tar.gz": "vkGxGf+aV4KQDk8DxhNEk7miFqI6nWu14riHyRkDRabVi8mHWI5m4xpqvRnCIyPBDAA6oPyiI9cb0hoUXZMSAA==",
+    "appimage-tools-runtime-20251108.tar.gz": "sha256:84021a78ee214ae6fd33a2d62a92ba25542dd10bc86bf117a9b2d0bba44e7665",
   },
 } as const
 
