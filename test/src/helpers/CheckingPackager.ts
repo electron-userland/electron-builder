@@ -14,10 +14,10 @@ export class CheckingWinPackager extends WinPackager {
     super(info)
   }
 
-  //noinspection JSUnusedLocalSymbols
   async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<any> {
+    const pkgName = "electron-builder-squirrel-windows"
     // skip pack
-    const helperClass = (await import("electron-builder-squirrel-windows")).default
+    const helperClass = (await import(pkgName)).default
     const newClass = new (helperClass as any)(this, outDir)
     const setupFile = this.expandArtifactNamePattern(newClass.options, "exe", arch, "${productName} Setup ${version}.${ext}")
     const installerOutDir = path.join(outDir, `squirrel-windows${getArchSuffix(arch)}`)
@@ -25,7 +25,6 @@ export class CheckingWinPackager extends WinPackager {
     await this.signIf(this.computeAppOutDir(outDir, arch))
   }
 
-  //noinspection JSUnusedLocalSymbols
   packageInDistributableFormat(appOutDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): void {
     // skip
   }
