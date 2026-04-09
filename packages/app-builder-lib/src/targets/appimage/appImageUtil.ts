@@ -201,7 +201,7 @@ function hasEula(config: AppRunScript): config is AppRunScriptWithEula {
 function generateAppRunScript(config: AppRunScript): string {
   const eulaEnabled = hasEula(config)
 
-  return `#!/bin/bash
+  return `#!/usr/bin/env bash
 set -e
 
 THIS="$0"
