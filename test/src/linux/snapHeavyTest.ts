@@ -1,5 +1,5 @@
 import { Arch, Platform } from "app-builder-lib"
-import { app, EXTENDED_TIMEOUT, snapTarget } from "../helpers/packTester"
+import { app, EXTENDED_TIMEOUT, snapTarget } from "../helpers/packTester.js"
 import * as which from "which"
 
 // very slow

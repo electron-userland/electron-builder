@@ -1,6 +1,6 @@
 import { Arch, Platform } from "electron-builder"
 import * as fs from "fs"
-import { app } from "../helpers/packTester"
+import { app } from "../helpers/packTester.js"
 import { ToolsetConfig } from "app-builder-lib"
 
 const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0"]

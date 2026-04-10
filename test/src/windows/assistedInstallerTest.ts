@@ -1,8 +1,8 @@
 import { Arch, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { app, assertPack, copyTestAsset } from "../helpers/packTester"
-import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper"
+import { app, assertPack, copyTestAsset } from "../helpers/packTester.js"
+import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper.js"
 import { ToolsetConfig } from "app-builder-lib"
 
 const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0"]

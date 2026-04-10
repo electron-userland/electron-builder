@@ -4,9 +4,7 @@
   "version": "26.8.2",
   "type": "module",
   "exports": {
-    ".": "./out/index.js",
-    "./cli": "./cli.js",
-    "./install-app-deps": "./install-app-deps.js"
+    ".": "./out/index.js"
   },
   "files": [
     "out"

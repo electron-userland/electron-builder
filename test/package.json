@@ -1,6 +1,7 @@
 {
   "name": "@electron-builder/test",
   "version": "0.0.0",
+  "type": "module",
   "private": true,
   "dependencies": {
     "@electron/osx-sign": "^1.0.4",
@@ -45,35 +46,5 @@
     "vitest": "^3.0.4",
     "vitest-mock-commonjs": "^1.0.2",
     "which": "^5.0.0"
-  },
-  "jest": {
-    "snapshotResolver": "<rootDir>/snapshotResolver.js",
-    "testEnvironment": "node",
-    "roots": [
-      "src"
-    ],
-    "transformIgnorePatterns": [
-      "./node_modules",
-      "../node_modules",
-      "../packages"
-    ],
-    "transform": {
-      "^.+\\.ts$": [
-        "esbuild-jest",
-        {
-          "sourcemap": "inline",
-          "loaders": {
-            ".ts": "ts"
-          }
-        }
-      ]
-    },
-    "testPathIgnorePatterns": [
-      "[\\/]{1}helpers[\\/]{1}"
-    ],
-    "testRegex": "\\.[jt]s$",
-    "setupFilesAfterEnv": [
-      "<rootDir>/jestSetup.js"
-    ]
   }
 }

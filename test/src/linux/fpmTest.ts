@@ -1,5 +1,5 @@
 import { Arch, Platform } from "electron-builder"
-import { app, EXTENDED_TIMEOUT } from "../helpers/packTester"
+import { app, EXTENDED_TIMEOUT } from "../helpers/packTester.js"
 
 // "apk" is very slow, don't test for now
 describe.heavy.ifNotWindows("fpm", () => {

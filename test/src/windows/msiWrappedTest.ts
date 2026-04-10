@@ -1,7 +1,7 @@
 import { Arch, Platform } from "electron-builder"
 import { XMLParser } from "fast-xml-parser"
 import * as fs from "fs"
-import { app, appThrows } from "../helpers/packTester"
+import { app, appThrows } from "../helpers/packTester.js"
 import { ToolsetConfig } from "app-builder-lib"
 
 const parser = new XMLParser({

@@ -1,6 +1,6 @@
 import * as fs from "fs"
 import * as path from "path"
-import { IS_LINUX, IS_MAC, IS_WIN, PLATFORM, SupportedPlatforms, TargetPlatform, TEST_ROOT, skipPerOSTests, skippedTests } from "./smart-config"
+import { IS_LINUX, IS_MAC, IS_WIN, PLATFORM, SupportedPlatforms, TargetPlatform, TEST_ROOT, skipPerOSTests, skippedTests } from "./smart-config.js"
 
 export function platformAllowed(file: string, platform: TargetPlatform = "current"): boolean {
   if (platform === "current") {
