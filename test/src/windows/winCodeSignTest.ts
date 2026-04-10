@@ -12,8 +12,8 @@ import * as fsExtra from "fs-extra"
 >>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { load } from "js-yaml"
 import * as path from "path"
-import { CheckingWinPackager } from "../helpers/CheckingPackager"
-import { app, appThrows } from "../helpers/packTester"
+import { CheckingWinPackager } from "../helpers/CheckingPackager.js"
+import { app, appThrows } from "../helpers/packTester.js"
 import { ExpectStatic } from "vitest"
 
 type SignIfResult = { file: string; ok: boolean }
