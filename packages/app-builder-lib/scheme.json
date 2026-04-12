@@ -6471,7 +6471,8 @@
             {
               "enum": [
                 "0.0.0",
-                "1.0.2"
+                "1.0.2",
+                "1.0.3"
               ],
               "type": "string"
             },
@@ -6480,7 +6481,7 @@
             }
           ],
           "default": "0.0.0",
-          "description": "`appimage` bundle version to use for Appimage packaging and runtime.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage&expanded=true\n0.0.0 - legacy toolset (appimage)\n\nBeta:\n1.0.2 - Runtime 20251108"
+          "description": "`appimage` bundle version to use for Appimage packaging and runtime.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage&expanded=true\n0.0.0 - legacy toolset (appimage)\n\nBetas:\n1.0.2 - Runtime 20251108\n1.0.3 - Runtime 20251108 (Resolves GH issue #9598)"
         },
         "winCodeSign": {
           "anyOf": [

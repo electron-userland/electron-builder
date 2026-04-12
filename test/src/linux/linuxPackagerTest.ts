@@ -16,7 +16,7 @@ const testPublishConfig: GenericServerOptions = {
   url: "https://example.com/download",
 }
 
-const appImageToolset: ToolsetConfig["appimage"][] = ["0.0.0", "1.0.2"]
+const appImageToolset: ToolsetConfig["appimage"][] = ["0.0.0", "1.0.2", "1.0.3"]
 describe.ifNotWindows("LinuxPackager", () => {
   for (const appimage of appImageToolset) {
     const toolsets: ToolsetConfig = {

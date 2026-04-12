@@ -42,7 +42,7 @@ for (const winCodeSign of winCodeSignVersions) {
   })
 }
 
-const appImageToolVersions: ToolsetConfig["appimage"][] = ["0.0.0", "1.0.2"]
+const appImageToolVersions: ToolsetConfig["appimage"][] = ["0.0.0", "1.0.2", "1.0.3"]
 // must be sequential in order for process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER to be respected per-test
 describe.heavy.ifLinux("linux", { sequential: true }, () => {
   for (const appimage of appImageToolVersions) {

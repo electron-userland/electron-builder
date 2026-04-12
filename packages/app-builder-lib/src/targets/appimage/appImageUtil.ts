@@ -8,6 +8,7 @@ import { copyIcons, copyMimeTypes } from "./appLauncher"
 import { appendBlockmap } from "../differentialUpdateInfoBuilder"
 import { BlockMapDataHolder } from "builder-util-runtime"
 import { APP_RUN_ENTRYPOINT } from "./AppImageTarget"
+import { ToolsetConfig } from "app-builder-lib/src/configuration"
 
 interface Options {
   productName: string
@@ -28,7 +29,7 @@ export interface AppImageBuilderOptions {
   options: Options
 }
 
-export async function buildAppImage(opts: AppImageBuilderOptions): Promise<BlockMapDataHolder> {
+export async function buildAppImage(appimageToolVersion: ToolsetConfig["appimage"], opts: AppImageBuilderOptions): Promise<BlockMapDataHolder> {
   const { stageDir, output, appDir, options, arch } = opts
 
   try {
@@ -37,7 +38,7 @@ export async function buildAppImage(opts: AppImageBuilderOptions): Promise<Block
     // Write AppRun launcher and related files
     await writeAppLauncherAndRelatedFiles(opts)
 
-    const { runtimeLibraries: libraries, runtime, mksquashfs } = await getAppImageTools(arch)
+    const { runtimeLibraries: libraries, runtime, mksquashfs } = await getAppImageTools(appimageToolVersion, arch)
     await copyDir(libraries, path.join(stageDir, "usr", "lib"))
 
     // Copy app directory to stage
