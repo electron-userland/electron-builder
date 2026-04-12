@@ -102,8 +102,7 @@ describe.ifNotWindows("node_module collectors", () => {
               express: "4.0.0",
             }
             data.devDependencies = {
-              electron: "23.2.0",
-              "electron-builder": "26.8.1",
+              electron: ELECTRON_VERSION,
               "fs-extra": "11.0.0",
               "patch-package": "8.0.0",
             }
@@ -152,12 +151,9 @@ describe.ifNotWindows("node_module collectors", () => {
           await modifyPackageJson(projectDir, data => {
             data.dependencies = {
               "electron-updater": "6.8.3",
-              express: "4.0.0",
-              "patch-package": "8.0.0",
             }
             data.devDependencies = {
-              electron: "23.2.0",
-              "electron-builder": "26.8.1",
+              electron: ELECTRON_VERSION,
               "fs-extra": "11.0.0",
             }
             data.build.directories = {
