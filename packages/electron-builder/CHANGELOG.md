@@ -1,5 +1,24 @@
 # electron-builder
 
+## 26.9.0
+
+### Patch Changes
+
+<details><summary>Updated 4 dependencies</summary>
+
+<small>
+
+[`a69928f`](https://github.com/electron-userland/electron-builder/commit/a69928f28cd33a487a3158bd5c3ad040906d3c30) [`ed422f3`](https://github.com/electron-userland/electron-builder/commit/ed422f36540a93e9bd2a19bc7a5e729bf2b033ea) [`b072e92`](https://github.com/electron-userland/electron-builder/commit/b072e92bd31b84df506deaf6156cc6109c7ef0f5) [`3958d8b`](https://github.com/electron-userland/electron-builder/commit/3958d8b6cb7b74458ea541738af6ac753d2cf83a) [`13d8535`](https://github.com/electron-userland/electron-builder/commit/13d85355b6d37bd82d5153d260ba11de71323875) [`f71b101`](https://github.com/electron-userland/electron-builder/commit/f71b101be964bdcc2b84fcf281441372105def00) [`b7df0bc`](https://github.com/electron-userland/electron-builder/commit/b7df0bcef5790814fd6df187346dcec625dc681e) [`0c8fc41`](https://github.com/electron-userland/electron-builder/commit/0c8fc415debf0dc7e19e8ffd9c06db100ef41f11)
+
+</small>
+
+- `app-builder-lib@26.9.0`
+- `builder-util-runtime@9.6.0`
+- `dmg-builder@26.9.0`
+- `builder-util@26.9.0`
+
+</details>
+
 ## 26.8.2
 
 ### Patch Changes
