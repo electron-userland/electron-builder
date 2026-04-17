@@ -15,7 +15,7 @@ export function setPrinter(value: ((message: string) => void) | null) {
   printer = value
 }
 
-export type LogLevel = "info" | "warn" | "debug" | "notice" | "error"
+export type LogLevel = "info" | "warn" | "debug" | "error"
 
 export const PADDING = 2
 

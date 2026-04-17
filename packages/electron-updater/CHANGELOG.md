@@ -1,5 +1,27 @@
 ## 4.3.0
 
+## 6.8.4
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`b7df0bc`](https://github.com/electron-userland/electron-builder/commit/b7df0bcef5790814fd6df187346dcec625dc681e)
+
+</small>
+
+- `builder-util-runtime@9.6.0`
+
+</details>
+
+## 6.8.3
+
+### Patch Changes
+
+- Chore: Remove console logs for autoupdate checks _[`#9561`](https://github.com/electron-userland/electron-builder/pull/9561) [`9c67fd3`](https://github.com/electron-userland/electron-builder/commit/9c67fd31ce982d11c82aae71263ba1f0055a77cc) [@Kilian](https://github.com/Kilian)_
+
 ## 6.8.2
 
 ### Patch Changes

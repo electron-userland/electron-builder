@@ -9,7 +9,7 @@
       "version": "1.1.0",
       "license": "MIT",
       "dependencies": {
-        "electron-clear-data": "^1.0.5"
+        "electron-clear-data": "1.0.5"
       },
       "optionalDependencies": {
         "debug": "3.1.0"
@@ -96,9 +96,9 @@
       }
     },
     "node_modules/@types/http-cache-semantics": {
-      "version": "4.0.4",
-      "resolved": "https://registry.npmjs.org/@types/http-cache-semantics/-/http-cache-semantics-4.0.4.tgz",
-      "integrity": "sha512-1m0bIFVc7eJWyve9S0RnuRgcQqF/Xd5QsUZAZeQFr1Q3/p9JWoQQEqmVy+DPTNpGXwhgIetAoYF8JSc33q29QA==",
+      "version": "4.2.0",
+      "resolved": "https://registry.npmjs.org/@types/http-cache-semantics/-/http-cache-semantics-4.2.0.tgz",
+      "integrity": "sha512-L3LgimLHXtGkWikKnsPg0/VFx9OGZaC+eN1u4r+OB1XRqH3meBIAVC2zr1WdMH+RHmnRkqliQAOHNJ/E0j/e0Q==",
       "peer": true
     },
     "node_modules/@types/keyv": {
@@ -111,12 +111,12 @@
       }
     },
     "node_modules/@types/node": {
-      "version": "22.19.3",
-      "resolved": "https://registry.npmjs.org/@types/node/-/node-22.19.3.tgz",
-      "integrity": "sha512-1N9SBnWYOJTrNZCdh/yJE+t910Y128BoyY+zBLWhL3r0TYzlTmFdXrPwHL9DyFZmlEXNQQolTZh3KHV31QDhyA==",
+      "version": "24.12.2",
+      "resolved": "https://registry.npmjs.org/@types/node/-/node-24.12.2.tgz",
+      "integrity": "sha512-A1sre26ke7HDIuY/M23nd9gfB+nrmhtYyMINbjI1zHJxYteKR6qSMX56FsmjMcDb3SMcjJg5BiRRgOCC/yBD0g==",
       "peer": true,
       "dependencies": {
-        "undici-types": "~6.21.0"
+        "undici-types": "~7.16.0"
       }
     },
     "node_modules/@types/responselike": {
@@ -283,14 +283,14 @@
       "peer": true
     },
     "node_modules/electron": {
-      "version": "39.2.7",
-      "resolved": "https://registry.npmjs.org/electron/-/electron-39.2.7.tgz",
-      "integrity": "sha512-KU0uFS6LSTh4aOIC3miolcbizOFP7N1M46VTYVfqIgFiuA2ilfNaOHLDS9tCMvwwHRowAsvqBrh9NgMXcTOHCQ==",
+      "version": "41.2.0",
+      "resolved": "https://registry.npmjs.org/electron/-/electron-41.2.0.tgz",
+      "integrity": "sha512-0OKLiymqfV0WK68RBXqAm3Myad2TpI5wwxLCBEUcH5Nugo3YfSk7p1Js/AL9266qTz5xZioUnxt9hG8FFwax0g==",
       "hasInstallScript": true,
       "peer": true,
       "dependencies": {
         "@electron/get": "^2.0.0",
-        "@types/node": "^22.7.7",
+        "@types/node": "^24.9.0",
         "extract-zip": "^2.0.1"
       },
       "bin": {
@@ -469,9 +469,9 @@
       }
     },
     "node_modules/global-agent/node_modules/semver": {
-      "version": "7.7.3",
-      "resolved": "https://registry.npmjs.org/semver/-/semver-7.7.3.tgz",
-      "integrity": "sha512-SdsKMrI9TdgjdweUSR9MweHA4EJ8YxHn8DFaDisvhVlUOe4BF1tLD7GAj0lIqWVl+dPb/rExr0Btby5loQm20Q==",
+      "version": "7.7.4",
+      "resolved": "https://registry.npmjs.org/semver/-/semver-7.7.4.tgz",
+      "integrity": "sha512-vFKC2IEtQnVhpT78h1Yp8wzwrf8CM+MzKMHGJZfBtzhZNycRFnXsHk6E5TxIkkMsgNS7mdX3AGB7x2QM2di4lA==",
       "optional": true,
       "peer": true,
       "bin": {
@@ -698,9 +698,9 @@
       }
     },
     "node_modules/pump": {
-      "version": "3.0.3",
-      "resolved": "https://registry.npmjs.org/pump/-/pump-3.0.3.tgz",
-      "integrity": "sha512-todwxLMY7/heScKmntwQG8CXVkWUOdYxIvY2s0VWAAMh/nd8SoYiRaKjlr7+iCs984f2P8zvrfWcDDYVb73NfA==",
+      "version": "3.0.4",
+      "resolved": "https://registry.npmjs.org/pump/-/pump-3.0.4.tgz",
+      "integrity": "sha512-VS7sjc6KR7e1ukRFhQSY5LM2uBWAUPiOPa/A3mkKmiMwSmRFUITt0xuj+/lesgnCv+dPIEYlkzrcyXgquIHMcA==",
       "peer": true,
       "dependencies": {
         "end-of-stream": "^1.1.0",
@@ -843,9 +843,9 @@
       }
     },
     "node_modules/undici-types": {
-      "version": "6.21.0",
-      "resolved": "https://registry.npmjs.org/undici-types/-/undici-types-6.21.0.tgz",
-      "integrity": "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==",
+      "version": "7.16.0",
+      "resolved": "https://registry.npmjs.org/undici-types/-/undici-types-7.16.0.tgz",
+      "integrity": "sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==",
       "peer": true
     },
     "node_modules/universalify": {

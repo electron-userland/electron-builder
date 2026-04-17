@@ -1,5 +1,5 @@
 import { PublishManager } from "app-builder-lib"
-import { readAsar } from "app-builder-lib/out/asar/asar"
+import { verifyAsarFileTree as _verifyAsarFileTree } from "./asarVerifier"
 import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetFactory"
 import { getLinuxToolsPath } from "app-builder-lib/out/toolsets/linux"
 import { parsePlistFile, PlistObject } from "app-builder-lib/out/util/plist"
@@ -48,6 +48,35 @@ export function getPackageManagerWithVersion(pm: PM, packageManagerAndVersionStr
     version: packageManagerInfo.version,
     prepareEntry: prepare,
   }
+}
+
+function getLockedInstallArgs(pm: PM): Array<string> | undefined {
+  switch (pm) {
+    case PM.YARN:
+    case PM.PNPM:
+    case PM.BUN:
+      return ["--frozen-lockfile"]
+    case PM.YARN_BERRY:
+      return ["--immutable"]
+    default:
+      return undefined
+  }
+}
+
+function getLockfileFixtureNameCandidates(currentTestName: string): Array<string> {
+  const names: Array<string> = []
+  const normalizedTestName = currentTestName.trim()
+
+  const leafTestName = normalizedTestName.split(" > ").at(-1)?.trim()
+  if (leafTestName != null && leafTestName.length > 0) {
+    names.push(sanitizeFileName(leafTestName))
+  }
+
+  if (normalizedTestName.length > 0) {
+    names.push(sanitizeFileName(normalizedTestName))
+  }
+
+  return [...new Set(names.filter(Boolean))]
 }
 
 export const EXTENDED_TIMEOUT = 14 * 60 * 1000
@@ -131,9 +160,20 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
   }
 
   const state = expect.getState()
-  const lockfileFixtureName = `${path.basename(state.testPath!, ".ts")}`
+  const lockfileFixtureName = path.basename(state.testPath!, path.extname(state.testPath!))
   const lockfilePathPrefix = path.join(__dirname, "..", "..", "fixtures", "lockfiles", lockfileFixtureName)
-  const testFixtureLockfile = path.join(lockfilePathPrefix, `${sanitizeFileName(state.currentTestName!)}.txt`)
+  const lockfileFixtureNameCandidates = getLockfileFixtureNameCandidates(state.currentTestName || "")
+  if (lockfileFixtureNameCandidates.length === 0) {
+    lockfileFixtureNameCandidates.push("unknown-test")
+  }
+  const lockfileFixturePathCandidates = lockfileFixtureNameCandidates.map(name => path.join(lockfilePathPrefix, `${name}.txt`))
+  let testFixtureLockfile = lockfileFixturePathCandidates[0]
+  for (const lockfilePath of lockfileFixturePathCandidates) {
+    if (await exists(lockfilePath)) {
+      testFixtureLockfile = lockfilePath
+      break
+    }
+  }
 
   await copyDir(projectDir, dir, {
     filter: it => {
@@ -197,11 +237,13 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       const collectorOptions = collector.installOptions
 
       const destLockfile = path.join(projectDir, collectorOptions.lockfile)
+      let lockfileFixtureApplied = false
 
       const shouldUpdateLockfiles = !!process.env.UPDATE_LOCKFILE_FIXTURES && !!checkOptions.storeDepsLockfileSnapshot
       // check for lockfile fixture so we can use `--frozen-lockfile`
       if ((await exists(testFixtureLockfile)) && !shouldUpdateLockfiles) {
         await copyFile(testFixtureLockfile, destLockfile)
+        lockfileFixtureApplied = true
       }
 
       if (!(await exists(destLockfile))) {
@@ -210,6 +252,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       }
 
       const appDir = await computeDefaultAppDirectory(projectDir, configuration.directories?.app)
+      const additionalInstallArgs = lockfileFixtureApplied ? getLockedInstallArgs(pm) : undefined
 
       await installDependencies(
         configuration,
@@ -221,6 +264,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         {
           frameworkInfo: { version: ELECTRON_VERSION, useCustomDist: false },
           productionDeps: createLazyProductionDeps(appDir, null, false),
+          additionalArgs: additionalInstallArgs,
         },
         runtimeEnv
       )
@@ -229,8 +273,8 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         await postNodeModulesInstallHook()
       }
 
-      // save lockfile fixture
-      if (!(await exists(testFixtureLockfile)) && shouldUpdateLockfiles) {
+      // save or update lockfile fixture
+      if (shouldUpdateLockfiles) {
         const fixtureDir = path.dirname(testFixtureLockfile)
         if (!(await exists(fixtureDir))) {
           await mkdir(fixtureDir)
@@ -787,18 +831,7 @@ export function removeUnstableProperties(data: any) {
 }
 
 export async function verifyAsarFileTree(expect: ExpectStatic, resourceDir: string) {
-  const fs = await readAsar(path.join(resourceDir, "app.asar"))
-
-  const stableHeader = JSON.parse(
-    JSON.stringify(fs.header, (name, value) => {
-      // Keep existing test coverage
-      if (value.integrity) {
-        delete value.integrity
-      }
-      return value
-    })
-  )
-  expect(stableHeader).toMatchSnapshot()
+  return _verifyAsarFileTree(expect, resourceDir)
 }
 
 export function toSystemIndependentPath(s: string): string {
