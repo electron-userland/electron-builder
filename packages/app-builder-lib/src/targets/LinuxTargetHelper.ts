@@ -6,8 +6,6 @@ import { LinuxPackager } from "../linuxPackager"
 import { LinuxTargetSpecificOptions } from "../options/linuxOptions"
 import { IconInfo } from "../platformPackager"
 
-export const installPrefix = "/opt"
-
 export class LinuxTargetHelper {
   private readonly iconPromise = new Lazy(() => this.computeDesktopIcons())
 
@@ -23,6 +21,11 @@ export class LinuxTargetHelper {
 
   get mimeTypeFiles(): Promise<string | null> {
     return this.mimeTypeFilesPromise.value
+  }
+
+  getInstallDirectory(options: LinuxTargetSpecificOptions): string {
+    const installDirectory = this.packager.expandMacro(options.installDirectory ?? "/opt/${productName}", null)
+    return installDirectory.replace(/(?<=.)\/+$/, "")
   }
 
   private async computeMimeTypeFiles(): Promise<string | null> {
@@ -114,7 +117,8 @@ export class LinuxTargetHelper {
 
     const executableArgs = targetSpecificOptions.executableArgs
     if (exec == null) {
-      exec = `${installPrefix}/${appInfo.sanitizedProductName}/${packager.executableName}`
+      const installDirectory = this.getInstallDirectory(targetSpecificOptions)
+      exec = `${installDirectory}/${packager.executableName}`
       if (!/^[/0-9A-Za-z._-]+$/.test(exec)) {
         exec = `"${exec}"`
       }
