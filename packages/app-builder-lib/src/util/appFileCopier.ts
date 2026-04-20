@@ -222,7 +222,9 @@ async function collectNodeModulesWithLogging(platformPackager: PlatformPackager<
     for (const dir of searchDirectories) {
       log.info({ pm, searchDir: dir }, "searching for node modules")
       const collector = getCollectorByPackageManager(pm, dir, tempDirManager)
-      deps = await collector.getNodeModules({ packageName: packager.metadata.name! })
+      deps = await collector.getNodeModules({
+        packageName: packager.originalPackageJsonName ?? packager.metadata.name!,
+      })
       if (deps.nodeModules.length > 0) {
         break
       }

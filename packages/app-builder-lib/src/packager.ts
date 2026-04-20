@@ -109,6 +109,12 @@ export class Packager {
     return this._metadata!
   }
 
+  /** Stores original "name" value from package.json before merging with extraMetadata. */
+  private _originalPackageJsonName: string | undefined
+  get originalPackageJsonName(): string | undefined {
+    return this._originalPackageJsonName
+  }
+
   private _nodeModulesHandledExternally = false
 
   get areNodeModulesHandledExternally(): boolean {
@@ -388,6 +394,7 @@ export class Packager {
     } else {
       this._metadata = await this.readProjectMetadataIfTwoPackageStructureOrPrepacked(appPackageFile)
     }
+    this._originalPackageJsonName = this.metadata.name
     deepAssign(this.metadata, configuration.extraMetadata)
 
     if (this.isTwoPackageJsonProjectLayoutUsed) {
