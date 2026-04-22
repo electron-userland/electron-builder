@@ -98,8 +98,7 @@ describe.ifNotWindows("node_module collectors", () => {
         projectDirCreated: async (projectDir, _tmpDir, testEnv) => {
           await modifyPackageJson(projectDir, data => {
             data.dependencies = {
-              "electron-updater": "6.8.3",
-              express: "4.0.0",
+              "is-odd": "3.0.1",
             }
             data.devDependencies = {
               electron: ELECTRON_VERSION,
@@ -150,7 +149,7 @@ describe.ifNotWindows("node_module collectors", () => {
         projectDirCreated: async (projectDir, _tmpDir, testEnv) => {
           await modifyPackageJson(projectDir, data => {
             data.dependencies = {
-              "electron-updater": "6.8.3",
+              "is-odd": "3.0.1",
             }
             data.devDependencies = {
               electron: ELECTRON_VERSION,
@@ -472,7 +471,7 @@ describe.ifNotWindows("node_module collectors", () => {
               "electron-clear-data": "1.0.5",
             }
             data.devDependencies = {
-              electron: "34.0.2",
+              electron: ELECTRON_VERSION,
             }
           })
           await spawn("yarn", ["install"], {

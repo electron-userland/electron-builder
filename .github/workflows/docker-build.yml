@@ -2,6 +2,7 @@ name: Build Docker Images
 
 on:
   workflow_call:
+  workflow_dispatch:
 
 permissions:
   contents: read

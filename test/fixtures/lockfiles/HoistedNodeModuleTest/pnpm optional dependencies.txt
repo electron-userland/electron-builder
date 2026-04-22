@@ -10,7 +10,7 @@ importers:
     dependencies:
       electron-clear-data:
         specifier: 1.0.5
-        version: 1.0.5(electron@41.1.1)
+        version: 1.0.5(electron@41.2.0)
     optionalDependencies:
       debug:
         specifier: 3.1.0
@@ -108,8 +108,8 @@ packages:
     peerDependencies:
       electron: '>= 1.2.2'
 
-  electron@41.1.1:
-    resolution: {integrity: sha512-8bgvDhBjli+3Z2YCKgzzoBPh6391pr7Xv2h/tTJG4ETgvPvUxZomObbZLs31mUzYb6VrlcDDd9cyWyNKtPm3tA==}
+  electron@41.2.0:
+    resolution: {integrity: sha512-0OKLiymqfV0WK68RBXqAm3Myad2TpI5wwxLCBEUcH5Nugo3YfSk7p1Js/AL9266qTz5xZioUnxt9hG8FFwax0g==}
     engines: {node: '>= 12.20.55'}
     hasBin: true
 
@@ -394,11 +394,11 @@ snapshots:
   detect-node@2.1.0:
     optional: true
 
-  electron-clear-data@1.0.5(electron@41.1.1):
+  electron-clear-data@1.0.5(electron@41.2.0):
     dependencies:
-      electron: 41.1.1
+      electron: 41.2.0
 
-  electron@41.1.1:
+  electron@41.2.0:
     dependencies:
       '@electron/get': 2.0.3
       '@types/node': 24.12.2
