@@ -237,14 +237,16 @@ async function doBuild(
                 "node-addon-api": "^8",
               }
               const electronUpdaterPath = (pkg: string) => path.resolve(__dirname, "../../../packages", pkg)
+              const updaterPath = electronUpdaterPath("electron-updater")
+              const utilPath = electronUpdaterPath("builder-util-runtime")
               data.dependencies = {
                 ...data.dependencies,
                 sqlite3: "5.1.7", // for testing native dependency handling in auto-update
                 "@electron/remote": "2.1.3", // for debugging live application with GUI so that app.getVersion is accessible in renderer process
-                "electron-updater": `link:${electronUpdaterPath("electron-updater")}`,
-                ...readJsonSync(path.join(electronUpdaterPath("electron-updater"), "package.json")).dependencies,
-                "builder-util-runtime": `link:${electronUpdaterPath("builder-util-runtime")}`, // needs to be last to overwrite electron-updater's builder-util-runtime dependency for testing with workspace version of builder-util-runtime (workspace:* doesn't resolve and needs to be linked explicitly)
-                ...readJsonSync(path.join(electronUpdaterPath("builder-util-runtime"), "package.json")).dependencies,
+                "electron-updater": `link:${updaterPath}`,
+                ...readJsonSync(path.join(updaterPath, "package.json")).dependencies,
+                "builder-util-runtime": `link:${utilPath}`, // needs to be last to overwrite electron-updater's builder-util-runtime dependency for testing with workspace version of builder-util-runtime (workspace:* doesn't resolve and needs to be linked explicitly)
+                ...readJsonSync(path.join(utilPath, "package.json")).dependencies,
               }
             },
             true
