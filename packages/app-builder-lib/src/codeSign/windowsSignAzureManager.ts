@@ -1,4 +1,4 @@
-import { asArray, InvalidConfigurationError, log } from "builder-util"
+import { asArray, log } from "builder-util"
 import { MemoLazy } from "builder-util-runtime"
 import { Lazy } from "lazy-val"
 import { WindowsAzureSigningConfiguration, WindowsConfiguration } from "../options/winOptions"
