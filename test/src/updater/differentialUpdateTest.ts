@@ -119,7 +119,7 @@ async function testLinux(expect: ExpectStatic, arch: Arch, toolset: ToolsetConfi
   }
 }
 
-const appimageToolsetVersions: ToolsetConfig["appimage"][] = ["0.0.0", "1.0.2"]
+const appimageToolsetVersions: ToolsetConfig["appimage"][] = ["0.0.0", "1.0.2", "1.0.3"]
 const supportedArchs = [
   Arch.x64,
   Arch.arm64,

@@ -290,12 +290,13 @@ export interface ToolsetConfig {
    * Located at https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage&expanded=true
    * 0.0.0 - legacy toolset (appimage)
    *
-   * Beta:
+   * Betas:
    * 1.0.2 - Runtime 20251108
+   * 1.0.3 - Runtime 20251108 (Resolves GH issue #9598)
    *
    * @default "0.0.0"
    */
-  readonly appimage?: "0.0.0" | "1.0.2" | null
+  readonly appimage?: "0.0.0" | "1.0.2" | "1.0.3" | null
 }
 
 export interface Hooks {
