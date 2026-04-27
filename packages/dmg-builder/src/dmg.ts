@@ -96,7 +96,7 @@ export class DmgTarget extends Target {
     }
 
     const safeArtifactName = packager.computeSafeArtifactName(artifactName, "dmg")
-    const updateInfo = this.options.writeUpdateInfo === false ? null : await createBlockmap(artifactPath, this, packager, safeArtifactName)
+    const updateInfo = this.options.writeUpdateInfo === false ? null : await createBlockmap(artifactPath, this, packager, safeArtifactName, arch)
     await packager.info.emitArtifactBuildCompleted({
       file: artifactPath,
       safeArtifactName,
