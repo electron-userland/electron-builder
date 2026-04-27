@@ -104,15 +104,21 @@ export class Packager {
     return (await (await this._packageManager.value).workspaceRoot) || this.projectDir
   }
 
+  /** Stores original metadata merged with extraMetadata from configuration. */
   private _metadata: Metadata | null = null
   get metadata(): Metadata {
     return this._metadata!
   }
 
-  /** Stores original "name" value from package.json before merging with extraMetadata. */
-  private _originalPackageJsonName: string | undefined
-  get originalPackageJsonName(): string | undefined {
-    return this._originalPackageJsonName
+  /** Stores original metadata from package.json before merging with extraMetadata. */
+  private _originalMetadata: Metadata | null = null
+  get originalMetadata(): Metadata {
+    return this._originalMetadata!
+  }
+
+  /** The "name" field from package.json. */
+  get nodePackageName() {
+    return this.originalMetadata.name!
   }
 
   private _nodeModulesHandledExternally = false
@@ -394,8 +400,8 @@ export class Packager {
     } else {
       this._metadata = await this.readProjectMetadataIfTwoPackageStructureOrPrepacked(appPackageFile)
     }
-    this._originalPackageJsonName = this.metadata.name
-    deepAssign(this.metadata, configuration.extraMetadata)
+    this._originalMetadata = deepAssign({}, this._metadata)
+    deepAssign(this._metadata, configuration.extraMetadata)
 
     if (this.isTwoPackageJsonProjectLayoutUsed) {
       log.debug({ devPackageFile, appPackageFile }, "two package.json structure is used")
