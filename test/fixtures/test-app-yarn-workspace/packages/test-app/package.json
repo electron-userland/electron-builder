@@ -19,7 +19,7 @@
     }
   },
   "dependencies": {
-    "electron-log": "2.2.9",
-    "@sentry/core": "0.5.4"
+    "@sentry/core": "0.5.4",
+    "electron-log": "2.2.9"
   }
 }

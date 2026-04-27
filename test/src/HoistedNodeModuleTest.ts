@@ -5,6 +5,7 @@ import * as path from "path"
 import { appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { copy, mkdir, outputFile, readJson, rm, symlink, writeJson } from "fs-extra"
+import { assertThat } from "./helpers/fileAssert"
 
 describe.ifNotWindows("node_module collectors", () => {
   test("yarn workspace", ({ expect }) =>
@@ -662,6 +663,30 @@ describe.ifNotWindows("node_module collectors", () => {
           })
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      }
+    ))
+
+  test("yarn berry using extraMetadata.name should not unpack workspace app", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-yarn-workspace",
+      {
+        targets: linuxDirTarget,
+        projectDir: "packages/test-app",
+        config: {
+          extraMetadata: {
+            name: "overridden-app-name",
+          },
+        },
+      },
+      {
+        storeDepsLockfileSnapshot: true,
+        packageManager: PM.YARN_BERRY,
+        packed: async context => {
+          const resources = context.getResources(Platform.LINUX)
+
+          await assertThat(expect, path.join(resources, "app.asar.unpacked", "node_modules", "test-app")).doesNotExist()
+        },
       }
     ))
 })

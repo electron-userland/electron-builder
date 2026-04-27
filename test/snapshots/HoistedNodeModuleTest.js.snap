@@ -29627,6 +29627,12 @@ exports[`node_module collectors > pnpm workspace with native module 2`] = `
 }
 `;
 
+exports[`node_module collectors > yarn berry using extraMetadata.name should not unpack workspace app 1`] = `
+{
+  "linux": [],
+}
+`;
+
 exports[`node_module collectors > yarn berry version conflict with hoisted dependencies 1`] = `
 {
   "linux": [],
