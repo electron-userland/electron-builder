@@ -112,6 +112,12 @@ export interface LinuxTargetSpecificOptions extends CommonLinuxOptions, TargetSp
   readonly icon?: string
 
   /**
+   * Installation directory.
+   * @default /opt/${productName}
+   */
+  readonly installDirectory?: string | null
+
+  /**
    * The package category.
    */
   readonly packageCategory?: string | null

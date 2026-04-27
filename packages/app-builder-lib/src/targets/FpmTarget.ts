@@ -15,7 +15,7 @@ import { computeEnv } from "../util/bundledTool"
 import { hashFile } from "../util/hash"
 import { isMacOsSierra } from "../util/macosVersion"
 import { getTemplatePath } from "../util/pathManager"
-import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper"
+import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { getFpmPath, getLinuxToolsPath } from "../toolsets/linux"
 
 interface FpmOptions {
@@ -51,12 +51,13 @@ export default class FpmTarget extends Target {
     const defaultTemplatesDir = getTemplatePath("linux")
 
     const packager = this.packager
+    const installDirectory = this.helper.getInstallDirectory(this.options)
     const templateOptions = {
+      ...packager.platformSpecificBuildOptions,
       // old API compatibility
       executable: packager.executableName,
-      sanitizedProductName: packager.appInfo.sanitizedProductName,
       productFilename: packager.appInfo.productFilename,
-      ...packager.platformSpecificBuildOptions,
+      installDirectory,
     }
 
     function getResource(value: string | Nullish, defaultFile: string) {
@@ -232,7 +233,8 @@ export default class FpmTarget extends Target {
 
     use(options.fpm, it => args.push(...it))
 
-    args.push(`${appOutDir}/=${installPrefix}/${appInfo.sanitizedProductName}`)
+    const installDirectory = this.helper.getInstallDirectory(this.options)
+    args.push(`${appOutDir}/=${installDirectory}`)
     for (const icon of await this.helper.icons) {
       const extWithDot = path.extname(icon.file)
       const sizeName = extWithDot === ".svg" ? "scalable" : `${icon.size}x${icon.size}`
