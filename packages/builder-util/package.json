@@ -41,6 +41,6 @@
     "@types/tiny-async-pool": "^1.0.5"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=16"
   }
 }
