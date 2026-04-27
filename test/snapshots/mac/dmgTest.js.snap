@@ -160,6 +160,7 @@ exports[`dmg > background color 1`] = `
       "y": 220,
     },
   ],
+  "filesystem": "APFS",
   "format": "UDRO",
   "title": "Bar",
   "writeUpdateInfo": false,
