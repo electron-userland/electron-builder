@@ -1,10 +1,14 @@
-import { asArray, exists, isEmptyOrSpaces, log } from "builder-util"
+import { asArray, exists, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { join } from "path"
 import { LinuxPackager } from "../linuxPackager"
 import { LinuxTargetSpecificOptions } from "../options/linuxOptions"
 import { IconInfo } from "../platformPackager"
+import { SnapCore } from "./snap/SnapTarget"
+import { SnapBaseOptions } from "../options/SnapOptions"
+import { SnapCoreLegacy } from "./snap/coreLegacy"
+import { SnapCore24 } from "./snap/core24"
 
 export const installPrefix = "/opt"
 
@@ -23,6 +27,38 @@ export class LinuxTargetHelper {
 
   get mimeTypeFiles(): Promise<string | null> {
     return this.mimeTypeFilesPromise.value
+  }
+
+  getSnapCore(): SnapCore<SnapBaseOptions> {
+    const snap = this.packager.config.snap!
+    const core = snap.core || "core24"
+    switch (core) {
+      case "core18":
+      case "core20":
+      case "core22":
+        if (!this.isElectronVersionGreaterOrEqualThan("4.0.0")) {
+          if (!this.isElectronVersionGreaterOrEqualThan("2.0.0-beta.1")) {
+            throw new InvalidConfigurationError("Electron 2 and higher is required to build Snap with core18/core20/core22")
+          }
+          log.warn(null, "electron 4 and higher is highly recommended for Snap with core18/core20/core22")
+        }
+        return new SnapCoreLegacy(this.packager, this, (snap as any)[core] || {})
+      case "core24":
+        if (!this.isElectronVersionGreaterOrEqualThan("28.0.0")) {
+          if (!this.isElectronVersionGreaterOrEqualThan("25.0.0")) {
+            throw new InvalidConfigurationError("Electron 25 and higher is required to build Snap with core24")
+          }
+          log.warn(null, "electron 28 and higher is highly recommended for Snap with core24")
+        }
+        return new SnapCore24(this.packager, this, snap.core24 || {})
+      case "custom":
+        throw new InvalidConfigurationError("Custom snapcraft.yaml is not yet supported")
+    }
+  }
+
+  isElectronVersionGreaterOrEqualThan(version: string) {
+    return true
+    // return semver.gte(this.packager.config.electronVersion, version)
   }
 
   private async computeMimeTypeFiles(): Promise<string | null> {
