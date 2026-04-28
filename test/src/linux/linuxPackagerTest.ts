@@ -6,7 +6,7 @@ import * as path from "path"
 import { assertThat } from "../helpers/fileAssert.js"
 import { app, appThrows, copyTestAsset, modifyPackageJson } from "../helpers/packTester.js"
 import { ELECTRON_VERSION } from "../helpers/testConfig.js"
-import { ToolsetConfig } from "app-builder-lib/src"
+import { ToolsetConfig } from "app-builder-lib"
 
 const appImageTarget = Platform.LINUX.createTarget("appimage", Arch.x64)
 

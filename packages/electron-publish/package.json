@@ -30,5 +30,8 @@
   "typings": "./out/index.d.ts",
   "devDependencies": {
     "@types/mime": "2.0.3"
+  },
+  "scripts": {
+    "compile": "tsc -b"
   }
 }
