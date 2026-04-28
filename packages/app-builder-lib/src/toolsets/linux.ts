@@ -1,7 +1,7 @@
 import { Arch } from "builder-util"
 import * as path from "path"
-import { downloadArtifact, getBinFromUrl } from "../binDownload"
-import { ToolsetConfig } from "../configuration"
+import { downloadArtifact, getBinFromUrl } from "../binDownload.js"
+import { ToolsetConfig } from "../configuration.js"
 
 // It's just easier to copy the map of checksums here rather than adding them to within each if-statement. Also, easy copy-paste from the releases page
 const fpmChecksums = {
