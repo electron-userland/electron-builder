@@ -461,6 +461,9 @@ importers:
       dmg-builder:
         specifier: workspace:*
         version: link:../dmg-builder
+      electron-publish:
+        specifier: workspace:*
+        version: link:../electron-publish
       fs-extra:
 <<<<<<< HEAD
         specifier: ^11.3.0
