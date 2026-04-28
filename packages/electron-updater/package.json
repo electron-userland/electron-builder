@@ -1,6 +1,6 @@
 {
   "name": "electron-updater",
-  "version": "6.8.3",
+  "version": "6.8.4",
   "description": "Cross platform updater for electron applications",
   "type": "module",
   "exports": {

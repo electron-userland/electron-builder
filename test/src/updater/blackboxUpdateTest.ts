@@ -1,18 +1,18 @@
 import { ToolsetConfig } from "app-builder-lib"
-import { PM } from "app-builder-lib"
+import { PM } from "app-builder-lib/src/node-module-collector"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
-import { archFromString, doSpawn, getArchSuffix, isEmptyOrSpaces, log, spawn, TmpDir } from "builder-util"
+import { archFromString, doSpawn, getArchSuffix, isEmptyOrSpaces, log, spawn, TmpDir } from "builder-util/out/util"
 import { execFileSync, execSync } from "child_process"
 import { Arch, Configuration, Platform } from "electron-builder"
 import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
-import fsExtra from "fs-extra"
+import { copy, existsSync, move, outputFile, readJsonSync } from "fs-extra"
 import { homedir } from "os"
 import path from "path"
 import { ExpectStatic, TestContext } from "vitest"
-import { getRanLocalServerPath, launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform.js"
-import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester.js"
-import { ELECTRON_VERSION } from "../helpers/testConfig.js"
-import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
+import { getRanLocalServerPath, launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
+import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester"
+import { ELECTRON_VERSION } from "../helpers/testConfig"
+import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
 // Linux Tests MUST be run in docker containers for proper ephemeral testing environment (e.g. fresh install + update + relaunch)
 // Currently this test logic does not handle uninstalling packages (yet)
@@ -42,7 +42,7 @@ for (const winCodeSign of winCodeSignVersions) {
   })
 }
 
-const appImageToolVersions: ToolsetConfig["appimage"][] = ["0.0.0", "1.0.2"]
+const appImageToolVersions: ToolsetConfig["appimage"][] = ["0.0.0", "1.0.2", "1.0.3"]
 // must be sequential in order for process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER to be respected per-test
 describe.heavy.ifLinux("linux", { sequential: true }, () => {
   for (const appimage of appImageToolVersions) {
@@ -114,7 +114,7 @@ async function runTest(context: TestContext, target: string, packageManager: str
   // Setup tests by installing the previous version
   const appPath = await handleInitialInstallPerOS({ target, dirPath, arch })
 
-  if (!fsExtra.existsSync(appPath)) {
+  if (!existsSync(appPath)) {
     throw new Error(`App not found: ${appPath}`)
   }
 
@@ -122,7 +122,7 @@ async function runTest(context: TestContext, target: string, packageManager: str
   try {
     await runTestWithinServer(async (rootDirectory: string, updateConfigPath: string) => {
       // Move app update to the root directory of the server
-      await fsExtra.copy(newAppDir.dir, rootDirectory, { recursive: true, overwrite: true })
+      await copy(newAppDir.dir, rootDirectory, { recursive: true, overwrite: true })
 
       const verifyAppVersion = async (expectedVersion: string) =>
         await launchAndWaitForQuit({ appPath, timeoutMs: 2 * 60 * 1000, updateConfigPath, expectedVersion, packageManagerToTest: packageManager })
@@ -227,7 +227,7 @@ async function doBuild(
         packageManager: PM.PNPM,
         projectDirCreated: async (projectDir, _tmpDir, runtimeEnv) => {
           // await outputFile(path.join(projectDir, "package-lock.json"), "{}")
-          await fsExtra.outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted")
+          await outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted")
 
           await modifyPackageJson(
             projectDir,
@@ -236,15 +236,17 @@ async function doBuild(
                 electron: ELECTRON_VERSION,
                 "node-addon-api": "^8",
               }
-              const electronUpdaterPath = (pkg: string) => path.resolve(import.meta.dirname, "../../../packages", pkg)
+              const electronUpdaterPath = (pkg: string) => path.resolve(__dirname, "../../../packages", pkg)
+              const updaterPath = electronUpdaterPath("electron-updater")
+              const utilPath = electronUpdaterPath("builder-util-runtime")
               data.dependencies = {
                 ...data.dependencies,
                 sqlite3: "5.1.7", // for testing native dependency handling in auto-update
                 "@electron/remote": "2.1.3", // for debugging live application with GUI so that app.getVersion is accessible in renderer process
-                "electron-updater": `link:${electronUpdaterPath("electron-updater")}`,
-                ...fsExtra.readJsonSync(path.join(electronUpdaterPath("electron-updater"), "package.json")).dependencies,
-                "builder-util-runtime": `link:${electronUpdaterPath("builder-util-runtime")}`, // needs to be last to overwrite electron-updater's builder-util-runtime dependency for testing with workspace version of builder-util-runtime (workspace:* doesn't resolve and needs to be linked explicitly)
-                ...fsExtra.readJsonSync(path.join(electronUpdaterPath("builder-util-runtime"), "package.json")).dependencies,
+                "electron-updater": `link:${updaterPath}`,
+                ...readJsonSync(path.join(updaterPath, "package.json")).dependencies,
+                "builder-util-runtime": `link:${utilPath}`, // needs to be last to overwrite electron-updater's builder-util-runtime dependency for testing with workspace version of builder-util-runtime (workspace:* doesn't resolve and needs to be linked explicitly)
+                ...readJsonSync(path.join(utilPath, "package.json")).dependencies,
               }
             },
             true
@@ -276,7 +278,7 @@ async function doBuild(
       packed: async context => {
         // move dist temporarily out of project dir so each downloader can reference it
         const dir = await tmpDir.getTempDir({ prefix: version })
-        await fsExtra.move(context.outDir, dir)
+        await move(context.outDir, dir)
         const appPath = path.join(dir, path.relative(context.outDir, context.getAppPath(Platform.current(), archFromString(process.arch))))
         outDirs.push({ dir, appPath })
       },
@@ -331,7 +333,7 @@ async function handleInitialInstallPerOS({ target, dirPath, arch }: { target: st
     // this is to clear dev environment when not running on an ephemeral GH runner.
     // Reinstallation will otherwise fail due to "uninstall" message prompt, so we must uninstall first (hence the setTimeout delay)
     const uninstaller = path.join(localProgramsPath, "Uninstall TestApp.exe")
-    if (fsExtra.existsSync(uninstaller)) {
+    if (existsSync(uninstaller)) {
       console.log("Uninstalling", uninstaller)
       execFileSync(uninstaller, ["/S", "/C", "exit"], { stdio: "inherit" })
       await new Promise(resolve => setTimeout(resolve, 5000))

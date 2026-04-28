@@ -219,14 +219,21 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * the package name with an "unknown" version.
    */
   protected parseNameVersion(identifier: string): { name: string; version: string } {
-    const lastAt = identifier.lastIndexOf("@")
-    if (lastAt <= 0) {
-      // fallback for scoped packages or malformed strings
+    let at: number
+    if (identifier.startsWith("@")) {
+      // Scoped package: find the version separator after the scope (e.g. "@scope/pkg@1.2.3")
+      const slashIndex = identifier.indexOf("/")
+      if (slashIndex === -1) {
+        return { name: identifier, version: "unknown" }
+      }
+      at = identifier.indexOf("@", slashIndex + 1)
+    } else {
+      at = identifier.indexOf("@")
+    }
+    if (at <= 0) {
       return { name: identifier, version: "unknown" }
     }
-    const name = identifier.slice(0, lastAt)
-    const version = identifier.slice(lastAt + 1)
-    return { name, version }
+    return { name: identifier.slice(0, at), version: identifier.slice(at + 1) }
   }
 
   /**
