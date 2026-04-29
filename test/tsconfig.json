@@ -14,13 +14,10 @@
       "path": "../packages/builder-util-runtime"
     },
     {
-      "path": "../packages/electron-builder"
+      "path": "../packages/app-builder-lib"
     },
     {
       "path": "../packages/electron-publish"
-    },
-    {
-      "path": "../packages/electron-updater"
     }
   ],
   "declaration": false,
