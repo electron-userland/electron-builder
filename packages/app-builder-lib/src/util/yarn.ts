@@ -27,7 +27,7 @@ export async function installOrRebuild(
   }
   let isDependenciesInstalled = false
 
-  const dirsToCheck = [projectDir, appDir, workspaceRoot].filter((d): d is string => !!d)
+  const dirsToCheck = [...new Set([projectDir, appDir, workspaceRoot].filter((d): d is string => !!d))]
   for (const fileOrDir of ["node_modules", ".pnp.js"]) {
     if ((await Promise.all(dirsToCheck.map(d => pathExists(path.join(d, fileOrDir))))).some(Boolean)) {
       isDependenciesInstalled = true
