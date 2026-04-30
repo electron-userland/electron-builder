@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env tsx
 
 import isCI from "is-ci"
 import { startVitest } from "vitest/node"
@@ -6,6 +6,8 @@ import { getAllTestFiles } from "./file-discovery.js"
 import { buildWeightedFiles, computeShardCount, splitIntoShards } from "./shard-builder.js"
 import { SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN } from "./smart-config.js"
 import SmartSequencer from "./vitest-smart-sequencer.js"
+
+const __dirname = import.meta.dirname
 
 const testRegex = TEST_FILES_PATTERN?.split(",")
 const includeRegex = `(${testRegex.join("|")})`
