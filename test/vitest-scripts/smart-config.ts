@@ -1,5 +1,7 @@
 import * as path from "path"
 
+const __dirname = import.meta.dirname
+
 export type TargetPlatform = "darwin" | "win32" | "linux" | "current"
 export type SupportedPlatforms = Exclude<TargetPlatform, "current">
 

@@ -29,11 +29,11 @@ export * as utils from "./util.js"
 function doLoadAutoUpdater(): AppUpdater {
   let updater: any
   if (process.platform === "win32") {
-    updater = new (require("./NsisUpdater").NsisUpdater)()
+    updater = new (require("./NsisUpdater.js").NsisUpdater)()
   } else if (process.platform === "darwin") {
-    updater = new (require("./MacUpdater").MacUpdater)()
+    updater = new (require("./MacUpdater.js").MacUpdater)()
   } else {
-    updater = new (require("./AppImageUpdater").AppImageUpdater)()
+    updater = new (require("./AppImageUpdater.js").AppImageUpdater)()
     try {
       const identity = path.join(process.resourcesPath, "package-type")
       if (!fsExtra.existsSync(identity)) {
@@ -48,13 +48,13 @@ function doLoadAutoUpdater(): AppUpdater {
 >>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
       switch (fileType) {
         case "deb":
-          updater = new (require("./DebUpdater").DebUpdater)()
+          updater = new (require("./DebUpdater.js").DebUpdater)()
           break
         case "rpm":
-          updater = new (require("./RpmUpdater").RpmUpdater)()
+          updater = new (require("./RpmUpdater.js").RpmUpdater)()
           break
         case "pacman":
-          updater = new (require("./PacmanUpdater").PacmanUpdater)()
+          updater = new (require("./PacmanUpdater.js").PacmanUpdater)()
           break
         default:
           break
