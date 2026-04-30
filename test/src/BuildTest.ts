@@ -1,3 +1,4 @@
+import { createRequire } from "node:module"
 import { checkBuildRequestOptions } from "app-builder-lib"
 <<<<<<< HEAD
 import { doMergeConfigs } from "app-builder-lib/internal"
@@ -28,6 +29,8 @@ import { PM } from "app-builder-lib/src/node-module-collector/packageManager"
 test.ifLinux("cli", ({ expect }) => {
 =======
 import { PM } from "app-builder-lib"
+
+const require = createRequire(import.meta.url)
 
 test.ifLinux("cli", ({ expect }) => {
   // because these methods are internal

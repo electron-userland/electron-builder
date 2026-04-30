@@ -74,6 +74,8 @@ import { DOWNLOAD_PROGRESS, Logger, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, U
 import { VerifyUpdateSupport } from "./main.js"
 >>>>>>> c92b22265 (tmp save for .js extension migration)
 
+const require = createRequire(import.meta.url)
+
 export type AppUpdaterEvents = {
   error: (error: Error, message?: string) => void
   login: (info: AuthInfo, callback: LoginCallback) => void

@@ -1,3 +1,4 @@
+import { createRequire } from "node:module"
 import { Arch, build, PackagerOptions, Platform } from "electron-builder"
 import * as fs from "fs"
 import { readdir } from "fs/promises"
@@ -21,6 +22,8 @@ import * as unzipper from "unzipper"
 import { TmpDir } from "temp-file"
 import { readdir } from "fs/promises"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+
+const require = createRequire(import.meta.url)
 
 function createBuildResourcesTest(expect: ExpectStatic, packagerOptions: PackagerOptions) {
   return app(
