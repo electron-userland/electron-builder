@@ -4,7 +4,7 @@
   "description": "Cross platform updater for electron applications",
   "type": "module",
   "exports": {
-    ".": "./out/index.js"
+    ".": "./out/main.js"
   },
   "author": "Vladimir Krivosheev",
   "license": "MIT",

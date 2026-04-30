@@ -17,6 +17,12 @@
       "path": "../packages/app-builder-lib"
     },
     {
+      "path": "../packages/electron-builder"
+    },
+    {
+      "path": "../packages/electron-updater"
+    },
+    {
       "path": "../packages/electron-publish"
     }
   ],

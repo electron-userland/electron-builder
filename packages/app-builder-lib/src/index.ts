@@ -71,7 +71,15 @@ export { Framework, PrepareApplicationStageDirectoryOptions } from "./Framework.
 export { LinuxPackager } from "./linuxPackager.js"
 export { CustomMacSign, CustomMacSignOptions, MacPackager } from "./macPackager.js"
 export { HoisterDependencyKind, HoisterResult, HoisterTree, hoist } from "./node-module-collector/hoist.js"
-export { determinePackageManagerEnv } from "./node-module-collector/index.js"
+export {
+  determinePackageManagerEnv,
+  getCollectorByPackageManager,
+  PnpmNodeModulesCollector,
+  YarnNodeModulesCollector,
+  YarnBerryNodeModulesCollector,
+  BunNodeModulesCollector,
+  TraversalNodeModulesCollector,
+} from "./node-module-collector/index.js"
 export { PM } from "./node-module-collector/packageManager.js"
 export { DoPackOptions, PlatformPackager, computeSafeArtifactNameIfNeeded } from "./platformPackager.js"
 export { PublishManager, createPublisher } from "./publish/PublishManager.js"
@@ -90,7 +98,6 @@ export { execWine } from "./wine.js"
 export { WinPackager } from "./winPackager.js"
 
 export { AsarIntegrity } from "./asar/integrity.js"
-export { getCollectorByPackageManager } from "./node-module-collector/index.js"
 export { computeArchToTargetNamesMap } from "./targets/targetFactory.js"
 export { getLinuxToolsPath } from "./toolsets/linux.js"
 

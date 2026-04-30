@@ -12,7 +12,7 @@ import fs from "fs-extra"
 import * as path from "path"
 import { TraversalNodeModulesCollector } from "./traversalNodeModulesCollector.js"
 
-export { getPackageManagerCommand, PM }
+export { getPackageManagerCommand, PM, PnpmNodeModulesCollector, YarnNodeModulesCollector, YarnBerryNodeModulesCollector, BunNodeModulesCollector, TraversalNodeModulesCollector }
 
 export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirManager: TmpDir) {
   switch (pm) {

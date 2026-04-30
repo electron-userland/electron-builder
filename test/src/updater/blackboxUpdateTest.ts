@@ -9,10 +9,10 @@ import { copy, existsSync, move, outputFile, readJsonSync } from "fs-extra"
 import { homedir } from "os"
 import path from "path"
 import { ExpectStatic, TestContext } from "vitest"
-import { getRanLocalServerPath, launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
-import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester"
-import { ELECTRON_VERSION } from "../helpers/testConfig"
-import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { getRanLocalServerPath, launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform.js"
+import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester.js"
+import { ELECTRON_VERSION } from "../helpers/testConfig.js"
+import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 
 // Linux Tests MUST be run in docker containers for proper ephemeral testing environment (e.g. fresh install + update + relaunch)
 // Currently this test logic does not handle uninstalling packages (yet)

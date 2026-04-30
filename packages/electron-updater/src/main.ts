@@ -1,6 +1,9 @@
+import { createRequire } from "module"
 import fsExtra from "fs-extra"
 import * as path from "path"
 import { AppUpdater } from "./AppUpdater.js"
+
+const require = createRequire(import.meta.url)
 
 export { ElectronAppAdapter } from "./ElectronAppAdapter.js"
 
@@ -23,35 +26,29 @@ export { GitLabProvider } from "./providers/GitLabProvider.js"
 export * from "./types.js"
 export * as utils from "./util.js"
 
-// autoUpdater to mimic electron bundled autoUpdater
-let _autoUpdater: any
-
-// required for jsdoc
-export declare const autoUpdater: AppUpdater
-
 function doLoadAutoUpdater(): AppUpdater {
-  // tslint:disable:prefer-conditional-expression
+  let updater: any
   if (process.platform === "win32") {
-    _autoUpdater = new (require("./NsisUpdater").NsisUpdater)()
+    updater = new (require("./NsisUpdater").NsisUpdater)()
   } else if (process.platform === "darwin") {
-    _autoUpdater = new (require("./MacUpdater").MacUpdater)()
+    updater = new (require("./MacUpdater").MacUpdater)()
   } else {
-    _autoUpdater = new (require("./AppImageUpdater").AppImageUpdater)()
+    updater = new (require("./AppImageUpdater").AppImageUpdater)()
     try {
       const identity = path.join(process.resourcesPath, "package-type")
       if (!fsExtra.existsSync(identity)) {
-        return _autoUpdater
+        return updater
       }
       const fileType = fsExtra.readFileSync(identity).toString().trim()
       switch (fileType) {
         case "deb":
-          _autoUpdater = new (require("./DebUpdater").DebUpdater)()
+          updater = new (require("./DebUpdater").DebUpdater)()
           break
         case "rpm":
-          _autoUpdater = new (require("./RpmUpdater").RpmUpdater)()
+          updater = new (require("./RpmUpdater").RpmUpdater)()
           break
         case "pacman":
-          _autoUpdater = new (require("./PacmanUpdater").PacmanUpdater)()
+          updater = new (require("./PacmanUpdater").PacmanUpdater)()
           break
         default:
           break
@@ -63,15 +60,10 @@ function doLoadAutoUpdater(): AppUpdater {
       )
     }
   }
-  return _autoUpdater
+  return updater
 }
 
-Object.defineProperty(exports, "autoUpdater", {
-  enumerable: true,
-  get: () => {
-    return _autoUpdater || doLoadAutoUpdater()
-  },
-})
+export const autoUpdater: AppUpdater = doLoadAutoUpdater()
 
 /**
  * return null if verify signature succeed
