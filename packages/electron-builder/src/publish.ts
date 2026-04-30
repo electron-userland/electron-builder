@@ -1,12 +1,13 @@
 #! /usr/bin/env node
 
+import { fileURLToPath } from "node:url"
 import { AppInfo, CancellationToken, Packager, PackagerOptions, PublishManager, PublishOptions, UploadTask, checkBuildRequestOptions } from "app-builder-lib"
 import { Publish } from "app-builder-lib"
 import { computeSafeArtifactNameIfNeeded } from "app-builder-lib"
 import { getConfig } from "app-builder-lib"
 import { InvalidConfigurationError, archFromString, log, printErrorAndExit } from "builder-util"
 import { PublishPolicy } from "electron-publish"
-import * as chalk from "chalk"
+import chalk from "chalk"
 import * as path from "path"
 import { Argv } from "yargs"
 import { BuildOptions, createYargs, normalizeOptions } from "./builder.js"
@@ -124,7 +125,7 @@ function main() {
   return publish(configurePublishCommand(createYargs()).argv as any)
 }
 
-if (require.main === module) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   log.warn("please use as subcommand: electron-builder publish")
   main().catch(printErrorAndExit)
 }

@@ -1,4 +1,4 @@
-import * as chalk from "chalk"
+import chalk from "chalk"
 import { Chalk } from "chalk"
 import _debug from "debug"
 import WritableStream = NodeJS.WritableStream

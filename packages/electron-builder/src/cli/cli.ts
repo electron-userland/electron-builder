@@ -7,7 +7,7 @@ const require = createRequire(import.meta.url)
 import { loadEnv } from "app-builder-lib"
 import { nodeGypRebuild } from "app-builder-lib"
 import { ExecError, InvalidConfigurationError, log } from "builder-util"
-import * as chalk from "chalk"
+import chalk from "chalk"
 import fsExtra from "fs-extra"
 import { isCI } from "ci-info"
 import * as path from "path"

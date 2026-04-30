@@ -1,4 +1,5 @@
 #! /usr/bin/env node
+import { fileURLToPath } from "node:url"
 import { computeDefaultAppDirectory, createLazyProductionDeps, determinePackageManagerEnv, getConfig, getElectronVersion, installOrRebuild, PACKAGE_VERSION } from "app-builder-lib"
 import { getArchCliNames, log, orNullIfFileNotExist, printErrorAndExit } from "builder-util"
 import fsExtra from "fs-extra"
@@ -68,7 +69,7 @@ function main() {
   return installAppDeps(configureInstallAppDepsCommand(createYargs()).argv)
 }
 
-if (require.main === module) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   log.warn("please use as subcommand: electron-builder install-app-deps")
   main().catch(printErrorAndExit)
 }
