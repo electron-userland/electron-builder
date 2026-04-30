@@ -15,7 +15,7 @@ import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion
 import { loadEnv } from "app-builder-lib/out/util/config/load"
 import { nodeGypRebuild } from "app-builder-lib/out/util/yarn"
 import { ExecError, InvalidConfigurationError, log } from "builder-util"
-import * as chalk from "chalk"
+import chalk from "chalk"
 import fsExtra from "fs-extra"
 import { isCI } from "ci-info"
 import * as path from "path"
