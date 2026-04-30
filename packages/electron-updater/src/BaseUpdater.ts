@@ -1,4 +1,7 @@
+import { createRequire } from "node:module"
 import { AllPublishOptions } from "builder-util-runtime"
+
+const require = createRequire(import.meta.url)
 import { spawn, SpawnOptions, spawnSync, StdioOptions } from "child_process"
 import { AppAdapter } from "./AppAdapter.js"
 import { AppUpdater, DownloadExecutorTask } from "./AppUpdater.js"

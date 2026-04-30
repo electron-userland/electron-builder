@@ -1,7 +1,10 @@
+import { createRequire } from "node:module"
 import { exists, statOrNull } from "builder-util"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { ExpectStatic } from "vitest"
+
+const require = createRequire(import.meta.url)
 
 // http://joel-costigliola.github.io/assertj/
 export function assertThat(expect: ExpectStatic, actual: any): Assertions {

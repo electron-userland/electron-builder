@@ -1,4 +1,7 @@
+import { createRequire } from "node:module"
 import { FileTransformer, log } from "builder-util"
+
+const require = createRequire(import.meta.url)
 import { safeStringifyJson } from "builder-util-runtime"
 import { Platform } from "./core.js"
 import { NODE_MODULES_PATTERN } from "./fileTransformer.js"

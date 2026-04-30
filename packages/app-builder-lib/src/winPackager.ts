@@ -1,4 +1,7 @@
+import { createRequire } from "node:module"
 import { Arch, CopyFileTransformer, executeAppBuilder, exists, FileTransformer, InvalidConfigurationError, log, use, walk } from "builder-util"
+
+const require = createRequire(import.meta.url)
 import { Nullish } from "builder-util-runtime"
 import { isCI } from "ci-info"
 import { createHash } from "crypto"
@@ -96,13 +99,13 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
               }
 
             case "appx":
-              return require("./targets/AppxTarget").default
+              return AppXTarget
 
             case "msi":
-              return require("./targets/MsiTarget").default
+              return MsiTarget
 
             case "msiwrapped":
-              return require("./targets/MsiWrappedTarget").default
+              return MsiWrappedTarget
 
             default:
               return null

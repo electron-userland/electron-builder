@@ -1,7 +1,10 @@
+import { createRequire } from "node:module"
 import { log } from "builder-util"
 import debug from "debug"
 import * as path from "path"
 import * as requireMaybe from "../../helpers/dynamic-import.js"
+
+const require = createRequire(import.meta.url)
 
 export async function resolveModule<T>(type: string | undefined, name: string): Promise<T> {
   try {

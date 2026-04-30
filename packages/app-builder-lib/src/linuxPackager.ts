@@ -42,11 +42,11 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
       const targetClass: typeof AppImageTarget | typeof SnapTarget | typeof FlatpakTarget | typeof FpmTarget | null = (() => {
         switch (name) {
           case "appimage":
-            return require("./targets/appimage/AppImageTarget").default
+            return AppImageTarget
           case "snap":
-            return require("./targets/snap").default
+            return SnapTarget
           case "flatpak":
-            return require("./targets/FlatpakTarget").default
+            return FlatpakTarget
           case "deb":
           case "rpm":
           case "sh":
@@ -54,7 +54,7 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
           case "pacman":
           case "apk":
           case "p5p":
-            return require("./targets/FpmTarget").default
+            return FpmTarget
           default:
             return null
         }

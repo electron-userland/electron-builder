@@ -1,3 +1,4 @@
+import { createRequire } from "node:module"
 import { readAsarJson } from "app-builder-lib"
 import { Platform } from "electron-builder"
 import { coerceTypes } from "electron-builder"
@@ -6,6 +7,8 @@ import * as path from "path"
 import { assertThat } from "./helpers/fileAssert.js"
 import { app, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
 import { ExpectStatic } from "vitest"
+
+const require = createRequire(import.meta.url)
 
 function createExtraMetadataTest(expect: ExpectStatic, asar: boolean) {
   return app(

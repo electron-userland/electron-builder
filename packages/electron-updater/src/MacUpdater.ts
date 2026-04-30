@@ -1,4 +1,7 @@
+import { createRequire } from "node:module"
 import { AllPublishOptions, newError, safeStringifyJson } from "builder-util-runtime"
+
+const require = createRequire(import.meta.url)
 import fsExtra from "fs-extra"
 import { createReadStream } from "fs"
 import * as path from "path"

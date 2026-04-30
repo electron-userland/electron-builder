@@ -1,4 +1,7 @@
+import { createRequire } from "node:module"
 import { notarize } from "@electron/notarize"
+
+const require = createRequire(import.meta.url)
 import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types.js"
 import { PerFileSignOptions, SignOptions } from "@electron/osx-sign/dist/cjs/types.js"
 import { Identity } from "@electron/osx-sign/dist/cjs/util-identities.js"

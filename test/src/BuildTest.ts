@@ -1,3 +1,4 @@
+import { createRequire } from "node:module"
 import { checkBuildRequestOptions } from "app-builder-lib"
 import { doMergeConfigs } from "app-builder-lib"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
@@ -9,6 +10,8 @@ import { app, appTwo, appTwoThrows, assertPack, getFixtureDir, linuxDirTarget, m
 import { ELECTRON_VERSION } from "./helpers/testConfig.js"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack.js"
 import { PM } from "app-builder-lib"
+
+const require = createRequire(import.meta.url)
 
 test.ifLinux("cli", ({ expect }) => {
   // because these methods are internal

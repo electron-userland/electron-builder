@@ -1,4 +1,7 @@
+import { createRequire } from "node:module"
 import { debug, deepAssign, FileTransformer, log } from "builder-util"
+
+const require = createRequire(import.meta.url)
 import { readFile } from "fs/promises"
 import * as path from "path"
 import { Configuration } from "./configuration.js"

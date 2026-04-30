@@ -1,4 +1,7 @@
+import { createRequire } from "node:module"
 import { log } from "builder-util"
+
+const require = createRequire(import.meta.url)
 import { parse as parseEnv } from "dotenv"
 import { DotenvParseInput, expand } from "dotenv-expand"
 import { promises as fs } from "fs"

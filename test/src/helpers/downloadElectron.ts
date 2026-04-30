@@ -1,8 +1,12 @@
+import { createRequire } from "node:module"
+import { fileURLToPath } from "node:url"
 import { isCI as isCi } from "ci-info"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { gte } from "semver"
 import { ELECTRON_VERSION, getElectronCacheDir } from "./testConfig.js"
+
+const require = createRequire(import.meta.url)
 
 const executeAppBuilder: (options: any) => Promise<any> = require(path.join(import.meta.dirname, "../../..", "packages/builder-util")).executeAppBuilder
 
@@ -64,7 +68,7 @@ export function downloadAllRequiredElectronVersions(): Promise<any> {
   return executeAppBuilder(["download-electron", "--configuration", JSON.stringify(versions)])
 }
 
-if (require.main === module) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   downloadAllRequiredElectronVersions().catch(error => {
     console.error((error.stack || error).toString())
     process.exitCode = -1

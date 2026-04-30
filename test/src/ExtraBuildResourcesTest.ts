@@ -1,3 +1,4 @@
+import { createRequire } from "node:module"
 import { Arch, build, PackagerOptions, Platform } from "electron-builder"
 import * as fs from "fs"
 import * as path from "path"
@@ -9,6 +10,8 @@ import { ExpectStatic } from "vitest"
 import * as unzipper from "unzipper"
 import { TmpDir } from "temp-file"
 import { readdir } from "fs/promises"
+
+const require = createRequire(import.meta.url)
 
 function createBuildResourcesTest(expect: ExpectStatic, packagerOptions: PackagerOptions) {
   return app(

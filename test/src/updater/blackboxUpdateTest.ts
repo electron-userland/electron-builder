@@ -236,7 +236,7 @@ async function doBuild(
                 electron: ELECTRON_VERSION,
                 "node-addon-api": "^8",
               }
-              const electronUpdaterPath = (pkg: string) => path.resolve(__dirname, "../../../packages", pkg)
+              const electronUpdaterPath = (pkg: string) => path.resolve(import.meta.dirname, "../../../packages", pkg)
               const updaterPath = electronUpdaterPath("electron-updater")
               const utilPath = electronUpdaterPath("builder-util-runtime")
               data.dependencies = {

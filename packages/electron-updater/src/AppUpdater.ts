@@ -1,3 +1,4 @@
+import { createRequire } from "node:module"
 import {
   AllPublishOptions,
   asArray,
@@ -36,6 +37,8 @@ import { DifferentialDownloaderOptions } from "./differentialDownloader/Differen
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader.js"
 import { DOWNLOAD_PROGRESS, Logger, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./types.js"
 import { VerifyUpdateSupport } from "./main.js"
+
+const require = createRequire(import.meta.url)
 
 export type AppUpdaterEvents = {
   error: (error: Error, message?: string) => void
