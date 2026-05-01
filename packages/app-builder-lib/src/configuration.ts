@@ -4,7 +4,7 @@ import { ElectronBrandingOptions, ElectronDownloadOptions } from "./electron/Ele
 import { PrepareApplicationStageDirectoryOptions } from "./Framework"
 import { AppXOptions } from "./options/AppXOptions"
 import { AppImageOptions, DebOptions, FlatpakOptions, LinuxConfiguration, LinuxTargetSpecificOptions } from "./options/linuxOptions"
-import { DmgOptions, MacConfiguration, MasConfiguration } from "./options/macOptions"
+import { DmgOptions, MacConfiguration, MasConfiguration, ZipOptions } from "./options/macOptions"
 import { MsiOptions } from "./options/MsiOptions"
 import { MsiWrappedOptions } from "./options/MsiWrappedOptions"
 import { PkgOptions } from "./options/pkgOptions"
@@ -71,6 +71,10 @@ export interface CommonConfiguration {
    * macOS PKG options.
    */
   readonly pkg?: PkgOptions | null
+  /**
+   * macOS zip options.
+   */
+  readonly zip?: ZipOptions | null
 
   /**
    * Options related to how build Windows targets.
