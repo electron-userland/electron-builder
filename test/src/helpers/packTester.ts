@@ -1,4 +1,3 @@
-import { createRequire } from "node:module"
 import { PublishManager } from "app-builder-lib"
 import { verifyAsarFileTree as _verifyAsarFileTree } from "./asarVerifier.js"
 import { computeArchToTargetNamesMap } from "app-builder-lib"
@@ -28,10 +27,9 @@ import { computeDefaultAppDirectory } from "app-builder-lib"
 import { installDependencies } from "app-builder-lib"
 import { ELECTRON_VERSION } from "./testConfig.js"
 import { createLazyProductionDeps } from "app-builder-lib"
-import { execSync } from "child_process"
+import { exec as execCallback, execSync } from "child_process"
 import { detectPackageManager } from "app-builder-lib"
 
-const require = createRequire(import.meta.url)
 
 const PACKAGE_MANAGER_VERSION_MAP = {
   [PM.NPM]: { cli: "npm", version: "9.8.1" },
@@ -723,7 +721,7 @@ const checkResult = (expect: ExpectStatic, artifacts: Array<ArtifactCreated>, ex
   return { packageFile, zip, allFiles }
 }
 
-export const execShell: any = promisify(require("child_process").exec)
+export const execShell: any = promisify(execCallback)
 
 export async function getTarExecutable() {
   return process.platform === "darwin" ? path.join(await getLinuxToolsPath(), "bin", "gtar") : "tar"

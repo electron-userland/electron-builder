@@ -1,9 +1,12 @@
+import { createRequire } from "node:module"
 import { Arch, execWine, getArchSuffix, getBinFromUrl, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
 import { exists, InvalidConfigurationError, isEmptyOrSpaces, log, sanitizeFileName } from "builder-util"
 import { convertVersion, createWindowsInstaller, Options as SquirrelOptions } from "electron-winstaller"
 import * as fs from "fs"
 import * as os from "os"
 import * as path from "path"
+
+const require = createRequire(import.meta.url)
 
 export default class SquirrelWindowsTarget extends Target {
   //tslint:disable-next-line:no-object-literal-type-assertion
