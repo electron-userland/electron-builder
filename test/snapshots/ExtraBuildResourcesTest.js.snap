@@ -4,9 +4,9 @@ exports[`custom buildResources and output dirs: linux 1`] = `
 {
   "linux": [
     {
-      "arch": "arm64",
-      "file": "Test App ßW-1.1.0-arm64.AppImage",
-      "safeArtifactName": "TestApp-1.1.0-arm64.AppImage",
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0.AppImage",
+      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
       "updateInfo": {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
@@ -17,11 +17,17 @@ exports[`custom buildResources and output dirs: linux 1`] = `
 }
 `;
 
+exports[`custom buildResources and output dirs: mac 1`] = `
+{
+  "mac": [],
+}
+`;
+
 exports[`custom buildResources and output dirs: win 1`] = `
 {
   "win": [
     {
-      "arch": "arm64",
+      "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
@@ -30,12 +36,6 @@ exports[`custom buildResources and output dirs: win 1`] = `
 `;
 
 exports[`do not exclude build entirely (respect files) 1`] = `
-{
-  "linux": [],
-}
-`;
-
-exports[`electronDist as callback function for path to local electron zipped artifact  1`] = `
 {
   "linux": [],
 }

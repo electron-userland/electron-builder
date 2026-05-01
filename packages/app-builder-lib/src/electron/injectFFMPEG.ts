@@ -55,7 +55,7 @@ export class FFMPEGInjector {
     return ffmpegDir
   }
 
-  async copyFFMPEG(targetPath: string, sourcePath: string) {
+  private async copyFFMPEG(targetPath: string, sourcePath: string) {
     let fileName = "ffmpeg.dll"
     if (["darwin", "mas"].includes(this.options.platformName)) {
       fileName = "libffmpeg.dylib"

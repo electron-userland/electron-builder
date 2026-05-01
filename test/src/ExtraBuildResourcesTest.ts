@@ -1,4 +1,4 @@
-import { downloadArtifact } from "app-builder-lib/src/util/electronGet"
+import { downloadArtifact } from "app-builder-lib/out/util/electronGet"
 import { Arch, build, PackagerOptions, Platform } from "electron-builder"
 import * as fs from "fs"
 import { readdir } from "fs/promises"
