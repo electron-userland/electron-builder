@@ -110,11 +110,15 @@ function checkDependencies(dependencies: Record<string, string> | Nullish, error
     }
 
     // for testing auto-update using workspace electron-updater
-    if (updaterVersion.startsWith("file:")) {
-      const normalized = path.normalize(updaterVersion.substring("file:".length))
-      const packageJsonPath = path.isAbsolute(normalized) ? normalized : path.resolve(__dirname, normalized)
-      const json = readJsonSync(path.join(packageJsonPath, "package.json"))
-      updaterVersion = json.version
+    const prefixes = ["link:", "file:"]
+    for (const prefix of prefixes) {
+      if (updaterVersion.startsWith(prefix)) {
+        const normalized = path.normalize(updaterVersion.substring(prefix.length))
+        const packageJsonPath = path.isAbsolute(normalized) ? normalized : path.resolve(__dirname, normalized)
+        const json = readJsonSync(path.join(packageJsonPath, "package.json"))
+        updaterVersion = json.version
+        break
+      }
     }
 
     const requiredElectronUpdaterVersion = "4.0.0"

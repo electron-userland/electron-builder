@@ -58,16 +58,21 @@ const packageManagerMap: {
   },
 }
 
-for (const distro in packageManagerMap) {
-  const { pms, updater: Updater, extension } = packageManagerMap[distro as keyof typeof packageManagerMap]
-  for (const pm of pms) {
-    test.ifEnv(determineEnvironment(distro))(`test ${distro} download and install (${pm})`, async ({ expect }) => {
-      process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER = pm
-      await runTest(expect, Updater, extension)
-    })
+describe.ifLinux("Linux Updater Test", () => {
+  for (const distro in packageManagerMap) {
+    const { pms, updater: Updater, extension } = packageManagerMap[distro as keyof typeof packageManagerMap]
+    for (const pm of pms) {
+      test(`test ${distro} download and install (${pm})`, async context => {
+        if (!determineEnvironment(distro)) {
+          context.skip()
+        }
+        process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER = pm
+        await runTest(context.expect, Updater, extension)
+      })
+    }
   }
-}
 
-// test.ifLinux("test AppImage download", async ({ expect }) => {
-//   await runTest(expect, AppImageUpdater, "AppImage")
-// })
+  // test.ifLinux("test AppImage download", async ({ expect }) => {
+  //   await runTest(expect, AppImageUpdater, "AppImage")
+  // })
+})

@@ -1,4 +1,4 @@
-import { Arch, deepAssign } from "builder-util"
+import { Arch, deepAssign, exists, InvalidConfigurationError } from "builder-util"
 import { UUID } from "builder-util-runtime"
 import * as path from "path"
 import { MsiWrappedOptions } from "../"
@@ -60,12 +60,17 @@ export default class MsiWrappedTarget extends MsiTarget {
 
   async finishBuild(): Promise<any> {
     await super.finishBuild()
-    // this target invokes `build` in `finishBuild` to guarantee
-    // that the dependent target has already been built
-    // this also affords us re-usability
     const [arch, appOutDir] = this.archs.entries().next().value!
 
     this.validatePrerequisites()
+
+    const exeSourcePath = this.getExeSourcePath(arch)
+
+    if (!(await exists(exeSourcePath))) {
+      throw new InvalidConfigurationError(
+        `NSIS executable not found at ${exeSourcePath} - ensure the NSIS target builds before msiWrapped. Try listing 'nsis' before 'msiWrapped' in your target configuration.`
+      )
+    }
 
     return super.build(appOutDir, arch)
   }

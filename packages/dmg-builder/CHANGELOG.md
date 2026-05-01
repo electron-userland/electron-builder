@@ -1,5 +1,151 @@
 # dmg-builder
 
+## 26.9.0
+
+### Patch Changes
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`a69928f`](https://github.com/electron-userland/electron-builder/commit/a69928f28cd33a487a3158bd5c3ad040906d3c30) [`ed422f3`](https://github.com/electron-userland/electron-builder/commit/ed422f36540a93e9bd2a19bc7a5e729bf2b033ea) [`b072e92`](https://github.com/electron-userland/electron-builder/commit/b072e92bd31b84df506deaf6156cc6109c7ef0f5) [`3958d8b`](https://github.com/electron-userland/electron-builder/commit/3958d8b6cb7b74458ea541738af6ac753d2cf83a) [`13d8535`](https://github.com/electron-userland/electron-builder/commit/13d85355b6d37bd82d5153d260ba11de71323875) [`f71b101`](https://github.com/electron-userland/electron-builder/commit/f71b101be964bdcc2b84fcf281441372105def00) [`b7df0bc`](https://github.com/electron-userland/electron-builder/commit/b7df0bcef5790814fd6df187346dcec625dc681e) [`0c8fc41`](https://github.com/electron-userland/electron-builder/commit/0c8fc415debf0dc7e19e8ffd9c06db100ef41f11)
+
+</small>
+
+- `app-builder-lib@26.9.0`
+- `builder-util@26.9.0`
+
+</details>
+
+## 26.8.2
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`b348df0`](https://github.com/electron-userland/electron-builder/commit/b348df0ba409fee488288ead097ac900141a6dad) [`f2c0547`](https://github.com/electron-userland/electron-builder/commit/f2c0547d2fa63d42636713415d4100aceb443e00) [`52dc667`](https://github.com/electron-userland/electron-builder/commit/52dc6676f8fb8157e60a55df8021988bf6c48286) [`4e83aeb`](https://github.com/electron-userland/electron-builder/commit/4e83aeb610aad811413bfd626656dabc081957a3) [`02a9105`](https://github.com/electron-userland/electron-builder/commit/02a9105d1c4420e418d740dfa0bbbd22d5b44735)
+
+</small>
+
+- `app-builder-lib@26.8.2`
+
+</details>
+
+## 26.8.1
+
+### Patch Changes
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`4edd695`](https://github.com/electron-userland/electron-builder/commit/4edd6950454d369ef8994e5a1ad64f1d0c7b7643) [`8940ec6`](https://github.com/electron-userland/electron-builder/commit/8940ec63bac6450ed9b7c5e761954f08e6fa4242) [`4edd695`](https://github.com/electron-userland/electron-builder/commit/4edd6950454d369ef8994e5a1ad64f1d0c7b7643) [`dde4309`](https://github.com/electron-userland/electron-builder/commit/dde4309b9114e06d0826e8badc2cb968ceb75642)
+
+</small>
+
+- `app-builder-lib@26.8.1`
+- `builder-util@26.8.1`
+
+</details>
+
+## 26.8.0
+
+### Patch Changes
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`cd7c0d9`](https://github.com/electron-userland/electron-builder/commit/cd7c0d9a73cf63e2125ef5873bd0c2f392c211dc) [`c18f0eb`](https://github.com/electron-userland/electron-builder/commit/c18f0eb26bd9ba366b45e0ff9e85cdee0daba4ef) [`769b608`](https://github.com/electron-userland/electron-builder/commit/769b6080a7258205e2ea7cac74526765b80f7e0f) [`9ba36f9`](https://github.com/electron-userland/electron-builder/commit/9ba36f98791bc8d2393297dbca1133d03be6260a) [`1b113b7`](https://github.com/electron-userland/electron-builder/commit/1b113b758dffa346df8dce91185800293a68b6fd) [`1b39a8e`](https://github.com/electron-userland/electron-builder/commit/1b39a8e23c019a0e61fbe1fe5e973113036d255b)
+
+</small>
+
+- `app-builder-lib@26.8.0`
+- `builder-util@26.8.0`
+
+</details>
+
+## 26.7.0
+
+### Minor Changes
+
+- Feat: add `size` and `shrink` options to DmgOptions for explicit DMG filesystem size control _[`#9543`](https://github.com/electron-userland/electron-builder/pull/9543) [`bfee115`](https://github.com/electron-userland/electron-builder/commit/bfee115b185fa4dcb14b0fae6ccee1adc4d4590e) [@BarakXYZ](https://github.com/BarakXYZ)_
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`bfee115`](https://github.com/electron-userland/electron-builder/commit/bfee115b185fa4dcb14b0fae6ccee1adc4d4590e) [`3fa2d89`](https://github.com/electron-userland/electron-builder/commit/3fa2d894ac609d0d819d7adb80ff50bfca08039f) [`ec9e2db`](https://github.com/electron-userland/electron-builder/commit/ec9e2dbbd864f0858cf0d3b719ad75a84c59f29c) [`aec9157`](https://github.com/electron-userland/electron-builder/commit/aec9157b5124acf9409a46461eca86cb1212831b) [`64b40fe`](https://github.com/electron-userland/electron-builder/commit/64b40fe75a5464db19721e5a6dd9a6930196aaac)
+
+</small>
+
+- `app-builder-lib@26.7.0`
+
+</details>
+
+## 26.6.0
+
+### Patch Changes
+
+- Feat: update `dmgbuild` and migrate to portable `dmgbuild` python bundle. Fixes `badge-icon` property _[`#9516`](https://github.com/electron-userland/electron-builder/pull/9516) [`9b1dbb2`](https://github.com/electron-userland/electron-builder/commit/9b1dbb2f56662b2072662ed7432228e1c4437640) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`cf10da8`](https://github.com/electron-userland/electron-builder/commit/cf10da8d4988399232e5db62fe533789bdc816b2) [`9b1dbb2`](https://github.com/electron-userland/electron-builder/commit/9b1dbb2f56662b2072662ed7432228e1c4437640) [`e46b407`](https://github.com/electron-userland/electron-builder/commit/e46b4074edf8c74849738d2dafcdb106da47e27c) [`88070e9`](https://github.com/electron-userland/electron-builder/commit/88070e95e602aa1e6985d770cb4c279fea58a4a6) [`d56550f`](https://github.com/electron-userland/electron-builder/commit/d56550f75828ef3c097377264336794f2f65da86)
+
+</small>
+
+- `app-builder-lib@26.6.0`
+
+</details>
+
+## 26.5.0
+
+### Minor Changes
+
+- Feat: add support for dmgbuild's badge-icon configuration _[`#9513`](https://github.com/electron-userland/electron-builder/pull/9513) [`b1d6e24`](https://github.com/electron-userland/electron-builder/commit/b1d6e2417001977d12dc8365e6c5ceb5ac9d49c9) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Chore: fix dmg background by updating vendor dmgbuild _[`#9512`](https://github.com/electron-userland/electron-builder/pull/9512) [`666d85a`](https://github.com/electron-userland/electron-builder/commit/666d85a8b626492c8195355d3d152f76c96bcb8f) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`b1d6e24`](https://github.com/electron-userland/electron-builder/commit/b1d6e2417001977d12dc8365e6c5ceb5ac9d49c9) [`6c20eeb`](https://github.com/electron-userland/electron-builder/commit/6c20eeb1cf9fd10980cde3c9ce0602fa6b7c6972) [`3022f0f`](https://github.com/electron-userland/electron-builder/commit/3022f0f840c893d14beb82d638bedb8ed27d7ae6) [`2c11709`](https://github.com/electron-userland/electron-builder/commit/2c11709b6a330628095ec46c51435a40b6761710)
+
+</small>
+
+- `app-builder-lib@26.5.0`
+
+</details>
+
+## 26.4.1
+
+### Patch Changes
+
+- Fix: update the `dmgbuild` hex regex for `backgroundColor` to be case insensitive _[`#9487`](https://github.com/electron-userland/electron-builder/pull/9487) [`c3af390`](https://github.com/electron-userland/electron-builder/commit/c3af390ec67becfe548a8c83f0d3ba828c28b751) [@Kilian](https://github.com/Kilian)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`cb5b9c6`](https://github.com/electron-userland/electron-builder/commit/cb5b9c6e47686b0329dbf808b36587a82db03d3b) [`d38ae8e`](https://github.com/electron-userland/electron-builder/commit/d38ae8e666ca3769dfa091643ef816632f6e206f) [`1c94529`](https://github.com/electron-userland/electron-builder/commit/1c945290a38cc4b6070a4e756db58354aee5e683) [`ef43f42`](https://github.com/electron-userland/electron-builder/commit/ef43f42c2532ae3501071c6329f3dd058a91fd7f) [`25b5dd2`](https://github.com/electron-userland/electron-builder/commit/25b5dd2b4a87554640c99ffef376af8703f69a3d) [`97e5503`](https://github.com/electron-userland/electron-builder/commit/97e5503cecfcdfd9dddf1c4b321d52b5d5a94f83)
+
+</small>
+
+- `app-builder-lib@26.4.1`
+- `builder-util@26.4.1`
+
+</details>
+
 ## 26.4.0
 
 ### Patch Changes

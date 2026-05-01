@@ -29,14 +29,14 @@ export class YarnBerryNodeModulesCollector extends NpmNodeModulesCollector {
   protected async getDependenciesTree(_pm: PM): Promise<NpmDependency> {
     const isPnp = await this.yarnSetupInfo.value.then(info => !!info.isPnP)
     if (isPnp) {
-      log.warn(null, "Yarn PnP extraction not supported directly due to virtual file paths (<package_name>.zip/<file_path>), falling back to NPM node module collector")
+      log.warn(null, "Yarn PnP extraction not supported directly due to virtual file paths (<package_name>.zip/<file_path>), utilizing NPM node module collector")
     }
 
     return super.getDependenciesTree(PM.NPM)
   }
 
   protected isProdDependency(packageName: string, tree: NpmDependency): boolean {
-    return tree._dependencies?.[packageName] != null || tree.dependencies?.[packageName] != null || tree.optionalDependencies?.[packageName] != null
+    return super.isProdDependency(packageName, tree) || tree.dependencies?.[packageName] != null || tree.optionalDependencies?.[packageName] != null
   }
 
   private async detectYarnSetup(rootDir: string): Promise<YarnSetupInfo> {

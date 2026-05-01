@@ -21,7 +21,6 @@
     "js-yaml": "^4.1.0",
     "lazy-val": "^1.0.5",
     "path-sort": "^0.1.0",
-    "request": "^2.88.2",
     "resedit": "1.7.0",
     "semver": "7.7.2",
     "stat-mode": "^1.0.0",
@@ -40,10 +39,12 @@
     "@types/request": "^2.48.12",
     "@types/semver": "7.7.1",
     "@types/unzipper": "^0.10.11",
+    "@types/which": "^3.0.4",
     "fast-xml-parser": "4.4.1",
     "sanitize-filename": "^1.6.3",
     "vitest": "^3.0.4",
-    "vitest-mock-commonjs": "^1.0.2"
+    "vitest-mock-commonjs": "^1.0.2",
+    "which": "^5.0.0"
   },
   "jest": {
     "snapshotResolver": "<rootDir>/snapshotResolver.js",

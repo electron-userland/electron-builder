@@ -1,8 +1,7 @@
-import { isEmptyOrSpaces, log } from "builder-util"
-import * as path from "path"
+import { LogMessageByKey } from "./moduleManager"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager"
-import { PackageJson, PnpmDependency } from "./types"
+import { PnpmDependency } from "./types"
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependency, PnpmDependency> {
   public readonly installOptions = {
@@ -11,29 +10,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
   }
 
   protected getArgs(): string[] {
-    return ["list", "--prod", "--json", "--depth", "Infinity", "--long"]
-  }
-
-  private async getProductionDependencies(depTree: PnpmDependency): Promise<{ path: string; dependencies: Record<string, string>; optionalDependencies: Record<string, string> }> {
-    const packageName = depTree.name || depTree.from
-    if (isEmptyOrSpaces(packageName)) {
-      log.error(depTree, `Cannot determine production dependencies for package with empty name`)
-      throw new Error(`Cannot compute production dependencies for package with empty name: ${packageName}`)
-    }
-
-    const actualPath = await this.locatePackageVersion(depTree.path, packageName, depTree.version).then(it => it?.packageDir)
-    const resolvedLocalPath = await this.cache.realPath[actualPath ?? depTree.path]
-    const p = path.normalize(resolvedLocalPath)
-    const pkgJsonPath = path.join(p, "package.json")
-
-    let packageJson: PackageJson
-    try {
-      packageJson = await this.cache.packageJson[pkgJsonPath]
-    } catch (error: any) {
-      log.warn(null, `Failed to read package.json for ${p}: ${error.message}`)
-      return { path: p, dependencies: {}, optionalDependencies: {} }
-    }
-    return { path: p, dependencies: { ...packageJson.dependencies }, optionalDependencies: { ...packageJson.optionalDependencies } }
+    return ["list", "--prod", "--json", "--depth", "Infinity", "--silent", "--loglevel=error"]
   }
 
   protected async extractProductionDependencyGraph(tree: PnpmDependency, dependencyId: string) {
@@ -42,29 +19,50 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     }
     this.productionGraph[dependencyId] = { dependencies: [] }
 
+    if ((tree.dedupedDependenciesCount ?? 0) > 0) {
+      const realDep = this.allDependencies.get(dependencyId)
+      if (realDep) {
+        this.cache.logSummary[LogMessageByKey.PKG_DUPLICATE_REF].push(dependencyId)
+        tree = realDep
+      } else {
+        this.cache.logSummary[LogMessageByKey.PKG_DUPLICATE_REF_UNRESOLVED].push(dependencyId)
+        return
+      }
+    }
+
     const packageName = tree.name || tree.from
+    const { packageJson } = (await this.cache.locatePackageVersion({ pkgName: packageName, parentDir: this.rootDir, requiredRange: tree.version })) || {}
 
-    const treeDep = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
-    const json = packageName === dependencyId ? null : await this.getProductionDependencies(tree)
-    const prodDependencies = json ? { ...json.dependencies, ...json.optionalDependencies } : treeDep
+    const all = packageJson ? { ...packageJson.dependencies, ...packageJson.optionalDependencies } : { ...tree.dependencies, ...tree.optionalDependencies }
+    const optional = packageJson ? { ...packageJson.optionalDependencies } : {}
 
-    const collectedDependencies: string[] = []
-    for (const packageName in treeDep) {
-      if (!prodDependencies[packageName]) {
-        continue
+    const deps = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
+    this.productionGraph[dependencyId] = { dependencies: [] }
+    const depPromises = Object.entries(deps).map(async ([packageName, dependency]) => {
+      // First check if it's in production dependencies
+      if (!all[packageName]) {
+        return undefined
       }
 
       // Then check if optional dependency path exists (using actual resolved path)
-      const version = json?.optionalDependencies?.[packageName] || tree.optionalDependencies?.[packageName]?.version
-      const actualPath = await this.locatePackageVersion(json?.path ?? tree.path, packageName, version).then(it => it?.packageDir)
-      if (actualPath == null || !(await this.cache.exists[actualPath])) {
-        log.debug({ packageName, version: version, searchPath: actualPath }, `optional dependency not installed, skipping`)
-        continue
+      if (optional[packageName]) {
+        const pkg = await this.cache.locatePackageVersion({ pkgName: packageName, parentDir: this.rootDir, requiredRange: dependency.version })
+        if (!pkg) {
+          this.cache.logSummary[LogMessageByKey.PKG_OPTIONAL_NOT_INSTALLED].push(`${packageName}@${dependency.version}`)
+          return undefined
+        }
       }
-      const dependency = treeDep[packageName]
-      const childDependencyId = this.packageVersionString(dependency)
-      await this.extractProductionDependencyGraph(dependency, childDependencyId)
-      collectedDependencies.push(childDependencyId)
+      const { id: childDependencyId, pkgOverride } = this.normalizePackageVersion(packageName, dependency)
+      await this.extractProductionDependencyGraph(pkgOverride, childDependencyId)
+      return childDependencyId
+    })
+
+    const collectedDependencies: string[] = []
+    for (const dep of depPromises) {
+      const result = await dep
+      if (result !== undefined) {
+        collectedDependencies.push(result)
+      }
     }
     this.productionGraph[dependencyId] = { dependencies: collectedDependencies }
   }
@@ -72,27 +70,28 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
   protected async collectAllDependencies(tree: PnpmDependency) {
     // Collect regular dependencies
     for (const [key, value] of Object.entries(tree.dependencies || {})) {
-      const json = await this.getProductionDependencies(value)
-      this.allDependencies.set(`${key}@${value.version}`, { ...value, path: json.path })
+      if ((value?.dedupedDependenciesCount ?? 0) > 0) {
+        continue
+      }
+      const pkg = await this.cache.locatePackageVersion({ pkgName: key, parentDir: this.rootDir, requiredRange: value.version })
+      this.allDependencies.set(`${key}@${value.version}`, { ...value, path: pkg?.packageDir ?? value.path })
       await this.collectAllDependencies(value)
     }
 
     // Collect optional dependencies if they exist
     for (const [key, value] of Object.entries(tree.optionalDependencies || {})) {
-      const json = await this.getProductionDependencies(value)
-      this.allDependencies.set(`${key}@${value.version}`, { ...value, path: json.path })
+      if ((value?.dedupedDependenciesCount ?? 0) > 0) {
+        continue
+      }
+      const pkg = await this.cache.locatePackageVersion({ pkgName: key, parentDir: this.rootDir, requiredRange: value.version })
+      this.allDependencies.set(`${key}@${value.version}`, { ...value, path: pkg?.packageDir ?? value.path })
       await this.collectAllDependencies(value)
     }
   }
 
-  protected packageVersionString(pkg: PnpmDependency): string {
-    // we use 'from' field because 'name' may be different in case of aliases
-    return `${pkg.from}@${pkg.version}`
-  }
-
-  protected async parseDependenciesTree(jsonBlob: string): Promise<PnpmDependency> {
-    const dependencyTree: PnpmDependency[] = JSON.parse(jsonBlob)
+  protected parseDependenciesTree(jsonBlob: string): PnpmDependency {
     // pnpm returns an array of dependency trees
-    return Promise.resolve(dependencyTree[0])
+    const dependencyTree: PnpmDependency[] = this.extractJsonFromPollutedOutput<PnpmDependency[]>(jsonBlob)
+    return dependencyTree[0]
   }
 }

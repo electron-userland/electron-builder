@@ -1,12 +1,12 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`dev 1`] = `
+exports[`mas > dev 1`] = `
 {
   "mac": [],
 }
 `;
 
-exports[`dev 2`] = `
+exports[`mas > dev 2`] = `
 {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
@@ -30,18 +30,19 @@ exports[`dev 2`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
 `;
 
-exports[`mas 1`] = `
+exports[`mas > mas 1`] = `
 {
   "mac": [],
 }
 `;
 
-exports[`mas 2`] = `
+exports[`mas > mas 2`] = `
 {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
@@ -65,12 +66,13 @@ exports[`mas 2`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
 `;
 
-exports[`mas and 7z 1`] = `
+exports[`mas > mas and 7z 1`] = `
 {
   "mac": [
     {
@@ -82,7 +84,7 @@ exports[`mas and 7z 1`] = `
 }
 `;
 
-exports[`mas and 7z 2`] = `
+exports[`mas > mas and 7z 2`] = `
 {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
@@ -106,6 +108,7 @@ exports[`mas and 7z 2`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }

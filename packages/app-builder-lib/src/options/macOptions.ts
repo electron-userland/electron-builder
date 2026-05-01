@@ -252,6 +252,11 @@ export interface DmgOptions extends TargetSpecificOptions {
   backgroundColor?: string | null
 
   /**
+   * The path to DMG icon (badge icon), which will be shown when mounted, relative to the [build resources](./contents.md#extraresources) or to the project directory.
+   */
+  badgeIcon?: string | null
+
+  /**
    * The path to DMG icon (volume icon), which will be shown when mounted, relative to the [build resources](./contents.md#extraresources) or to the project directory.
    * Defaults to the application icon (`build/icon.icns`).
    */
@@ -287,6 +292,20 @@ export interface DmgOptions extends TargetSpecificOptions {
    * @default UDZO
    */
   format?: "UDRW" | "UDRO" | "UDCO" | "UDZO" | "UDBZ" | "ULFO"
+
+  /**
+   * The initial size of the DMG filesystem. Accepts the same syntax as the `-size` argument to `hdiutil`, e.g. `"150m"`, `"4g"`.
+   * If not specified, the size is calculated automatically.
+   * Set this explicitly for large apps or apps with sparse files to avoid "No space left on device" errors.
+   */
+  readonly size?: string | null
+
+  /**
+   * Whether to shrink the DMG filesystem to the minimum size after copying files.
+   * Set to `false` to preserve the explicit `size` you specified.
+   * @default true
+   */
+  readonly shrink?: boolean
 
   /**
    * The DMG window position and size. With y co-ordinates running from bottom to top.

@@ -1,5 +1,40 @@
 # builder-util
 
+## 26.9.0
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`b7df0bc`](https://github.com/electron-userland/electron-builder/commit/b7df0bcef5790814fd6df187346dcec625dc681e)
+
+</small>
+
+- `builder-util-runtime@9.6.0`
+
+</details>
+
+## 26.8.1
+
+### Patch Changes
+
+- Chore: removing unused `notice` LogLevel _[`#9587`](https://github.com/electron-userland/electron-builder/pull/9587) [`4edd695`](https://github.com/electron-userland/electron-builder/commit/4edd6950454d369ef8994e5a1ad64f1d0c7b7643) [@mmaietta](https://github.com/mmaietta)_
+
+## 26.8.0
+
+### Patch Changes
+
+- Chore: silence test console logging and throw more helpful error in msiWrapped targetr _[`#9572`](https://github.com/electron-userland/electron-builder/pull/9572) [`cd7c0d9`](https://github.com/electron-userland/electron-builder/commit/cd7c0d9a73cf63e2125ef5873bd0c2f392c211dc) [@mmaietta](https://github.com/mmaietta)_
+- Chore: allow `link:` support for package detection to mirror current `file:` parsing _[`#9578`](https://github.com/electron-userland/electron-builder/pull/9578) [`9ba36f9`](https://github.com/electron-userland/electron-builder/commit/9ba36f98791bc8d2393297dbca1133d03be6260a) [@mmaietta](https://github.com/mmaietta)_
+
+## 26.4.1
+
+### Patch Changes
+
+- Chore: migrating manual Node Module collector to seperate filesystem traversal class _[`#9440`](https://github.com/electron-userland/electron-builder/pull/9440) [`97e5503`](https://github.com/electron-userland/electron-builder/commit/97e5503cecfcdfd9dddf1c4b321d52b5d5a94f83) [@mmaietta](https://github.com/mmaietta)_
+
 ## 26.3.4
 
 ### Patch Changes

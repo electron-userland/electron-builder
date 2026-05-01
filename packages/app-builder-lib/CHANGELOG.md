@@ -1,5 +1,222 @@
 # app-builder-lib
 
+## 26.9.0
+
+### Minor Changes
+
+- Feat: If necessary, start with --no-sandbox _[`#9590`](https://github.com/electron-userland/electron-builder/pull/9590) [`ed422f3`](https://github.com/electron-userland/electron-builder/commit/ed422f36540a93e9bd2a19bc7a5e729bf2b033ea) [@sabonerune](https://github.com/sabonerune)_
+- Feat(nsis): detect windows version and exclude win 7 compatibility logic when not needed _[`#9564`](https://github.com/electron-userland/electron-builder/pull/9564) [`13d8535`](https://github.com/electron-userland/electron-builder/commit/13d85355b6d37bd82d5153d260ba11de71323875) [@JPCrounse](https://github.com/JPCrounse)_
+- Feat: pass release notes to GitHub/GitLab release body via `releaseBody` and `releaseName` options _[`#9581`](https://github.com/electron-userland/electron-builder/pull/9581) [`b7df0bc`](https://github.com/electron-userland/electron-builder/commit/b7df0bcef5790814fd6df187346dcec625dc681e) [@asamofal](https://github.com/asamofal)_
+
+### Patch Changes
+
+- Fix: parseNameVersion correctly splits scoped packages with link: paths _[`#9653`](https://github.com/electron-userland/electron-builder/pull/9653) [`a69928f`](https://github.com/electron-userland/electron-builder/commit/a69928f28cd33a487a3158bd5c3ad040906d3c30) [@davidebaraldo](https://github.com/davidebaraldo)_
+- Fix(normalizePackageData): check bd variable instead of string "bd" _[`#9669`](https://github.com/electron-userland/electron-builder/pull/9669) [`b072e92`](https://github.com/electron-userland/electron-builder/commit/b072e92bd31b84df506deaf6156cc6109c7ef0f5) [@Sandblaze05](https://github.com/Sandblaze05)_
+- Fix(appimage): add entry for patched appimage toolset bundle to resolve issues on Ubuntu 25.1.0 _[`#9673`](https://github.com/electron-userland/electron-builder/pull/9673) [`3958d8b`](https://github.com/electron-userland/electron-builder/commit/3958d8b6cb7b74458ea541738af6ac753d2cf83a) [@mmaietta](https://github.com/mmaietta)_
+- Fix(appimage): use /usr/bin/env in hashbang so it works in non FHS distros _[`#9664`](https://github.com/electron-userland/electron-builder/pull/9664) [`f71b101`](https://github.com/electron-userland/electron-builder/commit/f71b101be964bdcc2b84fcf281441372105def00) [@lucasew](https://github.com/lucasew)_
+- Fix: respect electron*builder_binaries_mirror in downloadArtifact *[`#9631`](https://github.com/electron-userland/electron-builder/pull/9631) [`0c8fc41`](https://github.com/electron-userland/electron-builder/commit/0c8fc415debf0dc7e19e8ffd9c06db100ef41f11) [@ysansan98](https://github.com/ysansan98)\_
+
+  downloadArtifact() was ignoring electron_builder_binaries_mirror and falling back
+  to electron_mirror due to @electron/get behavior. This affected dmg-builder
+  (macOS) and appimage-tools (Linux) downloads.
+  - Extract getBinariesMirrorUrl() to share mirror URL resolution
+  - Use the helper in both downloadArtifact() and getBinFromUrl()
+  - Ensure custom mirrors are respected for all binary downloads
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`b7df0bc`](https://github.com/electron-userland/electron-builder/commit/b7df0bcef5790814fd6df187346dcec625dc681e)
+
+</small>
+
+- `electron-publish@26.9.0`
+- `builder-util-runtime@9.6.0`
+- `dmg-builder@26.9.0`
+- `electron-builder-squirrel-windows@26.9.0`
+- `builder-util@26.9.0`
+
+</details>
+
+## 26.8.2
+
+### Patch Changes
+
+- Fix: handle pnpm deduped dependencies correctly in node module collector _[`#9618`](https://github.com/electron-userland/electron-builder/pull/9618) [`b348df0`](https://github.com/electron-userland/electron-builder/commit/b348df0ba409fee488288ead097ac900141a6dad) [@beyondkmp](https://github.com/beyondkmp)_
+- Fix: filter electronLanguages with startsWith filter for generous matching _[`#9605`](https://github.com/electron-userland/electron-builder/pull/9605) [`f2c0547`](https://github.com/electron-userland/electron-builder/commit/f2c0547d2fa63d42636713415d4100aceb443e00) [@mmaietta](https://github.com/mmaietta)_
+- Fix mksquashfs ENOENT when appimage tool paths are relative _[`#9610`](https://github.com/electron-userland/electron-builder/pull/9610) [`52dc667`](https://github.com/electron-userland/electron-builder/commit/52dc6676f8fb8157e60a55df8021988bf6c48286) [@f-io](https://github.com/f-io)_
+- Fix: regenerate schema to unblock CI _[`#9608`](https://github.com/electron-userland/electron-builder/pull/9608) [`4e83aeb`](https://github.com/electron-userland/electron-builder/commit/4e83aeb610aad811413bfd626656dabc081957a3) [@mmaietta](https://github.com/mmaietta)_
+- Fix(win): regenerate app exe if header of the asar has changed so that asar integrity properly matches _[`#9607`](https://github.com/electron-userland/electron-builder/pull/9607) [`02a9105`](https://github.com/electron-userland/electron-builder/commit/02a9105d1c4420e418d740dfa0bbbd22d5b44735) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`5d4651d`](https://github.com/electron-userland/electron-builder/commit/5d4651dbb29d0730d0fb3be96de79d9348c0a99c)
+
+</small>
+
+- `electron-builder-squirrel-windows@26.8.2`
+- `dmg-builder@26.8.2`
+
+</details>
+
+## 26.8.1
+
+### Patch Changes
+
+- Chore: add logging summary to end of node collector to flag any special cases/alerts _[`#9587`](https://github.com/electron-userland/electron-builder/pull/9587) [`4edd695`](https://github.com/electron-userland/electron-builder/commit/4edd6950454d369ef8994e5a1ad64f1d0c7b7643) [@mmaietta](https://github.com/mmaietta)_
+- Fix(AppImage): fix mime type directory in AppDir _[`#9589`](https://github.com/electron-userland/electron-builder/pull/9589) [`8940ec6`](https://github.com/electron-userland/electron-builder/commit/8940ec63bac6450ed9b7c5e761954f08e6fa4242) [@sabonerune](https://github.com/sabonerune)_
+- Fix: use package key when reading from dependency list instead of package `from` to not mislabel package-version strings _[`#9583`](https://github.com/electron-userland/electron-builder/pull/9583) [`dde4309`](https://github.com/electron-userland/electron-builder/commit/dde4309b9114e06d0826e8badc2cb968ceb75642) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 4 dependencies</summary>
+
+<small>
+
+[`4edd695`](https://github.com/electron-userland/electron-builder/commit/4edd6950454d369ef8994e5a1ad64f1d0c7b7643)
+
+</small>
+
+- `builder-util@26.8.1`
+- `dmg-builder@26.8.1`
+- `electron-builder-squirrel-windows@26.8.1`
+- `electron-publish@26.8.1`
+
+</details>
+
+## 26.8.0
+
+### Minor Changes
+
+- Feat: adding support for static appimage runtime via new toolset _[`#9558`](https://github.com/electron-userland/electron-builder/pull/9558) [`c18f0eb`](https://github.com/electron-userland/electron-builder/commit/c18f0eb26bd9ba366b45e0ff9e85cdee0daba4ef) [@mmaietta](https://github.com/mmaietta)_
+- Feat(win): adding support for latest artifacts for win-codesign tooling to be pulled from `electron-builder-binaries` _[`#9430`](https://github.com/electron-userland/electron-builder/pull/9430) [`1b39a8e`](https://github.com/electron-userland/electron-builder/commit/1b39a8e23c019a0e61fbe1fe5e973113036d255b) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Chore: silence test console logging and throw more helpful error in msiWrapped targetr _[`#9572`](https://github.com/electron-userland/electron-builder/pull/9572) [`cd7c0d9`](https://github.com/electron-userland/electron-builder/commit/cd7c0d9a73cf63e2125ef5873bd0c2f392c211dc) [@mmaietta](https://github.com/mmaietta)_
+- Fix: Windows build failure due to Node.js path with spaces _[`#9566`](https://github.com/electron-userland/electron-builder/pull/9566) [`769b608`](https://github.com/electron-userland/electron-builder/commit/769b6080a7258205e2ea7cac74526765b80f7e0f) [@copilot-swe-agent](https://github.com/apps/copilot-swe-agent)_
+- Refactor: simplify YarnNodeModulesCollector by extending NpmNodeModulesCollector _[`#9506`](https://github.com/electron-userland/electron-builder/pull/9506) [`1b113b7`](https://github.com/electron-userland/electron-builder/commit/1b113b758dffa346df8dce91185800293a68b6fd) [@beyondkmp](https://github.com/beyondkmp)_
+
+<details><summary>Updated 4 dependencies</summary>
+
+<small>
+
+[`cd7c0d9`](https://github.com/electron-userland/electron-builder/commit/cd7c0d9a73cf63e2125ef5873bd0c2f392c211dc) [`9ba36f9`](https://github.com/electron-userland/electron-builder/commit/9ba36f98791bc8d2393297dbca1133d03be6260a)
+
+</small>
+
+- `builder-util@26.8.0`
+- `dmg-builder@26.8.0`
+- `electron-builder-squirrel-windows@26.8.0`
+- `electron-publish@26.8.0`
+
+</details>
+
+## 26.7.0
+
+### Minor Changes
+
+- Feat: add `size` and `shrink` options to DmgOptions for explicit DMG filesystem size control _[`#9543`](https://github.com/electron-userland/electron-builder/pull/9543) [`bfee115`](https://github.com/electron-userland/electron-builder/commit/bfee115b185fa4dcb14b0fae6ccee1adc4d4590e) [@BarakXYZ](https://github.com/BarakXYZ)_
+- Adding optional config property `capabilities` to AppxOptions (#9436) _[`#9437`](https://github.com/electron-userland/electron-builder/pull/9437) [`3fa2d89`](https://github.com/electron-userland/electron-builder/commit/3fa2d894ac609d0d819d7adb80ff50bfca08039f) [@regnete](https://github.com/regnete)_
+
+### Patch Changes
+
+- Fix(linux): after-install.tpl: Fix `stdio` redirects in `update-alternative` invocation _[`#9536`](https://github.com/electron-userland/electron-builder/pull/9536) [`ec9e2db`](https://github.com/electron-userland/electron-builder/commit/ec9e2dbbd864f0858cf0d3b719ad75a84c59f29c) [@joshtriplett](https://github.com/joshtriplett)_
+- Fix: properly detecting npm duplicate entries and correlating `_dependencies` property against any duplicated `dependencies`. (npm collector also covers yarn berry) _[`#9548`](https://github.com/electron-userland/electron-builder/pull/9548) [`aec9157`](https://github.com/electron-userland/electron-builder/commit/aec9157b5124acf9409a46461eca86cb1212831b) [@mmaietta](https://github.com/mmaietta)_
+- Chore(deps): update `tar` again _[`#9547`](https://github.com/electron-userland/electron-builder/pull/9547) [`64b40fe`](https://github.com/electron-userland/electron-builder/commit/64b40fe75a5464db19721e5a6dd9a6930196aaac) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`bfee115`](https://github.com/electron-userland/electron-builder/commit/bfee115b185fa4dcb14b0fae6ccee1adc4d4590e)
+
+</small>
+
+- `dmg-builder@26.7.0`
+- `electron-builder-squirrel-windows@26.7.0`
+
+</details>
+
+## 26.6.0
+
+### Minor Changes
+
+- Feat(flatpak): use configuration for `executableArgs` _[`#9530`](https://github.com/electron-userland/electron-builder/pull/9530) [`d56550f`](https://github.com/electron-userland/electron-builder/commit/d56550f75828ef3c097377264336794f2f65da86) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Fix(nsis): allow $INSTDIR to be removed _[`#9520`](https://github.com/electron-userland/electron-builder/pull/9520) [`cf10da8`](https://github.com/electron-userland/electron-builder/commit/cf10da8d4988399232e5db62fe533789bdc816b2) [@liamcmitchell](https://github.com/liamcmitchell)_
+- Feat: update `dmgbuild` and migrate to portable `dmgbuild` python bundle. Fixes `badge-icon` property _[`#9516`](https://github.com/electron-userland/electron-builder/pull/9516) [`9b1dbb2`](https://github.com/electron-userland/electron-builder/commit/9b1dbb2f56662b2072662ed7432228e1c4437640) [@mmaietta](https://github.com/mmaietta)_
+- Chore(deps): updating electron/rebuild, tar, and form-data to latest releases _[`#9528`](https://github.com/electron-userland/electron-builder/pull/9528) [`e46b407`](https://github.com/electron-userland/electron-builder/commit/e46b4074edf8c74849738d2dafcdb106da47e27c) [@mmaietta](https://github.com/mmaietta)_
+- Fix: pnpm collector returning zero modules _[`#9535`](https://github.com/electron-userland/electron-builder/pull/9535) [`88070e9`](https://github.com/electron-userland/electron-builder/commit/88070e95e602aa1e6985d770cb4c279fea58a4a6) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 3 dependencies</summary>
+
+<small>
+
+[`9b1dbb2`](https://github.com/electron-userland/electron-builder/commit/9b1dbb2f56662b2072662ed7432228e1c4437640) [`e46b407`](https://github.com/electron-userland/electron-builder/commit/e46b4074edf8c74849738d2dafcdb106da47e27c)
+
+</small>
+
+- `dmg-builder@26.6.0`
+- `electron-publish@26.6.0`
+- `electron-builder-squirrel-windows@26.6.0`
+
+</details>
+
+## 26.5.0
+
+### Minor Changes
+
+- Feat: add support for dmgbuild's badge-icon configuration _[`#9513`](https://github.com/electron-userland/electron-builder/pull/9513) [`b1d6e24`](https://github.com/electron-userland/electron-builder/commit/b1d6e2417001977d12dc8365e6c5ceb5ac9d49c9) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Chore: running `eslint --fix` on more files _[`#9502`](https://github.com/electron-userland/electron-builder/pull/9502) [`6c20eeb`](https://github.com/electron-userland/electron-builder/commit/6c20eeb1cf9fd10980cde3c9ce0602fa6b7c6972) [@mmaietta](https://github.com/mmaietta)_
+- Fix: Windows build fails with spawn EINVAL after Node.js security fix _[`#9489`](https://github.com/electron-userland/electron-builder/pull/9489) [`3022f0f`](https://github.com/electron-userland/electron-builder/commit/3022f0f840c893d14beb82d638bedb8ed27d7ae6) [@mmaietta](https://github.com/mmaietta)_
+- Chore: update tar to latest release 7.5.3 to resolve dependabot _[`#9514`](https://github.com/electron-userland/electron-builder/pull/9514) [`2c11709`](https://github.com/electron-userland/electron-builder/commit/2c11709b6a330628095ec46c51435a40b6761710) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`666d85a`](https://github.com/electron-userland/electron-builder/commit/666d85a8b626492c8195355d3d152f76c96bcb8f) [`b1d6e24`](https://github.com/electron-userland/electron-builder/commit/b1d6e2417001977d12dc8365e6c5ceb5ac9d49c9)
+
+</small>
+
+- `dmg-builder@26.5.0`
+- `electron-builder-squirrel-windows@26.5.0`
+
+</details>
+
+## 26.4.1
+
+### Patch Changes
+
+- Fix: delete default macOS appPlist keys using extendInfo when set Nullish _[`#9481`](https://github.com/electron-userland/electron-builder/pull/9481) [`cb5b9c6`](https://github.com/electron-userland/electron-builder/commit/cb5b9c6e47686b0329dbf808b36587a82db03d3b) [@Lemonexe](https://github.com/Lemonexe)_
+- Fix: pnpm "Invalid string length" errors during node module collection _[`#9470`](https://github.com/electron-userland/electron-builder/pull/9470) [`d38ae8e`](https://github.com/electron-userland/electron-builder/commit/d38ae8e666ca3769dfa091643ef816632f6e206f) [@danteissaias](https://github.com/danteissaias)_
+- Fix: post-process parent directories of unpacked files to avoid overeager unpacking _[`#9419`](https://github.com/electron-userland/electron-builder/pull/9419) [`1c94529`](https://github.com/electron-userland/electron-builder/commit/1c945290a38cc4b6070a4e756db58354aee5e683) [@mmaietta](https://github.com/mmaietta)_
+- Deprecate: warn about implicit publishing in CI _[`#9475`](https://github.com/electron-userland/electron-builder/pull/9475) [`ef43f42`](https://github.com/electron-userland/electron-builder/commit/ef43f42c2532ae3501071c6329f3dd058a91fd7f) [@biw](https://github.com/biw)_
+- Fix: aliased packages not packaged with the correct name _[`#9492`](https://github.com/electron-userland/electron-builder/pull/9492) [`25b5dd2`](https://github.com/electron-userland/electron-builder/commit/25b5dd2b4a87554640c99ffef376af8703f69a3d) [@iamEvanYT](https://github.com/iamEvanYT)_
+- Chore: migrating manual Node Module collector to seperate filesystem traversal class _[`#9440`](https://github.com/electron-userland/electron-builder/pull/9440) [`97e5503`](https://github.com/electron-userland/electron-builder/commit/97e5503cecfcdfd9dddf1c4b321d52b5d5a94f83) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 4 dependencies</summary>
+
+<small>
+
+[`c3af390`](https://github.com/electron-userland/electron-builder/commit/c3af390ec67becfe548a8c83f0d3ba828c28b751) [`97e5503`](https://github.com/electron-userland/electron-builder/commit/97e5503cecfcdfd9dddf1c4b321d52b5d5a94f83)
+
+</small>
+
+- `dmg-builder@26.4.1`
+- `builder-util@26.4.1`
+- `electron-builder-squirrel-windows@26.4.1`
+- `electron-publish@26.4.1`
+
+</details>
+
 ## 26.4.0
 
 ### Minor Changes

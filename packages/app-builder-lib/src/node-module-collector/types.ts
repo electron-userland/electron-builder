@@ -8,12 +8,6 @@ export type PackageJson = {
   workspaces?: string[] | { packages: string[] }
 }
 
-export type ResolveModuleOptions<T> = {
-  dependency: T
-  virtualPath?: string // e.g. for file: dependencies or symlinked dependencies
-  isOptionalDependency?: boolean
-}
-
 export interface NodeModuleInfo {
   name: string
   version: string
@@ -34,21 +28,21 @@ export type ParsedDependencyTree = {
 export interface PnpmDependency extends Dependency<PnpmDependency, PnpmDependency> {
   readonly from: string
   readonly resolved: string
+  // Present in pnpm 10.29.3+ `pnpm list --json` output for deduped references.
+  // Context: https://github.com/pnpm/pnpm/issues/10601
+  readonly dedupedDependenciesCount?: number
 }
 
 export interface NpmDependency extends Dependency<NpmDependency, string> {
   readonly resolved?: string
-  // implicit dependencies
+  // implicit dependencies, returned only through `npm list`
   readonly _dependencies?: {
     [packageName: string]: string
   }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface YarnBerryDependency extends Dependency<YarnBerryDependency, string> {}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface YarnDependency extends Dependency<YarnDependency, YarnDependency> {}
+export interface TraversedDependency extends Dependency<TraversedDependency, TraversedDependency> {}
 
 export type Dependency<T, V> = Dependencies<T, V> & ParsedDependencyTree
 
@@ -62,9 +56,7 @@ export type Dependencies<T, V> = {
 }
 
 export interface DependencyGraph {
-  [packageNameAndVersion: string]: PackageDependencies
-}
-
-interface PackageDependencies {
-  readonly dependencies: string[]
+  [packageNameAndVersion: string]: {
+    readonly dependencies: string[]
+  }
 }

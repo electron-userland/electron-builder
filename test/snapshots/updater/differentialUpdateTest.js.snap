@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`AppImage 1`] = `
+exports[`AppImage > appimage x64 - toolset: 0.0.0 1`] = `
 {
   "linux": [
     {
@@ -34,7 +34,7 @@ exports[`AppImage 1`] = `
 }
 `;
 
-exports[`AppImage 2`] = `
+exports[`AppImage > appimage x64 - toolset: 0.0.0 2`] = `
 {
   "linux": [
     {
@@ -68,7 +68,7 @@ exports[`AppImage 2`] = `
 }
 `;
 
-exports[`AppImage 3`] = `
+exports[`AppImage > appimage x64 - toolset: 0.0.0 3`] = `
 {
   "files": [
     {
@@ -84,7 +84,457 @@ exports[`AppImage 3`] = `
 }
 `;
 
-exports[`AppImage 4`] = `
+exports[`AppImage > appimage x64 - toolset: 0.0.0 4`] = `
+[
+  "Test App ßW-1.0.1.AppImage",
+]
+`;
+
+exports[`AppImage > appimage x64 - toolset: 1.0.2 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.0.0.AppImage",
+      "safeArtifactName": "TestApp-1.0.0-x86_64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.0.AppImage",
+          },
+        ],
+        "path": "Test App ßW-1.0.0.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage > appimage x64 - toolset: 1.0.2 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.0.1.AppImage",
+      "safeArtifactName": "TestApp-1.0.1-x86_64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.1.AppImage",
+          },
+        ],
+        "path": "Test App ßW-1.0.1.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage > appimage x64 - toolset: 1.0.2 3`] = `
+{
+  "files": [
+    {
+      "blockMapSize": "@blockMapSize",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  ],
+  "path": "Test App ßW-1.0.1.AppImage",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
+
+exports[`AppImage > appimage x64 - toolset: 1.0.2 4`] = `
+[
+  "Test App ßW-1.0.1.AppImage",
+]
+`;
+
+exports[`AppImage > arm64 - toolset: 0.0.0 1`] = `
+{
+  "linux": [
+    {
+      "arch": "arm64",
+      "file": "Test App ßW-1.0.0-arm64.AppImage",
+      "safeArtifactName": "TestApp-1.0.0-arm64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux-arm64.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.0-arm64.AppImage",
+          },
+        ],
+        "path": "Test App ßW-1.0.0-arm64.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage > arm64 - toolset: 0.0.0 2`] = `
+{
+  "linux": [
+    {
+      "arch": "arm64",
+      "file": "Test App ßW-1.0.1-arm64.AppImage",
+      "safeArtifactName": "TestApp-1.0.1-arm64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux-arm64.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.1-arm64.AppImage",
+          },
+        ],
+        "path": "Test App ßW-1.0.1-arm64.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage > arm64 - toolset: 0.0.0 3`] = `
+{
+  "files": [
+    {
+      "blockMapSize": "@blockMapSize",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  ],
+  "path": "Test App ßW-1.0.1-arm64.AppImage",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
+
+exports[`AppImage > arm64 - toolset: 0.0.0 4`] = `
+[
+  "Test App ßW-1.0.1-arm64.AppImage",
+]
+`;
+
+exports[`AppImage > arm64 - toolset: 1.0.2 1`] = `
+{
+  "linux": [
+    {
+      "arch": "arm64",
+      "file": "Test App ßW-1.0.0-arm64.AppImage",
+      "safeArtifactName": "TestApp-1.0.0-arm64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux-arm64.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.0-arm64.AppImage",
+          },
+        ],
+        "path": "Test App ßW-1.0.0-arm64.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage > arm64 - toolset: 1.0.2 2`] = `
+{
+  "linux": [
+    {
+      "arch": "arm64",
+      "file": "Test App ßW-1.0.1-arm64.AppImage",
+      "safeArtifactName": "TestApp-1.0.1-arm64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux-arm64.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.1-arm64.AppImage",
+          },
+        ],
+        "path": "Test App ßW-1.0.1-arm64.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage > arm64 - toolset: 1.0.2 3`] = `
+{
+  "files": [
+    {
+      "blockMapSize": "@blockMapSize",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  ],
+  "path": "Test App ßW-1.0.1-arm64.AppImage",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
+
+exports[`AppImage > arm64 - toolset: 1.0.2 4`] = `
+[
+  "Test App ßW-1.0.1-arm64.AppImage",
+]
+`;
+
+exports[`AppImage > x64 - toolset: 0.0.0 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.0.0.AppImage",
+      "safeArtifactName": "TestApp-1.0.0-x86_64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.0.AppImage",
+          },
+        ],
+        "path": "Test App ßW-1.0.0.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage > x64 - toolset: 0.0.0 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.0.1.AppImage",
+      "safeArtifactName": "TestApp-1.0.1-x86_64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.1.AppImage",
+          },
+        ],
+        "path": "Test App ßW-1.0.1.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage > x64 - toolset: 0.0.0 3`] = `
+{
+  "files": [
+    {
+      "blockMapSize": "@blockMapSize",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  ],
+  "path": "Test App ßW-1.0.1.AppImage",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
+
+exports[`AppImage > x64 - toolset: 0.0.0 4`] = `
+[
+  "Test App ßW-1.0.1.AppImage",
+]
+`;
+
+exports[`AppImage > x64 - toolset: 1.0.2 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.0.0.AppImage",
+      "safeArtifactName": "TestApp-1.0.0-x86_64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.0.AppImage",
+          },
+        ],
+        "path": "Test App ßW-1.0.0.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage > x64 - toolset: 1.0.2 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.0.1.AppImage",
+      "safeArtifactName": "TestApp-1.0.1-x86_64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.1.AppImage",
+          },
+        ],
+        "path": "Test App ßW-1.0.1.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage > x64 - toolset: 1.0.2 3`] = `
+{
+  "files": [
+    {
+      "blockMapSize": "@blockMapSize",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  ],
+  "path": "Test App ßW-1.0.1.AppImage",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
+
+exports[`AppImage > x64 - toolset: 1.0.2 4`] = `
 [
   "Test App ßW-1.0.1.AppImage",
 ]
@@ -771,7 +1221,180 @@ exports[`Mac universal 6`] = `
 ]
 `;
 
-exports[`nsis 1`] = `
+exports[`web installer 1`] = `
+{
+  "win": [
+    {
+      "file": "Test App ßW Web Setup 1.0.0.exe",
+      "safeArtifactName": "TestApp-WebSetup-1.0.0.exe",
+      "updateInfo": {
+        "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-arm64.nsis.7z",
+            "path": "TestApp-1.0.0-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+          "x64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-x64.nsis.7z",
+            "path": "TestApp-1.0.0-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp-1.0.0-x64.nsis.7z",
+    },
+    {
+      "arch": "arm64",
+      "file": "TestApp-1.0.0-arm64.nsis.7z",
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "url": "Test App ßW Web Setup 1.0.0.exe",
+          },
+        ],
+        "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-arm64.nsis.7z",
+            "path": "TestApp-1.0.0-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+          "x64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-x64.nsis.7z",
+            "path": "TestApp-1.0.0-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+        "path": "Test App ßW Web Setup 1.0.0.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`web installer 2`] = `
+{
+  "win": [
+    {
+      "file": "Test App ßW Web Setup 1.0.1.exe",
+      "safeArtifactName": "TestApp-WebSetup-1.0.1.exe",
+      "updateInfo": {
+        "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.1-arm64.nsis.7z",
+            "path": "TestApp-1.0.1-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+          "x64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.1-x64.nsis.7z",
+            "path": "TestApp-1.0.1-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp-1.0.1-x64.nsis.7z",
+    },
+    {
+      "arch": "arm64",
+      "file": "TestApp-1.0.1-arm64.nsis.7z",
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "url": "Test App ßW Web Setup 1.0.1.exe",
+          },
+        ],
+        "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.1-arm64.nsis.7z",
+            "path": "TestApp-1.0.1-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+          "x64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.1-x64.nsis.7z",
+            "path": "TestApp-1.0.1-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+        "path": "Test App ßW Web Setup 1.0.1.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`web installer 3`] = `
+{
+  "files": [
+    {
+      "sha512": "@sha512",
+    },
+  ],
+  "packages": {
+    "arm64": {
+      "blockMapSize": "@blockMapSize",
+      "file": "TestApp-1.0.1-arm64.nsis.7z",
+      "path": "TestApp-1.0.1-arm64.nsis.7z",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+    "x64": {
+      "blockMapSize": "@blockMapSize",
+      "file": "TestApp-1.0.1-x64.nsis.7z",
+      "path": "TestApp-1.0.1-x64.nsis.7z",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  },
+  "path": "Test App ßW Web Setup 1.0.1.exe",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
+
+exports[`web installer 4`] = `
+[
+  "Test App ßW Web Setup 1.0.1.exe",
+  "package-1.0.1.7z",
+]
+`;
+
+exports[`winCodeSign: 0.0.0 > nsis 1`] = `
 {
   "win": [
     {
@@ -811,7 +1434,7 @@ exports[`nsis 1`] = `
 }
 `;
 
-exports[`nsis 2`] = `
+exports[`winCodeSign: 0.0.0 > nsis 2`] = `
 {
   "win": [
     {
@@ -851,7 +1474,7 @@ exports[`nsis 2`] = `
 }
 `;
 
-exports[`nsis 3`] = `
+exports[`winCodeSign: 0.0.0 > nsis 3`] = `
 {
   "files": [
     {
@@ -866,21 +1489,27 @@ exports[`nsis 3`] = `
 }
 `;
 
-exports[`nsis 4`] = `
+exports[`winCodeSign: 0.0.0 > nsis 4`] = `
 [
   "Test App ßW Setup 1.0.1.exe",
 ]
 `;
 
-exports[`web installer 1`] = `
+exports[`winCodeSign: 0.0.0 > web installer 1`] = `
 {
   "win": [
     {
-      "arch": "x64",
       "file": "Test App ßW Web Setup 1.0.0.exe",
       "safeArtifactName": "TestApp-WebSetup-1.0.0.exe",
       "updateInfo": {
         "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-arm64.nsis.7z",
+            "path": "TestApp-1.0.0-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
           "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.0.0-x64.nsis.7z",
@@ -896,6 +1525,10 @@ exports[`web installer 1`] = `
       "file": "TestApp-1.0.0-x64.nsis.7z",
     },
     {
+      "arch": "arm64",
+      "file": "TestApp-1.0.0-arm64.nsis.7z",
+    },
+    {
       "file": "latest.yml",
       "fileContent": {
         "files": [
@@ -905,6 +1538,13 @@ exports[`web installer 1`] = `
           },
         ],
         "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-arm64.nsis.7z",
+            "path": "TestApp-1.0.0-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
           "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.0.0-x64.nsis.7z",
@@ -923,15 +1563,21 @@ exports[`web installer 1`] = `
 }
 `;
 
-exports[`web installer 2`] = `
+exports[`winCodeSign: 0.0.0 > web installer 2`] = `
 {
   "win": [
     {
-      "arch": "x64",
       "file": "Test App ßW Web Setup 1.0.1.exe",
       "safeArtifactName": "TestApp-WebSetup-1.0.1.exe",
       "updateInfo": {
         "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.1-arm64.nsis.7z",
+            "path": "TestApp-1.0.1-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
           "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.0.1-x64.nsis.7z",
@@ -947,6 +1593,10 @@ exports[`web installer 2`] = `
       "file": "TestApp-1.0.1-x64.nsis.7z",
     },
     {
+      "arch": "arm64",
+      "file": "TestApp-1.0.1-arm64.nsis.7z",
+    },
+    {
       "file": "latest.yml",
       "fileContent": {
         "files": [
@@ -956,6 +1606,13 @@ exports[`web installer 2`] = `
           },
         ],
         "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.1-arm64.nsis.7z",
+            "path": "TestApp-1.0.1-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
           "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.0.1-x64.nsis.7z",
@@ -974,7 +1631,7 @@ exports[`web installer 2`] = `
 }
 `;
 
-exports[`web installer 3`] = `
+exports[`winCodeSign: 0.0.0 > web installer 3`] = `
 {
   "files": [
     {
@@ -982,6 +1639,13 @@ exports[`web installer 3`] = `
     },
   ],
   "packages": {
+    "arm64": {
+      "blockMapSize": "@blockMapSize",
+      "file": "TestApp-1.0.1-arm64.nsis.7z",
+      "path": "TestApp-1.0.1-arm64.nsis.7z",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
     "x64": {
       "blockMapSize": "@blockMapSize",
       "file": "TestApp-1.0.1-x64.nsis.7z",
@@ -997,7 +1661,555 @@ exports[`web installer 3`] = `
 }
 `;
 
-exports[`web installer 4`] = `
+exports[`winCodeSign: 0.0.0 > web installer 4`] = `
+[
+  "Test App ßW Web Setup 1.0.1.exe",
+  "package-1.0.1.7z",
+]
+`;
+
+exports[`winCodeSign: 1.0.0 > nsis 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.0.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.0.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 1.0.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.0.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW Setup 1.0.0.exe",
+          },
+        ],
+        "path": "Test App ßW Setup 1.0.0.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.0.0 > nsis 2`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.0.1.exe",
+      "safeArtifactName": "TestApp-Setup-1.0.1.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 1.0.1.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.0.1.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW Setup 1.0.1.exe",
+          },
+        ],
+        "path": "Test App ßW Setup 1.0.1.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.0.0 > nsis 3`] = `
+{
+  "files": [
+    {
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  ],
+  "path": "Test App ßW Setup 1.0.1.exe",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
+
+exports[`winCodeSign: 1.0.0 > nsis 4`] = `
+[
+  "Test App ßW Setup 1.0.1.exe",
+]
+`;
+
+exports[`winCodeSign: 1.0.0 > web installer 1`] = `
+{
+  "win": [
+    {
+      "file": "Test App ßW Web Setup 1.0.0.exe",
+      "safeArtifactName": "TestApp-WebSetup-1.0.0.exe",
+      "updateInfo": {
+        "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-arm64.nsis.7z",
+            "path": "TestApp-1.0.0-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+          "x64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-x64.nsis.7z",
+            "path": "TestApp-1.0.0-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp-1.0.0-x64.nsis.7z",
+    },
+    {
+      "arch": "arm64",
+      "file": "TestApp-1.0.0-arm64.nsis.7z",
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "url": "Test App ßW Web Setup 1.0.0.exe",
+          },
+        ],
+        "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-arm64.nsis.7z",
+            "path": "TestApp-1.0.0-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+          "x64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-x64.nsis.7z",
+            "path": "TestApp-1.0.0-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+        "path": "Test App ßW Web Setup 1.0.0.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.0.0 > web installer 2`] = `
+{
+  "win": [
+    {
+      "file": "Test App ßW Web Setup 1.0.1.exe",
+      "safeArtifactName": "TestApp-WebSetup-1.0.1.exe",
+      "updateInfo": {
+        "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.1-arm64.nsis.7z",
+            "path": "TestApp-1.0.1-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+          "x64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.1-x64.nsis.7z",
+            "path": "TestApp-1.0.1-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp-1.0.1-x64.nsis.7z",
+    },
+    {
+      "arch": "arm64",
+      "file": "TestApp-1.0.1-arm64.nsis.7z",
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "url": "Test App ßW Web Setup 1.0.1.exe",
+          },
+        ],
+        "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.1-arm64.nsis.7z",
+            "path": "TestApp-1.0.1-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+          "x64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.1-x64.nsis.7z",
+            "path": "TestApp-1.0.1-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+        "path": "Test App ßW Web Setup 1.0.1.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.0.0 > web installer 3`] = `
+{
+  "files": [
+    {
+      "sha512": "@sha512",
+    },
+  ],
+  "packages": {
+    "arm64": {
+      "blockMapSize": "@blockMapSize",
+      "file": "TestApp-1.0.1-arm64.nsis.7z",
+      "path": "TestApp-1.0.1-arm64.nsis.7z",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+    "x64": {
+      "blockMapSize": "@blockMapSize",
+      "file": "TestApp-1.0.1-x64.nsis.7z",
+      "path": "TestApp-1.0.1-x64.nsis.7z",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  },
+  "path": "Test App ßW Web Setup 1.0.1.exe",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
+
+exports[`winCodeSign: 1.0.0 > web installer 4`] = `
+[
+  "Test App ßW Web Setup 1.0.1.exe",
+  "package-1.0.1.7z",
+]
+`;
+
+exports[`winCodeSign: 1.1.0 > nsis 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.0.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.0.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 1.0.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.0.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW Setup 1.0.0.exe",
+          },
+        ],
+        "path": "Test App ßW Setup 1.0.0.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > nsis 2`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.0.1.exe",
+      "safeArtifactName": "TestApp-Setup-1.0.1.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 1.0.1.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.0.1.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW Setup 1.0.1.exe",
+          },
+        ],
+        "path": "Test App ßW Setup 1.0.1.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > nsis 3`] = `
+{
+  "files": [
+    {
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  ],
+  "path": "Test App ßW Setup 1.0.1.exe",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > nsis 4`] = `
+[
+  "Test App ßW Setup 1.0.1.exe",
+]
+`;
+
+exports[`winCodeSign: 1.1.0 > web installer 1`] = `
+{
+  "win": [
+    {
+      "file": "Test App ßW Web Setup 1.0.0.exe",
+      "safeArtifactName": "TestApp-WebSetup-1.0.0.exe",
+      "updateInfo": {
+        "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-arm64.nsis.7z",
+            "path": "TestApp-1.0.0-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+          "x64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-x64.nsis.7z",
+            "path": "TestApp-1.0.0-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp-1.0.0-x64.nsis.7z",
+    },
+    {
+      "arch": "arm64",
+      "file": "TestApp-1.0.0-arm64.nsis.7z",
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "url": "Test App ßW Web Setup 1.0.0.exe",
+          },
+        ],
+        "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-arm64.nsis.7z",
+            "path": "TestApp-1.0.0-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+          "x64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-x64.nsis.7z",
+            "path": "TestApp-1.0.0-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+        "path": "Test App ßW Web Setup 1.0.0.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > web installer 2`] = `
+{
+  "win": [
+    {
+      "file": "Test App ßW Web Setup 1.0.1.exe",
+      "safeArtifactName": "TestApp-WebSetup-1.0.1.exe",
+      "updateInfo": {
+        "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.1-arm64.nsis.7z",
+            "path": "TestApp-1.0.1-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+          "x64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.1-x64.nsis.7z",
+            "path": "TestApp-1.0.1-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp-1.0.1-x64.nsis.7z",
+    },
+    {
+      "arch": "arm64",
+      "file": "TestApp-1.0.1-arm64.nsis.7z",
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "url": "Test App ßW Web Setup 1.0.1.exe",
+          },
+        ],
+        "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.1-arm64.nsis.7z",
+            "path": "TestApp-1.0.1-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+          "x64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.1-x64.nsis.7z",
+            "path": "TestApp-1.0.1-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+        "path": "Test App ßW Web Setup 1.0.1.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > web installer 3`] = `
+{
+  "files": [
+    {
+      "sha512": "@sha512",
+    },
+  ],
+  "packages": {
+    "arm64": {
+      "blockMapSize": "@blockMapSize",
+      "file": "TestApp-1.0.1-arm64.nsis.7z",
+      "path": "TestApp-1.0.1-arm64.nsis.7z",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+    "x64": {
+      "blockMapSize": "@blockMapSize",
+      "file": "TestApp-1.0.1-x64.nsis.7z",
+      "path": "TestApp-1.0.1-x64.nsis.7z",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  },
+  "path": "Test App ßW Web Setup 1.0.1.exe",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > web installer 4`] = `
 [
   "Test App ßW Web Setup 1.0.1.exe",
   "package-1.0.1.7z",

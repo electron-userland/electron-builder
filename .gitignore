@@ -32,3 +32,4 @@ coverage
 
 /.yalc/
 yalc.lock
+_vitest-smart-cache.json

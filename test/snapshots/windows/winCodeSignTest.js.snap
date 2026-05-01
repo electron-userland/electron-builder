@@ -1,7 +1,5 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`forceCodeSigning 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
-
 exports[`parseDn 1`] = `
 Map {
   "CN" => "7digital Limited",
@@ -11,7 +9,25 @@ Map {
 }
 `;
 
-exports[`win code sign using pwsh 1`] = `
+exports[`winCodeSign: 0.0.0 > forceCodeSigning 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
+
+exports[`winCodeSign: 0.0.0 > win code sign using pwsh 1`] = `
+{
+  "win": [],
+}
+`;
+
+exports[`winCodeSign: 1.0.0 > forceCodeSigning 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
+
+exports[`winCodeSign: 1.0.0 > win code sign using pwsh 1`] = `
+{
+  "win": [],
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > forceCodeSigning 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
+
+exports[`winCodeSign: 1.1.0 > win code sign using pwsh 1`] = `
 {
   "win": [],
 }

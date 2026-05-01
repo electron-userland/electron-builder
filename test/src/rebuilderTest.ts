@@ -27,47 +27,49 @@ const config: Configuration = {
   asarUnpack: ["**/better_sqlite3.node"],
 }
 
-test("yarn workspace", ({ expect }) =>
-  assertPack(
-    expect,
-    "test-app-yarn-workspace",
-    {
-      targets: linuxDirTarget,
-      projectDir: "packages/test-app",
-      config,
-    },
-    {
-      packageManager: PM.YARN,
-      storeDepsLockfileSnapshot: true,
-      packed: async context => {
-        await verifySmartUnpack(expect, context.getResources(Platform.LINUX))
-        expect(await exists(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", extraFile))).toBeTruthy()
+describe.ifNotWindows("Rebuilder Test", () => {
+  test("yarn workspace", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-yarn-workspace",
+      {
+        targets: linuxDirTarget,
+        projectDir: "packages/test-app",
+        config,
       },
-      projectDirCreated: async projectDir => {
-        await modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => packageConfig(data))
-      },
-    }
-  ))
+      {
+        packageManager: PM.YARN,
+        storeDepsLockfileSnapshot: true,
+        packed: async context => {
+          await verifySmartUnpack(expect, context.getResources(Platform.LINUX))
+          expect(await exists(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", extraFile))).toBeTruthy()
+        },
+        projectDirCreated: async projectDir => {
+          await modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => packageConfig(data))
+        },
+      }
+    ))
 
-// yarn berry workspace
-test("yarn berry workspace", ({ expect }) =>
-  assertPack(
-    expect,
-    "test-app-yarn-workspace",
-    {
-      targets: linuxDirTarget,
-      projectDir: "packages/test-app",
-      config,
-    },
-    {
-      packageManager: PM.YARN_BERRY,
-      storeDepsLockfileSnapshot: true,
-      packed: async context => {
-        await verifySmartUnpack(expect, context.getResources(Platform.LINUX))
-        expect(await exists(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", extraFile))).toBeTruthy()
+  // yarn berry workspace
+  test("yarn berry workspace", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-yarn-workspace",
+      {
+        targets: linuxDirTarget,
+        projectDir: "packages/test-app",
+        config,
       },
-      projectDirCreated: async projectDir => {
-        await modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => packageConfig(data))
-      },
-    }
-  ))
+      {
+        packageManager: PM.YARN_BERRY,
+        storeDepsLockfileSnapshot: true,
+        packed: async context => {
+          await verifySmartUnpack(expect, context.getResources(Platform.LINUX))
+          expect(await exists(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", extraFile))).toBeTruthy()
+        },
+        projectDirCreated: async projectDir => {
+          await modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => packageConfig(data))
+        },
+      }
+    ))
+})

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if type update-alternatives 2>/dev/null >&1; then
+if type update-alternatives >/dev/null 2>&1; then
     # Remove previous link if it doesn't use update-alternatives
     if [ -L '/usr/bin/${executable}' -a -e '/usr/bin/${executable}' -a "`readlink '/usr/bin/${executable}'`" != '/etc/alternatives/${executable}' ]; then
         rm -f '/usr/bin/${executable}'

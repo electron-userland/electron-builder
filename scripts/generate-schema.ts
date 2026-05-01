@@ -6,8 +6,8 @@ import * as TJS from "typescript-json-schema"
 const rootDir = path.resolve(__dirname, "../packages")
 
 const compilerOptions: TJS.CompilerOptions = {
-  target: TypeScript.ScriptTarget.ES2022,
-  module: TypeScript.ModuleKind.ES2022,
+  target: TypeScript.ScriptTarget.ES2022 as any,
+  module: TypeScript.ModuleKind.ES2022 as any,
   // outDir: "out",
   baseUrl: rootDir,
   esModuleInterop: false,
