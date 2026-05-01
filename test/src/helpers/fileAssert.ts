@@ -1,17 +1,13 @@
-import { createRequire } from "node:module"
 import { exists, statOrNull } from "builder-util"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { ExpectStatic } from "vitest"
-
-const require = createRequire(import.meta.url)
+import { PACKAGE_VERSION as appVersion } from "app-builder-lib"
 
 // http://joel-costigliola.github.io/assertj/
 export function assertThat(expect: ExpectStatic, actual: any): Assertions {
   return new Assertions(expect, actual)
 }
-
-const appVersion = require(path.join(import.meta.dirname, "../../../packages/app-builder-lib/package.json")).version
 
 class Assertions {
   constructor(
