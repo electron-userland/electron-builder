@@ -16,7 +16,7 @@ import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../he
 
 // Linux Tests MUST be run in docker containers for proper ephemeral testing environment (e.g. fresh install + update + relaunch)
 // Currently this test logic does not handle uninstalling packages (yet)
-describe.heavy.ifMac.ifEnv(process.env.CSC_KEY_PASSWORD)("mac", { sequential: true }, () => {
+describe.ifMac.heavy("mac", { sequential: true }, () => {
   // can test on x64 and also arm64 (via rosetta)
   test("x64", async context => {
     await runTest(context, "zip", "", Arch.x64)

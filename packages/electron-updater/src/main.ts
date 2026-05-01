@@ -63,7 +63,24 @@ function doLoadAutoUpdater(): AppUpdater {
   return updater
 }
 
-export const autoUpdater: AppUpdater = doLoadAutoUpdater()
+let _autoUpdater: AppUpdater | undefined
+
+export const autoUpdater: AppUpdater = new Proxy({} as AppUpdater, {
+  get(_target, prop) {
+    if (_autoUpdater === undefined) {
+      _autoUpdater = doLoadAutoUpdater()
+    }
+    const value = (_autoUpdater as any)[prop]
+    return typeof value === "function" ? value.bind(_autoUpdater) : value
+  },
+  set(_target, prop, value) {
+    if (_autoUpdater === undefined) {
+      _autoUpdater = doLoadAutoUpdater()
+    }
+    ;(_autoUpdater as any)[prop] = value
+    return true
+  },
+})
 
 /**
  * return null if verify signature succeed
