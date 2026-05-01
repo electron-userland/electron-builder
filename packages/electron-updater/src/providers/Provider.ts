@@ -6,7 +6,7 @@ import { ElectronHttpExecutor } from "../electronHttpExecutor.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
 import { newUrlFromBase } from "../util.js"
 // @ts-ignore
-import * as escapeRegExp from "lodash.escaperegexp"
+import escapeRegExp from "lodash.escaperegexp"
 
 export type ProviderPlatform = "darwin" | "linux" | "win32"
 

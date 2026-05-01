@@ -15,7 +15,7 @@ const require = createRequire(import.meta.url)
 
 test.ifLinux("cli", ({ expect }) => {
   // because these methods are internal
-  const { configureBuildCommand, normalizeOptions } = require("electron-builder/out/builder")
+  const { configureBuildCommand, normalizeOptions } = require("electron-builder")
   const yargs = createYargs()
   configureBuildCommand(yargs)
 

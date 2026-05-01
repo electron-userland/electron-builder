@@ -31,7 +31,7 @@ export const skippedTests = [
   "snapHeavyTest",
 ]
 export const skipPerOSTests: Record<SupportedPlatforms, string[]> = {
-  darwin: ["fpmTest", "macUpdaterTest", "blackboxUpdateTest"],
+  darwin: ["fpmTest", "macUpdaterTest"],
   linux: ["flatpakTest"],
   win32: [],
 }
