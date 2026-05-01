@@ -1,7 +1,6 @@
 import { CancellationToken, GitlabOptions, HttpError, newError, UpdateFileInfo, UpdateInfo, GitlabReleaseInfo, GitlabReleaseAsset } from "builder-util-runtime"
 import { URL } from "url"
-// @ts-ignore
-import * as escapeRegExp from "lodash.escaperegexp"
+import escapeRegExp from "lodash.escaperegexp"
 import { AppUpdater } from "../AppUpdater.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
 import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util.js"

@@ -38,7 +38,12 @@ function collectTests(dir: string, platform: TargetPlatform = "current", out: st
   }
 
   for (const name of fs.readdirSync(dir)) {
-    if ([".ts.map", ".js.map", ".d.ts", ".snap"].some(ext => name.endsWith(ext)) || ["node_modules", "out"].includes(name) || (!testOverride && isUnstableTest(name, platform))) {
+    if ([".ts.map", ".js.map", ".d.ts", ".snap"].some(ext => name.endsWith(ext)) || ["node_modules", "out"].includes(name)) {
+      continue
+    }
+
+    if (isUnstableTest(name, platform)) {
+      console.warn(`Skipping unstable test: ${name}`)
       continue
     }
 
