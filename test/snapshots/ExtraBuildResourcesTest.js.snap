@@ -41,6 +41,12 @@ exports[`do not exclude build entirely (respect files) 1`] = `
 }
 `;
 
+exports[`electronDist as callback function for path to local electron zipped artifact  1`] = `
+{
+  "linux": [],
+}
+`;
+
 exports[`electronDist as callback function for path to local folder with electron builds zipped  1`] = `
 {
   "linux": [],
