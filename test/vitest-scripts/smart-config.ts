@@ -1,3 +1,4 @@
+import isCI from "is-ci"
 import * as path from "path"
 
 const __dirname = import.meta.dirname
@@ -31,7 +32,8 @@ export const skippedTests = [
   "snapHeavyTest",
 ]
 export const skipPerOSTests: Record<SupportedPlatforms, string[]> = {
-  darwin: ["fpmTest", "macUpdaterTest"],
+  // requires valid signing signature on CI, which we don't have yet. (Can only run locally)
+  darwin: ["fpmTest", "macUpdaterTest", isCI ? "blackboxUpdateTest" : null].filter(Boolean) as string[],
   linux: ["flatpakTest"],
   win32: [],
 }

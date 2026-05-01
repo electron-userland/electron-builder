@@ -203,6 +203,16 @@ async function doBuild(
             name: "testapp",
             version,
           },
+          electronFuses: {
+            runAsNode: false,
+            enableCookieEncryption: true,
+            enableNodeOptionsEnvironmentVariable: false,
+            enableNodeCliInspectArguments: false,
+            enableEmbeddedAsarIntegrityValidation: true,
+            onlyLoadAppFromAsar: true,
+            loadBrowserProcessSpecificV8Snapshot: false,
+            grantFileProtocolExtraPrivileges: false,
+          },
           electronUpdaterCompatibility: "1.1", // anything above 1.0.0 works. This is to allow testing via `link:` protocol with the current workspace electron-updater package version
           ...extraConfig,
           compression: "store",
