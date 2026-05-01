@@ -70,7 +70,7 @@ test("cli", ({ expect }) => {
   const yargs = createYargs()
 =======
   // because these methods are internal
-  const { configureBuildCommand, normalizeOptions } = require("electron-builder/out/builder.js")
+  const { configureBuildCommand, normalizeOptions } = require("electron-builder")
   const yargs = require("yargs")
 >>>>>>> fb7cff668 (esm complete on tests as well?)
     .strict()
