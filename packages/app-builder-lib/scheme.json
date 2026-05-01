@@ -4071,6 +4071,11 @@
           "description": "*assisted installer only.* Allow requesting for elevation. If false, user will have to restart installer with elevated permissions.",
           "type": "boolean"
         },
+        "allowToAddShortcut": {
+          "default": false,
+          "description": "*assisted installer only.* Whether to allow the user to choose to add desktop/start menu shortcuts during installation.",
+          "type": "boolean"
+        },
         "allowToChangeInstallationDirectory": {
           "default": false,
           "description": "*assisted installer only.* Whether to allow user to change installation directory.",
