@@ -349,11 +349,16 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    */
   async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
     const execName = path.basename(command, path.extname(command))
-    const isWindowsScriptFile = process.platform === "win32" && path.extname(command).toLowerCase() === ".cmd"
+    const ext = path.extname(command).toLowerCase()
+    // Wrap .cmd files in a .bat file for correct cmd.exe execution.
+    // Also wrap any Windows executable path that contains spaces (e.g. extensionless shims
+    // from tools like Volta installed at "C:\Program Files\Volta\") to ensure the path is
+    // quoted correctly when passed to `spawn(..., { shell: true })`.
+    const isWindowsScriptFile = process.platform === "win32" && (ext === ".cmd" || (command.includes(" ") && ext !== ".exe"))
     if (isWindowsScriptFile) {
-      // If the command is a Windows script file (.cmd), we need to wrap it in a .bat file to ensure it runs correctly with cmd.exe
-      // This is necessary because .cmd files are not directly executable in the same way as .bat files.
-      // We create a temporary .bat file that calls the .cmd file with the provided arguments. The .bat file will be executed by cmd.exe.
+      // We need to wrap it in a .bat file to ensure it runs correctly with cmd.exe
+      // This is necessary because some files (like .cmd) are not directly executable in the same way as .bat files.
+      // We create a temporary .bat file that calls the script-like file with the provided arguments. The .bat file will be executed by cmd.exe.
       // Note: This is a workaround for Windows command execution quirks when using `shell: true`
       const tempBatFile = await this.tempDirManager.getTempFile({
         prefix: execName,
@@ -371,7 +376,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       const child = childProcess.spawn(command, args, {
         cwd,
         env: { COREPACK_ENABLE_STRICT: "0", ...process.env }, // allow `process.env` overrides
-        shell: true, // `true`` is now required: https://github.com/electron-userland/electron-builder/issues/9488
+        shell: true, // `true`` is required: https://github.com/electron-userland/electron-builder/issues/9488
       })
 
       let stderr = ""
