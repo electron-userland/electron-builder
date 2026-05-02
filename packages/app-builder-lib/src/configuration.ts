@@ -250,6 +250,12 @@ export interface Configuration extends CommonConfiguration, PlatformSpecificBuil
    * @default false
    */
   readonly disableSanityCheckAsar?: boolean
+
+  /**
+   * Whether to disable asar integrity computation. Useful for custom electron forks with encrypted asar support that are incompatible with the default integrity computation.
+   * @default false
+   */
+  readonly disableAsarIntegrity?: boolean
 }
 
 export type Hook<T, V> = (contextOrPath: T) => Promise<V> | V

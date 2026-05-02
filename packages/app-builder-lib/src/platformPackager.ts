@@ -317,7 +317,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       const resourcesRelativePath = this.platform === Platform.MAC ? "Resources" : isElectronBased(framework) ? "resources" : ""
 
       let asarIntegrity: AsarIntegrity | null = null
-      if (!(asarOptions == null || options?.disableAsarIntegrity)) {
+      if (!(asarOptions == null || options?.disableAsarIntegrity || this.config.disableAsarIntegrity)) {
         asarIntegrity = await computeData({ resourcesPath, resourcesRelativePath, resourcesDestinationPath: this.getResourcesDir(appOutDir), extraResourceMatchers })
       }
 
