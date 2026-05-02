@@ -38,6 +38,7 @@ RUN echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https:/
   && apt-get update \
   && apt-get install -y libssl1.1 \
   && rm -f "$SOURCES_LIST" "$PREFERENCES_FILE" \
+  && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /project
