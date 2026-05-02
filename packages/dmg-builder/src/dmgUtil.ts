@@ -6,7 +6,7 @@ import { stat } from "fs/promises"
 
 =======
 import { DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
-import { downloadArtifact } from "app-builder-lib"
+import { downloadArtifact } from "app-builder-lib/internal"
 import { exec, executeFinally, exists, isEmptyOrSpaces, TmpDir } from "builder-util"
 import * as fsExtra from "fs-extra"
 >>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)

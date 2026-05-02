@@ -14,7 +14,7 @@ import { HttpPublisher } from "./httpPublisher.js.js"
 =======
 import { configureRequestOptions, HttpExecutor, parseJson } from "builder-util-runtime"
 import { KeygenOptions } from "builder-util-runtime"
-import { getCompleteExtname } from "builder-util"
+import { getCompleteExtname } from "builder-util/internal"
 import { ClientRequest, RequestOptions } from "http"
 import { PublishContext } from "./index.js"
 import { HttpPublisher } from "./httpPublisher.js"
