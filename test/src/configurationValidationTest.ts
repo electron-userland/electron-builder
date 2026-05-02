@@ -1,7 +1,7 @@
-import { validateConfiguration } from "app-builder-lib"
+import { validateConfiguration } from "app-builder-lib/internal"
 import { Arch, DebugLogger } from "builder-util"
-import { Configuration, Platform } from "electron-builder"
-import { CliOptions, configureBuildCommand, createYargs, normalizeOptions } from "electron-builder"
+import { CliOptions, Configuration, Platform } from "electron-builder"
+import { configureBuildCommand, createYargs, normalizeOptions } from "electron-builder/internal"
 import { app, appThrows, linuxDirTarget } from "./helpers/packTester.js"
 
 test.ifNotWindows("validation", ({ expect }) =>

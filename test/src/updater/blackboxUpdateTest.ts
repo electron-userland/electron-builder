@@ -1,5 +1,5 @@
 import { ToolsetConfig } from "app-builder-lib"
-import { PM } from "app-builder-lib"
+import { PM } from "app-builder-lib/internal"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
 import { archFromString, doSpawn, getArchSuffix, isEmptyOrSpaces, log, spawn, TmpDir } from "builder-util"
 import { execFileSync, execSync } from "child_process"

@@ -1,4 +1,4 @@
-import { readAsarJson } from "app-builder-lib"
+import { readAsarJson } from "app-builder-lib/internal"
 import { walk } from "builder-util"
 import { Arch, Platform } from "electron-builder"
 import fsExtra from "fs-extra"

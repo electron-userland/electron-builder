@@ -1,4 +1,4 @@
-import { getRepositoryInfo } from "app-builder-lib"
+import { getRepositoryInfo } from "app-builder-lib/internal"
 import { ExpectStatic } from "vitest"
 
 function checkInfo(expect: ExpectStatic, info: any) {

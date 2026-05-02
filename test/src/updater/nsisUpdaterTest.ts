@@ -8,8 +8,7 @@ import { assertThat } from "../helpers/fileAssert.js"
 import { removeUnstableProperties } from "../helpers/packTester.js"
 import { createNsisUpdater, trackEvents, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 import { ExpectStatic } from "vitest"
-import { GitLabProvider } from "electron-updater"
-import { GitHubProvider } from "electron-updater"
+import { GitLabProvider, GitHubProvider } from "electron-updater/internal"
 
 const config = { retry: 3 }
 

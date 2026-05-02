@@ -1,5 +1,5 @@
 import { Platform } from "app-builder-lib"
-import { PM } from "app-builder-lib"
+import { PM } from "app-builder-lib/internal"
 import fsExtra from "fs-extra"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert.js"

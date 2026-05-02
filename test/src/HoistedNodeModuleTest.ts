@@ -1,4 +1,4 @@
-import { PM } from "app-builder-lib"
+import { PM } from "app-builder-lib/internal"
 import { spawn } from "builder-util"
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as path from "path"

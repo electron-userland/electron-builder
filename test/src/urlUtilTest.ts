@@ -1,4 +1,4 @@
-import { utils } from "electron-updater"
+import { utils } from "electron-updater/internal"
 import { URL } from "url"
 
 test("newUrlFromBase", ({ expect }) => {

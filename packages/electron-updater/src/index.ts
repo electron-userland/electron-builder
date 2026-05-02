@@ -7,9 +7,8 @@ const require = createRequire(import.meta.url)
 
 import { UpdateInfo } from "builder-util-runtime"
 
+export { AppUpdater }
 export { BaseUpdater } from "./BaseUpdater.js"
-export { AppUpdater, NoOpLogger } from "./AppUpdater.js"
-
 export { AppImageUpdater } from "./AppImageUpdater.js"
 export { DebUpdater } from "./DebUpdater.js"
 export { PacmanUpdater } from "./PacmanUpdater.js"

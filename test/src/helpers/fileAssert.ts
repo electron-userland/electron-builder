@@ -2,7 +2,7 @@ import { exists, statOrNull } from "builder-util"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { ExpectStatic } from "vitest"
-import { PACKAGE_VERSION as appVersion } from "app-builder-lib"
+import { PACKAGE_VERSION as appVersion } from "app-builder-lib/internal"
 
 // http://joel-costigliola.github.io/assertj/
 export function assertThat(expect: ExpectStatic, actual: any): Assertions {

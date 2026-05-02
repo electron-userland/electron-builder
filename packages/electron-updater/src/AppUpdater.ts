@@ -36,7 +36,7 @@ import { gunzipSync, gzipSync } from "zlib"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader.js"
 import { DOWNLOAD_PROGRESS, Logger, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./types.js"
-import { VerifyUpdateSupport } from "./main.js"
+import { VerifyUpdateSupport } from "./index.js"
 
 const require = createRequire(import.meta.url)
 

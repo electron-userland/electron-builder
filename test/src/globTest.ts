@@ -1,6 +1,6 @@
 import { Platform } from "app-builder-lib"
-import { readAsar } from "app-builder-lib"
-import { PM } from "app-builder-lib"
+import { readAsar } from "app-builder-lib/internal"
+import { PM } from "app-builder-lib/internal"
 import fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"

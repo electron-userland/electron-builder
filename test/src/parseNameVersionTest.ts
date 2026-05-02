@@ -1,4 +1,4 @@
-import { PnpmNodeModulesCollector } from "app-builder-lib"
+import { PnpmNodeModulesCollector } from "app-builder-lib/internal"
 import { TmpDir } from "temp-file"
 import { describe, expect, test } from "vitest"
 
