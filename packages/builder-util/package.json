@@ -3,7 +3,8 @@
   "version": "26.8.1",
   "type": "module",
   "exports": {
-    ".": "./out/util.js"
+    ".": "./out/util.js",
+    "./internal": "./out/indexInternal.js"
   },
   "author": "Vladimir Krivosheev",
   "license": "MIT",

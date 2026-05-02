@@ -12,7 +12,6 @@ export { SnapStorePublisher } from "./snapStorePublisher.js"
 
 export type PublishPolicy = "onTag" | "onTagOrDraft" | "always" | "never"
 
-export { MultiProgress }
 export { ProgressCallback } from "./progress.js"
 
 export interface PublishOptions {

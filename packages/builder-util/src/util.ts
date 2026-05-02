@@ -15,7 +15,6 @@ if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
 }
 
-export { getCompleteExtname, sanitizeFileName } from "./filename.js"
 export { safeStringifyJson, retry } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
 export * from "./arch.js"

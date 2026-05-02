@@ -1,5 +1,5 @@
 import { DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
-import { downloadArtifact } from "app-builder-lib"
+import { downloadArtifact } from "app-builder-lib/internal"
 import { exec, executeFinally, exists, isEmptyOrSpaces, TmpDir } from "builder-util"
 import fsExtra from "fs-extra"
 import * as path from "path"

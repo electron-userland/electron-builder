@@ -1,5 +1,5 @@
 import { PlatformPackager } from "app-builder-lib"
-import { getLicenseAssets } from "app-builder-lib"
+import { getLicenseAssets } from "app-builder-lib/internal"
 import { log } from "builder-util"
 import fsExtra from "fs-extra"
 import * as iconv from "iconv-lite"

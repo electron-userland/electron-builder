@@ -1,0 +1,5 @@
+export { ElectronAppAdapter } from "./ElectronAppAdapter.js"
+export { TestOnlyUpdaterOptions } from "./AppUpdater.js"
+export { GitHubProvider } from "./providers/GitHubProvider.js"
+export { GitLabProvider } from "./providers/GitLabProvider.js"
+export * as utils from "./util.js"

@@ -4,7 +4,8 @@
   "version": "26.8.2",
   "type": "module",
   "exports": {
-    ".": "./out/index.js"
+    ".": "./out/index.js",
+    "./internal": "./out/indexInternal.js"
   },
   "files": [
     "out",

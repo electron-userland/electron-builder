@@ -53,9 +53,6 @@ export { CommonNsisOptions, CustomNsisBinary, NsisOptions, NsisWebOptions, Porta
 
 export { CancellationToken, ProgressInfo } from "builder-util-runtime"
 export { PublishOptions, UploadTask } from "electron-publish"
-export { AsarFilesystem, readAsar, readAsarJson } from "./asar/asar.js"
-export { downloadArtifact, getBinFromUrl } from "./binDownload.js"
-export { Identity, createKeychain, findIdentity, isSignAllowed, removeKeychain } from "./codeSign/macCodeSign.js"
 export { WindowsSignOptions } from "./codeSign/windowsCodeSign.js"
 export {
   CertificateFromStoreInfo,
@@ -64,45 +61,13 @@ export {
   FileCodeSigningInfo,
   WindowsSignTaskConfiguration
 } from "./codeSign/windowsSignToolManager.js"
-export { Publish } from "./core.js"
-export { getElectronVersion } from "./electron/electronVersion.js"
 export { ForgeOptions, buildForge } from "./forge-maker.js"
 export { Framework, PrepareApplicationStageDirectoryOptions } from "./Framework.js"
 export { LinuxPackager } from "./linuxPackager.js"
 export { CustomMacSign, CustomMacSignOptions, MacPackager } from "./macPackager.js"
-export { HoisterDependencyKind, HoisterResult, HoisterTree, hoist } from "./node-module-collector/hoist.js"
-export {
-  determinePackageManagerEnv,
-  getCollectorByPackageManager,
-  PnpmNodeModulesCollector,
-  YarnNodeModulesCollector,
-  YarnBerryNodeModulesCollector,
-  BunNodeModulesCollector,
-  TraversalNodeModulesCollector,
-} from "./node-module-collector/index.js"
-export { PM } from "./node-module-collector/packageManager.js"
-export { DoPackOptions, PlatformPackager, computeSafeArtifactNameIfNeeded } from "./platformPackager.js"
-export { PublishManager, createPublisher } from "./publish/PublishManager.js"
-export { createBlockmap } from "./targets/differentialUpdateInfoBuilder.js"
-export { getWindowsKitsBundle } from "./toolsets/windows.js"
-export { computeDefaultAppDirectory, doMergeConfigs, getConfig, validateConfiguration } from "./util/config/config.js"
-export { loadEnv } from "./util/config/load.js"
-export { getLicenseAssets, getLicenseFiles } from "./util/license.js"
-export { expandMacro } from "./util/macroExpander.js"
-export { createLazyProductionDeps } from "./util/packageDependencies.js"
-export { PlistObject, parsePlistFile } from "./util/plist.js"
-export { getRepositoryInfo } from "./util/repositoryInfo.js"
-export { installOrRebuild, nodeGypRebuild } from "./util/yarn.js"
-export { PACKAGE_VERSION } from "./version.js"
-export { execWine } from "./wine.js"
+export { PlatformPackager } from "./platformPackager.js"
+export { PublishManager } from "./publish/PublishManager.js"
 export { WinPackager } from "./winPackager.js"
-
-export { AsarIntegrity } from "./asar/integrity.js"
-export { computeArchToTargetNamesMap } from "./targets/targetFactory.js"
-export { getLinuxToolsPath } from "./toolsets/linux.js"
-
-export { detectPackageManager } from "./node-module-collector/packageManager.js"
-export { installDependencies } from "./util/yarn.js"
 
 const expectedOptions = new Set(["publish", "targets", "mac", "win", "linux", "projectDir", "platformPackagerFactory", "config", "effectiveOptionComputed", "prepackaged"])
 

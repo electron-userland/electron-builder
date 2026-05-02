@@ -29,7 +29,7 @@ import {
   SpacesPublisher,
   UploadTask,
 } from "electron-publish"
-import { MultiProgress } from "electron-publish"
+import { MultiProgress } from "electron-publish/internal"
 import { readFile, writeFile } from "fs/promises"
 import { isCI } from "ci-info"
 import * as path from "path"

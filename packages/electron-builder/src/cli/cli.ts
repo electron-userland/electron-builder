@@ -1,11 +1,9 @@
 #! /usr/bin/env node
 
 import { createRequire } from "node:module"
-import { getElectronVersion } from "app-builder-lib"
+import { getElectronVersion, loadEnv, nodeGypRebuild } from "app-builder-lib/internal"
 
 const require = createRequire(import.meta.url)
-import { loadEnv } from "app-builder-lib"
-import { nodeGypRebuild } from "app-builder-lib"
 import { ExecError, InvalidConfigurationError, log } from "builder-util"
 import chalk from "chalk"
 import fsExtra from "fs-extra"

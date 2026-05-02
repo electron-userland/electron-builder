@@ -2,9 +2,7 @@
 
 import { fileURLToPath } from "node:url"
 import { AppInfo, CancellationToken, Packager, PackagerOptions, PublishManager, PublishOptions, UploadTask, checkBuildRequestOptions } from "app-builder-lib"
-import { Publish } from "app-builder-lib"
-import { computeSafeArtifactNameIfNeeded } from "app-builder-lib"
-import { getConfig } from "app-builder-lib"
+import { Publish, computeSafeArtifactNameIfNeeded, getConfig } from "app-builder-lib/internal"
 import { InvalidConfigurationError, archFromString, log, printErrorAndExit } from "builder-util"
 import { PublishPolicy } from "electron-publish"
 import chalk from "chalk"
