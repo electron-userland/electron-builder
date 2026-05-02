@@ -77,7 +77,8 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     try {
       const version = JSON.parse((await this.httpRequest(url, this.configureHeaders("application/vnd.github.v3+json"), cancellationToken))!)
       if (allowPrerelease) {
-        return (version as Array<{ prerelease: boolean }>).find(it => it.prerelease) || version[0]
+        const candidates = (version as Array<{ prerelease: boolean; draft: boolean }>).filter(it => !it.draft)
+        return candidates.find(it => it.prerelease) || candidates[0]
       } else {
         return version
       }
@@ -109,6 +110,8 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
 interface ReleaseInfo {
   name: string
   html_url: string
+  draft: boolean
+  prerelease: boolean
   assets: Array<Asset>
 }
 
