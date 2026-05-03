@@ -58,9 +58,9 @@ export type DoPackOptions<DC extends PlatformSpecificBuildOptions> = {
   platformSpecificBuildOptions: DC
   targets: Array<Target>
   options?: {
-    sign?: boolean
-    disableAsarIntegrity?: boolean
-    disableFuses?: boolean
+    sign: boolean
+    disableAsarIntegrity: boolean
+    disableFuses: boolean
   }
 }
 
@@ -227,7 +227,15 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     // Due to node-gyp rewriting GYP_MSVS_VERSION when reused across the same session, we must reset the env var: https://github.com/electron-userland/electron-builder/issues/7256
     delete process.env.GYP_MSVS_VERSION
 
-    const { outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets, options } = packOptions
+    const {
+      outDir,
+      appOutDir,
+      platformName,
+      arch,
+      platformSpecificBuildOptions,
+      targets,
+      options: { sign = true, disableAsarIntegrity = false, disableFuses = false } = {},
+    } = packOptions
 
     await this.info.emitBeforePack({
       appOutDir,
@@ -316,8 +324,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (framework.beforeCopyExtraFiles != null) {
       const resourcesRelativePath = this.platform === Platform.MAC ? "Resources" : isElectronBased(framework) ? "resources" : ""
 
+      // Only compute if:
+      // 1. The user has explicitly enabled the fuse (non-null fuse config with true)
+      // OR
+      // 2. No fuse config at all (preserve current default behavior)
+      const fuseExplicitlyDisabled = this.config.electronFuses?.enableEmbeddedAsarIntegrityValidation === false
       let asarIntegrity: AsarIntegrity | null = null
-      if (!(asarOptions == null || options?.disableAsarIntegrity)) {
+      if (!(asarOptions == null || disableAsarIntegrity || fuseExplicitlyDisabled)) {
         asarIntegrity = await computeData({ resourcesPath, resourcesRelativePath, resourcesDestinationPath: this.getResourcesDir(appOutDir), extraResourceMatchers })
       }
 
@@ -350,15 +363,15 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const isAsar = asarOptions != null
     await this.sanityCheckPackage(appOutDir, isAsar, framework, !!this.config.disableSanityCheckAsar)
 
-    if (!options?.disableFuses) {
+    // the fuses MUST be flipped right before signing
+    if (!disableFuses) {
       await this.doAddElectronFuses(packContext)
     }
-    if (options?.sign ?? true) {
+    if (sign) {
       await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
     }
   }
 
-  // the fuses MUST be flipped right before signing
   protected async doAddElectronFuses(packContext: AfterPackContext) {
     if (this.config.electronFuses == null) {
       return
