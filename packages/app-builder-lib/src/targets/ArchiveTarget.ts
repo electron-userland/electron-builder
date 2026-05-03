@@ -2,9 +2,11 @@ import { Arch, defaultArchFromString } from "builder-util"
 import * as path from "path"
 import { Platform, Target, TargetSpecificOptions } from "../core"
 import { copyFiles, getFileMatchers } from "../fileMatcher"
+import { LinuxPackager } from "../linuxPackager"
 import { PlatformPackager } from "../platformPackager"
 import { archive, tar } from "./archive"
 import { appendBlockmap, createBlockmap } from "./differentialUpdateInfoBuilder"
+import { LinuxTargetHelper } from "./LinuxTargetHelper"
 
 export class ArchiveTarget extends Target {
   readonly options: TargetSpecificOptions = (this.packager.config as any)[this.name]
@@ -13,7 +15,8 @@ export class ArchiveTarget extends Target {
     name: string,
     readonly outDir: string,
     private readonly packager: PlatformPackager<any>,
-    private readonly isWriteUpdateInfo = false
+    private readonly isWriteUpdateInfo = false,
+    private readonly linuxHelper?: LinuxTargetHelper
   ) {
     super(name)
   }
@@ -77,6 +80,18 @@ export class ArchiveTarget extends Target {
             updateInfo = await appendBlockmap(artifactPath)
           }
         }
+      }
+
+      if (packager.platform === Platform.LINUX && this.linuxHelper != null) {
+        const linuxPackager = packager as LinuxPackager
+        const desktopEntryPath = path.join(this.outDir, `${linuxPackager.executableName}.desktop`)
+        await this.linuxHelper.writeDesktopEntry(linuxPackager.platformSpecificBuildOptions as any, undefined, desktopEntryPath)
+        await packager.info.emitArtifactBuildCompleted({
+          file: desktopEntryPath,
+          arch,
+          target: this,
+          packager,
+        })
       }
 
       await packager.info.emitArtifactBuildCompleted({

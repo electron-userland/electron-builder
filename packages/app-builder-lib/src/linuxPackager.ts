@@ -62,7 +62,7 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
 
       mapper(name, outDir => {
         if (targetClass === null) {
-          return createCommonTarget(name, outDir, this)
+          return createCommonTarget(name, outDir, this, getHelper())
         }
 
         return new targetClass(name, this, getHelper(), outDir)

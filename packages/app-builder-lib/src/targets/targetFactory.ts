@@ -2,6 +2,7 @@ import { addValue, Arch, archFromString, ArchType, asArray } from "builder-util"
 import { DEFAULT_TARGET, DIR_TARGET, Platform, Target, TargetConfiguration } from "../core"
 import { PlatformPackager } from "../platformPackager"
 import { ArchiveTarget } from "./ArchiveTarget"
+import { LinuxTargetHelper } from "./LinuxTargetHelper"
 
 const archiveTargets = new Set(["zip", "7z", "tar.xz", "tar.lz", "tar.gz", "tar.bz2"])
 
@@ -77,9 +78,9 @@ function normalizeTargets(targets: Array<string>, defaultTarget: Array<string>):
   return list
 }
 
-export function createCommonTarget(target: string, outDir: string, packager: PlatformPackager<any>): Target {
+export function createCommonTarget(target: string, outDir: string, packager: PlatformPackager<any>, helper?: LinuxTargetHelper): Target {
   if (archiveTargets.has(target)) {
-    return new ArchiveTarget(target, outDir, packager)
+    return new ArchiveTarget(target, outDir, packager, false, helper)
   } else if (target === DIR_TARGET) {
     return new NoOpTarget(DIR_TARGET)
   } else {
