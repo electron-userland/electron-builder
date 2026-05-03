@@ -1,8 +1,12 @@
 {
   "name": "app-builder-lib",
   "description": "electron-builder lib",
-  "version": "26.9.0",
-  "main": "out/index.js",
+  "version": "26.8.2",
+  "type": "module",
+  "exports": {
+    ".": "./out/index.js",
+    "./internal": "./out/indexInternal.js"
+  },
   "files": [
     "out",
     "templates",
@@ -56,7 +60,6 @@
     "@electron/rebuild": "^4.0.3",
     "@electron/universal": "2.0.3",
     "@malept/flatpak-bundler": "^0.4.0",
-    "@types/fs-extra": "9.0.13",
     "async-exit-hook": "^2.0.1",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
@@ -67,7 +70,7 @@
     "dotenv-expand": "^11.0.6",
     "ejs": "^3.1.8",
     "electron-publish": "workspace:*",
-    "fs-extra": "^10.1.0",
+    "fs-extra": "^11.3.4",
     "hosted-git-info": "^4.1.0",
     "isbinaryfile": "^5.0.0",
     "jiti": "^2.4.2",
@@ -106,6 +109,7 @@
     "@babel/preset-env": "7.24.8",
     "@babel/preset-react": "7.24.7",
     "@types/debug": "4.1.7",
+    "@types/fs-extra": "9.0.13",
     "@types/ejs": "3.1.0",
     "@types/hosted-git-info": "3.0.2",
     "@types/js-yaml": "4.0.3",
@@ -123,5 +127,5 @@
     "electron-builder-squirrel-windows": "workspace:*"
   },
   "//": "electron-builder-squirrel-windows and dmg-builder added as dev dep for tests (as otherwise `require` doesn't work using Yarn 2)",
-  "typings": "./out/index.d.ts"
+  "types": "./out/index.d.ts"
 }

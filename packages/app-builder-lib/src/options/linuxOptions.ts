@@ -1,4 +1,5 @@
-import { PlatformSpecificBuildOptions, TargetConfigType, TargetSpecificOptions } from "../index"
+import { TargetConfigType, TargetSpecificOptions } from "../core.js"
+import { PlatformSpecificBuildOptions } from "./PlatformSpecificBuildOptions.js"
 
 /**
  * Example Spec: https://specifications.freedesktop.org/desktop-entry-spec/latest/example.html

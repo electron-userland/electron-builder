@@ -1,13 +1,13 @@
 import { executeAppBuilder } from "builder-util"
-import { emptyDir } from "fs-extra"
+import fsExtra from "fs-extra"
 import { chmod, mkdir, rename, writeFile } from "fs/promises"
 import * as path from "path"
-import { AfterPackContext } from "../configuration"
-import { Platform } from "../core"
-import { Framework, PrepareApplicationStageDirectoryOptions } from "../Framework"
-import { LinuxPackager } from "../linuxPackager"
-import { MacPackager } from "../macPackager"
-import { savePlistFile } from "../util/plist"
+import { AfterPackContext } from "../configuration.js"
+import { Platform } from "../core.js"
+import { Framework, PrepareApplicationStageDirectoryOptions } from "../Framework.js"
+import { LinuxPackager } from "../linuxPackager.js"
+import { MacPackager } from "../macPackager.js"
+import { savePlistFile } from "../util/plist.js"
 
 export class LibUiFramework implements Framework {
   readonly name: string = "libui"
@@ -29,7 +29,7 @@ export class LibUiFramework implements Framework {
   ) {}
 
   async prepareApplicationStageDirectory(options: PrepareApplicationStageDirectoryOptions) {
-    await emptyDir(options.appOutDir)
+    await fsExtra.emptyDir(options.appOutDir)
 
     const packager = options.packager
     const platform = packager.platform

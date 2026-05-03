@@ -1,12 +1,12 @@
 import { GenericServerOptions } from "builder-util-runtime"
 import { Arch, build, Platform } from "electron-builder"
-import { outputFile } from "fs-extra"
+import fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { assertThat } from "../helpers/fileAssert"
-import { app, appThrows, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
-import { ELECTRON_VERSION } from "../helpers/testConfig"
-import { ToolsetConfig } from "app-builder-lib/src"
+import { assertThat } from "../helpers/fileAssert.js"
+import { app, appThrows, copyTestAsset, modifyPackageJson } from "../helpers/packTester.js"
+import { ELECTRON_VERSION } from "../helpers/testConfig.js"
+import { ToolsetConfig } from "app-builder-lib"
 
 const appImageTarget = Platform.LINUX.createTarget("appimage", Arch.x64)
 
@@ -107,7 +107,7 @@ describe.ifNotWindows("LinuxPackager", () => {
           },
           {
             projectDirCreated: projectDir => {
-              return outputFile(
+              return fsExtra.outputFile(
                 path.join(projectDir, "build", "license.html"),
                 `
         <html lang="en">

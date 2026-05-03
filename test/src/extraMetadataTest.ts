@@ -1,11 +1,14 @@
-import { readAsarJson } from "app-builder-lib/out/asar/asar"
+import { createRequire } from "node:module"
+import { readAsarJson } from "app-builder-lib/internal"
 import { Platform } from "electron-builder"
-import { coerceTypes } from "electron-builder/out/builder"
-import { readJson } from "fs-extra"
+import { coerceTypes } from "electron-builder/internal"
+import fsExtra from "fs-extra"
 import * as path from "path"
-import { assertThat } from "./helpers/fileAssert"
-import { app, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
+import { assertThat } from "./helpers/fileAssert.js"
+import { app, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
 import { ExpectStatic } from "vitest"
+
+const require = createRequire(import.meta.url)
 
 function createExtraMetadataTest(expect: ExpectStatic, asar: boolean) {
   return app(
@@ -44,7 +47,7 @@ function createExtraMetadataTest(expect: ExpectStatic, asar: boolean) {
         if (asar) {
           expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "package.json")).toMatchSnapshot()
         } else {
-          expect(await readJson(path.join(context.getResources(Platform.LINUX), "app", "package.json"))).toMatchSnapshot()
+          expect(await fsExtra.readJson(path.join(context.getResources(Platform.LINUX), "app", "package.json"))).toMatchSnapshot()
         }
       },
     }
@@ -56,7 +59,7 @@ test("extra metadata (no asar)", ({ expect }) => createExtraMetadataTest(expect,
 
 test("cli", ({ expect }) => {
   // because these methods are internal
-  const { configureBuildCommand, normalizeOptions } = require("electron-builder/out/builder")
+  const { configureBuildCommand, normalizeOptions } = require("electron-builder/internal")
   const yargs = require("yargs")
     .strict()
     .fail((message: string, error: Error | null) => {

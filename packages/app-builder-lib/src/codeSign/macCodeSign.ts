@@ -1,6 +1,4 @@
-import { signAsync } from "@electron/osx-sign"
-import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
-import { Identity as _Identity } from "@electron/osx-sign/dist/cjs/util-identities"
+import { signAsync, SignOptions } from "@electron/osx-sign"
 import { copyFile, exec, Fields, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequest, log, Logger, retry, TmpDir, unlinkIfExists } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { createHash, randomBytes } from "crypto"
@@ -9,8 +7,8 @@ import { Lazy } from "lazy-val"
 import { homedir, tmpdir } from "os"
 import * as path from "path"
 import { getTempName } from "temp-file"
-import { isAutoDiscoveryCodeSignIdentity } from "../util/flags"
-import { importCertificate } from "./codesign"
+import { isAutoDiscoveryCodeSignIdentity } from "../util/flags.js"
+import { importCertificate } from "./codesign.js"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 
@@ -107,7 +105,7 @@ const bundledCertKeychainAdded = new Lazy<void>(async () => {
   const keychainPath = path.join(cacheDir, "electron-builder-root-certs.keychain")
   const results = await Promise.all<any>([
     listUserKeychains(),
-    copyFile(path.join(__dirname, "..", "..", "certs", "root_certs.keychain"), tmpKeychainPath).then(() => rename(tmpKeychainPath, keychainPath)),
+    copyFile(path.join(import.meta.dirname, "..", "..", "certs", "root_certs.keychain"), tmpKeychainPath).then(() => rename(tmpKeychainPath, keychainPath)),
   ])
   const list = results[0]
   if (!list.includes(keychainPath)) {
@@ -307,18 +305,18 @@ async function _findIdentity(type: CertType, qualifier?: string | null, keychain
   return null
 }
 
-export declare class Identity {
-  readonly name: string
-  readonly hash?: string
-
-  constructor(name: string, hash?: string)
+export class Identity {
+  constructor(
+    readonly name: string,
+    readonly hash?: string
+  ) {}
 }
 
 function parseIdentity(line: string): Identity {
   const firstQuoteIndex = line.indexOf('"')
   const name = line.substring(firstQuoteIndex + 1, line.lastIndexOf('"'))
   const hash = line.substring(0, firstQuoteIndex - 1)
-  return new _Identity(name, hash)
+  return new Identity(name, hash)
 }
 
 export function findIdentity(certType: CertType, qualifier?: string | null, keychain?: string | null): Promise<Identity | null> {

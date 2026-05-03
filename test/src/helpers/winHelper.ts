@@ -1,13 +1,13 @@
-import { readAsarJson } from "app-builder-lib/out/asar/asar"
+import { readAsarJson } from "app-builder-lib/internal"
 import { walk } from "builder-util"
 import { Arch, Platform } from "electron-builder"
-import { outputFile } from "fs-extra"
+import fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
-import { assertThat } from "./fileAssert"
-import { PackedContext } from "./packTester"
-import { diff, WineManager } from "./wine"
+import { assertThat } from "./fileAssert.js"
+import { PackedContext } from "./packTester.js"
+import { diff, WineManager } from "./wine.js"
 import { ExpectStatic } from "vitest"
 
 export async function expectUpdateMetadata(expect: ExpectStatic, context: PackedContext, arch: Arch = Arch.ia32, requireCodeSign: boolean = false): Promise<void> {
@@ -91,7 +91,7 @@ export async function doTest(
 
   // run installer again to test uninstall
   const appDataFile = path.join(wine.userDir!, "Application Data", name, "doNotDeleteMe")
-  await outputFile(appDataFile, "app data must be not removed")
+  await fsExtra.outputFile(appDataFile, "app data must be not removed")
   fsBefore = await listFiles()
   await wine.exec(path.join(outDir, `${productFilename} Setup 1.1.0.exe`), "/S")
   fsAfter = await listFiles()

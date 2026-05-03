@@ -1,16 +1,19 @@
+import { createRequire } from "node:module"
 import { AllPublishOptions, newError, PackageFileInfo, CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME } from "builder-util-runtime"
 import * as path from "path"
-import { AppAdapter } from "./AppAdapter"
-import { DownloadUpdateOptions } from "./AppUpdater"
-import { BaseUpdater, InstallOptions } from "./BaseUpdater"
-import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader"
-import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
-import { DOWNLOAD_PROGRESS } from "./types"
-import { VerifyUpdateCodeSignature } from "./main"
-import { findFile, Provider } from "./providers/Provider"
-import { unlink } from "fs-extra"
-import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
+import { AppAdapter } from "./AppAdapter.js"
+import { DownloadUpdateOptions } from "./AppUpdater.js"
+import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
+import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
+import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader.js"
+import { DOWNLOAD_PROGRESS } from "./types.js"
+import { VerifyUpdateCodeSignature } from "./index.js"
+import { findFile, Provider } from "./providers/Provider.js"
+import fsExtra from "fs-extra"
+import { verifySignature } from "./windowsExecutableCodeSignatureVerifier.js"
 import { URL } from "url"
+
+const require = createRequire(import.meta.url)
 
 export class NsisUpdater extends BaseUpdater {
   /**
@@ -90,7 +93,7 @@ export class NsisUpdater extends BaseUpdater {
               })
             } catch (e: any) {
               try {
-                await unlink(packageFile)
+                await fsExtra.unlink(packageFile)
               } catch (_ignored) {
                 // ignore
               }

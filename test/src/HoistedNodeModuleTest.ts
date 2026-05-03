@@ -1,11 +1,11 @@
-import { PM } from "app-builder-lib/out/node-module-collector"
-import { spawn } from "builder-util/out/util"
+import { PM } from "app-builder-lib/internal"
+import { spawn } from "builder-util"
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as path from "path"
-import { appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
-import { ELECTRON_VERSION } from "./helpers/testConfig"
+import { appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester.js"
+import { ELECTRON_VERSION } from "./helpers/testConfig.js"
 import { copy, mkdir, outputFile, readJson, rm, symlink, writeJson } from "fs-extra"
-import { assertThat } from "./helpers/fileAssert"
+import { assertThat } from "./helpers/fileAssert.js"
 
 describe.ifNotWindows("node_module collectors", () => {
   test("yarn workspace", ({ expect }) =>

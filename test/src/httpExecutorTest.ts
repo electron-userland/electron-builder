@@ -1,5 +1,5 @@
 import { expect, test, describe } from "vitest"
-import { HttpExecutor } from "builder-util-runtime/src/httpExecutor"
+import { HttpExecutor } from "builder-util-runtime"
 import { RequestOptions } from "http"
 
 describe("HttpExecutor.prepareRedirectUrlOptions", () => {
@@ -506,7 +506,6 @@ describe("HttpExecutor.prepareRedirectUrlOptions", () => {
   })
 })
 
-// @ts-ignore
 describe("HttpExecutor.isCrossOriginRedirect", () => {
   const testCases: Array<{ name: string; url1: string; url2: string; expected: boolean }> = [
     {

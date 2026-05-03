@@ -1,12 +1,12 @@
 import { parseDn } from "builder-util-runtime"
 import { DIR_TARGET, Platform } from "electron-builder"
-import { outputFile } from "fs-extra"
+import fsExtra from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
-import { CheckingWinPackager } from "../helpers/CheckingPackager"
-import { app, appThrows } from "../helpers/packTester"
+import { CheckingWinPackager } from "../helpers/CheckingPackager.js"
+import { app, appThrows } from "../helpers/packTester.js"
 import { ExpectStatic } from "vitest"
-import { ToolsetConfig } from "app-builder-lib/src/configuration"
+import { ToolsetConfig } from "app-builder-lib"
 
 test("parseDn", ({ expect }) => {
   expect(parseDn("CN=7digital Limited, O=7digital Limited, L=London, C=GB")).toMatchSnapshot()
@@ -36,7 +36,7 @@ for (const winCodeSign of winCodeSignVersions) {
         {
           signedWin: true,
           projectDirCreated: async projectDir => {
-            await outputFile(path.join(projectDir, "assets", "nested", "nested", "file.exe"), "invalid PE file")
+            await fsExtra.outputFile(path.join(projectDir, "assets", "nested", "nested", "file.exe"), "invalid PE file")
           },
         },
         error => {
@@ -85,8 +85,8 @@ for (const winCodeSign of winCodeSignVersions) {
         return Promise.resolve()
       }))
     test("certificateFile/password - sign as Promise", ({ expect }) => testCustomSign(expect, () => Promise.resolve()))
-    test("certificateFile/password - sign as function", async ({ expect }) => testCustomSign(expect, (await import("../helpers/customWindowsSign")).default))
-    test("certificateFile/password - sign as path", ({ expect }) => testCustomSign(expect, path.join(__dirname, "../helpers/customWindowsSign.mjs")))
+    test("certificateFile/password - sign as function", async ({ expect }) => testCustomSign(expect, (await import("../helpers/customWindowsSign.js")).default))
+    test("certificateFile/password - sign as path", ({ expect }) => testCustomSign(expect, path.join(import.meta.dirname, "../helpers/customWindowsSign.mjs")))
 
     test("custom sign if no code sign info", ({ expect }) => {
       let called = false

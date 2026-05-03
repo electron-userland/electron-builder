@@ -1,4 +1,7 @@
+import { createRequire } from "node:module"
 import { DownloadOptions, HttpExecutor, configureRequestOptions, configureRequestUrl } from "builder-util-runtime"
+
+const require = createRequire(import.meta.url)
 import type { AuthInfo } from "electron"
 import { RequestOptions } from "http"
 import Session = Electron.Session

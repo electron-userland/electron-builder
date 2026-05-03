@@ -1,9 +1,9 @@
-import { parsePlistFile, PlistObject } from "app-builder-lib/out/util/plist"
+import { parsePlistFile, PlistObject } from "app-builder-lib/internal"
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { CheckingMacPackager } from "../helpers/CheckingPackager"
-import { app } from "../helpers/packTester"
+import { CheckingMacPackager } from "../helpers/CheckingPackager.js"
+import { app } from "../helpers/packTester.js"
 import { ExpectStatic } from "vitest"
 
 async function assertIcon(expect: ExpectStatic, platformPackager: CheckingMacPackager) {
@@ -19,7 +19,7 @@ async function assertIcon(expect: ExpectStatic, platformPackager: CheckingMacPac
 
 const targets = Platform.MAC.createTarget(DIR_TARGET, Arch.x64)
 
-const iconComposerFixture = path.join(__dirname, "..", "..", "fixtures", "macos-icon-composer-assets", "electron.icon")
+const iconComposerFixture = path.join(import.meta.dirname, "..", "..", "fixtures", "macos-icon-composer-assets", "electron.icon")
 
 test.ifMac("icon composer generate asset catalog", ({ expect }) => {
   return app(

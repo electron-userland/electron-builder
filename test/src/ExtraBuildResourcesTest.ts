@@ -1,14 +1,17 @@
+import { createRequire } from "node:module"
 import { Arch, build, PackagerOptions, Platform } from "electron-builder"
 import * as fs from "fs"
 import * as path from "path"
-import { assertThat } from "./helpers/fileAssert"
-import { app, assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
-import { ELECTRON_VERSION, getElectronCacheDir } from "./helpers/testConfig"
-import { expectUpdateMetadata } from "./helpers/winHelper"
+import { assertThat } from "./helpers/fileAssert.js"
+import { app, assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
+import { ELECTRON_VERSION, getElectronCacheDir } from "./helpers/testConfig.js"
+import { expectUpdateMetadata } from "./helpers/winHelper.js"
 import { ExpectStatic } from "vitest"
 import * as unzipper from "unzipper"
 import { TmpDir } from "temp-file"
 import { readdir } from "fs/promises"
+
+const require = createRequire(import.meta.url)
 
 function createBuildResourcesTest(expect: ExpectStatic, packagerOptions: PackagerOptions) {
   return app(

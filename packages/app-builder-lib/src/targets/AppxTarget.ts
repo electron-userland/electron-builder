@@ -1,16 +1,16 @@
 import { Arch, asArray, copyOrLinkFile, deepAssign, InvalidConfigurationError, log, walk } from "builder-util"
 import { Nullish } from "builder-util-runtime"
-import { emptyDir, readdir, readFile, writeFile } from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
-import { AppXOptions } from "../"
-import { getWindowsKitsBundle } from "../toolsets/windows"
-import { Target } from "../core"
-import { getTemplatePath } from "../util/pathManager"
-import { VmManager } from "../vm/vm"
-import { WinPackager } from "../winPackager"
-import { createStageDir } from "./targetUtil"
-import { isOldWin6 } from "../toolsets/windows"
-import { CAPABILITIES, isValidCapabilityName } from "./AppxCapabilities"
+import { AppXOptions } from "../options/AppXOptions.js"
+import { getWindowsKitsBundle } from "../toolsets/windows.js"
+import { Target } from "../core.js"
+import { getTemplatePath } from "../util/pathManager.js"
+import { VmManager } from "../vm/vm.js"
+import { WinPackager } from "../winPackager.js"
+import { createStageDir } from "./targetUtil.js"
+import { isOldWin6 } from "../toolsets/windows.js"
+import { CAPABILITIES, isValidCapabilityName } from "./AppxCapabilities.js"
 
 const APPX_ASSETS_DIR_NAME = "appx"
 
@@ -49,7 +49,7 @@ const restrictedApplicationIdValues = [
 const DEFAULT_RESOURCE_LANG = "en-US"
 
 export default class AppXTarget extends Target {
-  readonly options: AppXOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, this.packager.config.appx)
+  readonly options: AppXOptions
 
   isAsyncSupported = false
 
@@ -58,6 +58,7 @@ export default class AppXTarget extends Target {
     readonly outDir: string
   ) {
     super("appx")
+    this.options = deepAssign({}, this.packager.platformSpecificBuildOptions, this.packager.config.appx)
 
     if (process.platform !== "darwin" && (process.platform !== "win32" || isOldWin6())) {
       throw new Error("AppX is supported only on Windows 10 or Windows Server 2012 R2 (version number 6.3+)")
@@ -115,7 +116,7 @@ export default class AppXTarget extends Target {
       const makePriPath = vm.toVmFile(path.join(vendorPath.kit, "makepri.exe"))
 
       const assetRoot = stageDir.getTempFile("appx/assets")
-      await emptyDir(assetRoot)
+      await fsExtra.emptyDir(assetRoot)
       await Promise.all(assetInfo.allAssets.map(it => copyOrLinkFile(it, path.join(assetRoot, path.basename(it)))))
 
       await vm.exec(makePriPath, [
@@ -132,7 +133,7 @@ export default class AppXTarget extends Target {
       ])
 
       // in addition to resources.pri, resources.scale-140.pri and other such files will be generated
-      for (const resourceFile of (await readdir(stageDir.dir)).filter(it => it.startsWith("resources.")).sort()) {
+      for (const resourceFile of (await fsExtra.readdir(stageDir.dir)).filter(it => it.startsWith("resources.")).sort()) {
         mappingList.push([`"${vm.toVmFile(stageDir.getTempFile(resourceFile))}" "${resourceFile}"`])
       }
       makeAppXArgs.push("/l")
@@ -142,7 +143,7 @@ export default class AppXTarget extends Target {
     for (const list of mappingList) {
       mapping += "\r\n" + list.join("\r\n")
     }
-    await writeFile(mappingFile, mapping)
+    await fsExtra.writeFile(mappingFile, mapping)
     packager.debugLogger.add("appx.mapping", mapping)
 
     if (this.options.makeappxArgs != null) {
@@ -172,7 +173,7 @@ export default class AppXTarget extends Target {
     if (userAssetDir == null) {
       userAssets = []
     } else {
-      userAssets = (await readdir(userAssetDir)).filter(it => !it.startsWith(".") && !it.endsWith(".db") && it.includes("."))
+      userAssets = (await fsExtra.readdir(userAssetDir)).filter(it => !it.startsWith(".") && !it.endsWith(".db") && it.includes("."))
       for (const name of userAssets) {
         mappings.push(`"${vm.toVmFile(userAssetDir)}${vm.pathSep}${name}" "assets\\${name}"`)
         allAssets.push(path.join(userAssetDir, name))
@@ -210,7 +211,7 @@ export default class AppXTarget extends Target {
     if (customManifestPath) {
       log.info({ manifestPath: log.filePath(customManifestPath) }, "custom appx manifest found")
     }
-    const manifestFileContent = await readFile(customManifestPath || path.join(getTemplatePath("appx"), "appxmanifest.xml"), "utf8")
+    const manifestFileContent = await fsExtra.readFile(customManifestPath || path.join(getTemplatePath("appx"), "appxmanifest.xml"), "utf8")
     const manifest = manifestFileContent.replace(/\${([a-zA-Z0-9]+)}/g, (match, p1): string => {
       switch (p1) {
         case "publisher":
@@ -334,7 +335,7 @@ export default class AppXTarget extends Target {
           throw new Error(`Macro ${p1} is not defined`)
       }
     })
-    await writeFile(outFile, manifest)
+    await fsExtra.writeFile(outFile, manifest)
   }
 
   private getCapabilities(): string {
@@ -406,7 +407,7 @@ export default class AppXTarget extends Target {
 
     if (this.options.customExtensionsPath !== undefined) {
       const extensionsPath = path.resolve(this.packager.info.appDir, this.options.customExtensionsPath)
-      extensions += await readFile(extensionsPath, "utf8")
+      extensions += await fsExtra.readFile(extensionsPath, "utf8")
     }
 
     extensions += "</Extensions>"

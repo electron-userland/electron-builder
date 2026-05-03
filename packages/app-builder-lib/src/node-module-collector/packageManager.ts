@@ -1,5 +1,5 @@
 import { exists, log } from "builder-util"
-import * as fs from "fs-extra"
+import fs from "fs-extra"
 import * as path from "path"
 import * as which from "which"
 

@@ -1,15 +1,14 @@
 import { BitbucketOptions, GenericServerOptions, GithubOptions, GitlabOptions, KeygenOptions, S3Options, SpacesOptions } from "builder-util-runtime"
 import { BitbucketPublisher } from "electron-publish"
 import { UpdateCheckResult } from "electron-updater"
-import { outputFile } from "fs-extra"
+import fsExtra from "fs-extra"
 import { tmpdir } from "os"
 import * as path from "path"
-import { assertThat } from "../helpers/fileAssert"
-import { removeUnstableProperties } from "../helpers/packTester"
-import { createNsisUpdater, trackEvents, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { assertThat } from "../helpers/fileAssert.js"
+import { removeUnstableProperties } from "../helpers/packTester.js"
+import { createNsisUpdater, trackEvents, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 import { ExpectStatic } from "vitest"
-import { GitLabProvider } from "electron-updater/src/providers/GitLabProvider"
-import { GitHubProvider } from "electron-updater/src/providers/GitHubProvider"
+import { GitLabProvider, GitHubProvider } from "electron-updater/internal"
 
 const config = { retry: 3 }
 
@@ -471,7 +470,7 @@ test.ifWindows("test custom signature verifier - signing error message", config,
 // disable for now
 test("90 staging percentage", config, async ({ expect }) => {
   const userIdFile = path.join(tmpdir(), "electron-updater-test", "userData", ".updaterId")
-  await outputFile(userIdFile, "1wa70172-80f8-5cc4-8131-28f5e0edd2a1")
+  await fsExtra.outputFile(userIdFile, "1wa70172-80f8-5cc4-8131-28f5e0edd2a1")
 
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig<S3Options>({
@@ -485,7 +484,7 @@ test("90 staging percentage", config, async ({ expect }) => {
 
 test("1 staging percentage", config, async ({ expect }) => {
   const userIdFile = path.join(tmpdir(), "electron-updater-test", "userData", ".updaterId")
-  await outputFile(userIdFile, "12a70172-80f8-5cc4-8131-28f5e0edd2a1")
+  await fsExtra.outputFile(userIdFile, "12a70172-80f8-5cc4-8131-28f5e0edd2a1")
 
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({

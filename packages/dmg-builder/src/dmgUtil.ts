@@ -1,14 +1,14 @@
 import { DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
-import { downloadArtifact } from "app-builder-lib/out/binDownload"
+import { downloadArtifact } from "app-builder-lib/internal"
 import { exec, executeFinally, exists, isEmptyOrSpaces, TmpDir } from "builder-util"
-import { writeFile } from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
-import { DmgBuildConfig } from "./dmg"
-import { hdiUtil, hdiutilTransientExitCodes } from "./hdiuil"
+import { DmgBuildConfig } from "./dmg.js"
+import { hdiUtil, hdiutilTransientExitCodes } from "./hdiuil.js"
 
-export { DmgTarget } from "./dmg"
+export { DmgTarget } from "./dmg.js"
 
-const root = path.join(__dirname, "..")
+const root = path.join(import.meta.dirname, "..")
 
 export function getDmgTemplatePath() {
   return path.join(root, "templates")
@@ -183,7 +183,7 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
   }
 
   const settingsFile = await packager.getTempFile(".json")
-  await writeFile(settingsFile, JSON.stringify(settings, null, 2))
+  await fsExtra.writeFile(settingsFile, JSON.stringify(settings, null, 2))
 
   const dmgbuild = await getDmgVendorPath()
   await exec(dmgbuild, ["-s", settingsFile, path.basename(volumePath), artifactPath], {

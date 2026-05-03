@@ -1,6 +1,6 @@
 import * as fs from "fs"
 import * as path from "path"
-import { CACHE_FILE, SupportedPlatforms } from "./smart-config"
+import { CACHE_FILE, SupportedPlatforms } from "./smart-config.js"
 
 export interface TestStats {
   platformRuns?: Record<

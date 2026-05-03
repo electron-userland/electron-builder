@@ -1,10 +1,10 @@
 import { asArray, exists, isEmptyOrSpaces, log } from "builder-util"
-import { outputFile } from "fs-extra"
+import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import { join } from "path"
-import { LinuxPackager } from "../linuxPackager"
-import { LinuxTargetSpecificOptions } from "../options/linuxOptions"
-import { IconInfo } from "../platformPackager"
+import { LinuxPackager } from "../linuxPackager.js"
+import { LinuxTargetSpecificOptions } from "../options/linuxOptions.js"
+import { IconInfo } from "../platformPackager.js"
 
 export const installPrefix = "/opt"
 
@@ -45,7 +45,7 @@ export class LinuxTargetHelper {
     }
 
     const file = await this.packager.getTempFile(".xml")
-    await outputFile(
+    await fsExtra.outputFile(
       file,
       '<?xml version="1.0" encoding="utf-8"?>\n<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">\n' + items.join("\n") + "\n</mime-info>"
     )
@@ -96,7 +96,7 @@ export class LinuxTargetHelper {
   async writeDesktopEntry(targetSpecificOptions: LinuxTargetSpecificOptions, exec?: string, destination?: string | null, extra?: Record<string, string>): Promise<string> {
     const data = await this.computeDesktopEntry(targetSpecificOptions, exec, extra)
     const file = destination || (await this.packager.getTempFile(`${this.packager.appInfo.productFilename}.desktop`))
-    await outputFile(file, data)
+    await fsExtra.outputFile(file, data)
     return file
   }
 

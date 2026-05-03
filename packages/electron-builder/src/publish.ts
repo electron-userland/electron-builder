@@ -1,18 +1,17 @@
 #! /usr/bin/env node
 
+import { fileURLToPath } from "node:url"
 import { AppInfo, CancellationToken, Packager, PackagerOptions, PublishManager, PublishOptions, UploadTask, checkBuildRequestOptions } from "app-builder-lib"
-import { Publish } from "app-builder-lib/out/core"
-import { computeSafeArtifactNameIfNeeded } from "app-builder-lib/out/platformPackager"
-import { getConfig } from "app-builder-lib/out/util/config/config"
+import { Publish, computeSafeArtifactNameIfNeeded, getConfig } from "app-builder-lib/internal"
 import { InvalidConfigurationError, archFromString, log, printErrorAndExit } from "builder-util"
 import { PublishPolicy } from "electron-publish"
-import * as chalk from "chalk"
+import chalk from "chalk"
 import * as path from "path"
-import * as yargs from "yargs"
-import { BuildOptions, normalizeOptions } from "./builder"
+import { Argv } from "yargs"
+import { BuildOptions, createYargs, normalizeOptions } from "./builder.js"
 
 /** @internal */
-export function configurePublishCommand(yargs: yargs.Argv): yargs.Argv {
+export function configurePublishCommand(yargs: Argv): Argv {
   // https://github.com/yargs/yargs/issues/760
   // demandOption is required to be set
   return yargs
@@ -121,10 +120,10 @@ async function publishPackageWithTasks(
 }
 
 function main() {
-  return publish(configurePublishCommand(yargs).argv as any)
+  return publish(configurePublishCommand(createYargs()).argv as any)
 }
 
-if (require.main === module) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   log.warn("please use as subcommand: electron-builder publish")
   main().catch(printErrorAndExit)
 }

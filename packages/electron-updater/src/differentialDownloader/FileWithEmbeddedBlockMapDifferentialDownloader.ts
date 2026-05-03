@@ -1,6 +1,6 @@
-import { BlockMap } from "builder-util-runtime/out/blockMapApi"
-import { close, fstat, open, read } from "fs-extra"
-import { DifferentialDownloader } from "./DifferentialDownloader"
+import { BlockMap } from "builder-util-runtime"
+import fsExtra from "fs-extra"
+import { DifferentialDownloader } from "./DifferentialDownloader.js"
 import { inflateRawSync } from "zlib"
 
 export class FileWithEmbeddedBlockMapDifferentialDownloader extends DifferentialDownloader {
@@ -19,19 +19,19 @@ function readBlockMap(data: Buffer): BlockMap {
 }
 
 async function readEmbeddedBlockMapData(file: string): Promise<BlockMap> {
-  const fd = await open(file, "r")
+  const fd = await fsExtra.open(file, "r")
   try {
-    const fileSize = (await fstat(fd)).size
+    const fileSize = (await fsExtra.fstat(fd)).size
     const sizeBuffer = Buffer.allocUnsafe(4)
-    await read(fd, sizeBuffer, 0, sizeBuffer.length, fileSize - sizeBuffer.length)
+    await fsExtra.read(fd, sizeBuffer, 0, sizeBuffer.length, fileSize - sizeBuffer.length)
 
     const dataBuffer = Buffer.allocUnsafe(sizeBuffer.readUInt32BE(0))
-    await read(fd, dataBuffer, 0, dataBuffer.length, fileSize - sizeBuffer.length - dataBuffer.length)
-    await close(fd)
+    await fsExtra.read(fd, dataBuffer, 0, dataBuffer.length, fileSize - sizeBuffer.length - dataBuffer.length)
+    await fsExtra.close(fd)
 
     return readBlockMap(dataBuffer)
   } catch (e: any) {
-    await close(fd)
+    await fsExtra.close(fd)
     throw e
   }
 }

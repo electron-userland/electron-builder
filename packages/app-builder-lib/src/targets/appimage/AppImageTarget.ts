@@ -1,17 +1,17 @@
-import { IconInfo } from "../../platformPackager"
+import { IconInfo } from "../../platformPackager.js"
 import { Arch, log, serializeToYaml } from "builder-util"
-import { outputFile } from "fs-extra"
+import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { Target } from "../../core"
-import { LinuxPackager } from "../../linuxPackager"
-import { AppImageOptions } from "../../options/linuxOptions"
-import { getAppUpdatePublishConfiguration } from "../../publish/PublishManager"
-import { executeAppBuilderAsJson, objectToArgs } from "../../util/appBuilder"
-import { getNotLocalizedLicenseFile } from "../../util/license"
-import { LinuxTargetHelper } from "../LinuxTargetHelper"
-import { createStageDir, StageDir } from "../targetUtil"
-import { buildAppImage } from "./appImageUtil"
+import { Target } from "../../core.js"
+import { LinuxPackager } from "../../linuxPackager.js"
+import { AppImageOptions } from "../../options/linuxOptions.js"
+import { getAppUpdatePublishConfiguration } from "../../publish/PublishManager.js"
+import { executeAppBuilderAsJson, objectToArgs } from "../../util/appBuilder.js"
+import { getNotLocalizedLicenseFile } from "../../util/license.js"
+import { LinuxTargetHelper } from "../LinuxTargetHelper.js"
+import { createStageDir, StageDir } from "../targetUtil.js"
+import { buildAppImage } from "./appImageUtil.js"
 import { BlockMapDataHolder } from "builder-util-runtime"
 
 // https://unix.stackexchange.com/questions/375191/append-to-sub-directory-inside-squashfs-file
@@ -19,7 +19,7 @@ import { BlockMapDataHolder } from "builder-util-runtime"
 export const APP_RUN_ENTRYPOINT = "AppRun"
 
 export default class AppImageTarget extends Target {
-  readonly options: AppImageOptions = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
+  readonly options: AppImageOptions
 
   private readonly desktopEntry: Lazy<string>
 
@@ -30,6 +30,7 @@ export default class AppImageTarget extends Target {
     readonly outDir: string
   ) {
     super("appImage")
+    this.options = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
 
     this.desktopEntry = new Lazy<string>(() => {
       const appimageTool = packager.config.toolsets?.appimage
@@ -67,7 +68,7 @@ export default class AppImageTarget extends Target {
     ])
 
     if (publishConfig != null) {
-      await outputFile(path.join(packager.getResourcesDir(appOutDir), "app-update.yml"), serializeToYaml(publishConfig))
+      await fsExtra.outputFile(path.join(packager.getResourcesDir(appOutDir), "app-update.yml"), serializeToYaml(publishConfig))
     }
 
     if (this.packager.packagerOptions.effectiveOptionComputed != null && (await this.packager.packagerOptions.effectiveOptionComputed({ desktop: desktopEntry }))) {

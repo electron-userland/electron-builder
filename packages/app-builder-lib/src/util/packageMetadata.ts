@@ -1,14 +1,14 @@
 import { InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { Nullish } from "builder-util-runtime"
-import { readFile, readJson, readJsonSync } from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
 import * as semver from "semver"
-import { Metadata } from "../options/metadata"
-import { normalizePackageData } from "./normalizePackageData"
+import { Metadata } from "../options/metadata.js"
+import { normalizePackageData } from "./normalizePackageData.js"
 
 /** @internal */
 export async function readPackageJson(file: string): Promise<any> {
-  const data = await readJson(file)
+  const data = await fsExtra.readJson(file)
   await authors(file, data)
   // remove not required fields because can be used for remote build
   delete data.scripts
@@ -24,7 +24,7 @@ async function authors(file: string, data: any) {
 
   let authorData
   try {
-    authorData = await readFile(path.resolve(path.dirname(file), "AUTHORS"), "utf8")
+    authorData = await fsExtra.readFile(path.resolve(path.dirname(file), "AUTHORS"), "utf8")
   } catch (_ignored) {
     return
   }
@@ -114,8 +114,8 @@ function checkDependencies(dependencies: Record<string, string> | Nullish, error
     for (const prefix of prefixes) {
       if (updaterVersion.startsWith(prefix)) {
         const normalized = path.normalize(updaterVersion.substring(prefix.length))
-        const packageJsonPath = path.isAbsolute(normalized) ? normalized : path.resolve(__dirname, normalized)
-        const json = readJsonSync(path.join(packageJsonPath, "package.json"))
+        const packageJsonPath = path.isAbsolute(normalized) ? normalized : path.resolve(import.meta.dirname, normalized)
+        const json = fsExtra.readJsonSync(path.join(packageJsonPath, "package.json"))
         updaterVersion = json.version
         break
       }

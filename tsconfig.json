@@ -2,6 +2,18 @@
   "files": [],
   "references": [
     {
+      "path": "./packages/builder-util-runtime"
+    },
+    {
+      "path": "./packages/builder-util"
+    },
+    {
+      "path": "./packages/app-builder-lib"
+    },
+    {
+      "path": "./packages/dmg-builder"
+    },
+    {
       "path": "./packages/electron-builder"
     },
     {

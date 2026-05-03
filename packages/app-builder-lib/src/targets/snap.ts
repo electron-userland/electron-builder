@@ -1,21 +1,21 @@
 import { replaceDefault as _replaceDefault, Arch, deepAssign, executeAppBuilder, InvalidConfigurationError, log, serializeToYaml, toLinuxArchString } from "builder-util"
 import { asArray, Nullish, SnapStoreOptions } from "builder-util-runtime"
-import { outputFile, readFile } from "fs-extra"
+import fsExtra from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
 import * as semver from "semver"
-import { Configuration } from "../configuration"
-import { Publish, Target } from "../core"
-import { LinuxPackager } from "../linuxPackager"
-import { PlugDescriptor, SnapOptions } from "../options/SnapOptions"
-import { getTemplatePath } from "../util/pathManager"
-import { LinuxTargetHelper } from "./LinuxTargetHelper"
-import { createStageDirPath } from "./targetUtil"
+import { Configuration } from "../configuration.js"
+import { Publish, Target } from "../core.js"
+import { LinuxPackager } from "../linuxPackager.js"
+import { PlugDescriptor, SnapOptions } from "../options/SnapOptions.js"
+import { getTemplatePath } from "../util/pathManager.js"
+import { LinuxTargetHelper } from "./LinuxTargetHelper.js"
+import { createStageDirPath } from "./targetUtil.js"
 
 const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 
 export default class SnapTarget extends Target {
-  readonly options: SnapOptions = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
+  readonly options: SnapOptions
 
   public isUseTemplateApp = false
 
@@ -26,6 +26,7 @@ export default class SnapTarget extends Target {
     readonly outDir: string
   ) {
     super(name)
+    this.options = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
   }
 
   private replaceDefault(inList: Array<string> | Nullish, defaultList: Array<string>) {
@@ -71,7 +72,7 @@ export default class SnapTarget extends Target {
       adapter: "none",
     }
 
-    const snap: any = load(await readFile(path.join(getTemplatePath("snap"), "snapcraft.yaml"), "utf-8"))
+    const snap: any = load(await fsExtra.readFile(path.join(getTemplatePath("snap"), "snapcraft.yaml"), "utf-8"))
     if (this.isUseTemplateApp) {
       delete appDescriptor.adapter
     }
@@ -251,7 +252,7 @@ export default class SnapTarget extends Target {
       return
     }
 
-    await outputFile(path.join(snapMetaDir, this.isUseTemplateApp ? "snap.yaml" : "snapcraft.yaml"), serializeToYaml(snap))
+    await fsExtra.outputFile(path.join(snapMetaDir, this.isUseTemplateApp ? "snap.yaml" : "snapcraft.yaml"), serializeToYaml(snap))
 
     const hooksDir = await packager.getResource(options.hooks, "snap-hooks")
     if (hooksDir != null) {

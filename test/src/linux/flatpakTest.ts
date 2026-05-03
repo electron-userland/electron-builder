@@ -1,5 +1,5 @@
 import { Platform } from "electron-builder"
-import { app } from "../helpers/packTester"
+import { app } from "../helpers/packTester.js"
 import * as which from "which"
 
 describe.heavy.ifEnv(which.sync("flatpak", { nothrow: true }) != null)("Linux Flatpak Test", () => {

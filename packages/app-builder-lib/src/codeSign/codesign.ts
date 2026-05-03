@@ -1,9 +1,9 @@
 import { InvalidConfigurationError, statOrNull } from "builder-util"
-import { outputFile } from "fs-extra"
+import fsExtra from "fs-extra"
 import { homedir } from "os"
 import * as path from "path"
 import { TmpDir } from "temp-file"
-import { download } from "../binDownload"
+import { download } from "../binDownload.js"
 
 /** @private */
 export async function importCertificate(cscLink: string, tmpDir: TmpDir, currentDir: string): Promise<string> {
@@ -24,7 +24,7 @@ export async function importCertificate(cscLink: string, tmpDir: TmpDir, current
     const mimeType = /data:.*;base64,/.exec(cscLink)?.[0]
     if (mimeType || cscLink.length > 2048 || cscLink.endsWith("=")) {
       const tempFile = await tmpDir.getTempFile({ suffix: ".p12" })
-      await outputFile(tempFile, Buffer.from(cscLink.substring(mimeType?.length ?? 0), "base64"))
+      await fsExtra.outputFile(tempFile, Buffer.from(cscLink.substring(mimeType?.length ?? 0), "base64"))
       return tempFile
     }
     file = cscLink

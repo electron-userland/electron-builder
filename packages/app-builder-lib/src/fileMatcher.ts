@@ -3,9 +3,11 @@ import { Nullish } from "builder-util-runtime"
 import { mkdir } from "fs/promises"
 import { Minimatch } from "minimatch"
 import * as path from "path"
-import { Configuration, FileSet, Packager, PlatformSpecificBuildOptions } from "./index"
-import { PlatformPackager } from "./platformPackager"
-import { createFilter, hasMagic } from "./util/filter"
+import type { Configuration } from "./configuration.js"
+import type { Packager } from "./packager.js"
+import { FileSet, PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions.js"
+import { PlatformPackager } from "./platformPackager.js"
+import { createFilter, hasMagic } from "./util/filter.js"
 
 // https://github.com/electron-userland/electron-builder/issues/733
 const minimatchOptions = { dot: true }

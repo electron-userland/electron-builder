@@ -1,19 +1,19 @@
 import { asArray, InvalidConfigurationError, log, retry } from "builder-util"
 import { MemoLazy, parseDn } from "builder-util-runtime"
-import { rename } from "fs-extra"
+import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { Target } from "../core"
-import { WindowsConfiguration } from "../options/winOptions"
-import AppXTarget from "../targets/AppxTarget"
-import { getSignToolPath } from "../toolsets/windows"
-import { executeAppBuilderAsJson } from "../util/appBuilder"
-import { resolveFunction } from "../util/resolve"
-import { VmManager } from "../vm/vm"
-import { WinPackager } from "../winPackager"
-import { importCertificate } from "./codesign"
-import { SignManager } from "./signManager"
-import { WindowsSignOptions } from "./windowsCodeSign"
+import { Target } from "../core.js"
+import { WindowsConfiguration } from "../options/winOptions.js"
+import AppXTarget from "../targets/AppxTarget.js"
+import { getSignToolPath } from "../toolsets/windows.js"
+import { executeAppBuilderAsJson } from "../util/appBuilder.js"
+import { resolveFunction } from "../util/resolve.js"
+import { VmManager } from "../vm/vm.js"
+import { WinPackager } from "../winPackager.js"
+import { importCertificate } from "./codesign.js"
+import { SignManager } from "./signManager.js"
+import { WindowsSignOptions } from "./windowsCodeSign.js"
 
 export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration, packager?: WinPackager) => Promise<any>
 
@@ -232,7 +232,7 @@ export class WindowsSignToolManager implements SignManager {
       )
       isNest = true
       if (taskConfiguration.resultOutputPath != null) {
-        await rename(taskConfiguration.resultOutputPath, options.path)
+        await fsExtra.rename(taskConfiguration.resultOutputPath, options.path)
       }
     }
 

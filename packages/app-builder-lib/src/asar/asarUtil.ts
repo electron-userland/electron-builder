@@ -1,15 +1,14 @@
-import { createPackageFromStreams, AsarStreamType, AsarDirectory } from "@electron/asar"
-import { isEmptyOrSpaces, log } from "builder-util"
-import { exists, Filter, FilterStats } from "builder-util/out/fs"
-import * as fs from "fs-extra"
-import { readlink } from "fs-extra"
-import * as path from "path"
-import { AsarOptions } from "../options/PlatformSpecificBuildOptions"
-import { PlatformPackager } from "../platformPackager"
-import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier"
-import { detectUnpackedDirs } from "./unpackDetector"
-import { Readable } from "stream"
+import { AsarDirectory, AsarStreamType, createPackageFromStreams } from "@electron/asar"
+import { exists, Filter, FilterStats, isEmptyOrSpaces, log } from "builder-util"
+import * as fs from "fs/promises"
+import fsExtra from "fs-extra"
 import * as os from "os"
+import * as path from "path"
+import { Readable } from "stream"
+import { AsarOptions } from "../options/PlatformSpecificBuildOptions.js"
+import { PlatformPackager } from "../platformPackager.js"
+import { getDestinationPath, ResolvedFileSet } from "../util/appFileCopier.js"
+import { detectUnpackedDirs } from "./unpackDetector.js"
 
 const resolvePath = async (file: string | undefined): Promise<string | undefined> => (file && (await exists(file)) ? fs.realpath(file).catch(() => path.resolve(file)) : undefined)
 const resolvePaths = async (filepaths: (string | undefined)[]) => {
@@ -197,7 +196,7 @@ export class AsarPackager {
   private async processFileOrSymlink(options: {
     file: string
     destination: string
-    stat: fs.Stats
+    stat: fsExtra.Stats
     fileSet: ResolvedFileSet
     transformedData: string | Buffer | undefined
     isUnpacked: (dir: string, file?: string, stat?: FilterStats) => boolean
@@ -233,7 +232,7 @@ export class AsarPackager {
 
     const baseConfig = {
       path: destination,
-      streamGenerator: () => fs.createReadStream(file),
+      streamGenerator: () => fsExtra.createReadStream(file),
       unpacked,
       stat,
     }
@@ -244,7 +243,7 @@ export class AsarPackager {
     }
 
     // Handle symlinks - make relative to source location
-    let link = await readlink(file)
+    let link = await fsExtra.readlink(file)
     if (path.isAbsolute(link)) {
       link = path.relative(path.dirname(file), link)
     }

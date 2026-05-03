@@ -1,7 +1,7 @@
 import * as path from "path"
 import type { Reporter, TestCase, TestModule } from "vitest/node"
-import { FileStats, loadCache, saveCache, TestStats } from "./cache"
-import { UNSTABLE_FAIL_RATIO, SupportedPlatforms } from "./smart-config"
+import { FileStats, loadCache, saveCache, TestStats } from "./cache.js"
+import { UNSTABLE_FAIL_RATIO, SupportedPlatforms } from "./smart-config.js"
 
 const defaultStat: TestStats = {
   platformRuns: {

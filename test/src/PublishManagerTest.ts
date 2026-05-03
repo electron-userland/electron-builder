@@ -1,9 +1,9 @@
 import { GenericServerOptions, GithubOptions, KeygenOptions, SpacesOptions } from "builder-util-runtime"
 import { Arch, createTargets, Platform } from "electron-builder"
-import { outputFile } from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
-import { assertThat } from "./helpers/fileAssert"
-import { app, checkDirContents } from "./helpers/packTester"
+import { assertThat } from "./helpers/fileAssert.js"
+import { app, checkDirContents } from "./helpers/packTester.js"
 
 function spacesPublisher(publishAutoUpdate = true): SpacesOptions {
   return {
@@ -149,7 +149,7 @@ test.ifNotWindows("custom provider", ({ expect }) =>
     {
       publish: "never",
       projectDirCreated: projectDir =>
-        outputFile(
+        fsExtra.outputFile(
           path.join(projectDir, "build/electron-publisher-custom.js"),
           `class Publisher {
     async upload(task) {

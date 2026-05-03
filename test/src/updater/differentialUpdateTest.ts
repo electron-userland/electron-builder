@@ -3,16 +3,16 @@ import { archFromString, doSpawn, getArchSuffix } from "builder-util"
 import { GenericServerOptions, Nullish, S3Options } from "builder-util-runtime"
 import { AppImageUpdater, BaseUpdater, MacUpdater, NsisUpdater } from "electron-updater"
 import { EventEmitter } from "events"
-import { move } from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
 import { TmpDir } from "temp-file"
-import { TestAppAdapter } from "../helpers/TestAppAdapter"
-import { EXTENDED_TIMEOUT, PackedContext, assertPack, removeUnstableProperties } from "../helpers/packTester"
-import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, testAppCacheDirName, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { TestAppAdapter } from "../helpers/TestAppAdapter.js"
+import { EXTENDED_TIMEOUT, PackedContext, assertPack, removeUnstableProperties } from "../helpers/packTester.js"
+import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, testAppCacheDirName, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 import { mockForNodeRequire } from "vitest-mock-commonjs"
 import { ExpectStatic } from "vitest"
-import { getRanLocalServerPath } from "../helpers/launchAppCrossPlatform"
-import { ToolsetConfig } from "app-builder-lib/src/configuration"
+import { getRanLocalServerPath } from "../helpers/launchAppCrossPlatform.js"
+import { ToolsetConfig } from "app-builder-lib/out/configuration.js"
 
 async function doBuild(
   expect: ExpectStatic,
@@ -58,7 +58,7 @@ async function doBuild(
     buildApp(version, targets, extraConfig, async context => {
       // move dist temporarily out of project dir so each downloader can reference it
       const newDir = await tmpDir.getTempDir({ prefix: version })
-      await move(context.outDir, newDir)
+      await fsExtra.move(context.outDir, newDir)
       outDirs.push(newDir)
     })
   try {
@@ -81,7 +81,7 @@ for (const winCodeSign of winCodeSignVersions) {
       await doBuild(expect, outDirs, Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64, Arch.arm64), tmpDir, { winCodeSign })
 
       const oldDir = outDirs[0]
-      await move(
+      await fsExtra.move(
         path.join(oldDir, "nsis-web", `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(archFromString(process.arch), "universal")}.nsis.7z`),
         path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "package.7z")
       )
@@ -96,8 +96,8 @@ for (const winCodeSign of winCodeSignVersions) {
 
       const oldDir = outDirs[0]
       // move to new dir so that localhost server can read both blockmaps
-      await move(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "installer.exe"))
-      await move(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe.blockmap`), path.join(outDirs[1], "Test App ßW Setup 1.0.0.exe.blockmap"))
+      await fsExtra.move(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "installer.exe"))
+      await fsExtra.move(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe.blockmap`), path.join(outDirs[1], "Test App ßW Setup 1.0.0.exe.blockmap"))
 
       await testBlockMap(expect, outDirs[0], outDirs[1], NsisUpdater, Platform.WINDOWS, Arch.x64)
     })
@@ -148,8 +148,8 @@ async function testMac(expect: ExpectStatic, arch: Arch) {
     // move to new dir so that localhost server can read both blockmaps
     const oldDir = outDirs[0]
     const blockmap = `Test App ßW-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}-mac.zip.blockmap`
-    await move(path.join(oldDir, blockmap), path.join(outDirs[1], blockmap))
-    await move(path.join(oldDir, `Test App ßW-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}-mac.zip`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "update.zip"))
+    await fsExtra.move(path.join(oldDir, blockmap), path.join(outDirs[1], blockmap))
+    await fsExtra.move(path.join(oldDir, `Test App ßW-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}-mac.zip`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "update.zip"))
 
     await testBlockMap(expect, outDirs[0], outDirs[1], MacUpdater, Platform.MAC, arch, "Test App ßW")
   } finally {

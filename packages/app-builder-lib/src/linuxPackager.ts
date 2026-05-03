@@ -1,15 +1,15 @@
 import { Arch } from "builder-util"
-import { sanitizeFileName } from "builder-util/out/filename"
-import { DIR_TARGET, Platform, Target } from "./core"
-import { LinuxConfiguration } from "./options/linuxOptions"
-import { Packager } from "./packager"
-import { PlatformPackager } from "./platformPackager"
-import AppImageTarget from "./targets/appimage/AppImageTarget"
-import FlatpakTarget from "./targets/FlatpakTarget"
-import FpmTarget from "./targets/FpmTarget"
-import { LinuxTargetHelper } from "./targets/LinuxTargetHelper"
-import SnapTarget from "./targets/snap"
-import { createCommonTarget } from "./targets/targetFactory"
+import { sanitizeFileName } from "builder-util/internal"
+import { DIR_TARGET, Platform, Target } from "./core.js"
+import { LinuxConfiguration } from "./options/linuxOptions.js"
+import { Packager } from "./packager.js"
+import { PlatformPackager } from "./platformPackager.js"
+import AppImageTarget from "./targets/appimage/AppImageTarget.js"
+import FlatpakTarget from "./targets/FlatpakTarget.js"
+import FpmTarget from "./targets/FpmTarget.js"
+import { LinuxTargetHelper } from "./targets/LinuxTargetHelper.js"
+import SnapTarget from "./targets/snap.js"
+import { createCommonTarget } from "./targets/targetFactory.js"
 
 export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
   readonly executableName: string
@@ -42,11 +42,11 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
       const targetClass: typeof AppImageTarget | typeof SnapTarget | typeof FlatpakTarget | typeof FpmTarget | null = (() => {
         switch (name) {
           case "appimage":
-            return require("./targets/appimage/AppImageTarget").default
+            return AppImageTarget
           case "snap":
-            return require("./targets/snap").default
+            return SnapTarget
           case "flatpak":
-            return require("./targets/FlatpakTarget").default
+            return FlatpakTarget
           case "deb":
           case "rpm":
           case "sh":
@@ -54,7 +54,7 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
           case "pacman":
           case "apk":
           case "p5p":
-            return require("./targets/FpmTarget").default
+            return FpmTarget
           default:
             return null
         }

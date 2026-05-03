@@ -1,7 +1,11 @@
 {
 	"name": "dmg-builder",
-	"version": "26.9.0",
-	"main": "out/dmgUtil.js",
+	"version": "26.8.2",
+  "type": "module",
+	"exports": {
+    ".": "./out/dmgUtil.js"
+  },
+  "description": "dmg builder for electron-builder",
 	"author": "Vladimir Krivosheev",
 	"license": "MIT",
 	"repository": {
@@ -18,7 +22,7 @@
 	"dependencies": {
 		"app-builder-lib": "workspace:*",
 		"builder-util": "workspace:*",
-		"fs-extra": "^10.1.0",
+		"fs-extra": "^11.3.4",
 		"iconv-lite": "^0.6.2",
 		"js-yaml": "^4.1.0"
 	},
@@ -30,5 +34,5 @@
 		"@types/js-yaml": "4.0.3",
 		"temp-file": "3.4.0"
 	},
-	"typings": "./out/dmg.d.ts"
+	"types": "./out/dmg.d.ts"
 }

@@ -1,7 +1,7 @@
 import * as path from "path"
 import { BaseSequencer, TestSpecification } from "vitest/node"
-import { loadCache } from "./cache"
-import { DEFAULT_FILE_MS, SupportedPlatforms } from "./smart-config"
+import { loadCache } from "./cache.js"
+import { DEFAULT_FILE_MS, SupportedPlatforms } from "./smart-config.js"
 
 export default class SmartSequencer extends BaseSequencer {
   readonly cache = loadCache()

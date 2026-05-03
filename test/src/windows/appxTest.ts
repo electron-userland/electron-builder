@@ -1,8 +1,8 @@
 import { Arch, Platform } from "electron-builder"
-import { readFile } from "fs-extra"
+import fsExtra from "fs-extra"
 import { mkdir } from "fs/promises"
 import * as path from "path"
-import { app, appThrows, copyTestAsset } from "../helpers/packTester"
+import { app, appThrows, copyTestAsset } from "../helpers/packTester.js"
 import { ToolsetConfig } from "app-builder-lib"
 
 const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = [
@@ -125,7 +125,7 @@ describe.ifWindows("AppX", () => {
               customManifestPath: "custom-template-manifest.xml",
             },
             appxManifestCreated: async filepath => {
-              const fileContent = await readFile(filepath, "utf-8")
+              const fileContent = await fsExtra.readFile(filepath, "utf-8")
               expect(fileContent).toMatchSnapshot()
             },
           },
@@ -140,7 +140,7 @@ describe.ifWindows("AppX", () => {
               customManifestPath: "custom-manifest.xml",
             },
             appxManifestCreated: async filepath => {
-              const fileContent = await readFile(filepath, "utf-8")
+              const fileContent = await fsExtra.readFile(filepath, "utf-8")
               expect(fileContent).toMatchSnapshot()
             },
           },
@@ -157,7 +157,7 @@ describe.ifWindows("AppX", () => {
               capabilities: ["internetClient", "picturesLibrary", "webcam", "screenDuplication", "graphicsCapture", "globalMediaControl"],
             },
             appxManifestCreated: async filepath => {
-              const fileContent = await readFile(filepath, "utf-8")
+              const fileContent = await fsExtra.readFile(filepath, "utf-8")
               console.log("APPX-MANIFEST: " + fileContent)
               expect(fileContent).toContain('<rescap:Capability Name="runFullTrust"/>')
               expect(fileContent).toContain('<Capability Name="internetClient"/>')

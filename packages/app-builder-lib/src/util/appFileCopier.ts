@@ -1,20 +1,20 @@
 import { AsyncTaskManager, FileCopier, FileTransformer, isEmptyOrSpaces, Link, log, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
 import { Stats } from "fs"
-import { ensureSymlink } from "fs-extra"
+import fsExtra from "fs-extra"
 import { mkdir, readlink } from "fs/promises"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
-import { isLibOrExe } from "../asar/unpackDetector"
-import { Platform } from "../core"
-import { excludedExts, FileMatcher } from "../fileMatcher"
-import { createElectronCompilerHost, NODE_MODULES_PATTERN } from "../fileTransformer"
-import { getCollectorByPackageManager, PM } from "../node-module-collector"
-import { LogMessageByKey, logMessageLevelByKey, ModuleManager } from "../node-module-collector/moduleManager"
-import { Packager } from "../packager"
-import { PlatformPackager } from "../platformPackager"
-import { AppFileWalker } from "./AppFileWalker"
-import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper"
-import { NodeModuleInfo } from "./packageDependencies"
+import { isLibOrExe } from "../asar/unpackDetector.js"
+import { Platform } from "../core.js"
+import { excludedExts, FileMatcher } from "../fileMatcher.js"
+import { createElectronCompilerHost, NODE_MODULES_PATTERN } from "../fileTransformer.js"
+import { getCollectorByPackageManager, PM } from "../node-module-collector/index.js"
+import { LogMessageByKey, logMessageLevelByKey, ModuleManager } from "../node-module-collector/moduleManager.js"
+import { Packager } from "../packager.js"
+import { PlatformPackager } from "../platformPackager.js"
+import { AppFileWalker } from "./AppFileWalker.js"
+import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper.js"
+import { NodeModuleInfo } from "./packageDependencies.js"
 
 const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
 /** @internal */
@@ -74,7 +74,7 @@ export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager,
     await taskManager.awaitTasks()
   }
 
-  await asyncPool(MAX_FILE_REQUESTS, links, it => ensureSymlink(it.link, it.file))
+  await asyncPool(MAX_FILE_REQUESTS, links, it => fsExtra.ensureSymlink(it.link, it.file))
 }
 
 // os path separator is used
@@ -295,7 +295,7 @@ async function compileUsingElectronCompile(mainFileSet: ResolvedFileSet, package
     mainFileSet.files.length - 1,
     `
 'use strict';
-require('electron-compile').init(__dirname, require('path').resolve(__dirname, '${packager.metadata.main || "index"}'), true);
+require('electron-compile').init(import.meta.dirname, require('path').resolve(import.meta.dirname, '${packager.metadata.main || "index"}'), true);
 `
   )
   return { src: electronCompileCache, files: cacheFiles, metadata, destination: mainFileSet.destination }

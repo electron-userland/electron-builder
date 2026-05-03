@@ -1,18 +1,19 @@
 import { asArray, copyDir, DO_NOT_USE_HARD_LINKS, executeAppBuilder, isEmptyOrSpaces, log, MAX_FILE_REQUESTS, statOrNull, unlinkIfExists } from "builder-util"
-import { emptyDir, readdir, rename, rm } from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
-import { Configuration } from "../configuration"
-import { BeforeCopyExtraFilesOptions, Framework, PrepareApplicationStageDirectoryOptions } from "../Framework"
-import { Packager, Platform } from "../index"
-import { LinuxPackager } from "../linuxPackager"
-import { MacPackager } from "../macPackager"
-import { getTemplatePath } from "../util/pathManager"
-import { resolveFunction } from "../util/resolve"
-import { createMacApp } from "./electronMac"
-import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
-import { addWinAsarIntegrity } from "./electronWin"
-import injectFFMPEG from "./injectFFMPEG"
+import { Configuration } from "../configuration.js"
+import { BeforeCopyExtraFilesOptions, Framework, PrepareApplicationStageDirectoryOptions } from "../Framework.js"
+import { Platform } from "../core.js"
+import type { Packager } from "../packager.js"
+import type { LinuxPackager } from "../linuxPackager.js"
+import type { MacPackager } from "../macPackager.js"
+import { getTemplatePath } from "../util/pathManager.js"
+import { resolveFunction } from "../util/resolve.js"
+import { createMacApp } from "./electronMac.js"
+import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion.js"
+import { addWinAsarIntegrity } from "./electronWin.js"
+import injectFFMPEG from "./injectFFMPEG.js"
 
 export type ElectronPlatformName = "darwin" | "linux" | "win32" | "mas"
 
@@ -74,10 +75,10 @@ async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
   if (packager.platform === Platform.LINUX) {
     const linuxPackager = packager as LinuxPackager
     const executable = path.join(appOutDir, linuxPackager.executableName)
-    await rename(path.join(appOutDir, electronBranding.projectName), executable)
+    await fsExtra.rename(path.join(appOutDir, electronBranding.projectName), executable)
   } else if (packager.platform === Platform.WINDOWS) {
     const executable = path.join(appOutDir, `${packager.appInfo.productFilename}.exe`)
-    await rename(path.join(appOutDir, `${electronBranding.projectName}.exe`), executable)
+    await fsExtra.rename(path.join(appOutDir, `${electronBranding.projectName}.exe`), executable)
     if (options.asarIntegrity) {
       await addWinAsarIntegrity(executable, options.asarIntegrity)
     }
@@ -108,7 +109,7 @@ async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOption
   const { dirs, langFileExt } = getLocalesConfig()
   // noinspection SpellCheckingInspection
   const deleteNonMatchedLanguages: (dir: string) => Promise<Promise<void>[] | undefined> = async (dir: string) => {
-    const files = await readdir(dir)
+    const files = await fsExtra.readdir(dir)
     return files.map(async file => {
       if (path.extname(file) !== langFileExt) {
         return
@@ -127,7 +128,7 @@ async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOption
       if (isWantedLocale) {
         return undefined
       }
-      return rm(path.join(dir, file), { recursive: true, force: true })
+      return fsExtra.rm(path.join(dir, file), { recursive: true, force: true })
     })
   }
   const allDeletedFiles = (await Promise.all(dirs.map(deleteNonMatchedLanguages))).flat().filter((it): it is Promise<void> => it != null)
@@ -209,7 +210,7 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, d
     const source = packager.getElectronSrcDir(folderPath)
     const destination = packager.getElectronDestinationDir(appOutDir)
     log.info({ source, destination }, "copying unpacked Electron")
-    await emptyDir(appOutDir)
+    await fsExtra.emptyDir(appOutDir)
     await copyDir(source, destination, {
       isUseHardLink: DO_NOT_USE_HARD_LINKS,
     })
@@ -238,7 +239,7 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, d
 
     if (electronDistStats.isDirectory()) {
       // backward compatibility: if electronDist is a directory, check for the default zip file inside it
-      const files = await readdir(resolvedDist)
+      const files = await fsExtra.readdir(resolvedDist)
       if (files.includes(defaultZipName)) {
         log.info({ electronDist: log.filePath(resolvedDist) }, "using custom electronDist directory")
         await downloadUsingAdjustedConfig({
@@ -291,7 +292,7 @@ function cleanupAfterUnpack(prepareOptions: PrepareApplicationStageDirectoryOpti
     isFullCleanup ? unlinkIfExists(path.join(out, "version")) : Promise.resolve(),
     isMac
       ? Promise.resolve()
-      : rename(path.join(out, "LICENSE"), path.join(out, "LICENSE.electron.txt")).catch(() => {
+      : fsExtra.rename(path.join(out, "LICENSE"), path.join(out, "LICENSE.electron.txt")).catch(() => {
           /* ignore */
         }),
   ])

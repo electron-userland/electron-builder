@@ -1,13 +1,16 @@
+import { createRequire } from "node:module"
 import { AllPublishOptions, newError, safeStringifyJson } from "builder-util-runtime"
-import { pathExistsSync, stat, copyFile } from "fs-extra"
+
+const require = createRequire(import.meta.url)
+import fsExtra from "fs-extra"
 import { createReadStream } from "fs"
 import * as path from "path"
 import { createServer, IncomingMessage, Server, ServerResponse } from "http"
-import { AppAdapter } from "./AppAdapter"
-import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater"
-import { ResolvedUpdateFileInfo } from "./main"
-import { UpdateDownloadedEvent } from "./types"
-import { findFile } from "./providers/Provider"
+import { AppAdapter } from "./AppAdapter.js"
+import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater.js"
+import { ResolvedUpdateFileInfo } from "./types.js"
+import { UpdateDownloadedEvent } from "./types.js"
+import { findFile } from "./providers/Provider.js"
 import AutoUpdater = Electron.AutoUpdater
 import { execFileSync } from "child_process"
 import { randomBytes } from "crypto"
@@ -103,7 +106,7 @@ export class MacUpdater extends AppUpdater {
       task: async (destinationFile, downloadOptions) => {
         const cachedUpdateFilePath = path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_MAC_APP_ZIP_FILE_NAME)
         const canDifferentialDownload = () => {
-          if (!pathExistsSync(cachedUpdateFilePath)) {
+          if (!fsExtra.pathExistsSync(cachedUpdateFilePath)) {
             log.info("Unable to locate previous update.zip for differential download (is this first install?), falling back to full download")
             return false
           }
@@ -122,7 +125,7 @@ export class MacUpdater extends AppUpdater {
         if (!downloadUpdateOptions.disableDifferentialDownload) {
           try {
             const cachedUpdateFilePath = path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_MAC_APP_ZIP_FILE_NAME)
-            await copyFile(event.downloadedFile, cachedUpdateFilePath)
+            await fsExtra.copyFile(event.downloadedFile, cachedUpdateFilePath)
           } catch (error: any) {
             this._logger.warn(`Unable to copy file for caching for future differential downloads: ${error.message}`)
           }
@@ -134,7 +137,7 @@ export class MacUpdater extends AppUpdater {
 
   private async updateDownloaded(zipFileInfo: ResolvedUpdateFileInfo, event: UpdateDownloadedEvent): Promise<Array<string>> {
     const downloadedFile = event.downloadedFile
-    const updateFileSize = zipFileInfo.info.size ?? (await stat(downloadedFile)).size
+    const updateFileSize = zipFileInfo.info.size ?? (await fsExtra.stat(downloadedFile)).size
 
     const log = this._logger
     const logContext = `fileToProxy=${zipFileInfo.url.href}`

@@ -1,6 +1,6 @@
-import { createKeychain, removeKeychain } from "app-builder-lib/out/codeSign/macCodeSign"
+import { createKeychain, removeKeychain } from "app-builder-lib/internal"
 import { removePassword, TmpDir } from "builder-util"
-import { MAC_CSC_LINK } from "../helpers/codeSignData"
+import { MAC_CSC_LINK } from "../helpers/codeSignData.js"
 import { afterEach } from "vitest"
 
 describe.ifMac.runIf(MAC_CSC_LINK && process.env.CSC_KEY_PASSWORD)("macos keychain", { sequential: true }, () => {

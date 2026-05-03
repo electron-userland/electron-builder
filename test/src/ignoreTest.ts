@@ -1,9 +1,9 @@
 import { DIR_TARGET, Platform, archFromString } from "electron-builder"
-import { outputFile } from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
-import { assertThat } from "./helpers/fileAssert"
-import { app, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
-import { PM } from "app-builder-lib/out/node-module-collector/packageManager"
+import { assertThat } from "./helpers/fileAssert.js"
+import { app, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
+import { PM } from "app-builder-lib/internal"
 
 const currentProcessTarget = Platform.LINUX.createTarget(DIR_TARGET, archFromString(process.arch))
 
@@ -18,7 +18,7 @@ test.ifNotWindows("ignore build resources", ({ expect }) =>
     },
     {
       projectDirCreated: projectDir => {
-        return outputFile(path.join(projectDir, "one/build/foo.txt"), "data")
+        return fsExtra.outputFile(path.join(projectDir, "one/build/foo.txt"), "data")
       },
       packed: context => {
         return assertThat(expect, path.join(context.getResources(Platform.LINUX), "app", "one", "build", "foo.txt")).isFile()
@@ -47,7 +47,7 @@ test.ifNotWindows("2 ignore", ({ expect }) =>
     },
     {
       projectDirCreated: projectDir => {
-        return outputFile(path.join(projectDir, "electron/foo.txt"), "data")
+        return fsExtra.outputFile(path.join(projectDir, "electron/foo.txt"), "data")
       },
       packed: context => {
         return assertThat(expect, path.join(context.getResources(Platform.LINUX), "app", "electron", "foo.txt")).doesNotExist()
@@ -68,10 +68,10 @@ test.ifNotWindows("ignore known ignored files", ({ expect }) =>
     {
       projectDirCreated: projectDir =>
         Promise.all([
-          outputFile(path.join(projectDir, ".svn", "foo"), "data"),
-          outputFile(path.join(projectDir, ".git", "foo"), "data"),
-          outputFile(path.join(projectDir, "node_modules", ".bin", "f.txt"), "data"),
-          outputFile(path.join(projectDir, "node_modules", ".bin2", "f.txt"), "data"),
+          fsExtra.outputFile(path.join(projectDir, ".svn", "foo"), "data"),
+          fsExtra.outputFile(path.join(projectDir, ".git", "foo"), "data"),
+          fsExtra.outputFile(path.join(projectDir, "node_modules", ".bin", "f.txt"), "data"),
+          fsExtra.outputFile(path.join(projectDir, "node_modules", ".bin2", "f.txt"), "data"),
         ]),
       packed: context => checkDirContents(expect, path.join(context.getResources(Platform.LINUX), "app")),
     }
@@ -128,8 +128,8 @@ test.ifNotWindows("copied sub node_modules of the rootDir/node_modules", ({ expe
               ...data.dependencies,
             }
           }),
-          outputFile(path.join(projectDir, "submodule-1-test", "node_modules", "package.json"), "{}"),
-          outputFile(path.join(projectDir, "others", "node_modules", "package.json"), "{}"),
+          fsExtra.outputFile(path.join(projectDir, "submodule-1-test", "node_modules", "package.json"), "{}"),
+          fsExtra.outputFile(path.join(projectDir, "others", "node_modules", "package.json"), "{}"),
         ])
       },
       packed: context => {
@@ -164,10 +164,10 @@ test.ifNotWindows("Don't copy sub node_modules of the other dir instead of rootD
               ...data.dependencies,
             }
           }),
-          outputFile(path.join(projectDir, "others", "node_modules", "package.json"), "{}"),
-          outputFile(path.join(projectDir, "others", "test1", "package.json"), "{}"),
-          outputFile(path.join(projectDir, "others", "submodule-2-test", "node_modules", "package.json"), "{}"),
-          outputFile(path.join(projectDir, "others", "submodule-2-test", "test2", "package.json"), "{}"),
+          fsExtra.outputFile(path.join(projectDir, "others", "node_modules", "package.json"), "{}"),
+          fsExtra.outputFile(path.join(projectDir, "others", "test1", "package.json"), "{}"),
+          fsExtra.outputFile(path.join(projectDir, "others", "submodule-2-test", "node_modules", "package.json"), "{}"),
+          fsExtra.outputFile(path.join(projectDir, "others", "submodule-2-test", "test2", "package.json"), "{}"),
         ])
       },
       packed: context => {
@@ -205,8 +205,8 @@ test.ifNotWindows("copied select submodule node_modules", ({ expect }) =>
               ...data.dependencies,
             }
           }),
-          outputFile(path.join(projectDir, "submodule-1-test", "node_modules", "package.json"), "{}"),
-          outputFile(path.join(projectDir, "submodule-2-test", "node_modules", "package.json"), "{}"),
+          fsExtra.outputFile(path.join(projectDir, "submodule-1-test", "node_modules", "package.json"), "{}"),
+          fsExtra.outputFile(path.join(projectDir, "submodule-2-test", "node_modules", "package.json"), "{}"),
         ])
       },
       packed: context => {
@@ -238,7 +238,7 @@ test.ifNotWindows("cannot copied select submodule node_modules by */", ({ expect
               ...data.dependencies,
             }
           }),
-          outputFile(path.join(projectDir, "submodule-1-test", "node_modules", "package.json"), "{}"),
+          fsExtra.outputFile(path.join(projectDir, "submodule-1-test", "node_modules", "package.json"), "{}"),
         ])
       },
       packed: context => {
@@ -268,7 +268,7 @@ test.ifNotWindows("cannot copied select submodule node_modules by **/submodule-1
               ...data.dependencies,
             }
           }),
-          outputFile(path.join(projectDir, "submodule-1-test", "node_modules", "package.json"), "{}"),
+          fsExtra.outputFile(path.join(projectDir, "submodule-1-test", "node_modules", "package.json"), "{}"),
         ])
       },
       packed: context => {

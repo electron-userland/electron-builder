@@ -1,6 +1,6 @@
 import { Arch, Platform } from "electron-builder"
 import * as fs from "fs/promises"
-import { app, execShell, getTarExecutable } from "../helpers/packTester"
+import { app, execShell, getTarExecutable } from "../helpers/packTester.js"
 
 const defaultDebTarget = Platform.LINUX.createTarget("deb", Arch.x64)
 

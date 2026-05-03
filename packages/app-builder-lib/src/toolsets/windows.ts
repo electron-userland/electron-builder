@@ -2,10 +2,10 @@ import { Arch, isEmptyOrSpaces, log } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import * as os from "os"
 import * as path from "path"
-import { getBin, getBinFromUrl } from "../binDownload"
-import { ToolsetConfig } from "../configuration"
-import { ToolInfo, computeToolEnv } from "../util/bundledTool"
-import { isUseSystemSigncode } from "../util/flags"
+import { getBin, getBinFromUrl } from "../binDownload.js"
+import { ToolsetConfig } from "../configuration.js"
+import { ToolInfo, computeToolEnv } from "../util/bundledTool.js"
+import { isUseSystemSigncode } from "../util/flags.js"
 
 export const wincodesignChecksums = {
   "0.0.0": {

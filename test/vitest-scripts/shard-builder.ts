@@ -1,6 +1,6 @@
 import * as path from "path"
-import { loadCache } from "./cache"
-import { DEFAULT_FILE_MS, SAFEGUARD_MAX_SHARDS, SupportedPlatforms, TARGET_MS, TargetPlatform } from "./smart-config"
+import { loadCache } from "./cache.js"
+import { DEFAULT_FILE_MS, SAFEGUARD_MAX_SHARDS, SupportedPlatforms, TARGET_MS, TargetPlatform } from "./smart-config.js"
 
 export interface WeightedFile {
   filename: string

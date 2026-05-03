@@ -1,11 +1,11 @@
 import { NodeHttpExecutor, serializeToYaml, TmpDir } from "builder-util"
 import { AllPublishOptions, DownloadOptions } from "builder-util-runtime"
 import { AppUpdater, MacUpdater, NsisUpdater } from "electron-updater"
-import { NoOpLogger, TestOnlyUpdaterOptions } from "electron-updater/out/AppUpdater"
-import { outputFile, writeFile } from "fs-extra"
+import { NoOpLogger, TestOnlyUpdaterOptions } from "electron-updater/internal"
+import fsExtra from "fs-extra"
 import * as path from "path"
-import { assertThat } from "./fileAssert"
-import { TestAppAdapter } from "./TestAppAdapter"
+import { assertThat } from "./fileAssert.js"
+import { TestAppAdapter } from "./TestAppAdapter.js"
 import { ExpectStatic } from "vitest"
 
 const tmpDir = new TmpDir("updater-test-util")
@@ -24,7 +24,7 @@ export async function createNsisUpdater(version = "0.0.1") {
 // to reduce difference in test mode, setFeedURL is not used to set (NsisUpdater also read configOnDisk to load original publisherName)
 export async function writeUpdateConfig<T extends AllPublishOptions>(data: T): Promise<string> {
   const updateConfigPath = path.join(await tmpDir.getTempDir({ prefix: "test-update-config" }), "app-update.yml")
-  await outputFile(updateConfigPath, serializeToYaml(data))
+  await fsExtra.outputFile(updateConfigPath, serializeToYaml(data))
   return updateConfigPath
 }
 
@@ -62,7 +62,7 @@ export class TestNodeHttpExecutor extends NodeHttpExecutor {
   async download(url: string, destination: string, options: DownloadOptions): Promise<string> {
     const obj = new URL(url)
     const buffer = await this.downloadToBuffer(obj, options)
-    await writeFile(destination, buffer)
+    await fsExtra.writeFile(destination, buffer)
     return buffer.toString()
   }
 }

@@ -1,4 +1,4 @@
-import { getCompleteExtname } from "builder-util/out/filename"
+import { getCompleteExtname } from "builder-util/internal"
 
 // [inputFilename, expectedExtname]
 const tests = [

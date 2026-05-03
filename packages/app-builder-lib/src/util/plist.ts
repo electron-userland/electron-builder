@@ -1,4 +1,4 @@
-import { build, parse } from "plist"
+import * as plist_1 from "plist"
 import * as fs from "fs/promises"
 
 type PlistValue = string | number | boolean | Date | PlistObject | PlistValue[]
@@ -27,13 +27,13 @@ function sortObjectKeys(obj: PlistValue): PlistValue {
 
 export async function savePlistFile(path: string, data: PlistValue): Promise<void> {
   const sortedData = sortObjectKeys(data)
-  const plist = build(sortedData)
+  const plist = plist_1.build(sortedData)
   await fs.writeFile(path, plist)
 }
 
 export async function parsePlistFile<T>(file: string): Promise<T> {
   const data = await fs.readFile(file, "utf8")
-  return parse(data) as T
+  return plist_1.parse(data) as T
 }
 
 export type { PlistValue, PlistObject }

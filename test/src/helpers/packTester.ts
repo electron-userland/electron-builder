@@ -1,35 +1,28 @@
 import { PublishManager } from "app-builder-lib"
-import { verifyAsarFileTree as _verifyAsarFileTree } from "./asarVerifier"
-import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetFactory"
-import { getLinuxToolsPath } from "app-builder-lib/out/toolsets/linux"
-import { parsePlistFile, PlistObject } from "app-builder-lib/out/util/plist"
-import { AsarIntegrity } from "app-builder-lib/out/asar/integrity"
+import { computeArchToTargetNamesMap, getLinuxToolsPath, parsePlistFile, PlistObject, AsarIntegrity } from "app-builder-lib/internal"
+import { verifyAsarFileTree as _verifyAsarFileTree } from "./asarVerifier.js"
 import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, log, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { convertVersion } from "electron-winstaller"
 import { PublishPolicy } from "electron-publish"
-import { copyFile, emptyDir, mkdir, writeJson } from "fs-extra"
+import fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
 import pathSorter from "path-sort"
 import { NtExecutable, NtExecutableResource } from "resedit"
 import { TmpDir } from "temp-file"
-import { getCollectorByPackageManager, PM } from "app-builder-lib/out/node-module-collector"
+import { getCollectorByPackageManager, PM, computeDefaultAppDirectory, installDependencies, createLazyProductionDeps, detectPackageManager } from "app-builder-lib/internal"
 import { promisify } from "util"
-import { MAC_CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
-import { assertThat } from "./fileAssert"
+import { MAC_CSC_LINK, WIN_CSC_LINK } from "./codeSignData.js"
+import { assertThat } from "./fileAssert.js"
 import AdmZip from "adm-zip"
-// @ts-ignore
 import sanitizeFileName from "sanitize-filename"
 import type { ExpectStatic } from "vitest"
-import { computeDefaultAppDirectory } from "app-builder-lib/out/util/config/config"
-import { installDependencies } from "app-builder-lib/out/util/yarn"
-import { ELECTRON_VERSION } from "./testConfig"
-import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
-import { execSync } from "child_process"
-import { detectPackageManager } from "app-builder-lib/out/node-module-collector/packageManager"
+import { ELECTRON_VERSION } from "./testConfig.js"
+import { exec as execCallback, execSync } from "child_process"
+
 
 const PACKAGE_MANAGER_VERSION_MAP = {
   [PM.NPM]: { cli: "npm", version: "9.8.1" },
@@ -148,20 +141,20 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
     packagerOptions = deepAssign({}, packagerOptions, { config: { mac: { identity: null } } })
   }
 
-  let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
+  let projectDir = path.join(import.meta.dirname, "..", "..", "fixtures", fixtureName)
   // const isDoNotUseTempDir = platform === "darwin"
   const customTmpDir = process.env.TEST_APP_TMP_DIR
   const tmpDir = checkOptions.tmpDir || new TmpDir(`pack-tester: ${fixtureName}`)
   // non-macOS test uses the same dir as macOS test, but we cannot share node_modules (because tests executed in parallel)
   const dir = customTmpDir == null ? await tmpDir.createTempDir({ prefix: "test_project" }) : path.resolve(customTmpDir)
   if (customTmpDir != null) {
-    await emptyDir(dir)
+    await fsExtra.emptyDir(dir)
     log.info({ customTmpDir }, "custom temp dir used")
   }
 
   const state = expect.getState()
   const lockfileFixtureName = path.basename(state.testPath!, path.extname(state.testPath!))
-  const lockfilePathPrefix = path.join(__dirname, "..", "..", "fixtures", "lockfiles", lockfileFixtureName)
+  const lockfilePathPrefix = path.join(import.meta.dirname, "..", "..", "fixtures", "lockfiles", lockfileFixtureName)
   const lockfileFixtureNameCandidates = getLockfileFixtureNameCandidates(state.currentTestName || "")
   if (lockfileFixtureNameCandidates.length === 0) {
     lockfileFixtureNameCandidates.push("unknown-test")
@@ -242,7 +235,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       const shouldUpdateLockfiles = !!process.env.UPDATE_LOCKFILE_FIXTURES && !!checkOptions.storeDepsLockfileSnapshot
       // check for lockfile fixture so we can use `--frozen-lockfile`
       if ((await exists(testFixtureLockfile)) && !shouldUpdateLockfiles) {
-        await copyFile(testFixtureLockfile, destLockfile)
+        await fsExtra.copyFile(testFixtureLockfile, destLockfile)
         lockfileFixtureApplied = true
       }
 
@@ -277,9 +270,9 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       if (shouldUpdateLockfiles) {
         const fixtureDir = path.dirname(testFixtureLockfile)
         if (!(await exists(fixtureDir))) {
-          await mkdir(fixtureDir)
+          await fsExtra.mkdir(fixtureDir)
         }
-        await copyFile(destLockfile, testFixtureLockfile)
+        await fsExtra.copyFile(destLockfile, testFixtureLockfile)
       }
 
       if (packagerOptions.projectDir != null) {
@@ -328,7 +321,7 @@ export function copyTestAsset(name: string, destination: string): Promise<void> 
 }
 
 export function getFixtureDir() {
-  return path.join(__dirname, "..", "..", "fixtures")
+  return path.join(import.meta.dirname, "..", "..", "fixtures")
 }
 
 /**
@@ -721,7 +714,7 @@ const checkResult = (expect: ExpectStatic, artifacts: Array<ArtifactCreated>, ex
   return { packageFile, zip, allFiles }
 }
 
-export const execShell: any = promisify(require("child_process").exec)
+export const execShell: any = promisify(execCallback)
 
 export async function getTarExecutable() {
   return process.platform === "darwin" ? path.join(await getLinuxToolsPath(), "bin", "gtar") : "tar"
@@ -758,7 +751,7 @@ export async function modifyPackageJson(projectDir: string, task: (data: any) =>
   await fs.unlink(file)
 
   await fs.writeFile(path.join(projectDir, ".yarnrc.yml"), "nodeLinker: node-modules")
-  return await writeJson(file, data, { spaces: 2 })
+  return await fsExtra.writeJson(file, data, { spaces: 2 })
 }
 
 export function platform(platform: Platform): PackagerOptions {

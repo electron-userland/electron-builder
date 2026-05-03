@@ -1,8 +1,11 @@
+import { createRequire } from "node:module"
 import { debug, deepAssign, FileTransformer, log } from "builder-util"
+
+const require = createRequire(import.meta.url)
 import { readFile } from "fs/promises"
 import * as path from "path"
-import { Configuration } from "./configuration"
-import { Packager } from "./packager"
+import { Configuration } from "./configuration.js"
+import { Packager } from "./packager.js"
 
 /** @internal */
 export const NODE_MODULES_PATTERN = `${path.sep}node_modules${path.sep}`

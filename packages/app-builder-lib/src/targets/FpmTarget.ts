@@ -1,22 +1,22 @@
 import { Arch, asArray, exec, getArchSuffix, log, serializeToYaml, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
 import { Nullish } from "builder-util-runtime"
-import { copyFile, outputFile, stat } from "fs-extra"
+import fsExtra from "fs-extra"
 import { mkdir, readFile } from "fs/promises"
 import * as path from "path"
-import { smarten } from "../appInfo"
-import { Target } from "../core"
-import * as errorMessages from "../errorMessages"
-import { LinuxPackager } from "../linuxPackager"
-import { DebOptions, LinuxTargetSpecificOptions } from "../options/linuxOptions"
-import { ArtifactCreated } from "../packagerApi"
-import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
-import { objectToArgs } from "../util/appBuilder"
-import { computeEnv } from "../util/bundledTool"
-import { hashFile } from "../util/hash"
-import { isMacOsSierra } from "../util/macosVersion"
-import { getTemplatePath } from "../util/pathManager"
-import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper"
-import { getFpmPath, getLinuxToolsPath } from "../toolsets/linux"
+import { smarten } from "../appInfo.js"
+import { Target } from "../core.js"
+import * as errorMessages from "../errorMessages.js"
+import { LinuxPackager } from "../linuxPackager.js"
+import { DebOptions, LinuxTargetSpecificOptions } from "../options/linuxOptions.js"
+import { ArtifactCreated } from "../packagerApi.js"
+import { getAppUpdatePublishConfiguration } from "../publish/PublishManager.js"
+import { objectToArgs } from "../util/appBuilder.js"
+import { computeEnv } from "../util/bundledTool.js"
+import { hashFile } from "../util/hash.js"
+import { isMacOsSierra } from "../util/macosVersion.js"
+import { getTemplatePath } from "../util/pathManager.js"
+import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper.js"
+import { getFpmPath, getLinuxToolsPath } from "../toolsets/linux.js"
 
 interface FpmOptions {
   name: string
@@ -32,7 +32,7 @@ interface ScriptFiles {
 }
 
 export default class FpmTarget extends Target {
-  readonly options: LinuxTargetSpecificOptions = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
+  readonly options: LinuxTargetSpecificOptions
 
   private readonly scriptFiles: Promise<ScriptFiles>
 
@@ -43,7 +43,7 @@ export default class FpmTarget extends Target {
     readonly outDir: string
   ) {
     super(name, false)
-
+    this.options = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
     this.scriptFiles = this.createScripts()
   }
 
@@ -144,16 +144,16 @@ export default class FpmTarget extends Target {
       : null
     if (publishConfig != null) {
       log.info({ resourceDir: log.filePath(resourceDir) }, `adding autoupdate files for: ${target}`)
-      await outputFile(path.join(resourceDir, "app-update.yml"), serializeToYaml(publishConfig))
+      await fsExtra.outputFile(path.join(resourceDir, "app-update.yml"), serializeToYaml(publishConfig))
       // Extra file needed for auto-updater to detect installation method
-      await outputFile(path.join(resourceDir, "package-type"), target)
+      await fsExtra.outputFile(path.join(resourceDir, "package-type"), target)
     }
 
     const scripts = await this.scriptFiles
 
     // Install AppArmor support for ubuntu 24+
     // https://github.com/electron-userland/electron-builder/issues/8635
-    await copyFile(scripts.appArmor, path.join(resourceDir, "apparmor-profile"))
+    await fsExtra.copyFile(scripts.appArmor, path.join(resourceDir, "apparmor-profile"))
 
     const appInfo = packager.appInfo
     const options = this.options
@@ -280,7 +280,7 @@ export default class FpmTarget extends Target {
         isWriteUpdateInfo: true,
         updateInfo: {
           sha512: await hashFile(artifactPath),
-          size: (await stat(artifactPath)).size,
+          size: (await fsExtra.stat(artifactPath)).size,
         },
       }
     }
@@ -411,6 +411,6 @@ async function writeConfigFile(tmpDir: TmpDir, templatePath: string, options: an
   })
 
   const outputPath = await tmpDir.getTempFile({ suffix: path.basename(templatePath, ".tpl") })
-  await outputFile(outputPath, config)
+  await fsExtra.outputFile(outputPath, config)
   return outputPath
 }

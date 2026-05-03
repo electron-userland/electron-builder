@@ -1,17 +1,17 @@
 import asyncPool from "tiny-async-pool"
 import { Arch, log, safeStringifyJson, serializeToYaml } from "builder-util"
 import { GenericServerOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
-import { outputFile, outputJson, readFile } from "fs-extra"
+import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import * as semver from "semver"
-import { Platform } from "../core"
-import { ReleaseInfo } from "../options/PlatformSpecificBuildOptions"
-import { Packager } from "../packager"
-import { ArtifactCreated } from "../packagerApi"
-import { PlatformPackager } from "../platformPackager"
-import { hashFile } from "../util/hash"
-import { computeDownloadUrl, getPublishConfigsForUpdateInfo } from "./PublishManager"
+import { Platform } from "../core.js"
+import { ReleaseInfo } from "../options/PlatformSpecificBuildOptions.js"
+import { Packager } from "../packager.js"
+import { ArtifactCreated } from "../packagerApi.js"
+import { PlatformPackager } from "../platformPackager.js"
+import { hashFile } from "../util/hash.js"
+import { computeDownloadUrl, getPublishConfigsForUpdateInfo } from "./PublishManager.js"
 
 async function getReleaseInfo(packager: PlatformPackager<any>) {
   const releaseInfo: ReleaseInfo = { ...(packager.platformSpecificBuildOptions.releaseInfo || packager.config.releaseInfo) }
@@ -23,7 +23,7 @@ async function getReleaseInfo(packager: PlatformPackager<any>) {
       `release-notes-${packager.platform.nodeName}.md`,
       "release-notes.md"
     )
-    const releaseNotes = releaseNotesFile == null ? null : await readFile(releaseNotesFile, "utf-8")
+    const releaseNotes = releaseNotesFile == null ? null : await fsExtra.readFile(releaseNotesFile, "utf-8")
     // to avoid undefined in the file, check for null
     if (releaseNotes != null) {
       releaseInfo.releaseNotes = releaseNotes
@@ -227,7 +227,7 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
     }
 
     const fileContent = Buffer.from(serializeToYaml(task.info, false, true))
-    await outputFile(task.file, fileContent)
+    await fsExtra.outputFile(task.file, fileContent)
     await packager.emitArtifactCreated({
       file: task.file,
       fileContent,
@@ -253,7 +253,7 @@ async function writeOldMacInfo(
   const updateInfoFile = isGitHub && outDir === dir ? path.join(dir, "github", `${channel}-mac.json`) : path.join(dir, `${channel}-mac.json`)
   if (!createdFiles.has(updateInfoFile)) {
     createdFiles.add(updateInfoFile)
-    await outputJson(
+    await fsExtra.outputJson(
       updateInfoFile,
       {
         version,

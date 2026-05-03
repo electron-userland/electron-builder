@@ -18,26 +18,26 @@ import {
 import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, PackageFileInfo, UUID } from "builder-util-runtime"
 import _debug from "debug"
 import * as fs from "fs"
-import { readFile, stat, unlink } from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
-import { Target } from "../../core"
-import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../options/CommonWindowsInstallerConfiguration"
-import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt } from "../../platformPackager"
-import { hashFile } from "../../util/hash"
-import { isMacOsCatalina } from "../../util/macosVersion"
-import { time } from "../../util/timer"
-import { execWine } from "../../wine"
-import { WinPackager } from "../../winPackager"
-import { archive, ArchiveOptions } from "../archive"
-import { appendBlockmap, configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../differentialUpdateInfoBuilder"
-import { getWindowsInstallationAppPackageName, getWindowsInstallationDirName } from "../targetUtil"
-import { Commands } from "./Commands"
-import { Defines } from "./Defines"
-import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } from "./nsisLang"
-import { computeLicensePage } from "./nsisLicense"
-import { NsisOptions, PortableOptions } from "./nsisOptions"
-import { NsisScriptGenerator } from "./nsisScriptGenerator"
-import { AppPackageHelper, NSIS_PATH, NSIS_RESOURCES_PATH, NsisTargetOptions, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
+import { Target } from "../../core.js"
+import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../options/CommonWindowsInstallerConfiguration.js"
+import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt } from "../../platformPackager.js"
+import { hashFile } from "../../util/hash.js"
+import { isMacOsCatalina } from "../../util/macosVersion.js"
+import { time } from "../../util/timer.js"
+import { execWine } from "../../wine.js"
+import { WinPackager } from "../../winPackager.js"
+import { archive, ArchiveOptions } from "../archive.js"
+import { appendBlockmap, configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../differentialUpdateInfoBuilder.js"
+import { getWindowsInstallationAppPackageName, getWindowsInstallationDirName } from "../targetUtil.js"
+import { Commands } from "./Commands.js"
+import { Defines } from "./Defines.js"
+import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } from "./nsisLang.js"
+import { computeLicensePage } from "./nsisLicense.js"
+import { NsisOptions, PortableOptions } from "./nsisOptions.js"
+import { NsisScriptGenerator } from "./nsisScriptGenerator.js"
+import { AppPackageHelper, NSIS_PATH, NSIS_RESOURCES_PATH, NsisTargetOptions, nsisTemplatesDir, UninstallerReader } from "./nsisUtil.js"
 
 const debug = _debug("electron-builder:nsis")
 
@@ -352,14 +352,14 @@ export class NsisTarget extends Target {
     this.buildQueueManager.add(async () => {
       const sharedHeader = await this.computeCommonInstallerScriptHeader()
       const script = isPortable
-        ? await readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8")
+        ? await fsExtra.readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8")
         : await this.computeScriptAndSignUninstaller(definesUninstaller, commandsUninstaller, installerPath, sharedHeader, archs)
 
       // copy outfile name into main options, as the computeScriptAndSignUninstaller function was kind enough to add important data to temporary defines.
       defines.UNINSTALLER_OUT_FILE = definesUninstaller.UNINSTALLER_OUT_FILE
 
       await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(script, true, archs)))
-      await Promise.all<any>([packager.signIf(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
+      await Promise.all<any>([packager.signIf(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : fsExtra.unlink(defines.UNINSTALLER_OUT_FILE)])
 
       const safeArtifactName = computeSafeArtifactNameIfNeeded(installerFilename, () => this.generateGitHubInstallerName(primaryArch, defaultArch))
       let updateInfo: any
@@ -403,7 +403,7 @@ export class NsisTarget extends Target {
   private async computeScriptAndSignUninstaller(defines: Defines, commands: Commands, installerPath: string, sharedHeader: string, archs: Map<Arch, string>): Promise<string> {
     const packager = this.packager
     const customScriptPath = await packager.getResource(this.options.script, "installer.nsi")
-    const script = await readFile(customScriptPath || path.join(nsisTemplatesDir, "installer.nsi"), "utf8")
+    const script = await fsExtra.readFile(customScriptPath || path.join(nsisTemplatesDir, "installer.nsi"), "utf8")
 
     if (customScriptPath != null) {
       log.info({ reason: "custom NSIS script is used" }, "uninstaller is not signed by electron-builder")
@@ -821,7 +821,7 @@ async function ensureNotBusy(outFile: string): Promise<void> {
 async function createPackageFileInfo(file: string): Promise<PackageFileInfo> {
   return {
     path: file,
-    size: (await stat(file)).size,
+    size: (await fsExtra.stat(file)).size,
     sha512: await hashFile(file),
   }
 }

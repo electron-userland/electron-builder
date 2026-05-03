@@ -1,18 +1,21 @@
+import { createRequire } from "node:module"
 import { checkBuildRequestOptions } from "app-builder-lib"
-import { doMergeConfigs } from "app-builder-lib/out/util/config/config"
+import { doMergeConfigs } from "app-builder-lib/internal"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
-import { createYargs } from "electron-builder/out/builder"
+import { createYargs } from "electron-builder/internal"
 import { promises as fs } from "fs"
-import { outputFile, outputJson } from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
-import { app, appTwo, appTwoThrows, assertPack, getFixtureDir, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
-import { ELECTRON_VERSION } from "./helpers/testConfig"
-import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
-import { PM } from "app-builder-lib/out/node-module-collector/packageManager"
+import { app, appTwo, appTwoThrows, assertPack, getFixtureDir, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester.js"
+import { ELECTRON_VERSION } from "./helpers/testConfig.js"
+import { verifySmartUnpack } from "./helpers/verifySmartUnpack.js"
+import { PM } from "app-builder-lib/internal"
+
+const require = createRequire(import.meta.url)
 
 test.ifLinux("cli", ({ expect }) => {
   // because these methods are internal
-  const { configureBuildCommand, normalizeOptions } = require("electron-builder/out/builder")
+  const { configureBuildCommand, normalizeOptions } = require("electron-builder/internal")
   const yargs = createYargs()
   configureBuildCommand(yargs)
 
@@ -161,7 +164,7 @@ it.ifNotWindows("electron version from electron-prebuilt dependency", ({ expect 
           data.devDependencies = {}
         })
         return () =>
-          outputJson(path.join(projectDir, "node_modules", "electron-prebuilt", "package.json"), {
+          fsExtra.outputJson(path.join(projectDir, "node_modules", "electron-prebuilt", "package.json"), {
             version: ELECTRON_VERSION,
           })
       },
@@ -182,7 +185,7 @@ test.ifNotWindows("electron version from electron dependency", ({ expect }) =>
           data.devDependencies = {}
         })
         return () =>
-          outputJson(path.join(projectDir, "node_modules", "electron", "package.json"), {
+          fsExtra.outputJson(path.join(projectDir, "node_modules", "electron", "package.json"), {
             version: ELECTRON_VERSION,
           })
       },
@@ -399,8 +402,8 @@ test("smart unpack local module with dll file", ({ expect }) => {
       projectDirCreated: async (projectDir, tmpDir) => {
         const tmpPath = await tmpDir.getTempDir()
         const localPath = path.join(tmpPath, "foo")
-        await outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}`)
-        await outputFile(path.join(localPath, "test.dll"), `test`)
+        await fsExtra.outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}`)
+        await fsExtra.outputFile(path.join(localPath, "test.dll"), `test`)
         await modifyPackageJson(projectDir, data => {
           data.dependencies = {
             debug: "3.1.0",

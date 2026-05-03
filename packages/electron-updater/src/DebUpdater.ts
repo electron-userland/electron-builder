@@ -1,10 +1,10 @@
 import { AllPublishOptions } from "builder-util-runtime"
-import { AppAdapter } from "./AppAdapter"
-import { DownloadUpdateOptions } from "./AppUpdater"
-import { InstallOptions } from "./BaseUpdater"
-import { findFile } from "./providers/Provider"
-import { DOWNLOAD_PROGRESS, Logger } from "./types"
-import { LinuxUpdater } from "./LinuxUpdater"
+import { AppAdapter } from "./AppAdapter.js"
+import { DownloadUpdateOptions } from "./AppUpdater.js"
+import { InstallOptions } from "./BaseUpdater.js"
+import { findFile } from "./providers/Provider.js"
+import { DOWNLOAD_PROGRESS, Logger } from "./types.js"
+import { LinuxUpdater } from "./LinuxUpdater.js"
 
 export class DebUpdater extends LinuxUpdater {
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {

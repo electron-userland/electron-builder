@@ -1,11 +1,11 @@
 import { PlatformPackager } from "app-builder-lib"
-import { getLicenseAssets } from "app-builder-lib/out/util/license"
+import { getLicenseAssets } from "app-builder-lib/internal"
 import { log } from "builder-util"
-import { readFile } from "fs-extra"
+import fsExtra from "fs-extra"
 import * as iconv from "iconv-lite"
 import { load } from "js-yaml"
-import { serializeString } from "./dmgUtil"
-import { getDefaultButtons } from "./licenseDefaultButtons"
+import { serializeString } from "./dmgUtil.js"
+import { getDefaultButtons } from "./licenseDefaultButtons.js"
 
 export async function getLicenseButtonsFile(packager: PlatformPackager<any>): Promise<Array<LicenseButtonsFile>> {
   return getLicenseAssets(
@@ -34,7 +34,7 @@ export async function getLicenseButtons(licenseButtonFiles: Array<LicenseButtons
     }
 
     try {
-      const fileData = load(await readFile(item.file, "utf-8")) as any
+      const fileData = load(await fsExtra.readFile(item.file, "utf-8")) as any
       const buttonsStr =
         labelToHex(fileData.lang, item.lang, item.langWithRegion) +
         labelToHex(fileData.agree, item.lang, item.langWithRegion) +
