@@ -47,7 +47,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
   for (let i = options.start; i < options.end; i++) {
     const task = options.tasks[i]
     if (task.kind === OperationKind.DOWNLOAD) {
-      ranges += `${task.start}-${task.end - 1}, `
+      ranges += `${task.start}-${task.end - 1},`
       partIndexToTaskIndex.set(partCount, i)
       partCount++
       partIndexToLength.push(task.end - task.start)
