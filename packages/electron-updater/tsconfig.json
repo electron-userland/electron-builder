@@ -4,8 +4,6 @@
     "outDir": "out",
     "rootDir": "src"
   },
-  "files": [
-  ],
   "include": [
     "src/**/*.ts"
   ]

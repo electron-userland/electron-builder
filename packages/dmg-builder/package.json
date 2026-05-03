@@ -34,5 +34,5 @@
 		"@types/js-yaml": "4.0.3",
 		"temp-file": "3.4.0"
 	},
-	"typings": "./out/dmg.d.ts"
+	"types": "./out/dmg.d.ts"
 }

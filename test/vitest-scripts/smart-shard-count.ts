@@ -1,5 +1,3 @@
-#!/usr/bin/env ts-node
-
 import { getAllTestFiles } from "./file-discovery.js"
 import { buildWeightedFiles, computeShardCount } from "./shard-builder.js"
 import { TargetPlatform } from "./smart-config.js"

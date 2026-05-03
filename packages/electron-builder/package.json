@@ -71,7 +71,7 @@
     "@types/fs-extra": "9.0.13",
     "@types/yargs": "^17.0.16"
   },
-  "typings": "./out/index.d.ts",
+  "types": "./out/index.d.ts",
   "publishConfig": {
     "tag": "next"
   }

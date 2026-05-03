@@ -12,7 +12,6 @@
     "inlineSources": true,
     "sourceMap": true,
 
-    "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
 
     "newLine": "lf",

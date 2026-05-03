@@ -13,7 +13,6 @@
     }
   ],
   "include": [
-    "src/**/*.ts",
-    "../../typings/mime.d.ts"
+    "src/**/*.ts"
   ]
 }

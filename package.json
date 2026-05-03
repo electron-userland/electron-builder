@@ -55,7 +55,6 @@
     "fs-extra": "^11.3.4",
     "is-ci": "^4.1.0",
     "prettier": "3.7.4",
-    "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
     "typedoc": "^0.26.7",
     "typedoc-plugin-markdown": "4.2.8",

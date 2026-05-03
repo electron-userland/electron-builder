@@ -4,7 +4,8 @@
     "rootDir": ".",
     "outDir": "out",
     "skipLibCheck": true,
-    "baseUrl": "../packages"
+    "baseUrl": "../packages",
+    "declaration": false
   },
   "references": [
     {
@@ -26,14 +27,11 @@
       "path": "../packages/electron-publish"
     }
   ],
-  "declaration": false,
   "include": [
     "../typings/*.d.ts",
     "typings/*.d.ts",
     "src/**/*.ts",
     "vitest-scripts/*.ts"
    ],
-  "types": ["vitest/globals"],
-  "exclude": [
-  ]
+  "types": ["vitest/globals"]
 }

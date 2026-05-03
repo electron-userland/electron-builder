@@ -8,8 +8,6 @@
       "src/**/*.ts",
       "../../typings/*.d.ts"
   ],
-  "exclude": [
-  ],
   "references": [
     {
       "path": "../builder-util"

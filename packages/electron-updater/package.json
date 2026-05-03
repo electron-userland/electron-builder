@@ -37,7 +37,7 @@
     "@types/semver": "7.7.1",
     "electron": "35.7.5"
   },
-  "typings": "./out/main.d.ts",
+  "types": "./out/main.d.ts",
   "publishConfig": {
     "tag": "next"
   },
