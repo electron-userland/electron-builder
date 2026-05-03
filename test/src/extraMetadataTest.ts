@@ -59,7 +59,7 @@ test("extra metadata (no asar)", ({ expect }) => createExtraMetadataTest(expect,
 
 test("cli", ({ expect }) => {
   // because these methods are internal
-  const { configureBuildCommand, normalizeOptions } = require("electron-builder")
+  const { configureBuildCommand, normalizeOptions } = require("electron-builder/internal")
   const yargs = require("yargs")
     .strict()
     .fail((message: string, error: Error | null) => {
