@@ -292,7 +292,9 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     for (const d of dependencies.values()) {
       const reference = [...d.references][0]
       const key = `${d.name}@${reference}`
-      const p = this.allDependencies.get(key)?.path
+      // Normalize the path to handle mixed separators from pnpm JSON output on Windows
+      const rawPath = this.allDependencies.get(key)?.path
+      const p = rawPath != null ? path.normalize(rawPath) : undefined
       if (p === undefined) {
         this.cache.logSummary[LogMessageByKey.PKG_NOT_FOUND].push(key)
         continue

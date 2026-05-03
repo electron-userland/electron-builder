@@ -13,6 +13,19 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     return ["list", "--prod", "--json", "--depth", "Infinity", "--silent", "--loglevel=error"]
   }
 
+  /**
+   * Locate a package version, preferring the dep's own reported path before falling back to rootDir.
+   * This is critical for pnpm non-hoisted (virtual store) setups where each package has its own
+   * nested node_modules. Searching only from rootDir can resolve the wrong version when multiple
+   * versions of a dep exist in the workspace.
+   */
+  private async locateFromDepOrRoot(pkgName: string, parentPath: string | undefined, requiredRange?: string) {
+    return (
+      (parentPath ? await this.cache.locatePackageVersion({ pkgName, parentDir: parentPath, requiredRange }) : null) ||
+      (await this.cache.locatePackageVersion({ pkgName, parentDir: this.rootDir, requiredRange }))
+    )
+  }
+
   protected async extractProductionDependencyGraph(tree: PnpmDependency, dependencyId: string) {
     if (this.productionGraph[dependencyId]) {
       return
@@ -31,7 +44,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     }
 
     const packageName = tree.name || tree.from
-    const { packageJson } = (await this.cache.locatePackageVersion({ pkgName: packageName, parentDir: this.rootDir, requiredRange: tree.version })) || {}
+    const { packageJson } = (await this.locateFromDepOrRoot(packageName, tree.path, tree.version)) || {}
 
     const all = packageJson ? { ...packageJson.dependencies, ...packageJson.optionalDependencies } : { ...tree.dependencies, ...tree.optionalDependencies }
     const optional = packageJson ? { ...packageJson.optionalDependencies } : {}
@@ -46,7 +59,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
 
       // Then check if optional dependency path exists (using actual resolved path)
       if (optional[packageName]) {
-        const pkg = await this.cache.locatePackageVersion({ pkgName: packageName, parentDir: this.rootDir, requiredRange: dependency.version })
+        const pkg = await this.locateFromDepOrRoot(packageName, tree.path, dependency.version)
         if (!pkg) {
           this.cache.logSummary[LogMessageByKey.PKG_OPTIONAL_NOT_INSTALLED].push(`${packageName}@${dependency.version}`)
           return undefined
@@ -73,7 +86,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       if ((value?.dedupedDependenciesCount ?? 0) > 0) {
         continue
       }
-      const pkg = await this.cache.locatePackageVersion({ pkgName: key, parentDir: this.rootDir, requiredRange: value.version })
+      const pkg = await this.locateFromDepOrRoot(key, value.path, value.version)
       this.allDependencies.set(`${key}@${value.version}`, { ...value, path: pkg?.packageDir ?? value.path })
       await this.collectAllDependencies(value)
     }
@@ -83,7 +96,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       if ((value?.dedupedDependenciesCount ?? 0) > 0) {
         continue
       }
-      const pkg = await this.cache.locatePackageVersion({ pkgName: key, parentDir: this.rootDir, requiredRange: value.version })
+      const pkg = await this.locateFromDepOrRoot(key, value.path, value.version)
       this.allDependencies.set(`${key}@${value.version}`, { ...value, path: pkg?.packageDir ?? value.path })
       await this.collectAllDependencies(value)
     }
