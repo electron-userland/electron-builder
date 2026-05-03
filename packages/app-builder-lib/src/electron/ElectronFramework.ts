@@ -12,7 +12,7 @@ import { resolveFunction } from "../util/resolve"
 import { createMacApp } from "./electronMac"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
 import { addWinAsarIntegrity } from "./electronWin"
-import injectFFMPEG from "./injectFFMPEG"
+import { FFMPEGInjector } from "./injectFFMPEG"
 
 export type ElectronPlatformName = "darwin" | "linux" | "win32" | "mas"
 
@@ -168,7 +168,8 @@ class ElectronFramework implements Framework {
     const shouldCleanup = await unpack(options, downloadOptions, this.distMacOsAppName)
     await cleanupAfterUnpack(options, this.distMacOsAppName, shouldCleanup)
     if (options.packager.config.downloadAlternateFFmpeg) {
-      await injectFFMPEG(options, this.version)
+      const injector = new FFMPEGInjector(null, options, this.version, createBrandingOpts(options.packager.config))
+      await injector.inject()
     }
   }
 
