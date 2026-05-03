@@ -1,4 +1,5 @@
-import { PlatformSpecificBuildOptions, TargetConfiguration, TargetSpecificOptions } from "../index.js"
+import { TargetConfiguration, TargetSpecificOptions } from "../core.js"
+import { PlatformSpecificBuildOptions } from "./PlatformSpecificBuildOptions.js"
 import { CustomMacSign } from "../macPackager.js"
 
 export type MacOsTargetName = "default" | "dmg" | "mas" | "mas-dev" | "pkg" | "7z" | "zip" | "tar.xz" | "tar.lz" | "tar.gz" | "tar.bz2" | "dir"

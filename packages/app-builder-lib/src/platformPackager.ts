@@ -26,25 +26,16 @@ import { AppInfo } from "./appInfo.js"
 import { checkFileInArchive } from "./asar/asarFileChecker.js"
 import { AsarPackager } from "./asar/asarUtil.js"
 import { AsarIntegrity, computeData } from "./asar/integrity.js"
-import { FuseOptionsV1 } from "./configuration.js"
+import { AfterPackContext, Configuration, FuseOptionsV1 } from "./configuration.js"
+import { CompressionLevel, Platform, Target, TargetSpecificOptions } from "./core.js"
+import { ElectronPlatformName } from "./electron/ElectronFramework.js"
 import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers, getNodeModuleFileMatcher } from "./fileMatcher.js"
 import { createTransformer, isElectronCompileUsed } from "./fileTransformer.js"
 import { Framework, isElectronBased } from "./Framework.js"
-import {
-  AfterPackContext,
-  AsarOptions,
-  CompressionLevel,
-  Configuration,
-  ElectronPlatformName,
-  FileAssociation,
-  LinuxPackager,
-  Packager,
-  PackagerOptions,
-  Platform,
-  PlatformSpecificBuildOptions,
-  Target,
-  TargetSpecificOptions,
-} from "./index.js"
+import { FileAssociation } from "./options/FileAssociation.js"
+import { AsarOptions, PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions.js"
+import { Packager } from "./packager.js"
+import { PackagerOptions } from "./packagerApi.js"
 import { executeAppBuilderAsJson } from "./util/appBuilder.js"
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier.js"
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
@@ -420,7 +411,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       linux: "",
     }[electronPlatformName]
 
-    const executableName = this instanceof LinuxPackager ? this.executableName : this.appInfo.productFilename
+    const executableName = electronPlatformName === "linux" ? (this as any).executableName : this.appInfo.productFilename
     const electronBinaryPath = path.join(appOutDir, `${executableName}${ext}`)
 
     log.info({ electronPath: log.filePath(electronBinaryPath) }, "executing @electron/fuses")

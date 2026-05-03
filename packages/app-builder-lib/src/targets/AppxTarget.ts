@@ -2,7 +2,7 @@ import { Arch, asArray, copyOrLinkFile, deepAssign, InvalidConfigurationError, l
 import { Nullish } from "builder-util-runtime"
 import fsExtra from "fs-extra"
 import * as path from "path"
-import { AppXOptions } from "../index.js"
+import { AppXOptions } from "../options/AppXOptions.js"
 import { getWindowsKitsBundle } from "../toolsets/windows.js"
 import { Target } from "../core.js"
 import { getTemplatePath } from "../util/pathManager.js"

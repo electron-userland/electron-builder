@@ -1,7 +1,7 @@
 import { Arch, deepAssign, exists, InvalidConfigurationError } from "builder-util"
 import { UUID } from "builder-util-runtime"
 import * as path from "path"
-import { MsiWrappedOptions } from "../index.js"
+import { MsiWrappedOptions } from "../options/MsiWrappedOptions.js"
 import { TargetConfiguration } from "../core.js"
 import { FinalCommonWindowsInstallerOptions } from "../options/CommonWindowsInstallerConfiguration.js"
 import { WinPackager } from "../winPackager.js"
