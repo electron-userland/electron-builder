@@ -149,8 +149,54 @@
             }
           ]
         },
+        "sign": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AppImageSignOptions"
+            },
+            {
+              "type": [
+                "null",
+                "boolean"
+              ]
+            }
+          ],
+          "description": "GPG signing options for the AppImage. Set to `true` to enable with defaults, or provide an object with detailed options.\nCan also be enabled via the `APPIMAGE_SIGN` environment variable set to `\"true\"`.\n\nSigning embeds a GPG detached signature into the `.sha256_sig` ELF section of the AppImage runtime,\nfollowing the [AppImage signing specification](https://docs.appimage.org/packaging-guide/optional/signatures.html)."
+        },
         "synopsis": {
           "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "AppImageSignOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "detachedSigFile": {
+          "default": false,
+          "description": "Whether to also produce a detached `.sig` file alongside the AppImage.",
+          "type": "boolean"
+        },
+        "gpgKeyId": {
+          "description": "GPG key ID or fingerprint to use for signing. Can also be set via `APPIMAGE_GPG_KEY_ID` env var.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "gpgPath": {
+          "description": "Path to the gpg binary. Defaults to `gpg2`, then `gpg`. Can also be set via `APPIMAGE_GPG_PATH` env var.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "passphrase": {
+          "description": "GPG passphrase. Prefer using gpg-agent or the `APPIMAGE_GPG_PASSPHRASE` env var instead of putting this in config.",
           "type": [
             "null",
             "string"
