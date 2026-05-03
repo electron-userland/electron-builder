@@ -1,9 +1,9 @@
-import { asArray, exists, isEmptyOrSpaces, log } from "builder-util"
+import { asArray, exists, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { join } from "path"
 import { LinuxPackager } from "../linuxPackager"
-import { LinuxTargetSpecificOptions } from "../options/linuxOptions"
+import { CommonLinuxOptions, LinuxTargetSpecificOptions } from "../options/linuxOptions"
 import { IconInfo } from "../platformPackager"
 
 export const installPrefix = "/opt"
@@ -93,20 +93,23 @@ export class LinuxTargetHelper {
     }
   }
 
-  async writeDesktopEntry(targetSpecificOptions: LinuxTargetSpecificOptions, exec?: string, destination?: string | null, extra?: Record<string, string>): Promise<string> {
+  async writeDesktopEntry(targetSpecificOptions: CommonLinuxOptions, exec?: string, destination?: string | null, extra?: Record<string, string>): Promise<string> {
     const data = await this.computeDesktopEntry(targetSpecificOptions, exec, extra)
     const file = destination || (await this.packager.getTempFile(`${this.packager.appInfo.productFilename}.desktop`))
     await outputFile(file, data)
     return file
   }
 
-  computeDesktopEntry(targetSpecificOptions: LinuxTargetSpecificOptions, exec?: string, extra?: Record<string, string>): Promise<string> {
+  computeDesktopEntry(targetSpecificOptions: CommonLinuxOptions, exec?: string, extra?: Record<string, string>): Promise<string> {
     if (exec != null && exec.length === 0) {
       throw new Error("Specified exec is empty")
     }
     // https://github.com/electron-userland/electron-builder/issues/3418
     if (targetSpecificOptions.desktop?.entry?.Exec) {
-      throw new Error("Please specify executable name as linux.executableName instead of linux.desktop.Exec")
+      throw new InvalidConfigurationError("Please specify executable name as linux.executableName instead of linux.desktop.entry.Exec")
+    }
+    if (targetSpecificOptions.desktop?.entry?.Comment) {
+      throw new InvalidConfigurationError("Please specify the application description as linux.description instead of linux.desktop.entry.Comment")
     }
 
     const packager = this.packager

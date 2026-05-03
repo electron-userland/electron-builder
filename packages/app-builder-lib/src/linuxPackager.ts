@@ -1,5 +1,6 @@
-import { Arch } from "builder-util"
+import { Arch, AsyncTaskManager } from "builder-util"
 import { sanitizeFileName } from "builder-util/out/filename"
+import * as path from "path"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { LinuxConfiguration } from "./options/linuxOptions"
 import { Packager } from "./packager"
@@ -13,6 +14,8 @@ import { createCommonTarget } from "./targets/targetFactory"
 
 export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
   readonly executableName: string
+  private _helper: LinuxTargetHelper | null = null
+  private readonly emittedDesktopFiles = new Set<string>()
 
   constructor(info: Packager) {
     super(info, Platform.LINUX)
@@ -25,15 +28,46 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
     return ["snap", "appimage"]
   }
 
-  createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void {
-    let helper: LinuxTargetHelper | null
-    const getHelper = () => {
-      if (helper == null) {
-        helper = new LinuxTargetHelper(this)
-      }
-      return helper
+  getHelper(): LinuxTargetHelper {
+    if (this._helper == null) {
+      this._helper = new LinuxTargetHelper(this)
     }
+    return this._helper
+  }
 
+  override async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<any> {
+    await super.pack(outDir, arch, targets, taskManager)
+
+    for (const target of targets) {
+      if (target.name === DIR_TARGET) {
+        continue
+      }
+
+      const targetConfig: any = (this.config as any)[target.name] ?? {}
+      // Target-specific `desktop: null` opts out; `undefined` inherits platform-level config
+      const effectiveDesktop = "desktop" in targetConfig ? targetConfig.desktop : this.platformSpecificBuildOptions.desktop
+      if (effectiveDesktop == null) {
+        continue
+      }
+
+      const desktopEntryPath = path.join(outDir, `${this.executableName}.desktop`)
+      if (this.emittedDesktopFiles.has(desktopEntryPath)) {
+        continue
+      }
+      this.emittedDesktopFiles.add(desktopEntryPath)
+
+      const mergedOptions = { ...this.platformSpecificBuildOptions, ...targetConfig }
+      await this.getHelper().writeDesktopEntry(mergedOptions, undefined, desktopEntryPath)
+      await this.info.emitArtifactBuildCompleted({
+        file: desktopEntryPath,
+        arch,
+        target: null,
+        packager: this,
+      })
+    }
+  }
+
+  createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void {
     for (const name of targets) {
       if (name === DIR_TARGET) {
         continue
@@ -62,10 +96,10 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
 
       mapper(name, outDir => {
         if (targetClass === null) {
-          return createCommonTarget(name, outDir, this, getHelper())
+          return createCommonTarget(name, outDir, this)
         }
 
-        return new targetClass(name, this, getHelper(), outDir)
+        return new targetClass(name, this, this.getHelper(), outDir)
       })
     }
   }

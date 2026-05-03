@@ -1,5 +1,37 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`AppImage 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-x64.AppImage",
+      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "testapp.desktop",
+    },
+  ],
+}
+`;
+
+exports[`disable desktop file output 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0.zip",
+    },
+  ],
+}
+`;
+
 exports[`tar 1`] = `
 {
   "linux": [
@@ -14,6 +46,21 @@ exports[`tar 1`] = `
     {
       "arch": "x64",
       "file": "TestApp-1.1.0.tar.lz",
+    },
+  ],
+}
+`;
+
+exports[`zip 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0.zip",
+    },
+    {
+      "arch": "x64",
+      "file": "testapp.desktop",
     },
   ],
 }
