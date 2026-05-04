@@ -1,8 +1,8 @@
 import { GitlabOptions, GitlabReleaseInfo, HttpError } from "builder-util-runtime"
-import { vi } from "vitest"
-import { createNsisUpdater, httpExecutor, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { GitLabProvider } from "electron-updater/src/providers/GitLabProvider"
-import { assertDownloadNotTriggered, getProvider, mockYaml, setupProviderMocks, TEST_CONFIG } from "../helpers/providerTestUtil"
+import { afterEach, beforeEach, vi } from "vitest"
+import { assertDownloadNotTriggered, getProvider, mockYaml, TEST_CONFIG } from "../helpers/providerTestUtil"
+import { createNsisUpdater, httpExecutor, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
 const MOCK_PROJECT_ID = 99999999
 const STABLE_VERSION = "1.1.0"
@@ -11,7 +11,8 @@ const ASSET_BASE = "https://gitlab.com/-/project/99999999/uploads/abc123"
 
 const config = TEST_CONFIG
 
-setupProviderMocks()
+beforeEach(() => vi.restoreAllMocks())
+afterEach(() => vi.restoreAllMocks())
 
 function mockGitlabRelease(version: string, opts: { name?: string; description?: string; extraLinks?: Array<{ name: string; url: string }> } = {}): GitlabReleaseInfo {
   const tag = `v${version}`

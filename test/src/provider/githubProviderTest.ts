@@ -1,8 +1,8 @@
 import { GithubOptions, HttpError, UpdateInfo } from "builder-util-runtime"
-import { vi } from "vitest"
-import { createNsisUpdater, httpExecutor, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { GitHubProvider } from "electron-updater/src/providers/GitHubProvider"
-import { assertDownloadNotTriggered, getProvider, mockYaml, setupProviderMocks, TEST_CONFIG } from "../helpers/providerTestUtil"
+import { afterEach, beforeEach, vi } from "vitest"
+import { assertDownloadNotTriggered, getProvider, mockYaml, TEST_CONFIG } from "../helpers/providerTestUtil"
+import { createNsisUpdater, httpExecutor, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
 const MOCK_OWNER = "test-owner"
 const MOCK_REPO = "test-public-repo"
@@ -13,7 +13,8 @@ const BETA_TAG = `v${BETA_VERSION}`
 
 const config = TEST_CONFIG
 
-setupProviderMocks()
+beforeEach(() => vi.restoreAllMocks())
+afterEach(() => vi.restoreAllMocks())
 
 // Atom feed entry href must match /\/tag\/([^/]+)$/ for tag extraction
 function mockAtomFeed(entries: Array<{ tag: string; title: string; content?: string }>): string {

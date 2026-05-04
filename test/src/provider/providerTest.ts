@@ -1,15 +1,16 @@
 import { CancellationToken, UpdateInfo } from "builder-util-runtime"
-import { OutgoingHttpHeaders } from "http"
-import { URL } from "url"
-import { vi } from "vitest"
 import { Provider, ProviderRuntimeOptions } from "electron-updater/src/providers/Provider"
 import { ResolvedUpdateFileInfo } from "electron-updater/src/types"
+import { OutgoingHttpHeaders } from "http"
+import { URL } from "url"
+import { afterEach, beforeEach, vi } from "vitest"
+import { TEST_CONFIG } from "../helpers/providerTestUtil"
 import { httpExecutor } from "../helpers/updaterTestUtil"
-import { setupProviderMocks, TEST_CONFIG } from "../helpers/providerTestUtil"
 
 const config = TEST_CONFIG
 
-setupProviderMocks()
+beforeEach(() => vi.restoreAllMocks())
+afterEach(() => vi.restoreAllMocks())
 
 class TestProvider extends Provider<UpdateInfo> {
   constructor(opts: ProviderRuntimeOptions) {

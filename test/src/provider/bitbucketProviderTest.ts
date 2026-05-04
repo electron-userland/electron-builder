@@ -1,7 +1,7 @@
 import { BitbucketOptions } from "builder-util-runtime"
-import { vi } from "vitest"
+import { afterEach, beforeEach, vi } from "vitest"
+import { assertDownloadNotTriggered, getProvider, mockYaml, TEST_CONFIG } from "../helpers/providerTestUtil"
 import { createNsisUpdater, httpExecutor, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil"
-import { assertDownloadNotTriggered, getProvider, mockYaml, setupProviderMocks, TEST_CONFIG } from "../helpers/providerTestUtil"
 
 const MOCK_OWNER = "test-owner"
 const MOCK_SLUG = "test-repo"
@@ -9,7 +9,8 @@ const STABLE_VERSION = "1.1.0"
 
 const config = TEST_CONFIG
 
-setupProviderMocks()
+beforeEach(() => vi.restoreAllMocks())
+afterEach(() => vi.restoreAllMocks())
 
 async function createBitbucketUpdater(version = "0.0.1", options: Partial<BitbucketOptions> = {}) {
   const updater = await createNsisUpdater(version)

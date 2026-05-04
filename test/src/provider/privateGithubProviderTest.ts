@@ -1,8 +1,8 @@
 import { GithubOptions, HttpError } from "builder-util-runtime"
-import { vi } from "vitest"
-import { createNsisUpdater, httpExecutor, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { PrivateGitHubProvider, PrivateGitHubUpdateInfo } from "electron-updater/src/providers/PrivateGitHubProvider"
-import { assertDownloadNotTriggered, getProvider, mockYaml, setupProviderMocks, TEST_CONFIG } from "../helpers/providerTestUtil"
+import { afterEach, beforeEach, vi } from "vitest"
+import { assertDownloadNotTriggered, getProvider, mockYaml, TEST_CONFIG } from "../helpers/providerTestUtil"
+import { createNsisUpdater, httpExecutor, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
 const MOCK_TOKEN = "ghp_test-token-12345"
 const MOCK_OWNER = "test-owner"
@@ -12,7 +12,8 @@ const PRERELEASE_VERSION = "1.2.0-beta.1"
 
 const config = TEST_CONFIG
 
-setupProviderMocks()
+beforeEach(() => vi.restoreAllMocks())
+afterEach(() => vi.restoreAllMocks())
 
 function mockAssets(version: string) {
   return [

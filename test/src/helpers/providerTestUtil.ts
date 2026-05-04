@@ -1,5 +1,3 @@
-import { afterEach } from "vitest"
-import { vi } from "vitest"
 import { ExpectStatic } from "vitest"
 
 /** Shared retry config used by all provider test suites */
@@ -43,13 +41,4 @@ export function getProvider<T>(updater: any): T {
 export function assertDownloadNotTriggered(expect: ExpectStatic, result: any, actualEvents: string[]): void {
   expect(result?.downloadPromise).toBeNull()
   expect(actualEvents).toEqual(["checking-for-update", "update-available"])
-}
-
-/**
- * Registers a per-file afterEach that restores all vi spies/mocks.
- * Call once at the top of each provider test file instead of repeating
- * `afterEach(() => vi.restoreAllMocks())`.
- */
-export function setupProviderMocks(): void {
-  afterEach(() => vi.restoreAllMocks())
 }
