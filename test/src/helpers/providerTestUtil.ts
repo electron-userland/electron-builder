@@ -1,8 +1,5 @@
 import { ExpectStatic } from "vitest"
 
-/** Shared retry config used by all provider test suites */
-export const TEST_CONFIG = { retry: 3 }
-
 /**
  * A deterministic base64-encoded SHA-512 placeholder used in every mockYaml.
  * Long enough to pass validation; meaningless as an actual hash.

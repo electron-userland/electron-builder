@@ -1,15 +1,19 @@
 import { BitbucketOptions } from "builder-util-runtime"
-import { afterEach, beforeEach, vi } from "vitest"
-import { assertDownloadNotTriggered, getProvider, mockYaml, TEST_CONFIG } from "../helpers/providerTestUtil"
+import { MockInstance, afterEach, beforeEach, vi } from "vitest"
+import { assertDownloadNotTriggered, getProvider, mockYaml } from "../helpers/providerTestUtil"
 import { createNsisUpdater, httpExecutor, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
 const MOCK_OWNER = "test-owner"
 const MOCK_SLUG = "test-repo"
 const STABLE_VERSION = "1.1.0"
 
-const config = TEST_CONFIG
+let requestSpy: MockInstance
 
-beforeEach(() => vi.restoreAllMocks())
+beforeEach(() => {
+  vi.restoreAllMocks()
+  // Block every real HTTP call by default; tests opt-in via mockResolvedValueOnce
+  requestSpy = vi.spyOn(httpExecutor, "request").mockRejectedValue(new Error("Unexpected HTTP request – mock it with mockResolvedValueOnce"))
+})
 afterEach(() => vi.restoreAllMocks())
 
 async function createBitbucketUpdater(version = "0.0.1", options: Partial<BitbucketOptions> = {}) {
@@ -25,10 +29,10 @@ async function createBitbucketUpdater(version = "0.0.1", options: Partial<Bitbuc
 }
 
 // Single HTTP call: GET /downloads/{channelFile} → YAML
-test("stable release - getLatestVersion fetches channel file and returns UpdateInfo", config, async ({ expect }) => {
+test("stable release - getLatestVersion fetches channel file and returns UpdateInfo", async ({ expect }) => {
   const updater = await createBitbucketUpdater()
 
-  vi.spyOn(httpExecutor, "request").mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   const result = await updater.checkForUpdates()
   expect(result?.updateInfo.version).toBe(STABLE_VERSION)
@@ -36,10 +40,10 @@ test("stable release - getLatestVersion fetches channel file and returns UpdateI
 })
 
 // Channel URL must point to the correct Bitbucket downloads endpoint
-test("request URL - uses Bitbucket API downloads endpoint", config, async ({ expect }) => {
+test("request URL - uses Bitbucket API downloads endpoint", async ({ expect }) => {
   const updater = await createBitbucketUpdater()
 
-  const requestSpy = vi.spyOn(httpExecutor, "request").mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   await updater.checkForUpdates()
 
@@ -50,10 +54,10 @@ test("request URL - uses Bitbucket API downloads endpoint", config, async ({ exp
 })
 
 // Default channel is "latest" when neither updater.channel nor options.channel is set
-test("default channel - requests latest.yml", config, async ({ expect }) => {
+test("default channel - requests latest.yml", async ({ expect }) => {
   const updater = await createBitbucketUpdater()
 
-  const requestSpy = vi.spyOn(httpExecutor, "request").mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   await updater.checkForUpdates()
 
@@ -62,10 +66,10 @@ test("default channel - requests latest.yml", config, async ({ expect }) => {
 })
 
 // Custom channel via BitbucketOptions.channel
-test("custom channel via options - requests {channel}.yml", config, async ({ expect }) => {
+test("custom channel via options - requests {channel}.yml", async ({ expect }) => {
   const updater = await createBitbucketUpdater("0.0.1", { channel: "beta" })
 
-  const requestSpy = vi.spyOn(httpExecutor, "request").mockResolvedValueOnce(mockYaml("1.2.0-beta.1"))
+  requestSpy.mockResolvedValueOnce(mockYaml("1.2.0-beta.1"))
 
   await updater.checkForUpdates()
 
@@ -74,11 +78,11 @@ test("custom channel via options - requests {channel}.yml", config, async ({ exp
 })
 
 // Custom channel via updater.channel takes precedence over options.channel
-test("custom channel via updater.channel - overrides options.channel", config, async ({ expect }) => {
+test("custom channel via updater.channel - overrides options.channel", async ({ expect }) => {
   const updater = await createBitbucketUpdater("0.0.1", { channel: "stable" })
   updater.channel = "nightly"
 
-  const requestSpy = vi.spyOn(httpExecutor, "request").mockResolvedValueOnce(mockYaml("2.0.0"))
+  requestSpy.mockResolvedValueOnce(mockYaml("2.0.0"))
 
   await updater.checkForUpdates()
 
@@ -87,19 +91,19 @@ test("custom channel via updater.channel - overrides options.channel", config, a
 })
 
 // Any request failure is wrapped as ERR_UPDATER_LATEST_VERSION_NOT_FOUND
-test("request failure - throws ERR_UPDATER_LATEST_VERSION_NOT_FOUND", config, async ({ expect }) => {
+test("request failure - throws ERR_UPDATER_LATEST_VERSION_NOT_FOUND", async ({ expect }) => {
   const updater = await createBitbucketUpdater()
 
-  vi.spyOn(httpExecutor, "request").mockRejectedValueOnce(new Error("Connection reset"))
+  requestSpy.mockRejectedValueOnce(new Error("Connection reset"))
 
   await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_LATEST_VERSION_NOT_FOUND" })
 })
 
 // resolveFiles resolves YAML file URLs relative to the Bitbucket downloads base URL
-test("resolveFiles - constructs download URLs relative to Bitbucket base", config, async ({ expect }) => {
+test("resolveFiles - constructs download URLs relative to Bitbucket base", async ({ expect }) => {
   const updater = await createBitbucketUpdater()
 
-  vi.spyOn(httpExecutor, "request").mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   const result = await updater.checkForUpdates()
   const provider = getProvider<any>(updater)
@@ -110,11 +114,11 @@ test("resolveFiles - constructs download URLs relative to Bitbucket base", confi
 })
 
 // autoDownload=false → downloadPromise null, events contain only checking + available
-test("autoDownload=false - does not trigger download", config, async ({ expect }) => {
+test("autoDownload=false - does not trigger download", async ({ expect }) => {
   const updater = await createBitbucketUpdater()
   updater.autoDownload = false
 
-  vi.spyOn(httpExecutor, "request").mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   const actualEvents = trackEvents(updater)
   const result = await updater.checkForUpdates()
@@ -123,10 +127,10 @@ test("autoDownload=false - does not trigger download", config, async ({ expect }
 })
 
 // toString() describes the provider configuration for logging
-test("toString - includes owner, slug, and channel", config, async ({ expect }) => {
+test("toString - includes owner, slug, and channel", async ({ expect }) => {
   const updater = await createBitbucketUpdater("0.0.1", { channel: "beta" })
 
-  vi.spyOn(httpExecutor, "request").mockResolvedValueOnce(mockYaml("1.2.0"))
+  requestSpy.mockResolvedValueOnce(mockYaml("1.2.0"))
 
   await updater.checkForUpdates()
 

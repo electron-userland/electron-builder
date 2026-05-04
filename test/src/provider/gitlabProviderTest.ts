@@ -1,7 +1,7 @@
 import { GitlabOptions, GitlabReleaseInfo, HttpError } from "builder-util-runtime"
 import { GitLabProvider } from "electron-updater/src/providers/GitLabProvider"
-import { afterEach, beforeEach, vi } from "vitest"
-import { assertDownloadNotTriggered, getProvider, mockYaml, TEST_CONFIG } from "../helpers/providerTestUtil"
+import { MockInstance, afterEach, beforeEach, vi } from "vitest"
+import { assertDownloadNotTriggered, getProvider, mockYaml } from "../helpers/providerTestUtil"
 import { createNsisUpdater, httpExecutor, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
 const MOCK_PROJECT_ID = 99999999
@@ -9,9 +9,13 @@ const STABLE_VERSION = "1.1.0"
 const STABLE_TAG = `v${STABLE_VERSION}`
 const ASSET_BASE = "https://gitlab.com/-/project/99999999/uploads/abc123"
 
-const config = TEST_CONFIG
+let requestSpy: MockInstance
 
-beforeEach(() => vi.restoreAllMocks())
+beforeEach(() => {
+  vi.restoreAllMocks()
+  // Block every real HTTP call by default; tests opt-in via mockResolvedValueOnce
+  requestSpy = vi.spyOn(httpExecutor, "request").mockRejectedValue(new Error("Unexpected HTTP request – mock it with mockResolvedValueOnce"))
+})
 afterEach(() => vi.restoreAllMocks())
 
 function mockGitlabRelease(version: string, opts: { name?: string; description?: string; extraLinks?: Array<{ name: string; url: string }> } = {}): GitlabReleaseInfo {
@@ -57,12 +61,10 @@ async function createGitlabUpdater(version = "0.0.1", options: Partial<GitlabOpt
 }
 
 // Two HTTP calls: permalink/latest API → channel YAML
-test("stable release - getLatestVersion fetches API then channel file", config, async ({ expect }) => {
+test("stable release - getLatestVersion fetches API then channel file", async ({ expect }) => {
   const updater = await createGitlabUpdater()
 
-  vi.spyOn(httpExecutor, "request")
-    .mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION)))
-    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   const result = await updater.checkForUpdates()
   expect(result?.updateInfo.version).toBe(STABLE_VERSION)
@@ -70,13 +72,10 @@ test("stable release - getLatestVersion fetches API then channel file", config, 
 })
 
 // First request must go to /projects/{id}/releases/permalink/latest
-test("API request URL - uses GitLab releases permalink/latest endpoint", config, async ({ expect }) => {
+test("API request URL - uses GitLab releases permalink/latest endpoint", async ({ expect }) => {
   const updater = await createGitlabUpdater()
 
-  const requestSpy = vi
-    .spyOn(httpExecutor, "request")
-    .mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION)))
-    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   await updater.checkForUpdates()
 
@@ -85,66 +84,59 @@ test("API request URL - uses GitLab releases permalink/latest endpoint", config,
 })
 
 // API returns null/empty → ERR_UPDATER_LATEST_VERSION_NOT_FOUND
-test("null API response - throws ERR_UPDATER_LATEST_VERSION_NOT_FOUND", config, async ({ expect }) => {
+test("null API response - throws ERR_UPDATER_LATEST_VERSION_NOT_FOUND", async ({ expect }) => {
   const updater = await createGitlabUpdater()
 
-  vi.spyOn(httpExecutor, "request").mockResolvedValueOnce(null)
+  requestSpy.mockResolvedValueOnce(null)
 
   await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_LATEST_VERSION_NOT_FOUND" })
 })
 
 // API request failure → ERR_UPDATER_LATEST_VERSION_NOT_FOUND
-test("API request failure - throws ERR_UPDATER_LATEST_VERSION_NOT_FOUND", config, async ({ expect }) => {
+test("API request failure - throws ERR_UPDATER_LATEST_VERSION_NOT_FOUND", async ({ expect }) => {
   const updater = await createGitlabUpdater()
 
-  vi.spyOn(httpExecutor, "request").mockRejectedValueOnce(new Error("Network failure"))
+  requestSpy.mockRejectedValueOnce(new Error("Network failure"))
 
   await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_LATEST_VERSION_NOT_FOUND" })
 })
 
 // Channel file absent from release assets → ERR_UPDATER_CHANNEL_FILE_NOT_FOUND
-test("missing channel file in assets - throws ERR_UPDATER_CHANNEL_FILE_NOT_FOUND", config, async ({ expect }) => {
+test("missing channel file in assets - throws ERR_UPDATER_CHANNEL_FILE_NOT_FOUND", async ({ expect }) => {
   const updater = await createGitlabUpdater()
 
   const release = mockGitlabRelease(STABLE_VERSION)
   release.assets.links = release.assets.links.filter(l => l.name !== "latest.yml")
 
-  vi.spyOn(httpExecutor, "request").mockResolvedValueOnce(JSON.stringify(release))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(release))
 
   await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND" })
 })
 
 // Channel file asset URL returns 404 → ERR_UPDATER_CHANNEL_FILE_NOT_FOUND
-test("channel file 404 - throws ERR_UPDATER_CHANNEL_FILE_NOT_FOUND", config, async ({ expect }) => {
+test("channel file 404 - throws ERR_UPDATER_CHANNEL_FILE_NOT_FOUND", async ({ expect }) => {
   const updater = await createGitlabUpdater()
 
-  vi.spyOn(httpExecutor, "request")
-    .mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION)))
-    .mockRejectedValueOnce(new HttpError(404))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockRejectedValueOnce(new HttpError(404))
 
   await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND" })
 })
 
 // Custom channel not in assets → falls back to default latest.yml
-test("custom channel missing in assets - falls back to latest.yml", config, async ({ expect }) => {
+test("custom channel missing in assets - falls back to latest.yml", async ({ expect }) => {
   const updater = await createGitlabUpdater("0.0.1", { channel: "beta" })
 
-  vi.spyOn(httpExecutor, "request")
-    .mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION)))
-    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   const result = await updater.checkForUpdates()
   expect(result?.updateInfo.version).toBe(STABLE_VERSION)
 })
 
 // Private-token auth header sent when options.token is a plain token
-test("PRIVATE-TOKEN auth - plain token sent as PRIVATE-TOKEN header", config, async ({ expect }) => {
+test("PRIVATE-TOKEN auth - plain token sent as PRIVATE-TOKEN header", async ({ expect }) => {
   const updater = await createGitlabUpdater("0.0.1", { token: "glpat-abc123" })
 
-  const requestSpy = vi
-    .spyOn(httpExecutor, "request")
-    .mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION)))
-    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   await updater.checkForUpdates()
 
@@ -153,13 +145,10 @@ test("PRIVATE-TOKEN auth - plain token sent as PRIVATE-TOKEN header", config, as
 })
 
 // Bearer token sent as authorization header when token starts with "Bearer"
-test("Bearer auth - token starting with Bearer sent as authorization header", config, async ({ expect }) => {
+test("Bearer auth - token starting with Bearer sent as authorization header", async ({ expect }) => {
   const updater = await createGitlabUpdater("0.0.1", { token: "Bearer gloas-oauth-token" })
 
-  const requestSpy = vi
-    .spyOn(httpExecutor, "request")
-    .mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION)))
-    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   await updater.checkForUpdates()
 
@@ -169,13 +158,10 @@ test("Bearer auth - token starting with Bearer sent as authorization header", co
 })
 
 // No token → no auth headers on the release API request
-test("no token - no auth headers on API request", config, async ({ expect }) => {
+test("no token - no auth headers on API request", async ({ expect }) => {
   const updater = await createGitlabUpdater()
 
-  const requestSpy = vi
-    .spyOn(httpExecutor, "request")
-    .mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION)))
-    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   await updater.checkForUpdates()
 
@@ -185,12 +171,10 @@ test("no token - no auth headers on API request", config, async ({ expect }) => 
 })
 
 // resolveFiles uses the assets Map populated from GitLab release links
-test("resolveFiles - maps file URLs from GitLab release assets", config, async ({ expect }) => {
+test("resolveFiles - maps file URLs from GitLab release assets", async ({ expect }) => {
   const updater = await createGitlabUpdater()
 
-  vi.spyOn(httpExecutor, "request")
-    .mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION)))
-    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   const result = await updater.checkForUpdates()
   const provider = getProvider<GitLabProvider>(updater)
@@ -201,12 +185,10 @@ test("resolveFiles - maps file URLs from GitLab release assets", config, async (
 })
 
 // resolveFiles throws ERR_UPDATER_ASSET_NOT_FOUND when asset is absent from the Map
-test("resolveFiles - throws ERR_UPDATER_ASSET_NOT_FOUND for unknown file", config, async ({ expect }) => {
+test("resolveFiles - throws ERR_UPDATER_ASSET_NOT_FOUND for unknown file", async ({ expect }) => {
   const updater = await createGitlabUpdater()
 
-  vi.spyOn(httpExecutor, "request")
-    .mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION)))
-    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   await updater.checkForUpdates()
   const provider = getProvider<GitLabProvider>(updater)
@@ -225,14 +207,14 @@ test("resolveFiles - throws ERR_UPDATER_ASSET_NOT_FOUND for unknown file", confi
 })
 
 // normalizeFilename: underscores in asset names are matched to dashes in YAML file URLs
-test("resolveFiles - normalizes underscores in asset names to match YAML filenames", config, async ({ expect }) => {
+test("resolveFiles - normalizes underscores in asset names to match YAML filenames", async ({ expect }) => {
   const updater = await createGitlabUpdater()
 
   const release = mockGitlabRelease(STABLE_VERSION)
   const exeLink = release.assets.links.find(l => l.name.endsWith(".exe"))!
   exeLink.name = exeLink.name.replace(/-/g, "_")
 
-  vi.spyOn(httpExecutor, "request").mockResolvedValueOnce(JSON.stringify(release)).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(release)).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   const result = await updater.checkForUpdates()
   const provider = getProvider<GitLabProvider>(updater)
@@ -242,22 +224,20 @@ test("resolveFiles - normalizes underscores in asset names to match YAML filenam
 })
 
 // releaseName pulled from GitLab release when absent from YAML
-test("releaseName - populated from GitLab release name when absent from YAML", config, async ({ expect }) => {
+test("releaseName - populated from GitLab release name when absent from YAML", async ({ expect }) => {
   const updater = await createGitlabUpdater()
 
-  vi.spyOn(httpExecutor, "request")
-    .mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION, { name: "My App v1.1.0 GA Release" })))
-    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION, { name: "My App v1.1.0 GA Release" }))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   const result = await updater.checkForUpdates()
   expect(result?.updateInfo.releaseName).toBe("My App v1.1.0 GA Release")
 })
 
 // releaseNotes pulled from GitLab release description when absent from YAML
-test("releaseNotes - populated from GitLab release description when absent from YAML", config, async ({ expect }) => {
+test("releaseNotes - populated from GitLab release description when absent from YAML", async ({ expect }) => {
   const updater = await createGitlabUpdater()
 
-  vi.spyOn(httpExecutor, "request")
+  requestSpy
     .mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION, { description: "## What's new\n- Fixed bug X" })))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
@@ -266,13 +246,11 @@ test("releaseNotes - populated from GitLab release description when absent from 
 })
 
 // autoDownload=false → downloadPromise null, only checking + available events
-test("autoDownload=false - does not trigger download", config, async ({ expect }) => {
+test("autoDownload=false - does not trigger download", async ({ expect }) => {
   const updater = await createGitlabUpdater()
   updater.autoDownload = false
 
-  vi.spyOn(httpExecutor, "request")
-    .mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION)))
-    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   const actualEvents = trackEvents(updater)
   const result = await updater.checkForUpdates()
@@ -281,12 +259,10 @@ test("autoDownload=false - does not trigger download", config, async ({ expect }
 })
 
 // getBlockMapFiles with generic_package (no uploadTarget) uses default Provider strategy
-test("getBlockMapFiles - generic_package target uses default URL-based strategy", config, async ({ expect }) => {
+test("getBlockMapFiles - generic_package target uses default URL-based strategy", async ({ expect }) => {
   const updater = await createGitlabUpdater("1.0.0")
 
-  vi.spyOn(httpExecutor, "request")
-    .mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION)))
-    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   await updater.checkForUpdates()
   const provider = getProvider<GitLabProvider>(updater)
@@ -300,7 +276,7 @@ test("getBlockMapFiles - generic_package target uses default URL-based strategy"
 })
 
 // getBlockMapFiles with project_upload uses GitLab asset lookup (cache hit path)
-test("getBlockMapFiles - project_upload target looks up blockmap from cached release assets", config, async ({ expect }) => {
+test("getBlockMapFiles - project_upload target looks up blockmap from cached release assets", async ({ expect }) => {
   const oldVersion = "1.0.0"
 
   const updater = await createGitlabUpdater(oldVersion, { uploadTarget: "project_upload" })
@@ -312,7 +288,7 @@ test("getBlockMapFiles - project_upload target looks up blockmap from cached rel
     ],
   })
 
-  vi.spyOn(httpExecutor, "request")
+  requestSpy
     .mockResolvedValueOnce(JSON.stringify(newRelease))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
     .mockResolvedValueOnce(
@@ -335,13 +311,10 @@ test("getBlockMapFiles - project_upload target looks up blockmap from cached rel
 })
 
 // custom GitLab host sets baseApiUrl correctly
-test("custom GitLab host - API requests go to the configured host", config, async ({ expect }) => {
+test("custom GitLab host - API requests go to the configured host", async ({ expect }) => {
   const updater = await createGitlabUpdater("0.0.1", { host: "gitlab.mycompany.com" })
 
-  const requestSpy = vi
-    .spyOn(httpExecutor, "request")
-    .mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION)))
-    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   await updater.checkForUpdates()
 

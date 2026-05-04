@@ -1,7 +1,7 @@
 import { GithubOptions, HttpError, UpdateInfo } from "builder-util-runtime"
 import { GitHubProvider } from "electron-updater/src/providers/GitHubProvider"
-import { afterEach, beforeEach, vi } from "vitest"
-import { assertDownloadNotTriggered, getProvider, mockYaml, TEST_CONFIG } from "../helpers/providerTestUtil"
+import { MockInstance, afterEach, beforeEach, vi } from "vitest"
+import { assertDownloadNotTriggered, getProvider, mockYaml } from "../helpers/providerTestUtil"
 import { createNsisUpdater, httpExecutor, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
 const MOCK_OWNER = "test-owner"
@@ -11,9 +11,13 @@ const STABLE_TAG = `v${STABLE_VERSION}`
 const BETA_VERSION = "1.2.0-beta.1"
 const BETA_TAG = `v${BETA_VERSION}`
 
-const config = TEST_CONFIG
+let requestSpy: MockInstance
 
-beforeEach(() => vi.restoreAllMocks())
+beforeEach(() => {
+  vi.restoreAllMocks()
+  // Block every real HTTP call by default; tests opt-in via mockResolvedValueOnce
+  requestSpy = vi.spyOn(httpExecutor, "request").mockRejectedValue(new Error("Unexpected HTTP request – mock it with mockResolvedValueOnce"))
+})
 afterEach(() => vi.restoreAllMocks())
 
 // Atom feed entry href must match /\/tag\/([^/]+)$/ for tag extraction
@@ -50,10 +54,10 @@ async function createPublicUpdater(version = "0.0.1") {
 }
 
 // stable flow: feed → releases/latest JSON (getLatestTagName) → latest.yml
-test("stable release - checkForUpdates fetches Atom feed and returns correct UpdateInfo", config, async ({ expect }) => {
+test("stable release - checkForUpdates fetches Atom feed and returns correct UpdateInfo", async ({ expect }) => {
   const updater = await createPublicUpdater()
 
-  vi.spyOn(httpExecutor, "request")
+  requestSpy
     .mockResolvedValueOnce(mockAtomFeed([{ tag: STABLE_TAG, title: STABLE_TAG, content: "Release notes for stable" }]))
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
@@ -67,12 +71,11 @@ test("stable release - checkForUpdates fetches Atom feed and returns correct Upd
 })
 
 // allowPrerelease=false always calls getLatestTagName via /releases/latest
-test("allowPrerelease=false - uses /releases/latest for tag resolution", config, async ({ expect }) => {
+test("allowPrerelease=false - uses /releases/latest for tag resolution", async ({ expect }) => {
   const updater = await createPublicUpdater()
   updater.allowPrerelease = false
 
-  const requestSpy = vi
-    .spyOn(httpExecutor, "request")
+  requestSpy
     .mockResolvedValueOnce(mockAtomFeed([{ tag: STABLE_TAG, title: STABLE_TAG }]))
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
@@ -85,14 +88,11 @@ test("allowPrerelease=false - uses /releases/latest for tag resolution", config,
 })
 
 // allowPrerelease=true with stable current version: takes first feed entry directly (no getLatestTagName call)
-test("allowPrerelease=true with stable current - picks first entry from Atom feed", config, async ({ expect }) => {
+test("allowPrerelease=true with stable current - picks first entry from Atom feed", async ({ expect }) => {
   const updater = await createPublicUpdater("0.0.1")
   updater.allowPrerelease = true
 
-  const requestSpy = vi
-    .spyOn(httpExecutor, "request")
-    .mockResolvedValueOnce(mockAtomFeed([{ tag: BETA_TAG, title: BETA_TAG, content: "Beta notes" }]))
-    .mockResolvedValueOnce(mockYaml(BETA_VERSION))
+  requestSpy.mockResolvedValueOnce(mockAtomFeed([{ tag: BETA_TAG, title: BETA_TAG, content: "Beta notes" }])).mockResolvedValueOnce(mockYaml(BETA_VERSION))
 
   const result = await updater.checkForUpdates()
 
@@ -103,14 +103,14 @@ test("allowPrerelease=true with stable current - picks first entry from Atom fee
 })
 
 // allowPrerelease=true with beta channel current: loops feed to find matching beta entry
-test("allowPrerelease=true with beta channel current - picks matching beta entry", config, async ({ expect }) => {
+test("allowPrerelease=true with beta channel current - picks matching beta entry", async ({ expect }) => {
   const updater = await createPublicUpdater("1.0.0-beta.1")
   updater.allowPrerelease = true
 
   const olderBeta = "v1.0.0-beta.1"
   const newerBeta = "v1.2.0-beta.2"
 
-  vi.spyOn(httpExecutor, "request")
+  requestSpy
     .mockResolvedValueOnce(
       mockAtomFeed([
         { tag: newerBeta, title: newerBeta, content: "Newer beta notes" },
@@ -125,11 +125,11 @@ test("allowPrerelease=true with beta channel current - picks matching beta entry
 })
 
 // allowPrerelease=true: beta.yml 404 → falls back to latest.yml without error
-test("allowPrerelease=true - falls back to latest.yml when channel file not found", config, async ({ expect }) => {
+test("allowPrerelease=true - falls back to latest.yml when channel file not found", async ({ expect }) => {
   const updater = await createPublicUpdater("0.0.1")
   updater.allowPrerelease = true
 
-  vi.spyOn(httpExecutor, "request")
+  requestSpy
     .mockResolvedValueOnce(mockAtomFeed([{ tag: BETA_TAG, title: BETA_TAG }]))
     .mockRejectedValueOnce(new HttpError(404)) // beta.yml not found
     .mockResolvedValueOnce(mockYaml(BETA_VERSION)) // fallback to latest.yml succeeds
@@ -139,22 +139,22 @@ test("allowPrerelease=true - falls back to latest.yml when channel file not foun
 })
 
 // allowPrerelease=true with custom channel current + only nightly entries → no match → ERR_UPDATER_NO_PUBLISHED_VERSIONS
-test("allowPrerelease=true - no matching channel entry throws ERR_UPDATER_NO_PUBLISHED_VERSIONS", config, async ({ expect }) => {
+test("allowPrerelease=true - no matching channel entry throws ERR_UPDATER_NO_PUBLISHED_VERSIONS", async ({ expect }) => {
   const updater = await createPublicUpdater("1.0.0-beta.1")
   updater.allowPrerelease = true
 
   // nightly entries are "custom" channels, skipped when current is beta
-  vi.spyOn(httpExecutor, "request").mockResolvedValueOnce(mockAtomFeed([{ tag: "v2.0.0-nightly.1", title: "v2.0.0-nightly.1" }]))
+  requestSpy.mockResolvedValueOnce(mockAtomFeed([{ tag: "v2.0.0-nightly.1", title: "v2.0.0-nightly.1" }]))
 
   await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_NO_PUBLISHED_VERSIONS" })
 })
 
 // allowPrerelease=false: channel file 404 → ERR_UPDATER_CHANNEL_FILE_NOT_FOUND (no fallback)
-test("stable mode - channel file 404 throws ERR_UPDATER_CHANNEL_FILE_NOT_FOUND", config, async ({ expect }) => {
+test("stable mode - channel file 404 throws ERR_UPDATER_CHANNEL_FILE_NOT_FOUND", async ({ expect }) => {
   const updater = await createPublicUpdater()
   updater.allowPrerelease = false
 
-  vi.spyOn(httpExecutor, "request")
+  requestSpy
     .mockResolvedValueOnce(mockAtomFeed([{ tag: STABLE_TAG, title: STABLE_TAG }]))
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockRejectedValueOnce(new HttpError(404))
@@ -163,11 +163,11 @@ test("stable mode - channel file 404 throws ERR_UPDATER_CHANNEL_FILE_NOT_FOUND",
 })
 
 // getLatestTagName failure is wrapped in ERR_UPDATER_INVALID_RELEASE_FEED by outer try-catch
-test("getLatestTagName failure - throws ERR_UPDATER_INVALID_RELEASE_FEED", config, async ({ expect }) => {
+test("getLatestTagName failure - throws ERR_UPDATER_INVALID_RELEASE_FEED", async ({ expect }) => {
   const updater = await createPublicUpdater()
   updater.allowPrerelease = false
 
-  vi.spyOn(httpExecutor, "request")
+  requestSpy
     .mockResolvedValueOnce(mockAtomFeed([{ tag: STABLE_TAG, title: STABLE_TAG }]))
     .mockRejectedValueOnce(new Error("Connection refused"))
 
@@ -175,10 +175,10 @@ test("getLatestTagName failure - throws ERR_UPDATER_INVALID_RELEASE_FEED", confi
 })
 
 // Atom feed with no entries → element("entry") throws → ERR_XML_MISSED_ELEMENT bubbles out
-test("empty Atom feed - throws ERR_XML_MISSED_ELEMENT", config, async ({ expect }) => {
+test("empty Atom feed - throws ERR_XML_MISSED_ELEMENT", async ({ expect }) => {
   const updater = await createPublicUpdater()
 
-  vi.spyOn(httpExecutor, "request").mockResolvedValueOnce(`<?xml version="1.0" encoding="UTF-8"?>
+  requestSpy.mockResolvedValueOnce(`<?xml version="1.0" encoding="UTF-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en-US">
 </feed>`)
 
@@ -186,10 +186,10 @@ test("empty Atom feed - throws ERR_XML_MISSED_ELEMENT", config, async ({ expect 
 })
 
 // resolveFiles constructs the GitHub download URL using the tag from the feed
-test("resolveFiles - constructs download URL with tag in path", config, async ({ expect }) => {
+test("resolveFiles - constructs download URL with tag in path", async ({ expect }) => {
   const updater = await createPublicUpdater()
 
-  vi.spyOn(httpExecutor, "request")
+  requestSpy
     .mockResolvedValueOnce(mockAtomFeed([{ tag: STABLE_TAG, title: STABLE_TAG }]))
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
@@ -205,11 +205,11 @@ test("resolveFiles - constructs download URL with tag in path", config, async ({
 })
 
 // fullChangelog=true → releaseNotes is an array of ReleaseNoteInfo sorted descending
-test("fullChangelog=true - releaseNotes returned as sorted ReleaseNoteInfo array", config, async ({ expect }) => {
+test("fullChangelog=true - releaseNotes returned as sorted ReleaseNoteInfo array", async ({ expect }) => {
   const updater = await createPublicUpdater("1.0.0")
   updater.fullChangelog = true
 
-  vi.spyOn(httpExecutor, "request")
+  requestSpy
     .mockResolvedValueOnce(
       mockAtomFeed([
         { tag: "v1.2.0", title: "v1.2.0", content: "Notes for 1.2.0" },
@@ -229,10 +229,10 @@ test("fullChangelog=true - releaseNotes returned as sorted ReleaseNoteInfo array
 })
 
 // releaseName is pulled from the feed <title> when absent from the YAML
-test("releaseName - populated from Atom feed entry title", config, async ({ expect }) => {
+test("releaseName - populated from Atom feed entry title", async ({ expect }) => {
   const updater = await createPublicUpdater()
 
-  vi.spyOn(httpExecutor, "request")
+  requestSpy
     .mockResolvedValueOnce(mockAtomFeed([{ tag: STABLE_TAG, title: "My App 1.1.0 Release" }]))
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
@@ -242,11 +242,11 @@ test("releaseName - populated from Atom feed entry title", config, async ({ expe
 })
 
 // autoDownload=false → downloadPromise is null, only checking-for-update + update-available events
-test("autoDownload=false - checkForUpdates does not trigger download", config, async ({ expect }) => {
+test("autoDownload=false - checkForUpdates does not trigger download", async ({ expect }) => {
   const updater = await createPublicUpdater()
   updater.autoDownload = false
 
-  vi.spyOn(httpExecutor, "request")
+  requestSpy
     .mockResolvedValueOnce(mockAtomFeed([{ tag: STABLE_TAG, title: STABLE_TAG }]))
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
@@ -258,7 +258,7 @@ test("autoDownload=false - checkForUpdates does not trigger download", config, a
 })
 
 // enterprise host: getLatestTagName must use /api/v3 API endpoint instead of HTML releases/latest
-test("enterprise GitHub host - getLatestTagName uses /api/v3 API endpoint", config, async ({ expect }) => {
+test("enterprise GitHub host - getLatestTagName uses /api/v3 API endpoint", async ({ expect }) => {
   const updater = await createNsisUpdater()
   updater.autoDownload = false
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
@@ -268,8 +268,7 @@ test("enterprise GitHub host - getLatestTagName uses /api/v3 API endpoint", conf
     host: "github.mycompany.com",
   })
 
-  const requestSpy = vi
-    .spyOn(httpExecutor, "request")
+  requestSpy
     .mockResolvedValueOnce(mockAtomFeed([{ tag: STABLE_TAG, title: STABLE_TAG }]))
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
@@ -282,10 +281,10 @@ test("enterprise GitHub host - getLatestTagName uses /api/v3 API endpoint", conf
 })
 
 // getBlockMapFiles returns old/new blockmap URLs using the default Provider strategy
-test("getBlockMapFiles - constructs correct blockmap URLs from base URL", config, async ({ expect }) => {
+test("getBlockMapFiles - constructs correct blockmap URLs from base URL", async ({ expect }) => {
   const updater = await createPublicUpdater()
 
-  vi.spyOn(httpExecutor, "request")
+  requestSpy
     .mockResolvedValueOnce(mockAtomFeed([{ tag: STABLE_TAG, title: STABLE_TAG }]))
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))

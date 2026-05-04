@@ -3,13 +3,16 @@ import { Provider, ProviderRuntimeOptions } from "electron-updater/src/providers
 import { ResolvedUpdateFileInfo } from "electron-updater/src/types"
 import { OutgoingHttpHeaders } from "http"
 import { URL } from "url"
-import { afterEach, beforeEach, vi } from "vitest"
-import { TEST_CONFIG } from "../helpers/providerTestUtil"
+import { MockInstance, afterEach, beforeEach, vi } from "vitest"
 import { httpExecutor } from "../helpers/updaterTestUtil"
 
-const config = TEST_CONFIG
+let requestSpy: MockInstance
 
-beforeEach(() => vi.restoreAllMocks())
+beforeEach(() => {
+  vi.restoreAllMocks()
+  // Block every real HTTP call by default; tests opt-in via mockResolvedValueOnce
+  requestSpy = vi.spyOn(httpExecutor, "request").mockRejectedValue(new Error("Unexpected HTTP request – mock it with mockResolvedValueOnce"))
+})
 afterEach(() => vi.restoreAllMocks())
 
 class TestProvider extends Provider<UpdateInfo> {
@@ -17,8 +20,8 @@ class TestProvider extends Provider<UpdateInfo> {
     super(opts)
   }
 
-  async getLatestVersion(): Promise<UpdateInfo> {
-    return { version: "1.0.0", files: [], path: "", sha512: "", releaseDate: "" }
+  getLatestVersion(): Promise<UpdateInfo> {
+    return Promise.resolve({ version: "1.0.0", files: [], path: "", sha512: "", releaseDate: "" })
   }
 
   resolveFiles(_updateInfo: UpdateInfo): ResolvedUpdateFileInfo[] {
@@ -47,33 +50,32 @@ function makeProvider(platform: ProviderRuntimeOptions["platform"] = "win32", is
   return new TestProvider({ isUseMultipleRangeRequest, platform, executor: httpExecutor as any })
 }
 
-
-test("isUseMultipleRangeRequest - true when runtimeOptions flag is true", config, ({ expect }) => {
+test("isUseMultipleRangeRequest - true when runtimeOptions flag is true", ({ expect }) => {
   const provider = makeProvider("win32", true)
   expect(provider.isUseMultipleRangeRequest).toBe(true)
 })
 
-test("isUseMultipleRangeRequest - false when runtimeOptions flag is false", config, ({ expect }) => {
+test("isUseMultipleRangeRequest - false when runtimeOptions flag is false", ({ expect }) => {
   const provider = makeProvider("win32", false)
   expect(provider.isUseMultipleRangeRequest).toBe(false)
 })
 
-test("fileExtraDownloadHeaders - returns null by default", config, ({ expect }) => {
+test("fileExtraDownloadHeaders - returns null by default", ({ expect }) => {
   const provider = makeProvider()
   expect(provider.fileExtraDownloadHeaders).toBeNull()
 })
 
-test("getDefaultChannelName - win32 returns latest (no suffix)", config, ({ expect }) => {
+test("getDefaultChannelName - win32 returns latest (no suffix)", ({ expect }) => {
   const provider = makeProvider("win32")
   expect(provider.callGetDefaultChannelName()).toBe("latest")
 })
 
-test("getDefaultChannelName - darwin returns latest-mac", config, ({ expect }) => {
+test("getDefaultChannelName - darwin returns latest-mac", ({ expect }) => {
   const provider = makeProvider("darwin")
   expect(provider.callGetDefaultChannelName()).toBe("latest-mac")
 })
 
-test("getDefaultChannelName - linux returns latest-linux (x64 arch)", config, ({ expect }) => {
+test("getDefaultChannelName - linux returns latest-linux (x64 arch)", ({ expect }) => {
   const orig = process.env["TEST_UPDATER_ARCH"]
   process.env["TEST_UPDATER_ARCH"] = "x64"
   try {
@@ -85,17 +87,17 @@ test("getDefaultChannelName - linux returns latest-linux (x64 arch)", config, ({
   }
 })
 
-test("getCustomChannelName - win32 returns channel with no suffix", config, ({ expect }) => {
+test("getCustomChannelName - win32 returns channel with no suffix", ({ expect }) => {
   const provider = makeProvider("win32")
   expect(provider.callGetCustomChannelName("beta")).toBe("beta")
 })
 
-test("getCustomChannelName - darwin appends -mac suffix", config, ({ expect }) => {
+test("getCustomChannelName - darwin appends -mac suffix", ({ expect }) => {
   const provider = makeProvider("darwin")
   expect(provider.callGetCustomChannelName("beta")).toBe("beta-mac")
 })
 
-test("getCustomChannelName - linux appends -linux suffix (x64)", config, ({ expect }) => {
+test("getCustomChannelName - linux appends -linux suffix (x64)", ({ expect }) => {
   const orig = process.env["TEST_UPDATER_ARCH"]
   process.env["TEST_UPDATER_ARCH"] = "x64"
   try {
@@ -107,21 +109,21 @@ test("getCustomChannelName - linux appends -linux suffix (x64)", config, ({ expe
   }
 })
 
-test("httpRequest - delegates to executor.request with correct options", config, async ({ expect }) => {
+test("httpRequest - delegates to executor.request with correct options", async ({ expect }) => {
   const provider = makeProvider()
-  vi.spyOn(httpExecutor, "request").mockResolvedValueOnce("ok")
+  requestSpy.mockResolvedValueOnce("ok")
 
   const url = new URL("https://example.com/latest.yml")
   const result = await provider.callHttpRequest(url)
 
   expect(result).toBe("ok")
-  expect(httpExecutor.request).toHaveBeenCalledOnce()
-  const opts = vi.mocked(httpExecutor.request).mock.calls[0][0]
+  expect(requestSpy).toHaveBeenCalledOnce()
+  const opts = requestSpy.mock.calls[0][0]
   expect(opts.hostname).toBe("example.com")
   expect(opts.path).toBe("/latest.yml")
 })
 
-test("createRequestOptions - populates hostname and path from URL", config, ({ expect }) => {
+test("createRequestOptions - populates hostname and path from URL", ({ expect }) => {
   const provider = makeProvider()
   const url = new URL("https://api.example.com/v1/releases?foo=bar")
   const opts = provider.callCreateRequestOptions(url)
@@ -130,7 +132,7 @@ test("createRequestOptions - populates hostname and path from URL", config, ({ e
   expect(opts.path).toBe("/v1/releases?foo=bar")
 })
 
-test("createRequestOptions - merges setRequestHeaders with per-call headers", config, ({ expect }) => {
+test("createRequestOptions - merges setRequestHeaders with per-call headers", ({ expect }) => {
   const provider = makeProvider()
   provider.setRequestHeaders({ "x-base": "base-value" })
 
@@ -141,7 +143,7 @@ test("createRequestOptions - merges setRequestHeaders with per-call headers", co
   expect((opts.headers as any)["x-extra"]).toBe("extra-value")
 })
 
-test("createRequestOptions - per-call headers used alone when no base headers set", config, ({ expect }) => {
+test("createRequestOptions - per-call headers used alone when no base headers set", ({ expect }) => {
   const provider = makeProvider()
   const url = new URL("https://api.example.com/v1/releases")
   const opts = provider.callCreateRequestOptions(url, { authorization: "token abc" })
@@ -149,7 +151,7 @@ test("createRequestOptions - per-call headers used alone when no base headers se
   expect((opts.headers as any)["authorization"]).toBe("token abc")
 })
 
-test("createRequestOptions - no headers set when both are null", config, ({ expect }) => {
+test("createRequestOptions - no headers set when both are null", ({ expect }) => {
   const provider = makeProvider()
   const url = new URL("https://api.example.com/v1/releases")
   const opts = provider.callCreateRequestOptions(url)
