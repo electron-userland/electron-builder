@@ -45,18 +45,25 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
 
       const targetConfig: any = (this.config as any)[target.name] ?? {}
       // Target-specific `desktop: null` opts out; `undefined` inherits platform-level config
-      const effectiveDesktop = "desktop" in targetConfig ? targetConfig.desktop : this.platformSpecificBuildOptions.desktop
-      if (effectiveDesktop == null) {
+      const hasTargetSpecificDesktop = "desktop" in targetConfig
+      const effectiveDesktop = hasTargetSpecificDesktop ? targetConfig.desktop : this.platformSpecificBuildOptions.desktop
+      if (effectiveDesktop == null || effectiveDesktop === false) {
         continue
       }
 
-      const desktopEntryPath = path.join(outDir, `${this.executableName}.desktop`)
+      // When a target has its own explicit desktop config, use a target-specific filename
+      // to avoid silently dropping different configs when multiple targets are built.
+      // Targets that only inherit the platform-level `linux.desktop` all share one file.
+      const desktopFileName = hasTargetSpecificDesktop ? `${this.executableName}-${target.name.toLowerCase()}.desktop` : `${this.executableName}.desktop`
+      const desktopEntryPath = path.join(outDir, desktopFileName)
       if (this.emittedDesktopFiles.has(desktopEntryPath)) {
         continue
       }
       this.emittedDesktopFiles.add(desktopEntryPath)
 
-      const mergedOptions = { ...this.platformSpecificBuildOptions, ...targetConfig }
+      // Normalize boolean `true` to an empty LinuxDesktopFile so computeDesktopEntry
+      // can safely access .entry and .desktopActions via optional chaining.
+      const mergedOptions = { ...this.platformSpecificBuildOptions, ...targetConfig, desktop: effectiveDesktop === true ? {} : effectiveDesktop }
       await this.getHelper().writeDesktopEntry(mergedOptions, undefined, desktopEntryPath)
       await this.info.emitArtifactBuildCompleted({
         file: desktopEntryPath,

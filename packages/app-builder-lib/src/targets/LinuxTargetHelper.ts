@@ -104,11 +104,14 @@ export class LinuxTargetHelper {
     if (exec != null && exec.length === 0) {
       throw new Error("Specified exec is empty")
     }
+    // Normalize boolean desktop value: `true` means use defaults, boolean is never an object
+    const desktopConfig = typeof targetSpecificOptions.desktop === "object" ? targetSpecificOptions.desktop : null
+
     // https://github.com/electron-userland/electron-builder/issues/3418
-    if (targetSpecificOptions.desktop?.entry?.Exec) {
+    if (desktopConfig?.entry?.Exec) {
       throw new InvalidConfigurationError("Please specify executable name as linux.executableName instead of linux.desktop.entry.Exec")
     }
-    if (targetSpecificOptions.desktop?.entry?.Comment) {
+    if (desktopConfig?.entry?.Comment) {
       throw new InvalidConfigurationError("Please specify the application description as linux.description instead of linux.desktop.entry.Comment")
     }
 
@@ -145,7 +148,7 @@ export class LinuxTargetHelper {
       // https://github.com/electron/electron/blob/2-0-x/atom/browser/native_window_views.cc#L226
       StartupWMClass: appInfo.productName,
       ...extra,
-      ...(targetSpecificOptions.desktop?.entry ?? {}),
+      ...(desktopConfig?.entry ?? {}),
     }
 
     const description = this.getDescription(targetSpecificOptions)
@@ -199,7 +202,7 @@ export class LinuxTargetHelper {
       data += `\n${name}=${desktopMeta[name]}`
     }
     data += "\n"
-    const desktopActions = targetSpecificOptions.desktop?.desktopActions ?? {}
+    const desktopActions = desktopConfig?.desktopActions ?? {}
     for (const [actionName, config] of Object.entries(desktopActions)) {
       if (!Object.keys(config ?? {}).length) {
         continue

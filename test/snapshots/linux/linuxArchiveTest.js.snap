@@ -15,6 +15,21 @@ exports[`AppImage 1`] = `
     },
     {
       "arch": "x64",
+      "file": "testapp-appimage.desktop",
+    },
+  ],
+}
+`;
+
+exports[`desktop: true produces default desktop file 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0.zip",
+    },
+    {
+      "arch": "x64",
       "file": "testapp.desktop",
     },
   ],

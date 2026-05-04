@@ -84,9 +84,10 @@ export interface CommonLinuxOptions {
   readonly mimeTypes?: Array<string> | null
 
   /**
-   * The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)
+   * The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files).
+   * Customize the desktop file entries. Set to `true` to produce a desktop file with default options, `false` or `null` to disable.
    */
-  readonly desktop?: LinuxDesktopFile | null
+  readonly desktop?: LinuxDesktopFile | boolean | null
 
   /**
    * The executable parameters. Pass to executableName

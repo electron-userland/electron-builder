@@ -66,10 +66,13 @@
               "$ref": "#/definitions/LinuxDesktopFile"
             },
             {
-              "type": "null"
+              "type": [
+                "null",
+                "boolean"
+              ]
             }
           ],
-          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files).\nCustomize the desktop file entries. Set to `true` to produce a desktop file with default options, `false` or `null` to disable."
         },
         "executableArgs": {
           "anyOf": [
@@ -673,10 +676,13 @@
               "$ref": "#/definitions/LinuxDesktopFile"
             },
             {
-              "type": "null"
+              "type": [
+                "null",
+                "boolean"
+              ]
             }
           ],
-          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files).\nCustomize the desktop file entries. Set to `true` to produce a desktop file with default options, `false` or `null` to disable."
         },
         "executableArgs": {
           "anyOf": [
@@ -1244,10 +1250,13 @@
               "$ref": "#/definitions/LinuxDesktopFile"
             },
             {
-              "type": "null"
+              "type": [
+                "null",
+                "boolean"
+              ]
             }
           ],
-          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files).\nCustomize the desktop file entries. Set to `true` to produce a desktop file with default options, `false` or `null` to disable."
         },
         "executableArgs": {
           "anyOf": [
@@ -1944,10 +1953,13 @@
               "$ref": "#/definitions/LinuxDesktopFile"
             },
             {
-              "type": "null"
+              "type": [
+                "null",
+                "boolean"
+              ]
             }
           ],
-          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files).\nCustomize the desktop file entries. Set to `true` to produce a desktop file with default options, `false` or `null` to disable."
         },
         "detectUpdateChannel": {
           "default": true,
@@ -2359,10 +2371,13 @@
               "$ref": "#/definitions/LinuxDesktopFile"
             },
             {
-              "type": "null"
+              "type": [
+                "null",
+                "boolean"
+              ]
             }
           ],
-          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files).\nCustomize the desktop file entries. Set to `true` to produce a desktop file with default options, `false` or `null` to disable."
         },
         "executableArgs": {
           "anyOf": [
@@ -5944,10 +5959,13 @@
               "$ref": "#/definitions/LinuxDesktopFile"
             },
             {
-              "type": "null"
+              "type": [
+                "null",
+                "boolean"
+              ]
             }
           ],
-          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files).\nCustomize the desktop file entries. Set to `true` to produce a desktop file with default options, `false` or `null` to disable."
         },
         "environment": {
           "anyOf": [
