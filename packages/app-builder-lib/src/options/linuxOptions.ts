@@ -84,9 +84,16 @@ export interface CommonLinuxOptions {
   readonly mimeTypes?: Array<string> | null
 
   /**
-   * The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)
+   * Customize the desktop file entries.
+   * The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files).
+   *
+   * For AppImage and Snap targets, the desktop file is ALWAYS generated and ALWAYS included in the package - not emitted as a separate artifact.
+   *
+   * For other "Archive" targets (dir, zip, tar, etc.), the desktop file will not be generated or included by default, but if you specify this option, it will be generated and emitted as a separate artifact.
+   * Set to `true` to produce a desktop file with default options, `false`/`null`/`undefined` to disable.
+   * @default undefined
    */
-  readonly desktop?: LinuxDesktopFile | null
+  readonly desktop?: LinuxDesktopFile | boolean | null
 
   /**
    * The executable parameters. Pass to executableName

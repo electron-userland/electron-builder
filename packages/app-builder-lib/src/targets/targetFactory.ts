@@ -3,7 +3,7 @@ import { DEFAULT_TARGET, DIR_TARGET, Platform, Target, TargetConfiguration } fro
 import { PlatformPackager } from "../platformPackager"
 import { ArchiveTarget } from "./ArchiveTarget"
 
-const archiveTargets = new Set(["zip", "7z", "tar.xz", "tar.lz", "tar.gz", "tar.bz2"])
+export const archiveTargets = new Set(["zip", "7z", "tar.xz", "tar.lz", "tar.gz", "tar.bz2"])
 
 export function computeArchToTargetNamesMap(raw: Map<Arch, Array<string>>, platformPackager: PlatformPackager<any>, platform: Platform): Map<Arch, Array<string>> {
   for (const targetNames of raw.values()) {
