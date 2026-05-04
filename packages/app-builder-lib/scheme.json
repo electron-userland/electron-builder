@@ -72,7 +72,8 @@
               ]
             }
           ],
-          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files).\nCustomize the desktop file entries. Set to `true` to produce a desktop file with default options, `false` or `null` to disable."
+          "default": "undefined",
+          "description": "Customize the desktop file entries.\nThe [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files).\n\nFor AppImage and Snap targets, the desktop file is ALWAYS generated and ALWAYS included in the package - not emitted as a separate artifact.\n\nFor other \"Archive\" targets (dir, zip, tar, etc.), the desktop file will not be generated or included by default, but if you specify this option, it will be generated and emitted as a separate artifact.\nSet to `true` to produce a desktop file with default options, `false`/`null`/`undefined` to disable."
         },
         "executableArgs": {
           "anyOf": [
@@ -682,7 +683,8 @@
               ]
             }
           ],
-          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files).\nCustomize the desktop file entries. Set to `true` to produce a desktop file with default options, `false` or `null` to disable."
+          "default": "undefined",
+          "description": "Customize the desktop file entries.\nThe [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files).\n\nFor AppImage and Snap targets, the desktop file is ALWAYS generated and ALWAYS included in the package - not emitted as a separate artifact.\n\nFor other \"Archive\" targets (dir, zip, tar, etc.), the desktop file will not be generated or included by default, but if you specify this option, it will be generated and emitted as a separate artifact.\nSet to `true` to produce a desktop file with default options, `false`/`null`/`undefined` to disable."
         },
         "executableArgs": {
           "anyOf": [
@@ -1256,7 +1258,8 @@
               ]
             }
           ],
-          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files).\nCustomize the desktop file entries. Set to `true` to produce a desktop file with default options, `false` or `null` to disable."
+          "default": "undefined",
+          "description": "Customize the desktop file entries.\nThe [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files).\n\nFor AppImage and Snap targets, the desktop file is ALWAYS generated and ALWAYS included in the package - not emitted as a separate artifact.\n\nFor other \"Archive\" targets (dir, zip, tar, etc.), the desktop file will not be generated or included by default, but if you specify this option, it will be generated and emitted as a separate artifact.\nSet to `true` to produce a desktop file with default options, `false`/`null`/`undefined` to disable."
         },
         "executableArgs": {
           "anyOf": [
@@ -1959,7 +1962,8 @@
               ]
             }
           ],
-          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files).\nCustomize the desktop file entries. Set to `true` to produce a desktop file with default options, `false` or `null` to disable."
+          "default": "undefined",
+          "description": "Customize the desktop file entries.\nThe [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files).\n\nFor AppImage and Snap targets, the desktop file is ALWAYS generated and ALWAYS included in the package - not emitted as a separate artifact.\n\nFor other \"Archive\" targets (dir, zip, tar, etc.), the desktop file will not be generated or included by default, but if you specify this option, it will be generated and emitted as a separate artifact.\nSet to `true` to produce a desktop file with default options, `false`/`null`/`undefined` to disable."
         },
         "detectUpdateChannel": {
           "default": true,
@@ -2377,7 +2381,8 @@
               ]
             }
           ],
-          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files).\nCustomize the desktop file entries. Set to `true` to produce a desktop file with default options, `false` or `null` to disable."
+          "default": "undefined",
+          "description": "Customize the desktop file entries.\nThe [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files).\n\nFor AppImage and Snap targets, the desktop file is ALWAYS generated and ALWAYS included in the package - not emitted as a separate artifact.\n\nFor other \"Archive\" targets (dir, zip, tar, etc.), the desktop file will not be generated or included by default, but if you specify this option, it will be generated and emitted as a separate artifact.\nSet to `true` to produce a desktop file with default options, `false`/`null`/`undefined` to disable."
         },
         "executableArgs": {
           "anyOf": [
@@ -5965,7 +5970,8 @@
               ]
             }
           ],
-          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files).\nCustomize the desktop file entries. Set to `true` to produce a desktop file with default options, `false` or `null` to disable."
+          "default": "undefined",
+          "description": "Customize the desktop file entries.\nThe [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files).\n\nFor AppImage and Snap targets, the desktop file is ALWAYS generated and ALWAYS included in the package - not emitted as a separate artifact.\n\nFor other \"Archive\" targets (dir, zip, tar, etc.), the desktop file will not be generated or included by default, but if you specify this option, it will be generated and emitted as a separate artifact.\nSet to `true` to produce a desktop file with default options, `false`/`null`/`undefined` to disable."
         },
         "environment": {
           "anyOf": [

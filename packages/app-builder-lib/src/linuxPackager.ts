@@ -10,7 +10,7 @@ import FlatpakTarget from "./targets/FlatpakTarget"
 import FpmTarget from "./targets/FpmTarget"
 import { LinuxTargetHelper } from "./targets/LinuxTargetHelper"
 import SnapTarget from "./targets/snap"
-import { createCommonTarget } from "./targets/targetFactory"
+import { archiveTargets, createCommonTarget } from "./targets/targetFactory"
 
 export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
   readonly executableName: string
@@ -39,7 +39,7 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
     await super.pack(outDir, arch, targets, taskManager)
 
     for (const target of targets) {
-      if (target.name === DIR_TARGET) {
+      if (!(archiveTargets.has(target.name) || target.name === DIR_TARGET)) {
         continue
       }
 

@@ -1,25 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`LinuxPackager > AppImage 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0-x64.AppImage",
-      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "testapp-appimage.desktop",
-    },
-  ],
-}
-`;
+exports[`LinuxPackager > AppImage - deprecated systemIntegration 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
 
 exports[`LinuxPackager > AppImage toolset 0.0.0 > AppImage - default icon, custom executable and custom desktop 1`] = `
 "[Desktop Entry]
@@ -56,10 +37,6 @@ exports[`LinuxPackager > AppImage toolset 0.0.0 > AppImage - default icon, custo
         "sha512": "@sha512",
         "size": "@size",
       },
-    },
-    {
-      "arch": "x64",
-      "file": "Foo.desktop",
     },
   ],
 }
@@ -205,10 +182,6 @@ exports[`LinuxPackager > AppImage toolset 1.0.2 > AppImage - default icon, custo
         "size": "@size",
       },
     },
-    {
-      "arch": "x64",
-      "file": "Foo.desktop",
-    },
   ],
 }
 `;
@@ -353,10 +326,6 @@ exports[`LinuxPackager > AppImage toolset 1.0.3 > AppImage - default icon, custo
         "size": "@size",
       },
     },
-    {
-      "arch": "x64",
-      "file": "Foo.desktop",
-    },
   ],
 }
 `;
@@ -480,10 +449,27 @@ exports[`LinuxPackager > appimage nested desktop config 1`] = `
     },
     {
       "arch": "x64",
-      "file": "testapp-appimage.desktop",
+      "file": "TestApp-1.1.0.zip",
+    },
+    {
+      "arch": "x64",
+      "file": "testapp.desktop",
     },
   ],
 }
+`;
+
+exports[`LinuxPackager > appimage nested desktop config 2`] = `
+"[Desktop Entry]
+Name=Test App
+Exec="/opt/Test App ßW/testapp" %U
+Terminal=false
+Type=Application
+Icon=testapp
+StartupWMClass=Test App ßW
+Comment=Test Application (test quite “ #378)
+Categories=Development;
+"
 `;
 
 exports[`LinuxPackager > desktop: true produces default desktop file 1`] = `
@@ -498,6 +484,25 @@ exports[`LinuxPackager > desktop: true produces default desktop file 1`] = `
       "file": "testapp.desktop",
     },
   ],
+}
+`;
+
+exports[`LinuxPackager > desktop: true produces default desktop file 2`] = `
+"[Desktop Entry]
+Name=Test App ßW
+Exec="/opt/Test App ßW/testapp" %U
+Terminal=false
+Type=Application
+Icon=testapp
+StartupWMClass=Test App ßW
+Comment=Test Application (test quite “ #378)
+Categories=Development;
+"
+`;
+
+exports[`LinuxPackager > dir target .desktop file 1`] = `
+{
+  "linux": [],
 }
 `;
 
@@ -526,6 +531,23 @@ exports[`LinuxPackager > disable desktop file output 2`] = `
 exports[`LinuxPackager > forbid desktop.Comment 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
 
 exports[`LinuxPackager > forbid desktop.Exec 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
+
+exports[`LinuxPackager > html license 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0.AppImage",
+      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
 
 exports[`LinuxPackager > icons dir with images without size in the filename 1`] = `
 {
@@ -628,14 +650,6 @@ exports[`LinuxPackager > nested desktop config overrides global linux config 1`]
         "size": "@size",
       },
     },
-    {
-      "arch": "x64",
-      "file": "Foo-appimage.desktop",
-    },
-    {
-      "arch": "x64",
-      "file": "Foo-rpm.desktop",
-    },
   ],
 }
 `;
@@ -648,6 +662,23 @@ See https://docs.npmjs.com/files/package.json#people-fields-author-contributors
 It is required to set Linux .deb package maintainer. Or you can set maintainer in the custom linux options.
 (see https://www.electron.build/linux).
 "
+`;
+
+exports[`LinuxPackager > text license and file associations 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0.AppImage",
+      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
 `;
 
 exports[`LinuxPackager > zip 1`] = `
@@ -665,17 +696,15 @@ exports[`LinuxPackager > zip 1`] = `
 }
 `;
 
-exports[`LinuxPackager > zip desktop file 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "TestApp-1.1.0.zip",
-    },
-    {
-      "arch": "x64",
-      "file": "testapp.desktop",
-    },
-  ],
-}
+exports[`LinuxPackager > zip 2`] = `
+"[Desktop Entry]
+Name=Test App
+Exec="/opt/Test App ßW/testapp" %U
+Terminal=false
+Type=Application
+Icon=testapp
+StartupWMClass=Test App ßW
+Comment=Test Comment
+Categories=Development;
+"
 `;
