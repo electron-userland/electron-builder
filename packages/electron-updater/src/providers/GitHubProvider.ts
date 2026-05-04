@@ -6,7 +6,7 @@ import { ResolvedUpdateFileInfo } from "../types"
 import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util"
 import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider"
 
-const hrefRegExp = /\/tag\/([^/]+)$/
+const hrefRegExp = /\/tag\/(v?[^/]+)$/
 
 interface GithubUpdateInfo extends UpdateInfo {
   tag: string
@@ -87,6 +87,10 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
 
             // This Release's Tag
             const hrefTag = hrefElement[1]
+            if (!semver.valid(hrefTag)) {
+              continue
+            }
+
             //Get Channel from this release's tag
             const hrefChannel = (semver.prerelease(hrefTag)?.[0] as string) || null
 
@@ -97,12 +101,14 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
 
             if (shouldFetchVersion && !isCustomChannel && !channelMismatch) {
               tag = hrefTag
+              latestRelease = element
               break
             }
 
             const isNextPreRelease = hrefChannel && hrefChannel === currentChannel
             if (isNextPreRelease) {
               tag = hrefTag
+              latestRelease = element
               break
             }
           }
@@ -215,16 +221,41 @@ function getNoteValue(parent: XElement): string {
   return result === "No content." ? "" : result
 }
 
-export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangelog: boolean, feed: XElement, latestRelease: any): string | Array<ReleaseNoteInfo> | null {
+export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangelog: boolean, feed: XElement, latestRelease: XElement): string | Array<ReleaseNoteInfo> | null {
   if (!isFullChangelog) {
     return getNoteValue(latestRelease)
   }
 
+  const releaseVersionRegExp = /\/tag\/v?([^/]+)$/
+
+  let latestVersion: string | undefined = undefined
+  try {
+    latestVersion = releaseVersionRegExp.exec(latestRelease.element("link").attribute("href"))![1]
+    latestVersion = semver.valid(latestVersion) ? latestVersion : undefined
+  } catch {
+    // If we cannot parse the latest version, cntinue and return all release notes without filtering by version
+  }
+
+  if (latestVersion == null) {
+    return null
+  }
+
   const releaseNotes: Array<ReleaseNoteInfo> = []
   for (const release of feed.getElements("entry")) {
-    // noinspection TypeScriptValidateJSTypes
-    const versionRelease = /\/tag\/v?([^/]+)$/.exec(release.element("link").attribute("href"))![1]
-    if (semver.valid(versionRelease) && semver.lt(currentVersion, versionRelease)) {
+    let versionRelease: string | undefined = undefined
+    try {
+      versionRelease = releaseVersionRegExp.exec(release.element("link").attribute("href"))![1]
+    } catch {
+      continue
+    }
+    // check `semver.valid` to validate if an electron release, because some repositories can contain also non-electron releases (for example, with documentation or website updates)
+    if (!semver.valid(versionRelease)) {
+      continue
+    }
+
+    const isGreaterThanCurrent = semver.gt(versionRelease, currentVersion.raw)
+    const isLessOrEqualThanLatest = semver.lte(versionRelease, latestVersion)
+    if (isGreaterThanCurrent && isLessOrEqualThanLatest) {
       releaseNotes.push({
         version: versionRelease,
         note: getNoteValue(release),
