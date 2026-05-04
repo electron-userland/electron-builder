@@ -500,12 +500,6 @@ Categories=Development;
 "
 `;
 
-exports[`LinuxPackager > dir target .desktop file 1`] = `
-{
-  "linux": [],
-}
-`;
-
 exports[`LinuxPackager > disable desktop file output 1`] = `
 {
   "linux": [

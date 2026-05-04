@@ -39,7 +39,7 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
     await super.pack(outDir, arch, targets, taskManager)
 
     for (const target of targets) {
-      if (!(archiveTargets.has(target.name) || target.name === DIR_TARGET)) {
+      if (!archiveTargets.has(target.name)) {
         continue
       }
 

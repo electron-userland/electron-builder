@@ -518,29 +518,4 @@ describe.ifNotWindows("LinuxPackager", () => {
         expectedArtifacts: ["Test App-1.0.0-x64.zip", "testapp.desktop"],
       }
     ))
-
-  test.ifNotWindows("dir target .desktop file", ({ expect }) =>
-    app(
-      expect,
-      {
-        targets: Platform.LINUX.createTarget(["dir"], Arch.x64),
-        config: {
-          linux: {
-            desktop: {
-              entry: {
-                Name: "Test App",
-              },
-            },
-          },
-        },
-      },
-      {
-        packed: async result => {
-          const desktopFilePath = path.resolve(result.outDir, "testapp.desktop")
-          expect(await fs.readFile(desktopFilePath, "utf-8")).toMatchSnapshot()
-        },
-        expectedArtifacts: ["testapp.desktop"],
-      }
-    )
-  )
 })
