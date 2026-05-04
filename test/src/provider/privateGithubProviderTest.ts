@@ -1,7 +1,8 @@
 import { GithubOptions, HttpError } from "builder-util-runtime"
-import { afterEach, vi } from "vitest"
+import { vi } from "vitest"
 import { createNsisUpdater, httpExecutor, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { PrivateGitHubProvider, PrivateGitHubUpdateInfo } from "electron-updater/src/providers/PrivateGitHubProvider"
+import { assertDownloadNotTriggered, getProvider, mockYaml, setupProviderMocks, TEST_CONFIG } from "../helpers/providerTestUtil"
 
 const MOCK_TOKEN = "ghp_test-token-12345"
 const MOCK_OWNER = "test-owner"
@@ -9,9 +10,9 @@ const MOCK_REPO = "test-private-repo"
 const STABLE_VERSION = "1.1.0"
 const PRERELEASE_VERSION = "1.2.0-beta.1"
 
-const config = { retry: 3 }
+const config = TEST_CONFIG
 
-afterEach(() => vi.restoreAllMocks())
+setupProviderMocks()
 
 function mockAssets(version: string) {
   return [
@@ -31,18 +32,6 @@ function mockRelease(version: string, opts: { draft?: boolean; prerelease?: bool
   }
 }
 
-function mockYaml(version: string): string {
-  return `version: ${version}
-files:
-  - url: my-app-Setup-${version}.exe
-    sha512: YmFzZTY0ZW5jb2RlZHNoYTUxMnN0cmluZ2ZvcnRlc3RpbmdwdXJwb3Nlc29ubHk=
-    size: 12345678
-path: my-app-Setup-${version}.exe
-sha512: YmFzZTY0ZW5jb2RlZHNoYTUxMnN0cmluZ2ZvcnRlc3RpbmdwdXJwb3Nlc29ubHk=
-releaseDate: '2024-01-01T00:00:00.000Z'
-`
-}
-
 async function createPrivateUpdater(version = "0.0.1") {
   const updater = await createNsisUpdater(version)
   // disable auto-download so tests focused on the API layer don't trigger real network downloads
@@ -56,9 +45,6 @@ async function createPrivateUpdater(version = "0.0.1") {
   return updater
 }
 
-function getProvider(updater: any): PrivateGitHubProvider {
-  return updater.updateInfoAndProvider?.provider as PrivateGitHubProvider
-}
 
 test("stable release - checkForUpdates returns correct UpdateInfo", config, async ({ expect }) => {
   const updater = await createPrivateUpdater()
@@ -158,7 +144,7 @@ test("fileExtraDownloadHeaders - includes authorization token with correct forma
 
   await updater.checkForUpdates()
 
-  const provider = getProvider(updater)
+  const provider = getProvider<PrivateGitHubProvider>(updater)
   expect(provider.fileExtraDownloadHeaders).toEqual({
     accept: "application/octet-stream",
     authorization: `token ${MOCK_TOKEN}`,
@@ -173,7 +159,7 @@ test("resolveFiles - maps release assets to asset download URLs", config, async 
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   const result = await updater.checkForUpdates()
-  const provider = getProvider(updater)
+  const provider = getProvider<PrivateGitHubProvider>(updater)
   const updateInfo = result?.updateInfo as PrivateGitHubUpdateInfo
 
   const resolvedFiles = provider.resolveFiles(updateInfo)
@@ -189,7 +175,7 @@ test("resolveFiles - throws ERR_UPDATER_ASSET_NOT_FOUND when asset missing from 
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   await updater.checkForUpdates()
-  const provider = getProvider(updater)
+  const provider = getProvider<PrivateGitHubProvider>(updater)
 
   const updateInfoWithEmptyAssets: PrivateGitHubUpdateInfo = {
     version: STABLE_VERSION,
@@ -214,8 +200,7 @@ test("autoDownload=false - checkForUpdates does not trigger download", config, a
   const actualEvents = trackEvents(updater)
   const result = await updater.checkForUpdates()
 
-  expect(result?.downloadPromise).toBeNull()
-  expect(actualEvents).toEqual(["checking-for-update", "update-available"])
+  assertDownloadNotTriggered(expect, result, actualEvents)
 })
 
 test("authorization header sent in GitHub API request", config, async ({ expect }) => {
