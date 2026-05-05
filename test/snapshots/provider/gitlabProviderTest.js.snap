@@ -1,0 +1,25 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`stable release - getLatestVersion fetches API then channel file 1`] = `
+{
+  "assets": Map {
+    "latest.yml" => "https://gitlab.com/-/project/99999999/uploads/abc123/latest.yml",
+    "my-app-Setup-1.1.0.exe" => "https://gitlab.com/-/project/99999999/uploads/abc123/my-app-Setup-1.1.0.exe",
+    "my-app-Setup-1.1.0.exe.blockmap" => "https://gitlab.com/-/project/99999999/uploads/abc123/my-app-Setup-1.1.0.exe.blockmap",
+  },
+  "files": [
+    {
+      "sha512": "YmFzZTY0ZW5jb2RlZHNoYTUxMnN0cmluZ2ZvcnRlc3RpbmdwdXJwb3Nlc29ubHk=",
+      "size": 12345678,
+      "url": "my-app-Setup-1.1.0.exe",
+    },
+  ],
+  "path": "my-app-Setup-1.1.0.exe",
+  "releaseDate": "2024-01-01T00:00:00.000Z",
+  "releaseName": "Release v1.1.0",
+  "releaseNotes": "Release notes for 1.1.0",
+  "sha512": "YmFzZTY0ZW5jb2RlZHNoYTUxMnN0cmluZ2ZvcnRlc3RpbmdwdXJwb3Nlc29ubHk=",
+  "tag": "v1.1.0",
+  "version": "1.1.0",
+}
+`;

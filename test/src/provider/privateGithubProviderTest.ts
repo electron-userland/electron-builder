@@ -1,17 +1,13 @@
 import { GithubOptions, HttpError } from "builder-util-runtime"
-import { afterEach, vi } from "vitest"
-import { createNsisUpdater, httpExecutor, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { PrivateGitHubProvider, PrivateGitHubUpdateInfo } from "electron-updater/src/providers/PrivateGitHubProvider"
+import { assertDownloadNotTriggered, getProvider, mockYaml } from "../helpers/providerTestUtil"
+import { createMockRequest, createNsisUpdater, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
 const MOCK_TOKEN = "ghp_test-token-12345"
 const MOCK_OWNER = "test-owner"
 const MOCK_REPO = "test-private-repo"
 const STABLE_VERSION = "1.1.0"
 const PRERELEASE_VERSION = "1.2.0-beta.1"
-
-const config = { retry: 3 }
-
-afterEach(() => vi.restoreAllMocks())
 
 function mockAssets(version: string) {
   return [
@@ -31,21 +27,10 @@ function mockRelease(version: string, opts: { draft?: boolean; prerelease?: bool
   }
 }
 
-function mockYaml(version: string): string {
-  return `version: ${version}
-files:
-  - url: my-app-Setup-${version}.exe
-    sha512: YmFzZTY0ZW5jb2RlZHNoYTUxMnN0cmluZ2ZvcnRlc3RpbmdwdXJwb3Nlc29ubHk=
-    size: 12345678
-path: my-app-Setup-${version}.exe
-sha512: YmFzZTY0ZW5jb2RlZHNoYTUxMnN0cmluZ2ZvcnRlc3RpbmdwdXJwb3Nlc29ubHk=
-releaseDate: '2024-01-01T00:00:00.000Z'
-`
-}
-
-async function createPrivateUpdater(version = "0.0.1") {
+async function createPrivateUpdater(requestSpy: ReturnType<typeof createMockRequest>, version = "0.0.1") {
   const updater = await createNsisUpdater(version)
-  // disable auto-download so tests focused on the API layer don't trigger real network downloads
+  // Inject per-test mock executor so concurrent tests never share state
+  ;(updater as any).httpExecutor = { request: requestSpy }
   updater.autoDownload = false
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
     provider: "github",
@@ -56,16 +41,11 @@ async function createPrivateUpdater(version = "0.0.1") {
   return updater
 }
 
-function getProvider(updater: any): PrivateGitHubProvider {
-  return updater.updateInfoAndProvider?.provider as PrivateGitHubProvider
-}
+test("stable release - checkForUpdates returns correct UpdateInfo", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPrivateUpdater(requestSpy)
 
-test("stable release - checkForUpdates returns correct UpdateInfo", config, async ({ expect }) => {
-  const updater = await createPrivateUpdater()
-
-  vi.spyOn(httpExecutor, "request")
-    .mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION)))
-    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   const result = await updater.checkForUpdates()
   const info = result?.updateInfo as PrivateGitHubUpdateInfo
@@ -76,11 +56,12 @@ test("stable release - checkForUpdates returns correct UpdateInfo", config, asyn
   expect(result?.updateInfo).toMatchSnapshot()
 })
 
-test("allowPrerelease=true - picks prerelease from release list", config, async ({ expect }) => {
-  const updater = await createPrivateUpdater()
+test("allowPrerelease=true - picks prerelease from release list", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPrivateUpdater(requestSpy)
   updater.allowPrerelease = true
 
-  vi.spyOn(httpExecutor, "request")
+  requestSpy
     .mockResolvedValueOnce(JSON.stringify([mockRelease(STABLE_VERSION), mockRelease(PRERELEASE_VERSION, { prerelease: true })]))
     .mockResolvedValueOnce(mockYaml(PRERELEASE_VERSION))
 
@@ -88,14 +69,12 @@ test("allowPrerelease=true - picks prerelease from release list", config, async 
   expect(result?.updateInfo.version).toBe(PRERELEASE_VERSION)
 })
 
-test("allowPrerelease=false - uses /latest endpoint and returns stable release", config, async ({ expect }) => {
-  const updater = await createPrivateUpdater()
+test("allowPrerelease=false - uses /latest endpoint and returns stable release", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPrivateUpdater(requestSpy)
   updater.allowPrerelease = false
 
-  const requestSpy = vi
-    .spyOn(httpExecutor, "request")
-    .mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION)))
-    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   const result = await updater.checkForUpdates()
   expect(result?.updateInfo.version).toBe(STABLE_VERSION)
@@ -105,11 +84,12 @@ test("allowPrerelease=false - uses /latest endpoint and returns stable release",
   expect(firstCallOptions.path).toContain("/releases/latest")
 })
 
-test("allowPrerelease=true - skips draft releases", config, async ({ expect }) => {
-  const updater = await createPrivateUpdater()
+test("allowPrerelease=true - skips draft releases", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPrivateUpdater(requestSpy)
   updater.allowPrerelease = true
 
-  vi.spyOn(httpExecutor, "request")
+  requestSpy
     .mockResolvedValueOnce(JSON.stringify([mockRelease(PRERELEASE_VERSION, { prerelease: true, draft: true }), mockRelease(STABLE_VERSION)]))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
@@ -118,62 +98,61 @@ test("allowPrerelease=true - skips draft releases", config, async ({ expect }) =
   expect(result?.updateInfo.version).toBe(STABLE_VERSION)
 })
 
-test("missing channel file - throws ERR_UPDATER_CHANNEL_FILE_NOT_FOUND", config, async ({ expect }) => {
-  const updater = await createPrivateUpdater()
+test("missing channel file - throws ERR_UPDATER_CHANNEL_FILE_NOT_FOUND", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPrivateUpdater(requestSpy)
 
   const releaseWithNoChannelFile = {
     ...mockRelease(STABLE_VERSION),
     assets: [{ name: `my-app-Setup-${STABLE_VERSION}.exe`, url: "https://api.github.com/repos/test-owner/test-private-repo/releases/assets/1002" }],
   }
 
-  vi.spyOn(httpExecutor, "request").mockResolvedValueOnce(JSON.stringify(releaseWithNoChannelFile))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(releaseWithNoChannelFile))
 
   await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND" })
 })
 
-test("404 on channel file asset - throws ERR_UPDATER_CHANNEL_FILE_NOT_FOUND", config, async ({ expect }) => {
-  const updater = await createPrivateUpdater()
+test("404 on channel file asset - throws ERR_UPDATER_CHANNEL_FILE_NOT_FOUND", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPrivateUpdater(requestSpy)
 
-  vi.spyOn(httpExecutor, "request")
-    .mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION)))
-    .mockRejectedValueOnce(new HttpError(404))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockRejectedValueOnce(new HttpError(404))
 
   await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND" })
 })
 
-test("no releases available - throws ERR_UPDATER_LATEST_VERSION_NOT_FOUND", config, async ({ expect }) => {
-  const updater = await createPrivateUpdater()
+test("no releases available - throws ERR_UPDATER_LATEST_VERSION_NOT_FOUND", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPrivateUpdater(requestSpy)
 
-  vi.spyOn(httpExecutor, "request").mockRejectedValueOnce(new Error("Network failure"))
+  requestSpy.mockRejectedValueOnce(new Error("Network failure"))
 
   await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_LATEST_VERSION_NOT_FOUND" })
 })
 
-test("fileExtraDownloadHeaders - includes authorization token with correct format", config, async ({ expect }) => {
-  const updater = await createPrivateUpdater()
+test("fileExtraDownloadHeaders - includes authorization token with correct format", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPrivateUpdater(requestSpy)
 
-  vi.spyOn(httpExecutor, "request")
-    .mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION)))
-    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   await updater.checkForUpdates()
 
-  const provider = getProvider(updater)
+  const provider = getProvider<PrivateGitHubProvider>(updater)
   expect(provider.fileExtraDownloadHeaders).toEqual({
     accept: "application/octet-stream",
     authorization: `token ${MOCK_TOKEN}`,
   })
 })
 
-test("resolveFiles - maps release assets to asset download URLs", config, async ({ expect }) => {
-  const updater = await createPrivateUpdater()
+test("resolveFiles - maps release assets to asset download URLs", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPrivateUpdater(requestSpy)
 
-  vi.spyOn(httpExecutor, "request")
-    .mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION)))
-    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   const result = await updater.checkForUpdates()
-  const provider = getProvider(updater)
+  const provider = getProvider<PrivateGitHubProvider>(updater)
   const updateInfo = result?.updateInfo as PrivateGitHubUpdateInfo
 
   const resolvedFiles = provider.resolveFiles(updateInfo)
@@ -181,15 +160,14 @@ test("resolveFiles - maps release assets to asset download URLs", config, async 
   expect(resolvedFiles[0].url.href).toBe(`https://api.github.com/repos/${MOCK_OWNER}/${MOCK_REPO}/releases/assets/1002`)
 })
 
-test("resolveFiles - throws ERR_UPDATER_ASSET_NOT_FOUND when asset missing from release", config, async ({ expect }) => {
-  const updater = await createPrivateUpdater()
+test("resolveFiles - throws ERR_UPDATER_ASSET_NOT_FOUND when asset missing from release", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPrivateUpdater(requestSpy)
 
-  vi.spyOn(httpExecutor, "request")
-    .mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION)))
-    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   await updater.checkForUpdates()
-  const provider = getProvider(updater)
+  const provider = getProvider<PrivateGitHubProvider>(updater)
 
   const updateInfoWithEmptyAssets: PrivateGitHubUpdateInfo = {
     version: STABLE_VERSION,
@@ -203,28 +181,24 @@ test("resolveFiles - throws ERR_UPDATER_ASSET_NOT_FOUND when asset missing from 
   expect(() => provider.resolveFiles(updateInfoWithEmptyAssets)).toThrow(expect.objectContaining({ code: "ERR_UPDATER_ASSET_NOT_FOUND" }))
 })
 
-test("autoDownload=false - checkForUpdates does not trigger download", config, async ({ expect }) => {
-  const updater = await createPrivateUpdater()
+test("autoDownload=false - checkForUpdates does not trigger download", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPrivateUpdater(requestSpy)
   updater.autoDownload = false
 
-  vi.spyOn(httpExecutor, "request")
-    .mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION)))
-    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   const actualEvents = trackEvents(updater)
   const result = await updater.checkForUpdates()
 
-  expect(result?.downloadPromise).toBeNull()
-  expect(actualEvents).toEqual(["checking-for-update", "update-available"])
+  assertDownloadNotTriggered(expect, result, actualEvents)
 })
 
-test("authorization header sent in GitHub API request", config, async ({ expect }) => {
-  const updater = await createPrivateUpdater()
+test("authorization header sent in GitHub API request", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPrivateUpdater(requestSpy)
 
-  const requestSpy = vi
-    .spyOn(httpExecutor, "request")
-    .mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION)))
-    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   await updater.checkForUpdates()
 
@@ -235,13 +209,11 @@ test("authorization header sent in GitHub API request", config, async ({ expect 
   })
 })
 
-test("channel file request uses octet-stream accept header with authorization", config, async ({ expect }) => {
-  const updater = await createPrivateUpdater()
+test("channel file request uses octet-stream accept header with authorization", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPrivateUpdater(requestSpy)
 
-  const requestSpy = vi
-    .spyOn(httpExecutor, "request")
-    .mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION)))
-    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   await updater.checkForUpdates()
 
@@ -252,8 +224,11 @@ test("channel file request uses octet-stream accept header with authorization", 
   })
 })
 
-test("enterprise GitHub host - uses /api/v3 prefix in request path", config, async ({ expect }) => {
+test("enterprise GitHub host - uses /api/v3 prefix in request path", async ({ expect }) => {
+  const requestSpy = createMockRequest()
   const updater = await createNsisUpdater()
+  // Inject per-test mock before setting updateConfigPath (which resets clientPromise)
+  ;(updater as any).httpExecutor = { request: requestSpy }
   updater.autoDownload = false
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
     provider: "github",
@@ -263,10 +238,7 @@ test("enterprise GitHub host - uses /api/v3 prefix in request path", config, asy
     host: "github.mycompany.com",
   })
 
-  const requestSpy = vi
-    .spyOn(httpExecutor, "request")
-    .mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION)))
-    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   await updater.checkForUpdates()
 
