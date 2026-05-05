@@ -6,7 +6,7 @@ import { outputFile, writeFile } from "fs-extra"
 import * as path from "path"
 import { assertThat } from "./fileAssert"
 import { TestAppAdapter } from "./TestAppAdapter"
-import { ExpectStatic } from "vitest"
+import { ExpectStatic, vi } from "vitest"
 
 const tmpDir = new TmpDir("updater-test-util")
 
@@ -68,6 +68,18 @@ export class TestNodeHttpExecutor extends NodeHttpExecutor {
 }
 
 export const httpExecutor: TestNodeHttpExecutor = new TestNodeHttpExecutor()
+
+/**
+ * Creates a fresh per-test mock for httpExecutor.request.
+ * Use this instead of vi.spyOn(httpExecutor, "request") to avoid shared-state
+ * race conditions when tests run concurrently (sequence.concurrent: true).
+ *
+ * Inject the result into each updater via:
+ *   (updater as any).httpExecutor = { request: requestSpy }
+ */
+export function createMockRequest() {
+  return vi.fn().mockRejectedValue(new Error("Unexpected HTTP request – mock it with mockResolvedValueOnce"))
+}
 
 export function tuneTestUpdater(updater: AppUpdater, options?: TestOnlyUpdaterOptions) {
   ;(updater as any).httpExecutor = httpExecutor

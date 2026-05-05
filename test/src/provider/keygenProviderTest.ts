@@ -1,23 +1,15 @@
 import { KeygenOptions } from "builder-util-runtime"
-import { MockInstance, afterEach, beforeEach, vi } from "vitest"
 import { assertDownloadNotTriggered, getProvider, mockYaml } from "../helpers/providerTestUtil"
-import { createNsisUpdater, httpExecutor, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { createMockRequest, createNsisUpdater, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
 const MOCK_ACCOUNT = "test-account-id"
 const MOCK_PRODUCT = "test-product-id"
 const STABLE_VERSION = "1.1.0"
 
-let requestSpy: MockInstance
-
-beforeEach(() => {
-  vi.restoreAllMocks()
-  // Block every real HTTP call by default; tests opt-in via mockResolvedValueOnce
-  requestSpy = vi.spyOn(httpExecutor, "request").mockRejectedValue(new Error("Unexpected HTTP request – mock it with mockResolvedValueOnce"))
-})
-afterEach(() => vi.restoreAllMocks())
-
-async function createKeygenUpdater(version = "0.0.1", options: Partial<KeygenOptions> = {}) {
+async function createKeygenUpdater(requestSpy: ReturnType<typeof createMockRequest>, version = "0.0.1", options: Partial<KeygenOptions> = {}) {
   const updater = await createNsisUpdater(version)
+  // Inject per-test mock executor so concurrent tests never share state
+  ;(updater as any).httpExecutor = { request: requestSpy }
   updater.autoDownload = false
   updater.updateConfigPath = await writeUpdateConfig<KeygenOptions>({
     provider: "keygen",
@@ -30,7 +22,8 @@ async function createKeygenUpdater(version = "0.0.1", options: Partial<KeygenOpt
 
 // Single HTTP call with Keygen-specific headers
 test("stable release - getLatestVersion fetches channel file and returns UpdateInfo", async ({ expect }) => {
-  const updater = await createKeygenUpdater()
+  const requestSpy = createMockRequest()
+  const updater = await createKeygenUpdater(requestSpy)
 
   requestSpy.mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
@@ -41,7 +34,8 @@ test("stable release - getLatestVersion fetches channel file and returns UpdateI
 
 // Request must go to api.keygen.sh with account and product in URL
 test("request URL - uses Keygen API with account and product", async ({ expect }) => {
-  const updater = await createKeygenUpdater()
+  const requestSpy = createMockRequest()
+  const updater = await createKeygenUpdater(requestSpy)
 
   requestSpy.mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
@@ -55,7 +49,8 @@ test("request URL - uses Keygen API with account and product", async ({ expect }
 
 // Keygen requires Accept: application/vnd.api+json and Keygen-Version headers
 test("request headers - sends Keygen-specific Accept and Keygen-Version headers", async ({ expect }) => {
-  const updater = await createKeygenUpdater()
+  const requestSpy = createMockRequest()
+  const updater = await createKeygenUpdater(requestSpy)
 
   requestSpy.mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
@@ -68,7 +63,8 @@ test("request headers - sends Keygen-specific Accept and Keygen-Version headers"
 
 // Default channel is "stable" (not "latest" as in other providers)
 test("default channel - requests stable.yml (Keygen default is stable, not latest)", async ({ expect }) => {
-  const updater = await createKeygenUpdater()
+  const requestSpy = createMockRequest()
+  const updater = await createKeygenUpdater(requestSpy)
 
   requestSpy.mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
@@ -80,7 +76,8 @@ test("default channel - requests stable.yml (Keygen default is stable, not lates
 
 // Custom channel via KeygenOptions.channel
 test("custom channel via options - requests {channel}.yml", async ({ expect }) => {
-  const updater = await createKeygenUpdater("0.0.1", { channel: "beta" })
+  const requestSpy = createMockRequest()
+  const updater = await createKeygenUpdater(requestSpy, "0.0.1", { channel: "beta" })
 
   requestSpy.mockResolvedValueOnce(mockYaml("1.2.0-beta.1"))
 
@@ -92,7 +89,8 @@ test("custom channel via options - requests {channel}.yml", async ({ expect }) =
 
 // updater.channel takes precedence over configuration.channel
 test("custom channel via updater.channel - overrides options.channel", async ({ expect }) => {
-  const updater = await createKeygenUpdater("0.0.1", { channel: "stable" })
+  const requestSpy = createMockRequest()
+  const updater = await createKeygenUpdater(requestSpy, "0.0.1", { channel: "stable" })
   updater.channel = "nightly"
 
   requestSpy.mockResolvedValueOnce(mockYaml("2.0.0"))
@@ -105,7 +103,8 @@ test("custom channel via updater.channel - overrides options.channel", async ({ 
 
 // Custom host override via KeygenOptions.host
 test("custom host - uses configured host instead of api.keygen.sh", async ({ expect }) => {
-  const updater = await createKeygenUpdater("0.0.1", { host: "keygen.mycompany.com" })
+  const requestSpy = createMockRequest()
+  const updater = await createKeygenUpdater(requestSpy, "0.0.1", { host: "keygen.mycompany.com" })
 
   requestSpy.mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
@@ -117,7 +116,8 @@ test("custom host - uses configured host instead of api.keygen.sh", async ({ exp
 
 // Any request failure is wrapped as ERR_UPDATER_LATEST_VERSION_NOT_FOUND
 test("request failure - throws ERR_UPDATER_LATEST_VERSION_NOT_FOUND", async ({ expect }) => {
-  const updater = await createKeygenUpdater()
+  const requestSpy = createMockRequest()
+  const updater = await createKeygenUpdater(requestSpy)
 
   requestSpy.mockRejectedValueOnce(new Error("Network failure"))
 
@@ -126,7 +126,8 @@ test("request failure - throws ERR_UPDATER_LATEST_VERSION_NOT_FOUND", async ({ e
 
 // resolveFiles resolves YAML file URLs relative to the Keygen artifacts base URL
 test("resolveFiles - constructs download URLs relative to Keygen artifacts base", async ({ expect }) => {
-  const updater = await createKeygenUpdater()
+  const requestSpy = createMockRequest()
+  const updater = await createKeygenUpdater(requestSpy)
 
   requestSpy.mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
@@ -142,7 +143,8 @@ test("resolveFiles - constructs download URLs relative to Keygen artifacts base"
 
 // autoDownload=false → downloadPromise null, only checking + available events
 test("autoDownload=false - does not trigger download", async ({ expect }) => {
-  const updater = await createKeygenUpdater()
+  const requestSpy = createMockRequest()
+  const updater = await createKeygenUpdater(requestSpy)
   updater.autoDownload = false
 
   requestSpy.mockResolvedValueOnce(mockYaml(STABLE_VERSION))
@@ -155,7 +157,8 @@ test("autoDownload=false - does not trigger download", async ({ expect }) => {
 
 // toString() describes the provider configuration for logging
 test("toString - includes account, product, platform, and channel", async ({ expect }) => {
-  const updater = await createKeygenUpdater("0.0.1", { channel: "beta", platform: "win32" })
+  const requestSpy = createMockRequest()
+  const updater = await createKeygenUpdater(requestSpy, "0.0.1", { channel: "beta", platform: "win32" })
 
   requestSpy.mockResolvedValueOnce(mockYaml("1.2.0"))
 
