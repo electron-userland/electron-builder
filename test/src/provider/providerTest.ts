@@ -1,5 +1,5 @@
 import { CancellationToken, UpdateInfo } from "builder-util-runtime"
-import { Provider, ProviderRuntimeOptions } from "electron-updater/src/providers/Provider.js"
+import { Provider, ProviderRuntimeOptions } from "electron-updater"
 import { ResolvedUpdateFileInfo } from "electron-updater/src/types.js"
 import { OutgoingHttpHeaders } from "http"
 import { URL } from "url"

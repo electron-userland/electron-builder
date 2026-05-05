@@ -1,5 +1,5 @@
-import { createRequire } from "module"
 import fsExtra from "fs-extra"
+import { createRequire } from "module"
 import * as path from "path"
 import { AppUpdater } from "./AppUpdater.js"
 
@@ -7,14 +7,20 @@ const require = createRequire(import.meta.url)
 
 import { UpdateInfo } from "builder-util-runtime"
 
-export { AppUpdater }
-export { BaseUpdater } from "./BaseUpdater.js"
 export { AppImageUpdater } from "./AppImageUpdater.js"
+export { BaseUpdater } from "./BaseUpdater.js"
 export { DebUpdater } from "./DebUpdater.js"
-export { PacmanUpdater } from "./PacmanUpdater.js"
-export { RpmUpdater } from "./RpmUpdater.js"
 export { MacUpdater } from "./MacUpdater.js"
 export { NsisUpdater } from "./NsisUpdater.js"
+export { PacmanUpdater } from "./PacmanUpdater.js"
+export { BitbucketProvider } from "./providers/BitbucketProvider.js"
+export { GitHubProvider } from "./providers/GitHubProvider.js"
+export { GitLabProvider } from "./providers/GitLabProvider.js"
+export { KeygenProvider } from "./providers/KeygenProvider.js"
+export { PrivateGitHubProvider } from "./providers/PrivateGitHubProvider.js"
+export { ProviderRuntimeOptions } from "./providers/Provider.js"
+export { RpmUpdater } from "./RpmUpdater.js"
+export { AppUpdater }
 
 export { Provider } from "./providers/Provider.js"
 
