@@ -79,7 +79,10 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
     try {
       latestRelease = JSON.parse(releaseResponse)
     } catch (e: any) {
-      throw newError(`Unable to parse latest release response from GitLab (${latestReleaseUrl}): response was not valid JSON: ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
+      throw newError(
+        `Unable to parse latest release response from GitLab (${latestReleaseUrl}): response was not valid JSON: ${e.stack || e.message}`,
+        "ERR_UPDATER_LATEST_VERSION_NOT_FOUND"
+      )
     }
 
     if (latestRelease.upcoming_release) {
