@@ -294,6 +294,12 @@ export interface DmgOptions extends TargetSpecificOptions {
   format?: "UDRW" | "UDRO" | "UDCO" | "UDZO" | "UDBZ" | "ULFO"
 
   /**
+   * The filesystem for the DMG volume (e.g. `"APFS"` or `"HFS+"`). APFS is the default and recommended on macOS 10.13+.
+   * @default APFS
+   */
+  readonly filesystem?: string | null
+
+  /**
    * The initial size of the DMG filesystem. Accepts the same syntax as the `-size` argument to `hdiutil`, e.g. `"150m"`, `"4g"`.
    * If not specified, the size is calculated automatically.
    * Set this explicitly for large apps or apps with sparse files to avoid "No space left on device" errors.
