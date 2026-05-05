@@ -44,16 +44,7 @@ Name "${PRODUCT_NAME}" "${DoubleAmpersand}"
   !endif
 !macroend
 
-!macro check64BitAndSetRegView
-  # https://github.com/electron-userland/electron-builder/issues/2420
-  ${If} ${IsWin2000}
-  ${OrIf} ${IsWinME}
-  ${OrIf} ${IsWinXP}
-  ${OrIf} ${IsWinVista}
-    MessageBox MB_OK "$(win7Required)"
-    Quit
-  ${EndIf}
-
+!macro setRegView64
   !ifdef APP_ARM64
     ${If} ${RunningX64}
       SetRegView 64
@@ -73,6 +64,19 @@ Name "${PRODUCT_NAME}" "${DoubleAmpersand}"
       ${EndIf}
     !endif
   !endif
+!macroend
+
+!macro check64BitAndSetRegView
+  # https://github.com/electron-userland/electron-builder/issues/2420
+  ${If} ${IsWin2000}
+  ${OrIf} ${IsWinME}
+  ${OrIf} ${IsWinXP}
+  ${OrIf} ${IsWinVista}
+    MessageBox MB_OK "$(win7Required)"
+    Quit
+  ${EndIf}
+
+  !insertmacro setRegView64
 !macroend
 
 # avoid exit code 2

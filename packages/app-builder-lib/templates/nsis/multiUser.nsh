@@ -69,16 +69,30 @@ Var installMode
       ${endif}
     !endif
 
+    # Explicitly set registry view for 64-bit/ARM64 apps before reading install location.
+    # This ensures correct registry access regardless of call context (e.g., after UAC elevation).
+    # https://github.com/electron-userland/electron-builder/issues/9658
+    !insertmacro setRegView64
+
     # сheck registry for previous installation path
     ReadRegStr $perMachineInstallationFolder HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
     ${if} $perMachineInstallationFolder != ""
       StrCpy $INSTDIR $perMachineInstallationFolder
     ${else}
       StrCpy $0 "$PROGRAMFILES"
-      !ifdef APP_64
-        ${if} ${RunningX64}
+      !ifdef APP_ARM64
+        ${If} ${RunningX64}
           StrCpy $0 "$PROGRAMFILES64"
-        ${endif}
+        ${EndIf}
+        ${If} ${IsNativeARM64}
+          StrCpy $0 "$PROGRAMFILES64"
+        ${EndIf}
+      !else
+        !ifdef APP_64
+          ${if} ${RunningX64}
+            StrCpy $0 "$PROGRAMFILES64"
+          ${endif}
+        !endif
       !endif
 
       !ifdef MENU_FILENAME
