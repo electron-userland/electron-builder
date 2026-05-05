@@ -1,5 +1,27 @@
 # app-builder-lib
 
+## 26.9.1
+
+### Patch Changes
+
+- Fix: include workspaceRoot when checking for installed dependencies in installOrRebuild to prevent infinite npm install recursion when install-app-deps runs from a workspace member's postinstall in npm workspaces _[`#9692`](https://github.com/electron-userland/electron-builder/pull/9692) [`a821ae8`](https://github.com/electron-userland/electron-builder/commit/a821ae8bff54aff563c39414e1134dfad862814a) [@beyondkmp](https://github.com/beyondkmp)_
+- Fix: bundling source files when using extraMetadata.name in Yarn Berry _[`#9683`](https://github.com/electron-userland/electron-builder/pull/9683) [`9bc2626`](https://github.com/electron-userland/electron-builder/commit/9bc26260e1e1b314325227fac7c58ac6085d1fe0) [@DCzajkowski](https://github.com/DCzajkowski)_
+- Fix Windows node module collection failure when spaces are in package manager executable's path _[`#9695`](https://github.com/electron-userland/electron-builder/pull/9695) [`9967672`](https://github.com/electron-userland/electron-builder/commit/99676722552714a97c2285b170230ef941d411c0) [@copilot-swe-agent](https://github.com/apps/copilot-swe-agent)_
+- Fix: properly resolve package `version --> path` within pnpm virtual store _[`#9698`](https://github.com/electron-userland/electron-builder/pull/9698) [`fb92196`](https://github.com/electron-userland/electron-builder/commit/fb921963168cf654e05e5230b2ca1280a326667c) [@mmaietta](https://github.com/mmaietta)_
+- Fix(nsis): removing windows azure trusted signing preflight checks since TrustedSigning module has its own logging _[`#9687`](https://github.com/electron-userland/electron-builder/pull/9687) [`a4f2d98`](https://github.com/electron-userland/electron-builder/commit/a4f2d98a64087a0fc822e574d033b7770697b09e) [@mmaietta](https://github.com/mmaietta)_
+- Fix: convert file path via vm.toVmFile() in windowsSignAzureManager _[`#9676`](https://github.com/electron-userland/electron-builder/pull/9676) [`5c945b2`](https://github.com/electron-userland/electron-builder/commit/5c945b21f775b8dead1d5afb508517c43c31ef6e) [@copilot-swe-agent](https://github.com/apps/copilot-swe-agent)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@26.9.1`
+- `electron-builder-squirrel-windows@26.9.1`
+
+</details>
+
 ## 26.9.0
 
 ### Minor Changes
