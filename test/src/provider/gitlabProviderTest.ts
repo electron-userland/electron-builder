@@ -77,12 +77,24 @@ test("API request URL - uses GitLab releases permalink/latest endpoint", async (
   expect(firstCallPath).toContain(`projects/${MOCK_PROJECT_ID}/releases/permalink/latest`)
 })
 
-// API returns null/empty → ERR_UPDATER_LATEST_VERSION_NOT_FOUND
-test("null API response - throws ERR_UPDATER_LATEST_VERSION_NOT_FOUND", async ({ expect }) => {
+// API returns null/empty → ERR_UPDATER_NO_PUBLISHED_VERSIONS
+test("null API response - throws ERR_UPDATER_NO_PUBLISHED_VERSIONS", async ({ expect }) => {
   const requestSpy = createMockRequest()
   const updater = await createGitlabUpdater(requestSpy)
 
   requestSpy.mockResolvedValueOnce(null)
+
+  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_NO_PUBLISHED_VERSIONS" })
+})
+
+// upcoming_release=true → ERR_UPDATER_LATEST_VERSION_NOT_FOUND (scheduled, not yet published)
+test("upcoming release - throws ERR_UPDATER_LATEST_VERSION_NOT_FOUND", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createGitlabUpdater(requestSpy)
+
+  const release = mockGitlabRelease(STABLE_VERSION)
+  release.upcoming_release = true
+  requestSpy.mockResolvedValueOnce(JSON.stringify(release))
 
   await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_LATEST_VERSION_NOT_FOUND" })
 })
@@ -142,6 +154,12 @@ test("PRIVATE-TOKEN auth - plain token sent as PRIVATE-TOKEN header", async ({ e
 
   const firstCallHeaders = requestSpy.mock.calls[0][0].headers as Record<string, string>
   expect(firstCallHeaders["PRIVATE-TOKEN"]).toBe("glpat-abc123")
+  expect(firstCallHeaders["authorization"]).toBeUndefined()
+
+  // Channel YAML download (second request) must also use PRIVATE-TOKEN, not authorization
+  const secondCallHeaders = requestSpy.mock.calls[1][0].headers as Record<string, string>
+  expect(secondCallHeaders["PRIVATE-TOKEN"]).toBe("glpat-abc123")
+  expect(secondCallHeaders["authorization"]).toBeUndefined()
 })
 
 // Bearer token sent as authorization header when token starts with "Bearer"
@@ -156,6 +174,11 @@ test("Bearer auth - token starting with Bearer sent as authorization header", as
   const firstCallHeaders = requestSpy.mock.calls[0][0].headers as Record<string, string>
   expect(firstCallHeaders["authorization"]).toBe("Bearer gloas-oauth-token")
   expect(firstCallHeaders["PRIVATE-TOKEN"]).toBeUndefined()
+
+  // Channel YAML download (second request) must also use authorization, not PRIVATE-TOKEN
+  const secondCallHeaders = requestSpy.mock.calls[1][0].headers as Record<string, string>
+  expect(secondCallHeaders["authorization"]).toBe("Bearer gloas-oauth-token")
+  expect(secondCallHeaders["PRIVATE-TOKEN"]).toBeUndefined()
 })
 
 // No token → no auth headers on the release API request
