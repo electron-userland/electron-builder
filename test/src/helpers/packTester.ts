@@ -23,7 +23,6 @@ import type { ExpectStatic } from "vitest"
 import { ELECTRON_VERSION } from "./testConfig.js"
 import { exec as execCallback, execSync } from "child_process"
 
-
 const PACKAGE_MANAGER_VERSION_MAP = {
   [PM.NPM]: { cli: "npm", version: "9.8.1" },
   [PM.YARN]: { cli: "yarn", version: "1.22.19" },

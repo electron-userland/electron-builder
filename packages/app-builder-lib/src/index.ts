@@ -19,7 +19,7 @@ export {
   Hooks,
   MetadataDirectories,
   PackContext,
-  ToolsetConfig
+  ToolsetConfig,
 } from "./configuration.js"
 export {
   BeforeBuildContext,
@@ -31,7 +31,7 @@ export {
   Target,
   TargetConfigType,
   TargetConfiguration,
-  TargetSpecificOptions
+  TargetSpecificOptions,
 } from "./core.js"
 export { ElectronBrandingOptions, ElectronDownloadOptions, ElectronPlatformName } from "./electron/ElectronFramework.js"
 export { AppXOptions } from "./options/AppXOptions.js"
@@ -59,7 +59,7 @@ export {
   CustomWindowsSign,
   CustomWindowsSignTaskConfiguration,
   FileCodeSigningInfo,
-  WindowsSignTaskConfiguration
+  WindowsSignTaskConfiguration,
 } from "./codeSign/windowsSignToolManager.js"
 export { ForgeOptions, buildForge } from "./forge-maker.js"
 export { Framework, PrepareApplicationStageDirectoryOptions } from "./Framework.js"

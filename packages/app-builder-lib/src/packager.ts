@@ -682,7 +682,8 @@ function createOutDirIfNeed(targetList: Array<Target>, createdOutDirs: Set<strin
     Array.from(ourDirs)
       .sort()
       .map(dir => {
-        return fsExtra.mkdirs(dir)
+        return fsExtra
+          .mkdirs(dir)
           .then(() => fsExtra.chmod(dir, 0o755) /* set explicitly */)
           .then(() => createdOutDirs.add(dir))
       })

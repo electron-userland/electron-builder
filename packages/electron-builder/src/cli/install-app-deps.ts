@@ -1,6 +1,14 @@
 #! /usr/bin/env node
 import { fileURLToPath } from "node:url"
-import { computeDefaultAppDirectory, createLazyProductionDeps, determinePackageManagerEnv, getConfig, getElectronVersion, installOrRebuild, PACKAGE_VERSION } from "app-builder-lib/internal"
+import {
+  computeDefaultAppDirectory,
+  createLazyProductionDeps,
+  determinePackageManagerEnv,
+  getConfig,
+  getElectronVersion,
+  installOrRebuild,
+  PACKAGE_VERSION,
+} from "app-builder-lib/internal"
 import { getArchCliNames, log, orNullIfFileNotExist, printErrorAndExit } from "builder-util"
 import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"

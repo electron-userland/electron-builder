@@ -100,7 +100,8 @@ test.ifNotWindows("map resources", ({ expect }) =>
       },
     },
     {
-      projectDirCreated: projectDir => Promise.all([fsExtra.outputFile(path.join(projectDir, "foo", "old"), "data"), fsExtra.outputFile(path.join(projectDir, "license.txt"), "data")]),
+      projectDirCreated: projectDir =>
+        Promise.all([fsExtra.outputFile(path.join(projectDir, "foo", "old"), "data"), fsExtra.outputFile(path.join(projectDir, "license.txt"), "data")]),
       packed: context => {
         const resources = context.getResources(Platform.LINUX)
         return Promise.all([

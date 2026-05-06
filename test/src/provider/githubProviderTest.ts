@@ -167,9 +167,7 @@ test("getLatestTagName failure - throws ERR_UPDATER_INVALID_RELEASE_FEED", async
   const updater = await createPublicUpdater(requestSpy)
   updater.allowPrerelease = false
 
-  requestSpy
-    .mockResolvedValueOnce(mockAtomFeed([{ tag: STABLE_TAG, title: STABLE_TAG }]))
-    .mockRejectedValueOnce(new Error("Connection refused"))
+  requestSpy.mockResolvedValueOnce(mockAtomFeed([{ tag: STABLE_TAG, title: STABLE_TAG }])).mockRejectedValueOnce(new Error("Connection refused"))
 
   await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_RELEASE_FEED" })
 })
