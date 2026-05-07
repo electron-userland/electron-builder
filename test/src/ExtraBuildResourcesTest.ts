@@ -1,4 +1,3 @@
-import { downloadElectronArtifact } from "app-builder-lib/out/util/electronGet"
 import { Arch, build, PackagerOptions, Platform } from "electron-builder"
 import * as fs from "fs"
 import { readdir } from "fs/promises"
@@ -10,6 +9,7 @@ import { assertThat } from "./helpers/fileAssert"
 import { app, assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { expectUpdateMetadata } from "./helpers/winHelper"
+import { downloadArtifact } from "@electron/get"
 
 function createBuildResourcesTest(expect: ExpectStatic, packagerOptions: PackagerOptions) {
   return app(
@@ -182,16 +182,13 @@ test("do not exclude build entirely (respect files)", ({ expect }) => assertPack
 test.ifNotWindows("electronDist as path to local folder with electron builds zipped ", async ({ expect }) => {
   const tmpDir = new TmpDir()
   const cacheDir = await tmpDir.createTempDir({ prefix: "electronDistCache" })
-  const file = await downloadElectronArtifact(
-    {
-      artifactName: "electron",
-      platformName: Platform.LINUX.nodeName,
-      arch: "x64",
-      version: ELECTRON_VERSION,
-      cacheDir,
-    },
-    null
-  )
+  const file = await downloadArtifact({
+    artifactName: "electron",
+    platform: Platform.LINUX.nodeName,
+    arch: "x64",
+    version: ELECTRON_VERSION,
+    cacheRoot: cacheDir,
+  })
   await app(
     expect,
     {
@@ -215,17 +212,14 @@ test.ifNotWindows("electronDist as callback function for path to local electron 
         const { platformName, arch, version, packager } = context
 
         const cacheDir = await packager.info.tempDirManager.createTempDir({ prefix: "electronDistCache" })
-        const file = await downloadElectronArtifact(
-          {
-            artifactName: "electron",
-            platformName,
-            arch,
-            version,
-            cacheDir,
-          },
-          null
-        )
-        return file
+        const zipFile = await downloadArtifact({
+          artifactName: "electron",
+          platform: platformName,
+          arch,
+          version,
+          cacheRoot: cacheDir,
+        })
+        return zipFile
       },
     },
   })
@@ -258,23 +252,18 @@ test.ifLinux("electronDist as standard path to node_modules electron", ({ expect
   )
 })
 
-test.ifNotWindows("electronDist as callback function for path to locally unzipped", ({ expect }) => {
-  const tmpDir = new TmpDir()
-
-  return app(
+test.ifNotWindows("electronDist as callback function for path to locally unzipped", ({ expect }) =>
+  app(
     expect,
     {
       targets: linuxDirTarget,
       config: {
         electronDist: async context => {
-          const { platformName, arch, version } = context
+          const { platformName, arch, version, packager } = context
           const fileName = `electron-v${version}-${platformName}-${arch}.zip`
           const electronUrl = `https://github.com/electron/electron/releases/download/v${version}/${fileName}`
 
-          const tempDir = await tmpDir.getTempDir()
-          if (!fs.existsSync(tempDir)) {
-            fs.mkdirSync(tempDir)
-          }
+          const tempDir = await packager.info.tempDirManager.createTempDir({ prefix: "electronDistUnzip" })
           const electronPath = path.join(tempDir, "electron-dist")
 
           const directory = await unzipper.Open.url(require("request"), electronUrl)
@@ -288,11 +277,10 @@ test.ifNotWindows("electronDist as callback function for path to locally unzippe
       packed: async context => {
         const contents = await readdir(context.getAppPath(Platform.LINUX, Arch.x64))
         expect(contents).toMatchSnapshot()
-        await tmpDir.cleanup()
       },
     }
   )
-})
+)
 
 const overridePublishChannel: any = {
   channel: "beta",

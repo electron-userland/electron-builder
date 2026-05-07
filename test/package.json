@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "dependencies": {
+    "@electron/get": "^3.1.0",
     "@electron/osx-sign": "^1.0.4",
     "adm-zip": "0.5.16",
     "app-builder-lib": "workspace:*",

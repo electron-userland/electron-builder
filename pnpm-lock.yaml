@@ -97,7 +97,7 @@ importers:
         version: 0.64.0
       vitest:
         specifier: ^3.2.2
-        version: 3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4)(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
+        version: 3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.4))(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
 
   packages/app-builder-lib:
     dependencies:
@@ -584,6 +584,9 @@ importers:
 
   test:
     dependencies:
+      '@electron/get':
+        specifier: ^3.1.0
+        version: 3.1.0
       '@electron/osx-sign':
         specifier: ^1.0.4
         version: 1.3.3
@@ -698,7 +701,7 @@ importers:
         version: 1.6.3
       vitest:
         specifier: ^3.0.4
-        version: 3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4)(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
+        version: 3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.4))(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
       vitest-mock-commonjs:
         specifier: ^1.0.2
         version: 1.0.2
@@ -7182,7 +7185,7 @@ snapshots:
       sirv: 3.0.1
       tinyglobby: 0.2.14
       tinyrainbow: 2.0.0
-      vitest: 3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4)(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
+      vitest: 3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.4))(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
 
   '@vitest/utils@3.0.4':
     dependencies:
@@ -9658,7 +9661,7 @@ snapshots:
 
   vitest-mock-commonjs@1.0.2: {}
 
-  vitest@3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4)(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1):
+  vitest@3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.4))(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1):
     dependencies:
       '@types/chai': 5.2.2
       '@vitest/expect': 3.2.4

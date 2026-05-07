@@ -2,7 +2,7 @@ import * as fs from "fs/promises"
 import * as os from "os"
 import * as path from "path"
 import { afterAll, afterEach, beforeAll, vi } from "vitest"
-import { ArtifactDownloadOptions, ElectronDownloadOptions, downloadArtifact, downloadElectronArtifact, getCacheDirectory } from "app-builder-lib/out/util/electronGet"
+import { ArtifactDownloadOptions, ElectronDownloadOptions, downloadBuilderToolset, downloadElectronArtifact, getCacheDirectory } from "app-builder-lib/out/util/electronGet"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 
 // ─── getCacheDirectory ────────────────────────────────────────────────────────
@@ -80,7 +80,7 @@ const APPIMAGE_SHA256 = "84021a78ee214ae6fd33a2d62a92ba25542dd10bc86bf117a9b2d0b
 const DOWNLOAD_TIMEOUT = { timeout: 120_000 }
 
 test("downloadArtifact: downloads and extracts appimage@1.0.3 tar.gz with sha256 checksum", DOWNLOAD_TIMEOUT, async ({ expect }) => {
-  const result = await downloadArtifact({
+  const result = await downloadBuilderToolset({
     releaseName: APPIMAGE_RELEASE,
     filenameWithExt: APPIMAGE_FILE,
     checksums: { [APPIMAGE_FILE]: APPIMAGE_SHA256 },
@@ -100,12 +100,12 @@ test("downloadArtifact: downloads and extracts appimage@1.0.3 tar.gz with sha256
 })
 
 test("downloadArtifact: second call returns same cached path without re-downloading", DOWNLOAD_TIMEOUT, async ({ expect }) => {
-  const first = await downloadArtifact({
+  const first = await downloadBuilderToolset({
     releaseName: APPIMAGE_RELEASE,
     filenameWithExt: APPIMAGE_FILE,
     checksums: { [APPIMAGE_FILE]: APPIMAGE_SHA256 },
   })
-  const second = await downloadArtifact({
+  const second = await downloadBuilderToolset({
     releaseName: APPIMAGE_RELEASE,
     filenameWithExt: APPIMAGE_FILE,
     checksums: { [APPIMAGE_FILE]: APPIMAGE_SHA256 },
@@ -119,7 +119,7 @@ test("downloadArtifact: second call returns same cached path without re-download
 test("downloadArtifact: respects ELECTRON_BUILDER_BINARIES_MIRROR env var", DOWNLOAD_TIMEOUT, async ({ expect }) => {
   vi.stubEnv("ELECTRON_BUILDER_BINARIES_MIRROR", "https://github.com/electron-userland/electron-builder-binaries/releases/download/")
 
-  const result = await downloadArtifact({
+  const result = await downloadBuilderToolset({
     releaseName: APPIMAGE_RELEASE,
     filenameWithExt: APPIMAGE_FILE,
     checksums: { [APPIMAGE_FILE]: APPIMAGE_SHA256 },
@@ -136,7 +136,7 @@ test("downloadArtifact: rejects when sha256 checksum does not match", DOWNLOAD_T
   // Use a different release name (1.0.2 vs 1.0.3) so this test gets its own cold cache entry.
   // The cache-hit path skips checksum validation entirely, so we must avoid a pre-populated cache.
   await expect(
-    downloadArtifact({
+    downloadBuilderToolset({
       releaseName: "appimage@1.0.2",
       filenameWithExt: APPIMAGE_FILE,
       checksums: { [APPIMAGE_FILE]: "0000000000000000000000000000000000000000000000000000000000000000" },

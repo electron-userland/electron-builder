@@ -17,8 +17,6 @@ import * as lockfile from "proper-lockfile"
 import * as tar from "tar"
 import { ElectronPlatformName } from "../electron/ElectronFramework"
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 export type ElectronGetOptions = Omit<
   ElectronPlatformArtifactDetails,
   | "platform"
@@ -72,8 +70,6 @@ export interface ElectronDownloadOptions {
   platform?: ElectronPlatformName
   arch?: string
 }
-
-// ─── Internal helpers ─────────────────────────────────────────────────────────
 
 function hashUrlSafe(input: string, length = 6): string {
   let hash = 5381
@@ -184,13 +180,16 @@ async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
-const configToPromise = new Map<string, Promise<string>>()
-
 /**
  * Downloads a generic artifact (.tar.gz or .zip) from a GitHub release.
- * Used for electron-builder binary tools (appimage, etc.).
+ * Used for electron-builder-binaries tools (appimage, etc.).
  */
-export async function downloadArtifact(options: { releaseName: string; filenameWithExt: string; checksums: Record<string, string>; githubOrgRepo?: string }): Promise<string> {
+export async function downloadBuilderToolset(options: {
+  releaseName: string
+  filenameWithExt: string
+  checksums: Record<string, string>
+  githubOrgRepo?: string
+}): Promise<string> {
   const { releaseName, filenameWithExt, checksums, githubOrgRepo = "electron-userland/electron-builder-binaries" } = options
 
   const baseUrl = getBinariesMirrorUrl(githubOrgRepo)
@@ -222,20 +221,6 @@ export async function downloadArtifact(options: { releaseName: string; filenameW
  * Deduplicates concurrent calls for the same artifact within the same process.
  */
 export async function downloadElectronArtifact(options: ArtifactDownloadOptions, progress: MultiProgress | null): Promise<string> {
-  const cacheDir = options.cacheDir || path.resolve(getCacheDirectory(), "downloads")
-  const cacheName = JSON.stringify({ ...options, cacheDir })
-
-  let promise = configToPromise.get(cacheName)
-  if (promise != null) {
-    return promise
-  }
-
-  promise = doDownloadArtifact({ ...options, cacheDir }, progress)
-  configToPromise.set(cacheName, promise)
-  return promise
-}
-
-async function doDownloadArtifact(options: ArtifactDownloadOptions, progress: MultiProgress | null): Promise<string> {
   const { electronDownload, arch, version, platformName: platform, artifactName, cacheDir: cacheRoot } = options
 
   let artifactConfig: ElectronPlatformArtifactDetails = { cacheRoot, platform, arch, version, artifactName }
@@ -268,7 +253,7 @@ async function doDownloadArtifact(options: ArtifactDownloadOptions, progress: Mu
 
   artifactConfig.cacheMode = resolveCacheMode()
 
-  const suffix = hashUrlSafe(JSON.stringify({ artifactName, version, platform, arch }), 5)
+  const suffix = hashUrlSafe(JSON.stringify(artifactConfig), 5)
   const folderName = `${artifactName}-v${version}-${platform}-${arch}-${suffix}`
   const extractDir = path.join(getCacheDirectory(), `${artifactName}-v${version}`, folderName)
 
@@ -289,4 +274,3 @@ export function getBinariesMirrorUrl(githubOrgRepo: string): string {
     `https://github.com/${githubOrgRepo}/releases/download/`
   )
 }
-
