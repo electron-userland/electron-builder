@@ -135,17 +135,25 @@ async function extractArchive(file: string, dir: string) {
  * Both public download functions delegate here after building their respective configs.
  */
 async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact>[0], extractDir: string, label: string, progress: MultiProgress | null): Promise<string> {
-  const extractionCompleteMarker = `${extractDir}.complete`
+  const completeMarker = `${extractDir}.complete`
+  const isCached = async () => exists(completeMarker)
+
   await fs.mkdir(extractDir, { recursive: true })
 
-  let release: (() => Promise<void>) | undefined
-  try {
-    release = await lockfile.lock(extractDir, {
-      retries: { retries: 5, minTimeout: 1000, maxTimeout: 5000 },
-      stale: 60000,
-    })
+  // Fast path before acquiring the lock: avoids Windows lock-release timing issues
+  // where the .lock directory isn't immediately visible after release().
+  if (await isCached()) {
+    log.debug({ file: label, path: extractDir }, "using cached artifact - skipping download/extract")
+    return extractDir
+  }
 
-    if (await exists(extractionCompleteMarker)) {
+  const release = await lockfile.lock(extractDir, {
+    retries: { retries: 5, minTimeout: 1000, maxTimeout: 5000 },
+    stale: 60000,
+  })
+  try {
+    // Re-check after acquiring lock: another worker may have completed while we waited.
+    if (await isCached()) {
       log.debug({ file: label, path: extractDir }, "using cached artifact - skipping download/extract")
       return extractDir
     }
@@ -165,16 +173,14 @@ async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact
     const downloadedFile = await get.downloadArtifact({ ...config, downloadOptions })
 
     await extractArchive(downloadedFile, extractDir)
-    await fs.writeFile(extractionCompleteMarker, "")
+    await fs.writeFile(completeMarker, "")
 
     progressBar?.update(100)
     progressBar?.terminate()
 
     return extractDir
   } finally {
-    if (release) {
-      await release()
-    }
+    await release().catch(err => log.warn({ err }, "failed to release lockfile"))
   }
 }
 
