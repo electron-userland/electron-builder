@@ -1,11 +1,11 @@
-import { executeAppBuilder, log } from "builder-util"
+import { log } from "builder-util"
 import { MultiProgress } from "electron-publish/out/multiProgress"
 import * as fs from "fs-extra"
 import * as path from "path"
-import { PrepareApplicationStageDirectoryOptions } from "../Framework"
-import { downloadArtifact } from "../util/electronGet"
-import { ElectronBrandingOptions } from "./ElectronFramework"
 import { Platform } from "../core"
+import { PrepareApplicationStageDirectoryOptions } from "../Framework"
+import { downloadElectronArtifact } from "../util/electronGet"
+import { ElectronBrandingOptions } from "./ElectronFramework"
 
 export class FFMPEGInjector {
   constructor(
@@ -38,7 +38,7 @@ export class FFMPEGInjector {
       arch,
     } = this.options
 
-    const file = await downloadArtifact(
+    return downloadElectronArtifact(
       {
         electronDownload,
         artifactName: "ffmpeg",
@@ -48,11 +48,6 @@ export class FFMPEGInjector {
       },
       this.progress
     )
-
-    const ffmpegDir = await this.options.packager.info.tempDirManager.getTempDir({ prefix: "ffmpeg" })
-    log.debug(null, "extracting FFMPEG zip")
-    await executeAppBuilder(["unzip", "--input", file, "--output", ffmpegDir])
-    return ffmpegDir
   }
 
   private async copyFFMPEG(targetPath: string, sourcePath: string) {

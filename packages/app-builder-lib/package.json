@@ -67,6 +67,7 @@
     "dotenv-expand": "^11.0.6",
     "ejs": "^3.1.8",
     "electron-publish": "workspace:*",
+    "extract-zip": "^2.0.1",
     "fs-extra": "^10.1.0",
     "hosted-git-info": "^4.1.0",
     "isbinaryfile": "^5.0.0",

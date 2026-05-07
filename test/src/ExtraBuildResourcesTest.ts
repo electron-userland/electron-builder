@@ -1,4 +1,4 @@
-import { downloadArtifact } from "app-builder-lib/out/util/electronGet"
+import { downloadElectronArtifact } from "app-builder-lib/out/util/electronGet"
 import { Arch, build, PackagerOptions, Platform } from "electron-builder"
 import * as fs from "fs"
 import { readdir } from "fs/promises"
@@ -182,7 +182,7 @@ test("do not exclude build entirely (respect files)", ({ expect }) => assertPack
 test.ifNotWindows("electronDist as path to local folder with electron builds zipped ", async ({ expect }) => {
   const tmpDir = new TmpDir()
   const cacheDir = await tmpDir.createTempDir({ prefix: "electronDistCache" })
-  const file = await downloadArtifact(
+  const file = await downloadElectronArtifact(
     {
       artifactName: "electron",
       platformName: Platform.LINUX.nodeName,
@@ -215,7 +215,7 @@ test.ifNotWindows("electronDist as callback function for path to local electron 
         const { platformName, arch, version, packager } = context
 
         const cacheDir = await packager.info.tempDirManager.createTempDir({ prefix: "electronDistCache" })
-        const file = await downloadArtifact(
+        const file = await downloadElectronArtifact(
           {
             artifactName: "electron",
             platformName,
