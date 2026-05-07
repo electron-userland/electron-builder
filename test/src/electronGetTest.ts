@@ -79,69 +79,75 @@ const APPIMAGE_FILE = "appimage-tools-runtime-20251108.tar.gz"
 const APPIMAGE_SHA256 = "84021a78ee214ae6fd33a2d62a92ba25542dd10bc86bf117a9b2d0bba44e7665"
 const DOWNLOAD_TIMEOUT = { timeout: 120_000 }
 
-test("downloadArtifact: downloads and extracts appimage@1.0.3 tar.gz with sha256 checksum", DOWNLOAD_TIMEOUT, async ({ expect }) => {
-  const result = await downloadBuilderToolset({
-    releaseName: APPIMAGE_RELEASE,
-    filenameWithExt: APPIMAGE_FILE,
-    checksums: { [APPIMAGE_FILE]: APPIMAGE_SHA256 },
-  })
-
-  expect(typeof result).toBe("string")
-
-  const stat = await fs.stat(result)
-  expect(stat.isDirectory()).toBe(true)
-
-  const entries = await fs.readdir(result)
-  expect(entries.length).toBeGreaterThan(0)
-
-  // appimage-tools always contains these binaries
-  expect(entries).toContain("mksquashfs")
-  expect(entries).toContain("desktop-file-validate")
-})
-
-test("downloadArtifact: second call returns same cached path without re-downloading", DOWNLOAD_TIMEOUT, async ({ expect }) => {
-  const first = await downloadBuilderToolset({
-    releaseName: APPIMAGE_RELEASE,
-    filenameWithExt: APPIMAGE_FILE,
-    checksums: { [APPIMAGE_FILE]: APPIMAGE_SHA256 },
-  })
-  const second = await downloadBuilderToolset({
-    releaseName: APPIMAGE_RELEASE,
-    filenameWithExt: APPIMAGE_FILE,
-    checksums: { [APPIMAGE_FILE]: APPIMAGE_SHA256 },
-  })
-
-  expect(first).toBe(second)
-  // completion marker must exist to prove it was not re-extracted
-  await expect(fs.access(`${first}.complete`)).resolves.toBeUndefined()
-})
-
-test("downloadArtifact: respects ELECTRON_BUILDER_BINARIES_MIRROR env var", DOWNLOAD_TIMEOUT, async ({ expect }) => {
-  vi.stubEnv("ELECTRON_BUILDER_BINARIES_MIRROR", "https://github.com/electron-userland/electron-builder-binaries/releases/download/")
-
-  const result = await downloadBuilderToolset({
-    releaseName: APPIMAGE_RELEASE,
-    filenameWithExt: APPIMAGE_FILE,
-    checksums: { [APPIMAGE_FILE]: APPIMAGE_SHA256 },
-  })
-
-  vi.unstubAllEnvs()
-
-  expect(typeof result).toBe("string")
-  const stat = await fs.stat(result)
-  expect(stat.isDirectory()).toBe(true)
-})
-
-test("downloadArtifact: rejects when sha256 checksum does not match", DOWNLOAD_TIMEOUT, async ({ expect }) => {
-  // Use a different release name (1.0.2 vs 1.0.3) so this test gets its own cold cache entry.
-  // The cache-hit path skips checksum validation entirely, so we must avoid a pre-populated cache.
-  await expect(
-    downloadBuilderToolset({
-      releaseName: "appimage@1.0.2",
+// sequential: tests share the same extractDir (same release + file + mirror → same hash suffix).
+// Running them concurrently causes proper-lockfile contention: the first download holds the lock
+// longer than the retry budget allows. Sequential order ensures test 1 writes the .complete marker
+// before tests 2 and 3 run, so they hit the pre-lock cache fast-path instead of waiting on the lock.
+describe("downloadBuilderToolset", { sequential: true }, () => {
+  test("downloadArtifact: downloads and extracts appimage@1.0.3 tar.gz with sha256 checksum", DOWNLOAD_TIMEOUT, async ({ expect }) => {
+    const result = await downloadBuilderToolset({
+      releaseName: APPIMAGE_RELEASE,
       filenameWithExt: APPIMAGE_FILE,
-      checksums: { [APPIMAGE_FILE]: "0000000000000000000000000000000000000000000000000000000000000000" },
+      checksums: { [APPIMAGE_FILE]: APPIMAGE_SHA256 },
     })
-  ).rejects.toThrow()
+
+    expect(typeof result).toBe("string")
+
+    const stat = await fs.stat(result)
+    expect(stat.isDirectory()).toBe(true)
+
+    const entries = await fs.readdir(result)
+    expect(entries.length).toBeGreaterThan(0)
+
+    // appimage-tools always contains these binaries
+    expect(entries).toContain("mksquashfs")
+    expect(entries).toContain("desktop-file-validate")
+  })
+
+  test("downloadArtifact: second call returns same cached path without re-downloading", DOWNLOAD_TIMEOUT, async ({ expect }) => {
+    const first = await downloadBuilderToolset({
+      releaseName: APPIMAGE_RELEASE,
+      filenameWithExt: APPIMAGE_FILE,
+      checksums: { [APPIMAGE_FILE]: APPIMAGE_SHA256 },
+    })
+    const second = await downloadBuilderToolset({
+      releaseName: APPIMAGE_RELEASE,
+      filenameWithExt: APPIMAGE_FILE,
+      checksums: { [APPIMAGE_FILE]: APPIMAGE_SHA256 },
+    })
+
+    expect(first).toBe(second)
+    // completion marker must exist to prove it was not re-extracted
+    await expect(fs.access(`${first}.complete`)).resolves.toBeUndefined()
+  })
+
+  test("downloadArtifact: respects ELECTRON_BUILDER_BINARIES_MIRROR env var", DOWNLOAD_TIMEOUT, async ({ expect }) => {
+    vi.stubEnv("ELECTRON_BUILDER_BINARIES_MIRROR", "https://github.com/electron-userland/electron-builder-binaries/releases/download/")
+
+    const result = await downloadBuilderToolset({
+      releaseName: APPIMAGE_RELEASE,
+      filenameWithExt: APPIMAGE_FILE,
+      checksums: { [APPIMAGE_FILE]: APPIMAGE_SHA256 },
+    })
+
+    vi.unstubAllEnvs()
+
+    expect(typeof result).toBe("string")
+    const stat = await fs.stat(result)
+    expect(stat.isDirectory()).toBe(true)
+  })
+
+  test("downloadArtifact: rejects when sha256 checksum does not match", DOWNLOAD_TIMEOUT, async ({ expect }) => {
+    // Use a different release name (1.0.2 vs 1.0.3) so this test gets its own cold cache entry.
+    // The cache-hit path skips checksum validation entirely, so we must avoid a pre-populated cache.
+    await expect(
+      downloadBuilderToolset({
+        releaseName: "appimage@1.0.2",
+        filenameWithExt: APPIMAGE_FILE,
+        checksums: { [APPIMAGE_FILE]: "0000000000000000000000000000000000000000000000000000000000000000" },
+      })
+    ).rejects.toThrow()
+  })
 })
 
 // ─── downloadElectronArtifact: electron platform artifacts (.zip) ────────────
