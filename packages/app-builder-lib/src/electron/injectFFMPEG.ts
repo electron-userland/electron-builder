@@ -18,7 +18,16 @@ export class FFMPEGInjector {
   async inject() {
     const libPath =
       this.options.platformName === Platform.MAC.nodeName
-        ? path.join(this.options.appOutDir, `${this.branding.productName}.app`, `/Contents/Frameworks/${this.branding.productName} Framework.framework/Versions/A/Libraries`)
+        ? path.join(
+            this.options.appOutDir,
+            `${this.branding.productName}.app`,
+            "Contents",
+            "Frameworks",
+            `${this.branding.productName} Framework.framework`,
+            "Versions",
+            "A",
+            "Libraries"
+          )
         : this.options.appOutDir
 
     const ffmpegDir = await this.downloadFFMPEG()
