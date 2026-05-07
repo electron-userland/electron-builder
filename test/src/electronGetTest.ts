@@ -75,6 +75,20 @@ describe("getBinariesMirrorUrl", () => {
     vi.unstubAllEnvs()
   })
 
+  // Belt-and-suspenders: vi.unstubAllEnvs() may silently no-op on Windows when the OS
+  // normalises env var names to a different case than the key stored in Vitest's registry.
+  // Explicit delete guarantees nothing leaks into the functional download tests below.
+  afterAll(() => {
+    for (const key of [
+      "NPM_CONFIG_ELECTRON_BUILDER_BINARIES_MIRROR",
+      "npm_config_electron_builder_binaries_mirror",
+      "npm_package_config_electron_builder_binaries_mirror",
+      "ELECTRON_BUILDER_BINARIES_MIRROR",
+    ]) {
+      delete process.env[key]
+    }
+  })
+
   test("returns GitHub default when no env var is set", ({ expect }) => {
     expect(getBinariesMirrorUrl("my-org/my-repo")).toBe("https://github.com/my-org/my-repo/releases/download/")
   })

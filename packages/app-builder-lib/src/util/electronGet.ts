@@ -123,6 +123,12 @@ async function extractArchive(file: string, dir: string) {
   if (file.endsWith(".tar.gz") || file.endsWith(".tgz")) {
     await tar.extract({ file, cwd: dir, strip: 1 })
   } else if (file.endsWith(".zip")) {
+    // Clear any contents left by a failed prior extraction. extract-zip throws
+    // "dest already exists." on Windows when a zip entry's destination is an
+    // existing directory; starting from empty prevents that.
+    for (const entry of await fs.readdir(dir)) {
+      await fs.rm(path.join(dir, entry), { recursive: true, force: true })
+    }
     await extractZip(file, { dir })
   } else {
     throw new Error(`Unsupported archive format: ${path.basename(file)}`)
