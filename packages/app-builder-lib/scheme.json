@@ -1106,7 +1106,10 @@
           "type": "string"
         },
         "checksums": {
-          "type": "object"
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       },
       "type": "object"
@@ -1122,15 +1125,31 @@
           "description": "Whether to download an artifact regardless of whether it's in the cache directory.",
           "type": "boolean"
         },
-        "isGeneric": {
-          "const": false,
-          "type": "boolean"
-        },
         "unsafelyDisableChecksums": {
           "description": "When set to `true`, disables checking that the artifact download completed successfully\nwith the correct payload.",
           "type": "boolean"
+        },
+        "mirrorOptions": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Mirror options passed directly to @electron/get. Omits customDir, customFilename, and customVersion which are controlled by electron-builder.",
+          "properties": {
+            "mirror": {
+              "type": "string",
+              "description": "The base mirror URL for downloading Electron artifacts."
+            },
+            "nightlyMirror": {
+              "type": "string",
+              "description": "The mirror URL to use for nightly Electron builds."
+            },
+            "resolveAssetURL": {
+              "type": "string",
+              "description": "A custom function (serialised) to resolve the full asset URL."
+            }
+          }
         }
-      }
+      },
+      "type": "object"
     },
     "FileAssociation": {
       "additionalProperties": false,
@@ -5632,8 +5651,10 @@
       "type": "object"
     },
     "Record<string,string>": {
-      "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
     },
     "ReleaseInfo": {
       "additionalProperties": false,

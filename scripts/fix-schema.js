@@ -22,8 +22,31 @@ schema.definitions.OutgoingHttpHeaders.additionalProperties = {
   ],
 }
 
+// checksums is not in the ElectronDownloadOptions TypeScript type; it belongs to ElectronGetOptions.
+// Keep it in the schema for backward compatibility but enforce string values.
 schema.definitions.ElectronDownloadOptions.properties.checksums = {
   type: "object",
+  additionalProperties: { type: "string" },
+}
+
+// Fix Record<string,string>: additionalProperties:false rejects every non-empty object.
+schema.definitions["Record<string,string>"] = {
+  type: "object",
+  additionalProperties: { type: "string" },
+}
+
+// Fix ElectronGetOptions: add type:object, add mirrorOptions, remove internal isGeneric field.
+schema.definitions.ElectronGetOptions.type = "object"
+delete schema.definitions.ElectronGetOptions.properties.isGeneric
+schema.definitions.ElectronGetOptions.properties.mirrorOptions = {
+  type: "object",
+  additionalProperties: false,
+  description: "Mirror options passed directly to @electron/get. Omits customDir, customFilename, and customVersion which are controlled by electron-builder.",
+  properties: {
+    mirror: { type: "string", description: "The base mirror URL for downloading Electron artifacts." },
+    nightlyMirror: { type: "string", description: "The mirror URL to use for nightly Electron builds." },
+    resolveAssetURL: { type: "string", description: "A custom function (serialised) to resolve the full asset URL." },
+  },
 }
 
 o = schema.definitions.SnapOptions.properties.environment.anyOf[0] = {

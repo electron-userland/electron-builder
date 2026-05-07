@@ -32,7 +32,7 @@ export type ElectronGetOptions = Omit<
   | "downloadOptions"
   | "mirrorOptions" // to be added below
 > & {
-  mirrorOptions: Omit<MirrorOptions, "customDir" | "customFilename" | "customVersion">
+  mirrorOptions?: Omit<MirrorOptions, "customDir" | "customFilename" | "customVersion">
 }
 
 export type ArtifactDownloadOptions = {
@@ -222,6 +222,14 @@ export async function downloadBuilderToolset(options: {
   return downloadAndExtract(config, extractDir, filenameWithExt, progress)
 }
 
+// Keys present in ElectronGetOptions but absent from ElectronDownloadOptions.
+// Used to discriminate between the two config shapes at runtime.
+const ELECTRON_GET_EXCLUSIVE_KEYS: readonly string[] = ["mirrorOptions", "force", "unsafelyDisableChecksums"]
+
+function isElectronGetOptions(dl: ElectronGetOptions | ElectronDownloadOptions): dl is ElectronGetOptions {
+  return ELECTRON_GET_EXCLUSIVE_KEYS.some(k => Object.hasOwnProperty.call(dl, k))
+}
+
 /**
  * Downloads and extracts an electron platform artifact (e.g. ffmpeg) using @electron/get.
  * Deduplicates concurrent calls for the same artifact within the same process.
@@ -232,11 +240,11 @@ export async function downloadElectronArtifact(options: ArtifactDownloadOptions,
   let artifactConfig: ElectronPlatformArtifactDetails = { cacheRoot, platform, arch, version, artifactName }
 
   if (electronDownload != null) {
-    if (Object.hasOwnProperty.call(electronDownload, "mirrorOptions")) {
-      const { mirrorOptions, ...rest } = electronDownload as ElectronGetOptions
+    if (isElectronGetOptions(electronDownload)) {
+      const { mirrorOptions, ...rest } = electronDownload
       artifactConfig = { ...artifactConfig, ...rest, cacheRoot, mirrorOptions }
     } else {
-      const { mirror, customDir, cache, customFilename, isVerifyChecksum, strictSSL, platform: overridePlatform, arch: overrideArch } = electronDownload as ElectronDownloadOptions
+      const { mirror, customDir, cache, customFilename, isVerifyChecksum, strictSSL, platform: overridePlatform, arch: overrideArch } = electronDownload
       artifactConfig = {
         ...artifactConfig,
         unsafelyDisableChecksums: isVerifyChecksum === false,
