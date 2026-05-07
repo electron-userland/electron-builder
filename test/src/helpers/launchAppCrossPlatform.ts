@@ -52,6 +52,7 @@ interface LaunchOptions {
   expectedVersion?: string
   updateConfigPath: string
   packageManagerToTest: string
+  waitForExit?: boolean
 }
 
 export async function launchAndWaitForQuit({
@@ -61,6 +62,7 @@ export async function launchAndWaitForQuit({
   expectedVersion,
   updateConfigPath,
   packageManagerToTest,
+  waitForExit = false,
 }: LaunchOptions): Promise<LaunchResult> {
   let child: ChildProcess
   const versionRegex = /APP_VERSION:\s*([0-9]+\.[0-9]+\.[0-9]+)/
@@ -150,10 +152,13 @@ export async function launchAndWaitForQuit({
         console.log(`Found Version in console logs: ${version}`)
         if (expectedVersion && version !== expectedVersion) {
           reject(new Error(`Expected version ${expectedVersion}, got ${version}`))
-        } else {
+        } else if (!waitForExit) {
+          // resolve immediately once the version is confirmed
           resolved = true
           resolveResult(0)
         }
+        // else: wait for the process to exit so the caller knows the full
+        // update+install cycle completed before it does anything further
       }
     })
 

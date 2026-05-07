@@ -124,17 +124,18 @@ async function runTest(context: TestContext, target: string, packageManager: str
       // Move app update to the root directory of the server
       await copy(newAppDir.dir, rootDirectory, { recursive: true, overwrite: true })
 
-      const verifyAppVersion = async (expectedVersion: string) =>
-        await launchAndWaitForQuit({ appPath, timeoutMs: 2 * 60 * 1000, updateConfigPath, expectedVersion, packageManagerToTest: packageManager })
+      const verifyAppVersion = async (expectedVersion: string, waitForExit = false) =>
+        await launchAndWaitForQuit({ appPath, timeoutMs: 5 * 60 * 1000, updateConfigPath, expectedVersion, packageManagerToTest: packageManager, waitForExit })
 
-      const result = await verifyAppVersion(OLD_VERSION_NUMBER)
+      // waitForExit: true ensures we don't proceed until the app has fully quit,
+      // meaning quitAndInstall completed and the package manager install finished.
+      // This replaces the previous hardcoded 60s sleep which was a race condition.
+      const result = await verifyAppVersion(OLD_VERSION_NUMBER, true)
       log.debug(result, "Test App version")
       expect(result.version).toMatch(OLD_VERSION_NUMBER)
 
-      // Wait for quitAndInstall to take effect, increase delay if updates are slower
-      // (shouldn't be the case for such a small test app, but Windows with Debugger attached is pretty dam slow)
-      const delay = 60 * 1000
-      await new Promise(resolve => setTimeout(resolve, delay))
+      // Small buffer for filesystem sync after the package manager install completes
+      await new Promise(resolve => setTimeout(resolve, 2000))
 
       expect((await verifyAppVersion(NEW_VERSION_NUMBER)).version).toMatch(NEW_VERSION_NUMBER)
     })
