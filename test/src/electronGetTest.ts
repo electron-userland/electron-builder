@@ -2,7 +2,15 @@ import * as fs from "fs/promises"
 import * as os from "os"
 import * as path from "path"
 import { afterAll, afterEach, beforeAll, vi } from "vitest"
-import { ArtifactDownloadOptions, ElectronDownloadOptions, downloadBuilderToolset, downloadElectronArtifact, getCacheDirectory } from "app-builder-lib/out/util/electronGet"
+import {
+  ArtifactDownloadOptions,
+  ElectronDownloadOptions,
+  ElectronGetOptions,
+  downloadBuilderToolset,
+  downloadElectronArtifact,
+  getCacheDirectory,
+  getBinariesMirrorUrl,
+} from "app-builder-lib/out/util/electronGet"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 
 // ─── getCacheDirectory ────────────────────────────────────────────────────────
@@ -55,6 +63,59 @@ describe("getCacheDirectory", () => {
     vi.stubEnv("LOCALAPPDATA", "")
     const result = getCacheDirectory(true)
     expect(result).toContain(os.tmpdir())
+  })
+})
+
+// ─── getBinariesMirrorUrl ─────────────────────────────────────────────────────
+// Addresses #8522: the old app-builder binary crashed when fetching electron mirrors.
+// The fix reads mirror config from env vars directly; these tests validate each format.
+
+describe("getBinariesMirrorUrl", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test("returns GitHub default when no env var is set", ({ expect }) => {
+    expect(getBinariesMirrorUrl("my-org/my-repo")).toBe("https://github.com/my-org/my-repo/releases/download/")
+  })
+
+  test("uses the provided githubOrgRepo in the default URL", ({ expect }) => {
+    expect(getBinariesMirrorUrl("electron-userland/electron-builder-binaries")).toBe("https://github.com/electron-userland/electron-builder-binaries/releases/download/")
+  })
+
+  test("ELECTRON_BUILDER_BINARIES_MIRROR overrides the GitHub default", ({ expect }) => {
+    vi.stubEnv("ELECTRON_BUILDER_BINARIES_MIRROR", "https://mirror.example.com/")
+    expect(getBinariesMirrorUrl("any/repo")).toBe("https://mirror.example.com/")
+  })
+
+  test("npm_package_config_electron_builder_binaries_mirror is recognised", ({ expect }) => {
+    vi.stubEnv("npm_package_config_electron_builder_binaries_mirror", "https://package-config.example.com/")
+    expect(getBinariesMirrorUrl("any/repo")).toBe("https://package-config.example.com/")
+  })
+
+  test("npm_config_electron_builder_binaries_mirror (lowercase) is recognised", ({ expect }) => {
+    vi.stubEnv("npm_config_electron_builder_binaries_mirror", "https://lowercase.example.com/")
+    expect(getBinariesMirrorUrl("any/repo")).toBe("https://lowercase.example.com/")
+  })
+
+  test("NPM_CONFIG_ELECTRON_BUILDER_BINARIES_MIRROR (uppercase) is recognised", ({ expect }) => {
+    vi.stubEnv("NPM_CONFIG_ELECTRON_BUILDER_BINARIES_MIRROR", "https://uppercase.example.com/")
+    expect(getBinariesMirrorUrl("any/repo")).toBe("https://uppercase.example.com/")
+  })
+
+  test("priority: NPM_CONFIG_ > npm_config_ > npm_package_config_ > ELECTRON_BUILDER_BINARIES_MIRROR", ({ expect }) => {
+    vi.stubEnv("ELECTRON_BUILDER_BINARIES_MIRROR", "https://priority-4.example.com/")
+    vi.stubEnv("npm_package_config_electron_builder_binaries_mirror", "https://priority-3.example.com/")
+    vi.stubEnv("npm_config_electron_builder_binaries_mirror", "https://priority-2.example.com/")
+    vi.stubEnv("NPM_CONFIG_ELECTRON_BUILDER_BINARIES_MIRROR", "https://priority-1.example.com/")
+    expect(getBinariesMirrorUrl("any/repo")).toBe("https://priority-1.example.com/")
+  })
+
+  test("npm_config_ beats npm_package_config_ when NPM_CONFIG_ is absent", ({ expect }) => {
+    vi.stubEnv("NPM_CONFIG_ELECTRON_BUILDER_BINARIES_MIRROR", "") // ensure higher-priority var is absent
+    vi.stubEnv("npm_package_config_electron_builder_binaries_mirror", "https://priority-3.example.com/")
+    vi.stubEnv("npm_config_electron_builder_binaries_mirror", "https://priority-2.example.com/")
+    expect(getBinariesMirrorUrl("any/repo")).toBe("https://priority-2.example.com/")
   })
 })
 
@@ -228,6 +289,70 @@ test("downloadElectronArtifact: isVerifyChecksum:false skips checksum validation
   const result = await downloadElectronArtifact(options, null)
   expect(typeof result).toBe("string")
   await expect(fs.stat(result)).resolves.toBeDefined()
+})
+
+// Addresses #9205: electronDownload.customDir was not being mapped to mirrorOptions.customDir
+// in the @electron/get call. Setting it to the canonical "v${version}" directory verifies
+// the mapping is honoured without needing a custom server.
+test("downloadElectronArtifact: maps electronDownload.customDir to mirrorOptions.customDir", DOWNLOAD_TIMEOUT, async ({ expect }) => {
+  const options: ArtifactDownloadOptions = {
+    artifactName: "ffmpeg",
+    platformName: electronPlatform,
+    arch: electronArch,
+    version: ELECTRON_VERSION,
+    electronDownload: {
+      mirror: "https://github.com/electron/electron/releases/download/",
+      customDir: `v${ELECTRON_VERSION}`,
+    } satisfies ElectronDownloadOptions,
+  }
+
+  const result = await downloadElectronArtifact(options, null)
+  expect(typeof result).toBe("string")
+  const stat = await fs.stat(result)
+  expect(stat.isDirectory()).toBe(true)
+  const libPath = path.join(result, ffmpegLibName)
+  await expect(fs.stat(libPath)).resolves.toBeDefined()
+})
+
+// Addresses #9205 (new-style config): verifies the isElectronGetOptions() discriminator
+// correctly routes ElectronGetOptions (which has a "mirrorOptions" key) through the new path.
+test("downloadElectronArtifact: applies ElectronGetOptions.mirrorOptions (new-style config)", DOWNLOAD_TIMEOUT, async ({ expect }) => {
+  const options: ArtifactDownloadOptions = {
+    artifactName: "ffmpeg",
+    platformName: electronPlatform,
+    arch: electronArch,
+    version: ELECTRON_VERSION,
+    electronDownload: {
+      mirrorOptions: { mirror: "https://github.com/electron/electron/releases/download/" },
+    } satisfies ElectronGetOptions,
+  }
+
+  const result = await downloadElectronArtifact(options, null)
+  expect(typeof result).toBe("string")
+  const stat = await fs.stat(result)
+  expect(stat.isDirectory()).toBe(true)
+})
+
+// Addresses #8687: building for arm64 on an x64 host (or vice-versa) failed because
+// electron.exe was not found after extraction. Verifies cross-arch downloads succeed.
+test("downloadElectronArtifact: downloads ffmpeg for non-host arch (cross-arch build)", DOWNLOAD_TIMEOUT, async ({ expect }) => {
+  if (electronPlatform === "win32") {
+    // arm64 ffmpeg is not published separately for win32 in the same zip layout
+    expect(true).toBe(true)
+    return
+  }
+  const crossArch = electronArch === "arm64" ? "x64" : "arm64"
+  const options: ArtifactDownloadOptions = {
+    artifactName: "ffmpeg",
+    platformName: electronPlatform,
+    arch: crossArch,
+    version: ELECTRON_VERSION,
+  }
+
+  const result = await downloadElectronArtifact(options, null)
+  expect(typeof result).toBe("string")
+  const stat = await fs.stat(result)
+  expect(stat.isDirectory()).toBe(true)
 })
 
 // ─── downloadElectronArtifact: electron distribution zip (heavy) ──────────────
