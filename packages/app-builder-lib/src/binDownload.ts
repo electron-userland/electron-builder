@@ -2,22 +2,9 @@ import { executeAppBuilder } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { sanitizeFileName } from "builder-util/out/filename"
 import * as path from "path"
+import { getBinariesMirrorUrl } from "./util/electronGet"
 
 const versionToPromise = new Map<string, Promise<string>>()
-
-/**
- * Get the binaries mirror URL from environment variables.
- * Supports various npm config formats and falls back to GitHub.
- */
-export function getBinariesMirrorUrl(githubOrgRepo: string): string {
-  return (
-    process.env.NPM_CONFIG_ELECTRON_BUILDER_BINARIES_MIRROR ||
-    process.env.npm_config_electron_builder_binaries_mirror ||
-    process.env.npm_package_config_electron_builder_binaries_mirror ||
-    process.env.ELECTRON_BUILDER_BINARIES_MIRROR ||
-    `https://github.com/${githubOrgRepo}/releases/download/`
-  )
-}
 
 export function download(url: string, output: string, checksum?: string | null): Promise<void> {
   const args = ["download", "--url", url, "--output", output]

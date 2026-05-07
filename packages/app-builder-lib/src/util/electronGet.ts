@@ -1,5 +1,12 @@
 import * as get from "@electron/get"
-import { ElectronDownloadCacheMode, ElectronDownloadRequest, ElectronDownloadRequestOptions, ElectronPlatformArtifactDetails, GotDownloaderOptions, MirrorOptions } from "@electron/get"
+import {
+  ElectronDownloadCacheMode,
+  ElectronDownloadRequest,
+  ElectronDownloadRequestOptions,
+  ElectronPlatformArtifactDetails,
+  GotDownloaderOptions,
+  MirrorOptions,
+} from "@electron/get"
 import { exists, log, PADDING } from "builder-util"
 import { MultiProgress } from "electron-publish/out/multiProgress"
 import * as extractZip from "extract-zip"
@@ -8,7 +15,6 @@ import * as os from "os"
 import * as path from "path"
 import * as lockfile from "proper-lockfile"
 import * as tar from "tar"
-import { getBinariesMirrorUrl } from "../binDownload"
 import { ElectronPlatformName } from "../electron/ElectronFramework"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -268,3 +274,19 @@ async function doDownloadArtifact(options: ArtifactDownloadOptions, progress: Mu
 
   return downloadAndExtract(artifactConfig, extractDir, artifactName, progress)
 }
+
+/**
+ * Get the binaries mirror URL from environment variables.
+ * Supports various npm config formats and falls back to GitHub.
+ */
+
+export function getBinariesMirrorUrl(githubOrgRepo: string): string {
+  return (
+    process.env.NPM_CONFIG_ELECTRON_BUILDER_BINARIES_MIRROR ||
+    process.env.npm_config_electron_builder_binaries_mirror ||
+    process.env.npm_package_config_electron_builder_binaries_mirror ||
+    process.env.ELECTRON_BUILDER_BINARIES_MIRROR ||
+    `https://github.com/${githubOrgRepo}/releases/download/`
+  )
+}
+
