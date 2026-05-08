@@ -1614,6 +1614,9 @@ exports[`posix smart unpack 3`] = `
                 "sort.js": {
                   "size": "<size>",
                 },
+                "truncate.js": {
+                  "size": "<size>",
+                },
                 "valid.js": {
                   "size": "<size>",
                 },
