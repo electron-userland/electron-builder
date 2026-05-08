@@ -57,7 +57,6 @@ async function main() {
     reporters: ["default", __dirname + "/vitest-smart-reporter.ts"],
 
     maxWorkers: "50%",
-    minWorkers: 1,
 
     // Ensure tests from different files can run in parallel
     // but heavy tests will be serialized by the mutex
