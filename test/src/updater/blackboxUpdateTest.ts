@@ -145,6 +145,10 @@ async function runTest(context: TestContext, target: string, packageManager: str
           updateConfigPath,
           packageManagerToTest: packageManager,
           env: { AUTO_UPDATER_TEST: "" }, // disables updater — app prints version and quits
+          // waitForExit: true ensures TestApp.exe is fully released before the next
+          // poll iteration, giving the detached NSIS installer an uncontested window
+          // to overwrite the binary (Windows locks executables while they are running).
+          waitForExit: true,
         })
         newVersion = probe.version
         if (newVersion === NEW_VERSION_NUMBER) {
