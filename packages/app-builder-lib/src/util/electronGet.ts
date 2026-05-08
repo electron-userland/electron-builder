@@ -121,14 +121,13 @@ function resolveCacheMode(): ElectronDownloadCacheMode {
 
 async function extractArchive(file: string, dir: string) {
   if (file.endsWith(".tar.gz") || file.endsWith(".tgz")) {
+    // tar requires the cwd to exist; create it here since downloadAndExtract no longer pre-creates extractDir.
+    await fs.mkdir(dir, { recursive: true })
     await tar.extract({ file, cwd: dir, strip: 1 })
   } else if (file.endsWith(".zip")) {
-    // Clear any contents left by a failed prior extraction. extract-zip throws
-    // "dest already exists." on Windows when a zip entry's destination is an
-    // existing directory; starting from empty prevents that.
-    for (const entry of await fs.readdir(dir)) {
-      await fs.rm(path.join(dir, entry), { recursive: true, force: true })
-    }
+    // Pass dir only if it doesn't exist: extract-zip creates it fresh, which avoids
+    // "dest already exists." that occurs when the dir is pre-created and a zip entry's
+    // destination path coincides with an existing directory inside it.
     await extractZip(file, { dir })
   } else {
     throw new Error(`Unsupported archive format: ${path.basename(file)}`)
@@ -144,7 +143,12 @@ async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact
   const completeMarker = `${extractDir}.complete`
   const isCached = async () => exists(completeMarker)
 
-  await fs.mkdir(extractDir, { recursive: true })
+  // Use a sidecar file as the lock target instead of extractDir itself.
+  // This lets extractZip always receive a non-existent directory, which it creates
+  // fresh — eliminating "dest already exists." on all platforms.
+  const lockTarget = `${extractDir}.lk`
+  await fs.mkdir(path.dirname(lockTarget), { recursive: true })
+  await fs.writeFile(lockTarget, "", { flag: "a" }) // create once, idempotent
 
   // Fast path before acquiring the lock: avoids Windows lock-release timing issues
   // where the .lock directory isn't immediately visible after release().
@@ -153,7 +157,7 @@ async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact
     return extractDir
   }
 
-  const release = await lockfile.lock(extractDir, {
+  const release = await lockfile.lock(lockTarget, {
     retries: { retries: 5, minTimeout: 1000, maxTimeout: 5000 },
     stale: 60000,
   })
