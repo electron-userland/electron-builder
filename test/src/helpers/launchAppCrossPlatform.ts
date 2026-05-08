@@ -229,6 +229,14 @@ export async function launchAndWaitForQuit({
       const line = data.toString()
       stderrChunks.push(line)
       console.error(`[stderr] ${line}`)
+      // GPU/native crashes produce a FATAL ERROR in stderr that can hang the process
+      // during cleanup. If we've already captured the version the probe succeeded —
+      // kill and resolve rather than waiting for an exit that never comes.
+      if (!resolved && version != null && line.includes("FATAL ERROR")) {
+        resolved = true
+        child.kill()
+        resolveResult(0)
+      }
     })
 
     child.on("error", err => {
