@@ -158,7 +158,10 @@ export async function createKeychain({ tmpDir, cscLink, cscKeyPassword, cscILink
 
   // https://github.com/electron-userland/electron-builder/issues/3685
   // use constant file
-  const keychainFile = path.join(process.env.APP_BUILDER_TMP_DIR || tmpdir(), `${createHash("sha256").update(currentDir).update("app-builder").digest("hex")}.keychain`)
+  const keychainFile = path.join(
+    process.env.APP_BUILDER_TMP_DIR || tmpdir(),
+    `${createHash("sha256").update(currentDir).update("app-builder").digest("hex")}.keychain`
+  )
   // noinspection JSUnusedLocalSymbols
 
   await removeKeychain(keychainFile, false).catch(_ => {

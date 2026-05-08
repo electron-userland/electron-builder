@@ -1,5 +1,5 @@
 import { DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
-import { downloadArtifact } from "app-builder-lib/out/binDownload"
+import { downloadBuilderToolset } from "app-builder-lib/out/util/electronGet"
 import { exec, executeFinally, exists, isEmptyOrSpaces, TmpDir } from "builder-util"
 import { writeFile } from "fs-extra"
 import * as path from "path"
@@ -28,7 +28,7 @@ async function getDmgVendorPath(): Promise<string> {
     "dmgbuild-bundle-x86_64-75c8a6c.tar.gz": "87b3bb72148b11451ee90ede79cc8d59305c9173b68b0f2b50a3bea51fc4a4e2",
   }
   const filename: keyof typeof config = `dmgbuild-bundle-${arch}-${releaseVersion}.tar.gz`
-  const file = await downloadArtifact({
+  const file = await downloadBuilderToolset({
     releaseName: "dmg-builder@1.2.0",
     filenameWithExt: filename,
     checksums: config,

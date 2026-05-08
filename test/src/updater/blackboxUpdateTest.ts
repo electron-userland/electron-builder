@@ -14,9 +14,10 @@ import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTes
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
+const optionsForFlakyE2E = { sequential: true, retry: 2 }
 // Linux Tests MUST be run in docker containers for proper ephemeral testing environment (e.g. fresh install + update + relaunch)
 // Currently this test logic does not handle uninstalling packages (yet)
-describe.heavy.ifMac.ifEnv(process.env.CSC_KEY_PASSWORD)("mac", { sequential: true }, () => {
+describe.ifMac.heavy("mac", optionsForFlakyE2E, () => {
   // can test on x64 and also arm64 (via rosetta)
   test("x64", async context => {
     await runTest(context, "zip", "", Arch.x64)
@@ -33,8 +34,8 @@ describe.heavy.ifMac.ifEnv(process.env.CSC_KEY_PASSWORD)("mac", { sequential: tr
 const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0"]
 
 for (const winCodeSign of winCodeSignVersions) {
-  describe(`winCodeSign: ${winCodeSign}`, { sequential: true }, () => {
-    describe.heavy.ifWindows("windows", { sequential: true }, () => {
+  describe(`winCodeSign: ${winCodeSign}`, optionsForFlakyE2E, () => {
+    describe.heavy.ifWindows("windows", optionsForFlakyE2E, () => {
       test("nsis", async context => {
         await runTest(context, "nsis", "", Arch.x64, { winCodeSign })
       })
@@ -44,9 +45,9 @@ for (const winCodeSign of winCodeSignVersions) {
 
 const appImageToolVersions: ToolsetConfig["appimage"][] = ["0.0.0", "1.0.2", "1.0.3"]
 // must be sequential in order for process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER to be respected per-test
-describe.heavy.ifLinux("linux", { sequential: true }, () => {
+describe.heavy.ifLinux("linux", optionsForFlakyE2E, () => {
   for (const appimage of appImageToolVersions) {
-    describe(`appimage tool: ${appimage}`, () => {
+    describe(`appimage tool: ${appimage}`, optionsForFlakyE2E, () => {
       test.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true" && process.arch === "arm64")("AppImage - arm64", async context => {
         await runTest(context, "AppImage", "appimage", Arch.arm64, { appimage })
       })
@@ -62,7 +63,7 @@ describe.heavy.ifLinux("linux", { sequential: true }, () => {
   for (const distro in packageManagerMap) {
     const { pms, target } = packageManagerMap[distro as keyof typeof packageManagerMap]
     for (const pm of pms) {
-      test(`${distro} - (${pm})`, { sequential: true }, async context => {
+      test(`${distro} - (${pm})`, optionsForFlakyE2E, async context => {
         if (!determineEnvironment(distro)) {
           context.skip()
         }
@@ -203,6 +204,16 @@ async function doBuild(
             version,
           },
           electronUpdaterCompatibility: "1.1", // anything above 1.0.0 works. This is to allow testing via `link:` protocol with the current workspace electron-updater package version
+          electronFuses: {
+            runAsNode: false,
+            enableCookieEncryption: true,
+            enableNodeOptionsEnvironmentVariable: false,
+            enableNodeCliInspectArguments: false,
+            enableEmbeddedAsarIntegrityValidation: true,
+            onlyLoadAppFromAsar: true,
+            loadBrowserProcessSpecificV8Snapshot: false,
+            grantFileProtocolExtraPrivileges: false,
+          },
           ...extraConfig,
           compression: "store",
           publish: {

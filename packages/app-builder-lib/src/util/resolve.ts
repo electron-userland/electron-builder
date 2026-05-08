@@ -1,3 +1,4 @@
+import { InvalidConfigurationError } from "builder-util"
 import { log } from "builder-util/out/log"
 import debug from "debug"
 import * as path from "path"
@@ -12,7 +13,7 @@ export async function resolveModule<T>(type: string | undefined, name: string): 
   }
 }
 
-export async function resolveFunction<T>(type: string | undefined, executor: T | string, name: string): Promise<T> {
+export async function resolveFunction<T>(type: string | undefined, executor: T | string, name: string, rootSearchDir: string): Promise<T> {
   if (executor == null || typeof executor !== "string") {
     // is already function or explicitly ignored by user
     return executor
@@ -21,6 +22,10 @@ export async function resolveFunction<T>(type: string | undefined, executor: T |
   let p = executor as string
   if (p.startsWith(".")) {
     p = path.resolve(p)
+    const relative = path.relative(rootSearchDir, p)
+    if (relative.startsWith("..") || path.isAbsolute(relative)) {
+      throw new InvalidConfigurationError(`Hook module path "${executor}" resolves outside the workspace root ("${rootSearchDir}")`)
+    }
   }
 
   try {
