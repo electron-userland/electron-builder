@@ -289,16 +289,17 @@ export class Packager {
 
   private async addPackagerEventHandlers() {
     const { type } = this.appInfo
-    this.eventEmitter.on("artifactBuildStarted", await resolveFunction(type, this.config.artifactBuildStarted, "artifactBuildStarted"), "user")
-    this.eventEmitter.on("artifactBuildCompleted", await resolveFunction(type, this.config.artifactBuildCompleted, "artifactBuildCompleted"), "user")
+    const root = await this.getWorkspaceRoot()
+    this.eventEmitter.on("artifactBuildStarted", await resolveFunction(type, this.config.artifactBuildStarted, "artifactBuildStarted", root), "user")
+    this.eventEmitter.on("artifactBuildCompleted", await resolveFunction(type, this.config.artifactBuildCompleted, "artifactBuildCompleted", root), "user")
 
-    this.eventEmitter.on("appxManifestCreated", await resolveFunction(type, this.config.appxManifestCreated, "appxManifestCreated"), "user")
-    this.eventEmitter.on("msiProjectCreated", await resolveFunction(type, this.config.msiProjectCreated, "msiProjectCreated"), "user")
+    this.eventEmitter.on("appxManifestCreated", await resolveFunction(type, this.config.appxManifestCreated, "appxManifestCreated", root), "user")
+    this.eventEmitter.on("msiProjectCreated", await resolveFunction(type, this.config.msiProjectCreated, "msiProjectCreated", root), "user")
 
-    this.eventEmitter.on("beforePack", await resolveFunction(type, this.config.beforePack, "beforePack"), "user")
-    this.eventEmitter.on("afterExtract", await resolveFunction(type, this.config.afterExtract, "afterExtract"), "user")
-    this.eventEmitter.on("afterPack", await resolveFunction(type, this.config.afterPack, "afterPack"), "user")
-    this.eventEmitter.on("afterSign", await resolveFunction(type, this.config.afterSign, "afterSign"), "user")
+    this.eventEmitter.on("beforePack", await resolveFunction(type, this.config.beforePack, "beforePack", root), "user")
+    this.eventEmitter.on("afterExtract", await resolveFunction(type, this.config.afterExtract, "afterExtract", root), "user")
+    this.eventEmitter.on("afterPack", await resolveFunction(type, this.config.afterPack, "afterPack", root), "user")
+    this.eventEmitter.on("afterSign", await resolveFunction(type, this.config.afterSign, "afterSign", root), "user")
   }
 
   onAfterPack(handler: PackagerEvents["afterPack"]): Packager {
@@ -625,7 +626,7 @@ export class Packager {
       return
     }
 
-    const beforeBuild = await resolveFunction(this.appInfo.type, config.beforeBuild, "beforeBuild")
+    const beforeBuild = await resolveFunction(this.appInfo.type, config.beforeBuild, "beforeBuild", await this.getWorkspaceRoot())
     if (beforeBuild != null) {
       const performDependenciesInstallOrRebuild = await beforeBuild({
         appDir: this.appDir,
