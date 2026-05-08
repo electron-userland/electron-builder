@@ -1,6 +1,7 @@
 import { Arch } from "builder-util"
 import * as path from "path"
-import { downloadArtifact, getBinFromUrl } from "../binDownload"
+import { getBinFromUrl } from "../binDownload"
+import { downloadBuilderToolset } from "../util/electronGet"
 import { ToolsetConfig } from "../configuration"
 
 // It's just easier to copy the map of checksums here rather than adding them to within each if-statement. Also, easy copy-paste from the releases page
@@ -69,7 +70,7 @@ export async function getAppImageTools(appimageToolVersion: ToolsetConfig["appim
   const filenameWithExt = "appimage-tools-runtime-20251108.tar.gz"
   let artifactPath =
     override ||
-    (await downloadArtifact({
+    (await downloadBuilderToolset({
       releaseName: `appimage@${appimageToolVersion}`,
       filenameWithExt,
       checksums: {
