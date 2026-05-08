@@ -9,9 +9,8 @@ import {
 } from "@electron/get"
 import { exists, log, PADDING, parseValidEnvVarUrl } from "builder-util"
 import { MultiProgress } from "electron-publish/out/multiProgress"
-import { createWriteStream } from "fs"
+import * as extractZip from "extract-zip"
 import * as fs from "fs/promises"
-import * as yauzl from "yauzl"
 import * as os from "os"
 import * as path from "path"
 import * as lockfile from "proper-lockfile"
@@ -84,7 +83,7 @@ function hashUrlSafe(input: string, length = 6): string {
 
 export function getCacheDirectory(isAvoidSystemOnWindows = false): string {
   const env = process.env.ELECTRON_BUILDER_CACHE?.trim()
-  if (env) {
+  if (env && path.parse(env).root) {
     return env
   }
 
@@ -106,7 +105,7 @@ export function getCacheDirectory(isAvoidSystemOnWindows = false): string {
   }
 
   const xdgCache = process.env.XDG_CACHE_HOME
-  return xdgCache ? path.join(xdgCache, appName) : path.join(homeDir, ".cache", appName)
+  return xdgCache && path.parse(xdgCache).root ? path.join(xdgCache, appName) : path.join(homeDir, ".cache", appName)
 }
 
 function resolveCacheMode(): ElectronDownloadCacheMode {
@@ -120,61 +119,12 @@ function resolveCacheMode(): ElectronDownloadCacheMode {
   return ElectronDownloadCacheMode.ReadWrite
 }
 
-async function extractZipWithYauzl(zipPath: string, dir: string): Promise<void> {
-  await fs.mkdir(dir, { recursive: true })
-  return new Promise((resolve, reject) => {
-    yauzl.open(zipPath, { lazyEntries: true, autoClose: true }, (err, zipfile) => {
-      if (err != null) {
-        reject(err)
-        return
-      }
-      zipfile.on("error", reject)
-      zipfile.on("end", resolve)
-      zipfile.readEntry()
-      zipfile.on("entry", (entry: yauzl.Entry) => {
-        const dest = path.join(dir, entry.fileName)
-        // Reject path-traversal entries: dest must remain inside dir.
-        // path.join normalises ".." so we compare resolved absolute paths.
-        if (!dest.startsWith(path.resolve(dir) + path.sep) && dest !== path.resolve(dir)) {
-          zipfile.readEntry()
-          return
-        }
-        if (/\/$/.test(entry.fileName)) {
-          fs.mkdir(dest, { recursive: true })
-            .then(() => zipfile.readEntry())
-            .catch(reject)
-          return
-        }
-        fs.mkdir(path.dirname(dest), { recursive: true })
-          .then(() => fs.rm(dest, { recursive: true, force: true }))
-          .then(
-            () =>
-              new Promise<void>((res, rej) => {
-                zipfile.openReadStream(entry, (streamErr, readStream) => {
-                  if (streamErr != null) {
-                    rej(streamErr)
-                    return
-                  }
-                  const ws = createWriteStream(dest)
-                  ws.on("close", res)
-                  ws.on("error", rej)
-                  readStream.pipe(ws)
-                })
-              })
-          )
-          .then(() => zipfile.readEntry())
-          .catch(reject)
-      })
-    })
-  })
-}
-
 async function extractArchive(file: string, dir: string) {
   if (file.endsWith(".tar.gz") || file.endsWith(".tgz")) {
     await fs.mkdir(dir, { recursive: true })
     await tar.extract({ file, cwd: dir, strip: 1 })
   } else if (file.endsWith(".zip")) {
-    await extractZipWithYauzl(file, dir)
+    await extractZip(file, { dir })
   } else {
     throw new Error(`Unsupported archive format: ${path.basename(file)}`)
   }
