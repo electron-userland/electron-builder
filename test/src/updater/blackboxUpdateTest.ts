@@ -124,20 +124,38 @@ async function runTest(context: TestContext, target: string, packageManager: str
       // Move app update to the root directory of the server
       await copy(newAppDir.dir, rootDirectory, { recursive: true, overwrite: true })
 
-      const verifyAppVersion = async (expectedVersion: string, waitForExit = false) =>
-        await launchAndWaitForQuit({ appPath, timeoutMs: 5 * 60 * 1000, updateConfigPath, expectedVersion, packageManagerToTest: packageManager, waitForExit })
-
-      // waitForExit: true ensures we don't proceed until the app has fully quit,
-      // meaning quitAndInstall completed and the package manager install finished.
-      // This replaces the previous hardcoded 60s sleep which was a race condition.
-      const result = await verifyAppVersion(OLD_VERSION_NUMBER, true)
+      // waitForExit: true — don't proceed until the old app fully quits.
+      // On Linux (rpm/deb/pacman) the package manager install is synchronous, so exit means install done.
+      // On Windows (NSIS) and Mac (zip) the installer runs detached/async, so the app exits before
+      // installation completes — the polling loop below handles that case.
+      const result = await launchAndWaitForQuit({ appPath, timeoutMs: 5 * 60 * 1000, updateConfigPath, expectedVersion: OLD_VERSION_NUMBER, packageManagerToTest: packageManager, waitForExit: true })
       log.debug(result, "Test App version")
       expect(result.version).toMatch(OLD_VERSION_NUMBER)
 
-      // Small buffer for filesystem sync after the package manager install completes
-      await new Promise(resolve => setTimeout(resolve, 2000))
-
-      expect((await verifyAppVersion(NEW_VERSION_NUMBER)).version).toMatch(NEW_VERSION_NUMBER)
+      // Poll until the installed binary reports the new version.
+      // We disable AUTO_UPDATER_TEST so the probe app quits immediately after printing its version
+      // (no update cycle triggered), which also prevents a second installer from running in parallel.
+      const pollDeadline = Date.now() + 3 * 60 * 1000
+      const pollInterval = 5 * 1000
+      let newVersion: string | undefined
+      while (Date.now() < pollDeadline) {
+        const probe = await launchAndWaitForQuit({
+          appPath,
+          timeoutMs: 30 * 1000,
+          updateConfigPath,
+          packageManagerToTest: packageManager,
+          env: { AUTO_UPDATER_TEST: "" }, // disables updater — app prints version and quits
+        })
+        newVersion = probe.version
+        if (newVersion === NEW_VERSION_NUMBER) {
+          break
+        }
+        log.info({ installedVersion: newVersion, expected: NEW_VERSION_NUMBER }, "Installer still in progress, retrying...")
+        if (Date.now() + pollInterval < pollDeadline) {
+          await new Promise(resolve => setTimeout(resolve, pollInterval))
+        }
+      }
+      expect(newVersion).toMatch(NEW_VERSION_NUMBER)
     })
   } catch (error: any) {
     log.error({ error: error.message }, "Blackbox Updater Test failed to run")
