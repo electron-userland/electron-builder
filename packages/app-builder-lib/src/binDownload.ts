@@ -27,10 +27,10 @@ export function getBinFromUrl(releaseName: string, filenameWithExt: string, chec
   } else {
     const baseUrl = getBinariesMirrorUrl(githubOrgRepo)
     const middleUrl =
-      parseValidEnvVarUrl("NPM_CONFIG_ELECTRON_BUILDER_BINARIES_CUSTOM_DIR") ||
-      parseValidEnvVarUrl("npm_config_electron_builder_binaries_custom_dir") ||
-      parseValidEnvVarUrl("npm_package_config_electron_builder_binaries_custom_dir") ||
-      parseValidEnvVarUrl("ELECTRON_BUILDER_BINARIES_CUSTOM_DIR") ||
+      process.env.NPM_CONFIG_ELECTRON_BUILDER_BINARIES_CUSTOM_DIR ||
+      process.env.npm_config_electron_builder_binaries_custom_dir ||
+      process.env.npm_package_config_electron_builder_binaries_custom_dir ||
+      process.env.ELECTRON_BUILDER_BINARIES_CUSTOM_DIR ||
       releaseName
     url = `${baseUrl}${middleUrl}/${filenameWithExt}`
   }
