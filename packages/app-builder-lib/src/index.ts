@@ -91,7 +91,12 @@ export function build(options: PackagerOptions & PublishOptions, packager: Packa
   process.once("SIGINT", sigIntHandler)
 
   const promise = packager.build().then(async buildResult => {
-    const afterAllArtifactBuild = await resolveFunction(packager.appInfo.type, buildResult.configuration.afterAllArtifactBuild, "afterAllArtifactBuild")
+    const afterAllArtifactBuild = await resolveFunction(
+      packager.appInfo.type,
+      buildResult.configuration.afterAllArtifactBuild,
+      "afterAllArtifactBuild",
+      await packager.getWorkspaceRoot()
+    )
     if (afterAllArtifactBuild != null) {
       const newArtifacts = asArray(await Promise.resolve(afterAllArtifactBuild(buildResult)))
       if (newArtifacts.length === 0 || !publishManager.isPublish) {
