@@ -8,7 +8,13 @@ import path from "path"
 
 export function createLocalServer(root: string): Promise<{ server: http.Server; port: number }> {
   const server = http.createServer((req, res) => {
-    const filePath = path.join(root, decodeURIComponent(new URL(req.url!, "http://localhost").pathname))
+    const pathname = decodeURIComponent(new URL(req.url!, "http://localhost").pathname).replace(/^\/+/, "")
+    const filePath = path.resolve(root, pathname)
+    if (!filePath.startsWith(path.resolve(root) + path.sep) && filePath !== path.resolve(root)) {
+      res.writeHead(403)
+      res.end()
+      return
+    }
     fs.stat(filePath, (statErr, stat) => {
       if (statErr || !stat.isFile()) {
         res.writeHead(404)
@@ -59,6 +65,10 @@ export function createLocalServer(root: string): Promise<{ server: http.Server; 
         const prefix = i === 1 ? "" : "\r\n"
         res.write(`${prefix}--${boundary}\r\nContent-Type: application/octet-stream\r\nContent-Range: bytes ${start}-${end}/${size}\r\n\r\n`)
         const stream = fs.createReadStream(filePath, { start, end })
+        stream.once("error", () => {
+          stream.destroy()
+          res.destroy()
+        })
         stream.once("end", writeNext)
         stream.pipe(res, { end: false })
       }
@@ -78,12 +88,15 @@ export function createLocalServer(root: string): Promise<{ server: http.Server; 
 function parseByteRanges(header: string, size: number): Array<[number, number]> | null {
   const m = header.match(/^bytes=(.+)$/)
   if (!m) return null
-  return m[1].split(",").map(r => {
+  const ranges: Array<[number, number]> = []
+  for (const r of m[1].split(",")) {
     const [s, e] = r.trim().split("-")
-    const start = s === "" ? size - parseInt(e) : parseInt(s)
-    const end = e === "" ? size - 1 : Math.min(parseInt(e), size - 1)
-    return [start, end] as [number, number]
-  })
+    const start = s === "" ? size - parseInt(e, 10) : parseInt(s, 10)
+    const end = e === "" ? size - 1 : Math.min(parseInt(e, 10), size - 1)
+    if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || start > end) return null
+    ranges.push([start, end])
+  }
+  return ranges.length > 0 ? ranges : null
 }
 
 interface LaunchResult {
@@ -166,7 +179,7 @@ export async function launchAndWaitForQuit({
           },
         })
       } else {
-        child = spawnApp(appPath, ["--no-sandbox"], true, { DISPLAY: display })
+        child = spawnApp(appPath, ["--no-sandbox"], true, { ...env, DISPLAY: display })
       }
       break
     }
@@ -199,6 +212,8 @@ export async function launchAndWaitForQuit({
         version = match[1].trim()
         console.log(`Found Version in console logs: ${version}`)
         if (expectedVersion && version !== expectedVersion) {
+          resolved = true
+          child.kill()
           reject(new Error(`Expected version ${expectedVersion}, got ${version}`))
         } else if (!waitForExit) {
           // resolve immediately once the version is confirmed

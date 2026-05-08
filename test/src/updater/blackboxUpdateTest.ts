@@ -129,7 +129,14 @@ async function runTest(context: TestContext, target: string, packageManager: str
       // On Linux (rpm/deb/pacman) the package manager install is synchronous, so exit means install done.
       // On Windows (NSIS) and Mac (zip) the installer runs detached/async, so the app exits before
       // installation completes — the polling loop below handles that case.
-      const result = await launchAndWaitForQuit({ appPath, timeoutMs: 5 * 60 * 1000, updateConfigPath, expectedVersion: OLD_VERSION_NUMBER, packageManagerToTest: packageManager, waitForExit: true })
+      const result = await launchAndWaitForQuit({
+        appPath,
+        timeoutMs: 5 * 60 * 1000,
+        updateConfigPath,
+        expectedVersion: OLD_VERSION_NUMBER,
+        packageManagerToTest: packageManager,
+        waitForExit: true,
+      })
       log.debug(result, "Test App version")
       expect(result.version).toMatch(OLD_VERSION_NUMBER)
 
