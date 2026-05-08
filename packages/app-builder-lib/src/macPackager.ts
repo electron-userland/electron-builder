@@ -336,8 +336,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
         : filter.map(it => {
             try {
               return new RegExp(it)
-            } catch {
-              throw new InvalidConfigurationError(`Invalid regex filter pattern: ${it}`)
+            } catch (e: any) {
+              throw new InvalidConfigurationError(`Invalid regex filter pattern: ${it}. ${e.message}`)
             }
           })
 

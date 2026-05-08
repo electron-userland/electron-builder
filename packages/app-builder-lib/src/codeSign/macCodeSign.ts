@@ -160,7 +160,7 @@ export async function createKeychain({ tmpDir, cscLink, cscKeyPassword, cscILink
   // use constant file
   const keychainFile = path.join(
     process.env.APP_BUILDER_TMP_DIR || tmpdir(),
-    `${createHash("sha256").update(currentDir).update("app-builder").update(randomBytes(16)).digest("hex")}.keychain`
+    `${createHash("sha256").update(currentDir).update("app-builder").digest("hex")}.keychain`
   )
   // noinspection JSUnusedLocalSymbols
 

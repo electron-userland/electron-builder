@@ -190,7 +190,7 @@ export class WindowsSignToolManager implements SignManager {
     const name = this.packager.appInfo.productName
     const site = await this.packager.appInfo.computePackageUrl()
 
-    const customSign = await resolveFunction(this.packager.appInfo.type, options.options.signtoolOptions?.sign, "sign")
+    const customSign = await resolveFunction(this.packager.appInfo.type, options.options.signtoolOptions?.sign, "sign", await this.packager.info.getWorkspaceRoot())
 
     const cscInfo = await this.cscInfo.value
     if (cscInfo) {

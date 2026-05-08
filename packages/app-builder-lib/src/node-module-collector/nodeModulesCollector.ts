@@ -366,7 +366,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         prefix: execName,
         suffix: ".bat",
       })
-      const escapedCommand = command.replace(/"/g, '""')
+      const escapedCommand = command.replace(/"/g, `""`)
       const batScript = `@echo off\r\n"${escapedCommand}" %*\r\n` // <-- CRLF required for .bat
       await fs.writeFile(tempBatFile, batScript, { encoding: "utf8" })
       command = "cmd.exe"
