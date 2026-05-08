@@ -26,6 +26,7 @@ export { DebugLogger } from "./DebugLogger"
 export * from "./log"
 export { httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor"
 export * from "./promise"
+export { parseValidEnvVarUrl } from "./envUtil"
 
 export { asArray } from "builder-util-runtime"
 export * from "./fs"

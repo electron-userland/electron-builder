@@ -1,4 +1,4 @@
-import { executeAppBuilder } from "builder-util"
+import { executeAppBuilder, parseValidEnvVarUrl } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { sanitizeFileName } from "builder-util/out/filename"
 import * as path from "path"
@@ -21,15 +21,16 @@ export function getBinFromCustomLoc(name: string, version: string, binariesLocUr
 
 export function getBinFromUrl(releaseName: string, filenameWithExt: string, checksum: string, githubOrgRepo = "electron-userland/electron-builder-binaries"): Promise<string> {
   let url: string
-  if (process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL) {
-    url = process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL + "/" + filenameWithExt
+  const overrideUrl = parseValidEnvVarUrl("ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL")
+  if (overrideUrl != null) {
+    url = overrideUrl + "/" + filenameWithExt
   } else {
     const baseUrl = getBinariesMirrorUrl(githubOrgRepo)
     const middleUrl =
-      process.env.NPM_CONFIG_ELECTRON_BUILDER_BINARIES_CUSTOM_DIR ||
-      process.env.npm_config_electron_builder_binaries_custom_dir ||
-      process.env.npm_package_config_electron_builder_binaries_custom_dir ||
-      process.env.ELECTRON_BUILDER_BINARIES_CUSTOM_DIR ||
+      parseValidEnvVarUrl("NPM_CONFIG_ELECTRON_BUILDER_BINARIES_CUSTOM_DIR") ||
+      parseValidEnvVarUrl("npm_config_electron_builder_binaries_custom_dir") ||
+      parseValidEnvVarUrl("npm_package_config_electron_builder_binaries_custom_dir") ||
+      parseValidEnvVarUrl("ELECTRON_BUILDER_BINARIES_CUSTOM_DIR") ||
       releaseName
     url = `${baseUrl}${middleUrl}/${filenameWithExt}`
   }

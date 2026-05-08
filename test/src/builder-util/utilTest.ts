@@ -1,5 +1,6 @@
 import { removePassword } from "builder-util"
-import { describe, it } from "vitest"
+import { parseValidEnvVarUrl } from "builder-util/out/envUtil"
+import { afterEach, describe, it, vi } from "vitest"
 
 const testValue = "secretValue"
 const testQuoted = "secret with spaces"
@@ -48,6 +49,44 @@ describe("removePassword: /b … /c block", () => {
     const output = removePassword(input)
 
     expect(output).toMatchSnapshot()
+  })
+})
+
+describe("validateEnvVarUrl", () => {
+  const VAR = "TEST_VALIDATE_URL_VAR"
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it("returns null when env var is not set", ({ expect }) => {
+    delete process.env[VAR]
+    expect(parseValidEnvVarUrl(VAR)).toBeNull()
+  })
+
+  it("throws when value is not a valid URL", ({ expect }) => {
+    vi.stubEnv(VAR, "not-a-url")
+    expect(() => parseValidEnvVarUrl(VAR)).toThrow(`${VAR} is not a valid URL`)
+  })
+
+  it("throws when protocol is http (non-https)", ({ expect }) => {
+    vi.stubEnv(VAR, "http://example.com/")
+    expect(() => parseValidEnvVarUrl(VAR)).toThrow(`${VAR} must use https://`)
+  })
+
+  it("throws when protocol is file", ({ expect }) => {
+    vi.stubEnv(VAR, "file:///etc/passwd")
+    expect(() => parseValidEnvVarUrl(VAR)).toThrow(`${VAR} must use https://`)
+  })
+
+  it("returns the URL string for a valid https URL", ({ expect }) => {
+    vi.stubEnv(VAR, "https://mirror.example.com/")
+    expect(parseValidEnvVarUrl(VAR)).toBe("https://mirror.example.com/")
+  })
+
+  it("returns the URL string unchanged when it has a path and query", ({ expect }) => {
+    vi.stubEnv(VAR, "https://mirror.example.com/path?q=1")
+    expect(parseValidEnvVarUrl(VAR)).toBe("https://mirror.example.com/path?q=1")
   })
 })
 

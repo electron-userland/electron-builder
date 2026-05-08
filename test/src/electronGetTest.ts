@@ -66,10 +66,6 @@ describe("getCacheDirectory", () => {
   })
 })
 
-// ─── getBinariesMirrorUrl ─────────────────────────────────────────────────────
-// Addresses #8522: the old app-builder binary crashed when fetching electron mirrors.
-// The fix reads mirror config from env vars directly; these tests validate each format.
-
 describe("getBinariesMirrorUrl", () => {
   afterEach(() => {
     vi.unstubAllEnvs()

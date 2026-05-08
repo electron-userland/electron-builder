@@ -7,7 +7,7 @@ import {
   GotDownloaderOptions,
   MirrorOptions,
 } from "@electron/get"
-import { exists, log, PADDING } from "builder-util"
+import { exists, log, PADDING, parseValidEnvVarUrl } from "builder-util"
 import { MultiProgress } from "electron-publish/out/multiProgress"
 import { createWriteStream } from "fs"
 import * as fs from "fs/promises"
@@ -133,6 +133,12 @@ async function extractZipWithYauzl(zipPath: string, dir: string): Promise<void> 
       zipfile.readEntry()
       zipfile.on("entry", (entry: yauzl.Entry) => {
         const dest = path.join(dir, entry.fileName)
+        // Reject path-traversal entries: dest must remain inside dir.
+        // path.join normalises ".." so we compare resolved absolute paths.
+        if (!dest.startsWith(path.resolve(dir) + path.sep) && dest !== path.resolve(dir)) {
+          zipfile.readEntry()
+          return
+        }
         if (/\/$/.test(entry.fileName)) {
           fs.mkdir(dest, { recursive: true })
             .then(() => zipfile.readEntry())
@@ -321,13 +327,17 @@ export async function downloadElectronArtifact(options: ArtifactDownloadOptions,
  * Get the binaries mirror URL from environment variables.
  * Supports various npm config formats and falls back to GitHub.
  */
-
 export function getBinariesMirrorUrl(githubOrgRepo: string): string {
-  return (
-    process.env.NPM_CONFIG_ELECTRON_BUILDER_BINARIES_MIRROR ||
-    process.env.npm_config_electron_builder_binaries_mirror ||
-    process.env.npm_package_config_electron_builder_binaries_mirror ||
-    process.env.ELECTRON_BUILDER_BINARIES_MIRROR ||
-    `https://github.com/${githubOrgRepo}/releases/download/`
-  )
+  for (const envVar of [
+    "NPM_CONFIG_ELECTRON_BUILDER_BINARIES_MIRROR",
+    "npm_config_electron_builder_binaries_mirror",
+    "npm_package_config_electron_builder_binaries_mirror",
+    "ELECTRON_BUILDER_BINARIES_MIRROR",
+  ]) {
+    const url = parseValidEnvVarUrl(envVar)
+    if (url) {
+      return url.endsWith("/") ? url : `${url}/`
+    }
+  }
+  return `https://github.com/${githubOrgRepo}/releases/download/`
 }
