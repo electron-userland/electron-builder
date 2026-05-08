@@ -329,15 +329,18 @@ test("downloadElectronArtifact: maps electronDownload.customDir to mirrorOptions
 })
 
 // Addresses #9205 (new-style config): verifies the isElectronGetOptions() discriminator
-// correctly routes ElectronGetOptions (which has a "mirrorOptions" key) through the new path.
-test("downloadElectronArtifact: applies ElectronGetOptions.mirrorOptions (new-style config)", DOWNLOAD_TIMEOUT, async ({ expect }) => {
+// correctly routes ElectronGetOptions through the new path.
+// Uses unsafelyDisableChecksums (another ELECTRON_GET_EXCLUSIVE_KEY) rather than mirrorOptions
+// so that the effective download URL and @electron/get cache key are identical to the baseline
+// download — avoiding a redundant network request in CI environments with a pre-warmed cache.
+test("downloadElectronArtifact: routes ElectronGetOptions through the isElectronGetOptions discriminator", DOWNLOAD_TIMEOUT, async ({ expect }) => {
   const options: ArtifactDownloadOptions = {
     artifactName: "ffmpeg",
     platformName: electronPlatform,
     arch: electronArch,
     version: ELECTRON_VERSION,
     electronDownload: {
-      mirrorOptions: { mirror: "https://github.com/electron/electron/releases/download/" },
+      unsafelyDisableChecksums: false, // same behaviour as default; key presence triggers ElectronGetOptions path
     } satisfies ElectronGetOptions,
   }
 
