@@ -9,8 +9,9 @@ import {
 } from "@electron/get"
 import { exists, log, PADDING } from "builder-util"
 import { MultiProgress } from "electron-publish/out/multiProgress"
-import * as extractZip from "extract-zip"
+import { createWriteStream } from "fs"
 import * as fs from "fs/promises"
+import * as yauzl from "yauzl"
 import * as os from "os"
 import * as path from "path"
 import * as lockfile from "proper-lockfile"
@@ -119,16 +120,55 @@ function resolveCacheMode(): ElectronDownloadCacheMode {
   return ElectronDownloadCacheMode.ReadWrite
 }
 
+async function extractZipWithYauzl(zipPath: string, dir: string): Promise<void> {
+  await fs.mkdir(dir, { recursive: true })
+  return new Promise((resolve, reject) => {
+    yauzl.open(zipPath, { lazyEntries: true, autoClose: true }, (err, zipfile) => {
+      if (err != null) {
+        reject(err)
+        return
+      }
+      zipfile.on("error", reject)
+      zipfile.on("end", resolve)
+      zipfile.readEntry()
+      zipfile.on("entry", (entry: yauzl.Entry) => {
+        const dest = path.join(dir, entry.fileName)
+        if (/\/$/.test(entry.fileName)) {
+          fs.mkdir(dest, { recursive: true })
+            .then(() => zipfile.readEntry())
+            .catch(reject)
+          return
+        }
+        fs.mkdir(path.dirname(dest), { recursive: true })
+          .then(() => fs.rm(dest, { recursive: true, force: true }))
+          .then(
+            () =>
+              new Promise<void>((res, rej) => {
+                zipfile.openReadStream(entry, (streamErr, readStream) => {
+                  if (streamErr != null) {
+                    rej(streamErr)
+                    return
+                  }
+                  const ws = createWriteStream(dest)
+                  ws.on("close", res)
+                  ws.on("error", rej)
+                  readStream.pipe(ws)
+                })
+              })
+          )
+          .then(() => zipfile.readEntry())
+          .catch(reject)
+      })
+    })
+  })
+}
+
 async function extractArchive(file: string, dir: string) {
   if (file.endsWith(".tar.gz") || file.endsWith(".tgz")) {
-    // tar requires the cwd to exist; create it here since downloadAndExtract no longer pre-creates extractDir.
     await fs.mkdir(dir, { recursive: true })
     await tar.extract({ file, cwd: dir, strip: 1 })
   } else if (file.endsWith(".zip")) {
-    // Pass dir only if it doesn't exist: extract-zip creates it fresh, which avoids
-    // "dest already exists." that occurs when the dir is pre-created and a zip entry's
-    // destination path coincides with an existing directory inside it.
-    await extractZip(file, { dir })
+    await extractZipWithYauzl(file, dir)
   } else {
     throw new Error(`Unsupported archive format: ${path.basename(file)}`)
   }
@@ -143,21 +183,14 @@ async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact
   const completeMarker = `${extractDir}.complete`
   const isCached = async () => exists(completeMarker)
 
-  // Use a sidecar file as the lock target instead of extractDir itself.
-  // This lets extractZip always receive a non-existent directory, which it creates
-  // fresh — eliminating "dest already exists." on all platforms.
-  const lockTarget = `${extractDir}.lk`
-  await fs.mkdir(path.dirname(lockTarget), { recursive: true })
-  await fs.writeFile(lockTarget, "", { flag: "a" }) // create once, idempotent
+  await fs.mkdir(extractDir, { recursive: true })
 
-  // Fast path before acquiring the lock: avoids Windows lock-release timing issues
-  // where the .lock directory isn't immediately visible after release().
   if (await isCached()) {
     log.debug({ file: label, path: extractDir }, "using cached artifact - skipping download/extract")
     return extractDir
   }
 
-  const release = await lockfile.lock(lockTarget, {
+  const release = await lockfile.lock(extractDir, {
     retries: { retries: 5, minTimeout: 1000, maxTimeout: 5000 },
     stale: 60000,
   })
