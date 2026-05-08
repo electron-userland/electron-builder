@@ -234,163 +234,169 @@ const electronArch = process.arch === "arm64" ? "arm64" : "x64"
 // Expected ffmpeg library filename by platform
 const ffmpegLibName = electronPlatform === "darwin" ? "libffmpeg.dylib" : electronPlatform === "linux" ? "libffmpeg.so" : "ffmpeg.dll"
 
-test("downloadElectronArtifact: downloads and extracts electron ffmpeg zip for current platform", DOWNLOAD_TIMEOUT, async ({ expect }) => {
-  const options: ArtifactDownloadOptions = {
-    artifactName: "ffmpeg",
-    platformName: electronPlatform,
-    arch: electronArch,
-    version: ELECTRON_VERSION,
-  }
+// sequential: tests that download the same GitHub artifact (same URL → same @electron/get cache key)
+// must not run concurrently. @electron/get's putFileInCache has no internal locking; concurrent moves
+// to the same cache path produce "dest already exists." from fs-extra. Sequential order ensures the
+// first test populates the cache, and subsequent tests get a cache hit.
+describe("downloadElectronArtifact", { sequential: true }, () => {
+  test("downloads and extracts electron ffmpeg zip for current platform", DOWNLOAD_TIMEOUT, async ({ expect }) => {
+    const options: ArtifactDownloadOptions = {
+      artifactName: "ffmpeg",
+      platformName: electronPlatform,
+      arch: electronArch,
+      version: ELECTRON_VERSION,
+    }
 
-  const result = await downloadElectronArtifact(options, null)
+    const result = await downloadElectronArtifact(options, null)
 
-  expect(typeof result).toBe("string")
+    expect(typeof result).toBe("string")
 
-  const stat = await fs.stat(result)
-  expect(stat.isDirectory()).toBe(true)
+    const stat = await fs.stat(result)
+    expect(stat.isDirectory()).toBe(true)
 
-  // ffmpeg zip puts the lib at the root of the archive
-  const libPath = path.join(result, ffmpegLibName)
-  const libStat = await fs.stat(libPath)
-  expect(libStat.isFile()).toBe(true)
-  expect(libStat.size).toBeGreaterThan(0)
-})
+    // ffmpeg zip puts the lib at the root of the archive
+    const libPath = path.join(result, ffmpegLibName)
+    const libStat = await fs.stat(libPath)
+    expect(libStat.isFile()).toBe(true)
+    expect(libStat.size).toBeGreaterThan(0)
+  })
 
-test("downloadElectronArtifact: deduplicates concurrent calls for the same artifact", DOWNLOAD_TIMEOUT, async ({ expect }) => {
-  const options: ArtifactDownloadOptions = {
-    artifactName: "ffmpeg",
-    platformName: electronPlatform,
-    arch: electronArch,
-    version: ELECTRON_VERSION,
-  }
+  test("downloadElectronArtifact: deduplicates concurrent calls for the same artifact", DOWNLOAD_TIMEOUT, async ({ expect }) => {
+    const options: ArtifactDownloadOptions = {
+      artifactName: "ffmpeg",
+      platformName: electronPlatform,
+      arch: electronArch,
+      version: ELECTRON_VERSION,
+    }
 
-  // Fire three concurrent downloads; all must resolve to the same path
-  const [a, b, c] = await Promise.all([downloadElectronArtifact(options, null), downloadElectronArtifact(options, null), downloadElectronArtifact(options, null)])
+    // Fire three concurrent downloads; all must resolve to the same path
+    const [a, b, c] = await Promise.all([downloadElectronArtifact(options, null), downloadElectronArtifact(options, null), downloadElectronArtifact(options, null)])
 
-  expect(a).toBe(b)
-  expect(b).toBe(c)
-})
+    expect(a).toBe(b)
+    expect(b).toBe(c)
+  })
 
-test("downloadElectronArtifact: applies legacy ElectronDownloadOptions mirror settings", DOWNLOAD_TIMEOUT, async ({ expect }) => {
-  const legacyOptions: ElectronDownloadOptions = {
-    mirror: "https://github.com/electron/electron/releases/download/",
-  }
-
-  const options: ArtifactDownloadOptions = {
-    artifactName: "ffmpeg",
-    platformName: electronPlatform,
-    arch: electronArch,
-    version: ELECTRON_VERSION,
-    electronDownload: legacyOptions,
-  }
-
-  const result = await downloadElectronArtifact(options, null)
-
-  expect(typeof result).toBe("string")
-  const stat = await fs.stat(result)
-  expect(stat.isDirectory()).toBe(true)
-})
-
-test("downloadElectronArtifact: isVerifyChecksum:false skips checksum validation", DOWNLOAD_TIMEOUT, async ({ expect }) => {
-  const options: ArtifactDownloadOptions = {
-    artifactName: "ffmpeg",
-    platformName: electronPlatform,
-    arch: electronArch,
-    version: ELECTRON_VERSION,
-    electronDownload: { isVerifyChecksum: false } satisfies ElectronDownloadOptions,
-  }
-
-  const result = await downloadElectronArtifact(options, null)
-  expect(typeof result).toBe("string")
-  await expect(fs.stat(result)).resolves.toBeDefined()
-})
-
-// Addresses #9205: electronDownload.customDir was not being mapped to mirrorOptions.customDir
-// in the @electron/get call. Setting it to the canonical "v${version}" directory verifies
-// the mapping is honoured without needing a custom server.
-test("downloadElectronArtifact: maps electronDownload.customDir to mirrorOptions.customDir", DOWNLOAD_TIMEOUT, async ({ expect }) => {
-  const options: ArtifactDownloadOptions = {
-    artifactName: "ffmpeg",
-    platformName: electronPlatform,
-    arch: electronArch,
-    version: ELECTRON_VERSION,
-    electronDownload: {
+  test("downloadElectronArtifact: applies legacy ElectronDownloadOptions mirror settings", DOWNLOAD_TIMEOUT, async ({ expect }) => {
+    const legacyOptions: ElectronDownloadOptions = {
       mirror: "https://github.com/electron/electron/releases/download/",
-      customDir: `v${ELECTRON_VERSION}`,
-    } satisfies ElectronDownloadOptions,
-  }
+    }
 
-  const result = await downloadElectronArtifact(options, null)
-  expect(typeof result).toBe("string")
-  const stat = await fs.stat(result)
-  expect(stat.isDirectory()).toBe(true)
-  const libPath = path.join(result, ffmpegLibName)
-  await expect(fs.stat(libPath)).resolves.toBeDefined()
-})
+    const options: ArtifactDownloadOptions = {
+      artifactName: "ffmpeg",
+      platformName: electronPlatform,
+      arch: electronArch,
+      version: ELECTRON_VERSION,
+      electronDownload: legacyOptions,
+    }
 
-// Addresses #9205 (new-style config): verifies the isElectronGetOptions() discriminator
-// correctly routes ElectronGetOptions through the new path.
-// Uses unsafelyDisableChecksums (another ELECTRON_GET_EXCLUSIVE_KEY) rather than mirrorOptions
-// so that the effective download URL and @electron/get cache key are identical to the baseline
-// download — avoiding a redundant network request in CI environments with a pre-warmed cache.
-test("downloadElectronArtifact: routes ElectronGetOptions through the isElectronGetOptions discriminator", DOWNLOAD_TIMEOUT, async ({ expect }) => {
-  const options: ArtifactDownloadOptions = {
-    artifactName: "ffmpeg",
-    platformName: electronPlatform,
-    arch: electronArch,
-    version: ELECTRON_VERSION,
-    electronDownload: {
-      unsafelyDisableChecksums: false, // same behaviour as default; key presence triggers ElectronGetOptions path
-    } satisfies ElectronGetOptions,
-  }
+    const result = await downloadElectronArtifact(options, null)
 
-  const result = await downloadElectronArtifact(options, null)
-  expect(typeof result).toBe("string")
-  const stat = await fs.stat(result)
-  expect(stat.isDirectory()).toBe(true)
-})
+    expect(typeof result).toBe("string")
+    const stat = await fs.stat(result)
+    expect(stat.isDirectory()).toBe(true)
+  })
 
-// Addresses #8687: building for arm64 on an x64 host (or vice-versa) failed because
-// electron.exe was not found after extraction. Verifies cross-arch downloads succeed.
-test("downloadElectronArtifact: downloads ffmpeg for non-host arch (cross-arch build)", DOWNLOAD_TIMEOUT, async ({ expect }) => {
-  if (electronPlatform === "win32") {
-    // arm64 ffmpeg is not published separately for win32 in the same zip layout
-    expect(true).toBe(true)
-    return
-  }
-  const crossArch = electronArch === "arm64" ? "x64" : "arm64"
-  const options: ArtifactDownloadOptions = {
-    artifactName: "ffmpeg",
-    platformName: electronPlatform,
-    arch: crossArch,
-    version: ELECTRON_VERSION,
-  }
+  test("downloadElectronArtifact: isVerifyChecksum:false skips checksum validation", DOWNLOAD_TIMEOUT, async ({ expect }) => {
+    const options: ArtifactDownloadOptions = {
+      artifactName: "ffmpeg",
+      platformName: electronPlatform,
+      arch: electronArch,
+      version: ELECTRON_VERSION,
+      electronDownload: { isVerifyChecksum: false } satisfies ElectronDownloadOptions,
+    }
 
-  const result = await downloadElectronArtifact(options, null)
-  expect(typeof result).toBe("string")
-  const stat = await fs.stat(result)
-  expect(stat.isDirectory()).toBe(true)
-})
+    const result = await downloadElectronArtifact(options, null)
+    expect(typeof result).toBe("string")
+    await expect(fs.stat(result)).resolves.toBeDefined()
+  })
 
-// ─── downloadElectronArtifact: electron distribution zip (heavy) ──────────────
+  // Addresses #9205: electronDownload.customDir was not being mapped to mirrorOptions.customDir
+  // in the @electron/get call. Setting it to the canonical "v${version}" directory verifies
+  // the mapping is honoured without needing a custom server.
+  test("downloadElectronArtifact: maps electronDownload.customDir to mirrorOptions.customDir", DOWNLOAD_TIMEOUT, async ({ expect }) => {
+    const options: ArtifactDownloadOptions = {
+      artifactName: "ffmpeg",
+      platformName: electronPlatform,
+      arch: electronArch,
+      version: ELECTRON_VERSION,
+      electronDownload: {
+        mirror: "https://github.com/electron/electron/releases/download/",
+        customDir: `v${ELECTRON_VERSION}`,
+      } satisfies ElectronDownloadOptions,
+    }
 
-test.heavy("downloadElectronArtifact: downloads and extracts full electron distribution zip", { timeout: 300_000 }, async ({ expect }) => {
-  const options: ArtifactDownloadOptions = {
-    artifactName: "electron",
-    platformName: electronPlatform,
-    arch: electronArch,
-    version: ELECTRON_VERSION,
-  }
+    const result = await downloadElectronArtifact(options, null)
+    expect(typeof result).toBe("string")
+    const stat = await fs.stat(result)
+    expect(stat.isDirectory()).toBe(true)
+    const libPath = path.join(result, ffmpegLibName)
+    await expect(fs.stat(libPath)).resolves.toBeDefined()
+  })
 
-  const result = await downloadElectronArtifact(options, null)
+  // Addresses #9205 (new-style config): verifies the isElectronGetOptions() discriminator
+  // correctly routes ElectronGetOptions through the new path.
+  // Uses unsafelyDisableChecksums (another ELECTRON_GET_EXCLUSIVE_KEY) rather than mirrorOptions
+  // so that the effective download URL and @electron/get cache key are identical to the baseline
+  // download — avoiding a redundant network request in CI environments with a pre-warmed cache.
+  test("downloadElectronArtifact: routes ElectronGetOptions through the isElectronGetOptions discriminator", DOWNLOAD_TIMEOUT, async ({ expect }) => {
+    const options: ArtifactDownloadOptions = {
+      artifactName: "ffmpeg",
+      platformName: electronPlatform,
+      arch: electronArch,
+      version: ELECTRON_VERSION,
+      electronDownload: {
+        unsafelyDisableChecksums: false, // same behaviour as default; key presence triggers ElectronGetOptions path
+      } satisfies ElectronGetOptions,
+    }
 
-  expect(typeof result).toBe("string")
-  const stat = await fs.stat(result)
-  expect(stat.isDirectory()).toBe(true)
+    const result = await downloadElectronArtifact(options, null)
+    expect(typeof result).toBe("string")
+    const stat = await fs.stat(result)
+    expect(stat.isDirectory()).toBe(true)
+  })
 
-  const entries = await fs.readdir(result)
-  expect(entries.length).toBeGreaterThan(0)
+  // Addresses #8687: building for arm64 on an x64 host (or vice-versa) failed because
+  // electron.exe was not found after extraction. Verifies cross-arch downloads succeed.
+  test("downloadElectronArtifact: downloads ffmpeg for non-host arch (cross-arch build)", DOWNLOAD_TIMEOUT, async ({ expect }) => {
+    if (electronPlatform === "win32") {
+      // arm64 ffmpeg is not published separately for win32 in the same zip layout
+      expect(true).toBe(true)
+      return
+    }
+    const crossArch = electronArch === "arm64" ? "x64" : "arm64"
+    const options: ArtifactDownloadOptions = {
+      artifactName: "ffmpeg",
+      platformName: electronPlatform,
+      arch: crossArch,
+      version: ELECTRON_VERSION,
+    }
 
-  // electron distribution always ships a version file
-  expect(entries).toContain("version")
+    const result = await downloadElectronArtifact(options, null)
+    expect(typeof result).toBe("string")
+    const stat = await fs.stat(result)
+    expect(stat.isDirectory()).toBe(true)
+  })
+
+  // ─── downloadElectronArtifact: electron distribution zip (heavy) ──────────────
+
+  test.heavy("downloadElectronArtifact: downloads and extracts full electron distribution zip", { timeout: 300_000 }, async ({ expect }) => {
+    const options: ArtifactDownloadOptions = {
+      artifactName: "electron",
+      platformName: electronPlatform,
+      arch: electronArch,
+      version: ELECTRON_VERSION,
+    }
+
+    const result = await downloadElectronArtifact(options, null)
+
+    expect(typeof result).toBe("string")
+    const stat = await fs.stat(result)
+    expect(stat.isDirectory()).toBe(true)
+
+    const entries = await fs.readdir(result)
+    expect(entries.length).toBeGreaterThan(0)
+
+    // electron distribution always ships a version file
+    expect(entries).toContain("version")
+  })
 })
