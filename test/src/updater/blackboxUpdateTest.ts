@@ -1,7 +1,7 @@
 import { ToolsetConfig } from "app-builder-lib"
 import { PM } from "app-builder-lib/src/node-module-collector"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
-import { archFromString, doSpawn, getArchSuffix, isEmptyOrSpaces, log, spawn, TmpDir } from "builder-util/out/util"
+import { archFromString, getArchSuffix, isEmptyOrSpaces, log, spawn, TmpDir } from "builder-util/out/util"
 import { execFileSync, execSync } from "child_process"
 import { Arch, Configuration, Platform } from "electron-builder"
 import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
@@ -9,7 +9,7 @@ import { copy, existsSync, move, outputFile, readJsonSync } from "fs-extra"
 import { homedir } from "os"
 import path from "path"
 import { ExpectStatic, TestContext } from "vitest"
-import { getRanLocalServerPath, launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
+import { createLocalServer, launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
 import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
@@ -411,12 +411,7 @@ async function runTestWithinServer(doTest: (rootDirectory: string, updateConfigP
   const tmpDir = new TmpDir("blackbox-update-test")
   const root = await tmpDir.getTempDir({ prefix: "server-root" })
 
-  // 65535 is the max port number
-  // Math.random() / Math.random() is used to avoid zero
-  // Math.floor(((Math.random() / Math.random()) * 1000) % 65535) is used to avoid port number collision
-  const port = 8000 + Math.floor(((Math.random() / Math.random()) * 1000) % 65535)
-  const serverBin = await getRanLocalServerPath()
-  const httpServerProcess = doSpawn(serverBin, [`-root=${root}`, `-port=${port}`, "-gzip=false", "-listdir=true"])
+  const { server, port } = await createLocalServer(root)
 
   const updateConfig = await writeUpdateConfig<GenericServerOptions>({
     provider: "generic",
@@ -430,14 +425,14 @@ async function runTestWithinServer(doTest: (rootDirectory: string, updateConfigP
       console.error("Failed to cleanup tmpDir", error)
     }
     try {
-      httpServerProcess.kill()
+      server.close()
     } catch (error) {
-      console.error("Failed to kill httpServerProcess", error)
+      console.error("Failed to close server", error)
     }
   }
 
   return await new Promise<void>((resolve, reject) => {
-    httpServerProcess.on("error", reject)
+    server.on("error", reject)
     doTest(root, updateConfig).then(resolve).catch(reject)
   }).then(
     v => {

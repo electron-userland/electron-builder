@@ -1,68 +1,89 @@
-import { getBinFromUrl } from "app-builder-lib/src/binDownload"
 import { isEmptyOrSpaces } from "builder-util"
 import { ChildProcess, spawn } from "child_process"
-import { chmodSync } from "fs"
+import * as fs from "fs"
+import * as http from "http"
 import * as net from "net"
 import os from "os"
 import path from "path"
 
-export function waitForPort(port: number, timeoutMs = 10_000): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const deadline = Date.now() + timeoutMs
-    function attempt() {
-      const socket = new net.Socket()
-      socket.setTimeout(500)
-      socket.once("connect", () => {
-        socket.destroy()
-        resolve()
-      })
-      socket.once("error", retry)
-      socket.once("timeout", retry)
-      socket.connect(port, "127.0.0.1")
-      function retry() {
-        socket.destroy()
-        if (Date.now() >= deadline) {
-          reject(new Error(`Port ${port} not ready after ${timeoutMs}ms`))
-        } else {
-          setTimeout(attempt, 100)
-        }
+export function createLocalServer(root: string): Promise<{ server: http.Server; port: number }> {
+  const server = http.createServer((req, res) => {
+    const filePath = path.join(root, decodeURIComponent(new URL(req.url!, "http://localhost").pathname))
+    fs.stat(filePath, (statErr, stat) => {
+      if (statErr || !stat.isFile()) {
+        res.writeHead(404)
+        res.end("Not found")
+        return
       }
-    }
-    attempt()
+
+      const size = stat.size
+      res.setHeader("Accept-Ranges", "bytes")
+
+      const rangeHeader = req.headers["range"]
+      if (!rangeHeader) {
+        res.writeHead(200, { "Content-Length": size, "Content-Type": "application/octet-stream" })
+        fs.createReadStream(filePath).pipe(res)
+        return
+      }
+
+      const ranges = parseByteRanges(rangeHeader, size)
+      if (!ranges || ranges.length === 0) {
+        res.writeHead(416, { "Content-Range": `bytes */${size}` })
+        res.end()
+        return
+      }
+
+      if (ranges.length === 1) {
+        const [start, end] = ranges[0]
+        res.writeHead(206, {
+          "Content-Range": `bytes ${start}-${end}/${size}`,
+          "Content-Length": end - start + 1,
+          "Content-Type": "application/octet-stream",
+        })
+        fs.createReadStream(filePath, { start, end }).pipe(res)
+        return
+      }
+
+      // Multi-range: DataSplitter expects the very first boundary without a leading \r\n
+      const boundary = "gc0p4Jq0M2Yt08jU534c0p"
+      res.writeHead(206, { "Content-Type": `multipart/byteranges; boundary=${boundary}` })
+
+      let i = 0
+      const writeNext = () => {
+        if (i >= ranges.length) {
+          res.end(`\r\n--${boundary}--\r\n`)
+          return
+        }
+        const [start, end] = ranges[i]
+        i++
+        const prefix = i === 1 ? "" : "\r\n"
+        res.write(`${prefix}--${boundary}\r\nContent-Type: application/octet-stream\r\nContent-Range: bytes ${start}-${end}/${size}\r\n\r\n`)
+        const stream = fs.createReadStream(filePath, { start, end })
+        stream.once("end", writeNext)
+        stream.pipe(res, { end: false })
+      }
+      writeNext()
+    })
+  })
+
+  return new Promise((resolve, reject) => {
+    server.once("error", reject)
+    server.listen(0, "127.0.0.1", () => {
+      const { port } = server.address() as net.AddressInfo
+      resolve({ server, port })
+    })
   })
 }
 
-export async function getRanLocalServerPath() {
-  /**
-   * Folder structure inside the tools zip is:
-   * ran-v0.1.6-all-platforms/
-   *    ├── VERSION.txt
-   *    ├── darwin
-   *    │ └── amd64
-   *    │     └── ran
-   *    ├── linux
-   *    │ ├── 386
-   *    │ │ └── ran
-   *    │ ├── amd64
-   *    │ │ └── ran
-   *    │ └── arm64
-   *    │     └── ran
-   *    └── win
-   *        ├── amd64
-   *        │ └── ran.exe
-   *        └── ia32
-   *          └── ran.exe
-   */
-  const serverBin = await getBinFromUrl("ran@1.0.0", "ran-v0.1.6-all-platforms.zip", "8OW8qc8CHG4dT0/R/ccNSO7AJAOgSRxJwxHF6vaiYoyh3eVp7rHdkYBkqnXx54Eqdo4WY8RUxEwKzKaAu1ISFA==")
-  if (process.platform === "win32") {
-    return path.join(serverBin, "win", process.arch !== "x64" ? "ia32" : "amd64", "ran.exe")
-  }
-  return path.join(
-    serverBin,
-    process.platform,
-    process.arch === "x64" || process.platform === "darwin" ? "amd64" : process.arch === "ia32" && process.platform === "linux" ? "386" : process.arch,
-    "ran"
-  )
+function parseByteRanges(header: string, size: number): Array<[number, number]> | null {
+  const m = header.match(/^bytes=(.+)$/)
+  if (!m) return null
+  return m[1].split(",").map(r => {
+    const [s, e] = r.trim().split("-")
+    const start = s === "" ? size - parseInt(e) : parseInt(s)
+    const end = e === "" ? size - 1 : Math.min(parseInt(e), size - 1)
+    return [start, end] as [number, number]
+  })
 }
 
 interface LaunchResult {
@@ -126,7 +147,7 @@ export async function launchAndWaitForQuit({
       await new Promise(resolve => setTimeout(resolve, 500)) // Give Xvfb time to init
 
       if (appPath.endsWith(".AppImage")) {
-        chmodSync(appPath, 0o755)
+        fs.chmodSync(appPath, 0o755)
         const spawnEnv = {
           ...env,
           DISPLAY: display,
