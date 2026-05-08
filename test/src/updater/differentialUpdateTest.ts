@@ -11,7 +11,7 @@ import { EXTENDED_TIMEOUT, PackedContext, assertPack, removeUnstableProperties }
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, testAppCacheDirName, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { mockForNodeRequire } from "vitest-mock-commonjs"
 import { ExpectStatic } from "vitest"
-import { getRanLocalServerPath } from "../helpers/launchAppCrossPlatform"
+import { getRanLocalServerPath, waitForPort } from "../helpers/launchAppCrossPlatform"
 import { ToolsetConfig } from "app-builder-lib/src/configuration"
 
 async function doBuild(
@@ -212,6 +212,7 @@ async function testBlockMap(expect: ExpectStatic, oldDir: string, newDir: string
 
   const serverBin = await getRanLocalServerPath()
   const httpServerProcess = doSpawn(serverBin, [`-root=${newDir}`, `-port=${port}`, "-gzip=false", "-listdir=true"])
+  await waitForPort(port)
 
   // Mac uses electron's native autoUpdater to serve updates to, we mock here since electron API isn't available within jest runtime
   const mockNativeUpdater = new TestNativeUpdater()

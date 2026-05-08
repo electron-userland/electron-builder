@@ -2,8 +2,35 @@ import { getBinFromUrl } from "app-builder-lib/src/binDownload"
 import { isEmptyOrSpaces } from "builder-util"
 import { ChildProcess, spawn } from "child_process"
 import { chmodSync } from "fs"
+import * as net from "net"
 import os from "os"
 import path from "path"
+
+export function waitForPort(port: number, timeoutMs = 10_000): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const deadline = Date.now() + timeoutMs
+    function attempt() {
+      const socket = new net.Socket()
+      socket.setTimeout(500)
+      socket.once("connect", () => {
+        socket.destroy()
+        resolve()
+      })
+      socket.once("error", retry)
+      socket.once("timeout", retry)
+      socket.connect(port, "127.0.0.1")
+      function retry() {
+        socket.destroy()
+        if (Date.now() >= deadline) {
+          reject(new Error(`Port ${port} not ready after ${timeoutMs}ms`))
+        } else {
+          setTimeout(attempt, 100)
+        }
+      }
+    }
+    attempt()
+  })
+}
 
 export async function getRanLocalServerPath() {
   /**
