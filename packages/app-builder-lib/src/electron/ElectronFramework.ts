@@ -9,10 +9,12 @@ import { LinuxPackager } from "../linuxPackager"
 import { MacPackager } from "../macPackager"
 import { getTemplatePath } from "../util/pathManager"
 import { resolveFunction } from "../util/resolve"
+import { ElectronDownloadOptions, ElectronGetOptions } from "../util/electronGet"
+export { ElectronDownloadOptions }
 import { createMacApp } from "./electronMac"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
 import { addWinAsarIntegrity } from "./electronWin"
-import injectFFMPEG from "./injectFFMPEG"
+import { FFMPEGInjector } from "./injectFFMPEG"
 
 export type ElectronPlatformName = "darwin" | "linux" | "win32" | "mas"
 
@@ -32,40 +34,18 @@ export function createBrandingOpts(opts: Configuration): Required<ElectronBrandi
   }
 }
 
-export interface ElectronDownloadOptions {
-  // https://github.com/electron-userland/electron-builder/issues/3077
-  // must be optional
-  version?: string
-
-  /**
-   * The [cache location](https://github.com/electron-userland/electron-download#cache-location).
-   */
-  cache?: string | null
-
-  /**
-   * The mirror.
-   */
-  mirror?: string | null
-
-  /** @private */
-  customDir?: string | null
-  /** @private */
-  customFilename?: string | null
-
-  strictSSL?: boolean
-  isVerifyChecksum?: boolean
-
-  platform?: ElectronPlatformName
-  arch?: string
-}
-
 function createDownloadOpts(opts: Configuration, platform: ElectronPlatformName, arch: string, electronVersion: string): ElectronDownloadOptions {
-  return {
-    platform,
-    arch,
-    version: electronVersion,
-    ...opts.electronDownload,
+  const base: ElectronDownloadOptions = { platform, arch, version: electronVersion }
+  const dl = opts.electronDownload
+  if (dl == null) {
+    return base
   }
+  if (Object.hasOwnProperty.call(dl, "mirrorOptions")) {
+    // ElectronGetOptions: flatten mirrorOptions.mirror for the app-builder binary
+    const { mirrorOptions } = dl as ElectronGetOptions
+    return { ...base, mirror: mirrorOptions?.mirror ?? undefined }
+  }
+  return { ...base, ...dl }
 }
 
 async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
@@ -168,7 +148,8 @@ class ElectronFramework implements Framework {
     const shouldCleanup = await unpack(options, downloadOptions, this.distMacOsAppName)
     await cleanupAfterUnpack(options, this.distMacOsAppName, shouldCleanup)
     if (options.packager.config.downloadAlternateFFmpeg) {
-      await injectFFMPEG(options, this.version)
+      const injector = new FFMPEGInjector(null, options, this.version, createBrandingOpts(options.packager.config))
+      await injector.inject()
     }
   }
 

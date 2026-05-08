@@ -8,6 +8,7 @@
     "@babel/core": "7.24.9",
     "@babel/preset-env": "7.15.6",
     "@babel/preset-typescript": "^7.23.3",
+    "@electron/get": "^3.1.0",
     "@electron/osx-sign": "^1.0.4",
     "@jest/globals": "^29.7.0",
     "@types/adm-zip": "0.5.6",
