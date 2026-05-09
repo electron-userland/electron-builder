@@ -379,6 +379,16 @@ async function handleInitialInstallPerOS({ target, dirPath, arch }: { target: st
     // execSync(`sudo pacman -U --noconfirm "${path.join(dirPath, `TestApp.pacman`)}"`, { stdio: "inherit" })
     appPath = path.join("/opt", "TestApp", "TestApp")
   } else if (process.platform === "win32") {
+    // Kill any lingering NSIS installer processes left over from previous test retries.
+    // Without this, ALLOW_ONLY_ONE_INSTALLER_INSTANCE aborts the new installer (mutex conflict),
+    // and lingering mid-replacement processes cause ENOENT at the first probe launch.
+    try {
+      execSync('taskkill /F /IM "TestApp Setup.exe" /T', { stdio: "ignore" })
+      await new Promise(resolve => setTimeout(resolve, 1000))
+    } catch {
+      // no matching process — expected on the first run
+    }
+
     // access installed app's location
     const localProgramsPath = path.join(process.env.LOCALAPPDATA || path.join(homedir(), "AppData", "Local"), "Programs", "TestApp")
     // this is to clear dev environment when not running on an ephemeral GH runner.
@@ -413,6 +423,15 @@ async function handleCleanupPerOS({ target }: { target: string }) {
   } else if (target === "pacman") {
     execSync(`pacman -R --noconfirm testapp`, { stdio: "inherit" })
   } else if (process.platform === "win32") {
+    // Kill any lingering NSIS installer processes before running the uninstaller,
+    // so the uninstaller isn't blocked by a still-running update installer holding file locks.
+    try {
+      execSync('taskkill /F /IM "TestApp Setup.exe" /T', { stdio: "ignore" })
+      await new Promise(resolve => setTimeout(resolve, 500))
+    } catch {
+      // no matching process — ignore
+    }
+
     // access installed app's location
     const localProgramsPath = path.join(process.env.LOCALAPPDATA || path.join(homedir(), "AppData", "Local"), "Programs", "TestApp")
     const uninstaller = path.join(localProgramsPath, "Uninstall TestApp.exe")
