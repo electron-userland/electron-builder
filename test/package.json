@@ -48,9 +48,6 @@
     "yargs": "^17.6.2"
   },
   "pnpm": {
-    "overrides": {
-      "vite": ">=6.3.6",
-      "rollup": ">=4.59.0"
-    }
+    "overrides": {}
   }
 }
