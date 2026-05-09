@@ -167,7 +167,7 @@ async function runTest(context: TestContext, target: string, packageManager: str
         } catch (err: any) {
           // NSIS replaces the exe non-atomically: it deletes the old binary before writing the new one,
           // so there is a brief window where TestApp.exe does not exist on disk.
-          if (err.code === "ENOENT" && err.syscall === "spawn") {
+          if (err.code === "ENOENT" && (err.syscall === "spawn" || err.syscall?.startsWith("spawn "))) {
             log.info({ appPath }, "Binary temporarily unavailable (NSIS installer in progress), retrying...")
           } else {
             throw err
