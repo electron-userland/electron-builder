@@ -102,9 +102,20 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     }
   }
 
-  protected parseDependenciesTree(jsonBlob: string): PnpmDependency {
+  protected parseDependenciesTree(jsonBlob: string, packageName?: string): PnpmDependency {
     // pnpm returns an array of dependency trees
     const dependencyTree: PnpmDependency[] = this.extractJsonFromPollutedOutput<PnpmDependency[]>(jsonBlob)
+    if (dependencyTree.length === 0) {
+      throw new Error("pnpm list returned no dependency trees")
+    }
+
+    if (packageName) {
+      const matchedTree = dependencyTree.find(tree => tree.name === packageName)
+      if (matchedTree) {
+        return matchedTree
+      }
+    }
+
     return dependencyTree[0]
   }
 }

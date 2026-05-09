@@ -51,7 +51,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     nodeModules: NodeModuleInfo[]
     logSummary: ModuleManager["logSummary"]
   }> {
-    const tree: ProdDepType = await this.getDependenciesTree(this.installOptions.manager)
+    const tree: ProdDepType = await this.getDependenciesTree(this.installOptions.manager, packageName)
 
     await this.collectAllDependencies(tree, packageName)
     const realTree: ProdDepType = this.getTreeFromWorkspaces(tree, packageName)
@@ -84,7 +84,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * the output to a temporary file. Includes retry logic to handle transient failures such as
    * incomplete JSON output or missing files. Will retry up to 1 time with exponential backoff.
    */
-  protected async getDependenciesTree(pm: PM): Promise<ProdDepType> {
+  protected async getDependenciesTree(pm: PM, packageName?: string): Promise<ProdDepType> {
     const command = getPackageManagerCommand(pm)
     const args = this.getArgs()
 
@@ -97,7 +97,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       async () => {
         await this.streamCollectorCommandToFile(command, args, this.rootDir, tempOutputFile)
         const shellOutput = await fs.readFile(tempOutputFile, { encoding: "utf8" })
-        const result = await Promise.resolve(this.parseDependenciesTree(shellOutput))
+        const result = await Promise.resolve(this.parseDependenciesTree(shellOutput, packageName))
         return result
       },
       {
@@ -146,7 +146,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * Parses the dependencies tree from shell command output.
    *
    **/
-  protected parseDependenciesTree(shellOutput: string): ProdDepType | Promise<ProdDepType> {
+  protected parseDependenciesTree(shellOutput: string, _packageName?: string): ProdDepType | Promise<ProdDepType> {
     return this.extractJsonFromPollutedOutput<ProdDepType>(shellOutput)
   }
 
