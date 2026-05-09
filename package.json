@@ -43,6 +43,7 @@
     "@types/node": "^22.7.4",
     "@typescript-eslint/eslint-plugin": "8.17.0",
     "@typescript-eslint/parser": "8.17.0",
+    "@vitest/ui": "3.0.4",
     "chalk": "^4.1.2",
     "changesets-changelog-clean": "1.3.0",
     "conventional-changelog-cli": "5.0.0",
@@ -57,7 +58,8 @@
     "typedoc": "^0.26.7",
     "typedoc-plugin-markdown": "4.2.8",
     "typescript": "^5.6.2",
-    "typescript-json-schema": "0.64.0"
+    "typescript-json-schema": "0.64.0",
+    "vitest": "^3.2.2"
   },
   "engines": {
     "node": ">=14.14",
@@ -68,6 +70,9 @@
     "patchedDependencies": {
       "@changesets/cli@2.29.7": "patches/@changesets__cli@2.29.7.patch",
       "@changesets/assemble-release-plan@6.0.9": "patches/@changesets__assemble-release-plan@6.0.9.patch"
+    },
+    "overrides": {
+      "handlebars": ">=4.7.9"
     }
   }
 }
