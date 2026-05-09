@@ -99,12 +99,6 @@ exports[`default png icon 1`] = `
 ]
 `;
 
-exports[`icon composer generate asset catalog 1`] = `
-{
-  "mac": [],
-}
-`;
-
 exports[`icon set 1`] = `
 [
   {
