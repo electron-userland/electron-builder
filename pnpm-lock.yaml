@@ -4,9 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  handlebars: '>=4.7.9'
-
 patchedDependencies:
   '@changesets/assemble-release-plan@6.0.9':
     hash: ef56f57067dfcc594f40d9afc7278abe38cecf1c04230936e447a60e0d58a46e
