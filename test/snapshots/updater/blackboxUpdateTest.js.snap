@@ -1783,6 +1783,134 @@ exports[`linux > appimage tool: 1.0.2 > AppImage - arm64 2`] = `
 }
 `;
 
+exports[`linux > appimage tool: 1.0.3 > AppImage - arm64 1`] = `
+{
+  "linux": [
+    {
+      "arch": "arm64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux-arm64.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "path": "TestApp.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux > appimage tool: 1.0.3 > AppImage - arm64 2`] = `
+{
+  "linux": [
+    {
+      "arch": "arm64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux-arm64.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "path": "TestApp.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux > arch - (pacman) 1`] = `
+{
+  "linux": [
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.pacman",
+          },
+        ],
+        "path": "TestApp.pacman",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp.pacman",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux > arch - (pacman) 2`] = `
+{
+  "linux": [
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.pacman",
+          },
+        ],
+        "path": "TestApp.pacman",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp.pacman",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
 exports[`linux > debian - (apt) 1`] = `
 {
   "linux": [

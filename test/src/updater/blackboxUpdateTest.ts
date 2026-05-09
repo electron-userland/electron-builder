@@ -1,7 +1,7 @@
 import { ToolsetConfig } from "app-builder-lib"
 import { PM } from "app-builder-lib/src/node-module-collector"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
-import { archFromString, doSpawn, getArchSuffix, isEmptyOrSpaces, log, spawn, TmpDir } from "builder-util/out/util"
+import { archFromString, getArchSuffix, isEmptyOrSpaces, log, spawn, TmpDir } from "builder-util/out/util"
 import { execFileSync, execSync } from "child_process"
 import { Arch, Configuration, Platform } from "electron-builder"
 import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
@@ -9,7 +9,7 @@ import { copy, existsSync, move, outputFile, readJsonSync } from "fs-extra"
 import { homedir } from "os"
 import path from "path"
 import { ExpectStatic, TestContext } from "vitest"
-import { getRanLocalServerPath, launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
+import { createLocalServer, launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
 import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
@@ -125,19 +125,49 @@ async function runTest(context: TestContext, target: string, packageManager: str
       // Move app update to the root directory of the server
       await copy(newAppDir.dir, rootDirectory, { recursive: true, overwrite: true })
 
-      const verifyAppVersion = async (expectedVersion: string) =>
-        await launchAndWaitForQuit({ appPath, timeoutMs: 2 * 60 * 1000, updateConfigPath, expectedVersion, packageManagerToTest: packageManager })
-
-      const result = await verifyAppVersion(OLD_VERSION_NUMBER)
+      // waitForExit: true — don't proceed until the old app fully quits.
+      // On Linux (rpm/deb/pacman) the package manager install is synchronous, so exit means install done.
+      // On Windows (NSIS) and Mac (zip) the installer runs detached/async, so the app exits before
+      // installation completes — the polling loop below handles that case.
+      const result = await launchAndWaitForQuit({
+        appPath,
+        timeoutMs: 5 * 60 * 1000,
+        updateConfigPath,
+        expectedVersion: OLD_VERSION_NUMBER,
+        packageManagerToTest: packageManager,
+        waitForExit: true,
+      })
       log.debug(result, "Test App version")
       expect(result.version).toMatch(OLD_VERSION_NUMBER)
 
-      // Wait for quitAndInstall to take effect, increase delay if updates are slower
-      // (shouldn't be the case for such a small test app, but Windows with Debugger attached is pretty dam slow)
-      const delay = 60 * 1000
-      await new Promise(resolve => setTimeout(resolve, delay))
-
-      expect((await verifyAppVersion(NEW_VERSION_NUMBER)).version).toMatch(NEW_VERSION_NUMBER)
+      // Poll until the installed binary reports the new version.
+      // We disable AUTO_UPDATER_TEST so the probe app quits immediately after printing its version
+      // (no update cycle triggered), which also prevents a second installer from running in parallel.
+      const pollDeadline = Date.now() + 3 * 60 * 1000
+      const pollInterval = 5 * 1000
+      let newVersion: string | undefined
+      while (Date.now() < pollDeadline) {
+        const probe = await launchAndWaitForQuit({
+          appPath,
+          timeoutMs: 30 * 1000,
+          updateConfigPath,
+          packageManagerToTest: packageManager,
+          env: { AUTO_UPDATER_TEST: "" }, // disables updater — app prints version and quits
+          // waitForExit: true ensures TestApp.exe is fully released before the next
+          // poll iteration, giving the detached NSIS installer an uncontested window
+          // to overwrite the binary (Windows locks executables while they are running).
+          waitForExit: true,
+        })
+        newVersion = probe.version
+        if (newVersion === NEW_VERSION_NUMBER) {
+          break
+        }
+        log.info({ installedVersion: newVersion, expected: NEW_VERSION_NUMBER }, "Installer still in progress, retrying...")
+        if (Date.now() + pollInterval < pollDeadline) {
+          await new Promise(resolve => setTimeout(resolve, pollInterval))
+        }
+      }
+      expect(newVersion).toMatch(NEW_VERSION_NUMBER)
     })
   } catch (error: any) {
     log.error({ error: error.message }, "Blackbox Updater Test failed to run")
@@ -388,12 +418,7 @@ async function runTestWithinServer(doTest: (rootDirectory: string, updateConfigP
   const tmpDir = new TmpDir("blackbox-update-test")
   const root = await tmpDir.getTempDir({ prefix: "server-root" })
 
-  // 65535 is the max port number
-  // Math.random() / Math.random() is used to avoid zero
-  // Math.floor(((Math.random() / Math.random()) * 1000) % 65535) is used to avoid port number collision
-  const port = 8000 + Math.floor(((Math.random() / Math.random()) * 1000) % 65535)
-  const serverBin = await getRanLocalServerPath()
-  const httpServerProcess = doSpawn(serverBin, [`-root=${root}`, `-port=${port}`, "-gzip=false", "-listdir=true"])
+  const { server, port } = await createLocalServer(root)
 
   const updateConfig = await writeUpdateConfig<GenericServerOptions>({
     provider: "generic",
@@ -407,14 +432,14 @@ async function runTestWithinServer(doTest: (rootDirectory: string, updateConfigP
       console.error("Failed to cleanup tmpDir", error)
     }
     try {
-      httpServerProcess.kill()
+      server.close()
     } catch (error) {
-      console.error("Failed to kill httpServerProcess", error)
+      console.error("Failed to close server", error)
     }
   }
 
   return await new Promise<void>((resolve, reject) => {
-    httpServerProcess.on("error", reject)
+    server.on("error", reject)
     doTest(root, updateConfig).then(resolve).catch(reject)
   }).then(
     v => {

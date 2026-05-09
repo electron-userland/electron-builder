@@ -70,6 +70,9 @@
     "patchedDependencies": {
       "@changesets/cli@2.29.7": "patches/@changesets__cli@2.29.7.patch",
       "@changesets/assemble-release-plan@6.0.9": "patches/@changesets__assemble-release-plan@6.0.9.patch"
+    },
+    "overrides": {
+      "handlebars": ">=4.7.9"
     }
   }
 }
