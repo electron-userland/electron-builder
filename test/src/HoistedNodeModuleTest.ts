@@ -6,6 +6,7 @@ import { appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, verifyAsar
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { copy, mkdir, outputFile, readJson, rm, symlink, writeJson } from "fs-extra"
 import { assertThat } from "./helpers/fileAssert"
+import { dump } from "js-yaml"
 
 describe.ifNotWindows("node_module collectors", () => {
   test("yarn workspace", ({ expect }) =>
@@ -636,6 +637,40 @@ describe.ifNotWindows("node_module collectors", () => {
                 electron: ELECTRON_VERSION,
               }
             }),
+          ])
+        },
+        packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      }
+    ))
+
+  // https://github.com/electron-userland/electron-builder/issues/9711
+  test("pnpm v11 workspace", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-yarn-several-workspace",
+      {
+        targets: linuxDirTarget,
+        projectDir: "packages/test-app",
+      },
+      {
+        storeDepsLockfileSnapshot: true,
+        packageManager: PM.PNPM,
+        projectDirCreated: async projectDir => {
+          return Promise.all([
+            modifyPackageJson(projectDir, data => {
+              data.packageManager = "pnpm@11.0.9"
+            }),
+            modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => {
+              data.dependencies = {
+                debug: "4.4.3",
+              }
+              data.devDependencies = {
+                electron: ELECTRON_VERSION,
+              }
+            }),
+            // pnpm v11 requires explicit build script approval via allowBuilds in pnpm-workspace.yaml
+            // (replaces the removed onlyBuiltDependencies / neverBuiltDependencies settings)
+            outputFile(path.join(projectDir, "pnpm-workspace.yaml"), dump({ packages: ["packages/*"], allowBuilds: { electron: true } })),
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
