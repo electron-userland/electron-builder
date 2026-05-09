@@ -2,9 +2,20 @@
   "name": "@electron-builder/test",
   "version": "0.0.0",
   "private": true,
-  "dependencies": {
+  "devDependencies": {
+    "@babel/core": "7.24.9",
+    "@babel/preset-env": "7.15.6",
+    "@babel/preset-typescript": "^7.23.3",
     "@electron/get": "^3.1.0",
     "@electron/osx-sign": "^1.0.4",
+    "@jest/globals": "^29.7.0",
+    "@types/adm-zip": "0.5.6",
+    "@types/fs-extra": "^9.0.11",
+    "@types/js-yaml": "^4.0.1",
+    "@types/request": "^2.48.12",
+    "@types/semver": "7.7.1",
+    "@types/unzipper": "^0.10.11",
+    "@types/which": "^3.0.4",
     "adm-zip": "0.5.16",
     "app-builder-lib": "workspace:*",
     "builder-util": "workspace:*",
@@ -18,63 +29,20 @@
     "electron-publish": "workspace:*",
     "electron-updater": "workspace:*",
     "electron-winstaller": "5.4.0",
+    "fast-xml-parser": "5.7.0",
     "fs-extra": "^10.1.0",
     "js-yaml": "^4.1.0",
     "lazy-val": "^1.0.5",
     "path-sort": "^0.1.0",
     "resedit": "1.7.0",
+    "sanitize-filename": "^1.6.3",
     "semver": "7.7.2",
     "stat-mode": "^1.0.0",
     "temp-file": "^3.4.0",
     "unzipper": "^0.12.3",
-    "yargs": "^17.6.2"
-  },
-  "devDependencies": {
-    "@babel/core": "7.24.9",
-    "@babel/preset-env": "7.15.6",
-    "@babel/preset-typescript": "^7.23.3",
-    "@jest/globals": "^29.7.0",
-    "@types/adm-zip": "0.5.6",
-    "@types/fs-extra": "^9.0.11",
-    "@types/js-yaml": "^4.0.1",
-    "@types/request": "^2.48.12",
-    "@types/semver": "7.7.1",
-    "@types/unzipper": "^0.10.11",
-    "@types/which": "^3.0.4",
-    "fast-xml-parser": "5.7.0",
-    "sanitize-filename": "^1.6.3",
-    "vitest": "^3.0.4",
+    "vitest": "^3.2.4",
     "vitest-mock-commonjs": "^1.0.2",
-    "which": "^5.0.0"
-  },
-  "jest": {
-    "snapshotResolver": "<rootDir>/snapshotResolver.js",
-    "testEnvironment": "node",
-    "roots": [
-      "src"
-    ],
-    "transformIgnorePatterns": [
-      "./node_modules",
-      "../node_modules",
-      "../packages"
-    ],
-    "transform": {
-      "^.+\\.ts$": [
-        "esbuild-jest",
-        {
-          "sourcemap": "inline",
-          "loaders": {
-            ".ts": "ts"
-          }
-        }
-      ]
-    },
-    "testPathIgnorePatterns": [
-      "[\\/]{1}helpers[\\/]{1}"
-    ],
-    "testRegex": "\\.[jt]s$",
-    "setupFilesAfterEnv": [
-      "<rootDir>/jestSetup.js"
-    ]
+    "which": "^5.0.0",
+    "yargs": "^17.6.2"
   }
 }
