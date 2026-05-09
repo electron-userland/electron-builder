@@ -147,22 +147,32 @@ async function runTest(context: TestContext, target: string, packageManager: str
       const pollInterval = 5 * 1000
       let newVersion: string | undefined
       while (Date.now() < pollDeadline) {
-        const probe = await launchAndWaitForQuit({
-          appPath,
-          timeoutMs: 30 * 1000,
-          updateConfigPath,
-          packageManagerToTest: packageManager,
-          env: { AUTO_UPDATER_TEST: "" }, // disables updater — app prints version and quits
-          // waitForExit: true ensures TestApp.exe is fully released before the next
-          // poll iteration, giving the detached NSIS installer an uncontested window
-          // to overwrite the binary (Windows locks executables while they are running).
-          waitForExit: true,
-        })
-        newVersion = probe.version
-        if (newVersion === NEW_VERSION_NUMBER) {
-          break
+        try {
+          const probe = await launchAndWaitForQuit({
+            appPath,
+            timeoutMs: 30 * 1000,
+            updateConfigPath,
+            packageManagerToTest: packageManager,
+            env: { AUTO_UPDATER_TEST: "" }, // disables updater — app prints version and quits
+            // waitForExit: true ensures TestApp.exe is fully released before the next
+            // poll iteration, giving the detached NSIS installer an uncontested window
+            // to overwrite the binary (Windows locks executables while they are running).
+            waitForExit: true,
+          })
+          newVersion = probe.version
+          if (newVersion === NEW_VERSION_NUMBER) {
+            break
+          }
+          log.info({ installedVersion: newVersion, expected: NEW_VERSION_NUMBER }, "Installer still in progress, retrying...")
+        } catch (err: any) {
+          // NSIS replaces the exe non-atomically: it deletes the old binary before writing the new one,
+          // so there is a brief window where TestApp.exe does not exist on disk.
+          if (err.code === "ENOENT" && err.syscall === "spawn") {
+            log.info({ appPath }, "Binary temporarily unavailable (NSIS installer in progress), retrying...")
+          } else {
+            throw err
+          }
         }
-        log.info({ installedVersion: newVersion, expected: NEW_VERSION_NUMBER }, "Installer still in progress, retrying...")
         if (Date.now() + pollInterval < pollDeadline) {
           await new Promise(resolve => setTimeout(resolve, pollInterval))
         }
