@@ -81,7 +81,7 @@ export default class AppImageTarget extends Target {
       if (appimageTool == null || appimageTool === "0.0.0") {
         updateInfo = await this.buildFuse2AppImage({ stageDir, arch, artifactPath, appOutDir, options, packager, desktopEntry, icons, license })
       } else {
-        updateInfo = await buildAppImage({
+        updateInfo = await buildAppImage(appimageTool, {
           appDir: appOutDir,
           stageDir: stageDir.dir,
           arch,

@@ -85,6 +85,9 @@ async function isReady() {
       app.quit()
     })
     autoUpdater.checkForUpdates()
+  } else {
+    // Not in auto-update test mode — quit immediately after printing version so polling probes are cheap
+    app.quit()
   }
 }
 

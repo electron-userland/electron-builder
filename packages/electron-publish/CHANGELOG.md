@@ -1,5 +1,26 @@
 # electron-publish
 
+## 26.9.0
+
+### Minor Changes
+
+- Feat: pass release notes to GitHub/GitLab release body via `releaseBody` and `releaseName` options _[`#9581`](https://github.com/electron-userland/electron-builder/pull/9581) [`b7df0bc`](https://github.com/electron-userland/electron-builder/commit/b7df0bcef5790814fd6df187346dcec625dc681e) [@asamofal](https://github.com/asamofal)_
+
+### Patch Changes
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`b7df0bc`](https://github.com/electron-userland/electron-builder/commit/b7df0bcef5790814fd6df187346dcec625dc681e)
+
+</small>
+
+- `builder-util-runtime@9.6.0`
+- `builder-util@26.9.0`
+
+</details>
+
 ## 26.8.1
 
 ### Patch Changes

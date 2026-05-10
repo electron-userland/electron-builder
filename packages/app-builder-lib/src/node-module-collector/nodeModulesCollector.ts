@@ -219,14 +219,21 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * the package name with an "unknown" version.
    */
   protected parseNameVersion(identifier: string): { name: string; version: string } {
-    const lastAt = identifier.lastIndexOf("@")
-    if (lastAt <= 0) {
-      // fallback for scoped packages or malformed strings
+    let at: number
+    if (identifier.startsWith("@")) {
+      // Scoped package: find the version separator after the scope (e.g. "@scope/pkg@1.2.3")
+      const slashIndex = identifier.indexOf("/")
+      if (slashIndex === -1) {
+        return { name: identifier, version: "unknown" }
+      }
+      at = identifier.indexOf("@", slashIndex + 1)
+    } else {
+      at = identifier.indexOf("@")
+    }
+    if (at <= 0) {
       return { name: identifier, version: "unknown" }
     }
-    const name = identifier.slice(0, lastAt)
-    const version = identifier.slice(lastAt + 1)
-    return { name, version }
+    return { name: identifier.slice(0, at), version: identifier.slice(at + 1) }
   }
 
   /**
@@ -285,7 +292,9 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     for (const d of dependencies.values()) {
       const reference = [...d.references][0]
       const key = `${d.name}@${reference}`
-      const p = this.allDependencies.get(key)?.path
+      // Normalize the path to handle mixed separators from pnpm JSON output on Windows
+      const rawPath = this.allDependencies.get(key)?.path
+      const p = rawPath != null ? path.normalize(rawPath) : undefined
       if (p === undefined) {
         this.cache.logSummary[LogMessageByKey.PKG_NOT_FOUND].push(key)
         continue
@@ -342,17 +351,23 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    */
   async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
     const execName = path.basename(command, path.extname(command))
-    const isWindowsScriptFile = process.platform === "win32" && path.extname(command).toLowerCase() === ".cmd"
+    const ext = path.extname(command).toLowerCase()
+    // Wrap .cmd files in a .bat file for correct cmd.exe execution.
+    // Also wrap any Windows executable path that contains spaces (e.g. extensionless shims
+    // from tools like Volta installed at "C:\Program Files\Volta\") to ensure the path is
+    // quoted correctly when passed to `spawn(..., { shell: true })`.
+    const isWindowsScriptFile = process.platform === "win32" && (ext === ".cmd" || (command.includes(" ") && ext !== ".exe"))
     if (isWindowsScriptFile) {
-      // If the command is a Windows script file (.cmd), we need to wrap it in a .bat file to ensure it runs correctly with cmd.exe
-      // This is necessary because .cmd files are not directly executable in the same way as .bat files.
-      // We create a temporary .bat file that calls the .cmd file with the provided arguments. The .bat file will be executed by cmd.exe.
+      // We need to wrap it in a .bat file to ensure it runs correctly with cmd.exe
+      // This is necessary because some files (like .cmd) are not directly executable in the same way as .bat files.
+      // We create a temporary .bat file that calls the script-like file with the provided arguments. The .bat file will be executed by cmd.exe.
       // Note: This is a workaround for Windows command execution quirks when using `shell: true`
       const tempBatFile = await this.tempDirManager.getTempFile({
         prefix: execName,
         suffix: ".bat",
       })
-      const batScript = `@echo off\r\n"${command}" %*\r\n` // <-- CRLF required for .bat
+      const escapedCommand = command.replace(/"/g, `""`)
+      const batScript = `@echo off\r\n"${escapedCommand}" %*\r\n` // <-- CRLF required for .bat
       await fs.writeFile(tempBatFile, batScript, { encoding: "utf8" })
       command = "cmd.exe"
       args = ["/c", `"${tempBatFile}"`, ...args]
@@ -364,7 +379,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       const child = childProcess.spawn(command, args, {
         cwd,
         env: { COREPACK_ENABLE_STRICT: "0", ...process.env }, // allow `process.env` overrides
-        shell: true, // `true`` is now required: https://github.com/electron-userland/electron-builder/issues/9488
+        shell: true, // `true`` is required: https://github.com/electron-userland/electron-builder/issues/9488
       })
 
       let stderr = ""

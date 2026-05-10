@@ -29,6 +29,16 @@ runs:
         path: ${{ inputs.cache-path }}
         key: ${{ inputs.cache-key }}
 
+    - name: Cache electron-builder binaries
+      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+      with:
+        path: |
+          ~/.cache/electron-builder
+          ~/Library/Caches/electron-builder
+        key: electron-builder-binaries-${{ runner.os }}-${{ hashFiles('packages/app-builder-lib/src/toolsets/linux.ts', 'packages/app-builder-lib/src/toolsets/win.ts', 'packages/app-builder-lib/src/toolsets/mac.ts') }}
+        restore-keys: |
+          electron-builder-binaries-${{ runner.os }}-
+
     - name: Restore Vitest Smart Cache
       id: cache-restore
       uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3

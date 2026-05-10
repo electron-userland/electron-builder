@@ -330,7 +330,16 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       filter = filter.length === 0 ? null : [filter]
     }
 
-    const filterRe = filter == null ? null : filter.map(it => new RegExp(it))
+    const filterRe =
+      filter == null
+        ? null
+        : filter.map(it => {
+            try {
+              return new RegExp(it)
+            } catch (e: any) {
+              throw new InvalidConfigurationError(`Invalid regex filter pattern: ${it}. ${e.message}`)
+            }
+          })
 
     let binaries = options.binaries || undefined
     if (binaries) {
@@ -478,7 +487,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
 
   //noinspection JSMethodCanBeStatic
   protected async doSign(opts: SignOptions, customSignOptions: MacConfiguration, identity: Identity | null): Promise<void> {
-    const customSign = await resolveFunction(this.appInfo.type, customSignOptions.sign, "sign")
+    const customSign = await resolveFunction(this.appInfo.type, customSignOptions.sign, "sign", await this.info.getWorkspaceRoot())
 
     const { app, platform, type, provisioningProfile } = opts
     log.info(
@@ -579,7 +588,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
 
     const extendInfo = this.platformSpecificBuildOptions.extendInfo
     if (extendInfo != null) {
-      Object.assign(appPlist, extendInfo)
+      deepAssign(appPlist, extendInfo)
     }
     for (const [k, v] of Object.entries(appPlist)) {
       if (v === null || v === undefined) {

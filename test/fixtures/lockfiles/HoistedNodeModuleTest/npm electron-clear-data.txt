@@ -283,9 +283,9 @@
       "peer": true
     },
     "node_modules/electron": {
-      "version": "41.1.1",
-      "resolved": "https://registry.npmjs.org/electron/-/electron-41.1.1.tgz",
-      "integrity": "sha512-8bgvDhBjli+3Z2YCKgzzoBPh6391pr7Xv2h/tTJG4ETgvPvUxZomObbZLs31mUzYb6VrlcDDd9cyWyNKtPm3tA==",
+      "version": "41.2.2",
+      "resolved": "https://registry.npmjs.org/electron/-/electron-41.2.2.tgz",
+      "integrity": "sha512-3rzz/hVIpF726W9g7nleQzyF2IOEZbzZnUTUYGhMaEfsoab8fDyOYAWbdBdo4+DczS1Ifz11rdYo8IAAGcRx/g==",
       "hasInstallScript": true,
       "peer": true,
       "dependencies": {
