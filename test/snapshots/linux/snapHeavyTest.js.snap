@@ -1,17 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`snap core test: core24 > snap full (armhf) 1`] = `
-{
-  "linux": [
-    {
-      "arch": "armv7l",
-      "file": "se-wo-template_1.1.0_armhf.snap",
-    },
-  ],
-}
-`;
-
-exports[`snap core test: core24 > snap full 1`] = `
+exports[`snap core24 native > core24 build + install + launch 1`] = `
 {
   "linux": [
     {
@@ -22,7 +11,106 @@ exports[`snap core test: core24 > snap full 1`] = `
 }
 `;
 
-exports[`snap full 1`] = `
+exports[`snap core24 native > core24 destructive-mode (no gnome extension) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "se-wo-template_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snap core24 native > core24 with custom stagePackages 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "se-wo-template_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snap heavy > snap full (core18 armhf) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "armv7l",
+      "file": "se-wo-template_1.1.0_armhf.snap",
+    },
+  ],
+}
+`;
+
+exports[`snap heavy > snap full (core20 armhf) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "armv7l",
+      "file": "se-wo-template_1.1.0_armhf.snap",
+    },
+  ],
+}
+`;
+
+exports[`snap heavy > snap full (core22 armhf) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "armv7l",
+      "file": "se-wo-template_1.1.0_armhf.snap",
+    },
+  ],
+}
+`;
+
+exports[`snap heavy > snap full (core24) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "se-wo-template_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snap heavy > snap install+launch (core18) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "se-wo-template_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snap heavy > snap install+launch (core20) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "se-wo-template_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snap heavy > snap install+launch (core22) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "se-wo-template_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snap heavy > snap install+launch (core24) 1`] = `
 {
   "linux": [
     {

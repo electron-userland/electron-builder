@@ -351,6 +351,43 @@
       ],
       "type": "string"
     },
+    "Architecture": {
+      "additionalProperties": false,
+      "properties": {
+        "build-for": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The target architecture for the build"
+        },
+        "build-on": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The architectures to build the snap on"
+        }
+      },
+      "required": [
+        "build-on"
+      ],
+      "type": "object"
+    },
     "AsarOptions": {
       "additionalProperties": false,
       "properties": {
@@ -5650,11 +5687,43 @@
       ],
       "type": "object"
     },
+    "Record<string,App>": {
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Record<string,Component>": {
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Record<string,Hook>": {
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Record<string,Part>": {
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Record<string,Platform>": {
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Record<string,Record<string,string>>": {
+      "additionalProperties": false,
+      "type": "object"
+    },
     "Record<string,string>": {
       "type": "object",
       "additionalProperties": {
         "type": "string"
       }
+    },
+    "Record<string,string|null>": {
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Record<string,unknown>": {
+      "additionalProperties": false,
+      "type": "object"
     },
     "ReleaseInfo": {
       "additionalProperties": false,
@@ -5696,6 +5765,63 @@
           "description": "Vendor specific information."
         }
       },
+      "type": "object"
+    },
+    "RemoteBuildOptions": {
+      "additionalProperties": false,
+      "description": "Configuration for a remote snap build on [Launchpad](https://launchpad.net/).\nRemote builds run on Canonical's infrastructure and support multiple architectures\n(amd64, arm64, armhf) without requiring native hardware or nested virtualisation.\n\nAuthentication is resolved in this order:\n1. `credentialsFile` — path to a file produced by `snapcraft export-login`\n2. `SNAPCRAFT_STORE_CREDENTIALS` environment variable\n3. An active interactive `snapcraft login` session",
+      "properties": {
+        "acceptPublicUpload": {
+          "description": "Suppress the Launchpad public-upload consent prompt by automatically accepting it.\nYour source code will be uploaded to a **public** Launchpad repository.\nSet to `true` in CI once you understand the implications.",
+          "type": "boolean"
+        },
+        "buildFor": {
+          "description": "Target architectures for the remote build.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "credentialsFile": {
+          "description": "Path to a Snapcraft credentials file produced by `snapcraft export-login <file>`.\nRecommended for CI/CD pipelines — avoids interactive login and does not require an\nSSH key on the build agent.",
+          "type": "string"
+        },
+        "enabled": {
+          "description": "Whether to enable remote build on Launchpad. Must be set explicitly to `true` to opt in.",
+          "type": "boolean"
+        },
+        "launchpadUsername": {
+          "description": "Your Launchpad username. Used to select the correct Launchpad account when more than\none set of credentials is available.",
+          "type": "string"
+        },
+        "privateProject": {
+          "description": "Launchpad project name to use for a **private** source upload.\nThe project must already exist and you must have write access.",
+          "type": "string"
+        },
+        "recover": {
+          "description": "Resume a previously interrupted remote build rather than starting a new one.",
+          "type": "boolean"
+        },
+        "sshKeyPath": {
+          "description": "Path to an SSH private key used for Launchpad authentication.\nDefaults to `~/.ssh/id_rsa`. The matching public key must be registered\non your Launchpad account.",
+          "type": "string"
+        },
+        "strategy": {
+          "description": "Controls whether snapcraft may fall back to a different remote build strategy.\n- `\"disable-fallback\"` — always use the primary strategy, fail if unavailable.\n- `\"force-fallback\"` — always use the fallback strategy.",
+          "enum": [
+            "disable-fallback",
+            "force-fallback"
+          ],
+          "type": "string"
+        },
+        "timeout": {
+          "description": "Maximum time in seconds to wait for the remote build to complete before aborting.",
+          "type": "number"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
       "type": "object"
     },
     "S3Options": {
@@ -5855,6 +5981,7 @@
     },
     "SnapOptions": {
       "additionalProperties": false,
+      "description": "Flat snap options. Used via the `snap` key in your build config.",
       "properties": {
         "after": {
           "anyOf": [
@@ -5868,10 +5995,11 @@
               "type": "null"
             }
           ],
-          "description": "Specifies any [parts](https://snapcraft.io/docs/reference/parts) that should be built before this part.\nDefaults to `[\"desktop-gtk2\"\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom parts `foo` in addition to defaults."
+          "description": "Names of snapcraft parts that must be built before the app part.\nDefaults to `[\"desktop-gtk2\"]`.\n\nUse `\"default\"` to keep the default and add extras:\n`[\"default\", \"my-helper-part\"]`."
         },
         "allowNativeWayland": {
-          "description": "Allow running the program with native wayland support with --ozone-platform=wayland.\nDisabled by default because of this issue in older Electron/Snap versions: https://github.com/electron-userland/electron-builder/issues/4007",
+          "default": false,
+          "description": "Allow the snap to run with native Wayland support (`--ozone-platform=wayland`).\nDisabled by default due to compatibility issues in some Electron/snap combinations.",
           "type": [
             "null",
             "boolean"
@@ -5889,7 +6017,7 @@
               "type": "null"
             }
           ],
-          "description": "Specifies which files from the app part to stage and which to exclude. Individual files, directories, wildcards, globstars, and exclusions are accepted. See [Snapcraft filesets](https://snapcraft.io/docs/snapcraft-filesets) to learn more about the format.\n\nThe defaults can be found in [snap.ts](https://github.com/electron-userland/electron-builder/blob/master/packages/app-builder-lib/templates/snap/snapcraft.yaml#L29)."
+          "description": "Filesets controlling which files from the app part are staged into the snap.\nSupports individual files, directories, globs, globstars, and exclusions (prefix `!`).\nSee [Snapcraft filesets](https://snapcraft.io/docs/snapcraft-filesets).\n\nThe built-in defaults are in [snapcraft.ts](https://github.com/electron-userland/electron-builder/blob/master/packages/app-builder-lib/src/targets/snap/snapcraft.ts)."
         },
         "artifactName": {
           "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
@@ -5913,15 +6041,15 @@
               ]
             }
           ],
-          "description": "The list of features that must be supported by the core in order for this snap to install."
+          "description": "[Snapd features](https://snapcraft.io/docs/snapcraft-yaml-reference#assumes) that must\nbe present on the host before the snap can be installed."
         },
         "autoStart": {
           "default": false,
-          "description": "Whether or not the snap should automatically start on login.",
+          "description": "Whether the snap should automatically start on login.",
           "type": "boolean"
         },
         "base": {
-          "description": "A snap of type base to be used as the execution environment for this snap. Examples: `core`, `core18`, `core20`, `core22`. Defaults to `core20`",
+          "description": "The snap base to use as the execution environment.\nExamples: `core18`, `core20`, `core22`.\n\nFor new projects, use the `snapcraft` key with `base: \"core24\"` instead of\nthis legacy interface.",
           "type": [
             "null",
             "string"
@@ -5939,7 +6067,7 @@
               "type": "null"
             }
           ],
-          "description": "The list of debian packages needs to be installed for building this snap."
+          "description": "Debian packages required at **build** time (installed inside the build environment)."
         },
         "category": {
           "description": "The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).",
@@ -5961,7 +6089,357 @@
               "type": "null"
             }
           ],
-          "description": "Sets the compression type for the snap. Can be xz, lzo, or null."
+          "description": "Compression algorithm for the snap SquashFS image.\n- `xz` — smaller file, slower decompression (good for distribution).\n- `lzo` — larger file, faster decompression (good for development iteration).\nOmit to use snapcraft's default (`xz`)."
+        },
+        "confinement": {
+          "anyOf": [
+            {
+              "enum": [
+                "classic",
+                "devmode",
+                "strict"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "strict",
+          "description": "The type of [snap confinement](https://snapcraft.io/docs/reference/confinement).\n- `strict` — recommended; the snap runs in a fully isolated sandbox.\n- `devmode` — sandbox violations are logged but not enforced; for development only.\n- `classic` — no confinement; equivalent to a traditionally packaged application.\n  Requires Snap Store approval before publishing."
+        },
+        "description": {
+          "description": "As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "desktop": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LinuxDesktopFile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
+        },
+        "environment": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Environment variables injected into the snap's runtime environment.\nMerged with the electron-builder default `{ TMPDIR: \"$XDG_RUNTIME_DIR\" }`.\nUser-supplied values take precedence."
+        },
+        "executableArgs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The executable parameters. Pass to executableName"
+        },
+        "grade": {
+          "anyOf": [
+            {
+              "enum": [
+                "devel",
+                "stable"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "stable",
+          "description": "The quality grade of the snap.\n- `stable` — suitable for all channels, including `stable` and `candidate`.\n- `devel` — development snapshot; cannot be promoted to `stable` or `candidate`."
+        },
+        "hooks": {
+          "default": "build/snap-hooks",
+          "description": "Directory containing [snap hooks](https://snapcraft.io/docs/snap-hooks), relative to\nthe build resources directory (`build/`).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "layout": {
+          "anyOf": [
+            {
+              "typeof": "function"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "[Snap layouts](https://snapcraft.io/docs/snap-layouts) — bind-mount or symlink host paths\ninto the snap's namespace, making libraries or config at `/usr`, `/var`, `/etc`, etc.\naccessible inside the confined environment."
+        },
+        "mimeTypes": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing."
+        },
+        "plugs": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PlugDescriptor"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/PlugDescriptor"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "[Plugs](https://snapcraft.io/docs/reference/interfaces) (consumed interfaces) to declare\nfor the app entry point.\nDefaults to `[\"desktop\", \"desktop-legacy\", \"home\", \"x11\", \"wayland\", \"unity7\",\n\"browser-support\", \"network\", \"gsettings\", \"audio-playback\", \"pulseaudio\", \"opengl\"]`.\n\nUse `\"default\"` in the list to keep the defaults and append extras:\n`[\"default\", \"camera\"]` adds `camera` to the standard set.\n\nTo configure plug attributes (e.g. `allow-sandbox` for Chromium's internal sandbox),\nuse a descriptor object:\n```json\n[\n  { \"browser-sandbox\": { \"interface\": \"browser-support\", \"allow-sandbox\": true } },\n  \"another-simple-plug-name\"\n]\n```"
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "$ref": "#/definitions/BitbucketOptions"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllPublishOptions"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "slots": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SlotDescriptor"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/SlotDescriptor"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "[Slots](https://snapcraft.io/docs/reference/interfaces) (provided interfaces) to declare\nfor the app.\n\nTo expose an MPRIS player under the Chromium bus name (required for strict confinement):\n```json\n[{ \"mpris\": { \"name\": \"chromium\" } }]\n```\nChromium [hard-codes](https://source.chromium.org/chromium/chromium/src/+/master:components/system_media_controls/linux/system_media_controls_linux.cc;l=51;bpv=0;bpt=1)\nthe bus name `chromium`, so the slot name must match for snapd to\n[allow it](https://forum.snapcraft.io/t/unable-to-use-mpris-interface/15360/7)."
+        },
+        "stagePackages": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Ubuntu packages to **stage** alongside the app (equivalent to `depends` for deb).\nDefaults to `[\"libnspr4\", \"libnss3\", \"libxss1\", \"libappindicator3-1\", \"libsecret-1-0\"]`.\n\nUse the `\"default\"` keyword to extend the default list:\n`[\"default\", \"my-extra-lib\"]` appends `my-extra-lib` to the defaults."
+        },
+        "summary": {
+          "description": "A short summary of the snap (max 78 characters).\nDefaults to [productName](./configuration.md#productName).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "synopsis": {
+          "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "title": {
+          "description": "Display title for the snap (may contain uppercase letters and spaces).\nDefaults to `productName`.\nSee [snap format](https://snapcraft.io/docs/snap-format).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "useTemplateApp": {
+          "description": "Whether to use the pre-built Electron snap template for faster builds.\nWhen `true`, electron-builder delegates snap assembly to the upstream Electron snap\ntemplate rather than running a full snapcraft build, significantly reducing build time.\nDefaults to `true` when `stagePackages` is not customised.\nOnly applicable to x64 and armv7l builds.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "SnapOptions24": {
+      "additionalProperties": false,
+      "description": "Options for building a core24 snap. This is a fresh, forward-looking interface that does\nnot extend the legacy `SnapBaseOptions`. It inherits desktop-entry fields from\n`CommonLinuxOptions` (categories, mimeTypes, executableArgs, etc.) and publish\nconfiguration from `TargetSpecificOptions`.",
+      "properties": {
+        "after": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Names of other snapcraft parts that must be built before the app part."
+        },
+        "allowNativeWayland": {
+          "default": true,
+          "description": "Allow running the application with native Wayland support (`--ozone-platform=wayland`).\nFor core24 this defaults to `true`. Set to `false` to force X11 mode via XWayland.",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
+        "appPartStage": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Filesets controlling which files from the app part are staged into the snap.\nSupports glob patterns and exclusions. See [filesets](https://snapcraft.io/docs/snapcraft-filesets)."
+        },
+        "artifactName": {
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "assumes": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Features that must be supported by the host snapd before the snap can be installed.\nSee [assumes](https://snapcraft.io/docs/snapcraft-yaml-reference#assumes)."
+        },
+        "autoStart": {
+          "default": false,
+          "description": "Whether the app should auto-start on login (creates an autostart desktop entry).",
+          "type": "boolean"
+        },
+        "buildPackages": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Debian packages required at **build** time (installed inside the build environment)."
+        },
+        "category": {
+          "description": "The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "compression": {
+          "anyOf": [
+            {
+              "enum": [
+                "lzo",
+                "xz"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Compression algorithm for the snap file."
         },
         "confinement": {
           "anyOf": [
@@ -6010,7 +6488,7 @@
               "type": "null"
             }
           ],
-          "description": "The custom environment. Defaults to `{\"TMPDIR: \"$XDG_RUNTIME_DIR\"}`. If you set custom, it will be merged with default."
+          "description": "Additional environment variables injected into the snap's runtime environment.\nMerged with the electron-builder defaults (`TMPDIR=$XDG_RUNTIME_DIR`).\nUser-supplied values take precedence."
         },
         "executableArgs": {
           "anyOf": [
@@ -6026,6 +6504,20 @@
           ],
           "description": "The executable parameters. Pass to executableName"
         },
+        "extensions": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "[Snapcraft extensions](https://snapcraft.io/docs/snapcraft-extensions) to apply to the app.\nDefaults to `[\"gnome\"]` in normal builds (recommended for Electron apps on Ubuntu 24.04+).\nAutomatically set to `[]` in `useDestructiveMode` builds, where the gnome extension is\nincompatible. Explicitly including `\"gnome\"` while `useDestructiveMode` is set will throw.\nSee: https://snapcraft.io/docs/gnome-extension"
+        },
         "grade": {
           "anyOf": [
             {
@@ -6040,11 +6532,11 @@
             }
           ],
           "default": "stable",
-          "description": "The quality grade of the snap. It can be either `devel` (i.e. a development version of the snap, so not to be published to the “stable” or “candidate” channels) or “stable” (i.e. a stable release or release candidate, which can be released to all channels)."
+          "description": "The quality grade of the snap.\n`devel` — not publishable to stable/candidate channels.\n`stable` — suitable for all channels."
         },
         "hooks": {
           "default": "build/snap-hooks",
-          "description": "The [hooks](https://docs.snapcraft.io/build-snaps/hooks) directory, relative to `build` (build resources directory).",
+          "description": "Directory containing [snap hooks](https://snapcraft.io/docs/snap-hooks), relative to\nthe build resources directory.",
           "type": [
             "null",
             "string"
@@ -6059,7 +6551,7 @@
               "type": "null"
             }
           ],
-          "description": "Specifies any files to make accessible from locations such as `/usr`, `/var`, and `/etc`. See [snap layouts](https://snapcraft.io/docs/snap-layouts) to learn more."
+          "description": "[Snap layouts](https://snapcraft.io/docs/snap-layouts) — bind-mount or symlink host paths\ninto the snap's namespace. User-provided layouts always override the extension defaults."
         },
         "mimeTypes": {
           "anyOf": [
@@ -6097,7 +6589,401 @@
               "type": "null"
             }
           ],
-          "description": "The list of [plugs](https://snapcraft.io/docs/reference/interfaces).\nDefaults to `[\"desktop\", \"desktop-legacy\", \"home\", \"x11\", \"wayland\", \"unity7\", \"browser-support\", \"network\", \"gsettings\", \"audio-playback\", \"pulseaudio\", \"opengl\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom plug `foo` in addition to defaults.\n\nAdditional attributes can be specified using object instead of just name of plug:\n```\n[\n {\n   \"browser-sandbox\": {\n     \"interface\": \"browser-support\",\n     \"allow-sandbox\": true\n   },\n },\n \"another-simple-plug-name\"\n]\n```"
+          "description": "[Plugs](https://snapcraft.io/docs/reference/interfaces) (consumed interfaces) for the app.\nWhen the `gnome` extension is active, content-snap plugs (themes, GNOME platform, GPU)\nare added automatically — only list custom plugs here.\nWithout any extension, defaults to the standard Electron plug set.\n\nSupports descriptor objects for plugs with attributes:\n```json\n[{ \"browser-sandbox\": { \"interface\": \"browser-support\", \"allow-sandbox\": true } }]\n```"
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "$ref": "#/definitions/BitbucketOptions"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllPublishOptions"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "remoteBuild": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RemoteBuildOptions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Configuration for a remote build on [Launchpad](https://launchpad.net/).\nEnables multi-architecture builds (amd64, arm64, armhf) in CI without native hardware."
+        },
+        "slots": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SlotDescriptor"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/SlotDescriptor"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "[Slots](https://snapcraft.io/docs/reference/interfaces) (provided interfaces) for the app.\nUse for MPRIS, D-Bus services, etc.\n\nExample — expose MPRIS under the Chromium bus name:\n```json\n[{ \"mpris\": { \"name\": \"chromium\" } }]\n```"
+        },
+        "stagePackages": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Ubuntu packages to **stage** alongside the app (equivalent to `depends` for deb).\nDefaults to `[\"libnspr4\", \"libnss3\", \"libxss1\", \"libappindicator3-1\", \"libsecret-1-0\"]`.\nSupports the `\"default\"` keyword to reference the default list:\n`[\"default\", \"my-extra-lib\"]` appends `my-extra-lib` to the defaults."
+        },
+        "summary": {
+          "description": "A short summary of the snap (max 78 characters). Defaults to `productName`.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "synopsis": {
+          "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "title": {
+          "description": "An optional display title (may contain uppercase letters and spaces). Defaults to `productName`.\nSee [snap format](https://snapcraft.io/docs/snap-format).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "useDestructiveMode": {
+          "description": "Build directly on the host without an isolated VM or container (snapcraft `--destructive-mode`).\nEquivalent to setting `SNAPCRAFT_BUILD_ENVIRONMENT=host`.\n\n**Not recommended for most use cases.** Destructive mode pollutes the host environment\nand produces builds that are difficult to reproduce — any library or tool present on the\nhost at build time can silently end up in the snap. Prefer `useLXD` or `useMultipass`\nfor clean, reproducible builds; use `remoteBuild` for multi-architecture CI.\n\nValid reasons to enable this option:\n- Building inside a Docker container where nested virtualisation (LXD / Multipass) is\n  unavailable and a remote Launchpad build is not acceptable.\n- Running test suites in CI where the environment is already fully controlled.\n\nThe `gnome` extension is incompatible with this mode enabled — do not include it in `extensions`.",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
+        "useLXD": {
+          "description": "Use [LXD](https://canonical.com/lxd) as the isolated build environment.\nPreferred over Multipass on most Linux CI systems where nested virtualisation is unavailable.\nMutually exclusive with `useMultipass` and `useDestructiveMode`.",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
+        "useMultipass": {
+          "description": "Use [Multipass](https://multipass.run/) as the isolated build environment.\nMutually exclusive with `useLXD` and `useDestructiveMode`.",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "SnapOptionsCustom": {
+      "additionalProperties": false,
+      "properties": {
+        "yaml": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SnapcraftYAML"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Supports 2 routes:\n- Path to an existing `snapcraft.yaml` file, relative to `buildResourcesDir`. electron-builder reads the file and passes it through without modification.\n- A `SnapcraftYAML` object directly in the configuration. electron-builder uses the object to generate a `snapcraft.yaml` file, which is then passed through without modification."
+        }
+      },
+      "type": "object"
+    },
+    "SnapOptionsLegacy": {
+      "additionalProperties": false,
+      "properties": {
+        "after": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Names of snapcraft parts that must be built before the app part.\nDefaults to `[\"desktop-gtk2\"]`.\n\nUse `\"default\"` to keep the default and add extras:\n`[\"default\", \"my-helper-part\"]`."
+        },
+        "allowNativeWayland": {
+          "default": false,
+          "description": "Allow the snap to run with native Wayland support (`--ozone-platform=wayland`).\nDisabled by default due to compatibility issues in some Electron/snap combinations.",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
+        "appPartStage": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Filesets controlling which files from the app part are staged into the snap.\nSupports individual files, directories, globs, globstars, and exclusions (prefix `!`).\nSee [Snapcraft filesets](https://snapcraft.io/docs/snapcraft-filesets).\n\nThe built-in defaults are in [snapcraft.ts](https://github.com/electron-userland/electron-builder/blob/master/packages/app-builder-lib/src/targets/snap/snapcraft.ts)."
+        },
+        "artifactName": {
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "assumes": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "[Snapd features](https://snapcraft.io/docs/snapcraft-yaml-reference#assumes) that must\nbe present on the host before the snap can be installed."
+        },
+        "autoStart": {
+          "default": false,
+          "description": "Whether the snap should automatically start on login.",
+          "type": "boolean"
+        },
+        "buildPackages": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Debian packages required at **build** time (installed inside the build environment)."
+        },
+        "category": {
+          "description": "The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "compression": {
+          "anyOf": [
+            {
+              "enum": [
+                "lzo",
+                "xz"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Compression algorithm for the snap SquashFS image.\n- `xz` — smaller file, slower decompression (good for distribution).\n- `lzo` — larger file, faster decompression (good for development iteration).\nOmit to use snapcraft's default (`xz`)."
+        },
+        "confinement": {
+          "anyOf": [
+            {
+              "enum": [
+                "classic",
+                "devmode",
+                "strict"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "strict",
+          "description": "The type of [snap confinement](https://snapcraft.io/docs/reference/confinement).\n- `strict` — recommended; the snap runs in a fully isolated sandbox.\n- `devmode` — sandbox violations are logged but not enforced; for development only.\n- `classic` — no confinement; equivalent to a traditionally packaged application.\n  Requires Snap Store approval before publishing."
+        },
+        "description": {
+          "description": "As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "desktop": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LinuxDesktopFile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
+        },
+        "environment": {
+          "anyOf": [
+            {
+              "typeof": "function"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Environment variables injected into the snap's runtime environment.\nMerged with the electron-builder default `{ TMPDIR: \"$XDG_RUNTIME_DIR\" }`.\nUser-supplied values take precedence."
+        },
+        "executableArgs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The executable parameters. Pass to executableName"
+        },
+        "grade": {
+          "anyOf": [
+            {
+              "enum": [
+                "devel",
+                "stable"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "stable",
+          "description": "The quality grade of the snap.\n- `stable` — suitable for all channels, including `stable` and `candidate`.\n- `devel` — development snapshot; cannot be promoted to `stable` or `candidate`."
+        },
+        "hooks": {
+          "default": "build/snap-hooks",
+          "description": "Directory containing [snap hooks](https://snapcraft.io/docs/snap-hooks), relative to\nthe build resources directory (`build/`).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "layout": {
+          "anyOf": [
+            {
+              "typeof": "function"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "[Snap layouts](https://snapcraft.io/docs/snap-layouts) — bind-mount or symlink host paths\ninto the snap's namespace, making libraries or config at `/usr`, `/var`, `/etc`, etc.\naccessible inside the confined environment."
+        },
+        "mimeTypes": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing."
+        },
+        "plugs": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PlugDescriptor"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/PlugDescriptor"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "[Plugs](https://snapcraft.io/docs/reference/interfaces) (consumed interfaces) to declare\nfor the app entry point.\nDefaults to `[\"desktop\", \"desktop-legacy\", \"home\", \"x11\", \"wayland\", \"unity7\",\n\"browser-support\", \"network\", \"gsettings\", \"audio-playback\", \"pulseaudio\", \"opengl\"]`.\n\nUse `\"default\"` in the list to keep the defaults and append extras:\n`[\"default\", \"camera\"]` adds `camera` to the standard set.\n\nTo configure plug attributes (e.g. `allow-sandbox` for Chromium's internal sandbox),\nuse a descriptor object:\n```json\n[\n  { \"browser-sandbox\": { \"interface\": \"browser-support\", \"allow-sandbox\": true } },\n  \"another-simple-plug-name\"\n]\n```"
         },
         "publish": {
           "anyOf": [
@@ -6145,7 +7031,7 @@
         "slots": {
           "anyOf": [
             {
-              "$ref": "#/definitions/PlugDescriptor"
+              "$ref": "#/definitions/SlotDescriptor"
             },
             {
               "items": {
@@ -6164,7 +7050,7 @@
               "type": "null"
             }
           ],
-          "description": "The list of [slots](https://snapcraft.io/docs/reference/interfaces).\n\nAdditional attributes can be specified using object instead of just name of slot:\n```\n[\n {\n   \"mpris\": {\n     \"name\": \"chromium\"\n   },\n }\n]\n\nIn case you want your application to be a compliant MPris player, you will need to definie\nThe mpris slot with \"chromium\" name.\nThis electron has it [hardcoded](https://source.chromium.org/chromium/chromium/src/+/master:components/system_media_controls/linux/system_media_controls_linux.cc;l=51;bpv=0;bpt=1),\nand we need to pass this name so snap [will allow it](https://forum.snapcraft.io/t/unable-to-use-mpris-interface/15360/7) in strict confinement."
+          "description": "[Slots](https://snapcraft.io/docs/reference/interfaces) (provided interfaces) to declare\nfor the app.\n\nTo expose an MPRIS player under the Chromium bus name (required for strict confinement):\n```json\n[{ \"mpris\": { \"name\": \"chromium\" } }]\n```\nChromium [hard-codes](https://source.chromium.org/chromium/chromium/src/+/master:components/system_media_controls/linux/system_media_controls_linux.cc;l=51;bpv=0;bpt=1)\nthe bus name `chromium`, so the slot name must match for snapd to\n[allow it](https://forum.snapcraft.io/t/unable-to-use-mpris-interface/15360/7)."
         },
         "stagePackages": {
           "anyOf": [
@@ -6178,10 +7064,10 @@
               "type": "null"
             }
           ],
-          "description": "The list of Ubuntu packages to use that are needed to support the `app` part creation. Like `depends` for `deb`.\nDefaults to `[\"libnspr4\", \"libnss3\", \"libxss1\", \"libappindicator3-1\", \"libsecret-1-0\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom package `foo` in addition to defaults."
+          "description": "Ubuntu packages to **stage** alongside the app (equivalent to `depends` for deb).\nDefaults to `[\"libnspr4\", \"libnss3\", \"libxss1\", \"libappindicator3-1\", \"libsecret-1-0\"]`.\n\nUse the `\"default\"` keyword to extend the default list:\n`[\"default\", \"my-extra-lib\"]` appends `my-extra-lib` to the defaults."
         },
         "summary": {
-          "description": "The 78 character long summary. Defaults to [productName](./configuration.md#productName).",
+          "description": "A short summary of the snap (max 78 characters).\nDefaults to [productName](./configuration.md#productName).",
           "type": [
             "null",
             "string"
@@ -6195,14 +7081,14 @@
           ]
         },
         "title": {
-          "description": "An optional title for the snap, may contain uppercase letters and spaces. Defaults to `productName`. See [snap format documentation](https://snapcraft.io/docs/snap-format).",
+          "description": "Display title for the snap (may contain uppercase letters and spaces).\nDefaults to `productName`.\nSee [snap format](https://snapcraft.io/docs/snap-format).",
           "type": [
             "null",
             "string"
           ]
         },
         "useTemplateApp": {
-          "description": "Whether to use template snap. Defaults to `true` if `stagePackages` not specified.",
+          "description": "Whether to use the pre-built Electron snap template for faster builds.\nWhen `true`, electron-builder delegates snap assembly to the upstream Electron snap\ntemplate rather than running a full snapcraft build, significantly reducing build time.\nDefaults to `true` when `stagePackages` is not customised.\nOnly applicable to x64 and armv7l builds.",
           "type": "boolean"
         }
       },
@@ -6280,6 +7166,385 @@
       },
       "required": [
         "provider"
+      ],
+      "type": "object"
+    },
+    "SnapcraftOptions": {
+      "additionalProperties": false,
+      "description": "New-style snap configuration. Use this via the `snapcraft` key in your build config.\nSelects the snapcraft core version and its per-core options.",
+      "properties": {
+        "artifactName": {
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "base": {
+          "description": "A snap of type base to be used as the execution environment for this snap; can only select one core for target.",
+          "enum": [
+            "core18",
+            "core20",
+            "core22",
+            "core24",
+            "custom"
+          ],
+          "type": "string"
+        },
+        "core18": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SnapOptionsLegacy"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "core18; Migrates configuration from the legacy `snap` field for backward compatibility, but only applies if the core is selected in `base`."
+        },
+        "core20": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SnapOptionsLegacy"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "core20; Migrates configuration from the legacy `snap` field for backward compatibility, but only applies if the core is selected in `base`."
+        },
+        "core22": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SnapOptionsLegacy"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "core22; Migrates configuration from the legacy `snap` field for backward compatibility, but only applies if the core is selected in `base`."
+        },
+        "core24": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SnapOptions24"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "[Beta support] Options for building a core24 snap. This is a fresh, forward-looking interface that does not extend the legacy `SnapBaseOptions`.\nInherits desktop-entry fields from `CommonLinuxOptions` (categories, mimeTypes, executableArgs, etc.) and publish configuration from `TargetSpecificOptions`."
+        },
+        "custom": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SnapOptionsCustom"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "[Beta support] Pass-through custom snap configuration. electron-builder will read the\nsnapcraft.yaml at `yamlPath` and use it verbatim — no plugs, extensions,\norganize mappings, or desktop files are injected."
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "$ref": "#/definitions/BitbucketOptions"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllPublishOptions"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        }
+      },
+      "required": [
+        "base"
+      ],
+      "type": "object"
+    },
+    "SnapcraftYAML": {
+      "additionalProperties": false,
+      "description": "Latest TypeScript types for snapcraft.yaml\nFocuses on the most common Core24 configuration\nBased on https://snapcraft.io/docs/snapcraft-yaml-reference\n   npm install -g json-schema-to-typescript\n   curl -o snapcraft-schema.json https://raw.githubusercontent.com/canonical/snapcraft/refs/heads/main/schema/snapcraft.json\n   npx json2ts -i snapcraft-schema.json -o snapcraft.ts\n(manual edits to simplify and make more strict)",
+      "properties": {
+        "adopt-info": {
+          "description": "Selects a part to inherit metadata from",
+          "type": "string"
+        },
+        "apps": {
+          "$ref": "#/definitions/Record<string,App>",
+          "description": "The individual programs and services that the snap runs"
+        },
+        "architectures": {
+          "description": "The architectures that the snap builds and runs on (core22 and earlier)",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/Architecture"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "assumes": {
+          "description": "The minimum version of snapd and features the snap requires",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "base": {
+          "description": "The baseline system that the snap is built in",
+          "enum": [
+            "bare",
+            "core22",
+            "core24",
+            "core26",
+            "devel"
+          ],
+          "type": "string"
+        },
+        "build-base": {
+          "description": "The baseline system that the snap is built in",
+          "type": "string"
+        },
+        "components": {
+          "$ref": "#/definitions/Record<string,Component>",
+          "description": "Components to build in conjunction with the snap"
+        },
+        "compression": {
+          "description": "Specifies the algorithm that compresses the snap",
+          "enum": [
+            "lzo",
+            "xz"
+          ],
+          "type": "string"
+        },
+        "confinement": {
+          "description": "The amount of isolation the snap has from the host system",
+          "enum": [
+            "classic",
+            "devmode",
+            "strict"
+          ],
+          "type": "string"
+        },
+        "contact": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The snap author's contact links and email addresses"
+        },
+        "description": {
+          "type": "string"
+        },
+        "donation": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The snap's donation links"
+        },
+        "environment": {
+          "$ref": "#/definitions/Record<string,string|null>",
+          "description": "The snap's runtime environment variables"
+        },
+        "epoch": {
+          "description": "The epoch associated with this version of the snap",
+          "type": "string"
+        },
+        "grade": {
+          "enum": [
+            "devel",
+            "stable"
+          ],
+          "type": "string"
+        },
+        "hooks": {
+          "$ref": "#/definitions/Record<string,Hook>",
+          "description": "Configures the snap's hooks"
+        },
+        "icon": {
+          "description": "The path to the snap's icon file",
+          "type": "string"
+        },
+        "issues": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Links for submitting issues, bugs, and feature requests"
+        },
+        "layout": {
+          "$ref": "#/definitions/Record<string,Record<string,string>>",
+          "description": "The file layouts in the execution environment"
+        },
+        "license": {
+          "description": "The project's license as an SPDX expression",
+          "type": "string"
+        },
+        "lint": {
+          "description": "The linter configuration settings",
+          "typeof": "function"
+        },
+        "name": {
+          "description": "The identifying name of the snap",
+          "type": "string"
+        },
+        "package-repositories": {
+          "description": "The package repositories to use for build and stage packages",
+          "items": {
+            "$ref": "#/definitions/Record<string,unknown>"
+          },
+          "type": "array"
+        },
+        "parts": {
+          "$ref": "#/definitions/Record<string,Part>",
+          "description": "The self-contained software pieces needed to create the final artifact"
+        },
+        "passthrough": {
+          "$ref": "#/definitions/Record<string,unknown>",
+          "description": "Attributes to pass to snap's metadata file"
+        },
+        "platforms": {
+          "$ref": "#/definitions/Record<string,Platform>",
+          "description": "The platforms where the snap can be built and run (core24+)"
+        },
+        "plugs": {
+          "$ref": "#/definitions/Record<string,unknown>",
+          "description": "Declares the snap's plugs"
+        },
+        "provenance": {
+          "description": "Primary-key header for snaps signed by third parties",
+          "type": "string"
+        },
+        "slots": {
+          "$ref": "#/definitions/Record<string,unknown>",
+          "description": "Declares the snap's slots"
+        },
+        "source-code": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Links to the source code"
+        },
+        "summary": {
+          "description": "A short description of the project (max 78 chars)",
+          "type": "string"
+        },
+        "system-usernames": {
+          "$ref": "#/definitions/Record<string,unknown>",
+          "description": "The system usernames the snap can use"
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "description": "Snap type",
+          "enum": [
+            "app",
+            "base",
+            "gadget",
+            "kernel",
+            "snapd"
+          ],
+          "type": "string"
+        },
+        "ua-services": {
+          "description": "Ubuntu Pro services to enable when building",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "version": {
+          "type": "string"
+        },
+        "website": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Links to the original software's web pages"
+        }
+      },
+      "required": [
+        "base",
+        "confinement",
+        "name",
+        "parts"
       ],
       "type": "object"
     },
@@ -7992,8 +9257,18 @@
         {
           "type": "null"
         }
+      ]
+    },
+    "snapcraft": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/SnapcraftOptions"
+        },
+        {
+          "type": "null"
+        }
       ],
-      "description": "Snap options."
+      "description": "Snapcraft options."
     },
     "squirrelWindows": {
       "anyOf": [

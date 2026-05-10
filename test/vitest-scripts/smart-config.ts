@@ -24,14 +24,20 @@ export const IS_LINUX = PLATFORM === "linux"
 export const UNSTABLE_FAIL_RATIO = 0.2
 // Add here broken tests to exclude from smart sharding
 // TODO: FIX ALL OF THESE 😅
-export const skippedTests = [
-  // token expired?
-  "GitlabPublisher.integration.test.ts",
-  // General instability
-  "snapHeavyTest",
-]
+export const skippedTests =
+  process.env.SKIPPED_TESTS?.split(",") ||
+  [
+    // These tests require running on a native Linux environment with Flatpak support
+    // "flatpakTest",
+    // These tests are run separately due to different docker images used for testing, and they are currently unstable in the CI environment
+    // Test via `./test/src/linux/test-snap.sh`
+    // "snapHeavyTest",
+    // "snapTest",
+    // General instability tests are below
+    // None currently, but this is where we would add any test that is currently unstable in the CI environment and needs to be excluded from smart sharding until it can be fixed.
+  ]
 export const skipPerOSTests: Record<SupportedPlatforms, string[]> = {
   darwin: ["fpmTest", "macUpdaterTest", "blackboxUpdateTest"],
-  linux: ["flatpakTest"],
+  linux: [],
   win32: [],
 }

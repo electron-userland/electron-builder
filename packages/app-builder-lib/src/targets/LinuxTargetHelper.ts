@@ -1,10 +1,17 @@
-import { asArray, exists, isEmptyOrSpaces, log } from "builder-util"
+import { asArray, exists, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { join } from "path"
+import * as semver from "semver"
+import { Configuration } from "../configuration"
 import { LinuxPackager } from "../linuxPackager"
+import { SnapcraftOptions, SnapOptions } from "../options/SnapOptions"
 import { LinuxTargetSpecificOptions } from "../options/linuxOptions"
 import { IconInfo } from "../platformPackager"
+import { SnapCore } from "./snap/SnapTarget"
+import { SnapCore24 } from "./snap/core24"
+import { SnapCoreCustom } from "./snap/coreCustom"
+import { SnapCoreLegacy } from "./snap/coreLegacy"
 
 export const installPrefix = "/opt"
 
@@ -23,6 +30,47 @@ export class LinuxTargetHelper {
 
   get mimeTypeFiles(): Promise<string | null> {
     return this.mimeTypeFilesPromise.value
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getSnapCore(): SnapCore<any> {
+    const snapcraft = this.resolveSnapcraftConfig(this.packager.config)
+    if (snapcraft != null) {
+      const core = snapcraft.base || "core24"
+      switch (core) {
+        case "core18":
+        case "core20":
+        case "core22":
+          if (!this.isElectronVersionGreaterOrEqualThan("4.0.0")) {
+            if (!this.isElectronVersionGreaterOrEqualThan("2.0.0-beta.1")) {
+              throw new InvalidConfigurationError("Electron 2 and higher is required to build Snap with core18/core20/core22")
+            }
+            log.warn(null, "electron 4 and higher is highly recommended for Snap with core18/core20/core22")
+          }
+          return new SnapCoreLegacy(this.packager, this, { base: core, ...(snapcraft[core] || {}) })
+        case "core24":
+          if (!this.isElectronVersionGreaterOrEqualThan("28.0.0")) {
+            if (!this.isElectronVersionGreaterOrEqualThan("25.0.0")) {
+              throw new InvalidConfigurationError("Electron 25 and higher is required to build Snap with core24")
+            }
+            log.warn(null, "electron 28 and higher is highly recommended for Snap with core24")
+          }
+          return new SnapCore24(this.packager, this, snapcraft.core24 || {})
+        case "custom":
+          return new SnapCoreCustom(this.packager, this, snapcraft.custom || {})
+      }
+    }
+    // Backward compat: flat `snap` key maps directly to the legacy build path.
+    const legacySnap = this.resolveLegacySnapConfig(this.packager.config) ?? {}
+    return new SnapCoreLegacy(this.packager, this, legacySnap)
+  }
+
+  isElectronVersionGreaterOrEqualThan(version: string): boolean {
+    const electronVersion = this.packager.config.electronVersion
+    if (!electronVersion) {
+      return true
+    }
+    return semver.gte(electronVersion, version)
   }
 
   private async computeMimeTypeFiles(): Promise<string | null> {
@@ -208,6 +256,14 @@ export class LinuxTargetHelper {
       data += "\n"
     }
     return Promise.resolve(data)
+  }
+
+  private resolveSnapcraftConfig(config: Configuration): SnapcraftOptions | null {
+    return config.snapcraft ?? null
+  }
+
+  private resolveLegacySnapConfig(config: Configuration): SnapOptions | null {
+    return config.snap ?? null
   }
 }
 

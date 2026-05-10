@@ -1,0 +1,65 @@
+# Snap heavy-test image — core24
+#
+# Base: ghcr.io/canonical/snapcraft:8_core24
+#   Canonical rock image: Snapcraft 8 on Ubuntu 24.04 (Noble, glibc 2.39).
+#   Snapcraft 8 is the officially supported builder for core24 and is also
+#   backward-compatible with core18/core20/core22 if needed.
+#   Ubuntu 24.04 uses t64-transition package names (libgtk-3-0t64, libasound2t64 …).
+#
+# Source: https://github.com/canonical/snapcraft-rocks
+FROM --platform=linux/amd64 ghcr.io/canonical/snapcraft:8_core24
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# squashfs-tools: mksquashfs is required by snapcraft --destructive-mode.
+# xvfb: virtual framebuffer used when electron-builder invokes Electron.
+# git: required by pnpm workspace bootstrap.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    squashfs-tools \
+    xvfb \
+    git \
+    curl \
+    ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+# Node.js 22 LTS via NodeSource.
+# NodeSource's setup script uses `apt` internally; the resulting WARNING lines
+# ("apt does not have a stable CLI interface") come from that script and are
+# harmless.
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+  && apt-get install -y --no-install-recommends nodejs \
+  && rm -rf /var/lib/apt/lists/*
+
+# pnpm + corepack + bun — matches docker/test-in-docker.sh bootstrap exactly.
+RUN npm install -g corepack bun \
+  && corepack enable
+
+# Electron runtime libraries (Ubuntu 24.04 / t64-transition names).
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libnspr4 \
+    libnss3 \
+    libxss1 \
+    libxtst6 \
+    libdrm2 \
+    libgbm1 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libgtk-3-0t64 \
+    libasound2t64 \
+    libcups2t64 \
+  && rm -rf /var/lib/apt/lists/*
+
+# Create XDG_RUNTIME_DIR so craft-application/snapcraft-8's StateService can
+# create its socket files. Without this directory Docker containers running as
+# root hang indefinitely waiting for a StateService socket connection that
+# never arrives (craft-application tries to use /run/user/0/ which systemd
+# normally creates via pam_systemd — absent in Docker).
+RUN mkdir -p /run/user/0 && chmod 700 /run/user/0
+ENV XDG_RUNTIME_DIR=/run/user/0
+
+WORKDIR /project
+
+# Clear any ENTRYPOINT from the upstream rock so the project's test-linux
+# script (docker run … /bin/bash -c "…") works without --entrypoint overrides.
+ENTRYPOINT []
+CMD ["/bin/bash"]
