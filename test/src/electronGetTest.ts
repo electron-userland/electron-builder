@@ -243,7 +243,7 @@ describe("downloadElectronArtifact", { sequential: true }, () => {
       version: ELECTRON_VERSION,
     }
 
-    const result = await downloadElectronArtifact(options, null)
+    const result = await downloadElectronArtifact(options)
 
     expect(typeof result).toBe("string")
 
@@ -266,7 +266,7 @@ describe("downloadElectronArtifact", { sequential: true }, () => {
     }
 
     // Fire three concurrent downloads; all must resolve to the same path
-    const [a, b, c] = await Promise.all([downloadElectronArtifact(options, null), downloadElectronArtifact(options, null), downloadElectronArtifact(options, null)])
+    const [a, b, c] = await Promise.all([downloadElectronArtifact(options), downloadElectronArtifact(options), downloadElectronArtifact(options)])
 
     expect(a).toBe(b)
     expect(b).toBe(c)
@@ -285,7 +285,7 @@ describe("downloadElectronArtifact", { sequential: true }, () => {
       electronDownload: legacyOptions,
     }
 
-    const result = await downloadElectronArtifact(options, null)
+    const result = await downloadElectronArtifact(options)
 
     expect(typeof result).toBe("string")
     const stat = await fs.stat(result)
@@ -301,7 +301,7 @@ describe("downloadElectronArtifact", { sequential: true }, () => {
       electronDownload: { isVerifyChecksum: false } satisfies ElectronDownloadOptions,
     }
 
-    const result = await downloadElectronArtifact(options, null)
+    const result = await downloadElectronArtifact(options)
     expect(typeof result).toBe("string")
     await expect(fs.stat(result)).resolves.toBeDefined()
   })
@@ -321,7 +321,7 @@ describe("downloadElectronArtifact", { sequential: true }, () => {
       } satisfies ElectronDownloadOptions,
     }
 
-    const result = await downloadElectronArtifact(options, null)
+    const result = await downloadElectronArtifact(options)
     expect(typeof result).toBe("string")
     const stat = await fs.stat(result)
     expect(stat.isDirectory()).toBe(true)
@@ -345,7 +345,7 @@ describe("downloadElectronArtifact", { sequential: true }, () => {
       } satisfies ElectronGetOptions,
     }
 
-    const result = await downloadElectronArtifact(options, null)
+    const result = await downloadElectronArtifact(options)
     expect(typeof result).toBe("string")
     const stat = await fs.stat(result)
     expect(stat.isDirectory()).toBe(true)
@@ -367,7 +367,7 @@ describe("downloadElectronArtifact", { sequential: true }, () => {
       version: ELECTRON_VERSION,
     }
 
-    const result = await downloadElectronArtifact(options, null)
+    const result = await downloadElectronArtifact(options)
     expect(typeof result).toBe("string")
     const stat = await fs.stat(result)
     expect(stat.isDirectory()).toBe(true)
@@ -383,7 +383,7 @@ describe("downloadElectronArtifact", { sequential: true }, () => {
       version: ELECTRON_VERSION,
     }
 
-    const result = await downloadElectronArtifact(options, null)
+    const result = await downloadElectronArtifact(options)
 
     expect(typeof result).toBe("string")
     const stat = await fs.stat(result)

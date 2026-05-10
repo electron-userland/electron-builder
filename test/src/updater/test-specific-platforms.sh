@@ -29,7 +29,18 @@ do_build() {
 do_run() {
   local tag=$1
   [[ "$TARGET" == "build" ]] && return
-  TEST_RUNNER_IMAGE_TAG="$tag" pnpm test-linux
+
+  if [[ "$(uname)" == "Darwin" ]]; then
+    ELECTRON_CACHE_PATH="$HOME/Library/Caches/electron"
+    ELECTRON_BUILDER_CACHE_PATH="$HOME/Library/Caches/electron-builder"
+  else
+    ELECTRON_CACHE_PATH="${XDG_CACHE_HOME:-$HOME/.cache}/electron"
+    ELECTRON_BUILDER_CACHE_PATH="${XDG_CACHE_HOME:-$HOME/.cache}/electron-builder"
+  fi
+
+  ELECTRON_CACHE_PATH="$ELECTRON_CACHE_PATH" \
+    ELECTRON_BUILDER_CACHE_PATH="$ELECTRON_BUILDER_CACHE_PATH" \
+    TEST_RUNNER_IMAGE_TAG="$tag" pnpm test-linux
 }
 
 run_archlinux() {

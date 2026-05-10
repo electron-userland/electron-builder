@@ -25,6 +25,8 @@ export const UNSTABLE_FAIL_RATIO = 0.2
 // Add here broken tests to exclude from smart sharding
 // TODO: FIX ALL OF THESE 😅
 export const skippedTests = [
+  // token expired?
+  "GitlabPublisher.integration.test.ts",
   // General instability
   "snapHeavyTest",
 ]

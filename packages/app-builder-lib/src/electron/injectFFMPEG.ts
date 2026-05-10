@@ -1,5 +1,4 @@
 import { log } from "builder-util"
-import { MultiProgress } from "electron-publish/out/multiProgress"
 import * as fs from "fs-extra"
 import * as path from "path"
 import { Platform } from "../core"
@@ -9,7 +8,6 @@ import { ElectronBrandingOptions } from "./ElectronFramework"
 
 export class FFMPEGInjector {
   constructor(
-    private readonly progress: MultiProgress | null,
     private readonly options: PrepareApplicationStageDirectoryOptions,
     private readonly electronVersion: string,
     private readonly branding: Required<ElectronBrandingOptions>
@@ -47,16 +45,13 @@ export class FFMPEGInjector {
       arch,
     } = this.options
 
-    return downloadElectronArtifact(
-      {
-        electronDownload,
-        artifactName: "ffmpeg",
-        platformName,
-        arch,
-        version: this.electronVersion,
-      },
-      this.progress
-    )
+    return downloadElectronArtifact({
+      electronDownload,
+      artifactName: "ffmpeg",
+      platformName,
+      arch,
+      version: this.electronVersion,
+    })
   }
 
   private async copyFFMPEG(targetPath: string, sourcePath: string) {

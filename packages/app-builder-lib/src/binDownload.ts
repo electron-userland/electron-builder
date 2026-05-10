@@ -1,17 +1,26 @@
-import { executeAppBuilder, parseValidEnvVarUrl } from "builder-util"
+import * as get from "@electron/get"
+import { ElectronDownloadCacheMode } from "@electron/get"
+import * as fs from "fs/promises"
+import { parseValidEnvVarUrl } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { sanitizeFileName } from "builder-util/out/filename"
 import * as path from "path"
-import { getBinariesMirrorUrl } from "./util/electronGet"
+import { downloadBuilderToolset, getBinariesMirrorUrl, getCacheDirectory } from "./util/electronGet"
 
 const versionToPromise = new Map<string, Promise<string>>()
 
-export function download(url: string, output: string, checksum?: string | null): Promise<void> {
-  const args = ["download", "--url", url, "--output", output]
-  if (checksum != null) {
-    args.push("--sha512", checksum)
-  }
-  return executeAppBuilder(args) as Promise<any>
+export async function download(url: string, output: string, checksum?: string | null): Promise<void> {
+  const filenameWithExt = path.basename(new URL(url).pathname)
+  const downloadedFile = await get.downloadArtifact({
+    version: "9.9.9",
+    artifactName: filenameWithExt,
+    cacheRoot: path.resolve(getCacheDirectory(), "downloads"),
+    cacheMode: ElectronDownloadCacheMode.ReadWrite,
+    ...(checksum != null ? { checksums: { [filenameWithExt]: checksum } } : { unsafelyDisableChecksums: true }),
+    mirrorOptions: { resolveAssetURL: async () => Promise.resolve(url) },
+    isGeneric: true,
+  })
+  await fs.copyFile(downloadedFile, output)
 }
 
 export function getBinFromCustomLoc(name: string, version: string, binariesLocUrl: string, checksum: string): Promise<string> {
@@ -39,27 +48,31 @@ export function getBinFromUrl(releaseName: string, filenameWithExt: string, chec
   return getBin(cacheKey, url, checksum)
 }
 
-export function getBin(cacheKey: string, url?: string | null, checksum?: string | null): Promise<string> {
-  // Old cache is ignored if cache environment variable changes
+export function getBin(cacheKey: string, url?: string | Nullish, checksum?: string | Nullish): Promise<string> {
   const cacheName = sanitizeFileName(`${process.env.ELECTRON_BUILDER_CACHE ?? ""}${cacheKey}`)
-  let promise = versionToPromise.get(cacheName) // if rejected, we will try to download again
-
+  let promise = versionToPromise.get(cacheName)
   if (promise != null) {
     return promise
   }
 
-  promise = doGetBin(cacheKey, url, checksum)
+  if (url == null) {
+    throw new Error(
+      `getBin("${cacheKey}"): a download URL is required. ` +
+        `The no-URL legacy path (e.g. winCodeSign "0.0.0") is no longer used — ` +
+        `it now downloads from winCodeSign-2.6.0 automatically.`
+    )
+  }
+
+  const filenameWithExt = path.basename(url)
+  const overrideUrl = url.substring(0, url.lastIndexOf("/"))
+  const releaseName = path.basename(overrideUrl)
+
+  promise = downloadBuilderToolset({
+    releaseName,
+    filenameWithExt,
+    checksums: checksum != null ? { [filenameWithExt]: checksum } : undefined,
+    overrideUrl,
+  })
   versionToPromise.set(cacheName, promise)
   return promise
-}
-
-function doGetBin(name: string, url: string | Nullish, checksum: string | Nullish): Promise<string> {
-  const args = ["download-artifact", "--name", name]
-  if (url != null) {
-    args.push("--url", url)
-  }
-  if (checksum != null) {
-    args.push("--sha512", checksum)
-  }
-  return executeAppBuilder(args)
 }
