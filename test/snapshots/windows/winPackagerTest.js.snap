@@ -41,6 +41,20 @@ exports[`winCodeSign: 0.0.0 > beta version 1`] = `
 }
 `;
 
+exports[`winCodeSign: 0.0.0 > beta version 2`] = `
+{
+  "CompanyName": "Foo Bar",
+  "FileDescription": "Test App ßW",
+  "FileVersion": "3.0.0-beta.2",
+  "InternalName": "Test App ßW",
+  "LegalCopyright": "Copyright © 2026 Foo Bar",
+  "OriginalFilename": "",
+  "ProductName": "Test App ßW",
+  "ProductVersion": "3.0.0.0",
+  "SquirrelAwareVersion": "1",
+}
+`;
+
 exports[`winCodeSign: 0.0.0 > icon < 256 1`] = `"ERR_ICON_TOO_SMALL"`;
 
 exports[`winCodeSign: 0.0.0 > icon not an image 1`] = `"ERR_ICON_UNKNOWN_FORMAT"`;
@@ -54,6 +68,20 @@ exports[`winCodeSign: 0.0.0 > legacy win-codesign 1`] = `
       "safeArtifactName": "TestApp-1.1.0-win.zip",
     },
   ],
+}
+`;
+
+exports[`winCodeSign: 0.0.0 > legacy win-codesign 2`] = `
+{
+  "CompanyName": "Foo Bar",
+  "FileDescription": "Test App ßW",
+  "FileVersion": "1.1.0",
+  "InternalName": "Test App ßW",
+  "LegalCopyright": "Copyright © 2026 Foo Bar",
+  "OriginalFilename": "",
+  "ProductName": "Test App ßW",
+  "ProductVersion": "1.1.0.0",
+  "SquirrelAwareVersion": "1",
 }
 `;
 
@@ -168,6 +196,20 @@ exports[`winCodeSign: 0.0.0 > win zip 5`] = `
 ]
 `;
 
+exports[`winCodeSign: 0.0.0 > win zip 6`] = `
+{
+  "CompanyName": "Foo Bar",
+  "FileDescription": "Test App ßW",
+  "FileVersion": "1.1.0",
+  "InternalName": "Test App ßW",
+  "LegalCopyright": "Copyright © 2026 Foo Bar",
+  "OriginalFilename": "",
+  "ProductName": "Test App ßW",
+  "ProductVersion": "1.1.0.0",
+  "SquirrelAwareVersion": "1",
+}
+`;
+
 exports[`winCodeSign: 0.0.0 > zip artifactName 1`] = `
 {
   "win": [
@@ -177,6 +219,20 @@ exports[`winCodeSign: 0.0.0 > zip artifactName 1`] = `
       "safeArtifactName": "TestApp-1.1.0-win.zip",
     },
   ],
+}
+`;
+
+exports[`winCodeSign: 0.0.0 > zip artifactName 2`] = `
+{
+  "CompanyName": "Foo Bar",
+  "FileDescription": "Test App ßW",
+  "FileVersion": "1.1.0",
+  "InternalName": "Test App ßW",
+  "LegalCopyright": "Copyright © 2026 Foo Bar",
+  "OriginalFilename": "",
+  "ProductName": "Test App ßW",
+  "ProductVersion": "1.1.0.0",
+  "SquirrelAwareVersion": "1",
 }
 `;
 
@@ -221,6 +277,20 @@ exports[`winCodeSign: 1.0.0 > beta version 1`] = `
 }
 `;
 
+exports[`winCodeSign: 1.0.0 > beta version 2`] = `
+{
+  "CompanyName": "Foo Bar",
+  "FileDescription": "Test App ßW",
+  "FileVersion": "3.0.0-beta.2",
+  "InternalName": "Test App ßW",
+  "LegalCopyright": "Copyright © 2026 Foo Bar",
+  "OriginalFilename": "",
+  "ProductName": "Test App ßW",
+  "ProductVersion": "3.0.0.0",
+  "SquirrelAwareVersion": "1",
+}
+`;
+
 exports[`winCodeSign: 1.0.0 > icon < 256 1`] = `"ERR_ICON_TOO_SMALL"`;
 
 exports[`winCodeSign: 1.0.0 > icon not an image 1`] = `"ERR_ICON_UNKNOWN_FORMAT"`;
@@ -234,6 +304,20 @@ exports[`winCodeSign: 1.0.0 > legacy win-codesign 1`] = `
       "safeArtifactName": "TestApp-1.1.0-win.zip",
     },
   ],
+}
+`;
+
+exports[`winCodeSign: 1.0.0 > legacy win-codesign 2`] = `
+{
+  "CompanyName": "Foo Bar",
+  "FileDescription": "Test App ßW",
+  "FileVersion": "1.1.0",
+  "InternalName": "Test App ßW",
+  "LegalCopyright": "Copyright © 2026 Foo Bar",
+  "OriginalFilename": "",
+  "ProductName": "Test App ßW",
+  "ProductVersion": "1.1.0.0",
+  "SquirrelAwareVersion": "1",
 }
 `;
 
@@ -348,6 +432,20 @@ exports[`winCodeSign: 1.0.0 > win zip 5`] = `
 ]
 `;
 
+exports[`winCodeSign: 1.0.0 > win zip 6`] = `
+{
+  "CompanyName": "Foo Bar",
+  "FileDescription": "Test App ßW",
+  "FileVersion": "1.1.0",
+  "InternalName": "Test App ßW",
+  "LegalCopyright": "Copyright © 2026 Foo Bar",
+  "OriginalFilename": "",
+  "ProductName": "Test App ßW",
+  "ProductVersion": "1.1.0.0",
+  "SquirrelAwareVersion": "1",
+}
+`;
+
 exports[`winCodeSign: 1.0.0 > zip artifactName 1`] = `
 {
   "win": [
@@ -357,6 +455,20 @@ exports[`winCodeSign: 1.0.0 > zip artifactName 1`] = `
       "safeArtifactName": "TestApp-1.1.0-win.zip",
     },
   ],
+}
+`;
+
+exports[`winCodeSign: 1.0.0 > zip artifactName 2`] = `
+{
+  "CompanyName": "Foo Bar",
+  "FileDescription": "Test App ßW",
+  "FileVersion": "1.1.0",
+  "InternalName": "Test App ßW",
+  "LegalCopyright": "Copyright © 2026 Foo Bar",
+  "OriginalFilename": "",
+  "ProductName": "Test App ßW",
+  "ProductVersion": "1.1.0.0",
+  "SquirrelAwareVersion": "1",
 }
 `;
 
@@ -401,6 +513,20 @@ exports[`winCodeSign: 1.1.0 > beta version 1`] = `
 }
 `;
 
+exports[`winCodeSign: 1.1.0 > beta version 2`] = `
+{
+  "CompanyName": "Foo Bar",
+  "FileDescription": "Test App ßW",
+  "FileVersion": "3.0.0-beta.2",
+  "InternalName": "Test App ßW",
+  "LegalCopyright": "Copyright © 2026 Foo Bar",
+  "OriginalFilename": "",
+  "ProductName": "Test App ßW",
+  "ProductVersion": "3.0.0.0",
+  "SquirrelAwareVersion": "1",
+}
+`;
+
 exports[`winCodeSign: 1.1.0 > icon < 256 1`] = `"ERR_ICON_TOO_SMALL"`;
 
 exports[`winCodeSign: 1.1.0 > icon not an image 1`] = `"ERR_ICON_UNKNOWN_FORMAT"`;
@@ -414,6 +540,20 @@ exports[`winCodeSign: 1.1.0 > legacy win-codesign 1`] = `
       "safeArtifactName": "TestApp-1.1.0-win.zip",
     },
   ],
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > legacy win-codesign 2`] = `
+{
+  "CompanyName": "Foo Bar",
+  "FileDescription": "Test App ßW",
+  "FileVersion": "1.1.0",
+  "InternalName": "Test App ßW",
+  "LegalCopyright": "Copyright © 2026 Foo Bar",
+  "OriginalFilename": "",
+  "ProductName": "Test App ßW",
+  "ProductVersion": "1.1.0.0",
+  "SquirrelAwareVersion": "1",
 }
 `;
 
@@ -528,6 +668,20 @@ exports[`winCodeSign: 1.1.0 > win zip 5`] = `
 ]
 `;
 
+exports[`winCodeSign: 1.1.0 > win zip 6`] = `
+{
+  "CompanyName": "Foo Bar",
+  "FileDescription": "Test App ßW",
+  "FileVersion": "1.1.0",
+  "InternalName": "Test App ßW",
+  "LegalCopyright": "Copyright © 2026 Foo Bar",
+  "OriginalFilename": "",
+  "ProductName": "Test App ßW",
+  "ProductVersion": "1.1.0.0",
+  "SquirrelAwareVersion": "1",
+}
+`;
+
 exports[`winCodeSign: 1.1.0 > zip artifactName 1`] = `
 {
   "win": [
@@ -537,5 +691,19 @@ exports[`winCodeSign: 1.1.0 > zip artifactName 1`] = `
       "safeArtifactName": "TestApp-1.1.0-win.zip",
     },
   ],
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > zip artifactName 2`] = `
+{
+  "CompanyName": "Foo Bar",
+  "FileDescription": "Test App ßW",
+  "FileVersion": "1.1.0",
+  "InternalName": "Test App ßW",
+  "LegalCopyright": "Copyright © 2026 Foo Bar",
+  "OriginalFilename": "",
+  "ProductName": "Test App ßW",
+  "ProductVersion": "1.1.0.0",
+  "SquirrelAwareVersion": "1",
 }
 `;
