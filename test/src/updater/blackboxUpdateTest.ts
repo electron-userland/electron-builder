@@ -2,7 +2,8 @@ import { ToolsetConfig } from "app-builder-lib"
 import { PM } from "app-builder-lib/src/node-module-collector"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
 import { archFromString, getArchSuffix, isEmptyOrSpaces, log, spawn, TmpDir } from "builder-util/out/util"
-import { execFileSync, execSync } from "child_process"
+import { execFileSync, execSync, spawnSync } from "child_process"
+import { readFileSync } from "fs"
 import { Arch, Configuration, Platform } from "electron-builder"
 import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
 import { copy, existsSync, move, outputFile, readJsonSync } from "fs-extra"
@@ -75,6 +76,70 @@ describe.heavy.ifLinux("linux", optionsForFlakyE2E, () => {
       })
     }
   }
+})
+
+describe.heavy.ifLinux("AppImage env var integrity", optionsForFlakyE2E, () => {
+  test.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true")("env vars have no empty components and no relative paths", async ({ expect }) => {
+    const tmpDir = new TmpDir("appimage-env-test")
+
+    try {
+      await assertPack(
+        expect,
+        "test-app",
+        {
+          targets: Platform.LINUX.createTarget("AppImage", Arch.x64),
+          config: { productName: "TestApp", executableName: "TestApp", compression: "store", toolsets: { appimage: "1.0.3" } },
+        },
+        {
+          packed: async ctx => {
+            const appImagePath = ctx.getAppPath(Platform.LINUX, Arch.x64)
+
+            const extractDir = await tmpDir.getTempDir({ prefix: "squashfs" })
+            execSync(`"${appImagePath}" --appimage-extract`, { cwd: extractDir, stdio: "inherit" })
+
+            const appRunContent = readFileSync(path.join(extractDir, "squashfs-root", "AppRun"), "utf8")
+
+            const exportLines = appRunContent
+              .split("\n")
+              .filter(l => /^export (PATH|XDG_DATA_DIRS|LD_LIBRARY_PATH|GSETTINGS_SCHEMA_DIR)=/.test(l))
+              .join("\n")
+
+            const APPDIR = path.join(extractDir, "squashfs-root")
+
+            function evalExports(env: Record<string, string> = {}): string[] {
+              const result = spawnSync("bash", ["-c", `APPDIR=${APPDIR}\n${exportLines}\nprintf '%s\\n' "$PATH" "$XDG_DATA_DIRS" "$LD_LIBRARY_PATH" "$GSETTINGS_SCHEMA_DIR"`], {
+                encoding: "utf8",
+                env,
+              })
+              return (result.stdout ?? "").trim().split("\n")
+            }
+
+            function hasEmptyComponent(v: string) {
+              return v.split(":").some(p => p === "")
+            }
+
+            const [pathVal, xdgVal, ldVal, gsettingsVal] = evalExports()
+            expect(hasEmptyComponent(pathVal), `PATH has empty component: "${pathVal}"`).toBe(false)
+            expect(hasEmptyComponent(xdgVal), `XDG_DATA_DIRS has empty component: "${xdgVal}"`).toBe(false)
+            expect(hasEmptyComponent(ldVal), `LD_LIBRARY_PATH has empty component: "${ldVal}"`).toBe(false)
+            expect(hasEmptyComponent(gsettingsVal), `GSETTINGS_SCHEMA_DIR has empty component: "${gsettingsVal}"`).toBe(false)
+
+            const [, xdgSet, ldSet] = evalExports({ LD_LIBRARY_PATH: "/custom/lib", XDG_DATA_DIRS: "/custom/share" })
+            expect(ldSet).toContain("/custom/lib")
+            expect(xdgSet).toContain("/custom/share")
+            expect(hasEmptyComponent(ldSet), `LD_LIBRARY_PATH has empty component: "${ldSet}"`).toBe(false)
+            expect(hasEmptyComponent(xdgSet), `XDG_DATA_DIRS has empty component: "${xdgSet}"`).toBe(false)
+
+            for (const dir of xdgVal.split(":").filter(Boolean)) {
+              expect(dir, `XDG_DATA_DIRS entry "${dir}" must be absolute`).toMatch(/^\//)
+            }
+          },
+        }
+      )
+    } finally {
+      await tmpDir.cleanup()
+    }
+  })
 })
 
 const determineEnvironment = (target: string) => {

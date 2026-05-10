@@ -106,13 +106,10 @@ function escapeShellString(str: string): string {
  * Validates that critical executable/filename fields don't contain dangerous characters
  * that could break paths or cause security issues even when escaped.
  */
-function validateCriticalPathString(str: string, fieldName: string): void {
-  // Only reject characters that would break filesystem paths or cause severe issues
-  // Allow quotes, spaces, etc. since they can be escaped
-  if (/[`${}|&;<>\n\r\0]/.test(str) || str.includes("/") || str.includes("\\")) {
+export function validateCriticalPathString(str: string, fieldName: string): void {
+  if (!/^[a-zA-Z0-9._\- ]+$/.test(str)) {
     throw new InvalidConfigurationError(
-      `${fieldName} contains characters that cannot be safely used in file paths: ${str}. ` +
-        `Please use only alphanumeric characters, hyphens, underscores, dots, spaces, and quotes.`
+      `${fieldName} contains characters that cannot be safely used in file paths: ${str}. Please use only alphanumeric characters, hyphens, underscores, dots, and spaces.`
     )
   }
 }
@@ -179,7 +176,7 @@ async function writeAppLauncherAndRelatedFiles(opts: AppImageBuilderOptions): Pr
   await fs.writeFile(path.join(stageDir, APP_RUN_ENTRYPOINT), appRunContent, { mode: 0o755 })
 }
 
-type AppRunScriptBase = {
+export type AppRunScriptBase = {
   ExecutableName: string
   DesktopFileName: string
   ProductFilename: string
@@ -188,18 +185,18 @@ type AppRunScriptBase = {
   MimeTypeFile?: string
 }
 
-type AppRunScriptWithEula = AppRunScriptBase & {
+export type AppRunScriptWithEula = AppRunScriptBase & {
   EulaFile: string
   IsHtmlEula: boolean
 }
 
-type AppRunScript = AppRunScriptBase | AppRunScriptWithEula
+export type AppRunScript = AppRunScriptBase | AppRunScriptWithEula
 
 function hasEula(config: AppRunScript): config is AppRunScriptWithEula {
   return "EulaFile" in config && typeof config.EulaFile === "string"
 }
 
-function generateAppRunScript(config: AppRunScript): string {
+export function generateAppRunScript(config: AppRunScript): string {
   const eulaEnabled = hasEula(config)
 
   return `#!/usr/bin/env bash
@@ -221,11 +218,15 @@ if [ -z "$APPDIR" ] ; then
   APPDIR="$path"
 fi
 
-export PATH="\${APPDIR}:\${APPDIR}/usr/sbin:\${PATH}"
-export XDG_DATA_DIRS="./share/:/usr/share/gnome:/usr/local/share/:/usr/share/:\${XDG_DATA_DIRS}"
-export LD_LIBRARY_PATH="\${APPDIR}/usr/lib:\${LD_LIBRARY_PATH}"
-export XDG_DATA_DIRS="\${APPDIR}"/usr/share/:"\${XDG_DATA_DIRS}":/usr/share/gnome/:/usr/local/share/:/usr/share/
-export GSETTINGS_SCHEMA_DIR="\${APPDIR}/usr/share/glib-2.0/schemas:\${GSETTINGS_SCHEMA_DIR}"
+if [ -z "$APPDIR" ] ; then
+  echo "ERROR: could not locate the AppDir. Ensure this script is run from within a properly structured AppImage." >&2
+  exit 1
+fi
+
+export PATH="\${APPDIR}:\${APPDIR}/usr/sbin\${PATH:+:\${PATH}}"
+export XDG_DATA_DIRS="\${APPDIR}/usr/share/\${XDG_DATA_DIRS:+:\${XDG_DATA_DIRS}}:/usr/share/gnome:/usr/local/share/:/usr/share/"
+export LD_LIBRARY_PATH="\${APPDIR}/usr/lib\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}"
+export GSETTINGS_SCHEMA_DIR="\${APPDIR}/usr/share/glib-2.0/schemas\${GSETTINGS_SCHEMA_DIR:+:\${GSETTINGS_SCHEMA_DIR}}"
 
 BIN="$APPDIR/${config.ExecutableName}"
 
@@ -242,7 +243,7 @@ for arg in "\${args[@]}" ; do
     break
   fi
 done
-NO_SANDBOX=
+NO_SANDBOX=()
 # Use 'unshare -Ur true' as a heuristic to detect whether user namespaces are available.
 # Notes:
 #   - When running as root, this check will always succeed even if the sandbox configuration
@@ -254,16 +255,16 @@ NO_SANDBOX=
 #     us to add '--no-sandbox'. This is an intentional fail-safe: we prefer the app to start
 #     without sandboxing rather than crash on startup.
 if [ $HAVE_NO_SANDBOX -eq 0 ] && ! unshare -Ur true 2>/dev/null ; then
-  NO_SANDBOX=--no-sandbox
+  NO_SANDBOX=(--no-sandbox)
 fi
 
 atexit()
 {
   if [ $isEulaAccepted == 1 ] ; then
     if [ $NUMBER_OF_ARGS -eq 0 ] ; then
-      exec "$BIN" $NO_SANDBOX
+      exec "$BIN" "\${NO_SANDBOX[@]}"
     else
-      exec "$BIN" $NO_SANDBOX "\${args[@]}"
+      exec "$BIN" "\${NO_SANDBOX[@]}" "\${args[@]}"
     fi
   fi
 }

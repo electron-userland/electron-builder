@@ -85,7 +85,8 @@ export async function copyMimeTypes(options: AppImageBuilderOptions): Promise<st
     for (const ext of extensions) {
       // Validate extension doesn't contain dangerous characters
       if (!/^[a-zA-Z0-9_-]+$/.test(ext)) {
-        log.warn({ extension: ext }, `file extension contains unexpected characters and may not be supported`)
+        log.warn({ extension: ext }, `file extension contains unexpected characters and will be skipped`)
+        continue
       }
       mimeTypeParts.push(`  <glob pattern="*.${xmlEscape(ext)}"/>`)
     }
