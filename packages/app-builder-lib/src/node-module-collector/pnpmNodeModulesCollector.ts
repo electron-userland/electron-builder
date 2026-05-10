@@ -1,12 +1,36 @@
+import { Lazy } from "lazy-val"
 import { LogMessageByKey } from "./moduleManager"
 import { NodeModulesCollector } from "./nodeModulesCollector"
-import { PM } from "./packageManager"
+import { getPackageManagerCommand, PM } from "./packageManager"
 import { PnpmDependency } from "./types"
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependency, PnpmDependency> {
   public readonly installOptions = {
     manager: PM.PNPM,
     lockfile: "pnpm-lock.yaml",
+  }
+
+  // Raw backing field — all entries from `pnpm list --json`
+  private _allWorkspacePackages: PnpmDependency[] = []
+  // Cached after parseDependenciesTree resolves the Lazy; 0 = safe default (treated as < v11)
+  private _pnpmMajorVersion = 0
+  // Runs `pnpm --version` once and caches the major version number
+  private readonly pnpmVersion = new Lazy<number>(async () => {
+    const result = await this.asyncExec(getPackageManagerCommand(PM.PNPM), ["--version"])
+    const major = parseInt((result.stdout ?? "0").split(".")[0], 10)
+    return isNaN(major) ? 0 : major
+  })
+
+  /**
+   * Returns the workspace packages to iterate over, gated by detected pnpm version:
+   * - pnpm v11+: multi-entry workspace output → return the full parsed array
+   * - pnpm < v11 / non-workspace / detection failure: single-tree behavior → return only [0]
+   */
+  private get allWorkspacePackages(): PnpmDependency[] {
+    if (this._pnpmMajorVersion >= 11) {
+      return this._allWorkspacePackages
+    }
+    return this._allWorkspacePackages.slice(0, 1)
   }
 
   protected getArgs(): string[] {
@@ -80,31 +104,48 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     this.productionGraph[dependencyId] = { dependencies: collectedDependencies }
   }
 
-  protected async collectAllDependencies(tree: PnpmDependency) {
-    // Collect regular dependencies
+  protected async collectAllDependencies(_tree: PnpmDependency, _appPackageName: string): Promise<void> {
+    for (const root of this.allWorkspacePackages) {
+      await this.collectDepsRecursively(root)
+    }
+  }
+
+  private async collectDepsRecursively(tree: PnpmDependency): Promise<void> {
     for (const [key, value] of Object.entries(tree.dependencies || {})) {
       if ((value?.dedupedDependenciesCount ?? 0) > 0) {
         continue
       }
       const pkg = await this.locateFromDepOrRoot(key, value.path, value.version)
       this.allDependencies.set(`${key}@${value.version}`, { ...value, path: pkg?.packageDir ?? value.path })
-      await this.collectAllDependencies(value)
+      await this.collectDepsRecursively(value)
     }
 
-    // Collect optional dependencies if they exist
     for (const [key, value] of Object.entries(tree.optionalDependencies || {})) {
       if ((value?.dedupedDependenciesCount ?? 0) > 0) {
         continue
       }
       const pkg = await this.locateFromDepOrRoot(key, value.path, value.version)
       this.allDependencies.set(`${key}@${value.version}`, { ...value, path: pkg?.packageDir ?? value.path })
-      await this.collectAllDependencies(value)
+      await this.collectDepsRecursively(value)
     }
   }
 
-  protected parseDependenciesTree(jsonBlob: string): PnpmDependency {
-    // pnpm returns an array of dependency trees
-    const dependencyTree: PnpmDependency[] = this.extractJsonFromPollutedOutput<PnpmDependency[]>(jsonBlob)
+  protected override getTreeFromWorkspaces(tree: PnpmDependency, packageName: string): PnpmDependency {
+    // pnpm v10 workspace: app is nested as a dependency of root — handled by base class
+    const result = super.getTreeFromWorkspaces(tree, packageName)
+    if (result !== tree) {
+      return result
+    }
+    // pnpm v11 workspace: each workspace package is a separate top-level array entry;
+    // non-workspace (single-tree): find returns the one entry or undefined → falls back to tree
+    const match = this.allWorkspacePackages.find(pkg => pkg.name === packageName || pkg.from === packageName)
+    return match ?? tree
+  }
+
+  protected async parseDependenciesTree(jsonBlob: string): Promise<PnpmDependency> {
+    const dependencyTree = this.extractJsonFromPollutedOutput<PnpmDependency[]>(jsonBlob)
+    this._allWorkspacePackages = dependencyTree
+    this._pnpmMajorVersion = await this.pnpmVersion.value
     return dependencyTree[0]
   }
 }

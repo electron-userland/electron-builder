@@ -28474,6 +28474,83 @@ exports[`node_module collectors > pnpm shamefully-hoist=true 2`] = `
 }
 `;
 
+exports[`node_module collectors > pnpm v11 workspace 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`node_module collectors > pnpm v11 workspace 2`] = `
+{
+  "files": {
+    "index.html": {
+      "offset": 24710,
+      "size": 850,
+    },
+    "index.js": {
+      "offset": 25550,
+      "size": 2510,
+    },
+    "node_modules": {
+      "files": {
+        "debug": {
+          "files": {
+            "LICENSE": {
+              "offset": 0,
+              "size": 1140,
+            },
+            "package.json": {
+              "offset": 1140,
+              "size": 910,
+            },
+            "src": {
+              "files": {
+                "browser.js": {
+                  "offset": 2050,
+                  "size": 6110,
+                },
+                "common.js": {
+                  "offset": 8160,
+                  "size": 6920,
+                },
+                "index.js": {
+                  "offset": 15070,
+                  "size": 320,
+                },
+                "node.js": {
+                  "offset": 15390,
+                  "size": 4730,
+                },
+              },
+            },
+          },
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "offset": 20110,
+              "size": 3030,
+            },
+            "license.md": {
+              "offset": 23140,
+              "size": 1080,
+            },
+            "package.json": {
+              "offset": 24220,
+              "size": 500,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": 28060,
+      "size": 290,
+    },
+  },
+}
+`;
+
 exports[`node_module collectors > pnpm workspace with native module 1`] = `
 {
   "linux": [],

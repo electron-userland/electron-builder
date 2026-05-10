@@ -58,12 +58,9 @@ async function main() {
 
     maxWorkers: "50%",
 
-    // Ensure tests from different files can run in parallel
-    // but heavy tests will be serialized by the mutex
-    fileParallelism: true,
     sequence: {
       sequencer: SmartSequencer,
-      concurrent: process.env.TEST_SEQUENTIAL !== "true",
+      concurrent: process.env.TEST_SEQUENTIAL === "false",
     },
 
     slowTestThreshold: 2 * 60 * 1000,

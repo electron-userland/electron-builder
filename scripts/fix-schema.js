@@ -37,7 +37,6 @@ schema.definitions["Record<string,string>"] = {
 
 // Fix ElectronGetOptions: add type:object, add mirrorOptions, remove internal isGeneric field.
 schema.definitions.ElectronGetOptions.type = "object"
-delete schema.definitions.ElectronGetOptions.properties.isGeneric
 schema.definitions.ElectronGetOptions.properties.mirrorOptions = {
   type: "object",
   additionalProperties: false,
