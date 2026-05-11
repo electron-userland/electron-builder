@@ -251,7 +251,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   }
 
   protected createTransformerForExtraFiles(packContext: AfterPackContext): FileTransformer | null {
-    if (this.platformSpecificBuildOptions.signAndEditExecutable === false) {
+    if (this.platformSpecificBuildOptions.signAndEditExecutable === false || this.platformSpecificBuildOptions.signExecutable === false) {
       return null
     }
 
@@ -293,7 +293,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       }
     }
 
-    if (!isAsar) {
+    if (!isAsar || this.platformSpecificBuildOptions.signExecutable === false) {
       return true
     }
 
