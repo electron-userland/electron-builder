@@ -26,8 +26,6 @@ describe("nsisEscapeString", () => {
   })
 
   test("handles combined special characters", ({ expect }) => {
-    expect(nsisEscapeString('Copyright © 2024 "Acme" $Corp\r\nAll rights reserved')).toBe(
-      'Copyright © 2024 $\\"Acme$\\" $$Corp All rights reserved'
-    )
+    expect(nsisEscapeString('Copyright © 2024 "Acme" $Corp\r\nAll rights reserved')).toBe('Copyright © 2024 $\\"Acme$\\" $$Corp All rights reserved')
   })
 })

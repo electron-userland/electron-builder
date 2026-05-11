@@ -52,12 +52,11 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   readonly requestedExecutionLevel?: RequestedExecutionLevel | null
 
   /**
-   * Whether to sign and add metadata to executable via `rcedit`.
+   * Whether to sign and add metadata to executable via [`resedit`](https://www.npmjs.com/package/resedit).
    * Metadata includes information about the app name/description/version, publisher, copyright, etc.
    * This property also is responsible for adding the app icon and setting execution level.
-   * Set to `false` only if you need to fully disable rcedit-based resource editing.
+   * Set to `false` only if you need to fully disable resedit-based resource editing.
    * To skip only code signing while keeping resource editing, use `signExecutable: false` instead.
-   * (Advanced option leveraging `rcedit`)
    * @default true
    */
   readonly signAndEditExecutable?: boolean
@@ -65,7 +64,7 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   /**
    * Whether to sign Windows executables and any additional files matched by `signExts`.
    * Set to `false` to skip Windows code signing while still editing executable resources
-   * (icon, metadata, etc. via rcedit).
+   * (icon, metadata, etc. via [`resedit`](https://www.npmjs.com/package/resedit)).
    * This option is not limited to the main executable edit/sign flow and can also affect
    * signing of Windows installers or other artifacts that use the standard signing path.
    * @default true

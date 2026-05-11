@@ -231,8 +231,7 @@ for (const winCodeSign of winCodeSignVersions) {
             expect(strings["FileDescription"]).toBe(context.packager.appInfo.productName)
           },
         }
-      )
-    )
+      ))
 
     test("signExecutable: false — signing skipped even with cert", ({ expect }) =>
       app(
@@ -267,8 +266,7 @@ for (const winCodeSign of winCodeSignVersions) {
             expect(strings["FileDescription"]).toBe(context.packager.appInfo.productName)
           },
         }
-      )
-    )
+      ))
 
     test("signExecutable: false — throws when combined with forceCodeSigning", ({ expect }) =>
       appThrows(
@@ -283,8 +281,7 @@ for (const winCodeSign of winCodeSignVersions) {
         },
         {},
         error => expect(error.message).toContain("`forceCodeSigning` is enabled")
-      )
-    )
+      ))
 
     test("signAndEditExecutable: false — backward compat disables both editing and signing", ({ expect }) =>
       app(
@@ -313,7 +310,6 @@ for (const winCodeSign of winCodeSignVersions) {
             expect(strings["ProductName"]).not.toBe(context.packager.appInfo.productName)
           },
         }
-      )
-    )
+      ))
   })
 }
