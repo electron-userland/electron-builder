@@ -140,7 +140,7 @@ async function writeAppLauncherAndRelatedFiles(opts: AppImageBuilderOptions): Pr
     ResourceName: `appimagekit-${executableName}`,
   }
 
-  const mimeTypeFile = await copyMimeTypes(opts)
+  const mimeTypeFile = await copyMimeTypes(stageDir, opts.options)
   if (mimeTypeFile) {
     templateConfig.MimeTypeFile = mimeTypeFile
   }

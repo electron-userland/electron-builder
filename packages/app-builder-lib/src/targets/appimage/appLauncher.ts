@@ -58,11 +58,15 @@ export async function copyIcons(options: AppImageBuilderOptions): Promise<void> 
   await fs.symlink(iconRelativeToStageFile, path.join(stageDir, ".DirIcon"))
 }
 
-export async function copyMimeTypes(options: AppImageBuilderOptions): Promise<string | null> {
-  const {
-    stageDir,
-    options: { fileAssociations, productName, executableName },
-  } = options
+export async function copyMimeTypes(
+  stageDir: string,
+  options: Pick<AppImageBuilderOptions["options"], "fileAssociations" | "productName" | "executableName">
+): Promise<string | null> {
+  const { fileAssociations, productName, executableName } = options
+
+  if (!fileAssociations || fileAssociations.length === 0) {
+    return null
+  }
 
   if (!fileAssociations || fileAssociations.length === 0) {
     return null
