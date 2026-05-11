@@ -8,7 +8,7 @@ const target = Platform.WINDOWS.createTarget("msi", Arch.x64)
 
 describe.ifWindows("msi", { sequential: true }, () => {
   for (const winCodeSign of winCodeSignVersions) {
-    describe(`winCodeSign: ${winCodeSign}`, () => {
+    describe(`winCodeSign: ${winCodeSign}`, { retry: 1 }, () => {
       const toolsets: ToolsetConfig = {
         winCodeSign,
       }

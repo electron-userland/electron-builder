@@ -2,10 +2,27 @@ import { ToolsetConfig } from "app-builder-lib/src/configuration"
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
+import { NtExecutable, NtExecutableResource, Resource } from "resedit"
+import type { ExpectStatic } from "vitest"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
-import { app, appThrows, assertPack, platform } from "../helpers/packTester"
+import { PackedContext, app, appThrows, assertPack, platform } from "../helpers/packTester"
 
 const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0"]
+
+async function validatePeResources(context: PackedContext, expect: ExpectStatic, arch: Arch = Arch.x64): Promise<void> {
+  const { appInfo } = context.packager
+  const exePath = path.join(context.getAppPath(Platform.WINDOWS, arch), `${appInfo.productFilename}.exe`)
+  const res = NtExecutableResource.from(NtExecutable.from(await fs.readFile(exePath), { ignoreCert: true }))
+  const [vi] = Resource.VersionInfo.fromEntries(res.entries)
+  expect(vi).toBeDefined()
+  const lang = vi.getAllLanguagesForStringValues()[0]
+  const strings = vi.getStringValues(lang)
+  expect(strings.ProductName).toBe(appInfo.productName)
+  expect(strings.FileDescription).toBe(appInfo.productName)
+  expect(strings.LegalCopyright).toBe(appInfo.copyright)
+  expect(res.entries.some(e => e.type === 14)).toBe(true)
+  expect(strings).toMatchSnapshot()
+}
 
 for (const winCodeSign of winCodeSignVersions) {
   describe(`winCodeSign: ${winCodeSign}`, () => {
@@ -28,6 +45,9 @@ for (const winCodeSign of winCodeSignVersions) {
         },
         {
           signedWin: true,
+          packed: async context => {
+            await validatePeResources(context, expect)
+          },
         }
       )
     )
@@ -65,6 +85,9 @@ for (const winCodeSign of winCodeSignVersions) {
             await fs.mkdir(path.join(projectDir, "build", "subdir"))
             await fs.copyFile(path.join(projectDir, "build", "extraAsar.asar"), path.join(projectDir, "build", "subdir", "extraAsar2.asar"))
           },
+          packed: async context => {
+            await validatePeResources(context, expect)
+          },
         }
       ))
 
@@ -83,6 +106,9 @@ for (const winCodeSign of winCodeSignVersions) {
         },
         {
           signedWin: true,
+          packed: async context => {
+            await validatePeResources(context, expect)
+          },
         }
       ))
 
@@ -99,6 +125,9 @@ for (const winCodeSign of winCodeSignVersions) {
         },
         {
           signedWin: true,
+          packed: async context => {
+            await validatePeResources(context, expect)
+          },
         }
       ))
 

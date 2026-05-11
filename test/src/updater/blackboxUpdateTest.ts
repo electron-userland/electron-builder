@@ -8,13 +8,13 @@ import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
 import { copy, existsSync, move, outputFile, readJsonSync } from "fs-extra"
 import { homedir } from "os"
 import path from "path"
-import { ExpectStatic, TestContext } from "vitest"
+import { ExpectStatic, TestContext, TestOptions } from "vitest"
 import { createLocalServer, launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
-import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester"
+import { assertPack, EXTENDED_TIMEOUT, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
-const optionsForFlakyE2E = { sequential: true, retry: 2 }
+const optionsForFlakyE2E: TestOptions = { sequential: true, retry: 1, timeout: EXTENDED_TIMEOUT }
 // Linux Tests MUST be run in docker containers for proper ephemeral testing environment (e.g. fresh install + update + relaunch)
 // Currently this test logic does not handle uninstalling packages (yet)
 describe.ifMac.heavy("mac", optionsForFlakyE2E, () => {

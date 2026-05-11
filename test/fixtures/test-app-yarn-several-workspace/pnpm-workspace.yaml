@@ -1,2 +1,4 @@
 packages:
-  - "packages/*"
+  - packages/*
+allowBuilds:
+  electron: true
