@@ -1,5 +1,6 @@
 import { exists, log, retry, TmpDir } from "builder-util"
 import * as childProcess from "child_process"
+import { randomBytes } from "crypto"
 import * as fs from "fs-extra"
 import { createWriteStream } from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -363,12 +364,12 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       // We create a temporary .bat file that calls the script-like file with the provided arguments. The .bat file will be executed by cmd.exe.
       // Note: This is a workaround for Windows command execution quirks when using `shell: true`
       const tempBatFile = await this.tempDirManager.getTempFile({
-        prefix: execName,
+        prefix: execName + "-" + randomBytes(8).toString("hex"),
         suffix: ".bat",
       })
       const escapedCommand = command.replace(/"/g, `""`)
       const batScript = `@echo off\r\n"${escapedCommand}" %*\r\n` // <-- CRLF required for .bat
-      await fs.writeFile(tempBatFile, batScript, { encoding: "utf8" })
+      await fs.writeFile(tempBatFile, batScript, { encoding: "utf8", mode: 0o600 })
       command = "cmd.exe"
       args = ["/c", `"${tempBatFile}"`, ...args]
     }

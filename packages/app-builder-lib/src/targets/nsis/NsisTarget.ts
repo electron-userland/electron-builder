@@ -36,7 +36,7 @@ import { Defines } from "./Defines"
 import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } from "./nsisLang"
 import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
-import { NsisScriptGenerator } from "./nsisScriptGenerator"
+import { NsisScriptGenerator, nsisEscapeString } from "./nsisScriptGenerator"
 import { AppPackageHelper, NSIS_PATH, NSIS_RESOURCES_PATH, NsisTargetOptions, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
 
 const debug = _debug("electron-builder:nsis")
@@ -452,18 +452,18 @@ export class NsisTarget extends Target {
     const localeId = this.options.language || "1033"
     const appInfo = this.packager.appInfo
     const versionKey = [
-      `/LANG=${localeId} ProductName "${appInfo.productName}"`,
-      `/LANG=${localeId} ProductVersion "${appInfo.version}"`,
-      `/LANG=${localeId} LegalCopyright "${appInfo.copyright}"`,
-      `/LANG=${localeId} FileDescription "${appInfo.description}"`,
-      `/LANG=${localeId} FileVersion "${appInfo.buildVersion}"`,
+      `/LANG=${localeId} ProductName "${nsisEscapeString(appInfo.productName)}"`,
+      `/LANG=${localeId} ProductVersion "${nsisEscapeString(appInfo.version)}"`,
+      `/LANG=${localeId} LegalCopyright "${nsisEscapeString(appInfo.copyright)}"`,
+      `/LANG=${localeId} FileDescription "${nsisEscapeString(appInfo.description)}"`,
+      `/LANG=${localeId} FileVersion "${nsisEscapeString(appInfo.buildVersion)}"`,
     ]
     if (short) {
-      versionKey[1] = `/LANG=${localeId} ProductVersion "${appInfo.shortVersion}"`
-      versionKey[4] = `/LANG=${localeId} FileVersion "${appInfo.shortVersion}"`
+      versionKey[1] = `/LANG=${localeId} ProductVersion "${nsisEscapeString(appInfo.shortVersion!)}"`
+      versionKey[4] = `/LANG=${localeId} FileVersion "${nsisEscapeString(appInfo.shortVersion!)}"`
     }
-    use(this.packager.platformSpecificBuildOptions.legalTrademarks, it => versionKey.push(`/LANG=${localeId} LegalTrademarks "${it}"`))
-    use(appInfo.companyName, it => versionKey.push(`/LANG=${localeId} CompanyName "${it}"`))
+    use(this.packager.platformSpecificBuildOptions.legalTrademarks, it => versionKey.push(`/LANG=${localeId} LegalTrademarks "${nsisEscapeString(it)}"`))
+    use(appInfo.companyName, it => versionKey.push(`/LANG=${localeId} CompanyName "${nsisEscapeString(it)}"`))
     return versionKey
   }
 
@@ -741,9 +741,12 @@ export class NsisTarget extends Target {
             }
 
             const icon = `"${installedIconPath}"`
-            const commandText = `"Open with ${packager.appInfo.productName}"`
+            const commandText = `"Open with ${nsisEscapeString(packager.appInfo.productName)}"`
             const command = '"$appExe $\\"%1$\\""'
-            registerFileAssociationsScript.insertMacro("APP_ASSOCIATE", `"${ext}" "${item.name || ext}" "${item.description || ""}" ${icon} ${commandText} ${command}`)
+            registerFileAssociationsScript.insertMacro(
+              "APP_ASSOCIATE",
+              `"${nsisEscapeString(ext)}" "${nsisEscapeString(item.name || ext)}" "${nsisEscapeString(item.description || "")}" ${icon} ${commandText} ${command}`
+            )
           }
         }
         scriptGenerator.macro("registerFileAssociations", registerFileAssociationsScript)

@@ -72,6 +72,7 @@
       "@changesets/assemble-release-plan@6.0.9": "patches/@changesets__assemble-release-plan@6.0.9.patch"
     },
     "overrides": {
+      "flatted": ">=3.4.2",
       "handlebars": ">=4.7.9"
     }
   }
