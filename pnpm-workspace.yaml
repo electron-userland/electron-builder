@@ -2,8 +2,11 @@ packages:
   - "packages/**"
   - "test"
 
+allowBuilds:
+  '@parcel/watcher': false
+  electron: false
+  electron-winstaller: true
+  esbuild: false
+
 # 10080 minutes = 7 days
 minimumReleaseAge: 10080
-minimumReleaseAgeExclude:
-  - "tar"
-  - "@electron/rebuild"
