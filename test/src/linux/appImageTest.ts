@@ -41,6 +41,10 @@ describe("validateCriticalPathString", () => {
   test("allows alphanumeric, hyphens, underscores, dots, and spaces", ({ expect }) => {
     expect(() => validateCriticalPathString("My App-1.0_beta", "executableName")).not.toThrow()
   })
+
+  test("allows Unicode letters (e.g. German ß)", ({ expect }) => {
+    expect(() => validateCriticalPathString("Test App ßW", "productFilename")).not.toThrow()
+  })
 })
 
 describe("copyMimeTypes - invalid extension handling", () => {

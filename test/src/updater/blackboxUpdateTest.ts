@@ -107,7 +107,7 @@ describe.heavy.ifLinux("AppImage env var integrity", optionsForFlakyE2E, () => {
             const APPDIR = path.join(extractDir, "squashfs-root")
 
             function evalExports(env: Record<string, string> = {}): string[] {
-              const result = spawnSync("bash", ["-c", `APPDIR=${APPDIR}\n${exportLines}\nprintf '%s\\n' "$PATH" "$XDG_DATA_DIRS" "$LD_LIBRARY_PATH" "$GSETTINGS_SCHEMA_DIR"`], {
+              const result = spawnSync("bash", ["-c", `APPDIR="${APPDIR}"\n${exportLines}\nprintf '%s\\n' "$PATH" "$XDG_DATA_DIRS" "$LD_LIBRARY_PATH" "$GSETTINGS_SCHEMA_DIR"`], {
                 encoding: "utf8",
                 env,
               })

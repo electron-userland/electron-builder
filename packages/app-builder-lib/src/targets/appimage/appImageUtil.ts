@@ -103,13 +103,14 @@ function escapeShellString(str: string): string {
 }
 
 /**
- * Validates that critical executable/filename fields don't contain dangerous characters
- * that could break paths or cause security issues even when escaped.
+ * Validates that critical path fields (executable name, product filename, license filename)
+ * contain only characters that are safe for use in filesystem paths and embedded bash strings.
+ * Allowed: Unicode letters, digits, dots, underscores, hyphens, and spaces.
  */
 export function validateCriticalPathString(str: string, fieldName: string): void {
-  if (!/^[a-zA-Z0-9._\- ]+$/.test(str)) {
+  if (!/^[\p{L}\p{N}._\- ]+$/u.test(str)) {
     throw new InvalidConfigurationError(
-      `${fieldName} contains characters that cannot be safely used in file paths: ${str}. Please use only alphanumeric characters, hyphens, underscores, dots, and spaces.`
+      `${fieldName} contains characters that cannot be safely used in file paths: ${str}. Please use only letters, digits, hyphens, underscores, dots, and spaces.`
     )
   }
 }
@@ -120,8 +121,9 @@ async function writeAppLauncherAndRelatedFiles(opts: AppImageBuilderOptions): Pr
     options: { license, executableName, productFilename, productName, desktopEntry },
   } = opts
 
-  // Validate only critical path fields for severe path-breaking characters
-  // productName and productFilename can contain quotes, spaces, etc. - they'll be escaped
+  // executableName and productFilename are embedded directly into double-quoted bash strings
+  // and used as filesystem paths, so they must pass the whitelist.
+  // productName is not validated here because it is only ever passed through escapeShellString().
   validateCriticalPathString(executableName, "executableName")
   validateCriticalPathString(productFilename, "productFilename")
 
