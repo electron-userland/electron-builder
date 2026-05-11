@@ -1,3 +1,5 @@
+import { log } from "builder-util"
+
 export class NsisScriptGenerator {
   private readonly lines: Array<string> = []
 
@@ -18,7 +20,8 @@ export class NsisScriptGenerator {
   }
 
   file(outputName: string | null, file: string) {
-    this.lines.push(`File${outputName == null ? "" : ` "/oname=${outputName}"`} "${file}"`)
+    const safeName = outputName == null ? null : nsisEscapeString(outputName)
+    this.lines.push(`File${safeName == null ? "" : ` "/oname=${safeName}"`} "${file}"`)
   }
 
   insertMacro(name: string, parameters: string) {
@@ -41,6 +44,17 @@ export class NsisScriptGenerator {
   build() {
     return this.lines.join("\n") + "\n"
   }
+}
+
+export function nsisEscapeString(s: string): string {
+  const escaped = s
+    .replace(/\r\n|\r|\n/g, " ") // newlines break NSIS string literals
+    .replace(/\$/g, "$$$$") // $ → $$ (prevents NSIS variable expansion)
+    .replace(/"/g, '$\\"') // " → $\" (NSIS escape for double-quote)
+  if (escaped !== s) {
+    log.debug({ original: s, final: escaped }, "nsis was escaped")
+  }
+  return escaped
 }
 
 function getVarNameForFlag(flagName: string): string {

@@ -1,6 +1,7 @@
 import { DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
 import { downloadBuilderToolset } from "app-builder-lib/out/util/electronGet"
-import { exec, executeFinally, exists, isEmptyOrSpaces, TmpDir } from "builder-util"
+import { exec, executeFinally, exists, InvalidConfigurationError, isEmptyOrSpaces, log, TmpDir } from "builder-util"
+import { stat } from "fs/promises"
 import { writeFile } from "fs-extra"
 import * as path from "path"
 import { DmgBuildConfig } from "./dmg"
@@ -17,7 +18,21 @@ export function getDmgTemplatePath() {
 async function getDmgVendorPath(): Promise<string> {
   const customDmgbuildPath = process.env.CUSTOM_DMGBUILD_PATH?.trim()
   if (customDmgbuildPath) {
-    return path.resolve(customDmgbuildPath)
+    const resolvedPath = path.resolve(customDmgbuildPath)
+    let dmgbuildStat: Awaited<ReturnType<typeof stat>>
+    try {
+      dmgbuildStat = await stat(resolvedPath)
+    } catch (e: any) {
+      if (e.code === "ENOENT") {
+        throw new Error(`CUSTOM_DMGBUILD_PATH "${resolvedPath}" does not exist`)
+      }
+      throw e
+    }
+    if (!dmgbuildStat.isFile()) {
+      throw new Error(`CUSTOM_DMGBUILD_PATH "${resolvedPath}" is not a regular file`)
+    }
+    log.warn({ path: resolvedPath }, "using CUSTOM_DMGBUILD_PATH override for dmgbuild binary")
+    return resolvedPath
   }
 
   // https://github.com/electron-userland/electron-builder-binaries/releases/tag/dmg-builder%401.2.0
@@ -180,6 +195,16 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
   if (!isEmptyOrSpaces(settings.background)) {
     const size = await getImageSizeUsingSips(settings.background)
     settings.window = { position: { x: 400, y: Math.round((1440 - size.height) / 2) }, size, ...settings.window }
+  }
+
+  const workspaceRoot = await packager.info.getWorkspaceRoot()
+  for (const item of settings.contents ?? []) {
+    if (item.type === "file" && item.path && path.isAbsolute(item.path)) {
+      if (!item.path.startsWith(workspaceRoot + path.sep) && item.path !== appPath) {
+        log.error({ contentPath: item.path }, "dmg.contents path is outside the workspace root — verify this is intentional")
+        throw new InvalidConfigurationError(`dmg.contents path "${item.path}" is outside the workspace root`)
+      }
+    }
   }
 
   const settingsFile = await packager.getTempFile(".json")
