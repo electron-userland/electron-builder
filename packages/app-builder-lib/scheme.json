@@ -6934,7 +6934,12 @@
         },
         "signAndEditExecutable": {
           "default": true,
-          "description": "Whether to sign and add metadata to executable.\nMetadata includes information about the app name/description/version, publisher, copyright, etc.\nThis property also is responsible for adding the app icon and setting execution level.\n(Advanced option leveraging `rcedit`)",
+          "description": "Whether to edit executable resources and metadata.\nThis controls `rcedit`-based changes such as app icon, app name/description/version, publisher, copyright, and requested execution level.\nDisable to skip resource editing entirely. Signing is controlled separately by `signExecutable`.",
+          "type": "boolean"
+        },
+        "signExecutable": {
+          "default": true,
+          "description": "Whether to sign Windows executables, installers/artifacts, and any additional files matched by `signExts`.\nSet to `false` to skip Windows code signing while still editing executable resources (icon, metadata, etc. via `rcedit`) if `signAndEditExecutable` is `true`.",
           "type": "boolean"
         },
         "signExts": {
