@@ -78,8 +78,8 @@ describe.heavy.ifLinux("linux", optionsForFlakyE2E, () => {
   }
 })
 
-describe.heavy.ifLinux("AppImage env var integrity", optionsForFlakyE2E, () => {
-  test.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true")("env vars have no empty components and no relative paths", async ({ expect }) => {
+describe.heavy.ifLinux("AppImage", optionsForFlakyE2E, () => {
+  test.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true")("AppRun entrypoint", async ({ expect }) => {
     const tmpDir = new TmpDir("appimage-env-test")
 
     try {
@@ -109,7 +109,7 @@ describe.heavy.ifLinux("AppImage env var integrity", optionsForFlakyE2E, () => {
             function evalExports(env: Record<string, string> = {}): string[] {
               const result = spawnSync("bash", ["-c", `APPDIR="${APPDIR}"\n${exportLines}\nprintf '%s\\n' "$PATH" "$XDG_DATA_DIRS" "$LD_LIBRARY_PATH" "$GSETTINGS_SCHEMA_DIR"`], {
                 encoding: "utf8",
-                env,
+                env: { PATH: process.env.PATH, ...env },
               })
               return (result.stdout ?? "").trim().split("\n")
             }
