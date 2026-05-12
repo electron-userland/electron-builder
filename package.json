@@ -65,15 +65,5 @@
     "node": ">=14.14",
     "pnpm": ">=10"
   },
-  "packageManager": "pnpm@11.1.0+sha512.0c44e842e5686b2c061a81adda8b2258bd8818e9704b2cf2c63d56b931a7b2e910092e085027003b96ca3911ab56a07f6df5abaed2be9925034cdd686a535b14",
-  "pnpm": {
-    "patchedDependencies": {
-      "@changesets/cli@2.29.7": "patches/@changesets__cli@2.29.7.patch",
-      "@changesets/assemble-release-plan@6.0.9": "patches/@changesets__assemble-release-plan@6.0.9.patch"
-    },
-    "overrides": {
-      "flatted": ">=3.4.2",
-      "handlebars": ">=4.7.9"
-    }
-  }
+  "packageManager": "pnpm@11.1.0+sha512.0c44e842e5686b2c061a81adda8b2258bd8818e9704b2cf2c63d56b931a7b2e910092e085027003b96ca3911ab56a07f6df5abaed2be9925034cdd686a535b14"
 }
