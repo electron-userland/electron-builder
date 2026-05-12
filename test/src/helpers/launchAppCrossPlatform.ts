@@ -11,6 +11,20 @@ import path from "path"
  * Returns the macOS host's IP address on the Parallels virtual network.
  * The VM reaches the host via this address (not 127.0.0.1).
  */
+/**
+ * Converts a macOS path under the user home directory to its Parallels UNC form.
+ * Files in `~/` are reachable via `\\Mac\Home\...` (always shared) without needing
+ * "All Disks" sharing. Paths outside the home dir fall back to `\\Mac\Host\...`.
+ */
+export function toVmHomePath(macPath: string): string {
+  const home = os.homedir()
+  const rel = path.relative(home, macPath)
+  if (!rel.startsWith("..")) {
+    return "\\\\Mac\\Home\\" + rel.replace(/\//g, "\\")
+  }
+  return "\\\\Mac\\Host\\" + macPath.replace(/\//g, "\\")
+}
+
 export function getParallelsHostIP(): string | undefined {
   const interfaces = os.networkInterfaces()
   for (const [name, addrs] of Object.entries(interfaces)) {
@@ -165,7 +179,7 @@ export async function launchAndWaitForQuit({
   // VM-based execution: prlctl exec runs synchronously (blocks until the process exits),
   // so we build a PowerShell command that sets env vars and runs the app, then parse stdout.
   if (vm) {
-    const vmConfigPath = vm.toVmFile(updateConfigPath)
+    const vmConfigPath = toVmHomePath(updateConfigPath)
     const envVars: Record<string, string> = {
       AUTO_UPDATER_TEST: "1",
       AUTO_UPDATER_TEST_CONFIG_PATH: vmConfigPath,

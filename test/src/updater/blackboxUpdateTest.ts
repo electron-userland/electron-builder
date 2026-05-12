@@ -12,18 +12,12 @@ import { copy, existsSync, move, outputFile, readJsonSync, remove } from "fs-ext
 import { homedir } from "os"
 import path from "path"
 import { ExpectStatic, TestContext, TestOptions } from "vitest"
-import { createLocalServer, getParallelsHostIP, launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
+import { createLocalServer, getParallelsHostIP, launchAndWaitForQuit, toVmHomePath } from "../helpers/launchAppCrossPlatform"
 import { assertPack, EXTENDED_TIMEOUT, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
-const windowsVm = await (async () => {
-  try {
-    return await getWindowsVm(new DebugLogger(false))
-  } catch {
-    return undefined
-  }
-})()
+const windowsVmPromise: Promise<VmManager | undefined> = getWindowsVm(new DebugLogger(false)).catch(() => undefined)
 
 async function sha256File(filePath: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -56,8 +50,11 @@ const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "
 
 for (const winCodeSign of winCodeSignVersions) {
   describe(`winCodeSign: ${winCodeSign}`, optionsForFlakyE2E, () => {
-    describe.heavy.ifWindows("windows", optionsForFlakyE2E, () => {
+    describe.heavy("windows", optionsForFlakyE2E, () => {
       test("nsis", async context => {
+        if (process.platform !== "win32" && (await windowsVmPromise) == null) {
+          context.skip()
+        }
         await runTest(context, "nsis", "", Arch.x64, { winCodeSign })
       })
     })
@@ -124,14 +121,14 @@ const packageManagerMap: {
 
 async function runTest(context: TestContext, target: string, packageManager: string, arch: Arch = Arch.x64, toolsets: ToolsetConfig = {}) {
   const { expect } = context
-  const vm = windowsVm
+  const vm = await windowsVmPromise
   if (vm && target === "nsis") {
     console.log("Running Windows test via Parallels VM")
   }
 
   const tmpDir = new TmpDir("auto-update")
   const outDirs: ApplicationUpdatePaths[] = []
-  await doBuild(expect, outDirs, target, arch, tmpDir, windowsVm != null, { toolsets })
+  await doBuild(expect, outDirs, target, arch, tmpDir, process.platform === "win32" || (target === "nsis" && vm != null), { toolsets })
 
   const oldAppDir = outDirs[0]
   const newAppDir = outDirs[1]
@@ -524,7 +521,7 @@ async function handleInitialInstallPerOS({ target, dirPath, arch, vm }: { target
     ].join("\n")
 
     await outputFile(scriptPath, psScript)
-    const winScriptPath = vm.toVmFile(scriptPath)
+    const winScriptPath = toVmHomePath(scriptPath)
     try {
       const installResult = await vm.exec("powershell.exe", ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", winScriptPath], { timeout: 300000 })
       console.log("Installer output:", installResult)
@@ -575,11 +572,13 @@ async function runTestWithinServer(doTest: (rootDirectory: string, updateConfigP
   const root = await tmpDir.getTempDir({ prefix: "server-root" })
 
   // When a VM is in use, the update server must be reachable from inside the VM.
-  // Parallels exposes the macOS host via the prl* interface IP — bind to all
-  // interfaces so that IP is accessible, and use it in the config URL.
-  const bindAddress = vm ? "0.0.0.0" : "127.0.0.1"
-  const { server, port } = await createLocalServer(root, bindAddress)
-  const serverHost = vm ? (getParallelsHostIP() ?? "127.0.0.1") : "127.0.0.1"
+  // Bind to the Parallels host IP specifically so the server is accessible from the VM
+  // without exposing it on all interfaces.
+  const serverHost = vm ? getParallelsHostIP() : "127.0.0.1"
+  if (vm && !serverHost) {
+    throw new Error("Cannot determine Parallels host IP for update server — no prl*/bridge* interface found")
+  }
+  const { server, port } = await createLocalServer(root, serverHost!)
 
   const serverConfig: GenericServerOptions = { provider: "generic", url: `http://${serverHost}:${port}` }
   let updateConfig: string
