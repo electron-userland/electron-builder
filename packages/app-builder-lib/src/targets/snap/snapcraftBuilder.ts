@@ -199,13 +199,20 @@ async function copySnapToArtifactPath(workDir: string, outputBasename: string, o
 }
 
 /**
- * Builds a snap package from SnapcraftYAML configuration
+ * Builds a snap package from SnapcraftYAML configuration.
+ *
+ * `SNAPCRAFT_NO_NETWORK` is intentionally **not** forced to `"1"` here.
+ * All build modes (destructive-mode, LXD, Multipass, remote) require network
+ * access to download stage-packages, the base image, and extensions.
+ * To opt into an offline build, set `SNAPCRAFT_NO_NETWORK=1` in your environment.
  */
 export async function buildSnap(options: BuildSnapOptions): Promise<string> {
-  const { SNAPCRAFT_NO_NETWORK = "1" } = process.env
+  const { SNAPCRAFT_NO_NETWORK } = process.env
   const { snapcraftConfig, artifactPath, remoteBuild, stageDir, useLXD = false, useMultipass = false, useDestructiveMode = false } = options
 
-  const env: Record<string, string> = { SNAPCRAFT_NO_NETWORK }
+  const env: Record<string, string> = {
+    ...(SNAPCRAFT_NO_NETWORK != null ? { SNAPCRAFT_NO_NETWORK } : {}),
+  }
   if (useDestructiveMode) {
     env.SNAPCRAFT_BUILD_ENVIRONMENT = "host"
   }
@@ -213,15 +220,12 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string> {
   // Config validation — throws InvalidConfigurationError, no build artifacts exist yet.
   validateSnapcraftConfig(snapcraftConfig)
 
-  // Non-fatal CLI pre-validation: expand-extensions can fail in some environments
-  // (no store access, host-mode context). The actual build will surface real errors.
   try {
     await validateSnapcraftYamlWithCLI(stageDir)
   } catch (validationError: any) {
     log.warn({ error: validationError.message }, "snapcraft CLI pre-validation failed (non-fatal), continuing build")
   }
 
-  // Prerequisite and auth checks — these throw before any artifacts are created.
   await ensureSnapcraftInstalled()
 
   if (remoteBuild?.enabled) {

@@ -71,7 +71,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     try {
       const appPart = snap.parts[snap.name]
       if (appPart) {
-        const entries = await readdir(appOutDir)
+        const entries = (await readdir(appOutDir)).sort()
         const organize: Record<string, string> = (appPart.organize as Record<string, string>) || {}
         for (const entry of entries) {
           if (!entry) {
@@ -262,7 +262,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       // Metadata - with fallbacks from appInfo
       version: appInfo.version,
       summary: options.summary || appInfo.productName,
-      description: appInfo.description || options.summary || appInfo.productName,
+      description: this.helper.getDescription(options),
       grade: options.grade || "stable",
       title: options.title || appInfo.productName,
       icon: iconPath,

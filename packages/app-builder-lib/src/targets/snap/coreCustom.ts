@@ -21,7 +21,7 @@ export class SnapCoreCustom extends SnapCore<SnapOptionsCustom> {
     const { yaml: yamlPath } = this.options
     if (!yamlPath) {
       throw new InvalidConfigurationError(
-        'snap.core = "custom" requires an entry in snap.custom.yaml (either a path to a snapcraft.yaml file or a SnapcraftYAML object directly in the configuration)'
+        'snapcraft.base = "custom" requires an entry in snapcraft.custom.yaml (either a path to a snapcraft.yaml file or a SnapcraftYAML object directly in the configuration)'
       )
     }
     if (typeof yamlPath !== "string") {
@@ -30,7 +30,7 @@ export class SnapCoreCustom extends SnapCore<SnapOptionsCustom> {
     const resolved = path.resolve(this.packager.buildResourcesDir, yamlPath)
     const buildResourcesDir = this.packager.buildResourcesDir
     if (!resolved.startsWith(buildResourcesDir + path.sep) && resolved !== buildResourcesDir) {
-      throw new InvalidConfigurationError(`snap.custom.yaml must resolve within the build resources directory (got "${resolved}")`)
+      throw new InvalidConfigurationError(`snapcraft.custom.yaml must resolve within the build resources directory (got "${resolved}")`)
     }
     const raw = await readFile(resolved, "utf8")
     return yaml.load(raw) as SnapcraftYAML

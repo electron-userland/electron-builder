@@ -25,7 +25,9 @@ export const UNSTABLE_FAIL_RATIO = 0.2
 // Add here broken tests to exclude from smart sharding
 // TODO: FIX ALL OF THESE 😅
 export const skippedTests =
-  process.env.SKIPPED_TESTS?.split(",") ||
+  process.env.SKIPPED_TESTS?.split(",")
+    .map(s => s.trim())
+    .filter(Boolean) ||
   [
     // These tests require running on a native Linux environment with Flatpak support
     // "flatpakTest",
