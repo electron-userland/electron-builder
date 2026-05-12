@@ -128,7 +128,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
       // - Explicit allowNativeWayland override.
       // https://github.com/electron-userland/electron-builder/issues/9320
       const allow = options.allowNativeWayland
-      const isOldElectron = !this.helper.isElectronVersionGreaterOrEqualThan("38.0.0")
+      const isOldElectron = !this.helper.isElectronVersionGreaterOrEqualThan("38.0.0", "7.0.0")
       if (
         (allow == null && isOldElectron) || // No explicit option -> use legacy behavior for old Electron
         allow === false // Explicitly disallowed

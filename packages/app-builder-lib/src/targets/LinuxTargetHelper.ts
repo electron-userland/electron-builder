@@ -65,10 +65,10 @@ export class LinuxTargetHelper {
     return new SnapCoreLegacy(this.packager, this, legacySnap)
   }
 
-  isElectronVersionGreaterOrEqualThan(version: string): boolean {
+  isElectronVersionGreaterOrEqualThan(version: string, fallback?: string): boolean {
     const electronVersion = this.packager.config.electronVersion
     if (!electronVersion) {
-      return true
+      return fallback ? semver.gte(fallback, version) : true
     }
     return semver.gte(electronVersion, version)
   }

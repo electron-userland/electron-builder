@@ -1,8 +1,6 @@
-The top-level [`snapcraft`](#configuration) key is the recommended way to configure [Snap](https://snapcraft.io) builds.
-It requires an explicit `base` field and separates per-core options cleanly.
+The top-level [`snapcraft`](#configuration) key is the recommended way to configure [Snap](https://snapcraft.io) builds. It requires an explicit `base` field and separates per-core options cleanly.
 
-The legacy [`snap`](#legacy-snap-key) key is **deprecated** — it is still supported for `core22` and older but will not receive new features.
-See [Migrating from `snap` to `snapcraft`](#migrating-from-snap-to-snapcraft) if you are on the old key.
+The legacy [`snap`](#legacy-snap-key) key is **deprecated** — it is still supported for `core22` and older but will not receive new features. See [Migrating from `snap` to `snapcraft`](#migrating-from-snap-to-snapcraft) if you are on the old key.
 
 ---
 
@@ -10,9 +8,7 @@ See [Migrating from `snap` to `snapcraft`](#migrating-from-snap-to-snapcraft) if
 
 > **Beta** — core24 support is new. Please report any issues.
 
-`core24` targets Ubuntu 24.04 Noble and requires **Electron 25.0.0+** (28.0.0+ recommended).
-It uses snapcraft v8 (craft-application framework) and brings first-class Wayland, the GNOME extension,
-and Launchpad remote builds for multi-arch CI.
+`core24` targets Ubuntu 24.04 Noble and requires **Electron 25.0.0+** (28.0.0+ recommended). It uses snapcraft v8 (craft-application framework) and brings first-class Wayland, the GNOME extension, and Launchpad remote builds for multi-arch CI.
 
 ```json
 {
@@ -36,13 +32,11 @@ Choose one build environment. They are mutually exclusive.
 | `useDestructiveMode: true` | Linux only | Docker CI containers without any virtualisation |
 | `remoteBuild.enabled: true` | Any | Multi-arch CI (amd64, arm64, armhf) via Launchpad |
 
-If none is set and you are on Linux, snapcraft's own default (Multipass) is used.
-On non-Linux platforms you must choose `useMultipass` or `remoteBuild`.
+If none is set and you are on Linux, snapcraft's own default (Multipass) is used. On non-Linux platforms you must choose `useMultipass` or `remoteBuild`.
 
 #### LXD
 
-Container-based isolation. Preferred on most Linux CI systems because it does not require nested
-virtualisation (unlike Multipass).
+Container-based isolation. Preferred on most Linux CI systems because it does not require nested virtualisation (unlike Multipass).
 
 ```json
 {
@@ -83,17 +77,13 @@ VM-based isolation. The default choice for local development on macOS and Window
 Builds directly on the host without any VM or container (`snapcraft --destructive-mode`).
 
 !!! warning
-    **Not recommended for production builds.** Destructive mode pollutes the host environment —
-    any library present on the host at build time can end up in the snap, making builds difficult
-    to reproduce. Prefer `useLXD` or `useMultipass` for clean builds.
+    **Not recommended for production builds.** Destructive mode pollutes the host environment — any library present on the host at build time can end up in the snap, making builds difficult to reproduce. Prefer `useLXD` or `useMultipass` for clean builds.
 
 Valid reason(s) to use this mode:
 
 - CI test suites where the environment is already fully controlled.
 
-The `gnome` extension is **incompatible** with destructive mode. electron-builder automatically
-clears `extensions` when `useDestructiveMode` is set; explicitly including `"gnome"` alongside it
-will throw an error.
+The `gnome` extension is **incompatible** with destructive mode. electron-builder automatically clears `extensions` when `useDestructiveMode` is set; explicitly including `"gnome"` alongside it will throw an error.
 
 ```json
 {
@@ -109,8 +99,7 @@ will throw an error.
 
 #### Remote Build on Launchpad
 
-Builds on [Canonical's Launchpad](https://launchpad.net/) infrastructure. Works from any platform
-and supports building for multiple architectures simultaneously (`amd64`, `arm64`, `armhf`).
+Builds on [Canonical's Launchpad](https://launchpad.net/) infrastructure. Works from any platform and supports building for multiple architectures simultaneously (`amd64`, `arm64`, `armhf`).
 
 ```json
 {
@@ -128,8 +117,7 @@ and supports building for multiple architectures simultaneously (`amd64`, `arm64
 ```
 
 !!! note
-    Unless `privateProject` is set, your source code is uploaded to a **public** Launchpad
-    repository. Set `acceptPublicUpload: true` to suppress the interactive consent prompt in CI.
+    Unless `privateProject` is set, your source code is uploaded to a **public** Launchpad repository. Set `acceptPublicUpload: true` to suppress the interactive consent prompt in CI.
 
 ##### Authentication
 
@@ -140,8 +128,7 @@ Remote builds require Snapcraft Store credentials. electron-builder resolves the
 3. `SNAPCRAFT_STORE_CREDENTIALS` — plain-text macaroon, read directly by snapcraft.
 4. An active interactive `snapcraft login` session.
 
-Credentials are injected **only into the spawned `snapcraft` subprocess** environment and are
-never exposed through `process.env`.
+Credentials are injected **only into the spawned `snapcraft` subprocess** environment and are never exposed through `process.env`.
 
 This follows the same pattern as `WIN_CSC_LINK` / `CSC_LINK` for [code signing](./code-signing.md).
 
@@ -164,8 +151,7 @@ Then set `SNAP_CSC_LINK` in your CI environment:
   run: npx electron-builder --linux snap
 ```
 
-To embed credentials directly in the config (useful for monorepos where the credential is managed
-per-project):
+To reference credentials file directly via the config (useful for monorepos where the credential is managed per-project):
 
 ```json
 {
@@ -174,7 +160,7 @@ per-project):
     "core24": {
       "remoteBuild": {
         "enabled": true,
-        "cscLink": "base64encodedcredentials..."
+        "cscLink": "file://..."
       }
     }
   }
@@ -205,15 +191,13 @@ You normally do not need to configure `extensions` at all. To opt out:
 }
 ```
 
-When `extensions` is empty, electron-builder falls back to the standard Electron plug set and
-you are responsible for layout and content snap declarations.
+When `extensions` is empty, electron-builder falls back to the standard Electron plug set and you are responsible for layout and content snap declarations.
 
 ---
 
 ### Wayland
 
-`allowNativeWayland` defaults to `true` for core24. The snap runs with `--ozone-platform=wayland`
-on compositors that support it and falls back to XWayland otherwise.
+`allowNativeWayland` defaults to `true` for core24. The snap runs with `--ozone-platform=wayland` on compositors that support it and falls back to XWayland otherwise.
 
 To force X11-only mode:
 
@@ -251,8 +235,7 @@ Use the `"default"` keyword to extend the defaults rather than replace them:
 
 ## Core 22
 
-`core22` targets Ubuntu 22.04 Jammy. It is the most recent **stable** (non-beta) base and is
-supported via the legacy `SnapCoreLegacy` implementation.
+`core22` targets Ubuntu 22.04 Jammy. It is the most recent **stable** (non-beta) base and is supported via the legacy `SnapCoreLegacy` implementation.
 
 ```json
 {
@@ -316,9 +299,7 @@ Behaviour is identical to core22 above. Use core22 unless the Snap Store require
 
 ## Custom Pass-Through
 
-Set `base: "custom"` to pass a `snapcraft.yaml` file (or an inline object) through to snapcraft
-verbatim. electron-builder performs no injection — no plugs, extensions, organize mappings, or
-desktop entries are added.
+Set `base: "custom"` to pass a `snapcraft.yaml` file (or an inline object) through to snapcraft verbatim. electron-builder performs no injection — no plugs, extensions, organize mappings, or desktop entries are added.
 
 ```json
 {
@@ -331,16 +312,13 @@ desktop entries are added.
 }
 ```
 
-The `yaml` path is resolved relative to the build resources directory (`build/` by default).
-You can also supply the YAML content inline as an object in the config.
+The `yaml` path is resolved relative to the build resources directory (`build/` by default). You can also supply the YAML content inline as an object in the config.
 
 ---
 
 ## Migrating from `snap` to `snapcraft`
 
-The legacy `snap` key is equivalent to using `snapcraft` with a per-core options object. The
-`base` field moves to the top level of `snapcraft`, and all other fields move inside the
-corresponding core key.
+The legacy `snap` key is equivalent to using `snapcraft` with a per-core options object. The `base` field moves to the top level of `snapcraft`, and all other fields move inside the corresponding core key.
 
 ```jsonc
 // Before — deprecated snap key
@@ -366,8 +344,7 @@ corresponding core key.
 }
 ```
 
-The `snap` key continues to work for `core22` and older. Omit `base` from the inner object — it
-lives at `snapcraft.base` now.
+The `snap` key continues to work for `core22` and older. Omit `base` from the inner object — it lives at `snapcraft.base` now.
 
 ---
 
