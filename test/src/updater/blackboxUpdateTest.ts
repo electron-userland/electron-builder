@@ -37,7 +37,7 @@ async function sha256File(filePath: string): Promise<string> {
 const optionsForFlakyE2E: TestOptions = { sequential: true, retry: 0, timeout: EXTENDED_TIMEOUT }
 // Linux Tests MUST be run in docker containers for proper ephemeral testing environment (e.g. fresh install + update + relaunch)
 // Currently this test logic does not handle uninstalling packages (yet)
-describe.ifMac.heavy("mac", optionsForFlakyE2E, () => {
+describe.ifMac.heavy.ifEnv(process.env.CSC_KEY_LINK != null)("mac", optionsForFlakyE2E, () => {
   // can test on x64 and also arm64 (via rosetta)
   test("x64", async context => {
     await runTest(context, "zip", "", Arch.x64)
