@@ -1,5 +1,6 @@
 import { ToolsetConfig } from "app-builder-lib"
 import { PM } from "app-builder-lib/out/node-module-collector"
+import { ParallelsVmManager } from "app-builder-lib/out/vm/ParallelsVm"
 import { getWindowsVm, VmManager } from "app-builder-lib/out/vm/vm"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
 import { archFromString, DebugLogger, getArchSuffix, isEmptyOrSpaces, log, serializeToYaml, spawn, TmpDir } from "builder-util/out/util"
@@ -17,7 +18,11 @@ import { assertPack, EXTENDED_TIMEOUT, modifyPackageJson, PackedContext } from "
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
-const windowsVmPromise: Promise<VmManager | undefined> = getWindowsVm(new DebugLogger(false)).catch(() => undefined)
+// Resolve only to a ParallelsVmManager — PwshVmManager (used for code-signing on Linux/Mac via Wine)
+// is not capable of installing or running Windows executables and must not be treated as a Windows VM.
+const windowsVmPromise: Promise<ParallelsVmManager | undefined> = getWindowsVm(new DebugLogger(false))
+  .then(vm => (vm instanceof ParallelsVmManager ? vm : undefined))
+  .catch(() => undefined)
 
 async function sha256File(filePath: string): Promise<string> {
   return new Promise((resolve, reject) => {
