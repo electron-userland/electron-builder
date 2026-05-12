@@ -1,8 +1,8 @@
 import { ToolsetConfig } from "app-builder-lib"
 import { PM } from "app-builder-lib/out/node-module-collector"
-import { VmManager } from "app-builder-lib/out/vm/vm"
+import { getWindowsVm, VmManager } from "app-builder-lib/out/vm/vm"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
-import { archFromString, getArchSuffix, isEmptyOrSpaces, log, serializeToYaml, spawn, TmpDir } from "builder-util/out/util"
+import { archFromString, DebugLogger, getArchSuffix, isEmptyOrSpaces, log, serializeToYaml, spawn, TmpDir } from "builder-util/out/util"
 import { execFileSync, execSync } from "child_process"
 import { createHash, randomUUID } from "crypto"
 import { Arch, Configuration, Platform } from "electron-builder"
@@ -16,6 +16,14 @@ import { createLocalServer, getParallelsHostIP, launchAndWaitForQuit } from "../
 import { assertPack, EXTENDED_TIMEOUT, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
+
+const windowsVm = await (async () => {
+  try {
+    return await getWindowsVm(new DebugLogger(false))
+  } catch {
+    return undefined
+  }
+})()
 
 async function sha256File(filePath: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -123,7 +131,7 @@ async function runTest(context: TestContext, target: string, packageManager: str
 
   const tmpDir = new TmpDir("auto-update")
   const outDirs: ApplicationUpdatePaths[] = []
-  await doBuild(expect, outDirs, target, arch, tmpDir, isWindows, { toolsets })
+  await doBuild(expect, outDirs, target, arch, tmpDir, windowsVm != null, { toolsets })
 
   const oldAppDir = outDirs[0]
   const newAppDir = outDirs[1]
