@@ -1,8 +1,8 @@
 import { RemoteBuildOptions } from "../../options/SnapOptions"
-import { log, spawn } from "builder-util"
+import { importCredentialContent } from "../../codeSign/codesign"
+import { InvalidConfigurationError, log, spawn } from "builder-util"
 import * as childProcess from "child_process"
-import { access, copyFile, ensureDir, pathExists, readdir, readFile, remove } from "fs-extra"
-import * as os from "os"
+import { copyFile, ensureDir, pathExists, readdir, remove } from "fs-extra"
 import * as path from "path"
 import * as util from "util"
 import { SnapcraftYAML } from "./snapcraft"
@@ -25,34 +25,8 @@ interface BuildSnapOptions {
   useMultipass?: boolean
   /** Whether to use destructive mode (builds directly on host, Linux only) */
   useDestructiveMode?: boolean
-  /** Additional environment variables for the build */
-  env?: Record<string, string>
   /** The snap output path */
   artifactPath: string
-}
-
-/**
- * Progress tracker for snap builds
- */
-class SnapBuildProgress {
-  private startTime = Date.now()
-
-  logStage(stage: string, message: string, percentage?: number) {
-    const elapsed = Math.floor((Date.now() - this.startTime) / 1000)
-    log.debug(
-      {
-        stage,
-        elapsed: `${elapsed}s`,
-        percentage: percentage ? `${percentage}%` : undefined,
-      },
-      message
-    )
-  }
-
-  complete() {
-    const totalTime = Math.floor((Date.now() - this.startTime) / 1000)
-    log.info({ totalTime: `${totalTime}s` }, "snap build complete")
-  }
 }
 
 /**
@@ -113,11 +87,6 @@ function validateSnapcraftConfig(config: SnapcraftYAML): void {
     }
   }
 
-  // Summary validation
-  if (config.summary && config.summary.length > 78) {
-    warnings.push(`summary is ${config.summary.length} characters (recommended: 78 or less)`)
-  }
-
   // Parts validation
   Object.entries(config.parts).forEach(([partName, part]) => {
     if (!part.plugin) {
@@ -134,10 +103,15 @@ function validateSnapcraftConfig(config: SnapcraftYAML): void {
     })
   }
 
+  // Summary validation
+  if (config.summary && config.summary.length > 78) {
+    warnings.push(`summary is ${config.summary.length} characters (recommended: 78 or less)`)
+  }
+
   // Log results
   if (errors.length > 0) {
     log.error({ errors }, "snapcraft.yaml validation failed")
-    throw new Error(`Invalid snapcraft.yaml: ${errors.join(", ")}`)
+    throw new InvalidConfigurationError(`Invalid snapcraft.yaml: ${errors.join(", ")}`)
   }
 
   if (warnings.length > 0) {
@@ -228,66 +202,50 @@ async function copySnapToArtifactPath(workDir: string, outputBasename: string, o
  * Builds a snap package from SnapcraftYAML configuration
  */
 export async function buildSnap(options: BuildSnapOptions): Promise<string> {
-  const progress = new SnapBuildProgress()
   const { SNAPCRAFT_NO_NETWORK = "1" } = process.env
-  const { snapcraftConfig, artifactPath, remoteBuild, stageDir, useLXD = false, useMultipass = false, useDestructiveMode = false, env: userEnv } = options
+  const { snapcraftConfig, artifactPath, remoteBuild, stageDir, useLXD = false, useMultipass = false, useDestructiveMode = false } = options
 
-  // Build environment: start from user-provided env, ensure network-disabled by default.
-  const env: Record<string, string> = {
-    ...(userEnv || {}),
-    SNAPCRAFT_NO_NETWORK,
-  }
-
-  // Only force host (destructive) build environment when destructive mode is explicitly requested.
+  const env: Record<string, string> = { SNAPCRAFT_NO_NETWORK }
   if (useDestructiveMode) {
     env.SNAPCRAFT_BUILD_ENVIRONMENT = "host"
   }
 
+  // Config validation — throws InvalidConfigurationError, no build artifacts exist yet.
+  validateSnapcraftConfig(snapcraftConfig)
+
+  // Non-fatal CLI pre-validation: expand-extensions can fail in some environments
+  // (no store access, host-mode context). The actual build will surface real errors.
   try {
-    progress.logStage("preparing", "validating snapcraft configuration", 10)
-    validateSnapcraftConfig(snapcraftConfig)
+    await validateSnapcraftYamlWithCLI(stageDir)
+  } catch (validationError: any) {
+    log.warn({ error: validationError.message }, "snapcraft CLI pre-validation failed (non-fatal), continuing build")
+  }
 
-    progress.logStage("preparing", "validating with snapcraft CLI", 35)
-    try {
-      await validateSnapcraftYamlWithCLI(stageDir)
-    } catch (validationError: any) {
-      // Non-fatal: expand-extensions can fail in some environments (e.g. no store
-      // access, host-mode context). The actual snapcraft pack will surface real errors.
-      log.warn({ error: validationError.message }, "snapcraft CLI pre-validation failed (non-fatal), continuing build")
-    }
+  // Prerequisite and auth checks — these throw before any artifacts are created.
+  await ensureSnapcraftInstalled()
 
-    // Step 5: Detect platform and determine build strategy
-    progress.logStage("preparing", "detecting platform and build method", 50)
-    const platform = process.platform
-    await ensureSnapcraftInstalled(platform)
+  if (remoteBuild?.enabled) {
+    const authEnv = await ensureRemoteBuildAuthentication(remoteBuild)
+    Object.assign(env, authEnv)
+  }
 
-    // Step 6: Authenticate for remote build
-    if (remoteBuild?.enabled) {
-      progress.logStage("preparing", "authenticating for remote build", 60)
-      await ensureRemoteBuildAuthentication(remoteBuild, env)
-    }
+  const projectAppDir = path.join(stageDir, "app")
+  if (!(await pathExists(projectAppDir))) {
+    throw new InvalidConfigurationError(`snap build failed: expected app directory not found at ${projectAppDir}`)
+  }
+  log.debug({ appFiles: (await readdir(projectAppDir)).slice(0, 20) }, "app directory contents (truncated)")
 
-    // Step 7: Execute build with retry
-    // Pre-flight: ensure the app directory exists where snapcraft expects it (stageDir/app).
-    const projectAppDir = path.join(stageDir, "app")
-    if (!(await pathExists(projectAppDir))) {
-      log.error({ path: projectAppDir }, "snap build failed: app directory not found")
-      throw new Error(`snap build failed: expected app directory not found at ${projectAppDir}`)
-    }
-    const files = await readdir(projectAppDir)
-    log.debug({ appFiles: files.slice(0, 20) }, "app directory contents (truncated)")
+  if (!remoteBuild?.enabled && !useLXD && !useMultipass && !useDestructiveMode && process.platform !== "linux") {
+    throw new InvalidConfigurationError(
+      `No snap build environment specified for ${process.platform}. ` +
+        `Set one of: snapcraft.core24.useMultipass, snapcraft.core24.useLXD (Linux only), ` +
+        `or snapcraft.core24.remoteBuild.enabled`
+    )
+  }
 
-    // Validate build environment selection on non-Linux hosts where snapcraft has no fallback.
-    if (!remoteBuild?.enabled && !useLXD && !useMultipass && !useDestructiveMode && process.platform !== "linux") {
-      throw new Error(
-        `No snap build environment specified for ${process.platform}. ` +
-          `Set one of: snapcraft.core24.useMultipass, snapcraft.core24.useLXD (Linux only), ` +
-          `or snapcraft.core24.remoteBuild.enabled`
-      )
-    }
-
-    progress.logStage("building", "running snapcraft build", 70)
-    const snapFilePath = await executeWithRetry(
+  // Actual build — only this step can leave partial artifacts that need cleanup.
+  try {
+    return await executeWithRetry(
       () =>
         executeSnapcraftBuild({
           workDir: stageDir,
@@ -299,26 +257,13 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string> {
           env,
           compression: snapcraftConfig.compression,
         }),
-      {
-        maxRetries: remoteBuild?.enabled ? 3 : 1,
-        retryDelay: 10000,
-      }
+      { maxRetries: remoteBuild?.enabled ? 3 : 1, retryDelay: 10000 }
     )
-
-    progress.logStage("complete", "snap built successfully", 100)
-    progress.complete()
-
-    log.info({ snapFilePath }, "snap build complete")
-    return snapFilePath
   } catch (error: any) {
-    log.error({ error: error.message, stack: error.stack }, "snap build failed")
-
-    try {
-      await cleanupBuildArtifacts(stageDir, false)
-    } catch (cleanupError: any) {
+    log.error({ error: error.message }, "snap build failed")
+    await cleanupBuildArtifacts(stageDir, false).catch((cleanupError: any) => {
       log.warn({ error: cleanupError.message }, "failed to cleanup build artifacts")
-    }
-
+    })
     throw error
   }
 }
@@ -326,13 +271,14 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string> {
 /**
  * Ensures snapcraft is installed on the system
  */
-async function ensureSnapcraftInstalled(platform: string): Promise<void> {
+async function ensureSnapcraftInstalled(): Promise<void> {
   try {
     const { stdout } = await execAsync("snapcraft --version")
     log.info({ version: stdout.trim() }, "snapcraft found")
   } catch (error: any) {
     log.error({ error: error.message }, "snapcraft is not installed")
 
+    const platform = process.platform
     if (platform === "linux") {
       log.error(null, "Install with: sudo snap install snapcraft --classic")
     } else if (platform === "darwin") {
@@ -343,73 +289,81 @@ async function ensureSnapcraftInstalled(platform: string): Promise<void> {
       log.error(null, "See: https://snapcraft.io/docs/snapcraft-overview")
     }
 
-    throw new Error("snapcraft not found - please install snapcraft to continue")
+    throw new InvalidConfigurationError("snapcraft not found - please install snapcraft to continue")
   }
 }
 
 /**
- * Ensures remote build authentication is configured
+ * Resolves Snapcraft Store authentication and returns the credential env entries
+ * to inject into the snapcraft subprocess. Returns an empty map when snapcraft
+ * can authenticate itself (native env var or interactive session).
  */
-async function ensureRemoteBuildAuthentication(remoteBuild: RemoteBuildOptions, env: Record<string, string>): Promise<void> {
-  log.debug(null, "checking remote build authentication...")
+async function ensureRemoteBuildAuthentication(remoteBuild: RemoteBuildOptions): Promise<Record<string, string>> {
+  log.debug(null, "resolving remote build authentication...")
 
-  // Check if credentials file exists and is readable
-  if (remoteBuild.credentialsFile) {
+  // 1. remoteBuild.cscLink — config-level credential (base64 or file path).
+  // Takes priority over the env var, mirroring Mac/Windows cscLink behaviour.
+  if (remoteBuild.cscLink) {
     try {
-      const credentials = await readFile(remoteBuild.credentialsFile, "utf8")
-
-      if (!credentials || credentials.trim().length === 0) {
-        throw new Error("Credentials file is empty")
+      const credentials = await importCredentialContent(remoteBuild.cscLink, process.cwd())
+      if (!credentials.trim()) {
+        throw new InvalidConfigurationError("resolved credentials are empty")
       }
-
-      env["SNAPCRAFT_STORE_CREDENTIALS"] = credentials.trim()
-      log.debug(null, "using credentials from file")
-      return
-    } catch (error: any) {
-      log.error({ error: error.message, file: remoteBuild.credentialsFile }, "failed to read credentials file")
-      throw new Error(
-        `Failed to read credentials file '${remoteBuild.credentialsFile}': ${error.message}\n` + `Generate credentials with: snapcraft export-login ${remoteBuild.credentialsFile}`
+      log.debug(null, "snap store credentials resolved from remoteBuild.cscLink")
+      return { SNAPCRAFT_STORE_CREDENTIALS: credentials.trim() }
+    } catch (e: any) {
+      throw new InvalidConfigurationError(
+        `remoteBuild.cscLink is not valid: ${e.message}\n` +
+          `Provide a base64-encoded credentials string or a file path.\n` +
+          `Generate with: snapcraft export-login - | base64 -w0`
       )
     }
   }
 
-  // Check if already authenticated
+  // 2. SNAP_CSC_LINK env var — CI-friendly alternative (follows WIN_CSC_LINK pattern).
+  // Credential is decoded in memory and injected only into the subprocess env.
+  const snapCscLink = process.env.SNAP_CSC_LINK
+  if (snapCscLink) {
+    try {
+      const credentials = await importCredentialContent(snapCscLink, process.cwd())
+      if (!credentials.trim()) {
+        throw new InvalidConfigurationError("resolved credentials are empty")
+      }
+      log.debug(null, "snap store credentials resolved from SNAP_CSC_LINK")
+      return { SNAPCRAFT_STORE_CREDENTIALS: credentials.trim() }
+    } catch (e: any) {
+      throw new InvalidConfigurationError(
+        `SNAP_CSC_LINK is not valid: ${e.message}\n` +
+          `Set SNAP_CSC_LINK to a base64-encoded credentials string or a file path.\n` +
+          `Generate with: snapcraft export-login - | base64 -w0`
+      )
+    }
+  }
+
+  // 3. SNAPCRAFT_STORE_CREDENTIALS already in process.env — snapcraft reads it natively.
+  if (process.env.SNAPCRAFT_STORE_CREDENTIALS) {
+    log.debug(null, "using SNAPCRAFT_STORE_CREDENTIALS from environment, verbatim")
+    return {}
+  }
+
+  // 4. Interactive snapcraft session.
   try {
     const { stdout } = await execAsync("snapcraft whoami")
     if (stdout.includes("email:")) {
       log.debug({ account: stdout.trim() }, "already authenticated with snapcraft")
-      return
+      return {}
     }
-  } catch (error) {
-    // Not logged in, continue with checks
+  } catch {
+    // Not logged in, fall through to error.
   }
 
-  // Check for SSH key (required for remote build)
-  const sshKeyPath = remoteBuild.sshKeyPath || path.join(os.homedir(), ".ssh", "id_rsa")
-
-  try {
-    await access(sshKeyPath)
-    log.debug({ sshKeyPath }, "SSH key found")
-  } catch (error) {
-    const publicKeyPath = `${sshKeyPath}.pub`
-    log.error({ sshKeyPath, publicKeyPath }, "SSH key not found - remote build requires SSH authentication")
-    throw new Error(
-      `SSH key not found at ${sshKeyPath}\n` +
-        `To set up remote build:\n` +
-        `1. Generate SSH key: ssh-keygen -t rsa -b 4096 -f ${sshKeyPath}\n` +
-        `2. Add public key to Launchpad: https://launchpad.net/~/+editsshkeys\n` +
-        `3. Login to Snapcraft: snapcraft login`
-    )
-  }
-
-  // Not authenticated
-  log.error(null, "not authenticated with snapcraft")
   throw new Error(
     "Snapcraft authentication required for remote build\n" +
       "Authenticate with one of:\n" +
-      "  1. Run: snapcraft login\n" +
-      `  2. Export credentials: snapcraft export-login credentials.txt\n` +
-      "  3. Set SNAPCRAFT_STORE_CREDENTIALS environment variable"
+      "  1. Set SNAP_CSC_LINK: snapcraft export-login - | base64 -w0\n" +
+      "  2. Set remoteBuild.cscLink in your build config\n" +
+      "  3. Run: snapcraft login\n" +
+      "  4. Set SNAPCRAFT_STORE_CREDENTIALS environment variable ("
   )
 }
 
@@ -446,7 +400,9 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
     //   2. `snap pack`  — the exact command snapcraft calls internally;
     //      operates purely as a squashfs tool, no snapd socket needed.
     const primeArgs = ["prime", "--destructive-mode"]
-    if (log.isDebugEnabled) primeArgs.push("--verbose")
+    if (log.isDebugEnabled) {
+      primeArgs.push("--verbose")
+    }
     log.info({ command: `snapcraft ${primeArgs.join(" ")}`, workDir: log.filePath(workDir) }, "snapcraft prime (1/2)")
     await spawn("snapcraft", primeArgs, {
       cwd: workDir,
@@ -532,7 +488,7 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
     args.push("--verbose")
   }
 
-  log.info({ command: `${command} ${args.join(" ")}`, workDir: log.filePath(workDir) }, "executing snapcraft build")
+  log.info({ command: `${command} ${args.join(" ")}`, workDir: log.filePath(workDir) }, "executing snapcraft")
 
   await spawn(command, args, {
     cwd: workDir,

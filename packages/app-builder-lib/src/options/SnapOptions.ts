@@ -230,9 +230,18 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
  * (amd64, arm64, armhf) without requiring native hardware or nested virtualisation.
  *
  * Authentication is resolved in this order:
- * 1. `credentialsFile` — path to a file produced by `snapcraft export-login`
- * 2. `SNAPCRAFT_STORE_CREDENTIALS` environment variable
- * 3. An active interactive `snapcraft login` session
+ * 1. `cscLink` config field — base64-encoded credentials or a file path
+ * 2. `SNAP_CSC_LINK` environment variable — same format as `cscLink`
+ *    (CI-recommended; follows the same pattern as `WIN_CSC_LINK` for Windows code signing)
+ * 3. `SNAPCRAFT_STORE_CREDENTIALS` environment variable (read directly by snapcraft)
+ * 4. An active interactive `snapcraft login` session
+ *
+ * **CI setup** (set once as a CI secret):
+ * ```sh
+ * export SNAP_CSC_LINK=$(snapcraft export-login - | base64 -w0)
+ * ```
+ * The resolved credentials are injected only into the spawned `snapcraft` subprocess
+ * environment and never exposed through `process.env`.
  */
 export interface RemoteBuildOptions {
   /**
@@ -266,18 +275,19 @@ export interface RemoteBuildOptions {
   privateProject?: string
 
   /**
-   * Path to an SSH private key used for Launchpad authentication.
-   * Defaults to `~/.ssh/id_rsa`. The matching public key must be registered
-   * on your Launchpad account.
+   * Snapcraft Store credentials — a base64-encoded credentials string or a file path.
+   * Accepts the same formats as `WIN_CSC_LINK` / `CSC_LINK` on Windows and macOS:
+   * base64 data, absolute/relative/`~/` file paths, and `file://` URIs.
+   *
+   * Generate a credentials string for CI:
+   * ```sh
+   * export SNAP_CSC_LINK=$(snapcraft export-login - | base64 -w0)
+   * ```
+   *
+   * The `SNAP_CSC_LINK` environment variable is the CI-friendly alternative when you
+   * cannot embed credentials in the build config.
    */
-  sshKeyPath?: string
-
-  /**
-   * Path to a Snapcraft credentials file produced by `snapcraft export-login <file>`.
-   * Recommended for CI/CD pipelines — avoids interactive login and does not require an
-   * SSH key on the build agent.
-   */
-  credentialsFile?: string
+  cscLink?: string
 
   /**
    * Resume a previously interrupted remote build rather than starting a new one.

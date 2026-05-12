@@ -5769,7 +5769,7 @@
     },
     "RemoteBuildOptions": {
       "additionalProperties": false,
-      "description": "Configuration for a remote snap build on [Launchpad](https://launchpad.net/).\nRemote builds run on Canonical's infrastructure and support multiple architectures\n(amd64, arm64, armhf) without requiring native hardware or nested virtualisation.\n\nAuthentication is resolved in this order:\n1. `credentialsFile` — path to a file produced by `snapcraft export-login`\n2. `SNAPCRAFT_STORE_CREDENTIALS` environment variable\n3. An active interactive `snapcraft login` session",
+      "description": "Configuration for a remote snap build on [Launchpad](https://launchpad.net/).\nRemote builds run on Canonical's infrastructure and support multiple architectures\n(amd64, arm64, armhf) without requiring native hardware or nested virtualisation.\n\nAuthentication is resolved in this order:\n1. `cscLink` config field — base64-encoded credentials or a file path\n2. `SNAP_CSC_LINK` environment variable — same format as `cscLink`\n   (CI-recommended; follows the same pattern as `WIN_CSC_LINK` for Windows code signing)\n3. `SNAPCRAFT_STORE_CREDENTIALS` environment variable (read directly by snapcraft)\n4. An active interactive `snapcraft login` session\n\n**CI setup** (set once as a CI secret):\n```sh\nexport SNAP_CSC_LINK=$(snapcraft export-login - | base64 -w0)\n```\nThe resolved credentials are injected only into the spawned `snapcraft` subprocess\nenvironment and never exposed through `process.env`.",
       "properties": {
         "acceptPublicUpload": {
           "description": "Suppress the Launchpad public-upload consent prompt by automatically accepting it.\nYour source code will be uploaded to a **public** Launchpad repository.\nSet to `true` in CI once you understand the implications.",
@@ -5782,8 +5782,8 @@
           },
           "type": "array"
         },
-        "credentialsFile": {
-          "description": "Path to a Snapcraft credentials file produced by `snapcraft export-login <file>`.\nRecommended for CI/CD pipelines — avoids interactive login and does not require an\nSSH key on the build agent.",
+        "cscLink": {
+          "description": "Snapcraft Store credentials — a base64-encoded credentials string or a file path.\nAccepts the same formats as `WIN_CSC_LINK` / `CSC_LINK` on Windows and macOS:\nbase64 data, absolute/relative/`~/` file paths, and `file://` URIs.\n\nGenerate a credentials string for CI:\n```sh\nexport SNAP_CSC_LINK=$(snapcraft export-login - | base64 -w0)\n```\n\nThe `SNAP_CSC_LINK` environment variable is the CI-friendly alternative when you\ncannot embed credentials in the build config.",
           "type": "string"
         },
         "enabled": {
@@ -5801,10 +5801,6 @@
         "recover": {
           "description": "Resume a previously interrupted remote build rather than starting a new one.",
           "type": "boolean"
-        },
-        "sshKeyPath": {
-          "description": "Path to an SSH private key used for Launchpad authentication.\nDefaults to `~/.ssh/id_rsa`. The matching public key must be registered\non your Launchpad account.",
-          "type": "string"
         },
         "strategy": {
           "description": "Controls whether snapcraft may fall back to a different remote build strategy.\n- `\"disable-fallback\"` — always use the primary strategy, fail if unavailable.\n- `\"force-fallback\"` — always use the fallback strategy.",
