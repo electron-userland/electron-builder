@@ -12,12 +12,10 @@ type MetaSuite = SuiteFunction
 interface ConditionalTestAPI extends TestAPI {
   ifMac: ConditionalTestAPI
   ifWindows: ConditionalTestAPI
-  ifWindowsNative: ConditionalTestAPI
   ifLinux: ConditionalTestAPI
 
   ifNotMac: ConditionalTestAPI
   ifNotWindows: ConditionalTestAPI
-  ifNotWindowsNative: ConditionalTestAPI
   ifNotLinux: ConditionalTestAPI
 
   ifEnv: (envKey: boolean | string | undefined) => ConditionalTestAPI
@@ -29,12 +27,10 @@ interface ConditionalTestAPI extends TestAPI {
 interface ConditionalSuiteAPI extends SuiteAPI {
   ifMac: ConditionalSuiteAPI
   ifWindows: ConditionalSuiteAPI
-  ifWindowsNative: ConditionalSuiteAPI
   ifLinux: ConditionalSuiteAPI
 
   ifNotMac: ConditionalSuiteAPI
   ifNotWindows: ConditionalSuiteAPI
-  ifNotWindowsNative: ConditionalSuiteAPI
   ifNotLinux: ConditionalSuiteAPI
   ifEnv: (envKey: boolean | string | undefined) => ConditionalSuiteAPI
   ifLazyTrue: (truthy: () => boolean | Promise<boolean>) => ConditionalSuiteAPI
@@ -45,12 +41,10 @@ interface ConditionalSuiteAPI extends SuiteAPI {
 interface ConditionalSkipAPI extends TestAPI["skip"] {
   ifMac: ConditionalSkipAPI
   ifWindows: ConditionalSkipAPI
-  ifWindowsNative: ConditionalSkipAPI
   ifLinux: ConditionalSkipAPI
 
   ifNotMac: ConditionalSkipAPI
   ifNotWindows: ConditionalSkipAPI
-  ifNotWindowsNative: ConditionalSkipAPI
   ifNotLinux: ConditionalSkipAPI
 }
 
@@ -74,10 +68,4 @@ declare global {
   const it: ConditionalTestAPI
   const test: ConditionalTestAPI
   const describe: ConditionalSuiteAPI
-  /** true only on native Windows (process.platform === "win32") */
-  const isWindowsNative: boolean
-  /** true on native Windows OR when a Windows VM (Parallels/PWSH+Wine) is available */
-  const isWindows: boolean
-  /** the VmManager instance if a Windows VM is available, undefined otherwise */
-  const windowsVm: import("app-builder-lib/out/vm/vm").VmManager | undefined
 }
