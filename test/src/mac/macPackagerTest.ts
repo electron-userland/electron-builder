@@ -145,6 +145,28 @@ describe("macPackager", { sequential: true }, () => {
     )
   )
 
+  test.ifMac("extraFiles are placed in product app bundle Contents, not Electron.app", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: Platform.MAC.createTarget(DIR_TARGET, Arch.x64),
+        config: {
+          mac: { notarize: false },
+          extraFiles: ["extraTestFile.txt"],
+        },
+      },
+      {
+        signed: false,
+        projectDirCreated: async projectDir => {
+          await fs.writeFile(path.join(projectDir, "extraTestFile.txt"), "test")
+        },
+        checkMacApp: async appDir => {
+          await assertThat(expect, path.join(appDir, "Contents", "extraTestFile.txt")).isFile()
+        },
+      }
+    )
+  )
+
   test.ifMac("electronDist", ({ expect }) =>
     appThrows(
       expect,
