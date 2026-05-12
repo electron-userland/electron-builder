@@ -117,7 +117,7 @@ To build rpm: `sudo apt-get install --no-install-recommends -y rpm` (or `sudo yu
 
 To build pacman: `sudo apt-get install --no-install-recommends -y bsdtar`.
 
-To build snap *if and only if you have custom stage packages* (if you don't have custom snap build configuration, you don't need to install). See [snapcraft](https://snapcraft.io/snapcraft) in Store.
+To build snap using **core24** (`snapcraft.base: "core24"`): snapcraft and a build environment (LXD, Multipass, or remote build) are always required. To build snap using **legacy cores** (core18/core20/core22) with custom stage packages: snapcraft is required (otherwise `app-builder-bin` handles assembly and snapcraft is not needed). See [snapcraft](https://snapcraft.io/snapcraft) in Store.
 ```
 sudo snap install snapcraft --classic
 sudo snap install multipass --beta --classic
