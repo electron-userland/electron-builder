@@ -1,9 +1,26 @@
 import { test as baseTest, describe as baseDescribe, expect } from "vitest"
 import { ConditionalSuiteAPI, ConditionalTestAPI } from "../typings/vitest"
+import { getWindowsVm } from "app-builder-lib/out/vm/vm"
+import { DebugLogger } from "builder-util"
 
-const isWindows = process.platform === "win32"
+export const isWindowsNative = process.platform === "win32"
 const isMac = process.platform === "darwin"
 const isLinux = process.platform === "linux"
+
+const windowsVm = await (async () => {
+  try {
+    const vm = await getWindowsVm(new DebugLogger(false))
+    return vm
+  } catch {
+    return undefined
+  }
+})()
+
+// On non-Windows, probe for a Windows VM (Parallels) or PWSH+Wine combo.
+// Resolves to true if Windows targets can be built; false otherwise.
+// getWindowsVm() starts the Parallels VM as a side-effect if found — acceptable
+// since the VM will be needed when .ifWindows tests run anyway.
+const isWindows: boolean = isWindowsNative ? true : windowsVm !== undefined
 
 type Meta = Record<string, any>
 
@@ -60,8 +77,11 @@ function createChainable(baseFn: any, meta: Meta = {}, shouldSkip = false): any 
   add("ifMac", { platform: "mac" }, !isMac)
   add("ifNotMac", { platformNot: "mac" }, isMac)
 
-  add("ifWindows", { platform: "win" }, !isWindows)
-  add("ifNotWindows", { platformNot: "win" }, isWindows)
+  add("ifWindows", { platform: "win", vm: windowsVm }, !isWindows)
+  add("ifNotWindows", { platformNot: "win", vm: windowsVm }, isWindows)
+
+  add("ifWindowsNative", { platform: "win", native: true }, !isWindowsNative)
+  add("ifNotWindowsNative", { platformNot: "win", native: true }, isWindowsNative)
 
   add("ifLinux", { platform: "linux" }, !isLinux)
   add("ifNotLinux", { platformNot: "linux" }, isLinux)
@@ -93,5 +113,8 @@ export const skip: ConditionalTestAPI = createChainable(baseTest.skip)
 ;(globalThis as any).test = test
 ;(globalThis as any).it = test
 ;(globalThis as any).describe = describe
+;(globalThis as any).isWindowsNative = isWindowsNative
+;(globalThis as any).isWindows = isWindows
+;(globalThis as any).windowsVm = windowsVm
 
 export { expect }

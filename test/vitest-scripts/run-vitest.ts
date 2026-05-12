@@ -8,7 +8,7 @@ import { SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN } from "./smart-con
 import SmartSequencer from "./vitest-smart-sequencer"
 
 const testRegex = TEST_FILES_PATTERN?.split(",")
-const includeRegex = `(${testRegex.join("|")})`
+const includeRegex = `(${testRegex.join("|")}|${testRegex.map(t => `${t}Test`).join("|")})`
 console.log("TEST_FILES pattern", includeRegex)
 
 async function main() {
@@ -51,7 +51,7 @@ async function main() {
     // Allow test metadata
     includeTaskLocation: true,
     setupFiles: [__dirname + "/vitest-setup.ts", __dirname + "/vitest-heavy-mutex.ts"],
-    include: [`test/src/**/${includeRegex}.ts`],
+    include: [`test/src/**/*${includeRegex}.ts`],
 
     printConsoleTrace: true,
     reporters: ["default", __dirname + "/vitest-smart-reporter.ts"],
