@@ -1,5 +1,15 @@
 # builder-util
 
+## 26.10.0
+
+### Minor Changes
+
+- Feat: migrate `electronDownload` to use `electron/get` official package. provides much better support for mirrors _[`#8827`](https://github.com/electron-userland/electron-builder/pull/8827) [`c82bec1`](https://github.com/electron-userland/electron-builder/commit/c82bec161d07b1df8adc5cd80a495c4ff0829373) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Chore(builder-util): add engines field to package.json _[`#9671`](https://github.com/electron-userland/electron-builder/pull/9671) [`5be28a6`](https://github.com/electron-userland/electron-builder/commit/5be28a61de2aa1f344651a506044b2e897832660) [@gameroman](https://github.com/gameroman)_
+
 ## 26.9.0
 
 ### Patch Changes

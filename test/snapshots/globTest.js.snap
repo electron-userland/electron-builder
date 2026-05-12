@@ -15,16 +15,16 @@ exports[`asarUnpack and files ignore 2`] = `
     },
     "index.js": {
       "offset": 490,
-      "size": 3680,
+      "size": 4560,
     },
     "package.json": {
-      "offset": 4170,
+      "offset": 5040,
       "size": 230,
     },
     "path": {
       "files": {
         "app.asar": {
-          "offset": 4390,
+          "offset": 5270,
           "size": 720,
         },
       },
@@ -20136,16 +20136,16 @@ exports[`unpackDir 2`] = `
     },
     "index.js": {
       "offset": 490,
-      "size": 3680,
+      "size": 4560,
     },
     "package.json": {
-      "offset": 4170,
+      "offset": 5050,
       "size": 230,
     },
     "path": {
       "files": {
         "app.asar": {
-          "offset": 4400,
+          "offset": 5270,
           "size": 720,
         },
       },

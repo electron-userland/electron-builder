@@ -3,7 +3,7 @@ import { getLicenseAssets } from "app-builder-lib/out/util/license"
 import { log } from "builder-util"
 import { readFile } from "fs-extra"
 import * as iconv from "iconv-lite"
-import { load } from "js-yaml"
+import { CORE_SCHEMA, load } from "js-yaml"
 import { serializeString } from "./dmgUtil"
 import { getDefaultButtons } from "./licenseDefaultButtons"
 
@@ -34,7 +34,7 @@ export async function getLicenseButtons(licenseButtonFiles: Array<LicenseButtons
     }
 
     try {
-      const fileData = load(await readFile(item.file, "utf-8")) as any
+      const fileData = load(await readFile(item.file, "utf-8"), { schema: CORE_SCHEMA }) as any
       const buttonsStr =
         labelToHex(fileData.lang, item.lang, item.langWithRegion) +
         labelToHex(fileData.agree, item.lang, item.langWithRegion) +
