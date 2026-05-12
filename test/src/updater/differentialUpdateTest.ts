@@ -7,9 +7,7 @@ import { EXTENDED_TIMEOUT } from "../helpers/packTester"
 import { OLD_VERSION_NUMBER, testAppCacheDirName } from "../helpers/updaterTestUtil"
 import { MacUpdater } from "electron-updater"
 import { ExpectStatic } from "vitest"
-import { checkResult, doBuild, getTestUpdaterCacheDir, testBlockMap } from "./differentialUpdateHelpers"
-
-export { checkResult }
+import { doBuild, getTestUpdaterCacheDir, testBlockMap } from "./differentialUpdateHelpers"
 
 async function testMac(expect: ExpectStatic, arch: Arch) {
   process.env.TEST_UPDATER_ARCH = Arch[arch]
