@@ -186,6 +186,30 @@ exports[`winCodeSign: 0.0.0 > signAndEditExecutable: false — backward compat d
 ]
 `;
 
+exports[`winCodeSign: 0.0.0 > signExecutable: false — NSIS installer and elevate.exe not signed 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
 exports[`winCodeSign: 0.0.0 > signExecutable: false — rcedit still edits exe resources 1`] = `
 {
   "win": [
@@ -636,6 +660,30 @@ exports[`winCodeSign: 1.0.0 > signAndEditExecutable: false — backward compat d
 ]
 `;
 
+exports[`winCodeSign: 1.0.0 > signExecutable: false — NSIS installer and elevate.exe not signed 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
 exports[`winCodeSign: 1.0.0 > signExecutable: false — rcedit still edits exe resources 1`] = `
 {
   "win": [
@@ -1084,6 +1132,30 @@ exports[`winCodeSign: 1.1.0 > signAndEditExecutable: false — backward compat d
     "value": "hash",
   },
 ]
+`;
+
+exports[`winCodeSign: 1.1.0 > signExecutable: false — NSIS installer and elevate.exe not signed 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
 `;
 
 exports[`winCodeSign: 1.1.0 > signExecutable: false — rcedit still edits exe resources 1`] = `

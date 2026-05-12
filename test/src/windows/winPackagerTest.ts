@@ -211,7 +211,6 @@ for (const winCodeSign of winCodeSignVersions) {
         },
         {
           packed: async context => {
-            const { NtExecutable, NtExecutableResource, Resource } = await import("resedit")
             const appDir = context.getContent(Platform.WINDOWS, Arch.x64)
             const expectedExe = `${context.packager.appInfo.productFilename}.exe`
             const appDirEntries = await fs.readdir(appDir)
@@ -253,7 +252,6 @@ for (const winCodeSign of winCodeSignVersions) {
         {
           signedWin: true,
           packed: async context => {
-            const { NtExecutable, NtExecutableResource, Resource } = await import("resedit")
             const appDir = context.getContent(Platform.WINDOWS, Arch.x64)
             const expectedExe = `${context.packager.appInfo.productFilename}.exe`
             const buffer = await fs.readFile(path.join(appDir, expectedExe))
@@ -283,6 +281,21 @@ for (const winCodeSign of winCodeSignVersions) {
         error => expect(error.message).toContain("`forceCodeSigning` is enabled")
       ))
 
+    test("signAndEditExecutable: false — throws when combined with forceCodeSigning", ({ expect }) =>
+      appThrows(
+        expect,
+        {
+          targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
+          config: {
+            forceCodeSigning: true,
+            win: { signAndEditExecutable: false },
+            toolsets: { winCodeSign },
+          },
+        },
+        {},
+        error => expect(error.message).toContain("`forceCodeSigning` is enabled")
+      ))
+
     test("signAndEditExecutable: false — backward compat disables both editing and signing", ({ expect }) =>
       app(
         expect,
@@ -295,7 +308,6 @@ for (const winCodeSign of winCodeSignVersions) {
         },
         {
           packed: async context => {
-            const { NtExecutable, NtExecutableResource, Resource } = await import("resedit")
             const appDir = context.getContent(Platform.WINDOWS, Arch.x64)
             const expectedExe = `${context.packager.appInfo.productFilename}.exe`
             const buffer = await fs.readFile(path.join(appDir, expectedExe))
@@ -308,6 +320,36 @@ for (const winCodeSign of winCodeSignVersions) {
 
             const strings = versionInfoList[0].getStringValues(langs[0])
             expect(strings["ProductName"]).not.toBe(context.packager.appInfo.productName)
+          },
+        }
+      ))
+
+    test("signExecutable: false — NSIS installer and elevate.exe not signed", ({ expect }) =>
+      app(
+        expect,
+        {
+          targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64),
+          config: {
+            win: {
+              signExecutable: false,
+              signtoolOptions: {
+                sign: () => {
+                  throw new Error("sign must not be called when signExecutable is false")
+                },
+              },
+            },
+            toolsets: { winCodeSign },
+          },
+        },
+        {
+          signedWin: true,
+          packed: async context => {
+            const appDir = context.getContent(Platform.WINDOWS, Arch.x64)
+            const buffer = await fs.readFile(path.join(appDir, `${context.packager.appInfo.productFilename}.exe`))
+            const res = NtExecutableResource.from(NtExecutable.from(buffer))
+            const [vi] = Resource.VersionInfo.fromEntries(res.entries)
+            const strings = vi.getStringValues(vi.getAllLanguagesForStringValues()[0])
+            expect(strings["ProductName"]).toBe(context.packager.appInfo.productName)
           },
         }
       ))
