@@ -60,12 +60,11 @@ async function createFrameworkInfo(configuration: Configuration, packager: Packa
     nodeVersion = process.versions.node
   }
 
-  const distMacOsName = `${packager.appInfo.productFilename}.app`
   const isUseLaunchUi = configuration.launchUiVersion !== false
   if (framework === "proton" || framework === "proton-native") {
-    return new ProtonFramework(nodeVersion, distMacOsName, isUseLaunchUi)
+    return new ProtonFramework(nodeVersion, packager.appInfo.productFilename, isUseLaunchUi)
   } else if (framework === "libui") {
-    return new LibUiFramework(nodeVersion, distMacOsName, isUseLaunchUi)
+    return new LibUiFramework(nodeVersion, packager.appInfo.productFilename, isUseLaunchUi)
   } else {
     throw new InvalidConfigurationError(`Unknown framework: ${framework}`)
   }

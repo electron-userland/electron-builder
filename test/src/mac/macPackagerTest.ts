@@ -3,7 +3,7 @@ import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
-import { app, appThrows, assertPack, checkDirContents, platform } from "../helpers/packTester"
+import { app, appThrows, assertPack, checkDirContents, modifyPackageJson, platform } from "../helpers/packTester"
 import { verifySmartUnpack } from "../helpers/verifySmartUnpack"
 
 describe("macPackager", { sequential: true }, () => {
@@ -159,9 +159,19 @@ describe("macPackager", { sequential: true }, () => {
         signed: false,
         projectDirCreated: async projectDir => {
           await fs.writeFile(path.join(projectDir, "extraTestFile.txt"), "test")
+          await modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              debug: "4.4.3",
+            }
+          })
         },
         checkMacApp: async appDir => {
           await assertThat(expect, path.join(appDir, "Contents", "extraTestFile.txt")).isFile()
+        },
+        packed: async context => {
+          await checkDirContents(expect, path.join(context.getContent(Platform.MAC, Arch.x64)))
+          const resources = context.getResources(Platform.MAC, Arch.x64)
+          await verifySmartUnpack(expect, resources)
         },
       }
     )
