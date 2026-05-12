@@ -131,8 +131,12 @@ class ElectronFramework implements Framework {
   constructor(
     readonly name: string,
     readonly version: string,
-    readonly distMacOsAppName: string
+    readonly macOsProductName: string
   ) {}
+
+  get distMacOsAppName(): string {
+    return `${this.macOsProductName}.app`
+  }
 
   getDefaultIcon(platform: Platform) {
     if (platform === Platform.LINUX) {
@@ -174,7 +178,7 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
   }
 
   const branding = createBrandingOpts(configuration)
-  return new ElectronFramework(branding.projectName, version, `${branding.productName}.app`)
+  return new ElectronFramework(branding.projectName, version, branding.productName)
 }
 
 /**
