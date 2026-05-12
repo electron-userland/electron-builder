@@ -24,6 +24,7 @@ RUN dpkg --add-architecture i386 && \
 ENV WINEDEBUG=-all,err+all
 ENV WINEDLLOVERRIDES=winemenubuilder.exe=d
 
-# We expect this to error in the logs due to no screen display, but it seems to be the only way to init a ~/.wine config dir
-# Note: We could run this via xvfb-run, but since `winecfg` is a GUI config tool, the docker build process hangs as the process never exits
-RUN winecfg
+# wineboot --init is the correct headless prefix initialiser (no display needed, exits after init).
+# || true: Wine SIGABRT under QEMU on ARM64/Apple Silicon (16KB vs 4KB page size mismatch); non-fatal so
+# local builds complete. On x86_64 CI wineboot --init succeeds and the prefix is fully initialised.
+RUN wineboot --init || true
