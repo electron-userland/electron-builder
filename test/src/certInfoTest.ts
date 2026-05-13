@@ -46,6 +46,8 @@ const CN_ONLY_PFX = path.join(tmp, "certinfo-test-cn.pfx")
 const NO_EKU_PFX = path.join(tmp, "certinfo-test-noeku.pfx")
 const WIN_CSC_PFX = path.join(tmp, "certinfo-test-wincsc.pfx")
 const PARITY_PFX = path.join(tmp, "certinfo-test-parity.pfx")
+const OU_PFX = path.join(tmp, "certinfo-test-ou.pfx")
+const SPECIAL_PFX = path.join(tmp, "certinfo-test-special.pfx")
 
 beforeAll(async () => {
   await Promise.all([
@@ -76,11 +78,33 @@ beforeAll(async () => {
         "paritypassword"
       )
     ),
+    writeFile(
+      OU_PFX,
+      generatePfx(
+        [
+          { name: "commonName", value: "Test Publisher" },
+          { name: "organizationName", value: "Test Org" },
+          { shortName: "OU", value: "Engineering" },
+          { shortName: "C", value: "US" },
+        ],
+        "pw"
+      )
+    ),
+    writeFile(
+      SPECIAL_PFX,
+      generatePfx(
+        [
+          { name: "commonName", value: 'Publisher, Inc. + "More"' },
+          { shortName: "C", value: "US" },
+        ],
+        "pw"
+      )
+    ),
   ])
 })
 
 afterAll(async () => {
-  await Promise.all([FULL_SUBJECT_PFX, CN_ONLY_PFX, NO_EKU_PFX, WIN_CSC_PFX, PARITY_PFX].map(p => remove(p).catch(() => null)))
+  await Promise.all([FULL_SUBJECT_PFX, CN_ONLY_PFX, NO_EKU_PFX, WIN_CSC_PFX, PARITY_PFX, OU_PFX, SPECIAL_PFX].map(p => remove(p).catch(() => null)))
 })
 
 // ─── Unit tests ───────────────────────────────────────────────────────────────
@@ -113,6 +137,38 @@ describe("readCertInfo — error handling", () => {
 
   it("throws when the certificate lacks the codeSigning extended key usage", async () => {
     await expect(readCertInfo(NO_EKU_PFX, "pw")).rejects.toThrow(/ExtKeyUsageCodeSigning/)
+  })
+})
+
+// ─── Additional logic-path tests ─────────────────────────────────────────────
+
+describe("readCertInfo — file not found", () => {
+  it("throws when the input file does not exist", async () => {
+    await expect(readCertInfo("/nonexistent/path/cert.pfx", "pw")).rejects.toThrow()
+  })
+})
+
+describe("readCertInfo — OU attribute in subject DN", () => {
+  it("includes OU in bloodyMicrosoftSubjectDn", async () => {
+    const result = await readCertInfo(OU_PFX, "pw")
+    expect(result.commonName).toBe("Test Publisher")
+    expect(result.bloodyMicrosoftSubjectDn).toBe("CN=Test Publisher,O=Test Org,OU=Engineering,C=US")
+  })
+})
+
+describe("readCertInfo — special characters in DN values", () => {
+  it("wraps values containing special characters in quotes to match Go binary output", async () => {
+    const result = await readCertInfo(SPECIAL_PFX, "pw")
+    expect(result.commonName).toBe('Publisher, Inc. + "More"')
+    // , + " in the CN value must be quoted; embedded " is doubled per RFC 4514
+    expect(result.bloodyMicrosoftSubjectDn).toContain(`CN="Publisher, Inc. + ""More"""`)
+  })
+
+  it("parity: special-character DN matches binary output exactly", async () => {
+    const [binaryRaw, jsResult] = await Promise.all([executeAppBuilder(["certificate-info", "--input", SPECIAL_PFX, "--password", "pw"]), readCertInfo(SPECIAL_PFX, "pw")])
+    const binaryResult: { commonName: string; bloodyMicrosoftSubjectDn: string } = JSON.parse(binaryRaw)
+    expect(jsResult.commonName).toBe(binaryResult.commonName)
+    expect(jsResult.bloodyMicrosoftSubjectDn).toBe(binaryResult.bloodyMicrosoftSubjectDn)
   })
 })
 

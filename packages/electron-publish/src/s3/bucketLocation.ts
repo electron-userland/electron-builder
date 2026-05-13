@@ -32,7 +32,17 @@ export function getBucketLocation(bucket: string): Promise<string> {
       },
       res => {
         let body = ""
-        res.on("data", (chunk: string) => (body += chunk))
+        let bodySize = 0
+        const MAX_BODY = 65536
+        res.on("data", (chunk: string) => {
+          bodySize += chunk.length
+          if (bodySize > MAX_BODY) {
+            req.destroy()
+            reject(new Error("GetBucketLocation response too large"))
+            return
+          }
+          body += chunk
+        })
         res.on("end", () => {
           if (res.statusCode !== 200) {
             reject(new Error(`GetBucketLocation failed (HTTP ${res.statusCode}): ${body}`))
@@ -40,7 +50,12 @@ export function getBucketLocation(bucket: string): Promise<string> {
           }
           // Response: <LocationConstraint>us-west-2</LocationConstraint> or empty element for us-east-1
           const match = body.match(/<LocationConstraint[^>]*>([^<]*)<\/LocationConstraint>/)
-          resolve(match?.[1] || "us-east-1")
+          const region = match?.[1] || ""
+          if (region !== "" && !/^[a-z][a-z0-9-]+$/.test(region)) {
+            reject(new Error(`GetBucketLocation returned unexpected region: ${region}`))
+            return
+          }
+          resolve(region || "us-east-1")
         })
       }
     )

@@ -5,6 +5,17 @@ import { CertificateInfo } from "./windowsSignToolManager"
 // OID for codeSigning extended key usage
 const CODE_SIGNING_OID = "1.3.6.1.5.5.7.3.3"
 
+// Characters that must be quoted in a DN value to match Go binary BloodyMsString output
+const NEEDS_DN_ESCAPING = /[,+"\\<>;]/
+
+function escapeDnValue(value: string): string {
+  if (NEEDS_DN_ESCAPING.test(value)) {
+    // Escape embedded double-quotes by doubling them, then wrap entire value in quotes
+    return `"${value.replace(/"/g, '""')}"`
+  }
+  return value
+}
+
 /**
  * Reads certificate info from a PKCS#12 (.pfx) file using pure JS.
  * Mirrors the `certificate-info` subcommand of app-builder-bin.
@@ -43,10 +54,12 @@ export async function readCertInfo(file: string, password: string): Promise<Cert
   const cert = signingCert.cert
   const commonName = ((cert.subject.getField("CN") as forge.pki.CertificateField | null)?.value as string) ?? ""
 
-  // Format DN as "CN=X,O=X,..." — comma-separated, no spaces, matching app-builder output
+  // Format DN as "CN=X,O=X,..." — comma-separated, no spaces, matching app-builder output.
+  // Attributes without a shortName (unknown OIDs) are silently dropped; real code-signing
+  // certs from trusted CAs never include unknown OIDs in the subject.
   const bloodyMicrosoftSubjectDn = cert.subject.attributes
     .filter((a: forge.pki.CertificateField) => a.shortName != null)
-    .map((a: forge.pki.CertificateField) => `${a.shortName}=${a.value}`)
+    .map((a: forge.pki.CertificateField) => `${a.shortName}=${escapeDnValue(String(a.value))}`)
     .join(",")
 
   return { commonName, bloodyMicrosoftSubjectDn }

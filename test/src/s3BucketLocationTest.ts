@@ -72,6 +72,29 @@ describe("getBucketLocation — XML response parsing", () => {
     mockHttpResponse(400, '<Error><Code>NoSuchBucket</Code></Error>')
     await expect(getBucketLocation("my.dotted.bucket")).rejects.toThrow("HTTP 400")
   })
+
+  it("rejects when the request emits a network error", async () => {
+    vi.mocked(https.request).mockImplementationOnce((_opts: unknown, _callback: unknown) => {
+      const req = new EventEmitter() as ReturnType<typeof https.request>
+      ;(req as any).end = vi.fn(() => {
+        setImmediate(() => req.emit("error", new Error("ECONNREFUSED")))
+      })
+      return req
+    })
+    await expect(getBucketLocation("my.dotted.bucket")).rejects.toThrow("ECONNREFUSED")
+  })
+
+  it("rejects when the response body exceeds 64 KB", async () => {
+    // Guard against memory exhaustion from a malicious/unexpected S3 response
+    mockHttpResponse(200, "x".repeat(65537))
+    await expect(getBucketLocation("my.dotted.bucket")).rejects.toThrow("response too large")
+  })
+
+  it("rejects when the extracted region contains unexpected characters", async () => {
+    // Guard against a tampered response injecting an invalid region string
+    mockHttpResponse(200, "<LocationConstraint>../evil\ninjection</LocationConstraint>")
+    await expect(getBucketLocation("my.dotted.bucket")).rejects.toThrow("unexpected region")
+  })
 })
 
 // ─── Parity test: JS implementation vs app-builder-bin binary ────────────────
