@@ -1,7 +1,8 @@
-import { executeAppBuilder, InvalidConfigurationError, log } from "builder-util"
+import { InvalidConfigurationError, log } from "builder-util"
 import { S3Options } from "builder-util-runtime"
 import { PublishContext } from ".."
 import { BaseS3Publisher } from "./baseS3Publisher"
+import { getBucketLocation } from "./bucketLocation"
 
 export class S3Publisher extends BaseS3Publisher {
   readonly providerName = "s3"
@@ -22,7 +23,7 @@ export class S3Publisher extends BaseS3Publisher {
     if (options.endpoint == null && bucket.includes(".") && options.region == null) {
       // on dotted bucket names, we need to use a path-based endpoint URL. Path-based endpoint URLs need to include the region.
       try {
-        options.region = await executeAppBuilder(["get-bucket-location", "--bucket", bucket])
+        options.region = await getBucketLocation(bucket)
       } catch (e: any) {
         if (errorIfCannot) {
           throw e
