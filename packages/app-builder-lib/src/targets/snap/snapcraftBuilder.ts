@@ -259,7 +259,6 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string> {
           useMultipass,
           useDestructiveMode,
           env,
-          compression: snapcraftConfig.compression,
         }),
       { maxRetries: remoteBuild?.enabled ? 3 : 1, retryDelay: 10000 }
     )
@@ -379,30 +378,28 @@ interface ExecuteSnapcraftOptions {
   useMultipass: boolean
   useDestructiveMode: boolean
   env: Record<string, string>
-  /** Snap compression algorithm forwarded to `snap pack` in destructive-mode builds. */
-  compression?: string
 }
 
 /**
  * Executes the snapcraft build command
  */
 async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<string> {
-  const { workDir, outputSnap: outputFileName, remoteBuild, useLXD, useMultipass, useDestructiveMode, env, compression } = options
+  const { workDir, outputSnap: outputFileName, remoteBuild, useLXD, useMultipass, useDestructiveMode, env } = options
 
   const outputBasename = path.basename(outputFileName)
 
   if (useDestructiveMode && !remoteBuild?.enabled) {
     // Snapcraft 8 (craft-application) hangs after a successful destructive-mode
-    // pack in containerised environments (Docker/CI without snapd running).
-    // After `snap pack` finishes, craft-application's PackageService teardown
-    // tries to reach /run/snapd-snap.socket (snapctl IPC) which doesn't exist
-    // without a live snapd daemon — causing an indefinite block.
+    // build in containerised environments (Docker/CI without snapd running).
+    // craft-application's PackageService teardown tries to reach
+    // /run/snapd-snap.socket (snapctl IPC) which doesn't exist without a live
+    // snapd daemon — causing an indefinite block.
     //
-    // Work-around: split into two steps so we never enter PackageService.pack():
+    // Work-around: split into two steps:
     //   1. `snapcraft prime --destructive-mode`  — runs pull/build/stage/prime,
-    //      exits cleanly (no post-pack teardown code executed).
-    //   2. `snap pack`  — the exact command snapcraft calls internally;
-    //      operates purely as a squashfs tool, no snapd socket needed.
+    //      exits cleanly (no post-pack teardown executed).
+    //   2. `snapcraft pack <primeDir>`  — packs the pre-primed directory without
+    //      running the full build lifecycle, avoiding the problematic teardown.
     const primeArgs = ["prime", "--destructive-mode"]
     if (log.isDebugEnabled) {
       primeArgs.push("--verbose")
@@ -415,9 +412,12 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
     })
 
     const primeDir = path.join(workDir, "prime")
-    const snapPackArgs = ["pack", "--filename", outputBasename, "--compression", compression ?? "xz", primeDir, workDir]
-    log.info({ command: `snap ${snapPackArgs.join(" ")}`, workDir: log.filePath(workDir) }, "snap pack prime dir (2/2)")
-    await spawn("snap", snapPackArgs, {
+    const snapcraftPackArgs = ["pack", "--output", outputBasename, primeDir]
+    if (log.isDebugEnabled) {
+      snapcraftPackArgs.push("--verbose")
+    }
+    log.info({ command: `snapcraft ${snapcraftPackArgs.join(" ")}`, workDir: log.filePath(workDir) }, "snapcraft pack prime dir (2/2)")
+    await spawn("snapcraft", snapcraftPackArgs, {
       cwd: workDir,
       env: { ...process.env, ...env },
       stdio: "inherit",
