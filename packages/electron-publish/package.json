@@ -15,7 +15,9 @@
     "out"
   ],
   "dependencies": {
+    "@types/aws4": "^1.11.6",
     "@types/fs-extra": "^9.0.11",
+    "aws4": "^1.13.2",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.2",
