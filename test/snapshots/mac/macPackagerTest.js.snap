@@ -2,6 +2,205 @@
 
 exports[`macPackager > Build macOS on Windows is not supported 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
 
+exports[`macPackager > extraFiles are placed in product app bundle Contents, not Electron.app 1`] = `
+{
+  "mac": [],
+}
+`;
+
+exports[`macPackager > extraFiles are placed in product app bundle Contents, not Electron.app 2`] = `
+[
+  "Info.plist",
+  "PkgInfo",
+  "extraTestFile.txt",
+  "Resources/app.asar",
+  "Resources/icon.icns",
+  "MacOS/Test App ßW",
+  "Frameworks/Test App ßW Helper.app/Contents/Info.plist",
+  "Frameworks/Test App ßW Helper.app/Contents/PkgInfo",
+  "Frameworks/Test App ßW Helper.app/Contents/MacOS/Test App ßW Helper",
+  "Frameworks/Test App ßW Helper (Renderer).app/Contents/Info.plist",
+  "Frameworks/Test App ßW Helper (Renderer).app/Contents/PkgInfo",
+  "Frameworks/Test App ßW Helper (Renderer).app/Contents/MacOS/Test App ßW Helper (Renderer)",
+  "Frameworks/Test App ßW Helper (Plugin).app/Contents/Info.plist",
+  "Frameworks/Test App ßW Helper (Plugin).app/Contents/PkgInfo",
+  "Frameworks/Test App ßW Helper (Plugin).app/Contents/MacOS/Test App ßW Helper (Plugin)",
+  "Frameworks/Test App ßW Helper (GPU).app/Contents/Info.plist",
+  "Frameworks/Test App ßW Helper (GPU).app/Contents/PkgInfo",
+  "Frameworks/Test App ßW Helper (GPU).app/Contents/MacOS/Test App ßW Helper (GPU)",
+  "Frameworks/Squirrel.framework/Resources",
+  "Frameworks/Squirrel.framework/Squirrel",
+  "Frameworks/Squirrel.framework/Versions/Current",
+  "Frameworks/Squirrel.framework/Versions/A/Squirrel",
+  "Frameworks/Squirrel.framework/Versions/A/Resources/Info.plist",
+  "Frameworks/Squirrel.framework/Versions/A/Resources/ShipIt",
+  "Frameworks/ReactiveObjC.framework/ReactiveObjC",
+  "Frameworks/ReactiveObjC.framework/Resources",
+  "Frameworks/ReactiveObjC.framework/Versions/Current",
+  "Frameworks/ReactiveObjC.framework/Versions/A/ReactiveObjC",
+  "Frameworks/ReactiveObjC.framework/Versions/A/Resources/Info.plist",
+  "Frameworks/Mantle.framework/Mantle",
+  "Frameworks/Mantle.framework/Resources",
+  "Frameworks/Mantle.framework/Versions/Current",
+  "Frameworks/Mantle.framework/Versions/A/Mantle",
+  "Frameworks/Mantle.framework/Versions/A/Resources/Info.plist",
+  "Frameworks/Electron Framework.framework/Electron Framework",
+  "Frameworks/Electron Framework.framework/Helpers",
+  "Frameworks/Electron Framework.framework/Libraries",
+  "Frameworks/Electron Framework.framework/Resources",
+  "Frameworks/Electron Framework.framework/Versions/Current",
+  "Frameworks/Electron Framework.framework/Versions/A/Electron Framework",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/Info.plist",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/MainMenu.nib",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/chrome_100_percent.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/chrome_200_percent.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/icudtl.dat",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/resources.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/v8_context_snapshot.x86_64.bin",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/zh_TW.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/zh_CN.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/vi.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/ur.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/uk.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/tr.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/th.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/te.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/ta.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/sw.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/sv.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/sr.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/sl.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/sk.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/ru.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/ro.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/pt_PT.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/pt_BR.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/pl.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/nl.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/nb.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/ms.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/mr.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/ml.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/lv.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/lt.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/ko.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/kn.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/ja.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/it.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/id.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/hu.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/hr.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/hi.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/he.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/gu.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/fr.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/fil.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/fi.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/fa.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/et.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/es_419.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/es.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/en_GB.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/en.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/el.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/de.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/da.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/cs.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/ca.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/bn.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/bg.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/ar.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/am.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Resources/af.lproj/locale.pak",
+  "Frameworks/Electron Framework.framework/Versions/A/Libraries/libEGL.dylib",
+  "Frameworks/Electron Framework.framework/Versions/A/Libraries/libGLESv2.dylib",
+  "Frameworks/Electron Framework.framework/Versions/A/Libraries/libffmpeg.dylib",
+  "Frameworks/Electron Framework.framework/Versions/A/Libraries/libvk_swiftshader.dylib",
+  "Frameworks/Electron Framework.framework/Versions/A/Libraries/vk_swiftshader_icd.json",
+  "Frameworks/Electron Framework.framework/Versions/A/Helpers/chrome_crashpad_handler",
+]
+`;
+
+exports[`macPackager > extraFiles are placed in product app bundle Contents, not Electron.app 3`] = `
+{
+  "files": {
+    "app": {
+      "files": {
+        "package.json": {
+          "files": {
+            "readme.md": {
+              "size": "<size>",
+            },
+          },
+        },
+        "readme.md": {
+          "size": "<size>",
+        },
+      },
+    },
+    "index.html": {
+      "size": "<size>",
+    },
+    "index.js": {
+      "size": "<size>",
+    },
+    "node_modules": {
+      "files": {
+        "debug": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+            "src": {
+              "files": {
+                "browser.js": {
+                  "size": "<size>",
+                },
+                "common.js": {
+                  "size": "<size>",
+                },
+                "index.js": {
+                  "size": "<size>",
+                },
+                "node.js": {
+                  "size": "<size>",
+                },
+              },
+            },
+          },
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "size": "<size>",
+            },
+            "license.md": {
+              "size": "<size>",
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "size": "<size>",
+    },
+  },
+}
+`;
+
+exports[`macPackager > extraFiles are placed in product app bundle Contents, not Electron.app 4`] = `
+[
+  "app.asar",
+  "icon.icns",
+]
+`;
+
 exports[`macPackager > multiple asar resources 1`] = `
 {
   "mac": [

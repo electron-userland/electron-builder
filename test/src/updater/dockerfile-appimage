@@ -52,7 +52,7 @@ RUN echo "user_allow_other" >> /etc/fuse.conf
 # Allow AppImages to run without sudo (needed for fuse)
 RUN ln -s /usr/bin/fuse3 /usr/bin/fuse || true
 
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 RUN apt-get install -y nodejs
 RUN npm --silent install --global --depth 0 pnpm corepack \
   && corepack enable
