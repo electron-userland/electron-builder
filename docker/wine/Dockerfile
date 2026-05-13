@@ -9,6 +9,9 @@ RUN dpkg --add-architecture i386 && \
   wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/jammy/winehq-jammy.sources && \
   apt-get -qq update && \
   apt-get -qq install -y --install-recommends winehq-stable && \
+  # Wine 9.x+ removed wine64 as a standalone binary; wine on x86_64 is already 64-bit.
+  # Symlink for backward compatibility with tools (e.g. electron-winstaller) that still check for wine64.
+  ln -sf /usr/bin/wine /usr/bin/wine64 && \
   # powershell
   # https://learn.microsoft.com/en-us/powershell/scripting/install/install-ubuntu?view=powershell-7.4
   apt-get install -yq apt-transport-https software-properties-common && \
@@ -25,6 +28,14 @@ ENV WINEDEBUG=-all,err+all
 ENV WINEDLLOVERRIDES=winemenubuilder.exe=d
 
 # wineboot --init is the correct headless prefix initialiser (no display needed, exits after init).
-# On ARM64/Apple Silicon, Wine SIGABRT under QEMU (16KB host pages vs 4KB Wine expectation). The page-size
-# check gates the tolerance: ≠4096 means QEMU/Apple Silicon → skip; =4096 means native x86_64 → fail the build.
-RUN wineboot --init || [ "$(getconf PAGE_SIZE)" -ne 4096 ] || { echo "ERROR: wineboot failed on native x86_64" >&2 && false; }
+# On Apple Silicon / Linux ARM64 cross-builds, Wine aborts under QEMU due to the host/guest page-size mismatch
+# (host 16KB vs Wine's expected 4KB). We detect this via the assertion text in stderr rather than getconf
+# PAGE_SIZE, because inside the emulated x86_64 container PAGE_SIZE reports 4096 regardless of the host.
+RUN wineboot --init 2>/tmp/wb.log; \
+  if [ $? -ne 0 ]; then \
+    cat /tmp/wb.log >&2; \
+    grep -qE "host_page_mask|anon_mmap|qemu" /tmp/wb.log || \
+      { echo "ERROR: wineboot failed on native x86_64" >&2; exit 1; }; \
+    echo "NOTE: wineboot failed due to QEMU page-size emulation (expected on Apple Silicon/ARM cross-builds)" >&2; \
+  fi; \
+  rm -f /tmp/wb.log
