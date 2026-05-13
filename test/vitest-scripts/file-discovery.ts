@@ -63,8 +63,9 @@ export function getAllTestFiles(platform: TargetPlatform = "current"): string[] 
 }
 
 function isSkippedTest(file: string, platform: TargetPlatform): boolean {
-  if (process.env.SKIPPED_TESTS) {
-    const toSkip = process.env.SKIPPED_TESTS.trim().split(",")
+  const skippedTestsList = process.env.SKIPPED_TESTS?.trim()
+  if (skippedTestsList) {
+    const toSkip = skippedTestsList.split(",")
     if (toSkip.some(s => file.includes(s))) {
       return true
     }

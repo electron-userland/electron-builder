@@ -23,7 +23,7 @@ export const optionsForFlakyE2E = { sequential: true, retry: 1 }
 // Resolve only to a ParallelsVmManager — PwshVmManager (used for code-signing on Linux/Mac via Wine)
 // is not capable of installing or running Windows executables and must not be treated as a Windows VM.
 export const windowsVmPromise: Promise<ParallelsVmManager | undefined> = getWindowsVm(new DebugLogger(false))
-  .then(vm => (vm instanceof ParallelsVmManager ? vm : undefined))
+  .then(vm => (vm.constructor.name === "ParallelsVmManager" ? (vm as ParallelsVmManager) : undefined))
   .catch(() => undefined)
 
 async function sha256File(filePath: string): Promise<string> {
