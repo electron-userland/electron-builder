@@ -1,5 +1,6 @@
 ---
 "app-builder-lib": patch
+"dmg-builder": patch
 ---
 
-chore: adding hardening to resolving scripts to be within the workspace directory, utilize deepAssign helper utility, and escape command used within node module collector
+chore: add more validations, incl. compression levels, vendor toolsets, and invalid configs

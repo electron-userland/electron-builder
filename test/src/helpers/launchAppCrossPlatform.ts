@@ -1,4 +1,5 @@
 import { isEmptyOrSpaces } from "builder-util"
+import type { VmManager } from "app-builder-lib/out/vm/vm"
 import { ChildProcess, spawn } from "child_process"
 import * as fs from "fs"
 import * as http from "http"
@@ -6,7 +7,37 @@ import * as net from "net"
 import os from "os"
 import path from "path"
 
-export function createLocalServer(root: string): Promise<{ server: http.Server; port: number }> {
+/**
+ * Returns the macOS host's IP address on the Parallels virtual network.
+ * The VM reaches the host via this address (not 127.0.0.1).
+ */
+/**
+ * Converts a macOS path under the user home directory to its Parallels UNC form.
+ * Files in `~/` are reachable via `\\Mac\Home\...` (always shared) without needing
+ * "All Disks" sharing. Paths outside the home dir fall back to `\\Mac\Host\...`.
+ */
+export function toVmHomePath(macPath: string): string {
+  const home = os.homedir()
+  const rel = path.relative(home, macPath)
+  if (!rel.startsWith("..")) {
+    return "\\\\Mac\\Home\\" + rel.replace(/\//g, "\\")
+  }
+  return "\\\\Mac\\Host\\" + macPath.replace(/\//g, "\\")
+}
+
+export function getParallelsHostIP(): string | undefined {
+  const interfaces = os.networkInterfaces()
+  for (const [name, addrs] of Object.entries(interfaces)) {
+    // Older Parallels uses prl* interfaces; newer versions use bridge* (e.g. bridge100)
+    if (name.startsWith("prl") || name.startsWith("bridge")) {
+      const addr = addrs?.find(a => a.family === "IPv4" && !a.internal)
+      if (addr) return addr.address
+    }
+  }
+  return undefined
+}
+
+export function createLocalServer(root: string, bindAddress = "127.0.0.1"): Promise<{ server: http.Server; port: number }> {
   const server = http.createServer((req, res) => {
     const pathname = decodeURIComponent(new URL(req.url!, "http://localhost").pathname).replace(/^\/+/, "")
     const filePath = path.resolve(root, pathname)
@@ -78,7 +109,7 @@ export function createLocalServer(root: string): Promise<{ server: http.Server; 
 
   return new Promise((resolve, reject) => {
     server.once("error", reject)
-    server.listen(0, "127.0.0.1", () => {
+    server.listen(0, bindAddress, () => {
       const { port } = server.address() as net.AddressInfo
       resolve({ server, port })
     })
@@ -108,6 +139,7 @@ interface LaunchResult {
 
 interface LaunchOptions {
   appPath: string
+  vm?: VmManager
   timeoutMs?: number
   env?: Record<string, string>
   expectedVersion?: string
@@ -118,6 +150,7 @@ interface LaunchOptions {
 
 export async function launchAndWaitForQuit({
   appPath,
+  vm,
   timeoutMs = 20000,
   env = {},
   expectedVersion,
@@ -141,6 +174,33 @@ export async function launchAndWaitForQuit({
         ...localEnv,
       },
     })
+  }
+
+  // VM-based execution: prlctl exec runs synchronously (blocks until the process exits),
+  // so we build a PowerShell command that sets env vars and runs the app, then parse stdout.
+  if (vm) {
+    const vmConfigPath = toVmHomePath(updateConfigPath)
+    const envVars: Record<string, string> = {
+      AUTO_UPDATER_TEST: "1",
+      AUTO_UPDATER_TEST_CONFIG_PATH: vmConfigPath,
+      ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER: packageManagerToTest,
+      ...env,
+    }
+    const setters = Object.entries(envVars)
+      .map(([k, v]) => `$env:${k}='${v.replace(/'/g, "''")}'`)
+      .join("; ")
+    // 2>&1 merges TestApp.exe's stderr into PowerShell's stdout stream so
+    // console.error calls (including electron-updater errors) are captured.
+    const psCommand = `${setters}; & '${appPath.replace(/'/g, "''")}' 2>&1`
+
+    const output = await vm.exec("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", psCommand], { timeout: timeoutMs })
+
+    const match = output.match(versionRegex)
+    const version = match?.[1]?.trim()
+    if (expectedVersion && version && version !== expectedVersion) {
+      throw new Error(`Expected version ${expectedVersion}, got ${version}`)
+    }
+    return { version, exitCode: 0, stdout: output, stderr: "" }
   }
 
   const platform = os.platform()
