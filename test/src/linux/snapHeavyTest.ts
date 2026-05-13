@@ -33,6 +33,24 @@ const testCores = requestedCores ? allCores.filter(c => requestedCores.includes(
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
+/**
+ * Returns an effectiveOptionComputed callback that snapshots the generated
+ * snapcraft.yaml and then continues with the real build (returns false).
+ * Absolute `source` paths are stripped from every part so snapshots are
+ * deterministic across machines.
+ */
+function snapYamlCallback(expect: any): (options: any) => Promise<boolean> {
+  return ({ snap }) => {
+    if (snap.parts) {
+      for (const part of Object.values(snap.parts)) {
+        delete (part as any).source
+      }
+    }
+    expect(snap).toMatchSnapshot()
+    return Promise.resolve(false)
+  }
+}
+
 /** Find the single .snap file in outDir, throw if none or multiple. */
 async function findSnapArtifact(outDir: string): Promise<string> {
   const entries = await readdir(outDir)
@@ -91,7 +109,7 @@ function assertSnapStructure(primeDir: string, appName: string, binaryPath: stri
  * up outDir (and everything inside it, including extractDir) after the callback
  * returns. Running chmod/launch after assertPack would hit a deleted directory.
  */
-async function runInstallLaunchTest(expect: any, core: "core18" | "core20" | "core22" | "core24"): Promise<void> {
+async function runInstallLaunchTest(expect: any, core: "core18" | "core20" | "core22" | "core24", effectiveOptionComputed?: (options: any) => Promise<boolean>): Promise<void> {
   await assertPack(
     expect,
     "test-app-one",
@@ -106,6 +124,7 @@ async function runInstallLaunchTest(expect: any, core: "core18" | "core20" | "co
           ...(core === "core24" ? { core24: { useDestructiveMode: true } } : {}),
         },
       },
+      effectiveOptionComputed,
     },
     {
       packed: async context => {
@@ -173,11 +192,12 @@ describe.heavy.ifEnv(hasSnapInstalled())("snap heavy", options, () => {
             grantFileProtocolExtraPrivileges: undefined,
           },
         },
+        effectiveOptionComputed: snapYamlCallback(expect),
       }))
 
     // ── install+launch integration (requires unsquashfs) ────────────────────
     test.ifEnv(canRunInstallTests())(`snap install+launch (${core})`, async ({ expect }) => {
-      await runInstallLaunchTest(expect, core as "core18" | "core20" | "core22" | "core24")
+      await runInstallLaunchTest(expect, core as "core18" | "core20" | "core22" | "core24", snapYamlCallback(expect))
     })
 
     // armhf cross-compilation is not supported for core24 in host/destructive-mode
@@ -191,6 +211,7 @@ describe.heavy.ifEnv(hasSnapInstalled())("snap heavy", options, () => {
             runAsNode: true,
           },
         },
+        effectiveOptionComputed: snapYamlCallback(expect),
       })
     )
   }
@@ -204,7 +225,7 @@ describe.heavy.ifEnv(hasSnapInstalled())("snap heavy", options, () => {
 
 describe.heavy.ifLinux.ifEnv(hasSnapInstalled() && canRunInstallTests())("snap core24 native", options, () => {
   test("core24 build + install + launch", async ({ expect }) => {
-    await runInstallLaunchTest(expect, "core24")
+    await runInstallLaunchTest(expect, "core24", snapYamlCallback(expect))
   })
 
   test("core24 destructive-mode (no gnome extension)", async ({ expect }) => {
@@ -225,6 +246,7 @@ describe.heavy.ifLinux.ifEnv(hasSnapInstalled() && canRunInstallTests())("snap c
             },
           },
         },
+        effectiveOptionComputed: snapYamlCallback(expect),
       },
       {
         packed: async context => {
@@ -268,6 +290,7 @@ describe.heavy.ifLinux.ifEnv(hasSnapInstalled() && canRunInstallTests())("snap c
             },
           },
         },
+        effectiveOptionComputed: snapYamlCallback(expect),
       },
       {
         packed: async context => {

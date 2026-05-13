@@ -2,6 +2,75 @@
 
 exports[`snap core24 native > core24 build + install + launch 1`] = `
 {
+  "apps": {
+    "se-wo-template": {
+      "command": "app/se-wo-template",
+      "desktop": "meta/gui/se-wo-template.desktop",
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+        "browser-support",
+      ],
+    },
+  },
+  "base": "core24",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "environment": {
+    "TMPDIR": "$XDG_RUNTIME_DIR",
+  },
+  "grade": "stable",
+  "icon": "snap/gui/se-wo-template.png",
+  "name": "se-wo-template",
+  "parts": {
+    "se-wo-template": {
+      "organize": {
+        "LICENSE.electron.txt": "app/LICENSE.electron.txt",
+        "LICENSES.chromium.html": "app/LICENSES.chromium.html",
+        "chrome-sandbox": "app/chrome-sandbox",
+        "chrome_100_percent.pak": "app/chrome_100_percent.pak",
+        "chrome_200_percent.pak": "app/chrome_200_percent.pak",
+        "chrome_crashpad_handler": "app/chrome_crashpad_handler",
+        "icudtl.dat": "app/icudtl.dat",
+        "libEGL.so": "app/libEGL.so",
+        "libGLESv2.so": "app/libGLESv2.so",
+        "libffmpeg.so": "app/libffmpeg.so",
+        "libvk_swiftshader.so": "app/libvk_swiftshader.so",
+        "libvulkan.so.1": "app/libvulkan.so.1",
+        "locales": "app/locales",
+        "resources": "app/resources",
+        "resources.pak": "app/resources.pak",
+        "se-wo-template": "app/se-wo-template",
+        "snapshot_blob.bin": "app/snapshot_blob.bin",
+        "v8_context_snapshot.bin": "app/v8_context_snapshot.bin",
+        "vk_swiftshader_icd.json": "app/vk_swiftshader_icd.json",
+      },
+      "plugin": "dump",
+    },
+  },
+  "plugs": {
+    "browser-support": {
+      "allow-sandbox": true,
+      "interface": "browser-support",
+    },
+  },
+  "summary": "Snap Electron App",
+  "title": "Snap Electron App",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snap core24 native > core24 build + install + launch 2`] = `
+{
   "linux": [
     {
       "arch": "x64",
@@ -12,6 +81,75 @@ exports[`snap core24 native > core24 build + install + launch 1`] = `
 `;
 
 exports[`snap core24 native > core24 destructive-mode (no gnome extension) 1`] = `
+{
+  "apps": {
+    "se-wo-template": {
+      "command": "app/se-wo-template",
+      "desktop": "meta/gui/se-wo-template.desktop",
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+        "browser-support",
+      ],
+    },
+  },
+  "base": "core24",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "environment": {
+    "TMPDIR": "$XDG_RUNTIME_DIR",
+  },
+  "grade": "stable",
+  "icon": "snap/gui/se-wo-template.png",
+  "name": "se-wo-template",
+  "parts": {
+    "se-wo-template": {
+      "organize": {
+        "LICENSE.electron.txt": "app/LICENSE.electron.txt",
+        "LICENSES.chromium.html": "app/LICENSES.chromium.html",
+        "chrome-sandbox": "app/chrome-sandbox",
+        "chrome_100_percent.pak": "app/chrome_100_percent.pak",
+        "chrome_200_percent.pak": "app/chrome_200_percent.pak",
+        "chrome_crashpad_handler": "app/chrome_crashpad_handler",
+        "icudtl.dat": "app/icudtl.dat",
+        "libEGL.so": "app/libEGL.so",
+        "libGLESv2.so": "app/libGLESv2.so",
+        "libffmpeg.so": "app/libffmpeg.so",
+        "libvk_swiftshader.so": "app/libvk_swiftshader.so",
+        "libvulkan.so.1": "app/libvulkan.so.1",
+        "locales": "app/locales",
+        "resources": "app/resources",
+        "resources.pak": "app/resources.pak",
+        "se-wo-template": "app/se-wo-template",
+        "snapshot_blob.bin": "app/snapshot_blob.bin",
+        "v8_context_snapshot.bin": "app/v8_context_snapshot.bin",
+        "vk_swiftshader_icd.json": "app/vk_swiftshader_icd.json",
+      },
+      "plugin": "dump",
+    },
+  },
+  "plugs": {
+    "browser-support": {
+      "allow-sandbox": true,
+      "interface": "browser-support",
+    },
+  },
+  "summary": "Snap Electron App",
+  "title": "Snap Electron App",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snap core24 native > core24 destructive-mode (no gnome extension) 2`] = `
 {
   "linux": [
     {
@@ -24,6 +162,83 @@ exports[`snap core24 native > core24 destructive-mode (no gnome extension) 1`] =
 
 exports[`snap core24 native > core24 with custom stagePackages 1`] = `
 {
+  "apps": {
+    "se-wo-template": {
+      "command": "app/se-wo-template",
+      "desktop": "meta/gui/se-wo-template.desktop",
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+        "browser-support",
+      ],
+    },
+  },
+  "base": "core24",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "environment": {
+    "TMPDIR": "$XDG_RUNTIME_DIR",
+  },
+  "grade": "stable",
+  "icon": "snap/gui/se-wo-template.png",
+  "name": "se-wo-template",
+  "parts": {
+    "se-wo-template": {
+      "organize": {
+        "LICENSE.electron.txt": "app/LICENSE.electron.txt",
+        "LICENSES.chromium.html": "app/LICENSES.chromium.html",
+        "chrome-sandbox": "app/chrome-sandbox",
+        "chrome_100_percent.pak": "app/chrome_100_percent.pak",
+        "chrome_200_percent.pak": "app/chrome_200_percent.pak",
+        "chrome_crashpad_handler": "app/chrome_crashpad_handler",
+        "icudtl.dat": "app/icudtl.dat",
+        "libEGL.so": "app/libEGL.so",
+        "libGLESv2.so": "app/libGLESv2.so",
+        "libffmpeg.so": "app/libffmpeg.so",
+        "libvk_swiftshader.so": "app/libvk_swiftshader.so",
+        "libvulkan.so.1": "app/libvulkan.so.1",
+        "locales": "app/locales",
+        "resources": "app/resources",
+        "resources.pak": "app/resources.pak",
+        "se-wo-template": "app/se-wo-template",
+        "snapshot_blob.bin": "app/snapshot_blob.bin",
+        "v8_context_snapshot.bin": "app/v8_context_snapshot.bin",
+        "vk_swiftshader_icd.json": "app/vk_swiftshader_icd.json",
+      },
+      "plugin": "dump",
+      "stage-packages": [
+        "libnspr4",
+        "libnss3",
+        "libxss1",
+        "libappindicator3-1",
+        "libsecret-1-0",
+        "libdrm2",
+      ],
+    },
+  },
+  "plugs": {
+    "browser-support": {
+      "allow-sandbox": true,
+      "interface": "browser-support",
+    },
+  },
+  "summary": "Snap Electron App",
+  "title": "Snap Electron App",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snap core24 native > core24 with custom stagePackages 2`] = `
+{
   "linux": [
     {
       "arch": "x64",
@@ -34,6 +249,69 @@ exports[`snap core24 native > core24 with custom stagePackages 1`] = `
 `;
 
 exports[`snap heavy > snap full (core18 armhf) 1`] = `
+{
+  "apps": {
+    "se-wo-template": {
+      "command": "command.sh",
+      "environment": {
+        "DISABLE_WAYLAND": "1",
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/arm-linux-gnueabihf:$SNAP/usr/lib/arm-linux-gnueabihf:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/arm-linux-gnueabihf:$SNAP/usr/lib/arm-linux-gnueabihf",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "architectures": [
+    "armhf",
+  ],
+  "base": "core20",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "se-wo-template",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Snap Electron App (full build)",
+  "title": "Snap Electron App (full build)",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snap heavy > snap full (core18 armhf) 2`] = `
 {
   "linux": [
     {
@@ -46,6 +324,69 @@ exports[`snap heavy > snap full (core18 armhf) 1`] = `
 
 exports[`snap heavy > snap full (core20 armhf) 1`] = `
 {
+  "apps": {
+    "se-wo-template": {
+      "command": "command.sh",
+      "environment": {
+        "DISABLE_WAYLAND": "1",
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/arm-linux-gnueabihf:$SNAP/usr/lib/arm-linux-gnueabihf:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/arm-linux-gnueabihf:$SNAP/usr/lib/arm-linux-gnueabihf",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "architectures": [
+    "armhf",
+  ],
+  "base": "core20",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "se-wo-template",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Snap Electron App (full build)",
+  "title": "Snap Electron App (full build)",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snap heavy > snap full (core20 armhf) 2`] = `
+{
   "linux": [
     {
       "arch": "armv7l",
@@ -56,6 +397,69 @@ exports[`snap heavy > snap full (core20 armhf) 1`] = `
 `;
 
 exports[`snap heavy > snap full (core22 armhf) 1`] = `
+{
+  "apps": {
+    "se-wo-template": {
+      "command": "command.sh",
+      "environment": {
+        "DISABLE_WAYLAND": "1",
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/arm-linux-gnueabihf:$SNAP/usr/lib/arm-linux-gnueabihf:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/arm-linux-gnueabihf:$SNAP/usr/lib/arm-linux-gnueabihf",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "architectures": [
+    "armhf",
+  ],
+  "base": "core20",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "se-wo-template",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Snap Electron App (full build)",
+  "title": "Snap Electron App (full build)",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snap heavy > snap full (core22 armhf) 2`] = `
 {
   "linux": [
     {
@@ -68,6 +472,75 @@ exports[`snap heavy > snap full (core22 armhf) 1`] = `
 
 exports[`snap heavy > snap full (core24) 1`] = `
 {
+  "apps": {
+    "se-wo-template": {
+      "command": "app/se-wo-template",
+      "desktop": "meta/gui/se-wo-template.desktop",
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+        "browser-support",
+      ],
+    },
+  },
+  "base": "core24",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "environment": {
+    "TMPDIR": "$XDG_RUNTIME_DIR",
+  },
+  "grade": "stable",
+  "icon": "snap/gui/se-wo-template.png",
+  "name": "se-wo-template",
+  "parts": {
+    "se-wo-template": {
+      "organize": {
+        "LICENSE.electron.txt": "app/LICENSE.electron.txt",
+        "LICENSES.chromium.html": "app/LICENSES.chromium.html",
+        "chrome-sandbox": "app/chrome-sandbox",
+        "chrome_100_percent.pak": "app/chrome_100_percent.pak",
+        "chrome_200_percent.pak": "app/chrome_200_percent.pak",
+        "chrome_crashpad_handler": "app/chrome_crashpad_handler",
+        "icudtl.dat": "app/icudtl.dat",
+        "libEGL.so": "app/libEGL.so",
+        "libGLESv2.so": "app/libGLESv2.so",
+        "libffmpeg.so": "app/libffmpeg.so",
+        "libvk_swiftshader.so": "app/libvk_swiftshader.so",
+        "libvulkan.so.1": "app/libvulkan.so.1",
+        "locales": "app/locales",
+        "resources": "app/resources",
+        "resources.pak": "app/resources.pak",
+        "se-wo-template": "app/se-wo-template",
+        "snapshot_blob.bin": "app/snapshot_blob.bin",
+        "v8_context_snapshot.bin": "app/v8_context_snapshot.bin",
+        "vk_swiftshader_icd.json": "app/vk_swiftshader_icd.json",
+      },
+      "plugin": "dump",
+    },
+  },
+  "plugs": {
+    "browser-support": {
+      "allow-sandbox": true,
+      "interface": "browser-support",
+    },
+  },
+  "summary": "Snap Electron App (full build)",
+  "title": "Snap Electron App (full build)",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snap heavy > snap full (core24) 2`] = `
+{
   "linux": [
     {
       "arch": "x64",
@@ -78,6 +551,69 @@ exports[`snap heavy > snap full (core24) 1`] = `
 `;
 
 exports[`snap heavy > snap install+launch (core18) 1`] = `
+{
+  "apps": {
+    "se-wo-template": {
+      "command": "command.sh",
+      "environment": {
+        "DISABLE_WAYLAND": "1",
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core18",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "se-wo-template",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Snap Electron App",
+  "title": "Snap Electron App",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snap heavy > snap install+launch (core18) 2`] = `
 {
   "linux": [
     {
@@ -90,6 +626,69 @@ exports[`snap heavy > snap install+launch (core18) 1`] = `
 
 exports[`snap heavy > snap install+launch (core20) 1`] = `
 {
+  "apps": {
+    "se-wo-template": {
+      "command": "command.sh",
+      "environment": {
+        "DISABLE_WAYLAND": "1",
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "se-wo-template",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Snap Electron App",
+  "title": "Snap Electron App",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snap heavy > snap install+launch (core20) 2`] = `
+{
   "linux": [
     {
       "arch": "x64",
@@ -101,6 +700,69 @@ exports[`snap heavy > snap install+launch (core20) 1`] = `
 
 exports[`snap heavy > snap install+launch (core22) 1`] = `
 {
+  "apps": {
+    "se-wo-template": {
+      "command": "command.sh",
+      "environment": {
+        "DISABLE_WAYLAND": "1",
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core22",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "se-wo-template",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Snap Electron App",
+  "title": "Snap Electron App",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snap heavy > snap install+launch (core22) 2`] = `
+{
   "linux": [
     {
       "arch": "x64",
@@ -111,6 +773,75 @@ exports[`snap heavy > snap install+launch (core22) 1`] = `
 `;
 
 exports[`snap heavy > snap install+launch (core24) 1`] = `
+{
+  "apps": {
+    "se-wo-template": {
+      "command": "app/se-wo-template",
+      "desktop": "meta/gui/se-wo-template.desktop",
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+        "browser-support",
+      ],
+    },
+  },
+  "base": "core24",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "environment": {
+    "TMPDIR": "$XDG_RUNTIME_DIR",
+  },
+  "grade": "stable",
+  "icon": "snap/gui/se-wo-template.png",
+  "name": "se-wo-template",
+  "parts": {
+    "se-wo-template": {
+      "organize": {
+        "LICENSE.electron.txt": "app/LICENSE.electron.txt",
+        "LICENSES.chromium.html": "app/LICENSES.chromium.html",
+        "chrome-sandbox": "app/chrome-sandbox",
+        "chrome_100_percent.pak": "app/chrome_100_percent.pak",
+        "chrome_200_percent.pak": "app/chrome_200_percent.pak",
+        "chrome_crashpad_handler": "app/chrome_crashpad_handler",
+        "icudtl.dat": "app/icudtl.dat",
+        "libEGL.so": "app/libEGL.so",
+        "libGLESv2.so": "app/libGLESv2.so",
+        "libffmpeg.so": "app/libffmpeg.so",
+        "libvk_swiftshader.so": "app/libvk_swiftshader.so",
+        "libvulkan.so.1": "app/libvulkan.so.1",
+        "locales": "app/locales",
+        "resources": "app/resources",
+        "resources.pak": "app/resources.pak",
+        "se-wo-template": "app/se-wo-template",
+        "snapshot_blob.bin": "app/snapshot_blob.bin",
+        "v8_context_snapshot.bin": "app/v8_context_snapshot.bin",
+        "vk_swiftshader_icd.json": "app/vk_swiftshader_icd.json",
+      },
+      "plugin": "dump",
+    },
+  },
+  "plugs": {
+    "browser-support": {
+      "allow-sandbox": true,
+      "interface": "browser-support",
+    },
+  },
+  "summary": "Snap Electron App",
+  "title": "Snap Electron App",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snap heavy > snap install+launch (core24) 2`] = `
 {
   "linux": [
     {
