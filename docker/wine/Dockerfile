@@ -25,6 +25,6 @@ ENV WINEDEBUG=-all,err+all
 ENV WINEDLLOVERRIDES=winemenubuilder.exe=d
 
 # wineboot --init is the correct headless prefix initialiser (no display needed, exits after init).
-# || true: Wine SIGABRT under QEMU on ARM64/Apple Silicon (16KB vs 4KB page size mismatch); non-fatal so
-# local builds complete. On x86_64 CI wineboot --init succeeds and the prefix is fully initialised.
-RUN wineboot --init || true
+# On ARM64/Apple Silicon, Wine SIGABRT under QEMU (16KB host pages vs 4KB Wine expectation). The page-size
+# check gates the tolerance: ≠4096 means QEMU/Apple Silicon → skip; =4096 means native x86_64 → fail the build.
+RUN wineboot --init || [ "$(getconf PAGE_SIZE)" -ne 4096 ] || { echo "ERROR: wineboot failed on native x86_64" >&2 && false; }
