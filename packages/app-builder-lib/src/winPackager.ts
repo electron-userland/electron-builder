@@ -130,7 +130,10 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
 
     const promise = this.signingQueue.then(() => this._sign(file))
-    this.signingQueue = promise.catch(() => false)
+    this.signingQueue = promise.catch(e => {
+      log.warn({ file: log.filePath(file), error: e.message }, "signing failed for file, queue will continue to next file")
+      return false
+    })
     return promise
   }
 
