@@ -92,7 +92,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
       summary: options.summary || appInfo.productName,
       compression: options.compression,
       description: this.helper.getDescription(options),
-      architectures: [toLinuxArchString(arch, "snap")],
+      platforms: [toLinuxArchString(arch, "snap")],
       apps: {
         [snapName]: appDescriptor,
       },
