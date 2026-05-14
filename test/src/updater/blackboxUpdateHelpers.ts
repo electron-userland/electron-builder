@@ -5,15 +5,14 @@ import { getWindowsVm, VmManager } from "app-builder-lib/out/vm/vm"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
 import { archFromString, DebugLogger, getArchSuffix, log, serializeToYaml, spawn, TmpDir } from "builder-util/out/util"
 import { execFileSync, execSync } from "child_process"
-import { createHash, randomUUID } from "crypto"
+import { randomUUID } from "crypto"
 import { Arch, Configuration, Platform } from "electron-builder"
 import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
-import { createReadStream } from "fs"
 import { copy, existsSync, move, outputFile, readJsonSync, remove } from "fs-extra"
 import { homedir } from "os"
 import path from "path"
 import { ExpectStatic, TestContext } from "vitest"
-import { createLocalServer, getParallelsHostIP, launchAndWaitForQuit, toVmHomePath } from "../helpers/launchAppCrossPlatform"
+import { createLocalServer, getParallelsHostIP, launchAndWaitForQuit, sha256File, toVmHomePath } from "../helpers/launchAppCrossPlatform"
 import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
@@ -25,16 +24,6 @@ export const optionsForFlakyE2E = { sequential: true, retry: 1 }
 export const windowsVmPromise: Promise<ParallelsVmManager | undefined> = getWindowsVm(new DebugLogger(false))
   .then(vm => (vm.constructor.name === "ParallelsVmManager" ? (vm as ParallelsVmManager) : undefined))
   .catch(() => undefined)
-
-async function sha256File(filePath: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const hash = createHash("sha256")
-    createReadStream(filePath)
-      .on("data", chunk => hash.update(chunk))
-      .on("end", () => resolve(hash.digest("hex")))
-      .on("error", reject)
-  })
-}
 
 export type ApplicationUpdatePaths = {
   dir: string
