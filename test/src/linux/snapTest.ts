@@ -383,6 +383,7 @@ describe.heavy.ifEnv(hasSnapInstalled())("snap", { sequential: true, timeout: EX
         snapcraft: { base: "core24" },
       },
       effectiveOptionComputed: async ({ snap }) => {
+        delete snap.platforms // arch-specific: varies by host; tested separately via armhf tests
         expect(snap).toMatchSnapshot()
         expect(snap.base).toBe("core24")
         expect(snap.apps?.sep?.extensions).toContain("gnome")
@@ -413,6 +414,7 @@ describe.heavy.ifEnv(hasSnapInstalled())("snap", { sequential: true, timeout: EX
         },
       },
       effectiveOptionComputed: async ({ snap }) => {
+        delete snap.platforms // arch-specific: varies by host; tested separately via armhf tests
         expect(snap).toMatchSnapshot()
         expect(snap.base).toBe("core24")
         // Without GNOME extension, manual content snaps must be defined at root level
@@ -434,6 +436,7 @@ describe.heavy.ifEnv(hasSnapInstalled())("snap", { sequential: true, timeout: EX
         },
       },
       effectiveOptionComputed: async ({ snap }) => {
+        delete snap.platforms // arch-specific: varies by host; tested separately via armhf tests
         expect(snap).toMatchSnapshot()
         expect(snap.environment?.["DISABLE_WAYLAND"]).toBe("1")
         return Promise.resolve(true)
@@ -454,6 +457,7 @@ describe.heavy.ifEnv(hasSnapInstalled())("snap", { sequential: true, timeout: EX
         },
       },
       effectiveOptionComputed: async ({ snap }) => {
+        delete snap.platforms // arch-specific: varies by host; tested separately via armhf tests
         expect(snap).toMatchSnapshot()
         // "default" should expand to the full default plug list plus "camera"
         const appPlugs = snap.apps?.sep?.plugs ?? []
@@ -478,6 +482,7 @@ describe.heavy.ifEnv(hasSnapInstalled())("snap", { sequential: true, timeout: EX
           },
         },
         effectiveOptionComputed: ({ snap }) => {
+          delete snap.platforms // arch-specific: varies by host; tested separately via armhf tests
           expect(snap).toMatchSnapshot()
           // electron-builder must not inject any extra plugs or extensions
           expect(snap.name).toBe("sep")

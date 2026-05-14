@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`snap > arm 1`] = `
+exports[`arm 1`] = `
 {
   "linux": [
     {
@@ -11,7 +11,7 @@ exports[`snap > arm 1`] = `
 }
 `;
 
-exports[`snap > auto start 1`] = `
+exports[`auto start 1`] = `
 {
   "apps": {
     "sep": {
@@ -39,14 +39,14 @@ exports[`snap > auto start 1`] = `
       ],
     },
   },
-  "base": "core22",
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "sep",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -75,18 +75,13 @@ exports[`snap > auto start 1`] = `
 }
 `;
 
-exports[`snap > auto start 2`] = `
+exports[`auto start 2`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
-    },
-  ],
+  "linux": [],
 }
 `;
 
-exports[`snap > base option 1`] = `
+exports[`base option 1`] = `
 {
   "apps": {
     "testapp": {
@@ -113,14 +108,14 @@ exports[`snap > base option 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core22",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "testapp",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -149,21 +144,17 @@ exports[`snap > base option 1`] = `
 }
 `;
 
-exports[`snap > base option 2`] = `
+exports[`base option 2`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "TestApp_1.1.0_amd64.snap",
-    },
-  ],
+  "linux": [],
 }
 `;
 
-exports[`snap > buildPackages 1`] = `
+exports[`buildPackages 1`] = `
 {
   "apps": {
     "sep": {
+      "adapter": "none",
       "command": "command.sh",
       "environment": {
         "DISABLE_WAYLAND": "1",
@@ -187,7 +178,10 @@ exports[`snap > buildPackages 1`] = `
       ],
     },
   },
-  "base": "core22",
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
@@ -334,9 +328,6 @@ exports[`snap > buildPackages 1`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -365,18 +356,13 @@ exports[`snap > buildPackages 1`] = `
 }
 `;
 
-exports[`snap > buildPackages 2`] = `
+exports[`buildPackages 2`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
-    },
-  ],
+  "linux": [],
 }
 `;
 
-exports[`snap > classic confinement 1`] = `
+exports[`classic confinement 1`] = `
 {
   "linux": [
     {
@@ -387,10 +373,11 @@ exports[`snap > classic confinement 1`] = `
 }
 `;
 
-exports[`snap > compression option 1`] = `
+exports[`compression option 1`] = `
 {
   "apps": {
     "sep": {
+      "adapter": "none",
       "command": "command.sh",
       "environment": {
         "DISABLE_WAYLAND": "1",
@@ -414,7 +401,10 @@ exports[`snap > compression option 1`] = `
       ],
     },
   },
-  "base": "core22",
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
   "compression": "xz",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
@@ -557,9 +547,6 @@ exports[`snap > compression option 1`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -588,368 +575,13 @@ exports[`snap > compression option 1`] = `
 }
 `;
 
-exports[`snap > compression option 2`] = `
+exports[`compression option 2`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
-    },
-  ],
+  "linux": [],
 }
 `;
 
-exports[`snap > core24 custom plugs with default expansion 1`] = `
-{
-  "apps": {
-    "sep": {
-      "command": "app/sep",
-      "desktop": "meta/gui/sep.desktop",
-      "extensions": [
-        "gnome",
-      ],
-      "plugs": [
-        "desktop",
-        "desktop-legacy",
-        "home",
-        "x11",
-        "wayland",
-        "unity7",
-        "network",
-        "gsettings",
-        "audio-playback",
-        "pulseaudio",
-        "opengl",
-        "camera",
-      ],
-    },
-  },
-  "base": "core24",
-  "confinement": "strict",
-  "description": "Test Application (test quite “ #378)",
-  "environment": {
-    "TMPDIR": "$XDG_RUNTIME_DIR",
-  },
-  "grade": "stable",
-  "icon": "snap/gui/sep.png",
-  "name": "sep",
-  "parts": {
-    "sep": {
-      "organize": {
-        "LICENSE.electron.txt": "app/LICENSE.electron.txt",
-        "LICENSES.chromium.html": "app/LICENSES.chromium.html",
-        "chrome-sandbox": "app/chrome-sandbox",
-        "chrome_100_percent.pak": "app/chrome_100_percent.pak",
-        "chrome_200_percent.pak": "app/chrome_200_percent.pak",
-        "chrome_crashpad_handler": "app/chrome_crashpad_handler",
-        "icudtl.dat": "app/icudtl.dat",
-        "libEGL.so": "app/libEGL.so",
-        "libGLESv2.so": "app/libGLESv2.so",
-        "libffmpeg.so": "app/libffmpeg.so",
-        "libvk_swiftshader.so": "app/libvk_swiftshader.so",
-        "libvulkan.so.1": "app/libvulkan.so.1",
-        "locales": "app/locales",
-        "resources": "app/resources",
-        "resources.pak": "app/resources.pak",
-        "sep": "app/sep",
-        "snapshot_blob.bin": "app/snapshot_blob.bin",
-        "v8_context_snapshot.bin": "app/v8_context_snapshot.bin",
-        "vk_swiftshader_icd.json": "app/vk_swiftshader_icd.json",
-      },
-      "plugin": "dump",
-      "source": "app",
-    },
-  },
-  "summary": "Sep",
-  "title": "Sep",
-  "version": "1.1.0",
-}
-`;
-
-exports[`snap > core24 custom plugs with default expansion 2`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
-    },
-  ],
-}
-`;
-
-exports[`snap > core24 default (gnome extension) 1`] = `
-{
-  "apps": {
-    "sep": {
-      "command": "app/sep",
-      "desktop": "meta/gui/sep.desktop",
-      "extensions": [
-        "gnome",
-      ],
-      "plugs": [
-        "browser-support",
-      ],
-    },
-  },
-  "base": "core24",
-  "confinement": "strict",
-  "description": "Test Application (test quite “ #378)",
-  "environment": {
-    "TMPDIR": "$XDG_RUNTIME_DIR",
-  },
-  "grade": "stable",
-  "icon": "snap/gui/sep.png",
-  "name": "sep",
-  "parts": {
-    "sep": {
-      "organize": {
-        "LICENSE.electron.txt": "app/LICENSE.electron.txt",
-        "LICENSES.chromium.html": "app/LICENSES.chromium.html",
-        "chrome-sandbox": "app/chrome-sandbox",
-        "chrome_100_percent.pak": "app/chrome_100_percent.pak",
-        "chrome_200_percent.pak": "app/chrome_200_percent.pak",
-        "chrome_crashpad_handler": "app/chrome_crashpad_handler",
-        "icudtl.dat": "app/icudtl.dat",
-        "libEGL.so": "app/libEGL.so",
-        "libGLESv2.so": "app/libGLESv2.so",
-        "libffmpeg.so": "app/libffmpeg.so",
-        "libvk_swiftshader.so": "app/libvk_swiftshader.so",
-        "libvulkan.so.1": "app/libvulkan.so.1",
-        "locales": "app/locales",
-        "resources": "app/resources",
-        "resources.pak": "app/resources.pak",
-        "sep": "app/sep",
-        "snapshot_blob.bin": "app/snapshot_blob.bin",
-        "v8_context_snapshot.bin": "app/v8_context_snapshot.bin",
-        "vk_swiftshader_icd.json": "app/vk_swiftshader_icd.json",
-      },
-      "plugin": "dump",
-      "source": "app",
-    },
-  },
-  "plugs": {
-    "browser-support": {
-      "allow-sandbox": true,
-      "interface": "browser-support",
-    },
-  },
-  "summary": "Sep",
-  "title": "Sep",
-  "version": "1.1.0",
-}
-`;
-
-exports[`snap > core24 default (gnome extension) 2`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
-    },
-  ],
-}
-`;
-
-exports[`snap > core24 gnome extension throws in destructive-mode 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
-
-exports[`snap > core24 no gnome extension 1`] = `
-{
-  "apps": {
-    "sep": {
-      "command": "app/sep",
-      "desktop": "meta/gui/sep.desktop",
-      "plugs": [
-        "desktop",
-        "desktop-legacy",
-        "home",
-        "x11",
-        "wayland",
-        "unity7",
-        "network",
-        "gsettings",
-        "audio-playback",
-        "pulseaudio",
-        "opengl",
-        "browser-support",
-      ],
-    },
-  },
-  "base": "core24",
-  "confinement": "strict",
-  "description": "Test Application (test quite “ #378)",
-  "environment": {
-    "TMPDIR": "$XDG_RUNTIME_DIR",
-  },
-  "grade": "stable",
-  "icon": "snap/gui/sep.png",
-  "layout": {
-    "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0": {
-      "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0",
-    },
-    "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1": {
-      "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1",
-    },
-    "/usr/share/drirc.d": {
-      "symlink": "$SNAP/gpu-2404/drirc.d",
-    },
-    "/usr/share/libdrm": {
-      "bind": "$SNAP/gpu-2404/libdrm",
-    },
-    "/usr/share/xml/iso-codes": {
-      "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes",
-    },
-  },
-  "name": "sep",
-  "parts": {
-    "sep": {
-      "organize": {
-        "LICENSE.electron.txt": "app/LICENSE.electron.txt",
-        "LICENSES.chromium.html": "app/LICENSES.chromium.html",
-        "chrome-sandbox": "app/chrome-sandbox",
-        "chrome_100_percent.pak": "app/chrome_100_percent.pak",
-        "chrome_200_percent.pak": "app/chrome_200_percent.pak",
-        "chrome_crashpad_handler": "app/chrome_crashpad_handler",
-        "icudtl.dat": "app/icudtl.dat",
-        "libEGL.so": "app/libEGL.so",
-        "libGLESv2.so": "app/libGLESv2.so",
-        "libffmpeg.so": "app/libffmpeg.so",
-        "libvk_swiftshader.so": "app/libvk_swiftshader.so",
-        "libvulkan.so.1": "app/libvulkan.so.1",
-        "locales": "app/locales",
-        "resources": "app/resources",
-        "resources.pak": "app/resources.pak",
-        "sep": "app/sep",
-        "snapshot_blob.bin": "app/snapshot_blob.bin",
-        "v8_context_snapshot.bin": "app/v8_context_snapshot.bin",
-        "vk_swiftshader_icd.json": "app/vk_swiftshader_icd.json",
-      },
-      "plugin": "dump",
-      "source": "app",
-    },
-  },
-  "plugs": {
-    "browser-support": {
-      "allow-sandbox": true,
-      "interface": "browser-support",
-    },
-    "gnome-46-2404": {
-      "default-provider": "gnome-46-2404",
-      "interface": "content",
-      "target": "$SNAP/gnome-platform",
-    },
-    "gpu-2404": {
-      "default-provider": "mesa-2404",
-      "interface": "content",
-      "target": "$SNAP/gpu-2404",
-    },
-    "gtk-3-themes": {
-      "default-provider": "gtk-common-themes",
-      "interface": "content",
-      "target": "$SNAP/data-dir/themes",
-    },
-    "icon-themes": {
-      "default-provider": "gtk-common-themes",
-      "interface": "content",
-      "target": "$SNAP/data-dir/icons",
-    },
-    "sound-themes": {
-      "default-provider": "gtk-common-themes",
-      "interface": "content",
-      "target": "$SNAP/data-dir/sounds",
-    },
-  },
-  "summary": "Sep",
-  "title": "Sep",
-  "version": "1.1.0",
-}
-`;
-
-exports[`snap > core24 no gnome extension 2`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
-    },
-  ],
-}
-`;
-
-exports[`snap > core24 wayland disabled 1`] = `
-{
-  "apps": {
-    "sep": {
-      "command": "app/sep",
-      "desktop": "meta/gui/sep.desktop",
-      "extensions": [
-        "gnome",
-      ],
-      "plugs": [
-        "browser-support",
-      ],
-    },
-  },
-  "base": "core24",
-  "confinement": "strict",
-  "description": "Test Application (test quite “ #378)",
-  "environment": {
-    "DISABLE_WAYLAND": "1",
-    "TMPDIR": "$XDG_RUNTIME_DIR",
-  },
-  "grade": "stable",
-  "icon": "snap/gui/sep.png",
-  "name": "sep",
-  "parts": {
-    "sep": {
-      "organize": {
-        "LICENSE.electron.txt": "app/LICENSE.electron.txt",
-        "LICENSES.chromium.html": "app/LICENSES.chromium.html",
-        "chrome-sandbox": "app/chrome-sandbox",
-        "chrome_100_percent.pak": "app/chrome_100_percent.pak",
-        "chrome_200_percent.pak": "app/chrome_200_percent.pak",
-        "chrome_crashpad_handler": "app/chrome_crashpad_handler",
-        "icudtl.dat": "app/icudtl.dat",
-        "libEGL.so": "app/libEGL.so",
-        "libGLESv2.so": "app/libGLESv2.so",
-        "libffmpeg.so": "app/libffmpeg.so",
-        "libvk_swiftshader.so": "app/libvk_swiftshader.so",
-        "libvulkan.so.1": "app/libvulkan.so.1",
-        "locales": "app/locales",
-        "resources": "app/resources",
-        "resources.pak": "app/resources.pak",
-        "sep": "app/sep",
-        "snapshot_blob.bin": "app/snapshot_blob.bin",
-        "v8_context_snapshot.bin": "app/v8_context_snapshot.bin",
-        "vk_swiftshader_icd.json": "app/vk_swiftshader_icd.json",
-      },
-      "plugin": "dump",
-      "source": "app",
-    },
-  },
-  "plugs": {
-    "browser-support": {
-      "allow-sandbox": true,
-      "interface": "browser-support",
-    },
-  },
-  "summary": "Sep",
-  "title": "Sep",
-  "version": "1.1.0",
-}
-`;
-
-exports[`snap > core24 wayland disabled 2`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
-    },
-  ],
-}
-`;
-
-exports[`snap > custom after, no desktop 1`] = `
+exports[`custom after, no desktop 1`] = `
 {
   "apps": {
     "sep": {
@@ -976,14 +608,14 @@ exports[`snap > custom after, no desktop 1`] = `
       ],
     },
   },
-  "base": "core22",
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "sep",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -1012,18 +644,13 @@ exports[`snap > custom after, no desktop 1`] = `
 }
 `;
 
-exports[`snap > custom after, no desktop 2`] = `
+exports[`custom after, no desktop 2`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
-    },
-  ],
+  "linux": [],
 }
 `;
 
-exports[`snap > custom env 1`] = `
+exports[`custom env 1`] = `
 {
   "apps": {
     "sep": {
@@ -1051,14 +678,14 @@ exports[`snap > custom env 1`] = `
       ],
     },
   },
-  "base": "core22",
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "sep",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -1087,53 +714,13 @@ exports[`snap > custom env 1`] = `
 }
 `;
 
-exports[`snap > custom env 2`] = `
+exports[`custom env 2`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
-    },
-  ],
+  "linux": [],
 }
 `;
 
-exports[`snap > custom snap yamlPath pass-through 1`] = `
-{
-  "apps": {
-    "sep": {
-      "command": "sep",
-    },
-  },
-  "base": "core24",
-  "confinement": "strict",
-  "description": "Built with a custom snapcraft.yaml via electron-builder.
-",
-  "grade": "stable",
-  "name": "sep",
-  "parts": {
-    "app": {
-      "plugin": "dump",
-      "source": ".",
-    },
-  },
-  "summary": "Custom snap (pass-through)",
-  "version": "1.0.0",
-}
-`;
-
-exports[`snap > custom snap yamlPath pass-through 2`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
-    },
-  ],
-}
-`;
-
-exports[`snap > default base 1`] = `
+exports[`default base 1`] = `
 {
   "apps": {
     "testapp": {
@@ -1160,14 +747,14 @@ exports[`snap > default base 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "testapp",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -1196,18 +783,13 @@ exports[`snap > default base 1`] = `
 }
 `;
 
-exports[`snap > default base 2`] = `
+exports[`default base 2`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "TestApp_1.1.0_amd64.snap",
-    },
-  ],
+  "linux": [],
 }
 `;
 
-exports[`snap > default compression 1`] = `
+exports[`default compression 1`] = `
 {
   "apps": {
     "sep": {
@@ -1234,14 +816,14 @@ exports[`snap > default compression 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "sep",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -1270,25 +852,24 @@ exports[`snap > default compression 1`] = `
 }
 `;
 
-exports[`snap > default compression 2`] = `
+exports[`default compression 2`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
-    },
-  ],
+  "linux": [],
 }
 `;
 
-exports[`snap > default stagePackages 1`] = `
+exports[`default stagePackages 1`] = `
 {
   "apps": {
     "sep": {
+      "adapter": "none",
       "command": "command.sh",
     },
   },
-  "base": "core22",
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
@@ -1430,34 +1011,30 @@ exports[`snap > default stagePackages 1`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "summary": "Sep",
   "title": "Sep",
   "version": "1.1.0",
 }
 `;
 
-exports[`snap > default stagePackages 2`] = `
+exports[`default stagePackages 2`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
-    },
-  ],
+  "linux": [],
 }
 `;
 
-exports[`snap > default stagePackages 3`] = `
+exports[`default stagePackages 3`] = `
 {
   "apps": {
     "sep": {
+      "adapter": "none",
       "command": "command.sh",
     },
   },
-  "base": "core22",
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
@@ -1600,34 +1177,30 @@ exports[`snap > default stagePackages 3`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "summary": "Sep",
   "title": "Sep",
   "version": "1.1.0",
 }
 `;
 
-exports[`snap > default stagePackages 4`] = `
+exports[`default stagePackages 4`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
-    },
-  ],
+  "linux": [],
 }
 `;
 
-exports[`snap > default stagePackages 5`] = `
+exports[`default stagePackages 5`] = `
 {
   "apps": {
     "sep": {
+      "adapter": "none",
       "command": "command.sh",
     },
   },
-  "base": "core22",
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
@@ -1770,34 +1343,30 @@ exports[`snap > default stagePackages 5`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "summary": "Sep",
   "title": "Sep",
   "version": "1.1.0",
 }
 `;
 
-exports[`snap > default stagePackages 6`] = `
+exports[`default stagePackages 6`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
-    },
-  ],
+  "linux": [],
 }
 `;
 
-exports[`snap > default stagePackages 7`] = `
+exports[`default stagePackages 7`] = `
 {
   "apps": {
     "sep": {
+      "adapter": "none",
       "command": "command.sh",
     },
   },
-  "base": "core22",
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
@@ -1941,27 +1510,19 @@ exports[`snap > default stagePackages 7`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "summary": "Sep",
   "title": "Sep",
   "version": "1.1.0",
 }
 `;
 
-exports[`snap > default stagePackages 8`] = `
+exports[`default stagePackages 8`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
-    },
-  ],
+  "linux": [],
 }
 `;
 
-exports[`snap > no desktop plugs 1`] = `
+exports[`no desktop plugs 1`] = `
 {
   "apps": {
     "sep": {
@@ -1978,14 +1539,14 @@ exports[`snap > no desktop plugs 1`] = `
       ],
     },
   },
-  "base": "core22",
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "sep",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -2014,21 +1575,17 @@ exports[`snap > no desktop plugs 1`] = `
 }
 `;
 
-exports[`snap > no desktop plugs 2`] = `
+exports[`no desktop plugs 2`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
-    },
-  ],
+  "linux": [],
 }
 `;
 
-exports[`snap > plugs option 1`] = `
+exports[`plugs option 1`] = `
 {
   "apps": {
     "testapp": {
+      "adapter": "none",
       "command": "command.sh",
       "environment": {
         "DISABLE_WAYLAND": "1",
@@ -2042,7 +1599,10 @@ exports[`snap > plugs option 1`] = `
       ],
     },
   },
-  "base": "core22",
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
@@ -2184,9 +1744,6 @@ exports[`snap > plugs option 1`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "browser-sandbox": {
       "allow-sandbox": true,
@@ -2219,21 +1776,17 @@ exports[`snap > plugs option 1`] = `
 }
 `;
 
-exports[`snap > plugs option 2`] = `
+exports[`plugs option 2`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "TestApp_1.1.0_amd64.snap",
-    },
-  ],
+  "linux": [],
 }
 `;
 
-exports[`snap > plugs option 3`] = `
+exports[`plugs option 3`] = `
 {
   "apps": {
     "testapp": {
+      "adapter": "none",
       "command": "command.sh",
       "environment": {
         "DISABLE_WAYLAND": "1",
@@ -2247,7 +1800,10 @@ exports[`snap > plugs option 3`] = `
       ],
     },
   },
-  "base": "core22",
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
@@ -2389,9 +1945,6 @@ exports[`snap > plugs option 3`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "browser-sandbox": {
       "allow-sandbox": true,
@@ -2424,18 +1977,13 @@ exports[`snap > plugs option 3`] = `
 }
 `;
 
-exports[`snap > plugs option 4`] = `
+exports[`plugs option 4`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "TestApp_1.1.0_amd64.snap",
-    },
-  ],
+  "linux": [],
 }
 `;
 
-exports[`snap > slots option 1`] = `
+exports[`slots option 1`] = `
 {
   "apps": {
     "sep": {
@@ -2466,14 +2014,14 @@ exports[`snap > slots option 1`] = `
       ],
     },
   },
-  "base": "core22",
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "sep",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -2502,18 +2050,13 @@ exports[`snap > slots option 1`] = `
 }
 `;
 
-exports[`snap > slots option 2`] = `
+exports[`slots option 2`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
-    },
-  ],
+  "linux": [],
 }
 `;
 
-exports[`snap > slots option 3`] = `
+exports[`slots option 3`] = `
 {
   "apps": {
     "sep": {
@@ -2544,14 +2087,14 @@ exports[`snap > slots option 3`] = `
       ],
     },
   },
-  "base": "core22",
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "sep",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -2586,7 +2129,13 @@ exports[`snap > slots option 3`] = `
 }
 `;
 
-exports[`snap > slots option 4`] = `
+exports[`slots option 4`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`snap 1`] = `
 {
   "linux": [
     {
@@ -2597,18 +2146,7 @@ exports[`snap > slots option 4`] = `
 }
 `;
 
-exports[`snap > snap 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
-    },
-  ],
-}
-`;
-
-exports[`snap > use template app 1`] = `
+exports[`use template app 1`] = `
 {
   "apps": {
     "testapp": {
@@ -2635,14 +2173,14 @@ exports[`snap > use template app 1`] = `
       ],
     },
   },
-  "base": "core22",
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "testapp",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -2671,13 +2209,8 @@ exports[`snap > use template app 1`] = `
 }
 `;
 
-exports[`snap > use template app 2`] = `
+exports[`use template app 2`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "TestApp_1.1.0_amd64.snap",
-    },
-  ],
+  "linux": [],
 }
 `;

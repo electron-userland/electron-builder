@@ -12,12 +12,10 @@ import { launchSnapBinary } from "../helpers/launchAppCrossPlatform"
 // very slow
 const options = { sequential: true, timeout: EXTENDED_TIMEOUT }
 
-// Guard: tests run when:
-//   - RUN_SNAP_TESTS=true  (set by test-snap.sh inside the Docker container, where
-//     "snap" the snapd client is absent but "snapcraft" is present), OR
-//   - the "snap" snapd client is found in PATH (native Linux install), OR
-//   - the "snapcraft" CLI is found in PATH (e.g. installed via pip / brew)
-export const hasSnapInstalled = () => process.env.RUN_SNAP_TESTS === "true" || which.sync("snap", { nothrow: true }) != null || which.sync("snapcraft", { nothrow: true }) != null
+// Guard: tests run when RUN_SNAP_TESTS=true AND snapcraft is found in PATH.
+// test-snap.sh sets RUN_SNAP_TESTS=true and runs inside Docker images that
+// have snapcraft installed but lack the snapd client ("snap").
+export const hasSnapInstalled = () => process.env.RUN_SNAP_TESTS === "true" && which.sync("snapcraft", { nothrow: true }) != null
 
 // Whether install+launch tests should run.
 // Requires: Linux, unsquashfs (squashfs-tools), and Xvfb.
