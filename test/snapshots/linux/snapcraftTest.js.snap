@@ -1,0 +1,386 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`snapcraft > core24 custom plugs with default expansion 1`] = `
+{
+  "apps": {
+    "sep": {
+      "command": "app/sep",
+      "desktop": "meta/gui/sep.desktop",
+      "extensions": [
+        "gnome",
+      ],
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+        "camera",
+      ],
+    },
+  },
+  "base": "core24",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "environment": {
+    "TMPDIR": "$XDG_RUNTIME_DIR",
+  },
+  "grade": "stable",
+  "icon": "snap/gui/sep.png",
+  "name": "sep",
+  "parts": {
+    "sep": {
+      "organize": {
+        "LICENSE.electron.txt": "app/LICENSE.electron.txt",
+        "LICENSES.chromium.html": "app/LICENSES.chromium.html",
+        "chrome-sandbox": "app/chrome-sandbox",
+        "chrome_100_percent.pak": "app/chrome_100_percent.pak",
+        "chrome_200_percent.pak": "app/chrome_200_percent.pak",
+        "chrome_crashpad_handler": "app/chrome_crashpad_handler",
+        "icudtl.dat": "app/icudtl.dat",
+        "libEGL.so": "app/libEGL.so",
+        "libGLESv2.so": "app/libGLESv2.so",
+        "libffmpeg.so": "app/libffmpeg.so",
+        "libvk_swiftshader.so": "app/libvk_swiftshader.so",
+        "libvulkan.so.1": "app/libvulkan.so.1",
+        "locales": "app/locales",
+        "resources": "app/resources",
+        "resources.pak": "app/resources.pak",
+        "sep": "app/sep",
+        "snapshot_blob.bin": "app/snapshot_blob.bin",
+        "v8_context_snapshot.bin": "app/v8_context_snapshot.bin",
+        "vk_swiftshader_icd.json": "app/vk_swiftshader_icd.json",
+      },
+      "plugin": "dump",
+      "source": "app",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > core24 custom plugs with default expansion 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24 default (gnome extension) 1`] = `
+{
+  "apps": {
+    "sep": {
+      "command": "app/sep",
+      "desktop": "meta/gui/sep.desktop",
+      "extensions": [
+        "gnome",
+      ],
+      "plugs": [
+        "browser-support",
+      ],
+    },
+  },
+  "base": "core24",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "environment": {
+    "TMPDIR": "$XDG_RUNTIME_DIR",
+  },
+  "grade": "stable",
+  "icon": "snap/gui/sep.png",
+  "name": "sep",
+  "parts": {
+    "sep": {
+      "organize": {
+        "LICENSE.electron.txt": "app/LICENSE.electron.txt",
+        "LICENSES.chromium.html": "app/LICENSES.chromium.html",
+        "chrome-sandbox": "app/chrome-sandbox",
+        "chrome_100_percent.pak": "app/chrome_100_percent.pak",
+        "chrome_200_percent.pak": "app/chrome_200_percent.pak",
+        "chrome_crashpad_handler": "app/chrome_crashpad_handler",
+        "icudtl.dat": "app/icudtl.dat",
+        "libEGL.so": "app/libEGL.so",
+        "libGLESv2.so": "app/libGLESv2.so",
+        "libffmpeg.so": "app/libffmpeg.so",
+        "libvk_swiftshader.so": "app/libvk_swiftshader.so",
+        "libvulkan.so.1": "app/libvulkan.so.1",
+        "locales": "app/locales",
+        "resources": "app/resources",
+        "resources.pak": "app/resources.pak",
+        "sep": "app/sep",
+        "snapshot_blob.bin": "app/snapshot_blob.bin",
+        "v8_context_snapshot.bin": "app/v8_context_snapshot.bin",
+        "vk_swiftshader_icd.json": "app/vk_swiftshader_icd.json",
+      },
+      "plugin": "dump",
+      "source": "app",
+    },
+  },
+  "plugs": {
+    "browser-support": {
+      "allow-sandbox": true,
+      "interface": "browser-support",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > core24 default (gnome extension) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24 gnome extension throws in destructive-mode 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
+
+exports[`snapcraft > core24 no gnome extension 1`] = `
+{
+  "apps": {
+    "sep": {
+      "command": "app/sep",
+      "desktop": "meta/gui/sep.desktop",
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+        "browser-support",
+      ],
+    },
+  },
+  "base": "core24",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "environment": {
+    "TMPDIR": "$XDG_RUNTIME_DIR",
+  },
+  "grade": "stable",
+  "icon": "snap/gui/sep.png",
+  "layout": {
+    "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0": {
+      "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0",
+    },
+    "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1": {
+      "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1",
+    },
+    "/usr/share/drirc.d": {
+      "symlink": "$SNAP/gpu-2404/drirc.d",
+    },
+    "/usr/share/libdrm": {
+      "bind": "$SNAP/gpu-2404/libdrm",
+    },
+    "/usr/share/xml/iso-codes": {
+      "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes",
+    },
+  },
+  "name": "sep",
+  "parts": {
+    "sep": {
+      "organize": {
+        "LICENSE.electron.txt": "app/LICENSE.electron.txt",
+        "LICENSES.chromium.html": "app/LICENSES.chromium.html",
+        "chrome-sandbox": "app/chrome-sandbox",
+        "chrome_100_percent.pak": "app/chrome_100_percent.pak",
+        "chrome_200_percent.pak": "app/chrome_200_percent.pak",
+        "chrome_crashpad_handler": "app/chrome_crashpad_handler",
+        "icudtl.dat": "app/icudtl.dat",
+        "libEGL.so": "app/libEGL.so",
+        "libGLESv2.so": "app/libGLESv2.so",
+        "libffmpeg.so": "app/libffmpeg.so",
+        "libvk_swiftshader.so": "app/libvk_swiftshader.so",
+        "libvulkan.so.1": "app/libvulkan.so.1",
+        "locales": "app/locales",
+        "resources": "app/resources",
+        "resources.pak": "app/resources.pak",
+        "sep": "app/sep",
+        "snapshot_blob.bin": "app/snapshot_blob.bin",
+        "v8_context_snapshot.bin": "app/v8_context_snapshot.bin",
+        "vk_swiftshader_icd.json": "app/vk_swiftshader_icd.json",
+      },
+      "plugin": "dump",
+      "source": "app",
+    },
+  },
+  "plugs": {
+    "browser-support": {
+      "allow-sandbox": true,
+      "interface": "browser-support",
+    },
+    "gnome-46-2404": {
+      "default-provider": "gnome-46-2404",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gpu-2404": {
+      "default-provider": "mesa-2404",
+      "interface": "content",
+      "target": "$SNAP/gpu-2404",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > core24 no gnome extension 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24 wayland disabled 1`] = `
+{
+  "apps": {
+    "sep": {
+      "command": "app/sep",
+      "desktop": "meta/gui/sep.desktop",
+      "extensions": [
+        "gnome",
+      ],
+      "plugs": [
+        "browser-support",
+      ],
+    },
+  },
+  "base": "core24",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "environment": {
+    "DISABLE_WAYLAND": "1",
+    "TMPDIR": "$XDG_RUNTIME_DIR",
+  },
+  "grade": "stable",
+  "icon": "snap/gui/sep.png",
+  "name": "sep",
+  "parts": {
+    "sep": {
+      "organize": {
+        "LICENSE.electron.txt": "app/LICENSE.electron.txt",
+        "LICENSES.chromium.html": "app/LICENSES.chromium.html",
+        "chrome-sandbox": "app/chrome-sandbox",
+        "chrome_100_percent.pak": "app/chrome_100_percent.pak",
+        "chrome_200_percent.pak": "app/chrome_200_percent.pak",
+        "chrome_crashpad_handler": "app/chrome_crashpad_handler",
+        "icudtl.dat": "app/icudtl.dat",
+        "libEGL.so": "app/libEGL.so",
+        "libGLESv2.so": "app/libGLESv2.so",
+        "libffmpeg.so": "app/libffmpeg.so",
+        "libvk_swiftshader.so": "app/libvk_swiftshader.so",
+        "libvulkan.so.1": "app/libvulkan.so.1",
+        "locales": "app/locales",
+        "resources": "app/resources",
+        "resources.pak": "app/resources.pak",
+        "sep": "app/sep",
+        "snapshot_blob.bin": "app/snapshot_blob.bin",
+        "v8_context_snapshot.bin": "app/v8_context_snapshot.bin",
+        "vk_swiftshader_icd.json": "app/vk_swiftshader_icd.json",
+      },
+      "plugin": "dump",
+      "source": "app",
+    },
+  },
+  "plugs": {
+    "browser-support": {
+      "allow-sandbox": true,
+      "interface": "browser-support",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > core24 wayland disabled 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > custom snap yamlPath pass-through 1`] = `
+{
+  "apps": {
+    "sep": {
+      "command": "sep",
+    },
+  },
+  "base": "core24",
+  "confinement": "strict",
+  "description": "Built with a custom snapcraft.yaml via electron-builder.
+",
+  "grade": "stable",
+  "name": "sep",
+  "parts": {
+    "app": {
+      "plugin": "dump",
+      "source": ".",
+    },
+  },
+  "summary": "Custom snap (pass-through)",
+  "version": "1.0.0",
+}
+`;
+
+exports[`snapcraft > custom snap yamlPath pass-through 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;

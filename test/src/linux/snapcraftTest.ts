@@ -8,6 +8,200 @@ import * as which from "which"
 const hasSnapInstalled = () => process.env.RUN_SNAP_TESTS === "true" || which.sync("snap", { nothrow: true }) != null || which.sync("snapcraft", { nothrow: true }) != null
 
 describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeout: EXTENDED_TIMEOUT }, () => {
+  // ─── legacy cores (core18 / core20 / core22) ─────────────────────────────────
+  //
+  // Each iteration mirrors the test cases in snapTest.ts but uses the new
+  // `snapcraft: { base, [core]: { ... } }` structured config instead of the
+  // deprecated flat `snap:` key.
+
+  for (const core of ["core18", "core20", "core22"] as const) {
+    test(`default stagePackages (${core})`, async ({ expect }) => {
+      for (const p of [["default"], ["default", "custom"], ["custom", "default"], ["foo1", "default", "foo2"]]) {
+        await assertPack(expect, "test-app-one", {
+          targets: snapTarget,
+          config: {
+            extraMetadata: { name: "sep" },
+            productName: "Sep",
+            snapcraft: {
+              base: core,
+              [core]: { stagePackages: p, plugs: p, confinement: "classic", useTemplateApp: false },
+            },
+          },
+          effectiveOptionComputed: async ({ snap, args }) => {
+            delete snap.parts.app.source
+            expect(snap).toMatchSnapshot()
+            expect(args).not.toContain("--exclude")
+            return Promise.resolve(true)
+          },
+        })
+      }
+    })
+
+    test(`classic confinement (${core})`, ({ expect }) =>
+      app(expect, {
+        targets: snapTarget,
+        config: {
+          extraMetadata: { name: "cl-co-app" },
+          productName: "Snap Electron App (classic confinement)",
+          snapcraft: { base: core, [core]: { confinement: "classic" } },
+        },
+        effectiveOptionComputed: async ({ snap }) => {
+          expect(snap).toMatchSnapshot()
+          return Promise.resolve(true)
+        },
+      }))
+
+    test(`buildPackages (${core})`, async ({ expect }) => {
+      await assertPack(expect, "test-app-one", {
+        targets: snapTarget,
+        config: {
+          extraMetadata: { name: "sep" },
+          productName: "Sep",
+          snapcraft: { base: core, [core]: { buildPackages: ["foo1", "default", "foo2"], useTemplateApp: false } },
+        },
+        effectiveOptionComputed: async ({ snap }) => {
+          delete snap.parts.app.source
+          expect(snap).toMatchSnapshot()
+          return Promise.resolve(true)
+        },
+      })
+    })
+
+    test(`plugs option (${core})`, async ({ expect }) => {
+      for (const p of [
+        [{ "browser-sandbox": { interface: "browser-support", "allow-sandbox": true } }, "another-simple-plug-name"],
+        { "browser-sandbox": { interface: "browser-support", "allow-sandbox": true }, "another-simple-plug-name": null },
+      ]) {
+        await assertPack(expect, "test-app-one", {
+          targets: snapTarget,
+          config: { snapcraft: { base: core, [core]: { plugs: p, useTemplateApp: false } } },
+          effectiveOptionComputed: async ({ snap, args }) => {
+            delete snap.parts.app.source
+            expect(snap).toMatchSnapshot()
+            expect(args).not.toContain("--exclude")
+            return Promise.resolve(true)
+          },
+        })
+      }
+    })
+
+    test(`slots option (${core})`, async ({ expect }) => {
+      for (const slots of [
+        ["foo", "bar"],
+        [{ mpris: { interface: "mpris", name: "chromium" } }, "another-simple-slot-name"],
+      ]) {
+        await assertPack(expect, "test-app-one", {
+          targets: snapTarget,
+          config: {
+            extraMetadata: { name: "sep" },
+            productName: "Sep",
+            snapcraft: { base: core, [core]: { slots } },
+          },
+          effectiveOptionComputed: async ({ snap }) => {
+            expect(snap).toMatchSnapshot()
+            return Promise.resolve(true)
+          },
+        })
+      }
+    })
+
+    test(`custom env (${core})`, ({ expect }) =>
+      app(expect, {
+        targets: snapTarget,
+        config: {
+          extraMetadata: { name: "sep" },
+          productName: "Sep",
+          snapcraft: { base: core, [core]: { environment: { FOO: "bar" } } },
+        },
+        effectiveOptionComputed: async ({ snap }) => {
+          expect(snap).toMatchSnapshot()
+          return Promise.resolve(true)
+        },
+      }))
+
+    test(`custom after, no desktop (${core})`, ({ expect }) =>
+      app(expect, {
+        targets: snapTarget,
+        config: {
+          extraMetadata: { name: "sep" },
+          productName: "Sep",
+          snapcraft: { base: core, [core]: { after: ["bar"] } },
+        },
+        effectiveOptionComputed: async ({ snap }) => {
+          expect(snap).toMatchSnapshot()
+          return Promise.resolve(true)
+        },
+      }))
+
+    test(`no desktop plugs (${core})`, ({ expect }) =>
+      app(expect, {
+        targets: snapTarget,
+        config: {
+          extraMetadata: { name: "sep" },
+          productName: "Sep",
+          snapcraft: { base: core, [core]: { plugs: ["foo", "bar"] } },
+        },
+        effectiveOptionComputed: async ({ snap, args }) => {
+          expect(snap).toMatchSnapshot()
+          expect(args).toContain("--exclude")
+          return Promise.resolve(true)
+        },
+      }))
+
+    test(`auto start (${core})`, ({ expect }) =>
+      app(expect, {
+        targets: snapTarget,
+        config: {
+          extraMetadata: { name: "sep" },
+          productName: "Sep",
+          snapcraft: { base: core, [core]: { autoStart: true } },
+        },
+        effectiveOptionComputed: async ({ snap }) => {
+          expect(snap).toMatchSnapshot()
+          expect(snap.apps.sep.autostart).toEqual("sep.desktop")
+          return Promise.resolve(true)
+        },
+      }))
+
+    test(`compression option (${core})`, ({ expect }) =>
+      app(expect, {
+        targets: snapTarget,
+        config: {
+          extraMetadata: { name: "sep" },
+          productName: "Sep",
+          snapcraft: { base: core, [core]: { useTemplateApp: false, compression: "xz" } },
+        },
+        effectiveOptionComputed: async ({ snap, args }) => {
+          expect(snap).toMatchSnapshot()
+          expect(snap.compression).toBe("xz")
+          expect(args).toEqual(expect.arrayContaining(["--compression", "xz"]))
+          return Promise.resolve(true)
+        },
+      }))
+
+    test(`use template app (${core})`, ({ expect }) =>
+      app(expect, {
+        targets: snapTarget,
+        config: {
+          snapcraft: { base: core, [core]: { useTemplateApp: true, compression: "xz" } },
+        },
+        effectiveOptionComputed: async ({ snap, args }) => {
+          expect(snap).toMatchSnapshot()
+          expect(snap.parts).toBeUndefined()
+          expect(snap.compression).toBeUndefined()
+          expect(snap.contact).toBeUndefined()
+          expect(snap.donation).toBeUndefined()
+          expect(snap.issues).toBeUndefined()
+          expect(snap["source-code"]).toBeUndefined()
+          expect(snap.website).toBeUndefined()
+          expect(args).toEqual(expect.arrayContaining(["--exclude", "chrome-sandbox", "--compression", "xz"]))
+          return Promise.resolve(true)
+        },
+      }))
+  }
+
+  // ─── core24 tests ────────────────────────────────────────────────────────────
+
   test("core24 default (gnome extension)", ({ expect }) =>
     app(expect, {
       targets: snapTarget,

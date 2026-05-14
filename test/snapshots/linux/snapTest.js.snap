@@ -39,14 +39,14 @@ exports[`auto start 1`] = `
       ],
     },
   },
-  "architectures": [
-    "amd64",
-  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "sep",
+  "platforms": [
+    "amd64",
+  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -77,7 +77,12 @@ exports[`auto start 1`] = `
 
 exports[`auto start 2`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -108,14 +113,14 @@ exports[`base option 1`] = `
       ],
     },
   },
-  "architectures": [
-    "amd64",
-  ],
   "base": "core22",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "testapp",
+  "platforms": [
+    "amd64",
+  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -146,7 +151,12 @@ exports[`base option 1`] = `
 
 exports[`base option 2`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -178,9 +188,6 @@ exports[`buildPackages 1`] = `
       ],
     },
   },
-  "architectures": [
-    "amd64",
-  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
@@ -328,6 +335,9 @@ exports[`buildPackages 1`] = `
       "source": "scripts",
     },
   },
+  "platforms": [
+    "amd64",
+  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -358,7 +368,12 @@ exports[`buildPackages 1`] = `
 
 exports[`buildPackages 2`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -401,9 +416,6 @@ exports[`compression option 1`] = `
       ],
     },
   },
-  "architectures": [
-    "amd64",
-  ],
   "base": "core20",
   "compression": "xz",
   "confinement": "strict",
@@ -547,6 +559,9 @@ exports[`compression option 1`] = `
       "source": "scripts",
     },
   },
+  "platforms": [
+    "amd64",
+  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -577,7 +592,12 @@ exports[`compression option 1`] = `
 
 exports[`compression option 2`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -608,14 +628,14 @@ exports[`custom after, no desktop 1`] = `
       ],
     },
   },
-  "architectures": [
-    "amd64",
-  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "sep",
+  "platforms": [
+    "amd64",
+  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -646,7 +666,12 @@ exports[`custom after, no desktop 1`] = `
 
 exports[`custom after, no desktop 2`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -678,14 +703,14 @@ exports[`custom env 1`] = `
       ],
     },
   },
-  "architectures": [
-    "amd64",
-  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "sep",
+  "platforms": [
+    "amd64",
+  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -716,7 +741,12 @@ exports[`custom env 1`] = `
 
 exports[`custom env 2`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -747,14 +777,14 @@ exports[`default base 1`] = `
       ],
     },
   },
-  "architectures": [
-    "amd64",
-  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "testapp",
+  "platforms": [
+    "amd64",
+  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -785,7 +815,12 @@ exports[`default base 1`] = `
 
 exports[`default base 2`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -816,14 +851,14 @@ exports[`default compression 1`] = `
       ],
     },
   },
-  "architectures": [
-    "amd64",
-  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "sep",
+  "platforms": [
+    "amd64",
+  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -854,7 +889,12 @@ exports[`default compression 1`] = `
 
 exports[`default compression 2`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -866,9 +906,6 @@ exports[`default stagePackages 1`] = `
       "command": "command.sh",
     },
   },
-  "architectures": [
-    "amd64",
-  ],
   "base": "core20",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
@@ -1011,6 +1048,9 @@ exports[`default stagePackages 1`] = `
       "source": "scripts",
     },
   },
+  "platforms": [
+    "amd64",
+  ],
   "summary": "Sep",
   "title": "Sep",
   "version": "1.1.0",
@@ -1019,7 +1059,12 @@ exports[`default stagePackages 1`] = `
 
 exports[`default stagePackages 2`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -1031,9 +1076,6 @@ exports[`default stagePackages 3`] = `
       "command": "command.sh",
     },
   },
-  "architectures": [
-    "amd64",
-  ],
   "base": "core20",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
@@ -1177,6 +1219,9 @@ exports[`default stagePackages 3`] = `
       "source": "scripts",
     },
   },
+  "platforms": [
+    "amd64",
+  ],
   "summary": "Sep",
   "title": "Sep",
   "version": "1.1.0",
@@ -1185,7 +1230,12 @@ exports[`default stagePackages 3`] = `
 
 exports[`default stagePackages 4`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -1197,9 +1247,6 @@ exports[`default stagePackages 5`] = `
       "command": "command.sh",
     },
   },
-  "architectures": [
-    "amd64",
-  ],
   "base": "core20",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
@@ -1343,6 +1390,9 @@ exports[`default stagePackages 5`] = `
       "source": "scripts",
     },
   },
+  "platforms": [
+    "amd64",
+  ],
   "summary": "Sep",
   "title": "Sep",
   "version": "1.1.0",
@@ -1351,7 +1401,12 @@ exports[`default stagePackages 5`] = `
 
 exports[`default stagePackages 6`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -1363,9 +1418,6 @@ exports[`default stagePackages 7`] = `
       "command": "command.sh",
     },
   },
-  "architectures": [
-    "amd64",
-  ],
   "base": "core20",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
@@ -1510,6 +1562,9 @@ exports[`default stagePackages 7`] = `
       "source": "scripts",
     },
   },
+  "platforms": [
+    "amd64",
+  ],
   "summary": "Sep",
   "title": "Sep",
   "version": "1.1.0",
@@ -1518,7 +1573,12 @@ exports[`default stagePackages 7`] = `
 
 exports[`default stagePackages 8`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -1539,14 +1599,14 @@ exports[`no desktop plugs 1`] = `
       ],
     },
   },
-  "architectures": [
-    "amd64",
-  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "sep",
+  "platforms": [
+    "amd64",
+  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -1577,7 +1637,12 @@ exports[`no desktop plugs 1`] = `
 
 exports[`no desktop plugs 2`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -1599,9 +1664,6 @@ exports[`plugs option 1`] = `
       ],
     },
   },
-  "architectures": [
-    "amd64",
-  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
@@ -1744,6 +1806,9 @@ exports[`plugs option 1`] = `
       "source": "scripts",
     },
   },
+  "platforms": [
+    "amd64",
+  ],
   "plugs": {
     "browser-sandbox": {
       "allow-sandbox": true,
@@ -1778,7 +1843,12 @@ exports[`plugs option 1`] = `
 
 exports[`plugs option 2`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -1800,9 +1870,6 @@ exports[`plugs option 3`] = `
       ],
     },
   },
-  "architectures": [
-    "amd64",
-  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
@@ -1945,6 +2012,9 @@ exports[`plugs option 3`] = `
       "source": "scripts",
     },
   },
+  "platforms": [
+    "amd64",
+  ],
   "plugs": {
     "browser-sandbox": {
       "allow-sandbox": true,
@@ -1979,7 +2049,12 @@ exports[`plugs option 3`] = `
 
 exports[`plugs option 4`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -2014,14 +2089,14 @@ exports[`slots option 1`] = `
       ],
     },
   },
-  "architectures": [
-    "amd64",
-  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "sep",
+  "platforms": [
+    "amd64",
+  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -2052,7 +2127,12 @@ exports[`slots option 1`] = `
 
 exports[`slots option 2`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -2087,14 +2167,14 @@ exports[`slots option 3`] = `
       ],
     },
   },
-  "architectures": [
-    "amd64",
-  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "sep",
+  "platforms": [
+    "amd64",
+  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -2131,7 +2211,12 @@ exports[`slots option 3`] = `
 
 exports[`slots option 4`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -2173,14 +2258,14 @@ exports[`use template app 1`] = `
       ],
     },
   },
-  "architectures": [
-    "amd64",
-  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "testapp",
+  "platforms": [
+    "amd64",
+  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -2211,6 +2296,11 @@ exports[`use template app 1`] = `
 
 exports[`use template app 2`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
