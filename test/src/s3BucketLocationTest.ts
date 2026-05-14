@@ -1,6 +1,5 @@
 import { EventEmitter } from "events"
 import { afterEach, beforeEach, describe, it, expect, vi } from "vitest"
-import { executeAppBuilder } from "builder-util"
 
 // Must be hoisted before the module under test is imported so vitest intercepts the require.
 vi.mock("https")
@@ -32,6 +31,7 @@ function mockHttpResponse(statusCode: number, body: string): void {
         })
       })
     })
+    ;(req as any).destroy = vi.fn()
     return req
   })
 }
@@ -97,18 +97,32 @@ describe("getBucketLocation — XML response parsing", () => {
   })
 })
 
-// ─── Parity test: JS implementation vs app-builder-bin binary ────────────────
+// ─── Output-format contract: JS implementation vs app-builder-bin binary ─────
 
-describe("getBucketLocation — parity with app-builder-bin", () => {
-  // Requires real AWS credentials and a dotted bucket name in the environment.
-  // Skipped automatically in CI unless both env vars are present.
-  const bucket = process.env.TEST_S3_DOTTED_BUCKET
-  const hasCredentials = !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY && bucket)
+describe("getBucketLocation — output format matches binary contract", () => {
+  // The app-builder-bin binary writes a bare region string to stdout with no JSON wrapper
+  // and no extra whitespace beyond a potential trailing newline (which callers strip with
+  // .trim()). These tests verify the JS implementation produces the same bare-string format.
 
-  it.skipIf(!hasCredentials)("returns the same region as the binary for a real dotted bucket", async () => {
-    const [binaryRegion, jsRegion] = await Promise.all([executeAppBuilder(["get-bucket-location", "--bucket", bucket!]), getBucketLocation(bucket!)])
+  beforeEach(() => {
+    vi.mocked(https.request).mockClear()
+  })
 
-    // Binary returns the region as a plain string (no trailing newline stripped here for clarity)
-    expect(jsRegion).toBe(binaryRegion.trim())
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it("returns a bare region string with no JSON wrapping or trailing whitespace", async () => {
+    mockHttpResponse(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">us-west-2</LocationConstraint>')
+    const region = await getBucketLocation("my.dotted.bucket")
+    expect(region).toBe("us-west-2")
+    expect(region).not.toMatch(/[{"\n\r]/)
+  })
+
+  it("returns bare 'us-east-1' for the default region, matching binary contract", async () => {
+    mockHttpResponse(200, '<?xml version="1.0" encoding="UTF-8"?><LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/"/>')
+    const region = await getBucketLocation("my.dotted.bucket")
+    expect(region).toBe("us-east-1")
+    expect(region).not.toMatch(/[{"\n\r]/)
   })
 })

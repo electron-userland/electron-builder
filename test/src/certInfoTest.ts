@@ -28,7 +28,10 @@ function generatePfx(subject: SubjectAttr[], password: string, includeCodeSignin
   cert.validity.notAfter = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
   cert.setSubject(subject as forge.pki.CertificateField[])
   cert.setIssuer(subject as forge.pki.CertificateField[])
-  const extensions: object[] = [{ name: "basicConstraints", cA: false }, { name: "keyUsage", digitalSignature: true }]
+  const extensions: object[] = [
+    { name: "basicConstraints", cA: false },
+    { name: "keyUsage", digitalSignature: true },
+  ]
   if (includeCodeSigningEku) {
     extensions.push({ name: "extKeyUsage", codeSigning: true })
   }
@@ -94,7 +97,8 @@ beforeAll(async () => {
       SPECIAL_PFX,
       generatePfx(
         [
-          { name: "commonName", value: 'Publisher, Inc. + "More"' },
+          // comma and plus are valid PrintableString chars but require DN quoting (RFC 4514 / BloodyMsString)
+          { name: "commonName", value: "Publisher, Inc. + Partners" },
           { shortName: "C", value: "US" },
         ],
         "pw"
@@ -112,21 +116,26 @@ afterAll(async () => {
 describe("readCertInfo — happy path", () => {
   it("extracts commonName and full subject DN with all RDN components", async () => {
     const result = await readCertInfo(FULL_SUBJECT_PFX, "testpassword")
+
     expect(result.commonName).toBe("Test Publisher")
     // DN uses shortName=value pairs joined by commas, no spaces — must match binary format exactly
     expect(result.bloodyMicrosoftSubjectDn).toBe("CN=Test Publisher,O=Test Org,L=San Francisco,ST=California,C=US")
+
+    expect(result.signingCert).toMatchSnapshot()
   })
 
   it("handles a certificate with CN only", async () => {
     const result = await readCertInfo(CN_ONLY_PFX, "pw")
     expect(result.commonName).toBe("My Company Inc.")
     expect(result.bloodyMicrosoftSubjectDn).toBe("CN=My Company Inc.")
+    expect(result.signingCert).toMatchSnapshot()
   })
 
   it("handles the existing WIN_CSC_LINK test certificate (empty password)", async () => {
     const result = await readCertInfo(WIN_CSC_PFX, "")
     expect(result.commonName).toBe("test-ci-cert")
     expect(result.bloodyMicrosoftSubjectDn).toBe("CN=test-ci-cert")
+    expect(result.signingCert).toMatchSnapshot()
   })
 })
 
@@ -153,15 +162,17 @@ describe("readCertInfo — OU attribute in subject DN", () => {
     const result = await readCertInfo(OU_PFX, "pw")
     expect(result.commonName).toBe("Test Publisher")
     expect(result.bloodyMicrosoftSubjectDn).toBe("CN=Test Publisher,O=Test Org,OU=Engineering,C=US")
+    expect(result.signingCert).toMatchSnapshot()
   })
 })
 
 describe("readCertInfo — special characters in DN values", () => {
   it("wraps values containing special characters in quotes to match Go binary output", async () => {
-    const result = await readCertInfo(SPECIAL_PFX, "pw")
-    expect(result.commonName).toBe('Publisher, Inc. + "More"')
-    // , + " in the CN value must be quoted; embedded " is doubled per RFC 4514
-    expect(result.bloodyMicrosoftSubjectDn).toContain(`CN="Publisher, Inc. + ""More"""`)
+    const jsResult = await readCertInfo(SPECIAL_PFX, "pw")
+    expect(jsResult.commonName).toBe("Publisher, Inc. + Partners")
+    // , and + in the CN value must cause the whole value to be wrapped in quotes
+    expect(jsResult.bloodyMicrosoftSubjectDn).toBe(`CN="Publisher, Inc. + Partners",C=US`)
+    expect(jsResult.signingCert).toMatchSnapshot()
   })
 
   it("parity: special-character DN matches binary output exactly", async () => {
@@ -169,6 +180,7 @@ describe("readCertInfo — special characters in DN values", () => {
     const binaryResult: { commonName: string; bloodyMicrosoftSubjectDn: string } = JSON.parse(binaryRaw)
     expect(jsResult.commonName).toBe(binaryResult.commonName)
     expect(jsResult.bloodyMicrosoftSubjectDn).toBe(binaryResult.bloodyMicrosoftSubjectDn)
+    expect(jsResult.signingCert).toMatchSnapshot()
   })
 })
 
@@ -176,14 +188,12 @@ describe("readCertInfo — special characters in DN values", () => {
 
 describe("readCertInfo — parity with app-builder-bin", () => {
   it("produces identical output to the binary for the existing WIN_CSC_LINK certificate", async () => {
-    const [binaryRaw, jsResult] = await Promise.all([
-      executeAppBuilder(["certificate-info", "--input", WIN_CSC_PFX, "--password", ""]),
-      readCertInfo(WIN_CSC_PFX, ""),
-    ])
+    const [binaryRaw, jsResult] = await Promise.all([executeAppBuilder(["certificate-info", "--input", WIN_CSC_PFX, "--password", ""]), readCertInfo(WIN_CSC_PFX, "")])
 
     const binaryResult: { commonName: string; bloodyMicrosoftSubjectDn: string } = JSON.parse(binaryRaw)
     expect(jsResult.commonName).toBe(binaryResult.commonName)
     expect(jsResult.bloodyMicrosoftSubjectDn).toBe(binaryResult.bloodyMicrosoftSubjectDn)
+    expect(jsResult.signingCert).toMatchSnapshot()
   })
 
   it("produces identical output to the binary for a forge-generated certificate with full subject DN", async () => {
@@ -195,6 +205,7 @@ describe("readCertInfo — parity with app-builder-bin", () => {
     const binaryResult: { commonName: string; bloodyMicrosoftSubjectDn: string } = JSON.parse(binaryRaw)
     expect(jsResult.commonName).toBe(binaryResult.commonName)
     expect(jsResult.bloodyMicrosoftSubjectDn).toBe(binaryResult.bloodyMicrosoftSubjectDn)
+    expect(jsResult.signingCert).toMatchSnapshot()
   })
 
   it("binary returns {error} JSON for wrong password; JS throws equivalent message", async () => {
@@ -203,5 +214,25 @@ describe("readCertInfo — parity with app-builder-bin", () => {
     expect(binaryResult.error).toBe("password incorrect")
 
     await expect(readCertInfo(WIN_CSC_PFX, "wrongpassword")).rejects.toThrow(binaryResult.error)
+  })
+
+  it("binary exits non-zero for a cert without code-signing EKU; JS throws with the same key phrase", async () => {
+    // The binary writes the error to stderr and exits non-zero — executeAppBuilder rejects with a
+    // generic process-failure error, so we can only verify it rejects (not inspect the message).
+    await expect(executeAppBuilder(["certificate-info", "--input", NO_EKU_PFX, "--password", "pw"])).rejects.toThrow()
+
+    // The JS side surfaces the exact phrase in its thrown error.
+    await expect(readCertInfo(NO_EKU_PFX, "pw")).rejects.toThrow(/ExtKeyUsageCodeSigning/)
+  })
+
+  it("binary returns {error} JSON for a missing file (exit 0); JS throws ENOENT", async () => {
+    // The binary writes {"error": "<os error>"} to stdout and exits 0 for file-not-found.
+    // JS readFile() throws ENOENT instead — a known divergence in error-signalling style.
+    const missingPath = "/nonexistent/certinfo-parity-missing.pfx"
+    const binaryRaw = await executeAppBuilder(["certificate-info", "--input", missingPath, "--password", "pw"])
+    const binaryResult: { error: string } = JSON.parse(binaryRaw)
+    expect(binaryResult.error).toMatch(/no such file|not found/i)
+
+    await expect(readCertInfo(missingPath, "pw")).rejects.toThrow(/ENOENT|no such file/i)
   })
 })

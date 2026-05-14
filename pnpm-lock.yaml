@@ -598,10 +598,6 @@ importers:
         version: 35.7.5
 
   test:
-    dependencies:
-      app-builder-bin:
-        specifier: 5.0.0-alpha.12
-        version: 5.0.0-alpha.12
     devDependencies:
       '@babel/core':
         specifier: 7.24.9
@@ -648,6 +644,9 @@ importers:
       adm-zip:
         specifier: 0.5.16
         version: 0.5.16
+      app-builder-bin:
+        specifier: 5.0.0-alpha.12
+        version: 5.0.0-alpha.12
       app-builder-lib:
         specifier: workspace:*
         version: link:../packages/app-builder-lib

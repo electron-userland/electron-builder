@@ -1,6 +1,5 @@
 import * as forge from "node-forge"
 import { readFile } from "fs-extra"
-import { CertificateInfo } from "./windowsSignToolManager"
 
 // OID for codeSigning extended key usage
 const CODE_SIGNING_OID = "1.3.6.1.5.5.7.3.3"
@@ -24,7 +23,7 @@ function escapeDnValue(value: string): string {
  * Throws with message "password incorrect" on bad password.
  * Throws with message about missing codeSigning EKU when the cert lacks it.
  */
-export async function readCertInfo(file: string, password: string): Promise<CertificateInfo> {
+export async function readCertInfo(file: string, password: string): Promise<{ signingCert: forge.pkcs12.Bag; commonName: string; bloodyMicrosoftSubjectDn: string }> {
   const pfxDer = await readFile(file)
   const p12Asn1 = forge.asn1.fromDer(forge.util.createBuffer(pfxDer))
 
@@ -62,5 +61,5 @@ export async function readCertInfo(file: string, password: string): Promise<Cert
     .map((a: forge.pki.CertificateField) => `${a.shortName}=${escapeDnValue(String(a.value))}`)
     .join(",")
 
-  return { commonName, bloodyMicrosoftSubjectDn }
+  return { signingCert, commonName, bloodyMicrosoftSubjectDn }
 }
