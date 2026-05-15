@@ -18,7 +18,7 @@ import { pipeline } from "stream/promises"
 import * as tar from "tar"
 import * as unzipper from "unzipper"
 import { ElectronPlatformName } from "../electron/ElectronFramework"
-import { CacheState, cleanupCacheDirectory, readCacheState, validateCacheDirectory, writeCacheState } from "./cacheState"
+import { CacheState, cleanupCacheDirectory, computeCacheMetadata, readCacheStateFile, validateCacheDirectory, writeCacheState } from "./cacheState"
 
 export type ElectronGetOptions = Omit<
   ElectronPlatformArtifactDetails,
@@ -177,9 +177,6 @@ export async function extractArchive(file: string, dir: string) {
   })
 
   try {
-    // Write extracting state before extraction starts
-    await writeCacheState(dir, CacheState.extracting)
-
     // rm + mkdir happen AFTER acquiring the lock so no concurrent caller can clear our tmpDir mid-extraction
     await fs.rm(tmpDir, { recursive: true, force: true })
     await fs.mkdir(tmpDir, { recursive: true })
@@ -211,16 +208,6 @@ export async function extractArchive(file: string, dir: string) {
     if (extractedFiles.length === 0) {
       throw new Error(`Extraction of ${path.basename(file)} produced no files`)
     }
-
-    // Calculate extracted size for state tracking
-    const stats = await Promise.all(extractedFiles.map(f => fs.stat(path.join(tmpDir, f))))
-    const totalSize = stats.reduce((sum, stat) => sum + stat.size, 0)
-
-    // Write extracted state with metadata
-    await writeCacheState(dir, CacheState.extracted, {
-      fileCount: extractedFiles.length,
-      extractedSize: totalSize,
-    })
 
     await fs.rm(dir, { recursive: true, force: true })
     await fs.rename(tmpDir, dir)
@@ -284,45 +271,18 @@ async function downloadArtifactToFile(config: Parameters<typeof get.downloadArti
  * Both public download functions delegate here after building their respective configs.
  */
 async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact>[0], extractDir: string, label: string): Promise<string> {
-  const completeMarker = `${extractDir}.complete`
-  const isCached = async () => exists(completeMarker)
-
   await fs.mkdir(extractDir, { recursive: true })
 
-  // Check for corrupted cache BEFORE attempting to use it
-  const currentState = await readCacheState(extractDir)
-  if (currentState === CacheState.corrupted) {
-    log.warn({ extractDir, state: currentState }, "Corrupted cache detected, cleaning up and re-extracting")
-    await cleanupCacheDirectory(extractDir)
-    // Recreate directory so lockfile.lock can acquire a lock on it below
-    await fs.mkdir(extractDir, { recursive: true })
-  } else if (currentState === CacheState.complete) {
-    // Validate the complete state - ensure files still exist and are valid
-    const isValid = await validateCacheDirectory(extractDir)
+  // Pre-lock fast path: only short-circuit for a definitively complete and valid cache.
+  // Do NOT clean up here — concurrent processes could race to delete under each other.
+  const stateData = await readCacheStateFile(extractDir)
+  if (stateData?.state === CacheState.complete) {
+    const isValid = await validateCacheDirectory(extractDir, stateData.fileCount)
     if (isValid) {
       log.debug({ file: label, path: extractDir }, "using cached artifact - cache valid")
       return extractDir
-    } else {
-      log.warn({ extractDir }, "Cache marked complete but files invalid, clearing")
-      await cleanupCacheDirectory(extractDir)
-      // Recreate directory so lockfile.lock can acquire a lock on it below
-      await fs.mkdir(extractDir, { recursive: true })
-    }
-  } else if (await isCached()) {
-    // Legacy .complete marker exists, validate it
-    const isValid = await validateCacheDirectory(extractDir)
-    if (isValid) {
-      log.debug({ file: label, path: extractDir }, "using cached artifact - legacy marker valid")
-      return extractDir
-    } else {
-      await cleanupCacheDirectory(extractDir)
-      // Recreate directory so lockfile.lock can acquire a lock on it below
-      await fs.mkdir(extractDir, { recursive: true })
     }
   }
-
-  // Write pending state
-  await writeCacheState(extractDir, CacheState.pending)
 
   const release = await lockfile.lock(extractDir, {
     retries: { retries: 5, minTimeout: 1000, maxTimeout: 5000 },
@@ -331,14 +291,21 @@ async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact
   let downloadedFile: string | null = null
   try {
     // Re-check after acquiring lock: another worker may have completed while we waited.
-    const stateAfterLock = await readCacheState(extractDir)
-    if (stateAfterLock === CacheState.complete) {
-      const isValid = await validateCacheDirectory(extractDir)
+    const stateDataAfterLock = await readCacheStateFile(extractDir)
+    if (stateDataAfterLock?.state === CacheState.complete) {
+      const isValid = await validateCacheDirectory(extractDir, stateDataAfterLock.fileCount)
       if (isValid) {
         log.debug({ file: label, path: extractDir }, "using cached artifact - skipping download/extract")
         return extractDir
       }
+      log.warn({ extractDir }, "Cache marked complete but files invalid, clearing")
+    } else if (stateDataAfterLock?.state === CacheState.corrupted) {
+      log.warn({ extractDir }, "Corrupted cache detected, cleaning up and re-extracting")
     }
+
+    // Cleanup inside the lock — skip lock files since we currently hold them
+    await cleanupCacheDirectory(extractDir, { skipLockFiles: true })
+    await fs.mkdir(extractDir, { recursive: true })
 
     log.debug({ file: label }, "downloading")
     downloadedFile = await downloadArtifactToFile(config, label)
@@ -346,17 +313,20 @@ async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact
       throw new Error(`Failed to download artifact: ${label}`)
     }
 
-    // Write downloaded state
     await writeCacheState(extractDir, CacheState.downloaded)
+
+    // Mark extracting so stale-lock detection can recover a crashed mid-extraction process
+    await writeCacheState(extractDir, CacheState.extracting)
 
     // Extract while holding the lock to prevent concurrent interference
     await extractArchive(downloadedFile, extractDir)
 
-    // Write complete state BEFORE releasing the lock to prevent partial-extraction race
-    await writeCacheState(extractDir, CacheState.complete)
+    // Compute metadata with a full recursive walk now that tmpDir has been renamed to extractDir
+    const { fileCount, extractedSize } = await computeCacheMetadata(extractDir)
 
-    // Also write legacy .complete marker for backward compatibility
-    await fs.writeFile(completeMarker, "")
+    // Write complete state with metadata BEFORE releasing the lock; throwOnError=true so a
+    // failed write (disk full, permissions) propagates instead of silently producing a no-op cache
+    await writeCacheState(extractDir, CacheState.complete, { fileCount, extractedSize }, true)
   } finally {
     await release().catch(err => log.warn({ err }, "failed to release lockfile"))
   }

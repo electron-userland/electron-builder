@@ -1,6 +1,6 @@
 import { log } from "builder-util"
-import { exists } from "builder-util"
 import * as fs from "fs/promises"
+import * as path from "path"
 
 export enum CacheState {
   pending = "pending",
@@ -26,42 +26,38 @@ function getStateFilePath(extractDir: string): string {
   return `${extractDir}.state`
 }
 
-export async function readCacheState(extractDir: string): Promise<CacheState | null> {
+export async function readCacheStateFile(extractDir: string): Promise<CacheStateFile | null> {
   const stateFile = getStateFilePath(extractDir)
+  let content: string
   try {
-    if (!(await exists(stateFile))) {
-      // Check for legacy .complete marker for backward compatibility
-      if (await exists(`${extractDir}.complete`)) {
-        return CacheState.complete
-      }
-      return CacheState.pending
+    content = await fs.readFile(stateFile, "utf-8")
+  } catch (e: any) {
+    if (e.code !== "ENOENT") {
+      log.warn({ stateFile, error: e.message }, "Failed to read cache state file")
     }
-
-    const content = await fs.readFile(stateFile, "utf-8")
+    return null
+  }
+  try {
     const data: CacheStateFile = JSON.parse(content)
-    let state = data.state as CacheState
-
-    // Detect stale extracting state (process likely crashed)
-    if (state === CacheState.extracting) {
+    if (data.version !== STATE_FILE_VERSION) {
+      log.warn({ stateFile, version: data.version, expected: STATE_FILE_VERSION }, "Cache state file version mismatch, ignoring")
+      return null
+    }
+    if (data.state === CacheState.extracting) {
       const age = Date.now() - data.timestamp
       if (age > STALE_EXTRACTING_TIMEOUT_MS) {
         log.warn({ stateFile, age }, "Detected stale extracting state, marking as corrupted")
-        return CacheState.corrupted
+        return { ...data, state: CacheState.corrupted }
       }
     }
-
-    return state
+    return data
   } catch (e: any) {
-    log.warn({ stateFile, error: e.message }, "Failed to read cache state file")
-    return CacheState.pending
+    log.warn({ stateFile, error: e.message }, "Failed to parse cache state file")
+    return null
   }
 }
 
-export async function writeCacheState(
-  extractDir: string,
-  state: CacheState,
-  metadata?: { fileCount?: number; extractedSize?: number }
-): Promise<void> {
+export async function writeCacheState(extractDir: string, state: CacheState, metadata?: { fileCount?: number; extractedSize?: number }, throwOnError = false): Promise<void> {
   const stateFile = getStateFilePath(extractDir)
   const stateData: CacheStateFile = {
     version: STATE_FILE_VERSION,
@@ -75,28 +71,57 @@ export async function writeCacheState(
     await fs.writeFile(stateFile, JSON.stringify(stateData, null, 2), "utf-8")
   } catch (e: any) {
     log.warn({ stateFile, error: e.message }, "Failed to write cache state file")
+    if (throwOnError) {
+      throw e
+    }
   }
 }
 
-export async function validateCacheDirectory(extractDir: string): Promise<boolean> {
+export async function computeCacheMetadata(dir: string): Promise<{ fileCount: number; extractedSize: number }> {
+  let fileCount = 0
+  let extractedSize = 0
+  const stack: string[] = [dir]
+  while (stack.length > 0) {
+    const current = stack.pop()!
+    let entries
+    try {
+      entries = await fs.readdir(current, { withFileTypes: true })
+    } catch {
+      continue
+    }
+    for (const entry of entries) {
+      const fullPath = path.join(current, entry.name)
+      if (entry.isDirectory()) {
+        stack.push(fullPath)
+      } else {
+        fileCount++
+        if (entry.isFile()) {
+          try {
+            const stat = await fs.stat(fullPath)
+            extractedSize += stat.size
+          } catch {
+            // ignore stat errors for individual files
+          }
+        }
+      }
+    }
+  }
+  return { fileCount, extractedSize }
+}
+
+export async function validateCacheDirectory(extractDir: string, expectedFileCount?: number): Promise<boolean> {
   try {
-    if (!(await exists(extractDir))) {
+    const topLevel = await fs.readdir(extractDir)
+    if (topLevel.length === 0) {
       return false
     }
 
-    const files = await fs.readdir(extractDir)
-    if (files.length === 0) {
-      return false
-    }
-
-    // For 7z/WiX extractions, verify we have both executables and DLLs
-    const hasExe = files.some(f => f.toLowerCase().endsWith(".exe"))
-    const hasDlls = files.some(f => f.toLowerCase().endsWith(".dll"))
-
-    // If it looks like a 7z extraction (has .exe), it should also have DLLs
-    if (hasExe && !hasDlls) {
-      log.warn({ extractDir, files: files.length }, "Incomplete extraction: exe present but no DLLs")
-      return false
+    if (expectedFileCount != null && expectedFileCount > 0) {
+      const { fileCount: actual } = await computeCacheMetadata(extractDir)
+      if (actual !== expectedFileCount) {
+        log.warn({ extractDir, expected: expectedFileCount, actual }, "Cache file count mismatch, treating as invalid")
+        return false
+      }
     }
 
     return true
@@ -106,13 +131,8 @@ export async function validateCacheDirectory(extractDir: string): Promise<boolea
   }
 }
 
-export async function cleanupCacheDirectory(extractDir: string): Promise<void> {
-  const filesToClean = [
-    extractDir,
-    `${extractDir}.state`,
-    `${extractDir}.complete`,
-    `${extractDir}.tmp`,
-  ]
+export async function cleanupCacheDirectory(extractDir: string, { skipLockFiles = false } = {}): Promise<void> {
+  const filesToClean = [extractDir, `${extractDir}.state`, `${extractDir}.tmp`, ...(!skipLockFiles ? [`${extractDir}.lock`, `${extractDir}.tmp.lock`] : [])]
 
   for (const file of filesToClean) {
     try {
