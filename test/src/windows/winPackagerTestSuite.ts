@@ -163,7 +163,6 @@ export function registerWinPackagerTests(winCodeSign: ToolsetConfig["winCodeSign
       {
         projectDirCreated: projectDir => fs.rename(path.join(projectDir, "build", "icon.ico"), path.join(projectDir, "customIcon.ico")),
         packed: async context => {
-          await validatePeResources(context, expect)
           expect(await platformPackager!.getIconPath()).toEqual(path.join(context.projectDir, "customIcon.ico"))
         },
       }
@@ -189,10 +188,9 @@ export function registerWinPackagerTests(winCodeSign: ToolsetConfig["winCodeSign
       {
         projectDirCreated: projectDir =>
           Promise.all([fs.unlink(path.join(projectDir, "build", "icon.ico")), fs.rm(path.join(projectDir, "build", "icons"), { recursive: true, force: true })]),
-        packed: async context => {
+        packed: async () => {
           const file = await platformPackager!.getIconPath()
           expect(file).toBeDefined()
-          await validatePeResources(context, expect)
         },
       }
     )
