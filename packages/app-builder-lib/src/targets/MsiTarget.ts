@@ -1,4 +1,4 @@
-import { Arch, asArray, deepAssign, log, walk } from "builder-util"
+import { Arch, asArray, deepAssign, log, retry, walk } from "builder-util"
 import { UUID } from "builder-util-runtime"
 import { createHash } from "crypto"
 import * as ejs from "ejs"
@@ -91,7 +91,7 @@ export default class MsiTarget extends Target {
     // noinspection SpellCheckingInspection
     const candleArgs = ["-arch", wixArch === Arch.ia32 ? "x86" : "x64", `-dappDir=${vm.toVmFile(appOutDir)}`].concat(this.getCommonWixArgs())
     candleArgs.push("project.wxs")
-    await vm.exec(vm.toVmFile(path.join(vendorPath, "candle.exe")), candleArgs, {
+    await this.executeWixTool(vm.toVmFile(path.join(vendorPath, "candle.exe")), candleArgs, {
       cwd: stageDir.dir,
     })
 
@@ -140,7 +140,7 @@ export default class MsiTarget extends Target {
 
     // objectFiles - only filenames, we set current directory to our temp stage dir
     lightArgs.push(...objectFiles)
-    await vm.exec(vm.toVmFile(path.join(vendorPath, "light.exe")), lightArgs, {
+    await this.executeWixTool(vm.toVmFile(path.join(vendorPath, "light.exe")), lightArgs, {
       cwd: tempDir,
     })
   }
@@ -162,6 +162,34 @@ export default class MsiTarget extends Target {
       args.push(...this.options.additionalWixArgs)
     }
     return args
+  }
+
+  private async executeWixTool(tool: string, args: Array<string>, options: any) {
+    return retry(
+      () => this.vm.exec(tool, args, options),
+      {
+        retries: 3,
+        interval: 2000,
+        backoff: 2000,
+        shouldRetry: (e: any) => {
+          const message = (e.message ?? "") + (e.stdout ?? "") + (e.stderr ?? "")
+          if (
+            message.includes("Could not load file or assembly") ||
+            message.includes("System.IO.FileNotFoundException") ||
+            message.includes("Unhandled Exception") ||
+            e.exitCode === 3762504530 ||
+            e.exitCode === 0xe0000232
+          ) {
+            log.warn(
+              { error: e.message ?? "", exitCode: e.exitCode },
+              "WiX tool assembly loading failed transiently, retrying with longer delay"
+            )
+            return true
+          }
+          return false
+        },
+      }
+    )
   }
 
   protected async writeManifest(appOutDir: string, wixArch: Arch, commonOptions: FinalCommonWindowsInstallerOptions) {

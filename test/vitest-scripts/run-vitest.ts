@@ -60,7 +60,7 @@ async function main() {
 
     // Updater tests need to run sequentially to avoid issues with shared resources (e.g. VMs, temp directories, installer directories).
     // We can enable parallelism for other tests to speed up the test run, but we disable it for updater tests to ensure stability.
-    fileParallelism: includeRegex.toLowerCase().includes("blackboxupdate") ? false : true,
+    fileParallelism: ["blackboxupdate", "msi"].some(t => includeRegex.toLowerCase().includes(t)) ? false : true,
     sequence: {
       sequencer: SmartSequencer,
       concurrent: process.env.TEST_SEQUENTIAL === "false",
