@@ -46,17 +46,18 @@ export function serializeToYaml(object: any, skipInvalid = false, noRefs = false
 }
 
 export function removePassword(input: string): string {
-  const blockList = ["--accessKey", "--secretKey", "-P", "-p", "-pass", "-String", "/p", "pass:"]
+  const flagList = ["--accessKey", "--secretKey", "-p", "-pass", "-String", "/p"]
+  const escapedFlags = flagList.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")
 
-  // Create a regex pattern that supports:
-  //   - space-separated unquoted values: --key value
-  //   - quoted values: --key "value with spaces" or 'value with spaces'
-  const blockPattern = new RegExp(`(${blockList.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})\\s*(?:(["'])(.*?)\\2|([^\\s]+))`, "g")
+  // (?<!\S) requires flag starts at whitespace or start-of-string (word boundary on the left).
+  // (?=[\s"']|$) requires the flag ends as a standalone token, not embedded in a longer flag like -path or -StringLength.
+  // i flag: covers all capitalisation variants (e.g. -P, -PASS, --ACCESSKEY) without listing each separately.
+  const flagPattern = new RegExp(`(?<!\\S)(${escapedFlags})(?=[\\s"']|$)\\s*(?:(["'])(.*?)\\2|([^\\s]+))`, "gi")
 
-  input = input.replace(blockPattern, (_match, prefix, quote, quotedVal, unquotedVal) => {
+  input = input.replace(flagPattern, (_match, prefix, quote, quotedVal, unquotedVal) => {
     const value = quotedVal ?? unquotedVal
 
-    if (prefix.trim() === "/p" && value.startsWith("\\\\Mac\\Host\\\\")) {
+    if (prefix.trim().toLowerCase() === "/p" && value.startsWith("\\\\Mac\\Host\\")) {
       return `${prefix} ${quote ?? ""}${value}${quote ?? ""}`
     }
 
@@ -64,11 +65,27 @@ export function removePassword(input: string): string {
     return `${prefix} ${quote ?? ""}${hashed} (sha256 hash)${quote ?? ""}`
   })
 
-  // Also handle `/b ... /c` block format
+  // pass:value — colon acts as separator; handles both pass:secret (no space) and pass: secret (space)
+  input = input.replace(/(?<!\S)pass:\s*([^\s]+)/gi, (_match, val) => {
+    const hashed = createHash("sha256").update(val).digest("hex")
+    return `pass:${hashed} (sha256 hash)`
+  })
+
+  // /b … /c block format
   return input.replace(/(\/b\s+)(.*?)(\s+\/c)/g, (_match, p1, p2, p3) => {
     const hashed = createHash("sha256").update(p2).digest("hex")
     return `${p1}${hashed} (sha256 hash)${p3}`
   })
+}
+
+const SENSITIVE_ENV_KEY_RE = /KEY|TOKEN|SECRET|PASSWORD/i
+
+export function filterSensitiveEnv(env: Record<string, string | undefined>): Record<string, string | undefined> {
+  const out: Record<string, string | undefined> = {}
+  for (const [k, v] of Object.entries(env)) {
+    out[k] = SENSITIVE_ENV_KEY_RE.test(k) ? "[REDACTED]" : v
+  }
+  return out
 }
 
 function getProcessEnv(env: Record<string, string | undefined> | Nullish): NodeJS.ProcessEnv | undefined {
@@ -107,7 +124,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
             delete diffEnv[name]
           }
         }
-        logFields.env = safeStringifyJson(diffEnv)
+        logFields.env = safeStringifyJson(filterSensitiveEnv(diffEnv))
       }
     }
 
