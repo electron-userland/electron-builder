@@ -18,6 +18,7 @@ import { pipeline } from "stream/promises"
 import * as tar from "tar"
 import * as unzipper from "unzipper"
 import { ElectronPlatformName } from "../electron/ElectronFramework"
+import { CacheState, cleanupCacheDirectory, readCacheState, validateCacheDirectory, writeCacheState } from "./cacheState"
 
 export type ElectronGetOptions = Omit<
   ElectronPlatformArtifactDetails,
@@ -172,10 +173,13 @@ export async function extractArchive(file: string, dir: string) {
 
   const release = await lockfile.lock(tmpDir, {
     retries: { retries: 5, minTimeout: 1000, maxTimeout: 5000 },
-    stale: 60000,
+    stale: 120000, // Increased from 60s to allow long-running extractions
   })
 
   try {
+    // Write extracting state before extraction starts
+    await writeCacheState(dir, CacheState.extracting)
+
     // rm + mkdir happen AFTER acquiring the lock so no concurrent caller can clear our tmpDir mid-extraction
     await fs.rm(tmpDir, { recursive: true, force: true })
     await fs.mkdir(tmpDir, { recursive: true })
@@ -185,10 +189,48 @@ export async function extractArchive(file: string, dir: string) {
     } else if (file.endsWith(".zip")) {
       await extractZipStreaming(file, tmpDir)
     } else if (file.endsWith(".7z")) {
-      await exec(await getPath7za(), ["x", "-bd", file, `-o${tmpDir}`, "-y"])
+      const cmd7za = await getPath7za()
+      try {
+        await exec(cmd7za, ["x", "-bd", file, `-o${tmpDir}`, "-y"])
+      } catch (e: any) {
+        // Check if extraction actually failed or just had benign warnings
+        const files = await fs.readdir(tmpDir)
+        if (files.length === 0) {
+          log.warn({ file, tmpDir, error: e.message }, "7z extraction produced no output")
+          throw new Error(`7z extraction failed for ${file}: ${e.message}`)
+        }
+        // If files were extracted despite the error, log and continue
+        log.warn({ error: e.message, filesExtracted: files.length }, "7z reported error but extracted files")
+      }
     } else {
       throw new Error(`Unsupported archive format: ${path.basename(file)}`)
     }
+
+    // Verify extraction produced files
+    const extractedFiles = await fs.readdir(tmpDir)
+    if (extractedFiles.length === 0) {
+      throw new Error(`Extraction of ${path.basename(file)} produced no files`)
+    }
+
+    // For 7z extractions, verify critical files exist
+    if (file.endsWith(".7z")) {
+      const hasExe = extractedFiles.some(f => f.toLowerCase().endsWith(".exe"))
+      const hasDlls = extractedFiles.some(f => f.toLowerCase().endsWith(".dll"))
+      if (!hasExe || !hasDlls) {
+        throw new Error(`Incomplete 7z extraction: exe=${hasExe}, dlls=${hasDlls}, files=${extractedFiles.length}`)
+      }
+    }
+
+    // Calculate extracted size for state tracking
+    const stats = await Promise.all(extractedFiles.map(f => fs.stat(path.join(tmpDir, f))))
+    const totalSize = stats.reduce((sum, stat) => sum + stat.size, 0)
+
+    // Write extracted state with metadata
+    await writeCacheState(dir, CacheState.extracted, {
+      fileCount: extractedFiles.length,
+      extractedSize: totalSize,
+    })
+
     await fs.rm(dir, { recursive: true, force: true })
     await fs.rename(tmpDir, dir)
   } finally {
@@ -256,29 +298,77 @@ async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact
 
   await fs.mkdir(extractDir, { recursive: true })
 
-  if (await isCached()) {
-    log.debug({ file: label, path: extractDir }, "using cached artifact - skipping download/extract")
-    return extractDir
+  // Check for corrupted cache BEFORE attempting to use it
+  const currentState = await readCacheState(extractDir)
+  if (currentState === CacheState.corrupted) {
+    log.warn({ extractDir, state: currentState }, "Corrupted cache detected, cleaning up and re-extracting")
+    await cleanupCacheDirectory(extractDir)
+    // Recreate directory so lockfile.lock can acquire a lock on it below
+    await fs.mkdir(extractDir, { recursive: true })
+  } else if (currentState === CacheState.complete) {
+    // Validate the complete state - ensure files still exist and are valid
+    const isValid = await validateCacheDirectory(extractDir)
+    if (isValid) {
+      log.debug({ file: label, path: extractDir }, "using cached artifact - cache valid")
+      return extractDir
+    } else {
+      log.warn({ extractDir }, "Cache marked complete but files invalid, clearing")
+      await cleanupCacheDirectory(extractDir)
+      // Recreate directory so lockfile.lock can acquire a lock on it below
+      await fs.mkdir(extractDir, { recursive: true })
+    }
+  } else if (await isCached()) {
+    // Legacy .complete marker exists, validate it
+    const isValid = await validateCacheDirectory(extractDir)
+    if (isValid) {
+      log.debug({ file: label, path: extractDir }, "using cached artifact - legacy marker valid")
+      return extractDir
+    } else {
+      await cleanupCacheDirectory(extractDir)
+      // Recreate directory so lockfile.lock can acquire a lock on it below
+      await fs.mkdir(extractDir, { recursive: true })
+    }
   }
+
+  // Write pending state
+  await writeCacheState(extractDir, CacheState.pending)
 
   const release = await lockfile.lock(extractDir, {
     retries: { retries: 5, minTimeout: 1000, maxTimeout: 5000 },
-    stale: 60000,
+    stale: 120000,
   })
   let downloadedFile: string | null = null
   try {
     // Re-check after acquiring lock: another worker may have completed while we waited.
-    if (await isCached()) {
-      log.debug({ file: label, path: extractDir }, "using cached artifact - skipping download/extract")
-      return extractDir
+    const stateAfterLock = await readCacheState(extractDir)
+    if (stateAfterLock === CacheState.complete) {
+      const isValid = await validateCacheDirectory(extractDir)
+      if (isValid) {
+        log.debug({ file: label, path: extractDir }, "using cached artifact - skipping download/extract")
+        return extractDir
+      }
     }
 
+    log.debug({ file: label }, "downloading")
     downloadedFile = await downloadArtifactToFile(config, label)
+    if (!downloadedFile) {
+      throw new Error(`Failed to download artifact: ${label}`)
+    }
+
+    // Write downloaded state
+    await writeCacheState(extractDir, CacheState.downloaded)
+
+    // Extract while holding the lock to prevent concurrent interference
+    await extractArchive(downloadedFile, extractDir)
+
+    // Write complete state BEFORE releasing the lock to prevent partial-extraction race
+    await writeCacheState(extractDir, CacheState.complete)
+
+    // Also write legacy .complete marker for backward compatibility
+    await fs.writeFile(completeMarker, "")
   } finally {
     await release().catch(err => log.warn({ err }, "failed to release lockfile"))
   }
-  await extractArchive(downloadedFile, extractDir)
-  await fs.writeFile(completeMarker, "")
   return extractDir
 }
 
