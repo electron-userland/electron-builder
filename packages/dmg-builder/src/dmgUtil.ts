@@ -35,16 +35,15 @@ async function getDmgVendorPath(): Promise<string> {
     return resolvedPath
   }
 
-  // https://github.com/electron-userland/electron-builder-binaries/releases/tag/dmg-builder%401.2.0
-  const releaseVersion = "75c8a6c"
-  const arch = process.arch === "arm64" ? "arm64" : "x86_64"
+  // https://github.com/electron-userland/electron-builder-binaries/releases/tag/dmg-builder%401.2.1
   const config = {
-    "dmgbuild-bundle-arm64-75c8a6c.tar.gz": "a785f2a385c8c31996a089ef8e26361904b40c772d5ea65a36001212f1fc25e0",
-    "dmgbuild-bundle-x86_64-75c8a6c.tar.gz": "87b3bb72148b11451ee90ede79cc8d59305c9173b68b0f2b50a3bea51fc4a4e2",
+    "dmgbuild-bundle-arm64-75c8a6c.tar.gz": "e572e513996d7568a640a9c88380a9c1a32f66539f58b0900fa2719afe7a0abe",
+    "dmgbuild-bundle-x86_64-75c8a6c.tar.gz": "e90634f4a85bf042cbefd68677b555160771b3a85f646b0047c6941baf61e0cc",
   }
-  const filename: keyof typeof config = `dmgbuild-bundle-${arch}-${releaseVersion}.tar.gz`
+  const arch = process.arch === "arm64" ? "arm64" : "x86_64"
+  const filename: keyof typeof config = `dmgbuild-bundle-${arch}-75c8a6c.tar.gz`
   const file = await downloadBuilderToolset({
-    releaseName: "dmg-builder@1.2.0",
+    releaseName: "dmg-builder@1.2.1",
     filenameWithExt: filename,
     checksums: config,
     githubOrgRepo: "electron-userland/electron-builder-binaries",
