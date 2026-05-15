@@ -163,31 +163,33 @@ describe("removePassword: pass: colon-separator style", () => {
   })
 })
 
+const SHA256_HASH_RE = /^[a-f0-9]{64} \(sha256 hash\)$/
+
 describe("filterSensitiveEnv", () => {
   test("redacts values for keys containing KEY", ({ expect }) => {
     const result = filterSensitiveEnv({ MY_API_KEY: "abc123" })
-    expect(result.MY_API_KEY).toBe("[REDACTED]")
+    expect(result.MY_API_KEY).toMatch(SHA256_HASH_RE)
   })
 
   test("redacts values for keys containing TOKEN", ({ expect }) => {
     const result = filterSensitiveEnv({ GITHUB_TOKEN: "ghp_secret" })
-    expect(result.GITHUB_TOKEN).toBe("[REDACTED]")
+    expect(result.GITHUB_TOKEN).toMatch(SHA256_HASH_RE)
   })
 
   test("redacts values for keys containing SECRET", ({ expect }) => {
     const result = filterSensitiveEnv({ AWS_SECRET_ACCESS_KEY: "secret" })
-    expect(result.AWS_SECRET_ACCESS_KEY).toBe("[REDACTED]")
+    expect(result.AWS_SECRET_ACCESS_KEY).toMatch(SHA256_HASH_RE)
   })
 
   test("redacts values for keys containing PASSWORD", ({ expect }) => {
     const result = filterSensitiveEnv({ DB_PASSWORD: "hunter2" })
-    expect(result.DB_PASSWORD).toBe("[REDACTED]")
+    expect(result.DB_PASSWORD).toMatch(SHA256_HASH_RE)
   })
 
   test("is case-insensitive on the key name", ({ expect }) => {
     const result = filterSensitiveEnv({ api_key: "secret", Auth_Token: "tok" })
-    expect(result.api_key).toBe("[REDACTED]")
-    expect(result.Auth_Token).toBe("[REDACTED]")
+    expect(result.api_key).toMatch(SHA256_HASH_RE)
+    expect(result.Auth_Token).toMatch(SHA256_HASH_RE)
   })
 
   test("does not redact values for non-sensitive keys", ({ expect }) => {
@@ -198,9 +200,9 @@ describe("filterSensitiveEnv", () => {
 
   test("replaces the entire value, not just the sensitive substring within it", ({ expect }) => {
     // The value itself contains 'password' — only the key triggers redaction.
-    // The entire value must become "[REDACTED]", not "thisismy[REDACTED]".
+    // The entire value must be replaced with a sha256 hash, not "thisismy<hash>".
     const result = filterSensitiveEnv({ DB_PASSWORD: "thisismypassword" })
-    expect(result.DB_PASSWORD).toBe("[REDACTED]")
+    expect(result.DB_PASSWORD).toMatch(SHA256_HASH_RE)
   })
 
   test("handles a mixed env object, redacting only sensitive keys", ({ expect }) => {
@@ -212,8 +214,8 @@ describe("filterSensitiveEnv", () => {
     })
     expect(result.HOME).toBe("/home/user")
     expect(result.NODE_ENV).toBe("test")
-    expect(result.GITHUB_TOKEN).toBe("[REDACTED]")
-    expect(result.MY_API_KEY).toBe("[REDACTED]")
+    expect(result.GITHUB_TOKEN).toMatch(SHA256_HASH_RE)
+    expect(result.MY_API_KEY).toMatch(SHA256_HASH_RE)
   })
 })
 

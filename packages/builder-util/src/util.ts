@@ -85,7 +85,7 @@ const SENSITIVE_ENV_KEY_RE = /KEY|TOKEN|SECRET|PASSWORD|PASS/i
 export function filterSensitiveEnv(env: Record<string, string | undefined>): Record<string, string | undefined> {
   const out: Record<string, string | undefined> = {}
   for (const [k, v] of Object.entries(env)) {
-    out[k] = SENSITIVE_ENV_KEY_RE.test(k) ? "[REDACTED]" : v
+    out[k] = SENSITIVE_ENV_KEY_RE.test(k) && v != null ? `${createHash("sha256").update(v).digest("hex")} (sha256 hash)` : v
   }
   return out
 }
