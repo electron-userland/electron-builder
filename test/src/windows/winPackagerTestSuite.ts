@@ -2,8 +2,25 @@ import { ToolsetConfig } from "app-builder-lib/src/configuration"
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
+import { NtExecutable, NtExecutableResource, Resource } from "resedit"
+import type { ExpectStatic } from "vitest"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
-import { app, appThrows, assertPack, platform } from "../helpers/packTester"
+import { PackedContext, app, appThrows, assertPack, platform } from "../helpers/packTester"
+
+async function validatePeResources(context: PackedContext, expect: ExpectStatic, arch: Arch = Arch.x64): Promise<void> {
+  const { appInfo } = context.packager
+  const exePath = path.join(context.getAppPath(Platform.WINDOWS, arch), `${appInfo.productFilename}.exe`)
+  const res = NtExecutableResource.from(NtExecutable.from(await fs.readFile(exePath), { ignoreCert: true }))
+  const [vi] = Resource.VersionInfo.fromEntries(res.entries)
+  expect(vi).toBeDefined()
+  const lang = vi.getAllLanguagesForStringValues()[0]
+  const strings = vi.getStringValues(lang)
+  expect(strings.ProductName).toBe(appInfo.productName)
+  expect(strings.FileDescription).toBe(appInfo.productName)
+  expect(strings.LegalCopyright).toBe(appInfo.copyright)
+  expect(res.entries.some(e => e.type === 14)).toBe(true)
+  expect(strings).toMatchSnapshot()
+}
 
 export function registerWinPackagerTests(winCodeSign: ToolsetConfig["winCodeSign"]): void {
   test("beta version", { retry: 3 }, ({ expect }) =>
@@ -25,6 +42,9 @@ export function registerWinPackagerTests(winCodeSign: ToolsetConfig["winCodeSign
       },
       {
         signedWin: true,
+        packed: async context => {
+          await validatePeResources(context, expect)
+        },
       }
     )
   )
@@ -62,6 +82,9 @@ export function registerWinPackagerTests(winCodeSign: ToolsetConfig["winCodeSign
           await fs.mkdir(path.join(projectDir, "build", "subdir"))
           await fs.copyFile(path.join(projectDir, "build", "extraAsar.asar"), path.join(projectDir, "build", "subdir", "extraAsar2.asar"))
         },
+        packed: async context => {
+          await validatePeResources(context, expect)
+        },
       }
     ))
 
@@ -80,6 +103,9 @@ export function registerWinPackagerTests(winCodeSign: ToolsetConfig["winCodeSign
       },
       {
         signedWin: true,
+        packed: async context => {
+          await validatePeResources(context, expect)
+        },
       }
     ))
 
@@ -96,6 +122,9 @@ export function registerWinPackagerTests(winCodeSign: ToolsetConfig["winCodeSign
       },
       {
         signedWin: true,
+        packed: async context => {
+          await validatePeResources(context, expect)
+        },
       }
     ))
 
@@ -134,6 +163,7 @@ export function registerWinPackagerTests(winCodeSign: ToolsetConfig["winCodeSign
       {
         projectDirCreated: projectDir => fs.rename(path.join(projectDir, "build", "icon.ico"), path.join(projectDir, "customIcon.ico")),
         packed: async context => {
+          await validatePeResources(context, expect)
           expect(await platformPackager!.getIconPath()).toEqual(path.join(context.projectDir, "customIcon.ico"))
         },
       }
@@ -159,11 +189,142 @@ export function registerWinPackagerTests(winCodeSign: ToolsetConfig["winCodeSign
       {
         projectDirCreated: projectDir =>
           Promise.all([fs.unlink(path.join(projectDir, "build", "icon.ico")), fs.rm(path.join(projectDir, "build", "icons"), { recursive: true, force: true })]),
-        packed: async () => {
+        packed: async context => {
           const file = await platformPackager!.getIconPath()
           expect(file).toBeDefined()
+          await validatePeResources(context, expect)
         },
       }
     )
   })
+
+  test("signExecutable: false — rcedit still edits exe resources", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
+        config: {
+          win: { signExecutable: false },
+          toolsets: { winCodeSign },
+        },
+      },
+      {
+        packed: async context => {
+          const appDir = context.getContent(Platform.WINDOWS, Arch.x64)
+          const expectedExe = `${context.packager.appInfo.productFilename}.exe`
+          const appDirEntries = await fs.readdir(appDir)
+          expect(appDirEntries).toContain(expectedExe)
+
+          await validatePeResources(context, expect)
+        },
+      }
+    ))
+
+  test("signExecutable: false — signing skipped even with cert", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
+        config: {
+          win: {
+            signExecutable: false,
+            signtoolOptions: {
+              sign: () => {
+                throw new Error("sign must not be called when signExecutable is false")
+              },
+            },
+          },
+          toolsets: { winCodeSign },
+        },
+      },
+      {
+        signedWin: true,
+        packed: async context => {
+          await validatePeResources(context, expect)
+        },
+      }
+    ))
+
+  test("signExecutable: false — throws when combined with forceCodeSigning", ({ expect }) =>
+    appThrows(
+      expect,
+      {
+        targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
+        config: {
+          forceCodeSigning: true,
+          win: { signExecutable: false },
+          toolsets: { winCodeSign },
+        },
+      },
+      {},
+      error => expect(error.message).toContain("`forceCodeSigning` is enabled")
+    ))
+
+  test("signAndEditExecutable: false — throws when combined with forceCodeSigning", ({ expect }) =>
+    appThrows(
+      expect,
+      {
+        targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
+        config: {
+          forceCodeSigning: true,
+          win: { signAndEditExecutable: false },
+          toolsets: { winCodeSign },
+        },
+      },
+      {},
+      error => expect(error.message).toContain("`forceCodeSigning` is enabled")
+    ))
+
+  test("signAndEditExecutable: false — backward compat disables both editing and signing", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
+        config: {
+          win: { signAndEditExecutable: false },
+          toolsets: { winCodeSign },
+        },
+      },
+      {
+        packed: async context => {
+          const appDir = context.getContent(Platform.WINDOWS, Arch.x64)
+          const expectedExe = `${context.packager.appInfo.productFilename}.exe`
+          const buffer = await fs.readFile(path.join(appDir, expectedExe))
+          const res = NtExecutableResource.from(NtExecutable.from(buffer))
+          const versionInfoList = Resource.VersionInfo.fromEntries(res.entries)
+          expect(versionInfoList.length).toBeGreaterThan(0)
+
+          const langs = versionInfoList[0].getAllLanguagesForStringValues()
+          expect(langs.length).toBeGreaterThan(0)
+
+          const strings = versionInfoList[0].getStringValues(langs[0])
+          expect(strings["ProductName"]).not.toBe(context.packager.appInfo.productName)
+        },
+      }
+    ))
+
+  test("signExecutable: false — NSIS installer and elevate.exe not signed", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64),
+        config: {
+          win: {
+            signExecutable: false,
+            signtoolOptions: {
+              sign: () => {
+                throw new Error("sign must not be called when signExecutable is false")
+              },
+            },
+          },
+          toolsets: { winCodeSign },
+        },
+      },
+      {
+        signedWin: true,
+        packed: async context => {
+          await validatePeResources(context, expect)
+        },
+      }
+    ))
 }
