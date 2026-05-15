@@ -116,7 +116,7 @@ export async function validateCacheDirectory(extractDir: string, expectedFileCou
       return false
     }
 
-    if (expectedFileCount) {
+    if (expectedFileCount != null && expectedFileCount > 0) {
       const { fileCount: actual } = await computeCacheMetadata(extractDir)
       if (actual !== expectedFileCount) {
         log.warn({ extractDir, expected: expectedFileCount, actual }, "Cache file count mismatch, treating as invalid")
@@ -131,8 +131,8 @@ export async function validateCacheDirectory(extractDir: string, expectedFileCou
   }
 }
 
-export async function cleanupCacheDirectory(extractDir: string): Promise<void> {
-  const filesToClean = [extractDir, `${extractDir}.state`, `${extractDir}.tmp`, `${extractDir}.lock`, `${extractDir}.tmp.lock`]
+export async function cleanupCacheDirectory(extractDir: string, { skipLockFiles = false } = {}): Promise<void> {
+  const filesToClean = [extractDir, `${extractDir}.state`, `${extractDir}.tmp`, ...(!skipLockFiles ? [`${extractDir}.lock`, `${extractDir}.tmp.lock`] : [])]
 
   for (const file of filesToClean) {
     try {
