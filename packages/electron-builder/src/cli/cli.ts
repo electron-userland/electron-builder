@@ -39,7 +39,7 @@ void createYargs()
   )
   .command(
     "clear-cache",
-    "Clear the electron-builder cache directory (respects ELECTRON_BUILDER_CACHE if set to an absolute path)",
+    "Clear the electron-builder default cache directory",
     yargs => yargs,
     wrap(() => clearCache())
   )

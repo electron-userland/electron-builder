@@ -7,11 +7,14 @@ vi.mock("app-builder-lib/out/util/electronGet", () => ({
   getCacheDirectory: vi.fn().mockReturnValue("/home/user/.cache/electron-builder"),
 }))
 
-vi.mock("fs/promises", () => ({
-  access: vi.fn().mockResolvedValue(undefined),
-  rm: vi.fn().mockResolvedValue(undefined),
-  constants: { F_OK: 0, W_OK: 2 },
-}))
+vi.mock("fs/promises", async () => {
+  const actual = await vi.importActual<typeof import("fs/promises")>("fs/promises")
+  return {
+    ...actual,
+    access: vi.fn().mockResolvedValue(undefined),
+    rm: vi.fn().mockResolvedValue(undefined),
+  }
+})
 
 vi.mock("readline/promises", () => ({
   createInterface: vi.fn(() => ({
@@ -54,8 +57,8 @@ import { configurePublishCommand } from "../../packages/electron-builder/src/pub
 describe("clearCache", () => {
   beforeEach(() => {
     vi.mocked(getCacheDirectory).mockReturnValue("/home/user/.cache/electron-builder")
-    vi.mocked(access).mockResolvedValue(undefined)
-    vi.mocked(rm).mockResolvedValue(undefined)
+    vi.mocked(access).mockResolvedValue(undefined as any)
+    vi.mocked(rm).mockResolvedValue(undefined as any)
     vi.mocked(createInterface).mockReturnValue({
       question: vi.fn().mockResolvedValue("y"),
       close: vi.fn(),
@@ -66,9 +69,9 @@ describe("clearCache", () => {
     vi.clearAllMocks()
   })
 
-  test("calls getCacheDirectory with isAvoidSystemOnWindows=false", async () => {
+  test("calls getCacheDirectory with isAvoidSystemOnWindows=false, allowEnvVarOverride=false", async () => {
     await clearCache()
-    expect(getCacheDirectory).toHaveBeenCalledWith(false)
+    expect(getCacheDirectory).toHaveBeenCalledWith(false, false)
   })
 
   test("deletes cache dir when it exists and user confirms", async () => {
@@ -92,10 +95,11 @@ describe("clearCache", () => {
     )
   })
 
-  test("does not delete when cache dir is not writable", async () => {
+  test("does not delete when cache dir is not writable and logs error", async () => {
     vi.mocked(access).mockRejectedValue(Object.assign(new Error("EACCES"), { code: "EACCES" }))
     await clearCache()
     expect(rm).not.toHaveBeenCalled()
+    expect(log.error).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: expect.any(String) }), "cache directory is not writable")
   })
 
   test("propagates error thrown by rm", async () => {
@@ -111,13 +115,6 @@ describe("clearCache", () => {
       expect.objectContaining({ cacheDir: "/" }),
       expect.stringContaining("filesystem root")
     )
-  })
-
-  test("respects ELECTRON_BUILDER_CACHE env var path", async () => {
-    vi.mocked(getCacheDirectory).mockReturnValue("/custom/cache/path")
-    await clearCache()
-    expect(access).toHaveBeenCalledWith("/custom/cache/path", expect.any(Number))
-    expect(rm).toHaveBeenCalledWith("/custom/cache/path", { recursive: true })
   })
 
   test("closes readline interface even when user aborts", async () => {
