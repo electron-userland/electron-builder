@@ -46,13 +46,13 @@ export function serializeToYaml(object: any, skipInvalid = false, noRefs = false
 }
 
 export function removePassword(input: string): string {
-  const flagList = ["--accessKey", "--secretKey", "-p", "-pass", "-String", "/p"]
-  const escapedFlags = flagList.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")
-
-  // (?<!\S) requires flag starts at whitespace or start-of-string (word boundary on the left).
-  // (?=[\s"']|$) requires the flag ends as a standalone token, not embedded in a longer flag like -path or -StringLength.
-  // i flag: covers all capitalisation variants (e.g. -P, -PASS, --ACCESSKEY) without listing each separately.
-  const flagPattern = new RegExp(`(?<!\\S)(${escapedFlags})(?=[\\s"']|$)\\s*(?:(["'])(.*?)\\2|([^\\s]+))`, "gi")
+  // Sensitive parameter stems — any of `-`, `--`, or `/` prefix is accepted for all stems.
+  // `pass:` is intentionally absent; the dedicated pass: handler below covers it without double-processing.
+  const sensitiveStems = ["accessKey", "secretKey", "passphrase", "password", "secret", "token", "String", "pass", "p"]
+  const stemAlt = sensitiveStems.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")
+  // (?:--?|/) matches -, --, or / prefix. Longest stems listed first to minimise backtracking.
+  // (?<!\S) / (?=[\s"']|$) word-boundary guards prevent matching -path, -StringLength, etc.
+  const flagPattern = new RegExp(`(?<!\\S)((?:--?|/)(?:${stemAlt}))(?=[\\s"']|$)\\s*(?:(["'])(.*?)\\2|([^\\s]+))`, "gi")
 
   input = input.replace(flagPattern, (_match, prefix, quote, quotedVal, unquotedVal) => {
     const value = quotedVal ?? unquotedVal

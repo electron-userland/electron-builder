@@ -111,9 +111,9 @@ describe("removePassword: word boundary protection", () => {
     expect(removePassword(input)).toBe(input)
   })
 
-  test("does not redact -passphrase argument", ({ expect }) => {
+  test("redacts -passphrase argument", ({ expect }) => {
     const input = "tool -passphrase secret"
-    expect(removePassword(input)).toBe(input)
+    expect(removePassword(input)).not.toContain("secret")
   })
 
   test("still redacts -p when it is a standalone flag", ({ expect }) => {
