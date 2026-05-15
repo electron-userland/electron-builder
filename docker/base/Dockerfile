@@ -4,7 +4,12 @@ FROM --platform=linux/x86_64 buildpack-deps:22.04-curl
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN curl -L https://yarnpkg.com/latest.tar.gz | tar xvz && mv yarn-* /yarn && ln -s /yarn/bin/yarn /usr/bin/yarn
+RUN curl -L --fail --tlsv1.2 --proto "=https" --proto-redir "=https" \
+  -o /tmp/yarn.tar.gz https://yarnpkg.com/latest.tar.gz && \
+    tar xvz -f /tmp/yarn.tar.gz && \
+    rm -f /tmp/yarn.tar.gz && \
+    mv yarn-* /yarn && ln -s /yarn/bin/yarn /usr/bin/yarn
+
 RUN apt-get update -yqq && apt-get -qq dist-upgrade && \
   # add repo for git-lfs
   curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && \
@@ -24,12 +29,17 @@ RUN apt-get update -yqq && apt-get -qq dist-upgrade && \
 # Resolves the following error due to dependency requirements
 # /root/.cache/electron-builder/winCodeSign/winCodeSign-2.6.0/linux/osslsigncode: error while loading shared libraries: libcrypto.so.1.1: cannot open shared object file: No such file or directory
 # The missing libcrypto.so.1.1 is part of libssl1.1 but Ubuntu 22.04 upgraded to libssl3, so we must install it manually.
-# Note: The libssl1.1_1.1.1f-1ubuntuXXXXX.deb asset occasionally is removed from the "pool" when a new version is released.
-# To identify the new version number, go to http://security.ubuntu.com/ubuntu/pool/main/o/openssl and search for `libssl1.1_` to update this var accordingly.
-ARG LIB_SSL1_VERSION=2.24
-RUN wget -q "http://security.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu${LIB_SSL1_VERSION}_amd64.deb" && \
-  dpkg -i libssl1.1*.deb && \
-  rm libssl1.1*.deb
+ARG SOURCES_LIST="/etc/apt/sources.list.d/focal_security.list"
+ARG PREFERENCES_FILE="/etc/apt/preferences.d/libssl1.1-focal"
+RUN echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] http://security.ubuntu.com/ubuntu focal-security main" \
+  | tee "$SOURCES_LIST" \
+  && printf "Package: *\nPin: release n=focal-security\nPin-Priority: 100\n\nPackage: libssl1.1\nPin: release n=focal-security\nPin-Priority: 1001\n" \
+  | tee "$PREFERENCES_FILE" \
+  && apt-get update \
+  && apt-get install -y libssl1.1 \
+  && rm -f "$SOURCES_LIST" "$PREFERENCES_FILE" \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /project
 
