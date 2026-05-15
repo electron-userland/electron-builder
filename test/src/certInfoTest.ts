@@ -234,7 +234,7 @@ describe("readCertInfo — parity with app-builder-bin", () => {
     const missingPath = "/nonexistent/certinfo-parity-missing.pfx"
     const binaryRaw = await executeAppBuilder(["certificate-info", "--input", missingPath, "--password", "pw"])
     const binaryResult: { error: string } = JSON.parse(binaryRaw)
-    expect(binaryResult.error).toMatch(/no such file|not found/i)
+    expect(binaryResult.error).toMatch(/no such file|not found|cannot find the path/i)
 
     await expect(readCertInfo(missingPath, "pw")).rejects.toThrow(/ENOENT|no such file/i)
   })
