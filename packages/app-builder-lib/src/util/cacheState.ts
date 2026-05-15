@@ -1,6 +1,6 @@
 import { log } from "builder-util"
-import { exists } from "builder-util"
 import * as fs from "fs/promises"
+import * as path from "path"
 
 export enum CacheState {
   pending = "pending",
@@ -28,12 +28,21 @@ function getStateFilePath(extractDir: string): string {
 
 export async function readCacheStateFile(extractDir: string): Promise<CacheStateFile | null> {
   const stateFile = getStateFilePath(extractDir)
+  let content: string
   try {
-    if (!(await exists(stateFile))) {
+    content = await fs.readFile(stateFile, "utf-8")
+  } catch (e: any) {
+    if (e.code !== "ENOENT") {
+      log.warn({ stateFile, error: e.message }, "Failed to read cache state file")
+    }
+    return null
+  }
+  try {
+    const data: CacheStateFile = JSON.parse(content)
+    if (data.version !== STATE_FILE_VERSION) {
+      log.warn({ stateFile, version: data.version, expected: STATE_FILE_VERSION }, "Cache state file version mismatch, ignoring")
       return null
     }
-    const content = await fs.readFile(stateFile, "utf-8")
-    const data: CacheStateFile = JSON.parse(content)
     if (data.state === CacheState.extracting) {
       const age = Date.now() - data.timestamp
       if (age > STALE_EXTRACTING_TIMEOUT_MS) {
@@ -43,17 +52,12 @@ export async function readCacheStateFile(extractDir: string): Promise<CacheState
     }
     return data
   } catch (e: any) {
-    log.warn({ stateFile, error: e.message }, "Failed to read cache state file")
+    log.warn({ stateFile, error: e.message }, "Failed to parse cache state file")
     return null
   }
 }
 
-export async function readCacheState(extractDir: string): Promise<CacheState> {
-  const data = await readCacheStateFile(extractDir)
-  return data?.state ?? CacheState.pending
-}
-
-export async function writeCacheState(extractDir: string, state: CacheState, metadata?: { fileCount?: number; extractedSize?: number }): Promise<void> {
+export async function writeCacheState(extractDir: string, state: CacheState, metadata?: { fileCount?: number; extractedSize?: number }, throwOnError = false): Promise<void> {
   const stateFile = getStateFilePath(extractDir)
   const stateData: CacheStateFile = {
     version: STATE_FILE_VERSION,
@@ -67,23 +71,57 @@ export async function writeCacheState(extractDir: string, state: CacheState, met
     await fs.writeFile(stateFile, JSON.stringify(stateData, null, 2), "utf-8")
   } catch (e: any) {
     log.warn({ stateFile, error: e.message }, "Failed to write cache state file")
+    if (throwOnError) {
+      throw e
+    }
   }
+}
+
+export async function computeCacheMetadata(dir: string): Promise<{ fileCount: number; extractedSize: number }> {
+  let fileCount = 0
+  let extractedSize = 0
+  const stack: string[] = [dir]
+  while (stack.length > 0) {
+    const current = stack.pop()!
+    let entries
+    try {
+      entries = await fs.readdir(current, { withFileTypes: true })
+    } catch {
+      continue
+    }
+    for (const entry of entries) {
+      const fullPath = path.join(current, entry.name)
+      if (entry.isDirectory()) {
+        stack.push(fullPath)
+      } else {
+        fileCount++
+        if (entry.isFile()) {
+          try {
+            const stat = await fs.stat(fullPath)
+            extractedSize += stat.size
+          } catch {
+            // ignore stat errors for individual files
+          }
+        }
+      }
+    }
+  }
+  return { fileCount, extractedSize }
 }
 
 export async function validateCacheDirectory(extractDir: string, expectedFileCount?: number): Promise<boolean> {
   try {
-    if (!(await exists(extractDir))) {
+    const topLevel = await fs.readdir(extractDir)
+    if (topLevel.length === 0) {
       return false
     }
 
-    const files = await fs.readdir(extractDir)
-    if (files.length === 0) {
-      return false
-    }
-
-    if (expectedFileCount && files.length !== expectedFileCount) {
-      log.warn({ extractDir, expected: expectedFileCount, actual: files.length }, "Cache file count mismatch, treating as invalid")
-      return false
+    if (expectedFileCount) {
+      const { fileCount: actual } = await computeCacheMetadata(extractDir)
+      if (actual !== expectedFileCount) {
+        log.warn({ extractDir, expected: expectedFileCount, actual }, "Cache file count mismatch, treating as invalid")
+        return false
+      }
     }
 
     return true
@@ -94,7 +132,7 @@ export async function validateCacheDirectory(extractDir: string, expectedFileCou
 }
 
 export async function cleanupCacheDirectory(extractDir: string): Promise<void> {
-  const filesToClean = [extractDir, `${extractDir}.state`, `${extractDir}.tmp`]
+  const filesToClean = [extractDir, `${extractDir}.state`, `${extractDir}.tmp`, `${extractDir}.lock`, `${extractDir}.tmp.lock`]
 
   for (const file of filesToClean) {
     try {
