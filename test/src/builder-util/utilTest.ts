@@ -217,6 +217,27 @@ describe("filterSensitiveEnv", () => {
     expect(result.GITHUB_TOKEN).toMatch(SHA256_HASH_RE)
     expect(result.MY_API_KEY).toMatch(SHA256_HASH_RE)
   })
+
+  test("redacts values for keys containing CSC (code-signing certificate vars)", ({ expect }) => {
+    const result = filterSensitiveEnv({ CSC_LINK: "https://example.com/cert.p12" })
+    expect(result.CSC_LINK).toMatch(SHA256_HASH_RE)
+  })
+
+  test("redacts values for WIN_CSC_LINK", ({ expect }) => {
+    const result = filterSensitiveEnv({ WIN_CSC_LINK: "/path/to/cert.pfx" })
+    expect(result.WIN_CSC_LINK).toMatch(SHA256_HASH_RE)
+  })
+
+  test("redacts values for keys containing CREDENTIAL", ({ expect }) => {
+    const result = filterSensitiveEnv({ DB_CREDENTIAL: "s3cr3t" })
+    expect(result.DB_CREDENTIAL).toMatch(SHA256_HASH_RE)
+  })
+
+  test("does not redact unrelated LINK or CSC-free vars", ({ expect }) => {
+    const result = filterSensitiveEnv({ GITHUB_LINK: "https://github.com", ELECTRON_CACHE: "/tmp" })
+    expect(result.GITHUB_LINK).toBe("https://github.com")
+    expect(result.ELECTRON_CACHE).toBe("/tmp")
+  })
 })
 
 describe("removePassword: multiple keys in one string", () => {
