@@ -1,5 +1,5 @@
 import { Arch, Configuration, Platform } from "app-builder-lib"
-import { archFromString, doSpawn, getArchSuffix } from "builder-util"
+import { archFromString, getArchSuffix } from "builder-util"
 import { GenericServerOptions, Nullish, S3Options } from "builder-util-runtime"
 import { AppImageUpdater, BaseUpdater, MacUpdater, NsisUpdater } from "electron-updater"
 import { EventEmitter } from "events"
@@ -11,7 +11,7 @@ import { EXTENDED_TIMEOUT, PackedContext, assertPack, removeUnstableProperties }
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, testAppCacheDirName, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { mockForNodeRequire } from "vitest-mock-commonjs"
 import { ExpectStatic } from "vitest"
-import { getRanLocalServerPath } from "../helpers/launchAppCrossPlatform"
+import { createLocalServer } from "../helpers/launchAppCrossPlatform"
 import { ToolsetConfig } from "app-builder-lib/src/configuration"
 
 async function doBuild(
@@ -208,10 +208,7 @@ async function testBlockMap(expect: ExpectStatic, oldDir: string, newDir: string
     `${platform.buildConfigurationKey}${getArchSuffix(arch)}${platform === Platform.MAC ? "" : "-unpacked"}`,
     platform === Platform.MAC ? `${productFilename}.app` : ""
   )
-  const port = 8000 + (updaterClass.name.charCodeAt(0) as number) + Math.floor(Math.random() * 10000)
-
-  const serverBin = await getRanLocalServerPath()
-  const httpServerProcess = doSpawn(serverBin, [`-root=${newDir}`, `-port=${port}`, "-gzip=false", "-listdir=true"])
+  const { server, port } = await createLocalServer(newDir)
 
   // Mac uses electron's native autoUpdater to serve updates to, we mock here since electron API isn't available within jest runtime
   const mockNativeUpdater = new TestNativeUpdater()
@@ -220,7 +217,7 @@ async function testBlockMap(expect: ExpectStatic, oldDir: string, newDir: string
   })
 
   return await new Promise<void>((resolve, reject) => {
-    httpServerProcess.on("error", reject)
+    server.on("error", reject)
 
     const updater = new updaterClass(null, new TestAppAdapter(OLD_VERSION_NUMBER, getTestUpdaterCacheDir(oldDir)))
     updater._appUpdateConfigPath = path.join(
@@ -251,11 +248,11 @@ async function testBlockMap(expect: ExpectStatic, oldDir: string, newDir: string
     doTest().then(resolve).catch(reject)
   }).then(
     v => {
-      httpServerProcess.kill()
+      server.close()
       return v
     },
     e => {
-      httpServerProcess.kill()
+      server.close()
       throw e
     }
   )

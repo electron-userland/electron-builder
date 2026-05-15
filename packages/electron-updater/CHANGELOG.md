@@ -1,5 +1,12 @@
 ## 4.3.0
 
+## 6.8.5
+
+### Patch Changes
+
+- Fix: GitLab auth token differs between fetching channel yaml & API requests _[`#9703`](https://github.com/electron-userland/electron-builder/pull/9703) [`4bcf68a`](https://github.com/electron-userland/electron-builder/commit/4bcf68abc957faae827ca50fa5c1bed3ddf7c956) [@mmaietta](https://github.com/mmaietta)_
+- Fix(electron-updater): filter draft releases in PrivateGitHubProvider.getLatestVersionInfo _[`#9694`](https://github.com/electron-userland/electron-builder/pull/9694) [`a5d8ab9`](https://github.com/electron-userland/electron-builder/commit/a5d8ab9436dd7db0c58a08cf9594e47613c4fc8e) [@copilot-swe-agent](https://github.com/apps/copilot-swe-agent)_
+
 ## 6.8.4
 
 ### Patch Changes

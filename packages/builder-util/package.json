@@ -1,6 +1,6 @@
 {
   "name": "builder-util",
-  "version": "26.9.0",
+  "version": "26.10.0",
   "main": "out/util.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
@@ -39,5 +39,8 @@
     "@types/js-yaml": "4.0.3",
     "@types/source-map-support": "0.5.4",
     "@types/tiny-async-pool": "^1.0.5"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }

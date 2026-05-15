@@ -1,22 +1,43 @@
 import { ToolsetConfig } from "app-builder-lib"
-import { PM } from "app-builder-lib/src/node-module-collector"
+import { PM } from "app-builder-lib/out/node-module-collector"
+import { ParallelsVmManager } from "app-builder-lib/out/vm/ParallelsVm"
+import { getWindowsVm, VmManager } from "app-builder-lib/out/vm/vm"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
-import { archFromString, doSpawn, getArchSuffix, isEmptyOrSpaces, log, spawn, TmpDir } from "builder-util/out/util"
+import { archFromString, DebugLogger, getArchSuffix, isEmptyOrSpaces, log, serializeToYaml, spawn, TmpDir } from "builder-util/out/util"
 import { execFileSync, execSync } from "child_process"
+import { createHash, randomUUID } from "crypto"
 import { Arch, Configuration, Platform } from "electron-builder"
 import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
-import { copy, existsSync, move, outputFile, readJsonSync } from "fs-extra"
+import { createReadStream } from "fs"
+import { copy, existsSync, move, outputFile, readJsonSync, remove } from "fs-extra"
 import { homedir } from "os"
 import path from "path"
-import { ExpectStatic, TestContext } from "vitest"
-import { getRanLocalServerPath, launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
-import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester"
+import { ExpectStatic, TestContext, TestOptions } from "vitest"
+import { createLocalServer, getParallelsHostIP, launchAndWaitForQuit, toVmHomePath } from "../helpers/launchAppCrossPlatform"
+import { assertPack, EXTENDED_TIMEOUT, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
+// Resolve only to a ParallelsVmManager — PwshVmManager (used for code-signing on Linux/Mac via Wine)
+// is not capable of installing or running Windows executables and must not be treated as a Windows VM.
+const windowsVmPromise: Promise<ParallelsVmManager | undefined> = getWindowsVm(new DebugLogger(false))
+  .then(vm => (vm instanceof ParallelsVmManager ? vm : undefined))
+  .catch(() => undefined)
+
+async function sha256File(filePath: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const hash = createHash("sha256")
+    createReadStream(filePath)
+      .on("data", chunk => hash.update(chunk))
+      .on("end", () => resolve(hash.digest("hex")))
+      .on("error", reject)
+  })
+}
+
+const optionsForFlakyE2E: TestOptions = { sequential: true, retry: 0, timeout: EXTENDED_TIMEOUT }
 // Linux Tests MUST be run in docker containers for proper ephemeral testing environment (e.g. fresh install + update + relaunch)
 // Currently this test logic does not handle uninstalling packages (yet)
-describe.heavy.ifMac.ifEnv(process.env.CSC_KEY_PASSWORD)("mac", { sequential: true }, () => {
+describe.ifMac.heavy("mac", optionsForFlakyE2E, () => {
   // can test on x64 and also arm64 (via rosetta)
   test("x64", async context => {
     await runTest(context, "zip", "", Arch.x64)
@@ -33,9 +54,12 @@ describe.heavy.ifMac.ifEnv(process.env.CSC_KEY_PASSWORD)("mac", { sequential: tr
 const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0"]
 
 for (const winCodeSign of winCodeSignVersions) {
-  describe(`winCodeSign: ${winCodeSign}`, { sequential: true }, () => {
-    describe.heavy.ifWindows("windows", { sequential: true }, () => {
+  describe(`winCodeSign: ${winCodeSign}`, optionsForFlakyE2E, () => {
+    describe.heavy("windows", optionsForFlakyE2E, () => {
       test("nsis", async context => {
+        if (process.platform !== "win32" && (await windowsVmPromise) == null) {
+          context.skip()
+        }
         await runTest(context, "nsis", "", Arch.x64, { winCodeSign })
       })
     })
@@ -44,9 +68,9 @@ for (const winCodeSign of winCodeSignVersions) {
 
 const appImageToolVersions: ToolsetConfig["appimage"][] = ["0.0.0", "1.0.2", "1.0.3"]
 // must be sequential in order for process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER to be respected per-test
-describe.heavy.ifLinux("linux", { sequential: true }, () => {
+describe.heavy.ifLinux("linux", optionsForFlakyE2E, () => {
   for (const appimage of appImageToolVersions) {
-    describe(`appimage tool: ${appimage}`, () => {
+    describe(`appimage tool: ${appimage}`, optionsForFlakyE2E, () => {
       test.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true" && process.arch === "arm64")("AppImage - arm64", async context => {
         await runTest(context, "AppImage", "appimage", Arch.arm64, { appimage })
       })
@@ -62,7 +86,7 @@ describe.heavy.ifLinux("linux", { sequential: true }, () => {
   for (const distro in packageManagerMap) {
     const { pms, target } = packageManagerMap[distro as keyof typeof packageManagerMap]
     for (const pm of pms) {
-      test(`${distro} - (${pm})`, { sequential: true }, async context => {
+      test(`${distro} - (${pm})`, optionsForFlakyE2E, async context => {
         if (!determineEnvironment(distro)) {
           context.skip()
         }
@@ -102,19 +126,23 @@ const packageManagerMap: {
 
 async function runTest(context: TestContext, target: string, packageManager: string, arch: Arch = Arch.x64, toolsets: ToolsetConfig = {}) {
   const { expect } = context
+  const vm = await windowsVmPromise
+  if (vm && target === "nsis") {
+    console.log("Running Windows test via Parallels VM")
+  }
 
   const tmpDir = new TmpDir("auto-update")
   const outDirs: ApplicationUpdatePaths[] = []
-  await doBuild(expect, outDirs, target, arch, tmpDir, process.platform === "win32", { toolsets })
+  await doBuild(expect, outDirs, target, arch, tmpDir, process.platform === "win32" || (target === "nsis" && vm != null), { toolsets })
 
   const oldAppDir = outDirs[0]
   const newAppDir = outDirs[1]
 
   const dirPath = oldAppDir.dir
   // Setup tests by installing the previous version
-  const appPath = await handleInitialInstallPerOS({ target, dirPath, arch })
+  const appPath = await handleInitialInstallPerOS({ target, dirPath, arch, vm })
 
-  if (!existsSync(appPath)) {
+  if (!vm && !existsSync(appPath)) {
     throw new Error(`App not found: ${appPath}`)
   }
 
@@ -124,20 +152,65 @@ async function runTest(context: TestContext, target: string, packageManager: str
       // Move app update to the root directory of the server
       await copy(newAppDir.dir, rootDirectory, { recursive: true, overwrite: true })
 
-      const verifyAppVersion = async (expectedVersion: string) =>
-        await launchAndWaitForQuit({ appPath, timeoutMs: 2 * 60 * 1000, updateConfigPath, expectedVersion, packageManagerToTest: packageManager })
-
-      const result = await verifyAppVersion(OLD_VERSION_NUMBER)
-      log.debug(result, "Test App version")
+      // waitForExit: true — don't proceed until the old app fully quits.
+      // On Linux (rpm/deb/pacman) the package manager install is synchronous, so exit means install done.
+      // On Windows (NSIS) and Mac (zip) the installer runs detached/async, so the app exits before
+      // installation completes — the polling loop below handles that case.
+      const result = await launchAndWaitForQuit({
+        appPath,
+        vm,
+        timeoutMs: 5 * 60 * 1000,
+        updateConfigPath,
+        expectedVersion: OLD_VERSION_NUMBER,
+        packageManagerToTest: packageManager,
+        waitForExit: true,
+      })
+      log.info({ version: result.version, stdout: result.stdout }, "Initial launch completed")
       expect(result.version).toMatch(OLD_VERSION_NUMBER)
+      if (!result.stdout.includes("Update downloaded")) {
+        throw new Error(`Update phase did not complete — quitAndInstall was never triggered.\nFull stdout:\n${result.stdout}`)
+      }
 
-      // Wait for quitAndInstall to take effect, increase delay if updates are slower
-      // (shouldn't be the case for such a small test app, but Windows with Debugger attached is pretty dam slow)
-      const delay = 60 * 1000
-      await new Promise(resolve => setTimeout(resolve, delay))
-
-      expect((await verifyAppVersion(NEW_VERSION_NUMBER)).version).toMatch(NEW_VERSION_NUMBER)
-    })
+      // Poll until the installed binary reports the new version.
+      // We disable AUTO_UPDATER_TEST so the probe app quits immediately after printing its version
+      // (no update cycle triggered), which also prevents a second installer from running in parallel.
+      const pollDeadline = Date.now() + 6 * 60 * 1000
+      const pollInterval = 5 * 1000
+      let newVersion: string | undefined
+      while (Date.now() < pollDeadline) {
+        try {
+          const probe = await launchAndWaitForQuit({
+            appPath,
+            vm,
+            timeoutMs: 30 * 1000,
+            updateConfigPath,
+            packageManagerToTest: packageManager,
+            env: { AUTO_UPDATER_TEST: "" }, // disables updater — app prints version and quits
+            // waitForExit: true ensures TestApp.exe is fully released before the next
+            // poll iteration, giving the detached NSIS installer an uncontested window
+            // to overwrite the binary (Windows locks executables while they are running).
+            waitForExit: true,
+          })
+          newVersion = probe.version
+          if (newVersion === NEW_VERSION_NUMBER) {
+            break
+          }
+          log.info({ installedVersion: newVersion, expected: NEW_VERSION_NUMBER }, "Installer still in progress, retrying...")
+        } catch (err: any) {
+          // NSIS replaces the exe non-atomically: it deletes the old binary before writing the new one,
+          // so there is a brief window where TestApp.exe does not exist on disk.
+          if (err.code === "ENOENT" && (err.syscall === "spawn" || err.syscall?.startsWith("spawn "))) {
+            log.info({ appPath }, "Binary temporarily unavailable (NSIS installer in progress), retrying...")
+          } else {
+            throw err
+          }
+        }
+        if (Date.now() + pollInterval < pollDeadline) {
+          await new Promise(resolve => setTimeout(resolve, pollInterval))
+        }
+      }
+      expect(newVersion).toMatch(NEW_VERSION_NUMBER)
+    }, vm)
   } catch (error: any) {
     log.error({ error: error.message }, "Blackbox Updater Test failed to run")
     queuedError = error
@@ -171,7 +244,7 @@ async function doBuild(
   isWindows: boolean,
   extraConfig?: Configuration | null
 ) {
-  const currentPlatform = Platform.current()
+  const currentPlatform = isWindows ? Platform.WINDOWS : Platform.current()
   async function buildApp({
     version,
     target,
@@ -203,6 +276,16 @@ async function doBuild(
             version,
           },
           electronUpdaterCompatibility: "1.1", // anything above 1.0.0 works. This is to allow testing via `link:` protocol with the current workspace electron-updater package version
+          electronFuses: {
+            runAsNode: false,
+            enableCookieEncryption: true,
+            enableNodeOptionsEnvironmentVariable: false,
+            enableNodeCliInspectArguments: false,
+            enableEmbeddedAsarIntegrityValidation: true,
+            onlyLoadAppFromAsar: true,
+            loadBrowserProcessSpecificV8Snapshot: false,
+            grantFileProtocolExtraPrivileges: false,
+          },
           ...extraConfig,
           compression: "store",
           publish: {
@@ -292,7 +375,7 @@ async function doBuild(
   }
 }
 
-async function handleInitialInstallPerOS({ target, dirPath, arch }: { target: string; dirPath: string; arch: Arch }): Promise<string> {
+async function handleInitialInstallPerOS({ target, dirPath, arch, vm }: { target: string; dirPath: string; arch: Arch; vm?: VmManager }): Promise<string> {
   let appPath: string
   if (target === "AppImage") {
     appPath = path.join(dirPath, `TestApp.AppImage`)
@@ -328,6 +411,16 @@ async function handleInitialInstallPerOS({ target, dirPath, arch }: { target: st
     // execSync(`sudo pacman -U --noconfirm "${path.join(dirPath, `TestApp.pacman`)}"`, { stdio: "inherit" })
     appPath = path.join("/opt", "TestApp", "TestApp")
   } else if (process.platform === "win32") {
+    // Kill any lingering NSIS installer processes left over from previous test retries.
+    // Without this, ALLOW_ONLY_ONE_INSTALLER_INSTANCE aborts the new installer (mutex conflict),
+    // and lingering mid-replacement processes cause ENOENT at the first probe launch.
+    try {
+      execSync('taskkill /F /IM "TestApp Setup.exe" /T', { stdio: "ignore" })
+      await new Promise(resolve => setTimeout(resolve, 1000))
+    } catch {
+      // no matching process — expected on the first run
+    }
+
     // access installed app's location
     const localProgramsPath = path.join(process.env.LOCALAPPDATA || path.join(homedir(), "AppData", "Local"), "Programs", "TestApp")
     // this is to clear dev environment when not running on an ephemeral GH runner.
@@ -345,6 +438,103 @@ async function handleInitialInstallPerOS({ target, dirPath, arch }: { target: st
     execFileSync(installerPath, ["/S"], { stdio: "inherit" })
 
     appPath = path.join(localProgramsPath, "TestApp.exe")
+  } else if (target === "nsis" && vm) {
+    // Running on macOS host with Parallels VM — install and locate app inside the VM.
+    try {
+      await vm.exec("taskkill", ["/F", "/IM", "TestApp Setup.exe", "/T"])
+      await new Promise(resolve => setTimeout(resolve, 1000))
+    } catch {
+      // no matching process — expected on the first run
+    }
+    // Query LOCALAPPDATA once; used for both the uninstaller check and the install path.
+    const localAppData = (await vm.exec("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", "[Environment]::GetFolderPath('LocalApplicationData')"])).trim()
+    const uninstallerPath = `${localAppData}\\Programs\\TestApp\\Uninstall TestApp.exe`
+    try {
+      await vm.exec(uninstallerPath, ["/S", "/C", "exit"])
+      await new Promise(resolve => setTimeout(resolve, 5000))
+    } catch {
+      // no previous installation — expected on first run
+    }
+    // Use HTTP to deliver the installer: getParallelsHostIP() returns the Mac's bridge IP
+    // (e.g. 10.211.55.2) which is reachable from the VM. \\Mac\Home\ hangs on large binary reads.
+    const hostIP = getParallelsHostIP()
+    if (!hostIP) {
+      throw new Error("Cannot determine Parallels host IP for installer delivery — no prl*/bridge* interface found")
+    }
+
+    // Validate values that will be interpolated into the PowerShell script.
+    // Both are internally generated (not user input), but guard against unexpected values.
+    if (!/^[\d.]+$/.test(hostIP)) {
+      throw new Error(`Unsafe hostIP: ${hostIP}`)
+    }
+
+    // Compute the installer hash on the Mac side before serving so the Windows side can verify it.
+    const installerBinPath = path.join(dirPath, "TestApp Setup.exe")
+    const expectedSha256 = await sha256File(installerBinPath)
+    if (!/^[0-9a-f]{64}$/i.test(expectedSha256)) {
+      throw new Error(`Unexpected hash value: ${expectedSha256}`)
+    }
+
+    const { server: installerServer, port: installerPort } = await createLocalServer(dirPath, "0.0.0.0")
+    if (!Number.isInteger(installerPort) || installerPort < 1024 || installerPort > 65535) {
+      throw new Error(`Unsafe port: ${installerPort}`)
+    }
+
+    // Write the installer script to Mac home dir; the VM reads it via \\Mac\Home\ (UNC).
+    // Using -File instead of -Command avoids double-quote stripping by prlctl/cmd.exe,
+    // which allows the Add-Type heredoc and DllImport attributes to work correctly.
+    // A small PS script file (<5 KB) reads fine from \\Mac\Home\ (only large binary reads hang).
+    const scriptPath = path.join(homedir(), `.eb-nsis-${randomUUID()}.ps1`)
+    const psScript = [
+      `$tmpDir = $null`,
+      `try {`,
+      // Kill any stale installer from a previous test run — it holds the NSIS APP_GUID mutex
+      `    Stop-Process -Name 'eb-setup' -Force -ErrorAction SilentlyContinue`,
+      `    Start-Sleep -Seconds 1`,
+      `    $tmpDir = Join-Path $env:TEMP ([Guid]::NewGuid().ToString())`,
+      `    New-Item -ItemType Directory -Path $tmpDir | Out-Null`,
+      `    $dest = Join-Path $tmpDir 'eb-setup.exe'`,
+      `    Invoke-WebRequest -Uri 'http://${hostIP}:${installerPort}/TestApp%20Setup.exe' -OutFile $dest -UseBasicParsing`,
+      `    if (-not (Test-Path $dest)) { Write-Error 'Download failed'; exit 1 }`,
+      `    Write-Output ('DOWNLOAD_SIZE:' + (Get-Item $dest).Length)`,
+      // Verify download integrity; hash was computed on the Mac before the HTTP server started
+      `    $actualHash = (Get-FileHash $dest -Algorithm SHA256).Hash.ToLower()`,
+      `    $expectedHash = '${expectedSha256}'`,
+      `    if ($actualHash -ne $expectedHash) { Write-Error ('Hash mismatch: expected ' + $expectedHash + ' got ' + $actualHash); exit 1 }`,
+      `    Write-Output ('HASH_OK:true')`,
+      // Remove Mark-of-the-Web only after integrity is confirmed
+      `    Unblock-File -Path $dest -ErrorAction SilentlyContinue`,
+      `    Write-Output ('DEST_PATH:' + $dest)`,
+      `    $proc = Start-Process -FilePath $dest -ArgumentList '/S' -PassThru`,
+      `    $finished = $proc.WaitForExit(180000)`,
+      `    if (-not $finished) {`,
+      `        $proc.Kill() | Out-Null`,
+      `        Write-Error 'Installer timed out after 180s'; exit 1`,
+      `    }`,
+      `    Write-Output ('INSTALLER_EXIT:' + $proc.ExitCode)`,
+      // NSIS one-click calls quitSuccess (SetErrorLevel 0; Quit) on success → exit 0
+      `    if ($proc.ExitCode -ne 0) { Write-Error ('Installer exited with code ' + $proc.ExitCode); exit 1 }`,
+      `    Start-Sleep -Seconds 3`,
+      `    $lad = [Environment]::GetFolderPath('LocalApplicationData')`,
+      `    $installPath = Join-Path $lad 'Programs\\TestApp\\TestApp.exe'`,
+      `    Write-Output ('APP_EXISTS:' + (Test-Path $installPath))`,
+      `    if (-not (Test-Path $installPath)) { Write-Error 'App not installed at expected path'; exit 1 }`,
+      `} finally {`,
+      // PowerShell guarantees finally runs on all exit paths including exit 1
+      `    if ($tmpDir) { Remove-Item $tmpDir -Recurse -Force -ErrorAction SilentlyContinue }`,
+      `}`,
+    ].join("\n")
+
+    await outputFile(scriptPath, psScript)
+    const winScriptPath = toVmHomePath(scriptPath)
+    try {
+      const installResult = await vm.exec("powershell.exe", ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", winScriptPath], { timeout: 300000 })
+      console.log("Installer output:", installResult)
+    } finally {
+      installerServer.close()
+      await remove(scriptPath).catch(() => {})
+    }
+    appPath = `${localAppData}\\Programs\\TestApp\\TestApp.exe`
   } else if (process.platform === "darwin") {
     appPath = path.join(dirPath, `mac${getArchSuffix(arch)}`, `TestApp.app`, "Contents", "MacOS", "TestApp")
   } else {
@@ -362,6 +552,15 @@ async function handleCleanupPerOS({ target }: { target: string }) {
   } else if (target === "pacman") {
     execSync(`pacman -R --noconfirm testapp`, { stdio: "inherit" })
   } else if (process.platform === "win32") {
+    // Kill any lingering NSIS installer processes before running the uninstaller,
+    // so the uninstaller isn't blocked by a still-running update installer holding file locks.
+    try {
+      execSync('taskkill /F /IM "TestApp Setup.exe" /T', { stdio: "ignore" })
+      await new Promise(resolve => setTimeout(resolve, 500))
+    } catch {
+      // no matching process — ignore
+    }
+
     // access installed app's location
     const localProgramsPath = path.join(process.env.LOCALAPPDATA || path.join(homedir(), "AppData", "Local"), "Programs", "TestApp")
     const uninstaller = path.join(localProgramsPath, "Uninstall TestApp.exe")
@@ -373,21 +572,31 @@ async function handleCleanupPerOS({ target }: { target: string }) {
   }
 }
 
-async function runTestWithinServer(doTest: (rootDirectory: string, updateConfigPath: string) => Promise<void>) {
+async function runTestWithinServer(doTest: (rootDirectory: string, updateConfigPath: string) => Promise<void>, vm?: VmManager) {
   const tmpDir = new TmpDir("blackbox-update-test")
   const root = await tmpDir.getTempDir({ prefix: "server-root" })
 
-  // 65535 is the max port number
-  // Math.random() / Math.random() is used to avoid zero
-  // Math.floor(((Math.random() / Math.random()) * 1000) % 65535) is used to avoid port number collision
-  const port = 8000 + Math.floor(((Math.random() / Math.random()) * 1000) % 65535)
-  const serverBin = await getRanLocalServerPath()
-  const httpServerProcess = doSpawn(serverBin, [`-root=${root}`, `-port=${port}`, "-gzip=false", "-listdir=true"])
+  // When a VM is in use, the update server must be reachable from inside the VM.
+  // Bind to the Parallels host IP specifically so the server is accessible from the VM
+  // without exposing it on all interfaces.
+  const serverHost = vm ? getParallelsHostIP() : "127.0.0.1"
+  if (vm && !serverHost) {
+    throw new Error("Cannot determine Parallels host IP for update server — no prl*/bridge* interface found")
+  }
+  const { server, port } = await createLocalServer(root, serverHost!)
 
-  const updateConfig = await writeUpdateConfig<GenericServerOptions>({
-    provider: "generic",
-    url: `http://127.0.0.1:${port}`,
-  })
+  const serverConfig: GenericServerOptions = { provider: "generic", url: `http://${serverHost}:${port}` }
+  let updateConfig: string
+  let vmConfigDir: string | undefined
+  if (vm) {
+    // Write config to home dir → \\Mac\Home\... which Parallels always shares.
+    // System temp → \\Mac\Host\private\var\folders\... requires "All Disks" sharing and may be inaccessible.
+    vmConfigDir = path.join(homedir(), `.eb-update-test-${randomUUID()}`)
+    updateConfig = path.join(vmConfigDir, "app-update.yml")
+    await outputFile(updateConfig, serializeToYaml(serverConfig))
+  } else {
+    updateConfig = await writeUpdateConfig<GenericServerOptions>(serverConfig)
+  }
 
   const cleanup = () => {
     try {
@@ -396,14 +605,17 @@ async function runTestWithinServer(doTest: (rootDirectory: string, updateConfigP
       console.error("Failed to cleanup tmpDir", error)
     }
     try {
-      httpServerProcess.kill()
+      server.close()
     } catch (error) {
-      console.error("Failed to kill httpServerProcess", error)
+      console.error("Failed to close server", error)
+    }
+    if (vmConfigDir) {
+      remove(vmConfigDir).catch(() => {})
     }
   }
 
   return await new Promise<void>((resolve, reject) => {
-    httpServerProcess.on("error", reject)
+    server.on("error", reject)
     doTest(root, updateConfig).then(resolve).catch(reject)
   }).then(
     v => {
