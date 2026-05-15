@@ -212,15 +212,6 @@ export async function extractArchive(file: string, dir: string) {
       throw new Error(`Extraction of ${path.basename(file)} produced no files`)
     }
 
-    // For 7z extractions, verify critical files exist
-    if (file.endsWith(".7z")) {
-      const hasExe = extractedFiles.some(f => f.toLowerCase().endsWith(".exe"))
-      const hasDlls = extractedFiles.some(f => f.toLowerCase().endsWith(".dll"))
-      if (!hasExe || !hasDlls) {
-        throw new Error(`Incomplete 7z extraction: exe=${hasExe}, dlls=${hasDlls}, files=${extractedFiles.length}`)
-      }
-    }
-
     // Calculate extracted size for state tracking
     const stats = await Promise.all(extractedFiles.map(f => fs.stat(path.join(tmpDir, f))))
     const totalSize = stats.reduce((sum, stat) => sum + stat.size, 0)
