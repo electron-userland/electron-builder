@@ -212,15 +212,6 @@ export async function extractArchive(file: string, dir: string) {
       throw new Error(`Extraction of ${path.basename(file)} produced no files`)
     }
 
-    // For 7z extractions, verify critical files exist
-    if (file.endsWith(".7z")) {
-      const hasExe = extractedFiles.some(f => f.toLowerCase().endsWith(".exe"))
-      const hasDlls = extractedFiles.some(f => f.toLowerCase().endsWith(".dll"))
-      if (!hasExe || !hasDlls) {
-        throw new Error(`Incomplete 7z extraction: exe=${hasExe}, dlls=${hasDlls}, files=${extractedFiles.length}`)
-      }
-    }
-
     // Calculate extracted size for state tracking
     const stats = await Promise.all(extractedFiles.map(f => fs.stat(path.join(tmpDir, f))))
     const totalSize = stats.reduce((sum, stat) => sum + stat.size, 0)
@@ -240,7 +231,7 @@ export async function extractArchive(file: string, dir: string) {
 
 async function downloadArtifactToFile(config: Parameters<typeof get.downloadArtifact>[0], label: string): Promise<string> {
   const progress = process.stdout.isTTY ? new MultiProgress() : null
-  const progressBar = progress?.createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent | ${label}`, { total: 100 })
+  const progressBar = progress?.createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent | ${label}`, { total: 80 })
   progressBar?.render()
 
   let lastLoggedMilestone = -1
@@ -293,13 +284,11 @@ async function downloadArtifactToFile(config: Parameters<typeof get.downloadArti
  * Both public download functions delegate here after building their respective configs.
  */
 async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact>[0], extractDir: string, label: string): Promise<string> {
-  const completeMarker = `${extractDir}.complete`
-
   await fs.mkdir(extractDir, { recursive: true })
 
   // Single read — derive both state and metadata without a second file read
   const stateData = await readCacheStateFile(extractDir)
-  const currentState = stateData?.state ?? ((await exists(completeMarker)) ? CacheState.complete : CacheState.pending)
+  const currentState = stateData?.state ?? CacheState.pending
 
   if (currentState === CacheState.corrupted) {
     log.warn({ extractDir }, "Corrupted cache detected, cleaning up and re-extracting")
@@ -347,9 +336,6 @@ async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact
 
     // Write complete state BEFORE releasing the lock to prevent partial-extraction race
     await writeCacheState(extractDir, CacheState.complete)
-
-    // Also write legacy .complete marker for backward compatibility
-    await fs.writeFile(completeMarker, "")
   } finally {
     await release().catch(err => log.warn({ err }, "failed to release lockfile"))
   }

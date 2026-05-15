@@ -48,16 +48,9 @@ export async function readCacheStateFile(extractDir: string): Promise<CacheState
   }
 }
 
-export async function readCacheState(extractDir: string): Promise<CacheState | null> {
+export async function readCacheState(extractDir: string): Promise<CacheState> {
   const data = await readCacheStateFile(extractDir)
-  if (data !== null) {
-    return data.state
-  }
-  // Check for legacy .complete marker for backward compatibility
-  if (await exists(`${extractDir}.complete`)) {
-    return CacheState.complete
-  }
-  return CacheState.pending
+  return data?.state ?? CacheState.pending
 }
 
 export async function writeCacheState(extractDir: string, state: CacheState, metadata?: { fileCount?: number; extractedSize?: number }): Promise<void> {
@@ -101,7 +94,7 @@ export async function validateCacheDirectory(extractDir: string, expectedFileCou
 }
 
 export async function cleanupCacheDirectory(extractDir: string): Promise<void> {
-  const filesToClean = [extractDir, `${extractDir}.state`, `${extractDir}.complete`, `${extractDir}.tmp`]
+  const filesToClean = [extractDir, `${extractDir}.state`, `${extractDir}.tmp`]
 
   for (const file of filesToClean) {
     try {
