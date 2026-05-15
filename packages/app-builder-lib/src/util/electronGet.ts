@@ -84,9 +84,9 @@ function hashUrlSafe(input: string, length = 6): string {
   return out.length >= length ? out.slice(0, length) : out.padStart(length, "0")
 }
 
-export function getCacheDirectory(isAvoidSystemOnWindows = false): string {
+export function getCacheDirectory(allowEnvVarOverride = true, isAvoidSystemOnWindows = false): string {
   const env = process.env.ELECTRON_BUILDER_CACHE?.trim()
-  if (env && path.parse(env).root) {
+  if (allowEnvVarOverride && env && path.parse(env).root) {
     return env
   }
 
