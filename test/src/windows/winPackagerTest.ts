@@ -198,5 +198,160 @@ for (const winCodeSign of winCodeSignVersions) {
         }
       )
     })
+
+    test("signExecutable: false — rcedit still edits exe resources", ({ expect }) =>
+      app(
+        expect,
+        {
+          targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
+          config: {
+            win: { signExecutable: false },
+            toolsets: { winCodeSign },
+          },
+        },
+        {
+          packed: async context => {
+            const appDir = context.getContent(Platform.WINDOWS, Arch.x64)
+            const expectedExe = `${context.packager.appInfo.productFilename}.exe`
+            const appDirEntries = await fs.readdir(appDir)
+            expect(appDirEntries).toContain(expectedExe)
+
+            const buffer = await fs.readFile(path.join(appDir, expectedExe))
+            const res = NtExecutableResource.from(NtExecutable.from(buffer))
+            const versionInfoList = Resource.VersionInfo.fromEntries(res.entries)
+            expect(versionInfoList.length).toBeGreaterThan(0)
+
+            const versionInfo = versionInfoList[0]
+            const langs = versionInfo.getAllLanguagesForStringValues()
+            expect(langs.length).toBeGreaterThan(0)
+
+            const strings = versionInfo.getStringValues(langs[0])
+            expect(strings["ProductName"]).toBe(context.packager.appInfo.productName)
+            expect(strings["FileDescription"]).toBe(context.packager.appInfo.productName)
+          },
+        }
+      ))
+
+    test("signExecutable: false — signing skipped even with cert", ({ expect }) =>
+      app(
+        expect,
+        {
+          targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
+          config: {
+            win: {
+              signExecutable: false,
+              signtoolOptions: {
+                sign: () => {
+                  throw new Error("sign must not be called when signExecutable is false")
+                },
+              },
+            },
+            toolsets: { winCodeSign },
+          },
+        },
+        {
+          signedWin: true,
+          packed: async context => {
+            const appDir = context.getContent(Platform.WINDOWS, Arch.x64)
+            const expectedExe = `${context.packager.appInfo.productFilename}.exe`
+            const buffer = await fs.readFile(path.join(appDir, expectedExe))
+            const res = NtExecutableResource.from(NtExecutable.from(buffer))
+            const versionInfoList = Resource.VersionInfo.fromEntries(res.entries)
+            expect(versionInfoList.length).toBeGreaterThan(0)
+
+            const strings = versionInfoList[0].getStringValues(versionInfoList[0].getAllLanguagesForStringValues()[0])
+            expect(strings["ProductName"]).toBe(context.packager.appInfo.productName)
+            expect(strings["FileDescription"]).toBe(context.packager.appInfo.productName)
+          },
+        }
+      ))
+
+    test("signExecutable: false — throws when combined with forceCodeSigning", ({ expect }) =>
+      appThrows(
+        expect,
+        {
+          targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
+          config: {
+            forceCodeSigning: true,
+            win: { signExecutable: false },
+            toolsets: { winCodeSign },
+          },
+        },
+        {},
+        error => expect(error.message).toContain("`forceCodeSigning` is enabled")
+      ))
+
+    test("signAndEditExecutable: false — throws when combined with forceCodeSigning", ({ expect }) =>
+      appThrows(
+        expect,
+        {
+          targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
+          config: {
+            forceCodeSigning: true,
+            win: { signAndEditExecutable: false },
+            toolsets: { winCodeSign },
+          },
+        },
+        {},
+        error => expect(error.message).toContain("`forceCodeSigning` is enabled")
+      ))
+
+    test("signAndEditExecutable: false — backward compat disables both editing and signing", ({ expect }) =>
+      app(
+        expect,
+        {
+          targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
+          config: {
+            win: { signAndEditExecutable: false },
+            toolsets: { winCodeSign },
+          },
+        },
+        {
+          packed: async context => {
+            const appDir = context.getContent(Platform.WINDOWS, Arch.x64)
+            const expectedExe = `${context.packager.appInfo.productFilename}.exe`
+            const buffer = await fs.readFile(path.join(appDir, expectedExe))
+            const res = NtExecutableResource.from(NtExecutable.from(buffer))
+            const versionInfoList = Resource.VersionInfo.fromEntries(res.entries)
+            expect(versionInfoList.length).toBeGreaterThan(0)
+
+            const langs = versionInfoList[0].getAllLanguagesForStringValues()
+            expect(langs.length).toBeGreaterThan(0)
+
+            const strings = versionInfoList[0].getStringValues(langs[0])
+            expect(strings["ProductName"]).not.toBe(context.packager.appInfo.productName)
+          },
+        }
+      ))
+
+    test("signExecutable: false — NSIS installer and elevate.exe not signed", ({ expect }) =>
+      app(
+        expect,
+        {
+          targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64),
+          config: {
+            win: {
+              signExecutable: false,
+              signtoolOptions: {
+                sign: () => {
+                  throw new Error("sign must not be called when signExecutable is false")
+                },
+              },
+            },
+            toolsets: { winCodeSign },
+          },
+        },
+        {
+          signedWin: true,
+          packed: async context => {
+            const appDir = context.getContent(Platform.WINDOWS, Arch.x64)
+            const buffer = await fs.readFile(path.join(appDir, `${context.packager.appInfo.productFilename}.exe`))
+            const res = NtExecutableResource.from(NtExecutable.from(buffer))
+            const [vi] = Resource.VersionInfo.fromEntries(res.entries)
+            const strings = vi.getStringValues(vi.getAllLanguagesForStringValues()[0])
+            expect(strings["ProductName"]).toBe(context.packager.appInfo.productName)
+          },
+        }
+      ))
   })
 }

@@ -1,9 +1,10 @@
 FROM fedora:42
 
+RUN curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
+
 RUN dnf install -y \
     libxcrypt-compat \
     nodejs \
-    npm \
     rpm-build \
     libXScrnSaver \
     libX11-devel \

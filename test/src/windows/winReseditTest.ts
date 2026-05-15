@@ -1,4 +1,4 @@
-import { ResourceEditOptions, editWindowsResources } from "app-builder-lib/src/util/resEdit"
+import { ResourceEditOptions, editWindowsResources } from "app-builder-lib/out/util/resEdit"
 import * as fs from "fs/promises"
 import * as os from "os"
 import path from "path"

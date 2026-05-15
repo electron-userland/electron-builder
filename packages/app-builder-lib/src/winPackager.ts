@@ -127,9 +127,17 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       log.info(logFields, "file signing skipped via signExts configuration")
       return false
     }
+    if (this.platformSpecificBuildOptions.signExecutable === false) {
+      log.info(logFields, "file signing skipped via signExecutable configuration")
+      return false
+    }
 
-    this.signingQueue = this.signingQueue.then(() => this._sign(file))
-    return this.signingQueue
+    const promise = this.signingQueue.then(() => this._sign(file))
+    this.signingQueue = promise.catch(e => {
+      log.warn({ file: log.filePath(file), error: e.message }, "signing failed for file, queue will continue to next file")
+      return false
+    })
+    return promise
   }
 
   private async _sign(file: string): Promise<boolean> {
@@ -247,7 +255,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   }
 
   protected createTransformerForExtraFiles(packContext: AfterPackContext): FileTransformer | null {
-    if (this.platformSpecificBuildOptions.signAndEditExecutable === false) {
+    if (this.platformSpecificBuildOptions.signAndEditExecutable === false || this.platformSpecificBuildOptions.signExecutable === false) {
       return null
     }
 
@@ -264,6 +272,12 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
   protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<boolean> {
     const exeFileName = `${this.appInfo.productFilename}.exe`
+    const signingDisabled = this.platformSpecificBuildOptions.signExecutable === false || this.platformSpecificBuildOptions.signAndEditExecutable === false
+    if (signingDisabled && this.forceCodeSigning) {
+      throw new InvalidConfigurationError(
+        "Signing is disabled (`signExecutable: false` or `signAndEditExecutable: false`) but `forceCodeSigning` is enabled. Remove one of these options."
+      )
+    }
     if (this.platformSpecificBuildOptions.signAndEditExecutable === false) {
       return false
     }
@@ -283,7 +297,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       }
     }
 
-    if (!isAsar) {
+    if (!isAsar || this.platformSpecificBuildOptions.signExecutable === false) {
       return true
     }
 
