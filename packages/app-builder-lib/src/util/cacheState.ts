@@ -26,42 +26,41 @@ function getStateFilePath(extractDir: string): string {
   return `${extractDir}.state`
 }
 
-export async function readCacheState(extractDir: string): Promise<CacheState | null> {
+export async function readCacheStateFile(extractDir: string): Promise<CacheStateFile | null> {
   const stateFile = getStateFilePath(extractDir)
   try {
     if (!(await exists(stateFile))) {
-      // Check for legacy .complete marker for backward compatibility
-      if (await exists(`${extractDir}.complete`)) {
-        return CacheState.complete
-      }
-      return CacheState.pending
+      return null
     }
-
     const content = await fs.readFile(stateFile, "utf-8")
     const data: CacheStateFile = JSON.parse(content)
-    let state = data.state as CacheState
-
-    // Detect stale extracting state (process likely crashed)
-    if (state === CacheState.extracting) {
+    if (data.state === CacheState.extracting) {
       const age = Date.now() - data.timestamp
       if (age > STALE_EXTRACTING_TIMEOUT_MS) {
         log.warn({ stateFile, age }, "Detected stale extracting state, marking as corrupted")
-        return CacheState.corrupted
+        return { ...data, state: CacheState.corrupted }
       }
     }
-
-    return state
+    return data
   } catch (e: any) {
     log.warn({ stateFile, error: e.message }, "Failed to read cache state file")
-    return CacheState.pending
+    return null
   }
 }
 
-export async function writeCacheState(
-  extractDir: string,
-  state: CacheState,
-  metadata?: { fileCount?: number; extractedSize?: number }
-): Promise<void> {
+export async function readCacheState(extractDir: string): Promise<CacheState | null> {
+  const data = await readCacheStateFile(extractDir)
+  if (data !== null) {
+    return data.state
+  }
+  // Check for legacy .complete marker for backward compatibility
+  if (await exists(`${extractDir}.complete`)) {
+    return CacheState.complete
+  }
+  return CacheState.pending
+}
+
+export async function writeCacheState(extractDir: string, state: CacheState, metadata?: { fileCount?: number; extractedSize?: number }): Promise<void> {
   const stateFile = getStateFilePath(extractDir)
   const stateData: CacheStateFile = {
     version: STATE_FILE_VERSION,
@@ -78,7 +77,7 @@ export async function writeCacheState(
   }
 }
 
-export async function validateCacheDirectory(extractDir: string): Promise<boolean> {
+export async function validateCacheDirectory(extractDir: string, expectedFileCount?: number): Promise<boolean> {
   try {
     if (!(await exists(extractDir))) {
       return false
@@ -89,13 +88,8 @@ export async function validateCacheDirectory(extractDir: string): Promise<boolea
       return false
     }
 
-    // For 7z/WiX extractions, verify we have both executables and DLLs
-    const hasExe = files.some(f => f.toLowerCase().endsWith(".exe"))
-    const hasDlls = files.some(f => f.toLowerCase().endsWith(".dll"))
-
-    // If it looks like a 7z extraction (has .exe), it should also have DLLs
-    if (hasExe && !hasDlls) {
-      log.warn({ extractDir, files: files.length }, "Incomplete extraction: exe present but no DLLs")
+    if (expectedFileCount && files.length !== expectedFileCount) {
+      log.warn({ extractDir, expected: expectedFileCount, actual: files.length }, "Cache file count mismatch, treating as invalid")
       return false
     }
 
@@ -107,12 +101,7 @@ export async function validateCacheDirectory(extractDir: string): Promise<boolea
 }
 
 export async function cleanupCacheDirectory(extractDir: string): Promise<void> {
-  const filesToClean = [
-    extractDir,
-    `${extractDir}.state`,
-    `${extractDir}.complete`,
-    `${extractDir}.tmp`,
-  ]
+  const filesToClean = [extractDir, `${extractDir}.state`, `${extractDir}.complete`, `${extractDir}.tmp`]
 
   for (const file of filesToClean) {
     try {

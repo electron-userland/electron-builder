@@ -18,7 +18,7 @@ import { pipeline } from "stream/promises"
 import * as tar from "tar"
 import * as unzipper from "unzipper"
 import { ElectronPlatformName } from "../electron/ElectronFramework"
-import { CacheState, cleanupCacheDirectory, readCacheState, validateCacheDirectory, writeCacheState } from "./cacheState"
+import { CacheState, cleanupCacheDirectory, readCacheStateFile, validateCacheDirectory, writeCacheState } from "./cacheState"
 
 export type ElectronGetOptions = Omit<
   ElectronPlatformArtifactDetails,
@@ -294,44 +294,28 @@ async function downloadArtifactToFile(config: Parameters<typeof get.downloadArti
  */
 async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact>[0], extractDir: string, label: string): Promise<string> {
   const completeMarker = `${extractDir}.complete`
-  const isCached = async () => exists(completeMarker)
 
   await fs.mkdir(extractDir, { recursive: true })
 
-  // Check for corrupted cache BEFORE attempting to use it
-  const currentState = await readCacheState(extractDir)
+  // Single read — derive both state and metadata without a second file read
+  const stateData = await readCacheStateFile(extractDir)
+  const currentState = stateData?.state ?? ((await exists(completeMarker)) ? CacheState.complete : CacheState.pending)
+
   if (currentState === CacheState.corrupted) {
-    log.warn({ extractDir, state: currentState }, "Corrupted cache detected, cleaning up and re-extracting")
+    log.warn({ extractDir }, "Corrupted cache detected, cleaning up and re-extracting")
     await cleanupCacheDirectory(extractDir)
-    // Recreate directory so lockfile.lock can acquire a lock on it below
     await fs.mkdir(extractDir, { recursive: true })
   } else if (currentState === CacheState.complete) {
-    // Validate the complete state - ensure files still exist and are valid
-    const isValid = await validateCacheDirectory(extractDir)
+    // stateData is null for legacy-marker caches — fileCount undefined skips count check
+    const isValid = await validateCacheDirectory(extractDir, stateData?.fileCount)
     if (isValid) {
       log.debug({ file: label, path: extractDir }, "using cached artifact - cache valid")
       return extractDir
-    } else {
-      log.warn({ extractDir }, "Cache marked complete but files invalid, clearing")
-      await cleanupCacheDirectory(extractDir)
-      // Recreate directory so lockfile.lock can acquire a lock on it below
-      await fs.mkdir(extractDir, { recursive: true })
     }
-  } else if (await isCached()) {
-    // Legacy .complete marker exists, validate it
-    const isValid = await validateCacheDirectory(extractDir)
-    if (isValid) {
-      log.debug({ file: label, path: extractDir }, "using cached artifact - legacy marker valid")
-      return extractDir
-    } else {
-      await cleanupCacheDirectory(extractDir)
-      // Recreate directory so lockfile.lock can acquire a lock on it below
-      await fs.mkdir(extractDir, { recursive: true })
-    }
+    log.warn({ extractDir }, "Cache marked complete but files invalid, clearing")
+    await cleanupCacheDirectory(extractDir)
+    await fs.mkdir(extractDir, { recursive: true })
   }
-
-  // Write pending state
-  await writeCacheState(extractDir, CacheState.pending)
 
   const release = await lockfile.lock(extractDir, {
     retries: { retries: 5, minTimeout: 1000, maxTimeout: 5000 },
@@ -340,9 +324,9 @@ async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact
   let downloadedFile: string | null = null
   try {
     // Re-check after acquiring lock: another worker may have completed while we waited.
-    const stateAfterLock = await readCacheState(extractDir)
-    if (stateAfterLock === CacheState.complete) {
-      const isValid = await validateCacheDirectory(extractDir)
+    const stateDataAfterLock = await readCacheStateFile(extractDir)
+    if (stateDataAfterLock?.state === CacheState.complete) {
+      const isValid = await validateCacheDirectory(extractDir, stateDataAfterLock.fileCount)
       if (isValid) {
         log.debug({ file: label, path: extractDir }, "using cached artifact - skipping download/extract")
         return extractDir
