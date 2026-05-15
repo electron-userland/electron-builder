@@ -46,8 +46,8 @@ exports[`removePassword: multiple keys in one string > handles several keys and 
 
 exports[`removePassword: multiple keys in one string > handles two keys unquoted (snapshot) 1`] = `"--accessKey 8174099687a26621f4e2cdd7cc03b3dacedb3fb962255b1aafd033cabe831530 (sha256 hash) --secretKey b10253764c8b233fb37542e23401c7b450e5a6f9751f3b5a014f6f67e8bc999d (sha256 hash)"`;
 
-exports[`removePassword: pass: > handles double-quoted value (snapshot) 1`] = `"pass:c232b4779997b8d97d3c4dc863c167007c9139a33db1714b1225c7d60399860f (sha256 hash) with spaces""`;
+exports[`removePassword: pass: > handles double-quoted value (snapshot) 1`] = `"pass:"643dc0c1c3f4f28bd42a534af23ddea45ff9021a53c8d1cd88a01e2611ecf511 (sha256 hash)""`;
 
-exports[`removePassword: pass: > handles single-quoted value (snapshot) 1`] = `"pass:070f8b633da85e99590f05466f89a5237a659c883cb43abfaed67c6f533a309a (sha256 hash) with spaces'"`;
+exports[`removePassword: pass: > handles single-quoted value (snapshot) 1`] = `"pass:'643dc0c1c3f4f28bd42a534af23ddea45ff9021a53c8d1cd88a01e2611ecf511 (sha256 hash)'"`;
 
 exports[`removePassword: pass: > handles unquoted value (snapshot) 1`] = `"pass:916925d896d4e9b97f81aab67a3f7f916b39135db74bf4cbf03d4c4b49a411e4 (sha256 hash)"`;

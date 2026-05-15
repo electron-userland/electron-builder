@@ -66,9 +66,11 @@ export function removePassword(input: string): string {
   })
 
   // pass:value — colon acts as separator; handles both pass:secret (no space) and pass: secret (space)
-  input = input.replace(/(?<!\S)pass:\s*([^\s]+)/gi, (_match, val) => {
-    const hashed = createHash("sha256").update(val).digest("hex")
-    return `pass:${hashed} (sha256 hash)`
+  // Quoted phrases (pass:'a b c' or pass:"a b c") are captured in full so the whole phrase is hashed.
+  input = input.replace(/(?<!\S)pass:\s*(?:(["'])(.*?)\1|([^\s]+))/gi, (_match, quote, quotedVal, unquotedVal) => {
+    const value = quotedVal ?? unquotedVal
+    const hashed = createHash("sha256").update(value).digest("hex")
+    return quote ? `pass:${quote}${hashed} (sha256 hash)${quote}` : `pass:${hashed} (sha256 hash)`
   })
 
   // /b … /c block format
@@ -78,7 +80,7 @@ export function removePassword(input: string): string {
   })
 }
 
-const SENSITIVE_ENV_KEY_RE = /KEY|TOKEN|SECRET|PASSWORD/i
+const SENSITIVE_ENV_KEY_RE = /KEY|TOKEN|SECRET|PASSWORD|PASS/i
 
 export function filterSensitiveEnv(env: Record<string, string | undefined>): Record<string, string | undefined> {
   const out: Record<string, string | undefined> = {}
