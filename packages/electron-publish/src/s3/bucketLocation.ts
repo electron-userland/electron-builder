@@ -59,7 +59,9 @@ export function getBucketLocation(bucket: string): Promise<string> {
           // Response: <LocationConstraint>us-west-2</LocationConstraint> or empty element for us-east-1
           const match = body.match(/<LocationConstraint[^>]*>([^<]*)<\/LocationConstraint>/)
           const rawRegion = match?.[1] || ""
-          // AWS returns the legacy token "EU" for eu-west-1 buckets created before 2014
+          // "EU" is the only non-standard token GetBucketLocation ever returns — a legacy alias
+          // for eu-west-1 used by buckets created before August 2014. Simple lowercasing is not
+          // sufficient because "eu" is not a valid region identifier.
           const region = rawRegion === "EU" ? "eu-west-1" : rawRegion
           if (region !== "" && !/^[a-z][a-z0-9-]+$/.test(region)) {
             settle(reject, new Error(`GetBucketLocation returned unexpected region: ${region}`))
