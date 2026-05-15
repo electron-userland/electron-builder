@@ -175,6 +175,38 @@ export interface AppImageOptions extends CommonLinuxOptions, TargetSpecificOptio
    * The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). Only plain text is supported.
    */
   readonly license?: string | null
+
+  /**
+   * GPG signing options for the AppImage. Set to `true` to enable with defaults, or provide an object with detailed options.
+   * Can also be enabled via the `APPIMAGE_SIGN` environment variable set to `"true"`.
+   *
+   * Signing embeds a GPG detached signature into the `.sha256_sig` ELF section of the AppImage runtime,
+   * following the [AppImage signing specification](https://docs.appimage.org/packaging-guide/optional/signatures.html).
+   */
+  readonly sign?: AppImageSignOptions | boolean | null
+}
+
+export interface AppImageSignOptions {
+  /**
+   * GPG key ID or fingerprint to use for signing. Can also be set via `APPIMAGE_GPG_KEY_ID` env var.
+   */
+  readonly gpgKeyId?: string | null
+
+  /**
+   * Path to the gpg binary. Defaults to `gpg2`, then `gpg`. Can also be set via `APPIMAGE_GPG_PATH` env var.
+   */
+  readonly gpgPath?: string | null
+
+  /**
+   * GPG passphrase. Prefer using gpg-agent or the `APPIMAGE_GPG_PASSPHRASE` env var instead of putting this in config.
+   */
+  readonly passphrase?: string | null
+
+  /**
+   * Whether to also produce a detached `.sig` file alongside the AppImage.
+   * @default false
+   */
+  readonly detachedSigFile?: boolean
 }
 
 export interface FlatpakOptions extends CommonLinuxOptions, TargetSpecificOptions {
