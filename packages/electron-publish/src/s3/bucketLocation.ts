@@ -8,13 +8,21 @@ import { request } from "https"
  */
 export function getBucketLocation(bucket: string): Promise<string> {
   return new Promise((resolve, reject) => {
+    let settled = false
+    const settle = (fn: (v: any) => void, v: any) => {
+      if (!settled) {
+        settled = true
+        fn(v)
+      }
+    }
+
     const opts = sign(
       {
         service: "s3",
         region: "us-east-1",
         method: "GET",
-        host: `${bucket}.s3.amazonaws.com`,
-        path: "/?location",
+        host: "s3.amazonaws.com",
+        path: `/${bucket}?location`,
       },
       {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -38,29 +46,31 @@ export function getBucketLocation(bucket: string): Promise<string> {
           bodySize += chunk.length
           if (bodySize > MAX_BODY) {
             req.destroy()
-            reject(new Error("GetBucketLocation response too large"))
+            settle(reject, new Error("GetBucketLocation response too large"))
             return
           }
           body += chunk
         })
         res.on("end", () => {
           if (res.statusCode !== 200) {
-            reject(new Error(`GetBucketLocation failed (HTTP ${res.statusCode}): ${body}`))
+            settle(reject, new Error(`GetBucketLocation failed (HTTP ${res.statusCode}): ${body}`))
             return
           }
           // Response: <LocationConstraint>us-west-2</LocationConstraint> or empty element for us-east-1
           const match = body.match(/<LocationConstraint[^>]*>([^<]*)<\/LocationConstraint>/)
-          const region = match?.[1] || ""
+          const rawRegion = match?.[1] || ""
+          // AWS returns the legacy token "EU" for eu-west-1 buckets created before 2014
+          const region = rawRegion === "EU" ? "eu-west-1" : rawRegion
           if (region !== "" && !/^[a-z][a-z0-9-]+$/.test(region)) {
-            reject(new Error(`GetBucketLocation returned unexpected region: ${region}`))
+            settle(reject, new Error(`GetBucketLocation returned unexpected region: ${region}`))
             return
           }
-          resolve(region || "us-east-1")
+          settle(resolve, region || "us-east-1")
         })
       }
     )
 
-    req.on("error", reject)
+    req.on("error", e => settle(reject, e))
     req.end()
   })
 }

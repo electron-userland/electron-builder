@@ -1,5 +1,6 @@
 import * as os from "os"
 import * as path from "path"
+import { mkdtemp } from "fs/promises"
 import { afterAll, beforeAll, describe, it, expect } from "vitest"
 import * as forge from "node-forge"
 import { writeFile, remove } from "fs-extra"
@@ -43,16 +44,25 @@ function generatePfx(subject: SubjectAttr[], password: string, includeCodeSignin
 
 // ─── Test fixture paths ───────────────────────────────────────────────────────
 
-const tmp = os.tmpdir()
-const FULL_SUBJECT_PFX = path.join(tmp, "certinfo-test-full.pfx")
-const CN_ONLY_PFX = path.join(tmp, "certinfo-test-cn.pfx")
-const NO_EKU_PFX = path.join(tmp, "certinfo-test-noeku.pfx")
-const WIN_CSC_PFX = path.join(tmp, "certinfo-test-wincsc.pfx")
-const PARITY_PFX = path.join(tmp, "certinfo-test-parity.pfx")
-const OU_PFX = path.join(tmp, "certinfo-test-ou.pfx")
-const SPECIAL_PFX = path.join(tmp, "certinfo-test-special.pfx")
+let tmpDir: string
+let FULL_SUBJECT_PFX: string
+let CN_ONLY_PFX: string
+let NO_EKU_PFX: string
+let WIN_CSC_PFX: string
+let PARITY_PFX: string
+let OU_PFX: string
+let SPECIAL_PFX: string
 
 beforeAll(async () => {
+  tmpDir = await mkdtemp(path.join(os.tmpdir(), "certinfo-test-"))
+  FULL_SUBJECT_PFX = path.join(tmpDir, "full.pfx")
+  CN_ONLY_PFX = path.join(tmpDir, "cn.pfx")
+  NO_EKU_PFX = path.join(tmpDir, "noeku.pfx")
+  WIN_CSC_PFX = path.join(tmpDir, "wincsc.pfx")
+  PARITY_PFX = path.join(tmpDir, "parity.pfx")
+  OU_PFX = path.join(tmpDir, "ou.pfx")
+  SPECIAL_PFX = path.join(tmpDir, "special.pfx")
+
   await Promise.all([
     writeFile(
       FULL_SUBJECT_PFX,
@@ -108,7 +118,9 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-  await Promise.all([FULL_SUBJECT_PFX, CN_ONLY_PFX, NO_EKU_PFX, WIN_CSC_PFX, PARITY_PFX, OU_PFX, SPECIAL_PFX].map(p => remove(p).catch(() => null)))
+  if (tmpDir) {
+    await remove(tmpDir).catch(() => null)
+  }
 })
 
 // ─── Unit tests ───────────────────────────────────────────────────────────────
@@ -120,22 +132,18 @@ describe("readCertInfo — happy path", () => {
     expect(result.commonName).toBe("Test Publisher")
     // DN uses shortName=value pairs joined by commas, no spaces — must match binary format exactly
     expect(result.bloodyMicrosoftSubjectDn).toBe("CN=Test Publisher,O=Test Org,L=San Francisco,ST=California,C=US")
-
-    expect(result.signingCert).toMatchSnapshot()
   })
 
   it("handles a certificate with CN only", async () => {
     const result = await readCertInfo(CN_ONLY_PFX, "pw")
     expect(result.commonName).toBe("My Company Inc.")
     expect(result.bloodyMicrosoftSubjectDn).toBe("CN=My Company Inc.")
-    expect(result.signingCert).toMatchSnapshot()
   })
 
   it("handles the existing WIN_CSC_LINK test certificate (empty password)", async () => {
     const result = await readCertInfo(WIN_CSC_PFX, "")
     expect(result.commonName).toBe("test-ci-cert")
     expect(result.bloodyMicrosoftSubjectDn).toBe("CN=test-ci-cert")
-    expect(result.signingCert).toMatchSnapshot()
   })
 })
 
@@ -162,7 +170,6 @@ describe("readCertInfo — OU attribute in subject DN", () => {
     const result = await readCertInfo(OU_PFX, "pw")
     expect(result.commonName).toBe("Test Publisher")
     expect(result.bloodyMicrosoftSubjectDn).toBe("CN=Test Publisher,O=Test Org,OU=Engineering,C=US")
-    expect(result.signingCert).toMatchSnapshot()
   })
 })
 
@@ -172,7 +179,6 @@ describe("readCertInfo — special characters in DN values", () => {
     expect(jsResult.commonName).toBe("Publisher, Inc. + Partners")
     // , and + in the CN value must cause the whole value to be wrapped in quotes
     expect(jsResult.bloodyMicrosoftSubjectDn).toBe(`CN="Publisher, Inc. + Partners",C=US`)
-    expect(jsResult.signingCert).toMatchSnapshot()
   })
 
   it("parity: special-character DN matches binary output exactly", async () => {
@@ -180,7 +186,6 @@ describe("readCertInfo — special characters in DN values", () => {
     const binaryResult: { commonName: string; bloodyMicrosoftSubjectDn: string } = JSON.parse(binaryRaw)
     expect(jsResult.commonName).toBe(binaryResult.commonName)
     expect(jsResult.bloodyMicrosoftSubjectDn).toBe(binaryResult.bloodyMicrosoftSubjectDn)
-    expect(jsResult.signingCert).toMatchSnapshot()
   })
 })
 
@@ -193,7 +198,6 @@ describe("readCertInfo — parity with app-builder-bin", () => {
     const binaryResult: { commonName: string; bloodyMicrosoftSubjectDn: string } = JSON.parse(binaryRaw)
     expect(jsResult.commonName).toBe(binaryResult.commonName)
     expect(jsResult.bloodyMicrosoftSubjectDn).toBe(binaryResult.bloodyMicrosoftSubjectDn)
-    expect(jsResult.signingCert).toMatchSnapshot()
   })
 
   it("produces identical output to the binary for a forge-generated certificate with full subject DN", async () => {
@@ -205,7 +209,6 @@ describe("readCertInfo — parity with app-builder-bin", () => {
     const binaryResult: { commonName: string; bloodyMicrosoftSubjectDn: string } = JSON.parse(binaryRaw)
     expect(jsResult.commonName).toBe(binaryResult.commonName)
     expect(jsResult.bloodyMicrosoftSubjectDn).toBe(binaryResult.bloodyMicrosoftSubjectDn)
-    expect(jsResult.signingCert).toMatchSnapshot()
   })
 
   it("binary returns {error} JSON for wrong password; JS throws equivalent message", async () => {

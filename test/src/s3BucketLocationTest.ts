@@ -64,12 +64,12 @@ describe("getBucketLocation — XML response parsing", () => {
   })
 
   it("rejects on a non-200 HTTP status", async () => {
-    mockHttpResponse(403, '<Error><Code>AccessDenied</Code><Message>Access Denied</Message></Error>')
+    mockHttpResponse(403, "<Error><Code>AccessDenied</Code><Message>Access Denied</Message></Error>")
     await expect(getBucketLocation("my.dotted.bucket")).rejects.toThrow("HTTP 403")
   })
 
   it("rejects on a 400 error response", async () => {
-    mockHttpResponse(400, '<Error><Code>NoSuchBucket</Code></Error>')
+    mockHttpResponse(400, "<Error><Code>NoSuchBucket</Code></Error>")
     await expect(getBucketLocation("my.dotted.bucket")).rejects.toThrow("HTTP 400")
   })
 
@@ -94,6 +94,12 @@ describe("getBucketLocation — XML response parsing", () => {
     // Guard against a tampered response injecting an invalid region string
     mockHttpResponse(200, "<LocationConstraint>../evil\ninjection</LocationConstraint>")
     await expect(getBucketLocation("my.dotted.bucket")).rejects.toThrow("unexpected region")
+  })
+
+  it("maps the legacy 'EU' token to 'eu-west-1'", async () => {
+    // AWS returns "EU" for eu-west-1 buckets created before 2014
+    mockHttpResponse(200, '<?xml version="1.0" encoding="UTF-8"?><LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
+    expect(await getBucketLocation("my.dotted.bucket")).toBe("eu-west-1")
   })
 })
 

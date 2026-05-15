@@ -23,15 +23,21 @@ function escapeDnValue(value: string): string {
  * Throws with message "password incorrect" on bad password.
  * Throws with message about missing codeSigning EKU when the cert lacks it.
  */
-export async function readCertInfo(file: string, password: string): Promise<{ signingCert: forge.pkcs12.Bag; commonName: string; bloodyMicrosoftSubjectDn: string }> {
+export async function readCertInfo(file: string, password: string): Promise<{ commonName: string; bloodyMicrosoftSubjectDn: string }> {
   const pfxDer = await readFile(file)
   const p12Asn1 = forge.asn1.fromDer(forge.util.createBuffer(pfxDer))
 
   let p12: forge.pkcs12.Pkcs12Pfx
   try {
     p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, password)
-  } catch {
-    throw new Error("password incorrect")
+  } catch (err) {
+    // node-forge reports MAC failures (wrong password) with a message containing "MAC" or "password".
+    // Any other error (corrupt ASN.1, unsupported cipher, etc.) is rethrown as-is.
+    const msg = String(err instanceof Error ? err.message : err).toLowerCase()
+    if (msg.includes("mac") || msg.includes("password") || msg.includes("pkcs#12")) {
+      throw new Error("password incorrect")
+    }
+    throw err
   }
 
   const certBags = p12.getBags({ bagType: forge.pki.oids.certBag })
@@ -61,5 +67,5 @@ export async function readCertInfo(file: string, password: string): Promise<{ si
     .map((a: forge.pki.CertificateField) => `${a.shortName}=${escapeDnValue(String(a.value))}`)
     .join(",")
 
-  return { signingCert, commonName, bloodyMicrosoftSubjectDn }
+  return { commonName, bloodyMicrosoftSubjectDn }
 }
