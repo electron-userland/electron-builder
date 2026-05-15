@@ -1,17 +1,5 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`msi > winCodeSign: 1.0.0 > msi 1`] = `
-{
-  "win": [
-    {
-      "arch": "x64",
-      "file": "Test MSI 1.1.0.msi",
-      "safeArtifactName": "Test-MSI-1.1.0.msi",
-    },
-  ],
-}
-`;
-
 exports[`msi > winCodeSign: 1.0.0 > msi no asar 1`] = `
 {
   "win": [
