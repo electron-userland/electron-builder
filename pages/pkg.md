@@ -1,4 +1,4 @@
-The top-level [pkg](configuration.md#pkg) key contains set of options instructing electron-builder on how it should build macOS [PKG](https://en.wikipedia.org/wiki/Package_(macOS)) product archive installers.
+The top-level [pkg](configuration.md) key contains set of options instructing electron-builder on how it should build macOS [PKG](https://en.wikipedia.org/wiki/Package_(macOS)) product archive installers.
 
 ## When to Use PKG
 

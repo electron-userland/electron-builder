@@ -132,9 +132,9 @@ Add to GitHub Secrets:
 - `MAC_CSC_LINK` — the base64-encoded `.p12` content
 - `MAC_CSC_KEY_PASSWORD` — the certificate password
 
-### macOS Job with Keychain Import
+### macOS Signing
 
-For reliable macOS signing on GitHub Actions, explicitly import the certificate into a temporary keychain:
+Pass `CSC_LINK` and `CSC_KEY_PASSWORD` directly — electron-builder creates and manages a temporary keychain automatically:
 
 ```yaml
   build-mac:
@@ -149,30 +149,11 @@ For reliable macOS signing on GitHub Actions, explicitly import the certificate 
       - name: Install dependencies
         run: npm ci
 
-      - name: Set up keychain
-        run: |
-          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain"
-          echo "$MAC_CSC_LINK" | base64 --decode > "$RUNNER_TEMP/cert.p12"
-          security create-keychain -p "build" "$KEYCHAIN_PATH"
-          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
-          security unlock-keychain -p "build" "$KEYCHAIN_PATH"
-          security import "$RUNNER_TEMP/cert.p12" \
-            -k "$KEYCHAIN_PATH" \
-            -P "$MAC_CSC_KEY_PASSWORD" \
-            -T /usr/bin/codesign \
-            -T /usr/bin/productbuild
-          security list-keychain -d user -s "$KEYCHAIN_PATH"
-          security set-key-partition-list \
-            -S apple-tool:,apple:,codesign: \
-            -s -k "build" "$KEYCHAIN_PATH"
-        env:
-          MAC_CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
-          MAC_CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
-
       - name: Build and notarize
         run: npx electron-builder --mac --publish always
         env:
-          CSC_KEYCHAIN: ${{ runner.temp }}/build.keychain
+          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -279,21 +260,10 @@ jobs:
           path: ~/.cache/electron
           key: mac-electron-${{ hashFiles('**/package-lock.json') }}
       - run: npm ci
-      - name: Set up keychain
-        run: |
-          echo "$MAC_CSC_LINK" | base64 --decode > /tmp/cert.p12
-          security create-keychain -p "" build.keychain
-          security import /tmp/cert.p12 -k build.keychain -P "$MAC_CSC_KEY_PASSWORD" -T /usr/bin/codesign
-          security list-keychains -d user -s build.keychain
-          security set-keychain-settings -t 3600 -u build.keychain
-          security unlock-keychain -p "" build.keychain
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain
-        env:
-          MAC_CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
-          MAC_CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
       - run: npx electron-builder --mac --publish always
         env:
-          CSC_KEYCHAIN: build.keychain
+          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -342,10 +312,7 @@ jobs:
 : The workflow doesn't have permission to create releases. Add `permissions: contents: write` to the job or workflow. Also ensure `GH_TOKEN` is set.
 
 **macOS: "No identity found"**
-: The keychain setup step failed or the certificate wasn't imported correctly. Check the base64 encoding and ensure the password matches.
-
-**macOS: "Keychain not unlocked"**
-: The `security unlock-keychain` step must run before the build. Ensure `security set-key-partition-list` was called — without it, codesign can't access the key even in an unlocked keychain.
+: `CSC_LINK` or `CSC_KEY_PASSWORD` is wrong or missing. Verify the base64-encoded certificate decodes to a valid `.p12` and that the password is correct. Run `echo "$CSC_LINK" | base64 --decode | openssl pkcs12 -info -passin pass:"$CSC_KEY_PASSWORD"` locally to verify.
 
 **Windows: certificate base64 too long**
 : Windows CI environments may truncate environment variables over 8192 characters. Re-export the `.pfx` without the full certificate chain included. See [Code Signing](code-signing.md#encoding-a-certificate-for-ci).

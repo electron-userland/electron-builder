@@ -1,4 +1,4 @@
-The top-level [appImage](configuration.md#appImage) key contains set of options instructing electron-builder on how it should build [AppImage](https://appimage.org/) files.
+The top-level [appImage](configuration.md) key contains set of options instructing electron-builder on how it should build [AppImage](https://appimage.org/) files.
 
 ## What is AppImage?
 

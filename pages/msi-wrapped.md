@@ -1,4 +1,4 @@
-The top-level [msiWrapped](configuration.md#msiWrapped) key contains set of options instructing electron-builder on how it should build Windows MSI-Wrapped packages.
+The top-level [msiWrapped](configuration.md) key contains set of options instructing electron-builder on how it should build Windows MSI-Wrapped packages.
 
 !!! note "Experimental"
     The MSI-Wrapped target is experimental. It wraps an existing NSIS installer inside an MSI container.

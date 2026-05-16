@@ -1,4 +1,4 @@
-The top-level [snap](configuration.md#snap) key contains set of options instructing electron-builder on how it should build [Snap](http://snapcraft.io) packages for Linux.
+The top-level [snap](configuration.md) key contains set of options instructing electron-builder on how it should build [Snap](http://snapcraft.io) packages for Linux.
 
 ## What is Snap?
 

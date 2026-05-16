@@ -1,4 +1,4 @@
-The top-level [msi](configuration.md#msi) key contains set of options instructing electron-builder on how it should build Windows MSI (Microsoft Installer) packages.
+The top-level [msi](configuration.md) key contains set of options instructing electron-builder on how it should build Windows MSI (Microsoft Installer) packages.
 
 !!! note "Experimental"
     The MSI target is experimental. For most Windows consumer applications, [NSIS](nsis.md) is the recommended installer format. Use MSI for enterprise deployment scenarios where Group Policy or MDM management is required.

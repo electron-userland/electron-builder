@@ -1,4 +1,4 @@
-The top-level [dmg](configuration.md#dmg) key contains set of options instructing electron-builder on how it should build [DMG](https://en.wikipedia.org/wiki/Apple_Disk_Image) (macOS disk image) files.
+The top-level [dmg](configuration.md) key contains set of options instructing electron-builder on how it should build [DMG](https://en.wikipedia.org/wiki/Apple_Disk_Image) (macOS disk image) files.
 
 ## When to Use DMG
 
@@ -146,7 +146,7 @@ Internet-enabled DMGs automatically extract their contents and eject after first
 
 ## DMG License
 
-To display a license agreement when users open the DMG, create license files in your [build resources](configuration.md#directories) directory.
+To display a license agreement when users open the DMG, create license files in your [build resources](configuration.md) directory.
 
 ### Single Language
 

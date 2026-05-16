@@ -1,4 +1,4 @@
-The top-level [appx](configuration.md#appx) key contains set of options instructing electron-builder on how it should build AppX packages for the Windows Store or enterprise sideloading.
+The top-level [appx](configuration.md) key contains set of options instructing electron-builder on how it should build AppX packages for the Windows Store or enterprise sideloading.
 
 All options are optional. All required AppX configuration is inferred and computed automatically.
 
@@ -42,7 +42,7 @@ To install and trust a self-signed certificate: `certmgr.msc` → Trusted People
 
 ## AppX Assets
 
-AppX requires specific logo/icon assets. Place them in the `appx` folder inside your [build resources](configuration.md#MetadataDirectories-buildResources) directory (default: `build/appx/`):
+AppX requires specific logo/icon assets. Place them in the `appx` folder inside your [build resources](configuration.md) directory (default: `build/appx/`):
 
 | Asset | File Name | Required | Size |
 |---|---|---|---|
