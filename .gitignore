@@ -1,5 +1,5 @@
 /.vscode/
-node_modules
+node-modules*
 *.log
 
 /.idea/compiler.xml
@@ -33,4 +33,3 @@ coverage
 yalc.lock
 _vitest-smart-cache.json
 .claude
-node-modules-docker
