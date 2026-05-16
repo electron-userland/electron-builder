@@ -164,7 +164,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
     return snap
   }
 
-  async buildSnap(props: { snap: any; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }) {
+  async buildSnap(props: { snap: any; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<void> {
     const { snap, appOutDir, stageDir, snapArch, artifactPath } = props
     const args = [
       "snap",

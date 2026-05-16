@@ -1609,6 +1609,17 @@ exports[`snapcraft > compression option (core22) 2`] = `
 }
 `;
 
+exports[`snapcraft > core24 Multipass real build > core24 useMultipass full build 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
 exports[`snapcraft > core24 custom plugs with default expansion 1`] = `
 {
   "apps": {
@@ -1875,6 +1886,39 @@ exports[`snapcraft > core24 no gnome extension 1`] = `
 `;
 
 exports[`snapcraft > core24 no gnome extension 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24 remoteBuild build mode 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24 useLXD build mode 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24 useMultipass build mode 1`] = `
 {
   "linux": [
     {

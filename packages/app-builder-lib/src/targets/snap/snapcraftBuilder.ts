@@ -157,7 +157,7 @@ async function executeWithRetry<T>(
 /**
  * Cleans up build artifacts
  */
-async function cleanupBuildArtifacts(workDir: string, keepArtifacts: boolean = false): Promise<void> {
+async function cleanupBuildArtifacts(workDir: string): Promise<void> {
   const artifactsToClean = ["parts", "stage", "prime"]
 
   for (const artifact of artifactsToClean) {
@@ -166,25 +166,20 @@ async function cleanupBuildArtifacts(workDir: string, keepArtifacts: boolean = f
       await remove(artifactPath)
       log.debug({ artifact }, "cleaned build artifact")
     } catch (e: any) {
-      // Ignore errors if artifact doesn't exist
       log.debug({ artifact, error: e.message }, "no build artifact to clean")
     }
   }
 
-  // Clean snap files if not keeping artifacts
-  if (!keepArtifacts) {
-    try {
-      const files = await readdir(workDir)
-      for (const file of files) {
-        if (file.endsWith(".snap")) {
-          await remove(path.join(workDir, file))
-          log.debug({ file }, "cleaned snap file")
-        }
+  try {
+    const files = await readdir(workDir)
+    for (const file of files) {
+      if (file.endsWith(".snap")) {
+        await remove(path.join(workDir, file))
+        log.debug({ file }, "cleaned snap file")
       }
-    } catch (e: any) {
-      // Ignore errors
-      log.debug({ error: e.message }, "no snap files to clean")
     }
+  } catch (e: any) {
+    log.debug({ error: e.message }, "no snap files to clean")
   }
 }
 
@@ -264,7 +259,7 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string> {
     )
   } catch (error: any) {
     log.error({ error: error.message }, "snap build failed")
-    await cleanupBuildArtifacts(stageDir, false).catch((cleanupError: any) => {
+    await cleanupBuildArtifacts(stageDir).catch((cleanupError: any) => {
       log.warn({ error: cleanupError.message }, "failed to cleanup build artifacts")
     })
     throw error
@@ -450,9 +445,9 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
       log.debug({ project: remoteBuild.privateProject }, "using private Launchpad project")
     }
 
-    if (remoteBuild.buildFor && remoteBuild.buildFor.length > 0) {
-      args.push("--build-for", remoteBuild.buildFor.join(","))
-      log.debug({ archs: remoteBuild.buildFor }, "building for architectures")
+    if (remoteBuild.buildFor) {
+      args.push("--build-for", remoteBuild.buildFor)
+      log.debug({ arch: remoteBuild.buildFor }, "building for architecture")
     }
 
     if (remoteBuild.recover) {
@@ -465,31 +460,33 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
     }
 
     if (remoteBuild.timeout) {
+      args.push("--timeout", String(remoteBuild.timeout))
       log.debug({ timeout: `${remoteBuild.timeout}s` }, "build timeout configured")
     }
-  } else {
-    // Use 'pack' command for LXD/Multipass builds
-    args.push("pack")
 
+    // Remote-build downloads finished snaps into the working directory.
+    // Use --output-dir (not --output <file>) so snapcraft places every built
+    // snap (one per architecture) directly into workDir where we can find them.
+    args.push("--output-dir", workDir)
+    if (log.isDebugEnabled) {
+      args.push("--verbose")
+    }
+  } else {
+    // `snapcraft pack` runs the full lifecycle (pull → build → stage → prime → pack).
+    // snapcraft 8.x removed --use-multipass entirely; Multipass is now configured
+    // via the SNAPCRAFT_BUILD_ENVIRONMENT env var (or auto-selected on macOS).
+    // --use-lxd remains a supported CLI flag on `pack`.
+    args.push("pack")
     if (useLXD) {
       args.push("--use-lxd")
       log.debug(null, "using LXD for build")
     } else if (useMultipass) {
-      args.push("--use-multipass")
-      log.debug(null, "using Multipass for build")
+      env["SNAPCRAFT_BUILD_ENVIRONMENT"] = "multipass"
+      log.debug(null, "using Multipass for build (via SNAPCRAFT_BUILD_ENVIRONMENT)")
     }
-  }
-
-  // Always use a basename-only output so the snap lands in the workDir regardless of
-  // whether snapcraft is running on the host or inside an LXD/Multipass container.
-  // When using an isolated build environment (--use-lxd / --use-multipass) the
-  // workDir is mounted into the VM, but an absolute host path is NOT visible there —
-  // snapcraft would create the file inside the container's rootfs at that absolute
-  // path.  Using a relative name ensures it ends up in the mounted workDir, which is
-  // always accessible on the host after the build completes.
-  args.push("--output", outputBasename)
-  if (log.isDebugEnabled) {
-    args.push("--verbose")
+    if (log.isDebugEnabled) {
+      args.push("--verbose")
+    }
   }
 
   log.info({ command: `${command} ${args.join(" ")}`, workDir: log.filePath(workDir) }, "executing snapcraft")
@@ -499,6 +496,18 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
     env: { ...process.env, ...env },
     stdio: "inherit",
   })
+
+  if (remoteBuild?.enabled || useLXD || useMultipass) {
+    // snapcraft names the output snap itself (e.g. <name>_<version>_<arch>.snap).
+    // Each electron-builder build invocation targets exactly one arch, so exactly one snap is expected.
+    const files = await readdir(workDir)
+    const snaps = files.filter(f => f.endsWith(".snap"))
+    const builtSnap = snaps[0]
+    if (!builtSnap) {
+      throw new Error(`Build succeeded but no .snap file found in ${workDir}`)
+    }
+    return copySnapToArtifactPath(workDir, builtSnap, outputFileName)
+  }
 
   return copySnapToArtifactPath(workDir, outputBasename, outputFileName)
 }

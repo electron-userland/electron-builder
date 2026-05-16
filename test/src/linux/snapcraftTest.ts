@@ -1,11 +1,13 @@
 import { outputFile } from "fs-extra"
 import * as path from "path"
+import which from "which"
 import { app, appThrows, assertPack, EXTENDED_TIMEOUT, snapTarget } from "../helpers/packTester"
-import * as which from "which"
-
 // Inline so snapcraftTest.ts does NOT import from snapHeavyTest.ts — importing that file
 // causes all its describe() blocks to execute here, registering heavy tests twice.
-const hasSnapInstalled = () => process.env.RUN_SNAP_TESTS === "true" || which.sync("snap", { nothrow: true }) != null || which.sync("snapcraft", { nothrow: true }) != null
+//
+// No snapcraft binary is needed: every test uses effectiveOptionComputed: () => true to skip
+// the actual build and only validates the generated snapcraft.yaml descriptor.
+const hasSnapInstalled = () => process.platform !== "win32"
 
 describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeout: EXTENDED_TIMEOUT }, () => {
   // ─── legacy cores (core18 / core20 / core22) ─────────────────────────────────
@@ -295,6 +297,58 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
       },
     }))
 
+  test("core24 useMultipass build mode", ({ expect }) =>
+    app(expect, {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: "sep" },
+        productName: "Sep",
+        snapcraft: { base: "core24", core24: { useMultipass: true } },
+      },
+      effectiveOptionComputed: async ({ useMultipass, useLXD, useDestructiveMode }) => {
+        expect(useMultipass).toBe(true)
+        expect(useLXD).toBe(false)
+        expect(useDestructiveMode).toBe(false)
+        return Promise.resolve(true)
+      },
+    }))
+
+  test("core24 useLXD build mode", ({ expect }) =>
+    app(expect, {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: "sep" },
+        productName: "Sep",
+        snapcraft: { base: "core24", core24: { useLXD: true } },
+      },
+      effectiveOptionComputed: async ({ useLXD, useMultipass, useDestructiveMode }) => {
+        expect(useLXD).toBe(true)
+        expect(useMultipass).toBe(false)
+        expect(useDestructiveMode).toBe(false)
+        return Promise.resolve(true)
+      },
+    }))
+
+  test("core24 remoteBuild build mode", ({ expect }) =>
+    app(expect, {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: "sep" },
+        productName: "Sep",
+        snapcraft: {
+          base: "core24",
+          core24: { remoteBuild: { enabled: true, acceptPublicUpload: true } },
+        },
+      },
+      effectiveOptionComputed: async ({ remoteBuild, useLXD, useMultipass }) => {
+        expect(remoteBuild?.enabled).toBe(true)
+        expect(remoteBuild?.acceptPublicUpload).toBe(true)
+        expect(useLXD).toBe(false)
+        expect(useMultipass).toBe(false)
+        return Promise.resolve(true)
+      },
+    }))
+
   test("custom snap yamlPath pass-through", async ({ expect }) => {
     await assertPack(
       expect,
@@ -342,5 +396,28 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
         },
       }
     )
+  })
+
+  // ─── Real Multipass build ────────────────────────────────────────────────────
+  // Runs only when Multipass is available (local macOS dev machines).
+  // Skipped on GitHub Actions macOS runners (nested VMs not supported).
+  // LXD cannot run on macOS — its config path is validated by the
+  // "core24 useLXD build mode" effectiveOptionComputed test above.
+  const hasMultipassInstalled = () => which.sync("multipass", { nothrow: true }) != null
+
+  describe.skipIf(!hasMultipassInstalled())("core24 Multipass real build", { sequential: true, timeout: EXTENDED_TIMEOUT }, () => {
+    test("core24 useMultipass full build", async ({ expect }) => {
+      await app(expect, {
+        targets: snapTarget,
+        config: {
+          extraMetadata: { name: "sep" },
+          productName: "Sep",
+          snapcraft: {
+            base: "core24",
+            core24: { useMultipass: true },
+          },
+        },
+      })
+    })
   })
 })

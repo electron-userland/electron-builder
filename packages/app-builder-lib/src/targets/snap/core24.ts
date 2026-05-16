@@ -92,18 +92,25 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       log.debug({ error: e.message }, "failed to generate organize mapping")
     }
 
-    if (this.packager.packagerOptions.effectiveOptionComputed != null && (await this.packager.packagerOptions.effectiveOptionComputed({ snap }))) {
-      return
+    const buildMode = {
+      useLXD: this.options.useLXD === true,
+      useMultipass: this.options.useMultipass === true,
+      useDestructiveMode: this.options.useDestructiveMode === true,
+      remoteBuild: this.options.remoteBuild || undefined,
+    }
+
+    if (this.packager.packagerOptions.effectiveOptionComputed != null) {
+      const shouldSkip = await this.packager.packagerOptions.effectiveOptionComputed({ snap, ...buildMode })
+      if (shouldSkip) {
+        return
+      }
     }
 
     await buildSnap({
       snapcraftConfig: snap,
       artifactPath,
       stageDir,
-      remoteBuild: this.options.remoteBuild || undefined,
-      useLXD: this.options.useLXD === true,
-      useMultipass: this.options.useMultipass === true,
-      useDestructiveMode: this.options.useDestructiveMode === true,
+      ...buildMode,
     })
   }
 
@@ -353,7 +360,11 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
    */
   private async processHooks(hooksPath: string): Promise<Record<string, any> | undefined> {
     try {
-      const hooksDir = path.resolve(this.packager.buildResourcesDir, hooksPath)
+      const buildResourcesDir = this.packager.buildResourcesDir
+      const hooksDir = path.resolve(buildResourcesDir, hooksPath)
+      if (!hooksDir.startsWith(buildResourcesDir + path.sep) && hooksDir !== buildResourcesDir) {
+        throw new InvalidConfigurationError(`snapcraft.core24.hooks must resolve within the build resources directory (got "${hooksDir}")`)
+      }
       const hookFiles = await readdir(hooksDir)
 
       if (hookFiles.length === 0) {

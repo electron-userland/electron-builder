@@ -5,7 +5,7 @@ import { chmodSync } from "fs"
 import { existsSync, readFileSync } from "fs"
 import { readdir } from "fs/promises"
 import * as path from "path"
-import * as which from "which"
+import which from "which"
 import { app, assertPack, EXTENDED_TIMEOUT, snapTarget } from "../helpers/packTester"
 import { launchSnapBinary } from "../helpers/launchAppCrossPlatform"
 
@@ -15,7 +15,18 @@ const options = { sequential: true, timeout: EXTENDED_TIMEOUT }
 // Guard: tests run when RUN_SNAP_TESTS=true AND snapcraft is found in PATH.
 // test-snap.sh sets RUN_SNAP_TESTS=true and runs inside Docker images that
 // have snapcraft installed but lack the snapd client ("snap").
-export const hasSnapInstalled = () => process.env.RUN_SNAP_TESTS === "true" && which.sync("snapcraft", { nothrow: true }) != null
+export const hasSnapInstalled = () => {
+  if (!which.sync("snapcraft", { nothrow: true })) {
+    return false
+  }
+  if (process.platform === "darwin") {
+    // On macOS, snap builds require Multipass (LXD and destructive mode are Linux-only).
+    // Guard against CI runners where snapcraft is installed but Multipass cannot start VMs.
+    return which.sync("multipass", { nothrow: true }) != null
+  }
+  // On Linux: require explicit opt-in to prevent accidental heavy builds outside test containers
+  return process.env.RUN_SNAP_TESTS === "true"
+}
 
 // Whether install+launch tests should run.
 // Requires: Linux, unsquashfs (squashfs-tools), and Xvfb.

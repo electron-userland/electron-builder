@@ -243,6 +243,7 @@ jobs:
       - name: Install toolset via brew
         run: |
           brew install rpm
+          brew install snapcraft
 
       - name: Run shard
         run: pnpm ci:test

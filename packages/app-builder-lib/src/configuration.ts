@@ -96,12 +96,30 @@ export interface CommonConfiguration {
    */
   readonly deb?: DebOptions | null
   /**
-   * @deprecated Use `snapcraft` instead, which supersedes any `snap` configuration.
-   * Will be removed in a future major release.
+   * Flat snap configuration targeting core22 and older snap bases.
+   *
+   * @deprecated Use `snapcraft` instead — it supersedes `snap` when both are present and supports
+   * all snap bases including core24. Will be removed in a future major release.
+   * See {@link SnapOptions} for available properties.
    */
   readonly snap?: SnapOptions | null
   /**
-   * Snapcraft options.
+   * Snapcraft configuration. Prefer this over the deprecated `snap` field.
+   *
+   * Selects the snapcraft base and provides per-core options:
+   * - `base: "core18" | "core20" | "core22"` — legacy builds; accepts the same options as `snap`
+   * - `base: "core24"` — modern builds with the GNOME extension (recommended for new apps, requires Electron 25+)
+   * - `base: "custom"` — pass an existing `snapcraft.yaml` through unchanged; no plugs, extensions,
+   *   or desktop files are injected
+   *
+   * When both `snapcraft` and `snap` are set, `snapcraft` takes precedence.
+   *
+   * @example
+   * ```json
+   * { "snapcraft": { "base": "core24", "core24": { "useLXD": true } } }
+   * ```
+   *
+   * See {@link SnapcraftOptions} for all available properties.
    */
   readonly snapcraft?: SnapcraftOptions | null
   /**

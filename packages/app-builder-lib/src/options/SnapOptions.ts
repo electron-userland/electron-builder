@@ -8,7 +8,10 @@ import { CommonLinuxOptions } from "./linuxOptions"
  */
 export interface SnapcraftOptions extends TargetSpecificOptions {
   /**
-   * A snap of type base to be used as the execution environment for this snap; can only select one core for target.
+   * The snap base to use as the execution environment. Determines which set of per-core options
+   * (`core18`, `core20`, `core22`, `core24`, `custom`) is active.
+   *
+   * Only one core may be selected per build target.
    */
   readonly base: "core18" | "core20" | "core22" | "core24" | "custom"
   /**
@@ -256,10 +259,15 @@ export interface RemoteBuildOptions {
   launchpadUsername?: string
 
   /**
-   * Target architectures for the remote build.
-   * @example ["amd64", "arm64", "armhf"]
+   * Target architecture for the remote build. Accepts a single snapcraft arch string
+   * (e.g. `"amd64"`, `"arm64"`, `"armhf"`).
+   *
+   * To build for multiple architectures, configure electron-builder's top-level `arch` option
+   * (e.g. `arch: ["x64", "arm64"]`) — each arch spawns a separate remote-build job on Launchpad,
+   * keeping the one-build-per-artifact contract intact.
+   * @example "amd64"
    */
-  buildFor?: string[]
+  buildFor?: string
 
   /**
    * Suppress the Launchpad public-upload consent prompt by automatically accepting it.
@@ -296,6 +304,9 @@ export interface RemoteBuildOptions {
 
   /**
    * Maximum time in seconds to wait for the remote build to complete before aborting.
+   * Passed to `snapcraft remote-build` as `--timeout <seconds>`.
+   *
+   * @example 1800  // 30 minutes
    */
   timeout?: number
 
@@ -393,7 +404,10 @@ export interface SnapOptions24 extends CommonLinuxOptions, TargetSpecificOptions
   readonly title?: string | null
 
   /**
-   * Compression algorithm for the snap file.
+   * Compression algorithm for the snap SquashFS image.
+   * - `xz` — smaller file, slower decompression (recommended for distribution).
+   * - `lzo` — larger file, faster decompression (useful for development iteration).
+   * Omit to use snapcraft's default (`xz`).
    */
   readonly compression?: "xz" | "lzo" | null
 
@@ -493,10 +507,28 @@ export interface SnapOptions24 extends CommonLinuxOptions, TargetSpecificOptions
   readonly hooks?: string | null
 }
 
+/**
+ * Maps a named plug to its attribute object.
+ * `null` uses snapd defaults for that interface.
+ *
+ * @example
+ * ```json
+ * { "browser-sandbox": { "interface": "browser-support", "allow-sandbox": true } }
+ * ```
+ */
 export interface PlugDescriptor {
   [key: string]: { [key: string]: any } | null
 }
 
+/**
+ * Maps a named slot to its attribute object.
+ * `null` uses snapd defaults for that interface.
+ *
+ * @example
+ * ```json
+ * { "mpris": { "name": "chromium" } }
+ * ```
+ */
 export interface SlotDescriptor {
   [key: string]: { [key: string]: any } | null
 }
