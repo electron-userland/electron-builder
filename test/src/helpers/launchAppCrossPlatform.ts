@@ -1,10 +1,13 @@
 import { isEmptyOrSpaces } from "builder-util"
 import type { VmManager } from "app-builder-lib/out/vm/vm"
 import { ChildProcess, spawn } from "child_process"
+import { createHash, randomUUID } from "crypto"
+import { createReadStream } from "fs"
 import * as fs from "fs"
+import { outputFile, remove } from "fs-extra"
 import * as http from "http"
 import * as net from "net"
-import os from "os"
+import os, { homedir } from "os"
 import path from "path"
 
 /**
@@ -372,87 +375,89 @@ export function startXvfb(): { display: string; stop: () => void } {
   }
 }
 
+export async function sha256File(filePath: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const hash = createHash("sha256")
+    createReadStream(filePath)
+      .on("data", chunk => hash.update(chunk))
+      .on("end", () => resolve(hash.digest("hex")))
+      .on("error", reject)
+  })
+}
+
+export interface VmInstallerOptions {
+  /** Args passed to the installer executable (e.g. ["/S"] for NSIS, [] for Squirrel which is silent by default) */
+  installerArgs?: string[]
+  /** Process name to kill after install completes (stops auto-launched app from the installer event) */
+  postInstallKillProcess?: string
+  /** PowerShell lines appended after the installer exits — use to verify installation */
+  verifyPs: string[]
+  /** Timeout in ms for the entire PowerShell execution (default: 180_000) */
+  timeout?: number
+}
+
 /**
- * Launch the snap binary under Xvfb and wait for the app to signal readiness.
- *
- * The binary must be the test-app-one Electron executable, which writes
- * "ELECTRON_READY:<version>" to stdout when SNAP_LAUNCH_TEST=1 is set.
- * The process is SIGKILLed immediately after that line is detected —
- * Chromium's exit-cleanup path hangs indefinitely in Docker containers
- * without running system services (snapd, D-Bus, GPU), so we never wait
- * for a natural exit.
+ * Delivers an installer to a Parallels VM via HTTP, verifies its SHA256 checksum,
+ * runs it, and executes caller-supplied PowerShell to verify the result.
+ * Returns the full PowerShell stdout.
  */
-export async function launchSnapBinary(binaryPath: string, timeoutMs = 30_000): Promise<string> {
-  const xvfb = startXvfb()
-  await new Promise(resolve => setTimeout(resolve, 500))
+export async function deliverAndInstallInVm(vm: VmManager, installerPath: string, opts: VmInstallerOptions): Promise<string> {
+  const hostIP = getParallelsHostIP()
+  if (!hostIP) {
+    throw new Error("Cannot determine Parallels host IP — no prl*/bridge* interface found")
+  }
+  if (!/^[\d.]+$/.test(hostIP)) {
+    throw new Error(`Unsafe hostIP: ${hostIP}`)
+  }
 
-  const child = spawn(binaryPath, ["--no-sandbox", "--disable-gpu"], {
-    detached: false,
-    shell: false,
-    stdio: ["ignore", "pipe", "pipe"],
-    env: {
-      ...process.env,
-      DISPLAY: xvfb.display,
-      SNAP_LAUNCH_TEST: "1",
-      // XDG_RUNTIME_DIR=/run/user/0 is set in the Docker image for snapcraft's
-      // StateService.  Chromium sees a valid runtime dir and looks for a D-Bus
-      // session socket at $XDG_RUNTIME_DIR/bus.  Without a running session daemon
-      // the AT-SPI bridge hangs trying to connect; pointing to /dev/null makes
-      // libdbus fail fast (ENOENT) rather than blocking indefinitely.
-      DBUS_SESSION_BUS_ADDRESS: process.env.DBUS_SESSION_BUS_ADDRESS ?? "unix:path=/dev/null",
-    },
-  })
+  const expectedSha256 = await sha256File(installerPath)
+  if (!/^[0-9a-f]{64}$/i.test(expectedSha256)) {
+    throw new Error(`Unexpected SHA256 value: ${expectedSha256}`)
+  }
 
-  const chunks: string[] = []
+  const { server, port } = await createLocalServer(path.dirname(installerPath), "0.0.0.0")
+  if (!Number.isInteger(port) || port < 1024 || port > 65535) {
+    throw new Error(`Unsafe port: ${port}`)
+  }
 
-  return new Promise<string>((resolve, reject) => {
-    let done = false
+  const filename = path.basename(installerPath)
+  const argsLiteral = (opts.installerArgs ?? []).map(a => `'${a.replace(/'/g, "''")}'`).join(", ")
+  const argsPs = argsLiteral ? `@(${argsLiteral})` : "@()"
 
-    const finish = (err?: Error) => {
-      if (done) return
-      done = true
-      try {
-        child.kill("SIGKILL")
-      } catch {
-        // ignore — process may have already exited
-      }
-      xvfb.stop()
-      if (err) {
-        reject(err)
-      } else {
-        resolve(chunks.join(""))
-      }
-    }
+  const lines = [
+    `$tmpDir = $null`,
+    `try {`,
+    `    $tmpDir = Join-Path $env:TEMP ([Guid]::NewGuid().ToString())`,
+    `    New-Item -ItemType Directory -Path $tmpDir | Out-Null`,
+    `    $dest = Join-Path $tmpDir 'installer.exe'`,
+    `    Invoke-WebRequest -Uri 'http://${hostIP}:${port}/${encodeURIComponent(filename)}' -OutFile $dest -UseBasicParsing`,
+    `    $actualHash = (Get-FileHash $dest -Algorithm SHA256).Hash.ToLower()`,
+    `    $expectedHash = '${expectedSha256}'`,
+    `    if ($actualHash -ne $expectedHash) { Write-Error ("Hash mismatch: $actualHash vs $expectedHash"); exit 1 }`,
+    `    Write-Output ('HASH_OK:true')`,
+    `    Unblock-File -Path $dest -ErrorAction SilentlyContinue`,
+    `    $proc = Start-Process -FilePath $dest -ArgumentList ${argsPs} -PassThru -Wait`,
+    `    Write-Output ('INSTALLER_EXIT:' + $proc.ExitCode)`,
+    `    if ($proc.ExitCode -ne 0) { Write-Error ("Installer exited $($proc.ExitCode)"); exit 1 }`,
+    ...(opts.postInstallKillProcess ? [`    Stop-Process -Name '${opts.postInstallKillProcess.replace(/'/g, "''")}' -Force -ErrorAction SilentlyContinue`] : []),
+    ...opts.verifyPs.map(l => `    ${l}`),
+    `} finally {`,
+    `    if ($tmpDir) { Remove-Item $tmpDir -Recurse -Force -ErrorAction SilentlyContinue }`,
+    `}`,
+  ]
 
-    child.stdout?.on("data", (d: Buffer) => {
-      chunks.push(d.toString())
-      if (!done && chunks.join("").includes("ELECTRON_READY:")) {
-        finish()
-      }
+  const scriptPath = path.join(homedir(), `.eb-install-${randomUUID()}.ps1`)
+  await outputFile(scriptPath, lines.join("\n"))
+  const winScriptPath = toVmHomePath(scriptPath)
+
+  try {
+    const output = await vm.exec("powershell.exe", ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", winScriptPath], {
+      timeout: opts.timeout ?? 180_000,
     })
-
-    child.stderr?.on("data", (d: Buffer) => {
-      chunks.push(d.toString())
-    })
-
-    child.on("error", (e: Error) => finish(e))
-
-    child.on("exit", (code: number | null) => {
-      if (!done) {
-        if (code !== null && code !== 0) {
-          finish(new Error(`Binary exited with code ${code}\n${chunks.join("")}`))
-        } else {
-          // Exited cleanly without producing ELECTRON_READY — treat as success
-          // (the signal may have been received before the exit event fired)
-          finish()
-        }
-      }
-    })
-
-    setTimeout(() => {
-      if (!done) {
-        finish(new Error(`Binary launch timed out after ${timeoutMs}ms\nSTDOUT+STDERR:\n${chunks.join("")}`))
-      }
-    }, timeoutMs)
-  })
+    console.log("[deliverAndInstallInVm] output:", output)
+    return output
+  } finally {
+    server.close()
+    await remove(scriptPath).catch(() => {})
+  }
 }

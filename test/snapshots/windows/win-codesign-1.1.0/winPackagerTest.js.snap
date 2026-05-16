@@ -1,0 +1,517 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`winCodeSign: 1.1.0 > beta version 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 3.0.0-beta.2.exe",
+      "safeArtifactName": "TestApp-Setup-3.0.0-beta.2.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "arm64",
+      "file": "Test App ßW Setup 3.0.0-beta.2-arm64.exe",
+      "safeArtifactName": "TestApp-Setup-3.0.0-beta.2-arm64.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 3.0.0-beta.2-arm64.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-3.0.0-beta.2-arm64.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 3.0.0-beta.2.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-3.0.0-beta.2.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > beta version 2`] = `
+{
+  "CompanyName": "Foo Bar",
+  "FileDescription": "Test App ßW",
+  "FileVersion": "3.0.0-beta.2",
+  "InternalName": "Test App ßW",
+  "LegalCopyright": "Copyright © 2026 Foo Bar",
+  "OriginalFilename": "",
+  "ProductName": "Test App ßW",
+  "ProductVersion": "3.0.0.0",
+  "SquirrelAwareVersion": "1",
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > icon < 256 1`] = `"ERR_ICON_TOO_SMALL"`;
+
+exports[`winCodeSign: 1.1.0 > icon not an image 1`] = `"ERR_ICON_UNKNOWN_FORMAT"`;
+
+exports[`winCodeSign: 1.1.0 > legacy win-codesign 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-win.zip",
+      "safeArtifactName": "TestApp-1.1.0-win.zip",
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > legacy win-codesign 2`] = `
+{
+  "CompanyName": "Foo Bar",
+  "FileDescription": "Test App ßW",
+  "FileVersion": "1.1.0",
+  "InternalName": "Test App ßW",
+  "LegalCopyright": "Copyright © 2026 Foo Bar",
+  "OriginalFilename": "",
+  "ProductName": "Test App ßW",
+  "ProductVersion": "1.1.0.0",
+  "SquirrelAwareVersion": "1",
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > signAndEditExecutable: false — backward compat disables both editing and signing 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-win.zip",
+      "safeArtifactName": "TestApp-1.1.0-win.zip",
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > signAndEditExecutable: false — backward compat disables both editing and signing 2`] = `
+[
+  "chrome_100_percent.pak",
+  "chrome_200_percent.pak",
+  "d3dcompiler_47.dll",
+  "ffmpeg.dll",
+  "icudtl.dat",
+  "libEGL.dll",
+  "libGLESv2.dll",
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
+  "locales/",
+  "locales/af.pak",
+  "locales/am.pak",
+  "locales/ar.pak",
+  "locales/bg.pak",
+  "locales/bn.pak",
+  "locales/ca.pak",
+  "locales/cs.pak",
+  "locales/da.pak",
+  "locales/de.pak",
+  "locales/el.pak",
+  "locales/en-GB.pak",
+  "locales/en-US.pak",
+  "locales/es-419.pak",
+  "locales/es.pak",
+  "locales/et.pak",
+  "locales/fa.pak",
+  "locales/fi.pak",
+  "locales/fil.pak",
+  "locales/fr.pak",
+  "locales/gu.pak",
+  "locales/he.pak",
+  "locales/hi.pak",
+  "locales/hr.pak",
+  "locales/hu.pak",
+  "locales/id.pak",
+  "locales/it.pak",
+  "locales/ja.pak",
+  "locales/kn.pak",
+  "locales/ko.pak",
+  "locales/lt.pak",
+  "locales/lv.pak",
+  "locales/ml.pak",
+  "locales/mr.pak",
+  "locales/ms.pak",
+  "locales/nb.pak",
+  "locales/nl.pak",
+  "locales/pl.pak",
+  "locales/pt-BR.pak",
+  "locales/pt-PT.pak",
+  "locales/ro.pak",
+  "locales/ru.pak",
+  "locales/sk.pak",
+  "locales/sl.pak",
+  "locales/sr.pak",
+  "locales/sv.pak",
+  "locales/sw.pak",
+  "locales/ta.pak",
+  "locales/te.pak",
+  "locales/th.pak",
+  "locales/tr.pak",
+  "locales/uk.pak",
+  "locales/ur.pak",
+  "locales/vi.pak",
+  "locales/zh-CN.pak",
+  "locales/zh-TW.pak",
+  "resources/",
+  "resources/app.asar",
+  "resources.pak",
+  "snapshot_blob.bin",
+  "Test App ßW.exe",
+  "v8_context_snapshot.bin",
+  "vk_swiftshader.dll",
+  "vk_swiftshader_icd.json",
+  "vulkan-1.dll",
+]
+`;
+
+exports[`winCodeSign: 1.1.0 > signAndEditExecutable: false — backward compat disables both editing and signing 3`] = `
+[
+  {
+    "alg": "SHA256",
+    "file": "resources\\app.asar",
+    "value": "hash",
+  },
+]
+`;
+
+exports[`winCodeSign: 1.1.0 > signExecutable: false — NSIS installer and elevate.exe not signed 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > signExecutable: false — NSIS installer and elevate.exe not signed 2`] = `
+{
+  "CompanyName": "Foo Bar",
+  "FileDescription": "Test App ßW",
+  "FileVersion": "1.1.0",
+  "InternalName": "Test App ßW",
+  "LegalCopyright": "Copyright © 2026 Foo Bar",
+  "OriginalFilename": "",
+  "ProductName": "Test App ßW",
+  "ProductVersion": "1.1.0.0",
+  "SquirrelAwareVersion": "1",
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > signExecutable: false — rcedit still edits exe resources 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-win.zip",
+      "safeArtifactName": "TestApp-1.1.0-win.zip",
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > signExecutable: false — rcedit still edits exe resources 2`] = `
+[
+  "chrome_100_percent.pak",
+  "chrome_200_percent.pak",
+  "d3dcompiler_47.dll",
+  "ffmpeg.dll",
+  "icudtl.dat",
+  "libEGL.dll",
+  "libGLESv2.dll",
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
+  "locales/",
+  "locales/af.pak",
+  "locales/am.pak",
+  "locales/ar.pak",
+  "locales/bg.pak",
+  "locales/bn.pak",
+  "locales/ca.pak",
+  "locales/cs.pak",
+  "locales/da.pak",
+  "locales/de.pak",
+  "locales/el.pak",
+  "locales/en-GB.pak",
+  "locales/en-US.pak",
+  "locales/es-419.pak",
+  "locales/es.pak",
+  "locales/et.pak",
+  "locales/fa.pak",
+  "locales/fi.pak",
+  "locales/fil.pak",
+  "locales/fr.pak",
+  "locales/gu.pak",
+  "locales/he.pak",
+  "locales/hi.pak",
+  "locales/hr.pak",
+  "locales/hu.pak",
+  "locales/id.pak",
+  "locales/it.pak",
+  "locales/ja.pak",
+  "locales/kn.pak",
+  "locales/ko.pak",
+  "locales/lt.pak",
+  "locales/lv.pak",
+  "locales/ml.pak",
+  "locales/mr.pak",
+  "locales/ms.pak",
+  "locales/nb.pak",
+  "locales/nl.pak",
+  "locales/pl.pak",
+  "locales/pt-BR.pak",
+  "locales/pt-PT.pak",
+  "locales/ro.pak",
+  "locales/ru.pak",
+  "locales/sk.pak",
+  "locales/sl.pak",
+  "locales/sr.pak",
+  "locales/sv.pak",
+  "locales/sw.pak",
+  "locales/ta.pak",
+  "locales/te.pak",
+  "locales/th.pak",
+  "locales/tr.pak",
+  "locales/uk.pak",
+  "locales/ur.pak",
+  "locales/vi.pak",
+  "locales/zh-CN.pak",
+  "locales/zh-TW.pak",
+  "resources/",
+  "resources/app.asar",
+  "resources.pak",
+  "snapshot_blob.bin",
+  "Test App ßW.exe",
+  "v8_context_snapshot.bin",
+  "vk_swiftshader.dll",
+  "vk_swiftshader_icd.json",
+  "vulkan-1.dll",
+]
+`;
+
+exports[`winCodeSign: 1.1.0 > signExecutable: false — rcedit still edits exe resources 3`] = `
+[
+  {
+    "alg": "SHA256",
+    "file": "resources\\app.asar",
+    "value": "hash",
+  },
+]
+`;
+
+exports[`winCodeSign: 1.1.0 > signExecutable: false — rcedit still edits exe resources 4`] = `
+{
+  "CompanyName": "Foo Bar",
+  "FileDescription": "Test App ßW",
+  "FileVersion": "1.1.0",
+  "InternalName": "Test App ßW",
+  "LegalCopyright": "Copyright © 2026 Foo Bar",
+  "OriginalFilename": "",
+  "ProductName": "Test App ßW",
+  "ProductVersion": "1.1.0.0",
+  "SquirrelAwareVersion": "1",
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > signExecutable: false — signing skipped even with cert 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-win.zip",
+      "safeArtifactName": "TestApp-1.1.0-win.zip",
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > signExecutable: false — signing skipped even with cert 2`] = `
+{
+  "CompanyName": "Foo Bar",
+  "FileDescription": "Test App ßW",
+  "FileVersion": "1.1.0",
+  "InternalName": "Test App ßW",
+  "LegalCopyright": "Copyright © 2026 Foo Bar",
+  "OriginalFilename": "",
+  "ProductName": "Test App ßW",
+  "ProductVersion": "1.1.0.0",
+  "SquirrelAwareVersion": "1",
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > win zip 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-win.zip",
+      "safeArtifactName": "TestApp-1.1.0-win.zip",
+    },
+    {
+      "arch": "arm64",
+      "file": "Test App ßW-1.1.0-arm64-win.zip",
+      "safeArtifactName": "TestApp-1.1.0-arm64-win.zip",
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > win zip 2`] = `
+[
+  "chrome_100_percent.pak",
+  "chrome_200_percent.pak",
+  "d3dcompiler_47.dll",
+  "ffmpeg.dll",
+  "icudtl.dat",
+  "libEGL.dll",
+  "libGLESv2.dll",
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
+  "locales/",
+  "resources/",
+  "resources/app.asar",
+  "resources/extraAsar.asar",
+  "resources/subdir/",
+  "resources/subdir/extraAsar2.asar",
+  "resources.pak",
+  "snapshot_blob.bin",
+  "Test App ßW.exe",
+  "v8_context_snapshot.bin",
+  "vk_swiftshader.dll",
+  "vk_swiftshader_icd.json",
+  "vulkan-1.dll",
+]
+`;
+
+exports[`winCodeSign: 1.1.0 > win zip 3`] = `
+[
+  {
+    "alg": "SHA256",
+    "file": "resources\\app.asar",
+    "value": "hash",
+  },
+  {
+    "alg": "SHA256",
+    "file": "resources\\extraAsar.asar",
+    "value": "hash",
+  },
+  {
+    "alg": "SHA256",
+    "file": "resources\\subdir\\extraAsar2.asar",
+    "value": "hash",
+  },
+]
+`;
+
+exports[`winCodeSign: 1.1.0 > win zip 4`] = `
+[
+  "chrome_100_percent.pak",
+  "chrome_200_percent.pak",
+  "d3dcompiler_47.dll",
+  "ffmpeg.dll",
+  "icudtl.dat",
+  "libEGL.dll",
+  "libGLESv2.dll",
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
+  "locales/",
+  "resources/",
+  "resources/app.asar",
+  "resources/extraAsar.asar",
+  "resources/subdir/",
+  "resources/subdir/extraAsar2.asar",
+  "resources.pak",
+  "snapshot_blob.bin",
+  "Test App ßW.exe",
+  "v8_context_snapshot.bin",
+  "vk_swiftshader.dll",
+  "vk_swiftshader_icd.json",
+  "vulkan-1.dll",
+]
+`;
+
+exports[`winCodeSign: 1.1.0 > win zip 5`] = `
+[
+  {
+    "alg": "SHA256",
+    "file": "resources\\app.asar",
+    "value": "hash",
+  },
+  {
+    "alg": "SHA256",
+    "file": "resources\\extraAsar.asar",
+    "value": "hash",
+  },
+  {
+    "alg": "SHA256",
+    "file": "resources\\subdir\\extraAsar2.asar",
+    "value": "hash",
+  },
+]
+`;
+
+exports[`winCodeSign: 1.1.0 > win zip 6`] = `
+{
+  "CompanyName": "Foo Bar",
+  "FileDescription": "Test App ßW",
+  "FileVersion": "1.1.0",
+  "InternalName": "Test App ßW",
+  "LegalCopyright": "Copyright © 2026 Foo Bar",
+  "OriginalFilename": "",
+  "ProductName": "Test App ßW",
+  "ProductVersion": "1.1.0.0",
+  "SquirrelAwareVersion": "1",
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > zip artifactName 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-win-x64.zip",
+      "safeArtifactName": "TestApp-1.1.0-win.zip",
+    },
+  ],
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > zip artifactName 2`] = `
+{
+  "CompanyName": "Foo Bar",
+  "FileDescription": "Test App ßW",
+  "FileVersion": "1.1.0",
+  "InternalName": "Test App ßW",
+  "LegalCopyright": "Copyright © 2026 Foo Bar",
+  "OriginalFilename": "",
+  "ProductName": "Test App ßW",
+  "ProductVersion": "1.1.0.0",
+  "SquirrelAwareVersion": "1",
+}
+`;

@@ -16,6 +16,7 @@
     "@types/semver": "7.7.1",
     "@types/unzipper": "^0.10.11",
     "@types/which": "^3.0.4",
+    "@types/yargs": "^17.0.33",
     "adm-zip": "0.5.16",
     "app-builder-lib": "workspace:*",
     "builder-util": "workspace:*",
