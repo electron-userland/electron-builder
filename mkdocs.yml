@@ -81,6 +81,7 @@ plugins:
 nav:
   - Introduction: README.md
   - Command Line Interface (CLI): cli.md
+  - Target Selection: targets.md
   - Donate: donate.md
 
   - Programmatic API:
@@ -96,6 +97,7 @@ nav:
 
       - Application Contents: contents.md
       - File Patterns: file-patterns.md
+      - Architecture & Multi-Arch: architecture.md
 
       - macOS:
           - Any macOS Target: mac.md
@@ -124,10 +126,13 @@ nav:
       - Icons: icons.md
       - Auto Update: auto-update.md
       - Code Signing:
-        - Setup: code-signing.md
+        - Overview: code-signing.md
         - Windows: code-signing-win.md
         - MacOS: code-signing-mac.md
+        - macOS Notarization: notarization.md
       - Multi Platform Build: multi-platform-build.md
+      - GitHub Actions: github-actions.md
+      - Troubleshooting: troubleshooting.md
 
   - Tutorials:
       - Configuring Electron Fuses: tutorials/adding-electron-fuses.md
@@ -137,3 +142,6 @@ nav:
       - Sign a Windows app on macOS/Linux: tutorials/code-signing-windows-apps-on-unix.md
       - Release Using Channels: tutorials/release-using-channels.md
       - Test Update on s3 Locally: tutorials/test-update-on-s3-locally.md
+
+  - Reference:
+      - Glossary: glossary.md

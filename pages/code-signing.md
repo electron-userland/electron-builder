@@ -1,44 +1,209 @@
-macOS and Windows code signing is supported. If the configuration values are provided correctly in your package.json, then signing should be automatically executed.
+# Code Signing
 
-| Env Name       |  Description
-| -------------- | -----------
-| `CSC_LINK`                   | The HTTPS link (or base64-encoded data, or `file://` link, or local path) to certificate (`*.p12` or `*.pfx` file). Shorthand `~/` is supported (home directory).
-| `CSC_KEY_PASSWORD`           | The password to decrypt the certificate given in `CSC_LINK`.
-| `CSC_NAME`                   | *macOS-only* Name of certificate (to retrieve from login.keychain). Useful on a development machine (not on CI) if you have several identities (otherwise don't specify it).
-| `CSC_IDENTITY_AUTO_DISCOVERY`| `true` or `false`. Defaults to `true` — on a macOS development machine valid and appropriate identity from your keychain will be automatically used.
-| `CSC_KEYCHAIN`| The keychain name. Used if `CSC_LINK` is not specified. Defaults to system default keychain.
+Code signing proves your application's identity and confirms it hasn't been tampered with since it was signed. Without it, operating systems display security warnings — or block the app entirely.
 
-!!! tip
-    If you are wrapping app to installer (pkg), you need to have `INSTALLER ID` identity in your keychain or provide according `CSC_INSTALLER_LINK` and `CSC_INSTALLER_KEY_PASSWORD`.
+## Why Code Signing Matters
 
-!!! tip
-    If you are building Windows on macOS and need to set a different certificate and password (than the ones set in `CSC_*` env vars) you can use `WIN_CSC_LINK` and `WIN_CSC_KEY_PASSWORD`.
+| Platform | Without Signing | With Signing |
+|---|---|---|
+| macOS | Gatekeeper blocks app; user must override in System Preferences | Runs normally; no warning |
+| Windows | SmartScreen warning on first run ("Unknown publisher") | Trusted install; SmartScreen learns from reputation |
+| Windows (EV cert) | N/A | Instant trust, no reputation period needed |
+| Linux | No system-level enforcement | Optional (Snap/Flatpak have own signing) |
 
-## Travis, AppVeyor and other CI Servers
-To sign app on build server you need to set `CSC_LINK`, `CSC_KEY_PASSWORD`:
+On **macOS 10.15+**, notarization is additionally required for apps distributed outside the Mac App Store. An app that is code-signed but not notarized will be blocked by Gatekeeper unless the user explicitly overrides it.
 
-1. [Export](https://developer.apple.com/library/ios/documentation/IDEs/Conceptual/AppDistributionGuide/MaintainingCertificates/MaintainingCertificates.html#//apple_ref/doc/uid/TP40012582-CH31-SW7) certificate.
- Consider to not use special characters (for bash[1]) in the password because “*values are not escaped when your builds are executed*”.
-2. Encode file to base64 (macOS: `base64 -i yourFile.p12 -o envValue.txt`, Linux: `base64 yourFile.p12 > envValue.txt`).
+## Platform Requirements Matrix
 
-   Or upload `*.p12` file (e.g. on Google Drive, use [direct link generator](http://www.syncwithtech.org/p/direct-download-link-generator.html) to get correct download link).
+| Platform | Signing Required? | Certificate Type | Notarization? |
+|---|---|---|---|
+| macOS (direct distribution) | Yes (Gatekeeper) | Developer ID Application | Yes (10.15+) |
+| macOS (Mac App Store) | Yes | Apple Distribution / Mac App Distribution | No (Apple signs on submission) |
+| Windows | Recommended | OV or EV certificate | No |
+| Windows (Azure) | Recommended | Azure Trusted Signing | No |
+| Linux (AppImage, DEB, RPM) | Optional | N/A | No |
+| Linux (Snap) | Yes | Automatic (Ubuntu One account) | No |
+| Linux (Flatpak/Flathub) | Yes | Automatic (Flathub) | No |
 
-3. Set `CSC_LINK` and `CSC_KEY_PASSWORD` environment variables. See [Travis](https://docs.travis-ci.com/user/environment-variables/#Defining-Variables-in-Repository-Settings) or [AppVeyor](https://www.appveyor.com/docs/build-configuration#environment-variables) documentation.
-   Recommended to set it in the CI Project Settings, not in the `.travis.yml`/`appveyor.yml`. If you use link to file (not base64 encoded data), make sure to escape special characters (for bash[1]) accordingly.
+## Certificate Types
 
-   In case of AppVeyor, don't forget to click on lock icon to “Toggle variable encryption”.
+### macOS
 
-   Keep in mind that Windows is not able to handle enviroment variable values longer than 8192 characters, thus if the base64 representation of your certificate exceeds that limit, try re-exporting the certificate without including all the certificates in the certification path (they are not necessary, but the Certificate Manager export wizard ticks the option by default), otherwise the encoded value will be truncated.
+| Certificate | Use Case | Where to Get |
+|---|---|---|
+| Developer ID Application | Direct distribution (DMG, ZIP, PKG) | Apple Developer Program ($99/year) |
+| Developer ID Installer | PKG files for direct distribution | Apple Developer Program |
+| Apple Distribution | Mac App Store | Apple Developer Program |
+| Mac App Distribution | Mac App Store (app bundle signing) | Apple Developer Program |
+| Apple Development / Mac Developer | Local testing, mas-dev target | Apple Developer Program |
 
-[1] `printf "%q\n" "<url>"`
+All Apple certificates require membership in the [Apple Developer Program](https://developer.apple.com/programs/).
 
-## Where to Buy Code Signing Certificate
-See [Get a code signing certificate](https://msdn.microsoft.com/windows/hardware/drivers/dashboard/get-a-code-signing-certificate) for Windows (platform: "Microsoft Authenticode").
-Please note — Gatekeeper only recognises [Apple digital certificates](http://stackoverflow.com/questions/11833481/non-apple-issued-code-signing-certificate-can-it-work-with-mac-os-10-8-gatekeep).
+### Windows
 
-## Alternative methods of codesigning
+| Certificate Type | Trust | CI/CD Compatible | Notes |
+|---|---|---|---|
+| Standard OV Certificate | After reputation builds (days-weeks) | Yes (exportable) | Most common choice |
+| EV (Extended Validation) Certificate | Immediate | No (hardware dongle) | Best for fast trust; cannot be used in most CI |
+| Azure Trusted Signing | Immediate | Yes | Microsoft's cloud signing service; see [code-signing-win.md](code-signing-win.md) |
 
-Codesigning via Electron Builder's configuration (via package.json) is not the only way to sign an application. Some people find it easier to codesign using a GUI tool. A couple of examples include:
-- [SSL manager](https://www.ssl.com/ssl-manager)
-- [DigiCert utility for Windows](https://www.digicert.com/support/tools/certificate-utility-for-windows)
-Of course any comprehensive discussion of such tools is beyond the scope of this documentation.
+For Windows, purchase from any major CA (DigiCert, Sectigo, SSL.com). See [Get a Code Signing Certificate](https://msdn.microsoft.com/windows/hardware/drivers/dashboard/get-a-code-signing-certificate) (select "Microsoft Authenticode" platform).
+
+!!! note "Gatekeeper and Apple certificates"
+    macOS Gatekeeper only recognizes [Apple-issued certificates](https://developer.apple.com/support/code-signing/). Third-party certificates cannot be used to sign macOS apps for Gatekeeper.
+
+## Environment Variables
+
+electron-builder reads signing credentials from environment variables. **Never commit certificates or passwords to source control** — always inject them via CI secrets.
+
+### Shared / macOS Variables
+
+| Variable | Description |
+|---|---|
+| `CSC_LINK` | HTTPS URL, `file://` path, local path, or base64-encoded `.p12`/`.pfx` file |
+| `CSC_KEY_PASSWORD` | Password to decrypt the certificate at `CSC_LINK` |
+| `CSC_NAME` | *macOS only.* Certificate identity name from keychain. Useful when multiple identities exist on a dev machine |
+| `CSC_IDENTITY_AUTO_DISCOVERY` | `true` (default) / `false`. On macOS, automatically selects a valid identity from the keychain |
+| `CSC_KEYCHAIN` | Keychain name. Used when `CSC_LINK` is not set. Defaults to the system default keychain |
+
+### macOS Installer (PKG) Variables
+
+| Variable | Description |
+|---|---|
+| `CSC_INSTALLER_LINK` | Certificate for signing PKG installer files (requires Developer ID Installer certificate) |
+| `CSC_INSTALLER_KEY_PASSWORD` | Password for the installer certificate |
+
+### Windows-Specific Variables
+
+| Variable | Description |
+|---|---|
+| `WIN_CSC_LINK` | Windows certificate path or base64 string. Falls back to `CSC_LINK` if unset |
+| `WIN_CSC_KEY_PASSWORD` | Password for the Windows certificate. Falls back to `CSC_KEY_PASSWORD` if unset |
+
+!!! tip "Building Windows on macOS"
+    When cross-compiling Windows on macOS, use `WIN_CSC_LINK` and `WIN_CSC_KEY_PASSWORD` to provide a separate Windows certificate while keeping your macOS certificate in `CSC_LINK`.
+
+### Azure Trusted Signing Variables
+
+| Variable | Description |
+|---|---|
+| `AZURE_TENANT_ID` | Azure AD Tenant ID |
+| `AZURE_CLIENT_ID` | Application (Client) ID of your App registration |
+| `AZURE_CLIENT_SECRET` | Secret value for your App registration |
+
+See [Windows Code Signing](code-signing-win.md#using-azure-trusted-signing-beta) for full Azure Trusted Signing setup.
+
+## Encoding a Certificate for CI
+
+Most CI systems inject certificates as base64-encoded environment variables:
+
+```bash
+# macOS
+base64 -i your-certificate.p12 -o /tmp/cert_encoded.txt
+cat /tmp/cert_encoded.txt   # copy this value into your CI secret
+
+# Linux
+base64 your-certificate.p12 > /tmp/cert_encoded.txt
+cat /tmp/cert_encoded.txt
+```
+
+Then set `CSC_LINK` to the base64 string (no file URL needed):
+
+```
+CSC_LINK=<the-base64-string>
+CSC_KEY_PASSWORD=your-password
+```
+
+!!! warning "Windows environment variable length limit"
+    Windows cannot handle environment variable values longer than 8192 characters. If your base64-encoded certificate exceeds this limit, re-export it **without** including intermediate certificates in the chain (uncheck "Include all certificates in the certification path" in the Certificate Manager wizard).
+
+## GitHub Actions Setup
+
+### macOS Signing
+
+```yaml
+jobs:
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Import certificate
+        run: |
+          echo "$CSC_LINK" | base64 --decode > /tmp/cert.p12
+          security create-keychain -p "" build.keychain
+          security import /tmp/cert.p12 -k build.keychain -P "$CSC_KEY_PASSWORD" -T /usr/bin/codesign
+          security list-keychains -d user -s build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+          security unlock-keychain -p "" build.keychain
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+
+      - name: Build and sign
+        run: npx electron-builder --mac
+        env:
+          CSC_KEYCHAIN: build.keychain
+          CSC_NAME: ${{ secrets.CSC_NAME }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+```
+
+For a complete GitHub Actions workflow including publishing, see [GitHub Actions](github-actions.md).
+
+### Windows Signing
+
+```yaml
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and sign
+        run: npx electron-builder --win
+        env:
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+```
+
+## The `forceCodeSigning` Option
+
+```yaml
+forceCodeSigning: true
+```
+
+When `true`, the build **fails** if no valid signing identity can be found. Use this in CI to catch misconfigured secrets early rather than shipping an unsigned build.
+
+Without this option, electron-builder proceeds without signing if no credentials are provided — which can result in silently unsigned production builds.
+
+## Platform-Specific Guides
+
+- **[macOS Code Signing](code-signing-mac.md)** — exporting certificates, keychain setup, disabling signing, ad-hoc signing
+- **[Windows Code Signing](code-signing-win.md)** — OV vs. EV certificates, Azure Trusted Signing setup
+- **[macOS Notarization](notarization.md)** — notarizing apps for macOS 10.15+, Hardened Runtime requirements
+
+## Troubleshooting
+
+**"No identity found"** (macOS)
+: No valid Developer ID certificate is in the keychain. Check that you have an active Apple Developer Program membership and that the certificate is installed. Run `security find-identity -v -p codesigning` to list available identities.
+
+**"The certificate is not valid for use"** (macOS)
+: The certificate is expired or revoked. Renew it in the Apple Developer portal.
+
+**"CSSMERR_TP_CERT_REVOKED"** (macOS CI)
+: The certificate was revoked. Also check that the keychain has been unlocked before signing.
+
+**"Publisher name does not match"** (Windows AppX)
+: The `publisher` in `appx` config must exactly match the Subject of the certificate. Copy it from the certificate properties.
+
+**SmartScreen warning appears even after signing** (Windows)
+: Normal for standard OV certificates. SmartScreen trust builds over time based on download count. EV certificates skip this reputation period. See [Windows Code Signing](code-signing-win.md).
+
+**"Command requires admin privileges"** (Windows)
+: Some signing tools require elevated permissions. Run from an elevated prompt or check CI runner permissions.
+
+**Build fails silently with unsigned output**
+: Set `forceCodeSigning: true` to convert missing signing credentials from a silent warning into a build failure.
