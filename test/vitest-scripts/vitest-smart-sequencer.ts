@@ -18,7 +18,7 @@ export default class SmartSequencer extends BaseSequencer {
     console.log("Estimated test duration:", formatDuration(estimatedDuration))
     console.log()
     console.log(`Test files:`)
-    files
+    ;[...files]
       .sort((a, b) => getFileStats(this.cache, b).file.localeCompare(getFileStats(this.cache, a).file))
       .forEach(f => {
         const { stat, file } = getFileStats(this.cache, f)
