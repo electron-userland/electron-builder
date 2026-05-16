@@ -203,6 +203,7 @@ exports[`dmg > app is copyable from mounted dmg and bundle structure is intact 2
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
