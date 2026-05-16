@@ -11,6 +11,7 @@ import {
   getCacheDirectory,
   getBinariesMirrorUrl,
 } from "app-builder-lib/out/util/electronGet"
+import { CacheState } from "app-builder-lib/out/util/cacheState"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 
 // ─── getCacheDirectory ────────────────────────────────────────────────────────
@@ -152,7 +153,7 @@ const DOWNLOAD_TIMEOUT = { timeout: 120_000 }
 
 // sequential: tests share the same extractDir (same release + file + mirror → same hash suffix).
 // Running them concurrently causes proper-lockfile contention: the first download holds the lock
-// longer than the retry budget allows. Sequential order ensures test 1 writes the .complete marker
+// longer than the retry budget allows. Sequential order ensures test 1 writes the complete state
 // before tests 2 and 3 run, so they hit the pre-lock cache fast-path instead of waiting on the lock.
 describe("downloadBuilderToolset", { sequential: true }, () => {
   test("downloadArtifact: downloads and extracts appimage@1.0.3 tar.gz with sha256 checksum", DOWNLOAD_TIMEOUT, async ({ expect }) => {
@@ -188,8 +189,9 @@ describe("downloadBuilderToolset", { sequential: true }, () => {
     })
 
     expect(first).toBe(second)
-    // completion marker must exist to prove it was not re-extracted
-    await expect(fs.access(`${first}.complete`)).resolves.toBeUndefined()
+    // state file must record complete to prove it was not re-extracted
+    const stateRaw = await fs.readFile(`${first}.state`, "utf-8")
+    expect(JSON.parse(stateRaw).state).toBe(CacheState.complete)
   })
 
   test("downloadArtifact: respects ELECTRON_BUILDER_BINARIES_MIRROR env var", DOWNLOAD_TIMEOUT, async ({ expect }) => {
