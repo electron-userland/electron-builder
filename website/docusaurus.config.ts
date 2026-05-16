@@ -40,7 +40,7 @@ const config: Config = {
       {
         entryPoints: ["../packages/*"],
         entryPointStrategy: "packages",
-        tsconfig: "../packages/tsconfig-base.json",
+        tsconfig: "../tsconfig-base.json",
         out: "./docs/api",
         excludeExternals: true,
         excludePrivate: true,

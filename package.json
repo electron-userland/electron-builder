@@ -23,7 +23,7 @@
     "generate-changeset": "pnpm changeset",
     "generate-schema": "typescript-json-schema packages/app-builder-lib/tsconfig-scheme.json Configuration --out packages/app-builder-lib/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --required && node ./scripts/fix-schema.js",
     "generate-all": "pnpm generate-schema && pnpm prettier",
-    "docs:prebuild": "docker build -t docs-dockerfile -f docs-dockerfile .",
+    "docs:prebuild": "docker build -t docs-dockerfile -f website/dockerfile .",
     "docs:build": "docker run --rm -v ${PWD}:/app -w /app/website docs-dockerfile sh -c 'pnpm install --frozen-lockfile && pnpm build'",
     "docs:preview": "docker run --rm -p 3000:3000 -v ${PWD}/website/build:/app docs-dockerfile sh -c 'npx serve /app'",
     "docs:dev": "cd website && pnpm start",
