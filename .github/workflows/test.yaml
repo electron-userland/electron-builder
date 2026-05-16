@@ -185,7 +185,7 @@ jobs:
         shard: ${{ fromJson(needs.shard-plan.outputs.windows) }}
         include:
           - platform: windows
-            runner: windows-latest
+            runner: windows-2025-vs2026
             cache-path: ~\AppData\Local\electron\Cache
             cache-key: v-35.7.5-windows-electron
     runs-on: ${{ matrix.runner }}

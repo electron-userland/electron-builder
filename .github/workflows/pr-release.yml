@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-      - release/v*
+      - esm
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
@@ -42,37 +42,23 @@ jobs:
           BRANCH="${{ github.ref_name }}"
 
           if [ "$BRANCH" == "master" ]; then
-            echo "tag=next" >> $GITHUB_OUTPUT
-            echo "branch_type=prerelease" >> $GITHUB_OUTPUT
-            echo "config_file=config.json" >> $GITHUB_OUTPUT
-
-          elif [[ "$BRANCH" =~ ^release/v[0-9]+$ ]]; then
-            # Extract version from branch name (e.g., release/v27 -> v27)
-            VERSION=$(echo "$BRANCH" | sed -E 's/^release\/(v[0-9]+)$/\1/')
-
-            # Validate extraction
-            if [[ ! "$VERSION" =~ ^v[0-9]+$ ]]; then
-              echo "::error::Failed to extract valid version from branch: $BRANCH"
-              echo "::error::Expected format: release/v{major} (e.g., release/v27)"
-              echo "::error::Extracted version: $VERSION"
-              exit 1
-            fi
-
-            echo "tag=$VERSION" >> $GITHUB_OUTPUT
-            echo "branch_type=lts" >> $GITHUB_OUTPUT
-            echo "config_file=config.release-$VERSION.json" >> $GITHUB_OUTPUT
-
+            TAG="next"
+            BRANCH_TYPE="prerelease"
+            CONFIG_FILE="config.json"
+          elif [ "$BRANCH" == "esm" ]; then
+            TAG="esm"
+            BRANCH_TYPE="esm"
+            CONFIG_FILE="config.esm.json"
           else
-            echo "::error::Unsupported branch for release: $BRANCH"
-            echo "::error::Expected 'master' or 'release/v{major}' (e.g., 'release/v27')"
+            echo "::error::Unsupported branch: $BRANCH. Expected 'master' or 'esm'."
             exit 1
           fi
 
-          # Log determined values
-          echo "Branch: $BRANCH"
-          echo "Dist-tag: $(grep '^tag=' $GITHUB_OUTPUT | cut -d= -f2)"
-          echo "Branch type: $(grep '^branch_type=' $GITHUB_OUTPUT | cut -d= -f2)"
-          echo "Config file: $(grep '^config_file=' $GITHUB_OUTPUT | cut -d= -f2)"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "branch_type=$BRANCH_TYPE" >> $GITHUB_OUTPUT
+          echo "config_file=$CONFIG_FILE" >> $GITHUB_OUTPUT
+
+          echo "Branch: $BRANCH | Dist-tag: $TAG | Config: $CONFIG_FILE"
 
       - name: Link changeset config for this branch
         run: |
