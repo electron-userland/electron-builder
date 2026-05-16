@@ -461,3 +461,49 @@ export async function deliverAndInstallInVm(vm: VmManager, installerPath: string
     await remove(scriptPath).catch(() => {})
   }
 }
+
+/**
+ * Launches an extracted snap binary directly (outside the snap sandbox) and waits for it to
+ * print `ELECTRON_READY:<version>` to stdout. Returns the full stdout collected up to that point.
+ * Throws if the binary doesn't print the ready signal within the timeout.
+ */
+export function launchSnapBinary(binaryPath: string, timeoutMs = 30_000): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(binaryPath, ["--no-sandbox"], {
+      stdio: ["ignore", "pipe", "pipe"],
+      env: { ...process.env, DISPLAY: process.env.DISPLAY ?? ":99" },
+    })
+
+    let output = ""
+    let settled = false
+
+    const done = (err?: Error) => {
+      if (settled) return
+      settled = true
+      child.kill()
+      if (err) reject(err)
+      else resolve(output)
+    }
+
+    const timer = setTimeout(() => done(new Error(`launchSnapBinary timed out after ${timeoutMs}ms\n${output}`)), timeoutMs)
+
+    child.stdout?.on("data", (chunk: Buffer) => {
+      output += chunk.toString()
+      if (/ELECTRON_READY:\d+\.\d+\.\d+/.test(output)) {
+        clearTimeout(timer)
+        done()
+      }
+    })
+    child.stderr?.on("data", (chunk: Buffer) => {
+      output += chunk.toString()
+    })
+    child.on("error", err => {
+      clearTimeout(timer)
+      done(err)
+    })
+    child.on("exit", code => {
+      clearTimeout(timer)
+      if (!settled) done(new Error(`snap binary exited with code ${code} before ELECTRON_READY\n${output}`))
+    })
+  })
+}
