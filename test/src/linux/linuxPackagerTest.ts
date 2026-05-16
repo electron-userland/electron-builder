@@ -354,7 +354,7 @@ describe.ifNotWindows("LinuxPackager", () => {
       },
     }))
 
-  test("disable desktop file output", ({ expect }) =>
+  test("disable desktop file output (desktop: null)", ({ expect }) =>
     app(
       expect,
       {
@@ -367,6 +367,10 @@ describe.ifNotWindows("LinuxPackager", () => {
       },
       {
         expectedArtifacts: ["Test App-1.0.0-x64.zip"],
+        packed: async result => {
+          const desktopFilePath = path.resolve(result.outDir, "testapp.desktop")
+          expect(await fs.pathExists(desktopFilePath)).toBe(false)
+        },
       }
     ))
 
@@ -428,7 +432,9 @@ describe.ifNotWindows("LinuxPackager", () => {
           const desktopFilePath = path.resolve(result.outDir, "testapp.desktop")
           expect(await fs.readFile(desktopFilePath, "utf-8")).toMatchSnapshot()
 
-          // TODO: test AppImage embedded desktop file content - currently not tested in CI due to unsquashfs dependency, but can be tested locally
+          // AppImage embedded desktop file content is not tested in CI because `unsquashfs`
+          // is not provisioned in the CI environment. Run locally to validate AppImage-specific
+          // desktop embedding behavior.
           if (
             !(await execFile("unsquashfs", ["-version"])
               .then(() => true)
@@ -483,7 +489,87 @@ describe.ifNotWindows("LinuxPackager", () => {
       }
     ))
 
-  test("disable desktop file output", ({ expect }) =>
+  test("zip with mimeTypes (protocol registration)", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: zipTarget,
+        config: {
+          linux: {
+            description: "Test Comment",
+            mimeTypes: ["x-scheme-handler/myapp"],
+            desktop: {
+              entry: {
+                Name: "Test App",
+              },
+            },
+          },
+        },
+      },
+      {
+        packed: async result => {
+          const desktopFilePath = path.resolve(result.outDir, "testapp.desktop")
+          const content = await fs.readFile(desktopFilePath, "utf-8")
+          expect(content).toContain("MimeType=x-scheme-handler/myapp")
+          expect(content).toMatchSnapshot()
+        },
+      }
+    ))
+
+  test("tar.gz with desktop", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: Platform.LINUX.createTarget("tar.gz", Arch.x64),
+        config: {
+          linux: {
+            description: "Test Comment",
+            desktop: {
+              entry: {
+                Name: "Test App",
+              },
+            },
+          },
+        },
+      },
+      {
+        packed: async result => {
+          const desktopFilePath = path.resolve(result.outDir, "testapp.desktop")
+          expect(await fs.readFile(desktopFilePath, "utf-8")).toMatchSnapshot()
+        },
+      }
+    ))
+
+  test("target-specific desktop config uses target-scoped filename", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: zipTarget,
+        config: {
+          linux: {
+            desktop: null, // opt out at platform level
+          },
+          zip: {
+            desktop: {
+              entry: {
+                Name: "Zip-specific App",
+              },
+            },
+          },
+        } as any,
+      },
+      {
+        packed: async result => {
+          // Target-specific config produces testapp-zip.desktop, not testapp.desktop
+          const scopedDesktopPath = path.resolve(result.outDir, "testapp-zip.desktop")
+          const sharedDesktopPath = path.resolve(result.outDir, "testapp.desktop")
+          expect(await fs.pathExists(sharedDesktopPath)).toBe(false)
+          expect(await fs.readFile(scopedDesktopPath, "utf-8")).toMatchSnapshot()
+        },
+      }
+    ))
+
+  test("disable desktop file output (desktop: false)", ({ expect }) =>
     app(
       expect,
       {
@@ -496,6 +582,10 @@ describe.ifNotWindows("LinuxPackager", () => {
       },
       {
         expectedArtifacts: ["Test App-1.0.0-x64.zip"],
+        packed: async result => {
+          const desktopFilePath = path.resolve(result.outDir, "testapp.desktop")
+          expect(await fs.pathExists(desktopFilePath)).toBe(false)
+        },
       }
     ))
 

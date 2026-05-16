@@ -87,11 +87,11 @@ export interface CommonLinuxOptions {
    * Customize the desktop file entries.
    * The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files).
    *
-   * For AppImage and Snap targets, the desktop file is ALWAYS generated and ALWAYS included in the package - not emitted as a separate artifact.
+   * For AppImage and Snap targets, the desktop file is ALWAYS generated and ALWAYS included in the package — this option does not suppress it for those targets.
    *
-   * For other "Archive" targets (dir, zip, tar, etc.), the desktop file will not be generated or included by default, but if you specify this option, it will be generated and emitted as a separate artifact.
-   * Set to `true` to produce a desktop file with default options, `false`/`null`/`undefined` to disable.
-   * @default undefined
+   * For archive targets (zip, 7z, tar.xz, tar.lz, tar.gz, tar.bz2), no desktop file is emitted by default.
+   * Set to a `LinuxDesktopFile` object or `true` to emit a standalone `.desktop` artifact alongside the archive.
+   * Set to `false`, `null`, or omit to suppress.
    */
   readonly desktop?: LinuxDesktopFile | boolean | null
 
