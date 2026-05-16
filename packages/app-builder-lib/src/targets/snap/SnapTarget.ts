@@ -9,6 +9,7 @@ import { LinuxTargetHelper } from "../LinuxTargetHelper"
 import { createStageDirPath } from "../targetUtil"
 import { SnapcraftYAML } from "./snapcraft"
 
+/** Abstract base for all snap build strategies (core24, legacy core18/20/22, custom pass-through). */
 export abstract class SnapCore<T> {
   protected abstract defaultPlugs: Array<string>
 
@@ -19,9 +20,11 @@ export abstract class SnapCore<T> {
   ) {}
 
   abstract createDescriptor(arch: Arch): Promise<SnapcraftYAML>
+  // snapArch is passed through to subclasses; SnapCoreLegacy forwards it to app-builder as --arch.
   abstract buildSnap(params: { snap: SnapcraftYAML; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<void>
 }
 
+/** Snap build target — merges `snapcraft` (preferred) and legacy `snap` config, then delegates to the appropriate `SnapCore` strategy. */
 export default class SnapTarget extends Target {
   readonly options: SnapcraftOptions | SnapOptions
 
@@ -37,6 +40,7 @@ export default class SnapTarget extends Target {
       config: { snapcraft, snap },
       platformSpecificBuildOptions,
     } = packager
+    // compression lives on the per-core options (e.g. core24.compression), not on the shared linux options.
     const { compression: _ignored, ...overlappingOptions } = platformSpecificBuildOptions
 
     this.options = {

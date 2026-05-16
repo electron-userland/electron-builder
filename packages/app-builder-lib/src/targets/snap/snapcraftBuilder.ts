@@ -15,13 +15,13 @@ export const DEFAULT_STAGE_PACKAGES: string[] = ["libnspr4", "libnss3", "libxss1
 interface BuildSnapOptions {
   /** The snapcraft YAML configuration */
   snapcraftConfig: SnapcraftYAML
-  /** The source files to package */
+  /** Working directory where snapcraft.yaml is written and the build executes */
   stageDir: string
   /** Whether to use remote build (builds on Launchpad) */
   remoteBuild?: RemoteBuildOptions
   /** Whether to use LXD for local builds */
   useLXD?: boolean
-  /** Whether to use Multipass for local builds (default on macOS/Windows) */
+  /** Whether to use Multipass for local builds */
   useMultipass?: boolean
   /** Whether to use destructive mode (builds directly on host, Linux only) */
   useDestructiveMode?: boolean
@@ -30,13 +30,11 @@ interface BuildSnapOptions {
 }
 
 /**
- * Validates snapcraft.yaml using snapcraft's built-in validation
- * This runs snapcraft expand-extensions which validates without building
+ * Validates snapcraft.yaml using snapcraft's built-in `expand-extensions` command.
+ * Failures are non-fatal: a warning is logged and the build continues.
  */
 async function validateSnapcraftYamlWithCLI(workDir: string): Promise<void> {
   try {
-    // Run expand-extensions to validate the YAML
-    // This checks syntax, required fields, and expands extensions
     const { stdout } = await execAsync("snapcraft expand-extensions", {
       cwd: workDir,
       timeout: 30000,
@@ -236,9 +234,7 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string> {
 
   if (!remoteBuild?.enabled && !useLXD && !useMultipass && !useDestructiveMode && process.platform !== "linux") {
     throw new InvalidConfigurationError(
-      `No snap build environment specified for ${process.platform}. ` +
-        `Set one of: snapcraft.core24.useMultipass, snapcraft.core24.useLXD (Linux only), ` +
-        `or snapcraft.core24.remoteBuild.enabled`
+      `No snap build environment specified for ${process.platform}. Set one of: useMultipass, useLXD (Linux only), useDestructiveMode (Linux only), or remoteBuild.enabled`
     )
   }
 
@@ -281,7 +277,6 @@ async function ensureSnapcraftInstalled(): Promise<void> {
       log.error(null, "Install with: sudo snap install snapcraft --classic")
     } else if (platform === "darwin") {
       log.error(null, "Install with: brew install snapcraft")
-      log.error(null, "Then setup: sudo snap install snapcraft --classic (if snap is installed)")
     } else if (platform === "win32") {
       log.error(null, "Install snapcraft via WSL2 or use remote-build")
       log.error(null, "See: https://snapcraft.io/docs/snapcraft-overview")
@@ -464,9 +459,8 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
       log.debug({ timeout: `${remoteBuild.timeout}s` }, "build timeout configured")
     }
 
-    // Remote-build downloads finished snaps into the working directory.
-    // Use --output-dir (not --output <file>) so snapcraft places every built
-    // snap (one per architecture) directly into workDir where we can find them.
+    // Remote-build downloads the finished snap into workDir.
+    // --output-dir (not --output <file>) lets snapcraft name the file itself.
     args.push("--output-dir", workDir)
     if (log.isDebugEnabled) {
       args.push("--verbose")

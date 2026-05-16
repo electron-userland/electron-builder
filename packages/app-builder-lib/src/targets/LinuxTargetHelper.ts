@@ -3,9 +3,7 @@ import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { join } from "path"
 import * as semver from "semver"
-import { Configuration } from "../configuration"
 import { LinuxPackager } from "../linuxPackager"
-import { SnapcraftOptions, SnapOptions } from "../options/SnapOptions"
 import { LinuxTargetSpecificOptions } from "../options/linuxOptions"
 import { IconInfo } from "../platformPackager"
 import { SnapCore } from "./snap/SnapTarget"
@@ -34,9 +32,14 @@ export class LinuxTargetHelper {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getSnapCore(): SnapCore<any> {
-    const snapcraft = this.resolveSnapcraftConfig(this.packager.config)
+    const { snapcraft, snap: legacySnap } = this.packager.config
+    if (snapcraft != null && legacySnap != null) {
+      throw new InvalidConfigurationError(
+        `Cannot specify both \`snapcraft\` and \`snap\` configurations. Please migrate all \`snap\` configuration to \`snapcraft.<core>\` and remove \`snap\` configuration.`
+      )
+    }
     if (snapcraft != null) {
-      const core = snapcraft.base || "core24"
+      const core = snapcraft.base
       switch (core) {
         case "core18":
         case "core20":
@@ -60,9 +63,17 @@ export class LinuxTargetHelper {
           return new SnapCoreCustom(this.packager, this, snapcraft.custom || {})
       }
     }
-    // Backward compat: flat `snap` key maps directly to the legacy build path.
-    const legacySnap = this.resolveLegacySnapConfig(this.packager.config) ?? {}
-    return new SnapCoreLegacy(this.packager, this, legacySnap)
+
+    if (legacySnap != null) {
+      log.warn(
+        {
+          reason: "snap configuration is deprecated",
+          docs: "https://www.electron.build/snapcraft",
+        },
+        "Please migrate snap configuration to snapcraft.<core> and remove snap configuration"
+      )
+    }
+    return new SnapCoreLegacy(this.packager, this, legacySnap!)
   }
 
   isElectronVersionGreaterOrEqualThan(version: string, fallback?: string): boolean {
@@ -256,14 +267,6 @@ export class LinuxTargetHelper {
       data += "\n"
     }
     return Promise.resolve(data)
-  }
-
-  private resolveSnapcraftConfig(config: Configuration): SnapcraftOptions | null {
-    return config.snapcraft ?? null
-  }
-
-  private resolveLegacySnapConfig(config: Configuration): SnapOptions | null {
-    return config.snap ?? null
   }
 }
 

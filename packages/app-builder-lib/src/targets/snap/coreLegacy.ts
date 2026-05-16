@@ -9,7 +9,8 @@ import { SnapCore } from "./SnapTarget"
 import { DEFAULT_STAGE_PACKAGES } from "./snapcraftBuilder"
 import { SnapcraftYAML } from "./snapcraft"
 
-// Leverages legacy implementation through app-builder-bin https://github.com/develar/app-builder/blob/master/pkg/package-format/snap
+// Handles core18/core20/core22 snaps via the app-builder binary (not the snapcraft CLI).
+// See: https://github.com/develar/app-builder/blob/master/pkg/package-format/snap
 export class SnapCoreLegacy extends SnapCore<SnapOptions> {
   private isUseTemplateApp = false
 
@@ -17,6 +18,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
 
   private replaceDefault(inList: Array<string> | Nullish, defaultList: Array<string>) {
     const result = _replaceDefault(inList, defaultList)
+    // Any customisation opts out of the pre-built template app.
     if (result !== defaultList) {
       this.isUseTemplateApp = false
     }
@@ -40,6 +42,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
     const stageSet = new Set(stagePackages)
     const stageMatchesDefaults = stagePackages.length === DEFAULT_STAGE_PACKAGES.length && DEFAULT_STAGE_PACKAGES.every((p: string) => stageSet.has(p))
 
+    // Template app is only available for x64/armv7l, and only when no packages are customised.
     this.isUseTemplateApp = this.options.useTemplateApp !== false && (arch === Arch.x64 || arch === Arch.armv7l) && buildPackages.length === 0 && stageMatchesDefaults
 
     const appDescriptor: any = {

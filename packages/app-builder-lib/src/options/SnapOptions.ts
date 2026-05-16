@@ -15,26 +15,26 @@ export interface SnapcraftOptions extends TargetSpecificOptions {
    */
   readonly base: "core18" | "core20" | "core22" | "core24" | "custom"
   /**
-   * core18; Migrates configuration from the legacy `snap` field for backward compatibility, but only applies if the core is selected in `base`.
+   * Configuration for a core18 build. Only active when `base` is `"core18"`.
    */
   readonly core18?: SnapOptionsLegacy | null
   /**
-   * core20; Migrates configuration from the legacy `snap` field for backward compatibility, but only applies if the core is selected in `base`.
+   * Configuration for a core20 build. Only active when `base` is `"core20"`.
    */
   readonly core20?: SnapOptionsLegacy | null
   /**
-   * core22; Migrates configuration from the legacy `snap` field for backward compatibility, but only applies if the core is selected in `base`.
+   * Configuration for a core22 build. Only active when `base` is `"core22"`.
    */
   readonly core22?: SnapOptionsLegacy | null
 
   /**
-   * [Beta support] Options for building a core24 snap. This is a fresh, forward-looking interface that does not extend the legacy `SnapBaseOptions`.
-   * Inherits desktop-entry fields from `CommonLinuxOptions` (categories, mimeTypes, executableArgs, etc.) and publish configuration from `TargetSpecificOptions`.
+   * **[Beta]** Options for building a core24 snap. Uses the snapcraft CLI directly (not the app-builder binary).
+   * Inherits desktop-entry fields from `CommonLinuxOptions` and publish config from `TargetSpecificOptions`.
    * @beta
    */
   readonly core24?: SnapOptions24 | null
   /**
-   * [Beta support] Pass-through custom snap configuration. electron-builder will read the
+   * **[Beta]** Pass-through custom snap configuration. electron-builder will read the
    * snapcraft.yaml at `yamlPath` and use it verbatim — no plugs, extensions,
    * organize mappings, or desktop files are injected.
    * @beta
@@ -221,16 +221,19 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
 
   /**
    * Allow the snap to run with native Wayland support (`--ozone-platform=wayland`).
-   * Disabled by default due to compatibility issues in some Electron/snap combinations.
-   * @default false
+   * Defaults to `false` for Electron < 38 (legacy behaviour); `true` for Electron ≥ 38.
+   * Set explicitly to override the version-based default.
    */
   readonly allowNativeWayland?: boolean | null
 }
 
 /**
  * Configuration for a remote snap build on [Launchpad](https://launchpad.net/).
- * Remote builds run on Canonical's infrastructure and support multiple architectures
- * (amd64, arm64, armhf) without requiring native hardware or nested virtualisation.
+ * Remote builds run on Canonical's infrastructure without requiring native hardware or nested virtualisation.
+ *
+ * Each electron-builder build invocation targets exactly one architecture — to build for multiple
+ * architectures, configure the top-level `arch` option (e.g. `arch: ["x64", "arm64"]`); each arch
+ * spawns a separate `snapcraft remote-build` job on Launchpad.
  *
  * Authentication is resolved in this order:
  * 1. `cscLink` config field — base64-encoded credentials or a file path
@@ -319,10 +322,11 @@ export interface RemoteBuildOptions {
 }
 
 /**
- * Options for building a core24 snap. This is a fresh, forward-looking interface that does
- * not extend the legacy `SnapBaseOptions`. It inherits desktop-entry fields from
+ * **[Beta]** Options for building a core24 snap. This interface does not extend the legacy
+ * `SnapBaseOptions` — it uses the snapcraft CLI directly. Inherits desktop-entry fields from
  * `CommonLinuxOptions` (categories, mimeTypes, executableArgs, etc.) and publish
  * configuration from `TargetSpecificOptions`.
+ * @beta
  */
 export interface SnapOptions24 extends CommonLinuxOptions, TargetSpecificOptions {
   // ─── Build environment (mutually exclusive) ─────────────────────────────────
@@ -361,7 +365,8 @@ export interface SnapOptions24 extends CommonLinuxOptions, TargetSpecificOptions
 
   /**
    * Configuration for a remote build on [Launchpad](https://launchpad.net/).
-   * Enables multi-architecture builds (amd64, arm64, armhf) in CI without native hardware.
+   * Enables cross-architecture builds in CI without native hardware or nested virtualisation.
+   * Each build invocation targets one arch; use `arch: ["x64", "arm64"]` to build for multiple.
    */
   readonly remoteBuild?: RemoteBuildOptions | null
 

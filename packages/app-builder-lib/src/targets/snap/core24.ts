@@ -8,7 +8,10 @@ import { buildSnap, DEFAULT_STAGE_PACKAGES, SNAPCRAFT_YAML_OPTIONS } from "./sna
 import * as yaml from "js-yaml"
 import { Nullish } from "builder-util-runtime"
 
+/** Snap build strategy for core24 — generates a native snapcraft.yaml and invokes the snapcraft CLI. */
 export class SnapCore24 extends SnapCore<SnapOptions24> {
+  // browser-support is intentionally absent here; it is auto-injected in mapSnapOptionsToSnapcraftYAML
+  // when the user has not provided custom plugs, so it always lands in both root plugs and app plugs.
   defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 
   // Snap file hierarchy:
@@ -25,6 +28,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     return this.options.useDestructiveMode === true
   }
 
+  /** Writes the snapcraft.yaml, stages app files, then invokes `buildSnap()` to run the actual snapcraft build. */
   async buildSnap(params: { snap: SnapcraftYAML; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<void> {
     const { snap, appOutDir, stageDir, artifactPath } = params
 
@@ -114,6 +118,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     })
   }
 
+  /** Converts `SnapOptions24` into a fully resolved `SnapcraftYAML` descriptor for the given architecture. */
   async mapSnapOptionsToSnapcraftYAML(arch: Arch): Promise<SnapcraftYAML> {
     const appInfo = this.packager.appInfo
     const appName = this.packager.executableName.toLowerCase()
@@ -219,7 +224,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     // Create the app configuration
     const app: App = {
       command: `app/${this.packager.executableName}`,
-      "command-chain": undefined,
+      "command-chain": undefined, // explicitly undefined so removeNullish strips it; extensions supply their own command-chain
       plugs: appPlugs,
       slots: appSlots,
       autostart: options.autoStart ? `${appName}.desktop` : undefined,
@@ -273,7 +278,6 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       grade: options.grade || "stable",
       title: options.title || appInfo.productName,
       icon: iconPath,
-      // license: appInfo.metadata?.license,
 
       // Build configuration
       compression: options.compression || undefined,
