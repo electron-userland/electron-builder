@@ -66,6 +66,7 @@ markdown_extensions:
   - pymdownx.keys
   - pymdownx.mark
   - pymdownx.tilde
+  - def_list
   - toc:
       permalink: true
       toc_depth: 5

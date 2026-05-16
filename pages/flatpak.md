@@ -144,7 +144,7 @@ flatpak:
 
 ```yaml
 flatpak:
-  useWaylandFlags: true   # Sets ELECTRON_OZONE_PLATFORM_HINT=auto
+  useWaylandFlags: true   # Appends --enable-features=UseOzonePlatform --ozone-platform=wayland when running under a Wayland session
 ```
 
 ## Local Testing

@@ -38,7 +38,7 @@ msi:
   upgradeCode: "{A1234567-BCDE-F012-3456-789ABCDEF012}"
 ```
 
-If not specified, a deterministic GUID is generated from the application name. Explicitly setting it is strongly recommended for production.
+If not specified, a deterministic GUID is generated from the app ID (`appId`). Explicitly setting it is strongly recommended for production.
 
 ## One-Click Installation
 

@@ -191,7 +191,7 @@ docker run --rm \
   /bin/bash -c "npm ci && npx electron-builder --linux"
 ```
 
-### Building macOS Packages on Windows (AppX via VM)
+### Building AppX on macOS (via Parallels VM)
 
 For AppX (Windows Store), `MakeAppx.exe` requires Windows. When building on macOS with Parallels Desktop (Pro Edition), electron-builder automatically detects and uses the running Windows VM.
 

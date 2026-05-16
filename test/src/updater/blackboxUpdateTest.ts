@@ -583,7 +583,7 @@ async function runTestWithinServer(doTest: (rootDirectory: string, updateConfigP
   if (vm && !serverHost) {
     throw new Error("Cannot determine Parallels host IP for update server — no prl*/bridge* interface found")
   }
-  const { server, port } = await createLocalServer(root, serverHost!)
+  const { server, port } = await createLocalServer(root, serverHost)
 
   const serverConfig: GenericServerOptions = { provider: "generic", url: `http://${serverHost}:${port}` }
   let updateConfig: string

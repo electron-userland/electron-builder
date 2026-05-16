@@ -50,8 +50,8 @@ export interface CommonNsisOptions {
 
   /**
    * The GUID for the installer. Used to identify the application for upgrade and uninstall operations.
-   * If not specified, a deterministic GUID is generated from the application name — but this means
-   * renaming your app will break silent upgrades of existing installs.
+   * If not specified, a deterministic GUID is generated from the app ID (`appId`) — but this means
+   * changing your `appId` will break silent upgrades of existing installs.
    *
    * @see [GUID vs Application Name](./nsis.md#guid-vs-application-name)
    */
@@ -64,8 +64,7 @@ export interface CommonNsisOptions {
   readonly warningsAsErrors?: boolean
 
   /**
-   * @private
-   * @internal Forces zip compression format instead of LZMA. Used internally for differential update packages.
+   * Forces zip compression format instead of LZMA. Used internally for differential update packages.
    * @default false
    */
   readonly useZip?: boolean
@@ -208,11 +207,9 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
   readonly deleteAppDataOnUninstall?: boolean
 
   /**
-   * @private
-   * @internal Marks the package as built with differential download support for the update server.
-   * Not intended for direct user configuration.
+   * Marks the package as built with differential download support for the update server.
    */
-  differentialPackage?: boolean
+  readonly differentialPackage?: boolean
 
   /**
    * Whether to display a language selection dialog. Not recommended (by default will be detected using OS language).

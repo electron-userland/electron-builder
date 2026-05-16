@@ -90,7 +90,7 @@ export interface CommonConfiguration {
    */
   readonly msi?: MsiOptions | null
   /**
-   * MSI-wrapped installer optionss.
+   * MSI-wrapped installer options.
    */
   readonly msiWrapped?: MsiWrappedOptions | null
   /**

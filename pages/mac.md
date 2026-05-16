@@ -10,7 +10,7 @@ electron-builder supports several macOS distribution formats. Choose based on yo
 | `zip` | Update servers (electron-updater), minimal package | Yes | Yes |
 | `pkg` | System-level installs, kernel extensions, launch daemons | Yes | Yes |
 | `mas` | Mac App Store distribution | Yes (Mac App Distribution) | No (MAS handles it) |
-| `mas-dev` | Local testing of MAS builds | Yes (Developer ID) | No |
+| `mas-dev` | Local testing of MAS builds | Yes (Apple Development / Mac Developer) | No |
 | `7z`, `tar.*` | Archive formats, custom CDN distribution | Optional | Optional |
 | `dir` | Development/debugging — unpacked app | No | No |
 

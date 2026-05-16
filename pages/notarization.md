@@ -55,26 +55,14 @@ API keys don't expire and don't require two-factor authentication, making them i
 3. Download the `.p8` file (only downloadable once)
 4. Note the **Key ID** and **Issuer ID**
 
-Then set one of the following:
+Then set the following environment variables:
 
 ```bash
-# Option 1: path to the .p8 file
-APPLE_API_KEY_PATH=/path/to/AuthKey_KEYID.p8
-APPLE_API_KEY_ID=KEYID
-APPLE_API_ISSUER=your-issuer-id
-
-# Option 2: base64-encoded key (for CI secrets)
+# base64-encode the .p8 file for use as a CI secret
 APPLE_API_KEY=<base64-encoded-p8-content>
 APPLE_API_KEY_ID=KEYID
 APPLE_API_ISSUER=your-issuer-id
-```
-
-In `package.json` or `electron-builder.yml`:
-
-```yaml
-mac:
-  notarize:
-    teamId: ABCDE12345
+APPLE_TEAM_ID=ABCDE12345
 ```
 
 ## Hardened Runtime Requirements
