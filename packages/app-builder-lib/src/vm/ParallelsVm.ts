@@ -33,7 +33,6 @@ export async function parseVmList(debugLogger: DebugLogger) {
   return result
 }
 
-/** @internal */
 export class ParallelsVmManager extends VmManager {
   private startPromise: Promise<any>
 

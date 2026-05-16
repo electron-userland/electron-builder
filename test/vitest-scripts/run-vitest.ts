@@ -8,7 +8,7 @@ import { SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN } from "./smart-con
 import SmartSequencer from "./vitest-smart-sequencer"
 
 const testRegex = TEST_FILES_PATTERN?.split(",")
-const includeRegex = `(${testRegex.join("|")})`
+const includeRegex = `(${testRegex.join("|")}|${testRegex.map(t => `${t}Test`).join("|")})`
 console.log("TEST_FILES pattern", includeRegex)
 
 async function main() {
@@ -58,6 +58,7 @@ async function main() {
 
     maxWorkers: "50%",
 
+    fileParallelism: false,
     sequence: {
       sequencer: SmartSequencer,
       concurrent: process.env.TEST_SEQUENTIAL === "false",
