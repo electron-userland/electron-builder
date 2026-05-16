@@ -19,7 +19,6 @@ out/
 /scripts/jsdoc/out/
 /scripts/renderer/out/
 
-docs/
 site/
 
 electron-builder-*.d.ts

@@ -1,6 +1,12 @@
 import { themes as prismThemes } from "prism-react-renderer"
 import type { Config } from "@docusaurus/types"
 import type * as Preset from "@docusaurus/preset-classic"
+import { fileURLToPath } from "node:url"
+import { dirname, join } from "node:path"
+import remarkInclude from "./src/remark/remark-include.mjs"
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const docsDir = join(__dirname, "docs")
 
 const config: Config = {
   title: "electron-builder",
@@ -18,7 +24,6 @@ const config: Config = {
   projectName: "electron-builder",
 
   onBrokenLinks: "warn",
-  onBrokenMarkdownLinks: "warn",
 
   i18n: {
     defaultLocale: "en",
@@ -39,6 +44,7 @@ const config: Config = {
         includeVersion: true,
         disableSources: true,
         cleanOutputDir: false,
+        flattenOutputFiles: true,
         hideGroupHeadings: true,
         hidePageTitle: true,
         hidePageHeader: true,
@@ -71,6 +77,7 @@ const config: Config = {
           sidebarPath: "./sidebars.ts",
           editUrl: "https://github.com/electron-userland/electron-builder/edit/master/website/",
           routeBasePath: "/",
+          remarkPlugins: [[remarkInclude, { docsDir }]],
         },
         blog: false,
         theme: {
