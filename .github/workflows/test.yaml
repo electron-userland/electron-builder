@@ -200,6 +200,15 @@ jobs:
           cache-path: ${{ matrix.cache-path }}
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
 
+      - name: Pre-initialize NuGet IsolatedStorage
+        shell: pwsh
+        run: |
+          # NuGet 2.x (bundled in the Squirrel.Windows vendor) uses IsolatedStorageFile.GetUserStoreForAssembly()
+          # for user settings. On fresh Windows CI runners this directory may not exist, causing the first
+          # NuGet invocation to fail with IsolatedStorageException (0x80131468). Pre-creating it lets
+          # the CLR create its hashed subdirectory without error.
+          New-Item -ItemType Directory -Force -Path "$env:LOCALAPPDATA\IsolatedStorage" | Out-Null
+
       - name: Run shard
         run: pnpm ci:test
         env:
