@@ -25,6 +25,10 @@ const config: Config = {
 
   onBrokenLinks: "warn",
 
+  markdown: {
+    format: "detect",
+  },
+
   i18n: {
     defaultLocale: "en",
     locales: ["en"],
@@ -36,6 +40,7 @@ const config: Config = {
       {
         entryPoints: ["../packages/*"],
         entryPointStrategy: "packages",
+        tsconfig: "../packages/tsconfig-base.json",
         out: "./docs/api",
         excludeExternals: true,
         excludePrivate: true,
