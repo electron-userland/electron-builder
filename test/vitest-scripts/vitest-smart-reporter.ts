@@ -12,7 +12,10 @@ const defaultStat: TestStats = {
   heavy: false,
 }
 
+export const TEST_SRC_ROOT = path.resolve(__dirname, "../src")
+
 const shouldResetSnapshot = process.env.RESET_VITEST_SHARD_CACHE === "true"
+
 export default class SmarterReporter implements Reporter {
   private readonly cache = shouldResetSnapshot ? { tests: {}, files: {} } : loadCache()
   private readonly fileDurations = new Map<string, number>()
@@ -57,7 +60,7 @@ export default class SmarterReporter implements Reporter {
       heavy: isHeavy,
     }
 
-    const file = path.basename(test.module.moduleId)
+    const file = path.relative(TEST_SRC_ROOT, test.module.moduleId)
     this.fileDurations.set(file, (this.fileDurations.get(file) ?? 0) + dur)
     if (failed) {
       this.fileFails.set(file, (this.fileFails.get(file) ?? 0) + 1)
@@ -68,7 +71,7 @@ export default class SmarterReporter implements Reporter {
   }
 
   onTestModuleEnd(mod: TestModule) {
-    const file = path.basename(mod.moduleId)
+    const file = path.relative(TEST_SRC_ROOT, mod.moduleId)
     const dur = this.fileDurations.get(file) ?? 0
     const fails = this.fileFails.get(file) ?? 0
     const hasHeavy = this.fileHasHeavy.get(file) ?? false
