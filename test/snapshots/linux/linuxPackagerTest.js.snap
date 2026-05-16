@@ -42,8 +42,6 @@ exports[`LinuxPackager > AppImage toolset 0.0.0 > AppImage - default icon, custo
 }
 `;
 
-exports[`LinuxPackager > AppImage toolset 0.0.0 > AppImage - deprecated systemIntegration 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
-
 exports[`LinuxPackager > AppImage toolset 0.0.0 > AppImage 1`] = `
 {
   "linux": [
@@ -112,40 +110,6 @@ exports[`LinuxPackager > AppImage toolset 0.0.0 > AppImage arm, max compression 
 }
 `;
 
-exports[`LinuxPackager > AppImage toolset 0.0.0 > html license 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0.AppImage",
-      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
-}
-`;
-
-exports[`LinuxPackager > AppImage toolset 0.0.0 > text license and file associations 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0.AppImage",
-      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
-}
-`;
-
 exports[`LinuxPackager > AppImage toolset 1.0.2 > AppImage - default icon, custom executable and custom desktop 1`] = `
 "[Desktop Entry]
 Name=Test App ßW
@@ -185,8 +149,6 @@ exports[`LinuxPackager > AppImage toolset 1.0.2 > AppImage - default icon, custo
   ],
 }
 `;
-
-exports[`LinuxPackager > AppImage toolset 1.0.2 > AppImage - deprecated systemIntegration 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
 
 exports[`LinuxPackager > AppImage toolset 1.0.2 > AppImage 1`] = `
 {
@@ -256,40 +218,6 @@ exports[`LinuxPackager > AppImage toolset 1.0.2 > AppImage arm, max compression 
 }
 `;
 
-exports[`LinuxPackager > AppImage toolset 1.0.2 > html license 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0.AppImage",
-      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
-}
-`;
-
-exports[`LinuxPackager > AppImage toolset 1.0.2 > text license and file associations 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0.AppImage",
-      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
-}
-`;
-
 exports[`LinuxPackager > AppImage toolset 1.0.3 > AppImage - default icon, custom executable and custom desktop 1`] = `
 "[Desktop Entry]
 Name=Test App ßW
@@ -329,8 +257,6 @@ exports[`LinuxPackager > AppImage toolset 1.0.3 > AppImage - default icon, custo
   ],
 }
 `;
-
-exports[`LinuxPackager > AppImage toolset 1.0.3 > AppImage - deprecated systemIntegration 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
 
 exports[`LinuxPackager > AppImage toolset 1.0.3 > AppImage 1`] = `
 {
@@ -394,40 +320,6 @@ exports[`LinuxPackager > AppImage toolset 1.0.3 > AppImage arm, max compression 
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.1.0",
-      },
-    },
-  ],
-}
-`;
-
-exports[`LinuxPackager > AppImage toolset 1.0.3 > html license 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0.AppImage",
-      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
-}
-`;
-
-exports[`LinuxPackager > AppImage toolset 1.0.3 > text license and file associations 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0.AppImage",
-      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
       },
     },
   ],
@@ -500,7 +392,7 @@ Categories=Development;
 "
 `;
 
-exports[`LinuxPackager > disable desktop file output 1`] = `
+exports[`LinuxPackager > disable desktop file output (desktop: false) 1`] = `
 {
   "linux": [
     {
@@ -511,7 +403,7 @@ exports[`LinuxPackager > disable desktop file output 1`] = `
 }
 `;
 
-exports[`LinuxPackager > disable desktop file output 2`] = `
+exports[`LinuxPackager > disable desktop file output (desktop: null) 1`] = `
 {
   "linux": [
     {
@@ -658,6 +550,34 @@ It is required to set Linux .deb package maintainer. Or you can set maintainer i
 "
 `;
 
+exports[`LinuxPackager > tar.gz with desktop 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0.tar.gz",
+    },
+    {
+      "arch": "x64",
+      "file": "testapp.desktop",
+    },
+  ],
+}
+`;
+
+exports[`LinuxPackager > tar.gz with desktop 2`] = `
+"[Desktop Entry]
+Name=Test App
+Exec="/opt/Test App ßW/testapp" %U
+Terminal=false
+Type=Application
+Icon=testapp
+StartupWMClass=Test App ßW
+Comment=Test Comment
+Categories=Development;
+"
+`;
+
 exports[`LinuxPackager > text license and file associations 1`] = `
 {
   "linux": [
@@ -699,6 +619,35 @@ Type=Application
 Icon=testapp
 StartupWMClass=Test App ßW
 Comment=Test Comment
+Categories=Development;
+"
+`;
+
+exports[`LinuxPackager > zip with mimeTypes (protocol registration) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0.zip",
+    },
+    {
+      "arch": "x64",
+      "file": "testapp.desktop",
+    },
+  ],
+}
+`;
+
+exports[`LinuxPackager > zip with mimeTypes (protocol registration) 2`] = `
+"[Desktop Entry]
+Name=Test App
+Exec="/opt/Test App ßW/testapp" %U
+Terminal=false
+Type=Application
+Icon=testapp
+StartupWMClass=Test App ßW
+Comment=Test Comment
+MimeType=x-scheme-handler/myapp;
 Categories=Development;
 "
 `;

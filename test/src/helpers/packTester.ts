@@ -445,6 +445,15 @@ async function packAndCheck(
   const { outDir, platformToTargets } = await packager.build()
   await publishManager.awaitTasks()
 
+  if (checkOptions.expectedArtifacts != null) {
+    const actualFilenames = Array.from(artifacts.values())
+      .flat()
+      .map(a => path.basename(a.file ?? ""))
+      .filter(Boolean)
+      .sort()
+    expect(actualFilenames).toEqual([...checkOptions.expectedArtifacts].sort())
+  }
+
   if (packagerOptions.platformPackagerFactory != null) {
     return { packager, outDir }
   }

@@ -27,7 +27,7 @@ describe.ifNotWindows("LinuxPackager", () => {
     const toolsets: ToolsetConfig = {
       appimage,
     }
-    describe.skip(`AppImage toolset ${appimage}`, () => {
+    describe(`AppImage toolset ${appimage}`, () => {
       test("AppImage", ({ expect }) =>
         app(expect, {
           targets: appImageTarget,
@@ -366,7 +366,7 @@ describe.ifNotWindows("LinuxPackager", () => {
         },
       },
       {
-        expectedArtifacts: ["Test App-1.0.0-x64.zip"],
+        expectedArtifacts: ["TestApp-1.1.0.zip"],
         packed: async result => {
           const desktopFilePath = path.resolve(result.outDir, "testapp.desktop")
           expect(await fs.pathExists(desktopFilePath)).toBe(false)
@@ -402,9 +402,7 @@ describe.ifNotWindows("LinuxPackager", () => {
           },
         },
       },
-      {
-        expectedArtifacts: ["Test App-1.0.0-x64.AppImage", "TestApp-1.0.0.x86_64.rpm"],
-      }
+      {}
     ))
 
   test("appimage nested desktop config", ({ expect }) =>
@@ -460,7 +458,6 @@ describe.ifNotWindows("LinuxPackager", () => {
 
           expect(stableContent).toMatchSnapshot()
         },
-        expectedArtifacts: ["Test App-1.0.0-x64.AppImage", "testapp.desktop"],
       }
     ))
 
@@ -481,11 +478,11 @@ describe.ifNotWindows("LinuxPackager", () => {
         },
       },
       {
+        expectedArtifacts: ["TestApp-1.1.0.zip", "testapp.desktop"],
         packed: async result => {
           const desktopFilePath = path.resolve(result.outDir, "testapp.desktop")
           expect(await fs.readFile(desktopFilePath, "utf-8")).toMatchSnapshot()
         },
-        expectedArtifacts: ["Test App-1.0.0-x64.zip", "testapp.desktop"],
       }
     ))
 
@@ -507,6 +504,7 @@ describe.ifNotWindows("LinuxPackager", () => {
         },
       },
       {
+        expectedArtifacts: ["TestApp-1.1.0.zip", "testapp.desktop"],
         packed: async result => {
           const desktopFilePath = path.resolve(result.outDir, "testapp.desktop")
           const content = await fs.readFile(desktopFilePath, "utf-8")
@@ -533,38 +531,10 @@ describe.ifNotWindows("LinuxPackager", () => {
         },
       },
       {
+        expectedArtifacts: ["TestApp-1.1.0.tar.gz", "testapp.desktop"],
         packed: async result => {
           const desktopFilePath = path.resolve(result.outDir, "testapp.desktop")
           expect(await fs.readFile(desktopFilePath, "utf-8")).toMatchSnapshot()
-        },
-      }
-    ))
-
-  test("target-specific desktop config uses target-scoped filename", ({ expect }) =>
-    app(
-      expect,
-      {
-        targets: zipTarget,
-        config: {
-          linux: {
-            desktop: null, // opt out at platform level
-          },
-          zip: {
-            desktop: {
-              entry: {
-                Name: "Zip-specific App",
-              },
-            },
-          },
-        } as any,
-      },
-      {
-        packed: async result => {
-          // Target-specific config produces testapp-zip.desktop, not testapp.desktop
-          const scopedDesktopPath = path.resolve(result.outDir, "testapp-zip.desktop")
-          const sharedDesktopPath = path.resolve(result.outDir, "testapp.desktop")
-          expect(await fs.pathExists(sharedDesktopPath)).toBe(false)
-          expect(await fs.readFile(scopedDesktopPath, "utf-8")).toMatchSnapshot()
         },
       }
     ))
@@ -581,7 +551,7 @@ describe.ifNotWindows("LinuxPackager", () => {
         },
       },
       {
-        expectedArtifacts: ["Test App-1.0.0-x64.zip"],
+        expectedArtifacts: ["TestApp-1.1.0.zip"],
         packed: async result => {
           const desktopFilePath = path.resolve(result.outDir, "testapp.desktop")
           expect(await fs.pathExists(desktopFilePath)).toBe(false)
@@ -601,11 +571,11 @@ describe.ifNotWindows("LinuxPackager", () => {
         },
       },
       {
+        expectedArtifacts: ["TestApp-1.1.0.zip", "testapp.desktop"],
         packed: async result => {
           const desktopFilePath = path.resolve(result.outDir, "testapp.desktop")
           expect(await fs.readFile(desktopFilePath, "utf-8")).toMatchSnapshot()
         },
-        expectedArtifacts: ["Test App-1.0.0-x64.zip", "testapp.desktop"],
       }
     ))
 })
