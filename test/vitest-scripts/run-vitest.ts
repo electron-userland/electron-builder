@@ -51,16 +51,14 @@ async function main() {
     // Allow test metadata
     includeTaskLocation: true,
     setupFiles: [__dirname + "/vitest-setup.ts", __dirname + "/vitest-heavy-mutex.ts"],
-    include: [`test/src/**/*${includeRegex}.ts`],
+    include: [`test/src/**/${includeRegex}.ts`],
 
     printConsoleTrace: true,
     reporters: ["default", __dirname + "/vitest-smart-reporter.ts"],
 
     maxWorkers: "50%",
 
-    // Updater tests need to run sequentially to avoid issues with shared resources (e.g. VMs, temp directories, installer directories).
-    // We can enable parallelism for other tests to speed up the test run, but we disable it for updater tests to ensure stability.
-    fileParallelism: ["blackboxupdate", "msi"].some(t => includeRegex.toLowerCase().includes(t)) ? false : true,
+    fileParallelism: false,
     sequence: {
       sequencer: SmartSequencer,
       concurrent: process.env.TEST_SEQUENTIAL === "false",
