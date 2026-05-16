@@ -40,24 +40,6 @@ exports[`mac concurrent 1`] = `
   "mac": [
     {
       "arch": "x64",
-      "file": "Test Concurrent-1.1.0-x64.dmg",
-      "safeArtifactName": "Test-Concurrent-1.1.0-x64.dmg",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "arm64",
-      "file": "Test Concurrent-1.1.0-arm64.dmg",
-      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.dmg",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "x64",
       "file": "Test Concurrent-1.1.0-x64.zip",
       "safeArtifactName": "Test-Concurrent-1.1.0-x64.zip",
       "updateInfo": {
@@ -75,24 +57,8 @@ exports[`mac concurrent 1`] = `
       },
     },
     {
-      "file": "Test Concurrent-1.1.0-arm64.dmg.blockmap",
-      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.dmg.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
       "file": "Test Concurrent-1.1.0-arm64.zip.blockmap",
       "safeArtifactName": "Test Concurrent-1.1.0-arm64.zip.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "Test Concurrent-1.1.0-x64.dmg.blockmap",
-      "safeArtifactName": "Test-Concurrent-1.1.0-x64.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -197,24 +163,6 @@ exports[`mac/win/linux concurrent 1`] = `
   "mac": [
     {
       "arch": "x64",
-      "file": "Test Concurrent-1.1.0-x64.dmg",
-      "safeArtifactName": "Test-Concurrent-1.1.0-x64.dmg",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "arm64",
-      "file": "Test Concurrent-1.1.0-arm64.dmg",
-      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.dmg",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "x64",
       "file": "Test Concurrent-1.1.0-x64.zip",
       "safeArtifactName": "Test-Concurrent-1.1.0-x64.zip",
       "updateInfo": {
@@ -232,24 +180,8 @@ exports[`mac/win/linux concurrent 1`] = `
       },
     },
     {
-      "file": "Test Concurrent-1.1.0-arm64.dmg.blockmap",
-      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.dmg.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
       "file": "Test Concurrent-1.1.0-arm64.zip.blockmap",
       "safeArtifactName": "Test Concurrent-1.1.0-arm64.zip.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "Test Concurrent-1.1.0-x64.dmg.blockmap",
-      "safeArtifactName": "Test-Concurrent-1.1.0-x64.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",

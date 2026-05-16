@@ -225,6 +225,13 @@ async function downloadArtifactToFile(config: Parameters<typeof get.downloadArti
     timeout: { request: 10 * 60 * 1000 }, // prevent indefinite hang on stalled connections
     ...config.downloadOptions,
     getProgressCallback: info => {
+      // @electron/get passes downloadOptions (including this callback) to its internal
+      // SHASUMS256.txt validation download. That file is tiny (<1 MB) and fires at 100%
+      // immediately, producing a spurious bar even when the artifact itself is cached.
+      // Skip progress display for any download whose total size is known and small.
+      if (info.total && info.total < 1_000_000) {
+        return Promise.resolve()
+      }
       if (!state.bar && process.stdout.isTTY) {
         log.info({ label }, "downloading")
         state.bar = new MultiProgress().createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent | ${label}`, { total: 100 })
@@ -259,6 +266,9 @@ async function downloadArtifactToFile(config: Parameters<typeof get.downloadArti
     if (!(await exists(filePath))) {
       log.warn({ filePath, label }, "cached artifact missing from disk; retrying with cache write")
       filePath = await get.downloadArtifact({ ...configWithProgress, cacheMode: ElectronDownloadCacheMode.WriteOnly })
+    }
+    if (!state.bar && lastLoggedMilestone === -1) {
+      log.info({ label }, "using cached artifact")
     }
     return filePath
   } finally {
