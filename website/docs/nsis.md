@@ -1,3 +1,7 @@
+---
+title: "NSIS"
+---
+
 The top-level `nsis` key (see [configuration](./configuration.md)) contains set of options instructing electron-builder on how it should build NSIS target (default target for Windows).
 
 These options also applicable for [Web installer](#web-installer), use top-level `nsisWeb` key.

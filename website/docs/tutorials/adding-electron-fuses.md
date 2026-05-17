@@ -1,3 +1,7 @@
+---
+title: "Adding Electron Fuses"
+---
+
 :::note
 Information below has been partially copied from integration with [@electron/fuses](https://github.com/electron/fuses) and [electron tutorial](https://raw.githubusercontent.com/electron/electron/refs/heads/main/docs/tutorial/fuses.md) for easier reading/access.
 :::

@@ -1,3 +1,7 @@
+---
+title: "Linux"
+---
+
 The top-level [linux](configuration.md) key contains set of options instructing electron-builder on how it should build Linux targets. These options applicable for any Linux target.
 
 ## Linux Target Overview

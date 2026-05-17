@@ -1,3 +1,7 @@
+---
+title: "Programmatic Usage"
+---
+
 ```javascript
 "use strict"
 

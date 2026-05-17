@@ -1,3 +1,7 @@
+---
+title: "File Patterns"
+---
+
 * `*` Matches 0 or more characters in a single path portion
 * `?` Matches 1 character
 * `[...]` Matches a range of characters, similar to a RegExp range.

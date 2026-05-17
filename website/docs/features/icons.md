@@ -1,3 +1,7 @@
+---
+title: "Icons"
+---
+
 Recommended tools: [Icon Composer](https://developer.apple.com/icon-composer/), [AppIcon Generator](http://www.tweaknow.com/appicongenerator.php), [MakeAppIcon](https://makeappicon.com/).
 
 ## macOS

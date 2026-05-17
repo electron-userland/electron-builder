@@ -1,3 +1,7 @@
+---
+title: "Squirrel.Windows"
+---
+
 The top-level `squirrelWindows` key (see [configuration](./configuration.md)) contains set of options instructing electron-builder on how it should build Squirrel.Windows.
 
 Squirrel.Windows target is maintained, but deprecated. Please use [nsis](nsis.md) instead.

@@ -1,3 +1,7 @@
+---
+title: "MSI Wrapped"
+---
+
 The top-level [msiWrapped](configuration.md) key contains set of options instructing electron-builder on how it should build Windows MSI-Wrapped packages.
 
 :::note[Experimental]

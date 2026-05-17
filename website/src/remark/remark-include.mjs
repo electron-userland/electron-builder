@@ -31,9 +31,9 @@ function headingText(node) {
 }
 
 /**
- * Stamp `data.hProperties.id` on every heading node so that the remark→rehype
- * bridge writes a proper HTML id attribute — even though Docusaurus's own
- * heading-id plugin ran before us and won't see our dynamically inserted nodes.
+ * Pre-stamp `data.hProperties.id` on every heading node injected from included
+ * files. Docusaurus's TOC extraction reads this field directly; pre-stamping
+ * ensures the TOC id matches the rendered HTML id attribute.
  */
 function stampHeadingIds(nodes) {
   const seen = new Map()

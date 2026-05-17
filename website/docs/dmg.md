@@ -1,3 +1,7 @@
+---
+title: "DMG"
+---
+
 The top-level [dmg](configuration.md) key contains set of options instructing electron-builder on how it should build [DMG](https://en.wikipedia.org/wiki/Apple_Disk_Image) (macOS disk image) files.
 
 ## When to Use DMG

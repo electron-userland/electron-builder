@@ -1,3 +1,7 @@
+---
+title: "Two Package Structure"
+---
+
 :::info
 Since version 8 electron-builder rebuilds only production dependencies, so, you are not forced to use two package.json structure.
 :::

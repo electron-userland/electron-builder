@@ -1,3 +1,7 @@
+---
+title: "Loading App Dependencies Manually"
+---
+
 :::warning
 Important: This approach must be used only in development environment.
 Since the release version of your application the `app` directory should self contain all used files.

@@ -36,6 +36,16 @@ const config: Config = {
   },
 
   plugins: [
+    function suppressPagefindWarning() {
+      return {
+        name: "suppress-pagefind-warning",
+        configureWebpack() {
+          return {
+            ignoreWarnings: [/Critical dependency: the request of a dependency is an expression/],
+          }
+        },
+      }
+    },
     [
       // backwards compatibility for old links, e.g. https://www.electron.build/cli
       "@docusaurus/plugin-client-redirects",

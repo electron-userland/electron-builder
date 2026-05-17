@@ -1,3 +1,7 @@
+---
+title: "Auto Update"
+---
+
 Auto updates are enabled by the `electron-updater` package. Ideally, auto updates are configured to run in a CI pipeline to automatically provision new releases. See [publish configuration](../publish.md) for information on how to configure your local or CI environment for automated deployments.
 
 Auto updates work as follows:
