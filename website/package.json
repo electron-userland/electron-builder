@@ -16,16 +16,17 @@
   "dependencies": {
     "@docusaurus/core": "3.10.1",
     "@docusaurus/faster": "3.10.1",
+    "@docusaurus/plugin-client-redirects": "^3.10.1",
     "@docusaurus/preset-classic": "3.10.1",
     "@mdx-js/react": "^3.0.0",
     "clsx": "^2.0.0",
     "docusaurus-plugin-typedoc": "^1.4.0",
+    "mdast-util-from-markdown": "^2.0.0",
     "prism-react-renderer": "^2.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "typedoc": "^0.28.0",
     "typedoc-plugin-markdown": "^4.8.0",
-    "mdast-util-from-markdown": "^2.0.0",
     "unist-util-visit": "^5.0.0"
   },
   "devDependencies": {

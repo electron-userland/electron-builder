@@ -37,6 +37,16 @@ const config: Config = {
 
   plugins: [
     [
+      "@docusaurus/plugin-client-redirects",
+      {
+        createRedirects(toPath: string) {
+          if (toPath.startsWith("/docs/") && toPath !== "/docs/") {
+            return [toPath.replace("/docs/", "/")]
+          }
+        },
+      },
+    ],
+    [
       "docusaurus-plugin-typedoc",
       {
         entryPoints: ["../packages/*"],
@@ -86,7 +96,7 @@ const config: Config = {
         docs: {
           sidebarPath: "./sidebars.ts",
           editUrl: "https://github.com/electron-userland/electron-builder/edit/master/website/",
-          routeBasePath: "/",
+          routeBasePath: "/docs",
           remarkPlugins: [[remarkInclude, { docsDir }], remarkFixAnchors],
           exclude: ["api/!(index).md"],
         },
@@ -124,9 +134,9 @@ const config: Config = {
         {
           title: "Docs",
           items: [
-            { label: "Introduction", to: "/" },
-            { label: "CLI", to: "/cli" },
-            { label: "Configuration", to: "/configuration" },
+            { label: "Introduction", to: "/docs" },
+            { label: "CLI", to: "/docs/cli" },
+            { label: "Configuration", to: "/docs/configuration" },
           ],
         },
         {
