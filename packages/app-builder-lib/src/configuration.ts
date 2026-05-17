@@ -428,7 +428,7 @@ export interface MetadataDirectories {
   readonly buildResources?: string | null
 
   /**
-   * The output directory. [File macros](./file-patterns.md#file-macros) are supported.
+   * The output directory. [File macros](https://www.electron.build/file-patterns#file-macros) are supported.
    * @default dist
    */
   readonly output?: string | null

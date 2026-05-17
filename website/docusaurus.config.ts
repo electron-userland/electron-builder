@@ -71,6 +71,10 @@ const config: Config = {
           hideValues: false,
           leftAlignHeaders: false,
         },
+        validation: {
+          notExported: false,
+          invalidLink: false,
+        },
       },
     ],
   ],
@@ -84,10 +88,7 @@ const config: Config = {
           editUrl: "https://github.com/electron-userland/electron-builder/edit/master/website/",
           routeBasePath: "/",
           remarkPlugins: [[remarkInclude, { docsDir }], remarkFixAnchors],
-          // Exclude individual TypeDoc API files from Docusaurus compilation.
-          // remark-include reads them via fs.readFileSync, so includes still work.
-          // Only api/packages.md (the package index) and api/index.md are compiled as pages.
-          exclude: ["api/!(index|packages).md"],
+          exclude: ["api/!(index).md"],
         },
         blog: false,
         theme: {

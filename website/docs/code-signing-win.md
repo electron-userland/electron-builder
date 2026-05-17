@@ -11,7 +11,7 @@ To sign an app on Windows, there are two types of certificates:
 
 Both certificates work with auto-update. The regular (and often cheaper) Code Signing Certificate shows a warning during installation that goes away once enough users installed your application and you've built up trust. The EV Certificate has more trust and thus works immediately without any warnings. However, it is not possible to export the EV Certificate as it is bound to a physical USB dongle. Thus, you can't export the certificate for signing code on a CI, such as AppVeyor.
 
-If you are using an EV Certificate, you need to provide `certificateSubjectName` in your [win configuration](./win.md).
+If you are using an EV Certificate, you need to provide [`certificateSubjectName`](#certificatesubjectname) in your win configuration.
 
 If you use Windows 7, please ensure that [PowerShell](https://blogs.technet.microsoft.com/heyscriptingguy/2013/06/02/weekend-scripter-install-powershell-3-0-on-windows-7/) is updated to version 3.0.
 
@@ -39,9 +39,8 @@ Additional fields can be provided under `win.azureSignOptions` that are passed d
 Second, provide the appropriate environment variables to the build action. Descriptions of each variable can be found in [Azure.Identity class - EnvironmentCredential Class](https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition). You only need to provide the environment variables that are listed in the table corresponding to which authentication method you choose to use.
 
 :::tip
+If you use the minimal setup using an "App registration" that is described above, the section "Service principal with secret" applies to you. In this case, you only need the Tenant ID, Client ID, and Client Secret.
 :::
-
-  If you use the minimal setup using an "App registration" that is described above, the section "Service principal with secret" applies to you. In this case, you only need the Tenant ID, Client ID, and Client Secret.
 
 | Env Name                              |  Description                                                                                            |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------- |
@@ -52,3 +51,15 @@ Second, provide the appropriate environment variables to the build action. Descr
 | `AZURE_CLIENT_SEND_CERTIFICATE_CHAIN` | Required if you bring your own certificate.                                                             |
 | `AZURE_USERNAME`                      | The username for your Microsoft Entra account.                                                          |
 | `AZURE_PASSWORD`                      | The password for your Microsoft Entra account.                                                          |
+
+## Azure Signing Configuration
+
+The top-level `win.azureSignOptions` key contains set of options for Azure Trusted Signing.
+
+{!./app-builder-lib.Interface.WindowsAzureSigningConfiguration.md!}
+
+## Signtool Configuration
+
+The top-level `win.signtoolOptions` key contains options for classic signtool.exe-based code signing.
+
+{!./app-builder-lib.Interface.WindowsSigntoolConfiguration.md!}

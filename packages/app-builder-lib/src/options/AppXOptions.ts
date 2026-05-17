@@ -19,7 +19,7 @@ export interface AppXOptions extends TargetSpecificOptions {
   readonly displayName?: string | null
 
   /**
-   * The name. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx). Defaults to the [application name](./configuration.md#metadata).
+   * The name. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx). Defaults to the [application name](https://www.electron.build/configuration#metadata).
    */
   readonly identityName?: string | null
 

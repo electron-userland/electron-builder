@@ -31,48 +31,49 @@ Keep in mind — if you customize NSIS script, you should always state about it 
 1. Add file `build/installer.nsh`.
 2. Define wanted macro to customise: `customHeader`, `preInit`, `customInit`, `customUnInit`, `customInstall`, `customUnInstall`, `customRemoveFiles`, `customInstallMode`, `customWelcomePage`, `customUnWelcomePage`, `customUnInstallSection`.
 
-    !!! example
-        ```nsis
-        !macro customHeader
-          !system "echo '' > ${BUILD_RESOURCES_DIR}/customHeader"
-        !macroend
+:::note[Example]
+```nsis
+!macro customHeader
+  !system "echo '' > ${BUILD_RESOURCES_DIR}/customHeader"
+!macroend
 
-        !macro preInit
-          ; This macro is inserted at the beginning of the NSIS .OnInit callback
-          !system "echo '' > ${BUILD_RESOURCES_DIR}/preInit"
-        !macroend
+!macro preInit
+  ; This macro is inserted at the beginning of the NSIS .OnInit callback
+  !system "echo '' > ${BUILD_RESOURCES_DIR}/preInit"
+!macroend
 
-        !macro customInit
-          !system "echo '' > ${BUILD_RESOURCES_DIR}/customInit"
-        !macroend
+!macro customInit
+  !system "echo '' > ${BUILD_RESOURCES_DIR}/customInit"
+!macroend
 
-        !macro customInstall
-          !system "echo '' > ${BUILD_RESOURCES_DIR}/customInstall"
-        !macroend
+!macro customInstall
+  !system "echo '' > ${BUILD_RESOURCES_DIR}/customInstall"
+!macroend
 
-        !macro customInstallMode
-          # set $isForceMachineInstall or $isForceCurrentInstall
-          # to enforce one or the other modes.
-        !macroend
+!macro customInstallMode
+  # set $isForceMachineInstall or $isForceCurrentInstall
+  # to enforce one or the other modes.
+!macroend
 
-        !macro customWelcomePage
-          # Welcome Page is not added by default for installer.
-          !insertMacro MUI_PAGE_WELCOME
-        !macroend
+!macro customWelcomePage
+  # Welcome Page is not added by default for installer.
+  !insertMacro MUI_PAGE_WELCOME
+!macroend
 
-        !macro customUnWelcomePage
-          !define MUI_WELCOMEPAGE_TITLE "custom title for uninstaller welcome page"
-          !define MUI_WELCOMEPAGE_TEXT "custom text for uninstaller welcome page $\r$\n more"
-          !insertmacro MUI_UNPAGE_WELCOME
-        !macroend
+!macro customUnWelcomePage
+  !define MUI_WELCOMEPAGE_TITLE "custom title for uninstaller welcome page"
+  !define MUI_WELCOMEPAGE_TEXT "custom text for uninstaller welcome page $\r$\n more"
+  !insertmacro MUI_UNPAGE_WELCOME
+!macroend
 
-        !macro customUnInstallSection
-          Section /o "un.Some cool checkbox"
-            ; You can add some uninstall section as component page
-            ; If defined, then always run after `customUnInstall`
-          SectionEnd
-        !macroend
-        ```
+!macro customUnInstallSection
+  Section /o "un.Some cool checkbox"
+    ; You can add some uninstall section as component page
+    ; If defined, then always run after `customUnInstall`
+  SectionEnd
+!macroend
+```
+:::
 
 * `BUILD_RESOURCES_DIR` and `PROJECT_DIR` are defined.
 * `build` is added as `addincludedir` (i.e. you don't need to use `BUILD_RESOURCES_DIR` to include files).
@@ -89,7 +90,7 @@ If you want to include additional resources for use during installation, such as
 !macroend
 ```
 
-:::details[Is there a way to call just when the app is installed (or uninstalled) manually and not on update?]
+:::tip[Is there a way to call just when the app is installed (or uninstalled) manually and not on update?]
 Use `${isUpdated}`.
 
 ```nsis
@@ -124,7 +125,7 @@ For portable app, following environment variables are available:
 
 ## Common Questions
 
-:::details[How do change the default installation directory to custom?]
+:::tip[How do change the default installation directory to custom?]
 
 It is very specific requirement. Do not do if you are not sure. Add [custom macro](#custom-nsis-script):
 
@@ -140,7 +141,7 @@ It is very specific requirement. Do not do if you are not sure. Add [custom macr
 ```
 :::
 
-:::details[Is it possible to made single installer that will allow configuring user/machine installation?]
+:::tip[Is it possible to made single installer that will allow configuring user/machine installation?]
 
 Yes, you need to switch to assisted installer (not default one-click).
 

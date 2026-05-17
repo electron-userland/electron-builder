@@ -21,8 +21,8 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly target?: Array<MacOsTargetName | TargetConfiguration> | MacOsTargetName | TargetConfiguration | null
 
   /**
-   * The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](./code-signing.md) instead of specifying this option.
-   * MAS installer identity is specified in the [mas](./mas.md).
+   * The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://www.electron.build/code-signing) instead of specifying this option.
+   * MAS installer identity is specified in the [mas](https://www.electron.build/mas).
    *
    * Set to `-` to use an ad-hoc identity for signing. Set to `null` to skip signing entirely.
    */
@@ -38,7 +38,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
 
   /**
    * The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set).
-   * MAS entitlements is specified in the [mas](./mas.md).
+   * MAS entitlements is specified in the [mas](https://www.electron.build/mas).
    * See [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.
    * Be aware that your app may crash if the right entitlements are not set like `com.apple.security.cs.allow-jit` for example on arm64 builds with Electron 20+.
    * See [Signing and Notarizing macOS Builds from the Electron documentation](https://www.electronjs.org/docs/latest/tutorial/code-signing#signing--notarizing-macos-builds) for more information.
@@ -255,12 +255,12 @@ export interface DmgOptions extends TargetSpecificOptions {
   backgroundColor?: string | null
 
   /**
-   * The path to DMG icon (badge icon), which will be shown when mounted, relative to the [build resources](./contents.md#extraresources) or to the project directory.
+   * The path to DMG icon (badge icon), which will be shown when mounted, relative to the [build resources](https://www.electron.build/contents#extraresources) or to the project directory.
    */
   badgeIcon?: string | null
 
   /**
-   * The path to DMG icon (volume icon), which will be shown when mounted, relative to the [build resources](./contents.md#extraresources) or to the project directory.
+   * The path to DMG icon (volume icon), which will be shown when mounted, relative to the [build resources](https://www.electron.build/contents#extraresources) or to the project directory.
    * Defaults to the application icon (`build/icon.icns`).
    */
   icon?: string | null
