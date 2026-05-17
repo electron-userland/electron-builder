@@ -10,6 +10,8 @@ import * as path from "path"
 import { install as installSourceMap } from "source-map-support"
 import { getPath7za } from "./7za"
 import { debug, log } from "./log"
+import { exists } from "./fs"
+import { mkdir } from "fs-extra"
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
@@ -24,6 +26,7 @@ export { DebugLogger } from "./DebugLogger"
 export * from "./log"
 export { httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor"
 export * from "./promise"
+export { parseValidEnvVarUrl } from "./envUtil"
 
 export { asArray } from "builder-util-runtime"
 export * from "./fs"
@@ -43,17 +46,18 @@ export function serializeToYaml(object: any, skipInvalid = false, noRefs = false
 }
 
 export function removePassword(input: string): string {
-  const blockList = ["--accessKey", "--secretKey", "-P", "-p", "-pass", "-String", "/p", "pass:"]
+  // Sensitive parameter stems — any of `-`, `--`, or `/` prefix is accepted for all stems.
+  // `pass:` is intentionally absent; the dedicated pass: handler below covers it without double-processing.
+  const sensitiveStems = ["accessKey", "secretKey", "passphrase", "password", "secret", "token", "String", "pass", "p"]
+  const stemAlt = sensitiveStems.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")
+  // (?:--?|/) matches -, --, or / prefix. Longest stems listed first to minimise backtracking.
+  // (?<!\S) / (?=[\s"']|$) word-boundary guards prevent matching -path, -StringLength, etc.
+  const flagPattern = new RegExp(`(?<!\\S)((?:--?|/)(?:${stemAlt}))(?=[\\s"']|$)\\s*(?:(["'])(.*?)\\2|([^\\s]+))`, "gi")
 
-  // Create a regex pattern that supports:
-  //   - space-separated unquoted values: --key value
-  //   - quoted values: --key "value with spaces" or 'value with spaces'
-  const blockPattern = new RegExp(`(${blockList.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})\\s*(?:(["'])(.*?)\\2|([^\\s]+))`, "g")
-
-  input = input.replace(blockPattern, (_match, prefix, quote, quotedVal, unquotedVal) => {
+  input = input.replace(flagPattern, (_match, prefix, quote, quotedVal, unquotedVal) => {
     const value = quotedVal ?? unquotedVal
 
-    if (prefix.trim() === "/p" && value.startsWith("\\\\Mac\\Host\\\\")) {
+    if (prefix.trim().toLowerCase() === "/p" && value.startsWith("\\\\Mac\\Host\\")) {
       return `${prefix} ${quote ?? ""}${value}${quote ?? ""}`
     }
 
@@ -61,11 +65,29 @@ export function removePassword(input: string): string {
     return `${prefix} ${quote ?? ""}${hashed} (sha256 hash)${quote ?? ""}`
   })
 
-  // Also handle `/b ... /c` block format
+  // pass:value — colon acts as separator; handles both pass:secret (no space) and pass: secret (space)
+  // Quoted phrases (pass:'a b c' or pass:"a b c") are captured in full so the whole phrase is hashed.
+  input = input.replace(/(?<!\S)pass:\s*(?:(["'])(.*?)\1|([^\s]+))/gi, (_match, quote, quotedVal, unquotedVal) => {
+    const value = quotedVal ?? unquotedVal
+    const hashed = createHash("sha256").update(value).digest("hex")
+    return quote ? `pass:${quote}${hashed} (sha256 hash)${quote}` : `pass:${hashed} (sha256 hash)`
+  })
+
+  // /b … /c block format
   return input.replace(/(\/b\s+)(.*?)(\s+\/c)/g, (_match, p1, p2, p3) => {
     const hashed = createHash("sha256").update(p2).digest("hex")
     return `${p1}${hashed} (sha256 hash)${p3}`
   })
+}
+
+const SENSITIVE_ENV_KEY_RE = /KEY|TOKEN|SECRET|PASSWORD|PASS|CREDENTIAL|CSC/i
+
+export function filterSensitiveEnv(env: Record<string, string | undefined>): Record<string, string | undefined> {
+  const out: Record<string, string | undefined> = {}
+  for (const [k, v] of Object.entries(env)) {
+    out[k] = SENSITIVE_ENV_KEY_RE.test(k) && v != null ? `${createHash("sha256").update(v).digest("hex")} (sha256 hash)` : v
+  }
+  return out
 }
 
 function getProcessEnv(env: Record<string, string | undefined> | Nullish): NodeJS.ProcessEnv | undefined {
@@ -104,7 +126,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
             delete diffEnv[name]
           }
         }
-        logFields.env = safeStringifyJson(diffEnv)
+        logFields.env = safeStringifyJson(filterSensitiveEnv(diffEnv))
       }
     }
 
@@ -305,6 +327,18 @@ export function isEmptyOrSpaces(s: string | Nullish): s is "" | Nullish {
 
 export function isTokenCharValid(token: string) {
   return /^[.\w/=+-]+$/.test(token)
+}
+
+export async function getUserDefinedCacheDir() {
+  let cacheEnv = process.env.ELECTRON_BUILDER_CACHE
+  if (!isEmptyOrSpaces(cacheEnv)) {
+    cacheEnv = path.resolve(cacheEnv)
+    if (!(await exists(cacheEnv))) {
+      await mkdir(cacheEnv)
+    }
+    return cacheEnv
+  }
+  return undefined
 }
 
 export function addValue<K, T>(map: Map<K, Array<T>>, key: K, value: T) {

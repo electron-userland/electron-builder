@@ -200,6 +200,15 @@ jobs:
           cache-path: ${{ matrix.cache-path }}
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
 
+      - name: Pre-initialize NuGet IsolatedStorage
+        shell: pwsh
+        run: |
+          # NuGet 2.x (bundled in the Squirrel.Windows vendor) uses IsolatedStorageFile.GetUserStoreForAssembly()
+          # for user settings. On fresh Windows CI runners this directory may not exist, causing the first
+          # NuGet invocation to fail with IsolatedStorageException (0x80131468). Pre-creating it lets
+          # the CLR create its hashed subdirectory without error.
+          New-Item -ItemType Directory -Force -Path "$env:LOCALAPPDATA\IsolatedStorage" | Out-Null
+
       - name: Run shard
         run: pnpm ci:test
         env:
@@ -370,28 +379,28 @@ jobs:
       fail-fast: false
       matrix:
         test_config:
-          - file: dockerfile-archlinux
+          - stem: archlinux
             env:
               PACKAGE_MANAGER_TO_TEST: pacman
-          - file: dockerfile-rpm
+          - stem: rpm
             env:
               PACKAGE_MANAGER_TO_TEST: dnf
-          - file: dockerfile-rpm
+          - stem: rpm
             env:
               PACKAGE_MANAGER_TO_TEST: zypper
-          - file: dockerfile-rpm
+          - stem: rpm
             env:
               PACKAGE_MANAGER_TO_TEST: yum
-          - file: dockerfile-rpm
+          - stem: rpm
             env:
               PACKAGE_MANAGER_TO_TEST: rpm
-          - file: dockerfile-debian
+          - stem: debian
             env:
               PACKAGE_MANAGER_TO_TEST: apt
-          - file: dockerfile-debian
+          - stem: debian
             env:
               PACKAGE_MANAGER_TO_TEST: dpkg
-          - file: dockerfile-appimage
+          - stem: appimage
             env:
               RUN_APP_IMAGE_TEST: true
     steps:
@@ -406,17 +415,16 @@ jobs:
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
 
       - name: docker build
-        run: |
-          docker build --platform=linux/amd64 -t ${{ matrix.test_config.file }} -f ./test/src/updater/${{ matrix.test_config.file }} .
+        run: ./test/src/updater/test-specific-platforms.sh ${{ matrix.test_config.stem }} build
 
       - name: e2e Linux Updater tests (install, auto-update, uninstall)
-        run: |
-          pnpm test-linux
+        run: ./test/src/updater/test-specific-platforms.sh ${{ matrix.test_config.stem }} run
         env:
-          TEST_RUNNER_IMAGE_TAG: ${{ matrix.test_config.file }}
-          TEST_FILES: blackboxUpdateTest,linuxUpdaterTest
-          DEBUG: electron-updater,electron-builder
-          ADDITIONAL_DOCKER_ARGS: "-e PACKAGE_MANAGER_TO_TEST=${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST }} -e RUN_APP_IMAGE_TEST=${{ matrix.test_config.env.RUN_APP_IMAGE_TEST || false }} -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}"
+          ADDITIONAL_DOCKER_ARGS: >-
+            -e PACKAGE_MANAGER_TO_TEST=${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST || '' }}
+            -e RUN_APP_IMAGE_TEST=${{ matrix.test_config.env.RUN_APP_IMAGE_TEST || false }}
+            -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json
+            -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}
 
       - name: Upload smart cache artifact
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1

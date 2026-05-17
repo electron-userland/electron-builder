@@ -1,6 +1,7 @@
 import { DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
-import { downloadArtifact } from "app-builder-lib/out/binDownload"
-import { exec, executeFinally, exists, isEmptyOrSpaces, TmpDir } from "builder-util"
+import { downloadBuilderToolset } from "app-builder-lib/out/util/electronGet"
+import { exec, executeFinally, exists, InvalidConfigurationError, isEmptyOrSpaces, log, TmpDir } from "builder-util"
+import { stat } from "fs/promises"
 import { writeFile } from "fs-extra"
 import * as path from "path"
 import { DmgBuildConfig } from "./dmg"
@@ -17,19 +18,32 @@ export function getDmgTemplatePath() {
 async function getDmgVendorPath(): Promise<string> {
   const customDmgbuildPath = process.env.CUSTOM_DMGBUILD_PATH?.trim()
   if (customDmgbuildPath) {
-    return path.resolve(customDmgbuildPath)
+    const resolvedPath = path.resolve(customDmgbuildPath)
+    let dmgbuildStat: Awaited<ReturnType<typeof stat>>
+    try {
+      dmgbuildStat = await stat(resolvedPath)
+    } catch (e: any) {
+      if (e.code === "ENOENT") {
+        throw new Error(`CUSTOM_DMGBUILD_PATH "${resolvedPath}" does not exist`)
+      }
+      throw e
+    }
+    if (!dmgbuildStat.isFile()) {
+      throw new Error(`CUSTOM_DMGBUILD_PATH "${resolvedPath}" is not a regular file`)
+    }
+    log.warn({ path: resolvedPath }, "using CUSTOM_DMGBUILD_PATH override for dmgbuild binary")
+    return resolvedPath
   }
 
-  // https://github.com/electron-userland/electron-builder-binaries/releases/tag/dmg-builder%401.2.0
-  const releaseVersion = "75c8a6c"
-  const arch = process.arch === "arm64" ? "arm64" : "x86_64"
+  // https://github.com/electron-userland/electron-builder-binaries/releases/tag/dmg-builder%401.2.2
   const config = {
-    "dmgbuild-bundle-arm64-75c8a6c.tar.gz": "a785f2a385c8c31996a089ef8e26361904b40c772d5ea65a36001212f1fc25e0",
-    "dmgbuild-bundle-x86_64-75c8a6c.tar.gz": "87b3bb72148b11451ee90ede79cc8d59305c9173b68b0f2b50a3bea51fc4a4e2",
+    "dmgbuild-bundle-arm64-75c8a6c.tar.gz": "28be390d4cfade51d872c42016bc56712bb240525c9f21ebbfa0b413ade1fe0f",
+    "dmgbuild-bundle-x86_64-75c8a6c.tar.gz": "97d4ac0d2137383d37d02df3338bf653b6e6095d033508458ef195d567d25071",
   }
-  const filename: keyof typeof config = `dmgbuild-bundle-${arch}-${releaseVersion}.tar.gz`
-  const file = await downloadArtifact({
-    releaseName: "dmg-builder@1.2.0",
+  const arch = process.arch === "arm64" ? "arm64" : "x86_64"
+  const filename: keyof typeof config = `dmgbuild-bundle-${arch}-75c8a6c.tar.gz`
+  const file = await downloadBuilderToolset({
+    releaseName: "dmg-builder@1.2.2",
     filenameWithExt: filename,
     checksums: config,
     githubOrgRepo: "electron-userland/electron-builder-binaries",
@@ -180,6 +194,16 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
   if (!isEmptyOrSpaces(settings.background)) {
     const size = await getImageSizeUsingSips(settings.background)
     settings.window = { position: { x: 400, y: Math.round((1440 - size.height) / 2) }, size, ...settings.window }
+  }
+
+  const workspaceRoot = await packager.info.getWorkspaceRoot()
+  for (const item of settings.contents ?? []) {
+    if (item.type === "file" && item.path && path.isAbsolute(item.path)) {
+      if (!item.path.startsWith(workspaceRoot + path.sep) && item.path !== appPath) {
+        log.error({ contentPath: item.path }, "dmg.contents path is outside the workspace root — verify this is intentional")
+        throw new InvalidConfigurationError(`dmg.contents path "${item.path}" is outside the workspace root`)
+      }
+    }
   }
 
   const settingsFile = await packager.getTempFile(".json")

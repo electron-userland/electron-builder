@@ -11,7 +11,7 @@
     "prettier": "prettier 'packages/**/*.{ts,js}' 'test/{vitest-scripts,src}/**/*.ts' --write",
     "///": "Please see https://github.com/electron-userland/electron-builder/blob/master/CONTRIBUTING.md#run-test-using-cli how to run particular test instead full (and very slow) run",
     "test-all": "pnpm compile && pnpm pretest && pnpm ci:test",
-    "test-linux": "docker run --rm -e CI=${CI:-false} -e DEBUG=${DEBUG:-} -e VITEST_SHARD_INDEX=${VITEST_SHARD_INDEX:-} -e VITEST_SHARD_COUNT=${VITEST_SHARD_COUNT:-} -e UPDATE_SNAPSHOT=\"${UPDATE_SNAPSHOT:-false}\" -e TEST_FILES=\"${TEST_FILES:-}\" -w /project -v $(pwd):/project -v $(pwd)-node-modules:/project/node_modules -v $HOME/Library/Caches/electron:/root/.cache/electron -v $HOME/Library/Caches/electron-builder:/root/.cache/electron-builder ${ADDITIONAL_DOCKER_ARGS} ${TEST_RUNNER_IMAGE_TAG:-electronuserland/builder:22-wine-mono} /bin/bash -c \"bash ./docker/test-in-docker.sh\"",
+    "test-linux": "docker run --rm -e CI=${CI:-false} -e DEBUG=${DEBUG:-} -e VITEST_SHARD_INDEX=${VITEST_SHARD_INDEX:-} -e VITEST_SHARD_COUNT=${VITEST_SHARD_COUNT:-} -e UPDATE_SNAPSHOT=\"${UPDATE_SNAPSHOT:-false}\" -e TEST_FILES=\"${TEST_FILES:-}\" -w /project -v $(pwd):/project -v $(pwd)/node-modules-docker:/project/node_modules -v ${ELECTRON_CACHE_PATH:-$HOME/Library/Caches/electron}:/root/.cache/electron -v ${ELECTRON_BUILDER_CACHE_PATH:-$HOME/Library/Caches/electron-builder}:/root/.cache/electron-builder ${ADDITIONAL_DOCKER_ARGS} ${TEST_RUNNER_IMAGE_TAG:-electronuserland/builder:22-wine-mono} /bin/bash -c \"bash ./docker/test-in-docker.sh\"",
     "ci:test": "ts-node test/vitest-scripts/run-vitest.ts",
     "ci:test:count": "ts-node test/vitest-scripts/smart-shard-count.ts",
     "ci:validate": "pnpm compile && pnpm pretest && pnpm generate-all",
@@ -65,11 +65,5 @@
     "node": ">=14.14",
     "pnpm": ">=10"
   },
-  "packageManager": "pnpm@10.18.0+sha512.e804f889f1cecc40d572db084eec3e4881739f8dec69c0ff10d2d1beff9a4e309383ba27b5b750059d7f4c149535b6cd0d2cb1ed3aeb739239a4284a68f40cfa",
-  "pnpm": {
-    "patchedDependencies": {
-      "@changesets/cli@2.29.7": "patches/@changesets__cli@2.29.7.patch",
-      "@changesets/assemble-release-plan@6.0.9": "patches/@changesets__assemble-release-plan@6.0.9.patch"
-    }
-  }
+  "packageManager": "pnpm@11.1.0+sha512.0c44e842e5686b2c061a81adda8b2258bd8818e9704b2cf2c63d56b931a7b2e910092e085027003b96ca3911ab56a07f6df5abaed2be9925034cdd686a535b14"
 }

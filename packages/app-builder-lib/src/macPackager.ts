@@ -330,7 +330,16 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       filter = filter.length === 0 ? null : [filter]
     }
 
-    const filterRe = filter == null ? null : filter.map(it => new RegExp(it))
+    const filterRe =
+      filter == null
+        ? null
+        : filter.map(it => {
+            try {
+              return new RegExp(it)
+            } catch (e: any) {
+              throw new InvalidConfigurationError(`Invalid regex filter pattern: ${it}. ${e.message}`)
+            }
+          })
 
     let binaries = options.binaries || undefined
     if (binaries) {
@@ -457,6 +466,19 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       }
     }
 
+    const projectDir = await this.info.getWorkspaceRoot()
+    const blockExternalLoadPath = (p: string | null | undefined, label: string) => {
+      if (p && path.isAbsolute(p)) {
+        if (!p.startsWith(projectDir + path.sep) && p !== projectDir) {
+          log.error({ path: p, label }, "entitlements path is outside the workspace directory")
+          throw new InvalidConfigurationError(`Entitlements ${label} must be located inside the workspace directory`)
+        }
+      }
+    }
+    blockExternalLoadPath(customSignOptions.entitlements, "entitlements")
+    blockExternalLoadPath(customSignOptions.entitlementsInherit, "entitlementsInherit")
+    blockExternalLoadPath(customSignOptions.entitlementsLoginHelper, "entitlementsLoginHelper")
+
     const requirements = isMas || this.platformSpecificBuildOptions.requirements == null ? undefined : await this.getResource(this.platformSpecificBuildOptions.requirements)
 
     // harden by default for mac builds. Only harden mas builds if explicitly true (backward compatibility)
@@ -478,7 +500,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
 
   //noinspection JSMethodCanBeStatic
   protected async doSign(opts: SignOptions, customSignOptions: MacConfiguration, identity: Identity | null): Promise<void> {
-    const customSign = await resolveFunction(this.appInfo.type, customSignOptions.sign, "sign")
+    const customSign = await resolveFunction(this.appInfo.type, customSignOptions.sign, "sign", await this.info.getWorkspaceRoot())
 
     const { app, platform, type, provisioningProfile } = opts
     log.info(
@@ -579,7 +601,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
 
     const extendInfo = this.platformSpecificBuildOptions.extendInfo
     if (extendInfo != null) {
-      Object.assign(appPlist, extendInfo)
+      deepAssign(appPlist, extendInfo)
     }
     for (const [k, v] of Object.entries(appPlist)) {
       if (v === null || v === undefined) {

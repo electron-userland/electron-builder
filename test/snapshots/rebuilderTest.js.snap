@@ -844,6 +844,9 @@ exports[`Rebuilder Test > yarn berry workspace 2`] = `
                 "sort.js": {
                   "size": "<size>",
                 },
+                "truncate.js": {
+                  "size": "<size>",
+                },
                 "valid.js": {
                   "size": "<size>",
                 },
@@ -1991,6 +1994,9 @@ exports[`Rebuilder Test > yarn workspace 2`] = `
                   "size": "<size>",
                 },
                 "sort.js": {
+                  "size": "<size>",
+                },
+                "truncate.js": {
                   "size": "<size>",
                 },
                 "valid.js": {

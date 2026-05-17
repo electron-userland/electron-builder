@@ -1,4 +1,4 @@
-import { asArray, InvalidConfigurationError, log } from "builder-util"
+import { asArray, log } from "builder-util"
 import { MemoLazy } from "builder-util-runtime"
 import { Lazy } from "lazy-val"
 import { WindowsAzureSigningConfiguration, WindowsConfiguration } from "../options/winOptions"
@@ -41,58 +41,8 @@ export class WindowsSignAzureManager implements SignManager {
     }
     await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", "Install-Module -Name TrustedSigning -MinimumVersion 0.5.0 -Force -Repository PSGallery -Scope CurrentUser"])
 
-    // Preemptively check env vars once during initialization
+    // If signing has been misconfigured it, the error from the TrustedSigning module should be descriptive enough to help them fix their configuration.
     // Options: https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition
-    log.info(null, "verifying env vars for authenticating to Microsoft Entra ID")
-    this.verifyRequiredEnvVars()
-    if (!(this.verifyPrincipleSecretEnv() || this.verifyPrincipleCertificateEnv() || this.verifyUsernamePasswordEnv())) {
-      throw new InvalidConfigurationError(
-        `Unable to find valid azure env configuration for signing. Missing field(s) can be debugged via "DEBUG=electron-builder". Please refer to: https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition`
-      )
-    }
-  }
-
-  verifyRequiredEnvVars() {
-    ;["AZURE_TENANT_ID", "AZURE_CLIENT_ID"].forEach(field => {
-      if (!process.env[field]) {
-        throw new InvalidConfigurationError(
-          `Unable to find valid azure env field ${field} for signing. Please refer to: https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition`
-        )
-      }
-    })
-  }
-
-  verifyPrincipleSecretEnv() {
-    if (!process.env.AZURE_CLIENT_SECRET) {
-      log.debug({ envVar: "AZURE_CLIENT_SECRET" }, "no secret found for authenticating to Microsoft Entra ID")
-      return false
-    }
-    return true
-  }
-
-  verifyPrincipleCertificateEnv() {
-    if (!process.env.AZURE_CLIENT_CERTIFICATE_PATH) {
-      log.debug({ envVar: "AZURE_CLIENT_CERTIFICATE_PATH" }, "no path found for signing certificate for authenticating to Microsoft Entra ID")
-      return false
-    }
-    if (!process.env.AZURE_CLIENT_CERTIFICATE_PASSWORD) {
-      log.debug({ envVar: "AZURE_CLIENT_CERTIFICATE_PASSWORD" }, "(optional) certificate password not found, assuming no password")
-    }
-    if (!process.env.AZURE_CLIENT_SEND_CERTIFICATE_CHAIN) {
-      log.debug({ envVar: "AZURE_CLIENT_SEND_CERTIFICATE_CHAIN" }, "(optional) certificate chain not found")
-    }
-    return true
-  }
-
-  verifyUsernamePasswordEnv() {
-    if (!process.env.AZURE_USERNAME) {
-      log.debug({ envVar: "AZURE_USERNAME" }, "no username found for authenticating to Microsoft Entra ID")
-      if (!process.env.AZURE_PASSWORD) {
-        log.debug({ envVar: "AZURE_PASSWORD" }, "no password found for authenticating to Microsoft Entra ID")
-      }
-      return false
-    }
-    return true
   }
 
   computePublisherName(): Promise<string> {
