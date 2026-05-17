@@ -58,6 +58,7 @@ async function main() {
 
     maxWorkers: "50%",
 
+    fileParallelism: false,
     sequence: {
       sequencer: SmartSequencer,
       concurrent: process.env.TEST_SEQUENTIAL === "false",

@@ -14,7 +14,9 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly category?: string | null
 
   /**
-   * The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (`dmg` and `zip` for Squirrel.Mac). Note: Squirrel.Mac auto update mechanism requires both `dmg` and `zip` to be enabled, even when only `dmg` is used. Disabling `zip` will break auto update in `dmg` packages.
+   * The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
+   * Note: Squirrel.Mac auto update mechanism requires both `dmg` and `zip` to be enabled, even when only `dmg` is used. Disabling `zip` will break auto update in `dmg` packages.
+   * @default default (dmg and zip for Squirrel.Mac)
    */
   readonly target?: Array<MacOsTargetName | TargetConfiguration> | MacOsTargetName | TargetConfiguration | null
 
@@ -247,7 +249,8 @@ export interface DmgOptions extends TargetSpecificOptions {
   background?: string | null
 
   /**
-   * The background color (accepts css colors). Defaults to `#ffffff` (white) if no background image.
+   * The background color (accepts css colors). Used when no background image is set.
+   * @default #ffffff
    */
   backgroundColor?: string | null
 

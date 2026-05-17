@@ -77,16 +77,26 @@ export interface CommonConfiguration {
    * Options related to how build Windows targets.
    */
   readonly win?: WindowsConfiguration | null
+  /** NSIS installer options. */
   readonly nsis?: NsisOptions | null
+  /** NSIS web installer options (downloads app package at install time). */
   readonly nsisWeb?: NsisWebOptions | null
+  /** Portable executable options (no installation required). */
   readonly portable?: PortableOptions | null
+  /** Windows Store (AppX) package options. */
   readonly appx?: AppXOptions | null
-  /** @private */
+  /**
+   * MSI package options.
+   */
   readonly msi?: MsiOptions | null
-  /** @private */
+  /**
+   * MSI-wrapped installer options.
+   */
   readonly msiWrapped?: MsiWrappedOptions | null
+  /**
+   * Squirrel.Windows installer options. Requires the `electron-builder-squirrel-windows` dependency.
+   */
   readonly squirrelWindows?: SquirrelWindowsOptions | null
-
   /**
    * Options related to how build Linux targets.
    */
@@ -107,10 +117,15 @@ export interface CommonConfiguration {
    * Flatpak options.
    */
   readonly flatpak?: FlatpakOptions | null
+  /** pacman (Arch Linux) package options. */
   readonly pacman?: LinuxTargetSpecificOptions | null
+  /** RPM package options (Fedora, RHEL, openSUSE). */
   readonly rpm?: LinuxTargetSpecificOptions | null
+  /** FreeBSD package options. */
   readonly freebsd?: LinuxTargetSpecificOptions | null
+  /** Solaris IPS package options. */
   readonly p5p?: LinuxTargetSpecificOptions | null
+  /** Alpine Linux APK package options. */
   readonly apk?: LinuxTargetSpecificOptions | null
 
   /**
@@ -203,6 +218,7 @@ export interface CommonConfiguration {
 export interface Configuration extends CommonConfiguration, PlatformSpecificBuildOptions, Hooks {
   /**
    * Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified.
+   * @deprecated `electron-compile` is no longer maintained. Compile your app with a modern bundler (webpack, vite, etc.) instead.
    */
   readonly electronCompile?: boolean
 
@@ -234,16 +250,19 @@ export interface Configuration extends CommonConfiguration, PlatformSpecificBuil
   /**
    * *libui-based frameworks only* The version of NodeJS you are packaging for.
    * You can set it to `current` to set the Node.js version that you use to run.
+   * @deprecated libui-based frameworks (proton-native, etc.) are no longer actively maintained. This option has no effect when using Electron.
    */
   readonly nodeVersion?: string | null
 
   /**
    * *libui-based frameworks only* The version of LaunchUI you are packaging for. Applicable for Windows only. Defaults to version suitable for used framework version.
+   * @deprecated libui-based frameworks (proton-native, etc.) are no longer actively maintained. This option has no effect when using Electron.
    */
   readonly launchUiVersion?: boolean | string | null
 
   /**
    * The framework name. One of `electron`, `proton`, `libui`. Defaults to `electron`.
+   * @deprecated `proton` and `libui` framework support is no longer actively maintained. Use `electron` (the default).
    */
   readonly framework?: string | null
 
@@ -303,83 +322,73 @@ export interface ToolsetConfig {
 
 export interface Hooks {
   /**
-The function (or path to file or module id) to be run before pack.
-
-```typescript
-(context: BeforePackContext): Promise<any> | any
-```
-
-!!! example "As function"
-
-    ```js
-    beforePack: async (context) => {
-      // your code
-    }
-    ```
-
-Because in a configuration file you cannot use JavaScript, can be specified as a path to file or module id. Function must be exported as default export.
-
-```json
-"build": {
-  "beforePack": "./myBeforePackHook.js"
-}
-```
-
-File `myBeforePackHook.js` in the project root directory:
-
-!!! example "myBeforePackHook.js"
-    ```js
-    exports.default = async function(context) {
-      // your custom code
-    }
-    ```
+   * The function (or path to file or module id) to be run before pack.
+   * Receives a {@link BeforePackContext}.
+   *
+   * Can be specified inline as a function in JavaScript configs:
+   * ```js
+   * // electron-builder.config.js
+   * module.exports = {
+   *   beforePack: async (context) => {
+   *     // your code
+   *   }
+   * }
+   * ```
+   *
+   * Or as a path to a module that exports the function as its default export:
+   * ```json
+   * { "build": { "beforePack": "./myBeforePackHook.js" } }
+   * ```
+   * ```js
+   * // myBeforePackHook.js
+   * exports.default = async function(context) {
+   *   // your custom code
+   * }
+   * ```
    */
   readonly beforePack?: Hook<BeforePackContext, void> | string | null
 
   /**
-   * The function (or path to file or module id) to be [run after the prebuilt Electron binary has been extracted to the output directory](#afterextract)
-   * Same setup as {@link beforePack}
+   * The function (or path to file or module id) to be run after the prebuilt Electron binary has been extracted to the output directory.
+   * Receives an {@link AfterExtractContext}. For file/module setup, see {@link beforePack}.
    */
   readonly afterExtract?: Hook<AfterExtractContext, void> | string | null
 
   /**
-   * The function (or path to file or module id) to be [run after pack](#afterpack) (but before pack into distributable format and sign).
-   * Same setup as {@link beforePack}
+   * The function (or path to file or module id) to be run after pack but before pack into distributable format and sign.
+   * Receives an {@link AfterPackContext}. For file/module setup, see {@link beforePack}.
    */
   readonly afterPack?: Hook<AfterPackContext, void> | string | null
 
   /**
-   * The function (or path to file or module id) to be [run after pack and sign](#aftersign) (but before pack into distributable format).
-   * Same setup as {@link beforePack}
+   * The function (or path to file or module id) to be run after pack and sign but before pack into distributable format.
+   * Receives an {@link AfterPackContext}. For file/module setup, see {@link beforePack}.
    */
   readonly afterSign?: Hook<AfterPackContext, void> | string | null
 
   /**
-   * The function (or path to file or module id) to be run on artifact build start.
-   * Same setup as {@link beforePack}
+   * The function (or path to file or module id) to be run when an individual artifact build starts.
+   * Receives an {@link ArtifactBuildStarted}. For file/module setup, see {@link beforePack}.
    */
   readonly artifactBuildStarted?: Hook<ArtifactBuildStarted, void> | string | null
   /**
-   * The function (or path to file or module id) to be run on artifact build completed.
-   * Same setup as {@link beforePack}
+   * The function (or path to file or module id) to be run when an individual artifact build completes.
+   * Receives an {@link ArtifactCreated}. For file/module setup, see {@link beforePack}.
    */
   readonly artifactBuildCompleted?: Hook<ArtifactCreated, void> | string | null
   /**
    * The function (or path to file or module id) to be run after all artifacts are built.
-
-```typescript
-(buildResult: BuildResult): Promise<Array<string>> | Array<string>
-```
-
-Configuration in the same way as `afterPack` (see above).
-
-!!! example "myAfterAllArtifactBuild.js"
-    ```js
-    exports.default = function () {
-      // you can return additional files to publish
-      return ["/path/to/additional/result/file"]
-    }
-    ```
+   * Receives a {@link BuildResult}. May return an array of additional file paths to publish.
+   *
+   * For file/module setup, see {@link beforePack}.
+   *
+   * @example
+   * ```js
+   * exports.default = function () {
+   *   // return additional files to publish
+   *   return ["/path/to/additional/result/file"]
+   * }
+   * ```
    */
   readonly afterAllArtifactBuild?: Hook<BuildResult, Array<string>> | string | null
   /**

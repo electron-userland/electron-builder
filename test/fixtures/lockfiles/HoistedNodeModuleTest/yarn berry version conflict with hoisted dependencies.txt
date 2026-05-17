@@ -290,9 +290,9 @@ __metadata:
   linkType: hard
 
 "lru-cache@npm:^11.2.4, lru-cache@npm:^11.2.5, lru-cache@npm:^11.2.6":
-  version: 11.3.5
-  resolution: "lru-cache@npm:11.3.5"
-  checksum: 4b0110312c0d7224ab7ab4b6c30f639312d75b8246b6e90719c412c79256db49453c246e0c8ee02d7b7b1494c52bbd7d4f2d135c768ed2b6ba3e5ccbfe74de10
+  version: 11.3.6
+  resolution: "lru-cache@npm:11.3.6"
+  checksum: 0bc3ad1cb4c91c8baa532f3bede807a63d36156cc066a6f0e0a44d2dc317f94aa19a92bc11ce0f9933d00ea90995e2e61a0b12a21e1c5f3cc38d4b28956870d4
   languageName: node
   linkType: hard
 
@@ -408,21 +408,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"tldts-core@npm:^7.0.28":
-  version: 7.0.28
-  resolution: "tldts-core@npm:7.0.28"
-  checksum: b1401ac376c4829e2e285056e544919dded2a4a1bbdc4953cea980ceab309e13157e539139d513027e67994805d3d9b31ed76b4f5e2c3075ed7a0ac9be558d3f
+"tldts-core@npm:^7.0.30":
+  version: 7.0.30
+  resolution: "tldts-core@npm:7.0.30"
+  checksum: d0e52bbcd75b5a3856f212b0f9ecc86a0411379c8aebc4de2a667daf2131543d2e7b1117bf8a0b6b13fd8008d44f8709952cb497ce89ab94f30109566dca5e37
   languageName: node
   linkType: hard
 
 "tldts@npm:^7.0.5":
-  version: 7.0.28
-  resolution: "tldts@npm:7.0.28"
+  version: 7.0.30
+  resolution: "tldts@npm:7.0.30"
   dependencies:
-    tldts-core: ^7.0.28
+    tldts-core: ^7.0.30
   bin:
     tldts: bin/cli.js
-  checksum: e958a8692ec3f750ae2c6e355648359670acfade11251c0162e63f40b5473cd72338f690458f37421e64cd57242cd50f3c9df2d8672441577e6fed4f8bcb57eb
+  checksum: 47861e6c9150446d52557d3d28a035d1019ea255b04019b45eff7fc4b9e57affefb2458b5968aad86bacb6ed3c81146f8cfda93748e26af08d319fdfa709fcb4
   languageName: node
   linkType: hard
 

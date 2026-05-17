@@ -53,6 +53,8 @@ describe.heavy.ifMac("dmg", { sequential: true }, () => {
           const volumePath = it.volumePath
           await assertThat(expect, path.join(volumePath, ".background.tiff")).isFile()
           await assertThat(expect, path.join(volumePath, "Applications")).isSymbolicLink()
+          const entries = await fs.readdir(volumePath)
+          expect(entries.find(e => e.endsWith(".app"))).toBeTruthy()
           expect(
             it.specification.contents.map((c: any) => ({
               ...c,
@@ -87,6 +89,8 @@ describe.heavy.ifMac("dmg", { sequential: true }, () => {
         }
         delete it.specification.icon
         expect(it.specification).toMatchSnapshot()
+        const entries = await fs.readdir(it.volumePath)
+        expect(entries.find(e => e.endsWith(".app"))).toBeTruthy()
         return Promise.resolve(false)
       },
     }))
@@ -116,6 +120,8 @@ describe.heavy.ifMac("dmg", { sequential: true }, () => {
           }
           expect(it.specification.size).toEqual("500m")
           expect(it.specification.shrink).toEqual(false)
+          const entries = await fs.readdir(it.volumePath)
+          expect(entries.find(e => e.endsWith(".app"))).toBeTruthy()
           return Promise.resolve(false)
         },
       },
@@ -169,6 +175,8 @@ describe.heavy.ifMac("dmg", { sequential: true }, () => {
             return false
           }
           await assertThat(expect, path.join(it.volumePath, ".VolumeIcon.icns")).isFile()
+          const entries = await fs.readdir(it.volumePath)
+          expect(entries.find(e => e.endsWith(".app"))).toBeTruthy()
           return Promise.resolve(true)
         },
       },
@@ -313,6 +321,53 @@ describe.heavy.ifMac("dmg", { sequential: true }, () => {
           return attachAndExecute(path.join(context.outDir, "No-Background-1.1.0.dmg"), false, true, () => {
             return assertThat(expect, path.join("/Volumes/No-Background 1.1.0/.background.tiff")).doesNotExist()
           })
+        },
+      }
+    ))
+
+  // Verifies the full dmgbuild + mac_alias pipeline end-to-end: builds a DMG with a background
+  // image (which exercises alias.to_bytes() / uuid in mac_alias), then simulates what a user
+  // does — mounts, copies the .app out, verifies the bundle is intact — and immediately removes
+  // the copy to keep disk usage minimal.
+  test("app is copyable from mounted dmg and bundle structure is intact", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: dmgTarget,
+        config: {
+          productName: "DmgCopyTest",
+          publish: null,
+          dmg: {
+            title: "DmgCopyTest",
+          },
+        },
+      },
+      {
+        packed: async context => {
+          const dmgPath = path.join(context.outDir, "DmgCopyTest-1.1.0.dmg")
+          const tmpCopy = await context.tmpDir.createTempDir({ prefix: "dmg-copy-" })
+          try {
+            await attachAndExecute(dmgPath, false, true, async volumePath => {
+              const entries = await fs.readdir(volumePath)
+              const appName = entries.find(e => e.endsWith(".app"))
+              expect(appName).toBeTruthy()
+              // cp -Rf mirrors what Finder does when a user drags the app out of the DMG
+              await exec("cp", ["-Rf", path.join(volumePath, appName!), tmpCopy])
+            })
+
+            const copiedApp = path.join(tmpCopy, "DmgCopyTest.app")
+            await assertThat(expect, copiedApp).isDirectory()
+            await assertThat(expect, path.join(copiedApp, "Contents", "MacOS")).isDirectory()
+            await assertThat(expect, path.join(copiedApp, "Contents", "Info.plist")).isFile()
+
+            // Main executable must exist and have its execute bit set
+            const macosEntries = await fs.readdir(path.join(copiedApp, "Contents", "MacOS"))
+            expect(macosEntries.length).toBeGreaterThan(0)
+            const exeStat = await fs.stat(path.join(copiedApp, "Contents", "MacOS", macosEntries[0]))
+            expect(exeStat.mode & 0o111).toBeGreaterThan(0)
+          } finally {
+            await fs.rm(tmpCopy, { recursive: true, force: true })
+          }
         },
       }
     ))
