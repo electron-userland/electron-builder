@@ -230,6 +230,19 @@ Emitted on progress.
 
 * `info` [UpdateInfo](#updateinfo) — for generic and github providers. [VersionInfo](#VersionInfo) for Bintray provider.
 
+#### Event: `update-cancelled`
+
+* `info` [UpdateInfo](#updateinfo)
+
+Emitted when an update is cancelled by the user or the download is otherwise aborted.
+
+#### Event: `appimage-filename-updated`
+
+* `path` string
+
+Emitted after a successful AppImage update when the file is moved to its final location.
+Only fires on Linux AppImage builds.
+
 ## UpdateInfo
 
   {!./electron-updater.Interface.UpdateInfo.md!}

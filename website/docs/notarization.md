@@ -65,6 +65,18 @@ APPLE_API_ISSUER=your-issuer-id
 APPLE_TEAM_ID=ABCDE12345
 ```
 
+### Authentication — Option C: Keychain Profile
+
+If credentials are stored in a named keychain profile on the build machine:
+
+```bash
+APPLE_KEYCHAIN=login.keychain
+APPLE_KEYCHAIN_PROFILE=my-notarization-profile
+APPLE_TEAM_ID=ABCDE12345
+```
+
+This method is mainly useful for local development. **Option B (API Key) is recommended for CI** — it doesn't expire and avoids two-factor authentication prompts.
+
 ## Hardened Runtime Requirements
 
 Notarization requires **Hardened Runtime** (`hardenedRuntime: true`). This restricts what your app process can do unless you explicitly declare entitlements.
