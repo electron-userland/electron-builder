@@ -26,8 +26,9 @@ AppImage is the default Linux target for electron-builder (`@default AppImage`).
 
 ## Desktop Integration
 
-!!! info "Desktop Integration"
-    Since electron-builder 21, desktop integration (creating `.desktop` files, associating file types, registering with application menus) is NOT handled by the AppImage itself.
+:::info[Desktop Integration]
+Since electron-builder 21, desktop integration (creating `.desktop` files, associating file types, registering with application menus) is NOT handled by the AppImage itself.
+:::
 
 The recommended way to integrate AppImages into the desktop is [AppImageLauncher](https://github.com/TheAssassin/AppImageLauncher):
 

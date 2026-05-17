@@ -1,7 +1,8 @@
 The top-level [msi](configuration.md) key contains set of options instructing electron-builder on how it should build Windows MSI (Microsoft Installer) packages.
 
-!!! note "Experimental"
-    The MSI target is experimental. For most Windows consumer applications, [NSIS](nsis.md) is the recommended installer format. Use MSI for enterprise deployment scenarios where Group Policy or MDM management is required.
+:::note[Experimental]
+The MSI target is experimental. For most Windows consumer applications, [NSIS](nsis.md) is the recommended installer format. Use MSI for enterprise deployment scenarios where Group Policy or MDM management is required.
+:::
 
 ## When to Use MSI
 
@@ -30,8 +31,9 @@ MSI packages use Windows Installer technology and are the standard format for en
 
 The `upgradeCode` is a GUID that uniquely identifies your product across all versions. It persists through upgrades and is used by Windows Installer to find and upgrade existing installations.
 
-!!! warning "Critical: Do Not Change After First Release"
-    If you change the `upgradeCode` after your first release, Windows Installer will treat the new version as a completely different product — existing installations will NOT be upgraded, and users will end up with both versions installed. Set this once and never change it.
+:::warning[Critical: Do Not Change After First Release]
+If you change the `upgradeCode` after your first release, Windows Installer will treat the new version as a completely different product — existing installations will NOT be upgraded, and users will end up with both versions installed. Set this once and never change it.
+:::
 
 ```yaml
 msi:

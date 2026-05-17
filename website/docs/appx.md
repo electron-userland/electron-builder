@@ -68,8 +68,9 @@ appx:
   displayName: "My Application"               # displayed in Start menu
 ```
 
-!!! warning "Publisher Must Match Certificate"
-    The `publisher` value must exactly match the Subject field of your code signing certificate. Mismatches cause installation failures.
+:::warning[Publisher Must Match Certificate]
+The `publisher` value must exactly match the Subject field of your code signing certificate. Mismatches cause installation failures.
+:::
 
 ## Capabilities
 

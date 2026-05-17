@@ -1,5 +1,6 @@
-!!! note
-    Information below has been partially copied from integration with [@electron/fuses](https://github.com/electron/fuses) and [electron tutorial](https://raw.githubusercontent.com/electron/electron/refs/heads/main/docs/tutorial/fuses.md) for easier reading/access.
+:::note
+Information below has been partially copied from integration with [@electron/fuses](https://github.com/electron/fuses) and [electron tutorial](https://raw.githubusercontent.com/electron/electron/refs/heads/main/docs/tutorial/fuses.md) for easier reading/access.
+:::
 
 ## What are fuses?
 
@@ -12,8 +13,9 @@ Fuses are the solution to this problem, at a high level they are "magic bits" in
 Under-the-hood, electron-builder leverages the official [`@electron/fuses`](https://npmjs.com/package/@electron/fuses) module to make flipping these fuses easy. Previously, electron fuses could only be flipped within the `afterPack` hook (this is still a supported method). Now, you can instead set electron-builder configuration property `electronFuses: FuseOptionsV1` to activate electron-builder's integration.
 
 ### Example
-!!! note
-    The true/false below are just an example, customize your configuration to your own requirements
+:::note
+The true/false below are just an example, customize your configuration to your own requirements
+:::
 
 ```typescript
 electronFuses: {
@@ -31,7 +33,8 @@ electronFuses: {
 It also is still possible to continue to keep your current logic flow in `afterPack` hook, so a convience method has been exposed in the `PlatformPackager` for easy customization of the flags on your own. It directly accepts an `AfterPackContext` and a `FuseConfig` object of [type](https://github.com/electron/fuses/blob/main/src/config.ts).
 This convience method was opened so that custom FuseConfig's could be provided, allow usage of `strictlyRequireAllFuses` to monitor your fuses and stay up-to-date with fuses as they're released, and/or force override the version of @electron/fuses in electron-builder if there's an update you'd like to leverage.
 
-!!! example "afterPack.ts"
+:::note[afterPack.ts]
+:::
 
 ```typescript
 const { FuseConfig, FuseVersion, FuseV1Options } = require("@electron/fuses")

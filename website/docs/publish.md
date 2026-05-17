@@ -17,19 +17,21 @@ If `GITHUB_RELEASE_TOKEN` is defined, it will be used instead of (`GH_TOKEN` or 
 - you could make your `GITHUB_TOKEN` "Read-only" when creating a fine-grained personal access token, and "Read and write" for the `GITHUB_RELEASE_TOKEN`.
 - "Contents" fine-grained permission was sufficient. (at time of writing - Apr 2024)
 
-!!! warning "Deprecation Notice: Implicit Publishing"
-    electron-builder currently auto-detects when to publish based on CI environment conditions:
+:::warning[Deprecation Notice: Implicit Publishing]
+electron-builder currently auto-detects when to publish based on CI environment conditions:
 
-    - Running via `npm run release` → publishes always
-    - Git tag detected in CI → publishes on tag
-    - CI environment detected → publishes to draft releases
+- Running via `npm run release` → publishes always
+- Git tag detected in CI → publishes on tag
+- CI environment detected → publishes to draft releases
 
-    **This implicit publishing behavior is deprecated and will be disabled in electron-builder v27.**
+**This implicit publishing behavior is deprecated and will be disabled in electron-builder v27.**
 
-    To prepare for this change, please explicitly specify your publish intent using the `--publish` CLI flag (e.g., `--publish always`, `--publish onTag`) or set the `publish` configuration in your `package.json` or `electron-builder.yml`.
+To prepare for this change, please explicitly specify your publish intent using the `--publish` CLI flag (e.g., `--publish always`, `--publish onTag`) or set the `publish` configuration in your `package.json` or `electron-builder.yml`.
+:::
 
-!!! info "Snap store"
-    `snap` target by default publishes to snap store (the app store for Linux). To force publishing to another providers, explicitly specify publish configuration for `snap`.
+:::info[Snap store]
+`snap` target by default publishes to snap store (the app store for Linux). To force publishing to another providers, explicitly specify publish configuration for `snap`.
+:::
 
 You can publish to multiple providers. For example, to publish Windows artifacts to both GitHub and Bitbucket (order is important — first item will be used as a default auto-update server, so, in this example app will use github as auto-update provider):
 
@@ -57,8 +59,9 @@ You can also configure publishing using CLI arguments, for example, to force pub
 
 [Custom](https://github.com/electron-userland/electron-builder/issues/3261) publish provider can be used if need.
 
-!!! tip "Macros"
-    In all publish options [File Macros](./file-patterns.md#file-macros) are supported.
+:::tip[Macros]
+In all publish options [File Macros](./file-patterns.md#file-macros) are supported.
+:::
 
 ## How to Publish
 

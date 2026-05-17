@@ -1,7 +1,8 @@
 The top-level [msiWrapped](configuration.md) key contains set of options instructing electron-builder on how it should build Windows MSI-Wrapped packages.
 
-!!! note "Experimental"
-    The MSI-Wrapped target is experimental. It wraps an existing NSIS installer inside an MSI container.
+:::note[Experimental]
+The MSI-Wrapped target is experimental. It wraps an existing NSIS installer inside an MSI container.
+:::
 
 ## What is MSI-Wrapped?
 
@@ -63,8 +64,9 @@ msiWrapped:
   upgradeCode: "{A1234567-BCDE-F012-3456-789ABCDEF012}"
 ```
 
-!!! warning "Critical: Do Not Change After First Release"
-    See the [MSI upgrade code warning](msi.md#upgrade-code) — the same applies here.
+:::warning[Critical: Do Not Change After First Release]
+See the [MSI upgrade code warning](msi.md#upgrade-code) — the same applies here.
+:::
 
 ## Complete Example
 

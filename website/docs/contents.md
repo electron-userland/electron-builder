@@ -146,8 +146,9 @@ extraFiles:
   - "LICENSE"
 ```
 
-!!! tip "Native Modules and Extra Binaries"
-    Use `extraResources` for native binaries, CLI tools, or data files that need to be accessible at runtime. Access them in your app via `process.resourcesPath`.
+:::tip[Native Modules and Extra Binaries]
+Use `extraResources` for native binaries, CLI tools, or data files that need to be accessible at runtime. Access them in your app via `process.resourcesPath`.
+:::
 
 ## ASAR Packaging
 

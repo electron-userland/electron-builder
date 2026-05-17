@@ -8,8 +8,9 @@ Auto updates work as follows:
 
 Read the remainder of this guide to configure everything.
 
-!!! info "Code signing is required on macOS"
-    macOS application must be [signed](code-signing.md) in order for auto updating to work.
+:::info[Code signing is required on macOS]
+macOS application must be [signed](code-signing.md) in order for auto updating to work.
+:::
 
 ## Auto-updatable Targets
 
@@ -67,24 +68,26 @@ The `electron-updater` package offers a different functionality compared to Elec
 
 5. Call `autoUpdater.checkForUpdatesAndNotify()`. Or, if you need custom behaviour, implement `electron-updater` events, check examples below.
 
-!!! note
-    Do not call [setFeedURL](#appupdatersetfeedurloptions). electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it).
+:::note
+Do not call [setFeedURL](#appupdatersetfeedurloptions). electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it).
+:::
 
 ## Examples
 
-!!! example "Example in TypeScript using system notifications"
-    ```typescript
-    import { autoUpdater } from "electron-updater"
+:::note[Example in TypeScript using system notifications]
+```typescript
+import { autoUpdater } from "electron-updater"
 
-    export default class AppUpdater {
-      constructor() {
-        const log = require("electron-log")
-        log.transports.file.level = "debug"
-        autoUpdater.logger = log
-        autoUpdater.checkForUpdatesAndNotify()
-      }
-    }
-    ```
+export default class AppUpdater {
+  constructor() {
+    const log = require("electron-log")
+    log.transports.file.level = "debug"
+    autoUpdater.logger = log
+    autoUpdater.checkForUpdatesAndNotify()
+  }
+}
+```
+:::
 
 * A [complete example](https://github.com/iffy/electron-updater-example) showing how to use.
 * An [encapsulated manual update via menu](https://github.com/electron-userland/electron-builder/blob/7f6c3fea6fea8cffa00a43413f5335097aca94b0/pages/encapsulated%20manual%20update%20via%20menu.js).
@@ -129,15 +132,16 @@ In latest version you need [force the updater](https://github.com/electron-userl
 ```js
 autoUpdater.forceDevUpdateConfig = true
 ```
-!!! note
-    If you see this in logs:
-    ```
-    APPIMAGE env is not defined, current application is not an AppImage
-    ```
-    you need to apply [this workaround](https://github.com/electron-userland/electron-builder/issues/3167#issuecomment-627696277) otherwise update won't continue:
-    ```js
-    process.env.APPIMAGE = path.join(__dirname, 'dist', `app_name-${app.getVersion()}.AppImage`)
-    ```
+:::note
+If you see this in logs:
+```
+APPIMAGE env is not defined, current application is not an AppImage
+```
+you need to apply [this workaround](https://github.com/electron-userland/electron-builder/issues/3167#issuecomment-627696277) otherwise update won't continue:
+```js
+process.env.APPIMAGE = path.join(__dirname, 'dist', `app_name-${app.getVersion()}.AppImage`)
+```
+:::
 
 But it is not recommended, better to test auto-update for installed application (especially on Windows). [Minio](https://github.com/electron-userland/electron-builder/issues/3053#issuecomment-401001573) is recommended as a local server for testing updates.
 
@@ -181,11 +185,13 @@ You can use a private repository for updates with electron-updater by setting th
 If `GH_TOKEN` is set, electron-updater will use the GitHub API for updates allowing private repositories to work.
 
 
-!!! warning
-    Private GitHub provider only for [very special](https://github.com/electron-userland/electron-builder/issues/1393#issuecomment-288191885) cases — not intended and not suitable for all users.
+:::warning
+Private GitHub provider only for [very special](https://github.com/electron-userland/electron-builder/issues/1393#issuecomment-288191885) cases — not intended and not suitable for all users.
+:::
 
-!!! note
-    The GitHub API currently has a rate limit of 5000 requests per user per hour. An update check uses up to 3 requests per check.
+:::note
+The GitHub API currently has a rate limit of 5000 requests per user per hour. An update check uses up to 3 requests per check.
+:::
 
 ## Events
 

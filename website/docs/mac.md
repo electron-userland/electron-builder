@@ -87,8 +87,9 @@ export CSC_KEY_PASSWORD=yourpassword
 
 Set `identity: null` to skip signing entirely. Set `identity: "-"` to use an ad-hoc signature (app will only run on the machine that built it).
 
-!!! warning "Ad-hoc signing and Hardened Runtime"
-    If you disable code signing, you should also disable Hardened Runtime (`hardenedRuntime: false`), as the combination of no signing and enabled Hardened Runtime may prevent the app from launching.
+:::warning[Ad-hoc signing and Hardened Runtime]
+If you disable code signing, you should also disable Hardened Runtime (`hardenedRuntime: false`), as the combination of no signing and enabled Hardened Runtime may prevent the app from launching.
+:::
 
 ### Hardened Runtime
 
@@ -144,8 +145,9 @@ Common entitlements for Electron apps:
 | `com.apple.security.device.microphone` | Microphone access |
 | `com.apple.security.app-sandbox` | Required for Mac App Store — see [MAS](mas.md) |
 
-!!! info "Entitlements and Notarization"
-    Notarization requires Hardened Runtime + appropriate entitlements. See [Notarization](notarization.md) for the complete notarization workflow.
+:::info[Entitlements and Notarization]
+Notarization requires Hardened Runtime + appropriate entitlements. See [Notarization](notarization.md) for the complete notarization workflow.
+:::
 
 ## Info.plist Customization
 

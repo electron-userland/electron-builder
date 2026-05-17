@@ -1,7 +1,8 @@
 Windows code signing is supported. If the configuration values are provided correctly in your package.json, then signing should be automatically executed.
 
-!!! tip
-    Windows is dual code-signed (SHA1 & SHA256 hashing algorithms).
+:::tip
+Windows is dual code-signed (SHA1 & SHA256 hashing algorithms).
+:::
 
 To sign an app on Windows, there are two types of certificates:
 
@@ -37,7 +38,9 @@ Additional fields can be provided under `win.azureSignOptions` that are passed d
 
 Second, provide the appropriate environment variables to the build action. Descriptions of each variable can be found in [Azure.Identity class - EnvironmentCredential Class](https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition). You only need to provide the environment variables that are listed in the table corresponding to which authentication method you choose to use.
 
-!!! tip
+:::tip
+:::
+
   If you use the minimal setup using an "App registration" that is described above, the section "Service principal with secret" applies to you. In this case, you only need the Tenant ID, Client ID, and Client Secret.
 
 | Env Name                              |  Description                                                                                            |

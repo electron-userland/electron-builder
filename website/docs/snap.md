@@ -40,8 +40,9 @@ snap:
   confinement: strict   # required for Snap Store submission
 ```
 
-!!! warning "Classic Confinement"
-    Snap Store requires manual review and approval for `classic` confinement. Electron apps typically use `strict` with appropriate interface plugs.
+:::warning[Classic Confinement]
+Snap Store requires manual review and approval for `classic` confinement. Electron apps typically use `strict` with appropriate interface plugs.
+:::
 
 ## Base
 
@@ -83,8 +84,9 @@ snap:
     - password-manager-service # system keychain access
 ```
 
-!!! tip "Minimal Plugs"
-    Start with only the plugs you actually need. Unnecessary plugs may slow Snap Store review. At minimum, `browser-support`, `network`, `desktop`, and `desktop-legacy` are needed for most Electron apps.
+:::tip[Minimal Plugs]
+Start with only the plugs you actually need. Unnecessary plugs may slow Snap Store review. At minimum, `browser-support`, `network`, `desktop`, and `desktop-legacy` are needed for most Electron apps.
+:::
 
 Custom plug configuration:
 

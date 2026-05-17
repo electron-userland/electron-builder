@@ -125,8 +125,9 @@ Windows ARM64 builds run natively on ARM-based Windows devices (Surface Pro X, S
 electron-builder --win --arm64
 ```
 
-!!! note "Cross-compilation from x64"
-    Windows ARM64 builds can be cross-compiled from an x64 Windows machine. The Electron binary for ARM64 is downloaded automatically.
+:::note[Cross-compilation from x64]
+Windows ARM64 builds can be cross-compiled from an x64 Windows machine. The Electron binary for ARM64 is downloaded automatically.
+:::
 
 ## Linux ARM
 

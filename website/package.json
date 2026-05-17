@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
-    "prestart": "cp ../README.md docs/introduction.md",
+    "prestart": "{ printf -- '---\\nslug: /\\n---\\n\\n'; cat ../README.md; } > docs/introduction.md",
     "start": "docusaurus start",
-    "prebuild": "cp ../README.md docs/introduction.md",
+    "prebuild": "{ printf -- '---\\nslug: /\\n---\\n\\n'; cat ../README.md; } > docs/introduction.md",
     "build": "docusaurus build",
     "swizzle": "docusaurus swizzle",
     "clear": "docusaurus clear",

@@ -149,8 +149,9 @@ rpm:
 
 ## Pacman Package (`pacman`)
 
-!!! warning "Beta"
-    The `pacman` target is in beta. Test thoroughly before distributing.
+:::warning[Beta]
+The `pacman` target is in beta. Test thoroughly before distributing.
+:::
 
 Creates a `.pkg.tar.zst` package for Arch Linux and Arch-based distributions (Manjaro, EndeavourOS, etc.):
 
@@ -179,8 +180,9 @@ apk:
     - nss
 ```
 
-!!! note "musl libc"
-    Alpine uses musl libc rather than glibc. Electron bundles its own copy of glibc-dependent libraries, but some native modules may not be compatible with Alpine without recompilation.
+:::note[musl libc]
+Alpine uses musl libc rather than glibc. Electron bundles its own copy of glibc-dependent libraries, but some native modules may not be compatible with Alpine without recompilation.
+:::
 
 ## FreeBSD Package (`freebsd`)
 

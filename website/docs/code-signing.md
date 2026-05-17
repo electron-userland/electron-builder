@@ -49,8 +49,9 @@ All Apple certificates require membership in the [Apple Developer Program](https
 
 For Windows, purchase from any major CA (DigiCert, Sectigo, SSL.com). See [Get a Code Signing Certificate](https://msdn.microsoft.com/windows/hardware/drivers/dashboard/get-a-code-signing-certificate) (select "Microsoft Authenticode" platform).
 
-!!! note "Gatekeeper and Apple certificates"
-    macOS Gatekeeper only recognizes [Apple-issued certificates](https://developer.apple.com/support/code-signing/). Third-party certificates cannot be used to sign macOS apps for Gatekeeper.
+:::note[Gatekeeper and Apple certificates]
+macOS Gatekeeper only recognizes [Apple-issued certificates](https://developer.apple.com/support/code-signing/). Third-party certificates cannot be used to sign macOS apps for Gatekeeper.
+:::
 
 ## Environment Variables
 
@@ -80,8 +81,9 @@ electron-builder reads signing credentials from environment variables. **Never c
 | `WIN_CSC_LINK` | Windows certificate path or base64 string. Falls back to `CSC_LINK` if unset |
 | `WIN_CSC_KEY_PASSWORD` | Password for the Windows certificate. Falls back to `CSC_KEY_PASSWORD` if unset |
 
-!!! tip "Building Windows on macOS"
-    When cross-compiling Windows on macOS, use `WIN_CSC_LINK` and `WIN_CSC_KEY_PASSWORD` to provide a separate Windows certificate while keeping your macOS certificate in `CSC_LINK`.
+:::tip[Building Windows on macOS]
+When cross-compiling Windows on macOS, use `WIN_CSC_LINK` and `WIN_CSC_KEY_PASSWORD` to provide a separate Windows certificate while keeping your macOS certificate in `CSC_LINK`.
+:::
 
 ### Azure Trusted Signing Variables
 
@@ -114,8 +116,9 @@ CSC_LINK=<the-base64-string>
 CSC_KEY_PASSWORD=your-password
 ```
 
-!!! warning "Windows environment variable length limit"
-    Windows cannot handle environment variable values longer than 8192 characters. If your base64-encoded certificate exceeds this limit, re-export it **without** including intermediate certificates in the chain (uncheck "Include all certificates in the certification path" in the Certificate Manager wizard).
+:::warning[Windows environment variable length limit]
+Windows cannot handle environment variable values longer than 8192 characters. If your base64-encoded certificate exceeds this limit, re-export it **without** including intermediate certificates in the chain (uncheck "Include all certificates in the certification path" in the Certificate Manager wizard).
+:::
 
 ## GitHub Actions Setup
 
@@ -128,24 +131,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Import certificate
-        run: |
-          echo "$CSC_LINK" | base64 --decode > /tmp/cert.p12
-          security create-keychain -p "" build.keychain
-          security import /tmp/cert.p12 -k build.keychain -P "$CSC_KEY_PASSWORD" -T /usr/bin/codesign
-          security list-keychains -d user -s build.keychain
-          security set-keychain-settings -t 3600 -u build.keychain
-          security unlock-keychain -p "" build.keychain
-          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
-        env:
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-
       - name: Build and sign
         run: npx electron-builder --mac
         env:
-          CSC_KEYCHAIN: build.keychain
-          CSC_NAME: ${{ secrets.CSC_NAME }}
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}

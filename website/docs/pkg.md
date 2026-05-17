@@ -22,8 +22,9 @@ pkg:
 
 Or use the `CSC_INSTALLER_LINK` and `CSC_INSTALLER_KEY_PASSWORD` environment variables in CI.
 
-!!! tip
-    You can have both `Developer ID Application` and `Developer ID Installer` certificates. The application certificate signs the `.app` bundle, and the installer certificate signs the `.pkg` wrapper.
+:::tip
+You can have both `Developer ID Application` and `Developer ID Installer` certificates. The application certificate signs the `.app` bundle, and the installer certificate signs the `.pkg` wrapper.
+:::
 
 ## Installation Location
 
@@ -61,8 +62,9 @@ launchctl load /Library/LaunchDaemons/com.mycompany.myapp.daemon.plist
 exit 0
 ```
 
-!!! warning "Script Permissions"
-    Scripts must be executable (`chmod +x`). Scripts run as root during installation — test thoroughly. A failing script (non-zero exit code) will abort the installation.
+:::warning[Script Permissions]
+Scripts must be executable (`chmod +x`). Scripts run as root during installation — test thoroughly. A failing script (non-zero exit code) will abort the installation.
+:::
 
 See the [macOS Kernel Extensions tutorial](tutorials/macos-kernel-extensions.md) for a detailed example.
 

@@ -89,14 +89,15 @@ If you want to include additional resources for use during installation, such as
 !macroend
 ```
 
-??? question "Is there a way to call just when the app is installed (or uninstalled) manually and not on update?"
-    Use `${isUpdated}`.
+:::details[Is there a way to call just when the app is installed (or uninstalled) manually and not on update?]
+Use `${isUpdated}`.
 
-    ```nsis
-    ${ifNot} ${isUpdated}
-      # your code
-    ${endIf}
-    ```
+```nsis
+${ifNot} ${isUpdated}
+  # your code
+${endIf}
+```
+:::
 
 ## GUID vs Application Name
 
@@ -123,38 +124,40 @@ For portable app, following environment variables are available:
 
 ## Common Questions
 
-??? question "How do change the default installation directory to custom?"
+:::details[How do change the default installation directory to custom?]
 
-    It is very specific requirement. Do not do if you are not sure. Add [custom macro](#custom-nsis-script):
+It is very specific requirement. Do not do if you are not sure. Add [custom macro](#custom-nsis-script):
 
-    ```nsis
-    !macro preInit
-      SetRegView 64
-      WriteRegExpandStr HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation "C:\MyApp"
-      WriteRegExpandStr HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation "C:\MyApp"
-      SetRegView 32
-      WriteRegExpandStr HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation "C:\MyApp"
-      WriteRegExpandStr HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation "C:\MyApp"
-    !macroend
-    ```
+```nsis
+!macro preInit
+  SetRegView 64
+  WriteRegExpandStr HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation "C:\MyApp"
+  WriteRegExpandStr HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation "C:\MyApp"
+  SetRegView 32
+  WriteRegExpandStr HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation "C:\MyApp"
+  WriteRegExpandStr HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation "C:\MyApp"
+!macroend
+```
+:::
 
-??? question "Is it possible to made single installer that will allow configuring user/machine installation?"
+:::details[Is it possible to made single installer that will allow configuring user/machine installation?]
 
-    Yes, you need to switch to assisted installer (not default one-click).
+Yes, you need to switch to assisted installer (not default one-click).
 
-    package.json
-    ```json
-    "build": {
-      "nsis": {
-        "oneClick": false
-      }
-    }
-    ```
-    electron-builder.yml
-    ```yaml
-    nsis:
-      oneClick: false
-    ```
+package.json
+```json
+"build": {
+  "nsis": {
+    "oneClick": false
+  }
+}
+```
+electron-builder.yml
+```yaml
+nsis:
+  oneClick: false
+```
+:::
 
 ## Configuration
 

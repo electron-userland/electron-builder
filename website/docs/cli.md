@@ -58,26 +58,31 @@ Other:
 
 For other commands please see help using `--help` arg, e.g. `./node_modules/.bin/electron-builder install-app-deps --help`
 
-!!! tip
-    Since Node.js 8 [npx](https://medium.com/@maybekatz/introducing-npx-an-npm-package-runner-55f7d4bd282b) is bundled, so, you can simply use `npx electron-builder`.
-
+:::tip
+Since Node.js 8 [npx](https://medium.com/@maybekatz/introducing-npx-an-npm-package-runner-55f7d4bd282b) is bundled, so, you can simply use `npx electron-builder`.
+:::
 
 Prepend `npx` to sample commands below if you run it from Terminal and not from `package.json` scripts.
 
-!!! example "build for macOS, Windows and Linux"
-    `electron-builder -mwl`
+:::note[build for macOS, Windows and Linux]
+`electron-builder -mwl`
+:::
 
-!!! example "build deb and tar.xz for Linux"
-    `electron-builder --linux deb tar.xz`
+:::note[build deb and tar.xz for Linux]
+`electron-builder --linux deb tar.xz`
+:::
 
-!!! example "build NSIS 32-bit installer for Windows"
-    `electron-builder --windows nsis:ia32`
+:::note[build NSIS 32-bit installer for Windows]
+`electron-builder --windows nsis:ia32`
+:::
 
-!!! example "set package.json property `foo` to `bar`"
-    `electron-builder -c.extraMetadata.foo=bar`
+:::note[set package.json property `foo` to `bar`]
+`electron-builder -c.extraMetadata.foo=bar`
+:::
 
-!!! example "configure unicode options for NSIS"
-    `electron-builder -c.nsis.unicode=false`
+:::note[configure unicode options for NSIS]
+`electron-builder -c.nsis.unicode=false`
+:::
 
 ## Target
 
@@ -93,75 +98,76 @@ Platforms and archs can be configured or using [CLI args](https://github.com/ele
 
 For example, if you don't want to pass `--ia32` and `--x64` flags each time, but instead build by default NSIS target for all archs for Windows:
 
-!!! example "Configuration"
+:::note[Configuration]
 
-    package.json
-    ```json
-    "build": {
-      "win": {
-        "target": [
-          {
-            "target": "nsis",
-            "arch": [
-              "x64",
-              "ia32"
-            ]
-          }
-        ]
-      },
-      "mac": {
-        "target": [
-          {
-            "target": "dmg",
-            "arch": [
-              "universal"
-            ]
-          }
+package.json
+```json
+"build": {
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": [
+          "x64",
+          "ia32"
         ]
       }
-    }
-    ```
-
-    electron-builder.yml
-    ``` yaml
-     win:
-       target:
-         - target: nsis
-           arch:
-             - x64
-             - ia32
-    mac:
-      target:
-        - target: dmg
-          arch: universal
-    ```
-
-    electron-builder.config.js
-    ```js
-    module.exports = {
-      "win": {
-        "target": [
-          {
-            "target": "nsis",
-            "arch": [
-              "x64",
-              "ia32"
-            ]
-          }
-        ]
-      },
-      "mac": {
-        "target": [
-          {
-            "target": "dmg",
-            "arch": [
-              "universal"
-            ]
-          }
+    ]
+  },
+  "mac": {
+    "target": [
+      {
+        "target": "dmg",
+        "arch": [
+          "universal"
         ]
       }
-    }
-    ```
+    ]
+  }
+}
+```
+
+electron-builder.yml
+``` yaml
+ win:
+   target:
+     - target: nsis
+       arch:
+         - x64
+         - ia32
+mac:
+  target:
+    - target: dmg
+      arch: universal
+```
+
+electron-builder.config.js
+```js
+module.exports = {
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": [
+          "x64",
+          "ia32"
+        ]
+      }
+    ]
+  },
+  "mac": {
+    "target": [
+      {
+        "target": "dmg",
+        "arch": [
+          "universal"
+        ]
+      }
+    ]
+  }
+}
+```
+:::
 
 and use
 ```

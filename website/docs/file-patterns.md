@@ -18,9 +18,10 @@
 
 If directory matched, all contents are copied. So, you can just specify `foo` to copy `foo` directory.
 
-!!! tip "Excluding directories"
-    Remember that `!doNotCopyMe/**/*` would match the files *in* the `doNotCopyMe` directory, but not the directory itself, so the [empty directory](https://github.com/gulpjs/gulp/issues/165#issuecomment-32613179) would be created.
-    Solution — use macro `${/*}`, e.g. `!doNotCopyMe${/*}`.
+:::tip[Excluding directories]
+Remember that `!doNotCopyMe/**/*` would match the files *in* the `doNotCopyMe` directory, but not the directory itself, so the [empty directory](https://github.com/gulpjs/gulp/issues/165#issuecomment-32613179) would be created.
+Solution — use macro `${/*}`, e.g. `!doNotCopyMe${/*}`.
+:::
 
 ## Multiple Glob Patterns
  ```js
@@ -48,4 +49,4 @@ You can use macros in the file patterns, artifact file name patterns and publish
 * `${version}`
 * `${channel}` — detected prerelease component from version (e.g. `beta`).
 * `${env.ENV_NAME}` — any environment variable.
-* Any property of [AppInfo](./app-builder-lib.Class.AppInfo.md) (e.g. `buildVersion`, `buildNumber`).
+* Any property of [AppInfo](./api/app-builder-lib.Class.AppInfo.md) (e.g. `buildVersion`, `buildNumber`).

@@ -21,8 +21,9 @@ Use the `mas-dev` target (configured via the top-level `masDev` key) for local t
 
 You need a **Mac App Distribution** certificate (for signing the app) and an **Mac Installer Distribution** certificate (for signing the PKG submitted to App Store Connect). Both are issued from your [Apple Developer account](https://developer.apple.com/account/).
 
-!!! tip
-    For local testing with `mas-dev`, you use a **Development** provisioning profile and a standard developer certificate, not the distribution ones.
+:::tip
+For local testing with `mas-dev`, you use a **Development** provisioning profile and a standard developer certificate, not the distribution ones.
+:::
 
 ### Provisioning Profile
 

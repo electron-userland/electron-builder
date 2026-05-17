@@ -71,8 +71,9 @@ dmg:
 | `path` | Only for `link` type — the symlink destination |
 | `name` | Optional display name override |
 
-!!! tip "Centering Icons"
-    For a 540×380 window with two icons, the standard horizontal positions are x=130 (app) and x=410 (Applications link), both at y=220 (vertically centered).
+:::tip[Centering Icons]
+For a 540×380 window with two icons, the standard horizontal positions are x=130 (app) and x=410 (Applications link), both at y=220 (vertically centered).
+:::
 
 ## Volume Icon and Title
 
@@ -132,8 +133,9 @@ dmg:
   sign: true   # Default: false
 ```
 
-!!! note
-    The app bundle inside the DMG is always signed (when signing is configured). The `sign` option here refers to signing the DMG container file itself. Signing the DMG is not required for Gatekeeper but may be requested in some enterprise environments.
+:::note
+The app bundle inside the DMG is always signed (when signing is configured). The `sign` option here refers to signing the DMG container file itself. Signing the DMG is not required for Gatekeeper but may be requested in some enterprise environments.
+:::
 
 ## Internet-Enabled DMGs
 

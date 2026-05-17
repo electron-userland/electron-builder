@@ -1,5 +1,6 @@
-!!! warning "Single-file Flatpak bundles"
-    Currently `electron-builder` does **not** support publishing apps to Flatpak repositories like [Flathub](https://flathub.org/). Flatpak support in `electron-builder` is limited to generating [single-file bundles](https://docs.flatpak.org/en/latest/single-file-bundles.html) which have limitations compared to apps installed from a repository.
+:::warning[Single-file Flatpak bundles]
+Currently `electron-builder` does **not** support publishing apps to Flatpak repositories like [Flathub](https://flathub.org/). Flatpak support in `electron-builder` is limited to generating [single-file bundles](https://docs.flatpak.org/en/latest/single-file-bundles.html) which have limitations compared to apps installed from a repository.
+:::
 
 The top-level [flatpak](configuration.md) key contains a set of options instructing electron-builder on how it should build a [Flatpak](https://flatpak.org/) bundle.
 
