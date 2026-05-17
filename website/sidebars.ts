@@ -62,7 +62,7 @@ const sidebars: SidebarsConfig = {
 
     {
       type: "category",
-      label: "Guides",
+      label: "Features",
       items: [
         { type: "doc", id: "hooks", label: "Hooks" },
         { type: "doc", id: "icons", label: "Icons" },
