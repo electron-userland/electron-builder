@@ -1,10 +1,10 @@
-import { themes as prismThemes } from "prism-react-renderer"
-import type { Config } from "@docusaurus/types"
 import type * as Preset from "@docusaurus/preset-classic"
-import { fileURLToPath } from "node:url"
+import type { Config } from "@docusaurus/types"
 import { dirname, join } from "node:path"
-import remarkInclude from "./src/remark/remark-include.mjs"
+import { fileURLToPath } from "node:url"
+import { themes as prismThemes } from "prism-react-renderer"
 import remarkFixAnchors from "./src/remark/remark-fix-anchors.mjs"
+import remarkInclude from "./src/remark/remark-include.mjs"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const docsDir = join(__dirname, "docs")
@@ -37,6 +37,7 @@ const config: Config = {
 
   plugins: [
     [
+      // backwards compatibility for old links, e.g. https://www.electron.build/cli
       "@docusaurus/plugin-client-redirects",
       {
         createRedirects(toPath: string) {
@@ -108,6 +109,8 @@ const config: Config = {
     ],
   ],
 
+  themes: ['@docusaurus/theme-mermaid'],
+
   themeConfig: {
     colorMode: {
       respectPrefersColorScheme: true,
@@ -115,25 +118,43 @@ const config: Config = {
     navbar: {
       title: "electron-builder",
       items: [
+
         {
           type: "docSidebar",
           sidebarId: "docsSidebar",
           position: "left",
-          label: "Docs",
+          label: "Overview",
+        },
+        {
+          type: "dropdown",
+          label: "Configuration",
+          position: "left",
+          items: [
+            { type: "doc", docId: "configuration", label: "Overview" },
+            { type: "doc", docId: "contents", label: "Contents" },
+            { type: "doc", docId: "file-patterns", label: "File Patterns" },
+            { type: "doc", docId: "architecture", label: "Architecture" },
+            { type: "doc", docId: "publish", label: "Publish" },
+            { type: "docSidebar", sidebarId: "macosSidebar", label: "macOS" },
+            { type: "docSidebar", sidebarId: "windowsSidebar", label: "Windows" },
+            { type: "docSidebar", sidebarId: "linuxSidebar", label: "Linux" },
+          ],
         },
         {
           type: "dropdown",
           label: "Features",
           position: "left",
           items: [
-            { type: "doc", docId: "hooks", label: "Hooks" },
-            { type: "doc", docId: "icons", label: "Icons" },
-            { type: "doc", docId: "auto-update", label: "Auto Update" },
-            { type: "doc", docId: "code-signing", label: "Code Signing" },
-            { type: "doc", docId: "multi-platform-build", label: "Multi Platform Build" },
-            { type: "doc", docId: "github-actions", label: "GitHub Actions" },
-            { type: "doc", docId: "troubleshooting", label: "Troubleshooting" },
-          ],
+            { type: "doc", docId: "features/hooks", label: "Hooks" },
+            { type: "doc", docId: "features/icons", label: "Icons" },
+            { type: "doc", docId: "features/auto-update", label: "Auto Update" },
+            { type: "doc", docId: "features/code-signing/code-signing", label: "Code Signing" },
+            { type: "doc", docId: "features/code-signing/code-signing-win", label: "Code Signing — Windows" },
+            { type: "doc", docId: "features/code-signing/code-signing-mac", label: "Code Signing — macOS" },
+            { type: "doc", docId: "features/code-signing/notarization", label: "Notarization" },
+            { type: "doc", docId: "features/multi-platform-build", label: "Multi Platform Build" },
+            { type: "doc", docId: "features/github-actions", label: "GitHub Actions" },
+          ]
         },
         {
           type: "dropdown",
@@ -141,14 +162,36 @@ const config: Config = {
           position: "left",
           items: [
             { type: "doc", docId: "tutorials/adding-electron-fuses", label: "Adding Electron Fuses" },
-            { type: "doc", docId: "tutorials/loading-app-dependencies-manually", label: "Loading App Dependencies Manually" },
+            {
+              type: "doc",
+              docId: "tutorials/loading-app-dependencies-manually",
+              label: "Loading App Dependencies Manually",
+            },
             { type: "doc", docId: "tutorials/two-package-structure", label: "Two Package Structure" },
-            { type: "doc", docId: "tutorials/macos-kernel-extensions", label: "macOS Kernel Extensions" },
-            { type: "doc", docId: "tutorials/code-signing-windows-apps-on-unix", label: "Code Signing on Unix" },
-            { type: "doc", docId: "tutorials/release-using-channels", label: "Release Using Channels" },
-            { type: "doc", docId: "tutorials/test-update-on-s3-locally", label: "Test Update on S3 Locally" },
+            {
+              type: "doc",
+              docId: "tutorials/macos-kernel-extensions",
+              label: "macOS Kernel Extensions",
+            },
+            {
+              type: "doc",
+              docId: "tutorials/code-signing-windows-apps-on-unix",
+              label: "Code Signing Windows Apps on Unix",
+            },
+            {
+              type: "doc",
+              docId: "tutorials/release-using-channels",
+              label: "Release Using Channels",
+            },
+            {
+              type: "doc",
+              docId: "tutorials/test-update-on-s3-locally",
+              label: "Test Update on S3 Locally",
+            },
+            { type: "doc", docId: "tutorials/troubleshooting", label: "Troubleshooting" },
           ],
         },
+
         {
           href: "https://github.com/electron-userland/electron-builder",
           label: "GitHub",
@@ -162,7 +205,7 @@ const config: Config = {
         {
           title: "Docs",
           items: [
-            { label: "Introduction", to: "/docs" },
+            { label: "Overview", to: "/docs" },
             { label: "CLI", to: "/docs/cli" },
             { label: "Configuration", to: "/docs/configuration" },
           ],
