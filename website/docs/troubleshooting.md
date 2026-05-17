@@ -207,7 +207,7 @@ flatpak install flathub org.freedesktop.Sdk//24.08
 : The installer binary is corrupted. This can happen when the file is scanned/modified by antivirus during download or build. Check your AV exclusions during builds.
 
 **"The publisher could not be verified" (Windows SmartScreen)**
-: The app isn't code-signed, or signed with an untrusted certificate. See [Windows Code Signing](code-signing-win.md).
+: The app isn't code-signed, or signed with an untrusted certificate. See [Windows Code Signing](features/code-signing/code-signing-win.md).
 
 **MSI: upgrades don't remove the old version**
 : The `upgradeCode` was changed between versions. The `upgradeCode` (a GUID) must remain **identical** across all versions of your application. See [MSI Configuration](msi.md).

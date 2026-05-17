@@ -195,7 +195,7 @@ docker run --rm \
 
 For AppX (Windows Store), `MakeAppx.exe` requires Windows. When building on macOS with Parallels Desktop (Pro Edition), electron-builder automatically detects and uses the running Windows VM.
 
-See [Multi Platform Build](multi-platform-build.md) for full Docker documentation.
+See [Multi Platform Build](features/multi-platform-build.md) for full Docker documentation.
 
 ## Native Modules and Architecture
 
@@ -257,7 +257,7 @@ jobs:
 
 ## Related Pages
 
-- [GitHub Actions](github-actions.md) — full CI/CD workflows
-- [Multi Platform Build](multi-platform-build.md) — Docker images and cross-compilation
+- [GitHub Actions](features/github-actions.md) — full CI/CD workflows
+- [Multi Platform Build](features/multi-platform-build.md) — Docker images and cross-compilation
 - [macOS Configuration](mac.md) — `mergeASARs`, `singleArchFiles`, `x64ArchFiles`
 - [Target Selection](targets.md) — choosing the right target format per platform

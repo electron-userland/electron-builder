@@ -53,7 +53,7 @@ export interface CommonNsisOptions {
    * If not specified, a deterministic GUID is generated from the app ID (`appId`) — but this means
    * changing your `appId` will break silent upgrades of existing installs.
    *
-   * @see [GUID vs Application Name](./nsis.md#guid-vs-application-name)
+   * @see [GUID vs Application Name](https://www.electron.build/docs/nsis#guid-vs-application-name)
    */
   readonly guid?: string | null
 
@@ -125,32 +125,32 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
   readonly removeDefaultUninstallWelcomePage?: boolean
 
   /**
-   * The path to installer icon, relative to the [build resources](./contents.md#extraresources) or to the project directory.
+   * The path to installer icon, relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.
    * Defaults to `build/installerIcon.ico` or application icon.
    */
   readonly installerIcon?: string | null
   /**
-   * The path to uninstaller icon, relative to the [build resources](./contents.md#extraresources) or to the project directory.
+   * The path to uninstaller icon, relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.
    * Defaults to `build/uninstallerIcon.ico` or application icon.
    */
   readonly uninstallerIcon?: string | null
   /**
-   * *assisted installer only.* `MUI_HEADERIMAGE`, relative to the [build resources](./contents.md#extraresources) or to the project directory.
+   * *assisted installer only.* `MUI_HEADERIMAGE`, relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.
    * @default build/installerHeader.bmp
    */
   readonly installerHeader?: string | null
   /**
-   * *one-click installer only.* The path to header icon (above the progress bar), relative to the [build resources](./contents.md#extraresources) or to the project directory.
+   * *one-click installer only.* The path to header icon (above the progress bar), relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.
    * Defaults to `build/installerHeaderIcon.ico` or application icon.
    */
   readonly installerHeaderIcon?: string | null
   /**
-   * *assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](./contents.md#extraresources) or to the project directory.
+   * *assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.
    * Defaults to `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`. Image size 164 × 314 pixels.
    */
   readonly installerSidebar?: string | null
   /**
-   * *assisted installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](./contents.md#extraresources) or to the project directory.
+   * *assisted installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.
    * Defaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`
    */
   readonly uninstallerSidebar?: string | null
@@ -160,19 +160,19 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
    */
   readonly uninstallDisplayName?: string | null
   /**
-   * The URL to the uninstaller help page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.
+   * The URL to the uninstaller help page in the control panel. Defaults to [homepage](https://www.electron.build/docs/configuration#homepage) from application package.json.
    */
   readonly uninstallUrlHelp?: string | null
   /**
-   * The URL to the uninstaller info about page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.
+   * The URL to the uninstaller info about page in the control panel. Defaults to [homepage](https://www.electron.build/docs/configuration#homepage) from application package.json.
    */
   readonly uninstallUrlInfoAbout?: string | null
   /**
-   * The URL to the uninstaller update info page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.
+   * The URL to the uninstaller update info page in the control panel. Defaults to [homepage](https://www.electron.build/docs/configuration#homepage) from application package.json.
    */
   readonly uninstallUrlUpdateInfo?: string | null
   /**
-   * The URL to the uninstaller readme page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.
+   * The URL to the uninstaller readme page in the control panel. Defaults to [homepage](https://www.electron.build/docs/configuration#homepage) from application package.json.
    */
   readonly uninstallUrlReadme?: string | null
 
@@ -196,7 +196,7 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
   readonly license?: string | null
 
   /**
-   * The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName} Setup ${version}.${ext}`.
+   * The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template). Defaults to `${productName} Setup ${version}.${ext}`.
    */
   readonly artifactName?: string | null
 
@@ -295,7 +295,7 @@ export interface NsisWebOptions extends NsisOptions {
   readonly appPackageUrl?: string | null
 
   /**
-   * The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName} Web Setup ${version}.${ext}`.
+   * The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template). Defaults to `${productName} Web Setup ${version}.${ext}`.
    */
   readonly artifactName?: string | null
 

@@ -108,7 +108,8 @@ const config: Config = {
           sidebarPath: "./sidebars.ts",
           editUrl: "https://github.com/electron-userland/electron-builder/edit/master/website/",
           routeBasePath: "/docs",
-          remarkPlugins: [[remarkInclude, { docsDir }], remarkFixAnchors],
+          beforeDefaultRemarkPlugins: [[remarkInclude, { docsDir }]],
+          remarkPlugins: [remarkFixAnchors],
           exclude: ["api/!(index).md"],
         },
         blog: false,
@@ -163,6 +164,7 @@ const config: Config = {
             { type: "doc", docId: "features/code-signing/notarization", label: "Notarization" },
             { type: "doc", docId: "features/multi-platform-build", label: "Multi Platform Build" },
             { type: "doc", docId: "features/github-actions", label: "GitHub Actions" },
+            { type: "doc", docId: "features/electron-forge", label: "Electron Forge" },
           ],
         },
         {

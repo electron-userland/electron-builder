@@ -32,7 +32,7 @@ Quick reference for terms used throughout the electron-builder documentation.
 : The unique reverse-DNS identifier for a macOS application bundle (e.g., `com.company.myapp`). Set via `appId` in electron-builder config. Must be unique across all apps on a user's machine and within the App Store.
 
 **CSC (Code Signing Certificate)**
-: The prefix for environment variables that provide code signing credentials to electron-builder (`CSC_LINK`, `CSC_KEY_PASSWORD`, etc.). See [Code Signing](code-signing.md).
+: The prefix for environment variables that provide code signing credentials to electron-builder (`CSC_LINK`, `CSC_KEY_PASSWORD`, etc.). See [Code Signing](features/code-signing/code-signing.md).
 
 ---
 
