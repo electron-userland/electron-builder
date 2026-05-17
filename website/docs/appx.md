@@ -23,7 +23,7 @@ For standard consumer distribution, [NSIS](nsis.md) is simpler. For enterprise d
 | Auto-update | Store / electron-updater | electron-updater | electron-updater |
 | Code signing | Required (or Store) | Recommended | Recommended |
 
-## Code Signing
+## Code Signing {#appx-package-code-signing}
 
 - **Store distribution** — no manual signing needed. The Windows Store signs the package with a Microsoft certificate during the submission process.
 - **Sideloading / enterprise** — the AppX must be signed with a trusted certificate. See [Windows Code Signing](code-signing-win.md).

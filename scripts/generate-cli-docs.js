@@ -13,7 +13,7 @@ const out = execSync("node ./packages/electron-builder/out/cli/cli.js --help", {
   cwd: join(__dirname, "../"),
 })
 
-const helpBlock = `\`\`\`\n${out.trimEnd()}\n\`\`\``
+const helpBlock = `\`\`\`\n${out.trimEnd().replaceAll("cli.js", "electron-builder")}\n\`\`\``
 
 const dest = join(__dirname, "..", "website", "docs", "cli.md")
 const existing = readFileSync(dest, "utf-8")

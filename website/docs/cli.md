@@ -4,20 +4,20 @@ title: CLI
 
 <!-- HELP_OUTPUT_START -->
 ```
-cli.js
+electron-builder
 
 Build
 
 Commands:
-  cli.js build                    Build                                [default]
-  cli.js install-app-deps         Install app deps
-  cli.js node-gyp-rebuild         Rebuild own native code
-  cli.js publish                  Publish a list of artifacts
-  cli.js create-self-signed-cert  Create self-signed code signing cert for
+  electron-builder build                    Build                                [default]
+  electron-builder install-app-deps         Install app deps
+  electron-builder node-gyp-rebuild         Rebuild own native code
+  electron-builder publish                  Publish a list of artifacts
+  electron-builder create-self-signed-cert  Create self-signed code signing cert for
                                   Windows apps
-  cli.js start                    Run application in a development mode using
+  electron-builder start                    Run application in a development mode using
                                   electron-webpack
-  cli.js clear-cache              Clear the electron-builder default cache
+  electron-builder clear-cache              Clear the electron-builder default cache
                                   directory
 
 Building:

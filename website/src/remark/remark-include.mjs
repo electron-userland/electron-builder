@@ -12,6 +12,51 @@ function stripFrontmatter(content) {
   return content.slice(end + 4).trimStart()
 }
 
+function slugify(text) {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+}
+
+/** Extract plain text from a heading node. */
+function headingText(node) {
+  let text = ""
+  visit(node, "text", (n) => { text += n.value })
+  visit(node, "inlineCode", (n) => { text += n.value })
+  return text
+}
+
+/**
+ * Stamp `data.hProperties.id` on every heading node so that the remark→rehype
+ * bridge writes a proper HTML id attribute — even though Docusaurus's own
+ * heading-id plugin ran before us and won't see our dynamically inserted nodes.
+ */
+function stampHeadingIds(nodes) {
+  const seen = new Map()
+  visit({ type: "root", children: nodes }, "heading", (node) => {
+    const text = headingText(node)
+    // Honor any explicit {#id} already in the heading text
+    const explicit = text.match(/\{#([^}]+)\}\s*$/)
+    let id
+    if (explicit) {
+      id = explicit[1]
+    } else {
+      const base = slugify(text)
+      const count = seen.get(base) ?? 0
+      id = count === 0 ? base : `${base}-${count}`
+      seen.set(base, count + 1)
+    }
+    if (!id) return
+    node.data = node.data ?? {}
+    node.data.hProperties = node.data.hProperties ?? {}
+    node.data.hProperties.id = id
+  })
+}
+
 /** Remark plugin that resolves {! ./path.md !} file includes inline.
  *
  * When a file is not found at the literal path (relative to the including
@@ -49,6 +94,7 @@ export default function remarkInclude({ docsDir } = {}) {
       const content = stripFrontmatter(raw)
       const parsed = fromMarkdown(content)
 
+      stampHeadingIds(parsed.children)
       replacements.push({ parent, index, nodes: parsed.children })
     })
 

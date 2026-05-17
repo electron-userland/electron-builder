@@ -1,4 +1,4 @@
-The top-level [nsis](configuration.md#nsis) key contains set of options instructing electron-builder on how it should build NSIS target (default target for Windows).
+The top-level `nsis` key (see [configuration](./configuration.md)) contains set of options instructing electron-builder on how it should build NSIS target (default target for Windows).
 
 These options also applicable for [Web installer](#web-installer), use top-level `nsisWeb` key.
 
@@ -9,11 +9,11 @@ Unicode enabled by default. Large strings are supported (maximum string length o
 ## 32 bit + 64 bit
 
 If you build both ia32 and x64 arch (`--x64 --ia32`), you in any case get one installer. Appropriate arch will be installed automatically.
-The same applied to web installer (`nsis-web` [target](win.md#WindowsConfiguration-target)).
+The same applied to web installer (`nsis-web` [target](win.md#target)).
 
 ## Web Installer
 
-To build web installer, set [target](win.md#WindowsConfiguration-target) to `nsis-web`. Web Installer automatically detects OS architecture and downloads corresponding package file. So, user don't need to guess what installer to download and in the same time you don't bundle package files for all architectures in the one installer (as in case of default `nsis` target). It doesn't matter for common Electron application (due to superb LZMA compression, size difference is acceptable), but if your application is huge, Web Installer is a solution.
+To build web installer, set [target](win.md#target) to `nsis-web`. Web Installer automatically detects OS architecture and downloads corresponding package file. So, user don't need to guess what installer to download and in the same time you don't bundle package files for all architectures in the one installer (as in case of default `nsis` target). It doesn't matter for common Electron application (due to superb LZMA compression, size difference is acceptable), but if your application is huge, Web Installer is a solution.
 
 To customize web installer, use the top-level `nsisWeb` key (not `nsis`).
 
@@ -24,7 +24,7 @@ If for some reasons web installer cannot download (antivirus, offline):
 
 ## Custom NSIS script
 
-Two options are available — [include](#NsisOptions-include) and [script](#NsisOptions-script). `script` allows you to provide completely different NSIS script. For most cases it is not required as you need only to customise some aspects, but still use well-tested and maintained default NSIS script. So, `include` is recommended.
+Two options are available — [include](#include) and [script](#script). `script` allows you to provide completely different NSIS script. For most cases it is not required as you need only to customise some aspects, but still use well-tested and maintained default NSIS script. So, `include` is recommended.
 
 Keep in mind — if you customize NSIS script, you should always state about it in the issue reports. And don't expect that your issue will be resolved.
 
@@ -105,12 +105,12 @@ Windows requires to use registry keys (e.g. INSTALL/UNINSTALL info). Squirrel.Wi
 But it is not robust — Google can use key Google Chrome SxS, because it is a Google.
 
 So, it is better to use [GUID](http://stackoverflow.com/a/246935/1910191).
-You are not forced to explicitly specify it — name-based [UUID v5](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_5_.28SHA-1_hash_.26_namespace.29) will be generated from your [appId](configuration.md#appId) or [name](configuration.md#metadata).
+You are not forced to explicitly specify it — name-based [UUID v5](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_5_.28SHA-1_hash_.26_namespace.29) will be generated from your [appId](./configuration.md) or [name](configuration.md#metadata).
 It means that you **should not change appId** once your application in use (or name if `appId` was not set). Application product name (title) or description can be safely changed.
 
-You can explicitly set guid using option [nsis.guid](#NsisOptions-guid), but it is not recommended — consider using [appId](configuration.md#appId).
+You can explicitly set guid using option [nsis.guid](#guid), but it is not recommended — consider using [appId](./configuration.md).
 
-It is also important to set the Application User Model ID (AUMID) to the [appId](configuration.md#appId) of the application, in order for notifications on Windows 8/8.1 to function and for Window 10 notifications to display the app icon within the notifications by default. The AUMID should be set within the Main process and before any BrowserWindows have been opened, it is normally the first piece of code executed: `app.setAppUserModelId(appId)`
+It is also important to set the Application User Model ID (AUMID) to the [appId](./configuration.md) of the application, in order for notifications on Windows 8/8.1 to function and for Window 10 notifications to display the app icon within the notifications by default. The AUMID should be set within the Main process and before any BrowserWindows have been opened, it is normally the first piece of code executed: `app.setAppUserModelId(appId)`
 
 ## Portable
 

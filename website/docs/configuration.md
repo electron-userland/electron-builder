@@ -1,4 +1,4 @@
-electron-builder [configuration](#configuration) can be defined
+electron-builder configuration can be defined
 
 * in the `package.json` file of your project using the `build` key on the top level:
    ```json

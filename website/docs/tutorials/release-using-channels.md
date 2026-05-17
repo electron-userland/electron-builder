@@ -35,13 +35,13 @@ If you want to use channels, you should add this to your package.json:
 All you have to do to release using channels is to define the channel in the version tag of the `package.json`. Add "-beta" or "-alpha" (nothing for "latest") to automatically build for the related channel.
 
 :::warning
-Github release does not respect the version in the version tag even if `detectUpdateChannel` is true. You must *explicitly* set [`channel`](../builder-util-runtime.interface.githuboptions#channel) to match the intended release channel.
+Github release does not respect the version in the version tag even if `detectUpdateChannel` is true. You must *explicitly* set `channel` (see [GitHub publish options](../publish.md#github-repository-and-bintray-package)) to match the intended release channel.
 :::
 
 ### Your Application
 All you need to do here is to define which channel the user will receive with:
 
-`autoUpdater.channel = "beta"` (see [the documentation here](../auto-update.md#module_electron-updater.AppUpdater+channel))
+`autoUpdater.channel = "beta"` (see [auto-update documentation](../auto-update.md))
 
 The following versions will be distributed to users depending on the channel defined:
 

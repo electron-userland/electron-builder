@@ -4,6 +4,7 @@ import type * as Preset from "@docusaurus/preset-classic"
 import { fileURLToPath } from "node:url"
 import { dirname, join } from "node:path"
 import remarkInclude from "./src/remark/remark-include.mjs"
+import remarkFixAnchors from "./src/remark/remark-fix-anchors.mjs"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const docsDir = join(__dirname, "docs")
@@ -54,7 +55,7 @@ const config: Config = {
         hidePageTitle: true,
         hidePageHeader: true,
         useHTMLEncodedBrackets: true,
-        preserveAnchorCasing: true,
+        preserveAnchorCasing: false,
         visibilityFilters: {
           protected: false,
           private: false,
@@ -82,7 +83,7 @@ const config: Config = {
           sidebarPath: "./sidebars.ts",
           editUrl: "https://github.com/electron-userland/electron-builder/edit/master/website/",
           routeBasePath: "/",
-          remarkPlugins: [[remarkInclude, { docsDir }]],
+          remarkPlugins: [[remarkInclude, { docsDir }], remarkFixAnchors],
           // Exclude individual TypeDoc API files from Docusaurus compilation.
           // remark-include reads them via fs.readFileSync, so includes still work.
           // Only api/packages.md (the package index) and api/index.md are compiled as pages.

@@ -1,4 +1,4 @@
-The top-level [win](configuration.md#win) key contains set of options instructing electron-builder on how it should build Windows targets. These options applicable for any Windows target.
+The top-level `win` key (see [configuration](./configuration.md)) contains set of options instructing electron-builder on how it should build Windows targets. These options applicable for any Windows target.
 
 ---
 

@@ -230,7 +230,7 @@ The top-level [deb](configuration.md) key contains set of options for Debian pac
 
 All [LinuxTargetSpecificOptions](linux.md#linuxtargetspecificoptions-apk-freebsd-pacman-p5p-and-rpm-options) can also be specified in `deb` to customize Debian packages.
 
-## `LinuxTargetSpecificOptions` — APK, FreeBSD, Pacman, P5P and RPM Options
+## `LinuxTargetSpecificOptions` — APK, FreeBSD, Pacman, P5P and RPM Options {#linuxtargetspecificoptions-apk-freebsd-pacman-p5p-and-rpm-options}
 
 The top-level `apk`, `freebsd`, `pacman`, `p5p` and `rpm` keys contain options for their respective Linux targets.
 
