@@ -235,5 +235,5 @@ electron-builder --mac --x64 --arm64
 ## Related Pages
 
 - [Architecture & Multi-Arch](architecture.md) — building for multiple CPU architectures
-- [GitHub Actions](features/github-actions.md) — CI/CD workflows for multi-platform builds
-- [Code Signing](features/code-signing/code-signing.md) — signing requirements by platform
+- [GitHub Actions](github-actions.md) — CI/CD workflows for multi-platform builds
+- [Code Signing](code-signing.md) — signing requirements by platform

@@ -119,7 +119,7 @@ const config: Config = {
     ],
   ],
 
-  themes: ['@docusaurus/theme-mermaid'],
+  themes: ["@docusaurus/theme-mermaid"],
 
   themeConfig: {
     colorMode: {
@@ -128,7 +128,6 @@ const config: Config = {
     navbar: {
       title: "electron-builder",
       items: [
-
         {
           type: "docSidebar",
           sidebarId: "docsSidebar",
@@ -164,7 +163,7 @@ const config: Config = {
             { type: "doc", docId: "features/code-signing/notarization", label: "Notarization" },
             { type: "doc", docId: "features/multi-platform-build", label: "Multi Platform Build" },
             { type: "doc", docId: "features/github-actions", label: "GitHub Actions" },
-          ]
+          ],
         },
         {
           type: "dropdown",

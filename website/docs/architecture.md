@@ -125,9 +125,8 @@ Windows ARM64 builds run natively on ARM-based Windows devices (Surface Pro X, S
 electron-builder --win --arm64
 ```
 
-:::note[Cross-compilation from x64]
-Windows ARM64 builds can be cross-compiled from an x64 Windows machine. The Electron binary for ARM64 is downloaded automatically.
-:::
+!!! note "Cross-compilation from x64"
+    Windows ARM64 builds can be cross-compiled from an x64 Windows machine. The Electron binary for ARM64 is downloaded automatically.
 
 ## Linux ARM
 
@@ -196,7 +195,7 @@ docker run --rm \
 
 For AppX (Windows Store), `MakeAppx.exe` requires Windows. When building on macOS with Parallels Desktop (Pro Edition), electron-builder automatically detects and uses the running Windows VM.
 
-See [Multi Platform Build](features/multi-platform-build.md) for full Docker documentation.
+See [Multi Platform Build](multi-platform-build.md) for full Docker documentation.
 
 ## Native Modules and Architecture
 
@@ -258,7 +257,7 @@ jobs:
 
 ## Related Pages
 
-- [GitHub Actions](features/github-actions.md) — full CI/CD workflows
-- [Multi Platform Build](features/multi-platform-build.md) — Docker images and cross-compilation
+- [GitHub Actions](github-actions.md) — full CI/CD workflows
+- [Multi Platform Build](multi-platform-build.md) — Docker images and cross-compilation
 - [macOS Configuration](mac.md) — `mergeASARs`, `singleArchFiles`, `x64ArchFiles`
 - [Target Selection](targets.md) — choosing the right target format per platform
