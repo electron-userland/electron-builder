@@ -121,6 +121,8 @@ CSC_KEY_PASSWORD=your-password
 
 ### macOS Signing
 
+Pass `CSC_LINK` and `CSC_KEY_PASSWORD` directly — electron-builder creates and manages a temporary keychain automatically.
+
 ```yaml
 jobs:
   build-mac:
@@ -128,23 +130,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Import certificate
-        run: |
-          echo "$CSC_LINK" | base64 --decode > /tmp/cert.p12
-          security create-keychain -p "" build.keychain
-          security import /tmp/cert.p12 -k build.keychain -P "$CSC_KEY_PASSWORD" -T /usr/bin/codesign
-          security list-keychains -d user -s build.keychain
-          security set-keychain-settings -t 3600 -u build.keychain
-          security unlock-keychain -p "" build.keychain
-          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
-        env:
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-
       - name: Build and sign
         run: npx electron-builder --mac
         env:
-          CSC_KEYCHAIN: build.keychain
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           CSC_NAME: ${{ secrets.CSC_NAME }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}

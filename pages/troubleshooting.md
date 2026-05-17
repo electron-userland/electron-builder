@@ -11,7 +11,7 @@ DEBUG=electron-builder electron-builder build
 ### macOS
 
 **"No identity found for code signing"**
-: No Developer ID certificate is installed. Run `security find-identity -v -p codesigning` to list installed identities. If empty, the certificate hasn't been imported. On CI, check your keychain setup steps.
+: No Developer ID certificate is installed. Run `security find-identity -v -p codesigning` to list available identities. On CI, verify `CSC_LINK` is set and contains a valid base64-encoded `.p12`.
 
 **"CSSMERR_TP_CERT_REVOKED"**
 : Your certificate was revoked by Apple. Renew it in the Apple Developer portal.
@@ -23,7 +23,7 @@ DEBUG=electron-builder electron-builder build
 : `CSC_LINK` isn't set, so electron-builder silently skips signing. Set `forceCodeSigning: true` to turn this into a build failure so you catch it early.
 
 **"Keychain not unlocked" / codesign hangs**
-: On CI, ensure you run `security set-key-partition-list` after importing the certificate. Without this step the key is inaccessible to codesign even in an unlocked keychain.
+: Verify `CSC_LINK` and `CSC_KEY_PASSWORD` are set correctly — electron-builder creates a temporary keychain and runs all required setup commands, including `set-key-partition-list`, automatically. If using a manually managed keychain (via `CSC_KEYCHAIN`), ensure you run `security set-key-partition-list -S apple-tool:,apple: -s -k <password> <keychain>` after importing.
 
 **"App cannot be opened because the developer cannot be verified"** (Gatekeeper)
 : The app is unsigned, signed with the wrong certificate type (e.g., Mac App Store cert used for direct distribution), or not notarized. Check the certificate type and notarization status with `spctl --assess --verbose dist/mac/MyApp.app`.
