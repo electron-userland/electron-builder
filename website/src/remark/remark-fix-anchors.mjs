@@ -41,6 +41,14 @@ export default function remarkFixAnchors() {
         }
       }
 
+      // Strip .md extension from relative doc links so they work regardless of
+      // which page they're included into (remark-include bypasses the Docusaurus
+      // link resolver, so relative .md hrefs resolve as URL paths, not doc routes)
+      if (!url.startsWith("http") && !url.startsWith("#") && /\.mdx?($|#)/.test(url)) {
+        node.url = url.replace(/\.mdx?($|#)/, (_, rest) => (rest === "" ? "" : rest))
+        url = node.url
+      }
+
       if (!url.startsWith("#")) return
 
       const anchor = url.slice(1)
