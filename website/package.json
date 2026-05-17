@@ -6,7 +6,7 @@
     "docusaurus": "docusaurus",
     "prestart": "node scripts/prepare-docs.mjs",
     "start": "docusaurus start",
-    "prebuild": "node scripts/prepare-docs.mjs ",
+    "prebuild": "node scripts/prepare-docs.mjs && node scripts/fix-typedoc-anchors.mjs",
     "build": "docusaurus build && pagefind --site build",
     "swizzle": "docusaurus swizzle",
     "clear": "docusaurus clear",
