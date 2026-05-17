@@ -216,6 +216,7 @@ describe.heavy.ifEnv(hasSnapInstalled())("snap heavy", options, () => {
         config: {
           extraMetadata: { name: "se-wo-template" },
           productName: "Snap Electron App (full build)",
+          snapcraft: { base: core },
           electronFuses: {
             runAsNode: true,
           },

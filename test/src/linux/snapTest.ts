@@ -9,6 +9,7 @@ test.ifNotWindows("snap", ({ expect }) =>
         name: "sep",
       },
       productName: "Sep",
+      snap: {},
       electronFuses: {
         runAsNode: true,
         enableCookieEncryption: true,
@@ -31,6 +32,7 @@ test.ifNotWindows("arm", ({ expect }) =>
         name: "sep",
       },
       productName: "Sep",
+      snap: {},
     },
   })
 )
@@ -257,6 +259,7 @@ test.ifNotWindows("default compression", ({ expect }) =>
         name: "sep",
       },
       productName: "Sep",
+      snap: {},
     },
     effectiveOptionComputed: async ({ snap }) => {
       expect(snap).toMatchSnapshot()
@@ -292,6 +295,7 @@ test.ifNotWindows("default base", ({ expect }) =>
     targets: snapTarget,
     config: {
       productName: "Sep",
+      snap: {},
     },
     effectiveOptionComputed: async ({ snap }) => {
       expect(snap).toMatchSnapshot()

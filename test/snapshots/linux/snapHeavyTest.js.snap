@@ -275,7 +275,7 @@ exports[`snap heavy > snap full (core18 armhf) 1`] = `
       ],
     },
   },
-  "base": "core20",
+  "base": "core18",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
@@ -317,80 +317,6 @@ exports[`snap heavy > snap full (core18 armhf) 2`] = `
     {
       "arch": "armv7l",
       "file": "se-wo-template_1.1.0_armhf.snap",
-    },
-  ],
-}
-`;
-
-exports[`snap heavy > snap full (core18) 1`] = `
-{
-  "apps": {
-    "se-wo-template": {
-      "command": "command.sh",
-      "environment": {
-        "DISABLE_WAYLAND": "1",
-        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
-        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
-        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
-      },
-      "plugs": [
-        "desktop",
-        "desktop-legacy",
-        "home",
-        "x11",
-        "wayland",
-        "unity7",
-        "browser-support",
-        "network",
-        "gsettings",
-        "audio-playback",
-        "pulseaudio",
-        "opengl",
-      ],
-    },
-  },
-  "base": "core18",
-  "confinement": "strict",
-  "description": "Test Application (test quite “ #378)",
-  "grade": "stable",
-  "name": "se-wo-template",
-  "platforms": [
-    "amd64",
-  ],
-  "plugs": {
-    "gnome-3-28-1804": {
-      "default-provider": "gnome-3-28-1804",
-      "interface": "content",
-      "target": "$SNAP/gnome-platform",
-    },
-    "gtk-3-themes": {
-      "default-provider": "gtk-common-themes",
-      "interface": "content",
-      "target": "$SNAP/data-dir/themes",
-    },
-    "icon-themes": {
-      "default-provider": "gtk-common-themes",
-      "interface": "content",
-      "target": "$SNAP/data-dir/icons",
-    },
-    "sound-themes": {
-      "default-provider": "gtk-common-themes",
-      "interface": "content",
-      "target": "$SNAP/data-dir/sounds",
-    },
-  },
-  "summary": "Snap Electron App (full build)",
-  "title": "Snap Electron App (full build)",
-  "version": "1.1.0",
-}
-`;
-
-exports[`snap heavy > snap full (core18) 2`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "se-wo-template_1.1.0_amd64.snap",
     },
   ],
 }
@@ -470,80 +396,6 @@ exports[`snap heavy > snap full (core20 armhf) 2`] = `
 }
 `;
 
-exports[`snap heavy > snap full (core20) 1`] = `
-{
-  "apps": {
-    "se-wo-template": {
-      "command": "command.sh",
-      "environment": {
-        "DISABLE_WAYLAND": "1",
-        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
-        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
-        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
-      },
-      "plugs": [
-        "desktop",
-        "desktop-legacy",
-        "home",
-        "x11",
-        "wayland",
-        "unity7",
-        "browser-support",
-        "network",
-        "gsettings",
-        "audio-playback",
-        "pulseaudio",
-        "opengl",
-      ],
-    },
-  },
-  "base": "core20",
-  "confinement": "strict",
-  "description": "Test Application (test quite “ #378)",
-  "grade": "stable",
-  "name": "se-wo-template",
-  "platforms": [
-    "amd64",
-  ],
-  "plugs": {
-    "gnome-3-28-1804": {
-      "default-provider": "gnome-3-28-1804",
-      "interface": "content",
-      "target": "$SNAP/gnome-platform",
-    },
-    "gtk-3-themes": {
-      "default-provider": "gtk-common-themes",
-      "interface": "content",
-      "target": "$SNAP/data-dir/themes",
-    },
-    "icon-themes": {
-      "default-provider": "gtk-common-themes",
-      "interface": "content",
-      "target": "$SNAP/data-dir/icons",
-    },
-    "sound-themes": {
-      "default-provider": "gtk-common-themes",
-      "interface": "content",
-      "target": "$SNAP/data-dir/sounds",
-    },
-  },
-  "summary": "Snap Electron App (full build)",
-  "title": "Snap Electron App (full build)",
-  "version": "1.1.0",
-}
-`;
-
-exports[`snap heavy > snap full (core20) 2`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "se-wo-template_1.1.0_amd64.snap",
-    },
-  ],
-}
-`;
-
 exports[`snap heavy > snap full (core22 armhf) 1`] = `
 {
   "apps": {
@@ -571,7 +423,7 @@ exports[`snap heavy > snap full (core22 armhf) 1`] = `
       ],
     },
   },
-  "base": "core20",
+  "base": "core22",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
@@ -613,80 +465,6 @@ exports[`snap heavy > snap full (core22 armhf) 2`] = `
     {
       "arch": "armv7l",
       "file": "se-wo-template_1.1.0_armhf.snap",
-    },
-  ],
-}
-`;
-
-exports[`snap heavy > snap full (core22) 1`] = `
-{
-  "apps": {
-    "se-wo-template": {
-      "command": "command.sh",
-      "environment": {
-        "DISABLE_WAYLAND": "1",
-        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
-        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
-        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
-      },
-      "plugs": [
-        "desktop",
-        "desktop-legacy",
-        "home",
-        "x11",
-        "wayland",
-        "unity7",
-        "browser-support",
-        "network",
-        "gsettings",
-        "audio-playback",
-        "pulseaudio",
-        "opengl",
-      ],
-    },
-  },
-  "base": "core22",
-  "confinement": "strict",
-  "description": "Test Application (test quite “ #378)",
-  "grade": "stable",
-  "name": "se-wo-template",
-  "platforms": [
-    "amd64",
-  ],
-  "plugs": {
-    "gnome-3-28-1804": {
-      "default-provider": "gnome-3-28-1804",
-      "interface": "content",
-      "target": "$SNAP/gnome-platform",
-    },
-    "gtk-3-themes": {
-      "default-provider": "gtk-common-themes",
-      "interface": "content",
-      "target": "$SNAP/data-dir/themes",
-    },
-    "icon-themes": {
-      "default-provider": "gtk-common-themes",
-      "interface": "content",
-      "target": "$SNAP/data-dir/icons",
-    },
-    "sound-themes": {
-      "default-provider": "gtk-common-themes",
-      "interface": "content",
-      "target": "$SNAP/data-dir/sounds",
-    },
-  },
-  "summary": "Snap Electron App (full build)",
-  "title": "Snap Electron App (full build)",
-  "version": "1.1.0",
-}
-`;
-
-exports[`snap heavy > snap full (core22) 2`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "se-wo-template_1.1.0_amd64.snap",
     },
   ],
 }
@@ -749,12 +527,6 @@ exports[`snap heavy > snap full (core24) 1`] = `
       "plugin": "dump",
     },
   },
-  "platforms": {
-    "amd64": {
-      "build-for": "amd64",
-      "build-on": "arm64",
-    },
-  },
   "plugs": {
     "browser-support": {
       "allow-sandbox": true,
@@ -764,6 +536,17 @@ exports[`snap heavy > snap full (core24) 1`] = `
   "summary": "Snap Electron App (full build)",
   "title": "Snap Electron App (full build)",
   "version": "1.1.0",
+}
+`;
+
+exports[`snap heavy > snap full (core24) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "se-wo-template_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 

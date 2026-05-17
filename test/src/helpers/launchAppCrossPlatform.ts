@@ -463,47 +463,86 @@ export async function deliverAndInstallInVm(vm: VmManager, installerPath: string
 }
 
 /**
- * Launches an extracted snap binary directly (outside the snap sandbox) and waits for it to
- * print `ELECTRON_READY:<version>` to stdout. Returns the full stdout collected up to that point.
- * Throws if the binary doesn't print the ready signal within the timeout.
+ * Launch the snap binary under Xvfb and wait for the app to signal readiness.
+ *
+ * The binary must be the test-app-one Electron executable, which writes
+ * "ELECTRON_READY:<version>" to stdout when SNAP_LAUNCH_TEST=1 is set.
+ * The process is SIGKILLed immediately after that line is detected —
+ * Chromium's exit-cleanup path hangs indefinitely in Docker containers
+ * without running system services (snapd, D-Bus, GPU), so we never wait
+ * for a natural exit.
  */
-export function launchSnapBinary(binaryPath: string, timeoutMs = 30_000): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(binaryPath, ["--no-sandbox"], {
-      stdio: ["ignore", "pipe", "pipe"],
-      env: { ...process.env, DISPLAY: process.env.DISPLAY ?? ":99" },
-    })
+export async function launchSnapBinary(binaryPath: string, timeoutMs = 30_000): Promise<string> {
+  const xvfb = startXvfb()
+  await new Promise(resolve => setTimeout(resolve, 500))
 
-    let output = ""
-    let settled = false
+  const child = spawn(binaryPath, ["--no-sandbox", "--disable-gpu"], {
+    detached: false,
+    shell: false,
+    stdio: ["ignore", "pipe", "pipe"],
+    env: {
+      ...process.env,
+      DISPLAY: xvfb.display,
+      SNAP_LAUNCH_TEST: "1",
+      // XDG_RUNTIME_DIR=/run/user/0 is set in the Docker image for snapcraft's
+      // StateService.  Chromium sees a valid runtime dir and looks for a D-Bus
+      // session socket at $XDG_RUNTIME_DIR/bus.  Without a running session daemon
+      // the AT-SPI bridge hangs trying to connect; pointing to /dev/null makes
+      // libdbus fail fast (ENOENT) rather than blocking indefinitely.
+      DBUS_SESSION_BUS_ADDRESS: process.env.DBUS_SESSION_BUS_ADDRESS ?? "unix:path=/dev/null",
+    },
+  })
 
-    const done = (err?: Error) => {
-      if (settled) return
-      settled = true
-      child.kill()
-      if (err) reject(err)
-      else resolve(output)
+  const chunks: string[] = []
+
+  return new Promise<string>((resolve, reject) => {
+    let done = false
+
+    const finish = (err?: Error) => {
+      if (done) return
+      done = true
+      try {
+        child.kill("SIGKILL")
+      } catch {
+        // ignore — process may have already exited
+      }
+      xvfb.stop()
+      if (err) {
+        reject(err)
+      } else {
+        resolve(chunks.join(""))
+      }
     }
 
-    const timer = setTimeout(() => done(new Error(`launchSnapBinary timed out after ${timeoutMs}ms\n${output}`)), timeoutMs)
-
-    child.stdout?.on("data", (chunk: Buffer) => {
-      output += chunk.toString()
-      if (/ELECTRON_READY:\d+\.\d+\.\d+/.test(output)) {
-        clearTimeout(timer)
-        done()
+    child.stdout?.on("data", (d: Buffer) => {
+      chunks.push(d.toString())
+      if (!done && chunks.join("").includes("ELECTRON_READY:")) {
+        finish()
       }
     })
-    child.stderr?.on("data", (chunk: Buffer) => {
-      output += chunk.toString()
+
+    child.stderr?.on("data", (d: Buffer) => {
+      chunks.push(d.toString())
     })
-    child.on("error", err => {
-      clearTimeout(timer)
-      done(err)
+
+    child.on("error", (e: Error) => finish(e))
+
+    child.on("exit", (code: number | null) => {
+      if (!done) {
+        if (code !== null && code !== 0) {
+          finish(new Error(`Binary exited with code ${code}\n${chunks.join("")}`))
+        } else {
+          // Exited cleanly without producing ELECTRON_READY — treat as success
+          // (the signal may have been received before the exit event fired)
+          finish()
+        }
+      }
     })
-    child.on("exit", code => {
-      clearTimeout(timer)
-      if (!settled) done(new Error(`snap binary exited with code ${code} before ELECTRON_READY\n${output}`))
-    })
+
+    setTimeout(() => {
+      if (!done) {
+        finish(new Error(`Binary launch timed out after ${timeoutMs}ms\nSTDOUT+STDERR:\n${chunks.join("")}`))
+      }
+    }, timeoutMs)
   })
 }

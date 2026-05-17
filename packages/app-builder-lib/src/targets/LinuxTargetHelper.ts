@@ -67,13 +67,13 @@ export class LinuxTargetHelper {
     if (legacySnap != null) {
       log.warn(
         {
-          reason: "snap configuration is deprecated",
+          reason: "`snap` configuration is deprecated",
           docs: "https://www.electron.build/snapcraft",
         },
-        "Please migrate snap configuration to snapcraft.<core> and remove snap configuration"
+        "please consider migrating `snap` configuration to `snapcraft.<core>` and remove `snap` configuration"
       )
     }
-    return new SnapCoreLegacy(this.packager, this, legacySnap!)
+    return new SnapCoreLegacy(this.packager, this, legacySnap ?? {})
   }
 
   isElectronVersionGreaterOrEqualThan(version: string, fallback?: string): boolean {
