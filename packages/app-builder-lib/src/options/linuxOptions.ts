@@ -56,8 +56,9 @@ export interface LinuxConfiguration extends CommonLinuxOptions, PlatformSpecific
   readonly icon?: string
 
   /**
-   * backward compatibility + to allow specify fpm-only category for all possible fpm targets in one place
    * @private
+   * @internal Allows specifying an FPM-only package category for all FPM targets in one place.
+   * For user-facing category configuration use the target-specific options (e.g. {@link DebOptions}).
    */
   readonly packageCategory?: string | null
 }

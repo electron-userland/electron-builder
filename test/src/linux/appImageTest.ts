@@ -102,7 +102,7 @@ describe.heavy.ifLinux("AppImage", () => {
           execSync(`"${appImagePath}" --appimage-extract`, { cwd: extractDir, stdio: "inherit" })
 
           const appRunContent = fs.readFileSync(path.join(extractDir, "squashfs-root", "AppRun"), "utf8")
-          verifyAsarFileTree
+          await verifyAsarFileTree(expect, path.join(extractDir, "squashfs-root", "resources", "app.asar"))
 
           const exportLines = appRunContent
             .split("\n")
