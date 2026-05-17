@@ -67,7 +67,7 @@ While cross-compilation is possible, the most reliable approach is to build `arm
 
 ## Code Signing
 
-macOS apps must be signed to avoid Gatekeeper warnings. See [Code Signing](code-signing.md) for full setup.
+macOS apps must be signed to avoid Gatekeeper warnings. See [Code Signing](features/code-signing/code-signing.md) for full setup.
 
 ### Certificate Identity
 
@@ -146,7 +146,7 @@ Common entitlements for Electron apps:
 | `com.apple.security.app-sandbox` | Required for Mac App Store — see [MAS](mas.md) |
 
 :::info[Entitlements and Notarization]
-Notarization requires Hardened Runtime + appropriate entitlements. See [Notarization](notarization.md) for the complete notarization workflow.
+Notarization requires Hardened Runtime + appropriate entitlements. See [Notarization](features/code-signing/notarization.md) for the complete notarization workflow.
 :::
 
 ## Info.plist Customization

@@ -197,7 +197,7 @@ Add to GitHub Secrets:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-Configure `win.azureSignOptions` in your electron-builder config. See [Windows Code Signing](code-signing-win.md#using-azure-trusted-signing-beta).
+Configure `win.azureSignOptions` in your electron-builder config. See [Windows Code Signing](./code-signing/code-signing-win.md#using-azure-trusted-signing-beta).
 
 ## Caching for Faster Builds
 
@@ -315,14 +315,14 @@ jobs:
 : `CSC_LINK` or `CSC_KEY_PASSWORD` is wrong or missing. Verify the base64-encoded certificate decodes to a valid `.p12` and that the password is correct. Run `echo "$CSC_LINK" | base64 --decode | openssl pkcs12 -info -passin pass:"$CSC_KEY_PASSWORD"` locally to verify.
 
 **Windows: certificate base64 too long**
-: Windows CI environments may truncate environment variables over 8192 characters. Re-export the `.pfx` without the full certificate chain included. See [Code Signing](code-signing.md#encoding-a-certificate-for-ci).
+: Windows CI environments may truncate environment variables over 8192 characters. Re-export the `.pfx` without the full certificate chain included. See [Code Signing](./code-signing/code-signing.md#encoding-a-certificate-for-ci).
 
 **Build fails with "Cannot find module"**
 : Native modules need to be rebuilt for the target Electron version. Ensure `npm ci` (not `npm install`) is used, and check that `electron-rebuild` or `@electron/rebuild` is configured if needed.
 
 ## Related Pages
 
-- [Code Signing](code-signing.md) — environment variables, certificate types
-- [macOS Notarization](notarization.md) — notarization setup and troubleshooting
-- [Auto Update](auto-update.md) — configuring electron-updater with GitHub releases
-- [Multi Platform Build](multi-platform-build.md) — building for other platforms using Docker
+- [Code Signing](./code-signing/code-signing.md) — environment variables, certificate types
+- [macOS Notarization](./code-signing/notarization.md) — notarization setup and troubleshooting
+- [Auto Update](./auto-update.md) — configuring electron-updater with GitHub releases
+- [Multi Platform Build](./multi-platform-build.md) — building for other platforms using Docker

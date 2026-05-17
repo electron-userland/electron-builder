@@ -49,4 +49,4 @@ You can use macros in the file patterns, artifact file name patterns and publish
 * `${version}`
 * `${channel}` — detected prerelease component from version (e.g. `beta`).
 * `${env.ENV_NAME}` — any environment variable.
-* Any property of [AppInfo](./api/app-builder-lib.Class.AppInfo.md) (e.g. `buildVersion`, `buildNumber`).
+* Any property of [AppInfo](./api/index.md) (e.g. `buildVersion`, `buildNumber`).

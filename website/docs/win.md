@@ -5,7 +5,7 @@ The top-level `win` key (see [configuration](./configuration.md)) contains set o
 ## Common Questions
 ## How do delegate code signing?
 
-Use [sign](app-builder-lib.Interface.WindowsSigntoolConfiguration.md#sign) option. Please also see [why sign.js is called 8 times](https://github.com/electron-userland/electron-builder/issues/3995).
+Use [sign](./api/index.md) option. Please also see [why sign.js is called 8 times](https://github.com/electron-userland/electron-builder/issues/3995).
 
 ```json
 "win": {

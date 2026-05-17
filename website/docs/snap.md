@@ -23,7 +23,7 @@ Snap is a universal Linux packaging format developed by Canonical (Ubuntu). Snap
 
 ## Build Requirements
 
-Building Snap packages requires a Linux environment (or [Docker](multi-platform-build.md#docker)).
+Building Snap packages requires a Linux environment (or [Docker](features/multi-platform-build.md#docker)).
 
 ## Confinement
 

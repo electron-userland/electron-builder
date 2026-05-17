@@ -41,7 +41,7 @@ Github release does not respect the version in the version tag even if `detectUp
 ### Your Application
 All you need to do here is to define which channel the user will receive with:
 
-`autoUpdater.channel = "beta"` (see [auto-update documentation](../auto-update.md))
+`autoUpdater.channel = "beta"` (see [auto-update documentation](../features/auto-update.md))
 
 The following versions will be distributed to users depending on the channel defined:
 

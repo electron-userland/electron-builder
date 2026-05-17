@@ -1,6 +1,6 @@
 :::info[Only for EV code signing certificates]
 
-Described setup and configuration is required only if you have EV code signing certificate. The regular certificates supported [out of the box](../code-signing.md#windows).
+Described setup and configuration is required only if you have EV code signing certificate. The regular certificates supported [out of the box](../features/code-signing/code-signing.md#windows).
 :::
 
 Signing Windows apps on Unix is supported. There are multiple methods to achieve this. Basically you need an application

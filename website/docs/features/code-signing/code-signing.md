@@ -141,7 +141,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 ```
 
-For a complete GitHub Actions workflow including publishing, see [GitHub Actions](github-actions.md).
+For a complete GitHub Actions workflow including publishing, see [GitHub Actions](../github-actions.md).
 
 ### Windows Signing
 

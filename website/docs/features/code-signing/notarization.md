@@ -206,4 +206,4 @@ codesign --verify --deep --strict --verbose=2 dist/mac/MyApp.app
 - [macOS Code Signing](code-signing-mac.md) — exporting certificates, keychain management, disabling signing
 - [Code Signing Overview](code-signing.md) — environment variables, CI setup, certificate types
 - [macOS Configuration](mac.md) — entitlements, Hardened Runtime, bundle ID setup
-- [GitHub Actions](github-actions.md) — full workflow examples
+- [GitHub Actions](../github-actions.md) — full workflow examples

@@ -50,7 +50,7 @@ publish:
 
 When publishing, electron-builder generates a `.AppImage.zsync` file alongside the AppImage. electron-updater uses this for efficient differential updates.
 
-See [Auto Update](auto-update.md) for the full setup guide.
+See [Auto Update](features/auto-update.md) for the full setup guide.
 
 ## Architecture Support
 
@@ -60,7 +60,7 @@ See [Auto Update](auto-update.md) for the full setup guide.
 | `arm64` | `--arm64` | 64-bit ARM (Raspberry Pi 4+, server ARM) |
 | `armv7l` | `--armv7l` | 32-bit ARM (Raspberry Pi 3 and older) |
 
-Build requirements: Linux host (or [Docker](multi-platform-build.md#docker)) for all architectures.
+Build requirements: Linux host (or [Docker](features/multi-platform-build.md#docker)) for all architectures.
 
 ## Toolset Version
 
@@ -130,7 +130,7 @@ docker run --rm -ti \
   /bin/bash -c "npm install && npx electron-builder --linux"
 ```
 
-See [Multi Platform Build](multi-platform-build.md#docker) for full Docker documentation.
+See [Multi Platform Build](features/multi-platform-build.md#docker) for full Docker documentation.
 
 ## Debugging
 

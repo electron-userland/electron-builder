@@ -5,7 +5,7 @@ The top-level [dmg](configuration.md) key contains set of options instructing el
 DMG is the standard distribution format for direct-download macOS apps. Users mount the disk image, drag the app to their Applications folder, and eject the image. Use DMG when:
 
 - Distributing directly from your website or GitHub Releases
-- Using [electron-updater](auto-update.md) (the `zip` target also runs alongside DMG)
+- Using [electron-updater](features/auto-update.md) (the `zip` target also runs alongside DMG)
 - You want the most familiar macOS install experience
 
 For Mac App Store distribution, see [MAS](mas.md). For system-level installs (kernel extensions, launch daemons), see [PKG](pkg.md).

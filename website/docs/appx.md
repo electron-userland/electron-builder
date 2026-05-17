@@ -26,7 +26,7 @@ For standard consumer distribution, [NSIS](nsis.md) is simpler. For enterprise d
 ## Code Signing {#appx-package-code-signing}
 
 - **Store distribution** — no manual signing needed. The Windows Store signs the package with a Microsoft certificate during the submission process.
-- **Sideloading / enterprise** — the AppX must be signed with a trusted certificate. See [Windows Code Signing](code-signing-win.md).
+- **Sideloading / enterprise** — the AppX must be signed with a trusted certificate. See [Windows Code Signing](features/code-signing/code-signing-win.md).
 
 For self-signed certificates during development:
 

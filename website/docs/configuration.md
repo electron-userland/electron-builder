@@ -63,4 +63,4 @@ Currently, only macOS and Linux supported.
 
 ## Build Hooks
 
-  {!./hooks.md!}
+  {!./features/hooks.md!}

@@ -32,7 +32,7 @@ Quick reference for terms used throughout the electron-builder documentation.
 : The unique reverse-DNS identifier for a macOS application bundle (e.g., `com.company.myapp`). Set via `appId` in electron-builder config. Must be unique across all apps on a user's machine and within the App Store.
 
 **CSC (Code Signing Certificate)**
-: The prefix for environment variables that provide code signing credentials to electron-builder (`CSC_LINK`, `CSC_KEY_PASSWORD`, etc.). See [Code Signing](code-signing.md).
+: The prefix for environment variables that provide code signing credentials to electron-builder (`CSC_LINK`, `CSC_KEY_PASSWORD`, etc.). See [Code Signing](features/code-signing/code-signing.md).
 
 ---
 
@@ -113,7 +113,7 @@ Quick reference for terms used throughout the electron-builder documentation.
 ## N
 
 **Notarization**
-: Apple's service that scans your app for malware and issues a cryptographic ticket confirming the scan. Required for distributing apps outside the Mac App Store on macOS 10.15+. electron-builder handles notarization automatically when `mac.notarize: true`. See [Notarization](notarization.md).
+: Apple's service that scans your app for malware and issues a cryptographic ticket confirming the scan. Required for distributing apps outside the Mac App Store on macOS 10.15+. electron-builder handles notarization automatically when `mac.notarize: true`. See [Notarization](features/code-signing/notarization.md).
 
 **NSIS (Nullsoft Scriptable Install System)**
 : The Windows installer framework used by electron-builder's `nsis` and `nsis-web` targets. Produces highly customizable `.exe` installers. The default Windows target. See [NSIS](nsis.md).

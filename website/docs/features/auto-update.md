@@ -1,4 +1,4 @@
-Auto updates are enabled by the `electron-updater` package. Ideally, auto updates are configured to run in a CI pipeline to automatically provision new releases. See [publish configuration](./publish.md) for information on how to configure your local or CI environment for automated deployments.
+Auto updates are enabled by the `electron-updater` package. Ideally, auto updates are configured to run in a CI pipeline to automatically provision new releases. See [publish configuration](../publish.md) for information on how to configure your local or CI environment for automated deployments.
 
 Auto updates work as follows:
 
@@ -9,7 +9,7 @@ Auto updates work as follows:
 Read the remainder of this guide to configure everything.
 
 :::info[Code signing is required on macOS]
-macOS application must be [signed](code-signing.md) in order for auto updating to work.
+macOS application must be [signed](./code-signing/code-signing.md) in order for auto updating to work.
 :::
 
 ## Auto-updatable Targets
@@ -23,7 +23,7 @@ All these targets are default, custom configuration is not required. (Though it 
 !!! info 
     1. **Squirrel.Windows is not supported.** Simplified auto-update is supported on Windows if you use the default NSIS target, but is not supported for Squirrel.Windows.
     You can [easily migrate to NSIS](https://github.com/electron-userland/electron-builder/issues/837#issuecomment-355698368).
-    2. `zip` target for macOS is **required** for Squirrel.Mac, otherwise `latest-mac.yml` cannot be created, which causes `autoUpdater` error. Default [target](./mac.md#macos-target-overview) for macOS is `dmg`+`zip`, so there is no need to explicitly specify target.
+    2. `zip` target for macOS is **required** for Squirrel.Mac, otherwise `latest-mac.yml` cannot be created, which causes `autoUpdater` error. Default [target](../mac.md#macos-target-overview) for macOS is `dmg`+`zip`, so there is no need to explicitly specify target.
 
 ## Differences between electron-updater and built-in autoUpdater
 
@@ -40,7 +40,7 @@ The `electron-updater` package offers a different functionality compared to Elec
 
 1. Install [electron-updater](https://yarn.pm/electron-updater) as an app dependency.
 
-2. Configure the [`publish`](./publish.md) options depending on where you want to host your release files.
+2. Configure the [`publish`](../publish.md) options depending on where you want to host your release files.
 
 3. Build your application and check that the build directory contains the metadata `.yml` files next to the built application. For most publish targets, the building step will also upload the files, except for the generic server option, where you have to upload your built releases and metadata manually.
 

@@ -12,7 +12,7 @@ const docsDir = join(__dirname, "docs")
 const config: Config = {
   title: "electron-builder",
   tagline: "A complete solution to package and build a ready-for-distribution Electron app",
-  favicon: "img/favicon.ico",
+  favicon: "/img/favicon.ico",
 
   future: {
     v4: true,
@@ -130,14 +130,14 @@ const config: Config = {
           label: "Configuration",
           position: "left",
           items: [
-            { type: "doc", docId: "configuration", label: "Overview" },
-            { type: "doc", docId: "contents", label: "Contents" },
-            { type: "doc", docId: "file-patterns", label: "File Patterns" },
-            { type: "doc", docId: "architecture", label: "Architecture" },
-            { type: "doc", docId: "publish", label: "Publish" },
             { type: "docSidebar", sidebarId: "macosSidebar", label: "macOS" },
             { type: "docSidebar", sidebarId: "windowsSidebar", label: "Windows" },
             { type: "docSidebar", sidebarId: "linuxSidebar", label: "Linux" },
+            { type: "doc", docId: "configuration", label: "Root Config" },
+            { type: "doc", docId: "contents", label: "File Contents" },
+            { type: "doc", docId: "file-patterns", label: "File Patterns" },
+            { type: "doc", docId: "architecture", label: "Output Architecture" },
+            { type: "doc", docId: "publish", label: "Publishing" },
           ],
         },
         {
