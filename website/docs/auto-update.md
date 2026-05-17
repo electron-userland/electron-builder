@@ -23,7 +23,7 @@ All these targets are default, custom configuration is not required. (Though it 
 !!! info 
     1. **Squirrel.Windows is not supported.** Simplified auto-update is supported on Windows if you use the default NSIS target, but is not supported for Squirrel.Windows.
     You can [easily migrate to NSIS](https://github.com/electron-userland/electron-builder/issues/837#issuecomment-355698368).
-    2. `zip` target for macOS is **required** for Squirrel.Mac, otherwise `latest-mac.yml` cannot be created, which causes `autoUpdater` error. Default [target](./mac.md#MacOptions-target) for macOS is `dmg`+`zip`, so there is no need to explicitly specify target.
+    2. `zip` target for macOS is **required** for Squirrel.Mac, otherwise `latest-mac.yml` cannot be created, which causes `autoUpdater` error. Default [target](./mac.md#target) for macOS is `dmg`+`zip`, so there is no need to explicitly specify target.
 
 ## Differences between electron-updater and built-in autoUpdater
 
