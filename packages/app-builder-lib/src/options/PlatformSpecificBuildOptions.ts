@@ -31,6 +31,12 @@ export interface AsarOptions {
    */
   smartUnpack?: boolean
 
+  /**
+   * Path to a file containing the order in which files should be packed into the asar archive.
+   * Each line of the file is a relative path from the app directory. Files listed first are
+   * packed first, which can improve app startup time by front-loading frequently accessed modules.
+   * See the [asar documentation](https://github.com/electron/asar) for details.
+   */
   ordering?: string | null
 }
 
@@ -137,7 +143,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
    */
   readonly asarUnpack?: Array<string> | string | null
 
-  /*  - @private */
+  /** @private */
   readonly icon?: string | null
 
   /**
@@ -156,6 +162,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
 
   /**
    * Whether to fail if app will be not code signed.
+   * @default false
    */
   readonly forceCodeSigning?: boolean
 
@@ -191,14 +198,24 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
    */
   readonly releaseInfo?: ReleaseInfo
 
+  /**
+   * The build target(s) for this platform. Can be a target name string, a {@link TargetConfiguration}
+   * object, or an array of either. Available targets depend on the platform — see platform-specific
+   * options (e.g. {@link MacConfiguration.target}, {@link WindowsConfiguration.target},
+   * {@link LinuxConfiguration.target}).
+   */
   readonly target?: Array<string | TargetConfiguration> | string | TargetConfiguration | null
 
-  /*  - @private */
+  /** @private */
   cscLink?: string | null
 
-  /*  - @private */
+  /** @private */
   cscKeyPassword?: string | null
 
+  /**
+   * The default architecture to build for when no `--arch` flag is specified.
+   * Defaults to the current machine's architecture.
+   */
   readonly defaultArch?: string
 }
 

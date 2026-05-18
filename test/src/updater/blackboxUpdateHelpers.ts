@@ -81,8 +81,8 @@ export async function doBuild(
             loadBrowserProcessSpecificV8Snapshot: false,
             grantFileProtocolExtraPrivileges: false,
           },
-          ...extraConfig,
           compression: "store",
+          ...extraConfig,
           publish: {
             provider: "s3",
             bucket: "develar",
@@ -147,7 +147,7 @@ export async function doBuild(
     )
   }
 
-  const build = (version: string) =>
+  const build = (version: string, extraConfig: Configuration | Nullish) =>
     buildApp({
       version,
       target,
@@ -162,8 +162,8 @@ export async function doBuild(
       },
     })
   try {
-    await build(OLD_VERSION_NUMBER)
-    await build(NEW_VERSION_NUMBER)
+    await build(OLD_VERSION_NUMBER, { compression: "store" })
+    await build(NEW_VERSION_NUMBER, { compression: "maximum" }) // validate both compressions work while we're at it
   } catch (e: any) {
     await tmpDir.cleanup()
     throw e
@@ -378,7 +378,7 @@ export async function runTestWithinServer(doTest: (rootDirectory: string, update
   if (vm && !serverHost) {
     throw new Error("Cannot determine Parallels host IP for update server — no prl*/bridge* interface found")
   }
-  const { server, port } = await createLocalServer(root, serverHost!)
+  const { server, port } = await createLocalServer(root, serverHost)
 
   const serverConfig: GenericServerOptions = { provider: "generic", url: `http://${serverHost}:${port}` }
   let updateConfig: string

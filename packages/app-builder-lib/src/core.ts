@@ -78,7 +78,7 @@ export abstract class Target {
   // use only for tasks that cannot be executed in parallel (such as signing on windows and hdiutil on macOS due to file locking)
   readonly buildQueueManager = new AsyncTaskManager(new CancellationToken())
 
-  protected constructor(
+  public constructor(
     readonly name: string,
     readonly isAsyncSupported: boolean = true
   ) {}
