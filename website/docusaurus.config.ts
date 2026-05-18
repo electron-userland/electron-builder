@@ -36,6 +36,7 @@ const config: Config = {
   },
 
   plugins: [
+    "./scripts/docusaurus-plugin-prebuild.mjs",
     function suppressPagefindWarning() {
       return {
         name: "suppress-pagefind-warning",
@@ -54,47 +55,6 @@ const config: Config = {
           if (toPath.startsWith("/docs/") && toPath !== "/docs/") {
             return [toPath.replace("/docs/", "/")]
           }
-        },
-      },
-    ],
-    [
-      "docusaurus-plugin-typedoc",
-      {
-        entryPoints: ["../packages/*"],
-        entryPointStrategy: "packages",
-        tsconfig: "../tsconfig-base.json",
-        out: "./docs/api",
-        excludeExternals: true,
-        excludePrivate: true,
-        excludeProtected: true,
-        excludeNotDocumented: false,
-        includeVersion: true,
-        disableSources: true,
-        cleanOutputDir: false,
-        flattenOutputFiles: true,
-        hideGroupHeadings: true,
-        hidePageTitle: true,
-        hidePageHeader: true,
-        useHTMLEncodedBrackets: true,
-        preserveAnchorCasing: false,
-        visibilityFilters: {
-          protected: false,
-          private: false,
-          inherited: false,
-          external: false,
-        },
-        tableColumnSettings: {
-          hideDefaults: false,
-          hideInherited: false,
-          hideModifiers: true,
-          hideOverrides: true,
-          hideSources: true,
-          hideValues: false,
-          leftAlignHeaders: false,
-        },
-        validation: {
-          notExported: false,
-          invalidLink: false,
         },
       },
     ],

@@ -11,7 +11,7 @@ const sidebars: SidebarsConfig = {
       label: "Programmatic API",
       items: [
         { type: "doc", id: "programmatic-usage", label: "Programmatic Usage" },
-        { type: "doc", id: "api/index", label: "API Reference" },
+        { type: "doc", id: "api/packages", label: "API Reference" },
       ],
     },
 
