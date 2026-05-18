@@ -36,7 +36,7 @@ const config: Config = {
   },
 
   plugins: [
-    "./scripts/docusaurus-plugin-prebuild.mjs",
+    "./scripts/docusaurus-plugin-prebuild.ts",
     function suppressPagefindWarning() {
       return {
         name: "suppress-pagefind-warning",

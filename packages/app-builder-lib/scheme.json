@@ -4148,7 +4148,7 @@
           "type": "boolean"
         },
         "artifactName": {
-          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName} Setup ${version}.${ext}`.",
+          "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template). Defaults to `${productName} Setup ${version}.${ext}`.",
           "type": [
             "null",
             "string"
@@ -4225,21 +4225,21 @@
         },
         "installerHeader": {
           "default": "build/installerHeader.bmp",
-          "description": "*assisted installer only.* `MUI_HEADERIMAGE`, relative to the [build resources](./contents.md#extraresources) or to the project directory.",
+          "description": "*assisted installer only.* `MUI_HEADERIMAGE`, relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.",
           "type": [
             "null",
             "string"
           ]
         },
         "installerHeaderIcon": {
-          "description": "*one-click installer only.* The path to header icon (above the progress bar), relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to `build/installerHeaderIcon.ico` or application icon.",
+          "description": "*one-click installer only.* The path to header icon (above the progress bar), relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.\nDefaults to `build/installerHeaderIcon.ico` or application icon.",
           "type": [
             "null",
             "string"
           ]
         },
         "installerIcon": {
-          "description": "The path to installer icon, relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to `build/installerIcon.ico` or application icon.",
+          "description": "The path to installer icon, relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.\nDefaults to `build/installerIcon.ico` or application icon.",
           "type": [
             "null",
             "string"
@@ -4263,7 +4263,7 @@
           "description": "The installer languages (e.g. `en_US`, `de_DE`). Change only if you understand what do you do and for what."
         },
         "installerSidebar": {
-          "description": "*assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`. Image size 164 × 314 pixels.",
+          "description": "*assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.\nDefaults to `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`. Image size 164 × 314 pixels.",
           "type": [
             "null",
             "string"
@@ -4424,42 +4424,42 @@
           ]
         },
         "uninstallUrlHelp": {
-          "description": "The URL to the uninstaller help page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "description": "The URL to the uninstaller help page in the control panel. Defaults to [homepage](https://www.electron.build/docs/configuration#homepage) from application package.json.",
           "type": [
             "null",
             "string"
           ]
         },
         "uninstallUrlInfoAbout": {
-          "description": "The URL to the uninstaller info about page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "description": "The URL to the uninstaller info about page in the control panel. Defaults to [homepage](https://www.electron.build/docs/configuration#homepage) from application package.json.",
           "type": [
             "null",
             "string"
           ]
         },
         "uninstallUrlReadme": {
-          "description": "The URL to the uninstaller readme page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "description": "The URL to the uninstaller readme page in the control panel. Defaults to [homepage](https://www.electron.build/docs/configuration#homepage) from application package.json.",
           "type": [
             "null",
             "string"
           ]
         },
         "uninstallUrlUpdateInfo": {
-          "description": "The URL to the uninstaller update info page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "description": "The URL to the uninstaller update info page in the control panel. Defaults to [homepage](https://www.electron.build/docs/configuration#homepage) from application package.json.",
           "type": [
             "null",
             "string"
           ]
         },
         "uninstallerIcon": {
-          "description": "The path to uninstaller icon, relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to `build/uninstallerIcon.ico` or application icon.",
+          "description": "The path to uninstaller icon, relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.\nDefaults to `build/uninstallerIcon.ico` or application icon.",
           "type": [
             "null",
             "string"
           ]
         },
         "uninstallerSidebar": {
-          "description": "*assisted installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`",
+          "description": "*assisted installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.\nDefaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`",
           "type": [
             "null",
             "string"
@@ -4500,7 +4500,7 @@
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName} Web Setup ${version}.${ext}`.",
+          "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template). Defaults to `${productName} Web Setup ${version}.${ext}`.",
           "type": [
             "null",
             "string"
@@ -4578,21 +4578,21 @@
         },
         "installerHeader": {
           "default": "build/installerHeader.bmp",
-          "description": "*assisted installer only.* `MUI_HEADERIMAGE`, relative to the [build resources](./contents.md#extraresources) or to the project directory.",
+          "description": "*assisted installer only.* `MUI_HEADERIMAGE`, relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.",
           "type": [
             "null",
             "string"
           ]
         },
         "installerHeaderIcon": {
-          "description": "*one-click installer only.* The path to header icon (above the progress bar), relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to `build/installerHeaderIcon.ico` or application icon.",
+          "description": "*one-click installer only.* The path to header icon (above the progress bar), relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.\nDefaults to `build/installerHeaderIcon.ico` or application icon.",
           "type": [
             "null",
             "string"
           ]
         },
         "installerIcon": {
-          "description": "The path to installer icon, relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to `build/installerIcon.ico` or application icon.",
+          "description": "The path to installer icon, relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.\nDefaults to `build/installerIcon.ico` or application icon.",
           "type": [
             "null",
             "string"
@@ -4616,7 +4616,7 @@
           "description": "The installer languages (e.g. `en_US`, `de_DE`). Change only if you understand what do you do and for what."
         },
         "installerSidebar": {
-          "description": "*assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`. Image size 164 × 314 pixels.",
+          "description": "*assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.\nDefaults to `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`. Image size 164 × 314 pixels.",
           "type": [
             "null",
             "string"
@@ -4777,42 +4777,42 @@
           ]
         },
         "uninstallUrlHelp": {
-          "description": "The URL to the uninstaller help page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "description": "The URL to the uninstaller help page in the control panel. Defaults to [homepage](https://www.electron.build/docs/configuration#homepage) from application package.json.",
           "type": [
             "null",
             "string"
           ]
         },
         "uninstallUrlInfoAbout": {
-          "description": "The URL to the uninstaller info about page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "description": "The URL to the uninstaller info about page in the control panel. Defaults to [homepage](https://www.electron.build/docs/configuration#homepage) from application package.json.",
           "type": [
             "null",
             "string"
           ]
         },
         "uninstallUrlReadme": {
-          "description": "The URL to the uninstaller readme page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "description": "The URL to the uninstaller readme page in the control panel. Defaults to [homepage](https://www.electron.build/docs/configuration#homepage) from application package.json.",
           "type": [
             "null",
             "string"
           ]
         },
         "uninstallUrlUpdateInfo": {
-          "description": "The URL to the uninstaller update info page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "description": "The URL to the uninstaller update info page in the control panel. Defaults to [homepage](https://www.electron.build/docs/configuration#homepage) from application package.json.",
           "type": [
             "null",
             "string"
           ]
         },
         "uninstallerIcon": {
-          "description": "The path to uninstaller icon, relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to `build/uninstallerIcon.ico` or application icon.",
+          "description": "The path to uninstaller icon, relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.\nDefaults to `build/uninstallerIcon.ico` or application icon.",
           "type": [
             "null",
             "string"
           ]
         },
         "uninstallerSidebar": {
-          "description": "*assisted installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`",
+          "description": "*assisted installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.\nDefaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`",
           "type": [
             "null",
             "string"
@@ -5270,7 +5270,7 @@
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -5316,7 +5316,7 @@
           "description": "Package dependencies.\n`rpm` defaults to `[\"gtk3\", \"libnotify\", \"nss\", \"libXScrnSaver\", \"(libXtst or libXtst6)\", \"xdg-utils\", \"at-spi2-core\", \"(libuuid or libuuid1)\"]`\n`pacman` defaults to `[\"c-ares\", \"ffmpeg\", \"gtk3\", \"http-parser\", \"libevent\", \"libvpx\", \"libxslt\", \"libxss\", \"minizip\", \"nss\", \"re2\", \"snappy\", \"libnotify\", \"libappindicator-gtk3\"]`"
         },
         "description": {
-          "description": "As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.",
+          "description": "As [description](https://www.electron.build/configuration#description) from application package.json, but allows you to specify different for Linux.",
           "type": [
             "null",
             "string"
@@ -5968,7 +5968,7 @@
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -6014,7 +6014,7 @@
           "description": "Package dependencies.\n`rpm` defaults to `[\"gtk3\", \"libnotify\", \"nss\", \"libXScrnSaver\", \"(libXtst or libXtst6)\", \"xdg-utils\", \"at-spi2-core\", \"(libuuid or libuuid1)\"]`\n`pacman` defaults to `[\"c-ares\", \"ffmpeg\", \"gtk3\", \"http-parser\", \"libevent\", \"libvpx\", \"libxslt\", \"libxss\", \"minizip\", \"nss\", \"re2\", \"snappy\", \"libnotify\", \"libappindicator-gtk3\"]`"
         },
         "description": {
-          "description": "As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.",
+          "description": "As [description](https://www.electron.build/configuration#description) from application package.json, but allows you to specify different for Linux.",
           "type": [
             "null",
             "string"

@@ -1,8 +1,9 @@
 import { execSync } from "node:child_process"
 import { cpSync, existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
+import type { LoadContext, Plugin } from "@docusaurus/types"
 
-function generateCliDocs(siteDir) {
+function generateCliDocs(siteDir: string): void {
   const root = join(siteDir, "..")
   const help = execSync("node packages/electron-builder/out/cli/cli.js --help", {
     encoding: "utf-8",
@@ -19,7 +20,7 @@ function generateCliDocs(siteDir) {
   writeFileSync(dest, content.slice(0, si + start.length) + "\n" + helpBlock + "\n" + content.slice(ei))
 }
 
-function prepareDocs(siteDir) {
+function prepareDocs(siteDir: string): void {
   const root = join(siteDir, "..")
   const readme = readFileSync(join(root, "README.md"), "utf8")
   const introduction = `---\nslug: /\ntitle: "electron-builder"\n---\n\n${readme}`.replaceAll("https://www.electron.build", "")
@@ -33,7 +34,7 @@ function prepareDocs(siteDir) {
   }
 }
 
-function slugify(text) {
+function slugify(text: string): string {
   return text
     .toLowerCase()
     .replace(/[^\w\s-]/g, "")
@@ -43,11 +44,14 @@ function slugify(text) {
     .replace(/^-|-$/g, "")
 }
 
-function extractHeadingSlugs(content) {
-  const slugs = new Set()
+function extractHeadingSlugs(content: string): Set<string> {
+  const slugs = new Set<string>()
   let inCode = false
   for (const line of content.split("\n")) {
-    if (line.startsWith("```")) { inCode = !inCode; continue }
+    if (line.startsWith("```")) {
+      inCode = !inCode
+      continue
+    }
     if (inCode) continue
     const m = line.match(/^#{1,6}\s+(.+)$/)
     if (m) slugs.add(slugify(m[1]))
@@ -55,20 +59,27 @@ function extractHeadingSlugs(content) {
   return slugs
 }
 
-function fixTypedocAnchors(siteDir) {
+function fixTypedocAnchors(siteDir: string): void {
   const apiDir = join(siteDir, "docs/api")
   let totalFiles = 0
 
-  for (const file of readdirSync(apiDir).filter((f) => f.endsWith(".md"))) {
+  for (const file of readdirSync(apiDir).filter(f => f.endsWith(".md"))) {
     const filePath = join(apiDir, file)
     const original = readFileSync(filePath, "utf-8")
     const headings = extractHeadingSlugs(original)
 
     let inCode = false
-    const result = []
+    const result: string[] = []
     for (const line of original.split("\n")) {
-      if (line.startsWith("```")) { inCode = !inCode; result.push(line); continue }
-      if (inCode) { result.push(line); continue }
+      if (line.startsWith("```")) {
+        inCode = !inCode
+        result.push(line)
+        continue
+      }
+      if (inCode) {
+        result.push(line)
+        continue
+      }
       let fixed = line.replace(/\[([^\]]+)\]\(#([^)]+)\)/g, (_match, text, anchor) => {
         const slug = slugify(anchor)
         return headings.has(slug) ? `[${text}](#${slug})` : text
@@ -79,38 +90,41 @@ function fixTypedocAnchors(siteDir) {
 
     const afterLinePasses = result.join("\n")
     const updated = afterLinePasses.replace(/\[([^\]]+)\]\((?!https?:\/\/)([^)]+\.md[^)]*)\)/g, (_match, text) => text)
-    if (updated !== original) { writeFileSync(filePath, updated, "utf-8"); totalFiles++ }
+    if (updated !== original) {
+      writeFileSync(filePath, updated, "utf-8")
+      totalFiles++
+    }
   }
 
   console.log(`Fixed anchor links in ${totalFiles} TypeDoc files.`)
 }
 
-/** @param {{ siteDir: string }} context */
-export default async function prebuildPlugin(context) {
+export default async function prebuildPlugin(context: LoadContext): Promise<Plugin> {
   const { siteDir } = context
 
+
+  // Run CLI --help and inject output into docs, and prepare other docs before TypeDoc generates API reference
   generateCliDocs(siteDir)
   prepareDocs(siteDir)
-
+  
+  // Clean up old API docs to prevent stale files from remaining if APIs are removed
   rmSync(join(siteDir, "docs/api"), { recursive: true, force: true })
 
-  const { Application } = await import("typedoc")
-  const app = await Application.bootstrapWithPlugins({
-    options: join(siteDir, "typedoc.json"),
+  execSync("node_modules/.bin/typedoc --options typedoc.json", {
+    cwd: siteDir,
+    encoding: "utf-8",
+    stdio: "inherit",
   })
-  const project = await app.convert()
-  if (!project) throw new Error("TypeDoc failed to convert project")
-  await app.generateDocs(project, join(siteDir, "docs/api"))
 
   fixTypedocAnchors(siteDir)
 
   return {
     name: "electron-builder-prebuild",
-    async postBuild({ outDir }) {
-      const { createIndex } = await import("pagefind")
-      const { index } = await createIndex()
-      await index.addDirectory({ path: outDir })
-      await index.writeFiles({ outputPath: join(outDir, "pagefind") })
+    postBuild({ outDir }) {
+      execSync(`node_modules/.bin/pagefind --site "${outDir}"`, {
+        cwd: siteDir,
+        stdio: "inherit",
+      })
     },
   }
 }
