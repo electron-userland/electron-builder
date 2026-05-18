@@ -509,12 +509,19 @@ if [ "$ACTUAL" != "${expectedHash}" ]; then
   exit 1
 fi
 sudo snap install --dangerous "$SNAP_FILE"
-if [ -S "\${XDG_RUNTIME_DIR:-}/wayland-0" ]; then
-  OUTPUT=$(WAYLAND_DISPLAY=wayland-0 DBUS_SESSION_BUS_ADDRESS=unix:path=/dev/null SNAP_LAUNCH_TEST=1 timeout 30 /snap/bin/${snapBinaryName} --no-sandbox --disable-gpu 2>&1 || true)
-elif command -v xvfb-run >/dev/null 2>&1; then
-  OUTPUT=$(DBUS_SESSION_BUS_ADDRESS=unix:path=/dev/null SNAP_LAUNCH_TEST=1 xvfb-run -a --server-args="-ac -screen 0 1024x768x24" timeout 30 /snap/bin/${snapBinaryName} --no-sandbox --disable-gpu --ozone-platform=x11 2>&1 || true)
+RUNTIME_DIR="\${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+WAYLAND_SOCK="\$RUNTIME_DIR/wayland-0"
+XVFB_BIN=$(command -v xvfb-run 2>/dev/null || echo "")
+echo "DEBUG display: RUNTIME_DIR=\$RUNTIME_DIR wayland-0=$([ -S "\$WAYLAND_SOCK" ] && echo present || echo absent) xvfb-run=\${XVFB_BIN:-absent}" >&2
+if [ -S "\$WAYLAND_SOCK" ]; then
+  echo "DEBUG: using Wayland" >&2
+  OUTPUT=$(XDG_RUNTIME_DIR="\$RUNTIME_DIR" SNAP_LAUNCH_TEST=1 timeout 30 /snap/bin/${snapBinaryName} --no-sandbox --disable-gpu --disable-dev-shm-usage --ozone-platform=wayland 2>&1 || true)
+elif [ -n "\$XVFB_BIN" ]; then
+  echo "DEBUG: using xvfb-run" >&2
+  OUTPUT=$(SNAP_LAUNCH_TEST=1 xvfb-run -a --server-args="-ac -screen 0 1024x768x24" timeout 30 /snap/bin/${snapBinaryName} --no-sandbox --disable-gpu --disable-dev-shm-usage --ozone-platform=x11 2>&1 || true)
 else
-  OUTPUT=$(DISPLAY="\${DISPLAY:-:0}" DBUS_SESSION_BUS_ADDRESS=unix:path=/dev/null SNAP_LAUNCH_TEST=1 timeout 30 /snap/bin/${snapBinaryName} --no-sandbox --disable-gpu --ozone-platform=x11 2>&1 || true)
+  echo "DEBUG: using headless" >&2
+  OUTPUT=$(SNAP_LAUNCH_TEST=1 timeout 30 /snap/bin/${snapBinaryName} --no-sandbox --disable-gpu --disable-dev-shm-usage --ozone-platform=headless 2>&1 || true)
 fi
 VERSION=$(echo "$OUTPUT" | grep -oP '(?<=ELECTRON_READY:)\\S+' | head -1 || true)
 if [ -z "$VERSION" ]; then
