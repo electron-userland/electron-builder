@@ -1,5 +1,5 @@
 import type { VmManager } from "app-builder-lib/out/vm/vm"
-import { ChildProcess, spawn, StdioOptions } from "child_process"
+import { ChildProcess, execSync, spawn, StdioOptions } from "child_process"
 import { createHash, randomUUID } from "crypto"
 import * as fs from "fs"
 import { createReadStream } from "fs"
@@ -466,6 +466,120 @@ export async function deliverAndInstallInVm(vm: VmManager, installerPath: string
   } finally {
     server.close()
     await remove(scriptPath).catch(() => {})
+  }
+}
+
+export interface VmSnapOptions {
+  /** Snap package name — used to locate /snap/bin/<name> and to uninstall. */
+  snapName: string
+  /** Timeout in ms for the entire VM script (default: 3 minutes). */
+  timeoutMs?: number
+}
+
+/**
+ * Delivers a locally-built .snap to a Parallels Ubuntu VM via HTTP, installs it
+ * with --dangerous (unsigned), launches it under Xvfb with SNAP_LAUNCH_TEST=1,
+ * verifies the app emits ELECTRON_READY:<version>, then uninstalls the snap.
+ */
+export async function deliverAndInstallSnapInVm(vm: VmManager, snapPath: string, opts: VmSnapOptions): Promise<{ version: string }> {
+  const hostIp = getParallelsHostIP()
+  if (!hostIp) {
+    throw new Error("Cannot find Parallels host IP — is Parallels Desktop running?")
+  }
+
+  const snapFile = path.basename(snapPath)
+  const expectedHash = await sha256File(snapPath)
+  // snap forces package names to lowercase at install time
+  const snapBinaryName = opts.snapName.toLowerCase()
+
+  const { server, port } = await createLocalServer(path.dirname(snapPath), "0.0.0.0")
+
+  const script = `set -euo pipefail
+SNAP_FILE="/tmp/${snapFile}"
+SNAP_URL="http://${hostIp}:${port}/${encodeURIComponent(snapFile)}"
+cleanup() {
+  sudo snap remove ${snapBinaryName} 2>/dev/null || true
+  rm -f "$SNAP_FILE" || true
+}
+trap cleanup EXIT
+curl -fsSL "$SNAP_URL" -o "$SNAP_FILE"
+ACTUAL=$(sha256sum "$SNAP_FILE" | cut -d' ' -f1)
+if [ "$ACTUAL" != "${expectedHash}" ]; then
+  echo "hash mismatch: expected ${expectedHash} got $ACTUAL" >&2
+  exit 1
+fi
+sudo snap install --dangerous "$SNAP_FILE"
+if [ -S "\${XDG_RUNTIME_DIR:-}/wayland-0" ]; then
+  OUTPUT=$(WAYLAND_DISPLAY=wayland-0 DBUS_SESSION_BUS_ADDRESS=unix:path=/dev/null SNAP_LAUNCH_TEST=1 timeout 30 /snap/bin/${snapBinaryName} --no-sandbox --disable-gpu 2>&1 || true)
+elif command -v xvfb-run >/dev/null 2>&1; then
+  OUTPUT=$(DBUS_SESSION_BUS_ADDRESS=unix:path=/dev/null SNAP_LAUNCH_TEST=1 xvfb-run -a --server-args="-ac -screen 0 1024x768x24" timeout 30 /snap/bin/${snapBinaryName} --no-sandbox --disable-gpu --ozone-platform=x11 2>&1 || true)
+else
+  OUTPUT=$(DISPLAY="\${DISPLAY:-:0}" DBUS_SESSION_BUS_ADDRESS=unix:path=/dev/null SNAP_LAUNCH_TEST=1 timeout 30 /snap/bin/${snapBinaryName} --no-sandbox --disable-gpu --ozone-platform=x11 2>&1 || true)
+fi
+VERSION=$(echo "$OUTPUT" | grep -oP '(?<=ELECTRON_READY:)\\S+' | head -1 || true)
+if [ -z "$VERSION" ]; then
+  echo "ELECTRON_READY not found in output:" >&2
+  echo "$OUTPUT" >&2
+  exit 1
+fi
+echo "VERSION:$VERSION"
+`
+
+  try {
+    const output = await vm.exec("bash", ["-c", script], { timeout: opts.timeoutMs ?? 3 * 60 * 1000 })
+    const match = output.match(/VERSION:(\S+)/)
+    if (!match) {
+      throw new Error(`VERSION line not found in VM output:\n${output}`)
+    }
+    return { version: match[1] }
+  } finally {
+    server.close()
+  }
+}
+
+/**
+ * Returns true if the current user can run `sudo snap` non-interactively.
+ * Requires a scoped sudoers entry, e.g.:
+ *   <user> ALL=(root) NOPASSWD: /usr/bin/snap install *, /usr/bin/snap remove *
+ */
+export function canSudoSnap(): boolean {
+  try {
+    execSync("sudo -n snap install --help", { stdio: "pipe" })
+    return true
+  } catch (e: any) {
+    const stderr: string = (e.stderr ?? "").toString()
+    // sudo denied → stderr begins with "sudo:" (e.g. "sudo: a password is required")
+    // snap ran → stderr is snap's own help/error text, not "sudo:"
+    return stderr.length > 0 && !stderr.startsWith("sudo:")
+  }
+}
+
+/**
+ * Installs a locally-built .snap directly on the current Linux machine,
+ * launches it under Xvfb with SNAP_LAUNCH_TEST=1, verifies ELECTRON_READY,
+ * and unconditionally uninstalls the snap on completion.
+ *
+ * Requires a scoped sudoers entry:
+ *   echo "$(whoami) ALL=(root) NOPASSWD: /usr/bin/snap install *, /usr/bin/snap remove *" | sudo tee /etc/sudoers.d/eb-snap-test
+ */
+export async function installAndLaunchSnapLocally(snapPath: string, opts: VmSnapOptions): Promise<{ version: string }> {
+  const { snapName, timeoutMs = 3 * 60 * 1000 } = opts
+
+  execSync(`sudo snap install --dangerous ${snapPath}`, { stdio: "inherit" })
+
+  try {
+    const output = await launchSnapBinary(`/snap/bin/${snapName}`, timeoutMs)
+    const match = output.match(/ELECTRON_READY:(\S+)/)
+    if (!match) {
+      throw new Error(`ELECTRON_READY not found in output:\n${output}`)
+    }
+    return { version: match[1] }
+  } finally {
+    try {
+      execSync(`sudo snap remove ${snapName}`, { stdio: "inherit" })
+    } catch {
+      // best-effort — don't mask the original error
+    }
   }
 }
 

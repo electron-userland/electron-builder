@@ -539,17 +539,6 @@ exports[`snap heavy > snap full (core24) 1`] = `
 }
 `;
 
-exports[`snap heavy > snap full (core24) 2`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "se-wo-template_1.1.0_amd64.snap",
-    },
-  ],
-}
-`;
-
 exports[`snap heavy > snap install+launch (core18) 1`] = `
 {
   "apps": {
