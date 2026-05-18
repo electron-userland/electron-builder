@@ -210,7 +210,7 @@ flatpak install flathub org.freedesktop.Sdk//24.08
 : The app isn't code-signed, or signed with an untrusted certificate. See [Windows Code Signing](../features/code-signing/code-signing-win.md).
 
 **MSI: upgrades don't remove the old version**
-: The `upgradeCode` was changed between versions. The `upgradeCode` (a GUID) must remain **identical** across all versions of your application. See [MSI Configuration](msi.md).
+: The `upgradeCode` was changed between versions. The `upgradeCode` (a GUID) must remain **identical** across all versions of your application. See [MSI Configuration](../msi.md).
 
 **AppX installation fails: "The package could not be installed"**
 : Common causes: certificate not trusted on the target machine; `publisher` in config doesn't match certificate Subject; Windows version below the `minVersion` requirement. Check Event Viewer → Applications and Services Logs → Microsoft → Windows → AppxPackagingOM for detailed error codes.

@@ -41,7 +41,7 @@ const config: Config = {
         name: "suppress-pagefind-warning",
         configureWebpack() {
           return {
-            ignoreWarnings: [/Critical dependency: the request of a dependency is an expression/],
+            ignoreWarnings: [/Critical dependency/],
           }
         },
       }
@@ -226,6 +226,19 @@ const config: Config = {
           items: [
             { label: "GitHub Issues", href: "https://github.com/electron-userland/electron-builder/issues" },
             { label: "npm", href: "https://www.npmjs.com/package/electron-builder" },
+          ],
+        },
+        {
+          title: "Donate",
+          items: [
+            {
+              label: "Sponsor on GitHub",
+              href: "https://github.com/sponsors/electron-userland",
+            },
+            {
+              label: "Donorbox",
+              href: "https://donorbox.org/electron-builder",
+            },
           ],
         },
       ],
