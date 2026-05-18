@@ -221,9 +221,26 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
 
     const { root: rootSlots, app: appSlots } = options.slots ? this.processPlugOrSlots(options.slots) : { root: undefined, app: undefined }
 
+    // Build the effective arg list for the snap command.
+    // Start with any user-supplied executableArgs, then conditionally add --no-sandbox
+    // if browser-support with allow-sandbox:true is not present in the resolved plugs
+    // (mirrors the same logic in SnapCoreLegacy.buildSnap).
+    const extraArgs: string[] = [...(this.options.executableArgs ?? [])]
+    if (this.options.allowNativeWayland === false) {
+      if (!extraArgs.includes("--ozone-platform=x11")) {
+        extraArgs.push("--ozone-platform=x11")
+      }
+    }
+    if (this.helper.isElectronVersionGreaterOrEqualThan("5.0.0") && !this.isBrowserSandboxAllowed(rootPlugs)) {
+      if (!extraArgs.includes("--no-sandbox")) {
+        extraArgs.push("--no-sandbox")
+      }
+    }
+    const commandSuffix = extraArgs.length > 0 ? ` ${extraArgs.join(" ")}` : ""
+
     // Create the app configuration
     const app: App = {
-      command: `app/${this.packager.executableName}`,
+      command: `app/${this.packager.executableName}${commandSuffix}`,
       "command-chain": undefined, // explicitly undefined so removeNullish strips it; extensions supply their own command-chain
       plugs: appPlugs,
       slots: appSlots,
@@ -314,11 +331,6 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     // Add default TMPDIR for Electron/Chromium apps
     if (!options.environment?.TMPDIR) {
       env.TMPDIR = "$XDG_RUNTIME_DIR"
-    }
-
-    // Handle Wayland support
-    if (options.allowNativeWayland === false) {
-      env.DISABLE_WAYLAND = "1"
     }
 
     // Merge with user-provided environment
@@ -444,6 +456,18 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     }
 
     return { root: Object.keys(root).length > 0 ? root : undefined, app: app.length > 0 ? app : undefined }
+  }
+
+  private isBrowserSandboxAllowed(plugs: Record<string, any> | undefined): boolean {
+    if (!plugs) {
+      return false
+    }
+    for (const plug of Object.values(plugs)) {
+      if (plug?.interface === "browser-support" && plug["allow-sandbox"] === true) {
+        return true
+      }
+    }
+    return false
   }
 
   /**

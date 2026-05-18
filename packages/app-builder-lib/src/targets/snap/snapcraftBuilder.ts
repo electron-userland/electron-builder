@@ -210,6 +210,15 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string> {
     env.SNAPCRAFT_BUILD_ENVIRONMENT = "host"
   }
 
+  if (useLXD && process.platform !== "linux") {
+    throw new InvalidConfigurationError(`useLXD is only supported on Linux. On ${process.platform}, use useMultipass or remoteBuild instead.`)
+  }
+  if (useDestructiveMode && process.platform !== "linux") {
+    throw new InvalidConfigurationError(
+      `useDestructiveMode is only supported on Linux (requires Ubuntu 24.04 host for core24). On ${process.platform}, use useMultipass or remoteBuild instead.`
+    )
+  }
+
   // Config validation — throws InvalidConfigurationError, no build artifacts exist yet.
   validateSnapcraftConfig(snapcraftConfig)
 
@@ -276,7 +285,8 @@ async function ensureSnapcraftInstalled(): Promise<void> {
     if (platform === "linux") {
       log.error(null, "Install with: sudo snap install snapcraft --classic")
     } else if (platform === "darwin") {
-      log.error(null, "Install with: brew install snapcraft")
+      log.error(null, "Install snapcraft with: pip3 install snapcraft")
+      log.error(null, "On macOS, useMultipass or remoteBuild are the only supported build modes for core24")
     } else if (platform === "win32") {
       log.error(null, "Install snapcraft via WSL2 or use remote-build")
       log.error(null, "See: https://snapcraft.io/docs/snapcraft-overview")

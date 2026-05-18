@@ -4219,6 +4219,7 @@
           "type": "boolean"
         },
         "differentialPackage": {
+          "description": "Marks the package as built with differential download support for the update server.",
           "type": "boolean"
         },
         "displayLanguageSelector": {
@@ -4227,7 +4228,7 @@
           "type": "boolean"
         },
         "guid": {
-          "description": "The GUID for the installer. Used to identify the application for upgrade and uninstall operations.\nIf not specified, a deterministic GUID is generated from the application name — but this means\nrenaming your app will break silent upgrades of existing installs.",
+          "description": "The GUID for the installer. Used to identify the application for upgrade and uninstall operations.\nIf not specified, a deterministic GUID is generated from the app ID (`appId`) — but this means\nchanging your `appId` will break silent upgrades of existing installs.",
           "type": [
             "null",
             "string"
@@ -4484,6 +4485,7 @@
         },
         "useZip": {
           "default": false,
+          "description": "Forces zip compression format instead of LZMA. Used internally for differential update packages.",
           "type": "boolean"
         },
         "warningsAsErrors": {
@@ -4570,6 +4572,7 @@
           "type": "boolean"
         },
         "differentialPackage": {
+          "description": "Marks the package as built with differential download support for the update server.",
           "type": "boolean"
         },
         "displayLanguageSelector": {
@@ -4578,7 +4581,7 @@
           "type": "boolean"
         },
         "guid": {
-          "description": "The GUID for the installer. Used to identify the application for upgrade and uninstall operations.\nIf not specified, a deterministic GUID is generated from the application name — but this means\nrenaming your app will break silent upgrades of existing installs.",
+          "description": "The GUID for the installer. Used to identify the application for upgrade and uninstall operations.\nIf not specified, a deterministic GUID is generated from the app ID (`appId`) — but this means\nchanging your `appId` will break silent upgrades of existing installs.",
           "type": [
             "null",
             "string"
@@ -4835,6 +4838,7 @@
         },
         "useZip": {
           "default": false,
+          "description": "Forces zip compression format instead of LZMA. Used internally for differential update packages.",
           "type": "boolean"
         },
         "warningsAsErrors": {
@@ -5574,7 +5578,7 @@
           "description": "Allows you to provide your own `nsis-resources`"
         },
         "guid": {
-          "description": "The GUID for the installer. Used to identify the application for upgrade and uninstall operations.\nIf not specified, a deterministic GUID is generated from the application name — but this means\nrenaming your app will break silent upgrades of existing installs.",
+          "description": "The GUID for the installer. Used to identify the application for upgrade and uninstall operations.\nIf not specified, a deterministic GUID is generated from the app ID (`appId`) — but this means\nchanging your `appId` will break silent upgrades of existing installs.",
           "type": [
             "null",
             "string"
@@ -5654,6 +5658,7 @@
         },
         "useZip": {
           "default": false,
+          "description": "Forces zip compression format instead of LZMA. Used internally for differential update packages.",
           "type": "boolean"
         },
         "warningsAsErrors": {
@@ -9021,7 +9026,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "MSI package options."
     },
     "msiProjectCreated": {
       "anyOf": [
@@ -9045,7 +9051,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "MSI-wrapped installer options."
     },
     "nativeRebuilder": {
       "anyOf": [
