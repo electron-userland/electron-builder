@@ -254,11 +254,12 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
       },
     }))
 
-  test("core24 wayland disabled", ({ expect }) =>
-    app(expect, {
+  test("core24 wayland disabled", ({ expect }) => {
+    const appName = "sep"
+    return app(expect, {
       targets: snapTarget,
       config: {
-        extraMetadata: { name: "sep" },
+        extraMetadata: { name: appName },
         productName: "Sep",
         snapcraft: {
           base: "core24",
@@ -268,10 +269,11 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
       effectiveOptionComputed: async ({ snap }) => {
         delete snap.platforms // arch-specific: varies by host; tested separately via armhf tests
         expect(snap).toMatchSnapshot()
-        expect(snap.environment?.["DISABLE_WAYLAND"]).toBe("1")
+        expect(snap.apps?.[appName]?.command).toContain("--ozone-platform=x11")
         return Promise.resolve(true)
       },
-    }))
+    })
+  })
 
   test("core24 custom plugs with default expansion", ({ expect }) =>
     app(expect, {

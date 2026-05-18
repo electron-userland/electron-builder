@@ -496,8 +496,7 @@ export interface SnapOptions24 extends CommonLinuxOptions, TargetSpecificOptions
   readonly autoStart?: boolean
 
   /**
-   * Allow running the application with native Wayland support (`--ozone-platform=wayland`).
-   * For core24 this defaults to `true`. Set to `false` to force X11 mode via XWayland.
+   * Allows explicitly disabling native Wayland by injecting `--ozone-platform=x11` into the snap's runtime arguments, even on newer Electron versions where native Wayland is supported by default.
    * @default true
    */
   readonly allowNativeWayland?: boolean | null

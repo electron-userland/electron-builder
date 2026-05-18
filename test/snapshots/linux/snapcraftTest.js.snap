@@ -1624,7 +1624,7 @@ exports[`snapcraft > core24 custom plugs with default expansion 1`] = `
 {
   "apps": {
     "sep": {
-      "command": "app/sep",
+      "command": "app/sep --no-sandbox",
       "desktop": "meta/gui/sep.desktop",
       "extensions": [
         "gnome",
@@ -1933,7 +1933,7 @@ exports[`snapcraft > core24 wayland disabled 1`] = `
 {
   "apps": {
     "sep": {
-      "command": "app/sep",
+      "command": "app/sep --ozone-platform=x11",
       "desktop": "meta/gui/sep.desktop",
       "extensions": [
         "gnome",
@@ -1947,7 +1947,6 @@ exports[`snapcraft > core24 wayland disabled 1`] = `
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "environment": {
-    "DISABLE_WAYLAND": "1",
     "TMPDIR": "$XDG_RUNTIME_DIR",
   },
   "grade": "stable",

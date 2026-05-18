@@ -93,7 +93,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
         log.debug({ organize }, "updated snapcraft.yaml with organize mapping")
       }
     } catch (e: any) {
-      log.debug({ error: e.message }, "failed to generate organize mapping")
+      log.warn({ error: e.message }, "failed to generate and update organize mapping")
     }
 
     const buildMode = {

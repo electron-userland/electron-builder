@@ -59,7 +59,7 @@ CWD=$(dirname "$0")
 REPO_ROOT=$(cd "$CWD/../../.." && pwd)
 
 export TEST_FILES="${TEST_FILES:-snapTest,snapHeavyTest}"
-export DEBUG="${DEBUG:-electron-builder}"
+export DEBUG="${DEBUG:-electron-updater}"
 export SKIPPED_TESTS="${SKIPPED_TESTS:-none}"
 
 # Common docker flags forwarded to every test run.
