@@ -20,7 +20,7 @@ For standard consumer distribution, [NSIS](nsis.md) is simpler. For enterprise d
 | Sideloading | Yes (signed) | N/A | N/A |
 | Enterprise MDM | Limited | No | Yes |
 | Sandboxed | Partial | No | No |
-| Auto-update | Store / electron-updater | electron-updater | electron-updater |
+| Auto-update | Store only (not electron-updater) | electron-updater | Not supported via electron-updater |
 | Code signing | Required (or Store) | Recommended | Recommended |
 
 ## Code Signing {#appx-package-code-signing}
@@ -174,7 +174,7 @@ Import the certificate into "Trusted People" on the target machine — see [Micr
 
 **Does AppX support auto-updates without the Store?**
 
-Yes — electron-updater works with AppX packages just like NSIS. Configure a `publish` provider and electron-updater handles updates outside the Store update mechanism.
+No — AppX auto-updates are handled by the Windows Store only. electron-updater does not support AppX packages. For auto-updates outside the Store, use NSIS instead.
 
 ## Configuration
 

@@ -15,7 +15,7 @@
   "cleanOutputDir": false,
   "flattenOutputFiles": true,
   "hideGroupHeadings": true,
-  "hidePageTitle": true,
+  "hidePageTitle": false,
   "hidePageHeader": true,
   "useHTMLEncodedBrackets": true,
   "preserveAnchorCasing": false,

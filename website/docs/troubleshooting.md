@@ -94,16 +94,7 @@ files:
 ## Native Modules
 
 **"Error: The module was compiled against a different Node.js version"**
-: The native module was compiled for Node.js but needs to be compiled for Electron's Node.js. Install `@electron/rebuild` and run:
-```bash
-npx electron-rebuild
-```
-Or add it as a `postinstall` script:
-```json
-"scripts": {
-  "postinstall": "electron-rebuild"
-}
-```
+: electron-builder automatically rebuilds native modules for the target Electron version during the build. If you see this error at runtime during development (not during a build), ensure you are running your app via `electron .` from the project root, not from a globally installed Electron binary compiled against a different version.
 
 **Native module works in development but crashes after packaging**
 : The module likely needs to be in `asarUnpack`. Some modules also need their full directory tree unpacked:

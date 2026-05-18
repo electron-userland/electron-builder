@@ -1,9 +1,5 @@
 The top-level [msi](configuration.md) key contains set of options instructing electron-builder on how it should build Windows MSI (Microsoft Installer) packages.
 
-:::note[Experimental]
-The MSI target is experimental. For most Windows consumer applications, [NSIS](nsis.md) is the recommended installer format. Use MSI for enterprise deployment scenarios where Group Policy or MDM management is required.
-:::
-
 ## When to Use MSI
 
 MSI packages use Windows Installer technology and are the standard format for enterprise software deployment:
@@ -24,7 +20,7 @@ MSI packages use Windows Installer technology and are the standard format for en
 | Customizability | Moderate (WiX) | Excellent | N/A |
 | UI flexibility | Limited | Highly customizable | N/A |
 | File size | Typically larger | Compressed | No overhead |
-| Auto-update | electron-updater | electron-updater | Manual |
+| Auto-update | Not supported via electron-updater | electron-updater | Manual |
 | Recommended for | Enterprise | Consumer | USB/no-install |
 
 ## Upgrade Code

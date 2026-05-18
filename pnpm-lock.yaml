@@ -750,6 +750,9 @@ importers:
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.14
+      typedoc:
+        specifier: ^0.28.19
+        version: 0.28.19(typescript@5.6.3)
       typedoc-plugin-markdown:
         specifier: ^4.11.0
         version: 4.11.0(typedoc@0.28.19(typescript@5.6.3))

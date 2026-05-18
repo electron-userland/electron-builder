@@ -318,7 +318,7 @@ jobs:
 : Windows CI environments may truncate environment variables over 8192 characters. Re-export the `.pfx` without the full certificate chain included. See [Code Signing](./code-signing/code-signing.md#encoding-a-certificate-for-ci).
 
 **Build fails with "Cannot find module"**
-: Native modules need to be rebuilt for the target Electron version. Ensure `npm ci` (not `npm install`) is used, and check that `electron-rebuild` or `@electron/rebuild` is configured if needed.
+: Native modules need to be rebuilt for the target Electron version. Ensure `npm ci` (not `npm install`) is used. electron-builder handles native module rebuilding automatically.
 
 ## Related Pages
 

@@ -65,12 +65,11 @@ function fixTypedocAnchors(siteDir: string): void {
 
   for (const file of readdirSync(apiDir).filter(f => f.endsWith(".md"))) {
     const filePath = join(apiDir, file)
-    let original = readFileSync(filePath, "utf-8")
+    const raw = readFileSync(filePath, "utf-8")
 
-    // Strip the "Documentation / <pkgname>" breadcrumb TypeDoc emits at the top of package-level files
-    if (original.startsWith("Documentation / ")) {
-      original = original.replace(/^Documentation \/ [^\n]+\n\n?/, "")
-    }
+    // Strip TypeDoc breadcrumbs — handles both plain-text and link-wrapped formats:
+    // "Documentation / pkg / Symbol" and "[Documentation](url) / [pkg](url) / Symbol"
+    let original = raw.replace(/^(?:\[Documentation\]\([^)]*\)|Documentation) \/ [^\n]*\n\n?/, "")
 
     const headings = extractHeadingSlugs(original)
 
@@ -90,13 +89,19 @@ function fixTypedocAnchors(siteDir: string): void {
         const slug = slugify(anchor)
         return headings.has(slug) ? `[${text}](#${slug})` : text
       })
-      fixed = fixed.replace(/\[([^\]]+)\]\((?!https?:\/\/)([^)]+\.md[^)]*)\)/g, (_match, text) => text)
+      fixed = fixed.replace(
+        /\[([^\]]+)\]\((?:\.\/)?([^)#/]+)\.md(#[^)]*)?\)/g,
+        (_match, text, filename, anchor = "") => `[${text}](/docs/api/${filename}${anchor})`
+      )
       result.push(fixed)
     }
 
     const afterLinePasses = result.join("\n")
-    const updated = afterLinePasses.replace(/\[([^\]]+)\]\((?!https?:\/\/)([^)]+\.md[^)]*)\)/g, (_match, text) => text)
-    if (updated !== original) {
+    const updated = afterLinePasses.replace(
+      /\[([^\]]+)\]\((?:\.\/)?([^)#/]+)\.md(#[^)]*)?\)/g,
+      (_match, text, filename, anchor = "") => `[${text}](/docs/api/${filename}${anchor})`
+    )
+    if (updated !== raw) {
       writeFileSync(filePath, updated, "utf-8")
       totalFiles++
     }

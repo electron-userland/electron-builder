@@ -105,9 +105,6 @@ Quick reference for terms used throughout the electron-builder documentation.
 **MAS (Mac App Store)**
 : Apple's app distribution platform for macOS. MAS apps are sandboxed and require entitlements for any system access. electron-builder's `mas` target builds for App Store submission; `mas-dev` builds for local testing with a development provisioning profile. See [MAS](mas.md).
 
-**MSIX**
-: Microsoft's evolution of AppX packaging. Functionally identical for electron-builder purposes — the `appx` target produces files compatible with both.
-
 ---
 
 ## N

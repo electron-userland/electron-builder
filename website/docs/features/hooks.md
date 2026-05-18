@@ -4,25 +4,26 @@ Build hooks let you run custom code at specific points in the electron-builder b
 
 ## Build Lifecycle
 
-Hooks execute in this order during a build:
+Hooks fire in this order during every build. Pick the hook that runs at the right stage for your task — modifying app files before signing, triggering external tools after all artifacts are ready, etc.
 
-```
-1. beforeBuild      — before native dependencies are installed/rebuilt
-2. beforePack       — before files are copied and packaged
-3. afterExtract     — after Electron binary is extracted to output dir
-4. afterPack        — after app is packaged (before signing)
-5. afterSign        — after app is signed (before distributable creation)
-6. [per artifact]:
-   artifactBuildStarted
-   artifactBuildCompleted
-7. afterAllArtifactBuild  — after all artifacts are built
-```
+| Hook | When it fires | Common use |
+|---|---|---|
+| `beforeBuild` | Before native deps are installed/rebuilt | Skip or customize native module rebuild |
+| `beforePack` | Before files are copied into the app bundle | Inject generated files, modify source before pack |
+| `afterExtract` | After Electron binary is extracted | Modify the Electron binary or its resources |
+| `afterPack` | After files are packaged, **before signing** | Modify app bundle structure, add unpacked files |
+| `afterSign` | After signing, **before distributable is created** | Custom post-sign steps, extra notarization workflows |
+| `artifactBuildStarted` | When each installer/image starts building | Per-artifact logging or tracking |
+| `artifactBuildCompleted` | When each installer/image finishes | Checksum capture, per-artifact upload |
+| `afterAllArtifactBuild` | After **all** artifacts are done | Upload debug symbols, generate changelogs, return extra publish paths |
 
-Additional hooks for specific targets:
-- `electronDist` — provide a custom Electron binary path
-- `msiProjectCreated` — modify WiX project before MSI compilation
-- `appxManifestCreated` — modify AppX manifest before packaging
-- `onNodeModuleFile` — filter which node_module files are included
+Hook execution is serial within each platform/arch combination. Async hooks are awaited before the build proceeds.
+
+**Target-specific hooks** (only fire for their respective target):
+- `electronDist` — supply a custom Electron binary
+- `msiProjectCreated` — edit WiX XML before MSI compilation
+- `appxManifestCreated` — edit AppX manifest XML before packaging
+- `onNodeModuleFile` — filter which `node_modules` files are included in the bundle
 
 ## Defining Hooks
 

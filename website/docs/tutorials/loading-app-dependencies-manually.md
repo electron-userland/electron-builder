@@ -3,13 +3,21 @@ title: "Loading App Dependencies Manually"
 ---
 
 :::warning
-Important: This approach must be used only in development environment.
-Since the release version of your application the `app` directory should self contain all used files.
+This approach must only be used in a development environment. In production, electron-builder packages the `app/` directory as a self-contained bundle — no manual path injection is needed or appropriate.
 :::
 
-In case on development environment your app runs the main process (executed by electron) not inside the `/app` folder. You may need to load the `/app` dependencies manually. Because the app dependencies are be placed at `/app/node_modules` and your main process that is running in a different directory will not have access by default to that directory.
+## Background
 
-Instead of duplicating the app dependencies in the development `package.json` it is possible to make the electron main process load the app dependencies manually with an approach like this:
+This tutorial is relevant only if you use the **two-package.json structure** (see [Two Package Structure](two-package-structure.md)) where:
+
+- A root `package.json` holds your `devDependencies` (Electron, electron-builder, build tools)
+- An `app/package.json` holds your actual app `dependencies` — only this is packaged and shipped
+
+During **development**, your `main.js` entry point typically lives outside the `app/` directory (e.g., `src/main.js`). When Electron runs it, Node.js resolves modules relative to that file's location — meaning `app/node_modules` is **not** on the module search path by default.
+
+Rather than duplicating your app dependencies in the root `package.json`, you can manually inject the `app/node_modules` path into Node's module resolution at startup, in dev mode only:
+
+If you are not using the two-package.json structure, you do not need this tutorial.
 
 ```js
 // given this file is: /src/browser/main.js

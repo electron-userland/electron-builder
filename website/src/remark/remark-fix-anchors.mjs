@@ -65,7 +65,8 @@ export default function remarkFixAnchors() {
 function isTypedocSymbolLink(url) {
   const filename = url.split("/").pop()?.split("#")[0] ?? ""
   const base = filename.replace(/\.mdx?$/, "")
-  return base.split(".").length >= 3
+  // Only match links that still carry a .md extension; converted links (/docs/api/...) have no .md
+  return base !== filename && base.split(".").length >= 3
 }
 
 function extractText(node) {

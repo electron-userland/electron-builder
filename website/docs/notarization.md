@@ -65,6 +65,17 @@ APPLE_API_ISSUER=your-issuer-id
 APPLE_TEAM_ID=ABCDE12345
 ```
 
+### Authentication — Option C: Keychain Profile (stored credentials)
+
+If you have previously stored notarization credentials via `xcrun notarytool store-credentials`, reference them by profile name:
+
+```bash
+APPLE_KEYCHAIN_PROFILE=my-notarization-profile
+APPLE_KEYCHAIN=/path/to/keychain.keychain-db  # optional; defaults to system keychain
+```
+
+This approach requires credentials to be pre-stored on the build machine and is not suitable for ephemeral CI environments.
+
 ## Hardened Runtime Requirements
 
 Notarization requires **Hardened Runtime** (`hardenedRuntime: true`). This restricts what your app process can do unless you explicitly declare entitlements.

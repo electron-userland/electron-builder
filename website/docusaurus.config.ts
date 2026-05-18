@@ -70,7 +70,7 @@ const config: Config = {
           routeBasePath: "/docs",
           beforeDefaultRemarkPlugins: [[remarkInclude, { docsDir }], remarkFixAnchors],
           remarkPlugins: [],
-          exclude: ["api/*.*.md"],
+          exclude: [],
         },
         blog: false,
         theme: {

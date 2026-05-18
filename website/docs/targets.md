@@ -9,8 +9,8 @@ This page helps you choose the right packaging format for each platform. The rig
 | `nsis` | `.exe` installer | Consumer apps (most common) | Optional (per-user mode) | electron-updater |
 | `nsis-web` | `.exe` web installer | Apps with large assets | Optional | electron-updater |
 | `portable` | `.exe` no-install | USB drives, no-install scenarios | No | Manual |
-| `appx` | `.appx` / `.msix` | Windows Store, enterprise MDM | Managed by Store | Store or electron-updater |
-| `msi` | `.msi` | Enterprise deployment (SCCM/Intune/GPO) | Yes | MSI mechanisms |
+| `appx` | `.appx` / `.msix` | Windows Store, enterprise MDM | Managed by Store | Store only |
+| `msi` | `.msi` | Enterprise deployment (SCCM/Intune/GPO) | Yes | Not supported via electron-updater |
 | `msi-wrapped` | `.msi` wrapping NSIS | Enterprise + existing NSIS installer | Yes | electron-updater |
 | `squirrel.windows` | `.exe` / NuGet | Legacy (not recommended) | No | Squirrel |
 
@@ -19,7 +19,7 @@ This page helps you choose the right packaging format for each platform. The rig
 **NSIS** (`nsis`) — the default and best choice for most applications.
 - Consumer software distributed via your website or GitHub releases
 - Both per-user (no admin) and per-machine install modes available
-- Full customization of the installer UI
+- Script-based customization via NSIS macros (`.nsh` hooks) — not visual UI theming
 - Works with electron-updater for auto-updates
 
 **NSIS Web** (`nsis-web`) — use when your app download is very large.

@@ -4,10 +4,6 @@ title: "MSI Wrapped"
 
 The top-level [msiWrapped](configuration.md) key contains set of options instructing electron-builder on how it should build Windows MSI-Wrapped packages.
 
-:::note[Experimental]
-The MSI-Wrapped target is experimental. It wraps an existing NSIS installer inside an MSI container.
-:::
-
 ## What is MSI-Wrapped?
 
 MSI-Wrapped is a hybrid approach that combines the customizability of NSIS with the enterprise deployment compatibility of MSI. It works by:
