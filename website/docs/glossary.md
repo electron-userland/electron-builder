@@ -176,10 +176,3 @@ Quick reference for terms used throughout the electron-builder documentation.
 
 **WiX (Windows Installer XML Toolset)**
 : The toolchain used by electron-builder internally to produce MSI packages. Provides advanced Windows installer features like component tracking, repair, and rollback. You can pass additional WiX arguments via `msi.additionalWixArgs`.
-
----
-
-## Z
-
-**zsync**
-: A file synchronization protocol used by AppImage for differential updates. When publishing AppImages, electron-builder generates a `.AppImage.zsync` file. electron-updater uses zsync to download only the changed blocks of a new version rather than the full AppImage.

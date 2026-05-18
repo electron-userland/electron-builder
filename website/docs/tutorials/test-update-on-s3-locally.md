@@ -1,64 +1,26 @@
-# Description
-Auto updates is one of the most critical pieces of any application and testing that process is important.
+# Testing Auto-Update Locally with Minio
 
-This page is intended to explain how to test the auto update process locally.
+[Minio](https://min.io/) is a locally runnable server that implements the S3 protocol — useful for testing electron-builder's S3 publish provider without a real AWS account.
 
-Much of the update steps were copied from [here](https://github.com/electron-userland/electron-builder/issues/3053)
+## 1. Set up Minio
 
+Download and start Minio following the [Minio quickstart](https://min.io/docs/minio/linux/operations/install-deploy-manage/deploy-minio-single-node-single-drive.html). Create a bucket and set a public read policy on it so electron-updater can access the artifacts.
 
-# Steps
-## 1. Download and Install Minio
-Minio is a locally runnable server that implements the S3 protocol.  https://min.io/download
+## 2. Publish to local Minio
 
-Download the server and the client and put them in a directory you want.  For this document we'll refer to this directory as `minio-home`
+Set `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` to your Minio credentials, then publish with overridden S3 config:
 
-Your directory should look like this
-```
-minio-home
-├── minio.exe
-└── mc.exe
+```bash
+electron-builder --publish always \
+  --config.publish.provider=s3 \
+  --config.publish.endpoint=http://localhost:9000 \
+  --config.publish.bucket=test-bucket
 ```
 
-## 2. Create and Configure a Bucket
+## 3. Bump the version and test
 
-Run the following in `minio-home`
-```sh
-mkdir ./minio-data
-mkdir ./minio-data/test-bucket
-```
-Then you can run `./minio.exe server ./minio-data` to start the server.
+Update the `version` field in `package.json` to a higher number than the installed app, then install the previously built app and launch it. The updater should detect and apply the update from your local Minio bucket. Logs are written to:
 
-This will start the server with the default credentials _(i.e. **minioadmin**)_
-
-Access the web client at http://127.0.0.1:9000 - you should be able to access with the default credentials.
-
-At this point you should add a read policy on the bucket.  You can do this by accessing the web client, going to the bucket settings, and adding a `*` `Read Only` policy.  
-> This is necessary for the updater to have access to the updates.
-{.is-info}
-
-## 3. Publish the Updates
-First build the application once so we don't have to wait for a build every time.  To do this run your compilation step first.
-
-Then  ensure  your `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables  are set. You can set them in your terminal session or your IDE such as Webstorm or you can include them with [dotenv](https://www.npmjs.com/package/dotenv) and then have `require("dotenv").config()` at the top of your configuration file (if it's a javascript file).
-
-Once you've set the env variables you can run your publish command with a modification. 
-For example you have a command named `publish:prod` which is `electron-builder --x64 --config configs/electron-builder.js`, 
-
-You would make `publish:dev` which is `yarn publish:prod --publish always  --config.publish.provider=s3 --config.publish.endpoint=http://localhost:9000 --config.publish.bucket=test-update`
-
-This will automatically override the publish configurations and run the publish process.
-
-Then go into your `package.json` file and update the version number to something **higher** than the current version.  This is important for a new update to be detected.
-
-If you go to the web client now you should see the executable, corresponding blockmap, and a `latest.yml` file.
-
-
-## 4. Install and Test
-
-Now you want to install the built application. It should exist whatever directory you specified in your config as the out directory _(or the default which is `dist`)_
-
-Start the application and check the log output.  In windows it should be in this directory: `%AppData%\Roaming\yourapp\log.log` This will contain the updater logs and indicate how far or at what step the update fails if it does.  
-
-If your update flow is correct then you should see an update notification as normal.
-
-
+- **Windows:** `%AppData%\Roaming\<appname>\log.log`
+- **macOS:** `~/Library/Logs/<appname>/main.log`
+- **Linux:** `~/.config/<appname>/log.log`

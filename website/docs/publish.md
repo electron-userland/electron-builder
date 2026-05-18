@@ -136,6 +136,9 @@ Detected automatically using:
 ## Github
   {!./builder-util-runtime.Interface.GithubOptions.md!}
 
+## GitLab
+  {!./builder-util-runtime.Interface.GitlabOptions.md!}
+
 ## Keygen
   {!./builder-util-runtime.Interface.KeygenOptions.md!}
 

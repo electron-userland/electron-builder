@@ -137,11 +137,11 @@ Standard consumer distribution?
 
 ### When to Use Each Linux Target
 
-**AppImage** — the **default** target; best first choice for broad compatibility.
+**AppImage** — built by default alongside Snap; best first choice for broad compatibility.
 - Single file, no installation, no root required
 - Runs on virtually any x86_64 Linux distribution
 - [AppImageLauncher](https://github.com/TheAssassin/AppImageLauncher) handles desktop integration
-- electron-updater supports delta updates via zsync
+- electron-updater supports delta updates via embedded blockmap (no separate file needed)
 - See [AppImage Configuration](appimage.md)
 
 **DEB** — use for Debian-based distribution (Ubuntu, Mint, etc.).

@@ -177,10 +177,8 @@ snap:
 
 ## Publishing to the Snap Store
 
-1. Create an account at [snapcraft.io](https://snapcraft.io/account) and register your snap name
-2. Install `snapcraft`: `sudo snap install snapcraft --classic`
-3. Log in: `snapcraft login`
-4. Configure publishing in your electron-builder config:
+1. Create an account at [snapcraft.io](https://snapcraft.io/account), register your snap name, and install the `snapcraft` CLI — see [Publishing to the Snap Store](https://snapcraft.io/docs/releasing-your-app)
+2. Configure publishing in your electron-builder config:
 
 ```yaml
 publish:
@@ -190,7 +188,7 @@ publish:
     - stable
 ```
 
-5. Build and publish: `electron-builder --linux snap --publish always`
+3. Build and publish: `electron-builder --linux snap --publish always`
 
 ### Channel Strategy
 

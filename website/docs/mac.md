@@ -18,7 +18,7 @@ electron-builder supports several macOS distribution formats. Choose based on yo
 | `7z`, `tar.*` | Archive formats, custom CDN distribution | Optional | Optional |
 | `dir` | Development/debugging — unpacked app | No | No |
 
-The default target is `dmg` and `zip` (both are required for Squirrel.Mac auto-update).
+The default targets are `zip` and `dmg` (both are required for Squirrel.Mac auto-update).
 
 ## Bundle ID
 

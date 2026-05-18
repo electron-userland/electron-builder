@@ -22,7 +22,7 @@ electron-builder supports a wide range of Linux package formats. Choose based on
 | `zip`, `7z`, `tar.*` | Archive | Custom CDN distribution | Universal |
 | `dir` | Directory | Development/debugging | N/A |
 
-The default target is `AppImage`.
+The default targets are `AppImage` and `Snap`.
 
 ## Common Linux Configuration
 

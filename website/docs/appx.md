@@ -28,17 +28,7 @@ For standard consumer distribution, [NSIS](nsis.md) is simpler. For enterprise d
 - **Store distribution** — no manual signing needed. The Windows Store signs the package with a Microsoft certificate during the submission process.
 - **Sideloading / enterprise** — the AppX must be signed with a trusted certificate. See [Windows Code Signing](features/code-signing/code-signing-win.md).
 
-For self-signed certificates during development:
-
-```powershell
-# Create self-signed certificate
-New-SelfSignedCertificate -Type Custom -Subject "CN=My Publisher" `
-  -KeyUsage DigitalSignature -FriendlyName "MyApp" `
-  -CertStoreLocation "Cert:\CurrentUser\My" `
-  -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}")
-```
-
-To install and trust a self-signed certificate: `certmgr.msc` → Trusted People → Import.
+For self-signed certificates during development, see [Microsoft's self-signed certificate guide](https://learn.microsoft.com/en-us/windows/msix/package/create-certificate-package-signing).
 
 ## AppX Assets
 
@@ -152,10 +142,6 @@ appx:
 6. Complete the submission (age rating, pricing, screenshots, etc.)
 7. Wait for Store certification (typically 1-3 business days)
 
-## Building AppX on macOS
-
-Use a Windows virtual machine running via [Parallels Desktop](http://www.parallels.com/products/desktop/) (Pro Edition required). electron-builder automatically detects and uses the VM. No additional Windows setup is needed — just start the VM.
-
 ## Sideloading Without the Store
 
 For enterprise distribution without the Store:
@@ -184,20 +170,7 @@ Get-AppxPackage | Where-Object {$_.Name -like "*MyApp*"} | Remove-AppxPackage
 
 **How do I install an AppX with a self-signed certificate?**
 
-Import the certificate into "Trusted People" on the target machine:
-1. Right-click the `.appx` → Properties → Digital Signatures → Details → View Certificate → Install Certificate
-2. Select "Local Machine" → "Place all certificates in the following store" → Browse → "Trusted People"
-3. Then install the AppX normally.
-
-Or via PowerShell:
-
-```powershell
-Import-Certificate -FilePath "mycert.cer" -CertStoreLocation Cert:\LocalMachine\TrustedPeople
-```
-
-**Can I build AppX on macOS without a Windows VM?**
-
-Not reliably. The MakeAppx.exe tool required to create AppX packages only runs on Windows. Use Parallels Desktop or a CI service with Windows runners.
+Import the certificate into "Trusted People" on the target machine — see [Microsoft's guide to signing MSIX packages](https://learn.microsoft.com/en-us/windows/msix/package/sign-app-package-using-signtool). Then install the AppX normally with `Add-AppxPackage`.
 
 **Does AppX support auto-updates without the Store?**
 

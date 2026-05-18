@@ -8,17 +8,18 @@ See article [Notarizing your Electron application](https://kilianvalkhof.com/201
 
 ## How to Export Certificate on macOS
 
-1. Open Keychain.
-2. Select `login` keychain, and `My Certificates` category.
-3. Select all required certificates (hint: use cmd-click to select several):
-   * `Developer ID Application:` to sign app for macOS.
-   * `3rd Party Mac Developer Installer:` and either `Apple Distribution` or `3rd Party Mac Developer Application:` to sign app for MAS (Mac App Store).
-   * `Developer ID Application:` and `Developer ID Installer` to sign app and installer for distribution outside of the Mac App Store.
-   * `Apple Development:` or `Mac Developer:` to sign development builds for testing Mac App Store submissions (`mas-dev` target). You also need a provisioning profile in the working directory that matches this certificate and the device being used for testing.
+Export your certificate from Keychain Access as a `.p12` file — see [Apple's guide to exporting Keychain items](https://support.apple.com/guide/keychain-access/import-and-export-keychain-items-kyca35961/mac).
 
-   Please note – you can select as many certificates as needed. No restrictions on electron-builder side.
-   All selected certificates will be imported into temporary keychain on CI server.
-4. Open context menu and `Export`.
+Which certificate to export depends on your electron-builder target:
+
+| Certificate Type | Use |
+|---|---|
+| `Developer ID Application` | macOS direct distribution |
+| `Developer ID Application` + `Developer ID Installer` | macOS PKG installer (`pkg` target) |
+| `3rd Party Mac Developer Installer` + `Apple Distribution` | Mac App Store (`mas` target) |
+| `Apple Development` or `Mac Developer` | Local MAS testing (`mas-dev` target) — also requires a provisioning profile in the working directory |
+
+You can export multiple certificates into one `.p12` file. All selected certificates are imported into the temporary keychain on CI.
 
 ## How to Disable Code Signing During the Build Process on macOS
 

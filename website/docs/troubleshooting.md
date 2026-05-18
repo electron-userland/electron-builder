@@ -127,7 +127,7 @@ asarUnpack:
 : The downloaded update file is corrupt or the wrong file is being served. Verify that the artifact and the `.yml` metadata file were generated together in the same build and not mixed from different builds.
 
 **Delta updates (AppImage / NSIS-Web) fail**
-: For AppImage delta updates, the `.AppImage.zsync` file must be published alongside the AppImage. Check your publish configuration includes this file. For NSIS differential packages, `nsis.differentialPackage` must be `true`.
+: For AppImage delta updates, electron-builder embeds a blockmap directly in the AppImage binary — no separate file needs to be published. If delta updates aren't working, verify the AppImage was built with electron-builder and that a publish provider is configured. For NSIS differential packages, `nsis.differentialPackage` must be `true`.
 
 ---
 

@@ -26,18 +26,7 @@ Key characteristics:
 
 ## Build Requirements
 
-Install `flatpak` and `flatpak-builder` on your Linux build machine:
-
-```bash
-# Ubuntu/Debian
-sudo apt install flatpak flatpak-builder
-
-# Fedora
-sudo dnf install flatpak flatpak-builder
-
-# Arch
-sudo pacman -S flatpak flatpak-builder
-```
+Install `flatpak` and `flatpak-builder` on your Linux build machine — see [Flatpak setup](https://flatpak.org/setup/).
 
 ## Runtime and SDK
 
@@ -58,12 +47,7 @@ Common runtimes for Electron apps:
 | `org.gnome.Platform` | `org.gnome.Sdk` | GNOME-integrated apps |
 | `org.kde.Platform` | `org.kde.Sdk` | KDE-integrated apps |
 
-Install the runtime before building:
-
-```bash
-flatpak install flathub org.freedesktop.Platform//24.08
-flatpak install flathub org.freedesktop.Sdk//24.08
-```
+Install the runtime on your build machine before building — see [available Flatpak runtimes](https://docs.flatpak.org/en/latest/available-runtimes.html).
 
 ## Finish Args (Permissions)
 

@@ -22,7 +22,7 @@ Key characteristics:
 | Store distribution | N/A | Snap Store | Flathub | apt/dnf repos |
 | electron-builder default | **Yes** | No | No | No |
 
-AppImage is the default Linux target for electron-builder (`@default AppImage`).
+AppImage is one of the two default Linux targets for electron-builder (along with Snap).
 
 ## Desktop Integration
 
@@ -41,14 +41,12 @@ Without AppImageLauncher, users can manually create a `.desktop` file or use the
 
 ## Auto-Update Support
 
-AppImages support delta updates via the `electron-updater` package using the zsync protocol. Configure a publish provider and electron-updater will handle updates:
+AppImages support differential (delta) updates via the `electron-updater` package. electron-builder embeds a blockmap directly into the AppImage binary at build time — no separate file needs to be published alongside it. electron-updater reads the embedded blockmap to determine which blocks have changed and downloads only those blocks. Configure a publish provider and electron-updater will handle updates:
 
 ```yaml
 publish:
   provider: github   # or s3, generic, etc.
 ```
-
-When publishing, electron-builder generates a `.AppImage.zsync` file alongside the AppImage. electron-updater uses this for efficient differential updates.
 
 See [Auto Update](features/auto-update.md) for the full setup guide.
 
