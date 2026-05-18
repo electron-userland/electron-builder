@@ -6,7 +6,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "../..")
 
 const readme = readFileSync(join(root, "README.md"), "utf8")
 
-const introduction = `---\nslug: /\n---\n\n${readme}`.replaceAll("https://www.electron.build", "/")
+const introduction = `---\nslug: /\ntitle: "electron-builder"\n---\n\n${readme}`.replaceAll("https://www.electron.build", "")
 
 writeFileSync(join(root, "website/docs/introduction.md"), introduction)
 

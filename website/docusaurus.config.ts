@@ -199,7 +199,7 @@ const config: Config = {
               docId: "tutorials/test-update-on-s3-locally",
               label: "Test Update on S3 Locally",
             },
-            { type: "doc", docId: "tutorials/troubleshooting", label: "Troubleshooting" },
+            { type: "doc", docId: "troubleshooting", label: "Troubleshooting" },
           ],
         },
 
