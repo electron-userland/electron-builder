@@ -1,10 +1,10 @@
+import { CommonLinuxOptions } from "../options/linuxOptions"
 import { asArray, exists, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { join } from "path"
 import * as semver from "semver"
 import { LinuxPackager } from "../linuxPackager"
-import { LinuxTargetSpecificOptions } from "../options/linuxOptions"
 import { IconInfo } from "../platformPackager"
 import { SnapCore } from "./snap/SnapTarget"
 import { SnapCore24 } from "./snap/core24"
@@ -133,7 +133,7 @@ export class LinuxTargetHelper {
     return result.filter(icon => !icon.file.endsWith(".icon"))
   }
 
-  getDescription(options: LinuxTargetSpecificOptions) {
+  getDescription(options: CommonLinuxOptions) {
     return options.description || this.packager.appInfo.description
   }
 
@@ -152,14 +152,14 @@ export class LinuxTargetHelper {
     }
   }
 
-  async writeDesktopEntry(targetSpecificOptions: LinuxTargetSpecificOptions, exec?: string, destination?: string | null, extra?: Record<string, string>): Promise<string> {
+  async writeDesktopEntry(targetSpecificOptions: CommonLinuxOptions, exec?: string, destination?: string | null, extra?: Record<string, string>): Promise<string> {
     const data = await this.computeDesktopEntry(targetSpecificOptions, exec, extra)
     const file = destination || (await this.packager.getTempFile(`${this.packager.appInfo.productFilename}.desktop`))
     await outputFile(file, data)
     return file
   }
 
-  computeDesktopEntry(targetSpecificOptions: LinuxTargetSpecificOptions, exec?: string, extra?: Record<string, string>): Promise<string> {
+  computeDesktopEntry(targetSpecificOptions: CommonLinuxOptions, exec?: string, extra?: Record<string, string>): Promise<string> {
     if (exec != null && exec.length === 0) {
       throw new Error("Specified exec is empty")
     }

@@ -53,6 +53,22 @@
             "string"
           ]
         },
+        "compression": {
+          "anyOf": [
+            {
+              "enum": [
+                "gzip",
+                "xz",
+                "zstd"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The compression algorithm passed to the AppImage build tool.\n\n**FUSE2 toolset (`\"0.0.0\"` or unset):** `\"xz\"` is forwarded as `--compression xz`.\n`\"gzip\"`, `\"zstd\"`, `null`, and unset all fall through to the root-level `compression` option:\n- `\"maximum\"` → `--compression xz` (overrides any per-target gzip/zstd value)\n- anything else → flag omitted (mksquashfs defaults to gzip)\n\n**Static-runtime toolsets (`>= 1.0.0`):** `\"gzip\"` and `\"zstd\"` are forwarded\ndirectly. `\"xz\"` is mapped to `\"zstd\"` (nearest supported equivalent). `null`\nor unset falls through to the root-level `compression` option:\n- `\"store\"` → `\"gzip\"`\n- `\"normal\"` / `\"maximum\"` / unset → `\"zstd\"`"
+        },
         "description": {
           "description": "As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.",
           "type": [
@@ -661,8 +677,8 @@
               "enum": [
                 "bzip2",
                 "gz",
-                "lzo",
-                "xz"
+                "xz",
+                "zst"
               ],
               "type": "string"
             },
@@ -671,7 +687,7 @@
             }
           ],
           "default": "xz",
-          "description": "The compression type."
+          "description": "The compression type passed to fpm. For `deb`, `rpm`, and `pacman` targets prefer the\ntyped per-format interfaces (`DebOptions`, `RpmOptions`, `PacmanOptions`) which narrow\nthis to only the values that fpm actually accepts for that format."
         },
         "depends": {
           "anyOf": [
@@ -2403,8 +2419,11 @@
               "enum": [
                 "bzip2",
                 "gz",
-                "lzo",
-                "xz"
+                "gzip",
+                "xz",
+                "xzmt",
+                "zst",
+                "zstd"
               ],
               "type": "string"
             },
@@ -2413,7 +2432,7 @@
             }
           ],
           "default": "xz",
-          "description": "The compression type."
+          "description": "The compression type passed to fpm. For `deb`, `rpm`, and `pacman` targets prefer the\ntyped per-format interfaces (`DebOptions`, `RpmOptions`, `PacmanOptions`) which narrow\nthis to only the values that fpm actually accepts for that format."
         },
         "depends": {
           "anyOf": [
@@ -5263,6 +5282,218 @@
       },
       "type": "object"
     },
+    "PacmanOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "afterInstall": {
+          "description": "File path to script to be passed to FPM for `--after-install` arg.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "afterRemove": {
+          "description": "File path to script to be passed to FPM for `--after-remove` arg.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "appArmorProfile": {
+          "description": "File path to custom AppArmor profile (Ubuntu 24+)",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "artifactName": {
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "category": {
+          "description": "The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "compression": {
+          "anyOf": [
+            {
+              "enum": [
+                "bzip2",
+                "gz",
+                "xz",
+                "zstd"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "xz",
+          "description": "The compression type passed to fpm. For `deb`, `rpm`, and `pacman` targets prefer the\ntyped per-format interfaces (`DebOptions`, `RpmOptions`, `PacmanOptions`) which narrow\nthis to only the values that fpm actually accepts for that format."
+        },
+        "depends": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Package dependencies.\n`rpm` defaults to `[\"gtk3\", \"libnotify\", \"nss\", \"libXScrnSaver\", \"(libXtst or libXtst6)\", \"xdg-utils\", \"at-spi2-core\", \"(libuuid or libuuid1)\"]`\n`pacman` defaults to `[\"c-ares\", \"ffmpeg\", \"gtk3\", \"http-parser\", \"libevent\", \"libvpx\", \"libxslt\", \"libxss\", \"minizip\", \"nss\", \"re2\", \"snappy\", \"libnotify\", \"libappindicator-gtk3\"]`"
+        },
+        "description": {
+          "description": "As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "desktop": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LinuxDesktopFile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
+        },
+        "executableArgs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The executable parameters. Pass to executableName"
+        },
+        "fpm": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "*Advanced only* The [fpm](https://fpm.readthedocs.io/en/latest/cli-reference.html) options.\n\nExample: `[\"--before-install=build/deb-preinstall.sh\", \"--after-upgrade=build/deb-postinstall.sh\"]`"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "maintainer": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "mimeTypes": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing."
+        },
+        "packageCategory": {
+          "description": "The package category.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "packageName": {
+          "description": "The name of the package.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "$ref": "#/definitions/BitbucketOptions"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllPublishOptions"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "synopsis": {
+          "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "vendor": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "type": "object"
+    },
     "PkgBackgroundOptions": {
       "additionalProperties": false,
       "description": "Options for the background image in a PKG installer",
@@ -5830,6 +6061,218 @@
       "required": [
         "enabled"
       ],
+      "type": "object"
+    },
+    "RpmOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "afterInstall": {
+          "description": "File path to script to be passed to FPM for `--after-install` arg.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "afterRemove": {
+          "description": "File path to script to be passed to FPM for `--after-remove` arg.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "appArmorProfile": {
+          "description": "File path to custom AppArmor profile (Ubuntu 24+)",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "artifactName": {
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "category": {
+          "description": "The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "compression": {
+          "anyOf": [
+            {
+              "enum": [
+                "bzip2",
+                "gzip",
+                "xz",
+                "xzmt"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "xzmt",
+          "description": "Passed to fpm via `--rpm-compression`. `\"xzmt\"` uses multi-threaded xz (fpm's RPM default).\n`\"xz\"` is automatically promoted to `\"xzmt\"`. `\"gzip\"` and `\"bzip2\"` pass through as-is."
+        },
+        "depends": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Package dependencies.\n`rpm` defaults to `[\"gtk3\", \"libnotify\", \"nss\", \"libXScrnSaver\", \"(libXtst or libXtst6)\", \"xdg-utils\", \"at-spi2-core\", \"(libuuid or libuuid1)\"]`\n`pacman` defaults to `[\"c-ares\", \"ffmpeg\", \"gtk3\", \"http-parser\", \"libevent\", \"libvpx\", \"libxslt\", \"libxss\", \"minizip\", \"nss\", \"re2\", \"snappy\", \"libnotify\", \"libappindicator-gtk3\"]`"
+        },
+        "description": {
+          "description": "As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "desktop": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LinuxDesktopFile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
+        },
+        "executableArgs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The executable parameters. Pass to executableName"
+        },
+        "fpm": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "*Advanced only* The [fpm](https://fpm.readthedocs.io/en/latest/cli-reference.html) options.\n\nExample: `[\"--before-install=build/deb-preinstall.sh\", \"--after-upgrade=build/deb-postinstall.sh\"]`"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "maintainer": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "mimeTypes": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing."
+        },
+        "packageCategory": {
+          "description": "The package category.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "packageName": {
+          "description": "The name of the package.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "$ref": "#/definitions/BitbucketOptions"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllPublishOptions"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "synopsis": {
+          "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "vendor": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
       "type": "object"
     },
     "S3Options": {
@@ -8452,7 +8895,7 @@
           "type": "null"
         }
       ],
-      "description": "Alpine Linux APK package options."
+      "description": "Alpine Linux APK package options. Produces an `.apk` archive installable via `apk add`."
     },
     "appId": {
       "default": "com.electron.${name}",
@@ -8471,7 +8914,7 @@
           "type": "null"
         }
       ],
-      "description": "AppImage options."
+      "description": "AppImage options. AppImage is a portable application format that bundles the app\nand its dependencies into a single self-contained executable that runs on most\nLinux distributions without installation."
     },
     "appx": {
       "anyOf": [
@@ -8669,7 +9112,7 @@
           "type": "null"
         }
       ],
-      "description": "Debian package options."
+      "description": "Debian package options. Targets Debian, Ubuntu, and Debian-based distributions.\nProduces a `.deb` archive installable via `dpkg -i` or `apt install`."
     },
     "defaultArch": {
       "description": "The default architecture to build for when no `--arch` flag is specified.\nDefaults to the current machine's architecture.",
@@ -8925,7 +9368,7 @@
           "type": "null"
         }
       ],
-      "description": "Flatpak options."
+      "description": "Flatpak options. Flatpak is a sandboxed application distribution format for Linux\nthat runs in a controlled environment and is distributed via [Flathub](https://flathub.org/)\nor other Flatpak repositories."
     },
     "forceCodeSigning": {
       "default": false,
@@ -8948,7 +9391,7 @@
           "type": "null"
         }
       ],
-      "description": "FreeBSD package options."
+      "description": "FreeBSD package options. Produces a `.pkg` archive for the FreeBSD `pkg` package manager."
     },
     "generateUpdatesFilesForAllChannels": {
       "default": false,
@@ -8983,7 +9426,7 @@
           "type": "null"
         }
       ],
-      "description": "Options related to how build Linux targets."
+      "description": "General Linux build options shared across all Linux targets (icon, category, desktop entry,\nexecutable name, etc.). Target-specific compression and packaging options live in the\nper-format interfaces (`DebOptions`, `RpmOptions`, `PacmanOptions`, etc.)."
     },
     "mac": {
       "anyOf": [
@@ -9150,18 +9593,18 @@
           "type": "null"
         }
       ],
-      "description": "Solaris IPS package options."
+      "description": "Solaris IPS package options. Produces a `.p5p` archive for the Solaris Image Packaging\nSystem (`pkg`)."
     },
     "pacman": {
       "anyOf": [
         {
-          "$ref": "#/definitions/LinuxTargetSpecificOptions"
+          "$ref": "#/definitions/PacmanOptions"
         },
         {
           "type": "null"
         }
       ],
-      "description": "pacman (Arch Linux) package options."
+      "description": "Pacman package options. Targets Arch Linux and Arch-based distributions\n(Manjaro, EndeavourOS, etc.). Produces a `.pacman` archive installable via `pacman -U`."
     },
     "pkg": {
       "anyOf": [
@@ -9267,13 +9710,13 @@
     "rpm": {
       "anyOf": [
         {
-          "$ref": "#/definitions/LinuxTargetSpecificOptions"
+          "$ref": "#/definitions/RpmOptions"
         },
         {
           "type": "null"
         }
       ],
-      "description": "RPM package options (Fedora, RHEL, openSUSE)."
+      "description": "RPM package options. Targets Fedora, Red Hat Enterprise Linux, SUSE, and related\ndistributions. Produces a `.rpm` archive installable via `rpm` or `dnf`."
     },
     "snap": {
       "anyOf": [

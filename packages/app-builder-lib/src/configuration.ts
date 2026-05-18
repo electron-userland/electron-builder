@@ -3,7 +3,7 @@ import { BeforeBuildContext, Target } from "./core"
 import { ElectronBrandingOptions } from "./electron/ElectronFramework"
 import { PrepareApplicationStageDirectoryOptions } from "./Framework"
 import { AppXOptions } from "./options/AppXOptions"
-import { AppImageOptions, DebOptions, FlatpakOptions, LinuxConfiguration, LinuxTargetSpecificOptions } from "./options/linuxOptions"
+import { AppImageOptions, DebOptions, FlatpakOptions, LinuxConfiguration, LinuxTargetSpecificOptions, PacmanOptions, RpmOptions } from "./options/linuxOptions"
 import { DmgOptions, MacConfiguration, MasConfiguration } from "./options/macOptions"
 import { MsiOptions } from "./options/MsiOptions"
 import { MsiWrappedOptions } from "./options/MsiWrappedOptions"
@@ -98,11 +98,14 @@ export interface CommonConfiguration {
    */
   readonly squirrelWindows?: SquirrelWindowsOptions | null
   /**
-   * Options related to how build Linux targets.
+   * General Linux build options shared across all Linux targets (icon, category, desktop entry,
+   * executable name, etc.). Target-specific compression and packaging options live in the
+   * per-format interfaces (`DebOptions`, `RpmOptions`, `PacmanOptions`, etc.).
    */
   readonly linux?: LinuxConfiguration | null
   /**
-   * Debian package options.
+   * Debian package options. Targets Debian, Ubuntu, and Debian-based distributions.
+   * Produces a `.deb` archive installable via `dpkg -i` or `apt install`.
    */
   readonly deb?: DebOptions | null
   /**
@@ -133,22 +136,39 @@ export interface CommonConfiguration {
    */
   readonly snapcraft?: SnapcraftOptions | null
   /**
-   * AppImage options.
+   * AppImage options. AppImage is a portable application format that bundles the app
+   * and its dependencies into a single self-contained executable that runs on most
+   * Linux distributions without installation.
    */
   readonly appImage?: AppImageOptions | null
   /**
-   * Flatpak options.
+   * Flatpak options. Flatpak is a sandboxed application distribution format for Linux
+   * that runs in a controlled environment and is distributed via [Flathub](https://flathub.org/)
+   * or other Flatpak repositories.
    */
   readonly flatpak?: FlatpakOptions | null
-  /** pacman (Arch Linux) package options. */
-  readonly pacman?: LinuxTargetSpecificOptions | null
-  /** RPM package options (Fedora, RHEL, openSUSE). */
-  readonly rpm?: LinuxTargetSpecificOptions | null
-  /** FreeBSD package options. */
+  /**
+   * Pacman package options. Targets Arch Linux and Arch-based distributions
+   * (Manjaro, EndeavourOS, etc.). Produces a `.pacman` archive installable via `pacman -U`.
+   */
+  readonly pacman?: PacmanOptions | null
+  /**
+   * RPM package options. Targets Fedora, Red Hat Enterprise Linux, SUSE, and related
+   * distributions. Produces a `.rpm` archive installable via `rpm` or `dnf`.
+   */
+  readonly rpm?: RpmOptions | null
+  /**
+   * FreeBSD package options. Produces a `.pkg` archive for the FreeBSD `pkg` package manager.
+   */
   readonly freebsd?: LinuxTargetSpecificOptions | null
-  /** Solaris IPS package options. */
+  /**
+   * Solaris IPS package options. Produces a `.p5p` archive for the Solaris Image Packaging
+   * System (`pkg`).
+   */
   readonly p5p?: LinuxTargetSpecificOptions | null
-  /** Alpine Linux APK package options. */
+  /**
+   * Alpine Linux APK package options. Produces an `.apk` archive installable via `apk add`.
+   */
   readonly apk?: LinuxTargetSpecificOptions | null
 
   /**

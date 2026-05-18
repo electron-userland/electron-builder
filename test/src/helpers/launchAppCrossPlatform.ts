@@ -1,9 +1,8 @@
-import { isEmptyOrSpaces } from "builder-util"
 import type { VmManager } from "app-builder-lib/out/vm/vm"
-import { ChildProcess, spawn } from "child_process"
+import { ChildProcess, spawn, StdioOptions } from "child_process"
 import { createHash, randomUUID } from "crypto"
-import { createReadStream } from "fs"
 import * as fs from "fs"
+import { createReadStream } from "fs"
 import { outputFile, remove } from "fs-extra"
 import * as http from "http"
 import * as net from "net"
@@ -138,6 +137,27 @@ interface LaunchResult {
   exitCode: number | null
   stdout: string
   stderr: string
+  /** Runs fn(); on failure re-throws with stdout/stderr appended to the error message */
+  assert(fn: () => void | Promise<void>): Promise<void>
+}
+
+function buildResult(version: string | undefined, exitCode: number | null, stdout: string, stderr: string): LaunchResult {
+  return {
+    version,
+    exitCode,
+    stdout,
+    stderr,
+    async assert(fn) {
+      try {
+        await fn()
+      } catch (err: any) {
+        const msg = err?.message ?? String(err)
+        const enhanced = new Error(`${msg}\n\n--- app stdout ---\n${stdout || "(empty)"}\n\n--- app stderr ---\n${stderr || "(empty)"}`)
+        enhanced.stack = err?.stack
+        throw enhanced
+      }
+    },
+  }
 }
 
 interface LaunchOptions {
@@ -164,11 +184,12 @@ export async function launchAndWaitForQuit({
   let child: ChildProcess
   const versionRegex = /APP_VERSION:\s*([0-9]+\.[0-9]+\.[0-9]+)/
 
+  const stdio: StdioOptions = ["ignore", "pipe", "pipe"]
   function spawnApp(command: string, args: string[] = [], detached = true, localEnv = env) {
     return spawn(command, args, {
       detached,
       shell: false,
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio,
       env: {
         ...process.env,
         AUTO_UPDATER_TEST: "1",
@@ -203,7 +224,7 @@ export async function launchAndWaitForQuit({
     if (expectedVersion && version && version !== expectedVersion) {
       throw new Error(`Expected version ${expectedVersion}, got ${version}`)
     }
-    return { version, exitCode: 0, stdout: output, stderr: "" }
+    return buildResult(version, 0, output, "")
   }
 
   const platform = os.platform()
@@ -224,21 +245,18 @@ export async function launchAndWaitForQuit({
 
       if (appPath.endsWith(".AppImage")) {
         fs.chmodSync(appPath, 0o755)
-        const spawnEnv = {
-          ...env,
-          DISPLAY: display,
-          APPIMAGE_EXTRACT_AND_RUN: "1",
-        }
 
         child = spawn(appPath, ["--no-sandbox"], {
           detached: true,
           shell: false,
-          stdio: ["ignore", "pipe", "pipe"],
+          stdio,
           env: {
             ...process.env,
             AUTO_UPDATER_TEST: "1",
             AUTO_UPDATER_TEST_CONFIG_PATH: updateConfigPath,
-            ...spawnEnv,
+            ...env,
+            DISPLAY: display,
+            APPIMAGE_EXTRACT_AND_RUN: "1",
           },
         })
       } else {
@@ -258,22 +276,15 @@ export async function launchAndWaitForQuit({
     const stderrChunks: string[] = []
 
     function resolveResult(code: number | null) {
-      resolve({
-        version,
-        exitCode: code,
-        stdout: stdoutChunks.join(""),
-        stderr: stderrChunks.join(""),
-      })
+      resolve(buildResult(version, code, stdoutChunks.join(""), stderrChunks.join("")))
     }
 
     child.stdout?.on("data", data => {
       const line = data.toString()
-      console.log(line)
       stdoutChunks.push(line)
       const match = line.match(versionRegex)
       if (match) {
         version = match[1].trim()
-        console.log(`Found Version in console logs: ${version}`)
         if (expectedVersion && version !== expectedVersion) {
           resolved = true
           child.kill()
@@ -291,7 +302,6 @@ export async function launchAndWaitForQuit({
     child.stderr?.on("data", data => {
       const line = data.toString()
       stderrChunks.push(line)
-      console.error(`[stderr] ${line}`)
       // GPU/native crashes produce a FATAL ERROR in stderr that can hang the process
       // during cleanup. If we've already captured the version the probe succeeded —
       // kill and resolve rather than waiting for an exit that never comes.
@@ -331,7 +341,7 @@ export function startXvfb(): { display: string; stop: () => void } {
   const display = `:${Math.ceil(Math.random() * 100)}`
   const proc = spawn("Xvfb", [display, "-screen", "0", "1920x1080x24"], {
     detached: true,
-    stdio: ["ignore", "pipe", "pipe"],
+    stdio: ["ignore", "ignore", "pipe"],
   })
 
   let errorOutput = ""
@@ -348,12 +358,11 @@ export function startXvfb(): { display: string; stop: () => void } {
   proc.unref()
 
   const stop = () => {
-    console.log(`Stopping Xvfb.${isEmptyOrSpaces(errorOutput) ? "" : ` Error output: ${errorOutput}`}`)
     if (typeof proc.pid === "number" && !isNaN(proc.pid)) {
       try {
         process.kill(-proc.pid, "SIGTERM")
       } catch (e) {
-        console.warn("Failed to stop Xvfb:", e)
+        // ignore errors — the process may have already exited, and if it didn't, we're still in a docker container and it will be killed when the container stops, so no need to force-kill it here
       }
     }
   }
@@ -363,12 +372,10 @@ export function startXvfb(): { display: string; stop: () => void } {
       try {
         stop()
       } catch (e) {
-        console.warn("Failed to stop Xvfb:", e)
+        // ignored
       }
     })
   })
-
-  console.log("Xvfb started on display", display)
   return {
     display,
     stop,

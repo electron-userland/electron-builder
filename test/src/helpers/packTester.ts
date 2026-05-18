@@ -223,12 +223,12 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       } else {
         log.info({ pm, version: version, projectDir }, "activating corepack")
         try {
-          execSync(`corepack enable ${cli}`, { env: runtimeEnv, cwd: projectDir, stdio: "ignore" })
+          execSync(`corepack enable ${cli}`, { env: runtimeEnv, cwd: projectDir, stdio: ["ignore", "ignore", "ignore"] })
         } catch (err: any) {
           log.warn({ message: err.message }, "⚠️ corepack enable failed (possibly already enabled)")
         }
         try {
-          execSync(`corepack prepare ${prepareEntry} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: "ignore" })
+          execSync(`corepack prepare ${prepareEntry} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: ["ignore", "ignore", "ignore"] })
         } catch (err: any) {
           log.warn({ message: err.message }, "⚠️ corepack prepare failed")
         }
@@ -538,9 +538,10 @@ async function checkLinuxResult(expect: ExpectStatic, outDir: string, packager: 
     expect(await getContents(`${outDir}/${appInfo.name}_${appInfo.version}_i386.deb`)).toMatchSnapshot()
   }
 
+  const { member: controlMember, tarArgs: controlArgs } = await resolveDebMember(packagePath, "control.tar.")
   const control = parseDebControl(
     (
-      await execShell(`ar p '${packagePath}' control.tar.xz | ${await getTarExecutable()} -Jx --to-stdout ./control`, {
+      await execShell(`ar p '${packagePath}' ${controlMember} | ${await getTarExecutable()} -x ${controlArgs} --to-stdout ./control`, {
         maxBuffer: 10 * 1024 * 1024,
       })
     ).stdout
@@ -727,8 +728,27 @@ export async function getTarExecutable() {
   return process.platform === "darwin" ? path.join(await getLinuxToolsPath(), "bin", "gtar") : "tar"
 }
 
+export async function resolveDebMember(debFile: string, memberPrefix: "data.tar." | "control.tar."): Promise<{ member: string; tarArgs: string }> {
+  const { stdout: memberList } = await execShell(`ar t '${debFile}'`, { maxBuffer: 1024 * 1024 })
+  const member = memberList
+    .trim()
+    .split("\n")
+    .find((m: string) => m.startsWith(memberPrefix))
+  if (member == null) throw new Error(`No ${memberPrefix}* member found in ${debFile}`)
+  const ext = member.slice(memberPrefix.length)
+  // Short flags (-J, -z, -j) are safe to concatenate; zstd requires a standalone long option
+  const tarArgs = ext === "xz" ? "-J" : ext === "gz" ? "-z" : ext === "bz2" ? "-j" : ext === "zst" || ext === "zstd" ? "--zstd" : "-J"
+  return { member, tarArgs }
+}
+
+export async function readDebCompression(debFile: string): Promise<string> {
+  const { member } = await resolveDebMember(debFile, "data.tar.")
+  return member.slice("data.tar.".length)
+}
+
 async function getContents(packageFile: string) {
-  const result = await execShell(`ar p '${packageFile}' data.tar.xz | ${await getTarExecutable()} -tJ`, {
+  const { member, tarArgs } = await resolveDebMember(packageFile, "data.tar.")
+  const result = await execShell(`ar p '${packageFile}' ${member} | ${await getTarExecutable()} -t ${tarArgs}`, {
     maxBuffer: 10 * 1024 * 1024,
     env: {
       ...process.env,
