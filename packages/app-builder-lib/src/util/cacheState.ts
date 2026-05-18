@@ -118,8 +118,8 @@ export async function validateCacheDirectory(extractDir: string, expectedFileCou
 
     if (expectedFileCount != null && expectedFileCount > 0) {
       const { fileCount: actual } = await computeCacheMetadata(extractDir)
-      if (actual !== expectedFileCount) {
-        log.warn({ extractDir, expected: expectedFileCount, actual }, "Cache file count mismatch, treating as invalid")
+      if (actual < expectedFileCount) {
+        log.warn({ extractDir, expected: expectedFileCount, actual }, "Cache file count mismatch (fewer files than expected), treating as invalid")
         return false
       }
     }

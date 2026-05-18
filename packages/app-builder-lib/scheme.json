@@ -392,6 +392,7 @@
       "additionalProperties": false,
       "properties": {
         "ordering": {
+          "description": "Path to a file containing the order in which files should be packed into the asar archive.\nEach line of the file is a relative path from the app directory. Files listed first are\npacked first, which can improve app startup time by front-loading frequently accessed modules.\nSee the [asar documentation](https://github.com/electron/asar) for details.",
           "type": [
             "null",
             "string"
@@ -915,7 +916,8 @@
           ]
         },
         "backgroundColor": {
-          "description": "The background color (accepts css colors). Defaults to `#ffffff` (white) if no background image.",
+          "default": "#ffffff",
+          "description": "The background color (accepts css colors). Used when no background image is set.",
           "type": [
             "null",
             "string"
@@ -2009,6 +2011,7 @@
           ]
         },
         "defaultArch": {
+          "description": "The default architecture to build for when no `--arch` flag is specified.\nDefaults to the current machine's architecture.",
           "type": "string"
         },
         "description": {
@@ -2180,6 +2183,7 @@
           "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](configuration.md#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](mac.md)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](./file-patterns.md#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
         },
         "forceCodeSigning": {
+          "default": false,
           "description": "Whether to fail if app will be not code signed.",
           "type": "boolean"
         },
@@ -2214,7 +2218,6 @@
           "description": "The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing."
         },
         "packageCategory": {
-          "description": "backward compatibility + to allow specify fpm-only category for all possible fpm targets in one place",
           "type": [
             "null",
             "string"
@@ -2714,6 +2717,7 @@
           "type": "boolean"
         },
         "defaultArch": {
+          "description": "The default architecture to build for when no `--arch` flag is specified.\nDefaults to the current machine's architecture.",
           "type": "string"
         },
         "detectUpdateChannel": {
@@ -2894,6 +2898,7 @@
           "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](configuration.md#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](mac.md)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](./file-patterns.md#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
         },
         "forceCodeSigning": {
+          "default": false,
           "description": "Whether to fail if app will be not code signed.",
           "type": "boolean"
         },
@@ -3168,7 +3173,8 @@
               "type": "null"
             }
           ],
-          "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (`dmg` and `zip` for Squirrel.Mac). Note: Squirrel.Mac auto update mechanism requires both `dmg` and `zip` to be enabled, even when only `dmg` is used. Disabling `zip` will break auto update in `dmg` packages."
+          "default": "default (dmg and zip for Squirrel.Mac)",
+          "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\nNote: Squirrel.Mac auto update mechanism requires both `dmg` and `zip` to be enabled, even when only `dmg` is used. Disabling `zip` will break auto update in `dmg` packages."
         },
         "timestamp": {
           "description": "Specify the URL of the timestamp authority server",
@@ -3349,6 +3355,7 @@
           "type": "boolean"
         },
         "defaultArch": {
+          "description": "The default architecture to build for when no `--arch` flag is specified.\nDefaults to the current machine's architecture.",
           "type": "string"
         },
         "detectUpdateChannel": {
@@ -3529,6 +3536,7 @@
           "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](configuration.md#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](mac.md)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](./file-patterns.md#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
         },
         "forceCodeSigning": {
+          "default": false,
           "description": "Whether to fail if app will be not code signed.",
           "type": "boolean"
         },
@@ -3803,7 +3811,8 @@
               "type": "null"
             }
           ],
-          "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (`dmg` and `zip` for Squirrel.Mac). Note: Squirrel.Mac auto update mechanism requires both `dmg` and `zip` to be enabled, even when only `dmg` is used. Disabling `zip` will break auto update in `dmg` packages."
+          "default": "default (dmg and zip for Squirrel.Mac)",
+          "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\nNote: Squirrel.Mac auto update mechanism requires both `dmg` and `zip` to be enabled, even when only `dmg` is used. Disabling `zip` will break auto update in `dmg` packages."
         },
         "timestamp": {
           "description": "Specify the URL of the timestamp authority server",
@@ -4218,7 +4227,7 @@
           "type": "boolean"
         },
         "guid": {
-          "description": "See [GUID vs Application Name](./nsis.md#guid-vs-application-name).",
+          "description": "The GUID for the installer. Used to identify the application for upgrade and uninstall operations.\nIf not specified, a deterministic GUID is generated from the application name — but this means\nrenaming your app will break silent upgrades of existing installs.",
           "type": [
             "null",
             "string"
@@ -4569,7 +4578,7 @@
           "type": "boolean"
         },
         "guid": {
-          "description": "See [GUID vs Application Name](./nsis.md#guid-vs-application-name).",
+          "description": "The GUID for the installer. Used to identify the application for upgrade and uninstall operations.\nIf not specified, a deterministic GUID is generated from the application name — but this means\nrenaming your app will break silent upgrades of existing installs.",
           "type": [
             "null",
             "string"
@@ -5565,7 +5574,7 @@
           "description": "Allows you to provide your own `nsis-resources`"
         },
         "guid": {
-          "description": "See [GUID vs Application Name](./nsis.md#guid-vs-application-name).",
+          "description": "The GUID for the installer. Used to identify the application for upgrade and uninstall operations.\nIf not specified, a deterministic GUID is generated from the application name — but this means\nrenaming your app will break silent upgrades of existing installs.",
           "type": [
             "null",
             "string"
@@ -7949,6 +7958,7 @@
           ]
         },
         "defaultArch": {
+          "description": "The default architecture to build for when no `--arch` flag is specified.\nDefaults to the current machine's architecture.",
           "type": "string"
         },
         "detectUpdateChannel": {
@@ -8088,6 +8098,7 @@
           "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](configuration.md#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](mac.md)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](./file-patterns.md#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
         },
         "forceCodeSigning": {
+          "default": false,
           "description": "Whether to fail if app will be not code signed.",
           "type": "boolean"
         },
@@ -8383,7 +8394,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run after all artifacts are built.\n\n```typescript\n(buildResult: BuildResult): Promise<Array<string>> | Array<string>\n```\n\nConfiguration in the same way as `afterPack` (see above).\n\n!!! example \"myAfterAllArtifactBuild.js\"\n```js\nexports.default = function () {\n // you can return additional files to publish\n return [\"/path/to/additional/result/file\"]\n}\n```"
+      "description": "The function (or path to file or module id) to be run after all artifacts are built.\nReceives a {@link BuildResult}. May return an array of additional file paths to publish.\n\nFor file/module setup, see {@link beforePack}."
     },
     "afterExtract": {
       "anyOf": [
@@ -8397,7 +8408,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be [run after the prebuilt Electron binary has been extracted to the output directory](#afterextract)\nSame setup as {@link beforePack}"
+      "description": "The function (or path to file or module id) to be run after the prebuilt Electron binary has been extracted to the output directory.\nReceives an {@link AfterExtractContext}. For file/module setup, see {@link beforePack}."
     },
     "afterPack": {
       "anyOf": [
@@ -8411,7 +8422,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be [run after pack](#afterpack) (but before pack into distributable format and sign).\nSame setup as {@link beforePack}"
+      "description": "The function (or path to file or module id) to be run after pack but before pack into distributable format and sign.\nReceives an {@link AfterPackContext}. For file/module setup, see {@link beforePack}."
     },
     "afterSign": {
       "anyOf": [
@@ -8425,7 +8436,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be [run after pack and sign](#aftersign) (but before pack into distributable format).\nSame setup as {@link beforePack}"
+      "description": "The function (or path to file or module id) to be run after pack and sign but before pack into distributable format.\nReceives an {@link AfterPackContext}. For file/module setup, see {@link beforePack}."
     },
     "apk": {
       "anyOf": [
@@ -8435,7 +8446,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "Alpine Linux APK package options."
     },
     "appId": {
       "default": "com.electron.${name}",
@@ -8464,7 +8476,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "Windows Store (AppX) package options."
     },
     "appxManifestCreated": {
       "anyOf": [
@@ -8492,7 +8505,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run on artifact build completed.\nSame setup as {@link beforePack}"
+      "description": "The function (or path to file or module id) to be run when an individual artifact build completes.\nReceives an {@link ArtifactCreated}. For file/module setup, see {@link beforePack}."
     },
     "artifactBuildStarted": {
       "anyOf": [
@@ -8506,7 +8519,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run on artifact build start.\nSame setup as {@link beforePack}"
+      "description": "The function (or path to file or module id) to be run when an individual artifact build starts.\nReceives an {@link ArtifactBuildStarted}. For file/module setup, see {@link beforePack}."
     },
     "artifactName": {
       "description": "The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
@@ -8573,7 +8586,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run before pack.\n\n```typescript\n(context: BeforePackContext): Promise<any> | any\n```\n\n!!! example \"As function\"\n\n ```js\n beforePack: async (context) => {\n   // your code\n }\n ```\n\nBecause in a configuration file you cannot use JavaScript, can be specified as a path to file or module id. Function must be exported as default export.\n\n```json\n\"build\": {\n\"beforePack\": \"./myBeforePackHook.js\"\n}\n```\n\nFile `myBeforePackHook.js` in the project root directory:\n\n!!! example \"myBeforePackHook.js\"\n ```js\n exports.default = async function(context) {\n   // your custom code\n }\n ```"
+      "description": "The function (or path to file or module id) to be run before pack.\nReceives a {@link BeforePackContext}.\n\nCan be specified inline as a function in JavaScript configs:\n```js\n// electron-builder.config.js\nmodule.exports = {\n  beforePack: async (context) => {\n    // your code\n  }\n}\n```\n\nOr as a path to a module that exports the function as its default export:\n```json\n{ \"build\": { \"beforePack\": \"./myBeforePackHook.js\" } }\n```\n```js\n// myBeforePackHook.js\nexports.default = async function(context) {\n  // your custom code\n}\n```"
     },
     "buildDependenciesFromSource": {
       "default": false,
@@ -8654,6 +8667,7 @@
       "description": "Debian package options."
     },
     "defaultArch": {
+      "description": "The default architecture to build for when no `--arch` flag is specified.\nDefaults to the current machine's architecture.",
       "type": "string"
     },
     "detectUpdateChannel": {
@@ -8928,7 +8942,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "FreeBSD package options."
     },
     "generateUpdatesFilesForAllChannels": {
       "default": false,
@@ -9091,7 +9106,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "NSIS installer options."
     },
     "nsisWeb": {
       "anyOf": [
@@ -9101,7 +9117,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "NSIS web installer options (downloads app package at install time)."
     },
     "onNodeModuleFile": {
       "anyOf": [
@@ -9125,7 +9142,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "Solaris IPS package options."
     },
     "pacman": {
       "anyOf": [
@@ -9135,7 +9153,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "pacman (Arch Linux) package options."
     },
     "pkg": {
       "anyOf": [
@@ -9156,7 +9175,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "Portable executable options (no installation required)."
     },
     "productName": {
       "description": "As [name](#metadata), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name).\nIf not specified inside of the `build` configuration, `productName` property defined at the top level of `package.json` is used. If not specified at the top level of `package.json`, [name property](https://docs.npmjs.com/files/package.json#name) is used.",
@@ -9245,7 +9265,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "RPM package options (Fedora, RHEL, openSUSE)."
     },
     "snap": {
       "anyOf": [
@@ -9277,7 +9298,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "Squirrel.Windows installer options. Requires the `electron-builder-squirrel-windows` dependency."
     },
     "target": {
       "anyOf": [
@@ -9303,7 +9325,8 @@
             "string"
           ]
         }
-      ]
+      ],
+      "description": "The build target(s) for this platform. Can be a target name string, a {@link TargetConfiguration}\nobject, or an array of either. Available targets depend on the platform — see platform-specific\noptions (e.g. {@link MacConfiguration.target}, {@link WindowsConfiguration.target},\n{@link LinuxConfiguration.target})."
     },
     "toolsets": {
       "anyOf": [
