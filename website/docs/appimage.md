@@ -1,4 +1,4 @@
-The top-level [appImage](configuration.md#appImage) key contains set of options instructing electron-builder on how it should build [AppImage](https://appimage.org/) files.
+The top-level [appImage](configuration.md#appimage) key contains set of options instructing electron-builder on how it should build [AppImage](https://appimage.org/) files.
 
 [AppImage](https://appimage.org/) is a self-contained, portable Linux application format that packages everything an application needs to run into a single executable file — no installation, no root access required. Under the hood, the application files are stored in a [squashfs](https://en.wikipedia.org/wiki/SquashFS) filesystem that is mounted on launch.
 

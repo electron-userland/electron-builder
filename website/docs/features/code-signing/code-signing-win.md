@@ -17,7 +17,7 @@ If you use Windows 7, please ensure that [PowerShell](https://blogs.technet.micr
 
 If you are on Linux or Mac and you want sign a Windows app using EV Code Signing Certificate, please use [the guide for Unix systems](../../tutorials/code-signing-windows-apps-on-unix.md).
 
-## Using Azure Trusted Signing (beta)
+## Using Azure Trusted Signing
 
 Microsoft itself offers a code signing service called Azure Trusted Signing which you can use to code-sign your applications.
 

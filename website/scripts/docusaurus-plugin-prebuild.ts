@@ -23,7 +23,7 @@ function generateCliDocs(siteDir: string): void {
 function prepareDocs(siteDir: string): void {
   const root = join(siteDir, "..")
   const readme = readFileSync(join(root, "README.md"), "utf8")
-  const introduction = `---\nslug: /\ntitle: "electron-builder"\n---\n\n${readme}`.replaceAll("https://www.electron.build", "")
+  const introduction = `---\nslug: /\ntitle: "electron-builder"\n---\n\n${readme}`
   writeFileSync(join(siteDir, "docs/introduction.md"), introduction)
 
   // Copy pagefind from a previous build into static/ so dev-server search works
@@ -102,11 +102,10 @@ function fixTypedocAnchors(siteDir: string): void {
 export default async function prebuildPlugin(context: LoadContext): Promise<Plugin> {
   const { siteDir } = context
 
-
   // Run CLI --help and inject output into docs, and prepare other docs before TypeDoc generates API reference
   generateCliDocs(siteDir)
   prepareDocs(siteDir)
-  
+
   // Clean up old API docs to prevent stale files from remaining if APIs are removed
   rmSync(join(siteDir, "docs/api"), { recursive: true, force: true })
 

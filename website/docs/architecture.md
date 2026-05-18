@@ -201,16 +201,6 @@ See [Multi Platform Build](features/multi-platform-build.md) for full Docker doc
 
 Native modules (`.node` files) are compiled for a specific architecture and cannot be used in a different architecture without recompilation.
 
-### Per-Architecture Rebuilds
-
-When building for multiple architectures, native modules must be rebuilt for each:
-
-```bash
-# Rebuild for the current Electron version and architecture
-npx electron-rebuild --arch x64
-npx electron-rebuild --arch arm64
-```
-
 In practice, electron-builder handles this automatically during the build process when `npmRebuild: true` (the default).
 
 ### Universal Binary with Native Modules
