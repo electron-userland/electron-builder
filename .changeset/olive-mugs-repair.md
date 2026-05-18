@@ -1,5 +1,4 @@
 ---
-"electron-publish": patch
 "app-builder-lib": patch
 "builder-util": patch
 ---

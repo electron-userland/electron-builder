@@ -105,10 +105,7 @@ export default class AppImageTarget extends Target {
               if (packager.compression === "store") {
                 return "gzip"
               }
-              if (packager.compression === "maximum") {
-                return "zstd"
-              }
-              return undefined // normal/unset → no flag → mksquashfs default (gzip)
+              return "zstd" // maximum/normal/unset → zstd for static runtime
             })(),
           },
         })
