@@ -38,13 +38,20 @@ for (const file of readdirSync(apiDir).filter((f) => f.endsWith(".md"))) {
   for (const line of original.split("\n")) {
     if (line.startsWith("```")) { inCode = !inCode; result.push(line); continue }
     if (inCode) { result.push(line); continue }
-    result.push(line.replace(/\[([^\]]+)\]\(#([^)]+)\)/g, (_match, text, anchor) => {
+    // Fix same-file anchor links: validate against known headings, strip if invalid
+    let fixed = line.replace(/\[([^\]]+)\]\(#([^)]+)\)/g, (_match, text, anchor) => {
       const slug = slugify(anchor)
       return headings.has(slug) ? `[${text}](#${slug})` : text
-    }))
+    })
+    // Strip cross-file TypeDoc links (e.g. [Foo](other-api-page.md) or [...](other.md#anchor))
+    // These target excluded API pages that are never routed, so the link text is kept but the href removed.
+    fixed = fixed.replace(/\[([^\]]+)\]\((?!https?:\/\/)([^)]+\.md[^)]*)\)/g, (_match, text) => text)
+    result.push(fixed)
   }
 
-  const updated = result.join("\n")
+  // Whole-file fallback: strip any cross-file links still present (e.g. inside unclosed code fences)
+  const afterLinePasses = result.join("\n")
+  const updated = afterLinePasses.replace(/\[([^\]]+)\]\((?!https?:\/\/)([^)]+\.md[^)]*)\)/g, (_match, text) => text)
   if (updated !== original) { writeFileSync(filePath, updated, "utf-8"); totalFiles++ }
 }
 
