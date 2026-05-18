@@ -10,7 +10,7 @@ Quick reference for terms used throughout the electron-builder documentation.
 : A macOS code signature that identifies the binary but isn't tied to an Apple developer identity. Used for local development on Apple Silicon. Set `mac.identity` to `"-"` to request ad-hoc signing. Unlike a proper Developer ID signature, ad-hoc signatures are not trusted by Gatekeeper for distribution.
 
 **AppImage**
-: A self-contained Linux application format. A single executable file that runs on any Linux distribution without installation. Users download the file, mark it executable (`chmod +x`), and run it. The default Linux target for electron-builder. See [AppImage](appimage.md).
+: A self-contained Linux application format. A single executable file that runs on any Linux distribution without installation. Users download the file, mark it executable (`chmod +x`), and run it. One of the two default Linux targets for electron-builder (along with Snap). See [AppImage](appimage.md).
 
 **AppX / MSIX**
 : Microsoft's modern app packaging format for the Windows Store and enterprise MDM deployment. electron-builder's `appx` target produces `.appx` files. Microsoft's newer `.msix` format is functionally similar. See [AppX](appx.md).

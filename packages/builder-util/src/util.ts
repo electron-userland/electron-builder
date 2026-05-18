@@ -436,7 +436,7 @@ export async function executeAppBuilder(
   function runCommand() {
     return new Promise<string>((resolve, reject) => {
       const childProcess = doSpawn(command, args, {
-        stdio: ["ignore", "pipe", process.stdout],
+        stdio: ["ignore", "pipe", process.env.VITEST ? "pipe" : process.stdout],
         ...extraOptions,
         env,
       })
