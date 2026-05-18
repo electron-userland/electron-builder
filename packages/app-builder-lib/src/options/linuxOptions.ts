@@ -105,10 +105,12 @@ export interface LinuxTargetSpecificOptions extends CommonLinuxOptions, TargetSp
   readonly depends?: Array<string> | null
 
   /**
-   * The compression type.
+   * The compression type passed to fpm. For `deb`, `rpm`, and `pacman` targets prefer the
+   * typed per-format interfaces (`DebOptions`, `RpmOptions`, `PacmanOptions`) which narrow
+   * this to only the values that fpm actually accepts for that format.
    * @default xz
    */
-  readonly compression?: "gz" | "bzip2" | "xz" | "lzo" | null
+  readonly compression?: "gz" | "bzip2" | "xz" | "xzmt" | "gzip" | "zst" | "zstd" | null
 
   readonly icon?: string
 
@@ -169,6 +171,23 @@ export interface DebOptions extends LinuxTargetSpecificOptions {
    * The [Priority](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Priority) attribute.
    */
   readonly priority?: string | null
+
+  /** @default xz */
+  readonly compression?: "gz" | "bzip2" | "xz" | "zst" | null
+}
+
+export interface RpmOptions extends LinuxTargetSpecificOptions {
+  /**
+   * Passed directly to fpm via `--rpm-compression`. Values are the exact strings fpm accepts.
+   * `"xzmt"` uses multi-threaded xz; `"gzip"` and `"bzip2"` pass through as-is.
+   * @default xzmt
+   */
+  readonly compression?: "xz" | "xzmt" | "gzip" | "bzip2" | null
+}
+
+export interface PacmanOptions extends LinuxTargetSpecificOptions {
+  /** @default xz */
+  readonly compression?: "gz" | "bzip2" | "xz" | "zstd" | null
 }
 
 export interface AppImageOptions extends CommonLinuxOptions, TargetSpecificOptions {
@@ -176,6 +195,21 @@ export interface AppImageOptions extends CommonLinuxOptions, TargetSpecificOptio
    * The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). Only plain text is supported.
    */
   readonly license?: string | null
+  /**
+   * The compression algorithm passed to the AppImage build tool.
+   *
+   * **FUSE2 toolset (`"0.0.0"` or unset):** `"xz"` is forwarded as `--compression xz`.
+   * All other values fall through to the root-level `compression` option:
+   * - `"maximum"` → `"xz"`
+   * - `"store"` / `"normal"` / unset → flag omitted (mksquashfs defaults to gzip)
+   *
+   * **Static-runtime toolsets (`>= 1.0.0`):** `"gzip"` and `"zstd"` are forwarded
+   * directly. `"xz"` is mapped to `"zstd"` (nearest supported equivalent). `null`
+   * or unset falls through to the root-level `compression` option:
+   * - `"store"` → `"gzip"`
+   * - `"normal"` / `"maximum"` / unset → `"zstd"`
+   */
+  readonly compression?: "gzip" | "xz" | "zstd" | null
 }
 
 export interface FlatpakOptions extends CommonLinuxOptions, TargetSpecificOptions {

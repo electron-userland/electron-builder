@@ -11,7 +11,7 @@ import { executeAppBuilderAsJson, objectToArgs } from "../../util/appBuilder"
 import { getNotLocalizedLicenseFile } from "../../util/license"
 import { LinuxTargetHelper } from "../LinuxTargetHelper"
 import { createStageDir, StageDir } from "../targetUtil"
-import { buildAppImage } from "./appImageUtil"
+import { buildStaticRuntimeAppImage } from "./appImageUtil"
 import { BlockMapDataHolder } from "builder-util-runtime"
 
 // https://unix.stackexchange.com/questions/375191/append-to-sub-directory-inside-squashfs-file
@@ -81,29 +81,44 @@ export default class AppImageTarget extends Target {
       if (appimageTool == null || appimageTool === "0.0.0") {
         updateInfo = await this.buildFuse2AppImage({ stageDir, arch, artifactPath, appOutDir, options, packager, desktopEntry, icons, license })
       } else {
-        updateInfo = await buildAppImage(appimageTool, {
+        updateInfo = await buildStaticRuntimeAppImage(appimageTool, {
           appDir: appOutDir,
           stageDir: stageDir.dir,
           arch,
           output: artifactPath,
           options: {
-            productName: this.packager.appInfo.productName,
-            productFilename: this.packager.appInfo.productFilename,
-            executableName: this.packager.executableName,
+            productName: packager.appInfo.productName,
+            productFilename: packager.appInfo.productFilename,
+            executableName: packager.executableName,
             license,
             desktopEntry,
             icons,
-            fileAssociations: this.packager.fileAssociations,
-            compression: this.packager.compression === "maximum" ? "xz" : undefined,
+            fileAssociations: packager.fileAssociations,
+            compression: (() => {
+              const c = options.compression
+              if (c === "gzip" || c === "zstd") {
+                return c
+              }
+              if (c === "xz") {
+                return "zstd" // nearest equivalent; static runtime does not support xz
+              }
+              if (packager.compression === "store") {
+                return "gzip"
+              }
+              if (packager.compression === "maximum") {
+                return "zstd"
+              }
+              return undefined // normal/unset → no flag → mksquashfs default (gzip)
+            })(),
           },
         })
       }
     } catch (error: any) {
       log.error({ error: error.message }, "failed to build AppImage")
-      await stageDir.cleanup().catch(() => {})
       throw error
+    } finally {
+      await stageDir.cleanup().catch(() => {})
     }
-    await stageDir.cleanup()
 
     await packager.info.emitArtifactBuildCompleted({
       file: artifactPath,
@@ -116,6 +131,7 @@ export default class AppImageTarget extends Target {
     })
   }
 
+  /** Builds via the legacy FUSE2 toolset (mksquashfs); used when no static-runtime appimage tool is configured. */
   private async buildFuse2AppImage(props: {
     stageDir: StageDir
     arch: Arch
@@ -127,7 +143,7 @@ export default class AppImageTarget extends Target {
     icons: IconInfo[]
     license: string | null
   }): Promise<BlockMapDataHolder> {
-    const { stageDir, arch, artifactPath, appOutDir, options, packager, desktopEntry, icons, license } = props
+    const { stageDir, arch, artifactPath, appOutDir, options, desktopEntry, icons, license } = props
 
     const args = [
       "appimage",
@@ -153,7 +169,12 @@ export default class AppImageTarget extends Target {
     objectToArgs(args, {
       license,
     })
-    if (packager.compression === "maximum") {
+    // app-builder --compression enum for FUSE2 is xz/lzo/zstd; gzip is mksquashfs's default and must not be passed explicitly
+    const FUSE2_VALID = ["xz"] as const
+    const explicitComp = options.compression
+    if (explicitComp != null && (FUSE2_VALID as readonly string[]).includes(explicitComp)) {
+      args.push("--compression", explicitComp)
+    } else if (this.packager.compression === "maximum") {
       args.push("--compression", "xz")
     }
 

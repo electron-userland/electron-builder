@@ -301,7 +301,8 @@ export default class FpmTarget extends Target {
       fpmConfiguration.customRecommends?.forEach(it => fpmArgs.push("--deb-recommends", it))
     }
 
-    fpmArgs.push(...this.configureTargetSpecificOptions(target, fpmConfiguration.compression ?? "xz"))
+    const defaultCompression = target === "rpm" ? "xzmt" : "xz"
+    fpmArgs.push(...this.configureTargetSpecificOptions(target, fpmConfiguration.compression ?? defaultCompression))
     fpmArgs.push(...fpmConfiguration.args)
 
     const fpmPath = await getFpmPath()
@@ -378,7 +379,7 @@ export default class FpmTarget extends Target {
   private configureTargetSpecificOptions(target: string, compression: string): string[] {
     switch (target) {
       case "rpm":
-        return ["--rpm-os", "linux", "--rpm-compression", compression == "xz" ? "xzmt" : compression]
+        return ["--rpm-os", "linux", "--rpm-compression", compression === "xz" ? "xzmt" : compression]
       case "deb":
         return ["--deb-compression", compression]
       case "pacman":
@@ -393,7 +394,7 @@ interface FpmConfiguration {
   args: Array<string>
   customDepends?: Array<string>
   customRecommends?: Array<string>
-  compression?: string | null
+  compression?: LinuxTargetSpecificOptions["compression"]
 }
 
 async function writeConfigFile(tmpDir: TmpDir, templatePath: string, options: any): Promise<string> {

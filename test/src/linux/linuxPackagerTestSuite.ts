@@ -3,7 +3,7 @@ import { Arch, build, Platform } from "electron-builder"
 import { outputFile } from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { assertThat } from "../helpers/fileAssert"
+import { assertThat, readAppImageCompression } from "../helpers/fileAssert"
 import { app, appThrows, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { ToolsetConfig } from "app-builder-lib/src"
@@ -18,37 +18,97 @@ const testPublishConfig: GenericServerOptions = {
 
 export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
   test("AppImage", ({ expect }) =>
-    app(expect, {
-      targets: appImageTarget,
-      config: {
-        toolsets,
-        directories: {
-          output: "dist/${os}",
-        },
-        downloadAlternateFFmpeg: true,
-        publish: testPublishConfig,
-        electronFuses: {
-          runAsNode: true,
-          enableCookieEncryption: true,
-          enableNodeOptionsEnvironmentVariable: true,
-          enableNodeCliInspectArguments: true,
-          enableEmbeddedAsarIntegrityValidation: true,
-          onlyLoadAppFromAsar: true,
-          loadBrowserProcessSpecificV8Snapshot: true,
-          grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+    app(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+          directories: {
+            output: "dist/${os}",
+          },
+          compression: "normal",
+          downloadAlternateFFmpeg: true,
+          publish: testPublishConfig,
+          electronFuses: {
+            runAsNode: true,
+            enableCookieEncryption: true,
+            enableNodeOptionsEnvironmentVariable: true,
+            enableNodeCliInspectArguments: true,
+            enableEmbeddedAsarIntegrityValidation: true,
+            onlyLoadAppFromAsar: true,
+            loadBrowserProcessSpecificV8Snapshot: true,
+            grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+          },
         },
       },
-    }))
+      {
+        packed: async context => {
+          // normal compression omits --compression for both toolsets → mksquashfs defaults to gzip
+          const expectedComp = "gzip"
+          expect(await readAppImageCompression(path.join(context.outDir, "linux", "Test App ßW-1.1.0.AppImage"))).toBe(expectedComp)
+        },
+      }
+    ))
 
   test("AppImage arm, max compression", ({ expect }) =>
-    app(expect, {
-      targets: Platform.LINUX.createTarget("Appimage", Arch.armv7l),
-      config: {
-        toolsets,
-        publish: testPublishConfig,
-        compression: "maximum",
+    app(
+      expect,
+      {
+        targets: Platform.LINUX.createTarget("Appimage", Arch.armv7l),
+        config: {
+          toolsets,
+          publish: testPublishConfig,
+          compression: "maximum",
+        },
       },
-    }))
+      {
+        packed: async context => {
+          const expectedMaxComp = toolsets.appimage === "0.0.0" ? "xz" : "zstd"
+          expect(await readAppImageCompression(path.join(context.outDir, "Test App ßW-1.1.0-armv7l.AppImage"))).toBe(expectedMaxComp)
+        },
+      }
+    ))
+
+  test("AppImage - store compression maps to gzip", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+          publish: testPublishConfig,
+          compression: "store",
+        },
+      },
+      {
+        packed: async context => {
+          expect(await readAppImageCompression(path.join(context.outDir, "Test App ßW-1.1.0.AppImage"))).toBe("gzip")
+        },
+      }
+    ))
+
+  test("AppImage - explicit zstd compression override", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+          publish: testPublishConfig,
+          appImage: {
+            compression: "zstd",
+          },
+        },
+      },
+      {
+        packed: async context => {
+          // FUSE2 (0.0.0) does not support zstd; the flag is dropped → mksquashfs defaults to gzip
+          const expectedComp = toolsets.appimage === "0.0.0" ? "gzip" : "zstd"
+          expect(await readAppImageCompression(path.join(context.outDir, "Test App ßW-1.1.0.AppImage"))).toBe(expectedComp)
+        },
+      }
+    ))
 
   test("AppImage - deprecated systemIntegration", ({ expect }) =>
     appThrows(expect, {
