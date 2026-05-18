@@ -178,8 +178,8 @@ export interface DebOptions extends LinuxTargetSpecificOptions {
 
 export interface RpmOptions extends LinuxTargetSpecificOptions {
   /**
-   * Passed directly to fpm via `--rpm-compression`. Values are the exact strings fpm accepts.
-   * `"xzmt"` uses multi-threaded xz; `"gzip"` and `"bzip2"` pass through as-is.
+   * Passed to fpm via `--rpm-compression`. `"xzmt"` uses multi-threaded xz (fpm's RPM default).
+   * `"xz"` is automatically promoted to `"xzmt"`. `"gzip"` and `"bzip2"` pass through as-is.
    * @default xzmt
    */
   readonly compression?: "xz" | "xzmt" | "gzip" | "bzip2" | null
@@ -199,9 +199,9 @@ export interface AppImageOptions extends CommonLinuxOptions, TargetSpecificOptio
    * The compression algorithm passed to the AppImage build tool.
    *
    * **FUSE2 toolset (`"0.0.0"` or unset):** `"xz"` is forwarded as `--compression xz`.
-   * All other values fall through to the root-level `compression` option:
-   * - `"maximum"` → `"xz"`
-   * - `"store"` / `"normal"` / unset → flag omitted (mksquashfs defaults to gzip)
+   * `"gzip"`, `"zstd"`, `null`, and unset all fall through to the root-level `compression` option:
+   * - `"maximum"` → `--compression xz` (overrides any per-target gzip/zstd value)
+   * - anything else → flag omitted (mksquashfs defaults to gzip)
    *
    * **Static-runtime toolsets (`>= 1.0.0`):** `"gzip"` and `"zstd"` are forwarded
    * directly. `"xz"` is mapped to `"zstd"` (nearest supported equivalent). `null`

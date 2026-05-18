@@ -67,7 +67,7 @@
               "type": "null"
             }
           ],
-          "description": "The compression algorithm passed to the AppImage build tool.\n\n**FUSE2 toolset (`\"0.0.0\"` or unset):** `\"xz\"` is forwarded as `--compression xz`.\nAll other values fall through to the root-level `compression` option:\n- `\"maximum\"` → `\"xz\"`\n- `\"store\"` / `\"normal\"` / unset → flag omitted (mksquashfs defaults to gzip)\n\n**Static-runtime toolsets (`>= 1.0.0`):** `\"gzip\"` and `\"zstd\"` are forwarded\ndirectly. `\"xz\"` is mapped to `\"zstd\"` (nearest supported equivalent). `null`\nor unset falls through to the root-level `compression` option:\n- `\"store\"` → `\"gzip\"`\n- `\"normal\"` / `\"maximum\"` / unset → `\"zstd\"`"
+          "description": "The compression algorithm passed to the AppImage build tool.\n\n**FUSE2 toolset (`\"0.0.0\"` or unset):** `\"xz\"` is forwarded as `--compression xz`.\n`\"gzip\"`, `\"zstd\"`, `null`, and unset all fall through to the root-level `compression` option:\n- `\"maximum\"` → `--compression xz` (overrides any per-target gzip/zstd value)\n- anything else → flag omitted (mksquashfs defaults to gzip)\n\n**Static-runtime toolsets (`>= 1.0.0`):** `\"gzip\"` and `\"zstd\"` are forwarded\ndirectly. `\"xz\"` is mapped to `\"zstd\"` (nearest supported equivalent). `null`\nor unset falls through to the root-level `compression` option:\n- `\"store\"` → `\"gzip\"`\n- `\"normal\"` / `\"maximum\"` / unset → `\"zstd\"`"
         },
         "description": {
           "description": "As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.",
@@ -5997,7 +5997,7 @@
             }
           ],
           "default": "xzmt",
-          "description": "Passed directly to fpm via `--rpm-compression`. Values are the exact strings fpm accepts.\n`\"xzmt\"` uses multi-threaded xz; `\"gzip\"` and `\"bzip2\"` pass through as-is."
+          "description": "Passed to fpm via `--rpm-compression`. `\"xzmt\"` uses multi-threaded xz (fpm's RPM default).\n`\"xz\"` is automatically promoted to `\"xzmt\"`. `\"gzip\"` and `\"bzip2\"` pass through as-is."
         },
         "depends": {
           "anyOf": [
