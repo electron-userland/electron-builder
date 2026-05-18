@@ -1,4 +1,4 @@
-import { executeAppBuilder } from "builder-util"
+import { executeAppBuilder, shouldDisableNonErrorLoggingVitest } from "builder-util"
 import { SpawnOptions } from "child_process"
 
 export function executeAppBuilderAsJson<T>(args: Array<string>): Promise<T> {
@@ -23,7 +23,7 @@ export function executeAppBuilderAndWriteJson(args: Array<string>, data: any, ex
     },
     {
       ...extraOptions,
-      stdio: ["pipe", "pipe", process.env.VITEST ? "pipe" : process.stdout],
+      stdio: ["pipe", "pipe", shouldDisableNonErrorLoggingVitest ? "pipe" : process.stdout],
     }
   )
 }
