@@ -5,6 +5,7 @@
   "out": "./docs/api",
   "plugin": ["typedoc-plugin-markdown"],
   "entryFileName": "index",
+  "readme": "none",
   "excludeExternals": true,
   "excludePrivate": true,
   "excludeProtected": true,

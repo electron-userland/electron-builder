@@ -65,7 +65,13 @@ function fixTypedocAnchors(siteDir: string): void {
 
   for (const file of readdirSync(apiDir).filter(f => f.endsWith(".md"))) {
     const filePath = join(apiDir, file)
-    const original = readFileSync(filePath, "utf-8")
+    let original = readFileSync(filePath, "utf-8")
+
+    // Strip the "Documentation / <pkgname>" breadcrumb TypeDoc emits at the top of package-level files
+    if (original.startsWith("Documentation / ")) {
+      original = original.replace(/^Documentation \/ [^\n]+\n\n?/, "")
+    }
+
     const headings = extractHeadingSlugs(original)
 
     let inCode = false
@@ -99,6 +105,30 @@ function fixTypedocAnchors(siteDir: string): void {
   console.log(`Fixed anchor links in ${totalFiles} TypeDoc files.`)
 }
 
+function generateApiIndex(siteDir: string): void {
+  const root = join(siteDir, "..")
+  const apiDir = join(siteDir, "docs/api")
+
+  // Package-level files have no dot in the base name (only hyphens), unlike symbol files (e.g. app-builder-lib.Class.AppInfo.md)
+  const pkgNames = readdirSync(apiDir)
+    .filter(f => f.endsWith(".md") && f !== "index.md" && f !== "packages.md")
+    .filter(f => !f.slice(0, -3).includes("."))
+    .map(f => f.slice(0, -3))
+    .sort()
+
+  const rows = pkgNames.map(pkg => {
+    let desc = ""
+    try {
+      const pkgJson = JSON.parse(readFileSync(join(root, "packages", pkg, "package.json"), "utf-8")) as { description?: string }
+      desc = pkgJson.description ?? ""
+    } catch {}
+    return `| [\`${pkg}\`](./${pkg}) | ${desc} |`
+  })
+
+  const content = ["# API Reference", "", "| Package | Description |", "|---|---|", ...rows, ""].join("\n")
+  writeFileSync(join(apiDir, "index.md"), content, "utf-8")
+}
+
 export default async function prebuildPlugin(context: LoadContext): Promise<Plugin> {
   const { siteDir } = context
 
@@ -116,6 +146,7 @@ export default async function prebuildPlugin(context: LoadContext): Promise<Plug
   })
 
   fixTypedocAnchors(siteDir)
+  generateApiIndex(siteDir)
 
   return {
     name: "electron-builder-prebuild",

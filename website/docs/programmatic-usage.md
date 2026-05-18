@@ -15,14 +15,14 @@ const Platform = builder.Platform
 */
 const options = {
   protocols: {
-    name: "Deeplink Example",
-    // Don't forget to set `MimeType: "x-scheme-handler/deeplink"` for `linux.desktop` entry!
+    name: "Your Deeplink Example",
+    // Don't forget to set `MimeType: "x-scheme-handler/yourdeeplink"` for `linux.desktop` entry!
     schemes: [
-      "deeplink"
+      "yourdeeplink"
     ]
   },
 
-  // "store” | “normal” | "maximum". - For testing builds, use 'store' to reduce build time significantly.
+  // "store” | “normal” | "maximum". - For testing builds, using 'store' can significantly reduce build time.
   compression: "normal",
   removePackageScripts: true,
 
@@ -38,14 +38,6 @@ const options = {
   afterAllArtifactBuild: (buildResult) => {
     return stampArtifacts(buildResult)
   },
-  // force arch build if using electron-rebuild
-  beforeBuild: async (context) => {
-    const { appDir, electronVersion, arch } = context
-    await electronRebuild.rebuild({ buildPath: appDir, electronVersion, arch })
-    return false
-  },
-  nodeGypRebuild: false,
-  buildDependenciesFromSource: false,
 
   directories: {
     output: "dist/artifacts/local",
@@ -106,7 +98,7 @@ const options = {
     desktop: {
       StartupNotify: "false",
       Encoding: "UTF-8",
-      MimeType: "x-scheme-handler/deeplink"
+      MimeType: "x-scheme-handler/yourdeeplink"
     },
     target: ["AppImage", "rpm", "deb", "pacman"]
   },

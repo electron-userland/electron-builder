@@ -77,6 +77,9 @@ importers:
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@swc/core@1.15.33)(@types/node@22.13.17)(typescript@5.8.2)
+      typedoc:
+        specifier: ^0.28.19
+        version: 0.28.19(typescript@5.8.2)
       typescript:
         specifier: ^5.6.2
         version: 5.8.2
@@ -747,9 +750,6 @@ importers:
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.14
-      typedoc:
-        specifier: ^0.28.19
-        version: 0.28.19(typescript@5.6.3)
       typedoc-plugin-markdown:
         specifier: ^4.11.0
         version: 4.11.0(typedoc@0.28.19(typescript@5.6.3))
@@ -21508,6 +21508,15 @@ snapshots:
       markdown-it: 14.1.1
       minimatch: 10.2.5
       typescript: 5.6.3
+      yaml: 2.8.4
+
+  typedoc@0.28.19(typescript@5.8.2):
+    dependencies:
+      '@gerrit0/mini-shiki': 3.23.0
+      lunr: 2.3.9
+      markdown-it: 14.1.1
+      minimatch: 10.2.5
+      typescript: 5.8.2
       yaml: 2.8.4
 
   typescript-json-schema@0.64.0(@swc/core@1.15.33):

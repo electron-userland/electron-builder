@@ -93,7 +93,7 @@ When cross-compiling Windows on macOS, use `WIN_CSC_LINK` and `WIN_CSC_KEY_PASSW
 | `AZURE_CLIENT_ID` | Application (Client) ID of your App registration |
 | `AZURE_CLIENT_SECRET` | Secret value for your App registration |
 
-See [Windows Code Signing](code-signing-win.md#using-azure-trusted-signing-beta) for full Azure Trusted Signing setup.
+See [Windows Code Signing](code-signing-win.md#using-azure-trusted-signing) for full Azure Trusted Signing setup.
 
 ## Encoding a Certificate for CI
 

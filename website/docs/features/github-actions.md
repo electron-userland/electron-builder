@@ -197,7 +197,7 @@ Add to GitHub Secrets:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-Configure `win.azureSignOptions` in your electron-builder config. See [Windows Code Signing](./code-signing/code-signing-win.md#using-azure-trusted-signing-beta).
+Configure `win.azureSignOptions` in your electron-builder config. See [Windows Code Signing](./code-signing/code-signing-win.md#using-azure-trusted-signing).
 
 ## Caching for Faster Builds
 
