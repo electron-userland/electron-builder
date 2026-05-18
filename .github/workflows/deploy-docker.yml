@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 env:
-  LATEST_IMAGE_NODE_MAJOR_VERSION: 22
+  LATEST_IMAGE_NODE_MAJOR_VERSION: 24
 
 jobs:
   run-docker-build-and-test:
@@ -28,7 +28,7 @@ jobs:
       fail-fast: true
       matrix:
         nodeMajorVersion: [
-          14, 16, 18, 20, 22
+          14, 16, 18, 20, 22, 24
         ]
     steps:
       - name: Checkout code repository
