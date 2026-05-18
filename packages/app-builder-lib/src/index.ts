@@ -38,7 +38,17 @@ export { ElectronDownloadOptions } from "./util/electronGet"
 export { AppXOptions } from "./options/AppXOptions"
 export { CommonWindowsInstallerConfiguration } from "./options/CommonWindowsInstallerConfiguration"
 export { FileAssociation } from "./options/FileAssociation"
-export { AppImageOptions, CommonLinuxOptions, DebOptions, FlatpakOptions, LinuxConfiguration, LinuxDesktopFile, LinuxTargetSpecificOptions } from "./options/linuxOptions"
+export {
+  AppImageOptions,
+  CommonLinuxOptions,
+  DebOptions,
+  FlatpakOptions,
+  LinuxConfiguration,
+  LinuxDesktopFile,
+  LinuxTargetSpecificOptions,
+  PacmanOptions,
+  RpmOptions,
+} from "./options/linuxOptions"
 export { DmgContent, DmgOptions, DmgWindow, MacConfiguration, MacOsTargetName, MasConfiguration } from "./options/macOptions"
 export { AuthorMetadata, Metadata, RepositoryInfo } from "./options/metadata"
 export { MsiOptions } from "./options/MsiOptions"

@@ -21,14 +21,35 @@ export default class SmarterReporter implements Reporter {
   private readonly fileDurations = new Map<string, number>()
   private readonly fileFails = new Map<string, number>()
   private readonly fileHasHeavy = new Map<string, boolean>()
+  private readonly inProgressTests = new Map<string, number>() // fullName → startMs
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null
 
   // Get current platform
   currentPlatform = process.platform as SupportedPlatforms
 
+  onInit() {
+    this.heartbeatTimer = setInterval(() => {
+      const now = Date.now()
+      const running = [...this.inProgressTests.entries()]
+      if (running.length === 0) {
+        return
+      }
+      const lines = running.map(([name, start]) => `  ⏳ ${name} (${Math.floor((now - start) / 1000)}s)`).join("\n")
+      process.stdout.write(`\n[still running]\n${lines}\n`)
+    }, 30_000)
+  }
+
+  onTestCaseReady(test: TestCase) {
+    this.inProgressTests.set(test.fullName, Date.now())
+    process.stdout.write(`\n[test ready] 🏃 ${test.fullName}\n`)
+  }
+
   onTestCaseResult(test: TestCase) {
+    this.inProgressTests.delete(test.fullName)
     const id = test.fullName
     const dur = test.diagnostic()?.duration ?? 0
     const failed = test.result().state === "failed"
+    process.stdout.write(`\n${failed ? "❌" : "✅"} ${id} (${Math.round(dur / 1000)}s)\n`)
 
     // Access meta through the test task
     const meta = (test as any).meta || {}
@@ -116,6 +137,10 @@ export default class SmarterReporter implements Reporter {
   }
 
   onTestRunEnd() {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer)
+      this.heartbeatTimer = null
+    }
     saveCache(this.cache)
   }
 }
