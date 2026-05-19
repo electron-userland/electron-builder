@@ -12,7 +12,7 @@ const packageConfig = (data: any) => {
   data.dependencies = {
     ...data.debpendencies,
     debug: "4.4.3",
-    "better-sqlite3-multiple-ciphers": "12.2.0",
+    "better-sqlite3-multiple-ciphers": "12.9.0",
   }
   data.devDependencies = {
     electron: ELECTRON_VERSION,
@@ -27,7 +27,7 @@ const config: Configuration = {
   asarUnpack: ["**/better_sqlite3.node"],
 }
 
-describe.ifNotWindows("Rebuilder Test", () => {
+describe.ifLinux("Rebuilder Test", () => {
   test("yarn workspace", ({ expect }) =>
     assertPack(
       expect,

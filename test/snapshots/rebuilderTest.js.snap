@@ -167,12 +167,102 @@ exports[`Rebuilder Test > yarn berry workspace 2`] = `
             },
             "src": {
               "files": {
+                "addon.cpp": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
                 "better_sqlite3.cpp": {
                   "size": "<size>",
                   "unpacked": true,
                 },
-                "better_sqlite3.hpp": {
-                  "size": "<size>",
+                "objects": {
+                  "files": {
+                    "backup.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "backup.hpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "database.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "database.hpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "statement-iterator.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "statement-iterator.hpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "statement.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "statement.hpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                  },
+                  "unpacked": true,
+                },
+                "util": {
+                  "files": {
+                    "bind-map.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "binder.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "constants.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "custom-aggregate.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "custom-function.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "custom-table.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "data-converter.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "data.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "helpers.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "macros.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "query-macros.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "row-builder.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                  },
                   "unpacked": true,
                 },
               },
@@ -1080,7 +1170,7 @@ exports[`Rebuilder Test > yarn berry workspace 3`] = `
   {
     "content": "{
   "name": "better-sqlite3-multiple-ciphers",
-  "version": "12.2.0",
+  "version": "12.9.0",
   "description": "better-sqlite3 with multiple-cipher encryption support",
   "homepage": "https://github.com/m4heshd/better-sqlite3-multiple-ciphers",
   "author": "Mahesh Bandara Wijerathna (m4heshd) <m4heshd@gmail.com>",
@@ -1093,7 +1183,7 @@ exports[`Rebuilder Test > yarn berry workspace 3`] = `
   "files": [
     "index.d.ts",
     "binding.gyp",
-    "src/*.[ch]pp",
+    "src/**/*.[ch]pp",
     "lib/**",
     "deps/**"
   ],
@@ -1106,7 +1196,7 @@ exports[`Rebuilder Test > yarn berry workspace 3`] = `
   },
   "overrides": {
     "prebuild": {
-      "node-abi": "4.9.0"
+      "node-abi": "^4.25.0"
     }
   },
   "devDependencies": {
@@ -1124,8 +1214,28 @@ exports[`Rebuilder Test > yarn berry workspace 3`] = `
 }",
     "name": "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/package.json",
   },
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/addon.cpp",
   "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/better_sqlite3.cpp",
-  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/better_sqlite3.hpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/util/bind-map.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/util/binder.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/util/constants.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/util/custom-aggregate.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/util/custom-function.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/util/custom-table.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/util/data-converter.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/util/data.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/util/helpers.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/util/macros.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/util/query-macros.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/util/row-builder.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/objects/backup.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/objects/backup.hpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/objects/database.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/objects/database.hpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/objects/statement-iterator.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/objects/statement-iterator.hpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/objects/statement.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/objects/statement.hpp",
   "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/lib/database.js",
   "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/lib/index.js",
   "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/lib/sqlite-error.js",
@@ -1319,12 +1429,102 @@ exports[`Rebuilder Test > yarn workspace 2`] = `
             },
             "src": {
               "files": {
+                "addon.cpp": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
                 "better_sqlite3.cpp": {
                   "size": "<size>",
                   "unpacked": true,
                 },
-                "better_sqlite3.hpp": {
-                  "size": "<size>",
+                "objects": {
+                  "files": {
+                    "backup.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "backup.hpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "database.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "database.hpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "statement-iterator.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "statement-iterator.hpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "statement.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "statement.hpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                  },
+                  "unpacked": true,
+                },
+                "util": {
+                  "files": {
+                    "bind-map.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "binder.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "constants.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "custom-aggregate.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "custom-function.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "custom-table.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "data-converter.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "data.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "helpers.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "macros.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "query-macros.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "row-builder.cpp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                  },
                   "unpacked": true,
                 },
               },
@@ -2232,7 +2432,7 @@ exports[`Rebuilder Test > yarn workspace 3`] = `
   {
     "content": "{
   "name": "better-sqlite3-multiple-ciphers",
-  "version": "12.2.0",
+  "version": "12.9.0",
   "description": "better-sqlite3 with multiple-cipher encryption support",
   "homepage": "https://github.com/m4heshd/better-sqlite3-multiple-ciphers",
   "author": "Mahesh Bandara Wijerathna (m4heshd) <m4heshd@gmail.com>",
@@ -2245,7 +2445,7 @@ exports[`Rebuilder Test > yarn workspace 3`] = `
   "files": [
     "index.d.ts",
     "binding.gyp",
-    "src/*.[ch]pp",
+    "src/**/*.[ch]pp",
     "lib/**",
     "deps/**"
   ],
@@ -2258,7 +2458,7 @@ exports[`Rebuilder Test > yarn workspace 3`] = `
   },
   "overrides": {
     "prebuild": {
-      "node-abi": "4.9.0"
+      "node-abi": "^4.25.0"
     }
   },
   "devDependencies": {
@@ -2276,8 +2476,28 @@ exports[`Rebuilder Test > yarn workspace 3`] = `
 }",
     "name": "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/package.json",
   },
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/addon.cpp",
   "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/better_sqlite3.cpp",
-  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/better_sqlite3.hpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/util/bind-map.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/util/binder.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/util/constants.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/util/custom-aggregate.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/util/custom-function.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/util/custom-table.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/util/data-converter.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/util/data.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/util/helpers.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/util/macros.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/util/query-macros.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/util/row-builder.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/objects/backup.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/objects/backup.hpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/objects/database.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/objects/database.hpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/objects/statement-iterator.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/objects/statement-iterator.hpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/objects/statement.cpp",
+  "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/src/objects/statement.hpp",
   "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/lib/database.js",
   "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/lib/index.js",
   "app.asar.unpacked/node_modules/better-sqlite3-multiple-ciphers/lib/sqlite-error.js",
