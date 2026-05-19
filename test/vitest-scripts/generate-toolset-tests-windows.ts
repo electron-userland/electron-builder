@@ -86,7 +86,7 @@ ${body}
 `
 }
 
-export function generateToolsetTests(): void {
+export function generateWindowsToolsetTests(): void {
   if (fs.existsSync(GENERATED_DIR)) {
     for (const f of fs.readdirSync(GENERATED_DIR)) {
       fs.rmSync(path.join(GENERATED_DIR, f))

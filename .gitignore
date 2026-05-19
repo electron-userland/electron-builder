@@ -36,3 +36,5 @@ _vitest-smart-cache.json
 .claude
 node-modules-docker
 test/src/windows/generated/
+test/src/linux/generated/
+test/src/updater/generated/
