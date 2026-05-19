@@ -13,6 +13,7 @@ interface SuiteConfig {
   registerFn: string
   importPath: string
   outerDescribe?: { name: string; options?: TestOptions }
+  topLevelOptions?: TestOptions
   winCodeSignVersions?: ToolsetConfig["winCodeSign"][] // set custom am
 }
 
@@ -59,6 +60,18 @@ const SUITES: SuiteConfig[] = [
     outerDescribe: { name: "AppX" },
     winCodeSignVersions: ["1.0.0", "1.1.0"],
   },
+  {
+    name: "differentialWin",
+    registerFn: "registerDifferentialWinTests",
+    importPath: "../../updater/differentialUpdateWinSuite",
+    outerDescribe: { name: "differential-win", options: { sequential: true } },
+  },
+  {
+    name: "blackboxWin",
+    registerFn: "registerBlackboxWinTests",
+    importPath: "../../updater/blackboxUpdateWinSuite",
+    topLevelOptions: { sequential: true, retry: 1 },
+  },
 ]
 
 function renderFile(suite: SuiteConfig, winCodeSign: ToolsetConfig["winCodeSign"], nsis: ToolsetConfig["nsis"]): string {
@@ -74,7 +87,8 @@ function renderFile(suite: SuiteConfig, winCodeSign: ToolsetConfig["winCodeSign"
   })
 })`
   } else {
-    body = `describe("${label}", () => {
+    const topLevelOptPart = suite.topLevelOptions ? `, ${JSON.stringify(suite.topLevelOptions)}` : ""
+    body = `describe("${label}"${topLevelOptPart}, () => {
   ${suite.registerFn}(${toolsetsArg})
 })`
   }
