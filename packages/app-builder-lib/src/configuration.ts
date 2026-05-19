@@ -338,6 +338,19 @@ export interface ToolsetConfig {
    * @default "0.0.0"
    */
   readonly appimage?: "0.0.0" | "1.0.2" | "1.0.3" | null
+
+  /**
+   * `nsis` (makensis) bundle version to use for NSIS packaging.
+   * Located at https://github.com/electron-userland/electron-builder-binaries/releases?q=nsis&expanded=true
+   * 0.0.0 - legacy toolset (nsis)
+   *
+   * Betas:
+   * v1.0.0 - NSIS 3.11
+   * v1.1.0 - NSIS 3.12
+   *
+   * @default "0.0.0"
+   */
+  readonly nsis?: "0.0.0" | "1.0.0" | "1.1.0" | null
 }
 
 export interface Hooks {

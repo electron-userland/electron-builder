@@ -22,7 +22,7 @@ async function validatePeResources(context: PackedContext, expect: ExpectStatic,
   expect(strings).toMatchSnapshot()
 }
 
-export function registerWinPackagerTests(winCodeSign: ToolsetConfig["winCodeSign"]): void {
+export function registerWinPackagerTests(toolsets: { winCodeSign: ToolsetConfig["winCodeSign"]; nsis: ToolsetConfig["nsis"] }): void {
   test("beta version", { retry: 3 }, ({ expect }) =>
     app(
       expect,
@@ -35,9 +35,7 @@ export function registerWinPackagerTests(winCodeSign: ToolsetConfig["winCodeSign
           nsis: {
             buildUniversalInstaller: false,
           },
-          toolsets: {
-            winCodeSign,
-          },
+          toolsets
         },
       },
       {
@@ -59,9 +57,7 @@ export function registerWinPackagerTests(winCodeSign: ToolsetConfig["winCodeSign
             { from: "build", to: "./", filter: "*.asar" },
             { from: "build/subdir", to: "./subdir", filter: "*.asar" },
           ],
-          toolsets: {
-            winCodeSign,
-          },
+          toolsets,
           electronLanguages: "en",
           downloadAlternateFFmpeg: true,
           electronFuses: {
@@ -96,9 +92,7 @@ export function registerWinPackagerTests(winCodeSign: ToolsetConfig["winCodeSign
         config: {
           //tslint:disable-next-line:no-invalid-template-strings
           artifactName: "${productName}-${version}-${os}-${arch}.${ext}",
-          toolsets: {
-            winCodeSign,
-          },
+          toolsets
         },
       },
       {
@@ -115,9 +109,7 @@ export function registerWinPackagerTests(winCodeSign: ToolsetConfig["winCodeSign
       {
         targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
         config: {
-          toolsets: {
-            winCodeSign,
-          },
+          toolsets
         },
       },
       {
@@ -155,9 +147,7 @@ export function registerWinPackagerTests(winCodeSign: ToolsetConfig["winCodeSign
           win: {
             icon: "customIcon",
           },
-          toolsets: {
-            winCodeSign,
-          },
+          toolsets
         },
       },
       {
@@ -179,9 +169,7 @@ export function registerWinPackagerTests(winCodeSign: ToolsetConfig["winCodeSign
           mac: {
             icon: "icons/icon.icns",
           },
-          toolsets: {
-            winCodeSign,
-          },
+          toolsets
         },
         platformPackagerFactory: packager => (platformPackager = new CheckingWinPackager(packager)),
       },
@@ -203,7 +191,7 @@ export function registerWinPackagerTests(winCodeSign: ToolsetConfig["winCodeSign
         targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
         config: {
           win: { signExecutable: false },
-          toolsets: { winCodeSign },
+          toolsets,
         },
       },
       {
@@ -232,7 +220,7 @@ export function registerWinPackagerTests(winCodeSign: ToolsetConfig["winCodeSign
               },
             },
           },
-          toolsets: { winCodeSign },
+          toolsets,
         },
       },
       {
@@ -251,7 +239,7 @@ export function registerWinPackagerTests(winCodeSign: ToolsetConfig["winCodeSign
         config: {
           forceCodeSigning: true,
           win: { signExecutable: false },
-          toolsets: { winCodeSign },
+          toolsets,
         },
       },
       {},
@@ -266,7 +254,7 @@ export function registerWinPackagerTests(winCodeSign: ToolsetConfig["winCodeSign
         config: {
           forceCodeSigning: true,
           win: { signAndEditExecutable: false },
-          toolsets: { winCodeSign },
+          toolsets,
         },
       },
       {},
@@ -280,7 +268,7 @@ export function registerWinPackagerTests(winCodeSign: ToolsetConfig["winCodeSign
         targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
         config: {
           win: { signAndEditExecutable: false },
-          toolsets: { winCodeSign },
+          toolsets,
         },
       },
       {
@@ -315,7 +303,7 @@ export function registerWinPackagerTests(winCodeSign: ToolsetConfig["winCodeSign
               },
             },
           },
-          toolsets: { winCodeSign },
+          toolsets,
         },
       },
       {
