@@ -5,7 +5,7 @@ export interface FileSet {
   /**
    * The source path relative to and defaults to:
    *
-   *  - the [app directory](configuration.md#directories) for `files`,
+   *  - the [app directory](https://www.electron.build/configuration#directories) for `files`,
    *  - the project directory for `extraResources` and `extraFiles`.
    * If you don't use two-package.json structure and don't set custom app directory, app directory equals to project directory.
    */
@@ -19,7 +19,7 @@ export interface FileSet {
    */
   to?: string
   /**
-   * The [glob patterns](./file-patterns.md). Defaults to "**\/*"
+   * The [glob patterns](https://www.electron.build/file-patterns). Defaults to "**\/*"
    */
   filter?: Array<string> | string
 }
@@ -42,7 +42,7 @@ export interface AsarOptions {
 
 export interface FilesBuildOptions {
   /**
-   * A [glob patterns](./file-patterns.md) relative to the [app directory](configuration.md#directories), which specifies which files to include when copying files to create the package.
+   * A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.
 
 Defaults to:
 ```json
@@ -66,7 +66,7 @@ Development dependencies are never copied in any case. You don't need to ignore 
 
 Default pattern \`**\/*\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \`**\/node_modules/**\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.
 
-May be specified in the platform options (e.g. in the [mac](mac.md)).
+May be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).
 
 You may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.
 
@@ -80,12 +80,12 @@ You may also specify custom source and destination directories by using `FileSet
 ]
 ```
 
-You can use [file macros](./file-patterns.md#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.
+You can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.
    */
   files?: Array<FileSet | string> | FileSet | string | null
 
   /**
-   * A [glob patterns](./file-patterns.md) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).
+   * A [glob patterns](https://www.electron.build/file-patterns) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).
    *
    * File patterns (and support for `from` and `to` fields) the same as for [files](#files).
    *
@@ -107,7 +107,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
   readonly appId?: string | null
 
   /**
-   * The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).
+   * The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).
    */
   readonly artifactName?: string | null
 
@@ -139,7 +139,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
   readonly asar?: AsarOptions | boolean | null
 
   /**
-   * A [glob patterns](./file-patterns.md) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive.
+   * A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive.
    */
   readonly asarUnpack?: Array<string> | string | null
 
@@ -167,12 +167,12 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
   readonly forceCodeSigning?: boolean
 
   /**
-   * The [electron-updater compatibility](./auto-update.md#compatibility) semver range.
+   * The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.
    */
   readonly electronUpdaterCompatibility?: string | null
 
   /**
-   * Publisher configuration. See [Auto Update](./publish.md) for more information.
+   * Publisher configuration. See [Auto Update](https://www.electron.build/publish) for more information.
    */
   publish?: Publish
 
@@ -231,7 +231,7 @@ export interface ReleaseInfo {
   releaseNotes?: string | null
 
   /**
-   * The path to release notes file. Defaults to `release-notes-${platform}.md` (where `platform` it is current platform — `mac`, `linux` or `windows`) or `release-notes.md` in the [build resources](./contents.md#extraresources).
+   * The path to release notes file. Defaults to `release-notes-${platform}.md` (where `platform` it is current platform — `mac`, `linux` or `windows`) or `release-notes.md` in the [build resources](https://www.electron.build/contents#extraresources).
    */
   releaseNotesFile?: string | null
 

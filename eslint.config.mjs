@@ -27,6 +27,7 @@ export default [{
       "packages/app-builder-lib/src/node-module-collector/hoist.ts", // @yarn/pkg vendor code
       "test/fixtures/**",
       "test/src/helpers/**",
+      "website/**",
     ],
 }, ...compat.extends(
     "eslint:recommended",
