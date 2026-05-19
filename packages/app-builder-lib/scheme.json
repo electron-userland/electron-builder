@@ -6026,7 +6026,7 @@
           "type": "string"
         },
         "cscLink": {
-          "description": "Snapcraft Store credentials — a base64-encoded credentials string or a file path.\nAccepts the same formats as `WIN_CSC_LINK` / `CSC_LINK` on Windows and macOS:\nbase64 data, absolute/relative/`~/` file paths, and `file://` URIs.\n\nGenerate a credentials string for CI:\n```sh\nexport SNAP_CSC_LINK=$(snapcraft export-login - | base64 -w0)\n```\n\nThe `SNAP_CSC_LINK` environment variable is the CI-friendly alternative when you\ncannot embed credentials in the build config.",
+          "description": "Snapcraft Store credentials — a base64-encoded credentials string or a file path.\nAccepts the same formats as `WIN_CSC_LINK` / `CSC_LINK` on Windows and macOS:\nbase64 data, absolute/relative/`~/` file paths, and `file://` URIs.\nRelative paths are resolved against the build resources directory.\n\nGenerate a credentials string for CI:\n```sh\nexport SNAP_CSC_LINK=$(snapcraft export-login - | base64 -w0)\n```\n\nThe `SNAP_CSC_LINK` environment variable is the CI-friendly alternative when you\ncannot embed credentials in the build config.",
           "type": "string"
         },
         "enabled": {
@@ -6807,7 +6807,7 @@
         },
         "allowNativeWayland": {
           "default": true,
-          "description": "Allow running the application with native Wayland support (`--ozone-platform=wayland`).\nFor core24 this defaults to `true`. Set to `false` to force X11 mode via XWayland.",
+          "description": "Allows explicitly disabling native Wayland by injecting `--ozone-platform=x11` into the snap's runtime arguments, even on newer Electron versions where native Wayland is supported by default.",
           "type": [
             "null",
             "boolean"

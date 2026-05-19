@@ -289,6 +289,7 @@ export interface RemoteBuildOptions {
    * Snapcraft Store credentials — a base64-encoded credentials string or a file path.
    * Accepts the same formats as `WIN_CSC_LINK` / `CSC_LINK` on Windows and macOS:
    * base64 data, absolute/relative/`~/` file paths, and `file://` URIs.
+   * Relative paths are resolved against the build resources directory.
    *
    * Generate a credentials string for CI:
    * ```sh

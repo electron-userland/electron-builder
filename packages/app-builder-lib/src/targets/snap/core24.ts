@@ -114,6 +114,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       snapcraftConfig: snap,
       artifactPath,
       stageDir,
+      packager: this.packager,
       ...buildMode,
     })
   }

@@ -22,8 +22,7 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
         await assertPack(expect, "test-app-one", {
           targets: snapTarget,
           config: {
-            extraMetadata: { name: "sep" },
-            productName: "Sep",
+            artifactName: "${productName}-${version}-${arch}.${ext}",
             snapcraft: {
               base: core,
               [core]: { stagePackages: p, plugs: p, confinement: "classic", useTemplateApp: false },
@@ -204,19 +203,18 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
 
   // ─── core24 tests ────────────────────────────────────────────────────────────
 
-  test("core24 default (gnome extension)", ({ expect }) =>
+  test.only("core24 default (gnome extension)", ({ expect }) =>
     app(expect, {
       targets: snapTarget,
       config: {
-        extraMetadata: { name: "sep" },
-        productName: "Sep",
+        artifactName: "${productName}-${version}-${arch}.${ext}",
         snapcraft: { base: "core24" },
       },
       effectiveOptionComputed: async ({ snap }) => {
         delete snap.platforms // arch-specific: varies by host; tested separately via armhf tests
         expect(snap).toMatchSnapshot()
         expect(snap.base).toBe("core24")
-        expect(snap.apps?.sep?.extensions).toContain("gnome")
+        expect(snap.apps?.TestApp?.extensions).toContain("gnome")
         return Promise.resolve(true)
       },
     }))

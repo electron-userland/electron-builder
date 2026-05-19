@@ -54,6 +54,7 @@ export class SnapCoreCustom extends SnapCore<SnapOptionsCustom> {
       snapcraftConfig: snap,
       artifactPath,
       stageDir,
+      packager: this.packager,
     })
   }
 }

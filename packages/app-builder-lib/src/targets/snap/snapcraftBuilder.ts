@@ -1,11 +1,13 @@
 import { RemoteBuildOptions } from "../../options/SnapOptions"
 import { importCredentialContent } from "../../codeSign/codesign"
 import { InvalidConfigurationError, log, spawn } from "builder-util"
+import { randomUUID } from "crypto"
 import * as childProcess from "child_process"
 import { copyFile, ensureDir, pathExists, readdir, remove } from "fs-extra"
 import * as path from "path"
 import * as util from "util"
 import { SnapcraftYAML } from "./snapcraft"
+import { LinuxPackager } from "../../linuxPackager"
 
 const execAsync = util.promisify(childProcess.exec)
 
@@ -27,6 +29,8 @@ interface BuildSnapOptions {
   useDestructiveMode?: boolean
   /** The snap output path */
   artifactPath: string
+  /** LinuxPackager instance, used to resolve workspace dir for remote build authentication */
+  packager: LinuxPackager
 }
 
 /**
@@ -231,7 +235,7 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string> {
   await ensureSnapcraftInstalled()
 
   if (remoteBuild?.enabled) {
-    const authEnv = await ensureRemoteBuildAuthentication(remoteBuild)
+    const authEnv = await ensureRemoteBuildAuthentication(remoteBuild, options.packager.buildResourcesDir)
     Object.assign(env, authEnv)
   }
 
@@ -301,14 +305,14 @@ async function ensureSnapcraftInstalled(): Promise<void> {
  * to inject into the snapcraft subprocess. Returns an empty map when snapcraft
  * can authenticate itself (native env var or interactive session).
  */
-async function ensureRemoteBuildAuthentication(remoteBuild: RemoteBuildOptions): Promise<Record<string, string>> {
+async function ensureRemoteBuildAuthentication(remoteBuild: RemoteBuildOptions, cwd: string): Promise<Record<string, string>> {
   log.debug(null, "resolving remote build authentication...")
 
   // 1. remoteBuild.cscLink — config-level credential (base64 or file path).
   // Takes priority over the env var, mirroring Mac/Windows cscLink behaviour.
   if (remoteBuild.cscLink) {
     try {
-      const credentials = await importCredentialContent(remoteBuild.cscLink, process.cwd())
+      const credentials = await importCredentialContent(remoteBuild.cscLink, cwd)
       if (!credentials.trim()) {
         throw new InvalidConfigurationError("resolved credentials are empty")
       }
@@ -328,7 +332,7 @@ async function ensureRemoteBuildAuthentication(remoteBuild: RemoteBuildOptions):
   const snapCscLink = process.env.SNAP_CSC_LINK
   if (snapCscLink) {
     try {
-      const credentials = await importCredentialContent(snapCscLink, process.cwd())
+      const credentials = await importCredentialContent(snapCscLink, cwd)
       if (!credentials.trim()) {
         throw new InvalidConfigurationError("resolved credentials are empty")
       }
@@ -386,7 +390,9 @@ interface ExecuteSnapcraftOptions {
 async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<string> {
   const { workDir, outputSnap: outputFileName, remoteBuild, useLXD, useMultipass, useDestructiveMode, env } = options
 
-  const outputBasename = path.basename(outputFileName)
+  // Use a UUID-based temp name as the --output target so the copy below doesn't
+  // depend on snapcraft's naming convention (which always uses underscores).
+  const tmpSnap = `eb-snap-${randomUUID().replace(/-/g, "")}.snap`
 
   if (useDestructiveMode && !remoteBuild?.enabled) {
     // Snapcraft 8 (craft-application) hangs after a successful destructive-mode
@@ -412,7 +418,7 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
     })
 
     const primeDir = path.join(workDir, "prime")
-    const snapcraftPackArgs = ["pack", "--output", outputBasename, primeDir]
+    const snapcraftPackArgs = ["pack", "--output", tmpSnap, primeDir]
     if (log.isDebugEnabled) {
       snapcraftPackArgs.push("--verbose")
     }
@@ -423,7 +429,7 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
       stdio: "inherit",
     })
 
-    return copySnapToArtifactPath(workDir, outputBasename, outputFileName)
+    return copySnapToArtifactPath(workDir, tmpSnap, outputFileName)
   }
 
   const command = "snapcraft"
@@ -487,6 +493,8 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
     } else if (useMultipass) {
       env["SNAPCRAFT_BUILD_ENVIRONMENT"] = "multipass"
       log.debug(null, "using Multipass for build (via SNAPCRAFT_BUILD_ENVIRONMENT)")
+    } else {
+      args.push("--output", tmpSnap)
     }
     if (log.isDebugEnabled) {
       args.push("--verbose")
@@ -505,13 +513,12 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
     // snapcraft names the output snap itself (e.g. <name>_<version>_<arch>.snap).
     // Each electron-builder build invocation targets exactly one arch, so exactly one snap is expected.
     const files = await readdir(workDir)
-    const snaps = files.filter(f => f.endsWith(".snap"))
-    const builtSnap = snaps[0]
+    const builtSnap = files.find(f => f.endsWith(".snap"))
     if (!builtSnap) {
       throw new Error(`Build succeeded but no .snap file found in ${workDir}`)
     }
     return copySnapToArtifactPath(workDir, builtSnap, outputFileName)
   }
 
-  return copySnapToArtifactPath(workDir, outputBasename, outputFileName)
+  return copySnapToArtifactPath(workDir, tmpSnap, outputFileName)
 }
