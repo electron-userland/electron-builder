@@ -1,0 +1,167 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`editWindowsResources > creates version info from scratch when none exists (mirrors rcedit) 1`] = `
+{
+  "manifestXml": null,
+  "versionStrings": [
+    {
+      "codepage": 1200,
+      "lang": 1033,
+      "strings": {
+        "FileDescription": "New App",
+        "FileVersion": "2.0.0.0",
+        "LegalCopyright": "© 2024",
+        "ProductName": "New App",
+      },
+    },
+    {
+      "codepage": 1200,
+      "lang": 0,
+      "strings": {
+        "FileVersion": "2.0.0.0",
+        "ProductVersion": "2.0.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`editWindowsResources > does not touch manifest when requestedExecutionLevel is asInvoker 1`] = `
+{
+  "manifestXml": "<?xml version="1.0" encoding="UTF-8" standalone="yes"?><assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0"><trustInfo xmlns="urn:schemas-microsoft-com:asm.v3"><security><requestedPrivileges><requestedExecutionLevel level="asInvoker" uiAccess="false"/></requestedPrivileges></security></trustInfo></assembly>",
+  "versionStrings": [
+    {
+      "codepage": 1200,
+      "lang": 1033,
+      "strings": {
+        "FileDescription": "New App",
+        "FileVersion": "2.0.0.0",
+        "LegalCopyright": "© 2024",
+        "ProductName": "New App",
+        "ProductVersion": "2.0.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`editWindowsResources > does not touch manifest when requestedExecutionLevel is omitted 1`] = `
+{
+  "manifestXml": "<?xml version="1.0" encoding="UTF-8" standalone="yes"?><assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0"><trustInfo xmlns="urn:schemas-microsoft-com:asm.v3"><security><requestedPrivileges><requestedExecutionLevel level="asInvoker" uiAccess="false"/></requestedPrivileges></security></trustInfo></assembly>",
+  "versionStrings": [
+    {
+      "codepage": 1200,
+      "lang": 1033,
+      "strings": {
+        "FileDescription": "New App",
+        "FileVersion": "2.0.0.0",
+        "LegalCopyright": "© 2024",
+        "ProductName": "New App",
+        "ProductVersion": "2.0.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`editWindowsResources > patches requestedExecutionLevel in manifest 1`] = `
+{
+  "manifestXml": "<?xml version="1.0" encoding="UTF-8" standalone="yes"?><assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0"><trustInfo xmlns="urn:schemas-microsoft-com:asm.v3"><security><requestedPrivileges><requestedExecutionLevel level="requireAdministrator" uiAccess="false"/></requestedPrivileges></security></trustInfo></assembly>",
+  "versionStrings": [
+    {
+      "codepage": 1200,
+      "lang": 1033,
+      "strings": {
+        "FileDescription": "New App",
+        "FileVersion": "2.0.0.0",
+        "LegalCopyright": "© 2024",
+        "ProductName": "New App",
+        "ProductVersion": "2.0.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`editWindowsResources > updates version strings on exe with existing version info 1`] = `
+{
+  "manifestXml": null,
+  "versionStrings": [
+    {
+      "codepage": 1200,
+      "lang": 1033,
+      "strings": {
+        "FileDescription": "New App",
+        "FileVersion": "2.0.0.0",
+        "LegalCopyright": "© 2024",
+        "ProductName": "New App",
+        "ProductVersion": "2.0.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`editWindowsResources > uses first language when multiple exist (mirrors rcedit) 1`] = `
+{
+  "manifestXml": null,
+  "versionStrings": [
+    {
+      "codepage": 1200,
+      "lang": 1033,
+      "strings": {
+        "FileDescription": "New App",
+        "FileVersion": "2.0.0.0",
+        "LegalCopyright": "© 2024",
+        "ProductName": "New App",
+        "ProductVersion": "2.0.0.0",
+      },
+    },
+    {
+      "codepage": 1200,
+      "lang": 1031,
+      "strings": {
+        "ProductName": "Original",
+      },
+    },
+  ],
+}
+`;
+
+exports[`editWindowsResources > warns and skips when RT_MANIFEST is missing 1`] = `
+{
+  "manifestXml": null,
+  "versionStrings": [
+    {
+      "codepage": 1200,
+      "lang": 1033,
+      "strings": {
+        "FileDescription": "New App",
+        "FileVersion": "2.0.0.0",
+        "LegalCopyright": "© 2024",
+        "ProductName": "New App",
+        "ProductVersion": "2.0.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`editWindowsResources > warns when requestedExecutionLevel node is absent from manifest xml 1`] = `
+{
+  "manifestXml": "<?xml version="1.0" encoding="UTF-8" standalone="yes"?><assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0"></assembly>",
+  "versionStrings": [
+    {
+      "codepage": 1200,
+      "lang": 1033,
+      "strings": {
+        "FileDescription": "New App",
+        "FileVersion": "2.0.0.0",
+        "LegalCopyright": "© 2024",
+        "ProductName": "New App",
+        "ProductVersion": "2.0.0.0",
+      },
+    },
+  ],
+}
+`;

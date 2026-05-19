@@ -53,6 +53,22 @@
             "string"
           ]
         },
+        "compression": {
+          "anyOf": [
+            {
+              "enum": [
+                "gzip",
+                "xz",
+                "zstd"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The compression algorithm passed to the AppImage build tool.\n\n**FUSE2 toolset (`\"0.0.0\"` or unset):** `\"xz\"` is forwarded as `--compression xz`.\n`\"gzip\"`, `\"zstd\"`, `null`, and unset all fall through to the root-level `compression` option:\n- `\"maximum\"` → `--compression xz` (overrides any per-target gzip/zstd value)\n- anything else → flag omitted (mksquashfs defaults to gzip)\n\n**Static-runtime toolsets (`>= 1.0.0`):** `\"gzip\"` and `\"zstd\"` are forwarded\ndirectly. `\"xz\"` is mapped to `\"zstd\"` (nearest supported equivalent). `null`\nor unset falls through to the root-level `compression` option:\n- `\"store\"` → `\"gzip\"`\n- `\"normal\"` / `\"maximum\"` / unset → `\"zstd\"`"
+        },
         "description": {
           "description": "As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.",
           "type": [
@@ -355,6 +371,7 @@
       "additionalProperties": false,
       "properties": {
         "ordering": {
+          "description": "Path to a file containing the order in which files should be packed into the asar archive.\nEach line of the file is a relative path from the app directory. Files listed first are\npacked first, which can improve app startup time by front-loading frequently accessed modules.\nSee the [asar documentation](https://github.com/electron/asar) for details.",
           "type": [
             "null",
             "string"
@@ -623,8 +640,8 @@
               "enum": [
                 "bzip2",
                 "gz",
-                "lzo",
-                "xz"
+                "xz",
+                "zst"
               ],
               "type": "string"
             },
@@ -633,7 +650,7 @@
             }
           ],
           "default": "xz",
-          "description": "The compression type."
+          "description": "The compression type passed to fpm. For `deb`, `rpm`, and `pacman` targets prefer the\ntyped per-format interfaces (`DebOptions`, `RpmOptions`, `PacmanOptions`) which narrow\nthis to only the values that fpm actually accepts for that format."
         },
         "depends": {
           "anyOf": [
@@ -878,7 +895,8 @@
           ]
         },
         "backgroundColor": {
-          "description": "The background color (accepts css colors). Defaults to `#ffffff` (white) if no background image.",
+          "default": "#ffffff",
+          "description": "The background color (accepts css colors). Used when no background image is set.",
           "type": [
             "null",
             "string"
@@ -1972,6 +1990,7 @@
           ]
         },
         "defaultArch": {
+          "description": "The default architecture to build for when no `--arch` flag is specified.\nDefaults to the current machine's architecture.",
           "type": "string"
         },
         "description": {
@@ -2143,6 +2162,7 @@
           "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](configuration.md#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](mac.md)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](./file-patterns.md#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
         },
         "forceCodeSigning": {
+          "default": false,
           "description": "Whether to fail if app will be not code signed.",
           "type": "boolean"
         },
@@ -2177,7 +2197,6 @@
           "description": "The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing."
         },
         "packageCategory": {
-          "description": "backward compatibility + to allow specify fpm-only category for all possible fpm targets in one place",
           "type": [
             "null",
             "string"
@@ -2363,8 +2382,11 @@
               "enum": [
                 "bzip2",
                 "gz",
-                "lzo",
-                "xz"
+                "gzip",
+                "xz",
+                "xzmt",
+                "zst",
+                "zstd"
               ],
               "type": "string"
             },
@@ -2373,7 +2395,7 @@
             }
           ],
           "default": "xz",
-          "description": "The compression type."
+          "description": "The compression type passed to fpm. For `deb`, `rpm`, and `pacman` targets prefer the\ntyped per-format interfaces (`DebOptions`, `RpmOptions`, `PacmanOptions`) which narrow\nthis to only the values that fpm actually accepts for that format."
         },
         "depends": {
           "anyOf": [
@@ -2677,6 +2699,7 @@
           "type": "boolean"
         },
         "defaultArch": {
+          "description": "The default architecture to build for when no `--arch` flag is specified.\nDefaults to the current machine's architecture.",
           "type": "string"
         },
         "detectUpdateChannel": {
@@ -2857,6 +2880,7 @@
           "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](configuration.md#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](mac.md)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](./file-patterns.md#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
         },
         "forceCodeSigning": {
+          "default": false,
           "description": "Whether to fail if app will be not code signed.",
           "type": "boolean"
         },
@@ -3131,7 +3155,8 @@
               "type": "null"
             }
           ],
-          "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (`dmg` and `zip` for Squirrel.Mac). Note: Squirrel.Mac auto update mechanism requires both `dmg` and `zip` to be enabled, even when only `dmg` is used. Disabling `zip` will break auto update in `dmg` packages."
+          "default": "default (dmg and zip for Squirrel.Mac)",
+          "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\nNote: Squirrel.Mac auto update mechanism requires both `dmg` and `zip` to be enabled, even when only `dmg` is used. Disabling `zip` will break auto update in `dmg` packages."
         },
         "timestamp": {
           "description": "Specify the URL of the timestamp authority server",
@@ -3312,6 +3337,7 @@
           "type": "boolean"
         },
         "defaultArch": {
+          "description": "The default architecture to build for when no `--arch` flag is specified.\nDefaults to the current machine's architecture.",
           "type": "string"
         },
         "detectUpdateChannel": {
@@ -3492,6 +3518,7 @@
           "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](configuration.md#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](mac.md)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](./file-patterns.md#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
         },
         "forceCodeSigning": {
+          "default": false,
           "description": "Whether to fail if app will be not code signed.",
           "type": "boolean"
         },
@@ -3766,7 +3793,8 @@
               "type": "null"
             }
           ],
-          "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (`dmg` and `zip` for Squirrel.Mac). Note: Squirrel.Mac auto update mechanism requires both `dmg` and `zip` to be enabled, even when only `dmg` is used. Disabling `zip` will break auto update in `dmg` packages."
+          "default": "default (dmg and zip for Squirrel.Mac)",
+          "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\nNote: Squirrel.Mac auto update mechanism requires both `dmg` and `zip` to be enabled, even when only `dmg` is used. Disabling `zip` will break auto update in `dmg` packages."
         },
         "timestamp": {
           "description": "Specify the URL of the timestamp authority server",
@@ -4173,6 +4201,7 @@
           "type": "boolean"
         },
         "differentialPackage": {
+          "description": "Marks the package as built with differential download support for the update server.",
           "type": "boolean"
         },
         "displayLanguageSelector": {
@@ -4181,7 +4210,7 @@
           "type": "boolean"
         },
         "guid": {
-          "description": "See [GUID vs Application Name](./nsis.md#guid-vs-application-name).",
+          "description": "The GUID for the installer. Used to identify the application for upgrade and uninstall operations.\nIf not specified, a deterministic GUID is generated from the app ID (`appId`) — but this means\nchanging your `appId` will break silent upgrades of existing installs.",
           "type": [
             "null",
             "string"
@@ -4438,6 +4467,7 @@
         },
         "useZip": {
           "default": false,
+          "description": "Forces zip compression format instead of LZMA. Used internally for differential update packages.",
           "type": "boolean"
         },
         "warningsAsErrors": {
@@ -4524,6 +4554,7 @@
           "type": "boolean"
         },
         "differentialPackage": {
+          "description": "Marks the package as built with differential download support for the update server.",
           "type": "boolean"
         },
         "displayLanguageSelector": {
@@ -4532,7 +4563,7 @@
           "type": "boolean"
         },
         "guid": {
-          "description": "See [GUID vs Application Name](./nsis.md#guid-vs-application-name).",
+          "description": "The GUID for the installer. Used to identify the application for upgrade and uninstall operations.\nIf not specified, a deterministic GUID is generated from the app ID (`appId`) — but this means\nchanging your `appId` will break silent upgrades of existing installs.",
           "type": [
             "null",
             "string"
@@ -4789,6 +4820,7 @@
         },
         "useZip": {
           "default": false,
+          "description": "Forces zip compression format instead of LZMA. Used internally for differential update packages.",
           "type": "boolean"
         },
         "warningsAsErrors": {
@@ -5213,6 +5245,218 @@
       },
       "type": "object"
     },
+    "PacmanOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "afterInstall": {
+          "description": "File path to script to be passed to FPM for `--after-install` arg.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "afterRemove": {
+          "description": "File path to script to be passed to FPM for `--after-remove` arg.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "appArmorProfile": {
+          "description": "File path to custom AppArmor profile (Ubuntu 24+)",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "artifactName": {
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "category": {
+          "description": "The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "compression": {
+          "anyOf": [
+            {
+              "enum": [
+                "bzip2",
+                "gz",
+                "xz",
+                "zstd"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "xz",
+          "description": "The compression type passed to fpm. For `deb`, `rpm`, and `pacman` targets prefer the\ntyped per-format interfaces (`DebOptions`, `RpmOptions`, `PacmanOptions`) which narrow\nthis to only the values that fpm actually accepts for that format."
+        },
+        "depends": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Package dependencies.\n`rpm` defaults to `[\"gtk3\", \"libnotify\", \"nss\", \"libXScrnSaver\", \"(libXtst or libXtst6)\", \"xdg-utils\", \"at-spi2-core\", \"(libuuid or libuuid1)\"]`\n`pacman` defaults to `[\"c-ares\", \"ffmpeg\", \"gtk3\", \"http-parser\", \"libevent\", \"libvpx\", \"libxslt\", \"libxss\", \"minizip\", \"nss\", \"re2\", \"snappy\", \"libnotify\", \"libappindicator-gtk3\"]`"
+        },
+        "description": {
+          "description": "As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "desktop": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LinuxDesktopFile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
+        },
+        "executableArgs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The executable parameters. Pass to executableName"
+        },
+        "fpm": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "*Advanced only* The [fpm](https://fpm.readthedocs.io/en/latest/cli-reference.html) options.\n\nExample: `[\"--before-install=build/deb-preinstall.sh\", \"--after-upgrade=build/deb-postinstall.sh\"]`"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "maintainer": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "mimeTypes": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing."
+        },
+        "packageCategory": {
+          "description": "The package category.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "packageName": {
+          "description": "The name of the package.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "$ref": "#/definitions/BitbucketOptions"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllPublishOptions"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "synopsis": {
+          "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "vendor": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "type": "object"
+    },
     "PkgBackgroundOptions": {
       "additionalProperties": false,
       "description": "Options for the background image in a PKG installer",
@@ -5527,7 +5771,7 @@
           "description": "Allows you to provide your own `nsis-resources`"
         },
         "guid": {
-          "description": "See [GUID vs Application Name](./nsis.md#guid-vs-application-name).",
+          "description": "The GUID for the installer. Used to identify the application for upgrade and uninstall operations.\nIf not specified, a deterministic GUID is generated from the app ID (`appId`) — but this means\nchanging your `appId` will break silent upgrades of existing installs.",
           "type": [
             "null",
             "string"
@@ -5607,6 +5851,7 @@
         },
         "useZip": {
           "default": false,
+          "description": "Forces zip compression format instead of LZMA. Used internally for differential update packages.",
           "type": "boolean"
         },
         "warningsAsErrors": {
@@ -5694,6 +5939,218 @@
             }
           ],
           "description": "Vendor specific information."
+        }
+      },
+      "type": "object"
+    },
+    "RpmOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "afterInstall": {
+          "description": "File path to script to be passed to FPM for `--after-install` arg.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "afterRemove": {
+          "description": "File path to script to be passed to FPM for `--after-remove` arg.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "appArmorProfile": {
+          "description": "File path to custom AppArmor profile (Ubuntu 24+)",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "artifactName": {
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "category": {
+          "description": "The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "compression": {
+          "anyOf": [
+            {
+              "enum": [
+                "bzip2",
+                "gzip",
+                "xz",
+                "xzmt"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "xzmt",
+          "description": "Passed to fpm via `--rpm-compression`. `\"xzmt\"` uses multi-threaded xz (fpm's RPM default).\n`\"xz\"` is automatically promoted to `\"xzmt\"`. `\"gzip\"` and `\"bzip2\"` pass through as-is."
+        },
+        "depends": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Package dependencies.\n`rpm` defaults to `[\"gtk3\", \"libnotify\", \"nss\", \"libXScrnSaver\", \"(libXtst or libXtst6)\", \"xdg-utils\", \"at-spi2-core\", \"(libuuid or libuuid1)\"]`\n`pacman` defaults to `[\"c-ares\", \"ffmpeg\", \"gtk3\", \"http-parser\", \"libevent\", \"libvpx\", \"libxslt\", \"libxss\", \"minizip\", \"nss\", \"re2\", \"snappy\", \"libnotify\", \"libappindicator-gtk3\"]`"
+        },
+        "description": {
+          "description": "As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "desktop": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LinuxDesktopFile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
+        },
+        "executableArgs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The executable parameters. Pass to executableName"
+        },
+        "fpm": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "*Advanced only* The [fpm](https://fpm.readthedocs.io/en/latest/cli-reference.html) options.\n\nExample: `[\"--before-install=build/deb-preinstall.sh\", \"--after-upgrade=build/deb-postinstall.sh\"]`"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "maintainer": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "mimeTypes": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing."
+        },
+        "packageCategory": {
+          "description": "The package category.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "packageName": {
+          "description": "The name of the package.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "$ref": "#/definitions/BitbucketOptions"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllPublishOptions"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "synopsis": {
+          "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "vendor": {
+          "type": [
+            "null",
+            "string"
+          ]
         }
       },
       "type": "object"
@@ -6691,6 +7148,7 @@
           ]
         },
         "defaultArch": {
+          "description": "The default architecture to build for when no `--arch` flag is specified.\nDefaults to the current machine's architecture.",
           "type": "string"
         },
         "detectUpdateChannel": {
@@ -6830,6 +7288,7 @@
           "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](configuration.md#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](mac.md)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](./file-patterns.md#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
         },
         "forceCodeSigning": {
+          "default": false,
           "description": "Whether to fail if app will be not code signed.",
           "type": "boolean"
         },
@@ -6934,7 +7393,12 @@
         },
         "signAndEditExecutable": {
           "default": true,
-          "description": "Whether to sign and add metadata to executable.\nMetadata includes information about the app name/description/version, publisher, copyright, etc.\nThis property also is responsible for adding the app icon and setting execution level.\n(Advanced option leveraging `rcedit`)",
+          "description": "Whether to sign and add metadata to executable via [`resedit`](https://www.npmjs.com/package/resedit).\nMetadata includes information about the app name/description/version, publisher, copyright, etc.\nThis property also is responsible for adding the app icon and setting execution level.\nSet to `false` only if you need to fully disable resedit-based resource editing.\nTo skip only code signing while keeping resource editing, use `signExecutable: false` instead.",
+          "type": "boolean"
+        },
+        "signExecutable": {
+          "default": true,
+          "description": "Whether to sign Windows executables and any additional files matched by `signExts`.\nSet to `false` to skip Windows code signing while still editing executable resources\n(icon, metadata, etc. via [`resedit`](https://www.npmjs.com/package/resedit)).\nThis option is not limited to the main executable edit/sign flow and can also affect\nsigning of Windows installers or other artifacts that use the standard signing path.",
           "type": "boolean"
         },
         "signExts": {
@@ -7120,7 +7584,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run after all artifacts are built.\n\n```typescript\n(buildResult: BuildResult): Promise<Array<string>> | Array<string>\n```\n\nConfiguration in the same way as `afterPack` (see above).\n\n!!! example \"myAfterAllArtifactBuild.js\"\n```js\nexports.default = function () {\n // you can return additional files to publish\n return [\"/path/to/additional/result/file\"]\n}\n```"
+      "description": "The function (or path to file or module id) to be run after all artifacts are built.\nReceives a {@link BuildResult}. May return an array of additional file paths to publish.\n\nFor file/module setup, see {@link beforePack}."
     },
     "afterExtract": {
       "anyOf": [
@@ -7134,7 +7598,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be [run after the prebuilt Electron binary has been extracted to the output directory](#afterextract)\nSame setup as {@link beforePack}"
+      "description": "The function (or path to file or module id) to be run after the prebuilt Electron binary has been extracted to the output directory.\nReceives an {@link AfterExtractContext}. For file/module setup, see {@link beforePack}."
     },
     "afterPack": {
       "anyOf": [
@@ -7148,7 +7612,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be [run after pack](#afterpack) (but before pack into distributable format and sign).\nSame setup as {@link beforePack}"
+      "description": "The function (or path to file or module id) to be run after pack but before pack into distributable format and sign.\nReceives an {@link AfterPackContext}. For file/module setup, see {@link beforePack}."
     },
     "afterSign": {
       "anyOf": [
@@ -7162,7 +7626,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be [run after pack and sign](#aftersign) (but before pack into distributable format).\nSame setup as {@link beforePack}"
+      "description": "The function (or path to file or module id) to be run after pack and sign but before pack into distributable format.\nReceives an {@link AfterPackContext}. For file/module setup, see {@link beforePack}."
     },
     "apk": {
       "anyOf": [
@@ -7172,7 +7636,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "Alpine Linux APK package options. Produces an `.apk` archive installable via `apk add`."
     },
     "appId": {
       "default": "com.electron.${name}",
@@ -7191,7 +7656,7 @@
           "type": "null"
         }
       ],
-      "description": "AppImage options."
+      "description": "AppImage options. AppImage is a portable application format that bundles the app\nand its dependencies into a single self-contained executable that runs on most\nLinux distributions without installation."
     },
     "appx": {
       "anyOf": [
@@ -7201,7 +7666,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "Windows Store (AppX) package options."
     },
     "appxManifestCreated": {
       "anyOf": [
@@ -7229,7 +7695,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run on artifact build completed.\nSame setup as {@link beforePack}"
+      "description": "The function (or path to file or module id) to be run when an individual artifact build completes.\nReceives an {@link ArtifactCreated}. For file/module setup, see {@link beforePack}."
     },
     "artifactBuildStarted": {
       "anyOf": [
@@ -7243,7 +7709,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run on artifact build start.\nSame setup as {@link beforePack}"
+      "description": "The function (or path to file or module id) to be run when an individual artifact build starts.\nReceives an {@link ArtifactBuildStarted}. For file/module setup, see {@link beforePack}."
     },
     "artifactName": {
       "description": "The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
@@ -7310,7 +7776,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run before pack.\n\n```typescript\n(context: BeforePackContext): Promise<any> | any\n```\n\n!!! example \"As function\"\n\n ```js\n beforePack: async (context) => {\n   // your code\n }\n ```\n\nBecause in a configuration file you cannot use JavaScript, can be specified as a path to file or module id. Function must be exported as default export.\n\n```json\n\"build\": {\n\"beforePack\": \"./myBeforePackHook.js\"\n}\n```\n\nFile `myBeforePackHook.js` in the project root directory:\n\n!!! example \"myBeforePackHook.js\"\n ```js\n exports.default = async function(context) {\n   // your custom code\n }\n ```"
+      "description": "The function (or path to file or module id) to be run before pack.\nReceives a {@link BeforePackContext}.\n\nCan be specified inline as a function in JavaScript configs:\n```js\n// electron-builder.config.js\nmodule.exports = {\n  beforePack: async (context) => {\n    // your code\n  }\n}\n```\n\nOr as a path to a module that exports the function as its default export:\n```json\n{ \"build\": { \"beforePack\": \"./myBeforePackHook.js\" } }\n```\n```js\n// myBeforePackHook.js\nexports.default = async function(context) {\n  // your custom code\n}\n```"
     },
     "buildDependenciesFromSource": {
       "default": false,
@@ -7388,9 +7854,10 @@
           "type": "null"
         }
       ],
-      "description": "Debian package options."
+      "description": "Debian package options. Targets Debian, Ubuntu, and Debian-based distributions.\nProduces a `.deb` archive installable via `dpkg -i` or `apt install`."
     },
     "defaultArch": {
+      "description": "The default architecture to build for when no `--arch` flag is specified.\nDefaults to the current machine's architecture.",
       "type": "string"
     },
     "detectUpdateChannel": {
@@ -7643,7 +8110,7 @@
           "type": "null"
         }
       ],
-      "description": "Flatpak options."
+      "description": "Flatpak options. Flatpak is a sandboxed application distribution format for Linux\nthat runs in a controlled environment and is distributed via [Flathub](https://flathub.org/)\nor other Flatpak repositories."
     },
     "forceCodeSigning": {
       "default": false,
@@ -7665,7 +8132,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "FreeBSD package options. Produces a `.pkg` archive for the FreeBSD `pkg` package manager."
     },
     "generateUpdatesFilesForAllChannels": {
       "default": false,
@@ -7700,7 +8168,7 @@
           "type": "null"
         }
       ],
-      "description": "Options related to how build Linux targets."
+      "description": "General Linux build options shared across all Linux targets (icon, category, desktop entry,\nexecutable name, etc.). Target-specific compression and packaging options live in the\nper-format interfaces (`DebOptions`, `RpmOptions`, `PacmanOptions`, etc.)."
     },
     "mac": {
       "anyOf": [
@@ -7743,7 +8211,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "MSI package options."
     },
     "msiProjectCreated": {
       "anyOf": [
@@ -7767,7 +8236,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "MSI-wrapped installer options."
     },
     "nativeRebuilder": {
       "anyOf": [
@@ -7828,7 +8298,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "NSIS installer options."
     },
     "nsisWeb": {
       "anyOf": [
@@ -7838,7 +8309,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "NSIS web installer options (downloads app package at install time)."
     },
     "onNodeModuleFile": {
       "anyOf": [
@@ -7862,17 +8334,19 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "Solaris IPS package options. Produces a `.p5p` archive for the Solaris Image Packaging\nSystem (`pkg`)."
     },
     "pacman": {
       "anyOf": [
         {
-          "$ref": "#/definitions/LinuxTargetSpecificOptions"
+          "$ref": "#/definitions/PacmanOptions"
         },
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "Pacman package options. Targets Arch Linux and Arch-based distributions\n(Manjaro, EndeavourOS, etc.). Produces a `.pacman` archive installable via `pacman -U`."
     },
     "pkg": {
       "anyOf": [
@@ -7893,7 +8367,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "Portable executable options (no installation required)."
     },
     "productName": {
       "description": "As [name](#metadata), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name).\nIf not specified inside of the `build` configuration, `productName` property defined at the top level of `package.json` is used. If not specified at the top level of `package.json`, [name property](https://docs.npmjs.com/files/package.json#name) is used.",
@@ -7977,12 +8452,13 @@
     "rpm": {
       "anyOf": [
         {
-          "$ref": "#/definitions/LinuxTargetSpecificOptions"
+          "$ref": "#/definitions/RpmOptions"
         },
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "RPM package options. Targets Fedora, Red Hat Enterprise Linux, SUSE, and related\ndistributions. Produces a `.rpm` archive installable via `rpm` or `dnf`."
     },
     "snap": {
       "anyOf": [
@@ -7993,7 +8469,7 @@
           "type": "null"
         }
       ],
-      "description": "Snap options."
+      "description": "Snap package options. Requires [snapcraft](https://snapcraft.io/) to be installed."
     },
     "squirrelWindows": {
       "anyOf": [
@@ -8003,7 +8479,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "Squirrel.Windows installer options. Requires the `electron-builder-squirrel-windows` dependency."
     },
     "target": {
       "anyOf": [
@@ -8029,7 +8506,8 @@
             "string"
           ]
         }
-      ]
+      ],
+      "description": "The build target(s) for this platform. Can be a target name string, a {@link TargetConfiguration}\nobject, or an array of either. Available targets depend on the platform — see platform-specific\noptions (e.g. {@link MacConfiguration.target}, {@link WindowsConfiguration.target},\n{@link LinuxConfiguration.target})."
     },
     "toolsets": {
       "anyOf": [

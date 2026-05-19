@@ -9,12 +9,8 @@ overrides:
   handlebars: '>=4.7.9'
 
 patchedDependencies:
-  '@changesets/assemble-release-plan@6.0.9':
-    hash: ef56f57067dfcc594f40d9afc7278abe38cecf1c04230936e447a60e0d58a46e
-    path: patches/@changesets__assemble-release-plan@6.0.9.patch
-  '@changesets/cli@2.29.7':
-    hash: 4ef9ea77709c09dd51d013cff58b6b8d9004f0c22208e12942cbf4161351d590
-    path: patches/@changesets__cli@2.29.7.patch
+  '@changesets/assemble-release-plan@6.0.9': ef56f57067dfcc594f40d9afc7278abe38cecf1c04230936e447a60e0d58a46e
+  '@changesets/cli@2.29.7': 4ef9ea77709c09dd51d013cff58b6b8d9004f0c22208e12942cbf4161351d590
 
 importers:
 
@@ -586,8 +582,8 @@ importers:
         specifier: 7.7.1
         version: 7.7.1
       electron:
-        specifier: 35.7.5
-        version: 35.7.5
+        specifier: 39.8.5
+        version: 39.8.5
 
   test:
     devDependencies:
@@ -630,6 +626,9 @@ importers:
       '@types/which':
         specifier: ^3.0.4
         version: 3.0.4
+      '@types/yargs':
+        specifier: ^17.0.33
+        version: 17.0.33
       adm-zip:
         specifier: 0.5.16
         version: 0.5.16
@@ -3169,8 +3168,8 @@ packages:
     resolution: {integrity: sha512-bO3y10YikuUwUuDUQRM4KfwNkKhnpVO7IPdbsrejwN9/AABJzzTQ4GeHwyzNSrVO+tEH3/Np255a3sVZpZDjvg==}
     engines: {node: '>=8.0.0'}
 
-  electron@35.7.5:
-    resolution: {integrity: sha512-dnL+JvLraKZl7iusXTVTGYs10TKfzUi30uEDTqsmTm0guN9V2tbOjTzyIZbh9n3ygUjgEYyo+igAwMRXIi3IPw==}
+  electron@39.8.5:
+    resolution: {integrity: sha512-q6+LiQIcTadSyvtPgLDQkCtVA9jQJXQVMrQcctfOJILh6OFMN+UJJLRkuUTy8CZDYeCIBn1ZycqsL1dAXugxZA==}
     engines: {node: '>= 12.20.55'}
     hasBin: true
 
@@ -8096,7 +8095,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  electron@35.7.5:
+  electron@39.8.5:
     dependencies:
       '@electron/get': 2.0.3
       '@types/node': 22.13.17

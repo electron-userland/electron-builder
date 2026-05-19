@@ -1,6 +1,6 @@
 {
   "name": "electron-forge-maker-snap",
-  "version": "26.9.1",
+  "version": "26.10.0",
   "main": "main.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",

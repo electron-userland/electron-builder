@@ -47,6 +47,7 @@ runs:
         key: vitest-smart-cache-${{ github.ref_name }}-${{ github.sha }}
         restore-keys: |
           vitest-smart-cache-${{ github.ref_name }}-
+          vitest-smart-cache-master-
 
     - name: Set up Vitest smart cache reset flag
       run: echo "RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}" >> $GITHUB_ENV
@@ -68,4 +69,4 @@ runs:
 #   uses: ./.github/actions/pretest
 #   with:
 #     cache-path: ~/Library/Caches/electron
-#     cache-key: v-35.7.5-macos-electron
+#     cache-key: v-39.8.5-macos-electron

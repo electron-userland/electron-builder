@@ -10,7 +10,7 @@ RUN pacman-key --init \
     libxcrypt-compat \
     base-devel \
     git \
-    nodejs \
+    nodejs-lts-jod \
     npm \
     sudo \
     xorg-server-xvfb \
