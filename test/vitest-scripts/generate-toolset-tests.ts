@@ -1,6 +1,7 @@
 import * as fs from "fs"
 import * as path from "path"
 import type { ToolsetConfig } from "app-builder-lib/src/configuration"
+import type { TestOptions } from "vitest"
 
 const WIN_CODE_SIGN_VERSIONS: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0"]
 const NSIS_VERSIONS: ToolsetConfig["nsis"][] = ["0.0.0", "1.0.0", "1.1.0"]
@@ -11,9 +12,8 @@ interface SuiteConfig {
   name: string
   registerFn: string
   importPath: string
-  nsisPermutation: boolean
-  outerDescribe?: { name: string; options?: string }
-  winCodeSignVersions?: ToolsetConfig["winCodeSign"][]
+  outerDescribe?: { name: string; options?: TestOptions }
+  winCodeSignVersions?: ToolsetConfig["winCodeSign"][] // set custom am
 }
 
 const SUITES: SuiteConfig[] = [
@@ -21,61 +21,53 @@ const SUITES: SuiteConfig[] = [
     name: "winPackager",
     registerFn: "registerWinPackagerTests",
     importPath: "../winPackagerTestSuite",
-    nsisPermutation: true,
   },
   {
     name: "portable",
     registerFn: "registerPortableTests",
     importPath: "../portableTestSuite",
-    nsisPermutation: true,
     outerDescribe: { name: "portable" },
   },
   {
     name: "assistedInstaller",
     registerFn: "registerAssistedInstallerTests",
     importPath: "../assistedInstallerTestSuite",
-    nsisPermutation: true,
     outerDescribe: { name: "assisted" },
   },
   {
     name: "msi",
     registerFn: "registerMsiTests",
     importPath: "../msiTestSuite",
-    nsisPermutation: false,
-    outerDescribe: { name: "msi", options: "{ sequential: true }" },
+    outerDescribe: { name: "msi", options: { sequential: true } },
   },
   {
     name: "msiWrapped",
     registerFn: "registerMsiWrappedTests",
     importPath: "../msiWrappedTestSuite",
-    nsisPermutation: false,
-    outerDescribe: { name: "msiWrapped", options: "{ sequential: true }" },
+    outerDescribe: { name: "msiWrapped", options: { sequential: true } },
   },
   {
     name: "squirrelWindows",
     registerFn: "registerSquirrelWindowsTests",
     importPath: "../squirrelWindowsTestSuite",
-    nsisPermutation: false,
-    outerDescribe: { name: "squirrel-windows", options: "{ sequential: true }" },
+    outerDescribe: { name: "squirrel-windows", options: { sequential: true } },
   },
   {
     name: "appx",
     registerFn: "registerAppxTests",
     importPath: "../appxTestSuite",
-    nsisPermutation: false,
     outerDescribe: { name: "AppX" },
     winCodeSignVersions: ["1.0.0", "1.1.0"],
   },
 ]
 
-function renderFile(suite: SuiteConfig, winCodeSign: ToolsetConfig["winCodeSign"], nsis: ToolsetConfig["nsis"] | undefined): string {
-  const toolsetsArg = suite.nsisPermutation ? `{ winCodeSign: "${winCodeSign}", nsis: "${nsis}" }` : `{ winCodeSign: "${winCodeSign}" }`
-
-  const label = suite.nsisPermutation ? `winCodeSign: ${winCodeSign}, nsis: ${nsis}` : `winCodeSign: ${winCodeSign}`
+function renderFile(suite: SuiteConfig, winCodeSign: ToolsetConfig["winCodeSign"], nsis: ToolsetConfig["nsis"]): string {
+  const toolsetsArg = `{ winCodeSign: "${winCodeSign}", nsis: "${nsis}" }`
+  const label = `winCodeSign: ${winCodeSign}, nsis: ${nsis}`
 
   let body: string
   if (suite.outerDescribe) {
-    const optionsPart = suite.outerDescribe.options ? `, ${suite.outerDescribe.options}` : ""
+    const optionsPart = suite.outerDescribe.options ? `, ${JSON.stringify(suite.outerDescribe.options)}` : ""
     body = `describe.ifWindows("${suite.outerDescribe.name}"${optionsPart}, () => {
   describe("${label}", () => {
     ${suite.registerFn}(${toolsetsArg})
@@ -105,18 +97,10 @@ export function generateToolsetTests(): void {
 
   for (const suite of SUITES) {
     const wcsVersions = suite.winCodeSignVersions ?? WIN_CODE_SIGN_VERSIONS
-
-    if (suite.nsisPermutation) {
-      for (const wcs of wcsVersions) {
-        for (const nsis of NSIS_VERSIONS) {
-          const filename = `${suite.name}__wcs-${wcs}__nsis-${nsis}__Test.ts`
-          fs.writeFileSync(path.join(GENERATED_DIR, filename), renderFile(suite, wcs, nsis), "utf8")
-        }
-      }
-    } else {
-      for (const wcs of wcsVersions) {
-        const filename = `${suite.name}__wcs-${wcs}__Test.ts`
-        fs.writeFileSync(path.join(GENERATED_DIR, filename), renderFile(suite, wcs, undefined), "utf8")
+    for (const wcs of wcsVersions) {
+      for (const nsis of NSIS_VERSIONS) {
+        const filename = `${suite.name}__wcs-${wcs}__nsis-${nsis}__Test.ts`
+        fs.writeFileSync(path.join(GENERATED_DIR, filename), renderFile(suite, wcs, nsis), "utf8")
       }
     }
   }
