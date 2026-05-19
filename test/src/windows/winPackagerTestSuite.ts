@@ -22,7 +22,7 @@ async function validatePeResources(context: PackedContext, expect: ExpectStatic,
   expect(strings).toMatchSnapshot()
 }
 
-export function registerWinPackagerTests(toolsets: { winCodeSign: ToolsetConfig["winCodeSign"]; nsis: ToolsetConfig["nsis"] }): void {
+export function registerWinPackagerTests(toolsets: ToolsetConfig): void {
   test("beta version", { retry: 3 }, ({ expect }) =>
     app(
       expect,
