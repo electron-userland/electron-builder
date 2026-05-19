@@ -1,3 +1,5 @@
+# Code Signing for macOS
+
 macOS code signing is supported. If the configuration values are provided correctly in your package.json, then signing should be automatically executed.
 
 On a macOS development machine, a valid and appropriate identity from your keychain will be automatically used. If no such identity exists, the default behavior depends on the target architecture. On ARM or universal builds, an ad-hoc signature will be applied by default. On Intel-only builds, the default behavior is to not sign at all.

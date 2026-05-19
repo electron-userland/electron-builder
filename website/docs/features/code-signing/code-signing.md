@@ -9,7 +9,6 @@ Code signing proves your application's identity and confirms it hasn't been tamp
 | macOS | Gatekeeper blocks app; user must override in System Preferences | Runs normally; no warning |
 | Windows | SmartScreen warning on first run ("Unknown publisher") | Trusted install; SmartScreen learns from reputation |
 | Windows (EV cert) | N/A | Instant trust, no reputation period needed |
-| Linux | No system-level enforcement | Optional (Snap/Flatpak have own signing) |
 
 On **macOS 10.15+**, notarization is additionally required for apps distributed outside the Mac App Store. An app that is code-signed but not notarized will be blocked by Gatekeeper unless the user explicitly overrides it.
 
@@ -21,9 +20,6 @@ On **macOS 10.15+**, notarization is additionally required for apps distributed 
 | macOS (Mac App Store) | Yes | Apple Distribution / Mac App Distribution | No (Apple signs on submission) |
 | Windows | Recommended | OV or EV certificate | No |
 | Windows (Azure) | Recommended | Azure Trusted Signing | No |
-| Linux (AppImage, DEB, RPM) | Optional | N/A | No |
-| Linux (Snap) | Yes | Automatic (Ubuntu One account) | No |
-| Linux (Flatpak/Flathub) | Yes | Automatic (Flathub) | No |
 
 ## Certificate Types
 
@@ -178,7 +174,7 @@ Without this option, electron-builder proceeds without signing if no credentials
 ## Troubleshooting
 
 **"No identity found"** (macOS)
-: No valid Developer ID certificate is in the keychain. Check that you have an active Apple Developer Program membership and that the certificate is installed. Run `security find-identity -v -p codesigning` to list available identities.
+: No valid Developer ID certificate is in the keychain. Check that you have an active Apple Developer Program membership and that the certificates are correctly exported.
 
 **"The certificate is not valid for use"** (macOS)
 : The certificate is expired or revoked. Renew it in the Apple Developer portal.

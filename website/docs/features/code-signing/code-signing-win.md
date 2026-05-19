@@ -1,3 +1,5 @@
+# Code Signing for Windows
+
 Windows code signing is supported. If the configuration values are provided correctly in your package.json, then signing should be automatically executed.
 
 :::tip
