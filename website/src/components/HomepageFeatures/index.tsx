@@ -21,8 +21,8 @@ const FeatureList: FeatureItem[] = [
     ),
     description: (
       <>
-        Package your Electron app for macOS, Windows, and Linux with a single <code>electron-builder</code> command.
-        Produces installers, portable builds, and distribution-ready archives automatically.
+        Package your Electron app for macOS, Windows, and Linux with the <code>electron-builder</code> command.
+        Produces installers, portable builds, and distribution-ready archives easily.
       </>
     ),
   },
@@ -36,7 +36,7 @@ const FeatureList: FeatureItem[] = [
     description: (
       <>
         Ship updates seamlessly with <code>electron-updater</code>. Supports differential updates, staged rollouts,
-        and multiple providers — GitHub Releases, S3, and more — with no extra infrastructure.
+        and multiple providers — GitHub Releases, S3, and more — with minimal configuration required.
       </>
     ),
   },
@@ -49,8 +49,8 @@ const FeatureList: FeatureItem[] = [
     ),
     description: (
       <>
-        macOS notarization, Windows Authenticode signing, and Linux package signing — all handled out of the box.
-        Your users see trusted, verified apps on every platform.
+        macOS notarization and Windows Authenticode signing — all available out of the box.
+        Your users can see trusted, verified apps on their platform.
       </>
     ),
   },
