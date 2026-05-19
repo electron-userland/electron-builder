@@ -18,7 +18,6 @@ exports[`auto start 1`] = `
       "autostart": "sep.desktop",
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -92,7 +91,6 @@ exports[`base option 1`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -167,7 +165,6 @@ exports[`buildPackages 1`] = `
       "adapter": "none",
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -395,7 +392,6 @@ exports[`compression option 1`] = `
       "adapter": "none",
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -607,7 +603,6 @@ exports[`custom after, no desktop 1`] = `
     "sep": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -681,7 +676,6 @@ exports[`custom env 1`] = `
     "sep": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "FOO": "bar",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
@@ -756,7 +750,6 @@ exports[`default base 1`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -830,7 +823,6 @@ exports[`default compression 1`] = `
     "sep": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -1588,7 +1580,6 @@ exports[`no desktop plugs 1`] = `
     "sep": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -1653,7 +1644,6 @@ exports[`plugs option 1`] = `
       "adapter": "none",
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -1859,7 +1849,6 @@ exports[`plugs option 3`] = `
       "adapter": "none",
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -2064,7 +2053,6 @@ exports[`slots option 1`] = `
     "sep": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -2142,7 +2130,6 @@ exports[`slots option 3`] = `
     "sep": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -2237,7 +2224,6 @@ exports[`use template app 1`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",

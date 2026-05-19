@@ -63,6 +63,15 @@ function getLockedInstallArgs(pm: PM): Array<string> | undefined {
   }
 }
 
+function getUnlockedInstallArgs(pm: PM): Array<string> | undefined {
+  // Yarn handles CI immutable installs via YARN_ENABLE_IMMUTABLE_INSTALLS=false in runtimeEnv.
+  // pnpm has no env var equivalent; must explicitly pass --no-frozen-lockfile.
+  if (pm === PM.PNPM) {
+    return ["--no-frozen-lockfile"]
+  }
+  return undefined
+}
+
 function getLockfileFixtureNameCandidates(currentTestName: string): Array<string> {
   const names: Array<string> = []
   const normalizedTestName = currentTestName.trim()
@@ -239,20 +248,25 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       const destLockfile = path.join(projectDir, collectorOptions.lockfile)
       let lockfileFixtureApplied = false
 
-      const shouldUpdateLockfiles = !!process.env.UPDATE_LOCKFILE_FIXTURES && !!checkOptions.storeDepsLockfileSnapshot
+      const shouldUpdateLockfiles = process.env.UPDATE_LOCKFILE_FIXTURES === "true" && !!checkOptions.storeDepsLockfileSnapshot
       // check for lockfile fixture so we can use `--frozen-lockfile`
       if ((await exists(testFixtureLockfile)) && !shouldUpdateLockfiles) {
         await copyFile(testFixtureLockfile, destLockfile)
         lockfileFixtureApplied = true
       }
 
-      if (!(await exists(destLockfile))) {
-        log.info({ lockfile: collectorOptions.lockfile }, "lockfile not found, creating empty stub to prevent package manager prompts")
+      if (shouldUpdateLockfiles || !(await exists(destLockfile))) {
+        // When updating: clear the stale base-fixture lockfile so the package manager regenerates fresh.
+        // When no lockfile exists yet: create an empty stub to prevent package manager prompts.
         await fs.writeFile(destLockfile, "")
       }
 
       const appDir = await computeDefaultAppDirectory(projectDir, configuration.directories?.app)
-      const additionalInstallArgs = lockfileFixtureApplied ? getLockedInstallArgs(pm) : undefined
+      const additionalInstallArgs = lockfileFixtureApplied
+        ? getLockedInstallArgs(pm)
+        : checkOptions.storeDepsLockfileSnapshot
+        ? getUnlockedInstallArgs(pm)
+        : undefined
 
       await installDependencies(
         configuration,
