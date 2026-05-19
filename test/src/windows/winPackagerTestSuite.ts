@@ -35,7 +35,7 @@ export function registerWinPackagerTests(toolsets: { winCodeSign: ToolsetConfig[
           nsis: {
             buildUniversalInstaller: false,
           },
-          toolsets
+          toolsets,
         },
       },
       {
@@ -92,7 +92,7 @@ export function registerWinPackagerTests(toolsets: { winCodeSign: ToolsetConfig[
         config: {
           //tslint:disable-next-line:no-invalid-template-strings
           artifactName: "${productName}-${version}-${os}-${arch}.${ext}",
-          toolsets
+          toolsets,
         },
       },
       {
@@ -109,7 +109,7 @@ export function registerWinPackagerTests(toolsets: { winCodeSign: ToolsetConfig[
       {
         targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
         config: {
-          toolsets
+          toolsets,
         },
       },
       {
@@ -147,7 +147,7 @@ export function registerWinPackagerTests(toolsets: { winCodeSign: ToolsetConfig[
           win: {
             icon: "customIcon",
           },
-          toolsets
+          toolsets,
         },
       },
       {
@@ -169,7 +169,7 @@ export function registerWinPackagerTests(toolsets: { winCodeSign: ToolsetConfig[
           mac: {
             icon: "icons/icon.icns",
           },
-          toolsets
+          toolsets,
         },
         platformPackagerFactory: packager => (platformPackager = new CheckingWinPackager(packager)),
       },

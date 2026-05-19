@@ -89,10 +89,7 @@ function fixTypedocAnchors(siteDir: string): void {
         const slug = slugify(anchor)
         return headings.has(slug) ? `[${text}](#${slug})` : text
       })
-      fixed = fixed.replace(
-        /\[([^\]]+)\]\((?:\.\/)?([^)#/]+)\.md(#[^)]*)?\)/g,
-        (_match, text, filename, anchor = "") => `[${text}](/docs/api/${filename}${anchor})`
-      )
+      fixed = fixed.replace(/\[([^\]]+)\]\((?:\.\/)?([^)#/]+)\.md(#[^)]*)?\)/g, (_match, text, filename, anchor = "") => `[${text}](/docs/api/${filename}${anchor})`)
       result.push(fixed)
     }
 

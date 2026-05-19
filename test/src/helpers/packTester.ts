@@ -262,11 +262,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       }
 
       const appDir = await computeDefaultAppDirectory(projectDir, configuration.directories?.app)
-      const additionalInstallArgs = lockfileFixtureApplied
-        ? getLockedInstallArgs(pm)
-        : checkOptions.storeDepsLockfileSnapshot
-        ? getUnlockedInstallArgs(pm)
-        : undefined
+      const additionalInstallArgs = lockfileFixtureApplied ? getLockedInstallArgs(pm) : checkOptions.storeDepsLockfileSnapshot ? getUnlockedInstallArgs(pm) : undefined
 
       await installDependencies(
         configuration,
