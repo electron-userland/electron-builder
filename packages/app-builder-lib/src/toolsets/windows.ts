@@ -42,6 +42,18 @@ export const wincodesignChecksums = {
   },
 } as const
 
+export const nsisChecksums = {
+  "0.0.0": {
+    // legacy — downloads NSIS 3.08 via getLegacyWinCodeSignBin()
+  },
+  "1.0.0": {
+    "nsis-bundle-3.11.tar.gz": "60a128695e40cd206a9c4bbaf82b110d1502f8bd3b568682c866e7c4b7165116",
+  },
+  "1.1.0": {
+    "nsis-bundle-3.12.tar.gz": "02690924e5600e5dbba35695918fff78cea37d30a97b4ea6bd262745c50a388b",
+  },
+} as const
+
 type CodeSignVersionKey = keyof typeof wincodesignChecksums
 
 function _getWindowsToolsBin<V extends CodeSignVersionKey>(winCodeSign: V, file: keyof (typeof wincodesignChecksums)[V]): Promise<string> {
@@ -153,4 +165,19 @@ export async function getRceditBundle(winCodeSign: ToolsetConfig["winCodeSign"] 
   const file = "rcedit-windows-2_0_0.zip"
   const vendorPath = await _getWindowsToolsBin(winCodeSign, file)
   return { x86: path.join(vendorPath, x86), x64: path.join(vendorPath, x64) }
+}
+
+export async function getNsisBundle(nsis: ToolsetConfig["nsis"] | Nullish) {
+  const overridePath = process.env.ELECTRON_BUILDER_NSIS_PATH?.trim()
+  if (!isEmptyOrSpaces(overridePath)) {
+    log.debug({ overridePath }, `Using NSIS from ELECTRON_BUILDER_NSIS_PATH`)
+    return { path: overridePath }
+  }
+  if (nsis === "0.0.0" || nsis == null) {
+    const vendorPath = await getLegacyWinCodeSignBin()
+    return { path: path.join(vendorPath, "nsis") }
+  }
+  const file = "windows-kits-bundle-10_0_26100_0.zip"
+  const vendorPath = await _getWindowsToolsBin(nsis, file)
+  return { path: path.join(vendorPath, "nsis") }
 }
