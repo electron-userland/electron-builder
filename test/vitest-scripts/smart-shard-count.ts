@@ -1,6 +1,7 @@
 #!/usr/bin/env ts-node
 
 import { getAllTestFiles } from "./file-discovery"
+import { generateToolsetTests } from "./generate-toolset-tests"
 import { buildWeightedFiles, computeShardCount } from "./shard-builder"
 import { TargetPlatform } from "./smart-config"
 
@@ -15,6 +16,8 @@ function computeShardIndicesForPlatform(platform: TargetPlatform): number[] {
 }
 
 function main() {
+  generateToolsetTests()
+
   const platforms: TargetPlatform[] = ["linux", "win32", "darwin"]
 
   const shardCounts = platforms.reduce(
