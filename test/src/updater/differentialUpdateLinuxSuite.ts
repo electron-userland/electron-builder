@@ -8,7 +8,8 @@ const supportedArchs = [
   // Arch.ia32 // Skipped, electron no longer ships ia32 linux binaries
 ]
 
-export function registerDifferentialLinuxTests(appimage: ToolsetConfig["appimage"]): void {
+export function registerDifferentialLinuxTests(toolset: ToolsetConfig): void {
+  const appimage = toolset.appimage!
   for (const arch of supportedArchs) {
     test(`${Arch[arch]} - toolset: ${appimage}`, ({ expect }) => testLinux(expect, arch, appimage))
   }
