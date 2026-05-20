@@ -1,0 +1,21 @@
+.features {
+  display: flex;
+  align-items: center;
+  padding: 2rem 0;
+  width: 100%;
+}
+
+.featureIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  margin-bottom: 1rem;
+  color: var(--ifm-color-primary);
+}
+
+.featureIcon svg {
+  width: 100%;
+  height: 100%;
+}

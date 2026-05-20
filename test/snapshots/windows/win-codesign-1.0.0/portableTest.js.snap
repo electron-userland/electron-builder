@@ -1,0 +1,65 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`portable > winCodeSign: 1.0.0 > portable - artifactName and request execution level 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßWPortable.1.1.0.exe",
+      "safeArtifactName": "TestApp-1.1.0.exe",
+    },
+  ],
+}
+`;
+
+exports[`portable > winCodeSign: 1.0.0 > portable - splashImage 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßWPortable.1.1.0.exe",
+      "safeArtifactName": "TestApp-1.1.0.exe",
+    },
+  ],
+}
+`;
+
+exports[`portable > winCodeSign: 1.0.0 > portable 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.exe",
+      "safeArtifactName": "TestApp-1.1.0.exe",
+    },
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+    },
+  ],
+}
+`;
+
+exports[`portable > winCodeSign: 1.0.0 > portable zip 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.exe",
+      "safeArtifactName": "TestApp-1.1.0.exe",
+    },
+  ],
+}
+`;
+
+exports[`portable > winCodeSign: 1.0.0 > portable zip several archs 1`] = `
+{
+  "win": [
+    {
+      "file": "Test App ßW 1.1.0.exe",
+      "safeArtifactName": "TestApp-1.1.0.exe",
+    },
+  ],
+}
+`;

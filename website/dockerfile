@@ -1,0 +1,4 @@
+FROM node:24-alpine
+WORKDIR /app
+ENV CI=true
+RUN corepack enable

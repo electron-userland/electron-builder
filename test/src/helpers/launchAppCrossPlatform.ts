@@ -1,10 +1,12 @@
-import { isEmptyOrSpaces } from "builder-util"
 import type { VmManager } from "app-builder-lib/out/vm/vm"
-import { ChildProcess, spawn } from "child_process"
+import { ChildProcess, spawn, StdioOptions } from "child_process"
+import { createHash, randomUUID } from "crypto"
 import * as fs from "fs"
+import { createReadStream } from "fs"
+import { outputFile, remove } from "fs-extra"
 import * as http from "http"
 import * as net from "net"
-import os from "os"
+import os, { homedir } from "os"
 import path from "path"
 
 /**
@@ -135,6 +137,27 @@ interface LaunchResult {
   exitCode: number | null
   stdout: string
   stderr: string
+  /** Runs fn(); on failure re-throws with stdout/stderr appended to the error message */
+  assert(fn: () => void | Promise<void>): Promise<void>
+}
+
+function buildResult(version: string | undefined, exitCode: number | null, stdout: string, stderr: string): LaunchResult {
+  return {
+    version,
+    exitCode,
+    stdout,
+    stderr,
+    async assert(fn) {
+      try {
+        await fn()
+      } catch (err: any) {
+        const msg = err?.message ?? String(err)
+        const enhanced = new Error(`${msg}\n\n--- app stdout ---\n${stdout || "(empty)"}\n\n--- app stderr ---\n${stderr || "(empty)"}`)
+        enhanced.stack = err?.stack
+        throw enhanced
+      }
+    },
+  }
 }
 
 interface LaunchOptions {
@@ -161,11 +184,12 @@ export async function launchAndWaitForQuit({
   let child: ChildProcess
   const versionRegex = /APP_VERSION:\s*([0-9]+\.[0-9]+\.[0-9]+)/
 
+  const stdio: StdioOptions = ["ignore", "pipe", "pipe"]
   function spawnApp(command: string, args: string[] = [], detached = true, localEnv = env) {
     return spawn(command, args, {
       detached,
       shell: false,
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio,
       env: {
         ...process.env,
         AUTO_UPDATER_TEST: "1",
@@ -200,7 +224,7 @@ export async function launchAndWaitForQuit({
     if (expectedVersion && version && version !== expectedVersion) {
       throw new Error(`Expected version ${expectedVersion}, got ${version}`)
     }
-    return { version, exitCode: 0, stdout: output, stderr: "" }
+    return buildResult(version, 0, output, "")
   }
 
   const platform = os.platform()
@@ -221,21 +245,18 @@ export async function launchAndWaitForQuit({
 
       if (appPath.endsWith(".AppImage")) {
         fs.chmodSync(appPath, 0o755)
-        const spawnEnv = {
-          ...env,
-          DISPLAY: display,
-          APPIMAGE_EXTRACT_AND_RUN: "1",
-        }
 
         child = spawn(appPath, ["--no-sandbox"], {
           detached: true,
           shell: false,
-          stdio: ["ignore", "pipe", "pipe"],
+          stdio,
           env: {
             ...process.env,
             AUTO_UPDATER_TEST: "1",
             AUTO_UPDATER_TEST_CONFIG_PATH: updateConfigPath,
-            ...spawnEnv,
+            ...env,
+            DISPLAY: display,
+            APPIMAGE_EXTRACT_AND_RUN: "1",
           },
         })
       } else {
@@ -255,22 +276,15 @@ export async function launchAndWaitForQuit({
     const stderrChunks: string[] = []
 
     function resolveResult(code: number | null) {
-      resolve({
-        version,
-        exitCode: code,
-        stdout: stdoutChunks.join(""),
-        stderr: stderrChunks.join(""),
-      })
+      resolve(buildResult(version, code, stdoutChunks.join(""), stderrChunks.join("")))
     }
 
     child.stdout?.on("data", data => {
       const line = data.toString()
-      console.log(line)
       stdoutChunks.push(line)
       const match = line.match(versionRegex)
       if (match) {
         version = match[1].trim()
-        console.log(`Found Version in console logs: ${version}`)
         if (expectedVersion && version !== expectedVersion) {
           resolved = true
           child.kill()
@@ -288,7 +302,6 @@ export async function launchAndWaitForQuit({
     child.stderr?.on("data", data => {
       const line = data.toString()
       stderrChunks.push(line)
-      console.error(`[stderr] ${line}`)
       // GPU/native crashes produce a FATAL ERROR in stderr that can hang the process
       // during cleanup. If we've already captured the version the probe succeeded —
       // kill and resolve rather than waiting for an exit that never comes.
@@ -328,7 +341,7 @@ export function startXvfb(): { display: string; stop: () => void } {
   const display = `:${Math.ceil(Math.random() * 100)}`
   const proc = spawn("Xvfb", [display, "-screen", "0", "1920x1080x24"], {
     detached: true,
-    stdio: ["ignore", "pipe", "pipe"],
+    stdio: ["ignore", "ignore", "pipe"],
   })
 
   let errorOutput = ""
@@ -345,12 +358,11 @@ export function startXvfb(): { display: string; stop: () => void } {
   proc.unref()
 
   const stop = () => {
-    console.log(`Stopping Xvfb.${isEmptyOrSpaces(errorOutput) ? "" : ` Error output: ${errorOutput}`}`)
     if (typeof proc.pid === "number" && !isNaN(proc.pid)) {
       try {
         process.kill(-proc.pid, "SIGTERM")
       } catch (e) {
-        console.warn("Failed to stop Xvfb:", e)
+        // ignore errors — the process may have already exited, and if it didn't, we're still in a docker container and it will be killed when the container stops, so no need to force-kill it here
       }
     }
   }
@@ -360,14 +372,99 @@ export function startXvfb(): { display: string; stop: () => void } {
       try {
         stop()
       } catch (e) {
-        console.warn("Failed to stop Xvfb:", e)
+        // ignored
       }
     })
   })
-
-  console.log("Xvfb started on display", display)
   return {
     display,
     stop,
+  }
+}
+
+export async function sha256File(filePath: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const hash = createHash("sha256")
+    createReadStream(filePath)
+      .on("data", chunk => hash.update(chunk))
+      .on("end", () => resolve(hash.digest("hex")))
+      .on("error", reject)
+  })
+}
+
+export interface VmInstallerOptions {
+  /** Args passed to the installer executable (e.g. ["/S"] for NSIS, [] for Squirrel which is silent by default) */
+  installerArgs?: string[]
+  /** Process name to kill after install completes (stops auto-launched app from the installer event) */
+  postInstallKillProcess?: string
+  /** PowerShell lines appended after the installer exits — use to verify installation */
+  verifyPs: string[]
+  /** Timeout in ms for the entire PowerShell execution (default: 180_000) */
+  timeout?: number
+}
+
+/**
+ * Delivers an installer to a Parallels VM via HTTP, verifies its SHA256 checksum,
+ * runs it, and executes caller-supplied PowerShell to verify the result.
+ * Returns the full PowerShell stdout.
+ */
+export async function deliverAndInstallInVm(vm: VmManager, installerPath: string, opts: VmInstallerOptions): Promise<string> {
+  const hostIP = getParallelsHostIP()
+  if (!hostIP) {
+    throw new Error("Cannot determine Parallels host IP — no prl*/bridge* interface found")
+  }
+  if (!/^[\d.]+$/.test(hostIP)) {
+    throw new Error(`Unsafe hostIP: ${hostIP}`)
+  }
+
+  const expectedSha256 = await sha256File(installerPath)
+  if (!/^[0-9a-f]{64}$/i.test(expectedSha256)) {
+    throw new Error(`Unexpected SHA256 value: ${expectedSha256}`)
+  }
+
+  const { server, port } = await createLocalServer(path.dirname(installerPath), "0.0.0.0")
+  if (!Number.isInteger(port) || port < 1024 || port > 65535) {
+    throw new Error(`Unsafe port: ${port}`)
+  }
+
+  const filename = path.basename(installerPath)
+  const argsLiteral = (opts.installerArgs ?? []).map(a => `'${a.replace(/'/g, "''")}'`).join(", ")
+  const argsPs = argsLiteral ? `@(${argsLiteral})` : "@()"
+
+  const lines = [
+    `$tmpDir = $null`,
+    `try {`,
+    `    $tmpDir = Join-Path $env:TEMP ([Guid]::NewGuid().ToString())`,
+    `    New-Item -ItemType Directory -Path $tmpDir | Out-Null`,
+    `    $dest = Join-Path $tmpDir 'installer.exe'`,
+    `    Invoke-WebRequest -Uri 'http://${hostIP}:${port}/${encodeURIComponent(filename)}' -OutFile $dest -UseBasicParsing`,
+    `    $actualHash = (Get-FileHash $dest -Algorithm SHA256).Hash.ToLower()`,
+    `    $expectedHash = '${expectedSha256}'`,
+    `    if ($actualHash -ne $expectedHash) { Write-Error ("Hash mismatch: $actualHash vs $expectedHash"); exit 1 }`,
+    `    Write-Output ('HASH_OK:true')`,
+    `    Unblock-File -Path $dest -ErrorAction SilentlyContinue`,
+    `    $proc = Start-Process -FilePath $dest -ArgumentList ${argsPs} -PassThru -Wait`,
+    `    Write-Output ('INSTALLER_EXIT:' + $proc.ExitCode)`,
+    `    if ($proc.ExitCode -ne 0) { Write-Error ("Installer exited $($proc.ExitCode)"); exit 1 }`,
+    ...(opts.postInstallKillProcess ? [`    Stop-Process -Name '${opts.postInstallKillProcess.replace(/'/g, "''")}' -Force -ErrorAction SilentlyContinue`] : []),
+    ...opts.verifyPs.map(l => `    ${l}`),
+    `} finally {`,
+    `    if ($tmpDir) { Remove-Item $tmpDir -Recurse -Force -ErrorAction SilentlyContinue }`,
+    `}`,
+  ]
+
+  const scriptPath = path.join(homedir(), `.eb-install-${randomUUID()}.ps1`)
+  await outputFile(scriptPath, lines.join("\n"))
+  const winScriptPath = toVmHomePath(scriptPath)
+
+  try {
+    const output = await vm.exec("powershell.exe", ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", winScriptPath], {
+      timeout: opts.timeout ?? 180_000,
+    })
+    console.log("[deliverAndInstallInVm] output:", output)
+    return output
+  } finally {
+    server.close()
+    await remove(scriptPath).catch(() => {})
   }
 }

@@ -69,20 +69,20 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:*":
-  version: 25.6.0
-  resolution: "@types/node@npm:25.6.0"
+  version: 25.6.2
+  resolution: "@types/node@npm:25.6.2"
   dependencies:
     undici-types: ~7.19.0
-  checksum: 98945eb59909a08868ccac203022f122b5549448ef8628de9eac3fe20481467cd6ec32af819fd432695f67ac21ebbbc69c8a141de6c6455edaf6e717e2cb89c9
+  checksum: 73ba68cce7b80bec594ba8b48b88af3f58f90cf5a6066f922e1c1efb2165862054498ee0464305cfed4e54596561520959d7a0e89478d7a450cd7ba3114e98f6
   languageName: node
   linkType: hard
 
 "@types/node@npm:^22.7.7":
-  version: 22.19.17
-  resolution: "@types/node@npm:22.19.17"
+  version: 22.19.18
+  resolution: "@types/node@npm:22.19.18"
   dependencies:
     undici-types: ~6.21.0
-  checksum: c817456948b0453b15a15d7865faea0b0de9bc93e9725788a62978f05994702b673029300ce9667d52ce439acfb43ecd8122acb8eba9145c26b1c4d22e67a234
+  checksum: 5750ece9067be5adcb9bb2dc93080a61f89948d1485010a12a5394949b299aa6087ee281fc5b66a230ae475b7ed4197f61884d5ac0df67b6f4db34df913a1f93
   languageName: node
   linkType: hard
 
@@ -206,16 +206,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron@npm:35.7.5":
-  version: 35.7.5
-  resolution: "electron@npm:35.7.5"
+"electron@npm:39.8.5":
+  version: 39.8.5
+  resolution: "electron@npm:39.8.5"
   dependencies:
     "@electron/get": ^2.0.0
     "@types/node": ^22.7.7
     extract-zip: ^2.0.1
   bin:
     electron: cli.js
-  checksum: 0540a82d9462b95e4e9173937e64aaa72b4c2f089ad4f10ea522a9298bfeb4340930582cfd79041dc1214e0f981c6fb9a02ac49433fbc89135faa5df8607f705
+  checksum: 3963f76cc4afd80ebe35e6a0f0ef5dafee912122de05ce4ee1d36e788deade7e1962259dadce90ff557cb988852a5389011932eb3f6783d0ecf8850121d042b8
   languageName: node
   linkType: hard
 
@@ -388,7 +388,7 @@ __metadata:
   resolution: "hello-world@workspace:packages/test-app"
   dependencies:
     debug: 4.4.3
-    electron: 35.7.5
+    electron: 39.8.5
   languageName: unknown
   linkType: soft
 
@@ -596,11 +596,11 @@ __metadata:
   linkType: hard
 
 "semver@npm:^7.3.2":
-  version: 7.7.4
-  resolution: "semver@npm:7.7.4"
+  version: 7.8.0
+  resolution: "semver@npm:7.8.0"
   bin:
     semver: bin/semver.js
-  checksum: 9b4a6a58e98b9723fafcafa393c9d4e8edefaa60b8dfbe39e30892a3604cf1f45f52df9cfb1ae1a22b44c8b3d57fec8a9bb7b3e1645431587cb272399ede152e
+  checksum: 68e38bc26ed1191d7c78d2b711bdffc2f8b1d05a1caadda41a1d7e1a9d32e1da5ae5b645de5c5f2b27bde830d7e9c1cbeeafcb8fda091830411df7d40be405b1
   languageName: node
   linkType: hard
 

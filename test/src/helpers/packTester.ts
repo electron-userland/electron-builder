@@ -63,6 +63,15 @@ function getLockedInstallArgs(pm: PM): Array<string> | undefined {
   }
 }
 
+function getUnlockedInstallArgs(pm: PM): Array<string> | undefined {
+  // Yarn handles CI immutable installs via YARN_ENABLE_IMMUTABLE_INSTALLS=false in runtimeEnv.
+  // pnpm has no env var equivalent; must explicitly pass --no-frozen-lockfile.
+  if (pm === PM.PNPM) {
+    return ["--no-frozen-lockfile"]
+  }
+  return undefined
+}
+
 function getLockfileFixtureNameCandidates(currentTestName: string): Array<string> {
   const names: Array<string> = []
   const normalizedTestName = currentTestName.trim()
@@ -223,12 +232,12 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       } else {
         log.info({ pm, version: version, projectDir }, "activating corepack")
         try {
-          execSync(`corepack enable ${cli}`, { env: runtimeEnv, cwd: projectDir, stdio: "ignore" })
+          execSync(`corepack enable ${cli}`, { env: runtimeEnv, cwd: projectDir, stdio: ["ignore", "ignore", "ignore"] })
         } catch (err: any) {
           log.warn({ message: err.message }, "⚠️ corepack enable failed (possibly already enabled)")
         }
         try {
-          execSync(`corepack prepare ${prepareEntry} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: "ignore" })
+          execSync(`corepack prepare ${prepareEntry} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: ["ignore", "ignore", "ignore"] })
         } catch (err: any) {
           log.warn({ message: err.message }, "⚠️ corepack prepare failed")
         }
@@ -239,20 +248,21 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       const destLockfile = path.join(projectDir, collectorOptions.lockfile)
       let lockfileFixtureApplied = false
 
-      const shouldUpdateLockfiles = !!process.env.UPDATE_LOCKFILE_FIXTURES && !!checkOptions.storeDepsLockfileSnapshot
+      const shouldUpdateLockfiles = process.env.UPDATE_LOCKFILE_FIXTURES === "true" && !!checkOptions.storeDepsLockfileSnapshot
       // check for lockfile fixture so we can use `--frozen-lockfile`
       if ((await exists(testFixtureLockfile)) && !shouldUpdateLockfiles) {
         await copyFile(testFixtureLockfile, destLockfile)
         lockfileFixtureApplied = true
       }
 
-      if (!(await exists(destLockfile))) {
-        log.info({ lockfile: collectorOptions.lockfile }, "lockfile not found, creating empty stub to prevent package manager prompts")
+      if (shouldUpdateLockfiles || !(await exists(destLockfile))) {
+        // When updating: clear the stale base-fixture lockfile so the package manager regenerates fresh.
+        // When no lockfile exists yet: create an empty stub to prevent package manager prompts.
         await fs.writeFile(destLockfile, "")
       }
 
       const appDir = await computeDefaultAppDirectory(projectDir, configuration.directories?.app)
-      const additionalInstallArgs = lockfileFixtureApplied ? getLockedInstallArgs(pm) : undefined
+      const additionalInstallArgs = lockfileFixtureApplied ? getLockedInstallArgs(pm) : checkOptions.storeDepsLockfileSnapshot ? getUnlockedInstallArgs(pm) : undefined
 
       await installDependencies(
         configuration,
@@ -538,9 +548,10 @@ async function checkLinuxResult(expect: ExpectStatic, outDir: string, packager: 
     expect(await getContents(`${outDir}/${appInfo.name}_${appInfo.version}_i386.deb`)).toMatchSnapshot()
   }
 
+  const { member: controlMember, tarArgs: controlArgs } = await resolveDebMember(packagePath, "control.tar.")
   const control = parseDebControl(
     (
-      await execShell(`ar p '${packagePath}' control.tar.xz | ${await getTarExecutable()} -Jx --to-stdout ./control`, {
+      await execShell(`ar p '${packagePath}' ${controlMember} | ${await getTarExecutable()} -x ${controlArgs} --to-stdout ./control`, {
         maxBuffer: 10 * 1024 * 1024,
       })
     ).stdout
@@ -727,8 +738,27 @@ export async function getTarExecutable() {
   return process.platform === "darwin" ? path.join(await getLinuxToolsPath(), "bin", "gtar") : "tar"
 }
 
+export async function resolveDebMember(debFile: string, memberPrefix: "data.tar." | "control.tar."): Promise<{ member: string; tarArgs: string }> {
+  const { stdout: memberList } = await execShell(`ar t '${debFile}'`, { maxBuffer: 1024 * 1024 })
+  const member = memberList
+    .trim()
+    .split("\n")
+    .find((m: string) => m.startsWith(memberPrefix))
+  if (member == null) throw new Error(`No ${memberPrefix}* member found in ${debFile}`)
+  const ext = member.slice(memberPrefix.length)
+  // Short flags (-J, -z, -j) are safe to concatenate; zstd requires a standalone long option
+  const tarArgs = ext === "xz" ? "-J" : ext === "gz" ? "-z" : ext === "bz2" ? "-j" : ext === "zst" || ext === "zstd" ? "--zstd" : "-J"
+  return { member, tarArgs }
+}
+
+export async function readDebCompression(debFile: string): Promise<string> {
+  const { member } = await resolveDebMember(debFile, "data.tar.")
+  return member.slice("data.tar.".length)
+}
+
 async function getContents(packageFile: string) {
-  const result = await execShell(`ar p '${packageFile}' data.tar.xz | ${await getTarExecutable()} -tJ`, {
+  const { member, tarArgs } = await resolveDebMember(packageFile, "data.tar.")
+  const result = await execShell(`ar p '${packageFile}' ${member} | ${await getTarExecutable()} -t ${tarArgs}`, {
     maxBuffer: 10 * 1024 * 1024,
     env: {
       ...process.env,

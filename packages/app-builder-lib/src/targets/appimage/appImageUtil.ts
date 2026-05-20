@@ -18,7 +18,15 @@ interface Options {
   icons: IconInfo[]
   license?: string | null
   fileAssociations: FileAssociation[]
-  compression?: "xz" | "lzo" | "zstd"
+  /**
+   * The compression type available for static runtime is limited as it's only compiled with support for gzip and zstd.
+   *
+   * [stderr] Squashfs image uses lzo compression, this version supports only zlib, zstd.
+   * Failed to open squashfs image
+   * Failed to extract AppImage
+   *
+   */
+  compression?: "gzip" | "zstd"
 }
 
 export interface AppImageBuilderOptions {
@@ -29,7 +37,7 @@ export interface AppImageBuilderOptions {
   options: Options
 }
 
-export async function buildAppImage(appimageToolVersion: ToolsetConfig["appimage"], opts: AppImageBuilderOptions): Promise<BlockMapDataHolder> {
+export async function buildStaticRuntimeAppImage(appimageToolVersion: ToolsetConfig["appimage"], opts: AppImageBuilderOptions): Promise<BlockMapDataHolder> {
   const { stageDir, output, appDir, options, arch } = opts
 
   try {
@@ -51,10 +59,6 @@ export async function buildAppImage(appimageToolVersion: ToolsetConfig["appimage
     const args: string[] = [stageDir, output, "-offset", runtimeData.length.toString(), "-all-root", "-noappend", "-no-progress", "-quiet", "-no-xattrs", "-no-fragments"]
     if (options.compression) {
       args.push("-comp", options.compression)
-
-      if (options.compression === "xz") {
-        args.push("-Xdict-size", "100%", "-b", "1048576")
-      }
     }
     await exec(mksquashfs, args, {
       cwd: stageDir,
