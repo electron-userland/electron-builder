@@ -5,6 +5,8 @@ import * as path from "path"
 import { appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { copy, mkdir, outputFile, readJson, rm, symlink, writeJson } from "fs-extra"
+import { assertThat } from "./helpers/fileAssert"
+import { dump } from "js-yaml"
 
 describe.ifNotWindows("node_module collectors", () => {
   test("yarn workspace", ({ expect }) =>
@@ -98,14 +100,12 @@ describe.ifNotWindows("node_module collectors", () => {
         projectDirCreated: async (projectDir, _tmpDir, testEnv) => {
           await modifyPackageJson(projectDir, data => {
             data.dependencies = {
-              "electron-updater": "6",
-              express: "4",
-              "patch-package": "^8.0.0",
+              "is-odd": "3.0.1",
             }
             data.devDependencies = {
-              electron: "23.2.0",
-              "electron-builder": "26",
-              "fs-extra": "11",
+              electron: ELECTRON_VERSION,
+              "fs-extra": "11.0.0",
+              "patch-package": "8.0.0",
             }
             data.build.directories = {
               app: "app",
@@ -151,14 +151,11 @@ describe.ifNotWindows("node_module collectors", () => {
         projectDirCreated: async (projectDir, _tmpDir, testEnv) => {
           await modifyPackageJson(projectDir, data => {
             data.dependencies = {
-              "electron-updater": "6",
-              express: "4",
-              "patch-package": "^8.0.0",
+              "is-odd": "3.0.1",
             }
             data.devDependencies = {
-              electron: "23.2.0",
-              "electron-builder": "26",
-              "fs-extra": "11",
+              electron: ELECTRON_VERSION,
+              "fs-extra": "11.0.0",
             }
             data.build.directories = {
               app: "app",
@@ -297,7 +294,7 @@ describe.ifNotWindows("node_module collectors", () => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
               data.dependencies = {
-                "electron-clear-data": "^1.0.5",
+                "electron-clear-data": "1.0.5",
               }
               data.optionalDependencies = {
                 debug: "3.1.0",
@@ -323,7 +320,7 @@ describe.ifNotWindows("node_module collectors", () => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
               data.dependencies = {
-                "electron-clear-data": "^1.0.5",
+                "electron-clear-data": "1.0.5",
               }
               data.optionalDependencies = {
                 "node-mac-permissions": "2.3.0",
@@ -350,7 +347,7 @@ describe.ifNotWindows("node_module collectors", () => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
               data.dependencies = {
-                "electron-clear-data": "^1.0.5",
+                "electron-clear-data": "1.0.5",
               }
               data.optionalDependencies = {
                 debug: "3.1.0",
@@ -376,7 +373,7 @@ describe.ifNotWindows("node_module collectors", () => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
               data.dependencies = {
-                "electron-clear-data": "^1.0.5",
+                "electron-clear-data": "1.0.5",
               }
               data.optionalDependencies = {
                 debug: "3.1.0",
@@ -426,7 +423,7 @@ describe.ifNotWindows("node_module collectors", () => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
               data.dependencies = {
-                "npm-run-all": "^4.1.5",
+                "npm-run-all": "4.1.5",
               }
             }),
           ])
@@ -449,7 +446,7 @@ describe.ifNotWindows("node_module collectors", () => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
               data.dependencies = {
-                "npm-run-all": "^4.1.5",
+                "npm-run-all": "4.1.5",
               }
             }),
           ])
@@ -473,10 +470,10 @@ describe.ifNotWindows("node_module collectors", () => {
           await modifyPackageJson(projectDir, data => {
             data.dependencies = {
               "@sentry/electron": "5.11.0",
-              "electron-clear-data": "^1.0.5",
+              "electron-clear-data": "1.0.5",
             }
             data.devDependencies = {
-              electron: "34.0.2",
+              electron: ELECTRON_VERSION,
             }
           })
           await spawn("yarn", ["install"], {
@@ -633,13 +630,47 @@ describe.ifNotWindows("node_module collectors", () => {
           return Promise.all([
             modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => {
               data.dependencies = {
-                "better-sqlite3": "^11.10.0",
+                "better-sqlite3": "11.10.0",
                 debug: "4.4.3",
               }
               data.devDependencies = {
                 electron: ELECTRON_VERSION,
               }
             }),
+          ])
+        },
+        packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      }
+    ))
+
+  // https://github.com/electron-userland/electron-builder/issues/9711
+  test("pnpm v11 workspace", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-yarn-several-workspace",
+      {
+        targets: linuxDirTarget,
+        projectDir: "packages/test-app",
+      },
+      {
+        storeDepsLockfileSnapshot: true,
+        packageManager: PM.PNPM,
+        projectDirCreated: async projectDir => {
+          return Promise.all([
+            modifyPackageJson(projectDir, data => {
+              data.packageManager = "pnpm@11.0.9"
+            }),
+            modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => {
+              data.dependencies = {
+                debug: "4.4.3",
+              }
+              data.devDependencies = {
+                electron: ELECTRON_VERSION,
+              }
+            }),
+            // pnpm v11 requires explicit build script approval via allowBuilds in pnpm-workspace.yaml
+            // (replaces the removed onlyBuiltDependencies / neverBuiltDependencies settings)
+            outputFile(path.join(projectDir, "pnpm-workspace.yaml"), dump({ packages: ["packages/*"], allowBuilds: { electron: true } })),
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
@@ -661,12 +692,36 @@ describe.ifNotWindows("node_module collectors", () => {
           const subAppDir = path.join(projectDir, "packages", "test-app")
           return modifyPackageJson(subAppDir, data => {
             data.dependencies = {
-              jsdom: "^27.4.0",
-              "markdown-it": "^14.1.0",
+              jsdom: "27.4.0",
+              "markdown-it": "14.1.0",
             }
           })
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      }
+    ))
+
+  test("yarn berry using extraMetadata.name should not unpack workspace app", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-yarn-workspace",
+      {
+        targets: linuxDirTarget,
+        projectDir: "packages/test-app",
+        config: {
+          extraMetadata: {
+            name: "overridden-app-name",
+          },
+        },
+      },
+      {
+        storeDepsLockfileSnapshot: true,
+        packageManager: PM.YARN_BERRY,
+        packed: async context => {
+          const resources = context.getResources(Platform.LINUX)
+
+          await assertThat(expect, path.join(resources, "app.asar.unpacked", "node_modules", "test-app")).doesNotExist()
+        },
       }
     ))
 })

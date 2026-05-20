@@ -40,7 +40,7 @@
       "additionalProperties": false,
       "properties": {
         "artifactName": {
-          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -53,8 +53,24 @@
             "string"
           ]
         },
+        "compression": {
+          "anyOf": [
+            {
+              "enum": [
+                "gzip",
+                "xz",
+                "zstd"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The compression algorithm passed to the AppImage build tool.\n\n**FUSE2 toolset (`\"0.0.0\"` or unset):** `\"xz\"` is forwarded as `--compression xz`.\n`\"gzip\"`, `\"zstd\"`, `null`, and unset all fall through to the root-level `compression` option:\n- `\"maximum\"` → `--compression xz` (overrides any per-target gzip/zstd value)\n- anything else → flag omitted (mksquashfs defaults to gzip)\n\n**Static-runtime toolsets (`>= 1.0.0`):** `\"gzip\"` and `\"zstd\"` are forwarded\ndirectly. `\"xz\"` is mapped to `\"zstd\"` (nearest supported equivalent). `null`\nor unset falls through to the root-level `compression` option:\n- `\"store\"` → `\"gzip\"`\n- `\"normal\"` / `\"maximum\"` / unset → `\"zstd\"`"
+        },
         "description": {
-          "description": "As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.",
+          "description": "As [description](https://www.electron.build/configuration#description) from application package.json, but allows you to specify different for Linux.",
           "type": [
             "null",
             "string"
@@ -171,7 +187,7 @@
           "type": "string"
         },
         "artifactName": {
-          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -219,7 +235,7 @@
           "type": "boolean"
         },
         "identityName": {
-          "description": "The name. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx). Defaults to the [application name](./configuration.md#metadata).",
+          "description": "The name. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx). Defaults to the [application name](https://www.electron.build/configuration#metadata).",
           "type": [
             "null",
             "string"
@@ -355,6 +371,7 @@
       "additionalProperties": false,
       "properties": {
         "ordering": {
+          "description": "Path to a file containing the order in which files should be packed into the asar archive.\nEach line of the file is a relative path from the app directory. Files listed first are\npacked first, which can improve app startup time by front-loading frequently accessed modules.\nSee the [asar documentation](https://github.com/electron/asar) for details.",
           "type": [
             "null",
             "string"
@@ -604,7 +621,7 @@
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -623,8 +640,8 @@
               "enum": [
                 "bzip2",
                 "gz",
-                "lzo",
-                "xz"
+                "xz",
+                "zst"
               ],
               "type": "string"
             },
@@ -633,7 +650,7 @@
             }
           ],
           "default": "xz",
-          "description": "The compression type."
+          "description": "The compression type passed to fpm. For `deb`, `rpm`, and `pacman` targets prefer the\ntyped per-format interfaces (`DebOptions`, `RpmOptions`, `PacmanOptions`) which narrow\nthis to only the values that fpm actually accepts for that format."
         },
         "depends": {
           "anyOf": [
@@ -661,7 +678,7 @@
           "description": "Package dependencies.\nIf need to support Debian, `libappindicator1` should be removed, it is [deprecated in Debian](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=895037).\nIf need to support KDE, `gconf2` and `gconf-service` should be removed as it's no longer used [by GNOME](https://packages.debian.org/bullseye/gconf2)."
         },
         "description": {
-          "description": "As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.",
+          "description": "As [description](https://www.electron.build/configuration#description) from application package.json, but allows you to specify different for Linux.",
           "type": [
             "null",
             "string"
@@ -864,7 +881,7 @@
       "additionalProperties": false,
       "properties": {
         "artifactName": {
-          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -878,14 +895,15 @@
           ]
         },
         "backgroundColor": {
-          "description": "The background color (accepts css colors). Defaults to `#ffffff` (white) if no background image.",
+          "default": "#ffffff",
+          "description": "The background color (accepts css colors). Used when no background image is set.",
           "type": [
             "null",
             "string"
           ]
         },
         "badgeIcon": {
-          "description": "The path to DMG icon (badge icon), which will be shown when mounted, relative to the [build resources](./contents.md#extraresources) or to the project directory.",
+          "description": "The path to DMG icon (badge icon), which will be shown when mounted, relative to the [build resources](https://www.electron.build/contents#extraresources) or to the project directory.",
           "type": [
             "null",
             "string"
@@ -912,7 +930,7 @@
           "type": "string"
         },
         "icon": {
-          "description": "The path to DMG icon (volume icon), which will be shown when mounted, relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to the application icon (`build/icon.icns`).",
+          "description": "The path to DMG icon (volume icon), which will be shown when mounted, relative to the [build resources](https://www.electron.build/contents#extraresources) or to the project directory.\nDefaults to the application icon (`build/icon.icns`).",
           "type": [
             "null",
             "string"
@@ -1104,6 +1122,49 @@
         },
         "version": {
           "type": "string"
+        },
+        "checksums": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "type": "object"
+    },
+    "ElectronGetOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "checksums": {
+          "$ref": "#/definitions/Record<string,string>",
+          "description": "Provides checksums for the artifact as strings.\nCan be used if you already know the checksums of the Electron artifact\nyou are downloading and want to skip the checksum file download\nwithout skipping the checksum validation.\n\nThis should be an object whose keys are the file names of the artifacts and\nthe values are their respective SHA256 checksums."
+        },
+        "force": {
+          "description": "Whether to download an artifact regardless of whether it's in the cache directory.",
+          "type": "boolean"
+        },
+        "unsafelyDisableChecksums": {
+          "description": "When set to `true`, disables checking that the artifact download completed successfully\nwith the correct payload.",
+          "type": "boolean"
+        },
+        "mirrorOptions": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Mirror options passed directly to @electron/get. Omits customDir, customFilename, and customVersion which are controlled by electron-builder.",
+          "properties": {
+            "mirror": {
+              "type": "string",
+              "description": "The base mirror URL for downloading Electron artifacts."
+            },
+            "nightlyMirror": {
+              "type": "string",
+              "description": "The mirror URL to use for nightly Electron builds."
+            },
+            "resolveAssetURL": {
+              "type": "string",
+              "description": "A custom function (serialised) to resolve the full asset URL."
+            }
+          }
         }
       },
       "type": "object"
@@ -1189,10 +1250,10 @@
               "type": "string"
             }
           ],
-          "description": "The [glob patterns](./file-patterns.md). Defaults to \"**\\/*\""
+          "description": "The [glob patterns](https://www.electron.build/file-patterns). Defaults to \"**\\/*\""
         },
         "from": {
-          "description": "The source path relative to and defaults to:\n\n - the [app directory](configuration.md#directories) for `files`,\n - the project directory for `extraResources` and `extraFiles`.\nIf you don't use two-package.json structure and don't set custom app directory, app directory equals to project directory.",
+          "description": "The source path relative to and defaults to:\n\n - the [app directory](https://www.electron.build/configuration#directories) for `files`,\n - the project directory for `extraResources` and `extraFiles`.\nIf you don't use two-package.json structure and don't set custom app directory, app directory equals to project directory.",
           "type": "string"
         },
         "to": {
@@ -1206,7 +1267,7 @@
       "additionalProperties": false,
       "properties": {
         "artifactName": {
-          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -1232,7 +1293,7 @@
           ]
         },
         "description": {
-          "description": "As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.",
+          "description": "As [description](https://www.electron.build/configuration#description) from application package.json, but allows you to specify different for Linux.",
           "type": [
             "null",
             "string"
@@ -1444,7 +1505,7 @@
     },
     "GenericServerOptions": {
       "additionalProperties": false,
-      "description": "Generic (any HTTP(S) server) options.\nIn all publish options [File Macros](./file-patterns.md#file-macros) are supported.",
+      "description": "Generic (any HTTP(S) server) options.\nIn all publish options [File Macros](https://www.electron.build/file-patterns#file-macros) are supported.",
       "properties": {
         "channel": {
           "default": "latest",
@@ -1538,7 +1599,7 @@
           ]
         },
         "private": {
-          "description": "Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](./auto-update.md#private-github-update-repo).",
+          "description": "Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](https://www.electron.build/auto-update#private-github-update-repo).",
           "type": [
             "null",
             "boolean"
@@ -1624,7 +1685,7 @@
           ]
         },
         "token": {
-          "description": "The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](./auto-update.md#appupdatersetfeedurloptions).",
+          "description": "The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](https://www.electron.build/auto-update#appupdatersetfeedurloptions).",
           "type": [
             "null",
             "string"
@@ -1854,7 +1915,7 @@
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
+          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
           "type": [
             "null",
             "string"
@@ -1890,7 +1951,7 @@
               ]
             }
           ],
-          "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
         },
         "category": {
           "description": "The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).",
@@ -1929,10 +1990,11 @@
           ]
         },
         "defaultArch": {
+          "description": "The default architecture to build for when no `--arch` flag is specified.\nDefaults to the current machine's architecture.",
           "type": "string"
         },
         "description": {
-          "description": "As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.",
+          "description": "As [description](https://www.electron.build/configuration#description) from application package.json, but allows you to specify different for Linux.",
           "type": [
             "null",
             "string"
@@ -1977,7 +2039,7 @@
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](./auto-update.md#compatibility) semver range.",
+          "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
           "type": [
             "null",
             "string"
@@ -2056,7 +2118,7 @@
               ]
             }
           ],
-          "description": "A [glob patterns](./file-patterns.md) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).\n\nFile patterns (and support for `from` and `to` fields) the same as for [files](#files)."
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).\n\nFile patterns (and support for `from` and `to` fields) the same as for [files](#files)."
         },
         "fileAssociations": {
           "anyOf": [
@@ -2097,9 +2159,10 @@
               ]
             }
           ],
-          "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](configuration.md#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](mac.md)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](./file-patterns.md#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
         },
         "forceCodeSigning": {
+          "default": false,
           "description": "Whether to fail if app will be not code signed.",
           "type": "boolean"
         },
@@ -2109,11 +2172,11 @@
           "type": "boolean"
         },
         "icon": {
-          "description": "The path to icon set directory or one png file, relative to the [build resources](./contents.md#extraresources) or to the project directory. The icon filename must contain the size (e.g. 32x32.png) of the icon.\nBy default will be generated automatically based on the macOS icns file.",
+          "description": "The path to icon set directory or one png file, relative to the [build resources](https://www.electron.build/contents#extraresources) or to the project directory. The icon filename must contain the size (e.g. 32x32.png) of the icon.\nBy default will be generated automatically based on the macOS icns file.",
           "type": "string"
         },
         "maintainer": {
-          "description": "The maintainer. Defaults to [author](./configuration.md#author).",
+          "description": "The maintainer. Defaults to [author](https://www.electron.build/configuration#author).",
           "type": [
             "null",
             "string"
@@ -2134,7 +2197,6 @@
           "description": "The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing."
         },
         "packageCategory": {
-          "description": "backward compatibility + to allow specify fpm-only category for all possible fpm targets in one place",
           "type": [
             "null",
             "string"
@@ -2196,7 +2258,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration. See [Auto Update](./publish.md) for more information."
+          "description": "Publisher configuration. See [Auto Update](https://www.electron.build/publish) for more information."
         },
         "releaseInfo": {
           "$ref": "#/definitions/ReleaseInfo",
@@ -2235,10 +2297,10 @@
             }
           ],
           "default": "AppImage",
-          "description": "Target package type: list of `AppImage`, `flatpak`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\n\nelectron-builder [docker image](./multi-platform-build.md#docker) can be used to build Linux targets on any platform.\n\nPlease [do not put an AppImage into another archive](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) like a .zip or .tar.gz."
+          "description": "Target package type: list of `AppImage`, `flatpak`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\n\nelectron-builder [docker image](https://www.electron.build/multi-platform-build#docker) can be used to build Linux targets on any platform.\n\nPlease [do not put an AppImage into another archive](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) like a .zip or .tar.gz."
         },
         "vendor": {
-          "description": "The vendor. Defaults to [author](./configuration.md#author).",
+          "description": "The vendor. Defaults to [author](https://www.electron.build/configuration#author).",
           "type": [
             "null",
             "string"
@@ -2301,7 +2363,7 @@
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -2320,8 +2382,11 @@
               "enum": [
                 "bzip2",
                 "gz",
-                "lzo",
-                "xz"
+                "gzip",
+                "xz",
+                "xzmt",
+                "zst",
+                "zstd"
               ],
               "type": "string"
             },
@@ -2330,7 +2395,7 @@
             }
           ],
           "default": "xz",
-          "description": "The compression type."
+          "description": "The compression type passed to fpm. For `deb`, `rpm`, and `pacman` targets prefer the\ntyped per-format interfaces (`DebOptions`, `RpmOptions`, `PacmanOptions`) which narrow\nthis to only the values that fpm actually accepts for that format."
         },
         "depends": {
           "anyOf": [
@@ -2347,7 +2412,7 @@
           "description": "Package dependencies.\n`rpm` defaults to `[\"gtk3\", \"libnotify\", \"nss\", \"libXScrnSaver\", \"(libXtst or libXtst6)\", \"xdg-utils\", \"at-spi2-core\", \"(libuuid or libuuid1)\"]`\n`pacman` defaults to `[\"c-ares\", \"ffmpeg\", \"gtk3\", \"http-parser\", \"libevent\", \"libvpx\", \"libxslt\", \"libxss\", \"minizip\", \"nss\", \"re2\", \"snappy\", \"libnotify\", \"libappindicator-gtk3\"]`"
         },
         "description": {
-          "description": "As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.",
+          "description": "As [description](https://www.electron.build/configuration#description) from application package.json, but allows you to specify different for Linux.",
           "type": [
             "null",
             "string"
@@ -2514,7 +2579,7 @@
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
+          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
           "type": [
             "null",
             "string"
@@ -2550,7 +2615,7 @@
               ]
             }
           ],
-          "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
         },
         "binaries": {
           "anyOf": [
@@ -2634,6 +2699,7 @@
           "type": "boolean"
         },
         "defaultArch": {
+          "description": "The default architecture to build for when no `--arch` flag is specified.\nDefaults to the current machine's architecture.",
           "type": "string"
         },
         "detectUpdateChannel": {
@@ -2664,14 +2730,14 @@
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](./auto-update.md#compatibility) semver range.",
+          "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
           "type": [
             "null",
             "string"
           ]
         },
         "entitlements": {
-          "description": "The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set).\nMAS entitlements is specified in the [mas](./mas.md).\nSee [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.\nBe aware that your app may crash if the right entitlements are not set like `com.apple.security.cs.allow-jit` for example on arm64 builds with Electron 20+.\nSee [Signing and Notarizing macOS Builds from the Electron documentation](https://www.electronjs.org/docs/latest/tutorial/code-signing#signing--notarizing-macos-builds) for more information.",
+          "description": "The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set).\nMAS entitlements is specified in the [mas](https://www.electron.build/mas).\nSee [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.\nBe aware that your app may crash if the right entitlements are not set like `com.apple.security.cs.allow-jit` for example on arm64 builds with Electron 20+.\nSee [Signing and Notarizing macOS Builds from the Electron documentation](https://www.electronjs.org/docs/latest/tutorial/code-signing#signing--notarizing-macos-builds) for more information.",
           "type": [
             "null",
             "string"
@@ -2770,7 +2836,7 @@
               ]
             }
           ],
-          "description": "A [glob patterns](./file-patterns.md) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).\n\nFile patterns (and support for `from` and `to` fields) the same as for [files](#files)."
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).\n\nFile patterns (and support for `from` and `to` fields) the same as for [files](#files)."
         },
         "fileAssociations": {
           "anyOf": [
@@ -2811,9 +2877,10 @@
               ]
             }
           ],
-          "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](configuration.md#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](mac.md)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](./file-patterns.md#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
         },
         "forceCodeSigning": {
+          "default": false,
           "description": "Whether to fail if app will be not code signed.",
           "type": "boolean"
         },
@@ -2889,7 +2956,7 @@
           ]
         },
         "identity": {
-          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](./code-signing.md) instead of specifying this option.\nMAS installer identity is specified in the [mas](./mas.md).\n\nSet to `-` to use an ad-hoc identity for signing. Set to `null` to skip signing entirely.",
+          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://www.electron.build/code-signing) instead of specifying this option.\nMAS installer identity is specified in the [mas](https://www.electron.build/mas).\n\nSet to `-` to use an ad-hoc identity for signing. Set to `null` to skip signing entirely.",
           "type": [
             "null",
             "string"
@@ -2979,7 +3046,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration. See [Auto Update](./publish.md) for more information."
+          "description": "Publisher configuration. See [Auto Update](https://www.electron.build/publish) for more information."
         },
         "releaseInfo": {
           "$ref": "#/definitions/ReleaseInfo",
@@ -3088,7 +3155,8 @@
               "type": "null"
             }
           ],
-          "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (`dmg` and `zip` for Squirrel.Mac). Note: Squirrel.Mac auto update mechanism requires both `dmg` and `zip` to be enabled, even when only `dmg` is used. Disabling `zip` will break auto update in `dmg` packages."
+          "default": "default (dmg and zip for Squirrel.Mac)",
+          "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\nNote: Squirrel.Mac auto update mechanism requires both `dmg` and `zip` to be enabled, even when only `dmg` is used. Disabling `zip` will break auto update in `dmg` packages."
         },
         "timestamp": {
           "description": "Specify the URL of the timestamp authority server",
@@ -3149,7 +3217,7 @@
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
+          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
           "type": [
             "null",
             "string"
@@ -3185,7 +3253,7 @@
               ]
             }
           ],
-          "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
         },
         "binaries": {
           "anyOf": [
@@ -3269,6 +3337,7 @@
           "type": "boolean"
         },
         "defaultArch": {
+          "description": "The default architecture to build for when no `--arch` flag is specified.\nDefaults to the current machine's architecture.",
           "type": "string"
         },
         "detectUpdateChannel": {
@@ -3299,7 +3368,7 @@
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](./auto-update.md#compatibility) semver range.",
+          "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
           "type": [
             "null",
             "string"
@@ -3405,7 +3474,7 @@
               ]
             }
           ],
-          "description": "A [glob patterns](./file-patterns.md) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).\n\nFile patterns (and support for `from` and `to` fields) the same as for [files](#files)."
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).\n\nFile patterns (and support for `from` and `to` fields) the same as for [files](#files)."
         },
         "fileAssociations": {
           "anyOf": [
@@ -3446,9 +3515,10 @@
               ]
             }
           ],
-          "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](configuration.md#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](mac.md)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](./file-patterns.md#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
         },
         "forceCodeSigning": {
+          "default": false,
           "description": "Whether to fail if app will be not code signed.",
           "type": "boolean"
         },
@@ -3524,7 +3594,7 @@
           ]
         },
         "identity": {
-          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](./code-signing.md) instead of specifying this option.\nMAS installer identity is specified in the [mas](./mas.md).\n\nSet to `-` to use an ad-hoc identity for signing. Set to `null` to skip signing entirely.",
+          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://www.electron.build/code-signing) instead of specifying this option.\nMAS installer identity is specified in the [mas](https://www.electron.build/mas).\n\nSet to `-` to use an ad-hoc identity for signing. Set to `null` to skip signing entirely.",
           "type": [
             "null",
             "string"
@@ -3614,7 +3684,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration. See [Auto Update](./publish.md) for more information."
+          "description": "Publisher configuration. See [Auto Update](https://www.electron.build/publish) for more information."
         },
         "releaseInfo": {
           "$ref": "#/definitions/ReleaseInfo",
@@ -3723,7 +3793,8 @@
               "type": "null"
             }
           ],
-          "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (`dmg` and `zip` for Squirrel.Mac). Note: Squirrel.Mac auto update mechanism requires both `dmg` and `zip` to be enabled, even when only `dmg` is used. Disabling `zip` will break auto update in `dmg` packages."
+          "default": "default (dmg and zip for Squirrel.Mac)",
+          "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\nNote: Squirrel.Mac auto update mechanism requires both `dmg` and `zip` to be enabled, even when only `dmg` is used. Disabling `zip` will break auto update in `dmg` packages."
         },
         "timestamp": {
           "description": "Specify the URL of the timestamp authority server",
@@ -3778,7 +3849,7 @@
         },
         "output": {
           "default": "dist",
-          "description": "The output directory. [File macros](./file-patterns.md#file-macros) are supported.",
+          "description": "The output directory. [File macros](https://www.electron.build/file-patterns#file-macros) are supported.",
           "type": [
             "null",
             "string"
@@ -3819,7 +3890,7 @@
           "description": "Any additional arguments to be passed to the WiX installer compiler, such as `[\"-ext\", \"WixUtilExtension\"]`"
         },
         "artifactName": {
-          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -3945,7 +4016,7 @@
           "description": "Any additional arguments to be passed to the WiX installer compiler, such as `[\"-ext\", \"WixUtilExtension\"]`"
         },
         "artifactName": {
-          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -4077,7 +4148,7 @@
           "type": "boolean"
         },
         "artifactName": {
-          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName} Setup ${version}.${ext}`.",
+          "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template). Defaults to `${productName} Setup ${version}.${ext}`.",
           "type": [
             "null",
             "string"
@@ -4130,6 +4201,7 @@
           "type": "boolean"
         },
         "differentialPackage": {
+          "description": "Marks the package as built with differential download support for the update server.",
           "type": "boolean"
         },
         "displayLanguageSelector": {
@@ -4138,7 +4210,7 @@
           "type": "boolean"
         },
         "guid": {
-          "description": "See [GUID vs Application Name](./nsis.md#guid-vs-application-name).",
+          "description": "The GUID for the installer. Used to identify the application for upgrade and uninstall operations.\nIf not specified, a deterministic GUID is generated from the app ID (`appId`) — but this means\nchanging your `appId` will break silent upgrades of existing installs.",
           "type": [
             "null",
             "string"
@@ -4153,21 +4225,21 @@
         },
         "installerHeader": {
           "default": "build/installerHeader.bmp",
-          "description": "*assisted installer only.* `MUI_HEADERIMAGE`, relative to the [build resources](./contents.md#extraresources) or to the project directory.",
+          "description": "*assisted installer only.* `MUI_HEADERIMAGE`, relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.",
           "type": [
             "null",
             "string"
           ]
         },
         "installerHeaderIcon": {
-          "description": "*one-click installer only.* The path to header icon (above the progress bar), relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to `build/installerHeaderIcon.ico` or application icon.",
+          "description": "*one-click installer only.* The path to header icon (above the progress bar), relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.\nDefaults to `build/installerHeaderIcon.ico` or application icon.",
           "type": [
             "null",
             "string"
           ]
         },
         "installerIcon": {
-          "description": "The path to installer icon, relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to `build/installerIcon.ico` or application icon.",
+          "description": "The path to installer icon, relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.\nDefaults to `build/installerIcon.ico` or application icon.",
           "type": [
             "null",
             "string"
@@ -4191,7 +4263,7 @@
           "description": "The installer languages (e.g. `en_US`, `de_DE`). Change only if you understand what do you do and for what."
         },
         "installerSidebar": {
-          "description": "*assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`. Image size 164 × 314 pixels.",
+          "description": "*assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.\nDefaults to `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`. Image size 164 × 314 pixels.",
           "type": [
             "null",
             "string"
@@ -4352,42 +4424,42 @@
           ]
         },
         "uninstallUrlHelp": {
-          "description": "The URL to the uninstaller help page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "description": "The URL to the uninstaller help page in the control panel. Defaults to [homepage](https://www.electron.build/docs/configuration#homepage) from application package.json.",
           "type": [
             "null",
             "string"
           ]
         },
         "uninstallUrlInfoAbout": {
-          "description": "The URL to the uninstaller info about page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "description": "The URL to the uninstaller info about page in the control panel. Defaults to [homepage](https://www.electron.build/docs/configuration#homepage) from application package.json.",
           "type": [
             "null",
             "string"
           ]
         },
         "uninstallUrlReadme": {
-          "description": "The URL to the uninstaller readme page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "description": "The URL to the uninstaller readme page in the control panel. Defaults to [homepage](https://www.electron.build/docs/configuration#homepage) from application package.json.",
           "type": [
             "null",
             "string"
           ]
         },
         "uninstallUrlUpdateInfo": {
-          "description": "The URL to the uninstaller update info page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "description": "The URL to the uninstaller update info page in the control panel. Defaults to [homepage](https://www.electron.build/docs/configuration#homepage) from application package.json.",
           "type": [
             "null",
             "string"
           ]
         },
         "uninstallerIcon": {
-          "description": "The path to uninstaller icon, relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to `build/uninstallerIcon.ico` or application icon.",
+          "description": "The path to uninstaller icon, relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.\nDefaults to `build/uninstallerIcon.ico` or application icon.",
           "type": [
             "null",
             "string"
           ]
         },
         "uninstallerSidebar": {
-          "description": "*assisted installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`",
+          "description": "*assisted installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.\nDefaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`",
           "type": [
             "null",
             "string"
@@ -4395,6 +4467,7 @@
         },
         "useZip": {
           "default": false,
+          "description": "Forces zip compression format instead of LZMA. Used internally for differential update packages.",
           "type": "boolean"
         },
         "warningsAsErrors": {
@@ -4427,7 +4500,7 @@
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName} Web Setup ${version}.${ext}`.",
+          "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template). Defaults to `${productName} Web Setup ${version}.${ext}`.",
           "type": [
             "null",
             "string"
@@ -4481,6 +4554,7 @@
           "type": "boolean"
         },
         "differentialPackage": {
+          "description": "Marks the package as built with differential download support for the update server.",
           "type": "boolean"
         },
         "displayLanguageSelector": {
@@ -4489,7 +4563,7 @@
           "type": "boolean"
         },
         "guid": {
-          "description": "See [GUID vs Application Name](./nsis.md#guid-vs-application-name).",
+          "description": "The GUID for the installer. Used to identify the application for upgrade and uninstall operations.\nIf not specified, a deterministic GUID is generated from the app ID (`appId`) — but this means\nchanging your `appId` will break silent upgrades of existing installs.",
           "type": [
             "null",
             "string"
@@ -4504,21 +4578,21 @@
         },
         "installerHeader": {
           "default": "build/installerHeader.bmp",
-          "description": "*assisted installer only.* `MUI_HEADERIMAGE`, relative to the [build resources](./contents.md#extraresources) or to the project directory.",
+          "description": "*assisted installer only.* `MUI_HEADERIMAGE`, relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.",
           "type": [
             "null",
             "string"
           ]
         },
         "installerHeaderIcon": {
-          "description": "*one-click installer only.* The path to header icon (above the progress bar), relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to `build/installerHeaderIcon.ico` or application icon.",
+          "description": "*one-click installer only.* The path to header icon (above the progress bar), relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.\nDefaults to `build/installerHeaderIcon.ico` or application icon.",
           "type": [
             "null",
             "string"
           ]
         },
         "installerIcon": {
-          "description": "The path to installer icon, relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to `build/installerIcon.ico` or application icon.",
+          "description": "The path to installer icon, relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.\nDefaults to `build/installerIcon.ico` or application icon.",
           "type": [
             "null",
             "string"
@@ -4542,7 +4616,7 @@
           "description": "The installer languages (e.g. `en_US`, `de_DE`). Change only if you understand what do you do and for what."
         },
         "installerSidebar": {
-          "description": "*assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`. Image size 164 × 314 pixels.",
+          "description": "*assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.\nDefaults to `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`. Image size 164 × 314 pixels.",
           "type": [
             "null",
             "string"
@@ -4703,42 +4777,42 @@
           ]
         },
         "uninstallUrlHelp": {
-          "description": "The URL to the uninstaller help page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "description": "The URL to the uninstaller help page in the control panel. Defaults to [homepage](https://www.electron.build/docs/configuration#homepage) from application package.json.",
           "type": [
             "null",
             "string"
           ]
         },
         "uninstallUrlInfoAbout": {
-          "description": "The URL to the uninstaller info about page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "description": "The URL to the uninstaller info about page in the control panel. Defaults to [homepage](https://www.electron.build/docs/configuration#homepage) from application package.json.",
           "type": [
             "null",
             "string"
           ]
         },
         "uninstallUrlReadme": {
-          "description": "The URL to the uninstaller readme page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "description": "The URL to the uninstaller readme page in the control panel. Defaults to [homepage](https://www.electron.build/docs/configuration#homepage) from application package.json.",
           "type": [
             "null",
             "string"
           ]
         },
         "uninstallUrlUpdateInfo": {
-          "description": "The URL to the uninstaller update info page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "description": "The URL to the uninstaller update info page in the control panel. Defaults to [homepage](https://www.electron.build/docs/configuration#homepage) from application package.json.",
           "type": [
             "null",
             "string"
           ]
         },
         "uninstallerIcon": {
-          "description": "The path to uninstaller icon, relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to `build/uninstallerIcon.ico` or application icon.",
+          "description": "The path to uninstaller icon, relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.\nDefaults to `build/uninstallerIcon.ico` or application icon.",
           "type": [
             "null",
             "string"
           ]
         },
         "uninstallerSidebar": {
-          "description": "*assisted installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`",
+          "description": "*assisted installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](https://www.electron.build/docs/contents#extraresources) or to the project directory.\nDefaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`",
           "type": [
             "null",
             "string"
@@ -4746,6 +4820,7 @@
         },
         "useZip": {
           "default": false,
+          "description": "Forces zip compression format instead of LZMA. Used internally for differential update packages.",
           "type": "boolean"
         },
         "warningsAsErrors": {
@@ -5170,6 +5245,218 @@
       },
       "type": "object"
     },
+    "PacmanOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "afterInstall": {
+          "description": "File path to script to be passed to FPM for `--after-install` arg.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "afterRemove": {
+          "description": "File path to script to be passed to FPM for `--after-remove` arg.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "appArmorProfile": {
+          "description": "File path to custom AppArmor profile (Ubuntu 24+)",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "artifactName": {
+          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "category": {
+          "description": "The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "compression": {
+          "anyOf": [
+            {
+              "enum": [
+                "bzip2",
+                "gz",
+                "xz",
+                "zstd"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "xz",
+          "description": "The compression type passed to fpm. For `deb`, `rpm`, and `pacman` targets prefer the\ntyped per-format interfaces (`DebOptions`, `RpmOptions`, `PacmanOptions`) which narrow\nthis to only the values that fpm actually accepts for that format."
+        },
+        "depends": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Package dependencies.\n`rpm` defaults to `[\"gtk3\", \"libnotify\", \"nss\", \"libXScrnSaver\", \"(libXtst or libXtst6)\", \"xdg-utils\", \"at-spi2-core\", \"(libuuid or libuuid1)\"]`\n`pacman` defaults to `[\"c-ares\", \"ffmpeg\", \"gtk3\", \"http-parser\", \"libevent\", \"libvpx\", \"libxslt\", \"libxss\", \"minizip\", \"nss\", \"re2\", \"snappy\", \"libnotify\", \"libappindicator-gtk3\"]`"
+        },
+        "description": {
+          "description": "As [description](https://www.electron.build/configuration#description) from application package.json, but allows you to specify different for Linux.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "desktop": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LinuxDesktopFile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
+        },
+        "executableArgs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The executable parameters. Pass to executableName"
+        },
+        "fpm": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "*Advanced only* The [fpm](https://fpm.readthedocs.io/en/latest/cli-reference.html) options.\n\nExample: `[\"--before-install=build/deb-preinstall.sh\", \"--after-upgrade=build/deb-postinstall.sh\"]`"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "maintainer": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "mimeTypes": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing."
+        },
+        "packageCategory": {
+          "description": "The package category.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "packageName": {
+          "description": "The name of the package.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "$ref": "#/definitions/BitbucketOptions"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllPublishOptions"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "synopsis": {
+          "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "vendor": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "type": "object"
+    },
     "PkgBackgroundOptions": {
       "additionalProperties": false,
       "description": "Options for the background image in a PKG installer",
@@ -5250,7 +5537,7 @@
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -5290,7 +5577,7 @@
           ]
         },
         "identity": {
-          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](./code-signing.md) instead of specifying this option.",
+          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://www.electron.build/code-signing) instead of specifying this option.",
           "type": [
             "null",
             "string"
@@ -5450,7 +5737,7 @@
       "description": "Portable options.",
       "properties": {
         "artifactName": {
-          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -5484,7 +5771,7 @@
           "description": "Allows you to provide your own `nsis-resources`"
         },
         "guid": {
-          "description": "See [GUID vs Application Name](./nsis.md#guid-vs-application-name).",
+          "description": "The GUID for the installer. Used to identify the application for upgrade and uninstall operations.\nIf not specified, a deterministic GUID is generated from the app ID (`appId`) — but this means\nchanging your `appId` will break silent upgrades of existing installs.",
           "type": [
             "null",
             "string"
@@ -5564,6 +5851,7 @@
         },
         "useZip": {
           "default": false,
+          "description": "Forces zip compression format instead of LZMA. Used internally for differential update packages.",
           "type": "boolean"
         },
         "warningsAsErrors": {
@@ -5607,6 +5895,12 @@
       ],
       "type": "object"
     },
+    "Record<string,string>": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
     "ReleaseInfo": {
       "additionalProperties": false,
       "properties": {
@@ -5629,7 +5923,7 @@
           ]
         },
         "releaseNotesFile": {
-          "description": "The path to release notes file. Defaults to `release-notes-${platform}.md` (where `platform` it is current platform — `mac`, `linux` or `windows`) or `release-notes.md` in the [build resources](./contents.md#extraresources).",
+          "description": "The path to release notes file. Defaults to `release-notes-${platform}.md` (where `platform` it is current platform — `mac`, `linux` or `windows`) or `release-notes.md` in the [build resources](https://www.electron.build/contents#extraresources).",
           "type": [
             "null",
             "string"
@@ -5645,6 +5939,218 @@
             }
           ],
           "description": "Vendor specific information."
+        }
+      },
+      "type": "object"
+    },
+    "RpmOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "afterInstall": {
+          "description": "File path to script to be passed to FPM for `--after-install` arg.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "afterRemove": {
+          "description": "File path to script to be passed to FPM for `--after-remove` arg.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "appArmorProfile": {
+          "description": "File path to custom AppArmor profile (Ubuntu 24+)",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "artifactName": {
+          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "category": {
+          "description": "The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "compression": {
+          "anyOf": [
+            {
+              "enum": [
+                "bzip2",
+                "gzip",
+                "xz",
+                "xzmt"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "xzmt",
+          "description": "Passed to fpm via `--rpm-compression`. `\"xzmt\"` uses multi-threaded xz (fpm's RPM default).\n`\"xz\"` is automatically promoted to `\"xzmt\"`. `\"gzip\"` and `\"bzip2\"` pass through as-is."
+        },
+        "depends": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Package dependencies.\n`rpm` defaults to `[\"gtk3\", \"libnotify\", \"nss\", \"libXScrnSaver\", \"(libXtst or libXtst6)\", \"xdg-utils\", \"at-spi2-core\", \"(libuuid or libuuid1)\"]`\n`pacman` defaults to `[\"c-ares\", \"ffmpeg\", \"gtk3\", \"http-parser\", \"libevent\", \"libvpx\", \"libxslt\", \"libxss\", \"minizip\", \"nss\", \"re2\", \"snappy\", \"libnotify\", \"libappindicator-gtk3\"]`"
+        },
+        "description": {
+          "description": "As [description](https://www.electron.build/configuration#description) from application package.json, but allows you to specify different for Linux.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "desktop": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LinuxDesktopFile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
+        },
+        "executableArgs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The executable parameters. Pass to executableName"
+        },
+        "fpm": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "*Advanced only* The [fpm](https://fpm.readthedocs.io/en/latest/cli-reference.html) options.\n\nExample: `[\"--before-install=build/deb-preinstall.sh\", \"--after-upgrade=build/deb-postinstall.sh\"]`"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "maintainer": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "mimeTypes": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing."
+        },
+        "packageCategory": {
+          "description": "The package category.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "packageName": {
+          "description": "The name of the package.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "$ref": "#/definitions/BitbucketOptions"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllPublishOptions"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "synopsis": {
+          "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "vendor": {
+          "type": [
+            "null",
+            "string"
+          ]
         }
       },
       "type": "object"
@@ -5843,7 +6349,7 @@
           "description": "Specifies which files from the app part to stage and which to exclude. Individual files, directories, wildcards, globstars, and exclusions are accepted. See [Snapcraft filesets](https://snapcraft.io/docs/snapcraft-filesets) to learn more about the format.\n\nThe defaults can be found in [snap.ts](https://github.com/electron-userland/electron-builder/blob/master/packages/app-builder-lib/templates/snap/snapcraft.yaml#L29)."
         },
         "artifactName": {
-          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -5932,7 +6438,7 @@
           "description": "The type of [confinement](https://snapcraft.io/docs/reference/confinement) supported by the snap."
         },
         "description": {
-          "description": "As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.",
+          "description": "As [description](https://www.electron.build/configuration#description) from application package.json, but allows you to specify different for Linux.",
           "type": [
             "null",
             "string"
@@ -6132,7 +6638,7 @@
           "description": "The list of Ubuntu packages to use that are needed to support the `app` part creation. Like `depends` for `deb`.\nDefaults to `[\"libnspr4\", \"libnss3\", \"libxss1\", \"libappindicator3-1\", \"libsecret-1-0\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom package `foo` in addition to defaults."
         },
         "summary": {
-          "description": "The 78 character long summary. Defaults to [productName](./configuration.md#productName).",
+          "description": "The 78 character long summary. Defaults to [productName](https://www.electron.build/configuration#productname).",
           "type": [
             "null",
             "string"
@@ -6331,7 +6837,7 @@
       "additionalProperties": false,
       "properties": {
         "artifactName": {
-          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -6471,7 +6977,8 @@
             {
               "enum": [
                 "0.0.0",
-                "1.0.2"
+                "1.0.2",
+                "1.0.3"
               ],
               "type": "string"
             },
@@ -6480,7 +6987,7 @@
             }
           ],
           "default": "0.0.0",
-          "description": "`appimage` bundle version to use for Appimage packaging and runtime.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage&expanded=true\n0.0.0 - legacy toolset (appimage)\n\nBeta:\n1.0.2 - Runtime 20251108"
+          "description": "`appimage` bundle version to use for Appimage packaging and runtime.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage&expanded=true\n0.0.0 - legacy toolset (appimage)\n\nBetas:\n1.0.2 - Runtime 20251108\n1.0.3 - Runtime 20251108 (Resolves GH issue #9598)"
         },
         "winCodeSign": {
           "anyOf": [
@@ -6562,7 +7069,7 @@
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
+          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
           "type": [
             "null",
             "string"
@@ -6598,7 +7105,7 @@
               ]
             }
           ],
-          "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
         },
         "azureSignOptions": {
           "anyOf": [
@@ -6641,6 +7148,7 @@
           ]
         },
         "defaultArch": {
+          "description": "The default architecture to build for when no `--arch` flag is specified.\nDefaults to the current machine's architecture.",
           "type": "string"
         },
         "detectUpdateChannel": {
@@ -6671,7 +7179,7 @@
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](./auto-update.md#compatibility) semver range.",
+          "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
           "type": [
             "null",
             "string"
@@ -6736,7 +7244,7 @@
               ]
             }
           ],
-          "description": "A [glob patterns](./file-patterns.md) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).\n\nFile patterns (and support for `from` and `to` fields) the same as for [files](#files)."
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).\n\nFile patterns (and support for `from` and `to` fields) the same as for [files](#files)."
         },
         "fileAssociations": {
           "anyOf": [
@@ -6777,9 +7285,10 @@
               ]
             }
           ],
-          "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](configuration.md#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](mac.md)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](./file-patterns.md#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
         },
         "forceCodeSigning": {
+          "default": false,
           "description": "Whether to fail if app will be not code signed.",
           "type": "boolean"
         },
@@ -6859,7 +7368,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration. See [Auto Update](./publish.md) for more information."
+          "description": "Publisher configuration. See [Auto Update](https://www.electron.build/publish) for more information."
         },
         "releaseInfo": {
           "$ref": "#/definitions/ReleaseInfo",
@@ -6884,7 +7393,12 @@
         },
         "signAndEditExecutable": {
           "default": true,
-          "description": "Whether to sign and add metadata to executable.\nMetadata includes information about the app name/description/version, publisher, copyright, etc.\nThis property also is responsible for adding the app icon and setting execution level.\n(Advanced option leveraging `rcedit`)",
+          "description": "Whether to sign and add metadata to executable via [`resedit`](https://www.npmjs.com/package/resedit).\nMetadata includes information about the app name/description/version, publisher, copyright, etc.\nThis property also is responsible for adding the app icon and setting execution level.\nSet to `false` only if you need to fully disable resedit-based resource editing.\nTo skip only code signing while keeping resource editing, use `signExecutable: false` instead.",
+          "type": "boolean"
+        },
+        "signExecutable": {
+          "default": true,
+          "description": "Whether to sign Windows executables and any additional files matched by `signExts`.\nSet to `false` to skip Windows code signing while still editing executable resources\n(icon, metadata, etc. via [`resedit`](https://www.npmjs.com/package/resedit)).\nThis option is not limited to the main executable edit/sign flow and can also affect\nsigning of Windows installers or other artifacts that use the standard signing path.",
           "type": "boolean"
         },
         "signExts": {
@@ -6939,7 +7453,7 @@
             }
           ],
           "default": "nsis",
-          "description": "The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable]./nsis.md#portable) app without installation), `appx`, `msi`, `msi-wrapped`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\nAppX package can be built only on Windows 10.\n\nTo use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency."
+          "description": "The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable]https://www.electron.build/nsis#portable) app without installation), `appx`, `msi`, `msi-wrapped`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\nAppX package can be built only on Windows 10.\n\nTo use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency."
         },
         "verifyUpdateCodeSignature": {
           "default": true,
@@ -6960,14 +7474,14 @@
           ]
         },
         "certificateFile": {
-          "description": "The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason.\nPlease see [Code Signing](./code-signing.md).",
+          "description": "The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason.\nPlease see [Code Signing](https://www.electron.build/code-signing).",
           "type": [
             "null",
             "string"
           ]
         },
         "certificatePassword": {
-          "description": "The password to the certificate provided in `certificateFile`. Please use it only if you cannot use env variable `CSC_KEY_PASSWORD` (`WIN_CSC_KEY_PASSWORD`) for some reason.\nPlease see [Code Signing](./code-signing.md).",
+          "description": "The password to the certificate provided in `certificateFile`. Please use it only if you cannot use env variable `CSC_KEY_PASSWORD` (`WIN_CSC_KEY_PASSWORD`) for some reason.\nPlease see [Code Signing](https://www.electron.build/code-signing).",
           "type": [
             "null",
             "string"
@@ -7070,7 +7584,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run after all artifacts are built.\n\n```typescript\n(buildResult: BuildResult): Promise<Array<string>> | Array<string>\n```\n\nConfiguration in the same way as `afterPack` (see above).\n\n!!! example \"myAfterAllArtifactBuild.js\"\n```js\nexports.default = function () {\n // you can return additional files to publish\n return [\"/path/to/additional/result/file\"]\n}\n```"
+      "description": "The function (or path to file or module id) to be run after all artifacts are built.\nReceives a {@link BuildResult}. May return an array of additional file paths to publish.\n\nFor file/module setup, see {@link beforePack}."
     },
     "afterExtract": {
       "anyOf": [
@@ -7084,7 +7598,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be [run after the prebuilt Electron binary has been extracted to the output directory](#afterextract)\nSame setup as {@link beforePack}"
+      "description": "The function (or path to file or module id) to be run after the prebuilt Electron binary has been extracted to the output directory.\nReceives an {@link AfterExtractContext}. For file/module setup, see {@link beforePack}."
     },
     "afterPack": {
       "anyOf": [
@@ -7098,7 +7612,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be [run after pack](#afterpack) (but before pack into distributable format and sign).\nSame setup as {@link beforePack}"
+      "description": "The function (or path to file or module id) to be run after pack but before pack into distributable format and sign.\nReceives an {@link AfterPackContext}. For file/module setup, see {@link beforePack}."
     },
     "afterSign": {
       "anyOf": [
@@ -7112,7 +7626,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be [run after pack and sign](#aftersign) (but before pack into distributable format).\nSame setup as {@link beforePack}"
+      "description": "The function (or path to file or module id) to be run after pack and sign but before pack into distributable format.\nReceives an {@link AfterPackContext}. For file/module setup, see {@link beforePack}."
     },
     "apk": {
       "anyOf": [
@@ -7122,7 +7636,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "Alpine Linux APK package options. Produces an `.apk` archive installable via `apk add`."
     },
     "appId": {
       "default": "com.electron.${name}",
@@ -7141,7 +7656,7 @@
           "type": "null"
         }
       ],
-      "description": "AppImage options."
+      "description": "AppImage options. AppImage is a portable application format that bundles the app\nand its dependencies into a single self-contained executable that runs on most\nLinux distributions without installation."
     },
     "appx": {
       "anyOf": [
@@ -7151,7 +7666,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "Windows Store (AppX) package options."
     },
     "appxManifestCreated": {
       "anyOf": [
@@ -7179,7 +7695,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run on artifact build completed.\nSame setup as {@link beforePack}"
+      "description": "The function (or path to file or module id) to be run when an individual artifact build completes.\nReceives an {@link ArtifactCreated}. For file/module setup, see {@link beforePack}."
     },
     "artifactBuildStarted": {
       "anyOf": [
@@ -7193,10 +7709,10 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run on artifact build start.\nSame setup as {@link beforePack}"
+      "description": "The function (or path to file or module id) to be run when an individual artifact build starts.\nReceives an {@link ArtifactBuildStarted}. For file/module setup, see {@link beforePack}."
     },
     "artifactName": {
-      "description": "The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
+      "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
       "type": [
         "null",
         "string"
@@ -7232,7 +7748,7 @@
           ]
         }
       ],
-      "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
+      "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
     },
     "beforeBuild": {
       "anyOf": [
@@ -7260,7 +7776,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run before pack.\n\n```typescript\n(context: BeforePackContext): Promise<any> | any\n```\n\n!!! example \"As function\"\n\n ```js\n beforePack: async (context) => {\n   // your code\n }\n ```\n\nBecause in a configuration file you cannot use JavaScript, can be specified as a path to file or module id. Function must be exported as default export.\n\n```json\n\"build\": {\n\"beforePack\": \"./myBeforePackHook.js\"\n}\n```\n\nFile `myBeforePackHook.js` in the project root directory:\n\n!!! example \"myBeforePackHook.js\"\n ```js\n exports.default = async function(context) {\n   // your custom code\n }\n ```"
+      "description": "The function (or path to file or module id) to be run before pack.\nReceives a {@link BeforePackContext}.\n\nCan be specified inline as a function in JavaScript configs:\n```js\n// electron-builder.config.js\nmodule.exports = {\n  beforePack: async (context) => {\n    // your code\n  }\n}\n```\n\nOr as a path to a module that exports the function as its default export:\n```json\n{ \"build\": { \"beforePack\": \"./myBeforePackHook.js\" } }\n```\n```js\n// myBeforePackHook.js\nexports.default = async function(context) {\n  // your custom code\n}\n```"
     },
     "buildDependenciesFromSource": {
       "default": false,
@@ -7338,9 +7854,10 @@
           "type": "null"
         }
       ],
-      "description": "Debian package options."
+      "description": "Debian package options. Targets Debian, Ubuntu, and Debian-based distributions.\nProduces a `.deb` archive installable via `dpkg -i` or `apt install`."
     },
     "defaultArch": {
+      "description": "The default architecture to build for when no `--arch` flag is specified.\nDefaults to the current machine's architecture.",
       "type": "string"
     },
     "detectUpdateChannel": {
@@ -7410,8 +7927,18 @@
       "description": "The function (or path to file or module id) to be run when staging the electron artifact environment.\nReturns the path to custom Electron build (e.g. `~/electron/out/R`) or folder of electron zips.\n\nZip files must follow the pattern `electron-v${version}-${platformName}-${arch}.zip`, otherwise it will be assumed to be an unpacked Electron app directory"
     },
     "electronDownload": {
-      "$ref": "#/definitions/ElectronDownloadOptions",
-      "description": "The [electron-download](https://github.com/electron-userland/electron-download#usage) options."
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ElectronDownloadOptions"
+        },
+        {
+          "$ref": "#/definitions/ElectronGetOptions"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The [electron-download](https://github.com/electron-userland/electron-download#usage) options. (legacy)\nAlternatively, you can use [electron/get](https://github.com/electron/get#usage) options."
     },
     "electronFuses": {
       "anyOf": [
@@ -7439,7 +7966,7 @@
       "description": "The electron locales to keep. By default, all Electron locales used as-is."
     },
     "electronUpdaterCompatibility": {
-      "description": "The [electron-updater compatibility](./auto-update.md#compatibility) semver range.",
+      "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
       "type": [
         "null",
         "string"
@@ -7531,7 +8058,7 @@
           ]
         }
       ],
-      "description": "A [glob patterns](./file-patterns.md) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).\n\nFile patterns (and support for `from` and `to` fields) the same as for [files](#files)."
+      "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).\n\nFile patterns (and support for `from` and `to` fields) the same as for [files](#files)."
     },
     "fileAssociations": {
       "anyOf": [
@@ -7572,7 +8099,7 @@
           ]
         }
       ],
-      "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](configuration.md#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](mac.md)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](./file-patterns.md#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+      "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
     },
     "flatpak": {
       "anyOf": [
@@ -7583,7 +8110,7 @@
           "type": "null"
         }
       ],
-      "description": "Flatpak options."
+      "description": "Flatpak options. Flatpak is a sandboxed application distribution format for Linux\nthat runs in a controlled environment and is distributed via [Flathub](https://flathub.org/)\nor other Flatpak repositories."
     },
     "forceCodeSigning": {
       "default": false,
@@ -7605,7 +8132,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "FreeBSD package options. Produces a `.pkg` archive for the FreeBSD `pkg` package manager."
     },
     "generateUpdatesFilesForAllChannels": {
       "default": false,
@@ -7640,7 +8168,7 @@
           "type": "null"
         }
       ],
-      "description": "Options related to how build Linux targets."
+      "description": "General Linux build options shared across all Linux targets (icon, category, desktop entry,\nexecutable name, etc.). Target-specific compression and packaging options live in the\nper-format interfaces (`DebOptions`, `RpmOptions`, `PacmanOptions`, etc.)."
     },
     "mac": {
       "anyOf": [
@@ -7683,7 +8211,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "MSI package options."
     },
     "msiProjectCreated": {
       "anyOf": [
@@ -7707,7 +8236,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "MSI-wrapped installer options."
     },
     "nativeRebuilder": {
       "anyOf": [
@@ -7768,7 +8298,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "NSIS installer options."
     },
     "nsisWeb": {
       "anyOf": [
@@ -7778,7 +8309,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "NSIS web installer options (downloads app package at install time)."
     },
     "onNodeModuleFile": {
       "anyOf": [
@@ -7802,17 +8334,19 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "Solaris IPS package options. Produces a `.p5p` archive for the Solaris Image Packaging\nSystem (`pkg`)."
     },
     "pacman": {
       "anyOf": [
         {
-          "$ref": "#/definitions/LinuxTargetSpecificOptions"
+          "$ref": "#/definitions/PacmanOptions"
         },
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "Pacman package options. Targets Arch Linux and Arch-based distributions\n(Manjaro, EndeavourOS, etc.). Produces a `.pacman` archive installable via `pacman -U`."
     },
     "pkg": {
       "anyOf": [
@@ -7833,7 +8367,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "Portable executable options (no installation required)."
     },
     "productName": {
       "description": "As [name](#metadata), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name).\nIf not specified inside of the `build` configuration, `productName` property defined at the top level of `package.json` is used. If not specified at the top level of `package.json`, [name property](https://docs.npmjs.com/files/package.json#name) is used.",
@@ -7898,7 +8433,7 @@
           ]
         }
       ],
-      "description": "Publisher configuration. See [Auto Update](./publish.md) for more information."
+      "description": "Publisher configuration. See [Auto Update](https://www.electron.build/publish) for more information."
     },
     "releaseInfo": {
       "$ref": "#/definitions/ReleaseInfo",
@@ -7917,12 +8452,13 @@
     "rpm": {
       "anyOf": [
         {
-          "$ref": "#/definitions/LinuxTargetSpecificOptions"
+          "$ref": "#/definitions/RpmOptions"
         },
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "RPM package options. Targets Fedora, Red Hat Enterprise Linux, SUSE, and related\ndistributions. Produces a `.rpm` archive installable via `rpm` or `dnf`."
     },
     "snap": {
       "anyOf": [
@@ -7933,7 +8469,7 @@
           "type": "null"
         }
       ],
-      "description": "Snap options."
+      "description": "Snap package options. Requires [snapcraft](https://snapcraft.io/) to be installed."
     },
     "squirrelWindows": {
       "anyOf": [
@@ -7943,7 +8479,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "Squirrel.Windows installer options. Requires the `electron-builder-squirrel-windows` dependency."
     },
     "target": {
       "anyOf": [
@@ -7969,7 +8506,8 @@
             "string"
           ]
         }
-      ]
+      ],
+      "description": "The build target(s) for this platform. Can be a target name string, a {@link TargetConfiguration}\nobject, or an array of either. Available targets depend on the platform — see platform-specific\noptions (e.g. {@link MacConfiguration.target}, {@link WindowsConfiguration.target},\n{@link LinuxConfiguration.target})."
     },
     "toolsets": {
       "anyOf": [

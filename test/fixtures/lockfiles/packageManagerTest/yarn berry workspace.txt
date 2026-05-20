@@ -53,9 +53,9 @@ __metadata:
   linkType: hard
 
 "@types/http-cache-semantics@npm:*":
-  version: 4.0.4
-  resolution: "@types/http-cache-semantics@npm:4.0.4"
-  checksum: 7f4dd832e618bc1e271be49717d7b4066d77c2d4eed5b81198eb987e532bb3e1c7e02f45d77918185bad936f884b700c10cebe06305f50400f382ab75055f9e8
+  version: 4.2.0
+  resolution: "@types/http-cache-semantics@npm:4.2.0"
+  checksum: c75c63c3d4204eba2dc14f5ac5cfabc1c17ee9f11e6f5ff63d5c73a6245c7e360c0ae3e95512778860f5b08f5886fbaf7400fba3d23fd8faf279f58aa9bb54bc
   languageName: node
   linkType: hard
 
@@ -69,20 +69,20 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:*":
-  version: 25.0.3
-  resolution: "@types/node@npm:25.0.3"
+  version: 25.6.2
+  resolution: "@types/node@npm:25.6.2"
   dependencies:
-    undici-types: ~7.16.0
-  checksum: b5e0146eafe208e2f1c1167fd6078a460ace823ad1da61967ec70b8d7521bd6dd26f3cd945796effac48ef4b3df4d8d57d03e9eefd5f2903f6c1d6daf84a9a79
+    undici-types: ~7.19.0
+  checksum: 73ba68cce7b80bec594ba8b48b88af3f58f90cf5a6066f922e1c1efb2165862054498ee0464305cfed4e54596561520959d7a0e89478d7a450cd7ba3114e98f6
   languageName: node
   linkType: hard
 
 "@types/node@npm:^22.7.7":
-  version: 22.19.3
-  resolution: "@types/node@npm:22.19.3"
+  version: 22.19.18
+  resolution: "@types/node@npm:22.19.18"
   dependencies:
     undici-types: ~6.21.0
-  checksum: 2fffd870ac2a5a531a160034075c858e7c95c521b0612e9b7ae35e7a6bae1880c7a190a77a5c335fbb2e5f4a315c1e2f2b529f9be4bdbb2166664a7206e28951
+  checksum: 5750ece9067be5adcb9bb2dc93080a61f89948d1485010a12a5394949b299aa6087ee281fc5b66a230ae475b7ed4197f61884d5ac0df67b6f4db34df913a1f93
   languageName: node
   linkType: hard
 
@@ -206,16 +206,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron@npm:35.7.5":
-  version: 35.7.5
-  resolution: "electron@npm:35.7.5"
+"electron@npm:39.8.5":
+  version: 39.8.5
+  resolution: "electron@npm:39.8.5"
   dependencies:
     "@electron/get": ^2.0.0
     "@types/node": ^22.7.7
     extract-zip: ^2.0.1
   bin:
     electron: cli.js
-  checksum: 0540a82d9462b95e4e9173937e64aaa72b4c2f089ad4f10ea522a9298bfeb4340930582cfd79041dc1214e0f981c6fb9a02ac49433fbc89135faa5df8607f705
+  checksum: 3963f76cc4afd80ebe35e6a0f0ef5dafee912122de05ce4ee1d36e788deade7e1962259dadce90ff557cb988852a5389011932eb3f6783d0ecf8850121d042b8
   languageName: node
   linkType: hard
 
@@ -380,7 +380,7 @@ __metadata:
   resolution: "hello-world@workspace:packages/test-app"
   dependencies:
     debug: 4.4.3
-    electron: 35.7.5
+    electron: 39.8.5
   languageName: unknown
   linkType: soft
 
@@ -518,12 +518,12 @@ __metadata:
   linkType: hard
 
 "pump@npm:^3.0.0":
-  version: 3.0.3
-  resolution: "pump@npm:3.0.3"
+  version: 3.0.4
+  resolution: "pump@npm:3.0.4"
   dependencies:
     end-of-stream: ^1.1.0
     once: ^1.3.1
-  checksum: 52843fc933b838c0330f588388115a1b28ef2a5ffa7774709b142e35431e8ab0c2edec90de3fa34ebb72d59fef854f151eea7dfc211b6dcf586b384556bd2f39
+  checksum: d043c3e710c56ffd280711e98a94e863ab334f79ea43cee0fb70e1349b2355ffd2ff287c7522e4c960a247699d5b7825f00fa090b85d6179c973be13f78a6c49
   languageName: node
   linkType: hard
 
@@ -587,11 +587,11 @@ __metadata:
   linkType: hard
 
 "semver@npm:^7.3.2":
-  version: 7.7.3
-  resolution: "semver@npm:7.7.3"
+  version: 7.8.0
+  resolution: "semver@npm:7.8.0"
   bin:
     semver: bin/semver.js
-  checksum: f013a3ee4607857bcd3503b6ac1d80165f7f8ea94f5d55e2d3e33df82fce487aa3313b987abf9b39e0793c83c9fc67b76c36c067625141a9f6f704ae0ea18db2
+  checksum: 68e38bc26ed1191d7c78d2b711bdffc2f8b1d05a1caadda41a1d7e1a9d32e1da5ae5b645de5c5f2b27bde830d7e9c1cbeeafcb8fda091830411df7d40be405b1
   languageName: node
   linkType: hard
 
@@ -634,10 +634,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici-types@npm:~7.16.0":
-  version: 7.16.0
-  resolution: "undici-types@npm:7.16.0"
-  checksum: 1ef68fc6c5bad200c8b6f17de8e5bc5cfdcadc164ba8d7208cd087cfa8583d922d8316a7fd76c9a658c22b4123d3ff847429185094484fbc65377d695c905857
+"undici-types@npm:~7.19.0":
+  version: 7.19.2
+  resolution: "undici-types@npm:7.19.2"
+  checksum: f721026160e1f068a982401d0272b872819c335a2f64783c235ddd37a65ccd94327ec24489cee4556d57c77c14bd68ced60efa5def11cf11e3991f5ebf5e0e72
   languageName: node
   linkType: hard
 

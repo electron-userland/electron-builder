@@ -142,6 +142,77 @@ exports[`disable dmg icon (light), bundleVersion 2`] = `
 }
 `;
 
+exports[`dmg > app is copyable from mounted dmg and bundle structure is intact 1`] = `
+{
+  "mac": [
+    {
+      "arch": "x64",
+      "file": "DmgCopyTest-1.1.0.dmg",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "DmgCopyTest-1.1.0.dmg.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`dmg > app is copyable from mounted dmg and bundle structure is intact 2`] = `
+{
+  "CFBundleDisplayName": "DmgCopyTest",
+  "CFBundleExecutable": "DmgCopyTest",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "DmgCopyTest",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": {
+      "127.0.0.1": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
 exports[`dmg > background color 1`] = `
 {
   "backgroundColor": "orange",
@@ -216,6 +287,7 @@ exports[`dmg > background color 3`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -286,6 +358,7 @@ exports[`dmg > bundleShortVersion 2`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -357,6 +430,7 @@ exports[`dmg > custom background - new way 2`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -428,6 +502,7 @@ exports[`dmg > disable dmg icon (light), bundleVersion 2`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -498,6 +573,7 @@ exports[`dmg > dmg 2`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -557,6 +633,7 @@ exports[`dmg > explicit size 2`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -685,6 +762,7 @@ exports[`dmg > license buttons config 3`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -755,6 +833,7 @@ exports[`dmg > license en 2`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -825,6 +904,7 @@ exports[`dmg > license ja 2`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -895,6 +975,7 @@ exports[`dmg > license rtf 2`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -965,6 +1046,7 @@ exports[`dmg > multi language license 2`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -1035,6 +1117,7 @@ exports[`dmg > no background 2`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -1123,6 +1206,7 @@ exports[`dmg > no build directory 3`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -1194,6 +1278,7 @@ exports[`dmg > retina background as 2 png 2`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -1264,6 +1349,7 @@ exports[`dmg > unset dmg icon 2`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,

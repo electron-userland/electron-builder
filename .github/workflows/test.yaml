@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - release/v*
   pull_request:
   workflow_call:
     inputs:
@@ -82,7 +83,7 @@ jobs:
       - name: Setup Tests
         uses: ./.github/actions/pretest
         with:
-          cache-key: v-35.7.5-linux-electron
+          cache-key: v-39.8.5-linux-electron
           cache-path: ~/.cache/electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
 
@@ -126,7 +127,7 @@ jobs:
           - platform: linux
             runner: ubuntu-latest
             cache-path: ~/.cache/electron
-            cache-key: v-35.7.5-linux-electron
+            cache-key: v-39.8.5-linux-electron
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     steps:
@@ -186,7 +187,7 @@ jobs:
           - platform: windows
             runner: windows-latest
             cache-path: ~\AppData\Local\electron\Cache
-            cache-key: v-35.7.5-windows-electron
+            cache-key: v-39.8.5-windows-electron
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     steps:
@@ -198,6 +199,15 @@ jobs:
           cache-key: ${{ matrix.cache-key }}
           cache-path: ${{ matrix.cache-path }}
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
+
+      - name: Pre-initialize NuGet IsolatedStorage
+        shell: pwsh
+        run: |
+          # NuGet 2.x (bundled in the Squirrel.Windows vendor) uses IsolatedStorageFile.GetUserStoreForAssembly()
+          # for user settings. On fresh Windows CI runners this directory may not exist, causing the first
+          # NuGet invocation to fail with IsolatedStorageException (0x80131468). Pre-creating it lets
+          # the CLR create its hashed subdirectory without error.
+          New-Item -ItemType Directory -Force -Path "$env:LOCALAPPDATA\IsolatedStorage" | Out-Null
 
       - name: Run shard
         run: pnpm ci:test
@@ -226,7 +236,7 @@ jobs:
           - platform: macos
             runner: macos-26
             cache-path: ~/Library/Caches/electron
-            cache-key: v-35.7.5-macos-electron
+            cache-key: v-39.8.5-macos-electron
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     steps:
@@ -284,8 +294,14 @@ jobs:
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
-          cache-key: v-35.7.5-update-electron
+          cache-key: v-39.8.5-update-electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
+
+      - name: Verify Docs Generation
+        run: pnpm generate:all
+
+      - name: Verify Site Generation
+        run: pnpm docs:all
 
       - name: Download test-runner if exists
         if: needs.run-docker-build.result == 'success'
@@ -332,7 +348,7 @@ jobs:
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
-          cache-key: v-35.7.5-native-electron
+          cache-key: v-39.8.5-native-electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
 
       - name: Install dependencies
@@ -340,9 +356,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y rpm flatpak flatpak-builder snapd
           sudo snap install snapcraft --classic
-
-      - name: Verify Docs Generation
-        run: pnpm generate-all
 
       - name: Test
         run: |
@@ -369,28 +382,28 @@ jobs:
       fail-fast: false
       matrix:
         test_config:
-          - file: dockerfile-archlinux
+          - stem: archlinux
             env:
               PACKAGE_MANAGER_TO_TEST: pacman
-          - file: dockerfile-rpm
+          - stem: rpm
             env:
               PACKAGE_MANAGER_TO_TEST: dnf
-          - file: dockerfile-rpm
+          - stem: rpm
             env:
               PACKAGE_MANAGER_TO_TEST: zypper
-          - file: dockerfile-rpm
+          - stem: rpm
             env:
               PACKAGE_MANAGER_TO_TEST: yum
-          - file: dockerfile-rpm
+          - stem: rpm
             env:
               PACKAGE_MANAGER_TO_TEST: rpm
-          - file: dockerfile-debian
+          - stem: debian
             env:
               PACKAGE_MANAGER_TO_TEST: apt
-          - file: dockerfile-debian
+          - stem: debian
             env:
               PACKAGE_MANAGER_TO_TEST: dpkg
-          - file: dockerfile-appimage
+          - stem: appimage
             env:
               RUN_APP_IMAGE_TEST: true
     steps:
@@ -401,21 +414,20 @@ jobs:
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
-          cache-key: v-35.7.5-linux-e2e-electron
+          cache-key: v-39.8.5-linux-e2e-electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
 
       - name: docker build
-        run: |
-          docker build --platform=linux/amd64 -t ${{ matrix.test_config.file }} -f ./test/src/updater/${{ matrix.test_config.file }} .
+        run: ./test/src/updater/test-specific-platforms.sh ${{ matrix.test_config.stem }} build
 
       - name: e2e Linux Updater tests (install, auto-update, uninstall)
-        run: |
-          pnpm test-linux
+        run: ./test/src/updater/test-specific-platforms.sh ${{ matrix.test_config.stem }} run
         env:
-          TEST_RUNNER_IMAGE_TAG: ${{ matrix.test_config.file }}
-          TEST_FILES: blackboxUpdateTest,linuxUpdaterTest
-          DEBUG: electron-updater,electron-builder
-          ADDITIONAL_DOCKER_ARGS: "-e PACKAGE_MANAGER_TO_TEST=${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST }} -e RUN_APP_IMAGE_TEST=${{ matrix.test_config.env.RUN_APP_IMAGE_TEST || false }} -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}"
+          ADDITIONAL_DOCKER_ARGS: >-
+            -e PACKAGE_MANAGER_TO_TEST=${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST || '' }}
+            -e RUN_APP_IMAGE_TEST=${{ matrix.test_config.env.RUN_APP_IMAGE_TEST || false }}
+            -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json
+            -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}
 
       - name: Upload smart cache artifact
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
@@ -522,9 +534,12 @@ jobs:
           path: merged-cache/_vitest-smart-cache.json
           retention-days: 2
 
+      - name: Copy merged cache to canonical path
+        run: cp merged-cache/_vitest-smart-cache.json test/vitest-scripts/_vitest-smart-cache.json
+
       - name: Save merged cache for future runs on this branch
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
-          path: merged-cache/_vitest-smart-cache.json
+          path: test/vitest-scripts/_vitest-smart-cache.json
           key: vitest-smart-cache-${{ github.ref_name }}-${{ github.sha }}
 

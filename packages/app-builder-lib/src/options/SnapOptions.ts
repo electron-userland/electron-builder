@@ -19,7 +19,7 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
   readonly environment?: { [key: string]: string } | null
 
   /**
-   * The 78 character long summary. Defaults to [productName](./configuration.md#productName).
+   * The 78 character long summary. Defaults to [productName](https://www.electron.build/configuration#productname).
    */
   readonly summary?: string | null
 

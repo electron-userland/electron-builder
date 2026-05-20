@@ -1,6 +1,6 @@
 import { notarize } from "@electron/notarize"
 import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
-import { PerFileSignOptions, SigningDistributionType, SignOptions } from "@electron/osx-sign/dist/cjs/types"
+import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
 import { makeUniversalApp } from "@electron/universal"
 import {
@@ -14,7 +14,6 @@ import {
   InvalidConfigurationError,
   log,
   orIfFileNotExist,
-  statOrNull,
   unlinkIfExists,
   use,
 } from "builder-util"
@@ -24,9 +23,10 @@ import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { AppInfo } from "./appInfo"
-import { CertType, CodeSigningInfo, createKeychain, CreateKeychainOptions, findIdentity, isSignAllowed, removeKeychain, reportError, sign } from "./codeSign/macCodeSign"
+import { CodeSigningInfo, createKeychain, CreateKeychainOptions, isSignAllowed, removeKeychain, sign } from "./codeSign/macCodeSign"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { AfterPackContext, ElectronPlatformName } from "./index"
+import { MacTargetHelper } from "./mac/MacTargetHelper"
 import { MacConfiguration, MasConfiguration } from "./options/macOptions"
 import { Packager } from "./packager"
 import { chooseNotNull, DoPackOptions, PlatformPackager } from "./platformPackager"
@@ -34,7 +34,6 @@ import { ArchiveTarget } from "./targets/ArchiveTarget"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
-import { getTemplatePath } from "./util/pathManager"
 import { resolveFunction } from "./util/resolve"
 
 export type CustomMacSignOptions = SignOptions
@@ -84,6 +83,11 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
   )
 
   private _iconPath = new Lazy(() => this.getOrConvertIcon("icns"))
+
+  // Set during MAS packing so applyCommonInfo can use MAS-specific bundleVersion/bundleShortVersion (#8909)
+  private _activePackConfig: MacConfiguration | MasConfiguration | null = null
+
+  readonly helper = new MacTargetHelper(this)
 
   constructor(info: Packager) {
     super(info, Platform.MAC)
@@ -299,20 +303,25 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       const platformType = this.getPlatformTypeFromTarget(target.name)
       const platformConfig = this.getPlatformConfig(platformType)
 
-      const targetOutDir = path.join(outDir, `${target.name}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}`)
+      this._activePackConfig = platformConfig.config
+      try {
+        const targetOutDir = path.join(outDir, `${target.name}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}`)
 
-      if (prepackaged == null) {
-        await this.doPack({
-          outDir,
-          appOutDir: targetOutDir,
-          platformName: platformConfig.platformName,
-          arch,
-          platformSpecificBuildOptions: platformConfig.config,
-          targets: [target],
-        })
-        await this.signMas(path.join(targetOutDir, `${this.appInfo.productFilename}.app`), targetOutDir, platformConfig, arch)
-      } else {
-        await this.signMas(prepackaged, targetOutDir, platformConfig, arch)
+        if (prepackaged == null) {
+          await this.doPack({
+            outDir,
+            appOutDir: targetOutDir,
+            platformName: platformConfig.platformName,
+            arch,
+            platformSpecificBuildOptions: platformConfig.config,
+            targets: [target],
+          })
+          await this.signMas(path.join(targetOutDir, `${this.appInfo.productFilename}.app`), targetOutDir, platformConfig, arch)
+        } else {
+          await this.signMas(prepackaged, targetOutDir, platformConfig, arch)
+        }
+      } finally {
+        this._activePackConfig = null
       }
     }
   }
@@ -356,7 +365,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     const fallBackToAdhoc = (arch === Arch.arm64 || arch === Arch.universal) && !this.forceCodeSigning
 
     if (qualifier === null) {
-      return this.handleNullIdentity(fallBackToAdhoc)
+      return this.helper.handleNullIdentity(fallBackToAdhoc)
     }
 
     const keychainFile = (await this.codeSigningInfo.value).keychainFile
@@ -364,18 +373,18 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     const type = explicitType || "distribution"
     const isDevelopment = type === "development"
 
-    const identity = await this.findSigningIdentity(isMas, isDevelopment, qualifier, keychainFile, config, fallBackToAdhoc)
+    const identity = await this.helper.findSigningIdentity(isMas, isDevelopment, qualifier, keychainFile, config, fallBackToAdhoc)
 
     if (!identity) {
       return false
     }
 
-    const signOptions = await this.buildSignOptions(appPath, identity, type, isMas, config, keychainFile, arch)
+    const signOptions = await this.helper.buildSignOptions(appPath, identity, type, isMas, config, keychainFile, arch)
     await this.doSign(signOptions, config, identity)
 
     // Handle MAS installer creation
     if (isMas && !isDevelopment && outDir) {
-      await this.createMasInstaller(appPath, outDir, config as MasConfiguration, keychainFile, isDevelopment, arch)
+      await this.helper.createMasInstaller(appPath, outDir, config as MasConfiguration, keychainFile, isDevelopment, arch)
     }
 
     // Handle notarization for non-MAS builds
@@ -386,228 +395,9 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     return true
   }
 
-  private handleNullIdentity(fallBackToAdhoc: boolean): boolean {
-    if (this.forceCodeSigning) {
-      throw new InvalidConfigurationError("identity explicitly is set to null, but forceCodeSigning is set to true")
-    }
-    log.info({ reason: "identity explicitly is set to null" }, "skipped macOS code signing")
-    if (fallBackToAdhoc) {
-      log.warn("arm64 requires signing, but identity is set to null and signing is being skipped")
-    }
-    return false
-  }
-
-  private async findSigningIdentity(
-    isMas: boolean,
-    isDevelopment: boolean,
-    qualifier: string | undefined,
-    keychainFile: string | Nullish,
-    config: MacConfiguration | MasConfiguration,
-    fallBackToAdhoc: boolean
-  ): Promise<Identity | null> {
-    const certificateTypes = getCertificateTypes(isMas, isDevelopment)
-
-    let identity: Identity | null = null
-    for (const certificateType of certificateTypes) {
-      identity = await findIdentity(certificateType, qualifier, keychainFile)
-      if (identity != null) {
-        break
-      }
-    }
-
-    if (identity == null) {
-      // Try Mac Developer as fallback
-      if (!isMas && !isDevelopment && config.type !== "distribution") {
-        identity = await findIdentity("Mac Developer", qualifier, keychainFile)
-        if (identity != null) {
-          log.warn("Mac Developer is used to sign app — it is only for development and testing, not for production")
-        }
-      }
-
-      // Handle ad-hoc signing
-      const noIdentity = !config.sign && identity == null
-      if (qualifier === "-") {
-        identity = new Identity("-", undefined)
-      } else if (noIdentity && fallBackToAdhoc) {
-        log.warn(null, "falling back to ad-hoc signature for macOS application code signing")
-        identity = new Identity("-", undefined)
-      } else if (noIdentity) {
-        await reportError(isMas, certificateTypes, qualifier, keychainFile, this.forceCodeSigning)
-        return null
-      }
-    }
-
-    return identity
-  }
-
-  private async buildSignOptions(
-    appPath: string,
-    identity: Identity,
-    type: SigningDistributionType,
-    isMas: boolean,
-    config: MacConfiguration | MasConfiguration,
-    keychainFile: string | Nullish,
-    arch: Arch
-  ): Promise<SignOptions> {
-    let filter = config.signIgnore
-    if (Array.isArray(filter)) {
-      if (filter.length == 0) {
-        filter = null
-      }
-    } else if (filter != null) {
-      filter = filter.length === 0 ? null : [filter]
-    }
-
-    const filterRe = filter == null ? null : filter.map(it => new RegExp(it))
-
-    let binaries = config.binaries || undefined
-    if (binaries) {
-      // Accept absolute paths for external binaries, else resolve relative paths from the artifact's app Contents path.
-      binaries = (
-        await Promise.all(
-          binaries.flatMap(async destination => {
-            const expandedDestination = this.expandArch(destination, arch)
-            return await Promise.all(
-              expandedDestination.map(async d => {
-                if (await statOrNull(d)) {
-                  return d
-                }
-                return path.resolve(appPath, d)
-              })
-            )
-          })
-        )
-      ).flat()
-      log.info({ binaries, arch: arch == null ? null : Arch[arch] }, "signing additional user-defined binaries for arch")
-    }
-
-    const signOptions: SignOptions = {
-      identityValidation: false,
-      // https://github.com/electron-userland/electron-builder/issues/1699
-      // kext are signed by the chipset manufacturers. You need a special certificate (only available on request) from Apple to be able to sign kext.
-      ignore: (file: string) => {
-        if (filterRe != null) {
-          for (const regExp of filterRe) {
-            if (regExp.test(file)) {
-              return true
-            }
-          }
-        }
-        return (
-          file.endsWith(".kext") ||
-          file.startsWith("/Contents/PlugIns", appPath.length) ||
-          file.includes("/node_modules/puppeteer/.local-chromium") ||
-          file.includes("/node_modules/playwright-firefox/.local-browsers") ||
-          file.includes("/node_modules/playwright/.local-browsers")
-        )
-
-        /* Those are browser automating modules, browser (chromium, nightly) cannot be signed
-          https://github.com/electron-userland/electron-builder/issues/2010
-          https://github.com/electron-userland/electron-builder/issues/5383
-          */
-      },
-      identity: identity ? identity.hash || identity.name : undefined,
-      type,
-      platform: isMas ? "mas" : "darwin",
-      version: this.config.electronVersion || undefined,
-      app: appPath,
-      keychain: keychainFile || undefined,
-      binaries,
-      // https://github.com/electron-userland/electron-builder/issues/1480
-      strictVerify: config.strictVerify,
-      preAutoEntitlements: config.preAutoEntitlements,
-      optionsForFile: await this.getOptionsForFile(appPath, isMas, config),
-      provisioningProfile: config.provisioningProfile || undefined,
-    }
-
-    return signOptions
-  }
-
-  private async createMasInstaller(
-    appPath: string,
-    outDir: string,
-    masOptions: MasConfiguration,
-    keychainFile: string | Nullish,
-    isDevelopment: boolean,
-    arch: Arch
-  ): Promise<void> {
-    const certType = isDevelopment ? "Mac Developer" : "3rd Party Mac Developer Installer"
-    const masInstallerIdentity = await findIdentity(certType, masOptions.identity, keychainFile)
-
-    if (masInstallerIdentity == null) {
-      throw new InvalidConfigurationError(`Cannot find valid "${certType}" identity to sign MAS installer, please see https://electron.build/code-signing`)
-    }
-
-    // mas uploaded to AppStore, so, use "-" instead of space for name
-    const artifactName = this.expandArtifactNamePattern(masOptions, "pkg", arch)
-    const artifactPath = path.join(outDir, artifactName)
-    await this.doFlat(appPath, artifactPath, masInstallerIdentity, keychainFile)
-    await this.info.emitArtifactBuildCompleted({
-      file: artifactPath,
-      target: null,
-      arch: Arch.x64,
-      safeArtifactName: this.computeSafeArtifactName(artifactName, "pkg", arch, true, this.platformSpecificBuildOptions.defaultArch),
-      packager: this,
-    })
-  }
-
-  private async getOptionsForFile(appPath: string, isMas: boolean, customSignOptions: MacConfiguration | MasConfiguration) {
-    const resourceList = await this.resourceList
-    const entitlementsSuffix = isMas ? "mas" : "mac"
-
-    const getEntitlements = (filePath: string) => {
-      // check if root app, then use main entitlements
-      if (filePath === appPath) {
-        if (customSignOptions.entitlements) {
-          return customSignOptions.entitlements
-        }
-        const p = `entitlements.${entitlementsSuffix}.plist`
-        if (resourceList.includes(p)) {
-          return path.join(this.info.buildResourcesDir, p)
-        } else {
-          return getTemplatePath("entitlements.mac.plist")
-        }
-      }
-
-      // It's a login helper...
-      if (filePath.includes("Library/LoginItems")) {
-        return customSignOptions.entitlementsLoginHelper
-      }
-
-      // Only remaining option is that it's inherited entitlements
-      if (customSignOptions.entitlementsInherit) {
-        return customSignOptions.entitlementsInherit
-      }
-      const p = `entitlements.${entitlementsSuffix}.inherit.plist`
-      if (resourceList.includes(p)) {
-        return path.join(this.info.buildResourcesDir, p)
-      } else {
-        return getTemplatePath("entitlements.mac.plist")
-      }
-    }
-
-    const requirements = isMas || this.platformSpecificBuildOptions.requirements == null ? undefined : await this.getResource(this.platformSpecificBuildOptions.requirements)
-
-    // harden by default for mac builds. Only harden mas builds if explicitly true (backward compatibility)
-    const hardenedRuntime = isMas ? customSignOptions.hardenedRuntime === true : customSignOptions.hardenedRuntime !== false
-
-    const optionsForFile: (filePath: string) => PerFileSignOptions = filePath => {
-      const entitlements = getEntitlements(filePath)
-      const args = {
-        entitlements: entitlements || undefined,
-        hardenedRuntime: hardenedRuntime ?? undefined,
-        timestamp: customSignOptions.timestamp || undefined,
-        requirements: requirements || undefined,
-        additionalArguments: customSignOptions.additionalArguments || [],
-      }
-      return args
-    }
-    return optionsForFile
-  }
-
   //noinspection JSMethodCanBeStatic
   protected async doSign(opts: SignOptions, customSignOptions: MacConfiguration | MasConfiguration, identity: Identity | null): Promise<void> {
-    const customSign = await resolveFunction(this.appInfo.type, customSignOptions.sign, "sign")
+    const customSign = await resolveFunction(this.appInfo.type, customSignOptions.sign, "sign", await this.info.getWorkspaceRoot())
 
     const { app, platform, type, provisioningProfile } = opts
     log.info(
@@ -626,7 +416,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
   }
 
   //noinspection JSMethodCanBeStatic
-  protected async doFlat(appPath: string, outFile: string, identity: Identity, keychain: string | Nullish): Promise<any> {
+  public async doFlat(appPath: string, outFile: string, identity: Identity, keychain: string | Nullish): Promise<any> {
     // productbuild doesn't created directory for out file
     await mkdir(path.dirname(outFile), { recursive: true })
 
@@ -696,8 +486,9 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       appPlist.LSMinimumSystemVersion = minimumSystemVersion
     }
 
-    appPlist.CFBundleShortVersionString = this.platformSpecificBuildOptions.bundleShortVersion || appInfo.version
-    appPlist.CFBundleVersion = appInfo.buildVersion
+    const activeOpts = this._activePackConfig ?? this.platformSpecificBuildOptions
+    appPlist.CFBundleShortVersionString = activeOpts.bundleShortVersion || appInfo.version
+    appPlist.CFBundleVersion = activeOpts.bundleVersion || appInfo.buildVersion
 
     use(this.platformSpecificBuildOptions.category || (this.config as any).category, it => (appPlist.LSApplicationCategoryType = it))
     appPlist.NSHumanReadableCopyright = appInfo.copyright
@@ -708,7 +499,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
 
     const extendInfo = this.platformSpecificBuildOptions.extendInfo
     if (extendInfo != null) {
-      Object.assign(appPlist, extendInfo)
+      deepAssign(appPlist, extendInfo)
     }
     for (const [k, v] of Object.entries(appPlist)) {
       if (v === null || v === undefined) {
@@ -803,9 +594,3 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
   }
 }
 
-function getCertificateTypes(isMas: boolean, isDevelopment: boolean): CertType[] {
-  if (isDevelopment) {
-    return isMas ? ["Mac Developer", "Apple Development"] : ["Mac Developer", "Developer ID Application"]
-  }
-  return isMas ? ["Apple Distribution", "3rd Party Mac Developer Application"] : ["Developer ID Application"]
-}

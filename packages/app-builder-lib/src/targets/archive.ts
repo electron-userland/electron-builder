@@ -7,6 +7,14 @@ import { CompressionLevel } from "../core"
 import { getLinuxToolsPath } from "../toolsets/linux"
 import { TarOptionsWithAliasesAsync } from "tar/dist/commonjs/options"
 
+const ALLOWED_7Z_FILTERS = new Set(["BCJ", "BCJ2", "ARM", "ARMT", "IA64", "PPC", "SPARC", "DELTA"])
+
+function validateCompressionLevel(level: string): void {
+  if (!/^[0-9]$/.test(level)) {
+    throw new Error(`ELECTRON_BUILDER_COMPRESSION_LEVEL must be a single digit 0-9, got: "${level}"`)
+  }
+}
+
 /** @internal */
 export async function tar(compression: CompressionLevel | any, format: string, outFile: string, dirToArchive: string, isMacApp: boolean, tempDirManager: TmpDir): Promise<void> {
   const tarFile = await tempDirManager.getTempFile({ suffix: ".tar" })
@@ -89,9 +97,11 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
   const args = debug7zArgs("a")
 
   let isLevelSet = false
-  if (process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL != null) {
+  const compressionLevel = process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL
+  if (compressionLevel != null) {
+    validateCompressionLevel(compressionLevel)
     storeOnly = false
-    args.push(`-mx=${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL}`)
+    args.push(`-mx=${compressionLevel}`)
     isLevelSet = true
   }
 
@@ -131,8 +141,12 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
 
     // https://www.7-zip.org/7z.html
     // Filters: BCJ, BCJ2, ARM, ARMT, IA64, PPC, SPARC, ...
-    if (process.env.ELECTRON_BUILDER_7Z_FILTER) {
-      args.push(`-mf=${process.env.ELECTRON_BUILDER_7Z_FILTER}`)
+    const sevenZFilter = process.env.ELECTRON_BUILDER_7Z_FILTER
+    if (sevenZFilter) {
+      if (!ALLOWED_7Z_FILTERS.has(sevenZFilter.toUpperCase())) {
+        throw new Error(`ELECTRON_BUILDER_7Z_FILTER must be one of: ${[...ALLOWED_7Z_FILTERS].join(", ")}`)
+      }
+      args.push(`-mf=${sevenZFilter}`)
     }
 
     // args valid only for 7z
@@ -165,9 +179,11 @@ export function computeZipCompressArgs(options: ArchiveOptions = {}) {
     args.push("-v")
   }
 
-  if (process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL != null) {
+  const compressionLevelZip = process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL
+  if (compressionLevelZip != null) {
+    validateCompressionLevel(compressionLevelZip)
     storeOnly = false
-    args.push(`-${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL}`)
+    args.push(`-${compressionLevelZip}`)
   } else if (!storeOnly) {
     // https://github.com/electron-userland/electron-builder/pull/3032
     args.push("-" + (options.compression === "maximum" ? "9" : "7"))

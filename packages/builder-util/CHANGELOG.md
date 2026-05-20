@@ -1,5 +1,57 @@
 # builder-util
 
+## 26.11.0
+
+### Patch Changes
+
+- Chore(docs): documentation updates and docusaurus migration _[`#9744`](https://github.com/electron-userland/electron-builder/pull/9744) [`d846315`](https://github.com/electron-userland/electron-builder/commit/d84631587d816a1aa0bff57680bab0f865d7a84f) [@mmaietta](https://github.com/mmaietta)_
+- Fix: improving filtering of log redactor and adding support for filtering out potentially-sensitive env vars _[`#9736`](https://github.com/electron-userland/electron-builder/pull/9736) [`56d8331`](https://github.com/electron-userland/electron-builder/commit/56d83314596803e4c3973b3c2a4eb2b838eb0edf) [@mmaietta](https://github.com/mmaietta)_
+- Fix(appimage): fix compression mapping and add per-target squashfs algorithm overrides _[`#9730`](https://github.com/electron-userland/electron-builder/pull/9730) [`8a98647`](https://github.com/electron-userland/electron-builder/commit/8a98647f79c19fff7e7f5347d0a1ff80db18520e) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`d846315`](https://github.com/electron-userland/electron-builder/commit/d84631587d816a1aa0bff57680bab0f865d7a84f)
+
+</small>
+
+- `builder-util-runtime@9.6.1`
+
+</details>
+
+## 26.10.0
+
+### Minor Changes
+
+- Feat: migrate `electronDownload` to use `electron/get` official package. provides much better support for mirrors _[`#8827`](https://github.com/electron-userland/electron-builder/pull/8827) [`c82bec1`](https://github.com/electron-userland/electron-builder/commit/c82bec161d07b1df8adc5cd80a495c4ff0829373) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Chore(builder-util): add engines field to package.json _[`#9671`](https://github.com/electron-userland/electron-builder/pull/9671) [`5be28a6`](https://github.com/electron-userland/electron-builder/commit/5be28a61de2aa1f344651a506044b2e897832660) [@gameroman](https://github.com/gameroman)_
+
+## 26.9.0
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`b7df0bc`](https://github.com/electron-userland/electron-builder/commit/b7df0bcef5790814fd6df187346dcec625dc681e)
+
+</small>
+
+- `builder-util-runtime@9.6.0`
+
+</details>
+
+## 26.8.1
+
+### Patch Changes
+
+- Chore: removing unused `notice` LogLevel _[`#9587`](https://github.com/electron-userland/electron-builder/pull/9587) [`4edd695`](https://github.com/electron-userland/electron-builder/commit/4edd6950454d369ef8994e5a1ad64f1d0c7b7643) [@mmaietta](https://github.com/mmaietta)_
+
 ## 26.8.0
 
 ### Patch Changes

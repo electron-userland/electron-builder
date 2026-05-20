@@ -1,5 +1,7 @@
+import { InvalidConfigurationError } from "builder-util"
 import { log } from "builder-util/out/log"
 import debug from "debug"
+import { realpath } from "fs/promises"
 import * as path from "path"
 import * as requireMaybe from "../../helpers/dynamic-import"
 
@@ -12,7 +14,7 @@ export async function resolveModule<T>(type: string | undefined, name: string): 
   }
 }
 
-export async function resolveFunction<T>(type: string | undefined, executor: T | string, name: string): Promise<T> {
+export async function resolveFunction<T>(type: string | undefined, executor: T | string, name: string, rootSearchDir: string): Promise<T> {
   if (executor == null || typeof executor !== "string") {
     // is already function or explicitly ignored by user
     return executor
@@ -21,6 +23,18 @@ export async function resolveFunction<T>(type: string | undefined, executor: T |
   let p = executor as string
   if (p.startsWith(".")) {
     p = path.resolve(p)
+    let realP = p
+    let realRoot = rootSearchDir
+    try {
+      realP = await realpath(p)
+      realRoot = await realpath(rootSearchDir)
+    } catch {
+      // path may not exist yet; fall back to lexical check
+    }
+    const relative = path.relative(realRoot, realP)
+    if (relative.startsWith("..") || path.isAbsolute(relative)) {
+      throw new InvalidConfigurationError(`Hook module path "${executor}" resolves outside the workspace root ("${rootSearchDir}")`)
+    }
   }
 
   try {

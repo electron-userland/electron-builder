@@ -1,6 +1,6 @@
 import { Configuration, Platform } from "app-builder-lib"
 import { PM } from "app-builder-lib/out/node-module-collector"
-import { exists } from "builder-util/src/util"
+import { exists } from "builder-util/out/util"
 import path from "path"
 import { assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
@@ -12,7 +12,7 @@ const packageConfig = (data: any) => {
   data.dependencies = {
     ...data.debpendencies,
     debug: "4.4.3",
-    "better-sqlite3-multiple-ciphers": "12.2.0",
+    "better-sqlite3-multiple-ciphers": "12.9.0",
   }
   data.devDependencies = {
     electron: ELECTRON_VERSION,
@@ -27,7 +27,7 @@ const config: Configuration = {
   asarUnpack: ["**/better_sqlite3.node"],
 }
 
-describe.ifNotWindows("Rebuilder Test", () => {
+describe.ifLinux("Rebuilder Test", () => {
   test("yarn workspace", ({ expect }) =>
     assertPack(
       expect,

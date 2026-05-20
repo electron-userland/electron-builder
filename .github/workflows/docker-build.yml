@@ -2,6 +2,7 @@ name: Build Docker Images
 
 on:
   workflow_call:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -13,9 +14,10 @@ jobs:
       fail-fast: false
       matrix:
         nodeVersion: [
-          22.14.0,
-          20.18.3,
-          18.20.7,
+          24.15.0,
+          22.22.2,
+          20.20.2,
+          18.20.8,
           16.20.2,
           14.21.3
         ]

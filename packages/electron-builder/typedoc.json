@@ -1,5 +1,11 @@
 {
   "$schema": "https://typedoc.org/schema.json",
   "includeVersion": true,
-  "entryPoints": ["src/index.ts"]
+  "entryPoints": [
+    "src/index.ts"
+  ],
+  "validation": {
+    "notExported": false,
+    "invalidLink": false
+  }
 }

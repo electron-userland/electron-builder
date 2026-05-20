@@ -2,8 +2,7 @@ import { Configuration } from "../configuration"
 
 export interface Metadata {
   /**
-   * The application name.
-   * @required
+   * The application name. Required.
    */
   readonly name?: string
 

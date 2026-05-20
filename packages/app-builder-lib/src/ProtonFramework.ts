@@ -11,8 +11,8 @@ export class ProtonFramework extends LibUiFramework {
   // noinspection JSUnusedGlobalSymbols
   readonly defaultAppIdPrefix = "com.proton-native."
 
-  constructor(version: string, distMacOsAppName: string, isUseLaunchUi: boolean) {
-    super(version, distMacOsAppName, isUseLaunchUi)
+  constructor(version: string, macOsProductName: string, isUseLaunchUi: boolean) {
+    super(version, macOsProductName, isUseLaunchUi)
   }
 
   getDefaultIcon(platform: Platform): string {
