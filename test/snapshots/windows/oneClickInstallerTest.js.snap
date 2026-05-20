@@ -1,5 +1,29 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`createDesktopShortcut always 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
 exports[`custom guid 1`] = `
 {
   "win": [
@@ -15,6 +39,126 @@ exports[`custom guid 1`] = `
     {
       "file": "boo Hub Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "boo-Hub-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`custom include 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`custom script 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`file associations per user 1`] = `
+{
+  "win": [
+    {
+      "arch": "ia32",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`html license 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`menuCategory 1`] = `
+{
+  "win": [
+    {
+      "arch": "ia32",
+      "file": "Test Menu Category CustomName 1.1.0.exe",
+      "safeArtifactName": "Test-Menu-Category-CustomName-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test Menu Category CustomName 1.1.0.exe.blockmap",
+      "safeArtifactName": "Test-Menu-Category-CustomName-1.1.0.exe.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -93,5 +237,80 @@ exports[`one-click 2`] = `
   "provider": "generic",
   "updaterCacheDirName": "testapp-updater",
   "url": "https://develar.s3.amazonaws.com/test/win/x64",
+}
+`;
+
+exports[`perMachine, no run after finish 1`] = `
+{
+  "win": [
+    {
+      "arch": "ia32",
+      "file": "TestApp Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": {
+        "isAdminRightsRequired": true,
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "isAdminRightsRequired": true,
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "isAdminRightsRequired": true,
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp Setup 1.1.0.exe",
+          },
+        ],
+        "path": "TestApp Setup 1.1.0.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.1.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`perMachine, no run after finish 2`] = `
+{
+  "provider": "generic",
+  "updaterCacheDirName": "testapp-updater",
+  "url": "https://develar.s3.amazonaws.com/test/win/ia32",
+}
+`;
+
+exports[`string menuCategory 1`] = `
+{
+  "win": [
+    {
+      "arch": "ia32",
+      "file": "Test Menu Category ' CustomName 1.1.0.exe",
+      "safeArtifactName": "test-menu-category-setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test Menu Category ' CustomName 1.1.0.exe.blockmap",
+      "safeArtifactName": "test-menu-category-setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
 }
 `;
