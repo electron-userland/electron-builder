@@ -2,7 +2,7 @@
 title: "Mac App Store"
 ---
 
-The top-level [mas](configuration.md) key contains set of options instructing electron-builder on how it should build MAS (Mac Application Store) target. Inherits all [macOS options](mac.md).
+The top-level [mas](configuration.md) key contains a set of options instructing electron-builder on how it should build the MAS (Mac Application Store) target. Inherits all [macOS options](mac.md).
 
 Use the `mas-dev` target (configured via the top-level `masDev` key) for local testing of MAS builds with a development provisioning profile.
 
@@ -15,7 +15,7 @@ Use the `mas-dev` target (configured via the top-level `masDev` key) for local t
 | Sandboxing | Mandatory | Optional |
 | Update mechanism | Mac App Store | electron-updater |
 | Revenue | Apple takes 30% (15% for small dev program) | 100% to you |
-| Discovery | App Store search and Browse | Your own marketing |
+| Discovery | App Store search and browsing | Your own marketing |
 | Review | Apple review (1-7 days) | Instant |
 | macOS version support | As Apple dictates | You control |
 
@@ -23,7 +23,7 @@ Use the `mas-dev` target (configured via the top-level `masDev` key) for local t
 
 ### Certificates
 
-You need a **Mac App Distribution** certificate (for signing the app) and an **Mac Installer Distribution** certificate (for signing the PKG submitted to App Store Connect). Both are issued from your [Apple Developer account](https://developer.apple.com/account/).
+You need a **Mac App Distribution** certificate (for signing the app) and a **Mac Installer Distribution** certificate (for signing the PKG submitted to App Store Connect). Both are issued from your [Apple Developer account](https://developer.apple.com/account/).
 
 :::tip
 For local testing with `mas-dev`, you use a **Development** provisioning profile and a standard developer certificate, not the distribution ones.

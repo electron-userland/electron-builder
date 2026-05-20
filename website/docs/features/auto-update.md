@@ -24,10 +24,11 @@ macOS application must be [signed](./code-signing/code-signing.md) in order for 
 
 All these targets are default, custom configuration is not required. (Though it is possible to [pass in additional configuration, e.g. request headers](#custom-options-instantiating-updater-directly).)
 
-!!! info
-    1. **Squirrel.Windows is not supported.** Simplified auto-update is supported on Windows if you use the default NSIS target, but is not supported for Squirrel.Windows.
-    You can [easily migrate to NSIS](https://github.com/electron-userland/electron-builder/issues/837#issuecomment-355698368).
-    2. `zip` target for macOS is **required** for Squirrel.Mac, otherwise `latest-mac.yml` cannot be created, which causes `autoUpdater` error. Default [target](../mac.md#macos-target-overview) for macOS is `dmg`+`zip`, so there is no need to explicitly specify target.
+:::info
+1. **Squirrel.Windows is not supported.** Simplified auto-update is supported on Windows if you use the default NSIS target, but is not supported for Squirrel.Windows.
+You can [easily migrate to NSIS](https://github.com/electron-userland/electron-builder/issues/837#issuecomment-355698368).
+2. `zip` target for macOS is **required** for Squirrel.Mac, otherwise `latest-mac.yml` cannot be created, which causes `autoUpdater` error. Default [target](../mac.md#macos-target-overview) for macOS is `dmg`+`zip`, so there is no need to explicitly specify target.
+:::
 
 ## Differences between electron-updater and built-in autoUpdater
 
@@ -98,7 +99,7 @@ export default class AppUpdater {
 
 ### Custom Options instantiating updater Directly
 
-If you want to more control over the updater configuration (e.g. request header for authorization purposes), you can instantiate the updater directly.
+If you want more control over the updater configuration (e.g. request header for authorization purposes), you can instantiate the updater directly.
 
 ```typescript
 import { NsisUpdater } from "electron-updater"
@@ -123,7 +124,7 @@ export default class AppUpdater {
 
 ## Debugging
 
-You don't need to listen all events to understand what's wrong. Just set `logger`.
+You don't need to listen to all events to understand what's wrong. Just set `logger`.
 [electron-log](https://github.com/megahertz/electron-log) is recommended (it is an additional dependency that you can install if needed).
 
 ```js
@@ -153,7 +154,7 @@ But it is not recommended, better to test auto-update for installed application 
 
 Generated metadata files format changes from time to time, but compatibility preserved up to version 1. If you start a new project, recommended to set `electronUpdaterCompatibility` to current latest format version (`>= 2.16`).
 
-Option `electronUpdaterCompatibility` set the electron-updater compatibility semver range. Can be specified per platform.
+The `electronUpdaterCompatibility` option sets the electron-updater compatibility semver range. Can be specified per platform.
 
 e.g. `>= 2.16`, `>=1.0.0`. Defaults to `>=2.15`
 
