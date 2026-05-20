@@ -1,7 +1,8 @@
 import { InvalidConfigurationError, log } from "builder-util"
 import { S3Options } from "builder-util-runtime"
 import { PublishContext } from ".."
-import { BaseS3Publisher } from "./baseS3Publisher"
+import { resolveAwsCredentials } from "./awsCredentials"
+import { BaseS3Publisher, S3UploadConfig, S3UploadExtraParams } from "./baseS3Publisher"
 import { getBucketLocation } from "./bucketLocation"
 
 export class S3Publisher extends BaseS3Publisher {
@@ -46,25 +47,21 @@ export class S3Publisher extends BaseS3Publisher {
     return this.info.bucket
   }
 
-  protected configureS3Options(args: Array<string>): void {
-    super.configureS3Options(args)
+  public getS3UploadConfig(): S3UploadConfig {
+    return {
+      region: this.info.region ?? "us-east-1",
+      endpoint: this.info.endpoint ?? undefined,
+      forcePathStyle: this.info.forcePathStyle ?? undefined,
+      credentials: resolveAwsCredentials(),
+    }
+  }
 
-    if (this.info.endpoint != null) {
-      args.push("--endpoint", this.info.endpoint)
-    }
-    if (this.info.region != null) {
-      args.push("--region", this.info.region)
-    }
-
-    if (this.info.storageClass != null) {
-      args.push("--storageClass", this.info.storageClass)
-    }
-    if (this.info.encryption != null) {
-      args.push("--encryption", this.info.encryption)
-    }
-
-    if (this.info.forcePathStyle != null) {
-      args.push("--forcePathStyle", this.info.forcePathStyle ? "true" : "false")
+  public getUploadExtraParams(): S3UploadExtraParams {
+    const base = super.getUploadExtraParams()
+    return {
+      ...base,
+      storageClass: this.info.storageClass ?? undefined,
+      serverSideEncryption: this.info.encryption ?? undefined,
     }
   }
 

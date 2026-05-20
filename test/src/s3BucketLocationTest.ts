@@ -1,11 +1,17 @@
 import { EventEmitter } from "events"
-import { afterEach, beforeEach, describe, it, expect, vi } from "vitest"
+import * as os from "os"
+import * as path from "path"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // Must be hoisted before the module under test is imported so vitest intercepts the require.
 vi.mock("https")
+vi.mock("electron-publish/src/s3/awsCredentials", () => ({
+  resolveAwsCredentials: vi.fn().mockReturnValue({ accessKeyId: "test-key", secretAccessKey: "test-secret" }),
+}))
 
 // Import after mock is in place.
 import * as https from "https"
+import { resolveAwsCredentials } from "electron-publish/src/s3/awsCredentials"
 import { getBucketLocation } from "electron-publish/src/s3/bucketLocation"
 
 // ─── Mock helper ─────────────────────────────────────────────────────────────
@@ -103,6 +109,40 @@ describe("getBucketLocation — XML response parsing", () => {
   })
 })
 
+// ─── Credential chain: getBucketLocation forwards resolved credentials ────────
+
+describe("getBucketLocation — credential chain", () => {
+  beforeEach(() => {
+    vi.mocked(https.request).mockClear()
+    vi.mocked(resolveAwsCredentials).mockClear()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it("calls resolveAwsCredentials() and uses the result for signing", async () => {
+    vi.mocked(resolveAwsCredentials).mockReturnValueOnce({ accessKeyId: "AKIATEST", secretAccessKey: "secret" })
+    mockHttpResponse(200, "<LocationConstraint>us-west-2</LocationConstraint>")
+
+    await getBucketLocation("my.bucket")
+
+    expect(resolveAwsCredentials).toHaveBeenCalledOnce()
+    // The Authorization header in the request should reference the access key
+    const callArgs = vi.mocked(https.request).mock.calls[0][0] as any
+    const authHeader = callArgs?.headers?.Authorization ?? callArgs?.headers?.authorization ?? ""
+    expect(authHeader).toMatch(/AKIATEST/)
+  })
+
+  it("still makes the request when no credentials are found (anonymous request)", async () => {
+    vi.mocked(resolveAwsCredentials).mockReturnValueOnce(undefined)
+    mockHttpResponse(200, "<LocationConstraint>eu-central-1</LocationConstraint>")
+
+    const region = await getBucketLocation("public-bucket")
+    expect(region).toBe("eu-central-1")
+  })
+})
+
 // ─── Output-format contract: JS implementation vs app-builder-bin binary ─────
 
 describe("getBucketLocation — output format matches binary contract", () => {
@@ -130,5 +170,49 @@ describe("getBucketLocation — output format matches binary contract", () => {
     const region = await getBucketLocation("my.dotted.bucket")
     expect(region).toBe("us-east-1")
     expect(region).not.toMatch(/[{"\n\r]/)
+  })
+})
+
+// ─── Credential resolution unit tests ────────────────────────────────────────
+
+describe("resolveAwsCredentials", () => {
+  // These tests unshim the module mock and test the real implementation.
+  // We exercise the env var path only (the ~/.aws/credentials path is tested via
+  // file I/O which would require temp-file setup).
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.mocked(resolveAwsCredentials).mockRestore?.()
+  })
+
+  it("returns env-var credentials when AWS_ACCESS_KEY_ID is set", async () => {
+    const { resolveAwsCredentials: realResolve } = await vi.importActual<typeof import("electron-publish/src/s3/awsCredentials")>("electron-publish/src/s3/awsCredentials")
+    vi.stubEnv("AWS_ACCESS_KEY_ID", "AKIAENV")
+    vi.stubEnv("AWS_SECRET_ACCESS_KEY", "env-secret")
+    vi.stubEnv("AWS_SESSION_TOKEN", "env-token")
+
+    const creds = realResolve()
+    expect(creds).toEqual({ accessKeyId: "AKIAENV", secretAccessKey: "env-secret", sessionToken: "env-token" })
+  })
+
+  it("includes sessionToken only when AWS_SESSION_TOKEN is set", async () => {
+    const { resolveAwsCredentials: realResolve } = await vi.importActual<typeof import("electron-publish/src/s3/awsCredentials")>("electron-publish/src/s3/awsCredentials")
+    vi.stubEnv("AWS_ACCESS_KEY_ID", "AKIAENV")
+    vi.stubEnv("AWS_SECRET_ACCESS_KEY", "env-secret")
+    vi.stubEnv("AWS_SESSION_TOKEN", "")
+
+    const creds = realResolve()
+    expect(creds?.sessionToken).toBeUndefined()
+  })
+
+  it("returns undefined when no credentials are configured", async () => {
+    const { resolveAwsCredentials: realResolve } = await vi.importActual<typeof import("electron-publish/src/s3/awsCredentials")>("electron-publish/src/s3/awsCredentials")
+    vi.stubEnv("AWS_ACCESS_KEY_ID", "")
+    vi.stubEnv("AWS_SECRET_ACCESS_KEY", "")
+    // Point HOME to a non-existent dir so there's no ~/.aws/credentials
+    vi.stubEnv("HOME", path.join(os.tmpdir(), "no-such-home-" + Date.now()))
+
+    const creds = realResolve()
+    expect(creds).toBeUndefined()
   })
 })

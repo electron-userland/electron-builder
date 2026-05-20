@@ -40,7 +40,7 @@ function escapeDnValue(value: string): string {
  *
  * Known divergences from the Go binary:
  * - No OpenSSL fallback when the pure PKCS#12 decoder fails for a non-password reason.
- * - Unknown OIDs are rendered as `OID=value`; Go uses `OID=#hexbytes` when ASN.1 marshal succeeds.
+ * - Unknown OIDs are rendered using the raw numeric OID as the type name (e.g. `2.5.4.100=value`); Go uses `OID=#hexbytes` when ASN.1 marshal succeeds.
  * - RDN ordering uses DER order; Go normalizes via pkix.Name.ToRDNSequence then reverses via
  *   BloodyMsString. These coincide for node-forge-generated certs (CN-first DER) but may
  *   differ for real CA-issued certs stored in traditional C-first DER order.

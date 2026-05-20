@@ -4,4 +4,4 @@
 "electron-publish": minor
 ---
 
-feat: migrate 1-to-1 app-builder-bin functions (`certificate-info`, `ksuid`, `get-bucket-location`) to pure JS
+feat: migrate app-builder-bin functions to pure JS (`certificate-info`, `ksuid`, `get-bucket-location`, `publish-s3`)
