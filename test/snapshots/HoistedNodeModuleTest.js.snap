@@ -29728,11 +29728,11 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
 {
   "files": {
     "index.html": {
-      "offset": 19661380,
+      "offset": 19684080,
       "size": 850,
     },
     "index.js": {
-      "offset": 19662220,
+      "offset": 19684920,
       "size": 2510,
     },
     "node_modules": {
@@ -35125,132 +35125,132 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                         },
                         "index.d.ts.map": {
                           "offset": 10260880,
-                          "size": 15380,
+                          "size": 15480,
                         },
                         "index.js": {
-                          "offset": 10276250,
-                          "size": 62290,
+                          "offset": 10276350,
+                          "size": 63050,
                         },
                         "index.js.map": {
-                          "offset": 10338540,
-                          "size": 154670,
+                          "offset": 10339390,
+                          "size": 156150,
                         },
                         "index.min.js": {
-                          "offset": 10493210,
-                          "size": 19160,
+                          "offset": 10495540,
+                          "size": 19250,
                         },
                         "index.min.js.map": {
-                          "offset": 10512360,
-                          "size": 133600,
+                          "offset": 10514790,
+                          "size": 134960,
                         },
                         "perf.d.ts.map": {
-                          "offset": 10645960,
+                          "offset": 10649740,
                           "size": 230,
                         },
                         "perf.js": {
-                          "offset": 10646180,
+                          "offset": 10649970,
                           "size": 380,
                         },
                         "perf.js.map": {
-                          "offset": 10646560,
+                          "offset": 10650340,
                           "size": 820,
                         },
                       },
                     },
                     "diagnostics-channel-cjs.cjs.map": {
-                      "offset": 10647380,
+                      "offset": 10651160,
                       "size": 710,
                     },
                     "diagnostics-channel-cjs.d.cts.map": {
-                      "offset": 10648080,
+                      "offset": 10651870,
                       "size": 350,
                     },
                     "diagnostics-channel.js": {
-                      "offset": 10648430,
+                      "offset": 10652220,
                       "size": 270,
                     },
                     "index.d.ts.map": {
-                      "offset": 10648690,
-                      "size": 15380,
+                      "offset": 10652480,
+                      "size": 15470,
                     },
                     "index.js": {
-                      "offset": 10664070,
-                      "size": 62290,
+                      "offset": 10667950,
+                      "size": 63050,
                     },
                     "index.js.map": {
-                      "offset": 10726360,
-                      "size": 154670,
+                      "offset": 10730990,
+                      "size": 156150,
                     },
                     "index.min.js": {
-                      "offset": 10881020,
-                      "size": 19160,
+                      "offset": 10887140,
+                      "size": 19250,
                     },
                     "index.min.js.map": {
-                      "offset": 10900170,
-                      "size": 133590,
+                      "offset": 10906380,
+                      "size": 134950,
                     },
                     "node": {
                       "files": {
                         "diagnostics-channel-node.d.ts.map": {
-                          "offset": 11033760,
+                          "offset": 11041330,
                           "size": 350,
                         },
                         "diagnostics-channel-node.js.map": {
-                          "offset": 11034110,
+                          "offset": 11041680,
                           "size": 770,
                         },
                         "diagnostics-channel.js": {
-                          "offset": 11034880,
+                          "offset": 11042450,
                           "size": 530,
                         },
                         "index.d.ts.map": {
-                          "offset": 11035400,
-                          "size": 15380,
+                          "offset": 11042980,
+                          "size": 15480,
                         },
                         "index.js": {
-                          "offset": 11050780,
-                          "size": 62290,
+                          "offset": 11058450,
+                          "size": 63050,
                         },
                         "index.js.map": {
-                          "offset": 11113070,
-                          "size": 154670,
+                          "offset": 11121490,
+                          "size": 156150,
                         },
                         "index.min.js": {
-                          "offset": 11267740,
-                          "size": 19240,
+                          "offset": 11277640,
+                          "size": 19330,
                         },
                         "index.min.js.map": {
-                          "offset": 11286970,
-                          "size": 133690,
+                          "offset": 11296970,
+                          "size": 135050,
                         },
                         "perf.d.ts.map": {
-                          "offset": 11420650,
+                          "offset": 11432010,
                           "size": 230,
                         },
                         "perf.js": {
-                          "offset": 11420880,
+                          "offset": 11432240,
                           "size": 380,
                         },
                         "perf.js.map": {
-                          "offset": 11421250,
+                          "offset": 11432620,
                           "size": 820,
                         },
                       },
                     },
                     "package.json": {
-                      "offset": 11422070,
+                      "offset": 11433440,
                       "size": 30,
                     },
                     "perf.d.ts.map": {
-                      "offset": 11422100,
+                      "offset": 11433460,
                       "size": 220,
                     },
                     "perf.js": {
-                      "offset": 11422320,
+                      "offset": 11433680,
                       "size": 380,
                     },
                     "perf.js.map": {
-                      "offset": 11422700,
+                      "offset": 11434060,
                       "size": 820,
                     },
                   },
@@ -35260,145 +35260,145 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                     "browser": {
                       "files": {
                         "diagnostics-channel-browser.d.ts.map": {
-                          "offset": 11423510,
+                          "offset": 11434880,
                           "size": 360,
                         },
                         "diagnostics-channel-browser.js.map": {
-                          "offset": 11423870,
+                          "offset": 11435230,
                           "size": 730,
                         },
                         "diagnostics-channel.js": {
-                          "offset": 11424600,
+                          "offset": 11435960,
                           "size": 160,
                         },
                         "index.d.ts.map": {
-                          "offset": 11424750,
-                          "size": 15380,
+                          "offset": 11436110,
+                          "size": 15480,
                         },
                         "index.js": {
-                          "offset": 11440130,
-                          "size": 61600,
+                          "offset": 11451590,
+                          "size": 62350,
                         },
                         "index.js.map": {
-                          "offset": 11501720,
-                          "size": 154700,
+                          "offset": 11513930,
+                          "size": 156190,
                         },
                         "index.min.js": {
-                          "offset": 11656420,
-                          "size": 18580,
+                          "offset": 11670110,
+                          "size": 18680,
                         },
                         "index.min.js.map": {
-                          "offset": 11675000,
-                          "size": 133420,
+                          "offset": 11688790,
+                          "size": 134770,
                         },
                         "perf.d.ts.map": {
-                          "offset": 11808410,
+                          "offset": 11823560,
                           "size": 230,
                         },
                         "perf.js": {
-                          "offset": 11808640,
+                          "offset": 11823780,
                           "size": 280,
                         },
                         "perf.js.map": {
-                          "offset": 11808910,
+                          "offset": 11824060,
                           "size": 830,
                         },
                       },
                     },
                     "diagnostics-channel-esm.d.mts.map": {
-                      "offset": 11809740,
+                      "offset": 11824880,
                       "size": 350,
                     },
                     "diagnostics-channel-esm.mjs.map": {
-                      "offset": 11810090,
+                      "offset": 11825230,
                       "size": 1800,
                     },
                     "diagnostics-channel.js": {
-                      "offset": 11811890,
+                      "offset": 11827030,
                       "size": 780,
                     },
                     "index.d.ts.map": {
-                      "offset": 11812670,
-                      "size": 15380,
+                      "offset": 11827810,
+                      "size": 15470,
                     },
                     "index.js": {
-                      "offset": 11828040,
-                      "size": 61600,
+                      "offset": 11843280,
+                      "size": 62350,
                     },
                     "index.js.map": {
-                      "offset": 11889640,
-                      "size": 154700,
+                      "offset": 11905620,
+                      "size": 156180,
                     },
                     "index.min.js": {
-                      "offset": 12044330,
-                      "size": 18710,
+                      "offset": 12061800,
+                      "size": 18800,
                     },
                     "index.min.js.map": {
-                      "offset": 12063030,
-                      "size": 134350,
+                      "offset": 12080600,
+                      "size": 135700,
                     },
                     "node": {
                       "files": {
                         "diagnostics-channel-node.d.ts.map": {
-                          "offset": 12197380,
+                          "offset": 12216300,
                           "size": 350,
                         },
                         "diagnostics-channel-node.js.map": {
-                          "offset": 12197730,
+                          "offset": 12216650,
                           "size": 820,
                         },
                         "diagnostics-channel.js": {
-                          "offset": 12198540,
+                          "offset": 12217460,
                           "size": 350,
                         },
                         "index.d.ts.map": {
-                          "offset": 12198890,
-                          "size": 15380,
+                          "offset": 12217810,
+                          "size": 15480,
                         },
                         "index.js": {
-                          "offset": 12214260,
-                          "size": 61600,
+                          "offset": 12233280,
+                          "size": 62350,
                         },
                         "index.js.map": {
-                          "offset": 12275860,
-                          "size": 154700,
+                          "offset": 12295630,
+                          "size": 156190,
                         },
                         "index.min.js": {
-                          "offset": 12430560,
-                          "size": 18670,
+                          "offset": 12451810,
+                          "size": 18760,
                         },
                         "index.min.js.map": {
-                          "offset": 12449220,
-                          "size": 133510,
+                          "offset": 12470570,
+                          "size": 134860,
                         },
                         "perf.d.ts.map": {
-                          "offset": 12582720,
+                          "offset": 12605420,
                           "size": 230,
                         },
                         "perf.js": {
-                          "offset": 12582940,
+                          "offset": 12605650,
                           "size": 280,
                         },
                         "perf.js.map": {
-                          "offset": 12583220,
+                          "offset": 12605920,
                           "size": 830,
                         },
                       },
                     },
                     "package.json": {
-                      "offset": 12584050,
+                      "offset": 12606750,
                       "size": 30,
                     },
                     "perf.d.ts.map": {
-                      "offset": 12584070,
+                      "offset": 12606770,
                       "size": 220,
                     },
                     "perf.js": {
-                      "offset": 12584290,
+                      "offset": 12606990,
                       "size": 280,
                     },
                     "perf.js.map": {
-                      "offset": 12584570,
+                      "offset": 12607270,
                       "size": 830,
                     },
                   },
@@ -35406,7 +35406,7 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
               },
             },
             "package.json": {
-              "offset": 12585390,
+              "offset": 12608090,
               "size": 3550,
             },
           },
@@ -35414,14 +35414,14 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
         "markdown-it": {
           "files": {
             "LICENSE": {
-              "offset": 12588930,
+              "offset": 12611640,
               "size": 1080,
             },
             "bin": {
               "files": {
                 "markdown-it.mjs": {
                   "executable": true,
-                  "offset": 12590000,
+                  "offset": 12612710,
                   "size": 2170,
                 },
               },
@@ -35429,21 +35429,21 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
             "dist": {
               "files": {
                 "index.cjs.js": {
-                  "offset": 12592170,
+                  "offset": 12614870,
                   "size": 163060,
                 },
                 "markdown-it.js": {
-                  "offset": 12755220,
+                  "offset": 12777930,
                   "size": 298980,
                 },
                 "markdown-it.min.js": {
-                  "offset": 13054200,
+                  "offset": 13076900,
                   "size": 123620,
                 },
               },
             },
             "index.mjs": {
-              "offset": 13177810,
+              "offset": 13200520,
               "size": 50,
             },
             "lib": {
@@ -35451,15 +35451,15 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                 "common": {
                   "files": {
                     "html_blocks.mjs": {
-                      "offset": 13177860,
+                      "offset": 13200560,
                       "size": 800,
                     },
                     "html_re.mjs": {
-                      "offset": 13178660,
+                      "offset": 13201360,
                       "size": 1000,
                     },
                     "utils.mjs": {
-                      "offset": 13179650,
+                      "offset": 13202350,
                       "size": 7900,
                     },
                   },
@@ -35467,111 +35467,111 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                 "helpers": {
                   "files": {
                     "index.mjs": {
-                      "offset": 13187540,
+                      "offset": 13210250,
                       "size": 280,
                     },
                     "parse_link_destination.mjs": {
-                      "offset": 13187820,
+                      "offset": 13210520,
                       "size": 1550,
                     },
                     "parse_link_label.mjs": {
-                      "offset": 13189360,
+                      "offset": 13212070,
                       "size": 990,
                     },
                     "parse_link_title.mjs": {
-                      "offset": 13190350,
+                      "offset": 13213050,
                       "size": 1860,
                     },
                   },
                 },
                 "index.mjs": {
-                  "offset": 13192200,
+                  "offset": 13214900,
                   "size": 17900,
                 },
                 "parser_block.mjs": {
-                  "offset": 13210100,
+                  "offset": 13232800,
                   "size": 3990,
                 },
                 "parser_core.mjs": {
-                  "offset": 13214080,
+                  "offset": 13236790,
                   "size": 1510,
                 },
                 "parser_inline.mjs": {
-                  "offset": 13215590,
+                  "offset": 13238300,
                   "size": 5440,
                 },
                 "presets": {
                   "files": {
                     "commonmark.mjs": {
-                      "offset": 13221030,
+                      "offset": 13243730,
                       "size": 1910,
                     },
                     "default.mjs": {
-                      "offset": 13222940,
+                      "offset": 13245640,
                       "size": 1290,
                     },
                     "zero.mjs": {
-                      "offset": 13224220,
+                      "offset": 13246920,
                       "size": 1660,
                     },
                   },
                 },
                 "renderer.mjs": {
-                  "offset": 13225870,
+                  "offset": 13248570,
                   "size": 8930,
                 },
                 "ruler.mjs": {
-                  "offset": 13234800,
+                  "offset": 13257500,
                   "size": 8480,
                 },
                 "rules_block": {
                   "files": {
                     "blockquote.mjs": {
-                      "offset": 13243280,
+                      "offset": 13265980,
                       "size": 6060,
                     },
                     "code.mjs": {
-                      "offset": 13249330,
+                      "offset": 13272040,
                       "size": 690,
                     },
                     "fence.mjs": {
-                      "offset": 13250020,
+                      "offset": 13272720,
                       "size": 2420,
                     },
                     "heading.mjs": {
-                      "offset": 13252430,
+                      "offset": 13275130,
                       "size": 1500,
                     },
                     "hr.mjs": {
-                      "offset": 13253930,
+                      "offset": 13276630,
                       "size": 1070,
                     },
                     "html_block.mjs": {
-                      "offset": 13255000,
+                      "offset": 13277700,
                       "size": 2200,
                     },
                     "lheading.mjs": {
-                      "offset": 13257200,
+                      "offset": 13279900,
                       "size": 2490,
                     },
                     "list.mjs": {
-                      "offset": 13259680,
+                      "offset": 13282390,
                       "size": 9110,
                     },
                     "paragraph.mjs": {
-                      "offset": 13268790,
+                      "offset": 13291490,
                       "size": 1460,
                     },
                     "reference.mjs": {
-                      "offset": 13270240,
+                      "offset": 13292950,
                       "size": 5830,
                     },
                     "state_block.mjs": {
-                      "offset": 13276070,
+                      "offset": 13298780,
                       "size": 5900,
                     },
                     "table.mjs": {
-                      "offset": 13281970,
+                      "offset": 13304670,
                       "size": 7090,
                     },
                   },
@@ -35579,35 +35579,35 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                 "rules_core": {
                   "files": {
                     "block.mjs": {
-                      "offset": 13289060,
+                      "offset": 13311760,
                       "size": 340,
                     },
                     "inline.mjs": {
-                      "offset": 13289390,
+                      "offset": 13312090,
                       "size": 290,
                     },
                     "linkify.mjs": {
-                      "offset": 13289680,
+                      "offset": 13312380,
                       "size": 4250,
                     },
                     "normalize.mjs": {
-                      "offset": 13293930,
+                      "offset": 13316630,
                       "size": 360,
                     },
                     "replacements.mjs": {
-                      "offset": 13294280,
+                      "offset": 13316980,
                       "size": 2640,
                     },
                     "smartquotes.mjs": {
-                      "offset": 13296910,
+                      "offset": 13319610,
                       "size": 5730,
                     },
                     "state_core.mjs": {
-                      "offset": 13302630,
+                      "offset": 13325340,
                       "size": 330,
                     },
                     "text_join.mjs": {
-                      "offset": 13302960,
+                      "offset": 13325660,
                       "size": 1150,
                     },
                   },
@@ -35615,69 +35615,69 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                 "rules_inline": {
                   "files": {
                     "autolink.mjs": {
-                      "offset": 13304110,
+                      "offset": 13326810,
                       "size": 2020,
                     },
                     "backticks.mjs": {
-                      "offset": 13306120,
+                      "offset": 13328820,
                       "size": 1680,
                     },
                     "balance_pairs.mjs": {
-                      "offset": 13307790,
+                      "offset": 13330500,
                       "size": 4090,
                     },
                     "emphasis.mjs": {
-                      "offset": 13311880,
+                      "offset": 13334580,
                       "size": 3520,
                     },
                     "entity.mjs": {
-                      "offset": 13315400,
+                      "offset": 13338100,
                       "size": 1490,
                     },
                     "escape.mjs": {
-                      "offset": 13316880,
+                      "offset": 13339590,
                       "size": 1420,
                     },
                     "fragments_join.mjs": {
-                      "offset": 13318300,
+                      "offset": 13341010,
                       "size": 1270,
                     },
                     "html_inline.mjs": {
-                      "offset": 13319570,
+                      "offset": 13342270,
                       "size": 1170,
                     },
                     "image.mjs": {
-                      "offset": 13320730,
+                      "offset": 13343440,
                       "size": 3640,
                     },
                     "link.mjs": {
-                      "offset": 13324370,
+                      "offset": 13347070,
                       "size": 3730,
                     },
                     "linkify.mjs": {
-                      "offset": 13328090,
+                      "offset": 13350800,
                       "size": 1680,
                     },
                     "newline.mjs": {
-                      "offset": 13329770,
+                      "offset": 13352470,
                       "size": 1200,
                     },
                     "state_inline.mjs": {
-                      "offset": 13330970,
+                      "offset": 13353670,
                       "size": 3500,
                     },
                     "strikethrough.mjs": {
-                      "offset": 13334460,
+                      "offset": 13357160,
                       "size": 2940,
                     },
                     "text.mjs": {
-                      "offset": 13337400,
+                      "offset": 13360100,
                       "size": 2110,
                     },
                   },
                 },
                 "token.mjs": {
-                  "offset": 13339500,
+                  "offset": 13362200,
                   "size": 3800,
                 },
               },
@@ -35687,163 +35687,163 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                 "entities": {
                   "files": {
                     "LICENSE": {
-                      "offset": 13345070,
+                      "offset": 13367770,
                       "size": 1260,
                     },
                     "lib": {
                       "files": {
                         "decode.d.ts.map": {
-                          "offset": 13346330,
+                          "offset": 13369030,
                           "size": 2210,
                         },
                         "decode.js": {
-                          "offset": 13348540,
+                          "offset": 13371240,
                           "size": 22620,
                         },
                         "decode.js.map": {
-                          "offset": 13371150,
+                          "offset": 13393850,
                           "size": 11600,
                         },
                         "decode_codepoint.d.ts.map": {
-                          "offset": 13382740,
+                          "offset": 13405440,
                           "size": 400,
                         },
                         "decode_codepoint.js": {
-                          "offset": 13383140,
+                          "offset": 13405840,
                           "size": 2320,
                         },
                         "decode_codepoint.js.map": {
-                          "offset": 13385450,
+                          "offset": 13408150,
                           "size": 1910,
                         },
                         "encode.d.ts.map": {
-                          "offset": 13387360,
+                          "offset": 13410060,
                           "size": 340,
                         },
                         "encode.js": {
-                          "offset": 13387690,
+                          "offset": 13410390,
                           "size": 2970,
                         },
                         "encode.js.map": {
-                          "offset": 13390660,
+                          "offset": 13413360,
                           "size": 1840,
                         },
                         "escape.d.ts.map": {
-                          "offset": 13392490,
+                          "offset": 13415200,
                           "size": 590,
                         },
                         "escape.js": {
-                          "offset": 13393080,
+                          "offset": 13415780,
                           "size": 4320,
                         },
                         "escape.js.map": {
-                          "offset": 13397390,
+                          "offset": 13420090,
                           "size": 2880,
                         },
                         "esm": {
                           "files": {
                             "decode.d.ts.map": {
-                              "offset": 13400260,
+                              "offset": 13422970,
                               "size": 2210,
                             },
                             "decode.js": {
-                              "offset": 13402470,
+                              "offset": 13425180,
                               "size": 19810,
                             },
                             "decode.js.map": {
-                              "offset": 13422280,
+                              "offset": 13444990,
                               "size": 11480,
                             },
                             "decode_codepoint.d.ts.map": {
-                              "offset": 13433760,
+                              "offset": 13456460,
                               "size": 400,
                             },
                             "decode_codepoint.js": {
-                              "offset": 13434150,
+                              "offset": 13456860,
                               "size": 2120,
                             },
                             "decode_codepoint.js.map": {
-                              "offset": 13436270,
+                              "offset": 13458970,
                               "size": 1910,
                             },
                             "encode.d.ts.map": {
-                              "offset": 13438170,
+                              "offset": 13460880,
                               "size": 340,
                             },
                             "encode.js": {
-                              "offset": 13438510,
+                              "offset": 13461210,
                               "size": 2570,
                             },
                             "encode.js.map": {
-                              "offset": 13441080,
+                              "offset": 13463780,
                               "size": 1870,
                             },
                             "escape.d.ts.map": {
-                              "offset": 13442940,
+                              "offset": 13465640,
                               "size": 590,
                             },
                             "escape.js": {
-                              "offset": 13443530,
+                              "offset": 13466230,
                               "size": 3970,
                             },
                             "escape.js.map": {
-                              "offset": 13447490,
+                              "offset": 13470200,
                               "size": 2900,
                             },
                             "generated": {
                               "files": {
                                 "decode-data-html.d.ts.map": {
-                                  "offset": 13450390,
+                                  "offset": 13473090,
                                   "size": 240,
                                 },
                                 "decode-data-html.js": {
-                                  "offset": 13450620,
+                                  "offset": 13473330,
                                   "size": 47730,
                                 },
                                 "decode-data-html.js.map": {
-                                  "offset": 13498350,
+                                  "offset": 13521050,
                                   "size": 400,
                                 },
                                 "decode-data-xml.d.ts.map": {
-                                  "offset": 13498740,
+                                  "offset": 13521450,
                                   "size": 240,
                                 },
                                 "decode-data-xml.js": {
-                                  "offset": 13498970,
+                                  "offset": 13521680,
                                   "size": 280,
                                 },
                                 "decode-data-xml.js.map": {
-                                  "offset": 13499250,
+                                  "offset": 13521960,
                                   "size": 390,
                                 },
                                 "encode-html.d.ts.map": {
-                                  "offset": 13499640,
+                                  "offset": 13522340,
                                   "size": 390,
                                 },
                                 "encode-html.js": {
-                                  "offset": 13500030,
+                                  "offset": 13522730,
                                   "size": 27040,
                                 },
                                 "encode-html.js.map": {
-                                  "offset": 13527070,
+                                  "offset": 13549770,
                                   "size": 48230,
                                 },
                               },
                             },
                             "index.d.ts.map": {
-                              "offset": 13575290,
+                              "offset": 13598000,
                               "size": 1420,
                             },
                             "index.js": {
-                              "offset": 13576710,
+                              "offset": 13599410,
                               "size": 4060,
                             },
                             "index.js.map": {
-                              "offset": 13580770,
+                              "offset": 13603470,
                               "size": 2550,
                             },
                             "package.json": {
-                              "offset": 13583310,
+                              "offset": 13606010,
                               "size": 20,
                             },
                           },
@@ -35851,59 +35851,59 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                         "generated": {
                           "files": {
                             "decode-data-html.d.ts.map": {
-                              "offset": 13583330,
+                              "offset": 13606030,
                               "size": 240,
                             },
                             "decode-data-html.js": {
-                              "offset": 13583560,
+                              "offset": 13606270,
                               "size": 47830,
                             },
                             "decode-data-html.js.map": {
-                              "offset": 13631380,
+                              "offset": 13654090,
                               "size": 410,
                             },
                             "decode-data-xml.d.ts.map": {
-                              "offset": 13631790,
+                              "offset": 13654490,
                               "size": 240,
                             },
                             "decode-data-xml.js": {
-                              "offset": 13632020,
+                              "offset": 13654720,
                               "size": 380,
                             },
                             "decode-data-xml.js.map": {
-                              "offset": 13632400,
+                              "offset": 13655100,
                               "size": 400,
                             },
                             "encode-html.d.ts.map": {
-                              "offset": 13632790,
+                              "offset": 13655500,
                               "size": 390,
                             },
                             "encode-html.js": {
-                              "offset": 13633180,
+                              "offset": 13655880,
                               "size": 27120,
                             },
                             "encode-html.js.map": {
-                              "offset": 13660300,
+                              "offset": 13683000,
                               "size": 48230,
                             },
                           },
                         },
                         "index.d.ts.map": {
-                          "offset": 13708530,
+                          "offset": 13731230,
                           "size": 1420,
                         },
                         "index.js": {
-                          "offset": 13709940,
+                          "offset": 13732650,
                           "size": 7150,
                         },
                         "index.js.map": {
-                          "offset": 13717090,
+                          "offset": 13739790,
                           "size": 2650,
                         },
                       },
                     },
                     "package.json": {
-                      "offset": 13719730,
+                      "offset": 13742430,
                       "size": 1510,
                     },
                   },
@@ -35911,7 +35911,7 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
               },
             },
             "package.json": {
-              "offset": 13343300,
+              "offset": 13366000,
               "size": 1780,
             },
           },
@@ -35919,21 +35919,21 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
         "mdn-data": {
           "files": {
             "LICENSE": {
-              "offset": 13721230,
+              "offset": 13743930,
               "size": 6560,
             },
             "api": {
               "files": {
                 "index.js": {
-                  "offset": 13727780,
+                  "offset": 13750490,
                   "size": 70,
                 },
                 "inheritance.json": {
-                  "offset": 13727850,
+                  "offset": 13750550,
                   "size": 53040,
                 },
                 "inheritance.schema.json": {
-                  "offset": 13780890,
+                  "offset": 13803590,
                   "size": 530,
                 },
               },
@@ -35941,89 +35941,89 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
             "css": {
               "files": {
                 "at-rules.json": {
-                  "offset": 13781420,
+                  "offset": 13804120,
                   "size": 19150,
                 },
                 "at-rules.schema.json": {
-                  "offset": 13800560,
+                  "offset": 13823260,
                   "size": 3390,
                 },
                 "definitions.json": {
-                  "offset": 13803950,
+                  "offset": 13826650,
                   "size": 2090,
                 },
                 "functions.json": {
-                  "offset": 13806030,
+                  "offset": 13828740,
                   "size": 25250,
                 },
                 "functions.schema.json": {
-                  "offset": 13831280,
+                  "offset": 13853980,
                   "size": 840,
                 },
                 "index.js": {
-                  "offset": 13832120,
+                  "offset": 13854820,
                   "size": 280,
                 },
                 "properties.json": {
-                  "offset": 13832390,
+                  "offset": 13855100,
                   "size": 340620,
                 },
                 "properties.schema.json": {
-                  "offset": 14173010,
+                  "offset": 14195710,
                   "size": 16100,
                 },
                 "selectors.json": {
-                  "offset": 14189110,
+                  "offset": 14211810,
                   "size": 27640,
                 },
                 "selectors.schema.json": {
-                  "offset": 14216740,
+                  "offset": 14239450,
                   "size": 720,
                 },
                 "syntaxes.json": {
-                  "offset": 14217460,
+                  "offset": 14240160,
                   "size": 40350,
                 },
                 "syntaxes.schema.json": {
-                  "offset": 14257800,
+                  "offset": 14280500,
                   "size": 230,
                 },
                 "types.json": {
-                  "offset": 14258030,
+                  "offset": 14280730,
                   "size": 6620,
                 },
                 "types.schema.json": {
-                  "offset": 14264640,
+                  "offset": 14287350,
                   "size": 650,
                 },
                 "units.json": {
-                  "offset": 14265290,
+                  "offset": 14287990,
                   "size": 2840,
                 },
                 "units.schema.json": {
-                  "offset": 14268120,
+                  "offset": 14290830,
                   "size": 530,
                 },
               },
             },
             "index.js": {
-              "offset": 14268650,
+              "offset": 14291350,
               "size": 100,
             },
             "l10n": {
               "files": {
                 "css.json": {
-                  "offset": 14268750,
+                  "offset": 14291450,
                   "size": 181820,
                 },
                 "index.js": {
-                  "offset": 14450560,
+                  "offset": 14473270,
                   "size": 50,
                 },
               },
             },
             "package.json": {
-              "offset": 14450610,
+              "offset": 14473310,
               "size": 560,
             },
           },
@@ -36031,43 +36031,43 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
         "mdurl": {
           "files": {
             "LICENSE": {
-              "offset": 14451160,
+              "offset": 14473860,
               "size": 2310,
             },
             "build": {
               "files": {
                 "index.cjs.js": {
-                  "offset": 14453460,
+                  "offset": 14476170,
                   "size": 15460,
                 },
               },
             },
             "index.mjs": {
-              "offset": 14468920,
+              "offset": 14491620,
               "size": 200,
             },
             "lib": {
               "files": {
                 "decode.mjs": {
-                  "offset": 14469120,
+                  "offset": 14491820,
                   "size": 2850,
                 },
                 "encode.mjs": {
-                  "offset": 14471960,
+                  "offset": 14494670,
                   "size": 2220,
                 },
                 "format.mjs": {
-                  "offset": 14474170,
+                  "offset": 14496880,
                   "size": 490,
                 },
                 "parse.mjs": {
-                  "offset": 14474660,
+                  "offset": 14497360,
                   "size": 9740,
                 },
               },
             },
             "package.json": {
-              "offset": 14484390,
+              "offset": 14507090,
               "size": 610,
             },
           },
@@ -36075,15 +36075,15 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
         "ms": {
           "files": {
             "index.js": {
-              "offset": 14484990,
+              "offset": 14507700,
               "size": 3030,
             },
             "license.md": {
-              "offset": 14488020,
+              "offset": 14510720,
               "size": 1080,
             },
             "package.json": {
-              "offset": 14489100,
+              "offset": 14511800,
               "size": 500,
             },
           },
@@ -36091,7 +36091,7 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
         "parse5": {
           "files": {
             "LICENSE": {
-              "offset": 14489590,
+              "offset": 14512300,
               "size": 1110,
             },
             "dist": {
@@ -36099,47 +36099,47 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                 "common": {
                   "files": {
                     "doctype.js": {
-                      "offset": 14490700,
+                      "offset": 14513410,
                       "size": 4670,
                     },
                     "error-codes.js": {
-                      "offset": 14495360,
+                      "offset": 14518070,
                       "size": 4750,
                     },
                     "foreign-content.js": {
-                      "offset": 14500110,
+                      "offset": 14522810,
                       "size": 6300,
                     },
                     "html.js": {
-                      "offset": 14506410,
+                      "offset": 14529110,
                       "size": 17560,
                     },
                     "token.js": {
-                      "offset": 14523960,
+                      "offset": 14546670,
                       "size": 840,
                     },
                     "unicode.js": {
-                      "offset": 14524800,
+                      "offset": 14547500,
                       "size": 2990,
                     },
                   },
                 },
                 "index.js": {
-                  "offset": 14527780,
+                  "offset": 14550490,
                   "size": 1360,
                 },
                 "parser": {
                   "files": {
                     "formatting-element-list.js": {
-                      "offset": 14529140,
+                      "offset": 14551840,
                       "size": 4310,
                     },
                     "index.js": {
-                      "offset": 14533440,
+                      "offset": 14556140,
                       "size": 107130,
                     },
                     "open-element-stack.js": {
-                      "offset": 14640560,
+                      "offset": 14663270,
                       "size": 10920,
                     },
                   },
@@ -36147,7 +36147,7 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                 "serializer": {
                   "files": {
                     "index.js": {
-                      "offset": 14651480,
+                      "offset": 14674190,
                       "size": 5270,
                     },
                   },
@@ -36155,11 +36155,11 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                 "tokenizer": {
                   "files": {
                     "index.js": {
-                      "offset": 14656750,
+                      "offset": 14679460,
                       "size": 98340,
                     },
                     "preprocessor.js": {
-                      "offset": 14755090,
+                      "offset": 14777790,
                       "size": 7030,
                     },
                   },
@@ -36167,11 +36167,11 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                 "tree-adapters": {
                   "files": {
                     "default.js": {
-                      "offset": 14762110,
+                      "offset": 14784810,
                       "size": 5240,
                     },
                     "interface.js": {
-                      "offset": 14767340,
+                      "offset": 14790050,
                       "size": 20,
                     },
                   },
@@ -36179,7 +36179,7 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
               },
             },
             "package.json": {
-              "offset": 14767350,
+              "offset": 14790060,
               "size": 670,
             },
           },
@@ -36187,19 +36187,19 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
         "punycode": {
           "files": {
             "LICENSE-MIT.txt": {
-              "offset": 14768020,
+              "offset": 14790730,
               "size": 1080,
             },
             "package.json": {
-              "offset": 14769100,
+              "offset": 14791800,
               "size": 750,
             },
             "punycode.es6.js": {
-              "offset": 14769850,
+              "offset": 14792550,
               "size": 12780,
             },
             "punycode.js": {
-              "offset": 14782630,
+              "offset": 14805330,
               "size": 12720,
             },
           },
@@ -36207,19 +36207,19 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
         "punycode.js": {
           "files": {
             "LICENSE-MIT.txt": {
-              "offset": 14795340,
+              "offset": 14818040,
               "size": 1080,
             },
             "package.json": {
-              "offset": 14796420,
+              "offset": 14819120,
               "size": 760,
             },
             "punycode.es6.js": {
-              "offset": 14797170,
+              "offset": 14819870,
               "size": 12780,
             },
             "punycode.js": {
-              "offset": 14809950,
+              "offset": 14832650,
               "size": 12720,
             },
           },
@@ -36227,15 +36227,15 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
         "require-from-string": {
           "files": {
             "index.js": {
-              "offset": 14822660,
+              "offset": 14845360,
               "size": 870,
             },
             "license": {
-              "offset": 14823530,
+              "offset": 14846230,
               "size": 1130,
             },
             "package.json": {
-              "offset": 14824650,
+              "offset": 14847360,
               "size": 450,
             },
           },
@@ -36243,15 +36243,15 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
         "saxes": {
           "files": {
             "package.json": {
-              "offset": 14825100,
+              "offset": 14847800,
               "size": 1700,
             },
             "saxes.js": {
-              "offset": 14826790,
+              "offset": 14849490,
               "size": 73800,
             },
             "saxes.js.map": {
-              "offset": 14900580,
+              "offset": 14923280,
               "size": 51770,
             },
           },
@@ -36259,59 +36259,59 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
         "source-map-js": {
           "files": {
             "LICENSE": {
-              "offset": 14952350,
+              "offset": 14975050,
               "size": 1530,
             },
             "lib": {
               "files": {
                 "array-set.js": {
-                  "offset": 14953880,
+                  "offset": 14976580,
                   "size": 3200,
                 },
                 "base64-vlq.js": {
-                  "offset": 14957070,
+                  "offset": 14979780,
                   "size": 4720,
                 },
                 "base64.js": {
-                  "offset": 14961790,
+                  "offset": 14984490,
                   "size": 1540,
                 },
                 "binary-search.js": {
-                  "offset": 14963330,
+                  "offset": 14986030,
                   "size": 4250,
                 },
                 "mapping-list.js": {
-                  "offset": 14967580,
+                  "offset": 14990280,
                   "size": 2340,
                 },
                 "quick-sort.js": {
-                  "offset": 14969910,
+                  "offset": 14992620,
                   "size": 4070,
                 },
                 "source-map-consumer.js": {
-                  "offset": 14973980,
+                  "offset": 14996690,
                   "size": 41580,
                 },
                 "source-map-generator.js": {
-                  "offset": 15015560,
+                  "offset": 15038270,
                   "size": 14940,
                 },
                 "source-node.js": {
-                  "offset": 15030500,
+                  "offset": 15053200,
                   "size": 13810,
                 },
                 "util.js": {
-                  "offset": 15044300,
+                  "offset": 15067010,
                   "size": 15410,
                 },
               },
             },
             "package.json": {
-              "offset": 15059710,
+              "offset": 15082410,
               "size": 640,
             },
             "source-map.js": {
-              "offset": 15060340,
+              "offset": 15083040,
               "size": 410,
             },
           },
@@ -36319,31 +36319,31 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
         "symbol-tree": {
           "files": {
             "LICENSE": {
-              "offset": 15060740,
+              "offset": 15083450,
               "size": 1090,
             },
             "lib": {
               "files": {
                 "SymbolTree.js": {
-                  "offset": 15061830,
+                  "offset": 15084530,
                   "size": 29510,
                 },
                 "SymbolTreeNode.js": {
-                  "offset": 15091340,
+                  "offset": 15114040,
                   "size": 1940,
                 },
                 "TreeIterator.js": {
-                  "offset": 15093270,
+                  "offset": 15115980,
                   "size": 1980,
                 },
                 "TreePosition.js": {
-                  "offset": 15095250,
+                  "offset": 15117950,
                   "size": 250,
                 },
               },
             },
             "package.json": {
-              "offset": 15095490,
+              "offset": 15118190,
               "size": 700,
             },
           },
@@ -36351,14 +36351,14 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
         "tldts": {
           "files": {
             "LICENSE": {
-              "offset": 15096180,
+              "offset": 15118890,
               "size": 1080,
             },
             "bin": {
               "files": {
                 "cli.js": {
                   "executable": true,
-                  "offset": 15097260,
+                  "offset": 15119960,
                   "size": 550,
                 },
               },
@@ -36368,11 +36368,11 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                 "cjs": {
                   "files": {
                     "index.js": {
-                      "offset": 15097810,
+                      "offset": 15120510,
                       "size": 176800,
                     },
                     "index.js.map": {
-                      "offset": 15274600,
+                      "offset": 15297300,
                       "size": 413310,
                     },
                     "src": {
@@ -36380,27 +36380,27 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                         "data": {
                           "files": {
                             "trie.js": {
-                              "offset": 15687900,
+                              "offset": 15710610,
                               "size": 152980,
                             },
                             "trie.js.map": {
-                              "offset": 15840870,
+                              "offset": 15863580,
                               "size": 219150,
                             },
                           },
                         },
                         "suffix-trie.js": {
-                          "offset": 16060020,
+                          "offset": 16082720,
                           "size": 2490,
                         },
                         "suffix-trie.js.map": {
-                          "offset": 16062510,
+                          "offset": 16085210,
                           "size": 2270,
                         },
                       },
                     },
                     "tsconfig.tsbuildinfo": {
-                      "offset": 16064770,
+                      "offset": 16087470,
                       "size": 39390,
                     },
                   },
@@ -36408,11 +36408,11 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                 "es6": {
                   "files": {
                     "index.js": {
-                      "offset": 16104160,
+                      "offset": 16126860,
                       "size": 1510,
                     },
                     "index.js.map": {
-                      "offset": 16105670,
+                      "offset": 16128370,
                       "size": 1290,
                     },
                     "src": {
@@ -36420,63 +36420,63 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                         "data": {
                           "files": {
                             "trie.js": {
-                              "offset": 16106950,
+                              "offset": 16129660,
                               "size": 152870,
                             },
                             "trie.js.map": {
-                              "offset": 16259820,
+                              "offset": 16282520,
                               "size": 219160,
                             },
                           },
                         },
                         "suffix-trie.js": {
-                          "offset": 16478970,
+                          "offset": 16501680,
                           "size": 2380,
                         },
                         "suffix-trie.js.map": {
-                          "offset": 16481350,
+                          "offset": 16504050,
                           "size": 2320,
                         },
                       },
                     },
                     "tsconfig.bundle.tsbuildinfo": {
-                      "offset": 16483670,
+                      "offset": 16506370,
                       "size": 39100,
                     },
                   },
                 },
                 "index.cjs.min.js": {
-                  "offset": 16522760,
+                  "offset": 16545470,
                   "size": 110890,
                 },
                 "index.cjs.min.js.map": {
-                  "offset": 16633650,
+                  "offset": 16656350,
                   "size": 397090,
                 },
                 "index.esm.min.js": {
-                  "offset": 17030740,
+                  "offset": 17053440,
                   "size": 110870,
                 },
                 "index.esm.min.js.map": {
-                  "offset": 17141600,
+                  "offset": 17164310,
                   "size": 397200,
                 },
                 "index.umd.min.js": {
-                  "offset": 17538800,
+                  "offset": 17561510,
                   "size": 111080,
                 },
                 "index.umd.min.js.map": {
-                  "offset": 17649880,
+                  "offset": 17672580,
                   "size": 397090,
                 },
               },
             },
             "index.ts": {
-              "offset": 18046970,
+              "offset": 18069670,
               "size": 1730,
             },
             "package.json": {
-              "offset": 18048700,
+              "offset": 18071400,
               "size": 1100,
             },
             "src": {
@@ -36484,13 +36484,13 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                 "data": {
                   "files": {
                     "trie.ts": {
-                      "offset": 18049790,
+                      "offset": 18072500,
                       "size": 131730,
                     },
                   },
                 },
                 "suffix-trie.ts": {
-                  "offset": 18181520,
+                  "offset": 18204230,
                   "size": 2560,
                 },
               },
@@ -36500,7 +36500,7 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
         "tldts-core": {
           "files": {
             "LICENSE": {
-              "offset": 18184070,
+              "offset": 18206780,
               "size": 1080,
             },
             "dist": {
@@ -36508,103 +36508,103 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                 "cjs": {
                   "files": {
                     "index.js": {
-                      "offset": 18185150,
+                      "offset": 18207860,
                       "size": 20370,
                     },
                     "index.js.map": {
-                      "offset": 18205510,
+                      "offset": 18228220,
                       "size": 34550,
                     },
                     "src": {
                       "files": {
                         "domain-without-suffix.js": {
-                          "offset": 18240060,
+                          "offset": 18262760,
                           "size": 590,
                         },
                         "domain-without-suffix.js.map": {
-                          "offset": 18240650,
+                          "offset": 18263350,
                           "size": 340,
                         },
                         "domain.js": {
-                          "offset": 18240980,
+                          "offset": 18263690,
                           "size": 3320,
                         },
                         "domain.js.map": {
-                          "offset": 18244300,
+                          "offset": 18267000,
                           "size": 1760,
                         },
                         "extract-hostname.js": {
-                          "offset": 18246060,
+                          "offset": 18268760,
                           "size": 5670,
                         },
                         "extract-hostname.js.map": {
-                          "offset": 18251720,
+                          "offset": 18274430,
                           "size": 4550,
                         },
                         "factory.js": {
-                          "offset": 18256270,
+                          "offset": 18278970,
                           "size": 4260,
                         },
                         "factory.js.map": {
-                          "offset": 18260520,
+                          "offset": 18283220,
                           "size": 2720,
                         },
                         "is-ip.js": {
-                          "offset": 18263230,
+                          "offset": 18285940,
                           "size": 2220,
                         },
                         "is-ip.js.map": {
-                          "offset": 18265450,
+                          "offset": 18288160,
                           "size": 2000,
                         },
                         "is-valid.js": {
-                          "offset": 18267440,
+                          "offset": 18290150,
                           "size": 2560,
                         },
                         "is-valid.js.map": {
-                          "offset": 18270000,
+                          "offset": 18292710,
                           "size": 1610,
                         },
                         "lookup": {
                           "files": {
                             "fast-path.js": {
-                              "offset": 18271610,
+                              "offset": 18294320,
                               "size": 2350,
                             },
                             "fast-path.js.map": {
-                              "offset": 18273960,
+                              "offset": 18296660,
                               "size": 2260,
                             },
                             "interface.js": {
-                              "offset": 18276220,
+                              "offset": 18298920,
                               "size": 120,
                             },
                             "interface.js.map": {
-                              "offset": 18276330,
+                              "offset": 18299030,
                               "size": 130,
                             },
                           },
                         },
                         "options.js": {
-                          "offset": 18276460,
+                          "offset": 18299160,
                           "size": 750,
                         },
                         "options.js.map": {
-                          "offset": 18277200,
+                          "offset": 18299910,
                           "size": 620,
                         },
                         "subdomain.js": {
-                          "offset": 18277820,
+                          "offset": 18300530,
                           "size": 440,
                         },
                         "subdomain.js.map": {
-                          "offset": 18278260,
+                          "offset": 18300970,
                           "size": 370,
                         },
                       },
                     },
                     "tsconfig.tsbuildinfo": {
-                      "offset": 18278630,
+                      "offset": 18301330,
                       "size": 40280,
                     },
                   },
@@ -36612,103 +36612,103 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                 "es6": {
                   "files": {
                     "index.js": {
-                      "offset": 18318910,
+                      "offset": 18341610,
                       "size": 220,
                     },
                     "index.js.map": {
-                      "offset": 18319130,
+                      "offset": 18341830,
                       "size": 260,
                     },
                     "src": {
                       "files": {
                         "domain-without-suffix.js": {
-                          "offset": 18319380,
+                          "offset": 18342080,
                           "size": 490,
                         },
                         "domain-without-suffix.js.map": {
-                          "offset": 18319860,
+                          "offset": 18342570,
                           "size": 340,
                         },
                         "domain.js": {
-                          "offset": 18320200,
+                          "offset": 18342900,
                           "size": 3230,
                         },
                         "domain.js.map": {
-                          "offset": 18323430,
+                          "offset": 18346130,
                           "size": 1760,
                         },
                         "extract-hostname.js": {
-                          "offset": 18325180,
+                          "offset": 18347880,
                           "size": 5580,
                         },
                         "extract-hostname.js.map": {
-                          "offset": 18330750,
+                          "offset": 18353460,
                           "size": 4550,
                         },
                         "factory.js": {
-                          "offset": 18335290,
+                          "offset": 18358000,
                           "size": 3950,
                         },
                         "factory.js.map": {
-                          "offset": 18339240,
+                          "offset": 18361940,
                           "size": 2780,
                         },
                         "is-ip.js": {
-                          "offset": 18342010,
+                          "offset": 18364720,
                           "size": 2140,
                         },
                         "is-ip.js.map": {
-                          "offset": 18344150,
+                          "offset": 18366850,
                           "size": 1990,
                         },
                         "is-valid.js": {
-                          "offset": 18346140,
+                          "offset": 18368840,
                           "size": 2460,
                         },
                         "is-valid.js.map": {
-                          "offset": 18348600,
+                          "offset": 18371300,
                           "size": 1610,
                         },
                         "lookup": {
                           "files": {
                             "fast-path.js": {
-                              "offset": 18350200,
+                              "offset": 18372910,
                               "size": 2250,
                             },
                             "fast-path.js.map": {
-                              "offset": 18352450,
+                              "offset": 18375160,
                               "size": 2260,
                             },
                             "interface.js": {
-                              "offset": 18354710,
+                              "offset": 18377410,
                               "size": 50,
                             },
                             "interface.js.map": {
-                              "offset": 18354760,
+                              "offset": 18377460,
                               "size": 130,
                             },
                           },
                         },
                         "options.js": {
-                          "offset": 18354880,
+                          "offset": 18377590,
                           "size": 650,
                         },
                         "options.js.map": {
-                          "offset": 18355520,
+                          "offset": 18378230,
                           "size": 610,
                         },
                         "subdomain.js": {
-                          "offset": 18356130,
+                          "offset": 18378840,
                           "size": 350,
                         },
                         "subdomain.js.map": {
-                          "offset": 18356480,
+                          "offset": 18379180,
                           "size": 370,
                         },
                       },
                     },
                     "tsconfig.bundle.tsbuildinfo": {
-                      "offset": 18356850,
+                      "offset": 18379550,
                       "size": 39260,
                     },
                   },
@@ -36716,57 +36716,57 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
               },
             },
             "index.ts": {
-              "offset": 18396100,
+              "offset": 18418800,
               "size": 300,
             },
             "package.json": {
-              "offset": 18396400,
+              "offset": 18419100,
               "size": 940,
             },
             "src": {
               "files": {
                 "domain-without-suffix.ts": {
-                  "offset": 18397330,
+                  "offset": 18420030,
                   "size": 460,
                 },
                 "domain.ts": {
-                  "offset": 18397790,
+                  "offset": 18420490,
                   "size": 3220,
                 },
                 "extract-hostname.ts": {
-                  "offset": 18401000,
+                  "offset": 18423710,
                   "size": 4820,
                 },
                 "factory.ts": {
-                  "offset": 18405820,
+                  "offset": 18428520,
                   "size": 5110,
                 },
                 "is-ip.ts": {
-                  "offset": 18410930,
+                  "offset": 18433630,
                   "size": 2060,
                 },
                 "is-valid.ts": {
-                  "offset": 18412980,
+                  "offset": 18435690,
                   "size": 2310,
                 },
                 "lookup": {
                   "files": {
                     "fast-path.ts": {
-                      "offset": 18415290,
+                      "offset": 18437990,
                       "size": 2120,
                     },
                     "interface.ts": {
-                      "offset": 18417400,
+                      "offset": 18440110,
                       "size": 230,
                     },
                   },
                 },
                 "options.ts": {
-                  "offset": 18417630,
+                  "offset": 18440330,
                   "size": 870,
                 },
                 "subdomain.ts": {
-                  "offset": 18418500,
+                  "offset": 18441200,
                   "size": 330,
                 },
               },
@@ -36776,35 +36776,35 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
         "tough-cookie": {
           "files": {
             "LICENSE": {
-              "offset": 18418820,
+              "offset": 18441520,
               "size": 1490,
             },
             "dist": {
               "files": {
                 "index.cjs": {
-                  "offset": 18420300,
+                  "offset": 18443010,
                   "size": 74170,
                 },
                 "index.cjs.map": {
-                  "offset": 18494460,
+                  "offset": 18517170,
                   "size": 217210,
                 },
                 "index.d.cts": {
-                  "offset": 18711670,
+                  "offset": 18734370,
                   "size": 80400,
                 },
                 "index.js": {
-                  "offset": 18792060,
+                  "offset": 18814760,
                   "size": 72520,
                 },
                 "index.js.map": {
-                  "offset": 18864580,
+                  "offset": 18887280,
                   "size": 217030,
                 },
               },
             },
             "package.json": {
-              "offset": 19081610,
+              "offset": 19104310,
               "size": 1620,
             },
           },
@@ -36812,31 +36812,31 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
         "tr46": {
           "files": {
             "LICENSE.md": {
-              "offset": 19083230,
+              "offset": 19105930,
               "size": 1080,
             },
             "index.js": {
-              "offset": 19084300,
+              "offset": 19107010,
               "size": 8590,
             },
             "lib": {
               "files": {
                 "mappingTable.json": {
-                  "offset": 19092890,
+                  "offset": 19115600,
                   "size": 142920,
                 },
                 "regexes.js": {
-                  "offset": 19235810,
+                  "offset": 19258510,
                   "size": 72470,
                 },
                 "statusMapping.js": {
-                  "offset": 19308270,
+                  "offset": 19330970,
                   "size": 130,
                 },
               },
             },
             "package.json": {
-              "offset": 19308390,
+              "offset": 19331090,
               "size": 680,
             },
           },
@@ -36844,13 +36844,13 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
         "uc.micro": {
           "files": {
             "LICENSE.txt": {
-              "offset": 19309070,
+              "offset": 19331770,
               "size": 1080,
             },
             "build": {
               "files": {
                 "index.cjs.js": {
-                  "offset": 19310140,
+                  "offset": 19332850,
                   "size": 5270,
                 },
               },
@@ -36860,7 +36860,7 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                 "Cc": {
                   "files": {
                     "regex.mjs": {
-                      "offset": 19315410,
+                      "offset": 19338110,
                       "size": 40,
                     },
                   },
@@ -36868,7 +36868,7 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                 "Cf": {
                   "files": {
                     "regex.mjs": {
-                      "offset": 19315440,
+                      "offset": 19338150,
                       "size": 270,
                     },
                   },
@@ -36876,7 +36876,7 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                 "P": {
                   "files": {
                     "regex.mjs": {
-                      "offset": 19315710,
+                      "offset": 19338410,
                       "size": 2050,
                     },
                   },
@@ -36884,7 +36884,7 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                 "S": {
                   "files": {
                     "regex.mjs": {
-                      "offset": 19317750,
+                      "offset": 19340450,
                       "size": 2560,
                     },
                   },
@@ -36892,7 +36892,7 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                 "Z": {
                   "files": {
                     "regex.mjs": {
-                      "offset": 19320300,
+                      "offset": 19343000,
                       "size": 80,
                     },
                   },
@@ -36900,11 +36900,11 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
               },
             },
             "index.mjs": {
-              "offset": 19320370,
+              "offset": 19343080,
               "size": 310,
             },
             "package.json": {
-              "offset": 19320670,
+              "offset": 19343380,
               "size": 650,
             },
             "properties": {
@@ -36912,7 +36912,7 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                 "Any": {
                   "files": {
                     "regex.mjs": {
-                      "offset": 19321320,
+                      "offset": 19344020,
                       "size": 150,
                     },
                   },
@@ -36924,27 +36924,27 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
         "w3c-xmlserializer": {
           "files": {
             "LICENSE.md": {
-              "offset": 19321460,
+              "offset": 19344170,
               "size": 1110,
             },
             "lib": {
               "files": {
                 "attributes.js": {
-                  "offset": 19322570,
+                  "offset": 19345270,
                   "size": 3700,
                 },
                 "constants.js": {
-                  "offset": 19326260,
+                  "offset": 19348960,
                   "size": 790,
                 },
                 "serialize.js": {
-                  "offset": 19327050,
+                  "offset": 19349750,
                   "size": 10100,
                 },
               },
             },
             "package.json": {
-              "offset": 19337150,
+              "offset": 19359850,
               "size": 460,
             },
           },
@@ -36952,19 +36952,19 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
         "webidl-conversions": {
           "files": {
             "LICENSE.md": {
-              "offset": 19337600,
+              "offset": 19360310,
               "size": 1330,
             },
             "lib": {
               "files": {
                 "index.js": {
-                  "offset": 19338930,
+                  "offset": 19361630,
                   "size": 12230,
                 },
               },
             },
             "package.json": {
-              "offset": 19351150,
+              "offset": 19373850,
               "size": 600,
             },
           },
@@ -36972,43 +36972,43 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
         "whatwg-mimetype": {
           "files": {
             "LICENSE.txt": {
-              "offset": 19351740,
+              "offset": 19374440,
               "size": 1070,
             },
             "lib": {
               "files": {
                 "index.js": {
-                  "offset": 19352810,
+                  "offset": 19375510,
                   "size": 120,
                 },
                 "mime-type-parameters.js": {
-                  "offset": 19352920,
+                  "offset": 19375620,
                   "size": 1440,
                 },
                 "mime-type.js": {
-                  "offset": 19354350,
+                  "offset": 19377060,
                   "size": 3160,
                 },
                 "parser.js": {
-                  "offset": 19357510,
+                  "offset": 19380210,
                   "size": 2520,
                 },
                 "serializer.js": {
-                  "offset": 19360020,
+                  "offset": 19382730,
                   "size": 600,
                 },
                 "sniff.js": {
-                  "offset": 19360620,
+                  "offset": 19383330,
                   "size": 23890,
                 },
                 "utils.js": {
-                  "offset": 19384510,
+                  "offset": 19407220,
                   "size": 1410,
                 },
               },
             },
             "package.json": {
-              "offset": 19385920,
+              "offset": 19408620,
               "size": 680,
             },
           },
@@ -37016,71 +37016,71 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
         "whatwg-url": {
           "files": {
             "LICENSE.txt": {
-              "offset": 19386600,
+              "offset": 19409300,
               "size": 1080,
             },
             "index.js": {
-              "offset": 19387670,
+              "offset": 19410380,
               "size": 1270,
             },
             "lib": {
               "files": {
                 "Function.js": {
-                  "offset": 19388940,
+                  "offset": 19411640,
                   "size": 1190,
                 },
                 "URL-impl.js": {
-                  "offset": 19390120,
+                  "offset": 19412830,
                   "size": 5090,
                 },
                 "URL.js": {
-                  "offset": 19395210,
+                  "offset": 19417910,
                   "size": 15390,
                 },
                 "URLSearchParams-impl.js": {
-                  "offset": 19410590,
+                  "offset": 19433290,
                   "size": 2970,
                 },
                 "URLSearchParams.js": {
-                  "offset": 19413560,
+                  "offset": 19436260,
                   "size": 17120,
                 },
                 "VoidFunction.js": {
-                  "offset": 19430680,
+                  "offset": 19453380,
                   "size": 730,
                 },
                 "encoding.js": {
-                  "offset": 19431410,
+                  "offset": 19454110,
                   "size": 330,
                 },
                 "infra.js": {
-                  "offset": 19431730,
+                  "offset": 19454440,
                   "size": 520,
                 },
                 "percent-encoding.js": {
-                  "offset": 19432250,
+                  "offset": 19454960,
                   "size": 4890,
                 },
                 "url-state-machine.js": {
-                  "offset": 19437140,
+                  "offset": 19459840,
                   "size": 31850,
                 },
                 "urlencoded.js": {
-                  "offset": 19468980,
+                  "offset": 19491690,
                   "size": 2280,
                 },
                 "utils.js": {
-                  "offset": 19471260,
+                  "offset": 19493970,
                   "size": 6770,
                 },
               },
             },
             "package.json": {
-              "offset": 19478030,
+              "offset": 19500730,
               "size": 980,
             },
             "webidl2js-wrapper.js": {
-              "offset": 19479010,
+              "offset": 19501710,
               "size": 170,
             },
           },
@@ -37088,79 +37088,79 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
         "ws": {
           "files": {
             "LICENSE": {
-              "offset": 19479180,
+              "offset": 19501880,
               "size": 1190,
             },
             "browser.js": {
-              "offset": 19480360,
+              "offset": 19503060,
               "size": 180,
             },
             "index.js": {
-              "offset": 19480530,
+              "offset": 19503240,
               "size": 800,
             },
             "lib": {
               "files": {
                 "buffer-util.js": {
-                  "offset": 19481330,
+                  "offset": 19504030,
                   "size": 3060,
                 },
                 "constants.js": {
-                  "offset": 19484390,
+                  "offset": 19507090,
                   "size": 510,
                 },
                 "event-target.js": {
-                  "offset": 19484890,
+                  "offset": 19507590,
                   "size": 7330,
                 },
                 "extension.js": {
-                  "offset": 19492210,
+                  "offset": 19514910,
                   "size": 6190,
                 },
                 "limiter.js": {
-                  "offset": 19498390,
+                  "offset": 19521100,
                   "size": 1040,
                 },
                 "permessage-deflate.js": {
-                  "offset": 19499430,
+                  "offset": 19522130,
                   "size": 14540,
                 },
                 "receiver.js": {
-                  "offset": 19513960,
+                  "offset": 19536660,
                   "size": 16460,
                 },
                 "sender.js": {
-                  "offset": 19530420,
+                  "offset": 19553120,
                   "size": 16890,
                 },
                 "stream.js": {
-                  "offset": 19547310,
+                  "offset": 19570010,
                   "size": 4210,
                 },
                 "subprotocol.js": {
-                  "offset": 19551510,
+                  "offset": 19574210,
                   "size": 1500,
                 },
                 "validation.js": {
-                  "offset": 19553010,
+                  "offset": 19575710,
                   "size": 3910,
                 },
                 "websocket-server.js": {
-                  "offset": 19556910,
+                  "offset": 19579610,
                   "size": 16650,
                 },
                 "websocket.js": {
-                  "offset": 19573550,
+                  "offset": 19596260,
                   "size": 36730,
                 },
               },
             },
             "package.json": {
-              "offset": 19610280,
+              "offset": 19632980,
               "size": 1310,
             },
             "wrapper.mjs": {
-              "offset": 19611590,
+              "offset": 19634290,
               "size": 560,
             },
           },
@@ -37168,19 +37168,19 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
         "xml-name-validator": {
           "files": {
             "LICENSE.txt": {
-              "offset": 19612140,
+              "offset": 19634840,
               "size": 10180,
             },
             "lib": {
               "files": {
                 "xml-name-validator.js": {
-                  "offset": 19622310,
+                  "offset": 19645020,
                   "size": 1710,
                 },
               },
             },
             "package.json": {
-              "offset": 19624020,
+              "offset": 19646720,
               "size": 530,
             },
           },
@@ -37188,11 +37188,11 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
         "xmlchars": {
           "files": {
             "LICENSE": {
-              "offset": 19624540,
+              "offset": 19647250,
               "size": 1090,
             },
             "package.json": {
-              "offset": 19625630,
+              "offset": 19648330,
               "size": 860,
             },
             "xml": {
@@ -37200,19 +37200,19 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                 "1.0": {
                   "files": {
                     "ed4.js": {
-                      "offset": 19626490,
+                      "offset": 19649190,
                       "size": 5500,
                     },
                     "ed4.js.map": {
-                      "offset": 19631980,
+                      "offset": 19654690,
                       "size": 1400,
                     },
                     "ed5.js": {
-                      "offset": 19633380,
+                      "offset": 19656080,
                       "size": 3350,
                     },
                     "ed5.js.map": {
-                      "offset": 19636720,
+                      "offset": 19659420,
                       "size": 2610,
                     },
                   },
@@ -37220,11 +37220,11 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                 "1.1": {
                   "files": {
                     "ed2.js": {
-                      "offset": 19639330,
+                      "offset": 19662030,
                       "size": 4740,
                     },
                     "ed2.js.map": {
-                      "offset": 19644070,
+                      "offset": 19666770,
                       "size": 3400,
                     },
                   },
@@ -37232,11 +37232,11 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
               },
             },
             "xmlchars.js": {
-              "offset": 19647460,
+              "offset": 19670160,
               "size": 6920,
             },
             "xmlchars.js.map": {
-              "offset": 19654370,
+              "offset": 19677070,
               "size": 3080,
             },
             "xmlns": {
@@ -37244,11 +37244,11 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
                 "1.0": {
                   "files": {
                     "ed3.js": {
-                      "offset": 19657440,
+                      "offset": 19680150,
                       "size": 2260,
                     },
                     "ed3.js.map": {
-                      "offset": 19659700,
+                      "offset": 19682400,
                       "size": 1690,
                     },
                   },
@@ -37260,7 +37260,7 @@ exports[`node_module collectors > yarn berry version conflict with hoisted depen
       },
     },
     "package.json": {
-      "offset": 19664720,
+      "offset": 19687420,
       "size": 320,
     },
   },
