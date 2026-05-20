@@ -9,7 +9,10 @@ const supportedArchs = [
 ]
 
 export function registerDifferentialLinuxTests(toolset: ToolsetConfig): void {
-  const appimage = toolset.appimage!
+  const appimage = toolset.appimage
+  if (appimage == null) {
+    throw new Error("appimage tool version must be specified in ToolsetConfig for Linux differential tests")
+  }
   for (const arch of supportedArchs) {
     test(`${Arch[arch]} - toolset: ${appimage}`, ({ expect }) => testLinux(expect, arch, appimage))
   }

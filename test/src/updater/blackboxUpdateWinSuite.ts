@@ -4,6 +4,9 @@ import { TestContext } from "vitest"
 import { optionsForFlakyE2E, runTest, windowsVmPromise } from "./blackboxUpdateHelpers"
 
 export function registerBlackboxWinTests(toolsets: ToolsetConfig): void {
+  if (toolsets.winCodeSign == null) {
+    throw new Error("Toolsets must be specified for Windows blackbox tests")
+  }
   describe.heavy("windows", optionsForFlakyE2E, () => {
     test("nsis", async (context: TestContext) => {
       const vm = await windowsVmPromise

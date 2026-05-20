@@ -6,7 +6,10 @@ import { TestContext } from "vitest"
 import { optionsForFlakyE2E, runTest } from "./blackboxUpdateHelpers"
 
 export function registerBlackboxLinuxTests(toolset: ToolsetConfig): void {
-  const appimage = toolset.appimage!
+  const appimage = toolset.appimage
+  if (appimage == null) {
+    throw new Error("appimage tool version must be specified in ToolsetConfig for Linux blackbox tests")
+  }
   describe(`appimage tool: ${appimage}`, optionsForFlakyE2E, () => {
     test.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true" && process.arch === "arm64")("AppImage - arm64", async (context: TestContext) => {
       await runTest(context, "AppImage", "appimage", Arch.arm64, { appimage })

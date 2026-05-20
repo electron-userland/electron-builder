@@ -21,7 +21,7 @@ export default class SmarterReporter implements Reporter {
   private readonly fileDurations = new Map<string, number>()
   private readonly fileFails = new Map<string, number>()
   private readonly fileHasHeavy = new Map<string, boolean>()
-  private readonly inProgressTests = new Map<string, number>() // fullName → startMs
+  private readonly inProgressTests = new Map<string, number>() // moduleRelPath::fullName → startMs
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null
 
   // Get current platform
@@ -40,13 +40,14 @@ export default class SmarterReporter implements Reporter {
   }
 
   onTestCaseReady(test: TestCase) {
-    this.inProgressTests.set(test.fullName, Date.now())
+    const id = `${path.relative(TEST_SRC_ROOT, test.module.moduleId)}::${test.fullName}`
+    this.inProgressTests.set(id, Date.now())
     process.stdout.write(`\n[test ready] 🏃 ${test.fullName}\n`)
   }
 
   onTestCaseResult(test: TestCase) {
-    this.inProgressTests.delete(test.fullName)
-    const id = test.fullName
+    const id = `${path.relative(TEST_SRC_ROOT, test.module.moduleId)}::${test.fullName}`
+    this.inProgressTests.delete(id)
     const dur = test.diagnostic()?.duration ?? 0
     const testResult = test.result().state
     const status = (() => {
