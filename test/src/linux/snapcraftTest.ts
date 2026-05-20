@@ -1,4 +1,4 @@
-import { outputFile } from "fs-extra"
+import { outputFile, readFile } from "fs-extra"
 import * as path from "path"
 import which from "which"
 import { app, appThrows, assertPack, EXTENDED_TIMEOUT, snapTarget } from "../helpers/packTester"
@@ -455,6 +455,22 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
       }))
   }
 
+  test("core22: linux.category propagates to desktop Categories", ({ expect }) =>
+    app(expect, {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: "sep" },
+        productName: "Sep",
+        linux: { category: "AudioVideo" },
+        snapcraft: { base: "core22" },
+      },
+      effectiveOptionComputed: async ({ desktopFile }) => {
+        const content = await readFile(desktopFile, "utf8")
+        expect(content).toContain("Categories=AudioVideo;")
+        return Promise.resolve(true)
+      },
+    }))
+
   // ─── linux.compression → snap algorithm mapping ──────────────────────────────
 
   test("core24: linux.compression 'store' maps to lzo", ({ expect }) =>
@@ -552,6 +568,80 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
         },
       }))
   }
+
+  test("core22: linux.compression 'normal' leaves compression unset", ({ expect }) =>
+    app(expect, {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: "sep" },
+        productName: "Sep",
+        linux: { compression: "normal" },
+        snapcraft: { base: "core22", core22: { useTemplateApp: false } },
+      },
+      effectiveOptionComputed: async ({ snap }) => {
+        expect(snap.compression).toBeUndefined()
+        return Promise.resolve(true)
+      },
+    }))
+
+  test("core22: per-core compression overrides linux.compression mapping", ({ expect }) =>
+    app(expect, {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: "sep" },
+        productName: "Sep",
+        linux: { compression: "store" },
+        snapcraft: { base: "core22", core22: { compression: "xz", useTemplateApp: false } },
+      },
+      effectiveOptionComputed: async ({ snap }) => {
+        expect(snap.compression).toBe("xz")
+        return Promise.resolve(true)
+      },
+    }))
+
+  test("custom pass-through: linux.description is not injected", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-one",
+      {
+        targets: snapTarget,
+        config: {
+          productName: "Sep",
+          linux: { description: "Should not appear in custom snap" },
+          snapcraft: {
+            base: "custom",
+            custom: { yaml: "custom-snapcraft.yaml" },
+          },
+        },
+        effectiveOptionComputed: ({ snap }) => {
+          expect(snap.description).toBe("Custom description.")
+          return Promise.resolve(true)
+        },
+      },
+      {
+        projectDirCreated: async projectDir => {
+          await outputFile(
+            path.join(projectDir, "build", "custom-snapcraft.yaml"),
+            [
+              "name: sep",
+              "base: core24",
+              "version: '1.0.0'",
+              "summary: Custom snap",
+              "description: Custom description.",
+              "confinement: strict",
+              "grade: stable",
+              "parts:",
+              "  app:",
+              "    plugin: dump",
+              "    source: .",
+              "apps:",
+              "  sep:",
+              "    command: sep",
+            ].join("\n")
+          )
+        },
+      }
+    ))
 
   // ─── Real Multipass build ────────────────────────────────────────────────────
   // Runs only when Multipass is available (local macOS dev machines).

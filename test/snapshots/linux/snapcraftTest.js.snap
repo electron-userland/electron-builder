@@ -1688,7 +1688,29 @@ exports[`snapcraft > core20: per-core description overrides linux.description 1`
 }
 `;
 
+exports[`snapcraft > core22: linux.category propagates to desktop Categories 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
 exports[`snapcraft > core22: linux.compression 'maximum' maps to xz 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core22: linux.compression 'normal' leaves compression unset 1`] = `
 {
   "linux": [
     {
@@ -1711,6 +1733,17 @@ exports[`snapcraft > core22: linux.compression 'store' maps to lzo 1`] = `
 `;
 
 exports[`snapcraft > core22: linux.description propagates to snap.description 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core22: per-core compression overrides linux.compression mapping 1`] = `
 {
   "linux": [
     {
@@ -2623,6 +2656,17 @@ exports[`snapcraft > custom env (core22) 1`] = `
 `;
 
 exports[`snapcraft > custom env (core22) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > custom pass-through: linux.description is not injected 1`] = `
 {
   "linux": [
     {
