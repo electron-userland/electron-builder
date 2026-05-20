@@ -1,7 +1,7 @@
 # Release Using Channels / Auto-Updates With Channels
 
 ## Description
-Channels are useful to distribute "beta" or "alpha" releases of your application to a chosen set of users. This allows to test an application before release it as "latest" (stable).
+Channels are useful to distribute "beta" or "alpha" releases of your application to a chosen set of users. This allows you to test an application before releasing it as "latest" (stable).
 
 Users which receive "beta" version will get "latest" versions too. Otherwise, users who don't want "beta" will only get "latest" releases.
 
@@ -12,7 +12,7 @@ There are three channels, ordered by stability:
 3. "alpha" which means your application is not stable and in active development (example: `1.3.2-alpha`)
 
 ### Configuration
-To release using channels, you should config electron-builder and define the channels to use in client side.
+To release using channels, you should configure electron-builder and define the channels to use on the client side.
 
 ### Electron-Builder
 By default (without using channels), all application releases use the "latest" channel.

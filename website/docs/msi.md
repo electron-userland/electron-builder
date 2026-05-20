@@ -1,4 +1,4 @@
-The top-level [msi](configuration.md) key contains set of options instructing electron-builder on how it should build Windows MSI (Microsoft Installer) packages.
+The top-level [msi](configuration.md) key contains a set of options instructing electron-builder on how it should build Windows MSI (Microsoft Installer) packages.
 
 ## When to Use MSI
 

@@ -2,7 +2,7 @@
 title: "macOS"
 ---
 
-The top-level [mac](configuration.md) key contains set of options instructing electron-builder on how it should build macOS targets. These options applicable for any macOS target.
+The top-level [mac](configuration.md) key contains a set of options instructing electron-builder on how it should build macOS targets. These options are applicable to any macOS target.
 
 ## macOS Target Overview
 
