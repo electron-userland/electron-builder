@@ -1,5 +1,5 @@
 /.vscode/
-node_modules
+node-modules*
 *.log
 
 /.idea/compiler.xml
@@ -19,7 +19,6 @@ out/
 /scripts/jsdoc/out/
 /scripts/renderer/out/
 
-docs/
 site/
 
 electron-builder-*.d.ts
@@ -34,4 +33,3 @@ coverage
 yalc.lock
 _vitest-smart-cache.json
 .claude
-node-modules-docker

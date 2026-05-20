@@ -1,9 +1,12 @@
 packages:
   - "packages/**"
   - "test"
+  - "website"
 
 allowBuilds:
   '@parcel/watcher': false
+  '@swc/core': true
+  core-js: false
   electron: false
   electron-winstaller: true
   esbuild: false
