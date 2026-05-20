@@ -84,7 +84,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
 
   private _iconPath = new Lazy(() => this.getOrConvertIcon("icns"))
 
-  // Set during MAS packing so applyCommonInfo can use MAS-specific bundleVersion/bundleShortVersion (#8909)
+  // Set/cleared in doPack so applyCommonInfo can read the per-pack platformSpecificBuildOptions
+  // (the framework call chain doesn't thread it through to applyCommonInfo). Fixes #8909.
   private _activePackConfig: MacConfiguration | MasConfiguration | null = null
 
   readonly helper = new MacTargetHelper(this)
@@ -202,7 +203,14 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     if (config.arch === Arch.universal) {
       return this.doUniversalPack(config)
     }
-    return super.doPack(config)
+    // Bridge the per-pack platformSpecificBuildOptions to applyCommonInfo, which is called deep in the
+    // framework stack (doPack → beforeCopyExtraFiles → createMacApp → applyCommonInfo) without it.
+    this._activePackConfig = config.platformSpecificBuildOptions
+    try {
+      return await super.doPack(config)
+    } finally {
+      this._activePackConfig = null
+    }
   }
 
   /**
@@ -292,44 +300,42 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     const masTargets = targets.filter(it => this.isMasTarget(it.name))
     const nonMasTargets = targets.filter(it => !this.isMasTarget(it.name))
     const prepackaged = this.packagerOptions.prepackaged
+    const hasMas = masTargets.length > 0
 
     // mas always first
     await this.packMasTargets(outDir, arch, masTargets, prepackaged)
-    await this.packMacTargets(outDir, arch, nonMasTargets, prepackaged, taskManager)
+
+    // Mirror master's condition: skip the non-MAS darwin pack only when there are exclusively MAS
+    // targets (hasMas=true, targets.length=1). DIR_TARGET passes targets=[] to pack() because
+    // MacPackager.createTargets() doesn't call mapper() for it, so hasMas=false and doPack still runs.
+    if (!hasMas || targets.length > 1) {
+      await this.packMacTargets(outDir, arch, nonMasTargets, prepackaged, taskManager)
+    }
   }
 
   private async packMasTargets(outDir: string, arch: Arch, targets: Array<Target>, prepackaged: string | null | undefined): Promise<void> {
     for (const target of targets) {
       const platformType = this.getPlatformTypeFromTarget(target.name)
       const platformConfig = this.getPlatformConfig(platformType)
+      const targetOutDir = path.join(outDir, `${target.name}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}`)
 
-      this._activePackConfig = platformConfig.config
-      try {
-        const targetOutDir = path.join(outDir, `${target.name}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}`)
-
-        if (prepackaged == null) {
-          await this.doPack({
-            outDir,
-            appOutDir: targetOutDir,
-            platformName: platformConfig.platformName,
-            arch,
-            platformSpecificBuildOptions: platformConfig.config,
-            targets: [target],
-          })
-          await this.signMas(path.join(targetOutDir, `${this.appInfo.productFilename}.app`), targetOutDir, platformConfig, arch)
-        } else {
-          await this.signMas(prepackaged, targetOutDir, platformConfig, arch)
-        }
-      } finally {
-        this._activePackConfig = null
+      if (prepackaged == null) {
+        await this.doPack({
+          outDir,
+          appOutDir: targetOutDir,
+          platformName: platformConfig.platformName,
+          arch,
+          platformSpecificBuildOptions: platformConfig.config,
+          targets: [target],
+        })
+        await this.signMas(path.join(targetOutDir, `${this.appInfo.productFilename}.app`), targetOutDir, platformConfig, arch)
+      } else {
+        await this.signMas(prepackaged, targetOutDir, platformConfig, arch)
       }
     }
   }
 
   private async packMacTargets(outDir: string, arch: Arch, targets: Array<Target>, prepackaged: string | null | undefined, taskManager: AsyncTaskManager): Promise<void> {
-    if (targets.length === 0) {
-      return
-    }
     const appPath = prepackaged == null ? path.join(this.computeAppOutDir(outDir, arch), `${this.appInfo.productFilename}.app`) : prepackaged
 
     if (prepackaged == null) {
