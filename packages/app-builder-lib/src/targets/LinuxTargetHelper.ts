@@ -47,6 +47,7 @@ export class LinuxTargetHelper {
 
     if (snapcraft != null) {
       const core = snapcraft.base
+      const options = snapcraft[core] || {}
       switch (core) {
         case "core18":
         case "core20":
@@ -57,7 +58,7 @@ export class LinuxTargetHelper {
             }
             log.warn(null, "electron 4 and higher is highly recommended for Snap with core18/core20/core22")
           }
-          return new SnapCoreLegacy(this.packager, this, deepAssign({}, linuxOptions, { base: core, ...(snapcraft[core] || {}) }))
+          return new SnapCoreLegacy(this.packager, this, deepAssign({}, linuxOptions, { base: core, ...options }))
         case "core24":
           if (!this.isElectronVersionGreaterOrEqualThan("28.0.0")) {
             if (!this.isElectronVersionGreaterOrEqualThan("25.0.0")) {
@@ -65,7 +66,7 @@ export class LinuxTargetHelper {
             }
             log.warn(null, "electron 28 and higher is highly recommended for Snap with core24")
           }
-          return new SnapCore24(this.packager, this, deepAssign({}, linuxOptions, snapcraft.core24 || {}))
+          return new SnapCore24(this.packager, this, deepAssign({}, linuxOptions, options))
         case "custom":
           // Pass-through: do not inject linux options into user-supplied yaml
           return new SnapCoreCustom(this.packager, this, snapcraft.custom || {})

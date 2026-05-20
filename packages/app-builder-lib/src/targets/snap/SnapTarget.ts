@@ -1,4 +1,4 @@
-import { Arch, log } from "builder-util"
+import { Arch, deepAssign, log } from "builder-util"
 import { SnapStoreOptions } from "builder-util-runtime"
 import * as path from "path"
 import { Configuration } from "../../configuration"
@@ -40,13 +40,8 @@ export default class SnapTarget extends Target {
       config: { snapcraft, snap },
       platformSpecificBuildOptions,
     } = packager
-    // compression lives on the per-core options (e.g. core24.compression), not on the shared linux options.
-    const { compression: _ignored, ...overlappingOptions } = platformSpecificBuildOptions
 
-    this.options = {
-      ...overlappingOptions,
-      ...(snapcraft ?? snap), // support deprecated `snap` config for backward compatibility
-    }
+    this.options = deepAssign({}, platformSpecificBuildOptions, snapcraft ?? snap ?? {})
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
