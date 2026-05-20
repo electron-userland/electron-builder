@@ -1,5 +1,5 @@
 import { CommonLinuxOptions } from "../options/linuxOptions"
-import { asArray, exists, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
+import { asArray, deepAssign, exists, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { join } from "path"
@@ -38,6 +38,13 @@ export class LinuxTargetHelper {
         `Cannot specify both \`snapcraft\` and \`snap\` configurations. Please migrate all \`snap\` configuration to \`snapcraft.<core>\` and remove \`snap\` configuration.`
       )
     }
+
+    // Merge linux-level options (category, description, mimeTypes, compression, etc.) as the base
+    // so they propagate into the generated snapcraft.yaml and .desktop file without requiring users
+    // to duplicate them under core24/core18/etc. Per-core options always win for conflicts.
+    // core24 validates that any inherited compression value is compatible with snapcraft.
+    const linuxOptions = this.packager.platformSpecificBuildOptions
+
     if (snapcraft != null) {
       const core = snapcraft.base
       switch (core) {
@@ -50,7 +57,7 @@ export class LinuxTargetHelper {
             }
             log.warn(null, "electron 4 and higher is highly recommended for Snap with core18/core20/core22")
           }
-          return new SnapCoreLegacy(this.packager, this, { base: core, ...(snapcraft[core] || {}) })
+          return new SnapCoreLegacy(this.packager, this, deepAssign({}, linuxOptions, { base: core, ...(snapcraft[core] || {}) }))
         case "core24":
           if (!this.isElectronVersionGreaterOrEqualThan("28.0.0")) {
             if (!this.isElectronVersionGreaterOrEqualThan("25.0.0")) {
@@ -58,8 +65,9 @@ export class LinuxTargetHelper {
             }
             log.warn(null, "electron 28 and higher is highly recommended for Snap with core24")
           }
-          return new SnapCore24(this.packager, this, snapcraft.core24 || {})
+          return new SnapCore24(this.packager, this, deepAssign({}, linuxOptions, snapcraft.core24 || {}))
         case "custom":
+          // Pass-through: do not inject linux options into user-supplied yaml
           return new SnapCoreCustom(this.packager, this, snapcraft.custom || {})
       }
     }
@@ -73,7 +81,7 @@ export class LinuxTargetHelper {
         "please consider migrating `snap` configuration to `snapcraft.<core>` and remove `snap` configuration"
       )
     }
-    return new SnapCoreLegacy(this.packager, this, legacySnap ?? {})
+    return new SnapCoreLegacy(this.packager, this, deepAssign({}, linuxOptions, legacySnap ?? {}))
   }
 
   isElectronVersionGreaterOrEqualThan(version: string, fallback?: string): boolean {

@@ -56,7 +56,6 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
       await assertPack(expect, "test-app-one", {
         targets: snapTarget,
         config: {
-          extraMetadata: { name: "sep" },
           productName: "Sep",
           snapcraft: { base: core, [core]: { buildPackages: ["foo1", "default", "foo2"], useTemplateApp: false } },
         },
@@ -94,7 +93,6 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
         await assertPack(expect, "test-app-one", {
           targets: snapTarget,
           config: {
-            extraMetadata: { name: "sep" },
             productName: "Sep",
             snapcraft: { base: core, [core]: { slots } },
           },
@@ -110,7 +108,6 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
       app(expect, {
         targets: snapTarget,
         config: {
-          extraMetadata: { name: "sep" },
           productName: "Sep",
           snapcraft: { base: core, [core]: { environment: { FOO: "bar" } } },
         },
@@ -124,7 +121,6 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
       app(expect, {
         targets: snapTarget,
         config: {
-          extraMetadata: { name: "sep" },
           productName: "Sep",
           snapcraft: { base: core, [core]: { after: ["bar"] } },
         },
@@ -138,7 +134,6 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
       app(expect, {
         targets: snapTarget,
         config: {
-          extraMetadata: { name: "sep" },
           productName: "Sep",
           snapcraft: { base: core, [core]: { plugs: ["foo", "bar"] } },
         },
@@ -168,7 +163,6 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
       app(expect, {
         targets: snapTarget,
         config: {
-          extraMetadata: { name: "sep" },
           productName: "Sep",
           snapcraft: { base: core, [core]: { useTemplateApp: false, compression: "xz" } },
         },
@@ -203,7 +197,7 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
 
   // ─── core24 tests ────────────────────────────────────────────────────────────
 
-  test.only("core24 default (gnome extension)", ({ expect }) =>
+  test("core24 default (gnome extension)", ({ expect }) =>
     app(expect, {
       targets: snapTarget,
       config: {
@@ -214,7 +208,7 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
         delete snap.platforms // arch-specific: varies by host; tested separately via armhf tests
         expect(snap).toMatchSnapshot()
         expect(snap.base).toBe("core24")
-        expect(snap.apps?.TestApp?.extensions).toContain("gnome")
+        expect(snap.apps?.testapp?.extensions).toContain("gnome")
         return Promise.resolve(true)
       },
     }))
@@ -223,7 +217,6 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
     appThrows(expect, {
       targets: snapTarget,
       config: {
-        extraMetadata: { name: "sep" },
         productName: "Sep",
         snapcraft: { base: "core24", core24: { useDestructiveMode: true, extensions: ["gnome"] } },
       },
@@ -233,7 +226,6 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
     app(expect, {
       targets: snapTarget,
       config: {
-        extraMetadata: { name: "sep" },
         productName: "Sep",
         snapcraft: {
           base: "core24",
@@ -277,7 +269,6 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
     app(expect, {
       targets: snapTarget,
       config: {
-        extraMetadata: { name: "sep" },
         productName: "Sep",
         snapcraft: {
           base: "core24",
@@ -301,7 +292,6 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
     app(expect, {
       targets: snapTarget,
       config: {
-        extraMetadata: { name: "sep" },
         productName: "Sep",
         snapcraft: { base: "core24", core24: { useMultipass: true } },
       },
@@ -317,7 +307,6 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
     app(expect, {
       targets: snapTarget,
       config: {
-        extraMetadata: { name: "sep" },
         productName: "Sep",
         snapcraft: { base: "core24", core24: { useLXD: true } },
       },
@@ -333,7 +322,6 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
     app(expect, {
       targets: snapTarget,
       config: {
-        extraMetadata: { name: "sep" },
         productName: "Sep",
         snapcraft: {
           base: "core24",
@@ -356,7 +344,6 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
       {
         targets: snapTarget,
         config: {
-          extraMetadata: { name: "sep" },
           productName: "Sep",
           snapcraft: {
             base: "custom",
@@ -398,6 +385,134 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
     )
   })
 
+  // ─── linux root config propagation ──────────────────────────────────────────
+  //
+  // Validates that fields set at the linux level (platformSpecificBuildOptions)
+  // are coalesced into each core's options so they reach snapcraft.yaml and
+  // the .desktop file without requiring duplication under core24/core18/etc.
+
+  test("core24: linux.description propagates to snap.description", ({ expect }) =>
+    app(expect, {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: "sep" },
+        productName: "Sep",
+        linux: { description: "From linux config" },
+        snapcraft: { base: "core24" },
+      },
+      effectiveOptionComputed: async ({ snap }) => {
+        delete snap.platforms
+        expect(snap.description).toBe("From linux config")
+        return Promise.resolve(true)
+      },
+    }))
+
+  test("core24: per-core description overrides linux.description", ({ expect }) =>
+    app(expect, {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: "sep" },
+        productName: "Sep",
+        linux: { description: "From linux config" },
+        snapcraft: { base: "core24", core24: { description: "From core24 config" } },
+      },
+      effectiveOptionComputed: async ({ snap }) => {
+        delete snap.platforms
+        expect(snap.description).toBe("From core24 config")
+        return Promise.resolve(true)
+      },
+    }))
+
+  for (const core of ["core18", "core20", "core22"] as const) {
+    test(`${core}: linux.description propagates to snap.description`, ({ expect }) =>
+      app(expect, {
+        targets: snapTarget,
+        config: {
+          extraMetadata: { name: "sep" },
+          productName: "Sep",
+          linux: { description: "From linux config" },
+          snapcraft: { base: core },
+        },
+        effectiveOptionComputed: async ({ snap }) => {
+          expect(snap.description).toBe("From linux config")
+          return Promise.resolve(true)
+        },
+      }))
+
+    test(`${core}: per-core description overrides linux.description`, ({ expect }) =>
+      app(expect, {
+        targets: snapTarget,
+        config: {
+          extraMetadata: { name: "sep" },
+          productName: "Sep",
+          linux: { description: "From linux config" },
+          snapcraft: { base: core, [core]: { description: "From core config" } },
+        },
+        effectiveOptionComputed: async ({ snap }) => {
+          expect(snap.description).toBe("From core config")
+          return Promise.resolve(true)
+        },
+      }))
+  }
+
+  // ─── linux.compression cascading ─────────────────────────────────────────────
+
+  test("core24: linux.compression xz cascades", ({ expect }) =>
+    app(expect, {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: "sep" },
+        productName: "Sep",
+        snapcraft: { base: "core24" },
+      },
+      effectiveOptionComputed: async ({ snap }) => {
+        delete snap.platforms
+        expect(snap.compression).toBe("xz")
+        return Promise.resolve(true)
+      },
+    }))
+
+  test("core24: per-core compression overrides linux.compression", ({ expect }) =>
+    app(expect, {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: "sep" },
+        productName: "Sep",
+        snapcraft: { base: "core24", core24: { compression: "lzo" } },
+      },
+      effectiveOptionComputed: async ({ snap }) => {
+        delete snap.platforms
+        expect(snap.compression).toBe("lzo")
+        return Promise.resolve(true)
+      },
+    }))
+
+  test("core24: invalid linux.compression throws with helpful message", ({ expect }) =>
+    appThrows(expect, {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: "sep" },
+        productName: "Sep",
+        snapcraft: { base: "core24" },
+      },
+    }))
+
+  for (const core of ["core18", "core20", "core22"] as const) {
+    test(`${core}: linux.compression cascades`, ({ expect }) =>
+      app(expect, {
+        targets: snapTarget,
+        config: {
+          extraMetadata: { name: "sep" },
+          productName: "Sep",
+          snapcraft: { base: core, [core]: { useTemplateApp: false } },
+        },
+        effectiveOptionComputed: async ({ snap }) => {
+          expect(snap.compression).toBe("xz")
+          return Promise.resolve(true)
+        },
+      }))
+  }
+
   // ─── Real Multipass build ────────────────────────────────────────────────────
   // Runs only when Multipass is available (local macOS dev machines).
   // Skipped on GitHub Actions macOS runners (nested VMs not supported).
@@ -410,7 +525,6 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
       await app(expect, {
         targets: snapTarget,
         config: {
-          extraMetadata: { name: "sep" },
           productName: "Sep",
           snapcraft: {
             base: "core24",

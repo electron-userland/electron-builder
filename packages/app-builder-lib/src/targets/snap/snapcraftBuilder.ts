@@ -1,6 +1,6 @@
 import { RemoteBuildOptions } from "../../options/SnapOptions"
 import { importCredentialContent } from "../../codeSign/codesign"
-import { InvalidConfigurationError, log, spawn } from "builder-util"
+import { deepAssign, InvalidConfigurationError, log, spawn } from "builder-util"
 import { randomUUID } from "crypto"
 import * as childProcess from "child_process"
 import { copyFile, ensureDir, pathExists, readdir, remove } from "fs-extra"
@@ -207,11 +207,11 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string> {
   const { SNAPCRAFT_NO_NETWORK } = process.env
   const { snapcraftConfig, artifactPath, remoteBuild, stageDir, useLXD = false, useMultipass = false, useDestructiveMode = false } = options
 
-  const env: Record<string, string> = {
+  const isolatedEnv: Record<string, string> = {
     ...(SNAPCRAFT_NO_NETWORK != null ? { SNAPCRAFT_NO_NETWORK } : {}),
   }
   if (useDestructiveMode) {
-    env.SNAPCRAFT_BUILD_ENVIRONMENT = "host"
+    isolatedEnv.SNAPCRAFT_BUILD_ENVIRONMENT = "host"
   }
 
   if (useLXD && process.platform !== "linux") {
@@ -236,7 +236,7 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string> {
 
   if (remoteBuild?.enabled) {
     const authEnv = await ensureRemoteBuildAuthentication(remoteBuild, options.packager.buildResourcesDir)
-    Object.assign(env, authEnv)
+    deepAssign(isolatedEnv, authEnv)
   }
 
   const projectAppDir = path.join(stageDir, "app")
@@ -262,7 +262,7 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string> {
           useLXD,
           useMultipass,
           useDestructiveMode,
-          env,
+          isolatedEnv: isolatedEnv,
         }),
       { maxRetries: remoteBuild?.enabled ? 3 : 1, retryDelay: 10000 }
     )
@@ -381,106 +381,32 @@ interface ExecuteSnapcraftOptions {
   useLXD: boolean
   useMultipass: boolean
   useDestructiveMode: boolean
-  env: Record<string, string>
+  isolatedEnv: Record<string, string>
 }
 
 /**
  * Executes the snapcraft build command
  */
 async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<string> {
-  const { workDir, outputSnap: outputFileName, remoteBuild, useLXD, useMultipass, useDestructiveMode, env } = options
+  const { workDir, outputSnap: outputFileName, remoteBuild, useLXD, useMultipass, useDestructiveMode, isolatedEnv } = options
+  let processedEnv: NodeJS.ProcessEnv = { ...process.env, ...isolatedEnv }
 
   // Use a UUID-based temp name as the --output target so the copy below doesn't
   // depend on snapcraft's naming convention (which always uses underscores).
   const tmpSnap = `eb-snap-${randomUUID().replace(/-/g, "")}.snap`
 
   if (useDestructiveMode && !remoteBuild?.enabled) {
-    // Snapcraft 8 (craft-application) hangs after a successful destructive-mode
-    // build in containerised environments (Docker/CI without snapd running).
-    // craft-application's PackageService teardown tries to reach
-    // /run/snapd-snap.socket (snapctl IPC) which doesn't exist without a live
-    // snapd daemon — causing an indefinite block.
-    //
-    // Work-around: split into two steps:
-    //   1. `snapcraft prime --destructive-mode`  — runs pull/build/stage/prime,
-    //      exits cleanly (no post-pack teardown executed).
-    //   2. `snapcraft pack <primeDir>`  — packs the pre-primed directory without
-    //      running the full build lifecycle, avoiding the problematic teardown.
-    const primeArgs = ["prime", "--destructive-mode"]
-    if (log.isDebugEnabled) {
-      primeArgs.push("--verbose")
-    }
-    log.info({ command: `snapcraft ${primeArgs.join(" ")}`, workDir: log.filePath(workDir) }, "snapcraft prime (1/2)")
-    await spawn("snapcraft", primeArgs, {
-      cwd: workDir,
-      env: { ...process.env, ...env },
-      stdio: "inherit",
-    })
-
-    const primeDir = path.join(workDir, "prime")
-    const snapcraftPackArgs = ["pack", "--output", tmpSnap, primeDir]
-    if (log.isDebugEnabled) {
-      snapcraftPackArgs.push("--verbose")
-    }
-    log.info({ command: `snapcraft ${snapcraftPackArgs.join(" ")}`, workDir: log.filePath(workDir) }, "snapcraft pack prime dir (2/2)")
-    await spawn("snapcraft", snapcraftPackArgs, {
-      cwd: workDir,
-      env: { ...process.env, ...env },
-      stdio: "inherit",
-    })
-
-    return copySnapToArtifactPath(workDir, tmpSnap, outputFileName)
+    return await runDestructiveBuild(workDir, processedEnv, tmpSnap, outputFileName)
   }
 
   const command = "snapcraft"
   const args: string[] = []
 
   if (remoteBuild?.enabled) {
+    const remoteBuildArgs = generateRemoteBuildArgs(remoteBuild, workDir)
     // Remote build on Launchpad (works from any platform)
-    args.push("remote-build")
-    log.debug(null, "using remote-build (Launchpad)")
-
-    // Add remote build specific options
-    if (remoteBuild.launchpadUsername) {
-      args.push("--user", remoteBuild.launchpadUsername)
-    }
-
-    if (remoteBuild.acceptPublicUpload) {
-      args.push("--launchpad-accept-public-upload")
-    } else {
-      log.warn(null, "your project will be publicly uploaded to Launchpad. Use `acceptPublicUpload: true` to suppress this warning")
-    }
-
-    if (remoteBuild.privateProject) {
-      args.push("--project", remoteBuild.privateProject)
-      log.debug({ project: remoteBuild.privateProject }, "using private Launchpad project")
-    }
-
-    if (remoteBuild.buildFor) {
-      args.push("--build-for", remoteBuild.buildFor)
-      log.debug({ arch: remoteBuild.buildFor }, "building for architecture")
-    }
-
-    if (remoteBuild.recover) {
-      args.push("--recover")
-      log.debug(null, "recovering previous build")
-    }
-
-    if (remoteBuild.strategy) {
-      env["SNAPCRAFT_REMOTE_BUILD_STRATEGY"] = remoteBuild.strategy
-    }
-
-    if (remoteBuild.timeout) {
-      args.push("--timeout", String(remoteBuild.timeout))
-      log.debug({ timeout: `${remoteBuild.timeout}s` }, "build timeout configured")
-    }
-
-    // Remote-build downloads the finished snap into workDir.
-    // --output-dir (not --output <file>) lets snapcraft name the file itself.
-    args.push("--output-dir", workDir)
-    if (log.isDebugEnabled) {
-      args.push("--verbose")
-    }
+    args.push(...remoteBuildArgs.args)
+    processedEnv = { ...processedEnv, ...remoteBuildArgs.isolatedEnv }
   } else {
     // `snapcraft pack` runs the full lifecycle (pull → build → stage → prime → pack).
     // snapcraft 8.x removed --use-multipass entirely; Multipass is now configured
@@ -491,22 +417,22 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
       args.push("--use-lxd")
       log.debug(null, "using LXD for build")
     } else if (useMultipass) {
-      env["SNAPCRAFT_BUILD_ENVIRONMENT"] = "multipass"
+      isolatedEnv["SNAPCRAFT_BUILD_ENVIRONMENT"] = "multipass"
       log.debug(null, "using Multipass for build (via SNAPCRAFT_BUILD_ENVIRONMENT)")
     } else {
       args.push("--output", tmpSnap)
     }
-    if (log.isDebugEnabled) {
-      args.push("--verbose")
-    }
   }
 
-  log.info({ command: `${command} ${args.join(" ")}`, workDir: log.filePath(workDir) }, "executing snapcraft")
+  if (log.isDebugEnabled) {
+    args.push("--verbose")
+  }
+
+  log.info({ workDir: log.filePath(workDir) }, "executing snapcraft")
 
   await spawn(command, args, {
     cwd: workDir,
-    env: { ...process.env, ...env },
-    stdio: "inherit",
+    env: { ...process.env, ...processedEnv },
   })
 
   if (remoteBuild?.enabled || useLXD || useMultipass) {
@@ -519,6 +445,90 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
     }
     return copySnapToArtifactPath(workDir, builtSnap, outputFileName)
   }
+
+  return copySnapToArtifactPath(workDir, tmpSnap, outputFileName)
+}
+
+function generateRemoteBuildArgs(remoteBuild: RemoteBuildOptions, workDir: string) {
+  const isolatedEnv: Record<string, string> = {}
+  const args: string[] = ["remote-build"]
+
+  log.debug(null, "using remote-build (Launchpad)")
+
+  // Add remote build specific options
+  if (remoteBuild.launchpadUsername) {
+    args.push("--user", remoteBuild.launchpadUsername)
+  }
+
+  if (remoteBuild.acceptPublicUpload) {
+    args.push("--launchpad-accept-public-upload")
+  } else {
+    log.warn(null, "your project will be publicly uploaded to Launchpad. Use `acceptPublicUpload: true` to suppress this warning")
+  }
+
+  if (remoteBuild.privateProject) {
+    args.push("--project", remoteBuild.privateProject)
+    log.debug({ project: remoteBuild.privateProject }, "using private Launchpad project")
+  }
+
+  if (remoteBuild.buildFor) {
+    args.push("--build-for", remoteBuild.buildFor)
+    log.debug({ arch: remoteBuild.buildFor }, "building for architecture")
+  }
+
+  if (remoteBuild.recover) {
+    args.push("--recover")
+    log.debug(null, "recovering previous build")
+  }
+
+  if (remoteBuild.strategy) {
+    isolatedEnv["SNAPCRAFT_REMOTE_BUILD_STRATEGY"] = remoteBuild.strategy
+  }
+
+  if (remoteBuild.timeout) {
+    args.push("--timeout", String(remoteBuild.timeout))
+    log.debug({ timeout: `${remoteBuild.timeout}s` }, "build timeout configured")
+  }
+
+  // Remote-build downloads the finished snap into workDir.
+  // --output-dir (not --output <file>) lets snapcraft name the file itself.
+  args.push("--output-dir", workDir)
+
+  return { args, isolatedEnv }
+}
+
+// Snapcraft 8 (craft-application) hangs after a successful destructive-mode
+// build in containerised environments (Docker/CI without snapd running).
+// craft-application's PackageService teardown tries to reach
+// /run/snapd-snap.socket (snapctl IPC) which doesn't exist without a live
+// snapd daemon — causing an indefinite block.
+//
+// Work-around: split into two steps:
+//   1. `snapcraft prime --destructive-mode`  — runs pull/build/stage/prime,
+//      exits cleanly (no post-pack teardown executed).
+//   2. `snapcraft pack <primeDir>`  — packs the pre-primed directory without
+//      running the full build lifecycle, avoiding the problematic teardown.
+async function runDestructiveBuild(workDir: string, processedEnv: NodeJS.ProcessEnv, tmpSnap: string, outputFileName: string) {
+  const primeArgs = ["prime", "--destructive-mode"]
+  if (log.isDebugEnabled) {
+    primeArgs.push("--verbose")
+  }
+  log.info({ command: `snapcraft ${primeArgs.join(" ")}`, workDir: log.filePath(workDir) }, "snapcraft prime (1/2)")
+  await spawn("snapcraft", primeArgs, {
+    cwd: workDir,
+    env: processedEnv,
+  })
+
+  const primeDir = path.join(workDir, "prime")
+  const snapcraftPackArgs = ["pack", "--output", tmpSnap, primeDir]
+  if (log.isDebugEnabled) {
+    snapcraftPackArgs.push("--verbose")
+  }
+  log.info({ command: `snapcraft ${snapcraftPackArgs.join(" ")}`, workDir: log.filePath(workDir) }, "snapcraft pack prime dir (2/2)")
+  await spawn("snapcraft", snapcraftPackArgs, {
+    cwd: workDir,
+    env: processedEnv,
+  })
 
   return copySnapToArtifactPath(workDir, tmpSnap, outputFileName)
 }

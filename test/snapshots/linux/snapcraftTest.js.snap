@@ -7,7 +7,6 @@ exports[`snapcraft > auto start (core18) 1`] = `
       "autostart": "sep.desktop",
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -82,7 +81,6 @@ exports[`snapcraft > auto start (core20) 1`] = `
       "autostart": "sep.desktop",
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -157,7 +155,6 @@ exports[`snapcraft > auto start (core22) 1`] = `
       "autostart": "sep.desktop",
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -228,11 +225,10 @@ exports[`snapcraft > auto start (core22) 2`] = `
 exports[`snapcraft > buildPackages (core18) 1`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "adapter": "none",
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -258,7 +254,7 @@ exports[`snapcraft > buildPackages (core18) 1`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "icon": "snap/gui/icon.png",
-  "name": "sep",
+  "name": "testapp",
   "parts": {
     "app": {
       "build-packages": [
@@ -436,7 +432,7 @@ exports[`snapcraft > buildPackages (core18) 2`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -445,11 +441,10 @@ exports[`snapcraft > buildPackages (core18) 2`] = `
 exports[`snapcraft > buildPackages (core20) 1`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "adapter": "none",
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -475,7 +470,7 @@ exports[`snapcraft > buildPackages (core20) 1`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "icon": "snap/gui/icon.png",
-  "name": "sep",
+  "name": "testapp",
   "parts": {
     "app": {
       "build-packages": [
@@ -653,7 +648,7 @@ exports[`snapcraft > buildPackages (core20) 2`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -662,10 +657,9 @@ exports[`snapcraft > buildPackages (core20) 2`] = `
 exports[`snapcraft > buildPackages (core22) 1`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -691,7 +685,7 @@ exports[`snapcraft > buildPackages (core22) 1`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "icon": "snap/gui/icon.png",
-  "name": "sep",
+  "name": "testapp",
   "parts": {
     "app": {
       "build-packages": [
@@ -869,7 +863,7 @@ exports[`snapcraft > buildPackages (core22) 2`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -974,11 +968,10 @@ exports[`snapcraft > classic confinement (core22) 2`] = `
 exports[`snapcraft > compression option (core18) 1`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "adapter": "none",
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -1005,7 +998,7 @@ exports[`snapcraft > compression option (core18) 1`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "icon": "snap/gui/icon.png",
-  "name": "sep",
+  "name": "testapp",
   "parts": {
     "app": {
       "plugin": "nil",
@@ -1178,7 +1171,7 @@ exports[`snapcraft > compression option (core18) 2`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -1187,11 +1180,10 @@ exports[`snapcraft > compression option (core18) 2`] = `
 exports[`snapcraft > compression option (core20) 1`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "adapter": "none",
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -1218,7 +1210,7 @@ exports[`snapcraft > compression option (core20) 1`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "icon": "snap/gui/icon.png",
-  "name": "sep",
+  "name": "testapp",
   "parts": {
     "app": {
       "plugin": "nil",
@@ -1391,7 +1383,7 @@ exports[`snapcraft > compression option (core20) 2`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -1400,10 +1392,9 @@ exports[`snapcraft > compression option (core20) 2`] = `
 exports[`snapcraft > compression option (core22) 1`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -1430,7 +1421,7 @@ exports[`snapcraft > compression option (core22) 1`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "icon": "snap/gui/icon.png",
-  "name": "sep",
+  "name": "testapp",
   "parts": {
     "app": {
       "plugin": "nil",
@@ -1603,13 +1594,68 @@ exports[`snapcraft > compression option (core22) 2`] = `
   "linux": [
     {
       "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core18: linux.description propagates to snap.description 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
       "file": "sep_1.1.0_amd64.snap",
     },
   ],
 }
 `;
 
-exports[`snapcraft > core24 Multipass real build > core24 useMultipass full build 1`] = `
+exports[`snapcraft > core18: per-core description overrides linux.description 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core20: linux.description propagates to snap.description 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core20: per-core description overrides linux.description 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core22: linux.description propagates to snap.description 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core22: per-core description overrides linux.description 1`] = `
 {
   "linux": [
     {
@@ -1623,9 +1669,9 @@ exports[`snapcraft > core24 Multipass real build > core24 useMultipass full buil
 exports[`snapcraft > core24 custom plugs with default expansion 1`] = `
 {
   "apps": {
-    "sep": {
-      "command": "app/sep --no-sandbox",
-      "desktop": "meta/gui/sep.desktop",
+    "testapp": {
+      "command": "app/testapp --no-sandbox",
+      "desktop": "meta/gui/testapp.desktop",
       "extensions": [
         "gnome",
       ],
@@ -1652,10 +1698,10 @@ exports[`snapcraft > core24 custom plugs with default expansion 1`] = `
     "TMPDIR": "$XDG_RUNTIME_DIR",
   },
   "grade": "stable",
-  "icon": "snap/gui/sep.png",
-  "name": "sep",
+  "icon": "snap/gui/testapp.png",
+  "name": "testapp",
   "parts": {
-    "sep": {
+    "testapp": {
       "organize": {
         "LICENSE.electron.txt": "app/LICENSE.electron.txt",
         "LICENSES.chromium.html": "app/LICENSES.chromium.html",
@@ -1672,8 +1718,8 @@ exports[`snapcraft > core24 custom plugs with default expansion 1`] = `
         "locales": "app/locales",
         "resources": "app/resources",
         "resources.pak": "app/resources.pak",
-        "sep": "app/sep",
         "snapshot_blob.bin": "app/snapshot_blob.bin",
+        "testapp": "app/testapp",
         "v8_context_snapshot.bin": "app/v8_context_snapshot.bin",
         "vk_swiftshader_icd.json": "app/vk_swiftshader_icd.json",
       },
@@ -1687,23 +1733,12 @@ exports[`snapcraft > core24 custom plugs with default expansion 1`] = `
 }
 `;
 
-exports[`snapcraft > core24 custom plugs with default expansion 2`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
-    },
-  ],
-}
-`;
-
 exports[`snapcraft > core24 default (gnome extension) 1`] = `
 {
   "apps": {
-    "sep": {
-      "command": "app/sep",
-      "desktop": "meta/gui/sep.desktop",
+    "testapp": {
+      "command": "app/testapp",
+      "desktop": "meta/gui/testapp.desktop",
       "extensions": [
         "gnome",
       ],
@@ -1719,10 +1754,10 @@ exports[`snapcraft > core24 default (gnome extension) 1`] = `
     "TMPDIR": "$XDG_RUNTIME_DIR",
   },
   "grade": "stable",
-  "icon": "snap/gui/sep.png",
-  "name": "sep",
+  "icon": "snap/gui/testapp.png",
+  "name": "testapp",
   "parts": {
-    "sep": {
+    "testapp": {
       "organize": {
         "LICENSE.electron.txt": "app/LICENSE.electron.txt",
         "LICENSES.chromium.html": "app/LICENSES.chromium.html",
@@ -1739,8 +1774,8 @@ exports[`snapcraft > core24 default (gnome extension) 1`] = `
         "locales": "app/locales",
         "resources": "app/resources",
         "resources.pak": "app/resources.pak",
-        "sep": "app/sep",
         "snapshot_blob.bin": "app/snapshot_blob.bin",
+        "testapp": "app/testapp",
         "v8_context_snapshot.bin": "app/v8_context_snapshot.bin",
         "vk_swiftshader_icd.json": "app/vk_swiftshader_icd.json",
       },
@@ -1754,8 +1789,8 @@ exports[`snapcraft > core24 default (gnome extension) 1`] = `
       "interface": "browser-support",
     },
   },
-  "summary": "Sep",
-  "title": "Sep",
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
   "version": "1.1.0",
 }
 `;
@@ -1765,7 +1800,8 @@ exports[`snapcraft > core24 default (gnome extension) 2`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
     },
   ],
 }
@@ -1776,9 +1812,9 @@ exports[`snapcraft > core24 gnome extension throws in destructive-mode 1`] = `"E
 exports[`snapcraft > core24 no gnome extension 1`] = `
 {
   "apps": {
-    "sep": {
-      "command": "app/sep",
-      "desktop": "meta/gui/sep.desktop",
+    "testapp": {
+      "command": "app/testapp",
+      "desktop": "meta/gui/testapp.desktop",
       "plugs": [
         "desktop",
         "desktop-legacy",
@@ -1802,7 +1838,7 @@ exports[`snapcraft > core24 no gnome extension 1`] = `
     "TMPDIR": "$XDG_RUNTIME_DIR",
   },
   "grade": "stable",
-  "icon": "snap/gui/sep.png",
+  "icon": "snap/gui/testapp.png",
   "layout": {
     "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0": {
       "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0",
@@ -1820,9 +1856,9 @@ exports[`snapcraft > core24 no gnome extension 1`] = `
       "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes",
     },
   },
-  "name": "sep",
+  "name": "testapp",
   "parts": {
-    "sep": {
+    "testapp": {
       "organize": {
         "LICENSE.electron.txt": "app/LICENSE.electron.txt",
         "LICENSES.chromium.html": "app/LICENSES.chromium.html",
@@ -1839,8 +1875,8 @@ exports[`snapcraft > core24 no gnome extension 1`] = `
         "locales": "app/locales",
         "resources": "app/resources",
         "resources.pak": "app/resources.pak",
-        "sep": "app/sep",
         "snapshot_blob.bin": "app/snapshot_blob.bin",
+        "testapp": "app/testapp",
         "v8_context_snapshot.bin": "app/v8_context_snapshot.bin",
         "vk_swiftshader_icd.json": "app/vk_swiftshader_icd.json",
       },
@@ -1890,7 +1926,7 @@ exports[`snapcraft > core24 no gnome extension 2`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -1901,7 +1937,7 @@ exports[`snapcraft > core24 remoteBuild build mode 1`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -1912,7 +1948,7 @@ exports[`snapcraft > core24 useLXD build mode 1`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -1923,7 +1959,7 @@ exports[`snapcraft > core24 useMultipass build mode 1`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -2002,13 +2038,57 @@ exports[`snapcraft > core24 wayland disabled 2`] = `
 }
 `;
 
+exports[`snapcraft > core24: invalid linux.compression throws with helpful message 1`] = `
+"Invalid configuration object. electron-builder <appVersion> has been initialized using a configuration object that does not match the API schema.
+ - configuration.linux should be one of these:
+   object { appId?, artifactName?, asar?, asarUnpack?, category?, compression?, cscKeyPassword?, cscLink?, defaultArch?, description?, desktop?, detectUpdateChannel?, disableDefaultIgnoredFiles?, electronLanguages?, electronUpdaterCompatibility?, executableArgs?, executableName?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, generateUpdatesFilesForAllChannels?, icon?, maintainer?, mimeTypes?, packageCategory?, protocols?, publish?, releaseInfo?, synopsis?, target?, vendor? } | null
+   -> General Linux build options shared across all Linux targets (icon, category, desktop entry,
+   executable name, etc.). Target-specific compression and packaging options live in the
+   per-format interfaces (\`DebOptions\`, \`RpmOptions\`, \`PacmanOptions\`, etc.).
+   Details:
+    * configuration.linux.compression should be one of these:
+      "maximum" | "normal" | "store" | null
+      -> The compression level. If you want to rapidly test build, \`store\` can reduce build time significantly. \`maximum\` doesn't lead to noticeable size difference, but increase build time.
+      Details:
+       * configuration.linux.compression should be one of these:
+         "maximum" | "normal" | "store"
+       * configuration.linux.compression should be a null.
+     How to fix:
+     1. Open https://www.electron.build/linux
+     2. Search the option name on the page (or type in into Search to find across the docs).
+       * Not found? The option was deprecated or not exists (check spelling).
+       * Found? Check that the option in the appropriate place. e.g. "title" only in the "dmg", not in the root.
+"
+`;
+
+exports[`snapcraft > core24: linux.description propagates to snap.description 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24: per-core description overrides linux.description 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
 exports[`snapcraft > custom after, no desktop (core18) 1`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -2033,7 +2113,7 @@ exports[`snapcraft > custom after, no desktop (core18) 1`] = `
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
-  "name": "sep",
+  "name": "testapp",
   "platforms": [
     "amd64",
   ],
@@ -2070,7 +2150,7 @@ exports[`snapcraft > custom after, no desktop (core18) 2`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -2079,10 +2159,9 @@ exports[`snapcraft > custom after, no desktop (core18) 2`] = `
 exports[`snapcraft > custom after, no desktop (core20) 1`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -2107,7 +2186,7 @@ exports[`snapcraft > custom after, no desktop (core20) 1`] = `
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
-  "name": "sep",
+  "name": "testapp",
   "platforms": [
     "amd64",
   ],
@@ -2144,7 +2223,7 @@ exports[`snapcraft > custom after, no desktop (core20) 2`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -2153,10 +2232,9 @@ exports[`snapcraft > custom after, no desktop (core20) 2`] = `
 exports[`snapcraft > custom after, no desktop (core22) 1`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -2181,7 +2259,7 @@ exports[`snapcraft > custom after, no desktop (core22) 1`] = `
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
-  "name": "sep",
+  "name": "testapp",
   "platforms": [
     "amd64",
   ],
@@ -2218,7 +2296,7 @@ exports[`snapcraft > custom after, no desktop (core22) 2`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -2227,10 +2305,9 @@ exports[`snapcraft > custom after, no desktop (core22) 2`] = `
 exports[`snapcraft > custom env (core18) 1`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "FOO": "bar",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
@@ -2256,7 +2333,7 @@ exports[`snapcraft > custom env (core18) 1`] = `
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
-  "name": "sep",
+  "name": "testapp",
   "platforms": [
     "amd64",
   ],
@@ -2293,7 +2370,7 @@ exports[`snapcraft > custom env (core18) 2`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -2302,10 +2379,9 @@ exports[`snapcraft > custom env (core18) 2`] = `
 exports[`snapcraft > custom env (core20) 1`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "FOO": "bar",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
@@ -2331,7 +2407,7 @@ exports[`snapcraft > custom env (core20) 1`] = `
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
-  "name": "sep",
+  "name": "testapp",
   "platforms": [
     "amd64",
   ],
@@ -2368,7 +2444,7 @@ exports[`snapcraft > custom env (core20) 2`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -2377,10 +2453,9 @@ exports[`snapcraft > custom env (core20) 2`] = `
 exports[`snapcraft > custom env (core22) 1`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "FOO": "bar",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
@@ -2406,7 +2481,7 @@ exports[`snapcraft > custom env (core22) 1`] = `
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
-  "name": "sep",
+  "name": "testapp",
   "platforms": [
     "amd64",
   ],
@@ -2443,7 +2518,7 @@ exports[`snapcraft > custom env (core22) 2`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -2478,7 +2553,7 @@ exports[`snapcraft > custom snap yamlPath pass-through 2`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -2487,7 +2562,7 @@ exports[`snapcraft > custom snap yamlPath pass-through 2`] = `
 exports[`snapcraft > default stagePackages (core18) 1`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "adapter": "none",
       "command": "command.sh",
     },
@@ -2497,7 +2572,7 @@ exports[`snapcraft > default stagePackages (core18) 1`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "icon": "snap/gui/icon.png",
-  "name": "sep",
+  "name": "testapp",
   "parts": {
     "app": {
       "plugin": "nil",
@@ -2637,8 +2712,8 @@ exports[`snapcraft > default stagePackages (core18) 1`] = `
   "platforms": [
     "amd64",
   ],
-  "summary": "Sep",
-  "title": "Sep",
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
   "version": "1.1.0",
 }
 `;
@@ -2648,7 +2723,8 @@ exports[`snapcraft > default stagePackages (core18) 2`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
     },
   ],
 }
@@ -2657,7 +2733,7 @@ exports[`snapcraft > default stagePackages (core18) 2`] = `
 exports[`snapcraft > default stagePackages (core18) 3`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "adapter": "none",
       "command": "command.sh",
     },
@@ -2667,7 +2743,7 @@ exports[`snapcraft > default stagePackages (core18) 3`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "icon": "snap/gui/icon.png",
-  "name": "sep",
+  "name": "testapp",
   "parts": {
     "app": {
       "plugin": "nil",
@@ -2808,8 +2884,8 @@ exports[`snapcraft > default stagePackages (core18) 3`] = `
   "platforms": [
     "amd64",
   ],
-  "summary": "Sep",
-  "title": "Sep",
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
   "version": "1.1.0",
 }
 `;
@@ -2819,7 +2895,8 @@ exports[`snapcraft > default stagePackages (core18) 4`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
     },
   ],
 }
@@ -2828,7 +2905,7 @@ exports[`snapcraft > default stagePackages (core18) 4`] = `
 exports[`snapcraft > default stagePackages (core18) 5`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "adapter": "none",
       "command": "command.sh",
     },
@@ -2838,7 +2915,7 @@ exports[`snapcraft > default stagePackages (core18) 5`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "icon": "snap/gui/icon.png",
-  "name": "sep",
+  "name": "testapp",
   "parts": {
     "app": {
       "plugin": "nil",
@@ -2979,8 +3056,8 @@ exports[`snapcraft > default stagePackages (core18) 5`] = `
   "platforms": [
     "amd64",
   ],
-  "summary": "Sep",
-  "title": "Sep",
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
   "version": "1.1.0",
 }
 `;
@@ -2990,7 +3067,8 @@ exports[`snapcraft > default stagePackages (core18) 6`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
     },
   ],
 }
@@ -2999,7 +3077,7 @@ exports[`snapcraft > default stagePackages (core18) 6`] = `
 exports[`snapcraft > default stagePackages (core18) 7`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "adapter": "none",
       "command": "command.sh",
     },
@@ -3009,7 +3087,7 @@ exports[`snapcraft > default stagePackages (core18) 7`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "icon": "snap/gui/icon.png",
-  "name": "sep",
+  "name": "testapp",
   "parts": {
     "app": {
       "plugin": "nil",
@@ -3151,8 +3229,8 @@ exports[`snapcraft > default stagePackages (core18) 7`] = `
   "platforms": [
     "amd64",
   ],
-  "summary": "Sep",
-  "title": "Sep",
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
   "version": "1.1.0",
 }
 `;
@@ -3162,7 +3240,8 @@ exports[`snapcraft > default stagePackages (core18) 8`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
     },
   ],
 }
@@ -3171,7 +3250,7 @@ exports[`snapcraft > default stagePackages (core18) 8`] = `
 exports[`snapcraft > default stagePackages (core20) 1`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "adapter": "none",
       "command": "command.sh",
     },
@@ -3181,7 +3260,7 @@ exports[`snapcraft > default stagePackages (core20) 1`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "icon": "snap/gui/icon.png",
-  "name": "sep",
+  "name": "testapp",
   "parts": {
     "app": {
       "plugin": "nil",
@@ -3321,8 +3400,8 @@ exports[`snapcraft > default stagePackages (core20) 1`] = `
   "platforms": [
     "amd64",
   ],
-  "summary": "Sep",
-  "title": "Sep",
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
   "version": "1.1.0",
 }
 `;
@@ -3332,7 +3411,8 @@ exports[`snapcraft > default stagePackages (core20) 2`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
     },
   ],
 }
@@ -3341,7 +3421,7 @@ exports[`snapcraft > default stagePackages (core20) 2`] = `
 exports[`snapcraft > default stagePackages (core20) 3`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "adapter": "none",
       "command": "command.sh",
     },
@@ -3351,7 +3431,7 @@ exports[`snapcraft > default stagePackages (core20) 3`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "icon": "snap/gui/icon.png",
-  "name": "sep",
+  "name": "testapp",
   "parts": {
     "app": {
       "plugin": "nil",
@@ -3492,8 +3572,8 @@ exports[`snapcraft > default stagePackages (core20) 3`] = `
   "platforms": [
     "amd64",
   ],
-  "summary": "Sep",
-  "title": "Sep",
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
   "version": "1.1.0",
 }
 `;
@@ -3503,7 +3583,8 @@ exports[`snapcraft > default stagePackages (core20) 4`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
     },
   ],
 }
@@ -3512,7 +3593,7 @@ exports[`snapcraft > default stagePackages (core20) 4`] = `
 exports[`snapcraft > default stagePackages (core20) 5`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "adapter": "none",
       "command": "command.sh",
     },
@@ -3522,7 +3603,7 @@ exports[`snapcraft > default stagePackages (core20) 5`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "icon": "snap/gui/icon.png",
-  "name": "sep",
+  "name": "testapp",
   "parts": {
     "app": {
       "plugin": "nil",
@@ -3663,8 +3744,8 @@ exports[`snapcraft > default stagePackages (core20) 5`] = `
   "platforms": [
     "amd64",
   ],
-  "summary": "Sep",
-  "title": "Sep",
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
   "version": "1.1.0",
 }
 `;
@@ -3674,7 +3755,8 @@ exports[`snapcraft > default stagePackages (core20) 6`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
     },
   ],
 }
@@ -3683,7 +3765,7 @@ exports[`snapcraft > default stagePackages (core20) 6`] = `
 exports[`snapcraft > default stagePackages (core20) 7`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "adapter": "none",
       "command": "command.sh",
     },
@@ -3693,7 +3775,7 @@ exports[`snapcraft > default stagePackages (core20) 7`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "icon": "snap/gui/icon.png",
-  "name": "sep",
+  "name": "testapp",
   "parts": {
     "app": {
       "plugin": "nil",
@@ -3835,8 +3917,8 @@ exports[`snapcraft > default stagePackages (core20) 7`] = `
   "platforms": [
     "amd64",
   ],
-  "summary": "Sep",
-  "title": "Sep",
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
   "version": "1.1.0",
 }
 `;
@@ -3846,7 +3928,8 @@ exports[`snapcraft > default stagePackages (core20) 8`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
     },
   ],
 }
@@ -3855,7 +3938,7 @@ exports[`snapcraft > default stagePackages (core20) 8`] = `
 exports[`snapcraft > default stagePackages (core22) 1`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "command": "command.sh",
     },
   },
@@ -3864,7 +3947,7 @@ exports[`snapcraft > default stagePackages (core22) 1`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "icon": "snap/gui/icon.png",
-  "name": "sep",
+  "name": "testapp",
   "parts": {
     "app": {
       "plugin": "nil",
@@ -4004,8 +4087,8 @@ exports[`snapcraft > default stagePackages (core22) 1`] = `
   "platforms": [
     "amd64",
   ],
-  "summary": "Sep",
-  "title": "Sep",
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
   "version": "1.1.0",
 }
 `;
@@ -4015,7 +4098,8 @@ exports[`snapcraft > default stagePackages (core22) 2`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
     },
   ],
 }
@@ -4024,7 +4108,7 @@ exports[`snapcraft > default stagePackages (core22) 2`] = `
 exports[`snapcraft > default stagePackages (core22) 3`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "command": "command.sh",
     },
   },
@@ -4033,7 +4117,7 @@ exports[`snapcraft > default stagePackages (core22) 3`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "icon": "snap/gui/icon.png",
-  "name": "sep",
+  "name": "testapp",
   "parts": {
     "app": {
       "plugin": "nil",
@@ -4174,8 +4258,8 @@ exports[`snapcraft > default stagePackages (core22) 3`] = `
   "platforms": [
     "amd64",
   ],
-  "summary": "Sep",
-  "title": "Sep",
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
   "version": "1.1.0",
 }
 `;
@@ -4185,7 +4269,8 @@ exports[`snapcraft > default stagePackages (core22) 4`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
     },
   ],
 }
@@ -4194,7 +4279,7 @@ exports[`snapcraft > default stagePackages (core22) 4`] = `
 exports[`snapcraft > default stagePackages (core22) 5`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "command": "command.sh",
     },
   },
@@ -4203,7 +4288,7 @@ exports[`snapcraft > default stagePackages (core22) 5`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "icon": "snap/gui/icon.png",
-  "name": "sep",
+  "name": "testapp",
   "parts": {
     "app": {
       "plugin": "nil",
@@ -4344,8 +4429,8 @@ exports[`snapcraft > default stagePackages (core22) 5`] = `
   "platforms": [
     "amd64",
   ],
-  "summary": "Sep",
-  "title": "Sep",
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
   "version": "1.1.0",
 }
 `;
@@ -4355,7 +4440,8 @@ exports[`snapcraft > default stagePackages (core22) 6`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
     },
   ],
 }
@@ -4364,7 +4450,7 @@ exports[`snapcraft > default stagePackages (core22) 6`] = `
 exports[`snapcraft > default stagePackages (core22) 7`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "command": "command.sh",
     },
   },
@@ -4373,7 +4459,7 @@ exports[`snapcraft > default stagePackages (core22) 7`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "icon": "snap/gui/icon.png",
-  "name": "sep",
+  "name": "testapp",
   "parts": {
     "app": {
       "plugin": "nil",
@@ -4515,8 +4601,8 @@ exports[`snapcraft > default stagePackages (core22) 7`] = `
   "platforms": [
     "amd64",
   ],
-  "summary": "Sep",
-  "title": "Sep",
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
   "version": "1.1.0",
 }
 `;
@@ -4526,7 +4612,8 @@ exports[`snapcraft > default stagePackages (core22) 8`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
     },
   ],
 }
@@ -4535,10 +4622,9 @@ exports[`snapcraft > default stagePackages (core22) 8`] = `
 exports[`snapcraft > no desktop plugs (core18) 1`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -4553,7 +4639,7 @@ exports[`snapcraft > no desktop plugs (core18) 1`] = `
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
-  "name": "sep",
+  "name": "testapp",
   "platforms": [
     "amd64",
   ],
@@ -4590,7 +4676,7 @@ exports[`snapcraft > no desktop plugs (core18) 2`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -4599,10 +4685,9 @@ exports[`snapcraft > no desktop plugs (core18) 2`] = `
 exports[`snapcraft > no desktop plugs (core20) 1`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -4617,7 +4702,7 @@ exports[`snapcraft > no desktop plugs (core20) 1`] = `
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
-  "name": "sep",
+  "name": "testapp",
   "platforms": [
     "amd64",
   ],
@@ -4654,7 +4739,7 @@ exports[`snapcraft > no desktop plugs (core20) 2`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -4663,10 +4748,9 @@ exports[`snapcraft > no desktop plugs (core20) 2`] = `
 exports[`snapcraft > no desktop plugs (core22) 1`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -4681,7 +4765,7 @@ exports[`snapcraft > no desktop plugs (core22) 1`] = `
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
-  "name": "sep",
+  "name": "testapp",
   "platforms": [
     "amd64",
   ],
@@ -4718,7 +4802,7 @@ exports[`snapcraft > no desktop plugs (core22) 2`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -4731,7 +4815,6 @@ exports[`snapcraft > plugs option (core18) 1`] = `
       "adapter": "none",
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -4937,7 +5020,6 @@ exports[`snapcraft > plugs option (core18) 3`] = `
       "adapter": "none",
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -5143,7 +5225,6 @@ exports[`snapcraft > plugs option (core20) 1`] = `
       "adapter": "none",
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -5349,7 +5430,6 @@ exports[`snapcraft > plugs option (core20) 3`] = `
       "adapter": "none",
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -5554,7 +5634,6 @@ exports[`snapcraft > plugs option (core22) 1`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -5759,7 +5838,6 @@ exports[`snapcraft > plugs option (core22) 3`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -5961,10 +6039,9 @@ exports[`snapcraft > plugs option (core22) 4`] = `
 exports[`snapcraft > slots option (core18) 1`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -5993,7 +6070,7 @@ exports[`snapcraft > slots option (core18) 1`] = `
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
-  "name": "sep",
+  "name": "testapp",
   "platforms": [
     "amd64",
   ],
@@ -6030,7 +6107,7 @@ exports[`snapcraft > slots option (core18) 2`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -6039,10 +6116,9 @@ exports[`snapcraft > slots option (core18) 2`] = `
 exports[`snapcraft > slots option (core18) 3`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -6071,7 +6147,7 @@ exports[`snapcraft > slots option (core18) 3`] = `
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
-  "name": "sep",
+  "name": "testapp",
   "platforms": [
     "amd64",
   ],
@@ -6114,7 +6190,7 @@ exports[`snapcraft > slots option (core18) 4`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -6123,10 +6199,9 @@ exports[`snapcraft > slots option (core18) 4`] = `
 exports[`snapcraft > slots option (core20) 1`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -6155,7 +6230,7 @@ exports[`snapcraft > slots option (core20) 1`] = `
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
-  "name": "sep",
+  "name": "testapp",
   "platforms": [
     "amd64",
   ],
@@ -6192,7 +6267,7 @@ exports[`snapcraft > slots option (core20) 2`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -6201,10 +6276,9 @@ exports[`snapcraft > slots option (core20) 2`] = `
 exports[`snapcraft > slots option (core20) 3`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -6233,7 +6307,7 @@ exports[`snapcraft > slots option (core20) 3`] = `
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
-  "name": "sep",
+  "name": "testapp",
   "platforms": [
     "amd64",
   ],
@@ -6276,7 +6350,7 @@ exports[`snapcraft > slots option (core20) 4`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -6285,10 +6359,9 @@ exports[`snapcraft > slots option (core20) 4`] = `
 exports[`snapcraft > slots option (core22) 1`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -6317,7 +6390,7 @@ exports[`snapcraft > slots option (core22) 1`] = `
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
-  "name": "sep",
+  "name": "testapp",
   "platforms": [
     "amd64",
   ],
@@ -6354,7 +6427,7 @@ exports[`snapcraft > slots option (core22) 2`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -6363,10 +6436,9 @@ exports[`snapcraft > slots option (core22) 2`] = `
 exports[`snapcraft > slots option (core22) 3`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -6395,7 +6467,7 @@ exports[`snapcraft > slots option (core22) 3`] = `
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
-  "name": "sep",
+  "name": "testapp",
   "platforms": [
     "amd64",
   ],
@@ -6438,7 +6510,7 @@ exports[`snapcraft > slots option (core22) 4`] = `
   "linux": [
     {
       "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -6450,7 +6522,6 @@ exports[`snapcraft > use template app (core18) 1`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -6524,7 +6595,6 @@ exports[`snapcraft > use template app (core20) 1`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -6598,7 +6668,6 @@ exports[`snapcraft > use template app (core22) 1`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
