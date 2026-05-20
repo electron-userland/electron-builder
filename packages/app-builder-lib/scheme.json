@@ -6540,7 +6540,7 @@
               "type": "null"
             }
           ],
-          "description": "Compression algorithm for the snap SquashFS image.\n- `xz` — smaller file, slower decompression (good for distribution).\n- `lzo` — larger file, faster decompression (good for development iteration).\nOmit to use snapcraft's default (`xz`)."
+          "description": "Compression algorithm for the snap SquashFS image.\n- `xz` — smaller file, slower decompression (good for distribution).\n- `lzo` — larger file, faster decompression (good for development iteration).\nOmit to use snapcraft's default (`xz`).\n\nWhen not set, `linux.compression` is mapped automatically:\n`\"store\"` → `\"lzo\"`, `\"maximum\"` → `\"xz\"`, `\"normal\"` → snapcraft default.\nExplicitly setting this field always overrides the mapped value."
         },
         "confinement": {
           "anyOf": [
@@ -6890,7 +6890,7 @@
               "type": "null"
             }
           ],
-          "description": "Compression algorithm for the snap SquashFS image.\n- `xz` — smaller file, slower decompression (recommended for distribution).\n- `lzo` — larger file, faster decompression (useful for development iteration).\nOmit to use snapcraft's default (`xz`)."
+          "description": "Compression algorithm for the snap SquashFS image.\n- `xz` — smaller file, slower decompression (recommended for distribution).\n- `lzo` — larger file, faster decompression (useful for development iteration).\nOmit to use snapcraft's default (`xz`).\n\nWhen not set, `linux.compression` is mapped automatically:\n`\"store\"` → `\"lzo\"`, `\"maximum\"` → `\"xz\"`, `\"normal\"` → snapcraft default.\nExplicitly setting this field always overrides the mapped value."
         },
         "confinement": {
           "anyOf": [
@@ -7300,7 +7300,7 @@
               "type": "null"
             }
           ],
-          "description": "Compression algorithm for the snap SquashFS image.\n- `xz` — smaller file, slower decompression (good for distribution).\n- `lzo` — larger file, faster decompression (good for development iteration).\nOmit to use snapcraft's default (`xz`)."
+          "description": "Compression algorithm for the snap SquashFS image.\n- `xz` — smaller file, slower decompression (good for distribution).\n- `lzo` — larger file, faster decompression (good for development iteration).\nOmit to use snapcraft's default (`xz`).\n\nWhen not set, `linux.compression` is mapped automatically:\n`\"store\"` → `\"lzo\"`, `\"maximum\"` → `\"xz\"`, `\"normal\"` → snapcraft default.\nExplicitly setting this field always overrides the mapped value."
         },
         "confinement": {
           "anyOf": [

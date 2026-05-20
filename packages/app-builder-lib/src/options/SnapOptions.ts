@@ -216,6 +216,10 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
    * - `xz` — smaller file, slower decompression (good for distribution).
    * - `lzo` — larger file, faster decompression (good for development iteration).
    * Omit to use snapcraft's default (`xz`).
+   *
+   * When not set, `linux.compression` is mapped automatically:
+   * `"store"` → `"lzo"`, `"maximum"` → `"xz"`, `"normal"` → snapcraft default.
+   * Explicitly setting this field always overrides the mapped value.
    */
   readonly compression?: "xz" | "lzo" | null
 
@@ -414,6 +418,10 @@ export interface SnapOptions24 extends CommonLinuxOptions, TargetSpecificOptions
    * - `xz` — smaller file, slower decompression (recommended for distribution).
    * - `lzo` — larger file, faster decompression (useful for development iteration).
    * Omit to use snapcraft's default (`xz`).
+   *
+   * When not set, `linux.compression` is mapped automatically:
+   * `"store"` → `"lzo"`, `"maximum"` → `"xz"`, `"normal"` → snapcraft default.
+   * Explicitly setting this field always overrides the mapped value.
    */
   readonly compression?: "xz" | "lzo" | null
 

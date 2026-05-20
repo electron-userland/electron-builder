@@ -124,14 +124,6 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     const appInfo = this.packager.appInfo
     const appName = this.packager.executableName.toLowerCase()
     const options = this.options
-    // Validate that any compression value cascaded from linux config is supported by snapcraft.
-    // linux.compression allows deb/rpm values (gz, bzip2, zstd, etc.) that snapcraft rejects.
-    const validCore24Compressions = ["xz", "lzo"]
-    if (options.compression != null && !validCore24Compressions.includes(options.compression)) {
-      throw new InvalidConfigurationError(
-        `linux.compression "${options.compression}" is not supported for core24 snaps (valid values: "xz", "lzo"). Set snapcraft.core24.compression explicitly to override.`
-      )
-    }
 
     // Default to ["gnome"] in normal builds; no extensions in host/destructive-mode (where the
     // gnome extension is incompatible). Throw if the user explicitly includes "gnome" in host mode.

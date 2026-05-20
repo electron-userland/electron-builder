@@ -455,14 +455,31 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
       }))
   }
 
-  // ─── linux.compression cascading ─────────────────────────────────────────────
+  // ─── linux.compression → snap algorithm mapping ──────────────────────────────
 
-  test("core24: linux.compression xz cascades", ({ expect }) =>
+  test("core24: linux.compression 'store' maps to lzo", ({ expect }) =>
     app(expect, {
       targets: snapTarget,
       config: {
         extraMetadata: { name: "sep" },
         productName: "Sep",
+        linux: { compression: "store" },
+        snapcraft: { base: "core24" },
+      },
+      effectiveOptionComputed: async ({ snap }) => {
+        delete snap.platforms
+        expect(snap.compression).toBe("lzo")
+        return Promise.resolve(true)
+      },
+    }))
+
+  test("core24: linux.compression 'maximum' maps to xz", ({ expect }) =>
+    app(expect, {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: "sep" },
+        productName: "Sep",
+        linux: { compression: "maximum" },
         snapcraft: { base: "core24" },
       },
       effectiveOptionComputed: async ({ snap }) => {
@@ -472,12 +489,29 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
       },
     }))
 
-  test("core24: per-core compression overrides linux.compression", ({ expect }) =>
+  test("core24: linux.compression 'normal' leaves compression unset", ({ expect }) =>
     app(expect, {
       targets: snapTarget,
       config: {
         extraMetadata: { name: "sep" },
         productName: "Sep",
+        linux: { compression: "normal" },
+        snapcraft: { base: "core24" },
+      },
+      effectiveOptionComputed: async ({ snap }) => {
+        delete snap.platforms
+        expect(snap.compression).toBeUndefined()
+        return Promise.resolve(true)
+      },
+    }))
+
+  test("core24: per-core compression overrides linux.compression mapping", ({ expect }) =>
+    app(expect, {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: "sep" },
+        productName: "Sep",
+        linux: { compression: "maximum" },
         snapcraft: { base: "core24", core24: { compression: "lzo" } },
       },
       effectiveOptionComputed: async ({ snap }) => {
@@ -487,23 +521,29 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
       },
     }))
 
-  test("core24: invalid linux.compression throws with helpful message", ({ expect }) =>
-    appThrows(expect, {
-      targets: snapTarget,
-      config: {
-        extraMetadata: { name: "sep" },
-        productName: "Sep",
-        snapcraft: { base: "core24" },
-      },
-    }))
-
   for (const core of ["core18", "core20", "core22"] as const) {
-    test(`${core}: linux.compression cascades`, ({ expect }) =>
+    test(`${core}: linux.compression 'store' maps to lzo`, ({ expect }) =>
       app(expect, {
         targets: snapTarget,
         config: {
           extraMetadata: { name: "sep" },
           productName: "Sep",
+          linux: { compression: "store" },
+          snapcraft: { base: core, [core]: { useTemplateApp: false } },
+        },
+        effectiveOptionComputed: async ({ snap }) => {
+          expect(snap.compression).toBe("lzo")
+          return Promise.resolve(true)
+        },
+      }))
+
+    test(`${core}: linux.compression 'maximum' maps to xz`, ({ expect }) =>
+      app(expect, {
+        targets: snapTarget,
+        config: {
+          extraMetadata: { name: "sep" },
+          productName: "Sep",
+          linux: { compression: "maximum" },
           snapcraft: { base: core, [core]: { useTemplateApp: false } },
         },
         effectiveOptionComputed: async ({ snap }) => {
