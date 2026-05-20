@@ -1600,6 +1600,28 @@ exports[`snapcraft > compression option (core22) 2`] = `
 }
 `;
 
+exports[`snapcraft > core18: linux.compression 'maximum' maps to xz 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core18: linux.compression 'store' maps to lzo 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
 exports[`snapcraft > core18: linux.description propagates to snap.description 1`] = `
 {
   "linux": [
@@ -1612,6 +1634,28 @@ exports[`snapcraft > core18: linux.description propagates to snap.description 1`
 `;
 
 exports[`snapcraft > core18: per-core description overrides linux.description 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core20: linux.compression 'maximum' maps to xz 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core20: linux.compression 'store' maps to lzo 1`] = `
 {
   "linux": [
     {
@@ -1644,6 +1688,28 @@ exports[`snapcraft > core20: per-core description overrides linux.description 1`
 }
 `;
 
+exports[`snapcraft > core22: linux.compression 'maximum' maps to xz 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core22: linux.compression 'store' maps to lzo 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
 exports[`snapcraft > core22: linux.description propagates to snap.description 1`] = `
 {
   "linux": [
@@ -1661,6 +1727,17 @@ exports[`snapcraft > core22: per-core description overrides linux.description 1`
     {
       "arch": "x64",
       "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24 Multipass real build > core24 useMultipass full build 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -1730,6 +1807,17 @@ exports[`snapcraft > core24 custom plugs with default expansion 1`] = `
   "summary": "Sep",
   "title": "Sep",
   "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > core24 custom plugs with default expansion 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -2038,7 +2126,38 @@ exports[`snapcraft > core24 wayland disabled 2`] = `
 }
 `;
 
-exports[`snapcraft > core24: invalid linux.compression throws with helpful message 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
+exports[`snapcraft > core24: linux.compression 'maximum' maps to xz 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24: linux.compression 'normal' leaves compression unset 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24: linux.compression 'store' maps to lzo 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
 
 exports[`snapcraft > core24: linux.description propagates to snap.description 1`] = `
 {
@@ -2051,7 +2170,7 @@ exports[`snapcraft > core24: linux.description propagates to snap.description 1`
 }
 `;
 
-exports[`snapcraft > core24: per-core compression overrides linux.compression 1`] = `
+exports[`snapcraft > core24: per-core compression overrides linux.compression mapping 1`] = `
 {
   "linux": [
     {

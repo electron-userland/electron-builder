@@ -281,7 +281,7 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
         delete snap.platforms // arch-specific: varies by host; tested separately via armhf tests
         expect(snap).toMatchSnapshot()
         // "default" should expand to the full default plug list plus "camera"
-        const appPlugs = snap.apps?.sep?.plugs ?? []
+        const appPlugs = snap.apps?.testapp?.plugs
         expect(appPlugs).toContain("camera")
         expect(appPlugs).toContain("desktop")
         return Promise.resolve(true)
