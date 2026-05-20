@@ -15,7 +15,7 @@ electron-builder configuration can be defined
    appId: "com.example.app"
    ```
 
-    `json`, [json5](http://json5.org), [toml](https://github.com/toml-lang/toml) or `js`/`ts` (exported configuration or function that produces configuration) formats also supported.
+    `json`, [json5](http://json5.org), [toml](https://github.com/toml-lang/toml) or `js`/`ts` (exported configuration or function that produces configuration) formats are also supported.
 
     :::tip
     If you want to use a `js` file, do not name it `electron-builder.js`. It will [conflict](https://github.com/electron-userland/electron-builder/issues/6227) with the `electron-builder` package name.
@@ -62,7 +62,7 @@ Some standard fields should be defined in the `package.json`.
 ## Proton Native
 
 To package [Proton Native](https://proton-native.js.org/) app, set `protonNodeVersion` option to `current` or specific NodeJS version that you are packaging for.
-Currently, only macOS and Linux supported.
+Currently, only macOS and Linux are supported.
 
 ## Build Version Management
 `CFBundleVersion` (macOS) and `FileVersion` (Windows) will be set automatically to `version.build_number` on CI server (Travis, AppVeyor, CircleCI and Bamboo supported).

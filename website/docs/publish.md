@@ -30,10 +30,10 @@ To prepare for this change, please explicitly specify your publish intent using 
 :::
 
 :::info[Snap store]
-`snap` target by default publishes to snap store (the app store for Linux). To force publishing to another providers, explicitly specify publish configuration for `snap`.
+`snap` target by default publishes to the Snap Store (the app store for Linux). To force publishing to another provider, explicitly specify publish configuration for `snap`.
 :::
 
-You can publish to multiple providers. For example, to publish Windows artifacts to both GitHub and Bitbucket (order is important — first item will be used as a default auto-update server, so, in this example app will use github as auto-update provider):
+You can publish to multiple providers. For example, to publish Windows artifacts to both GitHub and Bitbucket (order is important — first item will be used as a default auto-update server, so in this example the app will use GitHub as the auto-update provider):
 
 ```json
 {
@@ -57,7 +57,7 @@ win:
 
 You can also configure publishing using CLI arguments, for example, to force publishing snap not to Snap Store, but to GitHub: `-c.snap.publish=github`
 
-[Custom](https://github.com/electron-userland/electron-builder/issues/3261) publish provider can be used if need.
+A [custom](https://github.com/electron-userland/electron-builder/issues/3261) publish provider can be used if needed.
 
 :::tip[Macros]
 In all publish options [File Macros](./file-patterns.md#file-macros) are supported.
@@ -83,9 +83,9 @@ But please consider using automatic rules instead of explicitly specifying `publ
 
 * If CI server detected, — `onTagOrDraft`.
 
-* If CI server reports that tag was pushed, — `onTag`.
+* If CI server reports that a tag was pushed, — `onTag`.
 
-  Release will be drafted (if doesn't already exist) and artifacts published only if tag was pushed.
+  A release will be drafted (if one doesn't already exist) and artifacts published only if a tag was pushed.
 
 * If [npm script](https://docs.npmjs.com/misc/scripts) named `release`, — `always`.
 
@@ -110,11 +110,11 @@ The benefit of this workflow is that it allows you to always have the latest art
 
 ### Continuous Deployment Workflow on Amazon S3 and other non-GitHub
 
-This example workflow is modelled on how releases are handled in maven (it is an example of one of many possible workflows, you are not forced to follow it).
+This example workflow is modeled on how releases are handled in Maven (it is an example of one of many possible workflows, you are not forced to follow it).
 
 1. Setup your CI to publish on each commit. E.g. `"dist": "electron-builder --publish always"` in your `package.json`.
 2. Set your version in your application `package.json` to `1.9.0-snapshot` (or `1.9.0-master` or whatever you want your development channel to be named). This will publish a file named `snapshot.yml` and a build named `something-snapshot.exe` (and corresponding for mac) to S3.
-3. When you are ready to deploy, simply change you package version to `1.9.0` and push. This will then produce a `latest.yml` and `something.exe` on s3. Usually you'll git-tag this version as well (just to keep track of it).
+3. When you are ready to deploy, simply change your package version to `1.9.0` and push. This will then produce a `latest.yml` and `something.exe` on s3. Usually you'll git-tag this version as well (just to keep track of it).
 4. Change the version back to a snapshot version right after, i.e. `1.10.0-snapshot`, and commit it.
 
 ## GitHub Repository {#github-repository-and-bintray-package}
