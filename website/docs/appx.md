@@ -1,4 +1,4 @@
-The top-level [appx](configuration.md) key contains set of options instructing electron-builder on how it should build AppX packages for the Windows Store or enterprise sideloading.
+The top-level [appx](configuration.md) key contains a set of options instructing electron-builder on how it should build AppX packages for the Windows Store or enterprise sideloading.
 
 All options are optional. All required AppX configuration is inferred and computed automatically.
 
