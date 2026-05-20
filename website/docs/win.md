@@ -2,12 +2,12 @@
 title: "Windows"
 ---
 
-The top-level [win](./configuration.md#win) key contains set of options instructing electron-builder on how it should build Windows targets. These options applicable for any Windows target.
+The top-level [win](./configuration.md#win) key contains a set of options instructing electron-builder on how it should build Windows targets. These options are applicable to any Windows target.
 
 ---
 
 ## Common Questions
-## How do delegate code signing?
+## How do you delegate code signing?
 
 Use [sign](./api/index.md) option. Please also see [why sign.js is called 8 times](https://github.com/electron-userland/electron-builder/issues/3995).
 
@@ -26,7 +26,7 @@ exports.default = async function(configuration) {
 }
 ```
 
-## How do use a custom verify function to enable nsis signature verification alternatives instead of powershell?
+## How do you use a custom verify function to enable nsis signature verification alternatives instead of powershell?
 
 Use the `verifyUpdateCodeSignature` interface:
 
@@ -69,12 +69,13 @@ export default class AppUpdater {
 ```
 
 
-## How do create Parallels Windows 10 Virtual Machine?
+## How do you create a Parallels Windows 10 Virtual Machine?
 
-!!! warning "Disable "Share Mac user folders with Windows""
-    If you use Parallels, you [must not use](https://github.com/electron-userland/electron-builder/issues/865#issuecomment-258105498) "Share Mac user folders with Windows" feature and must not run installers from such folders.
+:::warning[Disable "Share Mac user folders with Windows"]
+If you use Parallels, you [must not use](https://github.com/electron-userland/electron-builder/issues/865#issuecomment-258105498) "Share Mac user folders with Windows" feature and must not run installers from such folders.
+:::
 
-You don't need to have Windows 10 license. Free is provided (expire after 90 days, but it is not a problem because no additional setup is required).
+You don't need to have a Windows 10 license. A free license is provided (expires after 90 days, but this is not a problem because no additional setup is required).
 
 1. Open Parallels Desktop.
 2. File -> New.
@@ -85,7 +86,7 @@ You don't need to have Windows 10 license. Free is provided (expire after 90 day
 
 Parallels Windows 10 VM will be used automatically to build AppX on macOS. No need even start VM — it will be started automatically on demand and suspended after build. No need to specify VM — it will be detected automatically (first Windows 10 VM will be used).
 
-## How do create VirtualBox Windows 10 Virtual Machine?
+## How do you create a VirtualBox Windows 10 Virtual Machine?
 
 If you are not on macOS or don't want to buy [Parallels Desktop](https://www.parallels.com/products/desktop/), you can use free [VirtualBox](https://www.virtualbox.org/wiki/Downloads).
 
@@ -96,7 +97,7 @@ If you are not on macOS or don't want to buy [Parallels Desktop](https://www.par
 
 The password to your VM is `Passw0rd!`.
 
-VirtualBox is not supported by electron-builder for now, so, you need to setup build environment on Windows if you want to use VirtualBox to build AppX (and other Windows-only tasks).
+VirtualBox is not supported by electron-builder for now, so you need to set up the build environment on Windows if you want to use VirtualBox to build AppX (and other Windows-only tasks).
 
 ## Configuration
 
