@@ -66,10 +66,10 @@ See https://electron.build for more documentation.
 For other commands please see help using `--help` arg, e.g. `./node_modules/.bin/electron-builder install-app-deps --help`
 
 :::tip
-Since Node.js 8 [npx](https://medium.com/@maybekatz/introducing-npx-an-npm-package-runner-55f7d4bd282b) is bundled, so, you can simply use `npx electron-builder`.
+Since Node.js 8 [npx](https://medium.com/@maybekatz/introducing-npx-an-npm-package-runner-55f7d4bd282b) is bundled, so you can simply use `npx electron-builder`.
 :::
 
-Prepend `npx` to sample commands below if you run it from Terminal and not from `package.json` scripts.
+Prepend `npx` to sample commands below if you run them from Terminal and not from `package.json` scripts.
 
 :::note[build for macOS, Windows and Linux]
 `electron-builder -mwl`

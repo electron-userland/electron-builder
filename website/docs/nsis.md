@@ -2,9 +2,9 @@
 title: "NSIS"
 ---
 
-The top-level [nsis](./configuration.md#nsis) key contains set of options instructing electron-builder on how it should build NSIS target (default target for Windows).
+The top-level [nsis](./configuration.md#nsis) key contains a set of options instructing electron-builder on how it should build NSIS target (default target for Windows).
 
-These options also applicable for [Web installer](#web-installer), use top-level `nsisWeb` key.
+These options are also applicable for the [Web installer](#web-installer), use top-level `nsisWeb` key.
 
 ---
 
@@ -12,12 +12,12 @@ Unicode enabled by default. Large strings are supported (maximum string length o
 
 ## 32 bit + 64 bit
 
-If you build both ia32 and x64 arch (`--x64 --ia32`), you in any case get one installer. Appropriate arch will be installed automatically.
+If you build both ia32 and x64 arch (`--x64 --ia32`), you will always get one installer. The appropriate arch will be installed automatically.
 The same applied to web installer (`nsis-web` [target](win.md#target)).
 
 ## Web Installer
 
-To build web installer, set [target](win.md#target) to `nsis-web`. Web Installer automatically detects OS architecture and downloads corresponding package file. So, user don't need to guess what installer to download and in the same time you don't bundle package files for all architectures in the one installer (as in case of default `nsis` target). It doesn't matter for common Electron application (due to superb LZMA compression, size difference is acceptable), but if your application is huge, Web Installer is a solution.
+To build web installer, set [target](win.md#target) to `nsis-web`. Web Installer automatically detects OS architecture and downloads corresponding package file. So, the user doesn't need to guess what installer to download and at the same time you don't bundle package files for all architectures in one installer (as in case of default `nsis` target). It doesn't matter for common Electron application (due to superb LZMA compression, size difference is acceptable), but if your application is huge, Web Installer is a solution.
 
 To customize web installer, use the top-level `nsisWeb` key (not `nsis`).
 
@@ -30,7 +30,7 @@ If for some reasons web installer cannot download (antivirus, offline):
 
 Two options are available — [include](#include) and [script](#script). `script` allows you to provide completely different NSIS script. For most cases it is not required as you need only to customise some aspects, but still use well-tested and maintained default NSIS script. So, `include` is recommended.
 
-Keep in mind — if you customize NSIS script, you should always state about it in the issue reports. And don't expect that your issue will be resolved.
+Keep in mind — if you customize the NSIS script, you should always mention it in issue reports. And don't expect that your issue will be resolved.
 
 1. Add file `build/installer.nsh`.
 2. Define wanted macro to customise: `customHeader`, `preInit`, `customInit`, `customUnInit`, `customInstall`, `customUnInstall`, `customRemoveFiles`, `customInstallMode`, `customWelcomePage`, `customUnWelcomePage`, `customUnInstallSection`.
@@ -129,7 +129,7 @@ For portable app, following environment variables are available:
 
 ## Common Questions
 
-:::tip[How do change the default installation directory to custom?]
+:::tip[How do I change the default installation directory?]
 
 It is very specific requirement. Do not do if you are not sure. Add [custom macro](#custom-nsis-script):
 
@@ -145,7 +145,7 @@ It is very specific requirement. Do not do if you are not sure. Add [custom macr
 ```
 :::
 
-:::tip[Is it possible to made single installer that will allow configuring user/machine installation?]
+:::tip[Is it possible to make a single installer that will allow configuring user/machine installation?]
 
 Yes, you need to switch to assisted installer (not default one-click).
 

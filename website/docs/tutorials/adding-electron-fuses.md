@@ -8,7 +8,7 @@ Information below has been partially copied from integration with [@electron/fus
 
 ## What are fuses?
 
-For a subset of Electron functionality it makes sense to disable certain features for an entire application.  For example, 99% of apps don't make use of `ELECTRON_RUN_AS_NODE`, these applications want to be able to ship a binary that is incapable of using that feature.  We also don't want Electron consumers building Electron from source as that is both a massive technical challenge and has a high cost of both time and money.
+For a subset of Electron functionality it makes sense to disable certain features for an entire application.  For example, 99% of apps don't make use of `ELECTRON_RUN_AS_NODE`, these applications want to be able to ship a binary that is incapable of using that feature.  We also don't want Electron consumers building Electron from source as that is both a massive technical challenge and a significant cost in time and money.
 
 Fuses are the solution to this problem, at a high level they are "magic bits" in the Electron binary that can be flipped when packaging your Electron app to enable / disable certain features / restrictions.  Because they are flipped at package time before you code sign your app the OS becomes responsible for ensuring those bits aren't flipped back via OS level code signing validation (Gatekeeper / App Locker).
 
@@ -34,8 +34,8 @@ electronFuses: {
 }
 ```
 
-It also is still possible to continue to keep your current logic flow in `afterPack` hook, so a convience method has been exposed in the `PlatformPackager` for easy customization of the flags on your own. It directly accepts an `AfterPackContext` and a `FuseConfig` object of [type](https://github.com/electron/fuses/blob/main/src/config.ts).
-This convience method was opened so that custom FuseConfig's could be provided, allow usage of `strictlyRequireAllFuses` to monitor your fuses and stay up-to-date with fuses as they're released, and/or force override the version of @electron/fuses in electron-builder if there's an update you'd like to leverage.
+It is also still possible to continue to keep your current logic in the `afterPack` hook, so a convenience method has been exposed in the `PlatformPackager` for easy customization of the flags on your own. It directly accepts an `AfterPackContext` and a `FuseConfig` object of [type](https://github.com/electron/fuses/blob/main/src/config.ts).
+This convenience method was added so that custom FuseConfigs could be provided, allowing usage of `strictlyRequireAllFuses` to monitor your fuses and stay up-to-date with fuses as they're released, and/or force override the version of @electron/fuses in electron-builder if there's an update you'd like to leverage.
 
 :::note[afterPack.ts]
 :::

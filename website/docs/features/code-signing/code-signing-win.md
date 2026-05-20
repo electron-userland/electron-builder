@@ -56,7 +56,7 @@ If you use the minimal setup using an "App registration" that is described above
 
 ## Azure Signing Configuration
 
-The top-level `win.azureSignOptions` key contains set of options for Azure Trusted Signing.
+The top-level `win.azureSignOptions` key contains a set of options for Azure Trusted Signing.
 
 {!./app-builder-lib.Interface.WindowsAzureSigningConfiguration.md!}
 

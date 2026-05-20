@@ -2,7 +2,7 @@
 title: "Linux"
 ---
 
-The top-level [linux](configuration.md) key contains set of options instructing electron-builder on how it should build Linux targets. These options applicable for any Linux target.
+The top-level [linux](configuration.md) key contains a set of options instructing electron-builder on how it should build Linux targets. These options are applicable to any Linux target.
 
 ## Linux Target Overview
 
@@ -228,7 +228,7 @@ Without a profile, the app may be restricted by Ubuntu's default profile. See th
 
 ## Debian Package Options
 
-The top-level [deb](configuration.md) key contains set of options for Debian packages.
+The top-level [deb](configuration.md) key contains a set of options for Debian packages.
 
 {!./app-builder-lib.Interface.DebOptions.md!}
 
