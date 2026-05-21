@@ -389,7 +389,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         stderr += chunk.toString()
       })
       child.on("error", err => {
-        reject(new Error(`Node module collector spawn (${command} ${args.join(" ")}) failed: ${err.message}`))
+        reject(new Error(`Node module collector spawn (${command} ${JSON.stringify(args)}) failed: ${err.message}`))
       })
 
       child.on("close", code => {

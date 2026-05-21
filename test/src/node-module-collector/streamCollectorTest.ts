@@ -33,6 +33,15 @@ function setPlatform(p: NodeJS.Platform) {
 let collector: TestCollector
 let closeCb: ((code: number) => void) | undefined
 
+async function waitForCloseCb() {
+  for (let i = 0; i < 50 && closeCb === undefined; i++) {
+    await Promise.resolve()
+  }
+  if (closeCb === undefined) {
+    throw new Error("spawn never registered close callback")
+  }
+}
+
 beforeEach(() => {
   closeCb = undefined
   const mockChild = {
@@ -53,15 +62,11 @@ afterEach(() => {
 })
 
 describe.sequential("streamCollectorCommandToFile", () => {
-  // For bat-wrapped cases: two microtask flushes are needed to drain the
-  // getTempFile and writeFile awaits before the Promise constructor (and thus
-  // the close-callback registration) runs.
   describe("Windows bat wrapping", () => {
     test(".cmd file: spawn receives cmd.exe", async ({ expect }) => {
       setPlatform("win32")
       const p = collector.streamCollectorCommandToFile("C:\\nodejs\\npm.cmd", ["list"], "/cwd", OUTPUT_FILE)
-      await Promise.resolve()
-      await Promise.resolve()
+      await waitForCloseCb()
       closeCb!(0)
       await p
       const [cmd, args] = vi.mocked(childProcess.spawn).mock.calls[0]
@@ -73,8 +78,7 @@ describe.sequential("streamCollectorCommandToFile", () => {
     test(".cmd at path with spaces: wrapped in bat", async ({ expect }) => {
       setPlatform("win32")
       const p = collector.streamCollectorCommandToFile("C:\\Program Files\\nodejs\\npm.cmd", ["list"], "/cwd", OUTPUT_FILE)
-      await Promise.resolve()
-      await Promise.resolve()
+      await waitForCloseCb()
       closeCb!(0)
       await p
       expect(vi.mocked(childProcess.spawn).mock.calls[0][0]).toBe("cmd.exe")
@@ -83,8 +87,7 @@ describe.sequential("streamCollectorCommandToFile", () => {
     test("extensionless at path with spaces: wrapped in bat", async ({ expect }) => {
       setPlatform("win32")
       const p = collector.streamCollectorCommandToFile("C:\\Program Files\\Volta\\pnpm", [], "/cwd", OUTPUT_FILE)
-      await Promise.resolve()
-      await Promise.resolve()
+      await waitForCloseCb()
       closeCb!(0)
       await p
       expect(vi.mocked(childProcess.spawn).mock.calls[0][0]).toBe("cmd.exe")
@@ -93,8 +96,7 @@ describe.sequential("streamCollectorCommandToFile", () => {
     test(".exe at path with spaces: wrapped in bat (Volta shim fix)", async ({ expect }) => {
       setPlatform("win32")
       const p = collector.streamCollectorCommandToFile("C:\\Program Files\\Volta\\pnpm.exe", [], "/cwd", OUTPUT_FILE)
-      await Promise.resolve()
-      await Promise.resolve()
+      await waitForCloseCb()
       closeCb!(0)
       await p
       expect(vi.mocked(childProcess.spawn).mock.calls[0][0]).toBe("cmd.exe")
@@ -103,8 +105,7 @@ describe.sequential("streamCollectorCommandToFile", () => {
     test("bat script quotes command and uses CRLF line endings", async ({ expect }) => {
       setPlatform("win32")
       const p = collector.streamCollectorCommandToFile("C:\\Program Files\\Volta\\pnpm.exe", [], "/cwd", OUTPUT_FILE)
-      await Promise.resolve()
-      await Promise.resolve()
+      await waitForCloseCb()
       closeCb!(0)
       await p
       const [, content] = vi.mocked(fsExtra.writeFile).mock.calls[0] as unknown as [string, string, unknown]
@@ -114,8 +115,7 @@ describe.sequential("streamCollectorCommandToFile", () => {
     test("bat script escapes double quotes in command path", async ({ expect }) => {
       setPlatform("win32")
       const p = collector.streamCollectorCommandToFile('C:\\some""path\\npm.cmd', [], "/cwd", OUTPUT_FILE)
-      await Promise.resolve()
-      await Promise.resolve()
+      await waitForCloseCb()
       closeCb!(0)
       await p
       const [, content] = vi.mocked(fsExtra.writeFile).mock.calls[0] as unknown as [string, string, unknown]
@@ -125,8 +125,7 @@ describe.sequential("streamCollectorCommandToFile", () => {
     test("original args forwarded after bat path", async ({ expect }) => {
       setPlatform("win32")
       const p = collector.streamCollectorCommandToFile("C:\\Program Files\\npm.cmd", ["list", "--json"], "/cwd", OUTPUT_FILE)
-      await Promise.resolve()
-      await Promise.resolve()
+      await waitForCloseCb()
       closeCb!(0)
       await p
       const spawnArgs = vi.mocked(childProcess.spawn).mock.calls[0][1] as string[]
