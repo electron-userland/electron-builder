@@ -125,6 +125,22 @@ export function parseUpdateInfo(rawData: string | null, channelFile: string, cha
       "ERR_UPDATER_INVALID_UPDATE_INFO"
     )
   }
+
+  if (result == null || typeof result !== "object") {
+    throw newError(`Update info from ${channelFile} is not an object`, "ERR_UPDATER_INVALID_UPDATE_INFO")
+  }
+  if (typeof result.version !== "string" || result.version.trim() === "") {
+    throw newError(`Update info from ${channelFile} is missing a valid "version" field`, "ERR_UPDATER_INVALID_UPDATE_INFO")
+  }
+  if (typeof result.releaseDate !== "string" || result.releaseDate.trim() === "") {
+    throw newError(`Update info from ${channelFile} is missing a valid "releaseDate" field`, "ERR_UPDATER_INVALID_UPDATE_INFO")
+  }
+  const hasFiles = Array.isArray(result.files) && result.files.length > 0
+  const hasLegacyPath = typeof (result as any).path === "string"
+  if (!hasFiles && !hasLegacyPath) {
+    throw newError(`Update info from ${channelFile} contains no downloadable files`, "ERR_UPDATER_INVALID_UPDATE_INFO")
+  }
+
   return result
 }
 
