@@ -111,6 +111,10 @@ export class NsisUpdater extends BaseUpdater {
     try {
       publisherName = (await this.configOnDisk.value).publisherName
       if (publisherName == null) {
+        this._logger.warn(
+          "publisherName is not set in app-update.yml — Windows code-signature verification is DISABLED. " +
+            "Set publisherName to the full Distinguished Name (DN) from your signing certificate to enable it."
+        )
         return null
       }
     } catch (e: any) {
