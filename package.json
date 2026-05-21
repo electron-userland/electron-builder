@@ -60,7 +60,7 @@
     "vitest": "^3.2.2"
   },
   "engines": {
-    "node": ">=14.14",
+    "node": ">=18.0.0",
     "pnpm": ">=10"
   },
   "packageManager": "pnpm@11.1.0+sha512.0c44e842e5686b2c061a81adda8b2258bd8818e9704b2cf2c63d56b931a7b2e910092e085027003b96ca3911ab56a07f6df5abaed2be9925034cdd686a535b14"
