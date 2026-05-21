@@ -89,15 +89,18 @@ describe("buildGotProxyAgent", () => {
     })
   })
 
+  // On Windows, env var names are case-insensitive at the OS level, so HTTPS_PROXY and
+  // https_proxy refer to the same variable. Precedence between case variants is only
+  // meaningful on case-sensitive OSes (Linux/macOS).
   describe("env var precedence", () => {
-    test("HTTPS_PROXY takes precedence over https_proxy when both are set", ({ expect }) => {
+    test.skipIf(process.platform === "win32")("HTTPS_PROXY takes precedence over https_proxy when both are set", ({ expect }) => {
       vi.stubEnv("HTTPS_PROXY", "https://uppercase.example.com:8080")
       vi.stubEnv("https_proxy", "https://lowercase.example.com:8080")
       const agent = buildGotProxyAgent()
       expect((agent?.https as any)?.proxy?.hostname).toBe("uppercase.example.com")
     })
 
-    test("HTTP_PROXY takes precedence over http_proxy when both are set", ({ expect }) => {
+    test.skipIf(process.platform === "win32")("HTTP_PROXY takes precedence over http_proxy when both are set", ({ expect }) => {
       vi.stubEnv("HTTP_PROXY", "http://uppercase.example.com:3128")
       vi.stubEnv("http_proxy", "http://lowercase.example.com:3128")
       const agent = buildGotProxyAgent()
