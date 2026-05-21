@@ -80,9 +80,17 @@ export abstract class LinuxUpdater extends BaseUpdater {
    * @param pms - An array of package manager commands to check for, in priority order.
    * @returns The detected package manager command or "unknown" if none are found.
    */
+  private static readonly ALLOWED_PACKAGE_MANAGERS = new Set(["apt", "apt-get", "dpkg", "rpm", "pacman", "zypper", "dnf", "yum", "snap", "flatpak"])
+
   protected detectPackageManager(pms: string[]): string {
     const pmOverride = process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER?.trim()
     if (pmOverride) {
+      if (!LinuxUpdater.ALLOWED_PACKAGE_MANAGERS.has(pmOverride)) {
+        throw new Error(
+          `ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER="${pmOverride}" is not an allowed value. ` +
+            `Allowed values: ${[...LinuxUpdater.ALLOWED_PACKAGE_MANAGERS].join(", ")}`
+        )
+      }
       return pmOverride
     }
     // Check for the package manager in the order of priority
