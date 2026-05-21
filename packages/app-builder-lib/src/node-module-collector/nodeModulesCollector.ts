@@ -374,6 +374,16 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       args = ["/c", `"${tempBatFile}"`, ...args]
     }
 
+    // shell: true is required on Windows — see https://github.com/electron-userland/electron-builder/issues/9488
+    // Guard: reject any argument that contains characters with special meaning to cmd.exe
+    // or a POSIX shell, to prevent injection if a malicious package.json were to influence args.
+    const SHELL_INJECTION_RE = /[;&|`$(){}[\]<>!]/
+    for (const arg of args) {
+      if (SHELL_INJECTION_RE.test(arg)) {
+        throw new Error(`Refusing to spawn "${command}": argument "${arg}" contains shell metacharacters. Possible injection attempt.`)
+      }
+    }
+
     await new Promise<void>((resolve, reject) => {
       const outStream = createWriteStream(tempOutputFile)
 
