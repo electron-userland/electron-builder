@@ -10,6 +10,7 @@ function setPlatform(p: NodeJS.Platform) {
 
 afterEach(() => {
   Object.defineProperty(process, "platform", { value: originalPlatform, configurable: true })
+  vi.clearAllMocks()
 })
 
 async function freshImport() {
