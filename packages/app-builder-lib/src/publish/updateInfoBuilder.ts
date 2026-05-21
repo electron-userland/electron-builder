@@ -79,7 +79,7 @@ export interface UpdateInfoFileTask {
   readonly info: UpdateInfo
   readonly publishConfiguration: PublishConfiguration
   readonly packager: PlatformPackager<any>
-  readonly arch: Arch | null
+  readonly arch?: Arch | null
 }
 
 function computeIsisElectronUpdater1xCompatibility(updaterCompatibility: string | null, publishConfiguration: PublishConfiguration, packager: Packager) {
@@ -198,7 +198,11 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
     if (zipDiff !== 0) {
       return zipDiff
     }
-    return (a.arch == null ? 0 : 1) - (b.arch == null ? 0 : 1)
+    // universal (arch === null) before arch-specific; tie-break by Arch enum value for full determinism
+    // undefined arch (external callers predating this field) treated as arch-specific via strict === null check
+    const aArch = a.arch === null ? -1 : (a.arch ?? Number.MAX_SAFE_INTEGER)
+    const bArch = b.arch === null ? -1 : (b.arch ?? Number.MAX_SAFE_INTEGER)
+    return aArch - bArch
   })
 
   const updateChannelFileToInfo = new Map<string, UpdateInfoFileTask>()

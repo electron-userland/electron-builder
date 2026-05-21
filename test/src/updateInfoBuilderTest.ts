@@ -97,11 +97,8 @@ test("all three NSIS multi-arch installer urls are present in files array", asyn
     ]
     await writeUpdateInfoFiles(tasks, makePackager() as any)
     const yml = await readYml(path.join(dir, "latest.yml"))
-    expect(yml.files).toHaveLength(3)
-    const urls: string[] = yml.files.map((f: any) => f.url)
-    expect(urls).toContain("App-1.0.0.exe")
-    expect(urls).toContain("App-1.0.0-x64.exe")
-    expect(urls).toContain("App-1.0.0-arm64.exe")
+    // universal first, then by Arch enum value: x64 (1) before arm64 (3)
+    expect(yml.files.map((f: any) => f.url)).toEqual(["App-1.0.0.exe", "App-1.0.0-x64.exe", "App-1.0.0-arm64.exe"])
   })
 })
 
