@@ -1,5 +1,41 @@
 # electron-publish
 
+## 26.11.1
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`b8c6a15`](https://github.com/electron-userland/electron-builder/commit/b8c6a1545b61d3c285f28d39100e9c7ff4e4192f)
+
+</small>
+
+- `builder-util@26.11.1`
+
+</details>
+
+## 26.11.0
+
+### Patch Changes
+
+- Chore(docs): documentation updates and docusaurus migration _[`#9744`](https://github.com/electron-userland/electron-builder/pull/9744) [`d846315`](https://github.com/electron-userland/electron-builder/commit/d84631587d816a1aa0bff57680bab0f865d7a84f) [@mmaietta](https://github.com/mmaietta)_
+- Fix: prevent double progress bar from displaying _[`#9743`](https://github.com/electron-userland/electron-builder/pull/9743) [`2583fd1`](https://github.com/electron-userland/electron-builder/commit/2583fd17b1ef6d752b00df7302294dc13d3dfb9d) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`d846315`](https://github.com/electron-userland/electron-builder/commit/d84631587d816a1aa0bff57680bab0f865d7a84f) [`56d8331`](https://github.com/electron-userland/electron-builder/commit/56d83314596803e4c3973b3c2a4eb2b838eb0edf) [`8a98647`](https://github.com/electron-userland/electron-builder/commit/8a98647f79c19fff7e7f5347d0a1ff80db18520e)
+
+</small>
+
+- `builder-util-runtime@9.6.1`
+- `builder-util@26.11.0`
+
+</details>
+
 ## 26.10.0
 
 ### Patch Changes

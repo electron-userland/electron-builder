@@ -1,5 +1,11 @@
 # builder-util-runtime
 
+## 9.6.1
+
+### Patch Changes
+
+- Chore(docs): documentation updates and docusaurus migration _[`#9744`](https://github.com/electron-userland/electron-builder/pull/9744) [`d846315`](https://github.com/electron-userland/electron-builder/commit/d84631587d816a1aa0bff57680bab0f865d7a84f) [@mmaietta](https://github.com/mmaietta)_
+
 ## 9.6.0
 
 ### Minor Changes

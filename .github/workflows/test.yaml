@@ -298,7 +298,10 @@ jobs:
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
 
       - name: Verify Docs Generation
-        run: pnpm generate-all
+        run: pnpm generate:all
+
+      - name: Verify Site Generation
+        run: pnpm docs:all
 
       - name: Download test-runner if exists
         if: needs.run-docker-build.result == 'success'

@@ -37,7 +37,7 @@ export async function doBuild(
   arch: Arch,
   tmpDir: TmpDir,
   isWindows: boolean,
-  extraConfig?: Configuration | null
+  extraConfiguration?: Configuration | null
 ) {
   const currentPlatform = isWindows ? Platform.WINDOWS : Platform.current()
   async function buildApp({
@@ -162,8 +162,8 @@ export async function doBuild(
       },
     })
   try {
-    await build(OLD_VERSION_NUMBER, { compression: "store" })
-    await build(NEW_VERSION_NUMBER, { compression: "maximum" }) // validate both compressions work while we're at it
+    await build(OLD_VERSION_NUMBER, { ...extraConfiguration, compression: "store" })
+    await build(NEW_VERSION_NUMBER, { ...extraConfiguration, compression: "maximum" }) // validate both compressions work while we're at it
   } catch (e: any) {
     await tmpDir.cleanup()
     throw e
@@ -433,7 +433,8 @@ export async function runTest(context: TestContext, target: string, packageManag
 
   const tmpDir = new TmpDir("auto-update")
   const outDirs: ApplicationUpdatePaths[] = []
-  await doBuild(expect, outDirs, target, arch, tmpDir, process.platform === "win32" || (target === "nsis" && vm != null), { toolsets })
+  const shouldRunWindowsTests = process.platform === "win32" || (target === "nsis" && vm != null)
+  await doBuild(expect, outDirs, target, arch, tmpDir, shouldRunWindowsTests, { toolsets })
 
   const oldAppDir = outDirs[0]
   const newAppDir = outDirs[1]
