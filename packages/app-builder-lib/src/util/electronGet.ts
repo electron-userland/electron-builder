@@ -7,7 +7,7 @@ import {
   GotDownloaderOptions,
   MirrorOptions,
 } from "@electron/get"
-import { exec, exists, getPath7za, log, PADDING, parseValidEnvVarUrl } from "builder-util"
+import { buildGotProxyAgent, exec, exists, getPath7za, log, PADDING, parseValidEnvVarUrl } from "builder-util"
 import { MultiProgress } from "electron-publish/out/multiProgress"
 import { createReadStream, createWriteStream } from "fs"
 import * as fs from "fs/promises"
@@ -223,6 +223,7 @@ async function downloadArtifactToFile(config: Parameters<typeof get.downloadArti
 
   const downloadOptions: GotDownloaderOptions = {
     timeout: { request: 10 * 60 * 1000 }, // prevent indefinite hang on stalled connections
+    agent: buildGotProxyAgent(),
     ...config.downloadOptions,
     getProgressCallback: info => {
       // @electron/get passes downloadOptions (including this callback) to its internal

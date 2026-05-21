@@ -24,7 +24,7 @@ export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames,
 export { AsyncTaskManager } from "./asyncTaskManager"
 export { DebugLogger } from "./DebugLogger"
 export * from "./log"
-export { httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor"
+export { buildGotProxyAgent, httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor"
 export * from "./promise"
 export { parseValidEnvVarUrl } from "./envUtil"
 
