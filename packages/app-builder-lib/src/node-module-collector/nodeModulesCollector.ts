@@ -357,7 +357,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     // Also wrap any Windows executable path that contains spaces (e.g. extensionless shims
     // from tools like Volta installed at "C:\Program Files\Volta\") to ensure the path is
     // quoted correctly when passed to `spawn(..., { shell: true })`.
-    const isWindowsScriptFile = process.platform === "win32" && (ext === ".cmd" || (command.includes(" ") && ext !== ".exe"))
+    const isWindowsScriptFile = process.platform === "win32" && (ext === ".cmd" || command.includes(" "))
     if (isWindowsScriptFile) {
       // We need to wrap it in a .bat file to ensure it runs correctly with cmd.exe
       // This is necessary because some files (like .cmd) are not directly executable in the same way as .bat files.
@@ -389,7 +389,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         stderr += chunk.toString()
       })
       child.on("error", err => {
-        reject(new Error(`Node module collector spawn failed: ${err.message}`))
+        reject(new Error(`Node module collector spawn (${command} ${args.join(" ")}) failed: ${err.message}`))
       })
 
       child.on("close", code => {
