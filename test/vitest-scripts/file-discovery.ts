@@ -38,7 +38,7 @@ function collectTests(dir: string, platform: TargetPlatform = "current", out: st
   }
 
   for (const name of fs.readdirSync(dir)) {
-    if ([".ts.map", ".js.map", ".d.ts", ".snap"].some(ext => name.endsWith(ext)) || ["node_modules", "out"].includes(name) || isSkippedTest(name, platform)) {
+    if ([".ts.map", ".js.map", ".d.ts", ".snap"].some(ext => name.endsWith(ext)) || ["node_modules", "out"].includes(name)) {
       continue
     }
 
@@ -47,9 +47,10 @@ function collectTests(dir: string, platform: TargetPlatform = "current", out: st
     if (!name.startsWith(".") && fs.statSync(full).isDirectory()) {
       collectTests(full, platform, out)
     } else {
+      // Explicit TEST_FILES override always bypasses the per-OS/global skip lists
       if (testOverride && testOverride.some(toMatch => name.includes(toMatch))) {
         out.push(normalizePath(full))
-      } else if (name.endsWith("Test.ts") || name.endsWith("test.ts")) {
+      } else if (!isSkippedTest(name, platform) && (name.endsWith("Test.ts") || name.endsWith("test.ts"))) {
         out.push(normalizePath(full))
       }
     }

@@ -1,8 +1,8 @@
 import { AllPublishOptions, newError, safeStringifyJson } from "builder-util-runtime"
-import { pathExistsSync, stat, copyFile } from "fs-extra"
-import { createReadStream } from "fs"
+import { pathExistsSync, copyFile } from "fs-extra"
+import { chmod, writeFile } from "fs/promises"
 import * as path from "path"
-import { createServer, IncomingMessage, Server, ServerResponse } from "http"
+import { pathToFileURL } from "url"
 import { AppAdapter } from "./AppAdapter"
 import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater"
 import { ResolvedUpdateFileInfo } from "./main"
@@ -10,14 +10,11 @@ import { UpdateDownloadedEvent } from "./types"
 import { findFile } from "./providers/Provider"
 import AutoUpdater = Electron.AutoUpdater
 import { execFileSync } from "child_process"
-import { randomBytes } from "crypto"
 
 export class MacUpdater extends AppUpdater {
   private readonly nativeUpdater: AutoUpdater = require("electron").autoUpdater
 
   private squirrelDownloadedUpdate = false
-
-  private server?: Server
 
   constructor(options?: AllPublishOptions, app?: AppAdapter) {
     super(options, app)
@@ -35,17 +32,6 @@ export class MacUpdater extends AppUpdater {
   private debug(message: string): void {
     if (this._logger.debug != null) {
       this._logger.debug(message)
-    }
-  }
-
-  private closeServerIfExists() {
-    if (this.server) {
-      this.debug("Closing proxy server")
-      this.server.close(err => {
-        if (err) {
-          this.debug("proxy server wasn't already open, probably attempted closing again as a safety check before quit")
-        }
-      })
     }
   }
 
@@ -123,134 +109,40 @@ export class MacUpdater extends AppUpdater {
           try {
             const cachedUpdateFilePath = path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_MAC_APP_ZIP_FILE_NAME)
             await copyFile(event.downloadedFile, cachedUpdateFilePath)
+            await chmod(cachedUpdateFilePath, 0o600)
           } catch (error: any) {
             this._logger.warn(`Unable to copy file for caching for future differential downloads: ${error.message}`)
           }
         }
-        return this.updateDownloaded(zipFileInfo, event)
+        return this.updateDownloaded(event)
       },
     })
   }
 
-  private async updateDownloaded(zipFileInfo: ResolvedUpdateFileInfo, event: UpdateDownloadedEvent): Promise<Array<string>> {
+  private async updateDownloaded(event: UpdateDownloadedEvent): Promise<Array<string>> {
     const downloadedFile = event.downloadedFile
-    const updateFileSize = zipFileInfo.info.size ?? (await stat(downloadedFile)).size
+    await chmod(downloadedFile, 0o600)
+    const feedPath = path.join(this.downloadedUpdateHelper!.cacheDir, "update-feed.json")
 
-    const log = this._logger
-    const logContext = `fileToProxy=${zipFileInfo.url.href}`
-    this.closeServerIfExists()
-    this.debug(`Creating proxy server for native Squirrel.Mac (${logContext})`)
-    this.server = createServer()
-    this.debug(`Proxy server for native Squirrel.Mac is created (${logContext})`)
-    this.server.on("close", () => {
-      log.info(`Proxy server for native Squirrel.Mac is closed (${logContext})`)
-    })
+    await writeFile(feedPath, JSON.stringify({ url: pathToFileURL(downloadedFile).href }), { mode: 0o600 })
+    this.debug(`Serving Squirrel.Mac update via file:// (feedPath=${feedPath})`)
 
-    // must be called after server is listening, otherwise address is null
-    const getServerUrl = (s: Server): string => {
-      const address = s.address()
-      if (typeof address === "string") {
-        return address
-      }
-      return `http://127.0.0.1:${address?.port}`
+    this.nativeUpdater.setFeedURL({ url: pathToFileURL(feedPath).href })
+    this.dispatchUpdateDownloaded(event)
+
+    if (!this.autoInstallOnAppQuit) {
+      return []
     }
 
-    return await new Promise<Array<string>>((resolve, reject) => {
-      const pass = randomBytes(64).toString("base64").replace(/\//g, "_").replace(/\+/g, "-")
-      const authInfo = Buffer.from(`autoupdater:${pass}`, "ascii")
-
-      // insecure random is ok
-      const fileUrl = `/${randomBytes(64).toString("hex")}.zip`
-      this.server!.on("request", (request: IncomingMessage, response: ServerResponse) => {
-        const requestUrl = request.url!
-        log.info(`${requestUrl} requested`)
-        if (requestUrl === "/") {
-          // check for basic auth header
-          if (!request.headers.authorization || request.headers.authorization.indexOf("Basic ") === -1) {
-            response.statusCode = 401
-            response.statusMessage = "Invalid Authentication Credentials"
-            response.end()
-            log.warn("No authenthication info")
-            return
-          }
-
-          // verify auth credentials
-          const base64Credentials = request.headers.authorization.split(" ")[1]
-          const credentials = Buffer.from(base64Credentials, "base64").toString("ascii")
-          const [username, password] = credentials.split(":")
-          if (username !== "autoupdater" || password !== pass) {
-            response.statusCode = 401
-            response.statusMessage = "Invalid Authentication Credentials"
-            response.end()
-            log.warn("Invalid authenthication credentials")
-            return
-          }
-
-          const data = Buffer.from(`{ "url": "${getServerUrl(this.server!)}${fileUrl}" }`)
-          response.writeHead(200, { "Content-Type": "application/json", "Content-Length": data.length })
-          response.end(data)
-          return
-        }
-
-        if (!requestUrl.startsWith(fileUrl)) {
-          log.warn(`${requestUrl} requested, but not supported`)
-          response.writeHead(404)
-          response.end()
-          return
-        }
-
-        log.info(`${fileUrl} requested by Squirrel.Mac, pipe ${downloadedFile}`)
-
-        let errorOccurred = false
-        response.on("finish", () => {
-          if (!errorOccurred) {
-            this.nativeUpdater.removeListener("error", reject)
-            resolve([])
-          }
-        })
-
-        const readStream = createReadStream(downloadedFile)
-        readStream.on("error", error => {
-          try {
-            response.end()
-          } catch (e: any) {
-            log.warn(`cannot end response: ${e}`)
-          }
-          errorOccurred = true
-          this.nativeUpdater.removeListener("error", reject)
-          reject(new Error(`Cannot pipe "${downloadedFile}": ${error}`))
-        })
-
-        response.writeHead(200, {
-          "Content-Type": "application/zip",
-          "Content-Length": updateFileSize,
-        })
-        readStream.pipe(response)
+    return new Promise<Array<string>>((resolve, reject) => {
+      const onError = (err: Error) => reject(err)
+      this.nativeUpdater.once("error", onError)
+      this.nativeUpdater.once("update-downloaded", () => {
+        this.nativeUpdater.removeListener("error", onError)
+        resolve([])
       })
-
-      this.debug(`Proxy server for native Squirrel.Mac is starting to listen (${logContext})`)
-
-      this.server!.listen(0, "127.0.0.1", () => {
-        this.debug(`Proxy server for native Squirrel.Mac is listening (address=${getServerUrl(this.server!)}, ${logContext})`)
-        this.nativeUpdater.setFeedURL({
-          url: getServerUrl(this.server!),
-          headers: {
-            "Cache-Control": "no-cache",
-            Authorization: `Basic ${authInfo.toString("base64")}`,
-          },
-        })
-
-        // The update has been downloaded and is ready to be served to Squirrel
-        this.dispatchUpdateDownloaded(event)
-
-        if (this.autoInstallOnAppQuit) {
-          this.nativeUpdater.once("error", reject)
-          // This will trigger fetching and installing the file on Squirrel side
-          this.nativeUpdater.checkForUpdates()
-        } else {
-          resolve([])
-        }
-      })
+      // This will trigger fetching and installing the file on Squirrel side
+      this.nativeUpdater.checkForUpdates()
     })
   }
 
@@ -260,7 +152,6 @@ export class MacUpdater extends AppUpdater {
     } else {
       this.app.quit()
     }
-    this.closeServerIfExists()
   }
 
   quitAndInstall(): void {
