@@ -3,6 +3,7 @@
 import isCI from "is-ci"
 import { startVitest } from "vitest/node"
 import { getAllTestFiles } from "./file-discovery"
+import { generateTests } from "./generate-tests"
 import { buildWeightedFiles, computeShardCount, splitIntoShards } from "./shard-builder"
 import { SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN } from "./smart-config"
 import SmartSequencer from "./vitest-smart-sequencer"
@@ -12,6 +13,8 @@ const includeRegex = `(${testRegex.join("|")}|${testRegex.map(t => `${t}*Test`).
 console.log("TEST_FILES pattern", includeRegex)
 
 async function main() {
+  generateTests()
+
   const files = getAllTestFiles()
   const currentPlatform = process.platform as SupportedPlatforms
 
