@@ -152,6 +152,14 @@ export class MacUpdater extends AppUpdater {
       if (typeof address === "string") {
         return address
       }
+      // SECURITY NOTE: Squirrel.Mac's native feedURL API requires an HTTP URL — it does not
+      // support HTTPS on a loopback server. The connection is localhost-only and is protected
+      // by Basic auth with a 64-byte cryptographically random password (see `pass` below),
+      // which makes remote exploitation infeasible. The auth token and random file path are
+      // generated fresh for each update, so they cannot be predicted or replayed.
+      // Risk: a local process with elevated entitlements could theoretically sniff loopback
+      // traffic or enumerate the URL; this is accepted as an architectural constraint of the
+      // Squirrel.Mac integration.
       return `http://127.0.0.1:${address?.port}`
     }
 
