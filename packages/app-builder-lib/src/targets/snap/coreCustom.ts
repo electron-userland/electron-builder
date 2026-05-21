@@ -8,11 +8,17 @@ import { SnapcraftYAML } from "./snapcraft"
 import { buildSnap, SNAPCRAFT_YAML_OPTIONS } from "./snapcraftBuilder"
 
 /**
- * Pass-through snap builder for custom snapcraft.yaml files.
+ * Pass-through snap builder for `base: "custom"`.
  *
- * electron-builder reads the file at `yamlPath`, writes it into the stage
- * directory, and invokes snapcraft — no plugs, extensions, organize mappings,
- * or desktop files are injected.
+ * electron-builder reads the file at `snapcraft.custom.yaml` (or the inline object),
+ * writes it into the stage directory, and invokes snapcraft. **Nothing is injected or
+ * modified in any way** — no plugs, extensions, organize mappings, desktop files,
+ * environment variables, layout entries, or stage packages. `linux.*` configuration
+ * is also not cascaded into the descriptor.
+ *
+ * Because electron-builder exerts no control over the descriptor's content, GitHub
+ * issue support for snap runtime problems encountered with custom yaml files is limited.
+ * Prefer a structured base (`core24`, `core22`, etc.) for a fully managed build.
  */
 export class SnapCoreCustom extends SnapCore<SnapOptionsCustom> {
   readonly defaultPlugs: string[] = []

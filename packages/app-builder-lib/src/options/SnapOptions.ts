@@ -61,6 +61,10 @@ export interface SnapOptionsCustom {
  * `{ "snapcraft": { "base": "core24", "core24": { ... } } }`). The flat `snap`
  * interface is maintained for backward compatibility and targets `core22` and
  * older snap bases only.
+ *
+ * Fields inherited from {@link CommonLinuxOptions} (e.g. `description`, `category`,
+ * `mimeTypes`, `executableArgs`) are automatically populated from `linux.*` configuration
+ * and do not need to be repeated here. Per-core values take precedence when both are set.
  */
 export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
   /**
@@ -328,9 +332,13 @@ export interface RemoteBuildOptions {
 
 /**
  * **[Beta]** Options for building a core24 snap. This interface does not extend the legacy
- * `SnapBaseOptions` — it uses the snapcraft CLI directly. Inherits desktop-entry fields from
- * `CommonLinuxOptions` (categories, mimeTypes, executableArgs, etc.) and publish
- * configuration from `TargetSpecificOptions`.
+ * `SnapBaseOptions` — it uses the snapcraft CLI directly.
+ *
+ * Fields inherited from {@link CommonLinuxOptions} (`description`, `category`, `mimeTypes`,
+ * `executableArgs`, `desktop`, `synopsis`) are automatically populated from the root `linux.*`
+ * configuration. You do not need to duplicate them here; values set directly on this interface
+ * take precedence over the cascaded `linux.*` values.
+ *
  * @beta
  */
 export interface SnapOptions24 extends CommonLinuxOptions, TargetSpecificOptions {

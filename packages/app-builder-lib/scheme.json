@@ -6789,7 +6789,7 @@
     },
     "SnapOptions24": {
       "additionalProperties": false,
-      "description": "**[Beta]** Options for building a core24 snap. This interface does not extend the legacy\n`SnapBaseOptions` — it uses the snapcraft CLI directly. Inherits desktop-entry fields from\n`CommonLinuxOptions` (categories, mimeTypes, executableArgs, etc.) and publish\nconfiguration from `TargetSpecificOptions`.",
+      "description": "**[Beta]** Options for building a core24 snap. This interface does not extend the legacy\n`SnapBaseOptions` — it uses the snapcraft CLI directly.\n\nFields inherited from {@link CommonLinuxOptions} (`description`, `category`, `mimeTypes`,\n`executableArgs`, `desktop`, `synopsis`) are automatically populated from the root `linux.*`\nconfiguration. You do not need to duplicate them here; values set directly on this interface\ntake precedence over the cascaded `linux.*` values.",
       "properties": {
         "after": {
           "anyOf": [
