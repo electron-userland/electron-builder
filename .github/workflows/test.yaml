@@ -174,7 +174,7 @@ jobs:
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
 
       - name: Upload smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
         if: always()
         with:
           name: vitest-smart-cache-${{ matrix.platform }}-${{ matrix.shard }}
@@ -223,7 +223,7 @@ jobs:
           VITEST_SMART_CACHE_FILE: ${{ github.workspace }}\test\vitest-scripts\_vitest-smart-cache.json
 
       - name: Upload smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
         if: always()
         with:
           name: vitest-smart-cache-${{ matrix.platform }}-${{ matrix.shard }}
@@ -268,7 +268,7 @@ jobs:
           # CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
 
       - name: Upload smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
         if: always()
         with:
           name: vitest-smart-cache-${{ matrix.platform }}-${{ matrix.shard }}
@@ -344,7 +344,7 @@ jobs:
           ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}"
 
       - name: Upload smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
         if: always()
         with:
           name: vitest-smart-cache-updater
@@ -384,7 +384,7 @@ jobs:
           RESET_VITEST_SHARD_CACHE: ${{ inputs.reset-vitest-smart-cache }}
 
       - name: Upload smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
         if: always()
         with:
           name: vitest-smart-cache-linux-native
@@ -448,7 +448,7 @@ jobs:
             -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}
 
       - name: Upload smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
         if: always()
         with:
           name: vitest-smart-cache-e2e-${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST }}
@@ -546,7 +546,7 @@ jobs:
           failOnError: false
 
       - name: Upload merged cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
         with:
           name: vitest-smart-cache-merged
           path: merged-cache/_vitest-smart-cache.json
