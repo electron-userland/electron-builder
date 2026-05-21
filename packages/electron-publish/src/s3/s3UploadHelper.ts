@@ -2,7 +2,7 @@ import { sign } from "aws4"
 import * as fs from "fs"
 import * as http from "http"
 import * as https from "https"
-import mime from "mime"
+import * as mime from "mime"
 import * as path from "path"
 import type { AwsCredentials } from "./awsCredentials"
 
@@ -94,7 +94,14 @@ export function startS3PutObject(params: S3PutObjectParams): { req: http.ClientR
         res.on("end", resolvePromise)
       } else {
         let body = ""
-        res.on("data", (chunk: string) => (body += chunk))
+        let bodySize = 0
+        const MAX_ERROR_BODY = 65536
+        res.on("data", (chunk: string) => {
+          bodySize += chunk.length
+          if (bodySize <= MAX_ERROR_BODY) {
+            body += chunk
+          }
+        })
         res.on("end", () => rejectPromise(new Error(`S3 PutObject failed (HTTP ${res.statusCode}): ${body.slice(0, 512)}`)))
       }
     }
@@ -103,6 +110,7 @@ export function startS3PutObject(params: S3PutObjectParams): { req: http.ClientR
   req.on("error", rejectPromise)
   const fileStream = fs.createReadStream(params.file)
   fileStream.on("error", rejectPromise)
+  req.on("close", () => fileStream.destroy())
   fileStream.pipe(req)
 
   return { req, done }
