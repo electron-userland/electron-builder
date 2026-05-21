@@ -42,6 +42,16 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
     // Also note that at this point the file has already been written to the disk, thus we are
     // guaranteed that the path will not contain any illegal characters like <>:"/\|?*
     // https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file
+    //
+    // Because preparePowerShellExec uses shell:true, the command passes through cmd.exe before
+    // PowerShell sees it. Guard against cmd.exe metacharacters that are not covered by the
+    // Windows filename rules above (%, ^, !, &, |, (, )).
+    const cmdMetaChars = /[%^!&|()]/
+    if (cmdMetaChars.test(unescapedTempUpdateFile)) {
+      reject(new Error(`Update file path contains cmd.exe metacharacters and cannot be verified safely: ${unescapedTempUpdateFile}`))
+      resolve(null)
+      return
+    }
     const tempUpdateFile = unescapedTempUpdateFile.replace(/'/g, "''")
     logger.info(`Verifying signature ${tempUpdateFile}`)
 
