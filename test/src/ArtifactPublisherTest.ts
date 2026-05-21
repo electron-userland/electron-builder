@@ -15,8 +15,7 @@ function versionNumber() {
   return `${getRandomInt(0, 99)}.${getRandomInt(0, 99)}.${getRandomInt(0, 99)}`
 }
 
-//noinspection SpellCheckingInspection
-const token = Buffer.from("Y2Y5NDdhZDJhYzJlMzg1OGNiNzQzYzcwOWZhNGI0OTk2NWQ4ZDg3Yg==", "base64").toString()
+const token = process.env.TEST_GH_TOKEN ?? ""
 const iconPath = path.join(__dirname, "..", "fixtures", "test-app", "build", "icon.icns")
 const icoPath = path.join(__dirname, "..", "fixtures", "test-app", "build", "icon.ico")
 
