@@ -3,20 +3,7 @@ import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@elect
 import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
 import { makeUniversalApp } from "@electron/universal"
-import {
-  Arch,
-  AsyncTaskManager,
-  copyFile,
-  deepAssign,
-  exec,
-  exists,
-  getArchSuffix,
-  InvalidConfigurationError,
-  log,
-  orIfFileNotExist,
-  unlinkIfExists,
-  use,
-} from "builder-util"
+import { Arch, AsyncTaskManager, copyFile, deepAssign, exec, exists, getArchSuffix, InvalidConfigurationError, log, orIfFileNotExist, unlinkIfExists, use } from "builder-util"
 import { MemoLazy, Nullish } from "builder-util-runtime"
 import * as fs from "fs/promises"
 import { mkdir, readdir } from "fs/promises"
@@ -412,60 +399,6 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     return true
   }
 
-  private async getOptionsForFile(appPath: string, isMas: boolean, customSignOptions: MacConfiguration) {
-    const resourceList = await this.resourceList
-    const entitlementsSuffix = isMas ? "mas" : "mac"
-
-    const getEntitlements = (filePath: string) => {
-      // check if root app, then use main entitlements
-      if (filePath === appPath) {
-        if (customSignOptions.entitlements) {
-          return customSignOptions.entitlements
-        }
-        const p = `entitlements.${entitlementsSuffix}.plist`
-        if (resourceList.includes(p)) {
-          return path.join(this.info.buildResourcesDir, p)
-        } else {
-          return getTemplatePath("entitlements.mac.plist")
-        }
-      }
-
-      // It's a login helper...
-      if (filePath.includes("Library/LoginItems")) {
-        return customSignOptions.entitlementsLoginHelper
-      }
-
-      // Only remaining option is that it's inherited entitlements
-      if (customSignOptions.entitlementsInherit) {
-        return customSignOptions.entitlementsInherit
-      }
-      const p = `entitlements.${entitlementsSuffix}.inherit.plist`
-      if (resourceList.includes(p)) {
-        return path.join(this.info.buildResourcesDir, p)
-      } else {
-        return getTemplatePath("entitlements.mac.plist")
-      }
-    }
-
-    const requirements = isMas || this.platformSpecificBuildOptions.requirements == null ? undefined : await this.getResource(this.platformSpecificBuildOptions.requirements)
-
-    // harden by default for mac builds. Only harden mas builds if explicitly true (backward compatibility)
-    const hardenedRuntime = isMas ? customSignOptions.hardenedRuntime === true : customSignOptions.hardenedRuntime !== false
-
-    const optionsForFile: (filePath: string) => PerFileSignOptions = filePath => {
-      const entitlements = getEntitlements(filePath)
-      const args = {
-        entitlements: entitlements || undefined,
-        hardenedRuntime: hardenedRuntime ?? undefined,
-        timestamp: customSignOptions.timestamp || undefined,
-        requirements: requirements || undefined,
-        additionalArguments: customSignOptions.additionalArguments || [],
-      }
-      return args
-    }
-    return optionsForFile
-  }
-
   //noinspection JSMethodCanBeStatic
   protected async doSign(opts: SignOptions, customSignOptions: MacConfiguration | MasConfiguration, identity: Identity | null): Promise<void> {
     const customSign = await resolveFunction(this.appInfo.type, customSignOptions.sign, "sign", await this.info.getWorkspaceRoot())
@@ -664,4 +597,3 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     return undefined
   }
 }
-

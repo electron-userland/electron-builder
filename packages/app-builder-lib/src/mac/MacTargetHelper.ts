@@ -208,20 +208,10 @@ export class MacTargetHelper {
       }
     }
 
-    const projectDir = await this.packager.info.getWorkspaceRoot()
-    const blockExternalLoadPath = (p: string | null | undefined, label: string) => {
-      if (p && path.isAbsolute(p)) {
-        if (!p.startsWith(projectDir + path.sep) && p !== projectDir) {
-          log.error({ path: p, label }, "entitlements path is outside the workspace directory")
-          throw new InvalidConfigurationError(`Entitlements ${label} must be located inside the workspace directory`)
-        }
-      }
-    }
-    blockExternalLoadPath(customSignOptions.entitlements, "entitlements")
-    blockExternalLoadPath(customSignOptions.entitlementsInherit, "entitlementsInherit")
-    blockExternalLoadPath(customSignOptions.entitlementsLoginHelper, "entitlementsLoginHelper")
-
-    const requirements = isMas || this.packager.platformSpecificBuildOptions.requirements == null ? undefined : await this.packager.getResource(this.packager.platformSpecificBuildOptions.requirements)
+    const requirements =
+      isMas || this.packager.platformSpecificBuildOptions.requirements == null
+        ? undefined
+        : await this.packager.getResource(this.packager.platformSpecificBuildOptions.requirements)
 
     // harden by default for mac builds. Only harden mas builds if explicitly true (backward compatibility)
     const hardenedRuntime = isMas ? customSignOptions.hardenedRuntime === true : customSignOptions.hardenedRuntime !== false
