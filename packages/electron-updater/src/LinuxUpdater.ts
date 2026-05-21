@@ -14,13 +14,6 @@ export abstract class LinuxUpdater extends BaseUpdater {
     return process.getuid?.() === 0
   }
 
-  /**
-   * Sanitizies the installer path for using with command line tools.
-   */
-  protected get installerPath(): string | null {
-    return super.installerPath?.replace(/\\/g, "\\\\").replace(/ /g, "\\ ") ?? null
-  }
-
   protected runCommandWithSudoIfNeeded(commandWithArgs: string[]) {
     if (this.isRunningAsRoot()) {
       this._logger.info("Running as root, no need to use sudo")
@@ -31,12 +24,15 @@ export abstract class LinuxUpdater extends BaseUpdater {
     const installComment = `"${name} would like to update"`
     const sudo = this.sudoWithArgs(installComment)
     this._logger.info(`Running as non-root user, using sudo to install: ${sudo}`)
+    // Each argument is POSIX single-quote escaped so shell metacharacters ($, `, &, ;, etc.)
+    // cannot break out of the quoted string when passed to bash -c.
+    const shellSafe = commandWithArgs.map(arg => `'${arg.replace(/'/g, "'\\''")}'`).join(" ")
     let wrapper = `"`
     // some sudo commands dont want the command to be wrapped in " quotes
     if (/pkexec/i.test(sudo[0]) || sudo[0] === "sudo") {
       wrapper = ""
     }
-    return this.spawnSyncLog(sudo[0], [...(sudo.length > 1 ? sudo.slice(1) : []), `${wrapper}/bin/bash`, "-c", `'${commandWithArgs.join(" ")}'${wrapper}`])
+    return this.spawnSyncLog(sudo[0], [...(sudo.length > 1 ? sudo.slice(1) : []), `${wrapper}/bin/bash`, "-c", `${shellSafe}${wrapper}`])
   }
 
   protected sudoWithArgs(installComment: string): string[] {
