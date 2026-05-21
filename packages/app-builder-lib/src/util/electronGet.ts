@@ -69,6 +69,7 @@ export interface ElectronDownloadOptions {
   /** @private */
   customFilename?: string | null
 
+  /** @deprecated Setting strictSSL to false disables TLS certificate verification for all binary downloads, enabling MITM attacks. Use ELECTRON_BUILDER_BYPASS_STRICT_SSL=1 env var instead, which requires explicit opt-in. */
   strictSSL?: boolean
   isVerifyChecksum?: boolean
 
@@ -417,7 +418,19 @@ function buildElectronArtifactConfig(options: ArtifactDownloadOptions): Electron
           customDir: customDir || undefined,
           customFilename: customFilename || undefined,
         },
-        ...(strictSSL === false ? { downloadOptions: { https: { rejectUnauthorized: false } } } : {}),
+        ...(strictSSL === false
+          ? process.env.ELECTRON_BUILDER_BYPASS_STRICT_SSL === "1"
+            ? (log.warn(
+                { reason: "ELECTRON_BUILDER_BYPASS_STRICT_SSL=1 is set" },
+                "TLS certificate verification is DISABLED for Electron binary downloads — this allows MITM attacks. Do not use in production."
+              ),
+              { downloadOptions: { https: { rejectUnauthorized: false } } })
+            : (log.warn(
+                {},
+                "strictSSL: false is deprecated and no longer takes effect. Set ELECTRON_BUILDER_BYPASS_STRICT_SSL=1 to explicitly opt in to disabling TLS verification."
+              ),
+              {})
+          : {}),
       }
       if (overridePlatform != null) {
         artifactConfig.platform = overridePlatform
