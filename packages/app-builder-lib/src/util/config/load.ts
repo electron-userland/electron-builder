@@ -32,6 +32,11 @@ async function readConfig<T>(configFile: string, request: ReadConfigRequest): Pr
     }
     result = await Promise.resolve(result)
   } else if (configFile.endsWith(".ts")) {
+    // SECURITY: jiti executes the TypeScript config file as code in the current Node.js process
+    // with full privileges. A compromised or malicious electron.builder.config.ts achieves RCE
+    // at build time. This is an accepted design tradeoff (all build-tool config runners have the
+    // same model), but warn so operators are aware that config files are trusted code.
+    log.warn({ configFile }, "executing TypeScript config file via jiti — ensure this file is from a trusted source")
     result = await jiti.import(configFile, { default: true })
 
     if (typeof result === "function") {
