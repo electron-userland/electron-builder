@@ -77,8 +77,12 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
                 return dn.get(key) === subject.get(key)
               })
             } else if (name === subject.get("CN")!) {
-              logger.warn(`Signature validated using only CN ${name}. Please add your full Distinguished Name (DN) to publisherNames configuration`)
-              match = true
+              const result = `publisherName "${name}" matches only by CN. ` +
+                `This is insecure — any certificate with the same CN would pass. ` +
+                `Set publisherName to the full Distinguished Name (DN), e.g. "CN=${name}, O=Your Org, L=City, C=US".`
+              logger.warn(result)
+              resolve(result)
+              return
             }
             if (match) {
               resolve(null)
