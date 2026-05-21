@@ -104,14 +104,14 @@ __metadata:
   linkType: hard
 
 "@exodus/bytes@npm:^1.6.0":
-  version: 1.15.0
-  resolution: "@exodus/bytes@npm:1.15.0"
+  version: 1.15.1
+  resolution: "@exodus/bytes@npm:1.15.1"
   peerDependencies:
     "@noble/hashes": ^1.8.0 || ^2.0.0
   peerDependenciesMeta:
     "@noble/hashes":
       optional: true
-  checksum: 9d36ea2fff78adde5fe937d2201edc86799b0fd581eb81d84984e65b19d76dc0fe0f11a62f098115163bbe040a3be5f3f0ab0c179475acabf575ca9e2e67daa1
+  checksum: ff9fe539a3c05aac5a2411931e5029d4f6b96df092eff0da42e0f9220b46de7e4f7aab0f5b22a5c6d7059a7d14986a616525915034eefde8c1569898415d3ad7
   languageName: node
   linkType: hard
 
@@ -290,9 +290,9 @@ __metadata:
   linkType: hard
 
 "lru-cache@npm:^11.2.4, lru-cache@npm:^11.2.5, lru-cache@npm:^11.2.6":
-  version: 11.4.0
-  resolution: "lru-cache@npm:11.4.0"
-  checksum: 9305b2fae384c491de15cb7a2a1762ffd00128df5db1d671943152728c24c7b85fe249f0af2ef803ac18bd67bdc3c7277cea6a8078d68f9901f70047f949cddf
+  version: 11.5.0
+  resolution: "lru-cache@npm:11.5.0"
+  checksum: c80137284638364ef3c938219d776373f1be2736dd442567f4dc767978d53b21268992eb72ba831e3734be42f7418ebed070aed543f72a3268037bc4f2529d15
   languageName: node
   linkType: hard
 

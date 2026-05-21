@@ -1,0 +1,49 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`msi > msi 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test MSI 1.1.0.msi",
+      "safeArtifactName": "Test-MSI-1.1.0.msi",
+    },
+  ],
+}
+`;
+
+exports[`msi > msi no asar 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test MSI 1.1.0.msi",
+      "safeArtifactName": "Test-MSI-1.1.0.msi",
+    },
+  ],
+}
+`;
+
+exports[`msi > per-user 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test MSI Per User 1.1.0.msi",
+      "safeArtifactName": "Test-MSI-Per-User-1.1.0.msi",
+    },
+  ],
+}
+`;
+
+exports[`msi > wix args 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test WiX Args 1.1.0.msi",
+      "safeArtifactName": "Test-WiX-Args-1.1.0.msi",
+    },
+  ],
+}
+`;

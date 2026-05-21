@@ -33,3 +33,6 @@ coverage
 yalc.lock
 _vitest-smart-cache.json
 .claude
+node-modules-docker
+
+test/src/generated/
