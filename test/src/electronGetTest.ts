@@ -1,4 +1,6 @@
 import * as fs from "fs/promises"
+import * as http from "http"
+import * as net from "net"
 import * as os from "os"
 import * as path from "path"
 import { afterAll, afterEach, beforeAll, vi } from "vitest"
@@ -396,5 +398,47 @@ describe("downloadElectronArtifact", { sequential: true }, () => {
 
     // electron distribution always ships a version file
     expect(entries).toContain("version")
+  })
+})
+
+// ─── Proxy integration ────────────────────────────────────────────────────────
+
+async function startRecordingProxy() {
+  const connectTargets: string[] = []
+  const server = http.createServer()
+  server.on("connect", (req, socket) => {
+    connectTargets.push(req.url ?? "")
+    socket.write("HTTP/1.1 503 Proxy Refused\r\n\r\n")
+    socket.destroy()
+  })
+  await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
+  const { port } = server.address() as net.AddressInfo
+  const close = () => new Promise<void>(resolve => server.close(() => resolve()))
+  return { port, connectTargets, close }
+}
+
+describe("proxy integration", () => {
+  test("routes download requests through HTTPS_PROXY when set", { timeout: 15_000 }, async ({ expect }) => {
+    const proxy = await startRecordingProxy()
+    const freshCache = await fs.mkdtemp(path.join(os.tmpdir(), "eb-proxy-integration-"))
+    vi.stubEnv("HTTPS_PROXY", `http://127.0.0.1:${proxy.port}`)
+    vi.stubEnv("ELECTRON_BUILDER_CACHE", freshCache)
+
+    try {
+      await expect(
+        downloadBuilderToolset({
+          releaseName: APPIMAGE_RELEASE,
+          filenameWithExt: APPIMAGE_FILE,
+          checksums: { [APPIMAGE_FILE]: APPIMAGE_SHA256 },
+        })
+      ).rejects.toThrow() // proxy refuses tunnel — download fails, that's expected
+    } finally {
+      vi.unstubAllEnvs()
+      await proxy.close()
+      await fs.rm(freshCache, { recursive: true, force: true })
+    }
+
+    // Core assertion: got sent CONNECT to our proxy, proving the agent is wired through
+    expect(proxy.connectTargets.some(t => t.startsWith("github.com"))).toBe(true)
   })
 })
