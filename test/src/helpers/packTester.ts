@@ -287,7 +287,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       if (shouldUpdateLockfiles) {
         const fixtureDir = path.dirname(testFixtureLockfile)
         if (!(await exists(fixtureDir))) {
-          await mkdir(fixtureDir)
+          await mkdir(fixtureDir, { recursive: true })
         }
         await copyFile(destLockfile, testFixtureLockfile)
       }

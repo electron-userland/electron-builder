@@ -13,6 +13,7 @@
     "test-all": "pnpm compile && pnpm pretest && pnpm ci:test",
     "test-linux": "sh docker/run-tests.sh",
     "ci:test": "ts-node test/vitest-scripts/run-vitest.ts",
+    "ci:test:generate": "ts-node test/vitest-scripts/generate-tests.ts",
     "ci:test:count": "ts-node test/vitest-scripts/smart-shard-count.ts",
     "ci:validate": "pnpm compile && pnpm pretest && pnpm generate:all",
     "ci:version": "pnpm i && pnpm changelog && changeset version && node scripts/update-package-version-export.js && pnpm compile && pnpm generate:all && git add .",
