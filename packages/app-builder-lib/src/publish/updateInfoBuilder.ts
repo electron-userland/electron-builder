@@ -96,7 +96,6 @@ function computeIsisElectronUpdater1xCompatibility(updaterCompatibility: string 
   return updaterVersion == null || semver.lt(updaterVersion, "4.0.0")
 }
 
-/** @internal */
 export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConfigs: Array<PublishConfiguration>): Promise<Array<UpdateInfoFileTask>> {
   const packager = event.packager
   const publishConfigs = await getPublishConfigsForUpdateInfo(packager, _publishConfigs, event.arch)
