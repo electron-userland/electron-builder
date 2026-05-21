@@ -107,7 +107,7 @@ describe.sequential("streamCollectorCommandToFile", () => {
       await Promise.resolve()
       closeCb!(0)
       await p
-      const [, content] = vi.mocked(fsExtra.writeFile).mock.calls[0] as [string, string, unknown]
+      const [, content] = vi.mocked(fsExtra.writeFile).mock.calls[0] as unknown as [string, string, unknown]
       expect(content).toBe('@echo off\r\n"C:\\Program Files\\Volta\\pnpm.exe" %*\r\n')
     })
 
@@ -118,7 +118,7 @@ describe.sequential("streamCollectorCommandToFile", () => {
       await Promise.resolve()
       closeCb!(0)
       await p
-      const [, content] = vi.mocked(fsExtra.writeFile).mock.calls[0] as [string, string, unknown]
+      const [, content] = vi.mocked(fsExtra.writeFile).mock.calls[0] as unknown as [string, string, unknown]
       expect(content).toContain('C:\\some""""path\\npm.cmd')
     })
 
