@@ -1,3 +1,4 @@
+import * as get from "@electron/get"
 import * as fs from "fs/promises"
 import * as http from "http"
 import * as net from "net"
@@ -158,6 +159,10 @@ const DOWNLOAD_TIMEOUT = { timeout: 120_000 }
 // longer than the retry budget allows. Sequential order ensures test 1 writes the complete state
 // before tests 2 and 3 run, so they hit the pre-lock cache fast-path instead of waiting on the lock.
 describe("downloadBuilderToolset", { sequential: true }, () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
   test("downloadArtifact: downloads and extracts appimage@1.0.3 tar.gz with sha256 checksum", DOWNLOAD_TIMEOUT, async ({ expect }) => {
     const result = await downloadBuilderToolset({
       releaseName: APPIMAGE_RELEASE,
@@ -205,8 +210,6 @@ describe("downloadBuilderToolset", { sequential: true }, () => {
       checksums: { [APPIMAGE_FILE]: APPIMAGE_SHA256 },
     })
 
-    vi.unstubAllEnvs()
-
     expect(typeof result).toBe("string")
     const stat = await fs.stat(result)
     expect(stat.isDirectory()).toBe(true)
@@ -222,6 +225,35 @@ describe("downloadBuilderToolset", { sequential: true }, () => {
         checksums: { [APPIMAGE_FILE]: "0000000000000000000000000000000000000000000000000000000000000000" },
       })
     ).rejects.toThrow()
+  })
+
+  // Regression test for https://github.com/electron-userland/electron-builder/issues/9752
+  // @electron/get's mirrorVar() checks ELECTRON_MIRROR before opts.mirror, so passing
+  // mirrorOptions.mirror would let ELECTRON_MIRROR silently override the builder-binaries URL.
+  // Using resolveAssetURL bypasses that env var check entirely.
+  // This test intercepts the config actually passed to get.downloadArtifact and verifies
+  // that resolveAssetURL() returns the builder-binaries URL even when ELECTRON_MIRROR is set.
+  test("ELECTRON_MIRROR env var does not corrupt builder-binaries download URL (#9752)", async ({ expect }) => {
+    vi.stubEnv("ELECTRON_MIRROR", "https://cdn.npmmirror.com/binaries/electron/")
+
+    let resolvedUrl: string | undefined
+    const spy = vi.spyOn(get, "downloadArtifact").mockImplementationOnce(async config => {
+      resolvedUrl = await (config.mirrorOptions?.resolveAssetURL as any)?.()
+      throw new Error("mock-stop")
+    })
+
+    await expect(
+      downloadBuilderToolset({
+        releaseName: "dmg-builder@1.2.2",
+        filenameWithExt: "dmgbuild-bundle-arm64-75c8a6c.tar.gz",
+      })
+    ).rejects.toThrow("mock-stop")
+
+    expect(resolvedUrl).toBeDefined()
+    expect(resolvedUrl).toContain("electron-builder-binaries")
+    expect(resolvedUrl).not.toContain("cdn.npmmirror.com/binaries/electron")
+
+    spy.mockRestore()
   })
 })
 

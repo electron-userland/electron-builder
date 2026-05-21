@@ -362,19 +362,16 @@ export async function downloadBuilderToolset(options: {
   const { releaseName, filenameWithExt, checksums, githubOrgRepo = "electron-userland/electron-builder-binaries", overrideUrl } = options
 
   const baseUrl = getBinariesMirrorUrl(githubOrgRepo)
-  const hashInput = overrideUrl ? `${overrideUrl}/${filenameWithExt}` : `${baseUrl}${releaseName}/${filenameWithExt}`
-  const suffix = hashUrlSafe(hashInput, 5)
+  const fullUrl = overrideUrl ? `${overrideUrl}/${filenameWithExt}` : `${baseUrl}${releaseName}/${filenameWithExt}`
+  const suffix = hashUrlSafe(fullUrl, 5)
   const folderName = `${filenameWithExt.replace(/\.(tar\.gz|tgz|zip|7z)$/, "")}-${suffix}`
   const extractDir = path.join(getCacheDirectory(), releaseName, folderName)
 
-  const mirrorOptions: MirrorOptions = overrideUrl
-    ? { resolveAssetURL: async () => Promise.resolve(`${overrideUrl}/${filenameWithExt}`) }
-    : {
-        // `${mirror}${customDir}/${customFilename}`
-        mirror: baseUrl,
-        customDir: releaseName,
-        customFilename: filenameWithExt,
-      }
+  // Use resolveAssetURL so @electron/get's ELECTRON_MIRROR env var check cannot override
+  // the builder-binaries URL we've already resolved (see getArtifactRemoteURL in @electron/get).
+  const mirrorOptions: MirrorOptions = {
+    resolveAssetURL: async () => Promise.resolve(fullUrl),
+  }
 
   const config: ElectronDownloadRequest & ElectronDownloadRequestOptions & { isGeneric: true } = {
     version: "9.9.9", // must be >1.3.2 to bypass @electron/get validation shortcut
