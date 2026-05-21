@@ -12,11 +12,13 @@ import { getPath7za } from "./7za"
 import { debug, log } from "./log"
 import { exists } from "./fs"
 import { mkdir } from "fs-extra"
+import { isEmptyOrSpaces } from "./stringUtil"
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
 }
 
+export { isEmptyOrSpaces } from "./stringUtil"
 export { safeStringifyJson, retry } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
 export * from "./arch"
@@ -319,10 +321,6 @@ export class ExecError extends Error {
 
 export function use<T, R>(value: T | Nullish, task: (value: T) => R): R | null {
   return value == null ? null : task(value)
-}
-
-export function isEmptyOrSpaces(s: string | Nullish): s is "" | Nullish {
-  return s == null || s.trim().length === 0
 }
 
 export function isTokenCharValid(token: string) {

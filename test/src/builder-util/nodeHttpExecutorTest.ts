@@ -73,6 +73,20 @@ describe("buildGotProxyAgent", () => {
       expect(agent?.https).toBeDefined()
       expect(agent?.http).toBeUndefined()
     })
+
+    test("falls back to https_proxy when HTTPS_PROXY is whitespace-only", ({ expect }) => {
+      vi.stubEnv("HTTPS_PROXY", "   ")
+      vi.stubEnv("https_proxy", "https://fallback.example.com:8080")
+      const agent = buildGotProxyAgent()
+      expect(agent?.https).toBeDefined()
+    })
+
+    test("falls back to http_proxy when HTTP_PROXY is whitespace-only", ({ expect }) => {
+      vi.stubEnv("HTTP_PROXY", "   ")
+      vi.stubEnv("http_proxy", "http://fallback.example.com:3128")
+      const agent = buildGotProxyAgent()
+      expect(agent?.http).toBeDefined()
+    })
   })
 
   describe("env var precedence", () => {
@@ -123,6 +137,7 @@ describe("NodeHttpExecutor.createRequest", () => {
   function callCreateRequest(executor: NodeHttpExecutor, options: any) {
     const req = executor.createRequest(options, vi.fn()) as any
     req?.on?.("error", () => {})
+    req?.destroy?.()
     return req
   }
 

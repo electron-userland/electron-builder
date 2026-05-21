@@ -223,8 +223,8 @@ async function downloadArtifactToFile(config: Parameters<typeof get.downloadArti
 
   const downloadOptions: GotDownloaderOptions = {
     timeout: { request: 10 * 60 * 1000 }, // prevent indefinite hang on stalled connections
-    agent: buildGotProxyAgent(),
     ...config.downloadOptions,
+    agent: config.downloadOptions?.agent ?? buildGotProxyAgent(),
     getProgressCallback: info => {
       // @electron/get passes downloadOptions (including this callback) to its internal
       // SHASUMS256.txt validation download. That file is tiny (<1 MB) and fires at 100%
