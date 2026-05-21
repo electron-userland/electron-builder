@@ -76,6 +76,13 @@ export abstract class Provider<T extends UpdateInfo> {
    * Method to perform API request only to resolve update info, but not to download update.
    */
   protected httpRequest(url: URL, headers?: OutgoingHttpHeaders | null, cancellationToken?: CancellationToken): Promise<string | null> {
+    if (url.protocol === "http:" && url.hostname !== "127.0.0.1" && url.hostname !== "localhost") {
+      throw newError(
+        `Update feed URL must use HTTPS, got HTTP: ${url.href}. ` +
+          "Fetching update manifests over HTTP allows a network attacker to inject a malicious update.",
+        "ERR_UPDATER_INSECURE_UPDATE_URL"
+      )
+    }
     return this.executor.request(this.createRequestOptions(url, headers), cancellationToken)
   }
 
