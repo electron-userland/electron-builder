@@ -34,6 +34,7 @@ import { ArchiveTarget } from "./targets/ArchiveTarget"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
+import { isMacOsHighSierra } from "./util/macosVersion"
 import { resolveFunction } from "./util/resolve"
 
 export type CustomMacSignOptions = SignOptions
@@ -217,83 +218,88 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
    * Handle universal build packing
    */
   private async doUniversalPack(config: DoPackOptions<MacConfiguration>): Promise<void> {
-    const { outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets } = config
+    this._activePackConfig = config.platformSpecificBuildOptions
+    try {
+      const { outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets } = config
 
-    const outDirName = (arch: Arch) => `${appOutDir}-${Arch[arch]}-temp`
-    const options = {
-      ...config,
-      options: {
-        sign: false,
-        disableAsarIntegrity: true,
-        disableFuses: true,
-      },
+      const outDirName = (arch: Arch) => `${appOutDir}-${Arch[arch]}-temp`
+      const options = {
+        ...config,
+        options: {
+          sign: false,
+          disableAsarIntegrity: true,
+          disableFuses: true,
+        },
+      }
+
+      const x64Arch = Arch.x64
+      const x64AppOutDir = outDirName(x64Arch)
+      await super.doPack({ ...options, appOutDir: x64AppOutDir, arch: x64Arch })
+
+      if (this.info.cancellationToken.cancelled) {
+        return
+      }
+
+      const arm64Arch = Arch.arm64
+      const arm64AppOutPath = outDirName(arm64Arch)
+      await super.doPack({ ...options, appOutDir: arm64AppOutPath, arch: arm64Arch })
+
+      if (this.info.cancellationToken.cancelled) {
+        return
+      }
+
+      const framework = this.info.framework
+      log.info(
+        {
+          platform: platformName,
+          arch: Arch[arch],
+          [`${framework.name}`]: framework.version,
+          appOutDir: log.filePath(appOutDir),
+        },
+        `packaging`
+      )
+      const appFile = `${this.appInfo.productFilename}.app`
+
+      // Make sure the Assets.car file is the same for both architectures
+      const sourceCatalogPath = path.join(x64AppOutDir, appFile, "Contents/Resources/Assets.car")
+      if (await exists(sourceCatalogPath)) {
+        const targetCatalogPath = path.join(arm64AppOutPath, appFile, "Contents/Resources/Assets.car")
+        await fs.copyFile(sourceCatalogPath, targetCatalogPath)
+      }
+
+      await makeUniversalApp({
+        x64AppPath: path.join(x64AppOutDir, appFile),
+        arm64AppPath: path.join(arm64AppOutPath, appFile),
+        outAppPath: path.join(appOutDir, appFile),
+        force: true,
+        mergeASARs: platformSpecificBuildOptions.mergeASARs ?? true, // must be ?? to allow false
+        singleArchFiles: platformSpecificBuildOptions.singleArchFiles || undefined,
+        x64ArchFiles: platformSpecificBuildOptions.x64ArchFiles || undefined,
+      })
+      await fs.rm(x64AppOutDir, { recursive: true, force: true })
+      await fs.rm(arm64AppOutPath, { recursive: true, force: true })
+
+      // Give users a final opportunity to perform things on the combined universal package before signing
+      const packContext: AfterPackContext = {
+        appOutDir,
+        outDir,
+        arch,
+        targets,
+        packager: this,
+        electronPlatformName: platformName,
+      }
+      await this.info.emitAfterPack(packContext)
+
+      if (this.info.cancellationToken.cancelled) {
+        return
+      }
+
+      await this.doAddElectronFuses(packContext)
+
+      await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
+    } finally {
+      this._activePackConfig = null
     }
-
-    const x64Arch = Arch.x64
-    const x64AppOutDir = outDirName(x64Arch)
-    await super.doPack({ ...options, appOutDir: x64AppOutDir, arch: x64Arch })
-
-    if (this.info.cancellationToken.cancelled) {
-      return
-    }
-
-    const arm64Arch = Arch.arm64
-    const arm64AppOutPath = outDirName(arm64Arch)
-    await super.doPack({ ...options, appOutDir: arm64AppOutPath, arch: arm64Arch })
-
-    if (this.info.cancellationToken.cancelled) {
-      return
-    }
-
-    const framework = this.info.framework
-    log.info(
-      {
-        platform: platformName,
-        arch: Arch[arch],
-        [`${framework.name}`]: framework.version,
-        appOutDir: log.filePath(appOutDir),
-      },
-      `packaging`
-    )
-    const appFile = `${this.appInfo.productFilename}.app`
-
-    // Make sure the Assets.car file is the same for both architectures
-    const sourceCatalogPath = path.join(x64AppOutDir, appFile, "Contents/Resources/Assets.car")
-    if (await exists(sourceCatalogPath)) {
-      const targetCatalogPath = path.join(arm64AppOutPath, appFile, "Contents/Resources/Assets.car")
-      await fs.copyFile(sourceCatalogPath, targetCatalogPath)
-    }
-
-    await makeUniversalApp({
-      x64AppPath: path.join(x64AppOutDir, appFile),
-      arm64AppPath: path.join(arm64AppOutPath, appFile),
-      outAppPath: path.join(appOutDir, appFile),
-      force: true,
-      mergeASARs: platformSpecificBuildOptions.mergeASARs ?? true, // must be ?? to allow false
-      singleArchFiles: platformSpecificBuildOptions.singleArchFiles || undefined,
-      x64ArchFiles: platformSpecificBuildOptions.x64ArchFiles || undefined,
-    })
-    await fs.rm(x64AppOutDir, { recursive: true, force: true })
-    await fs.rm(arm64AppOutPath, { recursive: true, force: true })
-
-    // Give users a final opportunity to perform things on the combined universal package before signing
-    const packContext: AfterPackContext = {
-      appOutDir,
-      outDir,
-      arch,
-      targets,
-      packager: this,
-      electronPlatformName: platformName,
-    }
-    await this.info.emitAfterPack(packContext)
-
-    if (this.info.cancellationToken.cancelled) {
-      return
-    }
-
-    await this.doAddElectronFuses(packContext)
-
-    await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
   }
 
   async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<void> {
@@ -327,6 +333,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
           arch,
           platformSpecificBuildOptions: platformConfig.config,
           targets: [target],
+          options: { sign: false },
         })
         await this.signMas(path.join(targetOutDir, `${this.appInfo.productFilename}.app`), targetOutDir, platformConfig, arch)
       } else {
@@ -383,6 +390,10 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
 
     if (!identity) {
       return false
+    }
+
+    if (!isMacOsHighSierra()) {
+      throw new InvalidConfigurationError("macOS High Sierra 10.13.6 is required to sign")
     }
 
     const signOptions = await this.helper.buildSignOptions(appPath, identity, type, isMas, config, keychainFile, arch)

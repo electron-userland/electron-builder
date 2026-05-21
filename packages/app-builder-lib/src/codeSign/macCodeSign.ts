@@ -11,7 +11,6 @@ import * as path from "path"
 import { getTempName } from "temp-file"
 import { isAutoDiscoveryCodeSignIdentity } from "../util/flags"
 import { importCertificate } from "./codesign"
-import { isMacOsHighSierra as isNewerThanHighSierra } from "../util/macosVersion"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 
@@ -54,10 +53,6 @@ export function isSignAllowed(isPrintWarn = true): boolean {
       }
       return false
     }
-  }
-
-  if (!isNewerThanHighSierra()) {
-    throw new InvalidConfigurationError("macOS High Sierra 10.13.6 is required to sign")
   }
 
   return true
