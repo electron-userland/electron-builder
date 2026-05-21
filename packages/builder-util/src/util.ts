@@ -114,7 +114,7 @@ function getProcessEnv(env: Record<string, string | undefined> | Nullish): NodeJ
   }
 
   const finalEnv = {
-    ...(env == null ? stripSensitiveEnvVars(process.env) : env),
+    ...(env == null ? process.env : env),
   }
 
   // without LC_CTYPE dpkg can returns encoded unicode symbols
@@ -434,7 +434,7 @@ export async function executeAppBuilder(
 ): Promise<string> {
   const command = appBuilderPath
   const env: any = {
-    ...stripSensitiveEnvVars(process.env),
+    ...process.env,
     SZA_PATH: await getPath7za(),
     FORCE_COLOR: chalk.level === 0 ? "0" : "1",
   }
