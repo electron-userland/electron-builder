@@ -13,6 +13,7 @@ import { debug, log } from "./log"
 import { exists } from "./fs"
 import { mkdir } from "fs-extra"
 import { isEmptyOrSpaces } from "./stringUtil"
+import { isValidKey } from "./mapper"
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
@@ -92,7 +93,7 @@ const SENSITIVE_ENV_KEY_RE = /KEY|TOKEN|SECRET|PASSWORD|PASS|CREDENTIAL|CSC/i
 export function stripSensitiveEnvVars(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   const out: NodeJS.ProcessEnv = {}
   for (const [k, v] of Object.entries(env)) {
-    if (!SENSITIVE_ENV_KEY_RE.test(k)) {
+    if (isValidKey(k) && !SENSITIVE_ENV_KEY_RE.test(k)) {
       out[k] = v
     }
   }
