@@ -221,6 +221,22 @@ describe("downloadBuilderToolset", { sequential: true }, () => {
       })
     ).rejects.toThrow()
   })
+
+  // Regression test for https://github.com/electron-userland/electron-builder/issues/9752
+  // @electron/get's mirrorVar() checks ELECTRON_MIRROR before opts.mirror, so passing
+  // mirrorOptions.mirror would let ELECTRON_MIRROR silently override the builder-binaries URL.
+  // Using resolveAssetURL bypasses that env var check entirely.
+  test("ELECTRON_MIRROR env var does not corrupt builder-binaries download URL (#9752)", ({ expect }) => {
+    vi.stubEnv("ELECTRON_MIRROR", "https://cdn.npmmirror.com/binaries/electron/")
+
+    const baseUrl = getBinariesMirrorUrl("electron-userland/electron-builder-binaries")
+    const fullUrl = `${baseUrl}dmg-builder@1.2.2/dmgbuild-bundle-arm64-75c8a6c.tar.gz`
+
+    // The computed URL must use electron-builder-binaries, not the electron mirror
+    expect(fullUrl).toContain("electron-builder-binaries")
+    expect(fullUrl).not.toContain("cdn.npmmirror.com/binaries/electron/")
+    expect(fullUrl).toBe("https://github.com/electron-userland/electron-builder-binaries/releases/download/dmg-builder@1.2.2/dmgbuild-bundle-arm64-75c8a6c.tar.gz")
+  })
 })
 
 // ─── downloadElectronArtifact: electron platform artifacts (.zip) ────────────
