@@ -21,7 +21,7 @@ export default class SmarterReporter implements Reporter {
   private readonly fileDurations = new Map<string, number>()
   private readonly fileFails = new Map<string, number>()
   private readonly fileHasHeavy = new Map<string, boolean>()
-  private readonly inProgressTests = new Map<string, number>() // fullName → startMs
+  private readonly inProgressTests = new Map<string, number>() // moduleRelPath::fullName → startMs
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null
 
   // Get current platform
@@ -40,16 +40,29 @@ export default class SmarterReporter implements Reporter {
   }
 
   onTestCaseReady(test: TestCase) {
-    this.inProgressTests.set(test.fullName, Date.now())
+    const id = `${path.relative(TEST_SRC_ROOT, test.module.moduleId)}::${test.fullName}`
+    this.inProgressTests.set(id, Date.now())
     process.stdout.write(`\n[test ready] 🏃 ${test.fullName}\n`)
   }
 
   onTestCaseResult(test: TestCase) {
-    this.inProgressTests.delete(test.fullName)
-    const id = test.fullName
+    const id = `${path.relative(TEST_SRC_ROOT, test.module.moduleId)}::${test.fullName}`
+    this.inProgressTests.delete(id)
     const dur = test.diagnostic()?.duration ?? 0
-    const failed = test.result().state === "failed"
-    process.stdout.write(`\n${failed ? "❌" : "✅"} ${id} (${Math.round(dur / 1000)}s)\n`)
+    const testResult = test.result().state
+    const status = (() => {
+      switch (testResult) {
+        case "passed":
+          return "✅"
+        case "failed":
+          return "❌"
+        case "skipped":
+          return "⏭️"
+        default:
+          return "❔"
+      }
+    })()
+    process.stdout.write(`\n${status} ${id} (${Math.round(dur / 1000)}s)\n`)
 
     // Access meta through the test task
     const meta = (test as any).meta || {}
@@ -69,7 +82,7 @@ export default class SmarterReporter implements Reporter {
     const prevAvg = platformRuns[this.currentPlatform].avgMs
 
     const newRuns = prevRuns + 1
-    const newFails = prevFails + (failed ? 1 : 0)
+    const newFails = prevFails + (testResult === "failed" ? 1 : 0)
     const newAvg = shouldResetSnapshot ? dur : (prevAvg * prevRuns + dur) / newRuns
 
     platformRuns[this.currentPlatform] = { runs: newRuns, fails: newFails, avgMs: newAvg }
@@ -83,7 +96,7 @@ export default class SmarterReporter implements Reporter {
 
     const file = path.relative(TEST_SRC_ROOT, test.module.moduleId)
     this.fileDurations.set(file, (this.fileDurations.get(file) ?? 0) + dur)
-    if (failed) {
+    if (testResult === "failed") {
       this.fileFails.set(file, (this.fileFails.get(file) ?? 0) + 1)
     }
     if (isHeavy) {
