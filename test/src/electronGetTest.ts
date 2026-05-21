@@ -439,6 +439,14 @@ describe("proxy integration", () => {
     }
 
     // Core assertion: got sent CONNECT to our proxy, proving the agent is wired through
-    expect(proxy.connectTargets.some(t => t.startsWith("github.com"))).toBe(true)
+    expect(
+      proxy.connectTargets.some(t => {
+        try {
+          return new URL(`http://${t}`).hostname.toLowerCase() === "github.com"
+        } catch {
+          return false
+        }
+      })
+    ).toBe(true)
   })
 })
