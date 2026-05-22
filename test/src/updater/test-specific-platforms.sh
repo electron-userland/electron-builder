@@ -17,6 +17,7 @@ DOCKERFILE="${1:-all}"
 TARGET="${2:-all}"
 
 export TEST_FILES="${TEST_FILES:-blackboxUpdateTest,linuxUpdaterTest,blackboxInstallTest}"
+export TEST_SEQUENTIAL_FILES="${TEST_SEQUENTIAL_FILES:-true}"
 export DEBUG="${DEBUG:-electron-updater}"
 
 do_build() {
