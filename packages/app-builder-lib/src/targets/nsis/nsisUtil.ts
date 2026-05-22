@@ -135,7 +135,10 @@ export class CopyElevateHelper {
       const outFile = path.join(appOutDir, "resources", "elevate.exe")
       try {
         await fs.access(sourceFile)
-      } catch {
+      } catch (e: any) {
+        if (e.code !== "ENOENT") {
+          throw e
+        }
         log.debug({ path: sourceFile }, "elevate.exe not included in NSIS directory — skipping (UAC elevation uses PowerShell instead as primary method)")
         return
       }

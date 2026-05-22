@@ -8,7 +8,7 @@ import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDo
 import { DOWNLOAD_PROGRESS } from "./types"
 import { VerifyUpdateCodeSignature } from "./main"
 import { findFile, Provider } from "./providers/Provider"
-import { existsSync, unlink } from "fs-extra"
+import { unlink } from "fs-extra"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
 import { URL } from "url"
 
@@ -151,22 +151,17 @@ export class NsisUpdater extends BaseUpdater {
     }
 
     const callUsingElevation = (): void => {
-      const psInstallArgs = args.map(a => `'${a.replace(/'/g, "''")}'`).join(",")
+      // Wrap args containing spaces in Win32 double-quotes so Start-Process preserves them as single tokens
+      const psInstallArgs = args.map(a => (a.includes(" ") ? `'"${a.replace(/"/g, '""')}"'` : `'${a.replace(/'/g, "''")}'`)).join(",")
       const psScript = `Start-Process -FilePath '${installerPath.replace(/'/g, "''")}' -ArgumentList @(${psInstallArgs}) -Verb RunAs`
       const encodedCmd = Buffer.from(psScript, "utf16le").toString("base64")
-      this.spawnLog("powershell.exe", ["-NonInteractive", "-EncodedCommand", encodedCmd]).catch(e => {
+      this.spawnLog("powershell.exe", ["-NonInteractive", "-NoProfile", "-EncodedCommand", encodedCmd]).catch(e => {
         if ((e as NodeJS.ErrnoException).code !== "ENOENT") {
           this.dispatchError(e)
           return
         }
-        const elevateExe = path.join(process.resourcesPath, "elevate.exe")
-        if (existsSync(elevateExe)) {
-          this._logger.info("Falling back to elevate.exe for UAC elevation")
-          this.spawnLog(elevateExe, [installerPath].concat(args)).catch(err => this.dispatchError(err))
-          return
-        }
-        this._logger.error("Cannot elevate installer, elevate.exe not found, and PowerShell failed to run: " + e)
-        this.dispatchError(e)
+        // powershell.exe not found — fall back to legacy elevate.exe
+        this.spawnLog(path.join(process.resourcesPath, "elevate.exe"), [installerPath].concat(args)).catch(err => this.dispatchError(err))
       })
     }
 
@@ -181,7 +176,7 @@ export class NsisUpdater extends BaseUpdater {
       // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
       const errorCode = (e as NodeJS.ErrnoException).code
       this._logger.info(
-        `Cannot run installer: error code: ${errorCode}, error message: "${e.message}", will be executed again using UAC elevation if EACCES, and will try to use electron.shell.openItem if ENOENT`
+        `Cannot run installer: error code: ${errorCode}, error message: "${e.message}", will be executed again using UAC elevation if EACCES, and will try to use electron.shell.openPath if ENOENT`
       )
       if (errorCode === "UNKNOWN" || errorCode === "EACCES") {
         callUsingElevation()
