@@ -1,6 +1,6 @@
 // vi.mock calls are hoisted to the top by vitest's transformer.
 // They must appear before any imports that depend on them.
-import { afterEach, beforeEach, expect, vi } from "vitest"
+import { afterAll, afterEach, beforeEach, expect, vi } from "vitest"
 
 vi.mock("child_process", async importOriginal => {
   const mod = await importOriginal<typeof import("child_process")>()
@@ -150,11 +150,21 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
       expect(opts.shell).toBe(false)
     })
 
-    test("PSModulePath is not set in env — it is cleared inside the PowerShell command", async () => {
-      mockPsSuccess(makeSignatureJson())
-      await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)
-      const [, , opts] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[], any, any]
-      expect(opts.env.PSModulePath).toBeUndefined()
+    test("PSModulePath is stripped from env even when present in process.env", async () => {
+      const original = process.env.PSModulePath
+      process.env.PSModulePath = "C:\\FakeUserModules"
+      try {
+        mockPsSuccess(makeSignatureJson())
+        await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)
+        const [, , opts] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[], any, any]
+        expect(opts.env.PSModulePath).toBeUndefined()
+      } finally {
+        if (original === undefined) {
+          delete process.env.PSModulePath
+        } else {
+          process.env.PSModulePath = original
+        }
+      }
     })
 
     test("other process.env keys are inherited through env", async () => {
@@ -405,6 +415,8 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     vi.clearAllMocks()
   })
 
+  afterAll(() => tmpDir.cleanup())
+
   async function createUnsignedExe(name = "unsigned.exe"): Promise<string> {
     const dir = await tmpDir.getTempDir()
     const p = path.join(dir, name)
@@ -494,6 +506,9 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     }, 30_000)
 
     test("wrong publisher returns non-null error string", async () => {
+      if (!notepadSubject) {
+        return
+      }
       expect(await verifySignature(["Definitely Not Microsoft"], NOTEPAD, logger)).not.toBeNull()
     }, 30_000)
 

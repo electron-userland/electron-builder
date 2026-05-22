@@ -5,27 +5,30 @@ import { Logger } from "./types"
 import * as path from "path"
 
 function preparePowerShellExec(command: string, timeout?: number) {
-  // Microsoft.PowerShell.Security is imported before PSModulePath is cleared so that
-  // Get-AuthenticodeSignature auto-loads correctly on Windows Server 2025, where the
-  // module loader relies on PSModulePath being set at import time.
+  // $PSHOME is a PS automatic variable pointing to the trusted PS installation directory.
+  // Using the full path for Import-Module avoids relying on PSModulePath for module discovery,
+  // which prevents a shadowing attack via user-writable PSModulePath entries.
+  // $env:PSModulePath is also cleared inside the script as belt-and-suspenders.
   // https://github.com/electron-userland/electron-builder/issues/2421
   // https://github.com/electron-userland/electron-builder/issues/2535
   // https://github.com/electron-userland/electron-builder/issues/7127
   //
-  // PSModulePath is then cleared inside PowerShell (after the import) to prevent
-  // user-installed modules from interfering with subsequent commands.
+  // PSModulePath is stripped from the inherited env on the Node side so it is never
+  // present when PowerShell starts.
   //
   // UTF-8 output encoding is configured inside PowerShell itself rather than via `chcp 65001`
   // (which required cmd.exe as the host). Both $OutputEncoding and [Console]::OutputEncoding
   // must be set so that ConvertTo-Json emits UTF-8 when stdout is captured by Node.
   // https://github.com/electron-userland/electron-builder/issues/8162
-  const script = `Import-Module Microsoft.PowerShell.Security; $env:PSModulePath = ""; $OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8; ${command}`
+  const script = `Import-Module "$PSHOME\\Modules\\Microsoft.PowerShell.Security"; $env:PSModulePath = ""; $OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8; ${command}`
   const encodedCommand = Buffer.from(script, "utf16le").toString("base64")
   const args = ["-NoProfile", "-NonInteractive", "-InputFormat", "None", "-EncodedCommand", encodedCommand]
+  const env: NodeJS.ProcessEnv = { ...process.env }
+  delete env.PSModulePath
   const options: ExecFileOptions = {
     shell: false,
     timeout,
-    env: { ...process.env },
+    env,
   }
   return ["powershell.exe", args, options] as const
 }
