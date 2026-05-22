@@ -24,31 +24,8 @@ export const appimageChecksums = {
   },
 } as const
 
-export const linuxToolsChecksums = {
-  "0.0.0": {
-    // legacy
-  },
-  "1.0.0": {
-    "linux-tools-darwin-arm64.tar.gz": "2ac82919e2167f050531d67414c0ebca268cb50784dbc8a483482e32f9b3a6cd",
-  },
-} as const
-
-export function getLinuxToolsPath(linuxToolsVersion: ToolsetConfig["linuxTools"]) {
-  if (process.env.CUSTOM_LINUX_TOOLS_PATH != null) {
-    return path.resolve(process.env.CUSTOM_LINUX_TOOLS_PATH)
-  }
-  if (process.platform !== "darwin") {
-    throw new Error("Portable linux tools are only provided for macOS")
-  }
-  if (linuxToolsVersion == null || linuxToolsVersion === "0.0.0") {
-    return getBinFromUrl("linux-tools-mac-10.12.3", "linux-tools-mac-10.12.3.7z", "58ff69a6f5082c78b809b72c929f5f2a82e6c3974c014bd1382fc87d9da1075c")
-  }
-  return downloadBuilderToolset({
-    releaseName: `linux-tools@${linuxToolsVersion}`,
-    filenameWithExt: "linux-tools-darwin-arm64.tar.gz",
-    checksums: linuxToolsChecksums[linuxToolsVersion],
-    githubOrgRepo: "electron-userland/electron-builder-binaries",
-  })
+export function getLinuxToolsPath() {
+  return getBinFromUrl("linux-tools-mac-10.12.3", "linux-tools-mac-10.12.3.7z", "58ff69a6f5082c78b809b72c929f5f2a82e6c3974c014bd1382fc87d9da1075c")
 }
 
 export async function getFpmPath() {
