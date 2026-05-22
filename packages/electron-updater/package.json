@@ -10,6 +10,9 @@
     "url": "git+https://github.com/electron-userland/electron-builder.git",
     "directory": "packages/electron-updater"
   },
+  "engines": {
+    "node": ">=14.0.0"
+  },
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "files": [
