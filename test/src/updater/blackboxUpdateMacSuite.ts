@@ -1,4 +1,4 @@
-import { Arch } from "electron-builder"
+import { Arch, Platform } from "electron-builder"
 import { existsSync, statSync } from "fs"
 import { readFile } from "fs/promises"
 import { homedir } from "os"
@@ -40,19 +40,19 @@ async function verifyFileProtocolArtifacts(expect: TestContext["expect"]) {
 
 export function registerBlackboxMacTests(): void {
   test("x64", async (context: TestContext) => {
-    await runTest(context, "zip", "", Arch.x64)
+    await runTest(context, "zip", Platform.MAC.name, Arch.x64)
     await verifyFileProtocolArtifacts(context.expect)
   })
 
   test("universal", async (context: TestContext) => {
-    await runTest(context, "zip", "", Arch.universal)
+    await runTest(context, "zip", Platform.MAC.name, Arch.universal)
     await verifyFileProtocolArtifacts(context.expect)
   })
 
   // Only runs on arm64 hardware; validates that the arm64-specific file selection
   // and file:// serving both work correctly on Apple Silicon.
   test.ifEnv(process.arch === "arm64")("arm64", async (context: TestContext) => {
-    await runTest(context, "zip", "", Arch.arm64)
+    await runTest(context, "zip", Platform.MAC.name, Arch.arm64)
     await verifyFileProtocolArtifacts(context.expect)
   })
 
@@ -60,7 +60,7 @@ export function registerBlackboxMacTests(): void {
   // Exercises the arch-filtering logic: universal files must not be filtered out
   // for x64 machines even though they do not carry an arm64 pathname suffix.
   test.ifEnv(process.arch === "x64")("universal on x64 host uses universal zip", async (context: TestContext) => {
-    await runTest(context, "zip", "", Arch.universal)
+    await runTest(context, "zip", Platform.MAC.name, Arch.universal)
     await verifyFileProtocolArtifacts(context.expect)
   })
 
@@ -69,7 +69,7 @@ export function registerBlackboxMacTests(): void {
   // The second update must still succeed end-to-end via the file:// protocol.
   test("x64 — second update uses cached update.zip for differential download", async (context: TestContext) => {
     // First pass: full download populates the differential cache
-    await runTest(context, "zip", "", Arch.x64)
+    await runTest(context, "zip", Platform.MAC.name, Arch.x64)
 
     const updateZip = path.join(MAC_TEST_APP_CACHE_DIR, "update.zip")
     // The differential cache must exist and be owner-only before the second pass
@@ -80,7 +80,7 @@ export function registerBlackboxMacTests(): void {
 
     // Second pass: should attempt differential download against the cached zip.
     // If diff fails it falls back to full download — either way the update must succeed.
-    await runTest(context, "zip", "", Arch.x64)
+    await runTest(context, "zip", Platform.MAC.name, Arch.x64)
     await verifyFileProtocolArtifacts(context.expect)
   })
 }

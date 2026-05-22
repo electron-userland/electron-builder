@@ -427,7 +427,8 @@ export async function runTestWithinServer(doTest: (rootDirectory: string, update
 export async function runTest(context: TestContext, target: string, packageManager: string, arch: Arch = Arch.x64, toolsets: ToolsetConfig = {}) {
   const { expect } = context
   const vm = await windowsVmPromise
-  if (vm && target === "nsis") {
+  const effectiveVm = packageManager !== Platform.MAC.name ? vm : undefined
+  if (effectiveVm) {
     console.log("Running Windows test via Parallels VM")
   }
 
@@ -441,9 +442,9 @@ export async function runTest(context: TestContext, target: string, packageManag
 
   const dirPath = oldAppDir.dir
   // Setup tests by installing the previous version
-  const appPath = await handleInitialInstallPerOS({ target, dirPath, arch, vm })
+  const appPath = await handleInitialInstallPerOS({ target, dirPath, arch, vm: effectiveVm })
 
-  if (!vm && !existsSync(appPath)) {
+  if (!effectiveVm && !existsSync(appPath)) {
     throw new Error(`App not found: ${appPath}`)
   }
 
@@ -459,7 +460,7 @@ export async function runTest(context: TestContext, target: string, packageManag
       // installation completes — the polling loop below handles that case.
       const result = await launchAndWaitForQuit({
         appPath,
-        vm,
+        vm: effectiveVm,
         timeoutMs: 5 * 60 * 1000,
         updateConfigPath,
         expectedVersion: OLD_VERSION_NUMBER,
@@ -482,7 +483,7 @@ export async function runTest(context: TestContext, target: string, packageManag
         try {
           const probe = await launchAndWaitForQuit({
             appPath,
-            vm,
+            vm: effectiveVm,
             timeoutMs: 30 * 1000,
             updateConfigPath,
             packageManagerToTest: packageManager,
@@ -511,7 +512,7 @@ export async function runTest(context: TestContext, target: string, packageManag
         }
       }
       expect(newVersion).toMatch(NEW_VERSION_NUMBER)
-    }, vm)
+    }, effectiveVm)
   } catch (error: any) {
     log.error({ error: error.message }, "Blackbox Updater Test failed to run")
     queuedError = error
