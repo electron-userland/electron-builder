@@ -2,7 +2,7 @@ import { Arch, isEmptyOrSpaces, log } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import * as os from "os"
 import * as path from "path"
-import { getBinFromUrl } from "../binDownload"
+import { getBinFromCustomLoc, getBinFromUrl } from "../binDownload"
 import { ToolsetConfig } from "../configuration"
 import { ToolInfo, computeToolEnv } from "../util/bundledTool"
 import { downloadBuilderToolset } from "../util/electronGet"
@@ -153,4 +153,77 @@ export async function getRceditBundle(winCodeSign: ToolsetConfig["winCodeSign"] 
   const file = "rcedit-windows-2_0_0.zip"
   const vendorPath = await _getWindowsToolsBin(winCodeSign, file)
   return { x86: path.join(vendorPath, x86), x64: path.join(vendorPath, x64) }
+}
+
+// ─── NSIS toolset ────────────────────────────────────────────────────────────
+
+function getLegacyNsisBin(): Promise<string> {
+  // Warning: Don't use v3.0.4.2 - https://github.com/electron-userland/electron-builder/issues/6334
+  return getBinFromUrl("nsis-3.0.4.1", "nsis-3.0.4.1.7z", "9877df902530f96357d13a7a31ae2b9df67f48b11ffc9a1700a7c961574ec5fa")
+}
+
+function getLegacyNsisResourcesBin(): Promise<string> {
+  return getBinFromUrl("nsis-resources-3.4.1", "nsis-resources-3.4.1.7z", "593a9a92ef958321293ac6a2ee61e64bf1bd543142a5bd6b3d310709cc924103")
+}
+
+export const nsisChecksums = {
+  "0.0.0": {
+    // legacy — uses getLegacyNsisBin() / getLegacyNsisResourcesBin()
+  },
+  "1.1.1": {
+    "nsis-bundle-1.1.1.zip": "PLACEHOLDER_CHECKSUM",
+  },
+} as const
+
+type CustomNsisBinaryConfig = { url: string | null; checksum?: string | null; version?: string | null }
+
+export async function getNsisBundlePath(nsis: ToolsetConfig["nsis"] | Nullish, customBinary?: CustomNsisBinaryConfig | null): Promise<string> {
+  if (customBinary?.url && customBinary?.checksum) {
+    const binaryVersion = customBinary.version ?? customBinary.checksum.substring(0, 8)
+    return getBinFromCustomLoc("nsis", binaryVersion, customBinary.url, customBinary.checksum)
+  }
+  if (nsis === "0.0.0" || nsis == null) {
+    return getLegacyNsisBin()
+  }
+  const file = "nsis-bundle-1.1.1.zip"
+  return getBinFromUrl(`nsis@${nsis}`, file, nsisChecksums["1.1.1"][file])
+}
+
+export async function getMakeNsisPath(nsis: ToolsetConfig["nsis"] | Nullish, customBinary?: CustomNsisBinaryConfig | null): Promise<ToolInfo> {
+  const overridePath = process.env.ELECTRON_BUILDER_NSIS_DIR?.trim()
+  if (!isEmptyOrSpaces(overridePath)) {
+    log.info({ path: overridePath }, "using local NSIS bundle")
+    return { path: overridePath } // assume that NSISDIR is set correctly in the environment
+  }
+  const bundlePath = await getNsisBundlePath(nsis, customBinary)
+  if (nsis === "0.0.0" || nsis == null) {
+    // legacy bundle: platform-specific subdirectories, NSISDIR must be set explicitly
+    if (process.platform === "darwin") {
+      return { path: path.join(bundlePath, "mac", "makensis"), env: { NSISDIR: bundlePath } }
+    } else if (process.platform === "win32") {
+      return { path: path.join(bundlePath, "Bin", "makensis.exe"), env: { NSISDIR: bundlePath } }
+    }
+    return { path: path.join(bundlePath, "linux", "makensis"), env: { NSISDIR: bundlePath } }
+  }
+  // new bundle: wrapper scripts auto-set NSISDIR
+  if (process.platform === "win32") {
+    return { path: path.join(bundlePath, "makensis.cmd") }
+  }
+  return { path: path.join(bundlePath, "makensis") }
+}
+
+export async function getNsisPluginsPath(nsis: ToolsetConfig["nsis"] | Nullish): Promise<string> {
+  const overridePath = process.env.ELECTRON_BUILDER_NSIS_RESOURCES_DIR?.trim()
+  if (!isEmptyOrSpaces(overridePath)) {
+    log.info({ path: overridePath }, "using local nsis-resources")
+    return overridePath
+  }
+  if (nsis === "0.0.0" || nsis == null) {
+    return path.join(await getLegacyNsisResourcesBin(), "plugins")
+  }
+  return path.join(await getNsisBundlePath(nsis), "windows", "Plugins")
+}
+
+export async function getNsisElevatePath(nsis: ToolsetConfig["nsis"] | Nullish, customBinary?: CustomNsisBinaryConfig | null): Promise<string> {
+  return path.join(await getNsisBundlePath(nsis, customBinary), "elevate.exe")
 }

@@ -37,7 +37,8 @@ import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } fr
 import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
 import { NsisScriptGenerator, nsisEscapeString } from "./nsisScriptGenerator"
-import { AppPackageHelper, NSIS_PATH, NSIS_RESOURCES_PATH, NsisTargetOptions, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
+import { getMakeNsisPath, getNsisPluginsPath } from "../../toolsets/windows"
+import { AppPackageHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
 
 const debug = _debug("electron-builder:nsis")
 
@@ -79,8 +80,6 @@ export class NsisTarget extends Target {
     if (deps != null && deps["electron-squirrel-startup"] != null) {
       log.warn('"electron-squirrel-startup" dependency is not required for NSIS')
     }
-
-    NsisTargetOptions.resolve(this.options)
   }
 
   get shouldBuildUniversalInstaller() {
@@ -630,12 +629,7 @@ export class NsisTarget extends Target {
       this.packager.debugLogger.add("nsis.script", script)
     }
 
-    const nsisPath = await NSIS_PATH()
-    const command = path.join(
-      nsisPath,
-      process.platform === "darwin" ? "mac" : process.platform === "win32" ? "Bin" : "linux",
-      process.platform === "win32" ? "makensis.exe" : "makensis"
-    )
+    const makensis = await getMakeNsisPath(this.packager.config.toolsets?.nsis, this.options.customNsisBinary)
 
     // if (process.platform === "win32") {
     // fix for an issue caused by virus scanners, locking the file during write
@@ -643,9 +637,8 @@ export class NsisTarget extends Target {
     await ensureNotBusy(commands["OutFile"].replace(/"/g, ""))
     // }
 
-    await spawnAndWrite(command, args, script, {
-      // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as MacOS/Windows version, so, we explicitly set NSISDIR
-      env: { ...process.env, NSISDIR: nsisPath },
+    await spawnAndWrite(makensis.path, args, script, {
+      env: { ...process.env, ...makensis.env },
       cwd: nsisTemplatesDir,
     })
   }
@@ -668,7 +661,7 @@ export class NsisTarget extends Target {
 
     const pluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
     taskManager.add(async () => {
-      scriptGenerator.addPluginDir(pluginArch, path.join(await NSIS_RESOURCES_PATH(), "plugins", pluginArch))
+      scriptGenerator.addPluginDir(pluginArch, path.join(await getNsisPluginsPath(this.packager.config.toolsets?.nsis), pluginArch))
     })
 
     taskManager.add(async () => {

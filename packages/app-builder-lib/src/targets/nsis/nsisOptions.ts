@@ -25,22 +25,6 @@ export interface CustomNsisBinary {
    */
   readonly debugLogging?: boolean | null
 }
-export interface CustomNsisResources {
-  /**
-   * @default https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-resources-3.4.1/nsis-resources-3.4.1.7z
-   */
-  readonly url: string
-
-  /**
-   * @default Dqd6g+2buwwvoG1Vyf6BHR1b+25QMmPcwZx40atOT57gH27rkjOei1L0JTldxZu4NFoEmW4kJgZ3DlSWVON3+Q==
-   */
-  readonly checksum: string
-
-  /**
-   * @default 3.4.1
-   */
-  readonly version: string
-}
 export interface CommonNsisOptions {
   /**
    * Whether to create [Unicode installer](http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode).
@@ -74,10 +58,6 @@ export interface CommonNsisOptions {
    */
   readonly customNsisBinary?: CustomNsisBinary | null
 
-  /**
-   * Allows you to provide your own `nsis-resources`
-   */
-  readonly customNsisResources?: CustomNsisResources | null
 }
 
 export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerConfiguration, TargetSpecificOptions {
