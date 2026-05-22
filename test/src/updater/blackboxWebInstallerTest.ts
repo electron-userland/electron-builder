@@ -124,7 +124,6 @@ describe.heavy("web installer (nsis-web) blackbox", optionsForFlakyE2E, () => {
             await move(ctx.outDir, builtDir)
           },
           projectDirCreated: async (projectDir: string, _tmpDir: TmpDir, runtimeEnv: NodeJS.ProcessEnv) => {
-            await outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted")
             await modifyPackageJson(
               projectDir,
               data => {
