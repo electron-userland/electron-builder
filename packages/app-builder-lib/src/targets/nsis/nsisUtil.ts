@@ -130,14 +130,21 @@ export class CopyElevateHelper {
       return promise
     }
 
-    promise = NSIS_PATH().then(it => {
+    promise = NSIS_PATH().then(async it => {
+      const sourceFile = path.join(it, "elevate.exe")
       const outFile = path.join(appOutDir, "resources", "elevate.exe")
-      const promise = copyFile(path.join(it, "elevate.exe"), outFile, false)
+      try {
+        await fs.access(sourceFile)
+      } catch {
+        log.debug({ path: sourceFile }, "elevate.exe not included in NSIS directory — skipping (UAC elevation uses PowerShell instead as primary method)")
+        return
+      }
+      const copyPromise = copyFile(sourceFile, outFile, false)
       const { signAndEditExecutable, signExecutable } = target.packager.platformSpecificBuildOptions
       if (signAndEditExecutable !== false && signExecutable !== false) {
-        return promise.then(() => target.packager.signIf(outFile))
+        return copyPromise.then(() => target.packager.signIf(outFile))
       }
-      return promise
+      return copyPromise
     })
     this.copied.set(appOutDir, promise)
     return promise
