@@ -24,7 +24,6 @@ import { verifySignature } from "electron-updater/src/windowsExecutableCodeSigna
 // Constants
 // =============================================================================
 
-const DEFAULT_FILE = "/tmp/test-update-1.0.1.exe"
 const DEFAULT_SUBJECT = "CN=Test Publisher, O=Test Org, C=US"
 
 // =============================================================================
@@ -50,7 +49,7 @@ interface SignatureJsonOpts {
 }
 
 function makeSignatureJson(opts: SignatureJsonOpts = {}): string {
-  const { status = 0, filePath = DEFAULT_FILE, subject = DEFAULT_SUBJECT, omitPath = false, withStrippableFields = false } = opts
+  const { status = 0, filePath = "", subject = DEFAULT_SUBJECT, omitPath = false, withStrippableFields = false } = opts
 
   const cert: Record<string, unknown> = {
     Subject: subject,
@@ -97,9 +96,16 @@ function makeSignatureJson(opts: SignatureJsonOpts = {}): string {
 // =============================================================================
 
 describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
+  const tmpDir = new TmpDir("verifier-unit")
+  let defaultFile = ""
   let logger: Logger
 
-  beforeEach(() => {
+  // Injects the per-test defaultFile so callers don't repeat it everywhere.
+  // An explicit filePath in opts still wins (used by path-injection tests).
+  const makeJson = (opts: SignatureJsonOpts = {}) => makeSignatureJson({ filePath: defaultFile, ...opts })
+
+  beforeEach(async () => {
+    defaultFile = path.join(await tmpDir.getTempDir(), "test-update-1.0.1.exe")
     logger = createLogger()
     vi.clearAllMocks()
     // Default: ConvertTo-Json probe (execFileSync) succeeds so handleError reaches reject().
@@ -111,6 +117,8 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
   afterEach(() => {
     vi.clearAllMocks()
   })
+
+  afterAll(() => tmpDir.cleanup())
 
   // -- helpers that drive the execFile mock -----------------------------------
 
@@ -136,16 +144,19 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
 
   // ---------------------------------------------------------------------------
   describe("preparePowerShellExec params", () => {
-    test("exe and args match snapshot", async () => {
-      mockPsSuccess(makeSignatureJson())
-      await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)
+    test("exe and decoded command match snapshot", async () => {
+      mockPsSuccess(makeJson())
+      await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
       const [exe, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
-      expect([exe, args]).toMatchSnapshot()
+      const encodedIdx = args.indexOf("-EncodedCommand")
+      const script = Buffer.from(args[encodedIdx + 1], "base64").toString("utf16le")
+      const normalizedScript = script.replace(defaultFile, "<UPDATE_PATH>")
+      expect([exe, [...args.slice(0, encodedIdx), normalizedScript]]).toMatchSnapshot()
     })
 
     test("shell is false — PowerShell is invoked directly", async () => {
-      mockPsSuccess(makeSignatureJson())
-      await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)
+      mockPsSuccess(makeJson())
+      await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
       const [, , opts] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[], any, any]
       expect(opts.shell).toBe(false)
     })
@@ -154,8 +165,8 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
       const original = process.env.PSModulePath
       process.env.PSModulePath = "C:\\FakeUserModules"
       try {
-        mockPsSuccess(makeSignatureJson())
-        await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)
+        mockPsSuccess(makeJson())
+        await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
         const [, , opts] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[], any, any]
         expect(opts.env.PSModulePath).toBeUndefined()
       } finally {
@@ -168,15 +179,15 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
     })
 
     test("other process.env keys are inherited through env", async () => {
-      mockPsSuccess(makeSignatureJson())
-      await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)
+      mockPsSuccess(makeJson())
+      await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
       const [, , opts] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[], any, any]
       expect(opts.env.PATH).toBe(process.env.PATH)
     })
 
     test("timeout is 20 seconds", async () => {
-      mockPsSuccess(makeSignatureJson())
-      await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)
+      mockPsSuccess(makeJson())
+      await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
       const [, , opts] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[], any, any]
       expect(opts.timeout).toBe(20_000)
     })
@@ -186,76 +197,76 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
   describe("publisher name matching", () => {
     test("full DN match returns null", async () => {
       const dn = "CN=Acme Corp, O=Acme Corp, L=Austin, S=TX, C=US"
-      mockPsSuccess(makeSignatureJson({ subject: dn }))
-      expect(await verifySignature([dn], DEFAULT_FILE, logger)).toBeNull()
+      mockPsSuccess(makeJson({ subject: dn }))
+      expect(await verifySignature([dn], defaultFile, logger)).toBeNull()
     })
 
     test("CN-only match returns null and logs a deprecation warning", async () => {
-      mockPsSuccess(makeSignatureJson({ subject: "CN=Acme Corp, O=Acme Corp, C=US" }))
-      expect(await verifySignature(["Acme Corp"], DEFAULT_FILE, logger)).toBeNull()
+      mockPsSuccess(makeJson({ subject: "CN=Acme Corp, O=Acme Corp, C=US" }))
+      expect(await verifySignature(["Acme Corp"], defaultFile, logger)).toBeNull()
       expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("Acme Corp"))
     })
 
     test("second publisher in list matches when first does not", async () => {
       const dn = "CN=Real Publisher, O=Real, C=DE"
-      mockPsSuccess(makeSignatureJson({ subject: dn }))
-      expect(await verifySignature(["Fake Corp", dn], DEFAULT_FILE, logger)).toBeNull()
+      mockPsSuccess(makeJson({ subject: dn }))
+      expect(await verifySignature(["Fake Corp", dn], defaultFile, logger)).toBeNull()
     })
 
     test("partial DN (publisherName has fewer keys than cert subject) matches on provided keys only", async () => {
-      mockPsSuccess(makeSignatureJson({ subject: "CN=Acme, O=Acme Corp, L=Denver, C=US" }))
+      mockPsSuccess(makeJson({ subject: "CN=Acme, O=Acme Corp, L=Denver, C=US" }))
       // Only CN and O in the publisherName spec — L and C are extra in the cert but not required
-      expect(await verifySignature(["CN=Acme, O=Acme Corp"], DEFAULT_FILE, logger)).toBeNull()
+      expect(await verifySignature(["CN=Acme, O=Acme Corp"], defaultFile, logger)).toBeNull()
     })
 
     test("no matching publisher returns non-null error string listing all provided names", async () => {
-      mockPsSuccess(makeSignatureJson({ subject: "CN=Real, O=Real, C=US" }))
-      const result = await verifySignature(["Wrong1", "CN=Wrong2, O=Wrong2, C=US"], DEFAULT_FILE, logger)
+      mockPsSuccess(makeJson({ subject: "CN=Real, O=Real, C=US" }))
+      const result = await verifySignature(["Wrong1", "CN=Wrong2, O=Wrong2, C=US"], defaultFile, logger)
       expect(result).not.toBeNull()
       expect(result).toContain("Wrong1")
       expect(result).toContain("CN=Wrong2")
     })
 
     test("empty publisherNames array always returns non-null error string", async () => {
-      mockPsSuccess(makeSignatureJson())
-      expect(await verifySignature([], DEFAULT_FILE, logger)).not.toBeNull()
+      mockPsSuccess(makeJson())
+      expect(await verifySignature([], defaultFile, logger)).not.toBeNull()
     })
 
     test("status non-0 returns non-null error regardless of publisher", async () => {
-      mockPsSuccess(makeSignatureJson({ status: 2 }))
-      expect(await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).not.toBeNull()
+      mockPsSuccess(makeJson({ status: 2 }))
+      expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).not.toBeNull()
     })
 
     test("DN value comparison is case-sensitive", async () => {
       // lower-case "acme corp" in cert, upper-case in publisherName → no match
-      mockPsSuccess(makeSignatureJson({ subject: "CN=acme corp, O=Acme, C=US" }))
-      expect(await verifySignature(["CN=Acme Corp, O=Acme, C=US"], DEFAULT_FILE, logger)).not.toBeNull()
+      mockPsSuccess(makeJson({ subject: "CN=acme corp, O=Acme, C=US" }))
+      expect(await verifySignature(["CN=Acme Corp, O=Acme, C=US"], defaultFile, logger)).not.toBeNull()
     })
 
     test("extra keys in cert subject beyond what publisherName specifies do not prevent a match", async () => {
-      mockPsSuccess(makeSignatureJson({ subject: "CN=Test, O=Test Org, L=City, C=US" }))
+      mockPsSuccess(makeJson({ subject: "CN=Test, O=Test Org, L=City, C=US" }))
       // Publisher spec only specifies CN and C — L and O in the cert are beyond the spec, ignored
-      expect(await verifySignature(["CN=Test, C=US"], DEFAULT_FILE, logger)).toBeNull()
+      expect(await verifySignature(["CN=Test, C=US"], defaultFile, logger)).toBeNull()
     })
   })
 
   // ---------------------------------------------------------------------------
   describe("LiteralPath validation", () => {
     test("matching Path resolves to null", async () => {
-      mockPsSuccess(makeSignatureJson({ filePath: DEFAULT_FILE }))
-      expect(await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).toBeNull()
+      mockPsSuccess(makeJson({ filePath: defaultFile }))
+      expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).toBeNull()
     })
 
     test("mismatched Path rejects (prevents symlink / redirect attacks)", async () => {
-      mockPsSuccess(makeSignatureJson({ filePath: "/tmp/attacker-controlled.exe" }))
+      mockPsSuccess(makeJson({ filePath: path.join(path.dirname(defaultFile), "attacker-controlled.exe") }))
       // execFileSync default: returns Buffer → ConvertTo-Json check passes → handleError rejects
-      await expect(verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).rejects.toThrow(/LiteralPath/)
+      await expect(verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).rejects.toThrow(/LiteralPath/)
     })
 
     test("absent Path key logs warning and continues to publisher check", async () => {
       // path.normalize(undefined) throws → caught → logger.warn → continues to publisher match
-      mockPsSuccess(makeSignatureJson({ omitPath: true }))
-      expect(await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).toBeNull()
+      mockPsSuccess(makeJson({ omitPath: true }))
+      expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).toBeNull()
       expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("LiteralPath"))
     })
   })
@@ -263,19 +274,19 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
   // ---------------------------------------------------------------------------
   describe("parseOut field stripping", () => {
     test("root-level PrivateKey, IsOSBinary, SignatureType do not prevent validation", async () => {
-      mockPsSuccess(makeSignatureJson({ withStrippableFields: true }))
-      expect(await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).toBeNull()
+      mockPsSuccess(makeJson({ withStrippableFields: true }))
+      expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).toBeNull()
     })
 
     test("SignerCertificate-level Archived, Extensions, Handle, HasPrivateKey, SubjectName are stripped without error", async () => {
-      mockPsSuccess(makeSignatureJson({ withStrippableFields: true }))
-      expect(await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).toBeNull()
+      mockPsSuccess(makeJson({ withStrippableFields: true }))
+      expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).toBeNull()
     })
 
     test("null SignerCertificate does not crash (Status non-0 path)", async () => {
-      mockPsSuccess(JSON.stringify({ SignerCertificate: null, Status: 1, Path: DEFAULT_FILE }))
+      mockPsSuccess(JSON.stringify({ SignerCertificate: null, Status: 1, Path: defaultFile }))
       // Status 1 → not valid → no access to null cert → non-null error string (no crash)
-      expect(await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).not.toBeNull()
+      expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).not.toBeNull()
     })
   })
 
@@ -284,13 +295,13 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
     describe("execFile error — modern OS (non-Win6)", () => {
       test("rejects with the original error when ConvertTo-Json probe passes", async () => {
         mockPsError(new Error("PowerShell execution failed"))
-        await expect(verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).rejects.toThrow("PowerShell execution failed")
+        await expect(verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).rejects.toThrow("PowerShell execution failed")
       })
 
       test("resolves null and warns when ConvertTo-Json probe also fails (old PowerShell installed)", async () => {
         mockPsError(new Error("PS unavailable"))
         mockConvertToJsonFail("ConvertTo-Json not found")
-        expect(await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).toBeNull()
+        expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).toBeNull()
         expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("ConvertTo-Json"))
       })
     })
@@ -298,7 +309,7 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
     describe("execFile stderr — modern OS", () => {
       test("rejects with an error wrapping stderr when ConvertTo-Json probe passes", async () => {
         mockPsError(null, "Access denied to certificate store")
-        await expect(verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).rejects.toThrow("Access denied to certificate store")
+        await expect(verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).rejects.toThrow("Access denied to certificate store")
       })
     })
 
@@ -306,14 +317,14 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
       test("Win 6.1 (Windows 7): warns and resolves null instead of rejecting", async () => {
         vi.mocked(osRelease).mockReturnValue("6.1.7601")
         mockPsError(new Error("ConvertTo-Json not available"))
-        expect(await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).toBeNull()
+        expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).toBeNull()
         expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("unsupported powershell"))
       })
 
       test("Win 6.0 (Vista): warns and resolves null", async () => {
         vi.mocked(osRelease).mockReturnValue("6.0.6001")
         mockPsError(new Error("old PS"))
-        expect(await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).toBeNull()
+        expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).toBeNull()
         expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("unsupported powershell"))
       })
 
@@ -321,7 +332,7 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
         vi.mocked(osRelease).mockReturnValue("6.3.9600")
         mockPsError(new Error("Some PS error"))
         // ConvertTo-Json check passes (mock default) → rejects with original error
-        await expect(verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).rejects.toThrow("Some PS error")
+        await expect(verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).rejects.toThrow("Some PS error")
         const warnCalls = (logger.warn as ReturnType<typeof vi.fn>).mock.calls.flat().join(" ")
         expect(warnCalls).not.toContain("unsupported powershell")
       })
@@ -330,13 +341,13 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
     describe("malformed JSON from execFile stdout", () => {
       test("rejects when ConvertTo-Json probe passes (outer catch → handleError → reject)", async () => {
         mockPsSuccess("this is { not valid json {{")
-        await expect(verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).rejects.toThrow()
+        await expect(verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).rejects.toThrow()
       })
 
       test("resolves null when ConvertTo-Json probe also fails", async () => {
         mockPsSuccess("not json at all")
         mockConvertToJsonFail()
-        expect(await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).toBeNull()
+        expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).toBeNull()
         expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("ConvertTo-Json"))
       })
     })
@@ -345,8 +356,8 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
   // ---------------------------------------------------------------------------
   describe("path injection prevention", () => {
     test("single quote in path is doubled in the PowerShell -LiteralPath argument", async () => {
-      const pathWithQuote = "/tmp/it's-an-update.exe"
-      mockPsSuccess(makeSignatureJson({ filePath: pathWithQuote }))
+      const pathWithQuote = path.join(path.dirname(defaultFile), "it's-an-update.exe")
+      mockPsSuccess(makeJson({ filePath: pathWithQuote }))
       await verifySignature([DEFAULT_SUBJECT], pathWithQuote, logger)
       const [, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
       const cmd = Buffer.from(args[args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le")
@@ -354,8 +365,8 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
     })
 
     test("multiple single quotes in path are all escaped", async () => {
-      const multiQuotePath = "/tmp/it's-really-it's.exe"
-      mockPsSuccess(makeSignatureJson({ filePath: multiQuotePath }))
+      const multiQuotePath = path.join(path.dirname(defaultFile), "it's-really-it's.exe")
+      mockPsSuccess(makeJson({ filePath: multiQuotePath }))
       await verifySignature([DEFAULT_SUBJECT], multiQuotePath, logger)
       const [, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
       const cmd = Buffer.from(args[args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le")
@@ -363,16 +374,16 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
     })
 
     test("path without special characters is passed through unchanged inside single quotes", async () => {
-      mockPsSuccess(makeSignatureJson())
-      await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)
+      mockPsSuccess(makeJson())
+      await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
       const [, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
       const cmd = Buffer.from(args[args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le")
-      expect(cmd).toContain(`-LiteralPath '${DEFAULT_FILE}'`)
+      expect(cmd).toContain(`-LiteralPath '${defaultFile}'`)
     })
 
     test("-LiteralPath value is enclosed in single quotes", async () => {
-      mockPsSuccess(makeSignatureJson())
-      await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)
+      mockPsSuccess(makeJson())
+      await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
       const [, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
       const cmd = Buffer.from(args[args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le")
       expect(cmd).toMatch(/-LiteralPath '.*'/)

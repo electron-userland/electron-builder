@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`windowsExecutableCodeSignatureVerifier (unit) > preparePowerShellExec params > exe and args match snapshot 1`] = `
+exports[`windowsExecutableCodeSignatureVerifier (unit) > preparePowerShellExec params > exe and decoded command match snapshot 1`] = `
 [
   "powershell.exe",
   [
@@ -8,8 +8,7 @@ exports[`windowsExecutableCodeSignatureVerifier (unit) > preparePowerShellExec p
     "-NonInteractive",
     "-InputFormat",
     "None",
-    "-EncodedCommand",
-    "SQBtAHAAbwByAHQALQBNAG8AZAB1AGwAZQAgACIAJABQAFMASABPAE0ARQBcAE0AbwBkAHUAbABlAHMAXABNAGkAYwByAG8AcwBvAGYAdAAuAFAAbwB3AGUAcgBTAGgAZQBsAGwALgBTAGUAYwB1AHIAaQB0AHkAIgA7ACAAJABlAG4AdgA6AFAAUwBNAG8AZAB1AGwAZQBQAGEAdABoACAAPQAgACIAIgA7ACAAJABPAHUAdABwAHUAdABFAG4AYwBvAGQAaQBuAGcAIAA9ACAAWwBDAG8AbgBzAG8AbABlAF0AOgA6AE8AdQB0AHAAdQB0AEUAbgBjAG8AZABpAG4AZwAgAD0AIABbAFQAZQB4AHQALgBFAG4AYwBvAGQAaQBuAGcAXQA6ADoAVQBUAEYAOAA7ACAARwBlAHQALQBBAHUAdABoAGUAbgB0AGkAYwBvAGQAZQBTAGkAZwBuAGEAdAB1AHIAZQAgAC0ATABpAHQAZQByAGEAbABQAGEAdABoACAAJwAvAHQAbQBwAC8AdABlAHMAdAAtAHUAcABkAGEAdABlAC0AMQAuADAALgAxAC4AZQB4AGUAJwAgAHwAIABDAG8AbgB2AGUAcgB0AFQAbwAtAEoAcwBvAG4AIAAtAEMAbwBtAHAAcgBlAHMAcwA=",
+    "Import-Module "$PSHOME\\Modules\\Microsoft.PowerShell.Security"; $env:PSModulePath = ""; $OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8; Get-AuthenticodeSignature -LiteralPath '<UPDATE_PATH>' | ConvertTo-Json -Compress",
   ],
 ]
 `;
