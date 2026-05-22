@@ -16,8 +16,9 @@ CWD=$(dirname "$0")
 DOCKERFILE="${1:-all}"
 TARGET="${2:-all}"
 
-export TEST_FILES="blackboxUpdateTest,linuxUpdaterTest"
-export DEBUG="electron-updater,electron-builder"
+export TEST_FILES="${TEST_FILES:-blackboxUpdateTest,linuxUpdaterTest,blackboxInstallTest}"
+export TEST_SEQUENTIAL_FILES="${TEST_SEQUENTIAL_FILES:-true}"
+export DEBUG="${DEBUG:-electron-updater}"
 
 do_build() {
   local name=$1 tag=$2 extra_flags="${3:-}"

@@ -12,11 +12,13 @@ import { getPath7za } from "./7za"
 import { debug, log } from "./log"
 import { exists } from "./fs"
 import { mkdir } from "fs-extra"
+import { isEmptyOrSpaces } from "./stringUtil"
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
 }
 
+export { isEmptyOrSpaces } from "./stringUtil"
 export { safeStringifyJson, retry } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
 export * from "./arch"
@@ -24,7 +26,7 @@ export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames,
 export { AsyncTaskManager } from "./asyncTaskManager"
 export { DebugLogger } from "./DebugLogger"
 export * from "./log"
-export { httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor"
+export { buildGotProxyAgent, httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor"
 export * from "./promise"
 export { parseValidEnvVarUrl } from "./envUtil"
 
@@ -321,10 +323,6 @@ export function use<T, R>(value: T | Nullish, task: (value: T) => R): R | null {
   return value == null ? null : task(value)
 }
 
-export function isEmptyOrSpaces(s: string | Nullish): s is "" | Nullish {
-  return s == null || s.trim().length === 0
-}
-
 export function isTokenCharValid(token: string) {
   return /^[.\w/=+-]+$/.test(token)
 }
@@ -436,7 +434,7 @@ export async function executeAppBuilder(
   function runCommand() {
     return new Promise<string>((resolve, reject) => {
       const childProcess = doSpawn(command, args, {
-        stdio: ["ignore", "pipe", process.stdout],
+        stdio: ["ignore", "pipe", process.env.VITEST ? "pipe" : process.stdout],
         ...extraOptions,
         env,
       })

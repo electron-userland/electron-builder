@@ -82,8 +82,11 @@ test("getDefaultChannelName - linux returns latest-linux (x64 arch)", ({ expect 
     const provider = makeProvider("linux")
     expect(provider.callGetDefaultChannelName()).toBe("latest-linux")
   } finally {
-    if (orig === undefined) delete process.env["TEST_UPDATER_ARCH"]
-    else process.env["TEST_UPDATER_ARCH"] = orig
+    if (orig === undefined) {
+      delete process.env["TEST_UPDATER_ARCH"]
+    } else {
+      process.env["TEST_UPDATER_ARCH"] = orig
+    }
   }
 })
 
@@ -104,8 +107,11 @@ test("getCustomChannelName - linux appends -linux suffix (x64)", ({ expect }) =>
     const provider = makeProvider("linux")
     expect(provider.callGetCustomChannelName("nightly")).toBe("nightly-linux")
   } finally {
-    if (orig === undefined) delete process.env["TEST_UPDATER_ARCH"]
-    else process.env["TEST_UPDATER_ARCH"] = orig
+    if (orig === undefined) {
+      delete process.env["TEST_UPDATER_ARCH"]
+    } else {
+      process.env["TEST_UPDATER_ARCH"] = orig
+    }
   }
 })
 

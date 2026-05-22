@@ -6,7 +6,7 @@ import { assertPack, modifyPackageJson } from "./helpers/packTester"
 const options = { timeout: 30 * 60 * 1000 }
 
 const winTargets = Platform.WINDOWS.createTarget([DIR_TARGET, "nsis"], Arch.x64, Arch.arm64)
-const macTargets = Platform.MAC.createTarget([DIR_TARGET, "zip", "dmg", "mas"], Arch.arm64, Arch.x64)
+const macTargets = Platform.MAC.createTarget([DIR_TARGET, "zip", "mas"], Arch.arm64, Arch.x64)
 const linuxTargets = Platform.LINUX.createTarget([DIR_TARGET, "AppImage"], Arch.x64, Arch.armv7l)
 
 const config: Configuration = {

@@ -7,7 +7,7 @@ import {
   GotDownloaderOptions,
   MirrorOptions,
 } from "@electron/get"
-import { exec, exists, getPath7za, log, PADDING, parseValidEnvVarUrl } from "builder-util"
+import { buildGotProxyAgent, exec, exists, getPath7za, log, PADDING, parseValidEnvVarUrl } from "builder-util"
 import { MultiProgress } from "electron-publish/out/multiProgress"
 import { createReadStream, createWriteStream } from "fs"
 import * as fs from "fs/promises"
@@ -19,6 +19,7 @@ import * as tar from "tar"
 import * as unzipper from "unzipper"
 import { ElectronPlatformName } from "../electron/ElectronFramework"
 import { CacheState, cleanupCacheDirectory, computeCacheMetadata, readCacheStateFile, validateCacheDirectory, writeCacheState } from "./cacheState"
+import type { ProgressBar } from "electron-publish"
 
 export type ElectronGetOptions = Omit<
   ElectronPlatformArtifactDetails,
@@ -217,18 +218,28 @@ export async function extractArchive(file: string, dir: string) {
 }
 
 async function downloadArtifactToFile(config: Parameters<typeof get.downloadArtifact>[0], label: string): Promise<string> {
-  const progress = process.stdout.isTTY ? new MultiProgress() : null
-  const progressBar = progress?.createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent | ${label}`, { total: 100 })
-  progressBar?.render()
-
   let lastLoggedMilestone = -1
+  const state: { bar: ProgressBar | undefined } = { bar: undefined }
+
   const downloadOptions: GotDownloaderOptions = {
     timeout: { request: 10 * 60 * 1000 }, // prevent indefinite hang on stalled connections
     ...config.downloadOptions,
+    agent: config.downloadOptions?.agent ?? buildGotProxyAgent(),
     getProgressCallback: info => {
+      // @electron/get passes downloadOptions (including this callback) to its internal
+      // SHASUMS256.txt validation download. That file is tiny (<1 MB) and fires at 100%
+      // immediately, producing a spurious bar even when the artifact itself is cached.
+      // Skip progress display for any download whose total size is known and small.
+      if (info.total && info.total < 1_000_000) {
+        return Promise.resolve()
+      }
+      if (!state.bar && process.stdout.isTTY) {
+        log.info({ label }, "downloading")
+        state.bar = new MultiProgress().createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent | ${label}`, { total: 100 })
+      }
       const pct = info.percent != null ? Math.floor(info.percent * 100) : 0
-      if (progressBar) {
-        progressBar.update(pct)
+      if (state.bar) {
+        state.bar.update(pct)
       } else {
         // log every 25% milestone for non-TTY environments (e.g. CI logs) to provide some visibility into download progress without overwhelming logs with too many updates
         const percentCompleted = info.transferred && info.total ? Math.floor((info.transferred / info.total) * 100) : Math.floor(pct / 25) * 25
@@ -241,7 +252,6 @@ async function downloadArtifactToFile(config: Parameters<typeof get.downloadArti
     },
   }
 
-  log.info({ label }, "downloading")
   const configWithProgress = { ...config, downloadOptions }
   try {
     let filePath: string
@@ -258,10 +268,13 @@ async function downloadArtifactToFile(config: Parameters<typeof get.downloadArti
       log.warn({ filePath, label }, "cached artifact missing from disk; retrying with cache write")
       filePath = await get.downloadArtifact({ ...configWithProgress, cacheMode: ElectronDownloadCacheMode.WriteOnly })
     }
+    if (!state.bar && lastLoggedMilestone === -1) {
+      log.info({ label }, "using cached artifact")
+    }
     return filePath
   } finally {
-    progressBar?.update(100)
-    progressBar?.terminate()
+    state.bar?.update(100)
+    state.bar?.terminate()
   }
 }
 
@@ -349,19 +362,16 @@ export async function downloadBuilderToolset(options: {
   const { releaseName, filenameWithExt, checksums, githubOrgRepo = "electron-userland/electron-builder-binaries", overrideUrl } = options
 
   const baseUrl = getBinariesMirrorUrl(githubOrgRepo)
-  const hashInput = overrideUrl ? `${overrideUrl}/${filenameWithExt}` : `${baseUrl}${releaseName}/${filenameWithExt}`
-  const suffix = hashUrlSafe(hashInput, 5)
+  const fullUrl = overrideUrl ? `${overrideUrl}/${filenameWithExt}` : `${baseUrl}${releaseName}/${filenameWithExt}`
+  const suffix = hashUrlSafe(fullUrl, 5)
   const folderName = `${filenameWithExt.replace(/\.(tar\.gz|tgz|zip|7z)$/, "")}-${suffix}`
   const extractDir = path.join(getCacheDirectory(), releaseName, folderName)
 
-  const mirrorOptions: MirrorOptions = overrideUrl
-    ? { resolveAssetURL: async () => Promise.resolve(`${overrideUrl}/${filenameWithExt}`) }
-    : {
-        // `${mirror}${customDir}/${customFilename}`
-        mirror: baseUrl,
-        customDir: releaseName,
-        customFilename: filenameWithExt,
-      }
+  // Use resolveAssetURL so @electron/get's ELECTRON_MIRROR env var check cannot override
+  // the builder-binaries URL we've already resolved (see getArtifactRemoteURL in @electron/get).
+  const mirrorOptions: MirrorOptions = {
+    resolveAssetURL: async () => Promise.resolve(fullUrl),
+  }
 
   const config: ElectronDownloadRequest & ElectronDownloadRequestOptions & { isGeneric: true } = {
     version: "9.9.9", // must be >1.3.2 to bypass @electron/get validation shortcut

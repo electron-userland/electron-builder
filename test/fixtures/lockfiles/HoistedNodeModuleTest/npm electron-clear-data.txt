@@ -59,9 +59,9 @@
       "peer": true
     },
     "node_modules/@types/node": {
-      "version": "24.12.3",
-      "resolved": "https://registry.npmjs.org/@types/node/-/node-24.12.3.tgz",
-      "integrity": "sha512-8oljBDGun9cIsZRJR6fkihn0TSXJI0UDOOhncYaERq6M0JMDoPLxyscwruJcb4GKS6dvK/d8xebYBg27h/duaQ==",
+      "version": "24.12.4",
+      "resolved": "https://registry.npmjs.org/@types/node/-/node-24.12.4.tgz",
+      "integrity": "sha512-GUUEShf+PBCGW2KaXwcIt3Yk+e3pkKwWKb9GSyM9WQVE+ep2jzmHdGsHzu4wgcZy5fN9FBdVzjpBQsYlpfpgLA==",
       "peer": true,
       "dependencies": {
         "undici-types": "~7.16.0"
@@ -96,9 +96,9 @@
       }
     },
     "node_modules/electron": {
-      "version": "42.0.1",
-      "resolved": "https://registry.npmjs.org/electron/-/electron-42.0.1.tgz",
-      "integrity": "sha512-d8HnycE970DGESe91Nj30eonFBUcAI9EZ1TwUGJVzSAnJZdh0BkFEinAXjdklvDYst+bVDc8HsksCuqVLrnqdg==",
+      "version": "42.2.0",
+      "resolved": "https://registry.npmjs.org/electron/-/electron-42.2.0.tgz",
+      "integrity": "sha512-b2Tc7sIKiZEl0tBVwFM5GJ+FT5KYhmy9QJHjx8BGVZPVW2SctXWEvrE959ElB56qw7H05dBkhlikDA1DmpaAMw==",
       "peer": true,
       "dependencies": {
         "@electron/get": "^5.0.0",

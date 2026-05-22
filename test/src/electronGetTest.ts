@@ -1,4 +1,7 @@
+import * as get from "@electron/get"
 import * as fs from "fs/promises"
+import * as http from "http"
+import * as net from "net"
 import * as os from "os"
 import * as path from "path"
 import { afterAll, afterEach, beforeAll, vi } from "vitest"
@@ -156,6 +159,10 @@ const DOWNLOAD_TIMEOUT = { timeout: 120_000 }
 // longer than the retry budget allows. Sequential order ensures test 1 writes the complete state
 // before tests 2 and 3 run, so they hit the pre-lock cache fast-path instead of waiting on the lock.
 describe("downloadBuilderToolset", { sequential: true }, () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
   test("downloadArtifact: downloads and extracts appimage@1.0.3 tar.gz with sha256 checksum", DOWNLOAD_TIMEOUT, async ({ expect }) => {
     const result = await downloadBuilderToolset({
       releaseName: APPIMAGE_RELEASE,
@@ -203,8 +210,6 @@ describe("downloadBuilderToolset", { sequential: true }, () => {
       checksums: { [APPIMAGE_FILE]: APPIMAGE_SHA256 },
     })
 
-    vi.unstubAllEnvs()
-
     expect(typeof result).toBe("string")
     const stat = await fs.stat(result)
     expect(stat.isDirectory()).toBe(true)
@@ -220,6 +225,35 @@ describe("downloadBuilderToolset", { sequential: true }, () => {
         checksums: { [APPIMAGE_FILE]: "0000000000000000000000000000000000000000000000000000000000000000" },
       })
     ).rejects.toThrow()
+  })
+
+  // Regression test for https://github.com/electron-userland/electron-builder/issues/9752
+  // @electron/get's mirrorVar() checks ELECTRON_MIRROR before opts.mirror, so passing
+  // mirrorOptions.mirror would let ELECTRON_MIRROR silently override the builder-binaries URL.
+  // Using resolveAssetURL bypasses that env var check entirely.
+  // This test intercepts the config actually passed to get.downloadArtifact and verifies
+  // that resolveAssetURL() returns the builder-binaries URL even when ELECTRON_MIRROR is set.
+  test("ELECTRON_MIRROR env var does not corrupt builder-binaries download URL (#9752)", async ({ expect }) => {
+    vi.stubEnv("ELECTRON_MIRROR", "https://cdn.npmmirror.com/binaries/electron/")
+
+    let resolvedUrl: string | undefined
+    const spy = vi.spyOn(get, "downloadArtifact").mockImplementationOnce(async config => {
+      resolvedUrl = await (config.mirrorOptions?.resolveAssetURL as any)?.()
+      throw new Error("mock-stop")
+    })
+
+    await expect(
+      downloadBuilderToolset({
+        releaseName: "dmg-builder@1.2.2",
+        filenameWithExt: "dmgbuild-bundle-arm64-75c8a6c.tar.gz",
+      })
+    ).rejects.toThrow("mock-stop")
+
+    expect(resolvedUrl).toBeDefined()
+    expect(resolvedUrl).toContain("electron-builder-binaries")
+    expect(resolvedUrl).not.toContain("cdn.npmmirror.com/binaries/electron")
+
+    spy.mockRestore()
   })
 })
 
@@ -396,5 +430,55 @@ describe("downloadElectronArtifact", { sequential: true }, () => {
 
     // electron distribution always ships a version file
     expect(entries).toContain("version")
+  })
+})
+
+// ─── Proxy integration ────────────────────────────────────────────────────────
+
+async function startRecordingProxy() {
+  const connectTargets: string[] = []
+  const server = http.createServer()
+  server.on("connect", (req, socket) => {
+    connectTargets.push(req.url ?? "")
+    socket.write("HTTP/1.1 503 Proxy Refused\r\n\r\n")
+    socket.destroy()
+  })
+  await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
+  const { port } = server.address() as net.AddressInfo
+  const close = () => new Promise<void>(resolve => server.close(() => resolve()))
+  return { port, connectTargets, close }
+}
+
+describe("proxy integration", () => {
+  test("routes download requests through HTTPS_PROXY when set", { timeout: 15_000 }, async ({ expect }) => {
+    const proxy = await startRecordingProxy()
+    const freshCache = await fs.mkdtemp(path.join(os.tmpdir(), "eb-proxy-integration-"))
+    vi.stubEnv("HTTPS_PROXY", `http://127.0.0.1:${proxy.port}`)
+    vi.stubEnv("ELECTRON_BUILDER_CACHE", freshCache)
+
+    try {
+      await expect(
+        downloadBuilderToolset({
+          releaseName: APPIMAGE_RELEASE,
+          filenameWithExt: APPIMAGE_FILE,
+          checksums: { [APPIMAGE_FILE]: APPIMAGE_SHA256 },
+        })
+      ).rejects.toThrow() // proxy refuses tunnel — download fails, that's expected
+    } finally {
+      vi.unstubAllEnvs()
+      await proxy.close()
+      await fs.rm(freshCache, { recursive: true, force: true })
+    }
+
+    // Core assertion: got sent CONNECT to our proxy, proving the agent is wired through
+    expect(
+      proxy.connectTargets.some(t => {
+        try {
+          return new URL(`http://${t}`).hostname.toLowerCase() === "github.com"
+        } catch {
+          return false
+        }
+      })
+    ).toBe(true)
   })
 })

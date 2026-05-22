@@ -89,10 +89,7 @@ describe("clearCache", () => {
     vi.mocked(access).mockRejectedValue(Object.assign(new Error("ENOENT"), { code: "ENOENT" }))
     await clearCache()
     expect(rm).not.toHaveBeenCalled()
-    expect(log.info).toHaveBeenCalledWith(
-      expect.objectContaining({ cacheDir: expect.any(String) }),
-      "cache directory does not exist, nothing to clear"
-    )
+    expect(log.info).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: expect.any(String) }), "cache directory does not exist, nothing to clear")
   })
 
   test("does not delete when cache dir is not writable and logs error", async () => {
@@ -111,10 +108,7 @@ describe("clearCache", () => {
     vi.mocked(getCacheDirectory).mockReturnValue("/")
     await clearCache()
     expect(rm).not.toHaveBeenCalled()
-    expect(log.error).toHaveBeenCalledWith(
-      expect.objectContaining({ cacheDir: "/" }),
-      expect.stringContaining("filesystem root")
-    )
+    expect(log.error).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: "/" }), expect.stringContaining("filesystem root"))
   })
 
   test("closes readline interface even when user aborts", async () => {
@@ -195,10 +189,7 @@ describe("wrap", () => {
     const task = vi.fn().mockRejectedValue(err)
     await wrap(task)({})
     expect(process.exitCode).toBe(1)
-    expect(log.error).toHaveBeenCalledWith(
-      expect.objectContaining({ stackTrace: expect.any(String) }),
-      expect.any(String)
-    )
+    expect(log.error).toHaveBeenCalledWith(expect.objectContaining({ stackTrace: expect.any(String) }), expect.any(String))
   })
 
   test("logs stack trace for generic errors", async () => {
@@ -206,10 +197,7 @@ describe("wrap", () => {
     const task = vi.fn().mockRejectedValue(err)
     await wrap(task)({})
     expect(process.exitCode).toBe(1)
-    expect(log.error).toHaveBeenCalledWith(
-      expect.objectContaining({ stackTrace: expect.any(String) }),
-      "something went wrong"
-    )
+    expect(log.error).toHaveBeenCalledWith(expect.objectContaining({ stackTrace: expect.any(String) }), "something went wrong")
   })
 })
 

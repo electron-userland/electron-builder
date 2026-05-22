@@ -78,7 +78,7 @@ export abstract class Target {
   // use only for tasks that cannot be executed in parallel (such as signing on windows and hdiutil on macOS due to file locking)
   readonly buildQueueManager = new AsyncTaskManager(new CancellationToken())
 
-  protected constructor(
+  public constructor(
     readonly name: string,
     readonly isAsyncSupported: boolean = true
   ) {}
@@ -96,7 +96,7 @@ export abstract class Target {
 
 export interface TargetSpecificOptions {
   /**
-   The [artifact file name template](./configuration.md#artifact-file-name-template).
+   The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).
    */
   readonly artifactName?: string | null
 
