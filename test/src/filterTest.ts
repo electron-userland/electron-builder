@@ -105,15 +105,15 @@ describe("createFilter – ** matching zero path segments", () => {
 describe("FileMatcher – constructor", () => {
   test("strips trailing slash from from/to", ({ expect }) => {
     const m = new FileMatcher("/app/", "/out/", noMacro)
-    expect(m.from).toBe("/app")
-    expect(m.to).toBe("/out")
+    expect(m.from).toBe(path.normalize("/app"))
+    expect(m.to).toBe(path.normalize("/out"))
   })
 
   test("expands macros in from/to", ({ expect }) => {
     const expand = (s: string) => s.replace("${platform}", "linux")
     const m = new FileMatcher("/app/${platform}", "/out/${platform}", expand)
-    expect(m.from).toBe("/app/linux")
-    expect(m.to).toBe("/out/linux")
+    expect(m.from).toBe(path.normalize("/app/linux"))
+    expect(m.to).toBe(path.normalize("/out/linux"))
   })
 
   test("normalizePattern strips leading ./", ({ expect }) => {
