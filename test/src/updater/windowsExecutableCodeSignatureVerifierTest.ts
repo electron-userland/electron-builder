@@ -1,0 +1,537 @@
+// vi.mock calls are hoisted to the top by vitest's transformer.
+// They must appear before any imports that depend on them.
+import { afterEach, beforeEach, expect, vi } from "vitest"
+
+vi.mock("child_process", async importOriginal => {
+  const mod = await importOriginal<typeof import("child_process")>()
+  return { ...mod, execFile: vi.fn(), execFileSync: vi.fn() }
+})
+
+vi.mock("os", async importOriginal => {
+  const mod = await importOriginal<typeof import("os")>()
+  return { ...mod, release: vi.fn() }
+})
+
+import { execFile, execFileSync } from "child_process"
+import * as fs from "fs/promises"
+import { release as osRelease } from "os"
+import * as path from "path"
+import { TmpDir } from "temp-file"
+import type { Logger } from "electron-updater/src/types"
+import { verifySignature } from "electron-updater/src/windowsExecutableCodeSignatureVerifier"
+
+// =============================================================================
+// Constants
+// =============================================================================
+
+const DEFAULT_FILE = "/tmp/test-update-1.0.1.exe"
+const DEFAULT_SUBJECT = "CN=Test Publisher, O=Test Org, C=US"
+
+// =============================================================================
+// Logger stub
+// =============================================================================
+
+function createLogger(): Logger {
+  return { info: vi.fn(), warn: vi.fn(), error: vi.fn() }
+}
+
+// =============================================================================
+// PowerShell JSON fixture builder
+//
+// Mirrors the shape Get-AuthenticodeSignature | ConvertTo-Json -Compress produces.
+// =============================================================================
+
+interface SignatureJsonOpts {
+  status?: number
+  filePath?: string
+  subject?: string
+  omitPath?: boolean
+  withStrippableFields?: boolean
+}
+
+function makeSignatureJson(opts: SignatureJsonOpts = {}): string {
+  const { status = 0, filePath = DEFAULT_FILE, subject = DEFAULT_SUBJECT, omitPath = false, withStrippableFields = false } = opts
+
+  const cert: Record<string, unknown> = {
+    Subject: subject,
+    Issuer: subject,
+    Thumbprint: "AABBCCDDEEFF00112233445566778899AABBCCDD",
+    NotBefore: "/Date(1000000000000)/",
+    NotAfter: "/Date(9999999999000)/",
+  }
+
+  if (withStrippableFields) {
+    cert.Archived = false
+    cert.Extensions = [{ critical: false }]
+    cert.Handle = { value: 0 }
+    cert.HasPrivateKey = false
+    cert.SubjectName = { Name: subject }
+  }
+
+  const data: Record<string, unknown> = {
+    SignerCertificate: cert,
+    TimeStamperCertificate: null,
+    Status: status,
+    StatusMessage: status === 0 ? "Signature verified." : "The file is not digitally signed.",
+  }
+
+  if (!omitPath) {
+    data.Path = filePath
+  }
+
+  if (withStrippableFields) {
+    data.PrivateKey = null
+    data.IsOSBinary = false
+    data.SignatureType = 1
+  }
+
+  return JSON.stringify(data)
+}
+
+// =============================================================================
+// Unit tests (mocked child_process + os)
+//
+// Platform-agnostic: execFile and execFileSync are replaced with vi.fn() via
+// vi.mock so no real PowerShell is ever spawned.  os.release() is also mocked
+// so Windows-version-detection logic can be exercised on any platform.
+// =============================================================================
+
+describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
+  let logger: Logger
+
+  beforeEach(() => {
+    logger = createLogger()
+    vi.clearAllMocks()
+    // Default: ConvertTo-Json probe (execFileSync) succeeds so handleError reaches reject().
+    vi.mocked(execFileSync).mockImplementation(() => Buffer.from("") as any)
+    // Default: modern OS — handleError does not short-circuit via isOldWin6().
+    vi.mocked(osRelease).mockReturnValue("10.0.19041")
+  })
+
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  // -- helpers that drive the execFile mock -----------------------------------
+
+  function mockPsSuccess(stdout: string): void {
+    vi.mocked(execFile).mockImplementationOnce((_: any, __: any, ___: any, cb: any) => {
+      cb(null, stdout, "")
+      return {} as any
+    })
+  }
+
+  function mockPsError(error: Error | null, stderr = ""): void {
+    vi.mocked(execFile).mockImplementationOnce((_: any, __: any, ___: any, cb: any) => {
+      cb(error, "", stderr)
+      return {} as any
+    })
+  }
+
+  function mockConvertToJsonFail(msg = "ConvertTo-Json not found"): void {
+    vi.mocked(execFileSync).mockImplementationOnce(() => {
+      throw new Error(msg)
+    })
+  }
+
+  // ---------------------------------------------------------------------------
+  describe("preparePowerShellExec params", () => {
+    test("exe and args match snapshot", async () => {
+      mockPsSuccess(makeSignatureJson())
+      await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)
+      const [exe, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
+      expect([exe, args]).toMatchSnapshot()
+    })
+
+    test("shell is false — PowerShell is invoked directly", async () => {
+      mockPsSuccess(makeSignatureJson())
+      await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)
+      const [, , opts] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[], any, any]
+      expect(opts.shell).toBe(false)
+    })
+
+    test("PSModulePath is not set in env — it is cleared inside the PowerShell command", async () => {
+      mockPsSuccess(makeSignatureJson())
+      await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)
+      const [, , opts] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[], any, any]
+      expect(opts.env.PSModulePath).toBeUndefined()
+    })
+
+    test("other process.env keys are inherited through env", async () => {
+      mockPsSuccess(makeSignatureJson())
+      await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)
+      const [, , opts] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[], any, any]
+      expect(opts.env.PATH).toBe(process.env.PATH)
+    })
+
+    test("timeout is 20 seconds", async () => {
+      mockPsSuccess(makeSignatureJson())
+      await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)
+      const [, , opts] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[], any, any]
+      expect(opts.timeout).toBe(20_000)
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  describe("publisher name matching", () => {
+    test("full DN match returns null", async () => {
+      const dn = "CN=Acme Corp, O=Acme Corp, L=Austin, S=TX, C=US"
+      mockPsSuccess(makeSignatureJson({ subject: dn }))
+      expect(await verifySignature([dn], DEFAULT_FILE, logger)).toBeNull()
+    })
+
+    test("CN-only match returns null and logs a deprecation warning", async () => {
+      mockPsSuccess(makeSignatureJson({ subject: "CN=Acme Corp, O=Acme Corp, C=US" }))
+      expect(await verifySignature(["Acme Corp"], DEFAULT_FILE, logger)).toBeNull()
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("Acme Corp"))
+    })
+
+    test("second publisher in list matches when first does not", async () => {
+      const dn = "CN=Real Publisher, O=Real, C=DE"
+      mockPsSuccess(makeSignatureJson({ subject: dn }))
+      expect(await verifySignature(["Fake Corp", dn], DEFAULT_FILE, logger)).toBeNull()
+    })
+
+    test("partial DN (publisherName has fewer keys than cert subject) matches on provided keys only", async () => {
+      mockPsSuccess(makeSignatureJson({ subject: "CN=Acme, O=Acme Corp, L=Denver, C=US" }))
+      // Only CN and O in the publisherName spec — L and C are extra in the cert but not required
+      expect(await verifySignature(["CN=Acme, O=Acme Corp"], DEFAULT_FILE, logger)).toBeNull()
+    })
+
+    test("no matching publisher returns non-null error string listing all provided names", async () => {
+      mockPsSuccess(makeSignatureJson({ subject: "CN=Real, O=Real, C=US" }))
+      const result = await verifySignature(["Wrong1", "CN=Wrong2, O=Wrong2, C=US"], DEFAULT_FILE, logger)
+      expect(result).not.toBeNull()
+      expect(result).toContain("Wrong1")
+      expect(result).toContain("CN=Wrong2")
+    })
+
+    test("empty publisherNames array always returns non-null error string", async () => {
+      mockPsSuccess(makeSignatureJson())
+      expect(await verifySignature([], DEFAULT_FILE, logger)).not.toBeNull()
+    })
+
+    test("status non-0 returns non-null error regardless of publisher", async () => {
+      mockPsSuccess(makeSignatureJson({ status: 2 }))
+      expect(await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).not.toBeNull()
+    })
+
+    test("DN value comparison is case-sensitive", async () => {
+      // lower-case "acme corp" in cert, upper-case in publisherName → no match
+      mockPsSuccess(makeSignatureJson({ subject: "CN=acme corp, O=Acme, C=US" }))
+      expect(await verifySignature(["CN=Acme Corp, O=Acme, C=US"], DEFAULT_FILE, logger)).not.toBeNull()
+    })
+
+    test("extra keys in cert subject beyond what publisherName specifies do not prevent a match", async () => {
+      mockPsSuccess(makeSignatureJson({ subject: "CN=Test, O=Test Org, L=City, C=US" }))
+      // Publisher spec only specifies CN and C — L and O in the cert are beyond the spec, ignored
+      expect(await verifySignature(["CN=Test, C=US"], DEFAULT_FILE, logger)).toBeNull()
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  describe("LiteralPath validation", () => {
+    test("matching Path resolves to null", async () => {
+      mockPsSuccess(makeSignatureJson({ filePath: DEFAULT_FILE }))
+      expect(await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).toBeNull()
+    })
+
+    test("mismatched Path rejects (prevents symlink / redirect attacks)", async () => {
+      mockPsSuccess(makeSignatureJson({ filePath: "/tmp/attacker-controlled.exe" }))
+      // execFileSync default: returns Buffer → ConvertTo-Json check passes → handleError rejects
+      await expect(verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).rejects.toThrow(/LiteralPath/)
+    })
+
+    test("absent Path key logs warning and continues to publisher check", async () => {
+      // path.normalize(undefined) throws → caught → logger.warn → continues to publisher match
+      mockPsSuccess(makeSignatureJson({ omitPath: true }))
+      expect(await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).toBeNull()
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("LiteralPath"))
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  describe("parseOut field stripping", () => {
+    test("root-level PrivateKey, IsOSBinary, SignatureType do not prevent validation", async () => {
+      mockPsSuccess(makeSignatureJson({ withStrippableFields: true }))
+      expect(await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).toBeNull()
+    })
+
+    test("SignerCertificate-level Archived, Extensions, Handle, HasPrivateKey, SubjectName are stripped without error", async () => {
+      mockPsSuccess(makeSignatureJson({ withStrippableFields: true }))
+      expect(await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).toBeNull()
+    })
+
+    test("null SignerCertificate does not crash (Status non-0 path)", async () => {
+      mockPsSuccess(JSON.stringify({ SignerCertificate: null, Status: 1, Path: DEFAULT_FILE }))
+      // Status 1 → not valid → no access to null cert → non-null error string (no crash)
+      expect(await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).not.toBeNull()
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  describe("error handling", () => {
+    describe("execFile error — modern OS (non-Win6)", () => {
+      test("rejects with the original error when ConvertTo-Json probe passes", async () => {
+        mockPsError(new Error("PowerShell execution failed"))
+        await expect(verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).rejects.toThrow("PowerShell execution failed")
+      })
+
+      test("resolves null and warns when ConvertTo-Json probe also fails (old PowerShell installed)", async () => {
+        mockPsError(new Error("PS unavailable"))
+        mockConvertToJsonFail("ConvertTo-Json not found")
+        expect(await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).toBeNull()
+        expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("ConvertTo-Json"))
+      })
+    })
+
+    describe("execFile stderr — modern OS", () => {
+      test("rejects with an error wrapping stderr when ConvertTo-Json probe passes", async () => {
+        mockPsError(null, "Access denied to certificate store")
+        await expect(verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).rejects.toThrow("Access denied to certificate store")
+      })
+    })
+
+    describe("old Windows 6.x — unsupported PowerShell", () => {
+      test("Win 6.1 (Windows 7): warns and resolves null instead of rejecting", async () => {
+        vi.mocked(osRelease).mockReturnValue("6.1.7601")
+        mockPsError(new Error("ConvertTo-Json not available"))
+        expect(await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).toBeNull()
+        expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("unsupported powershell"))
+      })
+
+      test("Win 6.0 (Vista): warns and resolves null", async () => {
+        vi.mocked(osRelease).mockReturnValue("6.0.6001")
+        mockPsError(new Error("old PS"))
+        expect(await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).toBeNull()
+        expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("unsupported powershell"))
+      })
+
+      test("Win 6.3 (Windows 8.1) is NOT treated as old Win6", async () => {
+        vi.mocked(osRelease).mockReturnValue("6.3.9600")
+        mockPsError(new Error("Some PS error"))
+        // ConvertTo-Json check passes (mock default) → rejects with original error
+        await expect(verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).rejects.toThrow("Some PS error")
+        const warnCalls = (logger.warn as ReturnType<typeof vi.fn>).mock.calls.flat().join(" ")
+        expect(warnCalls).not.toContain("unsupported powershell")
+      })
+    })
+
+    describe("malformed JSON from execFile stdout", () => {
+      test("rejects when ConvertTo-Json probe passes (outer catch → handleError → reject)", async () => {
+        mockPsSuccess("this is { not valid json {{")
+        await expect(verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).rejects.toThrow()
+      })
+
+      test("resolves null when ConvertTo-Json probe also fails", async () => {
+        mockPsSuccess("not json at all")
+        mockConvertToJsonFail()
+        expect(await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)).toBeNull()
+        expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("ConvertTo-Json"))
+      })
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  describe("path injection prevention", () => {
+    test("single quote in path is doubled in the PowerShell -LiteralPath argument", async () => {
+      const pathWithQuote = "/tmp/it's-an-update.exe"
+      mockPsSuccess(makeSignatureJson({ filePath: pathWithQuote }))
+      await verifySignature([DEFAULT_SUBJECT], pathWithQuote, logger)
+      const [, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
+      const cmd = Buffer.from(args[args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le")
+      expect(cmd).toContain("it''s-an-update.exe")
+    })
+
+    test("multiple single quotes in path are all escaped", async () => {
+      const multiQuotePath = "/tmp/it's-really-it's.exe"
+      mockPsSuccess(makeSignatureJson({ filePath: multiQuotePath }))
+      await verifySignature([DEFAULT_SUBJECT], multiQuotePath, logger)
+      const [, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
+      const cmd = Buffer.from(args[args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le")
+      expect(cmd).toContain("it''s-really-it''s.exe")
+    })
+
+    test("path without special characters is passed through unchanged inside single quotes", async () => {
+      mockPsSuccess(makeSignatureJson())
+      await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)
+      const [, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
+      const cmd = Buffer.from(args[args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le")
+      expect(cmd).toContain(`-LiteralPath '${DEFAULT_FILE}'`)
+    })
+
+    test("-LiteralPath value is enclosed in single quotes", async () => {
+      mockPsSuccess(makeSignatureJson())
+      await verifySignature([DEFAULT_SUBJECT], DEFAULT_FILE, logger)
+      const [, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
+      const cmd = Buffer.from(args[args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le")
+      expect(cmd).toMatch(/-LiteralPath '.*'/)
+    })
+  })
+})
+
+// =============================================================================
+// E2e tests — Windows only, real PowerShell
+//
+// These tests call verifySignature with real child_process functions restored
+// from vi.importActual.  They validate the full spawn → UTF-8 decode →
+// JSON parse → DN match chain, including the encoding and path-escaping fixes.
+// =============================================================================
+
+describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell)", () => {
+  const tmpDir = new TmpDir("verifier-e2e")
+  let logger: Logger
+  let realExecFile: (typeof import("child_process"))["execFile"]
+  let realExecFileSync: (typeof import("child_process"))["execFileSync"]
+  let realOsRelease: (typeof import("os"))["release"]
+
+  // Obtain real implementations once (vi.importActual is not cheap).
+  beforeEach(async () => {
+    logger = createLogger()
+    vi.clearAllMocks()
+
+    const realCp = await vi.importActual<typeof import("child_process")>("child_process")
+    const realOs = await vi.importActual<typeof import("os")>("os")
+    realExecFile = realCp.execFile
+    realExecFileSync = realCp.execFileSync
+    realOsRelease = realOs.release
+
+    vi.mocked(execFile).mockImplementation(realExecFile as any)
+    vi.mocked(execFileSync).mockImplementation(realExecFileSync as any)
+    vi.mocked(osRelease).mockImplementation(realOsRelease)
+  })
+
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  async function createUnsignedExe(name = "unsigned.exe"): Promise<string> {
+    const dir = await tmpDir.getTempDir()
+    const p = path.join(dir, name)
+    // Minimal fake MZ header — enough to produce a path, not enough to be a valid PE signature.
+    await fs.writeFile(p, Buffer.from("MZ" + "0".repeat(60)))
+    return p
+  }
+
+  test("unsigned file returns a non-null error string", async () => {
+    const p = await createUnsignedExe()
+    const result = await verifySignature(["Any Publisher"], p, logger)
+    expect(result).not.toBeNull()
+    expect(typeof result).toBe("string")
+  }, 30_000)
+
+  test("path with spaces is handled without crashing", async () => {
+    const dir = await tmpDir.getTempDir({ prefix: "path with spaces" })
+    const p = path.join(dir, "my update.exe")
+    await fs.writeFile(p, Buffer.from("not a PE"))
+    const result = await verifySignature(["Any Publisher"], p, logger)
+    expect(result).not.toBeNull() // Unsigned → non-null error; key assertion is no crash
+  }, 30_000)
+
+  test("path with single quote does not crash (injection prevention)", async () => {
+    const parent = await tmpDir.getTempDir()
+    const quotedDir = path.join(parent, "it's a test")
+    await fs.mkdir(quotedDir, { recursive: true })
+    const p = path.join(quotedDir, "update.exe")
+    await fs.writeFile(p, Buffer.from("not a PE"))
+    // Should not throw — the single quote must be escaped before entering the PS command string.
+    const result = await verifySignature(["Any Publisher"], p, logger)
+    expect(typeof result === "string" || result === null).toBe(true)
+  }, 30_000)
+
+  test("path with non-ASCII characters does not crash (UTF-8 encoding, issue #8162)", async () => {
+    const parent = await tmpDir.getTempDir()
+    const unicodeDir = path.join(parent, "üñícodé-path")
+    await fs.mkdir(unicodeDir, { recursive: true })
+    const p = path.join(unicodeDir, "update.exe")
+    await fs.writeFile(p, Buffer.from("not a PE"))
+    // The $OutputEncoding + [Console]::OutputEncoding setup must handle non-ASCII dir names.
+    const result = await verifySignature(["Any Publisher"], p, logger)
+    expect(typeof result === "string" || result === null).toBe(true)
+  }, 30_000)
+
+  // -------------------------------------------------------------------------
+  // Tests against a Microsoft-signed system binary.
+  //
+  // The exact Subject DN varies across Windows versions so we discover it at
+  // runtime in beforeEach rather than hardcoding it.
+  // -------------------------------------------------------------------------
+  describe("Microsoft-signed system binary (notepad.exe)", () => {
+    const NOTEPAD = "C:\\Windows\\System32\\notepad.exe"
+    let notepadSubject: string | undefined
+
+    beforeEach(async () => {
+      try {
+        await fs.access(NOTEPAD)
+      } catch {
+        return // notepad not accessible — skip all tests in this block
+      }
+
+      if (!notepadSubject) {
+        try {
+          const raw = realExecFileSync(
+            "powershell.exe",
+            [
+              "-NoProfile",
+              "-NonInteractive",
+              "-InputFormat",
+              "None",
+              "-Command",
+              `$OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8; Get-AuthenticodeSignature -LiteralPath '${NOTEPAD}' | ConvertTo-Json -Compress`,
+            ],
+            { shell: false, env: { ...process.env, PSModulePath: "" }, timeout: 15_000 }
+          ).toString()
+          notepadSubject = JSON.parse(raw)?.SignerCertificate?.Subject
+        } catch {
+          // Discovery failed — each individual test will early-return via the guard below
+        }
+      }
+    })
+
+    test("full DN publisher match returns null", async () => {
+      if (!notepadSubject) return
+      expect(await verifySignature([notepadSubject], NOTEPAD, logger)).toBeNull()
+    }, 30_000)
+
+    test("wrong publisher returns non-null error string", async () => {
+      expect(await verifySignature(["Definitely Not Microsoft"], NOTEPAD, logger)).not.toBeNull()
+    }, 30_000)
+
+    test("CN-only match returns null and logs deprecation warning", async () => {
+      if (!notepadSubject) return
+      const cnOnly = notepadSubject.match(/CN=([^,]+)/)?.[1]?.trim()
+      if (!cnOnly) return
+      expect(await verifySignature([cnOnly], NOTEPAD, logger)).toBeNull()
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining(cnOnly))
+    }, 30_000)
+
+    test("partial DN (subset of keys) matches when provided keys all agree", async () => {
+      if (!notepadSubject) return
+      const cn = notepadSubject.match(/CN=[^,]+/)?.[0]
+      const c = notepadSubject.match(/C=[A-Z]+/)?.[0]
+      if (!cn || !c) return
+      expect(await verifySignature([`${cn}, ${c}`], NOTEPAD, logger)).toBeNull()
+    }, 30_000)
+  })
+
+  // -------------------------------------------------------------------------
+  test("symlink to a different file: LiteralPath mismatch prevents a silent pass", async () => {
+    const realFile = await createUnsignedExe("real.exe")
+    const symlinkPath = path.join(path.dirname(realFile), "symlink.exe")
+    try {
+      await fs.symlink(realFile, symlinkPath)
+    } catch {
+      return // Symlinks may require elevated privileges on Windows — skip gracefully
+    }
+
+    // When PowerShell resolves the symlink, data.Path === realFile ≠ symlinkPath.
+    // Either the promise rejects (LiteralPath mismatch) or returns a non-null error string.
+    let result: string | null = null
+    try {
+      result = await verifySignature(["Any Publisher"], symlinkPath, logger)
+    } catch {
+      return // Rejection is the expected security behavior — verification did NOT silently pass
+    }
+    expect(result).not.toBeNull()
+  }, 30_000)
+})

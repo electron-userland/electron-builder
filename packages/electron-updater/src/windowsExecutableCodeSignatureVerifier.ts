@@ -5,18 +5,29 @@ import { Logger } from "./types"
 import * as path from "path"
 
 function preparePowerShellExec(command: string, timeout?: number) {
+  // Microsoft.PowerShell.Security is imported before PSModulePath is cleared so that
+  // Get-AuthenticodeSignature auto-loads correctly on Windows Server 2025, where the
+  // module loader relies on PSModulePath being set at import time.
   // https://github.com/electron-userland/electron-builder/issues/2421
   // https://github.com/electron-userland/electron-builder/issues/2535
-  // Resetting PSModulePath is necessary https://github.com/electron-userland/electron-builder/issues/7127
-  // semicolon wont terminate the set command and run chcp thus leading to verification errors on certificats with special chars like german umlauts, so rather
-  //   join commands using & https://github.com/electron-userland/electron-builder/issues/8162
-  const executable = `set "PSModulePath=" & chcp 65001 >NUL & powershell.exe`
-  const args = ["-NoProfile", "-NonInteractive", "-InputFormat", "None", "-Command", command]
+  // https://github.com/electron-userland/electron-builder/issues/7127
+  //
+  // PSModulePath is then cleared inside PowerShell (after the import) to prevent
+  // user-installed modules from interfering with subsequent commands.
+  //
+  // UTF-8 output encoding is configured inside PowerShell itself rather than via `chcp 65001`
+  // (which required cmd.exe as the host). Both $OutputEncoding and [Console]::OutputEncoding
+  // must be set so that ConvertTo-Json emits UTF-8 when stdout is captured by Node.
+  // https://github.com/electron-userland/electron-builder/issues/8162
+  const script = `Import-Module Microsoft.PowerShell.Security; $env:PSModulePath = ""; $OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8; ${command}`
+  const encodedCommand = Buffer.from(script, "utf16le").toString("base64")
+  const args = ["-NoProfile", "-NonInteractive", "-InputFormat", "None", "-EncodedCommand", encodedCommand]
   const options: ExecFileOptions = {
-    shell: true,
+    shell: false,
     timeout,
+    env: { ...process.env },
   }
-  return [executable, args, options] as const
+  return ["powershell.exe", args, options] as const
 }
 
 // $certificateInfo = (Get-AuthenticodeSignature 'xxx\yyy.exe'
@@ -45,7 +56,7 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
     const tempUpdateFile = unescapedTempUpdateFile.replace(/'/g, "''")
     logger.info(`Verifying signature ${tempUpdateFile}`)
 
-    execFile(...preparePowerShellExec(`"Get-AuthenticodeSignature -LiteralPath '${tempUpdateFile}' | ConvertTo-Json -Compress"`, 20 * 1000), (error, stdout, stderr) => {
+    execFile(...preparePowerShellExec(`Get-AuthenticodeSignature -LiteralPath '${tempUpdateFile}' | ConvertTo-Json -Compress`, 20 * 1000), (error, stdout, stderr) => {
       try {
         if (error != null || stderr) {
           handleError(logger, error, stderr, reject)
