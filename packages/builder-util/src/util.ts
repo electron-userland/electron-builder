@@ -13,6 +13,7 @@ import { debug, log } from "./log"
 import { exists } from "./fs"
 import { mkdir } from "fs-extra"
 import { isEmptyOrSpaces } from "./stringUtil"
+import { isValidKey } from "./mapper"
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
@@ -84,6 +85,21 @@ export function removePassword(input: string): string {
 
 const SENSITIVE_ENV_KEY_RE = /KEY|TOKEN|SECRET|PASSWORD|PASS|CREDENTIAL|CSC/i
 
+/**
+ * Returns a copy of the environment with sensitive keys removed.
+ * Use this when building the environment for child processes that do not
+ * need signing credentials, tokens, or passwords (e.g. package managers).
+ */
+export function stripSensitiveEnvVars(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  const out: NodeJS.ProcessEnv = {}
+  for (const [k, v] of Object.entries(env)) {
+    if (isValidKey(k) && !SENSITIVE_ENV_KEY_RE.test(k)) {
+      out[k] = v
+    }
+  }
+  return out
+}
+
 export function filterSensitiveEnv(env: Record<string, string | undefined>): Record<string, string | undefined> {
   const out: Record<string, string | undefined> = {}
   for (const [k, v] of Object.entries(env)) {
@@ -98,7 +114,7 @@ function getProcessEnv(env: Record<string, string | undefined> | Nullish): NodeJ
   }
 
   const finalEnv = {
-    ...(env || process.env),
+    ...(env == null ? process.env : env),
   }
 
   // without LC_CTYPE dpkg can returns encoded unicode symbols
