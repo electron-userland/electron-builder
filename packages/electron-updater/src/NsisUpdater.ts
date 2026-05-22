@@ -8,7 +8,7 @@ import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDo
 import { DOWNLOAD_PROGRESS } from "./types"
 import { VerifyUpdateCodeSignature } from "./main"
 import { findFile, Provider } from "./providers/Provider"
-import { unlink } from "fs-extra"
+import { existsSync, unlink } from "fs-extra"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
 import { URL } from "url"
 
@@ -159,8 +159,14 @@ export class NsisUpdater extends BaseUpdater {
           this.dispatchError(e)
           return
         }
-        // powershell.exe not found — fall back to legacy elevate.exe
-        this.spawnLog(path.join(process.resourcesPath, "elevate.exe"), [installerPath].concat(args)).catch(err => this.dispatchError(err))
+        const elevateExe = path.join(process.resourcesPath, "elevate.exe")
+        if (existsSync(elevateExe)) {
+          this._logger.info("Falling back to elevate.exe for UAC elevation")
+          this.spawnLog(elevateExe, [installerPath].concat(args)).catch(err => this.dispatchError(err))
+          return
+        }
+        this._logger.error("Cannot elevate installer, elevate.exe not found, and PowerShell failed to run: " + e)
+        this.dispatchError(e)
       })
     }
 
