@@ -1,0 +1,11 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`NsisUpdater.doInstall elevation > uses PowerShell with -NoProfile and -EncodedCommand when isAdminRightsRequired 1`] = `
+[
+  "-NonInteractive",
+  "-NoProfile",
+  "-EncodedCommand",
+]
+`;
+
+exports[`NsisUpdater.doInstall elevation > uses PowerShell with -NoProfile and -EncodedCommand when isAdminRightsRequired 2`] = `"Start-Process -FilePath '/fake/installer.exe' -ArgumentList @('--updated','/S') -Verb RunAs"`;

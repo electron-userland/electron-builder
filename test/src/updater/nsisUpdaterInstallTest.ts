@@ -1,5 +1,5 @@
 import * as path from "path"
-import { vi, describe, beforeEach, afterEach } from "vitest"
+import { vi, beforeEach, afterEach } from "vitest"
 import { createNsisUpdater } from "../helpers/updaterTestUtil"
 
 describe("NsisUpdater.doInstall elevation", () => {
@@ -23,17 +23,10 @@ describe("NsisUpdater.doInstall elevation", () => {
     expect(spawnLogMock).toHaveBeenCalledOnce()
     const [cmd, args] = spawnLogMock.mock.calls[0] as [string, string[]]
     expect(cmd).toBe("powershell.exe")
-    expect(args).toContain("-NoProfile")
-    expect(args).toContain("-NonInteractive")
-
     const encodedIdx = args.indexOf("-EncodedCommand")
-    expect(encodedIdx).toBeGreaterThan(-1)
     const script = Buffer.from(args[encodedIdx + 1], "base64").toString("utf16le")
-    expect(script).toContain("Start-Process")
-    expect(script).toContain("-Verb RunAs")
-    expect(script).toContain("/fake/installer.exe")
-    expect(script).toContain("--updated")
-    expect(script).toContain("/S")
+    expect(args.slice(0, encodedIdx + 1)).toMatchSnapshot()
+    expect(script).toMatchSnapshot()
   })
 
   test("wraps installer args containing spaces in Win32 double-quotes", async ({ expect }) => {
@@ -77,3 +70,44 @@ describe("NsisUpdater.doInstall elevation", () => {
     expect(spawnLogMock.mock.calls[1][0]).toBe(path.join("/fake/resources", "elevate.exe"))
   })
 })
+
+describe.ifWindows("NsisUpdater.doInstall elevation — Windows integration", () => {
+  test("powershell.exe accepts -EncodedCommand on this system", async ({ expect }) => {
+    const { execFile } = await import("child_process")
+    const { promisify } = await import("util")
+    const execFileAsync = promisify(execFile)
+    const script = "Write-Output 'elevation-test-ok'"
+    const encoded = Buffer.from(script, "utf16le").toString("base64")
+    const { stdout } = await execFileAsync("powershell.exe", ["-NoProfile", "-NonInteractive", "-EncodedCommand", encoded], { encoding: "utf8" })
+    expect(stdout.trim()).toBe("elevation-test-ok")
+  })
+
+  test("generated Start-Process script is syntactically valid for plain args", async ({ expect }) => {
+    const installerPath = "C:\\fake\\installer.exe"
+    const args = ["--updated", "/S"]
+    const psInstallArgs = args.map(a => `'${a.replace(/'/g, "''")}'`).join(",")
+    const psScript = `Start-Process -FilePath '${installerPath.replace(/'/g, "''")}' -ArgumentList @(${psInstallArgs}) -Verb RunAs`
+    await assertPsScriptParses(psScript)
+    expect(true).toBe(true)
+  })
+
+  test("generated Start-Process script is syntactically valid for args containing spaces", async ({ expect }) => {
+    const installerPath = "C:\\fake\\installer.exe"
+    const args = ["--updated", "/D=C:\\Program Files\\My App"]
+    const psInstallArgs = args.map(a => (a.includes(" ") ? `'"${a.replace(/"/g, '""')}"'` : `'${a.replace(/'/g, "''")}'`)).join(",")
+    const psScript = `Start-Process -FilePath '${installerPath.replace(/'/g, "''")}' -ArgumentList @(${psInstallArgs}) -Verb RunAs`
+    await assertPsScriptParses(psScript)
+    expect(true).toBe(true)
+  })
+})
+
+async function assertPsScriptParses(script: string): Promise<void> {
+  const { execFile } = await import("child_process")
+  const { promisify } = await import("util")
+  const execFileAsync = promisify(execFile)
+  // Count parse errors without executing the script
+  const parseCmd = `$errors = $null; $null = [System.Management.Automation.Language.Parser]::ParseInput(${JSON.stringify(script)}, [ref]$null, [ref]$errors); exit $errors.Count`
+  const encoded = Buffer.from(parseCmd, "utf16le").toString("base64")
+  // Throws on non-zero exit code (= parse errors found)
+  await execFileAsync("powershell.exe", ["-NoProfile", "-NonInteractive", "-EncodedCommand", encoded])
+}
