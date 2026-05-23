@@ -339,6 +339,15 @@ export interface SnapStoreOptions extends PublishConfiguration {
    * @default ["edge"]
    */
   readonly channels?: string | Array<string> | null
+
+  /**
+   * Snapcraft Store credentials — base64-encoded credentials string or file path.
+   * Injected as `SNAPCRAFT_STORE_CREDENTIALS` into the `snapcraft upload` subprocess.
+   *
+   * The `SNAP_CSC_LINK` environment variable is the CI-friendly alternative.
+   * Generate with: `snapcraft export-login - | base64 -w0`
+   */
+  readonly cscLink?: string
 }
 
 export interface BaseS3Options extends PublishConfiguration {

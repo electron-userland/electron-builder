@@ -14,6 +14,21 @@ export interface SnapcraftOptions extends TargetSpecificOptions {
    * Only one core may be selected per build target.
    */
   readonly base: "core18" | "core20" | "core22" | "core24" | "custom"
+
+  /**
+   * Snapcraft Store credentials — base64-encoded credentials string or file path.
+   * Accepts the same formats as `WIN_CSC_LINK` / `CSC_LINK`: base64 data,
+   * absolute/relative/`~/` file paths, and `file://` URIs.
+   * Relative paths are resolved against the build resources directory.
+   *
+   * Injected as `SNAPCRAFT_STORE_CREDENTIALS` into every snapcraft subprocess
+   * (all cores, all build modes, and `snapcraft upload`).
+   *
+   * The `SNAP_CSC_LINK` environment variable is the CI-friendly alternative.
+   * Generate with: `snapcraft export-login - | base64 -w0`
+   */
+  readonly cscLink?: string
+
   /**
    * Configuration for a core18 build. Only active when `base` is `"core18"`.
    */
@@ -292,22 +307,6 @@ export interface RemoteBuildOptions {
    * The project must already exist and you must have write access.
    */
   privateProject?: string
-
-  /**
-   * Snapcraft Store credentials — a base64-encoded credentials string or a file path.
-   * Accepts the same formats as `WIN_CSC_LINK` / `CSC_LINK` on Windows and macOS:
-   * base64 data, absolute/relative/`~/` file paths, and `file://` URIs.
-   * Relative paths are resolved against the build resources directory.
-   *
-   * Generate a credentials string for CI:
-   * ```sh
-   * export SNAP_CSC_LINK=$(snapcraft export-login - | base64 -w0)
-   * ```
-   *
-   * The `SNAP_CSC_LINK` environment variable is the CI-friendly alternative when you
-   * cannot embed credentials in the build config.
-   */
-  cscLink?: string
 
   /**
    * Resume a previously interrupted remote build rather than starting a new one.

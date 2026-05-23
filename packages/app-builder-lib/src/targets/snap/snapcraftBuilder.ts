@@ -1,6 +1,6 @@
 import { RemoteBuildOptions } from "../../options/SnapOptions"
 import { importCredentialContent } from "../../codeSign/codesign"
-import { deepAssign, InvalidConfigurationError, log, spawn } from "builder-util"
+import { deepAssign, InvalidConfigurationError, isEmptyOrSpaces, log, spawn } from "builder-util"
 import { randomUUID } from "crypto"
 import * as childProcess from "child_process"
 import { copyFile, ensureDir, pathExists, readdir, remove } from "fs-extra"
@@ -31,6 +31,8 @@ interface BuildSnapOptions {
   artifactPath: string
   /** LinuxPackager instance, used to resolve workspace dir for remote build authentication */
   packager: LinuxPackager
+  /** Snap Store credentials from SnapcraftOptions root — base64 string or file path */
+  cscLink?: string
 }
 
 /**
@@ -205,7 +207,7 @@ async function copySnapToArtifactPath(workDir: string, outputBasename: string, o
  */
 export async function buildSnap(options: BuildSnapOptions): Promise<string> {
   const { SNAPCRAFT_NO_NETWORK } = process.env
-  const { snapcraftConfig, artifactPath, remoteBuild, stageDir, useLXD = false, useMultipass = false, useDestructiveMode = false } = options
+  const { snapcraftConfig, artifactPath, remoteBuild, stageDir, useLXD = false, useMultipass = false, useDestructiveMode = false, cscLink } = options
 
   const isolatedEnv: Record<string, string> = {
     ...(SNAPCRAFT_NO_NETWORK != null ? { SNAPCRAFT_NO_NETWORK } : {}),
@@ -234,8 +236,14 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string> {
 
   await ensureSnapcraftInstalled()
 
+  // Inject credentials for all build modes from snapcraft.cscLink / SNAP_CSC_LINK.
+  const credEnv = await resolveSnapBuildCredentials(cscLink, options.packager.buildResourcesDir)
+  Object.assign(isolatedEnv, credEnv)
+
   if (remoteBuild?.enabled) {
-    const authEnv = await ensureRemoteBuildAuthentication(remoteBuild, options.packager.buildResourcesDir)
+    // Remote-build auth does additional checks (interactive session, throws on missing creds)
+    // and overrides any credential already set above.
+    const authEnv = await ensureRemoteBuildAuthentication(options.packager.buildResourcesDir, cscLink)
     deepAssign(isolatedEnv, authEnv)
   }
 
@@ -301,59 +309,56 @@ async function ensureSnapcraftInstalled(): Promise<void> {
 }
 
 /**
- * Resolves Snapcraft Store authentication and returns the credential env entries
- * to inject into the snapcraft subprocess. Returns an empty map when snapcraft
- * can authenticate itself (native env var or interactive session).
+ * Resolves credentials from `snapcraft.cscLink` or `SNAP_CSC_LINK` and returns the env
+ * entry to inject. Returns an empty map when neither is set (snapcraft will authenticate
+ * itself via the interactive session or `SNAPCRAFT_STORE_CREDENTIALS`).
  */
-async function ensureRemoteBuildAuthentication(remoteBuild: RemoteBuildOptions, cwd: string): Promise<Record<string, string>> {
-  log.debug(null, "resolving remote build authentication...")
-
-  // 1. remoteBuild.cscLink — config-level credential (base64 or file path).
-  // Takes priority over the env var, mirroring Mac/Windows cscLink behaviour.
-  if (remoteBuild.cscLink) {
-    try {
-      const credentials = await importCredentialContent(remoteBuild.cscLink, cwd)
-      if (!credentials.trim()) {
-        throw new InvalidConfigurationError("resolved credentials are empty")
-      }
-      log.debug(null, "snap store credentials resolved from remoteBuild.cscLink")
-      return { SNAPCRAFT_STORE_CREDENTIALS: credentials.trim() }
-    } catch (e: any) {
-      throw new InvalidConfigurationError(
-        `remoteBuild.cscLink is not valid: ${e.message}\n` +
-          `Provide a base64-encoded credentials string or a file path.\n` +
-          `Generate with: snapcraft export-login - | base64 -w0`
-      )
-    }
-  }
-
-  // 2. SNAP_CSC_LINK env var — CI-friendly alternative (follows WIN_CSC_LINK pattern).
-  // Credential is decoded in memory and injected only into the subprocess env.
-  const snapCscLink = process.env.SNAP_CSC_LINK
-  if (snapCscLink) {
-    try {
-      const credentials = await importCredentialContent(snapCscLink, cwd)
-      if (!credentials.trim()) {
-        throw new InvalidConfigurationError("resolved credentials are empty")
-      }
-      log.debug(null, "snap store credentials resolved from SNAP_CSC_LINK")
-      return { SNAPCRAFT_STORE_CREDENTIALS: credentials.trim() }
-    } catch (e: any) {
-      throw new InvalidConfigurationError(
-        `SNAP_CSC_LINK is not valid: ${e.message}\n` +
-          `Set SNAP_CSC_LINK to a base64-encoded credentials string or a file path.\n` +
-          `Generate with: snapcraft export-login - | base64 -w0`
-      )
-    }
-  }
-
-  // 3. SNAPCRAFT_STORE_CREDENTIALS already in process.env — snapcraft reads it natively.
-  if (process.env.SNAPCRAFT_STORE_CREDENTIALS) {
-    log.debug(null, "using SNAPCRAFT_STORE_CREDENTIALS from environment, verbatim")
+async function resolveSnapBuildCredentials(cscLink: string | undefined, cwd: string): Promise<Record<string, string>> {
+  const link = cscLink ?? process.env.SNAP_CSC_LINK
+  if (!link?.trim()) {
     return {}
   }
 
-  // 4. Interactive snapcraft session.
+  try {
+    const credentials = await importCredentialContent(link, cwd)
+    if (!credentials.trim()) {
+      throw new InvalidConfigurationError("resolved credentials are empty")
+    }
+    const source = cscLink ? "snapcraft.cscLink" : "SNAP_CSC_LINK"
+    log.debug(null, `snap store credentials resolved from ${source}`)
+    return { SNAPCRAFT_STORE_CREDENTIALS: credentials.trim() }
+  } catch (e: any) {
+    const source = cscLink ? "snapcraft.cscLink" : "SNAP_CSC_LINK"
+    throw new InvalidConfigurationError(
+      `${source} is not valid: ${e.message}\nProvide a base64-encoded credentials string or a file path.\nGenerate with: snapcraft export-login - | base64 -w0`
+    )
+  }
+}
+
+/**
+ * Resolves Snapcraft Store authentication for remote builds and returns the credential
+ * env entries to inject. Returns an empty map when snapcraft can authenticate itself
+ * (interactive session). Throws when no credential source is found.
+ */
+async function ensureRemoteBuildAuthentication(cwd: string, cscLink?: string): Promise<Record<string, string>> {
+  log.debug(null, "resolving remote build authentication...")
+
+  // 1. snapcraft.cscLink / SNAP_CSC_LINK — config-level or env credential (base64 or file path).
+  // resolveSnapBuildCredentials already ran for all build modes; re-run here so remote-build
+  // gets the same result and the interactive-session fallback is only reached when neither is set.
+  const credEnv = await resolveSnapBuildCredentials(cscLink, cwd)
+  if (Object.keys(credEnv).length > 0) {
+    return credEnv
+  }
+
+  // 2. SNAPCRAFT_STORE_CREDENTIALS env var — directly provide the credentials string (not base64-encoded).
+  const SNAPCRAFT_STORE_CREDENTIALS = process.env.SNAPCRAFT_STORE_CREDENTIALS?.trim()
+  if (!isEmptyOrSpaces(SNAPCRAFT_STORE_CREDENTIALS)) {
+    log.debug(null, "using SNAPCRAFT_STORE_CREDENTIALS from environment, verbatim")
+    return { SNAPCRAFT_STORE_CREDENTIALS }
+  }
+
+  // 3. Interactive snapcraft session.
   try {
     const { stdout } = await execAsync("snapcraft whoami")
     if (stdout.includes("email:")) {
@@ -366,9 +371,9 @@ async function ensureRemoteBuildAuthentication(remoteBuild: RemoteBuildOptions, 
 
   throw new InvalidConfigurationError(
     "Snapcraft authentication required for remote build.\n" +
-      "Authenticate with one of:\n" +
+      "Authenticate with one of any:\n" +
       "  1. Set SNAP_CSC_LINK: snapcraft export-login - | base64 -w0\n" +
-      "  2. Set remoteBuild.cscLink in your build config\n" +
+      "  2. Set snapcraft.cscLink in your build config\n" +
       "  3. Run: snapcraft login\n" +
       "  4. Set SNAPCRAFT_STORE_CREDENTIALS environment variable directly"
   )
