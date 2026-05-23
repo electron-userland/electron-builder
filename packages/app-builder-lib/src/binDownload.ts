@@ -29,6 +29,9 @@ export function getBinFromCustomLoc(name: string, version: string, binariesLocUr
 }
 
 export function getBinFromUrl(releaseName: string, filenameWithExt: string, checksum: string, githubOrgRepo = "electron-userland/electron-builder-binaries"): Promise<string> {
+  if (/[/\\]|^\.\./.test(filenameWithExt) || filenameWithExt.includes("..")) {
+    throw new Error(`getBinFromUrl: unsafe filenameWithExt "${filenameWithExt}" — must be a plain filename with no path separators or traversal sequences`)
+  }
   let url: string
   const overrideUrl = parseValidEnvVarUrl("ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL")
   if (overrideUrl != null) {

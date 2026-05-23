@@ -1,4 +1,4 @@
-import { exists, log, retry, TmpDir } from "builder-util"
+import { exists, log, retry, stripSensitiveEnvVars, TmpDir } from "builder-util"
 import * as childProcess from "child_process"
 import { randomBytes } from "crypto"
 import * as fs from "fs-extra"
@@ -357,7 +357,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     // Also wrap any Windows executable path that contains spaces (e.g. extensionless shims
     // from tools like Volta installed at "C:\Program Files\Volta\") to ensure the path is
     // quoted correctly when passed to `spawn(..., { shell: true })`.
-    const isWindowsScriptFile = process.platform === "win32" && (ext === ".cmd" || (command.includes(" ") && ext !== ".exe"))
+    const isWindowsScriptFile = process.platform === "win32" && (ext === ".cmd" || command.includes(" "))
     if (isWindowsScriptFile) {
       // We need to wrap it in a .bat file to ensure it runs correctly with cmd.exe
       // This is necessary because some files (like .cmd) are not directly executable in the same way as .bat files.
@@ -374,13 +374,30 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       args = ["/c", `"${tempBatFile}"`, ...args]
     }
 
+    const isWindows = process.platform === "win32"
+
+    // shell: true is required on Windows — see https://github.com/electron-userland/electron-builder/issues/9488
+    // On non-Windows, shell:false means args are passed directly to the process with no shell
+    // interpretation, so the metacharacter guard is only necessary on Windows.
+    if (isWindows) {
+      // Guard against cmd.exe metacharacters. Parentheses are intentionally excluded because they
+      // appear in legitimate Windows paths (e.g. "C:\Program Files (x86)").
+      const SHELL_INJECTION_RE = /[;&|`${}[\]<>!%^]/
+      for (const arg of args) {
+        if (SHELL_INJECTION_RE.test(arg)) {
+          throw new Error(`Refusing to spawn "${command}": argument "${arg}" contains shell metacharacters. Possible injection attempt.`)
+        }
+      }
+    }
+
     await new Promise<void>((resolve, reject) => {
       const outStream = createWriteStream(tempOutputFile)
 
       const child = childProcess.spawn(command, args, {
         cwd,
-        env: { COREPACK_ENABLE_STRICT: "0", ...process.env }, // allow `process.env` overrides
-        shell: true, // `true`` is required: https://github.com/electron-userland/electron-builder/issues/9488
+        // Package manager invocations do not need signing/publishing credentials.
+        env: { COREPACK_ENABLE_STRICT: "0", ...stripSensitiveEnvVars(process.env) },
+        shell: isWindows, // shell: true is required on Windows — see https://github.com/electron-userland/electron-builder/issues/9488
       })
 
       let stderr = ""
@@ -389,7 +406,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         stderr += chunk.toString()
       })
       child.on("error", err => {
-        reject(new Error(`Node module collector spawn failed: ${err.message}`))
+        reject(new Error(`Node module collector spawn (${command} ${JSON.stringify(args)}) failed: ${err.message}`))
       })
 
       child.on("close", code => {
