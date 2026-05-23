@@ -4,7 +4,7 @@ import * as path from "path"
 import { create } from "tar"
 import { TmpDir } from "temp-file"
 import { CompressionLevel } from "../core"
-import { getLinuxToolsPath } from "../toolsets/linux"
+import { getLinuxToolsMacToolset } from "../toolsets/linux"
 import { TarOptionsWithAliasesAsync } from "tar/dist/commonjs/options"
 
 const ALLOWED_7Z_FILTERS = new Set(["BCJ", "BCJ2", "ARM", "ARMT", "IA64", "PPC", "SPARC", "DELTA"])
@@ -15,8 +15,17 @@ function validateCompressionLevel(level: string): void {
   }
 }
 
+type TarConfig = {
+  compression: CompressionLevel | any
+  format: string
+  outFile: string
+  dirToArchive: string
+  isMacApp: boolean
+  tempDirManager: TmpDir
+}
+
 /** @internal */
-export async function tar(compression: CompressionLevel | any, format: string, outFile: string, dirToArchive: string, isMacApp: boolean, tempDirManager: TmpDir): Promise<void> {
+export async function tar({ compression, format, outFile, dirToArchive, isMacApp, tempDirManager }: TarConfig): Promise<void> {
   const tarFile = await tempDirManager.getTempFile({ suffix: ".tar" })
   const tarArgs: TarOptionsWithAliasesAsync = {
     file: tarFile,
@@ -38,11 +47,7 @@ export async function tar(compression: CompressionLevel | any, format: string, o
   ])
 
   if (format === "tar.lz") {
-    // noinspection SpellCheckingInspection
-    let lzipPath = "lzip"
-    if (process.platform === "darwin") {
-      lzipPath = path.join(await getLinuxToolsPath(), "bin", lzipPath)
-    }
+    const lzipPath = process.platform === "darwin" ? (await getLinuxToolsMacToolset()).lzip : "lzip"
     await exec(lzipPath, [compression === "store" ? "-1" : "-9", "--keep" /* keep (don't delete) input files */, tarFile])
     // bloody lzip creates file in the same dir where input file with postfix `.lz`, option --output doesn't work
     await move(`${tarFile}.lz`, outFile)
