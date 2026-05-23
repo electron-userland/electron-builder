@@ -186,7 +186,7 @@ async function getNsisBundlePath(nsis: ToolsetConfig["nsis"], customBinary?: Cus
     return getLegacyNsisBin()
   }
   const nsisVersion = "3.12"
-  const file = `nsis-bundle-${nsisVersion}.tar.gz`
+  const file: keyof (typeof nsisChecksums)[typeof nsis] = `nsis-bundle-${nsisVersion}.tar.gz`
   return downloadBuilderToolset({
     releaseName: `nsis@${nsis}`,
     filenameWithExt: file,
