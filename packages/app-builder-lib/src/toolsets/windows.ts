@@ -170,14 +170,14 @@ export const nsisChecksums = {
   "0.0.0": {
     // legacy — uses getLegacyNsisBin() / getLegacyNsisResourcesBin()
   },
-  "1.1.1": {
-    "nsis-bundle-1.1.1.zip": "PLACEHOLDER_CHECKSUM",
+  "1.2.0": {
+    "nsis-bundle-1.2.0.tar.gz": "d71542d91b9d35ce434af0cd129cbcc6ac780b91a114a5baf574ebe4c7868602",
   },
 } as const
 
 type CustomNsisBinaryConfig = { url: string | null; checksum?: string | null; version?: string | null }
 
-export async function getNsisBundlePath(nsis: ToolsetConfig["nsis"] | Nullish, customBinary?: CustomNsisBinaryConfig | null): Promise<string> {
+async function getNsisBundlePath(nsis: ToolsetConfig["nsis"], customBinary?: CustomNsisBinaryConfig | null): Promise<string> {
   if (customBinary?.url && customBinary?.checksum) {
     const binaryVersion = customBinary.version ?? customBinary.checksum.substring(0, 8)
     return getBinFromCustomLoc("nsis", binaryVersion, customBinary.url, customBinary.checksum)
@@ -185,8 +185,11 @@ export async function getNsisBundlePath(nsis: ToolsetConfig["nsis"] | Nullish, c
   if (nsis === "0.0.0" || nsis == null) {
     return getLegacyNsisBin()
   }
-  const file = "nsis-bundle-1.1.1.zip"
-  return getBinFromUrl(`nsis@${nsis}`, file, nsisChecksums["1.1.1"][file])
+  return downloadBuilderToolset({
+    releaseName: `nsis-bundle-${nsis}`,
+    filenameWithExt: `nsis-bundle-${nsis}.tar.gz`,
+    checksums: { [`nsis-bundle-${nsis}.tar.gz`]: nsisChecksums[nsis][`nsis-bundle-${nsis}.tar.gz`] },
+  })
 }
 
 export async function getMakeNsisPath(nsis: ToolsetConfig["nsis"] | Nullish, customBinary?: CustomNsisBinaryConfig | null): Promise<ToolInfo> {
@@ -198,14 +201,15 @@ export async function getMakeNsisPath(nsis: ToolsetConfig["nsis"] | Nullish, cus
   const bundlePath = await getNsisBundlePath(nsis, customBinary)
   if (nsis === "0.0.0" || nsis == null) {
     // legacy bundle: platform-specific subdirectories, NSISDIR must be set explicitly
+    const env = { NSISDIR: bundlePath }
     if (process.platform === "darwin") {
-      return { path: path.join(bundlePath, "mac", "makensis"), env: { NSISDIR: bundlePath } }
+      return { path: path.join(bundlePath, "mac", "makensis"), env }
     } else if (process.platform === "win32") {
-      return { path: path.join(bundlePath, "Bin", "makensis.exe"), env: { NSISDIR: bundlePath } }
+      return { path: path.join(bundlePath, "Bin", "makensis.exe"), env }
     }
-    return { path: path.join(bundlePath, "linux", "makensis"), env: { NSISDIR: bundlePath } }
+    return { path: path.join(bundlePath, "linux", "makensis"), env }
   }
-  // new bundle: wrapper scripts auto-set NSISDIR
+  // The entrypoint scripts auto-set NSISDIR that pipes to the platform+arch makensis binaries, so no need to set NSISDIR explicitly
   if (process.platform === "win32") {
     return { path: path.join(bundlePath, "makensis.cmd") }
   }

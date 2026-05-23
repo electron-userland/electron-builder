@@ -519,29 +519,6 @@
       ],
       "type": "object"
     },
-    "CustomNsisResources": {
-      "additionalProperties": false,
-      "properties": {
-        "checksum": {
-          "default": "Dqd6g+2buwwvoG1Vyf6BHR1b+25QMmPcwZx40atOT57gH27rkjOei1L0JTldxZu4NFoEmW4kJgZ3DlSWVON3+Q==",
-          "type": "string"
-        },
-        "url": {
-          "default": "https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-resources-3.4.1/nsis-resources-3.4.1.7z",
-          "type": "string"
-        },
-        "version": {
-          "default": "3.4.1",
-          "type": "string"
-        }
-      },
-      "required": [
-        "checksum",
-        "url",
-        "version"
-      ],
-      "type": "object"
-    },
     "CustomPublishOptions": {
       "additionalProperties": {},
       "properties": {
@@ -4184,17 +4161,6 @@
           ],
           "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
         },
-        "customNsisResources": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/CustomNsisResources"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Allows you to provide your own `nsis-resources`"
-        },
         "deleteAppDataOnUninstall": {
           "default": false,
           "description": "*one-click installer only.* Whether to delete app data on uninstall.",
@@ -4536,17 +4502,6 @@
             }
           ],
           "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
-        },
-        "customNsisResources": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/CustomNsisResources"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Allows you to provide your own `nsis-resources`"
         },
         "deleteAppDataOnUninstall": {
           "default": false,
@@ -5758,17 +5713,6 @@
             }
           ],
           "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
-        },
-        "customNsisResources": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/CustomNsisResources"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Allows you to provide your own `nsis-resources`"
         },
         "guid": {
           "description": "The GUID for the installer. Used to identify the application for upgrade and uninstall operations.\nIf not specified, a deterministic GUID is generated from the app ID (`appId`) — but this means\nchanging your `appId` will break silent upgrades of existing installs.",
@@ -6988,6 +6932,22 @@
           ],
           "default": "0.0.0",
           "description": "`appimage` bundle version to use for Appimage packaging and runtime.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage&expanded=true\n0.0.0 - legacy toolset (appimage)\n\nBetas:\n1.0.2 - Runtime 20251108\n1.0.3 - Runtime 20251108 (Resolves GH issue #9598)"
+        },
+        "nsis": {
+          "anyOf": [
+            {
+              "enum": [
+                "0.0.0",
+                "1.2.0"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "0.0.0",
+          "description": "`nsis` bundle version to use for NSIS installer compilation.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=nsis&expanded=true\n0.0.0 - legacy toolset (nsis-3.0.4.1 + nsis-resources-3.4.1)\n1.2.0 - unified bundle (makensis + plugins in one archive, wrapper scripts auto-set NSISDIR)"
         },
         "winCodeSign": {
           "anyOf": [

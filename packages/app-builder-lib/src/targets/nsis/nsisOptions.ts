@@ -57,7 +57,6 @@ export interface CommonNsisOptions {
    * Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)
    */
   readonly customNsisBinary?: CustomNsisBinary | null
-
 }
 
 export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerConfiguration, TargetSpecificOptions {
