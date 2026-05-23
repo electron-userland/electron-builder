@@ -216,11 +216,16 @@ export async function getMakeNsisPath(nsis: ToolsetConfig["nsis"] | Nullish, cus
   return { path: path.join(bundlePath, "makensis") }
 }
 
-export async function getNsisPluginsPath(nsis: ToolsetConfig["nsis"] | Nullish): Promise<string> {
+type CustomNsisResourcesConfig = { url: string; checksum: string; version: string }
+
+export async function getNsisPluginsPath(nsis: ToolsetConfig["nsis"] | Nullish, customNsisResources?: CustomNsisResourcesConfig | null): Promise<string> {
   const overridePath = process.env.ELECTRON_BUILDER_NSIS_RESOURCES_DIR?.trim()
   if (!isEmptyOrSpaces(overridePath)) {
     log.info({ path: overridePath }, "using local nsis-resources")
     return overridePath
+  }
+  if (customNsisResources) {
+    return path.join(await getBinFromCustomLoc("nsis-resources", customNsisResources.version, customNsisResources.url, customNsisResources.checksum), "plugins")
   }
   if (nsis === "0.0.0" || nsis == null) {
     return path.join(await getLegacyNsisResourcesBin(), "plugins")

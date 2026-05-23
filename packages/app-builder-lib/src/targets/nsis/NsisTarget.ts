@@ -661,7 +661,7 @@ export class NsisTarget extends Target {
 
     const pluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
     taskManager.add(async () => {
-      scriptGenerator.addPluginDir(pluginArch, path.join(await getNsisPluginsPath(this.packager.config.toolsets?.nsis), pluginArch))
+      scriptGenerator.addPluginDir(pluginArch, path.join(await getNsisPluginsPath(this.packager.config.toolsets?.nsis, this.options.customNsisResources), pluginArch))
     })
 
     taskManager.add(async () => {
