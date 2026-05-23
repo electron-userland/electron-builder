@@ -1,5 +1,29 @@
 # app-builder-lib
 
+## 26.11.1
+
+### Patch Changes
+
+- Fix: wrap any collector path in a .bat on Windows if path has a space in it _[`#9759`](https://github.com/electron-userland/electron-builder/pull/9759) [`139ac27`](https://github.com/electron-userland/electron-builder/commit/139ac274e840ed53281807d6cc7c57fd31e91809) [@mmaietta](https://github.com/mmaietta)_
+- Fix: force `electron/get`'s internal `got` downloader to respect http(s) proxies _[`#9754`](https://github.com/electron-userland/electron-builder/pull/9754) [`b8c6a15`](https://github.com/electron-userland/electron-builder/commit/b8c6a1545b61d3c285f28d39100e9c7ff4e4192f) [@mmaietta](https://github.com/mmaietta)_
+- Fix: always pass through resolved artifact url to `electron/get` to avoid env var overrides _[`#9755`](https://github.com/electron-userland/electron-builder/pull/9755) [`35c2c7a`](https://github.com/electron-userland/electron-builder/commit/35c2c7aad9b97e227b4d3dfba3762550d8a32e1f) [@mmaietta](https://github.com/mmaietta)_
+- Fix: allow mac entitlement files to be linked from outside the workspace _[`#9756`](https://github.com/electron-userland/electron-builder/pull/9756) [`e22295f`](https://github.com/electron-userland/electron-builder/commit/e22295f74f0e6e1059a13ee87b63f44955e0d95f) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 4 dependencies</summary>
+
+<small>
+
+[`b8c6a15`](https://github.com/electron-userland/electron-builder/commit/b8c6a1545b61d3c285f28d39100e9c7ff4e4192f)
+
+</small>
+
+- `builder-util@26.11.1`
+- `dmg-builder@26.11.1`
+- `electron-builder-squirrel-windows@26.11.1`
+- `electron-publish@26.11.1`
+
+</details>
+
 ## 26.11.0
 
 ### Minor Changes

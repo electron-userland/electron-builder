@@ -12,11 +12,14 @@ import { getPath7za } from "./7za"
 import { debug, log } from "./log"
 import { exists } from "./fs"
 import { mkdir } from "fs-extra"
+import { isEmptyOrSpaces } from "./stringUtil"
+import { isValidKey } from "./mapper"
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
 }
 
+export { isEmptyOrSpaces } from "./stringUtil"
 export { safeStringifyJson, retry } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
 export * from "./arch"
@@ -24,7 +27,7 @@ export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames,
 export { AsyncTaskManager } from "./asyncTaskManager"
 export { DebugLogger } from "./DebugLogger"
 export * from "./log"
-export { httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor"
+export { buildGotProxyAgent, httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor"
 export * from "./promise"
 export { parseValidEnvVarUrl } from "./envUtil"
 
@@ -83,6 +86,21 @@ export function removePassword(input: string): string {
 
 const SENSITIVE_ENV_KEY_RE = /KEY|TOKEN|SECRET|PASSWORD|PASS|CREDENTIAL|CSC/i
 
+/**
+ * Returns a copy of the environment with sensitive keys removed.
+ * Use this when building the environment for child processes that do not
+ * need signing credentials, tokens, or passwords (e.g. package managers).
+ */
+export function stripSensitiveEnvVars(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  const out: NodeJS.ProcessEnv = {}
+  for (const [k, v] of Object.entries(env)) {
+    if (isValidKey(k) && !SENSITIVE_ENV_KEY_RE.test(k)) {
+      out[k] = v
+    }
+  }
+  return out
+}
+
 export function filterSensitiveEnv(env: Record<string, string | undefined>): Record<string, string | undefined> {
   const out: Record<string, string | undefined> = {}
   for (const [k, v] of Object.entries(env)) {
@@ -97,7 +115,7 @@ function getProcessEnv(env: Record<string, string | undefined> | Nullish): NodeJ
   }
 
   const finalEnv = {
-    ...(env || process.env),
+    ...(env == null ? process.env : env),
   }
 
   // without LC_CTYPE dpkg can returns encoded unicode symbols
@@ -320,10 +338,6 @@ export class ExecError extends Error {
 
 export function use<T, R>(value: T | Nullish, task: (value: T) => R): R | null {
   return value == null ? null : task(value)
-}
-
-export function isEmptyOrSpaces(s: string | Nullish): s is "" | Nullish {
-  return s == null || s.trim().length === 0
 }
 
 export function isTokenCharValid(token: string) {

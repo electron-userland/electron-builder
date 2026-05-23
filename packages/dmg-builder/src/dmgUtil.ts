@@ -1,5 +1,6 @@
 import { DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
 import { downloadBuilderToolset } from "app-builder-lib/out/util/electronGet"
+import { withToolsetLock } from "app-builder-lib/out/util/toolsetLock"
 import { exec, executeFinally, exists, InvalidConfigurationError, isEmptyOrSpaces, log, TmpDir } from "builder-util"
 import { stat } from "fs/promises"
 import { writeFile } from "fs-extra"
@@ -210,12 +211,14 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
   await writeFile(settingsFile, JSON.stringify(settings, null, 2))
 
   const dmgbuild = await getDmgVendorPath()
-  await exec(dmgbuild, ["-s", settingsFile, path.basename(volumePath), artifactPath], {
-    env: {
-      ...process.env,
-      PYTHONIOENCODING: "utf8",
-    },
-  })
+  await withToolsetLock(() =>
+    exec(dmgbuild, ["-s", settingsFile, path.basename(volumePath), artifactPath], {
+      env: {
+        ...process.env,
+        PYTHONIOENCODING: "utf8",
+      },
+    })
+  )
 
   // effectiveOptionComputed, when present, is purely for verifying result during test execution
   return (

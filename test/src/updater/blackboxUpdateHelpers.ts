@@ -433,7 +433,8 @@ export async function runTest(context: TestContext, target: string, packageManag
 
   const tmpDir = new TmpDir("auto-update")
   const outDirs: ApplicationUpdatePaths[] = []
-  await doBuild(expect, outDirs, target, arch, tmpDir, process.platform === "win32" || (target === "nsis" && vm != null), { toolsets })
+  const shouldRunWindowsTests = process.platform === "win32" || (target === "nsis" && vm != null)
+  await doBuild(expect, outDirs, target, arch, tmpDir, shouldRunWindowsTests, { toolsets })
 
   const oldAppDir = outDirs[0]
   const newAppDir = outDirs[1]

@@ -158,17 +158,23 @@ jobs:
           docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
           docker image ls -a
 
+      - name: Write Docker secrets env file
+        run: |
+          printf 'CSC_KEY_PASSWORD=%s\n' "$CSC_KEY_PASSWORD_SECRET" > "${{ runner.temp }}/docker-secrets.env"
+          chmod 600 "${{ runner.temp }}/docker-secrets.env"
+        env:
+          CSC_KEY_PASSWORD_SECRET: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+
       - name: Run shard in docker
         run: |
           echo $TEST_RUNNER_IMAGE_TAG
           pnpm test-linux
         env:
-          CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
-          ADDITIONAL_DOCKER_ARGS: "-e CSC_KEY_PASSWORD=${{ secrets.WIN_CSC_KEY_PASSWORD }} -e VITEST_SHARD_INDEX=${{ matrix.shard }} -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}"
+          ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SHARD_INDEX=${{ matrix.shard }} -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}"
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
 
       - name: Upload smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
         if: always()
         with:
           name: vitest-smart-cache-${{ matrix.platform }}-${{ matrix.shard }}
@@ -217,7 +223,7 @@ jobs:
           VITEST_SMART_CACHE_FILE: ${{ github.workspace }}\test\vitest-scripts\_vitest-smart-cache.json
 
       - name: Upload smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
         if: always()
         with:
           name: vitest-smart-cache-${{ matrix.platform }}-${{ matrix.shard }}
@@ -263,7 +269,7 @@ jobs:
           # CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
 
       - name: Upload smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
         if: always()
         with:
           name: vitest-smart-cache-${{ matrix.platform }}-${{ matrix.shard }}
@@ -317,6 +323,18 @@ jobs:
           docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
           docker image ls -a
 
+      - name: Write Docker secrets env file
+        run: |
+          printf 'KEYGEN_TOKEN=%s\nBITBUCKET_TOKEN=%s\nGH_TOKEN=%s\nGITLAB_TOKEN=%s\n' \
+            "$KEYGEN_TOKEN_SECRET" "$BITBUCKET_TOKEN_SECRET" "$GH_TOKEN_SECRET" "$GITLAB_TOKEN_SECRET" \
+            > "${{ runner.temp }}/docker-secrets.env"
+          chmod 600 "${{ runner.temp }}/docker-secrets.env"
+        env:
+          KEYGEN_TOKEN_SECRET: ${{ secrets.KEYGEN_TOKEN }}
+          BITBUCKET_TOKEN_SECRET: ${{ secrets.BITBUCKET_TOKEN }}
+          GH_TOKEN_SECRET: ${{ secrets.GH_TOKEN }}
+          GITLAB_TOKEN_SECRET: ${{ secrets.GITLAB_TOKEN }}
+
       - name: Test
         run: |
           echo $TEST_RUNNER_IMAGE_TAG
@@ -324,10 +342,10 @@ jobs:
         env:
           TEST_FILES: nsisUpdaterTest,PublishManagerTest,differentialUpdateTest,GitlabPublisherTest,GitlabPublisher.integration.test
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
-          ADDITIONAL_DOCKER_ARGS: "-e KEYGEN_TOKEN=${{ secrets.KEYGEN_TOKEN }} -e BITBUCKET_TOKEN=${{ secrets.BITBUCKET_TOKEN }} -e GH_TOKEN=${{ secrets.GH_TOKEN }} -e GITLAB_TOKEN=${{ secrets.GITLAB_TOKEN }} -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}"
+          ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}"
 
       - name: Upload smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
         if: always()
         with:
           name: vitest-smart-cache-updater
@@ -390,7 +408,7 @@ jobs:
           RESET_VITEST_SHARD_CACHE: ${{ inputs.reset-vitest-smart-cache }}
 
       - name: Upload smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
         if: always()
         with:
           name: vitest-smart-cache-snap-${{ matrix.core }}
@@ -454,7 +472,7 @@ jobs:
             -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}
 
       - name: Upload smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
         if: always()
         with:
           name: vitest-smart-cache-e2e-${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST }}
@@ -552,7 +570,7 @@ jobs:
           failOnError: false
 
       - name: Upload merged cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
         with:
           name: vitest-smart-cache-merged
           path: merged-cache/_vitest-smart-cache.json
