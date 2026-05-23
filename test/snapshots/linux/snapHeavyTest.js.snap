@@ -254,7 +254,6 @@ exports[`snap heavy > snap full (core18 armhf) 1`] = `
     "se-wo-template": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/arm-linux-gnueabihf:$SNAP/usr/lib/arm-linux-gnueabihf:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/arm-linux-gnueabihf:$SNAP/usr/lib/arm-linux-gnueabihf",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -328,7 +327,6 @@ exports[`snap heavy > snap full (core20 armhf) 1`] = `
     "se-wo-template": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/arm-linux-gnueabihf:$SNAP/usr/lib/arm-linux-gnueabihf:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/arm-linux-gnueabihf:$SNAP/usr/lib/arm-linux-gnueabihf",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -402,7 +400,6 @@ exports[`snap heavy > snap full (core22 armhf) 1`] = `
     "se-wo-template": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/arm-linux-gnueabihf:$SNAP/usr/lib/arm-linux-gnueabihf:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/arm-linux-gnueabihf:$SNAP/usr/lib/arm-linux-gnueabihf",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -539,13 +536,23 @@ exports[`snap heavy > snap full (core24) 1`] = `
 }
 `;
 
+exports[`snap heavy > snap full (core24) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "se-wo-template_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
 exports[`snap heavy > snap install+launch (core18) 1`] = `
 {
   "apps": {
     "se-wo-template": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -619,7 +626,6 @@ exports[`snap heavy > snap install+launch (core20) 1`] = `
     "se-wo-template": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -693,7 +699,6 @@ exports[`snap heavy > snap install+launch (core22) 1`] = `
     "se-wo-template": {
       "command": "command.sh",
       "environment": {
-        "DISABLE_WAYLAND": "1",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
