@@ -1,6 +1,6 @@
 import * as os from "os"
 import * as path from "path"
-import { afterEach, beforeEach, describe, test, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { getBin, getBinFromCustomLoc, getBinFromUrl } from "app-builder-lib/src/binDownload"
 import { downloadBuilderToolset } from "app-builder-lib/src/util/electronGet"
 
@@ -84,6 +84,18 @@ describe.sequential("binDownload", () => {
       expect(downloadBuilderToolset).toHaveBeenCalledOnce()
       const call = vi.mocked(downloadBuilderToolset).mock.calls[0][0]
       expect(call.overrideUrl).toBe("https://override.example.com/custom-path")
+    })
+
+    describe("rejects unsafe filenameWithExt", () => {
+      test.each([
+        ["Unix traversal", "../x"],
+        ["Windows traversal", "..\\x"],
+        ["Unix path separator", "a/b"],
+        ["Windows path separator", "a\\b"],
+        ["embedded traversal", "foo/../bar"],
+      ])("%s — %s", (_label, filename) => {
+        expect(() => getBinFromUrl("some-release", filename, "fakechecksum")).toThrow(/unsafe filenameWithExt/)
+      })
     })
 
     test("deduplicates concurrent calls for the same artifact", async ({ expect }) => {
