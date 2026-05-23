@@ -29,7 +29,7 @@ export { DebugLogger } from "./DebugLogger"
 export * from "./log"
 export { buildGotProxyAgent, httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor"
 export * from "./promise"
-export { parseValidEnvVarUrl } from "./envUtil"
+export * from "./envUtil"
 
 export { asArray } from "builder-util-runtime"
 export * from "./fs"
