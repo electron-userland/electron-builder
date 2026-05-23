@@ -1,4 +1,5 @@
-import { Arch, isEmptyOrSpaces, log } from "builder-util"
+import { Arch } from "builder-util"
+import { resolveEnvToolsetPath } from "../util/envPath"
 import { Nullish } from "builder-util-runtime"
 import * as os from "os"
 import * as path from "path"
@@ -53,9 +54,9 @@ export async function getSignToolPath(winCodeSign: ToolsetConfig["winCodeSign"] 
     return { path: "osslsigncode" }
   }
 
-  const result = process.env.SIGNTOOL_PATH?.trim()
-  if (result) {
-    return { path: path.resolve(result) }
+  const signToolPath = resolveEnvToolsetPath("SIGNTOOL_PATH")
+  if (signToolPath != null) {
+    return { path: signToolPath }
   }
 
   if (isWin) {
@@ -69,9 +70,9 @@ export async function getSignToolPath(winCodeSign: ToolsetConfig["winCodeSign"] 
 }
 
 export async function getWindowsKitsBundle({ winCodeSign, arch }: { winCodeSign: CodeSignVersionKey | Nullish; arch: Arch }) {
-  const overridePath = process.env.ELECTRON_BUILDER_WINDOWS_KITS_PATH
-  if (!isEmptyOrSpaces(overridePath)) {
-    return { kit: overridePath, appxAssets: overridePath }
+  const kitPath = resolveEnvToolsetPath("ELECTRON_BUILDER_WINDOWS_KITS_PATH")
+  if (kitPath != null) {
+    return { kit: kitPath, appxAssets: kitPath }
   }
 
   const useLegacy = winCodeSign == null || winCodeSign === "0.0.0"
@@ -104,9 +105,9 @@ async function getWindowsSignToolExe({ winCodeSign, arch }: { winCodeSign: CodeS
 }
 
 async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish) {
-  const overridePath = process.env.ELECTRON_BUILDER_OSSL_SIGNCODE_PATH
-  if (!isEmptyOrSpaces(overridePath)) {
-    return { path: overridePath }
+  const osslSigncodePath = resolveEnvToolsetPath("ELECTRON_BUILDER_OSSL_SIGNCODE_PATH")
+  if (osslSigncodePath != null) {
+    return { path: osslSigncodePath }
   }
   if (process.platform === "win32" || process.env.USE_SYSTEM_OSSLSIGNCODE === "true") {
     return { path: "osslsigncode" }
@@ -141,9 +142,9 @@ export async function getRceditBundle(winCodeSign: ToolsetConfig["winCodeSign"] 
   const ia32 = "rcedit-ia32.exe"
   const x86 = "rcedit-x86.exe"
   const x64 = "rcedit-x64.exe"
-  const overridePath = process.env.ELECTRON_BUILDER_RCEDIT_PATH?.trim()
-  if (!isEmptyOrSpaces(overridePath)) {
-    log.debug({ searchFiles: [x86, x64], overridePath }, `Using RCEdit from ELECTRON_BUILDER_RCEDIT_PATH`)
+  const rcedit = resolveEnvToolsetPath("ELECTRON_BUILDER_RCEDIT_PATH")
+  if (rcedit != null) {
+    const overridePath = rcedit
     return { x86: path.join(overridePath, x86), x64: path.join(overridePath, x64) }
   }
   if (winCodeSign === "0.0.0" || winCodeSign == null) {

@@ -551,7 +551,7 @@ async function checkLinuxResult(expect: ExpectStatic, outDir: string, packager: 
   const { member: controlMember, tarArgs: controlArgs } = await resolveDebMember(packagePath, "control.tar.")
   const control = parseDebControl(
     (
-      await execShell(`${await getArExecutable()} p '${packagePath}' ${controlMember} | ${await getTarExecutable()} -x ${controlArgs} --to-stdout ./control`, {
+      await execShell(`'${await getArExecutable()}' p '${packagePath}' ${controlMember} | '${await getTarExecutable()}' -x ${controlArgs} --to-stdout ./control`, {
         maxBuffer: 10 * 1024 * 1024,
       })
     ).stdout
@@ -747,7 +747,7 @@ export async function getArExecutable() {
 
 export async function resolveDebMember(debFile: string, memberPrefix: "data.tar." | "control.tar."): Promise<{ member: string; tarArgs: string }> {
   const arExecutable = await getArExecutable()
-  const { stdout: memberList, stderr } = await execShell(`${arExecutable} t '${debFile}'`, { maxBuffer: 1024 * 1024 })
+  const { stdout: memberList, stderr } = await execShell(`'${arExecutable}' t '${debFile}'`, { maxBuffer: 1024 * 1024 })
   if (stderr.length > 0) {
     throw new Error(`Failed to list members of ${debFile}: ${stderr}`)
   }
@@ -770,7 +770,7 @@ export async function readDebCompression(debFile: string): Promise<string> {
 async function getContents(packageFile: string) {
   const { member, tarArgs } = await resolveDebMember(packageFile, "data.tar.")
   const arExecutable = await getArExecutable()
-  const result = await execShell(`${arExecutable} p '${packageFile}' ${member} | ${await getTarExecutable()} -t ${tarArgs}`, {
+  const result = await execShell(`'${arExecutable}' p '${packageFile}' ${member} | '${await getTarExecutable()}' -t ${tarArgs}`, {
     maxBuffer: 10 * 1024 * 1024,
     env: {
       ...process.env,

@@ -1,8 +1,9 @@
-import { Arch, isEmptyOrSpaces } from "builder-util"
+import { Arch } from "builder-util"
 import * as path from "path"
 import { getBinFromUrl } from "../binDownload"
-import { downloadBuilderToolset } from "../util/electronGet"
 import { ToolsetConfig } from "../configuration"
+import { downloadBuilderToolset } from "../util/electronGet"
+import { resolveEnvToolsetPath } from "../util/envPath"
 
 const fpmChecksums = {
   "fpm-1.17.0-ruby-3.4.3-darwin-arm64.7z": "6cc6d4785875bc7d79bdf52ca146080a4c300e1d663376ae79615fb548030ede",
@@ -31,8 +32,9 @@ const linuxToolsMacChecksums = {
 } as const
 
 export async function getLinuxToolsPath(): Promise<string> {
-  if (!isEmptyOrSpaces(process.env.LINUX_TOOLS_MAC_PATH)) {
-    return path.resolve(process.env.LINUX_TOOLS_MAC_PATH.trim())
+  const envPath = resolveEnvToolsetPath("LINUX_TOOLS_MAC_PATH")
+  if (envPath != null) {
+    return envPath
   }
   const arch = process.arch === "arm64" ? "arm64" : "x86_64"
   const toolsetVersion = "1.0.0"
@@ -58,8 +60,9 @@ export async function getLinuxToolsMacToolset() {
 }
 
 export async function getFpmPath() {
-  if (!isEmptyOrSpaces(process.env.CUSTOM_FPM_PATH)) {
-    return path.resolve(process.env.CUSTOM_FPM_PATH.trim())
+  const customFpmPath = resolveEnvToolsetPath("CUSTOM_FPM_PATH")
+  if (customFpmPath != null) {
+    return customFpmPath
   }
   const exec = "fpm"
   if (process.platform === "win32" || process.env.USE_SYSTEM_FPM === "true") {
@@ -94,27 +97,28 @@ export async function getAppImageTools(appimageToolVersion: ToolsetConfig["appim
     )
   }
 
-  const override = process.env.APPIMAGE_TOOLS_PATH?.trim()
-  const filenameWithExt = "appimage-tools-runtime-20251108.tar.gz"
-  let artifactPath =
-    override ||
-    (await downloadBuilderToolset({
-      releaseName: `appimage@${appimageToolVersion}`,
-      filenameWithExt,
-      checksums: {
-        [filenameWithExt]: appimageChecksums[appimageToolVersion][filenameWithExt],
-      },
-      githubOrgRepo: "electron-userland/electron-builder-binaries",
-    }))
-
-  artifactPath = path.resolve(artifactPath)
-
   const runtimeArch = targetArch === Arch.armv7l ? "arm32" : targetArch === Arch.arm64 ? "arm64" : targetArch === Arch.ia32 ? "ia32" : "x64"
 
-  return {
-    mksquashfs: path.join(artifactPath, "mksquashfs"),
-    desktopFileValidate: path.join(artifactPath, "desktop-file-validate"),
-    runtime: path.join(artifactPath, "runtimes", `runtime-${runtimeArch}`),
-    runtimeLibraries: path.join(artifactPath, "lib", runtimeArch),
+  const getPaths = (artifactPath: string) => ({
+    mksquashfs: path.resolve(artifactPath, "mksquashfs"),
+    desktopFileValidate: path.resolve(artifactPath, "desktop-file-validate"),
+    runtime: path.resolve(artifactPath, "runtimes", `runtime-${runtimeArch}`),
+    runtimeLibraries: path.resolve(artifactPath, "lib", runtimeArch),
+  })
+
+  const filenameWithExt = "appimage-tools-runtime-20251108.tar.gz"
+  const envPath = resolveEnvToolsetPath("APPIMAGE_TOOLS_PATH")
+  if (envPath != null) {
+    return getPaths(envPath)
   }
+  const artifact = await downloadBuilderToolset({
+    releaseName: `appimage@${appimageToolVersion}`,
+    filenameWithExt,
+    checksums: {
+      [filenameWithExt]: appimageChecksums[appimageToolVersion][filenameWithExt],
+    },
+    githubOrgRepo: "electron-userland/electron-builder-binaries",
+  })
+
+  return getPaths(artifact)
 }
