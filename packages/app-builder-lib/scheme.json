@@ -6994,7 +6994,7 @@
             {
               "enum": [
                 "0.0.0",
-                "1.2.0"
+                "1.2.1"
               ],
               "type": "string"
             },
@@ -7003,7 +7003,7 @@
             }
           ],
           "default": "0.0.0",
-          "description": "`nsis` bundle version to use for NSIS installer compilation.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=nsis&expanded=true\n0.0.0 - legacy toolset (nsis-3.0.4.1 + nsis-resources-3.4.1)\n\nBetas:\n1.2.0 - unified bundle (makensis + plugins in one archive, wrapper scripts auto-set NSISDIR)"
+          "description": "`nsis` bundle version to use for NSIS installer compilation.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=nsis&expanded=true\n0.0.0 - legacy toolset (nsis-3.0.4.1 + nsis-resources-3.4.1)\n\nBetas:\n1.2.1 - unified bundle (makensis + plugins in one archive, wrapper scripts auto-set NSISDIR)"
         },
         "winCodeSign": {
           "anyOf": [
