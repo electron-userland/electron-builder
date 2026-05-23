@@ -1,9 +1,10 @@
-import { Arch, copyFile, dirSize, isEmptyOrSpaces, log } from "builder-util"
+import { Arch, copyFile, dirSize, log } from "builder-util"
 import { PackageFileInfo } from "builder-util-runtime"
 import * as fs from "fs/promises"
 import * as path from "path"
 import * as zlib from "zlib"
 import { getBinFromCustomLoc, getBinFromUrl } from "../../binDownload"
+import { resolveEnvToolsetPath } from "../../util/envPath"
 import { getTemplatePath } from "../../util/pathManager"
 import { NsisOptions } from "./nsisOptions"
 import { NsisTarget } from "./NsisTarget"
@@ -19,13 +20,12 @@ export const NsisTargetOptions = (() => {
   }
 })()
 
-export const NSIS_PATH = () => {
-  const custom = process.env.ELECTRON_BUILDER_NSIS_DIR?.trim()
-  if (!isEmptyOrSpaces(custom)) {
-    log.info({ path: custom }, "using local nsis")
-    return Promise.resolve(custom)
+export const NSIS_PATH = async () => {
+  const envPath = resolveEnvToolsetPath("ELECTRON_BUILDER_NSIS_DIR")
+  if (envPath != null) {
+    return envPath
   }
-  return NsisTargetOptions.then((options: NsisOptions) => {
+  return await NsisTargetOptions.then((options: NsisOptions) => {
     if (options.customNsisBinary) {
       const { checksum, url, version } = options.customNsisBinary
       if (checksum && url) {
@@ -38,13 +38,12 @@ export const NSIS_PATH = () => {
   })
 }
 
-export const NSIS_RESOURCES_PATH = () => {
-  const custom = process.env.ELECTRON_BUILDER_NSIS_RESOURCES_DIR?.trim()
-  if (!isEmptyOrSpaces(custom)) {
-    log.info({ path: custom }, "using local nsis-resources")
-    return Promise.resolve(custom)
+export const NSIS_RESOURCES_PATH = async () => {
+  const envPath = resolveEnvToolsetPath("ELECTRON_BUILDER_NSIS_RESOURCES_DIR")
+  if (envPath != null) {
+    return envPath
   }
-  return NsisTargetOptions.then((options: NsisOptions) => {
+  return await NsisTargetOptions.then((options: NsisOptions) => {
     if (options.customNsisResources) {
       const { checksum, url, version } = options.customNsisResources
       return getBinFromCustomLoc("nsis-resources", version, url, checksum)
