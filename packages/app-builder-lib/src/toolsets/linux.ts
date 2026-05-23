@@ -1,4 +1,4 @@
-import { Arch } from "builder-util"
+import { Arch, isEmptyOrSpaces } from "builder-util"
 import * as path from "path"
 import { getBinFromUrl } from "../binDownload"
 import { downloadBuilderToolset } from "../util/electronGet"
@@ -24,13 +24,42 @@ export const appimageChecksums = {
   },
 } as const
 
-export function getLinuxToolsPath() {
-  return getBinFromUrl("linux-tools-mac-10.12.3", "linux-tools-mac-10.12.3.7z", "58ff69a6f5082c78b809b72c929f5f2a82e6c3974c014bd1382fc87d9da1075c")
+// no legacy toolset as macos arm64 BSD gtar/ar/lzip are not compatible with linux targets, so we always use newer toolset on macos for linux archives
+const linuxToolsMacChecksums = {
+  "linux-tools-mac-darwin-arm64.tar.gz": "204e76f08364352edb28a6a4be87e8f9bd9340213865d9a0d1c664aa46fcf053",
+  "linux-tools-mac-darwin-x86_64.tar.gz": "7ee26dfbd0d2a4c2c83b55a9416a30cc84876eef01c6497ca49bb016a190c726",
+} as const
+
+export async function getLinuxToolsPath(): Promise<string> {
+  if (!isEmptyOrSpaces(process.env.LINUX_TOOLS_MAC_PATH)) {
+    return path.resolve(process.env.LINUX_TOOLS_MAC_PATH.trim())
+  }
+  const arch = process.arch === "arm64" ? "arm64" : "x86_64"
+  const toolsetVersion = "1.0.0"
+  const filename: keyof typeof linuxToolsMacChecksums = `linux-tools-mac-darwin-${arch}.tar.gz`
+  return await downloadBuilderToolset({
+    releaseName: `linux-tools-mac@${toolsetVersion}`,
+    filenameWithExt: filename,
+    checksums: {
+      [filename]: linuxToolsMacChecksums[filename],
+    },
+    githubOrgRepo: "electron-userland/electron-builder-binaries",
+  })
+}
+
+export async function getLinuxToolsMacToolset() {
+  const linuxToolsPath = await getLinuxToolsPath()
+  const bin = (pkg: string) => path.join(linuxToolsPath, "bin", pkg)
+  return {
+    ar: bin("ar"),
+    lzip: bin("lzip"),
+    gtar: bin("gtar"),
+  }
 }
 
 export async function getFpmPath() {
-  if (process.env.CUSTOM_FPM_PATH != null) {
-    return path.resolve(process.env.CUSTOM_FPM_PATH)
+  if (!isEmptyOrSpaces(process.env.CUSTOM_FPM_PATH)) {
+    return path.resolve(process.env.CUSTOM_FPM_PATH.trim())
   }
   const exec = "fpm"
   if (process.platform === "win32" || process.env.USE_SYSTEM_FPM === "true") {
