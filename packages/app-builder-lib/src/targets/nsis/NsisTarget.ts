@@ -638,11 +638,13 @@ export class NsisTarget extends Target {
     // }
 
     if (makensis.psScript != null) {
-      // Encode the full invocation as UTF-16LE base64 so PowerShell receives it verbatim,
-      // avoiding CMD.exe's mangling of Windows paths (drive-letter colons in -D defines).
-      const quotedScript = `'${makensis.psScript.replace(/'/g, "''")}'`
-      const quotedArgs = args.map(a => `'${a.replace(/'/g, "''")}'`).join(" ")
-      const encodedCommand = Buffer.from(`& ${quotedScript} ${quotedArgs}`, "utf16le").toString("base64")
+      // Invoke makensis.exe via `powershell -EncodedCommand` + `--% ` (stop-parsing operator).
+      // --% passes everything verbatim to CreateProcess / CommandLineToArgvW, sidestepping:
+      //   - CMD.exe mangling drive-letter colons in -D defines (the .cmd wrapper bug)
+      //   - PowerShell 5.1 not re-quoting embedded double-quotes via @args (the .ps1 wrapper bug)
+      const quotedExe = `'${makensis.psScript.replace(/'/g, "''")}'`
+      const rawArgs = args.map(windowsQuoteArg).join(" ")
+      const encodedCommand = Buffer.from(`& ${quotedExe} --% ${rawArgs}`, "utf16le").toString("base64")
       await spawnAndWrite("powershell.exe", ["-NonInteractive", "-ExecutionPolicy", "Bypass", "-EncodedCommand", encodedCommand], script, {
         env: { ...process.env, ...makensis.env },
         cwd: nsisTemplatesDir,
@@ -824,6 +826,32 @@ async function ensureNotBusy(outFile: string): Promise<void> {
   }
 
   await isBusy(false)
+}
+
+// Standard Windows CommandLineToArgvW quoting — used when passing args via PowerShell --% operator
+function windowsQuoteArg(arg: string): string {
+  if (!/[ \t\n\v"\\]/.test(arg)) {
+    return arg
+  }
+  let result = '"'
+  let i = 0
+  while (i <= arg.length) {
+    let numBackslashes = 0
+    while (i < arg.length && arg[i] === "\\") {
+      i++
+      numBackslashes++
+    }
+    if (i === arg.length) {
+      result += "\\".repeat(numBackslashes * 2)
+      break
+    } else if (arg[i] === '"') {
+      result += "\\".repeat(numBackslashes * 2 + 1) + '"'
+    } else {
+      result += "\\".repeat(numBackslashes) + arg[i]
+    }
+    i++
+  }
+  return result + '"'
 }
 
 async function createPackageFileInfo(file: string): Promise<PackageFileInfo> {
