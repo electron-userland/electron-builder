@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "//": "do not wrap into single quotes - windows doesn't unwrap arg in this case",
-    "compile": "tsc --build",
+    "compile": "pnpm ci:test:generate && tsc --build",
     "lint": "eslint packages test/src --ext .ts,.js",
     "lint-deps": "node ./scripts/checkDeps.js",
     "pretest": "pnpm lint-deps && pnpm lint",

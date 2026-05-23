@@ -14,7 +14,7 @@ import type * as _DifferentialWinSuite from "../src/updater/differentialUpdateWi
 import type * as _BlackboxWinSuite from "../src/updater/blackboxUpdateWinSuite"
 
 const WIN_CODE_SIGN_VERSIONS: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0"]
-const NSIS_VERSIONS: ToolsetConfig["nsis"][] = ["0.0.0", "1.2.0"]
+const NSIS_VERSIONS: ToolsetConfig["nsis"][] = ["0.0.0", "1.2.1"]
 
 interface WindowsSuiteConfig extends SuiteConfig {
   readonly winCodeSignVersions?: ToolsetConfig["winCodeSign"][]
