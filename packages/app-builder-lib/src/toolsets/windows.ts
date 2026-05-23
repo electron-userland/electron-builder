@@ -171,7 +171,7 @@ export const nsisChecksums = {
     // legacy — uses getLegacyNsisBin() / getLegacyNsisResourcesBin()
   },
   "1.2.0": {
-    "nsis-bundle-1.2.0.tar.gz": "d71542d91b9d35ce434af0cd129cbcc6ac780b91a114a5baf574ebe4c7868602",
+    "nsis-bundle-3.12.tar.gz": "d71542d91b9d35ce434af0cd129cbcc6ac780b91a114a5baf574ebe4c7868602",
   },
 } as const
 
@@ -185,10 +185,12 @@ async function getNsisBundlePath(nsis: ToolsetConfig["nsis"], customBinary?: Cus
   if (nsis === "0.0.0" || nsis == null) {
     return getLegacyNsisBin()
   }
+  const nsisVersion = "3.12"
+  const file = `nsis-bundle-${nsisVersion}.tar.gz`
   return downloadBuilderToolset({
-    releaseName: `nsis-bundle-${nsis}`,
-    filenameWithExt: `nsis-bundle-${nsis}.tar.gz`,
-    checksums: { [`nsis-bundle-${nsis}.tar.gz`]: nsisChecksums[nsis][`nsis-bundle-${nsis}.tar.gz`] },
+    releaseName: `nsis@${nsis}`,
+    filenameWithExt: file,
+    checksums: { [file]: nsisChecksums[nsis][file] },
   })
 }
 
