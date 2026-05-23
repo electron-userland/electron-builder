@@ -32,6 +32,7 @@ export { asArray } from "builder-util-runtime"
 export * from "./fs"
 
 export { deepAssign } from "./deepAssign"
+export { loadCscLink, decodeCscLinkBase64, resolveCscLinkPath } from "./cscLink"
 
 export { getPath7x, getPath7za } from "./7za"
 

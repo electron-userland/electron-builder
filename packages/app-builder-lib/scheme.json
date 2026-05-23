@@ -6025,10 +6025,6 @@
           "description": "Target architecture for the remote build. Accepts a single snapcraft arch string\n(e.g. `\"amd64\"`, `\"arm64\"`, `\"armhf\"`).\n\nTo build for multiple architectures, configure electron-builder's top-level `arch` option\n(e.g. `arch: [\"x64\", \"arm64\"]`) — each arch spawns a separate remote-build job on Launchpad,\nkeeping the one-build-per-artifact contract intact.",
           "type": "string"
         },
-        "cscLink": {
-          "description": "Snapcraft Store credentials — a base64-encoded credentials string or a file path.\nAccepts the same formats as `WIN_CSC_LINK` / `CSC_LINK` on Windows and macOS:\nbase64 data, absolute/relative/`~/` file paths, and `file://` URIs.\nRelative paths are resolved against the build resources directory.\n\nGenerate a credentials string for CI:\n```sh\nexport SNAP_CSC_LINK=$(snapcraft export-login - | base64 -w0)\n```\n\nThe `SNAP_CSC_LINK` environment variable is the CI-friendly alternative when you\ncannot embed credentials in the build config.",
-          "type": "string"
-        },
         "enabled": {
           "description": "Whether to enable remote build on Launchpad. Must be set explicitly to `true` to opt in.",
           "type": "boolean"
@@ -7684,6 +7680,10 @@
             }
           ],
           "description": "**[Beta]** Options for building a core24 snap. Uses the snapcraft CLI directly (not the app-builder binary).\nInherits desktop-entry fields from `CommonLinuxOptions` and publish config from `TargetSpecificOptions`."
+        },
+        "cscLink": {
+          "description": "Snapcraft Store credentials — base64-encoded credentials string or file path.\nAccepts the same formats as `WIN_CSC_LINK` / `CSC_LINK`: base64 data,\nabsolute/relative/`~/` file paths, and `file://` URIs.\nRelative paths are resolved against the build resources directory.\n\nInjected as `SNAPCRAFT_STORE_CREDENTIALS` into every snapcraft subprocess\n(all cores, all build modes, and `snapcraft upload`).\n\nThe `SNAP_CSC_LINK` environment variable is the CI-friendly alternative.\nGenerate with: `snapcraft export-login - | base64 -w0`",
+          "type": "string"
         },
         "custom": {
           "anyOf": [

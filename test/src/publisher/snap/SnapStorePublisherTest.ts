@@ -20,7 +20,7 @@ function makeTask(file = "/tmp/app_1.0.0_amd64.snap"): UploadTask {
 }
 
 function makePublisher(channels?: SnapStoreOptions["channels"], cscLink?: string): SnapStorePublisher {
-  return new SnapStorePublisher(makeContext(), { provider: "snapStore", channels, cscLink })
+  return new SnapStorePublisher(makeContext(), { provider: "snapStore", channels }, { cscLink, resourcesDir: "/resources" })
 }
 
 beforeEach(() => {

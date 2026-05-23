@@ -1,7 +1,5 @@
-import { exec, spawn } from "builder-util"
+import { exec, loadCscLink, spawn } from "builder-util"
 import { SnapStoreOptions } from "builder-util-runtime/out/publishOptions"
-import { promises as fs } from "fs"
-import * as os from "os"
 import * as path from "path"
 import { PublishContext, UploadTask } from "."
 import { Publisher } from "./publisher"
@@ -10,8 +8,12 @@ export class SnapStorePublisher extends Publisher {
   readonly providerName = "snapStore"
 
   constructor(
-    context: PublishContext,
-    private options: SnapStoreOptions
+    readonly context: PublishContext,
+    private readonly options: SnapStoreOptions,
+    private readonly credentials: {
+      cscLink: string | undefined
+      resourcesDir: string
+    }
   ) {
     super(context)
   }
@@ -21,7 +23,7 @@ export class SnapStorePublisher extends Publisher {
 
     await checkSnapcraft()
 
-    const credEnv = await resolvePublishCredentials(this.options.cscLink)
+    const credEnv = await resolveSnapCredentials(this.credentials.cscLink, this.credentials.resourcesDir)
 
     let channels = this.options.channels ?? ["edge"]
     if (typeof channels === "string") {
@@ -44,21 +46,13 @@ export class SnapStorePublisher extends Publisher {
   }
 }
 
-async function resolvePublishCredentials(cscLink: string | undefined): Promise<Record<string, string>> {
+export async function resolveSnapCredentials(cscLink: string | undefined, resourcesDir: string | undefined): Promise<Record<string, string>> {
   const link = (cscLink ?? process.env.SNAP_CSC_LINK)?.trim()
   if (!link) {
     return {}
   }
 
-  let credentials: string
-  const isBase64 = link.length > 2048 || link.endsWith("=") || /^data:.*?;base64,/.test(link)
-  if (isBase64) {
-    credentials = Buffer.from(link.replace(/^data:.*?;base64,/, ""), "base64").toString("utf8")
-  } else {
-    const expanded = link.startsWith("~/") ? path.join(os.homedir(), link.slice(2)) : link
-    credentials = await fs.readFile(expanded, "utf8")
-  }
-
+  const credentials = await loadCscLink(link, resourcesDir)
   const trimmed = credentials.trim()
   if (!trimmed) {
     throw new Error("Resolved snap store credentials are empty")
