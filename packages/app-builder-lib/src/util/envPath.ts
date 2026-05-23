@@ -7,7 +7,9 @@ export function validateEnvValue(envVarName: string): string | null {
     return null
   }
   const trimmed = rawValue.trim()
-  if (/[;&|`$<>"'\\]/.test(trimmed)) {
+  // On Windows, backslash is the native path separator and must not be rejected
+  const shellUnsafeChars = process.platform === "win32" ? /[;&|`$<>"']/ : /[;&|`$<>"'\\]/
+  if (shellUnsafeChars.test(trimmed)) {
     throw new Error(`${envVarName} contains shell-unsafe characters: ${trimmed}`)
   }
   return trimmed
