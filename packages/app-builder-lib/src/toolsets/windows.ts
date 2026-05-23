@@ -213,7 +213,8 @@ export async function getMakeNsisPath(nsis: ToolsetConfig["nsis"] | Nullish, cus
   }
   // The entrypoint scripts auto-set NSISDIR that pipes to the platform+arch makensis binaries, so no need to set NSISDIR explicitly
   if (process.platform === "win32") {
-    return { path: path.join(bundlePath, "makensis.cmd") }
+    // Use PowerShell -EncodedCommand to avoid CMD.exe mangling Windows paths (colons in -D defines)
+    return { path: "powershell.exe", psScript: path.join(bundlePath, "makensis.ps1") }
   }
   return { path: path.join(bundlePath, "makensis") }
 }

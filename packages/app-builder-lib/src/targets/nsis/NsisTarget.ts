@@ -637,10 +637,22 @@ export class NsisTarget extends Target {
     await ensureNotBusy(commands["OutFile"].replace(/"/g, ""))
     // }
 
-    await spawnAndWrite(makensis.path, args, script, {
-      env: { ...process.env, ...makensis.env },
-      cwd: nsisTemplatesDir,
-    })
+    if (makensis.psScript != null) {
+      // Encode the full invocation as UTF-16LE base64 so PowerShell receives it verbatim,
+      // avoiding CMD.exe's mangling of Windows paths (drive-letter colons in -D defines).
+      const quotedScript = `'${makensis.psScript.replace(/'/g, "''")}'`
+      const quotedArgs = args.map(a => `'${a.replace(/'/g, "''")}'`).join(" ")
+      const encodedCommand = Buffer.from(`& ${quotedScript} ${quotedArgs}`, "utf16le").toString("base64")
+      await spawnAndWrite("powershell.exe", ["-NonInteractive", "-ExecutionPolicy", "Bypass", "-EncodedCommand", encodedCommand], script, {
+        env: { ...process.env, ...makensis.env },
+        cwd: nsisTemplatesDir,
+      })
+    } else {
+      await spawnAndWrite(makensis.path, args, script, {
+        env: { ...process.env, ...makensis.env },
+        cwd: nsisTemplatesDir,
+      })
+    }
   }
 
   private async computeCommonInstallerScriptHeader(): Promise<string> {

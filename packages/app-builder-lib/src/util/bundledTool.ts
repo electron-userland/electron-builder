@@ -3,6 +3,8 @@ import { Nullish } from "builder-util-runtime"
 export interface ToolInfo {
   path: string
   env?: any
+  /** On Windows: if set, invoke via `powershell.exe -EncodedCommand` to avoid CMD argument mangling with paths */
+  psScript?: string
 }
 
 export function computeEnv(oldValue: string | Nullish, newValues: Array<string>): string {
