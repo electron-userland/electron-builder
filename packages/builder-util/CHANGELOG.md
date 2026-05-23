@@ -1,5 +1,11 @@
 # builder-util
 
+## 26.11.1
+
+### Patch Changes
+
+- Fix: force `electron/get`'s internal `got` downloader to respect http(s) proxies _[`#9754`](https://github.com/electron-userland/electron-builder/pull/9754) [`b8c6a15`](https://github.com/electron-userland/electron-builder/commit/b8c6a1545b61d3c285f28d39100e9c7ff4e4192f) [@mmaietta](https://github.com/mmaietta)_
+
 ## 26.11.0
 
 ### Patch Changes

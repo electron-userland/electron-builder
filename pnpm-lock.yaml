@@ -177,8 +177,8 @@ importers:
         specifier: ^1.0.5
         version: 1.0.5
       minimatch:
-        specifier: ^10.0.3
-        version: 10.0.3
+        specifier: ^10.2.5
+        version: 10.2.5
       node-forge:
         specifier: ^1.4.0
         version: 1.4.0
@@ -3083,14 +3083,6 @@ packages:
     peerDependenciesMeta:
       '@types/node':
         optional: true
-
-  '@isaacs/balanced-match@4.0.1':
-    resolution: {integrity: sha512-yzMTt9lEb8Gv7zRioUilSglI0c0smZ9k5D65677DLWLtWJaXIS3CqcGyUFByYKlnUj6TkjLVs54fBl6+TiGQDQ==}
-    engines: {node: 20 || >=22}
-
-  '@isaacs/brace-expansion@5.0.0':
-    resolution: {integrity: sha512-ZT55BDLV0yv0RBm2czMiZ+SqCGO7AvmOM3G/w2xhVPH+te0aKgFjmBvGlL1dH+ql2tgGO3MVrbb3jCKyvpgnxA==}
-    engines: {node: 20 || >=22}
 
   '@isaacs/cliui@8.0.2':
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
@@ -7655,10 +7647,6 @@ packages:
 
   minimalistic-assert@1.0.1:
     resolution: {integrity: sha512-UtJcAD4yEaGtjPezWuO9wC4nwUnVH/8/Im3yEHQP4b67cXlD/Qr9hdITCU1xDbSEXg2XKNaP8jsReV7vQd00/A==}
-
-  minimatch@10.0.3:
-    resolution: {integrity: sha512-IPZ167aShDZZUMdRk66cyQAW3qr0WzbHkPdMYa8bzZhlHhO3jALbKdxcaak7W9FfT2rZNpQuUu4Od7ILEpXSaw==}
-    engines: {node: 20 || >=22}
 
   minimatch@10.2.5:
     resolution: {integrity: sha512-MULkVLfKGYDFYejP07QOurDLLQpcjk7Fw+7jXS2R2czRQzR56yHRveU5NDJEOviH+hETZKSkIk5c+T23GjFUMg==}
@@ -13764,7 +13752,7 @@ snapshots:
     dependencies:
       commander: 5.1.0
       glob: 7.2.3
-      minimatch: 3.1.2
+      minimatch: 3.1.5
 
   '@electron/fuses@1.8.0':
     dependencies:
@@ -14040,12 +14028,6 @@ snapshots:
       iconv-lite: 0.7.0
     optionalDependencies:
       '@types/node': 22.13.17
-
-  '@isaacs/balanced-match@4.0.1': {}
-
-  '@isaacs/brace-expansion@5.0.0':
-    dependencies:
-      '@isaacs/balanced-match': 4.0.1
 
   '@isaacs/cliui@8.0.2':
     dependencies:
@@ -17031,7 +17013,7 @@ snapshots:
       js-yaml: 3.14.1
       json5: 2.2.3
       lodash: 4.17.21
-      minimatch: 3.1.2
+      minimatch: 3.1.5
       multimatch: 5.0.0
       please-upgrade-node: 3.2.0
       query-ast: 1.0.5
@@ -19421,10 +19403,6 @@ snapshots:
       webpack: 5.106.2(@swc/core@1.15.33)(lightningcss@1.32.0)(postcss@8.5.14)
 
   minimalistic-assert@1.0.1: {}
-
-  minimatch@10.0.3:
-    dependencies:
-      '@isaacs/brace-expansion': 5.0.0
 
   minimatch@10.2.5:
     dependencies:
