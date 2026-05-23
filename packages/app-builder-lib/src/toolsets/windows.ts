@@ -171,8 +171,8 @@ export const nsisChecksums = {
   "0.0.0": {
     // legacy — uses getLegacyNsisBin() / getLegacyNsisResourcesBin()
   },
-  "1.2.0": {
-    "nsis-bundle-3.12.tar.gz": "d71542d91b9d35ce434af0cd129cbcc6ac780b91a114a5baf574ebe4c7868602",
+  "1.2.1": {
+    "nsis-bundle-3.12.tar.gz": "56997fdefe25e7928a1a68b4583d08b240b66cf660234053b20131a74cc082f4",
   },
 } as const
 
