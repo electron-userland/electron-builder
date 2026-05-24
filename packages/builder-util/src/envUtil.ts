@@ -1,8 +1,9 @@
 import * as path from "path"
-import { isEmptyOrSpaces } from "./util"
+import { isEmptyOrSpaces } from "./stringUtil"
 import { log } from "./log"
+import { existsSync } from "fs-extra"
 
-export function validateEnvValue(envVarName: string): string | null {
+export function resolveEnvShellValue(envVarName: string): string | null {
   const rawValue = process.env[envVarName]
   if (isEmptyOrSpaces(rawValue)) {
     return null
@@ -17,12 +18,19 @@ export function validateEnvValue(envVarName: string): string | null {
 }
 
 export function resolveEnvToolsetPath(envVarKey: string): string | null {
-  const value = validateEnvValue(envVarKey)
+  const value = resolveEnvShellValue(envVarKey)
   if (value == null) {
     return null
   }
-  log.info({ envVarKey, value }, `resolved value from environment variable`)
-  return path.resolve(value)
+  const p = path.resolve(value)
+  if (!path.isAbsolute(p)) {
+    throw new Error(`${envVarKey} must be an absolute path: ${p}`)
+  }
+  if (!existsSync(p)) {
+    throw new Error(`${envVarKey} path does not exist: ${p}`)
+  }
+  log.info({ envVarKey, value: p }, `resolved value from environment variable`)
+  return p
 }
 
 export function parseValidEnvVarUrl(envVarName: string): string | null {

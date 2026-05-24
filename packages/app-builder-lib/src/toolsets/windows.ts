@@ -1,6 +1,6 @@
-import { Arch } from "builder-util"
-import { resolveEnvToolsetPath } from "builder-util"
+import { Arch, exists, resolveEnvToolsetPath } from "builder-util"
 import { Nullish } from "builder-util-runtime"
+import { stat } from "fs-extra"
 import * as os from "os"
 import * as path from "path"
 import { getBinFromCustomLoc, getBinFromUrl } from "../binDownload"
@@ -196,12 +196,7 @@ async function getNsisBundlePath(nsis: ToolsetConfig["nsis"], customBinary?: Cus
 }
 
 export async function getMakeNsisPath(nsis: ToolsetConfig["nsis"] | Nullish, customBinary?: CustomNsisBinaryConfig | null): Promise<ToolInfo> {
-  const overridePath = resolveEnvToolsetPath("ELECTRON_BUILDER_NSIS_DIR")
-  if (overridePath != null) {
-    return { path: overridePath } // assume that NSISDIR is set correctly in the environment
-  }
-  const bundlePath = await getNsisBundlePath(nsis, customBinary)
-  if (nsis === "0.0.0" || nsis == null) {
+  const legacyBundle = (bundlePath: string) => {
     // legacy bundle: platform-specific subdirectories, NSISDIR must be set explicitly
     const env = { NSISDIR: bundlePath }
     if (process.platform === "darwin") {
@@ -211,25 +206,56 @@ export async function getMakeNsisPath(nsis: ToolsetConfig["nsis"] | Nullish, cus
     }
     return { path: path.join(bundlePath, "linux", "makensis"), env }
   }
-  if (process.platform === "win32") {
-    const nsisDir = path.join(bundlePath, "windows")
-    // Call makensis.exe directly via powershell -EncodedCommand + --% to avoid both CMD colon
-    // mangling and PS 5.1's @args double-quote passthrough bug
-    return { path: "powershell.exe", psScript: path.join(nsisDir, "makensis.exe"), env: { NSISDIR: nsisDir } }
+  const entrypointBundle = (bundlePath: string) => {
+    // the entrypoint script auto-sets NSISDIR
+    return { path: path.join(bundlePath, process.platform === "win32" ? "makensis.cmd" : "makensis") }
   }
-  // Non-Windows: the entrypoint script auto-sets NSISDIR
-  return { path: path.join(bundlePath, "makensis") }
+
+  const overridePath = resolveEnvToolsetPath("ELECTRON_BUILDER_NSIS_DIR")
+  if (overridePath != null) {
+    const pathStat = await stat(overridePath)
+    if (!pathStat.isDirectory()) {
+      throw new Error(`ELECTRON_BUILDER_NSIS_DIR must be a directory, got a file: ${overridePath}`)
+    }
+    // we have to search both to maintain backward compatibility
+    let potentialBundle: ToolInfo = legacyBundle(overridePath)
+    if (await exists(potentialBundle.path)) {
+      return potentialBundle
+    }
+    potentialBundle = entrypointBundle(overridePath)
+    if (await exists(potentialBundle.path)) {
+      return potentialBundle
+    }
+    throw new Error(`${path.basename(potentialBundle.path)} executable not found in ELECTRON_BUILDER_NSIS_DIR: ${overridePath}`)
+  }
+
+  const bundlePath = await getNsisBundlePath(nsis, customBinary)
+  if (nsis === "0.0.0" || nsis == null) {
+    return legacyBundle(bundlePath)
+  }
+  return entrypointBundle(bundlePath)
 }
 
 type CustomNsisResourcesConfig = { url: string; checksum: string; version: string }
 
 export async function getNsisPluginsPath(nsis: ToolsetConfig["nsis"] | Nullish, customNsisResources?: CustomNsisResourcesConfig | null): Promise<string> {
+  const resolveCustomBundle = async (bundlePath: string, type: "ELECTRON_BUILDER_NSIS_RESOURCES_DIR" | "CUSTOM_NSIS_RESOURCES") => {
+    // we have to search both to maintain backward compatibility
+    const potentialPaths = [path.join(bundlePath, "plugins"), path.join(bundlePath, "windows", "Plugins")]
+    for (const p of potentialPaths) {
+      if ((await exists(p)) && (await stat(p)).isDirectory()) {
+        return p
+      }
+    }
+    throw new Error(`Plugins directory not found in ${type}: ${bundlePath}. Expected to find in one of: ${potentialPaths.join(", ")}`)
+  }
   const overridePath = resolveEnvToolsetPath("ELECTRON_BUILDER_NSIS_RESOURCES_DIR")
   if (overridePath != null) {
-    return overridePath
+    return resolveCustomBundle(overridePath, "ELECTRON_BUILDER_NSIS_RESOURCES_DIR")
   }
   if (customNsisResources) {
-    return path.join(await getBinFromCustomLoc("nsis-resources", customNsisResources.version, customNsisResources.url, customNsisResources.checksum), "plugins")
+    const bundle = await getBinFromCustomLoc("nsis-resources", customNsisResources.version, customNsisResources.url, customNsisResources.checksum)
+    return resolveCustomBundle(bundle, "CUSTOM_NSIS_RESOURCES")
   }
   if (nsis === "0.0.0" || nsis == null) {
     return path.join(await getLegacyNsisResourcesBin(), "plugins")
@@ -238,5 +264,15 @@ export async function getNsisPluginsPath(nsis: ToolsetConfig["nsis"] | Nullish, 
 }
 
 export async function getNsisElevatePath(nsis: ToolsetConfig["nsis"] | Nullish, customBinary?: CustomNsisBinaryConfig | null): Promise<string> {
-  return path.join(await getNsisBundlePath(nsis, customBinary), "elevate.exe")
+  const bundlePath = await getNsisBundlePath(nsis, customBinary)
+  let elevatePath: string
+  if (nsis === "0.0.0" || nsis == null) {
+    elevatePath = path.join(bundlePath, "elevate.exe")
+  } else {
+    elevatePath = path.join(bundlePath, "windows", "elevate.exe")
+  }
+  if (await exists(elevatePath)) {
+    return elevatePath
+  }
+  throw new Error(`elevate.exe not found in NSIS bundle at ${elevatePath}`)
 }
