@@ -39,7 +39,7 @@ export function namedFn(name: string): Function {
 export function cleanAndEnsureDir(dir: string): void {
   if (fs.existsSync(dir)) {
     for (const f of fs.readdirSync(dir)) {
-      fs.rmSync(path.join(dir, f))
+      fs.rmSync(path.join(dir, f), { recursive: true, force: true })
     }
   } else {
     fs.mkdirSync(dir, { recursive: true })
