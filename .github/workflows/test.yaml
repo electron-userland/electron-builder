@@ -398,9 +398,7 @@ jobs:
 
       - name: Test snap core24 native (install + launch)
         if: matrix.core == 'core24'
-        run: |
-          rm -rf ${{ github.workspace }}/test/src/generated
-          pnpm ci:test
+        run: pnpm ci:test
         env:
           TEST_FILES: snapHeavyTest
           SNAP_TEST_CORES: core24
