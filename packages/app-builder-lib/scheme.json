@@ -726,6 +726,14 @@
         "icon": {
           "type": "string"
         },
+        "installDirectory": {
+          "default": "/opt/${productName}",
+          "description": "Installation directory.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "maintainer": {
           "type": [
             "null",
@@ -2459,6 +2467,14 @@
         },
         "icon": {
           "type": "string"
+        },
+        "installDirectory": {
+          "default": "/opt/${productName}",
+          "description": "Installation directory.",
+          "type": [
+            "null",
+            "string"
+          ]
         },
         "maintainer": {
           "type": [
