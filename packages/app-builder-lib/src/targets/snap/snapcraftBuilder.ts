@@ -37,7 +37,7 @@ interface BuildSnapOptions {
 
 /**
  * Validates snapcraft.yaml using snapcraft's built-in `expand-extensions` command.
- * Failures are non-fatal: a warning is logged and the build continues.
+ * Throws on failure. The caller in `buildSnap` catches this and treats it as a non-fatal warning.
  */
 async function validateSnapcraftYamlWithCLI(workDir: string): Promise<void> {
   try {

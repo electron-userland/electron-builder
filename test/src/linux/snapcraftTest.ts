@@ -253,7 +253,7 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
         productName: "Sep",
         snapcraft: {
           base: "core24",
-          core24: { allowNativeWayland: false },
+          core24: { forceX11: true },
         },
       },
       effectiveOptionComputed: async ({ snap }) => {

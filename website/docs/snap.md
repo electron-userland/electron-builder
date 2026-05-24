@@ -207,16 +207,16 @@ Start with only the plugs you actually need. Unnecessary plugs may slow Snap Sto
 
 ### Wayland
 
-`allowNativeWayland` defaults to `true` for core24. The snap runs with `--ozone-platform=wayland` on compositors that support it and falls back to XWayland otherwise.
+core24 always allows native Wayland. The snap runs with `--ozone-platform=wayland` on compositors that support it and falls back to XWayland otherwise.
 
-To force X11-only mode:
+To force X11-only mode, set `forceX11: true`:
 
 ```json
 {
   "snapcraft": {
     "base": "core24",
     "core24": {
-      "allowNativeWayland": false
+      "forceX11": true
     }
   }
 }
@@ -262,7 +262,7 @@ Use the `"default"` keyword to extend the defaults rather than replace them:
 
 Key differences from core24:
 
-- **`allowNativeWayland` defaults to `false`** — Wayland is disabled by default for older Electron compatibility. Set to `true` to enable.
+- **`allowNativeWayland` defaults to `false`** — Wayland is disabled by default for older Electron compatibility. Set to `true` to enable. (The legacy interface uses `allowNativeWayland`; core24 uses `forceX11`.)
 - **No extensions** — no GNOME extension support; uses the `desktop-gtk2` part instead.
 - **`useTemplateApp`** — when `stagePackages` is not customised, electron-builder uses a pre-built Electron snap template for faster assembly (x64 and armv7l only).
 - Build is handled by the `app-builder-bin` binary, not by a direct `snapcraft` invocation.

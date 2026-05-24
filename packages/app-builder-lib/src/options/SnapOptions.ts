@@ -22,7 +22,8 @@ export interface SnapcraftOptions extends TargetSpecificOptions {
    * Relative paths are resolved against the build resources directory.
    *
    * Injected as `SNAPCRAFT_STORE_CREDENTIALS` into every snapcraft subprocess
-   * (all cores, all build modes, and `snapcraft upload`).
+   * (core18/core20/core22/core24 builds and `snapcraft upload`).
+   * Not applied for `base: "custom"` — inject credentials manually via environment variables.
    *
    * The `SNAP_CSC_LINK` environment variable is the CI-friendly alternative.
    * Generate with: `snapcraft export-login - | base64 -w0`
@@ -218,8 +219,7 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
    * Filesets controlling which files from the app part are staged into the snap.
    * Supports individual files, directories, globs, globstars, and exclusions (prefix `!`).
    * See [Snapcraft filesets](https://snapcraft.io/docs/snapcraft-filesets).
-   *
-   * The built-in defaults are in [snapcraft.ts](https://github.com/electron-userland/electron-builder/blob/master/packages/app-builder-lib/src/targets/snap/snapcraft.ts).
+   * When not set, the snap template's default stage list is used for legacy bases (core18/core20/core22).
    */
   readonly appPartStage?: Array<string> | null
 
@@ -512,10 +512,12 @@ export interface SnapOptions24 extends CommonLinuxOptions, TargetSpecificOptions
   readonly autoStart?: boolean
 
   /**
-   * Allows explicitly disabling native Wayland by injecting `--ozone-platform=x11` into the snap's runtime arguments, even on newer Electron versions where native Wayland is supported by default.
-   * @default true
+   * Set to `true` to force X11 by injecting `--ozone-platform=x11` into the snap command line.
+   * When unset or `false`, no flag is injected and native Wayland is allowed.
+   * Unlike the legacy `snap.allowNativeWayland`, there is no electron-version-based default here —
+   * core24 always allows Wayland unless this is explicitly `true`.
    */
-  readonly allowNativeWayland?: boolean | null
+  readonly forceX11?: boolean | null
 
   // ─── Hooks ───────────────────────────────────────────────────────────────────
 

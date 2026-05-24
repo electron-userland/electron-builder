@@ -230,7 +230,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     // if browser-support with allow-sandbox:true is not present in the resolved plugs
     // (mirrors the same logic in SnapCoreLegacy.buildSnap).
     const extraArgs: string[] = [...(this.options.executableArgs ?? [])]
-    if (this.options.allowNativeWayland === false) {
+    if (this.options.forceX11 === true) {
       if (!extraArgs.includes("--ozone-platform=x11")) {
         extraArgs.push("--ozone-platform=x11")
       }
