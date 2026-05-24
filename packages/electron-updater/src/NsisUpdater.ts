@@ -151,11 +151,22 @@ export class NsisUpdater extends BaseUpdater {
     }
 
     const callUsingElevation = (): void => {
-      this.spawnLog(path.join(process.resourcesPath, "elevate.exe"), [installerPath].concat(args)).catch(e => this.dispatchError(e))
+      // Wrap args containing spaces in Win32 double-quotes so Start-Process preserves them as single tokens
+      const psInstallArgs = args.map(a => (a.includes(" ") ? `'"${a.replace(/"/g, '""')}"'` : `'${a.replace(/'/g, "''")}'`)).join(",")
+      const psScript = `Start-Process -FilePath '${installerPath.replace(/'/g, "''")}' -ArgumentList @(${psInstallArgs}) -Verb RunAs`
+      const encodedCmd = Buffer.from(psScript, "utf16le").toString("base64")
+      this.spawnLog("powershell.exe", ["-NonInteractive", "-NoProfile", "-EncodedCommand", encodedCmd]).catch(e => {
+        if ((e as NodeJS.ErrnoException).code !== "ENOENT") {
+          this.dispatchError(e)
+          return
+        }
+        // powershell.exe not found — fall back to legacy elevate.exe
+        this.spawnLog(path.join(process.resourcesPath, "elevate.exe"), [installerPath].concat(args)).catch(err => this.dispatchError(err))
+      })
     }
 
     if (options.isAdminRightsRequired) {
-      this._logger.info("isAdminRightsRequired is set to true, run installer using elevate.exe")
+      this._logger.info("isAdminRightsRequired is set to true, running installer with UAC elevation via PowerShell (elevate.exe fallback if PowerShell unavailable)")
       callUsingElevation()
       return true
     }
@@ -165,7 +176,7 @@ export class NsisUpdater extends BaseUpdater {
       // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
       const errorCode = (e as NodeJS.ErrnoException).code
       this._logger.info(
-        `Cannot run installer: error code: ${errorCode}, error message: "${e.message}", will be executed again using elevate if EACCES, and will try to use electron.shell.openItem if ENOENT`
+        `Cannot run installer: error code: ${errorCode}, error message: "${e.message}", will be executed again using UAC elevation if EACCES, and will try to use electron.shell.openPath if ENOENT`
       )
       if (errorCode === "UNKNOWN" || errorCode === "EACCES") {
         callUsingElevation()
