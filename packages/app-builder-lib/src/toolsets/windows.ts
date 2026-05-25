@@ -265,12 +265,7 @@ export async function getNsisPluginsPath(nsis: ToolsetConfig["nsis"] | Nullish, 
 
 export async function getNsisElevatePath(nsis: ToolsetConfig["nsis"] | Nullish, customBinary?: CustomNsisBinaryConfig | null): Promise<string> {
   const bundlePath = await getNsisBundlePath(nsis, customBinary)
-  let elevatePath: string
-  if (nsis === "0.0.0" || nsis == null) {
-    elevatePath = path.join(bundlePath, "elevate.exe")
-  } else {
-    elevatePath = path.join(bundlePath, "windows", "elevate.exe")
-  }
+  const elevatePath = path.join(bundlePath, "elevate.exe")
   if (await exists(elevatePath)) {
     return elevatePath
   }
