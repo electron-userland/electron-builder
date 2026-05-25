@@ -35,6 +35,19 @@ schema.definitions["Record<string,string>"] = {
   additionalProperties: { type: "string" },
 }
 
+// Fix Record<string,X> types: additionalProperties:false rejects every non-empty object.
+for (const key of ["Record<string,App>", "Record<string,Component>", "Record<string,Hook>", "Record<string,Part>", "Record<string,Platform>", "Record<string,unknown>"]) {
+  schema.definitions[key] = { type: "object", additionalProperties: {} }
+}
+schema.definitions["Record<string,Record<string,string>>"] = {
+  type: "object",
+  additionalProperties: { type: "object", additionalProperties: { type: "string" } },
+}
+schema.definitions["Record<string,string|null>"] = {
+  type: "object",
+  additionalProperties: { type: ["string", "null"] },
+}
+
 // Fix ElectronGetOptions: add type:object, add mirrorOptions, remove internal isGeneric field.
 schema.definitions.ElectronGetOptions.type = "object"
 schema.definitions.ElectronGetOptions.properties.mirrorOptions = {

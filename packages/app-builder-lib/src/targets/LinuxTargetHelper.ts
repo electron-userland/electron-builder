@@ -45,9 +45,7 @@ export class LinuxTargetHelper {
   getSnapCore(): SnapCore<any> {
     const { snapcraft, snap: legacySnap } = this.packager.config
     if (snapcraft != null && legacySnap != null) {
-      throw new InvalidConfigurationError(
-        `Cannot specify both \`snapcraft\` and \`snap\` configurations. Please migrate all \`snap\` configuration to \`snapcraft.<core>\` and remove \`snap\` configuration.`
-      )
+      log.warn("Both `snapcraft` and `snap` configurations are present. `snapcraft` takes precedence; please remove the `snap` key to silence this warning.")
     }
 
     // Merge linux-level options (category, description, mimeTypes, etc.) as the base so they

@@ -5934,28 +5934,33 @@
       "type": "object"
     },
     "Record<string,App>": {
-      "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "additionalProperties": {}
     },
     "Record<string,Component>": {
-      "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "additionalProperties": {}
     },
     "Record<string,Hook>": {
-      "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "additionalProperties": {}
     },
     "Record<string,Part>": {
-      "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "additionalProperties": {}
     },
     "Record<string,Platform>": {
-      "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "additionalProperties": {}
     },
     "Record<string,Record<string,string>>": {
-      "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "string"
+        }
+      }
     },
     "Record<string,string>": {
       "type": "object",
@@ -5964,12 +5969,17 @@
       }
     },
     "Record<string,string|null>": {
-      "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "additionalProperties": {
+        "type": [
+          "string",
+          "null"
+        ]
+      }
     },
     "Record<string,unknown>": {
-      "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "additionalProperties": {}
     },
     "ReleaseInfo": {
       "additionalProperties": false,
