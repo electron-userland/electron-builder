@@ -145,15 +145,15 @@ export async function getRceditBundle(winCodeSign: ToolsetConfig["winCodeSign"] 
   const rcedit = resolveEnvToolsetPath("ELECTRON_BUILDER_RCEDIT_PATH")
   if (rcedit != null) {
     const overridePath = rcedit
-    return { x86: path.join(overridePath, x86), x64: path.join(overridePath, x64) }
+    return { x86: path.resolve(overridePath, x86), x64: path.resolve(overridePath, x64) }
   }
   if (winCodeSign === "0.0.0" || winCodeSign == null) {
     const vendorPath = await getLegacyWinCodeSignBin()
-    return { x86: path.join(vendorPath, ia32), x64: path.join(vendorPath, x64) }
+    return { x86: path.resolve(vendorPath, ia32), x64: path.resolve(vendorPath, x64) }
   }
   const file = "rcedit-windows-2_0_0.zip"
   const vendorPath = await _getWindowsToolsBin(winCodeSign, file)
-  return { x86: path.join(vendorPath, x86), x64: path.join(vendorPath, x64) }
+  return { x86: path.resolve(vendorPath, x86), x64: path.resolve(vendorPath, x64) }
 }
 
 // ─── NSIS toolset ────────────────────────────────────────────────────────────
@@ -200,15 +200,15 @@ export async function getMakeNsisPath(nsis: ToolsetConfig["nsis"] | Nullish, cus
     // legacy bundle: platform-specific subdirectories, NSISDIR must be set explicitly
     const env = { NSISDIR: bundlePath }
     if (process.platform === "darwin") {
-      return { path: path.join(bundlePath, "mac", "makensis"), env }
+      return { path: path.resolve(bundlePath, "mac", "makensis"), env }
     } else if (process.platform === "win32") {
-      return { path: path.join(bundlePath, "Bin", "makensis.exe"), env }
+      return { path: path.resolve(bundlePath, "Bin", "makensis.exe"), env }
     }
-    return { path: path.join(bundlePath, "linux", "makensis"), env }
+    return { path: path.resolve(bundlePath, "linux", "makensis"), env }
   }
   const entrypointBundle = (bundlePath: string) => {
     // the entrypoint script auto-sets NSISDIR
-    return { path: path.join(bundlePath, process.platform === "win32" ? "makensis.cmd" : "makensis") }
+    return { path: path.resolve(bundlePath, process.platform === "win32" ? "makensis.cmd" : "makensis") }
   }
 
   const overridePath = resolveEnvToolsetPath("ELECTRON_BUILDER_NSIS_DIR")
@@ -241,7 +241,7 @@ type CustomNsisResourcesConfig = { url: string; checksum: string; version: strin
 export async function getNsisPluginsPath(nsis: ToolsetConfig["nsis"] | Nullish, customNsisResources?: CustomNsisResourcesConfig | null): Promise<string> {
   const resolveCustomBundle = async (bundlePath: string, type: "ELECTRON_BUILDER_NSIS_RESOURCES_DIR" | "CUSTOM_NSIS_RESOURCES") => {
     // we have to search both to maintain backward compatibility
-    const potentialPaths = [path.join(bundlePath, "plugins"), path.join(bundlePath, "windows", "Plugins")]
+    const potentialPaths = [path.resolve(bundlePath, "plugins"), path.resolve(bundlePath, "windows", "Plugins")]
     for (const p of potentialPaths) {
       if ((await exists(p)) && (await stat(p)).isDirectory()) {
         return p
@@ -254,18 +254,18 @@ export async function getNsisPluginsPath(nsis: ToolsetConfig["nsis"] | Nullish, 
     return resolveCustomBundle(overridePath, "ELECTRON_BUILDER_NSIS_RESOURCES_DIR")
   }
   if (customNsisResources) {
-    const bundle = await getBinFromCustomLoc("nsis-resources", customNsisResources.version, customNsisResources.url, customNsisResources.checksum)
+    const bundle = await getBinFromCustomLoc("nsis-resourcesgs", customNsisResources.version, customNsisResources.url, customNsisResources.checksum)
     return resolveCustomBundle(bundle, "CUSTOM_NSIS_RESOURCES")
   }
   if (nsis === "0.0.0" || nsis == null) {
-    return path.join(await getLegacyNsisResourcesBin(), "plugins")
+    return path.resolve(await getLegacyNsisResourcesBin(), "plugins")
   }
-  return path.join(await getNsisBundlePath(nsis), "windows", "Plugins")
+  return path.resolve(await getNsisBundlePath(nsis), "windows", "Plugins")
 }
 
 export async function getNsisElevatePath(nsis: ToolsetConfig["nsis"] | Nullish, customBinary?: CustomNsisBinaryConfig | null): Promise<string> {
   const bundlePath = await getNsisBundlePath(nsis, customBinary)
-  const elevatePath = path.join(bundlePath, "elevate.exe")
+  const elevatePath = path.resolve(bundlePath, "elevate.exe")
   if (await exists(elevatePath)) {
     return elevatePath
   }
