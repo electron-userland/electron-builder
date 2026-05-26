@@ -254,7 +254,7 @@ export async function getNsisPluginsPath(nsis: ToolsetConfig["nsis"] | Nullish, 
     return resolveCustomBundle(overridePath, "ELECTRON_BUILDER_NSIS_RESOURCES_DIR")
   }
   if (customNsisResources) {
-    const bundle = await getBinFromCustomLoc("nsis-resourcesgs", customNsisResources.version, customNsisResources.url, customNsisResources.checksum)
+    const bundle = await getBinFromCustomLoc("nsis-resources", customNsisResources.version, customNsisResources.url, customNsisResources.checksum)
     return resolveCustomBundle(bundle, "CUSTOM_NSIS_RESOURCES")
   }
   if (nsis === "0.0.0" || nsis == null) {
@@ -264,6 +264,14 @@ export async function getNsisPluginsPath(nsis: ToolsetConfig["nsis"] | Nullish, 
 }
 
 export async function getNsisElevatePath(nsis: ToolsetConfig["nsis"] | Nullish, customBinary?: CustomNsisBinaryConfig | null): Promise<string> {
+  const overridePath = resolveEnvToolsetPath("ELECTRON_BUILDER_NSIS_DIR")
+  if (overridePath != null) {
+    const elevatePath = path.resolve(overridePath, "elevate.exe")
+    if (await exists(elevatePath)) {
+      return elevatePath
+    }
+    throw new Error(`elevate.exe not found in ELECTRON_BUILDER_NSIS_DIR: ${overridePath}`)
+  }
   const bundlePath = await getNsisBundlePath(nsis, customBinary)
   const elevatePath = path.resolve(bundlePath, "elevate.exe")
   if (await exists(elevatePath)) {

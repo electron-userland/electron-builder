@@ -22,10 +22,10 @@ export function resolveEnvToolsetPath(envVarKey: string): string | null {
   if (value == null) {
     return null
   }
-  const p = path.resolve(value)
-  if (!path.isAbsolute(p)) {
-    throw new Error(`${envVarKey} must be an absolute path: ${p}`)
+  if (!path.isAbsolute(value)) {
+    throw new Error(`${envVarKey} must be an absolute path: ${value}`)
   }
+  const p = path.resolve(value)
   if (!existsSync(p)) {
     throw new Error(`${envVarKey} path does not exist: ${p}`)
   }

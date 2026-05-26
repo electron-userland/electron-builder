@@ -638,7 +638,7 @@ export class NsisTarget extends Target {
     }
 
     await spawnAndWrite(makensis.path, args, script, {
-      env: { ...process.env, ...makensis.env },
+      env: { ...process.env, ...(makensis.env ?? {}) },
       cwd: nsisTemplatesDir,
     })
   }

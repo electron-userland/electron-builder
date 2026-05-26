@@ -345,7 +345,7 @@ export interface ToolsetConfig {
    * 0.0.0 - legacy toolset (nsis-3.0.4.1 + nsis-resources-3.4.1)
    *
    * Betas:
-   * 1.2.1 - unified bundle (makensis + plugins in one archive, wrapper scripts auto-set NSISDIR)
+   * 1.2.1 - unified bundle (makensis 3.12 + plugins in one archive, entrypoint scripts auto-set NSISDIR)
    *
    * @default "0.0.0"
    */
