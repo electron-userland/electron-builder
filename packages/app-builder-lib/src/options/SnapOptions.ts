@@ -44,7 +44,7 @@ export interface SnapcraftOptions extends TargetSpecificOptions {
   readonly core22?: SnapOptionsLegacy | null
 
   /**
-   * **[Beta]** Options for building a core24 snap. Uses the snapcraft CLI directly (not the app-builder binary).
+   * **[Beta]** Options for building a core24 snap. Uses the snapcraft CLI directly.
    * Inherits desktop-entry fields from `CommonLinuxOptions` and publish config from `TargetSpecificOptions`.
    * @beta
    */

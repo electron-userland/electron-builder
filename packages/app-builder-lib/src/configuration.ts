@@ -112,7 +112,7 @@ export interface CommonConfiguration {
    * Flat snap configuration targeting core22 and older snap bases.
    *
    * @deprecated Use `snapcraft` instead — it supersedes `snap` when both are present and supports
-   * all snap bases including core24. Will be removed in a future major release.
+   * all snap bases including core24. `snap` will be removed in a future major release.
    * See {@link SnapOptions} for available properties.
    */
   readonly snap?: SnapOptions | null

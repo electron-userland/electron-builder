@@ -279,7 +279,7 @@ exports[`snap heavy > snap full (core18 armhf) 1`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "se-wo-template",
-  "platforms": [
+  "architectures": [
     "armhf",
   ],
   "plugs": {
@@ -352,7 +352,7 @@ exports[`snap heavy > snap full (core20 armhf) 1`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "se-wo-template",
-  "platforms": [
+  "architectures": [
     "armhf",
   ],
   "plugs": {
@@ -425,7 +425,7 @@ exports[`snap heavy > snap full (core22 armhf) 1`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "se-wo-template",
-  "platforms": [
+  "architectures": [
     "armhf",
   ],
   "plugs": {
@@ -578,7 +578,7 @@ exports[`snap heavy > snap install+launch (core18) 1`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "se-wo-template",
-  "platforms": [
+  "architectures": [
     "amd64",
   ],
   "plugs": {
@@ -651,7 +651,7 @@ exports[`snap heavy > snap install+launch (core20) 1`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "se-wo-template",
-  "platforms": [
+  "architectures": [
     "amd64",
   ],
   "plugs": {
@@ -724,7 +724,7 @@ exports[`snap heavy > snap install+launch (core22) 1`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "se-wo-template",
-  "platforms": [
+  "architectures": [
     "amd64",
   ],
   "plugs": {
