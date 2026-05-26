@@ -62,14 +62,14 @@ describe("SnapStorePublisher", () => {
       await expect(makePublisher().upload(makeTask())).resolves.toBeUndefined()
     })
 
-    test("accepts exactly 4.0.0 (boundary)", async ({ expect }) => {
-      vi.mocked(exec).mockResolvedValue("snapcraft, version 4.0.0")
+    test("accepts exactly 7.0.0 (boundary)", async ({ expect }) => {
+      vi.mocked(exec).mockResolvedValue("snapcraft, version 7.0.0")
       await expect(makePublisher().upload(makeTask())).resolves.toBeUndefined()
     })
 
-    test("rejects version 3.9.9 with descriptive error", async ({ expect }) => {
-      vi.mocked(exec).mockResolvedValue("snapcraft, version 3.9.9")
-      await expect(makePublisher().upload(makeTask())).rejects.toThrow(/at least snapcraft 4\.0\.0 is required/)
+    test("rejects version 6.9.9 with descriptive error", async ({ expect }) => {
+      vi.mocked(exec).mockResolvedValue("snapcraft, version 6.9.9")
+      await expect(makePublisher().upload(makeTask())).rejects.toThrow(/at least snapcraft 7\.0\.0 is required/)
     })
 
     test("error for outdated version includes the installed version string", async ({ expect }) => {

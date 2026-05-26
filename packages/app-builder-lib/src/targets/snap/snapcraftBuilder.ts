@@ -345,7 +345,7 @@ async function ensureRemoteBuildAuthentication(cscLink?: string, resourcesDir?: 
   throw new InvalidConfigurationError(
     "Snapcraft authentication required for remote build.\n" +
       "Authenticate with one of any:\n" +
-      "  1. Set SNAP_CSC_LINK: snapcraft export-login - | base64 -w0\n" +
+      "  1. Set SNAP_CSC_LINK\n" +
       "  2. Set snapcraft.cscLink in your build config\n" +
       "  3. Run: snapcraft login\n" +
       "  4. Set SNAPCRAFT_STORE_CREDENTIALS environment variable directly"

@@ -27,14 +27,14 @@ exports[`snapcraft > auto start (core18) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core18",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "sep",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -101,14 +101,14 @@ exports[`snapcraft > auto start (core20) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "sep",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -175,14 +175,14 @@ exports[`snapcraft > auto start (core22) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core22",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "sep",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -249,6 +249,9 @@ exports[`snapcraft > buildPackages (core18) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core18",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
@@ -396,9 +399,6 @@ exports[`snapcraft > buildPackages (core18) 1`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -465,6 +465,9 @@ exports[`snapcraft > buildPackages (core20) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
@@ -612,9 +615,6 @@ exports[`snapcraft > buildPackages (core20) 1`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -680,6 +680,9 @@ exports[`snapcraft > buildPackages (core22) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core22",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
@@ -827,9 +830,6 @@ exports[`snapcraft > buildPackages (core22) 1`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -876,14 +876,14 @@ exports[`snapcraft > classic confinement (core18) 1`] = `
       "command": "command.sh",
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core18",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "cl-co-app",
-  "platforms": [
-    "amd64",
-  ],
   "summary": "Snap Electron App (classic confinement)",
   "title": "Snap Electron App (classic confinement)",
   "version": "1.1.0",
@@ -908,14 +908,14 @@ exports[`snapcraft > classic confinement (core20) 1`] = `
       "command": "command.sh",
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core20",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "cl-co-app",
-  "platforms": [
-    "amd64",
-  ],
   "summary": "Snap Electron App (classic confinement)",
   "title": "Snap Electron App (classic confinement)",
   "version": "1.1.0",
@@ -940,14 +940,14 @@ exports[`snapcraft > classic confinement (core22) 1`] = `
       "command": "command.sh",
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core22",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "cl-co-app",
-  "platforms": [
-    "amd64",
-  ],
   "summary": "Snap Electron App (classic confinement)",
   "title": "Snap Electron App (classic confinement)",
   "version": "1.1.0",
@@ -992,6 +992,9 @@ exports[`snapcraft > compression option (core18) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core18",
   "compression": "xz",
   "confinement": "strict",
@@ -1135,9 +1138,6 @@ exports[`snapcraft > compression option (core18) 1`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -1204,6 +1204,9 @@ exports[`snapcraft > compression option (core20) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core20",
   "compression": "xz",
   "confinement": "strict",
@@ -1347,9 +1350,6 @@ exports[`snapcraft > compression option (core20) 1`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -1415,6 +1415,9 @@ exports[`snapcraft > compression option (core22) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core22",
   "compression": "xz",
   "confinement": "strict",
@@ -1558,9 +1561,6 @@ exports[`snapcraft > compression option (core22) 1`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -1760,17 +1760,6 @@ exports[`snapcraft > core22: per-core description overrides linux.description 1`
     {
       "arch": "x64",
       "file": "sep_1.1.0_amd64.snap",
-    },
-  ],
-}
-`;
-
-exports[`snapcraft > core24 Multipass real build > core24 useMultipass full build 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }
@@ -2251,14 +2240,14 @@ exports[`snapcraft > custom after, no desktop (core18) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core18",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "testapp",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -2324,14 +2313,14 @@ exports[`snapcraft > custom after, no desktop (core20) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "testapp",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -2397,14 +2386,14 @@ exports[`snapcraft > custom after, no desktop (core22) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core22",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "testapp",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -2471,14 +2460,14 @@ exports[`snapcraft > custom env (core18) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core18",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "testapp",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -2545,14 +2534,14 @@ exports[`snapcraft > custom env (core20) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "testapp",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -2619,14 +2608,14 @@ exports[`snapcraft > custom env (core22) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core22",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "testapp",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -2720,6 +2709,9 @@ exports[`snapcraft > default stagePackages (core18) 1`] = `
       "command": "command.sh",
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core18",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
@@ -2862,9 +2854,6 @@ exports[`snapcraft > default stagePackages (core18) 1`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "summary": "Test App ßW",
   "title": "Test App ßW",
   "version": "1.1.0",
@@ -2891,6 +2880,9 @@ exports[`snapcraft > default stagePackages (core18) 3`] = `
       "command": "command.sh",
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core18",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
@@ -3034,9 +3026,6 @@ exports[`snapcraft > default stagePackages (core18) 3`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "summary": "Test App ßW",
   "title": "Test App ßW",
   "version": "1.1.0",
@@ -3063,6 +3052,9 @@ exports[`snapcraft > default stagePackages (core18) 5`] = `
       "command": "command.sh",
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core18",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
@@ -3206,9 +3198,6 @@ exports[`snapcraft > default stagePackages (core18) 5`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "summary": "Test App ßW",
   "title": "Test App ßW",
   "version": "1.1.0",
@@ -3235,6 +3224,9 @@ exports[`snapcraft > default stagePackages (core18) 7`] = `
       "command": "command.sh",
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core18",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
@@ -3379,9 +3371,6 @@ exports[`snapcraft > default stagePackages (core18) 7`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "summary": "Test App ßW",
   "title": "Test App ßW",
   "version": "1.1.0",
@@ -3408,6 +3397,9 @@ exports[`snapcraft > default stagePackages (core20) 1`] = `
       "command": "command.sh",
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core20",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
@@ -3550,9 +3542,6 @@ exports[`snapcraft > default stagePackages (core20) 1`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "summary": "Test App ßW",
   "title": "Test App ßW",
   "version": "1.1.0",
@@ -3579,6 +3568,9 @@ exports[`snapcraft > default stagePackages (core20) 3`] = `
       "command": "command.sh",
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core20",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
@@ -3722,9 +3714,6 @@ exports[`snapcraft > default stagePackages (core20) 3`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "summary": "Test App ßW",
   "title": "Test App ßW",
   "version": "1.1.0",
@@ -3751,6 +3740,9 @@ exports[`snapcraft > default stagePackages (core20) 5`] = `
       "command": "command.sh",
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core20",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
@@ -3894,9 +3886,6 @@ exports[`snapcraft > default stagePackages (core20) 5`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "summary": "Test App ßW",
   "title": "Test App ßW",
   "version": "1.1.0",
@@ -3923,6 +3912,9 @@ exports[`snapcraft > default stagePackages (core20) 7`] = `
       "command": "command.sh",
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core20",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
@@ -4067,9 +4059,6 @@ exports[`snapcraft > default stagePackages (core20) 7`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "summary": "Test App ßW",
   "title": "Test App ßW",
   "version": "1.1.0",
@@ -4095,6 +4084,9 @@ exports[`snapcraft > default stagePackages (core22) 1`] = `
       "command": "command.sh",
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core22",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
@@ -4237,9 +4229,6 @@ exports[`snapcraft > default stagePackages (core22) 1`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "summary": "Test App ßW",
   "title": "Test App ßW",
   "version": "1.1.0",
@@ -4265,6 +4254,9 @@ exports[`snapcraft > default stagePackages (core22) 3`] = `
       "command": "command.sh",
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core22",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
@@ -4408,9 +4400,6 @@ exports[`snapcraft > default stagePackages (core22) 3`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "summary": "Test App ßW",
   "title": "Test App ßW",
   "version": "1.1.0",
@@ -4436,6 +4425,9 @@ exports[`snapcraft > default stagePackages (core22) 5`] = `
       "command": "command.sh",
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core22",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
@@ -4579,9 +4571,6 @@ exports[`snapcraft > default stagePackages (core22) 5`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "summary": "Test App ßW",
   "title": "Test App ßW",
   "version": "1.1.0",
@@ -4607,6 +4596,9 @@ exports[`snapcraft > default stagePackages (core22) 7`] = `
       "command": "command.sh",
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core22",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
@@ -4751,9 +4743,6 @@ exports[`snapcraft > default stagePackages (core22) 7`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "summary": "Test App ßW",
   "title": "Test App ßW",
   "version": "1.1.0",
@@ -4788,14 +4777,14 @@ exports[`snapcraft > no desktop plugs (core18) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core18",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "testapp",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -4851,14 +4840,14 @@ exports[`snapcraft > no desktop plugs (core20) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "testapp",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -4914,14 +4903,14 @@ exports[`snapcraft > no desktop plugs (core22) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core22",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "testapp",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -4978,6 +4967,9 @@ exports[`snapcraft > plugs option (core18) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core18",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
@@ -5120,9 +5112,6 @@ exports[`snapcraft > plugs option (core18) 1`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "browser-sandbox": {
       "allow-sandbox": true,
@@ -5183,6 +5172,9 @@ exports[`snapcraft > plugs option (core18) 3`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core18",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
@@ -5325,9 +5317,6 @@ exports[`snapcraft > plugs option (core18) 3`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "browser-sandbox": {
       "allow-sandbox": true,
@@ -5388,6 +5377,9 @@ exports[`snapcraft > plugs option (core20) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
@@ -5530,9 +5522,6 @@ exports[`snapcraft > plugs option (core20) 1`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "browser-sandbox": {
       "allow-sandbox": true,
@@ -5593,6 +5582,9 @@ exports[`snapcraft > plugs option (core20) 3`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
@@ -5735,9 +5727,6 @@ exports[`snapcraft > plugs option (core20) 3`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "browser-sandbox": {
       "allow-sandbox": true,
@@ -5797,6 +5786,9 @@ exports[`snapcraft > plugs option (core22) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core22",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
@@ -5939,9 +5931,6 @@ exports[`snapcraft > plugs option (core22) 1`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "browser-sandbox": {
       "allow-sandbox": true,
@@ -6001,6 +5990,9 @@ exports[`snapcraft > plugs option (core22) 3`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core22",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
@@ -6143,9 +6135,6 @@ exports[`snapcraft > plugs option (core22) 3`] = `
       "source": "scripts",
     },
   },
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "browser-sandbox": {
       "allow-sandbox": true,
@@ -6219,14 +6208,14 @@ exports[`snapcraft > slots option (core18) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core18",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "testapp",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -6296,14 +6285,14 @@ exports[`snapcraft > slots option (core18) 3`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core18",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "testapp",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -6379,14 +6368,14 @@ exports[`snapcraft > slots option (core20) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "testapp",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -6456,14 +6445,14 @@ exports[`snapcraft > slots option (core20) 3`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "testapp",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -6539,14 +6528,14 @@ exports[`snapcraft > slots option (core22) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core22",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "testapp",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -6616,14 +6605,14 @@ exports[`snapcraft > slots option (core22) 3`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core22",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "testapp",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -6695,14 +6684,14 @@ exports[`snapcraft > use template app (core18) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core18",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "testapp",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -6768,14 +6757,14 @@ exports[`snapcraft > use template app (core20) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "testapp",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -6841,14 +6830,14 @@ exports[`snapcraft > use template app (core22) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core22",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "testapp",
-  "platforms": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
