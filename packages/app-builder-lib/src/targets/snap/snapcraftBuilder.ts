@@ -395,7 +395,7 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
       args.push("--use-lxd")
       log.debug(null, "using LXD for build")
     } else if (useMultipass) {
-      isolatedEnv["SNAPCRAFT_BUILD_ENVIRONMENT"] = "multipass"
+      processedEnv.SNAPCRAFT_BUILD_ENVIRONMENT = "multipass"
       log.debug(null, "using Multipass for build (via SNAPCRAFT_BUILD_ENVIRONMENT)")
     } else {
       args.push("--output", tmpSnap)
@@ -410,7 +410,7 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
 
   await spawn(command, args, {
     cwd: workDir,
-    env: { ...process.env, ...processedEnv },
+    env: processedEnv,
   })
 
   if (remoteBuild?.enabled || useLXD || useMultipass) {
@@ -460,7 +460,7 @@ function generateRemoteBuildArgs(remoteBuild: RemoteBuildOptions, workDir: strin
   }
 
   if (remoteBuild.strategy) {
-    isolatedEnv["SNAPCRAFT_REMOTE_BUILD_STRATEGY"] = remoteBuild.strategy
+    isolatedEnv.SNAPCRAFT_REMOTE_BUILD_STRATEGY = remoteBuild.strategy
   }
 
   if (remoteBuild.timeout) {
