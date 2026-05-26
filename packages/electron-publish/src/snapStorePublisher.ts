@@ -23,13 +23,22 @@ export class SnapStorePublisher extends Publisher {
 
     await checkSnapcraft()
 
+    // Credentials are injected via SNAPCRAFT_STORE_CREDENTIALS so that the
+    // snapcraft subprocess authenticates without an interactive login session.
+    // Generate credentials with: snapcraft export-login -
+    // https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/authenticate/
     const credEnv = await resolveSnapCredentials(this.credentials.cscLink, this.credentials.resourcesDir)
 
+    // Channel format: [<track>/]<risk>[/<branch>]  e.g. "stable", "edge", "lts/stable"
+    // Multiple channels are comma-separated: "beta,edge"
     let channels = this.options.channels ?? ["edge"]
     if (typeof channels === "string") {
       channels = channels.split(",")
     }
 
+    // `snapcraft upload <snap-file> --release <channels>` uploads the snap and
+    // immediately releases it to the specified channels upon store review.
+    // https://documentation.ubuntu.com/snapcraft/stable/reference/commands/upload/
     const args = ["upload", task.file]
     if (channels.length > 0) {
       args.push("--release", channels.join(","))
@@ -46,6 +55,11 @@ export class SnapStorePublisher extends Publisher {
   }
 }
 
+// Resolves Snap Store credentials from cscLink / SNAP_CSC_LINK and returns
+// them as { SNAPCRAFT_STORE_CREDENTIALS } so they can be injected into the
+// snapcraft subprocess environment. The value is the raw export-login output
+// (base64-encoded or a file path handled by loadCscLink).
+// https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/authenticate/
 export async function resolveSnapCredentials(cscLink: string | undefined, resourcesDir: string | undefined): Promise<Record<string, string>> {
   const link = (cscLink ?? process.env.SNAP_CSC_LINK)?.trim()
   if (!link) {
@@ -60,6 +74,12 @@ export async function resolveSnapCredentials(cscLink: string | undefined, resour
   return { SNAPCRAFT_STORE_CREDENTIALS: trimmed }
 }
 
+// Snapcraft 7 introduced SNAPCRAFT_STORE_CREDENTIALS as the standard
+// non-interactive credential mechanism. Earlier versions used a different
+// auth format that is no longer compatible with this publisher.
+// https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/authenticate/
+const REQUIRED_SNAPCRAFT_MAJOR = 7
+
 async function checkSnapcraft(): Promise<void> {
   const installMessage = process.platform === "darwin" ? "brew install snapcraft" : "sudo snap install snapcraft --classic"
 
@@ -71,18 +91,21 @@ async function checkSnapcraft(): Promise<void> {
   }
 
   const trimmed = versionOutput.trim()
+  // Edge-channel installs report "snapcraft, version edge" with no semver — skip the check.
   if (trimmed === "snapcraft, version edge") {
     return
   }
 
-  // Parse "snapcraft, version X.Y.Z" or "snapcraft X.Y.Z"
+  // Handles both output formats:
+  //   "snapcraft, version X.Y.Z"  (snapcraft ≤ 6)
+  //   "snapcraft X.Y.Z"           (snapcraft 7+)
   let s = trimmed.replace(/^snapcraft/, "").trim()
   s = s.replace(/^,/, "").trim()
   s = s.replace(/^version/, "").trim()
   s = s.replace(/^'|'$/g, "")
 
   const major = parseInt(s.split(".")[0], 10)
-  if (major < 4) {
-    throw new Error(`at least snapcraft 4.0.0 is required, but ${trimmed} installed, please: ${installMessage}`)
+  if (major < REQUIRED_SNAPCRAFT_MAJOR) {
+    throw new Error(`at least snapcraft ${REQUIRED_SNAPCRAFT_MAJOR}.0.0 is required, but ${trimmed} installed, please: ${installMessage}`)
   }
 }
