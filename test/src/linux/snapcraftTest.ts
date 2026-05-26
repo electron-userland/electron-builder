@@ -1,6 +1,6 @@
 import { outputFile, readFile } from "fs-extra"
 import * as path from "path"
-import which from "which"
+import * as which from "which"
 import { app, appThrows, assertPack, EXTENDED_TIMEOUT, snapTarget } from "../helpers/packTester"
 // Inline so snapcraftTest.ts does NOT import from snapHeavyTest.ts — importing that file
 // causes all its describe() blocks to execute here, registering heavy tests twice.

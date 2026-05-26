@@ -1,13 +1,13 @@
-import { RemoteBuildOptions } from "../../options/SnapOptions"
 import { deepAssign, InvalidConfigurationError, isEmptyOrSpaces, log, spawn } from "builder-util"
-import { resolveSnapCredentials } from "electron-publish"
-import { randomUUID } from "crypto"
 import * as childProcess from "child_process"
+import { randomUUID } from "crypto"
+import { resolveSnapCredentials } from "electron-publish"
 import { copyFile, ensureDir, pathExists, readdir, remove } from "fs-extra"
 import * as path from "path"
 import * as util from "util"
-import { SnapcraftYAML } from "./snapcraft"
 import { LinuxPackager } from "../../linuxPackager"
+import { RemoteBuildOptions } from "../../options/SnapOptions"
+import { SnapcraftYAML } from "./snapcraft"
 
 const execAsync = util.promisify(childProcess.exec)
 
@@ -238,12 +238,12 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string> {
 
   // Inject credentials for all build modes from snapcraft.cscLink / SNAP_CSC_LINK.
   const credEnv = await resolveSnapCredentials(cscLink, options.packager.buildResourcesDir)
-  Object.assign(isolatedEnv, credEnv)
+  deepAssign(isolatedEnv, credEnv)
 
   if (remoteBuild?.enabled) {
     // Remote-build auth does additional checks (interactive session, throws on missing creds)
     // and overrides any credential already set above.
-    const authEnv = await ensureRemoteBuildAuthentication(cscLink)
+    const authEnv = await ensureRemoteBuildAuthentication(cscLink, options.packager.buildResourcesDir)
     deepAssign(isolatedEnv, authEnv)
   }
 
@@ -313,7 +313,7 @@ async function ensureSnapcraftInstalled(): Promise<void> {
  * env entries to inject. Returns an empty map when snapcraft can authenticate itself
  * (interactive session). Throws when no credential source is found.
  */
-async function ensureRemoteBuildAuthentication(cscLink?: string, resourcesDir?: string): Promise<Record<string, string>> {
+async function ensureRemoteBuildAuthentication(cscLink: string | undefined, resourcesDir: string | undefined): Promise<Record<string, string>> {
   log.debug(null, "resolving remote build authentication...")
 
   // 1. snapcraft.cscLink / SNAP_CSC_LINK — config-level or env credential (base64 or file path).

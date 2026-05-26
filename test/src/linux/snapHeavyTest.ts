@@ -5,7 +5,7 @@ import { chmodSync } from "fs"
 import { existsSync, readFileSync } from "fs"
 import { readdir } from "fs/promises"
 import * as path from "path"
-import which from "which"
+import * as which from "which"
 import { app, assertPack, EXTENDED_TIMEOUT, snapTarget } from "../helpers/packTester"
 import { launchSnapBinary } from "../helpers/launchAppCrossPlatform"
 

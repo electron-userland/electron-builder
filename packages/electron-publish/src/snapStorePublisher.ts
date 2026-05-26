@@ -105,7 +105,7 @@ async function checkSnapcraft(): Promise<void> {
   s = s.replace(/^'|'$/g, "")
 
   const major = parseInt(s.split(".")[0], 10)
-  if (major < REQUIRED_SNAPCRAFT_MAJOR) {
+  if (!Number.isFinite(major) || major < REQUIRED_SNAPCRAFT_MAJOR) {
     throw new Error(`at least snapcraft ${REQUIRED_SNAPCRAFT_MAJOR}.0.0 is required, but ${trimmed} installed, please: ${installMessage}`)
   }
 }

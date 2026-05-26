@@ -1,13 +1,13 @@
-import { getTemplatePath } from "../../util/pathManager"
-import { replaceDefault as _replaceDefault, Arch, deepAssign, executeAppBuilder, serializeToYaml, toLinuxArchString } from "builder-util"
+import { replaceDefault as _replaceDefault, Arch, deepAssign, executeAppBuilder, isValidKey, serializeToYaml, toLinuxArchString } from "builder-util"
 import { asArray, Nullish } from "builder-util-runtime"
 import { outputFile, readFile } from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
 import { PlugDescriptor, SnapOptions } from "../../options/SnapOptions"
+import { getTemplatePath } from "../../util/pathManager"
 import { SnapCore } from "./SnapTarget"
-import { DEFAULT_STAGE_PACKAGES } from "./snapcraftBuilder"
 import { SnapcraftYAML } from "./snapcraft"
+import { DEFAULT_STAGE_PACKAGES } from "./snapcraftBuilder"
 
 // Handles core18/core20/core22 snaps via the app-builder binary (not the snapcraft CLI).
 // See: https://github.com/develar/app-builder/blob/master/pkg/package-format/snap
@@ -77,6 +77,9 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
     if (slots != null) {
       appDescriptor.slots = Object.getOwnPropertyNames(slots)
       for (const slotName of appDescriptor.slots) {
+        if (!isValidKey(slotName)) {
+          throw new Error(`Invalid plug/slot name: ${slotName}`)
+        }
         const slotOptions = slots[slotName]
         if (slotOptions == null) {
           continue
@@ -143,11 +146,16 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
 
       if (plugs != null) {
         for (const plugName of plugNames) {
+          if (!isValidKey(plugName)) {
+            throw new Error(`Invalid plug/slot name: ${plugName}`)
+          }
           const plugOptions = plugs[plugName]
           if (plugOptions == null) {
             continue
           }
-
+          if (!snap.plugs) {
+            snap.plugs = {}
+          }
           snap.plugs[plugName] = plugOptions
         }
       }
@@ -256,9 +264,12 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
     const result: any = {}
     for (const item of Array.isArray(raw) ? raw : [raw]) {
       if (typeof item === "string") {
+        if (!isValidKey(item)) {
+          throw new Error(`Invalid plug/slot name: ${item}`)
+        }
         result[item] = null
       } else {
-        Object.assign(result, item)
+        deepAssign(result, item)
       }
     }
     return result

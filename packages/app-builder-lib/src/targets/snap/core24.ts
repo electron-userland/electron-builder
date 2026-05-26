@@ -1,4 +1,4 @@
-import { Arch, archFromString, copyDir, InvalidConfigurationError, log, removeNullish, toLinuxArchString } from "builder-util"
+import { Arch, archFromString, copyDir, deepAssign, InvalidConfigurationError, isValidKey, log, removeNullish, toLinuxArchString } from "builder-util"
 import { copy, mkdir, readdir, writeFile } from "fs-extra"
 import * as path from "path"
 import { PlugDescriptor, SlotDescriptor, SnapOptions24, SnapcraftOptions } from "../../options/SnapOptions"
@@ -337,9 +337,8 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       env.TMPDIR = "$XDG_RUNTIME_DIR"
     }
 
-    // Merge with user-provided environment
     if (options.environment) {
-      Object.assign(env, options.environment)
+      deepAssign(env, options.environment)
     }
 
     return Object.keys(env).length > 0 ? env : undefined
@@ -394,6 +393,9 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       const hooks: Record<string, any> = {}
       for (const hookFile of hookFiles) {
         const hookName = path.basename(hookFile, path.extname(hookFile))
+        if (!isValidKey(hookName)) {
+          throw new InvalidConfigurationError(`Invalid hook name: ${hookName}`)
+        }
         hooks[hookName] = {
           // Hook definitions will be populated by snapcraft from the files
           // Just register that these hooks exist
@@ -438,6 +440,9 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     // Handle single descriptor object
     if (!Array.isArray(items)) {
       Object.entries(items).forEach(([name, config]) => {
+        if (!isValidKey(name)) {
+          throw new Error(`Invalid plug/slot name: ${name}`)
+        }
         root[name] = config
         app.push(name)
       })
@@ -453,6 +458,9 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       } else {
         // Descriptor object with configuration
         Object.entries(item).forEach(([name, config]) => {
+          if (!isValidKey(name)) {
+            throw new Error(`Invalid plug/slot name: ${name}`)
+          }
           root[name] = config
           app.push(name)
         })
