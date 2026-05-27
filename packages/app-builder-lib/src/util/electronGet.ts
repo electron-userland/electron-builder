@@ -417,7 +417,19 @@ function buildElectronArtifactConfig(options: ArtifactDownloadOptions): Electron
           customDir: customDir || undefined,
           customFilename: customFilename || undefined,
         },
-        ...(strictSSL === false ? { downloadOptions: { https: { rejectUnauthorized: false } } } : {}),
+        // strictSSL: false disables TLS certificate validation for all
+        // electron/tool downloads, making the build vulnerable to MITM attacks
+        // that substitute malicious binaries.  This option exists only for
+        // air-gapped or self-signed-cert environments; if you set it, ensure
+        // your build network is fully trusted.
+        ...(strictSSL === false
+          ? (log.warn(
+              { option: "electronDownload.strictSSL" },
+              "strictSSL is false — TLS certificate validation is DISABLED for Electron downloads. " +
+                "This leaves the build open to MITM attacks. Only use this option in trusted, isolated environments."
+            ),
+            { downloadOptions: { https: { rejectUnauthorized: false } } })
+          : {}),
       }
       if (overridePlatform != null) {
         artifactConfig.platform = overridePlatform
