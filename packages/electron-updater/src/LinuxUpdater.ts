@@ -1,6 +1,15 @@
 import { AllPublishOptions } from "builder-util-runtime"
+import { spawnSync } from "child_process"
 import { AppAdapter } from "./AppAdapter"
 import { BaseUpdater } from "./BaseUpdater"
+
+/** POSIX-safe single-quoting: wraps `arg` in single quotes and escapes any
+ *  embedded single quotes using the `'\''` idiom.  The result is safe to embed
+ *  in a shell command string (e.g. `kdesudo -c '...'`).
+ */
+function shellQuote(arg: string): string {
+  return `'${arg.replace(/'/g, "'\\''")}'`
+}
 
 export abstract class LinuxUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
@@ -14,13 +23,6 @@ export abstract class LinuxUpdater extends BaseUpdater {
     return process.getuid?.() === 0
   }
 
-  /**
-   * Sanitizies the installer path for using with command line tools.
-   */
-  protected get installerPath(): string | null {
-    return super.installerPath?.replace(/\\/g, "\\\\").replace(/ /g, "\\ ") ?? null
-  }
-
   protected runCommandWithSudoIfNeeded(commandWithArgs: string[]) {
     if (this.isRunningAsRoot()) {
       this._logger.info("Running as root, no need to use sudo")
@@ -28,15 +30,23 @@ export abstract class LinuxUpdater extends BaseUpdater {
     }
 
     const { name } = this.app
-    const installComment = `"${name} would like to update"`
+    // Strip characters with shell/dialog-injection potential from the app name
+    // before embedding it in the privilege-escalation prompt string.
+    const safeComment = name.replace(/[^\w\s._-]/g, " ").trim()
+    const installComment = `${safeComment} would like to update`
     const sudo = this.sudoWithArgs(installComment)
-    this._logger.info(`Running as non-root user, using sudo to install: ${sudo}`)
-    let wrapper = `"`
-    // some sudo commands dont want the command to be wrapped in " quotes
-    if (/pkexec/i.test(sudo[0]) || sudo[0] === "sudo") {
-      wrapper = ""
+    this._logger.info(`Running as non-root user, using ${sudo[0]} to install`)
+
+    if (/kdesudo/i.test(sudo[0])) {
+      // kdesudo accepts a single shell-command string after -c.
+      // Shell-quote every argument individually to prevent injection.
+      const shellCmd = commandWithArgs.map(arg => shellQuote(arg)).join(" ")
+      return this.spawnSyncLog(sudo[0], [...sudo.slice(1), shellCmd])
     }
-    return this.spawnSyncLog(sudo[0], [...(sudo.length > 1 ? sudo.slice(1) : []), `${wrapper}/bin/bash`, "-c", `'${commandWithArgs.join(" ")}'${wrapper}`])
+
+    // pkexec, sudo, gksudo, beesu: command + args are separate process
+    // arguments passed directly to execvp() — no shell, no injection surface.
+    return this.spawnSyncLog(sudo[0], [...sudo.slice(1), ...commandWithArgs])
   }
 
   protected sudoWithArgs(installComment: string): string[] {
@@ -54,12 +64,10 @@ export abstract class LinuxUpdater extends BaseUpdater {
   }
 
   protected hasCommand(cmd: string): boolean {
-    try {
-      this.spawnSyncLog(`command`, ["-v", cmd])
-      return true
-    } catch {
-      return false
-    }
+    // Use "which" (a standalone binary) rather than the shell builtin "command -v"
+    // so this works when spawnSyncLog does not invoke a shell on Unix.
+    const result = spawnSync("which", [cmd], { encoding: "utf-8" })
+    return result.status === 0
   }
 
   protected determineSudoCommand(): string {
@@ -75,14 +83,25 @@ export abstract class LinuxUpdater extends BaseUpdater {
   /**
    * Detects the package manager to use based on the available commands.
    * Allows overriding the default behavior by setting the ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER environment variable.
-   * If the environment variable is set, it will be used directly. (This is useful for testing each package manager logic path.)
+   * If the environment variable is set, it will be validated against a plain-name allowlist and used directly.
+   * (This is useful for testing each package manager logic path.)
    * Otherwise, it checks for the presence of the specified package manager commands in the order provided.
    * @param pms - An array of package manager commands to check for, in priority order.
-   * @returns The detected package manager command or "unknown" if none are found.
+   * @returns The detected package manager command or the first entry if none are found.
    */
   protected detectPackageManager(pms: string[]): string {
     const pmOverride = process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER?.trim()
     if (pmOverride) {
+      // Guard against command injection: the value must be a plain command name
+      // (letters, digits, hyphens, underscores only — no paths, spaces, or
+      // shell metacharacters).
+      const SAFE_PM_RE = /^[a-zA-Z0-9_-]+$/
+      if (!SAFE_PM_RE.test(pmOverride)) {
+        throw new Error(
+          `ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER must be a plain command name ` +
+            `(e.g. "dpkg", "apt", "rpm"). Got: "${pmOverride}"`
+        )
+      }
       return pmOverride
     }
     // Check for the package manager in the order of priority
