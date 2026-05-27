@@ -629,14 +629,13 @@ export class NsisTarget extends Target {
       this.packager.debugLogger.add("nsis.script", script)
     }
 
-    const makensis = await getMakeNsisPath(this.packager.config.toolsets?.nsis, this.options.customNsisBinary)
-
     if (process.platform === "win32") {
       // fix for an issue caused by virus scanners, locking the file during write
       // https://github.com/electron-userland/electron-builder/issues/5005
       await ensureNotBusy(commands["OutFile"].replace(/"/g, ""))
     }
 
+    const makensis = await getMakeNsisPath(this.packager.config.toolsets?.nsis, this.options.customNsisBinary)
     await spawnAndWrite(makensis.path, args, script, {
       env: { ...process.env, ...(makensis.env ?? {}) },
       cwd: nsisTemplatesDir,
