@@ -14,7 +14,7 @@ export async function download(url: string, output: string, checksum?: string | 
   const downloadedFile = await get.downloadArtifact({
     version: "9.9.9",
     artifactName: filenameWithExt,
-    cacheRoot: path.resolve(getCacheDirectory(), "downloads"),
+    cacheRoot: path.resolve(getCacheDirectory({ allowEnvVarOverride: true }), "downloads"),
     cacheMode: ElectronDownloadCacheMode.ReadWrite,
     ...(checksum != null ? { checksums: { [filenameWithExt]: checksum } } : { unsafelyDisableChecksums: true }),
     mirrorOptions: { resolveAssetURL: async () => Promise.resolve(url) },
