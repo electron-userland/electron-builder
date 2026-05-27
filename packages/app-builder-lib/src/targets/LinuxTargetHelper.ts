@@ -23,18 +23,39 @@ function desktopStringEscape(value: string): string {
 }
 
 /**
+ * Characters that require an Exec argument to be double-quoted per the
+ * freedesktop Desktop Entry Specification.  Plain alphanumeric args and
+ * field codes must NOT be wrapped in quotes.
+ *
+ * @see https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#exec-variables
+ */
+const EXEC_RESERVED_RE = /[\s"'`\\<>~|&;$*?#()]/
+
+/**
  * Quote a single argument for use in a .desktop file Exec key.
  *
- * The freedesktop spec allows double-quoting Exec arguments.  Within a
- * double-quoted argument, `"` must be escaped as `\"` and `\` as `\\`.
- * Wrapping every argument in double quotes ensures that spaces and other
- * reserved characters (`;`, `$`, `&`, etc.) are not misinterpreted.
+ * Field codes (`%f`, `%u`, `%F`, `%U`, etc.) MUST be left unquoted — the
+ * desktop launcher only expands them in unquoted token positions.  Wrapping
+ * them in `"…"` causes the launcher to treat them as literal strings, which
+ * breaks file-association / drag-and-drop functionality.
+ *
+ * For all other arguments, double-quoting is used when the argument contains
+ * any character that would be misinterpreted by the launcher without quoting
+ * (spaces, shell metacharacters, etc.).  Safe plain-word args are passed
+ * through unchanged to keep the Exec line readable.
  *
  * @see https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#exec-variables
  */
 function desktopExecArgEscape(arg: string): string {
-  // Escape backslash first, then double-quote.
-  return `"${arg.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`
+  // Field codes (%f, %u, %F, %U, %i, %c, %k, …) must never be quoted.
+  if (/^%[a-zA-Z]$/.test(arg)) {
+    return arg
+  }
+  // Only quote when the arg actually contains characters that need it.
+  if (EXEC_RESERVED_RE.test(arg)) {
+    return `"${arg.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`
+  }
+  return arg
 }
 import { CompressionLevel } from "../core"
 import { outputFile } from "fs-extra"
