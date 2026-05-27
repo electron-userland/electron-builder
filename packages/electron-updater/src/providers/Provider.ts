@@ -111,9 +111,22 @@ export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string
   }
 }
 
+// A real update manifest is a handful of fields (version, urls, checksums, date).
+// 100 KB is extremely generous; anything larger is almost certainly malformed or
+// a YAML-anchor/alias "billion-laughs" expansion attack from a rogue update server.
+const MAX_UPDATE_MANIFEST_SIZE = 100 * 1024
+
 export function parseUpdateInfo(rawData: string | null, channelFile: string, channelFileUrl: URL): UpdateInfo {
   if (rawData == null) {
     throw newError(`Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): rawData: null`, "ERR_UPDATER_INVALID_UPDATE_INFO")
+  }
+
+  if (rawData.length > MAX_UPDATE_MANIFEST_SIZE) {
+    throw newError(
+      `Update manifest ${channelFile} is too large (${rawData.length} bytes; limit ${MAX_UPDATE_MANIFEST_SIZE}). ` +
+        `Refusing to parse to prevent YAML anchor-bomb or content-bomb attacks.`,
+      "ERR_UPDATER_INVALID_UPDATE_INFO"
+    )
   }
 
   let result: UpdateInfo
