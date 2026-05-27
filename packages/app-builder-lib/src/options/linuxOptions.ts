@@ -63,6 +63,14 @@ export interface LinuxConfiguration extends CommonLinuxOptions, PlatformSpecific
   readonly packageCategory?: string | null
 }
 
+/**
+ * Desktop-entry and runtime fields shared by all Linux targets and all snap core strategies.
+ *
+ * Fields set under `linux.*` in your build config (i.e. on {@link LinuxConfiguration}) are
+ * automatically cascaded into each snap core's options by `LinuxTargetHelper.getSnapCore()`.
+ * You do not need to duplicate them under `snapcraft.core24.*`, `snapcraft.core22.*`, etc.
+ * Per-core values always take precedence when both are set.
+ */
 export interface CommonLinuxOptions {
   /**
    * The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).

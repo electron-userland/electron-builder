@@ -3,7 +3,7 @@ import { Arch } from "electron-builder"
 import { TestContext } from "vitest"
 import { optionsForFlakyE2E, runTest, windowsVmPromise } from "./blackboxUpdateHelpers"
 
-export function registerBlackboxWinTests(toolsets: Required<Pick<ToolsetConfig, "winCodeSign">>): void {
+export function registerBlackboxWinTests(toolsets: Required<Pick<ToolsetConfig, "winCodeSign" | "nsis">>): void {
   describe.heavy("windows", optionsForFlakyE2E, () => {
     test("nsis", async (context: TestContext) => {
       const vm = await windowsVmPromise

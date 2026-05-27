@@ -19805,10 +19805,10 @@ exports[`link 3`] = `
     },
     "index.js": {
       "offset": 960,
-      "size": 4190,
+      "size": 4650,
     },
     "package.json": {
-      "offset": 5140,
+      "offset": 5600,
       "size": 290,
     },
   },
@@ -20252,10 +20252,10 @@ exports[`unpackDir one 2`] = `
     },
     "index.js": {
       "offset": 960,
-      "size": 4190,
+      "size": 4650,
     },
     "package.json": {
-      "offset": 5140,
+      "offset": 5600,
       "size": 290,
     },
   },

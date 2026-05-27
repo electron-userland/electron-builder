@@ -29,12 +29,15 @@ export { DebugLogger } from "./DebugLogger"
 export * from "./log"
 export { buildGotProxyAgent, httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor"
 export * from "./promise"
+export * from "./envUtil"
 export { parseValidEnvVarUrl } from "./envUtil"
+export { isValidKey } from "./mapper"
 
 export { asArray } from "builder-util-runtime"
 export * from "./fs"
 
 export { deepAssign } from "./deepAssign"
+export { loadCscLink, decodeCscLinkBase64, resolveCscLinkPath } from "./cscLink"
 
 export { getPath7x, getPath7za } from "./7za"
 
@@ -362,6 +365,35 @@ export function addValue<K, T>(map: Map<K, Array<T>>, key: K, value: T) {
   } else if (!list.includes(value)) {
     list.push(value)
   }
+}
+
+export function isArrayEqualRegardlessOfSort(a: Array<string>, b: Array<string>) {
+  a = a.slice()
+  b = b.slice()
+  a.sort()
+  b.sort()
+  return a.length === b.length && a.every((value, index) => value === b[index])
+}
+
+/**
+ * Recursively removes all undefined and null values from an object
+ */
+export function removeNullish<T>(obj: T): T {
+  if (obj === null || typeof obj !== "object") {
+    return obj
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(removeNullish) as T
+  }
+
+  const result: Record<string, any> = {}
+  for (const [key, value] of Object.entries(obj)) {
+    if (value != null) {
+      result[key] = removeNullish(value)
+    }
+  }
+  return result as T
 }
 
 export function replaceDefault(inList: Array<string> | Nullish, defaultList: Array<string>): Array<string> {
