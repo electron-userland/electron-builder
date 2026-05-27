@@ -1,7 +1,7 @@
 import * as get from "@electron/get"
 import { ElectronDownloadCacheMode } from "@electron/get"
 import * as fs from "fs/promises"
-import { parseValidEnvVarUrl } from "builder-util"
+import { log, parseValidEnvVarUrl } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { sanitizeFileName } from "builder-util/out/filename"
 import * as path from "path"
@@ -11,6 +11,13 @@ const versionToPromise = new Map<string, Promise<string>>()
 
 export async function download(url: string, output: string, checksum?: string | null): Promise<void> {
   const filenameWithExt = path.basename(new URL(url).pathname)
+  if (checksum == null) {
+    // Without a checksum, a MITM attacker who can intercept the download (e.g.
+    // via a rogue mirror, a tampered CDN edge, or a DNS-spoofing attack) can
+    // substitute a malicious payload.  Callers should supply a checksum whenever
+    // possible.  See security audit finding #10.
+    log.warn({ url }, "downloading without an integrity checksum — the download is not verified against a known-good hash")
+  }
   const downloadedFile = await get.downloadArtifact({
     version: "9.9.9",
     artifactName: filenameWithExt,
