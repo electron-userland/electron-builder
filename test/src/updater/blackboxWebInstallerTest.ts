@@ -2,7 +2,7 @@ import { TmpDir } from "builder-util/out/util"
 import { execFileSync, execSync } from "child_process"
 import { randomUUID } from "crypto"
 import { Arch, Platform } from "electron-builder"
-import { existsSync, move, outputFile, remove } from "fs-extra"
+import { existsSync, move, outputFile, remove, copy } from "fs-extra"
 import { AddressInfo } from "net"
 import { homedir } from "os"
 import path from "path"
@@ -81,7 +81,7 @@ describe.heavy("web installer (nsis-web) blackbox", optionsForFlakyE2E, () => {
 
       // APP_PACKAGE_URL is a complete URL (no arch suffix appended) because we
       // supply appPackageUrl explicitly — this is the code path fixed by #9655.
-      const packageFileName = "TestApp-1.0.0-x64.nsis.7z"
+      const packageFileName = "testapp-1.0.0-x64.nsis.7z"
       const appPackageUrl = `http://${packageServerHost}:${port}/${encodeURIComponent(packageFileName)}`
 
       // -----------------------------------------------------------------------
@@ -153,12 +153,14 @@ describe.heavy("web installer (nsis-web) blackbox", optionsForFlakyE2E, () => {
       // Step 3: Copy the .nsis.7z app package into the HTTP server root so the
       // installer can download it at install time.
       // -----------------------------------------------------------------------
-      const packageSrc = path.join(builtDir, packageFileName)
+      // nsis-web writes artifacts into an "nsis-web" subdirectory of outDir
+      const nsisWebDir = path.join(builtDir, "nsis-web")
+      const packageSrc = path.join(nsisWebDir, packageFileName)
       const packageDest = path.join(serverRoot, packageFileName)
-      await import("fs-extra").then(m => m.copy(packageSrc, packageDest))
+      await copy(packageSrc, packageDest)
 
       const stubName = "TestApp Web Setup.exe"
-      const stubPath = path.join(builtDir, stubName)
+      const stubPath = path.join(nsisWebDir, stubName)
 
       // -----------------------------------------------------------------------
       // Step 4a — Native Windows: run the stub directly and verify locally.
