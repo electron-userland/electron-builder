@@ -608,7 +608,16 @@ export class NsisTarget extends Target {
       if (value == null) {
         args.push(`-D${name}`)
       } else {
-        args.push(`-D${name}=${value}`)
+        // nsisEscapeString prevents three classes of injection:
+        //   1. Newlines  → replaced with spaces; a bare \n in a define value
+        //      would terminate the current script line and let whatever follows
+        //      be parsed as a new preprocessor directive (e.g. !system, !include).
+        //   2. $ chars   → escaped to $$; unescaped $ in a define value would
+        //      cause NSIS to try to expand an unintended variable reference when
+        //      the define is substituted into a string context.
+        //   3. " chars   → escaped to $\"; an unescaped " would break out of
+        //      double-quoted NSIS string literals where ${DEFINE} is expanded.
+        args.push(`-D${name}=${nsisEscapeString(String(value))}`)
       }
     }
 
