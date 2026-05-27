@@ -29,7 +29,9 @@ function mergePublish(config: Configuration, configFromOptions: Configuration) {
     config.publish = publish
   } else {
     // apply to first
-    Object.assign(listOnDisk[0], publish)
+    // Use deepAssign (not Object.assign) so prototype-polluting keys such as
+    // __proto__ / prototype / constructor are rejected by isValidKey().
+    deepAssign(listOnDisk[0], publish)
   }
 }
 
