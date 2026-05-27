@@ -19,6 +19,7 @@ function r2Publisher(publishAutoUpdate = true): R2Options {
     provider: "r2",
     bucket: "my-r2-bucket",
     accountId: "abcdef1234567890abcdef1234567890",
+    publicUrl: "https://pub-abcdef1234567890abcdef1234567890.r2.dev",
     publishAutoUpdate,
   }
 }
