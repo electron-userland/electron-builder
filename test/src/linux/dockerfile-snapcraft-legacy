@@ -1,0 +1,62 @@
+# Snap heavy-test image — legacy cores (core18 / core20 / core22)
+#
+# Base: ghcr.io/canonical/snapcraft:7_core22
+#   Canonical rock image: Snapcraft 7 on Ubuntu 22.04 (Jammy, glibc 2.35).
+#   Snapcraft 7 is the officially supported builder for core18/core20/core22.
+#   Ubuntu 22.04 uses pre-t64-transition package names (libgtk-3-0, libasound2 …).
+#
+# Source: https://github.com/canonical/snapcraft-rocks
+FROM --platform=linux/amd64 ghcr.io/canonical/snapcraft:7_core22
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# squashfs-tools: mksquashfs is required by snapcraft --destructive-mode.
+# xvfb: virtual framebuffer used when electron-builder invokes Electron.
+# git: required by pnpm workspace bootstrap.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    squashfs-tools \
+    xvfb \
+    git \
+    curl \
+    ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+# Node.js 22 LTS via NodeSource.
+# NodeSource's setup script uses `apt` internally; the resulting WARNING lines
+# ("apt does not have a stable CLI interface") come from that script and are
+# harmless.
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+  && apt-get install -y --no-install-recommends nodejs \
+  && rm -rf /var/lib/apt/lists/*
+
+# pnpm + corepack + bun — matches docker/test-in-docker.sh bootstrap exactly.
+RUN npm install -g corepack bun \
+  && corepack enable
+
+# Electron runtime libraries (Ubuntu 22.04 / pre-t64 names).
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libnspr4 \
+    libnss3 \
+    libxss1 \
+    libxtst6 \
+    libdrm2 \
+    libgbm1 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libgtk-3-0 \
+    libasound2 \
+    libcups2 \
+  && rm -rf /var/lib/apt/lists/*
+
+# Create XDG_RUNTIME_DIR — defensive measure; snapcraft 7 does not use
+# craft-application's StateService but keeping the directory consistent across
+# both images avoids surprises if the base image is ever upgraded.
+RUN mkdir -p /run/user/0 && chmod 700 /run/user/0
+ENV XDG_RUNTIME_DIR=/run/user/0
+
+WORKDIR /project
+
+# Clear any ENTRYPOINT from the upstream rock so the project's test-linux
+# script (docker run … /bin/bash -c "…") works without --entrypoint overrides.
+ENTRYPOINT []
+CMD ["/bin/bash"]
