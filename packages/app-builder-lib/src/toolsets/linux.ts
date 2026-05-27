@@ -3,7 +3,7 @@ import * as path from "path"
 import { getBinFromUrl } from "../binDownload"
 import { ToolsetConfig } from "../configuration"
 import { downloadBuilderToolset } from "../util/electronGet"
-import { resolveEnvToolsetPath } from "../util/envPath"
+import { resolveEnvToolsetPath } from "builder-util"
 
 const fpmChecksums = {
   "fpm-1.17.0-ruby-3.4.3-darwin-arm64.7z": "6cc6d4785875bc7d79bdf52ca146080a4c300e1d663376ae79615fb548030ede",
@@ -32,7 +32,7 @@ const linuxToolsMacChecksums = {
 } as const
 
 export async function getLinuxToolsPath(): Promise<string> {
-  const envPath = resolveEnvToolsetPath("LINUX_TOOLS_MAC_PATH")
+  const envPath = await resolveEnvToolsetPath("LINUX_TOOLS_MAC_PATH")
   if (envPath != null) {
     return envPath
   }
@@ -60,7 +60,7 @@ export async function getLinuxToolsMacToolset() {
 }
 
 export async function getFpmPath() {
-  const customFpmPath = resolveEnvToolsetPath("CUSTOM_FPM_PATH")
+  const customFpmPath = await resolveEnvToolsetPath("CUSTOM_FPM_PATH")
   if (customFpmPath != null) {
     return customFpmPath
   }
@@ -107,7 +107,7 @@ export async function getAppImageTools(appimageToolVersion: ToolsetConfig["appim
   })
 
   const filenameWithExt = "appimage-tools-runtime-20251108.tar.gz"
-  const envPath = resolveEnvToolsetPath("APPIMAGE_TOOLS_PATH")
+  const envPath = await resolveEnvToolsetPath("APPIMAGE_TOOLS_PATH")
   if (envPath != null) {
     return getPaths(envPath)
   }

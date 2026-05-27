@@ -59,7 +59,7 @@ async function main() {
     printConsoleTrace: true,
     reporters: ["default", __dirname + "/vitest-smart-reporter.ts"],
 
-    maxWorkers: 3, // we have some heavy tests that can cause OOM if we run too many in parallel, so we limit the workers to 3
+    maxWorkers: 3, // limit to 3 workers to avoid overwhelming the system with disk I/O
 
     fileParallelism: process.env.TEST_SEQUENTIAL_FILES !== "true",
     sequence: {
