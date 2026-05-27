@@ -1,7 +1,7 @@
 import * as path from "path"
 import { isEmptyOrSpaces } from "./stringUtil"
 import { log } from "./log"
-import { existsSync } from "fs-extra"
+import { exists } from "./fs"
 
 export function resolveEnvShellValue(envVarName: string): string | null {
   const rawValue = process.env[envVarName]
@@ -17,7 +17,7 @@ export function resolveEnvShellValue(envVarName: string): string | null {
   return trimmed
 }
 
-export function resolveEnvToolsetPath(envVarKey: string): string | null {
+export async function resolveEnvToolsetPath(envVarKey: string): Promise<string | null> {
   const value = resolveEnvShellValue(envVarKey)
   if (value == null) {
     return null
@@ -26,7 +26,7 @@ export function resolveEnvToolsetPath(envVarKey: string): string | null {
     throw new Error(`${envVarKey} must be an absolute path: ${value}`)
   }
   const p = path.resolve(value)
-  if (!existsSync(p)) {
+  if (!(await exists(p))) {
     throw new Error(`${envVarKey} path does not exist: ${p}`)
   }
   log.info({ envVarKey, value: p }, `resolved value from environment variable`)
