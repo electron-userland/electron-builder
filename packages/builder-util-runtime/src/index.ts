@@ -33,6 +33,7 @@ export {
   PublishProvider,
   S3Options,
   SnapStoreOptions,
+  R2Options,
   SpacesOptions,
   GitlabReleaseInfo,
   GitlabReleaseAsset,

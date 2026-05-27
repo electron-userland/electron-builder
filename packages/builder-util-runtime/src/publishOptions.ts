@@ -1,7 +1,7 @@
 import { OutgoingHttpHeaders } from "http"
 import { Nullish } from "."
 
-export type PublishProvider = "github" | "gitlab" | "s3" | "spaces" | "generic" | "custom" | "snapStore" | "keygen" | "bitbucket"
+export type PublishProvider = "github" | "gitlab" | "s3" | "spaces" | "r2" | "generic" | "custom" | "snapStore" | "keygen" | "bitbucket"
 
 // typescript-json-schema generates only PublishConfiguration if it is specified in the list, so, it is not added here
 export type AllPublishOptions =
@@ -10,6 +10,7 @@ export type AllPublishOptions =
   | GitlabOptions
   | S3Options
   | SpacesOptions
+  | R2Options
   | GenericServerOptions
   | CustomPublishOptions
   | KeygenOptions
@@ -459,6 +460,47 @@ export interface SpacesOptions extends BaseS3Options {
   readonly region: string
 }
 
+/**
+ * [Cloudflare R2](https://developers.cloudflare.com/r2/) options.
+ * Credentials are required; define `CF_R2_ACCESS_KEY_ID` and `CF_R2_SECRET_ACCESS_KEY` environment variables
+ * with an R2 API token (see https://developers.cloudflare.com/r2/api/s3/tokens/).
+ *
+ * Note: R2 does not support S3 ACLs. Do not set the `acl` option; bucket-level public access is
+ * configured in the Cloudflare dashboard instead.
+ *
+ * Example configuration:
+ *
+```json
+{
+  "build": {
+    "publish": {
+      "provider": "r2",
+      "bucket": "my-releases",
+      "accountId": "your-cloudflare-account-id"
+    }
+  }
+}
+```
+ */
+export interface R2Options extends BaseS3Options {
+  /**
+   * The provider. Must be `r2`.
+   */
+  readonly provider: "r2"
+
+  /**
+   * The R2 bucket name.
+   */
+  readonly bucket: string
+
+  /**
+   * Your Cloudflare account ID. Found on the R2 overview page in the Cloudflare dashboard.
+   * Used to construct the S3-compatible endpoint:
+   * `https://<accountId>.r2.cloudflarestorage.com`
+   */
+  readonly accountId: string
+}
+
 export interface GitlabReleaseInfo {
   name: string
   tag_name: string
@@ -491,6 +533,9 @@ export function getS3LikeProviderBaseUrl(configuration: PublishConfiguration) {
   }
   if (provider === "spaces") {
     return spacesUrl(configuration as SpacesOptions)
+  }
+  if (provider === "r2") {
+    return r2Url(configuration as R2Options)
   }
   throw new Error(`Not supported provider: ${provider}`)
 }
@@ -538,4 +583,14 @@ function spacesUrl(options: SpacesOptions) {
     throw new Error(`region is missing`)
   }
   return appendPath(`https://${options.name}.${options.region}.digitaloceanspaces.com`, options.path)
+}
+
+function r2Url(options: R2Options) {
+  if (options.bucket == null) {
+    throw new Error(`bucket is missing`)
+  }
+  if (options.accountId == null) {
+    throw new Error(`accountId is missing`)
+  }
+  return appendPath(`https://${options.accountId}.r2.cloudflarestorage.com/${options.bucket}`, options.path)
 }

@@ -87,8 +87,8 @@ function computeIsisElectronUpdater1xCompatibility(updaterCompatibility: string 
     return semver.satisfies("1.0.0", updaterCompatibility)
   }
 
-  // spaces is a new publish provider, no need to keep backward compatibility
-  if (publishConfiguration.provider === "spaces") {
+  // spaces and r2 are new publish providers, no need to keep backward compatibility
+  if (publishConfiguration.provider === "spaces" || publishConfiguration.provider === "r2") {
     return false
   }
 

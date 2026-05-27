@@ -1,4 +1,4 @@
-import { GenericServerOptions, GithubOptions, KeygenOptions, SpacesOptions } from "builder-util-runtime"
+import { GenericServerOptions, GithubOptions, KeygenOptions, R2Options, SpacesOptions } from "builder-util-runtime"
 import { Arch, createTargets, Platform } from "electron-builder"
 import { outputFile } from "fs-extra"
 import * as path from "path"
@@ -10,6 +10,15 @@ function spacesPublisher(publishAutoUpdate = true): SpacesOptions {
     provider: "spaces",
     name: "mySpaceName",
     region: "nyc3",
+    publishAutoUpdate,
+  }
+}
+
+function r2Publisher(publishAutoUpdate = true): R2Options {
+  return {
+    provider: "r2",
+    bucket: "my-r2-bucket",
+    accountId: "abcdef1234567890abcdef1234567890",
     publishAutoUpdate,
   }
 }
@@ -57,6 +66,31 @@ test.ifNotWindows("github and spaces (publishAutoUpdate)", ({ expect }) =>
         electronUpdaterCompatibility: ">=2.16",
       },
       publish: [githubPublisher("foo/foo"), spacesPublisher(false)],
+    },
+  })
+)
+
+test.ifNotWindows("generic, github and r2", ({ expect }) =>
+  app(expect, {
+    targets: Platform.MAC.createTarget("zip", Arch.x64),
+    config: {
+      generateUpdatesFilesForAllChannels: true,
+      mac: {
+        electronUpdaterCompatibility: ">=2.16",
+      },
+      publish: [genericPublisher("https://example.com/downloads"), githubPublisher("foo/foo"), r2Publisher()],
+    },
+  })
+)
+
+test.ifNotWindows("github and r2 (publishAutoUpdate)", ({ expect }) =>
+  app(expect, {
+    targets: Platform.LINUX.createTarget("AppImage", Arch.x64),
+    config: {
+      mac: {
+        electronUpdaterCompatibility: ">=2.16",
+      },
+      publish: [githubPublisher("foo/foo"), r2Publisher(false)],
     },
   })
 )

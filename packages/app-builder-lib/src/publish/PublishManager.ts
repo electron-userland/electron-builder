@@ -24,6 +24,7 @@ import {
   PublishContext,
   Publisher,
   PublishOptions,
+  R2Publisher,
   S3Publisher,
   SnapStorePublisher,
   SpacesPublisher,
@@ -391,6 +392,9 @@ async function requireProviderClass(provider: string, packager: Packager): Promi
 
     case "spaces":
       return SpacesPublisher
+
+    case "r2":
+      return R2Publisher
 
     case "bitbucket":
       return BitbucketPublisher

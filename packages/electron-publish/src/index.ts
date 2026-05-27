@@ -11,6 +11,7 @@ export { GitlabPublisher } from "./gitlabPublisher"
 export { KeygenPublisher } from "./keygenPublisher"
 export { S3Publisher } from "./s3/s3Publisher"
 export { SpacesPublisher } from "./s3/spacesPublisher"
+export { R2Publisher } from "./s3/r2Publisher"
 export { SnapStorePublisher, resolveSnapCredentials } from "./snapStorePublisher"
 
 export type PublishPolicy = "onTag" | "onTagOrDraft" | "always" | "never"
