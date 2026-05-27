@@ -110,7 +110,17 @@ function main() {
 
   // This method will be called when Electron has finished
   // initialization and is ready to create browser windows.
-  app.on('ready', createWindow);
+  app.on('ready', () => {
+    // Snap install+launch test: signal readiness without opening a window.
+    // The test runner SIGKILLs the process after capturing this line so
+    // we intentionally do NOT call app.quit() — its cleanup also hangs in
+    // Docker containers without system services (snapd, D-Bus, GPU).
+    if (process.env.SNAP_LAUNCH_TEST) {
+      process.stdout.write('ELECTRON_READY:' + process.versions.electron + '\n');
+      return;
+    }
+    createWindow();
+  });
 
   // Quit when all windows are closed.
   app.on('window-all-closed', function () {
