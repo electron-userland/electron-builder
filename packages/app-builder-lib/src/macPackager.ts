@@ -283,7 +283,11 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
 
       await this.doAddElectronFuses(packContext)
 
-      await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
+      // Mirror the base-class guard: skip signing when the caller explicitly set sign:false
+      // (e.g. packMasTargets passes sign:false so that signMas() is the sole signing step).
+      if (config.options?.sign ?? true) {
+        await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
+      }
     } finally {
       this._activePackConfig = null
     }
@@ -322,7 +326,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
           targets: [target],
           options: { sign: false },
         })
-        await this.signMas(path.join(targetOutDir, `${this.appInfo.productFilename}.app`), targetOutDir, platformConfig, arch)
+        await this.signMas(path.join(targetOutDir, `${path.basename(this.appInfo.productFilename)}.app`), targetOutDir, platformConfig, arch)
       } else {
         await this.signMas(prepackaged, targetOutDir, platformConfig, arch)
       }
@@ -330,7 +334,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
   }
 
   private async packMacTargets(outDir: string, arch: Arch, targets: Array<Target>, prepackaged: string | null | undefined, taskManager: AsyncTaskManager): Promise<void> {
-    const appPath = prepackaged == null ? path.join(this.computeAppOutDir(outDir, arch), `${this.appInfo.productFilename}.app`) : prepackaged
+    const appPath = prepackaged == null ? path.join(this.computeAppOutDir(outDir, arch), `${path.basename(this.appInfo.productFilename)}.app`) : prepackaged
 
     if (prepackaged == null) {
       const platformConfig = this.getPlatformConfig("mac")
@@ -517,7 +521,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       await Promise.all(
         directories.map(async (file: string) => {
           if (shouldSign(file)) {
-            await this.sign(path.join(sourceDirectory, file), null, null, packContext.arch, false)
+            await this.sign(path.join(sourceDirectory, path.basename(file)), null, null, packContext.arch, false)
           }
         })
       )
