@@ -1,5 +1,5 @@
 import { CommonLinuxOptions } from "../options/linuxOptions"
-import { asArray, deepAssign, exists, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
+import { asArray, exists, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { CompressionLevel } from "../core"
 import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -11,6 +11,7 @@ import { SnapCore } from "./snap/SnapTarget"
 import { SnapCore24 } from "./snap/core24"
 import { SnapCoreCustom } from "./snap/coreCustom"
 import { SnapCoreLegacy } from "./snap/coreLegacy"
+import { deepAssign } from "builder-util-runtime"
 
 function mapLinuxCompressionToSnap(level: CompressionLevel | null | undefined): "xz" | "lzo" | undefined {
   if (level === "store") {

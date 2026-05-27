@@ -11,6 +11,7 @@ import {
   ProgressInfo,
   BlockMap,
   retry,
+  deepAssign,
 } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { release } from "os"
@@ -172,7 +173,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    *  Shortcut for explicitly adding auth tokens to request headers
    */
   addAuthHeader(token: string) {
-    this.requestHeaders = Object.assign({}, this.requestHeaders, {
+    this.requestHeaders = deepAssign({}, this.requestHeaders, {
       authorization: token,
     })
   }

@@ -2,6 +2,7 @@ import * as path from "path"
 import { isEmptyOrSpaces } from "./stringUtil"
 import { log } from "./log"
 import { exists } from "./fs"
+import { stat } from "fs/promises"
 
 export function resolveEnvShellValue(envVarName: string): string | null {
   const rawValue = process.env[envVarName]
@@ -17,7 +18,7 @@ export function resolveEnvShellValue(envVarName: string): string | null {
   return trimmed
 }
 
-export async function resolveEnvToolsetPath(envVarKey: string): Promise<string | null> {
+export async function resolveEnvToolsetPath(envVarKey: string, expectedType: "directory" | "file"): Promise<string | null> {
   const value = resolveEnvShellValue(envVarKey)
   if (value == null) {
     return null
@@ -29,7 +30,12 @@ export async function resolveEnvToolsetPath(envVarKey: string): Promise<string |
   if (!(await exists(p))) {
     throw new Error(`${envVarKey} path does not exist: ${p}`)
   }
-  log.info({ envVarKey, value: p }, `resolved value from environment variable`)
+  const targetStat = await stat(p)
+  const targetType = targetStat.isDirectory() ? "directory" : targetStat.isFile() ? "file" : "unknown"
+  if (targetType !== expectedType) {
+    throw new Error(`${envVarKey} path must be a ${expectedType}, but got ${targetType}: ${p}`)
+  }
+  log.info({ [envVarKey]: p }, `resolved ${envVarKey} from environment variable`)
   return p
 }
 

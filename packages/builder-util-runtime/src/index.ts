@@ -42,6 +42,8 @@ export { parseDn } from "./rfc2253Parser"
 export { BlockMapDataHolder, PackageFileInfo, ReleaseNoteInfo, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo } from "./updateInfo"
 export { UUID } from "./uuid"
 export { parseXml, XElement } from "./xml"
+export { isValidKey } from "./mapper"
+export { deepAssign } from "./deepAssign"
 
 // nsis
 export const CURRENT_APP_INSTALLER_FILE_NAME = "installer.exe"

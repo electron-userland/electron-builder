@@ -54,7 +54,7 @@ export async function getSignToolPath(winCodeSign: ToolsetConfig["winCodeSign"] 
     return { path: "osslsigncode" }
   }
 
-  const signToolPath = await resolveEnvToolsetPath("SIGNTOOL_PATH")
+  const signToolPath = await resolveEnvToolsetPath("SIGNTOOL_PATH", "file")
   if (signToolPath != null) {
     return { path: signToolPath }
   }
@@ -70,7 +70,7 @@ export async function getSignToolPath(winCodeSign: ToolsetConfig["winCodeSign"] 
 }
 
 export async function getWindowsKitsBundle({ winCodeSign, arch }: { winCodeSign: CodeSignVersionKey | Nullish; arch: Arch }) {
-  const kitPath = await resolveEnvToolsetPath("ELECTRON_BUILDER_WINDOWS_KITS_PATH")
+  const kitPath = await resolveEnvToolsetPath("ELECTRON_BUILDER_WINDOWS_KITS_PATH", "directory")
   if (kitPath != null) {
     return { kit: kitPath, appxAssets: kitPath }
   }
@@ -105,7 +105,7 @@ async function getWindowsSignToolExe({ winCodeSign, arch }: { winCodeSign: CodeS
 }
 
 async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish) {
-  const osslSigncodePath = await resolveEnvToolsetPath("ELECTRON_BUILDER_OSSL_SIGNCODE_PATH")
+  const osslSigncodePath = await resolveEnvToolsetPath("ELECTRON_BUILDER_OSSL_SIGNCODE_PATH", "file")
   if (osslSigncodePath != null) {
     return { path: osslSigncodePath }
   }
@@ -142,7 +142,7 @@ export async function getRceditBundle(winCodeSign: ToolsetConfig["winCodeSign"] 
   const ia32 = "rcedit-ia32.exe"
   const x86 = "rcedit-x86.exe"
   const x64 = "rcedit-x64.exe"
-  const rcedit = await resolveEnvToolsetPath("ELECTRON_BUILDER_RCEDIT_PATH")
+  const rcedit = await resolveEnvToolsetPath("ELECTRON_BUILDER_RCEDIT_PATH", "directory")
   if (rcedit != null) {
     const overridePath = rcedit
     return { x86: path.resolve(overridePath, x86), x64: path.resolve(overridePath, x64) }
@@ -195,17 +195,6 @@ async function getNsisBundlePath(nsis: ToolsetConfig["nsis"], customBinary?: Cus
   })
 }
 
-async function getNsisDirOverride(): Promise<string | null> {
-  const overridePath = await resolveEnvToolsetPath("ELECTRON_BUILDER_NSIS_DIR")
-  if (overridePath == null) {
-    return null
-  }
-  if (!(await stat(overridePath)).isDirectory()) {
-    throw new Error(`ELECTRON_BUILDER_NSIS_DIR must be a directory, got a file: ${overridePath}`)
-  }
-  return overridePath
-}
-
 export async function getMakeNsisPath(nsis: ToolsetConfig["nsis"] | Nullish, customBinary?: CustomNsisBinaryConfig | null): Promise<ToolInfo> {
   const legacyBundle = (bundlePath: string) => {
     // legacy bundle: platform-specific subdirectories, NSISDIR must be set explicitly
@@ -222,7 +211,7 @@ export async function getMakeNsisPath(nsis: ToolsetConfig["nsis"] | Nullish, cus
     return { path: path.resolve(bundlePath, process.platform === "win32" ? "makensis.cmd" : "makensis") }
   }
 
-  const overridePath = await getNsisDirOverride()
+  const overridePath = await resolveEnvToolsetPath("ELECTRON_BUILDER_NSIS_DIR", "directory")
   if (overridePath != null) {
     // we have to search both to maintain backward compatibility
     let potentialBundle: ToolInfo = legacyBundle(overridePath)
@@ -256,7 +245,7 @@ export async function getNsisPluginsPath(nsis: ToolsetConfig["nsis"] | Nullish, 
     }
     throw new Error(`Plugins directory not found in ${type}: ${bundlePath}. Expected to find in one of: ${potentialPaths.join(", ")}`)
   }
-  const overridePath = await resolveEnvToolsetPath("ELECTRON_BUILDER_NSIS_RESOURCES_DIR")
+  const overridePath = await resolveEnvToolsetPath("ELECTRON_BUILDER_NSIS_RESOURCES_DIR", "directory")
   if (overridePath != null) {
     return resolveCustomBundle(overridePath, "ELECTRON_BUILDER_NSIS_RESOURCES_DIR")
   }
@@ -278,7 +267,7 @@ export async function getNsisElevatePath(nsis: ToolsetConfig["nsis"] | Nullish, 
     }
     throw new Error(`elevate.exe not found in ${label} directory: ${dir}. Expected path: ${p}`)
   }
-  const overridePath = await getNsisDirOverride()
+  const overridePath = await resolveEnvToolsetPath("ELECTRON_BUILDER_NSIS_DIR", "directory")
   if (overridePath != null) {
     return resolveElevate(overridePath, "ELECTRON_BUILDER_NSIS_DIR")
   }
