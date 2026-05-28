@@ -1,48 +1,15 @@
 import * as os from "os"
 import * as path from "path"
+import { execSync } from "child_process"
+import { writeFileSync } from "fs"
 import { mkdtemp } from "fs/promises"
 import { afterAll, beforeAll, describe, it, expect } from "vitest"
-import * as forge from "node-forge"
 import { writeFile, remove } from "fs-extra"
 import { readCertInfo, _testingOnly } from "app-builder-lib/src/codeSign/certInfo"
 
 const { pkcs12PbeDeriveKey, pkcs12PasswordToUtf16, rc2CbcDecrypt, MAX_PKCS12_PBE_ITERATIONS } = _testingOnly
 import { executeAppBuilder } from "builder-util"
 import { WIN_CSC_LINK } from "./helpers/codeSignData"
-
-// ─── PFX generation helper (cross-platform, no openssl required) ─────────────
-
-interface SubjectAttr {
-  name?: string
-  shortName?: string
-  value: string
-}
-
-/**
- * Generates a self-signed PKCS#12 (PFX) buffer using node-forge.
- * Uses RSA-1024 for speed in tests (not for security).
- */
-function generatePfx(subject: SubjectAttr[], password: string, includeCodeSigningEku = true): Buffer {
-  const keys = forge.pki.rsa.generateKeyPair(1024)
-  const cert = forge.pki.createCertificate()
-  cert.publicKey = keys.publicKey
-  cert.serialNumber = "01"
-  cert.validity.notBefore = new Date()
-  cert.validity.notAfter = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-  cert.setSubject(subject as forge.pki.CertificateField[])
-  cert.setIssuer(subject as forge.pki.CertificateField[])
-  const extensions: object[] = [
-    { name: "basicConstraints", cA: false },
-    { name: "keyUsage", digitalSignature: true },
-  ]
-  if (includeCodeSigningEku) {
-    extensions.push({ name: "extKeyUsage", codeSigning: true })
-  }
-  cert.setExtensions(extensions)
-  cert.sign(keys.privateKey, forge.md.sha256.create())
-  const p12Asn1 = forge.pkcs12.toPkcs12Asn1(keys.privateKey, cert, password)
-  return Buffer.from(forge.asn1.toDer(p12Asn1).getBytes(), "binary")
-}
 
 // ─── Test fixture paths ───────────────────────────────────────────────────────
 
@@ -58,113 +25,76 @@ let MULTI_CERT_PFX: string
 let TRUNCATED_PFX: string
 let RC2_40_PFX: string
 
+// Generates a self-signed cert + PFX with codeSigning EKU via openssl.
+// Uses RSA-1024 for speed in tests (not for security).
+function genSigningPfx(subj: string, password: string, name: string): string {
+  const key = path.join(tmpDir, `${name}.key`)
+  const crt = path.join(tmpDir, `${name}.crt`)
+  const pfx = path.join(tmpDir, `${name}.pfx`)
+  execSync(
+    `openssl req -x509 -newkey rsa:1024 -keyout "${key}" -out "${crt}" -sha256 -days 7300 -nodes -subj "${subj}" -addext "extendedKeyUsage=codeSigning" -addext "basicConstraints=CA:false"`,
+    { stdio: "pipe" }
+  )
+  execSync(`openssl pkcs12 -export -out "${pfx}" -inkey "${key}" -in "${crt}" -passout "pass:${password}"`, { stdio: "pipe" })
+  return pfx
+}
+
+// Generates a PFX without a codeSigning EKU.
+function genNoEkuPfx(subj: string, password: string, name: string): string {
+  const key = path.join(tmpDir, `${name}.key`)
+  const crt = path.join(tmpDir, `${name}.crt`)
+  const pfx = path.join(tmpDir, `${name}.pfx`)
+  execSync(`openssl req -x509 -newkey rsa:1024 -keyout "${key}" -out "${crt}" -sha256 -days 7300 -nodes -subj "${subj}"`, { stdio: "pipe" })
+  execSync(`openssl pkcs12 -export -out "${pfx}" -inkey "${key}" -in "${crt}" -passout "pass:${password}"`, { stdio: "pipe" })
+  return pfx
+}
+
 /**
  * Generates a PFX containing two certificates for the same key pair:
- *  1. A CA cert (basicConstraints CA:true, NO codeSigning EKU)
+ *  1. A CA cert (basicConstraints CA:true, NO codeSigning EKU) — placed FIRST
  *  2. A signing cert (CA:false, WITH codeSigning EKU)
  *
- * Both certs share the same key to avoid generating two key pairs.
- * The CA cert is placed FIRST in the cert-bag list to verify that
- * readCertInfo correctly skips non-signing certs.
+ * Both certs share the same key. The CA cert is placed first via `-in ca.crt -certfile signing.crt`
+ * so readCertInfo must iterate all cert bags and pick the one with codeSigning EKU.
  */
-function generateMultiCertPfx(password: string): Buffer {
-  const keys = forge.pki.rsa.generateKeyPair(1024)
+function genMultiCertPfx(password: string, name: string): string {
+  const key = path.join(tmpDir, `${name}.key`)
+  const caCrt = path.join(tmpDir, `${name}-ca.crt`)
+  const signingCsr = path.join(tmpDir, `${name}-signing.csr`)
+  const signingCrt = path.join(tmpDir, `${name}-signing.crt`)
+  const extFile = path.join(tmpDir, `${name}-ext.cnf`)
+  const pfx = path.join(tmpDir, `${name}.pfx`)
 
-  const caSubject: forge.pki.CertificateField[] = [{ name: "commonName", value: "Test CA" }]
-  const caCert = forge.pki.createCertificate()
-  caCert.publicKey = keys.publicKey
-  caCert.serialNumber = "10"
-  caCert.validity.notBefore = new Date()
-  caCert.validity.notAfter = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-  caCert.setSubject(caSubject)
-  caCert.setIssuer(caSubject)
-  caCert.setExtensions([{ name: "basicConstraints", cA: true }])
-  caCert.sign(keys.privateKey, forge.md.sha256.create())
-
-  const signingSubject: forge.pki.CertificateField[] = [{ name: "commonName", value: "Multi-Cert Signer" }]
-  const signingCert = forge.pki.createCertificate()
-  signingCert.publicKey = keys.publicKey
-  signingCert.serialNumber = "11"
-  signingCert.validity.notBefore = new Date()
-  signingCert.validity.notAfter = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-  signingCert.setSubject(signingSubject)
-  signingCert.setIssuer(caSubject)
-  signingCert.setExtensions([
-    { name: "basicConstraints", cA: false },
-    { name: "extKeyUsage", codeSigning: true },
-  ])
-  signingCert.sign(keys.privateKey, forge.md.sha256.create())
-
-  // CA cert listed first → readCertInfo must skip it and select the signing cert
-  const p12Asn1 = forge.pkcs12.toPkcs12Asn1(keys.privateKey, [caCert, signingCert], password)
-  return Buffer.from(forge.asn1.toDer(p12Asn1).getBytes(), "binary")
+  execSync(`openssl genrsa -out "${key}" 1024`, { stdio: "pipe" })
+  execSync(
+    `openssl req -x509 -key "${key}" -out "${caCrt}" -sha256 -days 7300 -nodes -subj "/CN=Test CA" -addext "basicConstraints=CA:true" -addext "keyUsage=keyCertSign,cRLSign"`,
+    { stdio: "pipe" }
+  )
+  execSync(`openssl req -new -key "${key}" -out "${signingCsr}" -subj "/CN=Multi-Cert Signer"`, { stdio: "pipe" })
+  writeFileSync(extFile, "extendedKeyUsage=codeSigning\nbasicConstraints=CA:false\n")
+  execSync(`openssl x509 -req -in "${signingCsr}" -CA "${caCrt}" -CAkey "${key}" -CAcreateserial -out "${signingCrt}" -days 7300 -extfile "${extFile}"`, { stdio: "pipe" })
+  // CA cert first (-in caCrt), signing cert as additional (-certfile signingCrt)
+  execSync(`openssl pkcs12 -export -out "${pfx}" -inkey "${key}" -in "${caCrt}" -certfile "${signingCrt}" -passout "pass:${password}"`, { stdio: "pipe" })
+  return pfx
 }
 
 beforeAll(async () => {
   tmpDir = await mkdtemp(path.join(os.tmpdir(), "certinfo-test-"))
-  FULL_SUBJECT_PFX = path.join(tmpDir, "full.pfx")
-  CN_ONLY_PFX = path.join(tmpDir, "cn.pfx")
-  NO_EKU_PFX = path.join(tmpDir, "noeku.pfx")
+
+  FULL_SUBJECT_PFX = genSigningPfx("/CN=Test Publisher/O=Test Org/L=San Francisco/ST=California/C=US", "testpassword", "full")
+  CN_ONLY_PFX = genSigningPfx("/CN=My Company Inc.", "pw", "cn")
+  NO_EKU_PFX = genNoEkuPfx("/CN=No EKU Cert", "pw", "noeku")
+  PARITY_PFX = genSigningPfx("/CN=Parity Test Publisher/O=Parity Org/C=DE", "paritypassword", "parity")
+  OU_PFX = genSigningPfx("/CN=Test Publisher/O=Test Org/OU=Engineering/C=US", "pw", "ou")
+  SPECIAL_PFX = genSigningPfx("/CN=Publisher, Inc. \\+ Partners/C=US", "pw", "special")
+  MULTI_CERT_PFX = genMultiCertPfx("multicertpw", "multicert")
+
   WIN_CSC_PFX = path.join(tmpDir, "wincsc.pfx")
-  PARITY_PFX = path.join(tmpDir, "parity.pfx")
-  OU_PFX = path.join(tmpDir, "ou.pfx")
-  SPECIAL_PFX = path.join(tmpDir, "special.pfx")
-  MULTI_CERT_PFX = path.join(tmpDir, "multicert.pfx")
   TRUNCATED_PFX = path.join(tmpDir, "truncated.pfx")
   RC2_40_PFX = path.join(tmpDir, "rc2-40.pfx")
 
   await Promise.all([
-    writeFile(
-      FULL_SUBJECT_PFX,
-      generatePfx(
-        [
-          { name: "commonName", value: "Test Publisher" },
-          { name: "organizationName", value: "Test Org" },
-          { shortName: "L", value: "San Francisco" },
-          { shortName: "ST", value: "California" },
-          { shortName: "C", value: "US" },
-        ],
-        "testpassword"
-      )
-    ),
-    writeFile(CN_ONLY_PFX, generatePfx([{ name: "commonName", value: "My Company Inc." }], "pw")),
-    writeFile(NO_EKU_PFX, generatePfx([{ name: "commonName", value: "No EKU Cert" }], "pw", false)),
     writeFile(WIN_CSC_PFX, Buffer.from(WIN_CSC_LINK.replace("data:application/x-pkcs12;base64,", ""), "base64")),
-    writeFile(
-      PARITY_PFX,
-      generatePfx(
-        [
-          { name: "commonName", value: "Parity Test Publisher" },
-          { name: "organizationName", value: "Parity Org" },
-          { shortName: "C", value: "DE" },
-        ],
-        "paritypassword"
-      )
-    ),
-    writeFile(
-      OU_PFX,
-      generatePfx(
-        [
-          { name: "commonName", value: "Test Publisher" },
-          { name: "organizationName", value: "Test Org" },
-          { shortName: "OU", value: "Engineering" },
-          { shortName: "C", value: "US" },
-        ],
-        "pw"
-      )
-    ),
-    writeFile(
-      SPECIAL_PFX,
-      generatePfx(
-        [
-          // comma and plus are valid PrintableString chars but require DN quoting (RFC 4514 / BloodyMsString)
-          { name: "commonName", value: "Publisher, Inc. + Partners" },
-          { shortName: "C", value: "US" },
-        ],
-        "pw"
-      )
-    ),
-    writeFile(MULTI_CERT_PFX, generateMultiCertPfx("multicertpw")),
     // Truncated PFX: first 50 bytes of WIN_CSC_LINK (incomplete ASN.1 structure)
     writeFile(TRUNCATED_PFX, Buffer.from(WIN_CSC_LINK.replace("data:application/x-pkcs12;base64,", ""), "base64").subarray(0, 50)),
     // RC2-40 PFX: generated with `openssl pkcs12 -certpbe PBE-SHA1-RC2-40 -keypbe PBE-SHA1-3DES -legacy`
@@ -265,7 +195,7 @@ describe("readCertInfo — parity with app-builder-bin", () => {
     expect(jsResult.bloodyMicrosoftSubjectDn).toBe(binaryResult.bloodyMicrosoftSubjectDn)
   })
 
-  it("produces identical output to the binary for a forge-generated certificate with full subject DN", async () => {
+  it("produces identical output to the binary for a certificate with full subject DN", async () => {
     const [binaryRaw, jsResult] = await Promise.all([
       executeAppBuilder(["certificate-info", "--input", PARITY_PFX, "--password", "paritypassword"]),
       readCertInfo(PARITY_PFX, "paritypassword"),
@@ -476,15 +406,16 @@ describe("readCertInfo — malformed/corrupted input", () => {
 
 // ─── rc2CbcDecrypt — known-answer tests (RFC 2268) ───────────────────────────
 //
-// Test vectors produced by node-forge's RC2 implementation, which is the
-// established JS reference for this algorithm. These pin the output so any
+// Test vectors produced by OpenSSL (legacy provider) and pinned here so any
 // regression in rc2ExpandKey or the round logic is caught immediately.
+// Generation commands:
+//   echo -n "Hello World!!!!" | openssl enc -rc2-40-cbc -provider legacy -provider default \
+//     -K ababababab -iv cdcdcdcdcdcdcdcd -nosalt | xxd -p
 
 describe("rc2CbcDecrypt — known-answer tests", () => {
   it("RC2-40: decrypts a known ciphertext to the correct plaintext", () => {
     // key=ababababab (5 bytes = 40 bits), iv=cdcdcdcdcdcdcdcd (8 bytes)
     // plaintext (15 bytes, 1 byte PKCS#7 padding) = "Hello World!!!!"
-    // ciphertext produced by node-forge's rc2.createEncryptionCipher(key, 40)
     const key = Buffer.from("ababababab", "hex")
     const iv = Buffer.from("cdcdcdcdcdcdcdcd", "hex")
     const ct = Buffer.from("c0ad5ebd7b5fa58742a81045ab475ae2", "hex")
@@ -495,6 +426,8 @@ describe("rc2CbcDecrypt — known-answer tests", () => {
 
   it("RC2-128: decrypts a known ciphertext to the correct plaintext", () => {
     // key=abababababababababababababababab (16 bytes = 128 bits), iv=cdcdcdcdcdcdcdcd
+    // echo -n "Hello World!!!!" | openssl enc -rc2-cbc -provider legacy -provider default \
+    //   -K abababababababababababababababab -iv cdcdcdcdcdcdcdcd -nosalt | xxd -p
     const key = Buffer.alloc(16, 0xab)
     const iv = Buffer.from("cdcdcdcdcdcdcdcd", "hex")
     const ct = Buffer.from("3f9f2c538a870cc78d4ffaa3642914e6", "hex")
@@ -504,38 +437,26 @@ describe("rc2CbcDecrypt — known-answer tests", () => {
   })
 
   it("RC2-40: decrypts each block independently (CBC state advances correctly)", () => {
-    // Two-block round-trip: encrypt with node-forge, then decrypt with our implementation.
+    // Two-block round-trip: ciphertext for "ABCDEFGHIJKLMNOP" (16 bytes + 8 bytes PKCS#7 = 3 blocks)
+    // echo -n "ABCDEFGHIJKLMNOP" | openssl enc -rc2-40-cbc -provider legacy -provider default \
+    //   -K 0102030405 -iv a1b2c3d4e5f60708 -nosalt | xxd -p
     const key = Buffer.from("0102030405", "hex") // 5 bytes
     const iv = Buffer.from("a1b2c3d4e5f60708", "hex")
     const plaintext = "ABCDEFGHIJKLMNOP" // exactly 16 bytes = 2 blocks of 8
-
-    // Encrypt using node-forge to produce the expected ciphertext
-    const forgeKey = forge.util.createBuffer(key.toString("binary"))
-    const enc = forge.rc2.createEncryptionCipher(forgeKey, 40) // lgtm[js/weak-cryptographic-algorithm]
-    enc.start(forge.util.createBuffer(iv.toString("binary")))
-    enc.update(forge.util.createBuffer(plaintext))
-    enc.finish()
-    const ct = Buffer.from(enc.output.bytes(), "binary")
-
-    // Decrypt with our implementation — result must match the original plaintext
+    const ct = Buffer.from("7707ed88fbe972c3dad7fb9415184368f16e131cb43061af", "hex")
     const pt = rc2CbcDecrypt(key, iv, ct, 40)
     expect(pt.toString("ascii")).toBe(plaintext)
   })
 
   it("RC2-40: output length equals plaintext length (padding stripped correctly)", () => {
     // 8 bytes plaintext → 16 bytes ciphertext (8-byte block requires 8 bytes PKCS#7 padding)
+    // echo -n "12345678" | openssl enc -rc2-40-cbc -provider legacy -provider default \
+    //   -K ababababab -iv 0000000000000000 -nosalt | xxd -p
     const key = Buffer.from("ababababab", "hex")
     const iv = Buffer.alloc(8, 0)
     const plaintext = "12345678" // 8 bytes → full block → 8 bytes of PKCS#7 padding added
-
-    const forgeKey = forge.util.createBuffer(key.toString("binary"))
-    const enc = forge.rc2.createEncryptionCipher(forgeKey, 40) // lgtm[js/weak-cryptographic-algorithm]
-    enc.start(forge.util.createBuffer(iv.toString("binary")))
-    enc.update(forge.util.createBuffer(plaintext))
-    enc.finish()
-    const ct = Buffer.from(enc.output.bytes(), "binary")
+    const ct = Buffer.from("7927aefbe24eb25496cda876799a6b3b", "hex")
     expect(ct.length).toBe(16) // 8 plaintext + 8 PKCS#7 padding
-
     const pt = rc2CbcDecrypt(key, iv, ct, 40)
     expect(pt.length).toBe(8)
     expect(pt.toString("ascii")).toBe(plaintext)
@@ -561,6 +482,12 @@ describe("readCertInfo — pbeWithSHAAnd40BitRC2CBC (OID 1.2.840.113549.1.12.1.6
 })
 
 // ─── rc2CbcDecrypt — input validation / security guards ──────────────────────
+//
+// Ciphertext vectors for security-guard tests produced by encrypting a raw 8-byte block
+// WITHOUT PKCS#7 padding (openssl -nopad flag) so that decryption yields a block with
+// a specific invalid last byte:
+//   printf '\xNN...' | openssl enc -rc2-40-cbc -provider legacy -provider default \
+//     -K ababababab -iv cdcdcdcdcdcdcdcd -nosalt -nopad | xxd -p
 
 describe("rc2CbcDecrypt — input validation / security guards", () => {
   const key5 = Buffer.from("ababababab", "hex") // 5 bytes (RC2-40)
@@ -579,37 +506,22 @@ describe("rc2CbcDecrypt — input validation / security guards", () => {
   })
 
   it("throws when last decrypted byte is 0x00 (invalid PKCS#7 pad byte)", () => {
-    // Encrypt a raw 8-byte block whose last byte is 0x00 using forge with a no-op padding
-    // function so PKCS#7 bytes are NOT appended. The ciphertext is exactly 8 bytes and
-    // decrypts back to the same 8 raw bytes — including the 0x00 at position 7.
-    const forgeKey = forge.util.createBuffer(key5.toString("binary"))
-    const enc = forge.rc2.createEncryptionCipher(forgeKey, 40) // lgtm[js/weak-cryptographic-algorithm]
-    enc.start(forge.util.createBuffer(iv8.toString("binary")))
-    enc.update(forge.util.createBuffer(Buffer.from([0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x00]).toString("binary")))
-    enc.finish(() => true) // no-op pad: don't add PKCS#7 padding
-    const ct = Buffer.from(enc.output.bytes(), "binary")
+    // Encrypts [0x41..0x47, 0x00] without PKCS#7 padding; decrypts back to the same 8 raw bytes.
+    const ct = Buffer.from("39b7121f4a3d9a30", "hex")
     expect(ct.length).toBe(8)
     expect(() => rc2CbcDecrypt(key5, iv8, ct, 40)).toThrow(/invalid PKCS#7 pad byte/)
   })
 
   it("throws when PKCS#7 pad byte exceeds block size (0x09 > 8)", () => {
-    const forgeKey = forge.util.createBuffer(key5.toString("binary"))
-    const enc = forge.rc2.createEncryptionCipher(forgeKey, 40) // lgtm[js/weak-cryptographic-algorithm]
-    enc.start(forge.util.createBuffer(iv8.toString("binary")))
-    enc.update(forge.util.createBuffer(Buffer.from([0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x09]).toString("binary")))
-    enc.finish(() => true)
-    const ct = Buffer.from(enc.output.bytes(), "binary")
+    // Encrypts [0x41..0x47, 0x09] without PKCS#7 padding.
+    const ct = Buffer.from("e032cf7e7effbe0b", "hex")
     expect(() => rc2CbcDecrypt(key5, iv8, ct, 40)).toThrow(/invalid PKCS#7 pad byte/)
   })
 
   it("throws when PKCS#7 padding bytes are inconsistent", () => {
+    // Encrypts [0x41..0x45, 0x01, 0x01, 0x02] without PKCS#7 padding.
     // Last byte = 0x02 (declares pad length 2), but second-to-last = 0x01 not 0x02.
-    const forgeKey = forge.util.createBuffer(key5.toString("binary"))
-    const enc = forge.rc2.createEncryptionCipher(forgeKey, 40) // lgtm[js/weak-cryptographic-algorithm]
-    enc.start(forge.util.createBuffer(iv8.toString("binary")))
-    enc.update(forge.util.createBuffer(Buffer.from([0x41, 0x42, 0x43, 0x44, 0x45, 0x01, 0x01, 0x02]).toString("binary")))
-    enc.finish(() => true)
-    const ct = Buffer.from(enc.output.bytes(), "binary")
+    const ct = Buffer.from("f90a40cc55a3a531", "hex")
     expect(() => rc2CbcDecrypt(key5, iv8, ct, 40)).toThrow(/invalid PKCS#7 padding/)
   })
 
