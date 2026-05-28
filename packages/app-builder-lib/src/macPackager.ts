@@ -314,7 +314,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     for (const target of targets) {
       const platformType = this.getPlatformTypeFromTarget(target.name)
       const platformConfig = this.getPlatformConfig(platformType)
-      const targetOutDir = path.join(outDir, `${target.name}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}`)
+      const targetOutDir = path.resolve(outDir, `${target.name}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}`)
 
       if (prepackaged == null) {
         await this.doPack({
@@ -326,7 +326,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
           targets: [target],
           options: { sign: false },
         })
-        await this.signMas(path.join(targetOutDir, `${path.basename(this.appInfo.productFilename)}.app`), targetOutDir, platformConfig, arch)
+        await this.signMas(path.resolve(targetOutDir, `${path.basename(this.appInfo.productFilename)}.app`), targetOutDir, platformConfig, arch)
       } else {
         await this.signMas(prepackaged, targetOutDir, platformConfig, arch)
       }
@@ -425,12 +425,14 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
 
   //noinspection JSMethodCanBeStatic
   public async doFlat(appPath: string, outFile: string, identity: Identity, keychain: string | Nullish): Promise<any> {
+    const resolvedAppPath = path.resolve(appPath)
+    const resolvedOutFile = path.resolve(outFile)
     // productbuild doesn't created directory for out file
-    await mkdir(path.dirname(outFile), { recursive: true })
+    await mkdir(path.dirname(resolvedOutFile), { recursive: true })
 
     const args = prepareProductBuildArgs(identity, keychain)
-    args.push("--component", appPath, "/Applications")
-    args.push(outFile)
+    args.push("--component", resolvedAppPath, "/Applications")
+    args.push(resolvedOutFile)
     return await exec("productbuild", args)
   }
 
@@ -517,11 +519,13 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
   }
 
   protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<boolean> {
+    const isMas = packContext.electronPlatformName === "mas"
+    const activeConfig = this._activePackConfig ?? this.platformSpecificBuildOptions
     const readDirectoryAndSign = async (sourceDirectory: string, directories: string[], shouldSign: (file: string) => boolean): Promise<boolean> => {
       await Promise.all(
         directories.map(async (file: string) => {
           if (shouldSign(file)) {
-            await this.sign(path.join(sourceDirectory, path.basename(file)), null, null, packContext.arch, false)
+            await this.sign(path.resolve(sourceDirectory, path.basename(file)), null, isMas ? activeConfig : null, packContext.arch, isMas)
           }
         })
       )
