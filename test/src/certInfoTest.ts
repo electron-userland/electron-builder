@@ -6,7 +6,7 @@ import * as forge from "node-forge"
 import { writeFile, remove } from "fs-extra"
 import { readCertInfo, _testingOnly } from "app-builder-lib/src/codeSign/certInfo"
 
-const { pkcs12PbeDeriveKey, pkcs12PasswordToUtf16, MAX_PKCS12_PBE_ITERATIONS } = _testingOnly
+const { pkcs12PbeDeriveKey, pkcs12PasswordToUtf16, rc2CbcDecrypt, MAX_PKCS12_PBE_ITERATIONS } = _testingOnly
 import { executeAppBuilder } from "builder-util"
 import { WIN_CSC_LINK } from "./helpers/codeSignData"
 
@@ -56,6 +56,7 @@ let OU_PFX: string
 let SPECIAL_PFX: string
 let MULTI_CERT_PFX: string
 let TRUNCATED_PFX: string
+let RC2_40_PFX: string
 
 /**
  * Generates a PFX containing two certificates for the same key pair:
@@ -110,6 +111,7 @@ beforeAll(async () => {
   SPECIAL_PFX = path.join(tmpDir, "special.pfx")
   MULTI_CERT_PFX = path.join(tmpDir, "multicert.pfx")
   TRUNCATED_PFX = path.join(tmpDir, "truncated.pfx")
+  RC2_40_PFX = path.join(tmpDir, "rc2-40.pfx")
 
   await Promise.all([
     writeFile(
@@ -165,6 +167,18 @@ beforeAll(async () => {
     writeFile(MULTI_CERT_PFX, generateMultiCertPfx("multicertpw")),
     // Truncated PFX: first 50 bytes of WIN_CSC_LINK (incomplete ASN.1 structure)
     writeFile(TRUNCATED_PFX, Buffer.from(WIN_CSC_LINK.replace("data:application/x-pkcs12;base64,", ""), "base64").subarray(0, 50)),
+    // RC2-40 PFX: generated with `openssl pkcs12 -certpbe PBE-SHA1-RC2-40 -keypbe PBE-SHA1-3DES -legacy`
+    // Certificates are encrypted with pbeWithSHAAnd40BitRC2CBC (OID 1.2.840.113549.1.12.1.6),
+    // which is the format used by Windows and OpenSSL ≤1.x for PKCS#12 cert bag encryption.
+    // Node.js 22 / OpenSSL 3 moved RC2 to the legacy provider (not loaded by default), so our
+    // pure-TypeScript RFC 2268 implementation is exercised here.
+    writeFile(
+      RC2_40_PFX,
+      Buffer.from(
+        "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",
+        "base64"
+      )
+    ),
   ])
 })
 
@@ -457,5 +471,175 @@ describe("readCertInfo — malformed/corrupted input", () => {
     const emptyPath = path.join(tmpDir, "empty.pfx")
     await writeFile(emptyPath, Buffer.alloc(0))
     await expect(readCertInfo(emptyPath, "pw")).rejects.toThrow()
+  })
+})
+
+// ─── rc2CbcDecrypt — known-answer tests (RFC 2268) ───────────────────────────
+//
+// Test vectors produced by node-forge's RC2 implementation, which is the
+// established JS reference for this algorithm. These pin the output so any
+// regression in rc2ExpandKey or the round logic is caught immediately.
+
+describe("rc2CbcDecrypt — known-answer tests", () => {
+  it("RC2-40: decrypts a known ciphertext to the correct plaintext", () => {
+    // key=ababababab (5 bytes = 40 bits), iv=cdcdcdcdcdcdcdcd (8 bytes)
+    // plaintext (15 bytes, 1 byte PKCS#7 padding) = "Hello World!!!!"
+    // ciphertext produced by node-forge's rc2.createEncryptionCipher(key, 40)
+    const key = Buffer.from("ababababab", "hex")
+    const iv = Buffer.from("cdcdcdcdcdcdcdcd", "hex")
+    const ct = Buffer.from("c0ad5ebd7b5fa58742a81045ab475ae2", "hex")
+    const pt = rc2CbcDecrypt(key, iv, ct, 40)
+    expect(pt.toString("hex")).toBe("48656c6c6f20576f726c6421212121")
+    expect(pt.toString("ascii")).toBe("Hello World!!!!")
+  })
+
+  it("RC2-128: decrypts a known ciphertext to the correct plaintext", () => {
+    // key=abababababababababababababababab (16 bytes = 128 bits), iv=cdcdcdcdcdcdcdcd
+    const key = Buffer.alloc(16, 0xab)
+    const iv = Buffer.from("cdcdcdcdcdcdcdcd", "hex")
+    const ct = Buffer.from("3f9f2c538a870cc78d4ffaa3642914e6", "hex")
+    const pt = rc2CbcDecrypt(key, iv, ct, 128)
+    expect(pt.toString("hex")).toBe("48656c6c6f20576f726c6421212121")
+    expect(pt.toString("ascii")).toBe("Hello World!!!!")
+  })
+
+  it("RC2-40: decrypts each block independently (CBC state advances correctly)", () => {
+    // Two-block round-trip: encrypt with node-forge, then decrypt with our implementation.
+    const key = Buffer.from("0102030405", "hex") // 5 bytes
+    const iv = Buffer.from("a1b2c3d4e5f60708", "hex")
+    const plaintext = "ABCDEFGHIJKLMNOP" // exactly 16 bytes = 2 blocks of 8
+
+    // Encrypt using node-forge to produce the expected ciphertext
+    const forgeKey = forge.util.createBuffer(key.toString("binary"))
+    const enc = forge.rc2.createEncryptionCipher(forgeKey, 40)
+    enc.start(forge.util.createBuffer(iv.toString("binary")))
+    enc.update(forge.util.createBuffer(plaintext))
+    enc.finish()
+    const ct = Buffer.from(enc.output.bytes(), "binary")
+
+    // Decrypt with our implementation — result must match the original plaintext
+    const pt = rc2CbcDecrypt(key, iv, ct, 40)
+    expect(pt.toString("ascii")).toBe(plaintext)
+  })
+
+  it("RC2-40: output length equals plaintext length (padding stripped correctly)", () => {
+    // 8 bytes plaintext → 16 bytes ciphertext (8-byte block requires 8 bytes PKCS#7 padding)
+    const key = Buffer.from("ababababab", "hex")
+    const iv = Buffer.alloc(8, 0)
+    const plaintext = "12345678" // 8 bytes → full block → 8 bytes of PKCS#7 padding added
+
+    const forgeKey = forge.util.createBuffer(key.toString("binary"))
+    const enc = forge.rc2.createEncryptionCipher(forgeKey, 40)
+    enc.start(forge.util.createBuffer(iv.toString("binary")))
+    enc.update(forge.util.createBuffer(plaintext))
+    enc.finish()
+    const ct = Buffer.from(enc.output.bytes(), "binary")
+    expect(ct.length).toBe(16) // 8 plaintext + 8 PKCS#7 padding
+
+    const pt = rc2CbcDecrypt(key, iv, ct, 40)
+    expect(pt.length).toBe(8)
+    expect(pt.toString("ascii")).toBe(plaintext)
+  })
+})
+
+// ─── readCertInfo — RC2-40 encrypted PFX ─────────────────────────────────────
+
+describe("readCertInfo — pbeWithSHAAnd40BitRC2CBC (OID 1.2.840.113549.1.12.1.6)", () => {
+  it("extracts certificate info from a PFX whose cert bags are encrypted with RC2-40", async () => {
+    // This PFX was generated with:
+    //   openssl pkcs12 -export -certpbe PBE-SHA1-RC2-40 -keypbe PBE-SHA1-3DES -legacy
+    // It exercises the pure-TS RFC 2268 RC2-CBC path that was added because
+    // Node.js 22 / OpenSSL 3 no longer support RC2 in the default crypto provider.
+    const result = await readCertInfo(RC2_40_PFX, "testrc2")
+    expect(result.commonName).toBe("RC2 Test Signer")
+    expect(result.bloodyMicrosoftSubjectDn).toBe("CN=RC2 Test Signer")
+  })
+
+  it("throws 'password incorrect' for the RC2-40 PFX with a wrong password", async () => {
+    await expect(readCertInfo(RC2_40_PFX, "wrongpassword")).rejects.toThrow("password incorrect")
+  })
+})
+
+// ─── rc2CbcDecrypt — input validation / security guards ──────────────────────
+
+describe("rc2CbcDecrypt — input validation / security guards", () => {
+  const key5 = Buffer.from("ababababab", "hex") // 5 bytes (RC2-40)
+  const iv8 = Buffer.from("cdcdcdcdcdcdcdcd", "hex") // 8 bytes
+
+  it("throws when ciphertext length is not a multiple of 8 (block-alignment guard)", () => {
+    expect(() => rc2CbcDecrypt(key5, iv8, Buffer.alloc(7), 40)).toThrow(/not a positive multiple/)
+  })
+
+  it("throws when ciphertext is empty (block-alignment guard)", () => {
+    expect(() => rc2CbcDecrypt(key5, iv8, Buffer.alloc(0), 40)).toThrow(/not a positive multiple/)
+  })
+
+  it("throws when IV is not exactly 8 bytes", () => {
+    expect(() => rc2CbcDecrypt(key5, Buffer.alloc(7), Buffer.alloc(8), 40)).toThrow(/IV must be exactly 8 bytes/)
+  })
+
+  it("throws when last decrypted byte is 0x00 (invalid PKCS#7 pad byte)", () => {
+    // Encrypt a raw 8-byte block whose last byte is 0x00 using forge with a no-op padding
+    // function so PKCS#7 bytes are NOT appended. The ciphertext is exactly 8 bytes and
+    // decrypts back to the same 8 raw bytes — including the 0x00 at position 7.
+    const forgeKey = forge.util.createBuffer(key5.toString("binary"))
+    const enc = forge.rc2.createEncryptionCipher(forgeKey, 40)
+    enc.start(forge.util.createBuffer(iv8.toString("binary")))
+    enc.update(forge.util.createBuffer(Buffer.from([0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x00]).toString("binary")))
+    enc.finish(() => true) // no-op pad: don't add PKCS#7 padding
+    const ct = Buffer.from(enc.output.bytes(), "binary")
+    expect(ct.length).toBe(8)
+    expect(() => rc2CbcDecrypt(key5, iv8, ct, 40)).toThrow(/invalid PKCS#7 pad byte/)
+  })
+
+  it("throws when PKCS#7 pad byte exceeds block size (0x09 > 8)", () => {
+    const forgeKey = forge.util.createBuffer(key5.toString("binary"))
+    const enc = forge.rc2.createEncryptionCipher(forgeKey, 40)
+    enc.start(forge.util.createBuffer(iv8.toString("binary")))
+    enc.update(forge.util.createBuffer(Buffer.from([0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x09]).toString("binary")))
+    enc.finish(() => true)
+    const ct = Buffer.from(enc.output.bytes(), "binary")
+    expect(() => rc2CbcDecrypt(key5, iv8, ct, 40)).toThrow(/invalid PKCS#7 pad byte/)
+  })
+
+  it("throws when PKCS#7 padding bytes are inconsistent", () => {
+    // Last byte = 0x02 (declares pad length 2), but second-to-last = 0x01 not 0x02.
+    const forgeKey = forge.util.createBuffer(key5.toString("binary"))
+    const enc = forge.rc2.createEncryptionCipher(forgeKey, 40)
+    enc.start(forge.util.createBuffer(iv8.toString("binary")))
+    enc.update(forge.util.createBuffer(Buffer.from([0x41, 0x42, 0x43, 0x44, 0x45, 0x01, 0x01, 0x02]).toString("binary")))
+    enc.finish(() => true)
+    const ct = Buffer.from(enc.output.bytes(), "binary")
+    expect(() => rc2CbcDecrypt(key5, iv8, ct, 40)).toThrow(/invalid PKCS#7 padding/)
+  })
+
+  it("throws when effectiveBits = 0 (OOB access guard in rc2ExpandKey)", () => {
+    // effectiveBits=0 → T8=ceil(0/8)=0 → L[128-0]=L[128] is out-of-bounds on a 128-element
+    // Uint8Array. The guard in rc2ExpandKey must fire before any array access occurs.
+    expect(() => rc2CbcDecrypt(key5, iv8, Buffer.alloc(8), 0)).toThrow(/effectiveBits/)
+  })
+
+  it("throws when effectiveBits is negative", () => {
+    expect(() => rc2CbcDecrypt(key5, iv8, Buffer.alloc(8), -1)).toThrow(/effectiveBits/)
+  })
+
+  it("throws when effectiveBits exceeds 1024", () => {
+    expect(() => rc2CbcDecrypt(key5, iv8, Buffer.alloc(8), 1025)).toThrow(/effectiveBits/)
+  })
+})
+
+// ─── pkcs12PbeDeriveKey — salt size guard ────────────────────────────────────
+
+describe("pkcs12PbeDeriveKey — salt size guard", () => {
+  it("throws when salt exceeds 4096 bytes (memory exhaustion prevention)", () => {
+    // Without the cap, ceil(saltLen / 64) * 64 bytes are allocated for S in the KDF.
+    // A multi-megabyte salt in a crafted PFX would exhaust memory before any crypto runs.
+    const hugeSalt = Buffer.alloc(4097, 0xaa)
+    expect(() => pkcs12PbeDeriveKey(pkcs12PasswordToUtf16("test"), hugeSalt, 1, 1, 8)).toThrow(/exceeds the safe maximum/)
+  })
+
+  it("accepts salt at the 4096-byte boundary without throwing", () => {
+    const maxSalt = Buffer.alloc(4096, 0xaa)
+    expect(() => pkcs12PbeDeriveKey(pkcs12PasswordToUtf16("test"), maxSalt, 1, 1, 1)).not.toThrow()
   })
 })

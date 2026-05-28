@@ -52,13 +52,162 @@ function toArrayBuffer(buf: Buffer): ArrayBuffer {
 //
 // pkijs's CryptoEngine.decryptEncryptedContentInfo only handles PBES2
 // (OID 1.2.840.113549.1.5.13). Many real-world PFX files use the older
-// pkcs-12PbeIds ciphers (SHA1+3DES, SHA1+2DES). We implement these below
-// using Node.js's built-in `crypto` module so no extra dependency is needed.
+// pkcs-12PbeIds ciphers (SHA1+3DES, SHA1+2DES, SHA1+RC2-128, SHA1+RC2-40).
+// We implement 3DES/2DES using Node.js's built-in `crypto` module and RC2
+// with a pure-TypeScript RFC 2268 implementation — RC2 was moved to
+// OpenSSL 3's legacy provider (not loaded by default) and is unavailable
+// via `createDecipheriv` in Node.js 22+.
+
+// ── RFC 2268 RC2-CBC implementation ─────────────────────────────────────────
+
+/** Permutation table from RFC 2268. */
+const RC2_PITABLE = Uint8Array.from([
+  0xd9, 0x78, 0xf9, 0xc4, 0x19, 0xdd, 0xb5, 0xed, 0x28, 0xe9, 0xfd, 0x79, 0x4a, 0xa0, 0xd8, 0x9d, 0xc6, 0x7e, 0x37, 0x83, 0x2b, 0x76, 0x53, 0x8e, 0x62, 0x4c, 0x64, 0x88, 0x44,
+  0x8b, 0xfb, 0xa2, 0x17, 0x9a, 0x59, 0xf5, 0x87, 0xb3, 0x4f, 0x13, 0x61, 0x45, 0x6d, 0x8d, 0x09, 0x81, 0x7d, 0x32, 0xbd, 0x8f, 0x40, 0xeb, 0x86, 0xb7, 0x7b, 0x0b, 0xf0, 0x95,
+  0x21, 0x22, 0x5c, 0x6b, 0x4e, 0x82, 0x54, 0xd6, 0x65, 0x93, 0xce, 0x60, 0xb2, 0x1c, 0x73, 0x56, 0xc0, 0x14, 0xa7, 0x8c, 0xf1, 0xdc, 0x12, 0x75, 0xca, 0x1f, 0x3b, 0xbe, 0xe4,
+  0xd1, 0x42, 0x3d, 0xd4, 0x30, 0xa3, 0x3c, 0xb6, 0x26, 0x6f, 0xbf, 0x0e, 0xda, 0x46, 0x69, 0x07, 0x57, 0x27, 0xf2, 0x1d, 0x9b, 0xbc, 0x94, 0x43, 0x03, 0xf8, 0x11, 0xc7, 0xf6,
+  0x90, 0xef, 0x3e, 0xe7, 0x06, 0xc3, 0xd5, 0x2f, 0xc8, 0x66, 0x1e, 0xd7, 0x08, 0xe8, 0xea, 0xde, 0x80, 0x52, 0xee, 0xf7, 0x84, 0xaa, 0x72, 0xac, 0x35, 0x4d, 0x6a, 0x2a, 0x96,
+  0x1a, 0xd2, 0x71, 0x5a, 0x15, 0x49, 0x74, 0x4b, 0x9f, 0xd0, 0x5e, 0x04, 0x18, 0xa4, 0xec, 0xc2, 0xe0, 0x41, 0x6e, 0x0f, 0x51, 0xcb, 0xcc, 0x24, 0x91, 0xaf, 0x50, 0xa1, 0xf4,
+  0x70, 0x39, 0x99, 0x7c, 0x3a, 0x85, 0x23, 0xb8, 0xb4, 0x7a, 0xfc, 0x02, 0x36, 0x5b, 0x25, 0x55, 0x97, 0x31, 0x2d, 0x5d, 0xfa, 0x98, 0xe3, 0x8a, 0x92, 0xae, 0x05, 0xdf, 0x29,
+  0x10, 0x67, 0x6c, 0xba, 0xc9, 0xd3, 0x00, 0xe6, 0xcf, 0xe1, 0x9e, 0xa8, 0x2c, 0x63, 0x16, 0x01, 0x3f, 0x58, 0xe2, 0x89, 0xa9, 0x0d, 0x38, 0x34, 0x1b, 0xab, 0x33, 0xff, 0xb0,
+  0xbb, 0x48, 0x0c, 0x5f, 0xb9, 0xb1, 0xcd, 0x2e, 0xc5, 0xf3, 0xdb, 0x47, 0xe5, 0xa5, 0x9c, 0x77, 0x0a, 0xa6, 0x20, 0x68, 0xfe, 0x7f, 0xc1, 0xad,
+])
+
+/** Rotation amounts for R[0], R[1], R[2], R[3] in each mix round. */
+const RC2_ROT = [1, 2, 3, 5] as const
+
+/**
+ * Expand a variable-length key to 64 sixteen-bit subkeys (RFC 2268 Section 2).
+ * `effectiveBits` controls the effective key length for export-grade keys
+ * (40 = RC2-40, 128 = RC2-128).
+ */
+function rc2ExpandKey(key: Buffer, effectiveBits: number): number[] {
+  // Guard: effectiveBits = 0 causes T8 = 0, making L[128-0] = L[128] an OOB
+  // access on a 128-element Uint8Array (silently returns undefined, producing
+  // a wrong key schedule). Values > 1024 exceed the RFC 2268 key schedule table.
+  if (!Number.isInteger(effectiveBits) || effectiveBits < 1 || effectiveBits > 1024) {
+    throw new Error(`rc2ExpandKey: effectiveBits must be an integer in [1, 1024], got ${effectiveBits}`)
+  }
+  const T = key.length
+  const T8 = Math.ceil(effectiveBits / 8)
+  // 0xff >> (effectiveBits & 7) gives 0xff for multiples-of-8 effective lengths
+  // (no masking), and a smaller mask for non-multiples.
+  const TM = 0xff >> (effectiveBits & 7)
+  const L = new Uint8Array(128)
+  for (let i = 0; i < T; i++) {
+    L[i] = key[i]
+  }
+  for (let i = T; i < 128; i++) {
+    L[i] = RC2_PITABLE[(L[i - 1] + L[i - T]) & 0xff]
+  }
+  L[128 - T8] = RC2_PITABLE[L[128 - T8] & TM]
+  for (let i = 127 - T8; i >= 0; i--) {
+    L[i] = RC2_PITABLE[L[i + 1] ^ L[i + T8]]
+  }
+  const K: number[] = new Array(64)
+  for (let i = 0; i < 64; i++) {
+    K[i] = L[2 * i] | (L[2 * i + 1] << 8)
+  }
+  return K
+}
+
+/** Rotate a 16-bit word right by `bits` positions. */
+function ror16(word: number, bits: number): number {
+  return ((word & 0xffff) >> bits) | ((word << (16 - bits)) & 0xffff)
+}
+
+/**
+ * Decrypt `data` using RC2-CBC with PKCS#7 padding removal (RFC 2268).
+ *
+ * Used for pbeWithSHAAnd40BitRC2CBC  (OID 1.2.840.113549.1.12.1.6) and
+ *          pbeWithSHAAnd128BitRC2CBC (OID 1.2.840.113549.1.12.1.5).
+ *
+ * These OIDs are commonly used to encrypt certificate bags in PKCS#12
+ * files produced by OpenSSL and Windows with default settings. Node.js 22+
+ * (OpenSSL 3 default provider) does not support RC2 via `createDecipheriv`.
+ */
+function rc2CbcDecrypt(key: Buffer, iv: Buffer, data: Buffer, effectiveBits: number): Buffer {
+  // Guard: a non-multiple-of-8 ciphertext causes the last partial block to be
+  // processed with `undefined` bytes.  In JS, `undefined | (undefined << 8)`
+  // produces NaN, and `NaN & 0xffff` produces 0 — so partial blocks silently
+  // produce garbage output rather than throwing.
+  if (data.length === 0 || data.length % 8 !== 0) {
+    throw new Error(`rc2CbcDecrypt: ciphertext length ${data.length} is not a positive multiple of the 8-byte RC2 block size`)
+  }
+  if (iv.length !== 8) {
+    throw new Error(`rc2CbcDecrypt: IV must be exactly 8 bytes, got ${iv.length}`)
+  }
+  const K = rc2ExpandKey(key, effectiveBits)
+  const out = Buffer.alloc(data.length)
+  const prev = Buffer.from(iv) // CBC running state; starts as the IV
+
+  for (let offset = 0; offset < data.length; offset += 8) {
+    const ct = data.subarray(offset, offset + 8)
+    // Parse ciphertext block as four little-endian 16-bit words
+    const R = [(ct[0] | (ct[1] << 8)) & 0xffff, (ct[2] | (ct[3] << 8)) & 0xffff, (ct[4] | (ct[5] << 8)) & 0xffff, (ct[6] | (ct[7] << 8)) & 0xffff]
+
+    // Reverse the encryption round plan [5 mix, 1 mash, 6 mix, 1 mash, 5 mix].
+    // For decryption j starts at 63 and decrements in each reverse-mix step.
+    let j = 63
+
+    const rMix = () => {
+      for (let i = 3; i >= 0; i--) {
+        R[i] = ror16(R[i], RC2_ROT[i])
+        const r3 = R[(i + 3) % 4]
+        R[i] = (R[i] - K[j] - (r3 & R[(i + 2) % 4]) - (~r3 & 0xffff & R[(i + 1) % 4])) & 0xffff
+        j--
+      }
+    }
+
+    const rMash = () => {
+      for (let i = 3; i >= 0; i--) {
+        R[i] = (R[i] - K[R[(i + 3) % 4] & 63]) & 0xffff
+      }
+    }
+
+    for (let n = 0; n < 5; n++) {
+      rMix()
+    }
+    rMash()
+    for (let n = 0; n < 6; n++) {
+      rMix()
+    }
+    rMash()
+    for (let n = 0; n < 5; n++) {
+      rMix()
+    }
+
+    // XOR decrypted words with previous ciphertext block (CBC mode)
+    for (let i = 0; i < 4; i++) {
+      out[offset + i * 2] = (R[i] & 0xff) ^ prev[i * 2]
+      out[offset + i * 2 + 1] = (R[i] >> 8) ^ prev[i * 2 + 1]
+    }
+    // Advance CBC state to current ciphertext block
+    ct.copy(prev)
+  }
+
+  // Validate and strip PKCS#7 padding.
+  // Without this guard, padLen = 0 silently returns the full buffer (no stripping)
+  // and padLen > 8 causes Buffer.subarray(0, negative) → empty buffer, both
+  // silently.  A wrong key/IV produces decrypted bytes that fail this check.
+  const padLen = out[out.length - 1]
+  if (padLen < 1 || padLen > 8) {
+    throw new Error(`rc2CbcDecrypt: invalid PKCS#7 pad byte 0x${padLen.toString(16).padStart(2, "0")} — the ciphertext is corrupt or the wrong key/IV was used`)
+  }
+  for (let i = out.length - padLen; i < out.length; i++) {
+    if (out[i] !== padLen) {
+      throw new Error(`rc2CbcDecrypt: invalid PKCS#7 padding — the ciphertext is corrupt or the wrong key/IV was used`)
+    }
+  }
+  return out.subarray(0, out.length - padLen)
+}
 
 /** PKCS#12 legacy PBE OIDs (pkcs-12PbeIds) and their cipher parameters. */
-const PKCS12_PBE_ALGOS: Record<string, { cipher: string; keyLen: number; ivLen: number }> = {
+const PKCS12_PBE_ALGOS: Record<string, { cipher: string; keyLen: number; ivLen: number; rc2Bits?: number }> = {
   "1.2.840.113549.1.12.1.3": { cipher: "des-ede3-cbc", keyLen: 24, ivLen: 8 }, // pbeWithSHAAnd3KeyTripleDESCBC
   "1.2.840.113549.1.12.1.4": { cipher: "des-ede-cbc", keyLen: 16, ivLen: 8 }, //  pbeWithSHAAnd2KeyTripleDESCBC
+  "1.2.840.113549.1.12.1.5": { cipher: "rc2-cbc", keyLen: 16, ivLen: 8, rc2Bits: 128 }, // pbeWithSHAAnd128BitRC2CBC
+  "1.2.840.113549.1.12.1.6": { cipher: "rc2-cbc", keyLen: 5, ivLen: 8, rc2Bits: 40 }, //  pbeWithSHAAnd40BitRC2CBC
 }
 
 /**
@@ -84,6 +233,12 @@ function pkcs12PbeDeriveKey(password: Buffer, salt: Buffer, iterations: number, 
     throw new Error(
       `PKCS#12 PBE iteration count ${iterations} is outside safe range [1, ${MAX_PKCS12_PBE_ITERATIONS}]; refusing to process — the file may be crafted to exhaust CPU`
     )
+  }
+  // A crafted PFX could supply a multi-megabyte salt, causing Buffer.alloc(sLen) inside
+  // the KDF to allocate gigabytes (sLen = ceil(salt.length / 64) * 64).
+  const MAX_SALT_BYTES = 4096
+  if (salt.length > MAX_SALT_BYTES) {
+    throw new Error(`PKCS#12 PBE salt length ${salt.length} exceeds the safe maximum of ${MAX_SALT_BYTES} bytes — the file may be crafted to exhaust memory`)
   }
 
   const u = 20 // SHA-1 output bytes
@@ -186,6 +341,13 @@ function decryptLegacyPkcs12Pbe(algId: string, algParams: any, encContent: any, 
     encBytes = Buffer.concat((encContent.valueBlock.value as any[]).map((p: any) => Buffer.from(p.valueBlock.valueHexView)))
   } else {
     encBytes = Buffer.from(encContent.valueBlock.valueHexView)
+  }
+
+  if (algo.rc2Bits != null) {
+    // RC2 is not available in Node.js 22+ via createDecipheriv (OpenSSL 3 moved
+    // it to the legacy provider which is not loaded by default). Use our pure-TS
+    // RFC 2268 implementation instead.
+    return rc2CbcDecrypt(key, iv, encBytes, algo.rc2Bits)
   }
 
   const decipher = createDecipheriv(algo.cipher, key, iv)
@@ -350,5 +512,6 @@ export async function readCertInfo(file: string, password: string): Promise<{ co
 export const _testingOnly = {
   pkcs12PbeDeriveKey,
   pkcs12PasswordToUtf16,
+  rc2CbcDecrypt,
   MAX_PKCS12_PBE_ITERATIONS,
 }
