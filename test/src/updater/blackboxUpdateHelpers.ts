@@ -3,7 +3,7 @@ import { PM } from "app-builder-lib/out/node-module-collector"
 import { ParallelsVmManager } from "app-builder-lib/out/vm/ParallelsVm"
 import { getWindowsVm, VmManager } from "app-builder-lib/out/vm/vm"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
-import { archFromString, DebugLogger, getArchSuffix, log, serializeToYaml, spawn, TmpDir } from "builder-util/out/util"
+import { archFromString, deepAssign, DebugLogger, getArchSuffix, log, serializeToYaml, spawn, TmpDir } from "builder-util/out/util"
 import { execFileSync, execSync } from "child_process"
 import { randomUUID } from "crypto"
 import { Arch, Configuration, Platform } from "electron-builder"
@@ -37,7 +37,7 @@ export async function doBuild(
   arch: Arch,
   tmpDir: TmpDir,
   isWindows: boolean,
-  extraConfiguration?: Configuration | null
+  extraConfiguration?: Configuration | null,
 ) {
   const currentPlatform = isWindows ? Platform.WINDOWS : Platform.current()
   async function buildApp({
@@ -50,7 +50,7 @@ export async function doBuild(
     version: string
     target: string
     arch: Arch
-    extraConfig: Configuration | Nullish
+    extraConfig: Partial<Configuration> | Nullish
     packed: (context: PackedContext) => Promise<any>
   }) {
     await assertPack(
@@ -58,44 +58,53 @@ export async function doBuild(
       "test-app",
       {
         targets: currentPlatform.createTarget(target, arch),
-        config: {
-          npmRebuild: true,
-          productName: "TestApp",
-          executableName: "TestApp",
-          appId: "com.test.app",
-          artifactName: "${productName}.${ext}",
-          // asar: false, // not necessarily needed, just easier debugging tbh
-          electronLanguages: ["en"],
-          extraMetadata: {
-            name: "testapp",
-            version,
-          },
-          electronUpdaterCompatibility: "1.1", // anything above 1.0.0 works. This is to allow testing via `link:` protocol with the current workspace electron-updater package version
-          electronFuses: {
-            runAsNode: false,
-            enableCookieEncryption: true,
-            enableNodeOptionsEnvironmentVariable: false,
-            enableNodeCliInspectArguments: false,
-            enableEmbeddedAsarIntegrityValidation: true,
-            onlyLoadAppFromAsar: true,
-            loadBrowserProcessSpecificV8Snapshot: false,
-            grantFileProtocolExtraPrivileges: false,
-          },
-          compression: "store",
-          ...extraConfig,
-          publish: {
-            provider: "s3",
-            bucket: "develar",
-            path: "test",
-          },
-          files: ["**/*", "../**/node_modules/**", "!path/**"],
-          nsis: {
-            artifactName: "${productName} Setup.${ext}",
-            // one click installer required. don't run after install otherwise we lose stdout pipe
-            oneClick: true,
-            runAfterFinish: false,
-          },
-        },
+        // Deep-merge so callers can override individual sub-object keys (e.g. nsis.perMachine)
+        // without replacing the entire sub-object. publish/files are pinned last so they cannot
+        // be accidentally overridden by a caller's extraConfig.
+        config: Object.assign(
+          deepAssign<Configuration>(
+            {
+              npmRebuild: true,
+              productName: "TestApp",
+              executableName: "TestApp",
+              appId: "com.test.app",
+              artifactName: "${productName}.${ext}",
+              electronLanguages: ["en"],
+              extraMetadata: {
+                name: "testapp",
+                version,
+              },
+              electronUpdaterCompatibility: "1.1",
+              electronFuses: {
+                runAsNode: false,
+                enableCookieEncryption: true,
+                enableNodeOptionsEnvironmentVariable: false,
+                enableNodeCliInspectArguments: false,
+                enableEmbeddedAsarIntegrityValidation: true,
+                onlyLoadAppFromAsar: true,
+                loadBrowserProcessSpecificV8Snapshot: false,
+                grantFileProtocolExtraPrivileges: false,
+              },
+              compression: "store",
+              nsis: {
+                artifactName: "${productName} Setup.${ext}",
+                // one click installer required. don't run after install otherwise we lose stdout pipe
+                oneClick: true,
+                runAfterFinish: false,
+              },
+            },
+            extraConfig ?? {}
+          ),
+          // Always pin publish and files so they can't be accidentally overridden
+          {
+            publish: {
+              provider: "s3",
+              bucket: "develar",
+              path: "test",
+            },
+            files: ["**/*", "../**/node_modules/**", "!path/**"],
+          }
+        ),
       },
       {
         storeDepsLockfileSnapshot: false,
@@ -170,7 +179,19 @@ export async function doBuild(
   }
 }
 
-export async function handleInitialInstallPerOS({ target, dirPath, arch, vm }: { target: string; dirPath: string; arch: Arch; vm?: VmManager }): Promise<string> {
+export async function handleInitialInstallPerOS({
+  target,
+  dirPath,
+  arch,
+  vm,
+  perMachine,
+}: {
+  target: string
+  dirPath: string
+  arch: Arch
+  vm?: VmManager
+  perMachine?: boolean
+}): Promise<string> {
   let appPath: string
   if (target === "AppImage") {
     appPath = path.join(dirPath, `TestApp.AppImage`)
@@ -217,7 +238,10 @@ export async function handleInitialInstallPerOS({ target, dirPath, arch, vm }: {
     }
 
     // access installed app's location
-    const localProgramsPath = path.join(process.env.LOCALAPPDATA || path.join(homedir(), "AppData", "Local"), "Programs", "TestApp")
+    const installBase = perMachine
+      ? (process.env["ProgramW6432"] ?? process.env["ProgramFiles"] ?? "C:\\Program Files")
+      : path.join(process.env.LOCALAPPDATA || path.join(homedir(), "AppData", "Local"), "Programs")
+    const localProgramsPath = path.join(installBase, "TestApp")
     // this is to clear dev environment when not running on an ephemeral GH runner.
     // Reinstallation will otherwise fail due to "uninstall" message prompt, so we must uninstall first (hence the setTimeout delay)
     const uninstaller = path.join(localProgramsPath, "Uninstall TestApp.exe")
@@ -241,9 +265,17 @@ export async function handleInitialInstallPerOS({ target, dirPath, arch, vm }: {
     } catch {
       // no matching process — expected on the first run
     }
-    // Query LOCALAPPDATA once; used for both the uninstaller check and the install path.
-    const localAppData = (await vm.exec("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", "[Environment]::GetFolderPath('LocalApplicationData')"])).trim()
-    const uninstallerPath = `${localAppData}\\Programs\\TestApp\\Uninstall TestApp.exe`
+    // Query the install root once; used for both the uninstaller check and the install path.
+    const installRoot = (
+      await vm.exec("powershell.exe", [
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        perMachine ? "[Environment]::GetFolderPath('ProgramFiles')" : "[Environment]::GetFolderPath('LocalApplicationData')",
+      ])
+    ).trim()
+    const installSubDir = perMachine ? "TestApp" : "Programs\\TestApp"
+    const uninstallerPath = `${installRoot}\\${installSubDir}\\Uninstall TestApp.exe`
     try {
       await vm.exec(uninstallerPath, ["/S", "/C", "exit"])
       await new Promise(resolve => setTimeout(resolve, 5000))
@@ -310,8 +342,7 @@ export async function handleInitialInstallPerOS({ target, dirPath, arch, vm }: {
       // NSIS one-click calls quitSuccess (SetErrorLevel 0; Quit) on success → exit 0
       `    if ($proc.ExitCode -ne 0) { Write-Error ('Installer exited with code ' + $proc.ExitCode); exit 1 }`,
       `    Start-Sleep -Seconds 3`,
-      `    $lad = [Environment]::GetFolderPath('LocalApplicationData')`,
-      `    $installPath = Join-Path $lad 'Programs\\TestApp\\TestApp.exe'`,
+      `    $installPath = Join-Path '${installRoot}' '${installSubDir}\\TestApp.exe'`,
       `    Write-Output ('APP_EXISTS:' + (Test-Path $installPath))`,
       `    if (-not (Test-Path $installPath)) { Write-Error 'App not installed at expected path'; exit 1 }`,
       `} finally {`,
@@ -329,7 +360,7 @@ export async function handleInitialInstallPerOS({ target, dirPath, arch, vm }: {
       installerServer.close()
       await remove(scriptPath).catch(() => {})
     }
-    appPath = `${localAppData}\\Programs\\TestApp\\TestApp.exe`
+    appPath = `${installRoot}\\${installSubDir}\\TestApp.exe`
   } else if (process.platform === "darwin") {
     appPath = path.join(dirPath, `mac${getArchSuffix(arch)}`, `TestApp.app`, "Contents", "MacOS", "TestApp")
   } else {
@@ -338,7 +369,7 @@ export async function handleInitialInstallPerOS({ target, dirPath, arch, vm }: {
   return appPath
 }
 
-export async function handleCleanupPerOS({ target }: { target: string }) {
+export async function handleCleanupPerOS({ target, perMachine }: { target: string; perMachine?: boolean }) {
   // TODO: ignore for now, this doesn't block CI, but proper uninstall logic should be implemented
   if (target === "deb") {
     //   execSync("dpkg -r testapp", { stdio: "inherit" });
@@ -357,7 +388,10 @@ export async function handleCleanupPerOS({ target }: { target: string }) {
     }
 
     // access installed app's location
-    const localProgramsPath = path.join(process.env.LOCALAPPDATA || path.join(homedir(), "AppData", "Local"), "Programs", "TestApp")
+    const installBase = perMachine
+      ? (process.env["ProgramW6432"] ?? process.env["ProgramFiles"] ?? "C:\\Program Files")
+      : path.join(process.env.LOCALAPPDATA || path.join(homedir(), "AppData", "Local"), "Programs")
+    const localProgramsPath = path.join(installBase, "TestApp")
     const uninstaller = path.join(localProgramsPath, "Uninstall TestApp.exe")
     console.log("Uninstalling", uninstaller)
     execFileSync(uninstaller, ["/S", "/C", "exit"], { stdio: "inherit" })
@@ -424,7 +458,7 @@ export async function runTestWithinServer(doTest: (rootDirectory: string, update
   )
 }
 
-export async function runTest(context: TestContext, target: string, packageManager: string, arch: Arch = Arch.x64, toolsets: ToolsetConfig = {}) {
+export async function runTest(context: TestContext, target: string, packageManager: string, arch: Arch = Arch.x64, toolsets: ToolsetConfig = {}, extraConfig?: Partial<Configuration>) {
   const { expect } = context
   const vm = await windowsVmPromise
   if (vm && target === "nsis") {
@@ -434,14 +468,17 @@ export async function runTest(context: TestContext, target: string, packageManag
   const tmpDir = new TmpDir("auto-update")
   const outDirs: ApplicationUpdatePaths[] = []
   const shouldRunWindowsTests = process.platform === "win32" || (target === "nsis" && vm != null)
-  await doBuild(expect, outDirs, target, arch, tmpDir, shouldRunWindowsTests, { toolsets })
+  // Merge toolsets with any caller-supplied config overrides (e.g. nsis.perMachine)
+  const buildConfig = deepAssign({ toolsets } as Configuration, extraConfig ?? {})
+  await doBuild(expect, outDirs, target, arch, tmpDir, shouldRunWindowsTests, buildConfig)
 
   const oldAppDir = outDirs[0]
   const newAppDir = outDirs[1]
 
   const dirPath = oldAppDir.dir
+  const perMachine = extraConfig?.nsis?.perMachine
   // Setup tests by installing the previous version
-  const appPath = await handleInitialInstallPerOS({ target, dirPath, arch, vm })
+  const appPath = await handleInitialInstallPerOS({ target, dirPath, arch, vm, perMachine })
 
   if (!vm && !existsSync(appPath)) {
     throw new Error(`App not found: ${appPath}`)
@@ -520,7 +557,7 @@ export async function runTest(context: TestContext, target: string, packageManag
     await new Promise(resolve => setTimeout(resolve, 1000))
     await tmpDir.cleanup()
     try {
-      await handleCleanupPerOS({ target })
+      await handleCleanupPerOS({ target, perMachine })
     } catch (error: any) {
       log.error({ error: error.message }, "Blackbox Updater Test cleanup failed")
       // ignore
