@@ -11,6 +11,7 @@ export enum LogMessageByKey {
   PKG_NOT_ON_DISK = "dependency not found on disk",
   PKG_SELF_REF = "self-referential dependencies",
   PKG_OPTIONAL_NOT_INSTALLED = "missing optional dependencies",
+  PKG_OPTIONAL_PLATFORM_NOT_INSTALLED = "platform-specific optional dependencies not bundled — add them to your project's optionalDependencies if your app requires them (pnpm 10+ does not auto-install transitive platform binaries)",
   PKG_COLLECTOR_OUTPUT = "collector stderr output",
 }
 export const logMessageLevelByKey: Record<LogMessageByKey, LogLevel> = {
@@ -20,6 +21,7 @@ export const logMessageLevelByKey: Record<LogMessageByKey, LogLevel> = {
   [LogMessageByKey.PKG_NOT_ON_DISK]: "warn",
   [LogMessageByKey.PKG_SELF_REF]: "debug",
   [LogMessageByKey.PKG_OPTIONAL_NOT_INSTALLED]: "info",
+  [LogMessageByKey.PKG_OPTIONAL_PLATFORM_NOT_INSTALLED]: "warn",
   [LogMessageByKey.PKG_COLLECTOR_OUTPUT]: "warn",
 }
 
