@@ -42,7 +42,7 @@ export { parseDn } from "./rfc2253Parser"
 export { BlockMapDataHolder, PackageFileInfo, ReleaseNoteInfo, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo } from "./updateInfo"
 export { UUID } from "./uuid"
 export { parseXml, XElement } from "./xml"
-export { isValidKey } from "./mapper"
+export { isValidKey, mapToObject } from "./mapper"
 export { deepAssign } from "./deepAssign"
 
 // nsis
