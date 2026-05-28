@@ -511,7 +511,7 @@ describe("rc2CbcDecrypt — known-answer tests", () => {
 
     // Encrypt using node-forge to produce the expected ciphertext
     const forgeKey = forge.util.createBuffer(key.toString("binary"))
-    const enc = forge.rc2.createEncryptionCipher(forgeKey, 40)
+    const enc = forge.rc2.createEncryptionCipher(forgeKey, 40) // lgtm[js/weak-cryptographic-algorithm]
     enc.start(forge.util.createBuffer(iv.toString("binary")))
     enc.update(forge.util.createBuffer(plaintext))
     enc.finish()
@@ -529,7 +529,7 @@ describe("rc2CbcDecrypt — known-answer tests", () => {
     const plaintext = "12345678" // 8 bytes → full block → 8 bytes of PKCS#7 padding added
 
     const forgeKey = forge.util.createBuffer(key.toString("binary"))
-    const enc = forge.rc2.createEncryptionCipher(forgeKey, 40)
+    const enc = forge.rc2.createEncryptionCipher(forgeKey, 40) // lgtm[js/weak-cryptographic-algorithm]
     enc.start(forge.util.createBuffer(iv.toString("binary")))
     enc.update(forge.util.createBuffer(plaintext))
     enc.finish()
@@ -583,7 +583,7 @@ describe("rc2CbcDecrypt — input validation / security guards", () => {
     // function so PKCS#7 bytes are NOT appended. The ciphertext is exactly 8 bytes and
     // decrypts back to the same 8 raw bytes — including the 0x00 at position 7.
     const forgeKey = forge.util.createBuffer(key5.toString("binary"))
-    const enc = forge.rc2.createEncryptionCipher(forgeKey, 40)
+    const enc = forge.rc2.createEncryptionCipher(forgeKey, 40) // lgtm[js/weak-cryptographic-algorithm]
     enc.start(forge.util.createBuffer(iv8.toString("binary")))
     enc.update(forge.util.createBuffer(Buffer.from([0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x00]).toString("binary")))
     enc.finish(() => true) // no-op pad: don't add PKCS#7 padding
@@ -594,7 +594,7 @@ describe("rc2CbcDecrypt — input validation / security guards", () => {
 
   it("throws when PKCS#7 pad byte exceeds block size (0x09 > 8)", () => {
     const forgeKey = forge.util.createBuffer(key5.toString("binary"))
-    const enc = forge.rc2.createEncryptionCipher(forgeKey, 40)
+    const enc = forge.rc2.createEncryptionCipher(forgeKey, 40) // lgtm[js/weak-cryptographic-algorithm]
     enc.start(forge.util.createBuffer(iv8.toString("binary")))
     enc.update(forge.util.createBuffer(Buffer.from([0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x09]).toString("binary")))
     enc.finish(() => true)
@@ -605,7 +605,7 @@ describe("rc2CbcDecrypt — input validation / security guards", () => {
   it("throws when PKCS#7 padding bytes are inconsistent", () => {
     // Last byte = 0x02 (declares pad length 2), but second-to-last = 0x01 not 0x02.
     const forgeKey = forge.util.createBuffer(key5.toString("binary"))
-    const enc = forge.rc2.createEncryptionCipher(forgeKey, 40)
+    const enc = forge.rc2.createEncryptionCipher(forgeKey, 40) // lgtm[js/weak-cryptographic-algorithm]
     enc.start(forge.util.createBuffer(iv8.toString("binary")))
     enc.update(forge.util.createBuffer(Buffer.from([0x41, 0x42, 0x43, 0x44, 0x45, 0x01, 0x01, 0x02]).toString("binary")))
     enc.finish(() => true)
