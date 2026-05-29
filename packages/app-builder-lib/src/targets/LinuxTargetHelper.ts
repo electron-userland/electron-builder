@@ -1,10 +1,26 @@
-import { asArray, exists, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
+import { asArray, deepAssign, exists, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { join } from "path"
+import * as semver from "semver"
+import { CompressionLevel } from "../core"
 import { LinuxPackager } from "../linuxPackager"
-import { CommonLinuxOptions, LinuxTargetSpecificOptions } from "../options/linuxOptions"
+import { CommonLinuxOptions } from "../options/linuxOptions"
 import { IconInfo } from "../platformPackager"
+import { SnapCore } from "./snap/SnapTarget"
+import { SnapCore24 } from "./snap/core24"
+import { SnapCoreCustom } from "./snap/coreCustom"
+import { SnapCoreLegacy } from "./snap/coreLegacy"
+
+function mapLinuxCompressionToSnap(level: CompressionLevel | null | undefined): "xz" | "lzo" | undefined {
+  if (level === "store") {
+    return "lzo"
+  }
+  if (level === "maximum") {
+    return "xz"
+  }
+  return undefined
+}
 
 export const installPrefix = "/opt"
 
@@ -23,6 +39,69 @@ export class LinuxTargetHelper {
 
   get mimeTypeFiles(): Promise<string | null> {
     return this.mimeTypeFilesPromise.value
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getSnapCore(): SnapCore<any> {
+    const { snapcraft, snap: legacySnap } = this.packager.config
+    if (snapcraft != null && legacySnap != null) {
+      log.warn("Both `snapcraft` and `snap` configurations are present. `snapcraft` takes precedence; please remove the `snap` key to silence this warning.")
+    }
+
+    // Merge linux-level options (category, description, mimeTypes, etc.) as the base so they
+    // propagate into the generated snapcraft.yaml and .desktop file without requiring users to
+    // duplicate them under core24/core18/etc. Per-core options always win for conflicts.
+    // linux.compression is a CompressionLevel ("store"/"normal"/"maximum"); snap compression is an
+    // algorithm ("xz"/"lzo"). Map the level to the nearest algorithm; per-core options override.
+    const { compression: linuxCompression, ...linuxOptions } = this.packager.platformSpecificBuildOptions
+    const snapLinuxOptions = { ...linuxOptions, compression: mapLinuxCompressionToSnap(linuxCompression) }
+
+    if (snapcraft != null) {
+      const core = snapcraft.base
+      const options = snapcraft[core] || {}
+      switch (core) {
+        case "core18":
+        case "core20":
+        case "core22":
+          if (!this.isElectronVersionGreaterOrEqualThan("4.0.0")) {
+            if (!this.isElectronVersionGreaterOrEqualThan("2.0.0-beta.1")) {
+              throw new InvalidConfigurationError("Electron 2 and higher is required to build Snap with core18/core20/core22")
+            }
+            log.warn(null, "electron 4 and higher is highly recommended for Snap with core18/core20/core22")
+          }
+          return new SnapCoreLegacy(this.packager, this, deepAssign({}, snapLinuxOptions, { base: core, ...options }))
+        case "core24":
+          if (!this.isElectronVersionGreaterOrEqualThan("28.0.0")) {
+            if (!this.isElectronVersionGreaterOrEqualThan("25.0.0")) {
+              throw new InvalidConfigurationError("Electron 25 and higher is required to build Snap with core24")
+            }
+            log.warn(null, "electron 28 and higher is highly recommended for Snap with core24")
+          }
+          return new SnapCore24(this.packager, this, deepAssign({}, snapLinuxOptions, options))
+        case "custom":
+          // Pass-through: do not inject linux options into user-supplied yaml
+          return new SnapCoreCustom(this.packager, this, snapcraft.custom || {})
+      }
+    }
+
+    if (legacySnap != null) {
+      log.warn(
+        {
+          reason: "`snap` configuration is deprecated",
+          docs: "https://www.electron.build/snapcraft",
+        },
+        "please consider migrating `snap` configuration to `snapcraft.<core>` and remove `snap` configuration"
+      )
+    }
+    return new SnapCoreLegacy(this.packager, this, deepAssign({}, snapLinuxOptions, legacySnap ?? {}))
+  }
+
+  isElectronVersionGreaterOrEqualThan(version: string, fallback?: string): boolean {
+    const electronVersion = this.packager.config.electronVersion
+    if (!electronVersion) {
+      return fallback ? semver.gte(fallback, version) : true
+    }
+    return semver.gte(electronVersion, version)
   }
 
   private async computeMimeTypeFiles(): Promise<string | null> {
@@ -74,7 +153,7 @@ export class LinuxTargetHelper {
     return result.filter(icon => !icon.file.endsWith(".icon"))
   }
 
-  getDescription(options: LinuxTargetSpecificOptions) {
+  getDescription(options: CommonLinuxOptions) {
     return options.description || this.packager.appInfo.description
   }
 

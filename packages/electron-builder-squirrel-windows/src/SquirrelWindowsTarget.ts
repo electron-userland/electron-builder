@@ -3,6 +3,7 @@ import { execWine } from "app-builder-lib/out/wine"
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { sanitizeFileName } from "builder-util/out/filename"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
+import { withToolsetLock } from "app-builder-lib/out/util/toolsetLock"
 import * as path from "path"
 import * as fs from "fs"
 import * as os from "os"
@@ -87,7 +88,7 @@ export default class SquirrelWindowsTarget extends Target {
       })
       const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFile)
       await this.generateStubExecutableExe(appOutDir, distOptions.vendorDirectory!)
-      await createWindowsInstaller(distOptions)
+      await withToolsetLock(() => createWindowsInstaller(distOptions))
 
       await packager.signAndEditResources(artifactPath, arch, installerOutDir)
 

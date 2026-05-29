@@ -1,10 +1,12 @@
-import { isEmptyOrSpaces } from "builder-util"
 import type { VmManager } from "app-builder-lib/out/vm/vm"
-import { ChildProcess, spawn } from "child_process"
+import { ChildProcess, execSync, spawn, StdioOptions } from "child_process"
+import { createHash, randomUUID } from "crypto"
 import * as fs from "fs"
+import { createReadStream } from "fs"
+import { outputFile, remove } from "fs-extra"
 import * as http from "http"
 import * as net from "net"
-import os from "os"
+import os, { homedir } from "os"
 import path from "path"
 
 /**
@@ -135,6 +137,27 @@ interface LaunchResult {
   exitCode: number | null
   stdout: string
   stderr: string
+  /** Runs fn(); on failure re-throws with stdout/stderr appended to the error message */
+  assert(fn: () => void | Promise<void>): Promise<void>
+}
+
+function buildResult(version: string | undefined, exitCode: number | null, stdout: string, stderr: string): LaunchResult {
+  return {
+    version,
+    exitCode,
+    stdout,
+    stderr,
+    async assert(fn) {
+      try {
+        await fn()
+      } catch (err: any) {
+        const msg = err?.message ?? String(err)
+        const enhanced = new Error(`${msg}\n\n--- app stdout ---\n${stdout || "(empty)"}\n\n--- app stderr ---\n${stderr || "(empty)"}`)
+        enhanced.stack = err?.stack
+        throw enhanced
+      }
+    },
+  }
 }
 
 interface LaunchOptions {
@@ -161,11 +184,12 @@ export async function launchAndWaitForQuit({
   let child: ChildProcess
   const versionRegex = /APP_VERSION:\s*([0-9]+\.[0-9]+\.[0-9]+)/
 
+  const stdio: StdioOptions = ["ignore", "pipe", "pipe"]
   function spawnApp(command: string, args: string[] = [], detached = true, localEnv = env) {
     return spawn(command, args, {
       detached,
       shell: false,
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio,
       env: {
         ...process.env,
         AUTO_UPDATER_TEST: "1",
@@ -200,7 +224,7 @@ export async function launchAndWaitForQuit({
     if (expectedVersion && version && version !== expectedVersion) {
       throw new Error(`Expected version ${expectedVersion}, got ${version}`)
     }
-    return { version, exitCode: 0, stdout: output, stderr: "" }
+    return buildResult(version, 0, output, "")
   }
 
   const platform = os.platform()
@@ -221,21 +245,18 @@ export async function launchAndWaitForQuit({
 
       if (appPath.endsWith(".AppImage")) {
         fs.chmodSync(appPath, 0o755)
-        const spawnEnv = {
-          ...env,
-          DISPLAY: display,
-          APPIMAGE_EXTRACT_AND_RUN: "1",
-        }
 
         child = spawn(appPath, ["--no-sandbox"], {
           detached: true,
           shell: false,
-          stdio: ["ignore", "pipe", "pipe"],
+          stdio,
           env: {
             ...process.env,
             AUTO_UPDATER_TEST: "1",
             AUTO_UPDATER_TEST_CONFIG_PATH: updateConfigPath,
-            ...spawnEnv,
+            ...env,
+            DISPLAY: display,
+            APPIMAGE_EXTRACT_AND_RUN: "1",
           },
         })
       } else {
@@ -255,22 +276,15 @@ export async function launchAndWaitForQuit({
     const stderrChunks: string[] = []
 
     function resolveResult(code: number | null) {
-      resolve({
-        version,
-        exitCode: code,
-        stdout: stdoutChunks.join(""),
-        stderr: stderrChunks.join(""),
-      })
+      resolve(buildResult(version, code, stdoutChunks.join(""), stderrChunks.join("")))
     }
 
     child.stdout?.on("data", data => {
       const line = data.toString()
-      console.log(line)
       stdoutChunks.push(line)
       const match = line.match(versionRegex)
       if (match) {
         version = match[1].trim()
-        console.log(`Found Version in console logs: ${version}`)
         if (expectedVersion && version !== expectedVersion) {
           resolved = true
           child.kill()
@@ -288,7 +302,6 @@ export async function launchAndWaitForQuit({
     child.stderr?.on("data", data => {
       const line = data.toString()
       stderrChunks.push(line)
-      console.error(`[stderr] ${line}`)
       // GPU/native crashes produce a FATAL ERROR in stderr that can hang the process
       // during cleanup. If we've already captured the version the probe succeeded —
       // kill and resolve rather than waiting for an exit that never comes.
@@ -328,7 +341,7 @@ export function startXvfb(): { display: string; stop: () => void } {
   const display = `:${Math.ceil(Math.random() * 100)}`
   const proc = spawn("Xvfb", [display, "-screen", "0", "1920x1080x24"], {
     detached: true,
-    stdio: ["ignore", "pipe", "pipe"],
+    stdio: ["ignore", "ignore", "pipe"],
   })
 
   let errorOutput = ""
@@ -345,12 +358,11 @@ export function startXvfb(): { display: string; stop: () => void } {
   proc.unref()
 
   const stop = () => {
-    console.log(`Stopping Xvfb.${isEmptyOrSpaces(errorOutput) ? "" : ` Error output: ${errorOutput}`}`)
     if (typeof proc.pid === "number" && !isNaN(proc.pid)) {
       try {
         process.kill(-proc.pid, "SIGTERM")
       } catch (e) {
-        console.warn("Failed to stop Xvfb:", e)
+        // ignore errors — the process may have already exited, and if it didn't, we're still in a docker container and it will be killed when the container stops, so no need to force-kill it here
       }
     }
   }
@@ -360,14 +372,305 @@ export function startXvfb(): { display: string; stop: () => void } {
       try {
         stop()
       } catch (e) {
-        console.warn("Failed to stop Xvfb:", e)
+        // ignored
       }
     })
   })
-
-  console.log("Xvfb started on display", display)
   return {
     display,
     stop,
   }
+}
+
+export async function sha256File(filePath: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const hash = createHash("sha256")
+    createReadStream(filePath)
+      .on("data", chunk => hash.update(chunk))
+      .on("end", () => resolve(hash.digest("hex")))
+      .on("error", reject)
+  })
+}
+
+export interface VmInstallerOptions {
+  /** Args passed to the installer executable (e.g. ["/S"] for NSIS, [] for Squirrel which is silent by default) */
+  installerArgs?: string[]
+  /** Process name to kill after install completes (stops auto-launched app from the installer event) */
+  postInstallKillProcess?: string
+  /** PowerShell lines appended after the installer exits — use to verify installation */
+  verifyPs: string[]
+  /** Timeout in ms for the entire PowerShell execution (default: 180_000) */
+  timeout?: number
+}
+
+/**
+ * Delivers an installer to a Parallels VM via HTTP, verifies its SHA256 checksum,
+ * runs it, and executes caller-supplied PowerShell to verify the result.
+ * Returns the full PowerShell stdout.
+ */
+export async function deliverAndInstallInVm(vm: VmManager, installerPath: string, opts: VmInstallerOptions): Promise<string> {
+  const hostIP = getParallelsHostIP()
+  if (!hostIP) {
+    throw new Error("Cannot determine Parallels host IP — no prl*/bridge* interface found")
+  }
+  if (!/^[\d.]+$/.test(hostIP)) {
+    throw new Error(`Unsafe hostIP: ${hostIP}`)
+  }
+
+  const expectedSha256 = await sha256File(installerPath)
+  if (!/^[0-9a-f]{64}$/i.test(expectedSha256)) {
+    throw new Error(`Unexpected SHA256 value: ${expectedSha256}`)
+  }
+
+  const { server, port } = await createLocalServer(path.dirname(installerPath), "0.0.0.0")
+  if (!Number.isInteger(port) || port < 1024 || port > 65535) {
+    throw new Error(`Unsafe port: ${port}`)
+  }
+
+  const filename = path.basename(installerPath)
+  const argsLiteral = (opts.installerArgs ?? []).map(a => `'${a.replace(/'/g, "''")}'`).join(", ")
+  const argsPs = argsLiteral ? `@(${argsLiteral})` : "@()"
+
+  const lines = [
+    `$tmpDir = $null`,
+    `try {`,
+    `    $tmpDir = Join-Path $env:TEMP ([Guid]::NewGuid().ToString())`,
+    `    New-Item -ItemType Directory -Path $tmpDir | Out-Null`,
+    `    $dest = Join-Path $tmpDir 'installer.exe'`,
+    `    Invoke-WebRequest -Uri 'http://${hostIP}:${port}/${encodeURIComponent(filename)}' -OutFile $dest -UseBasicParsing`,
+    `    $actualHash = (Get-FileHash $dest -Algorithm SHA256).Hash.ToLower()`,
+    `    $expectedHash = '${expectedSha256}'`,
+    `    if ($actualHash -ne $expectedHash) { Write-Error ("Hash mismatch: $actualHash vs $expectedHash"); exit 1 }`,
+    `    Write-Output ('HASH_OK:true')`,
+    `    Unblock-File -Path $dest -ErrorAction SilentlyContinue`,
+    `    $proc = Start-Process -FilePath $dest -ArgumentList ${argsPs} -PassThru -Wait`,
+    `    Write-Output ('INSTALLER_EXIT:' + $proc.ExitCode)`,
+    `    if ($proc.ExitCode -ne 0) { Write-Error ("Installer exited $($proc.ExitCode)"); exit 1 }`,
+    ...(opts.postInstallKillProcess ? [`    Stop-Process -Name '${opts.postInstallKillProcess.replace(/'/g, "''")}' -Force -ErrorAction SilentlyContinue`] : []),
+    ...opts.verifyPs.map(l => `    ${l}`),
+    `} finally {`,
+    `    if ($tmpDir) { Remove-Item $tmpDir -Recurse -Force -ErrorAction SilentlyContinue }`,
+    `}`,
+  ]
+
+  const scriptPath = path.join(homedir(), `.eb-install-${randomUUID()}.ps1`)
+  await outputFile(scriptPath, lines.join("\n"))
+  const winScriptPath = toVmHomePath(scriptPath)
+
+  try {
+    const output = await vm.exec("powershell.exe", ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", winScriptPath], {
+      timeout: opts.timeout ?? 180_000,
+    })
+    console.log("[deliverAndInstallInVm] output:", output)
+    return output
+  } finally {
+    server.close()
+    await remove(scriptPath).catch(() => {})
+  }
+}
+
+export interface VmSnapOptions {
+  /** Snap package name — used to locate /snap/bin/<name> and to uninstall. */
+  snapName: string
+  /** Timeout in ms for the entire VM script (default: 3 minutes). */
+  timeoutMs?: number
+}
+
+/**
+ * Delivers a locally-built .snap to a Parallels Ubuntu VM via HTTP, installs it
+ * with --dangerous (unsigned), launches it under Xvfb with SNAP_LAUNCH_TEST=1,
+ * verifies the app emits ELECTRON_READY:<version>, then uninstalls the snap.
+ */
+export async function deliverAndInstallSnapInVm(vm: VmManager, snapPath: string, opts: VmSnapOptions): Promise<{ version: string }> {
+  const hostIp = getParallelsHostIP()
+  if (!hostIp) {
+    throw new Error("Cannot find Parallels host IP — is Parallels Desktop running?")
+  }
+
+  const snapFile = path.basename(snapPath)
+  const expectedHash = await sha256File(snapPath)
+  // snap forces package names to lowercase at install time
+  const snapBinaryName = opts.snapName.toLowerCase()
+
+  const { server, port } = await createLocalServer(path.dirname(snapPath), "0.0.0.0")
+
+  const script = `set -euo pipefail
+SNAP_FILE="/tmp/${snapFile}"
+SNAP_URL="http://${hostIp}:${port}/${encodeURIComponent(snapFile)}"
+cleanup() {
+  sudo snap remove ${snapBinaryName} 2>/dev/null || true
+  rm -f "$SNAP_FILE" || true
+}
+trap cleanup EXIT
+curl -fsSL "$SNAP_URL" -o "$SNAP_FILE"
+ACTUAL=$(sha256sum "$SNAP_FILE" | cut -d' ' -f1)
+if [ "$ACTUAL" != "${expectedHash}" ]; then
+  echo "hash mismatch: expected ${expectedHash} got $ACTUAL" >&2
+  exit 1
+fi
+sudo snap install --dangerous "$SNAP_FILE"
+RUNTIME_DIR="\${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+WAYLAND_SOCK="\$RUNTIME_DIR/wayland-0"
+XVFB_BIN=$(command -v xvfb-run 2>/dev/null || echo "")
+echo "DEBUG display: RUNTIME_DIR=\$RUNTIME_DIR wayland-0=$([ -S "\$WAYLAND_SOCK" ] && echo present || echo absent) xvfb-run=\${XVFB_BIN:-absent}" >&2
+if [ -S "\$WAYLAND_SOCK" ]; then
+  echo "DEBUG: using Wayland" >&2
+  OUTPUT=$(XDG_RUNTIME_DIR="\$RUNTIME_DIR" SNAP_LAUNCH_TEST=1 timeout 30 /snap/bin/${snapBinaryName} --no-sandbox --disable-gpu --disable-dev-shm-usage --ozone-platform=wayland 2>&1 || true)
+elif [ -n "\$XVFB_BIN" ]; then
+  echo "DEBUG: using xvfb-run" >&2
+  OUTPUT=$(SNAP_LAUNCH_TEST=1 xvfb-run -a --server-args="-ac -screen 0 1024x768x24" timeout 30 /snap/bin/${snapBinaryName} --no-sandbox --disable-gpu --disable-dev-shm-usage --ozone-platform=x11 2>&1 || true)
+else
+  echo "DEBUG: using headless" >&2
+  OUTPUT=$(SNAP_LAUNCH_TEST=1 timeout 30 /snap/bin/${snapBinaryName} --no-sandbox --disable-gpu --disable-dev-shm-usage --ozone-platform=headless 2>&1 || true)
+fi
+VERSION=$(echo "$OUTPUT" | grep -oP '(?<=ELECTRON_READY:)\\S+' | head -1 || true)
+if [ -z "$VERSION" ]; then
+  echo "ELECTRON_READY not found in output:" >&2
+  echo "$OUTPUT" >&2
+  exit 1
+fi
+echo "VERSION:$VERSION"
+`
+
+  try {
+    const output = await vm.exec("bash", ["-c", script], { timeout: opts.timeoutMs ?? 3 * 60 * 1000 })
+    const match = output.match(/VERSION:(\S+)/)
+    if (!match) {
+      throw new Error(`VERSION line not found in VM output:\n${output}`)
+    }
+    return { version: match[1] }
+  } finally {
+    server.close()
+  }
+}
+
+/**
+ * Returns true if the current user can run `sudo snap` non-interactively.
+ * Requires a scoped sudoers entry, e.g.:
+ *   <user> ALL=(root) NOPASSWD: /usr/bin/snap install *, /usr/bin/snap remove *
+ */
+export function canSudoSnap(): boolean {
+  try {
+    execSync("sudo -n snap install --help", { stdio: "pipe" })
+    return true
+  } catch (e: any) {
+    const stderr: string = (e.stderr ?? "").toString()
+    // sudo denied → stderr begins with "sudo:" (e.g. "sudo: a password is required")
+    // snap ran → stderr is snap's own help/error text, not "sudo:"
+    return stderr.length > 0 && !stderr.startsWith("sudo:")
+  }
+}
+
+/**
+ * Installs a locally-built .snap directly on the current Linux machine,
+ * launches it under Xvfb with SNAP_LAUNCH_TEST=1, verifies ELECTRON_READY,
+ * and unconditionally uninstalls the snap on completion.
+ *
+ * Requires a scoped sudoers entry:
+ *   echo "$(whoami) ALL=(root) NOPASSWD: /usr/bin/snap install *, /usr/bin/snap remove *" | sudo tee /etc/sudoers.d/eb-snap-test
+ */
+export async function installAndLaunchSnapLocally(snapPath: string, opts: VmSnapOptions): Promise<{ version: string }> {
+  const { snapName, timeoutMs = 3 * 60 * 1000 } = opts
+
+  execSync(`sudo snap install --dangerous ${snapPath}`, { stdio: "inherit" })
+
+  try {
+    const output = await launchSnapBinary(`/snap/bin/${snapName}`, timeoutMs)
+    const match = output.match(/ELECTRON_READY:(\S+)/)
+    if (!match) {
+      throw new Error(`ELECTRON_READY not found in output:\n${output}`)
+    }
+    return { version: match[1] }
+  } finally {
+    try {
+      execSync(`sudo snap remove ${snapName}`, { stdio: "inherit" })
+    } catch {
+      // best-effort — don't mask the original error
+    }
+  }
+}
+
+/**
+ * Launch the snap binary under Xvfb and wait for the app to signal readiness.
+ *
+ * The binary must be the test-app-one Electron executable, which writes
+ * "ELECTRON_READY:<version>" to stdout when SNAP_LAUNCH_TEST=1 is set.
+ * The process is SIGKILLed immediately after that line is detected —
+ * Chromium's exit-cleanup path hangs indefinitely in Docker containers
+ * without running system services (snapd, D-Bus, GPU), so we never wait
+ * for a natural exit.
+ */
+export async function launchSnapBinary(binaryPath: string, timeoutMs = 30_000): Promise<string> {
+  const xvfb = startXvfb()
+  await new Promise(resolve => setTimeout(resolve, 500))
+
+  const child = spawn(binaryPath, ["--no-sandbox", "--disable-gpu"], {
+    detached: false,
+    shell: false,
+    stdio: ["ignore", "pipe", "pipe"],
+    env: {
+      ...process.env,
+      DISPLAY: xvfb.display,
+      SNAP_LAUNCH_TEST: "1",
+      // XDG_RUNTIME_DIR=/run/user/0 is set in the Docker image for snapcraft's
+      // StateService.  Chromium sees a valid runtime dir and looks for a D-Bus
+      // session socket at $XDG_RUNTIME_DIR/bus.  Without a running session daemon
+      // the AT-SPI bridge hangs trying to connect; pointing to /dev/null makes
+      // libdbus fail fast (ENOENT) rather than blocking indefinitely.
+      DBUS_SESSION_BUS_ADDRESS: process.env.DBUS_SESSION_BUS_ADDRESS ?? "unix:path=/dev/null",
+    },
+  })
+
+  const chunks: string[] = []
+
+  return new Promise<string>((resolve, reject) => {
+    let done = false
+
+    const finish = (err?: Error) => {
+      if (done) return
+      done = true
+      try {
+        child.kill("SIGKILL")
+      } catch {
+        // ignore — process may have already exited
+      }
+      xvfb.stop()
+      if (err) {
+        reject(err)
+      } else {
+        resolve(chunks.join(""))
+      }
+    }
+
+    child.stdout?.on("data", (d: Buffer) => {
+      chunks.push(d.toString())
+      if (!done && chunks.join("").includes("ELECTRON_READY:")) {
+        finish()
+      }
+    })
+
+    child.stderr?.on("data", (d: Buffer) => {
+      chunks.push(d.toString())
+    })
+
+    child.on("error", (e: Error) => finish(e))
+
+    child.on("exit", (code: number | null) => {
+      if (!done) {
+        if (code !== null && code !== 0) {
+          finish(new Error(`Binary exited with code ${code}\n${chunks.join("")}`))
+        } else {
+          // Exited cleanly without producing ELECTRON_READY — treat as success
+          // (the signal may have been received before the exit event fired)
+          finish()
+        }
+      }
+    })
+
+    setTimeout(() => {
+      if (!done) {
+        finish(new Error(`Binary launch timed out after ${timeoutMs}ms\nSTDOUT+STDERR:\n${chunks.join("")}`))
+      }
+    }, timeoutMs)
+  })
 }

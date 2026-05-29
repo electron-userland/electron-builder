@@ -3,15 +3,18 @@
 import isCI from "is-ci"
 import { startVitest } from "vitest/node"
 import { getAllTestFiles } from "./file-discovery"
+import { generateTests } from "./generate-tests"
 import { buildWeightedFiles, computeShardCount, splitIntoShards } from "./shard-builder"
 import { SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN } from "./smart-config"
 import SmartSequencer from "./vitest-smart-sequencer"
 
 const testRegex = TEST_FILES_PATTERN?.split(",")
-const includeRegex = `(${testRegex.join("|")}|${testRegex.map(t => `${t}Test`).join("|")})`
+const includeRegex = `(${testRegex.join("|")}|${testRegex.map(t => `${t}*Test`).join("|")})`
 console.log("TEST_FILES pattern", includeRegex)
 
 async function main() {
+  generateTests()
+
   const files = getAllTestFiles()
   const currentPlatform = process.platform as SupportedPlatforms
 
@@ -56,8 +59,9 @@ async function main() {
     printConsoleTrace: true,
     reporters: ["default", __dirname + "/vitest-smart-reporter.ts"],
 
-    maxWorkers: "50%",
+    maxWorkers: 3, // limit to 3 workers to avoid overwhelming the system with disk I/O
 
+    fileParallelism: process.env.TEST_SEQUENTIAL_FILES !== "true",
     sequence: {
       sequencer: SmartSequencer,
       concurrent: process.env.TEST_SEQUENTIAL === "false",

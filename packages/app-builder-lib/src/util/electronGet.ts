@@ -7,7 +7,7 @@ import {
   GotDownloaderOptions,
   MirrorOptions,
 } from "@electron/get"
-import { exec, exists, getPath7za, log, PADDING, parseValidEnvVarUrl } from "builder-util"
+import { buildGotProxyAgent, exec, exists, getPath7za, log, PADDING, parseValidEnvVarUrl } from "builder-util"
 import { MultiProgress } from "electron-publish/out/multiProgress"
 import { createReadStream, createWriteStream } from "fs"
 import * as fs from "fs/promises"
@@ -18,6 +18,8 @@ import { pipeline } from "stream/promises"
 import * as tar from "tar"
 import * as unzipper from "unzipper"
 import { ElectronPlatformName } from "../electron/ElectronFramework"
+import { CacheState, cleanupCacheDirectory, computeCacheMetadata, readCacheStateFile, validateCacheDirectory, writeCacheState } from "./cacheState"
+import type { ProgressBar } from "electron-publish"
 
 export type ElectronGetOptions = Omit<
   ElectronPlatformArtifactDetails,
@@ -84,9 +86,10 @@ function hashUrlSafe(input: string, length = 6): string {
   return out.length >= length ? out.slice(0, length) : out.padStart(length, "0")
 }
 
-export function getCacheDirectory(isAvoidSystemOnWindows = false): string {
+export function getCacheDirectory(options: { isAvoidSystemOnWindows?: boolean; allowEnvVarOverride: boolean }): string {
+  const { isAvoidSystemOnWindows = true, allowEnvVarOverride } = options
   const env = process.env.ELECTRON_BUILDER_CACHE?.trim()
-  if (env && path.parse(env).root) {
+  if (allowEnvVarOverride && env && path.parse(env).root) {
     return env
   }
 
@@ -100,6 +103,7 @@ export function getCacheDirectory(isAvoidSystemOnWindows = false): string {
   if (platform === "win32") {
     const localAppData = process.env.LOCALAPPDATA?.trim()
     const username = process.env.USERNAME?.trim()?.toLowerCase()
+    // https://github.com/electron-userland/electron-builder/issues/1164
     const isSystemUser = isAvoidSystemOnWindows && (localAppData?.toLowerCase()?.includes("\\windows\\system32\\") || username === "system")
     if (!localAppData || isSystemUser) {
       return path.join(os.tmpdir(), `${appName}-cache`)
@@ -172,7 +176,7 @@ export async function extractArchive(file: string, dir: string) {
 
   const release = await lockfile.lock(tmpDir, {
     retries: { retries: 5, minTimeout: 1000, maxTimeout: 5000 },
-    stale: 60000,
+    stale: 120000, // Increased from 60s to allow long-running extractions
   })
 
   try {
@@ -185,10 +189,29 @@ export async function extractArchive(file: string, dir: string) {
     } else if (file.endsWith(".zip")) {
       await extractZipStreaming(file, tmpDir)
     } else if (file.endsWith(".7z")) {
-      await exec(await getPath7za(), ["x", "-bd", file, `-o${tmpDir}`, "-y"])
+      const cmd7za = await getPath7za()
+      try {
+        await exec(cmd7za, ["x", "-bd", file, `-o${tmpDir}`, "-y"])
+      } catch (e: any) {
+        // Check if extraction actually failed or just had benign warnings
+        const files = await fs.readdir(tmpDir)
+        if (files.length === 0) {
+          log.warn({ file, tmpDir, error: e.message }, "7z extraction produced no output")
+          throw new Error(`7z extraction failed for ${file}: ${e.message}`)
+        }
+        // If files were extracted despite the error, log and continue
+        log.warn({ error: e.message, filesExtracted: files.length }, "7z reported error but extracted files")
+      }
     } else {
       throw new Error(`Unsupported archive format: ${path.basename(file)}`)
     }
+
+    // Verify extraction produced files
+    const extractedFiles = await fs.readdir(tmpDir)
+    if (extractedFiles.length === 0) {
+      throw new Error(`Extraction of ${path.basename(file)} produced no files`)
+    }
+
     await fs.rm(dir, { recursive: true, force: true })
     await fs.rename(tmpDir, dir)
   } finally {
@@ -197,18 +220,28 @@ export async function extractArchive(file: string, dir: string) {
 }
 
 async function downloadArtifactToFile(config: Parameters<typeof get.downloadArtifact>[0], label: string): Promise<string> {
-  const progress = process.stdout.isTTY ? new MultiProgress() : null
-  const progressBar = progress?.createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent | ${label}`, { total: 100 })
-  progressBar?.render()
-
   let lastLoggedMilestone = -1
+  const state: { bar: ProgressBar | undefined } = { bar: undefined }
+
   const downloadOptions: GotDownloaderOptions = {
     timeout: { request: 10 * 60 * 1000 }, // prevent indefinite hang on stalled connections
     ...config.downloadOptions,
+    agent: config.downloadOptions?.agent ?? buildGotProxyAgent(),
     getProgressCallback: info => {
+      // @electron/get passes downloadOptions (including this callback) to its internal
+      // SHASUMS256.txt validation download. That file is tiny (<1 MB) and fires at 100%
+      // immediately, producing a spurious bar even when the artifact itself is cached.
+      // Skip progress display for any download whose total size is known and small.
+      if (info.total && info.total < 1_000_000) {
+        return Promise.resolve()
+      }
+      if (!state.bar && process.stdout.isTTY) {
+        log.info({ label }, "downloading")
+        state.bar = new MultiProgress().createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent | ${label}`, { total: 100 })
+      }
       const pct = info.percent != null ? Math.floor(info.percent * 100) : 0
-      if (progressBar) {
-        progressBar.update(pct)
+      if (state.bar) {
+        state.bar.update(pct)
       } else {
         // log every 25% milestone for non-TTY environments (e.g. CI logs) to provide some visibility into download progress without overwhelming logs with too many updates
         const percentCompleted = info.transferred && info.total ? Math.floor((info.transferred / info.total) * 100) : Math.floor(pct / 25) * 25
@@ -221,7 +254,6 @@ async function downloadArtifactToFile(config: Parameters<typeof get.downloadArti
     },
   }
 
-  log.info({ label }, "downloading")
   const configWithProgress = { ...config, downloadOptions }
   try {
     let filePath: string
@@ -238,10 +270,13 @@ async function downloadArtifactToFile(config: Parameters<typeof get.downloadArti
       log.warn({ filePath, label }, "cached artifact missing from disk; retrying with cache write")
       filePath = await get.downloadArtifact({ ...configWithProgress, cacheMode: ElectronDownloadCacheMode.WriteOnly })
     }
+    if (!state.bar && lastLoggedMilestone === -1) {
+      log.info({ label }, "using cached artifact")
+    }
     return filePath
   } finally {
-    progressBar?.update(100)
-    progressBar?.terminate()
+    state.bar?.update(100)
+    state.bar?.terminate()
   }
 }
 
@@ -251,34 +286,65 @@ async function downloadArtifactToFile(config: Parameters<typeof get.downloadArti
  * Both public download functions delegate here after building their respective configs.
  */
 async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact>[0], extractDir: string, label: string): Promise<string> {
-  const completeMarker = `${extractDir}.complete`
-  const isCached = async () => exists(completeMarker)
-
   await fs.mkdir(extractDir, { recursive: true })
 
-  if (await isCached()) {
-    log.debug({ file: label, path: extractDir }, "using cached artifact - skipping download/extract")
-    return extractDir
+  // Pre-lock fast path: only short-circuit for a definitively complete and valid cache.
+  // Do NOT clean up here — concurrent processes could race to delete under each other.
+  const stateData = await readCacheStateFile(extractDir)
+  if (stateData?.state === CacheState.complete) {
+    const isValid = await validateCacheDirectory(extractDir, stateData.fileCount)
+    if (isValid) {
+      log.debug({ file: label, path: extractDir }, "using cached artifact - cache valid")
+      return extractDir
+    }
   }
 
   const release = await lockfile.lock(extractDir, {
     retries: { retries: 5, minTimeout: 1000, maxTimeout: 5000 },
-    stale: 60000,
+    stale: 120000,
   })
   let downloadedFile: string | null = null
   try {
     // Re-check after acquiring lock: another worker may have completed while we waited.
-    if (await isCached()) {
-      log.debug({ file: label, path: extractDir }, "using cached artifact - skipping download/extract")
-      return extractDir
+    const stateDataAfterLock = await readCacheStateFile(extractDir)
+    if (stateDataAfterLock?.state === CacheState.complete) {
+      const isValid = await validateCacheDirectory(extractDir, stateDataAfterLock.fileCount)
+      if (isValid) {
+        log.debug({ file: label, path: extractDir }, "using cached artifact - skipping download/extract")
+        return extractDir
+      }
+      log.warn({ extractDir }, "Cache marked complete but files invalid, clearing")
+    } else if (stateDataAfterLock?.state === CacheState.corrupted) {
+      log.warn({ extractDir }, "Corrupted cache detected, cleaning up and re-extracting")
     }
 
+    // Cleanup inside the lock — skip lock files since we currently hold them
+    await cleanupCacheDirectory(extractDir, { skipLockFiles: true })
+    await fs.mkdir(extractDir, { recursive: true })
+
+    log.debug({ file: label }, "downloading")
     downloadedFile = await downloadArtifactToFile(config, label)
+    if (!downloadedFile) {
+      throw new Error(`Failed to download artifact: ${label}`)
+    }
+
+    await writeCacheState(extractDir, CacheState.downloaded)
+
+    // Mark extracting so stale-lock detection can recover a crashed mid-extraction process
+    await writeCacheState(extractDir, CacheState.extracting)
+
+    // Extract while holding the lock to prevent concurrent interference
+    await extractArchive(downloadedFile, extractDir)
+
+    // Compute metadata with a full recursive walk now that tmpDir has been renamed to extractDir
+    const { fileCount, extractedSize } = await computeCacheMetadata(extractDir)
+
+    // Write complete state with metadata BEFORE releasing the lock; throwOnError=true so a
+    // failed write (disk full, permissions) propagates instead of silently producing a no-op cache
+    await writeCacheState(extractDir, CacheState.complete, { fileCount, extractedSize }, true)
   } finally {
     await release().catch(err => log.warn({ err }, "failed to release lockfile"))
   }
-  await extractArchive(downloadedFile, extractDir)
-  await fs.writeFile(completeMarker, "")
   return extractDir
 }
 
@@ -298,24 +364,21 @@ export async function downloadBuilderToolset(options: {
   const { releaseName, filenameWithExt, checksums, githubOrgRepo = "electron-userland/electron-builder-binaries", overrideUrl } = options
 
   const baseUrl = getBinariesMirrorUrl(githubOrgRepo)
-  const hashInput = overrideUrl ? `${overrideUrl}/${filenameWithExt}` : `${baseUrl}${releaseName}/${filenameWithExt}`
-  const suffix = hashUrlSafe(hashInput, 5)
+  const fullUrl = overrideUrl ? `${overrideUrl}/${filenameWithExt}` : `${baseUrl}${releaseName}/${filenameWithExt}`
+  const suffix = hashUrlSafe(fullUrl, 5)
   const folderName = `${filenameWithExt.replace(/\.(tar\.gz|tgz|zip|7z)$/, "")}-${suffix}`
-  const extractDir = path.join(getCacheDirectory(), releaseName, folderName)
+  const extractDir = path.join(getCacheDirectory({ allowEnvVarOverride: true }), releaseName, folderName)
 
-  const mirrorOptions: MirrorOptions = overrideUrl
-    ? { resolveAssetURL: async () => Promise.resolve(`${overrideUrl}/${filenameWithExt}`) }
-    : {
-        // `${mirror}${customDir}/${customFilename}`
-        mirror: baseUrl,
-        customDir: releaseName,
-        customFilename: filenameWithExt,
-      }
+  // Use resolveAssetURL so @electron/get's ELECTRON_MIRROR env var check cannot override
+  // the builder-binaries URL we've already resolved (see getArtifactRemoteURL in @electron/get).
+  const mirrorOptions: MirrorOptions = {
+    resolveAssetURL: async () => Promise.resolve(fullUrl),
+  }
 
   const config: ElectronDownloadRequest & ElectronDownloadRequestOptions & { isGeneric: true } = {
     version: "9.9.9", // must be >1.3.2 to bypass @electron/get validation shortcut
     artifactName: filenameWithExt,
-    cacheRoot: path.resolve(getCacheDirectory(), "downloads"),
+    cacheRoot: path.resolve(getCacheDirectory({ allowEnvVarOverride: true }), "downloads"),
     cacheMode: resolveCacheMode(),
     ...(checksums != null ? { checksums } : { unsafelyDisableChecksums: true }),
     mirrorOptions,
@@ -386,7 +449,7 @@ export async function downloadElectronArtifact(options: ArtifactDownloadOptions)
 
   const suffix = hashUrlSafe(JSON.stringify(artifactConfig), 5)
   const folderName = `${artifactName}-v${version}-${platform}-${arch}-${suffix}`
-  const extractDir = path.join(getCacheDirectory(), `${artifactName}-v${version}`, folderName)
+  const extractDir = path.join(getCacheDirectory({ allowEnvVarOverride: true }), `${artifactName}-v${version}`, folderName)
 
   return downloadAndExtract(artifactConfig, extractDir, artifactName)
 }

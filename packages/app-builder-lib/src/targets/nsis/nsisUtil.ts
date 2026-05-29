@@ -1,57 +1,13 @@
-import { Arch, copyFile, dirSize, isEmptyOrSpaces, log } from "builder-util"
+import { Arch, copyFile, dirSize, log } from "builder-util"
 import { PackageFileInfo } from "builder-util-runtime"
 import * as fs from "fs/promises"
 import * as path from "path"
 import * as zlib from "zlib"
-import { getBinFromCustomLoc, getBinFromUrl } from "../../binDownload"
+import { getNsisElevatePath } from "../../toolsets/windows"
 import { getTemplatePath } from "../../util/pathManager"
-import { NsisOptions } from "./nsisOptions"
 import { NsisTarget } from "./NsisTarget"
 
 export const nsisTemplatesDir = getTemplatePath("nsis")
-
-export const NsisTargetOptions = (() => {
-  let _resolve: (options: NsisOptions) => any
-  const promise = new Promise<NsisOptions>(resolve => (_resolve = resolve))
-  return {
-    then: (callback: (options: NsisOptions) => any): Promise<string> => promise.then(callback),
-    resolve: (options: NsisOptions): any => _resolve(options),
-  }
-})()
-
-export const NSIS_PATH = () => {
-  const custom = process.env.ELECTRON_BUILDER_NSIS_DIR?.trim()
-  if (!isEmptyOrSpaces(custom)) {
-    log.info({ path: custom }, "using local nsis")
-    return Promise.resolve(custom)
-  }
-  return NsisTargetOptions.then((options: NsisOptions) => {
-    if (options.customNsisBinary) {
-      const { checksum, url, version } = options.customNsisBinary
-      if (checksum && url) {
-        const binaryVersion = version || checksum.substr(0, 8)
-        return getBinFromCustomLoc("nsis", binaryVersion, url, checksum)
-      }
-    }
-    // Warning: Don't use v3.0.4.2 - https://github.com/electron-userland/electron-builder/issues/6334
-    return getBinFromUrl("nsis-3.0.4.1", "nsis-3.0.4.1.7z", "9877df902530f96357d13a7a31ae2b9df67f48b11ffc9a1700a7c961574ec5fa")
-  })
-}
-
-export const NSIS_RESOURCES_PATH = () => {
-  const custom = process.env.ELECTRON_BUILDER_NSIS_RESOURCES_DIR?.trim()
-  if (!isEmptyOrSpaces(custom)) {
-    log.info({ path: custom }, "using local nsis-resources")
-    return Promise.resolve(custom)
-  }
-  return NsisTargetOptions.then((options: NsisOptions) => {
-    if (options.customNsisResources) {
-      const { checksum, url, version } = options.customNsisResources
-      return getBinFromCustomLoc("nsis-resources", version, url, checksum)
-    }
-    return getBinFromUrl("nsis-resources-3.4.1", "nsis-resources-3.4.1.7z", "593a9a92ef958321293ac6a2ee61e64bf1bd543142a5bd6b3d310709cc924103")
-  })
-}
 
 export interface PackArchResult {
   fileInfo: PackageFileInfo
@@ -130,9 +86,9 @@ export class CopyElevateHelper {
       return promise
     }
 
-    promise = NSIS_PATH().then(it => {
+    promise = getNsisElevatePath(target.packager.config.toolsets?.nsis, target.options.customNsisBinary).then(elevatePath => {
       const outFile = path.join(appOutDir, "resources", "elevate.exe")
-      const promise = copyFile(path.join(it, "elevate.exe"), outFile, false)
+      const promise = copyFile(elevatePath, outFile, false)
       const { signAndEditExecutable, signExecutable } = target.packager.platformSpecificBuildOptions
       if (signAndEditExecutable !== false && signExecutable !== false) {
         return promise.then(() => target.packager.signIf(outFile))

@@ -14,7 +14,7 @@ export async function download(url: string, output: string, checksum?: string | 
   const downloadedFile = await get.downloadArtifact({
     version: "9.9.9",
     artifactName: filenameWithExt,
-    cacheRoot: path.resolve(getCacheDirectory(), "downloads"),
+    cacheRoot: path.resolve(getCacheDirectory({ allowEnvVarOverride: true }), "downloads"),
     cacheMode: ElectronDownloadCacheMode.ReadWrite,
     ...(checksum != null ? { checksums: { [filenameWithExt]: checksum } } : { unsafelyDisableChecksums: true }),
     mirrorOptions: { resolveAssetURL: async () => Promise.resolve(url) },
@@ -29,6 +29,9 @@ export function getBinFromCustomLoc(name: string, version: string, binariesLocUr
 }
 
 export function getBinFromUrl(releaseName: string, filenameWithExt: string, checksum: string, githubOrgRepo = "electron-userland/electron-builder-binaries"): Promise<string> {
+  if (/[/\\]|^\.\./.test(filenameWithExt) || filenameWithExt.includes("..")) {
+    throw new Error(`getBinFromUrl: unsafe filenameWithExt "${filenameWithExt}" — must be a plain filename with no path separators or traversal sequences`)
+  }
   let url: string
   const overrideUrl = parseValidEnvVarUrl("ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL")
   if (overrideUrl != null) {

@@ -1,5 +1,65 @@
 # app-builder-lib
 
+## 26.11.1
+
+### Patch Changes
+
+- Fix: wrap any collector path in a .bat on Windows if path has a space in it _[`#9759`](https://github.com/electron-userland/electron-builder/pull/9759) [`139ac27`](https://github.com/electron-userland/electron-builder/commit/139ac274e840ed53281807d6cc7c57fd31e91809) [@mmaietta](https://github.com/mmaietta)_
+- Fix: force `electron/get`'s internal `got` downloader to respect http(s) proxies _[`#9754`](https://github.com/electron-userland/electron-builder/pull/9754) [`b8c6a15`](https://github.com/electron-userland/electron-builder/commit/b8c6a1545b61d3c285f28d39100e9c7ff4e4192f) [@mmaietta](https://github.com/mmaietta)_
+- Fix: always pass through resolved artifact url to `electron/get` to avoid env var overrides _[`#9755`](https://github.com/electron-userland/electron-builder/pull/9755) [`35c2c7a`](https://github.com/electron-userland/electron-builder/commit/35c2c7aad9b97e227b4d3dfba3762550d8a32e1f) [@mmaietta](https://github.com/mmaietta)_
+- Fix: allow mac entitlement files to be linked from outside the workspace _[`#9756`](https://github.com/electron-userland/electron-builder/pull/9756) [`e22295f`](https://github.com/electron-userland/electron-builder/commit/e22295f74f0e6e1059a13ee87b63f44955e0d95f) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 4 dependencies</summary>
+
+<small>
+
+[`b8c6a15`](https://github.com/electron-userland/electron-builder/commit/b8c6a1545b61d3c285f28d39100e9c7ff4e4192f)
+
+</small>
+
+- `builder-util@26.11.1`
+- `dmg-builder@26.11.1`
+- `electron-builder-squirrel-windows@26.11.1`
+- `electron-publish@26.11.1`
+
+</details>
+
+## 26.11.0
+
+### Minor Changes
+
+- Feat: migrate to `resedit` npm package from `app-builder-bin`'s usage of `rcedit.exe` _[`#9717`](https://github.com/electron-userland/electron-builder/pull/9717) [`403706b`](https://github.com/electron-userland/electron-builder/commit/403706be7efd887ce3f2fb4d86c854b733262dff) [@mmaietta](https://github.com/mmaietta)_
+- Feat: add CLI action to clear the electron-builder default cache directory (env var override intentionally ignored for security) _[`#9739`](https://github.com/electron-userland/electron-builder/pull/9739) [`0361243`](https://github.com/electron-userland/electron-builder/commit/0361243edcef6807ae81f18ae7e083c796dcab94) [@mmaietta](https://github.com/mmaietta)_
+- Feat(win): adding config property to allow disabling signing without disabling editing the executable _[`#9708`](https://github.com/electron-userland/electron-builder/pull/9708) [`3199d18`](https://github.com/electron-userland/electron-builder/commit/3199d186678cc26917b47e7ef39c7ca10ab3a89a) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Chore(docs): adding more tsdoc to target configuration \_\_\_\_Options _[`#9741`](https://github.com/electron-userland/electron-builder/pull/9741) [`02ca7cf`](https://github.com/electron-userland/electron-builder/commit/02ca7cf360c16f460008f9c5dc15f38e1ae88e2b) [@mmaietta](https://github.com/mmaietta)_
+- Chore(docs): documentation updates and docusaurus migration _[`#9744`](https://github.com/electron-userland/electron-builder/pull/9744) [`d846315`](https://github.com/electron-userland/electron-builder/commit/d84631587d816a1aa0bff57680bab0f865d7a84f) [@mmaietta](https://github.com/mmaietta)_
+- Fix: add cache corruption/extraction detection to prevent malformed 7z extractions _[`#9735`](https://github.com/electron-userland/electron-builder/pull/9735) [`3d2f660`](https://github.com/electron-userland/electron-builder/commit/3d2f66032675540a6ec3699496b02ba5d70214ed) [@mmaietta](https://github.com/mmaietta)_
+- Chore: add more validations, incl. compression levels, vendor toolsets, and invalid configs _[`#9724`](https://github.com/electron-userland/electron-builder/pull/9724) [`d7a341d`](https://github.com/electron-userland/electron-builder/commit/d7a341dc5b8d4545ab861d7a49cbd313ec4b72a4) [@mmaietta](https://github.com/mmaietta)_
+- Fix(win): recover signing queue after transient errors _[`#9657`](https://github.com/electron-userland/electron-builder/pull/9657) [`65e5318`](https://github.com/electron-userland/electron-builder/commit/65e5318c50eeefa41b61415a0917e26709bb602a) [@davidebaraldo](https://github.com/davidebaraldo)_
+- Fix: prevent double progress bar from displaying _[`#9743`](https://github.com/electron-userland/electron-builder/pull/9743) [`2583fd1`](https://github.com/electron-userland/electron-builder/commit/2583fd17b1ef6d752b00df7302294dc13d3dfb9d) [@mmaietta](https://github.com/mmaietta)_
+- Fix(appimage): fix compression mapping and add per-target squashfs algorithm overrides _[`#9730`](https://github.com/electron-userland/electron-builder/pull/9730) [`8a98647`](https://github.com/electron-userland/electron-builder/commit/8a98647f79c19fff7e7f5347d0a1ff80db18520e) [@mmaietta](https://github.com/mmaietta)_
+- Fix(mac): correctly copy `extraFiles` to `productFilename` `.app` instead of `Electron.app` _[`#9729`](https://github.com/electron-userland/electron-builder/pull/9729) [`6d3798e`](https://github.com/electron-userland/electron-builder/commit/6d3798e59b2c7149d5127ac61ec4a216c33b2bc1) [@mmaietta](https://github.com/mmaietta)_
+- Perf(pnpm): memoize package resolution and skip downward search in flat virtual store. _[`#9732`](https://github.com/electron-userland/electron-builder/pull/9732) [`a2fc793`](https://github.com/electron-userland/electron-builder/commit/a2fc7932b6955744a394e24b5da5c1ce03e68067) [@IAmJSD](https://github.com/IAmJSD)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`d846315`](https://github.com/electron-userland/electron-builder/commit/d84631587d816a1aa0bff57680bab0f865d7a84f) [`d7a341d`](https://github.com/electron-userland/electron-builder/commit/d7a341dc5b8d4545ab861d7a49cbd313ec4b72a4) [`0a46eb1`](https://github.com/electron-userland/electron-builder/commit/0a46eb1869fa8d77b2f7e8bf47376d60e7d640b2) [`2583fd1`](https://github.com/electron-userland/electron-builder/commit/2583fd17b1ef6d752b00df7302294dc13d3dfb9d) [`56d8331`](https://github.com/electron-userland/electron-builder/commit/56d83314596803e4c3973b3c2a4eb2b838eb0edf) [`8a98647`](https://github.com/electron-userland/electron-builder/commit/8a98647f79c19fff7e7f5347d0a1ff80db18520e) [`26ce28c`](https://github.com/electron-userland/electron-builder/commit/26ce28c79ef42a7f80a91e9a68eba22dc4ca8150)
+
+</small>
+
+- `builder-util-runtime@9.6.1`
+- `builder-util@26.11.0`
+- `dmg-builder@26.11.0`
+- `electron-builder-squirrel-windows@26.11.0`
+- `electron-publish@26.11.0`
+
+</details>
+
 ## 26.10.0
 
 ### Minor Changes

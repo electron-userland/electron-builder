@@ -9,8 +9,8 @@ import AppImageTarget from "./targets/appimage/AppImageTarget"
 import FlatpakTarget from "./targets/FlatpakTarget"
 import FpmTarget from "./targets/FpmTarget"
 import { LinuxTargetHelper } from "./targets/LinuxTargetHelper"
-import SnapTarget from "./targets/snap"
 import { archiveTargets, createCommonTarget } from "./targets/targetFactory"
+import SnapTarget from "./targets/snap/SnapTarget"
 
 export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
   readonly executableName: string
@@ -90,7 +90,7 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
           case "appimage":
             return require("./targets/appimage/AppImageTarget").default
           case "snap":
-            return require("./targets/snap").default
+            return require("./targets/snap/SnapTarget").default
           case "flatpak":
             return require("./targets/FlatpakTarget").default
           case "deb":
