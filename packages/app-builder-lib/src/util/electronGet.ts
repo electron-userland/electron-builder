@@ -7,7 +7,7 @@ import {
   GotDownloaderOptions,
   MirrorOptions,
 } from "@electron/get"
-import { buildGotProxyAgent, exec, exists, getPath7za, log, PADDING, parseValidEnvVarUrl, sanitizeDirPath, validate7zaOutputPath } from "builder-util"
+import { buildGotProxyAgent, exec, exists, getPath7za, log, PADDING, parseValidEnvVarUrl, sanitizeDirPath, to7zaOutputSwitch } from "builder-util"
 import { MultiProgress } from "electron-publish/out/multiProgress"
 import { createReadStream, createWriteStream } from "fs"
 import * as fs from "fs/promises"
@@ -193,8 +193,7 @@ export async function extractArchive(file: string, dir: string) {
     } else if (file.endsWith(".7z")) {
       const cmd7za = await getPath7za()
       try {
-        const safeTmpDir = validate7zaOutputPath(sanitizeDirPath(tmpDir))
-        await exec(cmd7za, ["x", "-bd", file, `-o${safeTmpDir}`, "-y"]) // codeql[js/shell-command-constructed-from-input] - path validated by sanitizeDirPath + validate7zaOutputPath; execFile array args (no shell)
+        await exec(cmd7za, ["x", "-bd", file, to7zaOutputSwitch(sanitizeDirPath(tmpDir)), "-y"])
       } catch (e: any) {
         // Check if extraction actually failed or just had benign warnings
         const files = await fs.readdir(tmpDir)
