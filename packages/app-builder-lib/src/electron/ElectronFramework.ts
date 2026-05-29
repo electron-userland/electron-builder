@@ -1,4 +1,4 @@
-import { asArray, copyDir, DO_NOT_USE_HARD_LINKS, exec, getPath7za, isEmptyOrSpaces, log, MAX_FILE_REQUESTS, statOrNull, unlinkIfExists } from "builder-util"
+import { asArray, copyDir, DO_NOT_USE_HARD_LINKS, exec, getPath7za, isEmptyOrSpaces, log, MAX_FILE_REQUESTS, sanitizeDirPath, statOrNull, unlinkIfExists } from "builder-util"
 import { emptyDir, readdir, rename, rm } from "fs-extra"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
@@ -198,7 +198,10 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, d
     if (resolvedDist.endsWith(".zip")) {
       log.info({ zipFile: resolvedDist }, "using custom electronDist zip file")
       await emptyDir(appOutDir)
-      await exec(await getPath7za(), ["x", "-bd", resolvedDist, `-o${appOutDir}`, "-y"])
+      const safeOutDir = sanitizeDirPath(appOutDir)
+      const safeZipPath = sanitizeDirPath(resolvedDist)
+      const outputArg = "-o" + safeOutDir
+      await exec(await getPath7za(), ["x", "-bd", safeZipPath, outputArg, "-y"])
       return false // do not clean up after unpacking, it's a custom bundle and we should respect its configuration/contents as required
     }
 

@@ -54,17 +54,34 @@ export default class SquirrelWindowsTarget extends Target {
     return tmpVendorDirectory
   }
 
+  private ensurePathInside(baseDir: string, targetPath: string, description: string): string {
+    const resolvedBaseDir = path.resolve(baseDir)
+    const resolvedTargetPath = path.resolve(targetPath)
+    const relativePath = path.relative(resolvedBaseDir, resolvedTargetPath)
+    if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+      throw new InvalidConfigurationError(`${description} must be inside ${resolvedBaseDir}`)
+    }
+    return resolvedTargetPath
+  }
+
   private async generateStubExecutableExe(appOutDir: string, vendorDir: string) {
+    if (!path.isAbsolute(appOutDir) || !path.isAbsolute(vendorDir)) {
+      throw new InvalidConfigurationError("appOutDir and vendorDir must be absolute paths")
+    }
+
     const files = await fs.promises.readdir(appOutDir, { withFileTypes: true })
     const appExe = files.find(f => f.name === `${this.exeName}.exe`)
     if (!appExe) {
       throw new Error(`App executable not found in app directory: ${appOutDir}`)
     }
 
-    const filePath = path.join(appOutDir, appExe.name)
-    const stubExePath = path.join(appOutDir, `${this.exeName}_ExecutionStub.exe`)
-    await fs.promises.copyFile(path.join(vendorDir, "StubExecutable.exe"), stubExePath)
-    await execWine(path.join(vendorDir, "WriteZipToSetup.exe"), null, ["--copy-stub-resources", filePath, stubExePath])
+    const filePath = this.ensurePathInside(appOutDir, path.join(appOutDir, appExe.name), "App executable path")
+    const stubExePath = this.ensurePathInside(appOutDir, path.join(appOutDir, `${this.exeName}_ExecutionStub.exe`), "Stub executable path")
+    const stubExecutableSource = this.ensurePathInside(vendorDir, path.join(vendorDir, "StubExecutable.exe"), "Stub executable source")
+    const writeZipToSetupExe = this.ensurePathInside(vendorDir, path.join(vendorDir, "WriteZipToSetup.exe"), "WriteZipToSetup executable")
+
+    await fs.promises.copyFile(stubExecutableSource, stubExePath)
+    await execWine(writeZipToSetupExe, null, ["--copy-stub-resources", filePath, stubExePath])
     await this.packager.signIf(stubExePath)
     log.debug({ file: filePath }, "signing app executable")
     await this.packager.signIf(filePath)
@@ -147,7 +164,8 @@ export default class SquirrelWindowsTarget extends Target {
   }
 
   private get exeName() {
-    return this.packager.appInfo.productFilename || this.options.name || this.packager.appInfo.productName
+    const name = this.packager.appInfo.productFilename || this.options.name || this.packager.appInfo.productName
+    return sanitizeFileName(name)
   }
 
   private select7zipArch(vendorDirectory: string) {
@@ -196,7 +214,7 @@ export default class SquirrelWindowsTarget extends Target {
       title: appInfo.productName || appInfo.name,
       version: appInfo.version,
       description: appInfo.description,
-      exe: `${appInfo.productFilename || this.options.name || appInfo.productName}.exe`,
+      exe: `${this.exeName}.exe`,
       authors: appInfo.companyName || "",
       nuspecTemplate: await this.createNuspecTemplateWithProjectUrl(),
       iconUrl,

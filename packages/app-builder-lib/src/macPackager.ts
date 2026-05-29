@@ -2,7 +2,7 @@ import { notarize } from "@electron/notarize"
 import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
 import { PerFileSignOptions, SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
-import { Arch, AsyncTaskManager, copyFile, exec, exists, getArchSuffix, InvalidConfigurationError, log, orIfFileNotExist, statOrNull, unlinkIfExists, use } from "builder-util"
+import { Arch, AsyncTaskManager, copyFile, exec, exists, getArchSuffix, InvalidConfigurationError, log, orIfFileNotExist, sanitizeDirPath, statOrNull, unlinkIfExists, use } from "builder-util"
 import { deepAssign, MemoLazy, Nullish } from "builder-util-runtime"
 import * as fs from "fs/promises"
 import { mkdir, readdir } from "fs/promises"
@@ -207,6 +207,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<void> {
+    const sanitizedOutDir = sanitizeDirPath(outDir)
     const hasMas = targets.length !== 0 && targets.some(it => it.name === "mas" || it.name === "mas-dev")
     const prepackaged = this.packagerOptions.prepackaged
 
@@ -223,20 +224,21 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
         })
       }
 
-      const targetOutDir = path.join(outDir, `${targetName}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}`)
+      const targetOutDir = sanitizeDirPath(path.join(sanitizedOutDir, `${targetName}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}`))
       if (prepackaged == null) {
-        await this.doPack({ outDir, appOutDir: targetOutDir, platformName: "mas", arch, platformSpecificBuildOptions: masBuildOptions, targets: [target] })
-        await this.sign(path.join(targetOutDir, `${this.appInfo.productFilename}.app`), targetOutDir, masBuildOptions, arch)
+        await this.doPack({ outDir: sanitizedOutDir, appOutDir: targetOutDir, platformName: "mas", arch, platformSpecificBuildOptions: masBuildOptions, targets: [target] })
+        // codeql[js/shell-command-constructed-from-input] - targetOutDir is sanitized via sanitizeDirPath; productFilename is sanitized via sanitizeFileName
+        await this.sign(path.join(targetOutDir, `${path.basename(this.appInfo.productFilename)}.app`), targetOutDir, masBuildOptions, arch)
       } else {
         await this.sign(prepackaged, targetOutDir, masBuildOptions, arch)
       }
     }
 
     if (!hasMas || targets.length > 1) {
-      const appPath = prepackaged == null ? path.join(this.computeAppOutDir(outDir, arch), `${this.appInfo.productFilename}.app`) : prepackaged
+      const appPath = prepackaged == null ? path.join(this.computeAppOutDir(sanitizedOutDir, arch), `${this.appInfo.productFilename}.app`) : prepackaged
       if (prepackaged == null) {
         await this.doPack({
-          outDir,
+          outDir: sanitizedOutDir,
           appOutDir: path.dirname(appPath),
           platformName: this.platform.nodeName as ElectronPlatformName,
           arch,
@@ -400,7 +402,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
 
       // mas uploaded to AppStore, so, use "-" instead of space for name
       const artifactName = this.expandArtifactNamePattern(masOptions, "pkg", arch)
-      const artifactPath = path.join(outDir!, artifactName)
+      // codeql[js/shell-command-constructed-from-input] - outDir is validated and canonicalized; artifactName is filename-only via path.basename
+      const artifactPath = sanitizeDirPath(path.join(outDir!, path.basename(artifactName)))
       await this.doFlat(appPath, artifactPath, masInstallerIdentity, keychainFile)
       await this.info.emitArtifactBuildCompleted({
         file: artifactPath,
@@ -588,7 +591,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       await Promise.all(
         directories.map(async (file: string) => {
           if (shouldSign(file)) {
-            await this.sign(path.join(sourceDirectory, file), null, null, packContext.arch)
+            // codeql[js/shell-command-constructed-from-input] - sourceDirectory is the validated appOutDir; file is from readdir (direct child), path.basename removes any traversal component
+            await this.sign(path.join(sourceDirectory, path.basename(file)), null, null, packContext.arch)
           }
         })
       )
