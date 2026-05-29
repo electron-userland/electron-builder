@@ -1,5 +1,3 @@
-import { notarize } from "@electron/notarize"
-import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
 import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
 import { makeUniversalApp } from "@electron/universal"
@@ -13,7 +11,7 @@ import { AppInfo } from "./appInfo"
 import { CodeSigningInfo, createKeychain, CreateKeychainOptions, isSignAllowed, removeKeychain, sign } from "./codeSign/macCodeSign"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { AfterPackContext, ElectronPlatformName } from "./index"
-import { MacTargetHelper } from "./mac/MacTargetHelper"
+import { MacTargetHelper, PlatformType } from "./mac/MacTargetHelper"
 import { MacConfiguration, MasConfiguration } from "./options/macOptions"
 import { Packager } from "./packager"
 import { chooseNotNull, DoPackOptions, PlatformPackager } from "./platformPackager"
@@ -26,8 +24,6 @@ import { resolveFunction } from "./util/resolve"
 
 export type CustomMacSignOptions = SignOptions
 export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>
-
-type PlatformType = "mas" | "mas-dev" | "mac"
 
 interface PlatformConfig {
   type: PlatformType
@@ -120,26 +116,6 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     return { type: platformType, config, isDevelopment, platformName }
   }
 
-  /**
-   * Determine if target is MAS-related
-   */
-  private isMasTarget(targetName: string): boolean {
-    return targetName === "mas" || targetName === "mas-dev"
-  }
-
-  /**
-   * Get platform type from target name with always fallback to mac
-   */
-  private getPlatformTypeFromTarget(targetName: string): PlatformType {
-    if (targetName === "mas") {
-      return "mas"
-    }
-    if (targetName === "mas-dev") {
-      return "mas-dev"
-    }
-    return "mac"
-  }
-
   expandArch(pattern: string, arch?: Arch | null): string[] {
     if (arch === Arch.universal) {
       // Universal build has `app-x64.asar.unpacked` & `app-arm64.asar.unpacked`
@@ -181,7 +157,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
           break
 
         default:
-          mapper(name, outDir => (this.isMasTarget(name) ? new NoOpTarget(name) : createCommonTarget(name, outDir, this)))
+          mapper(name, outDir => (MacTargetHelper.isMasTarget(name) ? new NoOpTarget(name) : createCommonTarget(name, outDir, this)))
           break
       }
     }
@@ -294,8 +270,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
   }
 
   async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<void> {
-    const masTargets = targets.filter(it => this.isMasTarget(it.name))
-    const nonMasTargets = targets.filter(it => !this.isMasTarget(it.name))
+    const masTargets = targets.filter(it => MacTargetHelper.isMasTarget(it.name))
+    const nonMasTargets = targets.filter(it => !MacTargetHelper.isMasTarget(it.name))
     const prepackaged = this.packagerOptions.prepackaged
     const hasMas = masTargets.length > 0
 
@@ -310,23 +286,15 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     }
   }
 
-  private assertSafePathForCommandUsage(pathValue: string, description: string): void {
-    // Disallow shell-special/control characters so downstream command invocation cannot be altered
-    // if any consumer accidentally interpolates this path into a shell command string.
-    if (/[\r\n`$&;|<>]/.test(pathValue)) {
-      throw new InvalidConfigurationError(`Invalid ${description}: contains unsupported shell-special characters`)
-    }
-  }
-
   private async packMasTargets(outDir: string, arch: Arch, targets: Array<Target>, prepackaged: string | null | undefined): Promise<void> {
     const resolvedOutDir = path.resolve(outDir)
-    this.assertSafePathForCommandUsage(resolvedOutDir, "output directory")
+    MacTargetHelper.assertSafePathForCommandUsage(resolvedOutDir, "output directory")
 
     for (const target of targets) {
-      const platformType = this.getPlatformTypeFromTarget(target.name)
+      const platformType = MacTargetHelper.getPlatformTypeFromTarget(target.name)
       const platformConfig = this.getPlatformConfig(platformType)
       const targetOutDir = path.resolve(resolvedOutDir, `${target.name}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}`)
-      this.assertSafePathForCommandUsage(targetOutDir, "target output directory")
+      MacTargetHelper.assertSafePathForCommandUsage(targetOutDir, "target output directory")
 
       const relativeTargetOutDir = path.relative(resolvedOutDir, targetOutDir)
       if (relativeTargetOutDir.startsWith("..") || path.isAbsolute(relativeTargetOutDir)) {
@@ -343,7 +311,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
           targets: [target],
           options: { sign: false },
         })
-        this.assertSafePathForCommandUsage(this.appInfo.productFilename, "product filename")
+        MacTargetHelper.assertSafePathForCommandUsage(this.appInfo.productFilename, "product filename")
         await this.signMas(path.resolve(targetOutDir, `${path.basename(this.appInfo.productFilename)}.app`), targetOutDir, platformConfig, arch)
       } else {
         await this.signMas(prepackaged, targetOutDir, platformConfig, arch)
@@ -415,7 +383,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
 
     // Handle notarization for non-MAS builds
     if (!isMas) {
-      await this.notarizeIfProvided(appPath)
+      await this.helper.notarizeIfProvided(appPath)
     }
 
     return true
@@ -539,7 +507,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     const activeConfig = this._activePackConfig ?? this.platformSpecificBuildOptions
     const readDirectoryAndSign = async (sourceDirectory: string, directories: string[], shouldSign: (file: string) => boolean): Promise<boolean> => {
       const normalizedSourceDirectory = path.resolve(sourceDirectory)
-      this.assertSafePathForCommandUsage(normalizedSourceDirectory, "application output directory")
+      MacTargetHelper.assertSafePathForCommandUsage(normalizedSourceDirectory, "application output directory")
       await Promise.all(
         directories.map(async (file: string) => {
           if (shouldSign(file)) {
@@ -552,7 +520,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
             if (path.isAbsolute(relativeToSource) || relativeToSource.startsWith("..")) {
               throw new InvalidConfigurationError(`Cannot sign file outside of source directory: ${file}`)
             }
-            this.assertSafePathForCommandUsage(signTarget, "code signing target")
+            MacTargetHelper.assertSafePathForCommandUsage(signTarget, "code signing target")
             await this.sign(signTarget, null, isMas ? activeConfig : null, packContext.arch, isMas)
           }
         })
@@ -570,66 +538,5 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     await readDirectoryAndSign(outResourcesDir, await orIfFileNotExist(readdir(outResourcesDir), []), file => file.endsWith(".app"))
 
     return true
-  }
-
-  async notarizeIfProvided(appPath: string) {
-    const notarizeOptions = this.platformSpecificBuildOptions.notarize
-    if (notarizeOptions === false) {
-      log.info({ reason: "`notarize` options were set explicitly `false`" }, "skipped macOS notarization")
-      return
-    }
-    const options = this.getNotarizeOptions(appPath)
-    if (!options) {
-      log.warn({ reason: "`notarize` options were unable to be generated" }, "skipped macOS notarization")
-      return
-    }
-    await notarize(options)
-    log.info(null, "notarization successful")
-  }
-
-  private getNotarizeOptions(appPath: string): NotarizeOptionsNotaryTool | undefined {
-    const teamId = process.env.APPLE_TEAM_ID
-    const appleId = process.env.APPLE_ID
-    const appleIdPassword = process.env.APPLE_APP_SPECIFIC_PASSWORD
-    const tool = "notarytool"
-
-    // option 1: app specific password
-    if (appleId || appleIdPassword) {
-      if (!appleId) {
-        throw new InvalidConfigurationError(`APPLE_ID env var needs to be set`)
-      }
-      if (!appleIdPassword) {
-        throw new InvalidConfigurationError(`APPLE_APP_SPECIFIC_PASSWORD env var needs to be set`)
-      }
-      if (!teamId) {
-        throw new InvalidConfigurationError(`APPLE_TEAM_ID env var needs to be set`)
-      }
-      return { tool, appPath, appleId, appleIdPassword, teamId }
-    }
-
-    // option 2: API key
-    const appleApiKey = process.env.APPLE_API_KEY
-    const appleApiKeyId = process.env.APPLE_API_KEY_ID
-    const appleApiIssuer = process.env.APPLE_API_ISSUER
-    if (appleApiKey || appleApiKeyId || appleApiIssuer) {
-      if (!appleApiKey || !appleApiKeyId || !appleApiIssuer) {
-        throw new InvalidConfigurationError(`Env vars APPLE_API_KEY, APPLE_API_KEY_ID and APPLE_API_ISSUER need to be set`)
-      }
-      return { tool, appPath, appleApiKey, appleApiKeyId, appleApiIssuer }
-    }
-
-    // option 3: keychain
-    const keychain = process.env.APPLE_KEYCHAIN
-    const keychainProfile = process.env.APPLE_KEYCHAIN_PROFILE
-    if (keychainProfile) {
-      let args: NotaryToolKeychainCredentials = { keychainProfile }
-      if (keychain) {
-        args = { ...args, keychain }
-      }
-      return { tool, appPath, ...args }
-    }
-
-    // if no credentials provided, skip silently
-    return undefined
   }
 }

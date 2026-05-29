@@ -1,3 +1,5 @@
+import { notarize } from "@electron/notarize"
+import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
 import { PerFileSignOptions, SigningDistributionType, SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
 import { Arch, InvalidConfigurationError, log, statOrNull } from "builder-util"
@@ -7,6 +9,8 @@ import { CertType, findIdentity, reportError } from "../codeSign/macCodeSign"
 import type { MacPackager } from "../macPackager"
 import { MacConfiguration, MasConfiguration } from "../options/macOptions"
 import { getTemplatePath } from "../util/pathManager"
+
+export type PlatformType = "mas" | "mas-dev" | "mac"
 
 export class MacTargetHelper {
   constructor(private packager: MacPackager) {}
@@ -163,16 +167,12 @@ export class MacTargetHelper {
       throw new InvalidConfigurationError(`Cannot find valid "${certType}" identity to sign MAS installer, please see https://electron.build/code-signing`)
     }
 
-    if (/[\0\r\n"'`$;&|<>]/.test(outDir)) {
-      throw new InvalidConfigurationError(`Output directory contains unsafe shell characters: ${outDir}`)
-    }
+    MacTargetHelper.assertSafePathForCommandUsage(outDir, "output directory")
 
     // mas uploaded to AppStore, so, use "-" instead of space for name
     // path.basename prevents path traversal if a crafted artifactName contains "../"
     const artifactName = path.basename(this.packager.expandArtifactNamePattern(masOptions, "pkg", arch))
-    if (/[\0\r\n"'`$;&|<>]/.test(artifactName)) {
-      throw new InvalidConfigurationError(`Artifact name contains unsafe characters: ${artifactName}`)
-    }
+    MacTargetHelper.assertSafePathForCommandUsage(artifactName, "artifact name")
     const artifactPath = path.resolve(outDir, artifactName)
     await this.packager.doFlat(appPath, artifactPath, masInstallerIdentity, keychainFile)
     await this.packager.info.emitArtifactBuildCompleted({
@@ -241,5 +241,78 @@ export class MacTargetHelper {
       return isMas ? ["Mac Developer", "Apple Development"] : ["Mac Developer", "Developer ID Application"]
     }
     return isMas ? ["Apple Distribution", "3rd Party Mac Developer Application"] : ["Developer ID Application"]
+  }
+
+  static isMasTarget(targetName: string): boolean {
+    return targetName === "mas" || targetName === "mas-dev"
+  }
+
+  static getPlatformTypeFromTarget(targetName: string): PlatformType {
+    if (targetName === "mas") return "mas"
+    if (targetName === "mas-dev") return "mas-dev"
+    return "mac"
+  }
+
+  static assertSafePathForCommandUsage(pathValue: string, description: string): void {
+    if (/[\0\r\n"'`$;&|<>]/.test(pathValue)) {
+      throw new InvalidConfigurationError(`Invalid ${description}: contains unsupported shell-special characters`)
+    }
+  }
+
+  static getNotarizeOptions(appPath: string): NotarizeOptionsNotaryTool | undefined {
+    const tool = "notarytool"
+    const teamId = process.env.APPLE_TEAM_ID
+    const appleId = process.env.APPLE_ID
+    const appleIdPassword = process.env.APPLE_APP_SPECIFIC_PASSWORD
+
+    if (appleId || appleIdPassword) {
+      if (!appleId) {
+        throw new InvalidConfigurationError(`APPLE_ID env var needs to be set`)
+      }
+      if (!appleIdPassword) {
+        throw new InvalidConfigurationError(`APPLE_APP_SPECIFIC_PASSWORD env var needs to be set`)
+      }
+      if (!teamId) {
+        throw new InvalidConfigurationError(`APPLE_TEAM_ID env var needs to be set`)
+      }
+      return { tool, appPath, appleId, appleIdPassword, teamId }
+    }
+
+    const appleApiKey = process.env.APPLE_API_KEY
+    const appleApiKeyId = process.env.APPLE_API_KEY_ID
+    const appleApiIssuer = process.env.APPLE_API_ISSUER
+    if (appleApiKey || appleApiKeyId || appleApiIssuer) {
+      if (!appleApiKey || !appleApiKeyId || !appleApiIssuer) {
+        throw new InvalidConfigurationError(`Env vars APPLE_API_KEY, APPLE_API_KEY_ID and APPLE_API_ISSUER need to be set`)
+      }
+      return { tool, appPath, appleApiKey, appleApiKeyId, appleApiIssuer }
+    }
+
+    const keychain = process.env.APPLE_KEYCHAIN
+    const keychainProfile = process.env.APPLE_KEYCHAIN_PROFILE
+    if (keychainProfile) {
+      let args: NotaryToolKeychainCredentials = { keychainProfile }
+      if (keychain) {
+        args = { ...args, keychain }
+      }
+      return { tool, appPath, ...args }
+    }
+
+    return undefined
+  }
+
+  async notarizeIfProvided(appPath: string): Promise<void> {
+    const notarizeOptions = this.packager.platformSpecificBuildOptions.notarize
+    if (notarizeOptions === false) {
+      log.info({ reason: "`notarize` options were set explicitly `false`" }, "skipped macOS notarization")
+      return
+    }
+    const options = MacTargetHelper.getNotarizeOptions(appPath)
+    if (!options) {
+      log.warn({ reason: "`notarize` options were unable to be generated" }, "skipped macOS notarization")
+      return
+    }
+    await notarize(options)
+    log.info(null, "notarization successful")
   }
 }
