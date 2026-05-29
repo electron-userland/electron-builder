@@ -617,7 +617,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   public getMacOsElectronFrameworkResourcesDir(appOutDir: string): string {
     const electronFrameworkName = path.basename(this.info.framework.distMacOsAppName, ".app") + " " + "Framework.framework"
-    return path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents", "Frameworks", electronFrameworkName, "Resources")
+    return path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents", "Frameworks", electronFrameworkName, "Versions", "A", "Resources")
   }
   public getMacOsResourcesDir(appOutDir: string): string {
     return path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents", "Resources")
