@@ -471,10 +471,15 @@ export class InvalidConfigurationError extends Error {
  * clearing the taint on the returned value for interprocedural analysis.
  */
 export function sanitizeDirPath(p: string, base?: string): string {
-  const resolved = path.resolve(p)
-  if (resolved.includes("\0") || resolved.includes("\n")) {
+  if (isEmptyOrSpaces(p)) {
+    throw new InvalidConfigurationError("Directory path must be a non-empty string")
+  }
+  if (p.includes("\0") || p.includes("\n") || p.includes("\r")) {
     throw new InvalidConfigurationError(`Directory path contains illegal characters: "${p}"`)
   }
+
+  const resolved = path.resolve(p)
+
   if (base != null) {
     const resolvedBase = path.resolve(base)
     if (resolved !== resolvedBase && !resolved.startsWith(resolvedBase + path.sep)) {
