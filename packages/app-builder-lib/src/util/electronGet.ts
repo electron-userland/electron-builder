@@ -175,7 +175,7 @@ export async function extractArchive(file: string, dir: string) {
   await fs.mkdir(tmpDir, { recursive: true })
 
   const release = await lockfile.lock(tmpDir, {
-    retries: { retries: 5, minTimeout: 1000, maxTimeout: 5000 },
+    retries: { retries: 15, minTimeout: 1000, maxTimeout: 5000 },
     stale: 120000, // Increased from 60s to allow long-running extractions
   })
 
@@ -300,7 +300,7 @@ async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact
   }
 
   const release = await lockfile.lock(extractDir, {
-    retries: { retries: 5, minTimeout: 1000, maxTimeout: 5000 },
+    retries: { retries: 15, minTimeout: 1000, maxTimeout: 5000 },
     stale: 120000,
   })
   let downloadedFile: string | null = null

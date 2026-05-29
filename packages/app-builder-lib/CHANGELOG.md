@@ -1,5 +1,40 @@
 # app-builder-lib
 
+## 26.12.0
+
+### Minor Changes
+
+- Feat(linux): replace legacy `linux-tools-mac` toolset with v1.0.0 for macOS deb/tar builds for packaging or extracting Linux archives _[`#9767`](https://github.com/electron-userland/electron-builder/pull/9767) [`9a31b4e`](https://github.com/electron-userland/electron-builder/commit/9a31b4eac3155a9eea9bca9593fd616aa1098b73) [@mmaietta](https://github.com/mmaietta)_
+- Feat: adding support for core24 snapcraft and refactoring support to a new config property `snapcraft` to maintain backward compatibility _[`#9517`](https://github.com/electron-userland/electron-builder/pull/9517) [`059fffd`](https://github.com/electron-userland/electron-builder/commit/059fffd5b9aabd72e9a8b592b9b7cef4a9e063ef) [@mmaietta](https://github.com/mmaietta)_
+- Feat(nsis): adding `nsis` toolset configuration for makensis _[`#9768`](https://github.com/electron-userland/electron-builder/pull/9768) [`2181fd0`](https://github.com/electron-userland/electron-builder/commit/2181fd02850101002fd82e463b9e0ed93d44fc7b) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Fix: avoid system path on windows for cache when user is `system` OR path is `system32` _[`#9776`](https://github.com/electron-userland/electron-builder/pull/9776) [`ab6ada8`](https://github.com/electron-userland/electron-builder/commit/ab6ada8dc2ca375687a8e89fd367b34e4f7a62e5) [@mmaietta](https://github.com/mmaietta)_
+- Fix: add toolset lockfile for operations that leverage system utils that don't support parallelism (e.g. hdiutil, WiX, etc.) _[`#9761`](https://github.com/electron-userland/electron-builder/pull/9761) [`7955d66`](https://github.com/electron-userland/electron-builder/commit/7955d66682ac5c6c7e74d7c33221d033241294c1) [@mmaietta](https://github.com/mmaietta)_
+- Fix(node-module-collector): emit warn-level log for missing platform-specific optional packages with actionable suggestion to add them to optionalDependencies _[`#9777`](https://github.com/electron-userland/electron-builder/pull/9777) [`a4ece30`](https://github.com/electron-userland/electron-builder/commit/a4ece30c0e2b32b154503979b303c46b2ba9a5ab) [@mmaietta](https://github.com/mmaietta)_
+- Chore: adding additional validations to downloads and child processes _[`#9762`](https://github.com/electron-userland/electron-builder/pull/9762) [`bfd1c1b`](https://github.com/electron-userland/electron-builder/commit/bfd1c1bb23b985b3fc44bcb4bb028fa0496d4638) [@mmaietta](https://github.com/mmaietta)_
+- Chore: increase timeout and retries on toolset lockfiles _[`#9780`](https://github.com/electron-userland/electron-builder/pull/9780) [`0fd0f4f`](https://github.com/electron-userland/electron-builder/commit/0fd0f4f648d732f177354e8bff35efdebd64f62c) [@mmaietta](https://github.com/mmaietta)_
+- Fix(nsis): safely copy UserProgramFiles path _[`#9769`](https://github.com/electron-userland/electron-builder/pull/9769) [`a356198`](https://github.com/electron-userland/electron-builder/commit/a356198ec7c54c7795659342bff36d9a5162cd93) [@adamgauthier](https://github.com/adamgauthier)_
+- Fix(mac): `electronLanguages` option is not correctly applied for Mac platform _[`#9779`](https://github.com/electron-userland/electron-builder/pull/9779) [`5b83914`](https://github.com/electron-userland/electron-builder/commit/5b839143bb44819609218acfe79c2dd1ea48e662) [@mmaietta](https://github.com/mmaietta)_
+- Fix: make update info have a deterministic ordering of files _[`#9758`](https://github.com/electron-userland/electron-builder/pull/9758) [`5dbba8c`](https://github.com/electron-userland/electron-builder/commit/5dbba8c4aa7becc357f9b5439c55641aedf2e18b) [@mmaietta](https://github.com/mmaietta)_
+- Chore(deps): update dependency minimatch to v10.2.5 [security] _[`#9601`](https://github.com/electron-userland/electron-builder/pull/9601) [`65ff591`](https://github.com/electron-userland/electron-builder/commit/65ff5915655a3ec1320815c0bf354301d51735c6) [@renovate](https://github.com/apps/renovate)_
+
+<details><summary>Updated 4 dependencies</summary>
+
+<small>
+
+[`059fffd`](https://github.com/electron-userland/electron-builder/commit/059fffd5b9aabd72e9a8b592b9b7cef4a9e063ef) [`7955d66`](https://github.com/electron-userland/electron-builder/commit/7955d66682ac5c6c7e74d7c33221d033241294c1) [`bfd1c1b`](https://github.com/electron-userland/electron-builder/commit/bfd1c1bb23b985b3fc44bcb4bb028fa0496d4638) [`2181fd0`](https://github.com/electron-userland/electron-builder/commit/2181fd02850101002fd82e463b9e0ed93d44fc7b)
+
+</small>
+
+- `builder-util@26.12.0`
+- `electron-publish@26.12.0`
+- `electron-builder-squirrel-windows@26.12.0`
+- `dmg-builder@26.12.0`
+
+</details>
+
 ## 26.11.1
 
 ### Patch Changes
