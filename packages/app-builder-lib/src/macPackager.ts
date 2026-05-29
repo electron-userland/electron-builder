@@ -316,6 +316,11 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       const platformConfig = this.getPlatformConfig(platformType)
       const targetOutDir = path.resolve(outDir, `${target.name}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}`)
 
+      const relativeTargetOutDir = path.relative(path.resolve(outDir), targetOutDir)
+      if (relativeTargetOutDir.startsWith("..") || path.isAbsolute(relativeTargetOutDir)) {
+        throw new InvalidConfigurationError(`Invalid target output directory: ${targetOutDir}`)
+      }
+
       if (prepackaged == null) {
         await this.doPack({
           outDir,
@@ -523,7 +528,13 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       await Promise.all(
         directories.map(async (file: string) => {
           if (shouldSign(file)) {
-            await this.sign(path.resolve(sourceDirectory, path.basename(file)), null, isMas ? activeConfig : null, packContext.arch, isMas)
+            const entryName = path.basename(file)
+            const signTarget = path.resolve(sourceDirectory, entryName)
+            const relativeToSource = path.relative(sourceDirectory, signTarget)
+            if (path.isAbsolute(relativeToSource) || relativeToSource.startsWith("..")) {
+              throw new InvalidConfigurationError(`Cannot sign file outside of source directory: ${file}`)
+            }
+            await this.sign(signTarget, null, isMas ? activeConfig : null, packContext.arch, isMas)
           }
         })
       )
