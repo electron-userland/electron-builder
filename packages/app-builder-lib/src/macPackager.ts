@@ -343,6 +343,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
           targets: [target],
           options: { sign: false },
         })
+        this.assertSafePathForCommandUsage(this.appInfo.productFilename, "product filename")
         await this.signMas(path.resolve(targetOutDir, `${path.basename(this.appInfo.productFilename)}.app`), targetOutDir, platformConfig, arch)
       } else {
         await this.signMas(prepackaged, targetOutDir, platformConfig, arch)
@@ -538,6 +539,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     const activeConfig = this._activePackConfig ?? this.platformSpecificBuildOptions
     const readDirectoryAndSign = async (sourceDirectory: string, directories: string[], shouldSign: (file: string) => boolean): Promise<boolean> => {
       const normalizedSourceDirectory = path.resolve(sourceDirectory)
+      this.assertSafePathForCommandUsage(normalizedSourceDirectory, "application output directory")
       await Promise.all(
         directories.map(async (file: string) => {
           if (shouldSign(file)) {

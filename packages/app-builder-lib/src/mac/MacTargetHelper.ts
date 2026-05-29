@@ -170,6 +170,9 @@ export class MacTargetHelper {
     // mas uploaded to AppStore, so, use "-" instead of space for name
     // path.basename prevents path traversal if a crafted artifactName contains "../"
     const artifactName = path.basename(this.packager.expandArtifactNamePattern(masOptions, "pkg", arch))
+    if (/[\0\r\n"'`$;&|<>]/.test(artifactName)) {
+      throw new InvalidConfigurationError(`Artifact name contains unsafe characters: ${artifactName}`)
+    }
     const artifactPath = path.resolve(outDir, artifactName)
     await this.packager.doFlat(appPath, artifactPath, masInstallerIdentity, keychainFile)
     await this.packager.info.emitArtifactBuildCompleted({
