@@ -304,7 +304,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       // fix npm list issue
       // https://github.com/npm/cli/issues/8535
       if (!(await this.cache.exists[p])) {
-        this.cache.logSummary[LogMessageByKey.PKG_NOT_ON_DISK].push(key)
+        this.logMissingDependency(key)
         continue
       }
 
@@ -322,7 +322,13 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     result.sort((a, b) => a.name.localeCompare(b.name))
   }
 
-  async asyncExec(command: string, args: string[], cwd: string = this.rootDir): Promise<{ stdout: string | undefined; stderr: string | undefined }> {
+  protected logMissingDependency(pkgName: string) {
+    const PLATFORM_PACKAGE_RE = /(linux|win32|darwin|freebsd|android)[-_](x64|arm64|ia32|arm|ppc64|s390x|loong64|riscv64|universal)/
+    const diskLogKey = PLATFORM_PACKAGE_RE.test(pkgName) ? LogMessageByKey.PKG_OPTIONAL_PLATFORM_NOT_INSTALLED : LogMessageByKey.PKG_NOT_ON_DISK
+    this.cache.logSummary[diskLogKey].push(pkgName)
+  }
+
+  protected async asyncExec(command: string, args: string[], cwd: string = this.rootDir): Promise<{ stdout: string | undefined; stderr: string | undefined }> {
     const file = await this.tempDirManager.getTempFile({ prefix: "exec-", suffix: ".txt" })
     try {
       await this.streamCollectorCommandToFile(command, args, cwd, file)
@@ -350,7 +356,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * @returns Promise that resolves when the command completes successfully or rejects if it fails
    * @throws {Error} If the child process spawn fails or exits with a non-zero code
    */
-  async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
+  protected async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
     const execName = path.basename(command, path.extname(command))
     const ext = path.extname(command).toLowerCase()
     // Wrap .cmd files in a .bat file for correct cmd.exe execution.
