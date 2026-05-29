@@ -4,7 +4,6 @@ import {
   archFromString,
   AsyncTaskManager,
   DebugLogger,
-  deepAssign,
   executeFinally,
   getArtifactArchName,
   InvalidConfigurationError,
@@ -15,7 +14,7 @@ import {
   serializeToYaml,
   TmpDir,
 } from "builder-util"
-import { CancellationToken, retry } from "builder-util-runtime"
+import { CancellationToken, deepAssign, retry } from "builder-util-runtime"
 import { chmod, mkdirs, outputFile } from "fs-extra"
 import { isCI } from "ci-info"
 import { Lazy } from "lazy-val"

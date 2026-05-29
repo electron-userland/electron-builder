@@ -1,6 +1,6 @@
 import { outputFile } from "fs-extra"
 import { serializeToYaml } from "./util"
-import { mapToObject } from "./mapper"
+import { mapToObject } from "builder-util-runtime"
 
 export class DebugLogger {
   readonly data = new Map<string, any>()

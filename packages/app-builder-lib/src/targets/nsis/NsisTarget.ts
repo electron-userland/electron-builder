@@ -15,7 +15,7 @@ import {
   use,
   walk,
 } from "builder-util"
-import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, PackageFileInfo, UUID } from "builder-util-runtime"
+import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, deepAssign, PackageFileInfo, UUID } from "builder-util-runtime"
 import _debug from "debug"
 import * as fs from "fs"
 import { readFile, stat, unlink } from "fs-extra"
@@ -73,7 +73,7 @@ export class NsisTarget extends Target {
           }
 
     if (targetName !== "nsis") {
-      Object.assign(this.options, (this.packager.config as any)[targetName === "nsis-web" ? "nsisWeb" : targetName])
+      deepAssign(this.options, (this.packager.config as any)[targetName === "nsis-web" ? "nsisWeb" : targetName])
     }
 
     const deps = packager.info.metadata.dependencies
@@ -608,7 +608,17 @@ export class NsisTarget extends Target {
       if (value == null) {
         args.push(`-D${name}`)
       } else {
-        args.push(`-D${name}=${value}`)
+        // nsisEscapeString prevents three classes of injection:
+        //   1. Newlines  → replaced with spaces; a bare \n in a define value
+        //      would terminate the current script line and let whatever follows
+        //      be parsed as a new preprocessor directive (e.g. !system, !include).
+        //   2. bare $ → escaped to $$; unescaped $ in a define value would cause
+        //      NSIS to expand an unintended variable reference.  ${...} references
+        //      are left intact so NSIS compile-time defines like ${NSISDIR} still
+        //      expand correctly.
+        //   3. " chars   → escaped to $\"; an unescaped " would break out of
+        //      double-quoted NSIS string literals where ${DEFINE} is expanded.
+        args.push(`-D${name}=${nsisEscapeString(String(value))}`)
       }
     }
 
