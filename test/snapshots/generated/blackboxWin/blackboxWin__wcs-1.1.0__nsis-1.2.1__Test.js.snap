@@ -80,6 +80,92 @@ exports[`blackboxWin > windows > nsis - installer succeeds with sibling process 
 }
 `;
 
+exports[`blackboxWin > windows > nsis - per-machine installer succeeds with sibling process running 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe",
+      "safeArtifactName": "TestApp-Setup.exe",
+      "updateInfo": {
+        "isAdminRightsRequired": true,
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp Setup.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap",
+      "updateInfo": {
+        "isAdminRightsRequired": true,
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "isAdminRightsRequired": true,
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp Setup.exe",
+          },
+        ],
+        "path": "TestApp Setup.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`blackboxWin > windows > nsis - per-machine installer succeeds with sibling process running 2`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe",
+      "safeArtifactName": "TestApp-Setup.exe",
+      "updateInfo": {
+        "isAdminRightsRequired": true,
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp Setup.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap",
+      "updateInfo": {
+        "isAdminRightsRequired": true,
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "isAdminRightsRequired": true,
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp Setup.exe",
+          },
+        ],
+        "path": "TestApp Setup.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
 exports[`blackboxWin > windows > nsis 1`] = `
 {
   "win": [

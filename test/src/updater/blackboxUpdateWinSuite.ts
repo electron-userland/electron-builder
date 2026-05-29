@@ -116,6 +116,7 @@ export function registerBlackboxWinTests(toolsets: Required<Pick<ToolsetConfig, 
     // That path previously used nsProcess::FindProcess which performs prefix/partial matching
     // and falsely detects "TestApp-helper.exe" as "TestApp.exe".  With the old code the
     // installer exhausts its retry loop and quits (/SD IDCANCEL), causing runTest to fail.
+    // The installer is launched via Task Scheduler (RunLevel Highest) to avoid UAC prompts.
     test("nsis - per-machine installer succeeds with sibling process running", optionsForFlakyE2E, async (context: TestContext) => {
       const vm = await windowsVmPromise
       if (process.platform !== "win32" && vm == null) {
