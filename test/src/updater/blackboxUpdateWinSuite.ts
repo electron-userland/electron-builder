@@ -129,7 +129,7 @@ export function registerBlackboxWinTests(toolsets: Required<Pick<ToolsetConfig, 
     // to exercise the INSTALL_MODE_PER_ALL_USERS FIND_PROCESS code path.
     test("nsis - per-machine installer succeeds with sibling process running", optionsForFlakyE2E, async (context: TestContext) => {
       const vm = await windowsVmPromise
-      if (process.platform !== "win32" && vm == null) {
+      if (vm == null) {
         context.skip()
       }
 
@@ -144,7 +144,7 @@ export function registerBlackboxWinTests(toolsets: Required<Pick<ToolsetConfig, 
         // installWindowsVm runs the NSIS installer as SYSTEM (vm.spawn).
         // With old code: nsProcess::FindProcess detects sibling → dialog hangs in Session 0 → timeout → throws (RED)
         // With new code: findstr /B ignores sibling → install completes → assertAlive passes (GREEN)
-        await installWindowsVm(outDirs[0].dir, Arch.x64, vm as ParallelsVmManager, true /* perMachine */)
+        await installWindowsVm(outDirs[0].dir, Arch.x64, vm, true /* perMachine */)
         await assertAlive()
       } finally {
         await cleanup()
