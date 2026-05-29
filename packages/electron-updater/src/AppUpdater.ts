@@ -11,7 +11,6 @@ import {
   ProgressInfo,
   BlockMap,
   retry,
-  deepAssign,
 } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { release } from "os"
@@ -173,7 +172,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    *  Shortcut for explicitly adding auth tokens to request headers
    */
   addAuthHeader(token: string) {
-    this.requestHeaders = deepAssign({}, this.requestHeaders, {
+    this.requestHeaders = Object.assign({}, this.requestHeaders, {
       authorization: token,
     })
   }
@@ -727,17 +726,12 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     function getCacheUpdateFileName(): string {
       // NodeJS URL doesn't decode automatically
       const urlPath = decodeURIComponent(taskOptions.fileInfo.url.pathname)
-      // path.basename strips any directory components (preventing traversal).
-      const basename = path.basename(urlPath)
-      if (basename.toLowerCase().endsWith(`.${taskOptions.fileExtension.toLowerCase()}`)) {
-        return basename
+      if (urlPath.toLowerCase().endsWith(`.${taskOptions.fileExtension.toLowerCase()}`)) {
+        return path.basename(urlPath)
+      } else {
+        // url like /latest, generate name
+        return taskOptions.fileInfo.info.url
       }
-      // URL path has no usable filename (e.g. "/latest") — synthesize a safe
-      // deterministic name from the version.  Sanitize the version string so
-      // a malicious update server cannot inject path-traversal sequences via
-      // the "version" field of the update manifest.
-      const safeVersion = version.replace(/[^a-zA-Z0-9._-]/g, "_")
-      return `update-${safeVersion}.${taskOptions.fileExtension}`
     }
 
     const downloadedUpdateHelper = await this.getOrCreateDownloadHelper()

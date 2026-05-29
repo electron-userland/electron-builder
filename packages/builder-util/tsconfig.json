@@ -6,7 +6,7 @@
   },
   "include": [
     "src/**/*.ts"
-, "../builder-util-runtime/src/mapper.ts", "../builder-util-runtime/src/deepAssign.ts"  ],
+  ],
   "references": [
     {
       "path": "../builder-util-runtime"

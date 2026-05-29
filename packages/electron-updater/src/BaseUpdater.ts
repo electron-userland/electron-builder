@@ -108,10 +108,7 @@ export abstract class BaseUpdater extends AppUpdater {
     const response = spawnSync(cmd, args, {
       env: { ...process.env, ...env },
       encoding: "utf-8",
-      // shell: true is required on Windows to locate executables via PATHEXT.
-      // On Unix, arguments are passed directly to execvp() with no shell
-      // interpretation, which eliminates shell-injection as an attack surface.
-      shell: process.platform === "win32",
+      shell: true,
     })
 
     const { error, status, stdout, stderr } = response

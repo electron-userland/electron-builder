@@ -12,10 +12,9 @@ const versionToPromise = new Map<string, Promise<string>>()
 export async function download(url: string, output: string, checksum?: string | null): Promise<void> {
   const filenameWithExt = path.basename(new URL(url).pathname)
   if (checksum == null) {
-    // Without a checksum, a MITM attacker who can intercept the download (e.g.
-    // via a rogue mirror, a tampered CDN edge, or a DNS-spoofing attack) can
-    // substitute a malicious payload.  Callers should supply a checksum whenever
-    // possible.  See security audit finding #10.
+    // Without a checksum, a download intercepted via a rogue mirror, tampered CDN
+    // edge, or DNS spoofing can substitute a malicious payload undetected.
+    // Callers should supply a checksum whenever possible.
     log.warn({ url }, "downloading without an integrity checksum — the download is not verified against a known-good hash")
   }
   const downloadedFile = await get.downloadArtifact({
@@ -47,10 +46,7 @@ export function getBinFromCustomLoc(name: string, version: string, binariesLocUr
  */
 function validateBinaryCustomDir(envVarName: string, value: string): string {
   if (value.includes("://") || value.includes("..") || value.startsWith("/")) {
-    throw new Error(
-      `${envVarName} must be a safe relative path component (e.g. "v1.0.0-custom"). ` +
-        `Values containing "://", "..", or a leading "/" are not allowed. Got: "${value}"`
-    )
+    throw new Error(`${envVarName} must be a safe relative path component (e.g. "v1.0.0-custom"). Values containing "://", "..", or a leading "/" are not allowed. Got: "${value}"`)
   }
   return value
 }
