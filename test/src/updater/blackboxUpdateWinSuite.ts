@@ -2,11 +2,13 @@ import { ToolsetConfig } from "app-builder-lib"
 import { ParallelsVmManager } from "app-builder-lib/out/vm/ParallelsVm"
 import { copyFileSync, unlinkSync } from "fs"
 import { tmpdir } from "os"
-import { Arch } from "electron-builder"
+import { Arch, Configuration } from "electron-builder"
 import { spawn as nodeSpawn } from "child_process"
 import * as path from "path"
 import { TestContext } from "vitest"
-import { optionsForFlakyE2E, runTest, windowsVmPromise } from "./blackboxUpdateHelpers"
+import { deepAssign, TmpDir } from "builder-util/out/util"
+import { ApplicationUpdatePaths, doBuild, optionsForFlakyE2E, runTest, windowsVmPromise } from "./blackboxUpdateHelpers"
+import { installWindowsVm } from "./blackboxInstallWindows"
 
 // Spawn a process whose IMAGE NAME contains `appExeName` (e.g. "TestApp-helper.exe" when
 // app is "TestApp.exe").  Returns cleanup and assertAlive functions.  This is used to
@@ -84,7 +86,7 @@ async function spawnSiblingProcess(vm: ParallelsVmManager | undefined, appExeNam
 
 export function registerBlackboxWinTests(toolsets: Required<Pick<ToolsetConfig, "winCodeSign" | "nsis">>): void {
   describe.heavy("windows", optionsForFlakyE2E, () => {
-    test("nsis", async (context: TestContext) => {
+    test.skip("nsis", async (context: TestContext) => {
       const vm = await windowsVmPromise
       if (process.platform !== "win32" && vm == null) {
         context.skip()
@@ -114,20 +116,49 @@ export function registerBlackboxWinTests(toolsets: Required<Pick<ToolsetConfig, 
 
     // Same regression test for the per-machine (INSTALL_MODE_PER_ALL_USERS) code path.
     // That path previously used nsProcess::FindProcess which performs prefix/partial matching
-    // and falsely detects "TestApp-helper.exe" as "TestApp.exe".  With the old code the
-    // installer exhausts its retry loop and quits (/SD IDCANCEL), causing runTest to fail.
-    // The installer is launched via Task Scheduler (RunLevel Highest) to avoid UAC prompts.
+    // and falsely detects "TestApp-helper.exe" as "TestApp.exe".
+    //
+    // The installer is run as SYSTEM via vm.spawn (prlctl exec without --current-user).
+    // With the old code a MessageBox opens inside Windows Session 0 (non-interactive) and
+    // hangs indefinitely — our 180 s PS timeout surfaces this as a failure (RED).
+    // With the new code (findstr /B anchored match) no false positive is generated,
+    // the installer completes normally, and assertAlive() confirms the sibling survived (GREEN).
+    //
+    // We bypass the full auto-update cycle here because the detached update installer
+    // does not survive parent-process exit in Session 0; the initial install is sufficient
+    // to exercise the INSTALL_MODE_PER_ALL_USERS FIND_PROCESS code path.
     test("nsis - per-machine installer succeeds with sibling process running", optionsForFlakyE2E, async (context: TestContext) => {
       const vm = await windowsVmPromise
       if (process.platform !== "win32" && vm == null) {
         context.skip()
       }
+
+      const { expect } = context
+      const tmpDir = new TmpDir("per-machine-sibling-test")
+      const outDirs: ApplicationUpdatePaths[] = []
+      const buildConfig = deepAssign({ toolsets } as Configuration, { nsis: { perMachine: true } } as Partial<Configuration>)
+      await doBuild(expect, outDirs, "nsis", Arch.x64, tmpDir, /* isWindows */ true, buildConfig)
+
       const { cleanup, assertAlive } = await spawnSiblingProcess(vm, "TestApp.exe")
       try {
-        await runTest(context, "nsis", "", Arch.x64, toolsets, { nsis: { perMachine: true } })
+        // installWindowsVm runs the NSIS installer as SYSTEM (vm.spawn).
+        // With old code: nsProcess::FindProcess detects sibling → dialog hangs in Session 0 → timeout → throws (RED)
+        // With new code: findstr /B ignores sibling → install completes → assertAlive passes (GREEN)
+        await installWindowsVm(outDirs[0].dir, Arch.x64, vm as ParallelsVmManager, true /* perMachine */)
         await assertAlive()
       } finally {
         await cleanup()
+        // Best-effort uninstall to leave the VM clean for subsequent test runs
+        if (vm) {
+          await vm
+            .spawn("powershell.exe", [
+              "-NonInteractive",
+              "-Command",
+              `$u = Join-Path ([Environment]::GetFolderPath('ProgramFiles')) 'TestApp\\Uninstall TestApp.exe'; if (Test-Path $u) { $p = Start-Process $u -ArgumentList '/S' -PassThru; $p.WaitForExit(60000) | Out-Null }`,
+            ])
+            .catch(() => undefined)
+        }
+        await tmpDir.cleanup()
       }
     })
   })

@@ -114,7 +114,21 @@ export async function installWindowsVm(dirPath: string, arch: Arch, vm: Parallel
   const installSubDir = perMachine ? "TestApp" : "Programs\\TestApp"
   const uninstallerPath = `${installRoot}\\${installSubDir}\\Uninstall TestApp.exe`
 
-  if (!perMachine) {
+  if (perMachine) {
+    // For per-machine, run the uninstaller as SYSTEM via vm.spawn (prlctl exec without
+    // --current-user). SYSTEM already holds full admin rights — no UAC, no Task Scheduler.
+    const prevExists = (
+      await vm.exec("powershell.exe", ["-NonInteractive", "-Command", `if (Test-Path '${uninstallerPath}') { 'true' } else { 'false' }`])
+    ).trim()
+    if (prevExists === "true") {
+      await vm.spawn("powershell.exe", [
+        "-NonInteractive",
+        "-Command",
+        `$p = Start-Process -FilePath '${uninstallerPath}' -ArgumentList '/S' -PassThru; $p.WaitForExit(60000) | Out-Null`,
+      ])
+      await new Promise(resolve => setTimeout(resolve, 3000))
+    }
+  } else {
     // Per-user uninstall runs without elevation — direct exec is fine
     try {
       await vm.exec(uninstallerPath, ["/S", "/C", "exit"])
@@ -123,7 +137,6 @@ export async function installWindowsVm(dirPath: string, arch: Arch, vm: Parallel
       // no previous installation — expected on first run
     }
   }
-  // Per-machine uninstall is handled inside the PS script via Task Scheduler
 
   // Use HTTP to deliver the installer: getParallelsHostIP() returns the Mac's bridge IP
   // (e.g. 10.211.55.2) which is reachable from the VM. \\Mac\Home\ hangs on large binary reads.
@@ -157,27 +170,6 @@ export async function installWindowsVm(dirPath: string, arch: Arch, vm: Parallel
     // Kill any stale installer from a previous test run — it holds the NSIS APP_GUID mutex
     `    Stop-Process -Name 'eb-setup' -Force -ErrorAction SilentlyContinue`,
     `    Start-Sleep -Seconds 1`,
-    // Per-machine: remove any previous installation via Task Scheduler (avoids UAC)
-    ...(perMachine
-      ? [
-          `    $prevUninstaller = '${uninstallerPath}'`,
-          `    if (Test-Path $prevUninstaller) {`,
-          `        $tn = 'EBUninstall_' + [System.Guid]::NewGuid().ToString('N')`,
-          `        $stAction = New-ScheduledTaskAction -Execute $prevUninstaller -Argument '/S'`,
-          `        $stPrincipal = New-ScheduledTaskPrincipal -UserId ([System.Security.Principal.WindowsIdentity]::GetCurrent().Name) -RunLevel Highest`,
-          `        $stSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes 3)`,
-          `        Register-ScheduledTask -TaskName $tn -Action $stAction -Principal $stPrincipal -Settings $stSettings -Force | Out-Null`,
-          `        Start-ScheduledTask -TaskName $tn`,
-          `        $dl = [DateTime]::Now.AddMinutes(2)`,
-          `        while ((Get-ScheduledTask -TaskName $tn -ErrorAction SilentlyContinue).State -eq 'Running') {`,
-          `            if ([DateTime]::Now -gt $dl) { break }`,
-          `            Start-Sleep -Seconds 2`,
-          `        }`,
-          `        Unregister-ScheduledTask -TaskName $tn -Confirm:$false -ErrorAction SilentlyContinue`,
-          `        Start-Sleep -Seconds 3`,
-          `    }`,
-        ]
-      : []),
     `    $tmpDir = Join-Path $env:TEMP ([Guid]::NewGuid().ToString())`,
     `    New-Item -ItemType Directory -Path $tmpDir | Out-Null`,
     `    $dest = Join-Path $tmpDir 'eb-setup.exe'`,
@@ -192,38 +184,17 @@ export async function installWindowsVm(dirPath: string, arch: Arch, vm: Parallel
     // Remove Mark-of-the-Web only after integrity is confirmed
     `    Unblock-File -Path $dest -ErrorAction SilentlyContinue`,
     `    Write-Output ('DEST_PATH:' + $dest)`,
-    // Per-machine installers require admin elevation. Task Scheduler's RunLevel Highest grants
-    // this from a non-elevated admin context without triggering a UAC dialog — standard technique
-    // used by Windows Update and many system tools. Per-user installs use Start-Process directly.
-    ...(perMachine
-      ? [
-          `    $taskName = 'EBInstall_' + [System.Guid]::NewGuid().ToString('N')`,
-          `    $stAction = New-ScheduledTaskAction -Execute $dest -Argument '/S'`,
-          `    $stPrincipal = New-ScheduledTaskPrincipal -UserId ([System.Security.Principal.WindowsIdentity]::GetCurrent().Name) -RunLevel Highest`,
-          `    $stSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes 5)`,
-          `    Register-ScheduledTask -TaskName $taskName -Action $stAction -Principal $stPrincipal -Settings $stSettings -Force | Out-Null`,
-          `    Start-ScheduledTask -TaskName $taskName`,
-          `    $deadline = [DateTime]::Now.AddMinutes(3)`,
-          `    while ((Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue).State -eq 'Running') {`,
-          `        if ([DateTime]::Now -gt $deadline) { Write-Error 'Installer timed out'; break }`,
-          `        Start-Sleep -Seconds 2`,
-          `    }`,
-          `    $exitCode = (Get-ScheduledTaskInfo -TaskName $taskName).LastTaskResult`,
-          `    Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue`,
-          `    Write-Output ('INSTALLER_EXIT:' + $exitCode)`,
-          `    if ($exitCode -ne 0) { Write-Error ('Installer exited with code ' + $exitCode); exit 1 }`,
-        ]
-      : [
-          `    $proc = Start-Process -FilePath $dest -ArgumentList '/S' -PassThru`,
-          `    $finished = $proc.WaitForExit(180000)`,
-          `    if (-not $finished) {`,
-          `        $proc.Kill() | Out-Null`,
-          `        Write-Error 'Installer timed out after 180s'; exit 1`,
-          `    }`,
-          `    Write-Output ('INSTALLER_EXIT:' + $proc.ExitCode)`,
-          // NSIS one-click calls quitSuccess (SetErrorLevel 0; Quit) on success → exit 0
-          `    if ($proc.ExitCode -ne 0) { Write-Error ('Installer exited with code ' + $proc.ExitCode); exit 1 }`,
-        ]),
+    // For per-machine this script runs as SYSTEM (via vm.spawn / prlctl exec without --current-user)
+    // so Start-Process already has full admin rights — no UAC, no Task Scheduler needed.
+    `    $proc = Start-Process -FilePath $dest -ArgumentList '/S' -PassThru`,
+    `    $finished = $proc.WaitForExit(180000)`,
+    `    if (-not $finished) {`,
+    `        $proc.Kill() | Out-Null`,
+    `        Write-Error 'Installer timed out after 180s'; exit 1`,
+    `    }`,
+    `    Write-Output ('INSTALLER_EXIT:' + $proc.ExitCode)`,
+    // NSIS one-click calls quitSuccess (SetErrorLevel 0; Quit) on success → exit 0
+    `    if ($proc.ExitCode -ne 0) { Write-Error ('Installer exited with code ' + $proc.ExitCode); exit 1 }`,
     `    Start-Sleep -Seconds 3`,
     `    $installPath = Join-Path '${installRoot}' '${installSubDir}\\TestApp.exe'`,
     `    Write-Output ('APP_EXISTS:' + (Test-Path $installPath))`,
@@ -237,7 +208,12 @@ export async function installWindowsVm(dirPath: string, arch: Arch, vm: Parallel
   await outputFile(scriptPath, psScript)
   const winScriptPath = toVmHomePath(scriptPath)
   try {
-    const installResult = await vm.exec("powershell.exe", ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", winScriptPath], { timeout: 300000 })
+    // Per-machine: run as SYSTEM via vm.spawn (prlctl exec without --current-user).
+    // SYSTEM has full admin rights — installs to Program Files without UAC.
+    // Per-user: run as the logged-in user via vm.exec (--current-user).
+    const installResult = perMachine
+      ? await vm.spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", winScriptPath])
+      : await vm.exec("powershell.exe", ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", winScriptPath], { timeout: 300000 })
     console.log("Installer output:", installResult)
   } finally {
     installerServer.close()

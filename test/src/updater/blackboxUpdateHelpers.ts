@@ -292,6 +292,7 @@ export async function runTest(context: TestContext, target: string, packageManag
 
   const dirPath = oldAppDir.dir
   const perMachine = extraConfig?.nsis?.perMachine
+
   // Setup tests by installing the previous version
   const appPath = await handleInitialInstallPerOS({ target, dirPath, arch, vm, perMachine })
 
