@@ -425,14 +425,12 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
 
   //noinspection JSMethodCanBeStatic
   public async doFlat(appPath: string, outFile: string, identity: Identity, keychain: string | Nullish): Promise<any> {
-    const resolvedAppPath = path.resolve(appPath)
-    const resolvedOutFile = path.resolve(outFile)
     // productbuild doesn't created directory for out file
-    await mkdir(path.dirname(resolvedOutFile), { recursive: true })
+    await mkdir(path.dirname(outFile), { recursive: true })
 
     const args = prepareProductBuildArgs(identity, keychain)
-    args.push("--component", resolvedAppPath, "/Applications")
-    args.push(resolvedOutFile)
+    args.push("--component", appPath, "/Applications")
+    args.push(outFile)
     return await exec("productbuild", args)
   }
 
