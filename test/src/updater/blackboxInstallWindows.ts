@@ -115,19 +115,25 @@ export async function installWindowsVm(dirPath: string, arch: Arch, vm: Parallel
   const uninstallerPath = `${installRoot}\\${installSubDir}\\Uninstall TestApp.exe`
 
   if (perMachine) {
-    // For per-machine, run the uninstaller as SYSTEM via vm.spawn (prlctl exec without
-    // --current-user). SYSTEM already holds full admin rights — no UAC, no Task Scheduler.
-    const prevExists = (
-      await vm.exec("powershell.exe", ["-NonInteractive", "-Command", `if (Test-Path '${uninstallerPath}') { 'true' } else { 'false' }`])
-    ).trim()
-    if (prevExists === "true") {
-      await vm.spawn("powershell.exe", [
-        "-NonInteractive",
-        "-Command",
-        `$p = Start-Process -FilePath '${uninstallerPath}' -ArgumentList '/S' -PassThru; $p.WaitForExit(60000) | Out-Null`,
-      ])
-      await new Promise(resolve => setTimeout(resolve, 3000))
-    }
+    // Silently wipe any previous per-machine installation via direct filesystem + registry
+    // removal.  Running the NSIS uninstaller as SYSTEM in Session 0 (vm.spawn / prlctl exec
+    // without --current-user) causes Windows to surface "Interactive Services Detection"
+    // dialogs on the interactive desktop.  Remove-Item is pure I/O — no window, no UAC.
+    await vm.spawn("powershell.exe", [
+      "-NonInteractive",
+      "-Command",
+      [
+        `$d = Join-Path ([Environment]::GetFolderPath('ProgramFiles')) 'TestApp'`,
+        `Remove-Item $d -Recurse -Force -ErrorAction SilentlyContinue`,
+        `'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall',`,
+        `'HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall' | ForEach-Object {`,
+        `    Get-ChildItem $_ -ErrorAction SilentlyContinue |`,
+        `    Where-Object { (Get-ItemProperty -Path $_.PSPath -Name DisplayName -ErrorAction SilentlyContinue).DisplayName -eq 'TestApp' } |`,
+        `    Remove-Item -Recurse -Force -ErrorAction SilentlyContinue`,
+        `}`,
+      ].join("; "),
+    ])
+    await new Promise(resolve => setTimeout(resolve, 1000))
   } else {
     // Per-user uninstall runs without elevation — direct exec is fine
     try {

@@ -86,7 +86,7 @@ async function spawnSiblingProcess(vm: ParallelsVmManager | undefined, appExeNam
 
 export function registerBlackboxWinTests(toolsets: Required<Pick<ToolsetConfig, "winCodeSign" | "nsis">>): void {
   describe.heavy("windows", optionsForFlakyE2E, () => {
-    test.skip("nsis", async (context: TestContext) => {
+    test("nsis", async (context: TestContext) => {
       const vm = await windowsVmPromise
       if (process.platform !== "win32" && vm == null) {
         context.skip()
@@ -148,13 +148,24 @@ export function registerBlackboxWinTests(toolsets: Required<Pick<ToolsetConfig, 
         await assertAlive()
       } finally {
         await cleanup()
-        // Best-effort uninstall to leave the VM clean for subsequent test runs
+        // Silently wipe the per-machine installation so subsequent test runs start clean.
+        // Using Remove-Item (no NSIS executable) avoids Interactive Services Detection
+        // dialogs that appear when running the NSIS uninstaller as SYSTEM in Session 0.
         if (vm) {
           await vm
             .spawn("powershell.exe", [
               "-NonInteractive",
               "-Command",
-              `$u = Join-Path ([Environment]::GetFolderPath('ProgramFiles')) 'TestApp\\Uninstall TestApp.exe'; if (Test-Path $u) { $p = Start-Process $u -ArgumentList '/S' -PassThru; $p.WaitForExit(60000) | Out-Null }`,
+              [
+                `$d = Join-Path ([Environment]::GetFolderPath('ProgramFiles')) 'TestApp'`,
+                `Remove-Item $d -Recurse -Force -ErrorAction SilentlyContinue`,
+                `'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall',`,
+                `'HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall' | ForEach-Object {`,
+                `    Get-ChildItem $_ -ErrorAction SilentlyContinue |`,
+                `    Where-Object { (Get-ItemProperty -Path $_.PSPath -Name DisplayName -ErrorAction SilentlyContinue).DisplayName -eq 'TestApp' } |`,
+                `    Remove-Item -Recurse -Force -ErrorAction SilentlyContinue`,
+                `}`,
+              ].join("; "),
             ])
             .catch(() => undefined)
         }
