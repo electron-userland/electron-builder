@@ -1,4 +1,17 @@
-import { asArray, copyDir, DO_NOT_USE_HARD_LINKS, exec, getPath7za, isEmptyOrSpaces, log, MAX_FILE_REQUESTS, sanitizeDirPath, statOrNull, unlinkIfExists } from "builder-util"
+import {
+  asArray,
+  copyDir,
+  DO_NOT_USE_HARD_LINKS,
+  exec,
+  getPath7za,
+  isEmptyOrSpaces,
+  log,
+  MAX_FILE_REQUESTS,
+  sanitizeDirPath,
+  statOrNull,
+  unlinkIfExists,
+  validate7zaOutputPath,
+} from "builder-util"
 import { emptyDir, readdir, rename, rm } from "fs-extra"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
@@ -198,10 +211,9 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, d
     if (resolvedDist.endsWith(".zip")) {
       log.info({ zipFile: resolvedDist }, "using custom electronDist zip file")
       await emptyDir(appOutDir)
-      const safeOutDir = sanitizeDirPath(appOutDir)
+      const safeOutDir = validate7zaOutputPath(sanitizeDirPath(appOutDir))
       const safeZipPath = sanitizeDirPath(resolvedDist)
-      const outputArg = "-o" + safeOutDir
-      await exec(await getPath7za(), ["x", "-bd", safeZipPath, outputArg, "-y"])
+      await exec(await getPath7za(), ["x", "-bd", safeZipPath, `-o${safeOutDir}`, "-y"]) // codeql[js/shell-command-constructed-from-input] - paths validated by sanitizeDirPath + validate7zaOutputPath; execFile array args (no shell)
       return false // do not clean up after unpacking, it's a custom bundle and we should respect its configuration/contents as required
     }
 

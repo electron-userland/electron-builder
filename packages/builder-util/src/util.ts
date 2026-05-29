@@ -484,6 +484,35 @@ export function sanitizeDirPath(p: string, base?: string): string {
   return resolved
 }
 
+/**
+ * Allowlist regex for paths passed as the value of 7-Zip's `-o<dir>` switch.
+ *
+ * The switch concatenates the flag and value into a single argument token, so
+ * a path that starts with `-` would look like a new 7za flag.  Control chars
+ * (0x00–0x1F) and DEL (0x7F) cause C-level string truncation or parser
+ * confusion regardless of execFile's array-arg safety.
+ *
+ * Specifically allows: spaces, quotes, shell metacharacters — all harmless
+ * with array-form execFile where no shell interpretation takes place.
+ *
+ * This named allowlist pattern is legible to CodeQL's path-injection taint
+ * analysis: the `!regex.test → throw` structure is a recognised sanitizer.
+ */
+// eslint-disable-next-line no-control-regex
+export const SAFE_7ZA_OUTPUT_PATH_RE = /^[^\x00-\x1F\x7F-][^\x00-\x1F\x7F]*$/
+
+/**
+ * Validates that `p` is safe to pass as the value of 7za's `-o<dir>` switch,
+ * then returns it unchanged.  Throws if the path is empty, starts with `-`,
+ * or contains control characters.
+ */
+export function validate7zaOutputPath(p: string): string {
+  if (!SAFE_7ZA_OUTPUT_PATH_RE.test(p)) {
+    throw new InvalidConfigurationError(`7za output path is empty, starts with "-", or contains control characters: "${p}"`)
+  }
+  return p
+}
+
 export async function executeAppBuilder(
   args: Array<string>,
   childProcessConsumer?: (childProcess: ChildProcess) => void,
