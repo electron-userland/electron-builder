@@ -62,14 +62,15 @@ export function getBinFromUrl(releaseName: string, filenameWithExt: string, chec
   } else {
     const baseUrl = getBinariesMirrorUrl(githubOrgRepo)
     // Any of these env vars can redirect downloads to a custom release directory.
-    // Validate each one before interpolating into the URL to prevent a malicious
-    // postinstall script from pointing the download at an attacker-controlled server.
-    const rawCustomDir =
-      process.env.NPM_CONFIG_ELECTRON_BUILDER_BINARIES_CUSTOM_DIR ||
-      process.env.npm_config_electron_builder_binaries_custom_dir ||
-      process.env.npm_package_config_electron_builder_binaries_custom_dir ||
-      process.env.ELECTRON_BUILDER_BINARIES_CUSTOM_DIR
-    const middleUrl = rawCustomDir != null ? validateBinaryCustomDir("ELECTRON_BUILDER_BINARIES_CUSTOM_DIR", rawCustomDir) : releaseName
+    // Validate each one before interpolating into the URL.
+    const CUSTOM_DIR_ENV_VARS = [
+      "NPM_CONFIG_ELECTRON_BUILDER_BINARIES_CUSTOM_DIR",
+      "npm_config_electron_builder_binaries_custom_dir",
+      "npm_package_config_electron_builder_binaries_custom_dir",
+      "ELECTRON_BUILDER_BINARIES_CUSTOM_DIR",
+    ] as const
+    const customDirEntry = CUSTOM_DIR_ENV_VARS.map(name => ({ name, value: process.env[name] })).find(e => e.value != null)
+    const middleUrl = customDirEntry != null ? validateBinaryCustomDir(customDirEntry.name, customDirEntry.value!) : releaseName
     url = `${baseUrl}${middleUrl}/${filenameWithExt}`
   }
 

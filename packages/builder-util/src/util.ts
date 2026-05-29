@@ -31,7 +31,7 @@ export * from "./promise"
 export * from "./envUtil"
 export { parseValidEnvVarUrl } from "./envUtil"
 
-export { asArray } from "builder-util-runtime"
+export { asArray, deepAssign, isValidKey } from "builder-util-runtime"
 export * from "./fs"
 
 export { loadCscLink, decodeCscLinkBase64, resolveCscLinkPath } from "./cscLink"
