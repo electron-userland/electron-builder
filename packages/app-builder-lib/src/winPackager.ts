@@ -305,6 +305,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       const outDir = path.join(packContext.appOutDir, ...filepath)
       return walk(outDir, (file, stat) => stat.isDirectory() || this.shouldSignFile(file))
     }
+    // Note that the `swiftshader` directory is absent in modern electron versions, and is listed here only for backwards compatibility.
     const filesToSign = await Promise.all([filesPromise(["resources", "app.asar.unpacked"]), filesPromise(["swiftshader"])])
     for (const file of filesToSign.flat(1)) {
       await this.signIf(file)
