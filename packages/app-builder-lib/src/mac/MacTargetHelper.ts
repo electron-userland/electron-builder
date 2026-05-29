@@ -163,6 +163,10 @@ export class MacTargetHelper {
       throw new InvalidConfigurationError(`Cannot find valid "${certType}" identity to sign MAS installer, please see https://electron.build/code-signing`)
     }
 
+    if (/[\0\r\n"'`$;&|<>]/.test(outDir)) {
+      throw new InvalidConfigurationError(`Output directory contains unsafe shell characters: ${outDir}`)
+    }
+
     // mas uploaded to AppStore, so, use "-" instead of space for name
     // path.basename prevents path traversal if a crafted artifactName contains "../"
     const artifactName = path.basename(this.packager.expandArtifactNamePattern(masOptions, "pkg", arch))

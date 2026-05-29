@@ -310,20 +310,32 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     }
   }
 
+  private assertSafePathForCommandUsage(pathValue: string, description: string): void {
+    // Disallow shell-special/control characters so downstream command invocation cannot be altered
+    // if any consumer accidentally interpolates this path into a shell command string.
+    if (/[\r\n`$&;|<>]/.test(pathValue)) {
+      throw new InvalidConfigurationError(`Invalid ${description}: contains unsupported shell-special characters`)
+    }
+  }
+
   private async packMasTargets(outDir: string, arch: Arch, targets: Array<Target>, prepackaged: string | null | undefined): Promise<void> {
+    const resolvedOutDir = path.resolve(outDir)
+    this.assertSafePathForCommandUsage(resolvedOutDir, "output directory")
+
     for (const target of targets) {
       const platformType = this.getPlatformTypeFromTarget(target.name)
       const platformConfig = this.getPlatformConfig(platformType)
-      const targetOutDir = path.resolve(outDir, `${target.name}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}`)
+      const targetOutDir = path.resolve(resolvedOutDir, `${target.name}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}`)
+      this.assertSafePathForCommandUsage(targetOutDir, "target output directory")
 
-      const relativeTargetOutDir = path.relative(path.resolve(outDir), targetOutDir)
+      const relativeTargetOutDir = path.relative(resolvedOutDir, targetOutDir)
       if (relativeTargetOutDir.startsWith("..") || path.isAbsolute(relativeTargetOutDir)) {
         throw new InvalidConfigurationError(`Invalid target output directory: ${targetOutDir}`)
       }
 
       if (prepackaged == null) {
         await this.doPack({
-          outDir,
+          outDir: resolvedOutDir,
           appOutDir: targetOutDir,
           platformName: platformConfig.platformName,
           arch,
@@ -525,12 +537,16 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     const isMas = packContext.electronPlatformName === "mas"
     const activeConfig = this._activePackConfig ?? this.platformSpecificBuildOptions
     const readDirectoryAndSign = async (sourceDirectory: string, directories: string[], shouldSign: (file: string) => boolean): Promise<boolean> => {
+      const normalizedSourceDirectory = path.resolve(sourceDirectory)
       await Promise.all(
         directories.map(async (file: string) => {
           if (shouldSign(file)) {
             const entryName = path.basename(file)
-            const signTarget = path.resolve(sourceDirectory, entryName)
-            const relativeToSource = path.relative(sourceDirectory, signTarget)
+            if (file !== entryName) {
+              throw new InvalidConfigurationError(`Invalid entry name in source directory: ${file}`)
+            }
+            const signTarget = path.resolve(normalizedSourceDirectory, entryName)
+            const relativeToSource = path.relative(normalizedSourceDirectory, signTarget)
             if (path.isAbsolute(relativeToSource) || relativeToSource.startsWith("..")) {
               throw new InvalidConfigurationError(`Cannot sign file outside of source directory: ${file}`)
             }
