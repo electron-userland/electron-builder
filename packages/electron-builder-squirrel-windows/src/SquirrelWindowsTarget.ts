@@ -54,6 +54,12 @@ export default class SquirrelWindowsTarget extends Target {
     return tmpVendorDirectory
   }
 
+  private assertShellSafePath(filePath: string, description: string): void {
+    if (/[\r\n`$;&|<>]/.test(filePath)) {
+      throw new InvalidConfigurationError(`${description} contains unsafe shell characters: ${filePath}`)
+    }
+  }
+
   private async ensurePathInside(baseDir: string, targetPath: string, description: string): Promise<string> {
     const resolvedBaseDir = path.resolve(baseDir)
     const resolvedTargetPath = path.resolve(targetPath)
@@ -79,6 +85,7 @@ export default class SquirrelWindowsTarget extends Target {
     if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
       throw new InvalidConfigurationError(`${description} must be inside ${canonicalBaseDir}`)
     }
+    this.assertShellSafePath(canonicalTargetPath, description)
     return canonicalTargetPath
   }
 
