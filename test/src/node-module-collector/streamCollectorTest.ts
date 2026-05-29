@@ -19,6 +19,10 @@ class TestCollector extends NodeModulesCollector<any, any> {
   }
   protected async extractProductionDependencyGraph() {}
   protected async collectAllDependencies() {}
+  // expose protected method for testing
+  streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
+    return super.streamCollectorCommandToFile(command, args, cwd, tempOutputFile)
+  }
 }
 
 const BAT_PATH = "C:\\Temp\\pnpm-deadbeef.bat"
