@@ -54,14 +54,32 @@ export default class SquirrelWindowsTarget extends Target {
     return tmpVendorDirectory
   }
 
-  private ensurePathInside(baseDir: string, targetPath: string, description: string): string {
+  private async ensurePathInside(baseDir: string, targetPath: string, description: string): Promise<string> {
     const resolvedBaseDir = path.resolve(baseDir)
     const resolvedTargetPath = path.resolve(targetPath)
-    const relativePath = path.relative(resolvedBaseDir, resolvedTargetPath)
-    if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
-      throw new InvalidConfigurationError(`${description} must be inside ${resolvedBaseDir}`)
+
+    let canonicalBaseDir = resolvedBaseDir
+    let canonicalTargetPath = resolvedTargetPath
+
+    try {
+      canonicalBaseDir = await fs.promises.realpath(resolvedBaseDir)
     }
-    return resolvedTargetPath
+    catch {
+      canonicalBaseDir = resolvedBaseDir
+    }
+
+    try {
+      canonicalTargetPath = await fs.promises.realpath(resolvedTargetPath)
+    }
+    catch {
+      canonicalTargetPath = resolvedTargetPath
+    }
+
+    const relativePath = path.relative(canonicalBaseDir, canonicalTargetPath)
+    if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+      throw new InvalidConfigurationError(`${description} must be inside ${canonicalBaseDir}`)
+    }
+    return canonicalTargetPath
   }
 
   private async generateStubExecutableExe(appOutDir: string, vendorDir: string) {
@@ -75,10 +93,10 @@ export default class SquirrelWindowsTarget extends Target {
       throw new Error(`App executable not found in app directory: ${appOutDir}`)
     }
 
-    const filePath = this.ensurePathInside(appOutDir, path.join(appOutDir, appExe.name), "App executable path")
-    const stubExePath = this.ensurePathInside(appOutDir, path.join(appOutDir, `${this.exeName}_ExecutionStub.exe`), "Stub executable path")
-    const stubExecutableSource = this.ensurePathInside(vendorDir, path.join(vendorDir, "StubExecutable.exe"), "Stub executable source")
-    const writeZipToSetupExe = this.ensurePathInside(vendorDir, path.join(vendorDir, "WriteZipToSetup.exe"), "WriteZipToSetup executable")
+    const filePath = await this.ensurePathInside(appOutDir, path.join(appOutDir, appExe.name), "App executable path")
+    const stubExePath = await this.ensurePathInside(appOutDir, path.join(appOutDir, `${this.exeName}_ExecutionStub.exe`), "Stub executable path")
+    const stubExecutableSource = await this.ensurePathInside(vendorDir, path.join(vendorDir, "StubExecutable.exe"), "Stub executable source")
+    const writeZipToSetupExe = await this.ensurePathInside(vendorDir, path.join(vendorDir, "WriteZipToSetup.exe"), "WriteZipToSetup executable")
 
     await fs.promises.copyFile(stubExecutableSource, stubExePath)
     await execWine(writeZipToSetupExe, null, ["--copy-stub-resources", filePath, stubExePath])

@@ -224,10 +224,10 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
         })
       }
 
-      const targetOutDir = sanitizeDirPath(path.join(sanitizedOutDir, `${targetName}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}`))
+      const targetOutDir = sanitizeDirPath(path.join(sanitizedOutDir, `${targetName}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}`), sanitizedOutDir)
       if (prepackaged == null) {
         await this.doPack({ outDir: sanitizedOutDir, appOutDir: targetOutDir, platformName: "mas", arch, platformSpecificBuildOptions: masBuildOptions, targets: [target] })
-        // codeql[js/shell-command-constructed-from-input] - targetOutDir is sanitized via sanitizeDirPath; productFilename is sanitized via sanitizeFileName
+        // codeql[js/shell-command-constructed-from-input] - targetOutDir is sanitized via sanitizeDirPath with base containment; productFilename is sanitized via sanitizeFileName
         await this.sign(path.join(targetOutDir, `${path.basename(this.appInfo.productFilename)}.app`), targetOutDir, masBuildOptions, arch)
       } else {
         await this.sign(prepackaged, targetOutDir, masBuildOptions, arch)
@@ -588,11 +588,12 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
 
   protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<boolean> {
     const readDirectoryAndSign = async (sourceDirectory: string, directories: string[], shouldSign: (file: string) => boolean): Promise<boolean> => {
+      const safeSourceDirectory = sanitizeDirPath(sourceDirectory)
       await Promise.all(
         directories.map(async (file: string) => {
           if (shouldSign(file)) {
-            // codeql[js/shell-command-constructed-from-input] - sourceDirectory is the validated appOutDir; file is from readdir (direct child), path.basename removes any traversal component
-            await this.sign(path.join(sourceDirectory, path.basename(file)), null, null, packContext.arch)
+            const safeChildPath = sanitizeDirPath(path.join(safeSourceDirectory, path.basename(file)), safeSourceDirectory)
+            await this.sign(safeChildPath, null, null, packContext.arch)
           }
         })
       )

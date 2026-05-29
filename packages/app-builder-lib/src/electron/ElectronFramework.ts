@@ -11,6 +11,7 @@ import {
   statOrNull,
   unlinkIfExists,
   validate7zaOutputPath,
+  to7zaOutputSwitch,
 } from "builder-util"
 import { emptyDir, readdir, rename, rm } from "fs-extra"
 import * as path from "path"
@@ -213,7 +214,7 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, d
       await emptyDir(appOutDir)
       const safeOutDir = validate7zaOutputPath(sanitizeDirPath(appOutDir))
       const safeZipPath = sanitizeDirPath(resolvedDist)
-      await exec(await getPath7za(), ["x", "-bd", safeZipPath, `-o${safeOutDir}`, "-y"]) // codeql[js/shell-command-constructed-from-input] - paths validated by sanitizeDirPath + validate7zaOutputPath; execFile array args (no shell)
+      await exec(await getPath7za(), ["x", "-bd", safeZipPath, to7zaOutputSwitch(safeOutDir), "-y"])
       return false // do not clean up after unpacking, it's a custom bundle and we should respect its configuration/contents as required
     }
 
