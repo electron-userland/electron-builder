@@ -78,7 +78,12 @@ export default class SquirrelWindowsTarget extends Target {
       canonicalTargetPath = await fs.promises.realpath(resolvedTargetPath)
     }
     catch {
-      canonicalTargetPath = resolvedTargetPath
+      // Target may not exist yet; resolve the parent to handle symlinks/junctions consistently
+      try {
+        canonicalTargetPath = path.join(await fs.promises.realpath(path.dirname(resolvedTargetPath)), path.basename(resolvedTargetPath))
+      } catch {
+        canonicalTargetPath = resolvedTargetPath
+      }
     }
 
     const relativePath = path.relative(canonicalBaseDir, canonicalTargetPath)
