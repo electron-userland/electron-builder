@@ -212,7 +212,9 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, d
       log.info({ zipFile: resolvedDist }, "using custom electronDist zip file")
       await emptyDir(appOutDir)
       const safeZipPath = sanitizeDirPath(resolvedDist)
-      await exec(await getPath7za(), ["x", "-bd", safeZipPath, to7zaOutputSwitch(sanitizeDirPath(appOutDir)), "-y"])
+      const safeAppOutDir = sanitizeDirPath(appOutDir)
+      const outputSwitch = to7zaOutputSwitch(safeAppOutDir)
+      await exec(await getPath7za(), ["x", "-bd", safeZipPath, outputSwitch, "-y"])
       return false // do not clean up after unpacking, it's a custom bundle and we should respect its configuration/contents as required
     }
 

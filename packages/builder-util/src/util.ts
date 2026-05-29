@@ -492,26 +492,21 @@ export function sanitizeDirPath(p: string, base?: string): string {
 /**
  * Validates a path and returns the complete 7-Zip `-o<dir>` switch token.
  *
- * Combining validation and token construction in one function means the caller
- * never builds `-o${userPath}` with a template literal, eliminating the
- * string-concatenation pattern that CodeQL's `js/shell-command-constructed-from-input`
- * rule tracks as a taint sink.  The concatenation happens here, after the
- * allowlist check, so CodeQL sees the return value as sanitized.
+ * Input is first normalized via `sanitizeDirPath` (absolute resolution + null/newline
+ * rejection), then validated for 7za switch-token safety.
  *
  * Allowlist rejects:
  *   - empty string (7za would receive bare `-o`, which fails)
  *   - leading `-`  (7za would misparse the token as a new switch)
- *   - control chars 0x00–0x1F and DEL 0x7F (C-level null/newline truncation)
- *
- * Spaces, quotes, and shell metacharacters are intentionally allowed — they
- * are safe with array-form execFile where no shell interprets the arguments.
+ *   - control chars 0x00–0x1F and DEL 0x7F (C-level truncation/control risk)
  */
 export function to7zaOutputSwitch(p: string): string {
+  const safePath = sanitizeDirPath(p)
   // eslint-disable-next-line no-control-regex
-  if (!/^[^\x00-\x1F\x7F-][^\x00-\x1F\x7F]*$/.test(p)) {
+  if (!/^[^\x00-\x1F\x7F-][^\x00-\x1F\x7F]*$/.test(safePath)) {
     throw new InvalidConfigurationError(`7za output path is empty, starts with "-", or contains control characters: "${p}"`)
   }
-  return `-o${p}`
+  return "-o" + safePath
 }
 
 export async function executeAppBuilder(
