@@ -18,7 +18,7 @@ import { cleanupWindowsNative, installWindowsNative, installWindowsVm } from "./
 import { cleanupLinux, installLinux } from "./blackboxInstallLinux"
 import { installMac } from "./blackboxInstallMac"
 
-export const optionsForFlakyE2E = { sequential: true, retry: 0 }
+export const optionsForFlakyE2E = { sequential: true, retry: 0, timeout: 15 * 60 * 1000 } as const
 
 // Resolve only to a ParallelsVmManager — PwshVmManager (used for code-signing on Linux/Mac via Wine)
 // is not capable of installing or running Windows executables and must not be treated as a Windows VM.
