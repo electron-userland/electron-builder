@@ -4,7 +4,6 @@ import {
   asArray,
   AsyncTaskManager,
   DebugLogger,
-  deepAssign,
   defaultArchFromString,
   FileTransformer,
   getArchSuffix,
@@ -15,7 +14,7 @@ import {
   orIfFileNotExist,
   statOrNull,
 } from "builder-util"
-import { Nullish } from "builder-util-runtime"
+import { deepAssign, Nullish } from "builder-util-runtime"
 import { readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import { Minimatch } from "minimatch"

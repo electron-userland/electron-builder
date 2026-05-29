@@ -69,7 +69,9 @@ export interface ElectronDownloadOptions {
   /** @private */
   customFilename?: string | null
 
+  /** @private */
   strictSSL?: boolean
+  /** @private */
   isVerifyChecksum?: boolean
 
   platform?: ElectronPlatformName
@@ -410,6 +412,15 @@ function buildElectronArtifactConfig(options: ArtifactDownloadOptions): Electron
       artifactConfig = { ...artifactConfig, ...rest, cacheRoot, mirrorOptions }
     } else {
       const { mirror, customDir, cache, customFilename, isVerifyChecksum, strictSSL, platform: overridePlatform, arch: overrideArch } = electronDownload
+      // strictSSL: false disables TLS certificate validation for all
+      // electron/tool downloads.  This option exists only for air-gapped or
+      // self-signed-cert environments; ensure your build network is fully trusted.
+      if (strictSSL === false) {
+        log.warn(
+          { option: "electronDownload.strictSSL" },
+          "strictSSL is false — TLS certificate validation is DISABLED for Electron downloads. Only use this option in a trusted, isolated build environment."
+        )
+      }
       artifactConfig = {
         ...artifactConfig,
         unsafelyDisableChecksums: isVerifyChecksum === false,

@@ -1,16 +1,74 @@
-import { CommonLinuxOptions } from "../options/linuxOptions"
-import { asArray, deepAssign, exists, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { CompressionLevel } from "../core"
 import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { join } from "path"
 import * as semver from "semver"
+import { CommonLinuxOptions } from "../options/linuxOptions"
+import { asArray, exists, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { LinuxPackager } from "../linuxPackager"
 import { IconInfo } from "../platformPackager"
 import { SnapCore } from "./snap/SnapTarget"
 import { SnapCore24 } from "./snap/core24"
 import { SnapCoreCustom } from "./snap/coreCustom"
 import { SnapCoreLegacy } from "./snap/coreLegacy"
+import { deepAssign } from "builder-util-runtime"
+
+/**
+ * Escape a string value for use in a freedesktop .desktop file string field
+ * (Name, Comment, StartupWMClass, etc.).
+ *
+ * The freedesktop Desktop Entry Specification requires that the following
+ * characters be escaped in string / localestring values:
+ *   \n  →  \\n      (newline — would inject new key=value lines otherwise)
+ *   \r  →  \\r
+ *   \t  →  \\t
+ *   \\  →  \\\\
+ *
+ * Without escaping, a productName or description containing a literal newline
+ * can inject arbitrary key=value pairs into the generated .desktop file,
+ * potentially overriding the Exec key.
+ *
+ * @see https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#value-types
+ */
+function desktopStringEscape(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/\t/g, "\\t")
+}
+
+/**
+ * Characters that require an Exec argument to be double-quoted per the
+ * freedesktop Desktop Entry Specification.  Plain alphanumeric args and
+ * field codes must NOT be wrapped in quotes.
+ *
+ * @see https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#exec-variables
+ */
+const EXEC_RESERVED_RE = /[\s"'`\\<>~|&;$*?#()]/
+
+/**
+ * Quote a single argument for use in a .desktop file Exec key.
+ *
+ * Field codes (`%f`, `%u`, `%F`, `%U`, etc.) MUST be left unquoted — the
+ * desktop launcher only expands them in unquoted token positions.  Wrapping
+ * them in `"…"` causes the launcher to treat them as literal strings, which
+ * breaks file-association / drag-and-drop functionality.
+ *
+ * For all other arguments, double-quoting is used when the argument contains
+ * any character that would be misinterpreted by the launcher without quoting
+ * (spaces, shell metacharacters, etc.).  Safe plain-word args are passed
+ * through unchanged to keep the Exec line readable.
+ *
+ * @see https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#exec-variables
+ */
+function desktopExecArgEscape(arg: string): string {
+  // Field codes (%f, %u, %F, %U, %i, %c, %k, …) must never be quoted.
+  if (/^%[a-zA-Z]$/.test(arg)) {
+    return arg
+  }
+  // Only quote when the arg actually contains characters that need it.
+  if (EXEC_RESERVED_RE.test(arg)) {
+    return `"${arg.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`
+  }
+  return arg
+}
 
 function mapLinuxCompressionToSnap(level: CompressionLevel | null | undefined): "xz" | "lzo" | undefined {
   if (level === "store") {
@@ -199,7 +257,9 @@ export class LinuxTargetHelper {
       }
       if (executableArgs) {
         exec += " "
-        exec += executableArgs.join(" ")
+        // Each arg is double-quoted per the freedesktop Exec key spec so that
+        // spaces, $, ;, & and other reserved characters are not misinterpreted.
+        exec += executableArgs.map(desktopExecArgEscape).join(" ")
       }
       // https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#exec-variables
       const execCodes = ["%f", "%u", "%F", "%U"]
@@ -209,7 +269,10 @@ export class LinuxTargetHelper {
     }
 
     const desktopMeta: any = {
-      Name: appInfo.productName,
+      // String values are escaped per the freedesktop spec (\\, \n, \r, \t)
+      // so that a product name containing a newline cannot inject new key=value
+      // pairs into the .desktop file (e.g. overriding the Exec key).
+      Name: desktopStringEscape(appInfo.productName),
       Exec: exec,
       Terminal: "false",
       Type: "Application",
@@ -219,14 +282,14 @@ export class LinuxTargetHelper {
       // to get WM_CLASS of running window: xprop WM_CLASS
       // StartupWMClass doesn't work for unicode
       // https://github.com/electron/electron/blob/2-0-x/atom/browser/native_window_views.cc#L226
-      StartupWMClass: appInfo.productName,
+      StartupWMClass: desktopStringEscape(appInfo.productName),
       ...extra,
       ...(targetSpecificOptions.desktop?.entry ?? {}),
     }
 
     const description = this.getDescription(targetSpecificOptions)
     if (!isEmptyOrSpaces(description)) {
-      desktopMeta.Comment = description
+      desktopMeta.Comment = desktopStringEscape(description)
     }
 
     const mimeTypes: Array<string> = asArray(targetSpecificOptions.mimeTypes)
