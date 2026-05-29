@@ -12,14 +12,14 @@ import { getNotLocalizedLicenseFile } from "../../util/license"
 import { LinuxTargetHelper } from "../LinuxTargetHelper"
 import { createStageDir, StageDir } from "../targetUtil"
 import { buildStaticRuntimeAppImage } from "./appImageUtil"
-import { BlockMapDataHolder } from "builder-util-runtime"
+import { BlockMapDataHolder, deepAssign } from "builder-util-runtime"
 
 // https://unix.stackexchange.com/questions/375191/append-to-sub-directory-inside-squashfs-file
 
 export const APP_RUN_ENTRYPOINT = "AppRun"
 
 export default class AppImageTarget extends Target {
-  readonly options: AppImageOptions = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
+  readonly options: AppImageOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, (this.packager.config as any)[this.name])
 
   private readonly desktopEntry: Lazy<string>
 

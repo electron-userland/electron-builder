@@ -71,7 +71,7 @@ describe("clearCache", () => {
 
   test("calls getCacheDirectory with isAvoidSystemOnWindows=false, allowEnvVarOverride=false", async () => {
     await clearCache()
-    expect(getCacheDirectory).toHaveBeenCalledWith(false, false)
+    expect(getCacheDirectory).toHaveBeenCalledWith({ isAvoidSystemOnWindows: false, allowEnvVarOverride: false })
   })
 
   test("deletes cache dir when it exists and user confirms", async () => {

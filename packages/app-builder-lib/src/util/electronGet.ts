@@ -69,7 +69,9 @@ export interface ElectronDownloadOptions {
   /** @private */
   customFilename?: string | null
 
+  /** @private */
   strictSSL?: boolean
+  /** @private */
   isVerifyChecksum?: boolean
 
   platform?: ElectronPlatformName
@@ -86,7 +88,8 @@ function hashUrlSafe(input: string, length = 6): string {
   return out.length >= length ? out.slice(0, length) : out.padStart(length, "0")
 }
 
-export function getCacheDirectory(isAvoidSystemOnWindows = false, allowEnvVarOverride = true): string {
+export function getCacheDirectory(options: { isAvoidSystemOnWindows?: boolean; allowEnvVarOverride: boolean }): string {
+  const { isAvoidSystemOnWindows = true, allowEnvVarOverride } = options
   const env = process.env.ELECTRON_BUILDER_CACHE?.trim()
   if (allowEnvVarOverride && env && path.parse(env).root) {
     return env
@@ -102,6 +105,7 @@ export function getCacheDirectory(isAvoidSystemOnWindows = false, allowEnvVarOve
   if (platform === "win32") {
     const localAppData = process.env.LOCALAPPDATA?.trim()
     const username = process.env.USERNAME?.trim()?.toLowerCase()
+    // https://github.com/electron-userland/electron-builder/issues/1164
     const isSystemUser = isAvoidSystemOnWindows && (localAppData?.toLowerCase()?.includes("\\windows\\system32\\") || username === "system")
     if (!localAppData || isSystemUser) {
       return path.join(os.tmpdir(), `${appName}-cache`)
@@ -173,7 +177,7 @@ export async function extractArchive(file: string, dir: string) {
   await fs.mkdir(tmpDir, { recursive: true })
 
   const release = await lockfile.lock(tmpDir, {
-    retries: { retries: 5, minTimeout: 1000, maxTimeout: 5000 },
+    retries: { retries: 15, minTimeout: 1000, maxTimeout: 5000 },
     stale: 120000, // Increased from 60s to allow long-running extractions
   })
 
@@ -298,7 +302,7 @@ async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact
   }
 
   const release = await lockfile.lock(extractDir, {
-    retries: { retries: 5, minTimeout: 1000, maxTimeout: 5000 },
+    retries: { retries: 15, minTimeout: 1000, maxTimeout: 5000 },
     stale: 120000,
   })
   let downloadedFile: string | null = null
@@ -365,7 +369,7 @@ export async function downloadBuilderToolset(options: {
   const fullUrl = overrideUrl ? `${overrideUrl}/${filenameWithExt}` : `${baseUrl}${releaseName}/${filenameWithExt}`
   const suffix = hashUrlSafe(fullUrl, 5)
   const folderName = `${filenameWithExt.replace(/\.(tar\.gz|tgz|zip|7z)$/, "")}-${suffix}`
-  const extractDir = path.join(getCacheDirectory(), releaseName, folderName)
+  const extractDir = path.join(getCacheDirectory({ allowEnvVarOverride: true }), releaseName, folderName)
 
   // Use resolveAssetURL so @electron/get's ELECTRON_MIRROR env var check cannot override
   // the builder-binaries URL we've already resolved (see getArtifactRemoteURL in @electron/get).
@@ -376,7 +380,7 @@ export async function downloadBuilderToolset(options: {
   const config: ElectronDownloadRequest & ElectronDownloadRequestOptions & { isGeneric: true } = {
     version: "9.9.9", // must be >1.3.2 to bypass @electron/get validation shortcut
     artifactName: filenameWithExt,
-    cacheRoot: path.resolve(getCacheDirectory(), "downloads"),
+    cacheRoot: path.resolve(getCacheDirectory({ allowEnvVarOverride: true }), "downloads"),
     cacheMode: resolveCacheMode(),
     ...(checksums != null ? { checksums } : { unsafelyDisableChecksums: true }),
     mirrorOptions,
@@ -408,6 +412,15 @@ function buildElectronArtifactConfig(options: ArtifactDownloadOptions): Electron
       artifactConfig = { ...artifactConfig, ...rest, cacheRoot, mirrorOptions }
     } else {
       const { mirror, customDir, cache, customFilename, isVerifyChecksum, strictSSL, platform: overridePlatform, arch: overrideArch } = electronDownload
+      // strictSSL: false disables TLS certificate validation for all
+      // electron/tool downloads.  This option exists only for air-gapped or
+      // self-signed-cert environments; ensure your build network is fully trusted.
+      if (strictSSL === false) {
+        log.warn(
+          { option: "electronDownload.strictSSL" },
+          "strictSSL is false — TLS certificate validation is DISABLED for Electron downloads. Only use this option in a trusted, isolated build environment."
+        )
+      }
       artifactConfig = {
         ...artifactConfig,
         unsafelyDisableChecksums: isVerifyChecksum === false,
@@ -447,7 +460,7 @@ export async function downloadElectronArtifact(options: ArtifactDownloadOptions)
 
   const suffix = hashUrlSafe(JSON.stringify(artifactConfig), 5)
   const folderName = `${artifactName}-v${version}-${platform}-${arch}-${suffix}`
-  const extractDir = path.join(getCacheDirectory(), `${artifactName}-v${version}`, folderName)
+  const extractDir = path.join(getCacheDirectory({ allowEnvVarOverride: true }), `${artifactName}-v${version}`, folderName)
 
   return downloadAndExtract(artifactConfig, extractDir, artifactName)
 }
