@@ -20,8 +20,8 @@ import { chooseNotNull, DoPackOptions, PlatformPackager } from "./platformPackag
 import { ArchiveTarget } from "./targets/ArchiveTarget"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
-import { expandMacro as doExpandMacro } from "./util/macroExpander"
 import { isMacOsHighSierra } from "./util/macosVersion"
+import { expandMacro as doExpandMacro } from "./util/macroExpander"
 import { resolveFunction } from "./util/resolve"
 
 export type CustomMacSignOptions = SignOptions

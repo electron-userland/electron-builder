@@ -32,7 +32,7 @@ const linuxToolsMacChecksums = {
 } as const
 
 export async function getLinuxToolsPath(): Promise<string> {
-  const envPath = await resolveEnvToolsetPath("LINUX_TOOLS_MAC_PATH")
+  const envPath = await resolveEnvToolsetPath("LINUX_TOOLS_MAC_PATH", "directory")
   if (envPath != null) {
     return envPath
   }
@@ -60,7 +60,7 @@ export async function getLinuxToolsMacToolset() {
 }
 
 export async function getFpmPath() {
-  const customFpmPath = await resolveEnvToolsetPath("CUSTOM_FPM_PATH")
+  const customFpmPath = await resolveEnvToolsetPath("CUSTOM_FPM_PATH", "file")
   if (customFpmPath != null) {
     return customFpmPath
   }
@@ -107,7 +107,7 @@ export async function getAppImageTools(appimageToolVersion: ToolsetConfig["appim
   })
 
   const filenameWithExt = "appimage-tools-runtime-20251108.tar.gz"
-  const envPath = await resolveEnvToolsetPath("APPIMAGE_TOOLS_PATH")
+  const envPath = await resolveEnvToolsetPath("APPIMAGE_TOOLS_PATH", "directory")
   if (envPath != null) {
     return getPaths(envPath)
   }

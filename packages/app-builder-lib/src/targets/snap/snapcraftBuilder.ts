@@ -1,4 +1,4 @@
-import { deepAssign, InvalidConfigurationError, isEmptyOrSpaces, log, spawn } from "builder-util"
+import { InvalidConfigurationError, isEmptyOrSpaces, log, spawn } from "builder-util"
 import * as childProcess from "child_process"
 import { randomUUID } from "crypto"
 import { resolveSnapCredentials } from "electron-publish"
@@ -8,6 +8,7 @@ import * as util from "util"
 import { LinuxPackager } from "../../linuxPackager"
 import { RemoteBuildOptions } from "../../options/SnapOptions"
 import { SnapcraftYAML } from "./snapcraft"
+import { deepAssign } from "builder-util-runtime"
 
 const execAsync = util.promisify(childProcess.exec)
 

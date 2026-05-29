@@ -1,5 +1,5 @@
 import { appBuilderPath } from "app-builder-bin"
-import { retry, Nullish, safeStringifyJson } from "builder-util-runtime"
+import { retry, Nullish, safeStringifyJson, isValidKey, deepAssign } from "builder-util-runtime"
 import * as chalk from "chalk"
 import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_process"
 import { spawn as _spawn } from "cross-spawn"
@@ -13,7 +13,6 @@ import { debug, log } from "./log"
 import { exists } from "./fs"
 import { mkdir } from "fs-extra"
 import { isEmptyOrSpaces } from "./stringUtil"
-import { isValidKey } from "./mapper"
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
@@ -31,12 +30,10 @@ export { buildGotProxyAgent, httpExecutor, NodeHttpExecutor } from "./nodeHttpEx
 export * from "./promise"
 export * from "./envUtil"
 export { parseValidEnvVarUrl } from "./envUtil"
-export { isValidKey } from "./mapper"
 
-export { asArray } from "builder-util-runtime"
+export { asArray, deepAssign, isValidKey } from "builder-util-runtime"
 export * from "./fs"
 
-export { deepAssign } from "./deepAssign"
 export { loadCscLink, decodeCscLinkBase64, resolveCscLinkPath } from "./cscLink"
 
 export { getPath7x, getPath7za } from "./7za"
@@ -476,7 +473,7 @@ export async function executeAppBuilder(
   }
 
   if (extraOptions.env != null) {
-    Object.assign(env, extraOptions.env)
+    deepAssign(env, extraOptions.env)
   }
 
   function runCommand() {

@@ -1,5 +1,5 @@
 import { Arch, asArray, exec, getArchSuffix, log, serializeToYaml, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
-import { Nullish } from "builder-util-runtime"
+import { deepAssign, Nullish } from "builder-util-runtime"
 import { copyFile, outputFile, stat } from "fs-extra"
 import { mkdir, readFile } from "fs/promises"
 import * as path from "path"
@@ -32,7 +32,7 @@ interface ScriptFiles {
 }
 
 export default class FpmTarget extends Target {
-  readonly options: LinuxTargetSpecificOptions = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
+  readonly options: LinuxTargetSpecificOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, (this.packager.config as any)[this.name])
 
   private readonly scriptFiles: Promise<ScriptFiles>
 
@@ -51,8 +51,34 @@ export default class FpmTarget extends Target {
     const defaultTemplatesDir = getTemplatePath("linux")
 
     const packager = this.packager
-    const templateOptions = {
+
+    /** Escape a string value for safe interpolation inside a bash single-quoted
+     *  string (`'...'`).  The only character that can break out of a POSIX
+     *  single-quoted context is a literal single-quote; we replace it with the
+     *  standard `'\''` sequence (end quote → escaped quote → start quote).
+     *
+     *  sanitize-filename removes characters that are illegal in filenames but
+     *  deliberately keeps `'` because it is valid on POSIX systems.  Without
+     *  this extra step, an app named `O'Brien` would terminate the quoted path
+     *  inside the generated after-install / after-remove shell scripts, enabling
+     *  arbitrary command injection when the package is installed as root. */
+    function bashSingleQuoteEscape(value: string): string {
+      return value.replace(/'/g, "'\\''")
+    }
+
+    // Bash-script templates embed executable and sanitizedProductName inside
+    // single-quoted shell paths — escape single quotes to prevent injection.
+    const bashTemplateOptions = {
       // old API compatibility
+      executable: bashSingleQuoteEscape(packager.executableName),
+      sanitizedProductName: bashSingleQuoteEscape(packager.appInfo.sanitizedProductName),
+      productFilename: packager.appInfo.productFilename,
+      ...packager.platformSpecificBuildOptions,
+    }
+
+    // The AppArmor profile template uses these values inside double-quoted
+    // AppArmor path patterns — no single-quote escaping needed or wanted.
+    const appArmorTemplateOptions = {
       executable: packager.executableName,
       sanitizedProductName: packager.appInfo.sanitizedProductName,
       productFilename: packager.appInfo.productFilename,
@@ -67,9 +93,9 @@ export default class FpmTarget extends Target {
     }
 
     return {
-      afterInstall: await writeConfigFile(packager.info.tempDirManager, getResource(this.options.afterInstall, "after-install.tpl"), templateOptions),
-      afterRemove: await writeConfigFile(packager.info.tempDirManager, getResource(this.options.afterRemove, "after-remove.tpl"), templateOptions),
-      appArmor: await writeConfigFile(packager.info.tempDirManager, getResource(this.options.appArmorProfile, "apparmor-profile.tpl"), templateOptions),
+      afterInstall: await writeConfigFile(packager.info.tempDirManager, getResource(this.options.afterInstall, "after-install.tpl"), bashTemplateOptions),
+      afterRemove: await writeConfigFile(packager.info.tempDirManager, getResource(this.options.afterRemove, "after-remove.tpl"), bashTemplateOptions),
+      appArmor: await writeConfigFile(packager.info.tempDirManager, getResource(this.options.appArmorProfile, "apparmor-profile.tpl"), appArmorTemplateOptions),
     }
   }
 
