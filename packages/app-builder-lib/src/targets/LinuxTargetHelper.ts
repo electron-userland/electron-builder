@@ -1,17 +1,17 @@
-import { CompressionLevel } from "../core"
+import { asArray, exists, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
+import { deepAssign } from "builder-util-runtime"
 import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { join } from "path"
 import * as semver from "semver"
-import { CommonLinuxOptions } from "../options/linuxOptions"
-import { asArray, exists, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
+import { CompressionLevel } from "../core"
 import { LinuxPackager } from "../linuxPackager"
+import { CommonLinuxOptions } from "../options/linuxOptions"
 import { IconInfo } from "../platformPackager"
 import { SnapCore } from "./snap/SnapTarget"
 import { SnapCore24 } from "./snap/core24"
 import { SnapCoreCustom } from "./snap/coreCustom"
 import { SnapCoreLegacy } from "./snap/coreLegacy"
-import { deepAssign } from "builder-util-runtime"
 
 /**
  * Escape a string value for use in a freedesktop .desktop file string field
@@ -268,24 +268,26 @@ export class LinuxTargetHelper {
       }
     }
 
-    const desktopMeta: any = {
-      // String values are escaped per the freedesktop spec (\\, \n, \r, \t)
-      // so that a product name containing a newline cannot inject new key=value
-      // pairs into the .desktop file (e.g. overriding the Exec key).
-      Name: desktopStringEscape(appInfo.productName),
-      Exec: exec,
-      Terminal: "false",
-      Type: "Application",
-      Icon: packager.executableName,
-      // https://askubuntu.com/questions/367396/what-represent-the-startupwmclass-field-of-a-desktop-file
-      // must be set to package.json name (because it is Electron set WM_CLASS)
-      // to get WM_CLASS of running window: xprop WM_CLASS
-      // StartupWMClass doesn't work for unicode
-      // https://github.com/electron/electron/blob/2-0-x/atom/browser/native_window_views.cc#L226
-      StartupWMClass: desktopStringEscape(appInfo.productName),
-      ...extra,
-      ...(targetSpecificOptions.desktop?.entry ?? {}),
-    }
+    const desktopMeta = deepAssign<any>(
+      {
+        // String values are escaped per the freedesktop spec (\\, \n, \r, \t)
+        // so that a product name containing a newline cannot inject new key=value
+        // pairs into the .desktop file (e.g. overriding the Exec key).
+        Name: desktopStringEscape(appInfo.productName),
+        Exec: exec,
+        Terminal: "false",
+        Type: "Application",
+        Icon: packager.executableName,
+        // https://askubuntu.com/questions/367396/what-represent-the-startupwmclass-field-of-a-desktop-file
+        // must be set to package.json name (because it is Electron set WM_CLASS)
+        // to get WM_CLASS of running window: xprop WM_CLASS
+        // StartupWMClass doesn't work for unicode
+        // https://github.com/electron/electron/blob/2-0-x/atom/browser/native_window_views.cc#L226
+        StartupWMClass: desktopStringEscape(appInfo.productName),
+      },
+      extra,
+      targetSpecificOptions.desktop?.entry ?? {}
+    )
 
     const description = this.getDescription(targetSpecificOptions)
     if (!isEmptyOrSpaces(description)) {

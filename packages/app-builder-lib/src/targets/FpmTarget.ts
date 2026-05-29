@@ -1,5 +1,5 @@
 import { Arch, asArray, exec, getArchSuffix, log, serializeToYaml, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
-import { Nullish } from "builder-util-runtime"
+import { deepAssign, Nullish } from "builder-util-runtime"
 import { copyFile, outputFile, stat } from "fs-extra"
 import { mkdir, readFile } from "fs/promises"
 import * as path from "path"
@@ -32,7 +32,7 @@ interface ScriptFiles {
 }
 
 export default class FpmTarget extends Target {
-  readonly options: LinuxTargetSpecificOptions = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
+  readonly options: LinuxTargetSpecificOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, (this.packager.config as any)[this.name])
 
   private readonly scriptFiles: Promise<ScriptFiles>
 
