@@ -125,12 +125,7 @@ export async function installWindowsVm(dirPath: string, arch: Arch, vm: Parallel
       [
         `$d = Join-Path ([Environment]::GetFolderPath('ProgramFiles')) 'TestApp'`,
         `Remove-Item $d -Recurse -Force -ErrorAction SilentlyContinue`,
-        `'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall',`,
-        `'HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall' | ForEach-Object {`,
-        `    Get-ChildItem $_ -ErrorAction SilentlyContinue |`,
-        `    Where-Object { (Get-ItemProperty -Path $_.PSPath -Name DisplayName -ErrorAction SilentlyContinue).DisplayName -eq 'TestApp' } |`,
-        `    Remove-Item -Recurse -Force -ErrorAction SilentlyContinue`,
-        `}`,
+        `@('HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall', 'HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall') | ForEach-Object { Get-ChildItem $_ -ErrorAction SilentlyContinue | Where-Object { (Get-ItemProperty -Path $_.PSPath -Name DisplayName -ErrorAction SilentlyContinue).DisplayName -eq 'TestApp' } | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue }`,
       ].join("; "),
     ])
     await new Promise(resolve => setTimeout(resolve, 1000))

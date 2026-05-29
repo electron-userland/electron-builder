@@ -144,7 +144,7 @@ beforeEach(
     // Check whether this test OR any ancestor describe suite carries the heavy flag.
     // describe.heavy(...) puts meta.heavy on the suite, not on individual test tasks,
     // so we must walk the suite chain rather than just checking task.meta.
-    if (!isHeavy(task)) {
+    if (isHeavy(task)) {
       heavyContexts.add(ctx)
       // Acquire mutex — may wait for a long time if another heavy test is running.
       // The actual test timeout only starts once the mutex is acquired.
