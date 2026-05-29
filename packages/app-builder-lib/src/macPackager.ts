@@ -552,6 +552,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
             if (path.isAbsolute(relativeToSource) || relativeToSource.startsWith("..")) {
               throw new InvalidConfigurationError(`Cannot sign file outside of source directory: ${file}`)
             }
+            this.assertSafePathForCommandUsage(signTarget, "code signing target")
             await this.sign(signTarget, null, isMas ? activeConfig : null, packContext.arch, isMas)
           }
         })
