@@ -27,7 +27,7 @@ async function createFiles(appDir: string) {
   await fs.symlink(path.join(appDir, "assets", "subdir", "file3"), path.join(appDir, "file-symlink3")) // symlink down
 }
 
-test.ifNotWindows.ifDevOrLinuxCi("unpackDir one", ({ expect }) =>
+test.ifNotWindows("unpackDir one", ({ expect }) =>
   app(
     expect,
     {
@@ -56,7 +56,7 @@ async function assertDirs(expect: ExpectStatic, context: PackedContext) {
   await verifyAsarFileTree(expect, resourceDir)
 }
 
-test.ifNotWindows.ifDevOrLinuxCi("unpackDir", ({ expect }) => {
+test.ifNotWindows("unpackDir", ({ expect }) => {
   return assertPack(
     expect,
     "test-app",
@@ -73,7 +73,7 @@ test.ifNotWindows.ifDevOrLinuxCi("unpackDir", ({ expect }) => {
   )
 })
 
-test.ifDevOrLinuxCi("asarUnpack and files ignore", ({ expect }) => {
+test.ifNotWindows("asarUnpack and files ignore", ({ expect }) => {
   return assertPack(
     expect,
     "test-app",
@@ -163,7 +163,7 @@ test.ifNotWindows("symlinks everywhere with static framework", ({ expect }) =>
 )
 
 // https://github.com/electron-userland/electron-builder/issues/611
-test.ifDevOrLinuxCi("failed peer dep", ({ expect }) => {
+test.ifNotWindows("failed peer dep", ({ expect }) => {
   return assertPack(
     expect,
     "test-app-one",
@@ -192,7 +192,7 @@ test.ifDevOrLinuxCi("failed peer dep", ({ expect }) => {
   )
 })
 
-test.ifDevOrLinuxCi("ignore node_modules", ({ expect }) => {
+test.ifNotWindows("ignore node_modules", ({ expect }) => {
   return assertPack(
     expect,
     "test-app-one",
@@ -222,7 +222,7 @@ test.ifDevOrLinuxCi("ignore node_modules", ({ expect }) => {
   )
 })
 
-test.ifDevOrLinuxCi("asarUnpack node_modules", ({ expect }) => {
+test.ifNotWindows("asarUnpack node_modules", ({ expect }) => {
   return assertPack(
     expect,
     "test-app-one",

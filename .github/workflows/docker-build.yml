@@ -2,6 +2,7 @@ name: Build Docker Images
 
 on:
   workflow_call:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -13,15 +14,16 @@ jobs:
       fail-fast: false
       matrix:
         nodeVersion: [
-          22.14.0,
-          20.18.3,
-          18.20.7,
+          24.15.0,
+          22.22.2,
+          20.20.2,
+          18.20.8,
           16.20.2,
           14.21.3
         ]
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Cleanup runner
         uses: ./.github/actions/cleanup-runner
@@ -41,7 +43,7 @@ jobs:
           docker save -o ${{ runner.temp }}/electron-builder-all-${{ env.NODE_TAG }}.tar electronuserland/builder
 
       - name: Bundle all images
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: electron-builder-all-${{ env.NODE_TAG }}
           path: ${{ runner.temp }}/electron-builder-all-${{ env.NODE_TAG }}.tar

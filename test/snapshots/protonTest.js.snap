@@ -19,25 +19,7 @@ exports[`linux 1`] = `
 
 exports[`mac 1`] = `
 {
-  "mac": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0.dmg",
-      "safeArtifactName": "TestApp-1.1.0.dmg",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "Test App ßW-1.1.0.dmg.blockmap",
-      "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
+  "mac": [],
 }
 `;
 

@@ -1,16 +1,32 @@
-import { executeAppBuilder } from "builder-util"
+import * as get from "@electron/get"
+import { ElectronDownloadCacheMode } from "@electron/get"
+import * as fs from "fs/promises"
+import { log, parseValidEnvVarUrl } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { sanitizeFileName } from "builder-util/out/filename"
 import * as path from "path"
+import { downloadBuilderToolset, getBinariesMirrorUrl, getCacheDirectory } from "./util/electronGet"
 
 const versionToPromise = new Map<string, Promise<string>>()
 
-export function download(url: string, output: string, checksum?: string | null): Promise<void> {
-  const args = ["download", "--url", url, "--output", output]
-  if (checksum != null) {
-    args.push("--sha512", checksum)
+export async function download(url: string, output: string, checksum?: string | null): Promise<void> {
+  const filenameWithExt = path.basename(new URL(url).pathname)
+  if (checksum == null) {
+    // Without a checksum, a download intercepted via a rogue mirror, tampered CDN
+    // edge, or DNS spoofing can substitute a malicious payload undetected.
+    // Callers should supply a checksum whenever possible.
+    log.warn({ url }, "downloading without an integrity checksum — the download is not verified against a known-good hash")
   }
-  return executeAppBuilder(args) as Promise<any>
+  const downloadedFile = await get.downloadArtifact({
+    version: "9.9.9",
+    artifactName: filenameWithExt,
+    cacheRoot: path.resolve(getCacheDirectory({ allowEnvVarOverride: true }), "downloads"),
+    cacheMode: ElectronDownloadCacheMode.ReadWrite,
+    ...(checksum != null ? { checksums: { [filenameWithExt]: checksum } } : { unsafelyDisableChecksums: true }),
+    mirrorOptions: { resolveAssetURL: async () => Promise.resolve(url) },
+    isGeneric: true,
+  })
+  await fs.copyFile(downloadedFile, output)
 }
 
 export function getBinFromCustomLoc(name: string, version: string, binariesLocUrl: string, checksum: string): Promise<string> {
@@ -18,23 +34,43 @@ export function getBinFromCustomLoc(name: string, version: string, binariesLocUr
   return getBin(dirName, binariesLocUrl, checksum)
 }
 
+/**
+ * Validates a binary-download custom-directory value read from an environment
+ * variable.  These values are interpolated directly into a download URL; a
+ * malicious value (e.g. set via a postinstall hook in node_modules) could
+ * redirect tool downloads to an attacker-controlled server.
+ *
+ * Allowed: relative path components such as "v1.0.0-custom" or "my-mirror/nsis".
+ * Rejected: anything containing "://", ".." (traversal), or a leading "/" (which
+ * could make the resulting URL protocol-relative or change the host).
+ */
+function validateBinaryCustomDir(envVarName: string, value: string): string {
+  if (value.includes("://") || value.includes("..") || value.startsWith("/")) {
+    throw new Error(`${envVarName} must be a safe relative path component (e.g. "v1.0.0-custom"). Values containing "://", "..", or a leading "/" are not allowed. Got: "${value}"`)
+  }
+  return value
+}
+
 export function getBinFromUrl(releaseName: string, filenameWithExt: string, checksum: string, githubOrgRepo = "electron-userland/electron-builder-binaries"): Promise<string> {
+  if (/[/\\]|^\.\./.test(filenameWithExt) || filenameWithExt.includes("..")) {
+    throw new Error(`getBinFromUrl: unsafe filenameWithExt "${filenameWithExt}" — must be a plain filename with no path separators or traversal sequences`)
+  }
   let url: string
-  if (process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL) {
-    url = process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL + "/" + filenameWithExt
+  const overrideUrl = parseValidEnvVarUrl("ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL")
+  if (overrideUrl != null) {
+    url = overrideUrl + "/" + filenameWithExt
   } else {
-    const baseUrl =
-      process.env.NPM_CONFIG_ELECTRON_BUILDER_BINARIES_MIRROR ||
-      process.env.npm_config_electron_builder_binaries_mirror ||
-      process.env.npm_package_config_electron_builder_binaries_mirror ||
-      process.env.ELECTRON_BUILDER_BINARIES_MIRROR ||
-      `https://github.com/${githubOrgRepo}/releases/download/`
-    const middleUrl =
-      process.env.NPM_CONFIG_ELECTRON_BUILDER_BINARIES_CUSTOM_DIR ||
-      process.env.npm_config_electron_builder_binaries_custom_dir ||
-      process.env.npm_package_config_electron_builder_binaries_custom_dir ||
-      process.env.ELECTRON_BUILDER_BINARIES_CUSTOM_DIR ||
-      releaseName
+    const baseUrl = getBinariesMirrorUrl(githubOrgRepo)
+    // Any of these env vars can redirect downloads to a custom release directory.
+    // Validate each one before interpolating into the URL.
+    const CUSTOM_DIR_ENV_VARS = [
+      "NPM_CONFIG_ELECTRON_BUILDER_BINARIES_CUSTOM_DIR",
+      "npm_config_electron_builder_binaries_custom_dir",
+      "npm_package_config_electron_builder_binaries_custom_dir",
+      "ELECTRON_BUILDER_BINARIES_CUSTOM_DIR",
+    ] as const
+    const customDirEntry = CUSTOM_DIR_ENV_VARS.map(name => ({ name, value: process.env[name] })).find(e => e.value != null)
+    const middleUrl = customDirEntry != null ? validateBinaryCustomDir(customDirEntry.name, customDirEntry.value!) : releaseName
     url = `${baseUrl}${middleUrl}/${filenameWithExt}`
   }
 
@@ -42,27 +78,31 @@ export function getBinFromUrl(releaseName: string, filenameWithExt: string, chec
   return getBin(cacheKey, url, checksum)
 }
 
-export function getBin(cacheKey: string, url?: string | null, checksum?: string | null): Promise<string> {
-  // Old cache is ignored if cache environment variable changes
+export function getBin(cacheKey: string, url?: string | Nullish, checksum?: string | Nullish): Promise<string> {
   const cacheName = sanitizeFileName(`${process.env.ELECTRON_BUILDER_CACHE ?? ""}${cacheKey}`)
-  let promise = versionToPromise.get(cacheName) // if rejected, we will try to download again
-
+  let promise = versionToPromise.get(cacheName)
   if (promise != null) {
     return promise
   }
 
-  promise = doGetBin(cacheKey, url, checksum)
+  if (url == null) {
+    throw new Error(
+      `getBin("${cacheKey}"): a download URL is required. ` +
+        `The no-URL legacy path (e.g. winCodeSign "0.0.0") is no longer used — ` +
+        `it now downloads from winCodeSign-2.6.0 automatically.`
+    )
+  }
+
+  const filenameWithExt = path.basename(url)
+  const overrideUrl = url.substring(0, url.lastIndexOf("/"))
+  const releaseName = path.basename(overrideUrl)
+
+  promise = downloadBuilderToolset({
+    releaseName,
+    filenameWithExt,
+    checksums: checksum != null ? { [filenameWithExt]: checksum } : undefined,
+    overrideUrl,
+  })
   versionToPromise.set(cacheName, promise)
   return promise
-}
-
-function doGetBin(name: string, url: string | Nullish, checksum: string | Nullish): Promise<string> {
-  const args = ["download-artifact", "--name", name]
-  if (url != null) {
-    args.push("--url", url)
-  }
-  if (checksum != null) {
-    args.push("--sha512", checksum)
-  }
-  return executeAppBuilder(args)
 }

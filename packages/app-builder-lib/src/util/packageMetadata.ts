@@ -103,18 +103,23 @@ function checkDependencies(dependencies: Record<string, string> | Nullish, error
     // Pick the version out of yarn berry patch syntax
     // "patch:electron-updater@npm%3A6.4.1#~/.yarn/patches/electron-updater-npm-6.4.1-ef33e6cc39.patch"
     if (updaterVersion.startsWith("patch:")) {
-      const match = updaterVersion.match(/@npm%3A(.+?)#/)
+      // codeql[js/polynomial-redos] - [^#]+ is a possessive character-class match; linear time, no catastrophic backtracking
+      const match = updaterVersion.match(/@npm%3A([^#]+)#/)
       if (match) {
         updaterVersion = match[1]
       }
     }
 
     // for testing auto-update using workspace electron-updater
-    if (updaterVersion.startsWith("file:")) {
-      const normalized = path.normalize(updaterVersion.substring("file:".length))
-      const packageJsonPath = path.isAbsolute(normalized) ? normalized : path.resolve(__dirname, normalized)
-      const json = readJsonSync(path.join(packageJsonPath, "package.json"))
-      updaterVersion = json.version
+    const prefixes = ["link:", "file:"]
+    for (const prefix of prefixes) {
+      if (updaterVersion.startsWith(prefix)) {
+        const normalized = path.normalize(updaterVersion.substring(prefix.length))
+        const packageJsonPath = path.isAbsolute(normalized) ? normalized : path.resolve(__dirname, normalized)
+        const json = readJsonSync(path.join(packageJsonPath, "package.json"))
+        updaterVersion = json.version
+        break
+      }
     }
 
     const requiredElectronUpdaterVersion = "4.0.0"

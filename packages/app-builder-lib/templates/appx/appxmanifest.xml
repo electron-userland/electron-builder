@@ -22,9 +22,7 @@
   <Dependencies>
     <TargetDeviceFamily Name="Windows.Desktop" MinVersion="${minVersion}" MaxVersionTested="${maxVersionTested}" />
   </Dependencies>
-  <Capabilities>
-    <rescap:Capability Name="runFullTrust"/>
-  </Capabilities>
+  ${capabilities}
   <Applications>
     <Application Id="${applicationId}" Executable="${executable}" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements

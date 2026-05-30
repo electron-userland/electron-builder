@@ -17,7 +17,10 @@
       "path": "./test"
     },
     {
-      "path": "./scripts/renderer"
+      "path": "./website"
+    },
+    {
+      "path": "./scripts"
     }
   ]
 }

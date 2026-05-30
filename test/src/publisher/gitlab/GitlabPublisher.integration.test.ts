@@ -71,7 +71,7 @@ async function cleanupExistingReleases(): Promise<void> {
   }
 }
 
-describe.sequential("GitLab Publisher - Integration Tests", () => {
+describe.runIf(process.env.GITLAB_TOKEN != null)("GitLab Publisher - Integration Tests", { sequential: true }, () => {
   let publishContext: PublishContext
   let gitlabHelper: GitlabTestHelper
   let testId: string

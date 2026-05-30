@@ -15,7 +15,7 @@ test.ifMac("mac", ({ expect }) =>
   app(
     expect,
     {
-      targets: Platform.MAC.createTarget(),
+      targets: Platform.MAC.createTarget("dir", Arch.x64),
       config: {
         framework: "proton",
       },
@@ -24,11 +24,11 @@ test.ifMac("mac", ({ expect }) =>
   )
 )
 
-test.ifLinuxOrDevMac("linux", ({ expect }) =>
+test.ifNotWindows("linux", ({ expect }) =>
   app(
     expect,
     {
-      targets: Platform.LINUX.createTarget("appimage"),
+      targets: Platform.LINUX.createTarget("appimage", Arch.x64),
       config: {
         framework: "proton",
       },
@@ -37,11 +37,11 @@ test.ifLinuxOrDevMac("linux", ({ expect }) =>
   )
 )
 
-test.ifDevOrWinCi("win", { retry: 2 }, ({ expect }) =>
+test.ifWindows("win", { retry: 2 }, ({ expect }) =>
   app(
     expect,
     {
-      targets: Platform.WINDOWS.createTarget("nsis"),
+      targets: Platform.WINDOWS.createTarget("nsis", Arch.x64),
       config: {
         framework: "proton",
       },
@@ -50,7 +50,7 @@ test.ifDevOrWinCi("win", { retry: 2 }, ({ expect }) =>
   )
 )
 
-test.ifDevOrWinCi("win ia32", { retry: 2 }, ({ expect }) =>
+test.ifWindows("win ia32", { retry: 2 }, ({ expect }) =>
   app(
     expect,
     {

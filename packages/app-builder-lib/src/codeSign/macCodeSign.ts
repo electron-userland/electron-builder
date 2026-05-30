@@ -35,11 +35,11 @@ export function isSignAllowed(isPrintWarn = true): boolean {
     return false
   }
 
-  const buildForPrWarning =
-    "There are serious security concerns with CSC_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
-    "\nIf you have SSH keys, sensitive env vars or AWS credentials stored in your project settings and untrusted forks can make pull requests against your repo, then this option isn't for you."
-
   if (isPullRequest()) {
+    const buildForPrWarning =
+      "There are serious security concerns with CSC_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
+      "\nIf you have SSH keys, sensitive env vars or AWS credentials stored in your project settings and untrusted forks can make pull requests against your repo, then this option isn't for you."
+
     if (isEnvTrue(process.env.CSC_FOR_PULL_REQUEST)) {
       if (isPrintWarn) {
         log.warn(buildForPrWarning)
@@ -54,6 +54,7 @@ export function isSignAllowed(isPrintWarn = true): boolean {
       return false
     }
   }
+
   return true
 }
 

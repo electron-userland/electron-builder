@@ -1,5 +1,70 @@
 ## 4.3.0
 
+## 6.8.6
+
+### Patch Changes
+
+- Chore(docs): documentation updates and docusaurus migration _[`#9744`](https://github.com/electron-userland/electron-builder/pull/9744) [`d846315`](https://github.com/electron-userland/electron-builder/commit/d84631587d816a1aa0bff57680bab0f865d7a84f) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`d846315`](https://github.com/electron-userland/electron-builder/commit/d84631587d816a1aa0bff57680bab0f865d7a84f)
+
+</small>
+
+- `builder-util-runtime@9.6.1`
+
+</details>
+
+## 6.8.5
+
+### Patch Changes
+
+- Fix: GitLab auth token differs between fetching channel yaml & API requests _[`#9703`](https://github.com/electron-userland/electron-builder/pull/9703) [`4bcf68a`](https://github.com/electron-userland/electron-builder/commit/4bcf68abc957faae827ca50fa5c1bed3ddf7c956) [@mmaietta](https://github.com/mmaietta)_
+- Fix(electron-updater): filter draft releases in PrivateGitHubProvider.getLatestVersionInfo _[`#9694`](https://github.com/electron-userland/electron-builder/pull/9694) [`a5d8ab9`](https://github.com/electron-userland/electron-builder/commit/a5d8ab9436dd7db0c58a08cf9594e47613c4fc8e) [@copilot-swe-agent](https://github.com/apps/copilot-swe-agent)_
+
+## 6.8.4
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`b7df0bc`](https://github.com/electron-userland/electron-builder/commit/b7df0bcef5790814fd6df187346dcec625dc681e)
+
+</small>
+
+- `builder-util-runtime@9.6.0`
+
+</details>
+
+## 6.8.3
+
+### Patch Changes
+
+- Chore: Remove console logs for autoupdate checks _[`#9561`](https://github.com/electron-userland/electron-builder/pull/9561) [`9c67fd3`](https://github.com/electron-userland/electron-builder/commit/9c67fd31ce982d11c82aae71263ba1f0055a77cc) [@Kilian](https://github.com/Kilian)_
+
+## 6.8.2
+
+### Patch Changes
+
+- Fix(updater): ignore releases with non-semver tags when collecting full changelog _[`#9550`](https://github.com/electron-userland/electron-builder/pull/9550) [`8aee1e6`](https://github.com/electron-userland/electron-builder/commit/8aee1e6944afae05a60d2a392743a78f818ee6de) [@AbdulrhmanGoni](https://github.com/AbdulrhmanGoni)_
+
+## 6.8.1
+
+### Patch Changes
+
+- Chore: running `eslint --fix` on more files _[`#9502`](https://github.com/electron-userland/electron-builder/pull/9502) [`6c20eeb`](https://github.com/electron-userland/electron-builder/commit/6c20eeb1cf9fd10980cde3c9ce0602fa6b7c6972) [@mmaietta](https://github.com/mmaietta)_
+
+## 6.8.0
+
+### Minor Changes
+
+- Emit download-progress events when downloading with multiple range differential downloader _[`#9448`](https://github.com/electron-userland/electron-builder/pull/9448) [`3533a3e`](https://github.com/electron-userland/electron-builder/commit/3533a3eb5af01416db3ecac703d6da031b05e615) [@eliotschu](https://github.com/eliotschu)_
+
 ## 6.7.3
 
 ### Patch Changes

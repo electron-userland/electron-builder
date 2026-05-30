@@ -4,11 +4,11 @@ import { DIR_TARGET, Platform, Target } from "./core"
 import { LinuxConfiguration } from "./options/linuxOptions"
 import { Packager } from "./packager"
 import { PlatformPackager } from "./platformPackager"
-import AppImageTarget from "./targets/AppImageTarget"
+import AppImageTarget from "./targets/appimage/AppImageTarget"
 import FlatpakTarget from "./targets/FlatpakTarget"
 import FpmTarget from "./targets/FpmTarget"
 import { LinuxTargetHelper } from "./targets/LinuxTargetHelper"
-import SnapTarget from "./targets/snap"
+import SnapTarget from "./targets/snap/SnapTarget"
 import { createCommonTarget } from "./targets/targetFactory"
 
 export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
@@ -42,9 +42,9 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
       const targetClass: typeof AppImageTarget | typeof SnapTarget | typeof FlatpakTarget | typeof FpmTarget | null = (() => {
         switch (name) {
           case "appimage":
-            return require("./targets/AppImageTarget").default
+            return require("./targets/appimage/AppImageTarget").default
           case "snap":
-            return require("./targets/snap").default
+            return require("./targets/snap/SnapTarget").default
           case "flatpak":
             return require("./targets/FlatpakTarget").default
           case "deb":
