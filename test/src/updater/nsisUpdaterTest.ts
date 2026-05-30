@@ -360,7 +360,7 @@ test("test error", config, async ({ expect }) => {
   expect(actualEvents).toMatchSnapshot()
 })
 
-test.skip("test download progress", config, async ({ expect }) => {
+test("test download progress", config, async ({ expect }) => {
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "github",
@@ -535,7 +535,7 @@ test("test download and install", config, async ({ expect }) => {
   await validateDownload(expect, updater)
 })
 
-test.skip("test downloaded installer", config, async ({ expect }) => {
+test("test downloaded installer", config, async ({ expect }) => {
   const updater = await createNsisUpdater("1.0.1")
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
     provider: "github",
@@ -544,8 +544,12 @@ test.skip("test downloaded installer", config, async ({ expect }) => {
   })
 
   const actualEvents = trackEvents(updater)
+  let beforeQuitFired = false
+  ;(updater as any).addListener("before-quit-for-update", () => {
+    beforeQuitFired = true
+  })
   await validateDownload(expect, updater)
-  // expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
+  expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
   updater.quitAndInstall(true, false)
-  expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded", "before-quit-for-update"])
+  expect(beforeQuitFired).toBe(true)
 })
