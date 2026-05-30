@@ -738,7 +738,7 @@ export class NsisTarget extends Target {
             const customIcon = await packager.getResource(getPlatformIconFileName(item.icon, false), `${extensions[0]}.ico`)
             let installedIconPath = "$appExe,0"
             if (customIcon != null) {
-              installedIconPath = `$INSTDIR\\resources\\${path.basename(customIcon)}`
+              installedIconPath = `$INSTDIR\\resources\\${nsisEscapeString(path.basename(customIcon))}`
               registerFileAssociationsScript.file(installedIconPath, customIcon)
             }
 
@@ -786,7 +786,7 @@ async function generateForPreCompressed(preCompressedFileExtensions: Array<strin
   if (preCompressedAssets.length !== 0) {
     const macro = new NsisScriptGenerator()
     for (const file of preCompressedAssets) {
-      macro.file(`$INSTDIR\\${path.relative(dir, file).replace(/\//g, "\\")}`, file)
+      macro.file(`$INSTDIR\\${nsisEscapeString(path.relative(dir, file).replace(/\//g, "\\"))}`, file)
     }
     scriptGenerator.macro(`customFiles_${Arch[arch]}`, macro)
   }
