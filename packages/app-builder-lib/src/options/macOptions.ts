@@ -297,8 +297,9 @@ export interface DmgOptions extends TargetSpecificOptions {
   format?: "UDRW" | "UDRO" | "UDCO" | "UDZO" | "UDBZ" | "ULFO"
 
   /**
-   * The filesystem for the DMG volume (e.g. `"APFS"` or `"HFS+"`). APFS is the default and recommended on macOS 10.13+.
-   * @default APFS
+   * The filesystem for the DMG volume (e.g. `"APFS"` or `"HFS+"`)
+   * This will be changed to APFS in the next major release, so it is recommended to set it explicitly to HFS+ if you want to keep using HFS+ (e.g. for better compatibility with older macOS versions).
+   * @default HFS+
    */
   readonly filesystem?: string | null
 

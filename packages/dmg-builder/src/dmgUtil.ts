@@ -66,31 +66,22 @@ export async function attachAndExecute(dmgPath: string, readWrite: boolean, forc
   if (device == null) {
     throw new Error(`Cannot mount: ${attachResult}`)
   }
-  const volumePath = await findMountPath(path.basename(device))
+  // Find the volume mount path directly from hdiutil attach output.
+  // APFS images synthesize a new disk device (e.g. disk9) separate from the container disk
+  // (e.g. disk8), so device-name matching via hdiutil info misses the APFS volume.
+  let volumePath: string | null = null
+  for (const line of attachResult!.split("\n")) {
+    const match = /\s+(\/Volumes\/.+?)\s*$/.exec(line)
+    if (match) {
+      volumePath = match[1].trim()
+      break
+    }
+  }
   if (volumePath == null) {
     throw new Error(`Cannot find volume mount path for device: ${device}`)
   }
 
   return await executeFinally(task(volumePath), () => detach(device, forceDetach))
-}
-
-/**
- * Find the mount path for a specific device from `hdiutil info`.
- */
-async function findMountPath(devName: string, index: number = 1): Promise<string | null> {
-  const info = await hdiUtil(["info"])
-  const lines = info!.split("\n")
-  const regex = new RegExp(`^/dev/${devName}(s\\d+)?\\s+\\S+\\s+(/Volumes/.+)$`)
-  const matches: string[] = []
-
-  for (const line of lines) {
-    const result = regex.exec(line)
-    if (result && result.length >= 3) {
-      matches.push(result[2])
-    }
-  }
-
-  return matches.length >= index ? matches[index - 1] : null
 }
 
 export async function detach(name: string, alwaysForce: boolean) {
@@ -147,7 +138,7 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
     "text-size": iconTextSize,
 
     "compression-level": Number(process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || "9"),
-    filesystem: specification.filesystem || "APFS",
+    filesystem: specification.filesystem || "HFS+",
     format: specification.format,
     size: specification.size,
     shrink: specification.shrink,

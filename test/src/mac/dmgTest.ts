@@ -95,31 +95,29 @@ describe.heavy.ifMac("dmg", { sequential: true }, () => {
       },
     }))
 
-  test("explicit size", ({ expect }) =>
+  test("explicit size - HFS+", ({ expect }) =>
     app(
       expect,
       {
         targets: dmgTarget,
         config: {
-          // dmg can mount only one volume name, so, to test in parallel, we set different product name
-          productName: "ExplicitSize",
+          productName: "ExplicitSizeHFS",
           publish: null,
           dmg: {
             size: "500m",
             shrink: false,
-            // speed-up test
+            filesystem: "HFS+",
             writeUpdateInfo: false,
-            title: "Explicit Size",
+            title: "Explicit Size HFS",
           },
         },
         effectiveOptionComputed: async it => {
-          // effectiveOptionComputed is called multiple times with different payloads
-          // Only check specification when volumePath is present (first call from customizeDmg)
           if (!("volumePath" in it)) {
             return false
           }
           expect(it.specification.size).toEqual("500m")
           expect(it.specification.shrink).toEqual(false)
+          expect(it.specification.filesystem).toEqual("HFS+")
           const entries = await fs.readdir(it.volumePath)
           expect(entries.find(e => e.endsWith(".app"))).toBeTruthy()
           return Promise.resolve(false)
@@ -127,17 +125,55 @@ describe.heavy.ifMac("dmg", { sequential: true }, () => {
       },
       {
         packed: context => {
-          return attachAndExecute(path.join(context.outDir, "ExplicitSize-1.1.0.dmg"), false, true, async volumePath => {
-            // Verify filesystem size using Node.js statfs (more robust than parsing df output)
+          return attachAndExecute(path.join(context.outDir, "ExplicitSizeHFS-1.1.0.dmg"), false, true, async volumePath => {
             const stats = await fs.statfs(volumePath)
             const totalBytes = stats.bsize * stats.blocks
+            // 500m = 524,288,000 bytes; HFS+ metadata overhead is small (~2–5 MB)
+            const minBytes = 490 * 1024 * 1024
+            const maxBytes = 540 * 1024 * 1024
+            expect(totalBytes).toBeGreaterThan(minBytes)
+            expect(totalBytes).toBeLessThan(maxBytes)
+          })
+        },
+      }
+    ))
 
-            // 500m should give ~524,288,000 bytes (500 * 1024 * 1024)
-            // Allow margin for filesystem overhead. APFS can report larger sizes than HFS+ due to
-            // different block sizing and allocation, so use a wide range (450MB–1GB).
-            const minBytes = 450 * 1024 * 1024
-            const maxBytes = 1024 * 1024 * 1024
-
+  test("explicit size - APFS", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: dmgTarget,
+        config: {
+          productName: "ExplicitSizeAPFS",
+          publish: null,
+          dmg: {
+            size: "500m",
+            shrink: false,
+            filesystem: "APFS",
+            writeUpdateInfo: false,
+            title: "Explicit Size APFS",
+          },
+        },
+        effectiveOptionComputed: async it => {
+          if (!("volumePath" in it)) {
+            return false
+          }
+          expect(it.specification.size).toEqual("500m")
+          expect(it.specification.shrink).toEqual(false)
+          expect(it.specification.filesystem).toEqual("APFS")
+          const entries = await fs.readdir(it.volumePath)
+          expect(entries.find(e => e.endsWith(".app"))).toBeTruthy()
+          return Promise.resolve(false)
+        },
+      },
+      {
+        packed: context => {
+          return attachAndExecute(path.join(context.outDir, "ExplicitSizeAPFS-1.1.0.dmg"), false, true, async volumePath => {
+            const stats = await fs.statfs(volumePath)
+            const totalBytes = stats.bsize * stats.blocks
+            // 500m = 524,288,000 bytes; APFS metadata overhead may be slightly larger
+            const minBytes = 490 * 1024 * 1024
+            const maxBytes = 560 * 1024 * 1024
             expect(totalBytes).toBeGreaterThan(minBytes)
             expect(totalBytes).toBeLessThan(maxBytes)
           })

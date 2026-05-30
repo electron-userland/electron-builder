@@ -954,8 +954,8 @@
           "type": "array"
         },
         "filesystem": {
-          "default": "APFS",
-          "description": "The filesystem for the DMG volume (e.g. `\"APFS\"` or `\"HFS+\"`). APFS is the default and recommended on macOS 10.13+.",
+          "default": "HFS+",
+          "description": "The filesystem for the DMG volume (e.g. `\"APFS\"` or `\"HFS+\"`)\nThis will be changed to APFS in the next major release, so it is recommended to set it explicitly to HFS+ if you want to keep using HFS+ (e.g. for better compatibility with older macOS versions).",
           "type": [
             "null",
             "string"

@@ -2,7 +2,21 @@ import { notarize } from "@electron/notarize"
 import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
 import { PerFileSignOptions, SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
-import { Arch, AsyncTaskManager, copyFile, exec, exists, getArchSuffix, InvalidConfigurationError, log, orIfFileNotExist, sanitizeDirPath, statOrNull, unlinkIfExists, use } from "builder-util"
+import {
+  Arch,
+  AsyncTaskManager,
+  copyFile,
+  exec,
+  exists,
+  getArchSuffix,
+  InvalidConfigurationError,
+  log,
+  orIfFileNotExist,
+  sanitizeDirPath,
+  statOrNull,
+  unlinkIfExists,
+  use,
+} from "builder-util"
 import { deepAssign, MemoLazy, Nullish } from "builder-util-runtime"
 import * as fs from "fs/promises"
 import { mkdir, readdir } from "fs/promises"
