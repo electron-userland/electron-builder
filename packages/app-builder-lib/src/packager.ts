@@ -10,6 +10,7 @@ import {
   log,
   MAX_FILE_REQUESTS,
   orNullIfFileNotExist,
+  sanitizeDirPath,
   safeStringifyJson,
   serializeToYaml,
   TmpDir,
@@ -273,13 +274,13 @@ export class Packager {
       processTargets(Platform.WINDOWS, options.win)
     }
 
-    this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
+    this.projectDir = sanitizeDirPath(options.projectDir == null ? process.cwd() : options.projectDir)
     this._appDir = this.projectDir
     this._packageManager = determinePackageManagerEnv({ projectDir: this.projectDir, appDir: this.appDir, workspaceRoot: undefined })
 
     this.options = {
       ...options,
-      prepackaged: options.prepackaged == null ? null : path.resolve(this.projectDir, options.prepackaged),
+      prepackaged: options.prepackaged == null ? null : sanitizeDirPath(path.resolve(this.projectDir, options.prepackaged)),
     }
 
     log.info({ version: PACKAGE_VERSION, os: getOsRelease() }, "electron-builder")
