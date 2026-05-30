@@ -1,7 +1,7 @@
 import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
 import { makeUniversalApp } from "@electron/universal"
-import { Arch, AsyncTaskManager, copyFile, deepAssign, exec, exists, getArchSuffix, InvalidConfigurationError, log, orIfFileNotExist, unlinkIfExists, use } from "builder-util"
+import { Arch, AsyncTaskManager, copyFile, deepAssign, exec, exists, getArchSuffix, InvalidConfigurationError, log, orIfFileNotExist, sanitizeDirPath, unlinkIfExists, use } from "builder-util"
 import { MemoLazy, Nullish } from "builder-util-runtime"
 import * as fs from "fs/promises"
 import { mkdir, readdir } from "fs/promises"
@@ -224,16 +224,20 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       const appFile = `${this.appInfo.productFilename}.app`
 
       // Make sure the Assets.car file is the same for both architectures
-      const sourceCatalogPath = path.join(x64AppOutDir, appFile, "Contents/Resources/Assets.car")
+      const safeX64AppOutDir = sanitizeDirPath(x64AppOutDir)
+      const safeArm64AppOutPath = sanitizeDirPath(arm64AppOutPath)
+      const safeAppOutDir = sanitizeDirPath(appOutDir)
+
+      const sourceCatalogPath = path.join(safeX64AppOutDir, appFile, "Contents/Resources/Assets.car")
       if (await exists(sourceCatalogPath)) {
-        const targetCatalogPath = path.join(arm64AppOutPath, appFile, "Contents/Resources/Assets.car")
+        const targetCatalogPath = path.join(safeArm64AppOutPath, appFile, "Contents/Resources/Assets.car")
         await fs.copyFile(sourceCatalogPath, targetCatalogPath)
       }
 
       await makeUniversalApp({
-        x64AppPath: path.join(x64AppOutDir, appFile),
-        arm64AppPath: path.join(arm64AppOutPath, appFile),
-        outAppPath: path.join(appOutDir, appFile),
+        x64AppPath: path.join(safeX64AppOutDir, appFile),
+        arm64AppPath: path.join(safeArm64AppOutPath, appFile),
+        outAppPath: path.join(safeAppOutDir, appFile),
         force: true,
         mergeASARs: platformSpecificBuildOptions.mergeASARs ?? true, // must be ?? to allow false
         singleArchFiles: platformSpecificBuildOptions.singleArchFiles || undefined,
@@ -411,12 +415,14 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
 
   //noinspection JSMethodCanBeStatic
   public async doFlat(appPath: string, outFile: string, identity: Identity, keychain: string | Nullish): Promise<any> {
+    const safeAppPath = sanitizeDirPath(appPath)
+    const safeOutFile = sanitizeDirPath(outFile)
     // productbuild doesn't created directory for out file
-    await mkdir(path.dirname(outFile), { recursive: true })
+    await mkdir(path.dirname(safeOutFile), { recursive: true })
 
     const args = prepareProductBuildArgs(identity, keychain)
-    args.push("--component", appPath, "/Applications")
-    args.push(outFile)
+    args.push("--component", safeAppPath, "/Applications")
+    args.push(safeOutFile)
     return await exec("productbuild", args)
   }
 
@@ -516,12 +522,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
               throw new InvalidConfigurationError(`Invalid entry name in source directory: ${file}`)
             }
             const signTarget = path.resolve(normalizedSourceDirectory, entryName)
-            const relativeToSource = path.relative(normalizedSourceDirectory, signTarget)
-            if (path.isAbsolute(relativeToSource) || relativeToSource.startsWith("..")) {
-              throw new InvalidConfigurationError(`Cannot sign file outside of source directory: ${file}`)
-            }
-            MacTargetHelper.assertSafePathForCommandUsage(signTarget, "code signing target")
-            await this.sign(signTarget, null, isMas ? activeConfig : null, packContext.arch, isMas)
+            const safeSignTarget = sanitizeDirPath(signTarget, normalizedSourceDirectory)
+            await this.sign(safeSignTarget, null, isMas ? activeConfig : null, packContext.arch, isMas)
           }
         })
       )
