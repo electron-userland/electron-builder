@@ -20,8 +20,7 @@ export class NsisScriptGenerator {
   }
 
   file(outputName: string | null, file: string) {
-    const safeName = outputName == null ? null : nsisEscapeString(outputName)
-    this.lines.push(`File${safeName == null ? "" : ` "/oname=${safeName}"`} "${file}"`)
+    this.lines.push(`File${outputName == null ? "" : ` "/oname=${outputName}"`} "${file}"`)
   }
 
   insertMacro(name: string, parameters: string) {

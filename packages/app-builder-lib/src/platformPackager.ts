@@ -1,4 +1,5 @@
-import { flipFuses, FuseConfig, FuseV1Config, FuseV1Options, FuseVersion } from "@electron/fuses"
+import type { FuseConfig, FuseV1Config } from "@electron/fuses"
+import { dynamicImport } from "./util/dynamicImport"
 import {
   Arch,
   asArray,
@@ -315,7 +316,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       const resourcesRelativePath = this.platform === Platform.MAC ? "Resources" : isElectronBased(framework) ? "resources" : ""
 
       let asarIntegrity: AsarIntegrity | null = null
-      if (!(asarOptions == null || options?.disableAsarIntegrity)) {
+      if (!(asarOptions == null || options?.disableAsarIntegrity || this.config.disableAsarIntegrity)) {
         asarIntegrity = await computeData({ resourcesPath, resourcesRelativePath, resourcesDestinationPath: this.getResourcesDir(appOutDir), extraResourceMatchers })
       }
 
@@ -361,11 +362,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (this.config.electronFuses == null) {
       return
     }
-    const fuseConfig = this.generateFuseConfig(this.config.electronFuses)
+    const fuseConfig = await this.generateFuseConfig(this.config.electronFuses)
     await this.addElectronFuses(packContext, fuseConfig)
   }
 
-  private generateFuseConfig(fuses: FuseOptionsV1): FuseV1Config {
+  private async generateFuseConfig(fuses: FuseOptionsV1): Promise<FuseV1Config> {
+    const { FuseVersion, FuseV1Options } = await dynamicImport<typeof import("@electron/fuses")>("@electron/fuses")
     const config: FuseV1Config = {
       version: FuseVersion.V1,
       resetAdHocDarwinSignature: fuses.resetAdHocDarwinSignature,
@@ -408,7 +410,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
    * await context.packager.addElectronFuses(context, { ... })
    * ```
    */
-  public addElectronFuses(context: AfterPackContext, fuses: FuseConfig) {
+  public async addElectronFuses(context: AfterPackContext, fuses: FuseConfig) {
     const { appOutDir, electronPlatformName } = context
 
     const ext = {
@@ -422,6 +424,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const electronBinaryPath = path.join(appOutDir, `${executableName}${ext}`)
 
     log.info({ electronPath: log.filePath(electronBinaryPath) }, "executing @electron/fuses")
+    const { flipFuses } = await dynamicImport<typeof import("@electron/fuses")>("@electron/fuses")
     return flipFuses(electronBinaryPath, fuses)
   }
 
@@ -630,7 +633,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
     const relativeFile = path.relative(this.info.appDir, path.resolve(this.info.appDir, file))
     if (isAsar) {
-      checkFileInArchive(path.join(resourcesDir, "app.asar"), relativeFile, messagePrefix)
+      await checkFileInArchive(path.join(resourcesDir, "app.asar"), relativeFile, messagePrefix)
       return
     }
 
@@ -650,7 +653,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       const asarPath = path.join(...pathSplit.slice(0, partWithAsarIndex + 1))
       let mainPath = pathSplit.length > partWithAsarIndex + 1 ? path.join.apply(pathSplit.slice(partWithAsarIndex + 1)) : ""
       mainPath += path.join(mainPath, pathParsed.base)
-      checkFileInArchive(path.join(resourcesDir, "app", asarPath), mainPath, messagePrefix)
+      await checkFileInArchive(path.join(resourcesDir, "app", asarPath), mainPath, messagePrefix)
     } else {
       const fullPath = path.join(resourcesDir, "app", relativeFile)
       const outStat = await statOrNull(fullPath)

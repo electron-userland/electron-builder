@@ -2,6 +2,12 @@
 
 exports[`macPackager > Build macOS on Windows is not supported 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
 
+exports[`macPackager > disableAsarIntegrity skips ASAR integrity computation 1`] = `
+{
+  "mac": [],
+}
+`;
+
 exports[`macPackager > extraFiles are placed in product app bundle Contents, not Electron.app 1`] = `
 {
   "mac": [],

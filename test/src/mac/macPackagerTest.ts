@@ -219,6 +219,25 @@ describe("macPackager", { sequential: true }, () => {
     )
   )
 
+  test.ifMac("disableAsarIntegrity skips ASAR integrity computation", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: Platform.MAC.createTarget(DIR_TARGET, Arch.x64),
+        config: {
+          mac: { notarize: false },
+          disableAsarIntegrity: true,
+        },
+      },
+      {
+        signed: false,
+        checkMacApp: async (_appDir, info) => {
+          expect(info.ElectronAsarIntegrity).toBeUndefined()
+        },
+      }
+    )
+  )
+
   // Regression test for #8909: bundleVersion/bundleShortVersion from mas config must override mac config.
   // mac.bundleVersion = "100" (wrong value that would appear if the bug were present).
   // mas.bundleVersion = "1.1.0" = fixture appInfo.version (the correct MAS value).
