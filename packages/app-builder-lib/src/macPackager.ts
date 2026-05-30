@@ -1,6 +1,5 @@
-import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
-import { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
-import { makeUniversalApp } from "@electron/universal"
+import type { SignOptions } from "@electron/osx-sign/dist/cjs/types"
+import type { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
 import {
   Arch,
   AsyncTaskManager,
@@ -16,6 +15,7 @@ import {
   unlinkIfExists,
   use,
 } from "builder-util"
+import { dynamicImport } from "./util/dynamicImport"
 import { MemoLazy, Nullish } from "builder-util-runtime"
 import * as fs from "fs/promises"
 import { mkdir, readdir } from "fs/promises"
@@ -248,6 +248,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
         await fs.copyFile(sourceCatalogPath, targetCatalogPath)
       }
 
+      const { makeUniversalApp } = await dynamicImport<typeof import("@electron/universal")>("@electron/universal")
       await makeUniversalApp({
         x64AppPath: path.join(safeX64AppOutDir, appFile),
         arm64AppPath: path.join(safeArm64AppOutPath, appFile),
