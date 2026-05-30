@@ -42,4 +42,12 @@ describe("nsisEscapeString", () => {
   test("handles combined special characters", ({ expect }) => {
     expect(nsisEscapeString('Copyright © 2024 "Acme" $Corp\r\nAll rights reserved')).toBe('Copyright © 2024 $\\"Acme$\\" $$Corp All rights reserved')
   })
+
+  test("preserves ${...} variable references unchanged", ({ expect }) => {
+    expect(nsisEscapeString("${INSTDIR}\\resources\\icon.ico")).toBe("${INSTDIR}\\resources\\icon.ico")
+  })
+
+  test("escapes bare $ but leaves ${...} references intact", ({ expect }) => {
+    expect(nsisEscapeString("${INSTDIR}\\price $9.99")).toBe("${INSTDIR}\\price $$9.99")
+  })
 })
