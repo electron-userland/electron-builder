@@ -1,8 +1,8 @@
-import { notarize } from "@electron/notarize"
-import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
-import { PerFileSignOptions, SigningDistributionType, SignOptions } from "@electron/osx-sign/dist/cjs/types"
-import { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
+import type { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
+import type { PerFileSignOptions, SigningDistributionType, SignOptions } from "@electron/osx-sign/dist/cjs/types"
+import type { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
 import { Arch, InvalidConfigurationError, log, statOrNull } from "builder-util"
+import { dynamicImport } from "../util/dynamicImport"
 import { Nullish } from "builder-util-runtime"
 import * as path from "path"
 import { CertType, findIdentity, reportError } from "../codeSign/macCodeSign"
@@ -54,10 +54,12 @@ export class MacTargetHelper {
 
       const noIdentity = !config.sign && identity == null
       if (qualifier === "-") {
-        identity = new Identity("-", undefined)
+        const { Identity: IdentityClass } = await dynamicImport<{ Identity: new (name: string, hash?: string) => Identity }>("@electron/osx-sign/dist/cjs/util-identities")
+        identity = new IdentityClass("-", undefined)
       } else if (noIdentity && fallBackToAdhoc) {
         log.warn(null, "falling back to ad-hoc signature for macOS application code signing")
-        identity = new Identity("-", undefined)
+        const { Identity: IdentityClass } = await dynamicImport<{ Identity: new (name: string, hash?: string) => Identity }>("@electron/osx-sign/dist/cjs/util-identities")
+        identity = new IdentityClass("-", undefined)
       } else if (noIdentity) {
         await reportError(isMas, certificateTypes, qualifier, keychainFile, this.packager.forceCodeSigning)
         return null
@@ -312,6 +314,7 @@ export class MacTargetHelper {
       log.warn({ reason: "`notarize` options were unable to be generated" }, "skipped macOS notarization")
       return
     }
+    const { notarize } = await dynamicImport<typeof import("@electron/notarize")>("@electron/notarize")
     await notarize(options)
     log.info(null, "notarization successful")
   }
