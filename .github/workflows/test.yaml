@@ -489,6 +489,8 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      actions: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -568,18 +570,22 @@ jobs:
         with:
           name: vitest-smart-cache-*
           failOnError: false
+        continue-on-error: true
 
       - name: Upload merged cache artifact
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
+        if: always()
         with:
           name: vitest-smart-cache-merged
           path: merged-cache/_vitest-smart-cache.json
           retention-days: 2
 
       - name: Copy merged cache to canonical path
+        if: always()
         run: cp merged-cache/_vitest-smart-cache.json test/vitest-scripts/_vitest-smart-cache.json
 
       - name: Save merged cache for future runs on this branch
+        if: always()
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: test/vitest-scripts/_vitest-smart-cache.json
