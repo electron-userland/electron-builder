@@ -10,7 +10,7 @@ import { detectPackageManager } from "../node-module-collector/packageManager"
 import { NodeModuleDirInfo } from "./packageDependencies"
 import { rebuild as remoteRebuild } from "./rebuild"
 import * as which from "which"
-import { RebuildOptions as ElectronRebuildOptions } from "@electron/rebuild"
+import type { RebuildOptions as ElectronRebuildOptions } from "@electron/rebuild"
 import { Nullish } from "builder-util-runtime"
 
 export async function installOrRebuild(
