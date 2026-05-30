@@ -1,5 +1,31 @@
 # app-builder-lib
 
+## 26.12.1
+
+### Patch Changes
+
+- Fix: harden generated-file output, argument construction, and download validation _[`#9778`](https://github.com/electron-userland/electron-builder/pull/9778) [`d6a5aee`](https://github.com/electron-userland/electron-builder/commit/d6a5aee821138449dc0c082606da6a1bf5ba0798) [@mmaietta](https://github.com/mmaietta)_
+- Fix: `nsisEscapeString` incorrectly converting INSTDIR runtime var to double-$$ _[`#9788`](https://github.com/electron-userland/electron-builder/pull/9788) [`3f4f773`](https://github.com/electron-userland/electron-builder/commit/3f4f773970db92d8fbac31cbc90dfaa0cd08d2f1) [@mmaietta](https://github.com/mmaietta)_
+- Fix: properly parse and pass through `mas` configs to overwrite `mac` config when target is `mas` or `mas-dev` _[`#9567`](https://github.com/electron-userland/electron-builder/pull/9567) [`2c4cfa4`](https://github.com/electron-userland/electron-builder/commit/2c4cfa405303fe67008cce2d95a2645014e8e8e2) [@mmaietta](https://github.com/mmaietta)_
+- Fix(codeql): resolving GH CodeQL alerts _[`#9783`](https://github.com/electron-userland/electron-builder/pull/9783) [`4866737`](https://github.com/electron-userland/electron-builder/commit/4866737e4fe1f0cca210d318b9ce440f8e978a63) [@mmaietta](https://github.com/mmaietta)_
+- Chore: provide better error messaging when electron version in devDependencies or electronVersion property are not pinned _[`#9785`](https://github.com/electron-userland/electron-builder/pull/9785) [`f9ecb3c`](https://github.com/electron-userland/electron-builder/commit/f9ecb3c3f985ec999c3c8ba07e6054b0611284b6) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`d6a5aee`](https://github.com/electron-userland/electron-builder/commit/d6a5aee821138449dc0c082606da6a1bf5ba0798) [`4866737`](https://github.com/electron-userland/electron-builder/commit/4866737e4fe1f0cca210d318b9ce440f8e978a63)
+
+</small>
+
+- `builder-util-runtime@9.6.2`
+- `builder-util@26.12.1`
+- `dmg-builder@26.12.1`
+- `electron-builder-squirrel-windows@26.12.1`
+- `electron-publish@26.12.1`
+
+</details>
+
 ## 26.12.0
 
 ### Minor Changes
