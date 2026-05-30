@@ -1,5 +1,5 @@
-import { DebugLogger, deepAssign, InvalidConfigurationError, log, safeStringifyJson, statOrNull } from "builder-util"
-import { Nullish } from "builder-util-runtime"
+import { DebugLogger, InvalidConfigurationError, log, safeStringifyJson, statOrNull } from "builder-util"
+import { deepAssign, Nullish } from "builder-util-runtime"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -29,7 +29,7 @@ function mergePublish(config: Configuration, configFromOptions: Configuration) {
     config.publish = publish
   } else {
     // apply to first
-    Object.assign(listOnDisk[0], publish)
+    deepAssign(listOnDisk[0], publish)
   }
 }
 

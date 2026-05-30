@@ -1,5 +1,5 @@
-import { Arch, asArray, deepAssign, log, walk } from "builder-util"
-import { UUID } from "builder-util-runtime"
+import { Arch, asArray, log, walk } from "builder-util"
+import { deepAssign, UUID } from "builder-util-runtime"
 import { createHash } from "crypto"
 import * as ejs from "ejs"
 import { readFile, writeFile } from "fs/promises"

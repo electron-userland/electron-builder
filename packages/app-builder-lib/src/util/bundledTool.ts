@@ -1,3 +1,4 @@
+import { stripSensitiveEnvVars } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 
 export interface ToolInfo {
@@ -16,7 +17,7 @@ export function computeEnv(oldValue: string | Nullish, newValues: Array<string>)
 export function computeToolEnv(libPath: Array<string>): any {
   // noinspection SpellCheckingInspection
   return {
-    ...process.env,
+    ...stripSensitiveEnvVars(process.env),
     DYLD_LIBRARY_PATH: computeEnv(process.env.DYLD_LIBRARY_PATH, libPath),
   }
 }
