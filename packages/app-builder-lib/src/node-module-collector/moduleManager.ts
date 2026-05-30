@@ -11,6 +11,7 @@ export enum LogMessageByKey {
   PKG_NOT_ON_DISK = "dependency not found on disk",
   PKG_SELF_REF = "self-referential dependencies",
   PKG_OPTIONAL_NOT_INSTALLED = "missing optional dependencies",
+  PKG_OPTIONAL_PLATFORM_NOT_INSTALLED = "platform-specific optional dependencies not bundled — add them to your project's optionalDependencies if your app requires them (pnpm 10+ does not auto-install transitive platform binaries)",
   PKG_COLLECTOR_OUTPUT = "collector stderr output",
 }
 export const logMessageLevelByKey: Record<LogMessageByKey, LogLevel> = {
@@ -20,6 +21,7 @@ export const logMessageLevelByKey: Record<LogMessageByKey, LogLevel> = {
   [LogMessageByKey.PKG_NOT_ON_DISK]: "warn",
   [LogMessageByKey.PKG_SELF_REF]: "debug",
   [LogMessageByKey.PKG_OPTIONAL_NOT_INSTALLED]: "info",
+  [LogMessageByKey.PKG_OPTIONAL_PLATFORM_NOT_INSTALLED]: "warn",
   [LogMessageByKey.PKG_COLLECTOR_OUTPUT]: "warn",
 }
 
@@ -135,7 +137,22 @@ export class ModuleManager {
     return { ...result, packageDir: await this.realPath[result.packageDir] }
   }
 
-  public async locatePackageVersion({ parentDir, pkgName, requiredRange }: { parentDir: string; pkgName: string; requiredRange?: string }): Promise<Package | null> {
+  public async locatePackageVersion({
+    parentDir,
+    pkgName,
+    requiredRange,
+    skipDownwardSearch = false,
+  }: {
+    parentDir: string
+    pkgName: string
+    requiredRange?: string
+    /**
+     * When true, skip the BFS-based `downwardSearch`. Use for layouts that are guaranteed flat
+     * (e.g. pnpm's `.pnpm` virtual store), where the downward walk burns thousands of `readdir`
+     * / `lstat` calls and finds nothing.
+     */
+    skipDownwardSearch?: boolean
+  }): Promise<Package | null> {
     // 1) check direct parent node_modules/pkgName first
     const direct = path.join(path.resolve(parentDir), "node_modules", pkgName, "package.json")
     if (await this.exists[direct]) {
@@ -146,7 +163,14 @@ export class ModuleManager {
     }
 
     // 2) upward hoisted search, then 3) downward non-hoisted search
-    return (await this.upwardSearch(parentDir, pkgName, requiredRange)) || (await this.downwardSearch(parentDir, pkgName, requiredRange)) || null
+    const upward = await this.upwardSearch(parentDir, pkgName, requiredRange)
+    if (upward) {
+      return upward
+    }
+    if (skipDownwardSearch) {
+      return null
+    }
+    return (await this.downwardSearch(parentDir, pkgName, requiredRange)) || null
   }
 
   private semverSatisfies(found: string, range?: string): boolean {

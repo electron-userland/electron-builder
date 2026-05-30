@@ -1,4 +1,4 @@
-import { asArray, log, spawn } from "builder-util"
+import { asArray, log, spawn, stripSensitiveEnvVars } from "builder-util"
 import { pathExists } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { homedir } from "os"
@@ -27,8 +27,9 @@ export async function installOrRebuild(
   }
   let isDependenciesInstalled = false
 
+  const dirsToCheck = [...new Set([projectDir, appDir, workspaceRoot].filter((d): d is string => !!d))]
   for (const fileOrDir of ["node_modules", ".pnp.js"]) {
-    if ((await pathExists(path.join(projectDir, fileOrDir))) || (await pathExists(path.join(appDir, fileOrDir)))) {
+    if ((await Promise.all(dirsToCheck.map(d => pathExists(path.join(d, fileOrDir))))).some(Boolean)) {
       isDependenciesInstalled = true
 
       break
@@ -54,7 +55,7 @@ function getElectronGypCacheDir() {
 export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.Platform, arch: string, buildFromSource: boolean) {
   const npmConfigArch = arch === "armv7l" ? "arm" : arch
   const common: any = {
-    ...process.env,
+    ...stripSensitiveEnvVars(process.env),
     npm_config_arch: npmConfigArch,
     npm_config_target_arch: npmConfigArch,
     npm_config_platform: platform,

@@ -33,7 +33,7 @@ export async function createSelfSignedCert(publisher: string) {
   }
 }
 
-function quoteString(s: string): string {
+export function quoteString(s: string): string {
   if (!s.includes(",") && !s.includes('"')) {
     return s
   }

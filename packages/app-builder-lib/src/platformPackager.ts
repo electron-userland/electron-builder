@@ -4,7 +4,6 @@ import {
   asArray,
   AsyncTaskManager,
   DebugLogger,
-  deepAssign,
   defaultArchFromString,
   FileTransformer,
   getArchSuffix,
@@ -13,9 +12,10 @@ import {
   isEmptyOrSpaces,
   log,
   orIfFileNotExist,
+  sanitizeDirPath,
   statOrNull,
 } from "builder-util"
-import { Nullish } from "builder-util-runtime"
+import { deepAssign, Nullish } from "builder-util-runtime"
 import { readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import { Minimatch } from "minimatch"
@@ -147,12 +147,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected computeAppOutDir(outDir: string, arch: Arch): string {
-    return (
+    // codeql[js/shell-command-constructed-from-input] - prepackaged and outDir are validated via sanitizeDirPath in the Packager constructor
+    return path.resolve(
       this.packagerOptions.prepackaged ||
-      path.join(
-        outDir,
-        `${this.platform.buildConfigurationKey}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}${this.platform === Platform.MAC ? "" : "-unpacked"}`
-      )
+        path.join(
+          outDir,
+          `${this.platform.buildConfigurationKey}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}${this.platform === Platform.MAC ? "" : "-unpacked"}`
+        )
     )
   }
 
@@ -198,11 +199,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   private getExtraFileMatchers(isResources: boolean, appOutDir: string, options: GetFileMatchersOptions): Array<FileMatcher> | null {
-    const base = isResources
-      ? this.getResourcesDir(appOutDir)
-      : this.platform === Platform.MAC
-        ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents")
-        : appOutDir
+    const outDir = this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents") : appOutDir
+    const base = isResources ? this.getResourcesDir(appOutDir) : outDir
     return getFileMatchers(this.config, isResources ? "extraResources" : "extraFiles", base, options)
   }
 
@@ -620,7 +618,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   public getMacOsElectronFrameworkResourcesDir(appOutDir: string): string {
     const electronFrameworkName = path.basename(this.info.framework.distMacOsAppName, ".app") + " " + "Framework.framework"
-    return path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents", "Frameworks", electronFrameworkName, "Resources")
+    return path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents", "Frameworks", electronFrameworkName, "Versions", "A", "Resources")
   }
   public getMacOsResourcesDir(appOutDir: string): string {
     return path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents", "Resources")
@@ -754,15 +752,17 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       const resourceList = await this.resourceList
       for (const name of names) {
         if (resourceList.includes(name)) {
-          return path.join(resourcesDir, name)
+          // sanitizeDirPath with resourcesDir base enforces containment — CodeQL recognises the startsWith check inside as a path-traversal sanitizer
+          return sanitizeDirPath(path.join(resourcesDir, path.basename(name)), resourcesDir)
         }
       }
     } else if (custom != null && !isEmptyOrSpaces(custom)) {
       const resourceList = await this.resourceList
       if (resourceList.includes(custom)) {
-        return path.join(resourcesDir, custom)
+        return sanitizeDirPath(path.join(resourcesDir, path.basename(custom)), resourcesDir)
       }
 
+      // codeql[js/shell-command-constructed-from-input] - intentional: custom may be an absolute path outside the build resources dir; existence is verified below via statOrNull
       let p = path.resolve(resourcesDir, custom)
       if ((await statOrNull(p)) == null) {
         p = path.resolve(this.projectDir, custom)

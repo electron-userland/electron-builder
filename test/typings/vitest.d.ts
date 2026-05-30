@@ -9,33 +9,24 @@ import type {
 type MetaTest = TestFunction
 type MetaSuite = SuiteFunction
 
-interface ConditionalTestAPI extends TestAPI {
-  ifMac: ConditionalTestAPI
-  ifWindows: ConditionalTestAPI
-  ifLinux: ConditionalTestAPI
-
-  ifNotMac: ConditionalTestAPI
-  ifNotWindows: ConditionalTestAPI
-  ifNotLinux: ConditionalTestAPI
-
-  ifEnv: (envKey: boolean | string | undefined) => ConditionalTestAPI
-  ifLazyTrue: (truthy: () => boolean | Promise<boolean>) => ConditionalTestAPI
-
-  heavy: ConditionalTestAPI
+export interface ConditionalChainProps<T> {
+  readonly ifMac: T
+  readonly ifWindows: T
+  readonly ifLinux: T
+  readonly ifNotMac: T
+  readonly ifNotWindows: T
+  readonly ifNotLinux: T
+  readonly heavy: T
 }
 
-interface ConditionalSuiteAPI extends SuiteAPI {
-  ifMac: ConditionalSuiteAPI
-  ifWindows: ConditionalSuiteAPI
-  ifLinux: ConditionalSuiteAPI
+interface ConditionalTestAPI extends TestAPI, ConditionalChainProps<ConditionalTestAPI> {
+  ifEnv: (envKey: boolean | string | undefined) => ConditionalTestAPI
+  ifLazyTrue: (truthy: () => boolean | Promise<boolean>) => ConditionalTestAPI
+}
 
-  ifNotMac: ConditionalSuiteAPI
-  ifNotWindows: ConditionalSuiteAPI
-  ifNotLinux: ConditionalSuiteAPI
+interface ConditionalSuiteAPI extends SuiteAPI, ConditionalChainProps<ConditionalSuiteAPI> {
   ifEnv: (envKey: boolean | string | undefined) => ConditionalSuiteAPI
   ifLazyTrue: (truthy: () => boolean | Promise<boolean>) => ConditionalSuiteAPI
-
-  heavy: ConditionalSuiteAPI
 }
 
 interface ConditionalSkipAPI extends TestAPI["skip"] {

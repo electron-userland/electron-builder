@@ -76,8 +76,10 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     const url = newUrlFromBase(basePath, this.baseUrl)
     try {
       const version = JSON.parse((await this.httpRequest(url, this.configureHeaders("application/vnd.github.v3+json"), cancellationToken))!)
+      // only `latest` can return a single ReleaseInfo. Otherwise, a list of ReleaseInfo is returned and we need to find the latest one ourselves
       if (allowPrerelease) {
-        return (version as Array<{ prerelease: boolean }>).find(it => it.prerelease) || version[0]
+        const candidates = (version as Array<ReleaseInfo>).filter(it => !it.draft)
+        return candidates.find(it => it.prerelease) || candidates[0]
       } else {
         return version
       }
@@ -109,6 +111,8 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
 interface ReleaseInfo {
   name: string
   html_url: string
+  draft: boolean
+  prerelease: boolean
   assets: Array<Asset>
 }
 

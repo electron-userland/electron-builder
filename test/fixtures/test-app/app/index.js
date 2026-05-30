@@ -9,8 +9,8 @@ const BrowserWindow = electron.BrowserWindow
 
 let mainWindow
 
-process.on("uncaughtException", console.error)
-process.on("unhandledRejection", console.error)
+process.on("uncaughtException", err => console.log("uncaughtException:", err))
+process.on("unhandledRejection", err => console.log("unhandledRejection:", err))
 
 console.log(`APP_VERSION: ${app.getVersion()}`)
 console.log('Running from:', app.getAppPath())
@@ -36,7 +36,15 @@ async function init() {
 async function isReady() {
   console.log(`APP_VERSION: ${app.getVersion()}`)
 
-  createWindow()
+  if (!shouldTestAutoUpdater) {
+    // Probe mode: version already printed; quit without creating any windows
+    app.quit()
+    return
+  }
+
+  // No window in auto-update mode — renderer crashes in headless VMs (no GPU/display)
+  // trigger window-all-closed → app.quit() mid-download. electron-updater runs
+  // entirely in the main process and needs no visible window.
 
   // test native module loading
   const db = new sqlite3.Database(":memory:")
@@ -61,7 +69,12 @@ async function isReady() {
 
     // autoUpdater._appUpdateConfigPath = _appUpdateConfigPath
     autoUpdater.updateConfigPath = updateConfigPath
-    autoUpdater.logger = console
+    autoUpdater.logger = {
+      info: (...args) => console.log("[updater]", ...args),
+      warn: (...args) => console.log("[updater warn]", ...args),
+      error: (...args) => console.log("[updater error]", ...args),
+      debug: () => {},
+    }
     autoUpdater.autoRunAppAfterInstall = false
 
     autoUpdater.on("checking-for-update", () => {
@@ -81,10 +94,15 @@ async function isReady() {
       app.quit()
     })
     autoUpdater.on("error", error => {
-      console.error("Error in auto-updater:", error)
+      console.log("Error in auto-updater:", error)
       app.quit()
     })
-    autoUpdater.checkForUpdates()
+    autoUpdater.checkForUpdates().catch(err => {
+      console.log("checkForUpdates rejected (handled via error event):", err?.message)
+    })
+  } else {
+    // Not in auto-update test mode — quit immediately after printing version so polling probes are cheap
+    app.quit()
   }
 }
 
@@ -113,7 +131,10 @@ function createWindow() {
 }
 
 app.on('window-all-closed', function () {
-  app.quit()
+  if (!shouldTestAutoUpdater) {
+    app.quit()
+  }
+  // In auto-update mode the updater runs headlessly — a renderer crash must not abort it.
 })
 
 init()
@@ -121,5 +142,5 @@ init()
     console.log("App initialized")
   })
   .catch(error => {
-    console.error("Error initializing app:", error)
+    console.log("Error initializing app:", error)
   })
