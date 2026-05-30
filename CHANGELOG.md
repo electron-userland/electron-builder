@@ -1,3 +1,15 @@
+## [26.12.1](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.12.0...electron-builder@26.12.1) (2026-05-30)
+
+
+### Bug Fixes
+
+* **codeql:** resolving GH CodeQL alerts ([#9783](https://github.com/electron-userland/electron-builder/issues/9783)) ([4866737](https://github.com/electron-userland/electron-builder/commit/4866737e4fe1f0cca210d318b9ce440f8e978a63))
+* harden generated-file output, argument construction, and download validation ([#9778](https://github.com/electron-userland/electron-builder/issues/9778)) ([d6a5aee](https://github.com/electron-userland/electron-builder/commit/d6a5aee821138449dc0c082606da6a1bf5ba0798))
+* **nsis:** `nsisEscapeString` incorrectly converting INSTDIR runtime var to double-$$ ([#9788](https://github.com/electron-userland/electron-builder/issues/9788)) ([3f4f773](https://github.com/electron-userland/electron-builder/commit/3f4f773970db92d8fbac31cbc90dfaa0cd08d2f1))
+* refactor mac/mas/mas-dev logic flows within MacPackager ([#9567](https://github.com/electron-userland/electron-builder/issues/9567)) ([2c4cfa4](https://github.com/electron-userland/electron-builder/commit/2c4cfa405303fe67008cce2d95a2645014e8e8e2))
+
+
+
 # [26.12.0](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.11.1...electron-builder@26.12.0) (2026-05-29)
 
 
