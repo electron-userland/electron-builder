@@ -3,8 +3,8 @@ import {
   asArray,
   AsyncTaskManager,
   exec,
-  executeAppBuilder,
   exists,
+  generateKsuid,
   getArchSuffix,
   getPath7za,
   getPlatformIconFileName,
@@ -305,7 +305,7 @@ export class NsisTarget extends Target {
 
       // https://github.com/electron-userland/electron-builder/issues/5764
       if (typeof unpackDirName === "string" || !unpackDirName) {
-        defines.UNPACK_DIR_NAME = unpackDirName || (await executeAppBuilder(["ksuid"]))
+        defines.UNPACK_DIR_NAME = unpackDirName || generateKsuid()
       }
 
       if (splashImage != null) {
