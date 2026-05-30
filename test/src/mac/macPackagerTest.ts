@@ -218,4 +218,23 @@ describe("macPackager", { sequential: true }, () => {
       }
     )
   )
+
+  test.ifMac("disableAsarIntegrity skips ASAR integrity computation", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: Platform.MAC.createTarget(DIR_TARGET, Arch.x64),
+        config: {
+          mac: { notarize: false },
+          disableAsarIntegrity: true,
+        },
+      },
+      {
+        signed: false,
+        checkMacApp: async (_appDir, info) => {
+          expect(info.ElectronAsarIntegrity).toBeUndefined()
+        },
+      }
+    )
+  )
 })
