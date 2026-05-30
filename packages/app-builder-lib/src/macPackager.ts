@@ -1,7 +1,21 @@
 import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
 import { makeUniversalApp } from "@electron/universal"
-import { Arch, AsyncTaskManager, copyFile, deepAssign, exec, exists, getArchSuffix, InvalidConfigurationError, log, orIfFileNotExist, sanitizeDirPath, unlinkIfExists, use } from "builder-util"
+import {
+  Arch,
+  AsyncTaskManager,
+  copyFile,
+  deepAssign,
+  exec,
+  exists,
+  getArchSuffix,
+  InvalidConfigurationError,
+  log,
+  orIfFileNotExist,
+  sanitizeDirPath,
+  unlinkIfExists,
+  use,
+} from "builder-util"
 import { MemoLazy, Nullish } from "builder-util-runtime"
 import * as fs from "fs/promises"
 import { mkdir, readdir } from "fs/promises"

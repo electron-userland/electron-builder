@@ -31,10 +31,8 @@
 
 !macro CHECK_APP_RUNNING
   Var /GLOBAL CmdPath
-  Var /GLOBAL FindPath
   Var /GLOBAL PowerShellPath
   StrCpy $CmdPath "$SYSDIR\cmd.exe"
-  StrCpy $FindPath "$SYSDIR\find.exe"
   StrCpy $PowerShellPath "$SYSDIR\WindowsPowerShell\v1.0\powershell.exe"
   !ifmacrodef customCheckAppRunning
     !insertmacro customCheckAppRunning
@@ -69,10 +67,12 @@
     Pop ${_RETURN}
   ${else}
     !ifdef INSTALL_MODE_PER_ALL_USERS
-      ${nsProcess::FindProcess} "${_FILE}" ${_RETURN}
+      # exact match via findstr anchored to the start of each CSV line
+      nsExec::Exec `"$CmdPath" /C tasklist /FI "IMAGENAME eq ${_FILE}" /FO CSV /NH | "$SYSDIR\findstr.exe" /B /I /C:"\"${_FILE}\""`
+      Pop ${_RETURN}
     !else
-      # find process owned by current user
-      nsExec::Exec `"$CmdPath" /C tasklist /FI "USERNAME eq %USERNAME%" /FI "IMAGENAME eq ${_FILE}" /FO CSV | "$FindPath" "${_FILE}"`
+      # find process owned by current user — anchored exact match
+      nsExec::Exec `"$CmdPath" /C tasklist /FI "USERNAME eq %USERNAME%" /FI "IMAGENAME eq ${_FILE}" /FO CSV /NH | "$SYSDIR\findstr.exe" /B /I /C:"\"${_FILE}\""`
       Pop ${_RETURN}
     !endif
   ${endIf}
