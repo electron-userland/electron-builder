@@ -1,9 +1,9 @@
 import { GithubOptions } from "builder-util-runtime"
+import { execSync } from "child_process"
 import { AppUpdater, DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
 import { assertThat } from "../helpers/fileAssert"
 import { createTestAppAdapter, tuneTestUpdater, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { ExpectStatic } from "vitest"
-import { execSync } from "child_process"
 
 type UpdateFileExtension = "deb" | "rpm" | "AppImage" | "pacman"
 
