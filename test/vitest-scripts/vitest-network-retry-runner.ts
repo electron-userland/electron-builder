@@ -1,7 +1,7 @@
 import { getFn, setFn } from "vitest/suite"
 import { VitestTestRunner } from "vitest/runners"
 
-const NETWORK_PATTERNS = [/ENOTFOUND/, /ETIMEDOUT/, /ECONNRESET/, /fetch failed/, /getaddrinfo/, /\b5\d{2}\b/]
+const NETWORK_PATTERNS = [/ENOTFOUND/, /ETIMEDOUT/, /ECONNRESET/, /fetch failed/, /getaddrinfo/]
 
 const MAX_NETWORK_RETRIES = 2
 const RETRY_BASE_DELAY_MS = 2000

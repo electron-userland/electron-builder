@@ -110,8 +110,10 @@ run_pass() {
 
   # Pre-pull the base image so transient registry 5xx errors are retried
   # before docker build runs (docker build itself has no retry logic).
+  # Skip --platform and other --flags to get the image name even when the
+  # FROM line is: FROM --platform=linux/amd64 <image>
   local base_image
-  base_image=$(awk '/^FROM/{print $2; exit}' "$CWD/$dockerfile")
+  base_image=$(awk '/^FROM/{for(i=2;i<=NF;i++){if($i!~/^--/){print $i; exit}}}' "$CWD/$dockerfile")
   docker_pull_with_retry "$base_image"
 
   docker build \
