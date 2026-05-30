@@ -69,42 +69,50 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     let latestRelease = feed.element("entry", false, `No published versions on GitHub`)
     let tag: string | null = null
     try {
-      const currentChannel = this.updater?.channel || (semver.prerelease(this.updater.currentVersion)?.[0] as string) || null
-      if (this.updater.allowPrerelease && currentChannel) {
-        for (const element of feed.getElements("entry")) {
+      if (this.updater.allowPrerelease) {
+        const currentChannel = this.updater?.channel || (semver.prerelease(this.updater.currentVersion)?.[0] as string) || null
+
+        if (currentChannel === null) {
+          // allowPrerelease=true with no explicit channel and stable current version:
+          // pick the first entry from the Atom feed, which may be a prerelease
           // noinspection TypeScriptValidateJSTypes
-          const hrefElement = hrefRegExp.exec(element.element("link").attribute("href"))!
+          tag = hrefRegExp.exec(latestRelease.element("link").attribute("href"))![1]
+        } else {
+          for (const element of feed.getElements("entry")) {
+            // noinspection TypeScriptValidateJSTypes
+            const hrefElement = hrefRegExp.exec(element.element("link").attribute("href"))!
 
-          // If this is null then something is wrong and skip this release
-          if (hrefElement === null) {
-            continue
-          }
+            // If this is null then something is wrong and skip this release
+            if (hrefElement === null) {
+              continue
+            }
 
-          // This Release's Tag
-          const hrefTag = hrefElement[1]
-          if (!semver.valid(hrefTag)) {
-            continue
-          }
+            // This Release's Tag
+            const hrefTag = hrefElement[1]
+            if (!semver.valid(hrefTag)) {
+              continue
+            }
 
-          //Get Channel from this release's tag
-          const hrefChannel = (semver.prerelease(hrefTag)?.[0] as string) || null
+            //Get Channel from this release's tag
+            const hrefChannel = (semver.prerelease(hrefTag)?.[0] as string) || null
 
-          const shouldFetchVersion = !currentChannel || ["alpha", "beta"].includes(currentChannel)
-          const isCustomChannel = hrefChannel !== null && !["alpha", "beta"].includes(String(hrefChannel))
-          // Allow moving from alpha to beta but not down
-          const channelMismatch = currentChannel === "beta" && hrefChannel === "alpha"
+            const shouldFetchVersion = !currentChannel || ["alpha", "beta"].includes(currentChannel)
+            const isCustomChannel = hrefChannel !== null && !["alpha", "beta"].includes(String(hrefChannel))
+            // Allow moving from alpha to beta but not down
+            const channelMismatch = currentChannel === "beta" && hrefChannel === "alpha"
 
-          if (shouldFetchVersion && !isCustomChannel && !channelMismatch) {
-            tag = hrefTag
-            latestRelease = element
-            break
-          }
+            if (shouldFetchVersion && !isCustomChannel && !channelMismatch) {
+              tag = hrefTag
+              latestRelease = element
+              break
+            }
 
-          const isNextPreRelease = hrefChannel && hrefChannel === currentChannel
-          if (isNextPreRelease) {
-            tag = hrefTag
-            latestRelease = element
-            break
+            const isNextPreRelease = hrefChannel && hrefChannel === currentChannel
+            if (isNextPreRelease) {
+              tag = hrefTag
+              latestRelease = element
+              break
+            }
           }
         }
       } else {
