@@ -60,12 +60,12 @@ Function .onInit
     !insertmacro MUI_LANGDLL_DISPLAY
   !endif
 
+  !insertmacro check64BitAndSetRegView
+
   !ifdef BUILD_UNINSTALLER
     WriteUninstaller "${UNINSTALLER_OUT_FILE}"
     !insertmacro quitSuccess
   !else
-    !insertmacro check64BitAndSetRegView
-
     !ifdef ONE_CLICK
       !insertmacro ALLOW_ONLY_ONE_INSTALLER_INSTANCE
     !else

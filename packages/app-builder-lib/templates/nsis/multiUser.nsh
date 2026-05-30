@@ -71,6 +71,14 @@ Var installMode
       ${endif}
     !endif
 
+    # Re-assert the 64-bit registry view before reading the install location from HKLM.
+    # When the uninstaller runs under UAC, UAC_RunElevated spawns an elevated inner process
+    # that re-runs un.onInit (which calls check64BitAndSetRegView). However, the registry
+    # view may be reset before reaching this HKLM read. setRegView64IfNeeded is safe to
+    # call multiple times (no-op when already set).
+    # https://github.com/electron-userland/electron-builder/issues/9658
+    !insertmacro setRegView64IfNeeded
+
     # сheck registry for previous installation path
     ReadRegStr $perMachineInstallationFolder HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
     ${if} $perMachineInstallationFolder != ""

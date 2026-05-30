@@ -44,16 +44,9 @@ Name "${PRODUCT_NAME}" "${DoubleAmpersand}"
   !endif
 !macroend
 
-!macro check64BitAndSetRegView
-  # https://github.com/electron-userland/electron-builder/issues/2420
-  ${If} ${IsWin2000}
-  ${OrIf} ${IsWinME}
-  ${OrIf} ${IsWinXP}
-  ${OrIf} ${IsWinVista}
-    MessageBox MB_OK "$(win7Required)"
-    Quit
-  ${EndIf}
-
+# Sets the registry view to 64-bit without any OS checks or error messages.
+# Safe to call multiple times (e.g., after UAC elevation restarts the process).
+!macro setRegView64IfNeeded
   !ifdef APP_ARM64
     ${If} ${RunningX64}
       SetRegView 64
@@ -65,7 +58,26 @@ Name "${PRODUCT_NAME}" "${DoubleAmpersand}"
     !ifdef APP_64
       ${If} ${RunningX64}
         SetRegView 64
-      ${Else}
+      ${EndIf}
+    !endif
+  !endif
+!macroend
+
+!macro check64BitAndSetRegView
+  # https://github.com/electron-userland/electron-builder/issues/2420
+  ${If} ${IsWin2000}
+  ${OrIf} ${IsWinME}
+  ${OrIf} ${IsWinXP}
+  ${OrIf} ${IsWinVista}
+    MessageBox MB_OK "$(win7Required)"
+    Quit
+  ${EndIf}
+
+  !insertmacro setRegView64IfNeeded
+
+  !ifndef APP_ARM64
+    !ifdef APP_64
+      ${IfNot} ${RunningX64}
         !ifndef APP_32
           MessageBox MB_OK|MB_ICONEXCLAMATION "$(x64WinRequired)"
           Quit
