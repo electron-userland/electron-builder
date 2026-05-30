@@ -57,6 +57,7 @@ async function main() {
     include: [`test/src/**/${includeRegex}.ts`],
 
     printConsoleTrace: true,
+    runner: __dirname + "/vitest-network-retry-runner.ts",
     reporters: ["default", __dirname + "/vitest-smart-reporter.ts"],
 
     maxWorkers: 3, // limit to 3 workers to avoid overwhelming the system with disk I/O
