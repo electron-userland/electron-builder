@@ -1,7 +1,6 @@
-import { signAsync } from "@electron/osx-sign"
-import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
-import { Identity as _Identity } from "@electron/osx-sign/dist/cjs/util-identities"
+import type { SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { copyFile, exec, Fields, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequest, log, Logger, retry, TmpDir, unlinkIfExists } from "builder-util"
+import { dynamicImport } from "../util/dynamicImport"
 import { Nullish } from "builder-util-runtime"
 import { createHash, randomBytes } from "crypto"
 import { rename } from "fs/promises"
@@ -215,6 +214,7 @@ async function importCerts(keychainFile: string, paths: Array<string>, keyPasswo
 }
 
 export async function sign(opts: SignOptions): Promise<void> {
+  const { signAsync } = await dynamicImport<typeof import("@electron/osx-sign")>("@electron/osx-sign")
   return retry(() => signAsync(opts), {
     retries: 3,
     interval: 5000,
@@ -280,7 +280,7 @@ async function _findIdentity(type: CertType, qualifier?: string | null, keychain
     }
 
     if (line.includes(namePrefix)) {
-      return parseIdentity(line)
+      return await parseIdentity(line)
     }
   }
 
@@ -302,7 +302,7 @@ async function _findIdentity(type: CertType, qualifier?: string | null, keychain
         }
       }
 
-      return parseIdentity(line)
+      return await parseIdentity(line)
     }
   }
   return null
@@ -315,11 +315,12 @@ export declare class Identity {
   constructor(name: string, hash?: string)
 }
 
-function parseIdentity(line: string): Identity {
+async function parseIdentity(line: string): Promise<Identity> {
   const firstQuoteIndex = line.indexOf('"')
   const name = line.substring(firstQuoteIndex + 1, line.lastIndexOf('"'))
   const hash = line.substring(0, firstQuoteIndex - 1)
-  return new _Identity(name, hash)
+  const { Identity: IdentityClass } = await dynamicImport<{ Identity: new (name: string, hash?: string) => Identity }>("@electron/osx-sign/dist/cjs/util-identities")
+  return new IdentityClass(name, hash)
 }
 
 export function findIdentity(certType: CertType, qualifier?: string | null, keychain?: string | null): Promise<Identity | null> {
