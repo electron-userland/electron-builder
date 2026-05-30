@@ -301,7 +301,7 @@ export interface DmgOptions extends TargetSpecificOptions {
    * This will be changed to APFS in the next major release, so it is recommended to set it explicitly to HFS+ if you want to keep using HFS+ (e.g. for better compatibility with older macOS versions).
    * @default HFS+
    */
-  readonly filesystem?: string | null
+  readonly filesystem?: "HFS+" | "APFS" | null
 
   /**
    * The initial size of the DMG filesystem. Accepts the same syntax as the `-size` argument to `hdiutil`, e.g. `"150m"`, `"4g"`.
