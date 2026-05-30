@@ -109,7 +109,8 @@ export abstract class HttpExecutor<T extends Request> {
     redirectCount = 0
   ): Promise<string> {
     if (debug.enabled) {
-      debug(`Request: ${safeStringifyJson(options)}`)
+      const { headers: _headers, auth: _auth, ...safeOptions } = options as any
+      debug(`Request: ${safeStringifyJson(safeOptions)}`)
     }
 
     return cancellationToken.createPromise<string>((resolve, reject, onCancel) => {
@@ -153,7 +154,8 @@ export abstract class HttpExecutor<T extends Request> {
     requestProcessor: (request: T, reject: (error: Error) => void) => void
   ) {
     if (debug.enabled) {
-      debug(`Response: ${response.statusCode} ${response.statusMessage}, request options: ${safeStringifyJson(options)}`)
+      const { headers: _headers, auth: _auth, ...safeOptions } = options as any
+      debug(`Response: ${response.statusCode} ${response.statusMessage}, request options: ${safeStringifyJson(safeOptions)}`)
     }
 
     // we handle any other >= 400 error on request end (read detailed message in the response body)
