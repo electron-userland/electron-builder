@@ -43,39 +43,31 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
       return
     }
 
-    // Queue desktop emission after all archive build tasks so that a failing archive
-    // does not result in a published desktop file, and target-specific publish config is respected.
+    const effectiveDesktop = this.platformSpecificBuildOptions.desktop
+    if (effectiveDesktop == null || effectiveDesktop === false) {
+      return
+    }
+
+    // Queue desktop emission alongside the archive build tasks. Errors from archive
+    // builds are collected by the task manager and cause the overall build to fail,
+    // preventing publishing even if the desktop file was written to disk first.
     taskManager.add(async () => {
-      for (const target of archivesToProcess) {
-        const targetConfig: any = (this.config as any)[target.name] ?? {}
-        // Target-specific `desktop: null` opts out; `undefined` inherits platform-level config
-        const hasTargetSpecificDesktop = "desktop" in targetConfig
-        const effectiveDesktop = hasTargetSpecificDesktop ? targetConfig.desktop : this.platformSpecificBuildOptions.desktop
-        if (effectiveDesktop == null || effectiveDesktop === false) {
-          continue
-        }
-
-        // When a target has its own explicit desktop config, use a target-specific filename
-        // to avoid silently dropping different configs when multiple targets are built.
-        // Targets that only inherit the platform-level `linux.desktop` all share one file.
-        const desktopFileName = hasTargetSpecificDesktop ? `${this.executableName}-${target.name.toLowerCase()}.desktop` : `${this.executableName}.desktop`
-        const desktopEntryPath = path.join(outDir, desktopFileName)
-        if (this.emittedDesktopFiles.has(desktopEntryPath)) {
-          continue
-        }
-        this.emittedDesktopFiles.add(desktopEntryPath)
-
-        // Normalize boolean `true` to an empty LinuxDesktopFile so computeDesktopEntry
-        // can safely access .entry and .desktopActions via optional chaining.
-        const mergedOptions = { ...this.platformSpecificBuildOptions, ...targetConfig, desktop: effectiveDesktop === true ? {} : effectiveDesktop }
-        await this.getHelper().writeDesktopEntry(mergedOptions, undefined, desktopEntryPath)
-        await this.info.emitArtifactBuildCompleted({
-          file: desktopEntryPath,
-          arch,
-          target,
-          packager: this,
-        })
+      const desktopEntryPath = path.join(outDir, `${this.executableName}.desktop`)
+      if (this.emittedDesktopFiles.has(desktopEntryPath)) {
+        return
       }
+      this.emittedDesktopFiles.add(desktopEntryPath)
+
+      // Normalize boolean `true` to an empty LinuxDesktopFile so computeDesktopEntry
+      // can safely access .entry and .desktopActions via optional chaining.
+      const mergedOptions = { ...this.platformSpecificBuildOptions, desktop: effectiveDesktop === true ? {} : effectiveDesktop }
+      await this.getHelper().writeDesktopEntry(mergedOptions, undefined, desktopEntryPath)
+      await this.info.emitArtifactBuildCompleted({
+        file: desktopEntryPath,
+        arch,
+        target: archivesToProcess[0],
+        packager: this,
+      })
     })
   }
 

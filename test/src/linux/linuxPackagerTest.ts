@@ -559,34 +559,6 @@ describe.ifNotWindows("LinuxPackager", () => {
       }
     ))
 
-  test("target-specific zip.desktop overrides platform linux.desktop", ({ expect }) =>
-    app(
-      expect,
-      {
-        targets: zipTarget,
-        config: {
-          linux: {
-            desktop: null,
-          },
-          zip: {
-            desktop: {
-              entry: {
-                Name: "Test App (zip)",
-              },
-            },
-          },
-        } as any,
-      },
-      {
-        expectedArtifacts: ["TestApp-1.1.0.zip", "testapp-zip.desktop"],
-        packed: async result => {
-          expect(await fs.pathExists(path.resolve(result.outDir, "testapp.desktop"))).toBe(false)
-          const desktopFilePath = path.resolve(result.outDir, "testapp-zip.desktop")
-          expect(await fs.readFile(desktopFilePath, "utf-8")).toMatchSnapshot()
-        },
-      }
-    ))
-
   test("desktop: true produces default desktop file", ({ expect }) =>
     app(
       expect,
