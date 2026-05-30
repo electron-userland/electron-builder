@@ -2,4 +2,4 @@
 "dmg-builder": patch
 ---
 
-fix(dmg): use APFS as default filesystem for DMG builds due to incompatibilities on latest MacOS w/ HFS+
+fix(dmg): add support for APFS filesystem for dmg builds
