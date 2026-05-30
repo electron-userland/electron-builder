@@ -17,6 +17,7 @@ import * as lockfile from "proper-lockfile"
 import { pipeline } from "stream/promises"
 import * as tar from "tar"
 import * as unzipper from "unzipper"
+import { HttpError, retry } from "builder-util-runtime"
 import { ElectronPlatformName } from "../electron/ElectronFramework"
 import { CacheState, cleanupCacheDirectory, computeCacheMetadata, readCacheStateFile, validateCacheDirectory, writeCacheState } from "./cacheState"
 import type { ProgressBar } from "electron-publish"
@@ -260,7 +261,15 @@ async function downloadArtifactToFile(config: Parameters<typeof get.downloadArti
   try {
     let filePath: string
     try {
-      filePath = await get.downloadArtifact(configWithProgress)
+      filePath = await retry(() => get.downloadArtifact(configWithProgress), {
+        retries: 3,
+        interval: 2000,
+        backoff: 2000,
+        shouldRetry: (e: any) =>
+          e instanceof HttpError
+            ? e.isServerError()
+            : typeof e?.code === "string" && ["ENOTFOUND", "ETIMEDOUT", "ECONNRESET", "EPIPE"].includes(e.code),
+      })
     } catch (err) {
       if (typeof (err as any)?.message === "string" && (err as any).message.includes("dest already exists")) {
         filePath = await get.downloadArtifact(configWithProgress)

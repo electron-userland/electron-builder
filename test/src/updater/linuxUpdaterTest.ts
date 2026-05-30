@@ -1,9 +1,9 @@
 import { GithubOptions } from "builder-util-runtime"
+import { execSync } from "child_process"
 import { AppUpdater, DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
+import { afterEach, expect, ExpectStatic, test } from "vitest"
 import { assertThat } from "../helpers/fileAssert"
 import { createTestAppAdapter, tuneTestUpdater, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
-import { afterEach, expect, ExpectStatic, test } from "vitest"
-import { execSync } from "child_process"
 
 type UpdateFileExtension = "deb" | "rpm" | "AppImage" | "pacman"
 
@@ -70,7 +70,7 @@ describe("LinuxUpdater.detectPackageManager", () => {
   })
 
   function makeUpdater(availableCommands: string[]) {
-    const instance = Object.create(RpmUpdater.prototype) as any
+    const instance = Object.create(RpmUpdater.prototype)
     instance._logger = { info: () => {}, warn: () => {}, error: () => {}, debug: () => {} }
     instance.hasCommand = (cmd: string) => availableCommands.includes(cmd)
     return instance
@@ -94,7 +94,7 @@ describe("LinuxUpdater.detectPackageManager", () => {
 
   test("falls back to first in list and warns when nothing is available", () => {
     const warns: string[] = []
-    const instance = Object.create(DebUpdater.prototype) as any
+    const instance = Object.create(DebUpdater.prototype)
     instance._logger = { info: () => {}, warn: (m: string) => warns.push(m), error: () => {}, debug: () => {} }
     instance.hasCommand = () => false
     const result = instance.detectPackageManager(["apt", "dpkg"])
