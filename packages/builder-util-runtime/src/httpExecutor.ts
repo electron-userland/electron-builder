@@ -384,12 +384,13 @@ Please double check that your authentication token is correct. Due to security r
     return originalPort !== redirectPort
   }
 
-  static retryOnServerError(task: () => Promise<any>, maxRetries = 3) {
+  static async retryOnServerError(task: () => Promise<any>, maxRetries = 3): Promise<any> {
     for (let attemptNumber = 0; ; attemptNumber++) {
       try {
-        return task()
+        return await task()
       } catch (e: any) {
         if (attemptNumber < maxRetries && ((e instanceof HttpError && e.isServerError()) || e.code === "EPIPE")) {
+          await new Promise(r => setTimeout(r, 1000 * (attemptNumber + 1)))
           continue
         }
         throw e
