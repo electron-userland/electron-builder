@@ -111,7 +111,11 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
         tag = await this.getLatestTagName(cancellationToken)
         for (const element of feed.getElements("entry")) {
           // noinspection TypeScriptValidateJSTypes
-          if (hrefRegExp.exec(element.element("link").attribute("href"))![1] === tag) {
+          const hrefMatch = hrefRegExp.exec(element.element("link").attribute("href"))
+          if (hrefMatch == null) {
+            continue
+          }
+          if (hrefMatch[1] === tag) {
             latestRelease = element
             break
           }
@@ -227,7 +231,7 @@ export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangel
     latestVersion = releaseVersionRegExp.exec(latestRelease.element("link").attribute("href"))![1]
     latestVersion = semver.valid(latestVersion) ? latestVersion : undefined
   } catch {
-    // If we cannot parse the latest version, cntinue and return all release notes without filtering by version
+    // If we cannot parse the latest release version, return null — notes cannot be determined
   }
 
   if (latestVersion == null) {
@@ -236,13 +240,17 @@ export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangel
 
   const releaseNotes: Array<ReleaseNoteInfo> = []
   for (const release of feed.getElements("entry")) {
-    let versionRelease: string | undefined = undefined
+    let versionRelease: string
     try {
-      versionRelease = releaseVersionRegExp.exec(release.element("link").attribute("href"))![1]
+      const match = releaseVersionRegExp.exec(release.element("link").attribute("href"))
+      if (!match) {
+        continue
+      }
+      versionRelease = match[1]
     } catch {
       continue
     }
-    // check `semver.valid` to validate if an electron release, because some repositories can contain also non-electron releases (for example, with documentation or website updates)
+    // skip non-semver tags (e.g. doc/website releases in monorepos)
     if (!semver.valid(versionRelease)) {
       continue
     }
