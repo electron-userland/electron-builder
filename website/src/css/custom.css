@@ -1,0 +1,28 @@
+:root {
+  --ifm-color-primary: #1565c0;
+  --ifm-color-primary-dark: #1258a8;
+  --ifm-color-primary-darker: #11529e;
+  --ifm-color-primary-darkest: #0d4382;
+  --ifm-color-primary-light: #1872d8;
+  --ifm-color-primary-lighter: #1978e2;
+  --ifm-color-primary-lightest: #2b86f1;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] {
+  --ifm-color-primary: #5b9bd5;
+  --ifm-color-primary-dark: #4690cd;
+  --ifm-color-primary-darker: #3c89c9;
+  --ifm-color-primary-darkest: #2371b4;
+  --ifm-color-primary-light: #70a6dd;
+  --ifm-color-primary-lighter: #7aade1;
+  --ifm-color-primary-lightest: #9ec2eb;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}
+
+/* Keep wide tables from overflowing */
+.markdown table {
+  display: block;
+  overflow-x: auto;
+}

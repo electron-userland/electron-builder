@@ -1,0 +1,20 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`stable release - checkForUpdates fetches Atom feed and returns correct UpdateInfo 1`] = `
+{
+  "files": [
+    {
+      "sha512": "YmFzZTY0ZW5jb2RlZHNoYTUxMnN0cmluZ2ZvcnRlc3RpbmdwdXJwb3Nlc29ubHk=",
+      "size": 12345678,
+      "url": "my-app-Setup-1.1.0.exe",
+    },
+  ],
+  "path": "my-app-Setup-1.1.0.exe",
+  "releaseDate": "2024-01-01T00:00:00.000Z",
+  "releaseName": "v1.1.0",
+  "releaseNotes": "Release notes for stable",
+  "sha512": "YmFzZTY0ZW5jb2RlZHNoYTUxMnN0cmluZ2ZvcnRlc3RpbmdwdXJwb3Nlc29ubHk=",
+  "tag": "v1.1.0",
+  "version": "1.1.0",
+}
+`;

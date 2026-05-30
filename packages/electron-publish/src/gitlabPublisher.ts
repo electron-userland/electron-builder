@@ -121,9 +121,7 @@ export class GitlabPublisher extends HttpPublisher {
     const releaseName = this.releaseName || defaultName
     const branchName = await this.getDefaultBranch()
 
-    const description = this.releaseBody
-      ? trimStringWithWarn(this.releaseBody, 100000, "release body exceeds GitLab limit, truncating")
-      : `Release ${releaseName}`
+    const description = this.releaseBody ? trimStringWithWarn(this.releaseBody, 100000, "release body exceeds GitLab limit, truncating") : `Release ${releaseName}`
 
     const releaseData = {
       tag_name: this.tag,

@@ -1,0 +1,6878 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`snapcraft > auto start (core18) 1`] = `
+{
+  "apps": {
+    "sep": {
+      "autostart": "sep.desktop",
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core18",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "sep",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > auto start (core18) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > auto start (core20) 1`] = `
+{
+  "apps": {
+    "sep": {
+      "autostart": "sep.desktop",
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "sep",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > auto start (core20) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > auto start (core22) 1`] = `
+{
+  "apps": {
+    "sep": {
+      "autostart": "sep.desktop",
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core22",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "sep",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > auto start (core22) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > buildPackages (core18) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "adapter": "none",
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core18",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": {
+    "app": {
+      "build-packages": [
+        "foo1",
+        "default",
+        "foo2",
+      ],
+      "plugin": "nil",
+      "stage": [
+        "-usr/lib/python*",
+        "-usr/bin/python*",
+        "-var/lib/ucf",
+        "-usr/include",
+        "-usr/lib/X11",
+        "-usr/share",
+        "-usr/sbin",
+        "-usr/bin",
+        "-usr/lib/*/libicudata.*",
+        "-usr/lib/*/libicui18n.*",
+        "-usr/lib/*/libgtk-*",
+        "-usr/lib/*/libgdk-*",
+        "-usr/lib/*/glib-*",
+        "-usr/lib/*/gtk-*",
+        "-usr/lib/*/gdk-*",
+        "-usr/lib/*/krb5",
+        "-usr/lib/systemd",
+        "-usr/lib/glib-networking",
+        "-usr/lib/dconf",
+        "-usr/lib/*/avahi",
+        "-usr/lib/*/gio",
+        "-usr/lib/*/libatk*",
+        "-usr/lib/*/libatspi*",
+        "-usr/lib/*/libavahi*",
+        "-usr/lib/*/libcairo*",
+        "-usr/lib/*/libcolordprivate*",
+        "-usr/lib/*/libcolord*",
+        "-usr/lib/*/libcroco*",
+        "-usr/lib/*/libcups*",
+        "-usr/lib/*/libdatrie*",
+        "-usr/lib/*/libdconf*",
+        "-usr/lib/*/libepoxy*",
+        "-usr/lib/*/libexpatw*",
+        "-usr/lib/*/libffi*",
+        "-usr/lib/*/libfontconfig*",
+        "-usr/lib/*/libfreetype*",
+        "-usr/lib/*/libgdk_pixbuf*",
+        "-usr/lib/*/libgdk_pixbuf_xlib*",
+        "-usr/lib/*/libgio*",
+        "-usr/lib/*/libglib*",
+        "-usr/lib/*/libgmodule*",
+        "-usr/lib/*/libgmp*",
+        "-usr/lib/*/libgnutls*",
+        "-usr/lib/*/libgobject*",
+        "-usr/lib/*/libgraphite2*",
+        "-usr/lib/*/libgssapi_krb5*",
+        "-usr/lib/*/libgthread*",
+        "-usr/lib/*/libharfbuzz*",
+        "-usr/lib/*/libhogweed*",
+        "-usr/lib/*/libicuio*",
+        "-usr/lib/*/libicutest*",
+        "-usr/lib/*/libicutu*",
+        "-usr/lib/*/libicuuc*",
+        "-usr/lib/*/libidn2*",
+        "-usr/lib/*/libjbig*",
+        "-usr/lib/*/libjpeg*",
+        "-usr/lib/*/libjson*",
+        "-usr/lib/*/libk5crypto*",
+        "-usr/lib/*/libkrb5*",
+        "-usr/lib/*/libkrb5support*",
+        "-usr/lib/*/liblcms2*",
+        "-usr/lib/*/libnettle*",
+        "-usr/lib/*/libp11*",
+        "-usr/lib/*/libpango*",
+        "-usr/lib/*/libpangocairo*",
+        "-usr/lib/*/libpangoft2*",
+        "-usr/lib/*/libpixman*",
+        "-usr/lib/*/libpng16*",
+        "-usr/lib/*/libproxy*",
+        "-usr/lib/*/librest*",
+        "-usr/lib/*/librsvg*",
+        "-usr/lib/*/libsecret*",
+        "-usr/lib/*/libsoup*",
+        "-usr/lib/*/libsqlite3*",
+        "-usr/lib/*/libtasn1*",
+        "-usr/lib/*/libthai*",
+        "-usr/lib/*/libtiff*",
+        "-usr/lib/*/libunistring*",
+        "-usr/lib/*/libwayland*",
+        "-usr/lib/*/libX11*",
+        "-usr/lib/*/libXau*",
+        "-usr/lib/*/libxcb.so*",
+        "-usr/lib/*/libxcb-dri2*",
+        "-usr/lib/*/libxcb-dri3*",
+        "-usr/lib/*/libxcb-glx*",
+        "-usr/lib/*/libxcb-present*",
+        "-usr/lib/*/libxcb-render*",
+        "-usr/lib/*/libxcb-shm*",
+        "-usr/lib/*/libxcb-sync*",
+        "-usr/lib/*/libxcb-xfixes*",
+        "-usr/lib/*/libXcomposite*",
+        "-usr/lib/*/libXcursor*",
+        "-usr/lib/*/libXdamage*",
+        "-usr/lib/*/libXdmcp*",
+        "-usr/lib/*/libXext*",
+        "-usr/lib/*/libXfixes*",
+        "-usr/lib/*/libXinerama*",
+        "-usr/lib/*/libXi*",
+        "-usr/lib/*/libxkbcommon*",
+        "-usr/lib/*/libxml2*",
+        "-usr/lib/*/libXrandr*",
+        "-usr/lib/*/libXrender*",
+      ],
+      "stage-packages": [
+        "libnspr4",
+        "libnss3",
+        "libxss1",
+        "libappindicator3-1",
+        "libsecret-1-0",
+      ],
+    },
+    "app-files": {
+      "organize": {
+        "*": "app/",
+      },
+      "plugin": "dump",
+      "source": "app",
+      "stage": [
+        "-app/chrome-sandbox",
+        "-LICENSES.chromium.html",
+      ],
+    },
+    "gnome-platform-empty-dirs": {
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+",
+      "plugin": "nil",
+    },
+    "launch-scripts": {
+      "plugin": "dump",
+      "source": "scripts",
+    },
+  },
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > buildPackages (core18) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > buildPackages (core20) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "adapter": "none",
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": {
+    "app": {
+      "build-packages": [
+        "foo1",
+        "default",
+        "foo2",
+      ],
+      "plugin": "nil",
+      "stage": [
+        "-usr/lib/python*",
+        "-usr/bin/python*",
+        "-var/lib/ucf",
+        "-usr/include",
+        "-usr/lib/X11",
+        "-usr/share",
+        "-usr/sbin",
+        "-usr/bin",
+        "-usr/lib/*/libicudata.*",
+        "-usr/lib/*/libicui18n.*",
+        "-usr/lib/*/libgtk-*",
+        "-usr/lib/*/libgdk-*",
+        "-usr/lib/*/glib-*",
+        "-usr/lib/*/gtk-*",
+        "-usr/lib/*/gdk-*",
+        "-usr/lib/*/krb5",
+        "-usr/lib/systemd",
+        "-usr/lib/glib-networking",
+        "-usr/lib/dconf",
+        "-usr/lib/*/avahi",
+        "-usr/lib/*/gio",
+        "-usr/lib/*/libatk*",
+        "-usr/lib/*/libatspi*",
+        "-usr/lib/*/libavahi*",
+        "-usr/lib/*/libcairo*",
+        "-usr/lib/*/libcolordprivate*",
+        "-usr/lib/*/libcolord*",
+        "-usr/lib/*/libcroco*",
+        "-usr/lib/*/libcups*",
+        "-usr/lib/*/libdatrie*",
+        "-usr/lib/*/libdconf*",
+        "-usr/lib/*/libepoxy*",
+        "-usr/lib/*/libexpatw*",
+        "-usr/lib/*/libffi*",
+        "-usr/lib/*/libfontconfig*",
+        "-usr/lib/*/libfreetype*",
+        "-usr/lib/*/libgdk_pixbuf*",
+        "-usr/lib/*/libgdk_pixbuf_xlib*",
+        "-usr/lib/*/libgio*",
+        "-usr/lib/*/libglib*",
+        "-usr/lib/*/libgmodule*",
+        "-usr/lib/*/libgmp*",
+        "-usr/lib/*/libgnutls*",
+        "-usr/lib/*/libgobject*",
+        "-usr/lib/*/libgraphite2*",
+        "-usr/lib/*/libgssapi_krb5*",
+        "-usr/lib/*/libgthread*",
+        "-usr/lib/*/libharfbuzz*",
+        "-usr/lib/*/libhogweed*",
+        "-usr/lib/*/libicuio*",
+        "-usr/lib/*/libicutest*",
+        "-usr/lib/*/libicutu*",
+        "-usr/lib/*/libicuuc*",
+        "-usr/lib/*/libidn2*",
+        "-usr/lib/*/libjbig*",
+        "-usr/lib/*/libjpeg*",
+        "-usr/lib/*/libjson*",
+        "-usr/lib/*/libk5crypto*",
+        "-usr/lib/*/libkrb5*",
+        "-usr/lib/*/libkrb5support*",
+        "-usr/lib/*/liblcms2*",
+        "-usr/lib/*/libnettle*",
+        "-usr/lib/*/libp11*",
+        "-usr/lib/*/libpango*",
+        "-usr/lib/*/libpangocairo*",
+        "-usr/lib/*/libpangoft2*",
+        "-usr/lib/*/libpixman*",
+        "-usr/lib/*/libpng16*",
+        "-usr/lib/*/libproxy*",
+        "-usr/lib/*/librest*",
+        "-usr/lib/*/librsvg*",
+        "-usr/lib/*/libsecret*",
+        "-usr/lib/*/libsoup*",
+        "-usr/lib/*/libsqlite3*",
+        "-usr/lib/*/libtasn1*",
+        "-usr/lib/*/libthai*",
+        "-usr/lib/*/libtiff*",
+        "-usr/lib/*/libunistring*",
+        "-usr/lib/*/libwayland*",
+        "-usr/lib/*/libX11*",
+        "-usr/lib/*/libXau*",
+        "-usr/lib/*/libxcb.so*",
+        "-usr/lib/*/libxcb-dri2*",
+        "-usr/lib/*/libxcb-dri3*",
+        "-usr/lib/*/libxcb-glx*",
+        "-usr/lib/*/libxcb-present*",
+        "-usr/lib/*/libxcb-render*",
+        "-usr/lib/*/libxcb-shm*",
+        "-usr/lib/*/libxcb-sync*",
+        "-usr/lib/*/libxcb-xfixes*",
+        "-usr/lib/*/libXcomposite*",
+        "-usr/lib/*/libXcursor*",
+        "-usr/lib/*/libXdamage*",
+        "-usr/lib/*/libXdmcp*",
+        "-usr/lib/*/libXext*",
+        "-usr/lib/*/libXfixes*",
+        "-usr/lib/*/libXinerama*",
+        "-usr/lib/*/libXi*",
+        "-usr/lib/*/libxkbcommon*",
+        "-usr/lib/*/libxml2*",
+        "-usr/lib/*/libXrandr*",
+        "-usr/lib/*/libXrender*",
+      ],
+      "stage-packages": [
+        "libnspr4",
+        "libnss3",
+        "libxss1",
+        "libappindicator3-1",
+        "libsecret-1-0",
+      ],
+    },
+    "app-files": {
+      "organize": {
+        "*": "app/",
+      },
+      "plugin": "dump",
+      "source": "app",
+      "stage": [
+        "-app/chrome-sandbox",
+        "-LICENSES.chromium.html",
+      ],
+    },
+    "gnome-platform-empty-dirs": {
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+",
+      "plugin": "nil",
+    },
+    "launch-scripts": {
+      "plugin": "dump",
+      "source": "scripts",
+    },
+  },
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > buildPackages (core20) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > buildPackages (core22) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core22",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": {
+    "app": {
+      "build-packages": [
+        "foo1",
+        "default",
+        "foo2",
+      ],
+      "plugin": "nil",
+      "stage": [
+        "-usr/lib/python*",
+        "-usr/bin/python*",
+        "-var/lib/ucf",
+        "-usr/include",
+        "-usr/lib/X11",
+        "-usr/share",
+        "-usr/sbin",
+        "-usr/bin",
+        "-usr/lib/*/libicudata.*",
+        "-usr/lib/*/libicui18n.*",
+        "-usr/lib/*/libgtk-*",
+        "-usr/lib/*/libgdk-*",
+        "-usr/lib/*/glib-*",
+        "-usr/lib/*/gtk-*",
+        "-usr/lib/*/gdk-*",
+        "-usr/lib/*/krb5",
+        "-usr/lib/systemd",
+        "-usr/lib/glib-networking",
+        "-usr/lib/dconf",
+        "-usr/lib/*/avahi",
+        "-usr/lib/*/gio",
+        "-usr/lib/*/libatk*",
+        "-usr/lib/*/libatspi*",
+        "-usr/lib/*/libavahi*",
+        "-usr/lib/*/libcairo*",
+        "-usr/lib/*/libcolordprivate*",
+        "-usr/lib/*/libcolord*",
+        "-usr/lib/*/libcroco*",
+        "-usr/lib/*/libcups*",
+        "-usr/lib/*/libdatrie*",
+        "-usr/lib/*/libdconf*",
+        "-usr/lib/*/libepoxy*",
+        "-usr/lib/*/libexpatw*",
+        "-usr/lib/*/libffi*",
+        "-usr/lib/*/libfontconfig*",
+        "-usr/lib/*/libfreetype*",
+        "-usr/lib/*/libgdk_pixbuf*",
+        "-usr/lib/*/libgdk_pixbuf_xlib*",
+        "-usr/lib/*/libgio*",
+        "-usr/lib/*/libglib*",
+        "-usr/lib/*/libgmodule*",
+        "-usr/lib/*/libgmp*",
+        "-usr/lib/*/libgnutls*",
+        "-usr/lib/*/libgobject*",
+        "-usr/lib/*/libgraphite2*",
+        "-usr/lib/*/libgssapi_krb5*",
+        "-usr/lib/*/libgthread*",
+        "-usr/lib/*/libharfbuzz*",
+        "-usr/lib/*/libhogweed*",
+        "-usr/lib/*/libicuio*",
+        "-usr/lib/*/libicutest*",
+        "-usr/lib/*/libicutu*",
+        "-usr/lib/*/libicuuc*",
+        "-usr/lib/*/libidn2*",
+        "-usr/lib/*/libjbig*",
+        "-usr/lib/*/libjpeg*",
+        "-usr/lib/*/libjson*",
+        "-usr/lib/*/libk5crypto*",
+        "-usr/lib/*/libkrb5*",
+        "-usr/lib/*/libkrb5support*",
+        "-usr/lib/*/liblcms2*",
+        "-usr/lib/*/libnettle*",
+        "-usr/lib/*/libp11*",
+        "-usr/lib/*/libpango*",
+        "-usr/lib/*/libpangocairo*",
+        "-usr/lib/*/libpangoft2*",
+        "-usr/lib/*/libpixman*",
+        "-usr/lib/*/libpng16*",
+        "-usr/lib/*/libproxy*",
+        "-usr/lib/*/librest*",
+        "-usr/lib/*/librsvg*",
+        "-usr/lib/*/libsecret*",
+        "-usr/lib/*/libsoup*",
+        "-usr/lib/*/libsqlite3*",
+        "-usr/lib/*/libtasn1*",
+        "-usr/lib/*/libthai*",
+        "-usr/lib/*/libtiff*",
+        "-usr/lib/*/libunistring*",
+        "-usr/lib/*/libwayland*",
+        "-usr/lib/*/libX11*",
+        "-usr/lib/*/libXau*",
+        "-usr/lib/*/libxcb.so*",
+        "-usr/lib/*/libxcb-dri2*",
+        "-usr/lib/*/libxcb-dri3*",
+        "-usr/lib/*/libxcb-glx*",
+        "-usr/lib/*/libxcb-present*",
+        "-usr/lib/*/libxcb-render*",
+        "-usr/lib/*/libxcb-shm*",
+        "-usr/lib/*/libxcb-sync*",
+        "-usr/lib/*/libxcb-xfixes*",
+        "-usr/lib/*/libXcomposite*",
+        "-usr/lib/*/libXcursor*",
+        "-usr/lib/*/libXdamage*",
+        "-usr/lib/*/libXdmcp*",
+        "-usr/lib/*/libXext*",
+        "-usr/lib/*/libXfixes*",
+        "-usr/lib/*/libXinerama*",
+        "-usr/lib/*/libXi*",
+        "-usr/lib/*/libxkbcommon*",
+        "-usr/lib/*/libxml2*",
+        "-usr/lib/*/libXrandr*",
+        "-usr/lib/*/libXrender*",
+      ],
+      "stage-packages": [
+        "libnspr4",
+        "libnss3",
+        "libxss1",
+        "libappindicator3-1",
+        "libsecret-1-0",
+      ],
+    },
+    "app-files": {
+      "organize": {
+        "*": "app/",
+      },
+      "plugin": "dump",
+      "source": "app",
+      "stage": [
+        "-app/chrome-sandbox",
+        "-LICENSES.chromium.html",
+      ],
+    },
+    "gnome-platform-empty-dirs": {
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+",
+      "plugin": "nil",
+    },
+    "launch-scripts": {
+      "plugin": "dump",
+      "source": "scripts",
+    },
+  },
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > buildPackages (core22) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > classic confinement (core18) 1`] = `
+{
+  "apps": {
+    "cl-co-app": {
+      "command": "command.sh",
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core18",
+  "confinement": "classic",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "cl-co-app",
+  "summary": "Snap Electron App (classic confinement)",
+  "title": "Snap Electron App (classic confinement)",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > classic confinement (core18) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "cl-co-app_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > classic confinement (core20) 1`] = `
+{
+  "apps": {
+    "cl-co-app": {
+      "command": "command.sh",
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
+  "confinement": "classic",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "cl-co-app",
+  "summary": "Snap Electron App (classic confinement)",
+  "title": "Snap Electron App (classic confinement)",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > classic confinement (core20) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "cl-co-app_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > classic confinement (core22) 1`] = `
+{
+  "apps": {
+    "cl-co-app": {
+      "command": "command.sh",
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core22",
+  "confinement": "classic",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "cl-co-app",
+  "summary": "Snap Electron App (classic confinement)",
+  "title": "Snap Electron App (classic confinement)",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > classic confinement (core22) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "cl-co-app_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > compression option (core18) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "adapter": "none",
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core18",
+  "compression": "xz",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": {
+    "app": {
+      "plugin": "nil",
+      "stage": [
+        "-usr/lib/python*",
+        "-usr/bin/python*",
+        "-var/lib/ucf",
+        "-usr/include",
+        "-usr/lib/X11",
+        "-usr/share",
+        "-usr/sbin",
+        "-usr/bin",
+        "-usr/lib/*/libicudata.*",
+        "-usr/lib/*/libicui18n.*",
+        "-usr/lib/*/libgtk-*",
+        "-usr/lib/*/libgdk-*",
+        "-usr/lib/*/glib-*",
+        "-usr/lib/*/gtk-*",
+        "-usr/lib/*/gdk-*",
+        "-usr/lib/*/krb5",
+        "-usr/lib/systemd",
+        "-usr/lib/glib-networking",
+        "-usr/lib/dconf",
+        "-usr/lib/*/avahi",
+        "-usr/lib/*/gio",
+        "-usr/lib/*/libatk*",
+        "-usr/lib/*/libatspi*",
+        "-usr/lib/*/libavahi*",
+        "-usr/lib/*/libcairo*",
+        "-usr/lib/*/libcolordprivate*",
+        "-usr/lib/*/libcolord*",
+        "-usr/lib/*/libcroco*",
+        "-usr/lib/*/libcups*",
+        "-usr/lib/*/libdatrie*",
+        "-usr/lib/*/libdconf*",
+        "-usr/lib/*/libepoxy*",
+        "-usr/lib/*/libexpatw*",
+        "-usr/lib/*/libffi*",
+        "-usr/lib/*/libfontconfig*",
+        "-usr/lib/*/libfreetype*",
+        "-usr/lib/*/libgdk_pixbuf*",
+        "-usr/lib/*/libgdk_pixbuf_xlib*",
+        "-usr/lib/*/libgio*",
+        "-usr/lib/*/libglib*",
+        "-usr/lib/*/libgmodule*",
+        "-usr/lib/*/libgmp*",
+        "-usr/lib/*/libgnutls*",
+        "-usr/lib/*/libgobject*",
+        "-usr/lib/*/libgraphite2*",
+        "-usr/lib/*/libgssapi_krb5*",
+        "-usr/lib/*/libgthread*",
+        "-usr/lib/*/libharfbuzz*",
+        "-usr/lib/*/libhogweed*",
+        "-usr/lib/*/libicuio*",
+        "-usr/lib/*/libicutest*",
+        "-usr/lib/*/libicutu*",
+        "-usr/lib/*/libicuuc*",
+        "-usr/lib/*/libidn2*",
+        "-usr/lib/*/libjbig*",
+        "-usr/lib/*/libjpeg*",
+        "-usr/lib/*/libjson*",
+        "-usr/lib/*/libk5crypto*",
+        "-usr/lib/*/libkrb5*",
+        "-usr/lib/*/libkrb5support*",
+        "-usr/lib/*/liblcms2*",
+        "-usr/lib/*/libnettle*",
+        "-usr/lib/*/libp11*",
+        "-usr/lib/*/libpango*",
+        "-usr/lib/*/libpangocairo*",
+        "-usr/lib/*/libpangoft2*",
+        "-usr/lib/*/libpixman*",
+        "-usr/lib/*/libpng16*",
+        "-usr/lib/*/libproxy*",
+        "-usr/lib/*/librest*",
+        "-usr/lib/*/librsvg*",
+        "-usr/lib/*/libsecret*",
+        "-usr/lib/*/libsoup*",
+        "-usr/lib/*/libsqlite3*",
+        "-usr/lib/*/libtasn1*",
+        "-usr/lib/*/libthai*",
+        "-usr/lib/*/libtiff*",
+        "-usr/lib/*/libunistring*",
+        "-usr/lib/*/libwayland*",
+        "-usr/lib/*/libX11*",
+        "-usr/lib/*/libXau*",
+        "-usr/lib/*/libxcb.so*",
+        "-usr/lib/*/libxcb-dri2*",
+        "-usr/lib/*/libxcb-dri3*",
+        "-usr/lib/*/libxcb-glx*",
+        "-usr/lib/*/libxcb-present*",
+        "-usr/lib/*/libxcb-render*",
+        "-usr/lib/*/libxcb-shm*",
+        "-usr/lib/*/libxcb-sync*",
+        "-usr/lib/*/libxcb-xfixes*",
+        "-usr/lib/*/libXcomposite*",
+        "-usr/lib/*/libXcursor*",
+        "-usr/lib/*/libXdamage*",
+        "-usr/lib/*/libXdmcp*",
+        "-usr/lib/*/libXext*",
+        "-usr/lib/*/libXfixes*",
+        "-usr/lib/*/libXinerama*",
+        "-usr/lib/*/libXi*",
+        "-usr/lib/*/libxkbcommon*",
+        "-usr/lib/*/libxml2*",
+        "-usr/lib/*/libXrandr*",
+        "-usr/lib/*/libXrender*",
+      ],
+      "stage-packages": [
+        "libnspr4",
+        "libnss3",
+        "libxss1",
+        "libappindicator3-1",
+        "libsecret-1-0",
+      ],
+    },
+    "app-files": {
+      "organize": {
+        "*": "app/",
+      },
+      "plugin": "dump",
+      "source": "app",
+      "stage": [
+        "-app/chrome-sandbox",
+        "-LICENSES.chromium.html",
+      ],
+    },
+    "gnome-platform-empty-dirs": {
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+",
+      "plugin": "nil",
+    },
+    "launch-scripts": {
+      "plugin": "dump",
+      "source": "scripts",
+    },
+  },
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > compression option (core18) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > compression option (core20) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "adapter": "none",
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
+  "compression": "xz",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": {
+    "app": {
+      "plugin": "nil",
+      "stage": [
+        "-usr/lib/python*",
+        "-usr/bin/python*",
+        "-var/lib/ucf",
+        "-usr/include",
+        "-usr/lib/X11",
+        "-usr/share",
+        "-usr/sbin",
+        "-usr/bin",
+        "-usr/lib/*/libicudata.*",
+        "-usr/lib/*/libicui18n.*",
+        "-usr/lib/*/libgtk-*",
+        "-usr/lib/*/libgdk-*",
+        "-usr/lib/*/glib-*",
+        "-usr/lib/*/gtk-*",
+        "-usr/lib/*/gdk-*",
+        "-usr/lib/*/krb5",
+        "-usr/lib/systemd",
+        "-usr/lib/glib-networking",
+        "-usr/lib/dconf",
+        "-usr/lib/*/avahi",
+        "-usr/lib/*/gio",
+        "-usr/lib/*/libatk*",
+        "-usr/lib/*/libatspi*",
+        "-usr/lib/*/libavahi*",
+        "-usr/lib/*/libcairo*",
+        "-usr/lib/*/libcolordprivate*",
+        "-usr/lib/*/libcolord*",
+        "-usr/lib/*/libcroco*",
+        "-usr/lib/*/libcups*",
+        "-usr/lib/*/libdatrie*",
+        "-usr/lib/*/libdconf*",
+        "-usr/lib/*/libepoxy*",
+        "-usr/lib/*/libexpatw*",
+        "-usr/lib/*/libffi*",
+        "-usr/lib/*/libfontconfig*",
+        "-usr/lib/*/libfreetype*",
+        "-usr/lib/*/libgdk_pixbuf*",
+        "-usr/lib/*/libgdk_pixbuf_xlib*",
+        "-usr/lib/*/libgio*",
+        "-usr/lib/*/libglib*",
+        "-usr/lib/*/libgmodule*",
+        "-usr/lib/*/libgmp*",
+        "-usr/lib/*/libgnutls*",
+        "-usr/lib/*/libgobject*",
+        "-usr/lib/*/libgraphite2*",
+        "-usr/lib/*/libgssapi_krb5*",
+        "-usr/lib/*/libgthread*",
+        "-usr/lib/*/libharfbuzz*",
+        "-usr/lib/*/libhogweed*",
+        "-usr/lib/*/libicuio*",
+        "-usr/lib/*/libicutest*",
+        "-usr/lib/*/libicutu*",
+        "-usr/lib/*/libicuuc*",
+        "-usr/lib/*/libidn2*",
+        "-usr/lib/*/libjbig*",
+        "-usr/lib/*/libjpeg*",
+        "-usr/lib/*/libjson*",
+        "-usr/lib/*/libk5crypto*",
+        "-usr/lib/*/libkrb5*",
+        "-usr/lib/*/libkrb5support*",
+        "-usr/lib/*/liblcms2*",
+        "-usr/lib/*/libnettle*",
+        "-usr/lib/*/libp11*",
+        "-usr/lib/*/libpango*",
+        "-usr/lib/*/libpangocairo*",
+        "-usr/lib/*/libpangoft2*",
+        "-usr/lib/*/libpixman*",
+        "-usr/lib/*/libpng16*",
+        "-usr/lib/*/libproxy*",
+        "-usr/lib/*/librest*",
+        "-usr/lib/*/librsvg*",
+        "-usr/lib/*/libsecret*",
+        "-usr/lib/*/libsoup*",
+        "-usr/lib/*/libsqlite3*",
+        "-usr/lib/*/libtasn1*",
+        "-usr/lib/*/libthai*",
+        "-usr/lib/*/libtiff*",
+        "-usr/lib/*/libunistring*",
+        "-usr/lib/*/libwayland*",
+        "-usr/lib/*/libX11*",
+        "-usr/lib/*/libXau*",
+        "-usr/lib/*/libxcb.so*",
+        "-usr/lib/*/libxcb-dri2*",
+        "-usr/lib/*/libxcb-dri3*",
+        "-usr/lib/*/libxcb-glx*",
+        "-usr/lib/*/libxcb-present*",
+        "-usr/lib/*/libxcb-render*",
+        "-usr/lib/*/libxcb-shm*",
+        "-usr/lib/*/libxcb-sync*",
+        "-usr/lib/*/libxcb-xfixes*",
+        "-usr/lib/*/libXcomposite*",
+        "-usr/lib/*/libXcursor*",
+        "-usr/lib/*/libXdamage*",
+        "-usr/lib/*/libXdmcp*",
+        "-usr/lib/*/libXext*",
+        "-usr/lib/*/libXfixes*",
+        "-usr/lib/*/libXinerama*",
+        "-usr/lib/*/libXi*",
+        "-usr/lib/*/libxkbcommon*",
+        "-usr/lib/*/libxml2*",
+        "-usr/lib/*/libXrandr*",
+        "-usr/lib/*/libXrender*",
+      ],
+      "stage-packages": [
+        "libnspr4",
+        "libnss3",
+        "libxss1",
+        "libappindicator3-1",
+        "libsecret-1-0",
+      ],
+    },
+    "app-files": {
+      "organize": {
+        "*": "app/",
+      },
+      "plugin": "dump",
+      "source": "app",
+      "stage": [
+        "-app/chrome-sandbox",
+        "-LICENSES.chromium.html",
+      ],
+    },
+    "gnome-platform-empty-dirs": {
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+",
+      "plugin": "nil",
+    },
+    "launch-scripts": {
+      "plugin": "dump",
+      "source": "scripts",
+    },
+  },
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > compression option (core20) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > compression option (core22) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core22",
+  "compression": "xz",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": {
+    "app": {
+      "plugin": "nil",
+      "stage": [
+        "-usr/lib/python*",
+        "-usr/bin/python*",
+        "-var/lib/ucf",
+        "-usr/include",
+        "-usr/lib/X11",
+        "-usr/share",
+        "-usr/sbin",
+        "-usr/bin",
+        "-usr/lib/*/libicudata.*",
+        "-usr/lib/*/libicui18n.*",
+        "-usr/lib/*/libgtk-*",
+        "-usr/lib/*/libgdk-*",
+        "-usr/lib/*/glib-*",
+        "-usr/lib/*/gtk-*",
+        "-usr/lib/*/gdk-*",
+        "-usr/lib/*/krb5",
+        "-usr/lib/systemd",
+        "-usr/lib/glib-networking",
+        "-usr/lib/dconf",
+        "-usr/lib/*/avahi",
+        "-usr/lib/*/gio",
+        "-usr/lib/*/libatk*",
+        "-usr/lib/*/libatspi*",
+        "-usr/lib/*/libavahi*",
+        "-usr/lib/*/libcairo*",
+        "-usr/lib/*/libcolordprivate*",
+        "-usr/lib/*/libcolord*",
+        "-usr/lib/*/libcroco*",
+        "-usr/lib/*/libcups*",
+        "-usr/lib/*/libdatrie*",
+        "-usr/lib/*/libdconf*",
+        "-usr/lib/*/libepoxy*",
+        "-usr/lib/*/libexpatw*",
+        "-usr/lib/*/libffi*",
+        "-usr/lib/*/libfontconfig*",
+        "-usr/lib/*/libfreetype*",
+        "-usr/lib/*/libgdk_pixbuf*",
+        "-usr/lib/*/libgdk_pixbuf_xlib*",
+        "-usr/lib/*/libgio*",
+        "-usr/lib/*/libglib*",
+        "-usr/lib/*/libgmodule*",
+        "-usr/lib/*/libgmp*",
+        "-usr/lib/*/libgnutls*",
+        "-usr/lib/*/libgobject*",
+        "-usr/lib/*/libgraphite2*",
+        "-usr/lib/*/libgssapi_krb5*",
+        "-usr/lib/*/libgthread*",
+        "-usr/lib/*/libharfbuzz*",
+        "-usr/lib/*/libhogweed*",
+        "-usr/lib/*/libicuio*",
+        "-usr/lib/*/libicutest*",
+        "-usr/lib/*/libicutu*",
+        "-usr/lib/*/libicuuc*",
+        "-usr/lib/*/libidn2*",
+        "-usr/lib/*/libjbig*",
+        "-usr/lib/*/libjpeg*",
+        "-usr/lib/*/libjson*",
+        "-usr/lib/*/libk5crypto*",
+        "-usr/lib/*/libkrb5*",
+        "-usr/lib/*/libkrb5support*",
+        "-usr/lib/*/liblcms2*",
+        "-usr/lib/*/libnettle*",
+        "-usr/lib/*/libp11*",
+        "-usr/lib/*/libpango*",
+        "-usr/lib/*/libpangocairo*",
+        "-usr/lib/*/libpangoft2*",
+        "-usr/lib/*/libpixman*",
+        "-usr/lib/*/libpng16*",
+        "-usr/lib/*/libproxy*",
+        "-usr/lib/*/librest*",
+        "-usr/lib/*/librsvg*",
+        "-usr/lib/*/libsecret*",
+        "-usr/lib/*/libsoup*",
+        "-usr/lib/*/libsqlite3*",
+        "-usr/lib/*/libtasn1*",
+        "-usr/lib/*/libthai*",
+        "-usr/lib/*/libtiff*",
+        "-usr/lib/*/libunistring*",
+        "-usr/lib/*/libwayland*",
+        "-usr/lib/*/libX11*",
+        "-usr/lib/*/libXau*",
+        "-usr/lib/*/libxcb.so*",
+        "-usr/lib/*/libxcb-dri2*",
+        "-usr/lib/*/libxcb-dri3*",
+        "-usr/lib/*/libxcb-glx*",
+        "-usr/lib/*/libxcb-present*",
+        "-usr/lib/*/libxcb-render*",
+        "-usr/lib/*/libxcb-shm*",
+        "-usr/lib/*/libxcb-sync*",
+        "-usr/lib/*/libxcb-xfixes*",
+        "-usr/lib/*/libXcomposite*",
+        "-usr/lib/*/libXcursor*",
+        "-usr/lib/*/libXdamage*",
+        "-usr/lib/*/libXdmcp*",
+        "-usr/lib/*/libXext*",
+        "-usr/lib/*/libXfixes*",
+        "-usr/lib/*/libXinerama*",
+        "-usr/lib/*/libXi*",
+        "-usr/lib/*/libxkbcommon*",
+        "-usr/lib/*/libxml2*",
+        "-usr/lib/*/libXrandr*",
+        "-usr/lib/*/libXrender*",
+      ],
+      "stage-packages": [
+        "libnspr4",
+        "libnss3",
+        "libxss1",
+        "libappindicator3-1",
+        "libsecret-1-0",
+      ],
+    },
+    "app-files": {
+      "organize": {
+        "*": "app/",
+      },
+      "plugin": "dump",
+      "source": "app",
+      "stage": [
+        "-app/chrome-sandbox",
+        "-LICENSES.chromium.html",
+      ],
+    },
+    "gnome-platform-empty-dirs": {
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+",
+      "plugin": "nil",
+    },
+    "launch-scripts": {
+      "plugin": "dump",
+      "source": "scripts",
+    },
+  },
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > compression option (core22) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core18: linux.compression 'maximum' maps to xz 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core18: linux.compression 'store' maps to lzo 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core18: linux.description propagates to snap.description 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core18: per-core description overrides linux.description 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core20: linux.compression 'maximum' maps to xz 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core20: linux.compression 'store' maps to lzo 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core20: linux.description propagates to snap.description 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core20: per-core description overrides linux.description 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core22: linux.category propagates to desktop Categories 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core22: linux.compression 'maximum' maps to xz 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core22: linux.compression 'normal' leaves compression unset 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core22: linux.compression 'store' maps to lzo 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core22: linux.description propagates to snap.description 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core22: per-core compression overrides linux.compression mapping 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core22: per-core description overrides linux.description 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24 custom plugs with default expansion 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "app/testapp --no-sandbox",
+      "desktop": "meta/gui/testapp.desktop",
+      "extensions": [
+        "gnome",
+      ],
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+        "camera",
+      ],
+    },
+  },
+  "base": "core24",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "environment": {
+    "TMPDIR": "$XDG_RUNTIME_DIR",
+  },
+  "grade": "stable",
+  "icon": "snap/gui/testapp.png",
+  "name": "testapp",
+  "parts": {
+    "testapp": {
+      "organize": {
+        "LICENSE.electron.txt": "app/LICENSE.electron.txt",
+        "LICENSES.chromium.html": "app/LICENSES.chromium.html",
+        "chrome-sandbox": "app/chrome-sandbox",
+        "chrome_100_percent.pak": "app/chrome_100_percent.pak",
+        "chrome_200_percent.pak": "app/chrome_200_percent.pak",
+        "chrome_crashpad_handler": "app/chrome_crashpad_handler",
+        "icudtl.dat": "app/icudtl.dat",
+        "libEGL.so": "app/libEGL.so",
+        "libGLESv2.so": "app/libGLESv2.so",
+        "libffmpeg.so": "app/libffmpeg.so",
+        "libvk_swiftshader.so": "app/libvk_swiftshader.so",
+        "libvulkan.so.1": "app/libvulkan.so.1",
+        "locales": "app/locales",
+        "resources": "app/resources",
+        "resources.pak": "app/resources.pak",
+        "snapshot_blob.bin": "app/snapshot_blob.bin",
+        "testapp": "app/testapp",
+        "v8_context_snapshot.bin": "app/v8_context_snapshot.bin",
+        "vk_swiftshader_icd.json": "app/vk_swiftshader_icd.json",
+      },
+      "plugin": "dump",
+      "source": "app",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > core24 custom plugs with default expansion 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24 default (gnome extension) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "app/testapp",
+      "desktop": "meta/gui/testapp.desktop",
+      "extensions": [
+        "gnome",
+      ],
+      "plugs": [
+        "browser-support",
+      ],
+    },
+  },
+  "base": "core24",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "environment": {
+    "TMPDIR": "$XDG_RUNTIME_DIR",
+  },
+  "grade": "stable",
+  "icon": "snap/gui/testapp.png",
+  "name": "testapp",
+  "parts": {
+    "testapp": {
+      "organize": {
+        "LICENSE.electron.txt": "app/LICENSE.electron.txt",
+        "LICENSES.chromium.html": "app/LICENSES.chromium.html",
+        "chrome-sandbox": "app/chrome-sandbox",
+        "chrome_100_percent.pak": "app/chrome_100_percent.pak",
+        "chrome_200_percent.pak": "app/chrome_200_percent.pak",
+        "chrome_crashpad_handler": "app/chrome_crashpad_handler",
+        "icudtl.dat": "app/icudtl.dat",
+        "libEGL.so": "app/libEGL.so",
+        "libGLESv2.so": "app/libGLESv2.so",
+        "libffmpeg.so": "app/libffmpeg.so",
+        "libvk_swiftshader.so": "app/libvk_swiftshader.so",
+        "libvulkan.so.1": "app/libvulkan.so.1",
+        "locales": "app/locales",
+        "resources": "app/resources",
+        "resources.pak": "app/resources.pak",
+        "snapshot_blob.bin": "app/snapshot_blob.bin",
+        "testapp": "app/testapp",
+        "v8_context_snapshot.bin": "app/v8_context_snapshot.bin",
+        "vk_swiftshader_icd.json": "app/vk_swiftshader_icd.json",
+      },
+      "plugin": "dump",
+      "source": "app",
+    },
+  },
+  "plugs": {
+    "browser-support": {
+      "allow-sandbox": true,
+      "interface": "browser-support",
+    },
+  },
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > core24 default (gnome extension) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24 gnome extension throws in destructive-mode 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
+
+exports[`snapcraft > core24 no gnome extension 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "app/testapp",
+      "desktop": "meta/gui/testapp.desktop",
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+        "browser-support",
+      ],
+    },
+  },
+  "base": "core24",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "environment": {
+    "TMPDIR": "$XDG_RUNTIME_DIR",
+  },
+  "grade": "stable",
+  "icon": "snap/gui/testapp.png",
+  "layout": {
+    "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0": {
+      "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0",
+    },
+    "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1": {
+      "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1",
+    },
+    "/usr/share/drirc.d": {
+      "symlink": "$SNAP/gpu-2404/drirc.d",
+    },
+    "/usr/share/libdrm": {
+      "bind": "$SNAP/gpu-2404/libdrm",
+    },
+    "/usr/share/xml/iso-codes": {
+      "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes",
+    },
+  },
+  "name": "testapp",
+  "parts": {
+    "testapp": {
+      "organize": {
+        "LICENSE.electron.txt": "app/LICENSE.electron.txt",
+        "LICENSES.chromium.html": "app/LICENSES.chromium.html",
+        "chrome-sandbox": "app/chrome-sandbox",
+        "chrome_100_percent.pak": "app/chrome_100_percent.pak",
+        "chrome_200_percent.pak": "app/chrome_200_percent.pak",
+        "chrome_crashpad_handler": "app/chrome_crashpad_handler",
+        "icudtl.dat": "app/icudtl.dat",
+        "libEGL.so": "app/libEGL.so",
+        "libGLESv2.so": "app/libGLESv2.so",
+        "libffmpeg.so": "app/libffmpeg.so",
+        "libvk_swiftshader.so": "app/libvk_swiftshader.so",
+        "libvulkan.so.1": "app/libvulkan.so.1",
+        "locales": "app/locales",
+        "resources": "app/resources",
+        "resources.pak": "app/resources.pak",
+        "snapshot_blob.bin": "app/snapshot_blob.bin",
+        "testapp": "app/testapp",
+        "v8_context_snapshot.bin": "app/v8_context_snapshot.bin",
+        "vk_swiftshader_icd.json": "app/vk_swiftshader_icd.json",
+      },
+      "plugin": "dump",
+      "source": "app",
+    },
+  },
+  "plugs": {
+    "browser-support": {
+      "allow-sandbox": true,
+      "interface": "browser-support",
+    },
+    "gnome-46-2404": {
+      "default-provider": "gnome-46-2404",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gpu-2404": {
+      "default-provider": "mesa-2404",
+      "interface": "content",
+      "target": "$SNAP/gpu-2404",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > core24 no gnome extension 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24 remoteBuild build mode 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24 useLXD build mode 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24 useMultipass build mode 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24 wayland disabled 1`] = `
+{
+  "apps": {
+    "sep": {
+      "command": "app/sep --ozone-platform=x11",
+      "desktop": "meta/gui/sep.desktop",
+      "extensions": [
+        "gnome",
+      ],
+      "plugs": [
+        "browser-support",
+      ],
+    },
+  },
+  "base": "core24",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "environment": {
+    "TMPDIR": "$XDG_RUNTIME_DIR",
+  },
+  "grade": "stable",
+  "icon": "snap/gui/sep.png",
+  "name": "sep",
+  "parts": {
+    "sep": {
+      "organize": {
+        "LICENSE.electron.txt": "app/LICENSE.electron.txt",
+        "LICENSES.chromium.html": "app/LICENSES.chromium.html",
+        "chrome-sandbox": "app/chrome-sandbox",
+        "chrome_100_percent.pak": "app/chrome_100_percent.pak",
+        "chrome_200_percent.pak": "app/chrome_200_percent.pak",
+        "chrome_crashpad_handler": "app/chrome_crashpad_handler",
+        "icudtl.dat": "app/icudtl.dat",
+        "libEGL.so": "app/libEGL.so",
+        "libGLESv2.so": "app/libGLESv2.so",
+        "libffmpeg.so": "app/libffmpeg.so",
+        "libvk_swiftshader.so": "app/libvk_swiftshader.so",
+        "libvulkan.so.1": "app/libvulkan.so.1",
+        "locales": "app/locales",
+        "resources": "app/resources",
+        "resources.pak": "app/resources.pak",
+        "sep": "app/sep",
+        "snapshot_blob.bin": "app/snapshot_blob.bin",
+        "v8_context_snapshot.bin": "app/v8_context_snapshot.bin",
+        "vk_swiftshader_icd.json": "app/vk_swiftshader_icd.json",
+      },
+      "plugin": "dump",
+      "source": "app",
+    },
+  },
+  "plugs": {
+    "browser-support": {
+      "allow-sandbox": true,
+      "interface": "browser-support",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > core24 wayland disabled 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24: linux.compression 'maximum' maps to xz 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24: linux.compression 'normal' leaves compression unset 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24: linux.compression 'store' maps to lzo 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24: linux.description propagates to snap.description 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24: per-core compression overrides linux.compression mapping 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24: per-core description overrides linux.description 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > custom after, no desktop (core18) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core18",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "testapp",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > custom after, no desktop (core18) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > custom after, no desktop (core20) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "testapp",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > custom after, no desktop (core20) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > custom after, no desktop (core22) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core22",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "testapp",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > custom after, no desktop (core22) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > custom env (core18) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+      "environment": {
+        "FOO": "bar",
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core18",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "testapp",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > custom env (core18) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > custom env (core20) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+      "environment": {
+        "FOO": "bar",
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "testapp",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > custom env (core20) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > custom env (core22) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+      "environment": {
+        "FOO": "bar",
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core22",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "testapp",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > custom env (core22) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > custom pass-through: linux.description is not injected 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > custom snap yamlPath pass-through 1`] = `
+{
+  "apps": {
+    "sep": {
+      "command": "sep",
+    },
+  },
+  "base": "core24",
+  "confinement": "strict",
+  "description": "Built with a custom snapcraft.yaml via electron-builder.
+",
+  "grade": "stable",
+  "name": "sep",
+  "parts": {
+    "app": {
+      "plugin": "dump",
+      "source": ".",
+    },
+  },
+  "summary": "Custom snap (pass-through)",
+  "version": "1.0.0",
+}
+`;
+
+exports[`snapcraft > custom snap yamlPath pass-through 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > default stagePackages (core18) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "adapter": "none",
+      "command": "command.sh",
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core18",
+  "confinement": "classic",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": {
+    "app": {
+      "plugin": "nil",
+      "stage": [
+        "-usr/lib/python*",
+        "-usr/bin/python*",
+        "-var/lib/ucf",
+        "-usr/include",
+        "-usr/lib/X11",
+        "-usr/share",
+        "-usr/sbin",
+        "-usr/bin",
+        "-usr/lib/*/libicudata.*",
+        "-usr/lib/*/libicui18n.*",
+        "-usr/lib/*/libgtk-*",
+        "-usr/lib/*/libgdk-*",
+        "-usr/lib/*/glib-*",
+        "-usr/lib/*/gtk-*",
+        "-usr/lib/*/gdk-*",
+        "-usr/lib/*/krb5",
+        "-usr/lib/systemd",
+        "-usr/lib/glib-networking",
+        "-usr/lib/dconf",
+        "-usr/lib/*/avahi",
+        "-usr/lib/*/gio",
+        "-usr/lib/*/libatk*",
+        "-usr/lib/*/libatspi*",
+        "-usr/lib/*/libavahi*",
+        "-usr/lib/*/libcairo*",
+        "-usr/lib/*/libcolordprivate*",
+        "-usr/lib/*/libcolord*",
+        "-usr/lib/*/libcroco*",
+        "-usr/lib/*/libcups*",
+        "-usr/lib/*/libdatrie*",
+        "-usr/lib/*/libdconf*",
+        "-usr/lib/*/libepoxy*",
+        "-usr/lib/*/libexpatw*",
+        "-usr/lib/*/libffi*",
+        "-usr/lib/*/libfontconfig*",
+        "-usr/lib/*/libfreetype*",
+        "-usr/lib/*/libgdk_pixbuf*",
+        "-usr/lib/*/libgdk_pixbuf_xlib*",
+        "-usr/lib/*/libgio*",
+        "-usr/lib/*/libglib*",
+        "-usr/lib/*/libgmodule*",
+        "-usr/lib/*/libgmp*",
+        "-usr/lib/*/libgnutls*",
+        "-usr/lib/*/libgobject*",
+        "-usr/lib/*/libgraphite2*",
+        "-usr/lib/*/libgssapi_krb5*",
+        "-usr/lib/*/libgthread*",
+        "-usr/lib/*/libharfbuzz*",
+        "-usr/lib/*/libhogweed*",
+        "-usr/lib/*/libicuio*",
+        "-usr/lib/*/libicutest*",
+        "-usr/lib/*/libicutu*",
+        "-usr/lib/*/libicuuc*",
+        "-usr/lib/*/libidn2*",
+        "-usr/lib/*/libjbig*",
+        "-usr/lib/*/libjpeg*",
+        "-usr/lib/*/libjson*",
+        "-usr/lib/*/libk5crypto*",
+        "-usr/lib/*/libkrb5*",
+        "-usr/lib/*/libkrb5support*",
+        "-usr/lib/*/liblcms2*",
+        "-usr/lib/*/libnettle*",
+        "-usr/lib/*/libp11*",
+        "-usr/lib/*/libpango*",
+        "-usr/lib/*/libpangocairo*",
+        "-usr/lib/*/libpangoft2*",
+        "-usr/lib/*/libpixman*",
+        "-usr/lib/*/libpng16*",
+        "-usr/lib/*/libproxy*",
+        "-usr/lib/*/librest*",
+        "-usr/lib/*/librsvg*",
+        "-usr/lib/*/libsecret*",
+        "-usr/lib/*/libsoup*",
+        "-usr/lib/*/libsqlite3*",
+        "-usr/lib/*/libtasn1*",
+        "-usr/lib/*/libthai*",
+        "-usr/lib/*/libtiff*",
+        "-usr/lib/*/libunistring*",
+        "-usr/lib/*/libwayland*",
+        "-usr/lib/*/libX11*",
+        "-usr/lib/*/libXau*",
+        "-usr/lib/*/libxcb.so*",
+        "-usr/lib/*/libxcb-dri2*",
+        "-usr/lib/*/libxcb-dri3*",
+        "-usr/lib/*/libxcb-glx*",
+        "-usr/lib/*/libxcb-present*",
+        "-usr/lib/*/libxcb-render*",
+        "-usr/lib/*/libxcb-shm*",
+        "-usr/lib/*/libxcb-sync*",
+        "-usr/lib/*/libxcb-xfixes*",
+        "-usr/lib/*/libXcomposite*",
+        "-usr/lib/*/libXcursor*",
+        "-usr/lib/*/libXdamage*",
+        "-usr/lib/*/libXdmcp*",
+        "-usr/lib/*/libXext*",
+        "-usr/lib/*/libXfixes*",
+        "-usr/lib/*/libXinerama*",
+        "-usr/lib/*/libXi*",
+        "-usr/lib/*/libxkbcommon*",
+        "-usr/lib/*/libxml2*",
+        "-usr/lib/*/libXrandr*",
+        "-usr/lib/*/libXrender*",
+      ],
+      "stage-packages": [
+        "libnspr4",
+        "libnss3",
+        "libxss1",
+        "libappindicator3-1",
+        "libsecret-1-0",
+      ],
+    },
+    "app-files": {
+      "organize": {
+        "*": "app/",
+      },
+      "plugin": "dump",
+      "source": "app",
+      "stage": [
+        "-app/chrome-sandbox",
+        "-LICENSES.chromium.html",
+      ],
+    },
+    "gnome-platform-empty-dirs": {
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+",
+      "plugin": "nil",
+    },
+    "launch-scripts": {
+      "plugin": "dump",
+      "source": "scripts",
+    },
+  },
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > default stagePackages (core18) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > default stagePackages (core18) 3`] = `
+{
+  "apps": {
+    "testapp": {
+      "adapter": "none",
+      "command": "command.sh",
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core18",
+  "confinement": "classic",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": {
+    "app": {
+      "plugin": "nil",
+      "stage": [
+        "-usr/lib/python*",
+        "-usr/bin/python*",
+        "-var/lib/ucf",
+        "-usr/include",
+        "-usr/lib/X11",
+        "-usr/share",
+        "-usr/sbin",
+        "-usr/bin",
+        "-usr/lib/*/libicudata.*",
+        "-usr/lib/*/libicui18n.*",
+        "-usr/lib/*/libgtk-*",
+        "-usr/lib/*/libgdk-*",
+        "-usr/lib/*/glib-*",
+        "-usr/lib/*/gtk-*",
+        "-usr/lib/*/gdk-*",
+        "-usr/lib/*/krb5",
+        "-usr/lib/systemd",
+        "-usr/lib/glib-networking",
+        "-usr/lib/dconf",
+        "-usr/lib/*/avahi",
+        "-usr/lib/*/gio",
+        "-usr/lib/*/libatk*",
+        "-usr/lib/*/libatspi*",
+        "-usr/lib/*/libavahi*",
+        "-usr/lib/*/libcairo*",
+        "-usr/lib/*/libcolordprivate*",
+        "-usr/lib/*/libcolord*",
+        "-usr/lib/*/libcroco*",
+        "-usr/lib/*/libcups*",
+        "-usr/lib/*/libdatrie*",
+        "-usr/lib/*/libdconf*",
+        "-usr/lib/*/libepoxy*",
+        "-usr/lib/*/libexpatw*",
+        "-usr/lib/*/libffi*",
+        "-usr/lib/*/libfontconfig*",
+        "-usr/lib/*/libfreetype*",
+        "-usr/lib/*/libgdk_pixbuf*",
+        "-usr/lib/*/libgdk_pixbuf_xlib*",
+        "-usr/lib/*/libgio*",
+        "-usr/lib/*/libglib*",
+        "-usr/lib/*/libgmodule*",
+        "-usr/lib/*/libgmp*",
+        "-usr/lib/*/libgnutls*",
+        "-usr/lib/*/libgobject*",
+        "-usr/lib/*/libgraphite2*",
+        "-usr/lib/*/libgssapi_krb5*",
+        "-usr/lib/*/libgthread*",
+        "-usr/lib/*/libharfbuzz*",
+        "-usr/lib/*/libhogweed*",
+        "-usr/lib/*/libicuio*",
+        "-usr/lib/*/libicutest*",
+        "-usr/lib/*/libicutu*",
+        "-usr/lib/*/libicuuc*",
+        "-usr/lib/*/libidn2*",
+        "-usr/lib/*/libjbig*",
+        "-usr/lib/*/libjpeg*",
+        "-usr/lib/*/libjson*",
+        "-usr/lib/*/libk5crypto*",
+        "-usr/lib/*/libkrb5*",
+        "-usr/lib/*/libkrb5support*",
+        "-usr/lib/*/liblcms2*",
+        "-usr/lib/*/libnettle*",
+        "-usr/lib/*/libp11*",
+        "-usr/lib/*/libpango*",
+        "-usr/lib/*/libpangocairo*",
+        "-usr/lib/*/libpangoft2*",
+        "-usr/lib/*/libpixman*",
+        "-usr/lib/*/libpng16*",
+        "-usr/lib/*/libproxy*",
+        "-usr/lib/*/librest*",
+        "-usr/lib/*/librsvg*",
+        "-usr/lib/*/libsecret*",
+        "-usr/lib/*/libsoup*",
+        "-usr/lib/*/libsqlite3*",
+        "-usr/lib/*/libtasn1*",
+        "-usr/lib/*/libthai*",
+        "-usr/lib/*/libtiff*",
+        "-usr/lib/*/libunistring*",
+        "-usr/lib/*/libwayland*",
+        "-usr/lib/*/libX11*",
+        "-usr/lib/*/libXau*",
+        "-usr/lib/*/libxcb.so*",
+        "-usr/lib/*/libxcb-dri2*",
+        "-usr/lib/*/libxcb-dri3*",
+        "-usr/lib/*/libxcb-glx*",
+        "-usr/lib/*/libxcb-present*",
+        "-usr/lib/*/libxcb-render*",
+        "-usr/lib/*/libxcb-shm*",
+        "-usr/lib/*/libxcb-sync*",
+        "-usr/lib/*/libxcb-xfixes*",
+        "-usr/lib/*/libXcomposite*",
+        "-usr/lib/*/libXcursor*",
+        "-usr/lib/*/libXdamage*",
+        "-usr/lib/*/libXdmcp*",
+        "-usr/lib/*/libXext*",
+        "-usr/lib/*/libXfixes*",
+        "-usr/lib/*/libXinerama*",
+        "-usr/lib/*/libXi*",
+        "-usr/lib/*/libxkbcommon*",
+        "-usr/lib/*/libxml2*",
+        "-usr/lib/*/libXrandr*",
+        "-usr/lib/*/libXrender*",
+      ],
+      "stage-packages": [
+        "libnspr4",
+        "libnss3",
+        "libxss1",
+        "libappindicator3-1",
+        "libsecret-1-0",
+        "custom",
+      ],
+    },
+    "app-files": {
+      "organize": {
+        "*": "app/",
+      },
+      "plugin": "dump",
+      "source": "app",
+      "stage": [
+        "-app/chrome-sandbox",
+        "-LICENSES.chromium.html",
+      ],
+    },
+    "gnome-platform-empty-dirs": {
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+",
+      "plugin": "nil",
+    },
+    "launch-scripts": {
+      "plugin": "dump",
+      "source": "scripts",
+    },
+  },
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > default stagePackages (core18) 4`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > default stagePackages (core18) 5`] = `
+{
+  "apps": {
+    "testapp": {
+      "adapter": "none",
+      "command": "command.sh",
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core18",
+  "confinement": "classic",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": {
+    "app": {
+      "plugin": "nil",
+      "stage": [
+        "-usr/lib/python*",
+        "-usr/bin/python*",
+        "-var/lib/ucf",
+        "-usr/include",
+        "-usr/lib/X11",
+        "-usr/share",
+        "-usr/sbin",
+        "-usr/bin",
+        "-usr/lib/*/libicudata.*",
+        "-usr/lib/*/libicui18n.*",
+        "-usr/lib/*/libgtk-*",
+        "-usr/lib/*/libgdk-*",
+        "-usr/lib/*/glib-*",
+        "-usr/lib/*/gtk-*",
+        "-usr/lib/*/gdk-*",
+        "-usr/lib/*/krb5",
+        "-usr/lib/systemd",
+        "-usr/lib/glib-networking",
+        "-usr/lib/dconf",
+        "-usr/lib/*/avahi",
+        "-usr/lib/*/gio",
+        "-usr/lib/*/libatk*",
+        "-usr/lib/*/libatspi*",
+        "-usr/lib/*/libavahi*",
+        "-usr/lib/*/libcairo*",
+        "-usr/lib/*/libcolordprivate*",
+        "-usr/lib/*/libcolord*",
+        "-usr/lib/*/libcroco*",
+        "-usr/lib/*/libcups*",
+        "-usr/lib/*/libdatrie*",
+        "-usr/lib/*/libdconf*",
+        "-usr/lib/*/libepoxy*",
+        "-usr/lib/*/libexpatw*",
+        "-usr/lib/*/libffi*",
+        "-usr/lib/*/libfontconfig*",
+        "-usr/lib/*/libfreetype*",
+        "-usr/lib/*/libgdk_pixbuf*",
+        "-usr/lib/*/libgdk_pixbuf_xlib*",
+        "-usr/lib/*/libgio*",
+        "-usr/lib/*/libglib*",
+        "-usr/lib/*/libgmodule*",
+        "-usr/lib/*/libgmp*",
+        "-usr/lib/*/libgnutls*",
+        "-usr/lib/*/libgobject*",
+        "-usr/lib/*/libgraphite2*",
+        "-usr/lib/*/libgssapi_krb5*",
+        "-usr/lib/*/libgthread*",
+        "-usr/lib/*/libharfbuzz*",
+        "-usr/lib/*/libhogweed*",
+        "-usr/lib/*/libicuio*",
+        "-usr/lib/*/libicutest*",
+        "-usr/lib/*/libicutu*",
+        "-usr/lib/*/libicuuc*",
+        "-usr/lib/*/libidn2*",
+        "-usr/lib/*/libjbig*",
+        "-usr/lib/*/libjpeg*",
+        "-usr/lib/*/libjson*",
+        "-usr/lib/*/libk5crypto*",
+        "-usr/lib/*/libkrb5*",
+        "-usr/lib/*/libkrb5support*",
+        "-usr/lib/*/liblcms2*",
+        "-usr/lib/*/libnettle*",
+        "-usr/lib/*/libp11*",
+        "-usr/lib/*/libpango*",
+        "-usr/lib/*/libpangocairo*",
+        "-usr/lib/*/libpangoft2*",
+        "-usr/lib/*/libpixman*",
+        "-usr/lib/*/libpng16*",
+        "-usr/lib/*/libproxy*",
+        "-usr/lib/*/librest*",
+        "-usr/lib/*/librsvg*",
+        "-usr/lib/*/libsecret*",
+        "-usr/lib/*/libsoup*",
+        "-usr/lib/*/libsqlite3*",
+        "-usr/lib/*/libtasn1*",
+        "-usr/lib/*/libthai*",
+        "-usr/lib/*/libtiff*",
+        "-usr/lib/*/libunistring*",
+        "-usr/lib/*/libwayland*",
+        "-usr/lib/*/libX11*",
+        "-usr/lib/*/libXau*",
+        "-usr/lib/*/libxcb.so*",
+        "-usr/lib/*/libxcb-dri2*",
+        "-usr/lib/*/libxcb-dri3*",
+        "-usr/lib/*/libxcb-glx*",
+        "-usr/lib/*/libxcb-present*",
+        "-usr/lib/*/libxcb-render*",
+        "-usr/lib/*/libxcb-shm*",
+        "-usr/lib/*/libxcb-sync*",
+        "-usr/lib/*/libxcb-xfixes*",
+        "-usr/lib/*/libXcomposite*",
+        "-usr/lib/*/libXcursor*",
+        "-usr/lib/*/libXdamage*",
+        "-usr/lib/*/libXdmcp*",
+        "-usr/lib/*/libXext*",
+        "-usr/lib/*/libXfixes*",
+        "-usr/lib/*/libXinerama*",
+        "-usr/lib/*/libXi*",
+        "-usr/lib/*/libxkbcommon*",
+        "-usr/lib/*/libxml2*",
+        "-usr/lib/*/libXrandr*",
+        "-usr/lib/*/libXrender*",
+      ],
+      "stage-packages": [
+        "custom",
+        "libnspr4",
+        "libnss3",
+        "libxss1",
+        "libappindicator3-1",
+        "libsecret-1-0",
+      ],
+    },
+    "app-files": {
+      "organize": {
+        "*": "app/",
+      },
+      "plugin": "dump",
+      "source": "app",
+      "stage": [
+        "-app/chrome-sandbox",
+        "-LICENSES.chromium.html",
+      ],
+    },
+    "gnome-platform-empty-dirs": {
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+",
+      "plugin": "nil",
+    },
+    "launch-scripts": {
+      "plugin": "dump",
+      "source": "scripts",
+    },
+  },
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > default stagePackages (core18) 6`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > default stagePackages (core18) 7`] = `
+{
+  "apps": {
+    "testapp": {
+      "adapter": "none",
+      "command": "command.sh",
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core18",
+  "confinement": "classic",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": {
+    "app": {
+      "plugin": "nil",
+      "stage": [
+        "-usr/lib/python*",
+        "-usr/bin/python*",
+        "-var/lib/ucf",
+        "-usr/include",
+        "-usr/lib/X11",
+        "-usr/share",
+        "-usr/sbin",
+        "-usr/bin",
+        "-usr/lib/*/libicudata.*",
+        "-usr/lib/*/libicui18n.*",
+        "-usr/lib/*/libgtk-*",
+        "-usr/lib/*/libgdk-*",
+        "-usr/lib/*/glib-*",
+        "-usr/lib/*/gtk-*",
+        "-usr/lib/*/gdk-*",
+        "-usr/lib/*/krb5",
+        "-usr/lib/systemd",
+        "-usr/lib/glib-networking",
+        "-usr/lib/dconf",
+        "-usr/lib/*/avahi",
+        "-usr/lib/*/gio",
+        "-usr/lib/*/libatk*",
+        "-usr/lib/*/libatspi*",
+        "-usr/lib/*/libavahi*",
+        "-usr/lib/*/libcairo*",
+        "-usr/lib/*/libcolordprivate*",
+        "-usr/lib/*/libcolord*",
+        "-usr/lib/*/libcroco*",
+        "-usr/lib/*/libcups*",
+        "-usr/lib/*/libdatrie*",
+        "-usr/lib/*/libdconf*",
+        "-usr/lib/*/libepoxy*",
+        "-usr/lib/*/libexpatw*",
+        "-usr/lib/*/libffi*",
+        "-usr/lib/*/libfontconfig*",
+        "-usr/lib/*/libfreetype*",
+        "-usr/lib/*/libgdk_pixbuf*",
+        "-usr/lib/*/libgdk_pixbuf_xlib*",
+        "-usr/lib/*/libgio*",
+        "-usr/lib/*/libglib*",
+        "-usr/lib/*/libgmodule*",
+        "-usr/lib/*/libgmp*",
+        "-usr/lib/*/libgnutls*",
+        "-usr/lib/*/libgobject*",
+        "-usr/lib/*/libgraphite2*",
+        "-usr/lib/*/libgssapi_krb5*",
+        "-usr/lib/*/libgthread*",
+        "-usr/lib/*/libharfbuzz*",
+        "-usr/lib/*/libhogweed*",
+        "-usr/lib/*/libicuio*",
+        "-usr/lib/*/libicutest*",
+        "-usr/lib/*/libicutu*",
+        "-usr/lib/*/libicuuc*",
+        "-usr/lib/*/libidn2*",
+        "-usr/lib/*/libjbig*",
+        "-usr/lib/*/libjpeg*",
+        "-usr/lib/*/libjson*",
+        "-usr/lib/*/libk5crypto*",
+        "-usr/lib/*/libkrb5*",
+        "-usr/lib/*/libkrb5support*",
+        "-usr/lib/*/liblcms2*",
+        "-usr/lib/*/libnettle*",
+        "-usr/lib/*/libp11*",
+        "-usr/lib/*/libpango*",
+        "-usr/lib/*/libpangocairo*",
+        "-usr/lib/*/libpangoft2*",
+        "-usr/lib/*/libpixman*",
+        "-usr/lib/*/libpng16*",
+        "-usr/lib/*/libproxy*",
+        "-usr/lib/*/librest*",
+        "-usr/lib/*/librsvg*",
+        "-usr/lib/*/libsecret*",
+        "-usr/lib/*/libsoup*",
+        "-usr/lib/*/libsqlite3*",
+        "-usr/lib/*/libtasn1*",
+        "-usr/lib/*/libthai*",
+        "-usr/lib/*/libtiff*",
+        "-usr/lib/*/libunistring*",
+        "-usr/lib/*/libwayland*",
+        "-usr/lib/*/libX11*",
+        "-usr/lib/*/libXau*",
+        "-usr/lib/*/libxcb.so*",
+        "-usr/lib/*/libxcb-dri2*",
+        "-usr/lib/*/libxcb-dri3*",
+        "-usr/lib/*/libxcb-glx*",
+        "-usr/lib/*/libxcb-present*",
+        "-usr/lib/*/libxcb-render*",
+        "-usr/lib/*/libxcb-shm*",
+        "-usr/lib/*/libxcb-sync*",
+        "-usr/lib/*/libxcb-xfixes*",
+        "-usr/lib/*/libXcomposite*",
+        "-usr/lib/*/libXcursor*",
+        "-usr/lib/*/libXdamage*",
+        "-usr/lib/*/libXdmcp*",
+        "-usr/lib/*/libXext*",
+        "-usr/lib/*/libXfixes*",
+        "-usr/lib/*/libXinerama*",
+        "-usr/lib/*/libXi*",
+        "-usr/lib/*/libxkbcommon*",
+        "-usr/lib/*/libxml2*",
+        "-usr/lib/*/libXrandr*",
+        "-usr/lib/*/libXrender*",
+      ],
+      "stage-packages": [
+        "foo1",
+        "libnspr4",
+        "libnss3",
+        "libxss1",
+        "libappindicator3-1",
+        "libsecret-1-0",
+        "foo2",
+      ],
+    },
+    "app-files": {
+      "organize": {
+        "*": "app/",
+      },
+      "plugin": "dump",
+      "source": "app",
+      "stage": [
+        "-app/chrome-sandbox",
+        "-LICENSES.chromium.html",
+      ],
+    },
+    "gnome-platform-empty-dirs": {
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+",
+      "plugin": "nil",
+    },
+    "launch-scripts": {
+      "plugin": "dump",
+      "source": "scripts",
+    },
+  },
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > default stagePackages (core18) 8`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > default stagePackages (core20) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "adapter": "none",
+      "command": "command.sh",
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
+  "confinement": "classic",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": {
+    "app": {
+      "plugin": "nil",
+      "stage": [
+        "-usr/lib/python*",
+        "-usr/bin/python*",
+        "-var/lib/ucf",
+        "-usr/include",
+        "-usr/lib/X11",
+        "-usr/share",
+        "-usr/sbin",
+        "-usr/bin",
+        "-usr/lib/*/libicudata.*",
+        "-usr/lib/*/libicui18n.*",
+        "-usr/lib/*/libgtk-*",
+        "-usr/lib/*/libgdk-*",
+        "-usr/lib/*/glib-*",
+        "-usr/lib/*/gtk-*",
+        "-usr/lib/*/gdk-*",
+        "-usr/lib/*/krb5",
+        "-usr/lib/systemd",
+        "-usr/lib/glib-networking",
+        "-usr/lib/dconf",
+        "-usr/lib/*/avahi",
+        "-usr/lib/*/gio",
+        "-usr/lib/*/libatk*",
+        "-usr/lib/*/libatspi*",
+        "-usr/lib/*/libavahi*",
+        "-usr/lib/*/libcairo*",
+        "-usr/lib/*/libcolordprivate*",
+        "-usr/lib/*/libcolord*",
+        "-usr/lib/*/libcroco*",
+        "-usr/lib/*/libcups*",
+        "-usr/lib/*/libdatrie*",
+        "-usr/lib/*/libdconf*",
+        "-usr/lib/*/libepoxy*",
+        "-usr/lib/*/libexpatw*",
+        "-usr/lib/*/libffi*",
+        "-usr/lib/*/libfontconfig*",
+        "-usr/lib/*/libfreetype*",
+        "-usr/lib/*/libgdk_pixbuf*",
+        "-usr/lib/*/libgdk_pixbuf_xlib*",
+        "-usr/lib/*/libgio*",
+        "-usr/lib/*/libglib*",
+        "-usr/lib/*/libgmodule*",
+        "-usr/lib/*/libgmp*",
+        "-usr/lib/*/libgnutls*",
+        "-usr/lib/*/libgobject*",
+        "-usr/lib/*/libgraphite2*",
+        "-usr/lib/*/libgssapi_krb5*",
+        "-usr/lib/*/libgthread*",
+        "-usr/lib/*/libharfbuzz*",
+        "-usr/lib/*/libhogweed*",
+        "-usr/lib/*/libicuio*",
+        "-usr/lib/*/libicutest*",
+        "-usr/lib/*/libicutu*",
+        "-usr/lib/*/libicuuc*",
+        "-usr/lib/*/libidn2*",
+        "-usr/lib/*/libjbig*",
+        "-usr/lib/*/libjpeg*",
+        "-usr/lib/*/libjson*",
+        "-usr/lib/*/libk5crypto*",
+        "-usr/lib/*/libkrb5*",
+        "-usr/lib/*/libkrb5support*",
+        "-usr/lib/*/liblcms2*",
+        "-usr/lib/*/libnettle*",
+        "-usr/lib/*/libp11*",
+        "-usr/lib/*/libpango*",
+        "-usr/lib/*/libpangocairo*",
+        "-usr/lib/*/libpangoft2*",
+        "-usr/lib/*/libpixman*",
+        "-usr/lib/*/libpng16*",
+        "-usr/lib/*/libproxy*",
+        "-usr/lib/*/librest*",
+        "-usr/lib/*/librsvg*",
+        "-usr/lib/*/libsecret*",
+        "-usr/lib/*/libsoup*",
+        "-usr/lib/*/libsqlite3*",
+        "-usr/lib/*/libtasn1*",
+        "-usr/lib/*/libthai*",
+        "-usr/lib/*/libtiff*",
+        "-usr/lib/*/libunistring*",
+        "-usr/lib/*/libwayland*",
+        "-usr/lib/*/libX11*",
+        "-usr/lib/*/libXau*",
+        "-usr/lib/*/libxcb.so*",
+        "-usr/lib/*/libxcb-dri2*",
+        "-usr/lib/*/libxcb-dri3*",
+        "-usr/lib/*/libxcb-glx*",
+        "-usr/lib/*/libxcb-present*",
+        "-usr/lib/*/libxcb-render*",
+        "-usr/lib/*/libxcb-shm*",
+        "-usr/lib/*/libxcb-sync*",
+        "-usr/lib/*/libxcb-xfixes*",
+        "-usr/lib/*/libXcomposite*",
+        "-usr/lib/*/libXcursor*",
+        "-usr/lib/*/libXdamage*",
+        "-usr/lib/*/libXdmcp*",
+        "-usr/lib/*/libXext*",
+        "-usr/lib/*/libXfixes*",
+        "-usr/lib/*/libXinerama*",
+        "-usr/lib/*/libXi*",
+        "-usr/lib/*/libxkbcommon*",
+        "-usr/lib/*/libxml2*",
+        "-usr/lib/*/libXrandr*",
+        "-usr/lib/*/libXrender*",
+      ],
+      "stage-packages": [
+        "libnspr4",
+        "libnss3",
+        "libxss1",
+        "libappindicator3-1",
+        "libsecret-1-0",
+      ],
+    },
+    "app-files": {
+      "organize": {
+        "*": "app/",
+      },
+      "plugin": "dump",
+      "source": "app",
+      "stage": [
+        "-app/chrome-sandbox",
+        "-LICENSES.chromium.html",
+      ],
+    },
+    "gnome-platform-empty-dirs": {
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+",
+      "plugin": "nil",
+    },
+    "launch-scripts": {
+      "plugin": "dump",
+      "source": "scripts",
+    },
+  },
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > default stagePackages (core20) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > default stagePackages (core20) 3`] = `
+{
+  "apps": {
+    "testapp": {
+      "adapter": "none",
+      "command": "command.sh",
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
+  "confinement": "classic",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": {
+    "app": {
+      "plugin": "nil",
+      "stage": [
+        "-usr/lib/python*",
+        "-usr/bin/python*",
+        "-var/lib/ucf",
+        "-usr/include",
+        "-usr/lib/X11",
+        "-usr/share",
+        "-usr/sbin",
+        "-usr/bin",
+        "-usr/lib/*/libicudata.*",
+        "-usr/lib/*/libicui18n.*",
+        "-usr/lib/*/libgtk-*",
+        "-usr/lib/*/libgdk-*",
+        "-usr/lib/*/glib-*",
+        "-usr/lib/*/gtk-*",
+        "-usr/lib/*/gdk-*",
+        "-usr/lib/*/krb5",
+        "-usr/lib/systemd",
+        "-usr/lib/glib-networking",
+        "-usr/lib/dconf",
+        "-usr/lib/*/avahi",
+        "-usr/lib/*/gio",
+        "-usr/lib/*/libatk*",
+        "-usr/lib/*/libatspi*",
+        "-usr/lib/*/libavahi*",
+        "-usr/lib/*/libcairo*",
+        "-usr/lib/*/libcolordprivate*",
+        "-usr/lib/*/libcolord*",
+        "-usr/lib/*/libcroco*",
+        "-usr/lib/*/libcups*",
+        "-usr/lib/*/libdatrie*",
+        "-usr/lib/*/libdconf*",
+        "-usr/lib/*/libepoxy*",
+        "-usr/lib/*/libexpatw*",
+        "-usr/lib/*/libffi*",
+        "-usr/lib/*/libfontconfig*",
+        "-usr/lib/*/libfreetype*",
+        "-usr/lib/*/libgdk_pixbuf*",
+        "-usr/lib/*/libgdk_pixbuf_xlib*",
+        "-usr/lib/*/libgio*",
+        "-usr/lib/*/libglib*",
+        "-usr/lib/*/libgmodule*",
+        "-usr/lib/*/libgmp*",
+        "-usr/lib/*/libgnutls*",
+        "-usr/lib/*/libgobject*",
+        "-usr/lib/*/libgraphite2*",
+        "-usr/lib/*/libgssapi_krb5*",
+        "-usr/lib/*/libgthread*",
+        "-usr/lib/*/libharfbuzz*",
+        "-usr/lib/*/libhogweed*",
+        "-usr/lib/*/libicuio*",
+        "-usr/lib/*/libicutest*",
+        "-usr/lib/*/libicutu*",
+        "-usr/lib/*/libicuuc*",
+        "-usr/lib/*/libidn2*",
+        "-usr/lib/*/libjbig*",
+        "-usr/lib/*/libjpeg*",
+        "-usr/lib/*/libjson*",
+        "-usr/lib/*/libk5crypto*",
+        "-usr/lib/*/libkrb5*",
+        "-usr/lib/*/libkrb5support*",
+        "-usr/lib/*/liblcms2*",
+        "-usr/lib/*/libnettle*",
+        "-usr/lib/*/libp11*",
+        "-usr/lib/*/libpango*",
+        "-usr/lib/*/libpangocairo*",
+        "-usr/lib/*/libpangoft2*",
+        "-usr/lib/*/libpixman*",
+        "-usr/lib/*/libpng16*",
+        "-usr/lib/*/libproxy*",
+        "-usr/lib/*/librest*",
+        "-usr/lib/*/librsvg*",
+        "-usr/lib/*/libsecret*",
+        "-usr/lib/*/libsoup*",
+        "-usr/lib/*/libsqlite3*",
+        "-usr/lib/*/libtasn1*",
+        "-usr/lib/*/libthai*",
+        "-usr/lib/*/libtiff*",
+        "-usr/lib/*/libunistring*",
+        "-usr/lib/*/libwayland*",
+        "-usr/lib/*/libX11*",
+        "-usr/lib/*/libXau*",
+        "-usr/lib/*/libxcb.so*",
+        "-usr/lib/*/libxcb-dri2*",
+        "-usr/lib/*/libxcb-dri3*",
+        "-usr/lib/*/libxcb-glx*",
+        "-usr/lib/*/libxcb-present*",
+        "-usr/lib/*/libxcb-render*",
+        "-usr/lib/*/libxcb-shm*",
+        "-usr/lib/*/libxcb-sync*",
+        "-usr/lib/*/libxcb-xfixes*",
+        "-usr/lib/*/libXcomposite*",
+        "-usr/lib/*/libXcursor*",
+        "-usr/lib/*/libXdamage*",
+        "-usr/lib/*/libXdmcp*",
+        "-usr/lib/*/libXext*",
+        "-usr/lib/*/libXfixes*",
+        "-usr/lib/*/libXinerama*",
+        "-usr/lib/*/libXi*",
+        "-usr/lib/*/libxkbcommon*",
+        "-usr/lib/*/libxml2*",
+        "-usr/lib/*/libXrandr*",
+        "-usr/lib/*/libXrender*",
+      ],
+      "stage-packages": [
+        "libnspr4",
+        "libnss3",
+        "libxss1",
+        "libappindicator3-1",
+        "libsecret-1-0",
+        "custom",
+      ],
+    },
+    "app-files": {
+      "organize": {
+        "*": "app/",
+      },
+      "plugin": "dump",
+      "source": "app",
+      "stage": [
+        "-app/chrome-sandbox",
+        "-LICENSES.chromium.html",
+      ],
+    },
+    "gnome-platform-empty-dirs": {
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+",
+      "plugin": "nil",
+    },
+    "launch-scripts": {
+      "plugin": "dump",
+      "source": "scripts",
+    },
+  },
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > default stagePackages (core20) 4`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > default stagePackages (core20) 5`] = `
+{
+  "apps": {
+    "testapp": {
+      "adapter": "none",
+      "command": "command.sh",
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
+  "confinement": "classic",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": {
+    "app": {
+      "plugin": "nil",
+      "stage": [
+        "-usr/lib/python*",
+        "-usr/bin/python*",
+        "-var/lib/ucf",
+        "-usr/include",
+        "-usr/lib/X11",
+        "-usr/share",
+        "-usr/sbin",
+        "-usr/bin",
+        "-usr/lib/*/libicudata.*",
+        "-usr/lib/*/libicui18n.*",
+        "-usr/lib/*/libgtk-*",
+        "-usr/lib/*/libgdk-*",
+        "-usr/lib/*/glib-*",
+        "-usr/lib/*/gtk-*",
+        "-usr/lib/*/gdk-*",
+        "-usr/lib/*/krb5",
+        "-usr/lib/systemd",
+        "-usr/lib/glib-networking",
+        "-usr/lib/dconf",
+        "-usr/lib/*/avahi",
+        "-usr/lib/*/gio",
+        "-usr/lib/*/libatk*",
+        "-usr/lib/*/libatspi*",
+        "-usr/lib/*/libavahi*",
+        "-usr/lib/*/libcairo*",
+        "-usr/lib/*/libcolordprivate*",
+        "-usr/lib/*/libcolord*",
+        "-usr/lib/*/libcroco*",
+        "-usr/lib/*/libcups*",
+        "-usr/lib/*/libdatrie*",
+        "-usr/lib/*/libdconf*",
+        "-usr/lib/*/libepoxy*",
+        "-usr/lib/*/libexpatw*",
+        "-usr/lib/*/libffi*",
+        "-usr/lib/*/libfontconfig*",
+        "-usr/lib/*/libfreetype*",
+        "-usr/lib/*/libgdk_pixbuf*",
+        "-usr/lib/*/libgdk_pixbuf_xlib*",
+        "-usr/lib/*/libgio*",
+        "-usr/lib/*/libglib*",
+        "-usr/lib/*/libgmodule*",
+        "-usr/lib/*/libgmp*",
+        "-usr/lib/*/libgnutls*",
+        "-usr/lib/*/libgobject*",
+        "-usr/lib/*/libgraphite2*",
+        "-usr/lib/*/libgssapi_krb5*",
+        "-usr/lib/*/libgthread*",
+        "-usr/lib/*/libharfbuzz*",
+        "-usr/lib/*/libhogweed*",
+        "-usr/lib/*/libicuio*",
+        "-usr/lib/*/libicutest*",
+        "-usr/lib/*/libicutu*",
+        "-usr/lib/*/libicuuc*",
+        "-usr/lib/*/libidn2*",
+        "-usr/lib/*/libjbig*",
+        "-usr/lib/*/libjpeg*",
+        "-usr/lib/*/libjson*",
+        "-usr/lib/*/libk5crypto*",
+        "-usr/lib/*/libkrb5*",
+        "-usr/lib/*/libkrb5support*",
+        "-usr/lib/*/liblcms2*",
+        "-usr/lib/*/libnettle*",
+        "-usr/lib/*/libp11*",
+        "-usr/lib/*/libpango*",
+        "-usr/lib/*/libpangocairo*",
+        "-usr/lib/*/libpangoft2*",
+        "-usr/lib/*/libpixman*",
+        "-usr/lib/*/libpng16*",
+        "-usr/lib/*/libproxy*",
+        "-usr/lib/*/librest*",
+        "-usr/lib/*/librsvg*",
+        "-usr/lib/*/libsecret*",
+        "-usr/lib/*/libsoup*",
+        "-usr/lib/*/libsqlite3*",
+        "-usr/lib/*/libtasn1*",
+        "-usr/lib/*/libthai*",
+        "-usr/lib/*/libtiff*",
+        "-usr/lib/*/libunistring*",
+        "-usr/lib/*/libwayland*",
+        "-usr/lib/*/libX11*",
+        "-usr/lib/*/libXau*",
+        "-usr/lib/*/libxcb.so*",
+        "-usr/lib/*/libxcb-dri2*",
+        "-usr/lib/*/libxcb-dri3*",
+        "-usr/lib/*/libxcb-glx*",
+        "-usr/lib/*/libxcb-present*",
+        "-usr/lib/*/libxcb-render*",
+        "-usr/lib/*/libxcb-shm*",
+        "-usr/lib/*/libxcb-sync*",
+        "-usr/lib/*/libxcb-xfixes*",
+        "-usr/lib/*/libXcomposite*",
+        "-usr/lib/*/libXcursor*",
+        "-usr/lib/*/libXdamage*",
+        "-usr/lib/*/libXdmcp*",
+        "-usr/lib/*/libXext*",
+        "-usr/lib/*/libXfixes*",
+        "-usr/lib/*/libXinerama*",
+        "-usr/lib/*/libXi*",
+        "-usr/lib/*/libxkbcommon*",
+        "-usr/lib/*/libxml2*",
+        "-usr/lib/*/libXrandr*",
+        "-usr/lib/*/libXrender*",
+      ],
+      "stage-packages": [
+        "custom",
+        "libnspr4",
+        "libnss3",
+        "libxss1",
+        "libappindicator3-1",
+        "libsecret-1-0",
+      ],
+    },
+    "app-files": {
+      "organize": {
+        "*": "app/",
+      },
+      "plugin": "dump",
+      "source": "app",
+      "stage": [
+        "-app/chrome-sandbox",
+        "-LICENSES.chromium.html",
+      ],
+    },
+    "gnome-platform-empty-dirs": {
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+",
+      "plugin": "nil",
+    },
+    "launch-scripts": {
+      "plugin": "dump",
+      "source": "scripts",
+    },
+  },
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > default stagePackages (core20) 6`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > default stagePackages (core20) 7`] = `
+{
+  "apps": {
+    "testapp": {
+      "adapter": "none",
+      "command": "command.sh",
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
+  "confinement": "classic",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": {
+    "app": {
+      "plugin": "nil",
+      "stage": [
+        "-usr/lib/python*",
+        "-usr/bin/python*",
+        "-var/lib/ucf",
+        "-usr/include",
+        "-usr/lib/X11",
+        "-usr/share",
+        "-usr/sbin",
+        "-usr/bin",
+        "-usr/lib/*/libicudata.*",
+        "-usr/lib/*/libicui18n.*",
+        "-usr/lib/*/libgtk-*",
+        "-usr/lib/*/libgdk-*",
+        "-usr/lib/*/glib-*",
+        "-usr/lib/*/gtk-*",
+        "-usr/lib/*/gdk-*",
+        "-usr/lib/*/krb5",
+        "-usr/lib/systemd",
+        "-usr/lib/glib-networking",
+        "-usr/lib/dconf",
+        "-usr/lib/*/avahi",
+        "-usr/lib/*/gio",
+        "-usr/lib/*/libatk*",
+        "-usr/lib/*/libatspi*",
+        "-usr/lib/*/libavahi*",
+        "-usr/lib/*/libcairo*",
+        "-usr/lib/*/libcolordprivate*",
+        "-usr/lib/*/libcolord*",
+        "-usr/lib/*/libcroco*",
+        "-usr/lib/*/libcups*",
+        "-usr/lib/*/libdatrie*",
+        "-usr/lib/*/libdconf*",
+        "-usr/lib/*/libepoxy*",
+        "-usr/lib/*/libexpatw*",
+        "-usr/lib/*/libffi*",
+        "-usr/lib/*/libfontconfig*",
+        "-usr/lib/*/libfreetype*",
+        "-usr/lib/*/libgdk_pixbuf*",
+        "-usr/lib/*/libgdk_pixbuf_xlib*",
+        "-usr/lib/*/libgio*",
+        "-usr/lib/*/libglib*",
+        "-usr/lib/*/libgmodule*",
+        "-usr/lib/*/libgmp*",
+        "-usr/lib/*/libgnutls*",
+        "-usr/lib/*/libgobject*",
+        "-usr/lib/*/libgraphite2*",
+        "-usr/lib/*/libgssapi_krb5*",
+        "-usr/lib/*/libgthread*",
+        "-usr/lib/*/libharfbuzz*",
+        "-usr/lib/*/libhogweed*",
+        "-usr/lib/*/libicuio*",
+        "-usr/lib/*/libicutest*",
+        "-usr/lib/*/libicutu*",
+        "-usr/lib/*/libicuuc*",
+        "-usr/lib/*/libidn2*",
+        "-usr/lib/*/libjbig*",
+        "-usr/lib/*/libjpeg*",
+        "-usr/lib/*/libjson*",
+        "-usr/lib/*/libk5crypto*",
+        "-usr/lib/*/libkrb5*",
+        "-usr/lib/*/libkrb5support*",
+        "-usr/lib/*/liblcms2*",
+        "-usr/lib/*/libnettle*",
+        "-usr/lib/*/libp11*",
+        "-usr/lib/*/libpango*",
+        "-usr/lib/*/libpangocairo*",
+        "-usr/lib/*/libpangoft2*",
+        "-usr/lib/*/libpixman*",
+        "-usr/lib/*/libpng16*",
+        "-usr/lib/*/libproxy*",
+        "-usr/lib/*/librest*",
+        "-usr/lib/*/librsvg*",
+        "-usr/lib/*/libsecret*",
+        "-usr/lib/*/libsoup*",
+        "-usr/lib/*/libsqlite3*",
+        "-usr/lib/*/libtasn1*",
+        "-usr/lib/*/libthai*",
+        "-usr/lib/*/libtiff*",
+        "-usr/lib/*/libunistring*",
+        "-usr/lib/*/libwayland*",
+        "-usr/lib/*/libX11*",
+        "-usr/lib/*/libXau*",
+        "-usr/lib/*/libxcb.so*",
+        "-usr/lib/*/libxcb-dri2*",
+        "-usr/lib/*/libxcb-dri3*",
+        "-usr/lib/*/libxcb-glx*",
+        "-usr/lib/*/libxcb-present*",
+        "-usr/lib/*/libxcb-render*",
+        "-usr/lib/*/libxcb-shm*",
+        "-usr/lib/*/libxcb-sync*",
+        "-usr/lib/*/libxcb-xfixes*",
+        "-usr/lib/*/libXcomposite*",
+        "-usr/lib/*/libXcursor*",
+        "-usr/lib/*/libXdamage*",
+        "-usr/lib/*/libXdmcp*",
+        "-usr/lib/*/libXext*",
+        "-usr/lib/*/libXfixes*",
+        "-usr/lib/*/libXinerama*",
+        "-usr/lib/*/libXi*",
+        "-usr/lib/*/libxkbcommon*",
+        "-usr/lib/*/libxml2*",
+        "-usr/lib/*/libXrandr*",
+        "-usr/lib/*/libXrender*",
+      ],
+      "stage-packages": [
+        "foo1",
+        "libnspr4",
+        "libnss3",
+        "libxss1",
+        "libappindicator3-1",
+        "libsecret-1-0",
+        "foo2",
+      ],
+    },
+    "app-files": {
+      "organize": {
+        "*": "app/",
+      },
+      "plugin": "dump",
+      "source": "app",
+      "stage": [
+        "-app/chrome-sandbox",
+        "-LICENSES.chromium.html",
+      ],
+    },
+    "gnome-platform-empty-dirs": {
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+",
+      "plugin": "nil",
+    },
+    "launch-scripts": {
+      "plugin": "dump",
+      "source": "scripts",
+    },
+  },
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > default stagePackages (core20) 8`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > default stagePackages (core22) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core22",
+  "confinement": "classic",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": {
+    "app": {
+      "plugin": "nil",
+      "stage": [
+        "-usr/lib/python*",
+        "-usr/bin/python*",
+        "-var/lib/ucf",
+        "-usr/include",
+        "-usr/lib/X11",
+        "-usr/share",
+        "-usr/sbin",
+        "-usr/bin",
+        "-usr/lib/*/libicudata.*",
+        "-usr/lib/*/libicui18n.*",
+        "-usr/lib/*/libgtk-*",
+        "-usr/lib/*/libgdk-*",
+        "-usr/lib/*/glib-*",
+        "-usr/lib/*/gtk-*",
+        "-usr/lib/*/gdk-*",
+        "-usr/lib/*/krb5",
+        "-usr/lib/systemd",
+        "-usr/lib/glib-networking",
+        "-usr/lib/dconf",
+        "-usr/lib/*/avahi",
+        "-usr/lib/*/gio",
+        "-usr/lib/*/libatk*",
+        "-usr/lib/*/libatspi*",
+        "-usr/lib/*/libavahi*",
+        "-usr/lib/*/libcairo*",
+        "-usr/lib/*/libcolordprivate*",
+        "-usr/lib/*/libcolord*",
+        "-usr/lib/*/libcroco*",
+        "-usr/lib/*/libcups*",
+        "-usr/lib/*/libdatrie*",
+        "-usr/lib/*/libdconf*",
+        "-usr/lib/*/libepoxy*",
+        "-usr/lib/*/libexpatw*",
+        "-usr/lib/*/libffi*",
+        "-usr/lib/*/libfontconfig*",
+        "-usr/lib/*/libfreetype*",
+        "-usr/lib/*/libgdk_pixbuf*",
+        "-usr/lib/*/libgdk_pixbuf_xlib*",
+        "-usr/lib/*/libgio*",
+        "-usr/lib/*/libglib*",
+        "-usr/lib/*/libgmodule*",
+        "-usr/lib/*/libgmp*",
+        "-usr/lib/*/libgnutls*",
+        "-usr/lib/*/libgobject*",
+        "-usr/lib/*/libgraphite2*",
+        "-usr/lib/*/libgssapi_krb5*",
+        "-usr/lib/*/libgthread*",
+        "-usr/lib/*/libharfbuzz*",
+        "-usr/lib/*/libhogweed*",
+        "-usr/lib/*/libicuio*",
+        "-usr/lib/*/libicutest*",
+        "-usr/lib/*/libicutu*",
+        "-usr/lib/*/libicuuc*",
+        "-usr/lib/*/libidn2*",
+        "-usr/lib/*/libjbig*",
+        "-usr/lib/*/libjpeg*",
+        "-usr/lib/*/libjson*",
+        "-usr/lib/*/libk5crypto*",
+        "-usr/lib/*/libkrb5*",
+        "-usr/lib/*/libkrb5support*",
+        "-usr/lib/*/liblcms2*",
+        "-usr/lib/*/libnettle*",
+        "-usr/lib/*/libp11*",
+        "-usr/lib/*/libpango*",
+        "-usr/lib/*/libpangocairo*",
+        "-usr/lib/*/libpangoft2*",
+        "-usr/lib/*/libpixman*",
+        "-usr/lib/*/libpng16*",
+        "-usr/lib/*/libproxy*",
+        "-usr/lib/*/librest*",
+        "-usr/lib/*/librsvg*",
+        "-usr/lib/*/libsecret*",
+        "-usr/lib/*/libsoup*",
+        "-usr/lib/*/libsqlite3*",
+        "-usr/lib/*/libtasn1*",
+        "-usr/lib/*/libthai*",
+        "-usr/lib/*/libtiff*",
+        "-usr/lib/*/libunistring*",
+        "-usr/lib/*/libwayland*",
+        "-usr/lib/*/libX11*",
+        "-usr/lib/*/libXau*",
+        "-usr/lib/*/libxcb.so*",
+        "-usr/lib/*/libxcb-dri2*",
+        "-usr/lib/*/libxcb-dri3*",
+        "-usr/lib/*/libxcb-glx*",
+        "-usr/lib/*/libxcb-present*",
+        "-usr/lib/*/libxcb-render*",
+        "-usr/lib/*/libxcb-shm*",
+        "-usr/lib/*/libxcb-sync*",
+        "-usr/lib/*/libxcb-xfixes*",
+        "-usr/lib/*/libXcomposite*",
+        "-usr/lib/*/libXcursor*",
+        "-usr/lib/*/libXdamage*",
+        "-usr/lib/*/libXdmcp*",
+        "-usr/lib/*/libXext*",
+        "-usr/lib/*/libXfixes*",
+        "-usr/lib/*/libXinerama*",
+        "-usr/lib/*/libXi*",
+        "-usr/lib/*/libxkbcommon*",
+        "-usr/lib/*/libxml2*",
+        "-usr/lib/*/libXrandr*",
+        "-usr/lib/*/libXrender*",
+      ],
+      "stage-packages": [
+        "libnspr4",
+        "libnss3",
+        "libxss1",
+        "libappindicator3-1",
+        "libsecret-1-0",
+      ],
+    },
+    "app-files": {
+      "organize": {
+        "*": "app/",
+      },
+      "plugin": "dump",
+      "source": "app",
+      "stage": [
+        "-app/chrome-sandbox",
+        "-LICENSES.chromium.html",
+      ],
+    },
+    "gnome-platform-empty-dirs": {
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+",
+      "plugin": "nil",
+    },
+    "launch-scripts": {
+      "plugin": "dump",
+      "source": "scripts",
+    },
+  },
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > default stagePackages (core22) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > default stagePackages (core22) 3`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core22",
+  "confinement": "classic",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": {
+    "app": {
+      "plugin": "nil",
+      "stage": [
+        "-usr/lib/python*",
+        "-usr/bin/python*",
+        "-var/lib/ucf",
+        "-usr/include",
+        "-usr/lib/X11",
+        "-usr/share",
+        "-usr/sbin",
+        "-usr/bin",
+        "-usr/lib/*/libicudata.*",
+        "-usr/lib/*/libicui18n.*",
+        "-usr/lib/*/libgtk-*",
+        "-usr/lib/*/libgdk-*",
+        "-usr/lib/*/glib-*",
+        "-usr/lib/*/gtk-*",
+        "-usr/lib/*/gdk-*",
+        "-usr/lib/*/krb5",
+        "-usr/lib/systemd",
+        "-usr/lib/glib-networking",
+        "-usr/lib/dconf",
+        "-usr/lib/*/avahi",
+        "-usr/lib/*/gio",
+        "-usr/lib/*/libatk*",
+        "-usr/lib/*/libatspi*",
+        "-usr/lib/*/libavahi*",
+        "-usr/lib/*/libcairo*",
+        "-usr/lib/*/libcolordprivate*",
+        "-usr/lib/*/libcolord*",
+        "-usr/lib/*/libcroco*",
+        "-usr/lib/*/libcups*",
+        "-usr/lib/*/libdatrie*",
+        "-usr/lib/*/libdconf*",
+        "-usr/lib/*/libepoxy*",
+        "-usr/lib/*/libexpatw*",
+        "-usr/lib/*/libffi*",
+        "-usr/lib/*/libfontconfig*",
+        "-usr/lib/*/libfreetype*",
+        "-usr/lib/*/libgdk_pixbuf*",
+        "-usr/lib/*/libgdk_pixbuf_xlib*",
+        "-usr/lib/*/libgio*",
+        "-usr/lib/*/libglib*",
+        "-usr/lib/*/libgmodule*",
+        "-usr/lib/*/libgmp*",
+        "-usr/lib/*/libgnutls*",
+        "-usr/lib/*/libgobject*",
+        "-usr/lib/*/libgraphite2*",
+        "-usr/lib/*/libgssapi_krb5*",
+        "-usr/lib/*/libgthread*",
+        "-usr/lib/*/libharfbuzz*",
+        "-usr/lib/*/libhogweed*",
+        "-usr/lib/*/libicuio*",
+        "-usr/lib/*/libicutest*",
+        "-usr/lib/*/libicutu*",
+        "-usr/lib/*/libicuuc*",
+        "-usr/lib/*/libidn2*",
+        "-usr/lib/*/libjbig*",
+        "-usr/lib/*/libjpeg*",
+        "-usr/lib/*/libjson*",
+        "-usr/lib/*/libk5crypto*",
+        "-usr/lib/*/libkrb5*",
+        "-usr/lib/*/libkrb5support*",
+        "-usr/lib/*/liblcms2*",
+        "-usr/lib/*/libnettle*",
+        "-usr/lib/*/libp11*",
+        "-usr/lib/*/libpango*",
+        "-usr/lib/*/libpangocairo*",
+        "-usr/lib/*/libpangoft2*",
+        "-usr/lib/*/libpixman*",
+        "-usr/lib/*/libpng16*",
+        "-usr/lib/*/libproxy*",
+        "-usr/lib/*/librest*",
+        "-usr/lib/*/librsvg*",
+        "-usr/lib/*/libsecret*",
+        "-usr/lib/*/libsoup*",
+        "-usr/lib/*/libsqlite3*",
+        "-usr/lib/*/libtasn1*",
+        "-usr/lib/*/libthai*",
+        "-usr/lib/*/libtiff*",
+        "-usr/lib/*/libunistring*",
+        "-usr/lib/*/libwayland*",
+        "-usr/lib/*/libX11*",
+        "-usr/lib/*/libXau*",
+        "-usr/lib/*/libxcb.so*",
+        "-usr/lib/*/libxcb-dri2*",
+        "-usr/lib/*/libxcb-dri3*",
+        "-usr/lib/*/libxcb-glx*",
+        "-usr/lib/*/libxcb-present*",
+        "-usr/lib/*/libxcb-render*",
+        "-usr/lib/*/libxcb-shm*",
+        "-usr/lib/*/libxcb-sync*",
+        "-usr/lib/*/libxcb-xfixes*",
+        "-usr/lib/*/libXcomposite*",
+        "-usr/lib/*/libXcursor*",
+        "-usr/lib/*/libXdamage*",
+        "-usr/lib/*/libXdmcp*",
+        "-usr/lib/*/libXext*",
+        "-usr/lib/*/libXfixes*",
+        "-usr/lib/*/libXinerama*",
+        "-usr/lib/*/libXi*",
+        "-usr/lib/*/libxkbcommon*",
+        "-usr/lib/*/libxml2*",
+        "-usr/lib/*/libXrandr*",
+        "-usr/lib/*/libXrender*",
+      ],
+      "stage-packages": [
+        "libnspr4",
+        "libnss3",
+        "libxss1",
+        "libappindicator3-1",
+        "libsecret-1-0",
+        "custom",
+      ],
+    },
+    "app-files": {
+      "organize": {
+        "*": "app/",
+      },
+      "plugin": "dump",
+      "source": "app",
+      "stage": [
+        "-app/chrome-sandbox",
+        "-LICENSES.chromium.html",
+      ],
+    },
+    "gnome-platform-empty-dirs": {
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+",
+      "plugin": "nil",
+    },
+    "launch-scripts": {
+      "plugin": "dump",
+      "source": "scripts",
+    },
+  },
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > default stagePackages (core22) 4`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > default stagePackages (core22) 5`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core22",
+  "confinement": "classic",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": {
+    "app": {
+      "plugin": "nil",
+      "stage": [
+        "-usr/lib/python*",
+        "-usr/bin/python*",
+        "-var/lib/ucf",
+        "-usr/include",
+        "-usr/lib/X11",
+        "-usr/share",
+        "-usr/sbin",
+        "-usr/bin",
+        "-usr/lib/*/libicudata.*",
+        "-usr/lib/*/libicui18n.*",
+        "-usr/lib/*/libgtk-*",
+        "-usr/lib/*/libgdk-*",
+        "-usr/lib/*/glib-*",
+        "-usr/lib/*/gtk-*",
+        "-usr/lib/*/gdk-*",
+        "-usr/lib/*/krb5",
+        "-usr/lib/systemd",
+        "-usr/lib/glib-networking",
+        "-usr/lib/dconf",
+        "-usr/lib/*/avahi",
+        "-usr/lib/*/gio",
+        "-usr/lib/*/libatk*",
+        "-usr/lib/*/libatspi*",
+        "-usr/lib/*/libavahi*",
+        "-usr/lib/*/libcairo*",
+        "-usr/lib/*/libcolordprivate*",
+        "-usr/lib/*/libcolord*",
+        "-usr/lib/*/libcroco*",
+        "-usr/lib/*/libcups*",
+        "-usr/lib/*/libdatrie*",
+        "-usr/lib/*/libdconf*",
+        "-usr/lib/*/libepoxy*",
+        "-usr/lib/*/libexpatw*",
+        "-usr/lib/*/libffi*",
+        "-usr/lib/*/libfontconfig*",
+        "-usr/lib/*/libfreetype*",
+        "-usr/lib/*/libgdk_pixbuf*",
+        "-usr/lib/*/libgdk_pixbuf_xlib*",
+        "-usr/lib/*/libgio*",
+        "-usr/lib/*/libglib*",
+        "-usr/lib/*/libgmodule*",
+        "-usr/lib/*/libgmp*",
+        "-usr/lib/*/libgnutls*",
+        "-usr/lib/*/libgobject*",
+        "-usr/lib/*/libgraphite2*",
+        "-usr/lib/*/libgssapi_krb5*",
+        "-usr/lib/*/libgthread*",
+        "-usr/lib/*/libharfbuzz*",
+        "-usr/lib/*/libhogweed*",
+        "-usr/lib/*/libicuio*",
+        "-usr/lib/*/libicutest*",
+        "-usr/lib/*/libicutu*",
+        "-usr/lib/*/libicuuc*",
+        "-usr/lib/*/libidn2*",
+        "-usr/lib/*/libjbig*",
+        "-usr/lib/*/libjpeg*",
+        "-usr/lib/*/libjson*",
+        "-usr/lib/*/libk5crypto*",
+        "-usr/lib/*/libkrb5*",
+        "-usr/lib/*/libkrb5support*",
+        "-usr/lib/*/liblcms2*",
+        "-usr/lib/*/libnettle*",
+        "-usr/lib/*/libp11*",
+        "-usr/lib/*/libpango*",
+        "-usr/lib/*/libpangocairo*",
+        "-usr/lib/*/libpangoft2*",
+        "-usr/lib/*/libpixman*",
+        "-usr/lib/*/libpng16*",
+        "-usr/lib/*/libproxy*",
+        "-usr/lib/*/librest*",
+        "-usr/lib/*/librsvg*",
+        "-usr/lib/*/libsecret*",
+        "-usr/lib/*/libsoup*",
+        "-usr/lib/*/libsqlite3*",
+        "-usr/lib/*/libtasn1*",
+        "-usr/lib/*/libthai*",
+        "-usr/lib/*/libtiff*",
+        "-usr/lib/*/libunistring*",
+        "-usr/lib/*/libwayland*",
+        "-usr/lib/*/libX11*",
+        "-usr/lib/*/libXau*",
+        "-usr/lib/*/libxcb.so*",
+        "-usr/lib/*/libxcb-dri2*",
+        "-usr/lib/*/libxcb-dri3*",
+        "-usr/lib/*/libxcb-glx*",
+        "-usr/lib/*/libxcb-present*",
+        "-usr/lib/*/libxcb-render*",
+        "-usr/lib/*/libxcb-shm*",
+        "-usr/lib/*/libxcb-sync*",
+        "-usr/lib/*/libxcb-xfixes*",
+        "-usr/lib/*/libXcomposite*",
+        "-usr/lib/*/libXcursor*",
+        "-usr/lib/*/libXdamage*",
+        "-usr/lib/*/libXdmcp*",
+        "-usr/lib/*/libXext*",
+        "-usr/lib/*/libXfixes*",
+        "-usr/lib/*/libXinerama*",
+        "-usr/lib/*/libXi*",
+        "-usr/lib/*/libxkbcommon*",
+        "-usr/lib/*/libxml2*",
+        "-usr/lib/*/libXrandr*",
+        "-usr/lib/*/libXrender*",
+      ],
+      "stage-packages": [
+        "custom",
+        "libnspr4",
+        "libnss3",
+        "libxss1",
+        "libappindicator3-1",
+        "libsecret-1-0",
+      ],
+    },
+    "app-files": {
+      "organize": {
+        "*": "app/",
+      },
+      "plugin": "dump",
+      "source": "app",
+      "stage": [
+        "-app/chrome-sandbox",
+        "-LICENSES.chromium.html",
+      ],
+    },
+    "gnome-platform-empty-dirs": {
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+",
+      "plugin": "nil",
+    },
+    "launch-scripts": {
+      "plugin": "dump",
+      "source": "scripts",
+    },
+  },
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > default stagePackages (core22) 6`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > default stagePackages (core22) 7`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core22",
+  "confinement": "classic",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": {
+    "app": {
+      "plugin": "nil",
+      "stage": [
+        "-usr/lib/python*",
+        "-usr/bin/python*",
+        "-var/lib/ucf",
+        "-usr/include",
+        "-usr/lib/X11",
+        "-usr/share",
+        "-usr/sbin",
+        "-usr/bin",
+        "-usr/lib/*/libicudata.*",
+        "-usr/lib/*/libicui18n.*",
+        "-usr/lib/*/libgtk-*",
+        "-usr/lib/*/libgdk-*",
+        "-usr/lib/*/glib-*",
+        "-usr/lib/*/gtk-*",
+        "-usr/lib/*/gdk-*",
+        "-usr/lib/*/krb5",
+        "-usr/lib/systemd",
+        "-usr/lib/glib-networking",
+        "-usr/lib/dconf",
+        "-usr/lib/*/avahi",
+        "-usr/lib/*/gio",
+        "-usr/lib/*/libatk*",
+        "-usr/lib/*/libatspi*",
+        "-usr/lib/*/libavahi*",
+        "-usr/lib/*/libcairo*",
+        "-usr/lib/*/libcolordprivate*",
+        "-usr/lib/*/libcolord*",
+        "-usr/lib/*/libcroco*",
+        "-usr/lib/*/libcups*",
+        "-usr/lib/*/libdatrie*",
+        "-usr/lib/*/libdconf*",
+        "-usr/lib/*/libepoxy*",
+        "-usr/lib/*/libexpatw*",
+        "-usr/lib/*/libffi*",
+        "-usr/lib/*/libfontconfig*",
+        "-usr/lib/*/libfreetype*",
+        "-usr/lib/*/libgdk_pixbuf*",
+        "-usr/lib/*/libgdk_pixbuf_xlib*",
+        "-usr/lib/*/libgio*",
+        "-usr/lib/*/libglib*",
+        "-usr/lib/*/libgmodule*",
+        "-usr/lib/*/libgmp*",
+        "-usr/lib/*/libgnutls*",
+        "-usr/lib/*/libgobject*",
+        "-usr/lib/*/libgraphite2*",
+        "-usr/lib/*/libgssapi_krb5*",
+        "-usr/lib/*/libgthread*",
+        "-usr/lib/*/libharfbuzz*",
+        "-usr/lib/*/libhogweed*",
+        "-usr/lib/*/libicuio*",
+        "-usr/lib/*/libicutest*",
+        "-usr/lib/*/libicutu*",
+        "-usr/lib/*/libicuuc*",
+        "-usr/lib/*/libidn2*",
+        "-usr/lib/*/libjbig*",
+        "-usr/lib/*/libjpeg*",
+        "-usr/lib/*/libjson*",
+        "-usr/lib/*/libk5crypto*",
+        "-usr/lib/*/libkrb5*",
+        "-usr/lib/*/libkrb5support*",
+        "-usr/lib/*/liblcms2*",
+        "-usr/lib/*/libnettle*",
+        "-usr/lib/*/libp11*",
+        "-usr/lib/*/libpango*",
+        "-usr/lib/*/libpangocairo*",
+        "-usr/lib/*/libpangoft2*",
+        "-usr/lib/*/libpixman*",
+        "-usr/lib/*/libpng16*",
+        "-usr/lib/*/libproxy*",
+        "-usr/lib/*/librest*",
+        "-usr/lib/*/librsvg*",
+        "-usr/lib/*/libsecret*",
+        "-usr/lib/*/libsoup*",
+        "-usr/lib/*/libsqlite3*",
+        "-usr/lib/*/libtasn1*",
+        "-usr/lib/*/libthai*",
+        "-usr/lib/*/libtiff*",
+        "-usr/lib/*/libunistring*",
+        "-usr/lib/*/libwayland*",
+        "-usr/lib/*/libX11*",
+        "-usr/lib/*/libXau*",
+        "-usr/lib/*/libxcb.so*",
+        "-usr/lib/*/libxcb-dri2*",
+        "-usr/lib/*/libxcb-dri3*",
+        "-usr/lib/*/libxcb-glx*",
+        "-usr/lib/*/libxcb-present*",
+        "-usr/lib/*/libxcb-render*",
+        "-usr/lib/*/libxcb-shm*",
+        "-usr/lib/*/libxcb-sync*",
+        "-usr/lib/*/libxcb-xfixes*",
+        "-usr/lib/*/libXcomposite*",
+        "-usr/lib/*/libXcursor*",
+        "-usr/lib/*/libXdamage*",
+        "-usr/lib/*/libXdmcp*",
+        "-usr/lib/*/libXext*",
+        "-usr/lib/*/libXfixes*",
+        "-usr/lib/*/libXinerama*",
+        "-usr/lib/*/libXi*",
+        "-usr/lib/*/libxkbcommon*",
+        "-usr/lib/*/libxml2*",
+        "-usr/lib/*/libXrandr*",
+        "-usr/lib/*/libXrender*",
+      ],
+      "stage-packages": [
+        "foo1",
+        "libnspr4",
+        "libnss3",
+        "libxss1",
+        "libappindicator3-1",
+        "libsecret-1-0",
+        "foo2",
+      ],
+    },
+    "app-files": {
+      "organize": {
+        "*": "app/",
+      },
+      "plugin": "dump",
+      "source": "app",
+      "stage": [
+        "-app/chrome-sandbox",
+        "-LICENSES.chromium.html",
+      ],
+    },
+    "gnome-platform-empty-dirs": {
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+",
+      "plugin": "nil",
+    },
+    "launch-scripts": {
+      "plugin": "dump",
+      "source": "scripts",
+    },
+  },
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > default stagePackages (core22) 8`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-amd64.snap",
+      "safeArtifactName": "TestApp-1.1.0-amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > no desktop plugs (core18) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "foo",
+        "bar",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core18",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "testapp",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > no desktop plugs (core18) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > no desktop plugs (core20) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "foo",
+        "bar",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "testapp",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > no desktop plugs (core20) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > no desktop plugs (core22) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "foo",
+        "bar",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core22",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "testapp",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > no desktop plugs (core22) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > plugs option (core18) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "adapter": "none",
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "browser-sandbox",
+        "another-simple-plug-name",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core18",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": {
+    "app": {
+      "plugin": "nil",
+      "stage": [
+        "-usr/lib/python*",
+        "-usr/bin/python*",
+        "-var/lib/ucf",
+        "-usr/include",
+        "-usr/lib/X11",
+        "-usr/share",
+        "-usr/sbin",
+        "-usr/bin",
+        "-usr/lib/*/libicudata.*",
+        "-usr/lib/*/libicui18n.*",
+        "-usr/lib/*/libgtk-*",
+        "-usr/lib/*/libgdk-*",
+        "-usr/lib/*/glib-*",
+        "-usr/lib/*/gtk-*",
+        "-usr/lib/*/gdk-*",
+        "-usr/lib/*/krb5",
+        "-usr/lib/systemd",
+        "-usr/lib/glib-networking",
+        "-usr/lib/dconf",
+        "-usr/lib/*/avahi",
+        "-usr/lib/*/gio",
+        "-usr/lib/*/libatk*",
+        "-usr/lib/*/libatspi*",
+        "-usr/lib/*/libavahi*",
+        "-usr/lib/*/libcairo*",
+        "-usr/lib/*/libcolordprivate*",
+        "-usr/lib/*/libcolord*",
+        "-usr/lib/*/libcroco*",
+        "-usr/lib/*/libcups*",
+        "-usr/lib/*/libdatrie*",
+        "-usr/lib/*/libdconf*",
+        "-usr/lib/*/libepoxy*",
+        "-usr/lib/*/libexpatw*",
+        "-usr/lib/*/libffi*",
+        "-usr/lib/*/libfontconfig*",
+        "-usr/lib/*/libfreetype*",
+        "-usr/lib/*/libgdk_pixbuf*",
+        "-usr/lib/*/libgdk_pixbuf_xlib*",
+        "-usr/lib/*/libgio*",
+        "-usr/lib/*/libglib*",
+        "-usr/lib/*/libgmodule*",
+        "-usr/lib/*/libgmp*",
+        "-usr/lib/*/libgnutls*",
+        "-usr/lib/*/libgobject*",
+        "-usr/lib/*/libgraphite2*",
+        "-usr/lib/*/libgssapi_krb5*",
+        "-usr/lib/*/libgthread*",
+        "-usr/lib/*/libharfbuzz*",
+        "-usr/lib/*/libhogweed*",
+        "-usr/lib/*/libicuio*",
+        "-usr/lib/*/libicutest*",
+        "-usr/lib/*/libicutu*",
+        "-usr/lib/*/libicuuc*",
+        "-usr/lib/*/libidn2*",
+        "-usr/lib/*/libjbig*",
+        "-usr/lib/*/libjpeg*",
+        "-usr/lib/*/libjson*",
+        "-usr/lib/*/libk5crypto*",
+        "-usr/lib/*/libkrb5*",
+        "-usr/lib/*/libkrb5support*",
+        "-usr/lib/*/liblcms2*",
+        "-usr/lib/*/libnettle*",
+        "-usr/lib/*/libp11*",
+        "-usr/lib/*/libpango*",
+        "-usr/lib/*/libpangocairo*",
+        "-usr/lib/*/libpangoft2*",
+        "-usr/lib/*/libpixman*",
+        "-usr/lib/*/libpng16*",
+        "-usr/lib/*/libproxy*",
+        "-usr/lib/*/librest*",
+        "-usr/lib/*/librsvg*",
+        "-usr/lib/*/libsecret*",
+        "-usr/lib/*/libsoup*",
+        "-usr/lib/*/libsqlite3*",
+        "-usr/lib/*/libtasn1*",
+        "-usr/lib/*/libthai*",
+        "-usr/lib/*/libtiff*",
+        "-usr/lib/*/libunistring*",
+        "-usr/lib/*/libwayland*",
+        "-usr/lib/*/libX11*",
+        "-usr/lib/*/libXau*",
+        "-usr/lib/*/libxcb.so*",
+        "-usr/lib/*/libxcb-dri2*",
+        "-usr/lib/*/libxcb-dri3*",
+        "-usr/lib/*/libxcb-glx*",
+        "-usr/lib/*/libxcb-present*",
+        "-usr/lib/*/libxcb-render*",
+        "-usr/lib/*/libxcb-shm*",
+        "-usr/lib/*/libxcb-sync*",
+        "-usr/lib/*/libxcb-xfixes*",
+        "-usr/lib/*/libXcomposite*",
+        "-usr/lib/*/libXcursor*",
+        "-usr/lib/*/libXdamage*",
+        "-usr/lib/*/libXdmcp*",
+        "-usr/lib/*/libXext*",
+        "-usr/lib/*/libXfixes*",
+        "-usr/lib/*/libXinerama*",
+        "-usr/lib/*/libXi*",
+        "-usr/lib/*/libxkbcommon*",
+        "-usr/lib/*/libxml2*",
+        "-usr/lib/*/libXrandr*",
+        "-usr/lib/*/libXrender*",
+      ],
+      "stage-packages": [
+        "libnspr4",
+        "libnss3",
+        "libxss1",
+        "libappindicator3-1",
+        "libsecret-1-0",
+      ],
+    },
+    "app-files": {
+      "organize": {
+        "*": "app/",
+      },
+      "plugin": "dump",
+      "source": "app",
+      "stage": [
+        "-app/chrome-sandbox",
+        "-LICENSES.chromium.html",
+      ],
+    },
+    "gnome-platform-empty-dirs": {
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+",
+      "plugin": "nil",
+    },
+    "launch-scripts": {
+      "plugin": "dump",
+      "source": "scripts",
+    },
+  },
+  "plugs": {
+    "browser-sandbox": {
+      "allow-sandbox": true,
+      "interface": "browser-support",
+    },
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > plugs option (core18) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > plugs option (core18) 3`] = `
+{
+  "apps": {
+    "testapp": {
+      "adapter": "none",
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "browser-sandbox",
+        "another-simple-plug-name",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core18",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": {
+    "app": {
+      "plugin": "nil",
+      "stage": [
+        "-usr/lib/python*",
+        "-usr/bin/python*",
+        "-var/lib/ucf",
+        "-usr/include",
+        "-usr/lib/X11",
+        "-usr/share",
+        "-usr/sbin",
+        "-usr/bin",
+        "-usr/lib/*/libicudata.*",
+        "-usr/lib/*/libicui18n.*",
+        "-usr/lib/*/libgtk-*",
+        "-usr/lib/*/libgdk-*",
+        "-usr/lib/*/glib-*",
+        "-usr/lib/*/gtk-*",
+        "-usr/lib/*/gdk-*",
+        "-usr/lib/*/krb5",
+        "-usr/lib/systemd",
+        "-usr/lib/glib-networking",
+        "-usr/lib/dconf",
+        "-usr/lib/*/avahi",
+        "-usr/lib/*/gio",
+        "-usr/lib/*/libatk*",
+        "-usr/lib/*/libatspi*",
+        "-usr/lib/*/libavahi*",
+        "-usr/lib/*/libcairo*",
+        "-usr/lib/*/libcolordprivate*",
+        "-usr/lib/*/libcolord*",
+        "-usr/lib/*/libcroco*",
+        "-usr/lib/*/libcups*",
+        "-usr/lib/*/libdatrie*",
+        "-usr/lib/*/libdconf*",
+        "-usr/lib/*/libepoxy*",
+        "-usr/lib/*/libexpatw*",
+        "-usr/lib/*/libffi*",
+        "-usr/lib/*/libfontconfig*",
+        "-usr/lib/*/libfreetype*",
+        "-usr/lib/*/libgdk_pixbuf*",
+        "-usr/lib/*/libgdk_pixbuf_xlib*",
+        "-usr/lib/*/libgio*",
+        "-usr/lib/*/libglib*",
+        "-usr/lib/*/libgmodule*",
+        "-usr/lib/*/libgmp*",
+        "-usr/lib/*/libgnutls*",
+        "-usr/lib/*/libgobject*",
+        "-usr/lib/*/libgraphite2*",
+        "-usr/lib/*/libgssapi_krb5*",
+        "-usr/lib/*/libgthread*",
+        "-usr/lib/*/libharfbuzz*",
+        "-usr/lib/*/libhogweed*",
+        "-usr/lib/*/libicuio*",
+        "-usr/lib/*/libicutest*",
+        "-usr/lib/*/libicutu*",
+        "-usr/lib/*/libicuuc*",
+        "-usr/lib/*/libidn2*",
+        "-usr/lib/*/libjbig*",
+        "-usr/lib/*/libjpeg*",
+        "-usr/lib/*/libjson*",
+        "-usr/lib/*/libk5crypto*",
+        "-usr/lib/*/libkrb5*",
+        "-usr/lib/*/libkrb5support*",
+        "-usr/lib/*/liblcms2*",
+        "-usr/lib/*/libnettle*",
+        "-usr/lib/*/libp11*",
+        "-usr/lib/*/libpango*",
+        "-usr/lib/*/libpangocairo*",
+        "-usr/lib/*/libpangoft2*",
+        "-usr/lib/*/libpixman*",
+        "-usr/lib/*/libpng16*",
+        "-usr/lib/*/libproxy*",
+        "-usr/lib/*/librest*",
+        "-usr/lib/*/librsvg*",
+        "-usr/lib/*/libsecret*",
+        "-usr/lib/*/libsoup*",
+        "-usr/lib/*/libsqlite3*",
+        "-usr/lib/*/libtasn1*",
+        "-usr/lib/*/libthai*",
+        "-usr/lib/*/libtiff*",
+        "-usr/lib/*/libunistring*",
+        "-usr/lib/*/libwayland*",
+        "-usr/lib/*/libX11*",
+        "-usr/lib/*/libXau*",
+        "-usr/lib/*/libxcb.so*",
+        "-usr/lib/*/libxcb-dri2*",
+        "-usr/lib/*/libxcb-dri3*",
+        "-usr/lib/*/libxcb-glx*",
+        "-usr/lib/*/libxcb-present*",
+        "-usr/lib/*/libxcb-render*",
+        "-usr/lib/*/libxcb-shm*",
+        "-usr/lib/*/libxcb-sync*",
+        "-usr/lib/*/libxcb-xfixes*",
+        "-usr/lib/*/libXcomposite*",
+        "-usr/lib/*/libXcursor*",
+        "-usr/lib/*/libXdamage*",
+        "-usr/lib/*/libXdmcp*",
+        "-usr/lib/*/libXext*",
+        "-usr/lib/*/libXfixes*",
+        "-usr/lib/*/libXinerama*",
+        "-usr/lib/*/libXi*",
+        "-usr/lib/*/libxkbcommon*",
+        "-usr/lib/*/libxml2*",
+        "-usr/lib/*/libXrandr*",
+        "-usr/lib/*/libXrender*",
+      ],
+      "stage-packages": [
+        "libnspr4",
+        "libnss3",
+        "libxss1",
+        "libappindicator3-1",
+        "libsecret-1-0",
+      ],
+    },
+    "app-files": {
+      "organize": {
+        "*": "app/",
+      },
+      "plugin": "dump",
+      "source": "app",
+      "stage": [
+        "-app/chrome-sandbox",
+        "-LICENSES.chromium.html",
+      ],
+    },
+    "gnome-platform-empty-dirs": {
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+",
+      "plugin": "nil",
+    },
+    "launch-scripts": {
+      "plugin": "dump",
+      "source": "scripts",
+    },
+  },
+  "plugs": {
+    "browser-sandbox": {
+      "allow-sandbox": true,
+      "interface": "browser-support",
+    },
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > plugs option (core18) 4`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > plugs option (core20) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "adapter": "none",
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "browser-sandbox",
+        "another-simple-plug-name",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": {
+    "app": {
+      "plugin": "nil",
+      "stage": [
+        "-usr/lib/python*",
+        "-usr/bin/python*",
+        "-var/lib/ucf",
+        "-usr/include",
+        "-usr/lib/X11",
+        "-usr/share",
+        "-usr/sbin",
+        "-usr/bin",
+        "-usr/lib/*/libicudata.*",
+        "-usr/lib/*/libicui18n.*",
+        "-usr/lib/*/libgtk-*",
+        "-usr/lib/*/libgdk-*",
+        "-usr/lib/*/glib-*",
+        "-usr/lib/*/gtk-*",
+        "-usr/lib/*/gdk-*",
+        "-usr/lib/*/krb5",
+        "-usr/lib/systemd",
+        "-usr/lib/glib-networking",
+        "-usr/lib/dconf",
+        "-usr/lib/*/avahi",
+        "-usr/lib/*/gio",
+        "-usr/lib/*/libatk*",
+        "-usr/lib/*/libatspi*",
+        "-usr/lib/*/libavahi*",
+        "-usr/lib/*/libcairo*",
+        "-usr/lib/*/libcolordprivate*",
+        "-usr/lib/*/libcolord*",
+        "-usr/lib/*/libcroco*",
+        "-usr/lib/*/libcups*",
+        "-usr/lib/*/libdatrie*",
+        "-usr/lib/*/libdconf*",
+        "-usr/lib/*/libepoxy*",
+        "-usr/lib/*/libexpatw*",
+        "-usr/lib/*/libffi*",
+        "-usr/lib/*/libfontconfig*",
+        "-usr/lib/*/libfreetype*",
+        "-usr/lib/*/libgdk_pixbuf*",
+        "-usr/lib/*/libgdk_pixbuf_xlib*",
+        "-usr/lib/*/libgio*",
+        "-usr/lib/*/libglib*",
+        "-usr/lib/*/libgmodule*",
+        "-usr/lib/*/libgmp*",
+        "-usr/lib/*/libgnutls*",
+        "-usr/lib/*/libgobject*",
+        "-usr/lib/*/libgraphite2*",
+        "-usr/lib/*/libgssapi_krb5*",
+        "-usr/lib/*/libgthread*",
+        "-usr/lib/*/libharfbuzz*",
+        "-usr/lib/*/libhogweed*",
+        "-usr/lib/*/libicuio*",
+        "-usr/lib/*/libicutest*",
+        "-usr/lib/*/libicutu*",
+        "-usr/lib/*/libicuuc*",
+        "-usr/lib/*/libidn2*",
+        "-usr/lib/*/libjbig*",
+        "-usr/lib/*/libjpeg*",
+        "-usr/lib/*/libjson*",
+        "-usr/lib/*/libk5crypto*",
+        "-usr/lib/*/libkrb5*",
+        "-usr/lib/*/libkrb5support*",
+        "-usr/lib/*/liblcms2*",
+        "-usr/lib/*/libnettle*",
+        "-usr/lib/*/libp11*",
+        "-usr/lib/*/libpango*",
+        "-usr/lib/*/libpangocairo*",
+        "-usr/lib/*/libpangoft2*",
+        "-usr/lib/*/libpixman*",
+        "-usr/lib/*/libpng16*",
+        "-usr/lib/*/libproxy*",
+        "-usr/lib/*/librest*",
+        "-usr/lib/*/librsvg*",
+        "-usr/lib/*/libsecret*",
+        "-usr/lib/*/libsoup*",
+        "-usr/lib/*/libsqlite3*",
+        "-usr/lib/*/libtasn1*",
+        "-usr/lib/*/libthai*",
+        "-usr/lib/*/libtiff*",
+        "-usr/lib/*/libunistring*",
+        "-usr/lib/*/libwayland*",
+        "-usr/lib/*/libX11*",
+        "-usr/lib/*/libXau*",
+        "-usr/lib/*/libxcb.so*",
+        "-usr/lib/*/libxcb-dri2*",
+        "-usr/lib/*/libxcb-dri3*",
+        "-usr/lib/*/libxcb-glx*",
+        "-usr/lib/*/libxcb-present*",
+        "-usr/lib/*/libxcb-render*",
+        "-usr/lib/*/libxcb-shm*",
+        "-usr/lib/*/libxcb-sync*",
+        "-usr/lib/*/libxcb-xfixes*",
+        "-usr/lib/*/libXcomposite*",
+        "-usr/lib/*/libXcursor*",
+        "-usr/lib/*/libXdamage*",
+        "-usr/lib/*/libXdmcp*",
+        "-usr/lib/*/libXext*",
+        "-usr/lib/*/libXfixes*",
+        "-usr/lib/*/libXinerama*",
+        "-usr/lib/*/libXi*",
+        "-usr/lib/*/libxkbcommon*",
+        "-usr/lib/*/libxml2*",
+        "-usr/lib/*/libXrandr*",
+        "-usr/lib/*/libXrender*",
+      ],
+      "stage-packages": [
+        "libnspr4",
+        "libnss3",
+        "libxss1",
+        "libappindicator3-1",
+        "libsecret-1-0",
+      ],
+    },
+    "app-files": {
+      "organize": {
+        "*": "app/",
+      },
+      "plugin": "dump",
+      "source": "app",
+      "stage": [
+        "-app/chrome-sandbox",
+        "-LICENSES.chromium.html",
+      ],
+    },
+    "gnome-platform-empty-dirs": {
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+",
+      "plugin": "nil",
+    },
+    "launch-scripts": {
+      "plugin": "dump",
+      "source": "scripts",
+    },
+  },
+  "plugs": {
+    "browser-sandbox": {
+      "allow-sandbox": true,
+      "interface": "browser-support",
+    },
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > plugs option (core20) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > plugs option (core20) 3`] = `
+{
+  "apps": {
+    "testapp": {
+      "adapter": "none",
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "browser-sandbox",
+        "another-simple-plug-name",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": {
+    "app": {
+      "plugin": "nil",
+      "stage": [
+        "-usr/lib/python*",
+        "-usr/bin/python*",
+        "-var/lib/ucf",
+        "-usr/include",
+        "-usr/lib/X11",
+        "-usr/share",
+        "-usr/sbin",
+        "-usr/bin",
+        "-usr/lib/*/libicudata.*",
+        "-usr/lib/*/libicui18n.*",
+        "-usr/lib/*/libgtk-*",
+        "-usr/lib/*/libgdk-*",
+        "-usr/lib/*/glib-*",
+        "-usr/lib/*/gtk-*",
+        "-usr/lib/*/gdk-*",
+        "-usr/lib/*/krb5",
+        "-usr/lib/systemd",
+        "-usr/lib/glib-networking",
+        "-usr/lib/dconf",
+        "-usr/lib/*/avahi",
+        "-usr/lib/*/gio",
+        "-usr/lib/*/libatk*",
+        "-usr/lib/*/libatspi*",
+        "-usr/lib/*/libavahi*",
+        "-usr/lib/*/libcairo*",
+        "-usr/lib/*/libcolordprivate*",
+        "-usr/lib/*/libcolord*",
+        "-usr/lib/*/libcroco*",
+        "-usr/lib/*/libcups*",
+        "-usr/lib/*/libdatrie*",
+        "-usr/lib/*/libdconf*",
+        "-usr/lib/*/libepoxy*",
+        "-usr/lib/*/libexpatw*",
+        "-usr/lib/*/libffi*",
+        "-usr/lib/*/libfontconfig*",
+        "-usr/lib/*/libfreetype*",
+        "-usr/lib/*/libgdk_pixbuf*",
+        "-usr/lib/*/libgdk_pixbuf_xlib*",
+        "-usr/lib/*/libgio*",
+        "-usr/lib/*/libglib*",
+        "-usr/lib/*/libgmodule*",
+        "-usr/lib/*/libgmp*",
+        "-usr/lib/*/libgnutls*",
+        "-usr/lib/*/libgobject*",
+        "-usr/lib/*/libgraphite2*",
+        "-usr/lib/*/libgssapi_krb5*",
+        "-usr/lib/*/libgthread*",
+        "-usr/lib/*/libharfbuzz*",
+        "-usr/lib/*/libhogweed*",
+        "-usr/lib/*/libicuio*",
+        "-usr/lib/*/libicutest*",
+        "-usr/lib/*/libicutu*",
+        "-usr/lib/*/libicuuc*",
+        "-usr/lib/*/libidn2*",
+        "-usr/lib/*/libjbig*",
+        "-usr/lib/*/libjpeg*",
+        "-usr/lib/*/libjson*",
+        "-usr/lib/*/libk5crypto*",
+        "-usr/lib/*/libkrb5*",
+        "-usr/lib/*/libkrb5support*",
+        "-usr/lib/*/liblcms2*",
+        "-usr/lib/*/libnettle*",
+        "-usr/lib/*/libp11*",
+        "-usr/lib/*/libpango*",
+        "-usr/lib/*/libpangocairo*",
+        "-usr/lib/*/libpangoft2*",
+        "-usr/lib/*/libpixman*",
+        "-usr/lib/*/libpng16*",
+        "-usr/lib/*/libproxy*",
+        "-usr/lib/*/librest*",
+        "-usr/lib/*/librsvg*",
+        "-usr/lib/*/libsecret*",
+        "-usr/lib/*/libsoup*",
+        "-usr/lib/*/libsqlite3*",
+        "-usr/lib/*/libtasn1*",
+        "-usr/lib/*/libthai*",
+        "-usr/lib/*/libtiff*",
+        "-usr/lib/*/libunistring*",
+        "-usr/lib/*/libwayland*",
+        "-usr/lib/*/libX11*",
+        "-usr/lib/*/libXau*",
+        "-usr/lib/*/libxcb.so*",
+        "-usr/lib/*/libxcb-dri2*",
+        "-usr/lib/*/libxcb-dri3*",
+        "-usr/lib/*/libxcb-glx*",
+        "-usr/lib/*/libxcb-present*",
+        "-usr/lib/*/libxcb-render*",
+        "-usr/lib/*/libxcb-shm*",
+        "-usr/lib/*/libxcb-sync*",
+        "-usr/lib/*/libxcb-xfixes*",
+        "-usr/lib/*/libXcomposite*",
+        "-usr/lib/*/libXcursor*",
+        "-usr/lib/*/libXdamage*",
+        "-usr/lib/*/libXdmcp*",
+        "-usr/lib/*/libXext*",
+        "-usr/lib/*/libXfixes*",
+        "-usr/lib/*/libXinerama*",
+        "-usr/lib/*/libXi*",
+        "-usr/lib/*/libxkbcommon*",
+        "-usr/lib/*/libxml2*",
+        "-usr/lib/*/libXrandr*",
+        "-usr/lib/*/libXrender*",
+      ],
+      "stage-packages": [
+        "libnspr4",
+        "libnss3",
+        "libxss1",
+        "libappindicator3-1",
+        "libsecret-1-0",
+      ],
+    },
+    "app-files": {
+      "organize": {
+        "*": "app/",
+      },
+      "plugin": "dump",
+      "source": "app",
+      "stage": [
+        "-app/chrome-sandbox",
+        "-LICENSES.chromium.html",
+      ],
+    },
+    "gnome-platform-empty-dirs": {
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+",
+      "plugin": "nil",
+    },
+    "launch-scripts": {
+      "plugin": "dump",
+      "source": "scripts",
+    },
+  },
+  "plugs": {
+    "browser-sandbox": {
+      "allow-sandbox": true,
+      "interface": "browser-support",
+    },
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > plugs option (core20) 4`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > plugs option (core22) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "browser-sandbox",
+        "another-simple-plug-name",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core22",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": {
+    "app": {
+      "plugin": "nil",
+      "stage": [
+        "-usr/lib/python*",
+        "-usr/bin/python*",
+        "-var/lib/ucf",
+        "-usr/include",
+        "-usr/lib/X11",
+        "-usr/share",
+        "-usr/sbin",
+        "-usr/bin",
+        "-usr/lib/*/libicudata.*",
+        "-usr/lib/*/libicui18n.*",
+        "-usr/lib/*/libgtk-*",
+        "-usr/lib/*/libgdk-*",
+        "-usr/lib/*/glib-*",
+        "-usr/lib/*/gtk-*",
+        "-usr/lib/*/gdk-*",
+        "-usr/lib/*/krb5",
+        "-usr/lib/systemd",
+        "-usr/lib/glib-networking",
+        "-usr/lib/dconf",
+        "-usr/lib/*/avahi",
+        "-usr/lib/*/gio",
+        "-usr/lib/*/libatk*",
+        "-usr/lib/*/libatspi*",
+        "-usr/lib/*/libavahi*",
+        "-usr/lib/*/libcairo*",
+        "-usr/lib/*/libcolordprivate*",
+        "-usr/lib/*/libcolord*",
+        "-usr/lib/*/libcroco*",
+        "-usr/lib/*/libcups*",
+        "-usr/lib/*/libdatrie*",
+        "-usr/lib/*/libdconf*",
+        "-usr/lib/*/libepoxy*",
+        "-usr/lib/*/libexpatw*",
+        "-usr/lib/*/libffi*",
+        "-usr/lib/*/libfontconfig*",
+        "-usr/lib/*/libfreetype*",
+        "-usr/lib/*/libgdk_pixbuf*",
+        "-usr/lib/*/libgdk_pixbuf_xlib*",
+        "-usr/lib/*/libgio*",
+        "-usr/lib/*/libglib*",
+        "-usr/lib/*/libgmodule*",
+        "-usr/lib/*/libgmp*",
+        "-usr/lib/*/libgnutls*",
+        "-usr/lib/*/libgobject*",
+        "-usr/lib/*/libgraphite2*",
+        "-usr/lib/*/libgssapi_krb5*",
+        "-usr/lib/*/libgthread*",
+        "-usr/lib/*/libharfbuzz*",
+        "-usr/lib/*/libhogweed*",
+        "-usr/lib/*/libicuio*",
+        "-usr/lib/*/libicutest*",
+        "-usr/lib/*/libicutu*",
+        "-usr/lib/*/libicuuc*",
+        "-usr/lib/*/libidn2*",
+        "-usr/lib/*/libjbig*",
+        "-usr/lib/*/libjpeg*",
+        "-usr/lib/*/libjson*",
+        "-usr/lib/*/libk5crypto*",
+        "-usr/lib/*/libkrb5*",
+        "-usr/lib/*/libkrb5support*",
+        "-usr/lib/*/liblcms2*",
+        "-usr/lib/*/libnettle*",
+        "-usr/lib/*/libp11*",
+        "-usr/lib/*/libpango*",
+        "-usr/lib/*/libpangocairo*",
+        "-usr/lib/*/libpangoft2*",
+        "-usr/lib/*/libpixman*",
+        "-usr/lib/*/libpng16*",
+        "-usr/lib/*/libproxy*",
+        "-usr/lib/*/librest*",
+        "-usr/lib/*/librsvg*",
+        "-usr/lib/*/libsecret*",
+        "-usr/lib/*/libsoup*",
+        "-usr/lib/*/libsqlite3*",
+        "-usr/lib/*/libtasn1*",
+        "-usr/lib/*/libthai*",
+        "-usr/lib/*/libtiff*",
+        "-usr/lib/*/libunistring*",
+        "-usr/lib/*/libwayland*",
+        "-usr/lib/*/libX11*",
+        "-usr/lib/*/libXau*",
+        "-usr/lib/*/libxcb.so*",
+        "-usr/lib/*/libxcb-dri2*",
+        "-usr/lib/*/libxcb-dri3*",
+        "-usr/lib/*/libxcb-glx*",
+        "-usr/lib/*/libxcb-present*",
+        "-usr/lib/*/libxcb-render*",
+        "-usr/lib/*/libxcb-shm*",
+        "-usr/lib/*/libxcb-sync*",
+        "-usr/lib/*/libxcb-xfixes*",
+        "-usr/lib/*/libXcomposite*",
+        "-usr/lib/*/libXcursor*",
+        "-usr/lib/*/libXdamage*",
+        "-usr/lib/*/libXdmcp*",
+        "-usr/lib/*/libXext*",
+        "-usr/lib/*/libXfixes*",
+        "-usr/lib/*/libXinerama*",
+        "-usr/lib/*/libXi*",
+        "-usr/lib/*/libxkbcommon*",
+        "-usr/lib/*/libxml2*",
+        "-usr/lib/*/libXrandr*",
+        "-usr/lib/*/libXrender*",
+      ],
+      "stage-packages": [
+        "libnspr4",
+        "libnss3",
+        "libxss1",
+        "libappindicator3-1",
+        "libsecret-1-0",
+      ],
+    },
+    "app-files": {
+      "organize": {
+        "*": "app/",
+      },
+      "plugin": "dump",
+      "source": "app",
+      "stage": [
+        "-app/chrome-sandbox",
+        "-LICENSES.chromium.html",
+      ],
+    },
+    "gnome-platform-empty-dirs": {
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+",
+      "plugin": "nil",
+    },
+    "launch-scripts": {
+      "plugin": "dump",
+      "source": "scripts",
+    },
+  },
+  "plugs": {
+    "browser-sandbox": {
+      "allow-sandbox": true,
+      "interface": "browser-support",
+    },
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > plugs option (core22) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > plugs option (core22) 3`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "browser-sandbox",
+        "another-simple-plug-name",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core22",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": {
+    "app": {
+      "plugin": "nil",
+      "stage": [
+        "-usr/lib/python*",
+        "-usr/bin/python*",
+        "-var/lib/ucf",
+        "-usr/include",
+        "-usr/lib/X11",
+        "-usr/share",
+        "-usr/sbin",
+        "-usr/bin",
+        "-usr/lib/*/libicudata.*",
+        "-usr/lib/*/libicui18n.*",
+        "-usr/lib/*/libgtk-*",
+        "-usr/lib/*/libgdk-*",
+        "-usr/lib/*/glib-*",
+        "-usr/lib/*/gtk-*",
+        "-usr/lib/*/gdk-*",
+        "-usr/lib/*/krb5",
+        "-usr/lib/systemd",
+        "-usr/lib/glib-networking",
+        "-usr/lib/dconf",
+        "-usr/lib/*/avahi",
+        "-usr/lib/*/gio",
+        "-usr/lib/*/libatk*",
+        "-usr/lib/*/libatspi*",
+        "-usr/lib/*/libavahi*",
+        "-usr/lib/*/libcairo*",
+        "-usr/lib/*/libcolordprivate*",
+        "-usr/lib/*/libcolord*",
+        "-usr/lib/*/libcroco*",
+        "-usr/lib/*/libcups*",
+        "-usr/lib/*/libdatrie*",
+        "-usr/lib/*/libdconf*",
+        "-usr/lib/*/libepoxy*",
+        "-usr/lib/*/libexpatw*",
+        "-usr/lib/*/libffi*",
+        "-usr/lib/*/libfontconfig*",
+        "-usr/lib/*/libfreetype*",
+        "-usr/lib/*/libgdk_pixbuf*",
+        "-usr/lib/*/libgdk_pixbuf_xlib*",
+        "-usr/lib/*/libgio*",
+        "-usr/lib/*/libglib*",
+        "-usr/lib/*/libgmodule*",
+        "-usr/lib/*/libgmp*",
+        "-usr/lib/*/libgnutls*",
+        "-usr/lib/*/libgobject*",
+        "-usr/lib/*/libgraphite2*",
+        "-usr/lib/*/libgssapi_krb5*",
+        "-usr/lib/*/libgthread*",
+        "-usr/lib/*/libharfbuzz*",
+        "-usr/lib/*/libhogweed*",
+        "-usr/lib/*/libicuio*",
+        "-usr/lib/*/libicutest*",
+        "-usr/lib/*/libicutu*",
+        "-usr/lib/*/libicuuc*",
+        "-usr/lib/*/libidn2*",
+        "-usr/lib/*/libjbig*",
+        "-usr/lib/*/libjpeg*",
+        "-usr/lib/*/libjson*",
+        "-usr/lib/*/libk5crypto*",
+        "-usr/lib/*/libkrb5*",
+        "-usr/lib/*/libkrb5support*",
+        "-usr/lib/*/liblcms2*",
+        "-usr/lib/*/libnettle*",
+        "-usr/lib/*/libp11*",
+        "-usr/lib/*/libpango*",
+        "-usr/lib/*/libpangocairo*",
+        "-usr/lib/*/libpangoft2*",
+        "-usr/lib/*/libpixman*",
+        "-usr/lib/*/libpng16*",
+        "-usr/lib/*/libproxy*",
+        "-usr/lib/*/librest*",
+        "-usr/lib/*/librsvg*",
+        "-usr/lib/*/libsecret*",
+        "-usr/lib/*/libsoup*",
+        "-usr/lib/*/libsqlite3*",
+        "-usr/lib/*/libtasn1*",
+        "-usr/lib/*/libthai*",
+        "-usr/lib/*/libtiff*",
+        "-usr/lib/*/libunistring*",
+        "-usr/lib/*/libwayland*",
+        "-usr/lib/*/libX11*",
+        "-usr/lib/*/libXau*",
+        "-usr/lib/*/libxcb.so*",
+        "-usr/lib/*/libxcb-dri2*",
+        "-usr/lib/*/libxcb-dri3*",
+        "-usr/lib/*/libxcb-glx*",
+        "-usr/lib/*/libxcb-present*",
+        "-usr/lib/*/libxcb-render*",
+        "-usr/lib/*/libxcb-shm*",
+        "-usr/lib/*/libxcb-sync*",
+        "-usr/lib/*/libxcb-xfixes*",
+        "-usr/lib/*/libXcomposite*",
+        "-usr/lib/*/libXcursor*",
+        "-usr/lib/*/libXdamage*",
+        "-usr/lib/*/libXdmcp*",
+        "-usr/lib/*/libXext*",
+        "-usr/lib/*/libXfixes*",
+        "-usr/lib/*/libXinerama*",
+        "-usr/lib/*/libXi*",
+        "-usr/lib/*/libxkbcommon*",
+        "-usr/lib/*/libxml2*",
+        "-usr/lib/*/libXrandr*",
+        "-usr/lib/*/libXrender*",
+      ],
+      "stage-packages": [
+        "libnspr4",
+        "libnss3",
+        "libxss1",
+        "libappindicator3-1",
+        "libsecret-1-0",
+      ],
+    },
+    "app-files": {
+      "organize": {
+        "*": "app/",
+      },
+      "plugin": "dump",
+      "source": "app",
+      "stage": [
+        "-app/chrome-sandbox",
+        "-LICENSES.chromium.html",
+      ],
+    },
+    "gnome-platform-empty-dirs": {
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+",
+      "plugin": "nil",
+    },
+    "launch-scripts": {
+      "plugin": "dump",
+      "source": "scripts",
+    },
+  },
+  "plugs": {
+    "browser-sandbox": {
+      "allow-sandbox": true,
+      "interface": "browser-support",
+    },
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > plugs option (core22) 4`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > slots option (core18) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+      "slots": [
+        "foo",
+        "bar",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core18",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "testapp",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > slots option (core18) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > slots option (core18) 3`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+      "slots": [
+        "mpris",
+        "another-simple-slot-name",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core18",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "testapp",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "slots": {
+    "mpris": {
+      "interface": "mpris",
+      "name": "chromium",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > slots option (core18) 4`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > slots option (core20) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+      "slots": [
+        "foo",
+        "bar",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "testapp",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > slots option (core20) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > slots option (core20) 3`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+      "slots": [
+        "mpris",
+        "another-simple-slot-name",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "testapp",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "slots": {
+    "mpris": {
+      "interface": "mpris",
+      "name": "chromium",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > slots option (core20) 4`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > slots option (core22) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+      "slots": [
+        "foo",
+        "bar",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core22",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "testapp",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > slots option (core22) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > slots option (core22) 3`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+      "slots": [
+        "mpris",
+        "another-simple-slot-name",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core22",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "testapp",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "slots": {
+    "mpris": {
+      "interface": "mpris",
+      "name": "chromium",
+    },
+  },
+  "summary": "Sep",
+  "title": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > slots option (core22) 4`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > use template app (core18) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core18",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "testapp",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > use template app (core18) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > use template app (core20) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core20",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "testapp",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > use template app (core20) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > use template app (core22) 1`] = `
+{
+  "apps": {
+    "testapp": {
+      "command": "command.sh",
+      "environment": {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+      },
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "architectures": [
+    "amd64",
+  ],
+  "base": "core22",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "testapp",
+  "plugs": {
+    "gnome-3-28-1804": {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Test App ßW",
+  "title": "Test App ßW",
+  "version": "1.1.0",
+}
+`;
+
+exports[`snapcraft > use template app (core22) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;

@@ -1,5 +1,6 @@
-import { exists, log, retry, TmpDir } from "builder-util"
+import { exists, log, retry, stripSensitiveEnvVars, TmpDir } from "builder-util"
 import * as childProcess from "child_process"
+import { randomBytes } from "crypto"
 import * as fs from "fs-extra"
 import { createWriteStream } from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -219,14 +220,21 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * the package name with an "unknown" version.
    */
   protected parseNameVersion(identifier: string): { name: string; version: string } {
-    const lastAt = identifier.lastIndexOf("@")
-    if (lastAt <= 0) {
-      // fallback for scoped packages or malformed strings
+    let at: number
+    if (identifier.startsWith("@")) {
+      // Scoped package: find the version separator after the scope (e.g. "@scope/pkg@1.2.3")
+      const slashIndex = identifier.indexOf("/")
+      if (slashIndex === -1) {
+        return { name: identifier, version: "unknown" }
+      }
+      at = identifier.indexOf("@", slashIndex + 1)
+    } else {
+      at = identifier.indexOf("@")
+    }
+    if (at <= 0) {
       return { name: identifier, version: "unknown" }
     }
-    const name = identifier.slice(0, lastAt)
-    const version = identifier.slice(lastAt + 1)
-    return { name, version }
+    return { name: identifier.slice(0, at), version: identifier.slice(at + 1) }
   }
 
   /**
@@ -285,7 +293,9 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     for (const d of dependencies.values()) {
       const reference = [...d.references][0]
       const key = `${d.name}@${reference}`
-      const p = this.allDependencies.get(key)?.path
+      // Normalize the path to handle mixed separators from pnpm JSON output on Windows
+      const rawPath = this.allDependencies.get(key)?.path
+      const p = rawPath != null ? path.normalize(rawPath) : undefined
       if (p === undefined) {
         this.cache.logSummary[LogMessageByKey.PKG_NOT_FOUND].push(key)
         continue
@@ -294,7 +304,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       // fix npm list issue
       // https://github.com/npm/cli/issues/8535
       if (!(await this.cache.exists[p])) {
-        this.cache.logSummary[LogMessageByKey.PKG_NOT_ON_DISK].push(key)
+        this.logMissingDependency(key)
         continue
       }
 
@@ -312,7 +322,13 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     result.sort((a, b) => a.name.localeCompare(b.name))
   }
 
-  async asyncExec(command: string, args: string[], cwd: string = this.rootDir): Promise<{ stdout: string | undefined; stderr: string | undefined }> {
+  protected logMissingDependency(pkgName: string) {
+    const PLATFORM_PACKAGE_RE = /(linux|win32|darwin|freebsd|android)[-_](x64|arm64|ia32|arm|ppc64|s390x|loong64|riscv64|universal)/
+    const diskLogKey = PLATFORM_PACKAGE_RE.test(pkgName) ? LogMessageByKey.PKG_OPTIONAL_PLATFORM_NOT_INSTALLED : LogMessageByKey.PKG_NOT_ON_DISK
+    this.cache.logSummary[diskLogKey].push(pkgName)
+  }
+
+  protected async asyncExec(command: string, args: string[], cwd: string = this.rootDir): Promise<{ stdout: string | undefined; stderr: string | undefined }> {
     const file = await this.tempDirManager.getTempFile({ prefix: "exec-", suffix: ".txt" })
     try {
       await this.streamCollectorCommandToFile(command, args, cwd, file)
@@ -340,22 +356,44 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * @returns Promise that resolves when the command completes successfully or rejects if it fails
    * @throws {Error} If the child process spawn fails or exits with a non-zero code
    */
-  async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
+  protected async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
     const execName = path.basename(command, path.extname(command))
-    const isWindowsScriptFile = process.platform === "win32" && path.extname(command).toLowerCase() === ".cmd"
+    const ext = path.extname(command).toLowerCase()
+    // Wrap .cmd files in a .bat file for correct cmd.exe execution.
+    // Also wrap any Windows executable path that contains spaces (e.g. extensionless shims
+    // from tools like Volta installed at "C:\Program Files\Volta\") to ensure the path is
+    // quoted correctly when passed to `spawn(..., { shell: true })`.
+    const isWindowsScriptFile = process.platform === "win32" && (ext === ".cmd" || command.includes(" "))
     if (isWindowsScriptFile) {
-      // If the command is a Windows script file (.cmd), we need to wrap it in a .bat file to ensure it runs correctly with cmd.exe
-      // This is necessary because .cmd files are not directly executable in the same way as .bat files.
-      // We create a temporary .bat file that calls the .cmd file with the provided arguments. The .bat file will be executed by cmd.exe.
+      // We need to wrap it in a .bat file to ensure it runs correctly with cmd.exe
+      // This is necessary because some files (like .cmd) are not directly executable in the same way as .bat files.
+      // We create a temporary .bat file that calls the script-like file with the provided arguments. The .bat file will be executed by cmd.exe.
       // Note: This is a workaround for Windows command execution quirks when using `shell: true`
       const tempBatFile = await this.tempDirManager.getTempFile({
-        prefix: execName,
+        prefix: execName + "-" + randomBytes(8).toString("hex"),
         suffix: ".bat",
       })
-      const batScript = `@echo off\r\n"${command}" %*\r\n` // <-- CRLF required for .bat
-      await fs.writeFile(tempBatFile, batScript, { encoding: "utf8" })
+      const escapedCommand = command.replace(/"/g, `""`)
+      const batScript = `@echo off\r\n"${escapedCommand}" %*\r\n` // <-- CRLF required for .bat
+      await fs.writeFile(tempBatFile, batScript, { encoding: "utf8", mode: 0o600 })
       command = "cmd.exe"
       args = ["/c", `"${tempBatFile}"`, ...args]
+    }
+
+    const isWindows = process.platform === "win32"
+
+    // shell: true is required on Windows — see https://github.com/electron-userland/electron-builder/issues/9488
+    // On non-Windows, shell:false means args are passed directly to the process with no shell
+    // interpretation, so the metacharacter guard is only necessary on Windows.
+    if (isWindows) {
+      // Guard against cmd.exe metacharacters. Parentheses are intentionally excluded because they
+      // appear in legitimate Windows paths (e.g. "C:\Program Files (x86)").
+      const SHELL_INJECTION_RE = /[;&|`${}[\]<>!%^]/
+      for (const arg of args) {
+        if (SHELL_INJECTION_RE.test(arg)) {
+          throw new Error(`Refusing to spawn "${command}": argument "${arg}" contains shell metacharacters. Possible injection attempt.`)
+        }
+      }
     }
 
     await new Promise<void>((resolve, reject) => {
@@ -363,8 +401,9 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
       const child = childProcess.spawn(command, args, {
         cwd,
-        env: { COREPACK_ENABLE_STRICT: "0", ...process.env }, // allow `process.env` overrides
-        shell: true, // `true`` is now required: https://github.com/electron-userland/electron-builder/issues/9488
+        // Package manager invocations do not need signing/publishing credentials.
+        env: { COREPACK_ENABLE_STRICT: "0", ...stripSensitiveEnvVars(process.env) },
+        shell: isWindows, // shell: true is required on Windows — see https://github.com/electron-userland/electron-builder/issues/9488
       })
 
       let stderr = ""
@@ -373,7 +412,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         stderr += chunk.toString()
       })
       child.on("error", err => {
-        reject(new Error(`Node module collector spawn failed: ${err.message}`))
+        reject(new Error(`Node module collector spawn (${command} ${JSON.stringify(args)}) failed: ${err.message}`))
       })
 
       child.on("close", code => {
