@@ -89,6 +89,10 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     return promise
   }
 
+  // pnpm 10+ does not automatically preserve transitive optional platform-specific
+  // packages (e.g. sass-embedded-linux-x64) across lock file regeneration. Users
+  // must list them as direct optionalDependencies. Missing ones are emitted as
+  // PKG_OPTIONAL_PLATFORM_NOT_INSTALLED warnings in the log summary.
   protected async extractProductionDependencyGraph(tree: PnpmDependency, dependencyId: string) {
     if (this.productionGraph[dependencyId]) {
       return
@@ -124,7 +128,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       if (optional[packageName]) {
         const pkg = await this.locateFromDepOrRoot(packageName, tree.path, dependency.version)
         if (!pkg) {
-          this.cache.logSummary[LogMessageByKey.PKG_OPTIONAL_NOT_INSTALLED].push(`${packageName}@${dependency.version}`)
+          this.logMissingDependency(`${packageName}@${dependency.version}`)
           return undefined
         }
       }

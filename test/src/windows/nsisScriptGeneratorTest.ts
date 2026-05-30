@@ -1,4 +1,18 @@
-import { nsisEscapeString } from "app-builder-lib/src/targets/nsis/nsisScriptGenerator"
+import { NsisScriptGenerator, nsisEscapeString } from "app-builder-lib/src/targets/nsis/nsisScriptGenerator"
+
+describe("NsisScriptGenerator.file", () => {
+  test("preserves $INSTDIR variable in output name without escaping", ({ expect }) => {
+    const gen = new NsisScriptGenerator()
+    gen.file("$INSTDIR\\resources\\icon.ico", "C:\\build\\icon.ico")
+    expect(gen.build()).toContain(`File "/oname=$INSTDIR\\resources\\icon.ico" "C:\\build\\icon.ico"`)
+  })
+
+  test("omits /oname when outputName is null", ({ expect }) => {
+    const gen = new NsisScriptGenerator()
+    gen.file(null, "C:\\build\\icon.ico")
+    expect(gen.build()).toBe(`File "C:\\build\\icon.ico"\n`)
+  })
+})
 
 describe("nsisEscapeString", () => {
   test("leaves plain strings unchanged", ({ expect }) => {

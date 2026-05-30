@@ -8,13 +8,10 @@ import { FlatpakOptions } from "../options/linuxOptions"
 import { getNotLocalizedLicenseFile } from "../util/license"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createStageDir, StageDir } from "./targetUtil"
-import { Nullish } from "builder-util-runtime"
+import { deepAssign, Nullish } from "builder-util-runtime"
 
 export default class FlatpakTarget extends Target {
-  readonly options: FlatpakOptions = {
-    ...this.packager.platformSpecificBuildOptions,
-    ...(this.packager.config as any)[this.name],
-  }
+  readonly options: FlatpakOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, (this.packager.config as any)[this.name])
 
   constructor(
     name: string,
