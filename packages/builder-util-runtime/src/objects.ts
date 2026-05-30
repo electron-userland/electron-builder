@@ -1,4 +1,39 @@
-import { isValidKey } from "./mapper"
+export type Nullish = null | undefined
+
+type RecursiveMap = Map<any, RecursiveMap | any>
+
+export function mapToObject(map: RecursiveMap) {
+  const obj: any = {}
+  for (const [key, value] of map) {
+    if (!isValidKey(key)) {
+      continue
+    }
+    if (value instanceof Map) {
+      obj[key] = mapToObject(value)
+    } else {
+      obj[key] = value
+    }
+  }
+  return obj
+}
+
+export function isValidKey(key: any) {
+  const protectedProperties = ["__proto__", "prototype", "constructor"]
+  if (protectedProperties.includes(key)) {
+    return false
+  }
+  return ["string", "number", "symbol", "boolean"].includes(typeof key) || key === null
+}
+
+export function asArray<T>(v: Nullish | T | Array<T>): Array<T> {
+  if (v == null) {
+    return []
+  } else if (Array.isArray(v)) {
+    return v
+  } else {
+    return [v]
+  }
+}
 
 function isObject(x: any) {
   if (Array.isArray(x)) {

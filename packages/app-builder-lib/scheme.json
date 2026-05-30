@@ -953,6 +953,22 @@
           },
           "type": "array"
         },
+        "filesystem": {
+          "anyOf": [
+            {
+              "enum": [
+                "APFS",
+                "HFS+"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "HFS+",
+          "description": "The filesystem for the DMG volume (e.g. `\"APFS\"` or `\"HFS+\"`)\nThis will be changed to APFS in the next major release, so it is recommended to set it explicitly to HFS+ if you want to keep using HFS+ (e.g. for better compatibility with older macOS versions)."
+        },
         "format": {
           "default": "UDZO",
           "description": "The disk image format. `ULFO` (lzfse-compressed image (OS X 10.11+ only)).",
@@ -9158,6 +9174,11 @@
         }
       ],
       "description": "Directories for build resources"
+    },
+    "disableAsarIntegrity": {
+      "default": false,
+      "description": "Whether to skip ASAR integrity hash computation. Useful for custom electron forks with encrypted ASAR support where the header is not readable by standard tools.",
+      "type": "boolean"
     },
     "disableDefaultIgnoredFiles": {
       "default": false,
