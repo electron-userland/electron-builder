@@ -1,6 +1,20 @@
 import type { SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import type { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
-import { Arch, AsyncTaskManager, copyFile, deepAssign, exec, exists, getArchSuffix, InvalidConfigurationError, log, orIfFileNotExist, sanitizeDirPath, unlinkIfExists, use } from "builder-util"
+import {
+  Arch,
+  AsyncTaskManager,
+  copyFile,
+  deepAssign,
+  exec,
+  exists,
+  getArchSuffix,
+  InvalidConfigurationError,
+  log,
+  orIfFileNotExist,
+  sanitizeDirPath,
+  unlinkIfExists,
+  use,
+} from "builder-util"
 import { dynamicImport } from "./util/dynamicImport"
 import { MemoLazy, Nullish } from "builder-util-runtime"
 import * as fs from "fs/promises"

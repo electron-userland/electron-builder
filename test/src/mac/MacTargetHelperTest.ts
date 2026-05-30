@@ -93,7 +93,16 @@ describe("MacTargetHelper", () => {
   })
 
   describe("getNotarizeOptions", () => {
-    const envKeys = ["APPLE_ID", "APPLE_APP_SPECIFIC_PASSWORD", "APPLE_TEAM_ID", "APPLE_API_KEY", "APPLE_API_KEY_ID", "APPLE_API_ISSUER", "APPLE_KEYCHAIN", "APPLE_KEYCHAIN_PROFILE"]
+    const envKeys = [
+      "APPLE_ID",
+      "APPLE_APP_SPECIFIC_PASSWORD",
+      "APPLE_TEAM_ID",
+      "APPLE_API_KEY",
+      "APPLE_API_KEY_ID",
+      "APPLE_API_ISSUER",
+      "APPLE_KEYCHAIN",
+      "APPLE_KEYCHAIN_PROFILE",
+    ]
 
     afterEach(() => {
       for (const key of envKeys) {

@@ -69,24 +69,24 @@ export default class SquirrelWindowsTarget extends Target {
 
     try {
       canonicalBaseDir = await fs.promises.realpath(resolvedBaseDir)
-    }
-    catch {
+    } catch {
       canonicalBaseDir = resolvedBaseDir
     }
 
     try {
       canonicalTargetPath = await fs.promises.realpath(resolvedTargetPath)
-    }
-    catch {
+    } catch {
       // Target may not exist yet; resolve the parent to handle symlinks/junctions consistently
       try {
         const resolvedTargetParent = path.dirname(resolvedTargetPath)
         const canonicalTargetParent = await fs.promises.realpath(resolvedTargetParent)
         const relativeFromResolvedParent = path.relative(resolvedTargetParent, resolvedTargetPath)
-        if (isEmptyOrSpaces(relativeFromResolvedParent) ||
+        if (
+          isEmptyOrSpaces(relativeFromResolvedParent) ||
           path.isAbsolute(relativeFromResolvedParent) ||
           relativeFromResolvedParent.split(path.sep).includes("..") ||
-          /[\0\r\n]/.test(relativeFromResolvedParent)) {
+          /[\0\r\n]/.test(relativeFromResolvedParent)
+        ) {
           throw new InvalidConfigurationError(`${description} contains invalid path segments`)
         }
         canonicalTargetPath = path.resolve(canonicalTargetParent, relativeFromResolvedParent)
