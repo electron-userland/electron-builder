@@ -33,6 +33,42 @@ function preparePowerShellExec(command: string, timeout?: number) {
   return ["powershell.exe", args, options] as const
 }
 
+// Returns true if path verification passed or was skipped (missing data.Path).
+// Returns false and calls reject() if a LiteralPath mismatch is detected.
+function checkLiteralPath(data: any, unescapedTempUpdateFile: string, logger: Logger, reject: (reason: any) => void): boolean {
+  try {
+    const normalizedDataPath = path.normalize(data.Path)
+    const normalizedTempUpdateFile = path.normalize(unescapedTempUpdateFile)
+    logger.info(`LiteralPath: ${normalizedDataPath}. Update Path: ${normalizedTempUpdateFile}`)
+    if (normalizedDataPath !== normalizedTempUpdateFile) {
+      reject(new Error(`LiteralPath of ${normalizedDataPath} is different than ${normalizedTempUpdateFile}`))
+      return false
+    }
+  } catch (error: any) {
+    logger.warn(`Unable to verify LiteralPath of update asset due to missing data.Path. Skipping this step of validation. Message: ${error.message ?? error.stack}`)
+  }
+  return true
+}
+
+// Returns true if any entry in publisherNames matches the signing certificate subject.
+function matchPublisher(data: any, publisherNames: string[], logger: Logger): boolean {
+  const subject = parseDn(data.SignerCertificate.Subject)
+  for (const name of publisherNames) {
+    const dn = parseDn(name)
+    if (dn.size) {
+      // if we have a full DN, compare all values
+      const allKeys = Array.from(dn.keys())
+      if (allKeys.every(key => dn.get(key) === subject.get(key))) {
+        return true
+      }
+    } else if (name === subject.get("CN")!) {
+      logger.warn(`Signature validated using only CN ${name}. Please add your full Distinguished Name (DN) to publisherNames configuration`)
+      return true
+    }
+  }
+  return false
+}
+
 // $certificateInfo = (Get-AuthenticodeSignature 'xxx\yyy.exe'
 // | where {$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid) -and $_.SignerCertificate.Subject.Contains("CN=siemens.com")})
 // | Out-String ; if ($certificateInfo) { exit 0 } else { exit 1 }
@@ -68,36 +104,13 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
         }
         const data = parseOut(stdout)
         if (data.Status === 0) {
-          try {
-            const normlaizedUpdateFilePath = path.normalize(data.Path)
-            const normalizedTempUpdateFile = path.normalize(unescapedTempUpdateFile)
-            logger.info(`LiteralPath: ${normlaizedUpdateFilePath}. Update Path: ${normalizedTempUpdateFile}`)
-            if (normlaizedUpdateFilePath !== normalizedTempUpdateFile) {
-              handleError(logger, new Error(`LiteralPath of ${normlaizedUpdateFilePath} is different than ${normalizedTempUpdateFile}`), stderr, reject)
-              resolve(null)
-              return
-            }
-          } catch (error: any) {
-            logger.warn(`Unable to verify LiteralPath of update asset due to missing data.Path. Skipping this step of validation. Message: ${error.message ?? error.stack}`)
+          if (!checkLiteralPath(data, unescapedTempUpdateFile, logger, reject)) {
+            resolve(null)
+            return
           }
-          const subject = parseDn(data.SignerCertificate.Subject)
-          let match = false
-          for (const name of publisherNames) {
-            const dn = parseDn(name)
-            if (dn.size) {
-              // if we have a full DN, compare all values
-              const allKeys = Array.from(dn.keys())
-              match = allKeys.every(key => {
-                return dn.get(key) === subject.get(key)
-              })
-            } else if (name === subject.get("CN")!) {
-              logger.warn(`Signature validated using only CN ${name}. Please add your full Distinguished Name (DN) to publisherNames configuration`)
-              match = true
-            }
-            if (match) {
-              resolve(null)
-              return
-            }
+          if (matchPublisher(data, publisherNames, logger)) {
+            resolve(null)
+            return
           }
         }
 
@@ -149,9 +162,8 @@ function handleError(logger: Logger, error: Error | null, stderr: string | null,
 
   if (error != null) {
     reject(error)
-  }
-
-  if (stderr) {
+  } else if (stderr) {
+    // Only reached when error is null — avoids calling reject() twice when both are set.
     reject(new Error(`Cannot execute Get-AuthenticodeSignature, stderr: ${stderr}. Failing signature validation due to unknown stderr.`))
   }
 }

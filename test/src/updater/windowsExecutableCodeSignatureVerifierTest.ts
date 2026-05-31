@@ -191,6 +191,38 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
       const [, , opts] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[], any, any]
       expect(opts.timeout).toBe(20_000)
     })
+
+    test("script ordering: Import-Module → PSModulePath clear → encoding → command", async () => {
+      // Security property: the module must be imported BEFORE PSModulePath is cleared so that
+      // PowerShell can find it. All encoding/path setup precedes the user command.
+      mockPsSuccess(makeJson())
+      await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
+      const [, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
+      const script = Buffer.from(args[args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le")
+      const importIdx = script.indexOf("Import-Module")
+      const clearIdx = script.indexOf(`$env:PSModulePath = ""`)
+      const encIdx = script.indexOf("$OutputEncoding")
+      const cmdIdx = script.indexOf("Get-AuthenticodeSignature")
+      expect(importIdx).toBeGreaterThanOrEqual(0)
+      expect(importIdx).toBeLessThan(clearIdx)
+      expect(clearIdx).toBeLessThan(encIdx)
+      expect(encIdx).toBeLessThan(cmdIdx)
+    })
+
+    test("encoded command uses UTF-16LE base64 — round-trip decodes correctly", async () => {
+      mockPsSuccess(makeJson())
+      await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
+      const [, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
+      const encodedIdx = args.indexOf("-EncodedCommand")
+      const b64 = args[encodedIdx + 1]
+      // Valid base64 — no non-base64 characters
+      expect(b64).toMatch(/^[A-Za-z0-9+/]+=*$/)
+      // Decode back and verify it contains the expected segments
+      const decoded = Buffer.from(b64, "base64").toString("utf16le")
+      expect(decoded).toContain("Import-Module")
+      expect(decoded).toContain("Get-AuthenticodeSignature")
+      expect(decoded).toContain("ConvertTo-Json")
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -259,8 +291,14 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
 
     test("mismatched Path rejects (prevents symlink / redirect attacks)", async () => {
       mockPsSuccess(makeJson({ filePath: path.join(path.dirname(defaultFile), "attacker-controlled.exe") }))
-      // execFileSync default: returns Buffer → ConvertTo-Json check passes → handleError rejects
       await expect(verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).rejects.toThrow(/LiteralPath/)
+    })
+
+    test("mismatched Path rejects directly — no ConvertTo-Json probe is run", async () => {
+      // checkLiteralPath calls reject() directly; handleError (and its execFileSync probe) is NOT involved.
+      mockPsSuccess(makeJson({ filePath: path.join(path.dirname(defaultFile), "attacker-controlled.exe") }))
+      await expect(verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).rejects.toThrow(/LiteralPath/)
+      expect(vi.mocked(execFileSync)).not.toHaveBeenCalled()
     })
 
     test("absent Path key logs warning and continues to publisher check", async () => {
@@ -328,6 +366,13 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
         expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("unsupported powershell"))
       })
 
+      test("Win 6.2 (Windows 8) is treated as old Win6 — warns and resolves null", async () => {
+        vi.mocked(osRelease).mockReturnValue("6.2.9200")
+        mockPsError(new Error("old PS"))
+        expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).toBeNull()
+        expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("unsupported powershell"))
+      })
+
       test("Win 6.3 (Windows 8.1) is NOT treated as old Win6", async () => {
         vi.mocked(osRelease).mockReturnValue("6.3.9600")
         mockPsError(new Error("Some PS error"))
@@ -335,6 +380,68 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
         await expect(verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).rejects.toThrow("Some PS error")
         const warnCalls = (logger.warn as ReturnType<typeof vi.fn>).mock.calls.flat().join(" ")
         expect(warnCalls).not.toContain("unsupported powershell")
+      })
+
+      test("old Win6 skips the ConvertTo-Json probe — execFileSync is never called", async () => {
+        vi.mocked(osRelease).mockReturnValue("6.1.7601")
+        mockPsError(new Error("PS error"))
+        await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
+        expect(vi.mocked(execFileSync)).not.toHaveBeenCalled()
+      })
+    })
+
+    describe("both error and stderr set", () => {
+      test("rejects with the original Error, not with a stderr-derived error", async () => {
+        const originalError = new Error("the original PS error")
+        mockPsError(originalError, "some stderr text too")
+        await expect(verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).rejects.toThrow("the original PS error")
+      })
+
+      test("reject is called exactly once — no double-settlement", async () => {
+        const originalError = new Error("the original PS error")
+        const rejected: unknown[] = []
+        // Intercept reject calls by wrapping the promise.
+        mockPsError(originalError, "some stderr text too")
+        await new Promise<void>(done => {
+          verifySignature([DEFAULT_SUBJECT], defaultFile, logger).then(
+            () => done(),
+            err => {
+              rejected.push(err)
+              done()
+            }
+          )
+        })
+        // The Promise contract only delivers the first rejection, but we want to ensure
+        // handleError itself does not attempt a second reject() call.
+        expect(rejected).toHaveLength(1)
+        expect((rejected[0] as Error).message).toBe("the original PS error")
+      })
+    })
+
+    describe("ConvertTo-Json probe — invocation details", () => {
+      test("probe is called with powershell.exe, shell: false, PSModulePath stripped, and 10s timeout", async () => {
+        mockPsError(new Error("PS error"))
+        await expect(verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).rejects.toThrow()
+        expect(vi.mocked(execFileSync)).toHaveBeenCalledOnce()
+        const [probeExe, probeArgs, probeOpts] = vi.mocked(execFileSync).mock.calls[0] as unknown as [string, string[], any]
+        expect(probeExe).toBe("powershell.exe")
+        expect(probeOpts.shell).toBe(false)
+        expect(probeOpts.timeout).toBe(10_000)
+        expect(probeOpts.env.PSModulePath).toBeUndefined()
+        const encodedIdx = probeArgs.indexOf("-EncodedCommand")
+        const probeScript = Buffer.from(probeArgs[encodedIdx + 1], "base64").toString("utf16le")
+        expect(probeScript).toContain("ConvertTo-Json test")
+      })
+
+      test("probe script still imports the Security module and clears PSModulePath", async () => {
+        mockPsError(new Error("PS error"))
+        await expect(verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).rejects.toThrow()
+        const [, probeArgs] = vi.mocked(execFileSync).mock.calls[0] as unknown as [string, string[]]
+        const encodedIdx = probeArgs.indexOf("-EncodedCommand")
+        const probeScript = Buffer.from(probeArgs[encodedIdx + 1], "base64").toString("utf16le")
+        expect(probeScript).toContain("Import-Module")
+        expect(probeScript).toContain("Microsoft.PowerShell.Security")
+        expect(probeScript).toContain(`$env:PSModulePath = ""`)
       })
     })
 
