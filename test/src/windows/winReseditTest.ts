@@ -138,15 +138,18 @@ describe("editWindowsResources", () => {
     const file = await writePe(makePeBuffer())
     await editWindowsResources({ ...baseOpts, file })
     const res = NtExecutableResource.from(NtExecutable.from(await fs.readFile(file)))
+    expect(res.entries.some(e => e.type === 3)).toBe(false)
     expect(res.entries.some(e => e.type === 14)).toBe(false)
   })
 
   test("replaces existing icon when iconPath is provided", async ({ expect }) => {
     const file = await writePe(makePeBuffer())
     await editWindowsResources({ ...baseOpts, file, iconPath: FIXTURE_ICO })
-    const entriesAfterFirst = NtExecutableResource.from(NtExecutable.from(await fs.readFile(file))).entries.filter(e => e.type === 14).length
+    const resAfterFirst = NtExecutableResource.from(NtExecutable.from(await fs.readFile(file)))
+    const groupCountAfterFirst = resAfterFirst.entries.filter(e => e.type === 14).length
+    expect(groupCountAfterFirst).toBeGreaterThan(0)
     await editWindowsResources({ ...baseOpts, file, iconPath: FIXTURE_ICO })
-    const entriesAfterSecond = NtExecutableResource.from(NtExecutable.from(await fs.readFile(file))).entries.filter(e => e.type === 14).length
-    expect(entriesAfterSecond).toBe(entriesAfterFirst)
+    const groupCountAfterSecond = NtExecutableResource.from(NtExecutable.from(await fs.readFile(file))).entries.filter(e => e.type === 14).length
+    expect(groupCountAfterSecond).toBe(groupCountAfterFirst)
   })
 })
