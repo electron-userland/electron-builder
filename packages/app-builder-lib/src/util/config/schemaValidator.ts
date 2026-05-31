@@ -1,5 +1,4 @@
 import Ajv, { ErrorObject, ValidateFunction } from "ajv"
-import addKeywords from "ajv-keywords"
 
 export type PostFormatter = (formattedError: string, error: ErrorObject) => string
 
@@ -14,8 +13,6 @@ const ajv = new Ajv({
   coerceTypes: true,
   strict: false,
 })
-
-addKeywords(ajv, ["typeof"])
 
 // Cache the compiled validator for the canonical scheme.json so it is only
 // compiled once per process lifetime.
@@ -141,9 +138,6 @@ function formatError(error: ErrorObject, baseDataPath: string): string {
       const schemaText = formatSchemaType(parentSchema)
       return `${label} should be one of these:\n${schemaText}`
     }
-
-    case "typeof":
-      return `${label} should be a function`
 
     default:
       return `${label} ${error.message}`

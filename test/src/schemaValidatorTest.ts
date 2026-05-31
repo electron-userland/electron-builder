@@ -42,7 +42,7 @@ describe("validateSchema - valid inputs", () => {
     expect(() => validateSchema(simpleSchema, { name: "x", nullable: "value" })).not.toThrow()
   })
 
-  it("accepts function for callback field", () => {
+  it("accepts function for callback field (typeof is unregistered, so any value is allowed)", () => {
     expect(() => validateSchema(simpleSchema, { name: "x", callback: () => {} })).not.toThrow()
   })
 
@@ -128,7 +128,7 @@ describe("validateSchema - enum errors", () => {
   })
 })
 
-describe("validateSchema - typeof errors", () => {
+describe("validateSchema - typeof keyword (treated as unknown/no-op)", () => {
   const fnSchema = {
     type: "object",
     properties: {
@@ -137,12 +137,11 @@ describe("validateSchema - typeof errors", () => {
     additionalProperties: false,
   }
 
-  it("rejects non-function for typeof:function", () => {
-    expect(() => validateSchema(fnSchema, { hook: "string" })).toThrow("configuration.hook should be a function")
-  })
-
-  it("accepts function for typeof:function", () => {
+  it("accepts any value when only constraint is typeof:function (unregistered keyword)", () => {
+    // typeof is not registered; the schema {typeof:"function"} acts as {} and matches anything
+    expect(() => validateSchema(fnSchema, { hook: "string" })).not.toThrow()
     expect(() => validateSchema(fnSchema, { hook: () => {} })).not.toThrow()
+    expect(() => validateSchema(fnSchema, { hook: null })).not.toThrow()
   })
 })
 
@@ -254,25 +253,25 @@ describe("validateSchema - nested instancePath formatting", () => {
 })
 
 describe("validateSchema - anyOf grouping", () => {
-  it("surfaces single combined message when multiple branches fail for the same field", () => {
+  it("surfaces single combined message when multiple type branches fail for the same field", () => {
+    // Both branches fail for an array value: neither boolean nor null matches []
     const schema = {
       type: "object",
       properties: {
-        hook: { anyOf: [{ typeof: "function" }, { type: ["null", "string"] }] },
+        flag: { anyOf: [{ type: "boolean" }, { type: "null" }] },
       },
       additionalProperties: false,
     }
     let msg = ""
     try {
-      // Plain object is not function, null, or string — all branches fail
-      validateSchema(schema, { hook: {} })
+      validateSchema(schema, { flag: [] })
     } catch (e: any) {
       msg = e.message
     }
     // Error items are prefixed with "\n - "; count them to ensure only one is emitted
     const errorItems = msg.split("\n - ").slice(1) // skip header
     expect(errorItems).toHaveLength(1)
-    expect(msg).toContain("configuration.hook")
+    expect(msg).toContain("configuration.flag")
   })
 })
 
