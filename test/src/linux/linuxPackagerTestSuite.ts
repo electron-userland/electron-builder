@@ -442,6 +442,34 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
       }
     ))
 
+  test("AppImage - desktopName with surrounding whitespace is trimmed for StartupWMClass", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+          productName: "Signal",
+        },
+        effectiveOptionComputed: async it => {
+          const content: string = it.desktop
+          expect(
+            content
+              .split("\n")
+              .filter(it => !it.includes("X-AppImage-BuildId") && !it.includes("X-AppImage-Version"))
+              .join("\n")
+          ).toMatchSnapshot()
+          return Promise.resolve(false)
+        },
+      },
+      {
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.desktopName = "  signal.desktop  "
+          }),
+      }
+    ))
+
   test("AppImage - no desktopName falls back to productName for StartupWMClass", ({ expect }) =>
     app(
       expect,

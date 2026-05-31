@@ -71,6 +71,35 @@ exports[`LinuxPackager > AppImage - desktopName sets StartupWMClass 2`] = `
 }
 `;
 
+exports[`LinuxPackager > AppImage - desktopName with surrounding whitespace is trimmed for StartupWMClass 1`] = `
+"[Desktop Entry]
+Name=Signal
+Exec=AppRun %U
+Terminal=false
+Type=Application
+Icon=testapp
+StartupWMClass=signal
+Comment=Test Application (test quite “ #378)
+Categories=Development;
+"
+`;
+
+exports[`LinuxPackager > AppImage - desktopName with surrounding whitespace is trimmed for StartupWMClass 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Signal-1.1.0.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
 exports[`LinuxPackager > AppImage - desktopName without .desktop suffix is used as-is for StartupWMClass 1`] = `
 "[Desktop Entry]
 Name=MyApp
