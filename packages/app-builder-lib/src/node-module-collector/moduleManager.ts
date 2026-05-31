@@ -143,8 +143,18 @@ export class ModuleManager {
     requiredRange,
     skipDownwardSearch = false,
   }: {
-    parentDir: string
-    pkgName: string
+    /**
+     * The directory to start searching from. Typed optional because pnpm JSON output can omit
+     * the `path` field at runtime even when the TypeScript type says `string`. An undefined
+     * parentDir is treated as "package not found" rather than a crash.
+     */
+    parentDir?: string
+    /**
+     * The package name to locate. Typed optional for the same reason as parentDir: the pnpm
+     * list JSON can omit `name`/`from` fields (e.g. when the root package.json has no name),
+     * producing an undefined pkgName at runtime despite the TypeScript type.
+     */
+    pkgName?: string
     requiredRange?: string
     /**
      * When true, skip the BFS-based `downwardSearch`. Use for layouts that are guaranteed flat
@@ -153,6 +163,9 @@ export class ModuleManager {
      */
     skipDownwardSearch?: boolean
   }): Promise<Package | null> {
+    if (!parentDir || !pkgName) {
+      return null
+    }
     // 1) check direct parent node_modules/pkgName first
     const direct = path.join(path.resolve(parentDir), "node_modules", pkgName, "package.json")
     if (await this.exists[direct]) {

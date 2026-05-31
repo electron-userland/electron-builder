@@ -7,8 +7,8 @@ import { Target } from "../core"
 import { WindowsConfiguration } from "../options/winOptions"
 import AppXTarget from "../targets/AppxTarget"
 import { getSignToolPath } from "../toolsets/windows"
-import { executeAppBuilderAsJson } from "../util/appBuilder"
 import { resolveFunction } from "../util/resolve"
+import { readCertInfo } from "./certInfo"
 import { VmManager } from "../vm/vm"
 import { WinPackager } from "../winPackager"
 import { importCertificate } from "./codesign"
@@ -240,19 +240,12 @@ export class WindowsSignToolManager implements SignManager {
   }
 
   async getCertInfo(file: string, password: string): Promise<CertificateInfo> {
-    let result: any = null
     const errorMessagePrefix = "Cannot extract publisher name from code signing certificate. As workaround, set win.publisherName. Error: "
     try {
-      result = await executeAppBuilderAsJson<any>(["certificate-info", "--input", file, "--password", password])
+      return await readCertInfo(file, password)
     } catch (e: any) {
-      throw new Error(`${errorMessagePrefix}${e.stack || e}`)
+      throw new InvalidConfigurationError(`${errorMessagePrefix}${e.message || e}`)
     }
-
-    if (result.error != null) {
-      // noinspection ExceptionCaughtLocallyJS
-      throw new InvalidConfigurationError(`${errorMessagePrefix}${result.error}`)
-    }
-    return result
   }
 
   // on windows be aware of http://stackoverflow.com/a/32640183/1910191

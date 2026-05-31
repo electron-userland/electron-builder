@@ -114,6 +114,17 @@ export function registerBlackboxWinTests(toolsets: Required<Pick<ToolsetConfig, 
       }
     })
 
+    // Full per-machine update cycle: install old → trigger update → verify new version.
+    // Requires native Windows AND the RUN_PER_MACHINE_UPDATE_TEST=true env var because the
+    // detached NSIS update installer needs to write to C:\Program Files, which requires UAC
+    // elevation that most CI runners cannot provide reliably without a pre-elevated session.
+    test.ifEnv(process.env.RUN_PER_MACHINE_UPDATE_TEST === "true")("nsis - per-machine full update cycle", optionsForFlakyE2E, async (context: TestContext) => {
+      if (process.platform !== "win32") {
+        context.skip()
+      }
+      await runTest(context, "nsis", "", Arch.x64, toolsets, { nsis: { perMachine: true } })
+    })
+
     // Same regression test for the per-machine (INSTALL_MODE_PER_ALL_USERS) code path.
     // That path previously used nsProcess::FindProcess which performs prefix/partial matching
     // and falsely detects "TestApp-helper.exe" as "TestApp.exe".
