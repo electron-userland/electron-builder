@@ -57,8 +57,6 @@ exports[`winPackager > beta version 2`] = `
 
 exports[`winPackager > icon < 256 1`] = `"ERR_ICON_TOO_SMALL"`;
 
-exports[`winPackager > icon < 256 2`] = `"Snapshot \`winPackager > icon < 256 1\` mismatched"`;
-
 exports[`winPackager > icon not an image 1`] = `"ERR_ICON_UNKNOWN_FORMAT"`;
 
 exports[`winPackager > legacy win-codesign 1`] = `
