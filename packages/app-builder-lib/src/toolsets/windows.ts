@@ -276,39 +276,29 @@ export async function getNsisElevatePath(nsis: ToolsetConfig["nsis"] | Nullish, 
 
 // ─── WiX toolset ─────────────────────────────────────────────────────────────
 
+
 export const wixChecksums = {
   "0.0.0": {
     "wix-4.0.0.5512.2.7z": "fe677fcd837b18c9b912985d91636bbd8a1e800c3b3a6a841b6f96e89624e839",
   },
   "1.0.0": {
-    // TODO: fill in release tag, filename, and SHA-256 when the release is cut
-    // Expected pattern: "wix-X.X.X.XXXX.X.7z": "<sha256>"
+    // TODO
   },
 } as const
 
-type WixVersionKey = keyof typeof wixChecksums
-
-/**
- * Resolve the WiX toolset directory (containing candle.exe / light.exe).
- *
- * Resolution order:
- *   1. ELECTRON_BUILDER_WIX_PATH env var — must point to an existing directory
- *   2. Managed download via wixChecksums
- *
- * Security: resolveEnvToolsetPath stat-validates the path is a real directory.
- * Subsequent binary invocations join hardcoded filenames to the resolved base,
- * so there is no injection surface beyond the validated directory root.
- */
 export async function getWixBin(wix: ToolsetConfig["wix"] | Nullish): Promise<string> {
   const overridePath = await resolveEnvToolsetPath("ELECTRON_BUILDER_WIX_PATH", "directory")
   if (overridePath != null) {
     return overridePath
   }
-  const version: WixVersionKey = wix ?? "0.0.0"
-  if (version === "0.0.0") {
+  if (wix === "0.0.0" || wix == null) {
     const file = "wix-4.0.0.5512.2.7z"
-    return getBinFromUrl("wix-4.0.0.5512.2", file, wixChecksums["0.0.0"][file])
+    return downloadBuilderToolset({
+      releaseName: `wix-4.0.0.5512.2`,
+      filenameWithExt: file,
+      checksums: { [file]: wixChecksums["0.0.0"][file] },
+    })
   }
-  // version === "1.0.0" — stub until the release is cut and checksums are populated
-  throw new Error(`wix toolset version "${version}" is not yet available. ` + `Set ELECTRON_BUILDER_WIX_PATH to a local WiX directory, or use toolsets.wix = "0.0.0".`)
+  // wix === "1.0.0" — stub until the release is cut and checksums are populated
+  throw new Error(`wix toolset version "${wix}" is not yet available. ` + `Set ELECTRON_BUILDER_WIX_PATH to a local WiX directory, or use toolsets.wix = "0.0.0".`)
 }

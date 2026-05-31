@@ -17,6 +17,8 @@ export interface ConditionalChainProps<T> {
   readonly ifNotWindows: T
   readonly ifNotLinux: T
   readonly heavy: T
+  /** Skip on macOS (Catalina+ blocks 32-bit Wine); run on Windows (native) and Linux (wine32). */
+  readonly ifWineCapable: T
 }
 
 interface ConditionalTestAPI extends TestAPI, ConditionalChainProps<ConditionalTestAPI> {

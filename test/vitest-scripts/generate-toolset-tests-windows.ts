@@ -49,8 +49,8 @@ const SUITES: WindowsSuiteConfig[] = [
     name: "msi",
     registerFn: namedFn("registerMsiTests" satisfies keyof typeof _MsiSuite),
     importPath: "windows/msiTestSuite",
-    // No ifWindows chain: WineVmManager handles non-Windows platforms natively.
-    describeConfig: { name: "msi" },
+    // ifWineCapable: skip on macOS (Catalina+ blocks 32-bit Wine); run on Windows (native) and Linux (wine32).
+    describeConfig: { name: "msi", chain: ["ifWineCapable"] },
     describeOptions: { sequential: true },
     wixVersions: WIX_VERSIONS,
     winCodeSignVersions: [], // MSI does not use winCodeSign

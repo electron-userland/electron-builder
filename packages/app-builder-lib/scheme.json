@@ -8304,6 +8304,22 @@
           ],
           "default": "0.0.0",
           "description": "`win-codesign` version to use for signing Windows artifacts.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=win-codesign&expanded=true\n\nStable:\nv0.0.0 (winCodeSign)\n\nBeta:\nWindows Kits 10.0.26100.0\nv1.0.0, v1.1.0"
+        },
+        "wix": {
+          "anyOf": [
+            {
+              "enum": [
+                "0.0.0",
+                "1.0.0"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "0.0.0",
+          "description": "`wix` toolset version for MSI installer compilation.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=wix&expanded=true\n\nStable:\n0.0.0 - wix-4.0.0.5512.2 (Windows .exe only; requires Wine on non-Windows)\n\nBeta:\n1.0.0 - UPCOMING release (Windows .exe only; requires Wine on non-Windows)\n\nOverride with ELECTRON_BUILDER_WIX_PATH env var pointing to a local WiX directory."
         }
       },
       "type": "object"
