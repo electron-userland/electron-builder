@@ -2,6 +2,15 @@
 
 set -e
 
+# On macOS the default electron cache lives under Library/Caches; on Linux it follows XDG (~/.cache).
+if [[ "$(uname -s)" = "Darwin" ]]; then
+  _ELECTRON_CACHE_DEFAULT="$HOME/Library/Caches/electron"
+  _ELECTRON_BUILDER_CACHE_DEFAULT="$HOME/Library/Caches/electron-builder"
+else
+  _ELECTRON_CACHE_DEFAULT="$HOME/.cache/electron"
+  _ELECTRON_BUILDER_CACHE_DEFAULT="$HOME/.cache/electron-builder"
+fi
+
 docker run --rm \
   -e CI="${CI:-false}" \
   -e DEBUG="${DEBUG:-}" \
@@ -14,8 +23,8 @@ docker run --rm \
   -w /project \
   -v "$(pwd):/project" \
   -v "$(pwd)/node-modules-docker:/project/node_modules" \
-  -v "${ELECTRON_CACHE_PATH:-$HOME/Library/Caches/electron}:/root/.cache/electron" \
-  -v "${ELECTRON_BUILDER_CACHE_PATH:-$HOME/Library/Caches/electron-builder}:/root/.cache/electron-builder" \
+  -v "${ELECTRON_CACHE_PATH:-$_ELECTRON_CACHE_DEFAULT}:/root/.cache/electron" \
+  -v "${ELECTRON_BUILDER_CACHE_PATH:-$_ELECTRON_BUILDER_CACHE_DEFAULT}:/root/.cache/electron-builder" \
   ${ADDITIONAL_DOCKER_ARGS} \
   "${TEST_RUNNER_IMAGE_TAG:-electronuserland/builder:22-wine-mono}" \
   /bin/bash -c "bash ./docker/test-in-docker.sh"

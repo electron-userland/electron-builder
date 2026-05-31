@@ -1,6 +1,5 @@
 import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
-import { makeUniversalApp } from "@electron/universal"
 import {
   Arch,
   AsyncTaskManager,
@@ -32,6 +31,7 @@ import { chooseNotNull, DoPackOptions, PlatformPackager } from "./platformPackag
 import { ArchiveTarget } from "./targets/ArchiveTarget"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
+import { dynamicImport } from "./util/dynamicImport"
 import { isMacOsHighSierra } from "./util/macosVersion"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
 import { resolveFunction } from "./util/resolve"
@@ -248,6 +248,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
         await fs.copyFile(sourceCatalogPath, targetCatalogPath)
       }
 
+      const { makeUniversalApp } = await dynamicImport<typeof import("@electron/universal")>("@electron/universal")
       await makeUniversalApp({
         x64AppPath: path.join(safeX64AppOutDir, appFile),
         arm64AppPath: path.join(safeArm64AppOutPath, appFile),

@@ -155,12 +155,9 @@ beforeEach(
   Infinity
 )
 
-afterEach(
-  ctx => {
-    if (heavyContexts.has(ctx)) {
-      heavyContexts.delete(ctx)
-      heavyMutex.release()
-    }
-  },
-  Infinity
-)
+afterEach(ctx => {
+  if (heavyContexts.has(ctx)) {
+    heavyContexts.delete(ctx)
+    heavyMutex.release()
+  }
+}, Infinity)

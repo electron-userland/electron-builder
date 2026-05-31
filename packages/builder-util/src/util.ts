@@ -34,6 +34,7 @@ export { parseValidEnvVarUrl } from "./envUtil"
 export { asArray, deepAssign, isValidKey } from "builder-util-runtime"
 export * from "./fs"
 
+export { generateKsuid } from "./ksuid"
 export { loadCscLink, decodeCscLinkBase64, resolveCscLinkPath } from "./cscLink"
 
 export { getPath7x, getPath7za } from "./7za"

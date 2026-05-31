@@ -1,7 +1,6 @@
-import * as get from "@electron/get"
-import { ElectronDownloadCacheMode } from "@electron/get"
 import * as fs from "fs/promises"
 import { log, parseValidEnvVarUrl } from "builder-util"
+import { dynamicImport } from "./util/dynamicImport"
 import { Nullish } from "builder-util-runtime"
 import { sanitizeFileName } from "builder-util/out/filename"
 import * as path from "path"
@@ -17,7 +16,8 @@ export async function download(url: string, output: string, checksum?: string | 
     // Callers should supply a checksum whenever possible.
     log.warn({ url }, "downloading without an integrity checksum — the download is not verified against a known-good hash")
   }
-  const downloadedFile = await get.downloadArtifact({
+  const { downloadArtifact, ElectronDownloadCacheMode } = await dynamicImport<typeof import("@electron/get")>("@electron/get")
+  const downloadedFile = await downloadArtifact({
     version: "9.9.9",
     artifactName: filenameWithExt,
     cacheRoot: path.resolve(getCacheDirectory({ allowEnvVarOverride: true }), "downloads"),
