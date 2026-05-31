@@ -125,9 +125,6 @@ importers:
       ajv:
         specifier: ^8.18.0
         version: 8.20.0
-      ajv-keywords:
-        specifier: ^5.1.0
-        version: 5.1.0(ajv@8.20.0)
       asn1js:
         specifier: ^3.0.10
         version: 3.0.10
