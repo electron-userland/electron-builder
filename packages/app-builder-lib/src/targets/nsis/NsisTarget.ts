@@ -655,8 +655,11 @@ export class NsisTarget extends Target {
 
     checkMakensisOutput(stdout, stderr)
 
-    // Only verify output size for the final installer, not the intermediate uninstaller
-    if (!("BUILD_UNINSTALLER" in defines)) {
+    // Only verify output size for the final, non-web installer.
+    // BUILD_UNINSTALLER marks the intermediate uninstaller build (no embedded archives).
+    // APP_PACKAGE_STORE_FILE marks nsis-web: archives are downloaded at install-time,
+    // so the EXE is intentionally smaller than the archive(s).
+    if (!("BUILD_UNINSTALLER" in defines) && !("APP_PACKAGE_STORE_FILE" in defines)) {
       const outFile = commands["OutFile"].replace(/^"|"$/g, "")
       await verifyInstallerSize(outFile, defines)
     }
@@ -805,6 +808,10 @@ async function generateForPreCompressed(preCompressedFileExtensions: Array<strin
 async function runMakensis(command: string, args: Array<string>, script: string, options: { env?: NodeJS.ProcessEnv; cwd?: string }): Promise<{ stdout: string; stderr: string }> {
   const childProcess = doSpawn(command, args, { ...options, stdio: ["pipe", "pipe", "pipe"] as any })
   const timeout = setTimeout(() => childProcess.kill(), 4 * 60 * 1000)
+  // Mirror live output to parent process streams when the nsis debug logger is
+  // active (DEBUG=electron-builder:nsis or DEBUG=*), matching the original
+  // inherit-mode behaviour of spawnAndWrite in debug builds.
+  const isDebugEnabled = debug.enabled
 
   return new Promise((resolve, reject) => {
     let stdout = ""
@@ -817,9 +824,15 @@ async function runMakensis(command: string, args: Array<string>, script: string,
 
     childProcess.stdout!.on("data", (chunk: Buffer) => {
       stdout += chunk.toString()
+      if (isDebugEnabled) {
+        process.stdout.write(chunk)
+      }
     })
     childProcess.stderr!.on("data", (chunk: Buffer) => {
       stderr += chunk.toString()
+      if (isDebugEnabled) {
+        process.stderr.write(chunk)
+      }
     })
 
     childProcess.stdin!.end(script)
