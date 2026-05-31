@@ -3,8 +3,8 @@ import {
   asArray,
   AsyncTaskManager,
   exec,
-  executeAppBuilder,
   exists,
+  generateKsuid,
   getArchSuffix,
   getPath7za,
   getPlatformIconFileName,
@@ -15,7 +15,7 @@ import {
   use,
   walk,
 } from "builder-util"
-import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, PackageFileInfo, UUID } from "builder-util-runtime"
+import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, deepAssign, PackageFileInfo, UUID } from "builder-util-runtime"
 import _debug from "debug"
 import * as fs from "fs"
 import { readFile, stat, unlink } from "fs-extra"
@@ -36,8 +36,9 @@ import { Defines } from "./Defines"
 import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } from "./nsisLang"
 import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
-import { NsisScriptGenerator } from "./nsisScriptGenerator"
-import { AppPackageHelper, NSIS_PATH, NSIS_RESOURCES_PATH, NsisTargetOptions, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
+import { NsisScriptGenerator, nsisEscapeString } from "./nsisScriptGenerator"
+import { getMakeNsisPath, getNsisPluginsPath } from "../../toolsets/windows"
+import { AppPackageHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
 
 const debug = _debug("electron-builder:nsis")
 
@@ -72,15 +73,13 @@ export class NsisTarget extends Target {
           }
 
     if (targetName !== "nsis") {
-      Object.assign(this.options, (this.packager.config as any)[targetName === "nsis-web" ? "nsisWeb" : targetName])
+      deepAssign(this.options, (this.packager.config as any)[targetName === "nsis-web" ? "nsisWeb" : targetName])
     }
 
     const deps = packager.info.metadata.dependencies
     if (deps != null && deps["electron-squirrel-startup"] != null) {
       log.warn('"electron-squirrel-startup" dependency is not required for NSIS')
     }
-
-    NsisTargetOptions.resolve(this.options)
   }
 
   get shouldBuildUniversalInstaller() {
@@ -306,7 +305,7 @@ export class NsisTarget extends Target {
 
       // https://github.com/electron-userland/electron-builder/issues/5764
       if (typeof unpackDirName === "string" || !unpackDirName) {
-        defines.UNPACK_DIR_NAME = unpackDirName || (await executeAppBuilder(["ksuid"]))
+        defines.UNPACK_DIR_NAME = unpackDirName || generateKsuid()
       }
 
       if (splashImage != null) {
@@ -452,18 +451,18 @@ export class NsisTarget extends Target {
     const localeId = this.options.language || "1033"
     const appInfo = this.packager.appInfo
     const versionKey = [
-      `/LANG=${localeId} ProductName "${appInfo.productName}"`,
-      `/LANG=${localeId} ProductVersion "${appInfo.version}"`,
-      `/LANG=${localeId} LegalCopyright "${appInfo.copyright}"`,
-      `/LANG=${localeId} FileDescription "${appInfo.description}"`,
-      `/LANG=${localeId} FileVersion "${appInfo.buildVersion}"`,
+      `/LANG=${localeId} ProductName "${nsisEscapeString(appInfo.productName)}"`,
+      `/LANG=${localeId} ProductVersion "${nsisEscapeString(appInfo.version)}"`,
+      `/LANG=${localeId} LegalCopyright "${nsisEscapeString(appInfo.copyright)}"`,
+      `/LANG=${localeId} FileDescription "${nsisEscapeString(appInfo.description)}"`,
+      `/LANG=${localeId} FileVersion "${nsisEscapeString(appInfo.buildVersion)}"`,
     ]
     if (short) {
-      versionKey[1] = `/LANG=${localeId} ProductVersion "${appInfo.shortVersion}"`
-      versionKey[4] = `/LANG=${localeId} FileVersion "${appInfo.shortVersion}"`
+      versionKey[1] = `/LANG=${localeId} ProductVersion "${nsisEscapeString(appInfo.shortVersion!)}"`
+      versionKey[4] = `/LANG=${localeId} FileVersion "${nsisEscapeString(appInfo.shortVersion!)}"`
     }
-    use(this.packager.platformSpecificBuildOptions.legalTrademarks, it => versionKey.push(`/LANG=${localeId} LegalTrademarks "${it}"`))
-    use(appInfo.companyName, it => versionKey.push(`/LANG=${localeId} CompanyName "${it}"`))
+    use(this.packager.platformSpecificBuildOptions.legalTrademarks, it => versionKey.push(`/LANG=${localeId} LegalTrademarks "${nsisEscapeString(it)}"`))
+    use(appInfo.companyName, it => versionKey.push(`/LANG=${localeId} CompanyName "${nsisEscapeString(it)}"`))
     return versionKey
   }
 
@@ -609,7 +608,17 @@ export class NsisTarget extends Target {
       if (value == null) {
         args.push(`-D${name}`)
       } else {
-        args.push(`-D${name}=${value}`)
+        // nsisEscapeString prevents three classes of injection:
+        //   1. Newlines  → replaced with spaces; a bare \n in a define value
+        //      would terminate the current script line and let whatever follows
+        //      be parsed as a new preprocessor directive (e.g. !system, !include).
+        //   2. bare $ → escaped to $$; unescaped $ in a define value would cause
+        //      NSIS to expand an unintended variable reference.  ${...} references
+        //      are left intact so NSIS compile-time defines like ${NSISDIR} still
+        //      expand correctly.
+        //   3. " chars   → escaped to $\"; an unescaped " would break out of
+        //      double-quoted NSIS string literals where ${DEFINE} is expanded.
+        args.push(`-D${name}=${nsisEscapeString(String(value))}`)
       }
     }
 
@@ -630,22 +639,15 @@ export class NsisTarget extends Target {
       this.packager.debugLogger.add("nsis.script", script)
     }
 
-    const nsisPath = await NSIS_PATH()
-    const command = path.join(
-      nsisPath,
-      process.platform === "darwin" ? "mac" : process.platform === "win32" ? "Bin" : "linux",
-      process.platform === "win32" ? "makensis.exe" : "makensis"
-    )
+    if (process.platform === "win32") {
+      // fix for an issue caused by virus scanners, locking the file during write
+      // https://github.com/electron-userland/electron-builder/issues/5005
+      await ensureNotBusy(commands["OutFile"].replace(/"/g, ""))
+    }
 
-    // if (process.platform === "win32") {
-    // fix for an issue caused by virus scanners, locking the file during write
-    // https://github.com/electron-userland/electron-builder/issues/5005
-    await ensureNotBusy(commands["OutFile"].replace(/"/g, ""))
-    // }
-
-    await spawnAndWrite(command, args, script, {
-      // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as MacOS/Windows version, so, we explicitly set NSISDIR
-      env: { ...process.env, NSISDIR: nsisPath },
+    const makensis = await getMakeNsisPath(this.packager.config.toolsets?.nsis, this.options.customNsisBinary)
+    await spawnAndWrite(makensis.path, args, script, {
+      env: { ...process.env, ...(makensis.env ?? {}) },
       cwd: nsisTemplatesDir,
     })
   }
@@ -668,7 +670,7 @@ export class NsisTarget extends Target {
 
     const pluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
     taskManager.add(async () => {
-      scriptGenerator.addPluginDir(pluginArch, path.join(await NSIS_RESOURCES_PATH(), "plugins", pluginArch))
+      scriptGenerator.addPluginDir(pluginArch, path.join(await getNsisPluginsPath(this.packager.config.toolsets?.nsis, this.options.customNsisResources), pluginArch))
     })
 
     taskManager.add(async () => {
@@ -736,14 +738,17 @@ export class NsisTarget extends Target {
             const customIcon = await packager.getResource(getPlatformIconFileName(item.icon, false), `${extensions[0]}.ico`)
             let installedIconPath = "$appExe,0"
             if (customIcon != null) {
-              installedIconPath = `$INSTDIR\\resources\\${path.basename(customIcon)}`
+              installedIconPath = `$INSTDIR\\resources\\${nsisEscapeString(path.basename(customIcon))}`
               registerFileAssociationsScript.file(installedIconPath, customIcon)
             }
 
             const icon = `"${installedIconPath}"`
-            const commandText = `"Open with ${packager.appInfo.productName}"`
+            const commandText = `"Open with ${nsisEscapeString(packager.appInfo.productName)}"`
             const command = '"$appExe $\\"%1$\\""'
-            registerFileAssociationsScript.insertMacro("APP_ASSOCIATE", `"${ext}" "${item.name || ext}" "${item.description || ""}" ${icon} ${commandText} ${command}`)
+            registerFileAssociationsScript.insertMacro(
+              "APP_ASSOCIATE",
+              `"${nsisEscapeString(ext)}" "${nsisEscapeString(item.name || ext)}" "${nsisEscapeString(item.description || "")}" ${icon} ${commandText} ${command}`
+            )
           }
         }
         scriptGenerator.macro("registerFileAssociations", registerFileAssociationsScript)
@@ -781,7 +786,7 @@ async function generateForPreCompressed(preCompressedFileExtensions: Array<strin
   if (preCompressedAssets.length !== 0) {
     const macro = new NsisScriptGenerator()
     for (const file of preCompressedAssets) {
-      macro.file(`$INSTDIR\\${path.relative(dir, file).replace(/\//g, "\\")}`, file)
+      macro.file(`$INSTDIR\\${nsisEscapeString(path.relative(dir, file).replace(/\//g, "\\"))}`, file)
     }
     scriptGenerator.macro(`customFiles_${Arch[arch]}`, macro)
   }

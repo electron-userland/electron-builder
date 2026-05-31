@@ -3,15 +3,18 @@
 import isCI from "is-ci"
 import { startVitest } from "vitest/node"
 import { getAllTestFiles } from "./file-discovery"
+import { generateTests } from "./generate-tests"
 import { buildWeightedFiles, computeShardCount, splitIntoShards } from "./shard-builder"
 import { SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN } from "./smart-config"
 import SmartSequencer from "./vitest-smart-sequencer"
 
 const testRegex = TEST_FILES_PATTERN?.split(",")
-const includeRegex = `(${testRegex.join("|")})`
+const includeRegex = `(${testRegex.join("|")}|${testRegex.map(t => `${t}*Test`).join("|")})`
 console.log("TEST_FILES pattern", includeRegex)
 
 async function main() {
+  generateTests()
+
   const files = getAllTestFiles()
   const currentPlatform = process.platform as SupportedPlatforms
 
@@ -54,17 +57,16 @@ async function main() {
     include: [`test/src/**/${includeRegex}.ts`],
 
     printConsoleTrace: true,
+    runner: __dirname + "/vitest-network-retry-runner.ts",
     reporters: ["default", __dirname + "/vitest-smart-reporter.ts"],
 
-    maxWorkers: "50%",
-    minWorkers: 1,
+    // 2 on Windows (heavy MSI/Squirrel builds saturate the vitest main-thread RPC at 3); 3 elsewhere
+    maxWorkers: process.platform === "win32" ? 2 : 3,
 
-    // Ensure tests from different files can run in parallel
-    // but heavy tests will be serialized by the mutex
-    fileParallelism: true,
+    fileParallelism: process.env.TEST_SEQUENTIAL_FILES !== "true",
     sequence: {
       sequencer: SmartSequencer,
-      concurrent: process.env.TEST_SEQUENTIAL !== "true",
+      concurrent: process.env.TEST_SEQUENTIAL === "false",
     },
 
     slowTestThreshold: 2 * 60 * 1000,

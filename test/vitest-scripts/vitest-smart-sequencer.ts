@@ -1,6 +1,5 @@
-import * as path from "path"
 import { BaseSequencer, TestSpecification } from "vitest/node"
-import { loadCache } from "./cache"
+import { getFileStats, loadCache } from "./cache"
 import { DEFAULT_FILE_MS, SupportedPlatforms } from "./smart-config"
 
 export default class SmartSequencer extends BaseSequencer {
@@ -9,14 +8,8 @@ export default class SmartSequencer extends BaseSequencer {
   async sort(files: TestSpecification[]): Promise<TestSpecification[]> {
     const currentPlatform = process.platform as SupportedPlatforms
     const estimatedDuration = files.reduce((sum, f) => {
-      const basename = path.basename(f.moduleId)
-      const stat = this.cache.files[basename]
-      let base = DEFAULT_FILE_MS
-      if (stat?.platformAvgMs?.[currentPlatform] && stat?.platformRuns?.[currentPlatform]) {
-        base = stat.platformAvgMs[currentPlatform]
-      } else if (stat?.avgMs) {
-        base = stat.avgMs
-      }
+      const { stat } = getFileStats(this.cache, f)
+      const base = stat?.platformRuns?.[currentPlatform]?.avgMs ?? DEFAULT_FILE_MS
       return sum + base
     }, 0)
 
@@ -25,12 +18,11 @@ export default class SmartSequencer extends BaseSequencer {
     console.log("Estimated test duration:", formatDuration(estimatedDuration))
     console.log()
     console.log(`Test files:`)
-    files
-      .sort((a, b) => path.basename(a.moduleId).localeCompare(path.basename(b.moduleId)))
+    ;[...files]
+      .sort((a, b) => getFileStats(this.cache, b).file.localeCompare(getFileStats(this.cache, a).file))
       .forEach(f => {
-        const file = path.basename(f.moduleId)
-        const stat = this.cache.files[file]
-        const time = stat?.platformAvgMs?.[currentPlatform] ?? stat?.avgMs
+        const { stat, file } = getFileStats(this.cache, f)
+        const time = stat?.platformRuns?.[currentPlatform]?.avgMs
         console.log(`  - ${file} (${formatDuration(time)})${stat?.unstable ? " [unstable]" : ""}`)
       })
     console.log()
@@ -45,10 +37,9 @@ export default class SmartSequencer extends BaseSequencer {
     const regularFiles: TestSpecification[] = []
 
     for (const file of files) {
-      const basename = path.basename(file.moduleId)
-      const fileStats = this.cache.files[basename]
+      const { stat } = getFileStats(this.cache, file)
 
-      if (fileStats?.hasHeavyTests) {
+      if (stat?.hasHeavyTests) {
         heavyFiles.push(file)
       } else {
         regularFiles.push(file)
@@ -57,19 +48,19 @@ export default class SmartSequencer extends BaseSequencer {
 
     // Sort heavy files by duration (longest first) to run them early
     const sortedHeavy = heavyFiles.sort((a, b) => {
-      const A = this.cache.files[path.basename(a.moduleId)]
-      const B = this.cache.files[path.basename(b.moduleId)]
-      const aScore = (A?.unstable ? 1_000_000 : 0) + (A?.platformAvgMs?.[currentPlatform] ?? A?.avgMs ?? 0)
-      const bScore = (B?.unstable ? 1_000_000 : 0) + (B?.platformAvgMs?.[currentPlatform] ?? B?.avgMs ?? 0)
+      const { stat: A } = getFileStats(this.cache, a)
+      const { stat: B } = getFileStats(this.cache, b)
+      const aScore = (A?.unstable ? 1_000_000 : 0) + (A?.platformRuns?.[currentPlatform]?.avgMs ?? 0)
+      const bScore = (B?.unstable ? 1_000_000 : 0) + (B?.platformRuns?.[currentPlatform]?.avgMs ?? 0)
       return bScore - aScore
     })
 
     // Sort regular files by priority (unstable/long first)
     const sortedRegular = regularFiles.sort((a, b) => {
-      const A = this.cache.files[path.basename(a.moduleId)]
-      const B = this.cache.files[path.basename(b.moduleId)]
-      const aScore = (A?.unstable ? 1_000_000 : 0) + (A?.platformAvgMs?.[currentPlatform] ?? A?.avgMs ?? 0)
-      const bScore = (B?.unstable ? 1_000_000 : 0) + (B?.platformAvgMs?.[currentPlatform] ?? B?.avgMs ?? 0)
+      const { stat: A } = getFileStats(this.cache, a)
+      const { stat: B } = getFileStats(this.cache, b)
+      const aScore = (A?.unstable ? 1_000_000 : 0) + (A?.platformRuns?.[currentPlatform]?.avgMs ?? 0)
+      const bScore = (B?.unstable ? 1_000_000 : 0) + (B?.platformRuns?.[currentPlatform]?.avgMs ?? 0)
       return bScore - aScore
     })
 

@@ -32,7 +32,7 @@ export interface LinuxConfiguration extends CommonLinuxOptions, PlatformSpecific
   /**
    * Target package type: list of `AppImage`, `flatpak`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
    *
-   * electron-builder [docker image](./multi-platform-build.md#docker) can be used to build Linux targets on any platform.
+   * electron-builder [docker image](https://www.electron.build/multi-platform-build#docker) can be used to build Linux targets on any platform.
    *
    * Please [do not put an AppImage into another archive](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) like a .zip or .tar.gz.
    * @default AppImage
@@ -40,28 +40,37 @@ export interface LinuxConfiguration extends CommonLinuxOptions, PlatformSpecific
   readonly target?: TargetConfigType
 
   /**
-   * The maintainer. Defaults to [author](./configuration.md#author).
+   * The maintainer. Defaults to [author](https://www.electron.build/configuration#author).
    */
   readonly maintainer?: string | null
 
   /**
-   * The vendor. Defaults to [author](./configuration.md#author).
+   * The vendor. Defaults to [author](https://www.electron.build/configuration#author).
    */
   readonly vendor?: string | null
 
   /**
-   * The path to icon set directory or one png file, relative to the [build resources](./contents.md#extraresources) or to the project directory. The icon filename must contain the size (e.g. 32x32.png) of the icon.
+   * The path to icon set directory or one png file, relative to the [build resources](https://www.electron.build/contents#extraresources) or to the project directory. The icon filename must contain the size (e.g. 32x32.png) of the icon.
    * By default will be generated automatically based on the macOS icns file.
    */
   readonly icon?: string
 
   /**
-   * backward compatibility + to allow specify fpm-only category for all possible fpm targets in one place
    * @private
+   * @internal Allows specifying an FPM-only package category for all FPM targets in one place.
+   * For user-facing category configuration use the target-specific options (e.g. {@link DebOptions}).
    */
   readonly packageCategory?: string | null
 }
 
+/**
+ * Desktop-entry and runtime fields shared by all Linux targets and all snap core strategies.
+ *
+ * Fields set under `linux.*` in your build config (i.e. on {@link LinuxConfiguration}) are
+ * automatically cascaded into each snap core's options by `LinuxTargetHelper.getSnapCore()`.
+ * You do not need to duplicate them under `snapcraft.core24.*`, `snapcraft.core22.*`, etc.
+ * Per-core values always take precedence when both are set.
+ */
 export interface CommonLinuxOptions {
   /**
    * The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
@@ -69,7 +78,7 @@ export interface CommonLinuxOptions {
   readonly synopsis?: string | null
 
   /**
-   * As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.
+   * As [description](https://www.electron.build/configuration#description) from application package.json, but allows you to specify different for Linux.
    */
   readonly description?: string | null
 
@@ -104,10 +113,12 @@ export interface LinuxTargetSpecificOptions extends CommonLinuxOptions, TargetSp
   readonly depends?: Array<string> | null
 
   /**
-   * The compression type.
+   * The compression type passed to fpm. For `deb`, `rpm`, and `pacman` targets prefer the
+   * typed per-format interfaces (`DebOptions`, `RpmOptions`, `PacmanOptions`) which narrow
+   * this to only the values that fpm actually accepts for that format.
    * @default xz
    */
-  readonly compression?: "gz" | "bzip2" | "xz" | "lzo" | null
+  readonly compression?: "gz" | "bzip2" | "xz" | "xzmt" | "gzip" | "zst" | "zstd" | null
 
   readonly icon?: string
 
@@ -168,6 +179,23 @@ export interface DebOptions extends LinuxTargetSpecificOptions {
    * The [Priority](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Priority) attribute.
    */
   readonly priority?: string | null
+
+  /** @default xz */
+  readonly compression?: "gz" | "bzip2" | "xz" | "zst" | null
+}
+
+export interface RpmOptions extends LinuxTargetSpecificOptions {
+  /**
+   * Passed to fpm via `--rpm-compression`. `"xzmt"` uses multi-threaded xz (fpm's RPM default).
+   * `"xz"` is automatically promoted to `"xzmt"`. `"gzip"` and `"bzip2"` pass through as-is.
+   * @default xzmt
+   */
+  readonly compression?: "xz" | "xzmt" | "gzip" | "bzip2" | null
+}
+
+export interface PacmanOptions extends LinuxTargetSpecificOptions {
+  /** @default xz */
+  readonly compression?: "gz" | "bzip2" | "xz" | "zstd" | null
 }
 
 export interface AppImageOptions extends CommonLinuxOptions, TargetSpecificOptions {
@@ -175,6 +203,22 @@ export interface AppImageOptions extends CommonLinuxOptions, TargetSpecificOptio
    * The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). Only plain text is supported.
    */
   readonly license?: string | null
+  /**
+   * The compression algorithm passed to the AppImage build tool.
+   *
+   * **FUSE2 toolset (`"0.0.0"` or unset):** only `"xz"` and `"gzip"` are forwarded
+   * to mksquashfs (`-comp <value>`); `"xz"` additionally passes `-Xdict-size 100% -b 1048576`.
+   * `"zstd"`, `null`, and unset fall through to the root-level `compression` option:
+   * - `"maximum"` → `"xz"`
+   * - anything else → flag omitted (mksquashfs defaults to gzip)
+   *
+   * **Static-runtime toolsets (`>= 1.0.0`):** `"gzip"` and `"zstd"` are forwarded
+   * directly. `"xz"` is mapped to `"zstd"` (nearest supported equivalent). `null`
+   * or unset falls through to the root-level `compression` option:
+   * - `"store"` → `"gzip"`
+   * - `"normal"` / `"maximum"` / unset → `"zstd"`
+   */
+  readonly compression?: "gzip" | "xz" | "zstd" | null
 }
 
 export interface FlatpakOptions extends CommonLinuxOptions, TargetSpecificOptions {

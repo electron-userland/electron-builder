@@ -274,6 +274,7 @@ exports[`hooks as file - cjs 2`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -352,6 +353,7 @@ exports[`hooks as file - mjs exported functions 2`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -430,6 +432,7 @@ exports[`hooks as functions 2`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -1362,6 +1365,9 @@ exports[`posix smart unpack 3`] = `
             "SECURITY.md": {
               "size": "<size>",
             },
+            "empty.js": {
+              "size": "<size>",
+            },
             "index.js": {
               "size": "<size>",
             },
@@ -1609,6 +1615,9 @@ exports[`posix smart unpack 3`] = `
                   "size": "<size>",
                 },
                 "sort.js": {
+                  "size": "<size>",
+                },
+                "truncate.js": {
                   "size": "<size>",
                 },
                 "valid.js": {

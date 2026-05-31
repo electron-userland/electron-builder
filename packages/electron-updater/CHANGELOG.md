@@ -1,5 +1,68 @@
 ## 4.3.0
 
+## 6.8.7
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`d6a5aee`](https://github.com/electron-userland/electron-builder/commit/d6a5aee821138449dc0c082606da6a1bf5ba0798) [`4866737`](https://github.com/electron-userland/electron-builder/commit/4866737e4fe1f0cca210d318b9ce440f8e978a63)
+
+</small>
+
+- `builder-util-runtime@9.6.2`
+
+</details>
+
+## 6.8.6
+
+### Patch Changes
+
+- Chore(docs): documentation updates and docusaurus migration _[`#9744`](https://github.com/electron-userland/electron-builder/pull/9744) [`d846315`](https://github.com/electron-userland/electron-builder/commit/d84631587d816a1aa0bff57680bab0f865d7a84f) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`d846315`](https://github.com/electron-userland/electron-builder/commit/d84631587d816a1aa0bff57680bab0f865d7a84f)
+
+</small>
+
+- `builder-util-runtime@9.6.1`
+
+</details>
+
+## 6.8.5
+
+### Patch Changes
+
+- Fix: GitLab auth token differs between fetching channel yaml & API requests _[`#9703`](https://github.com/electron-userland/electron-builder/pull/9703) [`4bcf68a`](https://github.com/electron-userland/electron-builder/commit/4bcf68abc957faae827ca50fa5c1bed3ddf7c956) [@mmaietta](https://github.com/mmaietta)_
+- Fix(electron-updater): filter draft releases in PrivateGitHubProvider.getLatestVersionInfo _[`#9694`](https://github.com/electron-userland/electron-builder/pull/9694) [`a5d8ab9`](https://github.com/electron-userland/electron-builder/commit/a5d8ab9436dd7db0c58a08cf9594e47613c4fc8e) [@copilot-swe-agent](https://github.com/apps/copilot-swe-agent)_
+
+## 6.8.4
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`b7df0bc`](https://github.com/electron-userland/electron-builder/commit/b7df0bcef5790814fd6df187346dcec625dc681e)
+
+</small>
+
+- `builder-util-runtime@9.6.0`
+
+</details>
+
+## 6.8.3
+
+### Patch Changes
+
+- Chore: Remove console logs for autoupdate checks _[`#9561`](https://github.com/electron-userland/electron-builder/pull/9561) [`9c67fd3`](https://github.com/electron-userland/electron-builder/commit/9c67fd31ce982d11c82aae71263ba1f0055a77cc) [@Kilian](https://github.com/Kilian)_
+
 ## 6.8.2
 
 ### Patch Changes

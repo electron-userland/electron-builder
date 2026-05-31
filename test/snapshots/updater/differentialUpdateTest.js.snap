@@ -1,185 +1,5 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`AppImage 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW-1.0.0.AppImage",
-      "safeArtifactName": "TestApp-1.0.0-x86_64.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "latest-linux.yml",
-      "fileContent": {
-        "files": [
-          {
-            "blockMapSize": "@blockMapSize",
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "Test App ßW-1.0.0.AppImage",
-          },
-        ],
-        "path": "Test App ßW-1.0.0.AppImage",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.0.0",
-      },
-    },
-  ],
-}
-`;
-
-exports[`AppImage 2`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW-1.0.1.AppImage",
-      "safeArtifactName": "TestApp-1.0.1-x86_64.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "latest-linux.yml",
-      "fileContent": {
-        "files": [
-          {
-            "blockMapSize": "@blockMapSize",
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "Test App ßW-1.0.1.AppImage",
-          },
-        ],
-        "path": "Test App ßW-1.0.1.AppImage",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.0.1",
-      },
-    },
-  ],
-}
-`;
-
-exports[`AppImage 3`] = `
-{
-  "files": [
-    {
-      "blockMapSize": "@blockMapSize",
-      "sha512": "@sha512",
-      "size": "@size",
-    },
-  ],
-  "path": "Test App ßW-1.0.1.AppImage",
-  "releaseDate": "@releaseDate",
-  "sha512": "@sha512",
-  "version": "1.0.1",
-}
-`;
-
-exports[`AppImage 4`] = `
-[
-  "Test App ßW-1.0.1.AppImage",
-]
-`;
-
-exports[`AppImage ia32 1`] = `
-{
-  "linux": [
-    {
-      "arch": "ia32",
-      "file": "Test App ßW-1.0.0-i386.AppImage",
-      "safeArtifactName": "TestApp-1.0.0-i386.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "latest-linux-ia32.yml",
-      "fileContent": {
-        "files": [
-          {
-            "blockMapSize": "@blockMapSize",
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "Test App ßW-1.0.0-i386.AppImage",
-          },
-        ],
-        "path": "Test App ßW-1.0.0-i386.AppImage",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.0.0",
-      },
-    },
-  ],
-}
-`;
-
-exports[`AppImage ia32 2`] = `
-{
-  "linux": [
-    {
-      "arch": "ia32",
-      "file": "Test App ßW-1.0.1-i386.AppImage",
-      "safeArtifactName": "TestApp-1.0.1-i386.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "latest-linux-ia32.yml",
-      "fileContent": {
-        "files": [
-          {
-            "blockMapSize": "@blockMapSize",
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "Test App ßW-1.0.1-i386.AppImage",
-          },
-        ],
-        "path": "Test App ßW-1.0.1-i386.AppImage",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.0.1",
-      },
-    },
-  ],
-}
-`;
-
-exports[`AppImage ia32 3`] = `
-{
-  "files": [
-    {
-      "blockMapSize": "@blockMapSize",
-      "sha512": "@sha512",
-      "size": "@size",
-    },
-  ],
-  "path": "Test App ßW-1.0.1-i386.AppImage",
-  "releaseDate": "@releaseDate",
-  "sha512": "@sha512",
-  "version": "1.0.1",
-}
-`;
-
-exports[`AppImage ia32 4`] = `
-[
-  "Test App ßW-1.0.1-i386.AppImage",
-]
-`;
-
 exports[`Mac Intel 1`] = `
 {
   "mac": [
@@ -259,6 +79,7 @@ exports[`Mac Intel 2`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -347,6 +168,7 @@ exports[`Mac Intel 4`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -456,6 +278,7 @@ exports[`Mac arm64 2`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -544,6 +367,7 @@ exports[`Mac arm64 4`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -653,6 +477,7 @@ exports[`Mac universal 2`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -741,6 +566,7 @@ exports[`Mac universal 4`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -768,238 +594,5 @@ exports[`Mac universal 5`] = `
 exports[`Mac universal 6`] = `
 [
   "Test App ßW-1.0.1-universal-mac.zip",
-]
-`;
-
-exports[`nsis 1`] = `
-{
-  "win": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW Setup 1.0.0.exe",
-      "safeArtifactName": "TestApp-Setup-1.0.0.exe",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "Test App ßW Setup 1.0.0.exe.blockmap",
-      "safeArtifactName": "TestApp-Setup-1.0.0.exe.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "latest.yml",
-      "fileContent": {
-        "files": [
-          {
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "Test App ßW Setup 1.0.0.exe",
-          },
-        ],
-        "path": "Test App ßW Setup 1.0.0.exe",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.0.0",
-      },
-    },
-  ],
-}
-`;
-
-exports[`nsis 2`] = `
-{
-  "win": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW Setup 1.0.1.exe",
-      "safeArtifactName": "TestApp-Setup-1.0.1.exe",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "Test App ßW Setup 1.0.1.exe.blockmap",
-      "safeArtifactName": "TestApp-Setup-1.0.1.exe.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "latest.yml",
-      "fileContent": {
-        "files": [
-          {
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "Test App ßW Setup 1.0.1.exe",
-          },
-        ],
-        "path": "Test App ßW Setup 1.0.1.exe",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.0.1",
-      },
-    },
-  ],
-}
-`;
-
-exports[`nsis 3`] = `
-{
-  "files": [
-    {
-      "sha512": "@sha512",
-      "size": "@size",
-    },
-  ],
-  "path": "Test App ßW Setup 1.0.1.exe",
-  "releaseDate": "@releaseDate",
-  "sha512": "@sha512",
-  "version": "1.0.1",
-}
-`;
-
-exports[`nsis 4`] = `
-[
-  "Test App ßW Setup 1.0.1.exe",
-]
-`;
-
-exports[`web installer 1`] = `
-{
-  "win": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW Web Setup 1.0.0.exe",
-      "safeArtifactName": "TestApp-WebSetup-1.0.0.exe",
-      "updateInfo": {
-        "packages": {
-          "x64": {
-            "blockMapSize": "@blockMapSize",
-            "file": "TestApp-1.0.0-x64.nsis.7z",
-            "path": "TestApp-1.0.0-x64.nsis.7z",
-            "sha512": "@sha512",
-            "size": "@size",
-          },
-        },
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "TestApp-1.0.0-x64.nsis.7z",
-    },
-    {
-      "file": "latest.yml",
-      "fileContent": {
-        "files": [
-          {
-            "sha512": "@sha512",
-            "url": "Test App ßW Web Setup 1.0.0.exe",
-          },
-        ],
-        "packages": {
-          "x64": {
-            "blockMapSize": "@blockMapSize",
-            "file": "TestApp-1.0.0-x64.nsis.7z",
-            "path": "TestApp-1.0.0-x64.nsis.7z",
-            "sha512": "@sha512",
-            "size": "@size",
-          },
-        },
-        "path": "Test App ßW Web Setup 1.0.0.exe",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.0.0",
-      },
-    },
-  ],
-}
-`;
-
-exports[`web installer 2`] = `
-{
-  "win": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW Web Setup 1.0.1.exe",
-      "safeArtifactName": "TestApp-WebSetup-1.0.1.exe",
-      "updateInfo": {
-        "packages": {
-          "x64": {
-            "blockMapSize": "@blockMapSize",
-            "file": "TestApp-1.0.1-x64.nsis.7z",
-            "path": "TestApp-1.0.1-x64.nsis.7z",
-            "sha512": "@sha512",
-            "size": "@size",
-          },
-        },
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "TestApp-1.0.1-x64.nsis.7z",
-    },
-    {
-      "file": "latest.yml",
-      "fileContent": {
-        "files": [
-          {
-            "sha512": "@sha512",
-            "url": "Test App ßW Web Setup 1.0.1.exe",
-          },
-        ],
-        "packages": {
-          "x64": {
-            "blockMapSize": "@blockMapSize",
-            "file": "TestApp-1.0.1-x64.nsis.7z",
-            "path": "TestApp-1.0.1-x64.nsis.7z",
-            "sha512": "@sha512",
-            "size": "@size",
-          },
-        },
-        "path": "Test App ßW Web Setup 1.0.1.exe",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.0.1",
-      },
-    },
-  ],
-}
-`;
-
-exports[`web installer 3`] = `
-{
-  "files": [
-    {
-      "sha512": "@sha512",
-    },
-  ],
-  "packages": {
-    "x64": {
-      "blockMapSize": "@blockMapSize",
-      "file": "TestApp-1.0.1-x64.nsis.7z",
-      "path": "TestApp-1.0.1-x64.nsis.7z",
-      "sha512": "@sha512",
-      "size": "@size",
-    },
-  },
-  "path": "Test App ßW Web Setup 1.0.1.exe",
-  "releaseDate": "@releaseDate",
-  "sha512": "@sha512",
-  "version": "1.0.1",
-}
-`;
-
-exports[`web installer 4`] = `
-[
-  "Test App ßW Web Setup 1.0.1.exe",
-  "package-1.0.1.7z",
 ]
 `;

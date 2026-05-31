@@ -1,0 +1,27 @@
+.container {
+  position: relative;
+  width: 220px;
+
+  --pagefind-ui-scale: 0.75;
+  --pagefind-ui-primary: var(--ifm-color-primary);
+  --pagefind-ui-text: var(--ifm-font-color-base);
+  --pagefind-ui-background: var(--ifm-background-color);
+  --pagefind-ui-border: var(--ifm-color-emphasis-300);
+  --pagefind-ui-tag: var(--ifm-color-emphasis-200);
+  --pagefind-ui-font: var(--ifm-font-family-base);
+}
+
+.container :global(.pagefind-ui__results-area) {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  min-width: 420px;
+  max-height: 70vh;
+  overflow-y: auto;
+  background: var(--ifm-background-surface-color);
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: var(--ifm-global-radius);
+  box-shadow: var(--ifm-global-shadow-md);
+  z-index: 200;
+  padding: 0.5rem;
+}

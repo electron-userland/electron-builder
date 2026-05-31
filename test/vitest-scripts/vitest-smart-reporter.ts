@@ -1,104 +1,159 @@
 import * as path from "path"
 import type { Reporter, TestCase, TestModule } from "vitest/node"
 import { FileStats, loadCache, saveCache, TestStats } from "./cache"
-import { FLAKE_FAIL_RATIO, SLOW_TEST_MS } from "./smart-config"
-import { SupportedPlatforms } from "./smart-config"
+import { UNSTABLE_FAIL_RATIO, SupportedPlatforms } from "./smart-config"
 
 const defaultStat: TestStats = {
-  runs: 0,
-  fails: 0,
-  avgMs: 0,
-  slow: false,
+  platformRuns: {
+    win32: { runs: 0, fails: 0, avgMs: 0 },
+    darwin: { runs: 0, fails: 0, avgMs: 0 },
+    linux: { runs: 0, fails: 0, avgMs: 0 },
+  },
   heavy: false,
 }
 
+export const TEST_SRC_ROOT = path.resolve(__dirname, "../src")
+
+const shouldResetSnapshot = process.env.RESET_VITEST_SHARD_CACHE === "true"
+
 export default class SmarterReporter implements Reporter {
-  cache = loadCache()
-  fileDurations = new Map<string, number>()
-  fileFails = new Map<string, number>()
-  fileHasHeavy = new Map<string, boolean>()
+  private readonly cache = shouldResetSnapshot ? { tests: {}, files: {} } : loadCache()
+  private readonly fileDurations = new Map<string, number>()
+  private readonly fileFails = new Map<string, number>()
+  private readonly fileHasHeavy = new Map<string, boolean>()
+  private readonly inProgressTests = new Map<string, number>() // moduleRelPath::fullName → startMs
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null
 
   // Get current platform
   currentPlatform = process.platform as SupportedPlatforms
 
+  onInit() {
+    this.heartbeatTimer = setInterval(() => {
+      const now = Date.now()
+      const running = [...this.inProgressTests.entries()]
+      if (running.length === 0) {
+        return
+      }
+      const lines = running.map(([name, start]) => `  ⏳ ${name} (${Math.floor((now - start) / 1000)}s)`).join("\n")
+      process.stdout.write(`\n[still running]\n${lines}\n`)
+    }, 30_000)
+  }
+
+  onTestCaseReady(test: TestCase) {
+    const id = `${path.relative(TEST_SRC_ROOT, test.module.moduleId)}::${test.fullName}`
+    this.inProgressTests.set(id, Date.now())
+    process.stdout.write(`\n[test ready] 🏃 ${test.fullName}\n`)
+  }
+
   onTestCaseResult(test: TestCase) {
-    const id = test.fullName
+    const id = `${path.relative(TEST_SRC_ROOT, test.module.moduleId)}::${test.fullName}`
+    this.inProgressTests.delete(id)
     const dur = test.diagnostic()?.duration ?? 0
-    const failed = test.result().state === "failed"
+    const testResult = test.result().state
+    const status = (() => {
+      switch (testResult) {
+        case "passed":
+          return "✅"
+        case "failed":
+          return "❌"
+        case "skipped":
+          return "⏭️"
+        default:
+          return "❔"
+      }
+    })()
+    process.stdout.write(`\n${status} ${id} (${Math.round(dur / 1000)}s)\n`)
 
     // Access meta through the test task
     const meta = (test as any).meta || {}
 
     const prev: TestStats = this.cache.tests[id] ?? { ...defaultStat }
-    const runs = prev.runs + 1
-    const avgMs = (prev.avgMs * prev.runs + dur) / runs
-    const fails = prev.fails + (failed ? 1 : 0)
-    const isHeavy = meta.heavy === true // don't rely on previous tests, always reset off latest test `meta`
+
+    // Ensure platform objects exist
+    const platformRuns = {
+      win32: { runs: 0, fails: 0, avgMs: 0 },
+      darwin: { runs: 0, fails: 0, avgMs: 0 },
+      linux: { runs: 0, fails: 0, avgMs: 0 },
+      ...prev.platformRuns,
+    }
+
+    const prevRuns = platformRuns[this.currentPlatform].runs
+    const prevFails = platformRuns[this.currentPlatform].fails
+    const prevAvg = platformRuns[this.currentPlatform].avgMs
+
+    const newRuns = prevRuns + 1
+    const newFails = prevFails + (testResult === "failed" ? 1 : 0)
+    const newAvg = shouldResetSnapshot ? dur : (prevAvg * prevRuns + dur) / newRuns
+
+    platformRuns[this.currentPlatform] = { runs: newRuns, fails: newFails, avgMs: newAvg }
+
+    const isHeavy = meta.heavy === true
 
     this.cache.tests[id] = {
-      runs,
-      fails,
-      avgMs,
-      slow: avgMs > SLOW_TEST_MS,
+      platformRuns,
       heavy: isHeavy,
     }
 
-    const file = path.basename(test.module.moduleId)
+    const file = path.relative(TEST_SRC_ROOT, test.module.moduleId)
     this.fileDurations.set(file, (this.fileDurations.get(file) ?? 0) + dur)
-    if (failed) {
+    if (testResult === "failed") {
       this.fileFails.set(file, (this.fileFails.get(file) ?? 0) + 1)
     }
     if (isHeavy) {
       this.fileHasHeavy.set(file, true)
     }
   }
-  
+
   onTestModuleEnd(mod: TestModule) {
-    const file = path.basename(mod.moduleId)
+    const file = path.relative(TEST_SRC_ROOT, mod.moduleId)
     const dur = this.fileDurations.get(file) ?? 0
     const fails = this.fileFails.get(file) ?? 0
     const hasHeavy = this.fileHasHeavy.get(file) ?? false
 
     const prev: FileStats = this.cache.files[file] ?? {
-      runs: 0,
-      fails: 0,
-      avgMs: 0,
       unstable: false,
       hasHeavyTests: false,
-      platformAvgMs: { win32: 0, darwin: 0, linux: 0 },
-      platformRuns: { win32: 0, darwin: 0, linux: 0 },
+      platformRuns: {
+        win32: { runs: 0, fails: 0, avgMs: 0 },
+        darwin: { runs: 0, fails: 0, avgMs: 0 },
+        linux: { runs: 0, fails: 0, avgMs: 0 },
+      },
     }
 
-    const runs = prev.runs + 1
-    const totalFails = prev.fails + fails
-    const failRatio = totalFails / runs
+    // Ensure platform objects exist (migration from v0 - can delete after next cache reset)
+    const platformRuns = {
+      win32: { runs: 0, fails: 0, avgMs: 0 },
+      darwin: { runs: 0, fails: 0, avgMs: 0 },
+      linux: { runs: 0, fails: 0, avgMs: 0 },
+      ...prev.platformRuns,
+    }
 
-    // Update platform-specific stats
-    const base = { win32: 0, darwin: 0, linux: 0 }
-    const platformAvgMs = { ...base, ...prev.platformAvgMs }
-    const platformRuns = { ...base, ...prev.platformRuns }
-
-    const prevPlatformRuns = platformRuns[this.currentPlatform] || 0
-    const prevPlatformAvg = platformAvgMs[this.currentPlatform] || 0
+    const prevPlatformRuns = platformRuns[this.currentPlatform].runs
+    const prevPlatformFails = platformRuns[this.currentPlatform].fails
+    const prevPlatformAvg = platformRuns[this.currentPlatform].avgMs
 
     const newPlatformRuns = prevPlatformRuns + 1
-    platformRuns[this.currentPlatform] = newPlatformRuns
-    platformAvgMs[this.currentPlatform] = (prevPlatformAvg * prevPlatformRuns + dur) / newPlatformRuns
+    const totalFails = prevPlatformFails + fails
+    const failRatio = totalFails / newPlatformRuns
 
-    const avgMs = platformAvgMs[this.currentPlatform]
+    platformRuns[this.currentPlatform] = {
+      runs: newPlatformRuns,
+      fails: totalFails,
+      avgMs: shouldResetSnapshot ? dur : (prevPlatformAvg * prevPlatformRuns + dur) / newPlatformRuns,
+    }
 
     this.cache.files[file] = {
-      runs,
-      fails: totalFails,
-      avgMs,
-      unstable: failRatio > FLAKE_FAIL_RATIO,
+      unstable: failRatio > UNSTABLE_FAIL_RATIO,
       hasHeavyTests: hasHeavy || prev.hasHeavyTests,
-      platformAvgMs,
       platformRuns,
     }
   }
 
   onTestRunEnd() {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer)
+      this.heartbeatTimer = null
+    }
     saveCache(this.cache)
   }
 }

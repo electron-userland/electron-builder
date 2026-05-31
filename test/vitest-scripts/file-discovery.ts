@@ -1,6 +1,6 @@
 import * as fs from "fs"
 import * as path from "path"
-import { IS_LINUX, IS_MAC, IS_WIN, PLATFORM, SupportedPlatforms, TargetPlatform, TEST_ROOT, unstablePerOSTests, unstableTests } from "./smart-config"
+import { IS_LINUX, IS_MAC, IS_WIN, PLATFORM, SupportedPlatforms, TargetPlatform, TEST_ROOT, skipPerOSTests, skippedTests } from "./smart-config"
 
 export function platformAllowed(file: string, platform: TargetPlatform = "current"): boolean {
   if (platform === "current") {
@@ -38,7 +38,7 @@ function collectTests(dir: string, platform: TargetPlatform = "current", out: st
   }
 
   for (const name of fs.readdirSync(dir)) {
-    if ([".ts.map", ".js.map", ".d.ts", ".snap"].some(ext => name.endsWith(ext)) || ["node_modules", "out"].includes(name) || isUnstableTest(name, platform)) {
+    if ([".ts.map", ".js.map", ".d.ts", ".snap"].some(ext => name.endsWith(ext)) || ["node_modules", "out"].includes(name) || isSkippedTest(name, platform)) {
       continue
     }
 
@@ -62,9 +62,17 @@ export function getAllTestFiles(platform: TargetPlatform = "current"): string[] 
   return collectTests(TEST_ROOT, platform).filter(file => platformAllowed(file, platform))
 }
 
-function isUnstableTest(file: string, platform: TargetPlatform): boolean {
+function isSkippedTest(file: string, platform: TargetPlatform): boolean {
+  const skippedTestsList = process.env.SKIPPED_TESTS?.trim()
+  if (skippedTestsList) {
+    const toSkip = skippedTestsList.split(",")
+    if (toSkip.some(s => file.includes(s))) {
+      return true
+    }
+    return false
+  }
   const key: SupportedPlatforms = platform !== "current" ? platform : PLATFORM
-  return unstableTests.some(t => file.includes(t)) || unstablePerOSTests[key]?.some(t => file.includes(t)) || false
+  return skippedTests.some(t => file.includes(t)) || skipPerOSTests[key]?.some(t => file.includes(t)) || false
 }
 
 function normalizePath(p: string) {

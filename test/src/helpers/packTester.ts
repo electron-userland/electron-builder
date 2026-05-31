@@ -1,11 +1,11 @@
 import { PublishManager } from "app-builder-lib"
-import { readAsar } from "app-builder-lib/out/asar/asar"
+import { verifyAsarFileTree as _verifyAsarFileTree } from "./asarVerifier"
 import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetFactory"
-import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
+import { getLinuxToolsMacToolset } from "app-builder-lib/out/toolsets/linux"
 import { parsePlistFile, PlistObject } from "app-builder-lib/out/util/plist"
 import { AsarIntegrity } from "app-builder-lib/out/asar/integrity"
-import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, log, USE_HARD_LINKS, walk } from "builder-util"
-import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
+import { addValue, copyDir, exec, executeFinally, exists, FileCopier, log, USE_HARD_LINKS, walk } from "builder-util"
+import { CancellationToken, deepAssign, UpdateFileInfo } from "builder-util-runtime"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { convertVersion } from "electron-winstaller"
 import { PublishPolicy } from "electron-publish"
@@ -48,6 +48,44 @@ export function getPackageManagerWithVersion(pm: PM, packageManagerAndVersionStr
     version: packageManagerInfo.version,
     prepareEntry: prepare,
   }
+}
+
+function getLockedInstallArgs(pm: PM): Array<string> | undefined {
+  switch (pm) {
+    case PM.YARN:
+    case PM.PNPM:
+    case PM.BUN:
+      return ["--frozen-lockfile"]
+    case PM.YARN_BERRY:
+      return ["--immutable"]
+    default:
+      return undefined
+  }
+}
+
+function getUnlockedInstallArgs(pm: PM): Array<string> | undefined {
+  // Yarn handles CI immutable installs via YARN_ENABLE_IMMUTABLE_INSTALLS=false in runtimeEnv.
+  // pnpm has no env var equivalent; must explicitly pass --no-frozen-lockfile.
+  if (pm === PM.PNPM) {
+    return ["--no-frozen-lockfile"]
+  }
+  return undefined
+}
+
+function getLockfileFixtureNameCandidates(currentTestName: string): Array<string> {
+  const names: Array<string> = []
+  const normalizedTestName = currentTestName.trim()
+
+  const leafTestName = normalizedTestName.split(" > ").at(-1)?.trim()
+  if (leafTestName != null && leafTestName.length > 0) {
+    names.push(sanitizeFileName(leafTestName))
+  }
+
+  if (normalizedTestName.length > 0) {
+    names.push(sanitizeFileName(normalizedTestName))
+  }
+
+  return [...new Set(names.filter(Boolean))]
 }
 
 export const EXTENDED_TIMEOUT = 14 * 60 * 1000
@@ -120,7 +158,6 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
   }
 
   let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
-  // const isDoNotUseTempDir = platform === "darwin"
   const customTmpDir = process.env.TEST_APP_TMP_DIR
   const tmpDir = checkOptions.tmpDir || new TmpDir(`pack-tester: ${fixtureName}`)
   // non-macOS test uses the same dir as macOS test, but we cannot share node_modules (because tests executed in parallel)
@@ -131,9 +168,20 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
   }
 
   const state = expect.getState()
-  const lockfileFixtureName = `${path.basename(state.testPath!, ".ts")}`
+  const lockfileFixtureName = path.basename(state.testPath!, path.extname(state.testPath!))
   const lockfilePathPrefix = path.join(__dirname, "..", "..", "fixtures", "lockfiles", lockfileFixtureName)
-  const testFixtureLockfile = path.join(lockfilePathPrefix, `${sanitizeFileName(state.currentTestName!)}.txt`)
+  const lockfileFixtureNameCandidates = getLockfileFixtureNameCandidates(state.currentTestName || "")
+  if (lockfileFixtureNameCandidates.length === 0) {
+    lockfileFixtureNameCandidates.push("unknown-test")
+  }
+  const lockfileFixturePathCandidates = lockfileFixtureNameCandidates.map(name => path.join(lockfilePathPrefix, `${name}.txt`))
+  let testFixtureLockfile = lockfileFixturePathCandidates[0]
+  for (const lockfilePath of lockfileFixturePathCandidates) {
+    if (await exists(lockfilePath)) {
+      testFixtureLockfile = lockfilePath
+      break
+    }
+  }
 
   await copyDir(projectDir, dir, {
     filter: it => {
@@ -183,12 +231,12 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       } else {
         log.info({ pm, version: version, projectDir }, "activating corepack")
         try {
-          execSync(`corepack enable ${cli}`, { env: runtimeEnv, cwd: projectDir, stdio: "ignore" })
+          execSync(`corepack enable ${cli}`, { env: runtimeEnv, cwd: projectDir, stdio: ["ignore", "ignore", "ignore"] })
         } catch (err: any) {
           log.warn({ message: err.message }, "⚠️ corepack enable failed (possibly already enabled)")
         }
         try {
-          execSync(`corepack prepare ${prepareEntry} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: "ignore" })
+          execSync(`corepack prepare ${prepareEntry} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: ["ignore", "ignore", "ignore"] })
         } catch (err: any) {
           log.warn({ message: err.message }, "⚠️ corepack prepare failed")
         }
@@ -197,19 +245,23 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       const collectorOptions = collector.installOptions
 
       const destLockfile = path.join(projectDir, collectorOptions.lockfile)
+      let lockfileFixtureApplied = false
 
-      const shouldUpdateLockfiles = !!process.env.UPDATE_LOCKFILE_FIXTURES && !!checkOptions.storeDepsLockfileSnapshot
+      const shouldUpdateLockfiles = process.env.UPDATE_LOCKFILE_FIXTURES === "true" && !!checkOptions.storeDepsLockfileSnapshot
       // check for lockfile fixture so we can use `--frozen-lockfile`
       if ((await exists(testFixtureLockfile)) && !shouldUpdateLockfiles) {
         await copyFile(testFixtureLockfile, destLockfile)
+        lockfileFixtureApplied = true
       }
 
-      if (!(await exists(destLockfile))) {
-        log.info({ lockfile: collectorOptions.lockfile }, "lockfile not found, creating empty stub to prevent package manager prompts")
+      if (shouldUpdateLockfiles || !(await exists(destLockfile))) {
+        // When updating: clear the stale base-fixture lockfile so the package manager regenerates fresh.
+        // When no lockfile exists yet: create an empty stub to prevent package manager prompts.
         await fs.writeFile(destLockfile, "")
       }
 
       const appDir = await computeDefaultAppDirectory(projectDir, configuration.directories?.app)
+      const additionalInstallArgs = lockfileFixtureApplied ? getLockedInstallArgs(pm) : checkOptions.storeDepsLockfileSnapshot ? getUnlockedInstallArgs(pm) : undefined
 
       await installDependencies(
         configuration,
@@ -221,6 +273,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         {
           frameworkInfo: { version: ELECTRON_VERSION, useCustomDist: false },
           productionDeps: createLazyProductionDeps(appDir, null, false),
+          additionalArgs: additionalInstallArgs,
         },
         runtimeEnv
       )
@@ -229,11 +282,11 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         await postNodeModulesInstallHook()
       }
 
-      // save lockfile fixture
-      if (!(await exists(testFixtureLockfile)) && shouldUpdateLockfiles) {
+      // save or update lockfile fixture
+      if (shouldUpdateLockfiles) {
         const fixtureDir = path.dirname(testFixtureLockfile)
         if (!(await exists(fixtureDir))) {
-          await mkdir(fixtureDir)
+          await mkdir(fixtureDir, { recursive: true })
         }
         await copyFile(destLockfile, testFixtureLockfile)
       }
@@ -494,9 +547,10 @@ async function checkLinuxResult(expect: ExpectStatic, outDir: string, packager: 
     expect(await getContents(`${outDir}/${appInfo.name}_${appInfo.version}_i386.deb`)).toMatchSnapshot()
   }
 
+  const { member: controlMember, tarArgs: controlArgs } = await resolveDebMember(packagePath, "control.tar.")
   const control = parseDebControl(
     (
-      await execShell(`ar p '${packagePath}' control.tar.xz | ${await getTarExecutable()} -Jx --to-stdout ./control`, {
+      await execShell(`'${await getArExecutable()}' p '${packagePath}' ${controlMember} | '${await getTarExecutable()}' -x ${controlArgs} --to-stdout ./control`, {
         maxBuffer: 10 * 1024 * 1024,
       })
     ).stdout
@@ -680,11 +734,42 @@ const checkResult = (expect: ExpectStatic, artifacts: Array<ArtifactCreated>, ex
 export const execShell: any = promisify(require("child_process").exec)
 
 export async function getTarExecutable() {
-  return process.platform === "darwin" ? path.join(await getLinuxToolsPath(), "bin", "gtar") : "tar"
+  return process.platform === "darwin" ? (await getLinuxToolsMacToolset()).gtar : "tar"
+}
+
+export async function getArExecutable() {
+  if (process.platform === "darwin") {
+    return (await getLinuxToolsMacToolset()).ar
+  }
+  return "ar"
+}
+
+export async function resolveDebMember(debFile: string, memberPrefix: "data.tar." | "control.tar."): Promise<{ member: string; tarArgs: string }> {
+  const arExecutable = await getArExecutable()
+  const { stdout: memberList, stderr } = await execShell(`'${arExecutable}' t '${debFile}'`, { maxBuffer: 1024 * 1024 })
+  if (stderr.length > 0) {
+    throw new Error(`Failed to list members of ${debFile}: ${stderr}`)
+  }
+  const member = memberList
+    .trim()
+    .split("\n")
+    .find((m: string) => m.startsWith(memberPrefix))
+  if (member == null) throw new Error(`No ${memberPrefix}* member found in ${debFile}`)
+  const ext = member.slice(memberPrefix.length)
+  // Short flags (-J, -z, -j) are safe to concatenate; zstd requires a standalone long option
+  const tarArgs = ext === "xz" ? "-J" : ext === "gz" ? "-z" : ext === "bz2" ? "-j" : ext === "zst" || ext === "zstd" ? "--zstd" : "-J"
+  return { member, tarArgs }
+}
+
+export async function readDebCompression(debFile: string): Promise<string> {
+  const { member } = await resolveDebMember(debFile, "data.tar.")
+  return member.slice("data.tar.".length)
 }
 
 async function getContents(packageFile: string) {
-  const result = await execShell(`ar p '${packageFile}' data.tar.xz | ${await getTarExecutable()} -tJ`, {
+  const { member, tarArgs } = await resolveDebMember(packageFile, "data.tar.")
+  const arExecutable = await getArExecutable()
+  const result = await execShell(`'${arExecutable}' p '${packageFile}' ${member} | '${await getTarExecutable()}' -t ${tarArgs}`, {
     maxBuffer: 10 * 1024 * 1024,
     env: {
       ...process.env,
@@ -787,18 +872,7 @@ export function removeUnstableProperties(data: any) {
 }
 
 export async function verifyAsarFileTree(expect: ExpectStatic, resourceDir: string) {
-  const fs = await readAsar(path.join(resourceDir, "app.asar"))
-
-  const stableHeader = JSON.parse(
-    JSON.stringify(fs.header, (name, value) => {
-      // Keep existing test coverage
-      if (value.integrity) {
-        delete value.integrity
-      }
-      return value
-    })
-  )
-  expect(stableHeader).toMatchSnapshot()
+  return _verifyAsarFileTree(expect, resourceDir)
 }
 
 export function toSystemIndependentPath(s: string): string {

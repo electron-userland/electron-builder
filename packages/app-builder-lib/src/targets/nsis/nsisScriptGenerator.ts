@@ -1,3 +1,5 @@
+import { log } from "builder-util"
+
 export class NsisScriptGenerator {
   private readonly lines: Array<string> = []
 
@@ -41,6 +43,17 @@ export class NsisScriptGenerator {
   build() {
     return this.lines.join("\n") + "\n"
   }
+}
+
+export function nsisEscapeString(s: string): string {
+  const escaped = s
+    .replace(/\r\n|\r|\n/g, " ") // newlines break NSIS string literals
+    .replace(/\$(?!\{)/g, "$$$$") // bare $ → $$ (prevents NSIS variable expansion); ${...} references are left intact
+    .replace(/"/g, '$\\"') // " → $\" (NSIS escape for double-quote)
+  if (escaped !== s) {
+    log.debug({ original: s, final: escaped }, "nsis was escaped")
+  }
+  return escaped
 }
 
 function getVarNameForFlag(flagName: string): string {

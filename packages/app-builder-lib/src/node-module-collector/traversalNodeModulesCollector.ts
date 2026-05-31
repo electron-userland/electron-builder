@@ -1,8 +1,9 @@
 import { log } from "builder-util"
+import * as path from "path"
+import { LogMessageByKey } from "./moduleManager"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager.js"
 import { TraversedDependency } from "./types.js"
-import * as path from "path"
 
 // manual traversal of node_modules for package managers without CLI support for dependency tree extraction (e.g., bun) OR as a fallback (e.g. corepack enabled w/ strict mode)
 export class TraversalNodeModulesCollector extends NodeModulesCollector<TraversedDependency, TraversedDependency> {
@@ -21,8 +22,9 @@ export class TraversalNodeModulesCollector extends NodeModulesCollector<Traverse
   }
 
   protected async collectAllDependencies(tree: TraversedDependency, appPackageName: string) {
-    for (const [, value] of Object.entries({ ...tree.dependencies, ...tree.optionalDependencies })) {
-      this.allDependencies.set(this.packageVersionString(value), value)
+    for (const [packageKey, value] of Object.entries({ ...tree.dependencies, ...tree.optionalDependencies })) {
+      const normalizedDep = this.normalizePackageVersion(packageKey, value)
+      this.allDependencies.set(normalizedDep.id, normalizedDep.pkgOverride)
       await this.collectAllDependencies(value, appPackageName)
     }
   }
@@ -39,8 +41,8 @@ export class TraversalNodeModulesCollector extends NodeModulesCollector<Traverse
     const collectedDependencies: string[] = []
     for (const packageName in prodDependencies) {
       const dependency = prodDependencies[packageName]
-      const childDependencyId = this.packageVersionString(dependency)
-      await this.extractProductionDependencyGraph(dependency, childDependencyId)
+      const { id: childDependencyId, pkgOverride } = this.normalizePackageVersion(packageName, dependency)
+      await this.extractProductionDependencyGraph(pkgOverride, childDependencyId)
       collectedDependencies.push(childDependencyId)
     }
     this.productionGraph[dependencyId] = { dependencies: collectedDependencies }
@@ -102,7 +104,7 @@ export class TraversalNodeModulesCollector extends NodeModulesCollector<Traverse
 
           // Skip if this dependency resolves to the base directory or any parent we're already processing
           if (pkg.packageDir === resolvedPackageDir || pkg.packageDir === resolvedBaseDir) {
-            log.debug({ ...logFields, resolvedPath: pkg.packageDir }, "skipping self-referential dependency")
+            this.cache.logSummary[LogMessageByKey.PKG_SELF_REF].push(`${depName}@${depVersion}`)
             continue
           }
 
@@ -117,8 +119,9 @@ export class TraversalNodeModulesCollector extends NodeModulesCollector<Traverse
         throw new Error(`Production dependency ${depName} not found for package ${moduleName}`)
       })
 
-      const optionalDeps = await buildPackage(pkg.optionalDependencies, (depName: string) => {
+      const optionalDeps = await buildPackage(pkg.optionalDependencies, (depName: string, version: string) => {
         log.debug({ parent: moduleName, dependency: depName }, "optional dependency not installed, skipping")
+        this.cache.logSummary[LogMessageByKey.PKG_OPTIONAL_NOT_INSTALLED].push(`${depName}@${version}`)
       })
 
       return {

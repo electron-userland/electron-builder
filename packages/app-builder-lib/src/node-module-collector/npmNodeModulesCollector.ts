@@ -1,3 +1,4 @@
+import { LogMessageByKey } from "./moduleManager.js"
 import { NodeModulesCollector } from "./nodeModulesCollector.js"
 import { PM } from "./packageManager.js"
 import { NpmDependency } from "./types.js"
@@ -14,15 +15,23 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
 
   protected async collectAllDependencies(tree: NpmDependency) {
     for (const [key, value] of Object.entries(tree.dependencies || {})) {
+      const { id: childDependencyId, pkgOverride } = this.normalizePackageVersion(key, value)
+
+      // Only skip if this exact version is already collected AND it's a duplicate reference
+      // We need to collect nested versions even if a different version exists at top level
       if (this.isDuplicatedNpmDependency(value)) {
+        // This is a reference to a package already defined elsewhere in the tree
+        // Still add it to allDependencies if we haven't seen this exact version yet
+        if (!this.allDependencies.has(childDependencyId)) {
+          this.allDependencies.set(childDependencyId, pkgOverride)
+        }
+        this.cache.logSummary[LogMessageByKey.PKG_DUPLICATE_REF].push(childDependencyId)
         continue
       }
-      // Use the key (alias name) instead of value.name for npm aliased packages
-      // e.g., { "foo": { name: "@scope/bar", ... } } should be stored as "foo@version"
-      // This ensures aliased packages are copied to the correct location in node_modules
-      const normalizedDep: NpmDependency = key !== value.name ? { ...value, name: key } : value
-      this.allDependencies.set(this.packageVersionString(normalizedDep), normalizedDep)
-      await this.collectAllDependencies(value)
+
+      // Always store this dependency and recurse into its children
+      this.allDependencies.set(childDependencyId, pkgOverride)
+      await this.collectAllDependencies(pkgOverride)
     }
   }
 
@@ -51,8 +60,8 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
         if (Object.keys(dependency).length === 0) {
           continue
         }
-        const childDependencyId = this.packageVersionString({ name: packageName, version: dependency.version })
-        await this.extractProductionDependencyGraph(dependency, childDependencyId)
+        const { id: childDependencyId, pkgOverride } = this.normalizePackageVersion(packageName, dependency)
+        await this.extractProductionDependencyGraph(pkgOverride, childDependencyId)
         collectedDependencies.push(childDependencyId)
       }
     }

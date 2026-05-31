@@ -19,6 +19,7 @@ export {
   Hooks,
   MetadataDirectories,
   PackContext,
+  ToolsetConfig,
 } from "./configuration"
 export {
   BeforeBuildContext,
@@ -32,18 +33,29 @@ export {
   TargetConfiguration,
   TargetSpecificOptions,
 } from "./core"
-export { ElectronBrandingOptions, ElectronDownloadOptions, ElectronPlatformName } from "./electron/ElectronFramework"
+export { ElectronBrandingOptions, ElectronPlatformName } from "./electron/ElectronFramework"
+export { ElectronDownloadOptions } from "./util/electronGet"
 export { AppXOptions } from "./options/AppXOptions"
 export { CommonWindowsInstallerConfiguration } from "./options/CommonWindowsInstallerConfiguration"
 export { FileAssociation } from "./options/FileAssociation"
-export { AppImageOptions, CommonLinuxOptions, DebOptions, FlatpakOptions, LinuxConfiguration, LinuxDesktopFile, LinuxTargetSpecificOptions } from "./options/linuxOptions"
+export {
+  AppImageOptions,
+  CommonLinuxOptions,
+  DebOptions,
+  FlatpakOptions,
+  LinuxConfiguration,
+  LinuxDesktopFile,
+  LinuxTargetSpecificOptions,
+  PacmanOptions,
+  RpmOptions,
+} from "./options/linuxOptions"
 export { DmgContent, DmgOptions, DmgWindow, MacConfiguration, MacOsTargetName, MasConfiguration } from "./options/macOptions"
 export { AuthorMetadata, Metadata, RepositoryInfo } from "./options/metadata"
 export { MsiOptions } from "./options/MsiOptions"
 export { MsiWrappedOptions } from "./options/MsiWrappedOptions"
 export { BackgroundAlignment, BackgroundScaling, PkgBackgroundOptions, PkgOptions } from "./options/pkgOptions"
 export { AsarOptions, FileSet, FilesBuildOptions, PlatformSpecificBuildOptions, Protocol, ReleaseInfo } from "./options/PlatformSpecificBuildOptions"
-export { PlugDescriptor, SlotDescriptor, SnapOptions } from "./options/SnapOptions"
+export { PlugDescriptor, SlotDescriptor, SnapcraftOptions, SnapOptions } from "./options/SnapOptions"
 export { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions"
 export { WindowsAzureSigningConfiguration, WindowsConfiguration, WindowsSigntoolConfiguration } from "./options/winOptions"
 export { BuildResult, Packager } from "./packager"
@@ -90,7 +102,12 @@ export function build(options: PackagerOptions & PublishOptions, packager: Packa
   process.once("SIGINT", sigIntHandler)
 
   const promise = packager.build().then(async buildResult => {
-    const afterAllArtifactBuild = await resolveFunction(packager.appInfo.type, buildResult.configuration.afterAllArtifactBuild, "afterAllArtifactBuild")
+    const afterAllArtifactBuild = await resolveFunction(
+      packager.appInfo.type,
+      buildResult.configuration.afterAllArtifactBuild,
+      "afterAllArtifactBuild",
+      await packager.getWorkspaceRoot()
+    )
     if (afterAllArtifactBuild != null) {
       const newArtifacts = asArray(await Promise.resolve(afterAllArtifactBuild(buildResult)))
       if (newArtifacts.length === 0 || !publishManager.isPublish) {

@@ -1,11 +1,12 @@
-import { exists, log, retry, TmpDir } from "builder-util"
+import { exists, log, retry, stripSensitiveEnvVars, TmpDir } from "builder-util"
 import * as childProcess from "child_process"
+import { randomBytes } from "crypto"
 import * as fs from "fs-extra"
 import { createWriteStream } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { hoist, type HoisterResult, type HoisterTree } from "./hoist"
-import { ModuleManager } from "./moduleManager"
+import { LogMessageByKey, ModuleManager } from "./moduleManager"
 import { getPackageManagerCommand, PM } from "./packageManager"
 import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types"
 
@@ -46,12 +47,11 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * 4. Building a production dependency graph
    * 5. Hoisting the dependencies to their final locations
    * 6. Resolving and returning module information
-   *
-   * @param options - Configuration object
-   * @param options.packageName - The name of the package to collect modules for
-   * @returns Promise resolving to an array of NodeModuleInfo objects representing all collected modules
    */
-  public async getNodeModules({ packageName }: { packageName: string }): Promise<NodeModuleInfo[]> {
+  public async getNodeModules({ packageName }: { packageName: string }): Promise<{
+    nodeModules: NodeModuleInfo[]
+    logSummary: ModuleManager["logSummary"]
+  }> {
     const tree: ProdDepType = await this.getDependenciesTree(this.installOptions.manager)
 
     await this.collectAllDependencies(tree, packageName)
@@ -63,9 +63,10 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     })
 
     await this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
+
     log.debug({ packageName, depCount: this.nodeModules.length }, "node modules collection complete")
 
-    return this.nodeModules
+    return { nodeModules: this.nodeModules, logSummary: this.cache.logSummary }
   }
 
   public abstract readonly installOptions: {
@@ -83,10 +84,6 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * Executes the appropriate package manager command to fetch the dependency tree and writes
    * the output to a temporary file. Includes retry logic to handle transient failures such as
    * incomplete JSON output or missing files. Will retry up to 1 time with exponential backoff.
-   *
-   * @param pm - The package manager to use (npm, yarn, pnpm, etc.)
-   * @returns Promise resolving to the parsed dependency tree
-   * @throws {Error} If the dependency tree cannot be retrieved after retries
    */
   protected async getDependenciesTree(pm: PM): Promise<ProdDepType> {
     const command = getPackageManagerCommand(pm)
@@ -186,8 +183,10 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return `${pkg.name}::${pkg.version}::${rel ?? "."}`
   }
 
-  protected packageVersionString(pkg: Pick<ProdDepType, "name" | "version">): string {
-    return `${pkg.name}@${pkg.version}`
+  // We use the key (alias name) instead of value.name for npm aliased packages
+  // e.g., { "foo": { name: "@scope/bar", ... } } should be stored as "foo@version"
+  protected normalizePackageVersion(key: string, pkg: ProdDepType) {
+    return { id: `${key}@${pkg.version}`, pkgOverride: { ...pkg, name: key } }
   }
 
   /**
@@ -221,14 +220,21 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * the package name with an "unknown" version.
    */
   protected parseNameVersion(identifier: string): { name: string; version: string } {
-    const lastAt = identifier.lastIndexOf("@")
-    if (lastAt <= 0) {
-      // fallback for scoped packages or malformed strings
+    let at: number
+    if (identifier.startsWith("@")) {
+      // Scoped package: find the version separator after the scope (e.g. "@scope/pkg@1.2.3")
+      const slashIndex = identifier.indexOf("/")
+      if (slashIndex === -1) {
+        return { name: identifier, version: "unknown" }
+      }
+      at = identifier.indexOf("@", slashIndex + 1)
+    } else {
+      at = identifier.indexOf("@")
+    }
+    if (at <= 0) {
       return { name: identifier, version: "unknown" }
     }
-    const name = identifier.slice(0, lastAt)
-    const version = identifier.slice(lastAt + 1)
-    return { name, version }
+    return { name: identifier.slice(0, at), version: identifier.slice(at + 1) }
   }
 
   /**
@@ -286,16 +292,19 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
     for (const d of dependencies.values()) {
       const reference = [...d.references][0]
-      const p = this.allDependencies.get(`${d.name}@${reference}`)?.path
+      const key = `${d.name}@${reference}`
+      // Normalize the path to handle mixed separators from pnpm JSON output on Windows
+      const rawPath = this.allDependencies.get(key)?.path
+      const p = rawPath != null ? path.normalize(rawPath) : undefined
       if (p === undefined) {
-        log.warn({ name: d.name, reference }, "cannot find path for dependency")
+        this.cache.logSummary[LogMessageByKey.PKG_NOT_FOUND].push(key)
         continue
       }
 
       // fix npm list issue
       // https://github.com/npm/cli/issues/8535
       if (!(await this.cache.exists[p])) {
-        log.debug({ name: d.name, reference, p }, "dependency path does not exist")
+        this.logMissingDependency(key)
         continue
       }
 
@@ -313,7 +322,13 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     result.sort((a, b) => a.name.localeCompare(b.name))
   }
 
-  async asyncExec(command: string, args: string[], cwd: string = this.rootDir): Promise<{ stdout: string | undefined; stderr: string | undefined }> {
+  protected logMissingDependency(pkgName: string) {
+    const PLATFORM_PACKAGE_RE = /(linux|win32|darwin|freebsd|android)[-_](x64|arm64|ia32|arm|ppc64|s390x|loong64|riscv64|universal)/
+    const diskLogKey = PLATFORM_PACKAGE_RE.test(pkgName) ? LogMessageByKey.PKG_OPTIONAL_PLATFORM_NOT_INSTALLED : LogMessageByKey.PKG_NOT_ON_DISK
+    this.cache.logSummary[diskLogKey].push(pkgName)
+  }
+
+  protected async asyncExec(command: string, args: string[], cwd: string = this.rootDir): Promise<{ stdout: string | undefined; stderr: string | undefined }> {
     const file = await this.tempDirManager.getTempFile({ prefix: "exec-", suffix: ".txt" })
     try {
       await this.streamCollectorCommandToFile(command, args, cwd, file)
@@ -341,22 +356,44 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * @returns Promise that resolves when the command completes successfully or rejects if it fails
    * @throws {Error} If the child process spawn fails or exits with a non-zero code
    */
-  async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
+  protected async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
     const execName = path.basename(command, path.extname(command))
-    const isWindowsScriptFile = process.platform === "win32" && path.extname(command).toLowerCase() === ".cmd"
+    const ext = path.extname(command).toLowerCase()
+    // Wrap .cmd files in a .bat file for correct cmd.exe execution.
+    // Also wrap any Windows executable path that contains spaces (e.g. extensionless shims
+    // from tools like Volta installed at "C:\Program Files\Volta\") to ensure the path is
+    // quoted correctly when passed to `spawn(..., { shell: true })`.
+    const isWindowsScriptFile = process.platform === "win32" && (ext === ".cmd" || command.includes(" "))
     if (isWindowsScriptFile) {
-      // If the command is a Windows script file (.cmd), we need to wrap it in a .bat file to ensure it runs correctly with cmd.exe
-      // This is necessary because .cmd files are not directly executable in the same way as .bat files.
-      // We create a temporary .bat file that calls the .cmd file with the provided arguments. The .bat file will be executed by cmd.exe.
+      // We need to wrap it in a .bat file to ensure it runs correctly with cmd.exe
+      // This is necessary because some files (like .cmd) are not directly executable in the same way as .bat files.
+      // We create a temporary .bat file that calls the script-like file with the provided arguments. The .bat file will be executed by cmd.exe.
       // Note: This is a workaround for Windows command execution quirks when using `shell: true`
       const tempBatFile = await this.tempDirManager.getTempFile({
-        prefix: execName,
+        prefix: execName + "-" + randomBytes(8).toString("hex"),
         suffix: ".bat",
       })
-      const batScript = `@echo off\r\n"${command}" %*\r\n` // <-- CRLF required for .bat
-      await fs.writeFile(tempBatFile, batScript, { encoding: "utf8" })
+      const escapedCommand = command.replace(/"/g, `""`)
+      const batScript = `@echo off\r\n"${escapedCommand}" %*\r\n` // <-- CRLF required for .bat
+      await fs.writeFile(tempBatFile, batScript, { encoding: "utf8", mode: 0o600 })
       command = "cmd.exe"
       args = ["/c", `"${tempBatFile}"`, ...args]
+    }
+
+    const isWindows = process.platform === "win32"
+
+    // shell: true is required on Windows — see https://github.com/electron-userland/electron-builder/issues/9488
+    // On non-Windows, shell:false means args are passed directly to the process with no shell
+    // interpretation, so the metacharacter guard is only necessary on Windows.
+    if (isWindows) {
+      // Guard against cmd.exe metacharacters. Parentheses are intentionally excluded because they
+      // appear in legitimate Windows paths (e.g. "C:\Program Files (x86)").
+      const SHELL_INJECTION_RE = /[;&|`${}[\]<>!%^]/
+      for (const arg of args) {
+        if (SHELL_INJECTION_RE.test(arg)) {
+          throw new Error(`Refusing to spawn "${command}": argument "${arg}" contains shell metacharacters. Possible injection attempt.`)
+        }
+      }
     }
 
     await new Promise<void>((resolve, reject) => {
@@ -364,8 +401,9 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
       const child = childProcess.spawn(command, args, {
         cwd,
-        env: { COREPACK_ENABLE_STRICT: "0", ...process.env }, // allow `process.env` overrides
-        shell: true, // `true`` is now required: https://github.com/electron-userland/electron-builder/issues/9488
+        // Package manager invocations do not need signing/publishing credentials.
+        env: { COREPACK_ENABLE_STRICT: "0", ...stripSensitiveEnvVars(process.env) },
+        shell: isWindows, // shell: true is required on Windows — see https://github.com/electron-userland/electron-builder/issues/9488
       })
 
       let stderr = ""
@@ -374,7 +412,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         stderr += chunk.toString()
       })
       child.on("error", err => {
-        reject(new Error(`Node module collector spawn failed: ${err.message}`))
+        reject(new Error(`Node module collector spawn (${command} ${JSON.stringify(args)}) failed: ${err.message}`))
       })
 
       child.on("close", code => {
@@ -386,6 +424,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         }
         if (stderr.length > 0) {
           log.debug({ stderr }, "note: there was node module collector output on stderr")
+          this.cache.logSummary[LogMessageByKey.PKG_COLLECTOR_OUTPUT].push(stderr)
         }
         const shouldResolve = code === 0 || shouldIgnore
         return shouldResolve ? resolve() : reject(new Error(`Node module collector process exited with code ${code}:\n${stderr}`))

@@ -1,5 +1,8 @@
+.DS_Store
 /.vscode/
-node_modules
+
+node-modules*
+**/node_modules
 *.log
 
 /.idea/compiler.xml
@@ -9,26 +12,20 @@ node_modules
 /.idea/deployment.xml
 /.idea/shelf/
 
-.DS_Store
-
-out/
-/test/test-report.xml
-
-/packages/dmg-builder/vendor/
-
-/scripts/jsdoc/out/
-/scripts/renderer/out/
-
-docs/
-site/
-
-electron-builder-*.d.ts
-
 tsconfig.tsbuildinfo
 
+out/
+
+site/
+
 .pnpm-store/
-**/node_modules
+
 coverage
+test/src/generated/
+/test/test-report.xml
+_vitest-smart-cache.json
 
 /.yalc/
 yalc.lock
+
+.claude

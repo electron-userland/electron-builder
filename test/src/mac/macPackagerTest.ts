@@ -1,9 +1,9 @@
-import { copyOrLinkFile } from "builder-util"
+import { copyOrLinkFile, exec } from "builder-util"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
-import { app, appThrows, assertPack, checkDirContents, platform } from "../helpers/packTester"
+import { app, appThrows, assertPack, checkDirContents, modifyPackageJson, platform } from "../helpers/packTester"
 import { verifySmartUnpack } from "../helpers/verifySmartUnpack"
 
 describe("macPackager", { sequential: true }, () => {
@@ -145,6 +145,38 @@ describe("macPackager", { sequential: true }, () => {
     )
   )
 
+  test.ifMac("extraFiles are placed in product app bundle Contents, not Electron.app", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: Platform.MAC.createTarget(DIR_TARGET, Arch.x64),
+        config: {
+          mac: { notarize: false },
+          extraFiles: ["extraTestFile.txt"],
+        },
+      },
+      {
+        signed: false,
+        projectDirCreated: async projectDir => {
+          await fs.writeFile(path.join(projectDir, "extraTestFile.txt"), "test")
+          await modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              debug: "4.4.3",
+            }
+          })
+        },
+        checkMacApp: async appDir => {
+          await assertThat(expect, path.join(appDir, "Contents", "extraTestFile.txt")).isFile()
+        },
+        packed: async context => {
+          await checkDirContents(expect, path.join(context.getContent(Platform.MAC, Arch.x64)))
+          const resources = context.getResources(Platform.MAC, Arch.x64)
+          await verifySmartUnpack(expect, resources)
+        },
+      }
+    )
+  )
+
   test.ifMac("electronDist", ({ expect }) =>
     appThrows(
       expect,
@@ -182,6 +214,77 @@ describe("macPackager", { sequential: true }, () => {
         },
         checkMacApp: async (appDir, _info) => {
           await checkDirContents(expect, path.join(appDir, "Contents", "Resources"))
+        },
+      }
+    )
+  )
+
+  test.ifMac("disableAsarIntegrity skips ASAR integrity computation", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: Platform.MAC.createTarget(DIR_TARGET, Arch.x64),
+        config: {
+          mac: { notarize: false },
+          disableAsarIntegrity: true,
+        },
+      },
+      {
+        signed: false,
+        checkMacApp: async (_appDir, info) => {
+          expect(info.ElectronAsarIntegrity).toBeUndefined()
+        },
+      }
+    )
+  )
+
+  // Regression test for #8909: bundleVersion/bundleShortVersion from mas config must override mac config.
+  // mac.bundleVersion = "100" (wrong value that would appear if the bug were present).
+  // mas.bundleVersion = "1.1.0" = fixture appInfo.version (the correct MAS value).
+  test.ifMac("mas bundleVersion overrides mac bundleVersion", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: Platform.MAC.createTarget("mas", Arch.x64),
+        config: {
+          mac: { bundleVersion: "100", bundleShortVersion: "1.0.0" },
+          mas: { bundleVersion: "1.1.0", bundleShortVersion: "2.0.0" },
+        },
+      },
+      {
+        signed: false,
+        checkMacApp: async appDir => {
+          const plistPath = path.join(appDir, "Contents", "Info.plist")
+          const bundleVersion = (await exec("/usr/libexec/PlistBuddy", ["-c", "Print CFBundleVersion", plistPath])).trim()
+          const shortVersion = (await exec("/usr/libexec/PlistBuddy", ["-c", "Print CFBundleShortVersionString", plistPath])).trim()
+          // Must be the mas value, not mac's "100"/"1.0.0"
+          expect(bundleVersion).toBe("1.1.0")
+          expect(shortVersion).toBe("2.0.0")
+        },
+      }
+    )
+  )
+
+  // Regression test for #8909: masDev config overrides mas, which overrides mac (full merge chain).
+  // mac="100", mas="200" (both wrong), masDev="1.1.0" (correct — fixture appInfo.version).
+  test.ifMac("mas-dev bundleVersion takes precedence over mas and mac", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: Platform.MAC.createTarget("mas-dev", Arch.x64),
+        config: {
+          mac: { bundleVersion: "100" },
+          mas: { bundleVersion: "200" },
+          masDev: { bundleVersion: "1.1.0" },
+        },
+      },
+      {
+        signed: false,
+        checkMacApp: async appDir => {
+          const plistPath = path.join(appDir, "Contents", "Info.plist")
+          const bundleVersion = (await exec("/usr/libexec/PlistBuddy", ["-c", "Print CFBundleVersion", plistPath])).trim()
+          // Must be masDev's "1.1.0", not mac's "100" or mas's "200"
+          expect(bundleVersion).toBe("1.1.0")
         },
       }
     )

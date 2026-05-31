@@ -3,7 +3,6 @@ import { TmpDir } from "temp-file"
 import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
 import { detectPackageManager, getPackageManagerCommand, PM } from "./packageManager"
 import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector"
-import { NodeModuleInfo } from "./types"
 import { YarnBerryNodeModulesCollector } from "./yarnBerryNodeModulesCollector"
 import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector"
 import { BunNodeModulesCollector } from "./bunNodeModulesCollector"
@@ -30,22 +29,6 @@ export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirMan
     case PM.TRAVERSAL:
       return new TraversalNodeModulesCollector(rootDir, tempDirManager)
   }
-}
-
-export function getNodeModules(
-  pm: PM,
-  {
-    rootDir,
-    tempDirManager,
-    packageName,
-  }: {
-    rootDir: string
-    tempDirManager: TmpDir
-    packageName: string
-  }
-): Promise<NodeModuleInfo[]> {
-  const collector = getCollectorByPackageManager(pm, rootDir, tempDirManager)
-  return collector.getNodeModules({ packageName })
 }
 
 export const determinePackageManagerEnv = ({ projectDir, appDir, workspaceRoot }: { projectDir: string; appDir: string; workspaceRoot: string | Nullish }) =>
