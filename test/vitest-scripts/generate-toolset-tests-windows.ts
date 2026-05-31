@@ -15,10 +15,12 @@ import type * as _BlackboxWinSuite from "../src/updater/blackboxUpdateWinSuite"
 
 const WIN_CODE_SIGN_VERSIONS: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0"]
 const NSIS_VERSIONS: ToolsetConfig["nsis"][] = ["0.0.0", "1.2.1"]
+const WIX_VERSIONS: ToolsetConfig["wix"][] = ["0.0.0", "1.0.0"]
 
 interface WindowsSuiteConfig extends SuiteConfig {
   readonly winCodeSignVersions?: ToolsetConfig["winCodeSign"][]
   readonly nsisVersions?: ToolsetConfig["nsis"][]
+  readonly wixVersions?: ToolsetConfig["wix"][]
 }
 
 const SUITES: WindowsSuiteConfig[] = [
@@ -47,8 +49,11 @@ const SUITES: WindowsSuiteConfig[] = [
     name: "msi",
     registerFn: namedFn("registerMsiTests" satisfies keyof typeof _MsiSuite),
     importPath: "windows/msiTestSuite",
-    describeConfig: { name: "msi", chain: ["ifWindows"] },
+    // No ifWindows chain: WineVmManager handles non-Windows platforms natively.
+    describeConfig: { name: "msi" },
     describeOptions: { sequential: true },
+    wixVersions: WIX_VERSIONS,
+    winCodeSignVersions: [], // MSI does not use winCodeSign
   },
   {
     name: "msiWrapped",
@@ -90,11 +95,17 @@ const SUITES: WindowsSuiteConfig[] = [
   },
 ]
 
-function renderFile(suite: WindowsSuiteConfig, winCodeSign: ToolsetConfig["winCodeSign"], nsis?: ToolsetConfig["nsis"]): string {
+function renderFile(suite: WindowsSuiteConfig, winCodeSign: ToolsetConfig["winCodeSign"] | undefined, nsis?: ToolsetConfig["nsis"], wix?: ToolsetConfig["wix"]): string {
   const fnName = suite.registerFn.name
-  const toolsets: Record<string, unknown> = { winCodeSign }
+  const toolsets: Record<string, unknown> = {}
+  if (winCodeSign !== undefined) {
+    toolsets.winCodeSign = winCodeSign
+  }
   if (nsis !== undefined) {
     toolsets.nsis = nsis
+  }
+  if (wix !== undefined) {
+    toolsets.wix = wix
   }
   const toolsetsArg = JSON.stringify(toolsets)
   const describeCall = buildDescribeCall(suite.describeConfig.chain)
@@ -117,6 +128,16 @@ export function generateWindowsToolsetTests(): void {
   for (const suite of SUITES) {
     const generatedDir = path.resolve(GENERATED_TESTS_DIR, suite.name)
     cleanAndEnsureDir(generatedDir)
+
+    // Suites with an explicit wixVersions list are driven solely by the wix dimension.
+    if (suite.wixVersions) {
+      for (const wix of suite.wixVersions) {
+        const filename = `${suite.name}__wix-${wix}__Test.ts`
+        fs.writeFileSync(path.join(generatedDir, filename), renderFile(suite, undefined, undefined, wix), "utf8")
+      }
+      continue
+    }
+
     const wcsVersions = suite.winCodeSignVersions ?? WIN_CODE_SIGN_VERSIONS
     const nsisVersions = suite.nsisVersions
     if (nsisVersions) {

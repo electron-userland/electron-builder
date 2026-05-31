@@ -6,7 +6,7 @@ import { readFile, writeFile } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { MsiOptions } from "../"
-import { getBinFromUrl } from "../binDownload"
+import { getWixBin } from "../toolsets/windows"
 import { Target } from "../core"
 import { DesktopShortcutCreationPolicy, FinalCommonWindowsInstallerOptions, getEffectiveOptions } from "../options/CommonWindowsInstallerConfiguration"
 import { normalizeExt } from "../platformPackager"
@@ -74,9 +74,9 @@ export default class MsiTarget extends Target {
 
     const commonOptions = getEffectiveOptions(this.options, this.packager)
 
-    // wix 4.0.0.5512.2 doesn't support the arm64 architecture so default to x64 when building for arm64.
-    // This will result in an x64 MSI installer that installs an arm64 version of the application. This is a
-    // stopgap until the electron-builder-binaries wix version is upgraded to a version that supports arm64:
+    // wix 4.0.0.5512.2 (toolsets.wix "0.0.0") doesn't support arm64, so fall back to x64.
+    // This produces an x64 MSI that installs an arm64 app — a stopgap until a wix release adds arm64 support.
+    // TODO(wix-1.0.0): verify arm64 candle.exe availability and remove this fallback when confirmed.
     // https://github.com/electron-userland/electron-builder/issues/6077
     const wixArch = arch == Arch.arm64 ? Arch.x64 : arch
 
@@ -86,8 +86,7 @@ export default class MsiTarget extends Target {
 
     await packager.info.emitMsiProjectCreated(projectFile)
 
-    // noinspection SpellCheckingInspection
-    const vendorPath = await getBinFromUrl("wix-4.0.0.5512.2", "wix-4.0.0.5512.2.7z", "fe677fcd837b18c9b912985d91636bbd8a1e800c3b3a6a841b6f96e89624e839")
+    const vendorPath = await getWixBin(this.packager.config.toolsets?.wix)
 
     // noinspection SpellCheckingInspection
     const candleArgs = ["-arch", wixArch === Arch.ia32 ? "x86" : "x64", `-dappDir=${vm.toVmFile(appOutDir)}`].concat(this.getCommonWixArgs())

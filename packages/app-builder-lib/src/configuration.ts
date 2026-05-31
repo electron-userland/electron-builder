@@ -379,6 +379,22 @@ export interface ToolsetConfig {
    * @default "0.0.0"
    */
   readonly nsis?: "0.0.0" | "1.2.1" | null
+
+  /**
+   * `wix` toolset version for MSI installer compilation.
+   * Located at https://github.com/electron-userland/electron-builder-binaries/releases?q=wix&expanded=true
+   *
+   * Stable:
+   * 0.0.0 - wix-4.0.0.5512.2 (Windows .exe only; requires Wine on non-Windows)
+   *
+   * Beta:
+   * 1.0.0 - UPCOMING release (Windows .exe only; requires Wine on non-Windows)
+   *
+   * Override with ELECTRON_BUILDER_WIX_PATH env var pointing to a local WiX directory.
+   *
+   * @default "0.0.0"
+   */
+  readonly wix?: "0.0.0" | "1.0.0" | null
 }
 
 export interface Hooks {
