@@ -653,7 +653,7 @@ export class NsisTarget extends Target {
       cwd: nsisTemplatesDir,
     })
 
-    checkMakensisOutput(stdout, stderr)
+    checkMakensisOutput(stdout, stderr, "BUILD_UNINSTALLER" in defines)
 
     // Only verify output size for the final, non-web installer.
     // BUILD_UNINSTALLER marks the intermediate uninstaller build (no embedded archives).

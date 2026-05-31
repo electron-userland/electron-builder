@@ -68,6 +68,17 @@ describe("checkMakensisOutput", () => {
     const stderr = "ERROR: some fatal condition\n"
     expect(() => checkMakensisOutput("", stderr)).toThrow()
   })
+
+  test("skipInstallDataCheck=true suppresses install-data error (uninstaller build)", ({ expect }) => {
+    // BUILD_UNINSTALLER pass legitimately produces "Install data: 0 / 8" — must not throw
+    const stdout = "Install data: 0 / 8 bytes\n"
+    expect(() => checkMakensisOutput(stdout, "", true)).not.toThrow()
+  })
+
+  test("skipInstallDataCheck=true still throws on stderr Error: lines", ({ expect }) => {
+    const stderr = "Error: out of disk space\n"
+    expect(() => checkMakensisOutput("", stderr, true)).toThrow()
+  })
 })
 
 // ─── verifyInstallerSize ────────────────────────────────────────────────────
