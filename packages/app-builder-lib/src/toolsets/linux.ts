@@ -106,8 +106,8 @@ export async function getAppImageTools(appimageToolVersion: ToolsetConfig["appim
     const toolRoot = process.platform === "linux" ? `linux-${hostArch}` : "darwin"
     // Runtime files live at root; armv7l target uses "armv7l" filename, not the internal "arm32" alias
     const runtimeSuffix = targetArch === Arch.armv7l ? "armv7l" : runtimeArch
-    // FUSE2 tree only ships lib/ia32 and lib/x64; arm targets fall back to x64.
-    // buildLegacyFuse2AppImage does not copy runtimeLibraries, so the path is never accessed.
+    // FUSE2 tree only ships lib/ia32 and lib/x64; arm targets fall back to x64 here
+    // but buildLegacyFuse2AppImage only copies runtimeLibraries for x64/ia32.
     const libArch = targetArch === Arch.ia32 ? "ia32" : "x64"
     return {
       mksquashfs: path.resolve(artifactPath, toolRoot, "mksquashfs"),
