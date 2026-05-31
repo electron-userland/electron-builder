@@ -2,9 +2,8 @@ import {
   Arch,
   asArray,
   AsyncTaskManager,
-  doSpawn,
   exec,
-  ExecError,
+  spawnAndWriteWithOutput,
   exists,
   generateKsuid,
   getArchSuffix,
@@ -648,7 +647,7 @@ export class NsisTarget extends Target {
     }
 
     const makensis = await getMakeNsisPath(this.packager.config.toolsets?.nsis, this.options.customNsisBinary)
-    const { stdout, stderr } = await runMakensis(makensis.path, args, script, {
+    const { stdout, stderr } = await spawnAndWriteWithOutput(makensis.path, args, script, {
       env: { ...process.env, ...(makensis.env ?? {}) },
       cwd: nsisTemplatesDir,
     })
@@ -803,49 +802,6 @@ async function generateForPreCompressed(preCompressedFileExtensions: Array<strin
     }
     scriptGenerator.macro(`customFiles_${Arch[arch]}`, macro)
   }
-}
-
-async function runMakensis(command: string, args: Array<string>, script: string, options: { env?: NodeJS.ProcessEnv; cwd?: string }): Promise<{ stdout: string; stderr: string }> {
-  const childProcess = doSpawn(command, args, { ...options, stdio: ["pipe", "pipe", "pipe"] as any })
-  const timeout = setTimeout(() => childProcess.kill(), 4 * 60 * 1000)
-  // Mirror live output to parent process streams when the nsis debug logger is
-  // active (DEBUG=electron-builder:nsis or DEBUG=*), matching the original
-  // inherit-mode behaviour of spawnAndWrite in debug builds.
-  const isDebugEnabled = debug.enabled
-
-  return new Promise((resolve, reject) => {
-    let stdout = ""
-    let stderr = ""
-
-    childProcess.on("error", err => {
-      clearTimeout(timeout)
-      reject(err)
-    })
-
-    childProcess.stdout!.on("data", (chunk: Buffer) => {
-      stdout += chunk.toString()
-      if (isDebugEnabled) {
-        process.stdout.write(chunk)
-      }
-    })
-    childProcess.stderr!.on("data", (chunk: Buffer) => {
-      stderr += chunk.toString()
-      if (isDebugEnabled) {
-        process.stderr.write(chunk)
-      }
-    })
-
-    childProcess.stdin!.end(script)
-
-    childProcess.once("close", code => {
-      clearTimeout(timeout)
-      if (code === 0) {
-        resolve({ stdout, stderr })
-      } else {
-        reject(new ExecError(command, code ?? -1, stdout, stderr))
-      }
-    })
-  })
 }
 
 async function ensureNotBusy(outFile: string): Promise<void> {
