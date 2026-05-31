@@ -2,7 +2,9 @@ import {
   Arch,
   asArray,
   AsyncTaskManager,
+  doSpawn,
   exec,
+  ExecError,
   exists,
   generateKsuid,
   getArchSuffix,
@@ -10,7 +12,6 @@ import {
   getPlatformIconFileName,
   InvalidConfigurationError,
   log,
-  spawnAndWrite,
   statOrNull,
   use,
   walk,
@@ -39,6 +40,7 @@ import { NsisOptions, PortableOptions } from "./nsisOptions"
 import { NsisScriptGenerator, nsisEscapeString } from "./nsisScriptGenerator"
 import { getMakeNsisPath, getNsisPluginsPath } from "../../toolsets/windows"
 import { AppPackageHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
+import { checkMakensisOutput, verifyInstallerSize } from "./nsisValidation"
 
 const debug = _debug("electron-builder:nsis")
 
@@ -646,10 +648,18 @@ export class NsisTarget extends Target {
     }
 
     const makensis = await getMakeNsisPath(this.packager.config.toolsets?.nsis, this.options.customNsisBinary)
-    await spawnAndWrite(makensis.path, args, script, {
+    const { stdout, stderr } = await runMakensis(makensis.path, args, script, {
       env: { ...process.env, ...(makensis.env ?? {}) },
       cwd: nsisTemplatesDir,
     })
+
+    checkMakensisOutput(stdout, stderr)
+
+    // Only verify output size for the final installer, not the intermediate uninstaller
+    if (!("BUILD_UNINSTALLER" in defines)) {
+      const outFile = commands["OutFile"].replace(/^"|"$/g, "")
+      await verifyInstallerSize(outFile, defines)
+    }
   }
 
   private async computeCommonInstallerScriptHeader(): Promise<string> {
@@ -790,6 +800,39 @@ async function generateForPreCompressed(preCompressedFileExtensions: Array<strin
     }
     scriptGenerator.macro(`customFiles_${Arch[arch]}`, macro)
   }
+}
+
+async function runMakensis(command: string, args: Array<string>, script: string, options: { env?: NodeJS.ProcessEnv; cwd?: string }): Promise<{ stdout: string; stderr: string }> {
+  const childProcess = doSpawn(command, args, { ...options, stdio: ["pipe", "pipe", "pipe"] as any })
+  const timeout = setTimeout(() => childProcess.kill(), 4 * 60 * 1000)
+
+  return new Promise((resolve, reject) => {
+    let stdout = ""
+    let stderr = ""
+
+    childProcess.on("error", err => {
+      clearTimeout(timeout)
+      reject(err)
+    })
+
+    childProcess.stdout!.on("data", (chunk: Buffer) => {
+      stdout += chunk.toString()
+    })
+    childProcess.stderr!.on("data", (chunk: Buffer) => {
+      stderr += chunk.toString()
+    })
+
+    childProcess.stdin!.end(script)
+
+    childProcess.once("close", code => {
+      clearTimeout(timeout)
+      if (code === 0) {
+        resolve({ stdout, stderr })
+      } else {
+        reject(new ExecError(command, code ?? -1, stdout, stderr))
+      }
+    })
+  })
 }
 
 async function ensureNotBusy(outFile: string): Promise<void> {
