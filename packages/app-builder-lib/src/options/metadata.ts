@@ -49,6 +49,8 @@ export interface Metadata {
   readonly productName?: string | null
   /** @private */
   readonly main?: string | null
+  /** @private */
+  readonly desktopName?: string | null
 }
 
 export interface AuthorMetadata {

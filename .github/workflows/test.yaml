@@ -258,6 +258,7 @@ jobs:
       - name: Install toolset via brew
         run: |
           brew install rpm
+          brew install snapcraft
 
       - name: Run shard
         run: pnpm ci:test
@@ -352,13 +353,14 @@ jobs:
           retention-days: 1
           if-no-files-found: error
 
-  test-linux-native:
-    name:
-      Test Linux Native (non-Docker)
-      # disabled for now
-    if: false
+  test-snap:
+    name: Test Snap (${{ matrix.core }})
     runs-on: ubuntu-24.04
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        core: [core18, core20, core22, core24]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -369,17 +371,39 @@ jobs:
           cache-key: v-39.8.5-native-electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
 
-      - name: Install dependencies
+      - name: Test snap ${{ matrix.core }} (Docker)
+        run: SNAP_CORE=${{ matrix.core }} ./test/src/linux/test-snap.sh
+        env:
+          VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
+          RESET_VITEST_SHARD_CACHE: ${{ inputs.reset-vitest-smart-cache }}
+
+      # Native install+launch test — core24 only; requires snapcraft + unsquashfs on the runner.
+      - name: Disable background apt services (prevent apt lock contention)
+        if: matrix.core == 'core24'
+        run: |
+          sudo systemctl stop unattended-upgrades apt-daily.service apt-daily-upgrade.service || true
+          sudo systemctl disable apt-daily.timer apt-daily-upgrade.timer || true
+          sudo systemctl kill --kill-who=all apt-daily.service apt-daily-upgrade.service || true
+          while sudo fuser /var/lib/apt/lists/lock /var/lib/dpkg/lock /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+            echo "Waiting for apt lock to be released…"
+            sleep 2
+          done
+
+      - name: Install snapcraft natively
+        if: matrix.core == 'core24'
         run: |
           sudo apt-get update
-          sudo apt-get install -y rpm flatpak flatpak-builder snapd
+          sudo apt-get install -y squashfs-tools xvfb
           sudo snap install snapcraft --classic
 
-      - name: Test
-        run: |
-          pnpm ci:test
+      - name: Test snap core24 native (install + launch)
+        if: matrix.core == 'core24'
+        run: pnpm ci:test
         env:
-          TEST_FILES: flatpakTest,snapHeavyTest
+          TEST_FILES: snapHeavyTest
+          SNAP_TEST_CORES: core24
+          SNAPCRAFT_BUILD_ENVIRONMENT: host
+          RUN_SNAP_TESTS: "true"
           VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
           RESET_VITEST_SHARD_CACHE: ${{ inputs.reset-vitest-smart-cache }}
 
@@ -387,7 +411,7 @@ jobs:
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
         if: always()
         with:
-          name: vitest-smart-cache-linux-native
+          name: vitest-smart-cache-snap-${{ matrix.core }}
           path: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
           retention-days: 1
           if-no-files-found: error
@@ -461,7 +485,7 @@ jobs:
   # -------------------------
 
   merge-smart-cache:
-    needs: [test-linux, test-windows, test-macos, test-e2e, test-updater, test-linux-native]
+    needs: [test-linux, test-windows, test-macos, test-e2e, test-updater, test-snap]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -544,18 +568,22 @@ jobs:
         with:
           name: vitest-smart-cache-*
           failOnError: false
+        continue-on-error: true
 
       - name: Upload merged cache artifact
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
+        if: always()
         with:
           name: vitest-smart-cache-merged
           path: merged-cache/_vitest-smart-cache.json
           retention-days: 2
 
       - name: Copy merged cache to canonical path
+        if: always()
         run: cp merged-cache/_vitest-smart-cache.json test/vitest-scripts/_vitest-smart-cache.json
 
       - name: Save merged cache for future runs on this branch
+        if: always()
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: test/vitest-scripts/_vitest-smart-cache.json

@@ -20,13 +20,14 @@ interface Options {
   fileAssociations: FileAssociation[]
   /**
    * The compression type available for static runtime is limited as it's only compiled with support for gzip and zstd.
+   * "xz" is only valid for the legacy FUSE2 (0.0.0) toolset.
    *
    * [stderr] Squashfs image uses lzo compression, this version supports only zlib, zstd.
    * Failed to open squashfs image
    * Failed to extract AppImage
    *
    */
-  compression?: "gzip" | "zstd"
+  compression?: "gzip" | "zstd" | "xz"
 }
 
 export interface AppImageBuilderOptions {
@@ -75,6 +76,45 @@ export async function buildStaticRuntimeAppImage(appimageToolVersion: ToolsetCon
     return updateInfo
   } catch (error) {
     // Clean up partial build on failure
+    await fs.remove(output).catch(() => {})
+    throw error
+  }
+}
+
+export async function buildLegacyFuse2AppImage(opts: AppImageBuilderOptions): Promise<BlockMapDataHolder> {
+  const { stageDir, output, appDir, options, arch } = opts
+
+  try {
+    await fs.remove(output)
+
+    await writeAppLauncherAndRelatedFiles(opts)
+
+    const { runtime, mksquashfs, runtimeLibraries } = await getAppImageTools("0.0.0", arch)
+    // Mirror the app-builder-lib Go implementation: bundle lib/<arch> into usr/lib for x64 and ia32.
+    // arm targets don't have a dedicated lib dir in the FUSE2 toolset.
+    if (arch === Arch.x64 || arch === Arch.ia32) {
+      await copyDir(runtimeLibraries, path.join(stageDir, "usr", "lib"))
+    }
+    await copyDir(appDir, stageDir)
+
+    const runtimeData = await fs.readFile(runtime)
+
+    const args: string[] = [stageDir, output, "-offset", runtimeData.length.toString(), "-all-root", "-noappend", "-no-progress", "-quiet", "-no-xattrs", "-no-fragments"]
+    if (options.compression) {
+      args.push("-comp", options.compression)
+      if (options.compression === "xz") {
+        // Match the dictionary/block-size settings used by the original app-builder Go implementation
+        args.push("-Xdict-size", "100%", "-b", "1048576")
+      }
+    }
+    await exec(mksquashfs, args, { cwd: stageDir })
+
+    await writeRuntimeData(output, runtimeData)
+    await fs.chmod(output, 0o755)
+
+    const updateInfo = await appendBlockmap(output)
+    return updateInfo
+  } catch (error) {
     await fs.remove(output).catch(() => {})
     throw error
   }

@@ -57,9 +57,11 @@ async function main() {
     include: [`test/src/**/${includeRegex}.ts`],
 
     printConsoleTrace: true,
+    runner: __dirname + "/vitest-network-retry-runner.ts",
     reporters: ["default", __dirname + "/vitest-smart-reporter.ts"],
 
-    maxWorkers: "50%",
+    // 2 on Windows (heavy MSI/Squirrel builds saturate the vitest main-thread RPC at 3); 3 elsewhere
+    maxWorkers: process.platform === "win32" ? 2 : 3,
 
     fileParallelism: process.env.TEST_SEQUENTIAL_FILES !== "true",
     sequence: {

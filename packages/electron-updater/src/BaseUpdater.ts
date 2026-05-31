@@ -1,5 +1,6 @@
 import { AllPublishOptions } from "builder-util-runtime"
 import { spawn, SpawnOptions, spawnSync, StdioOptions } from "child_process"
+import * as path from "path"
 import { AppAdapter } from "./AppAdapter"
 import { AppUpdater, DownloadExecutorTask } from "./AppUpdater"
 
@@ -103,10 +104,23 @@ export abstract class BaseUpdater extends AppUpdater {
     })
   }
 
+  /**
+   * Strips relative-path entries from a PATH string.
+   * Prevents PATH-poisoning where a writable directory earlier in PATH shadows
+   * a trusted package manager binary.
+   */
+  protected sanitizeEnvPath(envPath: string): string {
+    return envPath
+      .split(path.delimiter)
+      .filter((dir: string) => path.isAbsolute(dir))
+      .join(path.delimiter)
+  }
+
   protected spawnSyncLog(cmd: string, args: string[] = [], env = {}): string {
     this._logger.info(`Executing: ${cmd} with args: ${args}`)
+    const mergedEnv: NodeJS.ProcessEnv = { ...process.env, ...env }
     const response = spawnSync(cmd, args, {
-      env: { ...process.env, ...env },
+      env: { ...mergedEnv, PATH: this.sanitizeEnvPath(mergedEnv.PATH ?? "") },
       encoding: "utf-8",
       shell: true,
     })

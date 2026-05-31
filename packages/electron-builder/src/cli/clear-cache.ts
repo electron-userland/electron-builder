@@ -5,7 +5,7 @@ import { createInterface } from "readline/promises"
 import * as path from "path"
 
 export async function clearCache(): Promise<void> {
-  const cacheDir = getCacheDirectory(false, false)
+  const cacheDir = getCacheDirectory({ isAvoidSystemOnWindows: false, allowEnvVarOverride: false })
 
   if (cacheDir === path.parse(cacheDir).root) {
     log.error({ cacheDir }, "cache directory resolves to a filesystem root — aborting")

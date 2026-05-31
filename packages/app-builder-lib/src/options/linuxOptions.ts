@@ -63,6 +63,14 @@ export interface LinuxConfiguration extends CommonLinuxOptions, PlatformSpecific
   readonly packageCategory?: string | null
 }
 
+/**
+ * Desktop-entry and runtime fields shared by all Linux targets and all snap core strategies.
+ *
+ * Fields set under `linux.*` in your build config (i.e. on {@link LinuxConfiguration}) are
+ * automatically cascaded into each snap core's options by `LinuxTargetHelper.getSnapCore()`.
+ * You do not need to duplicate them under `snapcraft.core24.*`, `snapcraft.core22.*`, etc.
+ * Per-core values always take precedence when both are set.
+ */
 export interface CommonLinuxOptions {
   /**
    * The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
@@ -198,9 +206,10 @@ export interface AppImageOptions extends CommonLinuxOptions, TargetSpecificOptio
   /**
    * The compression algorithm passed to the AppImage build tool.
    *
-   * **FUSE2 toolset (`"0.0.0"` or unset):** `"xz"` is forwarded as `--compression xz`.
-   * `"gzip"`, `"zstd"`, `null`, and unset all fall through to the root-level `compression` option:
-   * - `"maximum"` → `--compression xz` (overrides any per-target gzip/zstd value)
+   * **FUSE2 toolset (`"0.0.0"` or unset):** only `"xz"` and `"gzip"` are forwarded
+   * to mksquashfs (`-comp <value>`); `"xz"` additionally passes `-Xdict-size 100% -b 1048576`.
+   * `"zstd"`, `null`, and unset fall through to the root-level `compression` option:
+   * - `"maximum"` → `"xz"`
    * - anything else → flag omitted (mksquashfs defaults to gzip)
    *
    * **Static-runtime toolsets (`>= 1.0.0`):** `"gzip"` and `"zstd"` are forwarded
