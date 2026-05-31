@@ -89,8 +89,12 @@ export async function buildLegacyFuse2AppImage(opts: AppImageBuilderOptions): Pr
 
     await writeAppLauncherAndRelatedFiles(opts)
 
-    const { runtime, mksquashfs } = await getAppImageTools("0.0.0", arch)
-    // No runtimeLibraries copy — FUSE2 relies on the host's system libfuse2
+    const { runtime, mksquashfs, runtimeLibraries } = await getAppImageTools("0.0.0", arch)
+    // Mirror the app-builder-lib Go implementation: bundle lib/<arch> into usr/lib for x64 and ia32.
+    // arm targets don't have a dedicated lib dir in the FUSE2 toolset.
+    if (arch === Arch.x64 || arch === Arch.ia32) {
+      await copyDir(runtimeLibraries, path.join(stageDir, "usr", "lib"))
+    }
     await copyDir(appDir, stageDir)
 
     const runtimeData = await fs.readFile(runtime)
