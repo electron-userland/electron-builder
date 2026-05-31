@@ -35,7 +35,7 @@ const SET_SIZES = [16, 32, 48, 64, 128, 256, 512]
 
 // ─── ICNS writer ───────────────────────────────────────────────────────────
 
-async function buildIcnsEntry(size: number, png: Buffer): Promise<Buffer> {
+function buildIcnsEntry(size: number, png: Buffer): Buffer {
   const types = ICNS_SIZE_TO_TYPES[size]
   // Each OSType produces one entry: 4-byte ostype + 4-byte length (data + 8) + png data
   const parts: Buffer[] = []
@@ -51,7 +51,9 @@ async function convertToIcns(sourceFile: string, sizeToPath: Map<number, string>
   const entries: Buffer[] = []
 
   for (const size of ICNS_EXPECTED_SIZES) {
-    if (size > maxSize) continue // never upscale
+    if (size > maxSize) {
+      continue
+    } // never upscale
 
     let pngData: Buffer
     const existingPath = sizeToPath.get(size)
@@ -135,12 +137,16 @@ function buildSourceCandidates(sources: string[], format: IconFormat): string[] 
     if (imageHasExtension(src, format)) {
       result.push(src)
     } else {
-      if (format !== "set") result.push(src + "." + format)
+      if (format !== "set") {
+        result.push(src + "." + format)
+      }
       result.push(src)
       result.push(src + ".png")
       if (format !== "icns") {
         result.push(src + ".icns")
-        if (format !== "ico") result.push(src + ".ico")
+        if (format !== "ico") {
+          result.push(src + ".ico")
+        }
       }
     }
   }
@@ -149,12 +155,16 @@ function buildSourceCandidates(sources: string[], format: IconFormat): string[] 
     ["icon", "icons"],
     ["icon", "icon"],
   ] as [string, string][]) {
-    if (format !== "set") result.push(nameBase + "." + format)
+    if (format !== "set") {
+      result.push(nameBase + "." + format)
+    }
     result.push(setName)
     result.push(nameBase + ".png")
     if (format !== "icns") {
       result.push(nameBase + ".icns")
-      if (format !== "ico") result.push(nameBase + ".ico")
+      if (format !== "ico") {
+        result.push(nameBase + ".ico")
+      }
     }
   }
   return result
@@ -185,15 +195,21 @@ async function collectIconsFromDir(dir: string): Promise<{ icons: IconInfo[]; fa
   let fallbackFile: string | null = null
 
   for (const name of entries) {
-    if (!name.endsWith(".png") && !name.endsWith(".PNG")) continue
+    if (!name.endsWith(".png") && !name.endsWith(".PNG")) {
+      continue
+    }
     if (name === "icon.png") {
       fallbackFile = path.join(dir, name)
       continue
     }
     const match = name.match(/(\d+)/)
-    if (!match) continue
+    if (!match) {
+      continue
+    }
     const size = parseInt(match[1], 10)
-    if (isNaN(size)) continue
+    if (isNaN(size)) {
+      continue
+    }
     const filePath = path.join(dir, name)
     const existing = sizeMap.get(size)
     if (!existing || name.length < path.basename(existing.file).length) {
@@ -205,11 +221,43 @@ async function collectIconsFromDir(dir: string): Promise<{ icons: IconInfo[]; fa
   return { icons, fallbackFile }
 }
 
+// ─── ICO header parser (sharp does not support .ico input) ──────────────────
+
+// Returns max dimension on success, or null if the file is not a valid ICO
+// (magic = 0x00 0x00 0x01 0x00). Mirrors Go's IsIco() check.
+async function getIcoMaxSize(filePath: string): Promise<number | null> {
+  const buf = await readFile(filePath)
+  // ICO magic: bytes 0-1 = 0x0000, bytes 2-3 = 0x0001
+  if (buf.length < 6 || buf[0] !== 0 || buf[1] !== 0 || buf[2] !== 1 || buf[3] !== 0) {
+    return null
+  }
+  const count = buf.readUInt16LE(4)
+  let max = 0
+  for (let i = 0; i < count; i++) {
+    const off = 6 + i * 16
+    if (off + 2 > buf.length) {
+      break
+    }
+    // ICO: width/height byte of 0 means 256
+    const w = buf[off] || 256
+    const h = buf[off + 1] || 256
+    if (w > max) {
+      max = w
+    }
+    if (h > max) {
+      max = h
+    }
+  }
+  return max
+}
+
 // ─── Main conversion logic ───────────────────────────────────────────────────
 
 async function doConvertIcon(candidates: string[], roots: string[], format: IconFormat, outDir: string): Promise<IconInfo[] | null> {
   const found = await resolveSourceFile(candidates, roots)
-  if (!found) return null
+  if (!found) {
+    return null
+  }
 
   const { resolved, isDir } = found
   const outExt = format === "set" ? ".png" : "." + format
@@ -217,11 +265,20 @@ async function doConvertIcon(candidates: string[], roots: string[], format: Icon
   // If source already has the target extension (and is not a directory), return it directly
   if (!isDir && resolved.endsWith(outExt)) {
     if (format === "icns") {
-      // Skip size validation for pre-built ICNS
       return [{ file: resolved, size: 0 }]
     }
-    const img = sharp(resolved)
-    const meta = await img.metadata()
+    if (format === "ico") {
+      // sharp cannot read ICO; parse the header directly to get max dimension
+      const size = await getIcoMaxSize(resolved)
+      if (size === null) {
+        return { error: `Icon is not a valid ICO file: ${resolved}`, errorCode: "ERR_ICON_UNKNOWN_FORMAT" } as any
+      }
+      if (size < 256) {
+        return { error: `Icon must be at least 256x256 pixels, provided: ${size}x${size}`, errorCode: "ERR_ICON_TOO_SMALL" } as any
+      }
+      return [{ file: resolved, size }]
+    }
+    const meta = await sharp(resolved).metadata()
     const size = Math.max(meta.width ?? 0, meta.height ?? 0)
     return [{ file: resolved, size }]
   }
@@ -236,7 +293,9 @@ async function doConvertIcon(candidates: string[], roots: string[], format: Icon
     const { icons, fallbackFile } = await collectIconsFromDir(resolved)
 
     if (format === "set") {
-      if (icons.length > 0) return icons
+      if (icons.length > 0) {
+        return icons
+      }
       if (fallbackFile) {
         const meta = await sharp(fallbackFile).metadata()
         const maxSize = Math.max(meta.width ?? 0, meta.height ?? 0)
@@ -264,17 +323,40 @@ async function doConvertIcon(candidates: string[], roots: string[], format: Icon
     return null
   }
 
-  // Single file source
-  if (format === "set" && resolved.endsWith(".icns")) {
-    // ICNS → set: extract largest embedded PNG and resize down
+  // Single file source: ICNS → ico or set (sharp cannot read ICNS natively)
+  if (resolved.endsWith(".icns") && format !== "icns") {
     const data = await readFile(resolved)
     const extracted = await extractLargestFromIcns(data)
-    if (extracted) {
-      const meta = await sharp(extracted).metadata()
-      const maxSize = Math.max(meta.width ?? 0, meta.height ?? 0)
-      return buildLinuxSet(resolved, maxSize, outDir)
+    if (!extracted) {
+      return null
     }
-    return null
+    const meta = await sharp(extracted).metadata()
+    const maxSize = Math.max(meta.width ?? 0, meta.height ?? 0)
+    await mkdir(outDir, { recursive: true })
+    if (format === "set") {
+      const extractedPng = path.join(outDir, `icon_${maxSize}x${maxSize}.png`)
+      await writeFile(extractedPng, extracted)
+      return buildLinuxSet(extractedPng, maxSize, outDir)
+    }
+    // format === "ico": resize the extracted PNG to ≤256 and write ICO
+    const icoSize = Math.min(maxSize, 256)
+    const resized = await sharp(extracted).resize(icoSize, icoSize, { kernel: "lanczos3", fit: "fill" }).png().toBuffer()
+    const outFile = path.join(outDir, "icon.ico")
+    const header = Buffer.allocUnsafe(6)
+    header.writeUInt16LE(0, 0)
+    header.writeUInt16LE(1, 2)
+    header.writeUInt16LE(1, 4)
+    const dir = Buffer.allocUnsafe(16)
+    dir.writeUInt8(icoSize >= 256 ? 0 : icoSize, 0)
+    dir.writeUInt8(icoSize >= 256 ? 0 : icoSize, 1)
+    dir.writeUInt8(0, 2)
+    dir.writeUInt8(0, 3)
+    dir.writeUInt16LE(1, 4)
+    dir.writeUInt16LE(32, 6)
+    dir.writeUInt32LE(resized.length, 8)
+    dir.writeUInt32LE(6 + 16, 12)
+    await writeFile(outFile, Buffer.concat([header, dir, resized]))
+    return [{ file: outFile, size: icoSize }]
   }
 
   return doConvertSingleFile(resolved, format, outDir)
@@ -285,12 +367,14 @@ async function doConvertSingleFile(sourceFile: string, format: IconFormat, outDi
   const meta = await img.metadata()
   const maxSize = Math.max(meta.width ?? 0, meta.height ?? 0)
 
-  if (maxSize === 0) return null
+  if (maxSize === 0) {
+    return null
+  }
 
   const recommendedMin = format === "icns" ? 512 : 256
   if (maxSize < recommendedMin) {
     return {
-      error: `Icon must be at least ${recommendedMin}×${recommendedMin} pixels, provided: ${maxSize}×${maxSize}`,
+      error: `Icon must be at least ${recommendedMin}x${recommendedMin} pixels, provided: ${maxSize}x${maxSize}`,
       errorCode: "ERR_ICON_TOO_SMALL",
     } as any
   }
@@ -321,10 +405,14 @@ async function extractLargestFromIcns(data: Buffer): Promise<Buffer | null> {
 
   let offset = 8 // skip 8-byte ICNS header
   while (offset < data.length) {
-    if (offset + 8 > data.length) break
+    if (offset + 8 > data.length) {
+      break
+    }
     const ostype = data.toString("ascii", offset, offset + 4)
     const entryLen = data.readUInt32BE(offset + 4)
-    if (entryLen < 8) break
+    if (entryLen < 8) {
+      break
+    }
     const dataLen = entryLen - 8
     if (!["info", "TOC ", "icnV", "name"].includes(ostype)) {
       typeMap.set(ostype, { offset: offset + 8, length: dataLen })

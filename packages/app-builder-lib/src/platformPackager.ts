@@ -879,7 +879,6 @@ export interface IconInfo {
   size: number
 }
 
-
 export type IconFormat = "icns" | "ico" | "set"
 
 export function isSafeGithubName(name: string) {
