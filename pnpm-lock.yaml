@@ -200,9 +200,6 @@ importers:
       semver:
         specifier: ~7.7.3
         version: 7.7.3
-      sharp:
-        specifier: ^0.34.5
-        version: 0.34.5
       tar:
         specifier: ^7.5.7
         version: 7.5.11
@@ -315,6 +312,10 @@ importers:
       toml:
         specifier: ^3.0.0
         version: 3.0.0
+    optionalDependencies:
+      sharp:
+        specifier: ^0.34.5
+        version: 0.34.5
 
   packages/builder-util:
     dependencies:
