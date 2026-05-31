@@ -103,7 +103,9 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
       },
       {
         packed: async context => {
-          expect(await readAppImageCompression(path.join(context.outDir, "Test App ßW-1.1.0.AppImage"))).toBe("zstd")
+          // FUSE2 mksquashfs only supports gzip and xz; zstd is silently dropped → gzip default
+          const expectedComp = toolsets.appimage === "0.0.0" ? "gzip" : "zstd"
+          expect(await readAppImageCompression(path.join(context.outDir, "Test App ßW-1.1.0.AppImage"))).toBe(expectedComp)
         },
       }
     ))

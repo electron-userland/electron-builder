@@ -92,13 +92,13 @@ export default class AppImageTarget extends Target {
             fileAssociations: packager.fileAssociations,
             compression: (() => {
               const c = options.compression
-              if (c === "xz" || c === "gzip" || c === "zstd") {
+              if (c === "xz" || c === "gzip") {
                 return c
               }
               if (packager.compression === "maximum") {
                 return "xz"
               }
-              return undefined // normal/store/unset → mksquashfs defaults to gzip
+              return undefined // normal/store/unset/zstd → mksquashfs defaults to gzip
             })(),
           },
         })
