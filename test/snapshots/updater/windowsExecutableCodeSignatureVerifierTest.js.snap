@@ -8,7 +8,7 @@ exports[`windowsExecutableCodeSignatureVerifier (unit) > preparePowerShellExec p
     "-NonInteractive",
     "-InputFormat",
     "None",
-    "Import-Module "$PSHOME\\Modules\\Microsoft.PowerShell.Security"; $env:PSModulePath = ""; $OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8; Get-AuthenticodeSignature -LiteralPath '<UPDATE_PATH>' | ConvertTo-Json -Compress",
+    "$ProgressPreference = 'SilentlyContinue'; Import-Module "$PSHOME\\Modules\\Microsoft.PowerShell.Security"; $env:PSModulePath = ""; $OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8; Get-AuthenticodeSignature -LiteralPath '<UPDATE_PATH>' | ConvertTo-Json -Compress",
   ],
 ]
 `;

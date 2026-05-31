@@ -20,7 +20,10 @@ function preparePowerShellExec(command: string, timeout?: number) {
   // (which required cmd.exe as the host). Both $OutputEncoding and [Console]::OutputEncoding
   // must be set so that ConvertTo-Json emits UTF-8 when stdout is captured by Node.
   // https://github.com/electron-userland/electron-builder/issues/8162
-  const script = `Import-Module "$PSHOME\\Modules\\Microsoft.PowerShell.Security"; $env:PSModulePath = ""; $OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8; ${command}`
+  // Suppress progress-stream output (CLIXML) before the first Import-Module so that
+  // "Preparing modules for first use." records are never written to stderr, which would
+  // otherwise be misidentified as a command error by the stderr check in verifySignature.
+  const script = `$ProgressPreference = 'SilentlyContinue'; Import-Module "$PSHOME\\Modules\\Microsoft.PowerShell.Security"; $env:PSModulePath = ""; $OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8; ${command}`
   const encodedCommand = Buffer.from(script, "utf16le").toString("base64")
   const args = ["-NoProfile", "-NonInteractive", "-InputFormat", "None", "-EncodedCommand", encodedCommand]
   const env: NodeJS.ProcessEnv = { ...process.env }

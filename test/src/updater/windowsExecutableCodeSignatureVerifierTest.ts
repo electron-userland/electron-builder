@@ -192,18 +192,23 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
       expect(opts.timeout).toBe(20_000)
     })
 
-    test("script ordering: Import-Module → PSModulePath clear → encoding → command", async () => {
-      // Security property: the module must be imported BEFORE PSModulePath is cleared so that
-      // PowerShell can find it. All encoding/path setup precedes the user command.
+    test("script ordering: ProgressPreference → Import-Module → PSModulePath clear → encoding → command", async () => {
+      // Security/reliability properties:
+      // 1. $ProgressPreference = 'SilentlyContinue' must come first so that the Import-Module
+      //    progress stream record ("Preparing modules for first use.") is never written to stderr.
+      // 2. Import-Module must precede PSModulePath clear so PowerShell can still find the module.
+      // 3. All encoding/path setup precedes the user command.
       mockPsSuccess(makeJson())
       await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
       const [, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
       const script = Buffer.from(args[args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le")
+      const progressIdx = script.indexOf("$ProgressPreference")
       const importIdx = script.indexOf("Import-Module")
       const clearIdx = script.indexOf(`$env:PSModulePath = ""`)
       const encIdx = script.indexOf("$OutputEncoding")
       const cmdIdx = script.indexOf("Get-AuthenticodeSignature")
-      expect(importIdx).toBeGreaterThanOrEqual(0)
+      expect(progressIdx).toBe(0)
+      expect(progressIdx).toBeLessThan(importIdx)
       expect(importIdx).toBeLessThan(clearIdx)
       expect(clearIdx).toBeLessThan(encIdx)
       expect(encIdx).toBeLessThan(cmdIdx)
@@ -433,12 +438,13 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
         expect(probeScript).toContain("ConvertTo-Json test")
       })
 
-      test("probe script still imports the Security module and clears PSModulePath", async () => {
+      test("probe script suppresses progress, imports Security module, and clears PSModulePath", async () => {
         mockPsError(new Error("PS error"))
         await expect(verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).rejects.toThrow()
         const [, probeArgs] = vi.mocked(execFileSync).mock.calls[0] as unknown as [string, string[]]
         const encodedIdx = probeArgs.indexOf("-EncodedCommand")
         const probeScript = Buffer.from(probeArgs[encodedIdx + 1], "base64").toString("utf16le")
+        expect(probeScript).toContain("$ProgressPreference = 'SilentlyContinue'")
         expect(probeScript).toContain("Import-Module")
         expect(probeScript).toContain("Microsoft.PowerShell.Security")
         expect(probeScript).toContain(`$env:PSModulePath = ""`)
