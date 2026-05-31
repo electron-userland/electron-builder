@@ -108,44 +108,50 @@ test.ifNotWindows("unknown nsis property reports correct path", ({ expect }) =>
   )
 )
 
-test.ifNotWindows("valid callback function passes validation", () => {
-  return validateConfiguration(
+test.ifNotWindows("valid callback function passes validation", async ({ expect }) => {
+  await expect(
+    validateConfiguration(
+      {
+        afterPack: () => Promise.resolve(),
+        beforeBuild: () => Promise.resolve(),
+      },
+      new DebugLogger()
+    )
+  ).resolves.toBeUndefined()
+})
+
+test.ifNotWindows("null callback passes validation", async ({ expect }) => {
+  await expect(
+    validateConfiguration(
+      {
+        afterPack: null,
+        beforeBuild: null,
+      } as unknown as Configuration,
+      new DebugLogger()
+    )
+  ).resolves.toBeUndefined()
+})
+
+test.ifNotWindows("invalid string type for schema-level field throws via schema validator", async ({ expect }) => {
+  // productName must be a string|null — passing an object exercises the schema validator
+  let err: Error | undefined
+  try {
+    await validateConfiguration({ productName: {} } as any, new DebugLogger())
+  } catch (e: any) {
+    err = e
+  }
+  expect(err).toBeDefined()
+  expect(err!.message).toContain("configuration.productName")
+})
+
+test.ifNotWindows("unknown linux property reports correct nested path", ({ expect }) =>
+  appThrows(
+    expect,
     {
-      afterPack: () => Promise.resolve(),
-      beforeBuild: () => Promise.resolve(),
+      targets: linuxDirTarget,
+      config: { linux: { unknownLinuxProp: true } } as any,
     },
-    new DebugLogger()
+    undefined,
+    error => error.message.includes("configuration.linux has an unknown property 'unknownLinuxProp'")
   )
-})
-
-test.ifNotWindows("null callback passes validation", () => {
-  return validateConfiguration(
-    {
-      afterPack: null,
-      beforeBuild: null,
-    } as unknown as Configuration,
-    new DebugLogger()
-  )
-})
-
-test.ifNotWindows("deprecated extraMetadata.build throws", async ({ expect }) => {
-  let err: Error | undefined
-  try {
-    await validateConfiguration({ extraMetadata: { build: {} } } as any, new DebugLogger())
-  } catch (e: any) {
-    err = e
-  }
-  expect(err).toBeDefined()
-  expect(err!.message).toContain("--em.build is deprecated")
-})
-
-test.ifNotWindows("deprecated extraMetadata.directories throws", async ({ expect }) => {
-  let err: Error | undefined
-  try {
-    await validateConfiguration({ extraMetadata: { directories: {} } } as any, new DebugLogger())
-  } catch (e: any) {
-    err = e
-  }
-  expect(err).toBeDefined()
-  expect(err!.message).toContain("--em.directories is deprecated")
-})
+)

@@ -252,3 +252,50 @@ describe("validateSchema - nested instancePath formatting", () => {
     expect(() => validateSchema(deepSchema, { a: { b: { c: "ok", d: "extra" } } })).toThrow("configuration.a.b has an unknown property 'd'")
   })
 })
+
+describe("validateSchema - anyOf grouping", () => {
+  it("surfaces single combined message when multiple branches fail for the same field", () => {
+    const schema = {
+      type: "object",
+      properties: {
+        hook: { anyOf: [{ typeof: "function" }, { type: ["null", "string"] }] },
+      },
+      additionalProperties: false,
+    }
+    let msg = ""
+    try {
+      // Plain object is not function, null, or string — all branches fail
+      validateSchema(schema, { hook: {} })
+    } catch (e: any) {
+      msg = e.message
+    }
+    // Error items are prefixed with "\n - "; count them to ensure only one is emitted
+    const errorItems = msg.split("\n - ").slice(1) // skip header
+    expect(errorItems).toHaveLength(1)
+    expect(msg).toContain("configuration.hook")
+  })
+})
+
+describe("validateSchema - JSON Pointer decoding", () => {
+  it("decodes ~1 to / in property names", () => {
+    const schema = {
+      type: "object",
+      properties: {
+        "a/b": { type: "object", additionalProperties: false, properties: { c: { type: "string" } } },
+      },
+      additionalProperties: false,
+    }
+    expect(() => validateSchema(schema, { "a/b": { c: "ok", d: "extra" } })).toThrow("configuration.a/b has an unknown property 'd'")
+  })
+
+  it("decodes ~0 to ~ in property names", () => {
+    const schema = {
+      type: "object",
+      properties: {
+        "a~b": { type: "object", additionalProperties: false, properties: { c: { type: "string" } } },
+      },
+      additionalProperties: false,
+    }
+    expect(() => validateSchema(schema, { "a~b": { c: "ok", d: "extra" } })).toThrow("configuration.a~b has an unknown property 'd'")
+  })
+})

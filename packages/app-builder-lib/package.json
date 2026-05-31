@@ -47,8 +47,6 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
-    "ajv": "^8.18.0",
-    "ajv-keywords": "^5.1.0",
     "@electron/asar": "3.4.1",
     "@electron/fuses": "^1.8.0",
     "@electron/get": "^3.0.0",
@@ -61,6 +59,8 @@
     "@peculiar/webcrypto": "^1.7.1",
     "asn1js": "^3.0.10",
     "async-exit-hook": "^2.0.1",
+    "ajv": "^8.18.0",
+    "ajv-keywords": "^5.1.0",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
     "chromium-pickle-js": "^0.2.0",

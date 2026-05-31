@@ -1,7 +1,5 @@
-import Ajv, { ErrorObject } from "ajv"
-import type { CodeKeywordDefinition } from "ajv"
-
-const getTypeofDef: () => CodeKeywordDefinition = require("ajv-keywords/dist/definitions/typeof")
+import Ajv, { ErrorObject, ValidateFunction } from "ajv"
+import addKeywords from "ajv-keywords"
 
 export type PostFormatter = (formattedError: string, error: ErrorObject) => string
 
@@ -17,10 +15,18 @@ const ajv = new Ajv({
   strict: false,
 })
 
-ajv.addKeyword(getTypeofDef())
+addKeywords(ajv, ["typeof"])
+
+// Cache the compiled validator for the canonical scheme.json so it is only
+// compiled once per process lifetime.
+let _cachedValidate: ValidateFunction | undefined
 
 export function validateSchema(schema: unknown, data: unknown, config: ValidationConfig = {}): void {
-  const validate = ajv.compile(schema as object)
+  if (_cachedValidate == null || _cachedValidate.schema !== schema) {
+    _cachedValidate = ajv.compile(schema as object)
+  }
+  const validate = _cachedValidate
+
   if (validate(data)) {
     return
   }
@@ -42,17 +48,59 @@ export function validateSchema(schema: unknown, data: unknown, config: Validatio
   throw new Error(`${header}\n${formatted.join("\n")}`)
 }
 
+/**
+ * Filters the flat list of ajv errors to the most actionable subset.
+ * Composite keywords (anyOf/oneOf/if) are suppressed when more specific
+ * errors exist at the same or deeper paths.  When all errors share the
+ * same instancePath and a composite parent for that path exists, the
+ * parent is kept instead so the user sees a single "should be one of"
+ * message rather than every failed branch listed separately.
+ */
 function filterRelevantErrors(errors: ErrorObject[]): ErrorObject[] {
   const compositeKeywords = new Set(["anyOf", "oneOf", "if"])
-  const hasSpecific = errors.some(e => !compositeKeywords.has(e.keyword))
-  return hasSpecific ? errors.filter(e => !compositeKeywords.has(e.keyword)) : errors
+  const specific = errors.filter(e => !compositeKeywords.has(e.keyword))
+
+  if (specific.length === 0) {
+    return errors.filter(e => compositeKeywords.has(e.keyword))
+  }
+
+  // Group specific errors by instancePath
+  const byPath = new Map<string, ErrorObject[]>()
+  for (const e of specific) {
+    const list = byPath.get(e.instancePath)
+    if (list != null) {
+      list.push(e)
+    } else {
+      byPath.set(e.instancePath, [e])
+    }
+  }
+
+  const result: ErrorObject[] = []
+  for (const [path, group] of byPath) {
+    // When multiple branch-failures share the same path, prefer the anyOf
+    // parent error (one concise "should be one of these" message).
+    if (group.length > 1) {
+      const parent = errors.find(e => e.instancePath === path && compositeKeywords.has(e.keyword))
+      if (parent != null) {
+        result.push(parent)
+        continue
+      }
+    }
+    result.push(...group)
+  }
+  return result
+}
+
+/** Decodes a single RFC 6901 JSON Pointer segment (`~1` → `/`, `~0` → `~`). */
+function decodePointerSegment(segment: string): string {
+  return segment.replace(/~1/g, "/").replace(/~0/g, "~")
 }
 
 function instancePathToLabel(instancePath: string, baseDataPath: string): string {
   if (!instancePath) {
     return baseDataPath
   }
-  const segments = instancePath.split("/").filter(Boolean)
+  const segments = instancePath.split("/").filter(Boolean).map(decodePointerSegment)
   return [baseDataPath, ...segments].join(".")
 }
 
