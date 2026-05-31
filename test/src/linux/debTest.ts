@@ -86,6 +86,38 @@ describe.heavy.ifNotWindows("deb", () => {
       }
     ))
 
+  // Regression test for https://github.com/electron-userland/electron-builder/issues/9746:
+  // update-alternatives --remove must receive the registered binary path, not the symlink.
+  test("executable path in postrm script", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: defaultDebTarget,
+        config: {
+          productName: "foo",
+          linux: {
+            executableName: "Boo",
+          },
+        },
+      },
+      {
+        packed: async context => {
+          const debPath = `${context.outDir}/TestApp_1.1.0_amd64.deb`
+          const { member: controlMember, tarArgs: controlArgs } = await resolveDebMember(debPath, "control.tar.")
+          const postrm = (
+            await execShell(`'${await getArExecutable()}' p '${debPath}' ${controlMember} | '${await getTarExecutable()}' -x ${controlArgs} --to-stdout ./postrm`, {
+              maxBuffer: 10 * 1024 * 1024,
+            })
+          ).stdout
+          expect(postrm.trim()).toMatchSnapshot()
+          // The path passed to --remove must be the registered alternative binary (/opt/…),
+          // not the generic symlink (/usr/bin/…).
+          expect(postrm).toContain("update-alternatives --remove 'Boo' '/opt/foo/Boo'")
+          expect(postrm).not.toContain("update-alternatives --remove 'Boo' '/usr/bin/Boo'")
+        },
+      }
+    ))
+
   test("deb file associations", ({ expect }) =>
     app(
       expect,
