@@ -45,8 +45,8 @@ import {
   Target,
   TargetSpecificOptions,
 } from "./index"
-import { executeAppBuilderAsJson } from "./util/appBuilder"
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier"
+import { convertIcon } from "./util/iconConverter"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
 import { AssetCatalogResult, generateAssetCatalogForIcon } from "./util/macosIconComposer"
 
@@ -851,43 +851,23 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   // convert if need, validate size (it is a reason why tool is called even if file has target extension (already specified as foo.icns for example))
   async resolveIcon(sources: Array<string>, fallbackSources: Array<string>, outputFormat: IconFormat): Promise<Array<IconInfo>> {
     const output = this.expandMacro(this.config.directories!.output!)
-    const args = [
-      "icon",
-      "--format",
-      outputFormat,
-      "--root",
-      this.buildResourcesDir,
-      "--root",
-      this.projectDir,
-      "--out",
-      path.resolve(this.projectDir, output, `.icon-${outputFormat}`),
-    ]
-    for (const source of sources) {
-      if (source.endsWith(".icon")) {
-        // Ignore .icon files: they will cause the format conversion to fail
-        continue
-      }
-      args.push("--input", source)
-    }
-    for (const source of fallbackSources) {
-      if (source.endsWith(".icon")) {
-        // Ignore .icon files: they will cause the format conversion to fail
-        continue
-      }
-      args.push("--fallback-input", source)
-    }
+    const outDir = path.resolve(this.projectDir, output, `.icon-${outputFormat}`)
+    const roots = [this.buildResourcesDir, this.projectDir]
 
-    const result: IconConvertResult = await executeAppBuilderAsJson(args)
-    const errorMessage = result.error
-    if (errorMessage != null) {
-      throw new InvalidConfigurationError(errorMessage, result.errorCode)
+    const filteredSources = sources.filter(s => !s.endsWith(".icon"))
+    const filteredFallbacks = fallbackSources.filter(s => !s.endsWith(".icon"))
+
+    const result = await convertIcon(filteredSources, filteredFallbacks, roots, outputFormat, outDir)
+
+    if (result.error != null) {
+      throw new InvalidConfigurationError(result.error, result.errorCode)
     }
 
     if (result.isFallback) {
       log.warn({ reason: "application icon is not set" }, `default ${capitalizeFirstLetter(this.info.framework.name)} icon is used`)
     }
 
-    return result.icons || []
+    return result.icons
   }
 }
 
@@ -896,13 +876,6 @@ export interface IconInfo {
   size: number
 }
 
-interface IconConvertResult {
-  icons?: Array<IconInfo>
-
-  error?: string
-  errorCode?: string
-  isFallback?: boolean
-}
 
 export type IconFormat = "icns" | "ico" | "set"
 
