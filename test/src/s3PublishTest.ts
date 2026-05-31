@@ -326,7 +326,9 @@ describe("BaseS3Publisher.upload — key construction and S3 request", () => {
     vi.mocked(https.request).mockImplementationOnce((_opts: unknown, _cb: unknown) => {
       const req = new EventEmitter() as ReturnType<typeof https.request>
       ;(req as any).end = vi.fn()
-      ;(req as any).destroy = vi.fn(() => { destroyCalled = true })
+      ;(req as any).destroy = vi.fn(() => {
+        destroyCalled = true
+      })
       ;(req as any).write = vi.fn()
       // Never call the response callback — upload hangs until cancel
       return req

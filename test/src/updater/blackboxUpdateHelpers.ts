@@ -38,7 +38,7 @@ export async function doBuild(
   arch: Arch,
   tmpDir: TmpDir,
   isWindows: boolean,
-  extraConfiguration?: Configuration | null,
+  extraConfiguration?: Configuration | null
 ) {
   const currentPlatform = isWindows ? Platform.WINDOWS : Platform.current()
   async function buildApp({
@@ -273,7 +273,14 @@ export async function runTestWithinServer(doTest: (rootDirectory: string, update
   )
 }
 
-export async function runTest(context: TestContext, target: string, packageManager: string, arch: Arch = Arch.x64, toolsets: ToolsetConfig = {}, extraConfig?: Partial<Configuration>) {
+export async function runTest(
+  context: TestContext,
+  target: string,
+  packageManager: string,
+  arch: Arch = Arch.x64,
+  toolsets: ToolsetConfig = {},
+  extraConfig?: Partial<Configuration>
+) {
   const { expect } = context
   const vm = await windowsVmPromise
   if (vm && target === "nsis") {
