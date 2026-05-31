@@ -583,6 +583,122 @@ if apparmor_status --enabled > /dev/null 2>&1; then
 fi"
 `;
 
+exports[`deb > executable path in postrm script 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.deb",
+    },
+  ],
+}
+`;
+
+exports[`deb > executable path in postrm script 2`] = `
+[
+  "/",
+  "/opt/",
+  "/usr/",
+  "/opt/foo/",
+  "/opt/foo/Boo",
+  "/opt/foo/chrome-sandbox",
+  "/opt/foo/chrome_100_percent.pak",
+  "/opt/foo/chrome_200_percent.pak",
+  "/opt/foo/chrome_crashpad_handler",
+  "/opt/foo/icudtl.dat",
+  "/opt/foo/libEGL.so",
+  "/opt/foo/libffmpeg.so",
+  "/opt/foo/libGLESv2.so",
+  "/opt/foo/libvk_swiftshader.so",
+  "/opt/foo/libvulkan.so.1",
+  "/opt/foo/LICENSE.electron.txt",
+  "/opt/foo/LICENSES.chromium.html",
+  "/opt/foo/resources.pak",
+  "/opt/foo/snapshot_blob.bin",
+  "/opt/foo/v8_context_snapshot.bin",
+  "/opt/foo/vk_swiftshader_icd.json",
+  "/usr/share/",
+  "/opt/foo/resources/",
+  "/opt/foo/resources/app.asar",
+  "/opt/foo/resources/apparmor-profile",
+  "/usr/share/applications/",
+  "/usr/share/applications/Boo.desktop",
+  "/usr/share/doc/",
+  "/usr/share/icons/",
+  "/usr/share/doc/testapp/",
+  "/usr/share/doc/testapp/changelog.gz",
+  "/usr/share/icons/hicolor/",
+  "/usr/share/icons/hicolor/128x128/",
+  "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/256x256/",
+  "/usr/share/icons/hicolor/32x32/",
+  "/usr/share/icons/hicolor/48x48/",
+  "/usr/share/icons/hicolor/512x512/",
+  "/usr/share/icons/hicolor/64x64/",
+  "/usr/share/icons/hicolor/128x128/apps/",
+  "/usr/share/icons/hicolor/128x128/apps/Boo.png",
+  "/usr/share/icons/hicolor/16x16/apps/",
+  "/usr/share/icons/hicolor/16x16/apps/Boo.png",
+  "/usr/share/icons/hicolor/256x256/apps/",
+  "/usr/share/icons/hicolor/256x256/apps/Boo.png",
+  "/usr/share/icons/hicolor/32x32/apps/",
+  "/usr/share/icons/hicolor/32x32/apps/Boo.png",
+  "/usr/share/icons/hicolor/48x48/apps/",
+  "/usr/share/icons/hicolor/48x48/apps/Boo.png",
+  "/usr/share/icons/hicolor/512x512/apps/",
+  "/usr/share/icons/hicolor/512x512/apps/Boo.png",
+  "/usr/share/icons/hicolor/64x64/apps/",
+  "/usr/share/icons/hicolor/64x64/apps/Boo.png",
+]
+`;
+
+exports[`deb > executable path in postrm script 3`] = `
+{
+  "Architecture": "amd64",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
+  "Homepage": "http://foo.example.com",
+  "License": "MIT",
+  "Maintainer": "Foo Bar <foo@example.com>",
+  "Package": "testapp",
+  "Priority": "optional",
+  "Recommends": "libappindicator3-1",
+  "Section": "devel",
+  "Vendor": "Foo Bar <foo@example.com>",
+}
+`;
+
+exports[`deb > executable path in postrm script 4`] = `"Test Application (test quite “ #378)"`;
+
+exports[`deb > executable path in postrm script 5`] = `
+"#!/bin/bash
+
+# Delete the link to the binary
+# update-alternatives --remove <name> <path>: 'path' must be the registered alternative binary,
+# not the generic symlink — see https://man7.org/linux/man-pages/man1/update-alternatives.1.html
+if type update-alternatives >/dev/null 2>&1; then
+    update-alternatives --remove 'Boo' '/opt/foo/Boo'
+else
+    rm -f '/usr/bin/Boo'
+fi
+
+APPARMOR_PROFILE_DEST='/etc/apparmor.d/Boo'
+
+# Remove and unload apparmor profile.
+if [ -f "$APPARMOR_PROFILE_DEST" ]; then
+  # Unload the profile from the running kernel before deleting the file so the
+  # policy is not left enforced until the next reboot.  Mirror the chroot guard
+  # used in the after-install script — live AppArmor operations are not
+  # meaningful inside a chroot.
+  # https://wiki.debian.org/AppArmor/HowToUse
+  if apparmor_status --enabled > /dev/null 2>&1; then
+    if ! { [ -x '/usr/bin/ischroot' ] && /usr/bin/ischroot; } && hash apparmor_parser 2>/dev/null; then
+      apparmor_parser --remove "$APPARMOR_PROFILE_DEST" || true
+    fi
+  fi
+  rm -f "$APPARMOR_PROFILE_DEST"
+fi"
+`;
+
 exports[`deb > no quotes for safe exec name 1`] = `
 "[Desktop Entry]
 Name=foo
