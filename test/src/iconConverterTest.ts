@@ -78,15 +78,21 @@ describe("convertIcon – ICNS output", () => {
   })
 
   it("uses pre-built sized PNGs from icon directory", async () => {
+    // The fixture build dir has icons/ (16,32,48,64,128,256,512) and icon.icns.
+    // With empty sources, the auto-fallback resolves icon.icns directly (size 0)
+    // OR converts the icons/ directory to an ICNS. Either way the icon path
+    // must be a valid non-empty result.
     const iconsDir = TEST_APP_ICONS
     const outDir = path.join(tmpDir, "out")
 
     const result = await convertIcon([], [], [iconsDir], "icns", outDir)
 
-    // The fixture has icons/256x256.png, icons/512x512.png etc.
-    // resolveIcon with empty sources should pick up "icons" directory
-    // OR the fixture has icon.icns which would be returned directly
     expect(result.error).toBeUndefined()
+    expect(result.icons.length).toBeGreaterThan(0)
+    // The first result must be a readable file
+    const { readFile: rf } = await import("fs/promises")
+    const data = await rf(result.icons[0].file)
+    expect(data.length).toBeGreaterThan(0)
   })
 
   it("does not upscale — skips sizes larger than source", async () => {

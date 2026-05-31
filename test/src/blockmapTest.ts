@@ -7,10 +7,7 @@ import * as path from "path"
 import * as zlib from "zlib"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { buildBlockMap } from "app-builder-lib/out/targets/blockmap/blockmap"
-
-// Path to the shipped app-builder-bin binary for golden-output comparisons
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { appBuilderPath } = require("app-builder-bin") as { appBuilderPath: string }
+import { appBuilderPath } from "app-builder-bin"
 
 interface BinaryBlockMap {
   version: string
@@ -34,6 +31,8 @@ function runBinaryBlockmap(
   } else {
     args.push("--compression", compression)
   }
+  // appBuilderPath is non-null here: runBinaryBlockmap is only called from
+  // the describe.skipIf(appBuilderPath == null) suite.
   const proc = spawnSync(appBuilderPath, args, { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 })
   if (proc.status !== 0) {
     throw new Error(`app-builder-bin failed (exit ${proc.status}): ${proc.stderr}`)
@@ -239,7 +238,10 @@ describe("buildBlockMap", () => {
 // size (blockMapSize / the .blockmap file's byte length), because Go's flate and
 // Node.js's zlib produce different but equally valid DEFLATE/GZIP streams.
 
-describe("buildBlockMap vs app-builder-bin binary (golden output)", () => {
+// Skip the whole suite when app-builder-bin is not installed (e.g. after the
+// dependency is eventually removed). The tests remain as a permanent record of
+// the verified correctness without breaking CI once the binary is gone.
+describe.skipIf(appBuilderPath == null)("buildBlockMap vs app-builder-bin binary (golden output)", () => {
   it("single-chunk file: sizes, checksums and sha512 are identical", async () => {
     const data = Buffer.from("hello world. ".repeat(1024)) // 13 312 bytes, < MIN
     const inFile = path.join(tmpDir, "single.bin")

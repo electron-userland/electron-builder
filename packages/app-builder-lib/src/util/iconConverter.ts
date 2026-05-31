@@ -1,7 +1,32 @@
 import { mkdir, readdir, readFile, stat, writeFile } from "fs/promises"
 import * as path from "path"
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const sharp: typeof import("sharp") = require("sharp")
+
+// Lazy-load sharp so that users who never call resolveIcon / convertIcon
+// (e.g. CLI invocations that only target Windows with a pre-built .ico) do
+// not pay the sharp install-time cost at all.  sharp is listed as an optional
+// peer; missing it at runtime produces a clear error rather than a crash.
+function requireSharp(): typeof import("sharp") {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    return require("sharp")
+  } catch {
+    throw new Error(
+      "sharp is required for icon conversion but could not be loaded. " +
+        "Install it with: pnpm add sharp  (or npm install sharp / yarn add sharp)"
+    )
+  }
+}
+
+// Typed error for icon conversion problems. Thrown internally and caught in
+// convertIcon(), which maps it to the IconConvertResult error fields.
+class IconConversionError extends Error {
+  constructor(
+    message: string,
+    readonly errorCode: string
+  ) {
+    super(message)
+  }
+}
 
 export type IconFormat = "icns" | "ico" | "set"
 
@@ -64,7 +89,7 @@ async function convertToIcns(sourceFile: string, sizeToPath: Map<number, string>
         // Go: skip 16×16 unless explicitly provided (AppIcon Generator doesn't generate from source)
         continue
       }
-      pngData = await sharp(sourceFile).resize(size, size, { kernel: "lanczos3", fit: "fill" }).png().toBuffer()
+      pngData = await requireSharp()(sourceFile).resize(size, size, { kernel: "lanczos3", fit: "fill" }).png().toBuffer()
     }
 
     entries.push(await buildIcnsEntry(size, pngData))
@@ -84,7 +109,7 @@ async function convertToIco(sourceFile: string, maxSize: number, outFile: string
   // ICO format: 6-byte header + N×16-byte directory entries + raw PNG data
   // We embed a single 256×256 PNG (max accepted by Windows for app icons)
   const icoSize = Math.min(maxSize, 256)
-  const pngData = await sharp(sourceFile).resize(icoSize, icoSize, { kernel: "lanczos3", fit: "fill" }).png().toBuffer()
+  const pngData = await requireSharp()(sourceFile).resize(icoSize, icoSize, { kernel: "lanczos3", fit: "fill" }).png().toBuffer()
 
   // ICO directory header (single image)
   const header = Buffer.allocUnsafe(6)
@@ -116,7 +141,7 @@ async function buildLinuxSet(sourceFile: string, maxSize: number, outDir: string
   await Promise.all(
     SET_SIZES.filter(s => s < maxSize).map(async size => {
       const outFile = path.join(outDir, `icon_${size}x${size}.png`)
-      await sharp(sourceFile).resize(size, size, { kernel: "lanczos3", fit: "fill" }).png().toFile(outFile)
+      await requireSharp()(sourceFile).resize(size, size, { kernel: "lanczos3", fit: "fill" }).png().toFile(outFile)
       result.push({ file: outFile, size })
     })
   )
@@ -150,21 +175,20 @@ function buildSourceCandidates(sources: string[], format: IconFormat): string[] 
       }
     }
   }
-  // Auto-append standard fallback names (mirrors go createCommonIconSources)
-  for (const [nameBase, setName] of [
-    ["icon", "icons"],
-    ["icon", "icon"],
-  ] as [string, string][]) {
-    if (format !== "set") {
-      result.push(nameBase + "." + format)
-    }
+  // Auto-append standard fallback names (mirrors go createCommonIconSources).
+  // Only "icons" and "icon" differ between iterations; "icon.png" etc. are
+  // appended once to avoid double stat() calls on the same paths.
+  if (format !== "set") {
+    result.push("icon." + format)
+  }
+  for (const setName of ["icons", "icon"]) {
     result.push(setName)
-    result.push(nameBase + ".png")
-    if (format !== "icns") {
-      result.push(nameBase + ".icns")
-      if (format !== "ico") {
-        result.push(nameBase + ".ico")
-      }
+  }
+  result.push("icon.png")
+  if (format !== "icns") {
+    result.push("icon.icns")
+    if (format !== "ico") {
+      result.push("icon.ico")
     }
   }
   return result
@@ -195,14 +219,14 @@ async function collectIconsFromDir(dir: string): Promise<{ icons: IconInfo[]; fa
   let fallbackFile: string | null = null
 
   for (const name of entries) {
-    if (!name.endsWith(".png") && !name.endsWith(".PNG")) {
-      continue
-    }
-    if (name === "icon.png") {
+    if (name === "icon.png" || name === "icon.PNG") {
       fallbackFile = path.join(dir, name)
       continue
     }
-    const match = name.match(/(\d+)/)
+    // Only accept files whose entire basename is a pixel size, e.g. "256x256.png"
+    // or "512.png". Anchoring prevents matching incidental digits in names like
+    // "app2.png" or "icon-v2.png" — matching the original Go behavior.
+    const match = name.match(/^(\d+)(?:x\d+)?\.png$/i)
     if (!match) {
       continue
     }
@@ -271,14 +295,14 @@ async function doConvertIcon(candidates: string[], roots: string[], format: Icon
       // sharp cannot read ICO; parse the header directly to get max dimension
       const size = await getIcoMaxSize(resolved)
       if (size === null) {
-        return { error: `Icon is not a valid ICO file: ${resolved}`, errorCode: "ERR_ICON_UNKNOWN_FORMAT" } as any
+        throw new IconConversionError(`Icon is not a valid ICO file: ${resolved}`, "ERR_ICON_UNKNOWN_FORMAT")
       }
       if (size < 256) {
-        return { error: `Icon must be at least 256x256 pixels, provided: ${size}x${size}`, errorCode: "ERR_ICON_TOO_SMALL" } as any
+        throw new IconConversionError(`Icon must be at least 256x256 pixels, provided: ${size}x${size}`, "ERR_ICON_TOO_SMALL")
       }
       return [{ file: resolved, size }]
     }
-    const meta = await sharp(resolved).metadata()
+    const meta = await requireSharp()(resolved).metadata()
     const size = Math.max(meta.width ?? 0, meta.height ?? 0)
     return [{ file: resolved, size }]
   }
@@ -297,7 +321,7 @@ async function doConvertIcon(candidates: string[], roots: string[], format: Icon
         return icons
       }
       if (fallbackFile) {
-        const meta = await sharp(fallbackFile).metadata()
+        const meta = await requireSharp()(fallbackFile).metadata()
         const maxSize = Math.max(meta.width ?? 0, meta.height ?? 0)
         return buildLinuxSet(fallbackFile, maxSize, outDir)
       }
@@ -330,7 +354,7 @@ async function doConvertIcon(candidates: string[], roots: string[], format: Icon
     if (!extracted) {
       return null
     }
-    const meta = await sharp(extracted).metadata()
+    const meta = await requireSharp()(extracted).metadata()
     const maxSize = Math.max(meta.width ?? 0, meta.height ?? 0)
     await mkdir(outDir, { recursive: true })
     if (format === "set") {
@@ -340,7 +364,7 @@ async function doConvertIcon(candidates: string[], roots: string[], format: Icon
     }
     // format === "ico": resize the extracted PNG to ≤256 and write ICO
     const icoSize = Math.min(maxSize, 256)
-    const resized = await sharp(extracted).resize(icoSize, icoSize, { kernel: "lanczos3", fit: "fill" }).png().toBuffer()
+    const resized = await requireSharp()(extracted).resize(icoSize, icoSize, { kernel: "lanczos3", fit: "fill" }).png().toBuffer()
     const outFile = path.join(outDir, "icon.ico")
     const header = Buffer.allocUnsafe(6)
     header.writeUInt16LE(0, 0)
@@ -363,7 +387,7 @@ async function doConvertIcon(candidates: string[], roots: string[], format: Icon
 }
 
 async function doConvertSingleFile(sourceFile: string, format: IconFormat, outDir: string): Promise<IconInfo[] | null> {
-  const img = sharp(sourceFile)
+  const img = requireSharp()(sourceFile)
   const meta = await img.metadata()
   const maxSize = Math.max(meta.width ?? 0, meta.height ?? 0)
 
@@ -373,10 +397,7 @@ async function doConvertSingleFile(sourceFile: string, format: IconFormat, outDi
 
   const recommendedMin = format === "icns" ? 512 : 256
   if (maxSize < recommendedMin) {
-    return {
-      error: `Icon must be at least ${recommendedMin}x${recommendedMin} pixels, provided: ${maxSize}x${maxSize}`,
-      errorCode: "ERR_ICON_TOO_SMALL",
-    } as any
+    throw new IconConversionError(`Icon must be at least ${recommendedMin}x${recommendedMin} pixels, provided: ${maxSize}x${maxSize}`, "ERR_ICON_TOO_SMALL")
   }
 
   const outExt = format === "set" ? ".png" : "." + format
@@ -438,20 +459,21 @@ async function extractLargestFromIcns(data: Buffer): Promise<Buffer | null> {
 export async function convertIcon(sources: string[], fallbackSources: string[], roots: string[], format: IconFormat, outDir: string): Promise<IconConvertResult> {
   const candidates = buildSourceCandidates(sources, format)
 
-  let icons = await doConvertIcon(candidates, roots, format, outDir)
+  try {
+    let icons = await doConvertIcon(candidates, roots, format, outDir)
 
-  let isFallback = false
-  if (icons == null) {
-    const fallbackCandidates = buildSourceCandidates(fallbackSources, format)
-    icons = await doConvertIcon(fallbackCandidates, roots, format, outDir)
-    isFallback = true
+    let isFallback = false
+    if (icons == null) {
+      const fallbackCandidates = buildSourceCandidates(fallbackSources, format)
+      icons = await doConvertIcon(fallbackCandidates, roots, format, outDir)
+      isFallback = true
+    }
+
+    return { icons: icons ?? [], isFallback }
+  } catch (e) {
+    if (e instanceof IconConversionError) {
+      return { icons: [], isFallback: false, error: e.message, errorCode: e.errorCode }
+    }
+    throw e
   }
-
-  // Check if doConvertSingleFile returned an error object
-  if (icons != null && (icons as any).error != null) {
-    const err = icons as any
-    return { icons: [], isFallback, error: err.error, errorCode: err.errorCode }
-  }
-
-  return { icons: icons ?? [], isFallback }
 }

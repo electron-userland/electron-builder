@@ -1,6 +1,6 @@
 import { createHash } from "crypto"
-import { createWriteStream } from "fs"
-import { appendFile, readFile } from "fs/promises"
+import { createReadStream } from "fs"
+import { appendFile, writeFile } from "fs/promises"
 import * as zlib from "zlib"
 import { blake2b } from "@noble/hashes/blake2.js"
 import { BlockMapDataHolder } from "builder-util-runtime"
@@ -44,75 +44,15 @@ interface BlockMap {
   }>
 }
 
-// Compute Rabin content-defined chunk boundaries.
-// Returns parallel arrays of BLAKE2b-18 checksums (base64) and byte sizes.
-function computeChunks(data: Buffer): { checksums: string[]; sizes: number[] } {
-  const checksums: string[] = []
-  const sizes: number[] = []
-
-  let pos = 0
-  while (pos < data.length) {
-    const chunkStart = pos
-    const primeStart = pos + RABIN_MIN - RABIN_WINDOW
-    const primeEnd = pos + RABIN_MIN
-
-    // Not enough data for a full minimum chunk — emit remaining as final chunk
-    if (primeEnd > data.length) {
-      const chunk = data.subarray(chunkStart, data.length)
-      checksums.push(Buffer.from(blake2b(chunk, { dkLen: 18 })).toString("base64"))
-      sizes.push(chunk.length)
-      break
-    }
-
-    // Prime the rolling hash with the window bytes [primeStart, primeEnd)
-    // using the non-windowed hash update (same as go-rabin's table.update).
-    let hi = 0
-    let lo = 0
-    for (let i = primeStart; i < primeEnd; i++) {
-      const b = data[i]
-      const top = (hi >>> 23) & 0xff // bits 55–62 of 63-bit hash
-      const nhi = ((hi << 8) | (lo >>> 24)) & 0x7fffffff
-      const nlo = ((lo << 8) | b) & 0xffffffff
-      hi = (nhi ^ PUSH_HI[top]) | 0
-      lo = (nlo ^ PUSH_LO[top]) | 0
-    }
-
-    // Slide the window byte-by-byte looking for a boundary.
-    // go-rabin Chunker: boundary when hash & hashMask === hashMask.
-    let head = primeStart
-    const limit = chunkStart + RABIN_MAX - RABIN_WINDOW
-
-    while ((lo & RABIN_HASH_MASK) !== RABIN_HASH_MASK) {
-      if (head >= limit || head + RABIN_WINDOW >= data.length) break
-      // pop: remove oldest byte; push: add new byte
-      const oldByte = data[head]
-      const newByte = data[head + RABIN_WINDOW]
-      head++
-      hi = (hi ^ POP_HI[oldByte]) | 0
-      lo = (lo ^ POP_LO[oldByte]) | 0
-      const top = (hi >>> 23) & 0xff
-      const nhi = ((hi << 8) | (lo >>> 24)) & 0x7fffffff
-      const nlo = ((lo << 8) | newByte) & 0xffffffff
-      hi = (nhi ^ PUSH_HI[top]) | 0
-      lo = (nlo ^ PUSH_LO[top]) | 0
-    }
-
-    const chunkEnd = Math.min(head + RABIN_WINDOW, data.length)
-    const chunk = data.subarray(chunkStart, chunkEnd)
-    checksums.push(Buffer.from(blake2b(chunk, { dkLen: 18 })).toString("base64"))
-    sizes.push(chunk.length)
-    pos = chunkEnd
-  }
-
-  return { checksums, sizes }
-}
-
 function compress(data: Buffer, format: CompressionFormat): Buffer {
   return format === "deflate" ? zlib.deflateRawSync(data, { level: 9 }) : zlib.gzipSync(data, { level: 9 })
 }
 
 /**
  * Build a content-defined block map for `inFile` using Rabin fingerprinting.
+ *
+ * Files are processed via streaming (peak memory ≈ RABIN_MAX = 32 KB per chunk,
+ * not the full file size), making this safe for large installers.
  *
  * - If `outFile` is omitted: compressed blockmap is appended to `inFile`
  *   (used for NSIS web installer / AppImage embed); `blockMapSize` is returned.
@@ -122,48 +62,110 @@ function compress(data: Buffer, format: CompressionFormat): Buffer {
  * Returned `sha512` is SHA-512 of the full file as it exists after the call.
  */
 export async function buildBlockMap(inFile: string, compressionFormat: CompressionFormat, outFile?: string): Promise<BlockMapDataHolder> {
-  const data = await readFile(inFile)
+  const fileHash = createHash("sha512")
+  const checksums: string[] = []
+  const sizes: number[] = []
+  let totalSize = 0
 
-  const { checksums, sizes } = computeChunks(data)
+  // Per-chunk Rabin state. Peak memory ≈ RABIN_MAX (32 KB) — not file size.
+  const chunkBuf = Buffer.allocUnsafe(RABIN_MAX)
+  let chunkN = 0 // bytes accumulated for current chunk
+  let hi = 0
+  let lo = 0
+  const win = new Uint8Array(RABIN_WINDOW) // rolling window ring buffer
+  let wpos = 0
+
+  function emitChunk() {
+    checksums.push(Buffer.from(blake2b(chunkBuf.subarray(0, chunkN), { dkLen: 18 })).toString("base64"))
+    sizes.push(chunkN)
+    chunkN = 0
+    hi = 0
+    lo = 0
+    win.fill(0)
+    wpos = 0
+  }
+
+  // Called once per byte; inlines the three-phase Rabin state machine:
+  //   skip (< MIN-WINDOW bytes) → prime (next WINDOW bytes) → scan (≥ MIN bytes)
+  function processByte(b: number) {
+    chunkBuf[chunkN++] = b
+
+    if (chunkN <= RABIN_MIN - RABIN_WINDOW) {
+      // Skip phase: not close enough to MIN to start priming yet
+      return
+    }
+
+    if (chunkN <= RABIN_MIN) {
+      // Prime phase: non-windowed hash update, filling the ring buffer
+      win[wpos] = b
+      wpos = (wpos + 1) % RABIN_WINDOW
+      const top = (hi >>> 23) & 0xff
+      const nhi = ((hi << 8) | (lo >>> 24)) & 0x7fffffff
+      const nlo = ((lo << 8) | b) & 0xffffffff
+      hi = (nhi ^ PUSH_HI[top]) | 0
+      lo = (nlo ^ PUSH_LO[top]) | 0
+      // At exactly MIN: check whether the primed hash is already a boundary
+      if (chunkN === RABIN_MIN && (lo & RABIN_HASH_MASK) === RABIN_HASH_MASK) emitChunk()
+      return
+    }
+
+    // Scan phase: sliding window — pop oldest byte, push new byte
+    const old = win[wpos]
+    win[wpos] = b
+    wpos = (wpos + 1) % RABIN_WINDOW
+    hi = (hi ^ POP_HI[old]) | 0
+    lo = (lo ^ POP_LO[old]) | 0
+    const top = (hi >>> 23) & 0xff
+    const nhi = ((hi << 8) | (lo >>> 24)) & 0x7fffffff
+    const nlo = ((lo << 8) | b) & 0xffffffff
+    hi = (nhi ^ PUSH_HI[top]) | 0
+    lo = (nlo ^ PUSH_LO[top]) | 0
+
+    if ((lo & RABIN_HASH_MASK) === RABIN_HASH_MASK || chunkN >= RABIN_MAX) emitChunk()
+  }
+
+  // Stream-read the file, feeding SHA-512 and the Rabin chunker simultaneously
+  await new Promise<void>((resolve, reject) => {
+    const rs = createReadStream(inFile, { highWaterMark: 256 * 1024 })
+    rs.on("data", (chunk: Buffer | string) => {
+      const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
+      chunk = buf
+      fileHash.update(chunk)
+      totalSize += chunk.length
+      for (let i = 0; i < chunk.length; i++) processByte(chunk[i])
+    })
+    rs.on("end", () => {
+      if (chunkN > 0) emitChunk()
+      resolve()
+    })
+    rs.on("error", reject)
+  })
 
   const blockMap: BlockMap = {
     version: "2",
     files: [{ name: "file", offset: 0, checksums, sizes }],
   }
-
   const compressed = compress(Buffer.from(JSON.stringify(blockMap)), compressionFormat)
 
   if (outFile == null || outFile === "") {
-    // Append mode: compressed blockmap + 4-byte big-endian size → appended to inFile
+    // Append mode: write compressed blockmap + 4-byte size in one atomic call
+    // to avoid a partial-write window between the two separate appendFile calls.
     const sizeHeader = Buffer.allocUnsafe(4)
     sizeHeader.writeUInt32BE(compressed.length, 0)
-    await appendFile(inFile, compressed)
-    await appendFile(inFile, sizeHeader)
-
-    // SHA-512 of original content + appended data
-    const hash = createHash("sha512")
-    hash.update(data)
-    hash.update(compressed)
-    hash.update(sizeHeader)
+    const appended = Buffer.concat([compressed, sizeHeader])
+    await appendFile(inFile, appended)
+    fileHash.update(appended)
 
     return {
-      size: data.length + compressed.length + 4,
-      sha512: hash.digest("base64"),
+      size: totalSize + appended.length,
+      sha512: fileHash.digest("base64"),
       blockMapSize: compressed.length,
     }
   }
 
-  // File output mode: write compressed blockmap to outFile
-  await new Promise<void>((resolve, reject) => {
-    const ws = createWriteStream(outFile)
-    ws.on("error", reject)
-    ws.on("finish", resolve)
-    ws.write(compressed)
-    ws.end()
-  })
-
+  await writeFile(outFile, compressed)
   return {
-    size: data.length,
-    sha512: createHash("sha512").update(data).digest("base64"),
+    size: totalSize,
+    sha512: fileHash.digest("base64"),
   }
 }
