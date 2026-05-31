@@ -8,7 +8,7 @@ import { FileSet } from "../../options/PlatformSpecificBuildOptions"
 import { reactCra } from "../../presets/rectCra"
 import { PACKAGE_VERSION } from "../../version"
 import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load"
-const validateSchema = require("@develar/schema-utils")
+import { validateSchema } from "./schemaValidator"
 
 // https://github.com/electron-userland/electron-builder/issues/1847
 function mergePublish(config: Configuration, configFromOptions: Configuration) {
@@ -235,10 +235,9 @@ export async function validateConfiguration(config: Configuration, debugLogger: 
     throw new InvalidConfigurationError(`appImage.systemIntegration is deprecated, https://github.com/TheAssassin/AppImageLauncher is used for desktop integration"`)
   }
 
-  // noinspection JSUnusedGlobalSymbols
   validateSchema(await schemeDataPromise.value, config, {
     name: `electron-builder ${PACKAGE_VERSION}`,
-    postFormatter: (formattedError: string, error: any): string => {
+    postFormatter: (formattedError, error): string => {
       if (debugLogger.isEnabled) {
         debugLogger.add("invalidConfig", safeStringifyJson(error))
       }
@@ -246,10 +245,9 @@ export async function validateConfiguration(config: Configuration, debugLogger: 
       const site = "https://www.electron.build"
       let url = `${site}/configuration`
       const targets = new Set(["mac", "dmg", "pkg", "mas", "win", "nsis", "appx", "linux", "appimage", "snap"])
-      const dataPath: string = error.dataPath == null ? null : error.dataPath
-      const targetPath = dataPath.startsWith(".") ? dataPath.substr(1).toLowerCase() : null
-      if (targetPath != null && targets.has(targetPath)) {
-        url = `${site}/${targetPath}`
+      const firstSegment = (error.instancePath ?? "").split("/").filter(Boolean)[0]?.toLowerCase()
+      if (firstSegment != null && targets.has(firstSegment)) {
+        url = `${site}/${firstSegment}`
       }
 
       return `${formattedError}\n  How to fix:

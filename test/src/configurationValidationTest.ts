@@ -83,3 +83,69 @@ test.ifNotWindows("null string as null", async ({ expect }) => {
   expect(config.mac!.identity).toBeNull()
   expect(config.mac!.hardenedRuntime).toBe(false)
 })
+
+test.ifNotWindows("unknown mac property reports correct path", ({ expect }) =>
+  appThrows(
+    expect,
+    {
+      targets: linuxDirTarget,
+      config: { mac: { unknownMacProp: true } } as any,
+    },
+    undefined,
+    error => error.message.includes("configuration.mac has an unknown property 'unknownMacProp'")
+  )
+)
+
+test.ifNotWindows("unknown nsis property reports correct path", ({ expect }) =>
+  appThrows(
+    expect,
+    {
+      targets: linuxDirTarget,
+      config: { nsis: { unknownNsisProp: "bad" } } as any,
+    },
+    undefined,
+    error => error.message.includes("configuration.nsis has an unknown property 'unknownNsisProp'")
+  )
+)
+
+test.ifNotWindows("valid callback function passes validation", () => {
+  return validateConfiguration(
+    {
+      afterPack: () => Promise.resolve(),
+      beforeBuild: () => Promise.resolve(),
+    },
+    new DebugLogger()
+  )
+})
+
+test.ifNotWindows("null callback passes validation", () => {
+  return validateConfiguration(
+    {
+      afterPack: null,
+      beforeBuild: null,
+    } as unknown as Configuration,
+    new DebugLogger()
+  )
+})
+
+test.ifNotWindows("deprecated extraMetadata.build throws", async ({ expect }) => {
+  let err: Error | undefined
+  try {
+    await validateConfiguration({ extraMetadata: { build: {} } } as any, new DebugLogger())
+  } catch (e: any) {
+    err = e
+  }
+  expect(err).toBeDefined()
+  expect(err!.message).toContain("--em.build is deprecated")
+})
+
+test.ifNotWindows("deprecated extraMetadata.directories throws", async ({ expect }) => {
+  let err: Error | undefined
+  try {
+    await validateConfiguration({ extraMetadata: { directories: {} } } as any, new DebugLogger())
+  } catch (e: any) {
+    err = e
+  }
+  expect(err).toBeDefined()
+  expect(err!.message).toContain("--em.directories is deprecated")
+})

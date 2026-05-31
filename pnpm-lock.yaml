@@ -92,9 +92,6 @@ importers:
 
   packages/app-builder-lib:
     dependencies:
-      '@develar/schema-utils':
-        specifier: ~2.6.5
-        version: 2.6.5
       '@electron/asar':
         specifier: 3.4.1
         version: 3.4.1
@@ -125,6 +122,12 @@ importers:
       '@types/fs-extra':
         specifier: 9.0.13
         version: 9.0.13
+      ajv:
+        specifier: ^8.18.0
+        version: 8.20.0
+      ajv-keywords:
+        specifier: ^5.1.0
+        version: 5.1.0(ajv@8.20.0)
       asn1js:
         specifier: ^3.0.10
         version: 3.0.10
@@ -2555,10 +2558,6 @@ packages:
     engines: {node: '>=18'}
     peerDependencies:
       postcss: ^8.4
-
-  '@develar/schema-utils@2.6.5':
-    resolution: {integrity: sha512-0cp4PsWQ/9avqTVMCtZ+GirikIA36ikvjtHweU4/j8yLtgObI0+JUPhYFScgwlteveGB1rt3Cm8UhN04XayDig==}
-    engines: {node: '>= 8.9.0'}
 
   '@discoveryjs/json-ext@0.5.7':
     resolution: {integrity: sha512-dBVuXR082gk3jsFp7Rd/JI4kytwGHecnCoTtXFb7DB6CNHp4rg5k1bhg0nWdLGLnOV71lmDzGQaLMy8iPLY0pw==}
@@ -12581,11 +12580,6 @@ snapshots:
   '@csstools/utilities@2.0.0(postcss@8.5.14)':
     dependencies:
       postcss: 8.5.14
-
-  '@develar/schema-utils@2.6.5':
-    dependencies:
-      ajv: 6.12.6
-      ajv-keywords: 3.5.2(ajv@6.12.6)
 
   '@discoveryjs/json-ext@0.5.7': {}
 
