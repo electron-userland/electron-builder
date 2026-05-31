@@ -11,6 +11,7 @@ import { buildGotProxyAgent, exec, exists, getPath7za, log, PADDING, parseValidE
 import { MultiProgress } from "electron-publish/out/multiProgress"
 import { createReadStream, createWriteStream } from "fs"
 import * as fs from "fs/promises"
+import * as crypto from "crypto"
 import * as os from "os"
 import * as path from "path"
 import * as lockfile from "proper-lockfile"
@@ -187,6 +188,16 @@ export async function extractArchive(file: string, dir: string) {
     await fs.rm(tmpDir, { recursive: true, force: true })
     await fs.mkdir(tmpDir, { recursive: true })
 
+    // Guard against the transient window in @electron/get's non-atomic putFileInCache (remove → move).
+    // A concurrent worker may have deleted and not yet replaced the source archive; wait briefly for it.
+    for (let i = 0; !(await exists(file)); i++) {
+      if (i >= 4) {
+        throw Object.assign(new Error(`Source archive not found after retries: ${file}`), { code: "ENOENT", path: file })
+      }
+      log.warn({ file, attempt: i + 1 }, "source archive transiently missing, retrying")
+      await new Promise(r => setTimeout(r, 300 * (i + 1)))
+    }
+
     if (file.endsWith(".tar.gz") || file.endsWith(".tgz")) {
       await tar.extract({ file, cwd: tmpDir, strip: 1 })
     } else if (file.endsWith(".zip")) {
@@ -223,6 +234,19 @@ export async function extractArchive(file: string, dir: string) {
 }
 
 async function downloadArtifactToFile(config: Parameters<typeof get.downloadArtifact>[0], label: string): Promise<string> {
+  // Serialize concurrent downloads of the same artifact across vitest workers to prevent @electron/get's
+  // non-atomic putFileInCache (remove + move) from racing with a concurrent reader.
+  const artifactLockKey = crypto
+    .createHash("sha256")
+    .update(JSON.stringify({ v: config.version, p: (config as any).platform, a: (config as any).arch, n: (config as any).artifactName }))
+    .digest("hex")
+    .slice(0, 20)
+  const artifactLockPath = path.join(os.tmpdir(), `eb-dl-${artifactLockKey}.lock`)
+  const releaseArtifactLock = await lockfile.lock(artifactLockPath, {
+    retries: { retries: 30, minTimeout: 500, maxTimeout: 5000 },
+    stale: 600_000,
+    realpath: false,
+  })
   let lastLoggedMilestone = -1
   const state: { bar: ProgressBar | undefined } = { bar: undefined }
 
@@ -266,9 +290,7 @@ async function downloadArtifactToFile(config: Parameters<typeof get.downloadArti
         interval: 2000,
         backoff: 2000,
         shouldRetry: (e: any) =>
-          e instanceof HttpError
-            ? e.isServerError()
-            : typeof e?.code === "string" && ["ENOTFOUND", "ETIMEDOUT", "ECONNRESET", "EPIPE"].includes(e.code),
+          e instanceof HttpError ? e.isServerError() : typeof e?.code === "string" && ["ENOTFOUND", "ETIMEDOUT", "ECONNRESET", "EPIPE", "ENOENT"].includes(e.code),
       })
     } catch (err) {
       if (typeof (err as any)?.message === "string" && (err as any).message.includes("dest already exists")) {
@@ -288,6 +310,7 @@ async function downloadArtifactToFile(config: Parameters<typeof get.downloadArti
   } finally {
     state.bar?.update(100)
     state.bar?.terminate()
+    await releaseArtifactLock().catch(err => log.warn({ err }, "failed to release artifact download lock"))
   }
 }
 
