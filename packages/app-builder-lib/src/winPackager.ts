@@ -305,7 +305,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       const outDir = path.join(packContext.appOutDir, ...filepath)
       return walk(outDir, (file, stat) => stat.isDirectory() || this.shouldSignFile(file))
     }
-    // Note that the `swiftshader` directory is absent in modern electron versions, and is listed here only for backwards compatibility.
+    // Note: The `swiftshader` directory is absent in modern electron versions. `swiftshader/` held Chromium's legacy SwiftShader GL fallback (libEGL.dll / libGLESv2.dll), removed in Chromium 102 (Electron 19+) in favor of SwANGLE (ANGLE + SwiftShader Vulkan). This is kept here only for backwards compat with older Electron; `walk` no-ops on a missing dir (readdir ENOENT is swallowed), so this is harmless when the directory is absent.
     const filesToSign = await Promise.all([filesPromise(["resources", "app.asar.unpacked"]), filesPromise(["swiftshader"])])
     for (const file of filesToSign.flat(1)) {
       await this.signIf(file)
