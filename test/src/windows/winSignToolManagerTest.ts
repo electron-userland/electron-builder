@@ -29,8 +29,8 @@ function makeTaskConfig(overrides: Partial<WindowsSignTaskConfiguration> = {}): 
 describe("getOutputPath", () => {
   test("appends hash and -signed suffix before extension", () => {
     const manager = makeManager()
-    expect(manager.getOutputPath("/out/app.exe", "sha256")).toBe("/out/app-signed-sha256.exe")
-    expect(manager.getOutputPath("/out/app.exe", "sha1")).toBe("/out/app-signed-sha1.exe")
+    expect(manager.getOutputPath(path.join("/out", "app.exe"), "sha256")).toBe(path.join("/out", "app-signed-sha256.exe"))
+    expect(manager.getOutputPath(path.join("/out", "app.exe"), "sha1")).toBe(path.join("/out", "app-signed-sha1.exe"))
   })
 
   test("handles filenames without directory", () => {
@@ -41,8 +41,8 @@ describe("getOutputPath", () => {
 
   test("handles path with multiple dots in filename", () => {
     const manager = makeManager()
-    const result = manager.getOutputPath("/out/my.app.v2.exe", "sha256")
-    expect(result).toBe("/out/my.app.v2-signed-sha256.exe")
+    const result = manager.getOutputPath(path.join("/out", "my.app.v2.exe"), "sha256")
+    expect(result).toBe(path.join("/out", "my.app.v2-signed-sha256.exe"))
   })
 })
 
