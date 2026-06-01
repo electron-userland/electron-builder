@@ -39,14 +39,24 @@ runs:
         restore-keys: |
           electron-builder-binaries-${{ runner.os }}-
 
+    - name: Compute Vitest smart cache ref
+      run: |
+        PR_NUM="${{ github.event.pull_request.number }}"
+        if [ -n "$PR_NUM" ]; then
+          echo "VITEST_CACHE_REF=PR-${PR_NUM}" >> "$GITHUB_ENV"
+        else
+          echo "VITEST_CACHE_REF=${{ github.ref_name }}" >> "$GITHUB_ENV"
+        fi
+      shell: bash
+
     - name: Restore Vitest Smart Cache
       id: cache-restore
       uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
       with:
         path: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
-        key: vitest-smart-cache-${{ github.ref_name }}-${{ github.sha }}
+        key: vitest-smart-cache-${{ env.VITEST_CACHE_REF }}-${{ github.sha }}
         restore-keys: |
-          vitest-smart-cache-${{ github.ref_name }}-
+          vitest-smart-cache-${{ env.VITEST_CACHE_REF }}-
           vitest-smart-cache-master-
 
     - name: Set up Vitest smart cache reset flag

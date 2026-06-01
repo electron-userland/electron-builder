@@ -546,9 +546,13 @@ jobs:
                 const cache = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
                 filesProcessed++;
 
-                // Merge cache entries (later entries overwrite earlier ones, should be fine since they are all from the same test run just different shards and adding on to previous data)
+                // Deep-merge top-level objects so all shards' new timing data is preserved
                 Object.keys(cache).forEach(key => {
-                  mergedCache[key] = cache[key];
+                  if (mergedCache[key] && typeof mergedCache[key] === 'object' && !Array.isArray(mergedCache[key])) {
+                    mergedCache[key] = { ...mergedCache[key], ...cache[key] };
+                  } else {
+                    mergedCache[key] = cache[key];
+                  }
                 });
               } catch (err) {
                 console.error(`Error reading cache from ${platform}:`, err.message);
@@ -582,10 +586,20 @@ jobs:
         if: always()
         run: cp merged-cache/_vitest-smart-cache.json test/vitest-scripts/_vitest-smart-cache.json
 
+      - name: Compute Vitest smart cache ref
+        if: always()
+        run: |
+          PR_NUM="${{ github.event.pull_request.number }}"
+          if [ -n "$PR_NUM" ]; then
+            echo "VITEST_CACHE_REF=PR-${PR_NUM}" >> "$GITHUB_ENV"
+          else
+            echo "VITEST_CACHE_REF=${{ github.ref_name }}" >> "$GITHUB_ENV"
+          fi
+
       - name: Save merged cache for future runs on this branch
         if: always()
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: test/vitest-scripts/_vitest-smart-cache.json
-          key: vitest-smart-cache-${{ github.ref_name }}-${{ github.sha }}
+          key: vitest-smart-cache-${{ env.VITEST_CACHE_REF }}-${{ github.sha }}
 
