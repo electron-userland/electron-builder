@@ -1,5 +1,5 @@
 import { parseDn } from "builder-util-runtime"
-import { WinPackager } from "app-builder-lib"
+import { ToolInfo, WinPackager, WindowsSignToolManager } from "app-builder-lib"
 import { CustomWindowsSign } from "app-builder-lib/out/codeSign/windowsSignToolManager"
 import { Configuration, ToolsetConfig } from "app-builder-lib/out/configuration"
 import { AsyncTaskManager } from "builder-util"
@@ -142,6 +142,40 @@ for (const winCodeSign of winCodeSignVersions) {
     test("certificateFile/password - sign as Promise", ({ expect }) => testCustomSign(expect, () => Promise.resolve()))
     test("certificateFile/password - sign as function", async ({ expect }) => testCustomSign(expect, (await import("../helpers/customWindowsSign")).default))
     test("certificateFile/password - sign as path", ({ expect }) => testCustomSign(expect, path.join(__dirname, "../helpers/customWindowsSign.mjs")))
+
+    test("custom sign can call getToolPath() via packager.signingManager", ({ expect }) => {
+      let capturedToolInfo: ToolInfo | null = null
+      const sign: CustomWindowsSign = async (_config, packager) => {
+        const manager = (await packager!.signingManager.value) as WindowsSignToolManager
+        capturedToolInfo = await manager.getToolPath(process.platform === "win32")
+      }
+      return app(
+        expect,
+        {
+          targets: Platform.WINDOWS.createTarget(DIR_TARGET),
+          platformPackagerFactory: (packager, _platform) => new CheckingWinPackager(packager),
+          config: {
+            toolsets: { winCodeSign },
+            win: {
+              forceCodeSigning: true,
+              signtoolOptions: {
+                certificatePassword: "pass",
+                certificateFile: "secretFile",
+                sign,
+                signingHashAlgorithms: ["sha256"],
+              },
+            },
+          },
+        },
+        {
+          packed: async () => {
+            expect(capturedToolInfo).not.toBeNull()
+            expect(typeof capturedToolInfo!.path).toBe("string")
+            expect(capturedToolInfo!.path.length).toBeGreaterThan(0)
+          },
+        }
+      )
+    })
 
     test("custom sign if no code sign info", ({ expect }) => {
       let called = false

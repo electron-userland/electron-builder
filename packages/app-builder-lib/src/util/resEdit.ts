@@ -43,21 +43,25 @@ export async function editWindowsResources(opts: ResourceEditOptions): Promise<v
   }
 
   if (opts.requestedExecutionLevel && opts.requestedExecutionLevel !== "asInvoker") {
-    const manifestEntry = res.entries.find(e => e.type === 24 && e.id === 1)
-    if (!manifestEntry) {
-      log.warn({ file: opts.file }, "no RT_MANIFEST resource found; requestedExecutionLevel will not be applied")
-    } else {
-      const originalXml = Buffer.from(manifestEntry.bin).toString("utf-8")
-      const updatedXml = originalXml.replace(/(<requestedExecutionLevel[^>]*\blevel=")[^"]*(")/i, `$1${opts.requestedExecutionLevel}$2`)
-      if (updatedXml === originalXml) {
-        log.warn({ file: opts.file, requestedExecutionLevel: opts.requestedExecutionLevel }, "requestedExecutionLevel node not found in manifest; execution level not updated")
-      } else {
-        const newBuf = Buffer.from(updatedXml, "utf-8")
-        manifestEntry.bin = newBuf.buffer.slice(newBuf.byteOffset, newBuf.byteOffset + newBuf.byteLength)
-      }
-    }
+    patchManifestExecutionLevel(res, opts.requestedExecutionLevel, opts.file)
   }
 
   res.outputResource(executable)
   await writeFile(opts.file, Buffer.from(executable.generate()))
+}
+
+function patchManifestExecutionLevel(res: NtExecutableResource, level: string, file: string): void {
+  const manifestEntry = res.entries.find(e => e.type === 24 && e.id === 1)
+  if (!manifestEntry) {
+    log.warn({ file }, "no RT_MANIFEST resource found; requestedExecutionLevel will not be applied")
+    return
+  }
+  const originalXml = Buffer.from(manifestEntry.bin).toString("utf-8")
+  const updatedXml = originalXml.replace(/(<requestedExecutionLevel[^>]*\blevel=")[^"]*(")/i, `$1${level}$2`)
+  if (updatedXml === originalXml) {
+    log.warn({ file, requestedExecutionLevel: level }, "requestedExecutionLevel node not found in manifest; execution level not updated")
+    return
+  }
+  const newBuf = Buffer.from(updatedXml, "utf-8")
+  manifestEntry.bin = newBuf.buffer.slice(newBuf.byteOffset, newBuf.byteOffset + newBuf.byteLength)
 }

@@ -1,7 +1,7 @@
 {
   "name": "app-builder-lib",
   "description": "electron-builder lib",
-  "version": "26.12.1",
+  "version": "26.13.1",
   "main": "out/index.js",
   "files": [
     "out",
@@ -47,7 +47,6 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
-    "@develar/schema-utils": "~2.6.5",
     "@electron/asar": "3.4.1",
     "@electron/fuses": "^1.8.0",
     "@electron/get": "^3.0.0",
@@ -56,8 +55,10 @@
     "@electron/rebuild": "4.0.3",
     "@electron/universal": "2.0.3",
     "@malept/flatpak-bundler": "^0.4.0",
+    "@noble/hashes": "^2.2.0",
     "@types/fs-extra": "9.0.13",
     "@peculiar/webcrypto": "^1.7.1",
+    "ajv": "^8.18.0",
     "asn1js": "^3.0.10",
     "async-exit-hook": "^2.0.1",
     "builder-util": "workspace:*",

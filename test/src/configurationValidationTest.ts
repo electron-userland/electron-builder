@@ -83,3 +83,75 @@ test.ifNotWindows("null string as null", async ({ expect }) => {
   expect(config.mac!.identity).toBeNull()
   expect(config.mac!.hardenedRuntime).toBe(false)
 })
+
+test.ifNotWindows("unknown mac property reports correct path", ({ expect }) =>
+  appThrows(
+    expect,
+    {
+      targets: linuxDirTarget,
+      config: { mac: { unknownMacProp: true } } as any,
+    },
+    undefined,
+    error => error.message.includes("configuration.mac has an unknown property 'unknownMacProp'")
+  )
+)
+
+test.ifNotWindows("unknown nsis property reports correct path", ({ expect }) =>
+  appThrows(
+    expect,
+    {
+      targets: linuxDirTarget,
+      config: { nsis: { unknownNsisProp: "bad" } } as any,
+    },
+    undefined,
+    error => error.message.includes("configuration.nsis has an unknown property 'unknownNsisProp'")
+  )
+)
+
+test.ifNotWindows("valid callback function passes validation", async ({ expect }) => {
+  await expect(
+    validateConfiguration(
+      {
+        afterPack: () => Promise.resolve(),
+        beforeBuild: () => Promise.resolve(),
+      },
+      new DebugLogger()
+    )
+  ).resolves.toBeUndefined()
+})
+
+test.ifNotWindows("null callback passes validation", async ({ expect }) => {
+  await expect(
+    validateConfiguration(
+      {
+        afterPack: null,
+        beforeBuild: null,
+      } as unknown as Configuration,
+      new DebugLogger()
+    )
+  ).resolves.toBeUndefined()
+})
+
+test.ifNotWindows("invalid string type for schema-level field throws via schema validator", async ({ expect }) => {
+  // productName must be a string|null — passing an object exercises the schema validator
+  let err: Error | undefined
+  try {
+    await validateConfiguration({ productName: {} } as any, new DebugLogger())
+  } catch (e: any) {
+    err = e
+  }
+  expect(err).toBeDefined()
+  expect(err!.message).toContain("configuration.productName")
+})
+
+test.ifNotWindows("unknown linux property reports correct nested path", ({ expect }) =>
+  appThrows(
+    expect,
+    {
+      targets: linuxDirTarget,
+      config: { linux: { unknownLinuxProp: true } } as any,
+    },
+    undefined,
+    error => error.message.includes("configuration.linux has an unknown property 'unknownLinuxProp'")
+  )
+)

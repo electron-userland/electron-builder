@@ -1,5 +1,64 @@
 # app-builder-lib
 
+## 26.13.1
+
+### Patch Changes
+
+- Fix: correct `update-alternatives --remove` path and unload AppArmor profile on removal _[`#9801`](https://github.com/electron-userland/electron-builder/pull/9801) [`b5a1ac1`](https://github.com/electron-userland/electron-builder/commit/b5a1ac1a74b854931d45ac6d4eed15f876a496d3) [@mmaietta](https://github.com/mmaietta)_
+- Fix(win): restore `getToolPath()` on `WindowsSignToolManager` and improve public API _[`#9806`](https://github.com/electron-userland/electron-builder/pull/9806) [`fd9fcb1`](https://github.com/electron-userland/electron-builder/commit/fd9fcb11e81a42b4b018d6f7a2b16a89697a2ba2) [@mmaietta](https://github.com/mmaietta)_
+- Fix(node-module-collector): suppress expected `npm list` stderr from user-visible warnings when collecting dependencies for Yarn projects using resolutions _[`#9810`](https://github.com/electron-userland/electron-builder/pull/9810) [`478ade4`](https://github.com/electron-userland/electron-builder/commit/478ade400294af2980fca9c2eb47e9e47457943c) [@mmaietta](https://github.com/mmaietta)_
+- Fix(win): log actionable hint when signAndEditExecutable is false so users know to use signExecutable: false to preserve icon and metadata _[`#9807`](https://github.com/electron-userland/electron-builder/pull/9807) [`e4cd2ac`](https://github.com/electron-userland/electron-builder/commit/e4cd2ac4590c87e114444ab17f4bcead7f82ee2d) [@mmaietta](https://github.com/mmaietta)_
+- Fix(nsis): validate makensis stderr and installer file size after build to catch truncated output caused by low disk space _[`#9802`](https://github.com/electron-userland/electron-builder/pull/9802) [`cf2ec41`](https://github.com/electron-userland/electron-builder/commit/cf2ec4176a51a73856f05e271313a5e2ce2aaf7e) [@mmaietta](https://github.com/mmaietta)_
+- Fix(traversal): accept transitive dependencies resolved outside their declared range by package manager overrides _[`#9804`](https://github.com/electron-userland/electron-builder/pull/9804) [`c142e0f`](https://github.com/electron-userland/electron-builder/commit/c142e0f4c1f61e8800093023d30091af0674bb8a) [@mmaietta](https://github.com/mmaietta)_
+- Chore(deps): replace unmaintained @develar/schema-utils with a self-contained ajv@8 validator _[`#9803`](https://github.com/electron-userland/electron-builder/pull/9803) [`964ff9a`](https://github.com/electron-userland/electron-builder/commit/964ff9a3d5d5cb5850de3f450563b52c34aaae46) [@mmaietta](https://github.com/mmaietta)_
+- Chore: add comment re: non-existent swiftshader directory in newer electron versions _[`#9781`](https://github.com/electron-userland/electron-builder/pull/9781) [`bb8cb67`](https://github.com/electron-userland/electron-builder/commit/bb8cb672dfeb69f22a23ba43eaa636fe9f7d3121) [@Lemonexe](https://github.com/Lemonexe)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@26.13.1`
+- `electron-builder-squirrel-windows@26.13.1`
+
+</details>
+
+## 26.13.0
+
+### Minor Changes
+
+- Feat: migrate app-builder-bin functions to pure JS (`certificate-info`, `ksuid`, `get-bucket-location`, `publish-s3`) _[`#9733`](https://github.com/electron-userland/electron-builder/pull/9733) [`1bc92ff`](https://github.com/electron-userland/electron-builder/commit/1bc92ff4b21003536dfe161fb679b6a76713cd38) [@mmaietta](https://github.com/mmaietta)_
+- Fix(dmg): add support for APFS filesystem for dmg builds _[`#9616`](https://github.com/electron-userland/electron-builder/pull/9616) [`6982866`](https://github.com/electron-userland/electron-builder/commit/69828666afaa333001b7ba6fcdda23a2a8878885) [@RobbieMinderhoud](https://github.com/RobbieMinderhoud)_
+- Feat: add `disableAsarIntegrity` config option to skip ASAR integrity computation _[`#9786`](https://github.com/electron-userland/electron-builder/pull/9786) [`3a6c0b1`](https://github.com/electron-userland/electron-builder/commit/3a6c0b18fbd223e94bdb9651ef1c7a66b823cdfd) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Fix(appimage): fully migrate from app-builder-bin AppImage implementation to leverage JS-only approach _[`#9797`](https://github.com/electron-userland/electron-builder/pull/9797) [`98174e1`](https://github.com/electron-userland/electron-builder/commit/98174e147836c178034b237eb125c5cabe4fc253) [@mmaietta](https://github.com/mmaietta)_
+- Fix(nsis-web): `appPackageUrl`: stop appending arch macro to paths with explicit URLs _[`#9655`](https://github.com/electron-userland/electron-builder/pull/9655) [`73bb547`](https://github.com/electron-userland/electron-builder/commit/73bb547b8dfc5efb40e1df734fa2f92c070552b4) [@copilot-swe-agent](https://github.com/apps/copilot-swe-agent)_
+- Fix(nsis): replace partial-match process detection with exact findstr /B match to stop false-positive "app cannot be closed" dialogs when a sibling process name contains the app name _[`#9784`](https://github.com/electron-userland/electron-builder/pull/9784) [`dd6d704`](https://github.com/electron-userland/electron-builder/commit/dd6d704ea5fc268fd60aa29861ac389fa1414969) [@mmaietta](https://github.com/mmaietta)_
+- Fix: Use `desktopName` from `package.json` for `StartupWMClass` in Linux desktop entries _[`#9574`](https://github.com/electron-userland/electron-builder/pull/9574) [`fa2285c`](https://github.com/electron-userland/electron-builder/commit/fa2285cc563a7f068c93bc5b1b8e5d68fb6d1668) [@copilot-swe-agent](https://github.com/apps/copilot-swe-agent)_
+- Chore: prepare upgrade pathway for updating to latest `electron/____` npm packages that are ESM-only _[`#9792`](https://github.com/electron-userland/electron-builder/pull/9792) [`571d22b`](https://github.com/electron-userland/electron-builder/commit/571d22bd38fd8719aa4d3eb429ccf5598753a220) [@mmaietta](https://github.com/mmaietta)_
+- Chore: stabilize flaky CI tests (electron zip ENOENT, 5xx retries, snap timeouts) _[`#9795`](https://github.com/electron-userland/electron-builder/pull/9795) [`59efef1`](https://github.com/electron-userland/electron-builder/commit/59efef1a8b81ed1ead4e8004043726d2b49cf81f) [@mmaietta](https://github.com/mmaietta)_
+- Chore: Serialize concurrent downloads of the same artifact across vitest workers to prevent `@electron/get`'s non-atomic `putFileInCache` (remove + move) from racing with a concurrent reader. _[`#9798`](https://github.com/electron-userland/electron-builder/pull/9798) [`f3c4d88`](https://github.com/electron-userland/electron-builder/commit/f3c4d8810137f1beae592524019882cf97067f07) [@mmaietta](https://github.com/mmaietta)_
+- Fix(appimage): bundle FUSE2 runtime libraries for x64/ia32, matching Go implementation _[`#9799`](https://github.com/electron-userland/electron-builder/pull/9799) [`4e97804`](https://github.com/electron-userland/electron-builder/commit/4e9780454618518f1d532a1479a751368a5f7fe7) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`1bc92ff`](https://github.com/electron-userland/electron-builder/commit/1bc92ff4b21003536dfe161fb679b6a76713cd38) [`6982866`](https://github.com/electron-userland/electron-builder/commit/69828666afaa333001b7ba6fcdda23a2a8878885) [`59efef1`](https://github.com/electron-userland/electron-builder/commit/59efef1a8b81ed1ead4e8004043726d2b49cf81f)
+
+</small>
+
+- `builder-util@26.13.0`
+- `electron-publish@26.13.0`
+- `dmg-builder@26.13.0`
+- `builder-util-runtime@9.6.3`
+- `electron-builder-squirrel-windows@26.13.0`
+
+</details>
+
 ## 26.12.1
 
 ### Patch Changes
