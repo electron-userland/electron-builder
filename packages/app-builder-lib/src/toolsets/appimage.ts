@@ -1,16 +1,7 @@
 import { Arch, exists, resolveEnvToolsetPath, use } from "builder-util"
 import * as path from "path"
-import { getBinFromUrl } from "../binDownload"
 import { ToolsetConfig } from "../configuration"
 import { downloadBuilderToolset } from "../util/electronGet"
-
-const fpmChecksums = {
-  "fpm-1.17.0-ruby-3.4.3-darwin-arm64.7z": "6cc6d4785875bc7d79bdf52ca146080a4c300e1d663376ae79615fb548030ede",
-  "fpm-1.17.0-ruby-3.4.3-darwin-x86_64.7z": "f7cb468c5e64177124c9d3a5f400ac20ffcb411aa5aa0ea224a808ff5a2d3bbf",
-  "fpm-1.17.0-ruby-3.4.3-linux-amd64.7z": "44b0ec6025c14ec137f56180e62675c0eae36233cdce53d0953d9c73ced8989f",
-  "fpm-1.17.0-ruby-3.4.3-linux-arm64v8.7z": "338b50cfa7f12d745a997d1a3d000bcd0410008050fa7d8c4476a78a61c0564e",
-  "fpm-1.17.0-ruby-3.4.3-linux-i386.7z": "181124e2e9856855c21229ea9096bb7006a9e3e712d133ce332597ba878cd7b6",
-} as const
 
 export const appimageChecksums = {
   "0.0.0": {
@@ -23,70 +14,6 @@ export const appimageChecksums = {
     "appimage-tools-runtime-20251108.tar.gz": "84021a78ee214ae6fd33a2d62a92ba25542dd10bc86bf117a9b2d0bba44e7665",
   },
 } as const
-
-// no legacy toolset as macos arm64 BSD gtar/ar/lzip are not compatible with linux targets, so we always use newer toolset on macos for linux archives
-const linuxToolsMacChecksums = {
-  "linux-tools-mac-darwin-arm64.tar.gz": "204e76f08364352edb28a6a4be87e8f9bd9340213865d9a0d1c664aa46fcf053",
-  "linux-tools-mac-darwin-x86_64.tar.gz": "7ee26dfbd0d2a4c2c83b55a9416a30cc84876eef01c6497ca49bb016a190c726",
-} as const
-
-export async function getLinuxToolsPath(): Promise<string> {
-  const envPath = await resolveEnvToolsetPath("LINUX_TOOLS_MAC_PATH", "directory")
-  if (envPath != null) {
-    return envPath
-  }
-  const arch = process.arch === "arm64" ? "arm64" : "x86_64"
-  const toolsetVersion = "1.0.0"
-  const filename: keyof typeof linuxToolsMacChecksums = `linux-tools-mac-darwin-${arch}.tar.gz`
-  return await downloadBuilderToolset({
-    releaseName: `linux-tools-mac@${toolsetVersion}`,
-    filenameWithExt: filename,
-    checksums: {
-      [filename]: linuxToolsMacChecksums[filename],
-    },
-    githubOrgRepo: "electron-userland/electron-builder-binaries",
-  })
-}
-
-export async function getLinuxToolsMacToolset() {
-  const linuxToolsPath = await getLinuxToolsPath()
-  const bin = (pkg: string) => path.join(linuxToolsPath, "bin", pkg)
-  return {
-    ar: bin("ar"),
-    lzip: bin("lzip"),
-    gtar: bin("gtar"),
-  }
-}
-
-export async function getFpmPath() {
-  const customFpmPath = await resolveEnvToolsetPath("CUSTOM_FPM_PATH", "file")
-  if (customFpmPath != null) {
-    return customFpmPath
-  }
-  const exec = "fpm"
-  if (process.platform === "win32" || process.env.USE_SYSTEM_FPM === "true") {
-    return exec
-  }
-  const getKey = () => {
-    if (process.platform === "linux") {
-      if (process.arch == "x64") {
-        return "fpm-1.17.0-ruby-3.4.3-linux-amd64.7z"
-      } else if (process.arch === "arm64") {
-        return "fpm-1.17.0-ruby-3.4.3-linux-arm64v8.7z"
-      }
-      return "fpm-1.17.0-ruby-3.4.3-linux-i386.7z"
-    }
-    // darwin arm64
-    if (process.arch === "arm64") {
-      return "fpm-1.17.0-ruby-3.4.3-darwin-arm64.7z"
-    }
-    return "fpm-1.17.0-ruby-3.4.3-darwin-x86_64.7z"
-  }
-
-  const filename = getKey()
-  const fpmPath = await getBinFromUrl("fpm@2.1.4", filename, fpmChecksums[filename])
-  return path.join(fpmPath, exec)
-}
 
 export async function getAppImageTools(appimageToolVersion: ToolsetConfig["appimage"], targetArch: Arch) {
   const runtimeArch = targetArch === Arch.armv7l ? "arm32" : targetArch === Arch.arm64 ? "arm64" : targetArch === Arch.ia32 ? "ia32" : "x64"

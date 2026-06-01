@@ -353,7 +353,7 @@ export interface ToolsetConfig {
    *
    * @default "0.0.0"
    */
-  readonly winCodeSign?: "0.0.0" | "1.0.0" | "1.1.0" | null
+  readonly winCodeSign?: "0.0.0" | "1.0.0" | "1.1.0" | "1.2.1" | null
 
   /**
    * `appimage` bundle version to use for Appimage packaging and runtime.

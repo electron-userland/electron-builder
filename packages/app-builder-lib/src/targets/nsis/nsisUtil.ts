@@ -3,7 +3,7 @@ import { PackageFileInfo } from "builder-util-runtime"
 import * as fs from "fs/promises"
 import * as path from "path"
 import * as zlib from "zlib"
-import { getNsisElevatePath } from "../../toolsets/windows"
+import { getNsisElevatePath } from "../../toolsets/nsis"
 import { getTemplatePath } from "../../util/pathManager"
 import { NsisTarget } from "./NsisTarget"
 
