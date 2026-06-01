@@ -70,6 +70,7 @@ const sidebars: SidebarsConfig = {
   featuresSidebar: [
     { type: "doc", id: "features/hooks", label: "Hooks" },
     { type: "doc", id: "features/icons", label: "Icons" },
+    { type: "doc", id: "features/icons-and-images", label: "Icons & Images" },
     { type: "doc", id: "features/auto-update", label: "Auto Update" },
     {
       type: "category",

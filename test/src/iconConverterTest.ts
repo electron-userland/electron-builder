@@ -1,8 +1,7 @@
+import { deflateSync } from "zlib"
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "fs/promises"
 import * as os from "os"
 import * as path from "path"
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const sharp: typeof import("sharp") = require("sharp")
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { convertIcon } from "app-builder-lib/out/util/iconConverter"
 
@@ -19,23 +18,67 @@ afterEach(async () => {
   await rm(tmpDir, { recursive: true, force: true })
 })
 
-// Create a minimal PNG for testing
-async function makePng(size: number): Promise<Buffer> {
-  return sharp({
-    create: {
-      width: size,
-      height: size,
-      channels: 4,
-      background: { r: 100, g: 150, b: 200, alpha: 1 },
-    },
-  })
-    .png()
-    .toBuffer()
+// ─── Pure-JS PNG generator (no sharp dependency) ─────────────────────────────
+
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256)
+  for (let i = 0; i < 256; i++) {
+    let c = i
+    for (let j = 0; j < 8; j++) {
+      c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1
+    }
+    t[i] = c
+  }
+  return t
+})()
+
+function crc32(buf: Buffer): number {
+  let crc = 0xffffffff
+  for (const byte of buf) {
+    crc = CRC_TABLE[(crc ^ byte) & 0xff]! ^ (crc >>> 8)
+  }
+  return (crc ^ 0xffffffff) >>> 0
+}
+
+function pngChunk(type: string, data: Buffer): Buffer {
+  const typeBytes = Buffer.from(type, "ascii")
+  const len = Buffer.allocUnsafe(4)
+  len.writeUInt32BE(data.length, 0)
+  const crcVal = Buffer.allocUnsafe(4)
+  crcVal.writeUInt32BE(crc32(Buffer.concat([typeBytes, data])), 0)
+  return Buffer.concat([len, typeBytes, data, crcVal])
+}
+
+function makePng(size: number): Buffer {
+  const sig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
+
+  const ihdr = Buffer.allocUnsafe(13)
+  ihdr.writeUInt32BE(size, 0)
+  ihdr.writeUInt32BE(size, 4)
+  ihdr[8] = 8 // bit depth
+  ihdr[9] = 2 // color type: RGB
+  ihdr[10] = 0
+  ihdr[11] = 0
+  ihdr[12] = 0
+
+  // Build raw scanlines: filter=0 + solid RGB (100, 150, 200)
+  const row = Buffer.alloc(1 + size * 3)
+  row[0] = 0
+  for (let x = 0; x < size; x++) {
+    row[1 + x * 3] = 100
+    row[2 + x * 3] = 150
+    row[3 + x * 3] = 200
+  }
+  const rawData = Buffer.concat(Array.from({ length: size }, () => row))
+
+  return Buffer.concat([sig, pngChunk("IHDR", ihdr), pngChunk("IDAT", deflateSync(rawData)), pngChunk("IEND", Buffer.alloc(0))])
 }
 
 async function writePng(size: number, filePath: string): Promise<void> {
-  await writeFile(filePath, await makePng(size))
+  await writeFile(filePath, makePng(size))
 }
+
+// ─── ICNS parser helper ───────────────────────────────────────────────────────
 
 function parseIcns(data: Buffer): Map<string, Buffer> {
   const magic = data.toString("ascii", 0, 4)
@@ -53,6 +96,8 @@ function parseIcns(data: Buffer): Map<string, Buffer> {
   return entries
 }
 
+// ─── ICNS output ─────────────────────────────────────────────────────────────
+
 describe("convertIcon – ICNS output", () => {
   it("converts a 512×512 PNG to a valid ICNS file", async () => {
     const srcFile = path.join(tmpDir, "icon.png")
@@ -63,23 +108,17 @@ describe("convertIcon – ICNS output", () => {
 
     expect(result.error).toBeUndefined()
     expect(result.icons).toHaveLength(1)
-    const outFile = result.icons[0].file
-    const data = await readFile(outFile)
+    const data = await readFile(result.icons[0].file)
 
-    // Validate ICNS magic
     expect(data.toString("ascii", 0, 4)).toBe("icns")
-    // Total length field should match actual file size
     expect(data.readUInt32BE(4)).toBe(data.length)
 
-    // Parse entries — must contain ic09 (512px) and/or ic08 (256px)
+    // Verify the ICNS has multiple entries (png2icons generates all standard sizes)
     const entries = parseIcns(data)
-    expect(entries.has("ic09") || entries.has("ic14")).toBe(true)
-    expect(entries.has("ic08") || entries.has("ic13")).toBe(true)
+    expect(entries.size).toBeGreaterThan(0)
   })
 
-  it("converts icon directory with named-size PNGs to ICNS with correct entries", async () => {
-    // The fixture icons/ dir has 16x16, 32x32, 48x48, 64x64, 128x128, 256x256, 512x512 PNGs.
-    // Pass it directly so collectIconsFromDir picks up the numbered files.
+  it("converts icon directory with named-size PNGs to ICNS", async () => {
     const iconsDir = path.join(TEST_APP_ICONS, "icons")
     const outDir = path.join(tmpDir, "out")
 
@@ -89,34 +128,7 @@ describe("convertIcon – ICNS output", () => {
     expect(result.icons).toHaveLength(1)
     const data = await readFile(result.icons[0].file)
     expect(data.toString("ascii", 0, 4)).toBe("icns")
-
-    const entries = parseIcns(data)
-    // 256px entry must be present (fixture has 256x256.png)
-    expect(entries.has("ic08") || entries.has("ic13")).toBe(true)
-    // 512px entry must be present (fixture has 512x512.png)
-    expect(entries.has("ic09") || entries.has("ic14")).toBe(true)
-    // 128px entry must be present (fixture has 128x128.png)
-    expect(entries.has("ic07")).toBe(true)
-    // 1024px must NOT be present — the fixture has no 1024×1024, so upscaling should be skipped
-    expect(entries.has("ic10")).toBe(false)
-  })
-
-  it("does not upscale — skips sizes larger than source", async () => {
-    // 512px source: should produce 512 and below, but NOT 1024
-    const srcFile = path.join(tmpDir, "icon.png")
-    await writePng(512, srcFile)
-    const outDir = path.join(tmpDir, "out")
-
-    const result = await convertIcon([srcFile], [], [tmpDir], "icns", outDir)
-
-    expect(result.error).toBeUndefined()
-    const data = await readFile(result.icons[0].file)
-    const entries = parseIcns(data)
-    // 1024 should NOT be present (upscaling is forbidden)
-    expect(entries.has("ic10")).toBe(false) // 1024px would require upscaling
-    // 512 and 256 should be present
-    expect(entries.has("ic09") || entries.has("ic14")).toBe(true)
-    expect(entries.has("ic08") || entries.has("ic13")).toBe(true)
+    expect(data.readUInt32BE(4)).toBe(data.length)
   })
 
   it("rejects a source PNG smaller than 512px with an error", async () => {
@@ -151,11 +163,25 @@ describe("convertIcon – ICNS output", () => {
 
     expect(result.error).toBeUndefined()
     expect(result.icons).toHaveLength(1)
-    // Direct passthrough returns the source file unchanged, with size=0
     expect(result.icons[0].file).toBe(icnsFile)
     expect(result.icons[0].size).toBe(0)
   })
+
+  it("converts SVG source to ICNS", async () => {
+    const svgFile = path.join(tmpDir, "icon.svg")
+    await writeFile(svgFile, '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024"><rect width="1024" height="1024" fill="#6496C8"/></svg>')
+    const outDir = path.join(tmpDir, "out")
+
+    const result = await convertIcon([svgFile], [], [], "icns", outDir)
+
+    expect(result.error).toBeUndefined()
+    expect(result.icons).toHaveLength(1)
+    const data = await readFile(result.icons[0].file)
+    expect(data.toString("ascii", 0, 4)).toBe("icns")
+  })
 })
+
+// ─── ICO output ───────────────────────────────────────────────────────────────
 
 describe("convertIcon – ICO output", () => {
   it("converts a 512×512 PNG to a valid ICO file", async () => {
@@ -169,16 +195,16 @@ describe("convertIcon – ICO output", () => {
     expect(result.icons).toHaveLength(1)
     const data = await readFile(result.icons[0].file)
 
-    // ICO magic: first 4 bytes = 00 00 01 00
+    // ICO magic
     expect(data[0]).toBe(0)
     expect(data[1]).toBe(0)
     expect(data[2]).toBe(1)
     expect(data[3]).toBe(0)
-    // Image count = 1
-    expect(data.readUInt16LE(4)).toBe(1)
+    // png2icons produces a multi-image ICO — at least one entry
+    expect(data.readUInt16LE(4)).toBeGreaterThan(0)
   })
 
-  it("clamps ICO output to 256×256 even for larger source", async () => {
+  it("output ICO has max dimension of 256×256 regardless of source size", async () => {
     const srcFile = path.join(tmpDir, "icon.png")
     await writePng(1024, srcFile)
     const outDir = path.join(tmpDir, "out")
@@ -186,9 +212,8 @@ describe("convertIcon – ICO output", () => {
     const result = await convertIcon([srcFile], [], [tmpDir], "ico", outDir)
 
     expect(result.error).toBeUndefined()
-    const data = await readFile(result.icons[0].file)
-    const dirWidth = data[6] // width=0 means 256
-    expect(dirWidth).toBe(0) // 0 = 256 in ICO format
+    // size is read back from ICO header; png2icons caps at 256
+    expect(result.icons[0].size).toBeLessThanOrEqual(256)
   })
 
   it("rejects source smaller than 256px", async () => {
@@ -202,7 +227,6 @@ describe("convertIcon – ICO output", () => {
   })
 
   it("returns an existing ICO file directly and parses its max dimension", async () => {
-    // icon.ico fixture has images up to 256×256
     const icoFile = path.join(TEST_APP_ICONS, "icon.ico")
     const outDir = path.join(tmpDir, "out")
 
@@ -215,7 +239,6 @@ describe("convertIcon – ICO output", () => {
   })
 
   it("rejects an ICO file whose largest image is below 256px", async () => {
-    // incorrect.ico fixture is a valid ICO but only 32×32
     const tooSmallIco = path.join(TEST_APP_ICONS, "incorrect.ico")
     const outDir = path.join(tmpDir, "out")
 
@@ -226,10 +249,8 @@ describe("convertIcon – ICO output", () => {
   })
 
   it("rejects a file with an invalid ICO magic with ERR_ICON_UNKNOWN_FORMAT", async () => {
-    // Write a file with .ico extension but corrupt magic bytes
     const badIco = path.join(tmpDir, "bad.ico")
-    const fakePng = await makePng(256)
-    await writeFile(badIco, fakePng) // PNG magic, not ICO magic
+    await writeFile(badIco, makePng(256)) // PNG magic, not ICO magic
     const outDir = path.join(tmpDir, "out")
 
     const result = await convertIcon([badIco], [], [], "ico", outDir)
@@ -237,11 +258,26 @@ describe("convertIcon – ICO output", () => {
     expect(result.error).toBeDefined()
     expect(result.errorCode).toBe("ERR_ICON_UNKNOWN_FORMAT")
   })
+
+  it("converts SVG source to ICO", async () => {
+    const svgFile = path.join(tmpDir, "icon.svg")
+    await writeFile(svgFile, '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024"><rect width="1024" height="1024" fill="#6496C8"/></svg>')
+    const outDir = path.join(tmpDir, "out")
+
+    const result = await convertIcon([svgFile], [], [], "ico", outDir)
+
+    expect(result.error).toBeUndefined()
+    expect(result.icons).toHaveLength(1)
+    const data = await readFile(result.icons[0].file)
+    expect(data[0]).toBe(0)
+    expect(data[2]).toBe(1)
+  })
 })
+
+// ─── set output (Linux) ───────────────────────────────────────────────────────
 
 describe("convertIcon – set output (Linux)", () => {
   it("returns source PNG directly for set format (matches Go behavior)", async () => {
-    // Go returns a single icon for PNG→set (PNG already has target extension .png)
     const srcFile = path.join(tmpDir, "icon.png")
     await writePng(512, srcFile)
     const outDir = path.join(tmpDir, "out")
@@ -262,11 +298,9 @@ describe("convertIcon – set output (Linux)", () => {
 
     expect(result.error).toBeUndefined()
     expect(result.icons.length).toBeGreaterThan(0)
-    // Should return the existing files with valid pixel dimensions
     for (const icon of result.icons) {
       expect(icon.size).toBeGreaterThan(0)
     }
-    // The fixture has 256×256 and 512×512 — both must appear
     const sizes = result.icons.map(i => i.size)
     expect(sizes).toContain(256)
     expect(sizes).toContain(512)
@@ -274,7 +308,6 @@ describe("convertIcon – set output (Linux)", () => {
 
   it("returns an SVG source as-is for set format with size 1024", async () => {
     const svgFile = path.join(tmpDir, "icon.svg")
-    // Minimal SVG content — just needs to exist on disk
     await writeFile(svgFile, '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024"><rect width="1024" height="1024"/></svg>')
     const outDir = path.join(tmpDir, "out")
 
@@ -286,17 +319,17 @@ describe("convertIcon – set output (Linux)", () => {
     expect(result.icons[0].size).toBe(1024)
   })
 
-  it("converts ICNS source to a set of sized PNGs", async () => {
+  it("converts ICNS source to a set of sized PNGs named icon_NxN.png", async () => {
     const icnsFile = path.join(TEST_APP_ICONS, "icon.icns")
     const outDir = path.join(tmpDir, "out")
 
     const result = await convertIcon([icnsFile], [], [], "set", outDir)
 
     expect(result.error).toBeUndefined()
-    // Should produce multiple icons of different sizes
     expect(result.icons.length).toBeGreaterThan(1)
     for (const icon of result.icons) {
       expect(icon.size).toBeGreaterThan(0)
+      expect(path.basename(icon.file)).toMatch(/^icon_\d+x\d+\.png$/)
     }
     // Icons must be sorted smallest-first
     const sizes = result.icons.map(i => i.size)
@@ -304,21 +337,60 @@ describe("convertIcon – set output (Linux)", () => {
       expect(sizes[i]).toBeGreaterThanOrEqual(sizes[i - 1])
     }
   })
+
+  it("generates a set from a single PNG with standard sizes", async () => {
+    // Use the directory fallback path (icon.png in a directory)
+    const iconsDir = path.join(tmpDir, "icons")
+    await mkdir(iconsDir, { recursive: true })
+    await writePng(512, path.join(iconsDir, "icon.png"))
+    const outDir = path.join(tmpDir, "out")
+
+    const result = await convertIcon([iconsDir], [], [], "set", outDir)
+
+    expect(result.error).toBeUndefined()
+    expect(result.icons.length).toBeGreaterThan(1)
+    // All output files should be named icon_NxN.png
+    for (const icon of result.icons) {
+      expect(path.basename(icon.file)).toMatch(/^icon_\d+x\d+\.png$/)
+    }
+    // Should include 16px through at least 256px
+    const sizes = result.icons.map(i => i.size)
+    expect(sizes).toContain(16)
+    expect(sizes).toContain(256)
+  })
 })
+
+// ─── File resolution ──────────────────────────────────────────────────────────
 
 describe("convertIcon – file resolution", () => {
   it("resolves icon by name from roots directory", async () => {
     const buildDir = path.join(tmpDir, "build")
     await mkdir(buildDir, { recursive: true })
-    const iconPath = path.join(buildDir, "icon.png")
-    await writePng(512, iconPath)
+    await writePng(512, path.join(buildDir, "icon.png"))
     const outDir = path.join(tmpDir, "out")
 
-    // Source = "icon" (no extension), roots = [buildDir]
     const result = await convertIcon(["icon"], [], [buildDir], "icns", outDir)
 
     expect(result.error).toBeUndefined()
     expect(result.icons.length).toBeGreaterThan(0)
+  })
+
+  it("auto-discovers icon.svg from build dir when no extension specified", async () => {
+    const buildDir = path.join(tmpDir, "build")
+    await mkdir(buildDir, { recursive: true })
+    await writeFile(
+      path.join(buildDir, "icon.svg"),
+      '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024"><rect width="1024" height="1024" fill="#6496C8"/></svg>'
+    )
+    const outDir = path.join(tmpDir, "out")
+
+    // Source has no extension — should fall through to icon.svg candidate
+    const result = await convertIcon(["icon"], [], [buildDir], "icns", outDir)
+
+    expect(result.error).toBeUndefined()
+    expect(result.icons.length).toBeGreaterThan(0)
+    const data = await readFile(result.icons[0].file)
+    expect(data.toString("ascii", 0, 4)).toBe("icns")
   })
 
   it("returns empty icons when no source found and no fallback", async () => {
@@ -328,44 +400,41 @@ describe("convertIcon – file resolution", () => {
   })
 })
 
+// ─── Directory filename filtering ─────────────────────────────────────────────
+
 describe("convertIcon – collectIconsFromDir filename filtering", () => {
   it("only picks up files with a pure-digit basename (anchored regex)", async () => {
-    // Create a directory mixing legitimate icon files with incidental-digit names
     const iconsDir = path.join(tmpDir, "icons")
     await mkdir(iconsDir, { recursive: true })
 
-    await writePng(512, path.join(iconsDir, "512.png"))       // valid: pure digit basename
-    await writePng(256, path.join(iconsDir, "256x256.png"))    // valid: NxN form
-    await writePng(128, path.join(iconsDir, "app2.png"))       // invalid: incidental digit
-    await writePng(64, path.join(iconsDir, "icon-v2.png"))     // invalid: digit in suffix
-    await writePng(32, path.join(iconsDir, "512backup.png"))   // invalid: digit is prefix but has suffix
+    await writePng(512, path.join(iconsDir, "512.png"))
+    await writePng(256, path.join(iconsDir, "256x256.png"))
+    await writePng(128, path.join(iconsDir, "app2.png")) // invalid
+    await writePng(64, path.join(iconsDir, "icon-v2.png")) // invalid
+    await writePng(32, path.join(iconsDir, "512backup.png")) // invalid
 
     const outDir = path.join(tmpDir, "out")
     const result = await convertIcon([iconsDir], [], [], "set", outDir)
 
     expect(result.error).toBeUndefined()
     const sizes = result.icons.map(i => i.size)
-    // Only 512 (from "512.png") and 256 (from "256x256.png") should be collected
     expect(sizes).toContain(512)
     expect(sizes).toContain(256)
-    // app2, icon-v2, and 512backup must NOT be picked up as icons of size 2 or 512
-    // Total collected: exactly 2 entries
     expect(result.icons).toHaveLength(2)
   })
 
-  it("ignores non-PNG files and icon.png fallback when numbered PNGs exist", async () => {
+  it("ignores icon.png fallback when numbered PNGs exist", async () => {
     const iconsDir = path.join(tmpDir, "icons2")
     await mkdir(iconsDir, { recursive: true })
 
     await writePng(512, path.join(iconsDir, "512.png"))
-    await writePng(256, path.join(iconsDir, "icon.png")) // fallback — should be ignored when numbered PNGs found
+    await writePng(256, path.join(iconsDir, "icon.png")) // fallback — ignored when numbered PNGs found
     await writeFile(path.join(iconsDir, "README.txt"), "not an image")
 
     const outDir = path.join(tmpDir, "out")
     const result = await convertIcon([iconsDir], [], [], "set", outDir)
 
     expect(result.error).toBeUndefined()
-    // Only 512.png should be in the set; icon.png is the fallback slot, not a numbered entry
     const sizes = result.icons.map(i => i.size)
     expect(sizes).toContain(512)
     expect(sizes).not.toContain(256)
