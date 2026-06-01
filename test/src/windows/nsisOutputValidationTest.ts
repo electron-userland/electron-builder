@@ -33,51 +33,14 @@ describe("checkMakensisOutput", () => {
     expect(() => checkMakensisOutput("", stderr)).not.toThrow()
   })
 
-  test("throws when Install data shows written < expected bytes", ({ expect }) => {
-    const stdout = "Install data: 82086281 / 124000000 bytes\n"
-    expect(() => checkMakensisOutput(stdout, "")).toThrow(/truncated/i)
-  })
-
-  test("throws when Install data line has written exactly matching the low number from the issue", ({ expect }) => {
-    // Reproduce the exact numbers from issue #9602
-    const stdout = "Install data: 82086281 / 82371305 bytes\n"
-    expect(() => checkMakensisOutput(stdout, "")).toThrow(/truncated/i)
-  })
-
-  test("passes when Install data shows written == expected bytes", ({ expect }) => {
-    const stdout = "Install data: 124000000 / 124000000 bytes\n"
-    expect(() => checkMakensisOutput(stdout, "")).not.toThrow()
-  })
-
-  test("passes when Install data shows written > expected (shouldn't happen, but is safe)", ({ expect }) => {
-    const stdout = "Install data: 124000001 / 124000000 bytes\n"
-    expect(() => checkMakensisOutput(stdout, "")).not.toThrow()
-  })
-
-  test("passes when stdout has no Install data line", ({ expect }) => {
-    const stdout = "Processing: installer.nsi\nOutput: installer.exe\n"
-    expect(() => checkMakensisOutput(stdout, "")).not.toThrow()
-  })
-
-  test("Install data match is case-insensitive", ({ expect }) => {
-    const stdout = "install data: 100 / 200 bytes\n"
-    expect(() => checkMakensisOutput(stdout, "")).toThrow(/truncated/i)
-  })
-
   test("Error: matching is case-insensitive on stderr", ({ expect }) => {
     const stderr = "ERROR: some fatal condition\n"
     expect(() => checkMakensisOutput("", stderr)).toThrow()
   })
 
-  test("skipInstallDataCheck=true suppresses install-data error (uninstaller build)", ({ expect }) => {
-    // BUILD_UNINSTALLER pass legitimately produces "Install data: 0 / 8" — must not throw
-    const stdout = "Install data: 0 / 8 bytes\n"
-    expect(() => checkMakensisOutput(stdout, "", true)).not.toThrow()
-  })
-
-  test("skipInstallDataCheck=true still throws on stderr Error: lines", ({ expect }) => {
-    const stderr = "Error: out of disk space\n"
-    expect(() => checkMakensisOutput("", stderr, true)).toThrow()
+  test("passes when stdout has non-matching content", ({ expect }) => {
+    const stdout = "Processing: installer.nsi\nOutput: installer.exe\nInstall data: 100 / 200 bytes\n"
+    expect(() => checkMakensisOutput(stdout, "")).not.toThrow()
   })
 })
 

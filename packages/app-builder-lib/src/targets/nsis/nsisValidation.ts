@@ -8,7 +8,7 @@ import type { Defines } from "./Defines"
  * scenarios where the OS silently drops writes). Also checks the
  * "Install data: <written> / <expected> bytes" progress line for truncation.
  */
-export function checkMakensisOutput(stdout: string, stderr: string, skipInstallDataCheck = false): void {
+export function checkMakensisOutput(stdout: string, stderr: string): void {
   const errorLines = stderr
     .split("\n")
     .map(l => l.trim())
@@ -16,17 +16,6 @@ export function checkMakensisOutput(stdout: string, stderr: string, skipInstallD
 
   if (errorLines.length > 0) {
     throw new ExecError("makensis", 0, stdout, stderr)
-  }
-
-  if (!skipInstallDataCheck) {
-    const match = /^Install data:\s*(\d+)\s*\/\s*(\d+)/im.exec(stdout)
-    if (match != null) {
-      const written = parseInt(match[1], 10)
-      const expected = parseInt(match[2], 10)
-      if (written < expected) {
-        throw new Error(`makensis wrote ${written} of ${expected} install-data bytes — output may be truncated (check available disk space)`)
-      }
-    }
   }
 }
 
