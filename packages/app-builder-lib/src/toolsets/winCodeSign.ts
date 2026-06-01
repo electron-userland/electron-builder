@@ -160,7 +160,7 @@ async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"]) 
       filenameWithExt: f,
       checksums: { [f]: wincodesignChecksums["1.2.1"][f] },
     })
-    return { path: path.resolve(vp, "osslsigncode") }
+    return { path: path.resolve(vp, "osslsigncode.exe") }
   }
 
   // All remaining non-legacy versions carry the common cross-platform keys (keyof ["1.0.0"]).
@@ -170,11 +170,10 @@ async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"]) 
     filenameWithExt: file,
     checksums: { [file]: wincodesignChecksums[winCodeSign][file] },
   })
-  return { path: path.resolve(vendorPath, "osslsigncode") }
+  return { path: path.resolve(vendorPath, process.platform === "win32" ? "osslsigncode.exe" : "osslsigncode") }
 }
 
 export async function getRceditBundle(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish) {
-  const ia32 = "rcedit-ia32.exe"
   const x86 = "rcedit-x86.exe"
   const x64 = "rcedit-x64.exe"
   const rcedit = await resolveEnvToolsetPath("ELECTRON_BUILDER_RCEDIT_PATH", "directory")
@@ -184,7 +183,7 @@ export async function getRceditBundle(winCodeSign: ToolsetConfig["winCodeSign"] 
   }
   if (winCodeSign === "0.0.0" || winCodeSign == null) {
     const vendorPath = await getLegacyWinCodeSignBin()
-    return { x86: path.resolve(vendorPath, ia32), x64: path.resolve(vendorPath, x64) }
+    return { x86: path.resolve(vendorPath, "rcedit-ia32.exe"), x64: path.resolve(vendorPath, "rcedit-x64.exe") }
   }
   const file = "rcedit-windows-2_0_0.zip"
   const vendorPath = await downloadBuilderToolset({
