@@ -72,58 +72,45 @@ function matchPublisher(data: any, publisherNames: string[], logger: Logger): bo
   return false
 }
 
+// Parses Get-AuthenticodeSignature JSON, checks the LiteralPath guard, and
+// matches against publisherNames. Returns null on success or a diagnostic
+// string on failure. When checkLiteralPath detects a mismatch it calls
+// reject() directly and this function returns null.
+function evaluateSignatureResult(stdout: string, publisherNames: string[], unescapedTempUpdateFile: string, logger: Logger, reject: (reason: any) => void): string | null {
+  const data = parseOut(stdout)
+  if (data.Status === 0) {
+    if (!checkLiteralPath(data, unescapedTempUpdateFile, logger, reject)) {
+      return null
+    }
+    if (matchPublisher(data, publisherNames, logger)) {
+      return null
+    }
+  }
+  const result = `publisherNames: ${publisherNames.join(" | ")}, raw info: ` + JSON.stringify(data, (name, value) => (name === "RawData" ? undefined : value), 2)
+  logger.warn(`Sign verification failed, installer signed with incorrect certificate: ${result}`)
+  return result
+}
+
 // $certificateInfo = (Get-AuthenticodeSignature 'xxx\yyy.exe'
 // | where {$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid) -and $_.SignerCertificate.Subject.Contains("CN=siemens.com")})
 // | Out-String ; if ($certificateInfo) { exit 0 } else { exit 1 }
 export function verifySignature(publisherNames: Array<string>, unescapedTempUpdateFile: string, logger: Logger): Promise<string | null> {
+  // Single quotes in the path are doubled for PS single-quoted strings ('don''t' → don't).
+  // Other PS metacharacters ($, `, \) are literal inside single-quoted strings.
+  const tempUpdateFile = unescapedTempUpdateFile.replace(/'/g, "''")
+  logger.info(`Verifying signature ${tempUpdateFile}`)
   return new Promise<string | null>((resolve, reject) => {
-    // Escape quotes and backticks in filenames to prevent user from breaking the
-    // arguments and perform a remote command injection.
-    //
-    // Consider example powershell command:
-    // ```powershell
-    // Get-AuthenticodeSignature 'C:\\path\\my-bad-';calc;'filename.exe'
-    // ```
-    // The above would work expected and find the file name, however, it will also execute `;calc;`
-    // command and start the calculator app.
-    //
-    // From Powershell quoting rules:
-    // https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_quoting_rules?view=powershell-7
-    // * Double quotes `"` are treated literally within single-quoted strings;
-    // * Single quotes can be escaped by doubling them: 'don''t' -> don't;
-    //
-    // Also note that at this point the file has already been written to the disk, thus we are
-    // guaranteed that the path will not contain any illegal characters like <>:"/\|?*
-    // https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file
-    const tempUpdateFile = unescapedTempUpdateFile.replace(/'/g, "''")
-    logger.info(`Verifying signature ${tempUpdateFile}`)
-
     execFile(...preparePowerShellExec(`Get-AuthenticodeSignature -LiteralPath '${tempUpdateFile}' | ConvertTo-Json -Compress`, 20 * 1000), (error, stdout, stderr) => {
+      if (error != null || stderr) {
+        handleError(logger, error, stderr, reject)
+        resolve(null)
+        return
+      }
       try {
-        if (error != null || stderr) {
-          handleError(logger, error, stderr, reject)
-          resolve(null)
-          return
-        }
-        const data = parseOut(stdout)
-        if (data.Status === 0) {
-          if (!checkLiteralPath(data, unescapedTempUpdateFile, logger, reject)) {
-            resolve(null)
-            return
-          }
-          if (matchPublisher(data, publisherNames, logger)) {
-            resolve(null)
-            return
-          }
-        }
-
-        const result = `publisherNames: ${publisherNames.join(" | ")}, raw info: ` + JSON.stringify(data, (name, value) => (name === "RawData" ? undefined : value), 2)
-        logger.warn(`Sign verification failed, installer signed with incorrect certificate: ${result}`)
-        resolve(result)
+        resolve(evaluateSignatureResult(stdout, publisherNames, unescapedTempUpdateFile, logger, reject))
       } catch (e: any) {
         handleError(logger, e, null, reject)
         resolve(null)
-        return
       }
     })
   })

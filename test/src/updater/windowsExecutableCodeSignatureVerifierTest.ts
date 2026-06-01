@@ -1,6 +1,6 @@
 // vi.mock calls are hoisted to the top by vitest's transformer.
 // They must appear before any imports that depend on them.
-import { afterAll, afterEach, beforeEach, expect, vi } from "vitest"
+import { afterAll, afterEach, beforeAll, beforeEach, expect, vi } from "vitest"
 
 vi.mock("child_process", async importOriginal => {
   const mod = await importOriginal<typeof import("child_process")>()
@@ -274,6 +274,16 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
       expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).not.toBeNull()
     })
 
+    test("status 3 (HashMismatch) returns non-null error string", async () => {
+      mockPsSuccess(makeJson({ status: 3 }))
+      expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).not.toBeNull()
+    })
+
+    test("status 4 (NotSupportedFileFormat) returns non-null error string", async () => {
+      mockPsSuccess(makeJson({ status: 4 }))
+      expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).not.toBeNull()
+    })
+
     test("DN value comparison is case-sensitive", async () => {
       // lower-case "acme corp" in cert, upper-case in publisherName → no match
       mockPsSuccess(makeJson({ subject: "CN=acme corp, O=Acme, C=US" }))
@@ -463,6 +473,11 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
         expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).toBeNull()
         expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("ConvertTo-Json"))
       })
+
+      test("empty stdout rejects when ConvertTo-Json probe passes (JSON.parse('') throws)", async () => {
+        mockPsSuccess("")
+        await expect(verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).rejects.toThrow()
+      })
     })
   })
 
@@ -501,6 +516,24 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
       const cmd = Buffer.from(args[args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le")
       expect(cmd).toMatch(/-LiteralPath '.*'/)
     })
+
+    test("dollar sign in path is passed verbatim (not interpolated — single-quoted PS string)", async () => {
+      const dollarPath = path.join(path.dirname(defaultFile), "$important-update.exe")
+      mockPsSuccess(makeJson({ filePath: dollarPath }))
+      await verifySignature([DEFAULT_SUBJECT], dollarPath, logger)
+      const [, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
+      const cmd = Buffer.from(args[args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le")
+      expect(cmd).toContain("$important-update.exe")
+    })
+
+    test("backtick in path is passed verbatim (not treated as PS escape char — single-quoted PS string)", async () => {
+      const backtickPath = path.join(path.dirname(defaultFile), "`update.exe")
+      mockPsSuccess(makeJson({ filePath: backtickPath }))
+      await verifySignature([DEFAULT_SUBJECT], backtickPath, logger)
+      const [, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
+      const cmd = Buffer.from(args[args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le")
+      expect(cmd).toContain("`update.exe")
+    })
   })
 })
 
@@ -519,17 +552,20 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
   let realExecFileSync: (typeof import("child_process"))["execFileSync"]
   let realOsRelease: (typeof import("os"))["release"]
 
-  // Obtain real implementations once (vi.importActual is not cheap).
-  beforeEach(async () => {
-    logger = createLogger()
-    vi.clearAllMocks()
-
+  // Obtain real implementations once — vi.importActual is expensive and the
+  // returned values are stable across tests, so they live in beforeAll.
+  beforeAll(async () => {
     const realCp = await vi.importActual<typeof import("child_process")>("child_process")
     const realOs = await vi.importActual<typeof import("os")>("os")
     realExecFile = realCp.execFile
     realExecFileSync = realCp.execFileSync
     realOsRelease = realOs.release
+  })
 
+  beforeEach(() => {
+    logger = createLogger()
+    vi.clearAllMocks()
+    // Re-apply real implementations after vi.clearAllMocks() resets them.
     vi.mocked(execFile).mockImplementation(realExecFile as any)
     vi.mocked(execFileSync).mockImplementation(realExecFileSync as any)
     vi.mocked(osRelease).mockImplementation(realOsRelease)
@@ -652,6 +688,51 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
       expect(await verifySignature([`${cn}, ${c}`], NOTEPAD, logger)).toBeNull()
     }, 30_000)
   })
+
+  // -------------------------------------------------------------------------
+  // Paths with characters that were dangerous under the old cmd.exe-based
+  // invocation (shell: true) but are now safe with shell: false + -EncodedCommand.
+  // Each test verifies no crash / spurious rejection on an unsigned file.
+
+  test("directory name with & does not crash or reject (was dangerous with cmd.exe shell)", async () => {
+    const parent = await tmpDir.getTempDir()
+    const andDir = path.join(parent, "AT&T Updates")
+    await fs.mkdir(andDir, { recursive: true })
+    const p = path.join(andDir, "update.exe")
+    await fs.writeFile(p, Buffer.from("not a PE"))
+    const result = await verifySignature(["Any Publisher"], p, logger)
+    expect(typeof result === "string" || result === null).toBe(true)
+  }, 30_000)
+
+  test("directory name with %VAR% does not crash or reject (was expanded by cmd.exe)", async () => {
+    const parent = await tmpDir.getTempDir()
+    const pctDir = path.join(parent, "%USERNAME% Updates")
+    await fs.mkdir(pctDir, { recursive: true })
+    const p = path.join(pctDir, "update.exe")
+    await fs.writeFile(p, Buffer.from("not a PE"))
+    const result = await verifySignature(["Any Publisher"], p, logger)
+    expect(typeof result === "string" || result === null).toBe(true)
+  }, 30_000)
+
+  test("directory name with $ does not crash or reject (safe in PS single-quoted string)", async () => {
+    const parent = await tmpDir.getTempDir()
+    const dollarDir = path.join(parent, "$Updates")
+    await fs.mkdir(dollarDir, { recursive: true })
+    const p = path.join(dollarDir, "update.exe")
+    await fs.writeFile(p, Buffer.from("not a PE"))
+    const result = await verifySignature(["Any Publisher"], p, logger)
+    expect(typeof result === "string" || result === null).toBe(true)
+  }, 30_000)
+
+  test("directory name with backtick does not crash or reject (safe in PS single-quoted string)", async () => {
+    const parent = await tmpDir.getTempDir()
+    const backtickDir = path.join(parent, "`Updates")
+    await fs.mkdir(backtickDir, { recursive: true })
+    const p = path.join(backtickDir, "update.exe")
+    await fs.writeFile(p, Buffer.from("not a PE"))
+    const result = await verifySignature(["Any Publisher"], p, logger)
+    expect(typeof result === "string" || result === null).toBe(true)
+  }, 30_000)
 
   // -------------------------------------------------------------------------
   test("symlink to a different file: LiteralPath mismatch prevents a silent pass", async () => {
