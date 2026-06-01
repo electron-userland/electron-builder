@@ -450,7 +450,7 @@ export class NsisTarget extends Target {
         }
       }
     } else {
-      await execWine(installerPath, null, [], { env: { __COMPAT_LAYER: "RunAsInvoker" } })
+      await execWine({ file: installerPath, file64: null, appArgs: [], options: { env: { __COMPAT_LAYER: "RunAsInvoker" } }, toolset: this.packager.config.toolsets?.wine ?? null })
     }
     await packager.signIf(uninstallerPath)
 

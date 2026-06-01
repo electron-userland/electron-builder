@@ -379,6 +379,18 @@ export interface ToolsetConfig {
    * @default "0.0.0"
    */
   readonly nsis?: "0.0.0" | "1.2.1" | null
+
+  /**
+   * `wine` bundle version to use for running Windows tools on non-Windows platforms.
+   * Located at https://github.com/electron-userland/electron-builder-binaries/releases?q=wine&expanded=true
+   * 0.0.0 - system wine (legacy, no download)
+   *
+   * Beta:
+   * 1.0.0 - Wine 11 bundle (unified wine binary, ia32 via WoW64)
+   *
+   * @default "0.0.0"
+   */
+  readonly wine?: "0.0.0" | "1.0.0" | null
 }
 
 export interface Hooks {

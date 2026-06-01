@@ -1,17 +1,18 @@
 import { ExtraSpawnOptions } from "builder-util"
 import { ExecFileOptions, SpawnOptions } from "child_process"
 import * as path from "path"
+import { ToolsetConfig } from "../configuration"
 import { execWine } from "../wine"
 import { VmManager } from "./vm"
 
 export class WineVmManager extends VmManager {
-  constructor() {
+  constructor(private readonly wineToolset: ToolsetConfig["wine"]) {
     super()
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   exec(file: string, args: Array<string>, options?: ExecFileOptions, isLogOutIfDebug = true): Promise<string> {
-    return execWine(file, null, args, options)
+    return execWine({ file, file64: null, appArgs: args, options, toolset: this.wineToolset })
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

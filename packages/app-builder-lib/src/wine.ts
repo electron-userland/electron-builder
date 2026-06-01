@@ -1,8 +1,18 @@
-import { exec, executeAppBuilder } from "builder-util"
+import { exec } from "builder-util"
 import { ExecFileOptions } from "child_process"
+import { ToolsetConfig } from "./configuration"
+import { getWineToolset } from "./toolsets/wine"
+
+type WineOptions = {
+  file: string
+  file64?: string | null
+  appArgs?: Array<string>
+  options?: ExecFileOptions
+  toolset: ToolsetConfig["wine"]
+}
 
 /** @private */
-export function execWine(file: string, file64: string | null = null, appArgs: Array<string> = [], options: ExecFileOptions = {}): Promise<string> {
+export async function execWine({ file, file64 = null, appArgs = [], options = {}, toolset }: WineOptions): Promise<string> {
   if (process.platform === "win32") {
     if (options.timeout == null) {
       // 2 minutes
@@ -11,14 +21,10 @@ export function execWine(file: string, file64: string | null = null, appArgs: Ar
     return exec(file, appArgs, options)
   }
 
-  const commandArgs = ["wine", "--ia32", file]
-  if (file64 != null) {
-    commandArgs.push("--x64", file64)
-  }
-  if (appArgs.length > 0) {
-    commandArgs.push("--args", JSON.stringify(appArgs))
-  }
-  return executeAppBuilder(commandArgs, undefined, options)
+  const wineExe = await getWineToolset(toolset)
+  // Wine 11 unified binary: prefer x64 exe; ia32 runs via WoW64
+  const target = file64 ?? file
+  return exec(wineExe, [target, ...appArgs], options)
 }
 
 /** @private */
