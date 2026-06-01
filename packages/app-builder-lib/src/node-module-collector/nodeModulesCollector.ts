@@ -21,7 +21,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     const command = getPackageManagerCommand(manager)
     const config = (await this.asyncExec(command, ["config", "list"])).stdout
     if (config == null) {
-      log.debug({ manager }, "unable to determine if node_modules are hoisted: no config output. falling back to hoisted mode")
+      log.debug({ manager }, "unable to determine node-linker setting; assuming non-hoisted (virtual store) layout")
       return false
     }
     const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
