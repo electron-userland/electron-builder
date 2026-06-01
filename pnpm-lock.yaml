@@ -116,6 +116,9 @@ importers:
       '@malept/flatpak-bundler':
         specifier: ^0.4.0
         version: 0.4.0
+      '@noble/hashes':
+        specifier: ^2.2.0
+        version: 2.2.0
       '@peculiar/webcrypto':
         specifier: ^1.7.1
         version: 1.7.1
@@ -611,6 +614,9 @@ importers:
       '@jest/globals':
         specifier: ^29.7.0
         version: 29.7.0
+      '@noble/hashes':
+        specifier: ^2.2.0
+        version: 2.2.0
       '@types/adm-zip':
         specifier: 0.5.6
         version: 0.5.6
@@ -638,6 +644,9 @@ importers:
       adm-zip:
         specifier: 0.5.16
         version: 0.5.16
+      app-builder-bin:
+        specifier: 5.0.0-alpha.12
+        version: 5.0.0-alpha.12
       app-builder-lib:
         specifier: workspace:*
         version: link:../packages/app-builder-lib
@@ -3320,6 +3329,10 @@ packages:
   '@noble/hashes@1.4.0':
     resolution: {integrity: sha512-V1JJ1WTRUqHHrOSh597hURcMqVKVGL/ea3kv0gSnEdsEZ0/+VyPghM1lMNGc00z7CIQorSvbKpuJkxvuHbvdbg==}
     engines: {node: '>= 16'}
+
+  '@noble/hashes@2.2.0':
+    resolution: {integrity: sha512-IYqDGiTXab6FniAgnSdZwgWbomxpy9FtYvLKs7wCUs2a8RkITG+DFGO1DM9cr+E3/RgADRpFjrKVaJ1z6sjtEg==}
+    engines: {node: '>= 20.19.0'}
 
   '@nodable/entities@2.1.0':
     resolution: {integrity: sha512-nyT7T3nbMyBI/lvr6L5TyWbFJAI9FTgVRakNoBqCD+PmID8DzFrrNdLLtHMwMszOtqZa8PAOV24ZqDnQrhQINA==}
@@ -14373,6 +14386,8 @@ snapshots:
     optional: true
 
   '@noble/hashes@1.4.0': {}
+
+  '@noble/hashes@2.2.0': {}
 
   '@nodable/entities@2.1.0': {}
 
