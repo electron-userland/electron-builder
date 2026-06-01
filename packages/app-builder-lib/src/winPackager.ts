@@ -236,10 +236,10 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   }
 
   private shouldSignFile(file: string, fallbackValue = false): boolean {
-    const backwardCompatibility = file.endsWith(".exe")
+    const isExe = file.endsWith(".exe")
     const signExts = this.platformSpecificBuildOptions.signExts
     if (!signExts?.length) {
-      return backwardCompatibility || fallbackValue
+      return isExe || fallbackValue
     }
     // process patterns ( !exe => exclude .exe, .dll => include .dll )
     // we process first to allow literal negatives in case a filename matches "help!.txt" or similar
@@ -250,8 +250,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     if (signExts.some(ext => ext.startsWith("!") && file.endsWith(ext.substring(1)))) {
       return false
     }
-    // if no explicit patterns matched, fall back to backward compatibility
-    return backwardCompatibility || fallbackValue
+    return isExe || fallbackValue
   }
 
   protected createTransformerForExtraFiles(packContext: AfterPackContext): FileTransformer | null {
@@ -279,6 +278,10 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       )
     }
     if (this.platformSpecificBuildOptions.signAndEditExecutable === false) {
+      log.info(
+        { exe: log.filePath(path.join(packContext.appOutDir, exeFileName)) },
+        "executable resource editing and code signing skipped — signAndEditExecutable is false. To skip only code signing while keeping icon and metadata applied, use signExecutable: false instead."
+      )
       return false
     }
 
@@ -301,15 +304,18 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       return true
     }
 
-    const filesPromise = (filepath: string[]) => {
-      const outDir = path.join(packContext.appOutDir, ...filepath)
-      return walk(outDir, (file, stat) => stat.isDirectory() || this.shouldSignFile(file))
-    }
-    const filesToSign = await Promise.all([filesPromise(["resources", "app.asar.unpacked"]), filesPromise(["swiftshader"])])
+    const filesToSign = await Promise.all([
+      this.walkSignableFiles(packContext.appOutDir, "resources", "app.asar.unpacked"),
+      this.walkSignableFiles(packContext.appOutDir, "swiftshader"),
+    ])
     for (const file of filesToSign.flat(1)) {
       await this.signIf(file)
     }
 
     return true
+  }
+
+  private walkSignableFiles(baseDir: string, ...subpath: string[]): Promise<string[]> {
+    return walk(path.join(baseDir, ...subpath), (file, stat) => stat.isDirectory() || this.shouldSignFile(file))
   }
 }

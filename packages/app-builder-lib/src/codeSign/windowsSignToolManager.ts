@@ -7,6 +7,7 @@ import { Target } from "../core"
 import { WindowsConfiguration } from "../options/winOptions"
 import AppXTarget from "../targets/AppxTarget"
 import { getSignToolPath } from "../toolsets/windows"
+import { ToolInfo } from "../util/bundledTool"
 import { resolveFunction } from "../util/resolve"
 import { readCertInfo } from "./certInfo"
 import { VmManager } from "../vm/vm"
@@ -332,6 +333,9 @@ export class WindowsSignToolManager implements SignManager {
   }
 
   private addCertificateArgs(args: Array<string>, options: WindowsSignTaskConfiguration, vm: VmManager, isWin: boolean): void {
+    if (options.cscInfo == null) {
+      throw new Error("No code signing certificate configured. Provide certificateFile, certificateSha1, or certificateSubjectName.")
+    }
     const certificateFile = (options.cscInfo as FileCodeSigningInfo).file
 
     if (certificateFile == null) {
@@ -421,6 +425,10 @@ export class WindowsSignToolManager implements SignManager {
     }
 
     throw new Error(`Cannot find certificate ${certificateSubjectName || certificateSha1}, all certs: ${rawResult}`)
+  }
+
+  async getToolPath(isWin = process.platform === "win32"): Promise<ToolInfo> {
+    return getSignToolPath(this.packager.config.toolsets?.winCodeSign, isWin)
   }
 
   async doSign(configuration: CustomWindowsSignTaskConfiguration, packager: WinPackager) {

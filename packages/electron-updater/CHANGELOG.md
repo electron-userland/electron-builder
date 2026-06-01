@@ -1,5 +1,25 @@
 ## 4.3.0
 
+## 6.8.8
+
+### Patch Changes
+
+- Fix(updater): ensure full changelog includes only release notes up to the latest release _[`#9573`](https://github.com/electron-userland/electron-builder/pull/9573) [`ac45083`](https://github.com/electron-userland/electron-builder/commit/ac450835015b18720c5bc5de0221b4c770d0fac2) [@AbdulrhmanGoni](https://github.com/AbdulrhmanGoni)_
+- Fix: harden the auto-update flow relative paths in PATH, path traversals, and environment variable intercepts _[`#9796`](https://github.com/electron-userland/electron-builder/pull/9796) [`2dc409f`](https://github.com/electron-userland/electron-builder/commit/2dc409f1e4ab1c82795ad731a50beb1296315730) [@mmaietta](https://github.com/mmaietta)_
+- Chore: extracting helper function to add coverage in MacUpdater test suite _[`#9794`](https://github.com/electron-userland/electron-builder/pull/9794) [`d664ed0`](https://github.com/electron-userland/electron-builder/commit/d664ed0968e6c4010688eebe97babcfe5e43bd51) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`59efef1`](https://github.com/electron-userland/electron-builder/commit/59efef1a8b81ed1ead4e8004043726d2b49cf81f)
+
+</small>
+
+- `builder-util-runtime@9.6.3`
+
+</details>
+
 ## 6.8.7
 
 ### Patch Changes

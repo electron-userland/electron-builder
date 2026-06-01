@@ -1,3 +1,25 @@
+# [26.13.0](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.12.1...electron-builder@26.13.0) (2026-05-31)
+
+
+### Bug Fixes
+
+* **appimage:** bundle FUSE2 runtime libraries for x64/ia32, matching Go implementation ([#9799](https://github.com/electron-userland/electron-builder/issues/9799)) ([4e97804](https://github.com/electron-userland/electron-builder/commit/4e9780454618518f1d532a1479a751368a5f7fe7))
+* **appimage:** fully migrate from app-builder-bin fuse2 AppImage flow to leverage internal JS-only implementation ([#9797](https://github.com/electron-userland/electron-builder/issues/9797)) ([98174e1](https://github.com/electron-userland/electron-builder/commit/98174e147836c178034b237eb125c5cabe4fc253))
+* harden the auto-update flow from relative paths and env var intercepts ([#9796](https://github.com/electron-userland/electron-builder/issues/9796)) ([2dc409f](https://github.com/electron-userland/electron-builder/commit/2dc409f1e4ab1c82795ad731a50beb1296315730))
+* **linux:** Use `desktopName` from `package.json` for `StartupWMClass` in Linux desktop entries ([#9574](https://github.com/electron-userland/electron-builder/issues/9574)) ([fa2285c](https://github.com/electron-userland/electron-builder/commit/fa2285cc563a7f068c93bc5b1b8e5d68fb6d1668))
+* **nsis-web:** `appPackageUrl` regression: stop appending arch paths to explicit URLs ([#9655](https://github.com/electron-userland/electron-builder/issues/9655)) ([73bb547](https://github.com/electron-userland/electron-builder/commit/73bb547b8dfc5efb40e1df734fa2f92c070552b4))
+* **nsis:** exact process-name match to stop false-positive "cannot be closed" dialog ([#9784](https://github.com/electron-userland/electron-builder/issues/9784)) ([dd6d704](https://github.com/electron-userland/electron-builder/commit/dd6d704ea5fc268fd60aa29861ac389fa1414969))
+* **updater:** ensure full changelog includes only release notes up to the latest release ([#9573](https://github.com/electron-userland/electron-builder/issues/9573)) ([ac45083](https://github.com/electron-userland/electron-builder/commit/ac450835015b18720c5bc5de0221b4c770d0fac2))
+
+
+### Features
+
+* add `disableAsarIntegrity` config option to skip ASAR integrity computation ([#9786](https://github.com/electron-userland/electron-builder/issues/9786)) ([3a6c0b1](https://github.com/electron-userland/electron-builder/commit/3a6c0b18fbd223e94bdb9651ef1c7a66b823cdfd))
+* **dmg:** add `filesystem` option to support APFS dmg format ([#9616](https://github.com/electron-userland/electron-builder/issues/9616)) ([6982866](https://github.com/electron-userland/electron-builder/commit/69828666afaa333001b7ba6fcdda23a2a8878885))
+* migrate 1-to-1 app-builder-bin functions to pure JS (part 1) ([#9733](https://github.com/electron-userland/electron-builder/issues/9733)) ([1bc92ff](https://github.com/electron-userland/electron-builder/commit/1bc92ff4b21003536dfe161fb679b6a76713cd38))
+
+
+
 ## [26.12.1](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.12.0...electron-builder@26.12.1) (2026-05-30)
 
 
