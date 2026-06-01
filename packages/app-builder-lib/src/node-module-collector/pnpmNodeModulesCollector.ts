@@ -72,15 +72,17 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       }
     }
 
-    // pnpm's `.pnpm` virtual store is flat — no nested `node_modules/<a>/node_modules/<b>`
-    // structure exists. `downwardSearch` would burn thousands of `readdir`/`lstat` calls
-    // finding nothing, so skip it.
+    // pnpm's default `.pnpm` virtual store is flat, so `downwardSearch` would burn thousands
+    // of `readdir`/`lstat` calls finding nothing. With `nodeLinker: hoisted`, however, the
+    // layout is a traditional nested `node_modules` tree where version-conflicted packages
+    // land at `<root>/node_modules/A/node_modules/B` — downward BFS is needed to find them.
+    const skipDownwardSearch = !(await this.isHoisted.value)
     const promise = (async (): Promise<Package | null> => {
-      const fromDep = parentPath ? await this.cache.locatePackageVersion({ pkgName, parentDir: parentPath, requiredRange, skipDownwardSearch: true }) : null
+      const fromDep = parentPath ? await this.cache.locatePackageVersion({ pkgName, parentDir: parentPath, requiredRange, skipDownwardSearch }) : null
       if (fromDep) {
         return fromDep
       }
-      return this.cache.locatePackageVersion({ pkgName, parentDir: this.rootDir, requiredRange, skipDownwardSearch: true })
+      return this.cache.locatePackageVersion({ pkgName, parentDir: this.rootDir, requiredRange, skipDownwardSearch })
     })()
 
     if (memoKey != null) {

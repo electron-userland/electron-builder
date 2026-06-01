@@ -189,6 +189,97 @@ describe("ModuleManager.locatePackageVersion", () => {
   })
 })
 
+describe("ModuleManager downward search", () => {
+  let root = ""
+  afterEach(async () => {
+    if (root) await fse.rm(root, { recursive: true, force: true })
+  })
+
+  test("finds package nested under another package's node_modules", async ({ expect }) => {
+    // Simulates: root/node_modules/consumer/node_modules/target (hoisted layout with version conflict)
+    root = await buildTempTree({
+      "node_modules/consumer/package.json": { name: "consumer", version: "1.0.0" },
+      "node_modules/consumer/node_modules/target/package.json": { name: "target", version: "3.0.0" },
+      // a different version is hoisted at root so upward search finds the wrong one
+      "node_modules/target/package.json": { name: "target", version: "2.0.0" },
+    })
+    const manager = new ModuleManager()
+    const result = await manager.locatePackageVersion({
+      parentDir: root,
+      pkgName: "target",
+      requiredRange: "^3.0.0",
+      skipDownwardSearch: false,
+    })
+    expect(result).not.toBeNull()
+    expect(result!.packageJson.version).toBe("3.0.0")
+    expect(result!.packageDir).toBe(path.join(root, "node_modules", "consumer", "node_modules", "target"))
+  })
+
+  test("skipDownwardSearch: true does NOT find a package nested under another package's node_modules", async ({ expect }) => {
+    root = await buildTempTree({
+      "node_modules/consumer/package.json": { name: "consumer", version: "1.0.0" },
+      "node_modules/consumer/node_modules/target/package.json": { name: "target", version: "3.0.0" },
+    })
+    const manager = new ModuleManager()
+    const result = await manager.locatePackageVersion({
+      parentDir: root,
+      pkgName: "target",
+      requiredRange: "^3.0.0",
+      skipDownwardSearch: true,
+    })
+    expect(result).toBeNull()
+  })
+
+  test("finds scoped package (@scope/name) nested under another package's node_modules", async ({ expect }) => {
+    root = await buildTempTree({
+      "node_modules/consumer/package.json": { name: "consumer", version: "1.0.0" },
+      "node_modules/consumer/node_modules/@scope/target/package.json": { name: "@scope/target", version: "5.0.0" },
+    })
+    const manager = new ModuleManager()
+    const result = await manager.locatePackageVersion({
+      parentDir: root,
+      pkgName: "@scope/target",
+      requiredRange: "^5.0.0",
+      skipDownwardSearch: false,
+    })
+    expect(result).not.toBeNull()
+    expect(result!.packageJson.version).toBe("5.0.0")
+  })
+
+  test("upward search finds the hoisted version when the nested version does not satisfy the range", async ({ expect }) => {
+    // consumer/node_modules/target = 2.0.0 (direct check, fails range ^2.5.0)
+    // root/node_modules/target    = 2.5.0 (found by upward search, satisfies range)
+    root = await buildTempTree({
+      "node_modules/target/package.json": { name: "target", version: "2.5.0" },
+      "node_modules/consumer/package.json": { name: "consumer", version: "1.0.0" },
+      "node_modules/consumer/node_modules/target/package.json": { name: "target", version: "2.0.0" },
+    })
+    const manager = new ModuleManager()
+    const result = await manager.locatePackageVersion({
+      parentDir: path.join(root, "node_modules", "consumer"),
+      pkgName: "target",
+      requiredRange: "^2.5.0",
+    })
+    expect(result).not.toBeNull()
+    expect(result!.packageJson.version).toBe("2.5.0")
+  })
+
+  test("dot-prefixed directories inside node_modules are skipped", async ({ expect }) => {
+    // Ensures hidden dirs like .pnpm are never explored
+    root = await buildTempTree({
+      "node_modules/.hidden/node_modules/target/package.json": { name: "target", version: "1.0.0" },
+    })
+    const manager = new ModuleManager()
+    const result = await manager.locatePackageVersion({
+      parentDir: root,
+      pkgName: "target",
+      requiredRange: "^1.0.0",
+      skipDownwardSearch: false,
+    })
+    expect(result).toBeNull()
+  })
+})
+
 describe("ModuleManager.semverSatisfies (via locatePackageVersion)", () => {
   let root = ""
   afterEach(async () => {
