@@ -94,6 +94,17 @@ exports[`assisted > assisted, MUI_HEADER 1`] = `
 }
 `;
 
+exports[`assisted > assisted, MUI_HEADER as option 1`] = `
+{
+  "win": [
+    {
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+    },
+  ],
+}
+`;
+
 exports[`assisted > assisted, only perMachine 1`] = `
 {
   "win": [
