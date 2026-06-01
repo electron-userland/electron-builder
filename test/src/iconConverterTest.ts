@@ -136,11 +136,7 @@ describe("convertIcon – ICNS output", () => {
     await writePng(128, srcFile)
     const outDir = path.join(tmpDir, "out")
 
-    const result = await convertIcon({ sources: [srcFile], fallbackSources: [], roots: [tmpDir], format: "icns", outDir: outDir })
-
-    expect(result.error).toBeDefined()
-    expect(result.errorCode).toBeDefined()
-    expect(result.icons).toHaveLength(0)
+    await expect(convertIcon({ sources: [srcFile], fallbackSources: [], roots: [tmpDir], format: "icns", outDir: outDir })).rejects.toThrow(/must be at least 512/)
   })
 
   it("returns isFallback=true and uses fallback sources when primary is missing", async () => {
@@ -221,9 +217,7 @@ describe("convertIcon – ICO output", () => {
     await writePng(64, srcFile)
     const outDir = path.join(tmpDir, "out")
 
-    const result = await convertIcon({ sources: [srcFile], fallbackSources: [], roots: [tmpDir], format: "ico", outDir: outDir })
-
-    expect(result.error).toBeDefined()
+    await expect(convertIcon({ sources: [srcFile], fallbackSources: [], roots: [tmpDir], format: "ico", outDir: outDir })).rejects.toThrow(/must be at least 256/)
   })
 
   it("returns an existing ICO file directly and parses its max dimension", async () => {
@@ -242,10 +236,9 @@ describe("convertIcon – ICO output", () => {
     const tooSmallIco = path.join(TEST_APP_ICONS, "incorrect.ico")
     const outDir = path.join(tmpDir, "out")
 
-    const result = await convertIcon({ sources: [tooSmallIco], fallbackSources: [], roots: [], format: "ico", outDir: outDir })
-
-    expect(result.error).toBeDefined()
-    expect(result.errorCode).toBe("ERR_ICON_TOO_SMALL")
+    const err = await convertIcon({ sources: [tooSmallIco], fallbackSources: [], roots: [], format: "ico", outDir: outDir }).catch(e => e)
+    expect(err).toBeInstanceOf(Error)
+    expect((err as NodeJS.ErrnoException).code).toBe("ERR_ICON_TOO_SMALL")
   })
 
   it("rejects a file with an invalid ICO magic with ERR_ICON_UNKNOWN_FORMAT", async () => {
@@ -253,10 +246,9 @@ describe("convertIcon – ICO output", () => {
     await writeFile(badIco, makePng(256)) // PNG magic, not ICO magic
     const outDir = path.join(tmpDir, "out")
 
-    const result = await convertIcon({ sources: [badIco], fallbackSources: [], roots: [], format: "ico", outDir: outDir })
-
-    expect(result.error).toBeDefined()
-    expect(result.errorCode).toBe("ERR_ICON_UNKNOWN_FORMAT")
+    const err = await convertIcon({ sources: [badIco], fallbackSources: [], roots: [], format: "ico", outDir: outDir }).catch(e => e)
+    expect(err).toBeInstanceOf(Error)
+    expect((err as NodeJS.ErrnoException).code).toBe("ERR_ICON_UNKNOWN_FORMAT")
   })
 
   it("converts SVG source to ICO", async () => {

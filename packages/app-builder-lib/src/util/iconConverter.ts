@@ -8,6 +8,7 @@ class IconConversionError extends Error {
     readonly errorCode: string
   ) {
     super(message)
+    ;(this as NodeJS.ErrnoException).code = errorCode
   }
 }
 
