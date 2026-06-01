@@ -2,13 +2,14 @@ import { exec } from "builder-util"
 import { ExecFileOptions } from "child_process"
 import { ToolsetConfig } from "./configuration"
 import { getWineToolset } from "./toolsets/wine"
+import { Nullish } from "builder-util-runtime"
 
 type WineOptions = {
   file: string
   file64?: string | null
   appArgs?: Array<string>
   options?: ExecFileOptions
-  toolset: ToolsetConfig["wine"]
+  toolset: ToolsetConfig["wine"] | Nullish
 }
 
 /** @private */
