@@ -130,7 +130,7 @@ This will declare to use node-modules instead of PnP.
    See [all options](https://www.electron.build/docs/configuration). Option [files](https://www.electron.build/docs/contents#files) to indicate which files should be packed in the final application, including the entry file, maybe required.
    You can also use separate configuration files, such as `js`, `ts`, `yml`, and `json`/`json5`. See [read-config-file](https://www.npmjs.com/package/read-config-file) for supported extensions. [JS Example for programmatic API](https://www.electron.build/docs/programmatic-usage)
 
-3. Add [icons](https://www.electron.build/docs/features/icons).
+3. Add [icons](https://www.electron.build/docs/features/icons-and-images).
 
 4. Add the [scripts](https://docs.npmjs.com/cli/run-script) key to the development `package.json`:
     ```json

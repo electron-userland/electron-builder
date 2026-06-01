@@ -4,6 +4,12 @@ title: "Icons & Images"
 
 electron-builder handles icon and image assets differently per platform. Give it a single high-quality source — a 1024×1024 PNG or an SVG — and it auto-converts to every format the target platform needs. No manual export pipelines, no platform-specific tooling required.
 
+All icon and image files are **optional** — if omitted, the default Electron icon is used. Files are resolved from the [`buildResources`](../contents.md#extraresources) directory, which defaults to `build/` in your project root.
+
+:::tip[Icon creation tools]
+[Icon Composer](https://developer.apple.com/icon-composer/), [AppIcon Generator](http://www.tweaknow.com/appicongenerator.php), [MakeAppIcon](https://makeappicon.com/)
+:::
+
 ## TL;DR — Recommended build/ layout
 
 ```
@@ -93,6 +99,10 @@ If you provide a pre-built `.icns`, electron-builder uses it as-is — no re-enc
 If you set `mac.icon` to a `.icon` file (Apple Icon Composer asset), electron-builder compiles it into an `Assets.car` via `actool` and wires it via `CFBundleIconName`. This requires **Xcode 26+** and **macOS 15+** on the build machine.
 
 For `.icns` files, the path is referenced via `CFBundleIconFile` and does not require Xcode.
+
+:::note
+If you only provide a `.icon` file and rely on the default DMG volume icon, consider setting `dmg.icon` explicitly to an `.icns` file — the DMG volume icon still uses `.icns`.
+:::
 
 ---
 
