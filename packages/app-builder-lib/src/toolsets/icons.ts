@@ -1,4 +1,4 @@
-import { exec, exists, InvalidConfigurationError, resolveEnvToolsetPath } from "builder-util"
+import { exec, exists, InvalidConfigurationError, resolveEnvToolsetPath, sanitizeDirPath } from "builder-util"
 import * as path from "path"
 import { downloadBuilderToolset } from "../util/electronGet"
 
@@ -25,12 +25,19 @@ type IconConversionOptions = {
   outDir: string
 }
 
+const VALID_OUTPUT_FORMATS = ["icns", "ico", "set"] as const
+
 export async function runIconsTool({ inputFile, outputFormat, outDir }: IconConversionOptions): Promise<void> {
+  if (!(VALID_OUTPUT_FORMATS as readonly string[]).includes(outputFormat)) {
+    throw new InvalidConfigurationError(`Invalid icon output format: ${outputFormat}`)
+  }
+  const safeInput = sanitizeDirPath(inputFile)
+  const safeOutDir = sanitizeDirPath(outDir)
+
   const toolsetPath = await getIconsToolsetPath()
   const scriptPath = path.resolve(toolsetPath, "icon-tool.js")
   if (!(await exists(scriptPath))) {
     throw new InvalidConfigurationError(`Icons tool not found at expected path: ${scriptPath}`)
   }
-  // codeql[js/shell-command-constructed-from-input] - exec uses execFile (no shell); inputFile is verified to exist via stat() before this call; outputFormat is a string-literal union ("icns"|"ico"|"set"); outDir is constructed from projectDir + config output
-  await exec(process.execPath, [scriptPath, `--input=${inputFile}`, `--format=${outputFormat}`, `--out=${outDir}`])
+  await exec(process.execPath, [scriptPath, `--input=${safeInput}`, `--format=${outputFormat}`, `--out=${safeOutDir}`])
 }

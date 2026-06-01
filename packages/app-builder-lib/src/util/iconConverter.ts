@@ -38,23 +38,16 @@ type IconConversionConfig = {
 export async function convertIcon({ sources, fallbackSources, roots, format, outDir }: IconConversionConfig): Promise<IconConvertResult> {
   const candidates = buildSourceCandidates(sources, format)
 
-  try {
-    let icons = await doConvertIcon(candidates, roots, format, outDir)
+  let icons = await doConvertIcon(candidates, roots, format, outDir)
 
-    let isFallback = false
-    if (icons == null) {
-      const fallbackCandidates = buildSourceCandidates(fallbackSources, format)
-      icons = await doConvertIcon(fallbackCandidates, roots, format, outDir)
-      isFallback = true
-    }
-
-    return { icons: icons ?? [], isFallback }
-  } catch (e) {
-    if (e instanceof IconConversionError) {
-      return { icons: [], isFallback: false, error: e.message, errorCode: e.errorCode }
-    }
-    throw e
+  let isFallback = false
+  if (icons == null) {
+    const fallbackCandidates = buildSourceCandidates(fallbackSources, format)
+    icons = await doConvertIcon(fallbackCandidates, roots, format, outDir)
+    isFallback = true
   }
+
+  return { icons: icons ?? [], isFallback }
 }
 
 // ─── PNG dimension reader ─────────────────────────────────────────────────────
