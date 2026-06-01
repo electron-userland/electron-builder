@@ -1,7 +1,7 @@
 import { PublishManager } from "app-builder-lib"
 import { verifyAsarFileTree as _verifyAsarFileTree } from "./asarVerifier"
 import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetFactory"
-import { getLinuxToolsMacToolset } from "app-builder-lib/out/toolsets/linux"
+import { getLinuxToolsMacToolset } from "app-builder-lib/out/toolsets/linuxToolsMac"
 import { parsePlistFile, PlistObject } from "app-builder-lib/out/util/plist"
 import { AsarIntegrity } from "app-builder-lib/out/asar/integrity"
 import { addValue, copyDir, exec, executeFinally, exists, FileCopier, log, USE_HARD_LINKS, walk } from "builder-util"

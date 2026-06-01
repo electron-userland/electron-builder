@@ -88,7 +88,7 @@ export async function getWindowsKitsBundle({ winCodeSign, arch }: { winCodeSign:
     releaseName: `win-codesign@${winCodeSign}`,
     filenameWithExt: file,
     checksums: { [file]: wincodesignChecksums[winCodeSign][file] },
-  });
+  })
   return { kit: path.resolve(vendorPath, arch === Arch.ia32 ? "x86" : Arch[arch]), appxAssets: vendorPath }
 }
 
@@ -145,7 +145,7 @@ async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"]) 
     releaseName: `win-codesign@${winCodeSign}`,
     filenameWithExt: file,
     checksums: { [file]: wincodesignChecksums[winCodeSign][file] },
-  });
+  })
   return { path: path.resolve(vendorPath, "osslsigncode") }
 }
 
@@ -167,6 +167,6 @@ export async function getRceditBundle(winCodeSign: ToolsetConfig["winCodeSign"] 
     releaseName: `win-codesign@${winCodeSign}`,
     filenameWithExt: file,
     checksums: { [file]: wincodesignChecksums[winCodeSign][file] },
-  });
+  })
   return { x86: path.resolve(vendorPath, x86), x64: path.resolve(vendorPath, x64) }
 }
