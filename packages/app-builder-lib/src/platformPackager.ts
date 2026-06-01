@@ -854,13 +854,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   // convert if need, validate size (it is a reason why tool is called even if file has target extension (already specified as foo.icns for example))
   async resolveIcon(sources: Array<string>, fallbackSources: Array<string>, outputFormat: IconFormat): Promise<Array<IconInfo>> {
     const output = this.expandMacro(this.config.directories!.output!)
+    // codeql[js/shell-command-constructed-from-input] - outputFormat is IconFormat ("icns"|"ico"|"set"); output is developer-controlled build config, not user input; path is used as an arg to execFile (no shell)
     const outDir = path.resolve(this.projectDir, output, `.icon-${outputFormat}`)
     const roots = [this.buildResourcesDir, this.projectDir]
 
     const filteredSources = sources.filter(s => !s.endsWith(".icon"))
     const filteredFallbacks = fallbackSources.filter(s => !s.endsWith(".icon"))
 
-    const result = await convertIcon(filteredSources, filteredFallbacks, roots, outputFormat, outDir)
+    const result = await convertIcon({ sources: filteredSources, fallbackSources: filteredFallbacks, roots, format: outputFormat, outDir })
 
     if (result.error != null) {
       throw new InvalidConfigurationError(result.error, result.errorCode)

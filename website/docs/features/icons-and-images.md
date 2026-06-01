@@ -8,9 +8,10 @@ electron-builder handles icon and image assets differently per platform. Give it
 
 ```
 build/
-├── icon.png            ← your master icon (1024×1024 or SVG)
-├── icon.icns           ← optional: pre-built macOS icon
-├── icon.ico            ← optional: pre-built Windows icon
+├── icon.svg            ← master icon (SVG — scales perfectly to all sizes)
+├── icon.png            ← or use PNG (1024×1024 recommended)
+├── icon.icns           ← optional: pre-built macOS icon (skips conversion)
+├── icon.ico            ← optional: pre-built Windows icon (skips conversion)
 ├── background.png      ← macOS DMG background (540×380 px)
 ├── background@2x.png   ← Retina DMG background (1080×760 px)
 └── icons/              ← optional: manual Linux PNG set
@@ -19,35 +20,43 @@ build/
     └── 512x512.png
 ```
 
+A single `icon.svg` or `icon.png` in your `build/` directory is enough to cover all three platforms — electron-builder discovers and converts it automatically.
+
 ---
 
 ## Application Icon
 
-The application icon is the one that appears in the Dock, taskbar, Start menu, and application menus. electron-builder resolves it in this order:
+The application icon appears in the Dock, taskbar, Start menu, and application menus. electron-builder searches for your icon in this order:
 
 1. The explicit `mac.icon`, `win.icon`, or `linux.icon` config path
 2. `icon.<format>` (e.g. `icon.icns` for macOS, `icon.ico` for Windows)
 3. `icon.png`
-4. `icon.icns` (as a fallback source for all platforms)
-5. Named icon files in `build/icons/`
+4. `icon.svg` — auto-discovered, no config required
+5. `icon.icns` (cross-platform source for ICNS-based conversion)
+6. A directory named `icons/` or `icon/`
 
 ### Format & size requirements
 
-| Platform | Accepted formats | Minimum | Recommended |
+| Platform | Accepted input formats | Minimum | Recommended |
 |---|---|---|---|
-| macOS | `.icon`, `.icns`, `.png`, `.svg` | 512×512 | 1024×1024 |
-| Windows | `.ico`, `.png`, `.svg` | 256×256 | 512×512 |
-| Linux | PNG directory, `.png`, `.svg` | 256×256 | 1024×1024 |
+| macOS | `.svg`, `.png`, `.icns`, `.icon` | 512×512 | 1024×1024 (or SVG) |
+| Windows | `.svg`, `.png`, `.ico` | 256×256 | 512×512 (or SVG) |
+| Linux | `.svg`, `.png`, directory of PNGs | 256×256 | SVG or 1024×1024 PNG |
 
-:::tip
-A single 1024×1024 `icon.png` covers all three platforms. electron-builder converts it automatically.
+:::tip[SVG is best]
+SVG icons are rasterized at 1024px before conversion, giving every generated size a clean starting point. Use SVG when your icon is available in vector form.
 :::
 
 ---
 
 ## SVG Support
 
-SVG is supported as an input format for all three platforms — **including ICNS and ICO** generation. SVGs are rasterized to 1024×1024 pixels before conversion, providing clean headroom for all target sizes.
+SVG is supported as an input format for all three platforms. Place `icon.svg` in your `build/` directory and electron-builder finds it automatically — no `mac.icon` or `win.icon` config required.
+
+- **macOS / Windows**: The SVG is rasterized to 1024×1024 before ICNS or ICO conversion.
+- **Linux (`set` format)**: The SVG is passed through directly to the freedesktop `scalable/` icon hierarchy. Desktop environments render it at any scale — ideal for HiDPI and fractional-scaling displays.
+
+Explicit config also works:
 
 ```yaml
 mac:
@@ -57,23 +66,23 @@ win:
   icon: build/icon.svg
 ```
 
-**Linux:** For the `set` format, SVG source files are passed through directly to the freedesktop icon hierarchy under `scalable/`, where desktop environments can render them at any scale. This is ideal for HiDPI/fractional-scaling desktops.
-
 ---
 
 ## macOS Icon Sizes (ICNS)
 
-When converting a PNG or SVG to `.icns`, electron-builder generates these Apple OSType entries:
+When converting to `.icns`, electron-builder generates all standard Apple icon sizes:
 
-| OSType code | Size | Notes |
-|---|---|---|
-| `icp4` | 16×16 | Small icon |
-| `ic11` | 32×32 | |
-| `ic12` | 64×64 | |
-| `ic07` | 128×128 | |
-| `ic08` / `ic13` | 256×256 | Standard Retina |
-| `ic09` / `ic14` | 512×512 | Large Retina |
-| `ic10` | 1024×1024 | Full Retina |
+| Size | Usage |
+|---|---|
+| 16×16 | Finder list view |
+| 32×32 | Finder column view, Retina 16px |
+| 64×64 | Retina 32px |
+| 128×128 | Finder preview |
+| 256×256 | Standard Retina |
+| 512×512 | Large Retina |
+| 1024×1024 | Full Retina (macOS 10.7+) |
+
+All sizes are generated from the input regardless of the source dimensions — SVG sources and large PNGs produce the sharpest results at every size.
 
 :::note
 If you provide a pre-built `.icns`, electron-builder uses it as-is — no re-encoding.
@@ -91,7 +100,7 @@ For `.icns` files, the path is referenced via `CFBundleIconFile` and does not re
 
 electron-builder generates a full set of PNG icons for Linux, named `icon_NxN.png`, at these standard sizes:
 
-| Size | Target directories |
+| Size | Freedesktop target directory |
 |---|---|
 | 16×16 | `hicolor/16x16/apps/` |
 | 24×24 | `hicolor/24x24/apps/` |
@@ -101,6 +110,8 @@ electron-builder generates a full set of PNG icons for Linux, named `icon_NxN.pn
 | 128×128 | `hicolor/128x128/apps/` |
 | 256×256 | `hicolor/256x256/apps/` |
 | 512×512 | `hicolor/512x512/apps/` |
+
+SVG sources are placed in `scalable/` instead and are not resized.
 
 To provide a pre-built Linux set, create a directory and name each PNG with its pixel dimensions:
 
@@ -125,7 +136,7 @@ Files must match the pattern `NxN.png` or `N.png` (e.g., `256x256.png` or `512.p
 
 ## macOS DMG Background
 
-The DMG installer window background image. The window dimensions match the image dimensions, so getting this right ensures your DMG looks polished.
+The DMG installer window background image. The window dimensions match the image dimensions — getting this right ensures your DMG looks polished.
 
 | Asset | Dimensions | Location |
 |---|---|---|
@@ -205,18 +216,22 @@ electron-builder bundles a portable icon conversion toolset (`icon-tool.js` + `r
 ELECTRON_BUILDER_ICONS_TOOLSET_PATH=/path/to/icons-bundle pnpm build
 ```
 
-The path must be a directory containing `icon-tool.js` and `resvg.wasm`.
+The path must point to a directory containing `icon-tool.js` and `resvg.wasm`.
 
 ---
 
-## Source Resolution Details
+## Source Resolution Reference
 
-When you specify `icon: build/icon` (no extension), electron-builder searches for your icon in this order for each target format:
+When you specify `icon: build/icon` (no extension), electron-builder probes the following paths for each target format:
 
-1. `build/icon.<format>` (e.g. `build/icon.icns` for macOS)
-2. `build/icon` (exact path as a directory)
-3. `build/icon.png`
-4. `build/icon.icns` (cross-platform fallback)
-5. `build/icon.ico`
+| Priority | Probe path | Notes |
+|---|---|---|
+| 1 | `build/icon.<format>` | e.g. `icon.icns` for macOS |
+| 2 | `build/icon` | exact path |
+| 3 | `build/icon.png` | |
+| 4 | `build/icon.svg` | auto-discovered; converted on the fly |
+| 5 | `build/icon.icns` | used as PNG source for non-ICNS targets |
+| 6 | `build/icons/` or `build/icon/` | directory of pre-sized PNGs |
+| 7 | `build/icon.ico` | used as source for ICO targets |
 
-ICNS files can be used as a source for all platforms: electron-builder extracts the largest embedded PNG frame and converts from there.
+ICNS files can be used as a source for all platforms — electron-builder extracts the largest embedded PNG frame and converts from there.

@@ -25,10 +25,42 @@ export interface IconConvertResult {
   errorCode?: string
 }
 
+// ─── Public API ──────────────────────────────────────────────────────────────
+
+type IconConversionConfig = {
+  sources: string[]
+  fallbackSources: string[]
+  roots: string[]
+  format: IconFormat
+  outDir: string
+}
+
+export async function convertIcon({ sources, fallbackSources, roots, format, outDir }: IconConversionConfig): Promise<IconConvertResult> {
+  const candidates = buildSourceCandidates(sources, format)
+
+  try {
+    let icons = await doConvertIcon(candidates, roots, format, outDir)
+
+    let isFallback = false
+    if (icons == null) {
+      const fallbackCandidates = buildSourceCandidates(fallbackSources, format)
+      icons = await doConvertIcon(fallbackCandidates, roots, format, outDir)
+      isFallback = true
+    }
+
+    return { icons: icons ?? [], isFallback }
+  } catch (e) {
+    if (e instanceof IconConversionError) {
+      return { icons: [], isFallback: false, error: e.message, errorCode: e.errorCode }
+    }
+    throw e
+  }
+}
+
 // ─── PNG dimension reader ─────────────────────────────────────────────────────
 // Reads width/height from the PNG IHDR chunk at a fixed offset (no dependencies).
 
-async function getPngSize(filePath: string): Promise<{ width: number; height: number }> {
+export async function getPngSize(filePath: string): Promise<{ width: number; height: number }> {
   const buf = await readFile(filePath)
   // PNG signature = 8 bytes, IHDR chunk header = 8 bytes → width at 16, height at 20
   if (buf.length < 24) {
@@ -103,7 +135,7 @@ function imageHasExtension(name: string, format: string): boolean {
   return name.endsWith("." + format) || name.endsWith(".png") || name.endsWith(".ico") || name.endsWith(".svg") || name.endsWith(".icns")
 }
 
-function buildSourceCandidates(sources: string[], format: IconFormat): string[] {
+export function buildSourceCandidates(sources: string[], format: IconFormat): string[] {
   const result: string[] = []
   for (const src of sources) {
     if (imageHasExtension(src, format)) {
@@ -137,7 +169,8 @@ function buildSourceCandidates(sources: string[], format: IconFormat): string[] 
       result.push("icon.ico")
     }
   }
-  return result
+  // Deduplicate while preserving order so resolveSourceFile never stats the same path twice
+  return [...new Set(result)]
 }
 
 async function resolveSourceFile(candidates: string[], roots: string[]): Promise<{ resolved: string; isDir: boolean } | null> {
@@ -243,7 +276,7 @@ async function doConvertIcon(candidates: string[], roots: string[], format: Icon
       // Use largest available PNG from the directory as CLI input
       const maxIcon = icons[icons.length - 1]
       await mkdir(outDir, { recursive: true })
-      await runIconsTool(maxIcon.file, format, outDir)
+      await runIconsTool({ inputFile: maxIcon.file, outputFormat: format, outDir })
       return collectCliOutput(outDir, format, maxIcon.size)
     }
 
@@ -256,7 +289,7 @@ async function doConvertIcon(candidates: string[], roots: string[], format: Icon
   // Single file: ICNS → ico or set — pass ICNS directly to CLI (CLI handles extraction)
   if (resolved.endsWith(".icns") && format !== "icns") {
     await mkdir(outDir, { recursive: true })
-    await runIconsTool(resolved, format, outDir)
+    await runIconsTool({ inputFile: resolved, outputFormat: format, outDir })
     return collectCliOutput(outDir, format)
   }
 
@@ -282,30 +315,6 @@ async function doConvertSingleFile(sourceFile: string, format: IconFormat, outDi
   }
 
   await mkdir(outDir, { recursive: true })
-  await runIconsTool(sourceFile, format, outDir)
+  await runIconsTool({ inputFile: sourceFile, outputFormat: format, outDir })
   return collectCliOutput(outDir, format, maxSize)
-}
-
-// ─── Public API ──────────────────────────────────────────────────────────────
-
-export async function convertIcon(sources: string[], fallbackSources: string[], roots: string[], format: IconFormat, outDir: string): Promise<IconConvertResult> {
-  const candidates = buildSourceCandidates(sources, format)
-
-  try {
-    let icons = await doConvertIcon(candidates, roots, format, outDir)
-
-    let isFallback = false
-    if (icons == null) {
-      const fallbackCandidates = buildSourceCandidates(fallbackSources, format)
-      icons = await doConvertIcon(fallbackCandidates, roots, format, outDir)
-      isFallback = true
-    }
-
-    return { icons: icons ?? [], isFallback }
-  } catch (e) {
-    if (e instanceof IconConversionError) {
-      return { icons: [], isFallback: false, error: e.message, errorCode: e.errorCode }
-    }
-    throw e
-  }
 }
