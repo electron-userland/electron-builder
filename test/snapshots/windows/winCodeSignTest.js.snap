@@ -32,3 +32,11 @@ exports[`winCodeSign: 1.1.0 > win code sign using pwsh 1`] = `
   "win": [],
 }
 `;
+
+exports[`winCodeSign: 1.2.1 > forceCodeSigning 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
+
+exports[`winCodeSign: 1.2.1 > win code sign using pwsh 1`] = `
+{
+  "win": [],
+}
+`;

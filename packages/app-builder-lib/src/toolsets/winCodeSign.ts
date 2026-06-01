@@ -42,13 +42,13 @@ export const wincodesignChecksums = {
   "1.2.1": {
     "rcedit-windows-2_0_0.zip": "1c2b68b9ae41229566c008ce98c4f6cd2b642ace85284e753d1d3509377f9e67",
     "win-codesign-windows-x64.zip": "40b1d88ea074de58ddc7595a2b6d30ca23f81bcce33f110102304337538fcbeb",
-    "win-codesign-linux-amd64.zip": "69b94f71f9189ded6b962718df102e0ffe0a81d506351fecd3df3d73c7166e31",
-    "win-codesign-darwin-x86_64.zip": "7c4188bb301621cde22f918bb2d1a86ef9892ad401a40b7838b80efc9165547d",
     "win-codesign-windows-arm64.zip": "96390eb3130e63ea9d3641ef076c941c6f51463125498cf53b2503e52c38082d",
-    "windows-kits-bundle-10_0_26100_0.zip": "9b198db76ae75b124169aef3369fb96c17b39dbf16f16f1264dbd9fd001d976f",
+    "win-codesign-darwin-x86_64.zip": "7c4188bb301621cde22f918bb2d1a86ef9892ad401a40b7838b80efc9165547d",
     "win-codesign-darwin-arm64.zip": "ac7c1d9279490fc88e9e744ed965ad7e1d377e0219142dab0ab49cfba3ede764",
+    "win-codesign-linux-amd64.zip": "69b94f71f9189ded6b962718df102e0ffe0a81d506351fecd3df3d73c7166e31",
     "win-codesign-linux-arm64.zip": "c959031605a5ab994bfd9b84d37bc5bcaba8f39d54a6d69bd2541b2a91ecf723",
     "win-codesign-linux-i386.zip": "fc937f40655b9839b67ed35cc7b571795b3f7b7b15db10c3026599db43f1c2b1",
+    "windows-kits-bundle-10_0_26100_0.zip": "9b198db76ae75b124169aef3369fb96c17b39dbf16f16f1264dbd9fd001d976f",
   },
 } as const
 
@@ -111,36 +111,60 @@ async function getWindowsSignToolExe({ winCodeSign, arch }: { winCodeSign: Tools
   return path.resolve(vendorPath.kit, "signtool.exe")
 }
 
+// Returns the platform/arch-specific cross-platform file key.
+// All non-legacy versions share these keys; the one exception — win32 arm64 in 1.2.1 — is handled
+// as an early return in getOsslSigncodeBundle before this function is called.
+export function getWinCodesignPlatformFile(): keyof (typeof wincodesignChecksums)["1.0.0"] {
+  if (process.platform === "linux") {
+    if (process.arch === "x64") {
+      return "win-codesign-linux-amd64.zip"
+    }
+    if (process.arch === "arm64") {
+      return "win-codesign-linux-arm64.zip"
+    }
+    return "win-codesign-linux-i386.zip"
+  }
+  if (process.platform === "win32") {
+    return "win-codesign-windows-x64.zip"
+  }
+  // darwin
+  return process.arch === "arm64" ? "win-codesign-darwin-arm64.zip" : "win-codesign-darwin-x86_64.zip"
+}
+
 async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"]) {
   const osslSigncodePath = await resolveEnvToolsetPath("ELECTRON_BUILDER_OSSL_SIGNCODE_PATH", "file")
   if (osslSigncodePath != null) {
     return { path: osslSigncodePath }
   }
-  if (process.platform === "win32" || process.env.USE_SYSTEM_OSSLSIGNCODE === "true") {
+  if (process.env.USE_SYSTEM_OSSLSIGNCODE === "true") {
     return { path: "osslsigncode" }
   }
 
   if (winCodeSign === "0.0.0" || winCodeSign == null) {
+    if (process.platform === "win32") {
+      return { path: "osslsigncode" }
+    }
     const vendorBase = path.resolve(await getLegacyWinCodeSignBin(), process.platform)
     const vendorPath = process.platform === "darwin" ? path.resolve(vendorBase, "10.12") : vendorBase
-    return { path: path.resolve(vendorPath, "osslsigncode"), env: process.platform === "darwin" ? computeToolEnv([path.resolve(vendorPath, "lib")]) : undefined }
+    return {
+      path: path.resolve(vendorPath, "osslsigncode"),
+      env: process.platform === "darwin" ? computeToolEnv([path.resolve(vendorPath, "lib")]) : undefined,
+    }
   }
 
-  const file = (() => {
-    if (process.platform === "linux") {
-      if (process.arch == "x64") {
-        return "win-codesign-linux-amd64.zip"
-      } else if (process.arch === "arm64") {
-        return "win-codesign-linux-arm64.zip"
-      }
-      return "win-codesign-linux-i386.zip"
-    }
-    // darwin arm64
-    if (process.arch === "arm64") {
-      return "win-codesign-darwin-arm64.zip"
-    }
-    return "win-codesign-darwin-x86_64.zip"
-  })()
+  // arm64 Windows binary only ships with 1.2.1+; access its checksum directly to preserve type safety.
+  if (process.platform === "win32" && process.arch === "arm64" && winCodeSign === "1.2.1") {
+    const f = "win-codesign-windows-arm64.zip"
+    const vp = await downloadBuilderToolset({
+      releaseName: `win-codesign@1.2.1`,
+      filenameWithExt: f,
+      checksums: { [f]: wincodesignChecksums["1.2.1"][f] },
+    })
+    return { path: path.resolve(vp, "osslsigncode") }
+  }
+
+  // All remaining non-legacy versions carry the common cross-platform keys (keyof ["1.0.0"]).
+  const file = getWinCodesignPlatformFile()
   const vendorPath = await downloadBuilderToolset({
     releaseName: `win-codesign@${winCodeSign}`,
     filenameWithExt: file,

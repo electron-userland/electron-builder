@@ -70,7 +70,7 @@ const SUITES: WindowsSuiteConfig[] = [
     registerFn: namedFn("registerAppxTests" satisfies keyof typeof _AppxSuite),
     importPath: "windows/appxTestSuite",
     describeConfig: { name: "AppX", chain: ["ifWindows"] },
-    winCodeSignVersions: ["1.0.0", "1.1.0"],
+    winCodeSignVersions: WIN_CODE_SIGN_VERSIONS.filter(version => version !== "0.0.0"), // AppX tests are currently incompatible with win-codesign 1.2.1 due to changes in the bundled osslsigncode version — see
   },
   {
     name: "differentialWin",

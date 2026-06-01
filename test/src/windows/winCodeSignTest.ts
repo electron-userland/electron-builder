@@ -71,7 +71,7 @@ test("parseDn", ({ expect }) => {
 
 const windowsDirTarget = Platform.WINDOWS.createTarget(["dir"])
 
-const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0"]
+const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0", "1.2.1"]
 
 for (const winCodeSign of winCodeSignVersions) {
   describe(`winCodeSign: ${winCodeSign}`, { sequential: true }, () => {
@@ -104,6 +104,7 @@ for (const winCodeSign of winCodeSignVersions) {
               break
             case "1.0.0":
             case "1.1.0":
+            case "1.2.1":
               if (process.platform !== "win32") {
                 message = "Initialization error or unsupported input file type."
               }
