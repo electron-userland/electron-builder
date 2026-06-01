@@ -1,3 +1,16 @@
+## [26.13.1](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.13.0...electron-builder@26.13.1) (2026-06-01)
+
+
+### Bug Fixes
+
+* correct `update-alternatives --remove` path and unload AppArmor profile on removal ([#9801](https://github.com/electron-userland/electron-builder/issues/9801)) ([b5a1ac1](https://github.com/electron-userland/electron-builder/commit/b5a1ac1a74b854931d45ac6d4eed15f876a496d3))
+* **node-module-collector:** accept transitive dependencies resolved outside their declared range by package manager overrides ([#9804](https://github.com/electron-userland/electron-builder/issues/9804)) ([c142e0f](https://github.com/electron-userland/electron-builder/commit/c142e0f4c1f61e8800093023d30091af0674bb8a))
+* **node-module-collector:** suppress expected `npm list` stderr from user-visible warnings when collecting dependencies for Yarn projects using resolutions ([#9810](https://github.com/electron-userland/electron-builder/issues/9810)) ([478ade4](https://github.com/electron-userland/electron-builder/commit/478ade400294af2980fca9c2eb47e9e47457943c))
+* **nsis:** validate makensis stderr and installer file size post-build ([#9802](https://github.com/electron-userland/electron-builder/issues/9802)) ([cf2ec41](https://github.com/electron-userland/electron-builder/commit/cf2ec4176a51a73856f05e271313a5e2ce2aaf7e))
+* **win:** restore `getToolPath()` on `WindowsSignToolManager` and improve public API ([#9806](https://github.com/electron-userland/electron-builder/issues/9806)) ([fd9fcb1](https://github.com/electron-userland/electron-builder/commit/fd9fcb11e81a42b4b018d6f7a2b16a89697a2ba2))
+
+
+
 # [26.13.0](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.12.1...electron-builder@26.13.0) (2026-05-31)
 
 

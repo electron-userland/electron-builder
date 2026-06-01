@@ -1,5 +1,29 @@
 # app-builder-lib
 
+## 26.13.1
+
+### Patch Changes
+
+- Fix: correct `update-alternatives --remove` path and unload AppArmor profile on removal _[`#9801`](https://github.com/electron-userland/electron-builder/pull/9801) [`b5a1ac1`](https://github.com/electron-userland/electron-builder/commit/b5a1ac1a74b854931d45ac6d4eed15f876a496d3) [@mmaietta](https://github.com/mmaietta)_
+- Fix(win): restore `getToolPath()` on `WindowsSignToolManager` and improve public API _[`#9806`](https://github.com/electron-userland/electron-builder/pull/9806) [`fd9fcb1`](https://github.com/electron-userland/electron-builder/commit/fd9fcb11e81a42b4b018d6f7a2b16a89697a2ba2) [@mmaietta](https://github.com/mmaietta)_
+- Fix(node-module-collector): suppress expected `npm list` stderr from user-visible warnings when collecting dependencies for Yarn projects using resolutions _[`#9810`](https://github.com/electron-userland/electron-builder/pull/9810) [`478ade4`](https://github.com/electron-userland/electron-builder/commit/478ade400294af2980fca9c2eb47e9e47457943c) [@mmaietta](https://github.com/mmaietta)_
+- Fix(win): log actionable hint when signAndEditExecutable is false so users know to use signExecutable: false to preserve icon and metadata _[`#9807`](https://github.com/electron-userland/electron-builder/pull/9807) [`e4cd2ac`](https://github.com/electron-userland/electron-builder/commit/e4cd2ac4590c87e114444ab17f4bcead7f82ee2d) [@mmaietta](https://github.com/mmaietta)_
+- Fix(nsis): validate makensis stderr and installer file size after build to catch truncated output caused by low disk space _[`#9802`](https://github.com/electron-userland/electron-builder/pull/9802) [`cf2ec41`](https://github.com/electron-userland/electron-builder/commit/cf2ec4176a51a73856f05e271313a5e2ce2aaf7e) [@mmaietta](https://github.com/mmaietta)_
+- Fix(traversal): accept transitive dependencies resolved outside their declared range by package manager overrides _[`#9804`](https://github.com/electron-userland/electron-builder/pull/9804) [`c142e0f`](https://github.com/electron-userland/electron-builder/commit/c142e0f4c1f61e8800093023d30091af0674bb8a) [@mmaietta](https://github.com/mmaietta)_
+- Chore(deps): replace unmaintained @develar/schema-utils with a self-contained ajv@8 validator _[`#9803`](https://github.com/electron-userland/electron-builder/pull/9803) [`964ff9a`](https://github.com/electron-userland/electron-builder/commit/964ff9a3d5d5cb5850de3f450563b52c34aaae46) [@mmaietta](https://github.com/mmaietta)_
+- Chore: add comment re: non-existent swiftshader directory in newer electron versions _[`#9781`](https://github.com/electron-userland/electron-builder/pull/9781) [`bb8cb67`](https://github.com/electron-userland/electron-builder/commit/bb8cb672dfeb69f22a23ba43eaa636fe9f7d3121) [@Lemonexe](https://github.com/Lemonexe)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@26.13.1`
+- `electron-builder-squirrel-windows@26.13.1`
+
+</details>
+
 ## 26.13.0
 
 ### Minor Changes
