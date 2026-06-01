@@ -101,7 +101,7 @@ export class PkgTarget extends Target {
       cwd: appOutDir,
     })
     await Promise.all([unlink(innerPackageFile), unlink(distInfoFile)])
-    await packager.notarizeIfProvided(artifactPath)
+    await packager.helper.notarizeIfProvided(artifactPath)
     await packager.info.emitArtifactBuildCompleted({
       file: artifactPath,
       target: this,

@@ -1,4 +1,4 @@
-import { deepAssign, InvalidConfigurationError, isEmptyOrSpaces, log, spawn } from "builder-util"
+import { InvalidConfigurationError, isEmptyOrSpaces, log, spawn, stripSensitiveEnvVars } from "builder-util"
 import * as childProcess from "child_process"
 import { randomUUID } from "crypto"
 import { resolveSnapCredentials } from "electron-publish"
@@ -8,6 +8,7 @@ import * as util from "util"
 import { LinuxPackager } from "../../linuxPackager"
 import { RemoteBuildOptions } from "../../options/SnapOptions"
 import { SnapcraftYAML } from "./snapcraft"
+import { deepAssign } from "builder-util-runtime"
 
 const execAsync = util.promisify(childProcess.exec)
 
@@ -367,7 +368,7 @@ interface ExecuteSnapcraftOptions {
  */
 async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<string> {
   const { workDir, outputSnap: outputFileName, remoteBuild, useLXD, useMultipass, useDestructiveMode, isolatedEnv } = options
-  let processedEnv: NodeJS.ProcessEnv = { ...process.env, ...isolatedEnv }
+  let processedEnv: NodeJS.ProcessEnv = { ...stripSensitiveEnvVars(process.env), ...isolatedEnv }
 
   // Use a UUID-based temp name as the --output target so the copy below doesn't
   // depend on snapcraft's naming convention (which always uses underscores).

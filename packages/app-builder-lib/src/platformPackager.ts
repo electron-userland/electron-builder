@@ -1,10 +1,10 @@
-import { flipFuses, FuseConfig, FuseV1Config, FuseV1Options, FuseVersion } from "@electron/fuses"
+import type { FuseConfig, FuseV1Config } from "@electron/fuses"
+import { dynamicImport } from "./util/dynamicImport"
 import {
   Arch,
   asArray,
   AsyncTaskManager,
   DebugLogger,
-  deepAssign,
   defaultArchFromString,
   FileTransformer,
   getArchSuffix,
@@ -13,9 +13,10 @@ import {
   isEmptyOrSpaces,
   log,
   orIfFileNotExist,
+  sanitizeDirPath,
   statOrNull,
 } from "builder-util"
-import { Nullish } from "builder-util-runtime"
+import { deepAssign, Nullish } from "builder-util-runtime"
 import { readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import { Minimatch } from "minimatch"
@@ -147,12 +148,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected computeAppOutDir(outDir: string, arch: Arch): string {
-    return (
+    // codeql[js/shell-command-constructed-from-input] - prepackaged and outDir are validated via sanitizeDirPath in the Packager constructor
+    return path.resolve(
       this.packagerOptions.prepackaged ||
-      path.join(
-        outDir,
-        `${this.platform.buildConfigurationKey}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}${this.platform === Platform.MAC ? "" : "-unpacked"}`
-      )
+        path.join(
+          outDir,
+          `${this.platform.buildConfigurationKey}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}${this.platform === Platform.MAC ? "" : "-unpacked"}`
+        )
     )
   }
 
@@ -314,7 +316,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       const resourcesRelativePath = this.platform === Platform.MAC ? "Resources" : isElectronBased(framework) ? "resources" : ""
 
       let asarIntegrity: AsarIntegrity | null = null
-      if (!(asarOptions == null || options?.disableAsarIntegrity)) {
+      if (!(asarOptions == null || options?.disableAsarIntegrity || this.config.disableAsarIntegrity)) {
         asarIntegrity = await computeData({ resourcesPath, resourcesRelativePath, resourcesDestinationPath: this.getResourcesDir(appOutDir), extraResourceMatchers })
       }
 
@@ -360,11 +362,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (this.config.electronFuses == null) {
       return
     }
-    const fuseConfig = this.generateFuseConfig(this.config.electronFuses)
+    const fuseConfig = await this.generateFuseConfig(this.config.electronFuses)
     await this.addElectronFuses(packContext, fuseConfig)
   }
 
-  private generateFuseConfig(fuses: FuseOptionsV1): FuseV1Config {
+  private async generateFuseConfig(fuses: FuseOptionsV1): Promise<FuseV1Config> {
+    const { FuseVersion, FuseV1Options } = await dynamicImport<typeof import("@electron/fuses")>("@electron/fuses")
     const config: FuseV1Config = {
       version: FuseVersion.V1,
       resetAdHocDarwinSignature: fuses.resetAdHocDarwinSignature,
@@ -407,7 +410,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
    * await context.packager.addElectronFuses(context, { ... })
    * ```
    */
-  public addElectronFuses(context: AfterPackContext, fuses: FuseConfig) {
+  public async addElectronFuses(context: AfterPackContext, fuses: FuseConfig) {
     const { appOutDir, electronPlatformName } = context
 
     const ext = {
@@ -421,6 +424,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const electronBinaryPath = path.join(appOutDir, `${executableName}${ext}`)
 
     log.info({ electronPath: log.filePath(electronBinaryPath) }, "executing @electron/fuses")
+    const { flipFuses } = await dynamicImport<typeof import("@electron/fuses")>("@electron/fuses")
     return flipFuses(electronBinaryPath, fuses)
   }
 
@@ -629,7 +633,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
     const relativeFile = path.relative(this.info.appDir, path.resolve(this.info.appDir, file))
     if (isAsar) {
-      checkFileInArchive(path.join(resourcesDir, "app.asar"), relativeFile, messagePrefix)
+      await checkFileInArchive(path.join(resourcesDir, "app.asar"), relativeFile, messagePrefix)
       return
     }
 
@@ -649,7 +653,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       const asarPath = path.join(...pathSplit.slice(0, partWithAsarIndex + 1))
       let mainPath = pathSplit.length > partWithAsarIndex + 1 ? path.join.apply(pathSplit.slice(partWithAsarIndex + 1)) : ""
       mainPath += path.join(mainPath, pathParsed.base)
-      checkFileInArchive(path.join(resourcesDir, "app", asarPath), mainPath, messagePrefix)
+      await checkFileInArchive(path.join(resourcesDir, "app", asarPath), mainPath, messagePrefix)
     } else {
       const fullPath = path.join(resourcesDir, "app", relativeFile)
       const outStat = await statOrNull(fullPath)
@@ -751,15 +755,17 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       const resourceList = await this.resourceList
       for (const name of names) {
         if (resourceList.includes(name)) {
-          return path.join(resourcesDir, name)
+          // sanitizeDirPath with resourcesDir base enforces containment — CodeQL recognises the startsWith check inside as a path-traversal sanitizer
+          return sanitizeDirPath(path.join(resourcesDir, path.basename(name)), resourcesDir)
         }
       }
     } else if (custom != null && !isEmptyOrSpaces(custom)) {
       const resourceList = await this.resourceList
       if (resourceList.includes(custom)) {
-        return path.join(resourcesDir, custom)
+        return sanitizeDirPath(path.join(resourcesDir, path.basename(custom)), resourcesDir)
       }
 
+      // codeql[js/shell-command-constructed-from-input] - intentional: custom may be an absolute path outside the build resources dir; existence is verified below via statOrNull
       let p = path.resolve(resourcesDir, custom)
       if ((await statOrNull(p)) == null) {
         p = path.resolve(this.projectDir, custom)

@@ -3,8 +3,8 @@ import {
   asArray,
   AsyncTaskManager,
   exec,
-  executeAppBuilder,
   exists,
+  generateKsuid,
   getArchSuffix,
   getPath7za,
   getPlatformIconFileName,
@@ -15,7 +15,7 @@ import {
   use,
   walk,
 } from "builder-util"
-import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, PackageFileInfo, UUID } from "builder-util-runtime"
+import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, deepAssign, PackageFileInfo, UUID } from "builder-util-runtime"
 import _debug from "debug"
 import * as fs from "fs"
 import { readFile, stat, unlink } from "fs-extra"
@@ -73,7 +73,7 @@ export class NsisTarget extends Target {
           }
 
     if (targetName !== "nsis") {
-      Object.assign(this.options, (this.packager.config as any)[targetName === "nsis-web" ? "nsisWeb" : targetName])
+      deepAssign(this.options, (this.packager.config as any)[targetName === "nsis-web" ? "nsisWeb" : targetName])
     }
 
     const deps = packager.info.metadata.dependencies
@@ -305,7 +305,7 @@ export class NsisTarget extends Target {
 
       // https://github.com/electron-userland/electron-builder/issues/5764
       if (typeof unpackDirName === "string" || !unpackDirName) {
-        defines.UNPACK_DIR_NAME = unpackDirName || (await executeAppBuilder(["ksuid"]))
+        defines.UNPACK_DIR_NAME = unpackDirName || generateKsuid()
       }
 
       if (splashImage != null) {
@@ -608,7 +608,17 @@ export class NsisTarget extends Target {
       if (value == null) {
         args.push(`-D${name}`)
       } else {
-        args.push(`-D${name}=${value}`)
+        // nsisEscapeString prevents three classes of injection:
+        //   1. Newlines  → replaced with spaces; a bare \n in a define value
+        //      would terminate the current script line and let whatever follows
+        //      be parsed as a new preprocessor directive (e.g. !system, !include).
+        //   2. bare $ → escaped to $$; unescaped $ in a define value would cause
+        //      NSIS to expand an unintended variable reference.  ${...} references
+        //      are left intact so NSIS compile-time defines like ${NSISDIR} still
+        //      expand correctly.
+        //   3. " chars   → escaped to $\"; an unescaped " would break out of
+        //      double-quoted NSIS string literals where ${DEFINE} is expanded.
+        args.push(`-D${name}=${nsisEscapeString(String(value))}`)
       }
     }
 
@@ -728,7 +738,7 @@ export class NsisTarget extends Target {
             const customIcon = await packager.getResource(getPlatformIconFileName(item.icon, false), `${extensions[0]}.ico`)
             let installedIconPath = "$appExe,0"
             if (customIcon != null) {
-              installedIconPath = `$INSTDIR\\resources\\${path.basename(customIcon)}`
+              installedIconPath = `$INSTDIR\\resources\\${nsisEscapeString(path.basename(customIcon))}`
               registerFileAssociationsScript.file(installedIconPath, customIcon)
             }
 
@@ -776,7 +786,7 @@ async function generateForPreCompressed(preCompressedFileExtensions: Array<strin
   if (preCompressedAssets.length !== 0) {
     const macro = new NsisScriptGenerator()
     for (const file of preCompressedAssets) {
-      macro.file(`$INSTDIR\\${path.relative(dir, file).replace(/\//g, "\\")}`, file)
+      macro.file(`$INSTDIR\\${nsisEscapeString(path.relative(dir, file).replace(/\//g, "\\"))}`, file)
     }
     scriptGenerator.macro(`customFiles_${Arch[arch]}`, macro)
   }

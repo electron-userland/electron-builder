@@ -1,5 +1,5 @@
-import { Arch, asArray, copyOrLinkFile, deepAssign, InvalidConfigurationError, log, walk } from "builder-util"
-import { Nullish } from "builder-util-runtime"
+import { Arch, asArray, copyOrLinkFile, InvalidConfigurationError, log, walk } from "builder-util"
+import { deepAssign, Nullish } from "builder-util-runtime"
 import { emptyDir, readdir, readFile, writeFile } from "fs-extra"
 import * as path from "path"
 import { AppXOptions } from "../"

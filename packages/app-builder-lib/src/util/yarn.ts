@@ -1,4 +1,4 @@
-import { asArray, log, spawn } from "builder-util"
+import { asArray, log, spawn, stripSensitiveEnvVars } from "builder-util"
 import { pathExists } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { homedir } from "os"
@@ -10,7 +10,7 @@ import { detectPackageManager } from "../node-module-collector/packageManager"
 import { NodeModuleDirInfo } from "./packageDependencies"
 import { rebuild as remoteRebuild } from "./rebuild"
 import * as which from "which"
-import { RebuildOptions as ElectronRebuildOptions } from "@electron/rebuild"
+import type { RebuildOptions as ElectronRebuildOptions } from "@electron/rebuild"
 import { Nullish } from "builder-util-runtime"
 
 export async function installOrRebuild(
@@ -55,7 +55,7 @@ function getElectronGypCacheDir() {
 export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.Platform, arch: string, buildFromSource: boolean) {
   const npmConfigArch = arch === "armv7l" ? "arm" : arch
   const common: any = {
-    ...process.env,
+    ...stripSensitiveEnvVars(process.env),
     npm_config_arch: npmConfigArch,
     npm_config_target_arch: npmConfigArch,
     npm_config_platform: platform,
