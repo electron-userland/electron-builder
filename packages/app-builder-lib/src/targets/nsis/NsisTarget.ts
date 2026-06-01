@@ -3,6 +3,7 @@ import {
   asArray,
   AsyncTaskManager,
   exec,
+  spawnAndWriteWithOutput,
   exists,
   generateKsuid,
   getArchSuffix,
@@ -10,7 +11,6 @@ import {
   getPlatformIconFileName,
   InvalidConfigurationError,
   log,
-  spawnAndWrite,
   statOrNull,
   use,
   walk,
@@ -39,6 +39,7 @@ import { NsisOptions, PortableOptions } from "./nsisOptions"
 import { NsisScriptGenerator, nsisEscapeString } from "./nsisScriptGenerator"
 import { getMakeNsisPath, getNsisPluginsPath } from "../../toolsets/windows"
 import { AppPackageHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
+import { checkMakensisOutput, verifyInstallerSize } from "./nsisValidation"
 
 const debug = _debug("electron-builder:nsis")
 
@@ -350,14 +351,22 @@ export class NsisTarget extends Target {
 
     this.buildQueueManager.add(async () => {
       const sharedHeader = await this.computeCommonInstallerScriptHeader()
-      const script = isPortable
-        ? await readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8")
-        : await this.computeScriptAndSignUninstaller(definesUninstaller, commandsUninstaller, installerPath, sharedHeader, archs)
+      let rawScript: string
+      let isCustomScript = false
+      if (isPortable) {
+        rawScript = await readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8")
+      } else {
+        const result = await this.computeScriptAndSignUninstaller(definesUninstaller, commandsUninstaller, installerPath, sharedHeader, archs)
+        rawScript = result.script
+        isCustomScript = result.isCustomScript
+      }
 
       // copy outfile name into main options, as the computeScriptAndSignUninstaller function was kind enough to add important data to temporary defines.
       defines.UNINSTALLER_OUT_FILE = definesUninstaller.UNINSTALLER_OUT_FILE
 
-      await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(script, true, archs)))
+      // Skip size verification for portable (NSIS recompresses the archive, installer < archive is normal)
+      // and for custom scripts (may not embed archives).
+      await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(rawScript, true, archs)), { skipSizeVerification: isPortable || isCustomScript })
       await Promise.all<any>([packager.signIf(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
 
       const safeArtifactName = computeSafeArtifactNameIfNeeded(installerFilename, () => this.generateGitHubInstallerName(primaryArch, defaultArch))
@@ -399,14 +408,14 @@ export class NsisTarget extends Target {
     return false
   }
 
-  private async computeScriptAndSignUninstaller(defines: Defines, commands: Commands, installerPath: string, sharedHeader: string, archs: Map<Arch, string>): Promise<string> {
+  private async computeScriptAndSignUninstaller(defines: Defines, commands: Commands, installerPath: string, sharedHeader: string, archs: Map<Arch, string>): Promise<{ script: string; isCustomScript: boolean }> {
     const packager = this.packager
     const customScriptPath = await packager.getResource(this.options.script, "installer.nsi")
     const script = await readFile(customScriptPath || path.join(nsisTemplatesDir, "installer.nsi"), "utf8")
 
     if (customScriptPath != null) {
       log.info({ reason: "custom NSIS script is used" }, "uninstaller is not signed by electron-builder")
-      return script
+      return { script, isCustomScript: true }
     }
 
     // https://github.com/electron-userland/electron-builder/issues/2103
@@ -442,7 +451,7 @@ export class NsisTarget extends Target {
     delete defines.BUILD_UNINSTALLER
     // platform-specific path, not wine
     defines.UNINSTALLER_OUT_FILE = uninstallerPath
-    return script
+    return { script, isCustomScript: false }
   }
 
   private computeVersionKey(short = false) {
@@ -600,7 +609,7 @@ export class NsisTarget extends Target {
     }
   }
 
-  private async executeMakensis(defines: Defines, commands: Commands, script: string): Promise<void> {
+  private async executeMakensis(defines: Defines, commands: Commands, script: string, opts: { skipSizeVerification?: boolean } = {}): Promise<void> {
     const args: Array<string> = this.options.warningsAsErrors === false ? [] : ["-WX"]
     args.push("-INPUTCHARSET", "UTF8")
     for (const name of Object.keys(defines)) {
@@ -646,10 +655,22 @@ export class NsisTarget extends Target {
     }
 
     const makensis = await getMakeNsisPath(this.packager.config.toolsets?.nsis, this.options.customNsisBinary)
-    await spawnAndWrite(makensis.path, args, script, {
+    const { stdout, stderr } = await spawnAndWriteWithOutput(makensis.path, args, script, {
       env: { ...process.env, ...(makensis.env ?? {}) },
       cwd: nsisTemplatesDir,
     })
+
+    checkMakensisOutput(stdout, stderr)
+
+    // Only verify output size for the final, non-web installer.
+    // BUILD_UNINSTALLER: intermediate uninstaller build — no embedded archives.
+    // APP_PACKAGE_STORE_FILE: nsis-web — archives downloaded at install-time.
+    // skipSizeVerification: portable builds (NSIS recompresses the archive, so
+    //   installer < archive_size is normal) and custom scripts (may not embed archives).
+    if (!("BUILD_UNINSTALLER" in defines) && !("APP_PACKAGE_STORE_FILE" in defines) && !opts.skipSizeVerification) {
+      const outFile = commands["OutFile"].replace(/^"|"$/g, "")
+      await verifyInstallerSize(outFile, defines)
+    }
   }
 
   private async computeCommonInstallerScriptHeader(): Promise<string> {

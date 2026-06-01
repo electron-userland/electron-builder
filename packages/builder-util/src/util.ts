@@ -273,6 +273,47 @@ export function spawnAndWrite(command: string, args: Array<string>, data: string
   })
 }
 
+export function spawnAndWriteWithOutput(command: string, args: Array<string>, data: string, options?: SpawnOptions): Promise<{ stdout: string; stderr: string }> {
+  const childProcess = doSpawn(command, args, { ...options, stdio: ["pipe", "pipe", "pipe"] as any })
+  const timeout = setTimeout(() => childProcess.kill(), 4 * 60 * 1000)
+  const isDebugEnabled = debug.enabled
+
+  return new Promise((resolve, reject) => {
+    let stdout = ""
+    let stderr = ""
+
+    childProcess.on("error", (err: Error) => {
+      clearTimeout(timeout)
+      reject(err)
+    })
+
+    childProcess.stdout!.on("data", (chunk: Buffer) => {
+      stdout += chunk.toString()
+      if (isDebugEnabled) {
+        process.stdout.write(chunk)
+      }
+    })
+
+    childProcess.stderr!.on("data", (chunk: Buffer) => {
+      stderr += chunk.toString()
+      if (isDebugEnabled) {
+        process.stderr.write(chunk)
+      }
+    })
+
+    childProcess.stdin!.end(data)
+
+    childProcess.once("close", (code: number) => {
+      clearTimeout(timeout)
+      if (code === 0) {
+        resolve({ stdout, stderr })
+      } else {
+        reject(new ExecError(command, code ?? -1, stdout, stderr))
+      }
+    })
+  })
+}
+
 export function spawn(command: string, args?: Array<string> | null, options?: SpawnOptions, extraOptions?: ExtraSpawnOptions): Promise<any> {
   return new Promise<any>((resolve, reject) => {
     handleProcess("close", doSpawn(command, args || [], options, extraOptions), command, resolve, reject)
