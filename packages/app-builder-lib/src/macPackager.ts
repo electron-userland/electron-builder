@@ -1,5 +1,5 @@
-import type { SignOptions } from "@electron/osx-sign/dist/cjs/types"
-import type { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
+import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
+import { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
 import {
   Arch,
   AsyncTaskManager,
@@ -15,7 +15,6 @@ import {
   unlinkIfExists,
   use,
 } from "builder-util"
-import { dynamicImport } from "./util/dynamicImport"
 import { MemoLazy, Nullish } from "builder-util-runtime"
 import * as fs from "fs/promises"
 import { mkdir, readdir } from "fs/promises"
@@ -32,6 +31,7 @@ import { chooseNotNull, DoPackOptions, PlatformPackager } from "./platformPackag
 import { ArchiveTarget } from "./targets/ArchiveTarget"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
+import { dynamicImport } from "./util/dynamicImport"
 import { isMacOsHighSierra } from "./util/macosVersion"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
 import { resolveFunction } from "./util/resolve"

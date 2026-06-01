@@ -214,9 +214,10 @@ export interface AppImageOptions extends CommonLinuxOptions, TargetSpecificOptio
   /**
    * The compression algorithm passed to the AppImage build tool.
    *
-   * **FUSE2 toolset (`"0.0.0"` or unset):** `"xz"` is forwarded as `--compression xz`.
-   * `"gzip"`, `"zstd"`, `null`, and unset all fall through to the root-level `compression` option:
-   * - `"maximum"` → `--compression xz` (overrides any per-target gzip/zstd value)
+   * **FUSE2 toolset (`"0.0.0"` or unset):** only `"xz"` and `"gzip"` are forwarded
+   * to mksquashfs (`-comp <value>`); `"xz"` additionally passes `-Xdict-size 100% -b 1048576`.
+   * `"zstd"`, `null`, and unset fall through to the root-level `compression` option:
+   * - `"maximum"` → `"xz"`
    * - anything else → flag omitted (mksquashfs defaults to gzip)
    *
    * **Static-runtime toolsets (`>= 1.0.0`):** `"gzip"` and `"zstd"` are forwarded

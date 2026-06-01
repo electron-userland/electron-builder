@@ -1,9 +1,8 @@
-import { Arch } from "builder-util"
+import { Arch, exists, resolveEnvToolsetPath, use } from "builder-util"
 import * as path from "path"
 import { getBinFromUrl } from "../binDownload"
 import { ToolsetConfig } from "../configuration"
 import { downloadBuilderToolset } from "../util/electronGet"
-import { resolveEnvToolsetPath } from "builder-util"
 
 const fpmChecksums = {
   "fpm-1.17.0-ruby-3.4.3-darwin-arm64.7z": "6cc6d4785875bc7d79bdf52ca146080a4c300e1d663376ae79615fb548030ede",
@@ -15,7 +14,7 @@ const fpmChecksums = {
 
 export const appimageChecksums = {
   "0.0.0": {
-    // legacy
+    "appimage-12.0.1.7z": "d12ff7eb8f1d1ec4652ca5237a7fbdca33acc0c758045636feca62dc6ecb8ec4",
   },
   "1.0.2": {
     "appimage-tools-runtime-20251108.tar.gz": "a784a8c26331ec2e945c23d6bdb14af5c9df27f5939825d84b8709c61dc81eb0",
@@ -90,15 +89,9 @@ export async function getFpmPath() {
 }
 
 export async function getAppImageTools(appimageToolVersion: ToolsetConfig["appimage"], targetArch: Arch) {
-  // nullish and 0.0.0 are both considered legacy, but utilize an upstream dependency to download runtimes, so thus, we ignore logic here
-  if (appimageToolVersion == null || appimageToolVersion === "0.0.0") {
-    throw new Error(
-      "Legacy AppImage toolset was selected, but electron-builder is attempting to download newer runtime. Please file a GH issue if you see this error. Exiting early"
-    )
-  }
-
   const runtimeArch = targetArch === Arch.armv7l ? "arm32" : targetArch === Arch.arm64 ? "arm64" : targetArch === Arch.ia32 ? "ia32" : "x64"
 
+  // Static-runtime layout: tools at root, runtimes/ subdir, lib/{arch}/ subdir
   const getPaths = (artifactPath: string) => ({
     mksquashfs: path.resolve(artifactPath, "mksquashfs"),
     desktopFileValidate: path.resolve(artifactPath, "desktop-file-validate"),
@@ -106,19 +99,53 @@ export async function getAppImageTools(appimageToolVersion: ToolsetConfig["appim
     runtimeLibraries: path.resolve(artifactPath, "lib", runtimeArch),
   })
 
-  const filenameWithExt = "appimage-tools-runtime-20251108.tar.gz"
-  const envPath = await resolveEnvToolsetPath("APPIMAGE_TOOLS_PATH", "directory")
-  if (envPath != null) {
-    return getPaths(envPath)
+  // FUSE2 layout: tools under a host-platform subdir; runtime files at root with target-arch suffix
+  const getFuse2Paths = (artifactPath: string) => {
+    // mksquashfs/desktop-file-validate are HOST binaries — use process.arch, not targetArch
+    const hostArch = process.arch === "arm" ? "arm32" : process.arch === "arm64" ? "arm64" : process.arch === "ia32" ? "ia32" : "x64"
+    const toolRoot = process.platform === "linux" ? `linux-${hostArch}` : "darwin"
+    // Runtime files live at root; armv7l target uses "armv7l" filename, not the internal "arm32" alias
+    const runtimeSuffix = targetArch === Arch.armv7l ? "armv7l" : runtimeArch
+    // FUSE2 tree only ships lib/ia32 and lib/x64; arm targets fall back to x64 here
+    // but buildLegacyFuse2AppImage only copies runtimeLibraries for x64/ia32.
+    const libArch = targetArch === Arch.ia32 ? "ia32" : "x64"
+    return {
+      mksquashfs: path.resolve(artifactPath, toolRoot, "mksquashfs"),
+      desktopFileValidate: path.resolve(artifactPath, toolRoot, "desktop-file-validate"),
+      runtime: path.resolve(artifactPath, `runtime-${runtimeSuffix}`),
+      runtimeLibraries: path.resolve(artifactPath, "lib", libArch),
+    }
   }
-  const artifact = await downloadBuilderToolset({
-    releaseName: `appimage@${appimageToolVersion}`,
-    filenameWithExt,
-    checksums: {
-      [filenameWithExt]: appimageChecksums[appimageToolVersion][filenameWithExt],
-    },
-    githubOrgRepo: "electron-userland/electron-builder-binaries",
-  })
 
-  return getPaths(artifact)
+  const isFuse2 = appimageToolVersion === "0.0.0" || appimageToolVersion == null
+
+  const download = async () => {
+    if (isFuse2) {
+      const filenameWithExt = "appimage-12.0.1.7z"
+      const artifactPath = await downloadBuilderToolset({
+        releaseName: "appimage-12.0.1",
+        filenameWithExt,
+        checksums: { [filenameWithExt]: appimageChecksums["0.0.0"][filenameWithExt] },
+        githubOrgRepo: "electron-userland/electron-builder-binaries",
+      })
+      return getFuse2Paths(artifactPath)
+    }
+
+    const filenameWithExt = "appimage-tools-runtime-20251108.tar.gz"
+    const artifactPath = await downloadBuilderToolset({
+      releaseName: `appimage@${appimageToolVersion}`,
+      filenameWithExt,
+      checksums: { [filenameWithExt]: appimageChecksums[appimageToolVersion][filenameWithExt] },
+      githubOrgRepo: "electron-userland/electron-builder-binaries",
+    })
+    return getPaths(artifactPath)
+  }
+
+  const artifact = use(await resolveEnvToolsetPath("APPIMAGE_TOOLS_PATH", "directory"), it => (isFuse2 ? getFuse2Paths(it) : getPaths(it))) ?? (await download())
+  for (const entry of Object.entries(artifact)) {
+    if (!(await exists(entry[1]))) {
+      throw new Error(`AppImage tool ${entry[0]} not found at path: ${entry[1]}`)
+    }
+  }
+  return artifact
 }

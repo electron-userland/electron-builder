@@ -90,10 +90,31 @@ COMMON_DOCKER_ARGS="--privileged \
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
+# Pull a registry image with up to 3 attempts, sleeping 10s between failures.
+# Exits 0 on success, 1 if all attempts fail.
+docker_pull_with_retry() {
+  local image="$1"
+  for i in 1 2 3; do
+    docker pull "$image" && return 0
+    echo "docker pull failed (attempt $i/3), retrying in 10s..." >&2
+    sleep 10
+  done
+  echo "docker pull failed after 3 attempts: $image" >&2
+  return 1
+}
+
 run_pass() {
   local cores="$1"       # e.g. "core18,core20,core22" or "core24"
   local dockerfile="$2"  # e.g. "dockerfile-snapcraft-legacy"
   local image_tag="$3"   # e.g. "snapcraft-legacy-test"
+
+  # Pre-pull the base image so transient registry 5xx errors are retried
+  # before docker build runs (docker build itself has no retry logic).
+  # Skip --platform and other --flags to get the image name even when the
+  # FROM line is: FROM --platform=linux/amd64 <image>
+  local base_image
+  base_image=$(awk '/^FROM/{for(i=2;i<=NF;i++){if($i!~/^--/){print $i; exit}}}' "$CWD/$dockerfile")
+  docker_pull_with_retry "$base_image"
 
   docker build \
     --platform=linux/amd64 \

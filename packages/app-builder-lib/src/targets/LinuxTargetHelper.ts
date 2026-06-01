@@ -273,6 +273,12 @@ export class LinuxTargetHelper {
       }
     }
 
+    // https://github.com/electron-userland/electron-builder/issues/9103
+    // Electron derives app_id from desktopName in package.json; StartupWMClass must match.
+    // https://github.com/electron/electron/blob/9a7b73b5334f1d72c08e2d5e94106706ed751186/lib/browser/init.ts#L128-L133
+    const trimmedDesktopName = packager.info.metadata.desktopName?.trim()
+    const wmClass = !isEmptyOrSpaces(trimmedDesktopName) ? trimmedDesktopName.replace(/\.desktop$/, "") : appInfo.productName
+
     const desktopMeta = deepAssign<any>(
       {
         // String values are escaped per the freedesktop spec (\\, \n, \r, \t)
@@ -284,11 +290,13 @@ export class LinuxTargetHelper {
         Type: "Application",
         Icon: packager.executableName,
         // https://askubuntu.com/questions/367396/what-represent-the-startupwmclass-field-of-a-desktop-file
-        // must be set to package.json name (because it is Electron set WM_CLASS)
+        // Set to desktopName (minus .desktop suffix) when provided, so it matches Electron's
+        // app_id and desktop environments can associate running windows with this entry.
+        // Falls back to productName for apps that don't set desktopName.
         // to get WM_CLASS of running window: xprop WM_CLASS
         // StartupWMClass doesn't work for unicode
         // https://github.com/electron/electron/blob/2-0-x/atom/browser/native_window_views.cc#L226
-        StartupWMClass: desktopStringEscape(appInfo.productName),
+        StartupWMClass: desktopStringEscape(wmClass),
       },
       extra,
       desktopConfig?.entry ?? {}
