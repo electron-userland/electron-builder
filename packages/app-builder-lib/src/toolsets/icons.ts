@@ -6,7 +6,7 @@ import { downloadBuilderToolset } from "../util/electronGet"
 // If ELECTRON_BUILDER_ICONS_TOOLSET_DIR is not set and the bundle has not been
 // published yet, the download will fail with a checksum mismatch (safe failure).
 const iconsToolsChecksums = {
-  "icons-bundle.tar.gz": "d41d8cd98f00b204e9800998ecf8427e",
+  "icons-bundle.tar.gz": "a96b7322c2562dfa53e675c343b17326b79709b793fe8023314584a7891d2b44",
 } as const
 
 export async function getIconsToolsetPath(): Promise<string> {
@@ -15,7 +15,7 @@ export async function getIconsToolsetPath(): Promise<string> {
     return envPath
   }
   return downloadBuilderToolset({
-    releaseName: "icons@1.0.0",
+    releaseName: "icons@1.0.1",
     filenameWithExt: "icons-bundle.tar.gz",
     checksums: iconsToolsChecksums,
     githubOrgRepo: "electron-userland/electron-builder-binaries",
