@@ -90,7 +90,7 @@ See the full documentation on [electron.build](https://www.electron.build).
     * Separate [build steps](https://github.com/electron-userland/electron-builder/issues/1102#issuecomment-271845854).
     * Build and publish in parallel, using hard links on CI server to reduce IO and disk space usage.
 * [Docker](https://www.electron.build/docs/features/multi-platform-build#docker) images to build Electron app for Linux or Windows on any platform.
-* Downloads all required tools files on demand automatically (e.g. to code sign windows application, to make AppX), no need to setup.
+* Downloads all required tool files on demand automatically (e.g., to code sign a Windows application, to make AppX), no setup required.
 
 | Question                               | Answer                                                                            |
 | -------------------------------------- | --------------------------------------------------------------------------------- |
@@ -106,11 +106,11 @@ yarn add electron-builder --dev
 
 ### Note for Yarn 3
 
-Yarn 3 use PnP by default, but electron-builder still needs node-modules (ref: [yarnpkg/berry#4804](https://github.com/yarnpkg/berry/issues/4804#issuecomment-1234407305)). Add configuration in the `.yarnrc.yaml` as follows:
+Yarn 3 uses PnP by default, but electron-builder still needs node-modules (ref: [yarnpkg/berry#4804](https://github.com/yarnpkg/berry/issues/4804#issuecomment-1234407305)). Add configuration in the `.yarnrc.yaml` as follows:
 ```
 nodeLinker: "node-modules"
 ```
-This will declare to use node-modules instead of PnP.
+This instructs Yarn to use node-modules instead of PnP.
 
 ## Quick Setup Guide
 
@@ -130,7 +130,7 @@ This will declare to use node-modules instead of PnP.
    See [all options](https://www.electron.build/docs/configuration). Option [files](https://www.electron.build/docs/contents#files) to indicate which files should be packed in the final application, including the entry file, maybe required.
    You can also use separate configuration files, such as `js`, `ts`, `yml`, and `json`/`json5`. See [read-config-file](https://www.npmjs.com/package/read-config-file) for supported extensions. [JS Example for programmatic API](https://www.electron.build/docs/programmatic-usage)
 
-3. Add [icons](https://www.electron.build/docs/features/icons-and-images).
+3. Add [icons](https://www.electron.build/docs/features/icons).
 
 4. Add the [scripts](https://docs.npmjs.com/cli/run-script) key to the development `package.json`:
     ```json
