@@ -11,12 +11,12 @@ class IconConversionError extends Error {
   }
 }
 
-export type IconFormat = "icns" | "ico" | "set"
-
 export interface IconInfo {
   file: string
   size: number
 }
+
+export type IconFormat = "icns" | "ico" | "set"
 
 export interface IconConvertResult {
   icons: IconInfo[]
@@ -197,6 +197,13 @@ async function doConvertIcon(candidates: string[], roots: string[], format: Icon
   }
 
   const { resolved, isDir } = found
+
+  // SVG source for set format: return the SVG directly — Linux targets place it in
+  // the freedesktop scalable/ dir. Never call getPngSize on an SVG file.
+  if (!isDir && resolved.endsWith(".svg") && format === "set") {
+    return [{ file: resolved, size: 1024 }]
+  }
+
   const outExt = format === "set" ? ".png" : "." + format
 
   // If source already has the target extension and is not a directory, return it directly
@@ -217,11 +224,6 @@ async function doConvertIcon(candidates: string[], roots: string[], format: Icon
     // set: source is already a .png — return as-is with its dimensions
     const { width, height } = await getPngSize(resolved)
     return [{ file: resolved, size: Math.max(width, height) }]
-  }
-
-  // SVG source for set format: return SVG directly — Linux targets place it in scalable/ dir
-  if (!isDir && resolved.endsWith(".svg") && format === "set") {
-    return [{ file: resolved, size: 1024 }]
   }
 
   if (isDir) {

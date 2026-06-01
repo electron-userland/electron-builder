@@ -1,16 +1,16 @@
-import { exec, exists, resolveEnvToolsetPath } from "builder-util"
+import { exec, exists, InvalidConfigurationError, resolveEnvToolsetPath } from "builder-util"
 import * as path from "path"
 import { downloadBuilderToolset } from "../util/electronGet"
 
 // SHA256 checksums — placeholder until published to electron-builder-binaries.
-// If ELECTRON_BUILDER_ICONS_TOOLSET_PATH is not set and the bundle has not been
+// If ELECTRON_BUILDER_ICONS_TOOLSET_DIR is not set and the bundle has not been
 // published yet, the download will fail with a checksum mismatch (safe failure).
 const iconsToolsChecksums = {
-  "icons-bundle.tar.gz": "PLACEHOLDER_SHA256",
+  "icons-bundle.tar.gz": "d41d8cd98f00b204e9800998ecf8427e",
 } as const
 
 export async function getIconsToolsetPath(): Promise<string> {
-  const envPath = await resolveEnvToolsetPath("ELECTRON_BUILDER_ICONS_TOOLSET_PATH", "directory")
+  const envPath = await resolveEnvToolsetPath("ELECTRON_BUILDER_ICONS_TOOLSET_DIR", "directory")
   if (envPath != null) {
     return envPath
   }
@@ -27,7 +27,7 @@ export async function runIconsTool(inputFile: string, format: "icns" | "ico" | "
   // path.resolve (not path.join) to eliminate any residual .. components in toolsetPath
   const scriptPath = path.resolve(toolsetPath, "icon-tool.js")
   if (!(await exists(scriptPath))) {
-    throw new Error(`Icons toolset script not found: ${scriptPath}. Re-check ELECTRON_BUILDER_ICONS_TOOLSET_PATH or clear the electron-builder cache.`)
+    throw new InvalidConfigurationError(`Icons tool not found at expected path: ${scriptPath}`)
   }
   // exec uses execFile internally — args are passed as an array, not through a shell,
   // so no shell injection is possible regardless of inputFile/outDir content.

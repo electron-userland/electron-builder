@@ -47,7 +47,7 @@ import {
   TargetSpecificOptions,
 } from "./index"
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier"
-import { convertIcon } from "./util/iconConverter"
+import { convertIcon, IconFormat, IconInfo } from "./util/iconConverter"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
 import { AssetCatalogResult, generateAssetCatalogForIcon } from "./util/macosIconComposer"
 
@@ -873,13 +873,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return result.icons
   }
 }
-
-export interface IconInfo {
-  file: string
-  size: number
-}
-
-export type IconFormat = "icns" | "ico" | "set"
 
 export function isSafeGithubName(name: string) {
   return /^[0-9A-Za-z._-]+$/.test(name)

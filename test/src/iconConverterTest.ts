@@ -378,10 +378,7 @@ describe("convertIcon – file resolution", () => {
   it("auto-discovers icon.svg from build dir when no extension specified", async () => {
     const buildDir = path.join(tmpDir, "build")
     await mkdir(buildDir, { recursive: true })
-    await writeFile(
-      path.join(buildDir, "icon.svg"),
-      '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024"><rect width="1024" height="1024" fill="#6496C8"/></svg>'
-    )
+    await writeFile(path.join(buildDir, "icon.svg"), '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024"><rect width="1024" height="1024" fill="#6496C8"/></svg>')
     const outDir = path.join(tmpDir, "out")
 
     // Source has no extension — should fall through to icon.svg candidate
