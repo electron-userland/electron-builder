@@ -89,9 +89,6 @@
     "unzipper": "^0.12.3",
     "which": "^5.0.0"
   },
-  "optionalDependencies": {
-    "sharp": "^0.34.5"
-  },
   "///": "babel in devDependencies for proton tests",
   "devDependencies": {
     "@babel/core": "7.24.9",

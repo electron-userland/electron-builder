@@ -18,8 +18,6 @@ afterEach(async () => {
   await rm(tmpDir, { recursive: true, force: true })
 })
 
-// ─── Pure-JS PNG generator (no sharp dependency) ─────────────────────────────
-
 const CRC_TABLE = (() => {
   const t = new Uint32Array(256)
   for (let i = 0; i < 256; i++) {

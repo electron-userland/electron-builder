@@ -40,7 +40,6 @@
     "resedit": "1.7.0",
     "sanitize-filename": "^1.6.3",
     "semver": "7.7.2",
-    "sharp": "^0.34.5",
     "stat-mode": "^1.0.0",
     "temp-file": "^3.4.0",
     "unzipper": "^0.12.3",
