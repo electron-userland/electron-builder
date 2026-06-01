@@ -287,7 +287,7 @@ export const wixChecksums = {
 } as const
 
 export async function getWixBin(wix: ToolsetConfig["wix"] | Nullish): Promise<string> {
-  const overridePath = await resolveEnvToolsetPath("ELECTRON_BUILDER_WIX_PATH", "directory")
+  const overridePath = await resolveEnvToolsetPath("ELECTRON_BUILDER_WIX_DIR", "directory")
   if (overridePath != null) {
     return overridePath
   }
