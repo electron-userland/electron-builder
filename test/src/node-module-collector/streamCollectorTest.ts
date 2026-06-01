@@ -226,5 +226,19 @@ describe.sequential("streamCollectorCommandToFile", () => {
       await p
       expect(collector.logSummary[LogMessageByKey.PKG_COLLECTOR_OUTPUT]).toHaveLength(0)
     })
+
+    test("win32 npm.cmd wrapped via cmd.exe: exit code 1 still triggers shouldIgnore", async ({ expect }) => {
+      // Regression: execName must be derived from the original command ("npm"), not the rewritten
+      // cmd.exe invocation, otherwise shouldIgnore never fires and npm list exit code 1 rejects.
+      // Use "npm.cmd" without a backslash-prefixed directory so path.basename works cross-platform
+      // in the test environment (macOS path.basename ignores backslash separators).
+      setPlatform("win32")
+      const p = collector.streamCollectorCommandToFile("npm.cmd", ["list", "--json"], "/cwd", OUTPUT_FILE)
+      await waitForCloseCb()
+      stderrDataCb?.("npm error code ELSPROBLEMS\nnpm error invalid: canvas@npm:npm-empty-stub@1.0.1\n")
+      closeCb!(1)
+      await p
+      expect(collector.logSummary[LogMessageByKey.PKG_COLLECTOR_OUTPUT]).toHaveLength(0)
+    })
   })
 })

@@ -357,13 +357,15 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * @throws {Error} If the child process spawn fails or exits with a non-zero code
    */
   protected async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
+    // Capture execName from the original command before resolveWindowsCommand may rewrite it to
+    // cmd.exe — shouldIgnore must key off the original invocation (e.g. "npm", not "cmd").
+    const execName = path.basename(command, path.extname(command))
+
     if (process.platform === "win32") {
       const resolved = await this.resolveWindowsCommand(command, args)
       command = resolved.command
       args = resolved.args
     }
-
-    const execName = path.basename(command, path.extname(command))
     const isWindows = process.platform === "win32"
 
     // shell: true is required on Windows — see https://github.com/electron-userland/electron-builder/issues/9488
@@ -423,9 +425,9 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   }
 
   /**
-   * On Windows, wraps .cmd files and executables at paths containing spaces in a temporary .bat
-   * file so that cmd.exe spawns them correctly. Returns the original command/args unchanged on
-   * non-Windows or when no wrapping is required.
+   * Windows-only. Wraps .cmd files and executables at paths containing spaces in a temporary .bat
+   * file so that cmd.exe spawns them correctly. Returns the original command/args unchanged when
+   * no wrapping is required. Must only be called on win32.
    */
   private async resolveWindowsCommand(command: string, args: string[]): Promise<{ command: string; args: string[] }> {
     if (process.platform !== "win32") {
