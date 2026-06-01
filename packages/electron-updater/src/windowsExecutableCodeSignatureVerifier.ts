@@ -102,15 +102,17 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
   return new Promise<string | null>((resolve, reject) => {
     execFile(...preparePowerShellExec(`Get-AuthenticodeSignature -LiteralPath '${tempUpdateFile}' | ConvertTo-Json -Compress`, 20 * 1000), (error, stdout, stderr) => {
       if (error != null || stderr) {
-        handleError(logger, error, stderr, reject)
-        resolve(null)
+        if (handleError(logger, error, stderr, reject)) {
+          resolve(null)
+        }
         return
       }
       try {
         resolve(evaluateSignatureResult(stdout, publisherNames, unescapedTempUpdateFile, logger, reject))
       } catch (e: any) {
-        handleError(logger, e, null, reject)
-        resolve(null)
+        if (handleError(logger, e, null, reject)) {
+          resolve(null)
+        }
       }
     })
   })
@@ -133,12 +135,14 @@ function parseOut(out: string): any {
   return data
 }
 
-function handleError(logger: Logger, error: Error | null, stderr: string | null, reject: (reason: any) => void): void {
+// Returns true when the error is ignored (caller should resolve null).
+// Returns false when reject() was called (caller must not resolve).
+function handleError(logger: Logger, error: Error | null, stderr: string | null, reject: (reason: any) => void): boolean {
   if (isOldWin6()) {
     logger.warn(
       `Cannot execute Get-AuthenticodeSignature: ${error || stderr}. Ignoring signature validation due to unsupported powershell version. Please upgrade to powershell 3 or higher.`
     )
-    return
+    return true
   }
 
   try {
@@ -147,15 +151,15 @@ function handleError(logger: Logger, error: Error | null, stderr: string | null,
     logger.warn(
       `Cannot execute ConvertTo-Json: ${testError.message}. Ignoring signature validation due to unsupported powershell version. Please upgrade to powershell 3 or higher.`
     )
-    return
+    return true
   }
 
   if (error != null) {
     reject(error)
   } else if (stderr) {
-    // Only reached when error is null — avoids calling reject() twice when both are set.
     reject(new Error(`Cannot execute Get-AuthenticodeSignature, stderr: ${stderr}. Failing signature validation due to unknown stderr.`))
   }
+  return false
 }
 
 function isOldWin6(): boolean {
