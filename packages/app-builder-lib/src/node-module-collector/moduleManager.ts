@@ -13,6 +13,7 @@ export enum LogMessageByKey {
   PKG_OPTIONAL_NOT_INSTALLED = "missing optional dependencies",
   PKG_OPTIONAL_PLATFORM_NOT_INSTALLED = "platform-specific optional dependencies not bundled — add them to your project's optionalDependencies if your app requires them (pnpm 10+ does not auto-install transitive platform binaries)",
   PKG_COLLECTOR_OUTPUT = "collector stderr output",
+  PKG_VERSION_OVERRIDDEN = "dependencies resolved to a version outside the declared range (installed version accepted — likely resolved via package manager overrides)",
 }
 export const logMessageLevelByKey: Record<LogMessageByKey, LogLevel> = {
   [LogMessageByKey.PKG_DUPLICATE_REF]: "info",
@@ -23,6 +24,7 @@ export const logMessageLevelByKey: Record<LogMessageByKey, LogLevel> = {
   [LogMessageByKey.PKG_OPTIONAL_NOT_INSTALLED]: "info",
   [LogMessageByKey.PKG_OPTIONAL_PLATFORM_NOT_INSTALLED]: "warn",
   [LogMessageByKey.PKG_COLLECTOR_OUTPUT]: "warn",
+  [LogMessageByKey.PKG_VERSION_OVERRIDDEN]: "debug",
 }
 
 export type Package = { packageDir: string; packageJson: PackageJson }
@@ -166,6 +168,32 @@ export class ModuleManager {
     if (!parentDir || !pkgName) {
       return null
     }
+
+    const found = await this.searchForPackage(parentDir, pkgName, requiredRange, skipDownwardSearch)
+    if (found) {
+      return found
+    }
+
+    // Second pass: find any installed version of the package when the declared-range search
+    // returns nothing. This handles package manager `overrides` (Bun, npm, pnpm, Yarn) that
+    // resolve a transitive dependency to a version intentionally outside its declared range.
+    // File-system results are already cached, so this pass costs only JS overhead.
+    if (requiredRange) {
+      const overrideResult = await this.searchForPackage(parentDir, pkgName, undefined, skipDownwardSearch)
+      if (overrideResult) {
+        log.debug(
+          { pkg: pkgName, declared: requiredRange, installed: overrideResult.packageJson.version },
+          "accepting installed package version that doesn't satisfy the declared range"
+        )
+        this.logSummary[LogMessageByKey.PKG_VERSION_OVERRIDDEN].push(`${pkgName}@${overrideResult.packageJson.version} (declared ${requiredRange})`)
+        return overrideResult
+      }
+    }
+
+    return null
+  }
+
+  private async searchForPackage(parentDir: string, pkgName: string, requiredRange: string | undefined, skipDownwardSearch: boolean): Promise<Package | null> {
     // 1) check direct parent node_modules/pkgName first
     const direct = path.join(path.resolve(parentDir), "node_modules", pkgName, "package.json")
     if (await this.exists[direct]) {

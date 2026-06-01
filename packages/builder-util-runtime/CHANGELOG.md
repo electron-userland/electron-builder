@@ -1,5 +1,11 @@
 # builder-util-runtime
 
+## 9.6.3
+
+### Patch Changes
+
+- Chore: stabilize flaky CI tests (electron zip ENOENT, 5xx retries, snap timeouts) _[`#9795`](https://github.com/electron-userland/electron-builder/pull/9795) [`59efef1`](https://github.com/electron-userland/electron-builder/commit/59efef1a8b81ed1ead4e8004043726d2b49cf81f) [@mmaietta](https://github.com/mmaietta)_
+
 ## 9.6.2
 
 ### Patch Changes

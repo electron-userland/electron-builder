@@ -5,6 +5,8 @@ import path from "path"
 import { NtExecutable, NtExecutableResource, Resource } from "resedit"
 import { afterEach, beforeEach } from "vitest"
 
+const FIXTURE_ICO = path.join(__dirname, "../../fixtures/test-app/build/icon.ico")
+
 interface PeSnapshot {
   versionStrings: Array<{ lang: number; codepage: number; strings: Record<string, string> }>
   manifestXml: string | null
@@ -122,5 +124,32 @@ describe("editWindowsResources", () => {
     const file = await writePe(makePeBuffer({ withManifest: true }))
     await editWindowsResources({ ...baseOpts, file })
     expect(readPeSnapshot(await fs.readFile(file))).toMatchSnapshot()
+  })
+
+  test("adds icon resources when iconPath is provided", async ({ expect }) => {
+    const file = await writePe(makePeBuffer())
+    await editWindowsResources({ ...baseOpts, file, iconPath: FIXTURE_ICO })
+    const res = NtExecutableResource.from(NtExecutable.from(await fs.readFile(file)))
+    expect(res.entries.some(e => e.type === 3)).toBe(true)
+    expect(res.entries.some(e => e.type === 14)).toBe(true)
+  })
+
+  test("does not add icon resources when iconPath is omitted", async ({ expect }) => {
+    const file = await writePe(makePeBuffer())
+    await editWindowsResources({ ...baseOpts, file })
+    const res = NtExecutableResource.from(NtExecutable.from(await fs.readFile(file)))
+    expect(res.entries.some(e => e.type === 3)).toBe(false)
+    expect(res.entries.some(e => e.type === 14)).toBe(false)
+  })
+
+  test("replaces existing icon when iconPath is provided", async ({ expect }) => {
+    const file = await writePe(makePeBuffer())
+    await editWindowsResources({ ...baseOpts, file, iconPath: FIXTURE_ICO })
+    const resAfterFirst = NtExecutableResource.from(NtExecutable.from(await fs.readFile(file)))
+    const groupCountAfterFirst = resAfterFirst.entries.filter(e => e.type === 14).length
+    expect(groupCountAfterFirst).toBeGreaterThan(0)
+    await editWindowsResources({ ...baseOpts, file, iconPath: FIXTURE_ICO })
+    const groupCountAfterSecond = NtExecutableResource.from(NtExecutable.from(await fs.readFile(file))).entries.filter(e => e.type === 14).length
+    expect(groupCountAfterSecond).toBe(groupCountAfterFirst)
   })
 })
