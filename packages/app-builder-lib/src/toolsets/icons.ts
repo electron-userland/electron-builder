@@ -39,5 +39,5 @@ export async function runIconsTool({ inputFile, outputFormat, outDir }: IconConv
   if (!(await exists(scriptPath))) {
     throw new InvalidConfigurationError(`Icons tool not found at expected path: ${scriptPath}`)
   }
-  await exec(process.execPath, [scriptPath, `--input=${safeInput}`, `--format=${outputFormat}`, `--out=${safeOutDir}`])
+  await exec(process.execPath, [scriptPath, `--input=${safeInput}`, `--format=${outputFormat}`, `--out=${safeOutDir}`], { shell: false })
 }
