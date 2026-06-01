@@ -9,7 +9,7 @@ const isLinux = process.platform === "linux"
 // files (e.g. WiX v3 tools). Modern Wine 10.x via Homebrew works on ARM64 macOS —
 // wine.ts detects it and bypasses app-builder-bin's outdated Catalina guard.
 // A PATH lookup is cheap enough to do once at setup time.
-const isWineCapable = isWindows || spawnSync("which", ["wine"], { stdio: "ignore" }).status === 0
+const isWineCapable = spawnSync("which", ["wine"], { stdio: "ignore" }).status === 0
 
 type Meta = Record<string, any>
 
@@ -72,7 +72,7 @@ function createChainable(baseFn: any, meta: Meta = {}, shouldSkip = false): any 
   add("ifLinux", { platform: "linux" }, !isLinux)
   add("ifNotLinux", { platformNot: "linux" }, isLinux)
 
-  add("ifWineCapable", { wineCapable: true }, !isWineCapable)
+  add("ifWindowsOrWine", { wineCapable: isWineCapable }, !isWindows && !isWineCapable)
 
   wrapped.ifEnv = (envKey: boolean | string | undefined) => {
     let condition = false

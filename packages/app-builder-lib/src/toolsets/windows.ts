@@ -276,7 +276,6 @@ export async function getNsisElevatePath(nsis: ToolsetConfig["nsis"] | Nullish, 
 
 // ─── WiX toolset ─────────────────────────────────────────────────────────────
 
-
 export const wixChecksums = {
   "0.0.0": {
     "wix-4.0.0.5512.2.7z": "fe677fcd837b18c9b912985d91636bbd8a1e800c3b3a6a841b6f96e89624e839",

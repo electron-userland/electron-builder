@@ -49,8 +49,7 @@ const SUITES: WindowsSuiteConfig[] = [
     name: "msi",
     registerFn: namedFn("registerMsiTests" satisfies keyof typeof _MsiSuite),
     importPath: "windows/msiTestSuite",
-    // ifWineCapable: skip on macOS (Catalina+ blocks 32-bit Wine); run on Windows (native) and Linux (wine32).
-    describeConfig: { name: "msi", chain: ["ifWineCapable"] },
+    describeConfig: { name: "msi", chain: ["ifWindowsOrWine"] },
     describeOptions: { sequential: true },
     wixVersions: WIX_VERSIONS,
     winCodeSignVersions: [], // MSI does not use winCodeSign
