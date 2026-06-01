@@ -40,7 +40,7 @@ const SUITES: WindowsSuiteConfig[] = [
     name: "assistedInstaller",
     registerFn: namedFn("registerAssistedInstallerTests" satisfies keyof typeof _AssistedInstallerSuite),
     importPath: "windows/assistedInstallerTestSuite",
-    describeConfig: { name: "assisted", chain: ["ifWindows"] },
+    describeConfig: { name: "assisted" },
     nsisVersions: NSIS_VERSIONS,
   },
   {
