@@ -39,7 +39,7 @@ import { NsisScriptGenerator, nsisEscapeString } from "./nsisScriptGenerator"
 import { getMakeNsisPath, getNsisPluginsPath } from "../../toolsets/nsis"
 import { AppPackageHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
 import { checkMakensisOutput, verifyInstallerSize } from "./nsisValidation"
-import { WineVmManager } from "app-builder-lib/src/vm/WineVm"
+import { WineVmManager } from "../../vm/WineVm"
 
 const debug = _debug("electron-builder:nsis")
 
