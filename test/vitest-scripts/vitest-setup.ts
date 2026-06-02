@@ -1,15 +1,9 @@
-import { spawnSync } from "child_process"
 import { test as baseTest, describe as baseDescribe, expect } from "vitest"
 import { ConditionalSuiteAPI, ConditionalTestAPI } from "../typings/vitest"
 
 const isWindows = process.platform === "win32"
 const isMac = process.platform === "darwin"
 const isLinux = process.platform === "linux"
-// Windows runs natively. On macOS/Linux, wine is needed to run 32-bit Windows .exe
-// files (e.g. WiX v3 tools). Modern Wine 10.x via Homebrew works on ARM64 macOS —
-// wine.ts detects it and bypasses app-builder-bin's outdated Catalina guard.
-// A PATH lookup is cheap enough to do once at setup time.
-const isWineCapable = spawnSync("which", ["wine"], { stdio: "ignore" }).status === 0
 
 type Meta = Record<string, any>
 
@@ -71,8 +65,6 @@ function createChainable(baseFn: any, meta: Meta = {}, shouldSkip = false): any 
 
   add("ifLinux", { platform: "linux" }, !isLinux)
   add("ifNotLinux", { platformNot: "linux" }, isLinux)
-
-  add("ifWindowsOrWine", { wineCapable: isWineCapable }, !isWindows && !isWineCapable)
 
   wrapped.ifEnv = (envKey: boolean | string | undefined) => {
     let condition = false
