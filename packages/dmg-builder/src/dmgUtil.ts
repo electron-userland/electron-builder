@@ -1,13 +1,13 @@
 import { DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
 import { downloadBuilderToolset } from "app-builder-lib/out/util/electronGet"
 import { withToolsetLock } from "app-builder-lib/out/util/toolsetLock"
-import { exec, executeFinally, exists, InvalidConfigurationError, isEmptyOrSpaces, log, spawnAndWriteWithOutput, TmpDir } from "builder-util"
+import { exec, executeFinally, exists, InvalidConfigurationError, isEmptyOrSpaces, log, TmpDir } from "builder-util"
 import { stat } from "fs/promises"
 import { writeFile } from "fs-extra"
 import * as path from "path"
 import { DmgBuildConfig } from "./dmg"
 import type { DmgBuildLicenseConfig } from "./dmgLicense"
-import { hdiUtil, hdiutilTransientExitCodes } from "./hdiuil"
+import { hdiUtil, hdiUtilWithStdin, hdiutilTransientExitCodes } from "./hdiuil"
 
 export { DmgTarget } from "./dmg"
 
@@ -60,8 +60,7 @@ export async function attachAndExecute(dmgPath: string, readWrite: boolean, forc
   args.push(dmgPath)
   // Pipe "y\n" to stdin so that hdiutil auto-accepts any SLA/EULA dialog
   // embedded in the DMG instead of blocking on a terminal prompt.
-  const { stdout: attachOutput } = await spawnAndWriteWithOutput("hdiutil", args, "y\n")
-  const attachResult = attachOutput || null
+  const attachResult = await hdiUtilWithStdin(args, "y\n")
   // Use multiline flag so ^ matches any line start — the EULA text (if any)
   // precedes the /dev/... device lines in hdiutil's stdout output.
   const deviceResult = attachResult == null ? null : /^(\/dev\/\w+)/m.exec(attachResult)

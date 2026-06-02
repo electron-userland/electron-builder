@@ -79,7 +79,7 @@ export class DmgTarget extends Target {
 
     const specification = await this.computeDmgOptions(appPath)
 
-    const licenseData = await addLicenseToDmg(packager)
+    const licenseData = await addLicenseToDmg(packager, this.options.license)
 
     if (!(await customizeDmg({ appPath, artifactPath, volumeName, specification, packager, licenseData }))) {
       return

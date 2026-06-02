@@ -1,5 +1,6 @@
 import { PlatformPackager } from "app-builder-lib"
 import { getLicenseFiles } from "app-builder-lib/out/util/license"
+import { InvalidConfigurationError } from "builder-util"
 import { readFile, readJson } from "fs-extra"
 import { CORE_SCHEMA, load } from "js-yaml"
 import { getLicenseButtonsFile } from "./licenseButtons"
@@ -20,7 +21,51 @@ export type DmgBuildLicenseConfig = {
   >
 }
 
-export async function addLicenseToDmg(packager: PlatformPackager<any>): Promise<DmgBuildLicenseConfig | null> {
+export async function addLicenseToDmg(packager: PlatformPackager<any>, explicitLicense?: string | Record<string, string> | null): Promise<DmgBuildLicenseConfig | null> {
+  // null = explicitly disabled; skip both explicit and convention paths
+  if (explicitLicense === null) {
+    return null
+  }
+
+  // Explicit config overrides file-naming convention
+  if (explicitLicense !== undefined) {
+    return buildExplicitLicenseConfig(packager, explicitLicense)
+  }
+
+  // File-naming convention: license_LANG.{rtf,txt,html}
+  return buildConventionLicenseConfig(packager)
+}
+
+async function buildExplicitLicenseConfig(packager: PlatformPackager<any>, license: string | Record<string, string>): Promise<DmgBuildLicenseConfig | null> {
+  if (typeof license === "string") {
+    const resolvedPath = await packager.getResource(license)
+    if (resolvedPath == null) {
+      throw new InvalidConfigurationError(`dmg.license file not found: "${license}"`)
+    }
+    return { "default-language": "en_US", licenses: { en_US: resolvedPath } }
+  }
+
+  // Record<langCode, filePath>
+  const licenses: Record<string, string> = {}
+  for (const [lang, filePath] of Object.entries(license)) {
+    const resolvedPath = await packager.getResource(filePath)
+    if (resolvedPath == null) {
+      throw new InvalidConfigurationError(`dmg.license file not found for language "${lang}": "${filePath}"`)
+    }
+    licenses[lang] = resolvedPath
+  }
+
+  if (Object.keys(licenses).length === 0) {
+    return null
+  }
+
+  return {
+    "default-language": Object.keys(licenses)[0],
+    licenses,
+  }
+}
+
+async function buildConventionLicenseConfig(packager: PlatformPackager<any>): Promise<DmgBuildLicenseConfig | null> {
   const licenseFiles = await getLicenseFiles(packager)
   if (licenseFiles.length === 0) {
     return null
@@ -32,6 +77,11 @@ export async function addLicenseToDmg(packager: PlatformPackager<any>): Promise<
 
   const licenses: Record<string, string> = {}
   for (const file of licenseFiles) {
+    if (licenses[file.langWithRegion] != null) {
+      throw new InvalidConfigurationError(
+        `Multiple license files found for language "${file.langWithRegion}": "${licenses[file.langWithRegion]}" and "${file.file}". Only one license file per language is supported.`
+      )
+    }
     licenses[file.langWithRegion] = file.file
   }
 

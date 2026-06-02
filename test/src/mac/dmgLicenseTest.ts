@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest"
 import * as fs from "fs/promises"
 import * as os from "os"
 import * as path from "path"
+import { statSync } from "fs"
 
 // Import from src/ path so vitest can intercept relative imports inside the SUT
 import { addLicenseToDmg } from "dmg-builder/src/dmgLicense"
@@ -13,6 +14,28 @@ function makeMockPackager(resourceFiles: string[], buildResourcesDir: string) {
     resourceList: Promise.resolve(resourceFiles),
     buildResourcesDir,
     debugLogger: { add: () => undefined },
+    // Minimal getResource: returns the path if it's an existing absolute path,
+    // else resolves relative to buildResourcesDir
+    getResource: async (custom: string | null | undefined) => {
+      if (custom == null) {
+        return null
+      }
+      if (path.isAbsolute(custom)) {
+        try {
+          statSync(custom)
+          return custom
+        } catch {
+          return null
+        }
+      }
+      const resolved = path.join(buildResourcesDir, custom)
+      try {
+        statSync(resolved)
+        return resolved
+      } catch {
+        return null
+      }
+    },
   } as any
 }
 
@@ -246,6 +269,15 @@ describe("addLicenseToDmg", () => {
     expect(result!.buttons!["ja_JP"].agree).toBe("同意する")
   })
 
+  test("duplicate license language throws InvalidConfigurationError", async () => {
+    // Both license_en.txt and eula_en.txt map to en_US — must not silently overwrite
+    await fs.writeFile(path.join(tmpDir, "license_en.txt"), "License", "utf-8")
+    await fs.writeFile(path.join(tmpDir, "eula_en.txt"), "EULA", "utf-8")
+    const packager = makeMockPackager(["license_en.txt", "eula_en.txt"], tmpDir)
+
+    await expect(addLicenseToDmg(packager)).rejects.toThrow(/Multiple license files found for language "en_US"/)
+  })
+
   test("non-license files in resourceList are ignored", async () => {
     await fs.writeFile(path.join(tmpDir, "license_en.txt"), "x", "utf-8")
     await fs.writeFile(path.join(tmpDir, "background.png"), "x", "utf-8")
@@ -256,5 +288,71 @@ describe("addLicenseToDmg", () => {
     const result = await addLicenseToDmg(packager)
 
     expect(Object.keys(result!.licenses)).toEqual(["en_US"])
+  })
+
+  // ─── Explicit license config (DmgOptions.license) ───────────────────────────
+
+  test("explicit string license — resolves to en_US, ignores file convention", async () => {
+    const licenseFile = path.join(tmpDir, "my-license.rtf")
+    await fs.writeFile(licenseFile, "{\\rtf1 My license}", "utf-8")
+    // Also write a convention file to confirm it is NOT used
+    await fs.writeFile(path.join(tmpDir, "license_de.txt"), "Hallo", "utf-8")
+    const packager = makeMockPackager(["license_de.txt"], tmpDir)
+
+    const result = await addLicenseToDmg(packager, licenseFile)
+
+    expect(result!["default-language"]).toBe("en_US")
+    expect(Object.keys(result!.licenses)).toEqual(["en_US"])
+    expect(result!.licenses["en_US"]).toBe(licenseFile)
+    // Convention-based German license must not appear
+    expect(result!.licenses["de_DE"]).toBeUndefined()
+  })
+
+  test("explicit map license — uses provided language map verbatim", async () => {
+    const enFile = path.join(tmpDir, "license.rtf")
+    const deFile = path.join(tmpDir, "license_de.txt")
+    await fs.writeFile(enFile, "{\\rtf1 EN}", "utf-8")
+    await fs.writeFile(deFile, "DE Lizenz", "utf-8")
+    const packager = makeMockPackager([], tmpDir)
+
+    const result = await addLicenseToDmg(packager, { en_US: enFile, de_DE: deFile })
+
+    expect(result!["default-language"]).toBe("en_US")
+    expect(result!.licenses["en_US"]).toBe(enFile)
+    expect(result!.licenses["de_DE"]).toBe(deFile)
+    expect(result!.buttons).toBeUndefined()
+  })
+
+  test("explicit map license — first key is default-language", async () => {
+    const deFile = path.join(tmpDir, "license_de.txt")
+    const enFile = path.join(tmpDir, "license.txt")
+    await fs.writeFile(deFile, "DE", "utf-8")
+    await fs.writeFile(enFile, "EN", "utf-8")
+    const packager = makeMockPackager([], tmpDir)
+
+    const result = await addLicenseToDmg(packager, { de_DE: deFile, en_US: enFile })
+
+    expect(result!["default-language"]).toBe("de_DE")
+  })
+
+  test("explicit null license — returns null (no license dialog)", async () => {
+    await fs.writeFile(path.join(tmpDir, "license_en.txt"), "x", "utf-8")
+    const packager = makeMockPackager(["license_en.txt"], tmpDir)
+
+    const result = await addLicenseToDmg(packager, null)
+
+    expect(result).toBeNull()
+  })
+
+  test("explicit string pointing to missing file — throws InvalidConfigurationError", async () => {
+    const packager = makeMockPackager([], tmpDir)
+
+    await expect(addLicenseToDmg(packager, "/nonexistent/license.rtf")).rejects.toThrow(/dmg\.license file not found/)
+  })
+
+  test("explicit map with missing file — throws InvalidConfigurationError naming the language", async () => {
+    const packager = makeMockPackager([], tmpDir)
+
+    await expect(addLicenseToDmg(packager, { fr_FR: "/nonexistent/fr.rtf" })).rejects.toThrow(/fr_FR/)
   })
 })
