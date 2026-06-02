@@ -21,10 +21,14 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly target?: Array<MacOsTargetName | TargetConfiguration> | MacOsTargetName | TargetConfiguration | null
 
   /**
-   * The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://www.electron.build/code-signing) instead of specifying this option.
+   * The signing identity (certificate name) to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://www.electron.build/code-signing) instead of specifying this option.
    * MAS installer identity is specified in the [mas](https://www.electron.build/mas).
    *
-   * Set to `-` to use an ad-hoc identity for signing. Set to `null` to skip signing entirely.
+   * - **Not set** (default): electron-builder searches the keychain for a valid signing certificate. If none is found, signing is skipped for all architectures — there is no automatic ad-hoc fallback.
+   * - **`null`**: skip signing entirely.
+   * - **`"-"`**: opt in to ad-hoc signing explicitly. Note that `hardenedRuntime: true` (the default) combined with ad-hoc signing requires
+   *   the [`com.apple.security.cs.disable-library-validation`](https://developer.apple.com/documentation/BundleResources/Entitlements/com.apple.security.cs.disable-library-validation)
+   *   entitlement to prevent app launch failures; otherwise set `hardenedRuntime: false`.
    */
   readonly identity?: string | null
 
@@ -155,6 +159,12 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
 
   /**
    * Whether your app has to be signed with hardened runtime.
+   *
+   * When using ad-hoc signing (`identity: "-"`), hardened runtime enforces library validation which
+   * will reject pre-signed Electron frameworks that carry a different Team ID. To resolve this either
+   * set `hardenedRuntime: false` or add the
+   * [`com.apple.security.cs.disable-library-validation`](https://developer.apple.com/documentation/BundleResources/Entitlements/com.apple.security.cs.disable-library-validation)
+   * entitlement to your entitlements file.
    * @default true
    */
   readonly hardenedRuntime?: boolean

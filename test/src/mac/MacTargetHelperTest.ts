@@ -80,15 +80,28 @@ describe("MacTargetHelper", () => {
     }
 
     test("throws when forceCodeSigning is true", () => {
-      expect(() => makeHelper(true).handleNullIdentity(false)).toThrow("identity explicitly is set to null")
+      expect(() => makeHelper(true).handleNullIdentity()).toThrow("identity explicitly is set to null")
     })
 
     test("returns false when forceCodeSigning is false", () => {
-      expect(makeHelper(false).handleNullIdentity(false)).toBe(false)
+      expect(makeHelper(false).handleNullIdentity()).toBe(false)
     })
+  })
 
-    test("returns false with fallBackToAdhoc=true", () => {
-      expect(makeHelper(false).handleNullIdentity(true)).toBe(false)
+  describe("isHardenedRuntimeEnabledForSigning", () => {
+    const cases: [boolean, boolean | undefined, boolean][] = [
+      // non-MAS: defaults to true
+      [false, undefined, true],
+      [false, true, true],
+      [false, false, false],
+      // MAS: defaults to false
+      [true, undefined, false],
+      [true, false, false],
+      [true, true, true],
+    ]
+
+    test.each(cases)("isMas=%s hardenedRuntime=%s => %s", (isMas, hardenedRuntime, expected) => {
+      expect(MacTargetHelper.isHardenedRuntimeEnabledForSigning(isMas, { hardenedRuntime })).toBe(expected)
     })
   })
 

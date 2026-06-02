@@ -371,10 +371,9 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
 
     const config = options ?? this.platformSpecificBuildOptions
     const qualifier = config.identity
-    const fallBackToAdhoc = (arch === Arch.arm64 || arch === Arch.universal) && !this.forceCodeSigning
 
     if (qualifier === null) {
-      return this.helper.handleNullIdentity(fallBackToAdhoc)
+      return this.helper.handleNullIdentity()
     }
 
     const keychainFile = (await this.codeSigningInfo.value).keychainFile
@@ -382,7 +381,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     const type = explicitType || "distribution"
     const isDevelopment = type === "development"
 
-    const identity = await this.helper.findSigningIdentity(isMas, isDevelopment, qualifier, keychainFile, config, fallBackToAdhoc)
+    const identity = await this.helper.findSigningIdentity(isMas, isDevelopment, qualifier, keychainFile, config)
 
     if (!identity) {
       return false
