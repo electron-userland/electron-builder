@@ -1,5 +1,5 @@
+import { parseValidEnvVarUrl, resolveEnvShellValue } from "builder-util/out/envUtil"
 import { removePassword, filterSensitiveEnv, spawnAndWriteWithOutput, ExecError } from "builder-util"
-import { parseValidEnvVarUrl } from "builder-util/out/envUtil"
 import { afterEach, vi } from "vitest"
 
 const testValue = "secretValue"
@@ -263,6 +263,51 @@ describe("removePassword: multiple keys in one string", () => {
   })
 })
 
+describe("resolveEnvShellValue", () => {
+  const VAR = "TEST_RESOLVE_ENV_SHELL_VAR"
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test("returns null when env var is not set", ({ expect }) => {
+    delete process.env[VAR]
+    expect(resolveEnvShellValue(VAR)).toBeNull()
+  })
+
+  test("returns null when env var is empty string", ({ expect }) => {
+    vi.stubEnv(VAR, "")
+    expect(resolveEnvShellValue(VAR)).toBeNull()
+  })
+
+  test("returns null when env var is whitespace only", ({ expect }) => {
+    vi.stubEnv(VAR, "   ")
+    expect(resolveEnvShellValue(VAR)).toBeNull()
+  })
+
+  test("returns the value trimmed of surrounding whitespace", ({ expect }) => {
+    vi.stubEnv(VAR, "  /some/path  ")
+    expect(resolveEnvShellValue(VAR)).toBe("/some/path")
+  })
+
+  const UNSAFE_CHARS = [";", "&", "|", "`", "$", "<", ">", '"', "'"]
+  for (const ch of UNSAFE_CHARS) {
+    test(`throws on shell-unsafe character: ${ch}`, ({ expect }) => {
+      vi.stubEnv(VAR, `/some/path${ch}foo`)
+      expect(() => resolveEnvShellValue(VAR)).toThrow(`${VAR} contains shell-unsafe characters`)
+    })
+  }
+
+  test.skipIf(process.platform === "win32")("throws on backslash on non-Windows platforms", ({ expect }) => {
+    vi.stubEnv(VAR, "/some/path\\foo")
+    expect(() => resolveEnvShellValue(VAR)).toThrow(`${VAR} contains shell-unsafe characters`)
+  })
+
+  test.skipIf(process.platform !== "win32")("allows backslash on Windows (native path separator)", ({ expect }) => {
+    vi.stubEnv(VAR, "C:\\some\\path")
+    expect(resolveEnvShellValue(VAR)).toBe("C:\\some\\path")
+  })
+})
 // ─── spawnAndWriteWithOutput ────────────────────────────────────────────────
 
 describe("spawnAndWriteWithOutput", () => {

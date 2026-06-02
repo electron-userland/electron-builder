@@ -1,6 +1,5 @@
 import { exists, log, retry, stripSensitiveEnvVars, TmpDir } from "builder-util"
 import * as childProcess from "child_process"
-import { randomBytes } from "crypto"
 import * as fs from "fs-extra"
 import { createWriteStream } from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -357,39 +356,25 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * @throws {Error} If the child process spawn fails or exits with a non-zero code
    */
   protected async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
-    // Capture execName from the original command before resolveWindowsCommand may rewrite it to
-    // cmd.exe — shouldIgnore must key off the original invocation (e.g. "npm", not "cmd").
+    // Derive execName from the original command so the npm-list shouldIgnore check below keys off the
+    // real invocation (e.g. "npm"), not the "powershell" wrapper we spawn on Windows.
     const execName = path.basename(command, path.extname(command))
 
-    if (process.platform === "win32") {
-      const resolved = await this.resolveWindowsCommand(command, args)
-      command = resolved.command
-      args = resolved.args
-    }
-    const isWindows = process.platform === "win32"
-
-    // shell: true is required on Windows — see https://github.com/electron-userland/electron-builder/issues/9488
-    // On non-Windows, shell:false means args are passed directly to the process with no shell
-    // interpretation, so the metacharacter guard is only necessary on Windows.
-    if (isWindows) {
-      // Guard against cmd.exe metacharacters. Parentheses are intentionally excluded because they
-      // appear in legitimate Windows paths (e.g. "C:\Program Files (x86)").
-      const SHELL_INJECTION_RE = /[;&|`${}[\]<>!%^]/
-      for (const arg of args) {
-        if (SHELL_INJECTION_RE.test(arg)) {
-          throw new Error(`Refusing to spawn "${command}": argument "${arg}" contains shell metacharacters. Possible injection attempt.`)
-        }
-      }
-    }
+    // On Windows the package-manager command is typically a `.cmd` shim (npm.cmd/pnpm.cmd/yarn.cmd),
+    // which Node can no longer spawn directly (CVE-2024-27980). Rather than spawn with `shell: true` —
+    // which emits the DEP0190 "args with shell" deprecation warning and forces manual metacharacter
+    // escaping — wrap the invocation in a single PowerShell `-EncodedCommand`. The base64 (UTF-16LE)
+    // payload sidesteps every shell-quoting layer, and `powershell.exe` is a real executable we spawn
+    // directly with no shell. See buildPowerShellEncodedArgs for the UTF-8 / exit-code handling.
+    const [spawnCommand, spawnArgs] = process.platform === "win32" ? (["powershell.exe", buildPowerShellEncodedArgs(command, args)] as const) : ([command, args] as const)
 
     await new Promise<void>((resolve, reject) => {
       const outStream = createWriteStream(tempOutputFile)
 
-      const child = childProcess.spawn(command, args, {
+      const child = childProcess.spawn(spawnCommand, spawnArgs, {
         cwd,
         // Package manager invocations do not need signing/publishing credentials.
         env: { COREPACK_ENABLE_STRICT: "0", ...stripSensitiveEnvVars(process.env) },
-        shell: isWindows, // shell: true is required on Windows — see https://github.com/electron-userland/electron-builder/issues/9488
       })
 
       let stderr = ""
@@ -423,34 +408,25 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       })
     })
   }
+}
 
-  /**
-   * Windows-only. Wraps .cmd files and executables at paths containing spaces in a temporary .bat
-   * file so that cmd.exe spawns them correctly. Returns the original command/args unchanged when
-   * no wrapping is required. Must only be called on win32.
-   */
-  private async resolveWindowsCommand(command: string, args: string[]): Promise<{ command: string; args: string[] }> {
-    if (process.platform !== "win32") {
-      throw new Error("resolveWindowsCommand should only be called on Windows platforms")
-    }
-
-    const ext = path.extname(command).toLowerCase()
-    // Wrap .cmd files and any Windows executable path that contains spaces (e.g. extensionless
-    // shims from tools like Volta installed at "C:\Program Files\Volta\") to ensure the path is
-    // quoted correctly when passed to `spawn(..., { shell: true })`.
-    const needsWrap = ext === ".cmd" || command.includes(" ")
-    if (!needsWrap) {
-      return { command, args }
-    }
-
-    const execName = path.basename(command, ext)
-    const tempBatFile = await this.tempDirManager.getTempFile({
-      prefix: execName + "-" + randomBytes(8).toString("hex"),
-      suffix: ".bat",
-    })
-    const escapedCommand = command.replace(/"/g, `""`)
-    const batScript = `@echo off\r\n"${escapedCommand}" %*\r\n` // <-- CRLF required for .bat
-    await fs.writeFile(tempBatFile, batScript, { encoding: "utf8", mode: 0o600 })
-    return { command: "cmd.exe", args: ["/c", `"${tempBatFile}"`, ...args] }
-  }
+/**
+ * Build the argv for invoking a Windows command through `powershell.exe -EncodedCommand`.
+ *
+ * Each token is wrapped in a PowerShell single-quoted string (with embedded single quotes doubled),
+ * so no character is interpreted by a shell. The script:
+ *   - pins `[Console]::OutputEncoding` to UTF-8 *without* a BOM so the JSON dependency tree is not
+ *     corrupted by the console's OEM code page (and no BOM is prepended to break `JSON.parse`),
+ *   - invokes the command via the call operator `&`,
+ *   - re-emits the command's own exit code via `exit $LASTEXITCODE` (e.g. `npm list` returns 1 in
+ *     expected scenarios, which the caller's shouldIgnore logic relies on).
+ *
+ * The whole script is base64-encoded as UTF-16LE per PowerShell's `-EncodedCommand` contract.
+ */
+export function buildPowerShellEncodedArgs(command: string, args: string[]): string[] {
+  const psQuote = (value: string) => `'${value.replace(/'/g, "''")}'`
+  const invocation = ["&", psQuote(command), ...args.map(psQuote)].join(" ")
+  const script = `[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new($false); ${invocation}; exit $LASTEXITCODE`
+  const encoded = Buffer.from(script, "utf16le").toString("base64")
+  return ["-NoProfile", "-NonInteractive", "-EncodedCommand", encoded]
 }
