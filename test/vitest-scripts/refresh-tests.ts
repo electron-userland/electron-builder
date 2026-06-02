@@ -3,7 +3,7 @@
 import { spawnSync } from "child_process"
 import * as fs from "fs"
 import * as path from "path"
-import { generateTests } from "./runtime-tests/generate-tests"
+import { generateTests } from "./generate-tests"
 import { GENERATED_TESTS_DIR, SNAPSHOTS_GEN_DIR } from "./runtime-tests/generate-toolset-tests-shared"
 import { LINUX_SUITE_METADATA } from "./runtime-tests/generate-toolset-tests-linux"
 import { MAC_SUITE_METADATA } from "./runtime-tests/generate-toolset-tests-mac"
