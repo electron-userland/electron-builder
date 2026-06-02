@@ -7,6 +7,10 @@ exports[`custom icon set 1`] = `
     "size": 16,
   },
   {
+    "file": "icon_24x24.png",
+    "size": 24,
+  },
+  {
     "file": "icon_32x32.png",
     "size": 32,
   },
@@ -40,6 +44,10 @@ exports[`custom icon set with only 512 and 128 1`] = `
     "size": 16,
   },
   {
+    "file": "icon_24x24.png",
+    "size": 24,
+  },
+  {
     "file": "icon_32x32.png",
     "size": 32,
   },
@@ -71,6 +79,10 @@ exports[`default png icon 1`] = `
   {
     "file": "icon_16x16.png",
     "size": 16,
+  },
+  {
+    "file": "icon_24x24.png",
+    "size": 24,
   },
   {
     "file": "icon_32x32.png",
@@ -112,6 +124,10 @@ exports[`icon set 1`] = `
     "size": 16,
   },
   {
+    "file": "icon_24x24.png",
+    "size": 24,
+  },
+  {
     "file": "icon_32x32.png",
     "size": 32,
   },
@@ -143,6 +159,10 @@ exports[`png icon 1`] = `
   {
     "file": "icon_16x16.png",
     "size": 16,
+  },
+  {
+    "file": "icon_24x24.png",
+    "size": 24,
   },
   {
     "file": "icon_32x32.png",

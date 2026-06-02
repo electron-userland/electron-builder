@@ -408,7 +408,13 @@ export class NsisTarget extends Target {
     return false
   }
 
-  private async computeScriptAndSignUninstaller(defines: Defines, commands: Commands, installerPath: string, sharedHeader: string, archs: Map<Arch, string>): Promise<{ script: string; isCustomScript: boolean }> {
+  private async computeScriptAndSignUninstaller(
+    defines: Defines,
+    commands: Commands,
+    installerPath: string,
+    sharedHeader: string,
+    archs: Map<Arch, string>
+  ): Promise<{ script: string; isCustomScript: boolean }> {
     const packager = this.packager
     const customScriptPath = await packager.getResource(this.options.script, "installer.nsi")
     const script = await readFile(customScriptPath || path.join(nsisTemplatesDir, "installer.nsi"), "utf8")

@@ -309,72 +309,96 @@ export class ModuleManager {
           continue
         }
         const entryPath = path.join(dir, entry)
-        // handle scoped packages @scope/name
         if (entry.startsWith("@")) {
-          // queue the scope directory itself to explore its children
-          if ((await this.exists[entryPath]) && (await this.lstat[entryPath])?.isDirectory()) {
-            const scopeEntries = await fs.readdir(entryPath)
-            for (const sc of scopeEntries) {
-              const scPath = path.join(entryPath, sc)
-              // check scPath/node_modules/pkgName
-              const candidatePkgJson = path.join(scPath, "node_modules", pkgName, "package.json")
-              if (await this.exists[candidatePkgJson]) {
-                const json = await this.json[candidatePkgJson]
-                if (json && this.semverSatisfies(json.version, requiredRange)) {
-                  return { packageDir: path.dirname(candidatePkgJson), packageJson: json }
-                }
-              }
-              // enqueue scPath/node_modules to explore further
-              const scNodeModules = path.join(scPath, "node_modules")
-              if ((await this.exists[scNodeModules]) && (await this.lstat[scNodeModules])?.isDirectory()) {
-                if (!visited.has(scNodeModules)) {
-                  visited.add(scNodeModules)
-                  queue.push({ dir: scNodeModules, depth: depth + 1 })
-                }
-              }
-            }
+          const found = await this.processScope(entryPath, pkgName, requiredRange, depth, visited, queue)
+          if (found) {
+            return found
           }
           continue
         }
-
-        // check for direct candidate: entry/node_modules/pkgName
-        try {
-          const stat = await this.lstat[entryPath]
-          if (!stat?.isDirectory()) {
-            continue
-          }
-        } catch {
-          continue
-        }
-
-        const candidatePkgJson = path.join(entryPath, "node_modules", pkgName, "package.json")
-        if (await this.exists[candidatePkgJson]) {
-          const json = await this.json[candidatePkgJson]
-          if (json && this.semverSatisfies(json.version, requiredRange)) {
-            return { packageDir: path.dirname(candidatePkgJson), packageJson: json }
-          }
-        }
-
-        // also check entry/node_modules directly for pkgName (some layouts)
-        const candidateDirect = path.join(entryPath, pkgName, "package.json")
-        if (await this.exists[candidateDirect]) {
-          const json = await this.json[candidateDirect]
-          if (json && this.semverSatisfies(json.version, requiredRange)) {
-            return { packageDir: path.dirname(candidateDirect), packageJson: json }
-          }
-        }
-
-        // enqueue entry/node_modules for deeper traversal
-        const nextNodeModules = path.join(entryPath, "node_modules")
-        if ((await this.exists[nextNodeModules]) && (await this.lstat[nextNodeModules])?.isDirectory()) {
-          if (!visited.has(nextNodeModules)) {
-            visited.add(nextNodeModules)
-            queue.push({ dir: nextNodeModules, depth: depth + 1 })
-          }
+        const found = await this.processEntry(entryPath, pkgName, requiredRange, depth, visited, queue)
+        if (found) {
+          return found
         }
       }
     }
 
     return null
+  }
+
+  /** Handle a non-scoped entry directory inside a node_modules folder. */
+  private async processEntry(
+    entryPath: string,
+    pkgName: string,
+    requiredRange: string | undefined,
+    depth: number,
+    visited: Set<string>,
+    queue: Array<{ dir: string; depth: number }>
+  ): Promise<Package | null> {
+    const stat = await this.lstat[entryPath]
+    if (!stat?.isDirectory()) {
+      return null
+    }
+
+    // Check entry/node_modules/pkgName (nested dep under a package)
+    const nested = path.join(entryPath, "node_modules", pkgName, "package.json")
+    if (await this.exists[nested]) {
+      const json = await this.json[nested]
+      if (json && this.semverSatisfies(json.version, requiredRange)) {
+        return { packageDir: path.dirname(nested), packageJson: json }
+      }
+    }
+
+    // Check entry/pkgName directly (some flat layouts place pkgName as a sibling)
+    const direct = path.join(entryPath, pkgName, "package.json")
+    if (await this.exists[direct]) {
+      const json = await this.json[direct]
+      if (json && this.semverSatisfies(json.version, requiredRange)) {
+        return { packageDir: path.dirname(direct), packageJson: json }
+      }
+    }
+
+    await this.enqueueIfExists(path.join(entryPath, "node_modules"), depth, visited, queue)
+    return null
+  }
+
+  /** Handle a scoped-package directory (@scope) inside a node_modules folder. */
+  private async processScope(
+    scopePath: string,
+    pkgName: string,
+    requiredRange: string | undefined,
+    depth: number,
+    visited: Set<string>,
+    queue: Array<{ dir: string; depth: number }>
+  ): Promise<Package | null> {
+    if (!(await this.exists[scopePath]) || !(await this.lstat[scopePath])?.isDirectory()) {
+      return null
+    }
+    let scopeEntries: string[]
+    try {
+      scopeEntries = await fs.readdir(scopePath)
+    } catch {
+      return null
+    }
+    for (const sc of scopeEntries) {
+      const scPath = path.join(scopePath, sc)
+      const candidatePkgJson = path.join(scPath, "node_modules", pkgName, "package.json")
+      if (await this.exists[candidatePkgJson]) {
+        const json = await this.json[candidatePkgJson]
+        if (json && this.semverSatisfies(json.version, requiredRange)) {
+          return { packageDir: path.dirname(candidatePkgJson), packageJson: json }
+        }
+      }
+      await this.enqueueIfExists(path.join(scPath, "node_modules"), depth, visited, queue)
+    }
+    return null
+  }
+
+  /** Enqueue a node_modules directory for BFS only if it exists on disk and hasn't been visited. */
+  private async enqueueIfExists(nmPath: string, depth: number, visited: Set<string>, queue: Array<{ dir: string; depth: number }>): Promise<void> {
+    if (!visited.has(nmPath) && (await this.exists[nmPath]) && (await this.lstat[nmPath])?.isDirectory()) {
+      visited.add(nmPath)
+      queue.push({ dir: nmPath, depth: depth + 1 })
+    }
   }
 }

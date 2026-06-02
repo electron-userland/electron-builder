@@ -1,7 +1,7 @@
 import type { FilesystemEntry, FilesystemFileEntry } from "@electron/asar/lib/filesystem"
 import { dynamicImport } from "../util/dynamicImport"
 
-export async function checkFileInArchive(asarFile: string, relativeFile: string, messagePrefix: string) {
+export async function checkFileInArchive(asarFile: string, relativeFile: string, messagePrefix: string): Promise<FilesystemEntry> {
   const asar = await dynamicImport<typeof import("@electron/asar")>("@electron/asar")
   function error(text: string) {
     return new Error(`${messagePrefix} "${relativeFile}" in the "${asarFile}" ${text}`)

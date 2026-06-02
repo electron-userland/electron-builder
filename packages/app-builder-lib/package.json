@@ -1,7 +1,7 @@
 {
   "name": "app-builder-lib",
   "description": "electron-builder lib",
-  "version": "26.13.0",
+  "version": "26.13.1",
   "main": "out/index.js",
   "files": [
     "out",
@@ -55,6 +55,7 @@
     "@electron/rebuild": "4.0.3",
     "@electron/universal": "2.0.3",
     "@malept/flatpak-bundler": "^0.4.0",
+    "@noble/hashes": "^2.2.0",
     "@types/fs-extra": "9.0.13",
     "@peculiar/webcrypto": "^1.7.1",
     "ajv": "^8.18.0",

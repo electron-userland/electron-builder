@@ -7,11 +7,11 @@ import * as semver from "semver"
 import { CompressionLevel } from "../core"
 import { LinuxPackager } from "../linuxPackager"
 import { CommonLinuxOptions } from "../options/linuxOptions"
-import { IconInfo } from "../platformPackager"
 import { SnapCore } from "./snap/SnapTarget"
 import { SnapCore24 } from "./snap/core24"
 import { SnapCoreCustom } from "./snap/coreCustom"
 import { SnapCoreLegacy } from "./snap/coreLegacy"
+import { IconInfo } from "../util/iconConverter"
 
 /**
  * Escape a string value for use in a freedesktop .desktop file string field

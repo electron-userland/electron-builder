@@ -2,13 +2,13 @@ import { Arch, copyDir, copyFile, exec, exists, InvalidConfigurationError, log }
 import * as fs from "fs-extra"
 import * as path from "path"
 import { FileAssociation } from "../../options/FileAssociation"
-import { IconInfo } from "../../platformPackager"
 import { getAppImageTools } from "../../toolsets/linux"
 import { copyIcons, copyMimeTypes } from "./appLauncher"
 import { appendBlockmap } from "../differentialUpdateInfoBuilder"
 import { BlockMapDataHolder } from "builder-util-runtime"
 import { APP_RUN_ENTRYPOINT } from "./AppImageTarget"
-import { ToolsetConfig } from "app-builder-lib/src/configuration"
+import { ToolsetConfig } from "../../configuration"
+import { IconInfo } from "../../util/iconConverter"
 
 interface Options {
   productName: string
