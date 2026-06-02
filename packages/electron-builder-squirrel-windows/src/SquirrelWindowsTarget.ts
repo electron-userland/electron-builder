@@ -120,7 +120,7 @@ export default class SquirrelWindowsTarget extends Target {
     const writeZipToSetupExe = await this.ensurePathInside(vendorDir, path.join(vendorDir, "WriteZipToSetup.exe"), "WriteZipToSetup executable")
 
     await fs.promises.copyFile(stubExecutableSource, stubExePath)
-    await execWine({ file: writeZipToSetupExe, file64: null, appArgs: ["--copy-stub-resources", filePath, stubExePath], toolset: this.packager.config.toolsets?.wine })
+    await execWine({ file: writeZipToSetupExe, appArgs: ["--copy-stub-resources", filePath, stubExePath], toolset: this.packager.config.toolsets?.wine })
     await this.packager.signIf(stubExePath)
     log.debug({ file: filePath }, "signing app executable")
     await this.packager.signIf(filePath)

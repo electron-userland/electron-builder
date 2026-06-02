@@ -10,9 +10,8 @@ export class WineVmManager extends VmManager {
     super()
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  exec(file: string, args: Array<string>, options?: ExecFileOptions, isLogOutIfDebug = true): Promise<string> {
-    return execWine({ file, file64: null, appArgs: args, options, toolset: this.wineToolset })
+  exec(file: string, args: Array<string>, options?: ExecFileOptions, _isLogOutIfDebug = true): Promise<string> {
+    return execWine({ file, appArgs: args, options, toolset: this.wineToolset })
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

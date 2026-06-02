@@ -109,9 +109,7 @@ describe("appimageChecksums", () => {
     const f_002 = Object.keys(appimageChecksums["1.0.2"])[0]
     const f_003 = Object.keys(appimageChecksums["1.0.3"])[0]
     expect(f_002).toBe(f_003)
-    expect(appimageChecksums["1.0.2"][f_002 as keyof (typeof appimageChecksums)["1.0.2"]]).not.toBe(
-      appimageChecksums["1.0.3"][f_003 as keyof (typeof appimageChecksums)["1.0.3"]]
-    )
+    expect(appimageChecksums["1.0.2"][f_002 as keyof (typeof appimageChecksums)["1.0.2"]]).not.toBe(appimageChecksums["1.0.3"][f_003 as keyof (typeof appimageChecksums)["1.0.3"]])
   })
 })
 
