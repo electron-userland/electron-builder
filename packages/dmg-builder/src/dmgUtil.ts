@@ -37,22 +37,15 @@ async function getDmgVendorPath(): Promise<string> {
     return resolvedPath
   }
 
-  // https://github.com/electron-userland/electron-builder-binaries/releases/tag/dmg-builder%401.2.2
-  // TODO: update releaseName, filenames, and checksums below once the new bundle (with CJK codec
-  // support restored and licensing.py patches applied) has been built and published. The new bundle
-  // must include _codecs_jp/_codecs_kr/_codecs_cn/_codecs_hk/_codecs_tw so that Japanese, Korean,
-  // and Chinese license files are encoded correctly by dmgbuild's licensing.py at creation time.
-  const config = {
-    "dmgbuild-bundle-arm64-75c8a6c.tar.gz": "28be390d4cfade51d872c42016bc56712bb240525c9f21ebbfa0b413ade1fe0f",
-    "dmgbuild-bundle-x86_64-75c8a6c.tar.gz": "97d4ac0d2137383d37d02df3338bf653b6e6095d033508458ef195d567d25071",
-  }
   const arch = process.arch === "arm64" ? "arm64" : "x86_64"
-  const filename: keyof typeof config = `dmgbuild-bundle-${arch}-75c8a6c.tar.gz`
+  // https://github.com/electron-userland/electron-builder-binaries/releases?q=dmg-builder&expanded=true
   const file = await downloadBuilderToolset({
-    releaseName: "dmg-builder@1.2.2",
-    filenameWithExt: filename,
-    checksums: config,
-    githubOrgRepo: "electron-userland/electron-builder-binaries",
+    releaseName: "dmg-builder@1.2.5",
+    filenameWithExt: `dmgbuild-bundle-${arch}-75c8a6c.tar.gz`,
+    checksums: {
+      "dmgbuild-bundle-arm64-75c8a6c.tar.gz": "793404d0c96687e27d5ee40a668d498c92e36a64d6c2906df511031adb33cbeb",
+      "dmgbuild-bundle-x86_64-75c8a6c.tar.gz": "1664972f9cc2d6e8fce3b63e42cd30078aff602669c5856939c4519921200433",
+    },
   })
   return path.resolve(file, "dmgbuild")
 }

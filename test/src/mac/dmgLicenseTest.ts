@@ -98,14 +98,7 @@ describe("addLicenseToDmg", () => {
     await writeYml(
       tmpDir,
       "licensebuttons_en.yml",
-      [
-        "languageName: English",
-        "agree: Agree",
-        "disagree: Disagree",
-        "print: Print",
-        "save: Save",
-        "description: Custom message",
-      ].join("\n")
+      ["languageName: English", "agree: Agree", "disagree: Disagree", "print: Print", "save: Save", "description: Custom message"].join("\n")
     )
     const packager = makeMockPackager(["license_en.txt", "licensebuttons_en.yml"], tmpDir)
 
@@ -198,10 +191,7 @@ describe("addLicenseToDmg", () => {
     await writeYml(tmpDir, "licensebuttons_en.yml", "languageName: English\nagree: Agree")
     await writeJson(tmpDir, "licensebuttons_fr.json", { languageName: "Français", agree: "J'accepte" })
 
-    const packager = makeMockPackager(
-      ["license_en.txt", "license_fr.txt", "licensebuttons_en.yml", "licensebuttons_fr.json"],
-      tmpDir
-    )
+    const packager = makeMockPackager(["license_en.txt", "license_fr.txt", "licensebuttons_en.yml", "licensebuttons_fr.json"], tmpDir)
 
     const result = await addLicenseToDmg(packager)
 
