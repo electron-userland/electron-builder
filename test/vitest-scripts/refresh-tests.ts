@@ -11,7 +11,7 @@ import { WINDOWS_SUITE_METADATA } from "./generate-tests/generate-toolset-tests-
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type Target = "linux" | "mac" | "windows" | "any" | "clean"
+type Target = "linux" | "mac" | "windows" | "any"
 
 interface SuiteMetadata {
   name: string
@@ -117,51 +117,50 @@ function resolveGeneratedFiles(suiteNames: Set<string>): string[] {
 
 // ─── CLI ─────────────────────────────────────────────────────────────────────
 
-const VALID_TARGETS: readonly Target[] = ["linux", "mac", "windows", "any", "clean"]
+const VALID_COMMANDS: readonly string[] = ["start", "print", "clean"]
+const VALID_TARGETS: readonly Target[] = ["linux", "mac", "windows", "any"]
 
-function parseArgs(): { command: string; target: Target; updateSnapshots: boolean } {
+function parseArgs(): { command: string; target: Target | undefined; updateSnapshots: boolean } {
   const args = process.argv.slice(2)
+  const command = args[0]
+
+  if (!VALID_COMMANDS.includes(command)) {
+    console.error(`Usage:\n` + `  ts-node refresh-tests.ts <start|print> --target <linux|mac|windows|any> [--update-snapshots]\n` + `  ts-node refresh-tests.ts clean`)
+    process.exit(1)
+  }
+
+  if (command === "clean") {
+    return { command, target: undefined, updateSnapshots: false }
+  }
 
   const targetIdx = args.indexOf("--target")
   const targetArg = targetIdx >= 0 ? args[targetIdx + 1] : undefined
   if (!targetArg || !VALID_TARGETS.includes(targetArg as Target)) {
-    console.error(`Usage:\n` + `  ts-node refresh-tests.ts <start|print> --target <linux|mac|windows|any> [--update-snapshots]\n` + `  ts-node refresh-tests.ts --target clean`)
+    console.error(`--target must be one of: ${VALID_TARGETS.join(", ")}`)
     process.exit(1)
   }
 
-  const target = targetArg as Target
-
-  if (target === "clean") {
-    return { command: "clean", target, updateSnapshots: false }
-  }
-
-  const command = args[0]
-  if (command !== "start" && command !== "print") {
-    console.error(`Usage: ts-node refresh-tests.ts <start|print> --target <linux|mac|windows|any> [--update-snapshots]`)
-    process.exit(1)
-  }
-
-  return { command, target, updateSnapshots: args.includes("--update-snapshots") }
+  return { command, target: targetArg as Target, updateSnapshots: args.includes("--update-snapshots") }
 }
 
 function main(): void {
   const { command, target, updateSnapshots } = parseArgs()
 
-  console.log(`\n=== refresh-snapshots: ${command} --target ${target} ===\n`)
+  console.log(`\n=== refresh-tests: ${command}${target ? ` --target ${target}` : ""} ===\n`)
 
   // 1. Regenerate all generated test files so we have the current set
   console.log("Regenerating test suite...")
   generateTests()
 
   // 2. For clean target: delete stale snapshots and exit
-  if (target === "clean") {
+  if (command === "clean") {
     console.log("\nCleaning stale generated snapshots...")
     deleteStaleGeneratedSnapshots()
     return
   }
 
   // 3. Determine which suites match the target
-  const matchingSuites = resolveMatchingSuites(target)
+  const matchingSuites = resolveMatchingSuites(target!)
   const suiteNames = new Set(matchingSuites.map(s => s.name))
 
   // 4. Delete stale snapshots
