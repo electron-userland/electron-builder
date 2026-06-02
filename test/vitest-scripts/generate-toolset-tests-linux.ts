@@ -3,11 +3,10 @@ import * as path from "path"
 import type { ToolsetConfig } from "app-builder-lib/src/configuration"
 import { buildDescribeCall, cleanAndEnsureDir, GENERATED_TESTS_DIR, namedFn, resolveImportPath, TEST_SRC_DIR } from "./generate-toolset-tests-shared"
 import type { SuiteConfig } from "./generate-toolset-tests-shared"
+import { APPIMAGE_VERSIONS } from "./generate-toolset-versions"
 import type * as _LinuxPackagerSuite from "../src/linux/linuxPackagerTestSuite"
 import type * as _BlackboxLinuxSuite from "../src/updater/blackboxUpdateLinuxSuite"
 import type * as _DifferentialLinuxSuite from "../src/updater/differentialUpdateLinuxSuite"
-
-const APPIMAGE_VERSIONS: ToolsetConfig["appimage"][] = ["0.0.0", "1.0.2", "1.0.3"]
 
 const SUITES: SuiteConfig[] = [
   {
@@ -50,6 +49,8 @@ import { ${fnName} } from "${importPath}"
 ${body}
 `
 }
+
+export const LINUX_SUITE_METADATA = SUITES.map(s => ({ name: s.name, chain: s.describeConfig.chain }))
 
 export function generateLinuxToolsetTests(): void {
   for (const suite of SUITES) {

@@ -13,7 +13,9 @@ const includeRegex = `(${testRegex.join("|")}|${testRegex.map(t => `${t}*Test`).
 console.log("TEST_FILES pattern", includeRegex)
 
 async function main() {
-  generateTests()
+  if (!process.env.SKIP_GENERATE) {
+    generateTests()
+  }
 
   const files = getAllTestFiles()
   const currentPlatform = process.platform as SupportedPlatforms

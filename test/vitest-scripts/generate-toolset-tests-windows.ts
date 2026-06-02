@@ -3,6 +3,7 @@ import * as path from "path"
 import type { ToolsetConfig } from "app-builder-lib/src/configuration"
 import { buildDescribeCall, cleanAndEnsureDir, GENERATED_TESTS_DIR, namedFn, resolveImportPath, TEST_SRC_DIR } from "./generate-toolset-tests-shared"
 import type { SuiteConfig } from "./generate-toolset-tests-shared"
+import { WIN_CODE_SIGN_VERSIONS, NSIS_VERSIONS, WINE_VERSIONS, WIX_VERSIONS } from "./generate-toolset-versions"
 import type * as _WinPackagerSuite from "../src/windows/winPackagerTestSuite"
 import type * as _PortableSuite from "../src/windows/portableTestSuite"
 import type * as _AssistedInstallerSuite from "../src/windows/assistedInstallerTestSuite"
@@ -12,11 +13,6 @@ import type * as _SquirrelWindowsSuite from "../src/windows/squirrelWindowsTestS
 import type * as _AppxSuite from "../src/windows/appxTestSuite"
 import type * as _DifferentialWinSuite from "../src/updater/differentialUpdateWinSuite"
 import type * as _BlackboxWinSuite from "../src/updater/blackboxUpdateWinSuite"
-
-const WIN_CODE_SIGN_VERSIONS: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0", "1.2.1"]
-const NSIS_VERSIONS: ToolsetConfig["nsis"][] = ["0.0.0", "1.2.1", "2.0.0"]
-const WINE_VERSIONS: ToolsetConfig["wine"][] = ["0.0.0", "1.0.0"]
-const WIX_VERSIONS: ToolsetConfig["wix"][] = ["0.0.0", "1.0.0"]
 
 interface WindowsSuiteConfig extends SuiteConfig {
   readonly winCodeSignVersions?: ToolsetConfig["winCodeSign"][]
@@ -143,6 +139,8 @@ import { ${fnName} } from "${importPath}"
 ${body}
 `
 }
+
+export const WINDOWS_SUITE_METADATA = SUITES.map(s => ({ name: s.name, chain: s.describeConfig.chain }))
 
 export function generateWindowsToolsetTests(): void {
   for (const suite of SUITES) {
