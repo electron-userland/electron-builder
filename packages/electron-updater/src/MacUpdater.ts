@@ -131,10 +131,16 @@ export class MacUpdater extends AppUpdater {
     await chmod(downloadedFile, 0o600)
     const feedPath = path.join(this.downloadedUpdateHelper!.cacheDir, "update-feed.json")
 
-    await writeFile(feedPath, JSON.stringify({ url: pathToFileURL(downloadedFile).href }), { mode: 0o600 })
-    this.debug(`Serving Squirrel.Mac update via file:// (feedPath=${feedPath})`)
+    // Squirrel.Mac's JSON serverType requires currentRelease + releases with version and updateTo.url.
+    // Including the explicit version prevents Squirrel from deciding "no update available".
+    const feed = {
+      currentRelease: event.version,
+      releases: [{ version: event.version, updateTo: { version: event.version, url: pathToFileURL(downloadedFile).href } }],
+    }
+    await writeFile(feedPath, JSON.stringify(feed), { mode: 0o600 })
+    this.debug(`Serving Squirrel.Mac update via file:// JSON feed (feedPath=${feedPath}, version=${event.version})`)
 
-    this.nativeUpdater.setFeedURL({ url: pathToFileURL(feedPath).href })
+    this.nativeUpdater.setFeedURL({ url: pathToFileURL(feedPath).href, serverType: "json" })
     this.dispatchUpdateDownloaded(event)
 
     if (!this.autoInstallOnAppQuit) {

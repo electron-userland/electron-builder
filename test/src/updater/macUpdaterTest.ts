@@ -3,7 +3,6 @@ import { MacUpdater } from "electron-updater/out/MacUpdater"
 import { EventEmitter } from "events"
 import { statSync } from "fs"
 import { readFile } from "fs/promises"
-import * as path from "path"
 import { fileURLToPath, pathToFileURL } from "url"
 import { assertThat } from "../helpers/fileAssert"
 import { createTestAppAdapter, httpExecutor, trackEvents, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
@@ -16,12 +15,13 @@ const githubOptions: GithubOptions = {
 }
 
 /**
- * Simulates Squirrel.Mac. When setFeedURL receives a file:// URL (our new approach),
- * it reads the feed JSON from disk and verifies the ZIP is accessible, then emits
- * update-downloaded. Falls back to HTTP for legacy test scenarios.
+ * Simulates Squirrel.Mac in JSON serverType mode. When setFeedURL receives a
+ * file:// URL, it reads the feed JSON from disk, finds the updateTo.url, verifies
+ * the ZIP is accessible, then emits update-downloaded.
  */
 class TestNativeUpdater extends EventEmitter {
   private feedUrl: string | null = null
+  private serverType: string | null = null
   checkForUpdatesCalled = false
   quitAndInstallCalled = false
 
@@ -35,13 +35,18 @@ class TestNativeUpdater extends EventEmitter {
   private async simulateSquirrelDownload() {
     const url = this.feedUrl!
     if (url.startsWith("file://")) {
-      // Simulate Squirrel.Mac reading the feed JSON and the ZIP via NSURLSession file:// support
+      // Simulate Squirrel.Mac JSON mode: read feed from disk
       const feedContent = JSON.parse(await readFile(fileURLToPath(url), "utf-8"))
-      if (!feedContent.url?.startsWith("file://")) {
-        throw new Error(`Expected file:// zip URL in feed, got: ${feedContent.url}`)
+      // JSON serverType: look for releases[].updateTo.url
+      const release = feedContent.releases?.[0]?.updateTo
+      if (!release?.url) {
+        throw new Error(`Expected releases[0].updateTo.url in feed, got: ${JSON.stringify(feedContent)}`)
       }
-      // verify the zip is actually readable (as Squirrel.Mac would read it)
-      await readFile(fileURLToPath(feedContent.url))
+      if (!release.url.startsWith("file://")) {
+        throw new Error(`Expected file:// zip URL in feed, got: ${release.url}`)
+      }
+      // Verify the zip is actually readable (as Squirrel.Mac would read it)
+      await readFile(fileURLToPath(release.url))
       this.emit("update-downloaded")
     } else {
       const data = JSON.parse((await httpExecutor.request(configureRequestOptionsFromUrl(url, {})))!)
@@ -49,12 +54,17 @@ class TestNativeUpdater extends EventEmitter {
     }
   }
 
-  setFeedURL(options: { url: string }) {
+  setFeedURL(options: { url: string; serverType?: string }) {
     this.feedUrl = options.url
+    this.serverType = options.serverType ?? "default"
   }
 
   getFeedURL(): string | null {
     return this.feedUrl
+  }
+
+  getServerType(): string | null {
+    return this.serverType
   }
 
   quitAndInstall() {
@@ -86,7 +96,7 @@ test.ifMac("mac updates", async ({ expect }) => {
   expect(actualEvents).toMatchSnapshot()
 })
 
-test.ifMac("setFeedURL is called with a file:// URL pointing to update-feed.json", async ({ expect }) => {
+test.ifMac("setFeedURL is called with a file:// URL and serverType=json", async ({ expect }) => {
   const { updater, mockNativeUpdater } = await setupMacUpdater()
 
   const updateCheckResult = await updater.checkForUpdates()
@@ -96,9 +106,28 @@ test.ifMac("setFeedURL is called with a file:// URL pointing to update-feed.json
   expect(feedUrl).not.toBeNull()
   expect(feedUrl).toMatch(/^file:\/\//)
   expect(feedUrl).toMatch(/update-feed\.json$/)
+  expect(mockNativeUpdater.getServerType()).toBe("json")
 })
 
-test.ifMac("update-feed.json contains a file:// URL pointing to the downloaded zip", async ({ expect }) => {
+test.ifMac("update-feed.json contains JSON-mode feed with file:// ZIP URL and version", async ({ expect }) => {
+  const { updater, mockNativeUpdater } = await setupMacUpdater()
+
+  const updateCheckResult = await updater.checkForUpdates()
+  await updateCheckResult?.downloadPromise
+
+  const feedUrl = mockNativeUpdater.getFeedURL()!
+  const feedContent = JSON.parse(await readFile(fileURLToPath(feedUrl), "utf-8"))
+
+  // Must be JSON serverType format
+  expect(feedContent.currentRelease).toBeTruthy()
+  expect(feedContent.releases).toHaveLength(1)
+  const updateTo = feedContent.releases[0].updateTo
+  expect(updateTo.url).toMatch(/^file:\/\//)
+  expect(updateTo.url).toMatch(/\.zip$/)
+  expect(updateTo.version).toBe(feedContent.currentRelease)
+})
+
+test.ifMac("feed version matches the downloaded update version", async ({ expect }) => {
   const { updater, mockNativeUpdater } = await setupMacUpdater()
 
   const updateCheckResult = await updater.checkForUpdates()
@@ -106,11 +135,10 @@ test.ifMac("update-feed.json contains a file:// URL pointing to the downloaded z
 
   const feedUrl = mockNativeUpdater.getFeedURL()!
   const feedContent = JSON.parse(await readFile(fileURLToPath(feedUrl), "utf-8"))
+  const zipPath = fileURLToPath(feedContent.releases[0].updateTo.url)
 
-  expect(feedContent.url).toMatch(/^file:\/\//)
-  expect(feedContent.url).toMatch(/\.zip$/)
-  // feed must point to the same file that executeDownload resolved
-  expect(fileURLToPath(feedContent.url)).toBe(files![0])
+  // The ZIP URL must point to the same file that executeDownload resolved
+  expect(zipPath).toBe(files![0])
 })
 
 test.ifMac("downloaded zip has 0600 permissions", async ({ expect }) => {
@@ -142,8 +170,6 @@ test.ifMac("autoInstallOnAppQuit=false resolves immediately without calling nati
   const files = await updateCheckResult?.downloadPromise
 
   expect(mockNativeUpdater.checkForUpdatesCalled).toBe(false)
-  // executeDownload still returns [updateFile]; autoInstallOnAppQuit only controls
-  // whether Squirrel.Mac is triggered to fetch + install at download time
   expect(files!.length).toBe(1)
   await assertThat(expect, files![0]).isFile()
 })
@@ -165,7 +191,6 @@ test.ifMac("nativeUpdater error during checkForUpdates rejects the download prom
   const squirrelError = new Error("Squirrel.Mac: could not locate update bundle")
   mockNativeUpdater.checkForUpdates = function (this: TestNativeUpdater) {
     this.checkForUpdatesCalled = true
-    // Defer so the once("error") listener in updateDownloaded is registered first
     setImmediate(() => this.emit("error", squirrelError))
   }
   mockForNodeRequire("electron", { autoUpdater: mockNativeUpdater })
@@ -183,8 +208,6 @@ test.ifMac("nativeUpdater error during checkForUpdates rejects the download prom
 test.ifMac("quitAndInstall calls nativeUpdater.quitAndInstall when Squirrel already downloaded the update", async ({ expect }) => {
   const { updater, mockNativeUpdater } = await setupMacUpdater()
   updater.autoRunAppAfterInstall = true
-
-  // Simulate Squirrel having already downloaded the update (fires from constructor listener)
   ;(updater as any).squirrelDownloadedUpdate = true
 
   updater.quitAndInstall()
@@ -211,7 +234,6 @@ test.ifMac("quitAndInstall calls app.quit when autoRunAppAfterInstall=false", as
 test.ifMac("quitAndInstall with no prior Squirrel download triggers nativeUpdater.checkForUpdates", async ({ expect }) => {
   const { updater, mockNativeUpdater } = await setupMacUpdater()
 
-  // Download update but skip triggering Squirrel (autoInstallOnAppQuit=false)
   updater.autoInstallOnAppQuit = false
   const updateCheckResult = await updater.checkForUpdates()
   await updateCheckResult?.downloadPromise
@@ -221,7 +243,6 @@ test.ifMac("quitAndInstall with no prior Squirrel download triggers nativeUpdate
   mockNativeUpdater.checkForUpdatesCalled = false
   updater.quitAndInstall()
 
-  // quitAndInstall should invoke checkForUpdates since Squirrel hasn't fetched the update yet
   expect(mockNativeUpdater.checkForUpdatesCalled).toBe(true)
 })
 
@@ -239,23 +260,36 @@ test.ifMac("update events are emitted in the correct order", async ({ expect }) 
   expect(events.indexOf("update-available")).toBeLessThan(events.indexOf("update-downloaded"))
 })
 
+test.ifMac("quitAndInstall called twice only triggers handleUpdateDownloaded once", async ({ expect }) => {
+  const { updater } = await setupMacUpdater()
+
+  expect((updater as any).squirrelDownloadedUpdate).toBe(false)
+
+  let handlerCount = 0
+  ;(updater as any).handleUpdateDownloaded = () => {
+    handlerCount++
+  }
+
+  updater.quitAndInstall()
+  updater.quitAndInstall()
+
+  ;(updater as any).nativeUpdater.emit("update-downloaded")
+  expect(handlerCount).toBe(1)
+})
+
 test.ifMac("update-feed.json is stable across repeated checkForUpdates calls (feed is overwritten, not duplicated)", async ({ expect }) => {
   const { updater, mockNativeUpdater } = await setupMacUpdater()
 
-  // First update check
   await (await updater.checkForUpdates())?.downloadPromise
   const firstFeedUrl = mockNativeUpdater.getFeedURL()
 
-  // Second update check — feed.json should be overwritten with the same path
   await (await updater.checkForUpdates())?.downloadPromise
   const secondFeedUrl = mockNativeUpdater.getFeedURL()
 
-  // Path must be stable (same file, just overwritten)
   expect(firstFeedUrl).toBe(secondFeedUrl)
 
-  // The feed should still be valid
   const feedContent = JSON.parse(await readFile(fileURLToPath(secondFeedUrl!), "utf-8"))
-  expect(feedContent.url).toMatch(/^file:\/\//)
+  expect(feedContent.releases?.[0]?.updateTo?.url).toMatch(/^file:\/\//)
 })
 
 test.ifMac("cached differential copy update.zip has 0600 permissions after download", async ({ expect }) => {
@@ -264,51 +298,20 @@ test.ifMac("cached differential copy update.zip has 0600 permissions after downl
   const updateCheckResult = await updater.checkForUpdates()
   const files = await updateCheckResult?.downloadPromise
 
-  // The update-feed.json points to the downloaded file; update.zip is the differential cache copy
-  // which lives one directory above in cacheDir
-  const feedUrl = mockNativeUpdater.getFeedURL()!
-  const feedDir = path.dirname(fileURLToPath(feedUrl))
-  const updateZipPath = path.join(feedDir, "update.zip")
+  const feedContent = JSON.parse(await readFile(fileURLToPath(mockNativeUpdater.getFeedURL()!), "utf-8"))
+  const zipPath = fileURLToPath(feedContent.releases[0].updateTo.url)
 
-  // update.zip exists (differential cache) and must be restricted
-  const { mode } = statSync(updateZipPath)
+  const { mode } = statSync(zipPath)
   expect(mode & 0o777).toBe(0o600)
 
-  // Sanity: the downloaded file itself (served via file://) is also restricted
   expect(statSync(files![0]).mode & 0o777).toBe(0o600)
 })
 
-test.ifMac("quitAndInstall called twice only triggers handleUpdateDownloaded once", async ({ expect }) => {
-  const { updater } = await setupMacUpdater()
-
-  // Confirm Squirrel has NOT yet downloaded (squirrelDownloadedUpdate=false)
-  expect((updater as any).squirrelDownloadedUpdate).toBe(false)
-
-  let handlerCount = 0
-  ;(updater as any).handleUpdateDownloaded = () => {
-    handlerCount++
-  }
-
-  // First call: registers a once() listener and (since autoInstallOnAppQuit is true by default) does NOT call checkForUpdates
-  updater.quitAndInstall()
-  // Second call: should NOT register a second listener (once() is idempotent per call, but
-  // a second quitAndInstall() call would register a second listener if .on() was used instead of .once())
-  updater.quitAndInstall()
-
-  // Emit update-downloaded — handler must fire exactly once regardless of how many times quitAndInstall was called
-  ;(updater as any).nativeUpdater.emit("update-downloaded")
-  expect(handlerCount).toBe(1)
-})
-
 test("pathToFileURL encodes paths with spaces and special characters correctly", ({ expect }) => {
-  // Verify that pathToFileURL produces a valid file:// URL for paths that contain
-  // characters requiring percent-encoding (spaces, parentheses, etc.).
-  // This covers the real-world scenario where the OS user account name has a space.
   const pathWithSpaces = "/Users/John Doe/Library/Caches/com.example.app/update.zip"
   const url = pathToFileURL(pathWithSpaces)
 
   expect(url.href).toMatch(/^file:\/\//)
   expect(url.href).toContain("John%20Doe")
-  // Round-trip must restore the original path
   expect(fileURLToPath(url)).toBe(pathWithSpaces)
 })

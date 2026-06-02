@@ -12,8 +12,7 @@ const MAC_TEST_APP_CACHE_DIR = path.join(homedir(), "Library", "Caches", "com.te
 
 /**
  * Verifies that after a successful update the file:// artifacts in the system cache
- * have the expected permissions. Squirrel.Mac reads the update via file:// URLs so
- * neither update.zip nor update-feed.json should be world-readable.
+ * have the expected permissions and that the feed is in JSON serverType format.
  */
 async function verifyFileProtocolArtifacts(expect: TestContext["expect"]) {
   const updateZip = path.join(MAC_TEST_APP_CACHE_DIR, "update.zip")
@@ -28,10 +27,11 @@ async function verifyFileProtocolArtifacts(expect: TestContext["expect"]) {
     const { mode } = statSync(feedJson)
     expect(mode & 0o777).toBe(0o600)
 
-    // Feed must point to a file:// ZIP, not a localhost HTTP URL
     try {
       const content = JSON.parse(await readFile(feedJson, "utf-8"))
-      expect(content.url).toMatch(/^file:\/\//)
+      // Feed must be in JSON serverType format with file:// ZIP URL
+      expect(content.currentRelease).toBeTruthy()
+      expect(content.releases?.[0]?.updateTo?.url).toMatch(/^file:\/\//)
     } catch {
       // feed.json may have already been overwritten by the newly installed version; ignore parse errors
     }
@@ -57,8 +57,6 @@ export function registerBlackboxMacTests(): void {
   })
 
   // Validates that a universal binary update succeeds when running on an x64 Mac.
-  // Exercises the arch-filtering logic: universal files must not be filtered out
-  // for x64 machines even though they do not carry an arm64 pathname suffix.
   test.ifEnv(process.arch === "x64")("universal on x64 host uses universal zip", async (context: TestContext) => {
     await runTest(context, "zip", Platform.MAC.name, Arch.universal)
     await verifyFileProtocolArtifacts(context.expect)
@@ -66,20 +64,15 @@ export function registerBlackboxMacTests(): void {
 
   // Validates the differential-download path: runs the update twice so the second
   // run finds an existing update.zip in the cache and attempts a block-map diff.
-  // The second update must still succeed end-to-end via the file:// protocol.
   test("x64 — second update uses cached update.zip for differential download", async (context: TestContext) => {
-    // First pass: full download populates the differential cache
     await runTest(context, "zip", Platform.MAC.name, Arch.x64)
 
     const updateZip = path.join(MAC_TEST_APP_CACHE_DIR, "update.zip")
-    // The differential cache must exist and be owner-only before the second pass
     if (existsSync(updateZip)) {
       const { mode } = statSync(updateZip)
       context.expect(mode & 0o777).toBe(0o600)
     }
 
-    // Second pass: should attempt differential download against the cached zip.
-    // If diff fails it falls back to full download — either way the update must succeed.
     await runTest(context, "zip", Platform.MAC.name, Arch.x64)
     await verifyFileProtocolArtifacts(context.expect)
   })

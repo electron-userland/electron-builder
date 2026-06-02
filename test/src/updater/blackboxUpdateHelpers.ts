@@ -327,7 +327,10 @@ export async function runTest(
         packageManagerToTest: packageManager,
         waitForExit: true,
       })
-      log.info({ version: result.version, stdout: result.stdout }, "Initial launch completed")
+      log.info({ version: result.version, exitCode: result.exitCode, stdout: result.stdout, stderr: result.stderr }, "Initial launch completed")
+      if (result.version == null) {
+        throw new Error(`App did not print APP_VERSION (exitCode=${result.exitCode}).\nSTDOUT:\n${result.stdout}\nSTDERR:\n${result.stderr}`)
+      }
       expect(result.version).toMatch(OLD_VERSION_NUMBER)
       if (!result.stdout.includes("Update downloaded")) {
         throw new Error(`Update phase did not complete — quitAndInstall was never triggered.\nFull stdout:\n${result.stdout}`)
