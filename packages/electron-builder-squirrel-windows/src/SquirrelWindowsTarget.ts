@@ -1,5 +1,4 @@
 import { InvalidConfigurationError, log, isEmptyOrSpaces, exists } from "builder-util"
-import { execWine } from "app-builder-lib/out/wine"
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { sanitizeFileName } from "builder-util/out/filename"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
@@ -8,6 +7,7 @@ import * as path from "path"
 import * as fs from "fs"
 import * as os from "os"
 import { Options as SquirrelOptions, createWindowsInstaller, convertVersion } from "electron-winstaller"
+import { WineVmManager } from "app-builder-lib/out/vm/WineVm"
 
 export default class SquirrelWindowsTarget extends Target {
   //tslint:disable-next-line:no-object-literal-type-assertion
@@ -120,7 +120,8 @@ export default class SquirrelWindowsTarget extends Target {
     const writeZipToSetupExe = await this.ensurePathInside(vendorDir, path.join(vendorDir, "WriteZipToSetup.exe"), "WriteZipToSetup executable")
 
     await fs.promises.copyFile(stubExecutableSource, stubExePath)
-    await execWine({ file: writeZipToSetupExe, appArgs: ["--copy-stub-resources", filePath, stubExePath], toolset: this.packager.config.toolsets?.wine })
+    const wineVm = new WineVmManager(this.packager.config.toolsets?.wine)
+    await wineVm.exec(writeZipToSetupExe, ["--copy-stub-resources", filePath, stubExePath])
     await this.packager.signIf(stubExePath)
     log.debug({ file: filePath }, "signing app executable")
     await this.packager.signIf(filePath)
