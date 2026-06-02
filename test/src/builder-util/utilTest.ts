@@ -1,5 +1,5 @@
-import { removePassword, filterSensitiveEnv } from "builder-util"
 import { parseValidEnvVarUrl, resolveEnvShellValue } from "builder-util/out/envUtil"
+import { removePassword, filterSensitiveEnv, spawnAndWriteWithOutput, ExecError } from "builder-util"
 import { afterEach, vi } from "vitest"
 
 const testValue = "secretValue"
@@ -306,5 +306,70 @@ describe("resolveEnvShellValue", () => {
   test.skipIf(process.platform !== "win32")("allows backslash on Windows (native path separator)", ({ expect }) => {
     vi.stubEnv(VAR, "C:\\some\\path")
     expect(resolveEnvShellValue(VAR)).toBe("C:\\some\\path")
+  })
+})
+// ─── spawnAndWriteWithOutput ────────────────────────────────────────────────
+
+describe("spawnAndWriteWithOutput", () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  test("resolves with captured stdout and stderr", async ({ expect }) => {
+    const script = `
+      let buf = ""
+      process.stdin.on("data", d => { buf += d })
+      process.stdin.on("end", () => {
+        process.stdout.write("out:" + buf)
+        process.stderr.write("err:" + buf)
+      })
+    `
+    const { stdout, stderr } = await spawnAndWriteWithOutput(process.execPath, ["-e", script], "hello")
+    expect(stdout).toBe("out:hello")
+    expect(stderr).toBe("err:hello")
+  })
+
+  test("resolves with empty stdout and stderr when process emits nothing", async ({ expect }) => {
+    const { stdout, stderr } = await spawnAndWriteWithOutput(process.execPath, ["-e", ""], "")
+    expect(stdout).toBe("")
+    expect(stderr).toBe("")
+  })
+
+  test("rejects with ExecError on non-zero exit code", async ({ expect }) => {
+    const script = `process.stdout.write("some output"); process.exit(1)`
+    await expect(spawnAndWriteWithOutput(process.execPath, ["-e", script], "")).rejects.toBeInstanceOf(ExecError)
+  })
+
+  test("ExecError includes stdout and stderr from failed process", async ({ expect }) => {
+    const script = `process.stdout.write("stdoutval"); process.stderr.write("stderrval"); process.exit(2)`
+    let caught: unknown
+    try {
+      await spawnAndWriteWithOutput(process.execPath, ["-e", script], "")
+    } catch (e) {
+      caught = e
+    }
+    expect(caught).toBeInstanceOf(ExecError)
+    const err = caught as ExecError
+    expect(err.exitCode).toBe(2)
+    expect(err.message).toContain("stdoutval")
+    expect(err.message).toContain("stderrval")
+  })
+
+  test("writes data to stdin and reads it back", async ({ expect }) => {
+    const script = `
+      let buf = ""
+      process.stdin.on("data", d => { buf += d })
+      process.stdin.on("end", () => process.stdout.write(buf.toUpperCase()))
+    `
+    const { stdout } = await spawnAndWriteWithOutput(process.execPath, ["-e", script], "hello world")
+    expect(stdout).toBe("HELLO WORLD")
+  })
+
+  test("rejects with a timeout error when process does not finish within 4 minutes", async ({ expect }) => {
+    vi.useFakeTimers()
+    const script = `setInterval(() => {}, 999999)`
+    const promise = spawnAndWriteWithOutput(process.execPath, ["-e", script], "")
+    vi.advanceTimersByTime(4 * 60 * 1000 + 100)
+    await expect(promise).rejects.toThrow(/timed out/i)
   })
 })

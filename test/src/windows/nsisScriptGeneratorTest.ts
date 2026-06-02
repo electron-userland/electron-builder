@@ -50,4 +50,24 @@ describe("nsisEscapeString", () => {
   test("escapes bare $ but leaves ${...} references intact", ({ expect }) => {
     expect(nsisEscapeString("${INSTDIR}\\price $9.99")).toBe("${INSTDIR}\\price $$9.99")
   })
+
+  test("escapes multiple consecutive dollar signs", ({ expect }) => {
+    expect(nsisEscapeString("$$")).toBe("$$$$")
+  })
+
+  test("empty string is returned unchanged", ({ expect }) => {
+    expect(nsisEscapeString("")).toBe("")
+  })
+
+  test("string with only newlines becomes spaces", ({ expect }) => {
+    expect(nsisEscapeString("\n\r\n\r")).toBe("   ")
+  })
+
+  test("preserves backslash characters", ({ expect }) => {
+    expect(nsisEscapeString("C:\\Users\\name")).toBe("C:\\Users\\name")
+  })
+
+  test("escapes multiple double quotes", ({ expect }) => {
+    expect(nsisEscapeString('a"b"c')).toBe('a$\\"b$\\"c')
+  })
 })
