@@ -4,14 +4,14 @@ import { spawnSync } from "child_process"
 import * as fs from "fs"
 import * as path from "path"
 import { generateTests } from "./generate-tests/generate-tests"
-import { GENERATED_TESTS_DIR } from "./generate-tests/generate-toolset-tests-shared"
+import { GENERATED_TESTS_DIR, SNAPSHOTS_GEN_DIR } from "./generate-tests/generate-toolset-tests-shared"
 import { LINUX_SUITE_METADATA } from "./generate-tests/generate-toolset-tests-linux"
 import { MAC_SUITE_METADATA } from "./generate-tests/generate-toolset-tests-mac"
 import { WINDOWS_SUITE_METADATA } from "./generate-tests/generate-toolset-tests-windows"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type Target = "linux" | "mac" | "windows" | "any"
+type Target = "linux" | "mac" | "windows" | "any" | "clean"
 
 interface SuiteMetadata {
   name: string
@@ -57,14 +57,13 @@ function suiteRunsOnTarget(chain: string[] | undefined, target: Target): boolean
 
 function deleteStaleGeneratedSnapshots(): void {
   // Snapshots for generated tests live under test/snapshots/generated/
-  const snapshotsGenDir = path.resolve(__dirname, "../../snapshots/generated")
-  if (!fs.existsSync(snapshotsGenDir)) {
+  if (!fs.existsSync(SNAPSHOTS_GEN_DIR)) {
     return
   }
 
   let deleted = 0
-  for (const suite of fs.readdirSync(snapshotsGenDir)) {
-    const suiteSnapDir = path.join(snapshotsGenDir, suite)
+  for (const suite of fs.readdirSync(SNAPSHOTS_GEN_DIR)) {
+    const suiteSnapDir = path.join(SNAPSHOTS_GEN_DIR, suite)
     if (!fs.statSync(suiteSnapDir).isDirectory()) {
       continue
     }
@@ -118,23 +117,31 @@ function resolveGeneratedFiles(suiteNames: Set<string>): string[] {
 
 // ─── CLI ─────────────────────────────────────────────────────────────────────
 
+const VALID_TARGETS: readonly Target[] = ["linux", "mac", "windows", "any", "clean"]
+
 function parseArgs(): { command: string; target: Target; updateSnapshots: boolean } {
   const args = process.argv.slice(2)
 
-  const command = args[0]
-  if (command !== "start" && command !== "print") {
-    console.error(`Usage: ts-node refresh-snapshots.ts <start|print> --target <linux|mac|windows|any> [--update-snapshots]`)
-    process.exit(1)
-  }
-
   const targetIdx = args.indexOf("--target")
   const targetArg = targetIdx >= 0 ? args[targetIdx + 1] : undefined
-  if (!targetArg || !["linux", "mac", "windows", "any"].includes(targetArg)) {
-    console.error(`--target must be one of: linux, mac, windows, any`)
+  if (!targetArg || !VALID_TARGETS.includes(targetArg as Target)) {
+    console.error(`Usage:\n` + `  ts-node refresh-tests.ts <start|print> --target <linux|mac|windows|any> [--update-snapshots]\n` + `  ts-node refresh-tests.ts --target clean`)
     process.exit(1)
   }
 
-  return { command, target: targetArg as Target, updateSnapshots: args.includes("--update-snapshots") }
+  const target = targetArg as Target
+
+  if (target === "clean") {
+    return { command: "clean", target, updateSnapshots: false }
+  }
+
+  const command = args[0]
+  if (command !== "start" && command !== "print") {
+    console.error(`Usage: ts-node refresh-tests.ts <start|print> --target <linux|mac|windows|any> [--update-snapshots]`)
+    process.exit(1)
+  }
+
+  return { command, target, updateSnapshots: args.includes("--update-snapshots") }
 }
 
 function main(): void {
@@ -146,15 +153,22 @@ function main(): void {
   console.log("Regenerating test suite...")
   generateTests()
 
-  // 2. Determine which suites match the target
+  // 2. For clean target: delete stale snapshots and exit
+  if (target === "clean") {
+    console.log("\nCleaning stale generated snapshots...")
+    deleteStaleGeneratedSnapshots()
+    return
+  }
+
+  // 3. Determine which suites match the target
   const matchingSuites = resolveMatchingSuites(target)
   const suiteNames = new Set(matchingSuites.map(s => s.name))
 
-  // 3. Delete stale snapshots
+  // 4. Delete stale snapshots
   console.log("\nCleaning stale generated snapshots...")
   deleteStaleGeneratedSnapshots()
 
-  // 4. Resolve the actual generated file stems for the matching suites
+  // 5. Resolve the actual generated file stems for the matching suites
   const generatedFiles = resolveGeneratedFiles(suiteNames)
   const testFilesPattern = matchingSuites.map(s => s.name).join(",")
 

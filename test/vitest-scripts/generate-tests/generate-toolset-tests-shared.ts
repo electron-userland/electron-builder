@@ -5,6 +5,7 @@ import type { ConditionalChainProps } from "../../typings/vitest"
 
 export const TEST_SRC_DIR = path.resolve(__dirname, "../../src")
 export const GENERATED_TESTS_DIR = path.resolve(TEST_SRC_DIR, "generated")
+export const SNAPSHOTS_GEN_DIR = path.resolve(TEST_SRC_DIR, "snapshots", "generated")
 
 export type SuiteChainKey = keyof ConditionalChainProps<never>
 
