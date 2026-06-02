@@ -215,20 +215,16 @@ test.ifMac("quitAndInstall calls nativeUpdater.quitAndInstall when Squirrel alre
   expect(mockNativeUpdater.quitAndInstallCalled).toBe(true)
 })
 
-test.ifMac("quitAndInstall calls app.quit when autoRunAppAfterInstall=false", async ({ expect }) => {
-  const { updater, appAdapter, mockNativeUpdater } = await setupMacUpdater()
+test.ifMac("quitAndInstall always calls nativeUpdater.quitAndInstall (autoRunAppAfterInstall is ignored on macOS)", async ({ expect }) => {
+  const { updater, mockNativeUpdater } = await setupMacUpdater()
+  // Even with autoRunAppAfterInstall=false, macOS must always go through nativeUpdater.quitAndInstall()
+  // so that ShipIt receives the signal to apply the staged update.
   updater.autoRunAppAfterInstall = false
   ;(updater as any).squirrelDownloadedUpdate = true
 
-  let appQuitCalled = false
-  ;(appAdapter as any).quit = () => {
-    appQuitCalled = true
-  }
-
   updater.quitAndInstall()
 
-  expect(appQuitCalled).toBe(true)
-  expect(mockNativeUpdater.quitAndInstallCalled).toBe(false)
+  expect(mockNativeUpdater.quitAndInstallCalled).toBe(true)
 })
 
 test.ifMac("quitAndInstall with no prior Squirrel download triggers nativeUpdater.checkForUpdates", async ({ expect }) => {

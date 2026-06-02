@@ -160,11 +160,11 @@ export class MacUpdater extends AppUpdater {
   }
 
   private handleUpdateDownloaded() {
-    if (this.autoRunAppAfterInstall) {
-      this.nativeUpdater.quitAndInstall()
-    } else {
-      this.app.quit()
-    }
+    // Squirrel.Mac requires nativeUpdater.quitAndInstall() to signal ShipIt to
+    // apply the staged update. Calling app.quit() directly bypasses ShipIt and
+    // the update is never installed. autoRunAppAfterInstall cannot be honored on
+    // macOS because Squirrel.Mac always relaunches after install.
+    this.nativeUpdater.quitAndInstall()
   }
 
   quitAndInstall(): void {
