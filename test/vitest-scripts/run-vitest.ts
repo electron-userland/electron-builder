@@ -2,11 +2,11 @@
 
 import isCI from "is-ci"
 import { startVitest } from "vitest/node"
-import { getAllTestFiles } from "./file-discovery"
-import { generateTests } from "./generate-tests"
-import { buildWeightedFiles, computeShardCount, splitIntoShards } from "./shard-builder"
-import { SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN } from "./smart-config"
-import SmartSequencer from "./vitest-smart-sequencer"
+import { getAllTestFiles } from "./vitest-config/file-discovery"
+import { generateTests } from "./generate-tests/generate-tests"
+import { buildWeightedFiles, computeShardCount, splitIntoShards } from "./vitest-config/shard-builder"
+import { SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN } from "./vitest-config/smart-config"
+import SmartSequencer from "./vitest-config/vitest-smart-sequencer"
 
 const testRegex = TEST_FILES_PATTERN?.split(",")
 const includeRegex = `(${testRegex.join("|")}|${testRegex.map(t => `${t}*Test`).join("|")})`

@@ -3,7 +3,7 @@
 import { getAllTestFiles } from "./file-discovery"
 import { buildWeightedFiles, computeShardCount } from "./shard-builder"
 import { TargetPlatform } from "./smart-config"
-import { generateTests } from "./generate-tests"
+import { generateTests } from "../generate-tests/generate-tests"
 
 /**
  * Compute shard indices for a given platform

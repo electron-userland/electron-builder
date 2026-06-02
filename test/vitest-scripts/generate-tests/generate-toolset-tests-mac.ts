@@ -4,7 +4,7 @@ import type { ToolsetConfig } from "app-builder-lib/src/configuration"
 import { buildDescribeCall, cleanAndEnsureDir, GENERATED_TESTS_DIR, namedFn, resolveImportPath, TEST_SRC_DIR } from "./generate-toolset-tests-shared"
 import type { SuiteConfig } from "./generate-toolset-tests-shared"
 import { WINE_VERSIONS } from "./generate-toolset-versions"
-import type * as _WineToolsetSuite from "../src/mac/wineToolsetSuite"
+import type * as _WineToolsetSuite from "../../src/mac/wineToolsetSuite"
 
 const SUITES: SuiteConfig[] = [
   {

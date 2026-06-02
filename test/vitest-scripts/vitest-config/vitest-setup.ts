@@ -1,5 +1,5 @@
 import { test as baseTest, describe as baseDescribe, expect } from "vitest"
-import { ConditionalSuiteAPI, ConditionalTestAPI } from "../typings/vitest"
+import { ConditionalSuiteAPI, ConditionalTestAPI } from "../../typings/vitest"
 
 const isWindows = process.platform === "win32"
 const isMac = process.platform === "darwin"

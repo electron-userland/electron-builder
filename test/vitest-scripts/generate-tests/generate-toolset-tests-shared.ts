@@ -1,7 +1,7 @@
 import * as fs from "fs-extra"
 import * as path from "path"
 import type { TestOptions } from "vitest"
-import type { ConditionalChainProps } from "../typings/vitest"
+import type { ConditionalChainProps } from "../../typings/vitest"
 
 export const TEST_SRC_DIR = path.resolve(__dirname, "../src")
 export const GENERATED_TESTS_DIR = path.resolve(TEST_SRC_DIR, "generated")

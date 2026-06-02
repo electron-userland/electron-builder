@@ -4,9 +4,9 @@ import type { ToolsetConfig } from "app-builder-lib/src/configuration"
 import { buildDescribeCall, cleanAndEnsureDir, GENERATED_TESTS_DIR, namedFn, resolveImportPath, TEST_SRC_DIR } from "./generate-toolset-tests-shared"
 import type { SuiteConfig } from "./generate-toolset-tests-shared"
 import { APPIMAGE_VERSIONS } from "./generate-toolset-versions"
-import type * as _LinuxPackagerSuite from "../src/linux/linuxPackagerTestSuite"
-import type * as _BlackboxLinuxSuite from "../src/updater/blackboxUpdateLinuxSuite"
-import type * as _DifferentialLinuxSuite from "../src/updater/differentialUpdateLinuxSuite"
+import type * as _LinuxPackagerSuite from "../../src/linux/linuxPackagerTestSuite"
+import type * as _BlackboxLinuxSuite from "../../src/updater/blackboxUpdateLinuxSuite"
+import type * as _DifferentialLinuxSuite from "../../src/updater/differentialUpdateLinuxSuite"
 
 const SUITES: SuiteConfig[] = [
   {
