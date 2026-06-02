@@ -8322,22 +8322,6 @@
           ],
           "default": "0.0.0",
           "description": "`wine` bundle version to use for running Windows tools on non-Windows platforms.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=wine&expanded=true\n0.0.0 - legacy toolset (wine 4.0.1 portable; mac-only support)\n\nBeta:\n1.0.0 - Wine 11 bundle (unified wine binary, ia32 via WoW64)"
-        },
-        "wix": {
-          "anyOf": [
-            {
-              "enum": [
-                "0.0.0",
-                "1.0.0"
-              ],
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": "0.0.0",
-          "description": "`wix` toolset version for MSI installer compilation.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=wix&expanded=true\n\nStable:\n0.0.0 - legacy toolset (wix-4.0.0.5512.2)\n\nBeta:\n1.0.0 - v4.0.6 (compiled from source)"
         }
       },
       "type": "object"

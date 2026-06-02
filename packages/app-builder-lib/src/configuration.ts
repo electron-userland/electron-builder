@@ -405,6 +405,11 @@ export interface ToolsetConfig {
    * 1.0.0 - v4.0.6 (compiled from source)
    *
    * @default "0.0.0"
+   *
+   * NOTE(wix-v4): not yet exposed to users. WiX v4 ("1.0.0") support is incomplete (see MsiTarget /
+   * msiTestSuite), so this option is stripped from the public schema in scripts/fix-schema.js until it
+   * is finished. Do not add the @`internal` JSDoc tag here: it would strip this property from the emitted
+   * declaration file and break the test toolset matrix, which references ToolsetConfig["wix"].
    */
   readonly wix?: "0.0.0" | "1.0.0" | null
 }

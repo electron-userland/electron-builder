@@ -67,11 +67,15 @@ beforeEach(() => {
     stdout: { pipe: vi.fn() },
     stderr: {
       on: vi.fn((ev: string, cb: (chunk: string) => void) => {
-        if (ev === "data") stderrDataCb = cb
+        if (ev === "data") {
+          stderrDataCb = cb
+        }
       }),
     },
     on: vi.fn((ev: string, cb: (code: number) => void) => {
-      if (ev === "close") closeCb = cb
+      if (ev === "close") {
+        closeCb = cb
+      }
     }),
   }
   vi.mocked(childProcess.spawn).mockReturnValue(mockChild as any)

@@ -73,4 +73,11 @@ o = schema.properties["$schema"] = {
   type: ["null", "string"],
 }
 
+// TODO(wix-v4): hide the `toolsets.wix` option from users while WiX v4 support is incomplete.
+// The property is kept in the TypeScript type for internal use (MsiTarget / test matrix) but removed
+// from the public schema so it cannot be set in config files. Re-expose once v4 support lands.
+if (schema.definitions.ToolsetConfig && schema.definitions.ToolsetConfig.properties) {
+  delete schema.definitions.ToolsetConfig.properties.wix
+}
+
 fs.writeFileSync(schemaFile, JSON.stringify(schema, null, 2))
