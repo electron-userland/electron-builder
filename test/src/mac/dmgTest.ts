@@ -499,12 +499,13 @@ describe.heavy.ifMac("dmg", { sequential: true }, () => {
       {
         ...packagerOptions(5),
         effectiveOptionComputed: async it => {
-          if ("licenseData" in it) {
-            // Clean `file` path from the data because the path is dynamic at runtime
-            it.licenseData.body.forEach((license: any) => {
-              delete license.file
-            })
-            expect(it.licenseData).toMatchSnapshot()
+          if ("licenseData" in it && it.licenseData != null) {
+            // Strip dynamic file paths before snapshotting
+            const data = {
+              ...it.licenseData,
+              licenses: Object.fromEntries(Object.keys(it.licenseData.licenses).map((lang: string) => [lang, "<<path>>"])),
+            }
+            expect(data).toMatchSnapshot()
           }
           return Promise.resolve(false)
         },
