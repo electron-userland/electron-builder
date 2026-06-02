@@ -1,6 +1,6 @@
 import { ToolsetConfig } from "app-builder-lib"
 import { ParallelsVmManager } from "app-builder-lib/out/vm/ParallelsVm"
-import { copyFileSync, unlinkSync } from "fs"
+import { copyFileSync, mkdtempSync, rmSync } from "fs"
 import { tmpdir } from "os"
 import { Arch, Configuration } from "electron-builder"
 import { spawn as nodeSpawn } from "child_process"
@@ -53,9 +53,14 @@ async function spawnSiblingProcess(vm: ParallelsVmManager | undefined, appExeNam
     }
   }
 
-  // Native Windows: copy cmd.exe to %TEMP%\<sibling>.exe and start it detached
+  // Native Windows: copy cmd.exe to a unique temp dir as "<app>-helper.exe" and start it detached.
+  // A unique directory (rather than a fixed %TEMP%\<sibling>.exe path) is important: a sibling left
+  // running by a crashed/aborted previous run keeps its exe image locked, so reusing a fixed path
+  // would fail the copyfile with EBUSY. The image name is kept as "<app>-helper.exe" so it still
+  // reproduces the issue #6865 prefix-match false positive.
   const sysRoot = process.env["SystemRoot"] ?? "C:\\Windows"
-  const siblingExe = path.join(tmpdir(), siblingName)
+  const siblingDir = mkdtempSync(path.join(tmpdir(), "eb-sibling-"))
+  const siblingExe = path.join(siblingDir, siblingName)
   copyFileSync(path.join(sysRoot, "System32", "cmd.exe"), siblingExe)
   const child = nodeSpawn(siblingExe, ["/c", "ping", "-n", "999", "127.0.0.1"], { detached: true, stdio: "ignore" })
   child.unref()
@@ -67,7 +72,7 @@ async function spawnSiblingProcess(vm: ParallelsVmManager | undefined, appExeNam
         /* empty */
       }
       try {
-        unlinkSync(siblingExe)
+        rmSync(siblingDir, { recursive: true, force: true })
       } catch {
         /* empty */
       }

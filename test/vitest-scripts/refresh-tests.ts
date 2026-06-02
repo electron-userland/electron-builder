@@ -192,7 +192,11 @@ function main(): void {
 
   console.log(`\nStarting vitest with TEST_FILES=${testFilesPattern}${updateSnapshots ? " (updating snapshots)" : ""}\n`)
 
-  const result = spawnSync("ts-node", [path.join(__dirname, "run-vitest.ts")], { env, stdio: "inherit" })
+  // Invoke ts-node's bin script directly via the current node binary. Spawning the bare `ts-node`
+  // command fails on Windows (spawnSync can't launch the `.cmd`/`.ps1` shim → ENOENT), and using
+  // `shell: true` both depends on PATH and triggers the DEP0190 args-with-shell deprecation warning.
+  const tsNodeBin = require.resolve("ts-node/dist/bin")
+  const result = spawnSync(process.execPath, [tsNodeBin, path.join(__dirname, "run-vitest.ts")], { env, stdio: "inherit" })
   if (result.status !== 0) {
     process.exit(result.status ?? 1)
   }

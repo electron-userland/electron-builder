@@ -41,7 +41,11 @@ export async function doTest(
   packElevateHelper = true,
   toolsets?: ToolsetConfig
 ) {
-  if (toolsets?.wine == null || toolsets.wine === "0.0.0") {
+  // Running the built installer for verification is done under wine, which only exists on non-Windows
+  // hosts (getWineToolset throws on win32). On Windows we cannot sandbox the install via wine, and we
+  // must not execute the real installer against the host machine, so skip this verification step.
+  // The build itself is still validated by the other assertions in the `packed` callback.
+  if (process.platform === "win32" || toolsets?.wine == null || toolsets.wine === "0.0.0") {
     return Promise.resolve()
   }
 
