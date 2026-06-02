@@ -10,14 +10,10 @@ export function registerWineToolsetTests(toolsets: ToolsetConfig): void {
   test(`getWineToolset resolves path [wine=${wine}]`, async ({ expect }) => {
     const result = await getWineToolset(wine)
     expect(result.execPath).toBeTruthy()
-    if (isLegacy) {
-      // Legacy/system wine — no bundle download, just the "wine" command
-      expect(result.execPath).toBe("wine")
-    } else {
-      // Downloaded bundle — must be an absolute path that exists on disk
-      expect(path.isAbsolute(result.execPath)).toBe(true)
-      expect(await exists(result.execPath)).toBe(true)
-    }
+    // On macOS, both legacy (0.0.0 → wine-4.0.1-mac bundle) and 1.0.0 (Wine 11 bundle)
+    // return absolute paths — system "wine" fallback only applies to Linux legacy.
+    expect(path.isAbsolute(result.execPath)).toBe(true)
+    expect(await exists(result.execPath)).toBe(true)
   })
 
   if (!isLegacy) {

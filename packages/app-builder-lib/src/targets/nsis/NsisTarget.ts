@@ -26,7 +26,6 @@ import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt } from "..
 import { hashFile } from "../../util/hash"
 import { isMacOsCatalina } from "../../util/macosVersion"
 import { time } from "../../util/timer"
-import { execWine } from "../../wine"
 import { WinPackager } from "../../winPackager"
 import { archive, ArchiveOptions } from "../archive"
 import { appendBlockmap, configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../differentialUpdateInfoBuilder"
@@ -40,6 +39,7 @@ import { NsisScriptGenerator, nsisEscapeString } from "./nsisScriptGenerator"
 import { getMakeNsisPath, getNsisPluginsPath } from "../../toolsets/nsis"
 import { AppPackageHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
 import { checkMakensisOutput, verifyInstallerSize } from "./nsisValidation"
+import { WineVmManager } from "app-builder-lib/src/vm/WineVm"
 
 const debug = _debug("electron-builder:nsis")
 
@@ -451,7 +451,8 @@ export class NsisTarget extends Target {
         }
       }
     } else {
-      await execWine({ file: installerPath, appArgs: [], options: { env: { __COMPAT_LAYER: "RunAsInvoker" } }, toolset: this.packager.config.toolsets?.wine })
+      const wineVm = new WineVmManager(packager.config.toolsets?.wine)
+      await wineVm.exec(installerPath, [], { env: { __COMPAT_LAYER: "RunAsInvoker" } })
     }
     await packager.signIf(uninstallerPath)
 
