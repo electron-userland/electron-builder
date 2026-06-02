@@ -1,7 +1,10 @@
-import * as fs from "fs"
+import * as fs from "fs-extra"
 import * as path from "path"
 import type { TestOptions } from "vitest"
 import type { ConditionalChainProps } from "../typings/vitest"
+
+export const TEST_SRC_DIR = path.resolve(__dirname, "../src")
+export const GENERATED_TESTS_DIR = path.resolve(TEST_SRC_DIR, "generated")
 
 export type SuiteChainKey = keyof ConditionalChainProps<never>
 
@@ -39,7 +42,7 @@ export function namedFn(name: string): Function {
 export function cleanAndEnsureDir(dir: string): void {
   if (fs.existsSync(dir)) {
     for (const f of fs.readdirSync(dir)) {
-      fs.rmSync(path.join(dir, f))
+      fs.rmSync(path.join(dir, f), { recursive: true, force: true })
     }
   } else {
     fs.mkdirSync(dir, { recursive: true })

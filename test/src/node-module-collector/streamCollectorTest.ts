@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, test, vi } from "vitest"
 import { NodeModulesCollector } from "app-builder-lib/src/node-module-collector/nodeModulesCollector"
+import { LogMessageByKey } from "app-builder-lib/src/node-module-collector/moduleManager"
 import { PM } from "app-builder-lib/src/node-module-collector/packageManager"
 import * as childProcess from "child_process"
 import * as fsExtra from "fs-extra"
@@ -19,6 +20,13 @@ class TestCollector extends NodeModulesCollector<any, any> {
   }
   protected async extractProductionDependencyGraph() {}
   protected async collectAllDependencies() {}
+  // expose protected members for testing
+  streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
+    return super.streamCollectorCommandToFile(command, args, cwd, tempOutputFile)
+  }
+  get logSummary() {
+    return this.cache.logSummary
+  }
 }
 
 const BAT_PATH = "C:\\Temp\\pnpm-deadbeef.bat"
@@ -32,6 +40,7 @@ function setPlatform(p: NodeJS.Platform) {
 
 let collector: TestCollector
 let closeCb: ((code: number) => void) | undefined
+let stderrDataCb: ((chunk: string) => void) | undefined
 
 async function waitForCloseCb() {
   for (let i = 0; i < 50 && closeCb === undefined; i++) {
@@ -44,9 +53,14 @@ async function waitForCloseCb() {
 
 beforeEach(() => {
   closeCb = undefined
+  stderrDataCb = undefined
   const mockChild = {
     stdout: { pipe: vi.fn() },
-    stderr: { on: vi.fn() },
+    stderr: {
+      on: vi.fn((ev: string, cb: (chunk: string) => void) => {
+        if (ev === "data") stderrDataCb = cb
+      }),
+    },
     on: vi.fn((ev: string, cb: (code: number) => void) => {
       if (ev === "close") closeCb = cb
     }),
@@ -138,6 +152,7 @@ describe.sequential("streamCollectorCommandToFile", () => {
       setPlatform("win32")
       const cmd = "C:\\tools\\pnpm.exe"
       const p = collector.streamCollectorCommandToFile(cmd, [], "/cwd", OUTPUT_FILE)
+      await waitForCloseCb()
       closeCb!(0)
       await p
       expect(vi.mocked(childProcess.spawn).mock.calls[0][0]).toBe(cmd)
@@ -147,6 +162,7 @@ describe.sequential("streamCollectorCommandToFile", () => {
     test("extensionless at path without spaces: spawn receives original command", async ({ expect }) => {
       setPlatform("win32")
       const p = collector.streamCollectorCommandToFile("pnpm", [], "/cwd", OUTPUT_FILE)
+      await waitForCloseCb()
       closeCb!(0)
       await p
       expect(vi.mocked(childProcess.spawn).mock.calls[0][0]).toBe("pnpm")
@@ -157,10 +173,72 @@ describe.sequential("streamCollectorCommandToFile", () => {
       setPlatform("darwin")
       const cmd = "/Applications/Volta/pnpm.exe"
       const p = collector.streamCollectorCommandToFile(cmd, [], "/cwd", OUTPUT_FILE)
+      await waitForCloseCb()
       closeCb!(0)
       await p
       expect(vi.mocked(childProcess.spawn).mock.calls[0][0]).toBe(cmd)
       expect(vi.mocked(fsExtra.writeFile)).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("stderr and exit code behavior", () => {
+    test("npm list exit code 1: stderr is NOT surfaced as a collector warning", async ({ expect }) => {
+      const p = collector.streamCollectorCommandToFile("npm", ["list", "--json"], "/cwd", OUTPUT_FILE)
+      await waitForCloseCb()
+      stderrDataCb?.("npm error code ELSPROBLEMS\nnpm error invalid: canvas@npm:npm-empty-stub@1.0.1\n")
+      closeCb!(1)
+      await p
+      expect(collector.logSummary[LogMessageByKey.PKG_COLLECTOR_OUTPUT]).toHaveLength(0)
+    })
+
+    test("npm list exit code 0 with stderr: stderr IS surfaced as a collector warning", async ({ expect }) => {
+      const p = collector.streamCollectorCommandToFile("npm", ["list", "--json"], "/cwd", OUTPUT_FILE)
+      await waitForCloseCb()
+      stderrDataCb?.("npm warn some unexpected warning\n")
+      closeCb!(0)
+      await p
+      const output = collector.logSummary[LogMessageByKey.PKG_COLLECTOR_OUTPUT]
+      expect(output).toHaveLength(1)
+      expect(output[0]).toContain("npm warn some unexpected warning")
+    })
+
+    test("non-npm command exit code 1: rejects with stderr in error message", async ({ expect }) => {
+      const p = collector.streamCollectorCommandToFile("pnpm", ["list", "--json"], "/cwd", OUTPUT_FILE)
+      await waitForCloseCb()
+      stderrDataCb?.("pnpm error: something went wrong\n")
+      closeCb!(1)
+      await expect(p).rejects.toThrow("pnpm error: something went wrong")
+    })
+
+    test("npm command (not list) exit code 1: rejects", async ({ expect }) => {
+      const p = collector.streamCollectorCommandToFile("npm", ["install"], "/cwd", OUTPUT_FILE)
+      await waitForCloseCb()
+      stderrDataCb?.("npm error: install failed\n")
+      closeCb!(1)
+      await expect(p).rejects.toThrow()
+    })
+
+    test("npm list with full path exit code 1: stderr suppressed (shouldIgnore applies to basename)", async ({ expect }) => {
+      const p = collector.streamCollectorCommandToFile("/usr/local/bin/npm", ["list", "--json"], "/cwd", OUTPUT_FILE)
+      await waitForCloseCb()
+      stderrDataCb?.("npm error code ELSPROBLEMS\nnpm error invalid: some-pkg@npm:stub@1.0.0\n")
+      closeCb!(1)
+      await p
+      expect(collector.logSummary[LogMessageByKey.PKG_COLLECTOR_OUTPUT]).toHaveLength(0)
+    })
+
+    test("win32 npm.cmd wrapped via cmd.exe: exit code 1 still triggers shouldIgnore", async ({ expect }) => {
+      // Regression: execName must be derived from the original command ("npm"), not the rewritten
+      // cmd.exe invocation, otherwise shouldIgnore never fires and npm list exit code 1 rejects.
+      // Use "npm.cmd" without a backslash-prefixed directory so path.basename works cross-platform
+      // in the test environment (macOS path.basename ignores backslash separators).
+      setPlatform("win32")
+      const p = collector.streamCollectorCommandToFile("npm.cmd", ["list", "--json"], "/cwd", OUTPUT_FILE)
+      await waitForCloseCb()
+      stderrDataCb?.("npm error code ELSPROBLEMS\nnpm error invalid: canvas@npm:npm-empty-stub@1.0.1\n")
+      closeCb!(1)
+      await p
+      expect(collector.logSummary[LogMessageByKey.PKG_COLLECTOR_OUTPUT]).toHaveLength(0)
     })
   })
 })

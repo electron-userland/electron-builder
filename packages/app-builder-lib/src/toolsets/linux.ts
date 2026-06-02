@@ -1,8 +1,8 @@
-import { Arch } from "builder-util"
+import { Arch, exists, resolveEnvToolsetPath, use } from "builder-util"
 import * as path from "path"
 import { getBinFromUrl } from "../binDownload"
-import { downloadBuilderToolset } from "../util/electronGet"
 import { ToolsetConfig } from "../configuration"
+import { downloadBuilderToolset } from "../util/electronGet"
 
 const fpmChecksums = {
   "fpm-1.17.0-ruby-3.4.3-darwin-arm64.7z": "6cc6d4785875bc7d79bdf52ca146080a4c300e1d663376ae79615fb548030ede",
@@ -14,7 +14,7 @@ const fpmChecksums = {
 
 export const appimageChecksums = {
   "0.0.0": {
-    // legacy
+    "appimage-12.0.1.7z": "d12ff7eb8f1d1ec4652ca5237a7fbdca33acc0c758045636feca62dc6ecb8ec4",
   },
   "1.0.2": {
     "appimage-tools-runtime-20251108.tar.gz": "a784a8c26331ec2e945c23d6bdb14af5c9df27f5939825d84b8709c61dc81eb0",
@@ -24,13 +24,44 @@ export const appimageChecksums = {
   },
 } as const
 
-export function getLinuxToolsPath() {
-  return getBinFromUrl("linux-tools-mac-10.12.3", "linux-tools-mac-10.12.3.7z", "58ff69a6f5082c78b809b72c929f5f2a82e6c3974c014bd1382fc87d9da1075c")
+// no legacy toolset as macos arm64 BSD gtar/ar/lzip are not compatible with linux targets, so we always use newer toolset on macos for linux archives
+const linuxToolsMacChecksums = {
+  "linux-tools-mac-darwin-arm64.tar.gz": "204e76f08364352edb28a6a4be87e8f9bd9340213865d9a0d1c664aa46fcf053",
+  "linux-tools-mac-darwin-x86_64.tar.gz": "7ee26dfbd0d2a4c2c83b55a9416a30cc84876eef01c6497ca49bb016a190c726",
+} as const
+
+export async function getLinuxToolsPath(): Promise<string> {
+  const envPath = await resolveEnvToolsetPath("LINUX_TOOLS_MAC_PATH", "directory")
+  if (envPath != null) {
+    return envPath
+  }
+  const arch = process.arch === "arm64" ? "arm64" : "x86_64"
+  const toolsetVersion = "1.0.0"
+  const filename: keyof typeof linuxToolsMacChecksums = `linux-tools-mac-darwin-${arch}.tar.gz`
+  return await downloadBuilderToolset({
+    releaseName: `linux-tools-mac@${toolsetVersion}`,
+    filenameWithExt: filename,
+    checksums: {
+      [filename]: linuxToolsMacChecksums[filename],
+    },
+    githubOrgRepo: "electron-userland/electron-builder-binaries",
+  })
+}
+
+export async function getLinuxToolsMacToolset() {
+  const linuxToolsPath = await getLinuxToolsPath()
+  const bin = (pkg: string) => path.join(linuxToolsPath, "bin", pkg)
+  return {
+    ar: bin("ar"),
+    lzip: bin("lzip"),
+    gtar: bin("gtar"),
+  }
 }
 
 export async function getFpmPath() {
-  if (process.env.CUSTOM_FPM_PATH != null) {
-    return path.resolve(process.env.CUSTOM_FPM_PATH)
+  const customFpmPath = await resolveEnvToolsetPath("CUSTOM_FPM_PATH", "file")
+  if (customFpmPath != null) {
+    return customFpmPath
   }
   const exec = "fpm"
   if (process.platform === "win32" || process.env.USE_SYSTEM_FPM === "true") {
@@ -58,34 +89,63 @@ export async function getFpmPath() {
 }
 
 export async function getAppImageTools(appimageToolVersion: ToolsetConfig["appimage"], targetArch: Arch) {
-  // nullish and 0.0.0 are both considered legacy, but utilize an upstream dependency to download runtimes, so thus, we ignore logic here
-  if (appimageToolVersion == null || appimageToolVersion === "0.0.0") {
-    throw new Error(
-      "Legacy AppImage toolset was selected, but electron-builder is attempting to download newer runtime. Please file a GH issue if you see this error. Exiting early"
-    )
-  }
-
-  const override = process.env.APPIMAGE_TOOLS_PATH?.trim()
-  const filenameWithExt = "appimage-tools-runtime-20251108.tar.gz"
-  let artifactPath =
-    override ||
-    (await downloadBuilderToolset({
-      releaseName: `appimage@${appimageToolVersion}`,
-      filenameWithExt,
-      checksums: {
-        [filenameWithExt]: appimageChecksums[appimageToolVersion][filenameWithExt],
-      },
-      githubOrgRepo: "electron-userland/electron-builder-binaries",
-    }))
-
-  artifactPath = path.resolve(artifactPath)
-
   const runtimeArch = targetArch === Arch.armv7l ? "arm32" : targetArch === Arch.arm64 ? "arm64" : targetArch === Arch.ia32 ? "ia32" : "x64"
 
-  return {
-    mksquashfs: path.join(artifactPath, "mksquashfs"),
-    desktopFileValidate: path.join(artifactPath, "desktop-file-validate"),
-    runtime: path.join(artifactPath, "runtimes", `runtime-${runtimeArch}`),
-    runtimeLibraries: path.join(artifactPath, "lib", runtimeArch),
+  // Static-runtime layout: tools at root, runtimes/ subdir, lib/{arch}/ subdir
+  const getPaths = (artifactPath: string) => ({
+    mksquashfs: path.resolve(artifactPath, "mksquashfs"),
+    desktopFileValidate: path.resolve(artifactPath, "desktop-file-validate"),
+    runtime: path.resolve(artifactPath, "runtimes", `runtime-${runtimeArch}`),
+    runtimeLibraries: path.resolve(artifactPath, "lib", runtimeArch),
+  })
+
+  // FUSE2 layout: tools under a host-platform subdir; runtime files at root with target-arch suffix
+  const getFuse2Paths = (artifactPath: string) => {
+    // mksquashfs/desktop-file-validate are HOST binaries — use process.arch, not targetArch
+    const hostArch = process.arch === "arm" ? "arm32" : process.arch === "arm64" ? "arm64" : process.arch === "ia32" ? "ia32" : "x64"
+    const toolRoot = process.platform === "linux" ? `linux-${hostArch}` : "darwin"
+    // Runtime files live at root; armv7l target uses "armv7l" filename, not the internal "arm32" alias
+    const runtimeSuffix = targetArch === Arch.armv7l ? "armv7l" : runtimeArch
+    // FUSE2 tree only ships lib/ia32 and lib/x64; arm targets fall back to x64 here
+    // but buildLegacyFuse2AppImage only copies runtimeLibraries for x64/ia32.
+    const libArch = targetArch === Arch.ia32 ? "ia32" : "x64"
+    return {
+      mksquashfs: path.resolve(artifactPath, toolRoot, "mksquashfs"),
+      desktopFileValidate: path.resolve(artifactPath, toolRoot, "desktop-file-validate"),
+      runtime: path.resolve(artifactPath, `runtime-${runtimeSuffix}`),
+      runtimeLibraries: path.resolve(artifactPath, "lib", libArch),
+    }
   }
+
+  const isFuse2 = appimageToolVersion === "0.0.0" || appimageToolVersion == null
+
+  const download = async () => {
+    if (isFuse2) {
+      const filenameWithExt = "appimage-12.0.1.7z"
+      const artifactPath = await downloadBuilderToolset({
+        releaseName: "appimage-12.0.1",
+        filenameWithExt,
+        checksums: { [filenameWithExt]: appimageChecksums["0.0.0"][filenameWithExt] },
+        githubOrgRepo: "electron-userland/electron-builder-binaries",
+      })
+      return getFuse2Paths(artifactPath)
+    }
+
+    const filenameWithExt = "appimage-tools-runtime-20251108.tar.gz"
+    const artifactPath = await downloadBuilderToolset({
+      releaseName: `appimage@${appimageToolVersion}`,
+      filenameWithExt,
+      checksums: { [filenameWithExt]: appimageChecksums[appimageToolVersion][filenameWithExt] },
+      githubOrgRepo: "electron-userland/electron-builder-binaries",
+    })
+    return getPaths(artifactPath)
+  }
+
+  const artifact = use(await resolveEnvToolsetPath("APPIMAGE_TOOLS_PATH", "directory"), it => (isFuse2 ? getFuse2Paths(it) : getPaths(it))) ?? (await download())
+  for (const entry of Object.entries(artifact)) {
+    if (!(await exists(entry[1]))) {
+      throw new Error(`AppImage tool ${entry[0]} not found at path: ${entry[1]}`)
+    }
+  }
+  return artifact
 }

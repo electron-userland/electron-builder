@@ -1,5 +1,5 @@
-import { Arch, asArray, deepAssign, log, walk } from "builder-util"
-import { UUID } from "builder-util-runtime"
+import { Arch, asArray, log, walk } from "builder-util"
+import { deepAssign, UUID } from "builder-util-runtime"
 import { createHash } from "crypto"
 import * as ejs from "ejs"
 import { readFile, writeFile } from "fs/promises"
@@ -14,6 +14,7 @@ import { getTemplatePath } from "../util/pathManager"
 import { VmManager } from "../vm/vm"
 import { WineVmManager } from "../vm/WineVm"
 import { WinPackager } from "../winPackager"
+import { withToolsetLock } from "../util/toolsetLock"
 import { createStageDir, getWindowsInstallationDirName } from "./targetUtil"
 
 const ELECTRON_BUILDER_UPGRADE_CODE_NS_UUID = UUID.parse("d752fe43-5d44-44d5-9fc9-6dd1bf19d5cc")
@@ -91,11 +92,12 @@ export default class MsiTarget extends Target {
     // noinspection SpellCheckingInspection
     const candleArgs = ["-arch", wixArch === Arch.ia32 ? "x86" : "x64", `-dappDir=${vm.toVmFile(appOutDir)}`].concat(this.getCommonWixArgs())
     candleArgs.push("project.wxs")
-    await vm.exec(vm.toVmFile(path.join(vendorPath, "candle.exe")), candleArgs, {
-      cwd: stageDir.dir,
+    await withToolsetLock(async () => {
+      await vm.exec(vm.toVmFile(path.join(vendorPath, "candle.exe")), candleArgs, {
+        cwd: stageDir.dir,
+      })
+      await this.light(objectFiles, vm, artifactPath, appOutDir, vendorPath, stageDir.dir)
     })
-
-    await this.light(objectFiles, vm, artifactPath, appOutDir, vendorPath, stageDir.dir)
 
     await stageDir.cleanup()
 

@@ -26,17 +26,17 @@ describe("getCacheDirectory", () => {
 
   test("returns ELECTRON_BUILDER_CACHE when set", ({ expect }) => {
     vi.stubEnv("ELECTRON_BUILDER_CACHE", "/custom/cache")
-    expect(getCacheDirectory()).toBe("/custom/cache")
+    expect(getCacheDirectory({ allowEnvVarOverride: true })).toBe("/custom/cache")
   })
 
   test("trims whitespace from ELECTRON_BUILDER_CACHE", ({ expect }) => {
     vi.stubEnv("ELECTRON_BUILDER_CACHE", "  /padded/path  ")
-    expect(getCacheDirectory()).toBe("/padded/path")
+    expect(getCacheDirectory({ allowEnvVarOverride: true })).toBe("/padded/path")
   })
 
   test("returns platform-appropriate default when env var is absent", ({ expect }) => {
     vi.stubEnv("ELECTRON_BUILDER_CACHE", "")
-    const result = getCacheDirectory()
+    const result = getCacheDirectory({ allowEnvVarOverride: true })
     expect(typeof result).toBe("string")
     expect(result.length).toBeGreaterThan(0)
     if (process.platform === "darwin") {
@@ -55,18 +55,65 @@ describe("getCacheDirectory", () => {
     }
     vi.stubEnv("ELECTRON_BUILDER_CACHE", "")
     vi.stubEnv("XDG_CACHE_HOME", "/xdg/cache")
-    expect(getCacheDirectory()).toBe("/xdg/cache/electron-builder")
+    expect(getCacheDirectory({ allowEnvVarOverride: true })).toBe("/xdg/cache/electron-builder")
   })
 
-  test("isAvoidSystemOnWindows falls back to tmpdir for system users", ({ expect }) => {
+  test("falls back to tmpdir when LOCALAPPDATA is absent on Windows", ({ expect }) => {
     if (process.platform !== "win32") {
       expect(true).toBe(true)
       return
     }
-    vi.stubEnv("ELECTRON_BUILDER_CACHE", "")
     vi.stubEnv("LOCALAPPDATA", "")
-    const result = getCacheDirectory(true)
+    const result = getCacheDirectory({ isAvoidSystemOnWindows: true, allowEnvVarOverride: false })
     expect(result).toContain(os.tmpdir())
+  })
+
+  test("allowEnvVarOverride:false ignores ELECTRON_BUILDER_CACHE even when set", ({ expect }) => {
+    vi.stubEnv("ELECTRON_BUILDER_CACHE", "/custom/cache")
+    const result = getCacheDirectory({ allowEnvVarOverride: false })
+    expect(result).not.toBe("/custom/cache")
+    expect(result).toContain("electron-builder")
+  })
+
+  test("ignores ELECTRON_BUILDER_CACHE when value has no filesystem root (relative path)", ({ expect }) => {
+    vi.stubEnv("ELECTRON_BUILDER_CACHE", "relative/path/no-root")
+    const result = getCacheDirectory({ allowEnvVarOverride: true })
+    expect(result).not.toBe("relative/path/no-root")
+    expect(result).toContain("electron-builder")
+  })
+
+  test("falls back to tmpdir when USERNAME is 'system' (isAvoidSystemOnWindows defaults to true)", ({ expect }) => {
+    if (process.platform !== "win32") {
+      expect(true).toBe(true)
+      return
+    }
+    vi.stubEnv("LOCALAPPDATA", "C:\\Users\\system\\AppData\\Local")
+    vi.stubEnv("USERNAME", "system")
+    const result = getCacheDirectory({ allowEnvVarOverride: false })
+    expect(result).toContain(os.tmpdir())
+  })
+
+  test("falls back to tmpdir when LOCALAPPDATA path contains \\windows\\system32\\", ({ expect }) => {
+    if (process.platform !== "win32") {
+      expect(true).toBe(true)
+      return
+    }
+    vi.stubEnv("LOCALAPPDATA", "C:\\Windows\\System32\\config\\systemprofile\\AppData\\Local")
+    vi.stubEnv("USERNAME", "not-system")
+    const result = getCacheDirectory({ allowEnvVarOverride: false })
+    expect(result).toContain(os.tmpdir())
+  })
+
+  test("isAvoidSystemOnWindows:false does not fall back to tmpdir for USERNAME=system", ({ expect }) => {
+    if (process.platform !== "win32") {
+      expect(true).toBe(true)
+      return
+    }
+    vi.stubEnv("LOCALAPPDATA", "C:\\Users\\system\\AppData\\Local")
+    vi.stubEnv("USERNAME", "system")
+    const result = getCacheDirectory({ isAvoidSystemOnWindows: false, allowEnvVarOverride: false })
+    expect(result).not.toContain(os.tmpdir())
+    expect(result).toContain("electron-builder")
   })
 })
 

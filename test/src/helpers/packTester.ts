@@ -1,11 +1,11 @@
 import { PublishManager } from "app-builder-lib"
 import { verifyAsarFileTree as _verifyAsarFileTree } from "./asarVerifier"
 import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetFactory"
-import { getLinuxToolsPath } from "app-builder-lib/out/toolsets/linux"
+import { getLinuxToolsMacToolset } from "app-builder-lib/out/toolsets/linux"
 import { parsePlistFile, PlistObject } from "app-builder-lib/out/util/plist"
 import { AsarIntegrity } from "app-builder-lib/out/asar/integrity"
-import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, log, USE_HARD_LINKS, walk } from "builder-util"
-import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
+import { addValue, copyDir, exec, executeFinally, exists, FileCopier, log, USE_HARD_LINKS, walk } from "builder-util"
+import { CancellationToken, deepAssign, UpdateFileInfo } from "builder-util-runtime"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { convertVersion } from "electron-winstaller"
 import { PublishPolicy } from "electron-publish"
@@ -158,7 +158,6 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
   }
 
   let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
-  // const isDoNotUseTempDir = platform === "darwin"
   const customTmpDir = process.env.TEST_APP_TMP_DIR
   const tmpDir = checkOptions.tmpDir || new TmpDir(`pack-tester: ${fixtureName}`)
   // non-macOS test uses the same dir as macOS test, but we cannot share node_modules (because tests executed in parallel)
@@ -551,7 +550,7 @@ async function checkLinuxResult(expect: ExpectStatic, outDir: string, packager: 
   const { member: controlMember, tarArgs: controlArgs } = await resolveDebMember(packagePath, "control.tar.")
   const control = parseDebControl(
     (
-      await execShell(`ar p '${packagePath}' ${controlMember} | ${await getTarExecutable()} -x ${controlArgs} --to-stdout ./control`, {
+      await execShell(`'${await getArExecutable()}' p '${packagePath}' ${controlMember} | '${await getTarExecutable()}' -x ${controlArgs} --to-stdout ./control`, {
         maxBuffer: 10 * 1024 * 1024,
       })
     ).stdout
@@ -735,11 +734,22 @@ const checkResult = (expect: ExpectStatic, artifacts: Array<ArtifactCreated>, ex
 export const execShell: any = promisify(require("child_process").exec)
 
 export async function getTarExecutable() {
-  return process.platform === "darwin" ? path.join(await getLinuxToolsPath(), "bin", "gtar") : "tar"
+  return process.platform === "darwin" ? (await getLinuxToolsMacToolset()).gtar : "tar"
+}
+
+export async function getArExecutable() {
+  if (process.platform === "darwin") {
+    return (await getLinuxToolsMacToolset()).ar
+  }
+  return "ar"
 }
 
 export async function resolveDebMember(debFile: string, memberPrefix: "data.tar." | "control.tar."): Promise<{ member: string; tarArgs: string }> {
-  const { stdout: memberList } = await execShell(`ar t '${debFile}'`, { maxBuffer: 1024 * 1024 })
+  const arExecutable = await getArExecutable()
+  const { stdout: memberList, stderr } = await execShell(`'${arExecutable}' t '${debFile}'`, { maxBuffer: 1024 * 1024 })
+  if (stderr.length > 0) {
+    throw new Error(`Failed to list members of ${debFile}: ${stderr}`)
+  }
   const member = memberList
     .trim()
     .split("\n")
@@ -758,7 +768,8 @@ export async function readDebCompression(debFile: string): Promise<string> {
 
 async function getContents(packageFile: string) {
   const { member, tarArgs } = await resolveDebMember(packageFile, "data.tar.")
-  const result = await execShell(`ar p '${packageFile}' ${member} | ${await getTarExecutable()} -t ${tarArgs}`, {
+  const arExecutable = await getArExecutable()
+  const result = await execShell(`'${arExecutable}' p '${packageFile}' ${member} | '${await getTarExecutable()}' -t ${tarArgs}`, {
     maxBuffer: 10 * 1024 * 1024,
     env: {
       ...process.env,

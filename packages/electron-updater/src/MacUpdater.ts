@@ -29,6 +29,17 @@ export class MacUpdater extends AppUpdater {
     })
   }
 
+  /** Filters update files to the appropriate architecture.
+   * On arm64 Macs (including Rosetta), arm64 files are preferred when available.
+   * On x64 Macs, arm64 files are excluded. */
+  protected static filterFilesForArch(files: ResolvedUpdateFileInfo[], isArm64Mac: boolean): ResolvedUpdateFileInfo[] {
+    const isArm64File = (file: ResolvedUpdateFileInfo) => file.url.pathname.includes("arm64") || file.info.url?.includes("arm64")
+    if (isArm64Mac && files.some(isArm64File)) {
+      return files.filter(file => isArm64Mac === isArm64File(file))
+    }
+    return files.filter(file => !isArm64File(file))
+  }
+
   private debug(message: string): void {
     if (this._logger.debug != null) {
       this._logger.debug(message)
@@ -66,12 +77,7 @@ export class MacUpdater extends AppUpdater {
     isArm64Mac = isArm64Mac || process.arch === "arm64" || isRosetta
 
     // allow arm64 macs to install universal or rosetta2(x64) - https://github.com/electron-userland/electron-builder/pull/5524
-    const isArm64 = (file: ResolvedUpdateFileInfo) => file.url.pathname.includes("arm64") || file.info.url?.includes("arm64")
-    if (isArm64Mac && files.some(isArm64)) {
-      files = files.filter(file => isArm64Mac === isArm64(file))
-    } else {
-      files = files.filter(file => !isArm64(file))
-    }
+    files = MacUpdater.filterFilesForArch(files, isArm64Mac)
 
     const zipFileInfo = findFile(files, "zip", ["pkg", "dmg"])
 

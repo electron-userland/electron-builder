@@ -3,6 +3,7 @@ import { execWine } from "app-builder-lib/out/wine"
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { sanitizeFileName } from "builder-util/out/filename"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
+import { withToolsetLock } from "app-builder-lib/out/util/toolsetLock"
 import * as path from "path"
 import * as fs from "fs"
 import * as os from "os"
@@ -53,17 +54,73 @@ export default class SquirrelWindowsTarget extends Target {
     return tmpVendorDirectory
   }
 
+  private assertShellSafePath(filePath: string, description: string): void {
+    if (/[\r\n`$;&|<>]/.test(filePath)) {
+      throw new InvalidConfigurationError(`${description} contains unsafe shell characters: ${filePath}`)
+    }
+  }
+
+  private async ensurePathInside(baseDir: string, targetPath: string, description: string): Promise<string> {
+    const resolvedBaseDir = path.resolve(baseDir)
+    const resolvedTargetPath = path.resolve(targetPath)
+
+    let canonicalBaseDir = resolvedBaseDir
+    let canonicalTargetPath = resolvedTargetPath
+
+    try {
+      canonicalBaseDir = await fs.promises.realpath(resolvedBaseDir)
+    } catch {
+      canonicalBaseDir = resolvedBaseDir
+    }
+
+    try {
+      canonicalTargetPath = await fs.promises.realpath(resolvedTargetPath)
+    } catch {
+      // Target may not exist yet; resolve the parent to handle symlinks/junctions consistently
+      try {
+        const resolvedTargetParent = path.dirname(resolvedTargetPath)
+        const canonicalTargetParent = await fs.promises.realpath(resolvedTargetParent)
+        const relativeFromResolvedParent = path.relative(resolvedTargetParent, resolvedTargetPath)
+        if (
+          isEmptyOrSpaces(relativeFromResolvedParent) ||
+          path.isAbsolute(relativeFromResolvedParent) ||
+          relativeFromResolvedParent.split(path.sep).includes("..") ||
+          /[\0\r\n]/.test(relativeFromResolvedParent)
+        ) {
+          throw new InvalidConfigurationError(`${description} contains invalid path segments`)
+        }
+        canonicalTargetPath = path.resolve(canonicalTargetParent, relativeFromResolvedParent)
+      } catch {
+        canonicalTargetPath = resolvedTargetPath
+      }
+    }
+
+    const relativePath = path.relative(canonicalBaseDir, canonicalTargetPath)
+    if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+      throw new InvalidConfigurationError(`${description} must be inside ${canonicalBaseDir}`)
+    }
+    this.assertShellSafePath(canonicalTargetPath, description)
+    return canonicalTargetPath
+  }
+
   private async generateStubExecutableExe(appOutDir: string, vendorDir: string) {
+    if (!path.isAbsolute(appOutDir) || !path.isAbsolute(vendorDir)) {
+      throw new InvalidConfigurationError("appOutDir and vendorDir must be absolute paths")
+    }
+
     const files = await fs.promises.readdir(appOutDir, { withFileTypes: true })
     const appExe = files.find(f => f.name === `${this.exeName}.exe`)
     if (!appExe) {
       throw new Error(`App executable not found in app directory: ${appOutDir}`)
     }
 
-    const filePath = path.join(appOutDir, appExe.name)
-    const stubExePath = path.join(appOutDir, `${this.exeName}_ExecutionStub.exe`)
-    await fs.promises.copyFile(path.join(vendorDir, "StubExecutable.exe"), stubExePath)
-    await execWine(path.join(vendorDir, "WriteZipToSetup.exe"), null, ["--copy-stub-resources", filePath, stubExePath])
+    const filePath = await this.ensurePathInside(appOutDir, path.join(appOutDir, appExe.name), "App executable path")
+    const stubExePath = await this.ensurePathInside(appOutDir, path.join(appOutDir, `${this.exeName}_ExecutionStub.exe`), "Stub executable path")
+    const stubExecutableSource = await this.ensurePathInside(vendorDir, path.join(vendorDir, "StubExecutable.exe"), "Stub executable source")
+    const writeZipToSetupExe = await this.ensurePathInside(vendorDir, path.join(vendorDir, "WriteZipToSetup.exe"), "WriteZipToSetup executable")
+
+    await fs.promises.copyFile(stubExecutableSource, stubExePath)
+    await execWine(writeZipToSetupExe, null, ["--copy-stub-resources", filePath, stubExePath])
     await this.packager.signIf(stubExePath)
     log.debug({ file: filePath }, "signing app executable")
     await this.packager.signIf(filePath)
@@ -87,7 +144,7 @@ export default class SquirrelWindowsTarget extends Target {
       })
       const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFile)
       await this.generateStubExecutableExe(appOutDir, distOptions.vendorDirectory!)
-      await createWindowsInstaller(distOptions)
+      await withToolsetLock(() => createWindowsInstaller(distOptions))
 
       await packager.signAndEditResources(artifactPath, arch, installerOutDir)
 
@@ -146,7 +203,8 @@ export default class SquirrelWindowsTarget extends Target {
   }
 
   private get exeName() {
-    return this.packager.appInfo.productFilename || this.options.name || this.packager.appInfo.productName
+    const name = this.packager.appInfo.productFilename || this.options.name || this.packager.appInfo.productName
+    return sanitizeFileName(name)
   }
 
   private select7zipArch(vendorDirectory: string) {
@@ -195,7 +253,7 @@ export default class SquirrelWindowsTarget extends Target {
       title: appInfo.productName || appInfo.name,
       version: appInfo.version,
       description: appInfo.description,
-      exe: `${appInfo.productFilename || this.options.name || appInfo.productName}.exe`,
+      exe: `${this.exeName}.exe`,
       authors: appInfo.companyName || "",
       nuspecTemplate: await this.createNuspecTemplateWithProjectUrl(),
       iconUrl,

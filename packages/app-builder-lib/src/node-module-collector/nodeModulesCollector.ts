@@ -1,4 +1,4 @@
-import { exists, log, retry, TmpDir } from "builder-util"
+import { exists, log, retry, stripSensitiveEnvVars, TmpDir } from "builder-util"
 import * as childProcess from "child_process"
 import { randomBytes } from "crypto"
 import * as fs from "fs-extra"
@@ -21,7 +21,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     const command = getPackageManagerCommand(manager)
     const config = (await this.asyncExec(command, ["config", "list"])).stdout
     if (config == null) {
-      log.debug({ manager }, "unable to determine if node_modules are hoisted: no config output. falling back to hoisted mode")
+      log.debug({ manager }, "unable to determine node-linker setting; assuming non-hoisted (virtual store) layout")
       return false
     }
     const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
@@ -304,7 +304,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       // fix npm list issue
       // https://github.com/npm/cli/issues/8535
       if (!(await this.cache.exists[p])) {
-        this.cache.logSummary[LogMessageByKey.PKG_NOT_ON_DISK].push(key)
+        this.logMissingDependency(key)
         continue
       }
 
@@ -322,7 +322,13 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     result.sort((a, b) => a.name.localeCompare(b.name))
   }
 
-  async asyncExec(command: string, args: string[], cwd: string = this.rootDir): Promise<{ stdout: string | undefined; stderr: string | undefined }> {
+  protected logMissingDependency(pkgName: string) {
+    const PLATFORM_PACKAGE_RE = /(linux|win32|darwin|freebsd|android)[-_](x64|arm64|ia32|arm|ppc64|s390x|loong64|riscv64|universal)/
+    const diskLogKey = PLATFORM_PACKAGE_RE.test(pkgName) ? LogMessageByKey.PKG_OPTIONAL_PLATFORM_NOT_INSTALLED : LogMessageByKey.PKG_NOT_ON_DISK
+    this.cache.logSummary[diskLogKey].push(pkgName)
+  }
+
+  protected async asyncExec(command: string, args: string[], cwd: string = this.rootDir): Promise<{ stdout: string | undefined; stderr: string | undefined }> {
     const file = await this.tempDirManager.getTempFile({ prefix: "exec-", suffix: ".txt" })
     try {
       await this.streamCollectorCommandToFile(command, args, cwd, file)
@@ -350,28 +356,30 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * @returns Promise that resolves when the command completes successfully or rejects if it fails
    * @throws {Error} If the child process spawn fails or exits with a non-zero code
    */
-  async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
+  protected async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
+    // Capture execName from the original command before resolveWindowsCommand may rewrite it to
+    // cmd.exe — shouldIgnore must key off the original invocation (e.g. "npm", not "cmd").
     const execName = path.basename(command, path.extname(command))
-    const ext = path.extname(command).toLowerCase()
-    // Wrap .cmd files in a .bat file for correct cmd.exe execution.
-    // Also wrap any Windows executable path that contains spaces (e.g. extensionless shims
-    // from tools like Volta installed at "C:\Program Files\Volta\") to ensure the path is
-    // quoted correctly when passed to `spawn(..., { shell: true })`.
-    const isWindowsScriptFile = process.platform === "win32" && (ext === ".cmd" || command.includes(" "))
-    if (isWindowsScriptFile) {
-      // We need to wrap it in a .bat file to ensure it runs correctly with cmd.exe
-      // This is necessary because some files (like .cmd) are not directly executable in the same way as .bat files.
-      // We create a temporary .bat file that calls the script-like file with the provided arguments. The .bat file will be executed by cmd.exe.
-      // Note: This is a workaround for Windows command execution quirks when using `shell: true`
-      const tempBatFile = await this.tempDirManager.getTempFile({
-        prefix: execName + "-" + randomBytes(8).toString("hex"),
-        suffix: ".bat",
-      })
-      const escapedCommand = command.replace(/"/g, `""`)
-      const batScript = `@echo off\r\n"${escapedCommand}" %*\r\n` // <-- CRLF required for .bat
-      await fs.writeFile(tempBatFile, batScript, { encoding: "utf8", mode: 0o600 })
-      command = "cmd.exe"
-      args = ["/c", `"${tempBatFile}"`, ...args]
+
+    if (process.platform === "win32") {
+      const resolved = await this.resolveWindowsCommand(command, args)
+      command = resolved.command
+      args = resolved.args
+    }
+    const isWindows = process.platform === "win32"
+
+    // shell: true is required on Windows — see https://github.com/electron-userland/electron-builder/issues/9488
+    // On non-Windows, shell:false means args are passed directly to the process with no shell
+    // interpretation, so the metacharacter guard is only necessary on Windows.
+    if (isWindows) {
+      // Guard against cmd.exe metacharacters. Parentheses are intentionally excluded because they
+      // appear in legitimate Windows paths (e.g. "C:\Program Files (x86)").
+      const SHELL_INJECTION_RE = /[;&|`${}[\]<>!%^]/
+      for (const arg of args) {
+        if (SHELL_INJECTION_RE.test(arg)) {
+          throw new Error(`Refusing to spawn "${command}": argument "${arg}" contains shell metacharacters. Possible injection attempt.`)
+        }
+      }
     }
 
     await new Promise<void>((resolve, reject) => {
@@ -379,8 +387,9 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
       const child = childProcess.spawn(command, args, {
         cwd,
-        env: { COREPACK_ENABLE_STRICT: "0", ...process.env }, // allow `process.env` overrides
-        shell: true, // `true`` is required: https://github.com/electron-userland/electron-builder/issues/9488
+        // Package manager invocations do not need signing/publishing credentials.
+        env: { COREPACK_ENABLE_STRICT: "0", ...stripSensitiveEnvVars(process.env) },
+        shell: isWindows, // shell: true is required on Windows — see https://github.com/electron-userland/electron-builder/issues/9488
       })
 
       let stderr = ""
@@ -401,11 +410,47 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         }
         if (stderr.length > 0) {
           log.debug({ stderr }, "note: there was node module collector output on stderr")
-          this.cache.logSummary[LogMessageByKey.PKG_COLLECTOR_OUTPUT].push(stderr)
+          // Only surface stderr as a user-visible warning when the exit code itself is unexpected.
+          // When shouldIgnore is true (npm list exit code 1) the stderr is an anticipated side
+          // effect of package-manager features like yarn resolutions or npm overrides that cause
+          // npm to report ELSPROBLEMS for aliased packages it considers "invalid".
+          if (!shouldIgnore) {
+            this.cache.logSummary[LogMessageByKey.PKG_COLLECTOR_OUTPUT].push(stderr)
+          }
         }
         const shouldResolve = code === 0 || shouldIgnore
         return shouldResolve ? resolve() : reject(new Error(`Node module collector process exited with code ${code}:\n${stderr}`))
       })
     })
+  }
+
+  /**
+   * Windows-only. Wraps .cmd files and executables at paths containing spaces in a temporary .bat
+   * file so that cmd.exe spawns them correctly. Returns the original command/args unchanged when
+   * no wrapping is required. Must only be called on win32.
+   */
+  private async resolveWindowsCommand(command: string, args: string[]): Promise<{ command: string; args: string[] }> {
+    if (process.platform !== "win32") {
+      throw new Error("resolveWindowsCommand should only be called on Windows platforms")
+    }
+
+    const ext = path.extname(command).toLowerCase()
+    // Wrap .cmd files and any Windows executable path that contains spaces (e.g. extensionless
+    // shims from tools like Volta installed at "C:\Program Files\Volta\") to ensure the path is
+    // quoted correctly when passed to `spawn(..., { shell: true })`.
+    const needsWrap = ext === ".cmd" || command.includes(" ")
+    if (!needsWrap) {
+      return { command, args }
+    }
+
+    const execName = path.basename(command, ext)
+    const tempBatFile = await this.tempDirManager.getTempFile({
+      prefix: execName + "-" + randomBytes(8).toString("hex"),
+      suffix: ".bat",
+    })
+    const escapedCommand = command.replace(/"/g, `""`)
+    const batScript = `@echo off\r\n"${escapedCommand}" %*\r\n` // <-- CRLF required for .bat
+    await fs.writeFile(tempBatFile, batScript, { encoding: "utf8", mode: 0o600 })
+    return { command: "cmd.exe", args: ["/c", `"${tempBatFile}"`, ...args] }
   }
 }

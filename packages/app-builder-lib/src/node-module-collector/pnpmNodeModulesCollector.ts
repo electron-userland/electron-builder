@@ -72,15 +72,17 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       }
     }
 
-    // pnpm's `.pnpm` virtual store is flat — no nested `node_modules/<a>/node_modules/<b>`
-    // structure exists. `downwardSearch` would burn thousands of `readdir`/`lstat` calls
-    // finding nothing, so skip it.
+    // pnpm's default `.pnpm` virtual store is flat, so `downwardSearch` would burn thousands
+    // of `readdir`/`lstat` calls finding nothing. With `nodeLinker: hoisted`, however, the
+    // layout is a traditional nested `node_modules` tree where version-conflicted packages
+    // land at `<root>/node_modules/A/node_modules/B` — downward BFS is needed to find them.
+    const skipDownwardSearch = !(await this.isHoisted.value)
     const promise = (async (): Promise<Package | null> => {
-      const fromDep = parentPath ? await this.cache.locatePackageVersion({ pkgName, parentDir: parentPath, requiredRange, skipDownwardSearch: true }) : null
+      const fromDep = parentPath ? await this.cache.locatePackageVersion({ pkgName, parentDir: parentPath, requiredRange, skipDownwardSearch }) : null
       if (fromDep) {
         return fromDep
       }
-      return this.cache.locatePackageVersion({ pkgName, parentDir: this.rootDir, requiredRange, skipDownwardSearch: true })
+      return this.cache.locatePackageVersion({ pkgName, parentDir: this.rootDir, requiredRange, skipDownwardSearch })
     })()
 
     if (memoKey != null) {
@@ -89,6 +91,10 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     return promise
   }
 
+  // pnpm 10+ does not automatically preserve transitive optional platform-specific
+  // packages (e.g. sass-embedded-linux-x64) across lock file regeneration. Users
+  // must list them as direct optionalDependencies. Missing ones are emitted as
+  // PKG_OPTIONAL_PLATFORM_NOT_INSTALLED warnings in the log summary.
   protected async extractProductionDependencyGraph(tree: PnpmDependency, dependencyId: string) {
     if (this.productionGraph[dependencyId]) {
       return
@@ -124,7 +130,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       if (optional[packageName]) {
         const pkg = await this.locateFromDepOrRoot(packageName, tree.path, dependency.version)
         if (!pkg) {
-          this.cache.logSummary[LogMessageByKey.PKG_OPTIONAL_NOT_INSTALLED].push(`${packageName}@${dependency.version}`)
+          this.logMissingDependency(`${packageName}@${dependency.version}`)
           return undefined
         }
       }

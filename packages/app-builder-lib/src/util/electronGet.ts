@@ -7,16 +7,18 @@ import {
   GotDownloaderOptions,
   MirrorOptions,
 } from "@electron/get"
-import { buildGotProxyAgent, exec, exists, getPath7za, log, PADDING, parseValidEnvVarUrl } from "builder-util"
+import { buildGotProxyAgent, exec, exists, getPath7za, log, PADDING, parseValidEnvVarUrl, sanitizeDirPath, to7zaOutputSwitch } from "builder-util"
 import { MultiProgress } from "electron-publish/out/multiProgress"
 import { createReadStream, createWriteStream } from "fs"
 import * as fs from "fs/promises"
+import * as crypto from "crypto"
 import * as os from "os"
 import * as path from "path"
 import * as lockfile from "proper-lockfile"
 import { pipeline } from "stream/promises"
 import * as tar from "tar"
 import * as unzipper from "unzipper"
+import { HttpError, retry } from "builder-util-runtime"
 import { ElectronPlatformName } from "../electron/ElectronFramework"
 import { CacheState, cleanupCacheDirectory, computeCacheMetadata, readCacheStateFile, validateCacheDirectory, writeCacheState } from "./cacheState"
 import type { ProgressBar } from "electron-publish"
@@ -69,7 +71,9 @@ export interface ElectronDownloadOptions {
   /** @private */
   customFilename?: string | null
 
+  /** @private */
   strictSSL?: boolean
+  /** @private */
   isVerifyChecksum?: boolean
 
   platform?: ElectronPlatformName
@@ -86,7 +90,8 @@ function hashUrlSafe(input: string, length = 6): string {
   return out.length >= length ? out.slice(0, length) : out.padStart(length, "0")
 }
 
-export function getCacheDirectory(isAvoidSystemOnWindows = false, allowEnvVarOverride = true): string {
+export function getCacheDirectory(options: { isAvoidSystemOnWindows?: boolean; allowEnvVarOverride: boolean }): string {
+  const { isAvoidSystemOnWindows = true, allowEnvVarOverride } = options
   const env = process.env.ELECTRON_BUILDER_CACHE?.trim()
   if (allowEnvVarOverride && env && path.parse(env).root) {
     return env
@@ -102,6 +107,7 @@ export function getCacheDirectory(isAvoidSystemOnWindows = false, allowEnvVarOve
   if (platform === "win32") {
     const localAppData = process.env.LOCALAPPDATA?.trim()
     const username = process.env.USERNAME?.trim()?.toLowerCase()
+    // https://github.com/electron-userland/electron-builder/issues/1164
     const isSystemUser = isAvoidSystemOnWindows && (localAppData?.toLowerCase()?.includes("\\windows\\system32\\") || username === "system")
     if (!localAppData || isSystemUser) {
       return path.join(os.tmpdir(), `${appName}-cache`)
@@ -173,7 +179,7 @@ export async function extractArchive(file: string, dir: string) {
   await fs.mkdir(tmpDir, { recursive: true })
 
   const release = await lockfile.lock(tmpDir, {
-    retries: { retries: 5, minTimeout: 1000, maxTimeout: 5000 },
+    retries: { retries: 15, minTimeout: 1000, maxTimeout: 5000 },
     stale: 120000, // Increased from 60s to allow long-running extractions
   })
 
@@ -182,6 +188,16 @@ export async function extractArchive(file: string, dir: string) {
     await fs.rm(tmpDir, { recursive: true, force: true })
     await fs.mkdir(tmpDir, { recursive: true })
 
+    // Guard against the transient window in @electron/get's non-atomic putFileInCache (remove → move).
+    // A concurrent worker may have deleted and not yet replaced the source archive; wait briefly for it.
+    for (let i = 0; !(await exists(file)); i++) {
+      if (i >= 4) {
+        throw Object.assign(new Error(`Source archive not found after retries: ${file}`), { code: "ENOENT", path: file })
+      }
+      log.warn({ file, attempt: i + 1 }, "source archive transiently missing, retrying")
+      await new Promise(r => setTimeout(r, 300 * (i + 1)))
+    }
+
     if (file.endsWith(".tar.gz") || file.endsWith(".tgz")) {
       await tar.extract({ file, cwd: tmpDir, strip: 1 })
     } else if (file.endsWith(".zip")) {
@@ -189,7 +205,7 @@ export async function extractArchive(file: string, dir: string) {
     } else if (file.endsWith(".7z")) {
       const cmd7za = await getPath7za()
       try {
-        await exec(cmd7za, ["x", "-bd", file, `-o${tmpDir}`, "-y"])
+        await exec(cmd7za, ["x", "-bd", file, to7zaOutputSwitch(sanitizeDirPath(tmpDir)), "-y"])
       } catch (e: any) {
         // Check if extraction actually failed or just had benign warnings
         const files = await fs.readdir(tmpDir)
@@ -218,6 +234,19 @@ export async function extractArchive(file: string, dir: string) {
 }
 
 async function downloadArtifactToFile(config: Parameters<typeof get.downloadArtifact>[0], label: string): Promise<string> {
+  // Serialize concurrent downloads of the same artifact across vitest workers to prevent @electron/get's
+  // non-atomic putFileInCache (remove + move) from racing with a concurrent reader.
+  const artifactLockKey = crypto
+    .createHash("sha256")
+    .update(JSON.stringify({ v: config.version, p: (config as any).platform, a: (config as any).arch, n: (config as any).artifactName }))
+    .digest("hex")
+    .slice(0, 20)
+  const artifactLockPath = path.join(os.tmpdir(), `eb-dl-${artifactLockKey}.lock`)
+  const releaseArtifactLock = await lockfile.lock(artifactLockPath, {
+    retries: { retries: 30, minTimeout: 500, maxTimeout: 5000 },
+    stale: 600_000,
+    realpath: false,
+  })
   let lastLoggedMilestone = -1
   const state: { bar: ProgressBar | undefined } = { bar: undefined }
 
@@ -256,7 +285,13 @@ async function downloadArtifactToFile(config: Parameters<typeof get.downloadArti
   try {
     let filePath: string
     try {
-      filePath = await get.downloadArtifact(configWithProgress)
+      filePath = await retry(() => get.downloadArtifact(configWithProgress), {
+        retries: 3,
+        interval: 2000,
+        backoff: 2000,
+        shouldRetry: (e: any) =>
+          e instanceof HttpError ? e.isServerError() : typeof e?.code === "string" && ["ENOTFOUND", "ETIMEDOUT", "ECONNRESET", "EPIPE", "ENOENT"].includes(e.code),
+      })
     } catch (err) {
       if (typeof (err as any)?.message === "string" && (err as any).message.includes("dest already exists")) {
         filePath = await get.downloadArtifact(configWithProgress)
@@ -275,6 +310,7 @@ async function downloadArtifactToFile(config: Parameters<typeof get.downloadArti
   } finally {
     state.bar?.update(100)
     state.bar?.terminate()
+    await releaseArtifactLock().catch(err => log.warn({ err }, "failed to release artifact download lock"))
   }
 }
 
@@ -298,7 +334,7 @@ async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact
   }
 
   const release = await lockfile.lock(extractDir, {
-    retries: { retries: 5, minTimeout: 1000, maxTimeout: 5000 },
+    retries: { retries: 15, minTimeout: 1000, maxTimeout: 5000 },
     stale: 120000,
   })
   let downloadedFile: string | null = null
@@ -365,7 +401,7 @@ export async function downloadBuilderToolset(options: {
   const fullUrl = overrideUrl ? `${overrideUrl}/${filenameWithExt}` : `${baseUrl}${releaseName}/${filenameWithExt}`
   const suffix = hashUrlSafe(fullUrl, 5)
   const folderName = `${filenameWithExt.replace(/\.(tar\.gz|tgz|zip|7z)$/, "")}-${suffix}`
-  const extractDir = path.join(getCacheDirectory(), releaseName, folderName)
+  const extractDir = path.join(getCacheDirectory({ allowEnvVarOverride: true }), releaseName, folderName)
 
   // Use resolveAssetURL so @electron/get's ELECTRON_MIRROR env var check cannot override
   // the builder-binaries URL we've already resolved (see getArtifactRemoteURL in @electron/get).
@@ -376,7 +412,7 @@ export async function downloadBuilderToolset(options: {
   const config: ElectronDownloadRequest & ElectronDownloadRequestOptions & { isGeneric: true } = {
     version: "9.9.9", // must be >1.3.2 to bypass @electron/get validation shortcut
     artifactName: filenameWithExt,
-    cacheRoot: path.resolve(getCacheDirectory(), "downloads"),
+    cacheRoot: path.resolve(getCacheDirectory({ allowEnvVarOverride: true }), "downloads"),
     cacheMode: resolveCacheMode(),
     ...(checksums != null ? { checksums } : { unsafelyDisableChecksums: true }),
     mirrorOptions,
@@ -408,6 +444,15 @@ function buildElectronArtifactConfig(options: ArtifactDownloadOptions): Electron
       artifactConfig = { ...artifactConfig, ...rest, cacheRoot, mirrorOptions }
     } else {
       const { mirror, customDir, cache, customFilename, isVerifyChecksum, strictSSL, platform: overridePlatform, arch: overrideArch } = electronDownload
+      // strictSSL: false disables TLS certificate validation for all
+      // electron/tool downloads.  This option exists only for air-gapped or
+      // self-signed-cert environments; ensure your build network is fully trusted.
+      if (strictSSL === false) {
+        log.warn(
+          { option: "electronDownload.strictSSL" },
+          "strictSSL is false — TLS certificate validation is DISABLED for Electron downloads. Only use this option in a trusted, isolated build environment."
+        )
+      }
       artifactConfig = {
         ...artifactConfig,
         unsafelyDisableChecksums: isVerifyChecksum === false,
@@ -447,7 +492,7 @@ export async function downloadElectronArtifact(options: ArtifactDownloadOptions)
 
   const suffix = hashUrlSafe(JSON.stringify(artifactConfig), 5)
   const folderName = `${artifactName}-v${version}-${platform}-${arch}-${suffix}`
-  const extractDir = path.join(getCacheDirectory(), `${artifactName}-v${version}`, folderName)
+  const extractDir = path.join(getCacheDirectory({ allowEnvVarOverride: true }), `${artifactName}-v${version}`, folderName)
 
   return downloadAndExtract(artifactConfig, extractDir, artifactName)
 }

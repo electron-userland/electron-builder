@@ -55,7 +55,7 @@ export { MsiOptions } from "./options/MsiOptions"
 export { MsiWrappedOptions } from "./options/MsiWrappedOptions"
 export { BackgroundAlignment, BackgroundScaling, PkgBackgroundOptions, PkgOptions } from "./options/pkgOptions"
 export { AsarOptions, FileSet, FilesBuildOptions, PlatformSpecificBuildOptions, Protocol, ReleaseInfo } from "./options/PlatformSpecificBuildOptions"
-export { PlugDescriptor, SlotDescriptor, SnapOptions } from "./options/SnapOptions"
+export { PlugDescriptor, SlotDescriptor, SnapcraftOptions, SnapOptions } from "./options/SnapOptions"
 export { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions"
 export { WindowsAzureSigningConfiguration, WindowsConfiguration, WindowsSigntoolConfiguration } from "./options/winOptions"
 export { BuildResult, Packager } from "./packager"
@@ -71,7 +71,9 @@ export {
   CustomWindowsSignTaskConfiguration,
   FileCodeSigningInfo,
   WindowsSignTaskConfiguration,
+  WindowsSignToolManager,
 } from "./codeSign/windowsSignToolManager"
+export { ToolInfo } from "./util/bundledTool"
 export { ForgeOptions, buildForge } from "./forge-maker"
 export { Framework, PrepareApplicationStageDirectoryOptions } from "./Framework"
 export { LinuxPackager } from "./linuxPackager"
