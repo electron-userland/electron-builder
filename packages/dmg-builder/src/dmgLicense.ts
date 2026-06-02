@@ -1,21 +1,26 @@
 import { PlatformPackager } from "app-builder-lib"
 import { getLicenseFiles } from "app-builder-lib/out/util/license"
-import { log } from "builder-util"
-import { dmgLicenseFromJSON } from "dmg-license"
 import { readFile, readJson } from "fs-extra"
 import { CORE_SCHEMA, load } from "js-yaml"
 import { getLicenseButtonsFile } from "./licenseButtons"
-import { deepAssign } from "builder-util-runtime"
 
-// License Specifications
-// https://github.com/argv-minus-one/dmg-license/blob/HEAD/docs/License%20Specifications.md
-type LicenseConfig = {
-  $schema: string
-  body: any[]
-  labels: any[]
+export type DmgBuildLicenseConfig = {
+  "default-language": string
+  licenses: Record<string, string>
+  buttons?: Record<
+    string,
+    {
+      language?: string
+      agree?: string
+      disagree?: string
+      print?: string
+      save?: string
+      message?: string
+    }
+  >
 }
 
-export async function addLicenseToDmg(packager: PlatformPackager<any>, dmgPath: string): Promise<LicenseConfig | null> {
+export async function addLicenseToDmg(packager: PlatformPackager<any>): Promise<DmgBuildLicenseConfig | null> {
   const licenseFiles = await getLicenseFiles(packager)
   if (licenseFiles.length === 0) {
     return null
@@ -25,34 +30,48 @@ export async function addLicenseToDmg(packager: PlatformPackager<any>, dmgPath: 
   packager.debugLogger.add("dmg.licenseFiles", licenseFiles)
   packager.debugLogger.add("dmg.licenseButtons", licenseButtonFiles)
 
-  const jsonFile: LicenseConfig = {
-    $schema: "https://github.com/argv-minus-one/dmg-license/raw/master/schema.json",
-    // defaultLang: '',
-    body: [],
-    labels: [],
-  }
-
+  const licenses: Record<string, string> = {}
   for (const file of licenseFiles) {
-    jsonFile.body.push({
-      file: file.file,
-      lang: file.langWithRegion.replace("_", "-"),
-    })
+    licenses[file.langWithRegion] = file.file
   }
 
-  for (const button of licenseButtonFiles) {
-    const filepath = button.file
-    const label: any = filepath.endsWith(".yml") ? load(await readFile(filepath, "utf-8"), { schema: CORE_SCHEMA }) : await readJson(filepath)
-    if (label.description) {
-      // to support original button file format
-      label.message = label.description
-      delete label.description
+  const result: DmgBuildLicenseConfig = {
+    "default-language": licenseFiles[0].langWithRegion,
+    licenses,
+  }
+
+  if (licenseButtonFiles.length > 0) {
+    const buttons: DmgBuildLicenseConfig["buttons"] = {}
+    for (const button of licenseButtonFiles) {
+      const filepath = button.file
+      const raw: any = filepath.endsWith(".yml") ? load(await readFile(filepath, "utf-8"), { schema: CORE_SCHEMA }) : await readJson(filepath)
+
+      const entry: Record<string, string> = {}
+      if (raw.languageName != null) {
+        entry.language = raw.languageName
+      }
+      if (raw.agree != null) {
+        entry.agree = raw.agree
+      }
+      if (raw.disagree != null) {
+        entry.disagree = raw.disagree
+      }
+      if (raw.print != null) {
+        entry.print = raw.print
+      }
+      if (raw.save != null) {
+        entry.save = raw.save
+      }
+      // support legacy `description` field as well as `message`
+      const msg = raw.message ?? raw.description
+      if (msg != null) {
+        entry.message = msg
+      }
+
+      buttons[button.langWithRegion] = entry
     }
-    jsonFile.labels.push(deepAssign({ lang: button.langWithRegion.replace("_", "-") }, label))
+    result.buttons = buttons
   }
 
-  await dmgLicenseFromJSON(dmgPath, jsonFile, {
-    onNonFatalError: log.warn.bind(log),
-  })
-
-  return jsonFile
+  return result
 }

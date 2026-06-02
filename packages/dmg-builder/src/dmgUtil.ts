@@ -6,6 +6,7 @@ import { stat } from "fs/promises"
 import { writeFile } from "fs-extra"
 import * as path from "path"
 import { DmgBuildConfig } from "./dmg"
+import { DmgBuildLicenseConfig } from "./dmgLicense"
 import { hdiUtil, hdiutilTransientExitCodes } from "./hdiuil"
 
 export { DmgTarget } from "./dmg"
@@ -124,9 +125,10 @@ type DmgBuilderConfig = {
   volumeName: string
   specification: DmgOptions
   packager: MacPackager
+  licenseData?: DmgBuildLicenseConfig | null
 }
 
-export async function customizeDmg({ appPath, artifactPath, volumeName, specification, packager }: DmgBuilderConfig): Promise<boolean> {
+export async function customizeDmg({ appPath, artifactPath, volumeName, specification, packager, licenseData }: DmgBuilderConfig): Promise<boolean> {
   const isValidIconTextSize = !!specification.iconTextSize && specification.iconTextSize >= 10 && specification.iconTextSize <= 16
   const iconTextSize = isValidIconTextSize ? specification.iconTextSize : 12
   const volumePath = path.join("/Volumes", volumeName)
@@ -196,6 +198,10 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
         throw new InvalidConfigurationError(`dmg.contents path "${item.path}" is outside the workspace root`)
       }
     }
+  }
+
+  if (licenseData) {
+    settings.license = licenseData
   }
 
   const settingsFile = await packager.getTempFile(".json")
