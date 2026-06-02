@@ -15,10 +15,12 @@ import type * as _BlackboxWinSuite from "../src/updater/blackboxUpdateWinSuite"
 
 const WIN_CODE_SIGN_VERSIONS: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0", "1.2.1"]
 const NSIS_VERSIONS: ToolsetConfig["nsis"][] = ["0.0.0", "1.2.1"]
+const WINE_VERSIONS: ToolsetConfig["wine"][] = ["0.0.0", "1.0.0"]
 
 interface WindowsSuiteConfig extends SuiteConfig {
   readonly winCodeSignVersions?: ToolsetConfig["winCodeSign"][]
   readonly nsisVersions?: ToolsetConfig["nsis"][]
+  readonly wineVersions?: ToolsetConfig["wine"][]
 }
 
 const SUITES: WindowsSuiteConfig[] = [
@@ -28,6 +30,7 @@ const SUITES: WindowsSuiteConfig[] = [
     importPath: "windows/winPackagerTestSuite",
     describeConfig: { name: "winPackager" },
     nsisVersions: NSIS_VERSIONS,
+    wineVersions: WINE_VERSIONS,
   },
   {
     name: "portable",
@@ -42,6 +45,7 @@ const SUITES: WindowsSuiteConfig[] = [
     importPath: "windows/assistedInstallerTestSuite",
     describeConfig: { name: "assisted" },
     nsisVersions: NSIS_VERSIONS,
+    wineVersions: WINE_VERSIONS,
   },
   {
     name: "msi",
@@ -87,14 +91,23 @@ const SUITES: WindowsSuiteConfig[] = [
     describeConfig: { name: "blackboxWin" },
     describeOptions: { sequential: true, retry: 1 },
     nsisVersions: NSIS_VERSIONS,
+    wineVersions: WINE_VERSIONS,
   },
 ]
 
-function renderFile(suite: WindowsSuiteConfig, winCodeSign: ToolsetConfig["winCodeSign"], nsis?: ToolsetConfig["nsis"]): string {
+function renderFile(
+  suite: WindowsSuiteConfig,
+  winCodeSign: ToolsetConfig["winCodeSign"],
+  nsis?: ToolsetConfig["nsis"],
+  wine?: ToolsetConfig["wine"]
+): string {
   const fnName = suite.registerFn.name
   const toolsets: Record<string, unknown> = { winCodeSign }
   if (nsis !== undefined) {
     toolsets.nsis = nsis
+  }
+  if (wine !== undefined) {
+    toolsets.wine = wine
   }
   const toolsetsArg = JSON.stringify(toolsets)
   const describeCall = buildDescribeCall(suite.describeConfig.chain)
@@ -119,11 +132,19 @@ export function generateWindowsToolsetTests(): void {
     cleanAndEnsureDir(generatedDir)
     const wcsVersions = suite.winCodeSignVersions ?? WIN_CODE_SIGN_VERSIONS
     const nsisVersions = suite.nsisVersions
+    const wineVersions = suite.wineVersions
     if (nsisVersions) {
       for (const nsis of nsisVersions) {
         for (const wcs of wcsVersions) {
-          const filename = `${suite.name}__wcs-${wcs}__nsis-${nsis}__Test.ts`
-          fs.writeFileSync(path.join(generatedDir, filename), renderFile(suite, wcs, nsis), "utf8")
+          if (wineVersions) {
+            for (const wine of wineVersions) {
+              const filename = `${suite.name}__wcs-${wcs}__nsis-${nsis}__wine-${wine}__Test.ts`
+              fs.writeFileSync(path.join(generatedDir, filename), renderFile(suite, wcs, nsis, wine), "utf8")
+            }
+          } else {
+            const filename = `${suite.name}__wcs-${wcs}__nsis-${nsis}__Test.ts`
+            fs.writeFileSync(path.join(generatedDir, filename), renderFile(suite, wcs, nsis), "utf8")
+          }
         }
       }
     } else {

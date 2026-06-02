@@ -383,7 +383,7 @@ export interface ToolsetConfig {
   /**
    * `wine` bundle version to use for running Windows tools on non-Windows platforms.
    * Located at https://github.com/electron-userland/electron-builder-binaries/releases?q=wine&expanded=true
-   * 0.0.0 - system wine (legacy, no download)
+   * 0.0.0 - legacy toolset (wine 4.0.1 portable; mac-only support)
    *
    * Beta:
    * 1.0.0 - Wine 11 bundle (unified wine binary, ia32 via WoW64)
