@@ -15,6 +15,7 @@ export class MacUpdater extends AppUpdater {
   private readonly nativeUpdater: AutoUpdater = require("electron").autoUpdater
 
   private squirrelDownloadedUpdate = false
+  private quitAndInstallScheduled = false
 
   constructor(options?: AllPublishOptions, app?: AppAdapter) {
     super(options, app)
@@ -164,17 +165,21 @@ export class MacUpdater extends AppUpdater {
     if (this.squirrelDownloadedUpdate) {
       // update already fetched by Squirrel, it's ready to install
       this.handleUpdateDownloaded()
-    } else {
-      // Quit and install as soon as Squirrel get the update
-      this.nativeUpdater.on("update-downloaded", () => this.handleUpdateDownloaded())
+      return
+    }
 
-      if (!this.autoInstallOnAppQuit) {
-        /**
-         * If this was not `true` previously then MacUpdater.doDownloadUpdate()
-         * would not actually initiate the downloading by electron's autoUpdater
-         */
-        this.nativeUpdater.checkForUpdates()
-      }
+    if (!this.quitAndInstallScheduled) {
+      this.quitAndInstallScheduled = true
+      // Quit and install as soon as Squirrel gets the update
+      this.nativeUpdater.once("update-downloaded", () => this.handleUpdateDownloaded())
+    }
+
+    if (!this.autoInstallOnAppQuit) {
+      /**
+       * If this was not `true` previously then MacUpdater.doDownloadUpdate()
+       * would not actually initiate the downloading by electron's autoUpdater
+       */
+      this.nativeUpdater.checkForUpdates()
     }
   }
 }

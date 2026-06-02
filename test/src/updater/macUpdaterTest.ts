@@ -4,7 +4,7 @@ import { EventEmitter } from "events"
 import { statSync } from "fs"
 import { readFile } from "fs/promises"
 import * as path from "path"
-import { fileURLToPath } from "url"
+import { fileURLToPath, pathToFileURL } from "url"
 import { assertThat } from "../helpers/fileAssert"
 import { createTestAppAdapter, httpExecutor, trackEvents, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { mockForNodeRequire } from "vitest-mock-commonjs"
@@ -276,4 +276,39 @@ test.ifMac("cached differential copy update.zip has 0600 permissions after downl
 
   // Sanity: the downloaded file itself (served via file://) is also restricted
   expect(statSync(files![0]).mode & 0o777).toBe(0o600)
+})
+
+test.ifMac("quitAndInstall called twice only triggers handleUpdateDownloaded once", async ({ expect }) => {
+  const { updater } = await setupMacUpdater()
+
+  // Confirm Squirrel has NOT yet downloaded (squirrelDownloadedUpdate=false)
+  expect((updater as any).squirrelDownloadedUpdate).toBe(false)
+
+  let handlerCount = 0
+  ;(updater as any).handleUpdateDownloaded = () => {
+    handlerCount++
+  }
+
+  // First call: registers a once() listener and (since autoInstallOnAppQuit is true by default) does NOT call checkForUpdates
+  updater.quitAndInstall()
+  // Second call: should NOT register a second listener (once() is idempotent per call, but
+  // a second quitAndInstall() call would register a second listener if .on() was used instead of .once())
+  updater.quitAndInstall()
+
+  // Emit update-downloaded — handler must fire exactly once regardless of how many times quitAndInstall was called
+  ;(updater as any).nativeUpdater.emit("update-downloaded")
+  expect(handlerCount).toBe(1)
+})
+
+test("pathToFileURL encodes paths with spaces and special characters correctly", ({ expect }) => {
+  // Verify that pathToFileURL produces a valid file:// URL for paths that contain
+  // characters requiring percent-encoding (spaces, parentheses, etc.).
+  // This covers the real-world scenario where the OS user account name has a space.
+  const pathWithSpaces = "/Users/John Doe/Library/Caches/com.example.app/update.zip"
+  const url = pathToFileURL(pathWithSpaces)
+
+  expect(url.href).toMatch(/^file:\/\//)
+  expect(url.href).toContain("John%20Doe")
+  // Round-trip must restore the original path
+  expect(fileURLToPath(url)).toBe(pathWithSpaces)
 })

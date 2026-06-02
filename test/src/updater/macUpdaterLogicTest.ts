@@ -63,4 +63,24 @@ describe("MacUpdater.filterFilesForArch", () => {
     expect(filterFilesForArch([file], false)).toHaveLength(0)
     expect(filterFilesForArch([file], true)).toHaveLength(1)
   })
+
+  test("empty files array returns empty array", () => {
+    expect(filterFilesForArch([], true)).toHaveLength(0)
+    expect(filterFilesForArch([], false)).toHaveLength(0)
+  })
+
+  test("arm64 Mac with both universal and arm64 files: only arm64 file is returned", () => {
+    // When arm64-specific files exist, arm64 Mac should prefer them over universal
+    const files = [makeFile("app-universal.zip"), makeFile("app-arm64.zip")]
+    const result = filterFilesForArch(files, true)
+    expect(result).toHaveLength(1)
+    expect(result[0].info.url).toBe("app-arm64.zip")
+  })
+
+  test("x64 Mac with both universal and arm64 files: only universal is returned", () => {
+    const files = [makeFile("app-universal.zip"), makeFile("app-arm64.zip")]
+    const result = filterFilesForArch(files, false)
+    expect(result).toHaveLength(1)
+    expect(result[0].info.url).toBe("app-universal.zip")
+  })
 })
