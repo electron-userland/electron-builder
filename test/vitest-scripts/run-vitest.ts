@@ -7,6 +7,7 @@ import { generateTests } from "./generate-tests/generate-tests"
 import { buildWeightedFiles, computeShardCount, splitIntoShards } from "./vitest-config/shard-builder"
 import { SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN } from "./vitest-config/smart-config"
 import SmartSequencer from "./vitest-config/vitest-smart-sequencer"
+import * as path from "path"
 
 const testRegex = TEST_FILES_PATTERN?.split(",")
 const includeRegex = `(${testRegex.join("|")}|${testRegex.map(t => `${t}*Test`).join("|")})`
@@ -55,12 +56,12 @@ async function main() {
 
     // Allow test metadata
     includeTaskLocation: true,
-    setupFiles: [__dirname + "/vitest-setup.ts", __dirname + "/vitest-heavy-mutex.ts"],
+    setupFiles: [path.join(__dirname, "vitest-config", "vitest-setup.ts"), path.join(__dirname, "vitest-config", "vitest-heavy-mutex.ts")],
     include: [`test/src/**/${includeRegex}.ts`],
 
     printConsoleTrace: true,
-    runner: __dirname + "/vitest-network-retry-runner.ts",
-    reporters: ["default", __dirname + "/vitest-smart-reporter.ts"],
+    runner: path.join(__dirname, "vitest-config", "vitest-network-retry-runner.ts"),
+    reporters: ["default", path.join(__dirname, "vitest-config", "vitest-smart-reporter.ts")],
 
     // 2 on Windows (heavy MSI/Squirrel builds saturate the vitest main-thread RPC at 3); 3 elsewhere
     maxWorkers: process.platform === "win32" ? 2 : 3,
