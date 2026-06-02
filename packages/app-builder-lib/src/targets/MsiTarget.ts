@@ -143,12 +143,7 @@ export default class MsiTarget extends Target {
   private async buildV4(vm: VmManager, vendorPath: string, stageDir: string, appOutDir: string, artifactPath: string, arch: Arch) {
     const archFlag = arch === Arch.ia32 ? "x86" : arch === Arch.arm64 ? "arm64" : "x64"
     const buildArgs = ["build", "-arch", archFlag, "-d", `appDir=${vm.toVmFile(appOutDir)}`, "-o", vm.toVmFile(artifactPath), "-v"]
-    if (this.options.warningsAsErrors !== false) {
-      buildArgs.push("-wx")
-    }
-    if (this.options.additionalWixArgs != null) {
-      buildArgs.push(...this.options.additionalWixArgs)
-    }
+    buildArgs.push(...this.getCommonWixArgs())
     buildArgs.push(...this.getAdditionalLightArgs())
     if (this.options.oneClick === false) {
       buildArgs.push("-ext", "WixToolset.UI.wixext")

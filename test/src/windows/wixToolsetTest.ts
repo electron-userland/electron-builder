@@ -1,26 +1,26 @@
 import { afterEach, beforeEach, describe, test, vi } from "vitest"
 import { resolveEnvToolsetPath } from "builder-util"
-import { getBinFromUrl } from "app-builder-lib/src/binDownload"
+import { downloadBuilderToolset } from "app-builder-lib/src/util/electronGet"
 import { getWixBin, wixChecksums } from "app-builder-lib/src/toolsets/wix"
 
 // vi.mock is hoisted before imports by vitest. Importing the SUT from src/
 // ensures vitest's transform pipeline handles module interception so mocks
-// for "builder-util" and "app-builder-lib/src/binDownload" take effect.
+// for "builder-util" and "app-builder-lib/src/util/electronGet" take effect.
 vi.mock("builder-util", async importActual => {
   const actual = await importActual<typeof import("builder-util")>()
   return { ...actual, resolveEnvToolsetPath: vi.fn() }
 })
 
-vi.mock("app-builder-lib/src/binDownload", async importActual => {
-  const actual = await importActual<typeof import("app-builder-lib/src/binDownload")>()
-  return { ...actual, getBinFromUrl: vi.fn() }
+vi.mock("app-builder-lib/src/util/electronGet", async importActual => {
+  const actual = await importActual<typeof import("app-builder-lib/src/util/electronGet")>()
+  return { ...actual, downloadBuilderToolset: vi.fn() }
 })
 
 beforeEach(() => {
   vi.mocked(resolveEnvToolsetPath).mockClear()
   vi.mocked(resolveEnvToolsetPath).mockResolvedValue(null)
-  vi.mocked(getBinFromUrl).mockClear()
-  vi.mocked(getBinFromUrl).mockResolvedValue("/fake/wix/path")
+  vi.mocked(downloadBuilderToolset).mockClear()
+  vi.mocked(downloadBuilderToolset).mockResolvedValue("/fake/wix/path")
 })
 
 afterEach(() => {
@@ -44,70 +44,75 @@ describe.sequential("wixToolset", () => {
   })
 
   describe("getWixBin", () => {
-    test("resolveEnvToolsetPath is always called with ELECTRON_BUILDER_WIX_PATH and 'directory'", async ({ expect }) => {
+    test("resolveEnvToolsetPath is always called with ELECTRON_BUILDER_WIX_DIR and 'directory'", async ({ expect }) => {
       await getWixBin(null)
-      expect(resolveEnvToolsetPath).toHaveBeenCalledWith("ELECTRON_BUILDER_WIX_PATH", "directory")
+      expect(resolveEnvToolsetPath).toHaveBeenCalledWith("ELECTRON_BUILDER_WIX_DIR", "directory")
     })
 
     test("null → downloads wix-4.0.0.5512.2 (defaults to 0.0.0)", async ({ expect }) => {
       const result = await getWixBin(null)
 
-      expect(getBinFromUrl).toHaveBeenCalledOnce()
-      expect(getBinFromUrl).toHaveBeenCalledWith("wix-4.0.0.5512.2", "wix-4.0.0.5512.2.7z", wixChecksums["0.0.0"]["wix-4.0.0.5512.2.7z"])
+      expect(downloadBuilderToolset).toHaveBeenCalledOnce()
+      expect(downloadBuilderToolset).toHaveBeenCalledWith(
+        expect.objectContaining({ releaseName: "wix-4.0.0.5512.2", filenameWithExt: "wix-4.0.0.5512.2.7z" })
+      )
       expect(result).toBe("/fake/wix/path")
     })
 
     test("undefined → downloads wix-4.0.0.5512.2 (defaults to 0.0.0)", async ({ expect }) => {
       const result = await getWixBin(undefined)
 
-      expect(getBinFromUrl).toHaveBeenCalledOnce()
-      expect(getBinFromUrl).toHaveBeenCalledWith("wix-4.0.0.5512.2", "wix-4.0.0.5512.2.7z", wixChecksums["0.0.0"]["wix-4.0.0.5512.2.7z"])
+      expect(downloadBuilderToolset).toHaveBeenCalledOnce()
+      expect(downloadBuilderToolset).toHaveBeenCalledWith(
+        expect.objectContaining({ releaseName: "wix-4.0.0.5512.2", filenameWithExt: "wix-4.0.0.5512.2.7z" })
+      )
       expect(result).toBe("/fake/wix/path")
     })
 
     test("'0.0.0' → downloads wix-4.0.0.5512.2", async ({ expect }) => {
       const result = await getWixBin("0.0.0")
 
-      expect(getBinFromUrl).toHaveBeenCalledOnce()
-      expect(getBinFromUrl).toHaveBeenCalledWith("wix-4.0.0.5512.2", "wix-4.0.0.5512.2.7z", wixChecksums["0.0.0"]["wix-4.0.0.5512.2.7z"])
+      expect(downloadBuilderToolset).toHaveBeenCalledOnce()
+      expect(downloadBuilderToolset).toHaveBeenCalledWith(
+        expect.objectContaining({ releaseName: "wix-4.0.0.5512.2", filenameWithExt: "wix-4.0.0.5512.2.7z" })
+      )
       expect(result).toBe("/fake/wix/path")
     })
 
-    test("ELECTRON_BUILDER_WIX_PATH set → returns override path, skips getBinFromUrl", async ({ expect }) => {
+    test("ELECTRON_BUILDER_WIX_DIR set → returns override path, skips downloadBuilderToolset", async ({ expect }) => {
       vi.mocked(resolveEnvToolsetPath).mockResolvedValue("/custom/wix/dir")
 
       const result = await getWixBin("0.0.0")
 
       expect(result).toBe("/custom/wix/dir")
-      expect(getBinFromUrl).not.toHaveBeenCalled()
+      expect(downloadBuilderToolset).not.toHaveBeenCalled()
     })
 
-    test("env override takes priority even when version would throw ('1.0.0')", async ({ expect }) => {
+    test("'1.0.0' without env override → downloads wix@1.0.0 bundle", async ({ expect }) => {
+      const result = await getWixBin("1.0.0")
+
+      expect(downloadBuilderToolset).toHaveBeenCalledOnce()
+      expect(downloadBuilderToolset).toHaveBeenCalledWith(
+        expect.objectContaining({ releaseName: "wix@1.0.0", filenameWithExt: "wix-4.0.6.tar.gz" })
+      )
+      expect(result).toBe("/fake/wix/path")
+    })
+
+    test("'1.0.0' with ELECTRON_BUILDER_WIX_DIR set → returns override path, skips download", async ({ expect }) => {
       vi.mocked(resolveEnvToolsetPath).mockResolvedValue("/local/wix")
 
       const result = await getWixBin("1.0.0")
 
       expect(result).toBe("/local/wix")
-      expect(getBinFromUrl).not.toHaveBeenCalled()
+      expect(downloadBuilderToolset).not.toHaveBeenCalled()
     })
 
-    describe("version '1.0.0' without env override", () => {
-      test("throws an error mentioning the version", async ({ expect }) => {
-        await expect(getWixBin("1.0.0")).rejects.toThrow(/"1.0.0"/)
-      })
+    test("'1.0.0' download uses checksum from wixChecksums", async ({ expect }) => {
+      await getWixBin("1.0.0")
 
-      test("error message mentions ELECTRON_BUILDER_WIX_PATH as the workaround", async ({ expect }) => {
-        await expect(getWixBin("1.0.0")).rejects.toThrow(/ELECTRON_BUILDER_WIX_PATH/)
-      })
-
-      test("error message mentions toolsets.wix as the config key", async ({ expect }) => {
-        await expect(getWixBin("1.0.0")).rejects.toThrow(/toolsets\.wix/)
-      })
-
-      test("getBinFromUrl is never called", async ({ expect }) => {
-        await expect(getWixBin("1.0.0")).rejects.toThrow()
-        expect(getBinFromUrl).not.toHaveBeenCalled()
-      })
+      expect(downloadBuilderToolset).toHaveBeenCalledWith(
+        expect.objectContaining({ checksums: wixChecksums["1.0.0"] })
+      )
     })
 
     test("each call re-checks the env override (no caching of resolveEnvToolsetPath result)", async ({ expect }) => {

@@ -8,8 +8,8 @@ const wineToolsChecksums: Record<string, Record<string, string>> = {
     "wine-4.0.1-mac.7z": "1baac808a67975b68b9226beea7b64ad0acc3e598a4b45c25bb5d2ae8cac655e",
   },
   "1.0.0": {
-    "wine-11.0-linux-x86_64.tar.xz": "STUB",
-    "wine-11.0-darwin-x86_64.tar.xz": "STUB",
+    "wine-11.0-linux-x86_64.tar.xz": "33f43eb7ade0a055a709d2d3bbfdb12b810eba25273580fbb1cb41a744506dec",
+    "wine-11.0-darwin-x86_64.tar.xz": "da7c0fe102f8a59710b3527f6431f6a3d7a67c7265710a6978574a28b7473176",
   },
 }
 
@@ -48,7 +48,7 @@ export async function getWineToolset(wine: ToolsetConfig["wine"]): Promise<{ exe
         releaseName: "wine-4.0.1-mac",
         filenameWithExt: "wine-4.0.1-mac.7z",
         checksums: wineToolsChecksums["0.0.0"],
-        execPath: "wine64",
+        execPath: path.join("bin", "wine64"),
       }
     }
     const filenameWithExt = process.platform === "darwin" ? "wine-11.0-darwin-x86_64.tar.xz" : "wine-11.0-linux-x86_64.tar.xz"
@@ -83,13 +83,13 @@ export async function getWineToolset(wine: ToolsetConfig["wine"]): Promise<{ exe
 
     const execPath = path.resolve(sanitizedWinePath, execSubPath)
     const winePrefix = path.resolve(sanitizedWinePath, "wine-home")
-    const dyldLibPaths = [path.resolve(sanitizedWinePath, "lib"), process.env.DYLD_FALLBACK_LIBRARY_PATH].filter(Boolean).join(path.delimiter)
+    const dyldLibPath = path.resolve(sanitizedWinePath, "lib")
 
-    for (const p of [execPath, winePrefix, ...dyldLibPaths]) {
+    for (const p of [execPath, winePrefix, dyldLibPath]) {
       if (!(await exists(p))) {
-        throw new InvalidConfigurationError(`Path specified by ELECTRON_BUILDER_WINE_TOOLSET_DIR does not contain expected structure, missing: ${p}`)
+        throw new InvalidConfigurationError(`Wine toolset at "${toolsetPath}" is missing expected path: ${p}`)
       }
     }
-    return { execPath, winePrefix, dyldLibPaths }
+    return { execPath, winePrefix, dyldLibPaths: [dyldLibPath, process.env.DYLD_FALLBACK_LIBRARY_PATH].filter(Boolean).join(path.delimiter) }
   }
 }

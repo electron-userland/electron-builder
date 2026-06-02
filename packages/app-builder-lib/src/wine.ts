@@ -6,7 +6,6 @@ import { Nullish } from "builder-util-runtime"
 
 type WineOptions = {
   file: string
-  // file64?: string | null
   appArgs?: Array<string>
   options?: ExecFileOptions
   toolset: ToolsetConfig["wine"] | Nullish
@@ -14,11 +13,14 @@ type WineOptions = {
 
 /** @private */
 export async function execWine({ file: target, appArgs = [], options = {}, toolset }: WineOptions): Promise<string> {
-  const { execPath: wineExe, env: wineEnv } = await getWineToolset(toolset)
   if (options.timeout == null) {
     // 2 minutes
     options.timeout = 120 * 1000
   }
+  if (process.platform === "win32") {
+    return exec(target, appArgs, options)
+  }
+  const { execPath: wineExe, env: wineEnv } = await getWineToolset(toolset)
   return exec(wineExe, [target, ...appArgs], { ...options, env: { ...process.env, ...wineEnv, ...options.env } })
 }
 
