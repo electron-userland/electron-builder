@@ -200,6 +200,22 @@ export async function extractArchive(file: string, dir: string) {
 
     if (file.endsWith(".tar.gz") || file.endsWith(".tgz")) {
       await tar.extract({ file, cwd: tmpDir, strip: 1 })
+    } else if (file.endsWith(".tar.xz") || file.endsWith(".txz")) {
+      // node-tar cannot decompress xz, so use 7za to turn the .tar.xz into a .tar, then extract that tar.
+      const cmd7za = await getPath7za()
+      const xzOutDir = `${tmpDir}.xz`
+      await fs.rm(xzOutDir, { recursive: true, force: true })
+      await fs.mkdir(xzOutDir, { recursive: true })
+      try {
+        await exec(cmd7za, ["x", "-bd", file, to7zaOutputSwitch(sanitizeDirPath(xzOutDir)), "-y"])
+        const innerTar = (await fs.readdir(xzOutDir)).find(f => f.endsWith(".tar"))
+        if (innerTar == null) {
+          throw new Error(`xz decompression of ${path.basename(file)} produced no .tar archive`)
+        }
+        await tar.extract({ file: path.join(xzOutDir, innerTar), cwd: tmpDir, strip: 1 })
+      } finally {
+        await fs.rm(xzOutDir, { recursive: true, force: true })
+      }
     } else if (file.endsWith(".zip")) {
       await extractZipStreaming(file, tmpDir)
     } else if (file.endsWith(".7z")) {
@@ -400,7 +416,7 @@ export async function downloadBuilderToolset(options: {
   const baseUrl = getBinariesMirrorUrl(githubOrgRepo)
   const fullUrl = overrideUrl ? `${overrideUrl}/${filenameWithExt}` : `${baseUrl}${releaseName}/${filenameWithExt}`
   const suffix = hashUrlSafe(fullUrl, 5)
-  const folderName = `${filenameWithExt.replace(/\.(tar\.gz|tgz|zip|7z)$/, "")}-${suffix}`
+  const folderName = `${filenameWithExt.replace(/\.(tar\.gz|tgz|tar\.xz|txz|zip|7z)$/, "")}-${suffix}`
   const extractDir = path.join(getCacheDirectory({ allowEnvVarOverride: true }), releaseName, folderName)
 
   // Use resolveAssetURL so @electron/get's ELECTRON_MIRROR env var check cannot override

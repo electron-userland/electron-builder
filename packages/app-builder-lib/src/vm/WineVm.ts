@@ -40,6 +40,6 @@ export class WineVmManager extends VmManager {
       return exec(target, appArgs, options)
     }
     const { execPath: wineExe, env: wineEnv } = await getWineToolset(toolset)
-    return exec(wineExe, [target, ...appArgs], { ...options, env: { ...process.env, ...wineEnv, ...options.env } })
+    return exec(wineExe, [target, ...appArgs], { ...options, env: { ...wineEnv, ...options.env } })
   }
 }

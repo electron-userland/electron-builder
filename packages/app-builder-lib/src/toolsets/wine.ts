@@ -22,7 +22,7 @@ export async function getWineToolset(wine: ToolsetConfig["wine"]): Promise<{ exe
 
   const envPath = await resolveEnvToolsetPath("ELECTRON_BUILDER_WINE_TOOLSET_DIR", "directory")
   if (envPath != null) {
-    const { execPath, winePrefix, dyldLibPaths } = await createWineEnvironment(envPath)
+    const { execPath, winePrefix, dyldLibPaths } = await createWineEnvironment(envPath, "bin/wine")
 
     return {
       execPath,
@@ -78,18 +78,31 @@ export async function getWineToolset(wine: ToolsetConfig["wine"]): Promise<{ exe
     },
   }
 
-  async function createWineEnvironment(toolsetPath: string, execSubPath = path.join("bin", "wine")) {
+  async function createWineEnvironment(toolsetPath: string, execSubPath: string) {
     const sanitizedWinePath = sanitizeDirPath(toolsetPath)
 
     const execPath = path.resolve(sanitizedWinePath, execSubPath)
     const winePrefix = path.resolve(sanitizedWinePath, "wine-home")
-    const dyldLibPath = path.resolve(sanitizedWinePath, "lib")
 
-    for (const p of [execPath, winePrefix, dyldLibPath]) {
+    for (const p of [execPath, winePrefix]) {
       if (!(await exists(p))) {
         throw new InvalidConfigurationError(`Wine toolset at "${toolsetPath}" is missing expected path: ${p}`)
       }
     }
+
+    // Modern bundles ship a `lib` dir; the legacy wine-4.0.1-mac bundle ships `lib64` instead.
+    let dyldLibPath: string | null = null
+    for (const libDir of ["lib", "lib64"]) {
+      const candidate = path.resolve(sanitizedWinePath, libDir)
+      if (await exists(candidate)) {
+        dyldLibPath = candidate
+        break
+      }
+    }
+    if (dyldLibPath == null) {
+      throw new InvalidConfigurationError(`Wine toolset at "${toolsetPath}" is missing expected library directory (lib or lib64)`)
+    }
+
     return { execPath, winePrefix, dyldLibPaths: [dyldLibPath, process.env.DYLD_FALLBACK_LIBRARY_PATH].filter(Boolean).join(path.delimiter) }
   }
 }

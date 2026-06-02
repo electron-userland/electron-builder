@@ -66,6 +66,10 @@ function createChainable(baseFn: any, meta: Meta = {}, shouldSkip = false): any 
   add("ifLinux", { platform: "linux" }, !isLinux)
   add("ifNotLinux", { platformNot: "linux" }, isLinux)
 
+  // Run where wine-based Windows tooling works: native Windows and Linux (wine).
+  // Skip on macOS — Catalina+ blocks 32-bit Wine and CI runners have no wine/VM available.
+  add("ifWindowsOrWine", { platform: "win-or-wine" }, isMac)
+
   wrapped.ifEnv = (envKey: boolean | string | undefined) => {
     let condition = false
     if (typeof envKey === "boolean") {

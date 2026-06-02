@@ -80,10 +80,9 @@ export default class MsiTarget extends Target {
     await packager.info.emitMsiProjectCreated(projectFile)
 
     const vendorPath = await getWixBin(this.packager.config.toolsets?.wix)
-    const wixVersion = this.packager.config.toolsets?.wix ?? "0.0.0"
-
+    const wixVersion = this.packager.config.toolsets?.wix
     await withToolsetLock(async () => {
-      if (wixVersion === "0.0.0") {
+      if (wixVersion === "0.0.0" || wixVersion == null) {
         await this.buildV3(vm, vendorPath, stageDir.dir, appOutDir, artifactPath, arch)
       } else {
         await this.buildV4(vm, vendorPath, stageDir.dir, appOutDir, artifactPath, arch)
