@@ -54,10 +54,9 @@ runs:
       uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
       with:
         path: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
-        key: vitest-smart-cache-${{ env.VITEST_CACHE_REF }}-${{ github.sha }}
+        key: vitest-smart-cache-${{ env.VITEST_CACHE_REF }}
         restore-keys: |
-          vitest-smart-cache-${{ env.VITEST_CACHE_REF }}-
-          vitest-smart-cache-master-
+          vitest-smart-cache-master
 
     - name: Set up Vitest smart cache reset flag
       run: echo "RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}" >> $GITHUB_ENV
