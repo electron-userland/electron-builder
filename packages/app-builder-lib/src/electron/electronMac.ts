@@ -8,44 +8,22 @@ import { MacPackager } from "../macPackager"
 import { normalizeExt } from "../platformPackager"
 import { savePlistFile, parsePlistFile, PlistObject, PlistValue } from "../util/plist"
 import { createBrandingOpts } from "./ElectronFramework"
+import { addHelperCompatSymlinks, assertSafeHelperName, getAvailableHelperSuffixes } from "./electronMacUtils"
+export { addHelperCompatSymlinks, assertSafeHelperName, getAvailableHelperSuffixes }
 
 function doRename(basePath: string, oldName: string, newName: string) {
   return rename(path.join(basePath, oldName), path.join(basePath, newName))
 }
 
 function moveHelpers(helperSuffixes: Array<string>, frameworksPath: string, appName: string, prefix: string): Promise<any> {
+  assertSafeHelperName(appName, "Product name")
+  assertSafeHelperName(prefix, "Electron branding name")
   return Promise.all(
     helperSuffixes.map(suffix => {
       const executableBasePath = path.join(frameworksPath, `${prefix}${suffix}.app`, "Contents", "MacOS")
       return doRename(executableBasePath, `${prefix}${suffix}`, appName + suffix).then(() => doRename(frameworksPath, `${prefix}${suffix}.app`, `${appName}${suffix}.app`))
     })
   )
-}
-
-function getAvailableHelperSuffixes(
-  helperEHPlist: PlistObject | null,
-  helperNPPlist: PlistObject | null,
-  helperRendererPlist: PlistObject | null,
-  helperPluginPlist: PlistObject | null,
-  helperGPUPlist: PlistObject | null
-) {
-  const result = [" Helper"]
-  if (helperEHPlist != null) {
-    result.push(" Helper EH")
-  }
-  if (helperNPPlist != null) {
-    result.push(" Helper NP")
-  }
-  if (helperRendererPlist != null) {
-    result.push(" Helper (Renderer)")
-  }
-  if (helperPluginPlist != null) {
-    result.push(" Helper (Plugin)")
-  }
-  if (helperGPUPlist != null) {
-    result.push(" Helper (GPU)")
-  }
-  return result
 }
 
 /** @internal */
@@ -266,12 +244,10 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     unlinkIfExists(path.join(appOutDir, "LICENSES.chromium.html")),
   ])
 
-  await moveHelpers(
-    getAvailableHelperSuffixes(helperEHPlist, helperNPPlist, helperRendererPlist, helperPluginPlist, helperGPUPlist),
-    frameworksPath,
-    appFilename,
-    electronBranding.productName
-  )
+  const helperSuffixes = getAvailableHelperSuffixes(helperEHPlist, helperNPPlist, helperRendererPlist, helperPluginPlist, helperGPUPlist)
+
+  await moveHelpers(helperSuffixes, frameworksPath, appFilename, electronBranding.productName)
+  await addHelperCompatSymlinks(helperSuffixes, frameworksPath, appFilename, electronBranding.productName)
 
   if (helperLoginPlist != null) {
     const prefix = electronBranding.productName
