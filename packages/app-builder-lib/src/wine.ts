@@ -14,7 +14,7 @@ type WineOptions = {
 
 /** @private */
 export async function execWine({ file: target, appArgs = [], options = {}, toolset }: WineOptions): Promise<string> {
-  const { path: wineExe, env: wineEnv } = await getWineToolset(toolset)
+  const { execPath: wineExe, env: wineEnv } = await getWineToolset(toolset)
   if (options.timeout == null) {
     // 2 minutes
     options.timeout = 120 * 1000

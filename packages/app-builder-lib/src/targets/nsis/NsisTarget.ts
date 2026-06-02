@@ -434,6 +434,7 @@ export class NsisTarget extends Target {
     await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(script, false, archs)))
 
     // http://forums.winamp.com/showthread.php?p=3078545
+    // TODO: remove workaround when wine is fully upgraded to 11
     if (isMacOsCatalina()) {
       try {
         await UninstallerReader.exec(installerPath, uninstallerPath)

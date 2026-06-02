@@ -84,7 +84,7 @@ async function spawnSiblingProcess(vm: ParallelsVmManager | undefined, appExeNam
   }
 }
 
-export function registerBlackboxWinTests(toolsets: Required<Pick<ToolsetConfig, "winCodeSign" | "nsis">>): void {
+export function registerBlackboxWinTests(toolsets: Required<Pick<ToolsetConfig, "winCodeSign" | "nsis" | "wine">>): void {
   describe.heavy("windows", optionsForFlakyE2E, () => {
     test("nsis", optionsForFlakyE2E, async (context: TestContext) => {
       const vm = await windowsVmPromise

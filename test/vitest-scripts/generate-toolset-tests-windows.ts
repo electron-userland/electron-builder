@@ -51,16 +51,18 @@ const SUITES: WindowsSuiteConfig[] = [
     name: "msi",
     registerFn: namedFn("registerMsiTests" satisfies keyof typeof _MsiSuite),
     importPath: "windows/msiTestSuite",
-    describeConfig: { name: "msi", chain: ["ifWindows"] },
+    describeConfig: { name: "msi" },
     describeOptions: { sequential: true },
+    wineVersions: WINE_VERSIONS,
   },
   {
     name: "msiWrapped",
     registerFn: namedFn("registerMsiWrappedTests" satisfies keyof typeof _MsiWrappedSuite),
     importPath: "windows/msiWrappedTestSuite",
-    describeConfig: { name: "msiWrapped", chain: ["ifWindows"] },
+    describeConfig: { name: "msiWrapped" },
     describeOptions: { sequential: true },
     nsisVersions: NSIS_VERSIONS,
+    wineVersions: WINE_VERSIONS,
   },
   {
     name: "squirrelWindows",
@@ -95,12 +97,7 @@ const SUITES: WindowsSuiteConfig[] = [
   },
 ]
 
-function renderFile(
-  suite: WindowsSuiteConfig,
-  winCodeSign: ToolsetConfig["winCodeSign"],
-  nsis?: ToolsetConfig["nsis"],
-  wine?: ToolsetConfig["wine"]
-): string {
+function renderFile(suite: WindowsSuiteConfig, winCodeSign: ToolsetConfig["winCodeSign"], nsis?: ToolsetConfig["nsis"], wine?: ToolsetConfig["wine"]): string {
   const fnName = suite.registerFn.name
   const toolsets: Record<string, unknown> = { winCodeSign }
   if (nsis !== undefined) {

@@ -45,7 +45,7 @@ export async function doTest(
     return Promise.resolve()
   }
 
-  const { path: winePath, env: wineEnv } = await getWineToolset(toolsets.wine)
+  const { execPath: winePath, env: wineEnv } = await getWineToolset(toolsets.wine)
   const wine = new WineManager(winePath, wineEnv)
   await wine.prepare()
   const driveC = path.join(wine.wineDir!, "drive_c")
