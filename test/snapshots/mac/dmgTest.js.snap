@@ -703,6 +703,52 @@ exports[`dmg > explicit size - HFS+ 2`] = `
 }
 `;
 
+exports[`dmg > license buttons config 1`] = `
+{
+  "buttons": {
+    "en_US": {
+      "agree": "Agree",
+      "disagree": "Disagree",
+      "language": "English",
+      "message": "Here is my own description",
+      "print": "Print",
+      "save": "Save",
+    },
+    "fr_FR": {
+      "agree": "J'accepte",
+      "disagree": "Je refuse",
+      "language": "Français",
+      "message": "Voici ma propre description (éàè)",
+      "print": "Imprimer",
+      "save": "Sauvegarder",
+    },
+    "ja_JP": {
+      "agree": "同意する",
+      "disagree": "同意しない",
+      "language": "日本語",
+      "message": "ここに私の説明があります",
+      "print": "印刷する",
+      "save": "セーブ",
+    },
+    "ko_KR": {
+      "agree": "한국어",
+      "disagree": "동의하지 않는다",
+      "language": "한국어",
+      "message": "여기에 내 설명이있다.",
+      "print": "인쇄",
+      "save": "구하다",
+    },
+  },
+  "default-language": "en_US",
+  "licenses": {
+    "en_US": "<<path>>",
+    "fr_FR": "<<path>>",
+    "ja_JP": "<<path>>",
+    "ko_KR": "<<path>>",
+  },
+}
+`;
+
 exports[`dmg > license buttons config 2`] = `
 {
   "mac": [

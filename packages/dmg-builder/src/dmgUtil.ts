@@ -69,7 +69,9 @@ export async function attachAndExecute(dmgPath: string, readWrite: boolean, forc
   // embedded in the DMG instead of blocking on a terminal prompt.
   const { stdout: attachOutput } = await spawnAndWriteWithOutput("hdiutil", args, "y\n")
   const attachResult = attachOutput || null
-  const deviceResult = attachResult == null ? null : /^(\/dev\/\w+)/.exec(attachResult)
+  // Use multiline flag so ^ matches any line start — the EULA text (if any)
+  // precedes the /dev/... device lines in hdiutil's stdout output.
+  const deviceResult = attachResult == null ? null : /^(\/dev\/\w+)/m.exec(attachResult)
   const device = deviceResult == null || deviceResult.length !== 2 ? null : deviceResult[1]
   if (device == null) {
     throw new Error(`Cannot mount: ${attachResult}`)
