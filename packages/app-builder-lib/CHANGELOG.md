@@ -1,5 +1,32 @@
 # app-builder-lib
 
+## 26.14.0
+
+### Minor Changes
+
+- Feat: migrate blockmap and icon commands from app-builder-bin to pure TypeScript _[`#9800`](https://github.com/electron-userland/electron-builder/pull/9800) [`7a71b01`](https://github.com/electron-userland/electron-builder/commit/7a71b0136183b07e78ed6c1185c459673a77a4eb) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Fix(pnpm): properly resolve nested dependencies when `nodeLinker: hoisted` _[`#9811`](https://github.com/electron-userland/electron-builder/pull/9811) [`2be34d2`](https://github.com/electron-userland/electron-builder/commit/2be34d2b9b3903ecd616e7d098793961ebc6ee94) [@mmaietta](https://github.com/mmaietta)_
+- Fix(dynamic-import): use CJS resolver to reliably resolve package subpaths in pnpm projects _[`#9817`](https://github.com/electron-userland/electron-builder/pull/9817) [`370bd75`](https://github.com/electron-userland/electron-builder/commit/370bd754365ed082fdd0a2bd46ae85b8e26ef87c) [@mmaietta](https://github.com/mmaietta)_
+- Fix(builder-util): add timeout to `spawnAndWriteWithOutput` _[`#9820`](https://github.com/electron-userland/electron-builder/pull/9820) [`0e67339`](https://github.com/electron-userland/electron-builder/commit/0e67339e0177e4bacf57845356d27020918803b3) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 4 dependencies</summary>
+
+<small>
+
+[`f0e33f0`](https://github.com/electron-userland/electron-builder/commit/f0e33f08c46058bb9011337af1706c507d2dd733) [`0e67339`](https://github.com/electron-userland/electron-builder/commit/0e67339e0177e4bacf57845356d27020918803b3)
+
+</small>
+
+- `dmg-builder@26.14.0`
+- `builder-util@26.14.0`
+- `electron-builder-squirrel-windows@26.14.0`
+- `electron-publish@26.14.0`
+
+</details>
+
 ## 26.13.1
 
 ### Patch Changes

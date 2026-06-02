@@ -1,5 +1,11 @@
 # builder-util
 
+## 26.14.0
+
+### Patch Changes
+
+- Fix(builder-util): add timeout to `spawnAndWriteWithOutput` _[`#9820`](https://github.com/electron-userland/electron-builder/pull/9820) [`0e67339`](https://github.com/electron-userland/electron-builder/commit/0e67339e0177e4bacf57845356d27020918803b3) [@mmaietta](https://github.com/mmaietta)_
+
 ## 26.13.0
 
 ### Minor Changes
