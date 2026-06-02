@@ -43,6 +43,12 @@ describe("dynamicImport", () => {
     }
   })
 
+  test("imports a Node built-in module", async () => {
+    // Built-ins must not be routed through pathToFileURL — require.resolve("fs") === "fs"
+    const mod = await helper.dynamicImport("fs")
+    expect(typeof mod.readFileSync).toBe("function")
+  })
+
   test("rejects for a nonexistent module", async () => {
     await expect(helper.dynamicImport("__nonexistent_pkg_that_does_not_exist__")).rejects.toThrow()
   })
@@ -56,6 +62,7 @@ describe("dynamicImportMaybe", () => {
   })
 
   test("rejects with combined error message for a nonexistent module", async () => {
-    await expect(helper.dynamicImportMaybe("__nonexistent_pkg_that_does_not_exist__")).rejects.toThrow(/1\.|2\./)
+    // Require both markers in order: "\n1. <cjs error>\n2. <esm error>"
+    await expect(helper.dynamicImportMaybe("__nonexistent_pkg_that_does_not_exist__")).rejects.toThrow(/1\.[\s\S]*2\./)
   })
 })

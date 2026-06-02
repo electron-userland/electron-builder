@@ -1,13 +1,18 @@
 const url = require("url")
 const fs = require("fs")
+const path = require("path")
 
 // Resolve a module specifier to a file:// URL using CJS resolution, which
 // adds .js extensions automatically and follows pnpm's symlinked node_modules.
-// Falls back to the raw specifier if require.resolve() cannot find the path
-// (e.g. the module isn't installed yet — caller will get the normal error).
+// Returns null for Node built-ins (require.resolve returns a bare string, not
+// an absolute path) and for any specifier that cannot be resolved, so callers
+// fall back to importing the raw specifier and get the normal error.
 function resolveToFileUrl(modulePath) {
   try {
-    return url.pathToFileURL(require.resolve(modulePath)).href
+    const resolved = require.resolve(modulePath)
+    // Built-in modules (e.g. "fs", "path") resolve to their bare name, not a
+    // filesystem path. Passing a bare name to pathToFileURL produces a bogus URL.
+    return path.isAbsolute(resolved) ? url.pathToFileURL(resolved).href : null
   } catch {
     return null
   }
