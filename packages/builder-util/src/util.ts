@@ -275,12 +275,17 @@ export function spawnAndWrite(command: string, args: Array<string>, data: string
 
 export function spawnAndWriteWithOutput(command: string, args: Array<string>, data: string, options?: SpawnOptions): Promise<{ stdout: string; stderr: string }> {
   const childProcess = doSpawn(command, args, { ...options, stdio: ["pipe", "pipe", "pipe"] as any })
-  const timeout = setTimeout(() => childProcess.kill(), 4 * 60 * 1000)
   const isDebugEnabled = debug.enabled
 
   return new Promise((resolve, reject) => {
     let stdout = ""
     let stderr = ""
+    let timedOut = false
+
+    const timeout = setTimeout(() => {
+      timedOut = true
+      childProcess.kill()
+    }, 4 * 60 * 1000)
 
     childProcess.on("error", (err: Error) => {
       clearTimeout(timeout)
@@ -305,7 +310,9 @@ export function spawnAndWriteWithOutput(command: string, args: Array<string>, da
 
     childProcess.once("close", (code: number) => {
       clearTimeout(timeout)
-      if (code === 0) {
+      if (timedOut) {
+        reject(new Error(`${command} timed out after 4 minutes`))
+      } else if (code === 0) {
         resolve({ stdout, stderr })
       } else {
         reject(new ExecError(command, code ?? -1, stdout, stderr))

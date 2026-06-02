@@ -122,11 +122,11 @@ describe("verifyInstallerSize", () => {
     await expect(verifyInstallerSize(outFile, defines)).resolves.not.toThrow()
   })
 
-  test("throws when installer file does not exist", async ({ expect }) => {
+  test("throws a descriptive error when installer file does not exist", async ({ expect }) => {
     const archive = await writeFile("app.7z", 5000)
     const defines = { ...baseDefines(), APP_64: archive }
     const missingOut = path.join(tmpDir, "missing.exe")
-    await expect(verifyInstallerSize(missingOut, defines)).rejects.toThrow(/smaller/i)
+    await expect(verifyInstallerSize(missingOut, defines)).rejects.toThrow(/not created/i)
   })
 
   test("skips size check when archive path does not exist", async ({ expect }) => {
@@ -141,5 +141,30 @@ describe("verifyInstallerSize", () => {
     const outFile = await writeFile("installer.exe", 3000)
     const defines = { ...baseDefines(), APP_ARM64: archiveArm64 }
     await expect(verifyInstallerSize(outFile, defines)).rejects.toThrow(/smaller/i)
+  })
+
+  test("passes when installer covers all three arch archives combined", async ({ expect }) => {
+    const a64 = await writeFile("app-x64.7z", 2000)
+    const a32 = await writeFile("app-x86.7z", 1000)
+    const aArm64 = await writeFile("app-arm64.7z", 1500)
+    const outFile = await writeFile("installer.exe", 5000) // 5000 >= 4500
+    const defines = { ...baseDefines(), APP_64: a64, APP_32: a32, APP_ARM64: aArm64 }
+    await expect(verifyInstallerSize(outFile, defines)).resolves.not.toThrow()
+  })
+
+  test("throws when installer is smaller than all three arch archives combined", async ({ expect }) => {
+    const a64 = await writeFile("app-x64.7z", 2000)
+    const a32 = await writeFile("app-x86.7z", 1000)
+    const aArm64 = await writeFile("app-arm64.7z", 1500)
+    const outFile = await writeFile("installer.exe", 4000) // 4000 < 4500
+    const defines = { ...baseDefines(), APP_64: a64, APP_32: a32, APP_ARM64: aArm64 }
+    await expect(verifyInstallerSize(outFile, defines)).rejects.toThrow(/smaller/i)
+  })
+
+  test("error message from missing file contains the outFile path", async ({ expect }) => {
+    const archive = await writeFile("app.7z", 5000)
+    const defines = { ...baseDefines(), APP_64: archive }
+    const missingOut = path.join(tmpDir, "missing.exe")
+    await expect(verifyInstallerSize(missingOut, defines)).rejects.toThrow("missing.exe")
   })
 })

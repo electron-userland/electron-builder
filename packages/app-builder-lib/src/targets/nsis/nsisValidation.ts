@@ -44,10 +44,12 @@ export async function verifyInstallerSize(outFile: string, defines: Defines): Pr
   }
 
   const outStat = await statOrNull(outFile)
-  const actualSize = outStat?.size ?? 0
-  if (actualSize < archiveSize) {
+  if (outStat == null) {
+    throw new Error(`Generated installer was not created at "${outFile}" — output may be incomplete. Check available disk space and try again.`)
+  }
+  if (outStat.size < archiveSize) {
     throw new Error(
-      `Generated installer (${actualSize} bytes) is smaller than the embedded archive(s) (${archiveSize} bytes) — ` +
+      `Generated installer (${outStat.size} bytes) is smaller than the embedded archive(s) (${archiveSize} bytes) — ` +
         `output may be incomplete. Check available disk space and try again.`
     )
   }
