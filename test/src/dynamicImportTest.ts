@@ -33,7 +33,7 @@ describe("dynamicImport", () => {
   test("imports an absolute file path", async () => {
     const tempDir = path.join(WORKSPACE_ROOT, "temp")
     fs.mkdirSync(tempDir, { recursive: true })
-    const tmpFile = path.join(tempDir, `dynamic-import-test-${Date.now()}.js`)
+    const tmpFile = path.join(tempDir, `dynamic-import-test-${Date.now()}-${Math.random().toString(16).slice(2)}.js`)
     fs.writeFileSync(tmpFile, "exports.value = 42")
     try {
       const mod = await helper.dynamicImport(tmpFile)
