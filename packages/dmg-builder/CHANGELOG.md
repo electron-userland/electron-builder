@@ -1,5 +1,26 @@
 # dmg-builder
 
+## 26.14.0
+
+### Minor Changes
+
+- Feat(dmg-builder): replace `dmg-license` post-processing with dmgbuild-native license embedding; removes deprecated `hdiutil udifrez` dependency _[`#9815`](https://github.com/electron-userland/electron-builder/pull/9815) [`f0e33f0`](https://github.com/electron-userland/electron-builder/commit/f0e33f08c46058bb9011337af1706c507d2dd733) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`2be34d2`](https://github.com/electron-userland/electron-builder/commit/2be34d2b9b3903ecd616e7d098793961ebc6ee94) [`370bd75`](https://github.com/electron-userland/electron-builder/commit/370bd754365ed082fdd0a2bd46ae85b8e26ef87c) [`7a71b01`](https://github.com/electron-userland/electron-builder/commit/7a71b0136183b07e78ed6c1185c459673a77a4eb) [`0e67339`](https://github.com/electron-userland/electron-builder/commit/0e67339e0177e4bacf57845356d27020918803b3)
+
+</small>
+
+- `app-builder-lib@26.14.0`
+- `builder-util@26.14.0`
+
+</details>
+
 ## 26.13.1
 
 ### Patch Changes

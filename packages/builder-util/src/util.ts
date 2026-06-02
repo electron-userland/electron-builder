@@ -282,10 +282,13 @@ export function spawnAndWriteWithOutput(command: string, args: Array<string>, da
     let stderr = ""
     let timedOut = false
 
-    const timeout = setTimeout(() => {
-      timedOut = true
-      childProcess.kill()
-    }, 4 * 60 * 1000)
+    const timeout = setTimeout(
+      () => {
+        timedOut = true
+        childProcess.kill()
+      },
+      4 * 60 * 1000
+    )
 
     childProcess.on("error", (err: Error) => {
       clearTimeout(timeout)
