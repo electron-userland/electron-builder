@@ -338,6 +338,36 @@ export interface DmgOptions extends TargetSpecificOptions {
   readonly sign?: boolean
 
   /**
+   * License agreement to display when the DMG is mounted.
+   *
+   * Accepts a single file path (`.rtf`, `.txt`, or `.html`) used as the English/default license,
+   * or a language-code → file-path map for multi-language builds.
+   *
+   * When set, this takes precedence over the file-naming convention
+   * (`license_en.txt`, etc. in the build resources directory).
+   * Paths are resolved relative to the build resources directory or project root.
+   *
+   * @example Single language
+   * ```yaml
+   * dmg:
+   *   license: "build/license.rtf"
+   * ```
+   *
+   * @example Multi-language
+   * ```yaml
+   * dmg:
+   *   license:
+   *     en_US: "build/license.rtf"
+   *     de_DE: "build/license_de.txt"
+   *     ja_JP: "build/license_ja.txt"
+   * ```
+   *
+   * If not set, electron-builder scans the build resources directory for
+   * `license_LANG.{rtf,txt,html}` files automatically.
+   */
+  license?: string | Record<string, string> | null
+
+  /**
    * @private
    * @default true
    */

@@ -6,7 +6,8 @@ import { stat } from "fs/promises"
 import { writeFile } from "fs-extra"
 import * as path from "path"
 import { DmgBuildConfig } from "./dmg"
-import { hdiUtil, hdiutilTransientExitCodes } from "./hdiuil"
+import type { DmgBuildLicenseConfig } from "./dmgLicense"
+import { hdiUtil, hdiUtilWithStdin, hdiutilTransientExitCodes } from "./hdiuil"
 
 export { DmgTarget } from "./dmg"
 
@@ -36,18 +37,15 @@ async function getDmgVendorPath(): Promise<string> {
     return resolvedPath
   }
 
-  // https://github.com/electron-userland/electron-builder-binaries/releases/tag/dmg-builder%401.2.2
-  const config = {
-    "dmgbuild-bundle-arm64-75c8a6c.tar.gz": "a83110f714044b0776849bd4bf14d7d44e8b339fc0e0d646f25e8f8650c245fb",
-    "dmgbuild-bundle-x86_64-75c8a6c.tar.gz": "20b2c7169aa51273e7d8458c1b1bb98855a8a659a322661c32f856e569c3b081",
-  }
   const arch = process.arch === "arm64" ? "arm64" : "x86_64"
-  const filename: keyof typeof config = `dmgbuild-bundle-${arch}-75c8a6c.tar.gz`
+  // https://github.com/electron-userland/electron-builder-binaries/releases?q=dmg-builder&expanded=true
   const file = await downloadBuilderToolset({
-    releaseName: "dmg-builder@1.2.4",
-    filenameWithExt: filename,
-    checksums: config,
-    githubOrgRepo: "electron-userland/electron-builder-binaries",
+    releaseName: "dmg-builder@1.2.5",
+    filenameWithExt: `dmgbuild-bundle-${arch}-75c8a6c.tar.gz`,
+    checksums: {
+      "dmgbuild-bundle-arm64-75c8a6c.tar.gz": "793404d0c96687e27d5ee40a668d498c92e36a64d6c2906df511031adb33cbeb",
+      "dmgbuild-bundle-x86_64-75c8a6c.tar.gz": "1664972f9cc2d6e8fce3b63e42cd30078aff602669c5856939c4519921200433",
+    },
   })
   return path.resolve(file, "dmgbuild")
 }
@@ -60,8 +58,12 @@ export async function attachAndExecute(dmgPath: string, readWrite: boolean, forc
   }
 
   args.push(dmgPath)
-  const attachResult = await hdiUtil(args)
-  const deviceResult = attachResult == null ? null : /^(\/dev\/\w+)/.exec(attachResult)
+  // Pipe "y\n" to stdin so that hdiutil auto-accepts any SLA/EULA dialog
+  // embedded in the DMG instead of blocking on a terminal prompt.
+  const attachResult = await hdiUtilWithStdin(args, "y\n")
+  // Use multiline flag so ^ matches any line start — the EULA text (if any)
+  // precedes the /dev/... device lines in hdiutil's stdout output.
+  const deviceResult = attachResult == null ? null : /^(\/dev\/\w+)/m.exec(attachResult)
   const device = deviceResult == null || deviceResult.length !== 2 ? null : deviceResult[1]
   if (device == null) {
     throw new Error(`Cannot mount: ${attachResult}`)
@@ -124,9 +126,10 @@ type DmgBuilderConfig = {
   volumeName: string
   specification: DmgOptions
   packager: MacPackager
+  licenseData?: DmgBuildLicenseConfig | null
 }
 
-export async function customizeDmg({ appPath, artifactPath, volumeName, specification, packager }: DmgBuilderConfig): Promise<boolean> {
+export async function customizeDmg({ appPath, artifactPath, volumeName, specification, packager, licenseData }: DmgBuilderConfig): Promise<boolean> {
   const isValidIconTextSize = !!specification.iconTextSize && specification.iconTextSize >= 10 && specification.iconTextSize <= 16
   const iconTextSize = isValidIconTextSize ? specification.iconTextSize : 12
   const volumePath = path.join("/Volumes", volumeName)
@@ -196,6 +199,10 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
         throw new InvalidConfigurationError(`dmg.contents path "${item.path}" is outside the workspace root`)
       }
     }
+  }
+
+  if (licenseData) {
+    settings.license = licenseData
   }
 
   const settingsFile = await packager.getTempFile(".json")

@@ -1010,6 +1010,20 @@
           "description": "Whether to create internet-enabled disk image (when it is downloaded using a browser it will automatically decompress the image, put the application on the desktop, unmount and remove the disk image file).",
           "type": "boolean"
         },
+        "license": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Record<string,string>"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "License agreement to display when the DMG is mounted.\n\nAccepts a single file path (`.rtf`, `.txt`, or `.html`) used as the English/default license,\nor a language-code → file-path map for multi-language builds.\n\nWhen set, this takes precedence over the file-naming convention\n(`license_en.txt`, etc. in the build resources directory).\nPaths are resolved relative to the build resources directory or project root."
+        },
         "publish": {
           "anyOf": [
             {
