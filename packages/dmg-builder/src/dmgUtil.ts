@@ -1,12 +1,12 @@
 import { DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
 import { downloadBuilderToolset } from "app-builder-lib/out/util/electronGet"
 import { withToolsetLock } from "app-builder-lib/out/util/toolsetLock"
-import { exec, executeFinally, exists, InvalidConfigurationError, isEmptyOrSpaces, log, TmpDir } from "builder-util"
+import { exec, executeFinally, exists, InvalidConfigurationError, isEmptyOrSpaces, log, spawnAndWriteWithOutput, TmpDir } from "builder-util"
 import { stat } from "fs/promises"
 import { writeFile } from "fs-extra"
 import * as path from "path"
 import { DmgBuildConfig } from "./dmg"
-import { DmgBuildLicenseConfig } from "./dmgLicense"
+import type { DmgBuildLicenseConfig } from "./dmgLicense"
 import { hdiUtil, hdiutilTransientExitCodes } from "./hdiuil"
 
 export { DmgTarget } from "./dmg"
@@ -38,6 +38,10 @@ async function getDmgVendorPath(): Promise<string> {
   }
 
   // https://github.com/electron-userland/electron-builder-binaries/releases/tag/dmg-builder%401.2.2
+  // TODO: update releaseName, filenames, and checksums below once the new bundle (with CJK codec
+  // support restored and licensing.py patches applied) has been built and published. The new bundle
+  // must include _codecs_jp/_codecs_kr/_codecs_cn/_codecs_hk/_codecs_tw so that Japanese, Korean,
+  // and Chinese license files are encoded correctly by dmgbuild's licensing.py at creation time.
   const config = {
     "dmgbuild-bundle-arm64-75c8a6c.tar.gz": "28be390d4cfade51d872c42016bc56712bb240525c9f21ebbfa0b413ade1fe0f",
     "dmgbuild-bundle-x86_64-75c8a6c.tar.gz": "97d4ac0d2137383d37d02df3338bf653b6e6095d033508458ef195d567d25071",
@@ -61,7 +65,10 @@ export async function attachAndExecute(dmgPath: string, readWrite: boolean, forc
   }
 
   args.push(dmgPath)
-  const attachResult = await hdiUtil(args)
+  // Pipe "y\n" to stdin so that hdiutil auto-accepts any SLA/EULA dialog
+  // embedded in the DMG instead of blocking on a terminal prompt.
+  const { stdout: attachOutput } = await spawnAndWriteWithOutput("hdiutil", args, "y\n")
+  const attachResult = attachOutput || null
   const deviceResult = attachResult == null ? null : /^(\/dev\/\w+)/.exec(attachResult)
   const device = deviceResult == null || deviceResult.length !== 2 ? null : deviceResult[1]
   if (device == null) {

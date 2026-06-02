@@ -404,9 +404,6 @@ importers:
       fs-extra:
         specifier: ^10.1.0
         version: 10.1.0
-      iconv-lite:
-        specifier: ^0.6.2
-        version: 0.6.3
       js-yaml:
         specifier: ^4.1.0
         version: 4.1.1

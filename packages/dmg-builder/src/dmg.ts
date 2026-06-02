@@ -6,7 +6,8 @@ import { Arch, exec, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces }
 import { sanitizeFileName } from "builder-util/out/filename"
 import { release as getOsRelease } from "os"
 import * as path from "path"
-import { addLicenseToDmg, DmgBuildLicenseConfig } from "./dmgLicense"
+import type { DmgBuildLicenseConfig } from "./dmgLicense"
+import { addLicenseToDmg } from "./dmgLicense"
 import { computeBackground, customizeDmg } from "./dmgUtil"
 import { hdiUtil } from "./hdiuil"
 

@@ -703,64 +703,6 @@ exports[`dmg > explicit size - HFS+ 2`] = `
 }
 `;
 
-exports[`dmg > license buttons config 1`] = `
-{
-  "$schema": "https://github.com/argv-minus-one/dmg-license/raw/master/schema.json",
-  "body": [
-    {
-      "lang": "en-US",
-    },
-    {
-      "lang": "fr-FR",
-    },
-    {
-      "lang": "ja-JP",
-    },
-    {
-      "lang": "ko-KR",
-    },
-  ],
-  "labels": [
-    {
-      "agree": "Agree",
-      "disagree": "Disagree",
-      "lang": "en-US",
-      "languageName": "English",
-      "message": "Here is my own description",
-      "print": "Print",
-      "save": "Save",
-    },
-    {
-      "agree": "J'accepte",
-      "disagree": "Je refuse",
-      "lang": "fr-FR",
-      "languageName": "Français",
-      "message": "Voici ma propre description (éàè)",
-      "print": "Imprimer",
-      "save": "Sauvegarder",
-    },
-    {
-      "agree": "同意する",
-      "disagree": "同意しない",
-      "lang": "ja-JP",
-      "languageName": "日本語",
-      "message": "ここに私の説明があります",
-      "print": "印刷する",
-      "save": "セーブ",
-    },
-    {
-      "agree": "한국어",
-      "disagree": "동의하지 않는다",
-      "lang": "ko-KR",
-      "languageName": "한국어",
-      "message": "여기에 내 설명이있다.",
-      "print": "인쇄",
-      "save": "구하다",
-    },
-  ],
-}
-`;
-
 exports[`dmg > license buttons config 2`] = `
 {
   "mac": [
