@@ -2963,7 +2963,7 @@
         },
         "hardenedRuntime": {
           "default": true,
-          "description": "Whether your app has to be signed with hardened runtime.",
+          "description": "Whether your app has to be signed with hardened runtime.\n\nWhen using ad-hoc signing (`identity: \"-\"`), hardened runtime enforces library validation which\nwill reject pre-signed Electron frameworks that carry a different Team ID. To resolve this either\nset `hardenedRuntime: false` or add the\n[`com.apple.security.cs.disable-library-validation`](https://developer.apple.com/documentation/BundleResources/Entitlements/com.apple.security.cs.disable-library-validation)\nentitlement to your entitlements file.",
           "type": "boolean"
         },
         "helperBundleId": {
@@ -3023,7 +3023,7 @@
           ]
         },
         "identity": {
-          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://www.electron.build/code-signing) instead of specifying this option.\nMAS installer identity is specified in the [mas](https://www.electron.build/mas).\n\nSet to `-` to use an ad-hoc identity for signing. Set to `null` to skip signing entirely.",
+          "description": "The signing identity (certificate name) to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://www.electron.build/code-signing) instead of specifying this option.\nMAS installer identity is specified in the [mas](https://www.electron.build/mas).\n\n- **Not set** (default): electron-builder searches the keychain for a valid signing certificate. If none is found, signing is skipped for all architectures — there is no automatic ad-hoc fallback.\n- **`null`**: skip signing entirely.\n- **`\"-\"`**: opt in to ad-hoc signing explicitly. Note that `hardenedRuntime: true` (the default) combined with ad-hoc signing requires\n  the [`com.apple.security.cs.disable-library-validation`](https://developer.apple.com/documentation/BundleResources/Entitlements/com.apple.security.cs.disable-library-validation)\n  entitlement to prevent app launch failures; otherwise set `hardenedRuntime: false`.",
           "type": [
             "null",
             "string"
@@ -3601,7 +3601,7 @@
         },
         "hardenedRuntime": {
           "default": true,
-          "description": "Whether your app has to be signed with hardened runtime.",
+          "description": "Whether your app has to be signed with hardened runtime.\n\nWhen using ad-hoc signing (`identity: \"-\"`), hardened runtime enforces library validation which\nwill reject pre-signed Electron frameworks that carry a different Team ID. To resolve this either\nset `hardenedRuntime: false` or add the\n[`com.apple.security.cs.disable-library-validation`](https://developer.apple.com/documentation/BundleResources/Entitlements/com.apple.security.cs.disable-library-validation)\nentitlement to your entitlements file.",
           "type": "boolean"
         },
         "helperBundleId": {
@@ -3661,7 +3661,7 @@
           ]
         },
         "identity": {
-          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://www.electron.build/code-signing) instead of specifying this option.\nMAS installer identity is specified in the [mas](https://www.electron.build/mas).\n\nSet to `-` to use an ad-hoc identity for signing. Set to `null` to skip signing entirely.",
+          "description": "The signing identity (certificate name) to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://www.electron.build/code-signing) instead of specifying this option.\nMAS installer identity is specified in the [mas](https://www.electron.build/mas).\n\n- **Not set** (default): electron-builder searches the keychain for a valid signing certificate. If none is found, signing is skipped for all architectures — there is no automatic ad-hoc fallback.\n- **`null`**: skip signing entirely.\n- **`\"-\"`**: opt in to ad-hoc signing explicitly. Note that `hardenedRuntime: true` (the default) combined with ad-hoc signing requires\n  the [`com.apple.security.cs.disable-library-validation`](https://developer.apple.com/documentation/BundleResources/Entitlements/com.apple.security.cs.disable-library-validation)\n  entitlement to prevent app launch failures; otherwise set `hardenedRuntime: false`.",
           "type": [
             "null",
             "string"
