@@ -49,7 +49,7 @@ const SUITES: WindowsSuiteConfig[] = [
     name: "msi",
     registerFn: namedFn("registerMsiTests" satisfies keyof typeof _MsiSuite),
     importPath: "windows/msiTestSuite",
-    describeConfig: { name: "msi"  },
+    describeConfig: { name: "msi" },
     describeOptions: { sequential: true },
     wixVersions: WIX_VERSIONS,
     winCodeSignVersions: [], // MSI does not use winCodeSign

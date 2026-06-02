@@ -1,9 +1,9 @@
 #!/usr/bin/env ts-node
 
-import { getAllTestFiles } from "./file-discovery"
-import { buildWeightedFiles, computeShardCount } from "./shard-builder"
-import { TargetPlatform } from "./smart-config"
-import { generateTests } from "../generate-tests/generate-tests"
+import { getAllTestFiles } from "./vitest-config/file-discovery"
+import { buildWeightedFiles, computeShardCount } from "./vitest-config/shard-builder"
+import { TargetPlatform } from "./vitest-config/smart-config"
+import { generateTests } from "./generate-tests/generate-tests"
 
 /**
  * Compute shard indices for a given platform

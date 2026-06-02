@@ -168,7 +168,7 @@ jobs:
       - name: Run shard in docker
         run: |
           echo $TEST_RUNNER_IMAGE_TAG
-          pnpm test-linux
+          pnpm test:linux
         env:
           ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SHARD_INDEX=${{ matrix.shard }} -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}"
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
@@ -338,7 +338,7 @@ jobs:
       - name: Test
         run: |
           echo $TEST_RUNNER_IMAGE_TAG
-          pnpm test-linux
+          pnpm test:linux
         env:
           TEST_FILES: nsisUpdaterTest,PublishManagerTest,differentialUpdateTest,GitlabPublisherTest,GitlabPublisher.integration.test
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono

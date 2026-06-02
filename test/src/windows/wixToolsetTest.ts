@@ -53,9 +53,7 @@ describe.sequential("wixToolset", () => {
       const result = await getWixBin(null)
 
       expect(downloadBuilderToolset).toHaveBeenCalledOnce()
-      expect(downloadBuilderToolset).toHaveBeenCalledWith(
-        expect.objectContaining({ releaseName: "wix-4.0.0.5512.2", filenameWithExt: "wix-4.0.0.5512.2.7z" })
-      )
+      expect(downloadBuilderToolset).toHaveBeenCalledWith(expect.objectContaining({ releaseName: "wix-4.0.0.5512.2", filenameWithExt: "wix-4.0.0.5512.2.7z" }))
       expect(result).toBe("/fake/wix/path")
     })
 
@@ -63,9 +61,7 @@ describe.sequential("wixToolset", () => {
       const result = await getWixBin(undefined)
 
       expect(downloadBuilderToolset).toHaveBeenCalledOnce()
-      expect(downloadBuilderToolset).toHaveBeenCalledWith(
-        expect.objectContaining({ releaseName: "wix-4.0.0.5512.2", filenameWithExt: "wix-4.0.0.5512.2.7z" })
-      )
+      expect(downloadBuilderToolset).toHaveBeenCalledWith(expect.objectContaining({ releaseName: "wix-4.0.0.5512.2", filenameWithExt: "wix-4.0.0.5512.2.7z" }))
       expect(result).toBe("/fake/wix/path")
     })
 
@@ -73,9 +69,7 @@ describe.sequential("wixToolset", () => {
       const result = await getWixBin("0.0.0")
 
       expect(downloadBuilderToolset).toHaveBeenCalledOnce()
-      expect(downloadBuilderToolset).toHaveBeenCalledWith(
-        expect.objectContaining({ releaseName: "wix-4.0.0.5512.2", filenameWithExt: "wix-4.0.0.5512.2.7z" })
-      )
+      expect(downloadBuilderToolset).toHaveBeenCalledWith(expect.objectContaining({ releaseName: "wix-4.0.0.5512.2", filenameWithExt: "wix-4.0.0.5512.2.7z" }))
       expect(result).toBe("/fake/wix/path")
     })
 
@@ -92,9 +86,7 @@ describe.sequential("wixToolset", () => {
       const result = await getWixBin("1.0.0")
 
       expect(downloadBuilderToolset).toHaveBeenCalledOnce()
-      expect(downloadBuilderToolset).toHaveBeenCalledWith(
-        expect.objectContaining({ releaseName: "wix@1.0.0", filenameWithExt: "wix-4.0.6.tar.gz" })
-      )
+      expect(downloadBuilderToolset).toHaveBeenCalledWith(expect.objectContaining({ releaseName: "wix@1.0.0", filenameWithExt: "wix-4.0.6.tar.gz" }))
       expect(result).toBe("/fake/wix/path")
     })
 
@@ -110,9 +102,7 @@ describe.sequential("wixToolset", () => {
     test("'1.0.0' download uses checksum from wixChecksums", async ({ expect }) => {
       await getWixBin("1.0.0")
 
-      expect(downloadBuilderToolset).toHaveBeenCalledWith(
-        expect.objectContaining({ checksums: wixChecksums["1.0.0"] })
-      )
+      expect(downloadBuilderToolset).toHaveBeenCalledWith(expect.objectContaining({ checksums: wixChecksums["1.0.0"] }))
     })
 
     test("each call re-checks the env override (no caching of resolveEnvToolsetPath result)", async ({ expect }) => {

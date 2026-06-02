@@ -6,7 +6,6 @@ import { ToolsetConfig } from "../configuration"
 import { getWineToolset } from "../toolsets/wine"
 import { VmManager } from "./vm"
 
-
 type WineOptions = {
   file: string
   appArgs?: Array<string>

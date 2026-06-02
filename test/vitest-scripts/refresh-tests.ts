@@ -27,14 +27,28 @@ function suiteRunsOnTarget(chain: string[] | undefined, target: Target): boolean
     return !chain?.some(c => PLATFORM_GATE_KEYS.has(c))
   }
   const platformChain = chain?.filter(c => PLATFORM_GATE_KEYS.has(c)) ?? []
-  if (platformChain.length === 0) return true
+  if (platformChain.length === 0) {
+    return true
+  }
   return platformChain.every(key => {
-    if (key === "ifMac") return target === "mac"
-    if (key === "ifWindows") return target === "windows"
-    if (key === "ifLinux") return target === "linux"
-    if (key === "ifNotMac") return target !== "mac"
-    if (key === "ifNotWindows") return target !== "windows"
-    if (key === "ifNotLinux") return target !== "linux"
+    if (key === "ifMac") {
+      return target === "mac"
+    }
+    if (key === "ifWindows") {
+      return target === "windows"
+    }
+    if (key === "ifLinux") {
+      return target === "linux"
+    }
+    if (key === "ifNotMac") {
+      return target !== "mac"
+    }
+    if (key === "ifNotWindows") {
+      return target !== "windows"
+    }
+    if (key === "ifNotLinux") {
+      return target !== "linux"
+    }
     return true
   })
 }
@@ -44,15 +58,21 @@ function suiteRunsOnTarget(chain: string[] | undefined, target: Target): boolean
 function deleteStaleGeneratedSnapshots(): void {
   // Snapshots for generated tests live under test/snapshots/generated/
   const snapshotsGenDir = path.resolve(__dirname, "../../snapshots/generated")
-  if (!fs.existsSync(snapshotsGenDir)) return
+  if (!fs.existsSync(snapshotsGenDir)) {
+    return
+  }
 
   let deleted = 0
   for (const suite of fs.readdirSync(snapshotsGenDir)) {
     const suiteSnapDir = path.join(snapshotsGenDir, suite)
-    if (!fs.statSync(suiteSnapDir).isDirectory()) continue
+    if (!fs.statSync(suiteSnapDir).isDirectory()) {
+      continue
+    }
 
     for (const snapFile of fs.readdirSync(suiteSnapDir)) {
-      if (!snapFile.endsWith(".js.snap")) continue
+      if (!snapFile.endsWith(".js.snap")) {
+        continue
+      }
       const testFile = snapFile.replace(".js.snap", ".ts")
       const testPath = path.join(GENERATED_TESTS_DIR, suite, testFile)
       if (!fs.existsSync(testPath)) {
@@ -75,14 +95,22 @@ function resolveMatchingSuites(target: Target): SuiteMetadata[] {
 }
 
 function resolveGeneratedFiles(suiteNames: Set<string>): string[] {
-  if (!fs.existsSync(GENERATED_TESTS_DIR)) return []
+  if (!fs.existsSync(GENERATED_TESTS_DIR)) {
+    return []
+  }
   const files: string[] = []
   for (const suite of fs.readdirSync(GENERATED_TESTS_DIR)) {
-    if (!suiteNames.has(suite)) continue
+    if (!suiteNames.has(suite)) {
+      continue
+    }
     const suiteDir = path.join(GENERATED_TESTS_DIR, suite)
-    if (!fs.statSync(suiteDir).isDirectory()) continue
+    if (!fs.statSync(suiteDir).isDirectory()) {
+      continue
+    }
     for (const f of fs.readdirSync(suiteDir)) {
-      if (f.endsWith("Test.ts")) files.push(f.replace(/\.ts$/, ""))
+      if (f.endsWith("Test.ts")) {
+        files.push(f.replace(/\.ts$/, ""))
+      }
     }
   }
   return files.sort()
