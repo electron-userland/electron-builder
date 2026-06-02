@@ -14,13 +14,15 @@ import type * as _DifferentialWinSuite from "../src/updater/differentialUpdateWi
 import type * as _BlackboxWinSuite from "../src/updater/blackboxUpdateWinSuite"
 
 const WIN_CODE_SIGN_VERSIONS: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0", "1.2.1"]
-const NSIS_VERSIONS: ToolsetConfig["nsis"][] = ["0.0.0", "1.2.1"]
+const NSIS_VERSIONS: ToolsetConfig["nsis"][] = ["0.0.0", "1.2.1", "2.0.0"]
 const WINE_VERSIONS: ToolsetConfig["wine"][] = ["0.0.0", "1.0.0"]
+const WIX_VERSIONS: ToolsetConfig["wix"][] = ["0.0.0", "1.0.0"]
 
 interface WindowsSuiteConfig extends SuiteConfig {
   readonly winCodeSignVersions?: ToolsetConfig["winCodeSign"][]
   readonly nsisVersions?: ToolsetConfig["nsis"][]
   readonly wineVersions?: ToolsetConfig["wine"][]
+  readonly wixVersions?: ToolsetConfig["wix"][]
 }
 
 const SUITES: WindowsSuiteConfig[] = [
@@ -51,9 +53,10 @@ const SUITES: WindowsSuiteConfig[] = [
     name: "msi",
     registerFn: namedFn("registerMsiTests" satisfies keyof typeof _MsiSuite),
     importPath: "windows/msiTestSuite",
-    describeConfig: { name: "msi" },
+    describeConfig: { name: "msi", chain: ["ifWindowsOrWine"] },
     describeOptions: { sequential: true },
-    wineVersions: WINE_VERSIONS,
+    wixVersions: WIX_VERSIONS,
+    winCodeSignVersions: [], // MSI does not use winCodeSign
   },
   {
     name: "msiWrapped",
@@ -97,14 +100,32 @@ const SUITES: WindowsSuiteConfig[] = [
   },
 ]
 
-function renderFile(suite: WindowsSuiteConfig, winCodeSign: ToolsetConfig["winCodeSign"], nsis?: ToolsetConfig["nsis"], wine?: ToolsetConfig["wine"]): string {
+function renderFile({
+  suite,
+  winCodeSign,
+  nsis,
+  wine,
+  wix,
+}: {
+  suite: WindowsSuiteConfig
+  winCodeSign: ToolsetConfig["winCodeSign"] | undefined
+  nsis?: ToolsetConfig["nsis"]
+  wine?: ToolsetConfig["wine"]
+  wix?: ToolsetConfig["wix"]
+}): string {
   const fnName = suite.registerFn.name
-  const toolsets: Record<string, unknown> = { winCodeSign }
+  const toolsets: Record<string, unknown> = {}
+  if (winCodeSign !== undefined) {
+    toolsets.winCodeSign = winCodeSign
+  }
   if (nsis !== undefined) {
     toolsets.nsis = nsis
   }
   if (wine !== undefined) {
     toolsets.wine = wine
+  }
+  if (wix !== undefined) {
+    toolsets.wix = wix
   }
   const toolsetsArg = JSON.stringify(toolsets)
   const describeCall = buildDescribeCall(suite.describeConfig.chain)
@@ -127,6 +148,16 @@ export function generateWindowsToolsetTests(): void {
   for (const suite of SUITES) {
     const generatedDir = path.resolve(GENERATED_TESTS_DIR, suite.name)
     cleanAndEnsureDir(generatedDir)
+
+    // Suites with an explicit wixVersions list are driven solely by the wix dimension.
+    if (suite.wixVersions) {
+      for (const wix of suite.wixVersions) {
+        const filename = `${suite.name}__wix-${wix}__Test.ts`
+        fs.writeFileSync(path.join(generatedDir, filename), renderFile({ suite, winCodeSign: undefined, nsis: undefined, wine: undefined, wix }), "utf8")
+      }
+      continue
+    }
+
     const wcsVersions = suite.winCodeSignVersions ?? WIN_CODE_SIGN_VERSIONS
     const nsisVersions = suite.nsisVersions
     const wineVersions = suite.wineVersions
@@ -136,18 +167,18 @@ export function generateWindowsToolsetTests(): void {
           if (wineVersions) {
             for (const wine of wineVersions) {
               const filename = `${suite.name}__wcs-${wcs}__nsis-${nsis}__wine-${wine}__Test.ts`
-              fs.writeFileSync(path.join(generatedDir, filename), renderFile(suite, wcs, nsis, wine), "utf8")
+              fs.writeFileSync(path.join(generatedDir, filename), renderFile({ suite, winCodeSign: wcs, nsis, wine }), "utf8")
             }
           } else {
             const filename = `${suite.name}__wcs-${wcs}__nsis-${nsis}__Test.ts`
-            fs.writeFileSync(path.join(generatedDir, filename), renderFile(suite, wcs, nsis), "utf8")
+            fs.writeFileSync(path.join(generatedDir, filename), renderFile({ suite, winCodeSign: wcs, nsis }), "utf8")
           }
         }
       }
     } else {
       for (const wcs of wcsVersions) {
         const filename = `${suite.name}__wcs-${wcs}__Test.ts`
-        fs.writeFileSync(path.join(generatedDir, filename), renderFile(suite, wcs), "utf8")
+        fs.writeFileSync(path.join(generatedDir, filename), renderFile({ suite, winCodeSign: wcs }), "utf8")
       }
     }
   }

@@ -9,21 +9,21 @@ export function registerWineToolsetTests(toolsets: ToolsetConfig): void {
 
   test(`getWineToolset resolves path [wine=${wine}]`, async ({ expect }) => {
     const result = await getWineToolset(wine)
-    expect(result.path).toBeTruthy()
+    expect(result.execPath).toBeTruthy()
     if (isLegacy) {
       // Legacy/system wine — no bundle download, just the "wine" command
-      expect(result.path).toBe("wine")
+      expect(result.execPath).toBe("wine")
     } else {
       // Downloaded bundle — must be an absolute path that exists on disk
-      expect(path.isAbsolute(result.path)).toBe(true)
-      expect(await exists(result.path)).toBe(true)
+      expect(path.isAbsolute(result.execPath)).toBe(true)
+      expect(await exists(result.execPath)).toBe(true)
     }
   })
 
   if (!isLegacy) {
     test(`wine@${wine} bundle sets macOS-specific env vars`, async ({ expect }) => {
       const result = await getWineToolset(wine)
-      const env = result.env as Record<string, string>
+      const env = result.env
       expect(env.DYLD_FALLBACK_LIBRARY_PATH).toBeTruthy()
       expect(env.WINEPREFIX).toBeTruthy()
       expect(env.WINEDEBUG).toBeTruthy()

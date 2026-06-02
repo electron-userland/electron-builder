@@ -6,7 +6,7 @@ import { readFile, writeFile } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { MsiOptions } from "../"
-import { getBinFromUrl } from "../binDownload"
+import { getWixBin } from "../toolsets/wix"
 import { Target } from "../core"
 import { DesktopShortcutCreationPolicy, FinalCommonWindowsInstallerOptions, getEffectiveOptions } from "../options/CommonWindowsInstallerConfiguration"
 import { normalizeExt } from "../platformPackager"
@@ -71,32 +71,23 @@ export default class MsiTarget extends Target {
 
     const stageDir = await createStageDir(this, packager, arch)
     const vm = this.vm
-
     const commonOptions = getEffectiveOptions(this.options, this.packager)
 
-    // wix 4.0.0.5512.2 doesn't support the arm64 architecture so default to x64 when building for arm64.
-    // This will result in an x64 MSI installer that installs an arm64 version of the application. This is a
-    // stopgap until the electron-builder-binaries wix version is upgraded to a version that supports arm64:
-    // https://github.com/electron-userland/electron-builder/issues/6077
-    const wixArch = arch == Arch.arm64 ? Arch.x64 : arch
-
+    // arm64 uses ProgramFiles64Folder (same as x64) in the MSI manifest
+    const manifestArch = arch === Arch.arm64 ? Arch.x64 : arch
     const projectFile = stageDir.getTempFile("project.wxs")
-    const objectFiles = ["project.wixobj"]
-    await writeFile(projectFile, await this.writeManifest(appOutDir, wixArch, commonOptions))
-
+    await writeFile(projectFile, await this.writeManifest(appOutDir, manifestArch, commonOptions))
     await packager.info.emitMsiProjectCreated(projectFile)
 
-    // noinspection SpellCheckingInspection
-    const vendorPath = await getBinFromUrl("wix-4.0.0.5512.2", "wix-4.0.0.5512.2.7z", "fe677fcd837b18c9b912985d91636bbd8a1e800c3b3a6a841b6f96e89624e839")
+    const vendorPath = await getWixBin(this.packager.config.toolsets?.wix)
+    const wixVersion = this.packager.config.toolsets?.wix ?? "0.0.0"
 
-    // noinspection SpellCheckingInspection
-    const candleArgs = ["-arch", wixArch === Arch.ia32 ? "x86" : "x64", `-dappDir=${vm.toVmFile(appOutDir)}`].concat(this.getCommonWixArgs())
-    candleArgs.push("project.wxs")
     await withToolsetLock(async () => {
-      await vm.exec(vm.toVmFile(path.join(vendorPath, "candle.exe")), candleArgs, {
-        cwd: stageDir.dir,
-      })
-      await this.light(objectFiles, vm, artifactPath, appOutDir, vendorPath, stageDir.dir)
+      if (wixVersion === "0.0.0") {
+        await this.buildV3(vm, vendorPath, stageDir.dir, appOutDir, artifactPath, arch)
+      } else {
+        await this.buildV4(vm, vendorPath, stageDir.dir, appOutDir, artifactPath, arch)
+      }
     })
 
     await stageDir.cleanup()
@@ -113,7 +104,17 @@ export default class MsiTarget extends Target {
     })
   }
 
-  private async light(objectFiles: Array<string>, vm: VmManager, artifactPath: string, appOutDir: string, vendorPath: string, tempDir: string) {
+  // WiX v3 (toolsets.wix "0.0.0"): two-step candle.exe + light.exe pipeline
+  private async buildV3(vm: VmManager, vendorPath: string, stageDir: string, appOutDir: string, artifactPath: string, arch: Arch) {
+    // wix 4.0.0.5512.2 doesn't support arm64; falls back to x64 (installs arm64 app into an x64 MSI as a stopgap)
+    // https://github.com/electron-userland/electron-builder/issues/6077
+    const buildArch = arch === Arch.arm64 ? Arch.x64 : arch
+    const archFlag = buildArch === Arch.ia32 ? "x86" : "x64"
+
+    // noinspection SpellCheckingInspection
+    const candleArgs = ["-arch", archFlag, `-dappDir=${vm.toVmFile(appOutDir)}`, ...this.getCommonWixArgs(), "project.wxs"]
+    await vm.exec(vm.toVmFile(path.join(vendorPath, "candle.exe")), candleArgs, { cwd: stageDir })
+
     // noinspection SpellCheckingInspection
     const lightArgs = [
       "-out",
@@ -121,30 +122,39 @@ export default class MsiTarget extends Target {
       "-v",
       // https://github.com/wixtoolset/issues/issues/5169
       "-spdb",
-      // https://sourceforge.net/p/wix/bugs/2405/
-      // error LGHT1076 : ICE61: This product should remove only older versions of itself. The Maximum version is not less than the current product. (1.1.0.42 1.1.0.42)
+      // https://sourceforge.net/p/wix/bugs/2405/ (ICE61 false positive)
       "-sw1076",
       `-dappDir=${vm.toVmFile(appOutDir)}`,
-      // "-dcl:high",
+      ...this.getCommonWixArgs(),
+      ...this.getAdditionalLightArgs(),
     ]
-      .concat(this.getCommonWixArgs())
-      .concat(this.getAdditionalLightArgs())
-
     // http://windows-installer-xml-wix-toolset.687559.n2.nabble.com/Build-3-5-2229-0-give-me-the-following-error-error-LGHT0216-An-unexpected-Win32-exception-with-errorn-td5707443.html
     if (process.platform !== "win32") {
-      // noinspection SpellCheckingInspection
       lightArgs.push("-sval")
     }
-
     if (this.options.oneClick === false) {
       lightArgs.push("-ext", "WixUIExtension")
     }
+    lightArgs.push("project.wixobj")
+    await vm.exec(vm.toVmFile(path.join(vendorPath, "light.exe")), lightArgs, { cwd: stageDir })
+  }
 
-    // objectFiles - only filenames, we set current directory to our temp stage dir
-    lightArgs.push(...objectFiles)
-    await vm.exec(vm.toVmFile(path.join(vendorPath, "light.exe")), lightArgs, {
-      cwd: tempDir,
-    })
+  // WiX v4 (toolsets.wix "1.0.0"): unified wix build command, arm64 supported natively
+  private async buildV4(vm: VmManager, vendorPath: string, stageDir: string, appOutDir: string, artifactPath: string, arch: Arch) {
+    const archFlag = arch === Arch.ia32 ? "x86" : arch === Arch.arm64 ? "arm64" : "x64"
+    const buildArgs = ["build", "-arch", archFlag, "-d", `appDir=${vm.toVmFile(appOutDir)}`, "-o", vm.toVmFile(artifactPath), "-v"]
+    if (this.options.warningsAsErrors !== false) {
+      buildArgs.push("-wx")
+    }
+    if (this.options.additionalWixArgs != null) {
+      buildArgs.push(...this.options.additionalWixArgs)
+    }
+    buildArgs.push(...this.getAdditionalLightArgs())
+    if (this.options.oneClick === false) {
+      buildArgs.push("-ext", "WixToolset.UI.wixext")
+    }
+    buildArgs.push("project.wxs")
+    await vm.exec(vm.toVmFile(path.join(vendorPath, "wix.exe")), buildArgs, { cwd: stageDir })
   }
 
   private getAdditionalLightArgs() {

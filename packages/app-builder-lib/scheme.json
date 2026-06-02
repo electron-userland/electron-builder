@@ -8277,7 +8277,8 @@
             {
               "enum": [
                 "0.0.0",
-                "1.2.1"
+                "1.2.1",
+                "2.0.0"
               ],
               "type": "string"
             },
@@ -8286,7 +8287,7 @@
             }
           ],
           "default": "0.0.0",
-          "description": "`nsis` bundle version to use for NSIS installer compilation.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=nsis&expanded=true\n0.0.0 - legacy toolset (nsis-3.0.4.1 + nsis-resources-3.4.1)\n\nBetas:\n1.2.1 - unified bundle (makensis 3.12 + plugins in one archive, entrypoint scripts auto-set NSISDIR)"
+          "description": "`nsis` bundle version to use for NSIS installer compilation.\nIncludes StrLength8092 support for long command lines and other improvements.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=nsis&expanded=true\n0.0.0 - legacy toolset (nsis-3.0.4.1 + nsis-resources-3.4.1)\n\nBetas: (unified bundles; makensis 3.12 + plugins in one archive, entrypoint scripts auto-set NSISDIR)\n1.2.1\n2.0.0 - (compiled from source with additional LOG flag))"
         },
         "winCodeSign": {
           "anyOf": [
@@ -8321,6 +8322,22 @@
           ],
           "default": "0.0.0",
           "description": "`wine` bundle version to use for running Windows tools on non-Windows platforms.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=wine&expanded=true\n0.0.0 - legacy toolset (wine 4.0.1 portable; mac-only support)\n\nBeta:\n1.0.0 - Wine 11 bundle (unified wine binary, ia32 via WoW64)"
+        },
+        "wix": {
+          "anyOf": [
+            {
+              "enum": [
+                "0.0.0",
+                "1.0.0"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "0.0.0",
+          "description": "`wix` toolset version for MSI installer compilation.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=wix&expanded=true\n\nStable:\n0.0.0 - legacy toolset (wix-4.0.0.5512.2)\n\nBeta:\n1.0.0 - v4.0.6 (compiled from source)"
         }
       },
       "type": "object"

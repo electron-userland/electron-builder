@@ -20,9 +20,12 @@ export const nsisChecksums = {
   "0.0.0": {
     // legacy — uses getLegacyNsisBin() / getLegacyNsisResourcesBin()
   },
+  // unified bundles
   "1.2.1": {
-    // unified bundle
     "nsis-bundle-3.12.tar.gz": "56997fdefe25e7928a1a68b4583d08b240b66cf660234053b20131a74cc082f4",
+  },
+  "2.0.0": {
+    "nsis-bundle-3.12.tar.gz": "e2c84b314160604d5132cb15b65fee92981320572902b3a1aa17a9a0d632cd58",
   },
 } as const
 type CustomNsisBinaryConfig = { url: string | null; checksum?: string | null; version?: string | null }

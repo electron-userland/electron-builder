@@ -370,15 +370,17 @@ export interface ToolsetConfig {
 
   /**
    * `nsis` bundle version to use for NSIS installer compilation.
+   * Includes StrLength8092 support for long command lines and other improvements.
    * Located at https://github.com/electron-userland/electron-builder-binaries/releases?q=nsis&expanded=true
    * 0.0.0 - legacy toolset (nsis-3.0.4.1 + nsis-resources-3.4.1)
    *
-   * Betas:
-   * 1.2.1 - unified bundle (makensis 3.12 + plugins in one archive, entrypoint scripts auto-set NSISDIR)
+   * Betas: (unified bundles; makensis 3.12 + plugins in one archive, entrypoint scripts auto-set NSISDIR)
+   * 1.2.1
+   * 2.0.0 - (compiled from source with additional LOG flag))
    *
    * @default "0.0.0"
    */
-  readonly nsis?: "0.0.0" | "1.2.1" | null
+  readonly nsis?: "0.0.0" | "1.2.1" | "2.0.0" | null
 
   /**
    * `wine` bundle version to use for running Windows tools on non-Windows platforms.
@@ -391,6 +393,20 @@ export interface ToolsetConfig {
    * @default "0.0.0"
    */
   readonly wine?: "0.0.0" | "1.0.0" | null
+
+  /**
+   * `wix` toolset version for MSI installer compilation.
+   * Located at https://github.com/electron-userland/electron-builder-binaries/releases?q=wix&expanded=true
+   *
+   * Stable:
+   * 0.0.0 - legacy toolset (wix-4.0.0.5512.2)
+   *
+   * Beta:
+   * 1.0.0 - v4.0.6 (compiled from source)
+   *
+   * @default "0.0.0"
+   */
+  readonly wix?: "0.0.0" | "1.0.0" | null
 }
 
 export interface Hooks {
