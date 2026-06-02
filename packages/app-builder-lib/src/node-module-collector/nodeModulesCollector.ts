@@ -343,8 +343,9 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * Executes a command and streams its output to a file.
    *
    * Spawns a child process to execute the specified command with arguments, capturing stdout
-   * to a file. Handles Windows-specific quirks by wrapping .cmd files in a temporary .bat file
-   * when necessary. Enables corepack strict mode by default but allows process.env overrides.
+   * to a file. On Windows, wraps the invocation in `powershell.exe -EncodedCommand` (UTF-16LE
+   * base64) to avoid spawning `.cmd` shims directly and to eliminate shell-injection surface area.
+   * Enables corepack strict mode by default but allows process.env overrides.
    *
    * Special handling for `npm list` exit code 1, which is expected in certain scenarios.
    *

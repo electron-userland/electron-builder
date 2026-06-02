@@ -40,6 +40,9 @@ function decodeEncodedCommand(spawnArgs: string[]): string {
   if (idx < 0) {
     throw new Error(`-EncodedCommand not found in args: ${JSON.stringify(spawnArgs)}`)
   }
+  if (idx + 1 >= spawnArgs.length) {
+    throw new Error(`-EncodedCommand has no following value in args: ${JSON.stringify(spawnArgs)}`)
+  }
   return Buffer.from(spawnArgs[idx + 1], "base64").toString("utf16le")
 }
 
