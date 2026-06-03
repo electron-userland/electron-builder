@@ -3,6 +3,9 @@ import { afterEach, beforeEach, vi } from "vitest"
 
 const PROXY_VARS = ["HTTPS_PROXY", "https_proxy", "HTTP_PROXY", "http_proxy"] as const
 
+// sequence.concurrent is enabled globally; both describe blocks mutate process.env proxy
+// variables and must not run concurrently with each other.
+describe.sequential("nodeHttpExecutor", () => {
 describe("buildGotProxyAgent", () => {
   beforeEach(() => {
     for (const key of PROXY_VARS) delete process.env[key]
@@ -180,3 +183,4 @@ describe("NodeHttpExecutor.createRequest", () => {
     })
   })
 })
+}) // end describe.sequential("nodeHttpExecutor")

@@ -36,7 +36,9 @@ async function runCollector(rootDir: string, packageName: string) {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("TraversalNodeModulesCollector", () => {
+// sequence.concurrent is enabled globally; describe.sequential prevents concurrent tests from
+// overwriting the shared `root` variable used across all sub-describe blocks.
+describe.sequential("TraversalNodeModulesCollector", () => {
   let root = ""
   afterEach(async () => {
     if (root) {

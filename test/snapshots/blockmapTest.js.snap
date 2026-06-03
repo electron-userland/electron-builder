@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`buildBlockMap — JS snapshots and binary golden-output > append mode (deflate, 80 KB): embedded blockmap content is snapshotted 1`] = `
+exports[`blockmap > buildBlockMap — JS snapshots and binary golden-output > append mode (deflate, 80 KB): embedded blockmap content is snapshotted 1`] = `
 [
   20723,
   12694,
@@ -10,7 +10,7 @@ exports[`buildBlockMap — JS snapshots and binary golden-output > append mode (
 ]
 `;
 
-exports[`buildBlockMap — JS snapshots and binary golden-output > append mode (deflate, 80 KB): embedded blockmap content is snapshotted 2`] = `
+exports[`blockmap > buildBlockMap — JS snapshots and binary golden-output > append mode (deflate, 80 KB): embedded blockmap content is snapshotted 2`] = `
 [
   "XmHKShNZehZLRKQuQrL885h6",
   "FQhcfY+/P/6l+jSQDZGyshbI",
@@ -20,9 +20,9 @@ exports[`buildBlockMap — JS snapshots and binary golden-output > append mode (
 ]
 `;
 
-exports[`buildBlockMap — JS snapshots and binary golden-output > append mode (deflate, 80 KB): embedded blockmap content is snapshotted 3`] = `211`;
+exports[`blockmap > buildBlockMap — JS snapshots and binary golden-output > append mode (deflate, 80 KB): embedded blockmap content is snapshotted 3`] = `211`;
 
-exports[`buildBlockMap — JS snapshots and binary golden-output > file-output sha512: returns SHA-512 of the original unmodified file 1`] = `
+exports[`blockmap > buildBlockMap — JS snapshots and binary golden-output > file-output sha512: returns SHA-512 of the original unmodified file 1`] = `
 [
   10318,
   13659,
@@ -44,7 +44,7 @@ exports[`buildBlockMap — JS snapshots and binary golden-output > file-output s
 ]
 `;
 
-exports[`buildBlockMap — JS snapshots and binary golden-output > file-output sha512: returns SHA-512 of the original unmodified file 2`] = `
+exports[`blockmap > buildBlockMap — JS snapshots and binary golden-output > file-output sha512: returns SHA-512 of the original unmodified file 2`] = `
 [
   "QhKJ/1WEOtJWDpgb1h+eunJb",
   "L1aUYKuVhKwtYCzdYukU/W1T",
@@ -66,9 +66,9 @@ exports[`buildBlockMap — JS snapshots and binary golden-output > file-output s
 ]
 `;
 
-exports[`buildBlockMap — JS snapshots and binary golden-output > file-output sha512: returns SHA-512 of the original unmodified file 3`] = `"iaX00D14yw+Aqii54/LWQmRZafkcPpSG16LzkaaVfjBLDrY9RK+dzAVGXkM/VQg8gKABXMd4MIVwjoeB9jPIog=="`;
+exports[`blockmap > buildBlockMap — JS snapshots and binary golden-output > file-output sha512: returns SHA-512 of the original unmodified file 3`] = `"iaX00D14yw+Aqii54/LWQmRZafkcPpSG16LzkaaVfjBLDrY9RK+dzAVGXkM/VQg8gKABXMd4MIVwjoeB9jPIog=="`;
 
-exports[`buildBlockMap — JS snapshots and binary golden-output > multi-chunk random data (200 KB, seed 12345): sizes and checksums are snapshotted 1`] = `
+exports[`blockmap > buildBlockMap — JS snapshots and binary golden-output > multi-chunk random data (200 KB, seed 12345): sizes and checksums are snapshotted 1`] = `
 [
   30249,
   12777,
@@ -84,7 +84,7 @@ exports[`buildBlockMap — JS snapshots and binary golden-output > multi-chunk r
 ]
 `;
 
-exports[`buildBlockMap — JS snapshots and binary golden-output > multi-chunk random data (200 KB, seed 12345): sizes and checksums are snapshotted 2`] = `
+exports[`blockmap > buildBlockMap — JS snapshots and binary golden-output > multi-chunk random data (200 KB, seed 12345): sizes and checksums are snapshotted 2`] = `
 [
   "jjPrWepT4mbUfRhNr9tPN8LI",
   "qkk7qOU2Lijhnw9GObPaEbQq",
@@ -100,7 +100,7 @@ exports[`buildBlockMap — JS snapshots and binary golden-output > multi-chunk r
 ]
 `;
 
-exports[`buildBlockMap — JS snapshots and binary golden-output > multi-chunk random data (500 KB, seed 99999): sizes and checksums are snapshotted 1`] = `
+exports[`blockmap > buildBlockMap — JS snapshots and binary golden-output > multi-chunk random data (500 KB, seed 99999): sizes and checksums are snapshotted 1`] = `
 [
   32768,
   25825,
@@ -131,7 +131,7 @@ exports[`buildBlockMap — JS snapshots and binary golden-output > multi-chunk r
 ]
 `;
 
-exports[`buildBlockMap — JS snapshots and binary golden-output > multi-chunk random data (500 KB, seed 99999): sizes and checksums are snapshotted 2`] = `
+exports[`blockmap > buildBlockMap — JS snapshots and binary golden-output > multi-chunk random data (500 KB, seed 99999): sizes and checksums are snapshotted 2`] = `
 [
   "0370A9zsh++YHXDxFE4oB1AK",
   "8xHqzquUQiRvNnHd/7Nnn4H7",
@@ -162,21 +162,21 @@ exports[`buildBlockMap — JS snapshots and binary golden-output > multi-chunk r
 ]
 `;
 
-exports[`buildBlockMap — JS snapshots and binary golden-output > single-chunk file (< MIN): sizes, checksums and sha512 are snapshotted 1`] = `
+exports[`blockmap > buildBlockMap — JS snapshots and binary golden-output > single-chunk file (< MIN): sizes, checksums and sha512 are snapshotted 1`] = `
 [
   13312,
 ]
 `;
 
-exports[`buildBlockMap — JS snapshots and binary golden-output > single-chunk file (< MIN): sizes, checksums and sha512 are snapshotted 2`] = `
+exports[`blockmap > buildBlockMap — JS snapshots and binary golden-output > single-chunk file (< MIN): sizes, checksums and sha512 are snapshotted 2`] = `
 [
   "gk9YMffcIDK/zN5PKnsMVapv",
 ]
 `;
 
-exports[`buildBlockMap — JS snapshots and binary golden-output > single-chunk file (< MIN): sizes, checksums and sha512 are snapshotted 3`] = `"sxzkSHe86sbp9mgJVoklRspnOI5em4GlV0/aNmG4GEd6uf55qdP5WZB8ltFc8nEXUw2gfiwAxgoXJtMcaWDSnA=="`;
+exports[`blockmap > buildBlockMap — JS snapshots and binary golden-output > single-chunk file (< MIN): sizes, checksums and sha512 are snapshotted 3`] = `"sxzkSHe86sbp9mgJVoklRspnOI5em4GlV0/aNmG4GEd6uf55qdP5WZB8ltFc8nEXUw2gfiwAxgoXJtMcaWDSnA=="`;
 
-exports[`buildBlockMap — JS snapshots and binary golden-output > uniformly-filled buffer (150 KB, 0xFF): sizes and checksums are snapshotted 1`] = `
+exports[`blockmap > buildBlockMap — JS snapshots and binary golden-output > uniformly-filled buffer (150 KB, 0xFF): sizes and checksums are snapshotted 1`] = `
 [
   32768,
   32768,
@@ -186,7 +186,7 @@ exports[`buildBlockMap — JS snapshots and binary golden-output > uniformly-fil
 ]
 `;
 
-exports[`buildBlockMap — JS snapshots and binary golden-output > uniformly-filled buffer (150 KB, 0xFF): sizes and checksums are snapshotted 2`] = `
+exports[`blockmap > buildBlockMap — JS snapshots and binary golden-output > uniformly-filled buffer (150 KB, 0xFF): sizes and checksums are snapshotted 2`] = `
 [
   "RJM38wOLt4YjTHQFFAIEwMJP",
   "RJM38wOLt4YjTHQFFAIEwMJP",
@@ -196,7 +196,7 @@ exports[`buildBlockMap — JS snapshots and binary golden-output > uniformly-fil
 ]
 `;
 
-exports[`buildBlockMap — JS snapshots and binary golden-output > uniformly-zero buffer (100 KB): every interior chunk hits MAX=32768 1`] = `
+exports[`blockmap > buildBlockMap — JS snapshots and binary golden-output > uniformly-zero buffer (100 KB): every interior chunk hits MAX=32768 1`] = `
 [
   32768,
   32768,
@@ -205,7 +205,7 @@ exports[`buildBlockMap — JS snapshots and binary golden-output > uniformly-zer
 ]
 `;
 
-exports[`buildBlockMap — JS snapshots and binary golden-output > uniformly-zero buffer (100 KB): every interior chunk hits MAX=32768 2`] = `
+exports[`blockmap > buildBlockMap — JS snapshots and binary golden-output > uniformly-zero buffer (100 KB): every interior chunk hits MAX=32768 2`] = `
 [
   "49YOHSIXFI1QWFU53E3geupX",
   "49YOHSIXFI1QWFU53E3geupX",

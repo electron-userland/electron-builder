@@ -30,6 +30,7 @@ export async function getWineToolset(wine: ToolsetConfig["wine"]): Promise<{ exe
         ...defaultEnv,
         WINEPREFIX: winePrefix,
         DYLD_FALLBACK_LIBRARY_PATH: [dyldLibPaths, process.env.DYLD_FALLBACK_LIBRARY_PATH].filter(Boolean).join(path.delimiter),
+        LD_LIBRARY_PATH: [dyldLibPaths, process.env.LD_LIBRARY_PATH].filter(Boolean).join(path.delimiter),
       },
     }
   }
@@ -75,6 +76,7 @@ export async function getWineToolset(wine: ToolsetConfig["wine"]): Promise<{ exe
       ...defaultEnv,
       WINEPREFIX: winePrefix,
       DYLD_FALLBACK_LIBRARY_PATH: dyldLibPaths,
+      LD_LIBRARY_PATH: dyldLibPaths,
     },
   }
 

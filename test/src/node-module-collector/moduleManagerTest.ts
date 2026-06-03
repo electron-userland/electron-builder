@@ -81,7 +81,8 @@ describe("ModuleManager.locatePackageVersion", () => {
     })
   })
 
-  describe("upward (hoisted) resolution", () => {
+  // sequence.concurrent enabled globally; shared `root` variable requires sequential execution.
+  describe.sequential("upward (hoisted) resolution", () => {
     let root = ""
     afterEach(async () => {
       if (root) await fse.rm(root, { recursive: true, force: true })
@@ -105,7 +106,7 @@ describe("ModuleManager.locatePackageVersion", () => {
     })
   })
 
-  describe("override fallback (two-pass search)", () => {
+  describe.sequential("override fallback (two-pass search)", () => {
     let root = ""
     afterEach(async () => {
       if (root) await fse.rm(root, { recursive: true, force: true })
@@ -189,7 +190,8 @@ describe("ModuleManager.locatePackageVersion", () => {
   })
 })
 
-describe("ModuleManager downward search", () => {
+// sequence.concurrent enabled globally; shared `root` variable requires sequential execution.
+describe.sequential("ModuleManager downward search", () => {
   let root = ""
   afterEach(async () => {
     if (root) await fse.rm(root, { recursive: true, force: true })
@@ -280,7 +282,8 @@ describe("ModuleManager downward search", () => {
   })
 })
 
-describe("ModuleManager.semverSatisfies (via locatePackageVersion)", () => {
+// sequence.concurrent enabled globally; shared `root` variable requires sequential execution.
+describe.sequential("ModuleManager.semverSatisfies (via locatePackageVersion)", () => {
   let root = ""
   afterEach(async () => {
     if (root) await fse.rm(root, { recursive: true, force: true })

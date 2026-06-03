@@ -47,6 +47,9 @@ function runBinaryBlockmap(
   return { result, blockmap }
 }
 
+// sequence.concurrent is enabled globally; wrapping here prevents the module-level
+// tmpDir variable (set in beforeEach) from being overwritten by concurrent tests.
+describe.sequential("blockmap", () => {
 let tmpDir: string
 
 beforeEach(async () => {
@@ -414,3 +417,4 @@ describe("buildBlockMap — JS snapshots and binary golden-output", () => {
     }
   })
 })
+}) // end describe.sequential("blockmap")

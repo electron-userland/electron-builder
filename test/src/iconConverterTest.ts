@@ -8,6 +8,9 @@ import { buildSourceCandidates, convertIcon, getPngSize } from "app-builder-lib/
 const FIXTURES = path.join(__dirname, "../fixtures")
 const TEST_APP_ICONS = path.join(FIXTURES, "test-app-one/build")
 
+// sequence.concurrent is enabled globally; wrapping here prevents the module-level
+// tmpDir variable (set in beforeEach) from being overwritten by concurrent tests.
+describe.sequential("iconConverter", () => {
 let tmpDir: string
 
 beforeEach(async () => {
@@ -588,3 +591,4 @@ describe("convertIcon – edge cases", () => {
     expect(result.icons[0].file).toBe(srcFile)
   })
 })
+}) // end describe.sequential("iconConverter")

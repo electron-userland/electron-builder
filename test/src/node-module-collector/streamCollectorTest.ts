@@ -9,7 +9,17 @@ import type { TmpDir } from "builder-util"
 vi.mock("child_process", () => ({ spawn: vi.fn() }))
 vi.mock("fs-extra", async () => ({
   ...(await vi.importActual("fs-extra")),
-  createWriteStream: vi.fn(() => ({ close: vi.fn() })),
+  createWriteStream: vi.fn(() => ({
+    close: vi.fn(),
+    // The source gates settlement on both child "close" AND stream "finish".
+    // Simulate "finish" as a microtask so settle() sees streamFinished=true
+    // by the time closeCb is invoked in tests.
+    on: vi.fn((ev: string, cb: () => void) => {
+      if (ev === "finish") {
+        void Promise.resolve().then(cb)
+      }
+    }),
+  })),
   writeFile: vi.fn().mockResolvedValue(undefined),
 }))
 
