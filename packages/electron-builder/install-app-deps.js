@@ -1,3 +1,3 @@
 #!/usr/bin/env node
 
-import("./out/cli/install-app-deps")
+import("./dist/cli/install-app-deps")

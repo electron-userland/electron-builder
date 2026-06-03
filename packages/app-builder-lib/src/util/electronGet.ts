@@ -8,7 +8,7 @@ import {
   MirrorOptions,
 } from "@electron/get"
 import { buildGotProxyAgent, exec, exists, getPath7za, log, PADDING, parseValidEnvVarUrl, sanitizeDirPath, to7zaOutputSwitch } from "builder-util"
-import { MultiProgress } from "electron-publish/out/multiProgress"
+import { MultiProgress } from "electron-publish"
 import { createReadStream, createWriteStream } from "fs"
 import * as fs from "fs/promises"
 import * as crypto from "crypto"

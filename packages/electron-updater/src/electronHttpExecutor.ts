@@ -4,8 +4,8 @@ import { DownloadOptions, HttpExecutor, configureRequestOptions, configureReques
 const require = createRequire(import.meta.url)
 import type { AuthInfo } from "electron"
 import { RequestOptions } from "http"
-import Session = Electron.Session
-import ClientRequest = Electron.ClientRequest
+type Session = Electron.Session
+type ClientRequest = Electron.ClientRequest
 
 export type LoginCallback = (username: string, password: string) => void
 export const NET_SESSION_NAME = "electron-updater"

@@ -1,11 +1,6 @@
 #! /usr/bin/env node
 
-import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
-import { computeDefaultAppDirectory, getConfig } from "app-builder-lib/out/util/config/config"
-import { orNullIfFileNotExist } from "app-builder-lib/out/util/config/load"
-import { installOrRebuild } from "app-builder-lib/out/util/yarn"
-import { PACKAGE_VERSION } from "app-builder-lib/out/version"
-import { determinePackageManagerEnv } from "app-builder-lib/out/node-module-collector"
+import { computeDefaultAppDirectory, determinePackageManagerEnv, getConfig, getElectronVersion, installOrRebuild, orNullIfFileNotExist, PACKAGE_VERSION } from "app-builder-lib/internal"
 import { getArchCliNames, log, printErrorAndExit } from "builder-util"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"

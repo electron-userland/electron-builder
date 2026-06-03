@@ -1,6 +1,5 @@
 import { DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
-import { downloadBuilderToolset } from "app-builder-lib/out/util/electronGet"
-import { withToolsetLock } from "app-builder-lib/out/util/toolsetLock"
+import { downloadBuilderToolset, withToolsetLock } from "app-builder-lib/internal"
 import { exec, executeFinally, exists, InvalidConfigurationError, isEmptyOrSpaces, log, TmpDir } from "builder-util"
 import { stat } from "fs/promises"
 import { writeFile } from "fs-extra"

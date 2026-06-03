@@ -4,7 +4,8 @@
   "license": "MIT",
   "scripts": {
     "//": "do not wrap into single quotes - windows doesn't unwrap arg in this case",
-    "compile": "pnpm ci:test:generate && tsc --build",
+    "compile": "pnpm ci:test:generate && pnpm --filter './packages/**' --if-present run build",
+    "typecheck": "tsc --build --noEmit",
     "lint": "eslint packages test/src --ext .ts,.js",
     "lint-deps": "node ./scripts/checkDeps.js",
     "pretest": "pnpm lint-deps && pnpm lint",
@@ -53,6 +54,7 @@
     "is-ci": "^4.1.0",
     "prettier": "3.7.4",
     "ts-node": "^10.9.2",
+    "tsup": "^8.0.0",
     "typescript": "^5.6.2",
     "typescript-json-schema": "0.64.0",
     "typedoc": "^0.28.19",

@@ -1,7 +1,6 @@
 #! /usr/bin/env node
 
-import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
-import { nodeGypRebuild } from "app-builder-lib/out/util/yarn"
+import { getElectronVersion, nodeGypRebuild } from "app-builder-lib/internal"
 import * as chalk from "chalk"
 import { build, configureBuildCommand, createYargs } from "../builder"
 import { configurePublishCommand, publish } from "../publish"

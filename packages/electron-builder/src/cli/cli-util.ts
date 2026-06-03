@@ -1,4 +1,4 @@
-import { loadEnv } from "app-builder-lib/out/util/config/load"
+import { loadEnv } from "app-builder-lib/internal"
 import { ExecError, InvalidConfigurationError, log } from "builder-util"
 import { isCI } from "ci-info"
 import { readJson } from "fs-extra"

@@ -30,7 +30,7 @@ import { GenericProvider } from "./providers/GenericProvider.js"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory.js"
 import { Provider, ProviderPlatform } from "./providers/Provider.js"
 import type { TypedEmitter } from "tiny-typed-emitter"
-import Session = Electron.Session
+type Session = Electron.Session
 import type { AuthInfo } from "electron"
 import { gunzipSync, gzipSync } from "zlib"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"

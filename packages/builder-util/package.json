@@ -1,7 +1,20 @@
 {
   "name": "builder-util",
   "version": "26.14.0",
-  "main": "out/util.js",
+  "main": "./dist/util.js",
+  "module": "./dist/util.mjs",
+  "exports": {
+    ".": {
+      "types": "./dist/util.d.ts",
+      "import": "./dist/util.mjs",
+      "require": "./dist/util.js"
+    },
+    "./internal": {
+      "types": "./dist/indexInternal.d.ts",
+      "import": "./dist/indexInternal.mjs",
+      "require": "./dist/indexInternal.js"
+    }
+  },
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {
@@ -12,8 +25,11 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "files": [
-    "out"
+    "dist"
   ],
+  "scripts": {
+    "build": "tsup"
+  },
   "dependencies": {
     "7zip-bin": "~5.2.0",
     "@types/debug": "^4.1.6",
@@ -32,7 +48,7 @@
     "temp-file": "^3.4.0",
     "tiny-async-pool": "1.3.0"
   },
-  "typings": "./out/util.d.ts",
+  "types": "./dist/util.d.ts",
   "devDependencies": {
     "@types/cross-spawn": "6.0.6",
     "@types/fs-extra": "^9.0.11",

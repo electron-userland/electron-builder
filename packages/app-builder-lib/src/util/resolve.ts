@@ -1,5 +1,4 @@
-import { InvalidConfigurationError } from "builder-util"
-import { log } from "builder-util/out/log"
+import { InvalidConfigurationError, log } from "builder-util"
 import debug from "debug"
 import { realpath } from "fs/promises"
 import * as path from "path"

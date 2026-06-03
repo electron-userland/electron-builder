@@ -2,7 +2,7 @@ import * as fs from "fs/promises"
 import { log, parseValidEnvVarUrl } from "builder-util"
 import { dynamicImport } from "./util/dynamicImport"
 import { Nullish } from "builder-util-runtime"
-import { sanitizeFileName } from "builder-util/out/filename"
+import { sanitizeFileName } from "builder-util/internal"
 import * as path from "path"
 import { downloadBuilderToolset, getBinariesMirrorUrl, getCacheDirectory } from "./util/electronGet"
 

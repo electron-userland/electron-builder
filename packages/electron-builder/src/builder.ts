@@ -6,7 +6,7 @@ import { PublishOptions } from "electron-publish"
 import * as yargs from "yargs"
 
 export function createYargs(): yargs.Argv<unknown> {
-  return yargs.parserConfiguration({
+  return (yargs as unknown as yargs.Argv<unknown>).parserConfiguration({
     "camel-case-expansion": false,
   })
 }

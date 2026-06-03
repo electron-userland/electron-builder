@@ -1,7 +1,7 @@
 import chalk from "chalk"
 import { Chalk } from "chalk"
 import _debug from "debug"
-import WritableStream = NodeJS.WritableStream
+type WritableStream = NodeJS.WritableStream
 
 let printer: ((message: string) => void) | null = null
 

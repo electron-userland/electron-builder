@@ -11,7 +11,7 @@ import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater.js"
 import { ResolvedUpdateFileInfo } from "./types.js"
 import { UpdateDownloadedEvent } from "./types.js"
 import { findFile } from "./providers/Provider.js"
-import AutoUpdater = Electron.AutoUpdater
+type AutoUpdater = Electron.AutoUpdater
 import { execFileSync } from "child_process"
 import { randomBytes } from "crypto"
 

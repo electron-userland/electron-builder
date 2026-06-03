@@ -1,7 +1,6 @@
 import type { AsarStreamType, AsarDirectory } from "@electron/asar"
-import { isEmptyOrSpaces, log } from "builder-util"
+import { exists, Filter, FilterStats, isEmptyOrSpaces, log } from "builder-util"
 import { dynamicImport } from "../util/dynamicImport"
-import { exists, Filter, FilterStats } from "builder-util/out/fs"
 import * as fs from "fs-extra"
 import { readlink } from "fs-extra"
 import * as path from "path"

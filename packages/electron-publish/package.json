@@ -1,7 +1,20 @@
 {
   "name": "electron-publish",
   "version": "26.14.0",
-  "main": "out/index.js",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./internal": {
+      "types": "./dist/indexInternal.d.ts",
+      "import": "./dist/indexInternal.mjs",
+      "require": "./dist/indexInternal.js"
+    }
+  },
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {
@@ -12,8 +25,11 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "files": [
-    "out"
+    "dist"
   ],
+  "scripts": {
+    "build": "tsup"
+  },
   "dependencies": {
     "@types/fs-extra": "^9.0.11",
     "aws4": "^1.13.2",
@@ -25,7 +41,7 @@
     "lazy-val": "^1.0.5",
     "mime": "^2.5.2"
   },
-  "typings": "./out/index.d.ts",
+  "types": "./dist/index.d.ts",
   "devDependencies": {
     "@types/aws4": "^1.11.6",
     "@types/mime": "2.0.3"

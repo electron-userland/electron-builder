@@ -1,7 +1,15 @@
 {
 	"name": "dmg-builder",
 	"version": "26.14.0",
-	"main": "out/dmgUtil.js",
+	"main": "./dist/dmgUtil.js",
+	"module": "./dist/dmgUtil.mjs",
+	"exports": {
+		".": {
+			"types": "./dist/dmgUtil.d.ts",
+			"import": "./dist/dmgUtil.mjs",
+			"require": "./dist/dmgUtil.js"
+		}
+	},
 	"author": "Vladimir Krivosheev",
 	"license": "MIT",
 	"repository": {
@@ -12,9 +20,12 @@
 	"bugs": "https://github.com/electron-userland/electron-builder/issues",
 	"homepage": "https://github.com/electron-userland/electron-builder",
 	"files": [
-		"out",
+		"dist",
 		"templates"
 	],
+	"scripts": {
+		"build": "tsup"
+	},
 	"dependencies": {
 		"app-builder-lib": "workspace:*",
 		"builder-util": "workspace:*",
@@ -26,5 +37,5 @@
 		"@types/js-yaml": "4.0.3",
 		"temp-file": "3.4.0"
 	},
-	"typings": "./out/dmg.d.ts"
+	"types": "./dist/dmgUtil.d.ts"
 }
