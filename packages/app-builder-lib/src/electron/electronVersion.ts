@@ -100,14 +100,25 @@ export async function computeElectronVersion(projectDir: string): Promise<string
     throw new InvalidConfigurationError(`Cannot find electron dependency to get electron version in the '${path.join(projectDir, "package.json")}'`)
   }
   const version = dependency?.version
-  if (version == null || !/^\d/.test(version)) {
-    const versionMessage = version == null ? "" : ` and version ("${version}") is not fixed in project`
+  if (version == null) {
     throw new InvalidConfigurationError(
-      `Cannot compute electron version from installed node modules - none of the possible electron modules are installed${versionMessage}.\nSee https://github.com/electron-userland/electron-builder/issues/3984#issuecomment-504968246`
+      `Cannot compute electron version from installed node modules - none of the possible electron modules are installed.\nSee https://github.com/electron-userland/electron-builder/issues/3984#issuecomment-504968246`
     )
   }
 
-  return semver.coerce(version)!.format()
+  const pinnedVersion = semver.valid(version)
+  if (pinnedVersion === null) {
+    log.error(
+      { version },
+      `Electron version "${version}" is a range, not a fixed version. electron-builder requires an exact version because it downloads platform-specific binaries for a specific release — a range cannot be resolved without electron installed in node_modules. ` +
+        `Pin the version in package.json (e.g. "15.3.0" instead of "^15.3.0") or set "electronVersion" explicitly in your electron-builder config.`
+    )
+    throw new InvalidConfigurationError(
+      `Cannot compute electron version from installed node modules - version ("${version}") is not fixed in project.\nSee https://github.com/electron-userland/electron-builder/issues/3984#issuecomment-504968246`
+    )
+  }
+
+  return pinnedVersion
 }
 
 interface NameAndVersion {

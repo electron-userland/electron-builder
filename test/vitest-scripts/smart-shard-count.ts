@@ -1,6 +1,9 @@
-import { getAllTestFiles } from "./file-discovery.js"
-import { buildWeightedFiles, computeShardCount } from "./shard-builder.js"
-import { TargetPlatform } from "./smart-config.js"
+#!/usr/bin/env ts-node
+
+import { getAllTestFiles } from "./file-discovery"
+import { buildWeightedFiles, computeShardCount } from "./shard-builder"
+import { TargetPlatform } from "./smart-config"
+import { generateTests } from "./generate-tests"
 
 /**
  * Compute shard indices for a given platform
@@ -13,6 +16,8 @@ function computeShardIndicesForPlatform(platform: TargetPlatform): number[] {
 }
 
 function main() {
+  generateTests()
+
   const platforms: TargetPlatform[] = ["linux", "win32", "darwin"]
 
   const shardCounts = platforms.reduce(

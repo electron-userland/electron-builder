@@ -45,7 +45,7 @@ export class ArchiveTarget extends Target {
       })
       let updateInfo: any = null
       if (format.startsWith("tar.")) {
-        await tar(packager.compression, format, artifactPath, appOutDir, isMac, packager.info.tempDirManager)
+        await tar({ compression: packager.compression, format, outFile: artifactPath, dirToArchive: appOutDir, isMacApp: isMac, tempDirManager: packager.info.tempDirManager })
       } else {
         let withoutDir = !isMac
         let dirToArchive = appOutDir

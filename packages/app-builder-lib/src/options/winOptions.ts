@@ -5,7 +5,7 @@ import { PlatformSpecificBuildOptions } from "./PlatformSpecificBuildOptions.js"
 
 export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   /**
-   * The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable]./nsis.md#portable) app without installation), `appx`, `msi`, `msi-wrapped`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
+   * The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable]https://www.electron.build/nsis#portable) app without installation), `appx`, `msi`, `msi-wrapped`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
    * AppX package can be built only on Windows 10.
    *
    * To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
@@ -53,13 +53,24 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   readonly requestedExecutionLevel?: RequestedExecutionLevel | null
 
   /**
-   * Whether to sign and add metadata to executable.
+   * Whether to sign and add metadata to executable via [`resedit`](https://www.npmjs.com/package/resedit).
    * Metadata includes information about the app name/description/version, publisher, copyright, etc.
    * This property also is responsible for adding the app icon and setting execution level.
-   * (Advanced option leveraging `rcedit`)
+   * Set to `false` only if you need to fully disable resedit-based resource editing.
+   * To skip only code signing while keeping resource editing, use `signExecutable: false` instead.
    * @default true
    */
   readonly signAndEditExecutable?: boolean
+
+  /**
+   * Whether to sign Windows executables and any additional files matched by `signExts`.
+   * Set to `false` to skip Windows code signing while still editing executable resources
+   * (icon, metadata, etc. via [`resedit`](https://www.npmjs.com/package/resedit)).
+   * This option is not limited to the main executable edit/sign flow and can also affect
+   * signing of Windows installers or other artifacts that use the standard signing path.
+   * @default true
+   */
+  readonly signExecutable?: boolean
 
   /**
    * Explicit file name/extensions (`str.endsWith`) to also sign. Advanced option.
@@ -86,13 +97,13 @@ export interface WindowsSigntoolConfiguration {
 
   /**
    * The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason.
-   * Please see [Code Signing](./code-signing.md).
+   * Please see [Code Signing](https://www.electron.build/code-signing).
    */
   readonly certificateFile?: string | null
 
   /**
    * The password to the certificate provided in `certificateFile`. Please use it only if you cannot use env variable `CSC_KEY_PASSWORD` (`WIN_CSC_KEY_PASSWORD`) for some reason.
-   * Please see [Code Signing](./code-signing.md).
+   * Please see [Code Signing](https://www.electron.build/code-signing).
    */
   readonly certificatePassword?: string | null
 

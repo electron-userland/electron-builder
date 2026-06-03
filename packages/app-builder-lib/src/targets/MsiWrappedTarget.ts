@@ -1,5 +1,5 @@
-import { Arch, deepAssign, exists, InvalidConfigurationError } from "builder-util"
-import { UUID } from "builder-util-runtime"
+import { Arch, exists, InvalidConfigurationError } from "builder-util"
+import { deepAssign, UUID } from "builder-util-runtime"
 import * as path from "path"
 import { MsiWrappedOptions } from "../options/MsiWrappedOptions.js"
 import { TargetConfiguration } from "../core.js"

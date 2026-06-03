@@ -1,0 +1,28 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`web installer (nsis-web) blackbox > web installer downloads and installs app via HTTP server 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp Web Setup.exe",
+      "safeArtifactName": "TestApp-Web-Setup.exe",
+      "updateInfo": {
+        "packages": {
+          "x64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "testapp-1.0.0-x64.nsis.7z",
+            "path": "testapp-1.0.0-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "testapp-1.0.0-x64.nsis.7z",
+    },
+  ],
+}
+`;

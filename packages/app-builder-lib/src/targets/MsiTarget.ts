@@ -1,20 +1,21 @@
-import { Arch, asArray, deepAssign, log, walk } from "builder-util"
-import { UUID } from "builder-util-runtime"
+import { Arch, asArray, log, walk } from "builder-util"
+import { deepAssign, UUID } from "builder-util-runtime"
 import { createHash } from "crypto"
 import * as ejs from "ejs"
 import { readFile, writeFile } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { MsiOptions } from "../options/MsiOptions.js"
-import { getBinFromUrl } from "../binDownload.js"
-import { Target } from "../core.js"
-import { DesktopShortcutCreationPolicy, FinalCommonWindowsInstallerOptions, getEffectiveOptions } from "../options/CommonWindowsInstallerConfiguration.js"
-import { normalizeExt } from "../platformPackager.js"
-import { getTemplatePath } from "../util/pathManager.js"
-import { VmManager } from "../vm/vm.js"
-import { WineVmManager } from "../vm/WineVm.js"
-import { WinPackager } from "../winPackager.js"
-import { createStageDir, getWindowsInstallationDirName } from "./targetUtil.js"
+import { MsiOptions } from "../"
+import { getBinFromUrl } from "../binDownload"
+import { Target } from "../core"
+import { DesktopShortcutCreationPolicy, FinalCommonWindowsInstallerOptions, getEffectiveOptions } from "../options/CommonWindowsInstallerConfiguration"
+import { normalizeExt } from "../platformPackager"
+import { getTemplatePath } from "../util/pathManager"
+import { VmManager } from "../vm/vm"
+import { WineVmManager } from "../vm/WineVm"
+import { WinPackager } from "../winPackager"
+import { withToolsetLock } from "../util/toolsetLock"
+import { createStageDir, getWindowsInstallationDirName } from "./targetUtil"
 
 const ELECTRON_BUILDER_UPGRADE_CODE_NS_UUID = UUID.parse("d752fe43-5d44-44d5-9fc9-6dd1bf19d5cc")
 const ROOT_DIR_ID = "APPLICATIONFOLDER"
@@ -23,7 +24,7 @@ const ROOT_DIR_ID = "APPLICATIONFOLDER"
 export default class MsiTarget extends Target {
   protected readonly vm = process.platform === "win32" ? new VmManager() : new WineVmManager()
 
-  readonly options: MsiOptions
+  readonly options: MsiOptions = deepAssign(this.packager.platformSpecificBuildOptions, this.packager.config.msi)
 
   constructor(
     protected readonly packager: WinPackager,
@@ -32,7 +33,6 @@ export default class MsiTarget extends Target {
     isAsyncSupported = true
   ) {
     super(name, isAsyncSupported)
-    this.options = deepAssign(this.packager.platformSpecificBuildOptions, this.packager.config.msi)
   }
 
   protected projectTemplate = new Lazy<(data: any) => string>(async () => {
@@ -87,16 +87,17 @@ export default class MsiTarget extends Target {
     await packager.info.emitMsiProjectCreated(projectFile)
 
     // noinspection SpellCheckingInspection
-    const vendorPath = await getBinFromUrl("wix-4.0.0.5512.2", "wix-4.0.0.5512.2.7z", "/X5poahdCc3199Vt6AP7gluTlT1nxi9cbbHhZhCMEu+ngyP1LiBMn+oZX7QAZVaKeBMc2SjVp7fJqNLqsUnPNQ==")
+    const vendorPath = await getBinFromUrl("wix-4.0.0.5512.2", "wix-4.0.0.5512.2.7z", "fe677fcd837b18c9b912985d91636bbd8a1e800c3b3a6a841b6f96e89624e839")
 
     // noinspection SpellCheckingInspection
     const candleArgs = ["-arch", wixArch === Arch.ia32 ? "x86" : "x64", `-dappDir=${vm.toVmFile(appOutDir)}`].concat(this.getCommonWixArgs())
     candleArgs.push("project.wxs")
-    await vm.exec(vm.toVmFile(path.join(vendorPath, "candle.exe")), candleArgs, {
-      cwd: stageDir.dir,
+    await withToolsetLock(async () => {
+      await vm.exec(vm.toVmFile(path.join(vendorPath, "candle.exe")), candleArgs, {
+        cwd: stageDir.dir,
+      })
+      await this.light(objectFiles, vm, artifactPath, appOutDir, vendorPath, stageDir.dir)
     })
-
-    await this.light(objectFiles, vm, artifactPath, appOutDir, vendorPath, stageDir.dir)
 
     await stageDir.cleanup()
 

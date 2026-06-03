@@ -1,27 +1,35 @@
 import { PublishManager } from "app-builder-lib"
-import { computeArchToTargetNamesMap, getLinuxToolsPath, parsePlistFile, PlistObject, AsarIntegrity } from "app-builder-lib/internal"
-import { verifyAsarFileTree as _verifyAsarFileTree } from "./asarVerifier.js"
-import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, log, USE_HARD_LINKS, walk } from "builder-util"
-import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
+import { verifyAsarFileTree as _verifyAsarFileTree } from "./asarVerifier"
+import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetFactory"
+import { getLinuxToolsMacToolset } from "app-builder-lib/out/toolsets/linux"
+import { parsePlistFile, PlistObject } from "app-builder-lib/out/util/plist"
+import { AsarIntegrity } from "app-builder-lib/out/asar/integrity"
+import { addValue, copyDir, exec, executeFinally, exists, FileCopier, log, USE_HARD_LINKS, walk } from "builder-util"
+import { CancellationToken, deepAssign, UpdateFileInfo } from "builder-util-runtime"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { convertVersion } from "electron-winstaller"
 import { PublishPolicy } from "electron-publish"
-import fsExtra from "fs-extra"
+import { copyFile, emptyDir, mkdir, writeJson } from "fs-extra"
 import * as fs from "fs/promises"
+import { realpath as realpathCb } from "fs"
 import { load } from "js-yaml"
 import * as path from "path"
 import pathSorter from "path-sort"
 import { NtExecutable, NtExecutableResource } from "resedit"
 import { TmpDir } from "temp-file"
-import { getCollectorByPackageManager, PM, computeDefaultAppDirectory, installDependencies, createLazyProductionDeps, detectPackageManager } from "app-builder-lib/internal"
+import { getCollectorByPackageManager, PM } from "app-builder-lib/out/node-module-collector"
 import { promisify } from "util"
-import { MAC_CSC_LINK, WIN_CSC_LINK } from "./codeSignData.js"
-import { assertThat } from "./fileAssert.js"
+import { MAC_CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
+import { assertThat } from "./fileAssert"
 import AdmZip from "adm-zip"
+// @ts-ignore
 import sanitizeFileName from "sanitize-filename"
 import type { ExpectStatic } from "vitest"
-import { ELECTRON_VERSION } from "./testConfig.js"
-import { exec as execCallback, execSync } from "child_process"
+import { computeDefaultAppDirectory } from "app-builder-lib/out/util/config/config"
+import { installDependencies } from "app-builder-lib/out/util/yarn"
+import { ELECTRON_VERSION } from "./testConfig"
+import { execSync } from "child_process"
+import { detectPackageManager } from "app-builder-lib/out/node-module-collector/packageManager"
 
 const PACKAGE_MANAGER_VERSION_MAP = {
   [PM.NPM]: { cli: "npm", version: "9.8.1" },
@@ -31,6 +39,10 @@ const PACKAGE_MANAGER_VERSION_MAP = {
   [PM.BUN]: { cli: "bun", version: "1.3.2" },
   [PM.TRAVERSAL]: { cli: "npm", version: "9.8.1" }, // use npm to install, we're testing manual node traversal, but we still need something to install the dependencies
 }
+
+// `fs.promises.realpath` keeps 8.3 short components on Windows; only the `.native` variant
+// (GetFinalPathNameByHandle) expands them to the long form.
+const realpathNative = promisify(realpathCb.native)
 
 export function getPackageManagerWithVersion(pm: PM, packageManagerAndVersionString?: string) {
   const packageManagerInfo = PACKAGE_MANAGER_VERSION_MAP[pm]
@@ -53,6 +65,15 @@ function getLockedInstallArgs(pm: PM): Array<string> | undefined {
     default:
       return undefined
   }
+}
+
+function getUnlockedInstallArgs(pm: PM): Array<string> | undefined {
+  // Yarn handles CI immutable installs via YARN_ENABLE_IMMUTABLE_INSTALLS=false in runtimeEnv.
+  // pnpm has no env var equivalent; must explicitly pass --no-frozen-lockfile.
+  if (pm === PM.PNPM) {
+    return ["--no-frozen-lockfile"]
+  }
+  return undefined
 }
 
 function getLockfileFixtureNameCandidates(currentTestName: string): Array<string> {
@@ -140,20 +161,27 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
     packagerOptions = deepAssign({}, packagerOptions, { config: { mac: { identity: null } } })
   }
 
-  let projectDir = path.join(import.meta.dirname, "..", "..", "fixtures", fixtureName)
-  // const isDoNotUseTempDir = platform === "darwin"
+  let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
   const customTmpDir = process.env.TEST_APP_TMP_DIR
   const tmpDir = checkOptions.tmpDir || new TmpDir(`pack-tester: ${fixtureName}`)
   // non-macOS test uses the same dir as macOS test, but we cannot share node_modules (because tests executed in parallel)
-  const dir = customTmpDir == null ? await tmpDir.createTempDir({ prefix: "test_project" }) : path.resolve(customTmpDir)
+  const rawDir = customTmpDir == null ? await tmpDir.createTempDir({ prefix: "test_project" }) : path.resolve(customTmpDir)
+  // On Windows the OS temp dir can be an 8.3 short path (e.g. `RUNNER~1` on CI agents). Installing a
+  // workspace under a short path makes package managers bake short paths into node_modules, which
+  // breaks `npm list` workspace resolution during node-module collection — it then lists the entire
+  // physical tree (devDependencies included) instead of just the production subtree, corrupting the
+  // asar snapshots. Canonicalize to the long form so the layout matches a real project directory.
+  // Windows-only: on POSIX `realpath.native` would rewrite symlinked temp roots (e.g. macOS
+  // `/var` → `/private/var`) and churn unrelated path-sensitive tests.
+  const dir = process.platform === "win32" ? await realpathNative(rawDir).catch(() => rawDir) : rawDir
   if (customTmpDir != null) {
-    await fsExtra.emptyDir(dir)
+    await emptyDir(dir)
     log.info({ customTmpDir }, "custom temp dir used")
   }
 
   const state = expect.getState()
   const lockfileFixtureName = path.basename(state.testPath!, path.extname(state.testPath!))
-  const lockfilePathPrefix = path.join(import.meta.dirname, "..", "..", "fixtures", "lockfiles", lockfileFixtureName)
+  const lockfilePathPrefix = path.join(__dirname, "..", "..", "fixtures", "lockfiles", lockfileFixtureName)
   const lockfileFixtureNameCandidates = getLockfileFixtureNameCandidates(state.currentTestName || "")
   if (lockfileFixtureNameCandidates.length === 0) {
     lockfileFixtureNameCandidates.push("unknown-test")
@@ -215,12 +243,12 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       } else {
         log.info({ pm, version: version, projectDir }, "activating corepack")
         try {
-          execSync(`corepack enable ${cli}`, { env: runtimeEnv, cwd: projectDir, stdio: "ignore" })
+          execSync(`corepack enable ${cli}`, { env: runtimeEnv, cwd: projectDir, stdio: ["ignore", "ignore", "ignore"] })
         } catch (err: any) {
           log.warn({ message: err.message }, "⚠️ corepack enable failed (possibly already enabled)")
         }
         try {
-          execSync(`corepack prepare ${prepareEntry} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: "ignore" })
+          execSync(`corepack prepare ${prepareEntry} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: ["ignore", "ignore", "ignore"] })
         } catch (err: any) {
           log.warn({ message: err.message }, "⚠️ corepack prepare failed")
         }
@@ -231,20 +259,21 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       const destLockfile = path.join(projectDir, collectorOptions.lockfile)
       let lockfileFixtureApplied = false
 
-      const shouldUpdateLockfiles = !!process.env.UPDATE_LOCKFILE_FIXTURES && !!checkOptions.storeDepsLockfileSnapshot
+      const shouldUpdateLockfiles = process.env.UPDATE_LOCKFILE_FIXTURES === "true" && !!checkOptions.storeDepsLockfileSnapshot
       // check for lockfile fixture so we can use `--frozen-lockfile`
       if ((await exists(testFixtureLockfile)) && !shouldUpdateLockfiles) {
-        await fsExtra.copyFile(testFixtureLockfile, destLockfile)
+        await copyFile(testFixtureLockfile, destLockfile)
         lockfileFixtureApplied = true
       }
 
-      if (!(await exists(destLockfile))) {
-        log.info({ lockfile: collectorOptions.lockfile }, "lockfile not found, creating empty stub to prevent package manager prompts")
+      if (shouldUpdateLockfiles || !(await exists(destLockfile))) {
+        // When updating: clear the stale base-fixture lockfile so the package manager regenerates fresh.
+        // When no lockfile exists yet: create an empty stub to prevent package manager prompts.
         await fs.writeFile(destLockfile, "")
       }
 
       const appDir = await computeDefaultAppDirectory(projectDir, configuration.directories?.app)
-      const additionalInstallArgs = lockfileFixtureApplied ? getLockedInstallArgs(pm) : undefined
+      const additionalInstallArgs = lockfileFixtureApplied ? getLockedInstallArgs(pm) : checkOptions.storeDepsLockfileSnapshot ? getUnlockedInstallArgs(pm) : undefined
 
       await installDependencies(
         configuration,
@@ -255,7 +284,6 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         },
         {
           frameworkInfo: { version: ELECTRON_VERSION, useCustomDist: false },
-          productionDeps: createLazyProductionDeps(appDir, null, false),
           additionalArgs: additionalInstallArgs,
         },
         runtimeEnv
@@ -269,9 +297,9 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       if (shouldUpdateLockfiles) {
         const fixtureDir = path.dirname(testFixtureLockfile)
         if (!(await exists(fixtureDir))) {
-          await fsExtra.mkdir(fixtureDir)
+          await mkdir(fixtureDir, { recursive: true })
         }
-        await fsExtra.copyFile(destLockfile, testFixtureLockfile)
+        await copyFile(destLockfile, testFixtureLockfile)
       }
 
       if (packagerOptions.projectDir != null) {
@@ -320,7 +348,7 @@ export function copyTestAsset(name: string, destination: string): Promise<void> 
 }
 
 export function getFixtureDir() {
-  return path.join(import.meta.dirname, "..", "..", "fixtures")
+  return path.join(__dirname, "..", "..", "fixtures")
 }
 
 /**
@@ -530,9 +558,10 @@ async function checkLinuxResult(expect: ExpectStatic, outDir: string, packager: 
     expect(await getContents(`${outDir}/${appInfo.name}_${appInfo.version}_i386.deb`)).toMatchSnapshot()
   }
 
+  const { member: controlMember, tarArgs: controlArgs } = await resolveDebMember(packagePath, "control.tar.")
   const control = parseDebControl(
     (
-      await execShell(`ar p '${packagePath}' control.tar.xz | ${await getTarExecutable()} -Jx --to-stdout ./control`, {
+      await execShell(`'${await getArExecutable()}' p '${packagePath}' ${controlMember} | '${await getTarExecutable()}' -x ${controlArgs} --to-stdout ./control`, {
         maxBuffer: 10 * 1024 * 1024,
       })
     ).stdout
@@ -713,14 +742,45 @@ const checkResult = (expect: ExpectStatic, artifacts: Array<ArtifactCreated>, ex
   return { packageFile, zip, allFiles }
 }
 
-export const execShell: any = promisify(execCallback)
+export const execShell: any = promisify(require("child_process").exec)
 
 export async function getTarExecutable() {
-  return process.platform === "darwin" ? path.join(await getLinuxToolsPath(), "bin", "gtar") : "tar"
+  return process.platform === "darwin" ? (await getLinuxToolsMacToolset()).gtar : "tar"
+}
+
+export async function getArExecutable() {
+  if (process.platform === "darwin") {
+    return (await getLinuxToolsMacToolset()).ar
+  }
+  return "ar"
+}
+
+export async function resolveDebMember(debFile: string, memberPrefix: "data.tar." | "control.tar."): Promise<{ member: string; tarArgs: string }> {
+  const arExecutable = await getArExecutable()
+  const { stdout: memberList, stderr } = await execShell(`'${arExecutable}' t '${debFile}'`, { maxBuffer: 1024 * 1024 })
+  if (stderr.length > 0) {
+    throw new Error(`Failed to list members of ${debFile}: ${stderr}`)
+  }
+  const member = memberList
+    .trim()
+    .split("\n")
+    .find((m: string) => m.startsWith(memberPrefix))
+  if (member == null) throw new Error(`No ${memberPrefix}* member found in ${debFile}`)
+  const ext = member.slice(memberPrefix.length)
+  // Short flags (-J, -z, -j) are safe to concatenate; zstd requires a standalone long option
+  const tarArgs = ext === "xz" ? "-J" : ext === "gz" ? "-z" : ext === "bz2" ? "-j" : ext === "zst" || ext === "zstd" ? "--zstd" : "-J"
+  return { member, tarArgs }
+}
+
+export async function readDebCompression(debFile: string): Promise<string> {
+  const { member } = await resolveDebMember(debFile, "data.tar.")
+  return member.slice("data.tar.".length)
 }
 
 async function getContents(packageFile: string) {
-  const result = await execShell(`ar p '${packageFile}' data.tar.xz | ${await getTarExecutable()} -tJ`, {
+  const { member, tarArgs } = await resolveDebMember(packageFile, "data.tar.")
+  const arExecutable = await getArExecutable()
+  const result = await execShell(`'${arExecutable}' p '${packageFile}' ${member} | '${await getTarExecutable()}' -t ${tarArgs}`, {
     maxBuffer: 10 * 1024 * 1024,
     env: {
       ...process.env,
@@ -750,7 +810,7 @@ export async function modifyPackageJson(projectDir: string, task: (data: any) =>
   await fs.unlink(file)
 
   await fs.writeFile(path.join(projectDir, ".yarnrc.yml"), "nodeLinker: node-modules")
-  return await fsExtra.writeJson(file, data, { spaces: 2 })
+  return await writeJson(file, data, { spaces: 2 })
 }
 
 export function platform(platform: Platform): PackagerOptions {

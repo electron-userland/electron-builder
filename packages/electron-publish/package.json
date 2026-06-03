@@ -1,11 +1,7 @@
 {
   "name": "electron-publish",
-  "version": "26.8.1",
-  "type": "module",
-  "exports": {
-    ".": "./out/index.js",
-    "./internal": "./out/indexInternal.js"
-  },
+  "version": "26.14.0",
+  "main": "out/index.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {
@@ -19,20 +15,19 @@
     "out"
   ],
   "dependencies": {
+    "@types/fs-extra": "^9.0.11",
+    "aws4": "^1.13.2",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.2",
     "form-data": "^4.0.5",
-    "fs-extra": "^11.3.4",
+    "fs-extra": "^10.1.0",
     "lazy-val": "^1.0.5",
     "mime": "^2.5.2"
   },
-  "types": "./out/index.d.ts",
+  "typings": "./out/index.d.ts",
   "devDependencies": {
-    "@types/fs-extra": "^9.0.11",
+    "@types/aws4": "^1.11.6",
     "@types/mime": "2.0.3"
-  },
-  "scripts": {
-    "compile": "tsc -b"
   }
 }

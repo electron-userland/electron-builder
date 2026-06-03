@@ -1,14 +1,31 @@
 import { debug7z, exec, exists, getPath7za, log, statOrNull, unlinkIfExists } from "builder-util"
-import fsExtra from "fs-extra"
+import { move } from "fs-extra"
 import * as path from "path"
 import { create } from "tar"
 import { TmpDir } from "temp-file"
-import { CompressionLevel } from "../core.js"
-import { getLinuxToolsPath } from "../toolsets/linux.js"
-import { TarOptionsWithAliasesAsync } from "tar"
+import { CompressionLevel } from "../core"
+import { getLinuxToolsMacToolset } from "../toolsets/linux"
+import { TarOptionsWithAliasesAsync } from "tar/dist/commonjs/options"
+
+const ALLOWED_7Z_FILTERS = new Set(["BCJ", "BCJ2", "ARM", "ARMT", "IA64", "PPC", "SPARC", "DELTA"])
+
+function validateCompressionLevel(level: string): void {
+  if (!/^[0-9]$/.test(level)) {
+    throw new Error(`ELECTRON_BUILDER_COMPRESSION_LEVEL must be a single digit 0-9, got: "${level}"`)
+  }
+}
+
+type TarConfig = {
+  compression: CompressionLevel | any
+  format: string
+  outFile: string
+  dirToArchive: string
+  isMacApp: boolean
+  tempDirManager: TmpDir
+}
 
 /** @internal */
-export async function tar(compression: CompressionLevel | any, format: string, outFile: string, dirToArchive: string, isMacApp: boolean, tempDirManager: TmpDir): Promise<void> {
+export async function tar({ compression, format, outFile, dirToArchive, isMacApp, tempDirManager }: TarConfig): Promise<void> {
   const tarFile = await tempDirManager.getTempFile({ suffix: ".tar" })
   const tarArgs: TarOptionsWithAliasesAsync = {
     file: tarFile,
@@ -30,14 +47,10 @@ export async function tar(compression: CompressionLevel | any, format: string, o
   ])
 
   if (format === "tar.lz") {
-    // noinspection SpellCheckingInspection
-    let lzipPath = "lzip"
-    if (process.platform === "darwin") {
-      lzipPath = path.join(await getLinuxToolsPath(), "bin", lzipPath)
-    }
+    const lzipPath = process.platform === "darwin" ? (await getLinuxToolsMacToolset()).lzip : "lzip"
     await exec(lzipPath, [compression === "store" ? "-1" : "-9", "--keep" /* keep (don't delete) input files */, tarFile])
     // bloody lzip creates file in the same dir where input file with postfix `.lz`, option --output doesn't work
-    await fsExtra.move(`${tarFile}.lz`, outFile)
+    await move(`${tarFile}.lz`, outFile)
     return
   }
 
@@ -89,9 +102,11 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
   const args = debug7zArgs("a")
 
   let isLevelSet = false
-  if (process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL != null) {
+  const compressionLevel = process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL
+  if (compressionLevel != null) {
+    validateCompressionLevel(compressionLevel)
     storeOnly = false
-    args.push(`-mx=${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL}`)
+    args.push(`-mx=${compressionLevel}`)
     isLevelSet = true
   }
 
@@ -131,8 +146,12 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
 
     // https://www.7-zip.org/7z.html
     // Filters: BCJ, BCJ2, ARM, ARMT, IA64, PPC, SPARC, ...
-    if (process.env.ELECTRON_BUILDER_7Z_FILTER) {
-      args.push(`-mf=${process.env.ELECTRON_BUILDER_7Z_FILTER}`)
+    const sevenZFilter = process.env.ELECTRON_BUILDER_7Z_FILTER
+    if (sevenZFilter) {
+      if (!ALLOWED_7Z_FILTERS.has(sevenZFilter.toUpperCase())) {
+        throw new Error(`ELECTRON_BUILDER_7Z_FILTER must be one of: ${[...ALLOWED_7Z_FILTERS].join(", ")}`)
+      }
+      args.push(`-mf=${sevenZFilter}`)
     }
 
     // args valid only for 7z
@@ -165,9 +184,11 @@ export function computeZipCompressArgs(options: ArchiveOptions = {}) {
     args.push("-v")
   }
 
-  if (process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL != null) {
+  const compressionLevelZip = process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL
+  if (compressionLevelZip != null) {
+    validateCompressionLevel(compressionLevelZip)
     storeOnly = false
-    args.push(`-${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL}`)
+    args.push(`-${compressionLevelZip}`)
   } else if (!storeOnly) {
     // https://github.com/electron-userland/electron-builder/pull/3032
     args.push("-" + (options.compression === "maximum" ? "9" : "7"))

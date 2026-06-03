@@ -4,46 +4,45 @@ import {
   archFromString,
   AsyncTaskManager,
   DebugLogger,
-  deepAssign,
   executeFinally,
   getArtifactArchName,
   InvalidConfigurationError,
   log,
   MAX_FILE_REQUESTS,
   orNullIfFileNotExist,
+  sanitizeDirPath,
   safeStringifyJson,
   serializeToYaml,
   TmpDir,
 } from "builder-util"
-import { CancellationToken, retry } from "builder-util-runtime"
-import fsExtra from "fs-extra"
+import { CancellationToken, deepAssign, retry } from "builder-util-runtime"
+import { chmod, mkdirs, outputFile } from "fs-extra"
 import { isCI } from "ci-info"
 import { Lazy } from "lazy-val"
 import { release as getOsRelease } from "os"
 import * as path from "path"
-import { AppInfo } from "./appInfo.js"
-import { readAsarJson } from "./asar/asar.js"
-import { AfterExtractContext, AfterPackContext, BeforePackContext, Configuration, Hook } from "./configuration.js"
-import { Platform, SourceRepositoryInfo, Target } from "./core.js"
-import { createElectronFrameworkSupport } from "./electron/ElectronFramework.js"
-import { Framework } from "./Framework.js"
-import { LibUiFramework } from "./frameworks/LibUiFramework.js"
-import { Metadata } from "./options/metadata.js"
-import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi.js"
-import { PlatformPackager } from "./platformPackager.js"
-import { ProtonFramework } from "./ProtonFramework.js"
-import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory.js"
-import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config.js"
-import { expandMacro } from "./util/macroExpander.js"
-import { createLazyProductionDeps, NodeModuleDirInfo, NodeModuleInfo } from "./util/packageDependencies.js"
-import { checkMetadata, readPackageJson } from "./util/packageMetadata.js"
-import { getRepositoryInfo } from "./util/repositoryInfo.js"
-import { resolveFunction } from "./util/resolve.js"
-import { installOrRebuild, nodeGypRebuild } from "./util/yarn.js"
-import { PACKAGE_VERSION } from "./version.js"
-import { AsyncEventEmitter, HandlerType } from "./util/asyncEventEmitter.js"
+import { AppInfo } from "./appInfo"
+import { readAsarJson } from "./asar/asar"
+import { AfterExtractContext, AfterPackContext, BeforePackContext, Configuration, Hook } from "./configuration"
+import { Platform, SourceRepositoryInfo, Target } from "./core"
+import { createElectronFrameworkSupport } from "./electron/ElectronFramework"
+import { Framework } from "./Framework"
+import { LibUiFramework } from "./frameworks/LibUiFramework"
+import { Metadata } from "./options/metadata"
+import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi"
+import { PlatformPackager } from "./platformPackager"
+import { ProtonFramework } from "./ProtonFramework"
+import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
+import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config"
+import { expandMacro } from "./util/macroExpander"
+import { checkMetadata, readPackageJson } from "./util/packageMetadata"
+import { getRepositoryInfo } from "./util/repositoryInfo"
+import { resolveFunction } from "./util/resolve"
+import { installOrRebuild, nodeGypRebuild } from "./util/yarn"
+import { PACKAGE_VERSION } from "./version"
+import { AsyncEventEmitter, HandlerType } from "./util/asyncEventEmitter"
 import asyncPool from "tiny-async-pool"
-import { determinePackageManagerEnv, PM } from "./node-module-collector/index.js"
+import { determinePackageManagerEnv, PM } from "./node-module-collector"
 
 async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
   let framework = configuration.framework
@@ -60,12 +59,11 @@ async function createFrameworkInfo(configuration: Configuration, packager: Packa
     nodeVersion = process.versions.node
   }
 
-  const distMacOsName = `${packager.appInfo.productFilename}.app`
   const isUseLaunchUi = configuration.launchUiVersion !== false
   if (framework === "proton" || framework === "proton-native") {
-    return new ProtonFramework(nodeVersion, distMacOsName, isUseLaunchUi)
+    return new ProtonFramework(nodeVersion, packager.appInfo.productFilename, isUseLaunchUi)
   } else if (framework === "libui") {
-    return new LibUiFramework(nodeVersion, distMacOsName, isUseLaunchUi)
+    return new LibUiFramework(nodeVersion, packager.appInfo.productFilename, isUseLaunchUi)
   } else {
     throw new InvalidConfigurationError(`Unknown framework: ${framework}`)
   }
@@ -165,27 +163,7 @@ export class Packager {
     return this._repositoryInfo.value
   }
 
-  private nodeDependencyInfo = new Map<string, Lazy<Array<any>>>()
-
   private runtimeEnvironmentVariables: NodeJS.ProcessEnv = {}
-
-  getNodeDependencyInfo(platform: Platform | null, flatten: boolean = true): Lazy<Array<NodeModuleInfo | NodeModuleDirInfo>> {
-    let key = "" + flatten.toString()
-    let excludedDependencies: Array<string> | null = null
-    if (platform != null && this.framework.getExcludedDependencies != null) {
-      excludedDependencies = this.framework.getExcludedDependencies(platform)
-      if (excludedDependencies != null) {
-        key += `-${platform.name}`
-      }
-    }
-
-    let result = this.nodeDependencyInfo.get(key)
-    if (result == null) {
-      result = createLazyProductionDeps(this.appDir, excludedDependencies, flatten)
-      this.nodeDependencyInfo.set(key, result)
-    }
-    return result
-  }
 
   stageDirPathCustomizer: (target: Target, packager: PlatformPackager<any>, arch: Arch) => string = (target, packager, arch) => {
     return path.join(target.outDir, `__${target.name}-${getArtifactArchName(arch, target.name)}`)
@@ -275,13 +253,13 @@ export class Packager {
       processTargets(Platform.WINDOWS, options.win)
     }
 
-    this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
+    this.projectDir = sanitizeDirPath(options.projectDir == null ? process.cwd() : options.projectDir)
     this._appDir = this.projectDir
     this._packageManager = determinePackageManagerEnv({ projectDir: this.projectDir, appDir: this.appDir, workspaceRoot: undefined })
 
     this.options = {
       ...options,
-      prepackaged: options.prepackaged == null ? null : path.resolve(this.projectDir, options.prepackaged),
+      prepackaged: options.prepackaged == null ? null : sanitizeDirPath(path.resolve(this.projectDir, options.prepackaged)),
     }
 
     log.info({ version: PACKAGE_VERSION, os: getOsRelease() }, "electron-builder")
@@ -289,16 +267,17 @@ export class Packager {
 
   private async addPackagerEventHandlers() {
     const { type } = this.appInfo
-    this.eventEmitter.on("artifactBuildStarted", await resolveFunction(type, this.config.artifactBuildStarted, "artifactBuildStarted"), "user")
-    this.eventEmitter.on("artifactBuildCompleted", await resolveFunction(type, this.config.artifactBuildCompleted, "artifactBuildCompleted"), "user")
+    const root = await this.getWorkspaceRoot()
+    this.eventEmitter.on("artifactBuildStarted", await resolveFunction(type, this.config.artifactBuildStarted, "artifactBuildStarted", root), "user")
+    this.eventEmitter.on("artifactBuildCompleted", await resolveFunction(type, this.config.artifactBuildCompleted, "artifactBuildCompleted", root), "user")
 
-    this.eventEmitter.on("appxManifestCreated", await resolveFunction(type, this.config.appxManifestCreated, "appxManifestCreated"), "user")
-    this.eventEmitter.on("msiProjectCreated", await resolveFunction(type, this.config.msiProjectCreated, "msiProjectCreated"), "user")
+    this.eventEmitter.on("appxManifestCreated", await resolveFunction(type, this.config.appxManifestCreated, "appxManifestCreated", root), "user")
+    this.eventEmitter.on("msiProjectCreated", await resolveFunction(type, this.config.msiProjectCreated, "msiProjectCreated", root), "user")
 
-    this.eventEmitter.on("beforePack", await resolveFunction(type, this.config.beforePack, "beforePack"), "user")
-    this.eventEmitter.on("afterExtract", await resolveFunction(type, this.config.afterExtract, "afterExtract"), "user")
-    this.eventEmitter.on("afterPack", await resolveFunction(type, this.config.afterPack, "afterPack"), "user")
-    this.eventEmitter.on("afterSign", await resolveFunction(type, this.config.afterSign, "afterSign"), "user")
+    this.eventEmitter.on("beforePack", await resolveFunction(type, this.config.beforePack, "beforePack", root), "user")
+    this.eventEmitter.on("afterExtract", await resolveFunction(type, this.config.afterExtract, "afterExtract", root), "user")
+    this.eventEmitter.on("afterPack", await resolveFunction(type, this.config.afterPack, "afterPack", root), "user")
+    this.eventEmitter.on("afterSign", await resolveFunction(type, this.config.afterSign, "afterSign", root), "user")
   }
 
   onAfterPack(handler: PackagerEvents["afterPack"]): Packager {
@@ -437,7 +416,7 @@ export class Packager {
     if (!isCI && (process.stdout as any).isTTY) {
       const effectiveConfigFile = path.join(commonOutDirWithoutPossibleOsMacro, "builder-effective-config.yaml")
       log.info({ file: log.filePath(effectiveConfigFile) }, "writing effective config")
-      await fsExtra.outputFile(effectiveConfigFile, getSafeEffectiveConfig(this.config))
+      await outputFile(effectiveConfigFile, getSafeEffectiveConfig(this.config))
     }
 
     // because artifact event maybe dispatched several times for different publish providers
@@ -592,17 +571,17 @@ export class Packager {
 
     switch (platform) {
       case Platform.MAC: {
-        const helperClass = (await import("./macPackager.js")).MacPackager
+        const helperClass = (await import("./macPackager")).MacPackager
         return new helperClass(this)
       }
 
       case Platform.WINDOWS: {
-        const helperClass = (await import("./winPackager.js")).WinPackager
+        const helperClass = (await import("./winPackager")).WinPackager
         return new helperClass(this)
       }
 
       case Platform.LINUX:
-        return new (await import("./linuxPackager.js")).LinuxPackager(this)
+        return new (await import("./linuxPackager")).LinuxPackager(this)
 
       default:
         throw new Error(`Unknown platform: ${platform}`)
@@ -625,7 +604,7 @@ export class Packager {
       return
     }
 
-    const beforeBuild = await resolveFunction(this.appInfo.type, config.beforeBuild, "beforeBuild")
+    const beforeBuild = await resolveFunction(this.appInfo.type, config.beforeBuild, "beforeBuild", await this.getWorkspaceRoot())
     if (beforeBuild != null) {
       const performDependenciesInstallOrRebuild = await beforeBuild({
         appDir: this.appDir,
@@ -651,7 +630,6 @@ export class Packager {
           frameworkInfo,
           platform: platform.nodeName,
           arch: Arch[arch],
-          productionDeps: this.getNodeDependencyInfo(null, false) as Lazy<Array<NodeModuleDirInfo>>,
         },
         false,
         this.runtimeEnvironmentVariables
@@ -682,9 +660,8 @@ function createOutDirIfNeed(targetList: Array<Target>, createdOutDirs: Set<strin
     Array.from(ourDirs)
       .sort()
       .map(dir => {
-        return fsExtra
-          .mkdirs(dir)
-          .then(() => fsExtra.chmod(dir, 0o755) /* set explicitly */)
+        return mkdirs(dir)
+          .then(() => chmod(dir, 0o755) /* set explicitly */)
           .then(() => createdOutDirs.add(dir))
       })
   )

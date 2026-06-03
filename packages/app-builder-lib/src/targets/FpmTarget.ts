@@ -1,22 +1,22 @@
-import { Arch, asArray, exec, getArchSuffix, log, serializeToYaml, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
-import { Nullish } from "builder-util-runtime"
-import fsExtra from "fs-extra"
+import { Arch, asArray, exec, getArchSuffix, log, serializeToYaml, stripSensitiveEnvVars, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
+import { deepAssign, Nullish } from "builder-util-runtime"
+import { copyFile, outputFile, stat } from "fs-extra"
 import { mkdir, readFile } from "fs/promises"
 import * as path from "path"
-import { smarten } from "../appInfo.js"
-import { Target } from "../core.js"
-import * as errorMessages from "../errorMessages.js"
-import { LinuxPackager } from "../linuxPackager.js"
-import { DebOptions, LinuxTargetSpecificOptions } from "../options/linuxOptions.js"
-import { ArtifactCreated } from "../packagerApi.js"
-import { getAppUpdatePublishConfiguration } from "../publish/PublishManager.js"
-import { objectToArgs } from "../util/appBuilder.js"
-import { computeEnv } from "../util/bundledTool.js"
-import { hashFile } from "../util/hash.js"
-import { isMacOsSierra } from "../util/macosVersion.js"
-import { getTemplatePath } from "../util/pathManager.js"
-import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper.js"
-import { getFpmPath, getLinuxToolsPath } from "../toolsets/linux.js"
+import { smarten } from "../appInfo"
+import { Target } from "../core"
+import * as errorMessages from "../errorMessages"
+import { LinuxPackager } from "../linuxPackager"
+import { DebOptions, LinuxTargetSpecificOptions } from "../options/linuxOptions"
+import { ArtifactCreated } from "../packagerApi"
+import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
+import { objectToArgs } from "builder-util-runtime"
+import { computeEnv } from "../util/bundledTool"
+import { hashFile } from "../util/hash"
+import { isMacOsSierra } from "../util/macosVersion"
+import { getTemplatePath } from "../util/pathManager"
+import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper"
+import { getFpmPath, getLinuxToolsPath } from "../toolsets/linux"
 
 interface FpmOptions {
   name: string
@@ -32,7 +32,7 @@ interface ScriptFiles {
 }
 
 export default class FpmTarget extends Target {
-  readonly options: LinuxTargetSpecificOptions
+  readonly options: LinuxTargetSpecificOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, (this.packager.config as any)[this.name])
 
   private readonly scriptFiles: Promise<ScriptFiles>
 
@@ -43,7 +43,7 @@ export default class FpmTarget extends Target {
     readonly outDir: string
   ) {
     super(name, false)
-    this.options = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
+
     this.scriptFiles = this.createScripts()
   }
 
@@ -51,8 +51,34 @@ export default class FpmTarget extends Target {
     const defaultTemplatesDir = getTemplatePath("linux")
 
     const packager = this.packager
-    const templateOptions = {
+
+    /** Escape a string value for safe interpolation inside a bash single-quoted
+     *  string (`'...'`).  The only character that can break out of a POSIX
+     *  single-quoted context is a literal single-quote; we replace it with the
+     *  standard `'\''` sequence (end quote → escaped quote → start quote).
+     *
+     *  sanitize-filename removes characters that are illegal in filenames but
+     *  deliberately keeps `'` because it is valid on POSIX systems.  Without
+     *  this extra step, an app named `O'Brien` would terminate the quoted path
+     *  inside the generated after-install / after-remove shell scripts, enabling
+     *  arbitrary command injection when the package is installed as root. */
+    function bashSingleQuoteEscape(value: string): string {
+      return value.replace(/'/g, "'\\''")
+    }
+
+    // Bash-script templates embed executable and sanitizedProductName inside
+    // single-quoted shell paths — escape single quotes to prevent injection.
+    const bashTemplateOptions = {
       // old API compatibility
+      executable: bashSingleQuoteEscape(packager.executableName),
+      sanitizedProductName: bashSingleQuoteEscape(packager.appInfo.sanitizedProductName),
+      productFilename: packager.appInfo.productFilename,
+      ...packager.platformSpecificBuildOptions,
+    }
+
+    // The AppArmor profile template uses these values inside double-quoted
+    // AppArmor path patterns — no single-quote escaping needed or wanted.
+    const appArmorTemplateOptions = {
       executable: packager.executableName,
       sanitizedProductName: packager.appInfo.sanitizedProductName,
       productFilename: packager.appInfo.productFilename,
@@ -67,9 +93,9 @@ export default class FpmTarget extends Target {
     }
 
     return {
-      afterInstall: await writeConfigFile(packager.info.tempDirManager, getResource(this.options.afterInstall, "after-install.tpl"), templateOptions),
-      afterRemove: await writeConfigFile(packager.info.tempDirManager, getResource(this.options.afterRemove, "after-remove.tpl"), templateOptions),
-      appArmor: await writeConfigFile(packager.info.tempDirManager, getResource(this.options.appArmorProfile, "apparmor-profile.tpl"), templateOptions),
+      afterInstall: await writeConfigFile(packager.info.tempDirManager, getResource(this.options.afterInstall, "after-install.tpl"), bashTemplateOptions),
+      afterRemove: await writeConfigFile(packager.info.tempDirManager, getResource(this.options.afterRemove, "after-remove.tpl"), bashTemplateOptions),
+      appArmor: await writeConfigFile(packager.info.tempDirManager, getResource(this.options.appArmorProfile, "apparmor-profile.tpl"), appArmorTemplateOptions),
     }
   }
 
@@ -144,16 +170,16 @@ export default class FpmTarget extends Target {
       : null
     if (publishConfig != null) {
       log.info({ resourceDir: log.filePath(resourceDir) }, `adding autoupdate files for: ${target}`)
-      await fsExtra.outputFile(path.join(resourceDir, "app-update.yml"), serializeToYaml(publishConfig))
+      await outputFile(path.join(resourceDir, "app-update.yml"), serializeToYaml(publishConfig))
       // Extra file needed for auto-updater to detect installation method
-      await fsExtra.outputFile(path.join(resourceDir, "package-type"), target)
+      await outputFile(path.join(resourceDir, "package-type"), target)
     }
 
     const scripts = await this.scriptFiles
 
     // Install AppArmor support for ubuntu 24+
     // https://github.com/electron-userland/electron-builder/issues/8635
-    await fsExtra.copyFile(scripts.appArmor, path.join(resourceDir, "apparmor-profile"))
+    await copyFile(scripts.appArmor, path.join(resourceDir, "apparmor-profile"))
 
     const appInfo = packager.appInfo
     const options = this.options
@@ -173,7 +199,8 @@ export default class FpmTarget extends Target {
       artifactPath,
     ]
 
-    objectToArgs(args, (await this.computeFpmMetaInfoOptions()) as any)
+    const meta = await this.computeFpmMetaInfoOptions()
+    args.push(...objectToArgs({ name: meta.name, maintainer: meta.maintainer ?? null, vendor: meta.vendor, url: meta.url }))
 
     const packageCategory = options.packageCategory
     if (packageCategory != null) {
@@ -252,7 +279,7 @@ export default class FpmTarget extends Target {
     }
 
     const env = {
-      ...process.env,
+      ...stripSensitiveEnvVars(process.env),
     }
 
     // rpmbuild wants directory rpm with some default config files. Even if we can use dylibbundler, path to such config files are not changed (we need to replace in the binary)
@@ -280,7 +307,7 @@ export default class FpmTarget extends Target {
         isWriteUpdateInfo: true,
         updateInfo: {
           sha512: await hashFile(artifactPath),
-          size: (await fsExtra.stat(artifactPath)).size,
+          size: (await stat(artifactPath)).size,
         },
       }
     }
@@ -301,7 +328,8 @@ export default class FpmTarget extends Target {
       fpmConfiguration.customRecommends?.forEach(it => fpmArgs.push("--deb-recommends", it))
     }
 
-    fpmArgs.push(...this.configureTargetSpecificOptions(target, fpmConfiguration.compression ?? "xz"))
+    const defaultCompression = target === "rpm" ? "xzmt" : "xz"
+    fpmArgs.push(...this.configureTargetSpecificOptions(target, fpmConfiguration.compression ?? defaultCompression))
     fpmArgs.push(...fpmConfiguration.args)
 
     const fpmPath = await getFpmPath()
@@ -378,7 +406,7 @@ export default class FpmTarget extends Target {
   private configureTargetSpecificOptions(target: string, compression: string): string[] {
     switch (target) {
       case "rpm":
-        return ["--rpm-os", "linux", "--rpm-compression", compression == "xz" ? "xzmt" : compression]
+        return ["--rpm-os", "linux", "--rpm-compression", compression === "xz" ? "xzmt" : compression]
       case "deb":
         return ["--deb-compression", compression]
       case "pacman":
@@ -393,7 +421,7 @@ interface FpmConfiguration {
   args: Array<string>
   customDepends?: Array<string>
   customRecommends?: Array<string>
-  compression?: string | null
+  compression?: LinuxTargetSpecificOptions["compression"]
 }
 
 async function writeConfigFile(tmpDir: TmpDir, templatePath: string, options: any): Promise<string> {
@@ -411,6 +439,6 @@ async function writeConfigFile(tmpDir: TmpDir, templatePath: string, options: an
   })
 
   const outputPath = await tmpDir.getTempFile({ suffix: path.basename(templatePath, ".tpl") })
-  await fsExtra.outputFile(outputPath, config)
+  await outputFile(outputPath, config)
   return outputPath
 }

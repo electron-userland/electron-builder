@@ -1,14 +1,14 @@
 import { Arch, copyDir, copyFile, exec, exists, InvalidConfigurationError, log } from "builder-util"
 import * as fs from "fs-extra"
 import * as path from "path"
-import { FileAssociation } from "../../options/FileAssociation.js"
-import { IconInfo } from "../../platformPackager.js"
-import { getAppImageTools } from "../../toolsets/linux.js"
-import { copyIcons, copyMimeTypes } from "./appLauncher.js"
-import { appendBlockmap } from "../differentialUpdateInfoBuilder.js"
+import { FileAssociation } from "../../options/FileAssociation"
+import { getAppImageTools } from "../../toolsets/linux"
+import { copyIcons, copyMimeTypes } from "./appLauncher"
+import { appendBlockmap } from "../differentialUpdateInfoBuilder"
 import { BlockMapDataHolder } from "builder-util-runtime"
-import { APP_RUN_ENTRYPOINT } from "./AppImageTarget.js"
-import { ToolsetConfig } from "../../configuration.js"
+import { APP_RUN_ENTRYPOINT } from "./AppImageTarget"
+import { ToolsetConfig } from "../../configuration"
+import { IconInfo } from "../../util/iconConverter"
 
 interface Options {
   productName: string
@@ -18,7 +18,16 @@ interface Options {
   icons: IconInfo[]
   license?: string | null
   fileAssociations: FileAssociation[]
-  compression?: "xz" | "lzo" | "zstd"
+  /**
+   * The compression type available for static runtime is limited as it's only compiled with support for gzip and zstd.
+   * "xz" is only valid for the legacy FUSE2 (0.0.0) toolset.
+   *
+   * [stderr] Squashfs image uses lzo compression, this version supports only zlib, zstd.
+   * Failed to open squashfs image
+   * Failed to extract AppImage
+   *
+   */
+  compression?: "gzip" | "zstd" | "xz"
 }
 
 export interface AppImageBuilderOptions {
@@ -29,7 +38,7 @@ export interface AppImageBuilderOptions {
   options: Options
 }
 
-export async function buildAppImage(appimageToolVersion: ToolsetConfig["appimage"], opts: AppImageBuilderOptions): Promise<BlockMapDataHolder> {
+export async function buildStaticRuntimeAppImage(appimageToolVersion: ToolsetConfig["appimage"], opts: AppImageBuilderOptions): Promise<BlockMapDataHolder> {
   const { stageDir, output, appDir, options, arch } = opts
 
   try {
@@ -51,10 +60,6 @@ export async function buildAppImage(appimageToolVersion: ToolsetConfig["appimage
     const args: string[] = [stageDir, output, "-offset", runtimeData.length.toString(), "-all-root", "-noappend", "-no-progress", "-quiet", "-no-xattrs", "-no-fragments"]
     if (options.compression) {
       args.push("-comp", options.compression)
-
-      if (options.compression === "xz") {
-        args.push("-Xdict-size", "100%", "-b", "1048576")
-      }
     }
     await exec(mksquashfs, args, {
       cwd: stageDir,
@@ -71,6 +76,45 @@ export async function buildAppImage(appimageToolVersion: ToolsetConfig["appimage
     return updateInfo
   } catch (error) {
     // Clean up partial build on failure
+    await fs.remove(output).catch(() => {})
+    throw error
+  }
+}
+
+export async function buildLegacyFuse2AppImage(opts: AppImageBuilderOptions): Promise<BlockMapDataHolder> {
+  const { stageDir, output, appDir, options, arch } = opts
+
+  try {
+    await fs.remove(output)
+
+    await writeAppLauncherAndRelatedFiles(opts)
+
+    const { runtime, mksquashfs, runtimeLibraries } = await getAppImageTools("0.0.0", arch)
+    // Mirror the app-builder-lib Go implementation: bundle lib/<arch> into usr/lib for x64 and ia32.
+    // arm targets don't have a dedicated lib dir in the FUSE2 toolset.
+    if (arch === Arch.x64 || arch === Arch.ia32) {
+      await copyDir(runtimeLibraries, path.join(stageDir, "usr", "lib"))
+    }
+    await copyDir(appDir, stageDir)
+
+    const runtimeData = await fs.readFile(runtime)
+
+    const args: string[] = [stageDir, output, "-offset", runtimeData.length.toString(), "-all-root", "-noappend", "-no-progress", "-quiet", "-no-xattrs", "-no-fragments"]
+    if (options.compression) {
+      args.push("-comp", options.compression)
+      if (options.compression === "xz") {
+        // Match the dictionary/block-size settings used by the original app-builder Go implementation
+        args.push("-Xdict-size", "100%", "-b", "1048576")
+      }
+    }
+    await exec(mksquashfs, args, { cwd: stageDir })
+
+    await writeRuntimeData(output, runtimeData)
+    await fs.chmod(output, 0o755)
+
+    const updateInfo = await appendBlockmap(output)
+    return updateInfo
+  } catch (error) {
     await fs.remove(output).catch(() => {})
     throw error
   }
@@ -103,16 +147,14 @@ function escapeShellString(str: string): string {
 }
 
 /**
- * Validates that critical executable/filename fields don't contain dangerous characters
- * that could break paths or cause security issues even when escaped.
+ * Validates that critical path fields (executable name, product filename, license filename)
+ * contain only characters that are safe for use in filesystem paths and embedded bash strings.
+ * Allowed: Unicode letters, digits, dots, underscores, hyphens, and spaces.
  */
-function validateCriticalPathString(str: string, fieldName: string): void {
-  // Only reject characters that would break filesystem paths or cause severe issues
-  // Allow quotes, spaces, etc. since they can be escaped
-  if (/[`${}|&;<>\n\r\0]/.test(str) || str.includes("/") || str.includes("\\")) {
+export function validateCriticalPathString(str: string, fieldName: string): void {
+  if (!/^[\p{L}\p{N}._\- ]+$/u.test(str)) {
     throw new InvalidConfigurationError(
-      `${fieldName} contains characters that cannot be safely used in file paths: ${str}. ` +
-        `Please use only alphanumeric characters, hyphens, underscores, dots, spaces, and quotes.`
+      `${fieldName} contains characters that cannot be safely used in file paths: ${str}. Please use only letters, digits, hyphens, underscores, dots, and spaces.`
     )
   }
 }
@@ -123,8 +165,9 @@ async function writeAppLauncherAndRelatedFiles(opts: AppImageBuilderOptions): Pr
     options: { license, executableName, productFilename, productName, desktopEntry },
   } = opts
 
-  // Validate only critical path fields for severe path-breaking characters
-  // productName and productFilename can contain quotes, spaces, etc. - they'll be escaped
+  // executableName and productFilename are embedded directly into double-quoted bash strings
+  // and used as filesystem paths, so they must pass the whitelist.
+  // productName is not validated here because it is only ever passed through escapeShellString().
   validateCriticalPathString(executableName, "executableName")
   validateCriticalPathString(productFilename, "productFilename")
 
@@ -141,7 +184,7 @@ async function writeAppLauncherAndRelatedFiles(opts: AppImageBuilderOptions): Pr
     ResourceName: `appimagekit-${executableName}`,
   }
 
-  const mimeTypeFile = await copyMimeTypes(opts)
+  const mimeTypeFile = await copyMimeTypes(stageDir, opts.options)
   if (mimeTypeFile) {
     templateConfig.MimeTypeFile = mimeTypeFile
   }
@@ -179,7 +222,7 @@ async function writeAppLauncherAndRelatedFiles(opts: AppImageBuilderOptions): Pr
   await fs.writeFile(path.join(stageDir, APP_RUN_ENTRYPOINT), appRunContent, { mode: 0o755 })
 }
 
-type AppRunScriptBase = {
+export type AppRunScriptBase = {
   ExecutableName: string
   DesktopFileName: string
   ProductFilename: string
@@ -188,18 +231,18 @@ type AppRunScriptBase = {
   MimeTypeFile?: string
 }
 
-type AppRunScriptWithEula = AppRunScriptBase & {
+export type AppRunScriptWithEula = AppRunScriptBase & {
   EulaFile: string
   IsHtmlEula: boolean
 }
 
-type AppRunScript = AppRunScriptBase | AppRunScriptWithEula
+export type AppRunScript = AppRunScriptBase | AppRunScriptWithEula
 
 function hasEula(config: AppRunScript): config is AppRunScriptWithEula {
   return "EulaFile" in config && typeof config.EulaFile === "string"
 }
 
-function generateAppRunScript(config: AppRunScript): string {
+export function generateAppRunScript(config: AppRunScript): string {
   const eulaEnabled = hasEula(config)
 
   return `#!/usr/bin/env bash
@@ -221,11 +264,15 @@ if [ -z "$APPDIR" ] ; then
   APPDIR="$path"
 fi
 
-export PATH="\${APPDIR}:\${APPDIR}/usr/sbin:\${PATH}"
-export XDG_DATA_DIRS="./share/:/usr/share/gnome:/usr/local/share/:/usr/share/:\${XDG_DATA_DIRS}"
-export LD_LIBRARY_PATH="\${APPDIR}/usr/lib:\${LD_LIBRARY_PATH}"
-export XDG_DATA_DIRS="\${APPDIR}"/usr/share/:"\${XDG_DATA_DIRS}":/usr/share/gnome/:/usr/local/share/:/usr/share/
-export GSETTINGS_SCHEMA_DIR="\${APPDIR}/usr/share/glib-2.0/schemas:\${GSETTINGS_SCHEMA_DIR}"
+if [ -z "$APPDIR" ] ; then
+  echo "ERROR: could not locate the AppDir. Ensure this script is run from within a properly structured AppImage." >&2
+  exit 1
+fi
+
+export PATH="\${APPDIR}:\${APPDIR}/usr/sbin\${PATH:+:\${PATH}}"
+export XDG_DATA_DIRS="\${APPDIR}/usr/share/\${XDG_DATA_DIRS:+:\${XDG_DATA_DIRS}}:/usr/share/gnome:/usr/local/share/:/usr/share/"
+export LD_LIBRARY_PATH="\${APPDIR}/usr/lib\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}"
+export GSETTINGS_SCHEMA_DIR="\${APPDIR}/usr/share/glib-2.0/schemas\${GSETTINGS_SCHEMA_DIR:+:\${GSETTINGS_SCHEMA_DIR}}"
 
 BIN="$APPDIR/${config.ExecutableName}"
 
@@ -242,7 +289,7 @@ for arg in "\${args[@]}" ; do
     break
   fi
 done
-NO_SANDBOX=
+NO_SANDBOX=()
 # Use 'unshare -Ur true' as a heuristic to detect whether user namespaces are available.
 # Notes:
 #   - When running as root, this check will always succeed even if the sandbox configuration
@@ -254,16 +301,16 @@ NO_SANDBOX=
 #     us to add '--no-sandbox'. This is an intentional fail-safe: we prefer the app to start
 #     without sandboxing rather than crash on startup.
 if [ $HAVE_NO_SANDBOX -eq 0 ] && ! unshare -Ur true 2>/dev/null ; then
-  NO_SANDBOX=--no-sandbox
+  NO_SANDBOX=(--no-sandbox)
 fi
 
 atexit()
 {
   if [ $isEulaAccepted == 1 ] ; then
     if [ $NUMBER_OF_ARGS -eq 0 ] ; then
-      exec "$BIN" $NO_SANDBOX
+      exec "$BIN" "\${NO_SANDBOX[@]}"
     else
-      exec "$BIN" $NO_SANDBOX "\${args[@]}"
+      exec "$BIN" "\${NO_SANDBOX[@]}" "\${args[@]}"
     fi
   fi
 }

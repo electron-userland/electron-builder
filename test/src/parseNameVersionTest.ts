@@ -5,7 +5,7 @@ import { describe, expect, test } from "vitest"
 // Access protected method via cast for unit testing
 function parseNameVersion(identifier: string): { name: string; version: string } {
   const collector = new (PnpmNodeModulesCollector as any)(".", new TmpDir("test"))
-  return (collector as any).parseNameVersion(identifier)
+  return collector.parseNameVersion(identifier)
 }
 
 describe("parseNameVersion", () => {

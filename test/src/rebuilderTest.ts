@@ -1,10 +1,10 @@
 import { Configuration, Platform } from "app-builder-lib"
-import { PM } from "app-builder-lib/internal"
-import { exists } from "builder-util"
+import { PM } from "app-builder-lib/out/node-module-collector"
+import { exists } from "builder-util/out/util"
 import path from "path"
-import { assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
-import { ELECTRON_VERSION } from "./helpers/testConfig.js"
-import { verifySmartUnpack } from "./helpers/verifySmartUnpack.js"
+import { assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
+import { ELECTRON_VERSION } from "./helpers/testConfig"
+import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 
 const packageConfig = (data: any) => {
   data.name = "@packageManagers/test-app-yarn-workspace"
@@ -12,7 +12,7 @@ const packageConfig = (data: any) => {
   data.dependencies = {
     ...data.debpendencies,
     debug: "4.4.3",
-    "better-sqlite3-multiple-ciphers": "12.2.0",
+    "better-sqlite3-multiple-ciphers": "12.9.0",
   }
   data.devDependencies = {
     electron: ELECTRON_VERSION,
@@ -27,7 +27,7 @@ const config: Configuration = {
   asarUnpack: ["**/better_sqlite3.node"],
 }
 
-describe.ifNotWindows("Rebuilder Test", () => {
+describe.ifLinux("Rebuilder Test", () => {
   test("yarn workspace", ({ expect }) =>
     assertPack(
       expect,

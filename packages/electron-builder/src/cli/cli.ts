@@ -1,19 +1,15 @@
 #! /usr/bin/env node
 
-import { createRequire } from "node:module"
-import { getElectronVersion, loadEnv, nodeGypRebuild } from "app-builder-lib/internal"
-
-const require = createRequire(import.meta.url)
-import { ExecError, InvalidConfigurationError, log } from "builder-util"
-import chalk from "chalk"
-import fsExtra from "fs-extra"
-import { isCI } from "ci-info"
-import * as path from "path"
-import { build, configureBuildCommand, createYargs } from "../builder.js"
-import { configurePublishCommand, publish } from "../publish.js"
-import { createSelfSignedCert } from "./create-self-signed-cert.js"
-import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps.js"
-import { start } from "./start.js"
+import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
+import { nodeGypRebuild } from "app-builder-lib/out/util/yarn"
+import * as chalk from "chalk"
+import { build, configureBuildCommand, createYargs } from "../builder"
+import { configurePublishCommand, publish } from "../publish"
+import { clearCache } from "./clear-cache"
+import { wrap } from "./cli-util"
+import { createSelfSignedCert } from "./create-self-signed-cert"
+import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps"
+import { start } from "./start"
 
 // tslint:disable:no-unused-expression
 void createYargs()
@@ -41,41 +37,16 @@ void createYargs()
     yargs => yargs,
     wrap(() => start())
   )
+  .command(
+    "clear-cache",
+    "Clear the electron-builder default cache directory",
+    yargs => yargs,
+    wrap(() => clearCache())
+  )
   .help()
   .epilog(`See ${chalk.underline("https://electron.build")} for more documentation.`)
   .strict()
   .recommendCommands().argv
-
-function wrap(task: (args: any) => Promise<any>) {
-  return (args: any) => {
-    checkIsOutdated().catch((e: any) => log.warn({ error: e }, "cannot check updates"))
-    loadEnv(path.join(process.cwd(), "electron-builder.env"))
-      .then(() => task(args))
-      .catch(error => {
-        process.exitCode = 1
-        // https://github.com/electron-userland/electron-builder/issues/2940
-        process.on("exit", () => (process.exitCode = 1))
-        if (error instanceof InvalidConfigurationError) {
-          log.error(null, error.message)
-        } else if (!(error instanceof ExecError) || !error.alreadyLogged) {
-          log.error({ failedTask: task.name, stackTrace: error.stack }, error.message)
-        }
-      })
-  }
-}
-
-async function checkIsOutdated() {
-  if (isCI || process.env.NO_UPDATE_NOTIFIER != null) {
-    return
-  }
-
-  const pkg = await fsExtra.readJson(path.join(import.meta.dirname, "..", "..", "package.json"))
-  if (pkg.version === "0.0.0-semantic-release") {
-    return
-  }
-  const UpdateNotifier = require("simple-update-notifier")
-  await UpdateNotifier({ pkg })
-}
 
 async function rebuildAppNativeCode(args: any) {
   const projectDir = process.cwd()

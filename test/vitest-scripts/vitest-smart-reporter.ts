@@ -12,20 +12,57 @@ const defaultStat: TestStats = {
   heavy: false,
 }
 
+export const TEST_SRC_ROOT = path.resolve(__dirname, "../src")
+
 const shouldResetSnapshot = process.env.RESET_VITEST_SHARD_CACHE === "true"
+
 export default class SmarterReporter implements Reporter {
   private readonly cache = shouldResetSnapshot ? { tests: {}, files: {} } : loadCache()
   private readonly fileDurations = new Map<string, number>()
   private readonly fileFails = new Map<string, number>()
   private readonly fileHasHeavy = new Map<string, boolean>()
+  private readonly inProgressTests = new Map<string, number>() // moduleRelPath::fullName → startMs
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null
 
   // Get current platform
   currentPlatform = process.platform as SupportedPlatforms
 
+  onInit() {
+    this.heartbeatTimer = setInterval(() => {
+      const now = Date.now()
+      const running = [...this.inProgressTests.entries()]
+      if (running.length === 0) {
+        return
+      }
+      const lines = running.map(([name, start]) => `  ⏳ ${name} (${Math.floor((now - start) / 1000)}s)`).join("\n")
+      process.stdout.write(`\n[still running]\n${lines}\n`)
+    }, 30_000)
+  }
+
+  onTestCaseReady(test: TestCase) {
+    const id = `${path.relative(TEST_SRC_ROOT, test.module.moduleId)}::${test.fullName}`
+    this.inProgressTests.set(id, Date.now())
+    process.stdout.write(`\n[test ready] 🏃 ${test.fullName}\n`)
+  }
+
   onTestCaseResult(test: TestCase) {
-    const id = test.fullName
+    const id = `${path.relative(TEST_SRC_ROOT, test.module.moduleId)}::${test.fullName}`
+    this.inProgressTests.delete(id)
     const dur = test.diagnostic()?.duration ?? 0
-    const failed = test.result().state === "failed"
+    const testResult = test.result().state
+    const status = (() => {
+      switch (testResult) {
+        case "passed":
+          return "✅"
+        case "failed":
+          return "❌"
+        case "skipped":
+          return "⏭️"
+        default:
+          return "❔"
+      }
+    })()
+    process.stdout.write(`\n${status} ${id} (${Math.round(dur / 1000)}s)\n`)
 
     // Access meta through the test task
     const meta = (test as any).meta || {}
@@ -45,7 +82,7 @@ export default class SmarterReporter implements Reporter {
     const prevAvg = platformRuns[this.currentPlatform].avgMs
 
     const newRuns = prevRuns + 1
-    const newFails = prevFails + (failed ? 1 : 0)
+    const newFails = prevFails + (testResult === "failed" ? 1 : 0)
     const newAvg = shouldResetSnapshot ? dur : (prevAvg * prevRuns + dur) / newRuns
 
     platformRuns[this.currentPlatform] = { runs: newRuns, fails: newFails, avgMs: newAvg }
@@ -57,9 +94,9 @@ export default class SmarterReporter implements Reporter {
       heavy: isHeavy,
     }
 
-    const file = path.basename(test.module.moduleId)
+    const file = path.relative(TEST_SRC_ROOT, test.module.moduleId)
     this.fileDurations.set(file, (this.fileDurations.get(file) ?? 0) + dur)
-    if (failed) {
+    if (testResult === "failed") {
       this.fileFails.set(file, (this.fileFails.get(file) ?? 0) + 1)
     }
     if (isHeavy) {
@@ -68,7 +105,7 @@ export default class SmarterReporter implements Reporter {
   }
 
   onTestModuleEnd(mod: TestModule) {
-    const file = path.basename(mod.moduleId)
+    const file = path.relative(TEST_SRC_ROOT, mod.moduleId)
     const dur = this.fileDurations.get(file) ?? 0
     const fails = this.fileFails.get(file) ?? 0
     const hasHeavy = this.fileHasHeavy.get(file) ?? false
@@ -113,6 +150,10 @@ export default class SmarterReporter implements Reporter {
   }
 
   onTestRunEnd() {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer)
+      this.heartbeatTimer = null
+    }
     saveCache(this.cache)
   }
 }

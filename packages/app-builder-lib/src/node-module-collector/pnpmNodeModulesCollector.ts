@@ -1,12 +1,51 @@
-import { LogMessageByKey } from "./moduleManager.js"
-import { NodeModulesCollector } from "./nodeModulesCollector.js"
-import { PM } from "./packageManager.js"
-import { PnpmDependency } from "./types.js"
+import { Lazy } from "lazy-val"
+import { LogMessageByKey, type Package } from "./moduleManager"
+import { NodeModulesCollector } from "./nodeModulesCollector"
+import { getPackageManagerCommand, PM } from "./packageManager"
+import { PnpmDependency } from "./types"
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependency, PnpmDependency> {
   public readonly installOptions = {
     manager: PM.PNPM,
     lockfile: "pnpm-lock.yaml",
+  }
+
+  // Raw backing field — all entries from `pnpm list --json`
+  private _allWorkspacePackages: PnpmDependency[] = []
+  // Cached after parseDependenciesTree resolves the Lazy; 0 = safe default (treated as < v11)
+  private _pnpmMajorVersion = 0
+  // Runs `pnpm --version` once and caches the major version number
+  private readonly pnpmVersion = new Lazy<number>(async () => {
+    const result = await this.asyncExec(getPackageManagerCommand(PM.PNPM), ["--version"])
+    const major = parseInt((result.stdout ?? "0").split(".")[0], 10)
+    return isNaN(major) ? 0 : major
+  })
+
+  /**
+   * Memo for `locateFromDepOrRoot`, keyed by `name@version`. pnpm's content-addressed virtual
+   * store guarantees that any given `name@version` resolves to a single location on disk, so
+   * once we've resolved a package we can short-circuit every subsequent lookup. This is the
+   * dominant speedup for large workspaces where the `pnpm list --json` tree contains the same
+   * `name@version` thousands of times (one entry per dependent).
+   */
+  private readonly locateMemo: Map<string, Promise<Package | null>> = new Map()
+
+  /**
+   * Visited set for `collectDepsRecursively`, keyed by `name@version`. Without this we re-walk
+   * every shared subtree of the pnpm list output, exploding work in deep workspaces.
+   */
+  private readonly collectedDeps: Set<string> = new Set()
+
+  /**
+   * Returns the workspace packages to iterate over, gated by detected pnpm version:
+   * - pnpm v11+: multi-entry workspace output → return the full parsed array
+   * - pnpm < v11 / non-workspace / detection failure: single-tree behavior → return only [0]
+   */
+  private get allWorkspacePackages(): PnpmDependency[] {
+    if (this._pnpmMajorVersion >= 11) {
+      return this._allWorkspacePackages
+    }
+    return this._allWorkspacePackages.slice(0, 1)
   }
 
   protected getArgs(): string[] {
@@ -20,12 +59,42 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
    * versions of a dep exist in the workspace.
    */
   private async locateFromDepOrRoot(pkgName: string, parentPath: string | undefined, requiredRange?: string) {
-    return (
-      (parentPath ? await this.cache.locatePackageVersion({ pkgName, parentDir: parentPath, requiredRange }) : null) ||
-      (await this.cache.locatePackageVersion({ pkgName, parentDir: this.rootDir, requiredRange }))
-    )
+    // pnpm's virtual store is content-addressed: every `name@version` lookup is deterministic,
+    // so memoize on the exact version. `requiredRange` is normally an exact version coming from
+    // the pnpm list output (e.g. `value.version`), which makes this cache hit on duplicates.
+    // Only memoize when we have a concrete version — semver ranges could resolve differently
+    // depending on what's installed at `parentPath` vs root, so skip the cache for those.
+    const memoKey = requiredRange && /^\d/.test(requiredRange) ? `${pkgName}@${requiredRange}` : null
+    if (memoKey != null) {
+      const cached = this.locateMemo.get(memoKey)
+      if (cached != null) {
+        return cached
+      }
+    }
+
+    // pnpm's default `.pnpm` virtual store is flat, so `downwardSearch` would burn thousands
+    // of `readdir`/`lstat` calls finding nothing. With `nodeLinker: hoisted`, however, the
+    // layout is a traditional nested `node_modules` tree where version-conflicted packages
+    // land at `<root>/node_modules/A/node_modules/B` — downward BFS is needed to find them.
+    const skipDownwardSearch = !(await this.isHoisted.value)
+    const promise = (async (): Promise<Package | null> => {
+      const fromDep = parentPath ? await this.cache.locatePackageVersion({ pkgName, parentDir: parentPath, requiredRange, skipDownwardSearch }) : null
+      if (fromDep) {
+        return fromDep
+      }
+      return this.cache.locatePackageVersion({ pkgName, parentDir: this.rootDir, requiredRange, skipDownwardSearch })
+    })()
+
+    if (memoKey != null) {
+      this.locateMemo.set(memoKey, promise)
+    }
+    return promise
   }
 
+  // pnpm 10+ does not automatically preserve transitive optional platform-specific
+  // packages (e.g. sass-embedded-linux-x64) across lock file regeneration. Users
+  // must list them as direct optionalDependencies. Missing ones are emitted as
+  // PKG_OPTIONAL_PLATFORM_NOT_INSTALLED warnings in the log summary.
   protected async extractProductionDependencyGraph(tree: PnpmDependency, dependencyId: string) {
     if (this.productionGraph[dependencyId]) {
       return
@@ -61,7 +130,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       if (optional[packageName]) {
         const pkg = await this.locateFromDepOrRoot(packageName, tree.path, dependency.version)
         if (!pkg) {
-          this.cache.logSummary[LogMessageByKey.PKG_OPTIONAL_NOT_INSTALLED].push(`${packageName}@${dependency.version}`)
+          this.logMissingDependency(`${packageName}@${dependency.version}`)
           return undefined
         }
       }
@@ -80,31 +149,53 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     this.productionGraph[dependencyId] = { dependencies: collectedDependencies }
   }
 
-  protected async collectAllDependencies(tree: PnpmDependency) {
-    // Collect regular dependencies
-    for (const [key, value] of Object.entries(tree.dependencies || {})) {
-      if ((value?.dedupedDependenciesCount ?? 0) > 0) {
-        continue
-      }
-      const pkg = await this.locateFromDepOrRoot(key, value.path, value.version)
-      this.allDependencies.set(`${key}@${value.version}`, { ...value, path: pkg?.packageDir ?? value.path })
-      await this.collectAllDependencies(value)
-    }
-
-    // Collect optional dependencies if they exist
-    for (const [key, value] of Object.entries(tree.optionalDependencies || {})) {
-      if ((value?.dedupedDependenciesCount ?? 0) > 0) {
-        continue
-      }
-      const pkg = await this.locateFromDepOrRoot(key, value.path, value.version)
-      this.allDependencies.set(`${key}@${value.version}`, { ...value, path: pkg?.packageDir ?? value.path })
-      await this.collectAllDependencies(value)
+  protected async collectAllDependencies(_tree: PnpmDependency, _appPackageName: string): Promise<void> {
+    for (const root of this.allWorkspacePackages) {
+      await this.collectDepsRecursively(root)
     }
   }
 
-  protected parseDependenciesTree(jsonBlob: string): PnpmDependency {
-    // pnpm returns an array of dependency trees
-    const dependencyTree: PnpmDependency[] = this.extractJsonFromPollutedOutput<PnpmDependency[]>(jsonBlob)
+  private async collectDepsRecursively(tree: PnpmDependency): Promise<void> {
+    const visit = async (key: string, value: PnpmDependency) => {
+      if ((value?.dedupedDependenciesCount ?? 0) > 0) {
+        return
+      }
+      const id = `${key}@${value.version}`
+      // The pnpm list output can include the same `name@version` thousands of times across a
+      // deep workspace; without this guard we re-resolve and re-recurse each occurrence.
+      if (this.collectedDeps.has(id)) {
+        return
+      }
+      this.collectedDeps.add(id)
+      const pkg = await this.locateFromDepOrRoot(key, value.path, value.version)
+      this.allDependencies.set(id, { ...value, path: pkg?.packageDir ?? value.path })
+      await this.collectDepsRecursively(value)
+    }
+
+    for (const [key, value] of Object.entries(tree.dependencies || {})) {
+      await visit(key, value)
+    }
+    for (const [key, value] of Object.entries(tree.optionalDependencies || {})) {
+      await visit(key, value)
+    }
+  }
+
+  protected override getTreeFromWorkspaces(tree: PnpmDependency, packageName: string): PnpmDependency {
+    // pnpm v10 workspace: app is nested as a dependency of root — handled by base class
+    const result = super.getTreeFromWorkspaces(tree, packageName)
+    if (result !== tree) {
+      return result
+    }
+    // pnpm v11 workspace: each workspace package is a separate top-level array entry;
+    // non-workspace (single-tree): find returns the one entry or undefined → falls back to tree
+    const match = this.allWorkspacePackages.find(pkg => pkg.name === packageName || pkg.from === packageName)
+    return match ?? tree
+  }
+
+  protected async parseDependenciesTree(jsonBlob: string): Promise<PnpmDependency> {
+    const dependencyTree = this.extractJsonFromPollutedOutput<PnpmDependency[]>(jsonBlob)
+    this._allWorkspacePackages = dependencyTree
+    this._pnpmMajorVersion = await this.pnpmVersion.value
     return dependencyTree[0]
   }
 }

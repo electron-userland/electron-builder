@@ -307,7 +307,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   /**
-   * Configure update provider. If value is `string`, [GenericServerOptions](./publish.md#genericserveroptions) will be set with value as `url`.
+   * Configure update provider. If value is `string`, [GenericServerOptions](https://www.electron.build/publish#genericserveroptions) will be set with value as `url`.
    * @param options If you want to override configuration in the `app-update.yml`.
    */
   setFeedURL(options: PublishConfiguration | AllPublishOptions | string) {
@@ -732,8 +732,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       if (urlPath.toLowerCase().endsWith(`.${taskOptions.fileExtension.toLowerCase()}`)) {
         return path.basename(urlPath)
       } else {
-        // url like /latest, generate name
-        return taskOptions.fileInfo.info.url
+        // url like /latest — use basename so a server-supplied path like "../../etc/evil"
+        // cannot escape the cache directory via path.join
+        return path.basename(taskOptions.fileInfo.info.url)
       }
     }
 

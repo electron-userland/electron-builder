@@ -1,14 +1,15 @@
-import { DmgOptions, MacPackager, Target } from "app-builder-lib"
-import { createBlockmap, findIdentity, isSignAllowed } from "app-builder-lib/internal"
+import { DmgOptions, Target } from "app-builder-lib"
+import { findIdentity, isSignAllowed } from "app-builder-lib/out/codeSign/macCodeSign"
+import { MacPackager } from "app-builder-lib/out/macPackager"
+import { createBlockmap } from "app-builder-lib/out/targets/differentialUpdateInfoBuilder"
 import { Arch, exec, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces } from "builder-util"
-import { sanitizeFileName } from "builder-util/internal"
+import { sanitizeFileName } from "builder-util/out/filename"
 import { release as getOsRelease } from "os"
 import * as path from "path"
-import { addLicenseToDmg } from "./dmgLicense.js"
-import { computeBackground, customizeDmg } from "./dmgUtil.js"
-import { hdiUtil } from "./hdiuil.js"
-
-export { attachAndExecute, getDmgTemplatePath } from "./dmgUtil.js"
+import type { DmgBuildLicenseConfig } from "./dmgLicense"
+import { addLicenseToDmg } from "./dmgLicense"
+import { computeBackground, customizeDmg } from "./dmgUtil"
+import { hdiUtil } from "./hdiuil"
 
 export interface DmgBuildConfig {
   title: string
@@ -33,7 +34,7 @@ export interface DmgBuildConfig {
   shrink?: boolean
   filesystem?: string
   "compression-level"?: number | null
-  license?: string | null
+  license?: DmgBuildLicenseConfig | null
   contents?: Array<{
     path: string
     x: number
@@ -45,7 +46,7 @@ export interface DmgBuildConfig {
   }>
 }
 export class DmgTarget extends Target {
-  readonly options: DmgOptions
+  readonly options: DmgOptions = this.packager.config.dmg || Object.create(null)
 
   isAsyncSupported = false
 
@@ -54,7 +55,6 @@ export class DmgTarget extends Target {
     readonly outDir: string
   ) {
     super("dmg")
-    this.options = this.packager.config.dmg || Object.create(null)
   }
 
   async build(appPath: string, arch: Arch) {
@@ -79,7 +79,9 @@ export class DmgTarget extends Target {
 
     const specification = await this.computeDmgOptions(appPath)
 
-    if (!(await customizeDmg({ appPath, artifactPath, volumeName, specification, packager }))) {
+    const licenseData = await addLicenseToDmg(packager, this.options.license)
+
+    if (!(await customizeDmg({ appPath, artifactPath, volumeName, specification, packager, licenseData }))) {
       return
     }
 
@@ -87,7 +89,6 @@ export class DmgTarget extends Target {
       await hdiUtil(addLogLevel(["internet-enable"]).concat(artifactPath))
     }
 
-    const licenseData = await addLicenseToDmg(packager, artifactPath)
     if (packager.packagerOptions.effectiveOptionComputed != null) {
       await packager.packagerOptions.effectiveOptionComputed({ licenseData })
     }

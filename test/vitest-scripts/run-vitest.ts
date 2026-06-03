@@ -1,19 +1,20 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env ts-node
 
 import isCI from "is-ci"
 import { startVitest } from "vitest/node"
-import { getAllTestFiles } from "./file-discovery.js"
-import { buildWeightedFiles, computeShardCount, splitIntoShards } from "./shard-builder.js"
-import { SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN } from "./smart-config.js"
-import SmartSequencer from "./vitest-smart-sequencer.js"
-
-const __dirname = import.meta.dirname
+import { getAllTestFiles } from "./file-discovery"
+import { generateTests } from "./generate-tests"
+import { buildWeightedFiles, computeShardCount, splitIntoShards } from "./shard-builder"
+import { SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN } from "./smart-config"
+import SmartSequencer from "./vitest-smart-sequencer"
 
 const testRegex = TEST_FILES_PATTERN?.split(",")
-const includeRegex = `(${testRegex.join("|")})`
+const includeRegex = `(${testRegex.join("|")}|${testRegex.map(t => `${t}*Test`).join("|")})`
 console.log("TEST_FILES pattern", includeRegex)
 
 async function main() {
+  generateTests()
+
   const files = getAllTestFiles()
   const currentPlatform = process.platform as SupportedPlatforms
 
@@ -56,17 +57,16 @@ async function main() {
     include: [`test/src/**/${includeRegex}.ts`],
 
     printConsoleTrace: true,
+    runner: __dirname + "/vitest-network-retry-runner.ts",
     reporters: ["default", __dirname + "/vitest-smart-reporter.ts"],
 
-    maxWorkers: "50%",
-    minWorkers: 1,
+    // 2 on Windows (heavy MSI/Squirrel builds saturate the vitest main-thread RPC at 3); 3 elsewhere
+    maxWorkers: process.platform === "win32" ? 2 : 3,
 
-    // Ensure tests from different files can run in parallel
-    // but heavy tests will be serialized by the mutex
-    fileParallelism: true,
+    fileParallelism: process.env.TEST_SEQUENTIAL_FILES !== "true",
     sequence: {
       sequencer: SmartSequencer,
-      concurrent: process.env.TEST_SEQUENTIAL !== "true",
+      concurrent: process.env.TEST_SEQUENTIAL === "false",
     },
 
     slowTestThreshold: 2 * 60 * 1000,
@@ -76,10 +76,19 @@ async function main() {
       printBasicPrototype: false,
     },
     resolveSnapshotPath: (testPath, snapshotExtension) => {
-      return testPath
+      const snapshotPath = testPath
         .replace(/\.[tj]s$/, `.js${snapshotExtension}`)
         .replace("/src/", "/snapshots/")
         .replace("\\src\\", "\\snapshots\\")
+      // These suites assert the packed asar file tree across every package manager. The tree
+      // content (files + sizes) is identical on all hosts, but two header fields are inherently
+      // host-specific: the data-section packing `offset` (write order differs by OS) and the
+      // Unix `executable` bit (NTFS does not carry it). Keep a dedicated Windows baseline so the
+      // POSIX snapshots retain full fidelity and neither platform has to discard real data.
+      if (process.platform === "win32" && /(?:packageManagerTest|HoistedNodeModuleTest)\.js\.snap$/.test(snapshotPath)) {
+        return snapshotPath.replace(/\.snap$/, ".win.snap")
+      }
+      return snapshotPath
     },
   })
     .then(() => {

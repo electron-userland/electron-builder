@@ -1,36 +1,26 @@
-import { InvalidConfigurationError, statOrNull } from "builder-util"
-import fsExtra from "fs-extra"
-import { homedir } from "os"
-import * as path from "path"
+import { decodeCscLinkBase64, InvalidConfigurationError, resolveCscLinkPath, statOrNull } from "builder-util"
+import { outputFile } from "fs-extra"
 import { TmpDir } from "temp-file"
-import { download } from "../binDownload.js"
+import { download } from "../binDownload"
 
 /** @private */
 export async function importCertificate(cscLink: string, tmpDir: TmpDir, currentDir: string): Promise<string> {
   cscLink = cscLink.trim()
 
-  let file: string | null = null
-  if ((cscLink.length > 3 && cscLink[1] === ":") || cscLink.startsWith("/") || cscLink.startsWith(".")) {
-    file = cscLink
-  } else if (cscLink.startsWith("file://")) {
-    file = cscLink.substring("file://".length)
-  } else if (cscLink.startsWith("~/")) {
-    file = path.join(homedir(), cscLink.substring("~/".length))
-  } else if (cscLink.startsWith("https://")) {
+  if (cscLink.startsWith("https://")) {
     const tempFile = await tmpDir.getTempFile({ suffix: ".p12" })
     await download(cscLink, tempFile)
     return tempFile
-  } else {
-    const mimeType = /data:.*;base64,/.exec(cscLink)?.[0]
-    if (mimeType || cscLink.length > 2048 || cscLink.endsWith("=")) {
-      const tempFile = await tmpDir.getTempFile({ suffix: ".p12" })
-      await fsExtra.outputFile(tempFile, Buffer.from(cscLink.substring(mimeType?.length ?? 0), "base64"))
-      return tempFile
-    }
-    file = cscLink
   }
 
-  file = path.resolve(currentDir, file)
+  const decoded = decodeCscLinkBase64(cscLink)
+  if (decoded) {
+    const tempFile = await tmpDir.getTempFile({ suffix: ".p12" })
+    await outputFile(tempFile, decoded)
+    return tempFile
+  }
+
+  const file = resolveCscLinkPath(cscLink, currentDir)
   const stat = await statOrNull(file)
   if (stat == null) {
     throw new InvalidConfigurationError(`${file} doesn't exist`)

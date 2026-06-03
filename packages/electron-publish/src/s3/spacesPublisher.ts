@@ -1,7 +1,7 @@
 import { InvalidConfigurationError, isEmptyOrSpaces } from "builder-util"
 import { SpacesOptions } from "builder-util-runtime"
-import { PublishContext } from "../index.js"
-import { BaseS3Publisher } from "./baseS3Publisher.js"
+import { PublishContext } from "../"
+import { BaseS3Publisher, S3UploadConfig } from "./baseS3Publisher"
 
 export class SpacesPublisher extends BaseS3Publisher {
   readonly providerName = "spaces"
@@ -32,12 +32,7 @@ export class SpacesPublisher extends BaseS3Publisher {
     return this.info.name
   }
 
-  protected configureS3Options(args: Array<string>): void {
-    super.configureS3Options(args)
-
-    args.push("--endpoint", `${this.info.region}.digitaloceanspaces.com`)
-    args.push("--region", this.info.region)
-
+  public getS3UploadConfig(): S3UploadConfig {
     const accessKey = process.env.DO_KEY_ID
     const secretKey = process.env.DO_SECRET_KEY
     if (isEmptyOrSpaces(accessKey)) {
@@ -46,7 +41,10 @@ export class SpacesPublisher extends BaseS3Publisher {
     if (isEmptyOrSpaces(secretKey)) {
       throw new InvalidConfigurationError("Please set env DO_SECRET_KEY (see https://www.electron.build/publish#spacesoptions)")
     }
-    args.push("--accessKey", accessKey)
-    args.push("--secretKey", secretKey)
+    return {
+      region: this.info.region,
+      endpoint: `https://${this.info.region}.digitaloceanspaces.com`,
+      credentials: { accessKeyId: accessKey!, secretAccessKey: secretKey! },
+    }
   }
 }

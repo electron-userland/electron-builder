@@ -52,6 +52,23 @@ export async function getWindowsVm(debugLogger: DebugLogger): Promise<VmManager>
   return new parallelsVmModule.ParallelsVmManager(vmList.find(it => it.state === "running") || vmList.find(it => it.state === "suspended") || vmList[0])
 }
 
+export async function getLinuxVm(debugLogger: DebugLogger): Promise<VmManager | undefined> {
+  if (process.platform !== "darwin") {
+    return undefined
+  }
+  try {
+    const parallelsVmModule = await import("./ParallelsVm")
+    const vmList = (await parallelsVmModule.parseVmList(debugLogger)).filter(it => it.os === "ubuntu")
+    if (vmList.length === 0) {
+      return undefined
+    }
+    const vm = vmList.find(it => it.state === "running") || vmList.find(it => it.state === "suspended") || vmList[0]
+    return new parallelsVmModule.ParallelsVmManager(vm!)
+  } catch {
+    return undefined
+  }
+}
+
 const isWineAvailable = new Lazy(async () => {
   return isCommandAvailable("wine", ["--version"])
 })

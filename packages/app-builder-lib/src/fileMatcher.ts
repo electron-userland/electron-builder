@@ -286,7 +286,6 @@ export interface GetFileMatchersOptions {
   readonly defaultSrc: string
 }
 
-/** @internal */
 export function getFileMatchers(
   config: Configuration,
   name: "files" | "extraFiles" | "extraResources" | "asarUnpack" | "extraDistFiles",

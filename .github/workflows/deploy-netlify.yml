@@ -22,7 +22,7 @@ jobs:
       - name: Install deps and audit
         uses: ./.github/actions/pnpm
 
-      - name: Build typdoc site
+      - name: Build docusaurus site
         run: pnpm docs:all
 
       - uses: jsmrcaga/action-netlify-deploy@ae36ac1b3d1ad3646eecb5631977e7314d3a6a2f # v2.4.0
@@ -33,8 +33,7 @@ jobs:
           NETLIFY_DEPLOY_TO_PROD: true
           install_command: "echo Skipping installing the dependencies"
           build_command: "echo Skipping building the web files"
-          debug: true
-          build_directory: "site"
+          build_directory: "website/build"
           monorepo_package: "electron-builder"
 
       # Creates a status check with link to preview

@@ -361,7 +361,7 @@ export async function createPublisher(
       return new KeygenPublisher(context, publishConfig as KeygenOptions, version)
 
     case "snapStore":
-      return new SnapStorePublisher(context, publishConfig as SnapStoreOptions)
+      return new SnapStorePublisher(context, publishConfig as SnapStoreOptions, { cscLink: packager.config.snapcraft?.cscLink, resourcesDir: packager.buildResourcesDir })
 
     case "generic":
       return null

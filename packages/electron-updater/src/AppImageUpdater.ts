@@ -80,6 +80,9 @@ export class AppImageUpdater extends BaseUpdater {
     if (appImageFile == null) {
       throw newError("APPIMAGE env is not defined", "ERR_UPDATER_OLD_FILE_NOT_FOUND")
     }
+    if (!path.isAbsolute(appImageFile) || appImageFile.includes("\0")) {
+      throw newError(`APPIMAGE env is not a valid absolute path: "${appImageFile}"`, "ERR_UPDATER_OLD_FILE_NOT_FOUND")
+    }
 
     // https://stackoverflow.com/a/1712051/1910191
     unlinkSync(appImageFile)

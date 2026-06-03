@@ -1,5 +1,6 @@
-import { signAsync, SignOptions } from "@electron/osx-sign"
+import type { SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { copyFile, exec, Fields, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequest, log, Logger, retry, TmpDir, unlinkIfExists } from "builder-util"
+import { dynamicImport } from "../util/dynamicImport"
 import { Nullish } from "builder-util-runtime"
 import { createHash, randomBytes } from "crypto"
 import { rename } from "fs/promises"
@@ -7,8 +8,8 @@ import { Lazy } from "lazy-val"
 import { homedir, tmpdir } from "os"
 import * as path from "path"
 import { getTempName } from "temp-file"
-import { isAutoDiscoveryCodeSignIdentity } from "../util/flags.js"
-import { importCertificate } from "./codesign.js"
+import { isAutoDiscoveryCodeSignIdentity } from "../util/flags"
+import { importCertificate } from "./codesign"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 
@@ -33,11 +34,11 @@ export function isSignAllowed(isPrintWarn = true): boolean {
     return false
   }
 
-  const buildForPrWarning =
-    "There are serious security concerns with CSC_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
-    "\nIf you have SSH keys, sensitive env vars or AWS credentials stored in your project settings and untrusted forks can make pull requests against your repo, then this option isn't for you."
-
   if (isPullRequest()) {
+    const buildForPrWarning =
+      "There are serious security concerns with CSC_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
+      "\nIf you have SSH keys, sensitive env vars or AWS credentials stored in your project settings and untrusted forks can make pull requests against your repo, then this option isn't for you."
+
     if (isEnvTrue(process.env.CSC_FOR_PULL_REQUEST)) {
       if (isPrintWarn) {
         log.warn(buildForPrWarning)
@@ -52,6 +53,7 @@ export function isSignAllowed(isPrintWarn = true): boolean {
       return false
     }
   }
+
   return true
 }
 
@@ -105,7 +107,7 @@ const bundledCertKeychainAdded = new Lazy<void>(async () => {
   const keychainPath = path.join(cacheDir, "electron-builder-root-certs.keychain")
   const results = await Promise.all<any>([
     listUserKeychains(),
-    copyFile(path.join(import.meta.dirname, "..", "..", "certs", "root_certs.keychain"), tmpKeychainPath).then(() => rename(tmpKeychainPath, keychainPath)),
+    copyFile(path.join(__dirname, "..", "..", "certs", "root_certs.keychain"), tmpKeychainPath).then(() => rename(tmpKeychainPath, keychainPath)),
   ])
   const list = results[0]
   if (!list.includes(keychainPath)) {
@@ -212,6 +214,7 @@ async function importCerts(keychainFile: string, paths: Array<string>, keyPasswo
 }
 
 export async function sign(opts: SignOptions): Promise<void> {
+  const { signAsync } = await dynamicImport<typeof import("@electron/osx-sign")>("@electron/osx-sign")
   return retry(() => signAsync(opts), {
     retries: 3,
     interval: 5000,
@@ -277,7 +280,7 @@ async function _findIdentity(type: CertType, qualifier?: string | null, keychain
     }
 
     if (line.includes(namePrefix)) {
-      return parseIdentity(line)
+      return await parseIdentity(line)
     }
   }
 
@@ -299,24 +302,25 @@ async function _findIdentity(type: CertType, qualifier?: string | null, keychain
         }
       }
 
-      return parseIdentity(line)
+      return await parseIdentity(line)
     }
   }
   return null
 }
 
-export class Identity {
-  constructor(
-    readonly name: string,
-    readonly hash?: string
-  ) {}
+export declare class Identity {
+  readonly name: string
+  readonly hash?: string
+
+  constructor(name: string, hash?: string)
 }
 
-function parseIdentity(line: string): Identity {
+async function parseIdentity(line: string): Promise<Identity> {
   const firstQuoteIndex = line.indexOf('"')
   const name = line.substring(firstQuoteIndex + 1, line.lastIndexOf('"'))
   const hash = line.substring(0, firstQuoteIndex - 1)
-  return new Identity(name, hash)
+  const { Identity: IdentityClass } = await dynamicImport<{ Identity: new (name: string, hash?: string) => Identity }>("@electron/osx-sign/dist/cjs/util-identities")
+  return new IdentityClass(name, hash)
 }
 
 export function findIdentity(certType: CertType, qualifier?: string | null, keychain?: string | null): Promise<Identity | null> {

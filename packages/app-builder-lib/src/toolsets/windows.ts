@@ -1,35 +1,45 @@
-import { Arch, isEmptyOrSpaces, log } from "builder-util"
+import { Arch, exists, resolveEnvToolsetPath } from "builder-util"
 import { Nullish } from "builder-util-runtime"
+import { stat } from "fs-extra"
 import * as os from "os"
 import * as path from "path"
-import { getBin, getBinFromUrl } from "../binDownload.js"
-import { ToolsetConfig } from "../configuration.js"
-import { ToolInfo, computeToolEnv } from "../util/bundledTool.js"
-import { isUseSystemSigncode } from "../util/flags.js"
+import { getBinFromCustomLoc, getBinFromUrl } from "../binDownload"
+import { ToolsetConfig } from "../configuration"
+import { ToolInfo, computeToolEnv } from "../util/bundledTool"
+import { downloadBuilderToolset } from "../util/electronGet"
+import { isUseSystemSigncode } from "../util/flags"
+
+function getLegacyWinCodeSignBin(): Promise<string> {
+  return downloadBuilderToolset({
+    releaseName: "winCodeSign-2.6.0",
+    filenameWithExt: "winCodeSign-2.6.0.7z",
+    checksums: { ["winCodeSign-2.6.0.7z"]: "cdaec7154dda7cc31f88d886e2489379a0625a737d610b5ae7f62a12f16743a4" },
+  })
+}
 
 export const wincodesignChecksums = {
   "0.0.0": {
-    // legacy
+    // legacy — downloads winCodeSign-2.6.0 via getLegacyWinCodeSignBin()
   },
   "1.0.0": {
-    "rcedit-windows-2_0_0.zip": "NrBrX6M6qMG5vhUlMsD1P+byOfBq45KAD12Ono0lEfX8ynu3t0DmwJEMsRIjV/l0/SlptzM/eQXtY6+mOsvyjw==",
-    "win-codesign-darwin-arm64.zip": "D2w1EXL+4yTZ4vLvc2R+fox1nCl3D+o4m8CPo8BcIXNXHy5evnIgRGycb1nXNwRvyzS7trmOdVabW4W+A8CY7w==",
-    "win-codesign-darwin-x86_64.zip": "eF8TsYdSnPp2apYx/LoJMwwOvUAWo0ew0yqPxKfW6VflND2lmloJKxyfJzcBqhb1bvUNZAJtGuXU6KKOrUtPPQ==",
-    "win-codesign-linux-amd64.zip": "bHk5IbCv90BELGQxN7YUiiwVjQ10tEmIgLWn30/+9ejCGW6Hx1ammuX+katIxSm0osCrSGkHKY+E9Lo2qZCx5A==",
-    "win-codesign-linux-arm64.zip": "KLxwF6pvbyg37PI+IES17oOmrynaK3HR5fsFS7lUDzm7cNR8CUDirarwFP+G60Rl4cRC8hKbwNPumnPGStBXWQ==",
-    "win-codesign-linux-i386.zip": "sgI+axxrzKGbrKey9cIHg+FfniQqD6+u80xN6OQfcPcGmA3+z1R1Q0W/Wxy+qJkylhIgcRgeHgjzWkdDDNucyA==",
-    "win-codesign-windows-x64.zip": "XixPi+4XhoOdN5j90jx9rDgVAI0KHuM50D3dcWsn9NCxlZ5iTbDscvU7ARQG9h4+tWnprYZ2qbSoJiCvqlWZ4g==",
-    "windows-kits-bundle-10_0_26100_0.zip": "vvvH4J0JG2FoUcpRzXxrQHyONCALUZjQigff5CawjDP1DuwwwdVcZdfE33IQoRl4TqMOSu56hOy7nN72hskqyg==",
+    "rcedit-windows-2_0_0.zip": "589709935902545a8335190b08644cf61b46a9042e34c0c3ef0660a5aeddeaae",
+    "win-codesign-darwin-arm64.zip": "7eb41c3e6e48a75ced6b3384de22185da4bb458960fa410970eedd4e838c5c14",
+    "win-codesign-darwin-x86_64.zip": "3986c97429f002df63490193d7f787281836f055934e3cdd9e69c70a8acb695e",
+    "win-codesign-linux-amd64.zip": "d362a1a981053841554867e3e9dff51fe420fd577b44653df89bd7d3c916b156",
+    "win-codesign-linux-arm64.zip": "fb848d498281f081c937be48dd6ddaf49b0201f32210dfc816ad061c47ecd37b",
+    "win-codesign-linux-i386.zip": "11f8d9ffbf5b01e3bf6321c6d93b9b5e43d0c2d2a9fde1bca07698f2eb967cdf",
+    "win-codesign-windows-x64.zip": "1bd27f9fa553cb14bec8df530cb3caffcfb095f9dd187dab6eaf5e9b7d6e7bff",
+    "windows-kits-bundle-10_0_26100_0.zip": "1a12c81024c3499c212fdc5fac34a918e6d199271a39dfc524f6d8da484329bd",
   },
   "1.1.0": {
-    "rcedit-windows-2_0_0.zip": "sGDrjBJTVuhvcwbGAHv3/RVd9SA0HKBIDrtLk7NaAW1gSsmY0QZGn9fuhs/cjYHxZf39+PY2dOzqgLilhyeftA==",
-    "win-codesign-darwin-arm64.zip": "d0M76FslJ8+WxTJmHZjaGxYA/9yLS++zETrrZ57qf+ia/MUy9sRRohpPhZ62VgpUusUdNqqL6y3Zu1Oux/CBbQ==",
-    "win-codesign-darwin-x86_64.zip": "JgPwyRgt9MREDyjrUlccaeEVwfcXyBokSoiEvtJOipcPIAdOh6ECwj7ScjyzClWmh1WSnTEWKw6cFKwMXwxPTw==",
-    "win-codesign-linux-amd64.zip": "xqlwK9INio4Twp2sMH98uUKG+BuOLG8GJTeypD+Ay26TpV+/TIanOMvWMi2UB6dFW/B/XMVC2JDr+rlWikVJ0A==",
-    "win-codesign-linux-arm64.zip": "DQES7Koe6bOBbjuJWSRTFu41YfNeja5PLgL24ArklM1iSXZSb6AawgS0cSlwgIxmKfa08/xQ6emxfumg8sSA5A==",
-    "win-codesign-linux-i386.zip": "B+zhnU+5hJwmyXFs2ZK3lvIziqmz8dHStgZmSVgSXbKPx1SjZCm7JXk1FgLxk9O/mob5Hk/rJfrsO0WMjwgSAQ==",
-    "win-codesign-windows-x64.zip": "lLEOXdJP3dzjRI+/E3Rf8e3RqEh1qs0DRMRgmxHDbuSmXABAwEzhW+tj8g/VMIlxPTD12cyvWIyMbRZq4RxvsA==",
-    "windows-kits-bundle-10_0_26100_0.zip": "09Fh+zSwEiJMA6R2cW6tvpAlUDAq3h7kFzXt4scos62fygTMAK/G+JoRV4FMwBLcNiwUcn+A5ju2sJLHEfVdKA==",
+    "rcedit-windows-2_0_0.zip": "c66591ebe0919c60231f0bf79ff223e6504bfa69bc13edc1fa8bfc6177b73402",
+    "win-codesign-darwin-arm64.zip": "3f263b0e53cdc5410f6165471b2e808aee3148dc792efa23a7c303e7a01e67b7",
+    "win-codesign-darwin-x86_64.zip": "143fbdfcbc53bc273fa181356be8416829778452621484d39eadbe1ce49979ba",
+    "win-codesign-linux-amd64.zip": "65477fe8e40709b0f998928afb8336f82413b123310bf5adaa8efb7ed6ed0eeb",
+    "win-codesign-linux-arm64.zip": "575b01a966f2b775bbea119de263957378e2bd28cbd064d35f9e981827e37b59",
+    "win-codesign-linux-i386.zip": "aa3ce90e9aaa3449a228a3fa30633cdeb6b2791913786677a85c59db1d985598",
+    "win-codesign-windows-x64.zip": "6e5dcc5d7af7c00a7387e2101d1ad986aef80e963a3526da07bd0e65de484c30",
+    "windows-kits-bundle-10_0_26100_0.zip": "284f18a2fde66e6ecfbefc3065926c9bfdf641761a9e6cd2bd26e18d1e328bf7",
   },
 } as const
 
@@ -44,9 +54,9 @@ export async function getSignToolPath(winCodeSign: ToolsetConfig["winCodeSign"] 
     return { path: "osslsigncode" }
   }
 
-  const result = process.env.SIGNTOOL_PATH?.trim()
-  if (result) {
-    return { path: path.resolve(result) }
+  const signToolPath = await resolveEnvToolsetPath("SIGNTOOL_PATH", "file")
+  if (signToolPath != null) {
+    return { path: signToolPath }
   }
 
   if (isWin) {
@@ -60,14 +70,14 @@ export async function getSignToolPath(winCodeSign: ToolsetConfig["winCodeSign"] 
 }
 
 export async function getWindowsKitsBundle({ winCodeSign, arch }: { winCodeSign: CodeSignVersionKey | Nullish; arch: Arch }) {
-  const overridePath = process.env.ELECTRON_BUILDER_WINDOWS_KITS_PATH
-  if (!isEmptyOrSpaces(overridePath)) {
-    return { kit: overridePath, appxAssets: overridePath }
+  const kitPath = await resolveEnvToolsetPath("ELECTRON_BUILDER_WINDOWS_KITS_PATH", "directory")
+  if (kitPath != null) {
+    return { kit: kitPath, appxAssets: kitPath }
   }
 
   const useLegacy = winCodeSign == null || winCodeSign === "0.0.0"
   if (useLegacy) {
-    const vendorPath = await getBin("winCodeSign")
+    const vendorPath = await getLegacyWinCodeSignBin()
     return { kit: path.resolve(vendorPath, "windows-10", arch === Arch.arm64 ? "x64" : Arch[arch]), appxAssets: vendorPath }
   }
   const file = "windows-kits-bundle-10_0_26100_0.zip"
@@ -83,7 +93,7 @@ export function isOldWin6() {
 async function getWindowsSignToolExe({ winCodeSign, arch }: { winCodeSign: CodeSignVersionKey | Nullish; arch: Arch }) {
   if (winCodeSign === "0.0.0" || winCodeSign == null) {
     // use modern signtool on Windows Server 2012 R2 to be able to sign AppX
-    const vendorPath = await getBin("winCodeSign")
+    const vendorPath = await getLegacyWinCodeSignBin()
     if (isOldWin6()) {
       return path.resolve(vendorPath, "windows-6", "signtool.exe")
     } else {
@@ -95,16 +105,16 @@ async function getWindowsSignToolExe({ winCodeSign, arch }: { winCodeSign: CodeS
 }
 
 async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish) {
-  const overridePath = process.env.ELECTRON_BUILDER_OSSL_SIGNCODE_PATH
-  if (!isEmptyOrSpaces(overridePath)) {
-    return { path: overridePath }
+  const osslSigncodePath = await resolveEnvToolsetPath("ELECTRON_BUILDER_OSSL_SIGNCODE_PATH", "file")
+  if (osslSigncodePath != null) {
+    return { path: osslSigncodePath }
   }
   if (process.platform === "win32" || process.env.USE_SYSTEM_OSSLSIGNCODE === "true") {
     return { path: "osslsigncode" }
   }
 
   if (winCodeSign === "0.0.0" || winCodeSign == null) {
-    const vendorBase = path.resolve(await getBin("winCodeSign"), process.platform)
+    const vendorBase = path.resolve(await getLegacyWinCodeSignBin(), process.platform)
     const vendorPath = process.platform === "darwin" ? path.resolve(vendorBase, "10.12") : vendorBase
     return { path: path.resolve(vendorPath, "osslsigncode"), env: process.platform === "darwin" ? computeToolEnv([path.resolve(vendorPath, "lib")]) : undefined }
   }
@@ -132,16 +142,134 @@ export async function getRceditBundle(winCodeSign: ToolsetConfig["winCodeSign"] 
   const ia32 = "rcedit-ia32.exe"
   const x86 = "rcedit-x86.exe"
   const x64 = "rcedit-x64.exe"
-  const overridePath = process.env.ELECTRON_BUILDER_RCEDIT_PATH?.trim()
-  if (!isEmptyOrSpaces(overridePath)) {
-    log.debug({ searchFiles: [x86, x64], overridePath }, `Using RCEdit from ELECTRON_BUILDER_RCEDIT_PATH`)
-    return { x86: path.join(overridePath, x86), x64: path.join(overridePath, x64) }
+  const rcedit = await resolveEnvToolsetPath("ELECTRON_BUILDER_RCEDIT_PATH", "directory")
+  if (rcedit != null) {
+    const overridePath = rcedit
+    return { x86: path.resolve(overridePath, x86), x64: path.resolve(overridePath, x64) }
   }
   if (winCodeSign === "0.0.0" || winCodeSign == null) {
-    const vendorPath = await getBin("winCodeSign")
-    return { x86: path.join(vendorPath, ia32), x64: path.join(vendorPath, x64) }
+    const vendorPath = await getLegacyWinCodeSignBin()
+    return { x86: path.resolve(vendorPath, ia32), x64: path.resolve(vendorPath, x64) }
   }
   const file = "rcedit-windows-2_0_0.zip"
   const vendorPath = await _getWindowsToolsBin(winCodeSign, file)
-  return { x86: path.join(vendorPath, x86), x64: path.join(vendorPath, x64) }
+  return { x86: path.resolve(vendorPath, x86), x64: path.resolve(vendorPath, x64) }
+}
+
+// ─── NSIS toolset ────────────────────────────────────────────────────────────
+
+function getLegacyNsisBin(): Promise<string> {
+  // Warning: Don't use v3.0.4.2 - https://github.com/electron-userland/electron-builder/issues/6334
+  return getBinFromUrl("nsis-3.0.4.1", "nsis-3.0.4.1.7z", "9877df902530f96357d13a7a31ae2b9df67f48b11ffc9a1700a7c961574ec5fa")
+}
+
+function getLegacyNsisResourcesBin(): Promise<string> {
+  return getBinFromUrl("nsis-resources-3.4.1", "nsis-resources-3.4.1.7z", "593a9a92ef958321293ac6a2ee61e64bf1bd543142a5bd6b3d310709cc924103")
+}
+
+export const nsisChecksums = {
+  "0.0.0": {
+    // legacy — uses getLegacyNsisBin() / getLegacyNsisResourcesBin()
+  },
+  "1.2.1": {
+    // unified bundle
+    "nsis-bundle-3.12.tar.gz": "56997fdefe25e7928a1a68b4583d08b240b66cf660234053b20131a74cc082f4",
+  },
+} as const
+
+type CustomNsisBinaryConfig = { url: string | null; checksum?: string | null; version?: string | null }
+
+async function getNsisBundlePath(nsis: ToolsetConfig["nsis"], customBinary?: CustomNsisBinaryConfig | null): Promise<string> {
+  if (customBinary?.url && customBinary?.checksum) {
+    const binaryVersion = customBinary.version ?? customBinary.checksum.substring(0, 8)
+    return getBinFromCustomLoc("nsis", binaryVersion, customBinary.url, customBinary.checksum)
+  }
+  if (nsis === "0.0.0" || nsis == null) {
+    return getLegacyNsisBin()
+  }
+  const file = `nsis-bundle-3.12.tar.gz`
+  return downloadBuilderToolset({
+    releaseName: `nsis@${nsis}`,
+    filenameWithExt: file,
+    checksums: { [file]: nsisChecksums[nsis][file] },
+  })
+}
+
+export async function getMakeNsisPath(nsis: ToolsetConfig["nsis"] | Nullish, customBinary?: CustomNsisBinaryConfig | null): Promise<ToolInfo> {
+  const legacyBundle = (bundlePath: string) => {
+    // legacy bundle: platform-specific subdirectories, NSISDIR must be set explicitly
+    const env = { NSISDIR: bundlePath }
+    if (process.platform === "darwin") {
+      return { path: path.resolve(bundlePath, "mac", "makensis"), env }
+    } else if (process.platform === "win32") {
+      return { path: path.resolve(bundlePath, "Bin", "makensis.exe"), env }
+    }
+    return { path: path.resolve(bundlePath, "linux", "makensis"), env }
+  }
+  const entrypointBundle = (bundlePath: string) => {
+    // the entrypoint script auto-sets NSISDIR
+    return { path: path.resolve(bundlePath, process.platform === "win32" ? "makensis.cmd" : "makensis") }
+  }
+
+  const overridePath = await resolveEnvToolsetPath("ELECTRON_BUILDER_NSIS_DIR", "directory")
+  if (overridePath != null) {
+    // we have to search both to maintain backward compatibility
+    let potentialBundle: ToolInfo = legacyBundle(overridePath)
+    if (await exists(potentialBundle.path)) {
+      return potentialBundle
+    }
+    potentialBundle = entrypointBundle(overridePath)
+    if (await exists(potentialBundle.path)) {
+      return potentialBundle
+    }
+    throw new Error(`${path.basename(potentialBundle.path)} executable not found in ELECTRON_BUILDER_NSIS_DIR: ${overridePath}`)
+  }
+
+  const bundlePath = await getNsisBundlePath(nsis, customBinary)
+  if (nsis === "0.0.0" || nsis == null) {
+    return legacyBundle(bundlePath)
+  }
+  return entrypointBundle(bundlePath)
+}
+
+type CustomNsisResourcesConfig = { url: string; checksum: string; version: string }
+
+export async function getNsisPluginsPath(nsis: ToolsetConfig["nsis"] | Nullish, customNsisResources?: CustomNsisResourcesConfig | null): Promise<string> {
+  const resolveCustomBundle = async (bundlePath: string, type: "ELECTRON_BUILDER_NSIS_RESOURCES_DIR" | "CUSTOM_NSIS_RESOURCES") => {
+    // we have to search both to maintain backward compatibility
+    const potentialPaths = [path.resolve(bundlePath, "plugins"), path.resolve(bundlePath, "windows", "Plugins")]
+    for (const p of potentialPaths) {
+      if ((await exists(p)) && (await stat(p)).isDirectory()) {
+        return p
+      }
+    }
+    throw new Error(`Plugins directory not found in ${type}: ${bundlePath}. Expected to find in one of: ${potentialPaths.join(", ")}`)
+  }
+  const overridePath = await resolveEnvToolsetPath("ELECTRON_BUILDER_NSIS_RESOURCES_DIR", "directory")
+  if (overridePath != null) {
+    return resolveCustomBundle(overridePath, "ELECTRON_BUILDER_NSIS_RESOURCES_DIR")
+  }
+  if (customNsisResources) {
+    const bundle = await getBinFromCustomLoc("nsis-resources", customNsisResources.version, customNsisResources.url, customNsisResources.checksum)
+    return resolveCustomBundle(bundle, "CUSTOM_NSIS_RESOURCES")
+  }
+  if (nsis === "0.0.0" || nsis == null) {
+    return path.resolve(await getLegacyNsisResourcesBin(), "plugins")
+  }
+  return path.resolve(await getNsisBundlePath(nsis), "windows", "Plugins")
+}
+
+export async function getNsisElevatePath(nsis: ToolsetConfig["nsis"] | Nullish, customBinary?: CustomNsisBinaryConfig | null): Promise<string> {
+  const resolveElevate = async (dir: string, label: string) => {
+    const p = path.resolve(dir, "elevate.exe")
+    if ((await exists(p)) && (await stat(p)).isFile()) {
+      return p
+    }
+    throw new Error(`elevate.exe not found in ${label} directory: ${dir}. Expected path: ${p}`)
+  }
+  const overridePath = await resolveEnvToolsetPath("ELECTRON_BUILDER_NSIS_DIR", "directory")
+  if (overridePath != null) {
+    return resolveElevate(overridePath, "ELECTRON_BUILDER_NSIS_DIR")
+  }
+  return resolveElevate(await getNsisBundlePath(nsis, customBinary), "NSIS bundle")
 }

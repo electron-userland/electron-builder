@@ -78,8 +78,8 @@ export interface UpdateInfoFileTask {
   readonly file: string
   readonly info: UpdateInfo
   readonly publishConfiguration: PublishConfiguration
-
   readonly packager: PlatformPackager<any>
+  readonly arch?: Arch | null
 }
 
 function computeIsisElectronUpdater1xCompatibility(updaterCompatibility: string | null, publishConfiguration: PublishConfiguration, packager: Packager) {
@@ -96,7 +96,6 @@ function computeIsisElectronUpdater1xCompatibility(updaterCompatibility: string 
   return updaterVersion == null || semver.lt(updaterVersion, "4.0.0")
 }
 
-/** @internal */
 export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConfigs: Array<PublishConfiguration>): Promise<Array<UpdateInfoFileTask>> {
   const packager = event.packager
   const publishConfigs = await getPublishConfigsForUpdateInfo(packager, _publishConfigs, event.arch)
@@ -160,6 +159,7 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
         info,
         publishConfiguration,
         packager,
+        arch: event.arch,
       })
     }
   }
@@ -192,7 +192,18 @@ async function createUpdateInfo(version: string, event: ArtifactCreated, release
 
 export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfoFileTask>, packager: Packager) {
   // zip must be first and zip info must be used for old path/sha512 properties in the update info
-  updateInfoFileTasks.sort((a, b) => (a.info.files[0].url.endsWith(".zip") ? 0 : 100) - (b.info.files[0].url.endsWith(".zip") ? 0 : 100))
+  // universal installer (arch === null) must precede arch-specific ones so path:/sha512: point to the right artifact
+  updateInfoFileTasks.sort((a, b) => {
+    const zipDiff = (a.info.files[0].url.endsWith(".zip") ? 0 : 100) - (b.info.files[0].url.endsWith(".zip") ? 0 : 100)
+    if (zipDiff !== 0) {
+      return zipDiff
+    }
+    // universal (arch === null) before arch-specific; tie-break by Arch enum value for full determinism
+    // undefined arch (external callers predating this field) treated as arch-specific via strict === null check
+    const aArch = a.arch === null ? -1 : (a.arch ?? Number.MAX_SAFE_INTEGER)
+    const bArch = b.arch === null ? -1 : (b.arch ?? Number.MAX_SAFE_INTEGER)
+    return aArch - bArch
+  })
 
   const updateChannelFileToInfo = new Map<string, UpdateInfoFileTask>()
   for (const task of updateInfoFileTasks) {

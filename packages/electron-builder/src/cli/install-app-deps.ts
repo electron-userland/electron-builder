@@ -1,23 +1,19 @@
 #! /usr/bin/env node
-import { fileURLToPath } from "node:url"
-import {
-  computeDefaultAppDirectory,
-  createLazyProductionDeps,
-  determinePackageManagerEnv,
-  getConfig,
-  getElectronVersion,
-  installOrRebuild,
-  PACKAGE_VERSION,
-} from "app-builder-lib/internal"
-import { getArchCliNames, log, orNullIfFileNotExist, printErrorAndExit } from "builder-util"
-import fsExtra from "fs-extra"
+
+import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
+import { computeDefaultAppDirectory, getConfig } from "app-builder-lib/out/util/config/config"
+import { orNullIfFileNotExist } from "app-builder-lib/out/util/config/load"
+import { installOrRebuild } from "app-builder-lib/out/util/yarn"
+import { PACKAGE_VERSION } from "app-builder-lib/out/version"
+import { determinePackageManagerEnv } from "app-builder-lib/out/node-module-collector"
+import { getArchCliNames, log, printErrorAndExit } from "builder-util"
+import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { Argv } from "yargs"
-import { createYargs } from "../builder.js"
+import * as yargs from "yargs"
 
 /** @internal */
-export function configureInstallAppDepsCommand(yargs: Argv): Argv {
+export function configureInstallAppDepsCommand(yargs: yargs.Argv): yargs.Argv {
   // https://github.com/yargs/yargs/issues/760
   // demandOption is required to be set
   return yargs
@@ -48,7 +44,7 @@ export async function installAppDeps(args: any) {
   }
 
   const projectDir = process.cwd()
-  const packageMetadata = new Lazy(() => orNullIfFileNotExist(fsExtra.readJson(path.join(projectDir, "package.json"))))
+  const packageMetadata = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))
   const config = await getConfig(projectDir, null, null, packageMetadata)
   const [appDir, version] = await Promise.all<string>([computeDefaultAppDirectory(projectDir, config.directories?.app), getElectronVersion(projectDir, config)])
 
@@ -66,7 +62,6 @@ export async function installAppDeps(args: any) {
       frameworkInfo: { version, useCustomDist: true },
       platform: args.platform,
       arch: args.arch,
-      productionDeps: createLazyProductionDeps(appDir, null, false),
     },
     appDir !== projectDir,
     {}
@@ -74,10 +69,10 @@ export async function installAppDeps(args: any) {
 }
 
 function main() {
-  return installAppDeps(configureInstallAppDepsCommand(createYargs()).argv)
+  return installAppDeps(configureInstallAppDepsCommand(yargs).argv)
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (require.main === module) {
   log.warn("please use as subcommand: electron-builder install-app-deps")
   main().catch(printErrorAndExit)
 }
