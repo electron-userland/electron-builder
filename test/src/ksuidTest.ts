@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest"
 import { generateKsuid } from "builder-util/src/ksuid"
-import { executeAppBuilder } from "builder-util"
 
 const KSUID_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 const KSUID_EPOCH = 1400000000
@@ -101,39 +100,3 @@ describe("generateKsuid — timestamp encoding", () => {
   })
 })
 
-// ─── Parity tests: JS implementation vs app-builder-bin binary ───────────────
-
-describe("generateKsuid — parity with app-builder-bin", () => {
-  it("binary and JS both produce 27-character base62 strings", async () => {
-    const binaryOutput = (await executeAppBuilder(["ksuid"])).trim()
-    const jsOutput = generateKsuid()
-
-    expect(binaryOutput).toHaveLength(KSUID_LENGTH)
-    expect(binaryOutput).toMatch(/^[0-9A-Za-z]{27}$/)
-    expect(jsOutput).toHaveLength(KSUID_LENGTH)
-    expect(jsOutput).toMatch(/^[0-9A-Za-z]{27}$/)
-  })
-
-  it("binary and JS encode timestamps within 5 seconds of each other", async () => {
-    // Run both concurrently to minimize wall-clock divergence
-    const [binaryRaw, jsOutput] = await Promise.all([executeAppBuilder(["ksuid"]), Promise.resolve(generateKsuid())])
-
-    const binaryTs = decodeKsuid(binaryRaw.trim()).timestampSeconds
-    const jsTs = decodeKsuid(jsOutput).timestampSeconds
-
-    expect(Math.abs(binaryTs - jsTs)).toBeLessThanOrEqual(5)
-  })
-
-  it("binary and JS decode to valid 20-byte representations with 16-byte random payloads", async () => {
-    const binaryOutput = (await executeAppBuilder(["ksuid"])).trim()
-    const jsOutput = generateKsuid()
-
-    const binaryDecoded = decodeKsuid(binaryOutput)
-    const jsDecoded = decodeKsuid(jsOutput)
-
-    expect(binaryDecoded.payload).toHaveLength(16)
-    expect(jsDecoded.payload).toHaveLength(16)
-    // Payloads are random — they must differ
-    expect(binaryDecoded.payload.toString("hex")).not.toBe(jsDecoded.payload.toString("hex"))
-  })
-})

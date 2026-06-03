@@ -1,5 +1,4 @@
-import { appBuilderPath } from "app-builder-bin"
-import { retry, Nullish, safeStringifyJson, isValidKey, deepAssign } from "builder-util-runtime"
+import { Nullish, safeStringifyJson, isValidKey } from "builder-util-runtime"
 import * as chalk from "chalk"
 import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_process"
 import { spawn as _spawn } from "cross-spawn"
@@ -556,50 +555,4 @@ export function to7zaOutputSwitch(p: string): string {
     throw new InvalidConfigurationError(`7za output path is empty, starts with "-", or contains control characters: "${p}"`)
   }
   return "-o" + safePath
-}
-
-export function executeAppBuilder(
-  args: Array<string>,
-  childProcessConsumer?: (childProcess: ChildProcess) => void,
-  extraOptions: SpawnOptions = {},
-  maxRetries = 0
-): Promise<string> {
-  const command = appBuilderPath
-  const env: any = {
-    ...process.env, // codeql[js/shell-command-constructed-from-input] - app-builder is a trusted internal binary; requires full env including GITHUB_TOKEN for authenticated tool downloads
-    FORCE_COLOR: chalk.level === 0 ? "0" : "1",
-  }
-  const cacheEnv = process.env.ELECTRON_BUILDER_CACHE
-  if (cacheEnv != null && cacheEnv.length > 0) {
-    env.ELECTRON_BUILDER_CACHE = path.resolve(cacheEnv)
-  }
-
-  if (extraOptions.env != null) {
-    deepAssign(env, extraOptions.env)
-  }
-
-  function runCommand() {
-    return new Promise<string>((resolve, reject) => {
-      const childProcess = doSpawn(command, args, {
-        stdio: ["ignore", "pipe", process.env.VITEST ? "pipe" : process.stdout],
-        ...extraOptions,
-        env,
-      })
-      if (childProcessConsumer != null) {
-        childProcessConsumer(childProcess)
-      }
-      handleProcess("close", childProcess, command, resolve, error => {
-        if (error instanceof ExecError && error.exitCode === 2) {
-          error.alreadyLogged = true
-        }
-        reject(error)
-      })
-    })
-  }
-
-  if (maxRetries === 0) {
-    return runCommand()
-  } else {
-    return retry(runCommand, { retries: maxRetries, interval: 1000 })
-  }
 }

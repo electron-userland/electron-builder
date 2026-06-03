@@ -8,7 +8,6 @@ import { writeFile, remove } from "fs-extra"
 import { readCertInfo, _testingOnly } from "app-builder-lib/src/codeSign/certInfo"
 
 const { pkcs12PbeDeriveKey, pkcs12PasswordToUtf16, rc2CbcDecrypt, MAX_PKCS12_PBE_ITERATIONS } = _testingOnly
-import { executeAppBuilder } from "builder-util"
 import { WIN_CSC_LINK } from "./helpers/codeSignData"
 
 // ─── Test fixture paths ───────────────────────────────────────────────────────
@@ -18,7 +17,6 @@ let FULL_SUBJECT_PFX: string
 let CN_ONLY_PFX: string
 let NO_EKU_PFX: string
 let WIN_CSC_PFX: string
-let PARITY_PFX: string
 let OU_PFX: string
 let SPECIAL_PFX: string
 let MULTI_CERT_PFX: string
@@ -84,7 +82,6 @@ beforeAll(async () => {
   FULL_SUBJECT_PFX = genSigningPfx("/CN=Test Publisher/O=Test Org/L=San Francisco/ST=California/C=US", "testpassword", "full")
   CN_ONLY_PFX = genSigningPfx("/CN=My Company Inc.", "pw", "cn")
   NO_EKU_PFX = genNoEkuPfx("/CN=No EKU Cert", "pw", "noeku")
-  PARITY_PFX = genSigningPfx("/CN=Parity Test Publisher/O=Parity Org/C=DE", "paritypassword", "parity")
   OU_PFX = genSigningPfx("/CN=Test Publisher/O=Test Org/OU=Engineering/C=US", "pw", "ou")
   SPECIAL_PFX = genSigningPfx("/CN=Publisher, Inc. \\+ Partners/C=US", "pw", "special")
   MULTI_CERT_PFX = genMultiCertPfx("multicertpw", "multicert")
@@ -176,64 +173,8 @@ describe("readCertInfo — special characters in DN values", () => {
     expect(jsResult.bloodyMicrosoftSubjectDn).toBe(`CN="Publisher, Inc. + Partners",C=US`)
   })
 
-  it("parity: special-character DN matches binary output exactly", async () => {
-    const [binaryRaw, jsResult] = await Promise.all([executeAppBuilder(["certificate-info", "--input", SPECIAL_PFX, "--password", "pw"]), readCertInfo(SPECIAL_PFX, "pw")])
-    const binaryResult: { commonName: string; bloodyMicrosoftSubjectDn: string } = JSON.parse(binaryRaw)
-    expect(jsResult.commonName).toBe(binaryResult.commonName)
-    expect(jsResult.bloodyMicrosoftSubjectDn).toBe(binaryResult.bloodyMicrosoftSubjectDn)
-  })
 })
 
-// ─── Parity tests: JS implementation vs app-builder-bin binary ───────────────
-
-describe("readCertInfo — parity with app-builder-bin", () => {
-  it("produces identical output to the binary for the existing WIN_CSC_LINK certificate", async () => {
-    const [binaryRaw, jsResult] = await Promise.all([executeAppBuilder(["certificate-info", "--input", WIN_CSC_PFX, "--password", ""]), readCertInfo(WIN_CSC_PFX, "")])
-
-    const binaryResult: { commonName: string; bloodyMicrosoftSubjectDn: string } = JSON.parse(binaryRaw)
-    expect(jsResult.commonName).toBe(binaryResult.commonName)
-    expect(jsResult.bloodyMicrosoftSubjectDn).toBe(binaryResult.bloodyMicrosoftSubjectDn)
-  })
-
-  it("produces identical output to the binary for a certificate with full subject DN", async () => {
-    const [binaryRaw, jsResult] = await Promise.all([
-      executeAppBuilder(["certificate-info", "--input", PARITY_PFX, "--password", "paritypassword"]),
-      readCertInfo(PARITY_PFX, "paritypassword"),
-    ])
-
-    const binaryResult: { commonName: string; bloodyMicrosoftSubjectDn: string } = JSON.parse(binaryRaw)
-    expect(jsResult.commonName).toBe(binaryResult.commonName)
-    expect(jsResult.bloodyMicrosoftSubjectDn).toBe(binaryResult.bloodyMicrosoftSubjectDn)
-  })
-
-  it("binary returns {error} JSON for wrong password; JS throws equivalent message", async () => {
-    const binaryRaw = await executeAppBuilder(["certificate-info", "--input", WIN_CSC_PFX, "--password", "wrongpassword"])
-    const binaryResult: { error: string } = JSON.parse(binaryRaw)
-    expect(binaryResult.error).toBe("password incorrect")
-
-    await expect(readCertInfo(WIN_CSC_PFX, "wrongpassword")).rejects.toThrow(binaryResult.error)
-  })
-
-  it("binary exits non-zero for a cert without code-signing EKU; JS throws with the same key phrase", async () => {
-    // The binary writes the error to stderr and exits non-zero — executeAppBuilder rejects with a
-    // generic process-failure error, so we can only verify it rejects (not inspect the message).
-    await expect(executeAppBuilder(["certificate-info", "--input", NO_EKU_PFX, "--password", "pw"])).rejects.toThrow()
-
-    // The JS side surfaces the exact phrase in its thrown error.
-    await expect(readCertInfo(NO_EKU_PFX, "pw")).rejects.toThrow(/ExtKeyUsageCodeSigning/)
-  })
-
-  it("binary returns {error} JSON for a missing file (exit 0); JS throws ENOENT", async () => {
-    // The binary writes {"error": "<os error>"} to stdout and exits 0 for file-not-found.
-    // JS readFile() throws ENOENT instead — a known divergence in error-signalling style.
-    const missingPath = "/nonexistent/certinfo-parity-missing.pfx"
-    const binaryRaw = await executeAppBuilder(["certificate-info", "--input", missingPath, "--password", "pw"])
-    const binaryResult: { error: string } = JSON.parse(binaryRaw)
-    expect(binaryResult.error).toMatch(/no such file|not found|cannot find the path/i)
-
-    await expect(readCertInfo(missingPath, "pw")).rejects.toThrow(/ENOENT|no such file/i)
-  })
-})
 
 // ─── Security: pkcs12PasswordToUtf16 encoding ────────────────────────────────
 

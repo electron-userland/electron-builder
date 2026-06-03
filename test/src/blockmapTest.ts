@@ -1,17 +1,14 @@
 import { createHash } from "crypto"
 import { spawnSync } from "child_process"
-import { existsSync, readFileSync } from "fs"
+import { readFileSync } from "fs"
 import { mkdtemp, readFile, rm, writeFile } from "fs/promises"
 import * as os from "os"
 import * as path from "path"
 import * as zlib from "zlib"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { buildBlockMap } from "app-builder-lib/out/targets/blockmap/blockmap"
-import { appBuilderPath } from "app-builder-bin"
-
-// True when the app-builder-bin binary is actually present on disk.
-// Guards binary-comparison assertions; snapshots always run regardless.
-const binaryAvailable = existsSync(appBuilderPath)
+// app-builder-bin has been removed; binary parity assertions are disabled.
+const binaryAvailable = false
 
 interface BinaryBlockMap {
   version: string
@@ -35,9 +32,9 @@ function runBinaryBlockmap(
   } else {
     args.push("--compression", compression)
   }
-  // appBuilderPath is non-null here: runBinaryBlockmap is only called from
-  // the describe.skipIf(appBuilderPath == null) suite.
-  const proc = spawnSync(appBuilderPath, args, { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 })
+  // "" is non-null here: runBinaryBlockmap is only called from
+  // the describe.skipIf("" == null) suite.
+  const proc = spawnSync("", args, { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 })
   if (proc.status !== 0) {
     throw new Error(`app-builder-bin failed (exit ${proc.status}): ${proc.stderr}`)
   }
@@ -378,7 +375,7 @@ describe("buildBlockMap — JS snapshots and binary golden-output", () => {
     if (binaryAvailable) {
       const binFile = path.join(tmpDir, "append-bin.bin")
       await writeFile(binFile, data)
-      const proc = spawnSync(appBuilderPath, ["blockmap", "--input", binFile, "--compression", "deflate"], { encoding: "utf8" })
+      const proc = spawnSync("", ["blockmap", "--input", binFile, "--compression", "deflate"], { encoding: "utf8" })
       if (proc.status !== 0) {
         throw new Error(`binary failed: ${proc.stderr}`)
       }

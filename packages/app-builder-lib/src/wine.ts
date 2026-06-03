@@ -1,5 +1,6 @@
-import { exec, executeAppBuilder } from "builder-util"
+import { exec } from "builder-util"
 import { ExecFileOptions } from "child_process"
+import * as os from "os"
 
 /** @private */
 export function execWine(file: string, file64: string | null = null, appArgs: Array<string> = [], options: ExecFileOptions = {}): Promise<string> {
@@ -11,14 +12,16 @@ export function execWine(file: string, file64: string | null = null, appArgs: Ar
     return exec(file, appArgs, options)
   }
 
-  const commandArgs = ["wine", "--ia32", file]
-  if (file64 != null) {
-    commandArgs.push("--x64", file64)
+  // Catalina (Darwin kernel 19+) dropped 32-bit support; wine64 + x64 binary required.
+  const isCatalina = process.platform === "darwin" && parseInt(os.release().split(".")[0], 10) >= 19
+  if (isCatalina) {
+    if (file64 == null) {
+      throw new Error("macOS Catalina (10.15+) does not support 32-bit executables; a 64-bit (file64) path is required for wine")
+    }
+    return exec("wine64", [file64, ...appArgs], { ...options, env: { ...process.env, WINEDEBUG: "-all,err+all", WINEDLLOVERRIDES: "winemenubuilder.exe=d", ...options.env } })
   }
-  if (appArgs.length > 0) {
-    commandArgs.push("--args", JSON.stringify(appArgs))
-  }
-  return executeAppBuilder(commandArgs, undefined, options)
+
+  return exec("wine", [file, ...appArgs], { ...options, env: { ...process.env, WINEDEBUG: "-all,err+all", WINEDLLOVERRIDES: "winemenubuilder.exe=d", ...options.env } })
 }
 
 /** @private */
