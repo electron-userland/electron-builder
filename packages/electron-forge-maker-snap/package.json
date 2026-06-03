@@ -2,6 +2,9 @@
   "name": "electron-forge-maker-snap",
   "version": "26.14.0",
   "main": "main.js",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {

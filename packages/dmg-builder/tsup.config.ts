@@ -1,14 +1,9 @@
 import { defineConfig } from "tsup"
+import { baseConfig } from "../../tsup.config.base"
 
 export default defineConfig({
+  ...baseConfig,
   entry: {
     dmgUtil: "src/dmgUtil.ts",
   },
-  format: ["cjs", "esm"],
-  dts: true,
-  tsconfig: "../tsconfig-tsup.json",
-  sourcemap: true,
-  clean: true,
-  outDir: "dist",
-  platform: "node",
 })
