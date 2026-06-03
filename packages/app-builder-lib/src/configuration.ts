@@ -388,11 +388,11 @@ export interface ToolsetConfig {
    * 0.0.0 - legacy toolset (wine 4.0.1 portable; mac-only support)
    *
    * Beta:
-   * 1.0.0 - Wine 11 bundle (unified wine binary, ia32 via WoW64)
+   * 1.0.1 - Wine 11 bundle (unified wine binary, ia32 via WoW64)
    *
    * @default "0.0.0"
    */
-  readonly wine?: "0.0.0" | "1.0.0" | null
+  readonly wine?: "0.0.0" | "1.0.1" | null
 
   /**
    * `wix` toolset version for MSI installer compilation.
@@ -401,9 +401,6 @@ export interface ToolsetConfig {
    * Stable:
    * 0.0.0 - legacy toolset (wix-4.0.0.5512.2)
    *
-   * Beta:
-   * 1.0.0 - v4.0.6 (compiled from source)
-   *
    * @default "0.0.0"
    *
    * NOTE(wix-v4): not yet exposed to users. WiX v4 ("1.0.0") support is incomplete (see MsiTarget /
@@ -411,7 +408,7 @@ export interface ToolsetConfig {
    * is finished. Do not add the @`internal` JSDoc tag here: it would strip this property from the emitted
    * declaration file and break the test toolset matrix, which references ToolsetConfig["wix"].
    */
-  readonly wix?: "0.0.0" | "1.0.0" | null
+  readonly wix?: "0.0.0" | null
 }
 
 export interface Hooks {

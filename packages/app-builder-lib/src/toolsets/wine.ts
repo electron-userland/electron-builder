@@ -3,13 +3,13 @@ import * as path from "path"
 import { ToolsetConfig } from "../configuration"
 import { downloadBuilderToolset } from "../util/electronGet"
 
-const wineToolsChecksums: Record<string, Record<string, string>> = {
+const wineToolsChecksums: Record<Exclude<ToolsetConfig["wine"], null | undefined>, Record<string, string>> = {
   "0.0.0": {
     "wine-4.0.1-mac.7z": "1baac808a67975b68b9226beea7b64ad0acc3e598a4b45c25bb5d2ae8cac655e",
   },
-  "1.0.0": {
-    "wine-11.0-linux-x86_64.tar.xz": "33f43eb7ade0a055a709d2d3bbfdb12b810eba25273580fbb1cb41a744506dec",
-    "wine-11.0-darwin-x86_64.tar.xz": "da7c0fe102f8a59710b3527f6431f6a3d7a67c7265710a6978574a28b7473176",
+  "1.0.1": {
+    "wine-11.0-darwin-x86_64.tar.xz": "0a4a43867ef225c70ed8d4198aaba24a55cb0e52e5d67b0ac99563e6351a3c61",
+"wine-11.0-linux-x86_64.tar.xz": "d8cf95442957b75c07166540142c96d8f7be6a68a572cc656194e7b42e8a0f13",
   },
 }
 
