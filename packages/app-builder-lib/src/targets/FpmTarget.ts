@@ -10,7 +10,7 @@ import { LinuxPackager } from "../linuxPackager"
 import { DebOptions, LinuxTargetSpecificOptions } from "../options/linuxOptions"
 import { ArtifactCreated } from "../packagerApi"
 import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
-import { objectToArgs } from "../util/appBuilder"
+import { objectToArgs } from "builder-util-runtime"
 import { computeEnv } from "../util/bundledTool"
 import { hashFile } from "../util/hash"
 import { isMacOsSierra } from "../util/macosVersion"
@@ -199,7 +199,8 @@ export default class FpmTarget extends Target {
       artifactPath,
     ]
 
-    objectToArgs(args, (await this.computeFpmMetaInfoOptions()) as any)
+    const meta = await this.computeFpmMetaInfoOptions()
+    args.push(...objectToArgs({ name: meta.name, maintainer: meta.maintainer ?? null, vendor: meta.vendor, url: meta.url }))
 
     const packageCategory = options.packageCategory
     if (packageCategory != null) {

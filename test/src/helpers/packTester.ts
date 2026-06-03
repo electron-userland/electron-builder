@@ -11,6 +11,7 @@ import { convertVersion } from "electron-winstaller"
 import { PublishPolicy } from "electron-publish"
 import { copyFile, emptyDir, mkdir, writeJson } from "fs-extra"
 import * as fs from "fs/promises"
+import { realpath as realpathCb } from "fs"
 import { load } from "js-yaml"
 import * as path from "path"
 import pathSorter from "path-sort"
@@ -27,7 +28,6 @@ import type { ExpectStatic } from "vitest"
 import { computeDefaultAppDirectory } from "app-builder-lib/out/util/config/config"
 import { installDependencies } from "app-builder-lib/out/util/yarn"
 import { ELECTRON_VERSION } from "./testConfig"
-import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
 import { execSync } from "child_process"
 import { detectPackageManager } from "app-builder-lib/out/node-module-collector/packageManager"
 
@@ -39,6 +39,10 @@ const PACKAGE_MANAGER_VERSION_MAP = {
   [PM.BUN]: { cli: "bun", version: "1.3.2" },
   [PM.TRAVERSAL]: { cli: "npm", version: "9.8.1" }, // use npm to install, we're testing manual node traversal, but we still need something to install the dependencies
 }
+
+// `fs.promises.realpath` keeps 8.3 short components on Windows; only the `.native` variant
+// (GetFinalPathNameByHandle) expands them to the long form.
+const realpathNative = promisify(realpathCb.native)
 
 export function getPackageManagerWithVersion(pm: PM, packageManagerAndVersionString?: string) {
   const packageManagerInfo = PACKAGE_MANAGER_VERSION_MAP[pm]
@@ -161,7 +165,15 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
   const customTmpDir = process.env.TEST_APP_TMP_DIR
   const tmpDir = checkOptions.tmpDir || new TmpDir(`pack-tester: ${fixtureName}`)
   // non-macOS test uses the same dir as macOS test, but we cannot share node_modules (because tests executed in parallel)
-  const dir = customTmpDir == null ? await tmpDir.createTempDir({ prefix: "test_project" }) : path.resolve(customTmpDir)
+  const rawDir = customTmpDir == null ? await tmpDir.createTempDir({ prefix: "test_project" }) : path.resolve(customTmpDir)
+  // On Windows the OS temp dir can be an 8.3 short path (e.g. `RUNNER~1` on CI agents). Installing a
+  // workspace under a short path makes package managers bake short paths into node_modules, which
+  // breaks `npm list` workspace resolution during node-module collection — it then lists the entire
+  // physical tree (devDependencies included) instead of just the production subtree, corrupting the
+  // asar snapshots. Canonicalize to the long form so the layout matches a real project directory.
+  // Windows-only: on POSIX `realpath.native` would rewrite symlinked temp roots (e.g. macOS
+  // `/var` → `/private/var`) and churn unrelated path-sensitive tests.
+  const dir = process.platform === "win32" ? await realpathNative(rawDir).catch(() => rawDir) : rawDir
   if (customTmpDir != null) {
     await emptyDir(dir)
     log.info({ customTmpDir }, "custom temp dir used")
@@ -272,7 +284,6 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         },
         {
           frameworkInfo: { version: ELECTRON_VERSION, useCustomDist: false },
-          productionDeps: createLazyProductionDeps(appDir, null, false),
           additionalArgs: additionalInstallArgs,
         },
         runtimeEnv

@@ -29,7 +29,7 @@
     "typings/*.d.ts",
     "src/**/*.ts",
     "vitest-scripts/*.ts"
-   ],
+  ],
   "types": ["vitest/globals"],
   "exclude": [
   ]
