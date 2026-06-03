@@ -1,0 +1,2491 @@
+{
+  "tests": {
+    "schemaValidatorTest.ts::validateSchema - valid inputs > accepts a fully valid object": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 16.973083333333324
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - valid inputs > accepts minimal object with only required fields": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.2518193333332685
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - valid inputs > accepts null for nullable field": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.11327799999997978
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - valid inputs > accepts string for nullable field": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.09030566666664679
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - valid inputs > accepts function for callback field (typeof is unregistered, so any value is allowed)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.19726399999992358
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - valid inputs > accepts null for callback field": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.09379166666665621
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - valid inputs > accepts string for callback field": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.07681900000001936
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - additionalProperties errors > reports unknown root property": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.4073333333333646
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - additionalProperties errors > reports unknown nested property": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.4279446666667089
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - required errors > reports missing required property": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.13018066666671757
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - type errors > reports wrong single type (array cannot coerce to string)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.16862466666668752
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - type errors > does not throw when coerceTypes converts a value (string to number)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.07281933333333275
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - type errors > includes description for multi-type fields (object is not coercible)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.13866666666664665
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - type errors > formats multi-type as pipe-separated list": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.11379199999995156
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - enum errors > reports invalid enum value": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.5285143333333622
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - enum errors > includes valid values in error": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.09105533333337235
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - enum errors > reports single enum value correctly": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.46365299999998416
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - typeof keyword (treated as unknown/no-op) > accepts any value when only constraint is typeof:function (unregistered keyword)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.42584733333338437
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - postFormatter > calls postFormatter with formatted error and raw error object": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.541360999999957
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - postFormatter > uses instancePath on error object passed to postFormatter": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.07040266666660955
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - postFormatter > uses custom name in header": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.15300000000002
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - coercion > coerces string 'false' to boolean false": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.5910553333333345
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - error header > throws Error with correct header": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.16111099999998638
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - error header > uses default name when not provided": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.07359699999996867
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - nested instancePath formatting > converts deep nested path to dot-notation label": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 1.0944166666666888
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - anyOf grouping > surfaces single combined message when multiple type branches fail for the same field": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.9262079999999931
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - JSON Pointer decoding > decodes ~1 to / in property names": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.62641666666669
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "schemaValidatorTest.ts::validateSchema - JSON Pointer decoding > decodes ~0 to ~ in property names": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.5529583333333221
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/moduleManagerTest.ts::ModuleManager.locatePackageVersion > basic resolution > returns null when parentDir is undefined": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.8817776666666456
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/moduleManagerTest.ts::ModuleManager.locatePackageVersion > basic resolution > returns null when pkgName is undefined": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.15084733333325553
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/moduleManagerTest.ts::ModuleManager.locatePackageVersion > basic resolution > finds package in direct parent node_modules when version satisfies range": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 3.7751246666666702
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/moduleManagerTest.ts::ModuleManager.locatePackageVersion > basic resolution > returns null when package is absent from the tree": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 1.1264026666667633
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/moduleManagerTest.ts::ModuleManager.locatePackageVersion > basic resolution > accepts any installed version when no range is given": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 1.2472223333333357
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/moduleManagerTest.ts::ModuleManager.locatePackageVersion > upward (hoisted) resolution > finds hoisted package that satisfies range": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 2.1219166666666447
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/moduleManagerTest.ts::ModuleManager.locatePackageVersion > override fallback (two-pass search) > accepts package whose installed version is outside the declared range": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 1.72808333333334
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/moduleManagerTest.ts::ModuleManager.locatePackageVersion > override fallback (two-pass search) > records overridden dependency in logSummary": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 1.9383753333332454
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/moduleManagerTest.ts::ModuleManager.locatePackageVersion > override fallback (two-pass search) > does NOT add to override log when version satisfies range normally": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 1.929666333333368
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/moduleManagerTest.ts::ModuleManager.locatePackageVersion > override fallback (two-pass search) > returns null when package is genuinely absent (not just mismatched version)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 1.1469306666667005
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/moduleManagerTest.ts::ModuleManager.locatePackageVersion > override fallback (two-pass search) > does not trigger fallback when requiredRange is undefined": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 1.1801943333333231
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/moduleManagerTest.ts::ModuleManager downward search > finds package nested under another package's node_modules": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 2.382527666666647
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/moduleManagerTest.ts::ModuleManager downward search > skipDownwardSearch: true does NOT find a package nested under another package's node_modules": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 1.4600973333333513
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/moduleManagerTest.ts::ModuleManager downward search > finds scoped package (@scope/name) nested under another package's node_modules": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 1.977499999999888
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/moduleManagerTest.ts::ModuleManager downward search > upward search finds the hoisted version when the nested version does not satisfy the range": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 2.3834726666667243
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/moduleManagerTest.ts::ModuleManager downward search > dot-prefixed directories inside node_modules are skipped": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 1.5622916666667
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/moduleManagerTest.ts::ModuleManager.semverSatisfies (via locatePackageVersion) > caret range: matching major": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 1.1132219999999506
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/moduleManagerTest.ts::ModuleManager.semverSatisfies (via locatePackageVersion) > tilde range: matching minor": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 1.07245833333324
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/moduleManagerTest.ts::ModuleManager.semverSatisfies (via locatePackageVersion) > exact match": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 1.0748609999999796
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/moduleManagerTest.ts::ModuleManager.semverSatisfies (via locatePackageVersion) > non-semver range (git URL) is treated as match": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 1.2657500000001012
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/moduleManagerTest.ts::ModuleManager.semverSatisfies (via locatePackageVersion) > wildcard range (*) matches any version": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 1.0743333333333187
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/moduleManagerTest.ts::ModuleManager.semverSatisfies (via locatePackageVersion) > major mismatch triggers override fallback and still resolves": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 1.4752223333333252
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/streamCollectorTest.ts::streamCollectorCommandToFile > Windows PowerShell -EncodedCommand wrapping > .cmd file: spawn receives powershell.exe with -EncodedCommand": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 2.635388333333348
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/streamCollectorTest.ts::streamCollectorCommandToFile > Windows PowerShell -EncodedCommand wrapping > path with spaces: single-quoted, no shell escaping required": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.7674166666666906
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/streamCollectorTest.ts::streamCollectorCommandToFile > Windows PowerShell -EncodedCommand wrapping > extensionless command (e.g. Volta shim): wrapped via PowerShell call operator": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.4352500000000153
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/streamCollectorTest.ts::streamCollectorCommandToFile > Windows PowerShell -EncodedCommand wrapping > original args are forwarded and individually single-quoted": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.4091666666666545
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/streamCollectorTest.ts::streamCollectorCommandToFile > Windows PowerShell -EncodedCommand wrapping > embedded single quote in an argument is doubled (no injection)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.3421946666666524
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/streamCollectorTest.ts::streamCollectorCommandToFile > Windows PowerShell -EncodedCommand wrapping > pins UTF-8 output encoding without a BOM": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.3966946666667089
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/streamCollectorTest.ts::streamCollectorCommandToFile > Windows PowerShell -EncodedCommand wrapping > -EncodedCommand payload is valid base64 of UTF-16LE": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.3682223333333354
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/streamCollectorTest.ts::streamCollectorCommandToFile > non-Windows: no PowerShell wrapping > darwin: spawn receives the original command and args": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.43406966666670616
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/streamCollectorTest.ts::streamCollectorCommandToFile > stderr and exit code behavior > npm list exit code 1: stderr is NOT surfaced as a collector warning": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 1.0552083333333258
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/streamCollectorTest.ts::streamCollectorCommandToFile > stderr and exit code behavior > npm list exit code 0 with stderr: stderr IS surfaced as a collector warning": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.40561166666666776
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/streamCollectorTest.ts::streamCollectorCommandToFile > stderr and exit code behavior > non-npm command exit code 1: rejects with stderr in error message": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.7739863333333498
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/streamCollectorTest.ts::streamCollectorCommandToFile > stderr and exit code behavior > npm command (not list) exit code 1: rejects": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.3317916666666747
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/streamCollectorTest.ts::streamCollectorCommandToFile > stderr and exit code behavior > npm list with full path exit code 1: stderr suppressed (shouldIgnore applies to basename)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.3151110000000017
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "node-module-collector/streamCollectorTest.ts::streamCollectorCommandToFile > stderr and exit code behavior > win32 npm.cmd wrapped via PowerShell: exit code 1 still triggers shouldIgnore": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.31813900000001166
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "windows/nsisScriptGeneratorTest.ts::NsisScriptGenerator.file > preserves $INSTDIR variable in output name without escaping": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.8225140000000124
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "windows/nsisScriptGeneratorTest.ts::NsisScriptGenerator.file > omits /oname when outputName is null": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.24387500000000273
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "windows/nsisScriptGeneratorTest.ts::nsisEscapeString > leaves plain strings unchanged": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.2171663333333337
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "windows/nsisScriptGeneratorTest.ts::nsisEscapeString > replaces LF newline with space": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.19034700000001217
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "windows/nsisScriptGeneratorTest.ts::nsisEscapeString > replaces CRLF newline with space": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.08631933333333563
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "windows/nsisScriptGeneratorTest.ts::nsisEscapeString > replaces standalone CR with space": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.084541999999999
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "windows/nsisScriptGeneratorTest.ts::nsisEscapeString > escapes dollar sign to prevent variable expansion": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.07024999999998727
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "windows/nsisScriptGeneratorTest.ts::nsisEscapeString > escapes double quote": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.1031113333333451
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "windows/nsisScriptGeneratorTest.ts::nsisEscapeString > handles combined special characters": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.2060829999999972
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "windows/nsisScriptGeneratorTest.ts::nsisEscapeString > preserves ${...} variable references unchanged": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.11304166666665576
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "windows/nsisScriptGeneratorTest.ts::nsisEscapeString > escapes bare $ but leaves ${...} references intact": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.10708333333334015
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "windows/nsisScriptGeneratorTest.ts::nsisEscapeString > escapes multiple consecutive dollar signs": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.05631933333334397
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "windows/nsisScriptGeneratorTest.ts::nsisEscapeString > empty string is returned unchanged": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.05452733333330192
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "windows/nsisScriptGeneratorTest.ts::nsisEscapeString > string with only newlines becomes spaces": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.05369433333333973
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "windows/nsisScriptGeneratorTest.ts::nsisEscapeString > preserves backslash characters": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.04637466666664144
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "windows/nsisScriptGeneratorTest.ts::nsisEscapeString > escapes multiple double quotes": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 0.056416666666677884
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 0.0.0 > AppImage": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1568.2359999999999
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 0.0.0 > AppImage arm, max compression": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1332.3769589999997
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 0.0.0 > AppImage - deprecated systemIntegration": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1388.533375
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 0.0.0 > text license and file associations": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1323.2028330000003
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 0.0.0 > html license": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1426.7097910000002
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 0.0.0 > AppImage - default icon, custom executable and custom desktop": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1302.4044589999994
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 0.0.0 > icons from ICNS (mac)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1274.947082999999
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 0.0.0 > icons from ICNS if nothing specified": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1252.8537500000002
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 0.0.0 > icons from dir and one icon with suffix": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1258.6299589999999
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 0.0.0 > icons dir with images without size in the filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1205.507208000001
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 0.0.0 > icons from ICNS": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1227.5742910000008
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 0.0.0 > no-author-email": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1262.8662079999995
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 0.0.0 > forbid desktop.Exec": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1217.9662499999977
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.2 > AppImage": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1216.367250000003
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.2 > AppImage arm, max compression": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1222.2477499999986
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.2 > AppImage - deprecated systemIntegration": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1202.4069999999992
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.2 > text license and file associations": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1214.8789169999982
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.2 > html license": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1186.1180829999976
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.2 > AppImage - default icon, custom executable and custom desktop": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1222.620665999999
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.2 > icons from ICNS (mac)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1170.7240840000013
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.2 > icons from ICNS if nothing specified": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1355.485249999998
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.2 > icons from dir and one icon with suffix": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1345.510916000003
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.2 > icons dir with images without size in the filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1643.7597910000004
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.2 > icons from ICNS": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1274.6157080000012
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.2 > no-author-email": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1262.1312500000058
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.2 > forbid desktop.Exec": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1220.9013330000016
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.3 > AppImage": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1232.2774579999968
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.3 > AppImage arm, max compression": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1167.0066669999942
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.3 > AppImage - deprecated systemIntegration": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1251.1619589999973
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.3 > text license and file associations": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1362.7003750000003
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.3 > html license": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1274.5983330000017
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.3 > AppImage - default icon, custom executable and custom desktop": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1280.7859160000007
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.3 > icons from ICNS (mac)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1253.5321669999976
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.3 > icons from ICNS if nothing specified": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1329.489625000002
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.3 > icons from dir and one icon with suffix": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1313.955249999999
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.3 > icons dir with images without size in the filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1341.7976249999992
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.3 > icons from ICNS": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1315.2947920000006
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.3 > no-author-email": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1302.7428749999963
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/linuxPackagerTest.ts::LinuxPackager > AppImage toolset 1.0.3 > forbid desktop.Exec": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 1315.7694580000025
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    }
+  },
+  "files": {
+    "schemaValidatorTest.ts": {
+      "unstable": false,
+      "hasHeavyTests": false,
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 25.5553189999999
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      }
+    },
+    "node-module-collector/moduleManagerTest.ts": {
+      "unstable": false,
+      "hasHeavyTests": false,
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 34.06827766666652
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      }
+    },
+    "node-module-collector/streamCollectorTest.ts": {
+      "unstable": false,
+      "hasHeavyTests": false,
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 8.988251000000142
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      }
+    },
+    "windows/nsisScriptGeneratorTest.ts": {
+      "unstable": false,
+      "hasHeavyTests": false,
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 2.511665333333326
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      }
+    },
+    "linux/linuxPackagerTest.ts": {
+      "unstable": true,
+      "hasHeavyTests": false,
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 39,
+          "avgMs": 50320.68866399999
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      }
+    }
+  }
+}

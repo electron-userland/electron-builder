@@ -4,8 +4,13 @@
   "license": "MIT",
   "scripts": {
     "//": "do not wrap into single quotes - windows doesn't unwrap arg in this case",
+<<<<<<< HEAD
     "compile": "pnpm ci:test:generate && tsc --build tsconfig.build.json --force",
     "compile:watch": "tsc --build tsconfig.build.json --watch",
+=======
+    "compile": "pnpm ci:test:generate && pnpm run -r --if-present --filter builder-util-runtime --filter builder-util --filter electron-publish --filter app-builder-lib build && pnpm run -r --if-present --filter '!@electron-builder/website' --filter '!@electron-builder/test' --filter '!app-builder-lib' --filter '!builder-util' --filter '!builder-util-runtime' --filter '!electron-publish' build",
+    "compile:watch": "pnpm compile && pnpm run -r --if-present --parallel --filter '!@electron-builder/website' --filter '!@electron-builder/test' watch",
+>>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
     "typecheck": "tsc --build",
     "typecheck:test": "tsc --noEmit -p test/tsconfig.json",
     "lint": "eslint packages test/src --ext .ts,.js",

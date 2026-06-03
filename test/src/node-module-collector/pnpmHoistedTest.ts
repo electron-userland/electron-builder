@@ -2,7 +2,7 @@ import { describe, test, vi, afterEach } from "vitest"
 import * as fse from "fs-extra"
 import * as os from "os"
 import * as path from "path"
-import { ModuleManager } from "app-builder-lib/src/node-module-collector/moduleManager"
+import { ModuleManager } from "app-builder-lib/internal"
 
 // ---------------------------------------------------------------------------
 // Helpers

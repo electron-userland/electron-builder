@@ -60,8 +60,13 @@
     "node": ">=22.12.0"
   },
   "scripts": {
+<<<<<<< HEAD
     "build": "tsc --build tsconfig.build.json --force",
     "watch": "tsc --build tsconfig.build.json --watch"
+=======
+    "build": "tsup",
+    "watch": "tsup --watch"
+>>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
   },
   "dependencies": {
     "app-builder-lib": "workspace:*",

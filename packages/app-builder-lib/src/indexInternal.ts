@@ -1,9 +1,15 @@
 export { AsarFilesystem, readAsar, readAsarJson } from "./asar/asar.js"
 export { AsarIntegrity } from "./asar/integrity.js"
+<<<<<<< HEAD
 export { getBinFromUrl } from "./binDownload.js"
 export { readCertInfo, _testingOnly } from "./codeSign/certInfo.js"
 export { createKeychain, findIdentity, isSignAllowed, removeKeychain } from "./codeSign/macCodeSign.js"
 export type { Identity } from "./codeSign/macCodeSign.js"
+=======
+export { getBin, getBinFromCustomLoc, getBinFromUrl } from "./binDownload.js"
+export { readCertInfo, _testingOnly } from "./codeSign/certInfo.js"
+export { Identity, createKeychain, findIdentity, isSignAllowed, removeKeychain } from "./codeSign/macCodeSign.js"
+>>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
 export { CustomWindowsSign, WindowsSignTaskConfiguration } from "./codeSign/windowsSignToolManager.js"
 export { Configuration, ToolsetConfig } from "./configuration.js"
 export { Publish } from "./core.js"
@@ -20,7 +26,13 @@ export {
   BunNodeModulesCollector,
   TraversalNodeModulesCollector,
 } from "./node-module-collector/index.js"
+<<<<<<< HEAD
 export { PM } from "./node-module-collector/packageManager.js"
+=======
+export { LogMessageByKey, ModuleManager } from "./node-module-collector/moduleManager.js"
+export { NodeModulesCollector } from "./node-module-collector/nodeModulesCollector.js"
+export { detectPackageManager, PM } from "./node-module-collector/packageManager.js"
+>>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
 export { DoPackOptions, computeSafeArtifactNameIfNeeded } from "./platformPackager.js"
 export { createPublisher } from "./publish/PublishManager.js"
 export { createUpdateInfoTasks, writeUpdateInfoFiles, UpdateInfoFileTask } from "./publish/updateInfoBuilder.js"
@@ -59,4 +71,8 @@ export { installDependencies, installOrRebuild, nodeGypRebuild } from "./util/ya
 export { PACKAGE_VERSION } from "./version.js"
 export { ParallelsVmManager } from "./vm/ParallelsVm.js"
 export { VmManager, getWindowsVm, getLinuxVm } from "./vm/vm.js"
+<<<<<<< HEAD
 export { WineVmManager } from "./vm/WineVm.js"
+=======
+export { execWine } from "./wine.js"
+>>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)

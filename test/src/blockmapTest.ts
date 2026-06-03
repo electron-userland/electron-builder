@@ -4,7 +4,50 @@ import * as os from "os"
 import * as path from "path"
 import * as zlib from "zlib"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
+<<<<<<< HEAD
 import { buildBlockMap } from "app-builder-lib/src/targets/blockmap/blockmap.js"
+=======
+import { buildBlockMap } from "app-builder-lib/internal"
+import { appBuilderPath } from "app-builder-bin"
+
+// True when the app-builder-bin binary is actually present on disk.
+// Guards binary-comparison assertions; snapshots always run regardless.
+const binaryAvailable = existsSync(appBuilderPath)
+
+interface BinaryBlockMap {
+  version: string
+  files: Array<{
+    name: string
+    offset: number
+    checksums: string[]
+    sizes: number[]
+  }>
+}
+
+/** Run the real app-builder-bin binary and return its parsed blockmap JSON. */
+function runBinaryBlockmap(
+  inFile: string,
+  outFile: string,
+  compression: "gzip" | "deflate" = "gzip"
+): { result: { size: number; sha512: string; blockMapSize?: number }; blockmap: BinaryBlockMap } {
+  const args = ["blockmap", "--input", inFile]
+  if (outFile) {
+    args.push("--output", outFile, "--compression", compression)
+  } else {
+    args.push("--compression", compression)
+  }
+  // appBuilderPath is non-null here: runBinaryBlockmap is only called from
+  // the describe.skipIf(appBuilderPath == null) suite.
+  const proc = spawnSync(appBuilderPath, args, { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 })
+  if (proc.status !== 0) {
+    throw new Error(`app-builder-bin failed (exit ${proc.status}): ${proc.stderr}`)
+  }
+  const result = JSON.parse(proc.stdout.trim())
+  const compressed = readFileSync(outFile)
+  const blockmap: BinaryBlockMap = JSON.parse(zlib.gunzipSync(compressed).toString())
+  return { result, blockmap }
+}
+>>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
 
 let tmpDir: string
 

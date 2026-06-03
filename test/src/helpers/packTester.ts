@@ -28,6 +28,9 @@ import { NtExecutable, NtExecutableResource } from "resedit"
 import sanitizeFileName from "sanitize-filename"
 import { TmpDir } from "temp-file"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
 import { getCollectorByPackageManager, PM } from "app-builder-lib/internal"
 import { promisify } from "util"
 <<<<<<< HEAD
@@ -42,6 +45,9 @@ import AdmZip from "adm-zip"
 import sanitizeFileName from "sanitize-filename"
 import type { ExpectStatic } from "vitest"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
 import { computeDefaultAppDirectory, installDependencies } from "app-builder-lib/internal"
 import { ELECTRON_VERSION } from "./testConfig"
 =======
@@ -51,6 +57,7 @@ import { ELECTRON_VERSION } from "./testConfig.js"
 import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 import { execSync } from "child_process"
+<<<<<<< HEAD
 import { detectPackageManager } from "app-builder-lib/src/node-module-collector/packageManager"
 =======
 import { promisify } from "util"
@@ -59,6 +66,9 @@ import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData.js"
 import { assertThat } from "./fileAssert.js"
 import { ELECTRON_VERSION } from "./testConfig.js"
 >>>>>>> fb7cff668 (esm complete on tests as well?)
+=======
+import { detectPackageManager } from "app-builder-lib/internal"
+>>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
 
 const PACKAGE_MANAGER_VERSION_MAP = {
   [PM.NPM]: { cli: "npm", version: "9.8.1" },

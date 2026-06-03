@@ -2,8 +2,12 @@
   "name": "electron-builder",
   "description": "A complete solution to package and build a ready for distribution Electron app for MacOS, Windows and Linux with “auto update” support out of the box",
 <<<<<<< HEAD
+<<<<<<< HEAD
   "version": "26.15.3",
   "type": "module",
+=======
+  "version": "26.14.0",
+>>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
   "main": "./dist/index.js",
   "exports": {
     ".": {
@@ -28,8 +32,13 @@
     "install-app-deps.js"
   ],
   "scripts": {
+<<<<<<< HEAD
     "build": "tsc --build tsconfig.build.json --force",
     "watch": "tsc --build tsconfig.build.json --watch"
+=======
+    "build": "tsup",
+    "watch": "tsup --watch"
+>>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
   },
   "bin": {
     "electron-builder": "./cli.js",

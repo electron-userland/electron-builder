@@ -155,7 +155,12 @@
   "//": "electron-builder-squirrel-windows and dmg-builder added as dev dep for tests (as otherwise `require` doesn't work using Yarn 2)",
   "types": "./dist/index.d.ts",
   "scripts": {
+<<<<<<< HEAD
     "build": "tsc --build tsconfig.build.json --force",
     "watch": "tsc --build tsconfig.build.json --watch"
+=======
+    "build": "tsup",
+    "watch": "tsup --watch"
+>>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
   }
 }
