@@ -1,4 +1,9 @@
-import { archive, compute7zCompressArgs } from "app-builder-lib/out/targets/archive"
+// archive() is @internal and stripped from type declarations by stripInternal:true.
+// Import as namespace then cast to any so vitest's TypeScript transform still resolves
+// the real source exports while TypeScript type-checking is satisfied.
+import * as archiveModule from "app-builder-lib/src/targets/archive"
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const { archive, compute7zCompressArgs } = archiveModule as any
 import * as fs from "fs/promises"
 import * as os from "os"
 import * as path from "path"
@@ -39,7 +44,7 @@ describe("compute7zCompressArgs", () => {
   test("store mode adds -mm=Copy and omits -mx", ({ expect }) => {
     const args = compute7zCompressArgs("7z", { compression: "store" })
     expect(args).toContain("-mm=Copy")
-    expect(args.some(a => a.startsWith("-mx="))).toBe(false)
+    expect(args.some((a: string) => a.startsWith("-mx="))).toBe(false)
   })
 
   test("ELECTRON_BUILDER_COMPRESSION_LEVEL overrides store mode", ({ expect }) => {
@@ -53,7 +58,7 @@ describe("compute7zCompressArgs", () => {
     vi.stubEnv("ELECTRON_BUILDER_COMPRESSION_LEVEL", "3")
     const args = compute7zCompressArgs("7z", {})
     expect(args).toContain("-mx=3")
-    expect(args.filter(a => a.startsWith("-mx="))).toHaveLength(1)
+    expect(args.filter((a: string) => a.startsWith("-mx="))).toHaveLength(1)
   })
 
   test("invalid ELECTRON_BUILDER_COMPRESSION_LEVEL throws", ({ expect }) => {
@@ -95,7 +100,7 @@ describe("compute7zCompressArgs", () => {
   })
 
   test("method=DEFAULT suppresses -mm flag", ({ expect }) => {
-    expect(compute7zCompressArgs("7z", { method: "DEFAULT" }).some(a => a.startsWith("-mm="))).toBe(false)
+    expect(compute7zCompressArgs("7z", { method: "DEFAULT" }).some((a: string) => a.startsWith("-mm="))).toBe(false)
   })
 })
 
