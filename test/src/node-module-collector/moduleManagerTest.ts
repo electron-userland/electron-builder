@@ -85,7 +85,9 @@ describe("ModuleManager.locatePackageVersion", () => {
   describe.sequential("upward (hoisted) resolution", () => {
     let root = ""
     afterEach(async () => {
-      if (root) await fse.rm(root, { recursive: true, force: true })
+      if (root) {
+        await fse.rm(root, { recursive: true, force: true })
+      }
     })
 
     test("finds hoisted package that satisfies range", async ({ expect }) => {
@@ -109,7 +111,9 @@ describe("ModuleManager.locatePackageVersion", () => {
   describe.sequential("override fallback (two-pass search)", () => {
     let root = ""
     afterEach(async () => {
-      if (root) await fse.rm(root, { recursive: true, force: true })
+      if (root) {
+        await fse.rm(root, { recursive: true, force: true })
+      }
     })
 
     test("accepts package whose installed version is outside the declared range", async ({ expect }) => {
@@ -194,7 +198,9 @@ describe("ModuleManager.locatePackageVersion", () => {
 describe.sequential("ModuleManager downward search", () => {
   let root = ""
   afterEach(async () => {
-    if (root) await fse.rm(root, { recursive: true, force: true })
+    if (root) {
+      await fse.rm(root, { recursive: true, force: true })
+    }
   })
 
   test("finds package nested under another package's node_modules", async ({ expect }) => {
@@ -286,7 +292,9 @@ describe.sequential("ModuleManager downward search", () => {
 describe.sequential("ModuleManager.semverSatisfies (via locatePackageVersion)", () => {
   let root = ""
   afterEach(async () => {
-    if (root) await fse.rm(root, { recursive: true, force: true })
+    if (root) {
+      await fse.rm(root, { recursive: true, force: true })
+    }
   })
 
   async function locateWith(version: string, range: string): Promise<{ found: boolean; usedFallback: boolean }> {
