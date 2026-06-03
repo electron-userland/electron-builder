@@ -3,7 +3,6 @@
 import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
 import { computeDefaultAppDirectory, getConfig } from "app-builder-lib/out/util/config/config"
 import { orNullIfFileNotExist } from "app-builder-lib/out/util/config/load"
-import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
 import { installOrRebuild } from "app-builder-lib/out/util/yarn"
 import { PACKAGE_VERSION } from "app-builder-lib/out/version"
 import { determinePackageManagerEnv } from "app-builder-lib/out/node-module-collector"
@@ -63,7 +62,6 @@ export async function installAppDeps(args: any) {
       frameworkInfo: { version, useCustomDist: true },
       platform: args.platform,
       arch: args.arch,
-      productionDeps: createLazyProductionDeps(appDir, null, false),
     },
     appDir !== projectDir,
     {}
