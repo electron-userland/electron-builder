@@ -1,7 +1,6 @@
 export { AsarFilesystem, readAsar, readAsarJson } from "./asar/asar.js"
 export { AsarIntegrity } from "./asar/integrity.js"
 export { getBinFromUrl } from "./binDownload.js"
-export { MacPackager } from "./macPackager.js"
 export { downloadBuilderToolset, getCacheDirectory } from "./util/electronGet.js"
 export { withToolsetLock } from "./util/toolsetLock.js"
 export { orNullIfFileNotExist } from "./util/config/load.js"

@@ -1,5 +1,5 @@
-import { DmgOptions, Target } from "app-builder-lib"
-import { createBlockmap, findIdentity, isSignAllowed, MacPackager } from "app-builder-lib/internal"
+import { DmgOptions, MacPackager, Target } from "app-builder-lib"
+import { createBlockmap, findIdentity, isSignAllowed } from "app-builder-lib/internal"
 import { Arch, exec, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces } from "builder-util"
 import { sanitizeFileName } from "builder-util/internal"
 import { release as getOsRelease } from "os"

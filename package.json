@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "//": "do not wrap into single quotes - windows doesn't unwrap arg in this case",
-    "compile": "pnpm ci:test:generate && pnpm --filter './packages/**' --if-present run build",
+    "compile": "pnpm ci:test:generate && pnpm run -r --if-present --filter '!@electron-builder/website' --filter '!@electron-builder/test' build",
     "typecheck": "tsc --build --noEmit",
     "lint": "eslint packages test/src --ext .ts,.js",
     "lint-deps": "node ./scripts/checkDeps.js",

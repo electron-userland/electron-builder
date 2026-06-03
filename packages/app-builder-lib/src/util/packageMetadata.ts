@@ -115,7 +115,7 @@ function checkDependencies(dependencies: Record<string, string> | Nullish, error
     for (const prefix of prefixes) {
       if (updaterVersion.startsWith(prefix)) {
         const normalized = path.normalize(updaterVersion.substring(prefix.length))
-        const packageJsonPath = path.isAbsolute(normalized) ? normalized : path.resolve(import.meta.dirname, normalized)
+        const packageJsonPath = path.isAbsolute(normalized) ? normalized : path.resolve(process.cwd(), normalized)
         const json = fsExtra.readJsonSync(path.join(packageJsonPath, "package.json"))
         updaterVersion = json.version
         break
