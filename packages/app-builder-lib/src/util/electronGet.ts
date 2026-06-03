@@ -156,11 +156,6 @@ async function extractZipStreaming(file: string, dir: string): Promise<void> {
       if (path.isAbsolute(target)) {
         throw new Error(`Absolute symlink target blocked: ${target}`)
       }
-      // NOTE: path.resolve() is purely lexical here — it does NOT follow filesystem symlinks.
-      // A crafted zip that writes a symlink entry *before* the directory entry it points into
-      // could still cause writes outside `dir` when fs.mkdir later follows that symlink.
-      // Fixing this requires tracking previously written symlinks and rejecting subsequent
-      // writes through them; that hardening is deferred to a dedicated extraction-security PR.
       const resolvedTarget = path.resolve(path.dirname(destPath), target)
       if (!resolvedTarget.startsWith(dir + path.sep) && resolvedTarget !== dir) {
         throw new Error(`Symlink target escapes extraction dir: ${target}`)
