@@ -179,7 +179,9 @@ export async function extractArchive(file: string, dir: string) {
   await fs.mkdir(tmpDir, { recursive: true })
 
   const release = await lockfile.lock(tmpDir, {
-    retries: { retries: 15, minTimeout: 1000, maxTimeout: 5000 },
+    // 100 retries (not 15) so concurrent callers wait out a slow first extraction instead of failing
+    // with ELOCKED; the update heartbeat keeps an in-progress holder's lock fresh against `stale`.
+    retries: { retries: 100, minTimeout: 1000, maxTimeout: 5000 },
     stale: 120000, // Increased from 60s to allow long-running extractions
   })
 
@@ -258,8 +260,13 @@ async function downloadArtifactToFile(config: Parameters<typeof get.downloadArti
     .digest("hex")
     .slice(0, 20)
   const artifactLockPath = path.join(os.tmpdir(), `eb-dl-${artifactLockKey}.lock`)
+  // This lock is taken even for cache hits (the cache-hit check lives inside @electron/get), so under
+  // heavy concurrency many builds serialize here. 30 retries (~137s of backoff) is too few — waiters
+  // were exhausting it and failing with ELOCKED while the holder fetched a large artifact. 100 retries
+  // matches the other toolset locks; stale (10min) + proper-lockfile's update heartbeat keep a live
+  // downloader's lock fresh so the longer wait never falsely steals an in-progress download.
   const releaseArtifactLock = await lockfile.lock(artifactLockPath, {
-    retries: { retries: 30, minTimeout: 500, maxTimeout: 5000 },
+    retries: { retries: 100, minTimeout: 500, maxTimeout: 5000 },
     stale: 600_000,
     realpath: false,
   })
@@ -349,8 +356,13 @@ async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact
     }
   }
 
+  // Be patient: when many targets/builds contend on the same toolset cache concurrently, all but the
+  // first wait here while the winner downloads+extracts (a large bundle can take >1min). 15 retries
+  // (~67s) is too few and waiters fail with ELOCKED before the winner finishes; 100 matches the
+  // patience of withToolsetLock. proper-lockfile's update heartbeat keeps a live holder's lock fresh,
+  // so increasing waiter retries never falsely steals an in-progress extraction.
   const release = await lockfile.lock(extractDir, {
-    retries: { retries: 15, minTimeout: 1000, maxTimeout: 5000 },
+    retries: { retries: 100, minTimeout: 1000, maxTimeout: 5000 },
     stale: 120000,
   })
   let downloadedFile: string | null = null

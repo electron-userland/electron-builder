@@ -54,7 +54,9 @@ function makePeBuffer(opts: { withVersionInfo?: boolean; langs?: number[]; withM
   return Buffer.from(exe.generate())
 }
 
-describe("editWindowsResources", () => {
+// `sequential`: shared `tmpDir` reassigned per test in `beforeEach` is unsafe under the global
+// sequence.concurrent (siblings clobber it mid-test → ENOENT/EPERM on the shared exe files).
+describe("editWindowsResources", { sequential: true }, () => {
   let tmpDir: string
 
   beforeEach(async () => {

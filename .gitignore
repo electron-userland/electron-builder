@@ -29,3 +29,4 @@ _vitest-smart-cache.json
 yalc.lock
 
 .claude
+/test-run-logs

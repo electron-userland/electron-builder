@@ -46,7 +46,9 @@ describe("checkMakensisOutput", () => {
 
 // ─── verifyInstallerSize ────────────────────────────────────────────────────
 
-describe("verifyInstallerSize", () => {
+// `sequential`: shared `tmpDir` reassigned per test in `beforeEach` is unsafe under the global
+// sequence.concurrent (a sibling test's `beforeEach` clobbers it mid-test → ENOENT on temp files).
+describe("verifyInstallerSize", { sequential: true }, () => {
   let tmpDir: string
 
   beforeEach(async () => {

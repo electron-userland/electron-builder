@@ -203,7 +203,9 @@ describe("computeSignToolArgs with unsupported cert format", () => {
 
 // ─── getToolPath ─────────────────────────────────────────────────────────────
 
-describe("getToolPath", () => {
+// `sequential`: these tests share a `tmpDir`/`fakeTool` and mutate `process.env.SIGNTOOL_PATH`;
+// under the global sequence.concurrent siblings clobber both the temp files and the env override.
+describe("getToolPath", { sequential: true }, () => {
   let tmpDir: string
   let fakeTool: string
   const origEnv: Record<string, string | undefined> = {}

@@ -66,10 +66,9 @@ async function main() {
     // 2 on Windows (heavy MSI/Squirrel builds saturate the vitest main-thread RPC at 3); 3 elsewhere
     maxWorkers: process.platform === "win32" ? 2 : 3,
 
-    fileParallelism: process.env.TEST_SEQUENTIAL_FILES !== "true",
     sequence: {
       sequencer: SmartSequencer,
-      concurrent: process.env.TEST_SEQUENTIAL === "false",
+      concurrent: true,
     },
 
     slowTestThreshold: 2 * 60 * 1000,

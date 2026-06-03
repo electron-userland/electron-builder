@@ -8,10 +8,10 @@ export const TEST_FILES_PATTERN = process.env.TEST_FILES?.trim() || "*Test,*test
 
 export const CACHE_FILE = process.env.VITEST_SMART_CACHE_FILE || path.resolve(__dirname, "_vitest-smart-cache.json")
 
-export const DEFAULT_FILE_MS = 2 * 60 * 1000
+export const DEFAULT_FILE_MS = 4 * 60 * 1000
 export const DEFAULT_TARGET_MS = 20 * 60 * 1000
 export const TARGET_MS = Number(process.env.VITEST_TARGET_MS) || DEFAULT_TARGET_MS
-export const SAFEGUARD_MAX_SHARDS = 10
+export const SAFEGUARD_MAX_SHARDS = 13
 
 export const SHARD_INDEX = process.env.VITEST_SHARD_INDEX != null ? Number(process.env.VITEST_SHARD_INDEX) : null
 
