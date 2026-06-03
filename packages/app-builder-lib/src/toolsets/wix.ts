@@ -1,6 +1,5 @@
 import { resolveEnvToolsetPath } from "builder-util"
 import { Nullish } from "builder-util-runtime"
-import { ToolsetConfig } from "../configuration"
 import { downloadBuilderToolset } from "../util/electronGet"
 
 export const wixChecksums = {
@@ -12,7 +11,7 @@ export const wixChecksums = {
   },
 } as const
 
-export async function getWixBin(wix: ToolsetConfig["wix"] | Nullish): Promise<string> {
+export async function getWixBin(wix: keyof typeof wixChecksums | Nullish): Promise<string> {
   const overridePath = await resolveEnvToolsetPath("ELECTRON_BUILDER_WIX_DIR", "directory")
   if (overridePath != null) {
     return overridePath

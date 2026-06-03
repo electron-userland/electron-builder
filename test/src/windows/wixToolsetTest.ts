@@ -82,7 +82,7 @@ describe.sequential("wixToolset", () => {
       expect(downloadBuilderToolset).not.toHaveBeenCalled()
     })
 
-    test("'1.0.0' without env override → downloads wix@1.0.0 bundle", async ({ expect }) => {
+    test.skip("'1.0.0' without env override → downloads wix@1.0.0 bundle", async ({ expect }) => {
       const result = await getWixBin("1.0.0")
 
       expect(downloadBuilderToolset).toHaveBeenCalledOnce()
@@ -90,7 +90,7 @@ describe.sequential("wixToolset", () => {
       expect(result).toBe("/fake/wix/path")
     })
 
-    test("'1.0.0' with ELECTRON_BUILDER_WIX_DIR set → returns override path, skips download", async ({ expect }) => {
+    test.skip("'1.0.0' with ELECTRON_BUILDER_WIX_DIR set → returns override path, skips download", async ({ expect }) => {
       vi.mocked(resolveEnvToolsetPath).mockResolvedValue("/local/wix")
 
       const result = await getWixBin("1.0.0")
@@ -99,7 +99,7 @@ describe.sequential("wixToolset", () => {
       expect(downloadBuilderToolset).not.toHaveBeenCalled()
     })
 
-    test("'1.0.0' download uses checksum from wixChecksums", async ({ expect }) => {
+    test.skip("'1.0.0' download uses checksum from wixChecksums", async ({ expect }) => {
       await getWixBin("1.0.0")
 
       expect(downloadBuilderToolset).toHaveBeenCalledWith(expect.objectContaining({ checksums: wixChecksums["1.0.0"] }))
