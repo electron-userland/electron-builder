@@ -200,8 +200,15 @@ async function createZipArchive(outFile: string, dirToArchive: string, options: 
   const level = resolveCompressionLevel(options.compression ?? null)
   await unlinkIfExists(outFile)
 
-  // Normalise excluded patterns to recursive globs (e.g. "*.mp4" → "**/*.mp4")
-  const ignore = (options.excluded ?? []).map(mask => (mask.startsWith("**/") ? mask : `**/${mask}`))
+  // Normalise excluded patterns to recursive globs (e.g. "*.mp4" → "**/*.mp4").
+  // Reject any pattern containing ".." — a traversal sequence has no legitimate use in a
+  // file-extension exclusion list and could be used to suppress matching of unrelated paths.
+  const ignore = (options.excluded ?? []).map(mask => {
+    if (mask.includes("..")) {
+      throw new Error(`Excluded archive pattern contains path traversal sequence: "${mask}"`)
+    }
+    return mask.startsWith("**/") ? mask : `**/${mask}`
+  })
   // When withoutDir is false the directory name becomes the archive root via prefix
   const prefix = options.withoutDir ? undefined : path.basename(dirToArchive)
 
