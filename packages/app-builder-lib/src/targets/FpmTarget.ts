@@ -199,7 +199,8 @@ export default class FpmTarget extends Target {
       artifactPath,
     ]
 
-    args.push(...objectToArgs((await this.computeFpmMetaInfoOptions()) as any))
+    const meta = await this.computeFpmMetaInfoOptions()
+    args.push(...objectToArgs({ name: meta.name, maintainer: meta.maintainer ?? null, vendor: meta.vendor, url: meta.url }))
 
     const packageCategory = options.packageCategory
     if (packageCategory != null) {

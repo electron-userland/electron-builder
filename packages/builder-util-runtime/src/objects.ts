@@ -97,7 +97,7 @@ export function objectToArgs(obj: Record<string, string | null>): readonly strin
       return args
     }
     if (!SAFE_FLAG_NAME_RE.test(name)) {
-      throw new Error(`objectToArgs: unsafe flag name rejected: "${name}"`)
+      throw new Error(`objectToArgs: unsafe flag name rejected: ${JSON.stringify(name)}`)
     }
     if (UNSAFE_VALUE_RE.test(value)) {
       throw new Error(`objectToArgs: value for --${name} contains a null byte or newline`)
