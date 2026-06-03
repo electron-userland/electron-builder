@@ -787,8 +787,8 @@ export class NsisTarget extends Target {
       } else {
         const unregisterFileAssociationsScript = new NsisScriptGenerator()
         for (const item of fileAssociations) {
-          for (const ext of asArray(item.ext)) {
-            unregisterFileAssociationsScript.insertMacro("APP_UNASSOCIATE", `"${normalizeExt(ext)}" "${progIdMaker.progId(item.name || ext)}"`)
+          for (const ext of asArray(item.ext).map(normalizeExt)) {
+            unregisterFileAssociationsScript.insertMacro("APP_UNASSOCIATE", `"${nsisEscapeString(ext)}" "${progIdMaker.progId(item.name || ext)}"`)
           }
         }
         scriptGenerator.macro("unregisterFileAssociations", unregisterFileAssociationsScript)
