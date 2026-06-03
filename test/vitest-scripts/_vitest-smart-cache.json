@@ -1,1 +1,788 @@
-{"tests":{},"files":{}}
+{
+  "tests": {
+    "protonTest.ts::mac": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 7801.772833000001
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "protonTest.ts::linux": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 2265.1452919999992
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "protonTest.ts::win": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "protonTest.ts::win ia32": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::downloadNodeJsBinary > macOS > uses tar.gz and returns bin/node path": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 2.874917000000096
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::downloadNodeJsBinary > Linux > uses tar.gz and returns bin/node path": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.2540000000000191
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::downloadNodeJsBinary > Linux > arm64 arch is passed through unchanged": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.2161669999999276
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::downloadNodeJsBinary > Windows > uses zip and returns node.exe under version subdirectory": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 0.6208750000000691
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::downloadNodeJsBinary > Windows > ia32 arch maps to x86 in URL but binary path uses x86": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 0.3742500000000746
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::downloadLaunchUiDir > uses develar/launchui GitHub repo": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.15916600000002745
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::downloadLaunchUiDir > Windows platform maps to win32 in filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 0.2725830000000542
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::downloadLaunchUiDir > macOS platform maps to mac in filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 0.40991700000006404
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::downloadLaunchUiDir > Linux platform maps to linux in filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.2764590000000453
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::downloadLaunchUiDir > custom version string is forwarded to the release name and filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.11554100000000744
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LAUNCHUI_DEFAULT_VERSION > matches the version hardcoded in the original Go binary": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.06312500000001364
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > downloadNodeJsBinary > macOS > uses tar.gz and returns bin/node path": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 2,
+          "avgMs": 2.739458500000012
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > downloadNodeJsBinary > Linux > uses tar.gz and returns bin/node path": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.23552100000000564
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > downloadNodeJsBinary > Linux > arm64 arch is passed through unchanged": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.13141649999994343
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > downloadNodeJsBinary > Windows > uses zip and returns node.exe under version subdirectory": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 2,
+          "avgMs": 0.6202504999999974
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > downloadNodeJsBinary > Windows > ia32 arch maps to x86 in URL and binary path": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 2,
+          "avgMs": 0.39581250000003365
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > downloadLaunchUiDir > uses develar/launchui GitHub repo": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.1719165000000089
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > downloadLaunchUiDir > Windows platform maps to win32 in filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 2,
+          "avgMs": 0.2741875000000391
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > downloadLaunchUiDir > macOS platform maps to mac in filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 2,
+          "avgMs": 0.46043700000006993
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > downloadLaunchUiDir > Linux platform maps to linux in filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.32016699999996945
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > downloadLaunchUiDir > custom version string is forwarded to release name and filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.1414794999999458
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > LAUNCHUI_DEFAULT_VERSION > matches the version hardcoded in the original Go binary": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 4,
+          "fails": 0,
+          "avgMs": 0.0999267499999803
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > getNodeJsDownloadParams > macOS > darwin platform, tar.gz format, bin/node binary path": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 2,
+          "avgMs": 4.700770499999976
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > getNodeJsDownloadParams > Linux > linux platform, tar.gz format, bin/node binary path": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.3784790000000271
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > getNodeJsDownloadParams > Linux > arm64 arch is passed through unchanged": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.28112499999997453
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > getNodeJsDownloadParams > Windows > win platform, zip format, node.exe under version subdirectory": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 2,
+          "avgMs": 1.0418955000000096
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > getNodeJsDownloadParams > Windows > ia32 arch maps to x86 in URL and binary subdirectory": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 2,
+          "avgMs": 1.7461455000000115
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > getNodeJsDownloadParams > version is embedded in releaseName, filename, and URL": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.35322900000005575
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > getLaunchUiDownloadParams > uses develar/launchui GitHub repo": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.240041500000018
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > getLaunchUiDownloadParams > Windows platform maps to win32 in filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 2,
+          "avgMs": 0.44293799999996963
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > getLaunchUiDownloadParams > macOS platform maps to mac in filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 2,
+          "avgMs": 1.0061249999999973
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > getLaunchUiDownloadParams > Linux platform maps to linux in filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.4928750000000264
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > getLaunchUiDownloadParams > custom version is forwarded to release name and filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.16562550000003284
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    }
+  },
+  "files": {
+    "protonTest.ts": {
+      "unstable": true,
+      "hasHeavyTests": false,
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 10066.918125
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      }
+    },
+    "libUiFrameworkTest.ts": {
+      "unstable": true,
+      "hasHeavyTests": false,
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 5,
+          "fails": 25,
+          "avgMs": 7.743299800000114
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      }
+    }
+  }
+}
