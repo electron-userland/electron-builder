@@ -1,10 +1,11 @@
 import * as path from "path"
-import { describe } from "vitest"
+import { describe, expect } from "vitest"
 import { Platform } from "app-builder-lib/src/core"
 import {
   getLaunchUiDownloadParams,
   getNodeJsDownloadParams,
   LAUNCHUI_DEFAULT_VERSION,
+  validateShellEmbeddable,
 } from "app-builder-lib/src/frameworks/LibUiFramework"
 
 // Pure mapping functions — no mocking required.
@@ -100,6 +101,35 @@ describe.sequential("LibUiFramework helpers", () => {
   describe("LAUNCHUI_DEFAULT_VERSION", () => {
     test("matches the version hardcoded in the original Go binary", ({ expect }) => {
       expect(LAUNCHUI_DEFAULT_VERSION).toBe("0.1.4-10.13.0")
+    })
+  })
+
+  describe("validateShellEmbeddable", () => {
+    describe("safe values pass", () => {
+      test.each([
+        ["index.js", "package.json main"],
+        ["src/main.js", "package.json main"],
+        ["dist/app.js", "package.json main"],
+        ["my-app.js", "package.json main"],
+        ["app_main.js", "package.json main"],
+        ["", "empty string"],
+      ])("allows %j", (value, field) => {
+        expect(() => validateShellEmbeddable(value as string, field as string)).not.toThrow()
+      })
+    })
+
+    describe("shell metacharacters are rejected", () => {
+      test.each([
+        ["index.js$(evil)", "$"],
+        ["index.js`evil`", "backtick"],
+        ['index.js"evil"', "double-quote"],
+        ["index.js\\evil", "backslash"],
+        ["index.js\nevil", "newline"],
+        ["$(rm -rf /)", "command substitution"],
+        ["`id`", "backtick substitution"],
+      ])("rejects %j (contains %s)", (value) => {
+        expect(() => validateShellEmbeddable(value as string, "test field")).toThrow()
+      })
     })
   })
 })

@@ -1,6 +1,6 @@
 import { replaceDefault as _replaceDefault, Arch, copyDir, exec, log, serializeToYaml, toLinuxArchString } from "builder-util"
 import { asArray, deepAssign, isValidKey, Nullish } from "builder-util-runtime"
-import { copyFile, mkdir, readdir, rm, writeFile } from "fs/promises"
+import { chmod, copyFile, mkdir, readdir, rename, rm, writeFile } from "fs/promises"
 import { outputFile, readFile } from "fs-extra"
 import * as path from "path"
 import { PlugDescriptor, SnapOptions } from "../../options/SnapOptions"
@@ -316,8 +316,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
       const src = path.join(snapTemplateDir, script)
       const dest = path.join(stageDir, "scripts", script)
       await copyFile(src, dest)
-      // fs-extra copyFile doesn't preserve mode; chmod 755 explicitly
-      const { chmod } = await import("fs/promises")
+      // copyFile doesn't preserve mode; chmod 755 explicitly
       await chmod(dest, 0o755)
     }
 
@@ -338,7 +337,6 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
     })
 
     if (!isDestructiveMode) {
-      const { rename } = await import("fs/promises")
       await rename(path.join(stageDir, snapOutputName), artifactPath)
     }
   }
@@ -350,7 +348,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
     extraAppArgs: string[]
     isTemplate: boolean
   }): Promise<void> {
-    const { stageDir, appOutDir: _appOutDir, hooksDir, extraAppArgs, isTemplate } = opts
+    const { stageDir, hooksDir, extraAppArgs, isTemplate } = opts
 
     const snapMetaDir = path.join(stageDir, isTemplate ? "meta" : "snap")
     const scriptDir = path.join(stageDir, "scripts")
@@ -371,11 +369,10 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
     const appPrefix = isTemplate ? "" : "app/"
     let commandContent = `#!/bin/bash -e\nexec "$SNAP/desktop-init.sh" "$SNAP/desktop-common.sh" "$SNAP/desktop-gnome-specific.sh" "$SNAP/${appPrefix}${this.packager.executableName}"`
     if (extraAppArgs.length > 0) {
-      commandContent += " " + extraAppArgs.join(" ")
+      commandContent += " " + extraAppArgs.map(shellQuote).join(" ")
     }
     commandContent += ' "$@"'
     await writeFile(commandWrapperPath, commandContent, { mode: 0o755 })
-    const { chmod } = await import("fs/promises")
     await chmod(commandWrapperPath, 0o755)
   }
 
@@ -445,4 +442,9 @@ async function readDirPaths(dir: string, filter?: (name: string) => boolean): Pr
     }
   }
   return result
+}
+
+/** Single-quote a shell argument, escaping any embedded single quotes. */
+export function shellQuote(arg: string): string {
+  return "'" + arg.replace(/'/g, "'\\''") + "'"
 }

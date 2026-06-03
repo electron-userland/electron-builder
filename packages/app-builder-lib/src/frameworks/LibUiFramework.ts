@@ -1,3 +1,4 @@
+import { InvalidConfigurationError } from "builder-util"
 import { copy, emptyDir } from "fs-extra"
 import { chmod, copyFile, mkdir, rename, writeFile } from "fs/promises"
 import * as path from "path"
@@ -8,6 +9,19 @@ import { LinuxPackager } from "../linuxPackager"
 import { MacPackager } from "../macPackager"
 import { downloadBuilderToolset } from "../util/electronGet"
 import { savePlistFile } from "../util/plist"
+
+/** Validates that a value is safe to embed in a double-quoted shell string (no metacharacters). */
+export function validateShellEmbeddable(value: string, fieldName: string): void {
+  // Allow letters, digits, dots, underscores, hyphens, forward slashes, and spaces.
+  // Reject anything that could be interpreted as a shell metacharacter when embedded
+  // inside a double-quoted string: $, `, ", \, and newlines.
+  if (/[$`"\\\n]/.test(value)) {
+    throw new InvalidConfigurationError(
+      `${fieldName} contains characters that are not safe in shell scripts: ${JSON.stringify(value)}. ` +
+        `Avoid $, backtick, double-quote, backslash, and newline characters.`
+    )
+  }
+}
 
 // LaunchUI version is independent of the Node.js version; this was the hardcoded default in the Go binary.
 export const LAUNCHUI_DEFAULT_VERSION = "0.1.4-10.13.0"
@@ -73,11 +87,13 @@ export class LibUiFramework implements Framework {
     }
     await packager.applyCommonInfo(appPlist, appContentsDir)
     await savePlistFile(path.join(appContentsDir, "Info.plist"), appPlist)
+    const macMain = options.packager.info.metadata.main || "index.js"
+    validateShellEmbeddable(macMain, "package.json main")
     await writeExecutableMain(
       path.join(appContentsDir, "MacOS", appPlist.CFBundleExecutable),
       `#!/bin/sh
   DIR=$(dirname "$0")
-  "$DIR/node" "$DIR/../Resources/app/${options.packager.info.metadata.main || "index.js"}"
+  "$DIR/node" "$DIR/../Resources/app/${macMain}"
   `
     )
   }
@@ -88,11 +104,13 @@ export class LibUiFramework implements Framework {
     await copyFile(nodeBinaryLinux, path.join(appOutDir, "node"))
     await chmod(path.join(appOutDir, "node"), 0o755)
     const mainPath = path.join(appOutDir, (options.packager as LinuxPackager).executableName)
+    const linuxMain = options.packager.info.metadata.main || "index.js"
+    validateShellEmbeddable(linuxMain, "package.json main")
     await writeExecutableMain(
       mainPath,
       `#!/bin/sh
   DIR=$(dirname "$0")
-  "$DIR/node" "$DIR/app/${options.packager.info.metadata.main || "index.js"}"
+  "$DIR/node" "$DIR/app/${linuxMain}"
   `
     )
   }
