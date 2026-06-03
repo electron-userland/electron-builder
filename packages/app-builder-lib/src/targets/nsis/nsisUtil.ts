@@ -1,12 +1,11 @@
 import { Arch, copyFile, dirSize, log } from "builder-util"
-import { PackageFileInfo } from "builder-util-runtime"
+import { PackageFileInfo, UUID } from "builder-util-runtime"
 import * as fs from "fs/promises"
 import * as path from "path"
 import * as zlib from "zlib"
 import { getNsisElevatePath } from "../../toolsets/windows"
 import { getTemplatePath } from "../../util/pathManager"
 import { NsisTarget } from "./NsisTarget"
-import { UUID } from "builder-util-runtime"
 
 export const nsisTemplatesDir = getTemplatePath("nsis")
 
