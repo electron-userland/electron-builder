@@ -76,10 +76,19 @@ async function main() {
       printBasicPrototype: false,
     },
     resolveSnapshotPath: (testPath, snapshotExtension) => {
-      return testPath
+      const snapshotPath = testPath
         .replace(/\.[tj]s$/, `.js${snapshotExtension}`)
         .replace("/src/", "/snapshots/")
         .replace("\\src\\", "\\snapshots\\")
+      // These suites assert the packed asar file tree across every package manager. The tree
+      // content (files + sizes) is identical on all hosts, but two header fields are inherently
+      // host-specific: the data-section packing `offset` (write order differs by OS) and the
+      // Unix `executable` bit (NTFS does not carry it). Keep a dedicated Windows baseline so the
+      // POSIX snapshots retain full fidelity and neither platform has to discard real data.
+      if (process.platform === "win32" && /(?:packageManagerTest|HoistedNodeModuleTest)\.js\.snap$/.test(snapshotPath)) {
+        return snapshotPath.replace(/\.snap$/, ".win.snap")
+      }
+      return snapshotPath
     },
   })
     .then(() => {

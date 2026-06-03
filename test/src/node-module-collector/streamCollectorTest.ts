@@ -29,10 +29,22 @@ class TestCollector extends NodeModulesCollector<any, any> {
   }
 }
 
-const BAT_PATH = "C:\\Temp\\pnpm-deadbeef.bat"
+const TMP_FILE = "C:\\Temp\\pnpm-deadbeef.tmp"
 const OUTPUT_FILE = "/tmp/output.json"
 
 const originalPlatform = process.platform
+
+// Decode a `powershell.exe -EncodedCommand <base64>` argv back into the PowerShell script text.
+function decodeEncodedCommand(spawnArgs: string[]): string {
+  const idx = spawnArgs.indexOf("-EncodedCommand")
+  if (idx < 0) {
+    throw new Error(`-EncodedCommand not found in args: ${JSON.stringify(spawnArgs)}`)
+  }
+  if (idx + 1 >= spawnArgs.length) {
+    throw new Error(`-EncodedCommand has no following value in args: ${JSON.stringify(spawnArgs)}`)
+  }
+  return Buffer.from(spawnArgs[idx + 1], "base64").toString("utf16le")
+}
 
 function setPlatform(p: NodeJS.Platform) {
   Object.defineProperty(process, "platform", { value: p, configurable: true })
@@ -58,15 +70,19 @@ beforeEach(() => {
     stdout: { pipe: vi.fn() },
     stderr: {
       on: vi.fn((ev: string, cb: (chunk: string) => void) => {
-        if (ev === "data") stderrDataCb = cb
+        if (ev === "data") {
+          stderrDataCb = cb
+        }
       }),
     },
     on: vi.fn((ev: string, cb: (code: number) => void) => {
-      if (ev === "close") closeCb = cb
+      if (ev === "close") {
+        closeCb = cb
+      }
     }),
   }
   vi.mocked(childProcess.spawn).mockReturnValue(mockChild as any)
-  const mockTmpDir = { getTempFile: vi.fn().mockResolvedValue(BAT_PATH) } as unknown as TmpDir
+  const mockTmpDir = { getTempFile: vi.fn().mockResolvedValue(TMP_FILE) } as unknown as TmpDir
   collector = new TestCollector("/rootDir", mockTmpDir)
 })
 
@@ -76,107 +92,98 @@ afterEach(() => {
 })
 
 describe.sequential("streamCollectorCommandToFile", () => {
-  describe("Windows bat wrapping", () => {
-    test(".cmd file: spawn receives cmd.exe", async ({ expect }) => {
+  describe("Windows PowerShell -EncodedCommand wrapping", () => {
+    test(".cmd file: spawn receives powershell.exe with -EncodedCommand", async ({ expect }) => {
       setPlatform("win32")
       const p = collector.streamCollectorCommandToFile("C:\\nodejs\\npm.cmd", ["list"], "/cwd", OUTPUT_FILE)
       await waitForCloseCb()
       closeCb!(0)
       await p
       const [cmd, args] = vi.mocked(childProcess.spawn).mock.calls[0]
-      expect(cmd).toBe("cmd.exe")
-      expect(args[0]).toBe("/c")
-      expect(args[1]).toBe(`"${BAT_PATH}"`)
+      expect(cmd).toBe("powershell.exe")
+      expect((args as string[]).slice(0, 3)).toEqual(["-NoProfile", "-NonInteractive", "-EncodedCommand"])
+      const script = decodeEncodedCommand(args as string[])
+      expect(script).toContain("& 'C:\\nodejs\\npm.cmd' 'list'")
+      expect(script).toContain("exit $LASTEXITCODE")
+      // No temporary .bat file is created anymore.
+      expect(vi.mocked(fsExtra.writeFile)).not.toHaveBeenCalled()
     })
 
-    test(".cmd at path with spaces: wrapped in bat", async ({ expect }) => {
+    test("path with spaces: single-quoted, no shell escaping required", async ({ expect }) => {
       setPlatform("win32")
       const p = collector.streamCollectorCommandToFile("C:\\Program Files\\nodejs\\npm.cmd", ["list"], "/cwd", OUTPUT_FILE)
       await waitForCloseCb()
       closeCb!(0)
       await p
-      expect(vi.mocked(childProcess.spawn).mock.calls[0][0]).toBe("cmd.exe")
+      const script = decodeEncodedCommand(vi.mocked(childProcess.spawn).mock.calls[0][1] as string[])
+      expect(script).toContain("& 'C:\\Program Files\\nodejs\\npm.cmd' 'list'")
     })
 
-    test("extensionless at path with spaces: wrapped in bat", async ({ expect }) => {
+    test("extensionless command (e.g. Volta shim): wrapped via PowerShell call operator", async ({ expect }) => {
       setPlatform("win32")
       const p = collector.streamCollectorCommandToFile("C:\\Program Files\\Volta\\pnpm", [], "/cwd", OUTPUT_FILE)
       await waitForCloseCb()
       closeCb!(0)
       await p
-      expect(vi.mocked(childProcess.spawn).mock.calls[0][0]).toBe("cmd.exe")
+      expect(vi.mocked(childProcess.spawn).mock.calls[0][0]).toBe("powershell.exe")
+      const script = decodeEncodedCommand(vi.mocked(childProcess.spawn).mock.calls[0][1] as string[])
+      expect(script).toContain("& 'C:\\Program Files\\Volta\\pnpm'")
     })
 
-    test(".exe at path with spaces: wrapped in bat (Volta shim fix)", async ({ expect }) => {
-      setPlatform("win32")
-      const p = collector.streamCollectorCommandToFile("C:\\Program Files\\Volta\\pnpm.exe", [], "/cwd", OUTPUT_FILE)
-      await waitForCloseCb()
-      closeCb!(0)
-      await p
-      expect(vi.mocked(childProcess.spawn).mock.calls[0][0]).toBe("cmd.exe")
-    })
-
-    test("bat script quotes command and uses CRLF line endings", async ({ expect }) => {
-      setPlatform("win32")
-      const p = collector.streamCollectorCommandToFile("C:\\Program Files\\Volta\\pnpm.exe", [], "/cwd", OUTPUT_FILE)
-      await waitForCloseCb()
-      closeCb!(0)
-      await p
-      const [, content] = vi.mocked(fsExtra.writeFile).mock.calls[0] as unknown as [string, string, unknown]
-      expect(content).toBe('@echo off\r\n"C:\\Program Files\\Volta\\pnpm.exe" %*\r\n')
-    })
-
-    test("bat script escapes double quotes in command path", async ({ expect }) => {
-      setPlatform("win32")
-      const p = collector.streamCollectorCommandToFile('C:\\some""path\\npm.cmd', [], "/cwd", OUTPUT_FILE)
-      await waitForCloseCb()
-      closeCb!(0)
-      await p
-      const [, content] = vi.mocked(fsExtra.writeFile).mock.calls[0] as unknown as [string, string, unknown]
-      expect(content).toContain('C:\\some""""path\\npm.cmd')
-    })
-
-    test("original args forwarded after bat path", async ({ expect }) => {
+    test("original args are forwarded and individually single-quoted", async ({ expect }) => {
       setPlatform("win32")
       const p = collector.streamCollectorCommandToFile("C:\\Program Files\\npm.cmd", ["list", "--json"], "/cwd", OUTPUT_FILE)
       await waitForCloseCb()
       closeCb!(0)
       await p
-      const spawnArgs = vi.mocked(childProcess.spawn).mock.calls[0][1] as string[]
-      expect(spawnArgs.slice(2)).toEqual(["list", "--json"])
+      const script = decodeEncodedCommand(vi.mocked(childProcess.spawn).mock.calls[0][1] as string[])
+      expect(script).toContain("& 'C:\\Program Files\\npm.cmd' 'list' '--json'")
+    })
+
+    test("embedded single quote in an argument is doubled (no injection)", async ({ expect }) => {
+      setPlatform("win32")
+      const p = collector.streamCollectorCommandToFile("npm", ["list", "a'b"], "/cwd", OUTPUT_FILE)
+      await waitForCloseCb()
+      closeCb!(0)
+      await p
+      const script = decodeEncodedCommand(vi.mocked(childProcess.spawn).mock.calls[0][1] as string[])
+      expect(script).toContain("'a''b'")
+    })
+
+    test("pins UTF-8 output encoding without a BOM", async ({ expect }) => {
+      setPlatform("win32")
+      const p = collector.streamCollectorCommandToFile("npm", ["list"], "/cwd", OUTPUT_FILE)
+      await waitForCloseCb()
+      closeCb!(0)
+      await p
+      const script = decodeEncodedCommand(vi.mocked(childProcess.spawn).mock.calls[0][1] as string[])
+      expect(script).toContain("[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new($false)")
+    })
+
+    test("-EncodedCommand payload is valid base64 of UTF-16LE", async ({ expect }) => {
+      setPlatform("win32")
+      const p = collector.streamCollectorCommandToFile("pnpm", ["list"], "/cwd", OUTPUT_FILE)
+      await waitForCloseCb()
+      closeCb!(0)
+      await p
+      const args = vi.mocked(childProcess.spawn).mock.calls[0][1] as string[]
+      const encoded = args[args.indexOf("-EncodedCommand") + 1]
+      // Re-encoding the decoded script must reproduce the exact payload.
+      expect(Buffer.from(Buffer.from(encoded, "base64").toString("utf16le"), "utf16le").toString("base64")).toBe(encoded)
     })
   })
 
-  describe("no bat wrapping", () => {
-    test(".exe at path without spaces: spawn receives original command", async ({ expect }) => {
-      setPlatform("win32")
-      const cmd = "C:\\tools\\pnpm.exe"
-      const p = collector.streamCollectorCommandToFile(cmd, [], "/cwd", OUTPUT_FILE)
-      await waitForCloseCb()
-      closeCb!(0)
-      await p
-      expect(vi.mocked(childProcess.spawn).mock.calls[0][0]).toBe(cmd)
-      expect(vi.mocked(fsExtra.writeFile)).not.toHaveBeenCalled()
-    })
-
-    test("extensionless at path without spaces: spawn receives original command", async ({ expect }) => {
-      setPlatform("win32")
-      const p = collector.streamCollectorCommandToFile("pnpm", [], "/cwd", OUTPUT_FILE)
-      await waitForCloseCb()
-      closeCb!(0)
-      await p
-      expect(vi.mocked(childProcess.spawn).mock.calls[0][0]).toBe("pnpm")
-      expect(vi.mocked(fsExtra.writeFile)).not.toHaveBeenCalled()
-    })
-
-    test("non-Windows: never wraps even for spaces-in-path .exe", async ({ expect }) => {
+  describe("non-Windows: no PowerShell wrapping", () => {
+    test("darwin: spawn receives the original command and args", async ({ expect }) => {
       setPlatform("darwin")
-      const cmd = "/Applications/Volta/pnpm.exe"
-      const p = collector.streamCollectorCommandToFile(cmd, [], "/cwd", OUTPUT_FILE)
+      const cmd = "/Applications/Volta/pnpm"
+      const p = collector.streamCollectorCommandToFile(cmd, ["list", "--json"], "/cwd", OUTPUT_FILE)
       await waitForCloseCb()
       closeCb!(0)
       await p
-      expect(vi.mocked(childProcess.spawn).mock.calls[0][0]).toBe(cmd)
+      const [spawnCmd, spawnArgs] = vi.mocked(childProcess.spawn).mock.calls[0]
+      expect(spawnCmd).toBe(cmd)
+      expect(spawnArgs).toEqual(["list", "--json"])
       expect(vi.mocked(fsExtra.writeFile)).not.toHaveBeenCalled()
     })
   })
@@ -227,9 +234,9 @@ describe.sequential("streamCollectorCommandToFile", () => {
       expect(collector.logSummary[LogMessageByKey.PKG_COLLECTOR_OUTPUT]).toHaveLength(0)
     })
 
-    test("win32 npm.cmd wrapped via cmd.exe: exit code 1 still triggers shouldIgnore", async ({ expect }) => {
-      // Regression: execName must be derived from the original command ("npm"), not the rewritten
-      // cmd.exe invocation, otherwise shouldIgnore never fires and npm list exit code 1 rejects.
+    test("win32 npm.cmd wrapped via PowerShell: exit code 1 still triggers shouldIgnore", async ({ expect }) => {
+      // Regression: execName must be derived from the original command ("npm"), not the "powershell"
+      // wrapper we spawn on Windows, otherwise shouldIgnore never fires and npm list exit code 1 rejects.
       // Use "npm.cmd" without a backslash-prefixed directory so path.basename works cross-platform
       // in the test environment (macOS path.basename ignores backslash separators).
       setPlatform("win32")

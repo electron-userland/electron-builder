@@ -28,7 +28,7 @@ const packageConfig = (data: any, version: string) => {
   return data
 }
 
-describe.ifNotWindows("Package Managers", () => {
+describe("Package Managers", () => {
   test("yarn", ({ expect }) =>
     assertPack(
       expect,
