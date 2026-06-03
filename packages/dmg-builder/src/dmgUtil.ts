@@ -1,4 +1,4 @@
-import { DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
+import type { DmgContent, DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
 import { downloadBuilderToolset, withToolsetLock } from "app-builder-lib/internal"
 import { exec, executeFinally, exists, InvalidConfigurationError, isEmptyOrSpaces, log, TmpDir } from "builder-util"
 import { stat } from "fs/promises"
@@ -145,7 +145,7 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
     size: specification.size,
     shrink: specification.shrink,
     contents:
-      specification.contents?.map(c => ({
+      specification.contents?.map((c: DmgContent) => ({
         path: c.path || appPath, // path is required, when ommitted, appPath is used (backward compatibility
         x: c.x,
         y: c.y,
