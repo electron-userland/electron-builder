@@ -2,10 +2,10 @@ import { debug7z, exec, exists, getPath7za, log, statOrNull, unlinkIfExists } fr
 import { move } from "fs-extra"
 import * as path from "path"
 import { create } from "tar"
+import { TarOptionsWithAliasesAsync } from "tar/dist/commonjs/options"
 import { TmpDir } from "temp-file"
 import { CompressionLevel } from "../core"
 import { getLinuxToolsMacToolset } from "../toolsets/linux"
-import { TarOptionsWithAliasesAsync } from "tar/dist/commonjs/options"
 
 const ALLOWED_7Z_FILTERS = new Set(["BCJ", "BCJ2", "ARM", "ARMT", "IA64", "PPC", "SPARC", "DELTA"])
 
@@ -24,50 +24,53 @@ type TarConfig = {
   tempDirManager: TmpDir
 }
 
+function resolveCompressionLevel(compression: CompressionLevel | any): number {
+  const envLevel = process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL
+  if (envLevel != null) {
+    validateCompressionLevel(envLevel)
+    return parseInt(envLevel, 10)
+  }
+  return compression === "store" ? 0 : 9
+}
+
 /** @internal */
 export async function tar({ compression, format, outFile, dirToArchive, isMacApp, tempDirManager }: TarConfig): Promise<void> {
-  const tarFile = await tempDirManager.getTempFile({ suffix: ".tar" })
-  const tarArgs: TarOptionsWithAliasesAsync = {
-    file: tarFile,
-    portable: true,
-    cwd: dirToArchive,
-    prefix: path.basename(outFile, `.${format}`),
-  }
-  let tarDirectory = "."
-  if (isMacApp) {
-    delete tarArgs.prefix
-    tarArgs.cwd = path.dirname(dirToArchive)
-    tarDirectory = path.basename(dirToArchive)
+  const level = resolveCompressionLevel(compression)
+  const prefix = path.basename(outFile, `.${format}`)
+  const cwd = isMacApp ? path.dirname(dirToArchive) : dirToArchive
+  const tarDirectory = isMacApp ? path.basename(dirToArchive) : "."
+  const baseOpts: TarOptionsWithAliasesAsync = isMacApp ? { portable: true, cwd } : { portable: true, cwd, prefix }
+
+  if (format === "tar.gz") {
+    await unlinkIfExists(outFile)
+    await create({ ...baseOpts, file: outFile, gzip: { level } }, [tarDirectory])
+    return
   }
 
-  await Promise.all([
-    create(tarArgs, [tarDirectory]),
-    // remove file before - 7z doesn't overwrite file, but update
-    unlinkIfExists(outFile),
-  ])
+  const tarFile = await tempDirManager.getTempFile({ suffix: ".tar" })
+  await Promise.all([create({ ...baseOpts, file: tarFile }, [tarDirectory]), unlinkIfExists(outFile)])
 
   if (format === "tar.lz") {
     const lzipPath = process.platform === "darwin" ? (await getLinuxToolsMacToolset()).lzip : "lzip"
-    await exec(lzipPath, [compression === "store" ? "-1" : "-9", "--keep" /* keep (don't delete) input files */, tarFile])
-    // bloody lzip creates file in the same dir where input file with postfix `.lz`, option --output doesn't work
+    await exec(lzipPath, [compression === "store" ? "-1" : "-9", "--keep", tarFile])
     await move(`${tarFile}.lz`, outFile)
     return
   }
 
-  const args = compute7zCompressArgs(format === "tar.xz" ? "xz" : format === "tar.bz2" ? "bzip2" : "gzip", {
-    isRegularFile: true,
-    method: "DEFAULT",
-    compression,
-  })
-  args.push(outFile, tarFile)
-  await exec(
-    await getPath7za(),
-    args,
-    {
-      cwd: path.dirname(dirToArchive),
-    },
-    debug7z.enabled
-  )
+  if (format === "tar.xz") {
+    await exec("xz", [`-${level}`, "--keep", tarFile])
+    await move(`${tarFile}.xz`, outFile)
+    return
+  }
+
+  if (format === "tar.bz2") {
+    // bzip2 has no store mode; clamp level to minimum of 1
+    await exec("bzip2", [`-${Math.max(1, level)}`, "--keep", tarFile])
+    await move(`${tarFile}.bz2`, outFile)
+    return
+  }
+
+  throw new Error(`Unsupported tar format: ${format}`)
 }
 
 export interface ArchiveOptions {
