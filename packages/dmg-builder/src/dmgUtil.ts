@@ -1,4 +1,4 @@
-import type { DmgContent, DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
+import { DmgContent, DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
 import { downloadBuilderToolset, withToolsetLock } from "app-builder-lib/internal"
 import { exec, executeFinally, exists, InvalidConfigurationError, isEmptyOrSpaces, log, TmpDir } from "builder-util"
 import { stat } from "fs/promises"

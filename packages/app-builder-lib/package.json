@@ -139,8 +139,8 @@
     "toml": "^3.0.0"
   },
   "peerDependencies": {
-    "dmg-builder": "workspace:*",
-    "electron-builder-squirrel-windows": "workspace:*"
+    "dmg-builder": "*",
+    "electron-builder-squirrel-windows": "*"
   },
   "//": "electron-builder-squirrel-windows and dmg-builder added as dev dep for tests (as otherwise `require` doesn't work using Yarn 2)",
   "types": "./dist/index.d.ts",
