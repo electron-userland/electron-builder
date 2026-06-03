@@ -31,7 +31,10 @@ import { FuseOptionsV1 } from "./configuration"
 import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers, getNodeModuleFileMatcher } from "./fileMatcher"
 import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
 import { Framework, isElectronBased } from "./Framework"
-import {
+import { Platform } from "./core"
+// Type-only barrel import: keeping these erased avoids a runtime cycle
+// (index.ts → linuxPackager.ts → platformPackager.ts) that breaks ESM class init.
+import type {
   AfterPackContext,
   AsarOptions,
   CompressionLevel,
@@ -41,7 +44,6 @@ import {
   LinuxPackager,
   Packager,
   PackagerOptions,
-  Platform,
   PlatformSpecificBuildOptions,
   Target,
   TargetSpecificOptions,
@@ -420,7 +422,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       linux: "",
     }[electronPlatformName]
 
-    const executableName = this instanceof LinuxPackager ? this.executableName : this.appInfo.productFilename
+    // `"executableName" in this` instead of `instanceof LinuxPackager` keeps LinuxPackager a
+    // type-only import, avoiding the index.ts → linuxPackager.ts → platformPackager.ts runtime cycle.
+    const executableName = "executableName" in this ? (this as LinuxPackager).executableName : this.appInfo.productFilename
     const electronBinaryPath = path.join(appOutDir, `${executableName}${ext}`)
 
     log.info({ electronPath: log.filePath(electronBinaryPath) }, "executing @electron/fuses")

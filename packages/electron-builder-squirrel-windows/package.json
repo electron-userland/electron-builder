@@ -8,7 +8,8 @@
       "types": "./dist/SquirrelWindowsTarget.d.ts",
       "import": "./dist/SquirrelWindowsTarget.mjs",
       "require": "./dist/SquirrelWindowsTarget.js"
-    }
+    },
+    "./src/*": "./src/*.ts"
   },
   "author": "Vladimir Krivosheev",
   "license": "MIT",

@@ -14,7 +14,8 @@
       "types": "./dist/indexInternal.d.ts",
       "import": "./dist/indexInternal.mjs",
       "require": "./dist/indexInternal.js"
-    }
+    },
+    "./src/*": "./src/*.ts"
   },
   "files": [
     "dist",

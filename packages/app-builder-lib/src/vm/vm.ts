@@ -63,7 +63,7 @@ export async function getLinuxVm(debugLogger: DebugLogger): Promise<VmManager | 
       return undefined
     }
     const vm = vmList.find(it => it.state === "running") || vmList.find(it => it.state === "suspended") || vmList[0]
-    return new parallelsVmModule.ParallelsVmManager(vm!)
+    return new parallelsVmModule.ParallelsVmManager(vm)
   } catch {
     return undefined
   }

@@ -1,6 +1,6 @@
 import { exec, spawn } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
-import { SnapStoreOptions } from "builder-util-runtime/out/publishOptions"
+import { SnapStoreOptions } from "builder-util-runtime/src/publishOptions"
 import { PublishContext, UploadTask } from "electron-publish"
 import { beforeEach, describe, test, vi } from "vitest"
 // Import from source so Vitest's vi.mock intercepts builder-util in the same module graph

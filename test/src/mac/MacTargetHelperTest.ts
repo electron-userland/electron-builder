@@ -1,5 +1,5 @@
 import { afterEach, expect } from "vitest"
-import { MacTargetHelper } from "app-builder-lib/out/mac/MacTargetHelper"
+import { MacTargetHelper } from "app-builder-lib/src/mac/MacTargetHelper"
 
 describe("MacTargetHelper", () => {
   describe("getCertificateTypes", () => {

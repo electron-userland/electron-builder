@@ -1,7 +1,7 @@
 import * as fsp from "fs/promises"
 import * as os from "os"
 import * as path from "path"
-import { createUpdateInfoTasks, writeUpdateInfoFiles, UpdateInfoFileTask } from "app-builder-lib/out/publish/updateInfoBuilder"
+import { createUpdateInfoTasks, writeUpdateInfoFiles, UpdateInfoFileTask } from "app-builder-lib/src/publish/updateInfoBuilder"
 import { Platform } from "app-builder-lib"
 import { Arch } from "builder-util"
 import { load as yamlLoad } from "js-yaml"

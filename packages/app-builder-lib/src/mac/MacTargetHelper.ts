@@ -249,8 +249,12 @@ export class MacTargetHelper {
   }
 
   static getPlatformTypeFromTarget(targetName: string): PlatformType {
-    if (targetName === "mas") return "mas"
-    if (targetName === "mas-dev") return "mas-dev"
+    if (targetName === "mas") {
+      return "mas"
+    }
+    if (targetName === "mas-dev") {
+      return "mas-dev"
+    }
     return "mac"
   }
 

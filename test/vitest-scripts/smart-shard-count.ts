@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env tsx
 
 import { getAllTestFiles } from "./file-discovery"
 import { buildWeightedFiles, computeShardCount } from "./shard-builder"

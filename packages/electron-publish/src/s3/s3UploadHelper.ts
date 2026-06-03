@@ -55,9 +55,15 @@ export function startS3PutObject(params: S3PutObjectParams): { req: http.ClientR
     "Content-Type": params.contentType,
     "Content-Length": String(stat.size),
   }
-  if (params.acl != null) headers["x-amz-acl"] = params.acl
-  if (params.storageClass != null) headers["x-amz-storage-class"] = params.storageClass
-  if (params.serverSideEncryption != null) headers["x-amz-server-side-encryption"] = params.serverSideEncryption
+  if (params.acl != null) {
+    headers["x-amz-acl"] = params.acl
+  }
+  if (params.storageClass != null) {
+    headers["x-amz-storage-class"] = params.storageClass
+  }
+  if (params.serverSideEncryption != null) {
+    headers["x-amz-server-side-encryption"] = params.serverSideEncryption
+  }
 
   const signed = sign(
     {

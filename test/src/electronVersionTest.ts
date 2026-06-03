@@ -6,7 +6,7 @@ import { log } from "builder-util"
 
 // getElectronVersion is the public entry point; passing an explicit config with no
 // electronVersion bypasses getConfig and falls through to computeElectronVersion.
-import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
+import { getElectronVersion } from "app-builder-lib/src/electron/electronVersion"
 
 function rangeLogMessage(version: string): string {
   return (

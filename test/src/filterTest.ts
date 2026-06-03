@@ -1,5 +1,5 @@
 import { FilterStats } from "builder-util"
-import { FileMatcher, getFileMatchers, GetFileMatchersOptions } from "app-builder-lib/out/fileMatcher"
+import { FileMatcher, getFileMatchers, GetFileMatchersOptions } from "app-builder-lib/src/fileMatcher"
 import * as path from "path"
 
 // ---------------------------------------------------------------------------
@@ -241,7 +241,7 @@ describe("FileMatcher – computeParsedPatterns: auto-expand bare directory name
 
 describe("FileMatcher – createFilter with excludePatterns", () => {
   test("excludePatterns exclude matched files but not directories", ({ expect }) => {
-    const { Minimatch } = require("app-builder-lib/node_modules/minimatch")
+    const { Minimatch } = require("minimatch")
     const m = new FileMatcher("/app", "/out", noMacro, ["**/*"])
     m.excludePatterns = [new Minimatch("**/*.map", { dot: true })]
     const filter = m.createFilter()

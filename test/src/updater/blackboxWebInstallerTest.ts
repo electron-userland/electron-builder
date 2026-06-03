@@ -1,4 +1,4 @@
-import { TmpDir } from "builder-util/out/util"
+import { TmpDir } from "builder-util/src/util"
 import { execFileSync, execSync } from "child_process"
 import { randomUUID } from "crypto"
 import { Arch, Platform } from "electron-builder"
@@ -11,7 +11,7 @@ import { createLocalServer, getParallelsHostIP, sha256File, toVmHomePath } from 
 import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { optionsForFlakyE2E, windowsVmPromise } from "./blackboxUpdateHelpers"
-import { PM } from "app-builder-lib/out/node-module-collector"
+import { PM } from "app-builder-lib/src/node-module-collector"
 import { spawn } from "builder-util"
 
 // ---------------------------------------------------------------------------

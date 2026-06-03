@@ -13,8 +13,8 @@ import {
   downloadElectronArtifact,
   getCacheDirectory,
   getBinariesMirrorUrl,
-} from "app-builder-lib/out/util/electronGet"
-import { CacheState } from "app-builder-lib/out/util/cacheState"
+} from "app-builder-lib/src/util/electronGet"
+import { CacheState } from "app-builder-lib/src/util/cacheState"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 
 // ─── getCacheDirectory ────────────────────────────────────────────────────────

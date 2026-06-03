@@ -1,4 +1,4 @@
-import { ParallelsVmManager } from "app-builder-lib/out/vm/ParallelsVm"
+import { ParallelsVmManager } from "app-builder-lib/src/vm/ParallelsVm"
 import { execFileSync, execSync } from "child_process"
 import { randomUUID } from "crypto"
 import { Arch } from "electron-builder"

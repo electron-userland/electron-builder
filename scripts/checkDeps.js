@@ -15,6 +15,11 @@ const knownUnusedDevDependencies = new Set([
   "eslint-config-prettier",
   "eslint-plugin-prettier",
   "@rollup/plugin-typescript",
+  // Used in test/vitest-scripts/ (test dir is ignored by depcheck) or via pnpm workspace scripts
+  "is-ci",
+  "tsup",
+  "vitest",
+  "tsx",
 ])
 const knownMissedDependencies = new Set(["babel-core", "babel-preset-env", "babel-preset-stage-0", "babel-preset-react"])
 
@@ -26,13 +31,17 @@ async function check(projectDir, devPackageData) {
   // console.log(`Checking ${projectDir}`)
 
   const result = await new Promise(resolve => {
-    depCheck(projectDir, { ignoreDirs: ["out", "test", "pages", "typings", "docker", "certs", "templates", "vendor"] }, resolve)
+    depCheck(projectDir, { ignoreDirs: ["out", "dist", "test", "pages", "typings", "docker", "certs", "templates", "vendor"] }, resolve)
   })
 
   let unusedDependencies = result.dependencies
   if (unusedDependencies.length > 0) {
     if (packageName === "electron-builder") {
       unusedDependencies = unusedDependencies.filter(it => it !== "dmg-builder")
+    }
+    if (packageName === "app-builder-lib") {
+      // @electron/universal is used via dynamic string import which depcheck cannot detect statically
+      unusedDependencies = unusedDependencies.filter(it => it !== "@electron/universal")
     }
     if (unusedDependencies.length > 0) {
       console.error(`${chalk.bold(packageName)} Unused dependencies: ${JSON.stringify(unusedDependencies, null, 2)}`)
@@ -50,6 +59,8 @@ async function check(projectDir, devPackageData) {
   }
 
   delete result.missing.electron
+  // tsup is a root devDependency accessed via pnpm hoisting; each package uses it in tsup.config.ts
+  delete result.missing.tsup
   const toml = result.missing.toml
   if (toml != null && toml.length === 1 && toml[0].endsWith("config.js")) {
     delete result.missing.toml

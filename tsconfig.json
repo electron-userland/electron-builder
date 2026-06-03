@@ -26,12 +26,6 @@
       "path": "./packages/electron-builder-squirrel-windows"
     },
     {
-      "path": "./test"
-    },
-    {
-      "path": "./website"
-    },
-    {
       "path": "./scripts"
     }
   ]

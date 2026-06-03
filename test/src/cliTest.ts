@@ -3,8 +3,12 @@ import yargs from "yargs"
 
 // ─── Module mocks (hoisted by vitest above all imports) ───────────────────────
 
-vi.mock("app-builder-lib/out/util/electronGet", () => ({
+// getCacheDirectory (clear-cache) and loadEnv (cli-util) are the only `app-builder-lib/internal`
+// exports exercised here. Stub just those — a full mock keeps the heavy app-builder-lib module
+// graph (and its circular class hierarchy) from loading for these isolated CLI unit tests.
+vi.mock("app-builder-lib/internal", () => ({
   getCacheDirectory: vi.fn().mockReturnValue("/home/user/.cache/electron-builder"),
+  loadEnv: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock("fs/promises", async () => {
@@ -16,7 +20,7 @@ vi.mock("fs/promises", async () => {
   }
 })
 
-vi.mock("readline/promises", () => ({
+vi.mock("node:readline/promises", () => ({
   createInterface: vi.fn(() => ({
     question: vi.fn().mockResolvedValue("y"),
     close: vi.fn(),
@@ -32,15 +36,11 @@ vi.mock("builder-util", async () => {
   }
 })
 
-vi.mock("app-builder-lib/out/util/config/load", () => ({
-  loadEnv: vi.fn().mockResolvedValue(undefined),
-}))
-
 // ─── Imports ──────────────────────────────────────────────────────────────────
 
 import { access, rm } from "fs/promises"
-import { createInterface } from "readline/promises"
-import { getCacheDirectory } from "app-builder-lib/out/util/electronGet"
+import { createInterface } from "node:readline/promises"
+import { getCacheDirectory } from "app-builder-lib/internal"
 import { ExecError, InvalidConfigurationError, log } from "builder-util"
 // Relative imports bypass project-reference declaration files, which strip @internal exports
 import { clearCache } from "../../packages/electron-builder/src/cli/clear-cache"

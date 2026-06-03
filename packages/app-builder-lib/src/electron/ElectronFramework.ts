@@ -197,7 +197,7 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
 /**
  * Unpacks a custom or default Electron distribution into the app output directory.
  */
-async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, downloadOptions: ElectronDownloadOptions, distMacOsAppName: string): Promise<boolean> {
+async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, downloadOptions: ElectronDownloadOptions, _distMacOsAppName: string): Promise<boolean> {
   async function selectElectron(filepath: string) {
     const resolvedDist = path.isAbsolute(filepath) ? filepath : path.resolve(packager.projectDir, filepath)
 

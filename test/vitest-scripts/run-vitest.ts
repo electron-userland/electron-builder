@@ -1,12 +1,38 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env tsx
 
 import isCI from "is-ci"
+import * as path from "path"
 import { startVitest } from "vitest/node"
 import { getAllTestFiles } from "./file-discovery"
 import { generateTests } from "./generate-tests"
 import { buildWeightedFiles, computeShardCount, splitIntoShards } from "./shard-builder"
 import { SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN } from "./smart-config"
 import SmartSequencer from "./vitest-smart-sequencer"
+
+// Resolve workspace packages to their TypeScript sources during tests. The published packages are
+// bundled (CJS+ESM) by tsup, but tests must run against un-bundled source so vite handles CJS interop
+// (e.g. fs-extra) and circular deps, and so `vi.mock` can intercept individual internal modules.
+const PACKAGES_DIR = path.join(__dirname, "..", "..", "packages")
+const sourceAlias = (specifier: string, relPath: string) => ({
+  find: new RegExp(`^${specifier.replace(/\//g, "\\/")}$`),
+  replacement: path.join(PACKAGES_DIR, relPath),
+})
+const workspaceSourceAliases = [
+  sourceAlias("app-builder-lib/internal", "app-builder-lib/src/indexInternal.ts"),
+  sourceAlias("app-builder-lib", "app-builder-lib/src/index.ts"),
+  sourceAlias("builder-util/internal", "builder-util/src/indexInternal.ts"),
+  sourceAlias("builder-util", "builder-util/src/util.ts"),
+  sourceAlias("builder-util-runtime/internal", "builder-util-runtime/src/indexInternal.ts"),
+  sourceAlias("builder-util-runtime", "builder-util-runtime/src/index.ts"),
+  sourceAlias("electron-publish/internal", "electron-publish/src/indexInternal.ts"),
+  sourceAlias("electron-publish", "electron-publish/src/index.ts"),
+  sourceAlias("electron-updater/internal", "electron-updater/src/indexInternal.ts"),
+  sourceAlias("electron-updater", "electron-updater/src/index.ts"),
+  sourceAlias("dmg-builder", "dmg-builder/src/dmgUtil.ts"),
+  sourceAlias("electron-builder-squirrel-windows", "electron-builder-squirrel-windows/src/SquirrelWindowsTarget.ts"),
+  sourceAlias("electron-builder/internal", "electron-builder/src/indexInternal.ts"),
+  sourceAlias("electron-builder", "electron-builder/src/index.ts"),
+]
 
 const testRegex = TEST_FILES_PATTERN?.split(",")
 const includeRegex = `(${testRegex.join("|")}|${testRegex.map(t => `${t}*Test`).join("|")})`
@@ -44,53 +70,62 @@ async function main() {
   console.log(`\n=== Shard ${index + 1} of ${shardCount} ===`)
   console.log(`Scanned Files: ${selectedFiles.length}`)
 
-  return startVitest("test", selectedFiles, {
-    allowOnly: !isCI, // Prevent accidental commit of `test.only` in CI
-    update: process.env.UPDATE_SNAPSHOT === "true",
+  return startVitest(
+    "test",
+    selectedFiles,
+    {
+      allowOnly: !isCI, // Prevent accidental commit of `test.only` in CI
+      update: process.env.UPDATE_SNAPSHOT === "true",
 
-    // we manually set `globalThis.test` and `globalThis.describe` in vitest-setup.ts to make sure everything works correctly
-    globals: false,
+      // we manually set `globalThis.test` and `globalThis.describe` in vitest-setup.ts to make sure everything works correctly
+      globals: false,
 
-    // Allow test metadata
-    includeTaskLocation: true,
-    setupFiles: [__dirname + "/vitest-setup.ts", __dirname + "/vitest-heavy-mutex.ts"],
-    include: [`test/src/**/${includeRegex}.ts`],
+      // Allow test metadata
+      includeTaskLocation: true,
+      setupFiles: [__dirname + "/vitest-setup.ts", __dirname + "/vitest-heavy-mutex.ts"],
+      include: [`test/src/**/${includeRegex}.ts`],
 
-    printConsoleTrace: true,
-    runner: __dirname + "/vitest-network-retry-runner.ts",
-    reporters: ["default", __dirname + "/vitest-smart-reporter.ts"],
+      printConsoleTrace: true,
+      runner: __dirname + "/vitest-network-retry-runner.ts",
+      reporters: ["default", __dirname + "/vitest-smart-reporter.ts"],
 
-    // 2 on Windows (heavy MSI/Squirrel builds saturate the vitest main-thread RPC at 3); 3 elsewhere
-    maxWorkers: process.platform === "win32" ? 2 : 3,
+      // 2 on Windows (heavy MSI/Squirrel builds saturate the vitest main-thread RPC at 3); 3 elsewhere
+      maxWorkers: process.platform === "win32" ? 2 : 3,
 
-    fileParallelism: process.env.TEST_SEQUENTIAL_FILES !== "true",
-    sequence: {
-      sequencer: SmartSequencer,
-      concurrent: process.env.TEST_SEQUENTIAL === "false",
+      fileParallelism: false,
+      sequence: {
+        sequencer: SmartSequencer,
+        concurrent: process.env.TEST_SEQUENTIAL === "false",
+      },
+
+      slowTestThreshold: 2 * 60 * 1000,
+      testTimeout: 10 * 60 * 1000, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
+
+      snapshotFormat: {
+        printBasicPrototype: false,
+      },
+      resolveSnapshotPath: (testPath, snapshotExtension) => {
+        const snapshotPath = testPath
+          .replace(/\.[tj]s$/, `.js${snapshotExtension}`)
+          .replace("/src/", "/snapshots/")
+          .replace("\\src\\", "\\snapshots\\")
+        // These suites assert the packed asar file tree across every package manager. The tree
+        // content (files + sizes) is identical on all hosts, but two header fields are inherently
+        // host-specific: the data-section packing `offset` (write order differs by OS) and the
+        // Unix `executable` bit (NTFS does not carry it). Keep a dedicated Windows baseline so the
+        // POSIX snapshots retain full fidelity and neither platform has to discard real data.
+        if (process.platform === "win32" && /(?:packageManagerTest|HoistedNodeModuleTest)\.js\.snap$/.test(snapshotPath)) {
+          return snapshotPath.replace(/\.snap$/, ".win.snap")
+        }
+        return snapshotPath
+      },
     },
-
-    slowTestThreshold: 2 * 60 * 1000,
-    testTimeout: 10 * 60 * 1000, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
-
-    snapshotFormat: {
-      printBasicPrototype: false,
-    },
-    resolveSnapshotPath: (testPath, snapshotExtension) => {
-      const snapshotPath = testPath
-        .replace(/\.[tj]s$/, `.js${snapshotExtension}`)
-        .replace("/src/", "/snapshots/")
-        .replace("\\src\\", "\\snapshots\\")
-      // These suites assert the packed asar file tree across every package manager. The tree
-      // content (files + sizes) is identical on all hosts, but two header fields are inherently
-      // host-specific: the data-section packing `offset` (write order differs by OS) and the
-      // Unix `executable` bit (NTFS does not carry it). Keep a dedicated Windows baseline so the
-      // POSIX snapshots retain full fidelity and neither platform has to discard real data.
-      if (process.platform === "win32" && /(?:packageManagerTest|HoistedNodeModuleTest)\.js\.snap$/.test(snapshotPath)) {
-        return snapshotPath.replace(/\.snap$/, ".win.snap")
-      }
-      return snapshotPath
-    },
-  })
+    {
+      resolve: {
+        alias: workspaceSourceAliases,
+      },
+    }
+  )
     .then(() => {
       console.log("Vitest run completed")
     })

@@ -18,6 +18,7 @@ export default [{
     ignores: [
       "**/*.d.ts",
       "**/out",
+      "**/dist",
       // used for CLI
       "**/main.js",
       "test/vitest-setup.ts",
@@ -25,6 +26,7 @@ export default [{
       "packages/electron-builder/cli.js",
       "packages/electron-builder/install-app-deps.js",
       "packages/app-builder-lib/src/node-module-collector/hoist.ts", // @yarn/pkg vendor code
+      "**/tsup.config.ts",
       "test/fixtures/**",
       "test/src/helpers/**",
       "test/src/generated/**",
@@ -59,7 +61,7 @@ export default [{
         "@typescript-eslint/prefer-promise-reject-errors": "off",
 
         "curly": ["error", "all"],
-        "nonblock-statement-body-position": ["error", "below"],
+        "nonblock-statement-body-position": "off",
 
         "@stylistic/member-delimiter-style": ["error", {
             multiline: {
@@ -88,5 +90,13 @@ export default [{
         "@typescript-eslint/no-var-requires": "off",
         "@typescript-eslint/explicit-function-return-type": ["off", {}],
         "@typescript-eslint/no-redundant-type-constituents": "off",
+    },
+}, {
+    files: ["test/src/**/*.ts"],
+    rules: {
+        // Test helpers often use async without await for framework compatibility
+        "@typescript-eslint/require-await": "off",
+        // Test code routinely passes methods as callbacks without binding
+        "@typescript-eslint/unbound-method": "off",
     },
 }];

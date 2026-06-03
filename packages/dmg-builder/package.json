@@ -1,41 +1,42 @@
 {
-	"name": "dmg-builder",
-	"version": "26.14.0",
-	"main": "./dist/dmgUtil.js",
-	"module": "./dist/dmgUtil.mjs",
-	"exports": {
-		".": {
-			"types": "./dist/dmgUtil.d.ts",
-			"import": "./dist/dmgUtil.mjs",
-			"require": "./dist/dmgUtil.js"
-		}
-	},
-	"author": "Vladimir Krivosheev",
-	"license": "MIT",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/electron-userland/electron-builder.git",
-		"directory": "packages/dmg-builder"
-	},
-	"bugs": "https://github.com/electron-userland/electron-builder/issues",
-	"homepage": "https://github.com/electron-userland/electron-builder",
-	"files": [
-		"dist",
-		"templates"
-	],
-	"scripts": {
-		"build": "tsup"
-	},
-	"dependencies": {
-		"app-builder-lib": "workspace:*",
-		"builder-util": "workspace:*",
-		"fs-extra": "^10.1.0",
-		"js-yaml": "^4.1.0"
-	},
-	"devDependencies": {
-		"@types/fs-extra": "9.0.13",
-		"@types/js-yaml": "4.0.3",
-		"temp-file": "3.4.0"
-	},
-	"types": "./dist/dmgUtil.d.ts"
+  "name": "dmg-builder",
+  "version": "26.14.0",
+  "main": "./dist/dmgUtil.js",
+  "module": "./dist/dmgUtil.mjs",
+  "exports": {
+    ".": {
+      "types": "./dist/dmgUtil.d.ts",
+      "import": "./dist/dmgUtil.mjs",
+      "require": "./dist/dmgUtil.js"
+    },
+    "./src/*": "./src/*.ts"
+  },
+  "author": "Vladimir Krivosheev",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/electron-userland/electron-builder.git",
+    "directory": "packages/dmg-builder"
+  },
+  "bugs": "https://github.com/electron-userland/electron-builder/issues",
+  "homepage": "https://github.com/electron-userland/electron-builder",
+  "files": [
+    "dist",
+    "templates"
+  ],
+  "scripts": {
+    "build": "tsup"
+  },
+  "dependencies": {
+    "app-builder-lib": "workspace:*",
+    "builder-util": "workspace:*",
+    "fs-extra": "^10.1.0",
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "9.0.13",
+    "@types/js-yaml": "4.0.3",
+    "temp-file": "3.4.0"
+  },
+  "types": "./dist/dmgUtil.d.ts"
 }

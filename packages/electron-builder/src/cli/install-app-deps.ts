@@ -1,6 +1,14 @@
 #! /usr/bin/env node
 
-import { computeDefaultAppDirectory, determinePackageManagerEnv, getConfig, getElectronVersion, installOrRebuild, orNullIfFileNotExist, PACKAGE_VERSION } from "app-builder-lib/internal"
+import {
+  computeDefaultAppDirectory,
+  determinePackageManagerEnv,
+  getConfig,
+  getElectronVersion,
+  installOrRebuild,
+  orNullIfFileNotExist,
+  PACKAGE_VERSION,
+} from "app-builder-lib/internal"
 import { getArchCliNames, log, printErrorAndExit } from "builder-util"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -64,7 +72,7 @@ export async function installAppDeps(args: any) {
 }
 
 function main() {
-  return installAppDeps(configureInstallAppDepsCommand(yargs).argv)
+  return installAppDeps(configureInstallAppDepsCommand(yargs as unknown as yargs.Argv).argv)
 }
 
 if (require.main === module) {

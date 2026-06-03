@@ -6,7 +6,7 @@ import * as os from "os"
 import * as path from "path"
 import * as zlib from "zlib"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
-import { buildBlockMap } from "app-builder-lib/out/targets/blockmap/blockmap"
+import { buildBlockMap } from "app-builder-lib/src/targets/blockmap/blockmap"
 import { appBuilderPath } from "app-builder-bin"
 
 // True when the app-builder-bin binary is actually present on disk.
@@ -173,7 +173,7 @@ describe("buildBlockMap", () => {
 
   it("chunk checksums match BLAKE2b-18 of chunk content", async () => {
     const blake2bPath = require.resolve("@noble/hashes/blake2.js", {
-      paths: [require.resolve("app-builder-lib/out/targets/blockmap/blockmap")],
+      paths: [require.resolve("app-builder-lib/src/targets/blockmap/blockmap")],
     })
     const { blake2b } = require(blake2bPath) as typeof import("@noble/hashes/blake2")
     const data = makeTestData(50_000)

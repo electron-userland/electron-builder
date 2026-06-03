@@ -3,26 +3,8 @@
   "compilerOptions": {
     "rootDir": ".",
     "outDir": "out",
-    "skipLibCheck": true,
-    "baseUrl": "../packages"
+    "skipLibCheck": true
   },
-  "references": [
-    {
-      "path": "../packages/builder-util"
-    },
-    {
-      "path": "../packages/builder-util-runtime"
-    },
-    {
-      "path": "../packages/electron-builder"
-    },
-    {
-      "path": "../packages/electron-publish"
-    },
-    {
-      "path": "../packages/electron-updater"
-    }
-  ],
   "declaration": false,
   "include": [
     "../typings/*.d.ts",
@@ -31,6 +13,5 @@
     "vitest-scripts/*.ts"
   ],
   "types": ["vitest/globals"],
-  "exclude": [
-  ]
+  "exclude": []
 }
