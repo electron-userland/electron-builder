@@ -1,4 +1,5 @@
 import { debug7z, exec, exists, getPath7za, log, statOrNull, unlinkIfExists } from "builder-util"
+import * as fs from "fs"
 import { move } from "fs-extra"
 import * as path from "path"
 import { create } from "tar"
@@ -15,15 +16,6 @@ function validateCompressionLevel(level: string): void {
   }
 }
 
-type TarConfig = {
-  compression: CompressionLevel | any
-  format: string
-  outFile: string
-  dirToArchive: string
-  isMacApp: boolean
-  tempDirManager: TmpDir
-}
-
 function resolveCompressionLevel(compression: CompressionLevel | any): number {
   const envLevel = process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL
   if (envLevel != null) {
@@ -31,6 +23,15 @@ function resolveCompressionLevel(compression: CompressionLevel | any): number {
     return parseInt(envLevel, 10)
   }
   return compression === "store" ? 0 : 9
+}
+
+type TarConfig = {
+  compression: CompressionLevel | any
+  format: string
+  outFile: string
+  dirToArchive: string
+  isMacApp: boolean
+  tempDirManager: TmpDir
 }
 
 /** @internal */
@@ -113,27 +114,15 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
     isLevelSet = true
   }
 
-  const isZip = format === "zip"
-  if (!storeOnly) {
-    if (isZip && options.compression === "maximum") {
-      // http://superuser.com/a/742034
-      args.push("-mfb=258", "-mpass=15")
-    }
-
-    if (!isLevelSet) {
-      // https://github.com/electron-userland/electron-builder/pull/3032
-      args.push("-mx=" + (!isZip || options.compression === "maximum" ? "9" : "7"))
-    }
+  if (!storeOnly && !isLevelSet) {
+    args.push("-mx=9")
   }
 
   if (options.dictSize != null) {
     args.push(`-md=${options.dictSize}m`)
   }
 
-  // https://sevenzip.osdn.jp/chm/cmdline/switches/method.htm#7Z
-  // https://stackoverflow.com/questions/27136783/7zip-produces-different-output-from-identical-input
-  // tc and ta are off by default, but to be sure, we explicitly set it to off
-  // disable "Stores NTFS timestamps for files: Modification time, Creation time, Last access time." to produce the same archive for the same data
+  // Disable NTFS timestamps for reproducible archives
   if (!options.isRegularFile) {
     args.push("-mtc=off")
   }
@@ -147,8 +136,6 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
       args.push("-mhc=off")
     }
 
-    // https://www.7-zip.org/7z.html
-    // Filters: BCJ, BCJ2, ARM, ARMT, IA64, PPC, SPARC, ...
     const sevenZFilter = process.env.ELECTRON_BUILDER_7Z_FILTER
     if (sevenZFilter) {
       if (!ALLOWED_7Z_FILTERS.has(sevenZFilter.toUpperCase())) {
@@ -157,66 +144,18 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
       args.push(`-mf=${sevenZFilter}`)
     }
 
-    // args valid only for 7z
-    // -mtm=off disable "Stores last Modified timestamps for files."
     args.push("-mtm=off", "-mta=off")
   }
 
-  if (options.method != null) {
-    if (options.method !== "DEFAULT") {
-      args.push(`-mm=${options.method}`)
-    }
-  } else if (isZip || storeOnly) {
-    args.push(`-mm=${storeOnly ? "Copy" : "Deflate"}`)
+  if (options.method != null && options.method !== "DEFAULT") {
+    args.push(`-mm=${options.method}`)
+  } else if (storeOnly) {
+    args.push("-mm=Copy")
   }
 
-  if (isZip) {
-    // -mcu switch:  7-Zip uses UTF-8, if there are non-ASCII symbols.
-    // because default mode: 7-Zip uses UTF-8, if the local code page doesn't contain required symbols.
-    // but archive should be the same regardless where produced
-    args.push("-mcu")
-  }
   return args
 }
 
-export function computeZipCompressArgs(options: ArchiveOptions = {}) {
-  let storeOnly = options.compression === "store"
-  // do not deref symlinks
-  const args = ["-q", "-r", "-y"]
-  if (debug7z.enabled) {
-    args.push("-v")
-  }
-
-  const compressionLevelZip = process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL
-  if (compressionLevelZip != null) {
-    validateCompressionLevel(compressionLevelZip)
-    storeOnly = false
-    args.push(`-${compressionLevelZip}`)
-  } else if (!storeOnly) {
-    // https://github.com/electron-userland/electron-builder/pull/3032
-    args.push("-" + (options.compression === "maximum" ? "9" : "7"))
-  }
-
-  if (options.dictSize != null) {
-    log.warn({ distSize: options.dictSize }, `ignoring unsupported option`)
-  }
-
-  // do not save extra file attributes (Extended Attributes on OS/2, uid/gid and file times on Unix)
-  if (!options.isRegularFile) {
-    args.push("-X")
-  }
-
-  if (options.method != null) {
-    if (options.method !== "DEFAULT") {
-      log.warn({ method: options.method }, `ignoring unsupported option`)
-    }
-  } else {
-    args.push("-Z", storeOnly ? "store" : "deflate")
-  }
-  return args
-}
-
-// 7z is very fast, so, use ultra compression
 /** @internal */
 export async function archive(format: string, outFile: string, dirToArchive: string, options: ArchiveOptions = {}): Promise<string> {
   const outFileStat = await statOrNull(outFile)
@@ -225,32 +164,23 @@ export async function archive(format: string, outFile: string, dirToArchive: str
     log.info({ reason: "Archive file is up to date", outFile }, `skipped archiving`)
     return outFile
   }
-  let use7z = true
-  if (process.platform === "darwin" && format === "zip" && dirToArchive.normalize("NFC") !== dirToArchive) {
-    log.warn({ reason: "7z doesn't support NFD-normalized filenames" }, `using zip`)
-    use7z = false
-  }
-  const args = use7z ? compute7zCompressArgs(format, options) : computeZipCompressArgs(options)
-  // remove file before - 7z and zip doesn't overwrite file, but update
-  await unlinkIfExists(outFile)
 
+  if (format === "zip") {
+    await createZipArchive(outFile, dirToArchive, options)
+    return outFile
+  }
+
+  const args = compute7zCompressArgs(format, options)
+  await unlinkIfExists(outFile)
   args.push(outFile, options.withoutDir ? "." : path.basename(dirToArchive))
   if (options.excluded != null) {
     for (const mask of options.excluded) {
-      args.push(use7z ? `-xr!${mask}` : `-x${mask}`)
+      args.push(`-xr!${mask}`)
     }
   }
 
   try {
-    const binary = use7z ? await getPath7za() : "zip"
-    await exec(
-      binary,
-      args,
-      {
-        cwd: options.withoutDir ? dirToArchive : path.dirname(dirToArchive),
-      },
-      debug7z.enabled
-    )
+    await exec(await getPath7za(), args, { cwd: options.withoutDir ? dirToArchive : path.dirname(dirToArchive) }, debug7z.enabled)
   } catch (e: any) {
     if (e.code === "ENOENT" && !(await exists(dirToArchive))) {
       throw new Error(`Cannot create archive: "${dirToArchive}" doesn't exist`)
@@ -260,6 +190,40 @@ export async function archive(format: string, outFile: string, dirToArchive: str
   }
 
   return outFile
+}
+
+async function createZipArchive(outFile: string, dirToArchive: string, options: ArchiveOptions): Promise<void> {
+  if (!(await exists(dirToArchive))) {
+    throw new Error(`Cannot create archive: "${dirToArchive}" doesn't exist`)
+  }
+
+  const level = resolveCompressionLevel(options.compression ?? null)
+  await unlinkIfExists(outFile)
+
+  // Normalise excluded patterns to recursive globs (e.g. "*.mp4" → "**/*.mp4")
+  const ignore = (options.excluded ?? []).map(mask => (mask.startsWith("**/") ? mask : `**/${mask}`))
+  // When withoutDir is false the directory name becomes the archive root via prefix
+  const prefix = options.withoutDir ? undefined : path.basename(dirToArchive)
+
+  // archiver v8 is ESM-only; dynamic import works from CJS in Node ≥ 22
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { ZipArchive } = (await import("archiver")) as any
+
+  await new Promise<void>((resolve, reject) => {
+    const output = fs.createWriteStream(outFile)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const zip: any = new ZipArchive({ zlib: { level } })
+
+    output.on("close", resolve)
+    output.on("error", reject)
+    zip.on("error", reject)
+    zip.pipe(output)
+
+    // date: epoch gives reproducible archives regardless of source file timestamps
+    zip.glob("**/*", { cwd: dirToArchive, dot: true, follow: false, ignore }, { prefix, date: new Date(0) })
+
+    zip.finalize().catch(reject)
+  })
 }
 
 function debug7zArgs(command: "a" | "x"): Array<string> {
