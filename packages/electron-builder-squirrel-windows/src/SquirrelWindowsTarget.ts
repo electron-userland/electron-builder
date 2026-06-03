@@ -7,7 +7,7 @@ import { withToolsetLock } from "app-builder-lib/out/util/toolsetLock"
 import * as path from "path"
 import * as fs from "fs"
 import * as os from "os"
-import { Options as SquirrelOptions, createWindowsInstaller, convertVersion } from "electron-winstaller"
+import { InstallerOptions, createWindowsInstaller, convertVersion } from "./windowsInstaller"
 
 export default class SquirrelWindowsTarget extends Target {
   //tslint:disable-next-line:no-object-literal-type-assertion
@@ -33,12 +33,7 @@ export default class SquirrelWindowsTarget extends Target {
         log.warn({ customSquirrelVendorDirectory }, "unable to access custom Squirrel.Windows vendor directory, falling back to default vendor")
       }
 
-      const windowInstallerPackage = require.resolve("electron-winstaller/package.json")
-      const [squirrelBin] = await Promise.all([
-        getBinFromUrl("squirrel.windows@1.0.0", "squirrel.windows-2.0.1-patched.7z", "76851f0c192eaf9bc6f8f3eecdfe325857ebe70d7833ec62ed846a1acd50c846"),
-        fs.promises.cp(path.join(path.dirname(windowInstallerPackage), "vendor"), tmpVendorDirectory, { recursive: true }),
-      ])
-
+      const squirrelBin = await getBinFromUrl("squirrel.windows@1.0.0", "squirrel.windows-2.0.1-patched.7z", "76851f0c192eaf9bc6f8f3eecdfe325857ebe70d7833ec62ed846a1acd50c846")
       await fs.promises.cp(path.join(squirrelBin, "electron-winstaller", "vendor"), tmpVendorDirectory, { recursive: true })
     }
 
@@ -143,7 +138,7 @@ export default class SquirrelWindowsTarget extends Target {
         arch,
       })
       const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFile)
-      await this.generateStubExecutableExe(appOutDir, distOptions.vendorDirectory!)
+      await this.generateStubExecutableExe(appOutDir, distOptions.vendorDirectory)
       await withToolsetLock(() => createWindowsInstaller(distOptions))
 
       await packager.signAndEditResources(artifactPath, arch, installerOutDir)
@@ -211,7 +206,7 @@ export default class SquirrelWindowsTarget extends Target {
     // https://github.com/electron/windows-installer/blob/main/script/select-7z-arch.js
     // Even if we're cross-compiling for a different arch like arm64,
     // we still need to use the 7-Zip executable for the host arch
-    const resolvedArch = os.arch
+    const resolvedArch = os.arch()
     fs.copyFileSync(path.join(vendorDirectory, `7z-${resolvedArch}.exe`), path.join(vendorDirectory, "7z.exe"))
     fs.copyFileSync(path.join(vendorDirectory, `7z-${resolvedArch}.dll`), path.join(vendorDirectory, "7z.dll"))
   }
@@ -230,7 +225,7 @@ export default class SquirrelWindowsTarget extends Target {
     return templatePath
   }
 
-  async computeEffectiveDistOptions(appDirectory: string, outputDirectory: string, setupFile: string): Promise<SquirrelOptions> {
+  async computeEffectiveDistOptions(appDirectory: string, outputDirectory: string, setupFile: string): Promise<InstallerOptions> {
     const packager = this.packager
     let iconUrl = this.options.iconUrl
     if (iconUrl == null) {
@@ -246,60 +241,54 @@ export default class SquirrelWindowsTarget extends Target {
 
     checkConflictingOptions(this.options)
     const appInfo = packager.appInfo
-    const options: SquirrelOptions = {
-      appDirectory: appDirectory,
-      outputDirectory: outputDirectory,
+
+    const description = isEmptyOrSpaces(appInfo.description) ? (this.options.name || appInfo.productName) : appInfo.description
+
+    let remoteReleases: string | undefined
+    if (this.options.remoteReleases === true) {
+      const info = await packager.info.repositoryInfo
+      if (info == null) {
+        log.warn("remoteReleases set to true, but cannot get repository info")
+      } else {
+        remoteReleases = `https://github.com/${info.user}/${info.project}`
+        log.info({ remoteReleases }, `remoteReleases is set`)
+      }
+    } else if (typeof this.options.remoteReleases === "string" && !isEmptyOrSpaces(this.options.remoteReleases)) {
+      remoteReleases = this.options.remoteReleases
+    }
+
+    let loadingGif: string | undefined
+    if (this.options.loadingGif) {
+      loadingGif = path.resolve(packager.projectDir, this.options.loadingGif)
+    } else {
+      loadingGif = (await packager.getResource("install-spinner.gif")) ?? undefined
+    }
+
+    const vendorDirectory = await this.prepareSignedVendorDirectory()
+    this.select7zipArch(vendorDirectory)
+
+    return {
+      appDirectory,
+      outputDirectory,
+      vendorDirectory,
       name: this.options.useAppIdAsId ? appInfo.id : this.appName,
       title: appInfo.productName || appInfo.name,
       version: appInfo.version,
-      description: appInfo.description,
+      description,
       exe: `${this.exeName}.exe`,
       authors: appInfo.companyName || "",
       nuspecTemplate: await this.createNuspecTemplateWithProjectUrl(),
       iconUrl,
       copyright: appInfo.copyright,
       noMsi: !this.options.msi,
-      usePackageJson: false,
+      fixUpPaths: true,
+      setupExe: setupFile,
+      setupMsi: this.options.msi ? setupFile.replace(".exe", ".msi") : undefined,
+      loadingGif,
+      remoteReleases,
+      remoteToken: this.options.remoteToken || process.env.GH_TOKEN || process.env.GITHUB_TOKEN,
+      createTempDir: opts => this.packager.info.tempDirManager.createTempDir(opts),
     }
-
-    options.vendorDirectory = await this.prepareSignedVendorDirectory()
-    this.select7zipArch(options.vendorDirectory)
-    options.fixUpPaths = true
-    options.setupExe = setupFile
-    if (this.options.msi) {
-      options.setupMsi = setupFile.replace(".exe", ".msi")
-    }
-
-    if (isEmptyOrSpaces(options.description)) {
-      options.description = this.options.name || appInfo.productName
-    }
-
-    if (options.remoteToken == null) {
-      options.remoteToken = process.env.GH_TOKEN || process.env.GITHUB_TOKEN
-    }
-
-    if (this.options.remoteReleases === true) {
-      const info = await packager.info.repositoryInfo
-      if (info == null) {
-        log.warn("remoteReleases set to true, but cannot get repository info")
-      } else {
-        options.remoteReleases = `https://github.com/${info.user}/${info.project}`
-        log.info({ remoteReleases: options.remoteReleases }, `remoteReleases is set`)
-      }
-    } else if (typeof this.options.remoteReleases === "string" && !isEmptyOrSpaces(this.options.remoteReleases)) {
-      options.remoteReleases = this.options.remoteReleases
-    }
-
-    if (this.options.loadingGif) {
-      options.loadingGif = path.resolve(packager.projectDir, this.options.loadingGif)
-    } else {
-      const resourceList = await packager.resourceList
-      if (resourceList.includes("install-spinner.gif")) {
-        options.loadingGif = path.join(packager.buildResourcesDir, "install-spinner.gif")
-      }
-    }
-
-    return options
   }
 }
 
