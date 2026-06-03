@@ -1,3 +1,21 @@
+# [26.14.0](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.13.1...electron-builder@26.14.0) (2026-06-02)
+
+
+### Bug Fixes
+
+* **builder-util:** add timeout to `spawnAndWriteWithOutput` ([#9820](https://github.com/electron-userland/electron-builder/issues/9820)) ([0e67339](https://github.com/electron-userland/electron-builder/commit/0e67339e0177e4bacf57845356d27020918803b3))
+* **dynamic-import:** resolve module paths via CJS resolver for reliable subpath imports ([#9817](https://github.com/electron-userland/electron-builder/issues/9817)) ([370bd75](https://github.com/electron-userland/electron-builder/commit/370bd754365ed082fdd0a2bd46ae85b8e26ef87c))
+* **pnpm:** properly resolve nested dependencies when `nodeLinker: hoisted` ([#9811](https://github.com/electron-userland/electron-builder/issues/9811)) ([2be34d2](https://github.com/electron-userland/electron-builder/commit/2be34d2b9b3903ecd616e7d098793961ebc6ee94))
+* resolve vitest smart cache never being located on CI ([#9813](https://github.com/electron-userland/electron-builder/issues/9813)) ([54ded97](https://github.com/electron-userland/electron-builder/commit/54ded9719801fb9eef6818fe51b5f5154d2c0a15))
+
+
+### Features
+
+* **dmg-builder:** migrate license attachment to `dmg-builder` at creation time ([#9815](https://github.com/electron-userland/electron-builder/issues/9815)) ([f0e33f0](https://github.com/electron-userland/electron-builder/commit/f0e33f08c46058bb9011337af1706c507d2dd733))
+* migrate `blockmap` and `icon` commands from app-builder-bin to pure TypeScript ([#9800](https://github.com/electron-userland/electron-builder/issues/9800)) ([7a71b01](https://github.com/electron-userland/electron-builder/commit/7a71b0136183b07e78ed6c1185c459673a77a4eb))
+
+
+
 ## [26.13.1](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.13.0...electron-builder@26.13.1) (2026-06-01)
 
 

@@ -15,14 +15,11 @@ export type PlatformType = "mas" | "mas-dev" | "mac"
 export class MacTargetHelper {
   constructor(private packager: MacPackager) {}
 
-  handleNullIdentity(fallBackToAdhoc: boolean): boolean {
+  handleNullIdentity(): boolean {
     if (this.packager.forceCodeSigning) {
       throw new InvalidConfigurationError("identity explicitly is set to null, but forceCodeSigning is set to true")
     }
     log.info({ reason: "identity explicitly is set to null" }, "skipped macOS code signing")
-    if (fallBackToAdhoc) {
-      log.warn("arm64 requires signing, but identity is set to null and signing is being skipped")
-    }
     return false
   }
 
@@ -31,8 +28,7 @@ export class MacTargetHelper {
     isDevelopment: boolean,
     qualifier: string | undefined,
     keychainFile: string | Nullish,
-    config: MacConfiguration | MasConfiguration,
-    fallBackToAdhoc: boolean
+    config: MacConfiguration | MasConfiguration
   ): Promise<Identity | null> {
     const certificateTypes = MacTargetHelper.getCertificateTypes(isMas, isDevelopment)
 
@@ -54,10 +50,13 @@ export class MacTargetHelper {
 
       const noIdentity = !config.sign && identity == null
       if (qualifier === "-") {
-        const { Identity: IdentityClass } = await dynamicImport<{ Identity: new (name: string, hash?: string) => Identity }>("@electron/osx-sign/dist/cjs/util-identities")
-        identity = new IdentityClass("-", undefined)
-      } else if (noIdentity && fallBackToAdhoc) {
-        log.warn(null, "falling back to ad-hoc signature for macOS application code signing")
+        if (MacTargetHelper.isHardenedRuntimeEnabledForSigning(isMas, config)) {
+          log.warn(
+            null,
+            "ad-hoc signing with hardenedRuntime enabled requires the com.apple.security.cs.disable-library-validation entitlement " +
+              "to prevent app launch failures due to library validation. See https://electron.build/code-signing for details."
+          )
+        }
         const { Identity: IdentityClass } = await dynamicImport<{ Identity: new (name: string, hash?: string) => Identity }>("@electron/osx-sign/dist/cjs/util-identities")
         identity = new IdentityClass("-", undefined)
       } else if (noIdentity) {
@@ -253,6 +252,14 @@ export class MacTargetHelper {
     if (targetName === "mas") return "mas"
     if (targetName === "mas-dev") return "mas-dev"
     return "mac"
+  }
+
+  /**
+   * Returns true when hardened runtime will be active for signing.
+   * For non-MAS builds it defaults to on; for MAS it defaults to off.
+   */
+  static isHardenedRuntimeEnabledForSigning(isMas: boolean, config: Pick<MacConfiguration | MasConfiguration, "hardenedRuntime">): boolean {
+    return isMas ? config.hardenedRuntime === true : config.hardenedRuntime !== false
   }
 
   static assertSafePathForCommandUsage(pathValue: string, description: string): void {
