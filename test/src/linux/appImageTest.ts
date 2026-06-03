@@ -67,7 +67,7 @@ describe("copyMimeTypes - invalid extension handling", () => {
       executableName: "testapp",
     })
     expect(result).not.toBeNull()
-    const xml = await fs.readFile(path.join(dir, result!), "utf8")
+    const xml = await fs.readFile(path.join(dir, result), "utf8")
     expect(xml).not.toContain('<glob pattern="*.my ext"/>')
   })
 
@@ -79,7 +79,7 @@ describe("copyMimeTypes - invalid extension handling", () => {
       executableName: "testapp",
     })
     expect(result).not.toBeNull()
-    const xml = await fs.readFile(path.join(dir, result!), "utf8")
+    const xml = await fs.readFile(path.join(dir, result), "utf8")
     expect(xml).toContain('<glob pattern="*.txt"/>')
   })
 })

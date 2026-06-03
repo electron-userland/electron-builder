@@ -1,4 +1,5 @@
-import { Arch, serializeToYaml } from "builder-util"
+import { Arch, serializeToYaml, executeAppBuilder } from "builder-util"
+import { objectToArgs } from "builder-util-runtime"
 import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -6,7 +7,6 @@ import { Target } from "../core.js"
 import { LinuxPackager } from "../linuxPackager.js"
 import { AppImageOptions } from "../options/linuxOptions.js"
 import { getAppUpdatePublishConfiguration } from "../publish/PublishManager.js"
-import { executeAppBuilderAsJson, objectToArgs } from "../util/appBuilder.js"
 import { getNotLocalizedLicenseFile } from "../util/license.js"
 import { LinuxTargetHelper } from "./LinuxTargetHelper.js"
 import { createStageDir } from "./targetUtil.js"
@@ -90,12 +90,13 @@ export default class AppImageTarget extends Target {
         ...options,
       }),
     ]
-    objectToArgs(args, {
-      license,
-    })
+    args.push(...objectToArgs({ license }))
     if (packager.compression === "maximum") {
       args.push("--compression", "xz")
     }
+
+    const rawResult = await executeAppBuilder(args)
+    const updateInfo = rawResult === "" ? Object.create(null) : JSON.parse(rawResult)
 
     await packager.info.emitArtifactBuildCompleted({
       file: artifactPath,
@@ -104,7 +105,7 @@ export default class AppImageTarget extends Target {
       arch,
       packager,
       isWriteUpdateInfo: true,
-      updateInfo: await executeAppBuilderAsJson(args),
+      updateInfo,
     })
   }
 }

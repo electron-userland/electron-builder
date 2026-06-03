@@ -218,7 +218,7 @@ describe("addLicenseToDmg", () => {
 
     const result = await addLicenseToDmg(packager)
 
-    expect(Object.keys(result!.buttons!).sort()).toEqual(["en_US", "fr_FR"])
+    expect(Object.keys(result!.buttons).sort()).toEqual(["en_US", "fr_FR"])
     expect(result!.buttons!["en_US"].language).toBe("English")
     expect(result!.buttons!["fr_FR"].language).toBe("Français")
   })
