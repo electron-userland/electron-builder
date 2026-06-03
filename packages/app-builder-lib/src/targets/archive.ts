@@ -16,7 +16,7 @@ function validateCompressionLevel(level: string): void {
   }
 }
 
-function resolveCompressionLevel(compression: CompressionLevel | any): number {
+function resolveCompressionLevel(compression: CompressionLevel | null | undefined): number {
   const envLevel = process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL
   if (envLevel != null) {
     validateCompressionLevel(envLevel)
@@ -26,7 +26,7 @@ function resolveCompressionLevel(compression: CompressionLevel | any): number {
 }
 
 type TarConfig = {
-  compression: CompressionLevel | any
+  compression: CompressionLevel | null | undefined
   format: string
   outFile: string
   dirToArchive: string
@@ -105,16 +105,12 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
   let storeOnly = options.compression === "store"
   const args = debug7zArgs("a")
 
-  let isLevelSet = false
   const compressionLevel = process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL
   if (compressionLevel != null) {
     validateCompressionLevel(compressionLevel)
-    storeOnly = false
+    storeOnly = false // env var overrides "store" config
     args.push(`-mx=${compressionLevel}`)
-    isLevelSet = true
-  }
-
-  if (!storeOnly && !isLevelSet) {
+  } else if (!storeOnly) {
     args.push("-mx=9")
   }
 
