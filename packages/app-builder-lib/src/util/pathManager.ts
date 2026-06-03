@@ -1,6 +1,7 @@
 import * as path from "path"
 
-const root = path.join(import.meta.dirname, "..", "..")
+// __dirname is the dist/ folder in the bundle; templates/ and vendor/ are one level up
+const root = path.join(__dirname, "..")
 
 export function getTemplatePath(file: string) {
   return path.join(root, "templates", file)

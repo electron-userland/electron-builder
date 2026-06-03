@@ -12,4 +12,5 @@ export default defineConfig({
   clean: true,
   outDir: "dist",
   platform: "node",
+  shims: true,
 })
