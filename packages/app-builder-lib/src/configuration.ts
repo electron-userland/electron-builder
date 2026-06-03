@@ -393,22 +393,6 @@ export interface ToolsetConfig {
    * @default "0.0.0"
    */
   readonly wine?: "0.0.0" | "1.0.1" | null
-
-  /**
-   * `wix` toolset version for MSI installer compilation.
-   * Located at https://github.com/electron-userland/electron-builder-binaries/releases?q=wix&expanded=true
-   *
-   * Stable:
-   * 0.0.0 - legacy toolset (wix-4.0.0.5512.2)
-   *
-   * @default "0.0.0"
-   *
-   * NOTE(wix-v4): not yet exposed to users. WiX v4 ("1.0.0") support is incomplete (see MsiTarget /
-   * msiTestSuite), so this option is stripped from the public schema in scripts/fix-schema.js until it
-   * is finished. Do not add the @`internal` JSDoc tag here: it would strip this property from the emitted
-   * declaration file and break the test toolset matrix, which references ToolsetConfig["wix"].
-   */
-  readonly wix?: "0.0.0" | null
 }
 
 export interface Hooks {

@@ -4,6 +4,7 @@ import { LogMessageByKey } from "app-builder-lib/src/node-module-collector/modul
 import { PM } from "app-builder-lib/src/node-module-collector/packageManager"
 import * as childProcess from "child_process"
 import * as fsExtra from "fs-extra"
+import { EventEmitter } from "events"
 import type { TmpDir } from "builder-util"
 
 vi.mock("child_process", () => ({ spawn: vi.fn() }))
@@ -63,6 +64,7 @@ function setPlatform(p: NodeJS.Platform) {
 let collector: TestCollector
 let closeCb: ((code: number) => void) | undefined
 let stderrDataCb: ((chunk: string) => void) | undefined
+let mockOutStream: EventEmitter
 
 async function waitForCloseCb() {
   for (let i = 0; i < 50 && closeCb === undefined; i++) {
@@ -76,8 +78,19 @@ async function waitForCloseCb() {
 beforeEach(() => {
   closeCb = undefined
   stderrDataCb = undefined
+
+  // A real EventEmitter so outStream.on("finish"/"error", cb) and outStream.emit(...) work.
+  // pipe() is mocked to auto-emit "finish" after a microtask, matching what a real writable
+  // stream does when the readable source ends.
+  mockOutStream = new EventEmitter()
+  vi.mocked(fsExtra.createWriteStream).mockReturnValue(mockOutStream as any)
+
   const mockChild = {
-    stdout: { pipe: vi.fn() },
+    stdout: {
+      pipe: vi.fn((dest: EventEmitter) => {
+        void Promise.resolve().then(() => dest.emit("finish"))
+      }),
+    },
     stderr: {
       on: vi.fn((ev: string, cb: (chunk: string) => void) => {
         if (ev === "data") {
@@ -256,6 +269,15 @@ describe.sequential("streamCollectorCommandToFile", () => {
       closeCb!(1)
       await p
       expect(collector.logSummary[LogMessageByKey.PKG_COLLECTOR_OUTPUT]).toHaveLength(0)
+    })
+  })
+
+  describe("write stream error handling", () => {
+    test("outStream error event rejects the promise before child closes", async ({ expect }) => {
+      const p = collector.streamCollectorCommandToFile("npm", ["list", "--json"], "/cwd", OUTPUT_FILE)
+      await waitForCloseCb()
+      mockOutStream.emit("error", new Error("ENOSPC: no space left on device"))
+      await expect(p).rejects.toThrow("ENOSPC: no space left on device")
     })
   })
 })

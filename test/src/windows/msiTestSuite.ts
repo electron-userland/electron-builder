@@ -12,12 +12,12 @@ export function registerMsiTests(toolsets: ToolsetConfig): void {
   //   - templates/msi/template.xml uses the v3 `<Product>`/`<Package>` structure under the v4 namespace.
   //   - the "wix args" test uses the v3 extension name `WixUtilExtension`, which the bundled v4 toolset
   //     does not provide (WIX0144); v4 expects `WixToolset.Util.wixext`.
-  const msiTest = toolsets.wix !== "0.0.0" ? test.skip : test
+  const msiTest = (toolsets as any).wix !== "0.0.0" ? test.skip : test
 
   // `toolsets.wix` is currently removed from the public schema (scripts/fix-schema.js) while v4 support
   // is incomplete, so config validation rejects it. Drop it from the build config here; the MSI target
   // falls back to the default (v3) toolset.
-  const { wix: _wix, ...buildToolsets } = toolsets
+  const { /* wix: _wix */ ...buildToolsets } = toolsets
 
   msiTest("msi", ({ expect }) =>
     app(

@@ -1,1 +1,4394 @@
-{"tests":{},"files":{}}
+{
+  "tests": {
+    "protonTest.ts::mac": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 5727.141646
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "protonTest.ts::linux": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 1,
+          "avgMs": 4421.079292
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "protonTest.ts::win": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "protonTest.ts::win ia32": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::downloadNodeJsBinary > macOS > uses tar.gz and returns bin/node path": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 2.874917000000096
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::downloadNodeJsBinary > Linux > uses tar.gz and returns bin/node path": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.2540000000000191
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::downloadNodeJsBinary > Linux > arm64 arch is passed through unchanged": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.2161669999999276
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::downloadNodeJsBinary > Windows > uses zip and returns node.exe under version subdirectory": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 0.6208750000000691
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::downloadNodeJsBinary > Windows > ia32 arch maps to x86 in URL but binary path uses x86": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 0.3742500000000746
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::downloadLaunchUiDir > uses develar/launchui GitHub repo": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.15916600000002745
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::downloadLaunchUiDir > Windows platform maps to win32 in filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 0.2725830000000542
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::downloadLaunchUiDir > macOS platform maps to mac in filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 0.40991700000006404
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::downloadLaunchUiDir > Linux platform maps to linux in filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.2764590000000453
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::downloadLaunchUiDir > custom version string is forwarded to the release name and filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.11554100000000744
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LAUNCHUI_DEFAULT_VERSION > matches the version hardcoded in the original Go binary": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.06312500000001364
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > downloadNodeJsBinary > macOS > uses tar.gz and returns bin/node path": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 2,
+          "avgMs": 2.739458500000012
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > downloadNodeJsBinary > Linux > uses tar.gz and returns bin/node path": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.23552100000000564
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > downloadNodeJsBinary > Linux > arm64 arch is passed through unchanged": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.13141649999994343
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > downloadNodeJsBinary > Windows > uses zip and returns node.exe under version subdirectory": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 2,
+          "avgMs": 0.6202504999999974
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > downloadNodeJsBinary > Windows > ia32 arch maps to x86 in URL and binary path": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 2,
+          "avgMs": 0.39581250000003365
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > downloadLaunchUiDir > uses develar/launchui GitHub repo": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.1719165000000089
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > downloadLaunchUiDir > Windows platform maps to win32 in filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 2,
+          "avgMs": 0.2741875000000391
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > downloadLaunchUiDir > macOS platform maps to mac in filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 2,
+          "avgMs": 0.46043700000006993
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > downloadLaunchUiDir > Linux platform maps to linux in filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.32016699999996945
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > downloadLaunchUiDir > custom version string is forwarded to release name and filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.1414794999999458
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > LAUNCHUI_DEFAULT_VERSION > matches the version hardcoded in the original Go binary": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 7,
+          "fails": 0,
+          "avgMs": 0.08142828571428547
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > getNodeJsDownloadParams > macOS > darwin platform, tar.gz format, bin/node binary path": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 5,
+          "fails": 2,
+          "avgMs": 2.42216659999998
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > getNodeJsDownloadParams > Linux > linux platform, tar.gz format, bin/node binary path": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 5,
+          "fails": 0,
+          "avgMs": 0.23484180000001514
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > getNodeJsDownloadParams > Linux > arm64 arch is passed through unchanged": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 5,
+          "fails": 0,
+          "avgMs": 0.19879979999999478
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > getNodeJsDownloadParams > Windows > win platform, zip format, node.exe under version subdirectory": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 5,
+          "fails": 2,
+          "avgMs": 0.5315998000000036
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > getNodeJsDownloadParams > Windows > ia32 arch maps to x86 in URL and binary subdirectory": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 5,
+          "fails": 2,
+          "avgMs": 0.782974999999999
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > getNodeJsDownloadParams > version is embedded in releaseName, filename, and URL": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 5,
+          "fails": 0,
+          "avgMs": 0.22821640000000798
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > getLaunchUiDownloadParams > uses develar/launchui GitHub repo": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 5,
+          "fails": 0,
+          "avgMs": 0.1669581999999991
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > getLaunchUiDownloadParams > Windows platform maps to win32 in filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 5,
+          "fails": 2,
+          "avgMs": 0.2395667999999887
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > getLaunchUiDownloadParams > macOS platform maps to mac in filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 5,
+          "fails": 2,
+          "avgMs": 0.5295667999999865
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > getLaunchUiDownloadParams > Linux platform maps to linux in filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 5,
+          "fails": 0,
+          "avgMs": 0.27380860000001805
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > getLaunchUiDownloadParams > custom version is forwarded to release name and filename": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 5,
+          "fails": 0,
+          "avgMs": 0.11048360000003185
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > default stagePackages (core18)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 19578.564541500004
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > classic confinement (core18)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 5753.768541499998
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > buildPackages (core18)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 5830.040979500001
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > plugs option (core18)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 11191.703
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > slots option (core18)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 9592.126957999997
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > custom env (core18)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 5401.814104000001
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > custom after, no desktop (core18)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 4321.389958000003
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > no desktop plugs (core18)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 4889.5064374999965
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > auto start (core18)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 4475.889416499995
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > compression option (core18)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 5022.925125000002
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > use template app (core18)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 4907.024999999994
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > default stagePackages (core20)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 17641.336104
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > classic confinement (core20)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 5671.305729
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > buildPackages (core20)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 4862.7422295
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > plugs option (core20)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 8539.359604500001
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > slots option (core20)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 8926.42302100001
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > custom env (core20)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 4421.718291499994
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > custom after, no desktop (core20)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 5030.113895999995
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > no desktop plugs (core20)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 4215.028291499992
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > auto start (core20)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3598.313375000005
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > compression option (core20)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3881.158854000001
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > use template app (core20)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3577.0535829999935
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > default stagePackages (core22)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 17225.9006045
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > classic confinement (core22)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3188.181187500013
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > buildPackages (core22)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3838.494249999989
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > plugs option (core22)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 6794.983270500001
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > slots option (core22)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 9190.668354000009
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > custom env (core22)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 4404.291708000004
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > custom after, no desktop (core22)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3544.1556249999994
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > no desktop plugs (core22)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3606.7342085000128
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > auto start (core22)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3517.256437499993
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > compression option (core22)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3849.737687999994
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > use template app (core22)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3677.133437499986
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core24 default (gnome extension)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 4827.4575415
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core24 gnome extension throws in destructive-mode": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 5163.9441249999945
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core24 no gnome extension": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3646.5483959999983
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core24 wayland disabled": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3525.1514375000115
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core24 custom plugs with default expansion": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3512.266437999977
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core24 useMultipass build mode": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3960.9927089999983
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core24 useLXD build mode": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3802.1678960000136
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core24 remoteBuild build mode": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 5245.587979499993
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > custom snap yamlPath pass-through": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 6072.503124999988
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core24: linux.description propagates to snap.description": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 5354.409916999983
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core24: per-core description overrides linux.description": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3937.9921250000043
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core18: linux.description propagates to snap.description": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3585.1609580000077
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core18: per-core description overrides linux.description": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 4207.208938000011
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core20: linux.description propagates to snap.description": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 4617.670478999993
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core20: per-core description overrides linux.description": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3699.758062500012
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core22: linux.description propagates to snap.description": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3306.8841040000116
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core22: per-core description overrides linux.description": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3691.909166500016
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core22: linux.category propagates to desktop Categories": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3665.5003545000072
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core24: linux.compression 'store' maps to lzo": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3675.4719589999877
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core24: linux.compression 'maximum' maps to xz": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 4993.414979499983
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core24: linux.compression 'normal' leaves compression unset": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3483.4845415000163
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core24: per-core compression overrides linux.compression mapping": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3415.871353999959
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core18: linux.compression 'store' maps to lzo": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3511.634020999976
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core18: linux.compression 'maximum' maps to xz": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3822.4034165000194
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core20: linux.compression 'store' maps to lzo": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3935.949749499996
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core20: linux.compression 'maximum' maps to xz": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 4782.311021000001
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core22: linux.compression 'store' maps to lzo": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 4613.169291999977
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core22: linux.compression 'maximum' maps to xz": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3948.5088334999746
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core22: linux.compression 'normal' leaves compression unset": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 4125.88772899998
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core22: per-core compression overrides linux.compression mapping": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 3666.8164580000157
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > custom pass-through: linux.description is not injected": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 4984.216041000007
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapcraftTest.ts::snapcraft > core24 Multipass real build > core24 useMultipass full build": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 2,
+          "avgMs": 219775.27272900005
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "blockmapTest.ts::buildBlockMap > file output mode: returns correct sha512 and size for small file": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 14.00399999999999
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "blockmapTest.ts::buildBlockMap > append mode: appended data is readable and sha512 covers full file": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 8.162833666666662
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "blockmapTest.ts::buildBlockMap > chunk sizes sum to file size": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 30.772263666666664
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "blockmapTest.ts::buildBlockMap > chunk sizes respect min/max boundaries": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 25.167014000000012
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "blockmapTest.ts::buildBlockMap > identical data produces identical checksums": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 12.20038866666665
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "blockmapTest.ts::buildBlockMap > chunk checksums match BLAKE2b-18 of chunk content": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 5.813194333333333
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "blockmapTest.ts::buildBlockMap > matches Go binary output: chunk boundaries for known test data": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 10.243097333333338
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "blockmapTest.ts::buildBlockMap > file smaller than MIN is a single chunk": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 2.3871806666666657
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "blockmapTest.ts::buildBlockMap — JS snapshots and binary golden-output > single-chunk file (< MIN): sizes, checksums and sha512 are snapshotted": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 3.897972333333333
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "blockmapTest.ts::buildBlockMap — JS snapshots and binary golden-output > multi-chunk random data (200 KB, seed 12345): sizes and checksums are snapshotted": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 10.619555333333333
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "blockmapTest.ts::buildBlockMap — JS snapshots and binary golden-output > multi-chunk random data (500 KB, seed 99999): sizes and checksums are snapshotted": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 25.70919466666665
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "blockmapTest.ts::buildBlockMap — JS snapshots and binary golden-output > uniformly-zero buffer (100 KB): every interior chunk hits MAX=32768": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 7.537111
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "blockmapTest.ts::buildBlockMap — JS snapshots and binary golden-output > uniformly-filled buffer (150 KB, 0xFF): sizes and checksums are snapshotted": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 9.208347000000003
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "blockmapTest.ts::buildBlockMap — JS snapshots and binary golden-output > append mode (deflate, 80 KB): embedded blockmap content is snapshotted": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 7.0582913333333295
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "blockmapTest.ts::buildBlockMap — JS snapshots and binary golden-output > file-output sha512: returns SHA-512 of the original unmodified file": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 15.589485999999985
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::readCertInfo — happy path > extracts commonName and full subject DN with all RDN components": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 19.74541700000009
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::readCertInfo — happy path > handles a certificate with CN only": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 6.692000000000007
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::readCertInfo — happy path > handles the existing WIN_CSC_LINK test certificate (empty password)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 16.91179199999999
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::readCertInfo — error handling > throws with 'password incorrect' on wrong password": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 3.6148749999999836
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::readCertInfo — error handling > throws when the certificate lacks the codeSigning extended key usage": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 5.529125000000022
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::readCertInfo — file not found > throws when the input file does not exist": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.24525000000005548
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::readCertInfo — OU attribute in subject DN > includes OU in bloodyMicrosoftSubjectDn": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 5.496375000000057
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::readCertInfo — special characters in DN values > wraps values containing special characters in quotes to match Go binary output": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 4.930374999999913
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::pkcs12PasswordToUtf16 encoding > encodes empty string as a single UTF-16BE null terminator (2 bytes)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.5709170000000086
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::pkcs12PasswordToUtf16 encoding > encodes ASCII characters as UTF-16BE with null terminator": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.22658300000000509
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::pkcs12PasswordToUtf16 encoding > encodes non-ASCII BMP characters as UTF-16BE with null terminator": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.17599999999993088
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::pkcs12PasswordToUtf16 encoding > produces buffers of length (password.length + 1) * 2": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.0584999999999809
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::pkcs12PbeDeriveKey key derivation > produces the expected key for known inputs (smeg/1000 iters/SHA-1/id=1/24-byte)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 1.4100830000000997
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::pkcs12PbeDeriveKey key derivation > produces the expected IV for known inputs (smeg/1000 iters/SHA-1/id=2/8-byte)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.7303340000000844
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::pkcs12PbeDeriveKey key derivation > key derivation (id=1) and IV derivation (id=2) produce different bytes for identical inputs": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.4329999999999927
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::pkcs12PbeDeriveKey key derivation > is deterministic — identical inputs always produce identical output": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.2689579999999978
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::pkcs12PbeDeriveKey key derivation > handles empty password (null-terminator only) without error": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.06529199999999946
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::pkcs12PbeDeriveKey key derivation > output length matches requested length exactly": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.10504100000002836
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::pkcs12PbeDeriveKey key derivation > throws when iterations = 0 (DoS / degenerate input prevention)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.0945840000000544
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::pkcs12PbeDeriveKey key derivation > throws when iterations is negative": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.10958300000004328
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::pkcs12PbeDeriveKey key derivation > throws when iterations exceeds MAX_PKCS12_PBE_ITERATIONS (DoS prevention)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.06366600000001199
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::pkcs12PbeDeriveKey key derivation > throws when iterations is Number.MAX_SAFE_INTEGER (crafted-PFX DoS attack)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.06062499999995907
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::pkcs12PbeDeriveKey key derivation > throws when iterations is NaN (malformed ASN.1 integer)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.057084000000031665
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::pkcs12PbeDeriveKey key derivation > throws when iterations is Infinity": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.14362499999992906
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::pkcs12PbeDeriveKey key derivation > accepts iterations = 1 (minimum valid count)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.08816699999999855
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::pkcs12PbeDeriveKey key derivation > accepts iterations = MAX_PKCS12_PBE_ITERATIONS (boundary — must not throw)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 218.60799999999995
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::readCertInfo — multiple certificates in PFX > selects the code-signing certificate when a CA cert is also present": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 5.841792000000055
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::readCertInfo — multiple certificates in PFX > throws ExtKeyUsageCodeSigning when no cert in the PFX has the codeSigning EKU": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 7.41437499999995
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::readCertInfo — legacy PBE wrong password > throws 'password incorrect' for the legacy pbeWithSHAAnd3KeyTripleDESCBC encrypted WIN_CSC_LINK cert": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 3.0689160000000584
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::readCertInfo — malformed/corrupted input > throws a descriptive error for a truncated PFX (incomplete ASN.1)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.32350000000008095
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::readCertInfo — malformed/corrupted input > throws a descriptive error for arbitrary random bytes": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.5586250000000064
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::readCertInfo — malformed/corrupted input > throws a descriptive error for an empty file": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.43733399999996436
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::rc2CbcDecrypt — known-answer tests > RC2-40: decrypts a known ciphertext to the correct plaintext": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.4072909999999865
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::rc2CbcDecrypt — known-answer tests > RC2-128: decrypts a known ciphertext to the correct plaintext": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.1607089999999971
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::rc2CbcDecrypt — known-answer tests > RC2-40: decrypts each block independently (CBC state advances correctly)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.09566700000004857
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::rc2CbcDecrypt — known-answer tests > RC2-40: output length equals plaintext length (padding stripped correctly)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.08920899999998255
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::readCertInfo — pbeWithSHAAnd40BitRC2CBC (OID 1.2.840.113549.1.12.1.6) > extracts certificate info from a PFX whose cert bags are encrypted with RC2-40": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 6.943915999999945
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::readCertInfo — pbeWithSHAAnd40BitRC2CBC (OID 1.2.840.113549.1.12.1.6) > throws 'password incorrect' for the RC2-40 PFX with a wrong password": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 2.7289590000000317
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::rc2CbcDecrypt — input validation / security guards > throws when ciphertext length is not a multiple of 8 (block-alignment guard)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.11983299999997143
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::rc2CbcDecrypt — input validation / security guards > throws when ciphertext is empty (block-alignment guard)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.06799999999998363
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::rc2CbcDecrypt — input validation / security guards > throws when IV is not exactly 8 bytes": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.06370899999990343
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::rc2CbcDecrypt — input validation / security guards > throws when last decrypted byte is 0x00 (invalid PKCS#7 pad byte)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.10079100000007202
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::rc2CbcDecrypt — input validation / security guards > throws when PKCS#7 pad byte exceeds block size (0x09 > 8)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.07054100000004837
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::rc2CbcDecrypt — input validation / security guards > throws when PKCS#7 padding bytes are inconsistent": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.0684999999999718
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::rc2CbcDecrypt — input validation / security guards > throws when effectiveBits = 0 (OOB access guard in rc2ExpandKey)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.0542920000000322
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::rc2CbcDecrypt — input validation / security guards > throws when effectiveBits is negative": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.05025000000000546
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::rc2CbcDecrypt — input validation / security guards > throws when effectiveBits exceeds 1024": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.20425000000000182
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::pkcs12PbeDeriveKey — salt size guard > throws when salt exceeds 4096 bytes (memory exhaustion prevention)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.15229199999998855
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "certInfoTest.ts::pkcs12PbeDeriveKey — salt size guard > accepts salt at the 4096-byte boundary without throwing": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.4032910000000811
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "ksuidTest.ts::generateKsuid — format > produces exactly 27 characters": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 1.5477920000000154
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "ksuidTest.ts::generateKsuid — format > uses only base62 characters (0-9, A-Z, a-z)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.2983340000000112
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "ksuidTest.ts::generateKsuid — format > produces unique values on every call": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.4943749999999909
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "ksuidTest.ts::generateKsuid — sortability > produces lexicographically non-decreasing IDs in a tight loop (same second)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.4496249999999975
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "ksuidTest.ts::generateKsuid — sortability > IDs generated 1 second apart are strictly ordered": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.21783299999998462
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "ksuidTest.ts::generateKsuid — timestamp encoding > encodes the current Unix timestamp within the first 4 bytes": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.25883299999998144
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "ksuidTest.ts::generateKsuid — timestamp encoding > payload is 16 bytes of random data": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.4115419999999972
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapTest.ts::snap": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 12507.190611333333
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapTest.ts::arm": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 9914.020513666665
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapTest.ts::default stagePackages": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 17720.526680333332
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapTest.ts::classic confinement": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 12406.436472333335
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapTest.ts::buildPackages": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 4830.842527666665
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapTest.ts::plugs option": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 8609.300444666662
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapTest.ts::slots option": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 8429.142388999995
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapTest.ts::custom env": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 3757.4790416666706
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapTest.ts::custom after, no desktop": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 4310.208499666667
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapTest.ts::no desktop plugs": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 5921.690486000002
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapTest.ts::auto start": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 4590.561860999999
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapTest.ts::default compression": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 4935.001472333334
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapTest.ts::compression option": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 4043.013610999997
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapTest.ts::default base": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 4476.278874666667
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapTest.ts::base option": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 5856.860555666669
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapTest.ts::use template app": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 4294.282430333323
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > validateShellEmbeddable > safe values pass > allows \"index.js\"": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.3808750000000316
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > validateShellEmbeddable > safe values pass > allows \"src/main.js\"": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.07174999999998022
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > validateShellEmbeddable > safe values pass > allows \"dist/app.js\"": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.04729199999999878
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > validateShellEmbeddable > safe values pass > allows \"my-app.js\"": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.04922899999999686
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > validateShellEmbeddable > safe values pass > allows \"app_main.js\"": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.04943749999998204
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > validateShellEmbeddable > safe values pass > allows \"\"": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.05454199999999787
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > validateShellEmbeddable > shell metacharacters are rejected > rejects \"index.js$(evil)\" (contains $)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.08258349999994152
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > validateShellEmbeddable > shell metacharacters are rejected > rejects \"index.js`evil`\" (contains backtick)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.044541499999979806
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > validateShellEmbeddable > shell metacharacters are rejected > rejects \"index.js\\\"evil\\\"\" (contains double-quote)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.15372950000005403
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > validateShellEmbeddable > shell metacharacters are rejected > rejects \"index.js\\\\evil\" (contains backslash)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.05983299999999758
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > validateShellEmbeddable > shell metacharacters are rejected > rejects \"index.js\\nevil\" (contains newline)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.04683349999999109
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > validateShellEmbeddable > shell metacharacters are rejected > rejects \"$(rm -rf /)\" (contains command substitution)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.04454199999995012
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "libUiFrameworkTest.ts::LibUiFramework helpers > validateShellEmbeddable > shell metacharacters are rejected > rejects \"`id`\" (contains backtick substitution)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.04302099999998177
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapCoreLegacyTest.ts::snapCoreLegacy helpers > shellQuote > wraps a plain argument in single quotes": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.789583499999992
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapCoreLegacyTest.ts::snapCoreLegacy helpers > shellQuote > wraps an argument containing spaces so it is treated as one word": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.12812499999998295
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapCoreLegacyTest.ts::snapCoreLegacy helpers > shellQuote > escapes embedded single quotes using the '\\'' sequence": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.1596875000000182
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapCoreLegacyTest.ts::snapCoreLegacy helpers > shellQuote > multiple embedded single quotes are each escaped independently": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.14516649999998776
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapCoreLegacyTest.ts::snapCoreLegacy helpers > shellQuote > dollar signs are rendered literal (no variable expansion risk)": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.07641649999999345
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapCoreLegacyTest.ts::snapCoreLegacy helpers > shellQuote > backticks are rendered literal inside single quotes": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.08302100000003065
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapCoreLegacyTest.ts::snapCoreLegacy helpers > shellQuote > empty string produces empty single-quoted string": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 0,
+          "avgMs": 0.06597899999997026
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapCoreLegacyTest.ts::snapCoreLegacy helpers > shellQuote > argument that is already single-quoted is double-escaped correctly": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 2.1339999999999577
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    },
+    "linux/snapCoreLegacyTest.ts::snapCoreLegacy helpers > shellQuote > flag=value with embedded single quote escapes correctly": {
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0.1256670000000213
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      },
+      "heavy": false
+    }
+  },
+  "files": {
+    "protonTest.ts": {
+      "unstable": true,
+      "hasHeavyTests": false,
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 1,
+          "avgMs": 10148.220938
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      }
+    },
+    "libUiFrameworkTest.ts": {
+      "unstable": true,
+      "hasHeavyTests": false,
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 8,
+          "fails": 25,
+          "avgMs": 6.004953375000042
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      }
+    },
+    "linux/snapcraftTest.ts": {
+      "unstable": true,
+      "hasHeavyTests": false,
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 2,
+          "avgMs": 562724.369688
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      }
+    },
+    "blockmapTest.ts": {
+      "unstable": false,
+      "hasHeavyTests": false,
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 188.36992999999995
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      }
+    },
+    "certInfoTest.ts": {
+      "unstable": false,
+      "hasHeavyTests": false,
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 315.8612930000004
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      }
+    },
+    "ksuidTest.ts": {
+      "unstable": false,
+      "hasHeavyTests": false,
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 3.6783339999999782
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      }
+    },
+    "linux/snapTest.ts": {
+      "unstable": false,
+      "hasHeavyTests": false,
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 3,
+          "fails": 0,
+          "avgMs": 116602.8364713333
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      }
+    },
+    "linux/snapCoreLegacyTest.ts": {
+      "unstable": true,
+      "hasHeavyTests": false,
+      "platformRuns": {
+        "win32": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        },
+        "darwin": {
+          "runs": 2,
+          "fails": 1,
+          "avgMs": 2.5778124999999648
+        },
+        "linux": {
+          "runs": 0,
+          "fails": 0,
+          "avgMs": 0
+        }
+      }
+    }
+  }
+}

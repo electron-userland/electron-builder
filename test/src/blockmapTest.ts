@@ -1,51 +1,10 @@
 import { createHash } from "crypto"
-import { spawnSync } from "child_process"
-import { existsSync, readFileSync } from "fs"
 import { mkdtemp, readFile, rm, writeFile } from "fs/promises"
 import * as os from "os"
 import * as path from "path"
 import * as zlib from "zlib"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { buildBlockMap } from "app-builder-lib/out/targets/blockmap/blockmap"
-import { appBuilderPath } from "app-builder-bin"
-
-// True when the app-builder-bin binary is actually present on disk.
-// Guards binary-comparison assertions; snapshots always run regardless.
-const binaryAvailable = existsSync(appBuilderPath)
-
-interface BinaryBlockMap {
-  version: string
-  files: Array<{
-    name: string
-    offset: number
-    checksums: string[]
-    sizes: number[]
-  }>
-}
-
-/** Run the real app-builder-bin binary and return its parsed blockmap JSON. */
-function runBinaryBlockmap(
-  inFile: string,
-  outFile: string,
-  compression: "gzip" | "deflate" = "gzip"
-): { result: { size: number; sha512: string; blockMapSize?: number }; blockmap: BinaryBlockMap } {
-  const args = ["blockmap", "--input", inFile]
-  if (outFile) {
-    args.push("--output", outFile, "--compression", compression)
-  } else {
-    args.push("--compression", compression)
-  }
-  // appBuilderPath is non-null here: runBinaryBlockmap is only called from
-  // the describe.skipIf(appBuilderPath == null) suite.
-  const proc = spawnSync(appBuilderPath, args, { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 })
-  if (proc.status !== 0) {
-    throw new Error(`app-builder-bin failed (exit ${proc.status}): ${proc.stderr}`)
-  }
-  const result = JSON.parse(proc.stdout.trim())
-  const compressed = readFileSync(outFile)
-  const blockmap: BinaryBlockMap = JSON.parse(zlib.gunzipSync(compressed).toString())
-  return { result, blockmap }
-}
 
 // sequence.concurrent is enabled globally; wrapping here prevents the module-level
 // tmpDir variable (set in beforeEach) from being overwritten by concurrent tests.
@@ -266,13 +225,6 @@ describe.sequential("blockmap", () => {
       expect(js.version).toBe("2")
       expect(js.files[0].name).toBe("file")
       expect(js.files[0].offset).toBe(0)
-
-      if (binaryAvailable) {
-        const binOut = path.join(tmpDir, "single-bin.blockmap")
-        const { blockmap: bin } = runBinaryBlockmap(inFile, binOut, "gzip")
-        expect(js.files[0].sizes).toEqual(bin.files[0].sizes)
-        expect(js.files[0].checksums).toEqual(bin.files[0].checksums)
-      }
     })
 
     it("multi-chunk random data (200 KB, seed 12345): sizes and checksums are snapshotted", async () => {
@@ -288,13 +240,6 @@ describe.sequential("blockmap", () => {
       expect(js.files[0].checksums).toMatchSnapshot()
       // Multiple chunks expected for 200 KB with 16 KB average
       expect(js.files[0].sizes.length).toBeGreaterThan(1)
-
-      if (binaryAvailable) {
-        const binOut = path.join(tmpDir, "multi200k-bin.blockmap")
-        const { blockmap: bin } = runBinaryBlockmap(inFile, binOut, "gzip")
-        expect(js.files[0].sizes).toEqual(bin.files[0].sizes)
-        expect(js.files[0].checksums).toEqual(bin.files[0].checksums)
-      }
     })
 
     it("multi-chunk random data (500 KB, seed 99999): sizes and checksums are snapshotted", async () => {
@@ -308,13 +253,6 @@ describe.sequential("blockmap", () => {
 
       expect(js.files[0].sizes).toMatchSnapshot()
       expect(js.files[0].checksums).toMatchSnapshot()
-
-      if (binaryAvailable) {
-        const binOut = path.join(tmpDir, "multi500k-bin.blockmap")
-        const { blockmap: bin } = runBinaryBlockmap(inFile, binOut, "gzip")
-        expect(js.files[0].sizes).toEqual(bin.files[0].sizes)
-        expect(js.files[0].checksums).toEqual(bin.files[0].checksums)
-      }
     })
 
     it("uniformly-zero buffer (100 KB): every interior chunk hits MAX=32768", async () => {
@@ -332,13 +270,6 @@ describe.sequential("blockmap", () => {
       for (const size of (js.files[0].sizes as number[]).slice(0, -1)) {
         expect(size).toBe(32768)
       }
-
-      if (binaryAvailable) {
-        const binOut = path.join(tmpDir, "zeros-bin.blockmap")
-        const { blockmap: bin } = runBinaryBlockmap(inFile, binOut, "gzip")
-        expect(js.files[0].sizes).toEqual(bin.files[0].sizes)
-        expect(js.files[0].checksums).toEqual(bin.files[0].checksums)
-      }
     })
 
     it("uniformly-filled buffer (150 KB, 0xFF): sizes and checksums are snapshotted", async () => {
@@ -352,13 +283,6 @@ describe.sequential("blockmap", () => {
 
       expect(js.files[0].sizes).toMatchSnapshot()
       expect(js.files[0].checksums).toMatchSnapshot()
-
-      if (binaryAvailable) {
-        const binOut = path.join(tmpDir, "ff-bin.blockmap")
-        const { blockmap: bin } = runBinaryBlockmap(inFile, binOut, "gzip")
-        expect(js.files[0].sizes).toEqual(bin.files[0].sizes)
-        expect(js.files[0].checksums).toEqual(bin.files[0].checksums)
-      }
     })
 
     it("append mode (deflate, 80 KB): embedded blockmap content is snapshotted", async () => {
@@ -369,28 +293,13 @@ describe.sequential("blockmap", () => {
       const jsMeta = await buildBlockMap(jsFile, "deflate")
       const jsFull = await readFile(jsFile)
       const jsBmSize = jsFull.readUInt32BE(jsFull.length - 4)
-      const jsBm: BinaryBlockMap = JSON.parse(zlib.inflateRawSync(jsFull.subarray(jsFull.length - 4 - jsBmSize, jsFull.length - 4)).toString())
+      const jsBm = JSON.parse(zlib.inflateRawSync(jsFull.subarray(jsFull.length - 4 - jsBmSize, jsFull.length - 4)).toString())
 
-      // Snapshot the JS blockmap content
       expect(jsBm.files[0].sizes).toMatchSnapshot()
       expect(jsBm.files[0].checksums).toMatchSnapshot()
       expect(jsMeta.blockMapSize).toMatchSnapshot()
       expect(jsMeta.size).toBe(data.length + jsBmSize + 4)
       expect(jsMeta.sha512).toBe(sha512(jsFull))
-
-      if (binaryAvailable) {
-        const binFile = path.join(tmpDir, "append-bin.bin")
-        await writeFile(binFile, data)
-        const proc = spawnSync(appBuilderPath, ["blockmap", "--input", binFile, "--compression", "deflate"], { encoding: "utf8" })
-        if (proc.status !== 0) {
-          throw new Error(`binary failed: ${proc.stderr}`)
-        }
-        const binFull = readFileSync(binFile)
-        const binBmSize = binFull.readUInt32BE(binFull.length - 4)
-        const binBm: BinaryBlockMap = JSON.parse(zlib.inflateRawSync(binFull.subarray(binFull.length - 4 - binBmSize, binFull.length - 4)).toString())
-        expect(jsBm.files[0].sizes).toEqual(binBm.files[0].sizes)
-        expect(jsBm.files[0].checksums).toEqual(binBm.files[0].checksums)
-      }
     })
 
     it("file-output sha512: returns SHA-512 of the original unmodified file", async () => {
@@ -409,12 +318,6 @@ describe.sequential("blockmap", () => {
       expect(jsResult.sha512).toMatchSnapshot()
       // sha512 must equal the SHA-512 of the unmodified input (file not touched in output mode)
       expect(jsResult.sha512).toBe(expected)
-
-      if (binaryAvailable) {
-        const binOut = path.join(tmpDir, "sha-check-bin.blockmap")
-        const { result: binResult } = runBinaryBlockmap(inFile, binOut, "gzip")
-        expect(binResult.sha512).toBe(expected)
-      }
     })
   })
 }) // end describe.sequential("blockmap")

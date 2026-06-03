@@ -8326,7 +8326,7 @@
             {
               "enum": [
                 "0.0.0",
-                "1.0.0"
+                "1.0.1"
               ],
               "type": "string"
             },
@@ -8335,7 +8335,7 @@
             }
           ],
           "default": "0.0.0",
-          "description": "`wine` bundle version to use for running Windows tools on non-Windows platforms.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=wine&expanded=true\n0.0.0 - legacy toolset (wine 4.0.1 portable; mac-only support)\n\nBeta:\n1.0.0 - Wine 11 bundle (unified wine binary, ia32 via WoW64)"
+          "description": "`wine` bundle version to use for running Windows tools on non-Windows platforms.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=wine&expanded=true\n0.0.0 - legacy toolset (wine 4.0.1 portable; mac-only support)\n\nBeta:\n1.0.1 - Wine 11 bundle (unified wine binary, ia32 via WoW64)"
         }
       },
       "type": "object"

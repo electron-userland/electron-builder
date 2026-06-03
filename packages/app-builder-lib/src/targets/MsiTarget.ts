@@ -79,8 +79,9 @@ export default class MsiTarget extends Target {
     await writeFile(projectFile, await this.writeManifest(appOutDir, manifestArch, commonOptions))
     await packager.info.emitMsiProjectCreated(projectFile)
 
-    const vendorPath = await getWixBin(this.packager.config.toolsets?.wix)
-    const wixVersion = this.packager.config.toolsets?.wix
+    // TODO: Update wix to v4 and remove this shortcircuit (wix 4.0.0.5512.2 doesn't support arm64; falls back to x64 (installs arm64 app into an x64 MSI as a stopgap)
+    const vendorPath = await getWixBin(undefined)
+    const wixVersion = null
     await withToolsetLock(async () => {
       if (wixVersion === "0.0.0" || wixVersion == null) {
         await this.buildV3(vm, vendorPath, stageDir.dir, appOutDir, artifactPath, arch)

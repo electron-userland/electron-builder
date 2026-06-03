@@ -18,7 +18,7 @@ interface WindowsSuiteConfig extends SuiteConfig {
   readonly winCodeSignVersions?: ToolsetConfig["winCodeSign"][]
   readonly nsisVersions?: ToolsetConfig["nsis"][]
   readonly wineVersions?: ToolsetConfig["wine"][]
-  readonly wixVersions?: ToolsetConfig["wix"][]
+  readonly wixVersions?: any /* ToolsetConfig["wix"] */[]
 }
 
 const SUITES: WindowsSuiteConfig[] = [
@@ -107,7 +107,7 @@ function renderFile({
   winCodeSign: ToolsetConfig["winCodeSign"] | undefined
   nsis?: ToolsetConfig["nsis"]
   wine?: ToolsetConfig["wine"]
-  wix?: ToolsetConfig["wix"]
+  wix?: any /* ToolsetConfig["wix"] */
 }): string {
   const fnName = suite.registerFn.name
   const toolsets: Record<string, unknown> = {}
