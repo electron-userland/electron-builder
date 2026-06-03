@@ -1,6 +1,5 @@
 import { Platform } from "app-builder-lib/src"
-import { validateCriticalPathString } from "app-builder-lib/src/targets/appimage/appImageUtil"
-import { copyMimeTypes } from "app-builder-lib/src/targets/appimage/appLauncher"
+import { copyMimeTypes, validateCriticalPathString } from "app-builder-lib/internal"
 import { Arch, InvalidConfigurationError, TmpDir } from "builder-util"
 import { execSync, spawnSync } from "child_process"
 import * as fs from "fs-extra"

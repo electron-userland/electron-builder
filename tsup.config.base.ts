@@ -5,7 +5,7 @@ export const baseConfig: Options = {
   dts: true,
   tsconfig: "../tsconfig-tsup.json",
   sourcemap: true,
-  clean: true,
+  clean: !process.argv.includes("--watch"),
   outDir: "dist",
   platform: "node",
 }

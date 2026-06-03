@@ -5,7 +5,7 @@ import { move } from "fs-extra"
 import { TmpDir } from "temp-file"
 import { OLD_VERSION_NUMBER, testAppCacheDirName } from "../helpers/updaterTestUtil"
 import { NsisUpdater } from "electron-updater"
-import { ToolsetConfig } from "app-builder-lib/src/configuration"
+import { ToolsetConfig } from "app-builder-lib/internal"
 import { doBuild, getTestUpdaterCacheDir, testBlockMap } from "./differentialUpdateHelpers"
 
 export function registerDifferentialWinTests(toolsets: ToolsetConfig): void {

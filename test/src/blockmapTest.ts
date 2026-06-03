@@ -6,7 +6,7 @@ import * as os from "os"
 import * as path from "path"
 import * as zlib from "zlib"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
-import { buildBlockMap } from "app-builder-lib/src/targets/blockmap/blockmap"
+import { buildBlockMap } from "app-builder-lib/internal"
 import { appBuilderPath } from "app-builder-bin"
 
 // True when the app-builder-bin binary is actually present on disk.

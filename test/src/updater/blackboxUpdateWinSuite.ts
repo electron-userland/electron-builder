@@ -1,5 +1,5 @@
 import { ToolsetConfig } from "app-builder-lib"
-import { ParallelsVmManager } from "app-builder-lib/src/vm/ParallelsVm"
+import { ParallelsVmManager } from "app-builder-lib/internal"
 import { copyFileSync, unlinkSync } from "fs"
 import { tmpdir } from "os"
 import { Arch, Configuration } from "electron-builder"

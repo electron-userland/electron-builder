@@ -11,7 +11,7 @@ import { createLocalServer, getParallelsHostIP, sha256File, toVmHomePath } from 
 import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { optionsForFlakyE2E, windowsVmPromise } from "./blackboxUpdateHelpers"
-import { PM } from "app-builder-lib/src/node-module-collector"
+import { PM } from "app-builder-lib/internal"
 import { spawn } from "builder-util"
 
 // ---------------------------------------------------------------------------

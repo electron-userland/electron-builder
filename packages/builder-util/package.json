@@ -29,7 +29,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup"
+    "build": "tsup",
+    "watch": "tsup --watch"
   },
   "dependencies": {
     "7zip-bin": "~5.2.0",

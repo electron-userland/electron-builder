@@ -1,7 +1,5 @@
 import { ToolsetConfig } from "app-builder-lib"
-import { PM } from "app-builder-lib/src/node-module-collector"
-import { ParallelsVmManager } from "app-builder-lib/src/vm/ParallelsVm"
-import { getWindowsVm, VmManager } from "app-builder-lib/src/vm/vm"
+import { getWindowsVm, ParallelsVmManager, PM, VmManager } from "app-builder-lib/internal"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
 import { archFromString, deepAssign, DebugLogger, log, serializeToYaml, spawn, TmpDir } from "builder-util/src/util"
 import { Arch, Configuration, Platform } from "electron-builder"

@@ -5,6 +5,7 @@
   "scripts": {
     "//": "do not wrap into single quotes - windows doesn't unwrap arg in this case",
     "compile": "pnpm ci:test:generate && pnpm run -r --if-present --filter builder-util-runtime --filter builder-util --filter electron-publish --filter app-builder-lib build && pnpm run -r --if-present --filter '!@electron-builder/website' --filter '!@electron-builder/test' --filter '!app-builder-lib' --filter '!builder-util' --filter '!builder-util-runtime' --filter '!electron-publish' build",
+    "compile:watch": "pnpm compile && pnpm run -r --if-present --parallel --filter '!@electron-builder/website' --filter '!@electron-builder/test' watch",
     "typecheck": "tsc --build",
     "lint": "eslint packages test/src --ext .ts,.js",
     "lint-deps": "node ./scripts/checkDeps.js",

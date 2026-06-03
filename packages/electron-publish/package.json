@@ -32,7 +32,8 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "build": "tsup"
+    "build": "tsup",
+    "watch": "tsup --watch"
   },
   "dependencies": {
     "@types/fs-extra": "^9.0.11",

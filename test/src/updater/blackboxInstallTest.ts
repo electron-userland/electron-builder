@@ -1,5 +1,5 @@
 import { AppImageOptions, Configuration, DebOptions, PacmanOptions, RpmOptions, Target, ToolsetConfig } from "app-builder-lib"
-import { PM } from "app-builder-lib/src/node-module-collector"
+import { PM } from "app-builder-lib/internal"
 import { Arch, Platform } from "electron-builder"
 import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
 import { archFromString, log, spawn, TmpDir } from "builder-util/src/util"

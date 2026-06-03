@@ -7,14 +7,14 @@ import * as path from "path"
 import { afterAll, afterEach, beforeAll, vi } from "vitest"
 import {
   ArtifactDownloadOptions,
+  CacheState,
   ElectronDownloadOptions,
   ElectronGetOptions,
   downloadBuilderToolset,
   downloadElectronArtifact,
   getCacheDirectory,
   getBinariesMirrorUrl,
-} from "app-builder-lib/src/util/electronGet"
-import { CacheState } from "app-builder-lib/src/util/cacheState"
+} from "app-builder-lib/internal"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 
 // ─── getCacheDirectory ────────────────────────────────────────────────────────

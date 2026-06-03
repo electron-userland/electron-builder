@@ -1,6 +1,6 @@
 {
   "name": "electron-builder",
-  "description": "A complete solution to package and build a ready for distribution Electron app for MacOS, Windows and Linux with \u201cauto update\u201d support out of the box",
+  "description": "A complete solution to package and build a ready for distribution Electron app for MacOS, Windows and Linux with “auto update” support out of the box",
   "version": "26.14.0",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -23,7 +23,8 @@
     "install-app-deps.js"
   ],
   "scripts": {
-    "build": "tsup"
+    "build": "tsup",
+    "watch": "tsup --watch"
   },
   "bin": {
     "electron-builder": "./cli.js",

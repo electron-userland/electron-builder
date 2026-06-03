@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "fs/promises"
 import * as os from "os"
 import * as path from "path"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
-import { buildSourceCandidates, convertIcon, getPngSize } from "app-builder-lib/src/util/iconConverter"
+import { buildSourceCandidates, convertIcon, getPngSize } from "app-builder-lib/internal"
 
 const FIXTURES = path.join(__dirname, "../fixtures")
 const TEST_APP_ICONS = path.join(FIXTURES, "test-app-one/build")

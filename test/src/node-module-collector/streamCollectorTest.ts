@@ -1,7 +1,5 @@
 import { afterEach, beforeEach, describe, test, vi } from "vitest"
-import { NodeModulesCollector } from "app-builder-lib/src/node-module-collector/nodeModulesCollector"
-import { LogMessageByKey } from "app-builder-lib/src/node-module-collector/moduleManager"
-import { PM } from "app-builder-lib/src/node-module-collector/packageManager"
+import { LogMessageByKey, NodeModulesCollector, PM } from "app-builder-lib/internal"
 import * as childProcess from "child_process"
 import * as fsExtra from "fs-extra"
 import type { TmpDir } from "builder-util"

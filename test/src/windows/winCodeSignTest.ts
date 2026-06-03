@@ -1,7 +1,6 @@
 import { parseDn } from "builder-util-runtime"
 import { ToolInfo, WinPackager, WindowsSignToolManager } from "app-builder-lib"
-import { CustomWindowsSign } from "app-builder-lib/src/codeSign/windowsSignToolManager"
-import { Configuration, ToolsetConfig } from "app-builder-lib/src/configuration"
+import { Configuration, CustomWindowsSign, ToolsetConfig } from "app-builder-lib/internal"
 import { AsyncTaskManager } from "builder-util"
 import { Arch, DIR_TARGET, Platform, Target } from "electron-builder"
 import { Packager } from "electron-builder"

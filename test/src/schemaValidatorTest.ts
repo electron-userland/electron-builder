@@ -1,4 +1,4 @@
-import { validateSchema } from "app-builder-lib/src/util/config/schemaValidator"
+import { validateSchema } from "app-builder-lib/internal"
 import { describe, expect, it } from "vitest"
 
 const simpleSchema = {

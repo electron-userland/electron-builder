@@ -1,5 +1,5 @@
 import { FilterStats } from "builder-util"
-import { FileMatcher, getFileMatchers, GetFileMatchersOptions } from "app-builder-lib/src/fileMatcher"
+import { FileMatcher, getFileMatchers, GetFileMatchersOptions } from "app-builder-lib/internal"
 import * as path from "path"
 
 // ---------------------------------------------------------------------------
