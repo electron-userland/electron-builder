@@ -27,7 +27,6 @@ import type { ExpectStatic } from "vitest"
 import { computeDefaultAppDirectory } from "app-builder-lib/out/util/config/config"
 import { installDependencies } from "app-builder-lib/out/util/yarn"
 import { ELECTRON_VERSION } from "./testConfig"
-import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
 import { execSync } from "child_process"
 import { detectPackageManager } from "app-builder-lib/out/node-module-collector/packageManager"
 
@@ -272,7 +271,6 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         },
         {
           frameworkInfo: { version: ELECTRON_VERSION, useCustomDist: false },
-          productionDeps: createLazyProductionDeps(appDir, null, false),
           additionalArgs: additionalInstallArgs,
         },
         runtimeEnv

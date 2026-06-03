@@ -83,3 +83,26 @@ export function deepAssign<T>(target: T, ...objects: Array<any>): T {
   }
   return target
 }
+
+// Flag names must be letters/digits/hyphens only (e.g. "maintainer", "deb-priority").
+// Anything else could inject extra flags into the argument array.
+const SAFE_FLAG_NAME_RE = /^[a-zA-Z][a-zA-Z0-9-]*$/
+
+// Null bytes truncate arguments at the C layer; newlines can split arguments in some parsers.
+const UNSAFE_VALUE_RE = /[\0\r\n]/
+
+export function objectToArgs(obj: Record<string, string | null>): readonly string[] {
+  const args = Object.entries(obj).reduce<string[]>((args, [name, value]) => {
+    if (!isValidKey(name) || value == null) {
+      return args
+    }
+    if (!SAFE_FLAG_NAME_RE.test(name)) {
+      throw new Error(`objectToArgs: unsafe flag name rejected: "${name}"`)
+    }
+    if (UNSAFE_VALUE_RE.test(value)) {
+      throw new Error(`objectToArgs: value for --${name} contains a null byte or newline`)
+    }
+    return args.concat([`--${name}`, value])
+  }, [])
+  return Object.freeze(args)
+}
