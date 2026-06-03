@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "devDependencies": {
+    "7zip-bin": "~5.2.0",
     "@babel/core": "7.24.9",
     "@babel/preset-env": "7.15.6",
     "@babel/preset-typescript": "^7.23.3",

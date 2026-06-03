@@ -15,7 +15,6 @@
     "out"
   ],
   "dependencies": {
-    "7zip-bin": "~5.2.0",
     "@types/debug": "^4.1.6",
     "app-builder-bin": "5.0.0-alpha.12",
     "builder-util-runtime": "workspace:*",

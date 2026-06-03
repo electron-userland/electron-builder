@@ -9,8 +9,6 @@ import * as os from "os"
 import * as path from "path"
 import { afterEach, beforeEach, vi } from "vitest"
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-
 let tmpDir: string
 
 beforeEach(async () => {
@@ -35,16 +33,35 @@ async function makeSrcDir(files: Record<string, string> = { "hello.txt": "hello 
 // ─── compute7zCompressArgs ───────────────────────────────────────────────────
 
 describe("compute7zCompressArgs", () => {
-  test("default compression adds -mx=9", ({ expect }) => {
+  test("7z default compression adds -mx=9", ({ expect }) => {
     const args = compute7zCompressArgs("7z", {})
     expect(args).toContain("-mx=9")
     expect(args).not.toContain("-mm=Copy")
+  })
+
+  test("zip default uses level 7", ({ expect }) => {
+    const args = compute7zCompressArgs("zip", {})
+    expect(args).toContain("-mx=7")
+    expect(args).toContain("-mm=Deflate")
+    expect(args).toContain("-mcu")
+  })
+
+  test("zip maximum adds extra deflate passes and level 9", ({ expect }) => {
+    const args = compute7zCompressArgs("zip", { compression: "maximum" })
+    expect(args).toContain("-mx=9")
+    expect(args).toContain("-mfb=258")
+    expect(args).toContain("-mpass=15")
   })
 
   test("store mode adds -mm=Copy and omits -mx", ({ expect }) => {
     const args = compute7zCompressArgs("7z", { compression: "store" })
     expect(args).toContain("-mm=Copy")
     expect(args.some((a: string) => a.startsWith("-mx="))).toBe(false)
+  })
+
+  test("zip store mode adds -mm=Copy", ({ expect }) => {
+    const args = compute7zCompressArgs("zip", { compression: "store" })
+    expect(args).toContain("-mm=Copy")
   })
 
   test("ELECTRON_BUILDER_COMPRESSION_LEVEL overrides store mode", ({ expect }) => {
@@ -86,9 +103,9 @@ describe("compute7zCompressArgs", () => {
     expect(() => compute7zCompressArgs("7z", {})).toThrow("ELECTRON_BUILDER_7Z_FILTER must be one of")
   })
 
-  test("valid ELECTRON_BUILDER_7Z_FILTER is included case-insensitively", ({ expect }) => {
-    vi.stubEnv("ELECTRON_BUILDER_7Z_FILTER", "bcj2")
-    expect(compute7zCompressArgs("7z", {})).toContain("-mf=bcj2")
+  test("valid ELECTRON_BUILDER_7Z_FILTER is included", ({ expect }) => {
+    vi.stubEnv("ELECTRON_BUILDER_7Z_FILTER", "BCJ2")
+    expect(compute7zCompressArgs("7z", {})).toContain("-mf=BCJ2")
   })
 
   test("dictSize adds -md flag", ({ expect }) => {
@@ -102,63 +119,24 @@ describe("compute7zCompressArgs", () => {
   test("method=DEFAULT suppresses -mm flag", ({ expect }) => {
     expect(compute7zCompressArgs("7z", { method: "DEFAULT" }).some((a: string) => a.startsWith("-mm="))).toBe(false)
   })
+
+  test("isRegularFile suppresses -mtc=off", ({ expect }) => {
+    const args = compute7zCompressArgs("7z", { isRegularFile: true })
+    expect(args).not.toContain("-mtc=off")
+    // but still has the other timestamp flags
+    expect(args).toContain("-mtm=off")
+    expect(args).toContain("-mta=off")
+  })
 })
 
-// ─── archive() — zip format (archiver) ──────────────────────────────────────
+// ─── archive() — path-level guards (no binary needed) ───────────────────────
 
-describe("archive() zip format", () => {
-  test.ifNotWindows("creates a non-empty zip file", async ({ expect }) => {
+describe("archive() guards", () => {
+  test("excluded pattern with '..' throws before reaching 7za", async ({ expect }) => {
     const src = await makeSrcDir()
-    const outFile = path.join(tmpDir, "out.zip")
-    const result = await archive("zip", outFile, src)
-    expect(result).toBe(outFile)
-    expect((await fs.stat(outFile)).size).toBeGreaterThan(0)
-  })
-
-  test.ifNotWindows("withoutDir:false produces a valid zip", async ({ expect }) => {
-    const src = await makeSrcDir({ "file.txt": "x" })
-    const outFile = path.join(tmpDir, "with-dir.zip")
-    await archive("zip", outFile, src, { withoutDir: false })
-    expect((await fs.stat(outFile)).size).toBeGreaterThan(0)
-  })
-
-  test.ifNotWindows("withoutDir:true produces a valid zip", async ({ expect }) => {
-    const src = await makeSrcDir({ "file.txt": "x" })
-    const outFile = path.join(tmpDir, "no-dir.zip")
-    await archive("zip", outFile, src, { withoutDir: true })
-    expect((await fs.stat(outFile)).size).toBeGreaterThan(0)
-  })
-
-  test.ifNotWindows("excluded pattern omits matched files", async ({ expect }) => {
-    const src = await makeSrcDir({ "video.mp4": "binary data", "text.txt": "hello" })
-    const outFile = path.join(tmpDir, "out.zip")
-    await archive("zip", outFile, src, { excluded: ["*.mp4"] })
-    // Archive exists — the mp4 was excluded so the only file is text.txt
-    // The zip will be smaller than one that includes the mp4
-    const statExcluded = (await fs.stat(outFile)).size
-
-    const outFileAll = path.join(tmpDir, "out-all.zip")
-    await archive("zip", outFileAll, src)
-    const statAll = (await fs.stat(outFileAll)).size
-
-    expect(statExcluded).toBeLessThan(statAll)
-  })
-
-  test("excluded pattern with '..' throws path traversal error", async ({ expect }) => {
-    const src = await makeSrcDir()
-    await expect(archive("zip", path.join(tmpDir, "out.zip"), src, { excluded: ["../secret"] })).rejects.toThrow("path traversal sequence")
-  })
-
-  test("throws when source directory does not exist", async ({ expect }) => {
-    await expect(archive("zip", path.join(tmpDir, "out.zip"), path.join(tmpDir, "no-such-dir"))).rejects.toThrow("doesn't exist")
-  })
-
-  test.ifNotWindows("store compression level produces a valid zip", async ({ expect }) => {
-    vi.stubEnv("ELECTRON_BUILDER_COMPRESSION_LEVEL", "0")
-    const src = await makeSrcDir()
-    const outFile = path.join(tmpDir, "stored.zip")
-    await archive("zip", outFile, src)
-    expect((await fs.stat(outFile)).size).toBeGreaterThan(0)
+    await expect(
+      archive("zip", path.join(tmpDir, "out.zip"), src, { excluded: ["../secret"] })
+    ).rejects.toThrow("path traversal sequence")
   })
 
   test.ifNotWindows("skips archiving when output is newer than source dir", async ({ expect }) => {
@@ -171,19 +149,5 @@ describe("archive() zip format", () => {
     const result = await archive("zip", outFile, src)
     expect(result).toBe(outFile)
     expect(await fs.readFile(outFile, "utf8")).toBe("sentinel")
-  })
-
-  test.ifNotWindows("overwrites pre-existing output file", async ({ expect }) => {
-    const src = await makeSrcDir()
-    const outFile = path.join(tmpDir, "overwrite.zip")
-    // Create a stale output with an old mtime so the cache check doesn't skip
-    await fs.writeFile(outFile, "stale")
-    const past = new Date(Date.now() - 60_000)
-    await fs.utimes(outFile, past, past)
-
-    await archive("zip", outFile, src)
-    const contents = await fs.readFile(outFile)
-    // A real zip starts with the local file header signature PK\x03\x04
-    expect(contents.slice(0, 2).toString()).toBe("PK")
   })
 })

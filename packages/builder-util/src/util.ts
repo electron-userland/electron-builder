@@ -8,7 +8,6 @@ import _debug from "debug"
 import { dump } from "js-yaml"
 import * as path from "path"
 import { install as installSourceMap } from "source-map-support"
-import { getPath7za } from "./7za"
 import { debug, log } from "./log"
 import { exists } from "./fs"
 import { mkdir } from "fs-extra"
@@ -36,8 +35,6 @@ export * from "./fs"
 
 export { generateKsuid } from "./ksuid"
 export { loadCscLink, decodeCscLinkBase64, resolveCscLinkPath } from "./cscLink"
-
-export { getPath7x, getPath7za } from "./7za"
 
 export const debug7z = _debug("electron-builder:7z")
 
@@ -561,7 +558,7 @@ export function to7zaOutputSwitch(p: string): string {
   return "-o" + safePath
 }
 
-export async function executeAppBuilder(
+export function executeAppBuilder(
   args: Array<string>,
   childProcessConsumer?: (childProcess: ChildProcess) => void,
   extraOptions: SpawnOptions = {},
@@ -570,7 +567,6 @@ export async function executeAppBuilder(
   const command = appBuilderPath
   const env: any = {
     ...process.env, // codeql[js/shell-command-constructed-from-input] - app-builder is a trusted internal binary; requires full env including GITHUB_TOKEN for authenticated tool downloads
-    SZA_PATH: await getPath7za(),
     FORCE_COLOR: chalk.level === 0 ? "0" : "1",
   }
   const cacheEnv = process.env.ELECTRON_BUILDER_CACHE
