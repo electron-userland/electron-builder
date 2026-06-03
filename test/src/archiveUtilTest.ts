@@ -53,10 +53,12 @@ describe("compute7zCompressArgs", () => {
     expect(args).toContain("-mpass=15")
   })
 
-  test("store mode adds -mm=Copy and omits -mx", ({ expect }) => {
+  test("store mode adds -mx=0 (universal store flag)", ({ expect }) => {
     const args = compute7zCompressArgs("7z", { compression: "store" })
-    expect(args).toContain("-mm=Copy")
-    expect(args.some((a: string) => a.startsWith("-mx="))).toBe(false)
+    expect(args).toContain("-mx=0")
+    // -mm=Copy is NOT added for 7z store — -mx=0 is the universal no-compression flag
+    // and -mm=Copy would be invalid for xz/gzip/bzip2 formats
+    expect(args).not.toContain("-mm=Copy")
   })
 
   test("zip store mode adds -mm=Copy", ({ expect }) => {

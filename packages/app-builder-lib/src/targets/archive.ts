@@ -97,7 +97,11 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
     validateCompressionLevel(compressionLevel)
     storeOnly = false // env var overrides "store" config
     args.push(`-mx=${compressionLevel}`)
-  } else if (!storeOnly) {
+  } else if (storeOnly) {
+    // -mx=0 is the universal "no compression" flag across all formats (zip, 7z, gzip, xz, bzip2).
+    // -mm=Copy would only be valid for zip/7z and causes E_INVALIDARG on xz/gzip/bzip2.
+    args.push("-mx=0")
+  } else {
     const isZip = format === "zip"
     // ZIP uses level 7 by default; everything else (7z, gzip, xz, bzip2) uses level 9
     args.push("-mx=" + (isZip && options.compression !== "maximum" ? "7" : "9"))
@@ -139,11 +143,10 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
   if (options.method != null && options.method !== "DEFAULT") {
     args.push(`-mm=${options.method}`)
   } else if (format === "zip") {
+    // -mm is only set explicitly for zip (Deflate/Copy) and includes the UTF-8 flag.
+    // For all other formats the codec is implicit from the output file extension.
     args.push(`-mm=${storeOnly ? "Copy" : "Deflate"}`)
-    // UTF-8 encoding so the archive is the same regardless of where it was produced
     args.push("-mcu")
-  } else if (storeOnly) {
-    args.push("-mm=Copy")
   }
 
   return args

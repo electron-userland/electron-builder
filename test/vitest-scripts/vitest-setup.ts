@@ -5,17 +5,11 @@ const isWindows = process.platform === "win32"
 const isMac = process.platform === "darwin"
 const isLinux = process.platform === "linux"
 
-// Provide a 7za binary for integration tests while the downloadable toolset
-// release (7zip@24.09 in electron-builder-binaries) is not yet published.
-// Once the release is cut and checksums are filled in, this block can be removed.
-if (!process.env.ELECTRON_BUILDER_7ZA_PATH) {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { path7za } = require("7zip-bin") as { path7za: string }
-    process.env.ELECTRON_BUILDER_7ZA_PATH = path7za
-  } catch {
-    // 7zip-bin not installed — tests that need 7za will use the downloadable toolset
-  }
+// Point tests at the locally built 7zip toolset bundle (POC — replace with the
+// published GitHub release once 7zip@24.09 is cut in electron-builder-binaries).
+if (!process.env.ELECTRON_BUILDER_7ZIP_PATH) {
+  process.env.ELECTRON_BUILDER_7ZIP_PATH =
+    "/Users/mikemaietta/Development/electron-builder-binaries/packages/7zip/out/7zip/7zip"
 }
 
 type Meta = Record<string, any>
