@@ -2,12 +2,10 @@ import {
   Arch,
   asArray,
   AsyncTaskManager,
-  exec,
   spawnAndWriteWithOutput,
   exists,
   generateKsuid,
   getArchSuffix,
-  getPath7za,
   getPlatformIconFileName,
   InvalidConfigurationError,
   log,
@@ -286,15 +284,7 @@ export class NsisTarget extends Target {
             })
             packageFiles[Arch[arch]] = fileInfo
           }
-          const path7za = await getPath7za()
-          const archiveInfo = (await exec(path7za, ["l", file])).trim()
-          // after adding blockmap data will be "Warnings: 1" in the end of output
-          const match = /(\d+)\s+\d+\s+\d+\s+files/.exec(archiveInfo)
-          if (match == null) {
-            log.warn({ output: archiveInfo }, "cannot compute size of app package")
-          } else {
-            estimatedSize += parseInt(match[1], 10)
-          }
+          estimatedSize += unpackedSize
         })
       )
     }
