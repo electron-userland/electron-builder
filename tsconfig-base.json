@@ -1,12 +1,6 @@
 {
+  "extends": "@tsconfig/node22/tsconfig.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "lib": ["ES2022", "ESNext.Iterator"],
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "esModuleInterop": false,
-    "allowSyntheticDefaultImports": true,
-
     "forceConsistentCasingInFileNames": true,
 
     "noUnusedLocals": true,
@@ -18,8 +12,6 @@
     "inlineSources": true,
     "sourceMap": true,
 
-    "strict": true,
-    "skipLibCheck": true,
     "useDefineForClassFields": false,
     "experimentalDecorators": true,
 

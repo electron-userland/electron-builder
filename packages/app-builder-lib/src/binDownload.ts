@@ -1,10 +1,10 @@
 import * as fs from "fs/promises"
 import { log, parseValidEnvVarUrl } from "builder-util"
-import { dynamicImport } from "./util/dynamicImport"
+import { dynamicImport } from "./util/dynamicImport.js"
 import { Nullish } from "builder-util-runtime"
 import { sanitizeFileName } from "builder-util/internal"
 import * as path from "path"
-import { downloadBuilderToolset, getBinariesMirrorUrl, getCacheDirectory } from "./util/electronGet"
+import { downloadBuilderToolset, getBinariesMirrorUrl, getCacheDirectory } from "./util/electronGet.js"
 
 const versionToPromise = new Map<string, Promise<string>>()
 

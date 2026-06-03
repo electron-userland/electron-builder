@@ -57,7 +57,7 @@ export async function getLinuxVm(debugLogger: DebugLogger): Promise<VmManager | 
     return undefined
   }
   try {
-    const parallelsVmModule = await import("./ParallelsVm")
+    const parallelsVmModule = await import("./ParallelsVm.js")
     const vmList = (await parallelsVmModule.parseVmList(debugLogger)).filter(it => it.os === "ubuntu")
     if (vmList.length === 0) {
       return undefined

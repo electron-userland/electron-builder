@@ -1,17 +1,17 @@
 {
   "name": "builder-util",
   "version": "26.14.0",
+  "type": "module",
   "main": "./dist/util.js",
-  "module": "./dist/util.mjs",
   "exports": {
     ".": {
       "types": "./dist/util.d.ts",
-      "import": "./dist/util.mjs",
+      "import": "./dist/util.js",
       "require": "./dist/util.js"
     },
     "./internal": {
       "types": "./dist/indexInternal.d.ts",
-      "import": "./dist/indexInternal.mjs",
+      "import": "./dist/indexInternal.js",
       "require": "./dist/indexInternal.js"
     },
     "./src/*": "./src/*.ts"
@@ -29,8 +29,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup",
-    "watch": "tsup --watch"
+    "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsc -p tsconfig.build.json",
+    "watch": "tsc -p tsconfig.build.json --watch"
   },
   "dependencies": {
     "7zip-bin": "~5.2.0",

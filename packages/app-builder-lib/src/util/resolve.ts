@@ -2,7 +2,7 @@ import { InvalidConfigurationError, log } from "builder-util"
 import debug from "debug"
 import { realpath } from "fs/promises"
 import * as path from "path"
-import * as requireMaybe from "../../helpers/dynamic-import"
+import * as requireMaybe from "../../helpers/dynamic-import.js"
 
 export async function resolveModule<T>(type: string | undefined, name: string): Promise<T> {
   try {

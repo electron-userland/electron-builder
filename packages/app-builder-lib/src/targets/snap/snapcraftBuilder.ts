@@ -5,9 +5,9 @@ import { resolveSnapCredentials } from "electron-publish"
 import { copyFile, ensureDir, pathExists, readdir, remove } from "fs-extra"
 import * as path from "path"
 import * as util from "util"
-import { LinuxPackager } from "../../linuxPackager"
-import { RemoteBuildOptions } from "../../options/SnapOptions"
-import { SnapcraftYAML } from "./snapcraft"
+import { LinuxPackager } from "../../linuxPackager.js"
+import { RemoteBuildOptions } from "../../options/SnapOptions.js"
+import { SnapcraftYAML } from "./snapcraft.js"
 import { deepAssign } from "builder-util-runtime"
 
 const execAsync = util.promisify(childProcess.exec)

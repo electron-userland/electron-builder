@@ -2,17 +2,17 @@
   "name": "app-builder-lib",
   "description": "electron-builder lib",
   "version": "26.14.0",
+  "type": "module",
   "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
+      "import": "./dist/index.js",
       "require": "./dist/index.js"
     },
     "./internal": {
       "types": "./dist/indexInternal.d.ts",
-      "import": "./dist/indexInternal.mjs",
+      "import": "./dist/indexInternal.js",
       "require": "./dist/indexInternal.js"
     },
     "./src/*": "./src/*.ts"
@@ -145,7 +145,7 @@
   "//": "electron-builder-squirrel-windows and dmg-builder added as dev dep for tests (as otherwise `require` doesn't work using Yarn 2)",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsup",
-    "watch": "tsup --watch"
+    "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsc -p tsconfig.build.json",
+    "watch": "tsc -p tsconfig.build.json --watch"
   }
 }

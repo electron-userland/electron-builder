@@ -19,8 +19,8 @@ import { pipeline } from "stream/promises"
 import * as tar from "tar"
 import * as unzipper from "unzipper"
 import { HttpError, retry } from "builder-util-runtime"
-import { ElectronPlatformName } from "../electron/ElectronFramework"
-import { CacheState, cleanupCacheDirectory, computeCacheMetadata, readCacheStateFile, validateCacheDirectory, writeCacheState } from "./cacheState"
+import { ElectronPlatformName } from "../electron/ElectronFramework.js"
+import { CacheState, cleanupCacheDirectory, computeCacheMetadata, readCacheStateFile, validateCacheDirectory, writeCacheState } from "./cacheState.js"
 import type { ProgressBar } from "electron-publish"
 
 export type ElectronGetOptions = Omit<

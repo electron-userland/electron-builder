@@ -3,11 +3,11 @@ import { asArray, deepAssign, isValidKey, Nullish } from "builder-util-runtime"
 import { outputFile, readFile } from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
-import { PlugDescriptor, SnapOptions } from "../../options/SnapOptions"
-import { getTemplatePath } from "../../util/pathManager"
-import { SnapCore } from "./SnapTarget"
-import { SnapcraftYAML } from "./snapcraft"
-import { DEFAULT_STAGE_PACKAGES } from "./snapcraftBuilder"
+import { PlugDescriptor, SnapOptions } from "../../options/SnapOptions.js"
+import { getTemplatePath } from "../../util/pathManager.js"
+import { SnapCore } from "./SnapTarget.js"
+import { SnapcraftYAML } from "./snapcraft.js"
+import { DEFAULT_STAGE_PACKAGES } from "./snapcraftBuilder.js"
 
 // Handles core18/core20/core22 snaps via the app-builder binary (not the snapcraft CLI).
 // See: https://github.com/develar/app-builder/blob/master/pkg/package-format/snap

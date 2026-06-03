@@ -2,13 +2,13 @@
 
 import { getElectronVersion, nodeGypRebuild } from "app-builder-lib/internal"
 import * as chalk from "chalk"
-import { build, configureBuildCommand, createYargs } from "../builder"
-import { configurePublishCommand, publish } from "../publish"
-import { clearCache } from "./clear-cache"
-import { wrap } from "./cli-util"
-import { createSelfSignedCert } from "./create-self-signed-cert"
-import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps"
-import { start } from "./start"
+import { build, configureBuildCommand, createYargs } from "../builder.js"
+import { configurePublishCommand, publish } from "../publish.js"
+import { clearCache } from "./clear-cache.js"
+import { wrap } from "./cli-util.js"
+import { createSelfSignedCert } from "./create-self-signed-cert.js"
+import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps.js"
+import { start } from "./start.js"
 
 // tslint:disable:no-unused-expression
 void createYargs()

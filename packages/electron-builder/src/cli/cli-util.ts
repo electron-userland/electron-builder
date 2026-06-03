@@ -8,11 +8,11 @@ export async function checkIsOutdated(): Promise<void> {
   if (isCI || process.env.NO_UPDATE_NOTIFIER != null) {
     return
   }
-  const pkg = await readJson(path.join(__dirname, "..", "..", "package.json"))
+  const pkg = await readJson(path.join(import.meta.dirname, "..", "..", "package.json"))
   if (pkg.version === "0.0.0-semantic-release") {
     return
   }
-  const UpdateNotifier = require("simple-update-notifier")
+  const { default: UpdateNotifier } = await import("simple-update-notifier")
   await UpdateNotifier({ pkg })
 }
 

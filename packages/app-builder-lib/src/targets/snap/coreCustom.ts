@@ -2,10 +2,10 @@ import { Arch, InvalidConfigurationError, log } from "builder-util"
 import { outputFile, readFile } from "fs-extra"
 import * as yaml from "js-yaml"
 import * as path from "path"
-import { SnapOptionsCustom } from "../../options/SnapOptions"
-import { SnapCore } from "./SnapTarget"
-import { SnapcraftYAML } from "./snapcraft"
-import { buildSnap, SNAPCRAFT_YAML_OPTIONS } from "./snapcraftBuilder"
+import { SnapOptionsCustom } from "../../options/SnapOptions.js"
+import { SnapCore } from "./SnapTarget.js"
+import { SnapcraftYAML } from "./snapcraft.js"
+import { buildSnap, SNAPCRAFT_YAML_OPTIONS } from "./snapcraftBuilder.js"
 
 /**
  * Pass-through snap builder for `base: "custom"`.

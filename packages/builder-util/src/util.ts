@@ -8,36 +8,36 @@ import _debug from "debug"
 import { dump } from "js-yaml"
 import * as path from "path"
 import { install as installSourceMap } from "source-map-support"
-import { getPath7za } from "./7za"
-import { debug, log } from "./log"
-import { exists } from "./fs"
+import { getPath7za } from "./7za.js"
+import { debug, log } from "./log.js"
+import { exists } from "./fs.js"
 import { mkdir } from "fs-extra"
-import { isEmptyOrSpaces } from "./stringUtil"
+import { isEmptyOrSpaces } from "./stringUtil.js"
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
 }
 
-export { isEmptyOrSpaces } from "./stringUtil"
+export { isEmptyOrSpaces } from "./stringUtil.js"
 export { safeStringifyJson, retry } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
-export * from "./arch"
-export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames, getArchSuffix, toLinuxArchString } from "./arch"
-export { AsyncTaskManager } from "./asyncTaskManager"
-export { DebugLogger } from "./DebugLogger"
-export * from "./log"
-export { buildGotProxyAgent, httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor"
-export * from "./promise"
-export * from "./envUtil"
-export { parseValidEnvVarUrl } from "./envUtil"
+export * from "./arch.js"
+export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames, getArchSuffix, toLinuxArchString } from "./arch.js"
+export { AsyncTaskManager } from "./asyncTaskManager.js"
+export { DebugLogger } from "./DebugLogger.js"
+export * from "./log.js"
+export { buildGotProxyAgent, httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor.js"
+export * from "./promise.js"
+export * from "./envUtil.js"
+export { parseValidEnvVarUrl } from "./envUtil.js"
 
 export { asArray, deepAssign, isValidKey } from "builder-util-runtime"
-export * from "./fs"
+export * from "./fs.js"
 
-export { generateKsuid } from "./ksuid"
-export { loadCscLink, decodeCscLinkBase64, resolveCscLinkPath } from "./cscLink"
+export { generateKsuid } from "./ksuid.js"
+export { loadCscLink, decodeCscLinkBase64, resolveCscLinkPath } from "./cscLink.js"
 
-export { getPath7x, getPath7za } from "./7za"
+export { getPath7x, getPath7za } from "./7za.js"
 
 export const debug7z = _debug("electron-builder:7z")
 

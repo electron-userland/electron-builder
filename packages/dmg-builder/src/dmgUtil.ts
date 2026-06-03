@@ -4,13 +4,13 @@ import { exec, executeFinally, exists, InvalidConfigurationError, isEmptyOrSpace
 import { stat } from "fs/promises"
 import { writeFile } from "fs-extra"
 import * as path from "path"
-import { DmgBuildConfig } from "./dmg"
-import type { DmgBuildLicenseConfig } from "./dmgLicense"
-import { hdiUtil, hdiUtilWithStdin, hdiutilTransientExitCodes } from "./hdiuil"
+import { DmgBuildConfig } from "./dmg.js"
+import type { DmgBuildLicenseConfig } from "./dmgLicense.js"
+import { hdiUtil, hdiUtilWithStdin, hdiutilTransientExitCodes } from "./hdiuil.js"
 
-export { DmgTarget } from "./dmg"
+export { DmgTarget } from "./dmg.js"
 
-const root = path.join(__dirname, "..")
+const root = path.join(import.meta.dirname, "..")
 
 export function getDmgTemplatePath() {
   return path.join(root, "templates")

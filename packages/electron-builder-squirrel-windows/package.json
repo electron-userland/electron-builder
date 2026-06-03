@@ -1,12 +1,12 @@
 {
   "name": "electron-builder-squirrel-windows",
   "version": "26.14.0",
+  "type": "module",
   "main": "./dist/SquirrelWindowsTarget.js",
-  "module": "./dist/SquirrelWindowsTarget.mjs",
   "exports": {
     ".": {
       "types": "./dist/SquirrelWindowsTarget.d.ts",
-      "import": "./dist/SquirrelWindowsTarget.mjs",
+      "import": "./dist/SquirrelWindowsTarget.js",
       "require": "./dist/SquirrelWindowsTarget.js"
     },
     "./src/*": "./src/*.ts"
@@ -28,8 +28,8 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "build": "tsup",
-    "watch": "tsup --watch"
+    "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsc -p tsconfig.build.json",
+    "watch": "tsc -p tsconfig.build.json --watch"
   },
   "dependencies": {
     "app-builder-lib": "workspace:*",

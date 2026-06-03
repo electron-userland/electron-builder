@@ -2,13 +2,13 @@ import type { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@
 import type { PerFileSignOptions, SigningDistributionType, SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import type { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
 import { Arch, InvalidConfigurationError, log, statOrNull } from "builder-util"
-import { dynamicImport } from "../util/dynamicImport"
+import { dynamicImport } from "../util/dynamicImport.js"
 import { Nullish } from "builder-util-runtime"
 import * as path from "path"
-import { CertType, findIdentity, reportError } from "../codeSign/macCodeSign"
-import type { MacPackager } from "../macPackager"
-import { MacConfiguration, MasConfiguration } from "../options/macOptions"
-import { getTemplatePath } from "../util/pathManager"
+import { CertType, findIdentity, reportError } from "../codeSign/macCodeSign.js"
+import type { MacPackager } from "../macPackager.js"
+import { MacConfiguration, MasConfiguration } from "../options/macOptions.js"
+import { getTemplatePath } from "../util/pathManager.js"
 
 export type PlatformType = "mas" | "mas-dev" | "mac"
 

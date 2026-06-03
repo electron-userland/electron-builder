@@ -3,11 +3,11 @@ import { Nullish } from "builder-util-runtime"
 import { stat } from "fs-extra"
 import * as os from "os"
 import * as path from "path"
-import { getBinFromCustomLoc, getBinFromUrl } from "../binDownload"
-import { ToolsetConfig } from "../configuration"
-import { ToolInfo, computeToolEnv } from "../util/bundledTool"
-import { downloadBuilderToolset } from "../util/electronGet"
-import { isUseSystemSigncode } from "../util/flags"
+import { getBinFromCustomLoc, getBinFromUrl } from "../binDownload.js"
+import { ToolsetConfig } from "../configuration.js"
+import { ToolInfo, computeToolEnv } from "../util/bundledTool.js"
+import { downloadBuilderToolset } from "../util/electronGet.js"
+import { isUseSystemSigncode } from "../util/flags.js"
 
 function getLegacyWinCodeSignBin(): Promise<string> {
   return downloadBuilderToolset({

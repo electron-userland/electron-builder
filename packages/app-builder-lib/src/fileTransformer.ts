@@ -1,8 +1,8 @@
 import { debug, FileTransformer, log } from "builder-util"
 import { readFile } from "fs/promises"
 import * as path from "path"
-import { Configuration } from "./configuration"
-import { Packager } from "./packager"
+import { Configuration } from "./configuration.js"
+import { Packager } from "./packager.js"
 import { deepAssign } from "builder-util-runtime"
 
 /** @internal */
