@@ -1,15 +1,10 @@
 import { defineConfig } from "tsup"
+import { baseConfig } from "../../tsup.config.base"
 
 export default defineConfig({
+  ...baseConfig,
   entry: {
     index: "src/index.ts",
     indexInternal: "src/indexInternal.ts",
   },
-  format: ["cjs", "esm"],
-  dts: true,
-  tsconfig: "../tsconfig-tsup.json",
-  sourcemap: true,
-  clean: true,
-  outDir: "dist",
-  platform: "node",
 })
