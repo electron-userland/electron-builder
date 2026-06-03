@@ -129,6 +129,25 @@ describe("compute7zCompressArgs", () => {
     expect(args).toContain("-mtm=off")
     expect(args).toContain("-mta=off")
   })
+
+  // Regression: -mm=Copy is only valid for zip/7z; using it with xz/gzip/bzip2 causes E_INVALIDARG.
+  test("xz store mode uses -mx=0, never -mm=Copy", ({ expect }) => {
+    const args = compute7zCompressArgs("xz", { compression: "store" })
+    expect(args).toContain("-mx=0")
+    expect(args).not.toContain("-mm=Copy")
+  })
+
+  test("gzip store mode uses -mx=0, never -mm=Copy", ({ expect }) => {
+    const args = compute7zCompressArgs("gzip", { compression: "store" })
+    expect(args).toContain("-mx=0")
+    expect(args).not.toContain("-mm=Copy")
+  })
+
+  test("bzip2 store mode uses -mx=0, never -mm=Copy", ({ expect }) => {
+    const args = compute7zCompressArgs("bzip2", { compression: "store" })
+    expect(args).toContain("-mx=0")
+    expect(args).not.toContain("-mm=Copy")
+  })
 })
 
 // ─── archive() — path-level guards (no binary needed) ───────────────────────
