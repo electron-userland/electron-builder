@@ -1,4 +1,7 @@
+import { createRequire } from "node:module"
 import { InvalidConfigurationError, log, isEmptyOrSpaces, exists } from "builder-util"
+
+const _requireResolve = createRequire(import.meta.url).resolve
 import { execWine, getBinFromUrl, withToolsetLock } from "app-builder-lib/internal"
 import { sanitizeFileName } from "builder-util/internal"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
@@ -31,7 +34,7 @@ export default class SquirrelWindowsTarget extends Target {
         log.warn({ customSquirrelVendorDirectory }, "unable to access custom Squirrel.Windows vendor directory, falling back to default vendor")
       }
 
-      const windowInstallerPackage = require.resolve("electron-winstaller/package.json")
+      const windowInstallerPackage = _requireResolve("electron-winstaller/package.json")
       const [squirrelBin] = await Promise.all([
         getBinFromUrl("squirrel.windows@1.0.0", "squirrel.windows-2.0.1-patched.7z", "76851f0c192eaf9bc6f8f3eecdfe325857ebe70d7833ec62ed846a1acd50c846"),
         fs.promises.cp(path.join(path.dirname(windowInstallerPackage), "vendor"), tmpVendorDirectory, { recursive: true }),

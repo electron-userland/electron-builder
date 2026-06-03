@@ -18,7 +18,7 @@ import {
 import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, deepAssign, PackageFileInfo, UUID } from "builder-util-runtime"
 import _debug from "debug"
 import * as fs from "fs"
-import { readFile, stat, unlink } from "fs-extra"
+
 import * as path from "path"
 import { Target } from "../../core.js"
 import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../options/CommonWindowsInstallerConfiguration.js"
@@ -40,6 +40,8 @@ import { NsisScriptGenerator, nsisEscapeString } from "./nsisScriptGenerator.js"
 import { getMakeNsisPath, getNsisPluginsPath } from "../../toolsets/windows.js"
 import { AppPackageHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil.js"
 import { checkMakensisOutput, verifyInstallerSize } from "./nsisValidation.js"
+import _fsExtra from "fs-extra"
+const { readFile, stat, unlink } = _fsExtra
 
 const debug = _debug("electron-builder:nsis")
 

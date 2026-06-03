@@ -1,5 +1,5 @@
 import { log } from "builder-util"
-import * as fs from "fs-extra"
+import fs from "fs-extra"
 import * as path from "path"
 import { Platform } from "../core.js"
 import { PrepareApplicationStageDirectoryOptions } from "../Framework.js"

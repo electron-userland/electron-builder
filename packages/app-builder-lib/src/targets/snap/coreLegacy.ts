@@ -1,6 +1,6 @@
 import { replaceDefault as _replaceDefault, Arch, executeAppBuilder, serializeToYaml, toLinuxArchString } from "builder-util"
 import { asArray, deepAssign, isValidKey, Nullish } from "builder-util-runtime"
-import { outputFile, readFile } from "fs-extra"
+
 import { load } from "js-yaml"
 import * as path from "path"
 import { PlugDescriptor, SnapOptions } from "../../options/SnapOptions.js"
@@ -8,6 +8,8 @@ import { getTemplatePath } from "../../util/pathManager.js"
 import { SnapCore } from "./SnapTarget.js"
 import { SnapcraftYAML } from "./snapcraft.js"
 import { DEFAULT_STAGE_PACKAGES } from "./snapcraftBuilder.js"
+import _fsExtra from "fs-extra"
+const { outputFile, readFile } = _fsExtra
 
 // Handles core18/core20/core22 snaps via the app-builder binary (not the snapcraft CLI).
 // See: https://github.com/develar/app-builder/blob/master/pkg/package-format/snap

@@ -1,5 +1,8 @@
+import { createRequire } from "node:module"
 import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
-import { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
+import type { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
+
+const _require = createRequire(import.meta.url)
 import {
   Arch,
   AsyncTaskManager,
@@ -156,8 +159,10 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
           break
 
         case "dmg": {
-          const { DmgTarget } = require("dmg-builder")
-          mapper(name, outDir => new DmgTarget(this, outDir))
+          mapper(name, outDir => {
+            const { DmgTarget } = _require("dmg-builder")
+            return new DmgTarget(this, outDir)
+          })
           break
         }
 

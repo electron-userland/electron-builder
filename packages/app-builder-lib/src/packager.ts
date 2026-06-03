@@ -16,7 +16,7 @@ import {
   TmpDir,
 } from "builder-util"
 import { CancellationToken, deepAssign, retry } from "builder-util-runtime"
-import { chmod, mkdirs, outputFile } from "fs-extra"
+
 import { isCI } from "ci-info"
 import { Lazy } from "lazy-val"
 import { release as getOsRelease } from "os"
@@ -43,6 +43,8 @@ import { PACKAGE_VERSION } from "./version.js"
 import { AsyncEventEmitter, HandlerType } from "./util/asyncEventEmitter.js"
 import asyncPool from "tiny-async-pool"
 import { determinePackageManagerEnv, PM } from "./node-module-collector/index.js"
+import _fsExtra from "fs-extra"
+const { chmod, mkdirs, outputFile } = _fsExtra
 
 async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
   let framework = configuration.framework

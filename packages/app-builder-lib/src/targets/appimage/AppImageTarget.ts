@@ -1,5 +1,5 @@
 import { Arch, log, serializeToYaml } from "builder-util"
-import { outputFile } from "fs-extra"
+
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../../core.js"
@@ -11,6 +11,8 @@ import { LinuxTargetHelper } from "../LinuxTargetHelper.js"
 import { createStageDir } from "../targetUtil.js"
 import { buildLegacyFuse2AppImage, buildStaticRuntimeAppImage } from "./appImageUtil.js"
 import { BlockMapDataHolder, deepAssign } from "builder-util-runtime"
+import _fsExtra from "fs-extra"
+const { outputFile } = _fsExtra
 
 // https://unix.stackexchange.com/questions/375191/append-to-sub-directory-inside-squashfs-file
 

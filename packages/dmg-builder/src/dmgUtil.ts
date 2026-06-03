@@ -2,11 +2,13 @@ import { DmgContent, DmgOptions, MacPackager, PlatformPackager } from "app-build
 import { downloadBuilderToolset, withToolsetLock } from "app-builder-lib/internal"
 import { exec, executeFinally, exists, InvalidConfigurationError, isEmptyOrSpaces, log, TmpDir } from "builder-util"
 import { stat } from "fs/promises"
-import { writeFile } from "fs-extra"
+
 import * as path from "path"
 import { DmgBuildConfig } from "./dmg.js"
 import type { DmgBuildLicenseConfig } from "./dmgLicense.js"
 import { hdiUtil, hdiUtilWithStdin, hdiutilTransientExitCodes } from "./hdiuil.js"
+import _fsExtra from "fs-extra"
+const { writeFile } = _fsExtra
 
 export { DmgTarget } from "./dmg.js"
 

@@ -1,5 +1,5 @@
 import { asArray, log, spawn, stripSensitiveEnvVars } from "builder-util"
-import { pathExists } from "fs-extra"
+
 import { homedir } from "os"
 import * as path from "path"
 import { Configuration } from "../configuration.js"
@@ -9,6 +9,8 @@ import { rebuild as remoteRebuild } from "./rebuild.js"
 import * as which from "which"
 import type { RebuildOptions as ElectronRebuildOptions } from "@electron/rebuild"
 import { Nullish } from "builder-util-runtime"
+import _fsExtra from "fs-extra"
+const { pathExists } = _fsExtra
 
 export async function installOrRebuild(
   config: Configuration,

@@ -1,6 +1,6 @@
 import { Arch, asArray, exec, getArchSuffix, log, serializeToYaml, stripSensitiveEnvVars, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
 import { deepAssign, Nullish } from "builder-util-runtime"
-import { copyFile, outputFile, stat } from "fs-extra"
+
 import { mkdir, readFile } from "fs/promises"
 import * as path from "path"
 import { smarten } from "../appInfo.js"
@@ -17,6 +17,8 @@ import { isMacOsSierra } from "../util/macosVersion.js"
 import { getTemplatePath } from "../util/pathManager.js"
 import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper.js"
 import { getFpmPath, getLinuxToolsPath } from "../toolsets/linux.js"
+import _fsExtra from "fs-extra"
+const { copyFile, outputFile, stat } = _fsExtra
 
 interface FpmOptions {
   name: string

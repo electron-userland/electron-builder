@@ -1,6 +1,6 @@
 import { asArray, InvalidConfigurationError, log, retry } from "builder-util"
 import { MemoLazy, parseDn } from "builder-util-runtime"
-import { rename } from "fs-extra"
+
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../core.js"
@@ -15,6 +15,8 @@ import { WinPackager } from "../winPackager.js"
 import { importCertificate } from "./codesign.js"
 import { SignManager } from "./signManager.js"
 import { WindowsSignOptions } from "./windowsCodeSign.js"
+import _fsExtra from "fs-extra"
+const { rename } = _fsExtra
 
 export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration, packager?: WinPackager) => Promise<any>
 

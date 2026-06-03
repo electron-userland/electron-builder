@@ -12,7 +12,7 @@ import {
   to7zaOutputSwitch,
   unlinkIfExists,
 } from "builder-util"
-import { emptyDir, readdir, rename, rm } from "fs-extra"
+
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
 import { Configuration } from "../configuration.js"
@@ -28,6 +28,8 @@ import { createMacApp } from "./electronMac.js"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion.js"
 import { addWinAsarIntegrity } from "./electronWin.js"
 import { FFMPEGInjector } from "./injectFFMPEG.js"
+import _fsExtra from "fs-extra"
+const { emptyDir, readdir, rename, rm } = _fsExtra
 
 export type ElectronPlatformName = "darwin" | "linux" | "win32" | "mas"
 

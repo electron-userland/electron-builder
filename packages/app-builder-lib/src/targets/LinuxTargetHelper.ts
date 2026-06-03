@@ -1,6 +1,6 @@
 import { asArray, exists, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { deepAssign } from "builder-util-runtime"
-import { outputFile } from "fs-extra"
+
 import { Lazy } from "lazy-val"
 import { join } from "path"
 import * as semver from "semver"
@@ -12,6 +12,8 @@ import { SnapCore24 } from "./snap/core24.js"
 import { SnapCoreCustom } from "./snap/coreCustom.js"
 import { SnapCoreLegacy } from "./snap/coreLegacy.js"
 import { IconInfo } from "../util/iconConverter.js"
+import _fsExtra from "fs-extra"
+const { outputFile } = _fsExtra
 
 /**
  * Escape a string value for use in a freedesktop .desktop file string field

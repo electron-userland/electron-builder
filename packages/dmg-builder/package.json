@@ -34,7 +34,7 @@
   "dependencies": {
     "app-builder-lib": "workspace:*",
     "builder-util": "workspace:*",
-    "fs-extra": "^10.1.0",
+    "fs-extra": "^11.3.0",
     "js-yaml": "^4.1.0"
   },
   "devDependencies": {

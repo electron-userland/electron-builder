@@ -1,6 +1,6 @@
 import { Arch, exists, resolveEnvToolsetPath } from "builder-util"
 import { Nullish } from "builder-util-runtime"
-import { stat } from "fs-extra"
+
 import * as os from "os"
 import * as path from "path"
 import { getBinFromCustomLoc, getBinFromUrl } from "../binDownload.js"
@@ -8,6 +8,8 @@ import { ToolsetConfig } from "../configuration.js"
 import { ToolInfo, computeToolEnv } from "../util/bundledTool.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
 import { isUseSystemSigncode } from "../util/flags.js"
+import _fsExtra from "fs-extra"
+const { stat } = _fsExtra
 
 function getLegacyWinCodeSignBin(): Promise<string> {
   return downloadBuilderToolset({

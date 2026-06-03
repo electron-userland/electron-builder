@@ -1,6 +1,6 @@
 import { Arch, asArray, copyOrLinkFile, InvalidConfigurationError, log, walk } from "builder-util"
 import { deepAssign, Nullish } from "builder-util-runtime"
-import { emptyDir, readdir, readFile, writeFile } from "fs-extra"
+
 import * as path from "path"
 import { AppXOptions } from "../index.js"
 import { getWindowsKitsBundle } from "../toolsets/windows.js"
@@ -11,6 +11,8 @@ import { WinPackager } from "../winPackager.js"
 import { createStageDir } from "./targetUtil.js"
 import { isOldWin6 } from "../toolsets/windows.js"
 import { CAPABILITIES, isValidCapabilityName } from "./AppxCapabilities.js"
+import _fsExtra from "fs-extra"
+const { emptyDir, readdir, readFile, writeFile } = _fsExtra
 
 const APPX_ASSETS_DIR_NAME = "appx"
 

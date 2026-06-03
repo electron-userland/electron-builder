@@ -1,11 +1,13 @@
 import { debug7z, exec, exists, getPath7za, log, statOrNull, unlinkIfExists } from "builder-util"
-import { move } from "fs-extra"
+
 import * as path from "path"
 import { create } from "tar"
 import { TmpDir } from "temp-file"
 import { CompressionLevel } from "../core.js"
 import { getLinuxToolsMacToolset } from "../toolsets/linux.js"
 import type { TarOptionsWithAliasesAsync } from "tar"
+import _fsExtra from "fs-extra"
+const { move } = _fsExtra
 
 const ALLOWED_7Z_FILTERS = new Set(["BCJ", "BCJ2", "ARM", "ARMT", "IA64", "PPC", "SPARC", "DELTA"])
 

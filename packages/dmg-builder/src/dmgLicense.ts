@@ -1,9 +1,11 @@
 import { PlatformPackager } from "app-builder-lib"
 import { getLicenseFiles } from "app-builder-lib/internal"
 import { InvalidConfigurationError } from "builder-util"
-import { readFile, readJson } from "fs-extra"
+
 import { CORE_SCHEMA, load } from "js-yaml"
 import { getLicenseButtonsFile } from "./licenseButtons.js"
+import _fsExtra from "fs-extra"
+const { readFile, readJson } = _fsExtra
 
 export type DmgBuildLicenseConfig = {
   "default-language": string

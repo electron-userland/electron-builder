@@ -166,8 +166,8 @@ importers:
         specifier: workspace:*
         version: link:../electron-publish
       fs-extra:
-        specifier: ^10.1.0
-        version: 10.1.0
+        specifier: ^11.3.0
+        version: 11.3.0
       hosted-git-info:
         specifier: ^4.1.0
         version: 4.1.0
@@ -317,6 +317,8 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0
 
+  packages/app-builder-lib/helpers: {}
+
   packages/builder-util:
     dependencies:
       7zip-bin:
@@ -341,8 +343,8 @@ importers:
         specifier: ^4.3.4
         version: 4.4.3
       fs-extra:
-        specifier: ^10.1.0
-        version: 10.1.0
+        specifier: ^11.3.0
+        version: 11.3.0
       http-proxy-agent:
         specifier: ^7.0.0
         version: 7.0.2
@@ -409,8 +411,8 @@ importers:
         specifier: workspace:*
         version: link:../builder-util
       fs-extra:
-        specifier: ^10.1.0
-        version: 10.1.0
+        specifier: ^11.3.0
+        version: 11.3.0
       js-yaml:
         specifier: ^4.1.0
         version: 4.1.1
@@ -446,8 +448,8 @@ importers:
         specifier: workspace:*
         version: link:../dmg-builder
       fs-extra:
-        specifier: ^10.1.0
-        version: 10.1.0
+        specifier: ^11.3.0
+        version: 11.3.0
       lazy-val:
         specifier: ^1.0.5
         version: 1.0.5
@@ -529,8 +531,8 @@ importers:
         specifier: ^4.0.5
         version: 4.0.5
       fs-extra:
-        specifier: ^10.1.0
-        version: 10.1.0
+        specifier: ^11.3.0
+        version: 11.3.0
       lazy-val:
         specifier: ^1.0.5
         version: 1.0.5

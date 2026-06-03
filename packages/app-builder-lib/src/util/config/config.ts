@@ -1,6 +1,9 @@
+import { createRequire } from "node:module"
 import { DebugLogger, InvalidConfigurationError, log, safeStringifyJson, statOrNull } from "builder-util"
+
+const _requireResolve = createRequire(import.meta.url).resolve
 import { deepAssign, Nullish } from "builder-util-runtime"
-import { readJson } from "fs-extra"
+
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Configuration } from "../../configuration.js"
@@ -9,6 +12,8 @@ import { reactCra } from "../../presets/rectCra.js"
 import { PACKAGE_VERSION } from "../../version.js"
 import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load.js"
 import { validateSchema } from "./schemaValidator.js"
+import _fsExtra from "fs-extra"
+const { readJson } = _fsExtra
 
 // https://github.com/electron-userland/electron-builder/issues/1847
 function mergePublish(config: Configuration, configFromOptions: Configuration) {
@@ -59,9 +64,9 @@ export async function getConfig(
     } else if (devDependencies != null && "electron-webpack" in devDependencies) {
       let file = "electron-webpack/out/electron-builder.js"
       try {
-        file = require.resolve(file)
+        file = _requireResolve(file)
       } catch (_ignore) {
-        file = require.resolve("electron-webpack/electron-builder.yml")
+        file = _requireResolve("electron-webpack/electron-builder.yml")
       }
       config.extends = `file:${file}`
     }

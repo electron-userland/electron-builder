@@ -13,8 +13,9 @@ import SmartSequencer from "./vitest-smart-sequencer"
 // bundled (CJS+ESM) by tsup, but tests must run against un-bundled source so vite handles CJS interop
 // (e.g. fs-extra) and circular deps, and so `vi.mock` can intercept individual internal modules.
 const PACKAGES_DIR = path.join(__dirname, "..", "..", "packages")
+const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 const sourceAlias = (specifier: string, relPath: string) => ({
-  find: new RegExp(`^${specifier.replace(/\//g, "\\/")}$`),
+  find: new RegExp(`^${escapeRegex(specifier)}$`),
   replacement: path.join(PACKAGES_DIR, relPath),
 })
 const workspaceSourceAliases = [
@@ -34,9 +35,9 @@ const workspaceSourceAliases = [
   sourceAlias("electron-builder", "electron-builder/src/index.ts"),
 ]
 
-const testRegex = TEST_FILES_PATTERN?.split(",")
-const includeRegex = `(${testRegex.join("|")}|${testRegex.map(t => `${t}*Test`).join("|")})`
-console.log("TEST_FILES pattern", includeRegex)
+const testPatterns = TEST_FILES_PATTERN.split(",").map(s => s.trim()).filter(Boolean)
+const includeGlob = `(${testPatterns.join("|")}|${testPatterns.map(t => `${t}*Test`).join("|")})`
+console.log("TEST_FILES pattern", includeGlob)
 
 async function main() {
   generateTests()
@@ -83,7 +84,7 @@ async function main() {
       // Allow test metadata
       includeTaskLocation: true,
       setupFiles: [__dirname + "/vitest-setup.ts", __dirname + "/vitest-heavy-mutex.ts"],
-      include: [`test/src/**/${includeRegex}.ts`],
+      include: [`test/src/**/${includeGlob}.ts`],
 
       printConsoleTrace: true,
       runner: __dirname + "/vitest-network-retry-runner.ts",

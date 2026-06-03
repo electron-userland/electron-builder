@@ -9247,10 +9247,10 @@
     "electronDownload": {
       "anyOf": [
         {
-          "$ref": "#/definitions/ElectronDownloadOptions"
+          "$ref": "#/definitions/ElectronGetOptions"
         },
         {
-          "$ref": "#/definitions/ElectronGetOptions"
+          "$ref": "#/definitions/ElectronDownloadOptions"
         },
         {
           "type": "null"

@@ -11,8 +11,10 @@ import { install as installSourceMap } from "source-map-support"
 import { getPath7za } from "./7za.js"
 import { debug, log } from "./log.js"
 import { exists } from "./fs.js"
-import { mkdir } from "fs-extra"
+
 import { isEmptyOrSpaces } from "./stringUtil.js"
+import _fsExtra from "fs-extra"
+const { mkdir } = _fsExtra
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()

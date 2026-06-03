@@ -3,10 +3,15 @@ import { addValue, Arch, archFromString } from "builder-util"
 import { deepAssign } from "builder-util-runtime"
 import * as chalk from "chalk"
 import { PublishOptions } from "electron-publish"
+import { hideBin } from "yargs/helpers"
 import * as yargs from "yargs"
 
 export function createYargs(): yargs.Argv<unknown> {
-  return (yargs as unknown as yargs.Argv<unknown>).parserConfiguration({
+  // In ESM, yargs.default is the factory function; call it to create an instance.
+  // In CJS, yargs.default is already an Argv singleton.
+  const factory = (yargs as any).default ?? yargs
+  const instance = typeof factory?.parserConfiguration === "function" ? factory : factory(hideBin(process.argv))
+  return (instance as unknown as yargs.Argv<unknown>).parserConfiguration({
     "camel-case-expansion": false,
   })
 }
