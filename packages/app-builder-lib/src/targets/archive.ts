@@ -182,12 +182,7 @@ export async function archive(format: string, outFile: string, dirToArchive: str
     }
 
     try {
-      await exec(
-        await getPath7za(),
-        args,
-        { cwd: options.withoutDir ? dirToArchive : path.dirname(dirToArchive) },
-        debug7z.enabled
-      )
+      await exec(await getPath7za(), args, { cwd: options.withoutDir ? dirToArchive : path.dirname(dirToArchive) }, debug7z.enabled)
     } catch (e: any) {
       if (e.code === "ENOENT" && !(await exists(dirToArchive))) {
         throw new Error(`Cannot create archive: "${dirToArchive}" doesn't exist`)

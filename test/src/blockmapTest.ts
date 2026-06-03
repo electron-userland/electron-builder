@@ -222,7 +222,6 @@ describe("buildBlockMap — JS snapshots and binary golden-output", () => {
     expect(js.version).toBe("2")
     expect(js.files[0].name).toBe("file")
     expect(js.files[0].offset).toBe(0)
-
   })
 
   it("multi-chunk random data (200 KB, seed 12345): sizes and checksums are snapshotted", async () => {
@@ -238,7 +237,6 @@ describe("buildBlockMap — JS snapshots and binary golden-output", () => {
     expect(js.files[0].checksums).toMatchSnapshot()
     // Multiple chunks expected for 200 KB with 16 KB average
     expect(js.files[0].sizes.length).toBeGreaterThan(1)
-
   })
 
   it("multi-chunk random data (500 KB, seed 99999): sizes and checksums are snapshotted", async () => {

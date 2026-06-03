@@ -138,10 +138,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
       }
       const allow = options.allowNativeWayland
       const isOldElectron = !this.helper.isElectronVersionGreaterOrEqualThan("38.0.0", "7.0.0")
-      if (
-        (allow == null && isOldElectron) ||
-        allow === false
-      ) {
+      if ((allow == null && isOldElectron) || allow === false) {
         environment.DISABLE_WAYLAND = "1"
       }
 
@@ -291,21 +288,20 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
       ...(await readDirPaths(stageDir)),
       ...(await readDirPaths(appOutDir, name => name !== "LICENSES.chromium.html" && name !== "LICENSE.electron.txt" && name !== "chrome-sandbox")),
       artifactPath,
-      "-no-progress", "-quiet", "-noappend",
-      "-comp", compression,
-      "-no-xattrs", "-no-fragments", "-all-root",
+      "-no-progress",
+      "-quiet",
+      "-noappend",
+      "-comp",
+      compression,
+      "-no-xattrs",
+      "-no-fragments",
+      "-all-root",
     ]
 
     await exec(mksquashfsPath, mksquashfsArgs, { cwd: stageDir })
   }
 
-  private async buildWithoutTemplate(opts: {
-    appOutDir: string
-    stageDir: string
-    artifactPath: string
-    hooksDir: string | null
-    extraAppArgs: string[]
-  }): Promise<void> {
+  private async buildWithoutTemplate(opts: { appOutDir: string; stageDir: string; artifactPath: string; hooksDir: string | null; extraAppArgs: string[] }): Promise<void> {
     const { appOutDir, stageDir, artifactPath, hooksDir, extraAppArgs } = opts
 
     await this.stageSnapFiles({ stageDir, appOutDir, hooksDir, extraAppArgs, isTemplate: false })
@@ -341,13 +337,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
     }
   }
 
-  private async stageSnapFiles(opts: {
-    stageDir: string
-    appOutDir: string
-    hooksDir: string | null
-    extraAppArgs: string[]
-    isTemplate: boolean
-  }): Promise<void> {
+  private async stageSnapFiles(opts: { stageDir: string; appOutDir: string; hooksDir: string | null; extraAppArgs: string[]; isTemplate: boolean }): Promise<void> {
     const { stageDir, hooksDir, extraAppArgs, isTemplate } = opts
 
     const snapMetaDir = path.join(stageDir, isTemplate ? "meta" : "snap")

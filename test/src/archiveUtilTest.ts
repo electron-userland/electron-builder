@@ -136,9 +136,7 @@ describe("compute7zCompressArgs", () => {
 describe("archive() guards", () => {
   test("excluded pattern with '..' throws before reaching 7za", async ({ expect }) => {
     const src = await makeSrcDir()
-    await expect(
-      archive("zip", path.join(tmpDir, "out.zip"), src, { excluded: ["../secret"] })
-    ).rejects.toThrow("path traversal sequence")
+    await expect(archive("zip", path.join(tmpDir, "out.zip"), src, { excluded: ["../secret"] })).rejects.toThrow("path traversal sequence")
   })
 
   test.ifNotWindows("skips archiving when output is newer than source dir", async ({ expect }) => {

@@ -172,9 +172,7 @@ describe("readCertInfo — special characters in DN values", () => {
     // , and + in the CN value must cause the whole value to be wrapped in quotes
     expect(jsResult.bloodyMicrosoftSubjectDn).toBe(`CN="Publisher, Inc. + Partners",C=US`)
   })
-
 })
-
 
 // ─── Security: pkcs12PasswordToUtf16 encoding ────────────────────────────────
 

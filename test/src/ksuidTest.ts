@@ -99,4 +99,3 @@ describe("generateKsuid — timestamp encoding", () => {
     expect(payload.toString("hex")).not.toBe(payload2.toString("hex"))
   })
 })
-

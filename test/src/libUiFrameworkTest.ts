@@ -1,12 +1,7 @@
 import * as path from "path"
 import { describe, expect } from "vitest"
 import { Platform } from "app-builder-lib/src/core"
-import {
-  getLaunchUiDownloadParams,
-  getNodeJsDownloadParams,
-  LAUNCHUI_DEFAULT_VERSION,
-  validateShellEmbeddable,
-} from "app-builder-lib/src/frameworks/LibUiFramework"
+import { getLaunchUiDownloadParams, getNodeJsDownloadParams, LAUNCHUI_DEFAULT_VERSION, validateShellEmbeddable } from "app-builder-lib/src/frameworks/LibUiFramework"
 
 // Pure mapping functions — no mocking required.
 // The async downloadNodeJsBinary / downloadLaunchUiDir wrappers are covered by protonTest.ts.
@@ -127,7 +122,7 @@ describe.sequential("LibUiFramework helpers", () => {
         ["index.js\nevil", "newline"],
         ["$(rm -rf /)", "command substitution"],
         ["`id`", "backtick substitution"],
-      ])("rejects %j (contains %s)", (value) => {
+      ])("rejects %j (contains %s)", value => {
         expect(() => validateShellEmbeddable(value as string, "test field")).toThrow()
       })
     })

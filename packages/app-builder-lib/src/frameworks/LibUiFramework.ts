@@ -17,8 +17,7 @@ export function validateShellEmbeddable(value: string, fieldName: string): void 
   // inside a double-quoted string: $, `, ", \, and newlines.
   if (/[$`"\\\n]/.test(value)) {
     throw new InvalidConfigurationError(
-      `${fieldName} contains characters that are not safe in shell scripts: ${JSON.stringify(value)}. ` +
-        `Avoid $, backtick, double-quote, backslash, and newline characters.`
+      `${fieldName} contains characters that are not safe in shell scripts: ${JSON.stringify(value)}. ` + `Avoid $, backtick, double-quote, backslash, and newline characters.`
     )
   }
 }
