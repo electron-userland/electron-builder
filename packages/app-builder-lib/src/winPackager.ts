@@ -1,4 +1,4 @@
-import { Arch, CopyFileTransformer, executeAppBuilder, exists, FileTransformer, InvalidConfigurationError, log, use, walk } from "builder-util"
+import { Arch, CopyFileTransformer, exists, FileTransformer, InvalidConfigurationError, log, walk } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { isCI } from "ci-info"
 import { createHash } from "crypto"
@@ -22,12 +22,11 @@ import { NsisTarget } from "./targets/nsis/NsisTarget"
 import { AppPackageHelper, CopyElevateHelper } from "./targets/nsis/nsisUtil"
 import { WebInstallerTarget } from "./targets/nsis/WebInstallerTarget"
 import { createCommonTarget } from "./targets/targetFactory"
-import { getRceditBundle } from "./toolsets/windows"
 import { BuildCacheManager, digest } from "./util/cacheManager"
 import { isBuildCacheEnabled } from "./util/flags"
+import { editWindowsResources, ResourceEditOptions } from "./util/resEdit"
 import { time } from "./util/timer"
 import { getWindowsVm, VmManager } from "./vm/vm"
-import { execWine } from "./wine"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))
@@ -128,9 +127,17 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       log.info(logFields, "file signing skipped via signExts configuration")
       return false
     }
+    if (this.platformSpecificBuildOptions.signExecutable === false) {
+      log.info(logFields, "file signing skipped via signExecutable configuration")
+      return false
+    }
 
-    this.signingQueue = this.signingQueue.then(() => this._sign(file))
-    return this.signingQueue
+    const promise = this.signingQueue.then(() => this._sign(file))
+    this.signingQueue = promise.catch(e => {
+      log.warn({ file: log.filePath(file), error: e.message }, "signing failed for file, queue will continue to next file")
+      return false
+    })
+    return promise
   }
 
   private async _sign(file: string): Promise<boolean> {
@@ -153,38 +160,37 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
     const files: Array<string> = []
 
-    const args = [
-      file,
-      "--set-version-string",
-      "FileDescription",
-      appInfo.productName,
-      "--set-version-string",
-      "ProductName",
-      appInfo.productName,
-      "--set-version-string",
-      "LegalCopyright",
-      appInfo.copyright,
-      "--set-file-version",
-      appInfo.shortVersion || appInfo.buildVersion,
-      "--set-product-version",
-      appInfo.shortVersionWindows || appInfo.getVersionInWeirdWindowsForm(),
-    ]
+    const versionStrings: Record<string, string> = {
+      FileDescription: appInfo.productName,
+      ProductName: appInfo.productName,
+      LegalCopyright: appInfo.copyright,
+    }
 
     if (internalName != null) {
-      args.push("--set-version-string", "InternalName", internalName, "--set-version-string", "OriginalFilename", "")
+      versionStrings.InternalName = internalName
+      versionStrings.OriginalFilename = ""
     }
 
-    if (requestedExecutionLevel != null && requestedExecutionLevel !== "asInvoker") {
-      args.push("--set-requested-execution-level", requestedExecutionLevel)
+    if (appInfo.companyName != null) {
+      versionStrings.CompanyName = appInfo.companyName
+    }
+    if (this.platformSpecificBuildOptions.legalTrademarks != null) {
+      versionStrings.LegalTrademarks = this.platformSpecificBuildOptions.legalTrademarks
     }
 
-    use(appInfo.companyName, it => args.push("--set-version-string", "CompanyName", it))
-    use(this.platformSpecificBuildOptions.legalTrademarks, it => args.push("--set-version-string", "LegalTrademarks", it))
     const iconPath = await this.getIconPath()
-    use(iconPath, it => {
-      files.push(it)
-      args.push("--set-icon", it)
-    })
+    if (iconPath != null) {
+      files.push(iconPath)
+    }
+
+    const opts: ResourceEditOptions = {
+      file,
+      versionStrings,
+      fileVersion: appInfo.shortVersion || appInfo.buildVersion,
+      productVersion: appInfo.shortVersionWindows || appInfo.getVersionInWeirdWindowsForm(),
+      requestedExecutionLevel,
+      iconPath,
+    }
 
     const config = this.config
     const cscInfoForCacheDigest = !isBuildCacheEnabled() || isCI || config.electronDist != null ? null : await (await this.signingManager.value).cscInfo.value
@@ -200,7 +206,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       const hash = createHash("sha512")
       hash.update(config.electronVersion || "no electronVersion")
       hash.update(JSON.stringify(this.platformSpecificBuildOptions))
-      hash.update(JSON.stringify(args))
+      hash.update(JSON.stringify(opts))
       hash.update(this.platformSpecificBuildOptions.signtoolOptions?.certificateSha1 || "no certificateSha1")
       hash.update(this.platformSpecificBuildOptions.signtoolOptions?.certificateSubjectName || "no subjectName")
 
@@ -219,15 +225,8 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       timer.end()
     }
 
-    const timer = time("wine&sign")
-    // rcedit crashed of executed using wine, resourcehacker works
-    if (process.platform === "win32" || process.platform === "darwin") {
-      await executeAppBuilder(["rcedit", "--args", JSON.stringify(args)], undefined /* child-process */, {}, 3 /* retry three times */)
-    } else if (this.info.framework.name === "electron") {
-      const vendor = await getRceditBundle(this.config.toolsets?.winCodeSign)
-      await execWine(vendor.x86, vendor.x64, args)
-    }
-
+    const timer = time("resource-edit&sign")
+    await editWindowsResources(opts)
     await this.signIf(file)
     timer.end()
 
@@ -237,10 +236,10 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   }
 
   private shouldSignFile(file: string, fallbackValue = false): boolean {
-    const backwardCompatibility = file.endsWith(".exe")
+    const isExe = file.endsWith(".exe")
     const signExts = this.platformSpecificBuildOptions.signExts
     if (!signExts?.length) {
-      return backwardCompatibility || fallbackValue
+      return isExe || fallbackValue
     }
     // process patterns ( !exe => exclude .exe, .dll => include .dll )
     // we process first to allow literal negatives in case a filename matches "help!.txt" or similar
@@ -251,12 +250,11 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     if (signExts.some(ext => ext.startsWith("!") && file.endsWith(ext.substring(1)))) {
       return false
     }
-    // if no explicit patterns matched, fall back to backward compatibility
-    return backwardCompatibility || fallbackValue
+    return isExe || fallbackValue
   }
 
   protected createTransformerForExtraFiles(packContext: AfterPackContext): FileTransformer | null {
-    if (this.platformSpecificBuildOptions.signAndEditExecutable === false) {
+    if (this.platformSpecificBuildOptions.signAndEditExecutable === false || this.platformSpecificBuildOptions.signExecutable === false) {
       return null
     }
 
@@ -273,7 +271,17 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
   protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<boolean> {
     const exeFileName = `${this.appInfo.productFilename}.exe`
+    const signingDisabled = this.platformSpecificBuildOptions.signExecutable === false || this.platformSpecificBuildOptions.signAndEditExecutable === false
+    if (signingDisabled && this.forceCodeSigning) {
+      throw new InvalidConfigurationError(
+        "Signing is disabled (`signExecutable: false` or `signAndEditExecutable: false`) but `forceCodeSigning` is enabled. Remove one of these options."
+      )
+    }
     if (this.platformSpecificBuildOptions.signAndEditExecutable === false) {
+      log.info(
+        { exe: log.filePath(path.join(packContext.appOutDir, exeFileName)) },
+        "executable resource editing and code signing skipped — signAndEditExecutable is false. To skip only code signing while keeping icon and metadata applied, use signExecutable: false instead."
+      )
       return false
     }
 
@@ -292,19 +300,23 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       }
     }
 
-    if (!isAsar) {
+    if (!isAsar || this.platformSpecificBuildOptions.signExecutable === false) {
       return true
     }
 
-    const filesPromise = (filepath: string[]) => {
-      const outDir = path.join(packContext.appOutDir, ...filepath)
-      return walk(outDir, (file, stat) => stat.isDirectory() || this.shouldSignFile(file))
-    }
-    const filesToSign = await Promise.all([filesPromise(["resources", "app.asar.unpacked"]), filesPromise(["swiftshader"])])
+    const filesToSign = await Promise.all([
+      this.walkSignableFiles(packContext.appOutDir, "resources", "app.asar.unpacked"),
+      // Note: The `swiftshader` directory is absent in modern electron versions. `swiftshader/` held Chromium's legacy SwiftShader GL fallback (libEGL.dll / libGLESv2.dll), removed in Chromium 102 (Electron 19+) in favor of SwANGLE (ANGLE + SwiftShader Vulkan). This is kept here only for backwards compat with older Electron; `walk` no-ops on a missing dir (readdir ENOENT is swallowed), so this is harmless when the directory is absent.
+      this.walkSignableFiles(packContext.appOutDir, "swiftshader"),
+    ])
     for (const file of filesToSign.flat(1)) {
       await this.signIf(file)
     }
 
     return true
+  }
+
+  private walkSignableFiles(baseDir: string, ...subpath: string[]): Promise<string[]> {
+    return walk(path.join(baseDir, ...subpath), (file, stat) => stat.isDirectory() || this.shouldSignFile(file))
   }
 }

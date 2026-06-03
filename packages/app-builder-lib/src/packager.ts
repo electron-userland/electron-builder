@@ -4,18 +4,18 @@ import {
   archFromString,
   AsyncTaskManager,
   DebugLogger,
-  deepAssign,
   executeFinally,
   getArtifactArchName,
   InvalidConfigurationError,
   log,
   MAX_FILE_REQUESTS,
   orNullIfFileNotExist,
+  sanitizeDirPath,
   safeStringifyJson,
   serializeToYaml,
   TmpDir,
 } from "builder-util"
-import { CancellationToken, retry } from "builder-util-runtime"
+import { CancellationToken, deepAssign, retry } from "builder-util-runtime"
 import { chmod, mkdirs, outputFile } from "fs-extra"
 import { isCI } from "ci-info"
 import { Lazy } from "lazy-val"
@@ -35,7 +35,6 @@ import { ProtonFramework } from "./ProtonFramework"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
 import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config"
 import { expandMacro } from "./util/macroExpander"
-import { createLazyProductionDeps, NodeModuleDirInfo, NodeModuleInfo } from "./util/packageDependencies"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata"
 import { getRepositoryInfo } from "./util/repositoryInfo"
 import { resolveFunction } from "./util/resolve"
@@ -60,12 +59,11 @@ async function createFrameworkInfo(configuration: Configuration, packager: Packa
     nodeVersion = process.versions.node
   }
 
-  const distMacOsName = `${packager.appInfo.productFilename}.app`
   const isUseLaunchUi = configuration.launchUiVersion !== false
   if (framework === "proton" || framework === "proton-native") {
-    return new ProtonFramework(nodeVersion, distMacOsName, isUseLaunchUi)
+    return new ProtonFramework(nodeVersion, packager.appInfo.productFilename, isUseLaunchUi)
   } else if (framework === "libui") {
-    return new LibUiFramework(nodeVersion, distMacOsName, isUseLaunchUi)
+    return new LibUiFramework(nodeVersion, packager.appInfo.productFilename, isUseLaunchUi)
   } else {
     throw new InvalidConfigurationError(`Unknown framework: ${framework}`)
   }
@@ -104,9 +102,21 @@ export class Packager {
     return (await (await this._packageManager.value).workspaceRoot) || this.projectDir
   }
 
+  /** Stores original metadata merged with extraMetadata from configuration. */
   private _metadata: Metadata | null = null
   get metadata(): Metadata {
     return this._metadata!
+  }
+
+  /** Stores original metadata from package.json before merging with extraMetadata. */
+  private _originalMetadata: Metadata | null = null
+  get originalMetadata(): Metadata {
+    return this._originalMetadata!
+  }
+
+  /** The "name" field from package.json. */
+  get nodePackageName() {
+    return this.originalMetadata.name!
   }
 
   private _nodeModulesHandledExternally = false
@@ -153,27 +163,7 @@ export class Packager {
     return this._repositoryInfo.value
   }
 
-  private nodeDependencyInfo = new Map<string, Lazy<Array<any>>>()
-
   private runtimeEnvironmentVariables: NodeJS.ProcessEnv = {}
-
-  getNodeDependencyInfo(platform: Platform | null, flatten: boolean = true): Lazy<Array<NodeModuleInfo | NodeModuleDirInfo>> {
-    let key = "" + flatten.toString()
-    let excludedDependencies: Array<string> | null = null
-    if (platform != null && this.framework.getExcludedDependencies != null) {
-      excludedDependencies = this.framework.getExcludedDependencies(platform)
-      if (excludedDependencies != null) {
-        key += `-${platform.name}`
-      }
-    }
-
-    let result = this.nodeDependencyInfo.get(key)
-    if (result == null) {
-      result = createLazyProductionDeps(this.appDir, excludedDependencies, flatten)
-      this.nodeDependencyInfo.set(key, result)
-    }
-    return result
-  }
 
   stageDirPathCustomizer: (target: Target, packager: PlatformPackager<any>, arch: Arch) => string = (target, packager, arch) => {
     return path.join(target.outDir, `__${target.name}-${getArtifactArchName(arch, target.name)}`)
@@ -263,13 +253,13 @@ export class Packager {
       processTargets(Platform.WINDOWS, options.win)
     }
 
-    this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
+    this.projectDir = sanitizeDirPath(options.projectDir == null ? process.cwd() : options.projectDir)
     this._appDir = this.projectDir
     this._packageManager = determinePackageManagerEnv({ projectDir: this.projectDir, appDir: this.appDir, workspaceRoot: undefined })
 
     this.options = {
       ...options,
-      prepackaged: options.prepackaged == null ? null : path.resolve(this.projectDir, options.prepackaged),
+      prepackaged: options.prepackaged == null ? null : sanitizeDirPath(path.resolve(this.projectDir, options.prepackaged)),
     }
 
     log.info({ version: PACKAGE_VERSION, os: getOsRelease() }, "electron-builder")
@@ -277,16 +267,17 @@ export class Packager {
 
   private async addPackagerEventHandlers() {
     const { type } = this.appInfo
-    this.eventEmitter.on("artifactBuildStarted", await resolveFunction(type, this.config.artifactBuildStarted, "artifactBuildStarted"), "user")
-    this.eventEmitter.on("artifactBuildCompleted", await resolveFunction(type, this.config.artifactBuildCompleted, "artifactBuildCompleted"), "user")
+    const root = await this.getWorkspaceRoot()
+    this.eventEmitter.on("artifactBuildStarted", await resolveFunction(type, this.config.artifactBuildStarted, "artifactBuildStarted", root), "user")
+    this.eventEmitter.on("artifactBuildCompleted", await resolveFunction(type, this.config.artifactBuildCompleted, "artifactBuildCompleted", root), "user")
 
-    this.eventEmitter.on("appxManifestCreated", await resolveFunction(type, this.config.appxManifestCreated, "appxManifestCreated"), "user")
-    this.eventEmitter.on("msiProjectCreated", await resolveFunction(type, this.config.msiProjectCreated, "msiProjectCreated"), "user")
+    this.eventEmitter.on("appxManifestCreated", await resolveFunction(type, this.config.appxManifestCreated, "appxManifestCreated", root), "user")
+    this.eventEmitter.on("msiProjectCreated", await resolveFunction(type, this.config.msiProjectCreated, "msiProjectCreated", root), "user")
 
-    this.eventEmitter.on("beforePack", await resolveFunction(type, this.config.beforePack, "beforePack"), "user")
-    this.eventEmitter.on("afterExtract", await resolveFunction(type, this.config.afterExtract, "afterExtract"), "user")
-    this.eventEmitter.on("afterPack", await resolveFunction(type, this.config.afterPack, "afterPack"), "user")
-    this.eventEmitter.on("afterSign", await resolveFunction(type, this.config.afterSign, "afterSign"), "user")
+    this.eventEmitter.on("beforePack", await resolveFunction(type, this.config.beforePack, "beforePack", root), "user")
+    this.eventEmitter.on("afterExtract", await resolveFunction(type, this.config.afterExtract, "afterExtract", root), "user")
+    this.eventEmitter.on("afterPack", await resolveFunction(type, this.config.afterPack, "afterPack", root), "user")
+    this.eventEmitter.on("afterSign", await resolveFunction(type, this.config.afterSign, "afterSign", root), "user")
   }
 
   onAfterPack(handler: PackagerEvents["afterPack"]): Packager {
@@ -388,7 +379,8 @@ export class Packager {
     } else {
       this._metadata = await this.readProjectMetadataIfTwoPackageStructureOrPrepacked(appPackageFile)
     }
-    deepAssign(this.metadata, configuration.extraMetadata)
+    this._originalMetadata = deepAssign({}, this._metadata)
+    deepAssign(this._metadata, configuration.extraMetadata)
 
     if (this.isTwoPackageJsonProjectLayoutUsed) {
       log.debug({ devPackageFile, appPackageFile }, "two package.json structure is used")
@@ -612,7 +604,7 @@ export class Packager {
       return
     }
 
-    const beforeBuild = await resolveFunction(this.appInfo.type, config.beforeBuild, "beforeBuild")
+    const beforeBuild = await resolveFunction(this.appInfo.type, config.beforeBuild, "beforeBuild", await this.getWorkspaceRoot())
     if (beforeBuild != null) {
       const performDependenciesInstallOrRebuild = await beforeBuild({
         appDir: this.appDir,
@@ -638,7 +630,6 @@ export class Packager {
           frameworkInfo,
           platform: platform.nodeName,
           arch: Arch[arch],
-          productionDeps: this.getNodeDependencyInfo(null, false) as Lazy<Array<NodeModuleDirInfo>>,
         },
         false,
         this.runtimeEnvironmentVariables

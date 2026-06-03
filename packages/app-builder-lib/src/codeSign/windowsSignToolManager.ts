@@ -7,8 +7,9 @@ import { Target } from "../core"
 import { WindowsConfiguration } from "../options/winOptions"
 import AppXTarget from "../targets/AppxTarget"
 import { getSignToolPath } from "../toolsets/windows"
-import { executeAppBuilderAsJson } from "../util/appBuilder"
+import { ToolInfo } from "../util/bundledTool"
 import { resolveFunction } from "../util/resolve"
+import { readCertInfo } from "./certInfo"
 import { VmManager } from "../vm/vm"
 import { WinPackager } from "../winPackager"
 import { importCertificate } from "./codesign"
@@ -190,7 +191,7 @@ export class WindowsSignToolManager implements SignManager {
     const name = this.packager.appInfo.productName
     const site = await this.packager.appInfo.computePackageUrl()
 
-    const customSign = await resolveFunction(this.packager.appInfo.type, options.options.signtoolOptions?.sign, "sign")
+    const customSign = await resolveFunction(this.packager.appInfo.type, options.options.signtoolOptions?.sign, "sign", await this.packager.info.getWorkspaceRoot())
 
     const cscInfo = await this.cscInfo.value
     if (cscInfo) {
@@ -240,19 +241,12 @@ export class WindowsSignToolManager implements SignManager {
   }
 
   async getCertInfo(file: string, password: string): Promise<CertificateInfo> {
-    let result: any = null
     const errorMessagePrefix = "Cannot extract publisher name from code signing certificate. As workaround, set win.publisherName. Error: "
     try {
-      result = await executeAppBuilderAsJson<any>(["certificate-info", "--input", file, "--password", password])
+      return await readCertInfo(file, password)
     } catch (e: any) {
-      throw new Error(`${errorMessagePrefix}${e.stack || e}`)
+      throw new InvalidConfigurationError(`${errorMessagePrefix}${e.message || e}`)
     }
-
-    if (result.error != null) {
-      // noinspection ExceptionCaughtLocallyJS
-      throw new InvalidConfigurationError(`${errorMessagePrefix}${result.error}`)
-    }
-    return result
   }
 
   // on windows be aware of http://stackoverflow.com/a/32640183/1910191
@@ -339,6 +333,9 @@ export class WindowsSignToolManager implements SignManager {
   }
 
   private addCertificateArgs(args: Array<string>, options: WindowsSignTaskConfiguration, vm: VmManager, isWin: boolean): void {
+    if (options.cscInfo == null) {
+      throw new Error("No code signing certificate configured. Provide certificateFile, certificateSha1, or certificateSubjectName.")
+    }
     const certificateFile = (options.cscInfo as FileCodeSigningInfo).file
 
     if (certificateFile == null) {
@@ -428,6 +425,10 @@ export class WindowsSignToolManager implements SignManager {
     }
 
     throw new Error(`Cannot find certificate ${certificateSubjectName || certificateSha1}, all certs: ${rawResult}`)
+  }
+
+  async getToolPath(isWin = process.platform === "win32"): Promise<ToolInfo> {
+    return getSignToolPath(this.packager.config.toolsets?.winCodeSign, isWin)
   }
 
   async doSign(configuration: CustomWindowsSignTaskConfiguration, packager: WinPackager) {

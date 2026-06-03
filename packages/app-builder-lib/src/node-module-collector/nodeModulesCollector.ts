@@ -1,4 +1,4 @@
-import { exists, log, retry, TmpDir } from "builder-util"
+import { exists, log, retry, stripSensitiveEnvVars, TmpDir } from "builder-util"
 import * as childProcess from "child_process"
 import * as fs from "fs-extra"
 import { createWriteStream } from "fs-extra"
@@ -20,7 +20,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     const command = getPackageManagerCommand(manager)
     const config = (await this.asyncExec(command, ["config", "list"])).stdout
     if (config == null) {
-      log.debug({ manager }, "unable to determine if node_modules are hoisted: no config output. falling back to hoisted mode")
+      log.debug({ manager }, "unable to determine node-linker setting; assuming non-hoisted (virtual store) layout")
       return false
     }
     const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
@@ -292,7 +292,9 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     for (const d of dependencies.values()) {
       const reference = [...d.references][0]
       const key = `${d.name}@${reference}`
-      const p = this.allDependencies.get(key)?.path
+      // Normalize the path to handle mixed separators from pnpm JSON output on Windows
+      const rawPath = this.allDependencies.get(key)?.path
+      const p = rawPath != null ? path.normalize(rawPath) : undefined
       if (p === undefined) {
         this.cache.logSummary[LogMessageByKey.PKG_NOT_FOUND].push(key)
         continue
@@ -301,7 +303,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       // fix npm list issue
       // https://github.com/npm/cli/issues/8535
       if (!(await this.cache.exists[p])) {
-        this.cache.logSummary[LogMessageByKey.PKG_NOT_ON_DISK].push(key)
+        this.logMissingDependency(key)
         continue
       }
 
@@ -319,7 +321,13 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     result.sort((a, b) => a.name.localeCompare(b.name))
   }
 
-  async asyncExec(command: string, args: string[], cwd: string = this.rootDir): Promise<{ stdout: string | undefined; stderr: string | undefined }> {
+  protected logMissingDependency(pkgName: string) {
+    const PLATFORM_PACKAGE_RE = /(linux|win32|darwin|freebsd|android)[-_](x64|arm64|ia32|arm|ppc64|s390x|loong64|riscv64|universal)/
+    const diskLogKey = PLATFORM_PACKAGE_RE.test(pkgName) ? LogMessageByKey.PKG_OPTIONAL_PLATFORM_NOT_INSTALLED : LogMessageByKey.PKG_NOT_ON_DISK
+    this.cache.logSummary[diskLogKey].push(pkgName)
+  }
+
+  protected async asyncExec(command: string, args: string[], cwd: string = this.rootDir): Promise<{ stdout: string | undefined; stderr: string | undefined }> {
     const file = await this.tempDirManager.getTempFile({ prefix: "exec-", suffix: ".txt" })
     try {
       await this.streamCollectorCommandToFile(command, args, cwd, file)
@@ -335,8 +343,9 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * Executes a command and streams its output to a file.
    *
    * Spawns a child process to execute the specified command with arguments, capturing stdout
-   * to a file. Handles Windows-specific quirks by wrapping .cmd files in a temporary .bat file
-   * when necessary. Enables corepack strict mode by default but allows process.env overrides.
+   * to a file. On Windows, wraps the invocation in `powershell.exe -EncodedCommand` (UTF-16LE
+   * base64) to avoid spawning `.cmd` shims directly and to eliminate shell-injection surface area.
+   * Enables corepack strict mode by default but allows process.env overrides.
    *
    * Special handling for `npm list` exit code 1, which is expected in certain scenarios.
    *
@@ -347,31 +356,26 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * @returns Promise that resolves when the command completes successfully or rejects if it fails
    * @throws {Error} If the child process spawn fails or exits with a non-zero code
    */
-  async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
+  protected async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
+    // Derive execName from the original command so the npm-list shouldIgnore check below keys off the
+    // real invocation (e.g. "npm"), not the "powershell" wrapper we spawn on Windows.
     const execName = path.basename(command, path.extname(command))
-    const isWindowsScriptFile = process.platform === "win32" && path.extname(command).toLowerCase() === ".cmd"
-    if (isWindowsScriptFile) {
-      // If the command is a Windows script file (.cmd), we need to wrap it in a .bat file to ensure it runs correctly with cmd.exe
-      // This is necessary because .cmd files are not directly executable in the same way as .bat files.
-      // We create a temporary .bat file that calls the .cmd file with the provided arguments. The .bat file will be executed by cmd.exe.
-      // Note: This is a workaround for Windows command execution quirks when using `shell: true`
-      const tempBatFile = await this.tempDirManager.getTempFile({
-        prefix: execName,
-        suffix: ".bat",
-      })
-      const batScript = `@echo off\r\n"${command}" %*\r\n` // <-- CRLF required for .bat
-      await fs.writeFile(tempBatFile, batScript, { encoding: "utf8" })
-      command = "cmd.exe"
-      args = ["/c", `"${tempBatFile}"`, ...args]
-    }
+
+    // On Windows the package-manager command is typically a `.cmd` shim (npm.cmd/pnpm.cmd/yarn.cmd),
+    // which Node can no longer spawn directly (CVE-2024-27980). Rather than spawn with `shell: true` —
+    // which emits the DEP0190 "args with shell" deprecation warning and forces manual metacharacter
+    // escaping — wrap the invocation in a single PowerShell `-EncodedCommand`. The base64 (UTF-16LE)
+    // payload sidesteps every shell-quoting layer, and `powershell.exe` is a real executable we spawn
+    // directly with no shell. See buildPowerShellEncodedArgs for the UTF-8 / exit-code handling.
+    const [spawnCommand, spawnArgs] = process.platform === "win32" ? (["powershell.exe", buildPowerShellEncodedArgs(command, args)] as const) : ([command, args] as const)
 
     await new Promise<void>((resolve, reject) => {
       const outStream = createWriteStream(tempOutputFile)
 
-      const child = childProcess.spawn(command, args, {
+      const child = childProcess.spawn(spawnCommand, spawnArgs, {
         cwd,
-        env: { COREPACK_ENABLE_STRICT: "0", ...process.env }, // allow `process.env` overrides
-        shell: true, // `true`` is now required: https://github.com/electron-userland/electron-builder/issues/9488
+        // Package manager invocations do not need signing/publishing credentials.
+        env: { COREPACK_ENABLE_STRICT: "0", ...stripSensitiveEnvVars(process.env) },
       })
 
       let stderr = ""
@@ -380,7 +384,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         stderr += chunk.toString()
       })
       child.on("error", err => {
-        reject(new Error(`Node module collector spawn failed: ${err.message}`))
+        reject(new Error(`Node module collector spawn (${command} ${JSON.stringify(args)}) failed: ${err.message}`))
       })
 
       child.on("close", code => {
@@ -392,11 +396,38 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         }
         if (stderr.length > 0) {
           log.debug({ stderr }, "note: there was node module collector output on stderr")
-          this.cache.logSummary[LogMessageByKey.PKG_COLLECTOR_OUTPUT].push(stderr)
+          // Only surface stderr as a user-visible warning when the exit code itself is unexpected.
+          // When shouldIgnore is true (npm list exit code 1) the stderr is an anticipated side
+          // effect of package-manager features like yarn resolutions or npm overrides that cause
+          // npm to report ELSPROBLEMS for aliased packages it considers "invalid".
+          if (!shouldIgnore) {
+            this.cache.logSummary[LogMessageByKey.PKG_COLLECTOR_OUTPUT].push(stderr)
+          }
         }
         const shouldResolve = code === 0 || shouldIgnore
         return shouldResolve ? resolve() : reject(new Error(`Node module collector process exited with code ${code}:\n${stderr}`))
       })
     })
   }
+}
+
+/**
+ * Build the argv for invoking a Windows command through `powershell.exe -EncodedCommand`.
+ *
+ * Each token is wrapped in a PowerShell single-quoted string (with embedded single quotes doubled),
+ * so no character is interpreted by a shell. The script:
+ *   - pins `[Console]::OutputEncoding` to UTF-8 *without* a BOM so the JSON dependency tree is not
+ *     corrupted by the console's OEM code page (and no BOM is prepended to break `JSON.parse`),
+ *   - invokes the command via the call operator `&`,
+ *   - re-emits the command's own exit code via `exit $LASTEXITCODE` (e.g. `npm list` returns 1 in
+ *     expected scenarios, which the caller's shouldIgnore logic relies on).
+ *
+ * The whole script is base64-encoded as UTF-16LE per PowerShell's `-EncodedCommand` contract.
+ */
+export function buildPowerShellEncodedArgs(command: string, args: string[]): string[] {
+  const psQuote = (value: string) => `'${value.replace(/'/g, "''")}'`
+  const invocation = ["&", psQuote(command), ...args.map(psQuote)].join(" ")
+  const script = `[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new($false); ${invocation}; exit $LASTEXITCODE`
+  const encoded = Buffer.from(script, "utf16le").toString("base64")
+  return ["-NoProfile", "-NonInteractive", "-EncodedCommand", encoded]
 }

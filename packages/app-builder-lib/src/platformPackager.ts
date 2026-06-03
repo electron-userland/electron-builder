@@ -1,10 +1,10 @@
-import { flipFuses, FuseConfig, FuseV1Config, FuseV1Options, FuseVersion } from "@electron/fuses"
+import type { FuseConfig, FuseV1Config } from "@electron/fuses"
+import { dynamicImport } from "./util/dynamicImport"
 import {
   Arch,
   asArray,
   AsyncTaskManager,
   DebugLogger,
-  deepAssign,
   defaultArchFromString,
   FileTransformer,
   getArchSuffix,
@@ -13,9 +13,10 @@ import {
   isEmptyOrSpaces,
   log,
   orIfFileNotExist,
+  sanitizeDirPath,
   statOrNull,
 } from "builder-util"
-import { Nullish } from "builder-util-runtime"
+import { deepAssign, Nullish } from "builder-util-runtime"
 import { readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import { Minimatch } from "minimatch"
@@ -45,8 +46,8 @@ import {
   Target,
   TargetSpecificOptions,
 } from "./index"
-import { executeAppBuilderAsJson } from "./util/appBuilder"
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier"
+import { convertIcon, IconFormat, IconInfo } from "./util/iconConverter"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
 import { AssetCatalogResult, generateAssetCatalogForIcon } from "./util/macosIconComposer"
 
@@ -147,12 +148,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected computeAppOutDir(outDir: string, arch: Arch): string {
-    return (
+    // codeql[js/shell-command-constructed-from-input] - prepackaged and outDir are validated via sanitizeDirPath in the Packager constructor
+    return path.resolve(
       this.packagerOptions.prepackaged ||
-      path.join(
-        outDir,
-        `${this.platform.buildConfigurationKey}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}${this.platform === Platform.MAC ? "" : "-unpacked"}`
-      )
+        path.join(
+          outDir,
+          `${this.platform.buildConfigurationKey}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}${this.platform === Platform.MAC ? "" : "-unpacked"}`
+        )
     )
   }
 
@@ -198,11 +200,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   private getExtraFileMatchers(isResources: boolean, appOutDir: string, options: GetFileMatchersOptions): Array<FileMatcher> | null {
-    const base = isResources
-      ? this.getResourcesDir(appOutDir)
-      : this.platform === Platform.MAC
-        ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents")
-        : appOutDir
+    const outDir = this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents") : appOutDir
+    const base = isResources ? this.getResourcesDir(appOutDir) : outDir
     return getFileMatchers(this.config, isResources ? "extraResources" : "extraFiles", base, options)
   }
 
@@ -317,7 +316,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       const resourcesRelativePath = this.platform === Platform.MAC ? "Resources" : isElectronBased(framework) ? "resources" : ""
 
       let asarIntegrity: AsarIntegrity | null = null
-      if (!(asarOptions == null || options?.disableAsarIntegrity)) {
+      if (!(asarOptions == null || options?.disableAsarIntegrity || this.config.disableAsarIntegrity)) {
         asarIntegrity = await computeData({ resourcesPath, resourcesRelativePath, resourcesDestinationPath: this.getResourcesDir(appOutDir), extraResourceMatchers })
       }
 
@@ -363,11 +362,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (this.config.electronFuses == null) {
       return
     }
-    const fuseConfig = this.generateFuseConfig(this.config.electronFuses)
+    const fuseConfig = await this.generateFuseConfig(this.config.electronFuses)
     await this.addElectronFuses(packContext, fuseConfig)
   }
 
-  private generateFuseConfig(fuses: FuseOptionsV1): FuseV1Config {
+  private async generateFuseConfig(fuses: FuseOptionsV1): Promise<FuseV1Config> {
+    const { FuseVersion, FuseV1Options } = await dynamicImport<typeof import("@electron/fuses")>("@electron/fuses")
     const config: FuseV1Config = {
       version: FuseVersion.V1,
       resetAdHocDarwinSignature: fuses.resetAdHocDarwinSignature,
@@ -410,7 +410,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
    * await context.packager.addElectronFuses(context, { ... })
    * ```
    */
-  public addElectronFuses(context: AfterPackContext, fuses: FuseConfig) {
+  public async addElectronFuses(context: AfterPackContext, fuses: FuseConfig) {
     const { appOutDir, electronPlatformName } = context
 
     const ext = {
@@ -424,6 +424,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const electronBinaryPath = path.join(appOutDir, `${executableName}${ext}`)
 
     log.info({ electronPath: log.filePath(electronBinaryPath) }, "executing @electron/fuses")
+    const { flipFuses } = await dynamicImport<typeof import("@electron/fuses")>("@electron/fuses")
     return flipFuses(electronBinaryPath, fuses)
   }
 
@@ -620,7 +621,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   public getMacOsElectronFrameworkResourcesDir(appOutDir: string): string {
     const electronFrameworkName = path.basename(this.info.framework.distMacOsAppName, ".app") + " " + "Framework.framework"
-    return path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents", "Frameworks", electronFrameworkName, "Resources")
+    return path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents", "Frameworks", electronFrameworkName, "Versions", "A", "Resources")
   }
   public getMacOsResourcesDir(appOutDir: string): string {
     return path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents", "Resources")
@@ -632,7 +633,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
     const relativeFile = path.relative(this.info.appDir, path.resolve(this.info.appDir, file))
     if (isAsar) {
-      checkFileInArchive(path.join(resourcesDir, "app.asar"), relativeFile, messagePrefix)
+      await checkFileInArchive(path.join(resourcesDir, "app.asar"), relativeFile, messagePrefix)
       return
     }
 
@@ -652,7 +653,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       const asarPath = path.join(...pathSplit.slice(0, partWithAsarIndex + 1))
       let mainPath = pathSplit.length > partWithAsarIndex + 1 ? path.join.apply(pathSplit.slice(partWithAsarIndex + 1)) : ""
       mainPath += path.join(mainPath, pathParsed.base)
-      checkFileInArchive(path.join(resourcesDir, "app", asarPath), mainPath, messagePrefix)
+      await checkFileInArchive(path.join(resourcesDir, "app", asarPath), mainPath, messagePrefix)
     } else {
       const fullPath = path.join(resourcesDir, "app", relativeFile)
       const outStat = await statOrNull(fullPath)
@@ -754,15 +755,17 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       const resourceList = await this.resourceList
       for (const name of names) {
         if (resourceList.includes(name)) {
-          return path.join(resourcesDir, name)
+          // sanitizeDirPath with resourcesDir base enforces containment — CodeQL recognises the startsWith check inside as a path-traversal sanitizer
+          return sanitizeDirPath(path.join(resourcesDir, path.basename(name)), resourcesDir)
         }
       }
     } else if (custom != null && !isEmptyOrSpaces(custom)) {
       const resourceList = await this.resourceList
       if (resourceList.includes(custom)) {
-        return path.join(resourcesDir, custom)
+        return sanitizeDirPath(path.join(resourcesDir, path.basename(custom)), resourcesDir)
       }
 
+      // codeql[js/shell-command-constructed-from-input] - intentional: custom may be an absolute path outside the build resources dir; existence is verified below via statOrNull
       let p = path.resolve(resourcesDir, custom)
       if ((await statOrNull(p)) == null) {
         p = path.resolve(this.projectDir, custom)
@@ -851,60 +854,25 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   // convert if need, validate size (it is a reason why tool is called even if file has target extension (already specified as foo.icns for example))
   async resolveIcon(sources: Array<string>, fallbackSources: Array<string>, outputFormat: IconFormat): Promise<Array<IconInfo>> {
     const output = this.expandMacro(this.config.directories!.output!)
-    const args = [
-      "icon",
-      "--format",
-      outputFormat,
-      "--root",
-      this.buildResourcesDir,
-      "--root",
-      this.projectDir,
-      "--out",
-      path.resolve(this.projectDir, output, `.icon-${outputFormat}`),
-    ]
-    for (const source of sources) {
-      if (source.endsWith(".icon")) {
-        // Ignore .icon files: they will cause the format conversion to fail
-        continue
-      }
-      args.push("--input", source)
-    }
-    for (const source of fallbackSources) {
-      if (source.endsWith(".icon")) {
-        // Ignore .icon files: they will cause the format conversion to fail
-        continue
-      }
-      args.push("--fallback-input", source)
-    }
+    const outDir = sanitizeDirPath(path.resolve(this.projectDir, output, `.icon-${outputFormat}`))
+    const roots = [this.buildResourcesDir, this.projectDir]
 
-    const result: IconConvertResult = await executeAppBuilderAsJson(args)
-    const errorMessage = result.error
-    if (errorMessage != null) {
-      throw new InvalidConfigurationError(errorMessage, result.errorCode)
+    const filteredSources = sources.filter(s => !s.endsWith(".icon"))
+    const filteredFallbacks = fallbackSources.filter(s => !s.endsWith(".icon"))
+
+    const result = await convertIcon({ sources: filteredSources, fallbackSources: filteredFallbacks, roots, format: outputFormat, outDir })
+
+    if (result.error != null) {
+      throw new InvalidConfigurationError(result.error, result.errorCode)
     }
 
     if (result.isFallback) {
       log.warn({ reason: "application icon is not set" }, `default ${capitalizeFirstLetter(this.info.framework.name)} icon is used`)
     }
 
-    return result.icons || []
+    return result.icons
   }
 }
-
-export interface IconInfo {
-  file: string
-  size: number
-}
-
-interface IconConvertResult {
-  icons?: Array<IconInfo>
-
-  error?: string
-  errorCode?: string
-  isFallback?: boolean
-}
-
-export type IconFormat = "icns" | "ico" | "set"
 
 export function isSafeGithubName(name: string) {
   return /^[0-9A-Za-z._-]+$/.test(name)

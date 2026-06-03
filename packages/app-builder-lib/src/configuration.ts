@@ -1,21 +1,22 @@
 import { Arch } from "builder-util"
 import { BeforeBuildContext, Target } from "./core"
-import { ElectronBrandingOptions, ElectronDownloadOptions } from "./electron/ElectronFramework"
+import { ElectronBrandingOptions } from "./electron/ElectronFramework"
 import { PrepareApplicationStageDirectoryOptions } from "./Framework"
 import { AppXOptions } from "./options/AppXOptions"
-import { AppImageOptions, DebOptions, FlatpakOptions, LinuxConfiguration, LinuxTargetSpecificOptions } from "./options/linuxOptions"
+import { AppImageOptions, DebOptions, FlatpakOptions, LinuxConfiguration, LinuxTargetSpecificOptions, PacmanOptions, RpmOptions } from "./options/linuxOptions"
 import { DmgOptions, MacConfiguration, MasConfiguration } from "./options/macOptions"
 import { MsiOptions } from "./options/MsiOptions"
 import { MsiWrappedOptions } from "./options/MsiWrappedOptions"
 import { PkgOptions } from "./options/pkgOptions"
 import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions"
-import { SnapOptions } from "./options/SnapOptions"
+import { SnapcraftOptions, SnapOptions } from "./options/SnapOptions"
 import { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions"
 import { WindowsConfiguration } from "./options/winOptions"
 import { BuildResult } from "./packager"
 import { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi"
 import { PlatformPackager } from "./platformPackager"
 import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions"
+import { ElectronDownloadOptions, ElectronGetOptions } from "./util/electronGet"
 
 // duplicate appId here because it is important
 /**
@@ -76,40 +77,98 @@ export interface CommonConfiguration {
    * Options related to how build Windows targets.
    */
   readonly win?: WindowsConfiguration | null
+  /** NSIS installer options. */
   readonly nsis?: NsisOptions | null
+  /** NSIS web installer options (downloads app package at install time). */
   readonly nsisWeb?: NsisWebOptions | null
+  /** Portable executable options (no installation required). */
   readonly portable?: PortableOptions | null
+  /** Windows Store (AppX) package options. */
   readonly appx?: AppXOptions | null
-  /** @private */
-  readonly msi?: MsiOptions | null
-  /** @private */
-  readonly msiWrapped?: MsiWrappedOptions | null
-  readonly squirrelWindows?: SquirrelWindowsOptions | null
-
   /**
-   * Options related to how build Linux targets.
+   * MSI package options.
+   */
+  readonly msi?: MsiOptions | null
+  /**
+   * MSI-wrapped installer options.
+   */
+  readonly msiWrapped?: MsiWrappedOptions | null
+  /**
+   * Squirrel.Windows installer options. Requires the `electron-builder-squirrel-windows` dependency.
+   */
+  readonly squirrelWindows?: SquirrelWindowsOptions | null
+  /**
+   * General Linux build options shared across all Linux targets (icon, category, desktop entry,
+   * executable name, etc.). Target-specific compression and packaging options live in the
+   * per-format interfaces (`DebOptions`, `RpmOptions`, `PacmanOptions`, etc.).
    */
   readonly linux?: LinuxConfiguration | null
   /**
-   * Debian package options.
+   * Debian package options. Targets Debian, Ubuntu, and Debian-based distributions.
+   * Produces a `.deb` archive installable via `dpkg -i` or `apt install`.
    */
   readonly deb?: DebOptions | null
   /**
-   * Snap options.
+   * Flat snap configuration targeting core22 and older snap bases.
+   *
+   * @deprecated Use `snapcraft` instead — it supersedes `snap` when both are present and supports
+   * all snap bases including core24. `snap` will be removed in a future major release.
+   * See {@link SnapOptions} for available properties.
    */
   readonly snap?: SnapOptions | null
   /**
-   * AppImage options.
+   * Snapcraft configuration. Prefer this over the deprecated `snap` field.
+   *
+   * Selects the snapcraft base and provides per-core options:
+   * - `base: "core18" | "core20" | "core22"` — legacy builds; accepts the same options as `snap`
+   * - `base: "core24"` — modern builds with the GNOME extension (recommended for new apps, requires Electron 25+)
+   * - `base: "custom"` — pass an existing `snapcraft.yaml` through unchanged; no plugs, extensions,
+   *   or desktop files are injected
+   *
+   * When both `snapcraft` and `snap` are set, `snapcraft` takes precedence.
+   *
+   * @example
+   * ```json
+   * { "snapcraft": { "base": "core24", "core24": { "useLXD": true } } }
+   * ```
+   *
+   * See {@link SnapcraftOptions} for all available properties.
+   */
+  readonly snapcraft?: SnapcraftOptions | null
+  /**
+   * AppImage options. AppImage is a portable application format that bundles the app
+   * and its dependencies into a single self-contained executable that runs on most
+   * Linux distributions without installation.
    */
   readonly appImage?: AppImageOptions | null
   /**
-   * Flatpak options.
+   * Flatpak options. Flatpak is a sandboxed application distribution format for Linux
+   * that runs in a controlled environment and is distributed via [Flathub](https://flathub.org/)
+   * or other Flatpak repositories.
    */
   readonly flatpak?: FlatpakOptions | null
-  readonly pacman?: LinuxTargetSpecificOptions | null
-  readonly rpm?: LinuxTargetSpecificOptions | null
+  /**
+   * Pacman package options. Targets Arch Linux and Arch-based distributions
+   * (Manjaro, EndeavourOS, etc.). Produces a `.pacman` archive installable via `pacman -U`.
+   */
+  readonly pacman?: PacmanOptions | null
+  /**
+   * RPM package options. Targets Fedora, Red Hat Enterprise Linux, SUSE, and related
+   * distributions. Produces a `.rpm` archive installable via `rpm` or `dnf`.
+   */
+  readonly rpm?: RpmOptions | null
+  /**
+   * FreeBSD package options. Produces a `.pkg` archive for the FreeBSD `pkg` package manager.
+   */
   readonly freebsd?: LinuxTargetSpecificOptions | null
+  /**
+   * Solaris IPS package options. Produces a `.p5p` archive for the Solaris Image Packaging
+   * System (`pkg`).
+   */
   readonly p5p?: LinuxTargetSpecificOptions | null
+  /**
+   * Alpine Linux APK package options. Produces an `.apk` archive installable via `apk add`.
+   */
   readonly apk?: LinuxTargetSpecificOptions | null
 
   /**
@@ -202,13 +261,15 @@ export interface CommonConfiguration {
 export interface Configuration extends CommonConfiguration, PlatformSpecificBuildOptions, Hooks {
   /**
    * Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified.
+   * @deprecated `electron-compile` is no longer maintained. Compile your app with a modern bundler (webpack, vite, etc.) instead.
    */
   readonly electronCompile?: boolean
 
   /**
-   * The [electron-download](https://github.com/electron-userland/electron-download#usage) options.
+   * The [electron-download](https://github.com/electron-userland/electron-download#usage) options. (legacy)
+   * Alternatively, you can use [electron/get](https://github.com/electron/get#usage) options.
    */
-  readonly electronDownload?: ElectronDownloadOptions
+  readonly electronDownload?: ElectronDownloadOptions | ElectronGetOptions | null
 
   /**
    * The branding used by Electron's distributables. This is needed if a fork has modified Electron's BRANDING.json file.
@@ -232,16 +293,19 @@ export interface Configuration extends CommonConfiguration, PlatformSpecificBuil
   /**
    * *libui-based frameworks only* The version of NodeJS you are packaging for.
    * You can set it to `current` to set the Node.js version that you use to run.
+   * @deprecated libui-based frameworks (proton-native, etc.) are no longer actively maintained. This option has no effect when using Electron.
    */
   readonly nodeVersion?: string | null
 
   /**
    * *libui-based frameworks only* The version of LaunchUI you are packaging for. Applicable for Windows only. Defaults to version suitable for used framework version.
+   * @deprecated libui-based frameworks (proton-native, etc.) are no longer actively maintained. This option has no effect when using Electron.
    */
   readonly launchUiVersion?: boolean | string | null
 
   /**
    * The framework name. One of `electron`, `proton`, `libui`. Defaults to `electron`.
+   * @deprecated `proton` and `libui` framework support is no longer actively maintained. Use `electron` (the default).
    */
   readonly framework?: string | null
 
@@ -250,6 +314,12 @@ export interface Configuration extends CommonConfiguration, PlatformSpecificBuil
    * @default false
    */
   readonly disableSanityCheckAsar?: boolean
+
+  /**
+   * Whether to skip ASAR integrity hash computation. Useful for custom electron forks with encrypted ASAR support where the header is not readable by standard tools.
+   * @default false
+   */
+  readonly disableAsarIntegrity?: boolean
 }
 
 export type Hook<T, V> = (contextOrPath: T) => Promise<V> | V
@@ -297,87 +367,89 @@ export interface ToolsetConfig {
    * @default "0.0.0"
    */
   readonly appimage?: "0.0.0" | "1.0.2" | "1.0.3" | null
+
+  /**
+   * `nsis` bundle version to use for NSIS installer compilation.
+   * Located at https://github.com/electron-userland/electron-builder-binaries/releases?q=nsis&expanded=true
+   * 0.0.0 - legacy toolset (nsis-3.0.4.1 + nsis-resources-3.4.1)
+   *
+   * Betas:
+   * 1.2.1 - unified bundle (makensis 3.12 + plugins in one archive, entrypoint scripts auto-set NSISDIR)
+   *
+   * @default "0.0.0"
+   */
+  readonly nsis?: "0.0.0" | "1.2.1" | null
 }
 
 export interface Hooks {
   /**
-The function (or path to file or module id) to be run before pack.
-
-```typescript
-(context: BeforePackContext): Promise<any> | any
-```
-
-!!! example "As function"
-
-    ```js
-    beforePack: async (context) => {
-      // your code
-    }
-    ```
-
-Because in a configuration file you cannot use JavaScript, can be specified as a path to file or module id. Function must be exported as default export.
-
-```json
-"build": {
-  "beforePack": "./myBeforePackHook.js"
-}
-```
-
-File `myBeforePackHook.js` in the project root directory:
-
-!!! example "myBeforePackHook.js"
-    ```js
-    exports.default = async function(context) {
-      // your custom code
-    }
-    ```
+   * The function (or path to file or module id) to be run before pack.
+   * Receives a {@link BeforePackContext}.
+   *
+   * Can be specified inline as a function in JavaScript configs:
+   * ```js
+   * // electron-builder.config.js
+   * module.exports = {
+   *   beforePack: async (context) => {
+   *     // your code
+   *   }
+   * }
+   * ```
+   *
+   * Or as a path to a module that exports the function as its default export:
+   * ```json
+   * { "build": { "beforePack": "./myBeforePackHook.js" } }
+   * ```
+   * ```js
+   * // myBeforePackHook.js
+   * exports.default = async function(context) {
+   *   // your custom code
+   * }
+   * ```
    */
   readonly beforePack?: Hook<BeforePackContext, void> | string | null
 
   /**
-   * The function (or path to file or module id) to be [run after the prebuilt Electron binary has been extracted to the output directory](#afterextract)
-   * Same setup as {@link beforePack}
+   * The function (or path to file or module id) to be run after the prebuilt Electron binary has been extracted to the output directory.
+   * Receives an {@link AfterExtractContext}. For file/module setup, see {@link beforePack}.
    */
   readonly afterExtract?: Hook<AfterExtractContext, void> | string | null
 
   /**
-   * The function (or path to file or module id) to be [run after pack](#afterpack) (but before pack into distributable format and sign).
-   * Same setup as {@link beforePack}
+   * The function (or path to file or module id) to be run after pack but before pack into distributable format and sign.
+   * Receives an {@link AfterPackContext}. For file/module setup, see {@link beforePack}.
    */
   readonly afterPack?: Hook<AfterPackContext, void> | string | null
 
   /**
-   * The function (or path to file or module id) to be [run after pack and sign](#aftersign) (but before pack into distributable format).
-   * Same setup as {@link beforePack}
+   * The function (or path to file or module id) to be run after pack and sign but before pack into distributable format.
+   * Receives an {@link AfterPackContext}. For file/module setup, see {@link beforePack}.
    */
   readonly afterSign?: Hook<AfterPackContext, void> | string | null
 
   /**
-   * The function (or path to file or module id) to be run on artifact build start.
-   * Same setup as {@link beforePack}
+   * The function (or path to file or module id) to be run when an individual artifact build starts.
+   * Receives an {@link ArtifactBuildStarted}. For file/module setup, see {@link beforePack}.
    */
   readonly artifactBuildStarted?: Hook<ArtifactBuildStarted, void> | string | null
   /**
-   * The function (or path to file or module id) to be run on artifact build completed.
-   * Same setup as {@link beforePack}
+   * The function (or path to file or module id) to be run when an individual artifact build completes.
+   * Receives an {@link ArtifactCreated}. For file/module setup, see {@link beforePack}.
    */
   readonly artifactBuildCompleted?: Hook<ArtifactCreated, void> | string | null
   /**
    * The function (or path to file or module id) to be run after all artifacts are built.
-
-```typescript
-(buildResult: BuildResult): Promise<Array<string>> | Array<string>
-```
-
-Configuration in the same way as `afterPack` (see above).
-
-!!! example "myAfterAllArtifactBuild.js"
-    ```js
-    exports.default = function () {
-      // you can return additional files to publish
-      return ["/path/to/additional/result/file"]
-    }
-    ```
+   * Receives a {@link BuildResult}. May return an array of additional file paths to publish.
+   *
+   * For file/module setup, see {@link beforePack}.
+   *
+   * @example
+   * ```js
+   * exports.default = function () {
+   *   // return additional files to publish
+   *   return ["/path/to/additional/result/file"]
+   * }
+   * ```
    */
   readonly afterAllArtifactBuild?: Hook<BuildResult, Array<string>> | string | null
   /**
@@ -417,7 +489,7 @@ export interface MetadataDirectories {
   readonly buildResources?: string | null
 
   /**
-   * The output directory. [File macros](./file-patterns.md#file-macros) are supported.
+   * The output directory. [File macros](https://www.electron.build/file-patterns#file-macros) are supported.
    * @default dist
    */
   readonly output?: string | null

@@ -24,9 +24,13 @@ export class LibUiFramework implements Framework {
 
   constructor(
     readonly version: string,
-    readonly distMacOsAppName: string,
+    readonly macOsProductName: string,
     protected readonly isUseLaunchUi: boolean
   ) {}
+
+  get distMacOsAppName(): string {
+    return `${this.macOsProductName}.app`
+  }
 
   async prepareApplicationStageDirectory(options: PrepareApplicationStageDirectoryOptions) {
     await emptyDir(options.appOutDir)

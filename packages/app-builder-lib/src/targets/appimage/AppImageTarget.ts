@@ -1,4 +1,3 @@
-import { IconInfo } from "../../platformPackager"
 import { Arch, log, serializeToYaml } from "builder-util"
 import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -7,19 +6,18 @@ import { Target } from "../../core"
 import { LinuxPackager } from "../../linuxPackager"
 import { AppImageOptions } from "../../options/linuxOptions"
 import { getAppUpdatePublishConfiguration } from "../../publish/PublishManager"
-import { executeAppBuilderAsJson, objectToArgs } from "../../util/appBuilder"
 import { getNotLocalizedLicenseFile } from "../../util/license"
 import { LinuxTargetHelper } from "../LinuxTargetHelper"
-import { createStageDir, StageDir } from "../targetUtil"
-import { buildAppImage } from "./appImageUtil"
-import { BlockMapDataHolder } from "builder-util-runtime"
+import { createStageDir } from "../targetUtil"
+import { buildLegacyFuse2AppImage, buildStaticRuntimeAppImage } from "./appImageUtil"
+import { BlockMapDataHolder, deepAssign } from "builder-util-runtime"
 
 // https://unix.stackexchange.com/questions/375191/append-to-sub-directory-inside-squashfs-file
 
 export const APP_RUN_ENTRYPOINT = "AppRun"
 
 export default class AppImageTarget extends Target {
-  readonly options: AppImageOptions = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
+  readonly options: AppImageOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, (this.packager.config as any)[this.name])
 
   private readonly desktopEntry: Lazy<string>
 
@@ -79,31 +77,67 @@ export default class AppImageTarget extends Target {
     try {
       const appimageTool = this.packager.config.toolsets?.appimage
       if (appimageTool == null || appimageTool === "0.0.0") {
-        updateInfo = await this.buildFuse2AppImage({ stageDir, arch, artifactPath, appOutDir, options, packager, desktopEntry, icons, license })
-      } else {
-        updateInfo = await buildAppImage(appimageTool, {
+        updateInfo = await buildLegacyFuse2AppImage({
           appDir: appOutDir,
           stageDir: stageDir.dir,
           arch,
           output: artifactPath,
           options: {
-            productName: this.packager.appInfo.productName,
-            productFilename: this.packager.appInfo.productFilename,
-            executableName: this.packager.executableName,
+            productName: packager.appInfo.productName,
+            productFilename: packager.appInfo.productFilename,
+            executableName: packager.executableName,
             license,
             desktopEntry,
             icons,
-            fileAssociations: this.packager.fileAssociations,
-            compression: this.packager.compression === "maximum" ? "xz" : undefined,
+            fileAssociations: packager.fileAssociations,
+            compression: (() => {
+              const c = options.compression
+              if (c === "xz" || c === "gzip") {
+                return c
+              }
+              if (packager.compression === "maximum") {
+                return "xz"
+              }
+              return undefined // normal/store/unset/zstd → mksquashfs defaults to gzip
+            })(),
+          },
+        })
+      } else {
+        updateInfo = await buildStaticRuntimeAppImage(appimageTool, {
+          appDir: appOutDir,
+          stageDir: stageDir.dir,
+          arch,
+          output: artifactPath,
+          options: {
+            productName: packager.appInfo.productName,
+            productFilename: packager.appInfo.productFilename,
+            executableName: packager.executableName,
+            license,
+            desktopEntry,
+            icons,
+            fileAssociations: packager.fileAssociations,
+            compression: (() => {
+              const c = options.compression
+              if (c === "gzip" || c === "zstd") {
+                return c
+              }
+              if (c === "xz") {
+                return "zstd" // nearest equivalent; static runtime does not support xz
+              }
+              if (packager.compression === "store") {
+                return "gzip"
+              }
+              return "zstd" // maximum/normal/unset → zstd for static runtime
+            })(),
           },
         })
       }
     } catch (error: any) {
       log.error({ error: error.message }, "failed to build AppImage")
-      await stageDir.cleanup().catch(() => {})
       throw error
+    } finally {
+      await stageDir.cleanup().catch(() => {})
     }
-    await stageDir.cleanup()
 
     await packager.info.emitArtifactBuildCompleted({
       file: artifactPath,
@@ -114,50 +148,5 @@ export default class AppImageTarget extends Target {
       isWriteUpdateInfo: true,
       updateInfo,
     })
-  }
-
-  private async buildFuse2AppImage(props: {
-    stageDir: StageDir
-    arch: Arch
-    artifactPath: string
-    appOutDir: string
-    options: AppImageOptions
-    packager: LinuxPackager
-    desktopEntry: string
-    icons: IconInfo[]
-    license: string | null
-  }): Promise<BlockMapDataHolder> {
-    const { stageDir, arch, artifactPath, appOutDir, options, packager, desktopEntry, icons, license } = props
-
-    const args = [
-      "appimage",
-      "--stage",
-      stageDir.dir,
-      "--arch",
-      Arch[arch],
-      "--output",
-      artifactPath,
-      "--app",
-      appOutDir,
-      "--configuration",
-      JSON.stringify({
-        productName: this.packager.appInfo.productName,
-        productFilename: this.packager.appInfo.productFilename,
-        desktopEntry,
-        executableName: this.packager.executableName,
-        icons,
-        fileAssociations: this.packager.fileAssociations,
-        ...options,
-      }),
-    ]
-    objectToArgs(args, {
-      license,
-    })
-    if (packager.compression === "maximum") {
-      args.push("--compression", "xz")
-    }
-
-    const updateInfo = await executeAppBuilderAsJson<BlockMapDataHolder>(args)
-    return updateInfo
   }
 }

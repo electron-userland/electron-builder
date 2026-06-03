@@ -6,6 +6,7 @@ import { Arch, exec, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces }
 import { sanitizeFileName } from "builder-util/out/filename"
 import { release as getOsRelease } from "os"
 import * as path from "path"
+import type { DmgBuildLicenseConfig } from "./dmgLicense"
 import { addLicenseToDmg } from "./dmgLicense"
 import { computeBackground, customizeDmg } from "./dmgUtil"
 import { hdiUtil } from "./hdiuil"
@@ -33,7 +34,7 @@ export interface DmgBuildConfig {
   shrink?: boolean
   filesystem?: string
   "compression-level"?: number | null
-  license?: string | null
+  license?: DmgBuildLicenseConfig | null
   contents?: Array<{
     path: string
     x: number
@@ -78,7 +79,9 @@ export class DmgTarget extends Target {
 
     const specification = await this.computeDmgOptions(appPath)
 
-    if (!(await customizeDmg({ appPath, artifactPath, volumeName, specification, packager }))) {
+    const licenseData = await addLicenseToDmg(packager, this.options.license)
+
+    if (!(await customizeDmg({ appPath, artifactPath, volumeName, specification, packager, licenseData }))) {
       return
     }
 
@@ -86,7 +89,6 @@ export class DmgTarget extends Target {
       await hdiUtil(addLogLevel(["internet-enable"]).concat(artifactPath))
     }
 
-    const licenseData = await addLicenseToDmg(packager, artifactPath)
     if (packager.packagerOptions.effectiveOptionComputed != null) {
       await packager.packagerOptions.effectiveOptionComputed({ licenseData })
     }

@@ -1,4 +1,4 @@
-import { InvalidConfigurationError } from "builder-util"
+import { InvalidConfigurationError, log } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { AppInfo } from "../appInfo"
 
@@ -51,6 +51,9 @@ export function expandMacro(pattern: string, arch: string | Nullish, appInfo: Ap
           const envValue = process.env[envName]
           if (envValue == null) {
             throw new InvalidConfigurationError(`cannot expand pattern "${pattern}": env ${envName} is not defined`, "ERR_ELECTRON_BUILDER_ENV_NOT_DEFINED")
+          }
+          if (/TOKEN|SECRET|KEY|PASSWORD|CREDENTIAL/i.test(envName)) {
+            log.warn({ envName, pattern }, "macro expansion includes an env var that may contain a secret — verify this is intentional")
           }
           return envValue
         }
