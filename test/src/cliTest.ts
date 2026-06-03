@@ -52,8 +52,11 @@ import { configureInstallAppDepsCommand } from "../../packages/electron-builder/
 // @ts-ignore — configurePublishCommand is @internal; CLI tsc strips it from declarations
 import { configurePublishCommand } from "../../packages/electron-builder/src/publish"
 
-// ─── clearCache ───────────────────────────────────────────────────────────────
-
+// ─── clearCache + wrap (sequential) ──────────────────────────────────────────
+// Both suites assert on the shared module-level `log` mock created by vi.mock("builder-util").
+// sequence.concurrent is enabled globally; a single describe.sequential wrapper prevents
+// clearCache and wrap tests from running concurrently and corrupting each other's mock state.
+describe.sequential("clearCache and wrap", () => {
 describe("clearCache", () => {
   beforeEach(() => {
     vi.mocked(getCacheDirectory).mockReturnValue("/home/user/.cache/electron-builder")
@@ -200,6 +203,7 @@ describe("wrap", () => {
     expect(log.error).toHaveBeenCalledWith(expect.objectContaining({ stackTrace: expect.any(String) }), "something went wrong")
   })
 })
+}) // end describe.sequential("clearCache and wrap")
 
 // ─── quoteString ─────────────────────────────────────────────────────────────
 

@@ -105,7 +105,9 @@ describe("MacTargetHelper", () => {
     })
   })
 
-  describe("getNotarizeOptions", () => {
+  // sequence.concurrent is enabled globally; describe.sequential prevents concurrent tests from
+  // reading each other's process.env mutations before afterEach deletes them.
+  describe.sequential("getNotarizeOptions", () => {
     const envKeys = [
       "APPLE_ID",
       "APPLE_APP_SPECIFIC_PASSWORD",

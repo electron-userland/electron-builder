@@ -66,6 +66,7 @@ async function main() {
     // 2 on Windows (heavy MSI/Squirrel builds saturate the vitest main-thread RPC at 3); 3 elsewhere
     maxWorkers: process.platform === "win32" ? 2 : 3,
 
+    fileParallelism: false,
     sequence: {
       sequencer: SmartSequencer,
       concurrent: true,

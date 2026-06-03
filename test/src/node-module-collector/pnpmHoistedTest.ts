@@ -91,7 +91,9 @@ describe("PnpmNodeModulesCollector hoisted mode", () => {
 // Tests: end-to-end nested dependency resolution
 // ---------------------------------------------------------------------------
 
-describe("nested dependency resolution (hoisted layout simulation)", () => {
+// sequence.concurrent is enabled globally; describe.sequential prevents shared `root` from being
+// overwritten by concurrently-running tests before assertions complete.
+describe.sequential("nested dependency resolution (hoisted layout simulation)", () => {
   let root = ""
   afterEach(async () => {
     if (root) {
