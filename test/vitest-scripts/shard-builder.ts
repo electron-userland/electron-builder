@@ -1,6 +1,5 @@
-import * as path from "path"
 import { loadCache } from "./cache"
-import { DEFAULT_FILE_MS, SAFEGUARD_MAX_SHARDS, SupportedPlatforms, TARGET_MS, TargetPlatform } from "./smart-config"
+import { DEFAULT_FILE_MS, SAFEGUARD_MAX_SHARDS, SupportedPlatforms, TARGET_MS, TargetPlatform, TEST_ROOT } from "./smart-config"
 
 export interface WeightedFile {
   filename: string
@@ -17,15 +16,15 @@ export function buildWeightedFiles(files: string[], targetPlatform: TargetPlatfo
 
   const currentPlatform = targetPlatform === "current" ? (process.platform as SupportedPlatforms) : targetPlatform
   return files.map(file => {
-    const basename = path.basename(file)
-    const stat = cache.files[basename]
-
-    // Apply flaky multiplier if needed to prioritize fail-fast files
-    const cachedMs = stat?.platformRuns?.[currentPlatform]?.avgMs
+    // Cache keys are relative to TEST_ROOT (e.g. "updater/blackboxInstallTest.ts"), not basename
+    const key = file.slice(TEST_ROOT.length + 1)
+    const stat = cache.files[key]
+    // avgMs of 0 means no runs on this platform yet — treat as unknown
+    const cachedMs = stat?.platformRuns?.[currentPlatform]?.avgMs || undefined
     const base = cachedMs ?? DEFAULT_FILE_MS
     const weight = stat?.unstable ? base * 1.5 : base
 
-    return { filename: basename, weight, filepath: file, cachedMs }
+    return { filename: key, weight, filepath: file, cachedMs }
   })
 }
 
