@@ -255,7 +255,7 @@ export default class SquirrelWindowsTarget extends Target {
     normalizeSquirrelOptions(this.options)
     const appInfo = packager.appInfo
 
-    const description = isEmptyOrSpaces(appInfo.description) ? (this.options.name || appInfo.productName) : appInfo.description
+    const description = isEmptyOrSpaces(appInfo.description) ? this.options.name || appInfo.productName : appInfo.description
 
     let remoteReleases: string | undefined
     if (this.options.remoteReleases === true) {

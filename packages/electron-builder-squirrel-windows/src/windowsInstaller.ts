@@ -60,7 +60,23 @@ export interface InstallerOptions {
 }
 
 export async function createWindowsInstaller(options: InstallerOptions): Promise<void> {
-  const { appDirectory, outputDirectory, vendorDirectory, name, version, exe, nuspecTemplate, loadingGif, noMsi, remoteReleases, remoteToken, setupExe, setupMsi, fixUpPaths = false, createTempDir } = options
+  const {
+    appDirectory,
+    outputDirectory,
+    vendorDirectory,
+    name,
+    version,
+    exe,
+    nuspecTemplate,
+    loadingGif,
+    noMsi,
+    remoteReleases,
+    remoteToken,
+    setupExe,
+    setupMsi,
+    fixUpPaths = false,
+    createTempDir,
+  } = options
 
   const useMono = process.platform !== "win32"
   if (useMono) {

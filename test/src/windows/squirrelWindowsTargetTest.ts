@@ -23,8 +23,8 @@ describe("SquirrelWindowsTarget.select7zipArch", () => {
 
     t.select7zipArch(tmpDir)
 
-    expect((await readFile(path.join(tmpDir, "7z.exe"), "utf8"))).toBe("exe-content")
-    expect((await readFile(path.join(tmpDir, "7z.dll"), "utf8"))).toBe("dll-content")
+    expect(await readFile(path.join(tmpDir, "7z.exe"), "utf8")).toBe("exe-content")
+    expect(await readFile(path.join(tmpDir, "7z.dll"), "utf8")).toBe("dll-content")
   })
 
   test("skips copy and leaves existing 7z.exe unchanged when arch-specific exe is absent", async () => {
@@ -32,7 +32,7 @@ describe("SquirrelWindowsTarget.select7zipArch", () => {
 
     t.select7zipArch(tmpDir)
 
-    expect((await readFile(path.join(tmpDir, "7z.exe"), "utf8"))).toBe("original-exe")
+    expect(await readFile(path.join(tmpDir, "7z.exe"), "utf8")).toBe("original-exe")
   })
 
   test("copies exe but skips dll when only arch-specific exe is present", async () => {
@@ -42,7 +42,7 @@ describe("SquirrelWindowsTarget.select7zipArch", () => {
 
     t.select7zipArch(tmpDir)
 
-    expect((await readFile(path.join(tmpDir, "7z.exe"), "utf8"))).toBe("exe-only")
+    expect(await readFile(path.join(tmpDir, "7z.exe"), "utf8")).toBe("exe-only")
     // 7z.dll was never created — should still not exist
     await expect(readFile(path.join(tmpDir, "7z.dll"), "utf8")).rejects.toThrow()
   })
