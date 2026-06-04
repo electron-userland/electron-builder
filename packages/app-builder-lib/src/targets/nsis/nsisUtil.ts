@@ -1,5 +1,5 @@
 import { Arch, copyFile, dirSize, log } from "builder-util"
-import { PackageFileInfo, UUID } from "builder-util-runtime"
+import { PackageFileInfo } from "builder-util-runtime"
 import * as fs from "fs/promises"
 import * as path from "path"
 import * as zlib from "zlib"
@@ -244,31 +244,5 @@ export class UninstallerReader {
     }
     await fs.writeFile(uninstallerPath, executable)
     await fs.appendFile(uninstallerPath, innerBuffer)
-  }
-}
-
-export class ProgIdMaker {
-  private readonly program: string
-  private readonly guid: Buffer
-
-  constructor(guid: string, productFilename: string) {
-    this.guid = UUID.parse(guid)
-    let program = this.sanitize(productFilename)
-    if (program === "") {
-      program = this.sanitize(`App${guid}`)
-    } else if (program.match(/^\d/)) {
-      program = `App${program}`
-    }
-    this.program = program.slice(0, 19)
-  }
-
-  progId(nameOrExt: string): string {
-    const componentPrefix = this.sanitize(nameOrExt).slice(0, 31 - this.program.length)
-    const componentUuid = this.sanitize(UUID.v5(nameOrExt, this.guid))
-    return `${this.program}.${componentPrefix}${componentUuid}`.slice(0, 39)
-  }
-
-  private sanitize(value: string) {
-    return value.replace(/[^A-Za-z0-9]/g, "")
   }
 }
