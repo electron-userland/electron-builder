@@ -41,7 +41,7 @@ afterEach(async () => {
   await rm(FAKE_WINE_DIR, { recursive: true, force: true })
 })
 
-describe.ifNotWindows.sequential("getWineToolset — env merging (ELECTRON_BUILDER_WINE_TOOLSET_DIR override)", () => {
+describe.ifNotWindows("getWineToolset — env merging (ELECTRON_BUILDER_WINE_TOOLSET_DIR override)", { sequential: true }, () => {
   test("DYLD_FALLBACK_LIBRARY_PATH includes the wine lib dir", async ({ expect }) => {
     delete process.env.DYLD_FALLBACK_LIBRARY_PATH
     const result = await getWineToolset("0.0.0")
