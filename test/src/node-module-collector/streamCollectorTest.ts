@@ -5,11 +5,14 @@ import { PM } from "app-builder-lib/src/node-module-collector/packageManager"
 import * as childProcess from "child_process"
 import * as fsExtra from "fs-extra"
 import type { TmpDir } from "builder-util"
+import * as os from "os"
+import * as path from "path"
+import { randomBytes } from "crypto"
+import { existsSync, unlinkSync } from "fs"
 
 vi.mock("child_process", () => ({ spawn: vi.fn() }))
 vi.mock("fs-extra", async () => ({
   ...(await vi.importActual("fs-extra")),
-  createWriteStream: vi.fn(() => ({ close: vi.fn() })),
   writeFile: vi.fn().mockResolvedValue(undefined),
 }))
 
@@ -30,7 +33,7 @@ class TestCollector extends NodeModulesCollector<any, any> {
 }
 
 const TMP_FILE = "C:\\Temp\\pnpm-deadbeef.tmp"
-const OUTPUT_FILE = "/tmp/output.json"
+let OUTPUT_FILE: string
 
 const originalPlatform = process.platform
 
@@ -64,6 +67,7 @@ async function waitForCloseCb() {
 }
 
 beforeEach(() => {
+  OUTPUT_FILE = path.join(os.tmpdir(), `output-${randomBytes(4).toString("hex")}.json`)
   closeCb = undefined
   stderrDataCb = undefined
   const mockChild = {
@@ -89,9 +93,12 @@ beforeEach(() => {
 afterEach(() => {
   Object.defineProperty(process, "platform", { value: originalPlatform, configurable: true })
   vi.clearAllMocks()
+  if (existsSync(OUTPUT_FILE)) {
+    unlinkSync(OUTPUT_FILE)
+  }
 })
 
-describe.sequential("streamCollectorCommandToFile", () => {
+describe("streamCollectorCommandToFile", () => {
   describe("Windows PowerShell -EncodedCommand wrapping", () => {
     test(".cmd file: spawn receives powershell.exe with -EncodedCommand", async ({ expect }) => {
       setPlatform("win32")
