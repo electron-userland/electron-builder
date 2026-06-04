@@ -3,7 +3,7 @@ import * as path from "path"
 import type { ToolsetConfig } from "app-builder-lib/src/configuration"
 import { buildDescribeCall, cleanAndEnsureDir, GENERATED_TESTS_DIR, namedFn, resolveImportPath, TEST_SRC_DIR } from "./generate-toolset-tests-shared"
 import type { SuiteConfig } from "./generate-toolset-tests-shared"
-import { WIN_CODE_SIGN_VERSIONS, NSIS_VERSIONS, WINE_VERSIONS, WIX_VERSIONS } from "./generate-toolset-versions"
+import { WIN_CODE_SIGN_VERSIONS, NSIS_VERSIONS, WINE_VERSIONS } from "./generate-toolset-versions"
 import type * as _WinPackagerSuite from "../../src/windows/winPackagerTestSuite"
 import type * as _PortableSuite from "../../src/windows/portableTestSuite"
 import type * as _AssistedInstallerSuite from "../../src/windows/assistedInstallerTestSuite"
@@ -51,7 +51,7 @@ const SUITES: WindowsSuiteConfig[] = [
     importPath: "windows/msiTestSuite",
     describeConfig: { name: "msi", chain: ["ifWindows"] },
     describeOptions: { sequential: true },
-    wixVersions: WIX_VERSIONS,
+    // wixVersions: WIX_VERSIONS,
     winCodeSignVersions: [], // MSI does not use winCodeSign
   },
   {

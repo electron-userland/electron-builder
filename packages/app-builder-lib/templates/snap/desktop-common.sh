@@ -86,7 +86,7 @@ append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRI
 # Tell libGL where to find the drivers
 export LIBGL_DRIVERS_PATH="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/dri"
 append_dir LD_LIBRARY_PATH "$LIBGL_DRIVERS_PATH"
-export LIBVA_DRIVERS_PATH=$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/dri
+export LIBVA_DRIVERS_PATH=$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/dri
 
 # Workaround in snapd for proprietary nVidia drivers mounts the drivers in
 # /var/lib/snapd/lib/gl that needs to be in LD_LIBRARY_PATH

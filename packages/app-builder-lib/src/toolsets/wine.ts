@@ -22,15 +22,17 @@ export async function getWineToolset(wine: ToolsetConfig["wine"]): Promise<{ exe
 
   const envPath = await resolveEnvToolsetPath("ELECTRON_BUILDER_WINE_TOOLSET_DIR", "directory")
   if (envPath != null) {
-    const { execPath, winePrefix, dyldLibPaths } = await createWineEnvironment(envPath, "bin/wine")
+    // Probe for the wine binary: modern bundles ship bin/wine; legacy bundles (e.g. wine-4.0.1-mac) ship bin/wine64.
+    const wineExecSubPath = (await exists(path.join(envPath, "bin", "wine"))) ? "bin/wine" : "bin/wine64"
+    const { execPath, winePrefix, wineLibPath } = await createWineEnvironment(envPath, wineExecSubPath)
 
     return {
       execPath,
       env: {
         ...defaultEnv,
         WINEPREFIX: winePrefix,
-        DYLD_FALLBACK_LIBRARY_PATH: [dyldLibPaths, process.env.DYLD_FALLBACK_LIBRARY_PATH].filter(Boolean).join(path.delimiter),
-        LD_LIBRARY_PATH: [dyldLibPaths, process.env.LD_LIBRARY_PATH].filter(Boolean).join(path.delimiter),
+        DYLD_FALLBACK_LIBRARY_PATH: [wineLibPath, process.env.DYLD_FALLBACK_LIBRARY_PATH].filter(Boolean).join(path.delimiter),
+        LD_LIBRARY_PATH: [wineLibPath, process.env.LD_LIBRARY_PATH].filter(Boolean).join(path.delimiter),
       },
     }
   }
@@ -69,14 +71,14 @@ export async function getWineToolset(wine: ToolsetConfig["wine"]): Promise<{ exe
     githubOrgRepo: "electron-userland/electron-builder-binaries",
   })
 
-  const { execPath, winePrefix, dyldLibPaths } = await createWineEnvironment(toolsetPath, pkg.execPath)
+  const { execPath, winePrefix, wineLibPath } = await createWineEnvironment(toolsetPath, pkg.execPath)
   return {
     execPath,
     env: {
       ...defaultEnv,
       WINEPREFIX: winePrefix,
-      DYLD_FALLBACK_LIBRARY_PATH: dyldLibPaths,
-      LD_LIBRARY_PATH: dyldLibPaths,
+      DYLD_FALLBACK_LIBRARY_PATH: [wineLibPath, process.env.DYLD_FALLBACK_LIBRARY_PATH].filter(Boolean).join(path.delimiter),
+      LD_LIBRARY_PATH: [wineLibPath, process.env.LD_LIBRARY_PATH].filter(Boolean).join(path.delimiter),
     },
   }
 
@@ -93,18 +95,18 @@ export async function getWineToolset(wine: ToolsetConfig["wine"]): Promise<{ exe
     }
 
     // Modern bundles ship a `lib` dir; the legacy wine-4.0.1-mac bundle ships `lib64` instead.
-    let dyldLibPath: string | null = null
+    let wineLibPath: string | null = null
     for (const libDir of ["lib", "lib64"]) {
       const candidate = path.resolve(sanitizedWinePath, libDir)
       if (await exists(candidate)) {
-        dyldLibPath = candidate
+        wineLibPath = candidate
         break
       }
     }
-    if (dyldLibPath == null) {
+    if (wineLibPath == null) {
       throw new InvalidConfigurationError(`Wine toolset at "${toolsetPath}" is missing expected library directory (lib or lib64)`)
     }
 
-    return { execPath, winePrefix, dyldLibPaths: [dyldLibPath, process.env.DYLD_FALLBACK_LIBRARY_PATH].filter(Boolean).join(path.delimiter) }
+    return { execPath, winePrefix, wineLibPath }
   }
 }

@@ -1,10 +1,81 @@
 import { describe } from "vitest"
-import { shellQuote } from "app-builder-lib/src/targets/snap/coreLegacy"
+import { buildCommandShContent, shellQuote } from "app-builder-lib/src/targets/snap/coreLegacy"
 
 // Pure unit tests for module-level helpers exported from coreLegacy.ts.
 // Full snap build flows are exercised by snapTest.ts.
 
 describe.sequential("snapCoreLegacy helpers", () => {
+  describe("buildCommandShContent", () => {
+    test("template build: desktop scripts sourced from $SNAP root", ({ expect }) => {
+      const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [] })
+      expect(content).toContain('"$SNAP/desktop-init.sh"')
+      expect(content).toContain('"$SNAP/desktop-common.sh"')
+      expect(content).toContain('"$SNAP/desktop-gnome-specific.sh"')
+    })
+
+    test("template build: executable has no app/ prefix", ({ expect }) => {
+      const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [] })
+      expect(content).toContain('"$SNAP/myapp"')
+      expect(content).not.toContain('"$SNAP/app/myapp"')
+    })
+
+    test("no-template build: desktop scripts sourced from $SNAP/scripts/", ({ expect }) => {
+      const content = buildCommandShContent({ isTemplate: false, executableName: "myapp", extraAppArgs: [] })
+      expect(content).toContain('"$SNAP/scripts/desktop-init.sh"')
+      expect(content).toContain('"$SNAP/scripts/desktop-common.sh"')
+      expect(content).toContain('"$SNAP/scripts/desktop-gnome-specific.sh"')
+    })
+
+    test("no-template build: desktop scripts are NOT sourced from $SNAP root", ({ expect }) => {
+      const content = buildCommandShContent({ isTemplate: false, executableName: "myapp", extraAppArgs: [] })
+      // Must not reference bare $SNAP/desktop-*.sh (those files won't exist in no-template snaps)
+      expect(content).not.toMatch(/"\$SNAP\/desktop-init\.sh"/)
+      expect(content).not.toMatch(/"\$SNAP\/desktop-common\.sh"/)
+      expect(content).not.toMatch(/"\$SNAP\/desktop-gnome-specific\.sh"/)
+    })
+
+    test("no-template build: executable has app/ prefix", ({ expect }) => {
+      const content = buildCommandShContent({ isTemplate: false, executableName: "myapp", extraAppArgs: [] })
+      expect(content).toContain('"$SNAP/app/myapp"')
+    })
+
+    test("extraAppArgs are shell-quoted and appended", ({ expect }) => {
+      const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: ["--no-sandbox", "--flag=it's"] })
+      expect(content).toContain("'--no-sandbox'")
+      expect(content).toContain("'--flag=it'\\''s'")
+    })
+
+    test("trailing $@ is always appended to forward snap args", ({ expect }) => {
+      const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [] })
+      expect(content).toMatch(/"\$@"\s*$/)
+    })
+
+    test("shebang is present", ({ expect }) => {
+      const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [] })
+      expect(content).toMatch(/^#!\/bin\/bash/)
+    })
+
+    test("executableName with shell-safe chars is accepted", ({ expect }) => {
+      expect(() => buildCommandShContent({ isTemplate: true, executableName: "my-app_v2.0", extraAppArgs: [] })).not.toThrow()
+    })
+
+    test("executableName containing $ throws InvalidConfigurationError", ({ expect }) => {
+      expect(() => buildCommandShContent({ isTemplate: true, executableName: "app$evil", extraAppArgs: [] })).toThrow(/not safe in shell scripts/)
+    })
+
+    test("executableName containing backtick throws", ({ expect }) => {
+      expect(() => buildCommandShContent({ isTemplate: true, executableName: "app`id`", extraAppArgs: [] })).toThrow(/not safe in shell scripts/)
+    })
+
+    test("executableName containing double-quote throws", ({ expect }) => {
+      expect(() => buildCommandShContent({ isTemplate: true, executableName: 'app"name', extraAppArgs: [] })).toThrow(/not safe in shell scripts/)
+    })
+
+    test("executableName containing backslash throws", ({ expect }) => {
+      expect(() => buildCommandShContent({ isTemplate: true, executableName: "app\\evil", extraAppArgs: [] })).toThrow(/not safe in shell scripts/)
+    })
+  })
+
   describe("shellQuote", () => {
     test("wraps a plain argument in single quotes", ({ expect }) => {
       expect(shellQuote("--no-sandbox")).toBe("'--no-sandbox'")

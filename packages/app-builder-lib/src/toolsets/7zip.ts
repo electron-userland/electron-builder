@@ -42,9 +42,15 @@ function getFilename(): keyof typeof checksums {
 
 let _resolvedPath: Promise<string> | null = null
 
-/** Returns the path to the 7za executable, downloading it on first call. */
+/** Returns the path to the 7za executable, downloading it on first call. Resets on failure so callers can retry. */
 export function getPath7za(): Promise<string> {
-  return (_resolvedPath ??= resolve())
+  if (_resolvedPath == null) {
+    _resolvedPath = resolve().catch(err => {
+      _resolvedPath = null
+      throw err
+    })
+  }
+  return _resolvedPath
 }
 
 async function resolve(): Promise<string> {

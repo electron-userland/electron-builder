@@ -40,6 +40,8 @@ export class WineVmManager extends VmManager {
       return exec(target, appArgs, options)
     }
     const { execPath: wineExe, env: wineEnv } = await getWineToolset(toolset)
-    return exec(wineExe, [target, ...appArgs], { ...options, env: { ...wineEnv, ...options.env } })
+    // Preserve the base process environment (PATH, HOME, TMPDIR, etc.) so Wine and child
+    // tools start correctly. Wine env vars override the base; caller options.env wins last.
+    return exec(wineExe, [target, ...appArgs], { ...options, env: { ...process.env, ...wineEnv, ...options.env } })
   }
 }

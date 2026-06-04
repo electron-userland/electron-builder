@@ -7,6 +7,7 @@ import { PlugDescriptor, SnapOptions } from "../../options/SnapOptions"
 import { getAppImageTools } from "../../toolsets/appimage"
 import { downloadBuilderToolset } from "../../util/electronGet"
 import { getTemplatePath } from "../../util/pathManager"
+import { validateShellEmbeddable } from "../../frameworks/LibUiFramework"
 import { SnapCore } from "./SnapTarget"
 import { SnapcraftYAML } from "./snapcraft"
 import { DEFAULT_STAGE_PACKAGES } from "./snapcraftBuilder"
@@ -14,8 +15,8 @@ import { load } from "js-yaml"
 
 // Snap template release info from electron-userland/electron-builder-binaries
 const SNAP_TEMPLATES = {
-  amd64: { releaseName: "snap-template-4.0-2", filenameWithExt: "snap-template-electron-4.0-2-amd64.tar.7z" },
-  armhf: { releaseName: "snap-template-4.0-1", filenameWithExt: "snap-template-electron-4.0-1-armhf.tar.7z" },
+  amd64: { releaseName: "snap-template-4.0-2", filenameWithExt: "snap-template-electron-4.0-2-amd64.tar.7z" , checksums: { "snap-template-electron-4.0-2-amd64.tar.7z": "5e3ab4e09364ac06f0072b1c2dab9138318c933f6b2c7374f893b5ec44d19e6f" } },
+  armhf: { releaseName: "snap-template-4.0-1", filenameWithExt: "snap-template-electron-4.0-1-armhf.tar.7z" , checksums: { "snap-template-electron-4.0-1-armhf.tar.7z": "6f7553e904f4e043bc3019f0899d05e01a283b00b61fec22e932296490e3be6b" } },
 } as const
 
 // Handles core18/core20/core22 snaps via mksquashfs (template) or snapcraft CLI (no-template).
@@ -265,10 +266,10 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
   }): Promise<void> {
     const { appOutDir, stageDir, snapArch, artifactPath, compression, hooksDir, extraAppArgs } = opts
     const templateArch = snapArch === Arch.x64 ? "amd64" : "armhf"
-    const { releaseName, filenameWithExt } = SNAP_TEMPLATES[templateArch]
+    const { releaseName, filenameWithExt, checksums } = SNAP_TEMPLATES[templateArch]
 
     log.info({ releaseName }, "downloading snap template")
-    const templateDir = await downloadBuilderToolset({ releaseName, filenameWithExt })
+    const templateDir = await downloadBuilderToolset({ releaseName, filenameWithExt, checksums, githubOrgRepo: "electron-userland/electron-builder-binaries" })
 
     await this.stageSnapFiles({ stageDir, appOutDir, hooksDir, extraAppArgs, isTemplate: true })
 
@@ -356,12 +357,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
 
     // command.sh — template builds write to stage root; no-template writes to scripts/
     const commandWrapperPath = isTemplate ? path.join(stageDir, "command.sh") : path.join(scriptDir, "command.sh")
-    const appPrefix = isTemplate ? "" : "app/"
-    let commandContent = `#!/bin/bash -e\nexec "$SNAP/desktop-init.sh" "$SNAP/desktop-common.sh" "$SNAP/desktop-gnome-specific.sh" "$SNAP/${appPrefix}${this.packager.executableName}"`
-    if (extraAppArgs.length > 0) {
-      commandContent += " " + extraAppArgs.map(shellQuote).join(" ")
-    }
-    commandContent += ' "$@"'
+    const commandContent = buildCommandShContent({ isTemplate, executableName: this.packager.executableName, extraAppArgs })
     await writeFile(commandWrapperPath, commandContent, { mode: 0o755 })
     await chmod(commandWrapperPath, 0o755)
   }
@@ -437,4 +433,23 @@ async function readDirPaths(dir: string, filter?: (name: string) => boolean): Pr
 /** Single-quote a shell argument, escaping any embedded single quotes. */
 export function shellQuote(arg: string): string {
   return "'" + arg.replace(/'/g, "'\\''") + "'"
+}
+
+/**
+ * Builds the content of command.sh for a snap package.
+ *
+ * Template builds source desktop-integration scripts from the snap root ($SNAP);
+ * no-template builds copy them into scripts/ so they must be referenced from $SNAP/scripts/.
+ */
+export function buildCommandShContent(opts: { isTemplate: boolean; executableName: string; extraAppArgs: string[] }): string {
+  const { isTemplate, executableName, extraAppArgs } = opts
+  validateShellEmbeddable(executableName, "executableName")
+  const scriptBase = isTemplate ? "$SNAP" : "$SNAP/scripts"
+  const appPrefix = isTemplate ? "" : "app/"
+  let content = `#!/bin/bash -e\nexec "${scriptBase}/desktop-init.sh" "${scriptBase}/desktop-common.sh" "${scriptBase}/desktop-gnome-specific.sh" "$SNAP/${appPrefix}${executableName}"`
+  if (extraAppArgs.length > 0) {
+    content += " " + extraAppArgs.map(shellQuote).join(" ")
+  }
+  content += ' "$@"'
+  return content
 }

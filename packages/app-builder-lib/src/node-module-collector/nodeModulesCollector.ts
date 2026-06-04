@@ -400,6 +400,18 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
           return
         }
         settled = true
+        // Best-effort cleanup: stop the child and close the stream so we don't
+        // waste CPU writing to a broken fd after rejection.
+        try {
+          child.kill()
+        } catch {
+          // ignore
+        }
+        try {
+          outStream.destroy()
+        } catch {
+          // ignore
+        }
         reject(err)
       }
 
