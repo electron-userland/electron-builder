@@ -1,13 +1,13 @@
-import { InvalidConfigurationError, log, isEmptyOrSpaces, exists } from "builder-util"
-import { execWine } from "app-builder-lib/out/wine"
-import { sanitizeFileName } from "builder-util/out/filename"
-import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
+import { Arch, SquirrelWindowsOptions, Target, WinPackager, getArchSuffix } from "app-builder-lib"
 import { withToolsetLock } from "app-builder-lib/out/util/toolsetLock"
-import * as path from "path"
+import { WineVmManager } from "app-builder-lib/out/vm/WineVm"
+import { InvalidConfigurationError, exists, isEmptyOrSpaces, log } from "builder-util"
+import { sanitizeFileName } from "builder-util/out/filename"
 import * as fs from "fs"
 import * as os from "os"
-import { InstallerOptions, createWindowsInstaller, convertVersion } from "./windowsInstaller"
+import * as path from "path"
 import { getSquirrelToolsetPath } from "./toolset"
+import { InstallerOptions, convertVersion, createWindowsInstaller } from "./windowsInstaller"
 
 export default class SquirrelWindowsTarget extends Target {
   //tslint:disable-next-line:no-object-literal-type-assertion
@@ -120,7 +120,8 @@ export default class SquirrelWindowsTarget extends Target {
     const writeZipToSetupExe = await this.ensurePathInside(vendorDir, path.join(vendorDir, "WriteZipToSetup.exe"), "WriteZipToSetup executable")
 
     await fs.promises.copyFile(stubExecutableSource, stubExePath)
-    await execWine(writeZipToSetupExe, null, ["--copy-stub-resources", filePath, stubExePath])
+    const wineVm = new WineVmManager(this.packager.config.toolsets?.wine)
+    await wineVm.exec(writeZipToSetupExe, ["--copy-stub-resources", filePath, stubExePath])
     await this.packager.signIf(stubExePath)
     log.debug({ file: filePath }, "signing app executable")
     await this.packager.signIf(filePath)

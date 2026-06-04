@@ -7,7 +7,8 @@ import {
   GotDownloaderOptions,
   MirrorOptions,
 } from "@electron/get"
-import { buildGotProxyAgent, exec, exists, getPath7za, log, PADDING, parseValidEnvVarUrl, sanitizeDirPath, to7zaOutputSwitch } from "builder-util"
+import { buildGotProxyAgent, exec, exists, log, PADDING, parseValidEnvVarUrl, sanitizeDirPath, to7zaOutputSwitch } from "builder-util"
+import { getPath7za } from "../toolsets/7zip"
 import { MultiProgress } from "electron-publish/out/multiProgress"
 import { createReadStream, createWriteStream } from "fs"
 import * as fs from "fs/promises"
@@ -179,7 +180,9 @@ export async function extractArchive(file: string, dir: string) {
   await fs.mkdir(tmpDir, { recursive: true })
 
   const release = await lockfile.lock(tmpDir, {
-    retries: { retries: 15, minTimeout: 1000, maxTimeout: 5000 },
+    // 100 retries (not 15) so concurrent callers wait out a slow first extraction instead of failing
+    // with ELOCKED; the update heartbeat keeps an in-progress holder's lock fresh against `stale`.
+    retries: { retries: 100, minTimeout: 1000, maxTimeout: 5000 },
     stale: 120000, // Increased from 60s to allow long-running extractions
   })
 
@@ -200,6 +203,22 @@ export async function extractArchive(file: string, dir: string) {
 
     if (file.endsWith(".tar.gz") || file.endsWith(".tgz")) {
       await tar.extract({ file, cwd: tmpDir, strip: 1 })
+    } else if (file.endsWith(".tar.xz") || file.endsWith(".txz")) {
+      // node-tar cannot decompress xz, so use 7za to turn the .tar.xz into a .tar, then extract that tar.
+      const cmd7za = await getPath7za()
+      const xzOutDir = `${tmpDir}.xz`
+      await fs.rm(xzOutDir, { recursive: true, force: true })
+      await fs.mkdir(xzOutDir, { recursive: true })
+      try {
+        await exec(cmd7za, ["x", "-bd", file, to7zaOutputSwitch(sanitizeDirPath(xzOutDir)), "-y"])
+        const innerTar = (await fs.readdir(xzOutDir)).find(f => f.endsWith(".tar"))
+        if (innerTar == null) {
+          throw new Error(`xz decompression of ${path.basename(file)} produced no .tar archive`)
+        }
+        await tar.extract({ file: path.join(xzOutDir, innerTar), cwd: tmpDir, strip: 1 })
+      } finally {
+        await fs.rm(xzOutDir, { recursive: true, force: true })
+      }
     } else if (file.endsWith(".zip")) {
       await extractZipStreaming(file, tmpDir)
     } else if (file.endsWith(".7z")) {
@@ -242,8 +261,13 @@ async function downloadArtifactToFile(config: Parameters<typeof get.downloadArti
     .digest("hex")
     .slice(0, 20)
   const artifactLockPath = path.join(os.tmpdir(), `eb-dl-${artifactLockKey}.lock`)
+  // This lock is taken even for cache hits (the cache-hit check lives inside @electron/get), so under
+  // heavy concurrency many builds serialize here. 30 retries (~137s of backoff) is too few — waiters
+  // were exhausting it and failing with ELOCKED while the holder fetched a large artifact. 100 retries
+  // matches the other toolset locks; stale (10min) + proper-lockfile's update heartbeat keep a live
+  // downloader's lock fresh so the longer wait never falsely steals an in-progress download.
   const releaseArtifactLock = await lockfile.lock(artifactLockPath, {
-    retries: { retries: 30, minTimeout: 500, maxTimeout: 5000 },
+    retries: { retries: 100, minTimeout: 500, maxTimeout: 5000 },
     stale: 600_000,
     realpath: false,
   })
@@ -333,8 +357,13 @@ async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact
     }
   }
 
+  // Be patient: when many targets/builds contend on the same toolset cache concurrently, all but the
+  // first wait here while the winner downloads+extracts (a large bundle can take >1min). 15 retries
+  // (~67s) is too few and waiters fail with ELOCKED before the winner finishes; 100 matches the
+  // patience of withToolsetLock. proper-lockfile's update heartbeat keeps a live holder's lock fresh,
+  // so increasing waiter retries never falsely steals an in-progress extraction.
   const release = await lockfile.lock(extractDir, {
-    retries: { retries: 15, minTimeout: 1000, maxTimeout: 5000 },
+    retries: { retries: 100, minTimeout: 1000, maxTimeout: 5000 },
     stale: 120000,
   })
   let downloadedFile: string | null = null
@@ -400,7 +429,7 @@ export async function downloadBuilderToolset(options: {
   const baseUrl = getBinariesMirrorUrl(githubOrgRepo)
   const fullUrl = overrideUrl ? `${overrideUrl}/${filenameWithExt}` : `${baseUrl}${releaseName}/${filenameWithExt}`
   const suffix = hashUrlSafe(fullUrl, 5)
-  const folderName = `${filenameWithExt.replace(/\.(tar\.gz|tgz|zip|7z)$/, "")}-${suffix}`
+  const folderName = `${filenameWithExt.replace(/\.(tar\.gz|tgz|tar\.xz|txz|zip|7z)$/, "")}-${suffix}`
   const extractDir = path.join(getCacheDirectory({ allowEnvVarOverride: true }), releaseName, folderName)
 
   // Use resolveAssetURL so @electron/get's ELECTRON_MIRROR env var check cannot override
