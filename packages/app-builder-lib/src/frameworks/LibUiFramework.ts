@@ -51,8 +51,7 @@ export class LibUiFramework implements Framework {
   constructor(
     readonly version: string,
     readonly macOsProductName: string,
-    protected readonly isUseLaunchUi: boolean,
-    protected readonly launchUiVersion: string = LAUNCHUI_DEFAULT_VERSION
+    protected readonly isUseLaunchUi: boolean
   ) {}
 
   get distMacOsAppName(): string {
