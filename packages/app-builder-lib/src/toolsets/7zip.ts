@@ -1,5 +1,4 @@
-import _fsExtra from "fs-extra"
-const { chmod } = _fsExtra
+import { chmod } from "node:fs/promises"
 import * as path from "path"
 import { resolveEnvToolsetPath } from "builder-util"
 import { downloadBuilderToolset } from "../util/electronGet.js"

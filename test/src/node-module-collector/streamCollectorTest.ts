@@ -3,7 +3,7 @@ import { NodeModulesCollector } from "app-builder-lib/src/node-module-collector/
 import { LogMessageByKey } from "app-builder-lib/src/node-module-collector/moduleManager"
 import { PM } from "app-builder-lib/src/node-module-collector/packageManager"
 import * as childProcess from "child_process"
-import * as fsExtra from "fs-extra"
+import * as nodeFs from "node:fs"
 import { EventEmitter } from "events"
 import type { TmpDir } from "builder-util"
 import * as os from "os"
@@ -12,11 +12,10 @@ import { randomBytes } from "crypto"
 import { existsSync, unlinkSync } from "fs"
 
 vi.mock("child_process", () => ({ spawn: vi.fn() }))
-vi.mock("fs-extra", async () => ({
-  ...(await vi.importActual("fs-extra")),
-  createWriteStream: vi.fn(),
-  writeFile: vi.fn().mockResolvedValue(undefined),
-}))
+vi.mock("node:fs", async () => {
+  const actual = await vi.importActual<typeof import("node:fs")>("node:fs")
+  return { ...actual, createWriteStream: vi.fn() }
+})
 
 class TestCollector extends NodeModulesCollector<any, any> {
   readonly installOptions = { manager: PM.NPM, lockfile: "package-lock.json" }
@@ -78,7 +77,7 @@ beforeEach(() => {
   // pipe() is mocked to auto-emit "finish" after a microtask, matching what a real writable
   // stream does when the readable source ends.
   mockOutStream = new EventEmitter()
-  vi.mocked(fsExtra.createWriteStream).mockReturnValue(mockOutStream as any)
+  vi.mocked(nodeFs.createWriteStream).mockReturnValue(mockOutStream as any)
 
   const mockChild = {
     stdout: {
@@ -127,8 +126,6 @@ describe("streamCollectorCommandToFile", () => {
       const script = decodeEncodedCommand(args as string[])
       expect(script).toContain("& 'C:\\nodejs\\npm.cmd' 'list'")
       expect(script).toContain("exit $LASTEXITCODE")
-      // No temporary .bat file is created anymore.
-      expect(vi.mocked(fsExtra.writeFile)).not.toHaveBeenCalled()
     })
 
     test("path with spaces: single-quoted, no shell escaping required", async ({ expect }) => {
@@ -206,7 +203,6 @@ describe("streamCollectorCommandToFile", () => {
       const [spawnCmd, spawnArgs] = vi.mocked(childProcess.spawn).mock.calls[0]
       expect(spawnCmd).toBe(cmd)
       expect(spawnArgs).toEqual(["list", "--json"])
-      expect(vi.mocked(fsExtra.writeFile)).not.toHaveBeenCalled()
     })
   })
 
@@ -293,7 +289,7 @@ describe("streamCollectorCommandToFile", () => {
       // We stub createWriteStream to return an extended mock that has a destroy spy.
       const destroySpy = vi.fn()
       const extendedStream = Object.assign(mockOutStream, { destroy: destroySpy })
-      vi.mocked(fsExtra.createWriteStream).mockReturnValueOnce(extendedStream as any)
+      vi.mocked(nodeFs.createWriteStream).mockReturnValueOnce(extendedStream as any)
 
       const p = collector.streamCollectorCommandToFile("pnpm", ["list"], "/cwd", OUTPUT_FILE)
       await waitForCloseCb()
