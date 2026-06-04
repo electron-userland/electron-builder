@@ -242,7 +242,16 @@ export class LinuxTargetHelper {
       return fallback
     }
     const trimmedDesktopName = this.packager.info.metadata.desktopName?.trim()
-    return !isEmptyOrSpaces(trimmedDesktopName) ? trimmedDesktopName.replace(/\.desktop$/, "") : fallback
+    if (isEmptyOrSpaces(trimmedDesktopName)) {
+      return fallback
+    }
+    const basename = trimmedDesktopName.replace(/\.desktop$/, "")
+    // Guard against path traversal: desktopName flows into filesystem paths
+    // (snap/gui/<name>.desktop, /usr/share/applications/<name>.desktop, etc.).
+    if (/[/\\]/.test(basename) || [...basename].some(c => c.charCodeAt(0) === 0)) {
+      throw new InvalidConfigurationError(`desktopName "${trimmedDesktopName}" produces an invalid .desktop filename — remove any path separators or NUL characters`)
+    }
+    return basename
   }
 
   computeDesktopEntry(targetSpecificOptions: CommonLinuxOptions, exec?: string, extra?: Record<string, string>): Promise<string> {
@@ -280,6 +289,15 @@ export class LinuxTargetHelper {
     // Electron derives app_id from desktopName in package.json; StartupWMClass must match.
     // https://github.com/electron/electron/blob/9a7b73b5334f1d72c08e2d5e94106706ed751186/lib/browser/init.ts#L128-L133
     const trimmedDesktopName = packager.info.metadata.desktopName?.trim()
+    if (isEmptyOrSpaces(trimmedDesktopName)) {
+      log.warn(
+        {
+          reason: "desktopName is not set in package.json",
+          docs: "https://www.electron.build/linux",
+        },
+        "Electron uses desktopName as app_id / WM_CLASS for window association. Without it desktop environments may not link running windows to this .desktop entry. Set desktopName in package.json and linux.syncDesktopName: true to fix."
+      )
+    }
     const wmClass = !isEmptyOrSpaces(trimmedDesktopName) ? trimmedDesktopName.replace(/\.desktop$/, "") : appInfo.productName
 
     const desktopMeta = deepAssign<any>(

@@ -570,4 +570,61 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
         },
       },
     }))
+
+  test("AppImage - syncDesktopName rejects path traversal in desktopName", ({ expect }) =>
+    appThrows(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+          linux: { syncDesktopName: true },
+        },
+      },
+      {
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.desktopName = "../evil.desktop"
+          }),
+      },
+      err => expect(err.message).toContain("produces an invalid .desktop filename")
+    ))
+
+  test("AppImage - syncDesktopName rejects absolute path in desktopName", ({ expect }) =>
+    appThrows(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+          linux: { syncDesktopName: true },
+        },
+      },
+      {
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.desktopName = "/etc/passwd.desktop"
+          }),
+      },
+      err => expect(err.message).toContain("produces an invalid .desktop filename")
+    ))
+
+  test("AppImage - syncDesktopName rejects backslash in desktopName", ({ expect }) =>
+    appThrows(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+          linux: { syncDesktopName: true },
+        },
+      },
+      {
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.desktopName = "evil\\path.desktop"
+          }),
+      },
+      err => expect(err.message).toContain("produces an invalid .desktop filename")
+    ))
 }

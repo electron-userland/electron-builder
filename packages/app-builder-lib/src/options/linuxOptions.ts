@@ -69,7 +69,7 @@ export interface LinuxConfiguration extends CommonLinuxOptions, PlatformSpecific
    *
    * @default false
    * @see https://github.com/electron-userland/electron-builder/issues/9103
-   * @remarks Will become the default behavior in v27 and this option will be removed in v27 as well to align with electron upstream and common Linux desktop application practices. If you rely on the current default behavior, set this option to `false` explicitly to silence the warning.
+   * @remarks In v27 the default will change to `true`.
    */
   readonly syncDesktopName?: boolean
 }
