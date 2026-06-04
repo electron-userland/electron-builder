@@ -51,65 +51,69 @@ export async function doTest(
 
   const { execPath: winePath, env: wineEnv } = await getWineToolset(toolsets.wine)
   const wine = new WineManager(winePath, wineEnv)
-  await wine.prepare()
-  const driveC = path.join(wine.wineDir!, "drive_c")
-  const driveCWindows = path.join(wine.wineDir!, "drive_c", "windows")
-  const perUserTempDir = path.join(wine.userDir!, "Temp")
-  const walkFilter = (it: string) => {
-    return it !== driveCWindows && it !== perUserTempDir
-  }
-
-  function listFiles() {
-    return walk(driveC, null, { consume: walkFilter })
-  }
-
-  let fsBefore = await listFiles()
-
-  await wine.exec(path.join(outDir, `${productFilename} Setup 1.1.0.exe`), "/S")
-
-  let instDir = perUser ? path.join(wine.userDir!, "Local Settings", "Application Data", "Programs") : path.join(driveC, "Program Files")
-  if (menuCategory != null) {
-    instDir = path.join(instDir, menuCategory)
-  }
-
-  const appAsar = path.join(instDir, name, "resources", "app.asar")
-  expect(await readAsarJson(appAsar, "package.json")).toMatchObject({
-    name,
-  })
-
-  if (!perUser) {
-    let startMenuDir = path.join(driveC, "users", "Public", "Start Menu", "Programs")
-    if (menuCategory != null) {
-      startMenuDir = path.join(startMenuDir, menuCategory)
+  try {
+    await wine.prepare()
+    const driveC = path.join(wine.wineDir!, "drive_c")
+    const driveCWindows = path.join(wine.wineDir!, "drive_c", "windows")
+    const perUserTempDir = path.join(wine.userDir!, "Temp")
+    const walkFilter = (it: string) => {
+      return it !== driveCWindows && it !== perUserTempDir
     }
-    await assertThat(expect, path.join(startMenuDir, `${productFilename}.lnk`)).isFile()
+
+    function listFiles() {
+      return walk(driveC, null, { consume: walkFilter })
+    }
+
+    let fsBefore = await listFiles()
+
+    await wine.exec(path.join(outDir, `${productFilename} Setup 1.1.0.exe`), "/S")
+
+    let instDir = perUser ? path.join(wine.userDir!, "Local Settings", "Application Data", "Programs") : path.join(driveC, "Program Files")
+    if (menuCategory != null) {
+      instDir = path.join(instDir, menuCategory)
+    }
+
+    const appAsar = path.join(instDir, name, "resources", "app.asar")
+    expect(await readAsarJson(appAsar, "package.json")).toMatchObject({
+      name,
+    })
+
+    if (!perUser) {
+      let startMenuDir = path.join(driveC, "users", "Public", "Start Menu", "Programs")
+      if (menuCategory != null) {
+        startMenuDir = path.join(startMenuDir, menuCategory)
+      }
+      await assertThat(expect, path.join(startMenuDir, `${productFilename}.lnk`)).isFile()
+    }
+
+    if (packElevateHelper) {
+      await assertThat(expect, path.join(instDir, name, "resources", "elevate.exe")).isFile()
+    } else {
+      await assertThat(expect, path.join(instDir, name, "resources", "elevate.exe")).doesNotExist()
+    }
+
+    let fsAfter = await listFiles()
+
+    let fsChanges = diff(fsBefore, fsAfter, driveC)
+    expect(fsChanges.added).toMatchSnapshot()
+    expect(fsChanges.deleted).toEqual([])
+
+    // run installer again to test uninstall
+    const appDataFile = path.join(wine.userDir!, "Application Data", name, "doNotDeleteMe")
+    await outputFile(appDataFile, "app data must be not removed")
+    fsBefore = await listFiles()
+    await wine.exec(path.join(outDir, `${productFilename} Setup 1.1.0.exe`), "/S")
+    fsAfter = await listFiles()
+
+    fsChanges = diff(fsBefore, fsAfter, driveC)
+    expect(fsChanges.added).toEqual([])
+    expect(fsChanges.deleted).toEqual([])
+
+    await assertThat(expect, appDataFile).isFile()
+
+    await wine.exec(path.join(outDir, `${productFilename} Setup 1.1.0.exe`), "/S", "--delete-app-data")
+    await assertThat(expect, appDataFile).doesNotExist()
+  } finally {
+    await wine.dispose()
   }
-
-  if (packElevateHelper) {
-    await assertThat(expect, path.join(instDir, name, "resources", "elevate.exe")).isFile()
-  } else {
-    await assertThat(expect, path.join(instDir, name, "resources", "elevate.exe")).doesNotExist()
-  }
-
-  let fsAfter = await listFiles()
-
-  let fsChanges = diff(fsBefore, fsAfter, driveC)
-  expect(fsChanges.added).toMatchSnapshot()
-  expect(fsChanges.deleted).toEqual([])
-
-  // run installer again to test uninstall
-  const appDataFile = path.join(wine.userDir!, "Application Data", name, "doNotDeleteMe")
-  await outputFile(appDataFile, "app data must be not removed")
-  fsBefore = await listFiles()
-  await wine.exec(path.join(outDir, `${productFilename} Setup 1.1.0.exe`), "/S")
-  fsAfter = await listFiles()
-
-  fsChanges = diff(fsBefore, fsAfter, driveC)
-  expect(fsChanges.added).toEqual([])
-  expect(fsChanges.deleted).toEqual([])
-
-  await assertThat(expect, appDataFile).isFile()
-
-  await wine.exec(path.join(outDir, `${productFilename} Setup 1.1.0.exe`), "/S", "--delete-app-data")
-  await assertThat(expect, appDataFile).doesNotExist()
 }

@@ -184,7 +184,6 @@ describe.sequential("LibUiFramework helpers", () => {
     })
   })
 
-
   describe("validateShellEmbeddable", () => {
     describe("safe values pass", () => {
       test.each([

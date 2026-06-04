@@ -217,7 +217,6 @@ export async function fetchNodeJsChecksum(version: string, filename: string): Pr
   })
 }
 
-
 export type LaunchUiDownloadParams = {
   releaseName: string
   filenameWithExt: string

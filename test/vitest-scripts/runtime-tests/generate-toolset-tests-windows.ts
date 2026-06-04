@@ -42,6 +42,8 @@ const SUITES: WindowsSuiteConfig[] = [
     registerFn: namedFn("registerAssistedInstallerTests" satisfies keyof typeof _AssistedInstallerSuite),
     importPath: "windows/assistedInstallerTestSuite",
     describeConfig: { name: "assisted", chain: ["ifWindowsOrWine"] },
+    // sequential: tests share ~/wine-test WINEPREFIX; concurrent access causes wineboot --init races
+    describeOptions: { sequential: true },
     nsisVersions: NSIS_VERSIONS,
     wineVersions: WINE_VERSIONS,
   },

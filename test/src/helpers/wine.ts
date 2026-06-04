@@ -23,7 +23,9 @@ export class WineManager {
       return
     }
 
-    this.wineDir = path.join(homedir(), "wine-test")
+    // Each WineManager gets its own prefix under ~/wine-test-XXXX so concurrent
+    // workers in the same Docker container don't race on wineboot --init.
+    this.wineDir = await fs.mkdtemp(path.join(homedir(), "wine-test-"))
 
     const env = process.env
     const user = env.SUDO_USER || env.LOGNAME || env.USER || env.LNAME || env.USERNAME || (env.HOME === "/root" ? "root" : null)
@@ -39,6 +41,13 @@ export class WineManager {
 
   exec(...args: Array<string>) {
     return exec(this.winePath, args, { env: this.env })
+  }
+
+  async dispose() {
+    if (this.wineDir != null) {
+      await fs.rm(this.wineDir, { recursive: true, force: true })
+      this.wineDir = null
+    }
   }
 
   async prepareWine(wineDir: string) {
