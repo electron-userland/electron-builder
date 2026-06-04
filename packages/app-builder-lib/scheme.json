@@ -17,6 +17,9 @@
           "$ref": "#/definitions/SpacesOptions"
         },
         {
+          "$ref": "#/definitions/R2Options"
+        },
+        {
           "$ref": "#/definitions/GenericServerOptions"
         },
         {
@@ -135,6 +138,9 @@
             },
             {
               "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/R2Options"
             },
             {
               "$ref": "#/definitions/GenericServerOptions"
@@ -300,6 +306,9 @@
             },
             {
               "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/R2Options"
             },
             {
               "$ref": "#/definitions/GenericServerOptions"
@@ -819,6 +828,9 @@
               "$ref": "#/definitions/SpacesOptions"
             },
             {
+              "$ref": "#/definitions/R2Options"
+            },
+            {
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
@@ -1037,6 +1049,9 @@
             },
             {
               "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/R2Options"
             },
             {
               "$ref": "#/definitions/GenericServerOptions"
@@ -1454,6 +1469,9 @@
             },
             {
               "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/R2Options"
             },
             {
               "$ref": "#/definitions/GenericServerOptions"
@@ -2298,6 +2316,9 @@
               "$ref": "#/definitions/SpacesOptions"
             },
             {
+              "$ref": "#/definitions/R2Options"
+            },
+            {
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
@@ -2574,6 +2595,9 @@
             },
             {
               "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/R2Options"
             },
             {
               "$ref": "#/definitions/GenericServerOptions"
@@ -3084,6 +3108,9 @@
             },
             {
               "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/R2Options"
             },
             {
               "$ref": "#/definitions/GenericServerOptions"
@@ -3724,6 +3751,9 @@
               "$ref": "#/definitions/SpacesOptions"
             },
             {
+              "$ref": "#/definitions/R2Options"
+            },
+            {
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
@@ -4010,6 +4040,9 @@
               "$ref": "#/definitions/SpacesOptions"
             },
             {
+              "$ref": "#/definitions/R2Options"
+            },
+            {
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
@@ -4137,6 +4170,9 @@
             },
             {
               "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/R2Options"
             },
             {
               "$ref": "#/definitions/GenericServerOptions"
@@ -4418,6 +4454,9 @@
             },
             {
               "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/R2Options"
             },
             {
               "$ref": "#/definitions/GenericServerOptions"
@@ -4771,6 +4810,9 @@
             },
             {
               "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/R2Options"
             },
             {
               "$ref": "#/definitions/GenericServerOptions"
@@ -5480,6 +5522,9 @@
               "$ref": "#/definitions/SpacesOptions"
             },
             {
+              "$ref": "#/definitions/R2Options"
+            },
+            {
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
@@ -5740,6 +5785,9 @@
               "$ref": "#/definitions/SpacesOptions"
             },
             {
+              "$ref": "#/definitions/R2Options"
+            },
+            {
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
@@ -5860,6 +5908,9 @@
               "$ref": "#/definitions/SpacesOptions"
             },
             {
+              "$ref": "#/definitions/R2Options"
+            },
+            {
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
@@ -5960,6 +6011,90 @@
       "required": [
         "name",
         "schemes"
+      ],
+      "type": "object"
+    },
+    "R2Options": {
+      "additionalProperties": false,
+      "description": "[Cloudflare R2](https://developers.cloudflare.com/r2/) options.\nCredentials are required; define `CF_R2_ACCESS_KEY_ID` and `CF_R2_SECRET_ACCESS_KEY` environment variables\nwith an R2 API token (see https://developers.cloudflare.com/r2/api/s3/tokens/).\n\n**Public access for auto-updates:** R2 buckets are private by default. The S3-compatible API endpoint\nalways requires authentication, so `electron-updater` cannot download updates directly from it.\nYou must either enable a custom domain or an r2.dev subdomain for the bucket in the Cloudflare\ndashboard (see https://developers.cloudflare.com/r2/buckets/public-buckets/) and then set\n`publicUrl` to that base URL so the updater knows where to fetch update metadata and binaries.\n\n**ACLs:** R2 does not support S3 ACLs. The `acl` option from `BaseS3Options` is intentionally\nexcluded here. Configure public bucket access in the Cloudflare dashboard instead.\n\nExample configuration:\n\n```json\n{\n\"build\": {\n \"publish\": {\n   \"provider\": \"r2\",\n   \"bucket\": \"my-releases\",\n   \"accountId\": \"abcdef1234567890abcdef1234567890\",\n   \"publicUrl\": \"https://pub-abcdef1234567890abcdef1234567890.r2.dev\"\n }\n}\n}\n```",
+      "properties": {
+        "accountId": {
+          "description": "Your Cloudflare account ID (32-character hex string). Found on the R2 overview page\nin the Cloudflare dashboard. Used to construct the S3-compatible upload endpoint:\n`https://<accountId>.r2.cloudflarestorage.com`",
+          "type": "string"
+        },
+        "bucket": {
+          "description": "The R2 bucket name.",
+          "type": "string"
+        },
+        "channel": {
+          "default": "latest",
+          "description": "The update channel.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "path": {
+          "default": "/",
+          "description": "The directory path.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "provider": {
+          "const": "r2",
+          "description": "The provider. Must be `r2`.",
+          "type": "string"
+        },
+        "publicUrl": {
+          "description": "The public base URL from which `electron-updater` will download update metadata and\nbinaries. This must be the URL of your bucket's **custom domain** or **r2.dev subdomain**\n(e.g. `https://pub-xxx.r2.dev` or `https://cdn.example.com`).\n\nRequired when `publishAutoUpdate` is not `false`. The R2 S3 API endpoint requires\nauthentication and cannot serve unauthenticated download requests.\n\nSee https://developers.cloudflare.com/r2/buckets/public-buckets/",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "publishAutoUpdate": {
+          "default": true,
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "type": "boolean"
+        },
+        "publisherName": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requestHeaders": {
+          "$ref": "#/definitions/OutgoingHttpHeaders",
+          "description": "Any custom request headers"
+        },
+        "timeout": {
+          "default": 120000,
+          "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
+        "updaterCacheDirName": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "required": [
+        "accountId",
+        "bucket",
+        "provider"
       ],
       "type": "object"
     },
@@ -6265,6 +6400,9 @@
             },
             {
               "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/R2Options"
             },
             {
               "$ref": "#/definitions/GenericServerOptions"
@@ -6729,6 +6867,9 @@
               "$ref": "#/definitions/SpacesOptions"
             },
             {
+              "$ref": "#/definitions/R2Options"
+            },
+            {
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
@@ -7090,6 +7231,9 @@
             },
             {
               "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/R2Options"
             },
             {
               "$ref": "#/definitions/GenericServerOptions"
@@ -7485,6 +7629,9 @@
               "$ref": "#/definitions/SpacesOptions"
             },
             {
+              "$ref": "#/definitions/R2Options"
+            },
+            {
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
@@ -7748,6 +7895,9 @@
             },
             {
               "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/R2Options"
             },
             {
               "$ref": "#/definitions/GenericServerOptions"
@@ -8179,6 +8329,9 @@
             },
             {
               "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/R2Options"
             },
             {
               "$ref": "#/definitions/GenericServerOptions"
@@ -8668,6 +8821,9 @@
             },
             {
               "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/R2Options"
             },
             {
               "$ref": "#/definitions/GenericServerOptions"
@@ -9738,6 +9894,9 @@
         },
         {
           "$ref": "#/definitions/SpacesOptions"
+        },
+        {
+          "$ref": "#/definitions/R2Options"
         },
         {
           "$ref": "#/definitions/GenericServerOptions"
