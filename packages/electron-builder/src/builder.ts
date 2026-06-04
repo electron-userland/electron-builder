@@ -1,7 +1,7 @@
 import { build as _build, Configuration, DIR_TARGET, Packager, PackagerOptions, Platform } from "app-builder-lib"
 import { addValue, Arch, archFromString } from "builder-util"
 import { deepAssign } from "builder-util-runtime"
-import * as chalk from "chalk"
+import chalk from "chalk"
 import { PublishOptions } from "electron-publish"
 import { hideBin } from "yargs/helpers"
 import * as yargs from "yargs"

@@ -1,7 +1,7 @@
 import { getFn, setFn } from "vitest/suite"
 import { VitestTestRunner } from "vitest/runners"
 
-const NETWORK_PATTERNS = [/ENOTFOUND/, /ETIMEDOUT/, /ECONNRESET/, /fetch failed/, /getaddrinfo/]
+const NETWORK_PATTERNS = [/ENOTFOUND/, /ETIMEDOUT/, /ECONNRESET/, /fetch failed/, /getaddrinfo/, /Response code 5[0-9][0-9]/, /The batch file cannot be found/]
 
 const MAX_NETWORK_RETRIES = 2
 const RETRY_BASE_DELAY_MS = 2000

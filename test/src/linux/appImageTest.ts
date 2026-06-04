@@ -1,4 +1,4 @@
-import { Platform } from "app-builder-lib/src"
+import { Platform } from "app-builder-lib"
 import { copyMimeTypes, validateCriticalPathString } from "app-builder-lib/internal"
 import { Arch, InvalidConfigurationError, TmpDir } from "builder-util"
 import { execSync, spawnSync } from "child_process"
