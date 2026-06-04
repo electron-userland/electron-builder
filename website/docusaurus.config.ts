@@ -127,7 +127,7 @@ const config: Config = {
             { type: "doc", docId: "features/code-signing/code-signing", label: "Code Signing" },
             { type: "doc", docId: "features/multi-platform-build", label: "Multi Platform Build" },
             { type: "doc", docId: "features/hooks", label: "Hooks" },
-            { type: "doc", docId: "features/icons", label: "Icons" },
+            { type: "doc", docId: "features/icons-and-images", label: "Icons" },
             { type: "doc", docId: "features/github-actions", label: "GitHub Actions" },
             { type: "doc", docId: "features/electron-forge", label: "Electron Forge" },
           ],

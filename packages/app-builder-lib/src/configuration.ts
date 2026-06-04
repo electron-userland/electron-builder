@@ -314,6 +314,12 @@ export interface Configuration extends CommonConfiguration, PlatformSpecificBuil
    * @default false
    */
   readonly disableSanityCheckAsar?: boolean
+
+  /**
+   * Whether to skip ASAR integrity hash computation. Useful for custom electron forks with encrypted ASAR support where the header is not readable by standard tools.
+   * @default false
+   */
+  readonly disableAsarIntegrity?: boolean
 }
 
 export type Hook<T, V> = (contextOrPath: T) => Promise<V> | V
@@ -361,6 +367,18 @@ export interface ToolsetConfig {
    * @default "0.0.0"
    */
   readonly appimage?: "0.0.0" | "1.0.2" | "1.0.3" | null
+
+  /**
+   * `nsis` bundle version to use for NSIS installer compilation.
+   * Located at https://github.com/electron-userland/electron-builder-binaries/releases?q=nsis&expanded=true
+   * 0.0.0 - legacy toolset (nsis-3.0.4.1 + nsis-resources-3.4.1)
+   *
+   * Betas:
+   * 1.2.1 - unified bundle (makensis 3.12 + plugins in one archive, entrypoint scripts auto-set NSISDIR)
+   *
+   * @default "0.0.0"
+   */
+  readonly nsis?: "0.0.0" | "1.2.1" | null
 }
 
 export interface Hooks {

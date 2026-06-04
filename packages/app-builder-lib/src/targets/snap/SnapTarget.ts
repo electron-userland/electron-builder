@@ -1,5 +1,5 @@
-import { Arch, deepAssign, log } from "builder-util"
-import { SnapStoreOptions } from "builder-util-runtime"
+import { Arch, log } from "builder-util"
+import { deepAssign, SnapStoreOptions } from "builder-util-runtime"
 import * as path from "path"
 import { Configuration } from "../../configuration"
 import { Publish, Target } from "../../core"

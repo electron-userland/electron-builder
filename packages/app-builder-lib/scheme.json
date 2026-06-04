@@ -67,7 +67,7 @@
               "type": "null"
             }
           ],
-          "description": "The compression algorithm passed to the AppImage build tool.\n\n**FUSE2 toolset (`\"0.0.0\"` or unset):** `\"xz\"` is forwarded as `--compression xz`.\n`\"gzip\"`, `\"zstd\"`, `null`, and unset all fall through to the root-level `compression` option:\n- `\"maximum\"` → `--compression xz` (overrides any per-target gzip/zstd value)\n- anything else → flag omitted (mksquashfs defaults to gzip)\n\n**Static-runtime toolsets (`>= 1.0.0`):** `\"gzip\"` and `\"zstd\"` are forwarded\ndirectly. `\"xz\"` is mapped to `\"zstd\"` (nearest supported equivalent). `null`\nor unset falls through to the root-level `compression` option:\n- `\"store\"` → `\"gzip\"`\n- `\"normal\"` / `\"maximum\"` / unset → `\"zstd\"`"
+          "description": "The compression algorithm passed to the AppImage build tool.\n\n**FUSE2 toolset (`\"0.0.0\"` or unset):** only `\"xz\"` and `\"gzip\"` are forwarded\nto mksquashfs (`-comp <value>`); `\"xz\"` additionally passes `-Xdict-size 100% -b 1048576`.\n`\"zstd\"`, `null`, and unset fall through to the root-level `compression` option:\n- `\"maximum\"` → `\"xz\"`\n- anything else → flag omitted (mksquashfs defaults to gzip)\n\n**Static-runtime toolsets (`>= 1.0.0`):** `\"gzip\"` and `\"zstd\"` are forwarded\ndirectly. `\"xz\"` is mapped to `\"zstd\"` (nearest supported equivalent). `null`\nor unset falls through to the root-level `compression` option:\n- `\"store\"` → `\"gzip\"`\n- `\"normal\"` / `\"maximum\"` / unset → `\"zstd\"`"
         },
         "description": {
           "description": "As [description](https://www.electron.build/configuration#description) from application package.json, but allows you to specify different for Linux.",
@@ -953,6 +953,22 @@
           },
           "type": "array"
         },
+        "filesystem": {
+          "anyOf": [
+            {
+              "enum": [
+                "APFS",
+                "HFS+"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "HFS+",
+          "description": "The filesystem for the DMG volume (e.g. `\"APFS\"` or `\"HFS+\"`)\nThis will be changed to APFS in the next major release, so it is recommended to set it explicitly to HFS+ if you want to keep using HFS+ (e.g. for better compatibility with older macOS versions)."
+        },
         "format": {
           "default": "UDZO",
           "description": "The disk image format. `ULFO` (lzfse-compressed image (OS X 10.11+ only)).",
@@ -993,6 +1009,20 @@
           "default": false,
           "description": "Whether to create internet-enabled disk image (when it is downloaded using a browser it will automatically decompress the image, put the application on the desktop, unmount and remove the disk image file).",
           "type": "boolean"
+        },
+        "license": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Record<string,string>"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "License agreement to display when the DMG is mounted.\n\nAccepts a single file path (`.rtf`, `.txt`, or `.html`) used as the English/default license,\nor a language-code → file-path map for multi-language builds.\n\nWhen set, this takes precedence over the file-naming convention\n(`license_en.txt`, etc. in the build resources directory).\nPaths are resolved relative to the build resources directory or project root."
         },
         "publish": {
           "anyOf": [
@@ -2933,7 +2963,7 @@
         },
         "hardenedRuntime": {
           "default": true,
-          "description": "Whether your app has to be signed with hardened runtime.",
+          "description": "Whether your app has to be signed with hardened runtime.\n\nWhen using ad-hoc signing (`identity: \"-\"`), hardened runtime enforces library validation which\nwill reject pre-signed Electron frameworks that carry a different Team ID. To resolve this either\nset `hardenedRuntime: false` or add the\n[`com.apple.security.cs.disable-library-validation`](https://developer.apple.com/documentation/BundleResources/Entitlements/com.apple.security.cs.disable-library-validation)\nentitlement to your entitlements file.",
           "type": "boolean"
         },
         "helperBundleId": {
@@ -2993,7 +3023,7 @@
           ]
         },
         "identity": {
-          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://www.electron.build/code-signing) instead of specifying this option.\nMAS installer identity is specified in the [mas](https://www.electron.build/mas).\n\nSet to `-` to use an ad-hoc identity for signing. Set to `null` to skip signing entirely.",
+          "description": "The signing identity (certificate name) to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://www.electron.build/code-signing) instead of specifying this option.\nMAS installer identity is specified in the [mas](https://www.electron.build/mas).\n\n- **Not set** (default): electron-builder searches the keychain for a valid signing certificate. If none is found, signing is skipped for all architectures — there is no automatic ad-hoc fallback.\n- **`null`**: skip signing entirely.\n- **`\"-\"`**: opt in to ad-hoc signing explicitly. Note that `hardenedRuntime: true` (the default) combined with ad-hoc signing requires\n  the [`com.apple.security.cs.disable-library-validation`](https://developer.apple.com/documentation/BundleResources/Entitlements/com.apple.security.cs.disable-library-validation)\n  entitlement to prevent app launch failures; otherwise set `hardenedRuntime: false`.",
           "type": [
             "null",
             "string"
@@ -3571,7 +3601,7 @@
         },
         "hardenedRuntime": {
           "default": true,
-          "description": "Whether your app has to be signed with hardened runtime.",
+          "description": "Whether your app has to be signed with hardened runtime.\n\nWhen using ad-hoc signing (`identity: \"-\"`), hardened runtime enforces library validation which\nwill reject pre-signed Electron frameworks that carry a different Team ID. To resolve this either\nset `hardenedRuntime: false` or add the\n[`com.apple.security.cs.disable-library-validation`](https://developer.apple.com/documentation/BundleResources/Entitlements/com.apple.security.cs.disable-library-validation)\nentitlement to your entitlements file.",
           "type": "boolean"
         },
         "helperBundleId": {
@@ -3631,7 +3661,7 @@
           ]
         },
         "identity": {
-          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://www.electron.build/code-signing) instead of specifying this option.\nMAS installer identity is specified in the [mas](https://www.electron.build/mas).\n\nSet to `-` to use an ad-hoc identity for signing. Set to `null` to skip signing entirely.",
+          "description": "The signing identity (certificate name) to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://www.electron.build/code-signing) instead of specifying this option.\nMAS installer identity is specified in the [mas](https://www.electron.build/mas).\n\n- **Not set** (default): electron-builder searches the keychain for a valid signing certificate. If none is found, signing is skipped for all architectures — there is no automatic ad-hoc fallback.\n- **`null`**: skip signing entirely.\n- **`\"-\"`**: opt in to ad-hoc signing explicitly. Note that `hardenedRuntime: true` (the default) combined with ad-hoc signing requires\n  the [`com.apple.security.cs.disable-library-validation`](https://developer.apple.com/documentation/BundleResources/Entitlements/com.apple.security.cs.disable-library-validation)\n  entitlement to prevent app launch failures; otherwise set `hardenedRuntime: false`.",
           "type": [
             "null",
             "string"
@@ -8256,6 +8286,22 @@
           "default": "0.0.0",
           "description": "`appimage` bundle version to use for Appimage packaging and runtime.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage&expanded=true\n0.0.0 - legacy toolset (appimage)\n\nBetas:\n1.0.2 - Runtime 20251108\n1.0.3 - Runtime 20251108 (Resolves GH issue #9598)"
         },
+        "nsis": {
+          "anyOf": [
+            {
+              "enum": [
+                "0.0.0",
+                "1.2.1"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "0.0.0",
+          "description": "`nsis` bundle version to use for NSIS installer compilation.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=nsis&expanded=true\n0.0.0 - legacy toolset (nsis-3.0.4.1 + nsis-resources-3.4.1)\n\nBetas:\n1.2.1 - unified bundle (makensis 3.12 + plugins in one archive, entrypoint scripts auto-set NSISDIR)"
+        },
         "winCodeSign": {
           "anyOf": [
             {
@@ -9142,6 +9188,11 @@
         }
       ],
       "description": "Directories for build resources"
+    },
+    "disableAsarIntegrity": {
+      "default": false,
+      "description": "Whether to skip ASAR integrity hash computation. Useful for custom electron forks with encrypted ASAR support where the header is not readable by standard tools.",
+      "type": "boolean"
     },
     "disableDefaultIgnoredFiles": {
       "default": false,

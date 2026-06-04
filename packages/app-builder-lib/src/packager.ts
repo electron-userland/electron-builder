@@ -4,18 +4,18 @@ import {
   archFromString,
   AsyncTaskManager,
   DebugLogger,
-  deepAssign,
   executeFinally,
   getArtifactArchName,
   InvalidConfigurationError,
   log,
   MAX_FILE_REQUESTS,
   orNullIfFileNotExist,
+  sanitizeDirPath,
   safeStringifyJson,
   serializeToYaml,
   TmpDir,
 } from "builder-util"
-import { CancellationToken, retry } from "builder-util-runtime"
+import { CancellationToken, deepAssign, retry } from "builder-util-runtime"
 import { chmod, mkdirs, outputFile } from "fs-extra"
 import { isCI } from "ci-info"
 import { Lazy } from "lazy-val"
@@ -35,7 +35,6 @@ import { ProtonFramework } from "./ProtonFramework"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
 import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config"
 import { expandMacro } from "./util/macroExpander"
-import { createLazyProductionDeps, NodeModuleDirInfo, NodeModuleInfo } from "./util/packageDependencies"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata"
 import { getRepositoryInfo } from "./util/repositoryInfo"
 import { resolveFunction } from "./util/resolve"
@@ -164,27 +163,7 @@ export class Packager {
     return this._repositoryInfo.value
   }
 
-  private nodeDependencyInfo = new Map<string, Lazy<Array<any>>>()
-
   private runtimeEnvironmentVariables: NodeJS.ProcessEnv = {}
-
-  getNodeDependencyInfo(platform: Platform | null, flatten: boolean = true): Lazy<Array<NodeModuleInfo | NodeModuleDirInfo>> {
-    let key = "" + flatten.toString()
-    let excludedDependencies: Array<string> | null = null
-    if (platform != null && this.framework.getExcludedDependencies != null) {
-      excludedDependencies = this.framework.getExcludedDependencies(platform)
-      if (excludedDependencies != null) {
-        key += `-${platform.name}`
-      }
-    }
-
-    let result = this.nodeDependencyInfo.get(key)
-    if (result == null) {
-      result = createLazyProductionDeps(this.appDir, excludedDependencies, flatten)
-      this.nodeDependencyInfo.set(key, result)
-    }
-    return result
-  }
 
   stageDirPathCustomizer: (target: Target, packager: PlatformPackager<any>, arch: Arch) => string = (target, packager, arch) => {
     return path.join(target.outDir, `__${target.name}-${getArtifactArchName(arch, target.name)}`)
@@ -274,13 +253,13 @@ export class Packager {
       processTargets(Platform.WINDOWS, options.win)
     }
 
-    this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
+    this.projectDir = sanitizeDirPath(options.projectDir == null ? process.cwd() : options.projectDir)
     this._appDir = this.projectDir
     this._packageManager = determinePackageManagerEnv({ projectDir: this.projectDir, appDir: this.appDir, workspaceRoot: undefined })
 
     this.options = {
       ...options,
-      prepackaged: options.prepackaged == null ? null : path.resolve(this.projectDir, options.prepackaged),
+      prepackaged: options.prepackaged == null ? null : sanitizeDirPath(path.resolve(this.projectDir, options.prepackaged)),
     }
 
     log.info({ version: PACKAGE_VERSION, os: getOsRelease() }, "electron-builder")
@@ -651,7 +630,6 @@ export class Packager {
           frameworkInfo,
           platform: platform.nodeName,
           arch: Arch[arch],
-          productionDeps: this.getNodeDependencyInfo(null, false) as Lazy<Array<NodeModuleDirInfo>>,
         },
         false,
         this.runtimeEnvironmentVariables

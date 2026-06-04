@@ -103,7 +103,7 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
       },
       {
         packed: async context => {
-          // FUSE2 (0.0.0) does not support zstd; the flag is dropped → mksquashfs defaults to gzip
+          // FUSE2 mksquashfs only supports gzip and xz; zstd is silently dropped → gzip default
           const expectedComp = toolsets.appimage === "0.0.0" ? "gzip" : "zstd"
           expect(await readAppImageCompression(path.join(context.outDir, "Test App ßW-1.1.0.AppImage"))).toBe(expectedComp)
         },
@@ -384,6 +384,113 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
             data.author = "Foo"
           }),
       }
+    ))
+
+  test("AppImage - desktopName sets StartupWMClass", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+          productName: "Signal",
+        },
+        effectiveOptionComputed: async it => {
+          const content: string = it.desktop
+          expect(
+            content
+              .split("\n")
+              .filter(it => !it.includes("X-AppImage-BuildId") && !it.includes("X-AppImage-Version"))
+              .join("\n")
+          ).toMatchSnapshot()
+          return Promise.resolve(false)
+        },
+      },
+      {
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.desktopName = "signal.desktop"
+          }),
+      }
+    ))
+
+  test("AppImage - desktopName without .desktop suffix is used as-is for StartupWMClass", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+          productName: "MyApp",
+        },
+        effectiveOptionComputed: async it => {
+          const content: string = it.desktop
+          expect(
+            content
+              .split("\n")
+              .filter(it => !it.includes("X-AppImage-BuildId") && !it.includes("X-AppImage-Version"))
+              .join("\n")
+          ).toMatchSnapshot()
+          return Promise.resolve(false)
+        },
+      },
+      {
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.desktopName = "myapp"
+          }),
+      }
+    ))
+
+  test("AppImage - desktopName with surrounding whitespace is trimmed for StartupWMClass", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+          productName: "Signal",
+        },
+        effectiveOptionComputed: async it => {
+          const content: string = it.desktop
+          expect(
+            content
+              .split("\n")
+              .filter(it => !it.includes("X-AppImage-BuildId") && !it.includes("X-AppImage-Version"))
+              .join("\n")
+          ).toMatchSnapshot()
+          return Promise.resolve(false)
+        },
+      },
+      {
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.desktopName = "  signal.desktop  "
+          }),
+      }
+    ))
+
+  test("AppImage - no desktopName falls back to productName for StartupWMClass", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+          productName: "My App",
+        },
+        effectiveOptionComputed: async it => {
+          const content: string = it.desktop
+          expect(
+            content
+              .split("\n")
+              .filter(it => !it.includes("X-AppImage-BuildId") && !it.includes("X-AppImage-Version"))
+              .join("\n")
+          ).toMatchSnapshot()
+          return Promise.resolve(false)
+        },
+      },
+      {}
     ))
 
   test("forbid desktop.Exec", ({ expect }) =>

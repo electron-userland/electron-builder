@@ -1,0 +1,82 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`allowOnlyOneInstallerInstance.nsh > snapshot of FIND_PROCESS macro 1`] = `
+"!macro FIND_PROCESS _FILE _RETURN
+  \${if} $IsPowerShellAvailable == 0
+    nsExec::Exec \`"$PowerShellPath" -C "if ((Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and $$_.Path.StartsWith('$INSTDIR', 'CurrentCultureIgnoreCase')}).Count -gt 0) { exit 0 } else { exit 1 }"\`
+    Pop \${_RETURN}
+  \${else}
+    !ifdef INSTALL_MODE_PER_ALL_USERS
+      # exact match via findstr anchored to the start of each CSV line
+      nsExec::Exec \`"$CmdPath" /C tasklist /FI "IMAGENAME eq \${_FILE}" /FO CSV /NH | "$SYSDIR\\findstr.exe" /B /I /C:"\\"\${_FILE}\\""\`
+      Pop \${_RETURN}
+    !else
+      # find process owned by current user — anchored exact match
+      nsExec::Exec \`"$CmdPath" /C tasklist /FI "USERNAME eq %USERNAME%" /FI "IMAGENAME eq \${_FILE}" /FO CSV /NH | "$SYSDIR\\findstr.exe" /B /I /C:"\\"\${_FILE}\\""\`
+      Pop \${_RETURN}
+    !endif
+  \${endIf}
+!macroend"
+`;
+
+exports[`uninstaller.nsh — atomicRMDir > snapshot of atomicRMDir function 1`] = `
+"Function un.atomicRMDir
+  Exch $R0
+  Push $R1
+  Push $R2
+  Push $R3
+
+  StrCpy $R3 "$INSTDIR$R0\\*.*"
+  FindFirst $R1 $R2 $R3
+
+  loop:
+    StrCmp $R2 "" break
+
+    StrCmp $R2 "." continue
+    StrCmp $R2 ".." continue
+
+    IfFileExists "$INSTDIR$R0\\$R2\\*.*" isDir isNotDir
+
+    isDir:
+      CreateDirectory "$PLUGINSDIR\\old-install$R0\\$R2"
+
+      Push "$R0\\$R2"
+      Call un.atomicRMDir
+      Pop $R3
+
+      \${if} $R3 != 0
+        Goto done
+      \${endIf}
+
+      Goto continue
+
+    isNotDir:
+      ClearErrors
+      Rename "$INSTDIR$R0\\$R2" "$PLUGINSDIR\\old-install$R0\\$R2"
+
+      # Ignore errors when renaming ourselves.
+      StrCmp "$R0\\$R2" "\${UNINSTALL_FILENAME}" 0 +2
+      ClearErrors
+
+      IfErrors 0 +3
+      StrCpy $R3 "$INSTDIR$R0\\$R2"
+      Goto done
+
+    continue:
+      FindNext $R1 $R2
+      Goto loop
+
+  break:
+    StrCpy $R3 0
+
+  done:
+    FindClose $R1
+
+    StrCpy $R0 $R3
+
+    Pop $R3
+    Pop $R2
+    Pop $R1
+    Exch $R0
+FunctionEnd"
+`;

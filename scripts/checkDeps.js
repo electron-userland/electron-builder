@@ -31,10 +31,6 @@ async function check(projectDir, devPackageData) {
 
   let unusedDependencies = result.dependencies
   if (unusedDependencies.length > 0) {
-    // Check root for unused deps (which could be cloned to any folder name, so we check basename of cwd)
-    if (packageName === path.basename(process.cwd())) {
-      unusedDependencies = unusedDependencies.filter(it => it !== "dmg-license")
-    }
     if (packageName === "electron-builder") {
       unusedDependencies = unusedDependencies.filter(it => it !== "dmg-builder")
     }

@@ -2,6 +2,12 @@
 
 exports[`macPackager > Build macOS on Windows is not supported 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
 
+exports[`macPackager > disableAsarIntegrity skips ASAR integrity computation 1`] = `
+{
+  "mac": [],
+}
+`;
+
 exports[`macPackager > extraFiles are placed in product app bundle Contents, not Electron.app 1`] = `
 {
   "mac": [],
@@ -364,6 +370,80 @@ exports[`macPackager > extraFiles are placed in product app bundle Contents, not
   "app.asar",
   "icon.icns",
 ]
+`;
+
+exports[`macPackager > mas bundleVersion overrides mac bundleVersion 1`] = `
+{
+  "mac": [],
+}
+`;
+
+exports[`macPackager > mas bundleVersion overrides mac bundleVersion 2`] = `
+{
+  "CFBundleDisplayName": "Test App ßW",
+  "CFBundleExecutable": "Test App ßW",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "Test App ßW",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "2.0.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {},
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`macPackager > mas-dev bundleVersion takes precedence over mas and mac 1`] = `
+{
+  "mac": [],
+}
+`;
+
+exports[`macPackager > mas-dev bundleVersion takes precedence over mas and mac 2`] = `
+{
+  "CFBundleDisplayName": "Test App ßW",
+  "CFBundleExecutable": "Test App ßW",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "Test App ßW",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {},
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
 `;
 
 exports[`macPackager > multiple asar resources 1`] = `
