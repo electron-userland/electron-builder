@@ -293,6 +293,7 @@ describe("downloadBuilderToolset", { sequential: true }, () => {
       downloadBuilderToolset({
         releaseName: "dmg-builder@1.2.2",
         filenameWithExt: "dmgbuild-bundle-arm64-75c8a6c.tar.gz",
+        checksums: {},
       })
     ).rejects.toThrow("mock-stop")
 

@@ -13,6 +13,7 @@ describe("SquirrelWindowsTarget.assertShellSafePath", () => {
   test.each([
     ["newline \\n", "C:\\foo\nbar"],
     ["carriage return \\r", "C:\\foo\rbar"],
+    ["null byte \\0", "C:\\foo\0bar"],
     ["backtick", "C:\\foo`bar"],
     ["dollar sign", "C:\\foo$bar"],
     ["semicolon", "C:\\foo;bar"],
@@ -62,5 +63,13 @@ describe("SquirrelWindowsTarget.ensurePathInside", () => {
 
   test("rejects path containing shell-unsafe characters", async () => {
     await expect(t.ensurePathInside(base, path.join(base, "file$evil.exe"), "file")).rejects.toThrow("unsafe shell characters")
+  })
+
+  test("rejects a non-existent path whose filename contains a null byte", async () => {
+    // The target does not exist (parent base does), so we enter the parent-resolution
+    // branch. The null byte in the relative segment triggers inner path validation,
+    // and the assertShellSafePath guard also catches it — both layers must reject this.
+    const nullByteTarget = path.join(base, "file\0evil.exe")
+    await expect(t.ensurePathInside(base, nullByteTarget, "file")).rejects.toThrow()
   })
 })

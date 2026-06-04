@@ -1,6 +1,5 @@
 import { InvalidConfigurationError, log, isEmptyOrSpaces, exists } from "builder-util"
 import { execWine } from "app-builder-lib/out/wine"
-import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { sanitizeFileName } from "builder-util/out/filename"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
 import { withToolsetLock } from "app-builder-lib/out/util/toolsetLock"
@@ -8,6 +7,7 @@ import * as path from "path"
 import * as fs from "fs"
 import * as os from "os"
 import { InstallerOptions, createWindowsInstaller, convertVersion } from "./windowsInstaller"
+import { getSquirrelToolsetPath } from "./toolset"
 
 export default class SquirrelWindowsTarget extends Target {
   //tslint:disable-next-line:no-object-literal-type-assertion
@@ -33,18 +33,8 @@ export default class SquirrelWindowsTarget extends Target {
         log.warn({ customSquirrelVendorDirectory }, "unable to access custom Squirrel.Windows vendor directory, falling back to default vendor")
       }
 
-      const [squirrelBin, wixBin] = await Promise.all([
-        getBinFromUrl("squirrel.windows@1.0.0", "squirrel.windows-2.0.1-patched.7z", "76851f0c192eaf9bc6f8f3eecdfe325857ebe70d7833ec62ed846a1acd50c846"),
-        getBinFromUrl(
-          "wix@1.0.0",
-          "wix-4.0.6.tar.gz",
-          "e84c8f37bdfd833b6c7d92489ca4102f001517e9dd50a1204146d616f6fdc611e2049c79f13325dbb491454d03247847ed426d8b4ad8556693c72eb95f08cde0"
-        ),
-      ])
-
-      // WiX tools first (lower precedence), then Squirrel executables overlay
-      await fs.promises.cp(wixBin, tmpVendorDirectory, { recursive: true })
-      await fs.promises.cp(path.join(squirrelBin, "electron-winstaller", "vendor"), tmpVendorDirectory, { recursive: true })
+      const squirrelToolset = await getSquirrelToolsetPath()
+      await fs.promises.cp(path.join(squirrelToolset, "electron-winstaller", "vendor"), tmpVendorDirectory, { recursive: true })
     }
 
     const files = await fs.promises.readdir(tmpVendorDirectory)
@@ -60,7 +50,7 @@ export default class SquirrelWindowsTarget extends Target {
   }
 
   private assertShellSafePath(filePath: string, description: string): void {
-    if (/[\r\n`$;&|<>]/.test(filePath)) {
+    if (/[\r\n\0`$;&|<>]/.test(filePath)) {
       throw new InvalidConfigurationError(`${description} contains unsafe shell characters: ${filePath}`)
     }
   }
@@ -95,7 +85,12 @@ export default class SquirrelWindowsTarget extends Target {
           throw new InvalidConfigurationError(`${description} contains invalid path segments`)
         }
         canonicalTargetPath = path.resolve(canonicalTargetParent, relativeFromResolvedParent)
-      } catch {
+      } catch (e: unknown) {
+        // Only fall back for filesystem errors (target parent not found, permission, etc.).
+        // Validation errors must propagate so callers get an actionable message.
+        if (e instanceof InvalidConfigurationError) {
+          throw e
+        }
         canonicalTargetPath = resolvedTargetPath
       }
     }
@@ -257,7 +252,7 @@ export default class SquirrelWindowsTarget extends Target {
       }
     }
 
-    checkConflictingOptions(this.options)
+    normalizeSquirrelOptions(this.options)
     const appInfo = packager.appInfo
 
     const description = isEmptyOrSpaces(appInfo.description) ? (this.options.name || appInfo.productName) : appInfo.description
@@ -310,7 +305,7 @@ export default class SquirrelWindowsTarget extends Target {
   }
 }
 
-function checkConflictingOptions(options: any) {
+function normalizeSquirrelOptions(options: any) {
   for (const name of ["outputDirectory", "appDirectory", "exe", "fixUpPaths", "usePackageJson", "extraFileSpecs", "extraMetadataSpecs", "skipUpdateIcon", "setupExe"]) {
     if (name in options) {
       throw new InvalidConfigurationError(`Option ${name} is ignored, do not specify it.`)
