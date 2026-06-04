@@ -24,7 +24,14 @@ export function validateShellEmbeddable(value: string, fieldName: string): void 
 }
 
 // LaunchUI version is independent of the Node.js version; this was the hardcoded default in the Go binary.
+// https://github.com/develar/app-builder/blob/master/pkg/package-format/proton-native/protonNative.go#L105-L136
 export const LAUNCHUI_DEFAULT_VERSION = "0.1.4-10.13.0"
+// https://github.com/develar/launchui/releases/tag/v0.1.4-10.13.0
+const launchUiChecksums = {
+  "launchui-v0.1.4-10.13.0-linux-x64.7z": "4fb5cd8ed79e1e24e0f5cf4b26107f2fa6f6fd8dc48ecd18fb6f48f3ccfe9ee6",
+  "launchui-v0.1.4-10.13.0-win32-ia32.7z": "682734da3d817ac365093c6c8ef3d9a70cc3f2a809e4588cb12a311358a68a2d",
+  "launchui-v0.1.4-10.13.0-win32-x64.7z": "2f26629c5f5c12baeff272ac7855a1df7f27621cce782b79965f9a9b5eccc359",
+}
 
 export class LibUiFramework implements Framework {
   readonly name: string = "libui"
@@ -39,11 +46,12 @@ export class LibUiFramework implements Framework {
   // noinspection JSUnusedGlobalSymbols
   readonly isNpmRebuildRequired = false
 
+  readonly launchUiVersion: string = LAUNCHUI_DEFAULT_VERSION
+
   constructor(
     readonly version: string,
     readonly macOsProductName: string,
-    protected readonly isUseLaunchUi: boolean,
-    protected readonly launchUiVersion: string = LAUNCHUI_DEFAULT_VERSION
+    protected readonly isUseLaunchUi: boolean
   ) {}
 
   get distMacOsAppName(): string {
@@ -213,6 +221,7 @@ export type LaunchUiDownloadParams = {
   releaseName: string
   filenameWithExt: string
   githubOrgRepo: string
+  checksums: Record<string, string>
 }
 
 export function getLaunchUiDownloadParams(version: string, platform: Platform, arch: string): LaunchUiDownloadParams {
@@ -221,6 +230,7 @@ export function getLaunchUiDownloadParams(version: string, platform: Platform, a
     releaseName: `v${version}`,
     filenameWithExt: `launchui-v${version}-${launchPlatform}-${arch}.7z`,
     githubOrgRepo: "develar/launchui",
+    checksums: launchUiChecksums,
   }
 }
 
