@@ -205,10 +205,18 @@ export default class SquirrelWindowsTarget extends Target {
   private select7zipArch(vendorDirectory: string) {
     // https://github.com/electron/windows-installer/blob/main/script/select-7z-arch.js
     // Even if we're cross-compiling for a different arch like arm64,
-    // we still need to use the 7-Zip executable for the host arch
+    // we still need to use the 7-Zip executable for the host arch.
+    // When arch-specific variants aren't present (vendor bundle ships a pre-selected 7z.exe),
+    // skip the copy — the bundle's 7z.exe is already correct.
     const resolvedArch = os.arch()
-    fs.copyFileSync(path.join(vendorDirectory, `7z-${resolvedArch}.exe`), path.join(vendorDirectory, "7z.exe"))
-    fs.copyFileSync(path.join(vendorDirectory, `7z-${resolvedArch}.dll`), path.join(vendorDirectory, "7z.dll"))
+    const archExe = path.join(vendorDirectory, `7z-${resolvedArch}.exe`)
+    const archDll = path.join(vendorDirectory, `7z-${resolvedArch}.dll`)
+    if (fs.existsSync(archExe)) {
+      fs.copyFileSync(archExe, path.join(vendorDirectory, "7z.exe"))
+    }
+    if (fs.existsSync(archDll)) {
+      fs.copyFileSync(archDll, path.join(vendorDirectory, "7z.dll"))
+    }
   }
 
   private async createNuspecTemplateWithProjectUrl() {
@@ -261,7 +269,7 @@ export default class SquirrelWindowsTarget extends Target {
     if (this.options.loadingGif) {
       loadingGif = path.resolve(packager.projectDir, this.options.loadingGif)
     } else {
-      loadingGif = (await packager.getResource("install-spinner.gif")) ?? undefined
+      loadingGif = (await packager.getResource(undefined, "install-spinner.gif")) ?? undefined
     }
 
     const vendorDirectory = await this.prepareSignedVendorDirectory()
