@@ -40,7 +40,9 @@ fi
 SNAP_DESKTOP_ARCH_TRIPLET="$ARCH"
 
 if [ -f "$SNAP/lib/bindtextdomain.so" ]; then
-  export LD_PRELOAD="$LD_PRELOAD:$SNAP/lib/bindtextdomain.so"
+  # Use :+ to avoid a leading ':' when LD_PRELOAD is empty.
+  # A bare leading ':' makes the dynamic linker search CWD before snap paths.
+  export LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$SNAP/lib/bindtextdomain.so"
 fi
 
 export REALHOME

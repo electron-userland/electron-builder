@@ -240,7 +240,11 @@ SNAP_DESKTOP_WAYLAND_AVAILABLE=false
 if [[ -n "$XDG_RUNTIME_DIR" && -z "$DISABLE_WAYLAND" ]]; then
     wdisplay="wayland-0"
     if [ -n "$WAYLAND_DISPLAY" ]; then
-        wdisplay="$WAYLAND_DISPLAY"
+        # Reject values containing '/' to prevent path traversal in the symlink paths below.
+        # A legitimate WAYLAND_DISPLAY is always a plain socket name (e.g. "wayland-0").
+        if [[ "$WAYLAND_DISPLAY" != */* ]]; then
+            wdisplay="$WAYLAND_DISPLAY"
+        fi
     fi
     wayland_sockpath="$XDG_RUNTIME_DIR/../$wdisplay"
     wayland_snappath="$XDG_RUNTIME_DIR/$wdisplay"

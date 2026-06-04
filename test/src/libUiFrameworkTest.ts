@@ -1,7 +1,17 @@
+import * as https from "https"
+import { EventEmitter } from "events"
 import * as path from "path"
-import { describe, expect } from "vitest"
+import { afterEach, describe, expect, vi } from "vitest"
 import { Platform } from "app-builder-lib/src/core"
-import { getLaunchUiDownloadParams, getNodeJsDownloadParams, LAUNCHUI_DEFAULT_VERSION, validateShellEmbeddable } from "app-builder-lib/src/frameworks/LibUiFramework"
+import {
+  fetchNodeJsChecksum,
+  getLaunchUiDownloadParams,
+  getNodeJsDownloadParams,
+  LAUNCHUI_DEFAULT_VERSION,
+  validateShellEmbeddable,
+} from "app-builder-lib/src/frameworks/LibUiFramework"
+
+vi.mock("https")
 
 // Pure mapping functions — no mocking required.
 // The async downloadNodeJsBinary / downloadLaunchUiDir wrappers are covered by protonTest.ts.
@@ -98,6 +108,82 @@ describe.sequential("LibUiFramework helpers", () => {
       expect(LAUNCHUI_DEFAULT_VERSION).toBe("0.1.4-10.13.0")
     })
   })
+
+  describe("fetchNodeJsChecksum", () => {
+    function makeFakeResponse(statusCode: number, body: string) {
+      const res = new EventEmitter() as any
+      res.statusCode = statusCode
+      res.resume = vi.fn()
+      // Emit data + end asynchronously so callers have time to attach listeners
+      setImmediate(() => {
+        if (statusCode === 200) {
+          res.emit("data", Buffer.from(body))
+          res.emit("end")
+        }
+      })
+      return res
+    }
+
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    test("resolves with the hex SHA-256 when the filename is found", async ({ expect }) => {
+      const sha = "a".repeat(64)
+      const shasums = `${sha}  node-v20.0.0-linux-x64.tar.gz\n`
+      vi.spyOn(https, "get").mockImplementation((_url: any, _opts: any, cb: any) => {
+        cb(makeFakeResponse(200, shasums))
+        return { on: vi.fn().mockReturnThis() } as any
+      })
+
+      const result = await fetchNodeJsChecksum("20.0.0", "node-v20.0.0-linux-x64.tar.gz")
+      expect(result).toBe(sha)
+    })
+
+    test("rejects when the filename is not present in SHASUMS256.txt", async ({ expect }) => {
+      const shasums = `${"b".repeat(64)}  node-v20.0.0-darwin-x64.tar.gz\n`
+      vi.spyOn(https, "get").mockImplementation((_url: any, _opts: any, cb: any) => {
+        cb(makeFakeResponse(200, shasums))
+        return { on: vi.fn().mockReturnThis() } as any
+      })
+
+      await expect(fetchNodeJsChecksum("20.0.0", "node-v20.0.0-linux-x64.tar.gz")).rejects.toThrow("No checksum for")
+    })
+
+    test("rejects with an HTTP error when the server returns a non-200 status", async ({ expect }) => {
+      vi.spyOn(https, "get").mockImplementation((_url: any, _opts: any, cb: any) => {
+        cb(makeFakeResponse(404, ""))
+        return { on: vi.fn().mockReturnThis() } as any
+      })
+
+      await expect(fetchNodeJsChecksum("20.0.0", "node-v20.0.0-linux-x64.tar.gz")).rejects.toThrow("HTTP 404")
+    })
+
+    test("rejects when the https request itself errors", async ({ expect }) => {
+      const req = new EventEmitter() as any
+      vi.spyOn(https, "get").mockImplementation((_url: any, _opts: any, _cb: any) => {
+        setImmediate(() => req.emit("error", new Error("ENOTFOUND")))
+        return req
+      })
+
+      await expect(fetchNodeJsChecksum("20.0.0", "node-v20.0.0-linux-x64.tar.gz")).rejects.toThrow("ENOTFOUND")
+    })
+
+    test("request URL contains the correct Node.js version and path", async ({ expect }) => {
+      const sha = "c".repeat(64)
+      const shasums = `${sha}  node-v18.12.0-linux-arm64.tar.gz\n`
+      let capturedUrl = ""
+      vi.spyOn(https, "get").mockImplementation((url: any, _opts: any, cb: any) => {
+        capturedUrl = url as string
+        cb(makeFakeResponse(200, shasums))
+        return { on: vi.fn().mockReturnThis() } as any
+      })
+
+      await fetchNodeJsChecksum("18.12.0", "node-v18.12.0-linux-arm64.tar.gz")
+      expect(capturedUrl).toBe("https://nodejs.org/dist/v18.12.0/SHASUMS256.txt")
+    })
+  })
+
 
   describe("validateShellEmbeddable", () => {
     describe("safe values pass", () => {

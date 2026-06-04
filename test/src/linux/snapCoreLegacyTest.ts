@@ -19,19 +19,22 @@ describe.sequential("snapCoreLegacy helpers", () => {
       expect(content).not.toContain('"$SNAP/app/myapp"')
     })
 
-    test("no-template build: desktop scripts sourced from $SNAP/scripts/", ({ expect }) => {
+    test("no-template build: desktop scripts sourced from $SNAP root (dump plugin stages scripts/ to snap root)", ({ expect }) => {
+      // The snapcraft.yaml launch-scripts part uses `plugin: dump, source: scripts` which
+      // dumps stageDir/scripts/ contents directly into the snap root — so $SNAP/desktop-*.sh
+      // is the correct path even for no-template builds.
       const content = buildCommandShContent({ isTemplate: false, executableName: "myapp", extraAppArgs: [] })
-      expect(content).toContain('"$SNAP/scripts/desktop-init.sh"')
-      expect(content).toContain('"$SNAP/scripts/desktop-common.sh"')
-      expect(content).toContain('"$SNAP/scripts/desktop-gnome-specific.sh"')
+      expect(content).toContain('"$SNAP/desktop-init.sh"')
+      expect(content).toContain('"$SNAP/desktop-common.sh"')
+      expect(content).toContain('"$SNAP/desktop-gnome-specific.sh"')
     })
 
-    test("no-template build: desktop scripts are NOT sourced from $SNAP root", ({ expect }) => {
+    test("no-template build: desktop scripts are NOT referenced with a scripts/ prefix", ({ expect }) => {
+      // The scripts/ subdir is an intermediate staging dir; the dump plugin flattens it to snap root.
       const content = buildCommandShContent({ isTemplate: false, executableName: "myapp", extraAppArgs: [] })
-      // Must not reference bare $SNAP/desktop-*.sh (those files won't exist in no-template snaps)
-      expect(content).not.toMatch(/"\$SNAP\/desktop-init\.sh"/)
-      expect(content).not.toMatch(/"\$SNAP\/desktop-common\.sh"/)
-      expect(content).not.toMatch(/"\$SNAP\/desktop-gnome-specific\.sh"/)
+      expect(content).not.toContain('"$SNAP/scripts/desktop-init.sh"')
+      expect(content).not.toContain('"$SNAP/scripts/desktop-common.sh"')
+      expect(content).not.toContain('"$SNAP/scripts/desktop-gnome-specific.sh"')
     })
 
     test("no-template build: executable has app/ prefix", ({ expect }) => {
