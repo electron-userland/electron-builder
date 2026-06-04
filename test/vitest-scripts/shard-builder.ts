@@ -6,6 +6,7 @@ export interface WeightedFile {
   filename: string
   weight: number
   filepath: string
+  cachedMs?: number // raw avgMs from cache; undefined = no data (DEFAULT_FILE_MS was used)
 }
 
 /**
@@ -20,10 +21,11 @@ export function buildWeightedFiles(files: string[], targetPlatform: TargetPlatfo
     const stat = cache.files[basename]
 
     // Apply flaky multiplier if needed to prioritize fail-fast files
-    const base = stat?.platformRuns?.[currentPlatform]?.avgMs ?? DEFAULT_FILE_MS
+    const cachedMs = stat?.platformRuns?.[currentPlatform]?.avgMs
+    const base = cachedMs ?? DEFAULT_FILE_MS
     const weight = stat?.unstable ? base * 1.5 : base
 
-    return { filename: basename, weight, filepath: file }
+    return { filename: basename, weight, filepath: file, cachedMs }
   })
 }
 
