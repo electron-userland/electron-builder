@@ -87,6 +87,9 @@ jobs:
           cache-path: ~/.cache/electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
 
+      - name: Output shard plan
+        run: pnpm ci:test:count
+
       - id: plan
         run: |
           # Get shard counts for all platforms as JSON

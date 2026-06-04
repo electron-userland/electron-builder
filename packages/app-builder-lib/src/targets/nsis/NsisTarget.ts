@@ -2,12 +2,10 @@ import {
   Arch,
   asArray,
   AsyncTaskManager,
-  exec,
   spawnAndWriteWithOutput,
   exists,
   generateKsuid,
   getArchSuffix,
-  getPath7za,
   getPlatformIconFileName,
   InvalidConfigurationError,
   log,
@@ -26,7 +24,6 @@ import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt } from "..
 import { hashFile } from "../../util/hash"
 import { isMacOsCatalina } from "../../util/macosVersion"
 import { time } from "../../util/timer"
-import { execWine } from "../../wine"
 import { WinPackager } from "../../winPackager"
 import { archive, ArchiveOptions } from "../archive"
 import { appendBlockmap, configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../differentialUpdateInfoBuilder"
@@ -40,6 +37,7 @@ import { NsisScriptGenerator, nsisEscapeString } from "./nsisScriptGenerator"
 import { getMakeNsisPath, getNsisPluginsPath } from "../../toolsets/windows"
 import { AppPackageHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
 import { checkMakensisOutput, verifyInstallerSize } from "./nsisValidation"
+import { WineVmManager } from "../../vm/WineVm"
 
 const debug = _debug("electron-builder:nsis")
 
@@ -286,15 +284,7 @@ export class NsisTarget extends Target {
             })
             packageFiles[Arch[arch]] = fileInfo
           }
-          const path7za = await getPath7za()
-          const archiveInfo = (await exec(path7za, ["l", file])).trim()
-          // after adding blockmap data will be "Warnings: 1" in the end of output
-          const match = /(\d+)\s+\d+\s+\d+\s+files/.exec(archiveInfo)
-          if (match == null) {
-            log.warn({ output: archiveInfo }, "cannot compute size of app package")
-          } else {
-            estimatedSize += parseInt(match[1], 10)
-          }
+          estimatedSize += unpackedSize
         })
       )
     }
@@ -434,6 +424,7 @@ export class NsisTarget extends Target {
     await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(script, false, archs)))
 
     // http://forums.winamp.com/showthread.php?p=3078545
+    // TODO: remove workaround when wine is fully upgraded to 11
     if (isMacOsCatalina()) {
       try {
         await UninstallerReader.exec(installerPath, uninstallerPath)
@@ -450,7 +441,8 @@ export class NsisTarget extends Target {
         }
       }
     } else {
-      await execWine(installerPath, null, [], { env: { __COMPAT_LAYER: "RunAsInvoker" } })
+      const wineVm = new WineVmManager(packager.config.toolsets?.wine)
+      await wineVm.exec(installerPath, [], { env: { __COMPAT_LAYER: "RunAsInvoker" } })
     }
     await packager.signIf(uninstallerPath)
 
