@@ -293,9 +293,9 @@ export class LinuxTargetHelper {
       log.warn(
         {
           reason: "desktopName is not set in package.json",
-          docs: "https://www.electron.build/linux",
+          docs: "https://www.electron.build/linux#window-association-desktopname--syncdesktopname",
         },
-        "Electron uses desktopName as app_id / WM_CLASS for window association. Without it desktop environments may not link running windows to this .desktop entry. Set desktopName in package.json and linux.syncDesktopName: true to fix."
+        "electron uses desktopName as app_id / WM_CLASS for window association. Without it desktop environments may not link running windows to this .desktop entry. Set desktopName in package.json and linux.syncDesktopName: true to fix."
       )
     }
     const wmClass = !isEmptyOrSpaces(trimmedDesktopName) ? trimmedDesktopName.replace(/\.desktop$/, "") : appInfo.productName
