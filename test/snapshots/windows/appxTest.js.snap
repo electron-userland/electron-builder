@@ -54,7 +54,7 @@ exports[`AppX > winCodeSign: 1.0.0 > custom raw appmanifest.xml 1`] = `
   <Properties>
     <DisplayName>Test App ßW</DisplayName>
     <PublisherDisplayName>Foo Bar</PublisherDisplayName>
-    <Description>Test Application (test quite " #378)</Description>
+    <Description>Test Application (test quite “ #378)</Description>
     <Logo>assets\\StoreLogo.png</Logo>
   </Properties>
   <Resources>
@@ -75,12 +75,12 @@ exports[`AppX > winCodeSign: 1.0.0 > custom raw appmanifest.xml 1`] = `
        DisplayName="Test App ßW"
        Square150x150Logo="assets\\Square150x150Logo.png"
        Square44x44Logo="assets\\Square44x44Logo.png"
-       Description="Test Application (test quite " #378)">
-
+       Description="Test Application (test quite “ #378)">
+        
         <uap:DefaultTile Wide310x150Logo="assets\\Wide310x150Logo.png" />
-
+        
       </uap:VisualElements>
-
+      
     </Application>
   </Applications>
 </Package>
@@ -116,7 +116,7 @@ exports[`AppX > winCodeSign: 1.0.0 > custom template appmanifest.xml 1`] = `
   <Properties>
     <DisplayName>Test App ßW</DisplayName>
     <PublisherDisplayName>Foo Bar</PublisherDisplayName>
-    <Description>Test Application (test quite " #378)</Description>
+    <Description>Test Application (test quite “ #378)</Description>
     <Logo>assets\\StoreLogo.png</Logo>
   </Properties>
   <Resources>
@@ -135,10 +135,10 @@ exports[`AppX > winCodeSign: 1.0.0 > custom template appmanifest.xml 1`] = `
        DisplayName="Test App ßW"
        Square150x150Logo="assets\\Square150x150Logo.png"
        Square44x44Logo="assets\\Square44x44Logo.png"
-       Description="Test Application (test quite " #378)">
-
+       Description="Test Application (test quite “ #378)">
+        
         <uap:DefaultTile Wide310x150Logo="assets\\Wide310x150Logo.png" />
-
+        
       </uap:VisualElements>
       <!-- <Extensions>
         <desktop2:Extension Category="windows.firewallRules">
@@ -248,7 +248,7 @@ exports[`AppX > winCodeSign: 1.1.0 > custom raw appmanifest.xml 1`] = `
   <Properties>
     <DisplayName>Test App ßW</DisplayName>
     <PublisherDisplayName>Foo Bar</PublisherDisplayName>
-    <Description>Test Application (test quite " #378)</Description>
+    <Description>Test Application (test quite “ #378)</Description>
     <Logo>assets\\StoreLogo.png</Logo>
   </Properties>
   <Resources>
@@ -269,12 +269,12 @@ exports[`AppX > winCodeSign: 1.1.0 > custom raw appmanifest.xml 1`] = `
        DisplayName="Test App ßW"
        Square150x150Logo="assets\\Square150x150Logo.png"
        Square44x44Logo="assets\\Square44x44Logo.png"
-       Description="Test Application (test quite " #378)">
-
+       Description="Test Application (test quite “ #378)">
+        
         <uap:DefaultTile Wide310x150Logo="assets\\Wide310x150Logo.png" />
-
+        
       </uap:VisualElements>
-
+      
     </Application>
   </Applications>
 </Package>
@@ -310,7 +310,7 @@ exports[`AppX > winCodeSign: 1.1.0 > custom template appmanifest.xml 1`] = `
   <Properties>
     <DisplayName>Test App ßW</DisplayName>
     <PublisherDisplayName>Foo Bar</PublisherDisplayName>
-    <Description>Test Application (test quite " #378)</Description>
+    <Description>Test Application (test quite “ #378)</Description>
     <Logo>assets\\StoreLogo.png</Logo>
   </Properties>
   <Resources>
@@ -329,10 +329,10 @@ exports[`AppX > winCodeSign: 1.1.0 > custom template appmanifest.xml 1`] = `
        DisplayName="Test App ßW"
        Square150x150Logo="assets\\Square150x150Logo.png"
        Square44x44Logo="assets\\Square44x44Logo.png"
-       Description="Test Application (test quite " #378)">
-
+       Description="Test Application (test quite “ #378)">
+        
         <uap:DefaultTile Wide310x150Logo="assets\\Wide310x150Logo.png" />
-
+        
       </uap:VisualElements>
       <!-- <Extensions>
         <desktop2:Extension Category="windows.firewallRules">

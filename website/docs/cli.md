@@ -4,21 +4,62 @@ title: CLI
 
 <!-- HELP_OUTPUT_START -->
 ```
-  • please use as subcommand: electron-builder publish
-Options:
-      --help                             Show help                     [boolean]
-  -f, --files                            The file(s) to upload to your publisher
-                                                              [array] [required]
-  -v, --version                          The app/build version used when
-                                         searching for an upload release (used
-                                         by some Publishers)            [string]
-  -c, --config, --configurationFilePath  The path to an electron-builder config.
-                                         Defaults to `electron-builder.yml` (or
-                                         `json`, or `json5`, or `js`, or `ts`),
-                                         see https://goo.gl/YFRJOM      [string]
-  -p, --policy                           Publish trigger policy, see
-                                         https://www.electron.build/publish
-       [string] [choices: "onTag", "onTagOrDraft", "always", "never", undefined]
+electron-builder
+
+Build
+
+Commands:
+  electron-builder build                    Build                                [default]
+  electron-builder install-app-deps         Install app deps
+  electron-builder node-gyp-rebuild         Rebuild own native code
+  electron-builder publish                  Publish a list of artifacts
+  electron-builder create-self-signed-cert  Create self-signed code signing cert for Windo
+                                  ws apps
+  electron-builder start                    Run application in a development mode using el
+                                  ectron-webpack
+  electron-builder clear-cache              Clear the electron-builder default cache direc
+                                  tory
+
+Building:
+  -m, -o, --mac, --macos       Build for macOS, accepts target list (see https:/
+                               /www.electron.build/mac).                 [array]
+  -l, --linux                  Build for Linux, accepts target list (see https:/
+                               /www.electron.build/linux)                [array]
+  -w, --win, --windows         Build for Windows, accepts target list (see https
+                               ://www.electron.build/win)                [array]
+      --x64                    Build for x64                           [boolean]
+      --ia32                   Build for ia32                          [boolean]
+      --armv7l                 Build for armv7l                        [boolean]
+      --arm64                  Build for arm64                         [boolean]
+      --universal              Build for universal                     [boolean]
+      --dir                    Build unpacked dir. Useful to test.     [boolean]
+      --prepackaged, --pd      The path to prepackaged app (to pack in a distrib
+                               utable format)
+      --projectDir, --project  The path to project directory. Defaults to curren
+                               t working directory.
+  -c, --config                 The path to an electron-builder config. Defaults
+                               to `electron-builder.yml` (or `json`, or `json5`,
+                                or `js`, or `ts`), see https://www.electron.buil
+                               d/configuration
+
+Publishing:
+  -p, --publish  Publish artifacts, see https://www.electron.build/publish
+                [choices: "onTag", "onTagOrDraft", "always", "never", undefined]
+
+Other:
+      --help     Show help                                             [boolean]
+      --version  Show version number                                   [boolean]
+
+Examples:
+  electron-builder -mwl                     build for macOS, Windows and Linux
+  electron-builder --linux deb tar.xz       build deb and tar.xz for Linux
+  electron-builder --win --ia32             build for Windows ia32
+  electron-builder -c.extraMetadata.foo=ba  set package.json property `foo` to `
+  r                                         bar`
+  electron-builder --config.nsis.unicode=f  configure unicode options for NSIS
+  alse
+
+See https://electron.build for more documentation.
 ```
 <!-- HELP_OUTPUT_END -->
 
