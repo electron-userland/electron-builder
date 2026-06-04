@@ -33,7 +33,17 @@ export default class SquirrelWindowsTarget extends Target {
         log.warn({ customSquirrelVendorDirectory }, "unable to access custom Squirrel.Windows vendor directory, falling back to default vendor")
       }
 
-      const squirrelBin = await getBinFromUrl("squirrel.windows@1.0.0", "squirrel.windows-2.0.1-patched.7z", "76851f0c192eaf9bc6f8f3eecdfe325857ebe70d7833ec62ed846a1acd50c846")
+      const [squirrelBin, wixBin] = await Promise.all([
+        getBinFromUrl("squirrel.windows@1.0.0", "squirrel.windows-2.0.1-patched.7z", "76851f0c192eaf9bc6f8f3eecdfe325857ebe70d7833ec62ed846a1acd50c846"),
+        getBinFromUrl(
+          "wix@1.0.0",
+          "wix-4.0.6.tar.gz",
+          "e84c8f37bdfd833b6c7d92489ca4102f001517e9dd50a1204146d616f6fdc611e2049c79f13325dbb491454d03247847ed426d8b4ad8556693c72eb95f08cde0"
+        ),
+      ])
+
+      // WiX tools first (lower precedence), then Squirrel executables overlay
+      await fs.promises.cp(wixBin, tmpVendorDirectory, { recursive: true })
       await fs.promises.cp(path.join(squirrelBin, "electron-winstaller", "vendor"), tmpVendorDirectory, { recursive: true })
     }
 
@@ -294,7 +304,7 @@ export default class SquirrelWindowsTarget extends Target {
       setupMsi: this.options.msi ? setupFile.replace(".exe", ".msi") : undefined,
       loadingGif,
       remoteReleases,
-      remoteToken: this.options.remoteToken || process.env.GH_TOKEN || process.env.GITHUB_TOKEN,
+      remoteToken: this.options.remoteToken ?? process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN,
       createTempDir: opts => this.packager.info.tempDirManager.createTempDir(opts),
     }
   }

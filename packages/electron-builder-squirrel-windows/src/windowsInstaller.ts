@@ -26,8 +26,10 @@ export async function buildAdditionalFilesXml(appDirectory: string): Promise<str
     try {
       await fs.access(path.join(appDirectory, rel))
       lines.push(`    <file src="${src}" target="${target}" />`)
-    } catch {
-      // not present, skip
+    } catch (e: any) {
+      if (e?.code !== "ENOENT") {
+        throw e
+      }
     }
   }
   return lines.join("\n")
@@ -72,11 +74,12 @@ export async function createWindowsInstaller(options: InstallerOptions): Promise
   const authors = options.authors || ""
   const copyright = options.copyright || `Copyright © ${new Date().getFullYear()} ${authors}`
   const owners = options.owners || authors
-  const additionalFilesXml = await buildAdditionalFilesXml(appDirectory)
+  let additionalFilesXml = await buildAdditionalFilesXml(appDirectory)
 
   let templateContent = await fs.readFile(nuspecTemplate, "utf8")
   if (path.sep === "/") {
     templateContent = templateContent.replace(/\\/g, "/")
+    additionalFilesXml = additionalFilesXml.replace(/\\/g, "/")
   }
 
   const nuspecContent = renderNuspecTemplate(templateContent, {
