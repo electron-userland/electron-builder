@@ -1,6 +1,7 @@
 import { InvalidConfigurationError } from "builder-util"
 import { copy, emptyDir } from "fs-extra"
 import { chmod, copyFile, mkdir, rename, writeFile } from "fs/promises"
+import * as https from "https"
 import * as path from "path"
 import { AfterPackContext } from "../configuration"
 import { Platform } from "../core"
@@ -169,8 +170,43 @@ export function getNodeJsDownloadParams(version: string, platform: Platform, arc
 
 export async function downloadNodeJsBinary(version: string, platform: Platform, arch: string): Promise<string> {
   const { releaseName, filenameWithExt, overrideUrl, binaryRelPath } = getNodeJsDownloadParams(version, platform, arch)
-  const extractDir = await downloadBuilderToolset({ releaseName, filenameWithExt, overrideUrl })
+  const sha256 = await fetchNodeJsChecksum(version, filenameWithExt)
+  const checksums = { [filenameWithExt]: sha256 }
+  const extractDir = await downloadBuilderToolset({ releaseName, filenameWithExt, overrideUrl, checksums })
   return path.join(extractDir, binaryRelPath)
+}
+
+/**
+ * Fetches the SHA-256 hex digest for a specific Node.js distribution file from
+ * the official nodejs.org SHASUMS256.txt, preventing MITM substitution attacks.
+ */
+export async function fetchNodeJsChecksum(version: string, filename: string): Promise<string> {
+  const url = `https://nodejs.org/dist/v${version}/SHASUMS256.txt`
+  return new Promise((resolve, reject) => {
+    https
+      .get(url, { headers: { "User-Agent": "electron-builder" } }, res => {
+        if (res.statusCode !== 200) {
+          res.resume()
+          reject(new Error(`HTTP ${res.statusCode} fetching Node.js SHASUMS256.txt for v${version}`))
+          return
+        }
+        const chunks: Buffer[] = []
+        res.on("data", (c: Buffer) => chunks.push(c))
+        res.on("end", () => {
+          const text = Buffer.concat(chunks).toString("utf8")
+          for (const line of text.split("\n")) {
+            const m = line.match(/^([0-9a-f]{64})\s+(.+)$/)
+            if (m != null && m[2].trim() === filename) {
+              resolve(m[1])
+              return
+            }
+          }
+          reject(new Error(`No checksum for ${filename} in Node.js v${version} SHASUMS256.txt`))
+        })
+        res.on("error", reject)
+      })
+      .on("error", reject)
+  })
 }
 
 export type LaunchUiDownloadParams = {

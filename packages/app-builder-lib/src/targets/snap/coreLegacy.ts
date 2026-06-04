@@ -342,8 +342,12 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
     const { stageDir, hooksDir, extraAppArgs, isTemplate } = opts
 
     const snapMetaDir = path.join(stageDir, isTemplate ? "meta" : "snap")
+    // No-template builds place command.sh + desktop scripts in scripts/ which snapcraft stages to snap root.
+    // Template builds write command.sh to the stage root directly; no scripts/ dir is needed.
     const scriptDir = path.join(stageDir, "scripts")
-    await mkdir(scriptDir, { recursive: true })
+    if (!isTemplate) {
+      await mkdir(scriptDir, { recursive: true })
+    }
 
     if (this.helper.maxIconPath != null) {
       const iconDest = path.join(snapMetaDir, "gui", `icon${path.extname(this.helper.maxIconPath)}`)
@@ -438,15 +442,21 @@ export function shellQuote(arg: string): string {
 /**
  * Builds the content of command.sh for a snap package.
  *
- * Template builds source desktop-integration scripts from the snap root ($SNAP);
- * no-template builds copy them into scripts/ so they must be referenced from $SNAP/scripts/.
+ * For both template and no-template builds, the desktop-integration scripts are
+ * sourced from the snap root ($SNAP):
+ *   - Template: scripts are embedded in the template tarball at the snap root.
+ *   - No-template: the snapcraft.yaml `launch-scripts` part uses `plugin: dump,
+ *     source: scripts`, which stages stageDir/scripts/ contents directly into the
+ *     snap root — so $SNAP/desktop-init.sh is correct in both cases.
+ *
+ * The only difference between template and no-template is the app executable prefix:
+ * template apps are at $SNAP/<name>; no-template apps are at $SNAP/app/<name>.
  */
 export function buildCommandShContent(opts: { isTemplate: boolean; executableName: string; extraAppArgs: string[] }): string {
   const { isTemplate, executableName, extraAppArgs } = opts
   validateShellEmbeddable(executableName, "executableName")
-  const scriptBase = isTemplate ? "$SNAP" : "$SNAP/scripts"
   const appPrefix = isTemplate ? "" : "app/"
-  let content = `#!/bin/bash -e\nexec "${scriptBase}/desktop-init.sh" "${scriptBase}/desktop-common.sh" "${scriptBase}/desktop-gnome-specific.sh" "$SNAP/${appPrefix}${executableName}"`
+  let content = `#!/bin/bash -e\nexec "$SNAP/desktop-init.sh" "$SNAP/desktop-common.sh" "$SNAP/desktop-gnome-specific.sh" "$SNAP/${appPrefix}${executableName}"`
   if (extraAppArgs.length > 0) {
     content += " " + extraAppArgs.map(shellQuote).join(" ")
   }
