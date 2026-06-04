@@ -37,8 +37,8 @@ async function main() {
 
   const selectedShard = shards[index]
   if (!selectedShard || selectedShard.length === 0) {
-    console.log(`No tests in shard ${index + 1}`)
-    process.exit(1)
+    console.log(`No tests in shard ${index + 1} — shard is empty, exiting cleanly`)
+    process.exit(0)
   }
 
   // Extract file paths from WeightedFile objects

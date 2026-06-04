@@ -201,7 +201,7 @@ export function registerAssistedInstallerTests(toolsets: ToolsetConfig): void {
         packed: async context => {
           await expectUpdateMetadata(expect, context, Arch.x64)
           await checkHelpers(expect, context.getResources(Platform.WINDOWS), true)
-          await doTest(expect, context.outDir, false, undefined, undefined, undefined, undefined, toolsets)
+          await doTest(expect, context.outDir, false, "Test Custom Installation Dir", "test-custom-inst-dir", null, true, toolsets)
         },
       }
     ))

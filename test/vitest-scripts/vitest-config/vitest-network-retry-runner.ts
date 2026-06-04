@@ -10,7 +10,7 @@ for (const stream of [process.stdout, process.stderr] as NodeJS.WriteStream[]) {
   })
 }
 
-const NETWORK_PATTERNS = [/ENOTFOUND/, /ETIMEDOUT/, /ECONNRESET/, /fetch failed/, /getaddrinfo/, /Response code 5[0-9][0-9]/, /The batch file cannot be found/]
+const NETWORK_PATTERNS = [/ENOTFOUND/, /ETIMEDOUT/, /ECONNRESET/, /fetch failed/, /getaddrinfo/, /Response code 5[0-9][0-9]/, /The batch file cannot be found/, /[Rr]equest timed out/]
 
 const MAX_NETWORK_RETRIES = 2
 const RETRY_BASE_DELAY_MS = 2000
