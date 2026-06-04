@@ -1,7 +1,7 @@
 #! /usr/bin/env node
 
 import { getElectronVersion, nodeGypRebuild } from "app-builder-lib/internal"
-import * as chalk from "chalk"
+import chalk from "chalk"
 import { build, configureBuildCommand, createYargs } from "../builder.js"
 import { configurePublishCommand, publish } from "../publish.js"
 import { clearCache } from "./clear-cache.js"

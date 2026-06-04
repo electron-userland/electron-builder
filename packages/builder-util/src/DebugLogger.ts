@@ -1,4 +1,3 @@
-
 import { serializeToYaml } from "./util.js"
 import { mapToObject } from "builder-util-runtime"
 import _fsExtra from "fs-extra"

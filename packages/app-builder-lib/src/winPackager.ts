@@ -1,4 +1,5 @@
 import { Arch, CopyFileTransformer, exists, FileTransformer, InvalidConfigurationError, log, walk } from "builder-util"
+import { createRequire } from "node:module"
 import { Nullish } from "builder-util-runtime"
 import { isCI } from "ci-info"
 import { createHash } from "crypto"
@@ -27,6 +28,8 @@ import { isBuildCacheEnabled } from "./util/flags.js"
 import { editWindowsResources, ResourceEditOptions } from "./util/resEdit.js"
 import { time } from "./util/timer.js"
 import { getWindowsVm, VmManager } from "./vm/vm.js"
+
+const _require = createRequire(import.meta.url)
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))
@@ -89,19 +92,19 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
           switch (name) {
             case "squirrel":
               try {
-                return require("electron-builder-squirrel-windows").default
+                return _require("electron-builder-squirrel-windows").default
               } catch (e: any) {
                 throw new InvalidConfigurationError(`Module electron-builder-squirrel-windows must be installed in addition to build Squirrel.Windows: ${e.stack || e}`)
               }
 
             case "appx":
-              return require("./targets/AppxTarget").default
+              return AppXTarget
 
             case "msi":
-              return require("./targets/MsiTarget").default
+              return MsiTarget
 
             case "msiwrapped":
-              return require("./targets/MsiWrappedTarget").default
+              return MsiWrappedTarget
 
             default:
               return null

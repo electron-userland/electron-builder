@@ -35,7 +35,9 @@ const workspaceSourceAliases = [
   sourceAlias("electron-builder", "electron-builder/src/index.ts"),
 ]
 
-const testPatterns = TEST_FILES_PATTERN.split(",").map(s => s.trim()).filter(Boolean)
+const testPatterns = TEST_FILES_PATTERN.split(",")
+  .map(s => s.trim())
+  .filter(Boolean)
 const includeGlob = `(${testPatterns.join("|")}|${testPatterns.map(t => `${t}*Test`).join("|")})`
 console.log("TEST_FILES pattern", includeGlob)
 

@@ -1,5 +1,5 @@
 import fsExtra from "fs-extra"
-import { createRequire } from "module"
+import { createRequire } from "node:module"
 import * as path from "path"
 import { AppUpdater } from "./AppUpdater.js"
 
