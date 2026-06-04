@@ -1,4 +1,4 @@
-import { Arch, copyDir, copyFile, exec, exists, InvalidConfigurationError, log } from "builder-util"
+import { Arch, copyDir, copyFile, exec, exists, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import * as fs from "fs-extra"
 import * as path from "path"
 import { FileAssociation } from "../../options/FileAssociation"
@@ -28,6 +28,8 @@ interface Options {
    *
    */
   compression?: "gzip" | "zstd" | "xz"
+  desktopName?: string
+  syncDesktopName?: boolean
 }
 
 export interface AppImageBuilderOptions {
@@ -162,7 +164,7 @@ export function validateCriticalPathString(str: string, fieldName: string): void
 async function writeAppLauncherAndRelatedFiles(opts: AppImageBuilderOptions): Promise<void> {
   const {
     stageDir,
-    options: { license, executableName, productFilename, productName, desktopEntry },
+    options: { license, executableName, productFilename, productName, desktopEntry, desktopName, syncDesktopName },
   } = opts
 
   // executableName and productFilename are embedded directly into double-quoted bash strings
@@ -172,7 +174,7 @@ async function writeAppLauncherAndRelatedFiles(opts: AppImageBuilderOptions): Pr
   validateCriticalPathString(productFilename, "productFilename")
 
   // Write desktop file
-  const desktopFileName = `${executableName}.desktop`
+  const desktopFileName = `${syncDesktopName && !isEmptyOrSpaces(desktopName) ? desktopName!.replace(/\.desktop$/, "") : executableName}.desktop`
   await fs.writeFile(path.join(stageDir, desktopFileName), desktopEntry, { mode: 0o644 })
   await copyIcons(opts)
 

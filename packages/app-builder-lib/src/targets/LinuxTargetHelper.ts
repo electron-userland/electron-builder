@@ -237,6 +237,14 @@ export class LinuxTargetHelper {
     return file
   }
 
+  getDesktopFileName(fallback: string = this.packager.executableName): string {
+    if (!this.packager.platformSpecificBuildOptions.syncDesktopName) {
+      return fallback
+    }
+    const trimmedDesktopName = this.packager.info.metadata.desktopName?.trim()
+    return !isEmptyOrSpaces(trimmedDesktopName) ? trimmedDesktopName.replace(/\.desktop$/, "") : fallback
+  }
+
   computeDesktopEntry(targetSpecificOptions: CommonLinuxOptions, exec?: string, extra?: Record<string, string>): Promise<string> {
     if (exec != null && exec.length === 0) {
       throw new Error("Specified exec is empty")

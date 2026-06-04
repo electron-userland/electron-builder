@@ -61,6 +61,17 @@ export interface LinuxConfiguration extends CommonLinuxOptions, PlatformSpecific
    * For user-facing category configuration use the target-specific options (e.g. {@link DebOptions}).
    */
   readonly packageCategory?: string | null
+
+  /**
+   * When `true`, the installed `.desktop` filename is derived from `desktopName` in `package.json`
+   * (minus the `.desktop` suffix) so that it matches `StartupWMClass` and Electron's `app_id`.
+   * Falls back to `executableName` when `desktopName` is absent.
+   *
+   * @default false
+   * @see https://github.com/electron-userland/electron-builder/issues/9103
+   * @remarks Will become the default behavior in v27 and this option will be removed in v27 as well to align with electron upstream and common Linux desktop application practices. If you rely on the current default behavior, set this option to `false` explicitly to silence the warning.
+   */
+  readonly syncDesktopName?: boolean
 }
 
 /**

@@ -57,7 +57,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
 
     // Create desktop file in snap/gui/ directory
     // Snapcraft will automatically copy this to meta/gui/ in the final snap
-    const desktopFilePath = path.join(guiOutput, `${snap.name}.desktop`)
+    const desktopFilePath = path.join(guiOutput, `${this.helper.getDesktopFileName(snap.name)}.desktop`)
     await this.helper.writeDesktopEntry(this.options, this.packager.executableName + " %U", desktopFilePath, desktopExtraProps)
 
     // Copy app files to the project root `app` directory so `source: app`
@@ -243,13 +243,14 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     const commandSuffix = extraArgs.length > 0 ? ` ${extraArgs.join(" ")}` : ""
 
     // Create the app configuration
+    const desktopBaseName = this.helper.getDesktopFileName(appName)
     const app: App = {
       command: `app/${this.packager.executableName}${commandSuffix}`,
       "command-chain": undefined, // explicitly undefined so removeNullish strips it; extensions supply their own command-chain
       plugs: appPlugs,
       slots: appSlots,
-      autostart: options.autoStart ? `${appName}.desktop` : undefined,
-      desktop: `meta/gui/${appName}.desktop`,
+      autostart: options.autoStart ? `${desktopBaseName}.desktop` : undefined,
+      desktop: `meta/gui/${desktopBaseName}.desktop`,
       extensions: resolvedExtensions,
     }
 
