@@ -1,5 +1,6 @@
-import { createPackageFromStreams, AsarStreamType, AsarDirectory } from "@electron/asar"
+import type { AsarStreamType, AsarDirectory } from "@electron/asar"
 import { isEmptyOrSpaces, log } from "builder-util"
+import { dynamicImport } from "../util/dynamicImport"
 import { exists, Filter, FilterStats } from "builder-util/out/fs"
 import * as fs from "fs-extra"
 import { readlink } from "fs-extra"
@@ -79,6 +80,7 @@ export class AsarPackager {
       }
       log.info({ args }, "logging @electron/asar")
     }
+    const { createPackageFromStreams } = await dynamicImport<typeof import("@electron/asar")>("@electron/asar")
     await createPackageFromStreams(this.outFile, streams)
     console.log = consoleLogger
   }

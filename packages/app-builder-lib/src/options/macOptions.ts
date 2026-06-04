@@ -21,10 +21,14 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly target?: Array<MacOsTargetName | TargetConfiguration> | MacOsTargetName | TargetConfiguration | null
 
   /**
-   * The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://www.electron.build/code-signing) instead of specifying this option.
+   * The signing identity (certificate name) to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://www.electron.build/code-signing) instead of specifying this option.
    * MAS installer identity is specified in the [mas](https://www.electron.build/mas).
    *
-   * Set to `-` to use an ad-hoc identity for signing. Set to `null` to skip signing entirely.
+   * - **Not set** (default): electron-builder searches the keychain for a valid signing certificate. If none is found, signing is skipped for all architectures — there is no automatic ad-hoc fallback.
+   * - **`null`**: skip signing entirely.
+   * - **`"-"`**: opt in to ad-hoc signing explicitly. Note that `hardenedRuntime: true` (the default) combined with ad-hoc signing requires
+   *   the [`com.apple.security.cs.disable-library-validation`](https://developer.apple.com/documentation/BundleResources/Entitlements/com.apple.security.cs.disable-library-validation)
+   *   entitlement to prevent app launch failures; otherwise set `hardenedRuntime: false`.
    */
   readonly identity?: string | null
 
@@ -155,6 +159,12 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
 
   /**
    * Whether your app has to be signed with hardened runtime.
+   *
+   * When using ad-hoc signing (`identity: "-"`), hardened runtime enforces library validation which
+   * will reject pre-signed Electron frameworks that carry a different Team ID. To resolve this either
+   * set `hardenedRuntime: false` or add the
+   * [`com.apple.security.cs.disable-library-validation`](https://developer.apple.com/documentation/BundleResources/Entitlements/com.apple.security.cs.disable-library-validation)
+   * entitlement to your entitlements file.
    * @default true
    */
   readonly hardenedRuntime?: boolean
@@ -297,6 +307,13 @@ export interface DmgOptions extends TargetSpecificOptions {
   format?: "UDRW" | "UDRO" | "UDCO" | "UDZO" | "UDBZ" | "ULFO"
 
   /**
+   * The filesystem for the DMG volume (e.g. `"APFS"` or `"HFS+"`)
+   * This will be changed to APFS in the next major release, so it is recommended to set it explicitly to HFS+ if you want to keep using HFS+ (e.g. for better compatibility with older macOS versions).
+   * @default HFS+
+   */
+  readonly filesystem?: "HFS+" | "APFS" | null
+
+  /**
    * The initial size of the DMG filesystem. Accepts the same syntax as the `-size` argument to `hdiutil`, e.g. `"150m"`, `"4g"`.
    * If not specified, the size is calculated automatically.
    * Set this explicitly for large apps or apps with sparse files to avoid "No space left on device" errors.
@@ -329,6 +346,36 @@ export interface DmgOptions extends TargetSpecificOptions {
    * @default false
    */
   readonly sign?: boolean
+
+  /**
+   * License agreement to display when the DMG is mounted.
+   *
+   * Accepts a single file path (`.rtf`, `.txt`, or `.html`) used as the English/default license,
+   * or a language-code → file-path map for multi-language builds.
+   *
+   * When set, this takes precedence over the file-naming convention
+   * (`license_en.txt`, etc. in the build resources directory).
+   * Paths are resolved relative to the build resources directory or project root.
+   *
+   * @example Single language
+   * ```yaml
+   * dmg:
+   *   license: "build/license.rtf"
+   * ```
+   *
+   * @example Multi-language
+   * ```yaml
+   * dmg:
+   *   license:
+   *     en_US: "build/license.rtf"
+   *     de_DE: "build/license_de.txt"
+   *     ja_JP: "build/license_ja.txt"
+   * ```
+   *
+   * If not set, electron-builder scans the build resources directory for
+   * `license_LANG.{rtf,txt,html}` files automatically.
+   */
+  license?: string | Record<string, string> | null
 
   /**
    * @private

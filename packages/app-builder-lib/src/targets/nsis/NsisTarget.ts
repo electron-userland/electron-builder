@@ -2,20 +2,18 @@ import {
   Arch,
   asArray,
   AsyncTaskManager,
-  exec,
-  executeAppBuilder,
+  spawnAndWriteWithOutput,
   exists,
+  generateKsuid,
   getArchSuffix,
-  getPath7za,
   getPlatformIconFileName,
   InvalidConfigurationError,
   log,
-  spawnAndWrite,
   statOrNull,
   use,
   walk,
 } from "builder-util"
-import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, PackageFileInfo, UUID } from "builder-util-runtime"
+import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, deepAssign, PackageFileInfo, UUID } from "builder-util-runtime"
 import _debug from "debug"
 import * as fs from "fs"
 import { readFile, stat, unlink } from "fs-extra"
@@ -26,7 +24,6 @@ import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt } from "..
 import { hashFile } from "../../util/hash"
 import { isMacOsCatalina } from "../../util/macosVersion"
 import { time } from "../../util/timer"
-import { execWine } from "../../wine"
 import { WinPackager } from "../../winPackager"
 import { archive, ArchiveOptions } from "../archive"
 import { appendBlockmap, configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../differentialUpdateInfoBuilder"
@@ -37,7 +34,10 @@ import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } fr
 import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
 import { NsisScriptGenerator, nsisEscapeString } from "./nsisScriptGenerator"
-import { AppPackageHelper, NSIS_PATH, NSIS_RESOURCES_PATH, NsisTargetOptions, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
+import { getMakeNsisPath, getNsisPluginsPath } from "../../toolsets/windows"
+import { AppPackageHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
+import { checkMakensisOutput, verifyInstallerSize } from "./nsisValidation"
+import { WineVmManager } from "../../vm/WineVm"
 
 const debug = _debug("electron-builder:nsis")
 
@@ -72,15 +72,13 @@ export class NsisTarget extends Target {
           }
 
     if (targetName !== "nsis") {
-      Object.assign(this.options, (this.packager.config as any)[targetName === "nsis-web" ? "nsisWeb" : targetName])
+      deepAssign(this.options, (this.packager.config as any)[targetName === "nsis-web" ? "nsisWeb" : targetName])
     }
 
     const deps = packager.info.metadata.dependencies
     if (deps != null && deps["electron-squirrel-startup"] != null) {
       log.warn('"electron-squirrel-startup" dependency is not required for NSIS')
     }
-
-    NsisTargetOptions.resolve(this.options)
   }
 
   get shouldBuildUniversalInstaller() {
@@ -286,15 +284,7 @@ export class NsisTarget extends Target {
             })
             packageFiles[Arch[arch]] = fileInfo
           }
-          const path7za = await getPath7za()
-          const archiveInfo = (await exec(path7za, ["l", file])).trim()
-          // after adding blockmap data will be "Warnings: 1" in the end of output
-          const match = /(\d+)\s+\d+\s+\d+\s+files/.exec(archiveInfo)
-          if (match == null) {
-            log.warn({ output: archiveInfo }, "cannot compute size of app package")
-          } else {
-            estimatedSize += parseInt(match[1], 10)
-          }
+          estimatedSize += unpackedSize
         })
       )
     }
@@ -306,7 +296,7 @@ export class NsisTarget extends Target {
 
       // https://github.com/electron-userland/electron-builder/issues/5764
       if (typeof unpackDirName === "string" || !unpackDirName) {
-        defines.UNPACK_DIR_NAME = unpackDirName || (await executeAppBuilder(["ksuid"]))
+        defines.UNPACK_DIR_NAME = unpackDirName || generateKsuid()
       }
 
       if (splashImage != null) {
@@ -351,14 +341,22 @@ export class NsisTarget extends Target {
 
     this.buildQueueManager.add(async () => {
       const sharedHeader = await this.computeCommonInstallerScriptHeader()
-      const script = isPortable
-        ? await readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8")
-        : await this.computeScriptAndSignUninstaller(definesUninstaller, commandsUninstaller, installerPath, sharedHeader, archs)
+      let rawScript: string
+      let isCustomScript = false
+      if (isPortable) {
+        rawScript = await readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8")
+      } else {
+        const result = await this.computeScriptAndSignUninstaller(definesUninstaller, commandsUninstaller, installerPath, sharedHeader, archs)
+        rawScript = result.script
+        isCustomScript = result.isCustomScript
+      }
 
       // copy outfile name into main options, as the computeScriptAndSignUninstaller function was kind enough to add important data to temporary defines.
       defines.UNINSTALLER_OUT_FILE = definesUninstaller.UNINSTALLER_OUT_FILE
 
-      await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(script, true, archs)))
+      // Skip size verification for portable (NSIS recompresses the archive, installer < archive is normal)
+      // and for custom scripts (may not embed archives).
+      await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(rawScript, true, archs)), { skipSizeVerification: isPortable || isCustomScript })
       await Promise.all<any>([packager.signIf(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
 
       const safeArtifactName = computeSafeArtifactNameIfNeeded(installerFilename, () => this.generateGitHubInstallerName(primaryArch, defaultArch))
@@ -400,14 +398,20 @@ export class NsisTarget extends Target {
     return false
   }
 
-  private async computeScriptAndSignUninstaller(defines: Defines, commands: Commands, installerPath: string, sharedHeader: string, archs: Map<Arch, string>): Promise<string> {
+  private async computeScriptAndSignUninstaller(
+    defines: Defines,
+    commands: Commands,
+    installerPath: string,
+    sharedHeader: string,
+    archs: Map<Arch, string>
+  ): Promise<{ script: string; isCustomScript: boolean }> {
     const packager = this.packager
     const customScriptPath = await packager.getResource(this.options.script, "installer.nsi")
     const script = await readFile(customScriptPath || path.join(nsisTemplatesDir, "installer.nsi"), "utf8")
 
     if (customScriptPath != null) {
       log.info({ reason: "custom NSIS script is used" }, "uninstaller is not signed by electron-builder")
-      return script
+      return { script, isCustomScript: true }
     }
 
     // https://github.com/electron-userland/electron-builder/issues/2103
@@ -420,6 +424,7 @@ export class NsisTarget extends Target {
     await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(script, false, archs)))
 
     // http://forums.winamp.com/showthread.php?p=3078545
+    // TODO: remove workaround when wine is fully upgraded to 11
     if (isMacOsCatalina()) {
       try {
         await UninstallerReader.exec(installerPath, uninstallerPath)
@@ -436,14 +441,15 @@ export class NsisTarget extends Target {
         }
       }
     } else {
-      await execWine(installerPath, null, [], { env: { __COMPAT_LAYER: "RunAsInvoker" } })
+      const wineVm = new WineVmManager(packager.config.toolsets?.wine)
+      await wineVm.exec(installerPath, [], { env: { __COMPAT_LAYER: "RunAsInvoker" } })
     }
     await packager.signIf(uninstallerPath)
 
     delete defines.BUILD_UNINSTALLER
     // platform-specific path, not wine
     defines.UNINSTALLER_OUT_FILE = uninstallerPath
-    return script
+    return { script, isCustomScript: false }
   }
 
   private computeVersionKey(short = false) {
@@ -601,7 +607,7 @@ export class NsisTarget extends Target {
     }
   }
 
-  private async executeMakensis(defines: Defines, commands: Commands, script: string): Promise<void> {
+  private async executeMakensis(defines: Defines, commands: Commands, script: string, opts: { skipSizeVerification?: boolean } = {}): Promise<void> {
     const args: Array<string> = this.options.warningsAsErrors === false ? [] : ["-WX"]
     args.push("-INPUTCHARSET", "UTF8")
     for (const name of Object.keys(defines)) {
@@ -609,7 +615,17 @@ export class NsisTarget extends Target {
       if (value == null) {
         args.push(`-D${name}`)
       } else {
-        args.push(`-D${name}=${value}`)
+        // nsisEscapeString prevents three classes of injection:
+        //   1. Newlines  → replaced with spaces; a bare \n in a define value
+        //      would terminate the current script line and let whatever follows
+        //      be parsed as a new preprocessor directive (e.g. !system, !include).
+        //   2. bare $ → escaped to $$; unescaped $ in a define value would cause
+        //      NSIS to expand an unintended variable reference.  ${...} references
+        //      are left intact so NSIS compile-time defines like ${NSISDIR} still
+        //      expand correctly.
+        //   3. " chars   → escaped to $\"; an unescaped " would break out of
+        //      double-quoted NSIS string literals where ${DEFINE} is expanded.
+        args.push(`-D${name}=${nsisEscapeString(String(value))}`)
       }
     }
 
@@ -630,24 +646,29 @@ export class NsisTarget extends Target {
       this.packager.debugLogger.add("nsis.script", script)
     }
 
-    const nsisPath = await NSIS_PATH()
-    const command = path.join(
-      nsisPath,
-      process.platform === "darwin" ? "mac" : process.platform === "win32" ? "Bin" : "linux",
-      process.platform === "win32" ? "makensis.exe" : "makensis"
-    )
+    if (process.platform === "win32") {
+      // fix for an issue caused by virus scanners, locking the file during write
+      // https://github.com/electron-userland/electron-builder/issues/5005
+      await ensureNotBusy(commands["OutFile"].replace(/"/g, ""))
+    }
 
-    // if (process.platform === "win32") {
-    // fix for an issue caused by virus scanners, locking the file during write
-    // https://github.com/electron-userland/electron-builder/issues/5005
-    await ensureNotBusy(commands["OutFile"].replace(/"/g, ""))
-    // }
-
-    await spawnAndWrite(command, args, script, {
-      // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as MacOS/Windows version, so, we explicitly set NSISDIR
-      env: { ...process.env, NSISDIR: nsisPath },
+    const makensis = await getMakeNsisPath(this.packager.config.toolsets?.nsis, this.options.customNsisBinary)
+    const { stdout, stderr } = await spawnAndWriteWithOutput(makensis.path, args, script, {
+      env: { ...process.env, ...(makensis.env ?? {}) },
       cwd: nsisTemplatesDir,
     })
+
+    checkMakensisOutput(stdout, stderr)
+
+    // Only verify output size for the final, non-web installer.
+    // BUILD_UNINSTALLER: intermediate uninstaller build — no embedded archives.
+    // APP_PACKAGE_STORE_FILE: nsis-web — archives downloaded at install-time.
+    // skipSizeVerification: portable builds (NSIS recompresses the archive, so
+    //   installer < archive_size is normal) and custom scripts (may not embed archives).
+    if (!("BUILD_UNINSTALLER" in defines) && !("APP_PACKAGE_STORE_FILE" in defines) && !opts.skipSizeVerification) {
+      const outFile = commands["OutFile"].replace(/^"|"$/g, "")
+      await verifyInstallerSize(outFile, defines)
+    }
   }
 
   private async computeCommonInstallerScriptHeader(): Promise<string> {
@@ -668,7 +689,7 @@ export class NsisTarget extends Target {
 
     const pluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
     taskManager.add(async () => {
-      scriptGenerator.addPluginDir(pluginArch, path.join(await NSIS_RESOURCES_PATH(), "plugins", pluginArch))
+      scriptGenerator.addPluginDir(pluginArch, path.join(await getNsisPluginsPath(this.packager.config.toolsets?.nsis, this.options.customNsisResources), pluginArch))
     })
 
     taskManager.add(async () => {
@@ -736,7 +757,7 @@ export class NsisTarget extends Target {
             const customIcon = await packager.getResource(getPlatformIconFileName(item.icon, false), `${extensions[0]}.ico`)
             let installedIconPath = "$appExe,0"
             if (customIcon != null) {
-              installedIconPath = `$INSTDIR\\resources\\${path.basename(customIcon)}`
+              installedIconPath = `$INSTDIR\\resources\\${nsisEscapeString(path.basename(customIcon))}`
               registerFileAssociationsScript.file(installedIconPath, customIcon)
             }
 
@@ -784,7 +805,7 @@ async function generateForPreCompressed(preCompressedFileExtensions: Array<strin
   if (preCompressedAssets.length !== 0) {
     const macro = new NsisScriptGenerator()
     for (const file of preCompressedAssets) {
-      macro.file(`$INSTDIR\\${path.relative(dir, file).replace(/\//g, "\\")}`, file)
+      macro.file(`$INSTDIR\\${nsisEscapeString(path.relative(dir, file).replace(/\//g, "\\"))}`, file)
     }
     scriptGenerator.macro(`customFiles_${Arch[arch]}`, macro)
   }

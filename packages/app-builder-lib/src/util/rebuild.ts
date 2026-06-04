@@ -1,4 +1,4 @@
-import { RebuildOptions } from "@electron/rebuild"
+import type { RebuildOptions } from "@electron/rebuild"
 import { log } from "builder-util"
 import * as cp from "child_process"
 import * as path from "path"

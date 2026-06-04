@@ -1,5 +1,79 @@
 # electron-publish
 
+## 26.14.0
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`0e67339`](https://github.com/electron-userland/electron-builder/commit/0e67339e0177e4bacf57845356d27020918803b3)
+
+</small>
+
+- `builder-util@26.14.0`
+
+</details>
+
+## 26.13.0
+
+### Minor Changes
+
+- Feat: migrate app-builder-bin functions to pure JS (`certificate-info`, `ksuid`, `get-bucket-location`, `publish-s3`) _[`#9733`](https://github.com/electron-userland/electron-builder/pull/9733) [`1bc92ff`](https://github.com/electron-userland/electron-builder/commit/1bc92ff4b21003536dfe161fb679b6a76713cd38) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`1bc92ff`](https://github.com/electron-userland/electron-builder/commit/1bc92ff4b21003536dfe161fb679b6a76713cd38) [`59efef1`](https://github.com/electron-userland/electron-builder/commit/59efef1a8b81ed1ead4e8004043726d2b49cf81f)
+
+</small>
+
+- `builder-util@26.13.0`
+- `builder-util-runtime@9.6.3`
+
+</details>
+
+## 26.12.1
+
+### Patch Changes
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`d6a5aee`](https://github.com/electron-userland/electron-builder/commit/d6a5aee821138449dc0c082606da6a1bf5ba0798) [`4866737`](https://github.com/electron-userland/electron-builder/commit/4866737e4fe1f0cca210d318b9ce440f8e978a63)
+
+</small>
+
+- `builder-util-runtime@9.6.2`
+- `builder-util@26.12.1`
+
+</details>
+
+## 26.12.0
+
+### Minor Changes
+
+- Feat: adding support for core24 snapcraft and refactoring support to a new config property `snapcraft` to maintain backward compatibility _[`#9517`](https://github.com/electron-userland/electron-builder/pull/9517) [`059fffd`](https://github.com/electron-userland/electron-builder/commit/059fffd5b9aabd72e9a8b592b9b7cef4a9e063ef) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`059fffd`](https://github.com/electron-userland/electron-builder/commit/059fffd5b9aabd72e9a8b592b9b7cef4a9e063ef) [`bfd1c1b`](https://github.com/electron-userland/electron-builder/commit/bfd1c1bb23b985b3fc44bcb4bb028fa0496d4638) [`2181fd0`](https://github.com/electron-userland/electron-builder/commit/2181fd02850101002fd82e463b9e0ed93d44fc7b)
+
+</small>
+
+- `builder-util@26.12.0`
+
+</details>
+
 ## 26.11.1
 
 ### Patch Changes

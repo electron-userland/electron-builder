@@ -1,15 +1,25 @@
-import { replaceDefault as _replaceDefault, Arch, deepAssign, executeAppBuilder, isValidKey, serializeToYaml, toLinuxArchString } from "builder-util"
-import { asArray, Nullish } from "builder-util-runtime"
+import { replaceDefault as _replaceDefault, Arch, copyDir, exec, log, serializeToYaml, toLinuxArchString } from "builder-util"
+import { asArray, deepAssign, isValidKey, Nullish } from "builder-util-runtime"
+import { chmod, copyFile, mkdir, readdir, rename, rm, writeFile } from "fs/promises"
 import { outputFile, readFile } from "fs-extra"
-import { load } from "js-yaml"
 import * as path from "path"
 import { PlugDescriptor, SnapOptions } from "../../options/SnapOptions"
+import { getAppImageTools } from "../../toolsets/linux"
+import { downloadBuilderToolset } from "../../util/electronGet"
 import { getTemplatePath } from "../../util/pathManager"
+import { validateShellEmbeddable } from "../../frameworks/LibUiFramework"
 import { SnapCore } from "./SnapTarget"
 import { SnapcraftYAML } from "./snapcraft"
 import { DEFAULT_STAGE_PACKAGES } from "./snapcraftBuilder"
+import { load } from "js-yaml"
 
-// Handles core18/core20/core22 snaps via the app-builder binary (not the snapcraft CLI).
+// Snap template release info from electron-userland/electron-builder-binaries
+const SNAP_TEMPLATES = {
+  amd64: { releaseName: "snap-template-4.0-2", filenameWithExt: "snap-template-electron-4.0-2-amd64.tar.7z" , checksums: { "snap-template-electron-4.0-2-amd64.tar.7z": "5e3ab4e09364ac06f0072b1c2dab9138318c933f6b2c7374f893b5ec44d19e6f" } },
+  armhf: { releaseName: "snap-template-4.0-1", filenameWithExt: "snap-template-electron-4.0-1-armhf.tar.7z" , checksums: { "snap-template-electron-4.0-1-armhf.tar.7z": "6f7553e904f4e043bc3019f0899d05e01a283b00b61fec22e932296490e3be6b" } },
+} as const
+
+// Handles core18/core20/core22 snaps via mksquashfs (template) or snapcraft CLI (no-template).
 // See: https://github.com/develar/app-builder/blob/master/pkg/package-format/snap
 export class SnapCoreLegacy extends SnapCore<SnapOptions> {
   private isUseTemplateApp = false
@@ -18,7 +28,6 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
 
   private replaceDefault(inList: Array<string> | Nullish, defaultList: Array<string>) {
     const result = _replaceDefault(inList, defaultList)
-    // Any customisation opts out of the pre-built template app.
     if (result !== defaultList) {
       this.isUseTemplateApp = false
     }
@@ -57,7 +66,6 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
     }
     if (options.base != null) {
       snap.base = options.base
-      // from core22 onwards adapter is legacy
       if (Number(snap.base.split("core")[1]) >= 22) {
         delete appDescriptor.adapter
       }
@@ -129,16 +137,9 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
         ].join(":"),
         ...options.environment,
       }
-      // Determine whether Wayland should be disabled based on:
-      // - Electron version (<38 historically had Wayland disabled)
-      // - Explicit allowNativeWayland override.
-      // https://github.com/electron-userland/electron-builder/issues/9320
       const allow = options.allowNativeWayland
       const isOldElectron = !this.helper.isElectronVersionGreaterOrEqualThan("38.0.0", "7.0.0")
-      if (
-        (allow == null && isOldElectron) || // No explicit option -> use legacy behavior for old Electron
-        allow === false // Explicitly disallowed
-      ) {
+      if ((allow == null && isOldElectron) || allow === false) {
         environment.DISABLE_WAYLAND = "1"
       }
 
@@ -177,6 +178,8 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
 
   async buildSnap(props: { snap: any; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<void> {
     const { snap, appOutDir, stageDir, snapArch, artifactPath } = props
+
+    // Build the args array for effectiveOptionComputed compatibility — tests inspect this.
     const args = [
       "snap",
       "--app",
@@ -199,11 +202,9 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
       args.push("--icon", this.helper.maxIconPath)
     }
 
-    // snapcraft.yaml inside a snap directory, or snap.yaml inside meta/ for template builds
     const snapMetaDir = path.join(stageDir, this.isUseTemplateApp ? "meta" : "snap")
     const desktopFile = path.join(snapMetaDir, "gui", `${snap.name}.desktop`)
     await this.helper.writeDesktopEntry(this.options, this.packager.executableName + " %U", desktopFile, {
-      // tslint:disable:no-invalid-template-strings
       Icon: "${SNAP}/meta/gui/icon.png",
     })
 
@@ -221,12 +222,13 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
       args.push("--extraAppArgs=" + extraAppArgs.join(" "))
     }
 
+    // Capture compression BEFORE it gets stripped from snap for template builds.
+    const compression = this.options.compression ?? "xz"
     if (snap.compression != null) {
       args.push("--compression", snap.compression)
     }
 
     if (this.isUseTemplateApp) {
-      // remove fields that are valid in snapcraft.yaml but not in snap.yaml (template format)
       const fieldsToStrip = ["compression", "contact", "donation", "issues", "parts", "source-code", "website"]
       for (const field of fieldsToStrip) {
         delete snap[field]
@@ -245,15 +247,123 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
     }
 
     if (this.isUseTemplateApp) {
-      // Map TypeScript Arch enum to the string keys expected by app-builder's ResolveTemplateDir.
-      // The previous code passed the raw numeric enum value (e.g. Arch.x64 = 1 → "electron4:1")
-      // which fell through to the default case and was treated as a bare URL, failing with
-      // "unsupported protocol scheme". The switch in snap.go expects "electron4:amd64" / "electron4:armhf".
       const templateArch = snapArch === Arch.x64 ? "amd64" : "armhf"
       args.push("--template-url", `electron4:${templateArch}`)
+      await this.buildWithTemplate({ appOutDir, stageDir, snapArch, artifactPath, compression, hooksDir, extraAppArgs })
+    } else {
+      await this.buildWithoutTemplate({ appOutDir, stageDir, artifactPath, hooksDir, extraAppArgs })
+    }
+  }
+
+  private async buildWithTemplate(opts: {
+    appOutDir: string
+    stageDir: string
+    snapArch: Arch
+    artifactPath: string
+    compression: string
+    hooksDir: string | null
+    extraAppArgs: string[]
+  }): Promise<void> {
+    const { appOutDir, stageDir, snapArch, artifactPath, compression, hooksDir, extraAppArgs } = opts
+    const templateArch = snapArch === Arch.x64 ? "amd64" : "armhf"
+    const { releaseName, filenameWithExt, checksums } = SNAP_TEMPLATES[templateArch]
+
+    log.info({ releaseName }, "downloading snap template")
+    const templateDir = await downloadBuilderToolset({ releaseName, filenameWithExt, checksums, githubOrgRepo: "electron-userland/electron-builder-binaries" })
+
+    await this.stageSnapFiles({ stageDir, appOutDir, hooksDir, extraAppArgs, isTemplate: true })
+
+    // Best-effort: remove chrome-sandbox from app dir before mksquashfs scans it.
+    await rm(path.join(appOutDir, "chrome-sandbox"), { force: true })
+
+    // chmod -R g-s to avoid setgid bits in final image
+    for (const dir of [stageDir, appOutDir, templateDir]) {
+      await exec("chmod", ["-R", "g-s", dir]).catch(err => log.warn({ error: err.message }, "chmod g-s failed"))
     }
 
-    await executeAppBuilder(args)
+    const mksquashfsPath = await getMksquashfsPath(snapArch)
+
+    // Collect top-level entries from each dir as individual path args (mirrors Go ReadDirContentTo)
+    const mksquashfsArgs: string[] = [
+      ...(await readDirPaths(templateDir)),
+      ...(await readDirPaths(stageDir)),
+      ...(await readDirPaths(appOutDir, name => name !== "LICENSES.chromium.html" && name !== "LICENSE.electron.txt" && name !== "chrome-sandbox")),
+      artifactPath,
+      "-no-progress",
+      "-quiet",
+      "-noappend",
+      "-comp",
+      compression,
+      "-no-xattrs",
+      "-no-fragments",
+      "-all-root",
+    ]
+
+    await exec(mksquashfsPath, mksquashfsArgs, { cwd: stageDir })
+  }
+
+  private async buildWithoutTemplate(opts: { appOutDir: string; stageDir: string; artifactPath: string; hooksDir: string | null; extraAppArgs: string[] }): Promise<void> {
+    const { appOutDir, stageDir, artifactPath, hooksDir, extraAppArgs } = opts
+
+    await this.stageSnapFiles({ stageDir, appOutDir, hooksDir, extraAppArgs, isTemplate: false })
+
+    // Write desktop integration scripts (embedded in the Go binary, now in our templates)
+    const snapTemplateDir = getTemplatePath("snap")
+    for (const script of ["desktop-init.sh", "desktop-common.sh", "desktop-gnome-specific.sh"]) {
+      const src = path.join(snapTemplateDir, script)
+      const dest = path.join(stageDir, "scripts", script)
+      await copyFile(src, dest)
+      // copyFile doesn't preserve mode; chmod 755 explicitly
+      await chmod(dest, 0o755)
+    }
+
+    // Copy app dir into stage/app/ so snapcraft can pick it up
+    await copyDir(appOutDir, path.join(stageDir, "app"))
+
+    // Run snapcraft (legacy `snap` subcommand)
+    const isDestructiveMode = process.env.SNAP_DESTRUCTIVE_MODE === "true"
+    const snapOutputName = "out.snap"
+    const snapArgs = ["snap", "--output", isDestructiveMode ? artifactPath : snapOutputName]
+    if (isDestructiveMode) {
+      snapArgs.push("--destructive-mode")
+    }
+
+    await exec("snapcraft", snapArgs, {
+      cwd: stageDir,
+      env: { ...process.env, SNAPCRAFT_HAS_TTY: "false" },
+    })
+
+    if (!isDestructiveMode) {
+      await rename(path.join(stageDir, snapOutputName), artifactPath)
+    }
+  }
+
+  private async stageSnapFiles(opts: { stageDir: string; appOutDir: string; hooksDir: string | null; extraAppArgs: string[]; isTemplate: boolean }): Promise<void> {
+    const { stageDir, hooksDir, extraAppArgs, isTemplate } = opts
+
+    const snapMetaDir = path.join(stageDir, isTemplate ? "meta" : "snap")
+    // No-template builds place command.sh + desktop scripts in scripts/ which snapcraft stages to snap root.
+    // Template builds write command.sh to the stage root directly; no scripts/ dir is needed.
+    const scriptDir = path.join(stageDir, "scripts")
+    if (!isTemplate) {
+      await mkdir(scriptDir, { recursive: true })
+    }
+
+    if (this.helper.maxIconPath != null) {
+      const iconDest = path.join(snapMetaDir, "gui", `icon${path.extname(this.helper.maxIconPath)}`)
+      await mkdir(path.dirname(iconDest), { recursive: true })
+      await copyFile(this.helper.maxIconPath, iconDest)
+    }
+
+    if (hooksDir != null) {
+      await copyDir(hooksDir, path.join(snapMetaDir, "hooks"))
+    }
+
+    // command.sh — template builds write to stage root; no-template writes to scripts/
+    const commandWrapperPath = isTemplate ? path.join(stageDir, "command.sh") : path.join(scriptDir, "command.sh")
+    const commandContent = buildCommandShContent({ isTemplate, executableName: this.packager.executableName, extraAppArgs })
+    await writeFile(commandWrapperPath, commandContent, { mode: 0o755 })
+    await chmod(commandWrapperPath, 0o755)
   }
 
   private normalizePlugConfiguration(raw: Array<string | PlugDescriptor> | PlugDescriptor | Nullish): Record<string, Record<string, any> | null> | null {
@@ -294,7 +404,6 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
       case Arch.ia32:
         return "i386-linux-gnu"
       case Arch.armv7l:
-        // noinspection SpellCheckingInspection
         return "arm-linux-gnueabihf"
       case Arch.arm64:
         return "aarch64-linux-gnu"
@@ -303,4 +412,54 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
         throw new Error(`Unsupported arch ${arch}`)
     }
   }
+}
+
+async function getMksquashfsPath(arch: Arch): Promise<string> {
+  const envPath = process.env.MKSQUASHFS_PATH
+  if (envPath) {
+    return envPath
+  }
+  const { mksquashfs } = await getAppImageTools("0.0.0", arch)
+  return mksquashfs
+}
+
+async function readDirPaths(dir: string, filter?: (name: string) => boolean): Promise<string[]> {
+  const entries = await readdir(dir)
+  const result: string[] = []
+  for (const name of entries) {
+    if (!filter || filter(name)) {
+      result.push(path.join(dir, name))
+    }
+  }
+  return result
+}
+
+/** Single-quote a shell argument, escaping any embedded single quotes. */
+export function shellQuote(arg: string): string {
+  return "'" + arg.replace(/'/g, "'\\''") + "'"
+}
+
+/**
+ * Builds the content of command.sh for a snap package.
+ *
+ * For both template and no-template builds, the desktop-integration scripts are
+ * sourced from the snap root ($SNAP):
+ *   - Template: scripts are embedded in the template tarball at the snap root.
+ *   - No-template: the snapcraft.yaml `launch-scripts` part uses `plugin: dump,
+ *     source: scripts`, which stages stageDir/scripts/ contents directly into the
+ *     snap root — so $SNAP/desktop-init.sh is correct in both cases.
+ *
+ * The only difference between template and no-template is the app executable prefix:
+ * template apps are at $SNAP/<name>; no-template apps are at $SNAP/app/<name>.
+ */
+export function buildCommandShContent(opts: { isTemplate: boolean; executableName: string; extraAppArgs: string[] }): string {
+  const { isTemplate, executableName, extraAppArgs } = opts
+  validateShellEmbeddable(executableName, "executableName")
+  const appPrefix = isTemplate ? "" : "app/"
+  let content = `#!/bin/bash -e\nexec "$SNAP/desktop-init.sh" "$SNAP/desktop-common.sh" "$SNAP/desktop-gnome-specific.sh" "$SNAP/${appPrefix}${executableName}"`
+  if (extraAppArgs.length > 0) {
+    content += " " + extraAppArgs.map(shellQuote).join(" ")
+  }
+  content += ' "$@"'
+  return content
 }

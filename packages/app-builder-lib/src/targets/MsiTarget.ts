@@ -1,5 +1,5 @@
-import { Arch, asArray, deepAssign, log, walk } from "builder-util"
-import { UUID } from "builder-util-runtime"
+import { Arch, asArray, log, walk } from "builder-util"
+import { deepAssign, UUID } from "builder-util-runtime"
 import { createHash } from "crypto"
 import * as ejs from "ejs"
 import { readFile, writeFile } from "fs/promises"
@@ -22,7 +22,7 @@ const ROOT_DIR_ID = "APPLICATIONFOLDER"
 
 // WiX doesn't support Mono, so, dontnet462 is required to be installed for wine (preinstalled in our bundled wine)
 export default class MsiTarget extends Target {
-  protected readonly vm = process.platform === "win32" ? new VmManager() : new WineVmManager()
+  protected readonly vm = process.platform === "win32" ? new VmManager() : new WineVmManager(this.packager.config.toolsets?.wine)
 
   readonly options: MsiOptions = deepAssign(this.packager.platformSpecificBuildOptions, this.packager.config.msi)
 

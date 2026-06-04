@@ -1,16 +1,13 @@
-import { asArray, log, spawn } from "builder-util"
+import { asArray, log, spawn, stripSensitiveEnvVars } from "builder-util"
 import { pathExists } from "fs-extra"
-import { Lazy } from "lazy-val"
 import { homedir } from "os"
 import * as path from "path"
 import { Configuration } from "../configuration"
-import { executeAppBuilderAndWriteJson } from "./appBuilder"
 import { PM, getPackageManagerCommand } from "../node-module-collector"
 import { detectPackageManager } from "../node-module-collector/packageManager"
-import { NodeModuleDirInfo } from "./packageDependencies"
 import { rebuild as remoteRebuild } from "./rebuild"
 import * as which from "which"
-import { RebuildOptions as ElectronRebuildOptions } from "@electron/rebuild"
+import type { RebuildOptions as ElectronRebuildOptions } from "@electron/rebuild"
 import { Nullish } from "builder-util-runtime"
 
 export async function installOrRebuild(
@@ -55,7 +52,7 @@ function getElectronGypCacheDir() {
 export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.Platform, arch: string, buildFromSource: boolean) {
   const npmConfigArch = arch === "armv7l" ? "arm" : arch
   const common: any = {
-    ...process.env,
+    ...stripSensitiveEnvVars(process.env),
     npm_config_arch: npmConfigArch,
     npm_config_target_arch: npmConfigArch,
     npm_config_platform: platform,
@@ -150,7 +147,6 @@ export async function nodeGypRebuild(platform: NodeJS.Platform, arch: string, fr
 }
 export interface RebuildOptions {
   frameworkInfo: DesktopFrameworkInfo
-  productionDeps: Lazy<Array<NodeModuleDirInfo>>
 
   platform?: NodeJS.Platform
   arch?: string
@@ -172,20 +168,6 @@ export async function rebuild(config: Configuration, { appDir, projectDir, works
   const platform = options.platform || process.platform
   const arch = options.arch || process.arch
 
-  if (config.nativeRebuilder === "legacy") {
-    const configuration = {
-      platform,
-      arch,
-      buildFromSource,
-      dependencies: await options.productionDeps.value,
-      nodeExecPath: process.execPath,
-      additionalArgs: options.additionalArgs,
-      execPath: process.env.npm_execpath || process.env.NPM_CLI_JS,
-    }
-    const env = getGypEnv(options.frameworkInfo, platform, arch, buildFromSource)
-    return executeAppBuilderAndWriteJson(["rebuild-node-modules"], configuration, { env, cwd: appDir })
-  }
-
   const {
     frameworkInfo: { version: electronVersion },
   } = options
@@ -200,6 +182,8 @@ export async function rebuild(config: Configuration, { appDir, projectDir, works
   }
   log.info(logInfo, "executing @electron/rebuild")
 
+  // "legacy" previously used the app-builder-bin Go binary; it now maps to sequential @electron/rebuild.
+  const mode = config.nativeRebuilder === "legacy" || !config.nativeRebuilder ? "sequential" : config.nativeRebuilder
   const rebuildOptions: ElectronRebuildOptions = {
     buildPath: appDir,
     electronVersion,
@@ -207,7 +191,7 @@ export async function rebuild(config: Configuration, { appDir, projectDir, works
     platform,
     buildFromSource,
     projectRootPath,
-    mode: config.nativeRebuilder || "sequential",
+    mode,
     disablePreGypCopy: true,
   }
   return remoteRebuild(rebuildOptions)

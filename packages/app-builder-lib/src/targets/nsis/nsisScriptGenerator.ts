@@ -20,8 +20,7 @@ export class NsisScriptGenerator {
   }
 
   file(outputName: string | null, file: string) {
-    const safeName = outputName == null ? null : nsisEscapeString(outputName)
-    this.lines.push(`File${safeName == null ? "" : ` "/oname=${safeName}"`} "${file}"`)
+    this.lines.push(`File${outputName == null ? "" : ` "/oname=${outputName}"`} "${file}"`)
   }
 
   insertMacro(name: string, parameters: string) {
@@ -49,7 +48,7 @@ export class NsisScriptGenerator {
 export function nsisEscapeString(s: string): string {
   const escaped = s
     .replace(/\r\n|\r|\n/g, " ") // newlines break NSIS string literals
-    .replace(/\$/g, "$$$$") // $ → $$ (prevents NSIS variable expansion)
+    .replace(/\$(?!\{)/g, "$$$$") // bare $ → $$ (prevents NSIS variable expansion); ${...} references are left intact
     .replace(/"/g, '$\\"') // " → $\" (NSIS escape for double-quote)
   if (escaped !== s) {
     log.debug({ original: s, final: escaped }, "nsis was escaped")

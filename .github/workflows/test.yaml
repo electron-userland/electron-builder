@@ -87,6 +87,9 @@ jobs:
           cache-path: ~/.cache/electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
 
+      - name: Output shard plan
+        run: pnpm ci:test:count
+
       - id: plan
         run: |
           # Get shard counts for all platforms as JSON
@@ -546,9 +549,13 @@ jobs:
                 const cache = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
                 filesProcessed++;
 
-                // Merge cache entries (later entries overwrite earlier ones, should be fine since they are all from the same test run just different shards and adding on to previous data)
+                // Deep-merge top-level objects so all shards' new timing data is preserved
                 Object.keys(cache).forEach(key => {
-                  mergedCache[key] = cache[key];
+                  if (mergedCache[key] && typeof mergedCache[key] === 'object' && !Array.isArray(mergedCache[key])) {
+                    mergedCache[key] = { ...mergedCache[key], ...cache[key] };
+                  } else {
+                    mergedCache[key] = cache[key];
+                  }
                 });
               } catch (err) {
                 console.error(`Error reading cache from ${platform}:`, err.message);
@@ -568,20 +575,28 @@ jobs:
         with:
           name: vitest-smart-cache-*
           failOnError: false
-
-      - name: Upload merged cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
-        with:
-          name: vitest-smart-cache-merged
-          path: merged-cache/_vitest-smart-cache.json
-          retention-days: 2
+        continue-on-error: true
 
       - name: Copy merged cache to canonical path
+        if: always()
         run: cp merged-cache/_vitest-smart-cache.json test/vitest-scripts/_vitest-smart-cache.json
 
-      - name: Save merged cache for future runs on this branch
-        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+      - name: Compute Vitest smart cache ref
+        if: always()
+        run: |
+          PR_NUM="${{ github.event.pull_request.number }}"
+          if [ -n "$PR_NUM" ]; then
+            echo "VITEST_CACHE_REF=PR-${PR_NUM}" >> "$GITHUB_ENV"
+          else
+            echo "VITEST_CACHE_REF=${{ github.ref_name }}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Upload vitest smart cache artifact
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
+        if: always()
         with:
-          path: test/vitest-scripts/_vitest-smart-cache.json
-          key: vitest-smart-cache-${{ github.ref_name }}-${{ github.sha }}
+          name: vitest-smart-cache-${{ env.VITEST_CACHE_REF }}
+          path: merged-cache/_vitest-smart-cache.json
+          retention-days: 90
+          overwrite: true
 

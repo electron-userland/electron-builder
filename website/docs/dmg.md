@@ -152,40 +152,71 @@ Internet-enabled DMGs automatically extract their contents and eject after first
 
 ## DMG License
 
-To display a license agreement when users open the DMG, create license files in your [build resources](configuration.md) directory.
+To display a license agreement when users open the DMG, set the `license` option in your DMG configuration or use the file-naming convention.
 
-### Single Language
+### Configuration-based (recommended)
 
-Create `license.txt`, `license.rtf`, or `license.html` in your build resources directory (default: `build/`).
+Specify the license file path directly in `electron-builder.yml`:
 
-### Multiple Languages
+```yaml
+dmg:
+  license: "build/license.rtf"
+```
 
-Create files with a language code suffix. For example:
+For multi-language builds, provide a language-code → file-path map:
 
-- `license_en.txt` — English
-- `license_de.txt` — German
-- `license_fr.txt` — French
-- `license_ja.txt` — Japanese
-- `license_zh_CN.txt` — Simplified Chinese
+```yaml
+dmg:
+  license:
+    en_US: "build/license.rtf"
+    de_DE: "build/license_de.txt"
+    fr_FR: "build/license_fr.txt"
+    ja_JP: "build/license_ja.txt"
+    zh_CN: "build/license_zh.txt"
+```
 
-The displayed license is selected based on the user's macOS language preference. See the [language code reference](https://github.com/meikidd/iso-639-1/blob/master/src/data.js) for supported codes.
+Language codes use the `ll_CC` format (ISO 639-1 language code + ISO 3166-1 country code, underscore-separated). The first entry in the map is the fallback shown when the user's language is not present.
+
+Supported file formats: `.rtf` (recommended for rich text), `.txt` (plain text), `.html`.
+
+:::tip[RTF recommended]
+Use `.rtf` format for the best cross-language compatibility. Plain `.txt` files for Japanese, Korean, and Simplified/Traditional Chinese require macOS's CJK codec support in the bundled Python runtime.
+:::
+
+### File-naming convention (automatic discovery)
+
+As an alternative, place license files in your [build resources](configuration.md) directory using this naming pattern — electron-builder will pick them up automatically:
+
+| Filename | Language |
+|---|---|
+| `license_en.txt` or `eula_en.txt` | English |
+| `license_de.rtf` | German |
+| `license_fr.html` | French |
+| `license_ja.txt` | Japanese |
+| `license_zh_CN.txt` | Simplified Chinese |
+
+The language code is derived from the `_LANG` suffix. The user's macOS language preference determines which license is shown; `en_US` is the fallback.
+
+:::note[One file per language]
+Having both `license_en.txt` **and** `eula_en.txt` in the same build resources directory is an error — both map to `en_US` and electron-builder will throw an `InvalidConfigurationError`. Use the config-based `license` map if you need to control which file is used.
+:::
 
 ### Customizing License Button Labels
 
-Override the default button text (Agree/Disagree/Print/Save) for each language by creating `licenseButtons_LANG_CODE.json` files:
+Override the default button text (Agree / Disagree / Print / Save) for each language by creating `licenseButtons_LANG.json` or `licenseButtons_LANG.yml` files in your build resources directory:
 
 ```json
 {
-  "lang": "English",
+  "languageName": "English",
   "agree": "Accept",
   "disagree": "Decline",
   "print": "Print",
   "save": "Save",
-  "description": "Please read the license agreement below."
+  "message": "Please read the license agreement below."
 }
 ```
 
-Name the file `licenseButtons_en.json` for English, `licenseButtons_de.json` for German, etc.
+Name the file `licenseButtons_en.json` for English, `licenseButtons_de.json` for German, etc. The `message` field sets the prompt text at the top of the dialog. The legacy `description` field is also accepted as an alias for `message`.
 
 ## Complete Example
 
@@ -211,6 +242,24 @@ dmg:
   iconTextSize: 12
   title: "${productName} ${version}"
   format: UDZO
+  # Single-language license
+  license: "build/license.rtf"
+```
+
+Multi-language example:
+
+```yaml
+dmg:
+  background: build/dmg-background.png
+  license:
+    en_US: "build/license.rtf"
+    de_DE: "build/license_de.txt"
+    fr_FR: "build/license_fr.txt"
+  window:
+    size:
+      width: 540
+      height: 380
+  format: UDZO
 ```
 
 ## Troubleshooting
@@ -221,7 +270,11 @@ dmg:
 
 **DMG too large:** The default `UDZO` format compresses well. If size is critical, try `UDBZ` for better (slower) compression.
 
-**License not appearing:** Confirm the license file is in the correct build resources directory and has the correct filename format (`license.txt`, `license_en.txt`, etc.).
+**License not appearing:** If using the config option, verify the `license` path resolves relative to your build resources directory or project root. If using the file-naming convention, confirm the file is in the build resources directory with the correct pattern (`license_en.txt`, `eula_en.txt`, etc.) and a supported extension (`.rtf`, `.txt`, `.html`).
+
+**"Multiple license files found" error:** You have both `license_en.txt` and `eula_en.txt` (or two files that resolve to the same language code) in your build resources. Remove the duplicate or use the config-based `license` map to point to the exact file you want.
+
+**CJK license not appearing:** Japanese, Korean, and Chinese plain-text licenses require CJK codec support in the dmgbuild Python runtime. Use `.rtf` format for these languages, or ensure your dmgbuild bundle version is `1.2.5` or later.
 
 ## Configuration
 
