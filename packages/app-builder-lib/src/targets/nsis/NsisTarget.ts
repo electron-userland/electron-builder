@@ -2,12 +2,10 @@ import {
   Arch,
   asArray,
   AsyncTaskManager,
-  exec,
   spawnAndWriteWithOutput,
   exists,
   generateKsuid,
   getArchSuffix,
-  getPath7za,
   getPlatformIconFileName,
   InvalidConfigurationError,
   log,
@@ -26,7 +24,7 @@ import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt } from "..
 import { hashFile } from "../../util/hash.js"
 import { isMacOsCatalina } from "../../util/macosVersion.js"
 import { time } from "../../util/timer.js"
-import { execWine } from "../../wine.js"
+import { WineVmManager } from "../../vm/WineVm.js"
 import { WinPackager } from "../../winPackager.js"
 import { archive, ArchiveOptions } from "../archive.js"
 import { appendBlockmap, configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../differentialUpdateInfoBuilder.js"
@@ -288,15 +286,7 @@ export class NsisTarget extends Target {
             })
             packageFiles[Arch[arch]] = fileInfo
           }
-          const path7za = await getPath7za()
-          const archiveInfo = (await exec(path7za, ["l", file])).trim()
-          // after adding blockmap data will be "Warnings: 1" in the end of output
-          const match = /(\d+)\s+\d+\s+\d+\s+files/.exec(archiveInfo)
-          if (match == null) {
-            log.warn({ output: archiveInfo }, "cannot compute size of app package")
-          } else {
-            estimatedSize += parseInt(match[1], 10)
-          }
+          estimatedSize += unpackedSize
         })
       )
     }
@@ -436,6 +426,7 @@ export class NsisTarget extends Target {
     await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(script, false, archs)))
 
     // http://forums.winamp.com/showthread.php?p=3078545
+    // TODO: remove workaround when wine is fully upgraded to 11
     if (isMacOsCatalina()) {
       try {
         await UninstallerReader.exec(installerPath, uninstallerPath)
@@ -452,7 +443,8 @@ export class NsisTarget extends Target {
         }
       }
     } else {
-      await execWine(installerPath, null, [], { env: { __COMPAT_LAYER: "RunAsInvoker" } })
+      const wineVm = new WineVmManager(packager.config.toolsets?.wine)
+      await wineVm.exec(installerPath, [], { env: { __COMPAT_LAYER: "RunAsInvoker" } })
     }
     await packager.signIf(uninstallerPath)
 

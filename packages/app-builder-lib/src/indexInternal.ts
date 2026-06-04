@@ -61,4 +61,5 @@ export { installDependencies, installOrRebuild, nodeGypRebuild } from "./util/ya
 export { PACKAGE_VERSION } from "./version.js"
 export { ParallelsVmManager } from "./vm/ParallelsVm.js"
 export { VmManager, getWindowsVm, getLinuxVm } from "./vm/vm.js"
-export { execWine } from "./wine.js"
+export { WineVmManager } from "./vm/WineVm.js"
+export { getWineToolset } from "./toolsets/wine.js"
