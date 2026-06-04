@@ -1,3 +1,19 @@
+# [26.15.0](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.14.0...electron-builder@26.15.0) (2026-06-04)
+
+
+### Bug Fixes
+
+* **mac:** skip signing when no certificate found; warn on ad-hoc + hardenedRuntime ([#9822](https://github.com/electron-userland/electron-builder/issues/9822)) ([8f0621b](https://github.com/electron-userland/electron-builder/commit/8f0621ba9d5e8445e538fa0f6869ff0a4c8d19cb))
+* use `bash` instead of `sh` in package.json for shell scripts ([#9823](https://github.com/electron-userland/electron-builder/issues/9823)) ([197eaac](https://github.com/electron-userland/electron-builder/commit/197eaac07790cbec3233bbc031f886ef9598f4da))
+
+
+### Features
+
+* **migration:** fully replace Go binary `app-builder-bin` with TS implementation ([#9829](https://github.com/electron-userland/electron-builder/issues/9829)) ([01b8ba9](https://github.com/electron-userland/electron-builder/commit/01b8ba979d1db44543e18d07b4ad94953deb10ea))
+* **node-module-collector:** invoke package managers via PowerShell `-EncodedCommand` on Windows ([#9827](https://github.com/electron-userland/electron-builder/issues/9827)) ([3e3ea31](https://github.com/electron-userland/electron-builder/commit/3e3ea319002effd7b651851490ca0a4e6bfda27d))
+
+
+
 # [26.14.0](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.13.1...electron-builder@26.14.0) (2026-06-02)
 
 

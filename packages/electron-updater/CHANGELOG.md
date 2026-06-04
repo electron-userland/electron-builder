@@ -1,5 +1,21 @@
 ## 4.3.0
 
+## 6.8.9
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`198c10c`](https://github.com/electron-userland/electron-builder/commit/198c10c9693d1244bac80cb11af6b75ad363e5a0)
+
+</small>
+
+- `builder-util-runtime@9.7.0`
+
+</details>
+
 ## 6.8.8
 
 ### Patch Changes
