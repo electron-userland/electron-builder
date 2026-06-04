@@ -15,8 +15,16 @@ import { load } from "js-yaml"
 
 // Snap template release info from electron-userland/electron-builder-binaries
 const SNAP_TEMPLATES = {
-  amd64: { releaseName: "snap-template-4.0-2", filenameWithExt: "snap-template-electron-4.0-2-amd64.tar.7z" , checksums: { "snap-template-electron-4.0-2-amd64.tar.7z": "5e3ab4e09364ac06f0072b1c2dab9138318c933f6b2c7374f893b5ec44d19e6f" } },
-  armhf: { releaseName: "snap-template-4.0-1", filenameWithExt: "snap-template-electron-4.0-1-armhf.tar.7z" , checksums: { "snap-template-electron-4.0-1-armhf.tar.7z": "6f7553e904f4e043bc3019f0899d05e01a283b00b61fec22e932296490e3be6b" } },
+  amd64: {
+    releaseName: "snap-template-4.0-2",
+    filenameWithExt: "snap-template-electron-4.0-2-amd64.tar.7z",
+    checksums: { "snap-template-electron-4.0-2-amd64.tar.7z": "5e3ab4e09364ac06f0072b1c2dab9138318c933f6b2c7374f893b5ec44d19e6f" },
+  },
+  armhf: {
+    releaseName: "snap-template-4.0-1",
+    filenameWithExt: "snap-template-electron-4.0-1-armhf.tar.7z",
+    checksums: { "snap-template-electron-4.0-1-armhf.tar.7z": "6f7553e904f4e043bc3019f0899d05e01a283b00b61fec22e932296490e3be6b" },
+  },
 } as const
 
 // Handles core18/core20/core22 snaps via mksquashfs (template) or snapcraft CLI (no-template).
@@ -118,7 +126,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
     })
 
     if (options.autoStart) {
-      appDescriptor.autostart = `${snap.name}.desktop`
+      appDescriptor.autostart = `${this.helper.getDesktopFileName(snap.name)}.desktop`
     }
 
     if (options.confinement === "classic") {
@@ -203,7 +211,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
     }
 
     const snapMetaDir = path.join(stageDir, this.isUseTemplateApp ? "meta" : "snap")
-    const desktopFile = path.join(snapMetaDir, "gui", `${snap.name}.desktop`)
+    const desktopFile = path.join(snapMetaDir, "gui", `${this.helper.getDesktopFileName(snap.name)}.desktop`)
     await this.helper.writeDesktopEntry(this.options, this.packager.executableName + " %U", desktopFile, {
       Icon: "${SNAP}/meta/gui/icon.png",
     })

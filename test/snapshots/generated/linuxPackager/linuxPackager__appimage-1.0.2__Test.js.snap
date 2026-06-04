@@ -227,6 +227,54 @@ exports[`LinuxPackager > AppImage - store compression maps to gzip 1`] = `
 }
 `;
 
+exports[`LinuxPackager > AppImage - syncDesktopName true without desktopName falls back to executableName 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Signal-1.1.0.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`LinuxPackager > AppImage - syncDesktopName uses desktopName for installed filename 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Signal-1.1.0.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`LinuxPackager > AppImage - syncDesktopName without flag keeps executableName 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Signal-1.1.0.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
 exports[`LinuxPackager > AppImage 1`] = `
 {
   "linux": [
