@@ -119,7 +119,9 @@ function buildZipWithSymlinkEntry(linkName: string, target: string): Buffer {
   return Buffer.concat([lfh, content, cdh, eocd])
 }
 
-describe("extractArchive ZIP security guards", () => {
+// sequence.concurrent is enabled globally; wrapping here prevents the module-level
+// tmpDir variable (set in beforeEach) from being overwritten by concurrent tests.
+describe.sequential("extractArchive ZIP security guards", () => {
   test("blocks a path traversal entry (../escape.txt)", async ({ expect }) => {
     const zipPath = path.join(tmpDir, "traversal.zip")
     await fs.writeFile(zipPath, buildZipWithFileEntry("../escape.txt"))

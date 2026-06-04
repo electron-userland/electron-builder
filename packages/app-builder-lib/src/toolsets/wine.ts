@@ -39,9 +39,11 @@ export async function getWineToolset(wine: ToolsetConfig["wine"]): Promise<{ exe
 
   const useSystemWine = process.env.USE_SYSTEM_WINE === "true"
   const isLegacy = wine === "0.0.0" || wine == null
-  const isLegacyOnLinux = isLegacy && process.platform === "linux"
 
-  if (useSystemWine || isLegacyOnLinux) {
+  // On Linux, always use system wine. Wine 11 bundles for Linux require system library
+  // versions not guaranteed to be present in all CI environments. System wine (provided
+  // by the Docker image) is stable and sufficient for Linux build verification.
+  if (useSystemWine || process.platform === "linux") {
     return { execPath: "wine", env: defaultEnv }
   }
 
