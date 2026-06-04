@@ -3,7 +3,7 @@ import { resolveEnvToolsetPath } from "builder-util"
 
 export const squirrelWindowsChecksums = {
   // 1.1.0 bundled the Chocolatey shim instead of the standalone NuGet.CommandLine portable exe.
-  // 1.1.1 fixes that; checksum will be set once the new archive is published.
+  // 1.1.1 fixes that; update after squirrel.windows@1.1.1 is published to electron-builder-binaries.
   "1.1.1": {
     "squirrel.windows-2.0.1-patched.zip": "TODO-update-after-squirrel.windows@1.1.1-is-published",
   },
@@ -22,21 +22,10 @@ export async function getSquirrelToolsetPath(): Promise<string> {
   if (envPath != null) {
     return envPath
   }
-  const tempUpgrade = {
-    filenameWithExt: "squirrel.windows-2.0.1-patched.zip",
-    checksums: {
-      "squirrel.windows-2.0.1-patched.zip": "00ce495de66c4e985474e58e07c2713f07db955c8da3f90a115e66aa31fb4ffe",
-    },
-    overrideUrl: "https://github.com/electron-userland/electron-builder-binaries/actions/runs/26968100864/artifacts/7418460150",
-  }
+  const toolset = "1.1.1"
   return downloadBuilderToolset({
-    releaseName: "squirrel.windows@1.1.1-temp-upgrade",
-    ...tempUpgrade,
+    releaseName: `squirrel.windows@${toolset}`,
+    filenameWithExt: "squirrel.windows-2.0.1-patched.zip",
+    checksums: squirrelWindowsChecksums[toolset],
   })
-  // const toolset = "1.1.1"
-  // return downloadBuilderToolset({
-  //   releaseName: `squirrel.windows@${toolset}`,
-  //   filenameWithExt: "squirrel.windows-2.0.1-patched.zip",
-  //   checksums: squirrelWindowsChecksums[toolset],
-  // })
 }

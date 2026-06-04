@@ -168,12 +168,31 @@ jobs:
         env:
           CSC_KEY_PASSWORD_SECRET: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
 
+      - name: Provision squirrel.windows toolset
+        run: |
+          # squirrel.windows@1.1.0 bundles the Chocolatey shim for nuget.exe which fails when
+          # relocated. Download the published bundle and replace the shim with a standalone
+          # portable nuget.exe (the mono-compatible PE32 from dist.nuget.org, CI-only download).
+          TOOLSET_DIR="${{ runner.temp }}/squirrel-toolset"
+          mkdir -p "$TOOLSET_DIR"
+          curl -fsSL -o "${{ runner.temp }}/squirrel.zip" \
+            "https://github.com/electron-userland/electron-builder-binaries/releases/download/squirrel.windows%401.1.0/squirrel.windows-2.0.1-patched.zip"
+          unzip -q "${{ runner.temp }}/squirrel.zip" -d "$TOOLSET_DIR"
+          curl -fsSL -o "$TOOLSET_DIR/electron-winstaller/vendor/nuget.exe" \
+            "https://dist.nuget.org/win-x86-commandline/v6.14.0/nuget.exe"
+          echo "SQUIRREL_TOOLSET_HOST_DIR=$TOOLSET_DIR" >> "$GITHUB_ENV"
+
       - name: Run shard in docker
         run: |
           echo $TEST_RUNNER_IMAGE_TAG
+          export ADDITIONAL_DOCKER_ARGS="--env-file ${{ runner.temp }}/docker-secrets.env \
+            -e VITEST_SHARD_INDEX=${{ matrix.shard }} \
+            -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json \
+            -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }} \
+            -v ${SQUIRREL_TOOLSET_HOST_DIR}:/squirrel-toolset:ro \
+            -e ELECTRON_BUILDER_SQUIRREL_TOOLSET_DIR=/squirrel-toolset"
           pnpm test-linux
         env:
-          ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SHARD_INDEX=${{ matrix.shard }} -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}"
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
 
       - name: Upload smart cache artifact
@@ -217,6 +236,22 @@ jobs:
           # NuGet invocation to fail with IsolatedStorageException (0x80131468). Pre-creating it lets
           # the CLR create its hashed subdirectory without error.
           New-Item -ItemType Directory -Force -Path "$env:LOCALAPPDATA\IsolatedStorage" | Out-Null
+
+      - name: Provision squirrel.windows toolset
+        shell: pwsh
+        run: |
+          # squirrel.windows@1.1.0 bundles the Chocolatey shim for nuget.exe. The shim resolves the
+          # real binary relative to its Chocolatey install path and fails when copied to a temp dir.
+          # Download the published bundle, then replace the shim with the standalone portable exe.
+          $toolsetDir = "$env:RUNNER_TEMP\squirrel-toolset"
+          $zipPath    = "$env:RUNNER_TEMP\squirrel.zip"
+          Invoke-WebRequest `
+            -Uri "https://github.com/electron-userland/electron-builder-binaries/releases/download/squirrel.windows%401.1.0/squirrel.windows-2.0.1-patched.zip" `
+            -OutFile $zipPath
+          Expand-Archive -Path $zipPath -DestinationPath $toolsetDir -Force
+          $realNuget = Join-Path $env:ChocolateyInstall "lib\NuGet.CommandLine\tools\nuget.exe"
+          Copy-Item $realNuget "$toolsetDir\electron-winstaller\vendor\nuget.exe" -Force
+          "ELECTRON_BUILDER_SQUIRREL_TOOLSET_DIR=$toolsetDir" >> $env:GITHUB_ENV
 
       - name: Run shard
         run: pnpm ci:test
