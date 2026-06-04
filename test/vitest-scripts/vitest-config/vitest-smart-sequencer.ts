@@ -70,7 +70,7 @@ export default class SmartSequencer extends BaseSequencer {
   }
 }
 
-function formatDuration(ms?: number): string {
+export function formatDuration(ms?: number): string {
   if (!ms || ms <= 0) {
     return "unknown"
   }
