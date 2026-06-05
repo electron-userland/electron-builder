@@ -1,4 +1,4 @@
-import { extractArchive } from "app-builder-lib/src/util/electronGet"
+import { extractArchive } from "app-builder-lib/internal"
 import * as fs from "fs/promises"
 import * as os from "os"
 import * as path from "path"

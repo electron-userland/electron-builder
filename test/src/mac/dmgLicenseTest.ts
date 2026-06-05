@@ -5,7 +5,7 @@ import * as path from "path"
 import { statSync } from "fs"
 
 // Import from src/ path so vitest can intercept relative imports inside the SUT
-import { addLicenseToDmg } from "dmg-builder/src/dmgLicense"
+import { addLicenseToDmg } from "dmg-builder/internal"
 
 // ─── Minimal mock packager ──────────────────────────────────────────────────
 
@@ -218,7 +218,7 @@ describe("addLicenseToDmg", () => {
 
     const result = await addLicenseToDmg(packager)
 
-    expect(Object.keys(result!.buttons).sort()).toEqual(["en_US", "fr_FR"])
+    expect(Object.keys(result!.buttons!).sort()).toEqual(["en_US", "fr_FR"])
     expect(result!.buttons!["en_US"].language).toBe("English")
     expect(result!.buttons!["fr_FR"].language).toBe("Français")
   })

@@ -1,5 +1,5 @@
 import { describe } from "vitest"
-import { buildCommandShContent, shellQuote } from "app-builder-lib/src/targets/snap/coreLegacy"
+import { buildCommandShContent, shellQuote } from "app-builder-lib/internal"
 
 // Pure unit tests for module-level helpers exported from coreLegacy.ts.
 // Full snap build flows are exercised by snapTest.ts.

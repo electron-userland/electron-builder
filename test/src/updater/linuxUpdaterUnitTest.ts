@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { DebUpdater } from "electron-updater"
-import type { AppAdapter } from "electron-updater/src/AppAdapter"
+import type { AppAdapter } from "electron-updater/internal"
 
 const stubApp: AppAdapter = {
   name: "TestApp",

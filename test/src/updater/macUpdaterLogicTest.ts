@@ -1,6 +1,6 @@
 import { MacUpdater } from "electron-updater/internal"
 import { describe, expect, test } from "vitest"
-import type { ResolvedUpdateFileInfo } from "electron-updater/src/types"
+import type { ResolvedUpdateFileInfo } from "electron-updater/internal"
 
 // MacUpdater is in skipPerOSTests.darwin (requires live Electron), but
 // filterFilesForArch is a protected static with no Electron dependency — it

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { generateKsuid } from "builder-util/src/ksuid"
+import { generateKsuid } from "builder-util/internal"
 
 const KSUID_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 const KSUID_EPOCH = 1400000000

@@ -17,7 +17,7 @@ import { downloadBuilderToolset } from "app-builder-lib/internal"
 // Each test re-imports the module so the module-level `_resolvedPath` cache is reset.
 async function freshGetPath7za() {
   vi.resetModules()
-  const { getPath7za } = await import("app-builder-lib/src/toolsets/7zip")
+  const { getPath7za } = await import("app-builder-lib/internal")
   return getPath7za
 }
 
