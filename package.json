@@ -36,9 +36,6 @@
     "docs:all": "pnpm docs:prebuild && pnpm docs:build"
   },
   "repository": "https://github.com/electron-userland/electron-builder",
-  "dependencies": {
-    "@types/fs-extra": "^11.0.4"
-  },
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "7.24.8",
     "@changesets/cli": "2.29.7",
@@ -57,7 +54,6 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
     "fs-extra": "^10.1.0",
-    "is-ci": "^4.1.0",
     "prettier": "3.7.4",
     "tsx": "^4.0.0",
     "typedoc": "^0.28.19",

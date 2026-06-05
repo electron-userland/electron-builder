@@ -5,7 +5,6 @@ const path = require("path")
 const knownUnusedDevDependencies = new Set([
   "@babel/plugin-transform-modules-commonjs", // Not sure what this is used for, but keeping just in case (for now)
   "changesets-changelog-clean", // Used in package.json CI/CD logic
-  "typedoc-plugin-markdown", // Used in typedoc config
   // Eslint config doesn't get scanned by depCheck
   "@stylistic/eslint-plugin",
   "@eslint/js",
@@ -14,10 +13,7 @@ const knownUnusedDevDependencies = new Set([
   "@typescript-eslint/parser",
   "eslint-config-prettier",
   "eslint-plugin-prettier",
-  "@rollup/plugin-typescript",
   // Used in test/vitest-scripts/ (test dir is ignored by depcheck) or via pnpm workspace scripts
-  "is-ci",
-  "tsup",
   "vitest",
   "tsx",
 ])
@@ -43,10 +39,7 @@ async function check(projectDir, devPackageData) {
       unusedDependencies = unusedDependencies.filter(it => it !== "dmg-builder")
     }
     if (packageName === "app-builder-lib") {
-<<<<<<< HEAD
-      // @electron/universal is used via dynamic string import which depcheck cannot detect statically
-=======
->>>>>>> acd903e84832e41beb11471b77b439d6a70de099
+      // @electron/universal is loaded via dynamicImport() which depcheck cannot statically detect
       unusedDependencies = unusedDependencies.filter(it => it !== "@electron/universal")
     }
     if (unusedDependencies.length > 0) {
@@ -57,7 +50,7 @@ async function check(projectDir, devPackageData) {
 
   let unusedDevDependencies = result.devDependencies.filter(it => !it.startsWith("@types/") && !knownUnusedDevDependencies.has(it))
   if (packageName === "electron-builder") {
-    unusedDevDependencies = unusedDevDependencies.filter(it => ["is-ci", "vitest"].indexOf(it)<0)
+    unusedDevDependencies = unusedDevDependencies.filter(it => it !== "vitest")
   }
   if (packageName === "dmg-builder") {
     unusedDevDependencies = unusedDevDependencies.filter(it => it !== "temp-file")
@@ -68,9 +61,7 @@ async function check(projectDir, devPackageData) {
   }
 
   delete result.missing.electron
-  // tsup is a root devDependency accessed via pnpm hoisting; each package uses it in tsup.config.ts
-  delete result.missing.tsup
-  const toml = result.missing.toml
+const toml = result.missing.toml
   if (toml != null && toml.length === 1 && toml[0].endsWith("config.js")) {
     delete result.missing.toml
   }

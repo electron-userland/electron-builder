@@ -47,46 +47,46 @@ describe("getElectronVersion (version resolution from package.json)", () => {
   test("returns exact version from devDependencies when electron is not installed", async ({ expect }) => {
     await writePackageJson({ devDependencies: { electron: "15.3.0" } })
     await expect(resolveVersion()).resolves.toBe("15.3.0")
-    expect(log.error).not.toHaveBeenCalled()
+    expect(vi.mocked(log).error).not.toHaveBeenCalled()
   })
 
   test("returns exact version from dependencies when electron is not installed", async ({ expect }) => {
     await writePackageJson({ dependencies: { electron: "20.1.0" } })
     await expect(resolveVersion()).resolves.toBe("20.1.0")
-    expect(log.error).not.toHaveBeenCalled()
+    expect(vi.mocked(log).error).not.toHaveBeenCalled()
   })
 
   test("calls log.error and throws when version is a caret range", async ({ expect }) => {
     const version = "^15.3.0"
     await writePackageJson({ devDependencies: { electron: version } })
     await expect(resolveVersion()).rejects.toMatchObject({ message: rangeErrorMessage(version) })
-    expect(log.error).toHaveBeenCalledOnce()
-    expect(log.error).toHaveBeenCalledWith({ version }, rangeLogMessage(version))
+    expect(vi.mocked(log).error).toHaveBeenCalledOnce()
+    expect(vi.mocked(log).error).toHaveBeenCalledWith({ version }, rangeLogMessage(version))
   })
 
   test("calls log.error and throws when version is a tilde range", async ({ expect }) => {
     const version = "~15.3.0"
     await writePackageJson({ devDependencies: { electron: version } })
     await expect(resolveVersion()).rejects.toMatchObject({ message: rangeErrorMessage(version) })
-    expect(log.error).toHaveBeenCalledOnce()
-    expect(log.error).toHaveBeenCalledWith({ version }, rangeLogMessage(version))
+    expect(vi.mocked(log).error).toHaveBeenCalledOnce()
+    expect(vi.mocked(log).error).toHaveBeenCalledWith({ version }, rangeLogMessage(version))
   })
 
   test("error message tells user to pin or set electronVersion in config", async ({ expect }) => {
     const version = "^15.3.0"
     await writePackageJson({ devDependencies: { electron: version } })
     await expect(resolveVersion()).rejects.toMatchObject({ message: rangeErrorMessage(version) })
-    expect(log.error).toHaveBeenCalledWith({ version }, rangeLogMessage(version))
+    expect(vi.mocked(log).error).toHaveBeenCalledWith({ version }, rangeLogMessage(version))
   })
 
   test("throws without log.error when no electron dependency is found", async ({ expect }) => {
     await writePackageJson({ devDependencies: { react: "18.0.0" } })
     await expect(resolveVersion()).rejects.toThrow(/none of the possible electron modules are installed/)
-    expect(log.error).not.toHaveBeenCalled()
+    expect(vi.mocked(log).error).not.toHaveBeenCalled()
   })
 
   test("throws without log.error when package.json does not exist", async ({ expect }) => {
     await expect(resolveVersion()).rejects.toThrow(/none of the possible electron modules are installed/)
-    expect(log.error).not.toHaveBeenCalled()
+    expect(vi.mocked(log).error).not.toHaveBeenCalled()
   })
 })

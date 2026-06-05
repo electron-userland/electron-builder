@@ -65,7 +65,9 @@ function mockSuccessfulUpload(): { capturedOpts: () => any } {
       const res = new EventEmitter() as any
       res.statusCode = 200
       res.resume = vi.fn()
+
       ;(callback as (arg: unknown) => void)(res)
+      ;(callback as (res: unknown) => void)(res)
       setImmediate(() => res.emit("end"))
     })
     // Handle piped stream

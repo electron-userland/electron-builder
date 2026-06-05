@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 
-import isCI from "is-ci"
+import { isCI } from "ci-info"
 import * as path from "path"
 import { startVitest } from "vitest/node"
 import { getAllTestFiles } from "./file-discovery"

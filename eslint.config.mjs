@@ -96,7 +96,7 @@ export default [{
     rules: {
         // Test helpers often use async without await for framework compatibility
         "@typescript-eslint/require-await": "off",
-        // Test code routinely passes methods as callbacks without binding
+        // vitest spy/mock accessors (e.g. expect(log.error)) don't have real `this` binding issues
         "@typescript-eslint/unbound-method": "off",
     },
 }];

@@ -30,7 +30,8 @@ function mockHttpResponse(statusCode: number, body: string): void {
       setImmediate(() => {
         const res = new EventEmitter() as any
         res.statusCode = statusCode
-        ;(callback as (arg: unknown) => void)(res)
+
+        ;(callback as (res: unknown) => void)(res)
         setImmediate(() => {
           res.emit("data", body)
           res.emit("end")

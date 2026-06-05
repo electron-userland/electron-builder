@@ -231,8 +231,9 @@ describe("macPackager", { sequential: true }, () => {
       },
       {
         signed: false,
-        checkMacApp: async (_appDir, info) => {
+        checkMacApp: (_appDir, info) => {
           expect(info.ElectronAsarIntegrity).toBeUndefined()
+          return Promise.resolve()
         },
       }
     )
