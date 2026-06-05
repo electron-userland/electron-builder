@@ -1,3 +1,5 @@
+import { spawnSync } from "child_process"
+import * as path from "path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import yargs from "yargs"
 
@@ -294,6 +296,41 @@ describe("configureInstallAppDepsCommand", () => {
     configureInstallAppDepsCommand(instance)
     const parsed = instance.parseSync(["--arch", "x64"])
     expect(parsed.arch).toBe("x64")
+  })
+})
+
+// ─── CLI entry-point ESM smoke tests ─────────────────────────────────────────
+
+const REPO_ROOT = path.resolve(__dirname, "../../")
+const CLI_JS = path.join(REPO_ROOT, "packages/electron-builder/cli.js")
+const INSTALL_APP_DEPS_JS = path.join(REPO_ROOT, "packages/electron-builder/install-app-deps.js")
+
+describe("CLI entry points (ESM)", () => {
+  test("cli.js --help exits 0 without ERR_MODULE_NOT_FOUND", () => {
+    const result = spawnSync(process.execPath, [CLI_JS, "--help"], { encoding: "utf8" })
+    expect(result.stderr ?? "").not.toContain("ERR_MODULE_NOT_FOUND")
+    expect(result.status).toBe(0)
+  })
+
+  test("cli.js --help prints known subcommands", () => {
+    const result = spawnSync(process.execPath, [CLI_JS, "--help"], { encoding: "utf8" })
+    const out = result.stdout ?? ""
+    expect(out).toContain("build")
+    expect(out).toContain("install-app-deps")
+    expect(out).toContain("publish")
+  })
+
+  test("install-app-deps.js exits 0 without ERR_MODULE_NOT_FOUND", () => {
+    // run with --help to avoid actually executing an install
+    const result = spawnSync(process.execPath, [INSTALL_APP_DEPS_JS, "--help"], { encoding: "utf8" })
+    expect(result.stderr ?? "").not.toContain("ERR_MODULE_NOT_FOUND")
+    expect(result.status).toBe(0)
+  })
+
+  test("cli.js --version exits 0", () => {
+    const result = spawnSync(process.execPath, [CLI_JS, "--version"], { encoding: "utf8" })
+    expect(result.stderr ?? "").not.toContain("ERR_MODULE_NOT_FOUND")
+    expect(result.status).toBe(0)
   })
 })
 
