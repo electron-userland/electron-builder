@@ -30,6 +30,9 @@ async function check(projectDir, devPackageData) {
   const packageName = path.basename(projectDir)
   // console.log(`Checking ${projectDir}`)
 
+  /**
+   * @type {Results}
+   */
   const result = await new Promise(resolve => {
     depCheck(projectDir, { ignoreDirs: ["out", "dist", "test", "pages", "typings", "docker", "certs", "templates", "vendor"] }, resolve)
   })
@@ -40,7 +43,10 @@ async function check(projectDir, devPackageData) {
       unusedDependencies = unusedDependencies.filter(it => it !== "dmg-builder")
     }
     if (packageName === "app-builder-lib") {
+<<<<<<< HEAD
       // @electron/universal is used via dynamic string import which depcheck cannot detect statically
+=======
+>>>>>>> acd903e84832e41beb11471b77b439d6a70de099
       unusedDependencies = unusedDependencies.filter(it => it !== "@electron/universal")
     }
     if (unusedDependencies.length > 0) {
@@ -50,6 +56,9 @@ async function check(projectDir, devPackageData) {
   }
 
   let unusedDevDependencies = result.devDependencies.filter(it => !it.startsWith("@types/") && !knownUnusedDevDependencies.has(it))
+  if (packageName === "electron-builder") {
+    unusedDevDependencies = unusedDevDependencies.filter(it => ["is-ci", "vitest"].indexOf(it)<0)
+  }
   if (packageName === "dmg-builder") {
     unusedDevDependencies = unusedDevDependencies.filter(it => it !== "temp-file")
   }

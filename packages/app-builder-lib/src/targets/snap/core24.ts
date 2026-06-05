@@ -1,13 +1,13 @@
 import { Arch, archFromString, copyDir, InvalidConfigurationError, log, removeNullish, toLinuxArchString } from "builder-util"
 
+import { deepAssign, isValidKey, Nullish } from "builder-util-runtime"
+import _fsExtra from "fs-extra"
+import * as yaml from "js-yaml"
 import * as path from "path"
 import { PlugDescriptor, SlotDescriptor, SnapOptions24 } from "../../options/SnapOptions.js"
 import { SnapCore } from "./SnapTarget.js"
 import { App, Part, SnapcraftYAML } from "./snapcraft.js"
 import { buildSnap, DEFAULT_STAGE_PACKAGES, SNAPCRAFT_YAML_OPTIONS } from "./snapcraftBuilder.js"
-import * as yaml from "js-yaml"
-import { deepAssign, isValidKey, Nullish } from "builder-util-runtime"
-import _fsExtra from "fs-extra"
 const { copy, mkdir, readdir, writeFile } = _fsExtra
 
 /** Snap build strategy for core24 — generates a native snapcraft.yaml and invokes the snapcraft CLI. */
