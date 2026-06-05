@@ -49,11 +49,7 @@ function downloadArtifact(runId: number, artifactName: string, dest: string): bo
   const tmpDir = path.join(path.dirname(dest), ".cache-download-tmp")
   fs.mkdirSync(tmpDir, { recursive: true })
   try {
-    const result = spawnSync(
-      "gh",
-      ["run", "download", String(runId), "--repo", REPO, "--name", artifactName, "--dir", tmpDir],
-      { encoding: "utf8" }
-    )
+    const result = spawnSync("gh", ["run", "download", String(runId), "--repo", REPO, "--name", artifactName, "--dir", tmpDir], { encoding: "utf8" })
     if (result.status !== 0) return false
     const downloaded = fs.readdirSync(tmpDir).find(f => f === "_vitest-smart-cache.json")
     if (!downloaded) return false

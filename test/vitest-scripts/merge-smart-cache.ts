@@ -44,10 +44,7 @@ function normalizeKey(k: string): string {
   return k.replace(/\\/g, "/")
 }
 
-function mergePlatformRuns(
-  existing: Record<string, PlatformRun> = {},
-  incoming: Record<string, PlatformRun> = {}
-): Record<string, PlatformRun> {
+function mergePlatformRuns(existing: Record<string, PlatformRun> = {}, incoming: Record<string, PlatformRun> = {}): Record<string, PlatformRun> {
   const merged = { ...existing }
   for (const [platform, inPR] of Object.entries(incoming)) {
     const exPR = merged[platform]
