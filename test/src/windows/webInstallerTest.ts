@@ -62,11 +62,11 @@ test("web installer, appPackageUrl is complete URL (no arch paths appended)", ({
         appPackageUrl: "https://example.com/download/latest",
       },
     },
-    effectiveOptionComputed: async it => {
+    effectiveOptionComputed: it => {
       const defines = it[0]
       expect(defines.APP_PACKAGE_URL).toEqual("https://example.com/download/latest")
       expect(defines.APP_PACKAGE_URL_IS_INCOMPLETE).toBeUndefined()
-      return true
+      return Promise.resolve(true)
     },
   }))
 
@@ -82,11 +82,11 @@ test("web installer, auto-computed URL from S3 sets APP_PACKAGE_URL_IS_INCOMPLET
         path: "releases",
       },
     },
-    effectiveOptionComputed: async it => {
+    effectiveOptionComputed: it => {
       const defines = it[0]
       expect(defines.APP_PACKAGE_URL).toBeDefined()
       expect(defines.APP_PACKAGE_URL_IS_INCOMPLETE).toBeNull()
-      return true
+      return Promise.resolve(true)
     },
   }))
 
@@ -100,11 +100,11 @@ test("web installer, auto-computed URL from GitHub sets APP_PACKAGE_URL_IS_INCOM
         repo: "bar",
       },
     },
-    effectiveOptionComputed: async it => {
+    effectiveOptionComputed: it => {
       const defines = it[0]
       expect(defines.APP_PACKAGE_URL).toMatch(/github\.com\/foo\/bar\/releases\/download/)
       expect(defines.APP_PACKAGE_URL_IS_INCOMPLETE).toBeNull()
-      return true
+      return Promise.resolve(true)
     },
   }))
 
@@ -117,11 +117,11 @@ test("web installer, auto-computed URL from generic provider sets APP_PACKAGE_UR
         url: "https://cdn.example.com/releases",
       },
     },
-    effectiveOptionComputed: async it => {
+    effectiveOptionComputed: it => {
       const defines = it[0]
       expect(defines.APP_PACKAGE_URL).toEqual("https://cdn.example.com/releases")
       expect(defines.APP_PACKAGE_URL_IS_INCOMPLETE).toBeNull()
-      return true
+      return Promise.resolve(true)
     },
   }))
 
@@ -153,12 +153,12 @@ test("web installer, nsisWeb.publish overrides global publish config", ({ expect
         },
       },
     },
-    effectiveOptionComputed: async it => {
+    effectiveOptionComputed: it => {
       const defines = it[0]
       // target-level publish wins — URL must be from the generic provider
       expect(defines.APP_PACKAGE_URL).toEqual("https://target-level.example.com")
       expect(defines.APP_PACKAGE_URL_IS_INCOMPLETE).toBeNull()
-      return true
+      return Promise.resolve(true)
     },
   }))
 
@@ -174,11 +174,11 @@ test("web installer, win.publish used when nsisWeb.publish is absent", ({ expect
         },
       },
     },
-    effectiveOptionComputed: async it => {
+    effectiveOptionComputed: it => {
       const defines = it[0]
       expect(defines.APP_PACKAGE_URL).toEqual("https://win-level.example.com")
       expect(defines.APP_PACKAGE_URL_IS_INCOMPLETE).toBeNull()
-      return true
+      return Promise.resolve(true)
     },
   }))
 
@@ -192,11 +192,11 @@ test("web installer, appPackageUrl with trailing slash is used verbatim", ({ exp
         appPackageUrl: "https://example.com/download/",
       },
     },
-    effectiveOptionComputed: async it => {
+    effectiveOptionComputed: it => {
       const defines = it[0]
       expect(defines.APP_PACKAGE_URL).toEqual("https://example.com/download/")
       expect(defines.APP_PACKAGE_URL_IS_INCOMPLETE).toBeUndefined()
-      return true
+      return Promise.resolve(true)
     },
   }))
 
@@ -210,11 +210,11 @@ test("web installer, multiple publish configs — first one is used", ({ expect 
         { provider: "s3", bucket: "second-bucket" },
       ],
     },
-    effectiveOptionComputed: async it => {
+    effectiveOptionComputed: it => {
       const defines = it[0]
       // First config (GitHub) should determine the URL.
       expect(defines.APP_PACKAGE_URL).toMatch(/github\.com\/foo\/bar\/releases\/download/)
       expect(defines.APP_PACKAGE_URL_IS_INCOMPLETE).toBeNull()
-      return true
+      return Promise.resolve(true)
     },
   }))

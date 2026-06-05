@@ -30,6 +30,7 @@ function mockHttpResponse(statusCode: number, body: string): void {
       setImmediate(() => {
         const res = new EventEmitter() as any
         res.statusCode = statusCode
+        // eslint-disable-next-line
         ;(callback as Function)(res)
         setImmediate(() => {
           res.emit("data", body)
