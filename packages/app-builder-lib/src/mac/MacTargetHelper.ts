@@ -118,7 +118,7 @@ export class MacTargetHelper {
       log.info({ binaries, arch: arch == null ? null : Arch[arch] }, "signing additional user-defined binaries for arch")
     }
 
-    const signOptions: SignOptions = {
+    return {
       identityValidation: false,
       // https://github.com/electron-userland/electron-builder/issues/1699
       // kext are signed by the chipset manufacturers. You need a special certificate (only available on request) from Apple to be able to sign kext.
@@ -156,8 +156,6 @@ export class MacTargetHelper {
       optionsForFile: await this.getOptionsForFile(appPath, isMas, config),
       provisioningProfile: config.provisioningProfile || undefined,
     }
-
-    return signOptions
   }
 
   async createMasInstaller(appPath: string, outDir: string, masOptions: MasConfiguration, keychainFile: string | Nullish, isDevelopment: boolean, arch: Arch): Promise<void> {
@@ -249,8 +247,12 @@ export class MacTargetHelper {
   }
 
   static getPlatformTypeFromTarget(targetName: string): PlatformType {
-    if (targetName === "mas") return "mas"
-    if (targetName === "mas-dev") return "mas-dev"
+    if (targetName === "mas") {
+      return "mas"
+    }
+    if (targetName === "mas-dev") {
+      return "mas-dev"
+    }
     return "mac"
   }
 
