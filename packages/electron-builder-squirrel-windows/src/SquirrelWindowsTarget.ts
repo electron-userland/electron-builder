@@ -1,4 +1,5 @@
 import { Arch, SquirrelWindowsOptions, Target, WinPackager, getArchSuffix } from "app-builder-lib"
+import { getRceditBundle } from "app-builder-lib/out/toolsets/windows"
 import { withToolsetLock } from "app-builder-lib/out/util/toolsetLock"
 import { WineVmManager } from "app-builder-lib/out/vm/WineVm"
 import { InvalidConfigurationError, exists, isEmptyOrSpaces, log } from "builder-util"
@@ -35,6 +36,16 @@ export default class SquirrelWindowsTarget extends Target {
 
       const squirrelToolset = await getSquirrelToolsetPath()
       await fs.promises.cp(path.join(squirrelToolset, "electron-winstaller", "vendor"), tmpVendorDirectory, { recursive: true })
+    }
+
+    // Squirrel.exe --releasify calls rcedit.exe (via setPEVersionInfoAndIcon) to embed the app
+    // icon into Setup.exe. Resolve it from the win-codesign toolset which already versions and
+    // caches it across all platforms, rather than duplicating it in the squirrel.windows bundle.
+    // Squirrel-Mono.exe (used on non-Windows) does not call rcedit, so skip on other platforms.
+    if (process.platform === "win32") {
+      const rcedit = await getRceditBundle(this.packager.config.toolsets?.winCodeSign)
+      const rceditExe = os.arch() === "ia32" ? rcedit.x86 : rcedit.x64
+      await fs.promises.copyFile(rceditExe, path.join(tmpVendorDirectory, "rcedit.exe"))
     }
 
     const files = await fs.promises.readdir(tmpVendorDirectory)

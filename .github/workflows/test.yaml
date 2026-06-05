@@ -171,14 +171,15 @@ jobs:
       - name: Provision squirrel.windows toolset
         run: |
           # squirrel.windows@1.1.0 bundles the Chocolatey shim for nuget.exe which fails when
-          # relocated. Download the published bundle and replace the shim with a standalone
-          # portable nuget.exe (the mono-compatible PE32 from dist.nuget.org, CI-only download).
+          # relocated. Replace the shim with a standalone portable nuget.exe (CI-only download).
+          # rcedit.exe is supplied at runtime from the win-codesign toolset by SquirrelWindowsTarget.
           TOOLSET_DIR="${{ runner.temp }}/squirrel-toolset"
+          VENDOR_DIR="$TOOLSET_DIR/electron-winstaller/vendor"
           mkdir -p "$TOOLSET_DIR"
           curl -fsSL -o "${{ runner.temp }}/squirrel.zip" \
             "https://github.com/electron-userland/electron-builder-binaries/releases/download/squirrel.windows%401.1.0/squirrel.windows-2.0.1-patched.zip"
           unzip -q "${{ runner.temp }}/squirrel.zip" -d "$TOOLSET_DIR"
-          curl -fsSL -o "$TOOLSET_DIR/electron-winstaller/vendor/nuget.exe" \
+          curl -fsSL -o "$VENDOR_DIR/nuget.exe" \
             "https://dist.nuget.org/win-x86-commandline/v6.14.0/nuget.exe"
           echo "SQUIRREL_TOOLSET_HOST_DIR=$TOOLSET_DIR" >> "$GITHUB_ENV"
 
@@ -242,7 +243,7 @@ jobs:
         run: |
           # squirrel.windows@1.1.0 bundles the Chocolatey shim for nuget.exe. The shim resolves the
           # real binary relative to its Chocolatey install path and fails when copied to a temp dir.
-          # Download the published bundle, then replace the shim with the standalone portable exe.
+          # rcedit.exe is supplied at runtime from the win-codesign toolset by SquirrelWindowsTarget.
           $toolsetDir = "$env:RUNNER_TEMP\squirrel-toolset"
           $zipPath    = "$env:RUNNER_TEMP\squirrel.zip"
           Invoke-WebRequest `
