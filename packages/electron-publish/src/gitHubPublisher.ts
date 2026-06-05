@@ -1,5 +1,5 @@
 import { Arch, Fields, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isTokenCharValid, log } from "builder-util"
-import { configureRequestOptions, GithubOptions, HttpError, parseJson, githubTagPrefix } from "builder-util-runtime"
+import { configureRequestOptions, GithubOptions, hashSensitiveValue, HttpError, parseJson, githubTagPrefix } from "builder-util-runtime"
 import { ClientRequest } from "http"
 import { Lazy } from "lazy-val"
 import * as mime from "mime"
@@ -58,7 +58,7 @@ export class GitHubPublisher extends HttpPublisher {
       token = token.trim()
 
       if (!isTokenCharValid(token)) {
-        throw new InvalidConfigurationError(`GitHub Personal Access Token (${JSON.stringify(token)}) contains invalid characters, please check env "GH_TOKEN"`)
+        throw new InvalidConfigurationError(`GitHub Personal Access Token ${hashSensitiveValue(token)} contains invalid characters, please check env "GH_TOKEN"`)
       }
     }
 

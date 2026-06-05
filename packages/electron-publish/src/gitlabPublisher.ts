@@ -2,7 +2,7 @@ import { Arch, Fields, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces,
 import { createReadStream } from "fs"
 import { stat } from "fs/promises"
 import { readFile } from "fs/promises"
-import { configureRequestOptions, GitlabOptions, GitlabReleaseInfo, parseJson, HttpError } from "builder-util-runtime"
+import { configureRequestOptions, GitlabOptions, GitlabReleaseInfo, hashSensitiveValue, parseJson, HttpError } from "builder-util-runtime"
 import { ClientRequest } from "http"
 import { Lazy } from "lazy-val"
 import * as mime from "mime"
@@ -46,7 +46,7 @@ export class GitlabPublisher extends HttpPublisher {
       token = token.trim()
 
       if (!isTokenCharValid(token)) {
-        throw new InvalidConfigurationError(`GitLab Personal Access Token (${JSON.stringify(token)}) contains invalid characters, please check env "GITLAB_TOKEN"`)
+        throw new InvalidConfigurationError(`GitLab Personal Access Token ${hashSensitiveValue(token)} contains invalid characters, please check env "GITLAB_TOKEN"`)
       }
     }
 

@@ -1,5 +1,5 @@
 import { Arch, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
-import { configureRequestOptions, HttpExecutor, parseJson } from "builder-util-runtime"
+import { configureRequestOptions, HttpExecutor, parseJson, safeStringifyJson } from "builder-util-runtime"
 import { KeygenOptions } from "builder-util-runtime/out/publishOptions"
 import { getCompleteExtname } from "builder-util/out/filename"
 import { ClientRequest, RequestOptions } from "http"
@@ -179,7 +179,7 @@ export class KeygenPublisher extends HttpPublisher {
       },
     }
 
-    log.debug({ data: JSON.stringify(data) }, "Keygen create artifact")
+    log.debug({ data: safeStringifyJson(data) }, "Keygen create artifact")
 
     return parseJson(httpExecutor.request(configureRequestOptions(upload, this.auth, "POST"), this.context.cancellationToken, { data }))
   }
@@ -251,7 +251,7 @@ export class KeygenPublisher extends HttpPublisher {
       },
     }
 
-    log.debug({ data: JSON.stringify(data) }, "Keygen create release")
+    log.debug({ data: safeStringifyJson(data) }, "Keygen create release")
 
     return parseJson(httpExecutor.request(configureRequestOptions(req, this.auth, "POST"), this.context.cancellationToken, { data }))
   }

@@ -1,5 +1,5 @@
 import { expect, test, describe } from "vitest"
-import { HttpExecutor } from "builder-util-runtime/src/httpExecutor"
+import { HttpExecutor, safeStringifyJson, addSensitiveRedirectHeader, addSensitiveFieldPattern, isSensitiveFieldName, hashSensitiveValue } from "builder-util-runtime/src/httpExecutor"
 import { RequestOptions } from "http"
 
 describe("HttpExecutor.prepareRedirectUrlOptions", () => {
@@ -587,5 +587,190 @@ describe("HttpExecutor error handling", () => {
     }
     const redirectUrl = "https://example.com/redirect"
     expect(() => HttpExecutor.prepareRedirectUrlOptions(redirectUrl, originalOptions)).toThrow("Missing hostname in request options")
+  })
+})
+
+describe("sensitive header stripping", () => {
+  const crossOriginRedirect = "https://cdn.example.com/asset.zip"
+  const sameOriginRedirect = "https://gitlab.example.com/other/path"
+
+  const baseOptions = (headers: Record<string, string>): RequestOptions => ({
+    protocol: "https:",
+    hostname: "gitlab.example.com",
+    path: "/api/v4/projects/1/releases",
+    headers,
+  })
+
+  test("should strip PRIVATE-TOKEN on cross-origin redirect", () => {
+    const result = HttpExecutor.prepareRedirectUrlOptions(crossOriginRedirect, baseOptions({ "PRIVATE-TOKEN": "glpat-secret" }))
+    expect(result.headers?.["PRIVATE-TOKEN"]).toBeUndefined()
+  })
+
+  test("should strip mixed-case Authorization on cross-origin redirect", () => {
+    const result = HttpExecutor.prepareRedirectUrlOptions(crossOriginRedirect, baseOptions({ Authorization: "Bearer token123" }))
+    expect(result.headers?.["Authorization"]).toBeUndefined()
+    expect(result.headers?.["authorization"]).toBeUndefined()
+  })
+
+  test("should strip AUTHORIZATION (all-caps) on cross-origin redirect", () => {
+    const result = HttpExecutor.prepareRedirectUrlOptions(crossOriginRedirect, baseOptions({ AUTHORIZATION: "Bearer token123" }))
+    expect(result.headers?.["AUTHORIZATION"]).toBeUndefined()
+  })
+
+  test("should strip X-Api-Key on cross-origin redirect", () => {
+    const result = HttpExecutor.prepareRedirectUrlOptions(crossOriginRedirect, baseOptions({ "X-Api-Key": "mykey" }))
+    expect(result.headers?.["X-Api-Key"]).toBeUndefined()
+  })
+
+  test("should strip X-Auth-Token on cross-origin redirect", () => {
+    const result = HttpExecutor.prepareRedirectUrlOptions(crossOriginRedirect, baseOptions({ "X-Auth-Token": "mytoken" }))
+    expect(result.headers?.["X-Auth-Token"]).toBeUndefined()
+  })
+
+  test("should strip multiple sensitive headers in a single cross-origin redirect", () => {
+    const result = HttpExecutor.prepareRedirectUrlOptions(
+      crossOriginRedirect,
+      baseOptions({
+        "PRIVATE-TOKEN": "glpat-secret",
+        Authorization: "Bearer token123",
+        "X-Api-Key": "apikey",
+        "User-Agent": "electron-builder",
+        Accept: "application/json",
+      })
+    )
+    expect(result.headers?.["PRIVATE-TOKEN"]).toBeUndefined()
+    expect(result.headers?.["Authorization"]).toBeUndefined()
+    expect(result.headers?.["X-Api-Key"]).toBeUndefined()
+    // non-sensitive headers survive
+    expect(result.headers?.["User-Agent"]).toBe("electron-builder")
+    expect(result.headers?.["Accept"]).toBe("application/json")
+  })
+
+  test("should preserve PRIVATE-TOKEN on same-origin redirect", () => {
+    const result = HttpExecutor.prepareRedirectUrlOptions(sameOriginRedirect, baseOptions({ "PRIVATE-TOKEN": "glpat-secret" }))
+    expect(result.headers?.["PRIVATE-TOKEN"]).toBe("glpat-secret")
+  })
+
+  test("should preserve mixed-case Authorization on same-origin redirect", () => {
+    const result = HttpExecutor.prepareRedirectUrlOptions(sameOriginRedirect, baseOptions({ Authorization: "Bearer token123" }))
+    expect(result.headers?.["Authorization"]).toBe("Bearer token123")
+  })
+})
+
+describe("safeStringifyJson field redaction", () => {
+  test("strips token variants", () => {
+    const data = { token: "x", TOKEN: "x", access_token: "x", ACCESS_TOKEN: "x", refreshToken: "x" }
+    const parsed = JSON.parse(safeStringifyJson(data))
+    for (const key of Object.keys(data)) {
+      expect(parsed[key]).toBe(hashSensitiveValue("x"))
+    }
+  })
+
+  test("strips password variants", () => {
+    const data = { password: "x", PASSWORD: "x", db_password: "x", userPassword: "x" }
+    const parsed = JSON.parse(safeStringifyJson(data))
+    for (const key of Object.keys(data)) {
+      expect(parsed[key]).toBe(hashSensitiveValue("x"))
+    }
+  })
+
+  test("strips secret variants", () => {
+    const data = { secret: "x", SECRET: "x", clientSecret: "x", SECRET_KEY: "x" }
+    const parsed = JSON.parse(safeStringifyJson(data))
+    for (const key of Object.keys(data)) {
+      expect(parsed[key]).toBe(hashSensitiveValue("x"))
+    }
+  })
+
+  test("strips key-suffix variants", () => {
+    const data = { apiKey: "x", secretKey: "x", accessKey: "x", privateKey: "x", publicKey: "x", ACCESS_KEY: "x", private_key: "x" }
+    const parsed = JSON.parse(safeStringifyJson(data))
+    for (const key of Object.keys(data)) {
+      expect(parsed[key]).toBe(hashSensitiveValue("x"))
+    }
+  })
+
+  test("strips credential variants", () => {
+    const data = { credential: "x", credentials: "x", CREDENTIAL: "x" }
+    const parsed = JSON.parse(safeStringifyJson(data))
+    for (const key of Object.keys(data)) {
+      expect(parsed[key]).toBe(hashSensitiveValue("x"))
+    }
+  })
+
+  test("strips authorization variants", () => {
+    const data = { authorization: "x", Authorization: "x", AUTHORIZATION: "x" }
+    const parsed = JSON.parse(safeStringifyJson(data))
+    for (const key of Object.keys(data)) {
+      expect(parsed[key]).toBe(hashSensitiveValue("x"))
+    }
+  })
+
+  test("strips auth variants", () => {
+    const data = { auth: "x", authToken: "x", AUTH: "x", oauth: "x", authCode: "x" }
+    const parsed = JSON.parse(safeStringifyJson(data))
+    for (const key of Object.keys(data)) {
+      expect(parsed[key]).toBe(hashSensitiveValue("x"))
+    }
+  })
+
+  test("does not strip non-sensitive fields", () => {
+    const data = { name: "myapp", url: "https://example.com", provider: "github", version: "1.0.0", channel: "latest" }
+    const parsed = JSON.parse(safeStringifyJson(data))
+    expect(parsed).toEqual(data)
+  })
+
+  test("skippedNames still overrides non-sensitive fields", () => {
+    const data = { name: "myapp", url: "https://example.com" }
+    const parsed = JSON.parse(safeStringifyJson(data, new Set(["name"])))
+    expect(parsed.name).toBe(hashSensitiveValue("myapp"))
+    expect(parsed.url).toBe("https://example.com")
+  })
+})
+
+describe("addSensitiveRedirectHeader / addSensitiveFieldPattern", () => {
+  test("addSensitiveRedirectHeader causes custom header to be stripped on cross-origin redirect", () => {
+    addSensitiveRedirectHeader("X-Zz-Test-Custom-Auth")
+
+    const originalOptions: RequestOptions = {
+      protocol: "https:",
+      hostname: "api.example.com",
+      path: "/endpoint",
+      headers: { "X-Zz-Test-Custom-Auth": "secret-value", "User-Agent": "test" },
+    }
+    const result = HttpExecutor.prepareRedirectUrlOptions("https://cdn.other.com/asset.zip", originalOptions)
+
+    expect(result.headers?.["X-Zz-Test-Custom-Auth"]).toBeUndefined()
+    expect(result.headers?.["User-Agent"]).toBe("test")
+  })
+
+  test("addSensitiveFieldPattern causes matching fields to be redacted by safeStringifyJson", () => {
+    addSensitiveFieldPattern("zzTestCustomCred")
+
+    const data = { zzTestCustomCredToken: "secret", name: "safe" }
+    const parsed = JSON.parse(safeStringifyJson(data))
+
+    expect(parsed.zzTestCustomCredToken).toBe(hashSensitiveValue("secret"))
+    expect(parsed.name).toBe("safe")
+  })
+})
+
+describe("isSensitiveFieldName", () => {
+  test("returns true for sensitive field names", () => {
+    expect(isSensitiveFieldName("token")).toBe(true)
+    expect(isSensitiveFieldName("AUTH")).toBe(true)
+    expect(isSensitiveFieldName("auth_token")).toBe(true)
+    expect(isSensitiveFieldName("apiKey")).toBe(true)
+    expect(isSensitiveFieldName("SECRET_KEY")).toBe(true)
+    expect(isSensitiveFieldName("GH_TOKEN")).toBe(true)
+    expect(isSensitiveFieldName("AWS_SECRET_ACCESS_KEY")).toBe(true)
+  })
+
+  test("returns false for non-sensitive field names", () => {
+    expect(isSensitiveFieldName("name")).toBe(false)
+    expect(isSensitiveFieldName("url")).toBe(false)
+    expect(isSensitiveFieldName("version")).toBe(false)
+    expect(isSensitiveFieldName("channel")).toBe(false)
+    expect(isSensitiveFieldName("provider")).toBe(false)
   })
 })
