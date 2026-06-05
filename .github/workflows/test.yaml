@@ -506,69 +506,9 @@ jobs:
 
       - name: Merge cache files
         run: |
-          mkdir -p merged-cache
-
-          # Create merge script
-          cat > merge-caches.js << 'EOF'
-          const fs = require('fs');
-          const path = require('path');
-
-          const artifactsDir = 'smart-cache-artifacts';
-          const outputFile = 'merged-cache/_vitest-smart-cache.json';
-          const repoCommittedCache = 'test/vitest-scripts/_vitest-smart-cache.json';
-
-          let mergedCache = {};
-          let filesProcessed = 0;
-
-          // Start with repo-committed cache as base (if it exists)
-          if (fs.existsSync(repoCommittedCache)) {
-            console.log('Loading base cache from repo-committed file');
-            try {
-              mergedCache = JSON.parse(fs.readFileSync(repoCommittedCache, 'utf8'));
-              console.log(`Base cache has ${Object.keys(mergedCache).length} entries`);
-            } catch (err) {
-              console.error('Error reading repo-committed cache:', err.message);
-            }
-          }
-
-          // Check if artifacts directory exists
-          if (!fs.existsSync(artifactsDir)) {
-            console.log('No smart cache artifacts found to merge, using base cache only');
-            fs.writeFileSync(outputFile, JSON.stringify(mergedCache, null, 2));
-            process.exit(0);
-          }
-
-          // Read all cache files from test runs
-          const platforms = fs.readdirSync(artifactsDir);
-
-          platforms.forEach(platform => {
-            const cacheFile = path.join(artifactsDir, platform, '_vitest-smart-cache.json');
-            if (fs.existsSync(cacheFile)) {
-              console.log(`Reading cache from ${platform}`);
-              try {
-                const cache = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
-                filesProcessed++;
-
-                // Deep-merge top-level objects so all shards' new timing data is preserved
-                Object.keys(cache).forEach(key => {
-                  if (mergedCache[key] && typeof mergedCache[key] === 'object' && !Array.isArray(mergedCache[key])) {
-                    mergedCache[key] = { ...mergedCache[key], ...cache[key] };
-                  } else {
-                    mergedCache[key] = cache[key];
-                  }
-                });
-              } catch (err) {
-                console.error(`Error reading cache from ${platform}:`, err.message);
-              }
-            }
-          });
-
-          console.log(`Processed ${filesProcessed} cache files from test runs`);
-          console.log(`Final merged cache has ${Object.keys(mergedCache).length} entries`);
-          fs.writeFileSync(outputFile, JSON.stringify(mergedCache, null, 2));
-          EOF
-
-          node merge-caches.js
+          pnpm ci:test:merge-cache \
+            --artifacts-dir smart-cache-artifacts \
+            --output merged-cache/_vitest-smart-cache.json
 
       - name: Delete individual cache artifacts
         uses: geekyeggo/delete-artifact@f275313e70c08f6120db482d7a6b98377786765b # v5.1.0
