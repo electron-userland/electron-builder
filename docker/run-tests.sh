@@ -11,6 +11,22 @@ else
   _ELECTRON_BUILDER_CACHE_DEFAULT="$HOME/.cache/electron-builder"
 fi
 
+_IMAGE="${TEST_RUNNER_IMAGE_TAG:-electronuserland/builder:22-wine-mono}"
+
+# Pull with retries so transient registry timeouts don't fail the whole run.
+_PULL_ATTEMPTS=3
+_PULL_DELAY=30
+for _i in $(seq 1 $_PULL_ATTEMPTS); do
+  docker pull "$_IMAGE" && break
+  if [[ $_i -lt $_PULL_ATTEMPTS ]]; then
+    echo "docker pull failed (attempt $_i/$_PULL_ATTEMPTS), retrying in ${_PULL_DELAY}s…" >&2
+    sleep $_PULL_DELAY
+  else
+    echo "docker pull failed after $_PULL_ATTEMPTS attempts" >&2
+    exit 1
+  fi
+done
+
 docker run --rm \
   -e CI="${CI:-false}" \
   -e DEBUG="${DEBUG:-}" \
@@ -26,5 +42,5 @@ docker run --rm \
   -v "${ELECTRON_CACHE_PATH:-$_ELECTRON_CACHE_DEFAULT}:/root/.cache/electron" \
   -v "${ELECTRON_BUILDER_CACHE_PATH:-$_ELECTRON_BUILDER_CACHE_DEFAULT}:/root/.cache/electron-builder" \
   ${ADDITIONAL_DOCKER_ARGS} \
-  "${TEST_RUNNER_IMAGE_TAG:-electronuserland/builder:22-wine-mono}" \
+  "$_IMAGE" \
   /bin/bash -c "bash ./docker/test-in-docker.sh"
