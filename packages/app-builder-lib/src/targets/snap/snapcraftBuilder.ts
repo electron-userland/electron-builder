@@ -444,11 +444,24 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
       throw new Error(`Build succeeded but no .snap file found in ${workDir}`)
     }
     const outDir = path.dirname(outputFileName)
+    // Extract the arch segment from the pre-computed artifact path so we can identify
+    // the primary snap by arch rather than by filename — snapcraft may name its output
+    // differently (e.g. underscores vs hyphens, different app name sanitization).
+    const primaryBase = path.basename(outputFileName)
+    const primaryArch = primaryBase
+      .replace(/\.snap$/, "")
+      .split("_")
+      .pop()!
     const results: string[] = []
     for (const snapFile of builtSnaps) {
-      // Primary snap: the one whose basename matches the expected output filename gets the
-      // pre-computed artifact path; all additional snaps land alongside it in outDir.
-      const dest = snapFile === path.basename(outputFileName) ? outputFileName : path.join(outDir, snapFile)
+      const snapArch =
+        snapFile
+          .replace(/\.snap$/, "")
+          .split("_")
+          .pop() ?? primaryArch
+      // Primary arch: honour the pre-computed outputFileName (respects artifactName macro).
+      // Extra arches: substitute the arch segment in the primary basename to follow the same pattern.
+      const dest = snapArch === primaryArch ? outputFileName : path.join(outDir, primaryBase.replace(new RegExp(`_${primaryArch}\\.snap$`), `_${snapArch}.snap`))
       results.push(await copySnapToArtifactPath(workDir, snapFile, dest))
     }
     return results
