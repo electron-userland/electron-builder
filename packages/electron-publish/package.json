@@ -14,8 +14,7 @@
       "types": "./dist/indexInternal.d.ts",
       "import": "./dist/indexInternal.js",
       "require": "./dist/indexInternal.js"
-    },
-    "./src/*": "./src/*.ts"
+    }
   },
 =======
   "version": "26.3.4",
