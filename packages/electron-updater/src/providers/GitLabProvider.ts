@@ -1,4 +1,5 @@
 import { CancellationToken, GitlabOptions, HttpError, newError, UpdateFileInfo, UpdateInfo, GitlabReleaseInfo, GitlabReleaseAsset } from "builder-util-runtime"
+import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { URL } from "url"
 // @ts-ignore
 import * as escapeRegExp from "lodash.escaperegexp"
@@ -50,6 +51,12 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
     const host = options.host || defaultHost
 
     this.baseApiUrl = newBaseUrl(`https://${host}/api/v4`)
+  }
+
+  protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): RequestOptions {
+    const result = super.createRequestOptions(url, headers)
+    ;(result as any).redirect = "manual"
+    return result
   }
 
   private get channel(): string {
