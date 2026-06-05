@@ -1,7 +1,7 @@
-import { BlockMap } from "builder-util-runtime/src/blockMapApi"
-import { computeOperations, OperationKind } from "electron-updater/src/differentialDownloader/downloadPlanBuilder"
+import { BlockMap } from "builder-util-runtime/internal"
+import { computeOperations, OperationKind } from "electron-updater/internal"
 import { describe, expect, test } from "vitest"
-import type { Logger } from "electron-updater/src/types"
+import type { Logger } from "electron-updater/internal"
 
 function makeBlockMap(checksums: string[], sizes: number[], offset = 0, name = "file"): BlockMap {
   return { version: "2", files: [{ name, offset, checksums, sizes }] }

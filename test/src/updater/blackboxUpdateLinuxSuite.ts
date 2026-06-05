@@ -1,5 +1,5 @@
 import { ToolsetConfig } from "app-builder-lib"
-import { isEmptyOrSpaces } from "builder-util/src/util"
+import { isEmptyOrSpaces } from "builder-util"
 import { execSync } from "child_process"
 import { Arch } from "electron-builder"
 import { TestContext } from "vitest"

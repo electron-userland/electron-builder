@@ -1,5 +1,5 @@
 import { GithubOptions, HttpError, UpdateInfo } from "builder-util-runtime"
-import { GitHubProvider } from "electron-updater/src/providers/GitHubProvider.js"
+import { GitHubProvider } from "electron-updater/internal"
 import { assertDownloadNotTriggered, getProvider, mockYaml } from "../helpers/providerTestUtil.js"
 import { createMockRequest, createNsisUpdater, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 

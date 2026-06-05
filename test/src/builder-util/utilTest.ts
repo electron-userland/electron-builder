@@ -1,4 +1,4 @@
-import { parseValidEnvVarUrl, resolveEnvShellValue } from "builder-util/src/envUtil"
+import { parseValidEnvVarUrl, resolveEnvShellValue } from "builder-util/internal"
 import { removePassword, filterSensitiveEnv, spawnAndWriteWithOutput, ExecError } from "builder-util"
 import { afterEach, vi } from "vitest"
 

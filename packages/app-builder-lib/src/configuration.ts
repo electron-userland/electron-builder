@@ -260,12 +260,6 @@ export interface CommonConfiguration {
 
 export interface Configuration extends CommonConfiguration, PlatformSpecificBuildOptions, Hooks {
   /**
-   * Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified.
-   * @deprecated `electron-compile` is no longer maintained. Compile your app with a modern bundler (webpack, vite, etc.) instead.
-   */
-  readonly electronCompile?: boolean
-
-  /**
    * The [electron-download](https://github.com/electron-userland/electron-download#usage) options. (legacy)
    * Alternatively, you can use [electron/get](https://github.com/electron/get#usage) options.
    */

@@ -1,9 +1,26 @@
 {
   "extends": "../tsconfig-base.json",
   "compilerOptions": {
-    "rootDir": ".",
-    "outDir": "out",
-    "skipLibCheck": true
+    "noEmit": true,
+    "skipLibCheck": true,
+    "paths": {
+      "builder-util": ["../packages/builder-util/src/util.ts"],
+      "builder-util/internal": ["../packages/builder-util/src/indexInternal.ts"],
+      "builder-util-runtime": ["../packages/builder-util-runtime/src/index.ts"],
+      "builder-util-runtime/internal": ["../packages/builder-util-runtime/src/indexInternal.ts"],
+      "app-builder-lib": ["../packages/app-builder-lib/src/index.ts"],
+      "app-builder-lib/internal": ["../packages/app-builder-lib/src/indexInternal.ts"],
+      "dmg-builder": ["../packages/dmg-builder/src/dmgUtil.ts"],
+      "dmg-builder/internal": ["../packages/dmg-builder/src/indexInternal.ts"],
+      "electron-builder": ["../packages/electron-builder/src/index.ts"],
+      "electron-builder/internal": ["../packages/electron-builder/src/indexInternal.ts"],
+      "electron-publish": ["../packages/electron-publish/src/index.ts"],
+      "electron-publish/internal": ["../packages/electron-publish/src/indexInternal.ts"],
+      "electron-updater": ["../packages/electron-updater/src/index.ts"],
+      "electron-updater/internal": ["../packages/electron-updater/src/indexInternal.ts"],
+      "electron-builder-squirrel-windows": ["../packages/electron-builder-squirrel-windows/src/SquirrelWindowsTarget.ts"],
+      "electron-builder-squirrel-windows/internal": ["../packages/electron-builder-squirrel-windows/src/indexInternal.ts"]
+    }
   },
   "declaration": false,
   "include": [

@@ -6,7 +6,7 @@ import { Arch, Configuration } from "electron-builder"
 import { spawn as nodeSpawn } from "child_process"
 import * as path from "path"
 import { TestContext } from "vitest"
-import { deepAssign, TmpDir } from "builder-util/src/util"
+import { deepAssign, TmpDir } from "builder-util"
 import { ApplicationUpdatePaths, doBuild, optionsForFlakyE2E, runTest, windowsVmPromise } from "./blackboxUpdateHelpers"
 import { installWindowsVm } from "./blackboxInstallWindows"
 

@@ -1,9 +1,4 @@
-// archive() is @internal and stripped from type declarations by stripInternal:true.
-// Import as namespace then cast to any so vitest's TypeScript transform still resolves
-// the real source exports while TypeScript type-checking is satisfied.
-import * as archiveModule from "app-builder-lib/src/targets/archive"
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const { archive, compute7zCompressArgs } = archiveModule as any
+import { archive, compute7zCompressArgs } from "app-builder-lib/internal"
 import * as fs from "fs/promises"
 import * as os from "os"
 import * as path from "path"

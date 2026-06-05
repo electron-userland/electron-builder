@@ -1,4 +1,4 @@
-import { TmpDir } from "builder-util/src/util"
+import { TmpDir } from "builder-util"
 import { execFileSync, execSync } from "child_process"
 import { randomUUID } from "crypto"
 import { Arch, Platform } from "electron-builder"

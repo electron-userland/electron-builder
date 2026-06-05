@@ -1,5 +1,5 @@
 import { DebugLogger } from "builder-util"
-import { log } from "builder-util/src/util"
+import { log } from "builder-util"
 import { Platform } from "electron-builder"
 import { getLinuxVm } from "app-builder-lib/internal"
 import { readdir } from "fs/promises"

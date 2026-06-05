@@ -1,6 +1,6 @@
 import { Configuration, Platform } from "app-builder-lib"
 import { PM } from "app-builder-lib/internal"
-import { exists } from "builder-util/src/util"
+import { exists } from "builder-util"
 import path from "path"
 import { assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"

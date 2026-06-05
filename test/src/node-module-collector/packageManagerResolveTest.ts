@@ -16,7 +16,7 @@ afterEach(() => {
 async function freshImport() {
   vi.resetModules()
   const whichMod = await import("which")
-  const { getPackageManagerCommand, PM } = await import("app-builder-lib/src/node-module-collector/packageManager")
+  const { getPackageManagerCommand, PM } = await import("app-builder-lib/internal")
   return { getPackageManagerCommand, PM, whichSync: vi.mocked(whichMod.sync) }
 }
 

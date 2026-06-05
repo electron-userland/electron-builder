@@ -2,7 +2,7 @@ import { AppImageOptions, Configuration, DebOptions, PacmanOptions, RpmOptions, 
 import { PM } from "app-builder-lib/internal"
 import { Arch, Platform } from "electron-builder"
 import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
-import { archFromString, log, spawn, TmpDir } from "builder-util/src/util"
+import { archFromString, log, spawn, TmpDir } from "builder-util"
 import { deepAssign, GenericServerOptions } from "builder-util-runtime"
 import { execSync } from "child_process"
 import { move, outputFile, readJsonSync } from "fs-extra"

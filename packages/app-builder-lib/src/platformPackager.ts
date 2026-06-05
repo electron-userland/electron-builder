@@ -29,7 +29,7 @@ import { AsarPackager } from "./asar/asarUtil.js"
 import { AsarIntegrity, computeData } from "./asar/integrity.js"
 import { FuseOptionsV1 } from "./configuration.js"
 import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers, getNodeModuleFileMatcher } from "./fileMatcher.js"
-import { createTransformer, isElectronCompileUsed } from "./fileTransformer.js"
+import { createTransformer } from "./fileTransformer.js"
 import { Framework, isElectronBased } from "./Framework.js"
 import { Platform } from "./core.js"
 // Type-only barrel import: keeping these erased avoids a runtime cycle
@@ -48,7 +48,7 @@ import type {
   Target,
   TargetSpecificOptions,
 } from "./index.js"
-import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier.js"
+import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, transformFiles } from "./util/appFileCopier.js"
 import { convertIcon, IconFormat, IconInfo } from "./util/iconConverter.js"
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
 import { AssetCatalogResult, generateAssetCatalogForIcon } from "./util/macosIconComposer.js"
@@ -468,9 +468,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   ) {
     const appDir = this.info.appDir
     const config = this.config
-    const isElectronCompile = asarOptions != null && isElectronCompileUsed(this.info)
 
-    const mainMatchers = getMainFileMatchers(appDir, defaultDestination, macroExpander, platformSpecificBuildOptions, this, packContext.outDir, isElectronCompile)
+    const mainMatchers = getMainFileMatchers(appDir, defaultDestination, macroExpander, platformSpecificBuildOptions, this, packContext.outDir)
     if (excludePatterns.length > 0) {
       for (const matcher of mainMatchers) {
         matcher.excludePatterns = excludePatterns
@@ -478,21 +477,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const framework = this.info.framework
-    const transformer = createTransformer(
-      appDir,
-      config,
-      isElectronCompile
-        ? {
-            originalMain: this.info.metadata.main,
-            main: ELECTRON_COMPILE_SHIM_FILENAME,
-            ...config.extraMetadata,
-          }
-        : config.extraMetadata,
-      framework.createTransformer == null ? null : framework.createTransformer()
-    )
+    const transformer = createTransformer(appDir, config, config.extraMetadata, framework.createTransformer == null ? null : framework.createTransformer())
 
     const _computeFileSets = (matchers: Array<FileMatcher>) => {
-      return computeFileSets(matchers, this.info.isPrepackedAppAsar ? null : transformer, this, isElectronCompile).then(async result => {
+      return computeFileSets(matchers, this.info.isPrepackedAppAsar ? null : transformer, this).then(async result => {
         if (!this.info.isPrepackedAppAsar && !this.info.areNodeModulesHandledExternally) {
           const moduleFileMatcher = getNodeModuleFileMatcher(appDir, defaultDestination, macroExpander, platformSpecificBuildOptions, this.info)
           result = result.concat(await computeNodeModuleFileSets(this, moduleFileMatcher))

@@ -1,7 +1,7 @@
 import { ToolsetConfig } from "app-builder-lib"
 import { getWindowsVm, ParallelsVmManager, PM, VmManager } from "app-builder-lib/internal"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
-import { archFromString, deepAssign, DebugLogger, log, serializeToYaml, spawn, TmpDir } from "builder-util/src/util"
+import { archFromString, deepAssign, DebugLogger, log, serializeToYaml, spawn, TmpDir } from "builder-util"
 import { Arch, Configuration, Platform } from "electron-builder"
 import { copy, existsSync, move, outputFile, readJsonSync, remove } from "fs-extra"
 import { homedir } from "os"

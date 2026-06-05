@@ -1,5 +1,5 @@
 import { GithubOptions, HttpError } from "builder-util-runtime"
-import { PrivateGitHubProvider, PrivateGitHubUpdateInfo } from "electron-updater/src/providers/PrivateGitHubProvider.js"
+import { PrivateGitHubProvider, PrivateGitHubUpdateInfo } from "electron-updater/internal"
 import { assertDownloadNotTriggered, getProvider, mockYaml } from "../helpers/providerTestUtil.js"
 import { createMockRequest, createNsisUpdater, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 

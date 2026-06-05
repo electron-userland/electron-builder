@@ -9,6 +9,11 @@
       "import": "./dist/dmgUtil.js",
       "require": "./dist/dmgUtil.js"
     },
+    "./internal": {
+      "types": "./dist/indexInternal.d.ts",
+      "import": "./dist/indexInternal.js",
+      "require": "./dist/indexInternal.js"
+    },
     "./src/*": "./src/*.ts"
   },
   "author": "Vladimir Krivosheev",

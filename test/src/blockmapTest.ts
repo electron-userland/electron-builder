@@ -134,7 +134,7 @@ describe("buildBlockMap", () => {
     const blake2bPath = require.resolve("@noble/hashes/blake2.js", {
       paths: [require.resolve("app-builder-lib/src/targets/blockmap/blockmap")],
     })
-    const { blake2b } = require(blake2bPath) as typeof import("@noble/hashes/blake2")
+    const { blake2b } = require(blake2bPath) as typeof import("@noble/hashes/blake2.js")
     const data = makeTestData(50_000)
     const inFile = path.join(tmpDir, "checksum.bin")
     const outFile = path.join(tmpDir, "checksum.blockmap")

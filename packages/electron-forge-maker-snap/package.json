@@ -1,7 +1,14 @@
 {
   "name": "electron-forge-maker-snap",
   "version": "26.14.0",
+  "type": "module",
   "main": "main.js",
+  "exports": {
+    ".": {
+      "import": "./main.js",
+      "require": "./main.js"
+    }
+  },
   "engines": {
     "node": ">=22.12.0"
   },

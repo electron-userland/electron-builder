@@ -7,7 +7,6 @@ import asyncPool from "tiny-async-pool"
 import { isLibOrExe } from "../asar/unpackDetector.js"
 import { Platform } from "../core.js"
 import { excludedExts, FileMatcher } from "../fileMatcher.js"
-import { createElectronCompilerHost, NODE_MODULES_PATTERN } from "../fileTransformer.js"
 import { getCollectorByPackageManager, PM } from "../node-module-collector/index.js"
 import { LogMessageByKey, logMessageLevelByKey, ModuleManager } from "../node-module-collector/moduleManager.js"
 import { Packager } from "../packager.js"
@@ -15,10 +14,6 @@ import { PlatformPackager } from "../platformPackager.js"
 import { AppFileWalker } from "./AppFileWalker.js"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper.js"
 import { NodeModuleInfo } from "./packageDependencies.js"
-
-const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
-/** @internal */
-export const ELECTRON_COMPILE_SHIM_FILENAME = "__shim.js"
 
 export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
   if (file === fileSet.src) {
@@ -129,8 +124,7 @@ export async function transformFiles(transformer: FileTransformer, fileSet: Reso
 export async function computeFileSets(
   matchers: Array<FileMatcher>,
   transformer: FileTransformer | null,
-  platformPackager: PlatformPackager<any>,
-  isElectronCompile: boolean
+  platformPackager: PlatformPackager<any>
 ): Promise<Array<ResolvedFileSet>> {
   const fileSets: Array<ResolvedFileSet> = []
   const packager = platformPackager.info
@@ -149,10 +143,6 @@ export async function computeFileSets(
     fileSets.push(validateFileSet({ src: matcher.from, files, metadata, destination: matcher.to }))
   }
 
-  if (isElectronCompile) {
-    // cache files should be first (better IO)
-    fileSets.unshift(await compileUsingElectronCompile(fileSets[0], packager))
-  }
   return fileSets
 }
 
@@ -250,53 +240,3 @@ async function collectNodeModulesWithLogging(platformPackager: PlatformPackager<
   return deps.nodeModules
 }
 
-async function compileUsingElectronCompile(mainFileSet: ResolvedFileSet, packager: Packager): Promise<ResolvedFileSet> {
-  log.info("compiling using electron-compile")
-
-  const electronCompileCache = await packager.tempDirManager.getTempDir({ prefix: "electron-compile-cache" })
-  const cacheDir = path.join(electronCompileCache, ".cache")
-  // clear and create cache dir
-  await mkdir(cacheDir, { recursive: true })
-  const compilerHost = await createElectronCompilerHost(mainFileSet.src, cacheDir)
-  const nextSlashIndex = mainFileSet.src.length + 1
-  // pre-compute electron-compile to cache dir - we need to process only subdirectories, not direct files of app dir
-  const filesPromise: Promise<any>[] = mainFileSet.files.map(file => {
-    if (
-      file.includes(NODE_MODULES_PATTERN) ||
-      file.includes(BOWER_COMPONENTS_PATTERN) ||
-      !file.includes(path.sep, nextSlashIndex) || // ignore not root files
-      !mainFileSet.metadata.get(file)!.isFile()
-    ) {
-      return
-    }
-    return compilerHost.compile(file)
-  })
-  await asyncPool(MAX_FILE_REQUESTS, filesPromise, promise => promise)
-  await compilerHost.saveConfiguration()
-
-  const metadata = new Map<string, Stats>()
-  const cacheFiles = await walk(cacheDir, file => !file.startsWith("."), {
-    consume: (file, fileStat) => {
-      if (fileStat.isFile()) {
-        metadata.set(file, fileStat)
-      }
-      return null
-    },
-  })
-
-  // add shim
-  const shimPath = `${mainFileSet.src}${path.sep}${ELECTRON_COMPILE_SHIM_FILENAME}`
-  mainFileSet.files.push(shimPath)
-  mainFileSet.metadata.set(shimPath, { isFile: () => true, isDirectory: () => false, isSymbolicLink: () => false } as any)
-  if (mainFileSet.transformedFiles == null) {
-    mainFileSet.transformedFiles = new Map()
-  }
-  mainFileSet.transformedFiles.set(
-    mainFileSet.files.length - 1,
-    `
-'use strict';
-require('electron-compile').init(import.meta.dirname, require('path').resolve(import.meta.dirname, '${packager.metadata.main || "index"}'), true);
-`
-  )
-  return { src: electronCompileCache, files: cacheFiles, metadata, destination: mainFileSet.destination }
-}

@@ -129,8 +129,7 @@ export function getMainFileMatchers(
   macroExpander: (pattern: string) => string,
   platformSpecificBuildOptions: PlatformSpecificBuildOptions,
   platformPackager: PlatformPackager<any>,
-  outDir: string,
-  isElectronCompile: boolean
+  outDir: string
 ): Array<FileMatcher> {
   const packager = platformPackager.info
   const buildResourceDir = path.resolve(packager.projectDir, packager.buildResourcesDir)
@@ -204,9 +203,6 @@ export function getMainFileMatchers(
   patterns.push("!**/electron-builder.{yaml,yml,json,json5,toml,ts}")
   patterns.push(`!**/{${excludedNames}}`)
 
-  if (isElectronCompile) {
-    patterns.push("!.cache{,/**/*}")
-  }
   patterns.push("!.yarn{,/**/*}")
 
   // https://github.com/electron-userland/electron-builder/issues/1969

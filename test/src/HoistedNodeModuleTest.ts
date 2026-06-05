@@ -1,5 +1,5 @@
 import { PM } from "app-builder-lib/internal"
-import { spawn } from "builder-util/src/util"
+import { spawn } from "builder-util"
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as path from "path"
 import { appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"

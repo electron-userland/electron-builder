@@ -1,4 +1,4 @@
-import { buildGotProxyAgent, NodeHttpExecutor } from "builder-util/src/nodeHttpExecutor"
+import { buildGotProxyAgent, NodeHttpExecutor } from "builder-util/internal"
 import { afterEach, beforeEach, vi } from "vitest"
 
 const PROXY_VARS = ["HTTPS_PROXY", "https_proxy", "HTTP_PROXY", "http_proxy"] as const
