@@ -194,7 +194,7 @@ describe.sequential("LibUiFramework helpers", () => {
         ["app_main.js", "package.json main"],
         ["", "empty string"],
       ])("allows %j", (value, field) => {
-        expect(() => validateShellEmbeddable(value as string, field as string)).not.toThrow()
+        expect(() => validateShellEmbeddable(value, field)).not.toThrow()
       })
     })
 
@@ -208,7 +208,7 @@ describe.sequential("LibUiFramework helpers", () => {
         ["$(rm -rf /)", "command substitution"],
         ["`id`", "backtick substitution"],
       ])("rejects %j (contains %s)", value => {
-        expect(() => validateShellEmbeddable(value as string, "test field")).toThrow()
+        expect(() => validateShellEmbeddable(value, "test field")).toThrow()
       })
     })
   })
