@@ -1,1 +1,1 @@
-export { addLicenseToDmg } from "./dmgLicense.js"
+// No production cross-package internals yet.

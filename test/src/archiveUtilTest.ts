@@ -1,4 +1,4 @@
-import { archive, compute7zCompressArgs } from "app-builder-lib/internal"
+import { archive, compute7zCompressArgs } from "app-builder-lib/src/targets/archive"
 import * as fs from "fs/promises"
 import * as os from "os"
 import * as path from "path"

@@ -2,7 +2,7 @@ import { afterEach, describe, test } from "vitest"
 import * as fse from "fs-extra"
 import * as os from "os"
 import * as path from "path"
-import { ModuleManager, LogMessageByKey } from "app-builder-lib/internal"
+import { ModuleManager, LogMessageByKey } from "app-builder-lib/src/node-module-collector/moduleManager"
 
 // ---------------------------------------------------------------------------
 // Helpers

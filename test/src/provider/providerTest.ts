@@ -1,6 +1,6 @@
 import { CancellationToken, UpdateInfo } from "builder-util-runtime"
 import { Provider, ProviderRuntimeOptions } from "electron-updater"
-import { ResolvedUpdateFileInfo } from "electron-updater/internal"
+import type { ResolvedUpdateFileInfo } from "electron-updater/src/types"
 import { OutgoingHttpHeaders } from "http"
 import { URL } from "url"
 import { MockInstance, afterEach, beforeEach, vi } from "vitest"

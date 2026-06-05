@@ -16,10 +16,10 @@ import * as https from "https"
 import { Arch } from "builder-util"
 import { CancellationToken, S3Options, SpacesOptions } from "builder-util-runtime"
 import { PublishContext, UploadTask } from "electron-publish"
-import { resolveAwsCredentials } from "electron-publish/internal"
+import { resolveAwsCredentials } from "electron-publish/src/s3/awsCredentials"
 import { S3Publisher } from "electron-publish/internal"
 import { SpacesPublisher } from "electron-publish/internal"
-import { getS3ContentType } from "electron-publish/internal"
+import { getS3ContentType } from "electron-publish/src/s3/s3UploadHelper"
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

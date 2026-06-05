@@ -121,11 +121,7 @@ export async function transformFiles(transformer: FileTransformer, fileSet: Reso
   await asyncPool(MAX_FILE_REQUESTS, filesPromise, promise => promise)
 }
 
-export async function computeFileSets(
-  matchers: Array<FileMatcher>,
-  transformer: FileTransformer | null,
-  platformPackager: PlatformPackager<any>
-): Promise<Array<ResolvedFileSet>> {
+export async function computeFileSets(matchers: Array<FileMatcher>, transformer: FileTransformer | null, platformPackager: PlatformPackager<any>): Promise<Array<ResolvedFileSet>> {
   const fileSets: Array<ResolvedFileSet> = []
   const packager = platformPackager.info
 
@@ -239,4 +235,3 @@ async function collectNodeModulesWithLogging(platformPackager: PlatformPackager<
 
   return deps.nodeModules
 }
-

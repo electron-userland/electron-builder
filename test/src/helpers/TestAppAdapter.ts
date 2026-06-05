@@ -1,4 +1,4 @@
-import { ElectronAppAdapter } from "electron-updater/internal"
+import { ElectronAppAdapter } from "electron-updater/src/ElectronAppAdapter"
 
 // do not implement AppAdapter directly, test that our ElectronAppAdapter implementation is correct
 export class TestAppAdapter extends ElectronAppAdapter {

@@ -1,6 +1,3 @@
 export { MultiProgress } from "./multiProgress.js"
-export { resolveAwsCredentials } from "./s3/awsCredentials.js"
-export { getBucketLocation } from "./s3/bucketLocation.js"
 export { S3Publisher } from "./s3/s3Publisher.js"
-export { getS3ContentType } from "./s3/s3UploadHelper.js"
 export { SpacesPublisher } from "./s3/spacesPublisher.js"

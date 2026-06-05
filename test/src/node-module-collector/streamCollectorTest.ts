@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, test, vi } from "vitest"
-import { NodeModulesCollector } from "app-builder-lib/internal"
-import { LogMessageByKey } from "app-builder-lib/internal"
+import { NodeModulesCollector } from "app-builder-lib/src/node-module-collector/nodeModulesCollector"
+import { LogMessageByKey } from "app-builder-lib/src/node-module-collector/moduleManager"
 import { PM } from "app-builder-lib/internal"
 import * as childProcess from "child_process"
 import * as nodeFs from "node:fs"
@@ -11,7 +11,7 @@ import * as path from "path"
 import { randomBytes } from "crypto"
 import { existsSync, unlinkSync } from "fs"
 
-vi.mock("child_process", async (importOriginal) => {
+vi.mock("child_process", async importOriginal => {
   const actual = await importOriginal<typeof import("child_process")>()
   return { ...actual, spawn: vi.fn() }
 })

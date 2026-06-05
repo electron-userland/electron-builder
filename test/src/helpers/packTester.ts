@@ -25,7 +25,7 @@ import type { ExpectStatic } from "vitest"
 import { computeDefaultAppDirectory, installDependencies } from "app-builder-lib/internal"
 import { ELECTRON_VERSION } from "./testConfig"
 import { execSync } from "child_process"
-import { detectPackageManager } from "app-builder-lib/internal"
+import { detectPackageManager } from "app-builder-lib/src/node-module-collector/packageManager"
 
 const PACKAGE_MANAGER_VERSION_MAP = {
   [PM.NPM]: { cli: "npm", version: "9.8.1" },

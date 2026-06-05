@@ -1,4 +1,5 @@
-import { getWineToolset, ToolsetConfig } from "app-builder-lib/internal"
+import type { ToolsetConfig } from "app-builder-lib/internal"
+import { getWineToolset } from "app-builder-lib/src/toolsets/wine"
 import { exists } from "builder-util"
 import * as path from "path"
 

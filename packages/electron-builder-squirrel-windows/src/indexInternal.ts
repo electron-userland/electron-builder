@@ -1,1 +1,1 @@
-export { default as SquirrelWindowsTarget } from "./SquirrelWindowsTarget.js"
+// No production cross-package internals yet.
