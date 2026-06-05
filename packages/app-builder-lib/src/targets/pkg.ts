@@ -255,15 +255,11 @@ export class PkgTarget extends Target {
 
     use(this.options.installLocation || "/Applications", it => args.push("--install-location", it))
 
-    // nasty nested ternary-statement, probably should optimize
-    const scriptsDir =
-      // user-provided scripts dir
-      options.scripts != null
-        ? path.resolve(this.packager.info.buildResourcesDir, options.scripts)
-        : // fallback to default unless user explicitly sets null
-          options.scripts !== null
-          ? path.join(this.packager.info.buildResourcesDir, "pkg-scripts")
-          : null
+    // Pass the version explicitly — macOS 15+ pkgbuild no longer infers it from the bundle
+    const pkgVersion = await resolvePkgBuildVersion(appPath, this.packager.appInfo.version)
+    args.push("--version", pkgVersion)
+
+    const scriptsDir = resolveScriptsDir(this.packager.info.buildResourcesDir, options.scripts)
     if (scriptsDir && (await statOrNull(scriptsDir))?.isDirectory()) {
       const dirContents = readdirSync(scriptsDir)
       dirContents.forEach(name => {
@@ -294,4 +290,33 @@ export function prepareProductBuildArgs(identity: Identity | null, keychain: str
     }
   }
   return args
+}
+
+/**
+ * Resolves the version string to pass as `--version` to pkgbuild.
+ * Reads CFBundleShortVersionString from the app bundle's Info.plist (what pkgbuild
+ * previously inferred automatically), falling back to the appInfo version.
+ */
+export async function resolvePkgBuildVersion(appPath: string, fallback: string): Promise<string> {
+  const infoPlistPath = path.join(appPath, "Contents", "Info.plist")
+  try {
+    const plist = await parsePlistFile<PlistObject>(infoPlistPath)
+    const version = plist.CFBundleShortVersionString
+    return typeof version === "string" && version.length > 0 ? version : fallback
+  } catch {
+    return fallback
+  }
+}
+
+/**
+ * Resolves the scripts directory path for pkgbuild.
+ * Returns null when scripts is explicitly set to null (disabled).
+ * Returns a custom path when scripts is a non-empty string.
+ * Falls back to the default "pkg-scripts" directory otherwise.
+ */
+export function resolveScriptsDir(buildResourcesDir: string, scripts: string | null | undefined): string | null {
+  if (scripts === null) {
+    return null
+  }
+  return scripts != null ? path.resolve(buildResourcesDir, scripts) : path.join(buildResourcesDir, "pkg-scripts")
 }
