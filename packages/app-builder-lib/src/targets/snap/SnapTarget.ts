@@ -86,7 +86,12 @@ export default class SnapTarget extends Target {
       if (extraPath === artifactPath) {
         continue
       }
-      const snapArch = path.basename(extraPath).replace(/\.snap$/, "").split("_").pop() ?? "amd64"
+      const snapArch =
+        path
+          .basename(extraPath)
+          .replace(/\.snap$/, "")
+          .split("_")
+          .pop() ?? "amd64"
       const extraArch = snapArchStringToArch(snapArch)
       const extraArtifactName = path.basename(extraPath)
       await packager.info.emitArtifactBuildCompleted({
