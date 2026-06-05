@@ -5,7 +5,6 @@ const path = require("path")
 const knownUnusedDevDependencies = new Set([
   "@babel/plugin-transform-modules-commonjs", // Not sure what this is used for, but keeping just in case (for now)
   "changesets-changelog-clean", // Used in package.json CI/CD logic
-  "typedoc-plugin-markdown", // Used in typedoc config
   // Eslint config doesn't get scanned by depCheck
   "@stylistic/eslint-plugin",
   "@eslint/js",
@@ -14,7 +13,6 @@ const knownUnusedDevDependencies = new Set([
   "@typescript-eslint/parser",
   "eslint-config-prettier",
   "eslint-plugin-prettier",
-  "@rollup/plugin-typescript",
 ])
 const knownMissedDependencies = new Set(["babel-core", "babel-preset-env", "babel-preset-stage-0", "babel-preset-react"])
 
@@ -33,6 +31,10 @@ async function check(projectDir, devPackageData) {
   if (unusedDependencies.length > 0) {
     if (packageName === "electron-builder") {
       unusedDependencies = unusedDependencies.filter(it => it !== "dmg-builder")
+    }
+    if (packageName === "app-builder-lib") {
+      // @electron/universal is loaded via dynamicImport() which depcheck cannot statically detect
+      unusedDependencies = unusedDependencies.filter(it => it !== "@electron/universal")
     }
     if (unusedDependencies.length > 0) {
       console.error(`${chalk.bold(packageName)} Unused dependencies: ${JSON.stringify(unusedDependencies, null, 2)}`)

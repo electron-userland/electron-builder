@@ -1,7 +1,7 @@
 import { Arch, archFromString, copyDir, InvalidConfigurationError, log, removeNullish, toLinuxArchString } from "builder-util"
 import { copy, mkdir, readdir, writeFile } from "fs-extra"
 import * as path from "path"
-import { PlugDescriptor, SlotDescriptor, SnapOptions24, SnapcraftOptions } from "../../options/SnapOptions"
+import { PlugDescriptor, SlotDescriptor, SnapOptions24 } from "../../options/SnapOptions"
 import { SnapCore } from "./SnapTarget"
 import { App, Part, SnapcraftYAML } from "./snapcraft"
 import { buildSnap, DEFAULT_STAGE_PACKAGES, SNAPCRAFT_YAML_OPTIONS } from "./snapcraftBuilder"
@@ -110,7 +110,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       }
     }
 
-    const rootOptions = this.packager.config.snapcraft as SnapcraftOptions | null | undefined
+    const rootOptions = this.packager.config.snapcraft
     await buildSnap({
       snapcraftConfig: snap,
       artifactPath,

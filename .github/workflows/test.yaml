@@ -70,7 +70,7 @@ jobs:
   # Shard Planning (unified job outputting map for all platforms)
   # -------------------------
 
-  shard-plan:
+  validate-and-shard:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     outputs:
@@ -86,6 +86,12 @@ jobs:
           cache-key: v-39.8.5-linux-electron
           cache-path: ~/.cache/electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
+
+      - name: Validate files
+        run: pnpm ci:validate
+
+      - name: Lint files
+        run: pnpm lint
 
       - name: Output shard plan
         run: pnpm ci:test:count
@@ -505,10 +511,7 @@ jobs:
         continue-on-error: true
 
       - name: Merge cache files
-        run: |
-          pnpm ci:test:merge-cache \
-            --artifacts-dir smart-cache-artifacts \
-            --output merged-cache/_vitest-smart-cache.json
+        run: pnpm ci:test:merge-cache
 
       - name: Delete individual cache artifacts
         uses: geekyeggo/delete-artifact@f275313e70c08f6120db482d7a6b98377786765b # v5.1.0

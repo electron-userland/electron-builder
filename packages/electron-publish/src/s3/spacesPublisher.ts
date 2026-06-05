@@ -44,7 +44,7 @@ export class SpacesPublisher extends BaseS3Publisher {
     return {
       region: this.info.region,
       endpoint: `https://${this.info.region}.digitaloceanspaces.com`,
-      credentials: { accessKeyId: accessKey!, secretAccessKey: secretKey! },
+      credentials: { accessKeyId: accessKey, secretAccessKey: secretKey },
     }
   }
 }

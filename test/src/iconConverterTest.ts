@@ -33,7 +33,7 @@ const CRC_TABLE = (() => {
 function crc32(buf: Buffer): number {
   let crc = 0xffffffff
   for (const byte of buf) {
-    crc = CRC_TABLE[(crc ^ byte) & 0xff]! ^ (crc >>> 8)
+    crc = CRC_TABLE[(crc ^ byte) & 0xff] ^ (crc >>> 8)
   }
   return (crc ^ 0xffffffff) >>> 0
 }
@@ -80,14 +80,20 @@ async function writePng(size: number, filePath: string): Promise<void> {
 
 function parseIcns(data: Buffer): Map<string, Buffer> {
   const magic = data.toString("ascii", 0, 4)
-  if (magic !== "icns") throw new Error(`Not an ICNS file (got ${magic})`)
+  if (magic !== "icns") {
+    throw new Error(`Not an ICNS file (got ${magic})`)
+  }
   const entries = new Map<string, Buffer>()
   let offset = 8
   while (offset < data.length) {
-    if (offset + 8 > data.length) break
+    if (offset + 8 > data.length) {
+      break
+    }
     const ostype = data.toString("ascii", offset, offset + 4)
     const len = data.readUInt32BE(offset + 4)
-    if (len < 8) break
+    if (len < 8) {
+      break
+    }
     entries.set(ostype, data.subarray(offset + 8, offset + len))
     offset += len
   }

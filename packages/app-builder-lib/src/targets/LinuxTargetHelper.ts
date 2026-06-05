@@ -99,7 +99,6 @@ export class LinuxTargetHelper {
     return this.mimeTypeFilesPromise.value
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getSnapCore(): SnapCore<any> {
     const { snapcraft, snap: legacySnap } = this.packager.config
     if (snapcraft != null && legacySnap != null) {
