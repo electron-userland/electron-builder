@@ -65,6 +65,7 @@ function mockSuccessfulUpload(): { capturedOpts: () => any } {
       const res = new EventEmitter() as any
       res.statusCode = 200
       res.resume = vi.fn()
+      // eslint-disable-next-line
       ;(callback as Function)(res)
       setImmediate(() => res.emit("end"))
     })

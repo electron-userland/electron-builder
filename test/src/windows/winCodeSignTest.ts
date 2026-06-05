@@ -168,10 +168,11 @@ for (const winCodeSign of winCodeSignVersions) {
           },
         },
         {
-          packed: async () => {
+          packed: () => {
             expect(capturedToolInfo).not.toBeNull()
             expect(typeof capturedToolInfo!.path).toBe("string")
             expect(capturedToolInfo!.path.length).toBeGreaterThan(0)
+            return Promise.resolve()
           },
         }
       )
