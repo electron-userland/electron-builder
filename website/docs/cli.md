@@ -66,7 +66,11 @@ See https://electron.build for more documentation.
 For other commands please see help using `--help` arg, e.g. `./node_modules/.bin/electron-builder install-app-deps --help`
 
 :::tip
-Since Node.js 8 [npx](https://medium.com/@maybekatz/introducing-npx-an-npm-package-runner-55f7d4bd282b) is bundled, so you can simply use `npx electron-builder`.
+[npx](https://docs.npmjs.com/cli/v10/commands/npx) is bundled with Node.js, so you can simply use `npx electron-builder`.
+:::
+
+:::note[Requirements]
+electron-builder v27 requires **Node.js >=22.12.0**. See the [migration guide](./migration/v26-to-v27) if upgrading from v26.
 :::
 
 Prepend `npx` to sample commands below if you run them from Terminal and not from `package.json` scripts.

@@ -98,6 +98,10 @@ See the full documentation on [electron.build](https://www.electron.build).
 | “I found a bug or I have a question”   | [Open an issue](https://github.com/electron-userland/electron-builder/issues/new) |
 | “I want to support development”        | [Donate](https://www.electron.build/docs/donate)                                       |
 
+## Requirements
+
+- **Node.js >=22.12.0** — required for stable ESM/CJS interop. See the [v26 to v27 migration guide](./migration/v26-to-v27) if upgrading from v26.
+
 ## Installation
 ```
 yarn add electron-builder --dev
@@ -150,28 +154,28 @@ Please note that everything is packaged into an asar archive [by default](https:
 For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](https://www.electron.build/docs/features/code-signing/code-signing#where-to-buy-code-signing-certificate).
 
 ## Programmatic Usage
-See `node_modules/electron-builder/out/index.d.ts`. Typings for TypeScript are provided and also can be found [here](https://www.electron.build/docs/api/index).
+TypeScript types are provided and can be found [here](https://www.electron.build/docs/api/index). See the full [programmatic usage guide](https://www.electron.build/docs/programmatic-usage).
 
-Code snippet provided below is also shown "in action" [here](https://www.electron.build/docs/programmatic-usage) as well.
 ```js
-"use strict"
+// ESM (recommended)
+import { build, Platform } from "electron-builder"
 
-const builder = require("electron-builder")
-const Platform = builder.Platform
-
-// Promise is returned
-builder.build({
+await build({
   targets: Platform.MAC.createTarget(),
   config: {
-   "//": "build options, see https://www.electron.build/"
+    // build options — see https://www.electron.build/
   }
 })
-  .then(() => {
-    // handle result
-  })
-  .catch((error) => {
-    // handle error
-  })
+```
+
+```js
+// CommonJS — also works on Node >=22.12.0
+const { build, Platform } = require("electron-builder")
+
+build({
+  targets: Platform.MAC.createTarget(),
+  config: {},
+}).then(() => { /* done */ }).catch(console.error)
 ```
 
 ## Community Boilerplates
