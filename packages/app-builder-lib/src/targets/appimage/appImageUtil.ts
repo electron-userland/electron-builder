@@ -28,6 +28,8 @@ interface Options {
    *
    */
   compression?: "gzip" | "zstd" | "xz"
+  /** Pre-computed desktop basename (already validated). When absent, falls back to `executableName`. */
+  desktopBaseName?: string
 }
 
 export interface AppImageBuilderOptions {
@@ -162,7 +164,7 @@ export function validateCriticalPathString(str: string, fieldName: string): void
 async function writeAppLauncherAndRelatedFiles(opts: AppImageBuilderOptions): Promise<void> {
   const {
     stageDir,
-    options: { license, executableName, productFilename, productName, desktopEntry },
+    options: { license, executableName, productFilename, productName, desktopEntry, desktopBaseName },
   } = opts
 
   // executableName and productFilename are embedded directly into double-quoted bash strings
@@ -172,7 +174,7 @@ async function writeAppLauncherAndRelatedFiles(opts: AppImageBuilderOptions): Pr
   validateCriticalPathString(productFilename, "productFilename")
 
   // Write desktop file
-  const desktopFileName = `${executableName}.desktop`
+  const desktopFileName = `${desktopBaseName ?? executableName}.desktop`
   await fs.writeFile(path.join(stageDir, desktopFileName), desktopEntry, { mode: 0o644 })
   await copyIcons(opts)
 

@@ -12,6 +12,41 @@ import { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTrans
 
 const debug = _debug("electron-builder")
 
+// ── Sensitive-data registries ────────────────────────────────────────────────
+
+// Normalise a header or field name: lowercase + strip all separators (- and _).
+// Shared by both registries so lookup is always separator-agnostic.
+const normalizeName = (name: string): string => name.toLowerCase().replace(/[-_]/g, "")
+
+// HTTP header names (normalised) stripped on cross-origin redirects.
+// Stored normalised; lookup normalises the incoming key with normalizeName().
+const SENSITIVE_REDIRECT_HEADERS = new Set(["authorization", "proxyauthorization", "privatetoken", "xapikey", "xauthtoken", "xaccesstoken", "xgitlabtoken", "cookie", "xcsrftoken"])
+
+// Substrings: a field name containing any of these (after normalization) is redacted.
+const SENSITIVE_FIELD_PATTERNS: string[] = ["token", "password", "secret", "authorization", "credential", "apikey", "passphrase", "auth"] as const
+
+// Suffixes: a field name ending with any of these (after normalization) is redacted.
+// Intentionally greedy — "publicKey" is also stripped; over-stripping debug logs is
+// acceptable, under-stripping a credential is not.
+const SENSITIVE_FIELD_SUFFIXES: string[] = ["key"] as const
+
+/**
+ * Register an additional HTTP header to strip on cross-origin redirects.
+ * Intended for custom publishers (e.g. GenericPublisher with a non-standard auth header).
+ */
+export function addSensitiveRedirectHeader(header: string): void {
+  SENSITIVE_REDIRECT_HEADERS.add(normalizeName(header))
+}
+
+/**
+ * Register an additional substring pattern used by {@link safeStringifyJson} to
+ * identify sensitive field names. Input is normalized (lowercased, separators stripped).
+ * Intended for custom publishers that store credentials under non-standard field names.
+ */
+export function addSensitiveFieldPattern(pattern: string): void {
+  SENSITIVE_FIELD_PATTERNS.push(pattern.toLowerCase().replace(/[-_]/g, ""))
+}
+
 export interface RequestHeaders extends OutgoingHttpHeaders {
   [key: string]: OutgoingHttpHeader | undefined
 }
@@ -87,7 +122,9 @@ export abstract class HttpExecutor<T extends Request> {
     const json = data == null ? undefined : JSON.stringify(data)
     const encodedData = json ? Buffer.from(json) : undefined
     if (encodedData != null) {
-      debug(json!)
+      if (debug.enabled) {
+        debug(safeStringifyJson(data))
+      }
       const { headers, ...opts } = options
       options = {
         method: "post",
@@ -206,7 +243,7 @@ Please double check that your authentication token is correct. Due to security r
               `method: ${options.method || "GET"} url: ${options.protocol || "https:"}//${options.hostname}${options.port ? `:${options.port}` : ""}${options.path}
 
           Data:
-          ${isJson ? JSON.stringify(JSON.parse(data)) : data}
+          ${isJson ? safeStringifyJson(JSON.parse(data)) : data}
           `
             )
           )
@@ -320,17 +357,21 @@ Please double check that your authentication token is correct. Due to security r
   static prepareRedirectUrlOptions(redirectUrl: string, options: RequestOptions): RequestOptions {
     const newOptions = configureRequestOptionsFromUrl(redirectUrl, { ...options })
     const headers = newOptions.headers
-    if (headers?.authorization) {
-      // Parse original and redirect URLs to compare origins
-      const originalUrl = HttpExecutor.reconstructOriginalUrl(options)
-      const parsedRedirectUrl = parseUrl(redirectUrl, options)
+    if (headers == null) {
+      return newOptions
+    }
 
-      // Strip authorization header on cross-origin redirects (different protocol, hostname, or port)
-      if (HttpExecutor.isCrossOriginRedirect(originalUrl, parsedRedirectUrl)) {
-        if (debug.enabled) {
-          debug(`Given the cross-origin redirect (from ${originalUrl.host} to ${parsedRedirectUrl.host}), the Authorization header will be stripped out.`)
+    const originalUrl = HttpExecutor.reconstructOriginalUrl(options)
+    const parsedRedirectUrl = parseUrl(redirectUrl, options)
+
+    if (HttpExecutor.isCrossOriginRedirect(originalUrl, parsedRedirectUrl)) {
+      if (debug.enabled) {
+        debug(`Cross-origin redirect (${originalUrl.host} → ${parsedRedirectUrl.host}): stripping sensitive headers`)
+      }
+      for (const key of Object.keys(headers)) {
+        if (SENSITIVE_REDIRECT_HEADERS.has(normalizeName(key))) {
+          delete (headers as Record<string, unknown>)[key]
         }
-        delete headers.authorization
       }
     }
     return newOptions
@@ -583,21 +624,21 @@ export function configureRequestOptions(options: RequestOptions, token?: string 
   return options
 }
 
-export function safeStringifyJson(data: any, skippedNames?: Set<string>) {
+export function isSensitiveFieldName(name: string): boolean {
+  const normalized = normalizeName(name)
+  return SENSITIVE_FIELD_PATTERNS.some(p => normalized.includes(p)) || SENSITIVE_FIELD_SUFFIXES.some(s => normalized.endsWith(s))
+}
+
+export function hashSensitiveValue(value: string): string {
+  return `${createHash("sha256").update(value).digest("hex")} (sha256 hash)`
+}
+
+export function safeStringifyJson(data: any, skippedNames?: Set<string>): string {
   return JSON.stringify(
     data,
     (name, value) => {
-      if (
-        name.endsWith("Authorization") ||
-        name.endsWith("authorization") ||
-        name.endsWith("Password") ||
-        name.endsWith("PASSWORD") ||
-        name.endsWith("Token") ||
-        name.includes("password") ||
-        name.includes("token") ||
-        (skippedNames != null && skippedNames.has(name))
-      ) {
-        return "<stripped sensitive data>"
+      if (isSensitiveFieldName(name) || (skippedNames != null && skippedNames.has(name))) {
+        return typeof value === "string" ? hashSensitiveValue(value) : "<stripped sensitive data>"
       }
       return value
     },

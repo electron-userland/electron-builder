@@ -87,7 +87,7 @@ export function saveCache(cache: SmartCache) {
 }
 
 export function getFileStats(cache: SmartCache, f: TestSpecification) {
-  const file = path.relative(TEST_SRC_ROOT, f.moduleId)
+  const file = path.relative(TEST_SRC_ROOT, f.moduleId).split(path.sep).join("/")
   const stat = cache.files[file]
   return { stat, file }
 }

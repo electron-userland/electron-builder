@@ -1,8 +1,7 @@
-import { Nullish, safeStringifyJson, isValidKey } from "builder-util-runtime"
+import { Nullish, safeStringifyJson, isValidKey, isSensitiveFieldName, hashSensitiveValue } from "builder-util-runtime"
 import chalk from "chalk"
 import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_process"
 import { spawn as _spawn } from "cross-spawn"
-import { createHash } from "crypto"
 import _debug from "debug"
 import { dump } from "js-yaml"
 import * as path from "path"
@@ -49,7 +48,7 @@ export function serializeToYaml(object: any, skipInvalid = false, noRefs = false
 export function removePassword(input: string): string {
   // Sensitive parameter stems — any of `-`, `--`, or `/` prefix is accepted for all stems.
   // `pass:` is intentionally absent; the dedicated pass: handler below covers it without double-processing.
-  const sensitiveStems = ["accessKey", "secretKey", "passphrase", "password", "secret", "token", "String", "pass", "p"]
+  const sensitiveStems = ["accessKey", "secretKey", "privateToken", "apiKey", "passphrase", "password", "secret", "token", "String", "pass", "p"]
   const stemAlt = sensitiveStems.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")
   // (?:--?|/) matches -, --, or / prefix. Longest stems listed first to minimise backtracking.
   // (?<!\S) / (?=[\s"']|$) word-boundary guards prevent matching -path, -StringLength, etc.
@@ -62,22 +61,19 @@ export function removePassword(input: string): string {
       return `${prefix} ${quote ?? ""}${value}${quote ?? ""}`
     }
 
-    const hashed = createHash("sha256").update(value).digest("hex")
-    return `${prefix} ${quote ?? ""}${hashed} (sha256 hash)${quote ?? ""}`
+    return `${prefix} ${quote ?? ""}${hashSensitiveValue(value)}${quote ?? ""}`
   })
 
   // pass:value — colon acts as separator; handles both pass:secret (no space) and pass: secret (space)
   // Quoted phrases (pass:'a b c' or pass:"a b c") are captured in full so the whole phrase is hashed.
   input = input.replace(/(?<!\S)pass:\s*(?:(["'])(.*?)\1|([^\s]+))/gi, (_match, quote, quotedVal, unquotedVal) => {
     const value = quotedVal ?? unquotedVal
-    const hashed = createHash("sha256").update(value).digest("hex")
-    return quote ? `pass:${quote}${hashed} (sha256 hash)${quote}` : `pass:${hashed} (sha256 hash)`
+    return quote ? `pass:${quote}${hashSensitiveValue(value)}${quote}` : `pass:${hashSensitiveValue(value)}`
   })
 
   // /b … /c block format
   return input.replace(/(\/b\s+)(.*?)(\s+\/c)/g, (_match, p1, p2, p3) => {
-    const hashed = createHash("sha256").update(p2).digest("hex")
-    return `${p1}${hashed} (sha256 hash)${p3}`
+    return `${p1}${hashSensitiveValue(p2)}${p3}`
   })
 }
 
@@ -91,7 +87,7 @@ const SENSITIVE_ENV_KEY_RE = /KEY|TOKEN|SECRET|PASSWORD|PASS|CREDENTIAL|CSC/i
 export function stripSensitiveEnvVars(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   const out: NodeJS.ProcessEnv = {}
   for (const [k, v] of Object.entries(env)) {
-    if (isValidKey(k) && !SENSITIVE_ENV_KEY_RE.test(k)) {
+    if (isValidKey(k) && !isSensitiveFieldName(k) && !SENSITIVE_ENV_KEY_RE.test(k)) {
       out[k] = v
     }
   }
@@ -101,7 +97,7 @@ export function stripSensitiveEnvVars(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv
 export function filterSensitiveEnv(env: Record<string, string | undefined>): Record<string, string | undefined> {
   const out: Record<string, string | undefined> = {}
   for (const [k, v] of Object.entries(env)) {
-    out[k] = SENSITIVE_ENV_KEY_RE.test(k) && v != null ? `${createHash("sha256").update(v).digest("hex")} (sha256 hash)` : v
+    out[k] = (isSensitiveFieldName(k) || SENSITIVE_ENV_KEY_RE.test(k)) && v != null ? hashSensitiveValue(v) : v
   }
   return out
 }
@@ -184,13 +180,13 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
             if (file.endsWith("wine")) {
               stdout = stdout.toString()
             }
-            message += `\n${chalk.yellow(stdout.toString())}`
+            message += `\n${chalk.yellow(removePassword(stdout.toString()))}`
           }
           if (stderr.length !== 0) {
             if (file.endsWith("wine")) {
               stderr = stderr.toString()
             }
-            message += `\n${chalk.red(stderr.toString())}`
+            message += `\n${chalk.red(removePassword(stderr.toString()))}`
           }
 
           // TODO: switch to ECMA Script 2026 Error class with `cause` property to return stack trace

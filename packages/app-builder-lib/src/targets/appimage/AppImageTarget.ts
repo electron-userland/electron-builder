@@ -70,7 +70,13 @@ export default class AppImageTarget extends Target {
       await outputFile(path.join(packager.getResourcesDir(appOutDir), "app-update.yml"), serializeToYaml(publishConfig))
     }
 
-    if (this.packager.packagerOptions.effectiveOptionComputed != null && (await this.packager.packagerOptions.effectiveOptionComputed({ desktop: desktopEntry }))) {
+    // Validated once here; throws InvalidConfigurationError for path traversal / NUL.
+    const desktopBaseName = this.helper.getDesktopFileName()
+
+    if (
+      this.packager.packagerOptions.effectiveOptionComputed != null &&
+      (await this.packager.packagerOptions.effectiveOptionComputed({ desktop: desktopEntry, desktopFileName: `${desktopBaseName}.desktop` }))
+    ) {
       await stageDir.cleanup()
       return
     }
@@ -92,6 +98,7 @@ export default class AppImageTarget extends Target {
             desktopEntry,
             icons,
             fileAssociations: packager.fileAssociations,
+            desktopBaseName,
             compression: (() => {
               const c = options.compression
               if (c === "xz" || c === "gzip") {
@@ -118,6 +125,7 @@ export default class AppImageTarget extends Target {
             desktopEntry,
             icons,
             fileAssociations: packager.fileAssociations,
+            desktopBaseName,
             compression: (() => {
               const c = options.compression
               if (c === "gzip" || c === "zstd") {

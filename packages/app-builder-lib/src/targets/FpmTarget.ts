@@ -274,7 +274,7 @@ export default class FpmTarget extends Target {
     }
 
     const desktopFilePath = await this.helper.writeDesktopEntry(this.options)
-    args.push(`${desktopFilePath}=/usr/share/applications/${packager.executableName}.desktop`)
+    args.push(`${desktopFilePath}=/usr/share/applications/${this.helper.getDesktopFileName()}.desktop`)
 
     if (packager.packagerOptions.effectiveOptionComputed != null && (await packager.packagerOptions.effectiveOptionComputed([args, desktopFilePath]))) {
       return
