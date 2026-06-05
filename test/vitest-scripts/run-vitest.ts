@@ -18,6 +18,17 @@ const sourceAlias = (specifier: string, relPath: string) => ({
   find: new RegExp(`^${escapeRegex(specifier)}$`),
   replacement: path.join(PACKAGES_DIR, relPath),
 })
+const PACKAGES_DIR_FWD = PACKAGES_DIR.replace(/\\/g, "/")
+const workspacePackageNames = [
+  "app-builder-lib",
+  "builder-util",
+  "builder-util-runtime",
+  "dmg-builder",
+  "electron-builder",
+  "electron-builder-squirrel-windows",
+  "electron-publish",
+  "electron-updater",
+]
 const workspaceSourceAliases = [
   sourceAlias("app-builder-lib/internal", "app-builder-lib/src/indexInternal.ts"),
   sourceAlias("app-builder-lib", "app-builder-lib/src/index.ts"),
@@ -33,6 +44,13 @@ const workspaceSourceAliases = [
   sourceAlias("electron-builder-squirrel-windows", "electron-builder-squirrel-windows/src/SquirrelWindowsTarget.ts"),
   sourceAlias("electron-builder/internal", "electron-builder/src/indexInternal.ts"),
   sourceAlias("electron-builder", "electron-builder/src/index.ts"),
+  // Wildcard src/ alias: allows vi.mock/vi.importActual to reference individual source files
+  // (e.g. "electron-publish/src/s3/awsCredentials") without exposing ./src/* in package.json exports.
+  // Must come after the exact-match aliases above so it only fires for unmatched src/ paths.
+  {
+    find: new RegExp(`^(${workspacePackageNames.map(escapeRegex).join("|")})/src/(.+?)(?:\\.js)?$`),
+    replacement: `${PACKAGES_DIR_FWD}/$1/src/$2.ts`,
+  },
 ]
 
 const testPatterns = TEST_FILES_PATTERN.split(",")

@@ -186,7 +186,10 @@ describe("resolveAwsCredentials", () => {
   })
 
   it("returns env-var credentials when AWS_ACCESS_KEY_ID is set", async () => {
-    const { resolveAwsCredentials: realResolve } = await vi.importActual<typeof import("electron-publish/internal")>("electron-publish/internal")
+    // Use the specific awsCredentials module path so vi.importActual bypasses the mock for
+    // exactly that file — going via "electron-publish/internal" would still return the mock
+    // because internal re-exports from the already-mocked awsCredentials.ts.
+    const { resolveAwsCredentials: realResolve } = await vi.importActual<typeof import("electron-publish/internal")>("electron-publish/src/s3/awsCredentials")
     vi.stubEnv("AWS_ACCESS_KEY_ID", "AKIAENV")
     vi.stubEnv("AWS_SECRET_ACCESS_KEY", "env-secret")
     vi.stubEnv("AWS_SESSION_TOKEN", "env-token")
@@ -196,7 +199,7 @@ describe("resolveAwsCredentials", () => {
   })
 
   it("includes sessionToken only when AWS_SESSION_TOKEN is set", async () => {
-    const { resolveAwsCredentials: realResolve } = await vi.importActual<typeof import("electron-publish/internal")>("electron-publish/internal")
+    const { resolveAwsCredentials: realResolve } = await vi.importActual<typeof import("electron-publish/internal")>("electron-publish/src/s3/awsCredentials")
     vi.stubEnv("AWS_ACCESS_KEY_ID", "AKIAENV")
     vi.stubEnv("AWS_SECRET_ACCESS_KEY", "env-secret")
     vi.stubEnv("AWS_SESSION_TOKEN", "")
@@ -206,7 +209,7 @@ describe("resolveAwsCredentials", () => {
   })
 
   it("returns undefined when no credentials are configured", async () => {
-    const { resolveAwsCredentials: realResolve } = await vi.importActual<typeof import("electron-publish/internal")>("electron-publish/internal")
+    const { resolveAwsCredentials: realResolve } = await vi.importActual<typeof import("electron-publish/internal")>("electron-publish/src/s3/awsCredentials")
     vi.stubEnv("AWS_ACCESS_KEY_ID", "")
     vi.stubEnv("AWS_SECRET_ACCESS_KEY", "")
     // Point HOME to a non-existent dir so there's no ~/.aws/credentials

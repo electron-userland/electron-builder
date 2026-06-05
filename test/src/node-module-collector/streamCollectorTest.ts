@@ -11,7 +11,10 @@ import * as path from "path"
 import { randomBytes } from "crypto"
 import { existsSync, unlinkSync } from "fs"
 
-vi.mock("child_process", () => ({ spawn: vi.fn() }))
+vi.mock("child_process", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("child_process")>()
+  return { ...actual, spawn: vi.fn() }
+})
 vi.mock("node:fs", async () => {
   const actual = await vi.importActual<typeof import("node:fs")>("node:fs")
   return { ...actual, createWriteStream: vi.fn() }
