@@ -5,7 +5,7 @@ import * as path from "path"
 import { statSync } from "fs"
 
 // Import from src/ path so vitest can intercept relative imports inside the SUT
-import { addLicenseToDmg } from "dmg-builder/internal"
+import { addLicenseToDmg } from "dmg-builder/src/dmgLicense"
 
 // ─── Minimal mock packager ──────────────────────────────────────────────────
 

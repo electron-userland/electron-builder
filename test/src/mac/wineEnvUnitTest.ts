@@ -2,7 +2,7 @@ import { afterEach, beforeEach } from "vitest"
 import * as os from "os"
 import * as path from "path"
 import { mkdir, rm, writeFile } from "fs/promises"
-import { getWineToolset } from "app-builder-lib/internal"
+import { getWineToolset } from "app-builder-lib/src/toolsets/wine"
 
 // These unit tests exercise env-var merging in getWineToolset via the
 // ELECTRON_BUILDER_WINE_TOOLSET_DIR override, which bypasses the real download.

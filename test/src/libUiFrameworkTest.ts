@@ -9,7 +9,7 @@ import {
   getNodeJsDownloadParams,
   LAUNCHUI_DEFAULT_VERSION,
   validateShellEmbeddable,
-} from "app-builder-lib/internal"
+} from "app-builder-lib/src/frameworks/LibUiFramework"
 
 vi.mock("https")
 
