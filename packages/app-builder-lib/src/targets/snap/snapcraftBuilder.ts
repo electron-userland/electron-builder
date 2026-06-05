@@ -1,4 +1,4 @@
-import { InvalidConfigurationError, isEmptyOrSpaces, log, spawn, stripSensitiveEnvVars } from "builder-util"
+import { Arch, InvalidConfigurationError, isEmptyOrSpaces, log, spawn, stripSensitiveEnvVars } from "builder-util"
 import * as childProcess from "child_process"
 import { randomUUID } from "crypto"
 import { resolveSnapCredentials } from "electron-publish"
@@ -188,6 +188,27 @@ async function cleanupBuildArtifacts(workDir: string): Promise<void> {
   }
 }
 
+/**
+ * Maps a snapcraft arch string (as found in snap filenames) back to an electron-builder Arch.
+ * Used to assign the correct Arch value to extra artifacts from multi-arch remote-builds.
+ */
+export function snapArchStringToArch(snapArch: string): Arch {
+  switch (snapArch) {
+    case "amd64":
+      return Arch.x64
+    case "arm64":
+      return Arch.arm64
+    case "armhf":
+      return Arch.armv7l
+    case "i386":
+    case "i686":
+      return Arch.ia32
+    default:
+      log.warn({ snapArch }, "unrecognised snap arch in output filename, defaulting to x64")
+      return Arch.x64
+  }
+}
+
 async function copySnapToArtifactPath(workDir: string, outputBasename: string, outputFileName: string): Promise<string> {
   const snapInWorkDir = path.join(workDir, outputBasename)
   if (snapInWorkDir !== outputFileName) {
@@ -206,7 +227,7 @@ async function copySnapToArtifactPath(workDir: string, outputBasename: string, o
  * access to download stage-packages, the base image, and extensions.
  * To opt into an offline build, set `SNAPCRAFT_NO_NETWORK=1` in your environment.
  */
-export async function buildSnap(options: BuildSnapOptions): Promise<string> {
+export async function buildSnap(options: BuildSnapOptions): Promise<string[]> {
   const { SNAPCRAFT_NO_NETWORK } = process.env
   const { snapcraftConfig, artifactPath, remoteBuild, stageDir, useLXD = false, useMultipass = false, useDestructiveMode = false, cscLink } = options
 
@@ -366,7 +387,7 @@ interface ExecuteSnapcraftOptions {
 /**
  * Executes the snapcraft build command
  */
-async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<string> {
+async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<string[]> {
   const { workDir, outputSnap: outputFileName, remoteBuild, useLXD, useMultipass, useDestructiveMode, isolatedEnv } = options
   let processedEnv: NodeJS.ProcessEnv = { ...stripSensitiveEnvVars(process.env), ...isolatedEnv }
 
@@ -375,7 +396,7 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
   const tmpSnap = `eb-snap-${randomUUID().replace(/-/g, "")}.snap`
 
   if (useDestructiveMode && !remoteBuild?.enabled) {
-    return await runDestructiveBuild(workDir, processedEnv, tmpSnap, outputFileName)
+    return [await runDestructiveBuild(workDir, processedEnv, tmpSnap, outputFileName)]
   }
 
   const command = "snapcraft"
@@ -415,17 +436,25 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
   })
 
   if (remoteBuild?.enabled || useLXD || useMultipass) {
-    // snapcraft names the output snap itself (e.g. <name>_<version>_<arch>.snap).
-    // Each electron-builder build invocation targets exactly one arch, so exactly one snap is expected.
+    // snapcraft names output snaps itself (e.g. <name>_<version>_<arch>.snap).
+    // For multi-arch remote-builds (buildFor array), multiple snaps land in workDir.
     const files = await readdir(workDir)
-    const builtSnap = files.find(f => f.endsWith(".snap"))
-    if (!builtSnap) {
+    const builtSnaps = files.filter(f => f.endsWith(".snap"))
+    if (builtSnaps.length === 0) {
       throw new Error(`Build succeeded but no .snap file found in ${workDir}`)
     }
-    return copySnapToArtifactPath(workDir, builtSnap, outputFileName)
+    const outDir = path.dirname(outputFileName)
+    const results: string[] = []
+    for (const snapFile of builtSnaps) {
+      // Primary snap: the one whose basename matches the expected output filename gets the
+      // pre-computed artifact path; all additional snaps land alongside it in outDir.
+      const dest = snapFile === path.basename(outputFileName) ? outputFileName : path.join(outDir, snapFile)
+      results.push(await copySnapToArtifactPath(workDir, snapFile, dest))
+    }
+    return results
   }
 
-  return copySnapToArtifactPath(workDir, tmpSnap, outputFileName)
+  return [await copySnapToArtifactPath(workDir, tmpSnap, outputFileName)]
 }
 
 function generateRemoteBuildArgs(remoteBuild: RemoteBuildOptions, workDir: string) {
@@ -451,8 +480,9 @@ function generateRemoteBuildArgs(remoteBuild: RemoteBuildOptions, workDir: strin
   }
 
   if (remoteBuild.buildFor) {
-    args.push("--build-for", remoteBuild.buildFor)
-    log.debug({ arch: remoteBuild.buildFor }, "building for architecture")
+    const buildForStr = Array.isArray(remoteBuild.buildFor) ? remoteBuild.buildFor.join(",") : remoteBuild.buildFor
+    args.push("--build-for", buildForStr)
+    log.debug({ arch: buildForStr }, "building for architecture")
   }
 
   if (remoteBuild.recover) {

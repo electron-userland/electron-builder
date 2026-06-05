@@ -42,7 +42,7 @@ export class SnapCoreCustom extends SnapCore<SnapOptionsCustom> {
     return yaml.load(raw) as SnapcraftYAML
   }
 
-  async buildSnap(params: { snap: SnapcraftYAML; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<void> {
+  async buildSnap(params: { snap: SnapcraftYAML; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<string[]> {
     const { snap, stageDir, artifactPath } = params
 
     const snapDirResolved = path.resolve(stageDir, "snap")
@@ -53,10 +53,10 @@ export class SnapCoreCustom extends SnapCore<SnapOptionsCustom> {
     log.debug(snap, "using custom snapcraft.yaml (pass-through, no injection)")
 
     if (this.packager.packagerOptions.effectiveOptionComputed != null && (await this.packager.packagerOptions.effectiveOptionComputed({ snap }))) {
-      return
+      return [artifactPath]
     }
 
-    await buildSnap({
+    return buildSnap({
       snapcraftConfig: snap,
       artifactPath,
       stageDir,
