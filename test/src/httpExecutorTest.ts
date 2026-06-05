@@ -1,5 +1,12 @@
 import { expect, test, describe } from "vitest"
-import { HttpExecutor, safeStringifyJson, addSensitiveRedirectHeader, addSensitiveFieldPattern, isSensitiveFieldName, hashSensitiveValue } from "builder-util-runtime/src/httpExecutor"
+import {
+  HttpExecutor,
+  safeStringifyJson,
+  addSensitiveRedirectHeader,
+  addSensitiveFieldPattern,
+  isSensitiveFieldName,
+  hashSensitiveValue,
+} from "builder-util-runtime/src/httpExecutor"
 import { RequestOptions } from "http"
 
 describe("HttpExecutor.prepareRedirectUrlOptions", () => {
@@ -654,6 +661,22 @@ describe("sensitive header stripping", () => {
   test("should preserve mixed-case Authorization on same-origin redirect", () => {
     const result = HttpExecutor.prepareRedirectUrlOptions(sameOriginRedirect, baseOptions({ Authorization: "Bearer token123" }))
     expect(result.headers?.["Authorization"]).toBe("Bearer token123")
+  })
+
+  test("should strip underscore variants on cross-origin redirect", () => {
+    const result = HttpExecutor.prepareRedirectUrlOptions(
+      crossOriginRedirect,
+      baseOptions({
+        PRIVATE_TOKEN: "glpat-secret",
+        X_API_KEY: "mykey",
+        X_Auth_Token: "mytoken",
+        X_CSRF_TOKEN: "csrf",
+      })
+    )
+    expect(result.headers?.["PRIVATE_TOKEN"]).toBeUndefined()
+    expect(result.headers?.["X_API_KEY"]).toBeUndefined()
+    expect(result.headers?.["X_Auth_Token"]).toBeUndefined()
+    expect(result.headers?.["X_CSRF_TOKEN"]).toBeUndefined()
   })
 })
 

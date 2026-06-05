@@ -14,33 +14,28 @@ const debug = _debug("electron-builder")
 
 // ── Sensitive-data registries ────────────────────────────────────────────────
 
-// HTTP header names (lowercase) stripped on cross-origin redirects.
-const SENSITIVE_REDIRECT_HEADERS = new Set([
-  "authorization",
-  "proxy-authorization",
-  "private-token", // GitLab personal access token
-  "x-api-key",
-  "x-auth-token",
-  "x-access-token",
-  "x-gitlab-token",
-  "cookie",
-  "x-csrf-token",
-])
+// Normalise a header or field name: lowercase + strip all separators (- and _).
+// Shared by both registries so lookup is always separator-agnostic.
+const normalizeName = (name: string): string => name.toLowerCase().replace(/[-_]/g, "")
+
+// HTTP header names (normalised) stripped on cross-origin redirects.
+// Stored normalised; lookup normalises the incoming key with normalizeName().
+const SENSITIVE_REDIRECT_HEADERS = new Set(["authorization", "proxyauthorization", "privatetoken", "xapikey", "xauthtoken", "xaccesstoken", "xgitlabtoken", "cookie", "xcsrftoken"])
 
 // Substrings: a field name containing any of these (after normalization) is redacted.
-const SENSITIVE_FIELD_PATTERNS: string[] = ["token", "password", "secret", "authorization", "credential", "apikey", "passphrase", "auth"]
+const SENSITIVE_FIELD_PATTERNS: string[] = ["token", "password", "secret", "authorization", "credential", "apikey", "passphrase", "auth"] as const
 
 // Suffixes: a field name ending with any of these (after normalization) is redacted.
 // Intentionally greedy — "publicKey" is also stripped; over-stripping debug logs is
 // acceptable, under-stripping a credential is not.
-const SENSITIVE_FIELD_SUFFIXES: string[] = ["key"]
+const SENSITIVE_FIELD_SUFFIXES: string[] = ["key"] as const
 
 /**
  * Register an additional HTTP header to strip on cross-origin redirects.
  * Intended for custom publishers (e.g. GenericPublisher with a non-standard auth header).
  */
 export function addSensitiveRedirectHeader(header: string): void {
-  SENSITIVE_REDIRECT_HEADERS.add(header.toLowerCase())
+  SENSITIVE_REDIRECT_HEADERS.add(normalizeName(header))
 }
 
 /**
@@ -374,7 +369,7 @@ Please double check that your authentication token is correct. Due to security r
         debug(`Cross-origin redirect (${originalUrl.host} → ${parsedRedirectUrl.host}): stripping sensitive headers`)
       }
       for (const key of Object.keys(headers)) {
-        if (SENSITIVE_REDIRECT_HEADERS.has(key.toLowerCase())) {
+        if (SENSITIVE_REDIRECT_HEADERS.has(normalizeName(key))) {
           delete (headers as Record<string, unknown>)[key]
         }
       }
@@ -630,7 +625,7 @@ export function configureRequestOptions(options: RequestOptions, token?: string 
 }
 
 export function isSensitiveFieldName(name: string): boolean {
-  const normalized = name.toLowerCase().replace(/[-_]/g, "")
+  const normalized = normalizeName(name)
   return SENSITIVE_FIELD_PATTERNS.some(p => normalized.includes(p)) || SENSITIVE_FIELD_SUFFIXES.some(s => normalized.endsWith(s))
 }
 
