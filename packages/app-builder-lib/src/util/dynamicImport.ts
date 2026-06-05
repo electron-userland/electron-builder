@@ -2,7 +2,6 @@
 // `await Promise.resolve().then(() => require(x))`, which fails for ESM-only
 // packages. helpers/dynamic-import.js is plain JS so TypeScript never
 // transforms its native import() call — route through it instead.
-
 const _helper = require("../../helpers/dynamic-import") as { dynamicImport(path: string): Promise<any> }
 
 export function dynamicImport<T = any>(modulePath: string): Promise<T> {
