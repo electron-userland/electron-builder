@@ -1,11 +1,7 @@
 {
   "name": "electron-forge-maker-appimage",
-<<<<<<< HEAD
-  "version": "26.14.0",
-  "type": "module",
-=======
   "version": "26.15.0",
->>>>>>> master
+  "type": "module",
   "main": "main.js",
   "exports": {
     ".": {
