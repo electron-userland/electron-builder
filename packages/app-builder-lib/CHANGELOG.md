@@ -1,5 +1,36 @@
 # app-builder-lib
 
+## 26.15.0
+
+### Minor Changes
+
+- Feat(linux): add `linux.syncDesktopName` opt-in flag to align installed `.desktop` filename with `desktopName` and `StartupWMClass`; will become default in v27 _[`#9832`](https://github.com/electron-userland/electron-builder/pull/9832) [`8096732`](https://github.com/electron-userland/electron-builder/commit/8096732d7270ab8f20694a9a2f3821c95c0ea153) [@mmaietta](https://github.com/mmaietta)_
+- Fix(node-module-collector): invoke package managers via PowerShell `-EncodedCommand` on Windows to eliminate shell injection vectors and the Node `DEP0190` deprecation warning _[`#9827`](https://github.com/electron-userland/electron-builder/pull/9827) [`3e3ea31`](https://github.com/electron-userland/electron-builder/commit/3e3ea319002effd7b651851490ca0a4e6bfda27d) [@mmaietta](https://github.com/mmaietta)_
+- Chore: replace app-builder-bin `node-dep-tree` and `rebuild-node-modules` with pure-TS equivalents; `nativeRebuilder: "legacy"` now routes to `@electron/rebuild` sequential mode _[`#9828`](https://github.com/electron-userland/electron-builder/pull/9828) [`198c10c`](https://github.com/electron-userland/electron-builder/commit/198c10c9693d1244bac80cb11af6b75ad363e5a0) [@mmaietta](https://github.com/mmaietta)_
+- Chore: replace app-builder-bin `proton-native` command with pure-TS equivalents; Node.js and LaunchUI binaries are now downloaded via `downloadBuilderToolset`; `config.launchUiVersion` string is now respected _[`#9829`](https://github.com/electron-userland/electron-builder/pull/9829) [`01b8ba9`](https://github.com/electron-userland/electron-builder/commit/01b8ba979d1db44543e18d07b4ad94953deb10ea) [@mmaietta](https://github.com/mmaietta)_
+- Chore: replace app-builder-bin `snap` and `wine` commands with pure-TS equivalents; `executeAppBuilder` and `app-builder-bin` package fully removed from codebase; snap templates now downloaded via `downloadBuilderToolset` with pinned checksums; Wine is downloaded automatically on macOS (legacy 4.0.1 bundle by default, Wine 11 bundle available via `toolsets.wine: "1.0.1"`); on Linux with legacy config and when `USE_SYSTEM_WINE=true`, system wine is used instead _[`#9829`](https://github.com/electron-userland/electron-builder/pull/9829) [`01b8ba9`](https://github.com/electron-userland/electron-builder/commit/01b8ba979d1db44543e18d07b4ad94953deb10ea) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Fix(mac): skip signing when no certificate found; warn on ad-hoc + hardenedRuntime _[`#9822`](https://github.com/electron-userland/electron-builder/pull/9822) [`8f0621b`](https://github.com/electron-userland/electron-builder/commit/8f0621ba9d5e8445e538fa0f6869ff0a4c8d19cb) [@mmaietta](https://github.com/mmaietta)_
+- Fix(mac/pkg): explicitly pass `--version` to pkgbuild _[`#9835`](https://github.com/electron-userland/electron-builder/pull/9835) [`2fb4078`](https://github.com/electron-userland/electron-builder/commit/2fb4078a7aabd1524121d933f41c7183c1eb8d45) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`198c10c`](https://github.com/electron-userland/electron-builder/commit/198c10c9693d1244bac80cb11af6b75ad363e5a0) [`01b8ba9`](https://github.com/electron-userland/electron-builder/commit/01b8ba979d1db44543e18d07b4ad94953deb10ea) [`22a7532`](https://github.com/electron-userland/electron-builder/commit/22a7532bd01b9fb42cff7c58d599c7ad683569fe)
+
+</small>
+
+- `builder-util-runtime@9.7.0`
+- `builder-util@26.15.0`
+- `electron-publish@26.15.0`
+- `dmg-builder@26.15.0`
+- `electron-builder-squirrel-windows@26.15.0`
+
+</details>
+
 ## 26.14.0
 
 ### Minor Changes
