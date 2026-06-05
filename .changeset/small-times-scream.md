@@ -15,15 +15,87 @@
 
 feat!: migrate to native ESM, require Node.js >=22.12.0, remove electron-compile
 
-**Breaking changes:**
+## Breaking changes
 
-- **Node.js >=22.12.0 required.** This is the version where `require(esm)` was stabilized, allowing CJS consumers to `require()` these packages without a separate `.cjs` build or any flags.
-- **`electronCompile` configuration option removed.** `electron-compile` is unmaintained and has been fully removed. Use a modern bundler (Vite, webpack, esbuild, etc.) instead. See the [v26 to v27 migration guide](https://www.electron.build/docs/migration/v26-to-v27) for details.
-- All packages now ship as native ES modules (`"type": "module"`). CJS consumers on Node >=22.12.0 can continue using `require()` unchanged; the package automatically handles this via Node's stable `require(esm)` support.
-- `electron-forge-maker-{appimage,nsis,nsis-web,snap}` are now ES modules.
+### Node.js >=22.12.0 required
 
-**Other changes:**
+v27 requires Node.js 22.12.0 or later. This is the version where Node's
+[`require(esm)`](https://nodejs.org/en/blog/release/v22.12.0) support was
+stabilized without flags, which means **CJS `require()` callers need no code
+changes** on supported Node versions.
 
-- Adds `/internal` subpath export on each package for workspace-internal sharing without polluting the public API.
-- All imports use explicit `.js` extensions as required by Node ESM resolution.
-- `electron-updater`'s `autoUpdater` proxy continues to work synchronously via `createRequire` — no API change.
+```bash
+nvm install 22 && nvm use 22
+```
+
+CI (GitHub Actions):
+```yaml
+- uses: actions/setup-node@v4
+  with:
+    node-version: '22'
+```
+
+### All packages are now native ES modules
+
+Every package now ships with `"type": "module"`. On Node >=22.12.0 both
+import styles continue to work:
+
+```js
+// CJS — unchanged
+const { build } = require("electron-builder")
+
+// ESM — now the preferred style
+import { build } from "electron-builder"
+```
+
+TypeScript projects using `"moduleResolution": "bundler"` or `"node16"` / `"nodenext"` work as before.
+
+### `electronCompile` configuration option removed
+
+`electron-compile` is an unmaintained library (last release 2019) and has
+been fully removed. If your config includes `electronCompile: true`, remove
+that line and migrate to a modern bundler:
+
+- **[electron-vite](https://electron-vite.org/)** — fast, first-class ESM support
+- **[esbuild](https://esbuild.github.io/)** — minimal config, very fast
+- **[webpack](https://webpack.electron.build/)** — mature ecosystem
+
+```json5
+{
+  "build": {
+    "electronCompile": true  // ← delete this line
+  }
+}
+```
+
+### `electron-forge-maker-*` are now ES modules
+
+The four Electron Forge maker plugins now export a default ESM export.
+The public API shape is identical; Forge loads them via dynamic `import()`
+internally so no config change is required.
+
+---
+
+## New features
+
+- **Linux `syncDesktopName`** — new config option to align the installed
+  `.desktop` filename with `StartupWMClass`, fixing taskbar pinning on GNOME.
+- **macOS `pkgbuild --version`** — `pkgbuild` is now passed `--version`
+  explicitly, resolving a signing regression introduced in a recent Xcode update.
+- **Smart cache deep-merge** — shard caches now deep-merge on Linux so
+  timing data survives across CI runs.
+- **`/internal` subpath exports** — each package now exposes an `./internal`
+  export entry for workspace-internal sharing without polluting the public API.
+  This is not part of the public API and may change without notice.
+
+---
+
+## Migration guide
+
+See the full guide: **https://www.electron.build/docs/migration/v26-to-v27**
+
+**TL;DR checklist:**
+- [ ] Update Node.js to >=22.12.0
+- [ ] Update `node-version: '22'` in CI
+- [ ] Remove `electronCompile: true` from build config (if present)
+- [ ] Migrate off `electron-compile` to a modern bundler (if applicable)

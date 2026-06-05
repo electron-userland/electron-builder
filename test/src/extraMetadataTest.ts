@@ -1,14 +1,11 @@
-import { createRequire } from "node:module"
 import { readAsarJson } from "app-builder-lib/internal"
 import { Platform } from "electron-builder"
-import { coerceTypes } from "electron-builder/src/builder"
+import { coerceTypes, configureBuildCommand, createYargs, normalizeOptions } from "electron-builder/src/builder"
 import fsExtra from "fs-extra"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert.js"
 import { app, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
 import { ExpectStatic } from "vitest"
-
-const require = createRequire(import.meta.url)
 
 function createExtraMetadataTest(expect: ExpectStatic, asar: boolean) {
   return app(
@@ -58,9 +55,7 @@ test("extra metadata", ({ expect }) => createExtraMetadataTest(expect, true))
 test("extra metadata (no asar)", ({ expect }) => createExtraMetadataTest(expect, false))
 
 test("cli", ({ expect }) => {
-  // because these methods are internal
-  const { configureBuildCommand, normalizeOptions } = require("electron-builder/internal")
-  const yargs = require("yargs")
+  const yargs = createYargs()
     .strict()
     .fail((message: string, error: Error | null) => {
       throw error || new Error(message)
@@ -68,7 +63,7 @@ test("cli", ({ expect }) => {
   configureBuildCommand(yargs)
 
   function parse(input: string): any {
-    return normalizeOptions(yargs.parse(input.split(" ")))
+    return normalizeOptions(yargs.parse(input.split(" ")) as any)
   }
 
   function parseExtraMetadata(input: string) {

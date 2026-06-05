@@ -1,8 +1,7 @@
-import { createRequire } from "node:module"
 import { checkBuildRequestOptions } from "app-builder-lib"
 import { doMergeConfigs } from "app-builder-lib/internal"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
-import { createYargs } from "electron-builder/src/builder"
+import { configureBuildCommand, createYargs, normalizeOptions } from "electron-builder/src/builder"
 import { promises as fs } from "fs"
 import fsExtra from "fs-extra"
 import * as path from "path"
@@ -11,16 +10,12 @@ import { ELECTRON_VERSION } from "./helpers/testConfig.js"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack.js"
 import { PM } from "app-builder-lib/internal"
 
-const require = createRequire(import.meta.url)
-
 test.ifLinux("cli", ({ expect }) => {
-  // because these methods are internal
-  const { configureBuildCommand, normalizeOptions } = require("electron-builder/internal")
   const yargs = createYargs()
   configureBuildCommand(yargs)
 
   function parse(input: string): any {
-    const options = normalizeOptions(yargs.parse(input))
+    const options = normalizeOptions(yargs.parse(input) as any)
     checkBuildRequestOptions(options)
     return options
   }
