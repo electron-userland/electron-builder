@@ -77,7 +77,7 @@ describe("clearCache", () => {
   test("deletes cache dir when it exists and user confirms", async () => {
     await clearCache()
     expect(rm).toHaveBeenCalledWith("/home/user/.cache/electron-builder", { recursive: true })
-    expect(log.info).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: expect.any(String) }), "cache cleared")
+    expect(vi.mocked(log).info).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: expect.any(String) }), "cache cleared")
   })
 
   test("checks both existence and write permission before prompting", async () => {
@@ -89,14 +89,14 @@ describe("clearCache", () => {
     vi.mocked(access).mockRejectedValue(Object.assign(new Error("ENOENT"), { code: "ENOENT" }))
     await clearCache()
     expect(rm).not.toHaveBeenCalled()
-    expect(log.info).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: expect.any(String) }), "cache directory does not exist, nothing to clear")
+    expect(vi.mocked(log).info).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: expect.any(String) }), "cache directory does not exist, nothing to clear")
   })
 
   test("does not delete when cache dir is not writable and logs error", async () => {
     vi.mocked(access).mockRejectedValue(Object.assign(new Error("EACCES"), { code: "EACCES" }))
     await clearCache()
     expect(rm).not.toHaveBeenCalled()
-    expect(log.error).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: expect.any(String) }), "cache directory is not writable")
+    expect(vi.mocked(log).error).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: expect.any(String) }), "cache directory is not writable")
   })
 
   test("propagates error thrown by rm", async () => {
@@ -108,7 +108,7 @@ describe("clearCache", () => {
     vi.mocked(getCacheDirectory).mockReturnValue("/")
     await clearCache()
     expect(rm).not.toHaveBeenCalled()
-    expect(log.error).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: "/" }), expect.stringContaining("filesystem root"))
+    expect(vi.mocked(log).error).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: "/" }), expect.stringContaining("filesystem root"))
   })
 
   test("closes readline interface even when user aborts", async () => {
@@ -140,7 +140,7 @@ describe("clearCache", () => {
       } as any)
       await clearCache()
       expect(rm).not.toHaveBeenCalled()
-      expect(log.info).toHaveBeenCalledWith(null, "aborted")
+      expect(vi.mocked(log).info).toHaveBeenCalledWith(null, "aborted")
     })
   }
 })
@@ -172,7 +172,7 @@ describe("wrap", () => {
     const task = vi.fn().mockRejectedValue(new InvalidConfigurationError("bad config"))
     await wrap(task)({})
     expect(process.exitCode).toBe(1)
-    expect(log.error).toHaveBeenCalledWith(null, "bad config")
+    expect(vi.mocked(log).error).toHaveBeenCalledWith(null, "bad config")
   })
 
   test("sets exitCode=1 but does not re-log ExecError when alreadyLogged=true", async () => {
@@ -181,7 +181,7 @@ describe("wrap", () => {
     const task = vi.fn().mockRejectedValue(err)
     await wrap(task)({})
     expect(process.exitCode).toBe(1)
-    expect(log.error).not.toHaveBeenCalled()
+    expect(vi.mocked(log).error).not.toHaveBeenCalled()
   })
 
   test("logs ExecError with stack trace when alreadyLogged=false", async () => {
@@ -189,7 +189,7 @@ describe("wrap", () => {
     const task = vi.fn().mockRejectedValue(err)
     await wrap(task)({})
     expect(process.exitCode).toBe(1)
-    expect(log.error).toHaveBeenCalledWith(expect.objectContaining({ stackTrace: expect.any(String) }), expect.any(String))
+    expect(vi.mocked(log).error).toHaveBeenCalledWith(expect.objectContaining({ stackTrace: expect.any(String) }), expect.any(String))
   })
 
   test("logs stack trace for generic errors", async () => {
@@ -197,7 +197,7 @@ describe("wrap", () => {
     const task = vi.fn().mockRejectedValue(err)
     await wrap(task)({})
     expect(process.exitCode).toBe(1)
-    expect(log.error).toHaveBeenCalledWith(expect.objectContaining({ stackTrace: expect.any(String) }), "something went wrong")
+    expect(vi.mocked(log).error).toHaveBeenCalledWith(expect.objectContaining({ stackTrace: expect.any(String) }), "something went wrong")
   })
 })
 
