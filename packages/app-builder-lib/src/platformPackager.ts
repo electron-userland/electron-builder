@@ -152,6 +152,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   readonly appInfo: AppInfo
 
   protected constructor(
+    /** @deprecated Access specific properties via the getters on PlatformPackager instead. Will become protected in a future major release. */
     readonly info: Packager,
     readonly platform: Platform
   ) {

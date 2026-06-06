@@ -84,7 +84,7 @@ export class CopyElevateHelper {
   private readonly copied = new Map<string, Promise<any>>()
 
   copy(appOutDir: string, target: NsisTarget): Promise<any> {
-    if (!target.packager.info.framework.isCopyElevateHelper) {
+    if (!target.packager.framework.isCopyElevateHelper) {
       return Promise.resolve()
     }
 

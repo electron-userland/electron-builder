@@ -90,7 +90,7 @@ export class DmgTarget extends Target {
       packager.platformOptions.defaultArch
     )
     const artifactPath = path.join(this.outDir, artifactName)
-    await packager.info.emitArtifactBuildStarted({
+    await packager.emitArtifactBuildStarted({
       targetPresentableName: "DMG",
       file: artifactPath,
       arch,
@@ -120,7 +120,7 @@ export class DmgTarget extends Target {
 
     const safeArtifactName = packager.computeSafeArtifactName(artifactName, "dmg")
     const updateInfo = this.options.writeUpdateInfo === false ? null : await createBlockmap(artifactPath, this, packager, safeArtifactName)
-    await packager.info.emitArtifactBuildCompleted({
+    await packager.emitArtifactBuildCompleted({
       file: artifactPath,
       safeArtifactName,
       target: this,
