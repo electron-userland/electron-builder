@@ -51,7 +51,7 @@ export default class AppImageTarget extends Target {
     const artifactName = packager.expandArtifactNamePattern(options, "AppImage", arch)
     const artifactPath = path.join(this.outDir, artifactName)
 
-    await packager.info.emitArtifactBuildStarted({
+    await packager.emitArtifactBuildStarted({
       targetPresentableName: "AppImage",
       file: artifactPath,
       arch,
@@ -149,7 +149,7 @@ export default class AppImageTarget extends Target {
       await stageDir.cleanup().catch(() => {})
     }
 
-    await packager.info.emitArtifactBuildCompleted({
+    await packager.emitArtifactBuildCompleted({
       file: artifactPath,
       safeArtifactName: packager.computeSafeArtifactName(artifactName, "AppImage", arch, false),
       target: this,

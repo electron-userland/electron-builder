@@ -64,7 +64,7 @@ export class PkgTarget extends Target {
     const artifactName = packager.expandArtifactNamePattern(options, "pkg", arch)
     const artifactPath = path.join(this.outDir, artifactName)
 
-    await packager.info.emitArtifactBuildStarted({
+    await packager.emitArtifactBuildStarted({
       targetPresentableName: "pkg",
       file: artifactPath,
       arch,
@@ -104,7 +104,7 @@ export class PkgTarget extends Target {
     })
     await Promise.all([unlink(innerPackageFile), unlink(distInfoFile)])
     await packager.helper.notarizeIfProvided(artifactPath)
-    await packager.info.emitArtifactBuildCompleted({
+    await packager.emitArtifactBuildCompleted({
       file: artifactPath,
       target: this,
       arch,
@@ -118,7 +118,7 @@ export class PkgTarget extends Target {
     if (extraPkgsDir == null) {
       return null
     }
-    const packagePath = path.join(this.packager.info.buildResourcesDir, extraPkgsDir)
+    const packagePath = path.join(this.packager.buildResourcesDir, extraPkgsDir)
     let files: Array<string>
     try {
       files = readdirSync(packagePath)
@@ -154,7 +154,7 @@ export class PkgTarget extends Target {
       requirements.os = [minimumSystemVersion]
     }
 
-    const requirementsPlistFile = await this.packager.info.tempDirManager.getTempFile({ suffix: ".plist", prefix: "productbuild-requirements" })
+    const requirementsPlistFile = await this.packager.tempDirManager.getTempFile({ suffix: ".plist", prefix: "productbuild-requirements" })
     await savePlistFile(requirementsPlistFile, requirements)
 
     const args = ["--synthesize", "--product", requirementsPlistFile, "--component", appPath]
@@ -261,7 +261,7 @@ export class PkgTarget extends Target {
     const pkgVersion = await resolvePkgBuildVersion(appPath, this.packager.appInfo.version)
     args.push("--version", pkgVersion)
 
-    const scriptsDir = resolveScriptsDir(this.packager.info.buildResourcesDir, options.scripts)
+    const scriptsDir = resolveScriptsDir(this.packager.buildResourcesDir, options.scripts)
     if (scriptsDir && (await statOrNull(scriptsDir))?.isDirectory()) {
       const dirContents = readdirSync(scriptsDir)
       dirContents.forEach(name => {

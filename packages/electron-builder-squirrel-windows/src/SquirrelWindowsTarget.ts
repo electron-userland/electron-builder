@@ -26,7 +26,7 @@ export default class SquirrelWindowsTarget extends Target {
 
   private async prepareSignedVendorDirectory(): Promise<string> {
     const customSquirrelVendorDirectory = this.options.customSquirrelVendorDir
-    const tmpVendorDirectory = await this.packager.info.tempDirManager.createTempDir({ prefix: "squirrel-windows-vendor" })
+    const tmpVendorDirectory = await this.packager.tempDirManager.createTempDir({ prefix: "squirrel-windows-vendor" })
 
     if (customSquirrelVendorDirectory && (await exists(customSquirrelVendorDirectory))) {
       await fs.promises.cp(customSquirrelVendorDirectory, tmpVendorDirectory, { recursive: true })
@@ -140,7 +140,7 @@ export default class SquirrelWindowsTarget extends Target {
     const msiArtifactPath = path.join(installerOutDir, packager.expandArtifactNamePattern(this.options, "msi", arch, "${productName} Setup ${version}.${ext}"))
 
     this.buildQueueManager.add(async () => {
-      await packager.info.emitArtifactBuildStarted({
+      await packager.emitArtifactBuildStarted({
         targetPresentableName: "Squirrel.Windows",
         file: artifactPath,
         arch,
@@ -157,7 +157,7 @@ export default class SquirrelWindowsTarget extends Target {
 
       const safeArtifactName = (ext: string) => `${sanitizedName}-Setup-${version}${getArchSuffix(arch)}.${ext}`
 
-      await packager.info.emitArtifactBuildCompleted({
+      await packager.emitArtifactBuildCompleted({
         file: artifactPath,
         target: this,
         arch,
@@ -166,7 +166,7 @@ export default class SquirrelWindowsTarget extends Target {
       })
 
       if (this.options.msi) {
-        await packager.info.emitArtifactCreated({
+        await packager.emitArtifactCreated({
           file: msiArtifactPath,
           target: this,
           arch,
@@ -176,14 +176,14 @@ export default class SquirrelWindowsTarget extends Target {
       }
 
       const packagePrefix = `${this.appName}-${convertVersion(version)}-`
-      await packager.info.emitArtifactCreated({
+      await packager.emitArtifactCreated({
         file: path.join(installerOutDir, `${packagePrefix}full.nupkg`),
         target: this,
         arch,
         packager,
       })
       if (distOptions.remoteReleases != null) {
-        await packager.info.emitArtifactCreated({
+        await packager.emitArtifactCreated({
           file: path.join(installerOutDir, `${packagePrefix}delta.nupkg`),
           target: this,
           arch,
@@ -191,7 +191,7 @@ export default class SquirrelWindowsTarget extends Target {
         })
       }
 
-      await packager.info.emitArtifactCreated({
+      await packager.emitArtifactCreated({
         file: path.join(installerOutDir, "RELEASES"),
         target: this,
         arch,
@@ -223,7 +223,7 @@ export default class SquirrelWindowsTarget extends Target {
     const templatePath = path.resolve(import.meta.dirname, "..", "template.nuspectemplate")
     const projectUrl = await this.packager.appInfo.computePackageUrl()
     if (projectUrl != null) {
-      const nuspecTemplate = await this.packager.info.tempDirManager.getTempFile({ prefix: "template", suffix: ".nuspectemplate" })
+      const nuspecTemplate = await this.packager.tempDirManager.getTempFile({ prefix: "template", suffix: ".nuspectemplate" })
       let templateContent = await fs.promises.readFile(templatePath, "utf8")
       const searchString = "<copyright><%- copyright %></copyright>"
       templateContent = templateContent.replace(searchString, `${searchString}\n    <projectUrl>${projectUrl}</projectUrl>`)
@@ -237,9 +237,9 @@ export default class SquirrelWindowsTarget extends Target {
     const packager = this.packager
     let iconUrl = this.options.iconUrl
     if (iconUrl == null) {
-      const info = await packager.info.repositoryInfo
+      const info = await packager.repositoryInfo
       if (info != null) {
-        iconUrl = `https://github.com/${info.user}/${info.project}/blob/master/${packager.info.relativeBuildResourcesDirname}/icon.ico?raw=true`
+        iconUrl = `https://github.com/${info.user}/${info.project}/blob/master/${packager.relativeBuildResourcesDirname}/icon.ico?raw=true`
       }
 
       if (iconUrl == null) {
@@ -282,7 +282,7 @@ export default class SquirrelWindowsTarget extends Target {
     }
 
     if (this.options.remoteReleases === true) {
-      const info = await packager.info.repositoryInfo
+      const info = await packager.repositoryInfo
       if (info == null) {
         log.warn("remoteReleases set to true, but cannot get repository info")
       } else {

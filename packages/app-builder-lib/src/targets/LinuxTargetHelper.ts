@@ -242,7 +242,7 @@ export class LinuxTargetHelper {
     if (!this.packager.platformOptions.syncDesktopName) {
       return fallback
     }
-    const trimmedDesktopName = this.packager.info.metadata.desktopName?.trim()
+    const trimmedDesktopName = this.packager.metadata.desktopName?.trim()
     if (isEmptyOrSpaces(trimmedDesktopName)) {
       return fallback
     }
@@ -289,7 +289,7 @@ export class LinuxTargetHelper {
     // https://github.com/electron-userland/electron-builder/issues/9103
     // Electron derives app_id from desktopName in package.json; StartupWMClass must match.
     // https://github.com/electron/electron/blob/9a7b73b5334f1d72c08e2d5e94106706ed751186/lib/browser/init.ts#L128-L133
-    const trimmedDesktopName = packager.info.metadata.desktopName?.trim()
+    const trimmedDesktopName = packager.metadata.desktopName?.trim()
     if (isEmptyOrSpaces(trimmedDesktopName)) {
       log.warn(
         {

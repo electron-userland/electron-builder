@@ -57,7 +57,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   const appFilename = appInfo.sanitizedProductName
   const electronBranding = createBrandingOpts(packager.config)
 
-  const contentsPath = path.join(appOutDir, packager.info.framework.distMacOsAppName, "Contents")
+  const contentsPath = path.join(appOutDir, packager.framework.distMacOsAppName, "Contents")
   const frameworksPath = path.join(contentsPath, "Frameworks")
   const loginItemPath = path.join(contentsPath, "Library", "LoginItems")
 
