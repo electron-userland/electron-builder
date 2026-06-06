@@ -113,10 +113,7 @@ export class LinuxTargetHelper {
   }
 
   getSnapCore(): SnapCore<any> {
-    const { snapcraft, snap: legacySnap } = this.packager.config
-    if (snapcraft != null && legacySnap != null) {
-      log.warn("Both `snapcraft` and `snap` configurations are present. `snapcraft` takes precedence; please remove the `snap` key to silence this warning.")
-    }
+    const { snapcraft } = this.packager.config
 
     // Merge linux-level options (category, description, mimeTypes, etc.) as the base so they
     // propagate into the generated snapcraft.yaml and .desktop file without requiring users to
@@ -154,16 +151,7 @@ export class LinuxTargetHelper {
       }
     }
 
-    if (legacySnap != null) {
-      log.warn(
-        {
-          reason: "`snap` configuration is deprecated",
-          docs: "https://www.electron.build/snapcraft",
-        },
-        "please consider migrating `snap` configuration to `snapcraft.<core>` and remove `snap` configuration"
-      )
-    }
-    return new SnapCoreLegacy(this.packager, this, deepAssign({}, snapLinuxOptions, legacySnap ?? {}))
+    return new SnapCoreLegacy(this.packager, this, deepAssign({}, snapLinuxOptions))
   }
 
   isElectronVersionGreaterOrEqualThan(version: string, fallback?: string): boolean {

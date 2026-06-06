@@ -95,26 +95,6 @@ describe("GitLab Publisher - Unit Tests", () => {
         expect(publisher.toString()).toContain(GitlabTestFixtures.VERSIONS.validWithBuild)
       })
 
-      test("should handle vPrefixedTagName option", ({ expect }) => {
-        const publisherWithPrefix = new GitlabPublisher(
-          publishContext,
-          GitlabTestFixtures.createOptions({
-            vPrefixedTagName: true,
-          }),
-          GitlabTestFixtures.VERSIONS.valid
-        )
-
-        const publisherWithoutPrefix = new GitlabPublisher(
-          publishContext,
-          GitlabTestFixtures.createOptions({
-            vPrefixedTagName: false,
-          }),
-          GitlabTestFixtures.VERSIONS.valid
-        )
-
-        expect(publisherWithPrefix.toString()).toContain("GitLab")
-        expect(publisherWithoutPrefix.toString()).toContain("GitLab")
-      })
     })
 
     describe("Host Configuration", () => {

@@ -70,7 +70,7 @@ export class GitlabPublisher extends HttpPublisher {
     }
 
     // By default, we prefix the version with "v"
-    this.tag = info.vPrefixedTagName === false ? version : `v${version}`
+    this.tag = `v${version}`
   }
 
   private async getOrCreateRelease(): Promise<GitlabReleaseInfo | null> {
@@ -127,7 +127,7 @@ export class GitlabPublisher extends HttpPublisher {
   }
 
   private async createRelease(): Promise<GitlabReleaseInfo> {
-    const defaultName = this.info.vPrefixedTagName === false ? this.version : `v${this.version}`
+    const defaultName = `v${this.version}`
     const releaseName = this.releaseName || defaultName
     const branchName = await this.getDefaultBranch()
 

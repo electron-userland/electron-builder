@@ -36,11 +36,9 @@ import { AfterExtractContext, AfterPackContext, BeforePackContext, Configuration
 import { Platform, SourceRepositoryInfo, Target } from "./core.js"
 import { createElectronFrameworkSupport } from "./electron/ElectronFramework.js"
 import { Framework } from "./Framework.js"
-import { LibUiFramework } from "./frameworks/LibUiFramework.js"
 import { Metadata } from "./options/metadata.js"
 import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi.js"
 import { PlatformPackager } from "./platformPackager.js"
-import { ProtonFramework } from "./ProtonFramework.js"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory.js"
 import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config.js"
 import { expandMacro } from "./util/macroExpander.js"
@@ -90,28 +88,7 @@ import { determinePackageManagerEnv, PM } from "./node-module-collector/index.js
 >>>>>>> c92b22265 (tmp save for .js extension migration)
 
 async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
-  let framework = configuration.framework
-  if (framework != null) {
-    framework = framework.toLowerCase()
-  }
-
-  let nodeVersion = configuration.nodeVersion
-  if (framework === "electron" || framework == null) {
-    return await createElectronFrameworkSupport(configuration, packager)
-  }
-
-  if (nodeVersion == null || nodeVersion === "current") {
-    nodeVersion = process.versions.node
-  }
-
-  const isUseLaunchUi = configuration.launchUiVersion !== false
-  if (framework === "proton" || framework === "proton-native") {
-    return new ProtonFramework(nodeVersion, packager.appInfo.productFilename, isUseLaunchUi)
-  } else if (framework === "libui") {
-    return new LibUiFramework(nodeVersion, packager.appInfo.productFilename, isUseLaunchUi)
-  } else {
-    throw new InvalidConfigurationError(`Unknown framework: ${framework}`)
-  }
+  return createElectronFrameworkSupport(configuration, packager)
 }
 
 type PackagerEvents = {
@@ -245,13 +222,6 @@ export class Packager {
     options: PackagerOptions,
     readonly cancellationToken = new CancellationToken()
   ) {
-    if ("devMetadata" in options) {
-      throw new InvalidConfigurationError("devMetadata in the options is deprecated, please use config instead")
-    }
-    if ("extraMetadata" in options) {
-      throw new InvalidConfigurationError("extraMetadata in the options is deprecated, please use config.extraMetadata instead")
-    }
-
     const targets = options.targets || new Map<Platform, Map<Arch, Array<string>>>()
     if (options.targets == null) {
       options.targets = targets

@@ -29,52 +29,23 @@ import {
   SpacesPublisher,
   UploadTask,
 } from "electron-publish"
-<<<<<<< HEAD
 import { MultiProgress } from "electron-publish/internal"
 import { readFile, writeFile } from "fs/promises"
-=======
-import { MultiProgress } from "electron-publish"
-import { writeFile } from "fs/promises"
->>>>>>> c92b22265 (tmp save for .js extension migration)
-import { isCI } from "ci-info"
 import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
 import * as url from "url"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { AppInfo } from "../appInfo.js"
 import { Configuration } from "../configuration.js"
 import { Platform, Target, TargetSpecificOptions } from "../core.js"
 import { ArtifactCreated } from "../packagerApi.js"
 import { PlatformSpecificBuildOptions } from "../options/PlatformSpecificBuildOptions.js"
-=======
-import { AppInfo, ArtifactCreated, Configuration, Platform, PlatformSpecificBuildOptions, Target } from "../index.js"
->>>>>>> d26567f58 (tmp save)
 import { Packager } from "../packager.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { expandMacro } from "../util/macroExpander.js"
 import { WinPackager } from "../winPackager.js"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js"
 import { resolveModule } from "../util/resolve.js"
 import { parseUrl } from "../util/pathManager.js"
-=======
-import { AppInfo, ArtifactCreated, Configuration, Platform, PlatformSpecificBuildOptions, Target } from "../index"
-import { Packager } from "../packager"
-import { PlatformPackager } from "../platformPackager"
-import { expandMacro } from "../util/macroExpander"
-import { WinPackager } from "../winPackager"
-import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js.js"
-import { resolveModule } from "../util/resolve"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js.js"
-=======
-import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
-import { resolveModule } from "../util/resolve.js"
->>>>>>> d26567f58 (tmp save)
 
 const publishForPrWarning =
   "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
@@ -116,22 +87,6 @@ export class PublishManager implements PublishContext {
 
     const forcePublishForPr = process.env.PUBLISH_FOR_PULL_REQUEST === "true"
     if (!isPullRequest() || forcePublishForPr) {
-      if (publishOptions.publish === undefined) {
-        if (process.env.npm_lifecycle_event === "release") {
-          log.warn("Implicit publishing triggered by npm lifecycle event 'release'. This behavior will be disabled in electron-builder v27. Please use --publish explicitly.")
-          publishOptions.publish = "always"
-        } else {
-          const tag = getCiTag()
-          if (tag != null) {
-            log.warn({ tag }, "Implicit publishing triggered by git tag. This behavior will be disabled in electron-builder v27. Please use --publish explicitly.")
-            publishOptions.publish = "onTag"
-          } else if (isCI) {
-            log.warn("Implicit publishing triggered by CI detection. This behavior will be disabled in electron-builder v27. Please use --publish explicitly.")
-            publishOptions.publish = "onTagOrDraft"
-          }
-        }
-      }
-
       const publishPolicy = publishOptions.publish
       this.isPublish = publishPolicy != null && publishOptions.publish !== "never" && (publishPolicy !== "onTag" || getCiTag() != null)
       if (this.isPublish && forcePublishForPr) {
@@ -661,7 +616,7 @@ async function getResolvedPublishConfig(
 
   if (isGithub) {
     if ((options as GithubOptions).token != null && !(options as GithubOptions).private) {
-      log.warn('"token" specified in the github publish options. It should be used only for [setFeedURL](module:electron-updater/src/AppUpdater.AppUpdater+setFeedURL).')
+      log.warn('"token" specified in the github publish options. It should be used only for [setFeedURL](module:electron-updater/out/AppUpdater.AppUpdater+setFeedURL).')
     }
     //tslint:disable-next-line:no-object-literal-type-assertion
     return { owner, repo: project, ...options } as GithubOptions
