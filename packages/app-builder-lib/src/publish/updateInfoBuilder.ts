@@ -38,7 +38,7 @@ import { computeDownloadUrl, getPublishConfigsForUpdateInfo } from "./PublishMan
 >>>>>>> c92b22265 (tmp save for .js extension migration)
 
 async function getReleaseInfo(packager: PlatformPackager<any>) {
-  const releaseInfo: ReleaseInfo = { ...(packager.platformSpecificBuildOptions.releaseInfo || packager.config.releaseInfo) }
+  const releaseInfo: ReleaseInfo = { ...(packager.platformOptions.releaseInfo || packager.config.releaseInfo) }
   if (releaseInfo.releaseNotes == null) {
     const releaseNotesFile = await packager.getResource(
       releaseInfo.releaseNotesFile,
@@ -58,7 +58,7 @@ async function getReleaseInfo(packager: PlatformPackager<any>) {
 }
 
 function isGenerateUpdatesFilesForAllChannels(packager: PlatformPackager<any>) {
-  const value = packager.platformSpecificBuildOptions.generateUpdatesFilesForAllChannels
+  const value = packager.platformOptions.generateUpdatesFilesForAllChannels
   return value == null ? packager.config.generateUpdatesFilesForAllChannels : value
 }
 
@@ -134,7 +134,7 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
   const createdFiles = new Set<string>()
   const sharedInfo = await createUpdateInfo(version, event, await getReleaseInfo(packager))
   const tasks: Array<UpdateInfoFileTask> = []
-  const electronUpdaterCompatibility = packager.platformSpecificBuildOptions.electronUpdaterCompatibility || packager.config.electronUpdaterCompatibility || ">=2.15"
+  const electronUpdaterCompatibility = packager.platformOptions.electronUpdaterCompatibility || packager.config.electronUpdaterCompatibility || ">=2.15"
   for (const publishConfiguration of publishConfigs) {
     let dir = outDir
     if (publishConfigs.length > 1 && publishConfiguration !== publishConfigs[0]) {

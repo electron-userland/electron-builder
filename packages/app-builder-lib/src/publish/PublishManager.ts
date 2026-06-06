@@ -444,7 +444,7 @@ export async function getPublishConfigs(
 
   // check build.win (platform)
   if (publishers == null) {
-    publishers = platformPackager.platformSpecificBuildOptions.publish
+    publishers = platformPackager.platformOptions.publish
     if (publishers === null) {
       return null
     }
@@ -536,7 +536,7 @@ async function getResolvedPublishConfig(
   let channelFromAppVersion: string | null = null
   if (
     (options as GenericServerOptions).channel == null &&
-    isDetectUpdateChannel(platformPackager == null ? null : platformPackager.platformSpecificBuildOptions, packager.config)
+    isDetectUpdateChannel(platformPackager == null ? null : platformPackager.platformOptions, packager.config)
   ) {
     channelFromAppVersion = packager.appInfo.channel
   }

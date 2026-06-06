@@ -1,5 +1,5 @@
 import { Arch, log } from "builder-util"
-import { deepAssign, SnapStoreOptions } from "builder-util-runtime"
+import { SnapStoreOptions } from "builder-util-runtime"
 import * as path from "path"
 import { Configuration } from "../../configuration.js"
 import { Publish, Target } from "../../core.js"
@@ -36,12 +36,8 @@ export default class SnapTarget extends Target {
   ) {
     super(name)
 
-    const {
-      config: { snapcraft },
-      platformSpecificBuildOptions,
-    } = packager
-
-    this.options = deepAssign({}, platformSpecificBuildOptions, snapcraft ?? {})
+    const { config: { snapcraft } } = packager
+    this.options = packager.getOptionsForTarget<SnapcraftOptions | SnapOptions>(snapcraft != null ? "snapcraft" : "snap")
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
@@ -88,7 +84,7 @@ export default class SnapTarget extends Target {
       return fallback
     }
 
-    const snapConfig = config.snapcraft
+    const snapConfig = config.snapcraft ?? config.snap
     if (snapConfig?.publish) {
       return this.findSnapPublishConfigInPublishNode(snapConfig.publish)
     }

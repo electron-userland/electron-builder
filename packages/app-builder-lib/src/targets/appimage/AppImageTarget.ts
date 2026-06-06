@@ -14,7 +14,7 @@ import { getNotLocalizedLicenseFile } from "../../util/license.js"
 import { LinuxTargetHelper } from "../LinuxTargetHelper.js"
 import { createStageDir } from "../targetUtil.js"
 import { buildLegacyFuse2AppImage, buildStaticRuntimeAppImage } from "./appImageUtil.js"
-import { BlockMapDataHolder, deepAssign } from "builder-util-runtime"
+import { BlockMapDataHolder } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
 const { outputFile } = _fsExtra
 
@@ -23,7 +23,7 @@ const { outputFile } = _fsExtra
 export const APP_RUN_ENTRYPOINT = "AppRun"
 
 export default class AppImageTarget extends Target {
-  readonly options: AppImageOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, (this.packager.config as any)[this.name])
+  readonly options: AppImageOptions = this.packager.getOptionsForTarget<AppImageOptions>(this.name)
 
   private readonly desktopEntry: Lazy<string>
 

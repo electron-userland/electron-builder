@@ -29,7 +29,7 @@ export function computeArchToTargetNamesMap(raw: Map<Arch, Array<string>>, platf
 
   const defaultArchs: Array<ArchType> = raw.size === 0 ? [process.arch as ArchType] : Array.from(raw.keys()).map(it => Arch[it] as ArchType)
   const result = new Map(raw)
-  for (const target of asArray(platformPackager.platformSpecificBuildOptions.target).map<TargetConfiguration>(it => (typeof it === "string" ? { target: it } : it))) {
+  for (const target of asArray(platformPackager.platformOptions.target).map<TargetConfiguration>(it => (typeof it === "string" ? { target: it } : it))) {
     let name = target.target
     let archs = target.arch
     const suffixPos = name.lastIndexOf(":")

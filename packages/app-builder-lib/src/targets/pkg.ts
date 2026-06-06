@@ -94,7 +94,7 @@ export class PkgTarget extends Target {
     const componentPropertyListFile = path.join(appOutDir, `${filterCFBundleIdentifier(appInfo.id)}.plist`)
     const identity = (
       await Promise.all([
-        findIdentity(certType, options.identity || packager.platformSpecificBuildOptions.identity, keychainFile),
+        findIdentity(certType, options.identity || packager.platformOptions.identity, keychainFile),
         this.customizeDistributionConfiguration(distInfoFile, appPath, extraPackages, arch),
         this.buildComponentPackage(appPath, componentPropertyListFile, innerPackageFile),
       ])
@@ -161,7 +161,7 @@ export class PkgTarget extends Target {
     requirements.arch = archToAppleArchitectures(arch)
 
     // Set minimum OS version - productbuild will generate allowed-os-versions in distribution XML
-    const minimumSystemVersion = this.packager.platformSpecificBuildOptions.minimumSystemVersion
+    const minimumSystemVersion = this.packager.platformOptions.minimumSystemVersion
     if (minimumSystemVersion != null) {
       requirements.os = [minimumSystemVersion]
     }

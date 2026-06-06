@@ -1,46 +1,19 @@
 import { bundle as bundleFlatpak, FlatpakBundlerBuildOptions, FlatpakManifest } from "@malept/flatpak-bundler"
 import { Arch, copyFile, toLinuxArchString } from "builder-util"
-<<<<<<< HEAD
 
-=======
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as path from "path"
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> d26567f58 (tmp save)
 import { Target } from "../core.js"
 import { LinuxPackager } from "../linuxPackager.js"
 import { FlatpakOptions } from "../options/linuxOptions.js"
 import { getNotLocalizedLicenseFile } from "../util/license.js"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { LinuxTargetHelper } from "./LinuxTargetHelper.js"
 import { createStageDir, StageDir } from "./targetUtil.js"
-import { deepAssign, Nullish } from "builder-util-runtime"
+import { Nullish } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
 const { chmod, outputFile } = _fsExtra
-=======
-import { Target } from "../core"
-import { LinuxPackager } from "../linuxPackager"
-import { FlatpakOptions } from "../options/linuxOptions"
-import { getNotLocalizedLicenseFile } from "../util/license"
-=======
->>>>>>> d26567f58 (tmp save)
-import { LinuxTargetHelper } from "./LinuxTargetHelper.js.js"
-import { createStageDir, StageDir } from "./targetUtil.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export default class FlatpakTarget extends Target {
-  readonly options: FlatpakOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, (this.packager.config as any)[this.name])
-=======
-import { LinuxTargetHelper } from "./LinuxTargetHelper.js"
-import { createStageDir, StageDir } from "./targetUtil.js"
-
-export default class FlatpakTarget extends Target {
-  readonly options: FlatpakOptions
->>>>>>> c92b22265 (tmp save for .js extension migration)
+  readonly options: FlatpakOptions = this.packager.getOptionsForTarget<FlatpakOptions>(this.name)
 
   constructor(
     name: string,
@@ -49,10 +22,6 @@ export default class FlatpakTarget extends Target {
     readonly outDir: string
   ) {
     super(name)
-    this.options = {
-    ...this.packager.platformSpecificBuildOptions,
-    ...(this.packager.config as any)[this.name],
-  }
   }
 
   get appId(): string {
@@ -97,8 +66,8 @@ export default class FlatpakTarget extends Target {
   private async createSandboxBinWrapper(stageDir: StageDir) {
     const useWaylandFlags = !!this.options.useWaylandFlags
     const electronWrapperPath = stageDir.getTempFile(path.join("bin", "electron-wrapper"))
-    await fsExtra.outputFile(electronWrapperPath, getElectronWrapperScript(this.packager.executableName, this.options.executableArgs, useWaylandFlags))
-    await fsExtra.chmod(electronWrapperPath, 0o755)
+    await outputFile(electronWrapperPath, getElectronWrapperScript(this.packager.executableName, this.options.executableArgs, useWaylandFlags))
+    await chmod(electronWrapperPath, 0o755)
   }
 
   private async createDesktopFile(stageDir: StageDir) {

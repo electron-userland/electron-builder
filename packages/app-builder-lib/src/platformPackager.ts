@@ -15,8 +15,9 @@ import {
   orIfFileNotExist,
   sanitizeDirPath,
   statOrNull,
+  TmpDir,
 } from "builder-util"
-import { deepAssign, Nullish } from "builder-util-runtime"
+import { CancellationToken, deepAssign, Nullish } from "builder-util-runtime"
 import { readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import { Minimatch } from "minimatch"
@@ -37,6 +38,9 @@ import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMai
 import { createTransformer } from "./fileTransformer.js"
 import { Framework, isElectronBased } from "./Framework.js"
 import { Platform } from "./core.js"
+import type { SourceRepositoryInfo } from "./core.js"
+import type { Metadata } from "./options/metadata.js"
+import type { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi.js"
 // Type-only barrel import: keeping these erased avoids a runtime cycle
 // (index.ts → linuxPackager.ts → platformPackager.ts) that breaks ESM class init.
 import type {
@@ -123,7 +127,21 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.info.config
   }
 
-  readonly platformSpecificBuildOptions: DC
+  protected readonly platformSpecificBuildOptions: DC
+
+  /** Platform-level build options. Use getOptionsForTarget() for target-merged options. */
+  get platformOptions(): DC {
+    return this.platformSpecificBuildOptions
+  }
+
+  /**
+   * Returns a fresh merged object: platform-level options deep-assigned with the target-specific
+   * config slice identified by `targetConfigKey` (e.g. "msi", "appx", "deb").
+   * Targets should use this to initialise their `readonly options` field.
+   */
+  public getOptionsForTarget<T>(targetConfigKey: string): T {
+    return deepAssign({}, this.platformSpecificBuildOptions, (this.config as any)[targetConfigKey]) as T
+  }
 
   get resourceList(): Promise<Array<string>> {
     return this._resourceList.value
@@ -152,6 +170,70 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   get debugLogger(): DebugLogger {
     return this.info.debugLogger
+  }
+
+  get tempDirManager(): TmpDir {
+    return this.info.tempDirManager
+  }
+
+  get metadata(): Metadata {
+    return this.info.metadata
+  }
+
+  get framework(): Framework {
+    return this.info.framework
+  }
+
+  get cancellationToken(): CancellationToken {
+    return this.info.cancellationToken
+  }
+
+  get repositoryInfo(): Promise<SourceRepositoryInfo | null> {
+    return this.info.repositoryInfo
+  }
+
+  get relativeBuildResourcesDirname(): string {
+    return this.info.relativeBuildResourcesDirname
+  }
+
+  get stageDirPathCustomizer(): (target: Target, packager: PlatformPackager<any>, arch: Arch) => string {
+    return this.info.stageDirPathCustomizer
+  }
+
+  get areNodeModulesHandledExternally(): boolean {
+    return this.info.areNodeModulesHandledExternally
+  }
+
+  get isPrepackedAppAsar(): boolean {
+    return this.info.isPrepackedAppAsar
+  }
+
+  get appDir(): string {
+    return this.info.appDir
+  }
+
+  getWorkspaceRoot(): Promise<string> {
+    return this.info.getWorkspaceRoot()
+  }
+
+  emitArtifactBuildStarted(event: ArtifactBuildStarted, logFields?: any): Promise<void> {
+    return this.info.emitArtifactBuildStarted(event, logFields)
+  }
+
+  emitArtifactBuildCompleted(event: ArtifactCreated): Promise<void> {
+    return this.info.emitArtifactBuildCompleted(event)
+  }
+
+  emitArtifactCreated(event: ArtifactCreated): Promise<void> {
+    return this.info.emitArtifactCreated(event)
+  }
+
+  emitMsiProjectCreated(path: string): Promise<void> {
+    return this.info.emitMsiProjectCreated(path)
+  }
+
+  emitAppxManifestCreated(path: string): Promise<void> {
+    return this.info.emitAppxManifestCreated(path)
   }
 
   abstract get defaultTarget(): Array<string>

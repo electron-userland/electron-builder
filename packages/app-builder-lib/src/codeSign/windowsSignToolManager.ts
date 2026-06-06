@@ -96,7 +96,7 @@ export class WindowsSignToolManager implements SignManager {
   private readonly platformSpecificBuildOptions: WindowsConfiguration
 
   constructor(private readonly packager: WinPackager) {
-    this.platformSpecificBuildOptions = packager.platformSpecificBuildOptions
+    this.platformSpecificBuildOptions = packager.platformOptions
   }
 
   readonly computedPublisherName = new Lazy<Array<string> | null>(async () => {

@@ -1,18 +1,8 @@
-<<<<<<< HEAD
 import { Arch, asArray, exec, getArchSuffix, log, serializeToYaml, stripSensitiveEnvVars, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
-import { deepAssign, Nullish } from "builder-util-runtime"
-
-=======
-import { Arch, asArray, exec, getArchSuffix, log, serializeToYaml, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
 import { Nullish } from "builder-util-runtime"
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
+
 import { mkdir, readFile } from "fs/promises"
 import * as path from "path"
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> d26567f58 (tmp save)
 import { smarten } from "../appInfo.js"
 import { Target } from "../core.js"
 import * as errorMessages from "../errorMessages.js"
@@ -20,43 +10,15 @@ import { LinuxPackager } from "../linuxPackager.js"
 import { DebOptions, LinuxTargetSpecificOptions } from "../options/linuxOptions.js"
 import { ArtifactCreated } from "../packagerApi.js"
 import { getAppUpdatePublishConfiguration } from "../publish/PublishManager.js"
-<<<<<<< HEAD
 import { objectToArgs } from "builder-util-runtime"
-=======
-import { objectToArgs } from "../util/appBuilder.js"
->>>>>>> d26567f58 (tmp save)
 import { computeEnv } from "../util/bundledTool.js"
 import { hashFile } from "../util/hash.js"
 import { isMacOsSierra } from "../util/macosVersion.js"
 import { getTemplatePath } from "../util/pathManager.js"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper.js"
 import { getFpmPath, getLinuxToolsPath } from "../toolsets/linux.js"
 import _fsExtra from "fs-extra"
 const { copyFile, outputFile, stat } = _fsExtra
-=======
-import { smarten } from "../appInfo"
-import { Target } from "../core"
-import * as errorMessages from "../errorMessages"
-import { LinuxPackager } from "../linuxPackager"
-import { DebOptions, LinuxTargetSpecificOptions } from "../options/linuxOptions"
-import { ArtifactCreated } from "../packagerApi"
-import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
-import { objectToArgs } from "../util/appBuilder"
-import { computeEnv } from "../util/bundledTool"
-import { hashFile } from "../util/hash"
-import { isMacOsSierra } from "../util/macosVersion"
-import { getTemplatePath } from "../util/pathManager"
-=======
->>>>>>> d26567f58 (tmp save)
-import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper.js.js"
-import { getFpmPath, getLinuxToolsPath } from "./tools.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper.js"
-import { getFpmPath, getLinuxToolsPath } from "./tools.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 interface FpmOptions {
   name: string
@@ -72,11 +34,7 @@ interface ScriptFiles {
 }
 
 export default class FpmTarget extends Target {
-<<<<<<< HEAD
-  readonly options: LinuxTargetSpecificOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, (this.packager.config as any)[this.name])
-=======
-  readonly options: LinuxTargetSpecificOptions
->>>>>>> c92b22265 (tmp save for .js extension migration)
+  readonly options: LinuxTargetSpecificOptions = this.packager.getOptionsForTarget<LinuxTargetSpecificOptions>(this.name)
 
   private readonly scriptFiles: Promise<ScriptFiles>
 
@@ -87,7 +45,6 @@ export default class FpmTarget extends Target {
     readonly outDir: string
   ) {
     super(name, false)
-    this.options = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
 
     this.scriptFiles = this.createScripts()
   }
@@ -118,7 +75,7 @@ export default class FpmTarget extends Target {
       executable: bashSingleQuoteEscape(packager.executableName),
       sanitizedProductName: bashSingleQuoteEscape(packager.appInfo.sanitizedProductName),
       productFilename: packager.appInfo.productFilename,
-      ...packager.platformSpecificBuildOptions,
+      ...packager.platformOptions,
     }
 
     // The AppArmor profile template uses these values inside double-quoted
@@ -127,7 +84,7 @@ export default class FpmTarget extends Target {
       executable: packager.executableName,
       sanitizedProductName: packager.appInfo.sanitizedProductName,
       productFilename: packager.appInfo.productFilename,
-      ...packager.platformSpecificBuildOptions,
+      ...packager.platformOptions,
     }
 
     function getResource(value: string | Nullish, defaultFile: string) {
@@ -215,16 +172,16 @@ export default class FpmTarget extends Target {
       : null
     if (publishConfig != null) {
       log.info({ resourceDir: log.filePath(resourceDir) }, `adding autoupdate files for: ${target}`)
-      await fsExtra.outputFile(path.join(resourceDir, "app-update.yml"), serializeToYaml(publishConfig))
+      await outputFile(path.join(resourceDir, "app-update.yml"), serializeToYaml(publishConfig))
       // Extra file needed for auto-updater to detect installation method
-      await fsExtra.outputFile(path.join(resourceDir, "package-type"), target)
+      await outputFile(path.join(resourceDir, "package-type"), target)
     }
 
     const scripts = await this.scriptFiles
 
     // Install AppArmor support for ubuntu 24+
     // https://github.com/electron-userland/electron-builder/issues/8635
-    await fsExtra.copyFile(scripts.appArmor, path.join(resourceDir, "apparmor-profile"))
+    await copyFile(scripts.appArmor, path.join(resourceDir, "apparmor-profile"))
 
     const appInfo = packager.appInfo
     const options = this.options
@@ -352,7 +309,7 @@ export default class FpmTarget extends Target {
         isWriteUpdateInfo: true,
         updateInfo: {
           sha512: await hashFile(artifactPath),
-          size: (await fsExtra.stat(artifactPath)).size,
+          size: (await stat(artifactPath)).size,
         },
       }
     }
@@ -484,6 +441,6 @@ async function writeConfigFile(tmpDir: TmpDir, templatePath: string, options: an
   })
 
   const outputPath = await tmpDir.getTempFile({ suffix: path.basename(templatePath, ".tpl") })
-  await fsExtra.outputFile(outputPath, config)
+  await outputFile(outputPath, config)
   return outputPath
 }

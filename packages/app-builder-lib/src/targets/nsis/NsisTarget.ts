@@ -215,7 +215,7 @@ export class NsisTarget extends Target {
     const packager = this.packager
     const appInfo = packager.appInfo
     const options = this.options
-    const defaultArch = chooseNotNull(this.packager.platformSpecificBuildOptions.defaultArch, this.packager.config.defaultArch) ?? undefined
+    const defaultArch = chooseNotNull(this.packager.platformOptions.defaultArch, this.packager.config.defaultArch) ?? undefined
     const installerFilename = packager.expandArtifactNamePattern(options, "exe", primaryArch, this.installerFilenamePattern(primaryArch, defaultArch), false, defaultArch)
     const oneClick = options.oneClick !== false
     const installerPath = path.join(this.outDir, installerFilename)
@@ -524,7 +524,7 @@ export class NsisTarget extends Target {
       versionKey[1] = `/LANG=${localeId} ProductVersion "${nsisEscapeString(appInfo.shortVersion!)}"`
       versionKey[4] = `/LANG=${localeId} FileVersion "${nsisEscapeString(appInfo.shortVersion!)}"`
     }
-    use(this.packager.platformSpecificBuildOptions.legalTrademarks, it => versionKey.push(`/LANG=${localeId} LegalTrademarks "${nsisEscapeString(it)}"`))
+    use(this.packager.platformOptions.legalTrademarks, it => versionKey.push(`/LANG=${localeId} LegalTrademarks "${nsisEscapeString(it)}"`))
     use(appInfo.companyName, it => versionKey.push(`/LANG=${localeId} CompanyName "${nsisEscapeString(it)}"`))
     return versionKey
   }
