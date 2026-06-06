@@ -537,37 +537,16 @@ export class NsisTarget extends Target {
 
     if (oneClick) {
       defines.ONE_CLICK = null
-
       if (options.runAfterFinish !== false) {
         defines.RUN_AFTER_FINISH = null
       }
-
-      asyncTaskManager.add(async () => {
-        const installerHeaderIcon = await packager.getResource(options.installerHeaderIcon, "installerHeaderIcon.ico")
-        if (installerHeaderIcon != null) {
-          defines.HEADER_ICO = installerHeaderIcon
-        }
-      })
+      asyncTaskManager.add(() => this.loadInstallerHeaderIcon(defines))
     } else {
       if (options.runAfterFinish === false) {
         defines.HIDE_RUN_AFTER_FINISH = null
       }
-
-      asyncTaskManager.add(async () => {
-        const installerHeader = await packager.getResource(options.installerHeader, "installerHeader.bmp")
-        if (installerHeader != null) {
-          defines.MUI_HEADERIMAGE = null
-          defines.MUI_HEADERIMAGE_RIGHT = null
-          defines.MUI_HEADERIMAGE_BITMAP = installerHeader
-        }
-      })
-
-      asyncTaskManager.add(async () => {
-        const bitmap = (await packager.getResource(options.installerSidebar, "installerSidebar.bmp")) || "${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp"
-        defines.MUI_WELCOMEFINISHPAGE_BITMAP = bitmap
-        defines.MUI_UNWELCOMEFINISHPAGE_BITMAP = (await packager.getResource(options.uninstallerSidebar, "uninstallerSidebar.bmp")) || bitmap
-      })
-
+      asyncTaskManager.add(() => this.loadInstallerHeader(defines))
+      asyncTaskManager.add(() => this.loadInstallerSidebar(defines))
       if (options.allowElevation !== false) {
         defines.MULTIUSER_INSTALLMODE_ALLOW_ELEVATION = null
       }
@@ -608,14 +587,7 @@ export class NsisTarget extends Target {
       defines.DELETE_APP_DATA_ON_UNINSTALL = null
     }
 
-    asyncTaskManager.add(async () => {
-      const uninstallerIcon = await packager.getResource(options.uninstallerIcon, "uninstallerIcon.ico")
-      if (uninstallerIcon != null) {
-        // we don't need to copy MUI_UNICON (defaults to app icon), so, we have 2 defines
-        defines.UNINSTALLER_ICON = uninstallerIcon
-        defines.MUI_UNICON = uninstallerIcon
-      }
-    })
+    asyncTaskManager.add(() => this.loadUninstallerIcon(defines))
 
     defines.UNINSTALL_DISPLAY_NAME = packager.expandMacro(options.uninstallDisplayName || "${productName} ${version}", null, {}, false)
     if (commonOptions.isCreateDesktopShortcut === DesktopShortcutCreationPolicy.NEVER) {
@@ -633,6 +605,38 @@ export class NsisTarget extends Target {
     }
 
     return asyncTaskManager.awaitTasks()
+  }
+
+  private async loadInstallerHeaderIcon(defines: Defines): Promise<void> {
+    const icon = await this.packager.getResource(this.options.installerHeaderIcon, "installerHeaderIcon.ico")
+    if (icon != null) {
+      defines.HEADER_ICO = icon
+    }
+  }
+
+  private async loadInstallerHeader(defines: Defines): Promise<void> {
+    const header = await this.packager.getResource(this.options.installerHeader, "installerHeader.bmp")
+    if (header != null) {
+      defines.MUI_HEADERIMAGE = null
+      defines.MUI_HEADERIMAGE_RIGHT = null
+      defines.MUI_HEADERIMAGE_BITMAP = header
+    }
+  }
+
+  private async loadInstallerSidebar(defines: Defines): Promise<void> {
+    const bitmap =
+      (await this.packager.getResource(this.options.installerSidebar, "installerSidebar.bmp")) || "${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp"
+    defines.MUI_WELCOMEFINISHPAGE_BITMAP = bitmap
+    defines.MUI_UNWELCOMEFINISHPAGE_BITMAP = (await this.packager.getResource(this.options.uninstallerSidebar, "uninstallerSidebar.bmp")) || bitmap
+  }
+
+  private async loadUninstallerIcon(defines: Defines): Promise<void> {
+    const icon = await this.packager.getResource(this.options.uninstallerIcon, "uninstallerIcon.ico")
+    if (icon != null) {
+      // we don't need to copy MUI_UNICON (defaults to app icon), so, we have 2 defines
+      defines.UNINSTALLER_ICON = icon
+      defines.MUI_UNICON = icon
+    }
   }
 
   private configureDefinesForAllTypeOfInstaller(defines: Defines): void {
