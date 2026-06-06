@@ -7,22 +7,18 @@ import {
   GotDownloaderOptions,
   MirrorOptions,
 } from "@electron/get"
-import { buildGotProxyAgent, exec, exists, log, PADDING, parseValidEnvVarUrl, sanitizeDirPath, to7zaOutputSwitch } from "builder-util"
-import { getPath7za } from "../toolsets/7zip"
+import { buildGotProxyAgent, exists, log, PADDING, parseValidEnvVarUrl } from "builder-util"
 import { MultiProgress } from "electron-publish/out/multiProgress"
-import { createReadStream, createWriteStream } from "fs"
 import * as fs from "fs/promises"
 import * as crypto from "crypto"
 import * as os from "os"
 import * as path from "path"
 import * as lockfile from "proper-lockfile"
-import { pipeline } from "stream/promises"
-import * as tar from "tar"
-import * as unzipper from "unzipper"
 import { HttpError, retry } from "builder-util-runtime"
 import { ElectronPlatformName } from "../electron/ElectronFramework"
 import { CacheState, cleanupCacheDirectory, computeCacheMetadata, readCacheStateFile, validateCacheDirectory, writeCacheState } from "./cacheState"
 import type { ProgressBar } from "electron-publish"
+import { extractArchive, hashUrlSafe } from "../toolsets/custom"
 
 export type ElectronGetOptions = Omit<
   ElectronPlatformArtifactDetails,
@@ -81,16 +77,6 @@ export interface ElectronDownloadOptions {
   arch?: string
 }
 
-function hashUrlSafe(input: string, length = 6): string {
-  let hash = 5381
-  for (let i = 0; i < input.length; i++) {
-    hash = ((hash << 5) + hash) ^ input.charCodeAt(i)
-  }
-  hash >>>= 0
-  const out = hash.toString(36)
-  return out.length >= length ? out.slice(0, length) : out.padStart(length, "0")
-}
-
 export function getCacheDirectory(options: { isAvoidSystemOnWindows?: boolean; allowEnvVarOverride: boolean }): string {
   const { isAvoidSystemOnWindows = true, allowEnvVarOverride } = options
   const env = process.env.ELECTRON_BUILDER_CACHE?.trim()
@@ -129,127 +115,6 @@ function resolveCacheMode(): ElectronDownloadCacheMode {
     return mode
   }
   return ElectronDownloadCacheMode.ReadWrite
-}
-
-async function extractZipStreaming(file: string, dir: string): Promise<void> {
-  // Pass 1: read central directory once to collect Unix modes (one seek to EOF)
-  const zipDir = await unzipper.Open.file(file)
-  const entryModes = new Map<string, number>()
-  for (const entry of zipDir.files) {
-    const mode = (entry.externalFileAttributes >> 16) & 0xffff
-    if (mode > 0) {
-      entryModes.set(entry.path, mode)
-    }
-  }
-  const isSymlink = (mode: number) => (mode & 0o170000) === 0o120000
-
-  // Pass 2: stream from byte 0 — no per-entry seeks, no Docker hang
-  const entries = createReadStream(file).pipe(unzipper.Parse({ forceStream: true }))
-  for await (const entry of entries as AsyncIterable<unzipper.Entry>) {
-    const destPath = path.resolve(dir, entry.path)
-    if (!destPath.startsWith(dir + path.sep) && destPath !== dir) {
-      throw new Error(`Path traversal blocked: ${entry.path}`)
-    }
-    const mode = entryModes.get(entry.path) ?? 0
-    if (mode > 0 && isSymlink(mode)) {
-      const target = (await entry.buffer()).toString()
-      if (path.isAbsolute(target)) {
-        throw new Error(`Absolute symlink target blocked: ${target}`)
-      }
-      const resolvedTarget = path.resolve(path.dirname(destPath), target)
-      if (!resolvedTarget.startsWith(dir + path.sep) && resolvedTarget !== dir) {
-        throw new Error(`Symlink target escapes extraction dir: ${target}`)
-      }
-      await fs.mkdir(path.dirname(destPath), { recursive: true })
-      await fs.symlink(target, destPath)
-    } else if (entry.type === "Directory") {
-      await fs.mkdir(destPath, { recursive: true })
-      entry.autodrain()
-    } else {
-      await fs.mkdir(path.dirname(destPath), { recursive: true })
-      await pipeline(entry, createWriteStream(destPath))
-      if (mode > 0) {
-        await fs.chmod(destPath, mode & 0o7777)
-      }
-    }
-  }
-}
-
-export async function extractArchive(file: string, dir: string) {
-  const tmpDir = `${dir}.tmp`
-  await fs.mkdir(tmpDir, { recursive: true })
-
-  const release = await lockfile.lock(tmpDir, {
-    // 100 retries (not 15) so concurrent callers wait out a slow first extraction instead of failing
-    // with ELOCKED; the update heartbeat keeps an in-progress holder's lock fresh against `stale`.
-    retries: { retries: 100, minTimeout: 1000, maxTimeout: 5000 },
-    stale: 120000, // Increased from 60s to allow long-running extractions
-  })
-
-  try {
-    // rm + mkdir happen AFTER acquiring the lock so no concurrent caller can clear our tmpDir mid-extraction
-    await fs.rm(tmpDir, { recursive: true, force: true })
-    await fs.mkdir(tmpDir, { recursive: true })
-
-    // Guard against the transient window in @electron/get's non-atomic putFileInCache (remove → move).
-    // A concurrent worker may have deleted and not yet replaced the source archive; wait briefly for it.
-    for (let i = 0; !(await exists(file)); i++) {
-      if (i >= 4) {
-        throw Object.assign(new Error(`Source archive not found after retries: ${file}`), { code: "ENOENT", path: file })
-      }
-      log.warn({ file, attempt: i + 1 }, "source archive transiently missing, retrying")
-      await new Promise(r => setTimeout(r, 300 * (i + 1)))
-    }
-
-    if (file.endsWith(".tar.gz") || file.endsWith(".tgz")) {
-      await tar.extract({ file, cwd: tmpDir, strip: 1 })
-    } else if (file.endsWith(".tar.xz") || file.endsWith(".txz")) {
-      // node-tar cannot decompress xz, so use 7za to turn the .tar.xz into a .tar, then extract that tar.
-      const cmd7za = await getPath7za()
-      const xzOutDir = `${tmpDir}.xz`
-      await fs.rm(xzOutDir, { recursive: true, force: true })
-      await fs.mkdir(xzOutDir, { recursive: true })
-      try {
-        await exec(cmd7za, ["x", "-bd", file, to7zaOutputSwitch(sanitizeDirPath(xzOutDir)), "-y"])
-        const innerTar = (await fs.readdir(xzOutDir)).find(f => f.endsWith(".tar"))
-        if (innerTar == null) {
-          throw new Error(`xz decompression of ${path.basename(file)} produced no .tar archive`)
-        }
-        await tar.extract({ file: path.join(xzOutDir, innerTar), cwd: tmpDir, strip: 1 })
-      } finally {
-        await fs.rm(xzOutDir, { recursive: true, force: true })
-      }
-    } else if (file.endsWith(".zip")) {
-      await extractZipStreaming(file, tmpDir)
-    } else if (file.endsWith(".7z")) {
-      const cmd7za = await getPath7za()
-      try {
-        await exec(cmd7za, ["x", "-bd", file, to7zaOutputSwitch(sanitizeDirPath(tmpDir)), "-y"])
-      } catch (e: any) {
-        // Check if extraction actually failed or just had benign warnings
-        const files = await fs.readdir(tmpDir)
-        if (files.length === 0) {
-          log.warn({ file, tmpDir, error: e.message }, "7z extraction produced no output")
-          throw new Error(`7z extraction failed for ${file}: ${e.message}`)
-        }
-        // If files were extracted despite the error, log and continue
-        log.warn({ error: e.message, filesExtracted: files.length }, "7z reported error but extracted files")
-      }
-    } else {
-      throw new Error(`Unsupported archive format: ${path.basename(file)}`)
-    }
-
-    // Verify extraction produced files
-    const extractedFiles = await fs.readdir(tmpDir)
-    if (extractedFiles.length === 0) {
-      throw new Error(`Extraction of ${path.basename(file)} produced no files`)
-    }
-
-    await fs.rm(dir, { recursive: true, force: true })
-    await fs.rename(tmpDir, dir)
-  } finally {
-    await release().catch(err => log.warn({ err }, "failed to release lockfile"))
-  }
 }
 
 async function downloadArtifactToFile(config: Parameters<typeof get.downloadArtifact>[0], label: string): Promise<string> {

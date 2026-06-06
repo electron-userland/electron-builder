@@ -2,8 +2,9 @@ import { exists, InvalidConfigurationError, resolveEnvToolsetPath, sanitizeDirPa
 import * as path from "path"
 import { ToolsetConfig } from "../configuration"
 import { downloadBuilderToolset } from "../util/electronGet"
+import { getCustomToolsetPath } from "./custom"
 
-const wineToolsChecksums: Record<Exclude<ToolsetConfig["wine"], null | undefined>, Record<string, string>> = {
+const wineToolsChecksums: Record<string, Record<string, string>> = {
   "0.0.0": {
     "wine-4.0.1-mac.7z": "1baac808a67975b68b9226beea7b64ad0acc3e598a4b45c25bb5d2ae8cac655e",
   },
@@ -13,19 +14,41 @@ const wineToolsChecksums: Record<Exclude<ToolsetConfig["wine"], null | undefined
   },
 }
 
-export async function getWineToolset(wine: ToolsetConfig["wine"]): Promise<{ execPath: string; env: Record<string, string> }> {
+export async function getWineToolset(toolset: ToolsetConfig["wine"], resourcesDir: string): Promise<{ execPath: string; env: Record<string, string> }> {
   if (process.platform === "win32") {
-    throw new InvalidConfigurationError(`Wine toolset is not supported on Windows, but got: ${wine}`)
+    throw new InvalidConfigurationError(`Wine toolset is not supported on Windows, but got: ${toolset}`)
   }
 
   const defaultEnv = { WINEDEBUG: "-all,err+all", WINEDLLOVERRIDES: "winemenubuilder.exe=d" }
 
-  const envPath = await resolveEnvToolsetPath("ELECTRON_BUILDER_WINE_TOOLSET_DIR", "directory")
-  if (envPath != null) {
-    // Probe for the wine binary: modern bundles ship bin/wine; legacy bundles (e.g. wine-4.0.1-mac) ship bin/wine64.
-    const wineExecSubPath = (await exists(path.join(envPath, "bin", "wine"))) ? "bin/wine" : "bin/wine64"
-    const { execPath, winePrefix, wineLibPath } = await createWineEnvironment(envPath, wineExecSubPath)
+  // const envPath = await resolveEnvToolsetPath("ELECTRON_BUILDER_WINE_TOOLSET_DIR", "directory")
+  // if (envPath != null) {
+  //   // Probe for the wine binary: modern bundles ship bin/wine; legacy bundles (e.g. wine-4.0.1-mac) ship bin/wine64.
+  //   const wineExecSubPath = (await exists(path.join(envPath, "bin", "wine"))) ? "bin/wine" : "bin/wine64"
+  //   const { execPath, winePrefix, wineLibPath } = await createWineEnvironment(envPath, wineExecSubPath)
 
+  //   return {
+  //     execPath,
+  //     env: {
+  //       ...defaultEnv,
+  //       WINEPREFIX: winePrefix,
+  //       DYLD_FALLBACK_LIBRARY_PATH: [wineLibPath, process.env.DYLD_FALLBACK_LIBRARY_PATH].filter(Boolean).join(path.delimiter),
+  //       LD_LIBRARY_PATH: [wineLibPath, process.env.LD_LIBRARY_PATH].filter(Boolean).join(path.delimiter),
+  //     },
+  //   }
+  // }
+
+  const useSystemWine = process.env.USE_SYSTEM_WINE === "true"
+  const isLegacy = toolset === "0.0.0" || toolset == null
+  const isLegacyOnLinux = isLegacy && process.platform === "linux"
+
+  if (useSystemWine || isLegacyOnLinux) {
+    return { execPath: "wine", env: defaultEnv }
+  }
+
+  if (typeof toolset === "object" && toolset != null) {
+    const vendorPath = await getCustomToolsetPath(toolset, resourcesDir)
+    const { execPath, winePrefix, wineLibPath } = await createWineEnvironment(vendorPath, "bin/wine")
     return {
       execPath,
       env: {
@@ -35,14 +58,6 @@ export async function getWineToolset(wine: ToolsetConfig["wine"]): Promise<{ exe
         LD_LIBRARY_PATH: [wineLibPath, process.env.LD_LIBRARY_PATH].filter(Boolean).join(path.delimiter),
       },
     }
-  }
-
-  const useSystemWine = process.env.USE_SYSTEM_WINE === "true"
-  const isLegacy = wine === "0.0.0" || wine == null
-  const isLegacyOnLinux = isLegacy && process.platform === "linux"
-
-  if (useSystemWine || isLegacyOnLinux) {
-    return { execPath: "wine", env: defaultEnv }
   }
 
   const pkgConfig = () => {
@@ -56,9 +71,9 @@ export async function getWineToolset(wine: ToolsetConfig["wine"]): Promise<{ exe
     }
     const filenameWithExt = process.platform === "darwin" ? "wine-11.0-darwin-x86_64.tar.xz" : "wine-11.0-linux-x86_64.tar.xz"
     return {
-      releaseName: `wine@${wine}`,
+      releaseName: `wine@${toolset}`,
       filenameWithExt,
-      checksums: wineToolsChecksums[wine],
+      checksums: wineToolsChecksums[toolset],
       execPath: path.join("bin", "wine"),
     }
   }

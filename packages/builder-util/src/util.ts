@@ -513,13 +513,16 @@ export class InvalidConfigurationError extends Error {
  * start with the resolved `base` directory.  This `startsWith`-based check is
  * the pattern that CodeQL's path-injection analysis recognises as a sanitizer,
  * clearing the taint on the returned value for interprocedural analysis.
- */
+*/
 export function sanitizeDirPath(p: string, base?: string): string {
+  return sanitizePath(p, base, "directory")
+}
+export function sanitizePath(p: string, base: string | undefined, type: "file" | "directory"): string {
   if (isEmptyOrSpaces(p)) {
-    throw new InvalidConfigurationError("Directory path must be a non-empty string")
+    throw new InvalidConfigurationError(`${type} path must be a non-empty string`)
   }
   if (p.includes("\0") || p.includes("\n") || p.includes("\r")) {
-    throw new InvalidConfigurationError(`Directory path contains illegal characters: "${p}"`)
+    throw new InvalidConfigurationError(`${type} path contains illegal characters: "${p}"`)
   }
 
   const resolved = path.resolve(p)

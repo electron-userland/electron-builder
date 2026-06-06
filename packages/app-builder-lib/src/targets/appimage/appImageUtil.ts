@@ -2,7 +2,7 @@ import { Arch, copyDir, copyFile, exec, exists, InvalidConfigurationError, log }
 import * as fs from "fs-extra"
 import * as path from "path"
 import { FileAssociation } from "../../options/FileAssociation"
-import { getAppImageTools } from "../../toolsets/linux"
+import { getAppImageTools } from "app-builder-lib/src/toolsets/appimage"
 import { copyIcons, copyMimeTypes } from "./appLauncher"
 import { appendBlockmap } from "../differentialUpdateInfoBuilder"
 import { BlockMapDataHolder } from "builder-util-runtime"

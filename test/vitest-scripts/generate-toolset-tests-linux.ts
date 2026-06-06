@@ -7,7 +7,7 @@ import type * as _LinuxPackagerSuite from "../src/linux/linuxPackagerTestSuite"
 import type * as _BlackboxLinuxSuite from "../src/updater/blackboxUpdateLinuxSuite"
 import type * as _DifferentialLinuxSuite from "../src/updater/differentialUpdateLinuxSuite"
 
-const APPIMAGE_VERSIONS: ToolsetConfig["appimage"][] = ["0.0.0", "1.0.2", "1.0.3"]
+const APPIMAGE_VERSIONS: ToolsetConfig["appimage"][] = ["0.0.0", "1.0.3"]
 
 const SUITES: SuiteConfig[] = [
   {

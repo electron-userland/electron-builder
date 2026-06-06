@@ -16,7 +16,8 @@ import { hashFile } from "../util/hash"
 import { isMacOsSierra } from "../util/macosVersion"
 import { getTemplatePath } from "../util/pathManager"
 import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper"
-import { getFpmPath, getLinuxToolsPath } from "../toolsets/linux"
+import { getFpmPath } from "../toolsets/linux"
+import { getLinuxToolsPath } from "../toolsets/linuxToolsMac"
 
 interface FpmOptions {
   name: string

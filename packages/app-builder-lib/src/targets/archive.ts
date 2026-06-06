@@ -5,7 +5,7 @@ import { create } from "tar"
 import { TarOptionsWithAliasesAsync } from "tar/dist/commonjs/options"
 import { TmpDir } from "temp-file"
 import { CompressionLevel } from "../core"
-import { getLinuxToolsMacToolset } from "../toolsets/linux"
+import { getLinuxToolsMacToolset } from "../toolsets/linuxToolsMac"
 import { getPath7za } from "../toolsets/7zip"
 
 const ALLOWED_7Z_FILTERS = new Set(["BCJ", "BCJ2", "ARM", "ARMT", "IA64", "PPC", "SPARC", "DELTA"])
