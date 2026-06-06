@@ -1,6 +1,7 @@
 import { newError } from "builder-util-runtime"
 import { createReadStream } from "fs"
 import { Writable } from "stream"
+import { Logger } from "../types.js"
 import { Operation, OperationKind } from "./downloadPlanBuilder.js"
 import { ProgressInfo } from "./ProgressDifferentialDownloadCallbackTransform.js"
 
@@ -58,7 +59,8 @@ export class DataSplitter extends Writable {
     private readonly partIndexToLength: Array<number>,
     private readonly finishHandler: () => any,
     private readonly grandTotalBytes: number,
-    private readonly onProgress?: (info: ProgressInfo) => any
+    private readonly onProgress?: (info: ProgressInfo) => any,
+    private readonly logger?: Logger
   ) {
     super()
 
@@ -74,7 +76,7 @@ export class DataSplitter extends Writable {
   // noinspection JSUnusedGlobalSymbols
   _write(data: Buffer, encoding: string, callback: (error?: Error) => void): void {
     if (this.isFinished) {
-      console.error(`Trailing ignored data: ${data.length} bytes`)
+      this.logger?.error?.(`Trailing ignored data: ${data.length} bytes`)
       return
     }
 

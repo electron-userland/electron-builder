@@ -54,9 +54,8 @@ function doLoadAutoUpdater(): AppUpdater {
           break
       }
     } catch (error: any) {
-      console.warn(
-        "Unable to detect 'package-type' for autoUpdater (rpm/deb/pacman support). If you'd like to expand support, please consider contributing to electron-builder",
-        error.message
+      updater.logger.warn(
+        `Unable to detect 'package-type' for autoUpdater (rpm/deb/pacman support). If you'd like to expand support, please consider contributing to electron-builder: ${error.message}`
       )
     }
   }
