@@ -15,9 +15,6 @@
     "inlineSources": true,
     "sourceMap": true,
 
-    "useDefineForClassFields": false,
-    "experimentalDecorators": true,
-
     "newLine": "lf",
 
     "noEmitOnError": true
