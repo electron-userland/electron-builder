@@ -10,10 +10,6 @@ const linuxToolsMacChecksums = {
 } as const
 
 export async function getLinuxToolsPath(toolset: ToolsetConfig["linuxToolsMac"], resourceDir: string): Promise<string> {
-  // const envPath = await resolveEnvToolsetPath("LINUX_TOOLS_MAC_PATH", "directory");
-  // if (envPath != null) {
-  //   return envPath;
-  // }
   if (typeof toolset === "object" && toolset != null) {
     return getCustomToolsetPath(toolset, resourceDir)
   }

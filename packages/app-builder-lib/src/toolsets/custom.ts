@@ -24,21 +24,27 @@ async function validateCustomToolset(custom: ToolsetCustom, resourcesDir: string
   } catch {
     // Ignore. If the URL is invalid, validate it as a file path
   }
-  if (!url.startsWith("file://")) {
-    throw new Error(`Invalid URL for custom toolset: ${url}. Must be a valid https:// URL or a file:// path.`)
+  if (url.startsWith("file://")) {
+    const p = url.slice("file://".length)
+    const isWithinResources = path.normalize(p).startsWith(path.normalize(resourcesDir + path.sep))
+    const isValid = path.isAbsolute(p) || isWithinResources
+    const type =
+      isValid &&
+      (await exists(p)) &&
+      (await stat(p)
+        .then(s => (s.isDirectory() ? "directory" : s.isFile() ? "file" : null))
+        .catch(() => null))
+    if (type != null) {
+      return { toolset: custom, type }
+    }
   }
-  const isWithinResources = path.normalize(url).startsWith(path.normalize(resourcesDir + path.sep))
-  const isValid = path.isAbsolute(url) || isWithinResources
-  if (isValid && (await exists(url))) {
-    return { toolset: custom, type: await stat(url).then(s => (s.isDirectory() ? "directory" : s.isFile() ? "file" : "unknown")) }
-  }
-  throw new Error(`Invalid file path for custom toolset: ${url}. Must be a valid https:// URL or a file:// path.`)
+  throw new Error(`Invalid custom toolset: ${url}. Must be a valid https:// URL or a file:// path.`)
 }
 
 export async function getCustomToolsetPath(custom: ToolsetCustom, resourcesDir: string): Promise<string> {
   const { type, toolset } = await validateCustomToolset(custom, resourcesDir)
   const binaryVersion = toolset.version || toolset.checksum.substring(0, 8)
-  const releaseName = `${hashUrlSafe(toolset.url, 10)}-${binaryVersion}`
+  const releaseName = `${binaryVersion}-${hashUrlSafe(toolset.url)}`
 
   if (type === "url") {
     return downloadBuilderToolset({
