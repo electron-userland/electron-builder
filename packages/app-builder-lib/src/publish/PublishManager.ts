@@ -33,7 +33,6 @@ import { MultiProgress } from "electron-publish/internal"
 import { readFile, writeFile } from "fs/promises"
 import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
-import * as url from "url"
 import { AppInfo } from "../appInfo.js"
 import { Configuration } from "../configuration.js"
 import { Platform, Target, TargetSpecificOptions } from "../core.js"
@@ -408,7 +407,9 @@ export function computeDownloadUrl(publishConfiguration: PublishConfiguration, f
     }
 
     const baseUrl = parseUrl(baseUrlString)
-    return url.format({ ...baseUrl, pathname: path.posix.resolve(baseUrl?.pathname || "/", encodeURI(fileName)) })
+    const u = new URL(baseUrl?.href ?? baseUrlString)
+    u.pathname = path.posix.resolve(u.pathname || "/", encodeURI(fileName))
+    return u.href
   }
 
   let baseUrl
