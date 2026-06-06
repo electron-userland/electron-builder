@@ -2,6 +2,7 @@
 import { DmgContent, DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
 import { downloadBuilderToolset, withToolsetLock } from "app-builder-lib/internal"
 import { exec, executeFinally, exists, InvalidConfigurationError, isEmptyOrSpaces, log, TmpDir } from "builder-util"
+import { sleep } from "builder-util-runtime"
 import { stat } from "fs/promises"
 
 =======
@@ -110,7 +111,7 @@ export async function detach(name: string, alwaysForce: boolean) {
   return hdiUtil(["detach", "-quiet", name]).catch(async e => {
     if (hdiutilTransientExitCodes.has(e.code) || alwaysForce) {
       // Delay then force unmount with verbose output
-      await new Promise(resolve => setTimeout(resolve, 3000))
+      await sleep(3000)
       return hdiUtil(["detach", "-force", name])
     }
     throw e

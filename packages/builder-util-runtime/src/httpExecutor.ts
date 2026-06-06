@@ -1,27 +1,15 @@
 import { BinaryToTextEncoding, createHash, Hash } from "crypto"
+import { sleep } from "./retry.js"
 import _debug from "debug"
 import { createWriteStream } from "fs"
 import { IncomingMessage, OutgoingHttpHeader, OutgoingHttpHeaders, RequestOptions } from "http"
 import { Socket } from "net"
 import { Transform } from "stream"
 import { URL } from "url"
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> c92b22265 (tmp save for .js extension migration)
 import { Nullish } from "./index.js"
 import { CancellationToken } from "./CancellationToken.js"
 import { newError } from "./error.js"
 import { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform.js"
-<<<<<<< HEAD
-=======
-import { Nullish } from "./index.js.js.js"
-import { CancellationToken } from "./CancellationToken.js.js.js"
-import { newError } from "./error.js.js.js"
-import { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform.js.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 const debug = _debug("electron-builder")
 
@@ -444,7 +432,7 @@ Please double check that your authentication token is correct. Due to security r
         return await task()
       } catch (e: any) {
         if (attemptNumber < maxRetries && ((e instanceof HttpError && e.isServerError()) || e.code === "EPIPE")) {
-          await new Promise(r => setTimeout(r, 1000 * (attemptNumber + 1)))
+          await sleep(1000 * (attemptNumber + 1))
           continue
         }
         throw e

@@ -13,7 +13,7 @@ import {
   use,
   walk,
 } from "builder-util"
-import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, deepAssign, PackageFileInfo, UUID } from "builder-util-runtime"
+import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, deepAssign, PackageFileInfo, sleep, UUID } from "builder-util-runtime"
 import _debug from "debug"
 import * as fs from "fs"
 <<<<<<< HEAD
@@ -493,7 +493,7 @@ export class NsisTarget extends Target {
         let i = 0
         while (!(await exists(uninstallerPath)) && i++ < 100) {
           // noinspection JSUnusedLocalSymbols
-          await new Promise((resolve, _reject) => setTimeout(resolve, 300))
+          await sleep(300)
         }
       }
     } else {
@@ -890,7 +890,7 @@ async function ensureNotBusy(outFile: string): Promise<void> {
       if (result) {
         return true
       } else {
-        return new Promise(resolve => setTimeout(resolve, 2000)).then(() => isBusy(true))
+        return sleep(2000).then(() => isBusy(true))
       }
     })
   }

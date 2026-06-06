@@ -8,7 +8,7 @@ import * as util from "util"
 import { LinuxPackager } from "../../linuxPackager.js"
 import { RemoteBuildOptions } from "../../options/SnapOptions.js"
 import { SnapcraftYAML } from "./snapcraft.js"
-import { deepAssign } from "builder-util-runtime"
+import { deepAssign, sleep } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
 const { copyFile, ensureDir, pathExists, readdir, remove } = _fsExtra
 
@@ -151,7 +151,7 @@ async function executeWithRetry<T>(
 
       if (attempt < maxRetries && isRetryable) {
         log.warn({ attempt, maxRetries, error: error.message, retryIn: retryDelay }, "build failed with retryable error, retrying...")
-        await new Promise(resolve => setTimeout(resolve, retryDelay))
+        await sleep(retryDelay)
       } else {
         break
       }
