@@ -52,7 +52,7 @@ export interface DifferentialDownloaderOptions {
 export abstract class DifferentialDownloader {
   fileMetadataBuffer: Buffer | null = null
 
-  private readonly logger: Logger
+  readonly logger: Logger
 
   // noinspection TypeScriptAbstractClassConstructorCanBeMadeProtected
   constructor(
