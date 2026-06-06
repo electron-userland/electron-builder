@@ -28,11 +28,14 @@ export function copyData(task: Operation, out: Writable, oldFileFd: number, reje
     // end is inclusive
     end: task.end - 1,
   })
+  const onOutError = (err: Error): void => reject(err)
   readStream.on("error", reject)
-  readStream.once("end", resolve)
-  readStream.pipe(out, {
-    end: false,
+  readStream.once("end", () => {
+    out.removeListener("error", onOutError)
+    resolve()
   })
+  out.once("error", onOutError)
+  readStream.pipe(out, { end: false })
 }
 
 export class DataSplitter extends Writable {
