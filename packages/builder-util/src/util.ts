@@ -189,8 +189,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
             message += `\n${chalk.red(removePassword(stderr.toString()))}`
           }
 
-          // TODO: switch to ECMA Script 2026 Error class with `cause` property to return stack trace
-          reject(new ExecError(file, (error as any).code, message, "", `${error.code || ExecError.code}`))
+          reject(new ExecError(file, (error as any).code, message, "", `${error.code || ExecError.code}`, { cause: error }))
         }
       }
     )
@@ -377,9 +376,10 @@ export class ExecError extends Error {
     readonly exitCode: number,
     out: string,
     errorOut: string,
-    code = ExecError.code
+    code = ExecError.code,
+    options?: { cause?: unknown }
   ) {
-    super(`${command} process failed ${code}${formatOut(String(exitCode), "Exit code")}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`)
+    super(`${command} process failed ${code}${formatOut(String(exitCode), "Exit code")}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`, options)
     ;(this as NodeJS.ErrnoException).code = code
   }
 }
