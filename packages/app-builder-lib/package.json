@@ -79,7 +79,6 @@
     "@types/fs-extra": "9.0.13",
     "ajv": "^8.18.0",
     "asn1js": "^3.0.10",
-    "async-exit-hook": "^2.0.1",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
     "chromium-pickle-js": "^0.2.0",
