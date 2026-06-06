@@ -69,15 +69,14 @@ export const autoUpdater: AppUpdater = new Proxy({} as AppUpdater, {
     if (_autoUpdater === undefined) {
       _autoUpdater = doLoadAutoUpdater()
     }
-    const value = (_autoUpdater as any)[prop]
+    const value = Reflect.get(_autoUpdater, prop, _autoUpdater)
     return typeof value === "function" ? value.bind(_autoUpdater) : value
   },
   set(_target, prop, value) {
     if (_autoUpdater === undefined) {
       _autoUpdater = doLoadAutoUpdater()
     }
-    ;(_autoUpdater as any)[prop] = value
-    return true
+    return Reflect.set(_autoUpdater, prop, value, _autoUpdater)
   },
 })
 
