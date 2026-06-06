@@ -13,7 +13,7 @@ import {
   use,
   walk,
 } from "builder-util"
-import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, deepAssign, PackageFileInfo, sleep, UUID } from "builder-util-runtime"
+import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, deepAssign, PackageFileInfo, UUID } from "builder-util-runtime"
 import _debug from "debug"
 import * as fs from "fs"
 
@@ -249,47 +249,7 @@ export class NsisTarget extends Target {
       }
     }
 
-    const packageFiles: { [arch: string]: PackageFileInfo } = {}
-    let estimatedSize = 0
-    if (this.isPortable && options.useZip) {
-      for (const [arch, dir] of archs.entries()) {
-        defines[arch === Arch.x64 ? "APP_DIR_64" : arch === Arch.arm64 ? "APP_DIR_ARM64" : "APP_DIR_32"] = dir
-      }
-    } else if (USE_NSIS_BUILT_IN_COMPRESSOR && archs.size === 1) {
-      const value: Arch | undefined = archs.keys().next().value
-      use(value, v => (defines.APP_BUILD_DIR = archs.get(v)))
-    } else {
-      await Promise.all(
-        Array.from(archs.keys()).map(async arch => {
-          const { fileInfo, unpackedSize } = await this.packageHelper.packArch(arch, this)
-          const file = fileInfo.path
-          const defineKey = arch === Arch.x64 ? "APP_64" : arch === Arch.arm64 ? "APP_ARM64" : "APP_32"
-          defines[defineKey] = file
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-          const defineNameKey = `${defineKey}_NAME` as "APP_64_NAME" | "APP_ARM64_NAME" | "APP_32_NAME"
-          defines[defineNameKey] = path.basename(file)
-          // nsis expect a hexadecimal string
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-          const defineHashKey = `${defineKey}_HASH` as "APP_64_HASH" | "APP_ARM64_HASH" | "APP_32_HASH"
-          defines[defineHashKey] = Buffer.from(fileInfo.sha512, "base64").toString("hex").toUpperCase()
-          // NSIS accepts size in KiloBytes and supports only whole numbers
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-          const defineUnpackedSizeKey = `${defineKey}_UNPACKED_SIZE` as "APP_64_UNPACKED_SIZE" | "APP_ARM64_UNPACKED_SIZE" | "APP_32_UNPACKED_SIZE"
-          defines[defineUnpackedSizeKey] = Math.ceil(unpackedSize / 1024).toString()
-
-          if (this.isWebInstaller) {
-            await packager.info.emitArtifactBuildCompleted({
-              file,
-              target: this,
-              arch,
-              packager,
-            })
-            packageFiles[Arch[arch]] = fileInfo
-          }
-          estimatedSize += unpackedSize
-        })
-      )
-    }
+    const { packageFiles, estimatedSize } = await this.resolveArchPackageFiles(archs, defines, packager)
 
     this.configureDefinesForAllTypeOfInstaller(defines)
     if (isPortable) {
@@ -385,6 +345,53 @@ export class NsisTarget extends Target {
     })
   }
 
+  private async resolveArchPackageFiles(
+    archs: Map<Arch, string>,
+    defines: Defines,
+    packager: WinPackager
+  ): Promise<{ packageFiles: { [arch: string]: PackageFileInfo }; estimatedSize: number }> {
+    const packageFiles: { [arch: string]: PackageFileInfo } = {}
+    let estimatedSize = 0
+    const options = this.options
+
+    if (this.isPortable && options.useZip) {
+      for (const [arch, dir] of archs.entries()) {
+        defines[arch === Arch.x64 ? "APP_DIR_64" : arch === Arch.arm64 ? "APP_DIR_ARM64" : "APP_DIR_32"] = dir
+      }
+    } else if (USE_NSIS_BUILT_IN_COMPRESSOR && archs.size === 1) {
+      const value: Arch | undefined = archs.keys().next().value
+      use(value, v => (defines.APP_BUILD_DIR = archs.get(v)))
+    } else {
+      await Promise.all(
+        Array.from(archs.keys()).map(async arch => {
+          const { fileInfo, unpackedSize } = await this.packageHelper.packArch(arch, this)
+          const file = fileInfo.path
+          const defineKey = arch === Arch.x64 ? "APP_64" : arch === Arch.arm64 ? "APP_ARM64" : "APP_32"
+          defines[defineKey] = file
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+          const defineNameKey = `${defineKey}_NAME` as "APP_64_NAME" | "APP_ARM64_NAME" | "APP_32_NAME"
+          defines[defineNameKey] = path.basename(file)
+          // nsis expect a hexadecimal string
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+          const defineHashKey = `${defineKey}_HASH` as "APP_64_HASH" | "APP_ARM64_HASH" | "APP_32_HASH"
+          defines[defineHashKey] = Buffer.from(fileInfo.sha512, "base64").toString("hex").toUpperCase()
+          // NSIS accepts size in KiloBytes and supports only whole numbers
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+          const defineUnpackedSizeKey = `${defineKey}_UNPACKED_SIZE` as "APP_64_UNPACKED_SIZE" | "APP_ARM64_UNPACKED_SIZE" | "APP_32_UNPACKED_SIZE"
+          defines[defineUnpackedSizeKey] = Math.ceil(unpackedSize / 1024).toString()
+
+          if (this.isWebInstaller) {
+            await packager.info.emitArtifactBuildCompleted({ file, target: this, arch, packager })
+            packageFiles[Arch[arch]] = fileInfo
+          }
+          estimatedSize += unpackedSize
+        })
+      )
+    }
+
+    return { packageFiles, estimatedSize }
+  }
+
   protected generateGitHubInstallerName(primaryArch: Arch | null, defaultArch: string | undefined): string {
     const appInfo = this.packager.appInfo
     const classifier = appInfo.name.toLowerCase() === appInfo.name ? "setup-" : "Setup-"
@@ -439,7 +446,7 @@ export class NsisTarget extends Target {
         let i = 0
         while (!(await exists(uninstallerPath)) && i++ < 100) {
           // noinspection JSUnusedLocalSymbols
-          await sleep(300)
+          await new Promise((resolve, _reject) => setTimeout(resolve, 300))
         }
       }
     } else {
@@ -483,16 +490,37 @@ export class NsisTarget extends Target {
 
     if (oneClick) {
       defines.ONE_CLICK = null
+
       if (options.runAfterFinish !== false) {
         defines.RUN_AFTER_FINISH = null
       }
-      asyncTaskManager.add(() => this.loadInstallerHeaderIcon(defines))
+
+      asyncTaskManager.add(async () => {
+        const installerHeaderIcon = await packager.getResource(options.installerHeaderIcon, "installerHeaderIcon.ico")
+        if (installerHeaderIcon != null) {
+          defines.HEADER_ICO = installerHeaderIcon
+        }
+      })
     } else {
       if (options.runAfterFinish === false) {
         defines.HIDE_RUN_AFTER_FINISH = null
       }
-      asyncTaskManager.add(() => this.loadInstallerHeader(defines))
-      asyncTaskManager.add(() => this.loadInstallerSidebar(defines))
+
+      asyncTaskManager.add(async () => {
+        const installerHeader = await packager.getResource(options.installerHeader, "installerHeader.bmp")
+        if (installerHeader != null) {
+          defines.MUI_HEADERIMAGE = null
+          defines.MUI_HEADERIMAGE_RIGHT = null
+          defines.MUI_HEADERIMAGE_BITMAP = installerHeader
+        }
+      })
+
+      asyncTaskManager.add(async () => {
+        const bitmap = (await packager.getResource(options.installerSidebar, "installerSidebar.bmp")) || "${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp"
+        defines.MUI_WELCOMEFINISHPAGE_BITMAP = bitmap
+        defines.MUI_UNWELCOMEFINISHPAGE_BITMAP = (await packager.getResource(options.uninstallerSidebar, "uninstallerSidebar.bmp")) || bitmap
+      })
+
       if (options.allowElevation !== false) {
         defines.MULTIUSER_INSTALLMODE_ALLOW_ELEVATION = null
       }
@@ -533,7 +561,14 @@ export class NsisTarget extends Target {
       defines.DELETE_APP_DATA_ON_UNINSTALL = null
     }
 
-    asyncTaskManager.add(() => this.loadUninstallerIcon(defines))
+    asyncTaskManager.add(async () => {
+      const uninstallerIcon = await packager.getResource(options.uninstallerIcon, "uninstallerIcon.ico")
+      if (uninstallerIcon != null) {
+        // we don't need to copy MUI_UNICON (defaults to app icon), so, we have 2 defines
+        defines.UNINSTALLER_ICON = uninstallerIcon
+        defines.MUI_UNICON = uninstallerIcon
+      }
+    })
 
     defines.UNINSTALL_DISPLAY_NAME = packager.expandMacro(options.uninstallDisplayName || "${productName} ${version}", null, {}, false)
     if (commonOptions.isCreateDesktopShortcut === DesktopShortcutCreationPolicy.NEVER) {
@@ -551,38 +586,6 @@ export class NsisTarget extends Target {
     }
 
     return asyncTaskManager.awaitTasks()
-  }
-
-  private async loadInstallerHeaderIcon(defines: Defines): Promise<void> {
-    const icon = await this.packager.getResource(this.options.installerHeaderIcon, "installerHeaderIcon.ico")
-    if (icon != null) {
-      defines.HEADER_ICO = icon
-    }
-  }
-
-  private async loadInstallerHeader(defines: Defines): Promise<void> {
-    const header = await this.packager.getResource(this.options.installerHeader, "installerHeader.bmp")
-    if (header != null) {
-      defines.MUI_HEADERIMAGE = null
-      defines.MUI_HEADERIMAGE_RIGHT = null
-      defines.MUI_HEADERIMAGE_BITMAP = header
-    }
-  }
-
-  private async loadInstallerSidebar(defines: Defines): Promise<void> {
-    const bitmap =
-      (await this.packager.getResource(this.options.installerSidebar, "installerSidebar.bmp")) || "${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp"
-    defines.MUI_WELCOMEFINISHPAGE_BITMAP = bitmap
-    defines.MUI_UNWELCOMEFINISHPAGE_BITMAP = (await this.packager.getResource(this.options.uninstallerSidebar, "uninstallerSidebar.bmp")) || bitmap
-  }
-
-  private async loadUninstallerIcon(defines: Defines): Promise<void> {
-    const icon = await this.packager.getResource(this.options.uninstallerIcon, "uninstallerIcon.ico")
-    if (icon != null) {
-      // we don't need to copy MUI_UNICON (defaults to app icon), so, we have 2 defines
-      defines.UNINSTALLER_ICON = icon
-      defines.MUI_UNICON = icon
-    }
   }
 
   private configureDefinesForAllTypeOfInstaller(defines: Defines): void {
@@ -840,7 +843,7 @@ async function ensureNotBusy(outFile: string): Promise<void> {
       if (result) {
         return true
       } else {
-        return sleep(2000).then(() => isBusy(true))
+        return new Promise(resolve => setTimeout(resolve, 2000)).then(() => isBusy(true))
       }
     })
   }
