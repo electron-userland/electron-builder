@@ -34,7 +34,7 @@ import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } fr
 import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
 import { NsisScriptGenerator, nsisEscapeString } from "./nsisScriptGenerator"
-import { getMakeNsisPath, getNsisPluginsPath } from "app-builder-lib/src/toolsets/nsis"
+import { getMakeNsisPath, getNsisPluginsPath } from "../../toolsets/nsis"
 import { AppPackageHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
 import { checkMakensisOutput, verifyInstallerSize } from "./nsisValidation"
 import { WineVmManager } from "../../vm/WineVm"

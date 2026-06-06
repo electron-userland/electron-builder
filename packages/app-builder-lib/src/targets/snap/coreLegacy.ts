@@ -4,7 +4,7 @@ import { chmod, copyFile, mkdir, readdir, rename, rm, writeFile } from "fs/promi
 import { outputFile, readFile } from "fs-extra"
 import * as path from "path"
 import { PlugDescriptor, SnapOptions } from "../../options/SnapOptions"
-import { getAppImageTools } from "app-builder-lib/src/toolsets/appimage"
+import { getAppImageTools } from "../../toolsets/appimage"
 import { downloadBuilderToolset } from "../../util/electronGet"
 import { getTemplatePath } from "../../util/pathManager"
 import { validateShellEmbeddable } from "../../frameworks/LibUiFramework"
