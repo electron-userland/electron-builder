@@ -13,76 +13,33 @@ import {
   use,
   walk,
 } from "builder-util"
-import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, deepAssign, PackageFileInfo, sleep, UUID } from "builder-util-runtime"
+import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, deepAssign, PackageFileInfo, UUID } from "builder-util-runtime"
 import _debug from "debug"
 import * as fs from "fs"
-<<<<<<< HEAD
 
-=======
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as path from "path"
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> d26567f58 (tmp save)
 import { Target } from "../../core.js"
 import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../options/CommonWindowsInstallerConfiguration.js"
 import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt } from "../../platformPackager.js"
 import { hashFile } from "../../util/hash.js"
 import { isMacOsCatalina } from "../../util/macosVersion.js"
 import { time } from "../../util/timer.js"
-<<<<<<< HEAD
 import { WineVmManager } from "../../vm/WineVm.js"
-=======
-import { execWine } from "../../wine.js"
->>>>>>> d26567f58 (tmp save)
 import { WinPackager } from "../../winPackager.js"
 import { archive, ArchiveOptions } from "../archive.js"
 import { appendBlockmap, configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../differentialUpdateInfoBuilder.js"
 import { getWindowsInstallationAppPackageName, getWindowsInstallationDirName } from "../targetUtil.js"
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> c92b22265 (tmp save for .js extension migration)
 import { Commands } from "./Commands.js"
 import { Defines } from "./Defines.js"
 import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } from "./nsisLang.js"
 import { computeLicensePage } from "./nsisLicense.js"
 import { NsisOptions, PortableOptions } from "./nsisOptions.js"
-<<<<<<< HEAD
 import { NsisScriptGenerator, nsisEscapeString } from "./nsisScriptGenerator.js"
 import { getMakeNsisPath, getNsisPluginsPath } from "../../toolsets/windows.js"
 import { AppPackageHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil.js"
 import { checkMakensisOutput, verifyInstallerSize } from "./nsisValidation.js"
 import _fsExtra from "fs-extra"
 const { readFile, stat, unlink } = _fsExtra
-=======
-import { Target } from "../../core"
-import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../options/CommonWindowsInstallerConfiguration"
-import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt } from "../../platformPackager"
-import { hashFile } from "../../util/hash"
-import { isMacOsCatalina } from "../../util/macosVersion"
-import { time } from "../../util/timer"
-import { execWine } from "../../wine"
-import { WinPackager } from "../../winPackager"
-import { archive, ArchiveOptions } from "../archive"
-import { appendBlockmap, configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../differentialUpdateInfoBuilder"
-import { getWindowsInstallationAppPackageName, getWindowsInstallationDirName } from "../targetUtil"
-=======
->>>>>>> d26567f58 (tmp save)
-import { Commands } from "./Commands.js.js"
-import { Defines } from "./Defines.js.js"
-import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } from "./nsisLang.js.js"
-import { computeLicensePage } from "./nsisLicense.js.js"
-import { NsisOptions, PortableOptions } from "./nsisOptions.js.js"
-import { NsisScriptGenerator } from "./nsisScriptGenerator.js.js"
-import { AppPackageHelper, NSIS_PATH, NSIS_RESOURCES_PATH, NsisTargetOptions, nsisTemplatesDir, UninstallerReader } from "./nsisUtil.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { NsisScriptGenerator } from "./nsisScriptGenerator.js"
-import { AppPackageHelper, NSIS_PATH, NSIS_RESOURCES_PATH, NsisTargetOptions, nsisTemplatesDir, UninstallerReader } from "./nsisUtil.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 const debug = _debug("electron-builder:nsis")
 
@@ -120,7 +77,7 @@ export class NsisTarget extends Target {
       deepAssign(this.options, (this.packager.config as any)[targetName === "nsis-web" ? "nsisWeb" : targetName])
     }
 
-    const deps = packager.metadata.dependencies
+    const deps = packager.info.metadata.dependencies
     if (deps != null && deps["electron-squirrel-startup"] != null) {
       log.warn('"electron-squirrel-startup" dependency is not required for NSIS')
     }
@@ -215,7 +172,7 @@ export class NsisTarget extends Target {
     const packager = this.packager
     const appInfo = packager.appInfo
     const options = this.options
-    const defaultArch = chooseNotNull(this.packager.platformOptions.defaultArch, this.packager.config.defaultArch) ?? undefined
+    const defaultArch = chooseNotNull(this.packager.platformSpecificBuildOptions.defaultArch, this.packager.config.defaultArch) ?? undefined
     const installerFilename = packager.expandArtifactNamePattern(options, "exe", primaryArch, this.installerFilenamePattern(primaryArch, defaultArch), false, defaultArch)
     const oneClick = options.oneClick !== false
     const installerPath = path.join(this.outDir, installerFilename)
@@ -234,7 +191,7 @@ export class NsisTarget extends Target {
       logFields.perMachine = isPerMachine
     }
 
-    await packager.emitArtifactBuildStarted(
+    await packager.info.emitArtifactBuildStarted(
       {
         targetPresentableName: this.name,
         file: installerPath,
@@ -257,7 +214,7 @@ export class NsisTarget extends Target {
       VERSION: appInfo.version,
 
       PROJECT_DIR: packager.projectDir,
-      BUILD_RESOURCES_DIR: packager.buildResourcesDir,
+      BUILD_RESOURCES_DIR: packager.info.buildResourcesDir,
 
       APP_PACKAGE_NAME: getWindowsInstallationAppPackageName(appInfo.name),
     }
@@ -268,7 +225,7 @@ export class NsisTarget extends Target {
       defines.UNINSTALL_REGISTRY_KEY_2 = `Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${guid}`
     }
 
-    const { homepage } = this.packager.metadata
+    const { homepage } = this.packager.info.metadata
     use(options.uninstallUrlHelp || homepage, it => (defines.UNINSTALL_URL_HELP = it))
     use(options.uninstallUrlInfoAbout || homepage, it => (defines.UNINSTALL_URL_INFO_ABOUT = it))
     use(options.uninstallUrlUpdateInfo || homepage, it => (defines.UNINSTALL_URL_UPDATE_INFO = it))
@@ -292,47 +249,7 @@ export class NsisTarget extends Target {
       }
     }
 
-    const packageFiles: { [arch: string]: PackageFileInfo } = {}
-    let estimatedSize = 0
-    if (this.isPortable && options.useZip) {
-      for (const [arch, dir] of archs.entries()) {
-        defines[arch === Arch.x64 ? "APP_DIR_64" : arch === Arch.arm64 ? "APP_DIR_ARM64" : "APP_DIR_32"] = dir
-      }
-    } else if (USE_NSIS_BUILT_IN_COMPRESSOR && archs.size === 1) {
-      const value: Arch | undefined = archs.keys().next().value
-      use(value, v => (defines.APP_BUILD_DIR = archs.get(v)))
-    } else {
-      await Promise.all(
-        Array.from(archs.keys()).map(async arch => {
-          const { fileInfo, unpackedSize } = await this.packageHelper.packArch(arch, this)
-          const file = fileInfo.path
-          const defineKey = arch === Arch.x64 ? "APP_64" : arch === Arch.arm64 ? "APP_ARM64" : "APP_32"
-          defines[defineKey] = file
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-          const defineNameKey = `${defineKey}_NAME` as "APP_64_NAME" | "APP_ARM64_NAME" | "APP_32_NAME"
-          defines[defineNameKey] = path.basename(file)
-          // nsis expect a hexadecimal string
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-          const defineHashKey = `${defineKey}_HASH` as "APP_64_HASH" | "APP_ARM64_HASH" | "APP_32_HASH"
-          defines[defineHashKey] = Buffer.from(fileInfo.sha512, "base64").toString("hex").toUpperCase()
-          // NSIS accepts size in KiloBytes and supports only whole numbers
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-          const defineUnpackedSizeKey = `${defineKey}_UNPACKED_SIZE` as "APP_64_UNPACKED_SIZE" | "APP_ARM64_UNPACKED_SIZE" | "APP_32_UNPACKED_SIZE"
-          defines[defineUnpackedSizeKey] = Math.ceil(unpackedSize / 1024).toString()
-
-          if (this.isWebInstaller) {
-            await packager.emitArtifactBuildCompleted({
-              file,
-              target: this,
-              arch,
-              packager,
-            })
-            packageFiles[Arch[arch]] = fileInfo
-          }
-          estimatedSize += unpackedSize
-        })
-      )
-    }
+    const { packageFiles, estimatedSize } = await this.resolveArchPackageFiles(archs, defines, packager)
 
     this.configureDefinesForAllTypeOfInstaller(defines)
     if (isPortable) {
@@ -386,7 +303,6 @@ export class NsisTarget extends Target {
 
     this.buildQueueManager.add(async () => {
       const sharedHeader = await this.computeCommonInstallerScriptHeader()
-<<<<<<< HEAD
       let rawScript: string
       let isCustomScript = false
       if (isPortable) {
@@ -396,24 +312,14 @@ export class NsisTarget extends Target {
         rawScript = result.script
         isCustomScript = result.isCustomScript
       }
-=======
-      const script = isPortable
-        ? await fsExtra.readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8")
-        : await this.computeScriptAndSignUninstaller(definesUninstaller, commandsUninstaller, installerPath, sharedHeader, archs)
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 
       // copy outfile name into main options, as the computeScriptAndSignUninstaller function was kind enough to add important data to temporary defines.
       defines.UNINSTALLER_OUT_FILE = definesUninstaller.UNINSTALLER_OUT_FILE
 
-<<<<<<< HEAD
       // Skip size verification for portable (NSIS recompresses the archive, installer < archive is normal)
       // and for custom scripts (may not embed archives).
       await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(rawScript, true, archs)), { skipSizeVerification: isPortable || isCustomScript })
       await Promise.all<any>([packager.signIf(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
-=======
-      await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(script, true, archs)))
-      await Promise.all<any>([packager.signIf(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : fsExtra.unlink(defines.UNINSTALLER_OUT_FILE)])
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 
       const safeArtifactName = computeSafeArtifactNameIfNeeded(installerFilename, () => this.generateGitHubInstallerName(primaryArch, defaultArch))
       let updateInfo: any
@@ -427,7 +333,7 @@ export class NsisTarget extends Target {
         updateInfo.isAdminRightsRequired = true
       }
 
-      await packager.emitArtifactBuildCompleted({
+      await packager.info.emitArtifactBuildCompleted({
         file: installerPath,
         updateInfo,
         target: this,
@@ -437,6 +343,53 @@ export class NsisTarget extends Target {
         isWriteUpdateInfo: !this.isPortable,
       })
     })
+  }
+
+  private async resolveArchPackageFiles(
+    archs: Map<Arch, string>,
+    defines: Defines,
+    packager: WinPackager
+  ): Promise<{ packageFiles: { [arch: string]: PackageFileInfo }; estimatedSize: number }> {
+    const packageFiles: { [arch: string]: PackageFileInfo } = {}
+    let estimatedSize = 0
+    const options = this.options
+
+    if (this.isPortable && options.useZip) {
+      for (const [arch, dir] of archs.entries()) {
+        defines[arch === Arch.x64 ? "APP_DIR_64" : arch === Arch.arm64 ? "APP_DIR_ARM64" : "APP_DIR_32"] = dir
+      }
+    } else if (USE_NSIS_BUILT_IN_COMPRESSOR && archs.size === 1) {
+      const value: Arch | undefined = archs.keys().next().value
+      use(value, v => (defines.APP_BUILD_DIR = archs.get(v)))
+    } else {
+      await Promise.all(
+        Array.from(archs.keys()).map(async arch => {
+          const { fileInfo, unpackedSize } = await this.packageHelper.packArch(arch, this)
+          const file = fileInfo.path
+          const defineKey = arch === Arch.x64 ? "APP_64" : arch === Arch.arm64 ? "APP_ARM64" : "APP_32"
+          defines[defineKey] = file
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+          const defineNameKey = `${defineKey}_NAME` as "APP_64_NAME" | "APP_ARM64_NAME" | "APP_32_NAME"
+          defines[defineNameKey] = path.basename(file)
+          // nsis expect a hexadecimal string
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+          const defineHashKey = `${defineKey}_HASH` as "APP_64_HASH" | "APP_ARM64_HASH" | "APP_32_HASH"
+          defines[defineHashKey] = Buffer.from(fileInfo.sha512, "base64").toString("hex").toUpperCase()
+          // NSIS accepts size in KiloBytes and supports only whole numbers
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+          const defineUnpackedSizeKey = `${defineKey}_UNPACKED_SIZE` as "APP_64_UNPACKED_SIZE" | "APP_ARM64_UNPACKED_SIZE" | "APP_32_UNPACKED_SIZE"
+          defines[defineUnpackedSizeKey] = Math.ceil(unpackedSize / 1024).toString()
+
+          if (this.isWebInstaller) {
+            await packager.info.emitArtifactBuildCompleted({ file, target: this, arch, packager })
+            packageFiles[Arch[arch]] = fileInfo
+          }
+          estimatedSize += unpackedSize
+        })
+      )
+    }
+
+    return { packageFiles, estimatedSize }
   }
 
   protected generateGitHubInstallerName(primaryArch: Arch | null, defaultArch: string | undefined): string {
@@ -463,7 +416,7 @@ export class NsisTarget extends Target {
   ): Promise<{ script: string; isCustomScript: boolean }> {
     const packager = this.packager
     const customScriptPath = await packager.getResource(this.options.script, "installer.nsi")
-    const script = await fsExtra.readFile(customScriptPath || path.join(nsisTemplatesDir, "installer.nsi"), "utf8")
+    const script = await readFile(customScriptPath || path.join(nsisTemplatesDir, "installer.nsi"), "utf8")
 
     if (customScriptPath != null) {
       log.info({ reason: "custom NSIS script is used" }, "uninstaller is not signed by electron-builder")
@@ -493,7 +446,7 @@ export class NsisTarget extends Target {
         let i = 0
         while (!(await exists(uninstallerPath)) && i++ < 100) {
           // noinspection JSUnusedLocalSymbols
-          await sleep(300)
+          await new Promise((resolve, _reject) => setTimeout(resolve, 300))
         }
       }
     } else {
@@ -524,7 +477,7 @@ export class NsisTarget extends Target {
       versionKey[1] = `/LANG=${localeId} ProductVersion "${nsisEscapeString(appInfo.shortVersion!)}"`
       versionKey[4] = `/LANG=${localeId} FileVersion "${nsisEscapeString(appInfo.shortVersion!)}"`
     }
-    use(this.packager.platformOptions.legalTrademarks, it => versionKey.push(`/LANG=${localeId} LegalTrademarks "${nsisEscapeString(it)}"`))
+    use(this.packager.platformSpecificBuildOptions.legalTrademarks, it => versionKey.push(`/LANG=${localeId} LegalTrademarks "${nsisEscapeString(it)}"`))
     use(appInfo.companyName, it => versionKey.push(`/LANG=${localeId} CompanyName "${nsisEscapeString(it)}"`))
     return versionKey
   }
@@ -533,20 +486,41 @@ export class NsisTarget extends Target {
     const packager = this.packager
     const options = this.options
 
-    const asyncTaskManager = new AsyncTaskManager(packager.cancellationToken)
+    const asyncTaskManager = new AsyncTaskManager(packager.info.cancellationToken)
 
     if (oneClick) {
       defines.ONE_CLICK = null
+
       if (options.runAfterFinish !== false) {
         defines.RUN_AFTER_FINISH = null
       }
-      asyncTaskManager.add(() => this.loadInstallerHeaderIcon(defines))
+
+      asyncTaskManager.add(async () => {
+        const installerHeaderIcon = await packager.getResource(options.installerHeaderIcon, "installerHeaderIcon.ico")
+        if (installerHeaderIcon != null) {
+          defines.HEADER_ICO = installerHeaderIcon
+        }
+      })
     } else {
       if (options.runAfterFinish === false) {
         defines.HIDE_RUN_AFTER_FINISH = null
       }
-      asyncTaskManager.add(() => this.loadInstallerHeader(defines))
-      asyncTaskManager.add(() => this.loadInstallerSidebar(defines))
+
+      asyncTaskManager.add(async () => {
+        const installerHeader = await packager.getResource(options.installerHeader, "installerHeader.bmp")
+        if (installerHeader != null) {
+          defines.MUI_HEADERIMAGE = null
+          defines.MUI_HEADERIMAGE_RIGHT = null
+          defines.MUI_HEADERIMAGE_BITMAP = installerHeader
+        }
+      })
+
+      asyncTaskManager.add(async () => {
+        const bitmap = (await packager.getResource(options.installerSidebar, "installerSidebar.bmp")) || "${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp"
+        defines.MUI_WELCOMEFINISHPAGE_BITMAP = bitmap
+        defines.MUI_UNWELCOMEFINISHPAGE_BITMAP = (await packager.getResource(options.uninstallerSidebar, "uninstallerSidebar.bmp")) || bitmap
+      })
+
       if (options.allowElevation !== false) {
         defines.MULTIUSER_INSTALLMODE_ALLOW_ELEVATION = null
       }
@@ -587,7 +561,14 @@ export class NsisTarget extends Target {
       defines.DELETE_APP_DATA_ON_UNINSTALL = null
     }
 
-    asyncTaskManager.add(() => this.loadUninstallerIcon(defines))
+    asyncTaskManager.add(async () => {
+      const uninstallerIcon = await packager.getResource(options.uninstallerIcon, "uninstallerIcon.ico")
+      if (uninstallerIcon != null) {
+        // we don't need to copy MUI_UNICON (defaults to app icon), so, we have 2 defines
+        defines.UNINSTALLER_ICON = uninstallerIcon
+        defines.MUI_UNICON = uninstallerIcon
+      }
+    })
 
     defines.UNINSTALL_DISPLAY_NAME = packager.expandMacro(options.uninstallDisplayName || "${productName} ${version}", null, {}, false)
     if (commonOptions.isCreateDesktopShortcut === DesktopShortcutCreationPolicy.NEVER) {
@@ -605,38 +586,6 @@ export class NsisTarget extends Target {
     }
 
     return asyncTaskManager.awaitTasks()
-  }
-
-  private async loadInstallerHeaderIcon(defines: Defines): Promise<void> {
-    const icon = await this.packager.getResource(this.options.installerHeaderIcon, "installerHeaderIcon.ico")
-    if (icon != null) {
-      defines.HEADER_ICO = icon
-    }
-  }
-
-  private async loadInstallerHeader(defines: Defines): Promise<void> {
-    const header = await this.packager.getResource(this.options.installerHeader, "installerHeader.bmp")
-    if (header != null) {
-      defines.MUI_HEADERIMAGE = null
-      defines.MUI_HEADERIMAGE_RIGHT = null
-      defines.MUI_HEADERIMAGE_BITMAP = header
-    }
-  }
-
-  private async loadInstallerSidebar(defines: Defines): Promise<void> {
-    const bitmap =
-      (await this.packager.getResource(this.options.installerSidebar, "installerSidebar.bmp")) || "${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp"
-    defines.MUI_WELCOMEFINISHPAGE_BITMAP = bitmap
-    defines.MUI_UNWELCOMEFINISHPAGE_BITMAP = (await this.packager.getResource(this.options.uninstallerSidebar, "uninstallerSidebar.bmp")) || bitmap
-  }
-
-  private async loadUninstallerIcon(defines: Defines): Promise<void> {
-    const icon = await this.packager.getResource(this.options.uninstallerIcon, "uninstallerIcon.ico")
-    if (icon != null) {
-      // we don't need to copy MUI_UNICON (defaults to app icon), so, we have 2 defines
-      defines.UNINSTALLER_ICON = icon
-      defines.MUI_UNICON = icon
-    }
   }
 
   private configureDefinesForAllTypeOfInstaller(defines: Defines): void {
@@ -745,7 +694,7 @@ export class NsisTarget extends Target {
 
     createAddLangsMacro(scriptGenerator, langConfigurator)
 
-    const taskManager = new AsyncTaskManager(packager.cancellationToken)
+    const taskManager = new AsyncTaskManager(packager.info.cancellationToken)
 
     const pluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
     taskManager.add(async () => {
@@ -753,7 +702,7 @@ export class NsisTarget extends Target {
     })
 
     taskManager.add(async () => {
-      const userPluginDir = path.join(packager.buildResourcesDir, pluginArch)
+      const userPluginDir = path.join(packager.info.buildResourcesDir, pluginArch)
       const stat = await statOrNull(userPluginDir)
       if (stat != null && stat.isDirectory()) {
         scriptGenerator.addPluginDir(pluginArch, userPluginDir)
@@ -770,7 +719,7 @@ export class NsisTarget extends Target {
       taskManager.add(async () => {
         const customInclude = await packager.getResource(this.options.include, "installer.nsh")
         if (customInclude != null) {
-          scriptGenerator.addIncludeDir(packager.buildResourcesDir)
+          scriptGenerator.addIncludeDir(packager.info.buildResourcesDir)
           scriptGenerator.include(customInclude)
         }
       })
@@ -786,7 +735,7 @@ export class NsisTarget extends Target {
     const langConfigurator = new LangConfigurator(options)
 
     const scriptGenerator = new NsisScriptGenerator()
-    const taskManager = new AsyncTaskManager(packager.cancellationToken)
+    const taskManager = new AsyncTaskManager(packager.info.cancellationToken)
 
     if (isInstaller) {
       // http://stackoverflow.com/questions/997456/nsis-license-file-based-on-language-selection
@@ -894,7 +843,7 @@ async function ensureNotBusy(outFile: string): Promise<void> {
       if (result) {
         return true
       } else {
-        return sleep(2000).then(() => isBusy(true))
+        return new Promise(resolve => setTimeout(resolve, 2000)).then(() => isBusy(true))
       }
     })
   }
@@ -905,7 +854,7 @@ async function ensureNotBusy(outFile: string): Promise<void> {
 async function createPackageFileInfo(file: string): Promise<PackageFileInfo> {
   return {
     path: file,
-    size: (await fsExtra.stat(file)).size,
+    size: (await stat(file)).size,
     sha512: await hashFile(file),
   }
 }
