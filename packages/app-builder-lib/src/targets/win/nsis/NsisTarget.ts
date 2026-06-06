@@ -77,7 +77,7 @@ export class NsisTarget extends Target {
       deepAssign(this.options, (this.packager.config as any)[targetName === "nsis-web" ? "nsisWeb" : targetName])
     }
 
-    const deps = packager.info.metadata.dependencies
+    const deps = packager.metadata.dependencies
     if (deps != null && deps["electron-squirrel-startup"] != null) {
       log.warn('"electron-squirrel-startup" dependency is not required for NSIS')
     }
@@ -191,7 +191,7 @@ export class NsisTarget extends Target {
       logFields.perMachine = isPerMachine
     }
 
-    await packager.info.emitArtifactBuildStarted(
+    await packager.emitArtifactBuildStarted(
       {
         targetPresentableName: this.name,
         file: installerPath,
@@ -214,7 +214,7 @@ export class NsisTarget extends Target {
       VERSION: appInfo.version,
 
       PROJECT_DIR: packager.projectDir,
-      BUILD_RESOURCES_DIR: packager.info.buildResourcesDir,
+      BUILD_RESOURCES_DIR: packager.buildResourcesDir,
 
       APP_PACKAGE_NAME: getWindowsInstallationAppPackageName(appInfo.name),
     }
@@ -225,7 +225,7 @@ export class NsisTarget extends Target {
       defines.UNINSTALL_REGISTRY_KEY_2 = `Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${guid}`
     }
 
-    const { homepage } = this.packager.info.metadata
+    const { homepage } = this.packager.metadata
     use(options.uninstallUrlHelp || homepage, it => (defines.UNINSTALL_URL_HELP = it))
     use(options.uninstallUrlInfoAbout || homepage, it => (defines.UNINSTALL_URL_INFO_ABOUT = it))
     use(options.uninstallUrlUpdateInfo || homepage, it => (defines.UNINSTALL_URL_UPDATE_INFO = it))
@@ -333,7 +333,7 @@ export class NsisTarget extends Target {
         updateInfo.isAdminRightsRequired = true
       }
 
-      await packager.info.emitArtifactBuildCompleted({
+      await packager.emitArtifactBuildCompleted({
         file: installerPath,
         updateInfo,
         target: this,
@@ -486,7 +486,7 @@ export class NsisTarget extends Target {
     const packager = this.packager
     const options = this.options
 
-    const asyncTaskManager = new AsyncTaskManager(packager.info.cancellationToken)
+    const asyncTaskManager = new AsyncTaskManager(packager.cancellationToken)
 
     if (oneClick) {
       defines.ONE_CLICK = null
@@ -694,7 +694,7 @@ export class NsisTarget extends Target {
 
     createAddLangsMacro(scriptGenerator, langConfigurator)
 
-    const taskManager = new AsyncTaskManager(packager.info.cancellationToken)
+    const taskManager = new AsyncTaskManager(packager.cancellationToken)
 
     const pluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
     taskManager.add(async () => {
@@ -702,7 +702,7 @@ export class NsisTarget extends Target {
     })
 
     taskManager.add(async () => {
-      const userPluginDir = path.join(packager.info.buildResourcesDir, pluginArch)
+      const userPluginDir = path.join(packager.buildResourcesDir, pluginArch)
       const stat = await statOrNull(userPluginDir)
       if (stat != null && stat.isDirectory()) {
         scriptGenerator.addPluginDir(pluginArch, userPluginDir)
@@ -719,7 +719,7 @@ export class NsisTarget extends Target {
       taskManager.add(async () => {
         const customInclude = await packager.getResource(this.options.include, "installer.nsh")
         if (customInclude != null) {
-          scriptGenerator.addIncludeDir(packager.info.buildResourcesDir)
+          scriptGenerator.addIncludeDir(packager.buildResourcesDir)
           scriptGenerator.include(customInclude)
         }
       })
@@ -735,7 +735,7 @@ export class NsisTarget extends Target {
     const langConfigurator = new LangConfigurator(options)
 
     const scriptGenerator = new NsisScriptGenerator()
-    const taskManager = new AsyncTaskManager(packager.info.cancellationToken)
+    const taskManager = new AsyncTaskManager(packager.cancellationToken)
 
     if (isInstaller) {
       // http://stackoverflow.com/questions/997456/nsis-license-file-based-on-language-selection

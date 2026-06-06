@@ -140,7 +140,7 @@ export class WindowsSignToolManager implements SignManager {
       }
 
       return (
-        importCertificate(cscLink, this.packager.info.tempDirManager, this.packager.projectDir)
+        importCertificate(cscLink, this.packager.tempDirManager, this.packager.projectDir)
           // before then
           .catch((e: any) => {
             if (e instanceof InvalidConfigurationError) {
@@ -194,7 +194,7 @@ export class WindowsSignToolManager implements SignManager {
     const name = this.packager.appInfo.productName
     const site = await this.packager.appInfo.computePackageUrl()
 
-    const customSign = await resolveFunction(this.packager.appInfo.type, options.options.signtoolOptions?.sign, "sign", await this.packager.info.getWorkspaceRoot())
+    const customSign = await resolveFunction(this.packager.appInfo.type, options.options.signtoolOptions?.sign, "sign", await this.packager.getWorkspaceRoot())
 
     const cscInfo = await this.cscInfo.value
     if (cscInfo) {

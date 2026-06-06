@@ -96,9 +96,9 @@ export default class FpmTarget extends Target {
     }
 
     return {
-      afterInstall: await writeConfigFile(packager.info.tempDirManager, getResource(this.options.afterInstall, "after-install.tpl"), bashTemplateOptions),
-      afterRemove: await writeConfigFile(packager.info.tempDirManager, getResource(this.options.afterRemove, "after-remove.tpl"), bashTemplateOptions),
-      appArmor: await writeConfigFile(packager.info.tempDirManager, getResource(this.options.appArmorProfile, "apparmor-profile.tpl"), appArmorTemplateOptions),
+      afterInstall: await writeConfigFile(packager.tempDirManager, getResource(this.options.afterInstall, "after-install.tpl"), bashTemplateOptions),
+      afterRemove: await writeConfigFile(packager.tempDirManager, getResource(this.options.afterRemove, "after-remove.tpl"), bashTemplateOptions),
+      appArmor: await writeConfigFile(packager.tempDirManager, getResource(this.options.appArmorProfile, "apparmor-profile.tpl"), appArmorTemplateOptions),
     }
   }
 
@@ -117,7 +117,7 @@ export default class FpmTarget extends Target {
     const options = this.options
     let author = options.maintainer
     if (author == null) {
-      const a = packager.info.metadata.author
+      const a = packager.metadata.author
       if (a == null || a.email == null) {
         errors.push(errorMessages.authorEmailIsMissed)
       } else {
@@ -155,7 +155,7 @@ export default class FpmTarget extends Target {
     const artifactName = packager.expandArtifactNamePattern(this.options, target, arch, nameFormat, !isUseArchIfX64)
     const artifactPath = path.join(this.outDir, artifactName)
 
-    await packager.info.emitArtifactBuildStarted({
+    await packager.emitArtifactBuildStarted({
       targetPresentableName: target,
       file: artifactPath,
       arch,
@@ -250,7 +250,7 @@ export default class FpmTarget extends Target {
       }
     }
 
-    use(packager.info.metadata.license, it => args.push("--license", it))
+    use(packager.metadata.license, it => args.push("--license", it))
     use(appInfo.buildNumber, it =>
       args.push(
         "--iteration",
@@ -314,7 +314,7 @@ export default class FpmTarget extends Target {
         },
       }
     }
-    await packager.info.emitArtifactBuildCompleted(info)
+    await packager.emitArtifactBuildCompleted(info)
   }
 
   private async executeFpm(target: string, fpmConfiguration: FpmConfiguration, env: any) {

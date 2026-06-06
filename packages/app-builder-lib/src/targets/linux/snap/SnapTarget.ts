@@ -50,7 +50,7 @@ export default class SnapTarget extends Target {
     const artifactName = packager.expandArtifactNamePattern(this.options, "snap", arch, "${name}_${version}_${arch}.${ext}", false)
     const artifactPath = path.join(this.outDir, artifactName)
 
-    await packager.info.emitArtifactBuildStarted({
+    await packager.emitArtifactBuildStarted({
       targetPresentableName: "snap",
       file: artifactPath,
       arch,
@@ -71,7 +71,7 @@ export default class SnapTarget extends Target {
 
     const publishConfig = this.findSnapPublishConfig(packager.config)
 
-    await packager.info.emitArtifactBuildCompleted({
+    await packager.emitArtifactBuildCompleted({
       file: artifactPath,
       safeArtifactName: packager.computeSafeArtifactName(artifactName, "snap", arch, false),
       target: this,
