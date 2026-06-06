@@ -345,8 +345,8 @@ export interface ToolsetConfig {
    * Located at https://github.com/electron-userland/electron-builder-binaries/releases?q=win-codesign&expanded=true
    *
    * Stable:
-  *
-  * Beta:
+   *
+   * Beta:
    * v0.0.0 - (winCodeSign legacy)
    * v1.0.0, v1.1.0 - (Windows Kits 10.0.26100.0)
    *
@@ -357,7 +357,7 @@ export interface ToolsetConfig {
   /**
    * `appimage` bundle version to use for Appimage packaging and runtime.
    * Located at https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage&expanded=true
-  *
+   *
    * 0.0.0 - (FUSE2 legacy)
    * 1.0.3 - (Runtime 20251108)
    *
@@ -368,7 +368,7 @@ export interface ToolsetConfig {
   /**
    * `nsis` bundle version to use for NSIS installer compilation.
    * Located at https://github.com/electron-userland/electron-builder-binaries/releases?q=nsis&expanded=true
-  *
+   *
    * 0.0.0 - (nsis-3.0.4.1 + nsis-resources-3.4.1)
    * 1.2.1 - (makensis 3.12)
    *
@@ -379,7 +379,7 @@ export interface ToolsetConfig {
   /**
    * `wine` bundle version to use for running Windows tools on non-Windows platforms.
    * Located at https://github.com/electron-userland/electron-builder-binaries/releases?q=wine&expanded=true
-  *
+   *
    * 0.0.0 - (wine 4.0.1 portable; mac-only support)
    * 1.0.1 - (wine 11)
    *

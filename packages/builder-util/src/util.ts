@@ -513,7 +513,7 @@ export class InvalidConfigurationError extends Error {
  * start with the resolved `base` directory.  This `startsWith`-based check is
  * the pattern that CodeQL's path-injection analysis recognises as a sanitizer,
  * clearing the taint on the returned value for interprocedural analysis.
-*/
+ */
 export function sanitizeDirPath(p: string, base?: string): string {
   return sanitizePath(p, base, "directory")
 }

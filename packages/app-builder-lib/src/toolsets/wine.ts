@@ -1,4 +1,4 @@
-import { exists, InvalidConfigurationError, resolveEnvToolsetPath, sanitizeDirPath } from "builder-util"
+import { exists, InvalidConfigurationError, sanitizeDirPath } from "builder-util"
 import * as path from "path"
 import { ToolsetConfig } from "../configuration"
 import { downloadBuilderToolset } from "../util/electronGet"

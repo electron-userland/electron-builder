@@ -40,7 +40,7 @@ export interface AppImageBuilderOptions {
   options: Options
 }
 
-export async function buildStaticRuntimeAppImage(appimageToolVersion: ToolsetConfig["appimage"], opts: AppImageBuilderOptions): Promise<BlockMapDataHolder> {
+export async function buildStaticRuntimeAppImage(appimageToolVersion: ToolsetConfig["appimage"], opts: AppImageBuilderOptions, resourcesDir: string): Promise<BlockMapDataHolder> {
   const { stageDir, output, appDir, options, arch } = opts
 
   try {
@@ -49,7 +49,7 @@ export async function buildStaticRuntimeAppImage(appimageToolVersion: ToolsetCon
     // Write AppRun launcher and related files
     await writeAppLauncherAndRelatedFiles(opts)
 
-    const { runtimeLibraries: libraries, runtime, mksquashfs } = await getAppImageTools(appimageToolVersion, arch)
+    const { runtimeLibraries: libraries, runtime, mksquashfs } = await getAppImageTools(appimageToolVersion, arch, resourcesDir)
     await copyDir(libraries, path.join(stageDir, "usr", "lib"))
 
     // Copy app directory to stage
@@ -83,7 +83,7 @@ export async function buildStaticRuntimeAppImage(appimageToolVersion: ToolsetCon
   }
 }
 
-export async function buildLegacyFuse2AppImage(opts: AppImageBuilderOptions): Promise<BlockMapDataHolder> {
+export async function buildLegacyFuse2AppImage(opts: AppImageBuilderOptions, resourcesDir: string): Promise<BlockMapDataHolder> {
   const { stageDir, output, appDir, options, arch } = opts
 
   try {
@@ -91,7 +91,7 @@ export async function buildLegacyFuse2AppImage(opts: AppImageBuilderOptions): Pr
 
     await writeAppLauncherAndRelatedFiles(opts)
 
-    const { runtime, mksquashfs, runtimeLibraries } = await getAppImageTools("0.0.0", arch)
+    const { runtime, mksquashfs, runtimeLibraries } = await getAppImageTools("0.0.0", arch, resourcesDir)
     // Mirror the app-builder-lib Go implementation: bundle lib/<arch> into usr/lib for x64 and ia32.
     // arm targets don't have a dedicated lib dir in the FUSE2 toolset.
     if (arch === Arch.x64 || arch === Arch.ia32) {

@@ -519,66 +519,6 @@
       ],
       "type": "object"
     },
-    "CustomNsisBinary": {
-      "additionalProperties": false,
-      "properties": {
-        "checksum": {
-          "default": "VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q==",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "debugLogging": {
-          "description": "Whether or not to enable NSIS logging for debugging.\nNote: Requires a debug-enabled NSIS build.\nelectron-builder's included `makensis` does not natively support debug-enabled NSIS installers currently, you must supply your own via `customNsisBinary?: CustomNsisBinary`\nIn your custom nsis scripts, you can leverage this functionality via `LogSet` and `LogText`",
-          "type": [
-            "null",
-            "boolean"
-          ]
-        },
-        "url": {
-          "default": "https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-3.0.4.1/nsis-3.0.4.1.7z",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "version": {
-          "default": "3.0.4.1",
-          "type": [
-            "null",
-            "string"
-          ]
-        }
-      },
-      "required": [
-        "url"
-      ],
-      "type": "object"
-    },
-    "CustomNsisResources": {
-      "additionalProperties": false,
-      "properties": {
-        "checksum": {
-          "default": "Dqd6g+2buwwvoG1Vyf6BHR1b+25QMmPcwZx40atOT57gH27rkjOei1L0JTldxZu4NFoEmW4kJgZ3DlSWVON3+Q==",
-          "type": "string"
-        },
-        "url": {
-          "default": "https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-resources-3.4.1/nsis-resources-3.4.1.7z",
-          "type": "string"
-        },
-        "version": {
-          "default": "3.4.1",
-          "type": "string"
-        }
-      },
-      "required": [
-        "checksum",
-        "url",
-        "version"
-      ],
-      "type": "object"
-    },
     "CustomPublishOptions": {
       "additionalProperties": {},
       "properties": {
@@ -4245,27 +4185,12 @@
           "description": "Whether to create start menu shortcut.",
           "type": "boolean"
         },
-        "customNsisBinary": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/CustomNsisBinary"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
-        },
-        "customNsisResources": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/CustomNsisResources"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Allows you to provide your own `nsis-resources`"
+        "debugLogging": {
+          "description": "Whether or not to enable NSIS logging for debugging.\nNote: Requires a debug-enabled NSIS build.\nelectron-builder's included `makensis` does not natively support debug-enabled NSIS installers currently, you must supply your own via `customNsisBinary?: CustomNsisBinary`\nIn your custom nsis scripts, you can leverage this functionality via `LogSet` and `LogText`",
+          "type": [
+            "null",
+            "boolean"
+          ]
         },
         "deleteAppDataOnUninstall": {
           "default": false,
@@ -4598,27 +4523,12 @@
           "description": "Whether to create start menu shortcut.",
           "type": "boolean"
         },
-        "customNsisBinary": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/CustomNsisBinary"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
-        },
-        "customNsisResources": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/CustomNsisResources"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Allows you to provide your own `nsis-resources`"
+        "debugLogging": {
+          "description": "Whether or not to enable NSIS logging for debugging.\nNote: Requires a debug-enabled NSIS build.\nelectron-builder's included `makensis` does not natively support debug-enabled NSIS installers currently, you must supply your own via `customNsisBinary?: CustomNsisBinary`\nIn your custom nsis scripts, you can leverage this functionality via `LogSet` and `LogText`",
+          "type": [
+            "null",
+            "boolean"
+          ]
         },
         "deleteAppDataOnUninstall": {
           "default": false,
@@ -5821,27 +5731,12 @@
           "description": "Disable building an universal installer of the archs specified in the target configuration",
           "type": "boolean"
         },
-        "customNsisBinary": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/CustomNsisBinary"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
-        },
-        "customNsisResources": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/CustomNsisResources"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Allows you to provide your own `nsis-resources`"
+        "debugLogging": {
+          "description": "Whether or not to enable NSIS logging for debugging.\nNote: Requires a debug-enabled NSIS build.\nelectron-builder's included `makensis` does not natively support debug-enabled NSIS installers currently, you must supply your own via `customNsisBinary?: CustomNsisBinary`\nIn your custom nsis scripts, you can leverage this functionality via `LogSet` and `LogText`",
+          "type": [
+            "null",
+            "boolean"
+          ]
         },
         "guid": {
           "description": "The GUID for the installer. Used to identify the application for upgrade and uninstall operations.\nIf not specified, a deterministic GUID is generated from the app ID (`appId`) — but this means\nchanging your `appId` will break silent upgrades of existing installs.",
@@ -8277,9 +8172,11 @@
         "appimage": {
           "anyOf": [
             {
+              "$ref": "#/definitions/ToolsetCustom"
+            },
+            {
               "enum": [
                 "0.0.0",
-                "1.0.2",
                 "1.0.3"
               ],
               "type": "string"
@@ -8288,11 +8185,42 @@
               "type": "null"
             }
           ],
-          "default": "0.0.0",
-          "description": "`appimage` bundle version to use for Appimage packaging and runtime.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage&expanded=true\n0.0.0 - legacy toolset (appimage)\n\nBetas:\n1.0.2 - Runtime 20251108\n1.0.3 - Runtime 20251108 (Resolves GH issue #9598)"
+          "default": "1.0.3",
+          "description": "`appimage` bundle version to use for Appimage packaging and runtime.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage&expanded=true\n\n0.0.0 - (FUSE2 legacy)\n1.0.3 - (Runtime 20251108)"
+        },
+        "fpm": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ToolsetCustom"
+            },
+            {
+              "const": "1.0.0",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "linuxToolsMac": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ToolsetCustom"
+            },
+            {
+              "const": "1.0.0",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "nsis": {
           "anyOf": [
+            {
+              "$ref": "#/definitions/ToolsetCustom"
+            },
             {
               "enum": [
                 "0.0.0",
@@ -8304,11 +8232,14 @@
               "type": "null"
             }
           ],
-          "default": "0.0.0",
-          "description": "`nsis` bundle version to use for NSIS installer compilation.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=nsis&expanded=true\n0.0.0 - legacy toolset (nsis-3.0.4.1 + nsis-resources-3.4.1)\n\nBetas:\n1.2.1 - unified bundle (makensis 3.12 + plugins in one archive, entrypoint scripts auto-set NSISDIR)"
+          "default": "1.2.1",
+          "description": "`nsis` bundle version to use for NSIS installer compilation.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=nsis&expanded=true\n\n0.0.0 - (nsis-3.0.4.1 + nsis-resources-3.4.1)\n1.2.1 - (makensis 3.12)"
         },
         "winCodeSign": {
           "anyOf": [
+            {
+              "$ref": "#/definitions/ToolsetCustom"
+            },
             {
               "enum": [
                 "0.0.0",
@@ -8321,11 +8252,14 @@
               "type": "null"
             }
           ],
-          "default": "0.0.0",
-          "description": "`win-codesign` version to use for signing Windows artifacts.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=win-codesign&expanded=true\n\nStable:\nv0.0.0 (winCodeSign)\n\nBeta:\nWindows Kits 10.0.26100.0\nv1.0.0, v1.1.0"
+          "default": "1.1.0",
+          "description": "`win-codesign` version to use for signing Windows artifacts.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=win-codesign&expanded=true\n\nStable:\n\nBeta:\nv0.0.0 - (winCodeSign legacy)\nv1.0.0, v1.1.0 - (Windows Kits 10.0.26100.0)"
         },
         "wine": {
           "anyOf": [
+            {
+              "$ref": "#/definitions/ToolsetCustom"
+            },
             {
               "enum": [
                 "0.0.0",
@@ -8337,10 +8271,32 @@
               "type": "null"
             }
           ],
-          "default": "0.0.0",
-          "description": "`wine` bundle version to use for running Windows tools on non-Windows platforms.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=wine&expanded=true\n0.0.0 - legacy toolset (wine 4.0.1 portable; mac-only support)\n\nBeta:\n1.0.1 - Wine 11 bundle (unified wine binary, ia32 via WoW64)"
+          "default": "1.0.1",
+          "description": "`wine` bundle version to use for running Windows tools on non-Windows platforms.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=wine&expanded=true\n\n0.0.0 - (wine 4.0.1 portable; mac-only support)\n1.0.1 - (wine 11)"
         }
       },
+      "type": "object"
+    },
+    "ToolsetCustom": {
+      "additionalProperties": false,
+      "properties": {
+        "checksum": {
+          "description": "The checksum of the custom toolset bundle for verification.",
+          "type": "string"
+        },
+        "url": {
+          "description": "The https:// or file:// path to load the custom toolset bundle from. Path can be relative to the project directory or an absolute path. If a URL is provided, the bundle will be downloaded and cached locally. If a local path is provided, it will be used directly.\n\nThe toolset file structure should match the expected structure of the corresponding built-in toolset (e.g. `win-codesign`, `nsis`, etc.), and include all necessary binaries and resources for that toolset.\nYou will need to inspect the official toolset's expected file structure by downloading the corresponding built-in toolset bundle from `electron-userland/electron-builder-binaries` and replicating the structure in your custom bundle.\n\nToolset build scripts can be found here: https://github.com/electron-userland/electron-builder-binaries/tree/master/packages\n\nFile formats supported:\n- `.zip`, `.7z`, `.tar.gz` archives (will be extracted before use)",
+          "type": "string"
+        },
+        "version": {
+          "description": "The version of the custom toolset.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "checksum",
+        "url"
+      ],
       "type": "object"
     },
     "WindowsAzureSigningConfiguration": {

@@ -60,7 +60,7 @@ export { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions"
 export { WindowsAzureSigningConfiguration, WindowsConfiguration, WindowsSigntoolConfiguration } from "./options/winOptions"
 export { BuildResult, Packager } from "./packager"
 export { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi"
-export { CommonNsisOptions, CustomNsisBinary, NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions"
+export { CommonNsisOptions, NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions"
 
 export { CancellationToken, ProgressInfo } from "builder-util-runtime"
 export { PublishOptions, UploadTask } from "electron-publish"

@@ -7,6 +7,7 @@ import { TmpDir } from "temp-file"
 import { CompressionLevel } from "../core"
 import { getLinuxToolsMacToolset } from "../toolsets/linuxToolsMac"
 import { getPath7za } from "../toolsets/7zip"
+import { ToolsetConfig } from ".."
 
 const ALLOWED_7Z_FILTERS = new Set(["BCJ", "BCJ2", "ARM", "ARMT", "IA64", "PPC", "SPARC", "DELTA"])
 
@@ -26,7 +27,11 @@ type TarConfig = {
 }
 
 /** @internal */
-export async function tar({ compression, format, outFile, dirToArchive, isMacApp, tempDirManager }: TarConfig): Promise<void> {
+export async function tar(
+  { compression, format, outFile, dirToArchive, isMacApp, tempDirManager }: TarConfig,
+  toolset: ToolsetConfig["linuxToolsMac"],
+  resourcesDir: string
+): Promise<void> {
   const tarFile = await tempDirManager.getTempFile({ suffix: ".tar" })
   const tarArgs: TarOptionsWithAliasesAsync = {
     file: tarFile,
@@ -48,7 +53,7 @@ export async function tar({ compression, format, outFile, dirToArchive, isMacApp
   ])
 
   if (format === "tar.lz") {
-    const lzipPath = process.platform === "darwin" ? (await getLinuxToolsMacToolset()).lzip : "lzip"
+    const lzipPath = process.platform === "darwin" ? (await getLinuxToolsMacToolset(toolset, resourcesDir)).lzip : "lzip"
     await exec(lzipPath, [compression === "store" ? "-1" : "-9", "--keep" /* keep (don't delete) input files */, tarFile])
     // lzip creates the output file in the same directory as the input with a .lz suffix
     await move(`${tarFile}.lz`, outFile)

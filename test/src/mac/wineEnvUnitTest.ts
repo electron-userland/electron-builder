@@ -42,15 +42,16 @@ afterEach(async () => {
 })
 
 describe.ifNotWindows("getWineToolset — env merging (ELECTRON_BUILDER_WINE_TOOLSET_DIR override)", { sequential: true }, () => {
+  const cwd = process.cwd()
   test("DYLD_FALLBACK_LIBRARY_PATH includes the wine lib dir", async ({ expect }) => {
     delete process.env.DYLD_FALLBACK_LIBRARY_PATH
-    const result = await getWineToolset("0.0.0")
+    const result = await getWineToolset("0.0.0", cwd)
     expect(result.env.DYLD_FALLBACK_LIBRARY_PATH).toContain(path.join(FAKE_WINE_DIR, "lib"))
   })
 
   test("DYLD_FALLBACK_LIBRARY_PATH merges with existing process env — no duplication", async ({ expect }) => {
     process.env.DYLD_FALLBACK_LIBRARY_PATH = "/usr/local/lib"
-    const result = await getWineToolset("0.0.0")
+    const result = await getWineToolset("0.0.0", cwd)
     const parts = result.env.DYLD_FALLBACK_LIBRARY_PATH.split(path.delimiter)
     // Wine lib dir present
     expect(parts).toContain(path.join(FAKE_WINE_DIR, "lib"))
@@ -61,13 +62,13 @@ describe.ifNotWindows("getWineToolset — env merging (ELECTRON_BUILDER_WINE_TOO
 
   test("LD_LIBRARY_PATH includes the wine lib dir", async ({ expect }) => {
     delete process.env.LD_LIBRARY_PATH
-    const result = await getWineToolset("0.0.0")
+    const result = await getWineToolset("0.0.0", cwd)
     expect(result.env.LD_LIBRARY_PATH).toContain(path.join(FAKE_WINE_DIR, "lib"))
   })
 
   test("LD_LIBRARY_PATH merges with existing process env", async ({ expect }) => {
     process.env.LD_LIBRARY_PATH = "/opt/mylibs"
-    const result = await getWineToolset("0.0.0")
+    const result = await getWineToolset("0.0.0", cwd)
     const parts = result.env.LD_LIBRARY_PATH.split(path.delimiter)
     expect(parts).toContain(path.join(FAKE_WINE_DIR, "lib"))
     expect(parts).toContain("/opt/mylibs")
@@ -75,12 +76,12 @@ describe.ifNotWindows("getWineToolset — env merging (ELECTRON_BUILDER_WINE_TOO
   })
 
   test("execPath points into the fake toolset bin directory (bin/wine)", async ({ expect }) => {
-    const result = await getWineToolset("0.0.0")
+    const result = await getWineToolset("0.0.0", cwd)
     expect(result.execPath).toBe(path.join(FAKE_WINE_DIR, "bin", "wine"))
   })
 
   test("WINEPREFIX is set to the wine-home directory inside the toolset", async ({ expect }) => {
-    const result = await getWineToolset("0.0.0")
+    const result = await getWineToolset("0.0.0", cwd)
     expect(result.env.WINEPREFIX).toBe(path.join(FAKE_WINE_DIR, "wine-home"))
   })
 
@@ -89,7 +90,7 @@ describe.ifNotWindows("getWineToolset — env merging (ELECTRON_BUILDER_WINE_TOO
     await rm(path.join(FAKE_WINE_DIR, "bin", "wine"))
     await writeFile(path.join(FAKE_WINE_DIR, "bin", "wine64"), "#!/bin/sh\necho fake wine64", { mode: 0o755 })
 
-    const result = await getWineToolset("0.0.0")
+    const result = await getWineToolset("0.0.0", cwd)
     expect(result.execPath).toBe(path.join(FAKE_WINE_DIR, "bin", "wine64"))
   })
 })

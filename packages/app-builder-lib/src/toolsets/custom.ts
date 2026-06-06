@@ -1,6 +1,6 @@
 import { exec, log, sanitizeDirPath, sanitizePath, to7zaOutputSwitch } from "builder-util"
-import { validateSecuredUrl } from "builder-util/src/envUtil"
-import { exists } from "builder-util/src/fs"
+import { validateSecuredUrl } from "builder-util/out/envUtil"
+import { exists } from "builder-util/out/fs"
 import { createReadStream, createWriteStream } from "fs"
 import * as fs from "fs/promises"
 import { mkdir, rmdir, stat } from "fs/promises"
@@ -196,4 +196,3 @@ export async function extractArchive(file: string, dir: string) {
     await release().catch(err => log.warn({ err }, "failed to release lockfile"))
   }
 }
-

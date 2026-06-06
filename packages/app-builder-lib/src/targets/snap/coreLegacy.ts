@@ -289,7 +289,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
       await exec("chmod", ["-R", "g-s", dir]).catch(err => log.warn({ error: err.message }, "chmod g-s failed"))
     }
 
-    const mksquashfsPath = await getMksquashfsPath(snapArch)
+    const mksquashfsPath = await getMksquashfsPath(snapArch, this.packager.info.buildResourcesDir)
 
     // Collect top-level entries from each dir as individual path args (mirrors Go ReadDirContentTo)
     const mksquashfsArgs: string[] = [
@@ -422,12 +422,11 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
   }
 }
 
-async function getMksquashfsPath(arch: Arch): Promise<string> {
-  const envPath = process.env.MKSQUASHFS_PATH
-  if (envPath) {
-    return envPath
+async function getMksquashfsPath(arch: Arch, resourcesDir: string): Promise<string> {
+  if (process.env.USE_SYSTEM_MKSQUASHFS === "true") {
+    return "mksquashfs"
   }
-  const { mksquashfs } = await getAppImageTools("0.0.0", arch)
+  const { mksquashfs } = await getAppImageTools("0.0.0", arch, resourcesDir)
   return mksquashfs
 }
 

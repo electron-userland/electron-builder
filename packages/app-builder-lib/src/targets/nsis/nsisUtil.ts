@@ -66,7 +66,7 @@ export class AppPackageHelper {
 export class CopyElevateHelper {
   private readonly copied = new Map<string, Promise<any>>()
 
-  copy(appOutDir: string, target: NsisTarget): Promise<any> {
+  async copy(appOutDir: string, target: NsisTarget): Promise<any> {
     if (!target.packager.info.framework.isCopyElevateHelper) {
       return Promise.resolve()
     }
@@ -86,7 +86,7 @@ export class CopyElevateHelper {
       return promise
     }
 
-    promise = getNsisElevatePath(target.packager.config.toolsets?.nsis, target.options.customNsisBinary).then(elevatePath => {
+    promise = getNsisElevatePath(target.packager.config.toolsets?.nsis, target.packager.info.buildResourcesDir).then(elevatePath => {
       const outFile = path.join(appOutDir, "resources", "elevate.exe")
       const promise = copyFile(elevatePath, outFile, false)
       const { signAndEditExecutable, signExecutable } = target.packager.platformSpecificBuildOptions

@@ -11,7 +11,6 @@ const fpmChecksums = {
   "fpm-1.17.0-ruby-3.4.3-linux-i386.7z": "181124e2e9856855c21229ea9096bb7006a9e3e712d133ce332597ba878cd7b6",
 } as const
 
-
 export async function getFpmPath(toolset: ToolsetConfig["fpm"], resourcesDir: string): Promise<string> {
   // const customFpmPath = await resolveEnvToolsetPath("CUSTOM_FPM_PATH", "file")
   // if (customFpmPath != null) {
@@ -23,10 +22,10 @@ export async function getFpmPath(toolset: ToolsetConfig["fpm"], resourcesDir: st
     return exec
   }
 
-      if (typeof toolset === "object" && toolset != null) {
+  if (typeof toolset === "object" && toolset != null) {
     const vendorPath = await getCustomToolsetPath(toolset, resourcesDir)
-    return path.resolve(vendorPath, exec);
-}
+    return path.resolve(vendorPath, exec)
+  }
 
   const getKey = () => {
     if (process.platform === "linux") {
@@ -49,9 +48,6 @@ export async function getFpmPath(toolset: ToolsetConfig["fpm"], resourcesDir: st
     filenameWithExt: getKey(),
     checksums: fpmChecksums,
     githubOrgRepo: "electron-userland/electron-builder-binaries",
-  });
+  })
   return path.join(fpmPath, exec)
 }
-
-
-

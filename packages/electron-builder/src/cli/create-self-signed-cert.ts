@@ -1,4 +1,4 @@
-import { getWindowsKitsBundle } from "app-builder-lib/out/toolsets/windows"
+import { getWindowsKitsBundle } from "app-builder-lib/out/toolsets/winCodeSign"
 import { archFromString, exec, log, spawn, TmpDir, unlinkIfExists } from "builder-util"
 import { sanitizeFileName } from "builder-util/out/filename"
 import * as chalk from "chalk"
@@ -17,7 +17,7 @@ export async function createSelfSignedCert(publisher: string) {
 
   try {
     await mkdir(path.dirname(tempPrefix), { recursive: true })
-    const vendorPath = (await getWindowsKitsBundle({ winCodeSign: null, arch: archFromString(process.arch) })).kit
+    const vendorPath = (await getWindowsKitsBundle({ toolset: null, arch: archFromString(process.arch), resourcesDir: targetDir })).kit
     await exec(path.join(vendorPath, "makecert.exe"), ["-r", "-h", "0", "-n", `CN=${quoteString(publisher)}`, "-eku", "1.3.6.1.5.5.7.3.3", "-pe", "-sv", pvk, cer])
 
     const pfx = path.join(targetDir, `${sanitizeFileName(publisher)}.pfx`)
