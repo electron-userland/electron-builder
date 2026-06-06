@@ -24,7 +24,7 @@ export class WindowsSignAzureManager implements SignManager {
   })
 
   constructor(private readonly packager: WinPackager) {
-    this.platformSpecificBuildOptions = packager.platformSpecificBuildOptions
+    this.platformSpecificBuildOptions = packager.platformOptions
   }
 
   async initialize() {
@@ -46,10 +46,10 @@ export class WindowsSignAzureManager implements SignManager {
   }
 
   computePublisherName(): Promise<string> {
-    return Promise.resolve(this.packager.platformSpecificBuildOptions.azureSignOptions!.publisherName)
+    return Promise.resolve(this.platformSpecificBuildOptions.azureSignOptions!.publisherName)
   }
   readonly cscInfo = new MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>(
-    () => this.packager.platformSpecificBuildOptions,
+    () => this.platformSpecificBuildOptions,
     _selected => Promise.resolve(null)
   )
   // prerequisite: requires `initializeProviderModules` to already have been executed

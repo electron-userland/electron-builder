@@ -89,7 +89,7 @@ export class CopyElevateHelper {
     promise = getNsisElevatePath(target.packager.config.toolsets?.nsis, target.options.customNsisBinary).then(elevatePath => {
       const outFile = path.join(appOutDir, "resources", "elevate.exe")
       const promise = copyFile(elevatePath, outFile, false)
-      const { signAndEditExecutable, signExecutable } = target.packager.platformSpecificBuildOptions
+      const { signAndEditExecutable, signExecutable } = target.packager.platformOptions
       if (signAndEditExecutable !== false && signExecutable !== false) {
         return promise.then(() => target.packager.signIf(outFile))
       }

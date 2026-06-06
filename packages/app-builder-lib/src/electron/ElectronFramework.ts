@@ -70,7 +70,8 @@ async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
 
 async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOptions) {
   const { packager, appOutDir } = options
-  const { config, platformSpecificBuildOptions, platform } = packager
+  const { config, platform } = packager
+  const platformSpecificBuildOptions = packager.platformOptions
 
   const getLocalesConfig = () => {
     if (platform === Platform.MAC) {

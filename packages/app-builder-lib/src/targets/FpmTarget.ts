@@ -1,5 +1,5 @@
 import { Arch, asArray, exec, getArchSuffix, log, serializeToYaml, stripSensitiveEnvVars, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
-import { deepAssign, Nullish } from "builder-util-runtime"
+import { Nullish } from "builder-util-runtime"
 
 import { mkdir, readFile } from "fs/promises"
 import * as path from "path"
@@ -34,7 +34,7 @@ interface ScriptFiles {
 }
 
 export default class FpmTarget extends Target {
-  readonly options: LinuxTargetSpecificOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, (this.packager.config as any)[this.name])
+  readonly options: LinuxTargetSpecificOptions = this.packager.getOptionsForTarget<LinuxTargetSpecificOptions>(this.name)
 
   private readonly scriptFiles: Promise<ScriptFiles>
 
@@ -75,7 +75,7 @@ export default class FpmTarget extends Target {
       executable: bashSingleQuoteEscape(packager.executableName),
       sanitizedProductName: bashSingleQuoteEscape(packager.appInfo.sanitizedProductName),
       productFilename: packager.appInfo.productFilename,
-      ...packager.platformSpecificBuildOptions,
+      ...packager.platformOptions,
     }
 
     // The AppArmor profile template uses these values inside double-quoted
@@ -84,7 +84,7 @@ export default class FpmTarget extends Target {
       executable: packager.executableName,
       sanitizedProductName: packager.appInfo.sanitizedProductName,
       productFilename: packager.appInfo.productFilename,
-      ...packager.platformSpecificBuildOptions,
+      ...packager.platformOptions,
     }
 
     function getResource(value: string | Nullish, defaultFile: string) {
