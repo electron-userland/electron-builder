@@ -7,29 +7,8 @@ This repository has a mono-repo structure consisting of multiple packages. Try t
 
 ## Prerequisites
 
-- [pnpm](https://pnpm.js.org) is required.
-
-Use `corepack` to activate the correct version of pnpm for this project.
-
-For local development:
-### New dev route
-https://pnpm.io/cli/link
-
-### Legacy dev Route
-
-You can use [yalc](https://github.com/whitecolor/yalc) in order to apply changes made to
-  electron-builder for your other projects to leverage and test with.
-
-```
-npm i -g pnpm
-pnpm i yalc -g
-```
-
-- (unsettled) You may need yarn. See [this issue](https://github.com/electron-userland/electron-builder/issues/6820) for details. Detailed reports are welcome.
-
-```
-npm i -g yarn
-```
+- **Node.js >=22.12.0** is required. A `.nvmrc` file at the repo root pins the recommended dev version — run `nvm use` or `fnm use` to activate it.
+- [pnpm](https://pnpm.js.org) >=11.1.0 is required. Use `corepack` to activate the correct version for this project.
 
 ## To setup a local dev environment
 
@@ -43,8 +22,31 @@ pnpm install
 popd
 ```
 
-Publish the electron-builder packages to `yalc`'s local store via these commands that you need to run from `electron-builder/packages`.
-Unfortunately, the `yalc publish` command cannot pass multiple packages.
+## Linking packages for local development
+
+### Recommended: pnpm link
+
+Use [pnpm link](https://pnpm.io/cli/link) to develop against your local electron-builder changes without publishing:
+
+```sh
+# From within the package you changed (e.g., packages/app-builder-lib):
+pnpm link --global
+
+# From your consumer project:
+pnpm link --global app-builder-lib
+```
+
+After changing source files, rebuild with `pnpm compile` (or `pnpm compile --watch`) and the linked package will reflect the changes.
+
+### Legacy: yalc
+
+[yalc](https://github.com/whitecolor/yalc) is an alternative if you prefer it. Install globally first:
+
+```
+npm i -g yalc
+```
+
+Publish packages to yalc's local store (run from `electron-builder/packages`):
 
 ```
 yalc publish app-builder-lib
@@ -61,40 +63,24 @@ yalc publish electron-forge-maker-snap
 yalc publish electron-updater
 ```
 
-Now link those packages to your project via the one-liner below (run from your project folder).
+Link them to your consumer project:
 
 ```
 yalc link app-builder-lib builder-util builder-util-runtime dmg-builder electron-builder electron-publish electron-builder-squirrel-windows electron-forge-maker-appimage electron-forge-maker-nsis electron-forge-maker-nsis-web electron-forge-maker-snap electron-updater
 ```
 
-The magical script for whenever you make changes to electron-builder! Rebuilds electron-builder, and then patches
-the npm modules in your project (such as `electron-quick-start`).
-Ready for copy-paste into terminal presuming electron-builder repo is at root level outside your project folder,
-otherwise adjust path as necessary.
+Rebuild and push after changes (run from repo root):
 
-```
-pushd ../electron-builder
+```sh
 pnpm compile
 find packages/ -type d -maxdepth 1 -print0 | xargs -0 -L1 sh -c 'cd "$0" && yalc push'
-popd
 ```
 
-If you are using Windows and Visual Studio Code(Powershell), please use this.
+PowerShell equivalent:
 
 ```PowerShell
-pushd ..\electron-builder
 pnpm compile
 Get-ChildItem packages -Directory | Foreach-Object{pushd "$_"; yalc push; popd;}
-popd
-```
-
-On Windows cmd.exe:
-
-```batch
-pushd ..\electron-builder
-pnpm compile
-for /D %d in (packages\*) do (pushd "%d" & yalc push & popd)
-popd
 ```
 
 ## Pull Requests
@@ -102,7 +88,27 @@ popd
 To check that your contributions match the project coding style make sure `pnpm ci:validate` passes.
 To build project run: `pnpm i && pnpm compile` (add `--watch` for faster dev iteration)
 
-> If you get strange compilation errors, try to remove all `node_modules` directories in the project (especially under `packages/*`). `git clean -xfd` from root is a simply method; pre-validate via `--dry-run` additional flag.
+> If you get strange compilation errors, try to remove all `node_modules` directories in the project (especially under `packages/*`). `git clean -xfd` from root is a simple method; pre-validate via `--dry-run` first.
+
+### Build process
+
+`pnpm compile` runs a two-phase staged build to respect inter-package dependency order:
+
+1. **Phase 1** (sequential): `builder-util-runtime` → `builder-util` → `electron-publish` → `app-builder-lib`
+2. **Phase 2** (parallel): `dmg-builder`, `electron-builder-squirrel-windows`, `electron-updater`, `electron-builder`
+
+If you touch a core package (`builder-util`, `app-builder-lib`, etc.), run a full `pnpm compile` before running tests so downstream packages pick up your changes.
+
+### ESM
+
+All packages are native ESM (`"type": "module"`). When adding imports in TypeScript source files, use explicit `.js` extensions even though the source file is `.ts`:
+
+```ts
+import { something } from "./myModule.js"  // correct
+import { something } from "./myModule"     // will break at runtime
+```
+
+Tests run against TypeScript sources directly via Vitest path aliases — no compile step is needed before running tests. Internal APIs not exported from the main package surface are accessible in tests via the `./internal` subpath export (e.g., `import { x } from "app-builder-lib/internal"`).
 
 ### Git Commit Guidelines
 
@@ -135,13 +141,13 @@ can run tests from an editor (just click on `Run` green gutter icon).
 Or you can create the Node.js run configuration manually:
 
 - Ensure that `Before launch` contains `Compile TypeScript`.
-- Set `Node interpreter` to NodeJS 8. NodeJS 8 is required to debug.
+- Set `Node interpreter` to Node.js >=22.12.0.
 - Set `Application Parameters` to `-t "test name" relative-test-file-name` if you want to debug particular test. E.g.
   ```
   -t "extraResources - one-package" globTest.js
   ```
 - Set `Environment Variables`:
-  - Optionally, `TEST_APP_TMP_DIR` to some directory (e.g. `/tmp/electron-builder-test`) to inspect output if test
+  - Optionally, `TEST_APP_TMP_DIR` to a directory inside the repo (e.g., `./temp/electron-builder-test`) to inspect output if test
     uses temporary directory (only if `--match` is used). Specified directory will be used instead of random
     temporary directory and _cleared_ on each run.
 
@@ -152,8 +158,7 @@ Config is committed to the repo, it should auto-setup. Just make sure to run `pn
 ### Run Test using CLI
 
 ```sh
-pnpm compile
-TEST_APP_TMP_DIR=/tmp/electron-builder-test TEST_FILES=oneClickInstallerTest,assistedInstallerTest,webInstallerTest pnpm ci:test'
+TEST_APP_TMP_DIR=./temp/electron-builder-test TEST_FILES=oneClickInstallerTest,assistedInstallerTest,webInstallerTest pnpm ci:test
 ```
 
 where `TEST_APP_TMP_DIR` is specified to easily inspect and use test build, `oneClickInstallerTest` is the test filename

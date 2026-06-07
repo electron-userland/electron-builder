@@ -79,7 +79,7 @@ See the full documentation on [electron.build](https://www.electron.build).
     * [macOS](https://www.electron.build/docs/mac): `dmg`, `pkg`, `mas`.
     * [Linux](https://www.electron.build/docs/linux): [AppImage](http://appimage.org), [snap](http://snapcraft.io), debian package (`deb`), `rpm`, `freebsd`, `pacman`, `p5p`, `apk`.
     * [Windows](https://www.electron.build/docs/win): `nsis` (Installer), `nsis-web` (Web installer), `portable` (portable app without installation), AppX (Windows Store), MSI, Squirrel.Windows.
-* [Publishing artifacts](https://www.electron.build/docs/publish) to GitHub Releases, Amazon S3, DigitalOcean Spaces and Bintray.
+* [Publishing artifacts](https://www.electron.build/docs/publish) to GitHub Releases, Amazon S3, DigitalOcean Spaces, Cloudflare R2 and Bintray.
 * Advanced building:
     * Pack in a distributable format (already packaged app).
     * Separate [build steps](https://github.com/electron-userland/electron-builder/issues/1102#issuecomment-271845854).
