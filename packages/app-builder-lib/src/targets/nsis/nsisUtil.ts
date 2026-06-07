@@ -1,7 +1,6 @@
-import { Arch, copyFile, dirSize, log } from "builder-util"
+import { Arch, dirSize, log } from "builder-util"
 import { PackageFileInfo } from "builder-util-runtime"
 import * as fs from "fs/promises"
-import * as path from "path"
 import * as zlib from "zlib"
 import { getNsisElevatePath } from "../../toolsets/windows"
 import { getTemplatePath } from "../../util/pathManager"
@@ -28,8 +27,8 @@ export class AppPackageHelper {
     if (resultPromise == null) {
       const appOutDir = target.archs.get(arch)!
       resultPromise = this.elevateHelper
-        .copy(appOutDir, target)
-        .then(() => target.buildAppPackage(appOutDir, arch))
+        .resolve(target)
+        .then(elevatePath => target.buildAppPackage(appOutDir, arch, elevatePath))
         .then(async fileInfo => ({
           fileInfo,
           unpackedSize: await dirSize(appOutDir),
@@ -64,11 +63,14 @@ export class AppPackageHelper {
 }
 
 export class CopyElevateHelper {
-  private readonly copied = new Map<string, Promise<any>>()
+  // Cached path resolution — shared across all arches since the source never changes per build.
+  // Signing and staging happen inside buildAppPackage so appOutDir is never mutated here,
+  // which eliminates the race condition with concurrent Squirrel/ZIP/etc. packaging.
+  private elevatePath: Promise<string | null> | null = null
 
-  copy(appOutDir: string, target: NsisTarget): Promise<any> {
+  resolve(target: NsisTarget): Promise<string | null> {
     if (!target.packager.info.framework.isCopyElevateHelper) {
-      return Promise.resolve()
+      return Promise.resolve(null)
     }
 
     let isPackElevateHelper = target.options.packElevateHelper
@@ -78,25 +80,14 @@ export class CopyElevateHelper {
     }
 
     if (isPackElevateHelper === false) {
-      return Promise.resolve()
+      return Promise.resolve(null)
     }
 
-    let promise = this.copied.get(appOutDir)
-    if (promise != null) {
-      return promise
+    if (this.elevatePath == null) {
+      this.elevatePath = getNsisElevatePath(target.packager.config.toolsets?.nsis, target.options.customNsisBinary)
     }
 
-    promise = getNsisElevatePath(target.packager.config.toolsets?.nsis, target.options.customNsisBinary).then(elevatePath => {
-      const outFile = path.join(appOutDir, "resources", "elevate.exe")
-      const promise = copyFile(elevatePath, outFile, false)
-      const { signAndEditExecutable, signExecutable } = target.packager.platformSpecificBuildOptions
-      if (signAndEditExecutable !== false && signExecutable !== false) {
-        return promise.then(() => target.packager.signIf(outFile))
-      }
-      return promise
-    })
-    this.copied.set(appOutDir, promise)
-    return promise
+    return this.elevatePath
   }
 }
 

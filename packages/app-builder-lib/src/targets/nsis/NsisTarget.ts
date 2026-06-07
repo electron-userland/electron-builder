@@ -2,6 +2,9 @@ import {
   Arch,
   asArray,
   AsyncTaskManager,
+  copyFile,
+  debug7z,
+  exec,
   spawnAndWriteWithOutput,
   exists,
   generateKsuid,
@@ -17,7 +20,9 @@ import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, deepAss
 import _debug from "debug"
 import * as fs from "fs"
 import { readFile, stat, unlink } from "fs-extra"
+import { mkdir } from "fs/promises"
 import * as path from "path"
+import { TmpDir } from "temp-file"
 import { Target } from "../../core"
 import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../options/CommonWindowsInstallerConfiguration"
 import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt } from "../../platformPackager"
@@ -35,6 +40,7 @@ import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
 import { NsisScriptGenerator, nsisEscapeString } from "./nsisScriptGenerator"
 import { getMakeNsisPath, getNsisPluginsPath } from "../../toolsets/windows"
+import { getPath7za } from "../../toolsets/7zip"
 import { AppPackageHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
 import { checkMakensisOutput, verifyInstallerSize } from "./nsisValidation"
 import { WineVmManager } from "../../vm/WineVm"
@@ -104,7 +110,7 @@ export class NsisTarget extends Target {
   }
 
   /** @private */
-  async buildAppPackage(appOutDir: string, arch: Arch): Promise<PackageFileInfo> {
+  async buildAppPackage(appOutDir: string, arch: Arch, elevatePath?: string | null): Promise<PackageFileInfo> {
     const options = this.options
     const packager = this.packager
 
@@ -122,6 +128,13 @@ export class NsisTarget extends Target {
     await archive(format, archiveFile, appOutDir, isBuildDifferentialAware ? configureDifferentialAwareArchiveOptions(archiveOptions) : archiveOptions)
     timer.end()
 
+    // Inject elevate.exe into the archive via a temp staging dir so that appOutDir is never
+    // modified. Keeping appOutDir clean eliminates the race condition where concurrent targets
+    // (Squirrel, ZIP, etc.) that package appOutDir pick up elevate.exe non-deterministically.
+    if (elevatePath) {
+      await this.addElevateToArchive(archiveFile, elevatePath)
+    }
+
     if (isBuildDifferentialAware && this.isWebInstaller) {
       const data = await appendBlockmap(archiveFile)
       return {
@@ -130,6 +143,26 @@ export class NsisTarget extends Target {
       }
     } else {
       return await createPackageFileInfo(archiveFile)
+    }
+  }
+
+  private async addElevateToArchive(archiveFile: string, elevatePath: string): Promise<void> {
+    const tmpDir = new TmpDir("elevate-stage")
+    try {
+      const stagingDir = await tmpDir.getTempDir()
+      const resourcesDir = path.join(stagingDir, "resources")
+      await mkdir(resourcesDir, { recursive: true })
+      const stagedElevate = path.join(resourcesDir, "elevate.exe")
+      await copyFile(elevatePath, stagedElevate, false)
+
+      const { signAndEditExecutable, signExecutable } = this.packager.platformSpecificBuildOptions
+      if (signAndEditExecutable !== false && signExecutable !== false) {
+        await this.packager.signIf(stagedElevate)
+      }
+
+      await exec(await getPath7za(), ["a", archiveFile, "resources/elevate.exe"], { cwd: stagingDir }, debug7z.enabled)
+    } finally {
+      await tmpDir.cleanup().catch(() => {})
     }
   }
 
