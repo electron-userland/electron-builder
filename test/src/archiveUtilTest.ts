@@ -181,7 +181,7 @@ describe.runIf(process.platform === "darwin")("archive() macOS zip symlink prese
     await fs.symlink("real.txt", path.join(src, "link.txt"))
 
     const outFile = path.join(tmpDir, "out.zip")
-    await archive("zip", outFile, src, { withoutDir: true })
+    await archive("zip", outFile, src, { withoutDir: true, preserveSymlinks: true })
 
     // Extract and verify symlink is preserved
     const extractDir = path.join(tmpDir, "extracted")
@@ -199,6 +199,6 @@ describe.runIf(process.platform === "darwin")("archive() macOS zip symlink prese
 
   test("excluded pattern with '..' throws in native zip path", async ({ expect }) => {
     const src = await makeSrcDir()
-    await expect(archive("zip", path.join(tmpDir, "out.zip"), src, { excluded: ["../secret"] })).rejects.toThrow("path traversal sequence")
+    await expect(archive("zip", path.join(tmpDir, "out.zip"), src, { excluded: ["../secret"], preserveSymlinks: true })).rejects.toThrow("path traversal sequence")
   })
 })

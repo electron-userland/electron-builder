@@ -86,6 +86,12 @@ export interface ArchiveOptions {
   method?: "Copy" | "LZMA" | "Deflate" | "DEFAULT"
 
   isRegularFile?: boolean
+
+  /**
+   * Use native macOS `zip` to preserve symlinks. Required for .framework bundles.
+   * @default false
+   */
+  preserveSymlinks?: boolean
 }
 
 export function compute7zCompressArgs(format: string, options: ArchiveOptions = {}) {
@@ -162,10 +168,11 @@ export async function archive(format: string, outFile: string, dirToArchive: str
     return outFile
   }
 
-  // On macOS, always use native `zip` for zip archives: 7zip dereferences symlinks,
-  // corrupting .framework bundles and breaking codesign on the extracted app.
-  // Native `zip -y` stores symlinks as-is and also handles NFD-normalized filenames.
-  const use7z = !(process.platform === "darwin" && format === "zip")
+  // On macOS, use native `zip` when symlink preservation is required (e.g. .framework bundles).
+  // 7zip dereferences symlinks, corrupting .framework structure and breaking codesign.
+  // Only opt in via preserveSymlinks — Windows zip targets built on macOS still use 7z
+  // so that the UTF-8 bit (-mcu) is set correctly in the zip header.
+  const use7z = !(process.platform === "darwin" && format === "zip" && options.preserveSymlinks)
 
   if (use7z) {
     const args = compute7zCompressArgs(format, options)
