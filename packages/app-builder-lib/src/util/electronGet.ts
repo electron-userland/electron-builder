@@ -313,8 +313,15 @@ async function downloadArtifactToFile(config: Parameters<typeof get.downloadArti
         retries: 3,
         interval: 2000,
         backoff: 2000,
-        shouldRetry: (e: any) =>
-          e instanceof HttpError ? e.isServerError() : typeof e?.code === "string" && ["ENOTFOUND", "ETIMEDOUT", "ECONNRESET", "EPIPE", "ENOENT"].includes(e.code),
+        shouldRetry: (e: any) => {
+          if (e instanceof HttpError) {
+            return e.isServerError()
+          }
+          if (typeof e?.response?.statusCode === "number") {
+            return e.response.statusCode >= 500
+          }
+          return typeof e?.code === "string" && ["ENOTFOUND", "ETIMEDOUT", "ECONNRESET", "EPIPE", "ENOENT"].includes(e.code)
+        },
       })
     } catch (err) {
       if (typeof (err as any)?.message === "string" && (err as any).message.includes("dest already exists")) {
