@@ -1,8 +1,10 @@
-import { Arch, dirSize, log } from "builder-util"
+import { Arch, copyFile, debug7z, dirSize, exec, log } from "builder-util"
 import { PackageFileInfo } from "builder-util-runtime"
 import * as fs from "fs/promises"
+import * as path from "path"
 import * as zlib from "zlib"
 import { getNsisElevatePath } from "../../toolsets/windows"
+import { getPath7za } from "../../toolsets/7zip"
 import { getTemplatePath } from "../../util/pathManager"
 import { NsisTarget } from "./NsisTarget"
 
@@ -26,13 +28,10 @@ export class AppPackageHelper {
     let resultPromise = this.archToResult.get(arch)
     if (resultPromise == null) {
       const appOutDir = target.archs.get(arch)!
-      resultPromise = this.elevateHelper
-        .resolve(target)
-        .then(elevatePath => target.buildAppPackage(appOutDir, arch, elevatePath))
-        .then(async fileInfo => ({
-          fileInfo,
-          unpackedSize: await dirSize(appOutDir),
-        }))
+      resultPromise = target.buildAppPackage(appOutDir, arch, this.elevateHelper).then(async fileInfo => ({
+        fileInfo,
+        unpackedSize: await dirSize(appOutDir),
+      }))
       this.archToResult.set(arch, resultPromise)
     }
 
@@ -64,11 +63,10 @@ export class AppPackageHelper {
 
 export class CopyElevateHelper {
   // Cached path resolution — shared across all arches since the source never changes per build.
-  // Signing and staging happen inside buildAppPackage so appOutDir is never mutated here,
-  // which eliminates the race condition with concurrent Squirrel/ZIP/etc. packaging.
+  // appOutDir is never mutated, eliminating the race with concurrent Squirrel/ZIP/etc. packaging.
   private elevatePath: Promise<string | null> | null = null
 
-  resolve(target: NsisTarget): Promise<string | null> {
+  private resolve(target: NsisTarget): Promise<string | null> {
     if (!target.packager.info.framework.isCopyElevateHelper) {
       return Promise.resolve(null)
     }
@@ -88,6 +86,26 @@ export class CopyElevateHelper {
     }
 
     return this.elevatePath
+  }
+
+  async addToArchive(archiveFile: string, target: NsisTarget): Promise<void> {
+    const elevatePath = await this.resolve(target)
+    if (!elevatePath) {
+      return
+    }
+
+    const stagingDir = await target.packager.info.tempDirManager.getTempDir({ prefix: "elevate-staging" })
+    const resourcesDir = path.join(stagingDir, "resources")
+    await fs.mkdir(resourcesDir, { recursive: true })
+    const stagedElevate = path.join(resourcesDir, "elevate.exe")
+    await copyFile(elevatePath, stagedElevate, false)
+
+    const { signAndEditExecutable, signExecutable } = target.packager.platformSpecificBuildOptions
+    if (signAndEditExecutable !== false && signExecutable !== false) {
+      await target.packager.signIf(stagedElevate)
+    }
+
+    await exec(await getPath7za(), ["a", archiveFile, "resources/elevate.exe"], { cwd: stagingDir }, debug7z.enabled)
   }
 }
 

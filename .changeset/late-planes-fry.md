@@ -2,4 +2,4 @@
 "app-builder-lib": patch
 ---
 
-fix(nsis): eliminate `appOutDir` mutation to fix `elevate.exe` race condition in concurrent builds
+fix(win): flaky `appOutDir` mutation created `elevate.exe` race condition for concurrent builds that included Squirrel target
