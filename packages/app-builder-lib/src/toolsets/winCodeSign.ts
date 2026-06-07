@@ -1,7 +1,7 @@
 import { Arch } from "builder-util"
 import * as os from "os"
 import * as path from "path"
-import { ToolsetConfig } from "../configuration"
+import { ToolsetConfig } from "."
 import { ToolInfo, computeToolEnv } from "../util/bundledTool"
 import { downloadBuilderToolset } from "../util/electronGet"
 import { isUseSystemSigncode } from "../util/flags"

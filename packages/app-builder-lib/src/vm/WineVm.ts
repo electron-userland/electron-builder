@@ -2,7 +2,7 @@ import { exec, ExtraSpawnOptions } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { ExecFileOptions, SpawnOptions } from "child_process"
 import * as path from "path"
-import { ToolsetConfig } from "../configuration"
+import { ToolsetConfig } from "../toolsets"
 import { getWineToolset } from "../toolsets/wine"
 import { VmManager } from "./vm"
 

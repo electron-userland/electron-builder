@@ -1,5 +1,5 @@
 import * as path from "path"
-import { ToolsetConfig } from "../configuration"
+import { ToolsetConfig } from "."
 import { downloadBuilderToolset } from "../util/electronGet"
 import { getCustomToolsetPath } from "./custom"
 import { Arch } from "builder-util"

@@ -7,7 +7,7 @@ import { copyIcons, copyMimeTypes } from "./appLauncher"
 import { appendBlockmap } from "../differentialUpdateInfoBuilder"
 import { BlockMapDataHolder } from "builder-util-runtime"
 import { APP_RUN_ENTRYPOINT } from "./AppImageTarget"
-import { ToolsetConfig } from "../../configuration"
+import { ToolsetConfig } from "app-builder-lib/src/toolsets"
 import { IconInfo } from "../../util/iconConverter"
 
 interface Options {

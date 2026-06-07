@@ -17,6 +17,8 @@ import { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi"
 import { PlatformPackager } from "./platformPackager"
 import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions"
 import { ElectronDownloadOptions, ElectronGetOptions } from "./util/electronGet"
+export type { ToolsetConfig, ToolsetCustom } from "./toolsets"
+import { ToolsetConfig } from "./toolsets"
 
 // duplicate appId here because it is important
 /**
@@ -335,85 +337,6 @@ export interface PackContext {
 export type AfterPackContext = PackContext
 export type BeforePackContext = PackContext
 export type AfterExtractContext = PackContext
-
-/**
- * Configuration of toolsets utilized by electron-builder
- */
-export interface ToolsetConfig {
-  /**
-   * `win-codesign` version to use for signing Windows artifacts.
-   * Located at https://github.com/electron-userland/electron-builder-binaries/releases?q=win-codesign&expanded=true
-   *
-   * Stable:
-   *
-   * Beta:
-   * v0.0.0 - (winCodeSign legacy)
-   * v1.0.0, v1.1.0 - (Windows Kits 10.0.26100.0)
-   *
-   * @default "1.1.0"
-   */
-  readonly winCodeSign?: "0.0.0" | "1.0.0" | "1.1.0" | ToolsetCustom | null
-
-  /**
-   * `appimage` bundle version to use for Appimage packaging and runtime.
-   * Located at https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage&expanded=true
-   *
-   * 0.0.0 - (FUSE2 legacy)
-   * 1.0.3 - (Runtime 20251108)
-   *
-   * @default "1.0.3"
-   */
-  readonly appimage?: "0.0.0" | "1.0.3" | ToolsetCustom | null
-
-  /**
-   * `nsis` bundle version to use for NSIS installer compilation.
-   * Located at https://github.com/electron-userland/electron-builder-binaries/releases?q=nsis&expanded=true
-   *
-   * 0.0.0 - (nsis-3.0.4.1 + nsis-resources-3.4.1)
-   * 1.2.1 - (makensis 3.12)
-   *
-   * @default "1.2.1"
-   */
-  readonly nsis?: "0.0.0" | "1.2.1" | ToolsetCustom | null
-
-  /**
-   * `wine` bundle version to use for running Windows tools on non-Windows platforms.
-   * Located at https://github.com/electron-userland/electron-builder-binaries/releases?q=wine&expanded=true
-   *
-   * 0.0.0 - (wine 4.0.1 portable; mac-only support)
-   * 1.0.1 - (wine 11)
-   *
-   * @default "1.0.1"
-   */
-  readonly wine?: "0.0.0" | "1.0.1" | ToolsetCustom | null
-
-  readonly fpm?: "1.0.0" | ToolsetCustom | null
-
-  readonly linuxToolsMac?: "1.0.0" | ToolsetCustom | null
-}
-
-export interface ToolsetCustom {
-  /**
-   * The https:// or file:// path to load the custom toolset bundle from. Path can be relative to the project directory or an absolute path. If a URL is provided, the bundle will be downloaded and cached locally. If a local path is provided, it will be used directly.
-   *
-   * The toolset file structure should match the expected structure of the corresponding built-in toolset (e.g. `win-codesign`, `nsis`, etc.), and include all necessary binaries and resources for that toolset.
-   * You will need to inspect the official toolset's expected file structure by downloading the corresponding built-in toolset bundle from `electron-userland/electron-builder-binaries` and replicating the structure in your custom bundle.
-   *
-   * Toolset build scripts can be found here: https://github.com/electron-userland/electron-builder-binaries/tree/master/packages
-   *
-   * File formats supported:
-   * - `.zip`, `.7z`, `.tar.gz` archives (will be extracted before use)
-   */
-  url: string
-  /**
-   * The checksum of the custom toolset bundle for verification.
-   */
-  checksum: string
-  /**
-   * The version of the custom toolset.
-   */
-  version?: string
-}
 
 export interface Hooks {
   /**

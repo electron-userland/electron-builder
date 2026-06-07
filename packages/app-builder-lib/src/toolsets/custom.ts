@@ -1,6 +1,7 @@
-import { exec, log, sanitizeDirPath, sanitizePath, to7zaOutputSwitch } from "builder-util"
+import { exec, InvalidConfigurationError, log, sanitizeDirPath, sanitizePath, to7zaOutputSwitch } from "builder-util"
 import { validateSecuredUrl } from "builder-util/out/envUtil"
 import { exists } from "builder-util/out/fs"
+import { createHash } from "crypto"
 import { createReadStream, createWriteStream } from "fs"
 import * as fs from "fs/promises"
 import { mkdir, rmdir, stat } from "fs/promises"
@@ -9,7 +10,7 @@ import * as lockfile from "proper-lockfile"
 import { pipeline } from "stream/promises"
 import * as tar from "tar"
 import * as unzipper from "unzipper"
-import { ToolsetCustom } from "../configuration"
+import { ToolsetCustom } from "."
 import { downloadBuilderToolset, getCacheDirectory } from "../util/electronGet"
 import { getPath7za } from "./7zip"
 
@@ -28,14 +29,9 @@ async function validateCustomToolset(custom: ToolsetCustom, resourcesDir: string
     const p = url.slice("file://".length)
     const isWithinResources = path.normalize(p).startsWith(path.normalize(resourcesDir + path.sep))
     const isValid = path.isAbsolute(p) || isWithinResources
-    const type =
-      isValid &&
-      (await exists(p)) &&
-      (await stat(p)
-        .then(s => (s.isDirectory() ? "directory" : s.isFile() ? "file" : null))
-        .catch(() => null))
-    if (type != null) {
-      return { toolset: custom, type }
+    const archiveExistsValid = isValid && (await exists(p)) && (await stat(p))?.isFile()
+    if (archiveExistsValid) {
+      return { toolset: custom, type: "file" }
     }
   }
   throw new Error(`Invalid custom toolset: ${url}. Must be a valid https:// URL or a file:// path.`)
@@ -47,29 +43,42 @@ export async function getCustomToolsetPath(custom: ToolsetCustom, resourcesDir: 
   const releaseName = `${binaryVersion}-${hashUrlSafe(toolset.url)}`
 
   if (type === "url") {
+    // Split the full file URL into parent (overrideUrl) + filename so that
+    // downloadBuilderToolset can reconstruct the correct URL as `${overrideUrl}/${filenameWithExt}`.
+    const filenameWithExt = path.posix.basename(toolset.url)
+    const overrideUrlBase = toolset.url.slice(0, toolset.url.length - filenameWithExt.length - 1)
     return downloadBuilderToolset({
-      releaseName: releaseName,
-      filenameWithExt: path.basename(toolset.url),
-      checksums: { [path.basename(toolset.url)]: toolset.checksum },
-      overrideUrl: toolset.url,
+      releaseName,
+      filenameWithExt,
+      checksums: { [filenameWithExt]: toolset.checksum },
+      overrideUrl: overrideUrlBase,
     })
-  } else if (type === "file") {
-    const cacheDir = getCacheDirectory({ isAvoidSystemOnWindows: true, allowEnvVarOverride: true })
-    const customToolsetDir = path.join(cacheDir, "custom-toolsets")
-    await mkdir(customToolsetDir, { recursive: true })
-
-    // wipe it first to ensure idempotent extraction in case the source file has changed since the last extraction (e.g. overwritten in-place by benevolent CI caching or potentially-malicious actor)
-    const toolsetTarget = path.join(customToolsetDir, releaseName)
-    if (await exists(toolsetTarget)) {
-      await rmdir(toolsetTarget, { recursive: true })
-    }
-    await extractArchive(sanitizePath(toolset.url, resourcesDir, "file"), toolsetTarget)
-    return toolsetTarget
-  } else if (type === "directory") {
-    return sanitizePath(toolset.url, resourcesDir, "directory")
-  } else {
-    throw new Error(`Unsupported custom toolset type: ${type}`)
   }
+  // type === "file": strip the "file://" scheme before passing to sanitizePath,
+  // which calls path.resolve() and would otherwise treat the scheme as a relative path segment.
+  const filePath = sanitizePath(toolset.url.slice("file://".length), resourcesDir, "file")
+
+  // Validate checksum before extraction so a corrupt or tampered archive is rejected early.
+  const hash = createHash("sha256")
+  for await (const chunk of createReadStream(filePath)) {
+    hash.update(chunk as Buffer)
+  }
+  const actual = hash.digest("hex")
+  if (actual !== toolset.checksum.toLowerCase()) {
+    throw new InvalidConfigurationError(`Checksum mismatch for custom toolset "${toolset.url}": expected ${toolset.checksum}, got ${actual}`)
+  }
+
+  const cacheDir = getCacheDirectory({ isAvoidSystemOnWindows: true, allowEnvVarOverride: true })
+  const customToolsetDir = path.join(cacheDir, "custom-toolsets")
+  await mkdir(customToolsetDir, { recursive: true })
+
+  // wipe it first to ensure idempotent extraction in case the source file has changed since the last extraction (e.g. overwritten in-place by benevolent CI caching or potentially-malicious actor)
+  const toolsetTarget = path.join(customToolsetDir, releaseName)
+  if (await exists(toolsetTarget)) {
+    await rmdir(toolsetTarget, { recursive: true })
+  }
+  await extractArchive(filePath, toolsetTarget)
+  return toolsetTarget
 }
 
 export function hashUrlSafe(input: string, length = 6): string {
