@@ -162,11 +162,10 @@ export async function archive(format: string, outFile: string, dirToArchive: str
     return outFile
   }
 
-  let use7z = true
-  if (process.platform === "darwin" && format === "zip" && dirToArchive.normalize("NFC") !== dirToArchive) {
-    log.warn({ reason: "7z doesn't support NFD-normalized filenames" }, `using zip`)
-    use7z = false
-  }
+  // On macOS, always use native `zip` for zip archives: 7zip dereferences symlinks,
+  // corrupting .framework bundles and breaking codesign on the extracted app.
+  // Native `zip -y` stores symlinks as-is and also handles NFD-normalized filenames.
+  const use7z = !(process.platform === "darwin" && format === "zip")
 
   if (use7z) {
     const args = compute7zCompressArgs(format, options)
@@ -191,7 +190,7 @@ export async function archive(format: string, outFile: string, dirToArchive: str
       }
     }
   } else {
-    // NFD fallback: macOS native zip handles NFD-normalized Unicode paths correctly
+    // macOS native zip: -y preserves symlinks (required for .framework bundles)
     const args = ["-q", "-r", "-y"]
     if (debug7z.enabled) {
       args.push("-v")
@@ -205,6 +204,9 @@ export async function archive(format: string, outFile: string, dirToArchive: str
     args.push(outFile, options.withoutDir ? "." : path.basename(dirToArchive))
     if (options.excluded != null) {
       for (const mask of options.excluded) {
+        if (mask.includes("..")) {
+          throw new Error(`Excluded archive pattern contains path traversal sequence: "${mask}"`)
+        }
         args.push(`-x${mask}`)
       }
     }

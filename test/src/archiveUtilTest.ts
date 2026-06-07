@@ -153,7 +153,7 @@ describe("compute7zCompressArgs", () => {
 // ─── archive() — path-level guards (no binary needed) ───────────────────────
 
 describe("archive() guards", () => {
-  test("excluded pattern with '..' throws before reaching 7za", async ({ expect }) => {
+  test("excluded pattern with '..' throws", async ({ expect }) => {
     const src = await makeSrcDir()
     await expect(archive("zip", path.join(tmpDir, "out.zip"), src, { excluded: ["../secret"] })).rejects.toThrow("path traversal sequence")
   })
@@ -168,5 +168,37 @@ describe("archive() guards", () => {
     const result = await archive("zip", outFile, src)
     expect(result).toBe(outFile)
     expect(await fs.readFile(outFile, "utf8")).toBe("sentinel")
+  })
+})
+
+// ─── archive() — macOS zip symlink preservation ──────────────────────────────
+
+describe.runIf(process.platform === "darwin")("archive() macOS zip symlink preservation", () => {
+  test("zip archive preserves symlinks (not dereferenced)", async ({ expect }) => {
+    const src = path.join(tmpDir, "src")
+    await fs.mkdir(src, { recursive: true })
+    await fs.writeFile(path.join(src, "real.txt"), "content")
+    await fs.symlink("real.txt", path.join(src, "link.txt"))
+
+    const outFile = path.join(tmpDir, "out.zip")
+    await archive("zip", outFile, src, { withoutDir: true })
+
+    // Extract and verify symlink is preserved
+    const extractDir = path.join(tmpDir, "extracted")
+    await fs.mkdir(extractDir, { recursive: true })
+    const { exec: cpExec } = await import("child_process")
+    const { promisify } = await import("util")
+    const execAsync = promisify(cpExec)
+    await execAsync(`unzip -q "${outFile}" -d "${extractDir}"`)
+
+    const linkStat = await fs.lstat(path.join(extractDir, "link.txt"))
+    expect(linkStat.isSymbolicLink()).toBe(true)
+    const target = await fs.readlink(path.join(extractDir, "link.txt"))
+    expect(target).toBe("real.txt")
+  })
+
+  test("excluded pattern with '..' throws in native zip path", async ({ expect }) => {
+    const src = await makeSrcDir()
+    await expect(archive("zip", path.join(tmpDir, "out.zip"), src, { excluded: ["../secret"] })).rejects.toThrow("path traversal sequence")
   })
 })
