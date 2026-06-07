@@ -1,3 +1,14 @@
+## [26.15.2](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.1...electron-builder@26.15.2) (2026-06-07)
+
+
+### Bug Fixes
+
+* **icons:** replace png2icons with wasm-vips Lanczos3 resampling for high-quality icon conversion ([#9851](https://github.com/electron-userland/electron-builder/issues/9851)) ([f5ae163](https://github.com/electron-userland/electron-builder/commit/f5ae1632a7d30db34660786c81d39fca773e9467))
+* **mac:** use native `zip` for macOS zip target to preserve `.framework` symlinks ([#9847](https://github.com/electron-userland/electron-builder/issues/9847)) ([e25f967](https://github.com/electron-userland/electron-builder/commit/e25f9674d594524c2d0348c8fae456527391c9ca))
+* retry package install on transient network errors ([#9850](https://github.com/electron-userland/electron-builder/issues/9850)) ([3951024](https://github.com/electron-userland/electron-builder/commit/3951024641788af4a18f407074106b2a4196fc1f))
+
+
+
 ## [26.15.1](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.0...electron-builder@26.15.1) (2026-06-06)
 
 
