@@ -1,3 +1,12 @@
+## [26.15.1](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.0...electron-builder@26.15.1) (2026-06-06)
+
+
+### Bug Fixes
+
+* `ci:validate` packages ([#9838](https://github.com/electron-userland/electron-builder/issues/9838)) ([acd903e](https://github.com/electron-userland/electron-builder/commit/acd903e84832e41beb11471b77b439d6a70de099))
+
+
+
 # [26.15.0](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.14.0...electron-builder@26.15.0) (2026-06-05)
 
 

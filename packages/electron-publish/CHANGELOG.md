@@ -1,5 +1,11 @@
 # electron-publish
 
+## 26.15.1
+
+### Patch Changes
+
+- Chore: `ci:validate` lint fixes, `ci:test:fetch-cache` simplification, and code cleanup _[`#9840`](https://github.com/electron-userland/electron-builder/pull/9840) [`588ff48`](https://github.com/electron-userland/electron-builder/commit/588ff4854e9c0efa13539fed14b2711a708c8c7a) [@mmaietta](https://github.com/mmaietta)_
+
 ## 26.15.0
 
 ### Patch Changes

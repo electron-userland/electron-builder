@@ -1,5 +1,26 @@
 # app-builder-lib
 
+## 26.15.1
+
+### Patch Changes
+
+- Chore: `ci:validate` lint fixes, `ci:test:fetch-cache` simplification, and code cleanup _[`#9840`](https://github.com/electron-userland/electron-builder/pull/9840) [`588ff48`](https://github.com/electron-userland/electron-builder/commit/588ff4854e9c0efa13539fed14b2711a708c8c7a) [@mmaietta](https://github.com/mmaietta)_
+- Chore(deps): unpin and update `@electron/rebuild` package to latest `^4.0.4` _[`#9845`](https://github.com/electron-userland/electron-builder/pull/9845) [`db5d2f4`](https://github.com/electron-userland/electron-builder/commit/db5d2f4bfecf43dfb9f784f07f96666404487ba7) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 3 dependencies</summary>
+
+<small>
+
+[`588ff48`](https://github.com/electron-userland/electron-builder/commit/588ff4854e9c0efa13539fed14b2711a708c8c7a)
+
+</small>
+
+- `electron-publish@26.15.1`
+- `dmg-builder@26.15.1`
+- `electron-builder-squirrel-windows@26.15.1`
+
+</details>
+
 ## 26.15.0
 
 ### Minor Changes
