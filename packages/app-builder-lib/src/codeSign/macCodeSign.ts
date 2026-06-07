@@ -1,6 +1,6 @@
 import type { SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { copyFile, exec, Fields, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequest, log, Logger, retry, TmpDir, unlinkIfExists } from "builder-util"
-import { dynamicImport } from "../util/dynamicImport"
+import { dynamicImport } from "../util/dynamicImport.js"
 import { Nullish } from "builder-util-runtime"
 import { createHash, randomBytes } from "crypto"
 import { rename } from "fs/promises"
@@ -8,8 +8,8 @@ import { Lazy } from "lazy-val"
 import { homedir, tmpdir } from "os"
 import * as path from "path"
 import { getTempName } from "temp-file"
-import { isAutoDiscoveryCodeSignIdentity } from "../util/flags"
-import { importCertificate } from "./codesign"
+import { isAutoDiscoveryCodeSignIdentity } from "../util/flags.js"
+import { importCertificate } from "./codesign.js"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 
@@ -107,7 +107,7 @@ const bundledCertKeychainAdded = new Lazy<void>(async () => {
   const keychainPath = path.join(cacheDir, "electron-builder-root-certs.keychain")
   const results = await Promise.all<any>([
     listUserKeychains(),
-    copyFile(path.join(__dirname, "..", "..", "certs", "root_certs.keychain"), tmpKeychainPath).then(() => rename(tmpKeychainPath, keychainPath)),
+    copyFile(path.join(import.meta.dirname, "..", "..", "certs", "root_certs.keychain"), tmpKeychainPath).then(() => rename(tmpKeychainPath, keychainPath)),
   ])
   const list = results[0]
   if (!list.includes(keychainPath)) {

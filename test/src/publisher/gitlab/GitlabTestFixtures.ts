@@ -3,8 +3,8 @@ import { GitlabOptions } from "builder-util-runtime"
 
 export class GitlabTestFixtures {
   // Test file paths
-  static readonly ICON_PATH = path.join(__dirname, "..", "..", "..", "fixtures", "test-app", "build", "icon.icns")
-  static readonly ICO_PATH = path.join(__dirname, "..", "..", "..", "fixtures", "test-app", "build", "icon.ico")
+  static readonly ICON_PATH = path.join(import.meta.dirname, "..", "..", "..", "fixtures", "test-app", "build", "icon.icns")
+  static readonly ICO_PATH = path.join(import.meta.dirname, "..", "..", "..", "fixtures", "test-app", "build", "icon.ico")
 
   // Test versions
   static readonly VERSIONS = {

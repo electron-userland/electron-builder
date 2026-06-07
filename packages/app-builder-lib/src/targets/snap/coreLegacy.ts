@@ -1,17 +1,18 @@
 import { replaceDefault as _replaceDefault, Arch, copyDir, exec, log, serializeToYaml, toLinuxArchString } from "builder-util"
 import { asArray, deepAssign, isValidKey, Nullish } from "builder-util-runtime"
 import { chmod, copyFile, mkdir, readdir, rename, rm, writeFile } from "fs/promises"
-import { outputFile, readFile } from "fs-extra"
-import * as path from "path"
-import { PlugDescriptor, SnapOptions } from "../../options/SnapOptions"
-import { getAppImageTools } from "../../toolsets/linux"
-import { downloadBuilderToolset } from "../../util/electronGet"
-import { getTemplatePath } from "../../util/pathManager"
-import { validateShellEmbeddable } from "../../frameworks/LibUiFramework"
-import { SnapCore } from "./SnapTarget"
-import { SnapcraftYAML } from "./snapcraft"
-import { DEFAULT_STAGE_PACKAGES } from "./snapcraftBuilder"
+import _fsExtra from "fs-extra"
+const { outputFile, readFile } = _fsExtra
 import { load } from "js-yaml"
+import * as path from "path"
+import { PlugDescriptor, SnapOptions } from "../../options/SnapOptions.js"
+import { getAppImageTools } from "../../toolsets/linux.js"
+import { downloadBuilderToolset } from "../../util/electronGet.js"
+import { getTemplatePath } from "../../util/pathManager.js"
+import { validateShellEmbeddable } from "../../frameworks/LibUiFramework.js"
+import { SnapCore } from "./SnapTarget.js"
+import { SnapcraftYAML } from "./snapcraft.js"
+import { DEFAULT_STAGE_PACKAGES } from "./snapcraftBuilder.js"
 
 // Snap template release info from electron-userland/electron-builder-binaries
 const SNAP_TEMPLATES = {

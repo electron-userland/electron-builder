@@ -1,15 +1,16 @@
 import { InvalidConfigurationError } from "builder-util"
-import { copy, emptyDir } from "fs-extra"
+import _fsExtra from "fs-extra"
+const { copy, emptyDir } = _fsExtra
 import { chmod, copyFile, mkdir, rename, writeFile } from "fs/promises"
 import * as https from "https"
 import * as path from "path"
-import { AfterPackContext } from "../configuration"
-import { Platform } from "../core"
-import { Framework, PrepareApplicationStageDirectoryOptions } from "../Framework"
-import { LinuxPackager } from "../linuxPackager"
-import { MacPackager } from "../macPackager"
-import { downloadBuilderToolset } from "../util/electronGet"
-import { savePlistFile } from "../util/plist"
+import { AfterPackContext } from "../configuration.js"
+import { Platform } from "../core.js"
+import { Framework, PrepareApplicationStageDirectoryOptions } from "../Framework.js"
+import { LinuxPackager } from "../linuxPackager.js"
+import { MacPackager } from "../macPackager.js"
+import { downloadBuilderToolset } from "../util/electronGet.js"
+import { savePlistFile } from "../util/plist.js"
 
 /** Validates that a value is safe to embed in a double-quoted shell string (no metacharacters). */
 export function validateShellEmbeddable(value: string, fieldName: string): void {

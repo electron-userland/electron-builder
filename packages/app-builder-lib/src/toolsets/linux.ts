@@ -1,8 +1,8 @@
 import { Arch, exists, resolveEnvToolsetPath, use } from "builder-util"
 import * as path from "path"
-import { getBinFromUrl } from "../binDownload"
-import { ToolsetConfig } from "../configuration"
-import { downloadBuilderToolset } from "../util/electronGet"
+import { getBinFromUrl } from "../binDownload.js"
+import { ToolsetConfig } from "../configuration.js"
+import { downloadBuilderToolset } from "../util/electronGet.js"
 
 const fpmChecksums = {
   "fpm-1.17.0-ruby-3.4.3-darwin-arm64.7z": "6cc6d4785875bc7d79bdf52ca146080a4c300e1d663376ae79615fb548030ede",

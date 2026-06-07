@@ -2,11 +2,10 @@ import { CancellationToken, configureRequestUrl, newError, safeStringifyJson, Up
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { load } from "js-yaml"
 import { URL } from "url"
-import { ElectronHttpExecutor } from "../electronHttpExecutor"
-import { ResolvedUpdateFileInfo } from "../types"
-import { newUrlFromBase } from "../util"
-// @ts-ignore
-import * as escapeRegExp from "lodash.escaperegexp"
+import { ElectronHttpExecutor } from "../electronHttpExecutor.js"
+import { ResolvedUpdateFileInfo } from "../types.js"
+import { newUrlFromBase } from "../util.js"
+import escapeRegExp from "lodash.escaperegexp"
 
 export type ProviderPlatform = "darwin" | "linux" | "win32"
 

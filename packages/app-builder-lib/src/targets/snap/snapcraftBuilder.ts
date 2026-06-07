@@ -2,13 +2,15 @@ import { InvalidConfigurationError, isEmptyOrSpaces, log, spawn, stripSensitiveE
 import * as childProcess from "child_process"
 import { randomUUID } from "crypto"
 import { resolveSnapCredentials } from "electron-publish"
-import { copyFile, ensureDir, pathExists, readdir, remove } from "fs-extra"
+
 import * as path from "path"
 import * as util from "util"
-import { LinuxPackager } from "../../linuxPackager"
-import { RemoteBuildOptions } from "../../options/SnapOptions"
-import { SnapcraftYAML } from "./snapcraft"
+import { LinuxPackager } from "../../linuxPackager.js"
+import { RemoteBuildOptions } from "../../options/SnapOptions.js"
+import { SnapcraftYAML } from "./snapcraft.js"
 import { deepAssign } from "builder-util-runtime"
+import _fsExtra from "fs-extra"
+const { copyFile, ensureDir, pathExists, readdir, remove } = _fsExtra
 
 const execAsync = util.promisify(childProcess.exec)
 

@@ -2,7 +2,7 @@ import * as https from "https"
 import { EventEmitter } from "events"
 import * as path from "path"
 import { afterEach, describe, expect, vi } from "vitest"
-import { Platform } from "app-builder-lib/src/core"
+import { Platform } from "app-builder-lib"
 import {
   fetchNodeJsChecksum,
   getLaunchUiDownloadParams,

@@ -2,7 +2,7 @@ import { log } from "builder-util"
 import { readFile, writeFile } from "fs/promises"
 import * as path from "path"
 import { NtExecutable, NtExecutableResource, Resource } from "resedit"
-import { AsarIntegrity } from "../asar/integrity"
+import { AsarIntegrity } from "../asar/integrity.js"
 
 /** @internal */
 export async function addWinAsarIntegrity(executablePath: string, asarIntegrity: AsarIntegrity) {
@@ -27,10 +27,12 @@ export async function addWinAsarIntegrity(executablePath: string, asarIntegrity:
     value,
   }))
 
+  const encoder = new TextEncoder()
+
   resource.entries.push({
     type: "INTEGRITY",
     id: "ELECTRONASAR",
-    bin: Buffer.from(JSON.stringify(integrityList)),
+    bin: encoder.encode(JSON.stringify(integrityList)).buffer as ArrayBuffer,
     lang: languages[0].lang,
     codepage: languages[0].codepage,
   })

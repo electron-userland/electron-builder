@@ -1,5 +1,5 @@
 import { ExecError, statOrNull } from "builder-util"
-import type { Defines } from "./Defines"
+import type { Defines } from "./Defines.js"
 
 /**
  * Validates makensis stdout/stderr after a zero-exit run.

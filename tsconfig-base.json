@@ -1,21 +1,21 @@
 {
+  "extends": "@tsconfig/node22/tsconfig.json",
   "compilerOptions": {
-    "target": "es2019",
-    "module": "CommonJS",
-    "esModuleInterop": false,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
-    "skipLibCheck": true,
-    "strict": true,
+
     "noUnusedLocals": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
+
     "allowJs": true,
 
     "inlineSources": true,
     "sourceMap": true,
 
-    "allowSyntheticDefaultImports": true,
+    "useDefineForClassFields": false,
     "experimentalDecorators": true,
 
     "newLine": "lf",

@@ -1,7 +1,7 @@
 import { GithubOptions, HttpError, UpdateInfo } from "builder-util-runtime"
-import { GitHubProvider } from "electron-updater/src/providers/GitHubProvider"
-import { assertDownloadNotTriggered, getProvider, mockYaml } from "../helpers/providerTestUtil"
-import { createMockRequest, createNsisUpdater, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { GitHubProvider } from "electron-updater/internal"
+import { assertDownloadNotTriggered, getProvider, mockYaml } from "../helpers/providerTestUtil.js"
+import { createMockRequest, createNsisUpdater, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 
 const MOCK_OWNER = "test-owner"
 const MOCK_REPO = "test-public-repo"

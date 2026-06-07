@@ -1,18 +1,20 @@
-import { loadEnv } from "app-builder-lib/out/util/config/load"
+import { loadEnv } from "app-builder-lib/internal"
 import { ExecError, InvalidConfigurationError, log } from "builder-util"
 import { isCI } from "ci-info"
-import { readJson } from "fs-extra"
+
 import * as path from "path"
+import _fsExtra from "fs-extra"
+const { readJson } = _fsExtra
 
 export async function checkIsOutdated(): Promise<void> {
   if (isCI || process.env.NO_UPDATE_NOTIFIER != null) {
     return
   }
-  const pkg = await readJson(path.join(__dirname, "..", "..", "package.json"))
+  const pkg = await readJson(path.join(import.meta.dirname, "..", "..", "package.json"))
   if (pkg.version === "0.0.0-semantic-release") {
     return
   }
-  const UpdateNotifier = require("simple-update-notifier")
+  const { default: UpdateNotifier } = await import("simple-update-notifier")
   await UpdateNotifier({ pkg })
 }
 

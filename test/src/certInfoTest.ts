@@ -5,7 +5,7 @@ import { writeFileSync } from "fs"
 import { mkdtemp } from "fs/promises"
 import { afterAll, beforeAll, describe, it, expect } from "vitest"
 import { writeFile, remove } from "fs-extra"
-import { readCertInfo, _testingOnly } from "app-builder-lib/src/codeSign/certInfo"
+import { readCertInfo, _testingOnly } from "app-builder-lib/internal"
 
 const { pkcs12PbeDeriveKey, pkcs12PasswordToUtf16, rc2CbcDecrypt, MAX_PKCS12_PBE_ITERATIONS } = _testingOnly
 import { WIN_CSC_LINK } from "./helpers/codeSignData"

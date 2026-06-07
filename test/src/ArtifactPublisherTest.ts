@@ -1,5 +1,5 @@
 import { Platform } from "app-builder-lib"
-import { createPublisher } from "app-builder-lib/out/publish/PublishManager"
+import { createPublisher } from "app-builder-lib/internal"
 import { Arch } from "builder-util"
 import { BitbucketOptions, CancellationToken, HttpError, KeygenOptions, S3Options, SpacesOptions } from "builder-util-runtime"
 import { publishArtifactsWithOptions } from "electron-builder"
@@ -17,8 +17,8 @@ function versionNumber() {
 
 //noinspection SpellCheckingInspection
 const token = Buffer.from("Y2Y5NDdhZDJhYzJlMzg1OGNiNzQzYzcwOWZhNGI0OTk2NWQ4ZDg3Yg==", "base64").toString()
-const iconPath = path.join(__dirname, "..", "fixtures", "test-app", "build", "icon.icns")
-const icoPath = path.join(__dirname, "..", "fixtures", "test-app", "build", "icon.ico")
+const iconPath = path.join(import.meta.dirname, "..", "fixtures", "test-app", "build", "icon.icns")
+const icoPath = path.join(import.meta.dirname, "..", "fixtures", "test-app", "build", "icon.ico")
 
 const publishContext: PublishContext = {
   cancellationToken: new CancellationToken(),

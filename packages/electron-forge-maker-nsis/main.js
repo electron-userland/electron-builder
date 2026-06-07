@@ -1,13 +1,7 @@
-"use strict"
+import { buildForge } from "app-builder-lib"
 
-Object.defineProperty(exports, "__esModule", {
-  value: true,
-})
+export const isSupportedOnCurrentPlatform = () => Promise.resolve(true)
 
-const buildForge = require("app-builder-lib").buildForge
-
-exports.isSupportedOnCurrentPlatform = () => Promise.resolve(true)
-
-exports.default = function (options) {
+export default function (options) {
   return buildForge(options, { win: [`nsis:${options.targetArch}`] })
 }

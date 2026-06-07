@@ -17,8 +17,8 @@ import { Arch } from "builder-util"
 import { CancellationToken, S3Options, SpacesOptions } from "builder-util-runtime"
 import { PublishContext, UploadTask } from "electron-publish"
 import { resolveAwsCredentials } from "electron-publish/src/s3/awsCredentials"
-import { S3Publisher } from "electron-publish/src/s3/s3Publisher"
-import { SpacesPublisher } from "electron-publish/src/s3/spacesPublisher"
+import { S3Publisher } from "electron-publish/internal"
+import { SpacesPublisher } from "electron-publish/internal"
 import { getS3ContentType } from "electron-publish/src/s3/s3UploadHelper"
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -65,6 +65,7 @@ function mockSuccessfulUpload(): { capturedOpts: () => any } {
       const res = new EventEmitter() as any
       res.statusCode = 200
       res.resume = vi.fn()
+      ;(callback as (arg: unknown) => void)(res)
       ;(callback as (res: unknown) => void)(res)
       setImmediate(() => res.emit("end"))
     })

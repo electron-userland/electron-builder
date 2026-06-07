@@ -2,7 +2,7 @@ import { afterEach, beforeEach } from "vitest"
 import * as os from "os"
 import * as path from "path"
 import { mkdir, rm, writeFile } from "fs/promises"
-import { prepareProductBuildArgs, resolvePkgBuildVersion, resolveScriptsDir } from "app-builder-lib/out/targets/pkg"
+import { prepareProductBuildArgs, resolvePkgBuildVersion, resolveScriptsDir } from "app-builder-lib/src/targets/pkg"
 
 // Only run these tests on macOS since they rely on macOS-specific filesystem structure and conventions.
 // The functions being tested are also only relevant in the context of building macOS pkg installers.

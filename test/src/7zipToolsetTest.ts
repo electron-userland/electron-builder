@@ -4,15 +4,15 @@ vi.mock("builder-util", async () => ({
   ...(await vi.importActual<typeof import("builder-util")>("builder-util")),
   resolveEnvToolsetPath: vi.fn().mockResolvedValue(null),
 }))
-vi.mock("fs-extra", async () => ({
-  ...(await vi.importActual<typeof import("fs-extra")>("fs-extra")),
-  chmod: vi.fn().mockResolvedValue(undefined),
-}))
+vi.mock("node:fs/promises", async () => {
+  const actual = await vi.importActual<typeof import("node:fs/promises")>("node:fs/promises")
+  return { ...actual, chmod: vi.fn().mockResolvedValue(undefined) }
+})
 vi.mock("app-builder-lib/src/util/electronGet", () => ({
   downloadBuilderToolset: vi.fn(),
 }))
 
-import { downloadBuilderToolset } from "app-builder-lib/src/util/electronGet"
+import { downloadBuilderToolset } from "app-builder-lib/internal"
 
 // Each test re-imports the module so the module-level `_resolvedPath` cache is reset.
 async function freshGetPath7za() {

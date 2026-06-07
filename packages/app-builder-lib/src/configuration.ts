@@ -1,22 +1,22 @@
 import { Arch } from "builder-util"
-import { BeforeBuildContext, Target } from "./core"
-import { ElectronBrandingOptions } from "./electron/ElectronFramework"
-import { PrepareApplicationStageDirectoryOptions } from "./Framework"
-import { AppXOptions } from "./options/AppXOptions"
-import { AppImageOptions, DebOptions, FlatpakOptions, LinuxConfiguration, LinuxTargetSpecificOptions, PacmanOptions, RpmOptions } from "./options/linuxOptions"
-import { DmgOptions, MacConfiguration, MasConfiguration } from "./options/macOptions"
-import { MsiOptions } from "./options/MsiOptions"
-import { MsiWrappedOptions } from "./options/MsiWrappedOptions"
-import { PkgOptions } from "./options/pkgOptions"
-import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions"
-import { SnapcraftOptions, SnapOptions } from "./options/SnapOptions"
-import { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions"
-import { WindowsConfiguration } from "./options/winOptions"
-import { BuildResult } from "./packager"
-import { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi"
-import { PlatformPackager } from "./platformPackager"
-import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions"
-import { ElectronDownloadOptions, ElectronGetOptions } from "./util/electronGet"
+import { BeforeBuildContext, Target } from "./core.js"
+import { ElectronBrandingOptions } from "./electron/ElectronFramework.js"
+import { PrepareApplicationStageDirectoryOptions } from "./Framework.js"
+import { AppXOptions } from "./options/AppXOptions.js"
+import { AppImageOptions, DebOptions, FlatpakOptions, LinuxConfiguration, LinuxTargetSpecificOptions, PacmanOptions, RpmOptions } from "./options/linuxOptions.js"
+import { DmgOptions, MacConfiguration, MasConfiguration } from "./options/macOptions.js"
+import { MsiOptions } from "./options/MsiOptions.js"
+import { MsiWrappedOptions } from "./options/MsiWrappedOptions.js"
+import { PkgOptions } from "./options/pkgOptions.js"
+import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions.js"
+import { SnapcraftOptions, SnapOptions } from "./options/SnapOptions.js"
+import { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions.js"
+import { WindowsConfiguration } from "./options/winOptions.js"
+import { BuildResult } from "./packager.js"
+import { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi.js"
+import { PlatformPackager } from "./platformPackager.js"
+import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions.js"
+import { ElectronDownloadOptions, ElectronGetOptions } from "./util/electronGet.js"
 
 // duplicate appId here because it is important
 /**
@@ -259,12 +259,6 @@ export interface CommonConfiguration {
 }
 
 export interface Configuration extends CommonConfiguration, PlatformSpecificBuildOptions, Hooks {
-  /**
-   * Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified.
-   * @deprecated `electron-compile` is no longer maintained. Compile your app with a modern bundler (webpack, vite, etc.) instead.
-   */
-  readonly electronCompile?: boolean
-
   /**
    * The [electron-download](https://github.com/electron-userland/electron-download#usage) options. (legacy)
    * Alternatively, you can use [electron/get](https://github.com/electron/get#usage) options.
