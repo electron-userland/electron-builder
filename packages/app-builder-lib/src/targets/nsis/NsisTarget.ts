@@ -126,7 +126,7 @@ export class NsisTarget extends Target {
     // modified. Keeping appOutDir clean eliminates the race condition where concurrent targets
     // (Squirrel, ZIP, etc.) that package appOutDir pick up elevate.exe non-deterministically.
     if (elevateHelper) {
-      await elevateHelper.addToArchive(archiveFile, this)
+      await elevateHelper.addToArchive(archiveFile, this, appOutDir)
     }
 
     if (isBuildDifferentialAware && this.isWebInstaller) {

@@ -88,7 +88,7 @@ export class CopyElevateHelper {
     return this.elevatePath
   }
 
-  async addToArchive(archiveFile: string, target: NsisTarget): Promise<void> {
+  async addToArchive(archiveFile: string, target: NsisTarget, appOutDir: string): Promise<void> {
     const elevatePath = await this.resolve(target)
     if (!elevatePath) {
       return
@@ -106,6 +106,12 @@ export class CopyElevateHelper {
     }
 
     await exec(await getPath7za(), ["a", archiveFile, "resources/elevate.exe"], { cwd: stagingDir }, debug7z.enabled)
+
+    // Write the (possibly signed) binary into appOutDir so the dir-target output
+    // (win-unpacked/) also contains elevate.exe. This happens after both the NSIS
+    // archive and concurrent target archives (Squirrel, zip, etc.) have already
+    // captured appOutDir, so they are not affected.
+    await copyFile(stagedElevate, path.join(appOutDir, "resources", "elevate.exe"), false)
   }
 }
 
