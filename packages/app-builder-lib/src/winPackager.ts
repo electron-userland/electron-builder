@@ -6,10 +6,9 @@ import { readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { readAsarHeader } from "./asar/asar"
-import { SignManager } from "./codeSign/signManager"
+import { createSignManager } from "./codeSign/signManager"
 import { signWindows, WindowsSignOptions } from "./codeSign/windowsCodeSign"
-import { WindowsSignAzureManager } from "./codeSign/windowsSignAzureManager"
-import { FileCodeSigningInfo, WindowsSignToolManager } from "./codeSign/windowsSignToolManager"
+import { FileCodeSigningInfo } from "./codeSign/signtoolBaseSignManager"
 import { AfterPackContext } from "./configuration"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOptions"
@@ -34,12 +33,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   readonly vm = new Lazy<VmManager>(() => (process.platform === "win32" ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger)))
 
   readonly signingManager = new Lazy(async () => {
-    let manager: SignManager
-    if (this.platformSpecificBuildOptions.signing?.type === "azure") {
-      manager = new WindowsSignAzureManager(this)
-    } else {
-      manager = new WindowsSignToolManager(this)
-    }
+    const manager = createSignManager(this)
     await manager.initialize()
     return manager
   })

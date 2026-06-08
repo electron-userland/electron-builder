@@ -73,6 +73,9 @@ export {
   WindowsSignTaskConfiguration,
   WindowsSignToolManager,
 } from "./codeSign/windowsSignToolManager"
+export { HsmSignManager } from "./codeSign/hsmSignManager"
+export { Pkcs11SignManager } from "./codeSign/pkcs11SignManager"
+export { SigntoolSignManager } from "./codeSign/signtoolBaseSignManager"
 export { ToolInfo } from "./util/bundledTool"
 export { ForgeOptions, buildForge } from "./forge-maker"
 export { Framework, PrepareApplicationStageDirectoryOptions } from "./Framework"

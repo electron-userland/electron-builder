@@ -1,13 +1,27 @@
-import { WindowsSignToolManager } from "app-builder-lib"
-import { WindowsSignTaskConfiguration } from "app-builder-lib/out/codeSign/windowsSignToolManager"
+import { HsmSignManager } from "app-builder-lib/out/codeSign/hsmSignManager"
+import { Pkcs11SignManager } from "app-builder-lib/out/codeSign/pkcs11SignManager"
+import { SigntoolSignManager } from "app-builder-lib/out/codeSign/signtoolBaseSignManager"
+import { WindowsSignTaskConfiguration } from "app-builder-lib/out/codeSign/signtoolBaseSignManager"
 import { readCertInfoFromX509 } from "app-builder-lib/out/codeSign/certInfo"
 import { mkdtemp, rm, writeFile } from "fs/promises"
 import { tmpdir } from "os"
 import * as path from "path"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-function makeManager(winCodeSign?: string): WindowsSignToolManager {
-  const manager = Object.create(WindowsSignToolManager.prototype) as WindowsSignToolManager
+function makeManager(winCodeSign?: string): SigntoolSignManager {
+  const manager = Object.create(SigntoolSignManager.prototype) as SigntoolSignManager
+  ;(manager as any).packager = { config: { toolsets: { winCodeSign: winCodeSign ?? "1.1.0" } } }
+  return manager
+}
+
+function makeHsmManager(winCodeSign?: string): HsmSignManager {
+  const manager = Object.create(HsmSignManager.prototype) as HsmSignManager
+  ;(manager as any).packager = { config: { toolsets: { winCodeSign: winCodeSign ?? "1.1.0" } } }
+  return manager
+}
+
+function makePkcs11Manager(winCodeSign?: string): Pkcs11SignManager {
+  const manager = Object.create(Pkcs11SignManager.prototype) as Pkcs11SignManager
   ;(manager as any).packager = { config: { toolsets: { winCodeSign: winCodeSign ?? "1.1.0" } } }
   return manager
 }
@@ -262,7 +276,7 @@ describe("computeSignToolArgs — HSM (isWin=true, modern toolset)", () => {
   } as any
 
   test("HSM with .pfx file: /f, /csp, /kc present in correct order", () => {
-    const manager = makeManager("1.1.0")
+    const manager = makeHsmManager("1.1.0")
     const config = makeTaskConfig({
       options: hsmOptions,
       cscInfo: { file: "/certs/cert.pfx", password: null },
@@ -279,7 +293,7 @@ describe("computeSignToolArgs — HSM (isWin=true, modern toolset)", () => {
   })
 
   test("HSM with .crt file: /f accepted without error", () => {
-    const manager = makeManager("1.1.0")
+    const manager = makeHsmManager("1.1.0")
     const config = makeTaskConfig({
       options: hsmOptions,
       cscInfo: { file: "/certs/mycert.crt", password: null },
@@ -294,7 +308,7 @@ describe("computeSignToolArgs — HSM (isWin=true, modern toolset)", () => {
   })
 
   test("HSM with .cer file: /f accepted without error", () => {
-    const manager = makeManager("1.1.0")
+    const manager = makeHsmManager("1.1.0")
     const config = makeTaskConfig({
       options: hsmOptions,
       cscInfo: { file: "/certs/mycert.cer", password: null },
@@ -305,7 +319,7 @@ describe("computeSignToolArgs — HSM (isWin=true, modern toolset)", () => {
   })
 
   test("HSM with store-based cert: /sha1 present, /csp and /kc appended", () => {
-    const manager = makeManager("1.1.0")
+    const manager = makeHsmManager("1.1.0")
     const storeCscInfo = { thumbprint: "AABBCC", subject: "CN=Test", store: "My", isLocalMachineStore: false }
     const config = makeTaskConfig({
       options: hsmOptions,
@@ -318,7 +332,7 @@ describe("computeSignToolArgs — HSM (isWin=true, modern toolset)", () => {
   })
 
   test("/csp and /kc appear before /debug and the input file", () => {
-    const manager = makeManager("1.1.0")
+    const manager = makeHsmManager("1.1.0")
     const config = makeTaskConfig({ options: hsmOptions })
     const args = manager.computeSignToolArgs(config, true)
     const debugIdx = args.indexOf("/debug")
@@ -345,21 +359,21 @@ describe("HSM validation errors", () => {
   } as any
 
   test("legacy toolset (0.0.0) + HSM → throws toolset error", () => {
-    const manager = makeManager("0.0.0")
+    const manager = makeHsmManager("0.0.0")
     const config = makeTaskConfig({ options: hsmOptions })
     expect(() => manager.computeSignToolArgs(config, true)).toThrow(/winCodeSign toolset 1\.x/)
   })
 
   test("null toolset (legacy default) + HSM → throws toolset error", () => {
-    const manager = makeManager(undefined)
+    const manager = makeHsmManager(undefined)
     // null toolset behaves as legacy
     ;(manager as any).packager = { config: { toolsets: {} } }
     const config = makeTaskConfig({ options: hsmOptions })
     expect(() => manager.computeSignToolArgs(config, true)).toThrow(/winCodeSign toolset 1\.x/)
   })
 
-  test("non-Windows (isWin=false) + HSM without PKCS#11 → throws Windows-only error", () => {
-    const manager = makeManager("1.1.0")
+  test("non-Windows (isWin=false) + HSM → throws Windows-only error", () => {
+    const manager = makeHsmManager("1.1.0")
     const config = makeTaskConfig({ options: hsmOptions })
     expect(() => manager.computeSignToolArgs(config, false)).toThrow(/only supported on Windows/)
   })
@@ -386,7 +400,7 @@ describe("computeSignToolArgs — PKCS#11 (isWin=false)", () => {
   } as any
 
   test("PKCS#11 mode: -pkcs11module and -key present, no -pkcs12", () => {
-    const manager = makeManager("1.1.0")
+    const manager = makePkcs11Manager("1.1.0")
     const config = makeTaskConfig({ options: pkcs11Options })
     const args = manager.computeSignToolArgs(config, false)
     expect(args).toContain("-pkcs11module")
@@ -399,7 +413,7 @@ describe("computeSignToolArgs — PKCS#11 (isWin=false)", () => {
   })
 
   test("PKCS#11 mode: -in and -out are present", () => {
-    const manager = makeManager("1.1.0")
+    const manager = makePkcs11Manager("1.1.0")
     const config = makeTaskConfig({ options: pkcs11Options })
     const args = manager.computeSignToolArgs(config, false)
     expect(args).toContain("-in")
@@ -407,7 +421,7 @@ describe("computeSignToolArgs — PKCS#11 (isWin=false)", () => {
   })
 
   test("only pkcs11Module without pkcs11KeyUri → throws validation error", () => {
-    const manager = makeManager("1.1.0")
+    const manager = makePkcs11Manager("1.1.0")
     // as any: testing runtime JSON-config validation (bypasses TypeScript's required-field check)
     const config = makeTaskConfig({
       options: { signing: { type: "pkcs11" as const, pkcs11Module: "/usr/lib/opensc-pkcs11.so" } } as any,
@@ -416,7 +430,7 @@ describe("computeSignToolArgs — PKCS#11 (isWin=false)", () => {
   })
 
   test("only pkcs11KeyUri without pkcs11Module → throws validation error", () => {
-    const manager = makeManager("1.1.0")
+    const manager = makePkcs11Manager("1.1.0")
     // as any: testing runtime JSON-config validation (bypasses TypeScript's required-field check)
     const config = makeTaskConfig({
       options: { signing: { type: "pkcs11" as const, pkcs11KeyUri: "pkcs11:token=X;object=Y;type=private" } } as any,
@@ -424,8 +438,8 @@ describe("computeSignToolArgs — PKCS#11 (isWin=false)", () => {
     expect(() => manager.computeSignToolArgs(config, false)).toThrow(/pkcs11Module and pkcs11KeyUri must both be set/)
   })
 
-  test("HSM csp/kc on non-Windows without PKCS#11 → throws Windows-only error", () => {
-    const manager = makeManager("1.1.0")
+  test("HSM csp/kc on non-Windows → throws Windows-only error (via HsmSignManager)", () => {
+    const manager = makeHsmManager("1.1.0")
     const config = makeTaskConfig({
       options: { signing: { type: "hsm" as const, cryptoServiceProvider: "Google Cloud KMS Provider", keyContainer: "my-key" } } as any,
     })
@@ -433,7 +447,7 @@ describe("computeSignToolArgs — PKCS#11 (isWin=false)", () => {
   })
 
   test("resultOutputPath is set in PKCS#11 mode", () => {
-    const manager = makeManager("1.1.0")
+    const manager = makePkcs11Manager("1.1.0")
     const config = makeTaskConfig({ options: pkcs11Options, hash: "sha256" }) as any
     manager.computeSignToolArgs(config, false)
     expect(config.resultOutputPath).toBeDefined()
