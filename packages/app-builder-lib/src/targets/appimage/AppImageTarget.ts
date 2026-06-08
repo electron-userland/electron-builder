@@ -23,7 +23,7 @@ const { outputFile } = _fsExtra
 export const APP_RUN_ENTRYPOINT = "AppRun"
 
 export default class AppImageTarget extends Target {
-  readonly options: AppImageOptions = this.packager.getOptionsForTarget<AppImageOptions>(this.name)
+  readonly options: AppImageOptions
 
   private readonly desktopEntry: Lazy<string>
 
@@ -34,6 +34,7 @@ export default class AppImageTarget extends Target {
     readonly outDir: string
   ) {
     super("appImage")
+    this.options = this.packager.getOptionsForTarget<AppImageOptions>(this.name)
 
     this.desktopEntry = new Lazy<string>(() => {
       const appimageTool = packager.config.toolsets?.appimage

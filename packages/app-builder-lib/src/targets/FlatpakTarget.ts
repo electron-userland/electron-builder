@@ -13,7 +13,7 @@ import _fsExtra from "fs-extra"
 const { chmod, outputFile } = _fsExtra
 
 export default class FlatpakTarget extends Target {
-  readonly options: FlatpakOptions = this.packager.getOptionsForTarget<FlatpakOptions>(this.name)
+  readonly options: FlatpakOptions
 
   constructor(
     name: string,
@@ -22,6 +22,7 @@ export default class FlatpakTarget extends Target {
     readonly outDir: string
   ) {
     super(name)
+    this.options = this.packager.getOptionsForTarget<FlatpakOptions>(this.name)
   }
 
   get appId(): string {

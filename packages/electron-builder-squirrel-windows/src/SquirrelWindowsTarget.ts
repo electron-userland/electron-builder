@@ -12,8 +12,7 @@ import { Options as SquirrelOptions, createWindowsInstaller, convertVersion } fr
 import { WineVmManager } from "app-builder-lib/internal"
 
 export default class SquirrelWindowsTarget extends Target {
-  //tslint:disable-next-line:no-object-literal-type-assertion
-  readonly options: SquirrelWindowsOptions = this.packager.getOptionsForTarget<SquirrelWindowsOptions>("squirrelWindows")
+  readonly options: SquirrelWindowsOptions
 
   isAsyncSupported = false
 
@@ -22,6 +21,7 @@ export default class SquirrelWindowsTarget extends Target {
     readonly outDir: string
   ) {
     super("squirrel")
+    this.options = this.packager.getOptionsForTarget<SquirrelWindowsOptions>("squirrelWindows")
   }
 
   private async prepareSignedVendorDirectory(): Promise<string> {
