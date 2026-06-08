@@ -41,7 +41,6 @@ import { ArtifactCreated } from "../packagerApi.js"
 import { PlatformSpecificBuildOptions } from "../options/PlatformSpecificBuildOptions.js"
 import { Packager } from "../packager.js"
 import { PlatformPackager } from "../platformPackager.js"
-import { expandMacro } from "../util/macroExpander.js"
 import { WinPackager } from "../winPackager.js"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js"
 import { resolveModule } from "../util/resolve.js"
@@ -156,7 +155,7 @@ export class PublishManager implements PublishContext {
 
   async getGlobalPublishConfigurations(): Promise<Array<PublishConfiguration> | null> {
     const publishers = this.packager.config.publish
-    return await resolvePublishConfigurations(publishers, null, this.packager, null, true)
+    return await resolvePublishConfigurations(publishers, null, null, true, this.packager)
   }
 
   async scheduleUpload(publishConfig: PublishConfiguration, event: UploadTask, appInfo: AppInfo): Promise<void> {
@@ -302,7 +301,7 @@ export async function getPublishConfigsForUpdateInfo(
     const repositoryInfo = await packager.info.repositoryInfo
     debug(`getPublishConfigsForUpdateInfo: ${safeStringifyJson(repositoryInfo)}`)
     if (repositoryInfo != null && repositoryInfo.type === "github") {
-      const resolvedPublishConfig = await getResolvedPublishConfig(packager, packager.info, { provider: repositoryInfo.type }, arch, false)
+      const resolvedPublishConfig = await getResolvedPublishConfig(packager, { provider: repositoryInfo.type }, arch, false)
       if (resolvedPublishConfig != null) {
         debug(`getPublishConfigsForUpdateInfo: resolve to publish config ${safeStringifyJson(resolvedPublishConfig)}`)
         return [resolvedPublishConfig]
@@ -373,7 +372,7 @@ export async function createPublisher(
   }
 }
 
-async function requireProviderClass(provider: string, packager: Packager): Promise<any | null> {
+async function requireProviderClass(provider: string, packager: { buildResourcesDir: string; appInfo: AppInfo }): Promise<any | null> {
   switch (provider) {
     case "github":
       return GitHubPublisher
@@ -475,15 +474,15 @@ export async function getPublishConfigs(
       return null
     }
   }
-  return await resolvePublishConfigurations(publishers, platformPackager, platformPackager.info, arch, errorIfCannot)
+  return await resolvePublishConfigurations(publishers, platformPackager, arch, errorIfCannot)
 }
 
 async function resolvePublishConfigurations(
   publishers: any,
   platformPackager: PlatformPackager<any> | null,
-  packager: Packager,
   arch: Arch | null,
-  errorIfCannot: boolean
+  errorIfCannot: boolean,
+  fallbackPackager?: Packager
 ): Promise<Array<PublishConfiguration> | null> {
   if (publishers == null) {
     let serviceName: PublishProvider | null = null
@@ -503,7 +502,7 @@ async function resolvePublishConfigurations(
 
     if (serviceName != null) {
       log.debug(null, `detect ${serviceName} as publish provider`)
-      return [(await getResolvedPublishConfig(platformPackager, packager, { provider: serviceName }, arch, errorIfCannot))!]
+      return [(await getResolvedPublishConfig(platformPackager, { provider: serviceName }, arch, errorIfCannot, fallbackPackager))!]
     }
   }
 
@@ -513,7 +512,7 @@ async function resolvePublishConfigurations(
 
   debug(`Explicit publish provider: ${safeStringifyJson(publishers)}`)
   return (await Promise.all(
-    asArray(publishers).map(it => getResolvedPublishConfig(platformPackager, packager, typeof it === "string" ? { provider: it } : it, arch, errorIfCannot))
+    asArray(publishers).map(it => getResolvedPublishConfig(platformPackager, typeof it === "string" ? { provider: it } : it, arch, errorIfCannot, fallbackPackager))
   )) as PublishConfiguration[]
 }
 
@@ -524,12 +523,12 @@ function isSuitableWindowsTarget(target: Target) {
   return target.name === "nsis" || target.name.startsWith("nsis-")
 }
 
-function expandPublishConfig(options: any, platformPackager: PlatformPackager<any> | null, packager: Packager, arch: Arch | null): void {
+function expandPublishConfig(options: any, platformPackager: PlatformPackager<any> | null, arch: Arch | null): void {
   for (const name of Object.keys(options)) {
     const value = options[name]
     if (typeof value === "string") {
       const archValue = arch == null ? null : Arch[arch]
-      const expanded = platformPackager == null ? expandMacro(value, archValue, packager.appInfo) : platformPackager.expandMacro(value, archValue)
+      const expanded = platformPackager == null ? value : platformPackager.expandMacro(value, archValue)
       if (expanded !== value) {
         options[name] = expanded
       }
@@ -544,20 +543,18 @@ function isDetectUpdateChannel(platformSpecificConfiguration: PlatformSpecificBu
 
 async function getResolvedPublishConfig(
   platformPackager: PlatformPackager<any> | null,
-  packager: Packager,
   options: PublishConfiguration,
   arch: Arch | null,
-  errorIfCannot: boolean
+  errorIfCannot: boolean,
+  fallbackPackager?: Packager
 ): Promise<PublishConfiguration | GithubOptions | BitbucketOptions | GitlabOptions | null> {
   options = { ...options }
-  expandPublishConfig(options, platformPackager, packager, arch)
+  expandPublishConfig(options, platformPackager, arch)
 
+  const ctx = platformPackager ?? fallbackPackager!
   let channelFromAppVersion: string | null = null
-  if (
-    (options as GenericServerOptions).channel == null &&
-    isDetectUpdateChannel(platformPackager == null ? null : platformPackager.platformSpecificBuildOptions, packager.config)
-  ) {
-    channelFromAppVersion = packager.appInfo.channel
+  if ((options as GenericServerOptions).channel == null && isDetectUpdateChannel(platformPackager == null ? null : platformPackager.platformSpecificBuildOptions, ctx.config)) {
+    channelFromAppVersion = ctx.appInfo.channel
   }
 
   const provider = options.provider
@@ -573,7 +570,7 @@ async function getResolvedPublishConfig(
     return options
   }
 
-  const providerClass = await requireProviderClass(options.provider, packager)
+  const providerClass = await requireProviderClass(options.provider, ctx)
   if (providerClass != null && providerClass.checkAndResolveOptions != null) {
     await providerClass.checkAndResolveOptions(options, channelFromAppVersion, errorIfCannot)
     return options
@@ -604,7 +601,7 @@ async function getResolvedPublishConfig(
   }
 
   async function getInfo() {
-    const info = await packager.repositoryInfo
+    const info = await ctx.repositoryInfo
     if (info != null) {
       return info
     }

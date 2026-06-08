@@ -2,7 +2,7 @@ import { FileConsumer, Filter, FilterStats } from "builder-util"
 import fsExtra from "fs-extra"
 import * as path from "path"
 import { FileMatcher } from "../fileMatcher.js"
-import { Packager } from "../packager.js"
+import { PlatformPackager } from "../platformPackager.js"
 
 function addAllPatternIfNeed(matcher: FileMatcher) {
   if (!matcher.isSpecifiedAsEmptyArray && (matcher.isEmpty() || matcher.containsOnlyIgnore())) {
@@ -17,7 +17,7 @@ export abstract class FileCopyHelper {
   protected constructor(
     protected readonly matcher: FileMatcher,
     readonly filter: Filter | null,
-    protected readonly packager: Packager
+    protected readonly packager: PlatformPackager<any>
   ) {}
 
   protected handleFile(file: string, parent: string, fileStat: fsExtra.Stats): Promise<fsExtra.Stats | null> | null {
@@ -49,7 +49,7 @@ export abstract class FileCopyHelper {
   }
 }
 
-function createAppFilter(matcher: FileMatcher, packager: Packager): Filter | null {
+function createAppFilter(matcher: FileMatcher, packager: PlatformPackager<any>): Filter | null {
   if (packager.areNodeModulesHandledExternally) {
     return matcher.isEmpty() ? null : matcher.createFilter()
   }
@@ -59,7 +59,7 @@ function createAppFilter(matcher: FileMatcher, packager: Packager): Filter | nul
 /** @internal */
 export class AppFileWalker extends FileCopyHelper implements FileConsumer {
   readonly matcherFilter: any
-  constructor(matcher: FileMatcher, packager: Packager) {
+  constructor(matcher: FileMatcher, packager: PlatformPackager<any>) {
     super(addAllPatternIfNeed(matcher), createAppFilter(matcher, packager), packager)
     this.matcherFilter = matcher.createFilter()
   }
