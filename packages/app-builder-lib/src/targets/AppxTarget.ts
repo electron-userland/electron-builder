@@ -279,7 +279,7 @@ export default class AppXTarget extends Target {
             throw new InvalidConfigurationError(message)
           }
 
-          return escapeForXml(result)
+          return result
         }
 
         case "executable":
