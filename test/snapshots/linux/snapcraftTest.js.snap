@@ -1765,6 +1765,17 @@ exports[`snapcraft > core22: per-core description overrides linux.description 1`
 }
 `;
 
+exports[`snapcraft > core24 Multipass real build > core24 useMultipass full build 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
 exports[`snapcraft > core24 custom plugs with default expansion 1`] = `
 {
   "apps": {
@@ -2043,6 +2054,17 @@ exports[`snapcraft > core24 no gnome extension 2`] = `
 `;
 
 exports[`snapcraft > core24 remoteBuild build mode 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24 remoteBuild: buildFor array is forwarded correctly 1`] = `
 {
   "linux": [
     {
