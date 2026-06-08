@@ -1,4 +1,4 @@
-import { Arch, asArray, copyOrLinkFile, InvalidConfigurationError, log, walk } from "builder-util"
+import { Arch, asArray, copyOrLinkFile, InvalidConfigurationError, log, walk, escapeForXml } from "builder-util"
 import { deepAssign, Nullish } from "builder-util-runtime"
 import { emptyDir, readdir, readFile, writeFile } from "fs-extra"
 import * as path from "path"
@@ -214,14 +214,14 @@ export default class AppXTarget extends Target {
     const manifest = manifestFileContent.replace(/\${([a-zA-Z0-9]+)}/g, (match, p1): string => {
       switch (p1) {
         case "publisher":
-          return publisher
+          return escapeForXml(publisher)
 
         case "publisherDisplayName": {
           const name = options.publisherDisplayName || appInfo.companyName
           if (name == null) {
             throw new InvalidConfigurationError(`Please specify "author" in the application package.json — it is required because "appx.publisherDisplayName" is not set.`)
           }
-          return name
+          return escapeForXml(name)
         }
 
         case "version":
@@ -279,17 +279,17 @@ export default class AppXTarget extends Target {
             throw new InvalidConfigurationError(message)
           }
 
-          return result
+          return escapeForXml(result)
         }
 
         case "executable":
           return executable
 
         case "displayName":
-          return displayName
+          return escapeForXml(displayName)
 
         case "description":
-          return appInfo.description || appInfo.productName
+          return escapeForXml(appInfo.description || appInfo.productName)
 
         case "backgroundColor":
           return options.backgroundColor || "#464646"

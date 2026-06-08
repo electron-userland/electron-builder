@@ -16,7 +16,7 @@ if (process.env.JEST_WORKER_ID == null) {
 }
 
 export { isEmptyOrSpaces } from "./stringUtil"
-export { safeStringifyJson, retry } from "builder-util-runtime"
+export { safeStringifyJson, retry, escapeForXml } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
 export * from "./arch"
 export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames, getArchSuffix, toLinuxArchString } from "./arch"

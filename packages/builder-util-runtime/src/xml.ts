@@ -120,3 +120,18 @@ export function parseXml(data: string): XElement {
   parser.write(data)
   return rootElement!
 }
+
+/**
+ * escape given string for usage as XML text or attribute value
+ * @param raw
+ */
+export function escapeForXml(raw: string): string {
+  if(!raw)
+    return raw;
+
+  return raw.replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;")
+}
