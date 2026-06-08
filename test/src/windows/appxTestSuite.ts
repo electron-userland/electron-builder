@@ -148,7 +148,6 @@ export function registerAppxTests(toolsets: ToolsetConfig): void {
         },
         appxManifestCreated: async filepath => {
           const fileContent = await readFile(filepath, "utf-8")
-          console.log("APPX-MANIFEST: " + fileContent)
           expect(fileContent).toContain('<rescap:Capability Name="runFullTrust"/>')
           expect(fileContent).toContain('<Capability Name="internetClient"/>')
           expect(fileContent).toContain('<uap:Capability Name="picturesLibrary"/>')
@@ -179,4 +178,23 @@ export function registerAppxTests(toolsets: ToolsetConfig): void {
         expect(error.message).toContain("invalid windows capabilities")
       }
     ))
+
+  test("special chars in appx properties", ({ expect }) =>
+    app(expect, {
+      targets: target,
+      config: {
+        toolsets,
+        cscLink: protectedCscLink,
+        cscKeyPassword: "test",
+        appx: {
+          displayName: "<&>\"'",
+        },
+        appxManifestCreated: async filepath => {
+          const fileContent = await readFile(filepath, "utf-8")
+          expect(fileContent).toContain('<DisplayName>&lt;&amp;&gt;&quot;&apos;</DisplayName>')
+        },
+      },
+    }))
+
 }
+
