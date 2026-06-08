@@ -506,6 +506,59 @@ export async function readCertInfo(file: string, password: string): Promise<{ co
 }
 
 /**
+ * Reads certificate info from a plain X.509 certificate file (.crt / .cer).
+ * Accepts both PEM (base64 with -----BEGIN CERTIFICATE----- headers) and DER (raw binary) encoding.
+ *
+ * Unlike `readCertInfo`, this does not require a password and does not parse PKCS#12.
+ * Used when HSM mode supplies a public-cert-only file alongside /csp + /kc or pkcs11Module.
+ *
+ * Returns `null` when the publisher name cannot be determined (e.g. no CN attribute), so
+ * callers should fall back to requiring an explicit `publisherName` in that case.
+ */
+export async function readCertInfoFromX509(file: string): Promise<{ commonName: string; bloodyMicrosoftSubjectDn: string } | null> {
+  const raw = await readFile(file)
+
+  // Support PEM (ASCII armor) and DER (raw binary) encoding.
+  let derBytes: Buffer
+  const pemContent = raw.toString("ascii")
+  if (pemContent.includes("-----BEGIN CERTIFICATE-----")) {
+    const b64 = pemContent
+      .replace(/-----BEGIN CERTIFICATE-----/g, "")
+      .replace(/-----END CERTIFICATE-----/g, "")
+      .replace(/\s+/g, "")
+    derBytes = Buffer.from(b64, "base64")
+  } else {
+    derBytes = raw
+  }
+
+  let cert: pkijs.Certificate
+  try {
+    const asn1Result = asn1js.fromBER(toArrayBuffer(derBytes))
+    if (asn1Result.offset === -1) {
+      throw new Error("offset -1: invalid BER encoding")
+    }
+    cert = new pkijs.Certificate({ schema: asn1Result.result })
+  } catch (err) {
+    throw new Error(`X.509 certificate file "${file}" could not be parsed: ${err instanceof Error ? err.message : String(err)}`)
+  }
+
+  const cnAttr = cert.subject.typesAndValues.find(a => a.type === "2.5.4.3")
+  if (cnAttr == null) {
+    return null
+  }
+  const commonName = String(cnAttr.value.valueBlock.value)
+
+  const bloodyMicrosoftSubjectDn = cert.subject.typesAndValues
+    .map(a => {
+      const typeName = ATTRIBUTE_TYPE_NAMES[a.type] ?? a.type
+      return `${typeName}=${escapeDnValue(String(a.value.valueBlock.value))}`
+    })
+    .join(",")
+
+  return { commonName, bloodyMicrosoftSubjectDn }
+}
+
+/**
  * Internal functions exported exclusively for unit testing.
  * Not part of the public API — do not use outside of test files.
  */

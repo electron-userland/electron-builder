@@ -8343,7 +8343,7 @@
       },
       "type": "object"
     },
-    "WindowsAzureSigningConfiguration": {
+    "WindowsAzureSigningConfig": {
       "additionalProperties": {
         "type": [
           "null",
@@ -8352,20 +8352,20 @@
       },
       "properties": {
         "certificateProfileName": {
-          "description": "The Certificate Profile name. Translates to field: CertificateProfileName",
+          "description": "The Certificate Profile name. Translates to field: CertificateProfileName.",
           "type": "string"
         },
         "codeSigningAccountName": {
-          "description": "The Code Signing Signing Account name. Translates to field: CodeSigningAccountName",
+          "description": "The Code Signing Account name. Translates to field: CodeSigningAccountName.",
           "type": "string"
         },
         "endpoint": {
-          "description": "The Trusted Signing Account endpoint. The URI value must have a URI that aligns to the\nregion your Trusted Signing Account and Certificate Profile you are specifying were created\nin during the setup of these resources.\n\nTranslates to field: Endpoint\n\nRequires one of environment variable configurations for authenticating to Microsoft Entra ID per [Microsoft's documentation](https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition)",
+          "description": "The Trusted Signing Account endpoint. The URI value must align to the region your Trusted\nSigning Account and Certificate Profile were created in.\n\nRequires Azure Entra ID environment variables per\n[Microsoft's documentation](https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition).",
           "type": "string"
         },
         "fileDigest": {
           "default": "SHA256",
-          "description": "The File Digest for signing each file. Translates to field: FileDigest",
+          "description": "The file digest algorithm. Translates to field: FileDigest.",
           "type": "string"
         },
         "publisherName": {
@@ -8374,12 +8374,16 @@
         },
         "timestampDigest": {
           "default": "SHA256",
-          "description": "The Timestamp Digest. Translates to field: TimestampDigest",
+          "description": "The timestamp digest algorithm. Translates to field: TimestampDigest.",
           "type": "string"
         },
         "timestampRfc3161": {
           "default": "http://timestamp.acs.microsoft.com",
-          "description": "The Timestamp rfc3161 server. Translates to field: TimestampRfc3161",
+          "description": "The RFC3161 timestamp server. Translates to field: TimestampRfc3161.",
+          "type": "string"
+        },
+        "type": {
+          "const": "azure",
           "type": "string"
         }
       },
@@ -8387,7 +8391,8 @@
         "certificateProfileName",
         "codeSigningAccountName",
         "endpoint",
-        "publisherName"
+        "publisherName",
+        "type"
       ],
       "type": "object"
     },
@@ -8440,17 +8445,6 @@
             }
           ],
           "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
-        },
-        "azureSignOptions": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/WindowsAzureSigningConfiguration"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Options for usage of Azure Trusted Signing service\nCannot be used in conjunction with `signtoolOptions`, signing will default to Azure Trusted Signing"
         },
         "compression": {
           "anyOf": [
@@ -8750,16 +8744,25 @@
           "default": null,
           "description": "Explicit file name/extensions (`str.endsWith`) to also sign. Advanced option.\nSupports negative patterns, e.g. example that excludes `.appx` files: `[\"somefilename\", \".dll\", \"!.appx\"]`."
         },
-        "signtoolOptions": {
+        "signing": {
           "anyOf": [
             {
-              "$ref": "#/definitions/WindowsSigntoolConfiguration"
+              "$ref": "#/definitions/WindowsSigntoolSigningConfig"
+            },
+            {
+              "$ref": "#/definitions/WindowsHsmSigningConfig"
+            },
+            {
+              "$ref": "#/definitions/WindowsPkcs11SigningConfig"
+            },
+            {
+              "$ref": "#/definitions/WindowsAzureSigningConfig"
             },
             {
               "type": "null"
             }
           ],
-          "description": "Options for usage with signtool.exe\nCannot be used in conjunction with `azureSignOptions`, signing will default to Azure Trusted Signing"
+          "description": "Code signing configuration. Provide exactly one of the following signing modes:\n\n- `{ type: \"signtool\", ... }` — Sign with a local certificate file (.pfx/.p12) or a\n  certificate from the Windows certificate store.\n- `{ type: \"hsm\", ... }` — Sign using a Hardware Security Module (HSM) or FIPS-compliant\n  hardware token via signtool's `/csp` (cryptographic service provider) and `/kc` (key\n  container) flags. Requires `toolsets.winCodeSign: \"1.x\"`. Windows-only.\n- `{ type: \"pkcs11\", ... }` — Sign using a PKCS#11 hardware token via osslsigncode.\n  Available on macOS and Linux CI without a Windows VM.\n- `{ type: \"azure\", ... }` — Sign via Azure Trusted Signing (cloud service). Requires\n  Azure Entra ID environment variables for authentication."
         },
         "target": {
           "anyOf": [
@@ -8797,7 +8800,7 @@
       },
       "type": "object"
     },
-    "WindowsSigntoolConfiguration": {
+    "WindowsHsmSigningConfig": {
       "additionalProperties": false,
       "properties": {
         "additionalCertificateFile": {
@@ -8808,28 +8811,248 @@
           ]
         },
         "certificateFile": {
-          "description": "The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason.\nPlease see [Code Signing](https://www.electron.build/code-signing).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "certificatePassword": {
-          "description": "The password to the certificate provided in `certificateFile`. Please use it only if you cannot use env variable `CSC_KEY_PASSWORD` (`WIN_CSC_KEY_PASSWORD`) for some reason.\nPlease see [Code Signing](https://www.electron.build/code-signing).",
+          "description": "Path to the certificate file containing the public certificate chain (.crt / .cer / .pfx).\nThe private key is NOT read from this file — it is provided by the HSM via `cryptoServiceProvider`.",
           "type": [
             "null",
             "string"
           ]
         },
         "certificateSha1": {
-          "description": "The SHA1 hash of the signing certificate. The SHA1 hash is commonly specified when multiple certificates satisfy the criteria specified by the remaining switches. Works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).",
+          "description": "The SHA1 thumbprint of the certificate in the Windows certificate store.",
           "type": [
             "null",
             "string"
           ]
         },
         "certificateSubjectName": {
-          "description": "The name of the subject of the signing certificate, which is often labeled with the field name `issued to`. Required only for EV Code Signing and works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).",
+          "description": "The subject name of the certificate in the Windows certificate store.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "cryptoServiceProvider": {
+          "description": "The name of the cryptographic service provider (CSP) that holds the private key.\nMaps to signtool's `/csp` flag. Examples:\n- Google Cloud KMS: `\"Google Cloud KMS Provider\"`\n- Smart card / FIPS token: `\"Microsoft Base Smart Card Crypto Provider\"`\n\nRequires `toolsets.winCodeSign: \"1.x\"`. Windows-only — use `type: \"pkcs11\"` on macOS/Linux.",
+          "type": "string"
+        },
+        "keyContainer": {
+          "description": "The key container name within the CSP. Maps to signtool's `/kc` flag.\n\nExample for Google Cloud KMS:\n`\"projects/PROJECT_ID/locations/LOCATION/keyRings/KEY_RING/cryptoKeys/KEY_NAME/cryptoKeyVersions/1\"`",
+          "type": "string"
+        },
+        "publisherName": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "[The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided.\nDefaults to common name from your code signing certificate."
+        },
+        "rfc3161TimeStampServer": {
+          "default": "http://timestamp.digicert.com",
+          "description": "The URL of the RFC 3161 time stamp server.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "sign": {
+          "anyOf": [
+            {
+              "typeof": "function"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "The custom function (or path to file or module id) to sign Windows executables."
+        },
+        "signingHashAlgorithms": {
+          "anyOf": [
+            {
+              "items": {
+                "enum": [
+                  "sha1",
+                  "sha256"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "['sha1', 'sha256']",
+          "description": "Array of signing algorithms used. For AppX `sha256` is always used."
+        },
+        "timeStampServer": {
+          "default": "http://timestamp.digicert.com",
+          "description": "The URL of the time stamp server.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "type": {
+          "const": "hsm",
+          "type": "string"
+        }
+      },
+      "required": [
+        "cryptoServiceProvider",
+        "keyContainer",
+        "type"
+      ],
+      "type": "object"
+    },
+    "WindowsPkcs11SigningConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "additionalCertificateFile": {
+          "description": "The path to an additional certificate file you want to add to the signature block.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "certificateFile": {
+          "description": "Optional path to a certificate chain file to accompany the PKCS#11 key.\nIf omitted the certificate embedded in the token is used.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "pkcs11KeyUri": {
+          "description": "RFC 7512 PKCS#11 URI identifying the private key within the module.\nMaps to osslsigncode's `-key` parameter.\n\nExample: `\"pkcs11:token=MyToken;object=MyKey;type=private\"`\n\nMust be paired with `pkcs11Module`.",
+          "type": "string"
+        },
+        "pkcs11Module": {
+          "description": "Path to the PKCS#11 shared library (`.so` on Linux, `.dylib` on macOS).\nThe library must be installed separately — electron-builder does not bundle it.\n\nExample: `\"/usr/lib/x86_64-linux-gnu/opensc-pkcs11.so\"`\n\nMust be paired with `pkcs11KeyUri`.",
+          "type": "string"
+        },
+        "publisherName": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "[The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided.\nDefaults to common name from your code signing certificate."
+        },
+        "rfc3161TimeStampServer": {
+          "default": "http://timestamp.digicert.com",
+          "description": "The URL of the RFC 3161 time stamp server.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "sign": {
+          "anyOf": [
+            {
+              "typeof": "function"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "The custom function (or path to file or module id) to sign Windows executables."
+        },
+        "signingHashAlgorithms": {
+          "anyOf": [
+            {
+              "items": {
+                "enum": [
+                  "sha1",
+                  "sha256"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "['sha1', 'sha256']",
+          "description": "Array of signing algorithms used. For AppX `sha256` is always used."
+        },
+        "timeStampServer": {
+          "default": "http://timestamp.digicert.com",
+          "description": "The URL of the time stamp server.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "type": {
+          "const": "pkcs11",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pkcs11KeyUri",
+        "pkcs11Module",
+        "type"
+      ],
+      "type": "object"
+    },
+    "WindowsSigntoolSigningConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "additionalCertificateFile": {
+          "description": "The path to an additional certificate file you want to add to the signature block.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "certificateFile": {
+          "description": "The path to the *.pfx or *.p12 certificate file. Prefer the `WIN_CSC_LINK` environment\nvariable when possible. See [Code Signing](https://www.electron.build/code-signing).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "certificatePassword": {
+          "description": "The password to the certificate provided in `certificateFile`. Prefer the\n`WIN_CSC_KEY_PASSWORD` environment variable when possible.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "certificateSha1": {
+          "description": "The SHA1 hash of the signing certificate. Works only on Windows (or macOS with Parallels Desktop).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "certificateSubjectName": {
+          "description": "The name of the subject of the signing certificate. Required for EV Code Signing.\nWorks only on Windows (or macOS with Parallels Desktop).",
           "type": [
             "null",
             "string"
@@ -8872,7 +9095,7 @@
               ]
             }
           ],
-          "description": "The custom function (or path to file or module id) to sign Windows executables"
+          "description": "The custom function (or path to file or module id) to sign Windows executables."
         },
         "signingHashAlgorithms": {
           "anyOf": [
@@ -8900,8 +9123,15 @@
             "null",
             "string"
           ]
+        },
+        "type": {
+          "const": "signtool",
+          "type": "string"
         }
       },
+      "required": [
+        "type"
+      ],
       "type": "object"
     }
   },

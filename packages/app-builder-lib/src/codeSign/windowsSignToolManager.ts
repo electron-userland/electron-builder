@@ -4,12 +4,12 @@ import { rename } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../core"
-import { WindowsConfiguration } from "../options/winOptions"
+import { WindowsConfiguration, WindowsHsmSigningConfig, WindowsSigntoolFamilyConfig, WindowsSigntoolSigningConfig } from "../options/winOptions"
 import AppXTarget from "../targets/AppxTarget"
 import { getSignToolPath } from "../toolsets/windows"
 import { ToolInfo } from "../util/bundledTool"
 import { resolveFunction } from "../util/resolve"
-import { readCertInfo } from "./certInfo"
+import { readCertInfo, readCertInfoFromX509 } from "./certInfo"
 import { VmManager } from "../vm/vm"
 import { WinPackager } from "../winPackager"
 import { importCertificate } from "./codesign"
@@ -60,6 +60,13 @@ interface CertInfo {
   PSParentPath: string
 }
 
+/** Extracts the non-Azure signing config from WindowsConfiguration, or null for Azure/unset. */
+function getSigntoolFamilyConfig(config: WindowsConfiguration): WindowsSigntoolFamilyConfig | null {
+  const s = config.signing
+  if (s == null || s.type === "azure") return null
+  return s
+}
+
 export class WindowsSignToolManager implements SignManager {
   private readonly platformSpecificBuildOptions: WindowsConfiguration
 
@@ -68,7 +75,8 @@ export class WindowsSignToolManager implements SignManager {
   }
 
   readonly computedPublisherName = new Lazy<Array<string> | null>(async () => {
-    const publisherName = this.platformSpecificBuildOptions.signtoolOptions?.publisherName
+    const signing = getSigntoolFamilyConfig(this.platformSpecificBuildOptions)
+    const publisherName = signing?.publisherName
     if (publisherName === null) {
       return null
     } else if (publisherName != null) {
@@ -99,21 +107,42 @@ export class WindowsSignToolManager implements SignManager {
       if (cscFile == null) {
         return null
       }
-      return await this.getCertInfo(cscFile, cscInfo.password || "")
+
+      const certExt = path.extname(cscFile).toLowerCase()
+      if (certExt === ".p12" || certExt === ".pfx") {
+        return await this.getCertInfo(cscFile, cscInfo.password || "")
+      }
+      // Non-PKCS12 files (.crt, .cer): parse as plain X.509.
+      // Returns null when the CN is absent — caller must set publisherName explicitly.
+      return await readCertInfoFromX509(cscFile)
     }
   )
 
   readonly cscInfo = new MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>(
     () => this.platformSpecificBuildOptions,
     platformSpecificBuildOptions => {
-      const subjectName = platformSpecificBuildOptions.signtoolOptions?.certificateSubjectName
-      const shaType = platformSpecificBuildOptions.signtoolOptions?.certificateSha1
+      const signing = getSigntoolFamilyConfig(platformSpecificBuildOptions)
+      if (signing == null) {
+        return Promise.resolve(null)
+      }
+
+      // PKCS#11: the token provides both key and cert. Optional certificateFile is just the chain.
+      if (signing.type === "pkcs11") {
+        if (signing.certificateFile) {
+          return Promise.resolve({ file: signing.certificateFile, password: null })
+        }
+        return Promise.resolve(null)
+      }
+
+      // signtool + hsm: store-based cert takes priority
+      const subjectName = (signing as WindowsSigntoolSigningConfig | WindowsHsmSigningConfig).certificateSubjectName
+      const shaType = (signing as WindowsSigntoolSigningConfig | WindowsHsmSigningConfig).certificateSha1
       if (subjectName != null || shaType != null) {
         return this.packager.vm.value
           .then(vm => this.getCertificateFromStoreInfo(platformSpecificBuildOptions, vm))
           .catch((e: any) => {
             // https://github.com/electron-userland/electron-builder/pull/2397
-            if (platformSpecificBuildOptions.signtoolOptions?.sign == null) {
+            if (signing.sign == null) {
               throw e
             } else {
               log.debug({ error: e }, "getCertificateFromStoreInfo error")
@@ -122,23 +151,24 @@ export class WindowsSignToolManager implements SignManager {
           })
       }
 
-      const certificateFile = platformSpecificBuildOptions.signtoolOptions?.certificateFile
+      const certificateFile = signing.certificateFile
       if (certificateFile != null) {
-        const certificatePassword = this.packager.getCscPassword()
+        // Only signtool mode uses a password (HSM private key lives in the HSM, not the cert file)
+        const certificatePassword = signing.type === "signtool" ? this.packager.getCscPassword() : null
         return Promise.resolve({
           file: certificateFile,
           password: certificatePassword == null ? null : certificatePassword.trim(),
         })
       }
 
-      const cscLink = this.packager.getCscLink("WIN_CSC_LINK")
-      if (cscLink == null || cscLink === "") {
-        return Promise.resolve(null)
-      }
+      // WIN_CSC_LINK env var fallback: only for signtool mode
+      if (signing.type === "signtool") {
+        const cscLink = this.packager.getCscLink("WIN_CSC_LINK")
+        if (cscLink == null || cscLink === "") {
+          return Promise.resolve(null)
+        }
 
-      return (
-        importCertificate(cscLink, this.packager.info.tempDirManager, this.packager.projectDir)
-          // before then
+        return importCertificate(cscLink, this.packager.info.tempDirManager, this.packager.projectDir)
           .catch((e: any) => {
             if (e instanceof InvalidConfigurationError) {
               throw new InvalidConfigurationError(`Env WIN_CSC_LINK is not correct, cannot resolve: ${e.message}`)
@@ -146,13 +176,13 @@ export class WindowsSignToolManager implements SignManager {
               throw e
             }
           })
-          .then(path => {
-            return {
-              file: path,
-              password: this.packager.getCscPassword(),
-            }
-          })
-      )
+          .then(p => ({
+            file: p,
+            password: this.packager.getCscPassword(),
+          }))
+      }
+
+      return Promise.resolve(null)
     }
   )
 
@@ -176,7 +206,8 @@ export class WindowsSignToolManager implements SignManager {
   }
 
   async signFile(options: WindowsSignOptions): Promise<boolean> {
-    let hashes = options.options.signtoolOptions?.signingHashAlgorithms
+    const signing = getSigntoolFamilyConfig(options.options)
+    let hashes = signing?.signingHashAlgorithms
     // msi does not support dual-signing
     if (options.path.endsWith(".msi")) {
       hashes = [hashes != null && !hashes.includes("sha1") ? "sha256" : "sha1"]
@@ -191,18 +222,25 @@ export class WindowsSignToolManager implements SignManager {
     const name = this.packager.appInfo.productName
     const site = await this.packager.appInfo.computePackageUrl()
 
-    const customSign = await resolveFunction(this.packager.appInfo.type, options.options.signtoolOptions?.sign, "sign", await this.packager.info.getWorkspaceRoot())
+    const customSign = await resolveFunction(this.packager.appInfo.type, signing?.sign, "sign", await this.packager.info.getWorkspaceRoot())
 
     const cscInfo = await this.cscInfo.value
+
+    // Guard: HSM requires a certificate identifier (file or store).
+    const isHsmMode = signing?.type === "hsm"
+    if (isHsmMode && cscInfo == null && !customSign) {
+      throw new InvalidConfigurationError(
+        "HSM signing requires a certificate identifier. " +
+          "Provide certificateFile (e.g. a .crt/.pfx), certificateSha1, or certificateSubjectName."
+      )
+    }
+
     if (cscInfo) {
       let logInfo: any = {
         file: log.filePath(options.path),
       }
       if ("file" in cscInfo) {
-        logInfo = {
-          ...logInfo,
-          certificateFile: cscInfo.file,
-        }
+        logInfo = { ...logInfo, certificateFile: cscInfo.file }
       } else {
         logInfo = {
           ...logInfo,
@@ -254,7 +292,21 @@ export class WindowsSignToolManager implements SignManager {
     return isWin ? this.computeWindowsSignArgs(options, vm) : this.computeOsslsigncodeArgs(options, vm)
   }
 
+  private isLegacyToolset(): boolean {
+    const v = this.packager.config.toolsets?.winCodeSign
+    return v == null || v === "0.0.0"
+  }
+
   private computeWindowsSignArgs(options: WindowsSignTaskConfiguration, vm: VmManager): Array<string> {
+    const signing = getSigntoolFamilyConfig(options.options)
+
+    if (signing?.type === "hsm" && this.isLegacyToolset()) {
+      throw new InvalidConfigurationError(
+        "HSM signing requires winCodeSign toolset 1.x or later. " +
+          'Set toolsets.winCodeSign to "1.0.0" or "1.1.0" in your electron-builder configuration.'
+      )
+    }
+
     const inputFile = vm.toVmFile(options.path)
     const args = ["sign"]
 
@@ -262,19 +314,20 @@ export class WindowsSignToolManager implements SignManager {
     if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
       const isRfc3161 = options.isNest || options.hash === "sha256"
       args.push(isRfc3161 ? "/tr" : "/t")
-
-      const timestampUrl = isRfc3161
-        ? options.options.signtoolOptions?.rfc3161TimeStampServer || "http://timestamp.digicert.com"
-        : options.options.signtoolOptions?.timeStampServer || "http://timestamp.digicert.com"
+      const timestampUrl = isRfc3161 ? signing?.rfc3161TimeStampServer || "http://timestamp.digicert.com" : signing?.timeStampServer || "http://timestamp.digicert.com"
       args.push(timestampUrl)
     }
 
     // Certificate
     this.addCertificateArgs(args, options, vm, true)
 
+    // HSM: /csp and /kc immediately after certificate identification
+    if (signing?.type === "hsm") {
+      this.addHsmArgs(args, signing)
+    }
+
     // Hash algorithm
-    const isLegacyToolset = this.packager.config.toolsets?.winCodeSign === "0.0.0" || this.packager.config.toolsets?.winCodeSign == null
-    if (isLegacyToolset) {
+    if (this.isLegacyToolset()) {
       // Legacy || v0.0.0: Only add /fd for non-SHA1 (original behavior)
       if (options.hash !== "sha1") {
         args.push("/fd", options.hash)
@@ -302,6 +355,17 @@ export class WindowsSignToolManager implements SignManager {
   }
 
   private computeOsslsigncodeArgs(options: WindowsSignTaskConfiguration, vm: VmManager): Array<string> {
+    const signing = getSigntoolFamilyConfig(options.options)
+    const isPkcs11 = signing?.type === "pkcs11"
+
+    // HSM via Windows CSP/KC is signtool-only; it has no osslsigncode equivalent.
+    if (signing?.type === "hsm") {
+      throw new InvalidConfigurationError(
+        "HSM signing via cryptoServiceProvider/keyContainer is only supported on Windows (signtool.exe). " +
+          "For macOS/Linux, use type: \"pkcs11\" instead."
+      )
+    }
+
     const inputFile = vm.toVmFile(options.path)
     const outputPath = this.getOutputPath(inputFile, options.hash)
     options.resultOutputPath = outputPath
@@ -310,17 +374,27 @@ export class WindowsSignToolManager implements SignManager {
 
     // Timestamping
     if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
-      const timestampUrl = options.options.signtoolOptions?.timeStampServer || "http://timestamp.digicert.com"
+      const timestampUrl = signing?.timeStampServer || "http://timestamp.digicert.com"
       args.push("-t", timestampUrl)
     }
 
-    // Certificate
-    this.addCertificateArgs(args, options, vm, false)
+    if (isPkcs11) {
+      // PKCS#11 mode: the key (and cert) live in the hardware module.
+      // Runtime guard: JSON configs can produce partial objects that bypass TypeScript.
+      if (!signing.pkcs11Module || !signing.pkcs11KeyUri) {
+        throw new InvalidConfigurationError("pkcs11Module and pkcs11KeyUri must both be set for type: \"pkcs11\" signing.")
+      }
+      args.push("-pkcs11module", signing.pkcs11Module)
+      args.push("-key", signing.pkcs11KeyUri)
+    } else {
+      // Certificate file
+      this.addCertificateArgs(args, options, vm, false)
+    }
 
     // Hash algorithm
     args.push("-h", options.hash.toLowerCase())
 
-    // Optional parameters
+    // Optional parameters (name, site, nest, password, additionalCert)
     this.addCommonSigningArgs(args, options, vm, false)
 
     // Proxy support
@@ -351,14 +425,24 @@ export class WindowsSignToolManager implements SignManager {
         args.push("/sm")
       }
     } else {
-      // Certificate file
-      const certExtension = path.extname(certificateFile)
+      const certExtension = path.extname(certificateFile).toLowerCase()
+      const signing = getSigntoolFamilyConfig(options.options)
+      const isHsmMode = signing?.type === "hsm"
+
       if (certExtension === ".p12" || certExtension === ".pfx") {
         args.push(isWin ? "/f" : "-pkcs12", vm.toVmFile(certificateFile))
+      } else if (isWin && isHsmMode && (certExtension === ".crt" || certExtension === ".cer")) {
+        // HSM mode: private key is in the HSM; cert file contains only the public chain.
+        args.push("/f", vm.toVmFile(certificateFile))
       } else {
         throw new Error(`Please specify pkcs12 (.p12/.pfx) file, ${certificateFile} is not correct`)
       }
     }
+  }
+
+  private addHsmArgs(args: Array<string>, signing: WindowsHsmSigningConfig): void {
+    args.push("/csp", signing.cryptoServiceProvider)
+    args.push("/kc", signing.keyContainer)
   }
 
   private addCommonSigningArgs(args: Array<string>, options: WindowsSignTaskConfiguration, vm: VmManager, isWin: boolean): void {
@@ -379,7 +463,8 @@ export class WindowsSignToolManager implements SignManager {
       args.push(isWin ? "/p" : "-pass", password)
     }
 
-    const additionalCert = options.options.signtoolOptions?.additionalCertificateFile
+    const signing = getSigntoolFamilyConfig(options.options)
+    const additionalCert = signing?.additionalCertificateFile
     if (additionalCert) {
       args.push(isWin ? "/ac" : "-ac", vm.toVmFile(additionalCert))
     }
@@ -391,8 +476,9 @@ export class WindowsSignToolManager implements SignManager {
   }
 
   async getCertificateFromStoreInfo(options: WindowsConfiguration, vm: VmManager): Promise<CertificateFromStoreInfo> {
-    const certificateSubjectName = options.signtoolOptions?.certificateSubjectName
-    const certificateSha1 = options.signtoolOptions?.certificateSha1?.toUpperCase()
+    const signing = getSigntoolFamilyConfig(options) as WindowsSigntoolSigningConfig | WindowsHsmSigningConfig | null
+    const certificateSubjectName = signing?.certificateSubjectName
+    const certificateSha1 = signing?.certificateSha1?.toUpperCase()
 
     const ps = await vm.powershellCommand.value
     const rawResult = await vm.exec(ps, [
@@ -434,7 +520,6 @@ export class WindowsSignToolManager implements SignManager {
   async doSign(configuration: CustomWindowsSignTaskConfiguration, packager: WinPackager) {
     // https://github.com/electron-userland/electron-builder/pull/1944
     const timeout = parseInt(process.env.SIGNTOOL_TIMEOUT as any, 10) || 10 * 60 * 1000
-    // decide runtime argument by cases
     let args: Array<string>
     let vm: VmManager
     const useVmIfNotOnWin = configuration.path.endsWith(".appx") || !("file" in configuration.cscInfo!) /* certificateSubjectName and other such options */

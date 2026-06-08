@@ -8,11 +8,13 @@ export interface WindowsSignOptions {
 }
 
 export async function signWindows(options: WindowsSignOptions, packager: WinPackager): Promise<boolean> {
-  if (options.options.azureSignOptions) {
-    if (options.options.signtoolOptions) {
-      log.warn(null, "ignoring signtool options, using Azure Trusted Signing; please only configure one")
-    }
+  const signing = options.options.signing
+  if (signing?.type === "azure") {
     log.info({ path: log.filePath(options.path) }, "signing with Azure Trusted Signing")
+  } else if (signing?.type === "hsm") {
+    log.info({ path: log.filePath(options.path) }, "signing with signtool.exe (HSM)")
+  } else if (signing?.type === "pkcs11") {
+    log.info({ path: log.filePath(options.path) }, "signing with osslsigncode (PKCS#11)")
   } else {
     log.info({ path: log.filePath(options.path) }, "signing with signtool.exe")
   }

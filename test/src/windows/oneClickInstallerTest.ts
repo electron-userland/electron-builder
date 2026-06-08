@@ -32,7 +32,8 @@ test("one-click", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
       targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64),
       config: {
         win: {
-          signtoolOptions: {
+          signing: {
+            type: "signtool" as const,
             publisherName: "Foo, Inc",
           },
         },

@@ -214,7 +214,8 @@ export function registerWinPackagerTests(toolsets: ToolsetConfig): void {
         config: {
           win: {
             signExecutable: false,
-            signtoolOptions: {
+            signing: {
+              type: "signtool" as const,
               sign: () => {
                 throw new Error("sign must not be called when signExecutable is false")
               },
@@ -297,7 +298,8 @@ export function registerWinPackagerTests(toolsets: ToolsetConfig): void {
         config: {
           win: {
             signExecutable: false,
-            signtoolOptions: {
+            signing: {
+              type: "signtool" as const,
               sign: () => {
                 throw new Error("sign must not be called when signExecutable is false")
               },

@@ -1,7 +1,7 @@
 import { asArray, log } from "builder-util"
 import { MemoLazy } from "builder-util-runtime"
 import { Lazy } from "lazy-val"
-import { WindowsAzureSigningConfiguration, WindowsConfiguration } from "../options/winOptions"
+import { WindowsAzureSigningConfig, WindowsConfiguration } from "../options/winOptions"
 import { WinPackager } from "../winPackager"
 import { SignManager } from "./signManager"
 import { WindowsSignOptions } from "./windowsCodeSign"
@@ -11,7 +11,8 @@ export class WindowsSignAzureManager implements SignManager {
   private readonly platformSpecificBuildOptions: WindowsConfiguration
 
   readonly computedPublisherName = new Lazy<Array<string> | null>(() => {
-    const publisherName = this.platformSpecificBuildOptions.azureSignOptions?.publisherName
+    const signing = this.platformSpecificBuildOptions.signing
+    const publisherName = signing?.type === "azure" ? signing.publisherName : null
     if (publisherName === null) {
       return Promise.resolve(null)
     } else if (publisherName != null) {
@@ -46,7 +47,11 @@ export class WindowsSignAzureManager implements SignManager {
   }
 
   computePublisherName(): Promise<string> {
-    return Promise.resolve(this.packager.platformSpecificBuildOptions.azureSignOptions!.publisherName)
+    const signing = this.packager.platformSpecificBuildOptions.signing
+    if (signing?.type !== "azure") {
+      throw new Error("Internal error: WindowsSignAzureManager used without azure signing config")
+    }
+    return Promise.resolve(signing.publisherName)
   }
   readonly cscInfo = new MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>(
     () => this.packager.platformSpecificBuildOptions,
@@ -57,7 +62,12 @@ export class WindowsSignAzureManager implements SignManager {
     const vm = await this.packager.vm.value
     const ps = await vm.powershellCommand.value
 
+    const signing = options.options.signing
+    if (signing?.type !== "azure") {
+      throw new Error("Internal error: WindowsSignAzureManager.signFile called with non-azure signing config")
+    }
     const {
+      type: _type, // discriminant — not passed to signing tool
       publisherName: _publisher, // extract from `extraSigningArgs`
       endpoint,
       certificateProfileName,
@@ -66,7 +76,7 @@ export class WindowsSignAzureManager implements SignManager {
       timestampRfc3161,
       timestampDigest,
       ...extraSigningArgs
-    }: WindowsAzureSigningConfiguration = options.options.azureSignOptions!
+    }: WindowsAzureSigningConfig = signing
     const params = {
       ...extraSigningArgs,
       Endpoint: endpoint,

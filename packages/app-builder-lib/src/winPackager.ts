@@ -35,7 +35,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
   readonly signingManager = new Lazy(async () => {
     let manager: SignManager
-    if (this.platformSpecificBuildOptions.azureSignOptions != null) {
+    if (this.platformSpecificBuildOptions.signing?.type === "azure") {
       manager = new WindowsSignAzureManager(this)
     } else {
       manager = new WindowsSignToolManager(this)
@@ -118,7 +118,9 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   }
 
   doGetCscPassword(): string | Nullish {
-    return chooseNotNull(chooseNotNull(this.platformSpecificBuildOptions.signtoolOptions?.certificatePassword, process.env.WIN_CSC_KEY_PASSWORD), super.doGetCscPassword())
+    const signing = this.platformSpecificBuildOptions.signing
+    const certPassword = signing?.type === "signtool" ? signing.certificatePassword : null
+    return chooseNotNull(chooseNotNull(certPassword, process.env.WIN_CSC_KEY_PASSWORD), super.doGetCscPassword())
   }
 
   async signIf(file: string): Promise<boolean> {
@@ -207,8 +209,11 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       hash.update(config.electronVersion || "no electronVersion")
       hash.update(JSON.stringify(this.platformSpecificBuildOptions))
       hash.update(JSON.stringify(opts))
-      hash.update(this.platformSpecificBuildOptions.signtoolOptions?.certificateSha1 || "no certificateSha1")
-      hash.update(this.platformSpecificBuildOptions.signtoolOptions?.certificateSubjectName || "no subjectName")
+      const signingConfig = this.platformSpecificBuildOptions.signing
+      const certSha1 = signingConfig?.type === "signtool" || signingConfig?.type === "hsm" ? signingConfig.certificateSha1 : null
+      const subjectName = signingConfig?.type === "signtool" || signingConfig?.type === "hsm" ? signingConfig.certificateSubjectName : null
+      hash.update(certSha1 || "no certificateSha1")
+      hash.update(subjectName || "no subjectName")
 
       const asar = path.resolve(this.getResourcesDir(outDir), "app.asar")
       if (await exists(asar)) {

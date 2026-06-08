@@ -1,5 +1,6 @@
 import { parseDn } from "builder-util-runtime"
 import { ToolInfo, WinPackager, WindowsSignToolManager } from "app-builder-lib"
+import { WindowsSigntoolSigningConfig } from "app-builder-lib/out/options/winOptions"
 import { CustomWindowsSign } from "app-builder-lib/out/codeSign/windowsSignToolManager"
 import { Configuration, ToolsetConfig } from "app-builder-lib/out/configuration"
 import { AsyncTaskManager } from "builder-util"
@@ -14,14 +15,17 @@ import { ExpectStatic } from "vitest"
 
 type SignIfResult = { file: string; ok: boolean }
 
+const baseSigningConfig: WindowsSigntoolSigningConfig = {
+  type: "signtool",
+  certificateFile: "secretFile",
+  certificatePassword: "pass",
+  signingHashAlgorithms: ["sha256"],
+}
+
 const signtoolBaseConfig: Configuration = {
   toolsets: { winCodeSign: "1.1.0" },
   win: {
-    signtoolOptions: {
-      certificateFile: "secretFile",
-      certificatePassword: "pass",
-      signingHashAlgorithms: ["sha256"],
-    },
+    signing: baseSigningConfig,
   },
 }
 
@@ -122,7 +126,8 @@ for (const winCodeSign of winCodeSignVersions) {
             winCodeSign,
           },
           win: {
-            signtoolOptions: {
+            signing: {
+              type: "signtool" as const,
               certificatePassword: "pass",
               certificateFile: "secretFile",
               sign,
@@ -158,7 +163,8 @@ for (const winCodeSign of winCodeSignVersions) {
             toolsets: { winCodeSign },
             win: {
               forceCodeSigning: true,
-              signtoolOptions: {
+              signing: {
+                type: "signtool" as const,
                 certificatePassword: "pass",
                 certificateFile: "secretFile",
                 sign,
@@ -192,7 +198,8 @@ for (const winCodeSign of winCodeSignVersions) {
             win: {
               // to be sure that sign code will be executed
               forceCodeSigning: true,
-              signtoolOptions: {
+              signing: {
+                type: "signtool" as const,
                 sign: async () => {
                   called = true
                   return Promise.resolve()
@@ -248,7 +255,8 @@ for (const winCodeSign of winCodeSignVersions) {
               winCodeSign,
             },
             win: {
-              azureSignOptions: {
+              signing: {
+                type: "azure" as const,
                 publisherName: "test",
                 endpoint: "https://weu.codesigning.azure.net/",
                 certificateProfileName: "profilenamehere",
@@ -298,7 +306,7 @@ describe("signing queue", () => {
         platformPackagerFactory: (info, _platform) => new PackagerClass(info),
         config: {
           ...signtoolBaseConfig,
-          win: { signtoolOptions: { ...signtoolBaseConfig.win!.signtoolOptions, sign } },
+          win: { signing: { ...baseSigningConfig, sign } },
         },
       })
 
@@ -332,7 +340,7 @@ describe("signing queue", () => {
         platformPackagerFactory: (info, _platform) => new PackagerClass(info),
         config: {
           ...signtoolBaseConfig,
-          win: { signtoolOptions: { ...signtoolBaseConfig.win!.signtoolOptions, sign } },
+          win: { signing: { ...baseSigningConfig, sign } },
         },
       })
 
@@ -368,7 +376,7 @@ describe("signing queue", () => {
         config: {
           ...signtoolBaseConfig,
           win: {
-            signtoolOptions: { ...signtoolBaseConfig.win!.signtoolOptions, sign },
+            signing: { ...baseSigningConfig, sign },
             forceCodeSigning: true,
           },
         },
@@ -395,7 +403,7 @@ describe("signing queue", () => {
           config: {
             ...signtoolBaseConfig,
             win: {
-              signtoolOptions: { ...signtoolBaseConfig.win!.signtoolOptions, sign },
+              signing: { ...baseSigningConfig, sign },
               forceCodeSigning: true,
             },
           },
