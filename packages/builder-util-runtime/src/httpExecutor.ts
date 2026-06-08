@@ -9,6 +9,7 @@ import { Nullish } from "./index.js"
 import { CancellationToken } from "./CancellationToken.js"
 import { newError } from "./error.js"
 import { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform.js"
+import { sleep } from "./retry.js"
 
 const debug = _debug("electron-builder")
 
@@ -431,7 +432,7 @@ Please double check that your authentication token is correct. Due to security r
         return await task()
       } catch (e: any) {
         if (attemptNumber < maxRetries && ((e instanceof HttpError && e.isServerError()) || e.code === "EPIPE")) {
-          await new Promise(r => setTimeout(r, 1000 * (attemptNumber + 1)))
+          await sleep(1000 * (attemptNumber + 1))
           continue
         }
         throw e

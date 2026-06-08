@@ -1,4 +1,7 @@
+import { setTimeout as sleep } from "timers/promises"
 import { CancellationToken } from "./CancellationToken.js"
+
+export { sleep }
 
 export async function retry<T>(
   task: () => Promise<T>,
@@ -9,7 +12,7 @@ export async function retry<T>(
     return await task()
   } catch (error: any) {
     if ((await Promise.resolve(shouldRetry?.(error) ?? true)) && retryCount > 0 && !cancellationToken.cancelled) {
-      await new Promise(resolve => setTimeout(resolve, interval + backoff * attempt))
+      await sleep(interval + backoff * attempt)
       return await retry(task, { ...options, retries: retryCount - 1, attempt: attempt + 1 })
     } else {
       throw error

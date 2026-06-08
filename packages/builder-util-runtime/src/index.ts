@@ -39,7 +39,7 @@ export {
   GitlabReleaseInfo,
   GitlabReleaseAsset,
 } from "./publishOptions.js"
-export { retry } from "./retry.js"
+export { retry, sleep } from "./retry.js"
 export { parseDn } from "./rfc2253Parser.js"
 export { BlockMapDataHolder, PackageFileInfo, ReleaseNoteInfo, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo } from "./updateInfo.js"
 export { UUID } from "./uuid.js"

@@ -19,7 +19,7 @@ import * as lockfile from "proper-lockfile"
 import { pipeline } from "stream/promises"
 import * as tar from "tar"
 import * as unzipper from "unzipper"
-import { HttpError, retry } from "builder-util-runtime"
+import { HttpError, retry, sleep } from "builder-util-runtime"
 import { ElectronPlatformName } from "../electron/ElectronFramework.js"
 import { CacheState, cleanupCacheDirectory, computeCacheMetadata, readCacheStateFile, validateCacheDirectory, writeCacheState } from "./cacheState.js"
 import type { ProgressBar } from "electron-publish"
@@ -198,7 +198,7 @@ export async function extractArchive(file: string, dir: string) {
         throw Object.assign(new Error(`Source archive not found after retries: ${file}`), { code: "ENOENT", path: file })
       }
       log.warn({ file, attempt: i + 1 }, "source archive transiently missing, retrying")
-      await new Promise(r => setTimeout(r, 300 * (i + 1)))
+      await sleep(300 * (i + 1))
     }
 
     if (file.endsWith(".tar.gz") || file.endsWith(".tgz")) {
