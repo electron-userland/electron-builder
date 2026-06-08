@@ -29,7 +29,7 @@
     "docs:prebuild": "docker build -t docs-dockerfile -f website/dockerfile .",
     "docs:build": "pnpm compile && docker run --rm -v ${PWD}:/app -w /app/website -v $(pwd)/node-modules-docker-web:/app/node_modules docs-dockerfile sh -c 'pnpm install --frozen-lockfile && pnpm build'",
     "docs:preview": "docker run --rm -p 3000:3000 -v ${PWD}/website/build:/app -v $(pwd)/node-modules-docker-web:/app/node_modules docs-dockerfile sh -c 'npx serve /app'",
-    "docs:dev": "cd website && pnpm start",
+    "docs:dev": "cd website && pnpm build && pnpm start",
     "docs:all": "pnpm docs:prebuild && pnpm docs:build"
   },
   "repository": "https://github.com/electron-userland/electron-builder",

@@ -198,12 +198,8 @@ const config: Config = {
           title: "Donate",
           items: [
             {
-              label: "Sponsor on GitHub",
-              href: "https://github.com/sponsors/electron-userland",
-            },
-            {
-              label: "Donorbox",
-              href: "https://donorbox.org/electron-builder",
+              label: "Donate",
+              href: "https://www.electron.build/docs/donate",
             },
           ],
         },
