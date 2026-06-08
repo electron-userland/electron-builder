@@ -174,11 +174,11 @@ export class MacTargetHelper {
     MacTargetHelper.assertSafePathForCommandUsage(artifactName, "artifact name")
     const artifactPath = path.resolve(outDir, artifactName)
     await this.packager.doFlat(appPath, artifactPath, masInstallerIdentity, keychainFile)
-    await this.packager.info.emitArtifactBuildCompleted({
+    await this.packager.emitArtifactBuildCompleted({
       file: artifactPath,
       target: null,
       arch: Arch.x64,
-      safeArtifactName: this.packager.computeSafeArtifactName(artifactName, "pkg", arch, true, this.packager.platformSpecificBuildOptions.defaultArch),
+      safeArtifactName: this.packager.computeSafeArtifactName(artifactName, "pkg", arch, true, this.packager.platformOptions.defaultArch),
       packager: this.packager,
     })
   }
@@ -194,7 +194,7 @@ export class MacTargetHelper {
         }
         const p = `entitlements.${entitlementsSuffix}.plist`
         if (resourceList.includes(p)) {
-          return path.join(this.packager.info.buildResourcesDir, p)
+          return path.join(this.packager.buildResourcesDir, p)
         } else {
           return getTemplatePath("entitlements.mac.plist")
         }
@@ -209,16 +209,16 @@ export class MacTargetHelper {
       }
       const p = `entitlements.${entitlementsSuffix}.inherit.plist`
       if (resourceList.includes(p)) {
-        return path.join(this.packager.info.buildResourcesDir, p)
+        return path.join(this.packager.buildResourcesDir, p)
       } else {
         return getTemplatePath("entitlements.mac.plist")
       }
     }
 
     const requirements =
-      isMas || this.packager.platformSpecificBuildOptions.requirements == null
+      isMas || this.packager.platformOptions.requirements == null
         ? undefined
-        : await this.packager.getResource(this.packager.platformSpecificBuildOptions.requirements)
+        : await this.packager.getResource(this.packager.platformOptions.requirements)
 
     // harden by default for mac builds. Only harden mas builds if explicitly true (backward compatibility)
     const hardenedRuntime = isMas ? customSignOptions.hardenedRuntime === true : customSignOptions.hardenedRuntime !== false
@@ -313,7 +313,7 @@ export class MacTargetHelper {
   }
 
   async notarizeIfProvided(appPath: string): Promise<void> {
-    const notarizeOptions = this.packager.platformSpecificBuildOptions.notarize
+    const notarizeOptions = this.packager.platformOptions.notarize
     if (notarizeOptions === false) {
       log.info({ reason: "`notarize` options were set explicitly `false`" }, "skipped macOS notarization")
       return

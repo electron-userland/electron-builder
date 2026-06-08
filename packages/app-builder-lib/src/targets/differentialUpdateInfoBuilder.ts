@@ -71,7 +71,7 @@ export async function createBlockmap(file: string, target: Target, packager: Pla
   const blockMapFile = `${file}${BLOCK_MAP_FILE_SUFFIX}`
   log.info({ blockMapFile: log.filePath(blockMapFile) }, "building block map")
   const updateInfo = await buildBlockMap(file, "gzip", blockMapFile)
-  await packager.info.emitArtifactBuildCompleted({
+  await packager.emitArtifactBuildCompleted({
     file: blockMapFile,
     safeArtifactName: safeArtifactName == null ? null : `${safeArtifactName}${BLOCK_MAP_FILE_SUFFIX}`,
     target,

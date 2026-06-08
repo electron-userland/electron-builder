@@ -96,7 +96,7 @@ export class LibUiFramework implements Framework {
     }
     await packager.applyCommonInfo(appPlist, appContentsDir)
     await savePlistFile(path.join(appContentsDir, "Info.plist"), appPlist)
-    const macMain = options.packager.info.metadata.main || "index.js"
+    const macMain = options.packager.metadata.main || "index.js"
     validateShellEmbeddable(macMain, "package.json main")
     await writeExecutableMain(
       path.join(appContentsDir, "MacOS", appPlist.CFBundleExecutable),
@@ -113,7 +113,7 @@ export class LibUiFramework implements Framework {
     await copyFile(nodeBinaryLinux, path.join(appOutDir, "node"))
     await chmod(path.join(appOutDir, "node"), 0o755)
     const mainPath = path.join(appOutDir, (options.packager as LinuxPackager).executableName)
-    const linuxMain = options.packager.info.metadata.main || "index.js"
+    const linuxMain = options.packager.metadata.main || "index.js"
     validateShellEmbeddable(linuxMain, "package.json main")
     await writeExecutableMain(
       mainPath,
@@ -131,7 +131,7 @@ export class LibUiFramework implements Framework {
     }
 
     // LaunchUI requires main.js, rename if need
-    const userMain = packager.info.metadata.main || "index.js"
+    const userMain = packager.metadata.main || "index.js"
     if (userMain === "main.js") {
       return
     }

@@ -14,7 +14,7 @@ import { hashFile } from "../util/hash.js"
 import { computeDownloadUrl, getPublishConfigsForUpdateInfo } from "./PublishManager.js"
 
 async function getReleaseInfo(packager: PlatformPackager<any>) {
-  const releaseInfo: ReleaseInfo = { ...(packager.platformSpecificBuildOptions.releaseInfo || packager.config.releaseInfo) }
+  const releaseInfo: ReleaseInfo = { ...(packager.platformOptions.releaseInfo || packager.config.releaseInfo) }
   if (releaseInfo.releaseNotes == null) {
     const releaseNotesFile = await packager.getResource(
       releaseInfo.releaseNotesFile,
@@ -34,7 +34,7 @@ async function getReleaseInfo(packager: PlatformPackager<any>) {
 }
 
 function isGenerateUpdatesFilesForAllChannels(packager: PlatformPackager<any>) {
-  const value = packager.platformSpecificBuildOptions.generateUpdatesFilesForAllChannels
+  const value = packager.platformOptions.generateUpdatesFilesForAllChannels
   return value == null ? packager.config.generateUpdatesFilesForAllChannels : value
 }
 
@@ -82,7 +82,7 @@ export interface UpdateInfoFileTask {
   readonly arch?: Arch | null
 }
 
-function computeIsisElectronUpdater1xCompatibility(updaterCompatibility: string | null, publishConfiguration: PublishConfiguration, packager: Packager) {
+function computeIsisElectronUpdater1xCompatibility(updaterCompatibility: string | null, publishConfiguration: PublishConfiguration, packager: PlatformPackager<any>) {
   if (updaterCompatibility != null) {
     return semver.satisfies("1.0.0", updaterCompatibility)
   }
@@ -110,14 +110,14 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
   const createdFiles = new Set<string>()
   const sharedInfo = await createUpdateInfo(version, event, await getReleaseInfo(packager))
   const tasks: Array<UpdateInfoFileTask> = []
-  const electronUpdaterCompatibility = packager.platformSpecificBuildOptions.electronUpdaterCompatibility || packager.config.electronUpdaterCompatibility || ">=2.15"
+  const electronUpdaterCompatibility = packager.platformOptions.electronUpdaterCompatibility || packager.config.electronUpdaterCompatibility || ">=2.15"
   for (const publishConfiguration of publishConfigs) {
     let dir = outDir
     if (publishConfigs.length > 1 && publishConfiguration !== publishConfigs[0]) {
       dir = path.join(outDir, publishConfiguration.provider)
     }
 
-    let isElectronUpdater1xCompatibility = computeIsisElectronUpdater1xCompatibility(electronUpdaterCompatibility, publishConfiguration, packager.info)
+    let isElectronUpdater1xCompatibility = computeIsisElectronUpdater1xCompatibility(electronUpdaterCompatibility, publishConfiguration, packager)
 
     let info = sharedInfo
     // noinspection JSDeprecatedSymbols
@@ -274,7 +274,7 @@ async function writeOldMacInfo(
       { spaces: 2 }
     )
 
-    await packager.info.emitArtifactCreated({
+    await packager.emitArtifactCreated({
       file: updateInfoFile,
       arch: null,
       packager,

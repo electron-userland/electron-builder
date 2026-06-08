@@ -62,12 +62,12 @@ export class DmgTarget extends Target {
       this.options,
       "dmg",
       arch,
-      "${productName}-" + (packager.platformSpecificBuildOptions.bundleShortVersion || "${version}") + "-${arch}.${ext}",
+      "${productName}-" + (packager.platformOptions.bundleShortVersion || "${version}") + "-${arch}.${ext}",
       true,
-      packager.platformSpecificBuildOptions.defaultArch
+      packager.platformOptions.defaultArch
     )
     const artifactPath = path.join(this.outDir, artifactName)
-    await packager.info.emitArtifactBuildStarted({
+    await packager.emitArtifactBuildStarted({
       targetPresentableName: "DMG",
       file: artifactPath,
       arch,
@@ -97,7 +97,7 @@ export class DmgTarget extends Target {
 
     const safeArtifactName = packager.computeSafeArtifactName(artifactName, "dmg")
     const updateInfo = this.options.writeUpdateInfo === false ? null : await createBlockmap(artifactPath, this, packager, safeArtifactName)
-    await packager.info.emitArtifactBuildCompleted({
+    await packager.emitArtifactBuildCompleted({
       file: artifactPath,
       safeArtifactName,
       target: this,
@@ -114,7 +114,7 @@ export class DmgTarget extends Target {
     }
 
     const packager = this.packager
-    const qualifier = packager.platformSpecificBuildOptions.identity
+    const qualifier = packager.platformOptions.identity
     // explicitly disabled if set to null
     if (qualifier === null) {
       // macPackager already somehow handle this situation, so, here just return
@@ -141,8 +141,8 @@ export class DmgTarget extends Target {
 
   computeVolumeName(arch: Arch, custom?: string | null): string {
     const appInfo = this.packager.appInfo
-    const shortVersion = this.packager.platformSpecificBuildOptions.bundleShortVersion || appInfo.version
-    const archString = getArchSuffix(arch, this.packager.platformSpecificBuildOptions.defaultArch)
+    const shortVersion = this.packager.platformOptions.bundleShortVersion || appInfo.version
+    const archString = getArchSuffix(arch, this.packager.platformOptions.defaultArch)
 
     if (custom == null) {
       return `${appInfo.productFilename} ${shortVersion}${archString}`

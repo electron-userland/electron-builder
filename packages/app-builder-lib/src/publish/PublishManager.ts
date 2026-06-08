@@ -282,7 +282,7 @@ export async function getPublishConfigsForUpdateInfo(
     log.debug(null, "getPublishConfigsForUpdateInfo: no publishConfigs, detect using repository info")
     // https://github.com/electron-userland/electron-builder/issues/925#issuecomment-261732378
     // default publish config is github, file should be generated regardless of publish state (user can test installer locally or manage the release process manually)
-    const repositoryInfo = await packager.info.repositoryInfo
+    const repositoryInfo = await packager.repositoryInfo
     debug(`getPublishConfigsForUpdateInfo: ${safeStringifyJson(repositoryInfo)}`)
     if (repositoryInfo != null && repositoryInfo.type === "github") {
       const resolvedPublishConfig = await getResolvedPublishConfig(packager, packager.info, { provider: repositoryInfo.type }, arch, false)
@@ -444,7 +444,7 @@ export async function getPublishConfigs(
 
   // check build.win (platform)
   if (publishers == null) {
-    publishers = platformPackager.platformSpecificBuildOptions.publish
+    publishers = platformPackager.platformOptions.publish
     if (publishers === null) {
       return null
     }
@@ -536,7 +536,7 @@ async function getResolvedPublishConfig(
   let channelFromAppVersion: string | null = null
   if (
     (options as GenericServerOptions).channel == null &&
-    isDetectUpdateChannel(platformPackager == null ? null : platformPackager.platformSpecificBuildOptions, packager.config)
+    isDetectUpdateChannel(platformPackager == null ? null : platformPackager.platformOptions, packager.config)
   ) {
     channelFromAppVersion = packager.appInfo.channel
   }

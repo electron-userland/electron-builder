@@ -70,7 +70,8 @@ async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
 
 async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOptions) {
   const { packager, appOutDir } = options
-  const { config, platformSpecificBuildOptions, platform } = packager
+  const { config, platform } = packager
+  const platformSpecificBuildOptions = packager.platformOptions
 
   const getLocalesConfig = () => {
     if (platform === Platform.MAC) {
@@ -236,7 +237,7 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, d
 
   let resolvedDist: string | null = null
   try {
-    const electronDistHook: any = await resolveFunction(packager.appInfo.type, electronDist, "electronDist", await packager.info.getWorkspaceRoot())
+    const electronDistHook: any = await resolveFunction(packager.appInfo.type, electronDist, "electronDist", await packager.getWorkspaceRoot())
     resolvedDist = typeof electronDistHook === "function" ? await Promise.resolve(electronDistHook(prepareOptions)) : electronDistHook
   } catch (error: any) {
     log.warn({ error }, "Failed to resolve electronDist, using default unpack logic")

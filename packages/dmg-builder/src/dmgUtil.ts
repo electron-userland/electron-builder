@@ -184,7 +184,7 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
       }
     }
   } else {
-    settings.background = specification.background == null ? null : await transformBackgroundFileIfNeed(specification.background, packager.info.tempDirManager)
+    settings.background = specification.background == null ? null : await transformBackgroundFileIfNeed(specification.background, packager.tempDirManager)
   }
 
   if (!isEmptyOrSpaces(settings.background)) {
@@ -192,7 +192,7 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
     settings.window = { position: { x: 400, y: Math.round((1440 - size.height) / 2) }, size, ...settings.window }
   }
 
-  const workspaceRoot = await packager.info.getWorkspaceRoot()
+  const workspaceRoot = await packager.getWorkspaceRoot()
   for (const item of settings.contents ?? []) {
     if (item.type === "file" && item.path && path.isAbsolute(item.path)) {
       if (!item.path.startsWith(workspaceRoot + path.sep) && item.path !== appPath) {
