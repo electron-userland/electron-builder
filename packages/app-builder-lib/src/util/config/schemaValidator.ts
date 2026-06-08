@@ -42,7 +42,9 @@ export function validateSchema(schema: unknown, data: unknown, config: Validatio
   })
 
   const header = `Invalid configuration object. ${name} has been initialized using a configuration object that does not match the API schema.`
-  throw new Error(`${header}\n${formatted.join("\n")}`)
+  const guidance = `Please check the documentation to ensure that your configuration matches the expected schema: https://www.electron.build/configuration`
+  const migration = `If you recently upgraded electron-builder to v27, please check the release notes for breaking changes: https://www.electron.build/docs/migration/v26-to-v27`
+  throw new Error(`${header}\n${formatted.join("\n")}\n${guidance}\n${migration}`)
 }
 
 /**
