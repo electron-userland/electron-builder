@@ -2,4 +2,4 @@
 "builder-util": patch
 ---
 
-fix: reverting breaking change that forced env vars to be https protocol
+fix: harden HTTP mirror validation — reject non-localhost HTTP by default, add ELECTRON_BUILDER_BINARIES_ALLOW_HTTP opt-in
