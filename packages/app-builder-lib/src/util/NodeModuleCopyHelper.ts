@@ -10,7 +10,7 @@ import asyncPool from "tiny-async-pool"
 <<<<<<< HEAD
 <<<<<<< HEAD
 import { excludedNames, FileMatcher } from "../fileMatcher.js"
-import { Packager } from "../packager.js"
+import { PlatformPackager } from "../platformPackager.js"
 import { FileCopyHelper } from "./AppFileWalker.js"
 <<<<<<< HEAD
 import { NodeModuleInfo } from "../node-module-collector/types.js"
@@ -67,7 +67,7 @@ const topLevelExcludedFiles = new Set([
 
 /** @internal */
 export class NodeModuleCopyHelper extends FileCopyHelper {
-  constructor(matcher: FileMatcher, packager: Packager) {
+  constructor(matcher: FileMatcher, packager: PlatformPackager<any>) {
     super(matcher, matcher.isEmpty() ? null : matcher.createFilter(), packager)
   }
 
