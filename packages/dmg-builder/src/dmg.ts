@@ -44,7 +44,7 @@ export interface DmgBuildConfig {
   }>
 }
 export class DmgTarget extends Target {
-  readonly options: DmgOptions = this.packager.config.dmg || Object.create(null)
+  readonly options: DmgOptions
 
   isAsyncSupported = false
 
@@ -53,6 +53,7 @@ export class DmgTarget extends Target {
     readonly outDir: string
   ) {
     super("dmg")
+    this.options = this.packager.config.dmg || Object.create(null)
   }
 
   async build(appPath: string, arch: Arch) {

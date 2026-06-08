@@ -51,7 +51,7 @@ const restrictedApplicationIdValues = [
 const DEFAULT_RESOURCE_LANG = "en-US"
 
 export default class AppXTarget extends Target {
-  readonly options: AppXOptions = this.packager.getOptionsForTarget<AppXOptions>("appx")
+  readonly options: AppXOptions
 
   isAsyncSupported = false
 
@@ -60,6 +60,7 @@ export default class AppXTarget extends Target {
     readonly outDir: string
   ) {
     super("appx")
+    this.options = this.packager.getOptionsForTarget<AppXOptions>("appx")
 
     if (process.platform !== "darwin" && (process.platform !== "win32" || isOldWin6())) {
       throw new Error("AppX is supported only on Windows 10 or Windows Server 2012 R2 (version number 6.3+)")

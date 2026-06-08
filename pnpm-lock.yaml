@@ -128,9 +128,6 @@ importers:
       asn1js:
         specifier: ^3.0.10
         version: 3.0.10
-      async-exit-hook:
-        specifier: ^2.0.1
-        version: 2.0.1
       builder-util:
         specifier: workspace:*
         version: link:../builder-util

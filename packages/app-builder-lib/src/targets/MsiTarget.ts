@@ -22,9 +22,9 @@ const ROOT_DIR_ID = "APPLICATIONFOLDER"
 
 // WiX doesn't support Mono, so, dontnet462 is required to be installed for wine (preinstalled in our bundled wine)
 export default class MsiTarget extends Target {
-  protected readonly vm = process.platform === "win32" ? new VmManager() : new WineVmManager(this.packager.config.toolsets?.wine)
+  protected readonly vm: VmManager
 
-  readonly options: MsiOptions = this.packager.getOptionsForTarget<MsiOptions>("msi")
+  readonly options: MsiOptions
 
   constructor(
     protected readonly packager: WinPackager,
@@ -33,6 +33,8 @@ export default class MsiTarget extends Target {
     isAsyncSupported = true
   ) {
     super(name, isAsyncSupported)
+    this.vm = process.platform === "win32" ? new VmManager() : new WineVmManager(this.packager.config.toolsets?.wine)
+    this.options = this.packager.getOptionsForTarget<MsiOptions>("msi")
   }
 
   protected projectTemplate = new Lazy<(data: any) => string>(async () => {
