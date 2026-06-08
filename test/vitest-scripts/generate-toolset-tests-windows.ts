@@ -1,7 +1,7 @@
 import * as fs from "fs"
 import * as path from "path"
 import type { ToolsetConfig } from "app-builder-lib/src/configuration"
-import { buildDescribeCall, cleanAndEnsureDir, GENERATED_TESTS_DIR, namedFn, resolveImportPath, TEST_SRC_DIR } from "./generate-toolset-tests-shared"
+import { buildDescribeCall, cleanAndEnsureDir, GENERATED_TESTS_DIR, getPlatformSuffix, namedFn, resolveImportPath, TEST_SRC_DIR } from "./generate-toolset-tests-shared"
 import type { SuiteConfig } from "./generate-toolset-tests-shared"
 import type * as _WinPackagerSuite from "../src/windows/winPackagerTestSuite"
 import type * as _PortableSuite from "../src/windows/portableTestSuite"
@@ -119,16 +119,17 @@ export function generateWindowsToolsetTests(): void {
     cleanAndEnsureDir(generatedDir)
     const wcsVersions = suite.winCodeSignVersions ?? WIN_CODE_SIGN_VERSIONS
     const nsisVersions = suite.nsisVersions
+    const platformSuffix = getPlatformSuffix(suite.describeConfig.chain)
     if (nsisVersions) {
       for (const nsis of nsisVersions) {
         for (const wcs of wcsVersions) {
-          const filename = `${suite.name}__wcs-${wcs}__nsis-${nsis}__Test.ts`
+          const filename = `${suite.name}__wcs-${wcs}__nsis-${nsis}${platformSuffix}Test.ts`
           fs.writeFileSync(path.join(generatedDir, filename), renderFile(suite, wcs, nsis), "utf8")
         }
       }
     } else {
       for (const wcs of wcsVersions) {
-        const filename = `${suite.name}__wcs-${wcs}__Test.ts`
+        const filename = `${suite.name}__wcs-${wcs}${platformSuffix}Test.ts`
         fs.writeFileSync(path.join(generatedDir, filename), renderFile(suite, wcs), "utf8")
       }
     }

@@ -274,7 +274,7 @@ describe.sequential("streamCollectorCommandToFile", () => {
     test("outStream error: child.kill() is called to stop the orphaned process", async ({ expect }) => {
       const p = collector.streamCollectorCommandToFile("pnpm", ["list"], "/cwd", OUTPUT_FILE)
       await waitForCloseCb()
-      const mockChild = vi.mocked(childProcess.spawn).mock.results[0].value as any
+      const mockChild = vi.mocked(childProcess.spawn).mock.results[0].value
       mockOutStream.emit("error", new Error("ENOSPC"))
       await expect(p).rejects.toThrow()
       expect(mockChild.kill).toHaveBeenCalledOnce()

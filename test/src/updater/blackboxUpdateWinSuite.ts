@@ -15,7 +15,8 @@ import { installWindowsVm } from "./blackboxInstallWindows"
 // reproduce issue #6865: the NSIS installer must not show the "app cannot be closed" dialog
 // when a process with a *similar but different* name is running.
 async function spawnSiblingProcess(vm: ParallelsVmManager | undefined, appExeName: string): Promise<{ cleanup: () => Promise<void>; assertAlive: () => Promise<void> }> {
-  const siblingName = appExeName.replace(/\.exe$/i, "-helper.exe")
+  const uniqueId = Math.random().toString(36).slice(2, 8)
+  const siblingName = appExeName.replace(/\.exe$/i, `-helper-${uniqueId}.exe`)
   // Process name without extension, used by Stop-Process / Get-Process
   const siblingBaseName = siblingName.replace(/\.exe$/i, "")
 

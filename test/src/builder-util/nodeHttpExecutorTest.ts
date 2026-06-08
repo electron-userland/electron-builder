@@ -5,7 +5,9 @@ const PROXY_VARS = ["HTTPS_PROXY", "https_proxy", "HTTP_PROXY", "http_proxy"] as
 
 describe("buildGotProxyAgent", () => {
   beforeEach(() => {
-    for (const key of PROXY_VARS) delete process.env[key]
+    for (const key of PROXY_VARS) {
+      delete process.env[key]
+    }
   })
   afterEach(() => {
     vi.unstubAllEnvs()
@@ -128,7 +130,9 @@ describe("NodeHttpExecutor.createRequest", () => {
 
   beforeEach(() => {
     executor = new NodeHttpExecutor()
-    for (const key of PROXY_VARS) delete process.env[key]
+    for (const key of PROXY_VARS) {
+      delete process.env[key]
+    }
   })
   afterEach(() => {
     vi.unstubAllEnvs()

@@ -89,4 +89,10 @@ export default [{
         "@typescript-eslint/explicit-function-return-type": ["off", {}],
         "@typescript-eslint/no-redundant-type-constituents": "off",
     },
+}, {
+    files: ["test/src/**/*.ts"],
+    rules: {
+        // vitest spy/mock accessors (e.g. expect(log.error)) don't have real `this` binding issues
+        "@typescript-eslint/unbound-method": "off",
+    },
 }];

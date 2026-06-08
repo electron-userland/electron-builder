@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 
-import isCI from "is-ci"
+import { isCI } from "ci-info"
 import { startVitest } from "vitest/node"
 import { getAllTestFiles } from "./file-discovery"
 import { generateTests } from "./generate-tests"
