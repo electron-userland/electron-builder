@@ -63,7 +63,9 @@ interface CertInfo {
 /** Extracts the non-Azure signing config from WindowsConfiguration, or null for Azure/unset. */
 export function getSigntoolFamilyConfig(config: WindowsConfiguration): WindowsSigntoolFamilyConfig | null {
   const s = config.signing
-  if (s == null || s.type === "azure") return null
+  if (s == null || s.type === "azure") {
+    return null
+  }
   return s
 }
 

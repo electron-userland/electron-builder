@@ -530,8 +530,11 @@ describe("PKCS#11 timestamp flags", () => {
       expect(args).not.toContain("-ts")
       expect(args).not.toContain("-t")
     } finally {
-      if (origEnv === undefined) delete process.env.ELECTRON_BUILDER_OFFLINE
-      else process.env.ELECTRON_BUILDER_OFFLINE = origEnv
+      if (origEnv === undefined) {
+        delete process.env.ELECTRON_BUILDER_OFFLINE
+      } else {
+        process.env.ELECTRON_BUILDER_OFFLINE = origEnv
+      }
     }
   })
 })
