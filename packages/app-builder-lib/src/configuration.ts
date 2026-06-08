@@ -109,7 +109,7 @@ export interface CommonConfiguration {
    */
   readonly deb?: DebOptions | null
   /**
-   * Snapcraft configuration. Prefer this over the deprecated `snap` field.
+   * Snapcraft configuration.
    *
    * Selects the snapcraft base and provides per-core options:
    * - `base: "core18" | "core20" | "core22"` — legacy builds; accepts the same options as `snap`
@@ -185,7 +185,7 @@ export interface CommonConfiguration {
    */
   readonly npmRebuild?: boolean
   /**
-   * Use `legacy` app-builder binary for installing native dependencies, or `@electron/rebuild` in `sequential` or `parallel` compilation modes.
+   * Use `@electron/rebuild` in `sequential` or `parallel` compilation modes.
    * @default sequential
    */
   readonly nativeRebuilder?: "legacy" | "sequential" | "parallel" | null

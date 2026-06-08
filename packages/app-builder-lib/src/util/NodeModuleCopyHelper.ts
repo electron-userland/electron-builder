@@ -4,7 +4,7 @@ import fsExtra from "fs-extra"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
 import { excludedNames, FileMatcher } from "../fileMatcher.js"
-import { Packager } from "../packager.js"
+import { PlatformPackager } from "../platformPackager.js"
 import { FileCopyHelper } from "./AppFileWalker.js"
 import { NodeModuleInfo } from "./packageDependencies.js"
 import { resolveFunction } from "./resolve.js"
@@ -45,7 +45,7 @@ const topLevelExcludedFiles = new Set([
 
 /** @internal */
 export class NodeModuleCopyHelper extends FileCopyHelper {
-  constructor(matcher: FileMatcher, packager: Packager) {
+  constructor(matcher: FileMatcher, packager: PlatformPackager<any>) {
     super(matcher, matcher.isEmpty() ? null : matcher.createFilter(), packager)
   }
 
