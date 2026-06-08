@@ -318,7 +318,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
       } else if (isWin && allowX509 && (certExtension === ".crt" || certExtension === ".cer")) {
         args.push("/f", vm.toVmFile(certificateFile))
       } else {
-        throw new Error(`Please specify pkcs12 (.p12/.pfx) file, ${certificateFile} is not correct`)
+        throw new InvalidConfigurationError(`Please specify pkcs12 (.p12/.pfx) file, ${certificateFile} is not correct`)
       }
     }
   }
@@ -400,7 +400,10 @@ export abstract class SigntoolBaseSignManager implements SignManager {
     const timeout = parseInt(process.env.SIGNTOOL_TIMEOUT as any, 10) || 10 * 60 * 1000
     let args: Array<string>
     let vm: VmManager
-    const useVmIfNotOnWin = configuration.path.endsWith(".appx") || !("file" in configuration.cscInfo!) /* certificateSubjectName and other such options */
+    // cscInfo can be null (e.g. PKCS#11 with no cert file); guard before using `in`.
+    // CertificateFromStoreInfo (no `file` property) requires a Windows VM for cert-store lookup.
+    const cscInfo = configuration.cscInfo
+    const useVmIfNotOnWin = configuration.path.endsWith(".appx") || (cscInfo != null && !("file" in cscInfo))
     const isWin = process.platform === "win32" || useVmIfNotOnWin
     const toolInfo = await getSignToolPath(this.packager.config.toolsets?.winCodeSign, isWin)
     const tool = toolInfo.path

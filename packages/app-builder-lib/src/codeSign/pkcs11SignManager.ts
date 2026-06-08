@@ -3,7 +3,14 @@ import { MemoLazy } from "builder-util-runtime"
 import { WindowsConfiguration, WindowsPkcs11SigningConfig } from "../options/winOptions"
 import { VmManager } from "../vm/vm"
 import type { WinPackager } from "../winPackager"
-import { CustomWindowsSign, CertificateFromStoreInfo, FileCodeSigningInfo, getSigntoolFamilyConfig, SigntoolBaseSignManager, WindowsSignTaskConfiguration } from "./signtoolBaseSignManager"
+import {
+  CustomWindowsSign,
+  CertificateFromStoreInfo,
+  FileCodeSigningInfo,
+  getSigntoolFamilyConfig,
+  SigntoolBaseSignManager,
+  WindowsSignTaskConfiguration,
+} from "./signtoolBaseSignManager"
 
 export class Pkcs11SignManager extends SigntoolBaseSignManager {
   private readonly signingConfig: WindowsPkcs11SigningConfig
@@ -18,12 +25,14 @@ export class Pkcs11SignManager extends SigntoolBaseSignManager {
   }
 
   // PKCS#11: key and cert are in the hardware token; cert file is optional (chain only).
+  // When a cert file is supplied, the PIN (if any) is read from WIN_CSC_KEY_PASSWORD / CSC_KEY_PASSWORD.
   override readonly cscInfo = new MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>(
     () => this.platformSpecificBuildOptions,
     _platformSpecificBuildOptions => {
       const { certificateFile } = this.signingConfig
       if (certificateFile) {
-        return Promise.resolve({ file: certificateFile, password: null })
+        const pin = this.packager.getCscPassword() ?? null
+        return Promise.resolve({ file: certificateFile, password: pin })
       }
       return Promise.resolve(null)
     }
@@ -35,9 +44,7 @@ export class Pkcs11SignManager extends SigntoolBaseSignManager {
   }
 
   protected computeWindowsSignArgs(_options: WindowsSignTaskConfiguration, _vm: VmManager): Array<string> {
-    throw new InvalidConfigurationError(
-      'PKCS#11 signing is only supported via osslsigncode (non-Windows). Use type: "signtool" or type: "hsm" on Windows.'
-    )
+    throw new InvalidConfigurationError('PKCS#11 signing is only supported via osslsigncode (non-Windows). Use type: "signtool" or type: "hsm" on Windows.')
   }
 
   protected computeOsslsigncodeArgs(options: WindowsSignTaskConfiguration, vm: VmManager): Array<string> {
@@ -54,14 +61,35 @@ export class Pkcs11SignManager extends SigntoolBaseSignManager {
 
     const args = ["sign", "-in", inputFile, "-out", outputPath]
 
+    // RFC 3161 for sha256/nested (mirrors signtool /tr); HTTP Authenticode for sha1 (/t).
     if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
-      args.push("-t", signing.timeStampServer || "http://timestamp.digicert.com")
+      const isRfc3161 = options.isNest || options.hash === "sha256"
+      if (isRfc3161) {
+        args.push("-ts", signing.rfc3161TimeStampServer || "http://timestamp.digicert.com")
+      } else {
+        args.push("-t", signing.timeStampServer || "http://timestamp.digicert.com")
+      }
     }
 
     args.push("-pkcs11module", signing.pkcs11Module)
     args.push("-key", signing.pkcs11KeyUri)
+
+    // External certificate chain (optional — token may carry the cert internally).
+    if (signing.certificateFile) {
+      args.push("-certs", vm.toVmFile(signing.certificateFile))
+    }
+
     args.push("-h", options.hash.toLowerCase())
     this.addCommonSigningArgs(args, options, vm, false)
+
+    // When cscInfo is null the token holds the cert; addCommonSigningArgs won't emit -pass.
+    // Read the PIN from env vars so CI workflows can inject it without embedding it in the URI.
+    if (!options.cscInfo) {
+      const pin = process.env.WIN_CSC_KEY_PASSWORD ?? process.env.CSC_KEY_PASSWORD
+      if (pin?.trim()) {
+        args.push("-pass", pin.trim())
+      }
+    }
 
     const httpsProxy = process.env.HTTPS_PROXY
     if (httpsProxy?.length) {

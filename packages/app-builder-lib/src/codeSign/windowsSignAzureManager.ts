@@ -71,6 +71,7 @@ export class WindowsSignAzureManager implements SignManager {
       Endpoint: signing.endpoint,
       CodeSigningAccountName: signing.codeSigningAccountName,
       CertificateProfileName: signing.certificateProfileName,
+      ...signing.additionalMetadata,
     })
 
     const args = [

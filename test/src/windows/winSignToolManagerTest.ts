@@ -20,9 +20,12 @@ function makeHsmManager(winCodeSign?: string): HsmSignManager {
   return manager
 }
 
-function makePkcs11Manager(winCodeSign?: string): Pkcs11SignManager {
+function makePkcs11Manager(winCodeSign?: string, getCscPassword?: () => string | null): Pkcs11SignManager {
   const manager = Object.create(Pkcs11SignManager.prototype) as Pkcs11SignManager
-  ;(manager as any).packager = { config: { toolsets: { winCodeSign: winCodeSign ?? "1.1.0" } } }
+  ;(manager as any).packager = {
+    config: { toolsets: { winCodeSign: winCodeSign ?? "1.1.0" } },
+    getCscPassword: getCscPassword ?? (() => null),
+  }
   return manager
 }
 
@@ -452,6 +455,226 @@ describe("computeSignToolArgs — PKCS#11 (isWin=false)", () => {
     manager.computeSignToolArgs(config, false)
     expect(config.resultOutputPath).toBeDefined()
     expect(config.resultOutputPath).toContain("-signed-sha256")
+  })
+})
+
+// ─── PKCS#11 timestamp: -ts for sha256, -t for sha1 ──────────────────────────
+
+describe("PKCS#11 timestamp flags", () => {
+  const pkcs11Base = {
+    type: "pkcs11" as const,
+    pkcs11Module: "/usr/lib/opensc-pkcs11.so",
+    pkcs11KeyUri: "pkcs11:token=T;object=K;type=private",
+  }
+
+  test("sha256 → uses -ts (RFC 3161)", () => {
+    const manager = makePkcs11Manager()
+    const config = makeTaskConfig({ options: { signing: pkcs11Base } as any, hash: "sha256" })
+    const args = manager.computeSignToolArgs(config, false)
+    expect(args).toContain("-ts")
+    expect(args).not.toContain("-t")
+  })
+
+  test("sha1 → uses -t (HTTP Authenticode)", () => {
+    const manager = makePkcs11Manager()
+    const config = makeTaskConfig({ options: { signing: pkcs11Base } as any, hash: "sha1" })
+    const args = manager.computeSignToolArgs(config, false)
+    expect(args).toContain("-t")
+    expect(args).not.toContain("-ts")
+  })
+
+  test("sha256 nested → uses -ts", () => {
+    const manager = makePkcs11Manager()
+    const config = makeTaskConfig({ options: { signing: pkcs11Base } as any, hash: "sha256", isNest: true })
+    const args = manager.computeSignToolArgs(config, false)
+    expect(args).toContain("-ts")
+  })
+
+  test("sha1 nested → uses -ts (nested always RFC 3161)", () => {
+    const manager = makePkcs11Manager()
+    const config = makeTaskConfig({ options: { signing: pkcs11Base } as any, hash: "sha1", isNest: true })
+    const args = manager.computeSignToolArgs(config, false)
+    expect(args).toContain("-ts")
+    expect(args).not.toContain("-t")
+  })
+
+  test("custom rfc3161TimeStampServer is used for -ts", () => {
+    const manager = makePkcs11Manager()
+    const config = makeTaskConfig({
+      options: { signing: { ...pkcs11Base, rfc3161TimeStampServer: "http://my-ts.example.com" } } as any,
+      hash: "sha256",
+    })
+    const args = manager.computeSignToolArgs(config, false)
+    const idx = args.indexOf("-ts")
+    expect(args[idx + 1]).toBe("http://my-ts.example.com")
+  })
+
+  test("custom timeStampServer is used for -t", () => {
+    const manager = makePkcs11Manager()
+    const config = makeTaskConfig({
+      options: { signing: { ...pkcs11Base, timeStampServer: "http://old-ts.example.com" } } as any,
+      hash: "sha1",
+    })
+    const args = manager.computeSignToolArgs(config, false)
+    const idx = args.indexOf("-t")
+    expect(args[idx + 1]).toBe("http://old-ts.example.com")
+  })
+
+  test("offline mode omits all timestamp args", () => {
+    const origEnv = process.env.ELECTRON_BUILDER_OFFLINE
+    process.env.ELECTRON_BUILDER_OFFLINE = "true"
+    try {
+      const manager = makePkcs11Manager()
+      const config = makeTaskConfig({ options: { signing: pkcs11Base } as any, hash: "sha256" })
+      const args = manager.computeSignToolArgs(config, false)
+      expect(args).not.toContain("-ts")
+      expect(args).not.toContain("-t")
+    } finally {
+      if (origEnv === undefined) delete process.env.ELECTRON_BUILDER_OFFLINE
+      else process.env.ELECTRON_BUILDER_OFFLINE = origEnv
+    }
+  })
+})
+
+// ─── PKCS#11 certificateFile → -certs passthrough ────────────────────────────
+
+describe("PKCS#11 certificateFile passed as -certs to osslsigncode", () => {
+  const pkcs11Base = {
+    type: "pkcs11" as const,
+    pkcs11Module: "/usr/lib/opensc-pkcs11.so",
+    pkcs11KeyUri: "pkcs11:token=T;object=K;type=private",
+  }
+
+  test("certificateFile set → -certs present with correct path", () => {
+    const manager = makePkcs11Manager()
+    const config = makeTaskConfig({
+      options: { signing: { ...pkcs11Base, certificateFile: "/certs/chain.pem" } } as any,
+      cscInfo: { file: "/certs/chain.pem", password: null },
+    })
+    const args = manager.computeSignToolArgs(config, false)
+    expect(args).toContain("-certs")
+    const idx = args.indexOf("-certs")
+    expect(args[idx + 1]).toBe("/certs/chain.pem")
+  })
+
+  test("no certificateFile → no -certs arg", () => {
+    const manager = makePkcs11Manager()
+    const config = makeTaskConfig({ options: { signing: pkcs11Base } as any, cscInfo: null })
+    const args = manager.computeSignToolArgs(config, false)
+    expect(args).not.toContain("-certs")
+  })
+
+  test("-certs appears between -key and -h", () => {
+    const manager = makePkcs11Manager()
+    const config = makeTaskConfig({
+      options: { signing: { ...pkcs11Base, certificateFile: "/certs/chain.crt" } } as any,
+      cscInfo: { file: "/certs/chain.crt", password: null },
+    })
+    const args = manager.computeSignToolArgs(config, false)
+    const keyIdx = args.indexOf("-key")
+    const certsIdx = args.indexOf("-certs")
+    const hashIdx = args.indexOf("-h")
+    expect(certsIdx).toBeGreaterThan(keyIdx)
+    expect(certsIdx).toBeLessThan(hashIdx)
+  })
+})
+
+// ─── PKCS#11 PIN via env vars ─────────────────────────────────────────────────
+
+describe("PKCS#11 PIN via env var (no cert file)", () => {
+  const pkcs11Options = {
+    signing: {
+      type: "pkcs11" as const,
+      pkcs11Module: "/usr/lib/opensc-pkcs11.so",
+      pkcs11KeyUri: "pkcs11:token=MyToken;object=MyKey;type=private",
+    },
+  } as any
+
+  const origEnv: Record<string, string | undefined> = {}
+
+  beforeEach(() => {
+    origEnv.WIN_CSC_KEY_PASSWORD = process.env.WIN_CSC_KEY_PASSWORD
+    origEnv.CSC_KEY_PASSWORD = process.env.CSC_KEY_PASSWORD
+    delete process.env.WIN_CSC_KEY_PASSWORD
+    delete process.env.CSC_KEY_PASSWORD
+  })
+
+  afterEach(() => {
+    for (const [k, v] of Object.entries(origEnv)) {
+      if (v === undefined) {
+        delete process.env[k as any]
+      } else {
+        process.env[k as any] = v
+      }
+    }
+  })
+
+  test("no PIN env var set → no -pass arg", () => {
+    const manager = makePkcs11Manager()
+    const config = makeTaskConfig({ options: pkcs11Options, cscInfo: null })
+    const args = manager.computeSignToolArgs(config, false)
+    expect(args).not.toContain("-pass")
+  })
+
+  test("WIN_CSC_KEY_PASSWORD set → -pass appended when cscInfo is null", () => {
+    process.env.WIN_CSC_KEY_PASSWORD = "token-pin-1234"
+    const manager = makePkcs11Manager()
+    const config = makeTaskConfig({ options: pkcs11Options, cscInfo: null })
+    const args = manager.computeSignToolArgs(config, false)
+    expect(args).toContain("-pass")
+    const idx = args.indexOf("-pass")
+    expect(args[idx + 1]).toBe("token-pin-1234")
+  })
+
+  test("CSC_KEY_PASSWORD fallback → -pass appended when WIN_CSC_KEY_PASSWORD absent", () => {
+    process.env.CSC_KEY_PASSWORD = "fallback-pin"
+    const manager = makePkcs11Manager()
+    const config = makeTaskConfig({ options: pkcs11Options, cscInfo: null })
+    const args = manager.computeSignToolArgs(config, false)
+    expect(args).toContain("-pass")
+    const idx = args.indexOf("-pass")
+    expect(args[idx + 1]).toBe("fallback-pin")
+  })
+
+  test("WIN_CSC_KEY_PASSWORD takes priority over CSC_KEY_PASSWORD", () => {
+    process.env.WIN_CSC_KEY_PASSWORD = "win-pin"
+    process.env.CSC_KEY_PASSWORD = "csc-pin"
+    const manager = makePkcs11Manager()
+    const config = makeTaskConfig({ options: pkcs11Options, cscInfo: null })
+    const args = manager.computeSignToolArgs(config, false)
+    const idx = args.indexOf("-pass")
+    expect(args[idx + 1]).toBe("win-pin")
+  })
+
+  test("-pass not added when cscInfo carries password via cert file (addCommonSigningArgs handles it)", () => {
+    process.env.WIN_CSC_KEY_PASSWORD = "should-not-duplicate"
+    const manager = makePkcs11Manager("1.1.0", () => "should-not-duplicate")
+    const config = makeTaskConfig({
+      options: pkcs11Options,
+      cscInfo: { file: "/certs/chain.crt", password: "should-not-duplicate" },
+    })
+    const args = manager.computeSignToolArgs(config, false)
+    // -pass appears exactly once (from addCommonSigningArgs via cscInfo.password)
+    const count = args.filter(a => a === "-pass").length
+    expect(count).toBe(1)
+  })
+})
+
+// ─── addCertificateArgs error type ───────────────────────────────────────────
+
+describe("addCertificateArgs throws InvalidConfigurationError for bad cert extension", () => {
+  test("non-pfx cert in signtool mode throws InvalidConfigurationError (not Error)", () => {
+    const manager = makeManager()
+    const config = makeTaskConfig({ cscInfo: { file: "/certs/cert.crt", password: null } })
+    let thrown: unknown
+    try {
+      manager.computeSignToolArgs(config, true)
+    } catch (e) {
+      thrown = e
+    }
+    expect(thrown).toBeDefined()
+    // InvalidConfigurationError is a subclass of Error; check it has the right name
+    expect((thrown as any).constructor.name).toBe("InvalidConfigurationError")
   })
 })
 

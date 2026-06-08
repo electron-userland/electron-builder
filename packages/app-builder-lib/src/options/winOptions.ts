@@ -1,4 +1,3 @@
-import { Nullish } from "builder-util-runtime"
 import { CustomWindowsSign } from "../codeSign/windowsSignToolManager"
 import { PlatformSpecificBuildOptions, TargetConfigType } from "../index"
 
@@ -272,10 +271,11 @@ export interface WindowsAzureSigningConfig {
   readonly timestampDigest?: string
 
   /**
-   * Allow other CLI parameters (verbatim case-sensitive) to `Invoke-TrustedSigning`.
-   * Key-Value pairs with `undefined`/`null` value are filtered out of the command.
+   * Additional fields to include verbatim in the `metadata.json` file passed to
+   * `Azure.CodeSigning.Dlib.dll` via `signtool /dmdf`. Use this for DLib-specific options
+   * not covered by the typed fields above (e.g. `ExcludeCredentials`, `CorrelationId`).
    */
-  [k: string]: string | Nullish
+  readonly additionalMetadata?: Record<string, string>
 }
 
 // ─── Discriminated union ──────────────────────────────────────────────────────

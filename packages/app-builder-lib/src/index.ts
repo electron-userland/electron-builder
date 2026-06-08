@@ -57,7 +57,15 @@ export { BackgroundAlignment, BackgroundScaling, PkgBackgroundOptions, PkgOption
 export { AsarOptions, FileSet, FilesBuildOptions, PlatformSpecificBuildOptions, Protocol, ReleaseInfo } from "./options/PlatformSpecificBuildOptions"
 export { PlugDescriptor, SlotDescriptor, SnapcraftOptions, SnapOptions } from "./options/SnapOptions"
 export { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions"
-export { WindowsAzureSigningConfig, WindowsConfiguration, WindowsHsmSigningConfig, WindowsPkcs11SigningConfig, WindowsSigningConfiguration, WindowsSigntoolFamilyConfig, WindowsSigntoolSigningConfig } from "./options/winOptions"
+export {
+  WindowsAzureSigningConfig,
+  WindowsConfiguration,
+  WindowsHsmSigningConfig,
+  WindowsPkcs11SigningConfig,
+  WindowsSigningConfiguration,
+  WindowsSigntoolFamilyConfig,
+  WindowsSigntoolSigningConfig,
+} from "./options/winOptions"
 export { BuildResult, Packager } from "./packager"
 export { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi"
 export { CommonNsisOptions, CustomNsisBinary, NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions"

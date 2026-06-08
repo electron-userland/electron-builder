@@ -8344,13 +8344,12 @@
       "type": "object"
     },
     "WindowsAzureSigningConfig": {
-      "additionalProperties": {
-        "type": [
-          "null",
-          "string"
-        ]
-      },
+      "additionalProperties": false,
       "properties": {
+        "additionalMetadata": {
+          "$ref": "#/definitions/Record<string,string>",
+          "description": "Additional fields to include verbatim in the `metadata.json` file passed to\n`Azure.CodeSigning.Dlib.dll` via `signtool /dmdf`. Use this for DLib-specific options\nnot covered by the typed fields above (e.g. `ExcludeCredentials`, `CorrelationId`)."
+        },
         "certificateProfileName": {
           "description": "The Certificate Profile name. Translates to field: CertificateProfileName.",
           "type": "string"

@@ -23,8 +23,7 @@ export class HsmSignManager extends SigntoolBaseSignManager {
   protected computeWindowsSignArgs(options: WindowsSignTaskConfiguration, vm: VmManager): Array<string> {
     if (this.isLegacyToolset()) {
       throw new InvalidConfigurationError(
-        "HSM signing requires winCodeSign toolset 1.x or later. " +
-          'Set toolsets.winCodeSign to "1.0.0" or "1.1.0" in your electron-builder configuration.'
+        "HSM signing requires winCodeSign toolset 1.x or later. " + 'Set toolsets.winCodeSign to "1.0.0" or "1.1.0" in your electron-builder configuration.'
       )
     }
 
@@ -61,8 +60,7 @@ export class HsmSignManager extends SigntoolBaseSignManager {
 
   protected computeOsslsigncodeArgs(_options: WindowsSignTaskConfiguration, _vm: VmManager): Array<string> {
     throw new InvalidConfigurationError(
-      "HSM signing via cryptoServiceProvider/keyContainer is only supported on Windows (signtool.exe). " +
-        'For macOS/Linux, use type: "pkcs11" instead.'
+      "HSM signing via cryptoServiceProvider/keyContainer is only supported on Windows (signtool.exe). " + 'For macOS/Linux, use type: "pkcs11" instead.'
     )
   }
 }
