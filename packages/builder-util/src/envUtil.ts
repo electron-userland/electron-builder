@@ -39,7 +39,7 @@ export async function resolveEnvToolsetPath(envVarKey: string, expectedType: "di
   return p
 }
 
-export function parseValidEnvVarUrl(envVarName: string): string | null {
+export function parseValidEnvVarUrl(envVarName: string, allowHttp: boolean = true): string | null {
   const url = process.env[envVarName]?.trim()
   if (url == null || url === "") {
     return null
@@ -50,7 +50,7 @@ export function parseValidEnvVarUrl(envVarName: string): string | null {
   } catch {
     throw new Error(`${envVarName} is not a valid URL: ${url}`)
   }
-  if (parsed.protocol !== "https:") {
+  if (!allowHttp && parsed.protocol !== "https:") {
     throw new Error(`${envVarName} must use https:// (got ${parsed.protocol})`)
   }
   return url
