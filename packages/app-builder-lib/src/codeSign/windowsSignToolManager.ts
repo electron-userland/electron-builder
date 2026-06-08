@@ -305,7 +305,7 @@ export class WindowsSignToolManager implements SignManager {
     this.addCertificateArgs(args, options, vm, true)
 
     // Hash algorithm
-    const isLegacyToolset = this.packager.config.toolsets?.winCodeSign === "0.0.0" || this.packager.config.toolsets?.winCodeSign == null
+    const isLegacyToolset = this.packager.config.toolsets?.winCodeSign === "0.0.0"
     if (isLegacyToolset) {
       // Legacy || v0.0.0: Only add /fd for non-SHA1 (original behavior)
       if (options.hash !== "sha1") {

@@ -38,13 +38,14 @@ export async function getWineToolset(wine: ToolsetConfig["wine"]): Promise<{ exe
   }
 
   const useSystemWine = process.env.USE_SYSTEM_WINE === "true"
-  const isLegacy = wine === "0.0.0" || wine == null
+  const isLegacy = (wine ?? "1.0.1") === "0.0.0"
   const isLegacyOnLinux = isLegacy && process.platform === "linux"
 
   if (useSystemWine || isLegacyOnLinux) {
     return { execPath: "wine", env: defaultEnv }
   }
 
+  const resolved = wine ?? "1.0.1"
   const pkgConfig = () => {
     if (isLegacy) {
       return {
@@ -56,9 +57,9 @@ export async function getWineToolset(wine: ToolsetConfig["wine"]): Promise<{ exe
     }
     const filenameWithExt = process.platform === "darwin" ? "wine-11.0-darwin-x86_64.tar.xz" : "wine-11.0-linux-x86_64.tar.xz"
     return {
-      releaseName: `wine@${wine}`,
+      releaseName: `wine@${resolved}`,
       filenameWithExt,
-      checksums: wineToolsChecksums[wine],
+      checksums: wineToolsChecksums[resolved],
       execPath: path.join("bin", "wine"),
     }
   }

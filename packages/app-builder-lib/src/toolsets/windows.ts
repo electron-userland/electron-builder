@@ -77,13 +77,13 @@ export async function getWindowsKitsBundle({ winCodeSign, arch }: { winCodeSign:
     return { kit: kitPath, appxAssets: kitPath }
   }
 
-  const useLegacy = winCodeSign == null || winCodeSign === "0.0.0"
-  if (useLegacy) {
+  const resolved = winCodeSign ?? "1.1.0"
+  if (resolved === "0.0.0") {
     const vendorPath = await getLegacyWinCodeSignBin()
     return { kit: path.resolve(vendorPath, "windows-10", arch === Arch.arm64 ? "x64" : Arch[arch]), appxAssets: vendorPath }
   }
   const file = "windows-kits-bundle-10_0_26100_0.zip"
-  const vendorPath = await _getWindowsToolsBin(winCodeSign, file)
+  const vendorPath = await _getWindowsToolsBin(resolved, file)
   return { kit: path.resolve(vendorPath, arch === Arch.ia32 ? "x86" : Arch[arch]), appxAssets: vendorPath }
 }
 
@@ -93,8 +93,8 @@ export function isOldWin6() {
 }
 
 async function getWindowsSignToolExe({ winCodeSign, arch }: { winCodeSign: CodeSignVersionKey | Nullish; arch: Arch }) {
-  if (winCodeSign === "0.0.0" || winCodeSign == null) {
-    // use modern signtool on Windows Server 2012 R2 to be able to sign AppX
+  const resolved = winCodeSign ?? "1.1.0"
+  if (resolved === "0.0.0") {
     const vendorPath = await getLegacyWinCodeSignBin()
     if (isOldWin6()) {
       return path.resolve(vendorPath, "windows-6", "signtool.exe")
@@ -102,7 +102,7 @@ async function getWindowsSignToolExe({ winCodeSign, arch }: { winCodeSign: CodeS
       return path.resolve(vendorPath, "windows-10", process.arch === "ia32" ? "ia32" : "x64", "signtool.exe")
     }
   }
-  const vendorPath = await getWindowsKitsBundle({ winCodeSign, arch })
+  const vendorPath = await getWindowsKitsBundle({ winCodeSign: resolved, arch })
   return path.resolve(vendorPath.kit, "signtool.exe")
 }
 
@@ -115,7 +115,8 @@ async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] |
     return { path: "osslsigncode" }
   }
 
-  if (winCodeSign === "0.0.0" || winCodeSign == null) {
+  const resolved = winCodeSign ?? "1.1.0"
+  if (resolved === "0.0.0") {
     const vendorBase = path.resolve(await getLegacyWinCodeSignBin(), process.platform)
     const vendorPath = process.platform === "darwin" ? path.resolve(vendorBase, "10.12") : vendorBase
     return { path: path.resolve(vendorPath, "osslsigncode"), env: process.platform === "darwin" ? computeToolEnv([path.resolve(vendorPath, "lib")]) : undefined }
@@ -136,7 +137,7 @@ async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] |
     }
     return "win-codesign-darwin-x86_64.zip"
   })()
-  const vendorPath = await _getWindowsToolsBin(winCodeSign, file)
+  const vendorPath = await _getWindowsToolsBin(resolved, file)
   return { path: path.resolve(vendorPath, "osslsigncode") }
 }
 
@@ -149,12 +150,13 @@ export async function getRceditBundle(winCodeSign: ToolsetConfig["winCodeSign"] 
     const overridePath = rcedit
     return { x86: path.resolve(overridePath, x86), x64: path.resolve(overridePath, x64) }
   }
-  if (winCodeSign === "0.0.0" || winCodeSign == null) {
+  const resolved = winCodeSign ?? "1.1.0"
+  if (resolved === "0.0.0") {
     const vendorPath = await getLegacyWinCodeSignBin()
     return { x86: path.resolve(vendorPath, ia32), x64: path.resolve(vendorPath, x64) }
   }
   const file = "rcedit-windows-2_0_0.zip"
-  const vendorPath = await _getWindowsToolsBin(winCodeSign, file)
+  const vendorPath = await _getWindowsToolsBin(resolved, file)
   return { x86: path.resolve(vendorPath, x86), x64: path.resolve(vendorPath, x64) }
 }
 
@@ -181,19 +183,20 @@ export const nsisChecksums = {
 
 type CustomNsisBinaryConfig = { url: string | null; checksum?: string | null; version?: string | null }
 
-async function getNsisBundlePath(nsis: ToolsetConfig["nsis"], customBinary?: CustomNsisBinaryConfig | null): Promise<string> {
+async function getNsisBundlePath(nsis: ToolsetConfig["nsis"] | Nullish, customBinary?: CustomNsisBinaryConfig | null): Promise<string> {
   if (customBinary?.url && customBinary?.checksum) {
     const binaryVersion = customBinary.version ?? customBinary.checksum.substring(0, 8)
     return getBinFromCustomLoc("nsis", binaryVersion, customBinary.url, customBinary.checksum)
   }
-  if (nsis === "0.0.0" || nsis == null) {
+  const resolved = nsis ?? "1.2.1"
+  if (resolved === "0.0.0") {
     return getLegacyNsisBin()
   }
   const file = `nsis-bundle-3.12.tar.gz`
   return downloadBuilderToolset({
-    releaseName: `nsis@${nsis}`,
+    releaseName: `nsis@${resolved}`,
     filenameWithExt: file,
-    checksums: { [file]: nsisChecksums[nsis][file] },
+    checksums: { [file]: nsisChecksums[resolved][file] },
   })
 }
 
@@ -228,7 +231,7 @@ export async function getMakeNsisPath(nsis: ToolsetConfig["nsis"] | Nullish, cus
   }
 
   const bundlePath = await getNsisBundlePath(nsis, customBinary)
-  if (nsis === "0.0.0" || nsis == null) {
+  if ((nsis ?? "1.2.1") === "0.0.0") {
     return legacyBundle(bundlePath)
   }
   return entrypointBundle(bundlePath)
@@ -255,7 +258,7 @@ export async function getNsisPluginsPath(nsis: ToolsetConfig["nsis"] | Nullish, 
     const bundle = await getBinFromCustomLoc("nsis-resources", customNsisResources.version, customNsisResources.url, customNsisResources.checksum)
     return resolveCustomBundle(bundle, "CUSTOM_NSIS_RESOURCES")
   }
-  if (nsis === "0.0.0" || nsis == null) {
+  if ((nsis ?? "1.2.1") === "0.0.0") {
     return path.resolve(await getLegacyNsisResourcesBin(), "plugins")
   }
   return path.resolve(await getNsisBundlePath(nsis), "windows", "Plugins")

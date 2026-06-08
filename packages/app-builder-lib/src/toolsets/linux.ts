@@ -117,7 +117,7 @@ export async function getAppImageTools(appimageToolVersion: ToolsetConfig["appim
     }
   }
 
-  const isFuse2 = appimageToolVersion === "0.0.0" || appimageToolVersion == null
+  const isFuse2 = (appimageToolVersion ?? "1.0.3") === "0.0.0"
 
   const download = async () => {
     if (isFuse2) {
@@ -131,11 +131,12 @@ export async function getAppImageTools(appimageToolVersion: ToolsetConfig["appim
       return getFuse2Paths(artifactPath)
     }
 
+    const effectiveVersion = (appimageToolVersion ?? "1.0.3") as "1.0.2" | "1.0.3"
     const filenameWithExt = "appimage-tools-runtime-20251108.tar.gz"
     const artifactPath = await downloadBuilderToolset({
-      releaseName: `appimage@${appimageToolVersion}`,
+      releaseName: `appimage@${effectiveVersion}`,
       filenameWithExt,
-      checksums: { [filenameWithExt]: appimageChecksums[appimageToolVersion][filenameWithExt] },
+      checksums: { [filenameWithExt]: appimageChecksums[effectiveVersion][filenameWithExt] },
       githubOrgRepo: "electron-userland/electron-builder-binaries",
     })
     return getPaths(artifactPath)
