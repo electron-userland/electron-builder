@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig-base.json",
+  "compilerOptions": {
+    "composite": false,
+    "incremental": false,
+    "declaration": true
+  },
+  "include": ["../typings/*.d.ts"]
+}

@@ -9,7 +9,7 @@ import { MsiOptions } from "./options/MsiOptions.js"
 import { MsiWrappedOptions } from "./options/MsiWrappedOptions.js"
 import { PkgOptions } from "./options/pkgOptions.js"
 import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions.js"
-import { SnapcraftOptions, SnapOptions } from "./options/SnapOptions.js"
+import { SnapcraftOptions } from "./options/SnapOptions.js"
 import { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions.js"
 import { WindowsConfiguration } from "./options/winOptions.js"
 import { BuildResult } from "./packager.js"
@@ -108,14 +108,6 @@ export interface CommonConfiguration {
    * Produces a `.deb` archive installable via `dpkg -i` or `apt install`.
    */
   readonly deb?: DebOptions | null
-  /**
-   * Flat snap configuration targeting core22 and older snap bases.
-   *
-   * @deprecated Use `snapcraft` instead — it supersedes `snap` when both are present and supports
-   * all snap bases including core24. `snap` will be removed in a future major release.
-   * See {@link SnapOptions} for available properties.
-   */
-  readonly snap?: SnapOptions | null
   /**
    * Snapcraft configuration. Prefer this over the deprecated `snap` field.
    *
@@ -283,25 +275,6 @@ export interface Configuration extends CommonConfiguration, PlatformSpecificBuil
    * If `react-scripts` in the app dependencies, `react-cra` will be set automatically. Set to `null` to disable automatic detection.
    */
   extends?: Array<string> | string | null
-
-  /**
-   * *libui-based frameworks only* The version of NodeJS you are packaging for.
-   * You can set it to `current` to set the Node.js version that you use to run.
-   * @deprecated libui-based frameworks (proton-native, etc.) are no longer actively maintained. This option has no effect when using Electron.
-   */
-  readonly nodeVersion?: string | null
-
-  /**
-   * *libui-based frameworks only* The version of LaunchUI you are packaging for. Applicable for Windows only. Defaults to version suitable for used framework version.
-   * @deprecated libui-based frameworks (proton-native, etc.) are no longer actively maintained. This option has no effect when using Electron.
-   */
-  readonly launchUiVersion?: boolean | string | null
-
-  /**
-   * The framework name. One of `electron`, `proton`, `libui`. Defaults to `electron`.
-   * @deprecated `proton` and `libui` framework support is no longer actively maintained. Use `electron` (the default).
-   */
-  readonly framework?: string | null
 
   /**
    * Whether to disable sanity check asar package (useful for custom electron forks that implement their own encrypted integrity validation)

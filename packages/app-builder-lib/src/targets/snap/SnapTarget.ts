@@ -37,11 +37,11 @@ export default class SnapTarget extends Target {
     super(name)
 
     const {
-      config: { snapcraft, snap },
+      config: { snapcraft },
       platformSpecificBuildOptions,
     } = packager
 
-    this.options = deepAssign({}, platformSpecificBuildOptions, snapcraft ?? snap ?? {})
+    this.options = deepAssign({}, platformSpecificBuildOptions, snapcraft ?? {})
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
@@ -88,7 +88,7 @@ export default class SnapTarget extends Target {
       return fallback
     }
 
-    const snapConfig = config.snapcraft ?? config.snap
+    const snapConfig = config.snapcraft
     if (snapConfig?.publish) {
       return this.findSnapPublishConfigInPublishNode(snapConfig.publish)
     }
