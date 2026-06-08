@@ -93,7 +93,7 @@ export async function getWindowsKitsBundle({ winCodeSign, arch, resourcesDir = "
     return { kit: path.resolve(vendorPath, "windows-10", arch === Arch.arm64 ? "x64" : Arch[arch]), appxAssets: vendorPath }
   }
   const file = "windows-kits-bundle-10_0_26100_0.zip"
-  const vendorPath = await _getWindowsToolsBin(winCodeSign, file)
+  const vendorPath = await _getWindowsToolsBin(winCodeSign as CodeSignVersionKey, file)
   return { kit: path.resolve(vendorPath, arch === Arch.ia32 ? "x86" : Arch[arch]), appxAssets: vendorPath }
 }
 
@@ -151,7 +151,7 @@ async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] |
     }
     return "win-codesign-darwin-x86_64.zip"
   })()
-  const vendorPath = await _getWindowsToolsBin(winCodeSign, file)
+  const vendorPath = await _getWindowsToolsBin(winCodeSign as CodeSignVersionKey, file)
   return { path: path.resolve(vendorPath, "osslsigncode") }
 }
 
@@ -164,12 +164,13 @@ export async function getRceditBundle(winCodeSign: ToolsetConfig["winCodeSign"] 
     const overridePath = rcedit
     return { x86: path.resolve(overridePath, x86), x64: path.resolve(overridePath, x64) }
   }
-  if (winCodeSign === "0.0.0" || winCodeSign == null) {
+  const resolved = winCodeSign ?? "1.1.0"
+  if (resolved === "0.0.0") {
     const vendorPath = await getLegacyWinCodeSignBin()
     return { x86: path.resolve(vendorPath, ia32), x64: path.resolve(vendorPath, x64) }
   }
   const file = "rcedit-windows-2_0_0.zip"
-  const vendorPath = await _getWindowsToolsBin(winCodeSign, file)
+  const vendorPath = await _getWindowsToolsBin(resolved, file)
   return { x86: path.resolve(vendorPath, x86), x64: path.resolve(vendorPath, x64) }
 }
 
