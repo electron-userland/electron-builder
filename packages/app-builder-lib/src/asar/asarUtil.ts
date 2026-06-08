@@ -1,16 +1,16 @@
 import type { AsarStreamType, AsarDirectory } from "@electron/asar"
-import { isEmptyOrSpaces, log } from "builder-util"
-import { dynamicImport } from "../util/dynamicImport"
-import { exists, Filter, FilterStats } from "builder-util/out/fs"
-import * as fs from "fs-extra"
-import { readlink } from "fs-extra"
+import { exists, Filter, FilterStats, isEmptyOrSpaces, log } from "builder-util"
+import { dynamicImport } from "../util/dynamicImport.js"
+import fs from "fs-extra"
+
 import * as path from "path"
-import { AsarOptions } from "../options/PlatformSpecificBuildOptions"
-import { PlatformPackager } from "../platformPackager"
-import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier"
-import { detectUnpackedDirs } from "./unpackDetector"
+import { AsarOptions } from "../options/PlatformSpecificBuildOptions.js"
+import { PlatformPackager } from "../platformPackager.js"
+import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier.js"
+import { detectUnpackedDirs } from "./unpackDetector.js"
 import { Readable } from "stream"
 import * as os from "os"
+const { readlink } = fs
 
 const resolvePath = async (file: string | undefined): Promise<string | undefined> => (file && (await exists(file)) ? fs.realpath(file).catch(() => path.resolve(file)) : undefined)
 const resolvePaths = async (filepaths: (string | undefined)[]) => {

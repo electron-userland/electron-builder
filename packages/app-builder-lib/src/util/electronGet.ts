@@ -8,8 +8,8 @@ import {
   MirrorOptions,
 } from "@electron/get"
 import { buildGotProxyAgent, exec, exists, log, PADDING, parseValidEnvVarUrl, sanitizeDirPath, to7zaOutputSwitch } from "builder-util"
-import { getPath7za } from "../toolsets/7zip"
-import { MultiProgress } from "electron-publish/out/multiProgress"
+import { getPath7za } from "../toolsets/7zip.js"
+import { MultiProgress } from "electron-publish"
 import { createReadStream, createWriteStream } from "fs"
 import * as fs from "fs/promises"
 import * as crypto from "crypto"
@@ -20,8 +20,8 @@ import { pipeline } from "stream/promises"
 import * as tar from "tar"
 import * as unzipper from "unzipper"
 import { HttpError, retry } from "builder-util-runtime"
-import { ElectronPlatformName } from "../electron/ElectronFramework"
-import { CacheState, cleanupCacheDirectory, computeCacheMetadata, readCacheStateFile, validateCacheDirectory, writeCacheState } from "./cacheState"
+import { ElectronPlatformName } from "../electron/ElectronFramework.js"
+import { CacheState, cleanupCacheDirectory, computeCacheMetadata, readCacheStateFile, validateCacheDirectory, writeCacheState } from "./cacheState.js"
 import type { ProgressBar } from "electron-publish"
 
 export type ElectronGetOptions = Omit<

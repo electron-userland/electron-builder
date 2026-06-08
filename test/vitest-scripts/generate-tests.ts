@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env tsx
 import { existsSync, rmSync } from "fs-extra"
 import { generateLinuxToolsetTests } from "./generate-toolset-tests-linux"
 import { GENERATED_TESTS_DIR } from "./generate-toolset-tests-shared"

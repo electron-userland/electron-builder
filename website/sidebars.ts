@@ -86,6 +86,10 @@ const sidebars: SidebarsConfig = {
     { type: "doc", id: "features/electron-forge", label: "Electron Forge" },
   ],
 
+  migrationSidebar: [
+    { type: "doc", id: "migration/v26-to-v27", label: "v26 → v27" },
+  ],
+
   tutorialsSidebar: [
     { type: "doc", id: "tutorials/adding-electron-fuses", label: "Adding Electron Fuses" },
     { type: "doc", id: "tutorials/code-signing-windows-apps-on-unix", label: "Code Signing Windows Apps on Unix" },

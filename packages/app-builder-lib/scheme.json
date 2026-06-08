@@ -9247,10 +9247,6 @@
       "$ref": "#/definitions/ElectronBrandingOptions",
       "description": "The branding used by Electron's distributables. This is needed if a fork has modified Electron's BRANDING.json file."
     },
-    "electronCompile": {
-      "description": "Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified.",
-      "type": "boolean"
-    },
     "electronDist": {
       "anyOf": [
         {
@@ -9268,10 +9264,10 @@
     "electronDownload": {
       "anyOf": [
         {
-          "$ref": "#/definitions/ElectronDownloadOptions"
+          "$ref": "#/definitions/ElectronGetOptions"
         },
         {
-          "$ref": "#/definitions/ElectronGetOptions"
+          "$ref": "#/definitions/ElectronDownloadOptions"
         },
         {
           "type": "null"

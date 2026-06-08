@@ -1,7 +1,7 @@
 import { GitlabOptions, GitlabReleaseInfo, HttpError } from "builder-util-runtime"
-import { GitLabProvider } from "electron-updater/src/providers/GitLabProvider"
-import { assertDownloadNotTriggered, getProvider, mockYaml } from "../helpers/providerTestUtil"
-import { createMockRequest, createNsisUpdater, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { GitLabProvider } from "electron-updater/internal"
+import { assertDownloadNotTriggered, getProvider, mockYaml } from "../helpers/providerTestUtil.js"
+import { createMockRequest, createNsisUpdater, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 
 const MOCK_PROJECT_ID = 99999999
 const STABLE_VERSION = "1.1.0"

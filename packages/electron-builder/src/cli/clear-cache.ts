@@ -1,7 +1,7 @@
-import { getCacheDirectory } from "app-builder-lib/out/util/electronGet"
+import { getCacheDirectory } from "app-builder-lib/internal"
 import { log } from "builder-util"
 import { access, constants, rm } from "fs/promises"
-import { createInterface } from "readline/promises"
+import { createInterface } from "node:readline/promises"
 import * as path from "path"
 
 export async function clearCache(): Promise<void> {

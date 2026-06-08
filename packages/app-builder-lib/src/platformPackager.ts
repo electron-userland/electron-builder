@@ -1,5 +1,5 @@
 import type { FuseConfig, FuseV1Config } from "@electron/fuses"
-import { dynamicImport } from "./util/dynamicImport"
+import { dynamicImport } from "./util/dynamicImport.js"
 import {
   Arch,
   asArray,
@@ -23,15 +23,18 @@ import { Minimatch } from "minimatch"
 import * as path from "path"
 import * as fs from "fs/promises"
 import * as os from "os"
-import { AppInfo } from "./appInfo"
-import { checkFileInArchive } from "./asar/asarFileChecker"
-import { AsarPackager } from "./asar/asarUtil"
-import { AsarIntegrity, computeData } from "./asar/integrity"
-import { FuseOptionsV1 } from "./configuration"
-import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers, getNodeModuleFileMatcher } from "./fileMatcher"
-import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
-import { Framework, isElectronBased } from "./Framework"
-import {
+import { AppInfo } from "./appInfo.js"
+import { checkFileInArchive } from "./asar/asarFileChecker.js"
+import { AsarPackager } from "./asar/asarUtil.js"
+import { AsarIntegrity, computeData } from "./asar/integrity.js"
+import { FuseOptionsV1 } from "./configuration.js"
+import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers, getNodeModuleFileMatcher } from "./fileMatcher.js"
+import { createTransformer } from "./fileTransformer.js"
+import { Framework, isElectronBased } from "./Framework.js"
+import { Platform } from "./core.js"
+// Type-only barrel import: keeping these erased avoids a runtime cycle
+// (index.ts → linuxPackager.ts → platformPackager.ts) that breaks ESM class init.
+import type {
   AfterPackContext,
   AsarOptions,
   CompressionLevel,
@@ -41,15 +44,14 @@ import {
   LinuxPackager,
   Packager,
   PackagerOptions,
-  Platform,
   PlatformSpecificBuildOptions,
   Target,
   TargetSpecificOptions,
-} from "./index"
-import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier"
-import { convertIcon, IconFormat, IconInfo } from "./util/iconConverter"
-import { expandMacro as doExpandMacro } from "./util/macroExpander"
-import { AssetCatalogResult, generateAssetCatalogForIcon } from "./util/macosIconComposer"
+} from "./index.js"
+import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, transformFiles } from "./util/appFileCopier.js"
+import { convertIcon, IconFormat, IconInfo } from "./util/iconConverter.js"
+import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
+import { AssetCatalogResult, generateAssetCatalogForIcon } from "./util/macosIconComposer.js"
 
 export type DoPackOptions<DC extends PlatformSpecificBuildOptions> = {
   outDir: string
@@ -420,7 +422,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       linux: "",
     }[electronPlatformName]
 
-    const executableName = this instanceof LinuxPackager ? this.executableName : this.appInfo.productFilename
+    // `"executableName" in this` instead of `instanceof LinuxPackager` keeps LinuxPackager a
+    // type-only import, avoiding the index.ts → linuxPackager.ts → platformPackager.ts runtime cycle.
+    const executableName = "executableName" in this ? (this as LinuxPackager).executableName : this.appInfo.productFilename
     const electronBinaryPath = path.join(appOutDir, `${executableName}${ext}`)
 
     log.info({ electronPath: log.filePath(electronBinaryPath) }, "executing @electron/fuses")
@@ -464,9 +468,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   ) {
     const appDir = this.info.appDir
     const config = this.config
-    const isElectronCompile = asarOptions != null && isElectronCompileUsed(this.info)
 
-    const mainMatchers = getMainFileMatchers(appDir, defaultDestination, macroExpander, platformSpecificBuildOptions, this, packContext.outDir, isElectronCompile)
+    const mainMatchers = getMainFileMatchers(appDir, defaultDestination, macroExpander, platformSpecificBuildOptions, this, packContext.outDir)
     if (excludePatterns.length > 0) {
       for (const matcher of mainMatchers) {
         matcher.excludePatterns = excludePatterns
@@ -474,21 +477,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const framework = this.info.framework
-    const transformer = createTransformer(
-      appDir,
-      config,
-      isElectronCompile
-        ? {
-            originalMain: this.info.metadata.main,
-            main: ELECTRON_COMPILE_SHIM_FILENAME,
-            ...config.extraMetadata,
-          }
-        : config.extraMetadata,
-      framework.createTransformer == null ? null : framework.createTransformer()
-    )
+    const transformer = createTransformer(appDir, config, config.extraMetadata, framework.createTransformer == null ? null : framework.createTransformer())
 
     const _computeFileSets = (matchers: Array<FileMatcher>) => {
-      return computeFileSets(matchers, this.info.isPrepackedAppAsar ? null : transformer, this, isElectronCompile).then(async result => {
+      return computeFileSets(matchers, this.info.isPrepackedAppAsar ? null : transformer, this).then(async result => {
         if (!this.info.isPrepackedAppAsar && !this.info.areNodeModulesHandledExternally) {
           const moduleFileMatcher = getNodeModuleFileMatcher(appDir, defaultDestination, macroExpander, platformSpecificBuildOptions, this.info)
           result = result.concat(await computeNodeModuleFileSets(this, moduleFileMatcher))

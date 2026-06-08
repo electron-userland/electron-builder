@@ -1,13 +1,13 @@
 import { exists, log, retry, stripSensitiveEnvVars, TmpDir } from "builder-util"
 import * as childProcess from "child_process"
-import * as fs from "fs-extra"
-import { createWriteStream } from "fs-extra"
+import { createWriteStream } from "node:fs"
+import _fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { hoist, type HoisterResult, type HoisterTree } from "./hoist"
-import { LogMessageByKey, ModuleManager } from "./moduleManager"
-import { getPackageManagerCommand, PM } from "./packageManager"
-import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types"
+import { hoist, type HoisterResult, type HoisterTree } from "./hoist.js"
+import { LogMessageByKey, ModuleManager } from "./moduleManager.js"
+import { getPackageManagerCommand, PM } from "./packageManager.js"
+import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types.js"
 
 export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDepType, OptionalDepType>, OptionalDepType> {
   private readonly nodeModules: NodeModuleInfo[] = []
@@ -96,7 +96,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return retry(
       async () => {
         await this.streamCollectorCommandToFile(command, args, this.rootDir, tempOutputFile)
-        const shellOutput = await fs.readFile(tempOutputFile, { encoding: "utf8" })
+        const shellOutput = await _fsExtra.readFile(tempOutputFile, { encoding: "utf8" })
         const result = await Promise.resolve(this.parseDependenciesTree(shellOutput))
         return result
       },
@@ -112,7 +112,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
             return true
           }
 
-          const fileContent = await fs.readFile(tempOutputFile, { encoding: "utf8" })
+          const fileContent = await _fsExtra.readFile(tempOutputFile, { encoding: "utf8" })
           fields.fileContentLength = fileContent.length.toString()
 
           if (fileContent.trim().length === 0) {
@@ -332,7 +332,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     const file = await this.tempDirManager.getTempFile({ prefix: "exec-", suffix: ".txt" })
     try {
       await this.streamCollectorCommandToFile(command, args, cwd, file)
-      const result = await fs.readFile(file, { encoding: "utf8" })
+      const result = await _fsExtra.readFile(file, { encoding: "utf8" })
       return { stdout: result?.trim(), stderr: undefined }
     } catch (error: any) {
       log.debug({ error: error.message }, "failed to execute command")

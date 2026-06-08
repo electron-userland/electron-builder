@@ -1,6 +1,6 @@
 import { mkdir, readFile, readdir, rename, stat } from "fs/promises"
 import * as path from "path"
-import { runIconsTool } from "../toolsets/icons"
+import { runIconsTool } from "../toolsets/icons.js"
 
 class IconConversionError extends Error {
   constructor(

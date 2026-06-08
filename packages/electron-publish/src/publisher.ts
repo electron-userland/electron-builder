@@ -1,9 +1,9 @@
 import { log, PADDING } from "builder-util"
 import { ProgressCallbackTransform, PublishProvider } from "builder-util-runtime"
-import * as chalk from "chalk"
-import { createReadStream, Stats } from "fs-extra"
-import { PublishContext, UploadTask } from "."
-import { ProgressBar } from "./progress"
+import chalk from "chalk"
+import fsExtra from "fs-extra"
+import { PublishContext, UploadTask } from "./index.js"
+import { ProgressBar } from "./progress.js"
 
 const progressBarOptions = {
   incomplete: " ",
@@ -28,8 +28,8 @@ export abstract class Publisher {
     })
   }
 
-  protected createReadStreamAndProgressBar(file: string, fileStat: Stats, progressBar: ProgressBar | null, reject: (error: Error) => void): NodeJS.ReadableStream {
-    const fileInputStream = createReadStream(file)
+  protected createReadStreamAndProgressBar(file: string, fileStat: fsExtra.Stats, progressBar: ProgressBar | null, reject: (error: Error) => void): NodeJS.ReadableStream {
+    const fileInputStream = fsExtra.createReadStream(file)
     fileInputStream.on("error", reject)
 
     if (progressBar == null) {

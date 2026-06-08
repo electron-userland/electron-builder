@@ -169,6 +169,13 @@ const config: Config = {
         },
 
         {
+          type: "docSidebar",
+          sidebarId: "migrationSidebar",
+          position: "left",
+          label: "Migration",
+        },
+
+        {
           href: "https://github.com/electron-userland/electron-builder",
           label: "GitHub",
           position: "right",

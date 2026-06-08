@@ -1,8 +1,8 @@
 import * as path from "path"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { AppImageUpdater, DebUpdater } from "electron-updater"
-import type { AppAdapter } from "electron-updater/out/AppAdapter"
-import type { InstallOptions } from "electron-updater/out/BaseUpdater"
+import type { AppAdapter } from "electron-updater/src/AppAdapter"
+import type { InstallOptions } from "electron-updater/src/BaseUpdater"
 
 const stubApp: AppAdapter = {
   name: "TestApp",

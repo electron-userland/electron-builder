@@ -3,7 +3,7 @@ import { ClientRequest, request as httpRequest } from "http"
 import { HttpProxyAgent } from "http-proxy-agent"
 import * as https from "https"
 import { HttpsProxyAgent } from "https-proxy-agent"
-import { isEmptyOrSpaces } from "./stringUtil"
+import { isEmptyOrSpaces } from "./stringUtil.js"
 
 export class NodeHttpExecutor extends HttpExecutor<ClientRequest> {
   // noinspection JSMethodCanBeStatic

@@ -1,32 +1,35 @@
 import { Arch, CopyFileTransformer, exists, FileTransformer, InvalidConfigurationError, log, walk } from "builder-util"
+import { createRequire } from "node:module"
 import { Nullish } from "builder-util-runtime"
 import { isCI } from "ci-info"
 import { createHash } from "crypto"
 import { readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { readAsarHeader } from "./asar/asar"
-import { SignManager } from "./codeSign/signManager"
-import { signWindows, WindowsSignOptions } from "./codeSign/windowsCodeSign"
-import { WindowsSignAzureManager } from "./codeSign/windowsSignAzureManager"
-import { FileCodeSigningInfo, WindowsSignToolManager } from "./codeSign/windowsSignToolManager"
-import { AfterPackContext } from "./configuration"
-import { DIR_TARGET, Platform, Target } from "./core"
-import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOptions"
-import { Packager } from "./packager"
-import { chooseNotNull, PlatformPackager } from "./platformPackager"
-import AppXTarget from "./targets/AppxTarget"
-import MsiTarget from "./targets/MsiTarget"
-import MsiWrappedTarget from "./targets/MsiWrappedTarget"
-import { NsisTarget } from "./targets/nsis/NsisTarget"
-import { AppPackageHelper, CopyElevateHelper } from "./targets/nsis/nsisUtil"
-import { WebInstallerTarget } from "./targets/nsis/WebInstallerTarget"
-import { createCommonTarget } from "./targets/targetFactory"
-import { BuildCacheManager, digest } from "./util/cacheManager"
-import { isBuildCacheEnabled } from "./util/flags"
-import { editWindowsResources, ResourceEditOptions } from "./util/resEdit"
-import { time } from "./util/timer"
-import { getWindowsVm, VmManager } from "./vm/vm"
+import { readAsarHeader } from "./asar/asar.js"
+import { SignManager } from "./codeSign/signManager.js"
+import { signWindows, WindowsSignOptions } from "./codeSign/windowsCodeSign.js"
+import { WindowsSignAzureManager } from "./codeSign/windowsSignAzureManager.js"
+import { FileCodeSigningInfo, WindowsSignToolManager } from "./codeSign/windowsSignToolManager.js"
+import { AfterPackContext } from "./configuration.js"
+import { DIR_TARGET, Platform, Target } from "./core.js"
+import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOptions.js"
+import { Packager } from "./packager.js"
+import { chooseNotNull, PlatformPackager } from "./platformPackager.js"
+import AppXTarget from "./targets/AppxTarget.js"
+import MsiTarget from "./targets/MsiTarget.js"
+import MsiWrappedTarget from "./targets/MsiWrappedTarget.js"
+import { NsisTarget } from "./targets/nsis/NsisTarget.js"
+import { AppPackageHelper, CopyElevateHelper } from "./targets/nsis/nsisUtil.js"
+import { WebInstallerTarget } from "./targets/nsis/WebInstallerTarget.js"
+import { createCommonTarget } from "./targets/targetFactory.js"
+import { BuildCacheManager, digest } from "./util/cacheManager.js"
+import { isBuildCacheEnabled } from "./util/flags.js"
+import { editWindowsResources, ResourceEditOptions } from "./util/resEdit.js"
+import { time } from "./util/timer.js"
+import { getWindowsVm, VmManager } from "./vm/vm.js"
+
+const _require = createRequire(import.meta.url)
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))
@@ -89,19 +92,19 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
           switch (name) {
             case "squirrel":
               try {
-                return require("electron-builder-squirrel-windows").default
+                return _require("electron-builder-squirrel-windows").default
               } catch (e: any) {
                 throw new InvalidConfigurationError(`Module electron-builder-squirrel-windows must be installed in addition to build Squirrel.Windows: ${e.stack || e}`)
               }
 
             case "appx":
-              return require("./targets/AppxTarget").default
+              return AppXTarget
 
             case "msi":
-              return require("./targets/MsiTarget").default
+              return MsiTarget
 
             case "msiwrapped":
-              return require("./targets/MsiWrappedTarget").default
+              return MsiWrappedTarget
 
             default:
               return null
