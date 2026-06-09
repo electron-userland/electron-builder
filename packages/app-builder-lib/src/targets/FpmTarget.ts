@@ -17,6 +17,7 @@ import { isMacOsSierra } from "../util/macosVersion.js"
 import { getTemplatePath } from "../util/pathManager.js"
 import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper.js"
 import { getFpmPath } from "../toolsets/fpm.js"
+import { isFpmDebug } from "../util/flags.js"
 import { getLinuxToolsPath } from "../toolsets/linuxToolsMac.js"
 import _fsExtra from "fs-extra"
 const { copyFile, outputFile, stat } = _fsExtra
@@ -320,7 +321,7 @@ export default class FpmTarget extends Target {
 
   private async executeFpm(target: string, fpmConfiguration: FpmConfiguration, env: any) {
     const fpmArgs = ["-s", "dir", "--force", "-t", target]
-    const forceDebugLogging = process.env.FPM_DEBUG === "true"
+    const forceDebugLogging = isFpmDebug()
     if (forceDebugLogging) {
       fpmArgs.push("--debug")
     }

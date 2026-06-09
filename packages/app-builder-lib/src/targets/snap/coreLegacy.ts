@@ -12,6 +12,7 @@ import { getTemplatePath } from "../../util/pathManager.js"
 import { SnapCore } from "./SnapTarget.js"
 import { SnapcraftYAML } from "./snapcraft.js"
 import { DEFAULT_STAGE_PACKAGES } from "./snapcraftBuilder.js"
+import { isSnapDestructiveMode } from "../../util/flags.js"
 
 // Snap template release info from electron-userland/electron-builder-binaries
 const SNAP_TEMPLATES = {
@@ -329,7 +330,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
     await copyDir(appOutDir, path.join(stageDir, "app"))
 
     // Run snapcraft (legacy `snap` subcommand)
-    const isDestructiveMode = process.env.SNAP_DESTRUCTIVE_MODE === "true"
+    const isDestructiveMode = isSnapDestructiveMode()
     const snapOutputName = "out.snap"
     const snapArgs = ["snap", "--output", isDestructiveMode ? artifactPath : snapOutputName]
     if (isDestructiveMode) {

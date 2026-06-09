@@ -1,4 +1,5 @@
 import { InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
+import { isElectronBuilderAllowedAsProductionDependency } from "./flags.js"
 import { Nullish } from "builder-util-runtime"
 import fsExtra from "fs-extra"
 import * as path from "path"
@@ -132,7 +133,7 @@ function checkDependencies(dependencies: Record<string, string> | Nullish, error
   }
 
   const deps = ["electron", "electron-prebuilt", "electron-rebuild"]
-  if (process.env.ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY !== "true") {
+  if (!isElectronBuilderAllowedAsProductionDependency()) {
     deps.push("electron-builder")
   }
   for (const name of deps) {
