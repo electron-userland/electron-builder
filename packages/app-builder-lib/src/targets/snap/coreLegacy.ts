@@ -1,4 +1,4 @@
-import { replaceDefault as _replaceDefault, Arch, copyDir, exec, log, serializeToYaml, toLinuxArchString } from "builder-util"
+import { replaceDefault as _replaceDefault, Arch, copyDir, exec, log, serializeToYaml, toLinuxArchString, validateShellEmbeddable } from "builder-util"
 import { asArray, deepAssign, isValidKey, Nullish } from "builder-util-runtime"
 import { chmod, copyFile, mkdir, readdir, rename, rm, writeFile } from "fs/promises"
 import _fsExtra from "fs-extra"
