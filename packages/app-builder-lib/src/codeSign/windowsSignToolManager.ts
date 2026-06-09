@@ -36,7 +36,7 @@ import * as path from "path"
 import { Target } from "../core.js"
 import { WindowsConfiguration } from "../options/winOptions.js"
 import AppXTarget from "../targets/AppxTarget.js"
-import { getSignToolPath } from "../toolsets/windows.js"
+import { getSignToolPath } from "../toolsets/winCodeSign.js"
 import { ToolInfo } from "../util/bundledTool.js"
 import { resolveFunction } from "../util/resolve.js"
 import { readCertInfo } from "./certInfo.js"
@@ -460,7 +460,7 @@ export class WindowsSignToolManager implements SignManager {
   }
 
   async getToolPath(isWin = process.platform === "win32"): Promise<ToolInfo> {
-    return getSignToolPath(this.packager.config.toolsets?.winCodeSign, isWin)
+    return getSignToolPath(this.packager.config.toolsets?.winCodeSign, isWin, this.packager.buildResourcesDir)
   }
 
   async doSign(configuration: CustomWindowsSignTaskConfiguration, packager: WinPackager) {
@@ -471,7 +471,7 @@ export class WindowsSignToolManager implements SignManager {
     let vm: VmManager
     const useVmIfNotOnWin = configuration.path.endsWith(".appx") || !("file" in configuration.cscInfo!) /* certificateSubjectName and other such options */
     const isWin = process.platform === "win32" || useVmIfNotOnWin
-    const toolInfo = await getSignToolPath(this.packager.config.toolsets?.winCodeSign, isWin)
+    const toolInfo = await getSignToolPath(this.packager.config.toolsets?.winCodeSign, isWin, this.packager.buildResourcesDir)
     const tool = toolInfo.path
     if (useVmIfNotOnWin) {
       vm = await packager.vm.value

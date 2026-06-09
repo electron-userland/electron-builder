@@ -3,26 +3,9 @@ import { PackageFileInfo } from "builder-util-runtime"
 import * as fs from "fs/promises"
 import * as path from "path"
 import * as zlib from "zlib"
-<<<<<<< HEAD
-<<<<<<< HEAD
-import { getNsisElevatePath } from "../../toolsets/windows.js"
+import { getNsisElevatePath } from "../../toolsets/nsis.js"
 import { getTemplatePath } from "../../util/pathManager.js"
 import { NsisTarget } from "./NsisTarget.js"
-=======
-import { getBinFromCustomLoc, getBinFromUrl } from "../../binDownload"
-import { getTemplatePath } from "../../util/pathManager"
-=======
-import { getBinFromCustomLoc, getBinFromUrl } from "../../binDownload.js"
-import { getTemplatePath } from "../../util/pathManager.js"
-<<<<<<< HEAD
->>>>>>> d26567f58 (tmp save)
-import { NsisOptions } from "./nsisOptions.js.js"
-import { NsisTarget } from "./NsisTarget.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { NsisOptions } from "./nsisOptions.js"
-import { NsisTarget } from "./NsisTarget.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export const nsisTemplatesDir = getTemplatePath("nsis")
 
@@ -84,7 +67,7 @@ export class CopyElevateHelper {
   private readonly copied = new Map<string, Promise<any>>()
 
   copy(appOutDir: string, target: NsisTarget): Promise<any> {
-    if (!target.packager.framework.isCopyElevateHelper) {
+    if (!target.packager.info.framework.isCopyElevateHelper) {
       return Promise.resolve()
     }
 
@@ -103,10 +86,10 @@ export class CopyElevateHelper {
       return promise
     }
 
-    promise = getNsisElevatePath(target.packager.config.toolsets?.nsis, target.options.customNsisBinary).then(elevatePath => {
+    promise = getNsisElevatePath(target.packager.config.toolsets?.nsis, target.packager.buildResourcesDir).then(elevatePath => {
       const outFile = path.join(appOutDir, "resources", "elevate.exe")
       const promise = copyFile(elevatePath, outFile, false)
-      const { signAndEditExecutable, signExecutable } = target.packager.platformOptions
+      const { signAndEditExecutable, signExecutable } = target.packager.platformSpecificBuildOptions
       if (signAndEditExecutable !== false && signExecutable !== false) {
         return promise.then(() => target.packager.signIf(outFile))
       }

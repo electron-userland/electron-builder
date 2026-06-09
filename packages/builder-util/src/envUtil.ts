@@ -62,3 +62,16 @@ export function parseValidEnvVarUrl(envVarName: string, allowHttp: boolean = fal
   }
   return url
 }
+
+export function validateSecuredUrl(url: string): URL {
+  let parsed: URL
+  try {
+    parsed = new URL(url)
+  } catch {
+    throw new Error(`Not a valid URL: ${url}`)
+  }
+  if (parsed.protocol !== "https:") {
+    throw new Error(`URL must use https:// (got ${parsed.protocol})`)
+  }
+  return parsed
+}

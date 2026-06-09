@@ -204,8 +204,6 @@ export interface CommonConfiguration {
    * - `base: "custom"` — pass an existing `snapcraft.yaml` through unchanged; no plugs, extensions,
    *   or desktop files are injected.
    *
-   * When both `snapcraft` and `snap` are set, `snapcraft` takes precedence.
-   *
    * @example
    * ```json
    * { "snapcraft": { "base": "core24", "core24": { "useLXD": true } } }
@@ -543,7 +541,8 @@ export type BeforePackContext = PackContext
 export type AfterExtractContext = PackContext
 
 /**
- * Version pins for the binary toolsets that electron-builder downloads and caches locally.
+ * Version pins (or custom bundle overrides) for the binary toolsets that electron-builder
+ * downloads and caches locally.
  *
  * Each toolset is a versioned archive hosted at
  * [electron-userland/electron-builder-binaries](https://github.com/electron-userland/electron-builder-binaries/releases).
@@ -551,14 +550,10 @@ export type AfterExtractContext = PackContext
  * Setting a property to `"0.0.0"` forces the legacy bundle — useful only for diagnosing
  * regressions introduced by newer toolset bundles.
  *
- * Override with environment variables to use a custom build from disk:
- * - `ELECTRON_BUILDER_WINDOWS_KITS_PATH` — custom Windows Kits directory
- * - `ELECTRON_BUILDER_NSIS_DIR` — custom NSIS `makensis` directory
- * - `ELECTRON_BUILDER_NSIS_RESOURCES_DIR` — custom NSIS plugins directory
- * - `APPIMAGE_TOOLS_PATH` — custom AppImage tools directory
- * - `ELECTRON_BUILDER_WINE_TOOLSET_DIR` — custom Wine directory
- * - `SIGNTOOL_PATH` — custom `signtool.exe` / `osslsigncode` path
- * - `ELECTRON_BUILDER_RCEDIT_PATH` — custom `rcedit` directory
+ * To supply your own bundle, set the property to a {@link ToolsetCustom} object with a `url`
+ * (https:// or file://) and a `checksum` for verification. The bundle must mirror the expected
+ * directory layout of the corresponding built-in bundle; see the build scripts at
+ * https://github.com/electron-userland/electron-builder-binaries/tree/master/packages.
  */
 export interface ToolsetConfig {
   /**
@@ -581,7 +576,7 @@ export interface ToolsetConfig {
    *
    * @default "1.1.0"
    */
-  readonly winCodeSign?: "0.0.0" | "1.0.0" | "1.1.0" | null
+  readonly winCodeSign?: "0.0.0" | "1.0.0" | "1.1.0" | ToolsetCustom | null
 
   /**
    * Version of the AppImage toolset bundle used for building `.AppImage` files.
@@ -595,14 +590,13 @@ export interface ToolsetConfig {
    * | Version | Runtime date | Notes |
    * |---------|-------------|-------|
    * | `"0.0.0"` | Legacy | FUSE2-based AppImage runtime (pre-v27 default) |
-   * | `"1.0.2"` | 20251108 | Static-runtime (FUSE3-compatible); same archive, earlier checksum |
    * | `"1.0.3"` | 20251108 | Static-runtime (FUSE3-compatible); recommended (default) |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage
    *
    * @default "1.0.3"
    */
-  readonly appimage?: "0.0.0" | "1.0.2" | "1.0.3" | null
+  readonly appimage?: "0.0.0" | "1.0.3" | ToolsetCustom | null
 
   /**
    * Version of the NSIS toolset bundle used to compile Windows installers.
@@ -623,7 +617,7 @@ export interface ToolsetConfig {
    *
    * @default "1.2.1"
    */
-  readonly nsis?: "0.0.0" | "1.2.1" | null
+  readonly nsis?: "0.0.0" | "1.2.1" | ToolsetCustom | null
 
   /**
    * Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on
@@ -645,7 +639,86 @@ export interface ToolsetConfig {
    *
    * @default "1.0.1"
    */
-  readonly wine?: "0.0.0" | "1.0.1" | null
+  readonly wine?: "0.0.0" | "1.0.1" | ToolsetCustom | null
+
+  /**
+   * Version of the FPM bundle used to build Linux packages (`.deb`, `.rpm`, `.pacman`, etc.)
+   * on macOS and Linux hosts.
+   *
+   * Available versions:
+   * | Version | FPM version | Notes |
+   * |---------|------------|-------|
+   * | `"1.0.0"` | 1.17.0 (Ruby 3.4.3) | Current default |
+   *
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=fpm
+   *
+   * @default "1.0.0"
+   */
+  readonly fpm?: "1.0.0" | ToolsetCustom | null
+
+  /**
+   * Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build
+   * Linux targets on macOS hosts.
+   *
+   * The bundle ships macOS-native builds of `ar`, `lzip`, and `gtar` (GNU tar).
+   *
+   * Available versions:
+   * | Version | Notes |
+   * |---------|-------|
+   * | `"1.0.0"` | Current default |
+   *
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=linux-tools-mac
+   *
+   * @default "1.0.0"
+   */
+  readonly linuxToolsMac?: "1.0.0" | ToolsetCustom | null
+}
+
+/**
+ * A custom toolset bundle supplied by the user in place of a built-in versioned bundle.
+ *
+ * The bundle must mirror the expected directory layout of the corresponding built-in bundle.
+ * See the build scripts at
+ * https://github.com/electron-userland/electron-builder-binaries/tree/master/packages.
+ *
+ * File formats supported for `url` archives: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`.
+ *
+ * @example
+ * ```json
+ * {
+ *   "toolsets": {
+ *     "nsis": {
+ *       "url": "file:///path/to/my-nsis-bundle.tar.gz",
+ *       "checksum": "abc123...",
+ *       "version": "my-custom-1.0"
+ *     }
+ *   }
+ * }
+ * ```
+ */
+export interface ToolsetCustom {
+  /**
+   * The `https://` URL or `file://` path to load the custom toolset bundle from.
+   *
+   * - `https://` — downloaded and cached locally; the archive is extracted before use.
+   * - `file:///absolute/path` — used directly; relative paths must be within the project resources dir.
+   *
+   * Archives (`.zip`, `.7z`, `.tar.gz`, `.tar.xz`) are extracted automatically.
+   * A bare directory path (no archive) is used as-is.
+   */
+  readonly url: string
+
+  /**
+   * SHA checksum of the custom toolset bundle for verification.
+   * Required for remote (`https://`) URLs; used as a cache key for local archives.
+   */
+  readonly checksum: string
+
+  /**
+   * Optional version label used in the local cache directory name.
+   * Falls back to the first 8 characters of `checksum` when omitted.
+   */
+  readonly version?: string
 }
 
 /**

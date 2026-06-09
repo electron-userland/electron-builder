@@ -6,7 +6,7 @@ const { outputFile, readFile } = _fsExtra
 import { load } from "js-yaml"
 import * as path from "path"
 import { PlugDescriptor, SnapOptions } from "../../options/SnapOptions.js"
-import { getAppImageTools } from "../../toolsets/linux.js"
+import { getAppImageTools } from "../../toolsets/appimage.js"
 import { downloadBuilderToolset } from "../../util/electronGet.js"
 import { getTemplatePath } from "../../util/pathManager.js"
 import { validateShellEmbeddable } from "../../frameworks/LibUiFramework.js"
@@ -428,7 +428,7 @@ async function getMksquashfsPath(arch: Arch): Promise<string> {
   if (envPath) {
     return envPath
   }
-  const { mksquashfs } = await getAppImageTools("0.0.0", arch)
+  const { mksquashfs } = await getAppImageTools("0.0.0", arch, "")
   return mksquashfs
 }
 

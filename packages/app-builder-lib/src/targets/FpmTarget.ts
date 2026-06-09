@@ -16,7 +16,8 @@ import { hashFile } from "../util/hash.js"
 import { isMacOsSierra } from "../util/macosVersion.js"
 import { getTemplatePath } from "../util/pathManager.js"
 import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper.js"
-import { getFpmPath, getLinuxToolsPath } from "../toolsets/linux.js"
+import { getFpmPath } from "../toolsets/fpm.js"
+import { getLinuxToolsPath } from "../toolsets/linuxToolsMac.js"
 import _fsExtra from "fs-extra"
 const { copyFile, outputFile, stat } = _fsExtra
 
@@ -288,7 +289,7 @@ export default class FpmTarget extends Target {
     // rpmbuild wants directory rpm with some default config files. Even if we can use dylibbundler, path to such config files are not changed (we need to replace in the binary)
     // so, for now, brew install rpm is still required.
     if (target !== "rpm" && (await isMacOsSierra())) {
-      const linuxToolsPath = await getLinuxToolsPath()
+      const linuxToolsPath = await getLinuxToolsPath(packager.config.toolsets?.linuxToolsMac, packager.buildResourcesDir)
       Object.assign(env, {
         PATH: computeEnv(process.env.PATH, [path.join(linuxToolsPath, "bin")]),
         DYLD_LIBRARY_PATH: computeEnv(process.env.DYLD_LIBRARY_PATH, [path.join(linuxToolsPath, "lib")]),
@@ -335,7 +336,7 @@ export default class FpmTarget extends Target {
     fpmArgs.push(...this.configureTargetSpecificOptions(target, fpmConfiguration.compression ?? defaultCompression))
     fpmArgs.push(...fpmConfiguration.args)
 
-    const fpmPath = await getFpmPath()
+    const fpmPath = await getFpmPath(this.packager.config.toolsets?.fpm, this.packager.buildResourcesDir)
 
     await exec(fpmPath, fpmArgs, { env }).catch(e => {
       if (e.message.includes("Need executable 'rpmbuild' to convert dir to rpm")) {

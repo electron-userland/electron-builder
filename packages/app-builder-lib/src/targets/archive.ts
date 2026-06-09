@@ -1,18 +1,11 @@
-<<<<<<< HEAD
 import { debug7z, exec, exists, log, statOrNull, unlinkIfExists } from "builder-util"
-=======
-import { debug7z, exec, exists, getPath7za, log, statOrNull, unlinkIfExists } from "builder-util"
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as path from "path"
 import { create } from "tar"
 import type { TarOptionsWithAliasesAsync } from "tar"
 import { TmpDir } from "temp-file"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { CompressionLevel } from "../core.js"
-<<<<<<< HEAD
-import { getLinuxToolsMacToolset } from "../toolsets/linux.js"
+import { getLinuxToolsMacToolset } from "../toolsets/linuxToolsMac.js"
+import { ToolsetConfig } from "../configuration.js"
 import { getPath7za } from "../toolsets/7zip.js"
 import _fsExtra from "fs-extra"
 const { move } = _fsExtra
@@ -32,20 +25,12 @@ type TarConfig = {
   dirToArchive: string
   isMacApp: boolean
   tempDirManager: TmpDir
+  linuxToolsMac?: ToolsetConfig["linuxToolsMac"]
+  buildResourcesDir?: string
 }
-=======
-import { CompressionLevel } from "../core"
-=======
-import { CompressionLevel } from "../core.js"
->>>>>>> d26567f58 (tmp save)
-import { getLinuxToolsPath } from "./tools.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { getLinuxToolsPath } from "./tools.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 /** @internal */
-export async function tar({ compression, format, outFile, dirToArchive, isMacApp, tempDirManager }: TarConfig): Promise<void> {
+export async function tar({ compression, format, outFile, dirToArchive, isMacApp, tempDirManager, linuxToolsMac, buildResourcesDir }: TarConfig): Promise<void> {
   const tarFile = await tempDirManager.getTempFile({ suffix: ".tar" })
   const tarArgs: TarOptionsWithAliasesAsync = {
     file: tarFile,
@@ -67,15 +52,10 @@ export async function tar({ compression, format, outFile, dirToArchive, isMacApp
   ])
 
   if (format === "tar.lz") {
-    const lzipPath = process.platform === "darwin" ? (await getLinuxToolsMacToolset()).lzip : "lzip"
+    const lzipPath = process.platform === "darwin" ? (await getLinuxToolsMacToolset(linuxToolsMac, buildResourcesDir ?? "")).lzip : "lzip"
     await exec(lzipPath, [compression === "store" ? "-1" : "-9", "--keep" /* keep (don't delete) input files */, tarFile])
-<<<<<<< HEAD
     // lzip creates the output file in the same directory as the input with a .lz suffix
     await move(`${tarFile}.lz`, outFile)
-=======
-    // bloody lzip creates file in the same dir where input file with postfix `.lz`, option --output doesn't work
-    await fsExtra.move(`${tarFile}.lz`, outFile)
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
     return
   }
 

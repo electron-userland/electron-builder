@@ -89,7 +89,7 @@ export default class AppImageTarget extends Target {
     let updateInfo: BlockMapDataHolder
     try {
       const appimageTool = this.packager.config.toolsets?.appimage
-      if (appimageTool == null || appimageTool === "0.0.0") {
+      if (appimageTool === "0.0.0") {
         updateInfo = await buildLegacyFuse2AppImage({
           appDir: appOutDir,
           stageDir: stageDir.dir,
@@ -145,7 +145,7 @@ export default class AppImageTarget extends Target {
               return "zstd" // maximum/normal/unset → zstd for static runtime
             })(),
           },
-        })
+        }, packager.buildResourcesDir)
       }
     } catch (error: any) {
       log.error({ error: error.message }, "failed to build AppImage")
