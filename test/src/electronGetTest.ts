@@ -38,7 +38,6 @@ async function createMinimalTarGz(archivePath: string, files: Record<string, str
   }
 }
 
-
 // ─── getCacheDirectory ────────────────────────────────────────────────────────
 
 describe("getCacheDirectory", () => {
@@ -386,15 +385,13 @@ describe("toolset archive cache", () => {
     await fs.writeFile(archiveCachePath, "corrupt data")
 
     let downloadArtifactCalled = false
-    vi.spyOn(get, "downloadArtifact").mockImplementation(async () => {
+    vi.spyOn(get, "downloadArtifact").mockImplementation(() => {
       downloadArtifactCalled = true
       throw new Error("expected-download-attempt")
     })
 
     const correctSha256 = "0000000000000000000000000000000000000000000000000000000000000000"
-    await expect(
-      downloadBuilderToolset({ releaseName, filenameWithExt: fileName, checksums: { [fileName]: correctSha256 } })
-    ).rejects.toThrow("expected-download-attempt")
+    await expect(downloadBuilderToolset({ releaseName, filenameWithExt: fileName, checksums: { [fileName]: correctSha256 } })).rejects.toThrow("expected-download-attempt")
 
     expect(downloadArtifactCalled).toBe(true)
   })
@@ -408,9 +405,9 @@ describe("toolset archive cache", () => {
     const networkArchive = path.join(freshCache, "fake-network-download.tar.gz")
     await createMinimalTarGz(networkArchive, { "network-file": "content" })
     let callCount = 0
-    vi.spyOn(get, "downloadArtifact").mockImplementation(async () => {
+    vi.spyOn(get, "downloadArtifact").mockImplementation(() => {
       callCount++
-      return networkArchive
+      return Promise.resolve(networkArchive)
     })
 
     await downloadBuilderToolset({ releaseName, filenameWithExt: fileName })
