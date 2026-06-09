@@ -1,7 +1,6 @@
 import { Arch } from "builder-util"
 import * as os from "os"
 import * as path from "path"
-import { getBinFromUrl } from "../binDownload.js"
 import { ToolsetConfig } from "../configuration.js"
 import { ToolInfo, computeToolEnv } from "../util/bundledTool.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
@@ -45,7 +44,11 @@ export const wincodesignChecksums = {
 type CodeSignVersionKey = keyof typeof wincodesignChecksums
 
 function _getWindowsToolsBin<V extends Exclude<CodeSignVersionKey, "0.0.0">>(winCodeSign: V, file: keyof (typeof wincodesignChecksums)[V]): Promise<string> {
-  return getBinFromUrl(`win-codesign@${winCodeSign}`, file as string, wincodesignChecksums[winCodeSign][file] as string)
+  return downloadBuilderToolset({
+    releaseName: `win-codesign@${winCodeSign}`,
+    filenameWithExt: file as string,
+    checksums: { [file as string]: wincodesignChecksums[winCodeSign][file] as string },
+  })
 }
 
 export async function getSignToolPath(winCodeSign: ToolsetConfig["winCodeSign"], isWin: boolean, resourcesDir: string): Promise<ToolInfo> {

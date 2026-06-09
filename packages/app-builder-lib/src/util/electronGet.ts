@@ -414,20 +414,92 @@ async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 /**
+ * Copies a remote artifact to a specific output path on disk.
+ * Unlike downloadBuilderToolset, this does not extract archives — it copies the raw file.
+ * Used for certificate imports where the caller needs the file at a known path.
+ */
+export async function download(url: string, output: string, checksum: string | null): Promise<void> {
+  const filenameWithExt = path.basename(new URL(url).pathname)
+  if (checksum == null) {
+    log.warn({ url }, "downloading without an integrity checksum — the download is not verified against a known-good hash")
+  }
+  const downloadedFile = await downloadArtifactToFile(
+    {
+      version: "9.9.9",
+      artifactName: filenameWithExt,
+      cacheRoot: path.resolve(getCacheDirectory({ allowEnvVarOverride: true }), "downloads"),
+      cacheMode: resolveCacheMode(),
+      ...(checksum != null ? { checksums: { [filenameWithExt]: checksum } } : { unsafelyDisableChecksums: true }),
+      mirrorOptions: { resolveAssetURL: async () => Promise.resolve(url) },
+      isGeneric: true,
+    },
+    filenameWithExt
+  )
+  await fs.copyFile(downloadedFile, output)
+}
+
+function validateBinaryCustomDir(envVarName: string, value: string): string {
+  if (value.includes("://") || value.includes("..") || value.startsWith("/")) {
+    throw new Error(
+      `${envVarName} must be a safe relative path component (e.g. "v1.0.0-custom"). ` +
+        `Values containing "://", "..", or a leading "/" are not allowed. Got: "${value}"`
+    )
+  }
+  return value
+}
+
+const CUSTOM_DIR_ENV_VARS = [
+  "NPM_CONFIG_ELECTRON_BUILDER_BINARIES_CUSTOM_DIR",
+  "npm_config_electron_builder_binaries_custom_dir",
+  "npm_package_config_electron_builder_binaries_custom_dir",
+  "ELECTRON_BUILDER_BINARIES_CUSTOM_DIR",
+] as const
+
+/**
+ * Resolves the final download URL for a builder binary, honouring:
+ *   ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL  – fully replaces the URL directory
+ *   ELECTRON_BUILDER_BINARIES_CUSTOM_DIR (and npm_ variants) – replaces releaseName in the path
+ *   overrideUrl (caller-supplied)                     – used as-is when no env var is set
+ *
+ * Exported for unit testing; not part of the public API.
+ * @internal
+ */
+export function resolveBuilderBinaryUrl(releaseName: string, filenameWithExt: string, baseUrl: string, overrideUrl?: string): string {
+  const envOverrideUrl = parseValidEnvVarUrl("ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL")
+  if (envOverrideUrl != null) {
+    return `${envOverrideUrl}/${filenameWithExt}`
+  }
+  if (overrideUrl != null) {
+    return `${overrideUrl}/${filenameWithExt}`
+  }
+  const customDirEntry = CUSTOM_DIR_ENV_VARS.map(name => ({ name, value: process.env[name] })).find(e => e.value != null)
+  if (customDirEntry != null) {
+    return `${baseUrl}${validateBinaryCustomDir(customDirEntry.name, customDirEntry.value!)}/${filenameWithExt}`
+  }
+  return `${baseUrl}${releaseName}/${filenameWithExt}`
+}
+
+/**
  * Downloads a generic artifact (.tar.gz or .zip) from a GitHub release.
  * Used for electron-builder-binaries tools (appimage, etc.).
  */
 export async function downloadBuilderToolset(options: {
   releaseName: string
   filenameWithExt: string
-  checksums?: Record<string, string>
+  checksums: Record<string, string>
   githubOrgRepo?: string
   overrideUrl?: string
 }): Promise<string> {
   const { releaseName, filenameWithExt, checksums, githubOrgRepo = "electron-userland/electron-builder-binaries", overrideUrl } = options
 
+  if (/[/\\]|^\.\./.test(filenameWithExt) || filenameWithExt.includes("..")) {
+    throw new Error(
+      `downloadBuilderToolset: unsafe filenameWithExt "${filenameWithExt}" — must be a plain filename with no path separators or traversal sequences`
+    )
+  }
+
   const baseUrl = getBinariesMirrorUrl(githubOrgRepo)
-  const fullUrl = overrideUrl ? `${overrideUrl}/${filenameWithExt}` : `${baseUrl}${releaseName}/${filenameWithExt}`
+  const fullUrl = resolveBuilderBinaryUrl(releaseName, filenameWithExt, baseUrl, overrideUrl)
   const suffix = hashUrlSafe(fullUrl, 5)
   const folderName = `${filenameWithExt.replace(/\.(tar\.gz|tgz|tar\.xz|txz|zip|7z)$/, "")}-${suffix}`
   const extractDir = path.join(getCacheDirectory({ allowEnvVarOverride: true }), releaseName, folderName)
@@ -443,7 +515,7 @@ export async function downloadBuilderToolset(options: {
     artifactName: filenameWithExt,
     cacheRoot: path.resolve(getCacheDirectory({ allowEnvVarOverride: true }), "downloads"),
     cacheMode: resolveCacheMode(),
-    ...(checksums != null ? { checksums } : { unsafelyDisableChecksums: true }),
+    checksums,
     mirrorOptions,
     isGeneric: true,
   }

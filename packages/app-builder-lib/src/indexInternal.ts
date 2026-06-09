@@ -1,6 +1,5 @@
 export { AsarFilesystem, readAsar, readAsarJson } from "./asar/asar.js"
 export { AsarIntegrity } from "./asar/integrity.js"
-export { getBinFromUrl } from "./binDownload.js"
 export { readCertInfo, _testingOnly } from "./codeSign/certInfo.js"
 export { createKeychain, findIdentity, isSignAllowed, removeKeychain } from "./codeSign/macCodeSign.js"
 export type { Identity } from "./codeSign/macCodeSign.js"
@@ -42,10 +41,12 @@ export {
   ArtifactDownloadOptions,
   ElectronDownloadOptions,
   ElectronGetOptions,
+  download,
   downloadBuilderToolset,
   downloadElectronArtifact,
   getCacheDirectory,
   getBinariesMirrorUrl,
+  resolveBuilderBinaryUrl,
 } from "./util/electronGet.js"
 export { buildSourceCandidates, convertIcon, getPngSize } from "./util/iconConverter.js"
 export { getLicenseAssets, getLicenseFiles } from "./util/license.js"
