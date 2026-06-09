@@ -2,7 +2,6 @@ import { exists } from "builder-util"
 import _fsExtra from "fs-extra"
 const { stat } = _fsExtra
 import * as path from "path"
-import { getBinFromUrl } from "../binDownload.js"
 import { ToolsetConfig } from "../configuration.js"
 import { ToolInfo } from "../util/bundledTool.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
@@ -10,11 +9,19 @@ import { getCustomToolsetPath } from "./custom.js"
 
 function getLegacyNsisBin(): Promise<string> {
   // Warning: Don't use v3.0.4.2 - https://github.com/electron-userland/electron-builder/issues/6334
-  return getBinFromUrl("nsis-3.0.4.1", "nsis-3.0.4.1.7z", "9877df902530f96357d13a7a31ae2b9df67f48b11ffc9a1700a7c961574ec5fa")
+  return downloadBuilderToolset({
+    releaseName: "nsis-3.0.4.1",
+    filenameWithExt: "nsis-3.0.4.1.7z",
+    checksums: { "nsis-3.0.4.1.7z": "9877df902530f96357d13a7a31ae2b9df67f48b11ffc9a1700a7c961574ec5fa" },
+  })
 }
 
 function getLegacyNsisResourcesBin(): Promise<string> {
-  return getBinFromUrl("nsis-resources-3.4.1", "nsis-resources-3.4.1.7z", "593a9a92ef958321293ac6a2ee61e64bf1bd543142a5bd6b3d310709cc924103")
+  return downloadBuilderToolset({
+    releaseName: "nsis-resources-3.4.1",
+    filenameWithExt: "nsis-resources-3.4.1.7z",
+    checksums: { "nsis-resources-3.4.1.7z": "593a9a92ef958321293ac6a2ee61e64bf1bd543142a5bd6b3d310709cc924103" },
+  })
 }
 
 export const nsisChecksums = {

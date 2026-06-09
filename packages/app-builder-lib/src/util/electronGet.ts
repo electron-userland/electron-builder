@@ -19,7 +19,7 @@ import * as lockfile from "proper-lockfile"
 import { pipeline } from "stream/promises"
 import * as tar from "tar"
 import * as unzipper from "unzipper"
-import { HttpError, retry, sleep } from "builder-util-runtime"
+import { HttpError, retry } from "builder-util-runtime"
 import { ElectronPlatformName } from "../electron/ElectronFramework.js"
 import { CacheState, cleanupCacheDirectory, computeCacheMetadata, readCacheStateFile, validateCacheDirectory, writeCacheState } from "./cacheState.js"
 import type { ProgressBar } from "electron-publish"
@@ -198,7 +198,7 @@ export async function extractArchive(file: string, dir: string) {
         throw Object.assign(new Error(`Source archive not found after retries: ${file}`), { code: "ENOENT", path: file })
       }
       log.warn({ file, attempt: i + 1 }, "source archive transiently missing, retrying")
-      await sleep(300 * (i + 1))
+      await new Promise(r => setTimeout(r, 300 * (i + 1)))
     }
 
     if (file.endsWith(".tar.gz") || file.endsWith(".tgz")) {
@@ -478,7 +478,7 @@ async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact
  * Unlike downloadBuilderToolset, this does not extract archives — it copies the raw file.
  * Used for certificate imports where the caller needs the file at a known path.
  */
-export async function download(url: string, output: string, checksum?: string | null): Promise<void> {
+export async function download(url: string, output: string, checksum: string | null): Promise<void> {
   const filenameWithExt = path.basename(new URL(url).pathname)
   if (checksum == null) {
     log.warn({ url }, "downloading without an integrity checksum — the download is not verified against a known-good hash")
