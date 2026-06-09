@@ -11,7 +11,7 @@ export { readCertInfo, _testingOnly } from "./codeSign/certInfo.js"
 export { Identity, createKeychain, findIdentity, isSignAllowed, removeKeychain } from "./codeSign/macCodeSign.js"
 >>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
 export { CustomWindowsSign, WindowsSignTaskConfiguration } from "./codeSign/windowsSignToolManager.js"
-export { Configuration, ToolsetConfig } from "./configuration.js"
+export { Configuration, ToolsetConfig, ToolsetCustom } from "./configuration.js"
 export { Publish } from "./core.js"
 export { getElectronVersion } from "./electron/electronVersion.js"
 export { FileMatcher, getFileMatchers, GetFileMatchersOptions } from "./fileMatcher.js"
