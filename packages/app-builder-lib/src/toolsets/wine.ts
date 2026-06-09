@@ -2,6 +2,7 @@ import { exists, InvalidConfigurationError, resolveEnvToolsetPath, sanitizeDirPa
 import * as path from "path"
 import { ToolsetConfig } from "../configuration.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
+import { isUseSystemWine } from "../util/flags.js"
 
 const wineToolsChecksums: Record<Exclude<ToolsetConfig["wine"], null | undefined>, Record<string, string>> = {
   "0.0.0": {
@@ -20,6 +21,7 @@ export async function getWineToolset(wine: ToolsetConfig["wine"]): Promise<{ exe
 
   const defaultEnv = { WINEDEBUG: "-all,err+all", WINEDLLOVERRIDES: "winemenubuilder.exe=d" }
 
+<<<<<<< HEAD
   const envPath = await resolveEnvToolsetPath("ELECTRON_BUILDER_WINE_TOOLSET_DIR", "directory")
   if (envPath != null) {
     // Probe for the wine binary: modern bundles ship bin/wine; legacy bundles (e.g. wine-4.0.1-mac) ship bin/wine64.
@@ -37,7 +39,7 @@ export async function getWineToolset(wine: ToolsetConfig["wine"]): Promise<{ exe
     }
   }
 
-  const useSystemWine = process.env.USE_SYSTEM_WINE === "true"
+  const useSystemWine = isUseSystemWine()
   const isLegacy = wine === "0.0.0" || wine == null
   const isLegacyOnLinux = isLegacy && process.platform === "linux"
 

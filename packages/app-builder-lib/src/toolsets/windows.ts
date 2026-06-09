@@ -6,7 +6,7 @@ import * as path from "path"
 import { ToolsetConfig } from "../configuration.js"
 import { ToolInfo, computeToolEnv } from "../util/bundledTool.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
-import { isUseSystemSigncode } from "../util/flags.js"
+import { isUseSystemOsslSigncode, isUseSystemSigncode } from "../util/flags.js"
 import _fsExtra from "fs-extra"
 const { stat } = _fsExtra
 
@@ -115,7 +115,7 @@ async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] |
   if (osslSigncodePath != null) {
     return { path: osslSigncodePath }
   }
-  if (process.platform === "win32" || process.env.USE_SYSTEM_OSSLSIGNCODE === "true") {
+  if (process.platform === "win32" || isUseSystemOsslSigncode()) {
     return { path: "osslsigncode" }
   }
 

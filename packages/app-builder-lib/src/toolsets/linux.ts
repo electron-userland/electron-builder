@@ -2,6 +2,7 @@ import { Arch, exists, resolveEnvToolsetPath, use } from "builder-util"
 import * as path from "path"
 import { ToolsetConfig } from "../configuration.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
+import { isUseSystemFpm } from "../util/flags.js"
 
 const fpmChecksums = {
   "fpm-1.17.0-ruby-3.4.3-darwin-arm64.7z": "6cc6d4785875bc7d79bdf52ca146080a4c300e1d663376ae79615fb548030ede",
@@ -63,7 +64,7 @@ export async function getFpmPath() {
     return customFpmPath
   }
   const exec = "fpm"
-  if (process.platform === "win32" || process.env.USE_SYSTEM_FPM === "true") {
+  if (process.platform === "win32" || isUseSystemFpm()) {
     return exec
   }
   const getKey = () => {

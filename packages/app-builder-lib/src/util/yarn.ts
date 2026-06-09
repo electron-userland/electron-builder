@@ -1,4 +1,5 @@
 import { asArray, log, retry, spawn, stripSensitiveEnvVars } from "builder-util"
+import { isNpmNoBinLinks } from "./flags.js"
 
 import { homedir } from "os"
 import * as path from "path"
@@ -105,7 +106,7 @@ export async function installDependencies(
   if (pm === PM.YARN) {
     execArgs.push("--prefer-offline")
   } else if (pm === PM.YARN_BERRY) {
-    if (process.env.NPM_NO_BIN_LINKS === "true") {
+    if (isNpmNoBinLinks()) {
       execArgs.push("--no-bin-links")
     }
   }
