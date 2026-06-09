@@ -22,9 +22,9 @@ import { resolveFunction } from "../util/resolve.js"
 <<<<<<< HEAD
 import { downloadElectronArtifactZip, ElectronDownloadOptions, ElectronGetOptions, extractArchive } from "../util/electronGet.js"
 export { ElectronDownloadOptions }
-import { createMacApp } from "./electronMac.js"
+import { createMacApp } from "./mac/electronMac.js"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion.js"
-import { addWinAsarIntegrity } from "./electronWin.js"
+import { addWinAsarIntegrity } from "./win/electronWin.js"
 import { FFMPEGInjector } from "./injectFFMPEG.js"
 import _fsExtra from "fs-extra"
 const { emptyDir, readdir, rename, rm } = _fsExtra

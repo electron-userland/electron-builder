@@ -2,12 +2,12 @@ import { asArray, copyOrLinkFile, getPlatformIconFileName, InvalidConfigurationE
 import { rename, utimes } from "fs/promises"
 import * as path from "path"
 import * as fs from "fs"
-import { filterCFBundleIdentifier } from "../appInfo.js"
-import { AsarIntegrity } from "../asar/integrity.js"
-import { MacPackager } from "../macPackager.js"
-import { normalizeExt } from "../platformPackager.js"
-import { savePlistFile, parsePlistFile, PlistObject, PlistValue } from "../util/mac/plist.js"
-import { createBrandingOpts } from "./ElectronFramework.js"
+import { filterCFBundleIdentifier } from "../../appInfo.js"
+import { AsarIntegrity } from "../../asar/integrity.js"
+import { MacPackager } from "../../macPackager.js"
+import { normalizeExt } from "../../platformPackager.js"
+import { savePlistFile, parsePlistFile, PlistObject, PlistValue } from "../../util/mac/plist.js"
+import { createBrandingOpts } from "../ElectronFramework.js"
 
 function doRename(basePath: string, oldName: string, newName: string) {
   return rename(path.join(basePath, oldName), path.join(basePath, newName))
