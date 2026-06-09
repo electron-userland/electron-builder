@@ -1,5 +1,45 @@
 # app-builder-lib
 
+## 26.15.3
+
+### Patch Changes
+
+- Fix(download): persist toolset archives in a predictable cache path so repeated builds and offline environments skip the @electron/get network round-trip _[`#9861`](https://github.com/electron-userland/electron-builder/pull/9861) [`9097daf`](https://github.com/electron-userland/electron-builder/commit/9097daff78f7f9450dc7e06f6e7eea94ed1394aa) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 4 dependencies</summary>
+
+<small>
+
+[`818a89f`](https://github.com/electron-userland/electron-builder/commit/818a89f4c3087ed53498d781bf0bb1ca4807d03d) [`35bfdeb`](https://github.com/electron-userland/electron-builder/commit/35bfdebe47f412c3bf14bc5d1b9d833bfa1ec7d4)
+
+</small>
+
+- `electron-publish@26.15.3`
+- `builder-util@26.15.3`
+- `dmg-builder@26.15.3`
+- `electron-builder-squirrel-windows@26.15.3`
+
+</details>
+
+## 26.15.2
+
+### Patch Changes
+
+- Fix(mac): use native `zip` for macOS zip target to preserve `.framework` symlinks and fix Squirrel.Mac auto-update validation _[`#9847`](https://github.com/electron-userland/electron-builder/pull/9847) [`e25f967`](https://github.com/electron-userland/electron-builder/commit/e25f9674d594524c2d0348c8fae456527391c9ca) [@mmaietta](https://github.com/mmaietta)_
+- Fix(icons): replace png2icons with wasm-vips Lanczos3 resampling for high-quality icon conversion _[`#9851`](https://github.com/electron-userland/electron-builder/pull/9851) [`f5ae163`](https://github.com/electron-userland/electron-builder/commit/f5ae1632a7d30db34660786c81d39fca773e9467) [@mmaietta](https://github.com/mmaietta)_
+- Fix: retry package install on transient network errors _[`#9850`](https://github.com/electron-userland/electron-builder/pull/9850) [`3951024`](https://github.com/electron-userland/electron-builder/commit/3951024641788af4a18f407074106b2a4196fc1f) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@26.15.2`
+- `electron-builder-squirrel-windows@26.15.2`
+
+</details>
+
 ## 26.15.1
 
 ### Patch Changes

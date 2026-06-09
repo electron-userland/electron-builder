@@ -1,4 +1,4 @@
-import { asArray, log, spawn, stripSensitiveEnvVars } from "builder-util"
+import { asArray, log, retry, spawn, stripSensitiveEnvVars } from "builder-util"
 
 import { homedir } from "os"
 import * as path from "path"
@@ -116,11 +116,20 @@ export async function installDependencies(
     execArgs.push(...additionalArgs)
   }
 
-  await spawn(execPath, execArgs, {
-    cwd: appDir,
-    env: {
-      ...getGypEnv(options.frameworkInfo, platform, arch, options.buildFromSource === true),
-      ...env,
+  const spawnEnv = {
+    ...getGypEnv(options.frameworkInfo, platform, arch, options.buildFromSource === true),
+    ...env,
+  }
+  await retry(() => spawn(execPath, execArgs, { cwd: appDir, env: spawnEnv }), {
+    retries: 3,
+    interval: 1000,
+    backoff: 2000,
+    shouldRetry: (e: any) => {
+      const isTransient = /ENOTFOUND|ECONNRESET|ETIMEDOUT|EAI_AGAIN|ECONNREFUSED/.test(e?.message ?? "")
+      if (isTransient) {
+        log.warn({ error: String(e?.message).split("\n")[0] }, "transient network error during package install, retrying")
+      }
+      return isTransient
     },
   })
 

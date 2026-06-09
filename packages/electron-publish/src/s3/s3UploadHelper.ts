@@ -55,6 +55,9 @@ export function startS3PutObject(params: S3PutObjectParams): { req: http.ClientR
   const headers: Record<string, string> = {
     "Content-Type": params.contentType,
     "Content-Length": String(stat.size),
+    // Declare the payload as unsigned so aws4 signs over this literal string
+    // rather than defaulting to SHA256("") — which would not match the streamed body.
+    "x-amz-content-sha256": "UNSIGNED-PAYLOAD",
   }
   if (params.acl != null) {
     headers["x-amz-acl"] = params.acl

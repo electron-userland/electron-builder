@@ -322,6 +322,20 @@ describe("BaseS3Publisher.upload — key construction and S3 request", () => {
     expect(capturedOpts()?.headers?.Authorization).toMatch(/^AWS4-HMAC-SHA256/)
   })
 
+  it("sets x-amz-content-sha256 to UNSIGNED-PAYLOAD for streaming uploads", async () => {
+    const { capturedOpts } = mockSuccessfulUpload()
+    await makeS3Publisher().upload(makeTask(testFile))
+    expect(capturedOpts()?.headers?.["x-amz-content-sha256"]).toBe("UNSIGNED-PAYLOAD")
+  })
+
+  it("Authorization header covers x-amz-content-sha256 (UNSIGNED-PAYLOAD in signed headers)", async () => {
+    const { capturedOpts } = mockSuccessfulUpload()
+    await makeS3Publisher().upload(makeTask(testFile))
+    const auth: string = capturedOpts()?.headers?.Authorization ?? ""
+    // aws4 includes x-amz-content-sha256 in SignedHeaders when present
+    expect(auth).toMatch(/x-amz-content-sha256/)
+  })
+
   it("cancellation destroys the request", async () => {
     let destroyCalled = false
     vi.mocked(https.request).mockImplementationOnce((_opts: unknown, _cb: unknown) => {
@@ -453,5 +467,13 @@ describe("publish-s3 parity — Go binary flag mapping to HTTP request", () => {
     const { capturedOpts } = mockSuccessfulUpload()
     await makeS3Publisher({ endpoint: "https://s3.custom.io" }).upload(makeTask(testFile))
     expect(capturedOpts()?.hostname).toBe("s3.custom.io")
+  })
+
+  it("x-amz-content-sha256 is UNSIGNED-PAYLOAD regardless of endpoint or path style", async () => {
+    for (const opts of [{ endpoint: "https://minio.local:9000" }, { forcePathStyle: true as const }, { region: "ap-southeast-1" }]) {
+      const { capturedOpts } = mockSuccessfulUpload()
+      await makeS3Publisher(opts).upload(makeTask(testFile))
+      expect(capturedOpts()?.headers?.["x-amz-content-sha256"]).toBe("UNSIGNED-PAYLOAD")
+    }
   })
 })

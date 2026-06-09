@@ -56,7 +56,8 @@ export function getBinFromUrl(releaseName: string, filenameWithExt: string, chec
     throw new Error(`getBinFromUrl: unsafe filenameWithExt "${filenameWithExt}" — must be a plain filename with no path separators or traversal sequences`)
   }
   let url: string
-  const overrideUrl = parseValidEnvVarUrl("ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL")
+  const allowHttp = process.env["ELECTRON_BUILDER_BINARIES_ALLOW_HTTP"] === "true"
+  const overrideUrl = parseValidEnvVarUrl("ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL", allowHttp)
   if (overrideUrl != null) {
     url = overrideUrl + "/" + filenameWithExt
   } else {

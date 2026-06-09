@@ -1,4 +1,4 @@
-# electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg?label=latest)](https://www.npmjs.com/package/electron-builder) [![downloads per month](https://img.shields.io/npm/dm/electron-builder.svg)](https://yarn.pm/electron-builder) [![donate](https://img.shields.io/badge/donate-donorbox-brightgreen.svg)](https://www.electron.build/donate)
+# electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg?label=latest)](https://www.npmjs.com/package/electron-builder) [![downloads per month](https://img.shields.io/npm/dm/electron-builder.svg)](https://yarn.pm/electron-builder)
 A complete solution to package and build a ready for distribution [Electron](https://electronjs.org), [Proton Native](https://proton-native.js.org/) app for macOS, Windows and Linux with “auto update” support out of the box. 📦
 
 Always looking for community contributions! 👀 Setting up a [dev environment](https://github.com/electron-userland/electron-builder/blob/master/CONTRIBUTING.md) is easy to do 🪩
@@ -206,4 +206,4 @@ $env:DEBUG = "electron-builder"
 
 ## Donate
 
-We do this open source work in our free time. If you'd like us to invest more time on it, please [donate](https://www.electron.build/docs/donate).
+This open source work is accomplished during free time. If you'd like to have more time invested in it, please consider [donating](https://www.electron.build/docs/donate).

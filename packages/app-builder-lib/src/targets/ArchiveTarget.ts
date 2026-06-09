@@ -68,6 +68,7 @@ export class ArchiveTarget extends Target {
         const archiveOptions = {
           compression: packager.compression,
           withoutDir,
+          preserveSymlinks: isMac,
         }
         await archive(format, artifactPath, dirToArchive, archiveOptions)
 

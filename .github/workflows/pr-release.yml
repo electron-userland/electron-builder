@@ -115,6 +115,15 @@ jobs:
             echo "Using default config: $CONFIG_PATH (no symlink needed)"
           fi
 
+      - name: Update npm to support OIDC token authentication for publishing
+        run: |
+          for i in 1 2 3; do
+            npm install -g npm@11.6.2 && break
+            [ $i -lt 3 ] && echo "npm install failed (attempt $i/3), retrying in 15s…" && sleep 15
+          done
+          npm -v
+        shell: bash
+
       - name: Create versions PR & prepare publish
         id: changesets
         uses: changesets/action@7af85527bb2f43a404b5823a6cad47661be255c1 # v1.5.3 - @marshallofsound fork

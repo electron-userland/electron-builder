@@ -1,6 +1,6 @@
 {
   "name": "electron-builder-squirrel-windows",
-  "version": "26.15.1",
+  "version": "26.15.3",
   "type": "module",
   "main": "./dist/SquirrelWindowsTarget.js",
   "exports": {
