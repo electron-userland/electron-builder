@@ -94,7 +94,6 @@ describe("GitLab Publisher - Unit Tests", () => {
 
         expect(publisher.toString()).toContain(GitlabTestFixtures.VERSIONS.validWithBuild)
       })
-
     })
 
     describe("Host Configuration", () => {

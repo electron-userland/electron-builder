@@ -13,7 +13,7 @@ import {
   use,
   walk,
 } from "builder-util"
-import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, deepAssign, PackageFileInfo, UUID } from "builder-util-runtime"
+import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, deepAssign, PackageFileInfo, sleep, UUID } from "builder-util-runtime"
 import _debug from "debug"
 import * as fs from "fs"
 
@@ -77,7 +77,7 @@ export class NsisTarget extends Target {
       deepAssign(this.options, (this.packager.config as any)[targetName === "nsis-web" ? "nsisWeb" : targetName])
     }
 
-    const deps = packager.info.metadata.dependencies
+    const deps = packager.metadata.dependencies
     if (deps != null && deps["electron-squirrel-startup"] != null) {
       log.warn('"electron-squirrel-startup" dependency is not required for NSIS')
     }
@@ -172,7 +172,7 @@ export class NsisTarget extends Target {
     const packager = this.packager
     const appInfo = packager.appInfo
     const options = this.options
-    const defaultArch = chooseNotNull(this.packager.platformSpecificBuildOptions.defaultArch, this.packager.config.defaultArch) ?? undefined
+    const defaultArch = chooseNotNull(this.packager.platformOptions.defaultArch, this.packager.config.defaultArch) ?? undefined
     const installerFilename = packager.expandArtifactNamePattern(options, "exe", primaryArch, this.installerFilenamePattern(primaryArch, defaultArch), false, defaultArch)
     const oneClick = options.oneClick !== false
     const installerPath = path.join(this.outDir, installerFilename)
@@ -191,7 +191,7 @@ export class NsisTarget extends Target {
       logFields.perMachine = isPerMachine
     }
 
-    await packager.info.emitArtifactBuildStarted(
+    await packager.emitArtifactBuildStarted(
       {
         targetPresentableName: this.name,
         file: installerPath,
@@ -214,7 +214,7 @@ export class NsisTarget extends Target {
       VERSION: appInfo.version,
 
       PROJECT_DIR: packager.projectDir,
-      BUILD_RESOURCES_DIR: packager.info.buildResourcesDir,
+      BUILD_RESOURCES_DIR: packager.buildResourcesDir,
 
       APP_PACKAGE_NAME: getWindowsInstallationAppPackageName(appInfo.name),
     }
@@ -225,7 +225,7 @@ export class NsisTarget extends Target {
       defines.UNINSTALL_REGISTRY_KEY_2 = `Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${guid}`
     }
 
-    const { homepage } = this.packager.info.metadata
+    const { homepage } = this.packager.metadata
     use(options.uninstallUrlHelp || homepage, it => (defines.UNINSTALL_URL_HELP = it))
     use(options.uninstallUrlInfoAbout || homepage, it => (defines.UNINSTALL_URL_INFO_ABOUT = it))
     use(options.uninstallUrlUpdateInfo || homepage, it => (defines.UNINSTALL_URL_UPDATE_INFO = it))
@@ -333,7 +333,7 @@ export class NsisTarget extends Target {
         updateInfo.isAdminRightsRequired = true
       }
 
-      await packager.info.emitArtifactBuildCompleted({
+      await packager.emitArtifactBuildCompleted({
         file: installerPath,
         updateInfo,
         target: this,
@@ -446,7 +446,7 @@ export class NsisTarget extends Target {
         let i = 0
         while (!(await exists(uninstallerPath)) && i++ < 100) {
           // noinspection JSUnusedLocalSymbols
-          await new Promise((resolve, _reject) => setTimeout(resolve, 300))
+          await sleep(300)
         }
       }
     } else {
@@ -477,7 +477,7 @@ export class NsisTarget extends Target {
       versionKey[1] = `/LANG=${localeId} ProductVersion "${nsisEscapeString(appInfo.shortVersion!)}"`
       versionKey[4] = `/LANG=${localeId} FileVersion "${nsisEscapeString(appInfo.shortVersion!)}"`
     }
-    use(this.packager.platformSpecificBuildOptions.legalTrademarks, it => versionKey.push(`/LANG=${localeId} LegalTrademarks "${nsisEscapeString(it)}"`))
+    use(this.packager.platformOptions.legalTrademarks, it => versionKey.push(`/LANG=${localeId} LegalTrademarks "${nsisEscapeString(it)}"`))
     use(appInfo.companyName, it => versionKey.push(`/LANG=${localeId} CompanyName "${nsisEscapeString(it)}"`))
     return versionKey
   }
@@ -486,41 +486,20 @@ export class NsisTarget extends Target {
     const packager = this.packager
     const options = this.options
 
-    const asyncTaskManager = new AsyncTaskManager(packager.info.cancellationToken)
+    const asyncTaskManager = new AsyncTaskManager(packager.cancellationToken)
 
     if (oneClick) {
       defines.ONE_CLICK = null
-
       if (options.runAfterFinish !== false) {
         defines.RUN_AFTER_FINISH = null
       }
-
-      asyncTaskManager.add(async () => {
-        const installerHeaderIcon = await packager.getResource(options.installerHeaderIcon, "installerHeaderIcon.ico")
-        if (installerHeaderIcon != null) {
-          defines.HEADER_ICO = installerHeaderIcon
-        }
-      })
+      asyncTaskManager.add(() => this.loadInstallerHeaderIcon(defines))
     } else {
       if (options.runAfterFinish === false) {
         defines.HIDE_RUN_AFTER_FINISH = null
       }
-
-      asyncTaskManager.add(async () => {
-        const installerHeader = await packager.getResource(options.installerHeader, "installerHeader.bmp")
-        if (installerHeader != null) {
-          defines.MUI_HEADERIMAGE = null
-          defines.MUI_HEADERIMAGE_RIGHT = null
-          defines.MUI_HEADERIMAGE_BITMAP = installerHeader
-        }
-      })
-
-      asyncTaskManager.add(async () => {
-        const bitmap = (await packager.getResource(options.installerSidebar, "installerSidebar.bmp")) || "${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp"
-        defines.MUI_WELCOMEFINISHPAGE_BITMAP = bitmap
-        defines.MUI_UNWELCOMEFINISHPAGE_BITMAP = (await packager.getResource(options.uninstallerSidebar, "uninstallerSidebar.bmp")) || bitmap
-      })
-
+      asyncTaskManager.add(() => this.loadInstallerHeader(defines))
+      asyncTaskManager.add(() => this.loadInstallerSidebar(defines))
       if (options.allowElevation !== false) {
         defines.MULTIUSER_INSTALLMODE_ALLOW_ELEVATION = null
       }
@@ -561,14 +540,7 @@ export class NsisTarget extends Target {
       defines.DELETE_APP_DATA_ON_UNINSTALL = null
     }
 
-    asyncTaskManager.add(async () => {
-      const uninstallerIcon = await packager.getResource(options.uninstallerIcon, "uninstallerIcon.ico")
-      if (uninstallerIcon != null) {
-        // we don't need to copy MUI_UNICON (defaults to app icon), so, we have 2 defines
-        defines.UNINSTALLER_ICON = uninstallerIcon
-        defines.MUI_UNICON = uninstallerIcon
-      }
-    })
+    asyncTaskManager.add(() => this.loadUninstallerIcon(defines))
 
     defines.UNINSTALL_DISPLAY_NAME = packager.expandMacro(options.uninstallDisplayName || "${productName} ${version}", null, {}, false)
     if (commonOptions.isCreateDesktopShortcut === DesktopShortcutCreationPolicy.NEVER) {
@@ -586,6 +558,37 @@ export class NsisTarget extends Target {
     }
 
     return asyncTaskManager.awaitTasks()
+  }
+
+  private async loadInstallerHeaderIcon(defines: Defines): Promise<void> {
+    const icon = await this.packager.getResource(this.options.installerHeaderIcon, "installerHeaderIcon.ico")
+    if (icon != null) {
+      defines.HEADER_ICO = icon
+    }
+  }
+
+  private async loadInstallerHeader(defines: Defines): Promise<void> {
+    const header = await this.packager.getResource(this.options.installerHeader, "installerHeader.bmp")
+    if (header != null) {
+      defines.MUI_HEADERIMAGE = null
+      defines.MUI_HEADERIMAGE_RIGHT = null
+      defines.MUI_HEADERIMAGE_BITMAP = header
+    }
+  }
+
+  private async loadInstallerSidebar(defines: Defines): Promise<void> {
+    const bitmap = (await this.packager.getResource(this.options.installerSidebar, "installerSidebar.bmp")) || "${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp"
+    defines.MUI_WELCOMEFINISHPAGE_BITMAP = bitmap
+    defines.MUI_UNWELCOMEFINISHPAGE_BITMAP = (await this.packager.getResource(this.options.uninstallerSidebar, "uninstallerSidebar.bmp")) || bitmap
+  }
+
+  private async loadUninstallerIcon(defines: Defines): Promise<void> {
+    const icon = await this.packager.getResource(this.options.uninstallerIcon, "uninstallerIcon.ico")
+    if (icon != null) {
+      // we don't need to copy MUI_UNICON (defaults to app icon), so, we have 2 defines
+      defines.UNINSTALLER_ICON = icon
+      defines.MUI_UNICON = icon
+    }
   }
 
   private configureDefinesForAllTypeOfInstaller(defines: Defines): void {
@@ -694,7 +697,7 @@ export class NsisTarget extends Target {
 
     createAddLangsMacro(scriptGenerator, langConfigurator)
 
-    const taskManager = new AsyncTaskManager(packager.info.cancellationToken)
+    const taskManager = new AsyncTaskManager(packager.cancellationToken)
 
     const pluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
     taskManager.add(async () => {
@@ -702,7 +705,7 @@ export class NsisTarget extends Target {
     })
 
     taskManager.add(async () => {
-      const userPluginDir = path.join(packager.info.buildResourcesDir, pluginArch)
+      const userPluginDir = path.join(packager.buildResourcesDir, pluginArch)
       const stat = await statOrNull(userPluginDir)
       if (stat != null && stat.isDirectory()) {
         scriptGenerator.addPluginDir(pluginArch, userPluginDir)
@@ -719,7 +722,7 @@ export class NsisTarget extends Target {
       taskManager.add(async () => {
         const customInclude = await packager.getResource(this.options.include, "installer.nsh")
         if (customInclude != null) {
-          scriptGenerator.addIncludeDir(packager.info.buildResourcesDir)
+          scriptGenerator.addIncludeDir(packager.buildResourcesDir)
           scriptGenerator.include(customInclude)
         }
       })
@@ -735,7 +738,7 @@ export class NsisTarget extends Target {
     const langConfigurator = new LangConfigurator(options)
 
     const scriptGenerator = new NsisScriptGenerator()
-    const taskManager = new AsyncTaskManager(packager.info.cancellationToken)
+    const taskManager = new AsyncTaskManager(packager.cancellationToken)
 
     if (isInstaller) {
       // http://stackoverflow.com/questions/997456/nsis-license-file-based-on-language-selection
@@ -843,7 +846,7 @@ async function ensureNotBusy(outFile: string): Promise<void> {
       if (result) {
         return true
       } else {
-        return new Promise(resolve => setTimeout(resolve, 2000)).then(() => isBusy(true))
+        return sleep(2000).then(() => isBusy(true))
       }
     })
   }

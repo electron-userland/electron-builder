@@ -36,7 +36,9 @@ export default class SnapTarget extends Target {
   ) {
     super(name)
 
-    const { config: { snapcraft } } = packager
+    const {
+      config: { snapcraft },
+    } = packager
     this.options = packager.getOptionsForTarget<SnapcraftOptions | SnapOptions>(snapcraft != null ? "snapcraft" : "snap")
   }
 

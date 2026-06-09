@@ -23,10 +23,7 @@ export async function getLinuxToolsPath(toolset: ToolsetConfig["linuxToolsMac"],
   })
 }
 
-export async function getLinuxToolsMacToolset(
-  toolset: ToolsetConfig["linuxToolsMac"],
-  resourcesDir: string
-): Promise<{ ar: string; lzip: string; gtar: string }> {
+export async function getLinuxToolsMacToolset(toolset: ToolsetConfig["linuxToolsMac"], resourcesDir: string): Promise<{ ar: string; lzip: string; gtar: string }> {
   const linuxToolsPath = await getLinuxToolsPath(toolset, resourcesDir)
   const bin = (pkg: string) => path.join(linuxToolsPath, "bin", pkg)
   return {

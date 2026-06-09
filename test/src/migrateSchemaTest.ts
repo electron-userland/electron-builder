@@ -92,9 +92,7 @@ describe("migrateConfig — nativeModules grouping", () => {
       npmRebuild: true,
       rebuildMode: "sequential",
     })
-    expect(["buildDependenciesFromSource", "nodeGypRebuild", "npmRebuild"] as const).toSatisfy((keys: readonly string[]) =>
-      keys.every(k => !(k in result.migrated))
-    )
+    expect(["buildDependenciesFromSource", "nodeGypRebuild", "npmRebuild"] as const).toSatisfy((keys: readonly string[]) => keys.every(k => !(k in result.migrated)))
   })
 
   test("merges with existing nativeModules", () => {

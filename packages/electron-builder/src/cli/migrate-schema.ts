@@ -23,16 +23,7 @@ export interface MigrationResult {
 // ─── Pure migration logic ─────────────────────────────────────────────────────
 
 // Azure Trusted Signing fields that are typed in v27
-const AZURE_KNOWN_FIELDS = new Set([
-  "type",
-  "endpoint",
-  "codeSigningAccountName",
-  "certificateProfileName",
-  "publisherName",
-  "fileDigest",
-  "timestampRfc3161",
-  "timestampDigest",
-])
+const AZURE_KNOWN_FIELDS = new Set(["type", "endpoint", "codeSigningAccountName", "certificateProfileName", "publisherName", "fileDigest", "timestampRfc3161", "timestampDigest"])
 
 /**
  * Applies all v26→v27 config transformations to a parsed config object.
@@ -134,7 +125,7 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
     warnings.push(
       'The "snap" config key is removed in v27. Rename it to "snapcraft" and restructure: ' +
         'move all snap-specific options under a sub-key named after your base (e.g., "core22"). ' +
-        'See https://www.electron.build/docs/migration/v26-to-v27#snap for details.'
+        "See https://www.electron.build/docs/migration/v26-to-v27#snap for details."
     )
   }
 
@@ -161,7 +152,9 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
 }
 
 function mergeAsarUnpack(existing: string | string[] | undefined, incoming: string | string[]): string | string[] {
-  if (existing == null) return incoming
+  if (existing == null) {
+    return incoming
+  }
   const arr = (Array.isArray(existing) ? existing : [existing]).concat(Array.isArray(incoming) ? incoming : [incoming])
   return arr.length === 1 ? arr[0] : arr
 }
@@ -191,10 +184,18 @@ type ConfigFormat = "json" | "json5" | "yaml" | "toml" | "js"
 
 function formatFromPath(p: string): ConfigFormat {
   const ext = path.extname(p).toLowerCase()
-  if (ext === ".json") return "json"
-  if (ext === ".json5") return "json5"
-  if (ext === ".yml" || ext === ".yaml") return "yaml"
-  if (ext === ".toml") return "toml"
+  if (ext === ".json") {
+    return "json"
+  }
+  if (ext === ".json5") {
+    return "json5"
+  }
+  if (ext === ".yml" || ext === ".yaml") {
+    return "yaml"
+  }
+  if (ext === ".toml") {
+    return "toml"
+  }
   return "js"
 }
 
