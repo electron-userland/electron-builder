@@ -1,5 +1,11 @@
 # builder-util
 
+## 26.15.3
+
+### Patch Changes
+
+- Fix: harden HTTP mirror validation — reject non-localhost HTTP by default, add ELECTRON*BUILDER_BINARIES_ALLOW_HTTP opt-in *[`#9856`](https://github.com/electron-userland/electron-builder/pull/9856) [`35bfdeb`](https://github.com/electron-userland/electron-builder/commit/35bfdebe47f412c3bf14bc5d1b9d833bfa1ec7d4) [@mmaietta](https://github.com/mmaietta)\_
+
 ## 26.15.0
 
 ### Minor Changes

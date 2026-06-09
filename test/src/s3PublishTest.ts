@@ -469,11 +469,7 @@ describe("publish-s3 parity — Go binary flag mapping to HTTP request", () => {
   })
 
   it("x-amz-content-sha256 is UNSIGNED-PAYLOAD regardless of endpoint or path style", async () => {
-    for (const opts of [
-      { endpoint: "https://minio.local:9000" },
-      { forcePathStyle: true as const },
-      { region: "ap-southeast-1" },
-    ]) {
+    for (const opts of [{ endpoint: "https://minio.local:9000" }, { forcePathStyle: true as const }, { region: "ap-southeast-1" }]) {
       const { capturedOpts } = mockSuccessfulUpload()
       await makeS3Publisher(opts).upload(makeTask(testFile))
       expect(capturedOpts()?.headers?.["x-amz-content-sha256"]).toBe("UNSIGNED-PAYLOAD")
