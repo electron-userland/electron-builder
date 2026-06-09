@@ -1,6 +1,7 @@
 #!/usr/bin/env tsx
 import { existsSync, rmSync } from "fs-extra"
 import { generateLinuxToolsetTests } from "./generate-toolset-tests-linux"
+import { generateMacToolsetTests } from "./generate-toolset-tests-mac"
 import { GENERATED_TESTS_DIR } from "./generate-toolset-tests-shared"
 import { generateWindowsToolsetTests } from "./generate-toolset-tests-windows"
 
@@ -10,6 +11,7 @@ const generateTests = () => {
     rmSync(GENERATED_TESTS_DIR, { recursive: true })
   }
   generateLinuxToolsetTests()
+  generateMacToolsetTests()
   generateWindowsToolsetTests()
 }
 
