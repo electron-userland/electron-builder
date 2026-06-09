@@ -269,38 +269,12 @@ export interface CommonConfiguration {
   readonly apk?: LinuxTargetSpecificOptions | null
 
   /**
-   * Whether to pass `--build-from-source` to the package manager when installing native
-   * dependencies, forcing them to compile from source rather than using pre-built binaries.
-   *
-   * Useful when pre-built binaries are not available for the target platform/arch combination,
-   * or when you need to ensure native modules are compiled against the exact Electron ABI.
-   *
-   * @default false
-   */
-  buildDependenciesFromSource?: boolean
-
-  /**
-   * Whether to run `node-gyp rebuild` with Electron headers before packaging.
-   *
-   * This is a low-level escape hatch for cases where the standard `@electron/rebuild` path
-   * (controlled by {@link npmRebuild}) is insufficient. Most projects should leave this `false`
-   * and rely on `@electron/rebuild` instead.
-   *
-   * When `true`, electron-builder runs `node-gyp rebuild` with the correct `npm_config_*`
-   * environment variables set for the target Electron version and architecture before the
-   * normal rebuild step.
-   *
-   * @default false
-   */
-  readonly nodeGypRebuild?: boolean
-
-  /**
    * Additional command-line arguments appended to the package manager's `install` command when
    * electron-builder installs app dependencies (i.e., when `node_modules` is missing and a fresh
    * install is required).
    *
    * These arguments are appended **only** during the install phase, not during the rebuild phase.
-   * To influence `@electron/rebuild` directly, see {@link nativeRebuilder}.
+   * To influence `@electron/rebuild` directly, see {@link NativeModulesConfig.rebuildMode}.
    *
    * @example
    * ```json
@@ -310,31 +284,14 @@ export interface CommonConfiguration {
   readonly npmArgs?: Array<string> | string | null
 
   /**
-   * Whether to rebuild native Node.js modules for the target Electron version and architecture
-   * before packaging.
+   * Configuration for native Node.js module installation and rebuilding.
    *
-   * When `true` (the default), electron-builder runs `@electron/rebuild` against the app's
-   * `node_modules` directory to ensure all native modules are compiled against the correct Electron
-   * ABI. Set to `false` to skip this step entirely — useful when native modules are pre-built
-   * elsewhere in your pipeline or when the app has no native dependencies.
+   * Groups all options that control how electron-builder handles native modules — from forcing
+   * source builds during install through to the `@electron/rebuild` compilation mode.
    *
-   * The compilation mode (`sequential` vs `parallel`) is controlled by {@link nativeRebuilder}.
-   *
-   * @default true
+   * @see {@link NativeModulesConfig}
    */
-  readonly npmRebuild?: boolean
-
-  /**
-   * Compilation mode for `@electron/rebuild`.
-   *
-   * - `"sequential"` — rebuilds native modules one at a time. Safer in memory-constrained
-   *   environments and produces cleaner log output.
-   * - `"parallel"` — rebuilds all native modules concurrently. Faster on machines with many cores
-   *   and plentiful memory, but may exhaust resources on CI agents with limited RAM.
-   *
-   * @default "sequential"
-   */
-  readonly nativeRebuilder?: "sequential" | "parallel" | null
+  readonly nativeModules?: NativeModulesConfig | null
 
   /**
    * The build number.
@@ -524,6 +481,67 @@ export interface Configuration extends CommonConfiguration, PlatformSpecificBuil
    * @default false
    */
   readonly disableAsarIntegrity?: boolean
+}
+
+/**
+ * Configuration for native Node.js module installation and rebuilding.
+ *
+ * All options that control how electron-builder handles native modules — from forcing source
+ * builds at install time through to the `@electron/rebuild` compilation mode.
+ */
+export interface NativeModulesConfig {
+  /**
+   * Whether to pass `--build-from-source` to the package manager when installing native
+   * dependencies, forcing them to compile from source rather than using pre-built binaries.
+   *
+   * Useful when pre-built binaries are not available for the target platform/arch combination,
+   * or when you need to ensure native modules are compiled against the exact Electron ABI.
+   *
+   * @default false
+   */
+  buildDependenciesFromSource?: boolean
+
+  /**
+   * Whether to run `node-gyp rebuild` with Electron headers before packaging.
+   *
+   * This is a low-level escape hatch for cases where the standard `@electron/rebuild` path
+   * (controlled by {@link npmRebuild}) is insufficient. Most projects should leave this `false`
+   * and rely on `@electron/rebuild` instead.
+   *
+   * When `true`, electron-builder runs `node-gyp rebuild` with the correct `npm_config_*`
+   * environment variables set for the target Electron version and architecture before the
+   * normal rebuild step.
+   *
+   * @default false
+   */
+  readonly nodeGypRebuild?: boolean
+
+  /**
+   * Whether to rebuild native Node.js modules for the target Electron version and architecture
+   * before packaging.
+   *
+   * When `true` (the default), electron-builder runs `@electron/rebuild` against the app's
+   * `node_modules` directory to ensure all native modules are compiled against the correct Electron
+   * ABI. Set to `false` to skip this step entirely — useful when native modules are pre-built
+   * elsewhere in your pipeline or when the app has no native dependencies.
+   *
+   * The compilation mode (`sequential` vs `parallel`) is controlled by {@link rebuildMode}.
+   *
+   * @default true
+   */
+  readonly npmRebuild?: boolean
+
+  /**
+   * Compilation mode for `@electron/rebuild`.
+   *
+   * - `"sequential"` — rebuilds native modules one at a time. Safer in memory-constrained
+   *   environments and produces cleaner log output.
+   * - `"parallel"` — rebuilds all native modules concurrently. Faster on machines with many cores
+   *   and plentiful memory, but may exhaust resources on CI agents with limited RAM.
+   *
+   * @default "sequential"
+   */
+  readonly rebuildMode?: "sequential" | "parallel" | null
 }
 
 export type Hook<T, V> = (contextOrPath: T) => Promise<V> | V
