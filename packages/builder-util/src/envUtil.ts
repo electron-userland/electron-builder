@@ -39,6 +39,19 @@ export async function resolveEnvToolsetPath(envVarKey: string, expectedType: "di
   return p
 }
 
+export function validateSecuredUrl(url: string): URL {
+  let parsed: URL
+  try {
+    parsed = new URL(url)
+  } catch {
+    throw new Error(`Not a valid URL: ${url}`)
+  }
+  if (parsed.protocol !== "https:") {
+    throw new Error(`URL must use https:// (got ${parsed.protocol})`)
+  }
+  return parsed
+}
+
 export function parseValidEnvVarUrl(envVarName: string): string | null {
   const url = process.env[envVarName]?.trim()
   if (url == null || url === "") {

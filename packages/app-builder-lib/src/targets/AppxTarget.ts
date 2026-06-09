@@ -3,13 +3,12 @@ import { Nullish } from "builder-util-runtime"
 
 import * as path from "path"
 import { AppXOptions } from "../index.js"
-import { getWindowsKitsBundle } from "../toolsets/windows.js"
+import { getWindowsKitsBundle, isOldWin6 } from "../toolsets/winCodeSign.js"
 import { Target } from "../core.js"
 import { getTemplatePath } from "../util/pathManager.js"
 import { VmManager } from "../vm/vm.js"
 import { WinPackager } from "../winPackager.js"
 import { createStageDir } from "./targetUtil.js"
-import { isOldWin6 } from "../toolsets/windows.js"
 import { CAPABILITIES, isValidCapabilityName } from "./AppxCapabilities.js"
 import _fsExtra from "fs-extra"
 const { emptyDir, readdir, readFile, writeFile } = _fsExtra
@@ -78,7 +77,7 @@ export default class AppXTarget extends Target {
       arch,
     })
 
-    const vendorPath = await getWindowsKitsBundle({ winCodeSign: this.packager.config.toolsets?.winCodeSign, arch: arch })
+    const vendorPath = await getWindowsKitsBundle({ winCodeSign: this.packager.config.toolsets?.winCodeSign, arch: arch, resourcesDir: this.packager.buildResourcesDir })
     const vm = await packager.vm.value
 
     const stageDir = await createStageDir(this, packager, arch)

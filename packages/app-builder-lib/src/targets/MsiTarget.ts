@@ -33,7 +33,7 @@ export default class MsiTarget extends Target {
     isAsyncSupported = true
   ) {
     super(name, isAsyncSupported)
-    this.vm = process.platform === "win32" ? new VmManager() : new WineVmManager(this.packager.config.toolsets?.wine)
+    this.vm = process.platform === "win32" ? new VmManager() : new WineVmManager(this.packager.config.toolsets?.wine, this.packager.buildResourcesDir)
     this.options = this.packager.getOptionsForTarget<MsiOptions>("msi")
   }
 
