@@ -1,35 +1,16 @@
-<<<<<<< HEAD
-import { InvalidConfigurationError } from "builder-util"
+import { validateShellEmbeddable } from "builder-util"
 import _fsExtra from "fs-extra"
 const { copy, emptyDir } = _fsExtra
 import { chmod, copyFile, mkdir, rename, writeFile } from "fs/promises"
 import * as https from "https"
-=======
-import { executeAppBuilder } from "builder-util"
-import fsExtra from "fs-extra"
-import { chmod, mkdir, rename, writeFile } from "fs/promises"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as path from "path"
 import { AfterPackContext } from "../configuration.js"
 import { Platform } from "../core.js"
 import { Framework, PrepareApplicationStageDirectoryOptions } from "../Framework.js"
 import { LinuxPackager } from "../linuxPackager.js"
 import { MacPackager } from "../macPackager.js"
-<<<<<<< HEAD
 import { downloadBuilderToolset } from "../util/electronGet.js"
 import { savePlistFile } from "../util/plist.js"
-
-/** Validates that a value is safe to embed in a double-quoted shell string (no metacharacters). */
-export function validateShellEmbeddable(value: string, fieldName: string): void {
-  // Allow letters, digits, dots, underscores, hyphens, forward slashes, and spaces.
-  // Reject anything that could be interpreted as a shell metacharacter when embedded
-  // inside a double-quoted string: $, `, ", \, and newlines.
-  if (/[$`"\\\n]/.test(value)) {
-    throw new InvalidConfigurationError(
-      `${fieldName} contains characters that are not safe in shell scripts: ${JSON.stringify(value)}. ` + `Avoid $, backtick, double-quote, backslash, and newline characters.`
-    )
-  }
-}
 
 // LaunchUI version is independent of the Node.js version; this was the hardcoded default in the Go binary.
 // https://github.com/develar/app-builder/blob/master/pkg/package-format/proton-native/protonNative.go#L105-L136
@@ -40,9 +21,6 @@ const launchUiChecksums = {
   "launchui-v0.1.4-10.13.0-win32-ia32.7z": "682734da3d817ac365093c6c8ef3d9a70cc3f2a809e4588cb12a311358a68a2d",
   "launchui-v0.1.4-10.13.0-win32-x64.7z": "2f26629c5f5c12baeff272ac7855a1df7f27621cce782b79965f9a9b5eccc359",
 }
-=======
-import { savePlistFile } from "../util/plist.js"
->>>>>>> d26567f58 (tmp save)
 
 export class LibUiFramework implements Framework {
   readonly name: string = "libui"
@@ -70,7 +48,7 @@ export class LibUiFramework implements Framework {
   }
 
   async prepareApplicationStageDirectory(options: PrepareApplicationStageDirectoryOptions) {
-    await fsExtra.emptyDir(options.appOutDir)
+    await emptyDir(options.appOutDir)
 
     const packager = options.packager
     const platform = packager.platform
@@ -106,7 +84,7 @@ export class LibUiFramework implements Framework {
     }
     await packager.applyCommonInfo(appPlist, appContentsDir)
     await savePlistFile(path.join(appContentsDir, "Info.plist"), appPlist)
-    const macMain = options.packager.metadata.main || "index.js"
+    const macMain = options.packager.info.metadata.main || "index.js"
     validateShellEmbeddable(macMain, "package.json main")
     await writeExecutableMain(
       path.join(appContentsDir, "MacOS", appPlist.CFBundleExecutable),
@@ -123,7 +101,7 @@ export class LibUiFramework implements Framework {
     await copyFile(nodeBinaryLinux, path.join(appOutDir, "node"))
     await chmod(path.join(appOutDir, "node"), 0o755)
     const mainPath = path.join(appOutDir, (options.packager as LinuxPackager).executableName)
-    const linuxMain = options.packager.metadata.main || "index.js"
+    const linuxMain = options.packager.info.metadata.main || "index.js"
     validateShellEmbeddable(linuxMain, "package.json main")
     await writeExecutableMain(
       mainPath,
@@ -141,7 +119,7 @@ export class LibUiFramework implements Framework {
     }
 
     // LaunchUI requires main.js, rename if need
-    const userMain = packager.metadata.main || "index.js"
+    const userMain = packager.info.metadata.main || "index.js"
     if (userMain === "main.js") {
       return
     }
