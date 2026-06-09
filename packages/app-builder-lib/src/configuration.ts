@@ -15,7 +15,7 @@ import { WindowsConfiguration } from "./options/winOptions.js"
 import { BuildResult } from "./packager.js"
 import { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi.js"
 import { PlatformPackager } from "./platformPackager.js"
-import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions.js"
+import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/win/nsis/nsisOptions.js"
 import { ElectronDownloadOptions, ElectronGetOptions } from "./util/electronGet.js"
 
 // duplicate appId here because it is important

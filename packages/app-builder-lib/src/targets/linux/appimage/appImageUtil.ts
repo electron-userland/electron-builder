@@ -1,14 +1,14 @@
 import { Arch, copyDir, copyFile, exec, exists, InvalidConfigurationError, log } from "builder-util"
 import fs from "fs-extra"
 import * as path from "path"
-import { FileAssociation } from "../../options/FileAssociation.js"
-import { getAppImageTools } from "../../toolsets/linux/appimage.js"
+import { FileAssociation } from "../../../options/FileAssociation.js"
+import { getAppImageTools } from "../../../toolsets/linux/appimage.js"
 import { copyIcons, copyMimeTypes } from "./appLauncher.js"
-import { appendBlockmap } from "../differentialUpdateInfoBuilder.js"
+import { appendBlockmap } from "../../differentialUpdateInfoBuilder.js"
 import { BlockMapDataHolder } from "builder-util-runtime"
 import { APP_RUN_ENTRYPOINT } from "./AppImageTarget.js"
-import { ToolsetConfig } from "../../configuration.js"
-import { IconInfo } from "../../util/iconConverter.js"
+import { ToolsetConfig } from "../../../configuration.js"
+import { IconInfo } from "../../../util/iconConverter.js"
 
 interface Options {
   productName: string

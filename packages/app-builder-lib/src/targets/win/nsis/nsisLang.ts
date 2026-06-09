@@ -1,33 +1,13 @@
 import { asArray } from "builder-util"
 import _debug from "debug"
-<<<<<<< HEAD
 import fsExtra from "fs-extra"
-=======
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { load } from "js-yaml"
 import * as path from "path"
-<<<<<<< HEAD
-<<<<<<< HEAD
-import { PlatformPackager } from "../../platformPackager.js"
-import { bundledLanguages, langIdToName, lcid, toLangWithRegion } from "../../util/langs.js"
+import { PlatformPackager } from "../../../platformPackager.js"
+import { bundledLanguages, langIdToName, lcid, toLangWithRegion } from "../../../util/langs.js"
 import { NsisOptions } from "./nsisOptions.js"
 import { NsisScriptGenerator } from "./nsisScriptGenerator.js"
 import { nsisTemplatesDir } from "./nsisUtil.js"
-<<<<<<< HEAD
-=======
-import { PlatformPackager } from "../../platformPackager"
-import { bundledLanguages, langIdToName, lcid, toLangWithRegion } from "../../util/langs"
-=======
-import { PlatformPackager } from "../../platformPackager.js"
-import { bundledLanguages, langIdToName, lcid, toLangWithRegion } from "../../util/langs.js"
->>>>>>> d26567f58 (tmp save)
-import { NsisOptions } from "./nsisOptions.js.js"
-import { NsisScriptGenerator } from "./nsisScriptGenerator.js.js"
-import { nsisTemplatesDir } from "./nsisUtil.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 const debug = _debug("electron-builder:nsis")
 

@@ -1,19 +1,6 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { TargetSpecificOptions } from "../core.js"
-<<<<<<< HEAD
-import { SnapcraftYAML } from "../targets/snap/snapcraft.js"
+import { SnapcraftYAML } from "../targets/linux/snap/snapcraft.js"
 import { CommonLinuxOptions } from "./linuxOptions.js"
-=======
-import { TargetSpecificOptions } from "../core"
-=======
-import { TargetSpecificOptions } from "../core.js"
->>>>>>> d26567f58 (tmp save)
-import { CommonLinuxOptions } from "./linuxOptions.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { CommonLinuxOptions } from "./linuxOptions.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 /**
  * New-style snap configuration. Use this via the `snapcraft` key in your build config.

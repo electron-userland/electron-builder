@@ -10,14 +10,14 @@ import { Lazy } from "lazy-val"
 import { join } from "path"
 <<<<<<< HEAD
 import * as semver from "semver"
-import { CompressionLevel } from "../core.js"
-import { LinuxPackager } from "../linuxPackager.js"
-import { CommonLinuxOptions } from "../options/linuxOptions.js"
+import { CompressionLevel } from "../../core.js"
+import { LinuxPackager } from "../../linuxPackager.js"
+import { CommonLinuxOptions } from "../../options/linuxOptions.js"
 import { SnapCore } from "./snap/SnapTarget.js"
 import { SnapCore24 } from "./snap/core24.js"
 import { SnapCoreCustom } from "./snap/coreCustom.js"
 import { SnapCoreLegacy } from "./snap/coreLegacy.js"
-import { IconInfo } from "../util/iconConverter.js"
+import { IconInfo } from "../../util/iconConverter.js"
 import _fsExtra from "fs-extra"
 const { outputFile } = _fsExtra
 

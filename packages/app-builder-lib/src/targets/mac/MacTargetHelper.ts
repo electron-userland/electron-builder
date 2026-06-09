@@ -2,13 +2,13 @@ import type { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@
 import type { PerFileSignOptions, SigningDistributionType, SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import type { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
 import { Arch, InvalidConfigurationError, log, statOrNull } from "builder-util"
-import { dynamicImport } from "../util/dynamicImport.js"
+import { dynamicImport } from "../../util/dynamicImport.js"
 import { Nullish } from "builder-util-runtime"
 import * as path from "path"
-import { CertType, findIdentity, reportError } from "../codeSign/mac/macCodeSign.js"
-import type { MacPackager } from "../macPackager.js"
-import { MacConfiguration, MasConfiguration } from "../options/macOptions.js"
-import { getTemplatePath } from "../util/pathManager.js"
+import { CertType, findIdentity, reportError } from "../../codeSign/mac/macCodeSign.js"
+import type { MacPackager } from "../../macPackager.js"
+import { MacConfiguration, MasConfiguration } from "../../options/macOptions.js"
+import { getTemplatePath } from "../../util/pathManager.js"
 
 export type PlatformType = "mas" | "mas-dev" | "mac"
 
@@ -169,7 +169,7 @@ export class MacTargetHelper {
     MacTargetHelper.assertSafePathForCommandUsage(outDir, "output directory")
 
     // mas uploaded to AppStore, so, use "-" instead of space for name
-    // path.basename prevents path traversal if a crafted artifactName contains "../"
+    // path.basename prevents path traversal if a crafted artifactName contains "../../"
     const artifactName = path.basename(this.packager.expandArtifactNamePattern(masOptions, "pkg", arch))
     MacTargetHelper.assertSafePathForCommandUsage(artifactName, "artifact name")
     const artifactPath = path.resolve(outDir, artifactName)
