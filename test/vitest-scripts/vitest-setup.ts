@@ -1,6 +1,15 @@
 import { test as baseTest, describe as baseDescribe, expect } from "vitest"
 import { ConditionalSuiteAPI, ConditionalTestAPI } from "../typings/vitest.js"
 
+// EPIPE is normal when a CI pipe closes before all output is flushed; suppress it.
+for (const stream of [process.stdout, process.stderr] as NodeJS.WriteStream[]) {
+  stream.on("error", (err: NodeJS.ErrnoException) => {
+    if (err.code !== "EPIPE") {
+      throw err
+    }
+  })
+}
+
 const isWindows = process.platform === "win32"
 const isMac = process.platform === "darwin"
 const isLinux = process.platform === "linux"

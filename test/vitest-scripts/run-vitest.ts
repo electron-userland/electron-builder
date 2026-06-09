@@ -13,6 +13,7 @@ import SmartSequencer from "./vitest-smart-sequencer"
 // bundled (CJS+ESM) by tsup, but tests must run against un-bundled source so vite handles CJS interop
 // (e.g. fs-extra) and circular deps, and so `vi.mock` can intercept individual internal modules.
 const PACKAGES_DIR = path.join(__dirname, "..", "..", "packages")
+
 const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 const sourceAlias = (specifier: string, relPath: string) => ({
   find: new RegExp(`^${escapeRegex(specifier)}$`),
