@@ -1,7 +1,7 @@
 import { log } from "builder-util"
 import { readFile, writeFile } from "fs/promises"
 import { Data, NtExecutable, NtExecutableResource, Resource } from "resedit"
-import { RequestedExecutionLevel } from "../options/winOptions.js"
+import { RequestedExecutionLevel } from "../../options/winOptions.js"
 
 export interface ResourceEditOptions {
   file: string

@@ -35,7 +35,7 @@ import { ArchiveTarget } from "./targets/ArchiveTarget.js"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg.js"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory.js"
 import { dynamicImport } from "./util/dynamicImport.js"
-import { isMacOsHighSierra } from "./util/macosVersion.js"
+import { isMacOsHighSierra } from "./util/mac/macosVersion.js"
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
 import { resolveFunction } from "./util/resolve.js"
 

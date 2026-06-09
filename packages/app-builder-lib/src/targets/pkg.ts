@@ -9,7 +9,7 @@ import type { Identity } from "../codeSign/macCodeSign.js"
 import { Target } from "../core.js"
 import { MacPackager } from "../macPackager.js"
 import { PkgOptions } from "../options/pkgOptions.js"
-import { savePlistFile, parsePlistFile, PlistObject } from "../util/plist.js"
+import { savePlistFile, parsePlistFile, PlistObject } from "../util/mac/plist.js"
 import { getNotLocalizedLicenseFile } from "../util/license.js"
 
 const certType = "Developer ID Installer"

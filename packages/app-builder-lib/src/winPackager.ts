@@ -25,7 +25,7 @@ import { WebInstallerTarget } from "./targets/nsis/WebInstallerTarget.js"
 import { createCommonTarget } from "./targets/targetFactory.js"
 import { BuildCacheManager, digest } from "./util/cacheManager.js"
 import { isBuildCacheEnabled } from "./util/flags.js"
-import { editWindowsResources, ResourceEditOptions } from "./util/resEdit.js"
+import { editWindowsResources, ResourceEditOptions } from "./util/win/resEdit.js"
 import { time } from "./util/timer.js"
 import { getWindowsVm, VmManager } from "./vm/vm.js"
 

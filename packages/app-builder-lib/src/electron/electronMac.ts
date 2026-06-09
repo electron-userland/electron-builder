@@ -6,7 +6,7 @@ import { filterCFBundleIdentifier } from "../appInfo.js"
 import { AsarIntegrity } from "../asar/integrity.js"
 import { MacPackager } from "../macPackager.js"
 import { normalizeExt } from "../platformPackager.js"
-import { savePlistFile, parsePlistFile, PlistObject, PlistValue } from "../util/plist.js"
+import { savePlistFile, parsePlistFile, PlistObject, PlistValue } from "../util/mac/plist.js"
 import { createBrandingOpts } from "./ElectronFramework.js"
 
 function doRename(basePath: string, oldName: string, newName: string) {
