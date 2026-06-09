@@ -215,10 +215,7 @@ export class MacTargetHelper {
       }
     }
 
-    const requirements =
-      isMas || this.packager.platformOptions.requirements == null
-        ? undefined
-        : await this.packager.getResource(this.packager.platformOptions.requirements)
+    const requirements = isMas || this.packager.platformOptions.requirements == null ? undefined : await this.packager.getResource(this.packager.platformOptions.requirements)
 
     // harden by default for mac builds. Only harden mas builds if explicitly true (backward compatibility)
     const hardenedRuntime = isMas ? customSignOptions.hardenedRuntime === true : customSignOptions.hardenedRuntime !== false

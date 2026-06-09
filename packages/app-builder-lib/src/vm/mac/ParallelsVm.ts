@@ -84,10 +84,16 @@ export class ParallelsVmManager extends VmManager {
       // SIGTERM/SIGINT use async exec(); the synchronous 'exit' fallback fires
       // after all async callbacks have already resolved, so execFileSync is safe.
       const suspendAsync = () => exec("prlctl", stopArgs).catch(() => {})
-      const suspendSync = () => { try { execFileSync("prlctl", stopArgs) } catch { /* best-effort */ } }
+      const suspendSync = () => {
+        try {
+          execFileSync("prlctl", stopArgs)
+        } catch {
+          /* best-effort */
+        }
+      }
       process.once("SIGTERM", suspendAsync)
-      process.once("SIGINT",  suspendAsync)
-      process.once("exit",    suspendSync)
+      process.once("SIGINT", suspendAsync)
+      process.once("exit", suspendSync)
     }
     await exec("prlctl", ["start", vmId])
   }

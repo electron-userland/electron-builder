@@ -577,8 +577,7 @@ export class NsisTarget extends Target {
   }
 
   private async loadInstallerSidebar(defines: Defines): Promise<void> {
-    const bitmap =
-      (await this.packager.getResource(this.options.installerSidebar, "installerSidebar.bmp")) || "${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp"
+    const bitmap = (await this.packager.getResource(this.options.installerSidebar, "installerSidebar.bmp")) || "${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp"
     defines.MUI_WELCOMEFINISHPAGE_BITMAP = bitmap
     defines.MUI_UNWELCOMEFINISHPAGE_BITMAP = (await this.packager.getResource(this.options.uninstallerSidebar, "uninstallerSidebar.bmp")) || bitmap
   }

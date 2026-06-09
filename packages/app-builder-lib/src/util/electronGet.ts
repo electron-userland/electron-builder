@@ -441,8 +441,7 @@ export async function download(url: string, output: string, checksum?: string | 
 function validateBinaryCustomDir(envVarName: string, value: string): string {
   if (value.includes("://") || value.includes("..") || value.startsWith("/")) {
     throw new Error(
-      `${envVarName} must be a safe relative path component (e.g. "v1.0.0-custom"). ` +
-        `Values containing "://", "..", or a leading "/" are not allowed. Got: "${value}"`
+      `${envVarName} must be a safe relative path component (e.g. "v1.0.0-custom"). ` + `Values containing "://", "..", or a leading "/" are not allowed. Got: "${value}"`
     )
   }
   return value
@@ -493,9 +492,7 @@ export async function downloadBuilderToolset(options: {
   const { releaseName, filenameWithExt, checksums, githubOrgRepo = "electron-userland/electron-builder-binaries", overrideUrl } = options
 
   if (/[/\\]|^\.\./.test(filenameWithExt) || filenameWithExt.includes("..")) {
-    throw new Error(
-      `downloadBuilderToolset: unsafe filenameWithExt "${filenameWithExt}" — must be a plain filename with no path separators or traversal sequences`
-    )
+    throw new Error(`downloadBuilderToolset: unsafe filenameWithExt "${filenameWithExt}" — must be a plain filename with no path separators or traversal sequences`)
   }
 
   const baseUrl = getBinariesMirrorUrl(githubOrgRepo)
