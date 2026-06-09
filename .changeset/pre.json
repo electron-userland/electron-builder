@@ -14,7 +14,7 @@
     "electron-forge-maker-nsis-web": "26.15.3",
     "electron-forge-maker-snap": "26.15.3",
     "electron-publish": "26.15.3",
-    "electron-updater": "6.9.0",
+    "electron-updater": "6.8.9",
     "@electron-builder/test": "0.0.0",
     "@electron-builder/website": "0.0.0"
   },

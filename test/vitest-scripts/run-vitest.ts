@@ -9,11 +9,7 @@ import { buildWeightedFiles, computeShardCount, splitIntoShards } from "./shard-
 import { SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN } from "./smart-config"
 import SmartSequencer from "./vitest-smart-sequencer"
 
-// Resolve workspace packages to their TypeScript sources during tests. The published packages are
-// bundled (CJS+ESM) by tsup, but tests must run against un-bundled source so vite handles CJS interop
-// (e.g. fs-extra) and circular deps, and so `vi.mock` can intercept individual internal modules.
 const PACKAGES_DIR = path.join(__dirname, "..", "..", "packages")
-
 const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 const sourceAlias = (specifier: string, relPath: string) => ({
   find: new RegExp(`^${escapeRegex(specifier)}$`),
