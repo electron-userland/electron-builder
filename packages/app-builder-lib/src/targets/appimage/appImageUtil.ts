@@ -2,7 +2,7 @@ import { Arch, copyDir, copyFile, exec, exists, InvalidConfigurationError, log }
 import fs from "fs-extra"
 import * as path from "path"
 import { FileAssociation } from "../../options/FileAssociation.js"
-import { getAppImageTools } from "../../toolsets/appimage.js"
+import { getAppImageTools } from "../../toolsets/linux/appimage.js"
 import { copyIcons, copyMimeTypes } from "./appLauncher.js"
 import { appendBlockmap } from "../differentialUpdateInfoBuilder.js"
 import { BlockMapDataHolder } from "builder-util-runtime"

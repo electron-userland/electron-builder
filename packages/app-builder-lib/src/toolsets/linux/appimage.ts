@@ -1,8 +1,8 @@
 import { Arch } from "builder-util"
 import * as path from "path"
-import { ToolsetConfig } from "../configuration.js"
-import { downloadBuilderToolset } from "../util/electronGet.js"
-import { getCustomToolsetPath } from "./custom.js"
+import { ToolsetConfig } from "../../configuration.js"
+import { downloadBuilderToolset } from "../../util/electronGet.js"
+import { getCustomToolsetPath } from "../custom.js"
 
 export const appimageChecksums = {
   "0.0.0": {

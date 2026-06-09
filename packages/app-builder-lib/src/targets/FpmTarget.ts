@@ -16,9 +16,9 @@ import { hashFile } from "../util/hash.js"
 import { isMacOsSierra } from "../util/mac/macosVersion.js"
 import { getTemplatePath } from "../util/pathManager.js"
 import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper.js"
-import { getFpmPath } from "../toolsets/fpm.js"
+import { getFpmPath } from "../toolsets/linux/fpm.js"
 import { isFpmDebug } from "../util/flags.js"
-import { getLinuxToolsPath } from "../toolsets/linuxToolsMac.js"
+import { getLinuxToolsPath } from "../toolsets/linux/linuxToolsMac.js"
 import _fsExtra from "fs-extra"
 const { copyFile, outputFile, stat } = _fsExtra
 

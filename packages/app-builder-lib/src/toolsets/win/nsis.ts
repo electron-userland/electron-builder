@@ -2,10 +2,10 @@ import { exists } from "builder-util"
 import _fsExtra from "fs-extra"
 const { stat } = _fsExtra
 import * as path from "path"
-import { ToolsetConfig } from "../configuration.js"
-import { ToolInfo } from "../util/bundledTool.js"
-import { downloadBuilderToolset } from "../util/electronGet.js"
-import { getCustomToolsetPath } from "./custom.js"
+import { ToolsetConfig } from "../../configuration.js"
+import { ToolInfo } from "../../util/bundledTool.js"
+import { downloadBuilderToolset } from "../../util/electronGet.js"
+import { getCustomToolsetPath } from "../custom.js"
 
 function getLegacyNsisBin(): Promise<string> {
   // Warning: Don't use v3.0.4.2 - https://github.com/electron-userland/electron-builder/issues/6334

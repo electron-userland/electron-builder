@@ -1,11 +1,11 @@
 import { Arch } from "builder-util"
 import * as os from "os"
 import * as path from "path"
-import { ToolsetConfig } from "../configuration.js"
-import { ToolInfo, computeToolEnv } from "../util/bundledTool.js"
-import { downloadBuilderToolset } from "../util/electronGet.js"
-import { isUseSystemOsslSigncode, isUseSystemSigncode } from "../util/flags.js"
-import { getCustomToolsetPath } from "./custom.js"
+import { ToolsetConfig } from "../../configuration.js"
+import { ToolInfo, computeToolEnv } from "../../util/bundledTool.js"
+import { downloadBuilderToolset } from "../../util/electronGet.js"
+import { isUseSystemOsslSigncode, isUseSystemSigncode } from "../../util/flags.js"
+import { getCustomToolsetPath } from "../custom.js"
 
 function getLegacyWinCodeSignBin(): Promise<string> {
   return downloadBuilderToolset({
