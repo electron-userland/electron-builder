@@ -51,7 +51,7 @@ export {
 export { buildSourceCandidates, convertIcon, getPngSize } from "./util/iconConverter.js"
 export { getLicenseAssets, getLicenseFiles } from "./util/license.js"
 export { expandMacro } from "./util/macroExpander.js"
-export type { NodeModuleInfo } from "./util/packageDependencies.js"
+export type { NodeModuleInfo } from "./node-module-collector/types.js"
 export { PlistObject, parsePlistFile } from "./util/plist.js"
 export { getRepositoryInfo } from "./util/repositoryInfo.js"
 export { ResourceEditOptions, editWindowsResources } from "./util/resEdit.js"

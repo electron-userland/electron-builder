@@ -418,7 +418,7 @@ async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact
  * Unlike downloadBuilderToolset, this does not extract archives — it copies the raw file.
  * Used for certificate imports where the caller needs the file at a known path.
  */
-export async function download(url: string, output: string, checksum: string | null): Promise<void> {
+export async function download(url: string, output: string, checksum?: string | null): Promise<void> {
   const filenameWithExt = path.basename(new URL(url).pathname)
   if (checksum == null) {
     log.warn({ url }, "downloading without an integrity checksum — the download is not verified against a known-good hash")
@@ -486,7 +486,7 @@ export function resolveBuilderBinaryUrl(releaseName: string, filenameWithExt: st
 export async function downloadBuilderToolset(options: {
   releaseName: string
   filenameWithExt: string
-  checksums: Record<string, string>
+  checksums?: Record<string, string>
   githubOrgRepo?: string
   overrideUrl?: string
 }): Promise<string> {
@@ -515,7 +515,7 @@ export async function downloadBuilderToolset(options: {
     artifactName: filenameWithExt,
     cacheRoot: path.resolve(getCacheDirectory({ allowEnvVarOverride: true }), "downloads"),
     cacheMode: resolveCacheMode(),
-    checksums,
+    ...(checksums != null ? { checksums } : { unsafelyDisableChecksums: true }),
     mirrorOptions,
     isGeneric: true,
   }
