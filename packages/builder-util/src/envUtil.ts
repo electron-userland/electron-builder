@@ -39,7 +39,9 @@ export async function resolveEnvToolsetPath(envVarKey: string, expectedType: "di
   return p
 }
 
-export function parseValidEnvVarUrl(envVarName: string): string | null {
+const LOCALHOST_HOSTNAMES = new Set(["localhost", "127.0.0.1", "[::1]"])
+
+export function parseValidEnvVarUrl(envVarName: string, allowHttp: boolean = false): string | null {
   const url = process.env[envVarName]?.trim()
   if (url == null || url === "") {
     return null
@@ -51,7 +53,12 @@ export function parseValidEnvVarUrl(envVarName: string): string | null {
     throw new Error(`${envVarName} is not a valid URL: ${url}`)
   }
   if (parsed.protocol !== "https:") {
-    throw new Error(`${envVarName} must use https:// (got ${parsed.protocol})`)
+    // Always permit plain HTTP to loopback addresses (local dev / air-gapped CI mirrors
+    // running on the build machine itself).  For any other host, require opt-in.
+    const isLocalhost = parsed.protocol === "http:" && LOCALHOST_HOSTNAMES.has(parsed.hostname)
+    if (!isLocalhost && !allowHttp) {
+      throw new Error(`${envVarName} must use https:// (got ${parsed.protocol}). For non-localhost HTTP mirrors set ELECTRON_BUILDER_BINARIES_ALLOW_HTTP=true`)
+    }
   }
   return url
 }
