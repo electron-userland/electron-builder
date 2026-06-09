@@ -21,7 +21,7 @@ export async function installOrRebuild(
   env: NodeJS.ProcessEnv
 ) {
   const effectiveOptions: RebuildOptions = {
-    buildFromSource: config.buildDependenciesFromSource === true,
+    buildFromSource: config.nativeModules?.buildDependenciesFromSource === true,
     additionalArgs: asArray(config.npmArgs),
     ...options,
   }
@@ -185,7 +185,7 @@ export async function rebuild(config: Configuration, { appDir, projectDir, works
   }
   log.info(logInfo, "executing @electron/rebuild")
 
-  const mode = config.nativeRebuilder ?? "sequential"
+  const mode = config.nativeModules?.rebuildMode ?? "sequential"
   const rebuildOptions: ElectronRebuildOptions = {
     buildPath: appDir,
     electronVersion,
