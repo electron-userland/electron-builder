@@ -1,7 +1,7 @@
 import * as path from "path"
-import { ToolsetConfig } from "../configuration.js"
-import { downloadBuilderToolset } from "../util/electronGet.js"
-import { getCustomToolsetPath } from "./custom.js"
+import { ToolsetConfig } from "../../configuration.js"
+import { downloadBuilderToolset } from "../../util/electronGet.js"
+import { getCustomToolsetPath } from "../custom.js"
 
 const linuxToolsMacChecksums = {
   "linux-tools-mac-darwin-arm64.tar.gz": "204e76f08364352edb28a6a4be87e8f9bd9340213865d9a0d1c664aa46fcf053",

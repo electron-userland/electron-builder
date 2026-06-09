@@ -1,9 +1,9 @@
 import { exists, InvalidConfigurationError, sanitizeDirPath } from "builder-util"
 import * as path from "path"
-import { ToolsetConfig } from "../configuration.js"
-import { downloadBuilderToolset } from "../util/electronGet.js"
-import { getCustomToolsetPath } from "./custom.js"
-import { isUseSystemWine } from "../util/flags.js"
+import { ToolsetConfig } from "../../configuration.js"
+import { downloadBuilderToolset } from "../../util/electronGet.js"
+import { getCustomToolsetPath } from "../custom.js"
+import { isUseSystemWine } from "../../util/flags.js"
 
 const wineToolsChecksums: Record<string, Record<string, string>> = {
   "0.0.0": {

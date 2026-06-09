@@ -6,7 +6,7 @@ const { outputFile, readFile } = _fsExtra
 import { load } from "js-yaml"
 import * as path from "path"
 import { PlugDescriptor, SnapOptions } from "../../options/SnapOptions.js"
-import { getAppImageTools } from "../../toolsets/appimage.js"
+import { getAppImageTools } from "../../toolsets/linux/appimage.js"
 import { downloadBuilderToolset } from "../../util/electronGet.js"
 import { getTemplatePath } from "../../util/pathManager.js"
 import { SnapCore } from "./SnapTarget.js"
