@@ -1,9 +1,5 @@
-<<<<<<< HEAD
 import type { SignOptions } from "@electron/osx-sign/dist/cjs/types"
-=======
-import { signAsync, SignOptions } from "@electron/osx-sign"
->>>>>>> c92b22265 (tmp save for .js extension migration)
-import { copyFile, exec, Fields, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequest, log, Logger, retry, TmpDir, unlinkIfExists } from "builder-util"
+import { copyFile, exec, Fields, InvalidConfigurationError, isEmptyOrSpaces, isPullRequest, log, Logger, retry, TmpDir, unlinkIfExists } from "builder-util"
 import { dynamicImport } from "../util/dynamicImport.js"
 import { Nullish } from "builder-util-runtime"
 import { createHash, randomBytes } from "crypto"
@@ -12,20 +8,8 @@ import { Lazy } from "lazy-val"
 import { homedir, tmpdir } from "os"
 import * as path from "path"
 import { getTempName } from "temp-file"
-<<<<<<< HEAD
-<<<<<<< HEAD
-import { isAutoDiscoveryCodeSignIdentity } from "../util/flags.js"
+import { isAutoDiscoveryCodeSignIdentity, isCscForPullRequest, isTravis } from "../util/flags.js"
 import { importCertificate } from "./codesign.js"
-<<<<<<< HEAD
-=======
-import { isAutoDiscoveryCodeSignIdentity } from "../util/flags"
-=======
-import { isAutoDiscoveryCodeSignIdentity } from "../util/flags.js"
->>>>>>> d26567f58 (tmp save)
-import { importCertificate } from "./codesign.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 
@@ -55,7 +39,7 @@ export function isSignAllowed(isPrintWarn = true): boolean {
       "There are serious security concerns with CSC_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
       "\nIf you have SSH keys, sensitive env vars or AWS credentials stored in your project settings and untrusted forks can make pull requests against your repo, then this option isn't for you."
 
-    if (isEnvTrue(process.env.CSC_FOR_PULL_REQUEST)) {
+    if (isCscForPullRequest()) {
       if (isPrintWarn) {
         log.warn(buildForPrWarning)
       }
@@ -168,7 +152,7 @@ export function removeKeychain(keychainFile: string, printWarn = true): Promise<
 
 export async function createKeychain({ tmpDir, cscLink, cscKeyPassword, cscILink, cscIKeyPassword, currentDir }: CreateKeychainOptions): Promise<CodeSigningInfo> {
   // travis has correct AppleWWDRCA cert
-  if (process.env.TRAVIS !== "true") {
+  if (!isTravis()) {
     await bundledCertKeychainAdded.value
   }
 
@@ -201,11 +185,12 @@ export async function createKeychain({ tmpDir, cscLink, cscKeyPassword, cscILink
     securityCommands.push(["list-keychains", "-d", "user", "-s", keychainFile].concat(list))
   }
 
-  // Import all certs in parallel, then run security commands sequentially.
-  await Promise.all(certLinks.map((link, i) => importCertificate(link, tmpDir, currentDir).then(it => (certPaths[i] = it))))
-  for (const cmd of securityCommands) {
-    await exec("/usr/bin/security", cmd)
-  }
+  await Promise.all([
+    // we do not clear downloaded files - will be removed on tmpDir cleanup automatically. not a security issue since in any case data is available as env variables and protected by password.
+    ...certLinks.map((link, i) => importCertificate(link, tmpDir, currentDir).then(it => (certPaths[i] = it))),
+    // queue each security command
+    securityCommands.reduce((promise, cmd) => promise.then(() => exec("/usr/bin/security", cmd)), new Promise(resolve => resolve(null))),
+  ])
   const cscPasswords: Array<string> = [cscKeyPassword]
   if (cscIKeyPassword != null) {
     cscPasswords.push(cscIKeyPassword)
@@ -323,23 +308,19 @@ async function _findIdentity(type: CertType, qualifier?: string | null, keychain
   return null
 }
 
-export class Identity {
-  constructor(
-    readonly name: string,
-    readonly hash?: string
-  ) {}
+export declare class Identity {
+  readonly name: string
+  readonly hash?: string
+
+  constructor(name: string, hash?: string)
 }
 
 async function parseIdentity(line: string): Promise<Identity> {
   const firstQuoteIndex = line.indexOf('"')
   const name = line.substring(firstQuoteIndex + 1, line.lastIndexOf('"'))
   const hash = line.substring(0, firstQuoteIndex - 1)
-<<<<<<< HEAD
   const { Identity: IdentityClass } = await dynamicImport<{ Identity: new (name: string, hash?: string) => Identity }>("@electron/osx-sign/dist/cjs/util-identities")
   return new IdentityClass(name, hash)
-=======
-  return new Identity(name, hash)
->>>>>>> c92b22265 (tmp save for .js extension migration)
 }
 
 export function findIdentity(certType: CertType, qualifier?: string | null, keychain?: string | null): Promise<Identity | null> {

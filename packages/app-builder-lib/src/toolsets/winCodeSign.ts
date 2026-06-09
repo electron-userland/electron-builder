@@ -4,7 +4,7 @@ import * as path from "path"
 import { ToolsetConfig } from "../configuration.js"
 import { ToolInfo, computeToolEnv } from "../util/bundledTool.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
-import { isUseSystemSigncode } from "../util/flags.js"
+import { isUseSystemOsslSigncode, isUseSystemSigncode } from "../util/flags.js"
 import { getCustomToolsetPath } from "./custom.js"
 
 function getLegacyWinCodeSignBin(): Promise<string> {
@@ -116,7 +116,7 @@ async function _getWindowsSignToolExe({ winCodeSign, arch, resourcesDir }: { win
 }
 
 async function _getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"], resourcesDir: string) {
-  if (process.platform === "win32" || process.env.USE_SYSTEM_OSSLSIGNCODE === "true") {
+  if (process.platform === "win32" || isUseSystemOsslSigncode()) {
     return { path: "osslsigncode" }
   }
 

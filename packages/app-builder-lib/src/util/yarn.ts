@@ -1,38 +1,12 @@
-<<<<<<< HEAD
 import { asArray, log, retry, spawn, stripSensitiveEnvVars } from "builder-util"
+import { isNpmNoBinLinks } from "./flags.js"
 
-=======
-import { asArray, log, spawn } from "builder-util"
-import fsExtra from "fs-extra"
-import { Lazy } from "lazy-val"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { homedir } from "os"
 import * as path from "path"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { Configuration } from "../configuration.js"
-<<<<<<< HEAD
 import { PM, getPackageManagerCommand } from "../node-module-collector/index.js"
 import { detectPackageManager } from "../node-module-collector/packageManager.js"
 import { rebuild as remoteRebuild } from "./rebuild.js"
-=======
-import { Configuration } from "../configuration"
-=======
-import { Configuration } from "../configuration.js"
->>>>>>> d26567f58 (tmp save)
-import { executeAppBuilderAndWriteJson } from "./appBuilder.js.js"
-import { PM, getPackageManagerCommand } from "../node-module-collector.js"
-import { detectPackageManager } from "../node-module-collector/packageManager.js"
-import { NodeModuleDirInfo } from "./packageDependencies.js.js"
-import { rebuild as remoteRebuild } from "./rebuild.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { executeAppBuilderAndWriteJson } from "./appBuilder.js"
-import { PM, getPackageManagerCommand } from "../node-module-collector/index.js"
-import { detectPackageManager } from "../node-module-collector/packageManager.js"
-import { NodeModuleDirInfo } from "./packageDependencies.js"
-import { rebuild as remoteRebuild } from "./rebuild.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
 import * as which from "which"
 import type { RebuildOptions as ElectronRebuildOptions } from "@electron/rebuild"
 import { Nullish } from "builder-util-runtime"
@@ -55,11 +29,7 @@ export async function installOrRebuild(
 
   const dirsToCheck = [...new Set([projectDir, appDir, workspaceRoot].filter((d): d is string => !!d))]
   for (const fileOrDir of ["node_modules", ".pnp.js"]) {
-<<<<<<< HEAD
     if ((await Promise.all(dirsToCheck.map(d => pathExists(path.join(d, fileOrDir))))).some(Boolean)) {
-=======
-    if ((await fsExtra.pathExists(path.join(projectDir, fileOrDir))) || (await fsExtra.pathExists(path.join(appDir, fileOrDir)))) {
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
       isDependenciesInstalled = true
 
       break
@@ -136,7 +106,7 @@ export async function installDependencies(
   if (pm === PM.YARN) {
     execArgs.push("--prefer-offline")
   } else if (pm === PM.YARN_BERRY) {
-    if (process.env.NPM_NO_BIN_LINKS === "true") {
+    if (isNpmNoBinLinks()) {
       execArgs.push("--no-bin-links")
     }
   }
@@ -224,7 +194,8 @@ export async function rebuild(config: Configuration, { appDir, projectDir, works
   }
   log.info(logInfo, "executing @electron/rebuild")
 
-  const mode = config.nativeRebuilder ?? "sequential"
+  // "legacy" previously used the app-builder-bin Go binary; it now maps to sequential @electron/rebuild.
+  const mode = config.nativeRebuilder === "legacy" || !config.nativeRebuilder ? "sequential" : config.nativeRebuilder
   const rebuildOptions: ElectronRebuildOptions = {
     buildPath: appDir,
     electronVersion,

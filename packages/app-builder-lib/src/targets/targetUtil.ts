@@ -1,4 +1,5 @@
 import { Arch, debug } from "builder-util"
+import { isRemoveStageDirEvenIfDebug } from "../util/flags.js"
 import * as fs from "fs/promises"
 import * as path from "path"
 <<<<<<< HEAD
@@ -21,7 +22,7 @@ export class StageDir {
   }
 
   cleanup() {
-    if (!debug.enabled || process.env.ELECTRON_BUILDER_REMOVE_STAGE_EVEN_IF_DEBUG === "true") {
+    if (!debug.enabled || isRemoveStageDirEvenIfDebug()) {
       return fs.rm(this.dir, { recursive: true, force: true })
     }
     return Promise.resolve()
