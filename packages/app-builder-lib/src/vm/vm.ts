@@ -2,15 +2,7 @@ import { DebugLogger, exec, ExtraSpawnOptions, InvalidConfigurationError, log, s
 import { ExecFileOptions, SpawnOptions } from "child_process"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-<<<<<<< HEAD
-<<<<<<< HEAD
-import { ParallelsVm } from "./ParallelsVm.js"
-=======
-import { ParallelsVm } from "./ParallelsVm.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { ParallelsVm } from "./ParallelsVm.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
+import { ParallelsVm } from "./mac/ParallelsVm.js"
 export class VmManager {
   get pathSep(): string {
     return path.sep
@@ -42,13 +34,13 @@ export class VmManager {
 }
 
 export async function getWindowsVm(debugLogger: DebugLogger): Promise<VmManager> {
-  const parallelsVmModule = await import("./ParallelsVm.js")
+  const parallelsVmModule = await import("./mac/ParallelsVm.js")
   let vmList: ParallelsVm[] = []
   try {
     vmList = (await parallelsVmModule.parseVmList(debugLogger)).filter(it => ["win-10", "win-11"].includes(it.os))
   } catch (_error) {
     if ((await isPwshAvailable.value) && (await isWineAvailable.value)) {
-      const vmModule = await import("./PwshVm.js")
+      const vmModule = await import("./win/PwshVm.js")
       return new vmModule.PwshVmManager()
     }
   }
@@ -65,7 +57,7 @@ export async function getLinuxVm(debugLogger: DebugLogger): Promise<VmManager | 
     return undefined
   }
   try {
-    const parallelsVmModule = await import("./ParallelsVm.js")
+    const parallelsVmModule = await import("./mac/ParallelsVm.js")
     const vmList = (await parallelsVmModule.parseVmList(debugLogger)).filter(it => it.os === "ubuntu")
     if (vmList.length === 0) {
       return undefined

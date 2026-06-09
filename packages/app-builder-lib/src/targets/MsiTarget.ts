@@ -12,7 +12,7 @@ import { DesktopShortcutCreationPolicy, FinalCommonWindowsInstallerOptions, getE
 import { normalizeExt } from "../platformPackager.js"
 import { getTemplatePath } from "../util/pathManager.js"
 import { VmManager } from "../vm/vm.js"
-import { WineVmManager } from "../vm/WineVm.js"
+import { WineVmManager } from "../vm/win/WineVm.js"
 import { WinPackager } from "../winPackager.js"
 import { withToolsetLock } from "../util/toolsetLock.js"
 import { createStageDir, getWindowsInstallationDirName } from "./targetUtil.js"
