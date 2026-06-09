@@ -1,15 +1,9 @@
 import { AsyncTaskManager, FileCopier, FileTransformer, isEmptyOrSpaces, Link, log, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
 import { Stats } from "fs"
-<<<<<<< HEAD
 import fsExtra from "fs-extra"
-=======
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { mkdir, readlink } from "fs/promises"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { isLibOrExe } from "../asar/unpackDetector.js"
 import { Platform } from "../core.js"
 import { excludedExts, FileMatcher } from "../fileMatcher.js"
@@ -20,44 +14,6 @@ import { PlatformPackager } from "../platformPackager.js"
 import { AppFileWalker } from "./AppFileWalker.js"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper.js"
 import { NodeModuleInfo } from "../node-module-collector/types.js"
-=======
-import { isLibOrExe } from "../asar/unpackDetector"
-import { Platform } from "../core"
-import { excludedExts, FileMatcher } from "../fileMatcher"
-import { createElectronCompilerHost, NODE_MODULES_PATTERN } from "../fileTransformer"
-import { Packager } from "../packager"
-import { PlatformPackager } from "../platformPackager"
-<<<<<<< HEAD
-=======
-import { isLibOrExe } from "../asar/unpackDetector.js"
-import { Platform } from "../core.js"
-import { excludedExts, FileMatcher } from "../fileMatcher.js"
-import { createElectronCompilerHost, NODE_MODULES_PATTERN } from "../fileTransformer.js"
-import { Packager } from "../packager.js"
-import { PlatformPackager } from "../platformPackager.js"
-<<<<<<< HEAD
->>>>>>> d26567f58 (tmp save)
-import { AppFileWalker } from "./AppFileWalker.js.js"
-import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper.js.js"
-import { NodeModuleInfo } from "./packageDependencies.js.js"
-import { getNodeModules } from "../node-module-collector.js"
-=======
-import { AppFileWalker } from "./AppFileWalker.js"
-import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper.js"
-import { NodeModuleInfo } from "./packageDependencies.js"
-import { getNodeModules } from "../node-module-collector/index.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
-=======
-import { AppFileWalker } from "./AppFileWalker"
-import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper"
-import { NodeModuleInfo } from "./packageDependencies"
-import { getNodeModules, PM } from "../node-module-collector"
->>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
-
-const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
-/** @internal */
-export const ELECTRON_COMPILE_SHIM_FILENAME = "__shim.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
   if (file === fileSet.src) {
@@ -208,41 +164,7 @@ function validateFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
 
 /** @internal */
 export async function computeNodeModuleFileSets(platformPackager: PlatformPackager<any>, mainMatcher: FileMatcher): Promise<Array<ResolvedFileSet>> {
-<<<<<<< HEAD
   const deps = await collectNodeModulesWithLogging(platformPackager)
-=======
-  const packager = platformPackager.info
-  const { tempDirManager, cancellationToken, appDir, projectDir } = packager
-
-  let deps: Array<NodeModuleInfo> = []
-  const searchDirectories = Array.from(new Set([projectDir, appDir, await packager.getWorkspaceRoot()])).filter((it): it is string => it != null)
-  const pmApproaches = [await packager.getPackageManager(), PM.TRAVERSAL]
-  for (const pm of pmApproaches) {
-    for (const dir of searchDirectories) {
-      if (cancellationToken.cancelled) {
-        throw new Error("user cancelled")
-      }
-
-      const options = { rootDir: dir, tempDirManager, cancellationToken, packageName: packager.metadata.name! }
-      deps = await getNodeModules(pm, options)
-      if (deps.length > 0) {
-        break
-      }
-      const attempt = searchDirectories.indexOf(dir)
-      if (attempt < searchDirectories.length - 1) {
-        log.info({ searchDir: dir, attempt }, "no node modules found in collection, trying next search directory")
-      }
-    }
-    if (deps.length > 0) {
-      log.debug({ pm, nodeModules: deps }, "collected node modules")
-      break
-    }
-  }
-  if (deps.length === 0) {
-    log.warn({ searchDirectories: searchDirectories.map(it => log.filePath(it)) }, "no node modules returned while searching directories")
-    return []
-  }
->>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
 
   const nodeModuleExcludedExts = getNodeModuleExcludedExts(platformPackager)
   // serial execution because copyNodeModules is concurrent and so, no need to increase queue/pressure

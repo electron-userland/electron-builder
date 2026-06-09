@@ -1,6 +1,5 @@
 {
   "name": "electron-builder-squirrel-windows",
-<<<<<<< HEAD
   "version": "26.15.3",
   "type": "module",
   "main": "./dist/SquirrelWindowsTarget.js",
@@ -16,11 +15,6 @@
       "require": "./dist/indexInternal.js"
     }
   },
-=======
-  "version": "26.3.5",
-  "type": "module",
-  "exports": "./out/SquirrelWindowsTarget.js",
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {
@@ -38,23 +32,16 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-<<<<<<< HEAD
     "build": "tsc --build tsconfig.build.json --force",
     "watch": "tsc --build tsconfig.build.json --watch"
-=======
-    "build": "tsup",
-    "watch": "tsup --watch"
->>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
   },
   "dependencies": {
     "app-builder-lib": "workspace:*",
     "builder-util": "workspace:*",
     "electron-winstaller": "5.4.0"
   },
-  "engines": {
-    "node": ">=22.12.0"
-  },
   "devDependencies": {
+    "@types/archiver": "5.3.1",
     "@types/fs-extra": "9.0.13"
   },
   "types": "./dist/SquirrelWindowsTarget.d.ts"

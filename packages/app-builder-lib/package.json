@@ -1,7 +1,6 @@
 {
   "name": "app-builder-lib",
   "description": "electron-builder lib",
-<<<<<<< HEAD
   "version": "26.15.3",
   "type": "module",
   "main": "./dist/index.js",
@@ -17,11 +16,6 @@
       "require": "./dist/indexInternal.js"
     }
   },
-=======
-  "version": "26.3.5",
-  "type": "module",
-  "exports": "./out/index.js",
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
   "files": [
     "dist",
     "templates",
@@ -88,11 +82,7 @@
     "dotenv-expand": "^11.0.6",
     "ejs": "^3.1.8",
     "electron-publish": "workspace:*",
-<<<<<<< HEAD
     "fs-extra": "^11.3.0",
-=======
-    "fs-extra": "^11.3.4",
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
     "hosted-git-info": "^4.1.0",
     "isbinaryfile": "^5.0.0",
     "jiti": "^2.4.2",
@@ -153,12 +143,7 @@
   "//": "electron-builder-squirrel-windows and dmg-builder added as dev dep for tests (as otherwise `require` doesn't work using Yarn 2)",
   "types": "./dist/index.d.ts",
   "scripts": {
-<<<<<<< HEAD
     "build": "tsc --build tsconfig.build.json --force",
     "watch": "tsc --build tsconfig.build.json --watch"
-=======
-    "build": "tsup",
-    "watch": "tsup --watch"
->>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
   }
 }

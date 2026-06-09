@@ -1,13 +1,8 @@
 {
   "name": "electron-builder",
   "description": "A complete solution to package and build a ready for distribution Electron app for MacOS, Windows and Linux with “auto update” support out of the box",
-<<<<<<< HEAD
-<<<<<<< HEAD
   "version": "26.15.3",
   "type": "module",
-=======
-  "version": "26.14.0",
->>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
   "main": "./dist/index.js",
   "exports": {
     ".": {
@@ -21,24 +16,14 @@
       "require": "./dist/indexInternal.js"
     }
   },
-=======
-  "version": "26.3.5",
-  "type": "module",
-  "exports": "./out/index.js",
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
   "files": [
     "dist",
     "cli.js",
     "install-app-deps.js"
   ],
   "scripts": {
-<<<<<<< HEAD
     "build": "tsc --build tsconfig.build.json --force",
     "watch": "tsc --build tsconfig.build.json --watch"
-=======
-    "build": "tsup",
-    "watch": "tsup --watch"
->>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
   },
   "bin": {
     "electron-builder": "./cli.js",
@@ -88,15 +73,10 @@
     "app-builder-lib": "workspace:*",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
-    "electron-publish": "workspace:*",
     "chalk": "^4.1.2",
     "ci-info": "^4.2.0",
     "dmg-builder": "workspace:*",
-<<<<<<< HEAD
     "fs-extra": "^11.3.0",
-=======
-    "fs-extra": "^11.3.4",
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
     "lazy-val": "^1.0.5",
     "simple-update-notifier": "2.0.0",
     "yargs": "^17.6.2"

@@ -478,7 +478,7 @@ async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact
  * Unlike downloadBuilderToolset, this does not extract archives — it copies the raw file.
  * Used for certificate imports where the caller needs the file at a known path.
  */
-export async function download(url: string, output: string, checksum: string | null): Promise<void> {
+export async function download(url: string, output: string, checksum?: string | null): Promise<void> {
   const filenameWithExt = path.basename(new URL(url).pathname)
   if (checksum == null) {
     log.warn({ url }, "downloading without an integrity checksum — the download is not verified against a known-good hash")

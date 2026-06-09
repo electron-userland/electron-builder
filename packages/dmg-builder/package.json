@@ -1,5 +1,4 @@
 {
-<<<<<<< HEAD
   "name": "dmg-builder",
   "version": "26.15.3",
   "type": "module",
@@ -29,44 +28,12 @@
     "dist",
     "templates"
   ],
-=======
-	"name": "dmg-builder",
-	"version": "26.3.5",
-  "type": "module",
-	"exports": "./out/dmgUtil.js",
-	"author": "Vladimir Krivosheev",
-	"license": "MIT",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/electron-userland/electron-builder.git",
-		"directory": "packages/dmg-builder"
-	},
-	"bugs": "https://github.com/electron-userland/electron-builder/issues",
-	"homepage": "https://github.com/electron-userland/electron-builder",
-	"files": [
-		"out",
-		"templates",
-		"vendor"
-	],
-	"dependencies": {
-		"app-builder-lib": "workspace:*",
-		"builder-util": "workspace:*",
-		"fs-extra": "^11.3.4",
-		"iconv-lite": "^0.6.2",
-		"js-yaml": "^4.1.0"
-	},
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
   "engines": {
     "node": ">=22.12.0"
   },
   "scripts": {
-<<<<<<< HEAD
     "build": "tsc --build tsconfig.build.json --force",
     "watch": "tsc --build tsconfig.build.json --watch"
-=======
-    "build": "tsup",
-    "watch": "tsup --watch"
->>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
   },
   "dependencies": {
     "app-builder-lib": "workspace:*",

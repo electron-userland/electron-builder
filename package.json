@@ -4,13 +4,8 @@
   "license": "MIT",
   "scripts": {
     "//": "do not wrap into single quotes - windows doesn't unwrap arg in this case",
-<<<<<<< HEAD
     "compile": "pnpm ci:test:generate && tsc --build tsconfig.build.json --force",
     "compile:watch": "tsc --build tsconfig.build.json --watch",
-=======
-    "compile": "pnpm ci:test:generate && pnpm run -r --if-present --filter builder-util-runtime --filter builder-util --filter electron-publish --filter app-builder-lib build && pnpm run -r --if-present --filter '!@electron-builder/website' --filter '!@electron-builder/test' --filter '!app-builder-lib' --filter '!builder-util' --filter '!builder-util-runtime' --filter '!electron-publish' build",
-    "compile:watch": "pnpm compile && pnpm run -r --if-present --parallel --filter '!@electron-builder/website' --filter '!@electron-builder/test' watch",
->>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
     "typecheck": "tsc --build",
     "typecheck:test": "tsc --noEmit -p test/tsconfig.json",
     "lint": "eslint packages test/src --ext .ts,.js",
@@ -58,17 +53,13 @@
     "eslint": "9.39.2",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
-<<<<<<< HEAD
     "fs-extra": "^10.1.0",
-=======
-    "fs-extra": "^11.3.4",
-    "is-ci": "^4.1.0",
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
     "prettier": "3.7.4",
     "tsx": "^4.0.0",
     "typedoc": "^0.28.19",
     "typescript": "^5.6.2",
-    "typescript-json-schema": "0.64.0"
+    "typescript-json-schema": "0.64.0",
+    "vitest": "^3.2.2"
   },
   "engines": {
     "node": ">=22.12.0",
