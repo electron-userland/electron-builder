@@ -176,7 +176,7 @@ export function appTwoThrows(expect: ExpectStatic, packagerOptions: PackagerOpti
 }
 
 export function app(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
-  return assertPack(expect, packagerOptions.config != null && (packagerOptions.config as any).protonNodeVersion != null ? "proton" : "test-app-one", packagerOptions, checkOptions)
+  return assertPack(expect, "test-app-one", packagerOptions, checkOptions)
 }
 
 export function appTwo(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
