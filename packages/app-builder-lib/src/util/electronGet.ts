@@ -261,9 +261,7 @@ async function downloadArtifactToFile(config: Parameters<typeof get.downloadArti
     .digest("hex")
     .slice(0, 20)
   const artifactLockPath = path.join(os.tmpdir(), `eb-dl-${artifactLockKey}.lock`)
-  // This lock is taken even for cache hits (the cache-hit check lives inside @electron/get), so under
-  // heavy concurrency many builds serialize here. 30 retries (~137s of backoff) is too few — waiters
-  // were exhausting it and failing with ELOCKED while the holder fetched a large artifact. 100 retries
+  // This lock is taken when the artifact is not yet in @electron/get's download cache. 100 retries
   // matches the other toolset locks; stale (10min) + proper-lockfile's update heartbeat keep a live
   // downloader's lock fresh so the longer wait never falsely steals an in-progress download.
   const releaseArtifactLock = await lockfile.lock(artifactLockPath, {
@@ -346,11 +344,51 @@ async function downloadArtifactToFile(config: Parameters<typeof get.downloadArti
 }
 
 /**
+ * Checks electron-builder's own archive cache for a previously downloaded archive.
+ * Validates the SHA-256 checksum when one is known. Returns the cached path on hit,
+ * null on miss or checksum mismatch (mismatch also deletes the stale file).
+ */
+async function resolveFromArchiveCache(archiveCachePath: string, label: string, expectedSha256: string | undefined): Promise<string | null> {
+  if (!(await exists(archiveCachePath))) {
+    return null
+  }
+  if (expectedSha256) {
+    const hash = await new Promise<string>((resolve, reject) => {
+      const h = crypto.createHash("sha256")
+      const s = createReadStream(archiveCachePath)
+      s.on("error", reject)
+      s.on("data", (chunk: Buffer | string) => h.update(chunk))
+      s.on("end", () => resolve(h.digest("hex")))
+    })
+    if (hash !== expectedSha256) {
+      log.warn({ file: label, archiveCachePath }, "cached archive checksum mismatch — removing and re-downloading")
+      await fs.rm(archiveCachePath).catch(() => {})
+      return null
+    }
+  }
+  log.debug({ file: label, archiveCachePath }, "using cached archive — skipping download")
+  return archiveCachePath
+}
+
+/**
+ * Copies a freshly downloaded archive into electron-builder's own archive cache so that
+ * future builds (including offline environments) can skip the network request entirely.
+ */
+async function persistToArchiveCache(sourcePath: string, archiveCachePath: string): Promise<void> {
+  try {
+    await fs.mkdir(path.dirname(archiveCachePath), { recursive: true })
+    await fs.copyFile(sourcePath, archiveCachePath)
+  } catch (err) {
+    log.warn({ err, archiveCachePath }, "failed to persist archive to cache — will re-download next time")
+  }
+}
+
+/**
  * Core download + extract engine. Handles lockfile, cache-hit short-circuit,
  * progress bar, extraction (.zip or .tar.gz), and completion marker.
  * Both public download functions delegate here after building their respective configs.
  */
-async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact>[0], extractDir: string, label: string): Promise<string> {
+async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact>[0], extractDir: string, label: string, archiveCachePath?: string): Promise<string> {
   await fs.mkdir(extractDir, { recursive: true })
 
   // Pre-lock fast path: only short-circuit for a definitively complete and valid cache.
@@ -392,10 +430,25 @@ async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact
     await cleanupCacheDirectory(extractDir, { skipLockFiles: true })
     await fs.mkdir(extractDir, { recursive: true })
 
-    log.debug({ file: label }, "downloading")
-    downloadedFile = await downloadArtifactToFile(config, label)
+    // Check electron-builder's own archive cache before touching @electron/get.
+    // The cache lives alongside the extract dir: <cacheDir>/<releaseName>/<filename>.
+    // This lets repeated builds (or offline environments) skip the download entirely once
+    // the archive has been fetched at least once.
+    if (archiveCachePath) {
+      downloadedFile = await resolveFromArchiveCache(archiveCachePath, label, (config as any).checksums?.[label])
+    }
+
     if (!downloadedFile) {
-      throw new Error(`Failed to download artifact: ${label}`)
+      log.debug({ file: label }, "downloading")
+      downloadedFile = await downloadArtifactToFile(config, label)
+      if (!downloadedFile) {
+        throw new Error(`Failed to download artifact: ${label}`)
+      }
+      // Persist the downloaded archive so future builds (and offline environments) can
+      // skip the network request entirely.
+      if (archiveCachePath) {
+        await persistToArchiveCache(downloadedFile, archiveCachePath)
+      }
     }
 
     await writeCacheState(extractDir, CacheState.downloaded)
@@ -433,6 +486,10 @@ export async function downloadBuilderToolset(options: {
 }): Promise<string> {
   const { releaseName, filenameWithExt, checksums, githubOrgRepo = "electron-userland/electron-builder-binaries", overrideUrl } = options
 
+  if (/[/\\]|\.\./.test(filenameWithExt)) {
+    throw new Error(`downloadBuilderToolset: unsafe filenameWithExt "${filenameWithExt}" — must be a plain filename with no path separators or traversal sequences`)
+  }
+
   const baseUrl = getBinariesMirrorUrl(githubOrgRepo)
   const fullUrl = overrideUrl ? `${overrideUrl}/${filenameWithExt}` : `${baseUrl}${releaseName}/${filenameWithExt}`
   const suffix = hashUrlSafe(fullUrl, 5)
@@ -445,6 +502,11 @@ export async function downloadBuilderToolset(options: {
     resolveAssetURL: async () => Promise.resolve(fullUrl),
   }
 
+  // Predictable archive cache: <cacheDir>/<releaseName>/<filename>, next to the extract dir.
+  // downloadAndExtract checks here before touching @electron/get and persists the archive here
+  // after every successful download, so subsequent builds never need a network round-trip.
+  const archiveCachePath = path.join(getCacheDirectory({ allowEnvVarOverride: true }), releaseName, filenameWithExt)
+
   const config: ElectronDownloadRequest & ElectronDownloadRequestOptions & { isGeneric: true } = {
     version: "9.9.9", // must be >1.3.2 to bypass @electron/get validation shortcut
     artifactName: filenameWithExt,
@@ -454,7 +516,7 @@ export async function downloadBuilderToolset(options: {
     mirrorOptions,
     isGeneric: true,
   }
-  return downloadAndExtract(config, extractDir, filenameWithExt)
+  return downloadAndExtract(config, extractDir, filenameWithExt, archiveCachePath)
 }
 
 // Keys present in ElectronGetOptions but absent from ElectronDownloadOptions.

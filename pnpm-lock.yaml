@@ -684,6 +684,9 @@ importers:
       stat-mode:
         specifier: ^1.0.0
         version: 1.0.0
+      tar:
+        specifier: ^7.5.7
+        version: 7.5.11
       temp-file:
         specifier: ^3.4.0
         version: 3.4.0
