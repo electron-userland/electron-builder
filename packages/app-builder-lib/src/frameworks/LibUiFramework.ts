@@ -1,4 +1,4 @@
-import { InvalidConfigurationError } from "builder-util"
+import { validateShellEmbeddable } from "builder-util"
 import _fsExtra from "fs-extra"
 const { copy, emptyDir } = _fsExtra
 import { chmod, copyFile, mkdir, rename, writeFile } from "fs/promises"
@@ -11,18 +11,6 @@ import { LinuxPackager } from "../linuxPackager.js"
 import { MacPackager } from "../macPackager.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
 import { savePlistFile } from "../util/plist.js"
-
-/** Validates that a value is safe to embed in a double-quoted shell string (no metacharacters). */
-export function validateShellEmbeddable(value: string, fieldName: string): void {
-  // Allow letters, digits, dots, underscores, hyphens, forward slashes, and spaces.
-  // Reject anything that could be interpreted as a shell metacharacter when embedded
-  // inside a double-quoted string: $, `, ", \, and newlines.
-  if (/[$`"\\\n]/.test(value)) {
-    throw new InvalidConfigurationError(
-      `${fieldName} contains characters that are not safe in shell scripts: ${JSON.stringify(value)}. ` + `Avoid $, backtick, double-quote, backslash, and newline characters.`
-    )
-  }
-}
 
 // LaunchUI version is independent of the Node.js version; this was the hardcoded default in the Go binary.
 // https://github.com/develar/app-builder/blob/master/pkg/package-format/proton-native/protonNative.go#L105-L136

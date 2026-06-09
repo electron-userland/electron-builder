@@ -8,8 +8,8 @@ import {
   getLaunchUiDownloadParams,
   getNodeJsDownloadParams,
   LAUNCHUI_DEFAULT_VERSION,
-  validateShellEmbeddable,
 } from "app-builder-lib/src/frameworks/LibUiFramework"
+import { validateShellEmbeddable } from "builder-util/src/envUtil"
 
 vi.mock("https")
 
