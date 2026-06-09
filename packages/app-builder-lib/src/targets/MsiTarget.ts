@@ -1,4 +1,4 @@
-import { Arch, asArray, log, walk } from "builder-util"
+import { Arch, asArray, log, walk, escapeForXml } from "builder-util"
 import { deepAssign, UUID } from "builder-util-runtime"
 import { createHash } from "crypto"
 import * as ejs from "ejs"
@@ -240,7 +240,7 @@ export default class MsiTarget extends Target {
       // since RegistryValue can be part of Component, *** *** *** *** *** *** *** *** *** wix cannot auto generate guid
       // https://stackoverflow.com/questions/1405100/change-my-component-guid-in-wix
       let result = `<Component${directoryId === null ? "" : ` Directory="${directoryId}"`}>`
-      result += `\n${fileSpace}  <File Name="${xmlAttr(fileName)}" Source="$(var.appDir)${path.sep}${xmlAttr(packagePath)}" ReadOnly="yes" KeyPath="yes"`
+      result += `\n${fileSpace}  <File Name="${escapeForXml(fileName)}" Source="$(var.appDir)${path.sep}${escapeForXml(packagePath)}" ReadOnly="yes" KeyPath="yes"`
       const isMainExecutable = packagePath === `${appInfo.productFilename}.exe`
       if (isMainExecutable) {
         result += ' Id="mainExecutable"'
@@ -253,7 +253,7 @@ export default class MsiTarget extends Target {
         result += `>\n`
         const shortcutName = commonOptions.shortcutName
         if (isCreateDesktopShortcut) {
-          result += `${fileSpace}  <Shortcut Id="desktopShortcut" Directory="DesktopFolder" Name="${xmlAttr(
+          result += `${fileSpace}  <Shortcut Id="desktopShortcut" Directory="DesktopFolder" Name="${escapeForXml(
             shortcutName
           )}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes" Icon="${this.iconId}"/>\n`
         }
@@ -264,10 +264,10 @@ export default class MsiTarget extends Target {
           if (hasMenuCategory) {
             dirs.push(`<Directory Id="${startMenuShortcutDirectoryId}" Name="ProgramMenuFolder:\\${commonOptions.menuCategory}\\"/>`)
           }
-          result += `${fileSpace}  <Shortcut Id="startMenuShortcut" Directory="${startMenuShortcutDirectoryId}" Name="${xmlAttr(
+          result += `${fileSpace}  <Shortcut Id="startMenuShortcut" Directory="${startMenuShortcutDirectoryId}" Name="${escapeForXml(
             shortcutName
           )}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes" Icon="${this.iconId}">\n`
-          result += `${fileSpace}    <ShortcutProperty Key="System.AppUserModel.ID" Value="${xmlAttr(this.packager.appInfo.id)}"/>\n`
+          result += `${fileSpace}    <ShortcutProperty Key="System.AppUserModel.ID" Value="${escapeForXml(this.packager.appInfo.id)}"/>\n`
           result += `${fileSpace}  </Shortcut>\n`
         }
         result += `${fileSpace}</File>`
@@ -288,7 +288,7 @@ export default class MsiTarget extends Target {
               item.description ? `Description="${item.description}"` : ""
             }>\n`
             result += `${fileSpace}    <Extension Id="${ext}" Advertise="yes">\n`
-            result += `${fileSpace}      <Verb Id="open" Command="Open with ${xmlAttr(this.packager.appInfo.productName)}" Argument="&quot;%1&quot;"/>\n`
+            result += `${fileSpace}      <Verb Id="open" Command="Open with ${escapeForXml(this.packager.appInfo.productName)}" Argument="&quot;%1&quot;"/>\n`
             result += `${fileSpace}    </Extension>\n`
             result += `${fileSpace}  </ProgId>\n`
           }
@@ -305,8 +305,4 @@ export default class MsiTarget extends Target {
 function listToString(list: Array<string>, indentLevel: number) {
   const space = " ".repeat(indentLevel * 2)
   return list.join(`\n${space}`)
-}
-
-function xmlAttr(str: string) {
-  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;")
 }
