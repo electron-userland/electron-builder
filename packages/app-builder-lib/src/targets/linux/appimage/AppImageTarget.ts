@@ -112,35 +112,39 @@ export default class AppImageTarget extends Target {
           },
         })
       } else {
-        updateInfo = await buildStaticRuntimeAppImage(appimageTool, {
-          appDir: appOutDir,
-          stageDir: stageDir.dir,
-          arch,
-          output: artifactPath,
-          options: {
-            productName: packager.appInfo.productName,
-            productFilename: packager.appInfo.productFilename,
-            executableName: packager.executableName,
-            license,
-            desktopEntry,
-            icons,
-            fileAssociations: packager.fileAssociations,
-            desktopBaseName,
-            compression: (() => {
-              const c = options.compression
-              if (c === "gzip" || c === "zstd") {
-                return c
-              }
-              if (c === "xz") {
-                return "zstd" // nearest equivalent; static runtime does not support xz
-              }
-              if (packager.compression === "store") {
-                return "gzip"
-              }
-              return "zstd" // maximum/normal/unset → zstd for static runtime
-            })(),
+        updateInfo = await buildStaticRuntimeAppImage(
+          appimageTool,
+          {
+            appDir: appOutDir,
+            stageDir: stageDir.dir,
+            arch,
+            output: artifactPath,
+            options: {
+              productName: packager.appInfo.productName,
+              productFilename: packager.appInfo.productFilename,
+              executableName: packager.executableName,
+              license,
+              desktopEntry,
+              icons,
+              fileAssociations: packager.fileAssociations,
+              desktopBaseName,
+              compression: (() => {
+                const c = options.compression
+                if (c === "gzip" || c === "zstd") {
+                  return c
+                }
+                if (c === "xz") {
+                  return "zstd" // nearest equivalent; static runtime does not support xz
+                }
+                if (packager.compression === "store") {
+                  return "gzip"
+                }
+                return "zstd" // maximum/normal/unset → zstd for static runtime
+              })(),
+            },
           },
-        }, packager.buildResourcesDir)
+          packager.buildResourcesDir
+        )
       }
     } catch (error: any) {
       log.error({ error: error.message }, "failed to build AppImage")
