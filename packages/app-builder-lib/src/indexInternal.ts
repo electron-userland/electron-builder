@@ -1,11 +1,10 @@
 export { AsarFilesystem, readAsar, readAsarJson } from "./asar/asar.js"
 export { AsarIntegrity } from "./asar/integrity.js"
-export { download, resolveBuilderBinaryUrl } from "./util/electronGet.js"
 export { readCertInfo, _testingOnly } from "./codeSign/certInfo.js"
-export { createKeychain, findIdentity, isSignAllowed, removeKeychain } from "./codeSign/macCodeSign.js"
-export type { Identity } from "./codeSign/macCodeSign.js"
-export { CustomWindowsSign, WindowsSignTaskConfiguration } from "./codeSign/windowsSignToolManager.js"
-export { Configuration, ToolsetConfig } from "./configuration.js"
+export { createKeychain, findIdentity, isSignAllowed, removeKeychain } from "./codeSign/mac/macCodeSign.js"
+export type { Identity } from "./codeSign/mac/macCodeSign.js"
+export { CustomWindowsSign, WindowsSignTaskConfiguration } from "./codeSign/win/windowsSignToolManager.js"
+export { Configuration, ToolsetConfig, ToolsetCustom } from "./configuration.js"
 export { Publish } from "./core.js"
 export { getElectronVersion } from "./electron/electronVersion.js"
 export { FileMatcher, getFileMatchers, GetFileMatchersOptions } from "./fileMatcher.js"
@@ -32,8 +31,8 @@ export type { Defines } from "./targets/nsis/Defines.js"
 export { NsisScriptGenerator, nsisEscapeString } from "./targets/nsis/nsisScriptGenerator.js"
 export { checkMakensisOutput, verifyInstallerSize } from "./targets/nsis/nsisValidation.js"
 export { computeArchToTargetNamesMap } from "./targets/targetFactory.js"
-export { getLinuxToolsMacToolset, getLinuxToolsPath } from "./toolsets/linux.js"
-export { getWindowsKitsBundle } from "./toolsets/windows.js"
+export { getLinuxToolsMacToolset, getLinuxToolsPath } from "./toolsets/linuxToolsMac.js"
+export { getWindowsKitsBundle } from "./toolsets/winCodeSign.js"
 export { CacheState } from "./util/cacheState.js"
 export { computeDefaultAppDirectory, doMergeConfigs, getConfig, validateConfiguration } from "./util/config/config.js"
 export { orNullIfFileNotExist, loadEnv } from "./util/config/load.js"
@@ -42,10 +41,12 @@ export {
   ArtifactDownloadOptions,
   ElectronDownloadOptions,
   ElectronGetOptions,
+  download,
   downloadBuilderToolset,
   downloadElectronArtifact,
   getCacheDirectory,
   getBinariesMirrorUrl,
+  resolveBuilderBinaryUrl,
 } from "./util/electronGet.js"
 export { buildSourceCandidates, convertIcon, getPngSize } from "./util/iconConverter.js"
 export { getLicenseAssets, getLicenseFiles } from "./util/license.js"

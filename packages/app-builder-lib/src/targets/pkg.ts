@@ -4,12 +4,8 @@ import { readdirSync } from "fs"
 import { readFile, unlink, writeFile } from "fs/promises"
 import * as path from "path"
 import { filterCFBundleIdentifier } from "../appInfo.js"
-<<<<<<< HEAD
-import { findIdentity } from "../codeSign/macCodeSign.js"
-import type { Identity } from "../codeSign/macCodeSign.js"
-=======
-import { findIdentity, Identity } from "../codeSign/macCodeSign.js"
->>>>>>> d26567f58 (tmp save)
+import { findIdentity } from "../codeSign/mac/macCodeSign.js"
+import type { Identity } from "../codeSign/mac/macCodeSign.js"
 import { Target } from "../core.js"
 import { MacPackager } from "../macPackager.js"
 import { PkgOptions } from "../options/pkgOptions.js"
@@ -52,19 +48,11 @@ export class PkgTarget extends Target {
   ) {
     super("pkg")
     this.options = {
-<<<<<<< HEAD
       allowAnywhere: true,
       allowCurrentUserHome: true,
       allowRootDirectory: true,
       ...this.packager.config.pkg,
     }
-=======
-    allowAnywhere: true,
-    allowCurrentUserHome: true,
-    allowRootDirectory: true,
-    ...this.packager.config.pkg,
-  }
->>>>>>> c92b22265 (tmp save for .js extension migration)
   }
 
   async build(appPath: string, arch: Arch): Promise<any> {

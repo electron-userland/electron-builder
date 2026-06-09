@@ -33,7 +33,7 @@ import * as path from "path"
 <<<<<<< HEAD
 <<<<<<< HEAD
 import { AppInfo } from "./appInfo.js"
-import { CodeSigningInfo, createKeychain, CreateKeychainOptions, isSignAllowed, removeKeychain, sign } from "./codeSign/macCodeSign.js"
+import { CodeSigningInfo, createKeychain, CreateKeychainOptions, isSignAllowed, removeKeychain, sign } from "./codeSign/mac/macCodeSign.js"
 import { DIR_TARGET, Platform, Target } from "./core.js"
 import { AfterPackContext, ElectronPlatformName } from "./index.js"
 import { MacTargetHelper, PlatformType } from "./mac/MacTargetHelper.js"
