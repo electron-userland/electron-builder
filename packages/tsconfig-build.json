@@ -5,7 +5,6 @@
     "moduleResolution": "bundler",
     "declaration": true,
     "declarationMap": true,
-    "composite": false,
-    "incremental": false
+    "composite": true
   }
 }

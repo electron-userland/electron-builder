@@ -31,8 +31,8 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsc -p tsconfig.build.json",
-    "watch": "tsc -p tsconfig.build.json --watch"
+    "build": "tsc --build tsconfig.build.json --force",
+    "watch": "tsc --build tsconfig.build.json --watch"
   },
   "dependencies": {
     "@types/fs-extra": "^9.0.11",

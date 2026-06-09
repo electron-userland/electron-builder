@@ -13,7 +13,7 @@ import { Packager } from "../packager.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { AppFileWalker } from "./AppFileWalker.js"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper.js"
-import { NodeModuleInfo } from "./packageDependencies.js"
+import { NodeModuleInfo } from "../node-module-collector/types.js"
 
 export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
   if (file === fileSet.src) {
