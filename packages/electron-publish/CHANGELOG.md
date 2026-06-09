@@ -1,5 +1,23 @@
 # electron-publish
 
+## 26.15.3
+
+### Patch Changes
+
+- Fix(publish): set x-amz-content-sha256: UNSIGNED-PAYLOAD before SigV4 signing so S3 accepts streaming PutObject uploads _[`#9863`](https://github.com/electron-userland/electron-builder/pull/9863) [`818a89f`](https://github.com/electron-userland/electron-builder/commit/818a89f4c3087ed53498d781bf0bb1ca4807d03d) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`35bfdeb`](https://github.com/electron-userland/electron-builder/commit/35bfdebe47f412c3bf14bc5d1b9d833bfa1ec7d4)
+
+</small>
+
+- `builder-util@26.15.3`
+
+</details>
+
 ## 26.15.1
 
 ### Patch Changes

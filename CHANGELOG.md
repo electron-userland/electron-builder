@@ -1,3 +1,14 @@
+## [26.15.3](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.2...electron-builder@26.15.3) (2026-06-09)
+
+
+### Bug Fixes
+
+* add `ELECTRON_BUILDER_BINARIES_ALLOW_HTTP` opt-in for parsing env vars targeting non-localhost HTTP ([#9856](https://github.com/electron-userland/electron-builder/issues/9856)) ([35bfdeb](https://github.com/electron-userland/electron-builder/commit/35bfdebe47f412c3bf14bc5d1b9d833bfa1ec7d4))
+* **download:** persist toolset archives in a predictable cache path ([#9861](https://github.com/electron-userland/electron-builder/issues/9861)) ([9097daf](https://github.com/electron-userland/electron-builder/commit/9097daff78f7f9450dc7e06f6e7eea94ed1394aa))
+* **publish:** set `x-amz-content-sha256: UNSIGNED-PAYLOAD` before SigV4 signing ([#9863](https://github.com/electron-userland/electron-builder/issues/9863)) ([818a89f](https://github.com/electron-userland/electron-builder/commit/818a89f4c3087ed53498d781bf0bb1ca4807d03d))
+
+
+
 ## [26.15.2](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.1...electron-builder@26.15.2) (2026-06-07)
 
 
