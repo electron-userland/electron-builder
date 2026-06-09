@@ -3,6 +3,7 @@ import * as path from "path"
 import { ToolsetConfig } from "../configuration.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
 import { isUseSystemFpm } from "../util/flags.js"
+import { getCustomToolsetPath } from "./custom.js"
 
 const fpmChecksums = {
   "fpm-1.17.0-ruby-3.4.3-darwin-arm64.7z": "6cc6d4785875bc7d79bdf52ca146080a4c300e1d663376ae79615fb548030ede",
@@ -30,26 +31,22 @@ const linuxToolsMacChecksums = {
   "linux-tools-mac-darwin-x86_64.tar.gz": "7ee26dfbd0d2a4c2c83b55a9416a30cc84876eef01c6497ca49bb016a190c726",
 } as const
 
-export async function getLinuxToolsPath(): Promise<string> {
-  const envPath = await resolveEnvToolsetPath("LINUX_TOOLS_MAC_PATH", "directory")
-  if (envPath != null) {
-    return envPath
+export async function getLinuxToolsPath(toolset: ToolsetConfig["linuxToolsMac"], resourcesDir: string): Promise<string> {
+  if (typeof toolset === "object" && toolset != null) {
+    return getCustomToolsetPath(toolset, resourcesDir)
   }
   const arch = process.arch === "arm64" ? "arm64" : "x86_64"
-  const toolsetVersion = "1.0.0"
   const filename: keyof typeof linuxToolsMacChecksums = `linux-tools-mac-darwin-${arch}.tar.gz`
-  return await downloadBuilderToolset({
-    releaseName: `linux-tools-mac@${toolsetVersion}`,
+  return downloadBuilderToolset({
+    releaseName: `linux-tools-mac@${toolset ?? "1.0.0"}`,
     filenameWithExt: filename,
-    checksums: {
-      [filename]: linuxToolsMacChecksums[filename],
-    },
+    checksums: linuxToolsMacChecksums,
     githubOrgRepo: "electron-userland/electron-builder-binaries",
   })
 }
 
-export async function getLinuxToolsMacToolset() {
-  const linuxToolsPath = await getLinuxToolsPath()
+export async function getLinuxToolsMacToolset(toolset: ToolsetConfig["linuxToolsMac"], resourcesDir: string) {
+  const linuxToolsPath = await getLinuxToolsPath(toolset, resourcesDir)
   const bin = (pkg: string) => path.join(linuxToolsPath, "bin", pkg)
   return {
     ar: bin("ar"),
@@ -58,15 +55,17 @@ export async function getLinuxToolsMacToolset() {
   }
 }
 
-export async function getFpmPath() {
-  const customFpmPath = await resolveEnvToolsetPath("CUSTOM_FPM_PATH", "file")
-  if (customFpmPath != null) {
-    return customFpmPath
-  }
+export async function getFpmPath(toolset: ToolsetConfig["fpm"], resourcesDir: string) {
   const exec = "fpm"
   if (process.platform === "win32" || isUseSystemFpm()) {
     return exec
   }
+
+  if (typeof toolset === "object" && toolset != null) {
+    const vendorPath = await getCustomToolsetPath(toolset, resourcesDir)
+    return path.resolve(vendorPath, exec)
+  }
+
   const getKey = () => {
     if (process.platform === "linux") {
       if (process.arch == "x64") {
@@ -85,14 +84,15 @@ export async function getFpmPath() {
 
   const filename = getKey()
   const fpmPath = await downloadBuilderToolset({
-    releaseName: "fpm@2.1.4",
+    releaseName: `fpm@${toolset ?? "1.0.0"}`,
     filenameWithExt: filename,
-    checksums: { [filename]: fpmChecksums[filename] },
+    checksums: fpmChecksums,
+    githubOrgRepo: "electron-userland/electron-builder-binaries",
   })
   return path.join(fpmPath, exec)
 }
 
-export async function getAppImageTools(appimageToolVersion: ToolsetConfig["appimage"], targetArch: Arch) {
+export async function getAppImageTools(appimageToolVersion: ToolsetConfig["appimage"], targetArch: Arch, resourcesDir: string) {
   const runtimeArch = targetArch === Arch.armv7l ? "arm32" : targetArch === Arch.arm64 ? "arm64" : targetArch === Arch.ia32 ? "ia32" : "x64"
 
   // Static-runtime layout: tools at root, runtimes/ subdir, lib/{arch}/ subdir
@@ -121,31 +121,40 @@ export async function getAppImageTools(appimageToolVersion: ToolsetConfig["appim
     }
   }
 
-  const isFuse2 = appimageToolVersion === "0.0.0" || appimageToolVersion == null
+  // null → modern default "1.0.3"
+  const isFuse2 = (appimageToolVersion ?? "1.0.3") === "0.0.0"
 
-  const download = async () => {
-    if (isFuse2) {
-      const filenameWithExt = "appimage-12.0.1.7z"
-      const artifactPath = await downloadBuilderToolset({
-        releaseName: "appimage-12.0.1",
-        filenameWithExt,
-        checksums: { [filenameWithExt]: appimageChecksums["0.0.0"][filenameWithExt] },
-        githubOrgRepo: "electron-userland/electron-builder-binaries",
-      })
-      return getFuse2Paths(artifactPath)
-    }
-
-    const filenameWithExt = "appimage-tools-runtime-20251108.tar.gz"
+  if (isFuse2) {
+    const filenameWithExt = "appimage-12.0.1.7z"
     const artifactPath = await downloadBuilderToolset({
-      releaseName: `appimage@${appimageToolVersion}`,
+      releaseName: "appimage-12.0.1",
       filenameWithExt,
-      checksums: { [filenameWithExt]: appimageChecksums[appimageToolVersion][filenameWithExt] },
+      checksums: { [filenameWithExt]: appimageChecksums["0.0.0"][filenameWithExt] },
       githubOrgRepo: "electron-userland/electron-builder-binaries",
     })
-    return getPaths(artifactPath)
+    const artifact = getFuse2Paths(artifactPath)
+    for (const entry of Object.entries(artifact)) {
+      if (!(await exists(entry[1]))) {
+        throw new Error(`AppImage tool ${entry[0]} not found at path: ${entry[1]}`)
+      }
+    }
+    return artifact
   }
 
-  const artifact = use(await resolveEnvToolsetPath("APPIMAGE_TOOLS_PATH", "directory"), it => (isFuse2 ? getFuse2Paths(it) : getPaths(it))) ?? (await download())
+  if (typeof appimageToolVersion === "object" && appimageToolVersion != null) {
+    const vendorPath = await getCustomToolsetPath(appimageToolVersion, resourcesDir)
+    return getPaths(vendorPath)
+  }
+
+  const effectiveVersion = (appimageToolVersion ?? "1.0.3") as "1.0.2" | "1.0.3"
+  const filenameWithExt = "appimage-tools-runtime-20251108.tar.gz"
+  const artifactPath = await downloadBuilderToolset({
+    releaseName: `appimage@${effectiveVersion}`,
+    filenameWithExt,
+    checksums: { [filenameWithExt]: appimageChecksums[effectiveVersion][filenameWithExt] },
+    githubOrgRepo: "electron-userland/electron-builder-binaries",
+  })
+  const artifact = getPaths(artifactPath)
   for (const entry of Object.entries(artifact)) {
     if (!(await exists(entry[1]))) {
       throw new Error(`AppImage tool ${entry[0]} not found at path: ${entry[1]}`)

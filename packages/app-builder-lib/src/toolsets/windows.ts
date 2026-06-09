@@ -7,6 +7,7 @@ import { ToolsetConfig } from "../configuration.js"
 import { ToolInfo, computeToolEnv } from "../util/bundledTool.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
 import { isUseSystemOsslSigncode, isUseSystemSigncode } from "../util/flags.js"
+import { getCustomToolsetPath } from "./custom.js"
 import _fsExtra from "fs-extra"
 const { stat } = _fsExtra
 
@@ -55,7 +56,7 @@ function _getWindowsToolsBin<V extends CodeSignVersionKey>(winCodeSign: V, file:
   })
 }
 
-export async function getSignToolPath(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish, isWin: boolean): Promise<ToolInfo> {
+export async function getSignToolPath(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish, isWin: boolean, resourcesDir: string): Promise<ToolInfo> {
   if (isUseSystemSigncode()) {
     return { path: "osslsigncode" }
   }
@@ -68,17 +69,22 @@ export async function getSignToolPath(winCodeSign: ToolsetConfig["winCodeSign"] 
   if (isWin) {
     // windows kits are always the target arch; signtool can be used by either arch.
     const signtoolArch: Arch = process.arch === "x64" ? Arch.x64 : process.arch === "arm64" ? Arch.arm64 : Arch.ia32
-    return { path: await getWindowsSignToolExe({ winCodeSign, arch: signtoolArch }) }
+    return { path: await getWindowsSignToolExe({ winCodeSign, arch: signtoolArch, resourcesDir }) }
   } else {
-    const vendor = await getOsslSigncodeBundle(winCodeSign)
+    const vendor = await getOsslSigncodeBundle(winCodeSign, resourcesDir)
     return { path: vendor.path, env: vendor.env }
   }
 }
 
-export async function getWindowsKitsBundle({ winCodeSign, arch }: { winCodeSign: CodeSignVersionKey | Nullish; arch: Arch }) {
+export async function getWindowsKitsBundle({ winCodeSign, arch, resourcesDir = "" }: { winCodeSign: CodeSignVersionKey | Nullish; arch: Arch; resourcesDir?: string }) {
   const kitPath = await resolveEnvToolsetPath("ELECTRON_BUILDER_WINDOWS_KITS_PATH", "directory")
   if (kitPath != null) {
     return { kit: kitPath, appxAssets: kitPath }
+  }
+
+  if (typeof winCodeSign === "object" && winCodeSign != null) {
+    const vendorPath = await getCustomToolsetPath(winCodeSign, resourcesDir)
+    return { kit: path.resolve(vendorPath, arch === Arch.ia32 ? "x86" : Arch[arch]), appxAssets: vendorPath }
   }
 
   const useLegacy = winCodeSign == null || winCodeSign === "0.0.0"
@@ -96,7 +102,7 @@ export function isOldWin6() {
   return winVersion.startsWith("6.") && !winVersion.startsWith("6.3")
 }
 
-async function getWindowsSignToolExe({ winCodeSign, arch }: { winCodeSign: CodeSignVersionKey | Nullish; arch: Arch }) {
+async function getWindowsSignToolExe({ winCodeSign, arch, resourcesDir = "" }: { winCodeSign: CodeSignVersionKey | Nullish; arch: Arch; resourcesDir?: string }) {
   if (winCodeSign === "0.0.0" || winCodeSign == null) {
     // use modern signtool on Windows Server 2012 R2 to be able to sign AppX
     const vendorPath = await getLegacyWinCodeSignBin()
@@ -106,17 +112,22 @@ async function getWindowsSignToolExe({ winCodeSign, arch }: { winCodeSign: CodeS
       return path.resolve(vendorPath, "windows-10", process.arch === "ia32" ? "ia32" : "x64", "signtool.exe")
     }
   }
-  const vendorPath = await getWindowsKitsBundle({ winCodeSign, arch })
+  const vendorPath = await getWindowsKitsBundle({ winCodeSign, arch, resourcesDir })
   return path.resolve(vendorPath.kit, "signtool.exe")
 }
 
-async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish) {
+async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish, resourcesDir = "") {
   const osslSigncodePath = await resolveEnvToolsetPath("ELECTRON_BUILDER_OSSL_SIGNCODE_PATH", "file")
   if (osslSigncodePath != null) {
     return { path: osslSigncodePath }
   }
   if (process.platform === "win32" || isUseSystemOsslSigncode()) {
     return { path: "osslsigncode" }
+  }
+
+  if (typeof winCodeSign === "object" && winCodeSign != null) {
+    const vendorPath = await getCustomToolsetPath(winCodeSign, resourcesDir)
+    return { path: path.resolve(vendorPath, "osslsigncode") }
   }
 
   if (winCodeSign === "0.0.0" || winCodeSign == null) {
@@ -191,31 +202,23 @@ export const nsisChecksums = {
   },
 } as const
 
-type CustomNsisBinaryConfig = { url: string | null; checksum?: string | null; version?: string | null }
-
-async function getNsisBundlePath(nsis: ToolsetConfig["nsis"], customBinary?: CustomNsisBinaryConfig | null): Promise<string> {
-  if (customBinary?.url && customBinary?.checksum) {
-    const binaryVersion = customBinary.version ?? customBinary.checksum.substring(0, 8)
-    const filenameWithExt = customBinary.url.substring(customBinary.url.lastIndexOf("/") + 1)
-    return downloadBuilderToolset({
-      releaseName: `nsis-${binaryVersion}`,
-      filenameWithExt,
-      checksums: { [filenameWithExt]: customBinary.checksum },
-      overrideUrl: customBinary.url.substring(0, customBinary.url.lastIndexOf("/")),
-    })
+async function getNsisBundlePath(nsis: ToolsetConfig["nsis"], resourcesDir: string): Promise<string> {
+  if (typeof nsis === "object" && nsis != null) {
+    return getCustomToolsetPath(nsis, resourcesDir)
   }
-  if (nsis === "0.0.0" || nsis == null) {
+  const resolved = nsis ?? "1.2.1"
+  if (resolved === "0.0.0") {
     return getLegacyNsisBin()
   }
-  const file = `nsis-bundle-3.12.tar.gz`
+  const file = "nsis-bundle-3.12.tar.gz"
   return downloadBuilderToolset({
-    releaseName: `nsis@${nsis}`,
+    releaseName: `nsis@${resolved}`,
     filenameWithExt: file,
-    checksums: { [file]: nsisChecksums[nsis][file] },
+    checksums: { [file]: nsisChecksums[resolved][file] },
   })
 }
 
-export async function getMakeNsisPath(nsis: ToolsetConfig["nsis"] | Nullish, customBinary?: CustomNsisBinaryConfig | null): Promise<ToolInfo> {
+export async function getMakeNsisPath(nsis: ToolsetConfig["nsis"] | Nullish, resourcesDir: string): Promise<ToolInfo> {
   const legacyBundle = (bundlePath: string) => {
     // legacy bundle: platform-specific subdirectories, NSISDIR must be set explicitly
     const env = { NSISDIR: bundlePath }
@@ -245,57 +248,51 @@ export async function getMakeNsisPath(nsis: ToolsetConfig["nsis"] | Nullish, cus
     throw new Error(`${path.basename(potentialBundle.path)} executable not found in ELECTRON_BUILDER_NSIS_DIR: ${overridePath}`)
   }
 
-  const bundlePath = await getNsisBundlePath(nsis, customBinary)
-  if (nsis === "0.0.0" || nsis == null) {
+  const bundlePath = await getNsisBundlePath(nsis, resourcesDir)
+  if ((nsis ?? "1.2.1") === "0.0.0") {
+    return legacyBundle(bundlePath)
+  }
+  if (typeof nsis === "object") {
+    const entrypoint = entrypointBundle(bundlePath)
+    if (await exists(entrypoint.path)) {
+      return entrypoint
+    }
     return legacyBundle(bundlePath)
   }
   return entrypointBundle(bundlePath)
 }
 
-type CustomNsisResourcesConfig = { url: string; checksum: string; version: string }
-
-export async function getNsisPluginsPath(nsis: ToolsetConfig["nsis"] | Nullish, customNsisResources?: CustomNsisResourcesConfig | null): Promise<string> {
-  const resolveCustomBundle = async (bundlePath: string, type: "ELECTRON_BUILDER_NSIS_RESOURCES_DIR" | "CUSTOM_NSIS_RESOURCES") => {
-    // we have to search both to maintain backward compatibility
+export async function getNsisPluginsPath(nsis: ToolsetConfig["nsis"] | Nullish, resourcesDir: string): Promise<string> {
+  const resolvePluginsDir = async (bundlePath: string) => {
     const potentialPaths = [path.resolve(bundlePath, "plugins"), path.resolve(bundlePath, "windows", "Plugins")]
     for (const p of potentialPaths) {
       if ((await exists(p)) && (await stat(p)).isDirectory()) {
         return p
       }
     }
-    throw new Error(`Plugins directory not found in ${type}: ${bundlePath}. Expected to find in one of: ${potentialPaths.join(", ")}`)
+    throw new Error(`Plugins directory not found in NSIS bundle at: ${bundlePath}. Expected one of: ${potentialPaths.join(", ")}`)
   }
   const overridePath = await resolveEnvToolsetPath("ELECTRON_BUILDER_NSIS_RESOURCES_DIR", "directory")
   if (overridePath != null) {
-    return resolveCustomBundle(overridePath, "ELECTRON_BUILDER_NSIS_RESOURCES_DIR")
+    return resolvePluginsDir(overridePath)
   }
-  if (customNsisResources) {
-    const nsisResourcesFile = customNsisResources.url.substring(customNsisResources.url.lastIndexOf("/") + 1)
-    const bundle = await downloadBuilderToolset({
-      releaseName: `nsis-resources-${customNsisResources.version}`,
-      filenameWithExt: nsisResourcesFile,
-      checksums: { [nsisResourcesFile]: customNsisResources.checksum },
-      overrideUrl: customNsisResources.url.substring(0, customNsisResources.url.lastIndexOf("/")),
-    })
-    return resolveCustomBundle(bundle, "CUSTOM_NSIS_RESOURCES")
-  }
-  if (nsis === "0.0.0" || nsis == null) {
+  if ((nsis ?? "1.2.1") === "0.0.0") {
     return path.resolve(await getLegacyNsisResourcesBin(), "plugins")
   }
-  return path.resolve(await getNsisBundlePath(nsis), "windows", "Plugins")
+  return resolvePluginsDir(await getNsisBundlePath(nsis, resourcesDir))
 }
 
-export async function getNsisElevatePath(nsis: ToolsetConfig["nsis"] | Nullish, customBinary?: CustomNsisBinaryConfig | null): Promise<string> {
-  const resolveElevate = async (dir: string, label: string) => {
+export async function getNsisElevatePath(nsis: ToolsetConfig["nsis"] | Nullish, resourcesDir: string): Promise<string> {
+  const resolveElevate = async (dir: string) => {
     const p = path.resolve(dir, "elevate.exe")
     if ((await exists(p)) && (await stat(p)).isFile()) {
       return p
     }
-    throw new Error(`elevate.exe not found in ${label} directory: ${dir}. Expected path: ${p}`)
+    throw new Error(`elevate.exe not found in NSIS bundle at: ${dir}. Expected path: ${p}`)
   }
   const overridePath = await resolveEnvToolsetPath("ELECTRON_BUILDER_NSIS_DIR", "directory")
   if (overridePath != null) {
-    return resolveElevate(overridePath, "ELECTRON_BUILDER_NSIS_DIR")
+    return resolveElevate(overridePath)
   }
-  return resolveElevate(await getNsisBundlePath(nsis, customBinary), "NSIS bundle")
+  return resolveElevate(await getNsisBundlePath(nsis, resourcesDir))
 }

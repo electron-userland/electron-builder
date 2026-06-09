@@ -450,7 +450,7 @@ export class NsisTarget extends Target {
         }
       }
     } else {
-      const wineVm = new WineVmManager(packager.config.toolsets?.wine)
+      const wineVm = new WineVmManager(packager.config.toolsets?.wine, packager.buildResourcesDir)
       await wineVm.exec(installerPath, [], { env: { __COMPAT_LAYER: "RunAsInvoker" } })
     }
     await packager.signIf(uninstallerPath)
@@ -661,7 +661,7 @@ export class NsisTarget extends Target {
       await ensureNotBusy(commands["OutFile"].replace(/"/g, ""))
     }
 
-    const makensis = await getMakeNsisPath(this.packager.config.toolsets?.nsis, this.options.customNsisBinary)
+    const makensis = await getMakeNsisPath(this.packager.config.toolsets?.nsis, this.packager.buildResourcesDir)
     const { stdout, stderr } = await spawnAndWriteWithOutput(makensis.path, args, script, {
       env: { ...process.env, ...(makensis.env ?? {}) },
       cwd: nsisTemplatesDir,
@@ -698,7 +698,7 @@ export class NsisTarget extends Target {
 
     const pluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
     taskManager.add(async () => {
-      scriptGenerator.addPluginDir(pluginArch, path.join(await getNsisPluginsPath(this.packager.config.toolsets?.nsis, this.options.customNsisResources), pluginArch))
+      scriptGenerator.addPluginDir(pluginArch, path.join(await getNsisPluginsPath(this.packager.config.toolsets?.nsis, this.packager.buildResourcesDir), pluginArch))
     })
 
     taskManager.add(async () => {

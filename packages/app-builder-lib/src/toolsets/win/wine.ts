@@ -3,8 +3,9 @@ import * as path from "path"
 import { ToolsetConfig } from "../../configuration.js"
 import { downloadBuilderToolset } from "../../util/electronGet.js"
 import { isUseSystemWine } from "../../util/flags.js"
+import { getCustomToolsetPath } from "../custom.js"
 
-const wineToolsChecksums: Record<Exclude<ToolsetConfig["wine"], null | undefined>, Record<string, string>> = {
+const wineToolsChecksums: Record<string, Record<string, string>> = {
   "0.0.0": {
     "wine-4.0.1-mac.7z": "1baac808a67975b68b9226beea7b64ad0acc3e598a4b45c25bb5d2ae8cac655e",
   },
@@ -14,7 +15,7 @@ const wineToolsChecksums: Record<Exclude<ToolsetConfig["wine"], null | undefined
   },
 }
 
-export async function getWineToolset(wine: ToolsetConfig["wine"]): Promise<{ execPath: string; env: Record<string, string> }> {
+export async function getWineToolset(wine: ToolsetConfig["wine"], resourcesDir: string): Promise<{ execPath: string; env: Record<string, string> }> {
   if (process.platform === "win32") {
     throw new InvalidConfigurationError(`Wine toolset is not supported on Windows, but got: ${wine}`)
   }
@@ -26,7 +27,6 @@ export async function getWineToolset(wine: ToolsetConfig["wine"]): Promise<{ exe
     // Probe for the wine binary: modern bundles ship bin/wine; legacy bundles (e.g. wine-4.0.1-mac) ship bin/wine64.
     const wineExecSubPath = (await exists(path.join(envPath, "bin", "wine"))) ? "bin/wine" : "bin/wine64"
     const { execPath, winePrefix, wineLibPath } = await createWineEnvironment(envPath, wineExecSubPath)
-
     return {
       execPath,
       env: {
@@ -39,40 +39,44 @@ export async function getWineToolset(wine: ToolsetConfig["wine"]): Promise<{ exe
   }
 
   const useSystemWine = isUseSystemWine()
-  const isLegacy = wine === "0.0.0" || wine == null
+  // null → modern default "1.0.1"
+  const isLegacy = (wine ?? "1.0.1") === "0.0.0"
   const isLegacyOnLinux = isLegacy && process.platform === "linux"
 
   if (useSystemWine || isLegacyOnLinux) {
     return { execPath: "wine", env: defaultEnv }
   }
 
-  const pkgConfig = () => {
+  let toolsetPath: string
+  let execSubPath: string
+
+  if (typeof wine === "object" && wine != null) {
+    toolsetPath = await getCustomToolsetPath(wine, resourcesDir)
+    // Custom bundles: probe for the wine binary location
+    execSubPath = (await exists(path.join(toolsetPath, "bin", "wine"))) ? "bin/wine" : "bin/wine64"
+  } else {
+    const resolved = wine ?? "1.0.1"
     if (isLegacy) {
-      return {
+      toolsetPath = await downloadBuilderToolset({
         releaseName: "wine-4.0.1-mac",
         filenameWithExt: "wine-4.0.1-mac.7z",
         checksums: wineToolsChecksums["0.0.0"],
-        execPath: path.join("bin", "wine64"),
-      }
-    }
-    const filenameWithExt = process.platform === "darwin" ? "wine-11.0-darwin-x86_64.tar.xz" : "wine-11.0-linux-x86_64.tar.xz"
-    return {
-      releaseName: `wine@${wine}`,
-      filenameWithExt,
-      checksums: wineToolsChecksums[wine],
-      execPath: path.join("bin", "wine"),
+        githubOrgRepo: "electron-userland/electron-builder-binaries",
+      })
+      execSubPath = path.join("bin", "wine64")
+    } else {
+      const filenameWithExt = process.platform === "darwin" ? "wine-11.0-darwin-x86_64.tar.xz" : "wine-11.0-linux-x86_64.tar.xz"
+      toolsetPath = await downloadBuilderToolset({
+        releaseName: `wine@${resolved}`,
+        filenameWithExt,
+        checksums: wineToolsChecksums[resolved],
+        githubOrgRepo: "electron-userland/electron-builder-binaries",
+      })
+      execSubPath = path.join("bin", "wine")
     }
   }
 
-  const pkg = pkgConfig()
-  const toolsetPath = await downloadBuilderToolset({
-    releaseName: pkg.releaseName,
-    filenameWithExt: pkg.filenameWithExt,
-    checksums: pkg.checksums,
-    githubOrgRepo: "electron-userland/electron-builder-binaries",
-  })
-
-  const { execPath, winePrefix, wineLibPath } = await createWineEnvironment(toolsetPath, pkg.execPath)
+  const { execPath, winePrefix, wineLibPath } = await createWineEnvironment(toolsetPath, execSubPath)
   return {
     execPath,
     env: {
@@ -82,32 +86,32 @@ export async function getWineToolset(wine: ToolsetConfig["wine"]): Promise<{ exe
       LD_LIBRARY_PATH: [wineLibPath, process.env.LD_LIBRARY_PATH].filter(Boolean).join(path.delimiter),
     },
   }
+}
 
-  async function createWineEnvironment(toolsetPath: string, execSubPath: string) {
-    const sanitizedWinePath = sanitizeDirPath(toolsetPath)
+async function createWineEnvironment(toolsetPath: string, execSubPath: string) {
+  const sanitizedWinePath = sanitizeDirPath(toolsetPath)
 
-    const execPath = path.resolve(sanitizedWinePath, execSubPath)
-    const winePrefix = path.resolve(sanitizedWinePath, "wine-home")
+  const execPath = path.resolve(sanitizedWinePath, execSubPath)
+  const winePrefix = path.resolve(sanitizedWinePath, "wine-home")
 
-    for (const p of [execPath, winePrefix]) {
-      if (!(await exists(p))) {
-        throw new InvalidConfigurationError(`Wine toolset at "${toolsetPath}" is missing expected path: ${p}`)
-      }
+  for (const p of [execPath, winePrefix]) {
+    if (!(await exists(p))) {
+      throw new InvalidConfigurationError(`Wine toolset at "${toolsetPath}" is missing expected path: ${p}`)
     }
-
-    // Modern bundles ship a `lib` dir; the legacy wine-4.0.1-mac bundle ships `lib64` instead.
-    let wineLibPath: string | null = null
-    for (const libDir of ["lib", "lib64"]) {
-      const candidate = path.resolve(sanitizedWinePath, libDir)
-      if (await exists(candidate)) {
-        wineLibPath = candidate
-        break
-      }
-    }
-    if (wineLibPath == null) {
-      throw new InvalidConfigurationError(`Wine toolset at "${toolsetPath}" is missing expected library directory (lib or lib64)`)
-    }
-
-    return { execPath, winePrefix, wineLibPath }
   }
+
+  // Modern bundles ship a `lib` dir; the legacy wine-4.0.1-mac bundle ships `lib64` instead.
+  let wineLibPath: string | null = null
+  for (const libDir of ["lib", "lib64"]) {
+    const candidate = path.resolve(sanitizedWinePath, libDir)
+    if (await exists(candidate)) {
+      wineLibPath = candidate
+      break
+    }
+  }
+  if (wineLibPath == null) {
+    throw new InvalidConfigurationError(`Wine toolset at "${toolsetPath}" is missing expected library directory (lib or lib64)`)
+  }
+
+  return { execPath, winePrefix, wineLibPath }
 }

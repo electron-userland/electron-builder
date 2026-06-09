@@ -428,7 +428,7 @@ async function getMksquashfsPath(arch: Arch): Promise<string> {
   if (envPath) {
     return envPath
   }
-  const { mksquashfs } = await getAppImageTools("0.0.0", arch)
+  const { mksquashfs } = await getAppImageTools("0.0.0", arch, "")
   return mksquashfs
 }
 
