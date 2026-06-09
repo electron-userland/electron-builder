@@ -58,6 +58,6 @@ export { ResourceEditOptions, editWindowsResources } from "./util/win/resEdit.js
 export { withToolsetLock } from "./util/toolsetLock.js"
 export { installDependencies, installOrRebuild, nodeGypRebuild } from "./util/yarn.js"
 export { PACKAGE_VERSION } from "./version.js"
-export { ParallelsVmManager } from "./vm/ParallelsVm.js"
+export { ParallelsVmManager } from "./vm/mac/ParallelsVm.js"
 export { VmManager, getWindowsVm, getLinuxVm } from "./vm/vm.js"
-export { WineVmManager } from "./vm/WineVm.js"
+export { WineVmManager } from "./vm/win/WineVm.js"
