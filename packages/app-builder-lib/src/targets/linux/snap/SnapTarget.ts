@@ -1,12 +1,12 @@
 import { Arch, log } from "builder-util"
 import { deepAssign, SnapStoreOptions } from "builder-util-runtime"
 import * as path from "path"
-import { Configuration } from "../../configuration.js"
-import { Publish, Target } from "../../core.js"
-import { LinuxPackager } from "../../linuxPackager.js"
-import { SnapcraftOptions, SnapOptions } from "../../options/SnapOptions.js"
+import { Configuration } from "../../../configuration.js"
+import { Publish, Target } from "../../../core.js"
+import { LinuxPackager } from "../../../linuxPackager.js"
+import { SnapcraftOptions, SnapOptions } from "../../../options/SnapOptions.js"
 import { LinuxTargetHelper } from "../LinuxTargetHelper.js"
-import { createStageDirPath } from "../targetUtil.js"
+import { createStageDirPath } from "../../targetUtil.js"
 import { SnapcraftYAML } from "./snapcraft.js"
 
 /** Abstract base for all snap build strategies (core24, legacy core18/20/22, custom pass-through). */

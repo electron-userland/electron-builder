@@ -5,14 +5,14 @@ import _fsExtra from "fs-extra"
 const { outputFile, readFile } = _fsExtra
 import { load } from "js-yaml"
 import * as path from "path"
-import { PlugDescriptor, SnapOptions } from "../../options/SnapOptions.js"
-import { getAppImageTools } from "../../toolsets/linux.js"
-import { downloadBuilderToolset } from "../../util/electronGet.js"
-import { getTemplatePath } from "../../util/pathManager.js"
+import { PlugDescriptor, SnapOptions } from "../../../options/SnapOptions.js"
+import { getAppImageTools } from "../../../toolsets/linux.js"
+import { downloadBuilderToolset } from "../../../util/electronGet.js"
+import { getTemplatePath } from "../../../util/pathManager.js"
 import { SnapCore } from "./SnapTarget.js"
 import { SnapcraftYAML } from "./snapcraft.js"
 import { DEFAULT_STAGE_PACKAGES } from "./snapcraftBuilder.js"
-import { isSnapDestructiveMode } from "../../util/flags.js"
+import { isSnapDestructiveMode } from "../../../util/flags.js"
 
 // Snap template release info from electron-userland/electron-builder-binaries
 const SNAP_TEMPLATES = {

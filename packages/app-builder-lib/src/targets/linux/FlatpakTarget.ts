@@ -2,12 +2,12 @@ import { bundle as bundleFlatpak, FlatpakBundlerBuildOptions, FlatpakManifest } 
 import { Arch, copyFile, toLinuxArchString } from "builder-util"
 
 import * as path from "path"
-import { Target } from "../core.js"
-import { LinuxPackager } from "../linuxPackager.js"
-import { FlatpakOptions } from "../options/linuxOptions.js"
-import { getNotLocalizedLicenseFile } from "../util/license.js"
+import { Target } from "../../core.js"
+import { LinuxPackager } from "../../linuxPackager.js"
+import { FlatpakOptions } from "../../options/linuxOptions.js"
+import { getNotLocalizedLicenseFile } from "../../util/license.js"
 import { LinuxTargetHelper } from "./LinuxTargetHelper.js"
-import { createStageDir, StageDir } from "./targetUtil.js"
+import { createStageDir, StageDir } from "../targetUtil.js"
 import { deepAssign, Nullish } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
 const { chmod, outputFile } = _fsExtra

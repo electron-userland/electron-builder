@@ -3,8 +3,8 @@ import { PackageFileInfo } from "builder-util-runtime"
 import * as fs from "fs/promises"
 import * as path from "path"
 import * as zlib from "zlib"
-import { getNsisElevatePath } from "../../toolsets/windows.js"
-import { getTemplatePath } from "../../util/pathManager.js"
+import { getNsisElevatePath } from "../../../toolsets/windows.js"
+import { getTemplatePath } from "../../../util/pathManager.js"
 import { NsisTarget } from "./NsisTarget.js"
 
 export const nsisTemplatesDir = getTemplatePath("nsis")
