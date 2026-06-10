@@ -460,15 +460,6 @@ export function shellQuote(arg: string): string {
  * The only difference between template and no-template is the app executable prefix:
  * template apps are at $SNAP/<name>; no-template apps are at $SNAP/app/<name>.
  */
-function validateShellEmbeddable(value: string, fieldName: string): void {
-  if (/[$`"\\\n]/.test(value)) {
-    throw new Error(
-      `${fieldName} contains characters that are not safe in shell scripts: ${JSON.stringify(value)}. ` +
-        `Avoid $, backtick, double-quote, backslash, and newline characters.`
-    )
-  }
-}
-
 export function buildCommandShContent(opts: { isTemplate: boolean; executableName: string; extraAppArgs: string[] }): string {
   const { isTemplate, executableName, extraAppArgs } = opts
   validateShellEmbeddable(executableName, "executableName")
