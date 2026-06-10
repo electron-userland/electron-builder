@@ -12,6 +12,7 @@
   "exclude": [
     "node_modules",
     "out",
-    "**/*.spec.ts"
+    "**/*.spec.ts",
+    "renderer/**"
   ]
 }

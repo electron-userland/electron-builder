@@ -19,7 +19,8 @@ export default class NetworkRetryRunner extends TestRunner {
       return
     }
 
-    TestRunner.setTestFn(test, async () => {
+    // vitest 4 types setTestFn as a 1-arg getter (typeof getFn) but the setter form is still valid at runtime
+    ;(TestRunner.setTestFn as unknown as (task: any, fn: () => Promise<void>) => void)(test, async () => {
       for (let attempt = 0; attempt <= MAX_NETWORK_RETRIES; attempt++) {
         try {
           await originalFn()

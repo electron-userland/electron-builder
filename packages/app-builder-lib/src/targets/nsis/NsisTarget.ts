@@ -249,47 +249,7 @@ export class NsisTarget extends Target {
       }
     }
 
-    const packageFiles: { [arch: string]: PackageFileInfo } = {}
-    let estimatedSize = 0
-    if (this.isPortable && options.useZip) {
-      for (const [arch, dir] of archs.entries()) {
-        defines[arch === Arch.x64 ? "APP_DIR_64" : arch === Arch.arm64 ? "APP_DIR_ARM64" : "APP_DIR_32"] = dir
-      }
-    } else if (USE_NSIS_BUILT_IN_COMPRESSOR && archs.size === 1) {
-      const value: Arch | undefined = archs.keys().next().value
-      use(value, v => (defines.APP_BUILD_DIR = archs.get(v)))
-    } else {
-      await Promise.all(
-        Array.from(archs.keys()).map(async arch => {
-          const { fileInfo, unpackedSize } = await this.packageHelper.packArch(arch, this)
-          const file = fileInfo.path
-          const defineKey = arch === Arch.x64 ? "APP_64" : arch === Arch.arm64 ? "APP_ARM64" : "APP_32"
-          defines[defineKey] = file
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-          const defineNameKey = `${defineKey}_NAME` as "APP_64_NAME" | "APP_ARM64_NAME" | "APP_32_NAME"
-          defines[defineNameKey] = path.basename(file)
-          // nsis expect a hexadecimal string
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-          const defineHashKey = `${defineKey}_HASH` as "APP_64_HASH" | "APP_ARM64_HASH" | "APP_32_HASH"
-          defines[defineHashKey] = Buffer.from(fileInfo.sha512, "base64").toString("hex").toUpperCase()
-          // NSIS accepts size in KiloBytes and supports only whole numbers
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-          const defineUnpackedSizeKey = `${defineKey}_UNPACKED_SIZE` as "APP_64_UNPACKED_SIZE" | "APP_ARM64_UNPACKED_SIZE" | "APP_32_UNPACKED_SIZE"
-          defines[defineUnpackedSizeKey] = Math.ceil(unpackedSize / 1024).toString()
-
-          if (this.isWebInstaller) {
-            await packager.info.emitArtifactBuildCompleted({
-              file,
-              target: this,
-              arch,
-              packager,
-            })
-            packageFiles[Arch[arch]] = fileInfo
-          }
-          estimatedSize += unpackedSize
-        })
-      )
-    }
+    const { packageFiles, estimatedSize } = await this.resolveArchPackageFiles(archs, defines, packager)
 
     this.configureDefinesForAllTypeOfInstaller(defines)
     if (isPortable) {
@@ -383,6 +343,53 @@ export class NsisTarget extends Target {
         isWriteUpdateInfo: !this.isPortable,
       })
     })
+  }
+
+  private async resolveArchPackageFiles(
+    archs: Map<Arch, string>,
+    defines: Defines,
+    packager: WinPackager
+  ): Promise<{ packageFiles: { [arch: string]: PackageFileInfo }; estimatedSize: number }> {
+    const packageFiles: { [arch: string]: PackageFileInfo } = {}
+    let estimatedSize = 0
+    const options = this.options
+
+    if (this.isPortable && options.useZip) {
+      for (const [arch, dir] of archs.entries()) {
+        defines[arch === Arch.x64 ? "APP_DIR_64" : arch === Arch.arm64 ? "APP_DIR_ARM64" : "APP_DIR_32"] = dir
+      }
+    } else if (USE_NSIS_BUILT_IN_COMPRESSOR && archs.size === 1) {
+      const value: Arch | undefined = archs.keys().next().value
+      use(value, v => (defines.APP_BUILD_DIR = archs.get(v)))
+    } else {
+      await Promise.all(
+        Array.from(archs.keys()).map(async arch => {
+          const { fileInfo, unpackedSize } = await this.packageHelper.packArch(arch, this)
+          const file = fileInfo.path
+          const defineKey = arch === Arch.x64 ? "APP_64" : arch === Arch.arm64 ? "APP_ARM64" : "APP_32"
+          defines[defineKey] = file
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+          const defineNameKey = `${defineKey}_NAME` as "APP_64_NAME" | "APP_ARM64_NAME" | "APP_32_NAME"
+          defines[defineNameKey] = path.basename(file)
+          // nsis expect a hexadecimal string
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+          const defineHashKey = `${defineKey}_HASH` as "APP_64_HASH" | "APP_ARM64_HASH" | "APP_32_HASH"
+          defines[defineHashKey] = Buffer.from(fileInfo.sha512, "base64").toString("hex").toUpperCase()
+          // NSIS accepts size in KiloBytes and supports only whole numbers
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+          const defineUnpackedSizeKey = `${defineKey}_UNPACKED_SIZE` as "APP_64_UNPACKED_SIZE" | "APP_ARM64_UNPACKED_SIZE" | "APP_32_UNPACKED_SIZE"
+          defines[defineUnpackedSizeKey] = Math.ceil(unpackedSize / 1024).toString()
+
+          if (this.isWebInstaller) {
+            await packager.info.emitArtifactBuildCompleted({ file, target: this, arch, packager })
+            packageFiles[Arch[arch]] = fileInfo
+          }
+          estimatedSize += unpackedSize
+        })
+      )
+    }
+
+    return { packageFiles, estimatedSize }
   }
 
   protected generateGitHubInstallerName(primaryArch: Arch | null, defaultArch: string | undefined): string {

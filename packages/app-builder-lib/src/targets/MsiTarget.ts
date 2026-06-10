@@ -228,7 +228,7 @@ export default class MsiTarget extends Target {
         // This syntax is a shortcut to defining each directory in an individual Directory element.
         dirName = packagePath.substring(0, lastSlash)
         // https://github.com/electron-userland/electron-builder/issues/3027
-        directoryId = "d" + createHash("md5").update(dirName).digest("base64").replace(/\//g, "_").replace(/\+/g, ".").replace(/=+$/, "")
+        directoryId = "d" + createHash("sha256").update(dirName).digest("hex").slice(0, 16)
         if (!dirNames.has(dirName)) {
           dirNames.add(dirName)
           dirs.push(`<Directory Id="${directoryId}" Name="${ROOT_DIR_ID}:\\${dirName.replace(/\//g, "\\")}\\"/>`)

@@ -1,4 +1,5 @@
 import { BinaryToTextEncoding, createHash, Hash } from "crypto"
+import { sleep } from "./retry.js"
 import _debug from "debug"
 import { createWriteStream } from "fs"
 import { IncomingMessage, OutgoingHttpHeader, OutgoingHttpHeaders, RequestOptions } from "http"
@@ -431,7 +432,7 @@ Please double check that your authentication token is correct. Due to security r
         return await task()
       } catch (e: any) {
         if (attemptNumber < maxRetries && ((e instanceof HttpError && e.isServerError()) || e.code === "EPIPE")) {
-          await new Promise(r => setTimeout(r, 1000 * (attemptNumber + 1)))
+          await sleep(1000 * (attemptNumber + 1))
           continue
         }
         throw e

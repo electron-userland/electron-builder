@@ -1,7 +1,4 @@
-import { createRequire } from "node:module"
 import { DebugLogger, ExtraSpawnOptions, exec, log, spawn } from "builder-util"
-
-const require = createRequire(import.meta.url)
 import { ExecFileOptions, SpawnOptions, execFileSync } from "child_process"
 import { VmManager } from "./vm.js"
 
@@ -82,14 +79,25 @@ export class ParallelsVmManager extends VmManager {
 
     if (!this.isExitHookAdded) {
       this.isExitHookAdded = true
-      require("async-exit-hook")((callback: (() => void) | null) => {
-        const stopArgs = ["suspend", vmId]
-        if (callback == null) {
+      const stopArgs = ["suspend", vmId]
+      // Suspend the VM on normal exit and on termination signals.
+      // SIGTERM/SIGINT use async exec(); the synchronous 'exit' fallback fires
+      // after all async callbacks have already resolved, so execFileSync is safe.
+      const suspendAsync = () => exec("prlctl", stopArgs).catch(() => {})
+      const suspendSync = () => {
+        try {
           execFileSync("prlctl", stopArgs)
-        } else {
-          exec("prlctl", stopArgs).then(callback).catch(callback)
+        } catch {
+          /* best-effort */
         }
+      }
+      process.once("SIGTERM", () => {
+        void suspendAsync()
       })
+      process.once("SIGINT", () => {
+        void suspendAsync()
+      })
+      process.once("exit", suspendSync)
     }
     await exec("prlctl", ["start", vmId])
   }
