@@ -4,7 +4,7 @@ import * as path from "path"
 import { Configuration } from "../../../configuration.js"
 import { Publish, Target } from "../../../core.js"
 import { LinuxPackager } from "../../../linuxPackager.js"
-import { SnapcraftOptions, SnapOptions } from "../../../options/SnapOptions.js"
+import { SnapcraftOptions } from "../../../options/SnapOptions.js"
 import { LinuxTargetHelper } from "../LinuxTargetHelper.js"
 import { createStageDirPath } from "../../targetUtil.js"
 import { SnapcraftYAML } from "./snapcraft.js"
@@ -24,9 +24,9 @@ export abstract class SnapCore<T> {
   abstract buildSnap(params: { snap: SnapcraftYAML; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<void>
 }
 
-/** Snap build target — merges `snapcraft` (preferred) and legacy `snap` config, then delegates to the appropriate `SnapCore` strategy. */
+/** Snap build target — reads `snapcraft` config and delegates to the appropriate `SnapCore` strategy. */
 export default class SnapTarget extends Target {
-  readonly options: SnapcraftOptions | SnapOptions
+  readonly options: SnapcraftOptions
 
   constructor(
     name: string,
@@ -36,8 +36,7 @@ export default class SnapTarget extends Target {
   ) {
     super(name)
 
-    const { snapcraft } = packager.config
-    this.options = packager.getOptionsForTarget<SnapcraftOptions | SnapOptions>(snapcraft != null ? "snapcraft" : "snap")
+    this.options = packager.getOptionsForTarget<SnapcraftOptions>("snapcraft")
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
