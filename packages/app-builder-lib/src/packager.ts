@@ -27,11 +27,9 @@ import { AfterExtractContext, AfterPackContext, BeforePackContext, Configuration
 import { Platform, SourceRepositoryInfo, Target } from "./core.js"
 import { createElectronFrameworkSupport } from "./electron/ElectronFramework.js"
 import { Framework } from "./Framework.js"
-import { LibUiFramework } from "./frameworks/LibUiFramework.js"
 import { Metadata } from "./options/metadata.js"
 import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi.js"
 import { PlatformPackager } from "./platformPackager.js"
-import { ProtonFramework } from "./ProtonFramework.js"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory.js"
 import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config.js"
 import { expandMacro } from "./util/macroExpander.js"
@@ -61,14 +59,7 @@ async function createFrameworkInfo(configuration: Configuration, packager: Packa
     nodeVersion = process.versions.node
   }
 
-  const isUseLaunchUi = configuration.launchUiVersion !== false
-  if (framework === "proton" || framework === "proton-native") {
-    return new ProtonFramework(nodeVersion, packager.appInfo.productFilename, isUseLaunchUi)
-  } else if (framework === "libui") {
-    return new LibUiFramework(nodeVersion, packager.appInfo.productFilename, isUseLaunchUi)
-  } else {
-    throw new InvalidConfigurationError(`Unknown framework: ${framework}`)
-  }
+  throw new InvalidConfigurationError(`Unknown framework: ${framework}`)
 }
 
 type PackagerEvents = {

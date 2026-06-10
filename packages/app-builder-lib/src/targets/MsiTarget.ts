@@ -6,8 +6,8 @@ import { readFile, writeFile } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { MsiOptions } from "../index.js"
-import { getBinFromUrl } from "../binDownload.js"
 import { Target } from "../core.js"
+import { downloadBuilderToolset } from "../util/electronGet.js"
 import { DesktopShortcutCreationPolicy, FinalCommonWindowsInstallerOptions, getEffectiveOptions } from "../options/CommonWindowsInstallerConfiguration.js"
 import { normalizeExt } from "../platformPackager.js"
 import { getTemplatePath } from "../util/pathManager.js"
@@ -87,7 +87,11 @@ export default class MsiTarget extends Target {
     await packager.info.emitMsiProjectCreated(projectFile)
 
     // noinspection SpellCheckingInspection
-    const vendorPath = await getBinFromUrl("wix-4.0.0.5512.2", "wix-4.0.0.5512.2.7z", "fe677fcd837b18c9b912985d91636bbd8a1e800c3b3a6a841b6f96e89624e839")
+    const vendorPath = await downloadBuilderToolset({
+      releaseName: "wix-4.0.0.5512.2",
+      filenameWithExt: "wix-4.0.0.5512.2.7z",
+      checksums: { "wix-4.0.0.5512.2.7z": "fe677fcd837b18c9b912985d91636bbd8a1e800c3b3a6a841b6f96e89624e839" },
+    })
 
     // noinspection SpellCheckingInspection
     const candleArgs = ["-arch", wixArch === Arch.ia32 ? "x86" : "x64", `-dappDir=${vm.toVmFile(appOutDir)}`].concat(this.getCommonWixArgs())

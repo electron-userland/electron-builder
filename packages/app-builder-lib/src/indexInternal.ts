@@ -1,6 +1,6 @@
 export { AsarFilesystem, readAsar, readAsarJson } from "./asar/asar.js"
 export { AsarIntegrity } from "./asar/integrity.js"
-export { getBinFromUrl } from "./binDownload.js"
+export { download, resolveBuilderBinaryUrl } from "./util/electronGet.js"
 export { readCertInfo, _testingOnly } from "./codeSign/certInfo.js"
 export { createKeychain, findIdentity, isSignAllowed, removeKeychain } from "./codeSign/macCodeSign.js"
 export type { Identity } from "./codeSign/macCodeSign.js"

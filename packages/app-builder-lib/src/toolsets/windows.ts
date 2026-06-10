@@ -3,7 +3,6 @@ import { Nullish } from "builder-util-runtime"
 
 import * as os from "os"
 import * as path from "path"
-import { getBinFromCustomLoc, getBinFromUrl } from "../binDownload.js"
 import { ToolsetConfig } from "../configuration.js"
 import { ToolInfo, computeToolEnv } from "../util/bundledTool.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
@@ -48,7 +47,12 @@ export const wincodesignChecksums = {
 type CodeSignVersionKey = keyof typeof wincodesignChecksums
 
 function _getWindowsToolsBin<V extends CodeSignVersionKey>(winCodeSign: V, file: keyof (typeof wincodesignChecksums)[V]): Promise<string> {
-  return getBinFromUrl(`win-codesign@${winCodeSign}`, file as string, wincodesignChecksums[winCodeSign][file] as string)
+  const filenameWithExt = file as string
+  return downloadBuilderToolset({
+    releaseName: `win-codesign@${winCodeSign}`,
+    filenameWithExt,
+    checksums: { [filenameWithExt]: wincodesignChecksums[winCodeSign][file] as string },
+  })
 }
 
 export async function getSignToolPath(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish, isWin: boolean): Promise<ToolInfo> {
@@ -162,11 +166,19 @@ export async function getRceditBundle(winCodeSign: ToolsetConfig["winCodeSign"] 
 
 function getLegacyNsisBin(): Promise<string> {
   // Warning: Don't use v3.0.4.2 - https://github.com/electron-userland/electron-builder/issues/6334
-  return getBinFromUrl("nsis-3.0.4.1", "nsis-3.0.4.1.7z", "9877df902530f96357d13a7a31ae2b9df67f48b11ffc9a1700a7c961574ec5fa")
+  return downloadBuilderToolset({
+    releaseName: "nsis-3.0.4.1",
+    filenameWithExt: "nsis-3.0.4.1.7z",
+    checksums: { "nsis-3.0.4.1.7z": "9877df902530f96357d13a7a31ae2b9df67f48b11ffc9a1700a7c961574ec5fa" },
+  })
 }
 
 function getLegacyNsisResourcesBin(): Promise<string> {
-  return getBinFromUrl("nsis-resources-3.4.1", "nsis-resources-3.4.1.7z", "593a9a92ef958321293ac6a2ee61e64bf1bd543142a5bd6b3d310709cc924103")
+  return downloadBuilderToolset({
+    releaseName: "nsis-resources-3.4.1",
+    filenameWithExt: "nsis-resources-3.4.1.7z",
+    checksums: { "nsis-resources-3.4.1.7z": "593a9a92ef958321293ac6a2ee61e64bf1bd543142a5bd6b3d310709cc924103" },
+  })
 }
 
 export const nsisChecksums = {
@@ -184,7 +196,13 @@ type CustomNsisBinaryConfig = { url: string | null; checksum?: string | null; ve
 async function getNsisBundlePath(nsis: ToolsetConfig["nsis"], customBinary?: CustomNsisBinaryConfig | null): Promise<string> {
   if (customBinary?.url && customBinary?.checksum) {
     const binaryVersion = customBinary.version ?? customBinary.checksum.substring(0, 8)
-    return getBinFromCustomLoc("nsis", binaryVersion, customBinary.url, customBinary.checksum)
+    const filenameWithExt = customBinary.url.substring(customBinary.url.lastIndexOf("/") + 1)
+    return downloadBuilderToolset({
+      releaseName: `nsis-${binaryVersion}`,
+      filenameWithExt,
+      checksums: { [filenameWithExt]: customBinary.checksum },
+      overrideUrl: customBinary.url.substring(0, customBinary.url.lastIndexOf("/")),
+    })
   }
   if (nsis === "0.0.0" || nsis == null) {
     return getLegacyNsisBin()
@@ -252,7 +270,13 @@ export async function getNsisPluginsPath(nsis: ToolsetConfig["nsis"] | Nullish, 
     return resolveCustomBundle(overridePath, "ELECTRON_BUILDER_NSIS_RESOURCES_DIR")
   }
   if (customNsisResources) {
-    const bundle = await getBinFromCustomLoc("nsis-resources", customNsisResources.version, customNsisResources.url, customNsisResources.checksum)
+    const nsisResourcesFile = customNsisResources.url.substring(customNsisResources.url.lastIndexOf("/") + 1)
+    const bundle = await downloadBuilderToolset({
+      releaseName: `nsis-resources-${customNsisResources.version}`,
+      filenameWithExt: nsisResourcesFile,
+      checksums: { [nsisResourcesFile]: customNsisResources.checksum },
+      overrideUrl: customNsisResources.url.substring(0, customNsisResources.url.lastIndexOf("/")),
+    })
     return resolveCustomBundle(bundle, "CUSTOM_NSIS_RESOURCES")
   }
   if (nsis === "0.0.0" || nsis == null) {
