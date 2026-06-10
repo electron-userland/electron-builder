@@ -1,6 +1,5 @@
 import { Arch, exists, resolveEnvToolsetPath, use } from "builder-util"
 import * as path from "path"
-import { getBinFromUrl } from "../binDownload.js"
 import { ToolsetConfig } from "../configuration.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
 
@@ -84,7 +83,11 @@ export async function getFpmPath() {
   }
 
   const filename = getKey()
-  const fpmPath = await getBinFromUrl("fpm@2.1.4", filename, fpmChecksums[filename])
+  const fpmPath = await downloadBuilderToolset({
+    releaseName: "fpm@2.1.4",
+    filenameWithExt: filename,
+    checksums: { [filename]: fpmChecksums[filename] },
+  })
   return path.join(fpmPath, exec)
 }
 

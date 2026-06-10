@@ -1,7 +1,7 @@
 import { decodeCscLinkBase64, InvalidConfigurationError, resolveCscLinkPath, statOrNull } from "builder-util"
 
 import { TmpDir } from "temp-file"
-import { download } from "../binDownload.js"
+import { download } from "../util/electronGet.js"
 import _fsExtra from "fs-extra"
 const { outputFile } = _fsExtra
 
@@ -11,7 +11,8 @@ export async function importCertificate(cscLink: string, tmpDir: TmpDir, current
 
   if (cscLink.startsWith("https://")) {
     const tempFile = await tmpDir.getTempFile({ suffix: ".p12" })
-    await download(cscLink, tempFile)
+    // CSC_LINK is the caller's own certificate — no pre-known hash is possible.
+    await download(cscLink, tempFile, null)
     return tempFile
   }
 
