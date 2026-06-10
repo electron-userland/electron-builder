@@ -4,22 +4,10 @@ import { ClientRequest } from "http"
 import { Lazy } from "lazy-val"
 import * as mime from "mime"
 import { parse as parseUrl, UrlWithStringQuery } from "url"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { HttpPublisher } from "./httpPublisher.js"
 import { PublishContext, PublishOptions } from "./index.js"
 import { getCiTag } from "./publisher.js"
 import { trimStringWithWarn } from "./util.js"
-=======
-import { HttpPublisher } from "./httpPublisher.js.js"
-import { PublishContext, PublishOptions } from "./index.js.js"
-import { getCiTag } from "./publisher.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { HttpPublisher } from "./httpPublisher.js"
-import { PublishContext, PublishOptions } from "./index.js"
-import { getCiTag } from "./publisher.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export interface Release {
   id: number

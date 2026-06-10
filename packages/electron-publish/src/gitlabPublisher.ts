@@ -8,19 +8,9 @@ import { Lazy } from "lazy-val"
 import * as mime from "mime"
 import FormData from "form-data"
 import { URL } from "url"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { HttpPublisher } from "./httpPublisher.js"
 import { PublishContext } from "./index.js"
 import { trimStringWithWarn } from "./util.js"
-=======
-import { HttpPublisher } from "./httpPublisher.js.js"
-import { PublishContext } from "./index.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { HttpPublisher } from "./httpPublisher.js"
-import { PublishContext } from "./index.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 type RequestProcessor = (request: ClientRequest, reject: (error: Error) => void) => void
 

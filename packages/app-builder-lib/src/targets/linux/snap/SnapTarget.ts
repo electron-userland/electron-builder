@@ -86,7 +86,7 @@ export default class SnapTarget extends Target {
       return fallback
     }
 
-    const snapConfig = config.snapcraft ?? config.snap
+    const snapConfig = config.snapcraft
     if (snapConfig?.publish) {
       return this.findSnapPublishConfigInPublishNode(snapConfig.publish)
     }
