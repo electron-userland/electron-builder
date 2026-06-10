@@ -1,5 +1,5 @@
 import { TargetSpecificOptions } from "../core.js"
-import { SnapcraftYAML } from "../targets/snap/snapcraft.js"
+import { SnapcraftYAML } from "../targets/linux/snap/snapcraft.js"
 import { CommonLinuxOptions } from "./linuxOptions.js"
 
 /**

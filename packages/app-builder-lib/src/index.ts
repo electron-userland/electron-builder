@@ -60,11 +60,11 @@ export { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions.js"
 export { WindowsAzureSigningConfiguration, WindowsConfiguration, WindowsSigntoolConfiguration } from "./options/winOptions.js"
 export { BuildResult, Packager } from "./packager.js"
 export { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi.js"
-export { CommonNsisOptions, CustomNsisBinary, NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions.js"
+export { CommonNsisOptions, CustomNsisBinary, NsisOptions, NsisWebOptions, PortableOptions } from "./targets/win/nsis/nsisOptions.js"
 
 export { CancellationToken, ProgressInfo } from "builder-util-runtime"
 export { PublishOptions, UploadTask } from "electron-publish"
-export { WindowsSignOptions } from "./codeSign/windowsCodeSign.js"
+export { WindowsSignOptions } from "./codeSign/win/windowsCodeSign.js"
 export {
   CertificateFromStoreInfo,
   CustomWindowsSign,
@@ -72,7 +72,7 @@ export {
   FileCodeSigningInfo,
   WindowsSignTaskConfiguration,
   WindowsSignToolManager,
-} from "./codeSign/windowsSignToolManager.js"
+} from "./codeSign/win/windowsSignToolManager.js"
 export { ToolInfo } from "./util/bundledTool.js"
 export { ForgeOptions, buildForge } from "./forge-maker.js"
 export { Framework, PrepareApplicationStageDirectoryOptions } from "./Framework.js"
