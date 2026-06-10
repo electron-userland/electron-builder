@@ -169,13 +169,80 @@ describe("migrateConfig — appImage.systemIntegration", () => {
   })
 })
 
-describe("migrateConfig — snap warning", () => {
-  test("emits a warning for snap key", () => {
-    const result = migrateConfig({ snap: { summary: "My App", base: "core22" } })
+describe("migrateConfig — snap → snapcraft", () => {
+  test("nests options under the explicit base and removes snap", () => {
+    const result = migrateConfig({ snap: { summary: "My App", confinement: "strict", base: "core22" } })
+    expect("snap" in result.migrated).toBe(false)
+    expect(result.migrated.snapcraft).toEqual({
+      base: "core22",
+      core22: { summary: "My App", confinement: "strict" },
+    })
+    expect(result.warnings).toHaveLength(0)
+    expect(result.changes.some(c => c.key === "snap")).toBe(true)
+  })
+
+  test("defaults base to core20 and warns when base is absent", () => {
+    const result = migrateConfig({ snap: { summary: "My App" } })
+    expect(result.migrated.snapcraft).toEqual({
+      base: "core20",
+      core20: { summary: "My App" },
+    })
     expect(result.warnings).toHaveLength(1)
-    expect(result.warnings[0]).toContain("snap")
-    // snap itself is NOT automatically removed
-    expect("snap" in result.migrated).toBe(true)
+    expect(result.warnings[0]).toContain("core20")
+  })
+
+  test("base: custom is moved verbatim without per-base nesting", () => {
+    const result = migrateConfig({ snap: { base: "custom", yaml: { name: "my-snap" } } })
+    expect(result.migrated.snapcraft).toEqual({ base: "custom", yaml: { name: "my-snap" } })
+    expect(result.warnings).toHaveLength(0)
+  })
+
+  test("unrecognized base falls back to core20 with a warning", () => {
+    const result = migrateConfig({ snap: { base: "core99", summary: "x" } })
+    expect(result.migrated.snapcraft).toEqual({ base: "core20", core20: { summary: "x" } })
+    expect(result.warnings[0]).toContain("unrecognized base")
+  })
+
+  test("merges into an existing snapcraft block", () => {
+    const result = migrateConfig({ snap: { summary: "My App", base: "core22" }, snapcraft: { base: "core22", core22: { confinement: "strict" } } })
+    expect(result.migrated.snapcraft).toEqual({
+      base: "core22",
+      core22: { confinement: "strict", summary: "My App" },
+    })
+  })
+})
+
+describe("migrateConfig — helper-bundle-id", () => {
+  test("moves helper-bundle-id into mac.helperBundleId", () => {
+    const result = migrateConfig({ "helper-bundle-id": "com.example.helper" })
+    expect("helper-bundle-id" in result.migrated).toBe(false)
+    expect(result.migrated.mac).toEqual({ helperBundleId: "com.example.helper" })
+    expect(result.changes.some(c => c.key === "helper-bundle-id")).toBe(true)
+  })
+
+  test("does not overwrite an existing mac.helperBundleId", () => {
+    const result = migrateConfig({ "helper-bundle-id": "com.old.helper", mac: { helperBundleId: "com.new.helper", category: "public.app-category.utilities" } })
+    expect(result.migrated.mac).toEqual({ helperBundleId: "com.new.helper", category: "public.app-category.utilities" })
+  })
+})
+
+describe("migrateConfig — squirrelWindows.noMsi", () => {
+  test("inverts noMsi: true → msi: false", () => {
+    const result = migrateConfig({ squirrelWindows: { noMsi: true } })
+    expect("noMsi" in result.migrated.squirrelWindows).toBe(false)
+    expect(result.migrated.squirrelWindows.msi).toBe(false)
+    expect(result.changes.some(c => c.key === "squirrelWindows.noMsi")).toBe(true)
+  })
+
+  test("inverts noMsi: false → msi: true", () => {
+    const result = migrateConfig({ squirrelWindows: { noMsi: false } })
+    expect(result.migrated.squirrelWindows.msi).toBe(true)
+  })
+
+  test("does not overwrite an existing msi value", () => {
+    const result = migrateConfig({ squirrelWindows: { noMsi: true, msi: true } })
+    expect(result.migrated.squirrelWindows.msi).toBe(true)
+    expect("noMsi" in result.migrated.squirrelWindows).toBe(false)
   })
 })
 

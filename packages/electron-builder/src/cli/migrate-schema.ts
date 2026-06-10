@@ -120,16 +120,33 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
     }
   }
 
-  // ── 8. snap key removed (warn only — structure changed too much) ──────────
+  // ── 8. snap → snapcraft restructuring ─────────────────────────────────────
   if ("snap" in c) {
-    warnings.push(
-      'The "snap" config key is removed in v27. Rename it to "snapcraft" and restructure: ' +
-        'move all snap-specific options under a sub-key named after your base (e.g., "core22"). ' +
-        "See https://www.electron.build/docs/migration/v26-to-v27#snap for details."
-    )
+    migrateSnap(c, changes, warnings)
   }
 
-  // ── 9. azureSignOptions: index-signature extra keys → additionalMetadata ──
+  // ── 9. helper-bundle-id → mac.helperBundleId ──────────────────────────────
+  if ("helper-bundle-id" in c) {
+    const mac: Record<string, any> = { ...(c.mac ?? {}) }
+    if (!("helperBundleId" in mac)) {
+      mac.helperBundleId = c["helper-bundle-id"]
+    }
+    delete c["helper-bundle-id"]
+    c.mac = mac
+    changes.push({ key: "helper-bundle-id", description: "moved helper-bundle-id → mac.helperBundleId" })
+  }
+
+  // ── 10. squirrelWindows.noMsi → squirrelWindows.msi (inverted) ────────────
+  if (c.squirrelWindows != null && typeof c.squirrelWindows === "object" && "noMsi" in c.squirrelWindows) {
+    const sq: Record<string, any> = c.squirrelWindows
+    if (!("msi" in sq)) {
+      sq.msi = !sq.noMsi
+    }
+    delete sq.noMsi
+    changes.push({ key: "squirrelWindows.noMsi", description: "replaced squirrelWindows.noMsi → squirrelWindows.msi (inverted boolean)" })
+  }
+
+  // ── 11. azureSignOptions: index-signature extra keys → additionalMetadata ─
   if (c.win?.azureSignOptions != null) {
     const azure: Record<string, any> = c.win.azureSignOptions
     const extra: Record<string, string> = {}
@@ -178,6 +195,56 @@ function migratePublishEntries(parent: Record<string, any>, key: string, changes
   }
 }
 
+// snap bases recognized by the v27 snapcraft config. "custom" uses an inline/path yaml
+// and must be moved verbatim rather than nested under a per-base sub-key.
+const SNAP_BASES = new Set(["core18", "core20", "core22", "core24", "custom"])
+
+/**
+ * Migrates the removed flat `snap` config into the v27 `snapcraft` shape:
+ *   { snapcraft: { base, [base]: { ...rest } } }
+ * When no `base` is present, defaults to "core20" (the v27 1-to-1 migration target) and warns.
+ */
+function migrateSnap(c: Record<string, any>, changes: MigrationChange[], warnings: string[]) {
+  const snap = c.snap
+  delete c.snap
+
+  if (snap == null || typeof snap !== "object") {
+    changes.push({ key: "snap", description: "removed empty snap config (use snapcraft in v27)" })
+    return
+  }
+
+  const snapcraft: Record<string, any> = { ...(c.snapcraft ?? {}) }
+  const rest: Record<string, any> = { ...snap }
+  let base: string | undefined = rest.base
+  delete rest.base
+
+  if (base === "custom") {
+    // base: custom carries yamlPath / inline yaml — move verbatim, no per-base nesting
+    snapcraft.base = "custom"
+    Object.assign(snapcraft, rest)
+    c.snapcraft = snapcraft
+    changes.push({ key: "snap", description: "moved snap (base: custom) → snapcraft verbatim" })
+    return
+  }
+
+  let assumed = false
+  if (base == null || !SNAP_BASES.has(base)) {
+    if (base != null) {
+      warnings.push(`snap config had an unrecognized base "${base}"; assumed "core20". Verify the snapcraft.base value (core18/core20/core22/core24/custom).`)
+    }
+    base = "core20"
+    assumed = true
+  }
+
+  snapcraft.base = base
+  snapcraft[base] = { ...(snapcraft[base] ?? {}), ...rest }
+  c.snapcraft = snapcraft
+  changes.push({ key: "snap", description: `moved snap → snapcraft.${base}${assumed ? " (base defaulted to core20)" : ""}` })
+  if (assumed && warnings.every(w => !w.includes("unrecognized base"))) {
+    warnings.push('snap config had no "base"; assumed "core20" for snapcraft. Verify and adjust the base if needed (core18/core20/core22/core24).')
+  }
+}
+
 // ─── File I/O ─────────────────────────────────────────────────────────────────
 
 type ConfigFormat = "json" | "json5" | "yaml" | "toml" | "js"
@@ -217,6 +284,8 @@ interface FoundConfig {
   readonly format: ConfigFormat
   readonly rawText: string
   readonly parsed: Record<string, any>
+  /** package.json only: a root-level `directories` key was folded into `build.directories` */
+  readonly rootDirectoriesMoved?: boolean
 }
 
 async function findAndLoadConfig(projectDir: string, explicitConfigPath?: string | null): Promise<FoundConfig | null> {
@@ -237,7 +306,13 @@ async function findAndLoadConfig(projectDir: string, explicitConfigPath?: string
   if (pkgText != null) {
     const pkg = JSON.parse(pkgText)
     if (pkg.build != null && typeof pkg.build === "object") {
-      return { configFile: null, isPackageJson: true, format: "json", rawText: pkgText, parsed: pkg.build }
+      const build: Record<string, any> = pkg.build
+      let rootDirectoriesMoved = false
+      if (pkg.directories != null && build.directories == null) {
+        build.directories = pkg.directories
+        rootDirectoriesMoved = true
+      }
+      return { configFile: null, isPackageJson: true, format: "json", rawText: pkgText, parsed: build, rootDirectoriesMoved }
     }
   }
 
@@ -279,6 +354,9 @@ async function writeBackConfig(found: FoundConfig, migrated: Record<string, any>
     const pkgPath = path.join(projectDir, "package.json")
     const pkg = JSON.parse(found.rawText)
     pkg.build = migrated
+    if (found.rootDirectoriesMoved) {
+      delete pkg.directories
+    }
     const indentMatch = found.rawText.match(/^{\s*\n( +)/m)
     const indent = indentMatch ? indentMatch[1].length : 2
     await fs.writeFile(pkgPath, JSON.stringify(pkg, null, indent) + "\n", "utf8")
@@ -335,7 +413,13 @@ export async function migrateSchema(args: any): Promise<void> {
   // TOML: can parse but not serialize (toml lib is read-only)
   const isToml = found.format === "toml"
 
-  const { migrated, changes, warnings, modified } = migrateConfig(found.parsed)
+  const result = migrateConfig(found.parsed)
+  const { migrated, warnings } = result
+  const changes = [...result.changes]
+  if (found.rootDirectoriesMoved) {
+    changes.push({ key: "directories", description: "moved package.json root-level directories → build.directories" })
+  }
+  const modified = result.modified || found.rootDirectoriesMoved === true
 
   if (!modified) {
     log.info(null, "config is already up to date — no changes needed")
@@ -375,9 +459,12 @@ function printManualSteps() {
     "• Move buildDependenciesFromSource, nodeGypRebuild, npmRebuild, nativeRebuilder into nativeModules (rename nativeRebuilder → rebuildMode)",
     "• Rename asar-unpack / asar-unpack-dir / asar.unpack / asar.unpackDir → asarUnpack",
     "• Remove appImage.systemIntegration",
-    "• Rename snap → snapcraft; restructure options under a base-named sub-key",
+    "• Rename snap → snapcraft; nest options under a base-named sub-key (default base: core20)",
     "• Replace vPrefixedTagName with tagNamePrefix on GitHub publish entries",
     "• Move extra keys in win.azureSignOptions into an additionalMetadata object",
+    "• Move helper-bundle-id → mac.helperBundleId",
+    "• Replace squirrelWindows.noMsi with squirrelWindows.msi (inverted)",
+    "• Move root-level package.json directories → build.directories",
   ]
   for (const step of steps) {
     process.stdout.write(`  ${step}\n`)

@@ -32,3 +32,4 @@ yalc.lock
 .claude
 test/vitest-scripts/_vitest-smart-cache.json
 /test-run-logs
+temp

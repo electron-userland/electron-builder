@@ -2,20 +2,46 @@
 
 ## v26 → v27
 
-v27 migrates the entire electron-builder package ecosystem to native ES modules and requires Node.js >=22.12.0.
+v27 migrates the entire electron-builder package ecosystem to **native ES modules** and requires **Node.js >=22.12.0**. Alongside ESM, this release hard-deletes the deprecated APIs that had accumulated since v22 and reorganizes several configuration properties into clearer groupings.
 
-**Most projects need only a Node.js version bump.** Build configuration, the `build()` API, and all exported types are unchanged. CJS `require()` continues to work on Node >=22.12 — no code changes needed unless you relied on `electronCompile`.
+**Most projects need only a Node.js version bump.** The `build()` API and all exported types are unchanged, and CJS `require()` continues to work on Node >=22.12 — no code changes needed unless you used `electronCompile` or one of the removed config options below.
 
 Full guide: **[https://www.electron.build/docs/migration/v26-to-v27](https://www.electron.build/docs/migration/v26-to-v27)**
 
+### Step 0: run the automated migrator
+
+Before upgrading, let the built-in command rewrite your static config (`package.json` build key, `electron-builder.json`/`.json5`/`.yml`/`.yaml`) in place:
+
+```bash
+electron-builder migrate-schema           # apply changes
+electron-builder migrate-schema --dry-run # preview only
+```
+
+It handles **every config-level breaking change** automatically: `electronCompile`, `framework`/`nodeVersion`/`launchUiVersion`, the `nativeModules` grouping, legacy `asar` keys, `appImage.systemIntegration`, `vPrefixedTagName`, `win.azureSignOptions` extras, `snap` → `snapcraft`, `helper-bundle-id`, `squirrelWindows.noMsi`, and root-level `directories`. Programmatic configs (`.js`/`.ts`/`.cjs`/`.mjs`) and TOML are detected and printed as manual steps instead.
+
 ### Breaking changes at a glance
 
-| Change | Action required |
-|--------|----------------|
-| **Node.js >=22.12.0 required** | Update runtime and CI |
-| All packages are native ESM | None — CJS `require()` still works on Node >=22.12 |
-| `electronCompile` config option removed | Remove from config; migrate to a modern bundler |
-| `electron-forge-maker-*` are now ESM | None — same API, same `export default` shape |
+| Change | Auto-migrated | Action required |
+|--------|:---:|----------------|
+| **Node.js >=22.12.0 required** | — | Update runtime and CI |
+| All packages are native ESM | — | None — CJS `require()` still works on Node >=22.12 |
+| `electronCompile` removed | ✓ | Remove from config; migrate to a modern bundler |
+| `framework`, `nodeVersion`, `launchUiVersion` removed | ✓ | Removed automatically (Electron is the only framework) |
+| Native-module options grouped under `nativeModules` | ✓ | `nativeRebuilder` → `rebuildMode`; `npmSkipBuildFromSource` → `buildDependenciesFromSource` |
+| Legacy `asar-unpack` / `asar.unpack*` keys removed | ✓ | Replaced by `asarUnpack` |
+| `appImage.systemIntegration` removed | ✓ | Removed automatically |
+| `GithubOptions.vPrefixedTagName` removed | ✓ | Replaced by `tagNamePrefix` |
+| `win.azureSignOptions` index-signature keys | ✓ | Moved into `additionalMetadata` |
+| `snap` config key removed | ✓ | Restructured to `snapcraft` with an explicit `base` |
+| `build.helper-bundle-id` removed | ✓ | Moved to `mac.helperBundleId` |
+| `squirrelWindows.noMsi` removed | ✓ | Replaced by `msi` (inverted) |
+| Root-level `directories` removed | ✓ | Moved under `build.directories` |
+| Implicit `--publish` removed | — | Pass `--publish` explicitly |
+| `--em.build` / `--em.directories` CLI flags removed | — | Use `-c` / `-c.directories` |
+| `PackagerOptions.devMetadata` / `extraMetadata` removed | — | Use `config` / `config.extraMetadata` |
+| Toolset env-var overrides removed | — | Use `toolsets.X: { url, checksum }` (`ToolsetCustom`) |
+| Toolset default versions bumped | — | Optionally pin to `"0.0.0"` to restore legacy bundles |
+| `electron-forge-maker-*` are now ESM | — | None — same API, same `export default` shape |
 
 ### 1. Update Node.js
 
@@ -58,4 +84,4 @@ Migrate to [electron-vite](https://electron-vite.org/), [esbuild](https://esbuil
 
 ### Full migration details
 
-See the complete guide at [https://www.electron.build/docs/migration/v26-to-v27](https://www.electron.build/docs/migration/v26-to-v27).
+See the complete, sectioned guide at [https://www.electron.build/docs/migration/v26-to-v27](https://www.electron.build/docs/migration/v26-to-v27).
