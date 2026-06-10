@@ -8,6 +8,7 @@ import { CompressionLevel } from "../../core.js"
 import { LinuxPackager } from "../../linuxPackager.js"
 import { CommonLinuxOptions } from "../../options/linuxOptions.js"
 import { SnapCore } from "./snap/SnapTarget.js"
+import { SnapCore24 } from "./snap/core24.js"
 import { SnapCoreCustom } from "./snap/coreCustom.js"
 import { SnapCoreLegacy } from "./snap/coreLegacy.js"
 import { IconInfo } from "../../util/iconConverter.js"
@@ -125,6 +126,14 @@ export class LinuxTargetHelper {
             log.warn(null, "electron 4 and higher is highly recommended for Snap with core18/core20/core22")
           }
           return new SnapCoreLegacy(this.packager, this, deepAssign({ base: core }, snapLinuxOptions, options))
+        case "core24":
+          if (!this.isElectronVersionGreaterOrEqualThan("28.0.0")) {
+            if (!this.isElectronVersionGreaterOrEqualThan("25.0.0")) {
+              throw new InvalidConfigurationError("Electron 25 and higher is required to build Snap with core24")
+            }
+            log.warn(null, "electron 28 and higher is highly recommended for Snap with core24")
+          }
+          return new SnapCore24(this.packager, this, deepAssign({}, snapLinuxOptions, options))
         case "custom":
           // Pass-through: do not inject linux options into user-supplied yaml
           return new SnapCoreCustom(this.packager, this, snapcraft.custom || {})
