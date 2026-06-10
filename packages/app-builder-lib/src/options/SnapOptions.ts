@@ -12,7 +12,6 @@ export interface SnapcraftOptions extends TargetSpecificOptions {
    * (`core18`, `core20`, `core22`, `core24`, `custom`) is active.
    *
    * Only one core may be selected per build target.
-   * @default "core24"
    */
   readonly base: "core18" | "core20" | "core22" | "core24" | "custom"
 

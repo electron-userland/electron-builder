@@ -41,7 +41,7 @@ export default class SnapTarget extends Target {
       platformSpecificBuildOptions,
     } = packager
 
-    this.options = deepAssign({ base: "core24" }, platformSpecificBuildOptions, snapcraft ?? {})
+    this.options = deepAssign({}, platformSpecificBuildOptions, snapcraft ?? {}) as SnapcraftOptions
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {

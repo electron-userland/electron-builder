@@ -7358,7 +7358,6 @@
           ]
         },
         "base": {
-          "default": "core24",
           "description": "The snap base to use as the execution environment. Determines which set of per-core options\n(`core18`, `core20`, `core22`, `core24`, `custom`) is active.\n\nOnly one core may be selected per build target.",
           "enum": [
             "core18",
