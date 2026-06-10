@@ -47,6 +47,17 @@ are detected and print manual steps.
 - JSON5 files are rewritten as standard JSON (comments stripped, warning printed).
 - YAML comments are not preserved on round-trip.
 
+### PlatformPackager API refinement (also in this cascade)
+
+`platformSpecificBuildOptions` is now `protected`. Two public helpers replace external access:
+
+| Old pattern | v27 replacement |
+|---|---|
+| `packager.platformSpecificBuildOptions` | `packager.platformOptions` |
+| `deepAssign({}, packager.platformSpecificBuildOptions, config.X)` | `packager.getOptionsForTarget<T>("X")` |
+
+All built-in targets (AppImage, Flatpak, Fpm, Snap, Appx, Msi, MsiWrapped, SquirrelWindows, DMG, NSIS, Archive) have been migrated. Custom targets extending `PlatformPackager` must update any direct `.platformSpecificBuildOptions` access.
+
 ### Changed Files
 
 | File | Change |
@@ -54,6 +65,8 @@ are detected and print manual steps.
 | `packages/electron-builder/src/cli/migrate-schema.ts` | New — full migration implementation |
 | `packages/electron-builder/src/cli/cli.ts` | Wire up `migrate-schema` subcommand |
 | `test/src/migrateSchemaTest.ts` | New — unit tests for all transformations |
+| `packages/app-builder-lib/src/platformPackager.ts` | `platformSpecificBuildOptions` protected; add `platformOptions` getter + `getOptionsForTarget<T>()` |
+| All 20 target/helper files | Migrate to `platformOptions` / `getOptionsForTarget` |
 | `website/docs/migration/v26-to-v27.md` | Enhanced with auto-migrated column, new breaking-change sections, and "Additional notes" |
 
 ### Validations
