@@ -607,7 +607,7 @@ export function getBinariesMirrorUrl(githubOrgRepo: string): string {
     "npm_package_config_electron_builder_binaries_mirror",
     "ELECTRON_BUILDER_BINARIES_MIRROR",
   ]) {
-    const url = parseValidEnvVarUrl(envVar)
+    const url = parseValidEnvVarUrl(envVar, allowHttp)
     if (url) {
       return url.endsWith("/") ? url : `${url}/`
     }
