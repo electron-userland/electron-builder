@@ -3,7 +3,7 @@ import { Nullish } from "builder-util-runtime"
 import { ExecFileOptions, SpawnOptions } from "child_process"
 import * as path from "path"
 import { ToolsetConfig } from "../../configuration.js"
-import { getWineToolset } from "../../toolsets/win/wine.js"
+import { getWineToolset } from "../../toolsets/wine.js"
 import { VmManager } from "../vm.js"
 
 type WineOptions = {

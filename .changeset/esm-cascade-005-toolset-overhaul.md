@@ -1,9 +1,5 @@
 ---
-"app-builder-lib": minor
+"app-builder-lib": major
 ---
 
-Toolset overhaul: ToolsetCustom, split modules, PlatformPackager API cleanup
-
-Introduces first-class support for user-supplied toolset bundles via the new `ToolsetCustom`
-interface, consolidates split toolset files into unified `linux.ts` / `windows.ts` / `appimage.ts`
-/ `custom.ts` modules, upgrades toolset default versions, and cleans up the `PlatformPackager` API.
+chore(refactor): add `ToolsetCustom` support instead of `process.env` overrides, split toolset modules, and cleanup `PlatformPackager` API

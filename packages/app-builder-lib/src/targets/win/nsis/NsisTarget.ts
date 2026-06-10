@@ -35,7 +35,7 @@ import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } fr
 import { computeLicensePage } from "./nsisLicense.js"
 import { NsisOptions, PortableOptions } from "./nsisOptions.js"
 import { NsisScriptGenerator, nsisEscapeString } from "./nsisScriptGenerator.js"
-import { getMakeNsisPath, getNsisPluginsPath } from "../../../toolsets/windows.js"
+import { getMakeNsisPath, getNsisPluginsPath } from "../../../toolsets/nsis.js"
 import { AppPackageHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil.js"
 import { checkMakensisOutput, verifyInstallerSize } from "./nsisValidation.js"
 import _fsExtra from "fs-extra"

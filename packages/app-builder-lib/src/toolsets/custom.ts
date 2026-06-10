@@ -30,9 +30,9 @@ async function validateCustomToolset(custom: ToolsetCustom, resourcesDir: string
       isValid &&
       (await exists(p)) &&
       (await stat(p)
-        .then(s => (s.isDirectory() ? "directory" : s.isFile() ? "file" : null))
-        .catch(() => null))
-    if (type != null) {
+        .then(s => (s.isDirectory() ? "directory" : s.isFile() ? "file" : false))
+        .catch(() => false))
+    if (type) {
       return { toolset: custom, type }
     }
   }

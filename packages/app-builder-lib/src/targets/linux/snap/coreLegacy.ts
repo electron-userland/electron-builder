@@ -5,7 +5,7 @@ import { chmod, copyFile, mkdir, readdir, rename, rm, writeFile } from "fs/promi
 import { load } from "js-yaml"
 import * as path from "path"
 import { PlugDescriptor, SnapOptions } from "../../../options/SnapOptions.js"
-import { getAppImageTools } from "../../../toolsets/linux.js"
+import { getAppImageTools } from "../../../toolsets/appimage.js"
 import { downloadBuilderToolset } from "../../../util/electronGet.js"
 import { isSnapDestructiveMode } from "../../../util/flags.js"
 import { getTemplatePath } from "../../../util/pathManager.js"
