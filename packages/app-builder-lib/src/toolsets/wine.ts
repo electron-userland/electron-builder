@@ -1,9 +1,9 @@
-import { exists, InvalidConfigurationError, resolveEnvToolsetPath, sanitizeDirPath } from "builder-util"
+import { exists, InvalidConfigurationError, sanitizeDirPath } from "builder-util"
 import * as path from "path"
-import { ToolsetConfig } from "../../configuration.js"
-import { downloadBuilderToolset } from "../../util/electronGet.js"
-import { isUseSystemWine } from "../../util/flags.js"
-import { getCustomToolsetPath } from "../custom.js"
+import { ToolsetConfig } from "../configuration.js"
+import { downloadBuilderToolset } from "../util/electronGet.js"
+import { isUseSystemWine } from "../util/flags.js"
+import { getCustomToolsetPath } from "./custom.js"
 
 const wineToolsChecksums: Record<string, Record<string, string>> = {
   "0.0.0": {
@@ -22,28 +22,13 @@ export async function getWineToolset(wine: ToolsetConfig["wine"], resourcesDir: 
 
   const defaultEnv = { WINEDEBUG: "-all,err+all", WINEDLLOVERRIDES: "winemenubuilder.exe=d" }
 
-  const envPath = await resolveEnvToolsetPath("ELECTRON_BUILDER_WINE_TOOLSET_DIR", "directory")
-  if (envPath != null) {
-    // Probe for the wine binary: modern bundles ship bin/wine; legacy bundles (e.g. wine-4.0.1-mac) ship bin/wine64.
-    const wineExecSubPath = (await exists(path.join(envPath, "bin", "wine"))) ? "bin/wine" : "bin/wine64"
-    const { execPath, winePrefix, wineLibPath } = await createWineEnvironment(envPath, wineExecSubPath)
-    return {
-      execPath,
-      env: {
-        ...defaultEnv,
-        WINEPREFIX: winePrefix,
-        DYLD_FALLBACK_LIBRARY_PATH: [wineLibPath, process.env.DYLD_FALLBACK_LIBRARY_PATH].filter(Boolean).join(path.delimiter),
-        LD_LIBRARY_PATH: [wineLibPath, process.env.LD_LIBRARY_PATH].filter(Boolean).join(path.delimiter),
-      },
-    }
-  }
-
+  // null / undefined / "0.0.0" all mean "default wine" — always use system wine on Linux
+  // and use the legacy macOS bundle on darwin.  Only an explicit ToolsetCustom object
+  // (or a future non-legacy string version) triggers a bundle download.
   const useSystemWine = isUseSystemWine()
-  // null → modern default "1.0.1"
-  const isLegacy = (wine ?? "1.0.1") === "0.0.0"
-  const isLegacyOnLinux = isLegacy && process.platform === "linux"
+  const isDefault = wine == null || wine === "0.0.0"
 
-  if (useSystemWine || isLegacyOnLinux) {
+  if (useSystemWine || (isDefault && process.platform === "linux")) {
     return { execPath: "wine", env: defaultEnv }
   }
 
@@ -55,25 +40,14 @@ export async function getWineToolset(wine: ToolsetConfig["wine"], resourcesDir: 
     // Custom bundles: probe for the wine binary location
     execSubPath = (await exists(path.join(toolsetPath, "bin", "wine"))) ? "bin/wine" : "bin/wine64"
   } else {
-    const resolved = wine ?? "1.0.1"
-    if (isLegacy) {
-      toolsetPath = await downloadBuilderToolset({
-        releaseName: "wine-4.0.1-mac",
-        filenameWithExt: "wine-4.0.1-mac.7z",
-        checksums: wineToolsChecksums["0.0.0"],
-        githubOrgRepo: "electron-userland/electron-builder-binaries",
-      })
-      execSubPath = path.join("bin", "wine64")
-    } else {
-      const filenameWithExt = process.platform === "darwin" ? "wine-11.0-darwin-x86_64.tar.xz" : "wine-11.0-linux-x86_64.tar.xz"
-      toolsetPath = await downloadBuilderToolset({
-        releaseName: `wine@${resolved}`,
-        filenameWithExt,
-        checksums: wineToolsChecksums[resolved],
-        githubOrgRepo: "electron-userland/electron-builder-binaries",
-      })
-      execSubPath = path.join("bin", "wine")
-    }
+    // isDefault on macOS → download the legacy wine-4.0.1-mac bundle
+    toolsetPath = await downloadBuilderToolset({
+      releaseName: "wine-4.0.1-mac",
+      filenameWithExt: "wine-4.0.1-mac.7z",
+      checksums: wineToolsChecksums["0.0.0"],
+      githubOrgRepo: "electron-userland/electron-builder-binaries",
+    })
+    execSubPath = path.join("bin", "wine64")
   }
 
   const { execPath, winePrefix, wineLibPath } = await createWineEnvironment(toolsetPath, execSubPath)

@@ -82,7 +82,7 @@ export interface UpdateInfoFileTask {
   readonly arch?: Arch | null
 }
 
-function computeIsisElectronUpdater1xCompatibility(updaterCompatibility: string | null, publishConfiguration: PublishConfiguration, packager: PlatformPackager<any>) {
+function checkUpdaterCompatibility(updaterCompatibility: string | null, publishConfiguration: PublishConfiguration, packager: PlatformPackager<any>) {
   if (updaterCompatibility != null) {
     return semver.satisfies("1.0.0", updaterCompatibility)
   }
@@ -117,7 +117,7 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
       dir = path.join(outDir, publishConfiguration.provider)
     }
 
-    let isElectronUpdater1xCompatibility = computeIsisElectronUpdater1xCompatibility(electronUpdaterCompatibility, publishConfiguration, packager)
+    let isElectronUpdater1xCompatibility = checkUpdaterCompatibility(electronUpdaterCompatibility, publishConfiguration, packager)
 
     let info = sharedInfo
     // noinspection JSDeprecatedSymbols

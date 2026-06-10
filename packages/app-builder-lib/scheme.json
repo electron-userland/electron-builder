@@ -1764,6 +1764,11 @@
             "null",
             "string"
           ]
+        },
+        "vPrefixedTagName": {
+          "default": true,
+          "description": "Whether to use `v`-prefixed tag name.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1862,6 +1867,11 @@
           ],
           "default": "project_upload",
           "description": "Upload target method. Can be \"project_upload\" for GitLab project uploads or \"generic_package\" for GitLab generic packages."
+        },
+        "vPrefixedTagName": {
+          "default": true,
+          "description": "Whether to use `v`-prefixed tag name.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -7949,7 +7959,7 @@
     },
     "ToolsetConfig": {
       "additionalProperties": false,
-      "description": "Version pins (or custom bundle overrides) for the binary toolsets that electron-builder\ndownloads and caches locally.\n\nEach toolset is a versioned archive hosted at\n[electron-userland/electron-builder-binaries](https://github.com/electron-userland/electron-builder-binaries/releases).\nOmitting a property (or setting it to `null`) selects the modern default for that toolset.\nSetting a property to `\"0.0.0\"` forces the legacy bundle — useful only for diagnosing\nregressions introduced by newer toolset bundles.\n\nTo supply your own bundle, set the property to a {@link ToolsetCustom} object with a `url`\n(https:// or file://) and a `checksum` for verification. The bundle must mirror the expected\ndirectory layout of the corresponding built-in bundle; see the build scripts at\nhttps://github.com/electron-userland/electron-builder-binaries/tree/master/packages.",
+      "description": "Version pins and custom bundle overrides for the binary toolsets that electron-builder\ndownloads and caches locally.\n\nEach toolset is a versioned archive hosted at\n[electron-userland/electron-builder-binaries](https://github.com/electron-userland/electron-builder-binaries/releases).\nOmitting a property (or setting it to `null`) selects the modern default for that toolset.\nSetting a property to `\"0.0.0\"` forces the legacy bundle — useful only for diagnosing\nregressions introduced by newer toolset bundles.\n\nTo supply your own bundle, set the property to a {@link ToolsetCustom} object with a `url`\n(https:// or file://) and a `checksum` for verification. The bundle must mirror the expected\ndirectory layout of the corresponding built-in bundle; see the build scripts at\nhttps://github.com/electron-userland/electron-builder-binaries/tree/master/packages.",
       "properties": {
         "appimage": {
           "anyOf": [
@@ -7959,6 +7969,7 @@
             {
               "enum": [
                 "0.0.0",
+                "1.0.2",
                 "1.0.3"
               ],
               "type": "string"
@@ -7968,7 +7979,7 @@
             }
           ],
           "default": "1.0.3",
-          "description": "Version of the AppImage toolset bundle used for building `.AppImage` files.\n\nThe bundle ships:\n- **`mksquashfs`** — creates the SquashFS filesystem embedded in the AppImage.\n- **`desktop-file-validate`** — validates the generated `.desktop` entry.\n- **AppImage runtime** — the self-executing stub that mounts the SquashFS at launch.\n\nAvailable versions:\n| Version | Runtime date | Notes |\n|---------|-------------|-------|\n| `\"0.0.0\"` | Legacy | FUSE2-based AppImage runtime (pre-v27 default) |\n| `\"1.0.3\"` | 20251108 | Static-runtime (FUSE3-compatible); recommended (default) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage"
+          "description": "Version of the AppImage toolset bundle used for building `.AppImage` files.\n\nThe bundle ships:\n- **`mksquashfs`** — creates the SquashFS filesystem embedded in the AppImage.\n- **`desktop-file-validate`** — validates the generated `.desktop` entry.\n- **AppImage runtime** — the self-executing stub that mounts the SquashFS at launch.\n\nAvailable versions:\n| Version | Runtime date | Notes |\n|---------|-------------|-------|\n| `\"0.0.0\"` | Legacy | FUSE2-based AppImage runtime (pre-v27 default) |\n| `\"1.0.2\"` | 20251108 | Static-runtime (FUSE3-compatible) |\n| `\"1.0.3\"` | 20251108 | Static-runtime (FUSE3-compatible); recommended (default) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage"
         },
         "fpm": {
           "anyOf": [
@@ -7976,15 +7987,31 @@
               "$ref": "#/definitions/ToolsetCustom"
             },
             {
-              "const": "1.0.0",
+              "const": "2.2.1",
               "type": "string"
             },
             {
               "type": "null"
             }
           ],
-          "default": "1.0.0",
-          "description": "Version of the FPM bundle used to build Linux packages (`.deb`, `.rpm`, `.pacman`, etc.)\non macOS and Linux hosts.\n\nAvailable versions:\n| Version | FPM version | Notes |\n|---------|------------|-------|\n| `\"1.0.0\"` | 1.17.0 (Ruby 3.4.3) | Current default |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=fpm"
+          "default": "2.2.1",
+          "description": "Version of the FPM bundle used to build Linux packages (`.deb`, `.rpm`, `.pacman`, etc.)\non macOS and Linux hosts.\n\nAvailable versions:\n| Version | FPM version | Notes |\n|---------|------------|-------|\n| `\"2.2.1\"` | 1.17.0 (Ruby 3.4.3) | Current default |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=fpm"
+        },
+        "icons": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ToolsetCustom"
+            },
+            {
+              "const": "1.1.0",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "1.1.0",
+          "description": "Version of the icons-conversion bundle used to convert source images to `.icns`, `.ico`,\nand PNG icon sets.\n\nSet to a {@link ToolsetCustom} object to supply your own icons bundle directory.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.1.0\"` | Current default |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=icons"
         },
         "linuxToolsMac": {
           "anyOf": [
@@ -8021,6 +8048,22 @@
           "default": "1.2.1",
           "description": "Version of the NSIS toolset bundle used to compile Windows installers.\n\nThe bundle ships:\n- **`makensis`** — the NSIS compiler invoked to build `.nsi` scripts into `.exe` installers.\n- **NSIS plugins** — the plugin DLLs (`NsisMultiUser`, `UAC`, `StdUtils`, etc.) referenced by\n  electron-builder's default installer scripts.\n- **`elevate.exe`** — UAC elevation helper included in NSIS installers.\n\nAvailable versions:\n| Version | `makensis` version | Notes |\n|---------|------------------|-------|\n| `\"0.0.0\"` | 3.0.4.1 | Legacy split bundle — `nsis` + `nsis-resources` archives (pre-v27 default) |\n| `\"1.2.1\"` | 3.12 | Unified bundle — single archive, entrypoint scripts auto-set `NSISDIR` (default) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=nsis"
         },
+        "sevenZip": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ToolsetCustom"
+            },
+            {
+              "const": "1.0.0",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "1.0.0",
+          "description": "Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.\n\nSet to a {@link ToolsetCustom} object to supply your own 7za binary.\nThe `url` must point to a directory (or a `.tar.gz`/`.zip` archive of one) that contains\n`bin/7za` (macOS/Linux) or `bin/7za.exe` (Windows).\n\n**Bootstrap constraint:** the custom bundle itself must be a `.tar.gz` or `.zip` archive\n(or a bare `file://` directory). `.7z` and `.tar.xz` archives cannot be used here because\nextracting them requires 7za — a circular dependency."
+        },
         "winCodeSign": {
           "anyOf": [
             {
@@ -8047,18 +8090,15 @@
               "$ref": "#/definitions/ToolsetCustom"
             },
             {
-              "enum": [
-                "0.0.0",
-                "1.0.1"
-              ],
+              "const": "0.0.0",
               "type": "string"
             },
             {
               "type": "null"
             }
           ],
-          "default": "1.0.1",
-          "description": "Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on\nnon-Windows hosts (macOS and Linux).\n\nWine is only required when building Windows targets on a non-Windows machine. On Windows,\nthis setting has no effect.\n\nAvailable versions:\n| Version | Wine version | Platform support | Notes |\n|---------|-------------|-----------------|-------|\n| `\"0.0.0\"` | 4.0.1 | macOS only | Legacy portable bundle (pre-v27 default) |\n| `\"1.0.1\"` | 11.0 | macOS + Linux | Unified bundle; ia32 via WoW64 (default) |\n\nOn Linux with `\"0.0.0\"`, the system `wine` binary is used instead of a bundled one.\nSet `USE_SYSTEM_WINE=true` to force system Wine regardless of this setting.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=wine"
+          "default": "0.0.0",
+          "description": "Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on\nnon-Windows hosts (macOS and Linux).\n\nWine is only required when building Windows targets on a non-Windows machine. On Windows,\nthis setting has no effect.\n\nAvailable versions:\n| Version | Wine version | Platform support | Notes |\n|---------|-------------|-----------------|-------|\n| `\"0.0.0\"` | 4.0.1 | macOS only | Legacy portable bundle (pre-v27 default) |\n\nOn Linux, the system `wine` binary is used instead of a bundled one.\nSet `USE_SYSTEM_WINE=true` to force system Wine regardless of this setting.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=wine"
         }
       },
       "type": "object"
@@ -8068,7 +8108,7 @@
       "description": "A custom toolset bundle supplied by the user in place of a built-in versioned bundle.\n\nThe bundle must mirror the expected directory layout of the corresponding built-in bundle.\nSee the build scripts at\nhttps://github.com/electron-userland/electron-builder-binaries/tree/master/packages.\n\nFile formats supported for `url` archives: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`.",
       "properties": {
         "checksum": {
-          "description": "SHA checksum of the custom toolset bundle for verification.\nRequired for remote (`https://`) URLs; used as a cache key for local archives.",
+          "description": "SHA checksum of the custom toolset bundle for verification.\nRequired for remote (`https://`) URLs and local archive files (`file://`).\nNot needed for bare directory paths — the directory is used as-is with no caching.",
           "type": "string"
         },
         "url": {
@@ -8081,7 +8121,6 @@
         }
       },
       "required": [
-        "checksum",
         "url"
       ],
       "type": "object"

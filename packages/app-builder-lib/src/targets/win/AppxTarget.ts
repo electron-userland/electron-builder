@@ -3,7 +3,7 @@ import { Nullish } from "builder-util-runtime"
 
 import * as path from "path"
 import { AppXOptions } from "../../index.js"
-import { getWindowsKitsBundle, isOldWin6 } from "../../toolsets/windows.js"
+import { getWindowsKitsBundle, isOldWin6 } from "../../toolsets/winCodeSign.js"
 import { Target } from "../../core.js"
 import { getTemplatePath } from "../../util/pathManager.js"
 import { VmManager } from "../../vm/vm.js"

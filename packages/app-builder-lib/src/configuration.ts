@@ -9,7 +9,7 @@ import { MsiOptions } from "./options/MsiOptions.js"
 import { MsiWrappedOptions } from "./options/MsiWrappedOptions.js"
 import { PkgOptions } from "./options/pkgOptions.js"
 import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions.js"
-import { SnapcraftOptions, SnapOptions } from "./options/SnapOptions.js"
+import { SnapcraftOptions } from "./options/SnapOptions.js"
 import { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions.js"
 import { WindowsConfiguration } from "./options/winOptions.js"
 import { BuildResult } from "./packager.js"
@@ -212,13 +212,6 @@ export interface CommonConfiguration {
    * @see {@link SnapcraftOptions}
    */
   readonly snapcraft?: SnapcraftOptions | null
-  /**
-   * Flat snap configuration targeting core22 and older snap bases.
-   *
-   * @deprecated Use `snapcraft` instead — it supersedes `snap` when both are present and supports
-   * all snap bases including core24. `snap` will be removed in a future major release.
-   */
-  readonly snap?: SnapOptions | null
   /**
    * AppImage options.
    *
@@ -615,7 +608,7 @@ export interface ToolsetConfig {
    * | Version | Runtime date | Notes |
    * |---------|-------------|-------|
    * | `"0.0.0"` | Legacy | FUSE2-based AppImage runtime (pre-v27 default) |
-   * | `"1.0.2"` | 20251108 | Static-runtime (FUSE3-compatible); same archive, earlier checksum |
+   * | `"1.0.2"` | 20251108 | Static-runtime (FUSE3-compatible) |
    * | `"1.0.3"` | 20251108 | Static-runtime (FUSE3-compatible); recommended (default) |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage
@@ -656,16 +649,15 @@ export interface ToolsetConfig {
    * | Version | Wine version | Platform support | Notes |
    * |---------|-------------|-----------------|-------|
    * | `"0.0.0"` | 4.0.1 | macOS only | Legacy portable bundle (pre-v27 default) |
-   * | `"1.0.1"` | 11.0 | macOS + Linux | Unified bundle; ia32 via WoW64 (default) |
    *
-   * On Linux with `"0.0.0"`, the system `wine` binary is used instead of a bundled one.
+   * On Linux, the system `wine` binary is used instead of a bundled one.
    * Set `USE_SYSTEM_WINE=true` to force system Wine regardless of this setting.
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=wine
    *
-   * @default "1.0.1"
+   * @default "0.0.0"
    */
-  readonly wine?: "0.0.0" | "1.0.1" | ToolsetCustom | null
+  readonly wine?: "0.0.0" | ToolsetCustom | null
 
   /**
    * Version of the FPM bundle used to build Linux packages (`.deb`, `.rpm`, `.pacman`, etc.)
@@ -674,13 +666,13 @@ export interface ToolsetConfig {
    * Available versions:
    * | Version | FPM version | Notes |
    * |---------|------------|-------|
-   * | `"1.0.0"` | 1.17.0 (Ruby 3.4.3) | Current default |
+   * | `"2.2.1"` | 1.17.0 (Ruby 3.4.3) | Current default |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=fpm
    *
-   * @default "1.0.0"
+   * @default "2.2.1"
    */
-  readonly fpm?: "1.0.0" | ToolsetCustom | null
+  readonly fpm?: "2.2.1" | ToolsetCustom | null
 
   /**
    * Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build
@@ -698,6 +690,38 @@ export interface ToolsetConfig {
    * @default "1.0.0"
    */
   readonly linuxToolsMac?: "1.0.0" | ToolsetCustom | null
+
+  /**
+   * Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.
+   *
+   * Set to a {@link ToolsetCustom} object to supply your own 7za binary.
+   * The `url` must point to a directory (or a `.tar.gz`/`.zip` archive of one) that contains
+   * `bin/7za` (macOS/Linux) or `bin/7za.exe` (Windows).
+   *
+   * **Bootstrap constraint:** the custom bundle itself must be a `.tar.gz` or `.zip` archive
+   * (or a bare `file://` directory). `.7z` and `.tar.xz` archives cannot be used here because
+   * extracting them requires 7za — a circular dependency.
+   *
+   * @default "1.0.0"
+   */
+  readonly sevenZip?: "1.0.0" | ToolsetCustom | null
+
+  /**
+   * Version of the icons-conversion bundle used to convert source images to `.icns`, `.ico`,
+   * and PNG icon sets.
+   *
+   * Set to a {@link ToolsetCustom} object to supply your own icons bundle directory.
+   *
+   * Available versions:
+   * | Version | Notes |
+   * |---------|-------|
+   * | `"1.1.0"` | Current default |
+   *
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=icons
+   *
+   * @default "1.1.0"
+   */
+  readonly icons?: "1.1.0" | ToolsetCustom | null
 }
 
 /**
@@ -736,9 +760,10 @@ export interface ToolsetCustom {
 
   /**
    * SHA checksum of the custom toolset bundle for verification.
-   * Required for remote (`https://`) URLs; used as a cache key for local archives.
+   * Required for remote (`https://`) URLs and local archive files (`file://`).
+   * Not needed for bare directory paths — the directory is used as-is with no caching.
    */
-  readonly checksum: string
+  readonly checksum?: string
 
   /**
    * Optional version label used in the local cache directory name.

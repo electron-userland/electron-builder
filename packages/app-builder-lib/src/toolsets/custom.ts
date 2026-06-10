@@ -30,9 +30,9 @@ async function validateCustomToolset(custom: ToolsetCustom, resourcesDir: string
       isValid &&
       (await exists(p)) &&
       (await stat(p)
-        .then(s => (s.isDirectory() ? "directory" : s.isFile() ? "file" : null))
-        .catch(() => null))
-    if (type != null) {
+        .then(s => (s.isDirectory() ? "directory" : s.isFile() ? "file" : false))
+        .catch(() => false))
+    if (type) {
       return { toolset: custom, type }
     }
   }
@@ -47,14 +47,19 @@ function resolveFilePath(url: string, resourcesDir: string): string {
 
 export async function getCustomToolsetPath(custom: ToolsetCustom, resourcesDir: string): Promise<string> {
   const { type, toolset } = await validateCustomToolset(custom, resourcesDir)
-  const binaryVersion = toolset.version || toolset.checksum.substring(0, 8)
+
+  if (type !== "directory" && !toolset.checksum) {
+    throw new Error(`ToolsetCustom.checksum is required for ${type} toolsets (url: ${toolset.url})`)
+  }
+
+  const binaryVersion = toolset.version ?? toolset.checksum!.substring(0, 8)
   const releaseName = `${binaryVersion}-${hashUrlSafe(toolset.url)}`
 
   if (type === "url") {
     return downloadBuilderToolset({
       releaseName: releaseName,
       filenameWithExt: path.basename(toolset.url),
-      checksums: { [path.basename(toolset.url)]: toolset.checksum },
+      checksums: { [path.basename(toolset.url)]: toolset.checksum! },
       overrideUrl: toolset.url,
     })
   } else if (type === "file") {
