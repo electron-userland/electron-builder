@@ -110,7 +110,7 @@ export default class AppImageTarget extends Target {
               return undefined // normal/store/unset/zstd → mksquashfs defaults to gzip
             })(),
           },
-        })
+        }, packager.buildResourcesDir)
       } else {
         updateInfo = await buildStaticRuntimeAppImage(
           appimageTool,

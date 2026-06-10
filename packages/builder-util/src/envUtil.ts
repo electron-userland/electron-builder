@@ -59,24 +59,12 @@ export function parseValidEnvVarUrl(envVarName: string, allowHttp: boolean = fal
   if (url == null || url === "") {
     return null
   }
-  let parsed: URL
-  try {
-    parsed = new URL(url)
-  } catch {
-    throw new Error(`${envVarName} is not a valid URL: ${url}`)
-  }
-  if (parsed.protocol !== "https:") {
-    // Always permit plain HTTP to loopback addresses (local dev / air-gapped CI mirrors
-    // running on the build machine itself).  For any other host, require opt-in.
-    const isLocalhost = parsed.protocol === "http:" && LOCALHOST_HOSTNAMES.has(parsed.hostname)
-    if (!isLocalhost && !allowHttp) {
-      throw new Error(`${envVarName} must use https:// (got ${parsed.protocol}). For non-localhost HTTP mirrors set ELECTRON_BUILDER_BINARIES_ALLOW_HTTP=true`)
-    }
-  }
+  validateSecuredUrl(url, allowHttp)
   return url
 }
 
-export function validateSecuredUrl(url: string): URL {
+export function validateSecuredUrl(url: string, allowHttp: boolean = false): URL {
+  const httpOverride = process.env["ELECTRON_BUILDER_DANGEROUSLY_ALLOW_HTTP"] === "true" || allowHttp
   let parsed: URL
   try {
     parsed = new URL(url)
@@ -84,7 +72,12 @@ export function validateSecuredUrl(url: string): URL {
     throw new Error(`Not a valid URL: ${url}`)
   }
   if (parsed.protocol !== "https:") {
-    throw new Error(`URL must use https:// (got ${parsed.protocol})`)
+    // Always permit plain HTTP to loopback addresses (local dev / air-gapped CI mirrors
+    // running on the build machine itself).  For any other host, require opt-in.
+    const isLocalhost = parsed.protocol === "http:" && LOCALHOST_HOSTNAMES.has(parsed.hostname)
+    if (!isLocalhost && !httpOverride) {
+      throw new Error(`${url} must use https:// (got ${parsed.protocol}). For non-localhost HTTP mirrors, force set ELECTRON_BUILDER_DANGEROUSLY_ALLOW_HTTP=true`)
+    }
   }
   return parsed
 }

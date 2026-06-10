@@ -2,9 +2,9 @@ import { exec, ExtraSpawnOptions } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { ExecFileOptions, SpawnOptions } from "child_process"
 import * as path from "path"
-import { ToolsetConfig } from "../../configuration.js"
-import { getWineToolset } from "../../toolsets/wine.js"
-import { VmManager } from "../vm.js"
+import { ToolsetConfig } from "../configuration.js"
+import { getWineToolset } from "../toolsets/wine.js"
+import { VmManager } from "./vm.js"
 
 type WineOptions = {
   file: string
@@ -16,7 +16,7 @@ type WineOptions = {
 export class WineVmManager extends VmManager {
   constructor(
     private readonly wineToolset: ToolsetConfig["wine"],
-    private readonly buildResourcesDir: string = ""
+    private readonly buildResourcesDir: string
   ) {
     super()
   }

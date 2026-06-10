@@ -13,7 +13,7 @@ import { downloadBuilderToolset } from "../../util/electronGet.js"
 import { getTemplatePath } from "../../util/pathManager.js"
 import { withToolsetLock } from "../../util/toolsetLock.js"
 import { VmManager } from "../../vm/vm.js"
-import { WineVmManager } from "../../vm/win/WineVm.js"
+import { WineVmManager } from "../../vm/WineVm.js"
 import { WinPackager } from "../../winPackager.js"
 import { createStageDir, getWindowsInstallationDirName } from "../targetUtil.js"
 

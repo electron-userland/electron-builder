@@ -44,10 +44,6 @@ import { determinePackageManagerEnv, PM } from "./node-module-collector/index.js
 import _fsExtra from "fs-extra"
 const { chmod, mkdirs, outputFile } = _fsExtra
 
-async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
-  return createElectronFrameworkSupport(configuration, packager)
-}
-
 type PackagerEvents = {
   artifactBuildStarted: Hook<ArtifactBuildStarted, void>
 
@@ -383,7 +379,7 @@ export class Packager {
     this._appInfo = new AppInfo(this, null)
     await this.addPackagerEventHandlers()
 
-    this._framework = await createFrameworkInfo(this.config, this)
+    this._framework = await createElectronFrameworkSupport(this.config, this)
 
     const commonOutDirWithoutPossibleOsMacro = path.resolve(
       this.projectDir,

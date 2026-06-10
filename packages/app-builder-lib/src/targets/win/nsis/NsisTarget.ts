@@ -24,7 +24,7 @@ import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt } from "..
 import { hashFile } from "../../../util/hash.js"
 import { isMacOsCatalina } from "../../../util/mac/macosVersion.js"
 import { time } from "../../../util/timer.js"
-import { WineVmManager } from "../../../vm/win/WineVm.js"
+import { WineVmManager } from "../../../vm/WineVm.js"
 import { WinPackager } from "../../../winPackager.js"
 import { archive, ArchiveOptions } from "../../archive.js"
 import { appendBlockmap, configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../../differentialUpdateInfoBuilder.js"
