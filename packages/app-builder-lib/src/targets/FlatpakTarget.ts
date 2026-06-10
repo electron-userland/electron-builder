@@ -1,14 +1,16 @@
 import { bundle as bundleFlatpak, FlatpakBundlerBuildOptions, FlatpakManifest } from "@malept/flatpak-bundler"
 import { Arch, copyFile, toLinuxArchString } from "builder-util"
-import { chmod, outputFile } from "fs-extra"
+
 import * as path from "path"
-import { Target } from "../core"
-import { LinuxPackager } from "../linuxPackager"
-import { FlatpakOptions } from "../options/linuxOptions"
-import { getNotLocalizedLicenseFile } from "../util/license"
-import { LinuxTargetHelper } from "./LinuxTargetHelper"
-import { createStageDir, StageDir } from "./targetUtil"
+import { Target } from "../core.js"
+import { LinuxPackager } from "../linuxPackager.js"
+import { FlatpakOptions } from "../options/linuxOptions.js"
+import { getNotLocalizedLicenseFile } from "../util/license.js"
+import { LinuxTargetHelper } from "./LinuxTargetHelper.js"
+import { createStageDir, StageDir } from "./targetUtil.js"
 import { deepAssign, Nullish } from "builder-util-runtime"
+import _fsExtra from "fs-extra"
+const { chmod, outputFile } = _fsExtra
 
 export default class FlatpakTarget extends Target {
   readonly options: FlatpakOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, (this.packager.config as any)[this.name])

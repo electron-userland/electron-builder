@@ -1,6 +1,9 @@
+import { createRequire } from "node:module"
 import { DebugLogger, ExtraSpawnOptions, exec, log, spawn } from "builder-util"
+
+const require = createRequire(import.meta.url)
 import { ExecFileOptions, SpawnOptions, execFileSync } from "child_process"
-import { VmManager } from "./vm"
+import { VmManager } from "./vm.js"
 
 /** @internal */
 export async function parseVmList(debugLogger: DebugLogger) {

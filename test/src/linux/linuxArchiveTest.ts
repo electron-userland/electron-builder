@@ -1,5 +1,5 @@
 import { Arch, Platform } from "electron-builder"
-import { app, EXTENDED_TIMEOUT } from "../helpers/packTester"
+import { app, EXTENDED_TIMEOUT } from "../helpers/packTester.js"
 
 test.ifNotWindows("tar", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(expect, {

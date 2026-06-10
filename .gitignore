@@ -12,7 +12,7 @@ node-modules*
 /.idea/deployment.xml
 /.idea/shelf/
 
-tsconfig.tsbuildinfo
+*.tsbuildinfo
 
 out/
 

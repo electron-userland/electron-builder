@@ -1,13 +1,15 @@
+import { createRequire } from "node:module"
 import { InvalidConfigurationError, log, isEmptyOrSpaces, exists } from "builder-util"
-import { getBinFromUrl } from "app-builder-lib/out/binDownload"
-import { sanitizeFileName } from "builder-util/out/filename"
+
+const _requireResolve = createRequire(import.meta.url).resolve
+import { getBinFromUrl, withToolsetLock } from "app-builder-lib/internal"
+import { sanitizeFileName } from "builder-util/internal"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
-import { withToolsetLock } from "app-builder-lib/out/util/toolsetLock"
 import * as path from "path"
 import * as fs from "fs"
 import * as os from "os"
 import { Options as SquirrelOptions, createWindowsInstaller, convertVersion } from "electron-winstaller"
-import { WineVmManager } from "app-builder-lib/out/vm/WineVm"
+import { WineVmManager } from "app-builder-lib/internal"
 
 export default class SquirrelWindowsTarget extends Target {
   //tslint:disable-next-line:no-object-literal-type-assertion
@@ -33,7 +35,7 @@ export default class SquirrelWindowsTarget extends Target {
         log.warn({ customSquirrelVendorDirectory }, "unable to access custom Squirrel.Windows vendor directory, falling back to default vendor")
       }
 
-      const windowInstallerPackage = require.resolve("electron-winstaller/package.json")
+      const windowInstallerPackage = _requireResolve("electron-winstaller/package.json")
       const [squirrelBin] = await Promise.all([
         getBinFromUrl("squirrel.windows@1.0.0", "squirrel.windows-2.0.1-patched.7z", "76851f0c192eaf9bc6f8f3eecdfe325857ebe70d7833ec62ed846a1acd50c846"),
         fs.promises.cp(path.join(path.dirname(windowInstallerPackage), "vendor"), tmpVendorDirectory, { recursive: true }),
@@ -218,7 +220,7 @@ export default class SquirrelWindowsTarget extends Target {
   }
 
   private async createNuspecTemplateWithProjectUrl() {
-    const templatePath = path.resolve(__dirname, "..", "template.nuspectemplate")
+    const templatePath = path.resolve(import.meta.dirname, "..", "template.nuspectemplate")
     const projectUrl = await this.packager.appInfo.computePackageUrl()
     if (projectUrl != null) {
       const nuspecTemplate = await this.packager.info.tempDirManager.getTempFile({ prefix: "template", suffix: ".nuspectemplate" })

@@ -1,7 +1,7 @@
 import * as path from "path"
-import { isEmptyOrSpaces } from "./stringUtil"
-import { log } from "./log"
-import { exists } from "./fs"
+import { isEmptyOrSpaces } from "./stringUtil.js"
+import { log } from "./log.js"
+import { exists } from "./fs.js"
 import { stat } from "fs/promises"
 
 export function resolveEnvShellValue(envVarName: string): string | null {

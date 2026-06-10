@@ -1,6 +1,6 @@
 import { exec, exists, InvalidConfigurationError, resolveEnvToolsetPath, sanitizeDirPath } from "builder-util"
 import * as path from "path"
-import { downloadBuilderToolset } from "../util/electronGet"
+import { downloadBuilderToolset } from "../util/electronGet.js"
 
 const iconsToolsChecksums = {
   "icons-bundle.tar.gz": "2241c9501aa5ddd19317956449f50a1bc311df2c34058aae9bf8bfe62081eaec",

@@ -8,8 +8,8 @@ import {
   MirrorOptions,
 } from "@electron/get"
 import { buildGotProxyAgent, exec, exists, log, PADDING, parseValidEnvVarUrl, sanitizeDirPath, to7zaOutputSwitch } from "builder-util"
-import { getPath7za } from "../toolsets/7zip"
-import { MultiProgress } from "electron-publish/out/multiProgress"
+import { getPath7za } from "../toolsets/7zip.js"
+import { MultiProgress } from "electron-publish"
 import { createReadStream, createWriteStream } from "fs"
 import * as fs from "fs/promises"
 import * as crypto from "crypto"
@@ -20,8 +20,8 @@ import { pipeline } from "stream/promises"
 import * as tar from "tar"
 import * as unzipper from "unzipper"
 import { HttpError, retry } from "builder-util-runtime"
-import { ElectronPlatformName } from "../electron/ElectronFramework"
-import { CacheState, cleanupCacheDirectory, computeCacheMetadata, readCacheStateFile, validateCacheDirectory, writeCacheState } from "./cacheState"
+import { ElectronPlatformName } from "../electron/ElectronFramework.js"
+import { CacheState, cleanupCacheDirectory, computeCacheMetadata, readCacheStateFile, validateCacheDirectory, writeCacheState } from "./cacheState.js"
 import type { ProgressBar } from "electron-publish"
 
 export type ElectronGetOptions = Omit<
@@ -472,6 +472,71 @@ async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
+
+/**
+ * Copies a remote artifact to a specific output path on disk.
+ * Unlike downloadBuilderToolset, this does not extract archives — it copies the raw file.
+ * Used for certificate imports where the caller needs the file at a known path.
+ */
+export async function download(url: string, output: string, checksum?: string | null): Promise<void> {
+  const filenameWithExt = path.basename(new URL(url).pathname)
+  if (checksum == null) {
+    log.warn({ url }, "downloading without an integrity checksum — the download is not verified against a known-good hash")
+  }
+  const downloadedFile = await downloadArtifactToFile(
+    {
+      version: "9.9.9",
+      artifactName: filenameWithExt,
+      cacheRoot: path.resolve(getCacheDirectory({ allowEnvVarOverride: true }), "downloads"),
+      cacheMode: resolveCacheMode(),
+      ...(checksum != null ? { checksums: { [filenameWithExt]: checksum } } : { unsafelyDisableChecksums: true }),
+      mirrorOptions: { resolveAssetURL: async () => Promise.resolve(url) },
+      isGeneric: true,
+    },
+    filenameWithExt
+  )
+  await fs.copyFile(downloadedFile, output)
+}
+
+function validateBinaryCustomDir(envVarName: string, value: string): string {
+  if (value.includes("://") || value.includes("..") || value.startsWith("/")) {
+    throw new Error(
+      `${envVarName} must be a safe relative path component (e.g. "v1.0.0-custom"). ` + `Values containing "://", "..", or a leading "/" are not allowed. Got: "${value}"`
+    )
+  }
+  return value
+}
+
+const CUSTOM_DIR_ENV_VARS = [
+  "NPM_CONFIG_ELECTRON_BUILDER_BINARIES_CUSTOM_DIR",
+  "npm_config_electron_builder_binaries_custom_dir",
+  "npm_package_config_electron_builder_binaries_custom_dir",
+  "ELECTRON_BUILDER_BINARIES_CUSTOM_DIR",
+] as const
+
+/**
+ * Resolves the final download URL for a builder binary, honouring:
+ *   ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL  – fully replaces the URL directory
+ *   ELECTRON_BUILDER_BINARIES_CUSTOM_DIR (and npm_ variants) – replaces releaseName in the path
+ *   overrideUrl (caller-supplied)                     – used as-is when no env var is set
+ *
+ * Exported for unit testing; not part of the public API.
+ * @internal
+ */
+export function resolveBuilderBinaryUrl(releaseName: string, filenameWithExt: string, baseUrl: string, overrideUrl?: string): string {
+  const envOverrideUrl = parseValidEnvVarUrl("ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL")
+  if (envOverrideUrl != null) {
+    return `${envOverrideUrl}/${filenameWithExt}`
+  }
+  if (overrideUrl != null) {
+    return `${overrideUrl}/${filenameWithExt}`
+  }
+  const customDirEntry = CUSTOM_DIR_ENV_VARS.map(name => ({ name, value: process.env[name] })).find(e => e.value != null)
+  if (customDirEntry != null) {
+    return `${baseUrl}${validateBinaryCustomDir(customDirEntry.name, customDirEntry.value!)}/${filenameWithExt}`
+  }
+  return `${baseUrl}${releaseName}/${filenameWithExt}`
+}
 
 /**
  * Downloads a generic artifact (.tar.gz or .zip) from a GitHub release.

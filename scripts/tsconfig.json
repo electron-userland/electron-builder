@@ -3,9 +3,9 @@
   "compilerOptions": {
     "outDir": "out",
     "noUnusedLocals": false,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "declaration": false
   },
-  "declaration": false,
   "include": [
     "**/*.ts",
   ],

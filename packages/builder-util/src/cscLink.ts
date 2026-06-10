@@ -1,7 +1,7 @@
 import { readFile } from "fs/promises"
 import { homedir } from "os"
 import * as path from "path"
-import { statOrNull } from "./fs"
+import { statOrNull } from "./fs.js"
 
 /** Decodes a base64 CSC link to a Buffer, or returns null if the value is not base64. */
 export function decodeCscLinkBase64(link: string): Buffer | null {

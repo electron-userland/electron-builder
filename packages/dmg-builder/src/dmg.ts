@@ -1,15 +1,13 @@
-import { DmgOptions, Target } from "app-builder-lib"
-import { findIdentity, isSignAllowed } from "app-builder-lib/out/codeSign/macCodeSign"
-import { MacPackager } from "app-builder-lib/out/macPackager"
-import { createBlockmap } from "app-builder-lib/out/targets/differentialUpdateInfoBuilder"
+import { DmgOptions, MacPackager, Target } from "app-builder-lib"
+import { createBlockmap, findIdentity, isSignAllowed } from "app-builder-lib/internal"
 import { Arch, exec, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces } from "builder-util"
-import { sanitizeFileName } from "builder-util/out/filename"
+import { sanitizeFileName } from "builder-util/internal"
 import { release as getOsRelease } from "os"
 import * as path from "path"
-import type { DmgBuildLicenseConfig } from "./dmgLicense"
-import { addLicenseToDmg } from "./dmgLicense"
-import { computeBackground, customizeDmg } from "./dmgUtil"
-import { hdiUtil } from "./hdiuil"
+import type { DmgBuildLicenseConfig } from "./dmgLicense.js"
+import { addLicenseToDmg } from "./dmgLicense.js"
+import { computeBackground, customizeDmg } from "./dmgUtil.js"
+import { hdiUtil } from "./hdiuil.js"
 
 export interface DmgBuildConfig {
   title: string

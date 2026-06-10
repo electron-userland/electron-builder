@@ -1,7 +1,7 @@
-import { chmod } from "fs-extra"
+import { chmod } from "node:fs/promises"
 import * as path from "path"
 import { resolveEnvToolsetPath } from "builder-util"
-import { downloadBuilderToolset } from "../util/electronGet"
+import { downloadBuilderToolset } from "../util/electronGet.js"
 
 const checksums = {
   "7zip-linux-ia32.tar.gz": "24a5d5bfe81506d0bfe21a812588119ae3deb757e8ba084b2339d8e899543686",

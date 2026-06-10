@@ -1,6 +1,6 @@
 import { BitbucketOptions } from "builder-util-runtime"
-import { assertDownloadNotTriggered, getProvider, mockYaml } from "../helpers/providerTestUtil"
-import { createMockRequest, createNsisUpdater, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { assertDownloadNotTriggered, getProvider, mockYaml } from "../helpers/providerTestUtil.js"
+import { createMockRequest, createNsisUpdater, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 
 const MOCK_OWNER = "test-owner"
 const MOCK_SLUG = "test-repo"

@@ -5,7 +5,7 @@ import type { LoadContext, Plugin } from "@docusaurus/types"
 
 function generateCliDocs(siteDir: string): void {
   const root = join(siteDir, "..")
-  const help = execSync("node packages/electron-builder/out/cli/cli.js --help", {
+  const help = execSync("node packages/electron-builder/dist/cli/cli.js --help", {
     encoding: "utf-8",
     cwd: root,
   })

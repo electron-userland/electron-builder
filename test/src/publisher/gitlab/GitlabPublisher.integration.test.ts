@@ -2,8 +2,8 @@ import { Arch } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { GitlabPublisher, PublishContext } from "electron-publish"
 import { afterAll, beforeEach, describe, expect, test } from "vitest"
-import { GitlabTestFixtures } from "./GitlabTestFixtures"
-import { GitlabTestHelper } from "./GitlabTestHelper"
+import { GitlabTestFixtures } from "./GitlabTestFixtures.js"
+import { GitlabTestHelper } from "./GitlabTestHelper.js"
 
 /**
  * GitLab Publisher Integration Tests

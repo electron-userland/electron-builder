@@ -1,13 +1,13 @@
 import { Arch, defaultArchFromString } from "builder-util"
 import * as path from "path"
-import { Platform, Target, TargetSpecificOptions } from "../core"
-import { copyFiles, getFileMatchers } from "../fileMatcher"
-import { PlatformPackager } from "../platformPackager"
-import { archive, tar } from "./archive"
-import { appendBlockmap, createBlockmap } from "./differentialUpdateInfoBuilder"
+import { Platform, Target, TargetSpecificOptions } from "../core.js"
+import { copyFiles, getFileMatchers } from "../fileMatcher.js"
+import { PlatformPackager } from "../platformPackager.js"
+import { archive, tar } from "./archive.js"
+import { appendBlockmap, createBlockmap } from "./differentialUpdateInfoBuilder.js"
 
 export class ArchiveTarget extends Target {
-  readonly options: TargetSpecificOptions = (this.packager.config as any)[this.name]
+  readonly options: TargetSpecificOptions
 
   constructor(
     name: string,
@@ -16,6 +16,7 @@ export class ArchiveTarget extends Target {
     private readonly isWriteUpdateInfo = false
   ) {
     super(name)
+    this.options = (this.packager.config as any)[this.name]
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {

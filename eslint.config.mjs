@@ -18,6 +18,7 @@ export default [{
     ignores: [
       "**/*.d.ts",
       "**/out",
+      "**/dist",
       // used for CLI
       "**/main.js",
       "test/vitest-setup.ts",
@@ -25,6 +26,7 @@ export default [{
       "packages/electron-builder/cli.js",
       "packages/electron-builder/install-app-deps.js",
       "packages/app-builder-lib/src/node-module-collector/hoist.ts", // @yarn/pkg vendor code
+      "**/tsup.config.ts",
       "test/fixtures/**",
       "test/src/helpers/**",
       "test/src/generated/**",
@@ -59,7 +61,7 @@ export default [{
         "@typescript-eslint/prefer-promise-reject-errors": "off",
 
         "curly": ["error", "all"],
-        "nonblock-statement-body-position": ["error", "below"],
+        "nonblock-statement-body-position": "off",
 
         "@stylistic/member-delimiter-style": ["error", {
             multiline: {
@@ -92,6 +94,8 @@ export default [{
 }, {
     files: ["test/src/**/*.ts"],
     rules: {
+        // Test helpers often use async without await for framework compatibility
+        "@typescript-eslint/require-await": "off",
         // vitest spy/mock accessors (e.g. expect(log.error)) don't have real `this` binding issues
         "@typescript-eslint/unbound-method": "off",
     },

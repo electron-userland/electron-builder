@@ -1,7 +1,7 @@
 import { exists, InvalidConfigurationError, resolveEnvToolsetPath, sanitizeDirPath } from "builder-util"
 import * as path from "path"
-import { ToolsetConfig } from "../configuration"
-import { downloadBuilderToolset } from "../util/electronGet"
+import { ToolsetConfig } from "../configuration.js"
+import { downloadBuilderToolset } from "../util/electronGet.js"
 
 const wineToolsChecksums: Record<Exclude<ToolsetConfig["wine"], null | undefined>, Record<string, string>> = {
   "0.0.0": {

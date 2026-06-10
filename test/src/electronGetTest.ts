@@ -8,14 +8,14 @@ import * as tar from "tar"
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest"
 import {
   ArtifactDownloadOptions,
+  CacheState,
   ElectronDownloadOptions,
   ElectronGetOptions,
   downloadBuilderToolset,
   downloadElectronArtifact,
   getCacheDirectory,
   getBinariesMirrorUrl,
-} from "app-builder-lib/out/util/electronGet"
-import { CacheState } from "app-builder-lib/out/util/cacheState"
+} from "app-builder-lib/internal"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 
 // ─── Test helpers ─────────────────────────────────────────────────────────────
