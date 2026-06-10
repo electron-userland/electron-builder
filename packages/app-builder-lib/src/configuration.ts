@@ -656,7 +656,7 @@ export interface ToolsetConfig {
    * Available versions:
    * | Version | FPM version | Notes |
    * |---------|------------|-------|
-   * | `"2.1.4"` | 1.17.0 (Ruby 3.4.3) | Current default |
+   * | `"2.2.1"` | 1.17.0 (Ruby 3.4.3) | Current default |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=fpm
    *

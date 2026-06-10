@@ -5,11 +5,13 @@ import { isUseSystemFpm } from "../util/flags.js"
 import { getCustomToolsetPath } from "./custom.js"
 
 const fpmChecksums = {
-  "fpm-1.17.0-ruby-3.4.3-darwin-arm64.7z": "6cc6d4785875bc7d79bdf52ca146080a4c300e1d663376ae79615fb548030ede",
-  "fpm-1.17.0-ruby-3.4.3-darwin-x86_64.7z": "f7cb468c5e64177124c9d3a5f400ac20ffcb411aa5aa0ea224a808ff5a2d3bbf",
-  "fpm-1.17.0-ruby-3.4.3-linux-amd64.7z": "44b0ec6025c14ec137f56180e62675c0eae36233cdce53d0953d9c73ced8989f",
-  "fpm-1.17.0-ruby-3.4.3-linux-arm64v8.7z": "338b50cfa7f12d745a997d1a3d000bcd0410008050fa7d8c4476a78a61c0564e",
-  "fpm-1.17.0-ruby-3.4.3-linux-i386.7z": "181124e2e9856855c21229ea9096bb7006a9e3e712d133ce332597ba878cd7b6",
+  "2.2.1": {
+    "fpm-1.17.0-ruby-3.4.3-linux-amd64.7z": "2ef73acbcbfd26503369cb3a9b0345aa7fae251d69130537ee6ff47b402f828e",
+    "fpm-1.17.0-ruby-3.4.3-darwin-x86_64.7z": "50eff4214e3e30e2a8bbc35854f80acabb3260ea9e87f5835c60f898eedb320e",
+    "fpm-1.17.0-ruby-3.4.3-linux-arm64v8.7z": "553f047eacbc63423bae1eca5958bcdc720c1f6f4135cb815f5ec99f48d3bd55",
+    "fpm-1.17.0-ruby-3.4.3-darwin-arm64.7z": "e44b60765367cd11b0b9fa5f1966762137ee45ec02d49a3e9668475031e97873",
+    "fpm-1.17.0-ruby-3.4.3-linux-i386.7z": "f4091110728de8259dcab181761e74141b4b65d409a26e642c7271bd0b61eab4",
+  },
 } as const
 
 export async function getFpmPath(toolset: ToolsetConfig["fpm"], resourcesDir: string) {
@@ -40,11 +42,12 @@ export async function getFpmPath(toolset: ToolsetConfig["fpm"], resourcesDir: st
   }
 
   const filename = getKey()
+  const version = toolset ?? "2.2.1"
   const fpmPath = await downloadBuilderToolset({
-    releaseName: `fpm@${toolset ?? "2.2.1"}`,
+    releaseName: `fpm@${version}`,
     filenameWithExt: filename,
-    checksums: fpmChecksums,
+    checksums: fpmChecksums[version],
     githubOrgRepo: "electron-userland/electron-builder-binaries",
   })
-  return path.join(fpmPath, exec)
+  return path.resolve(fpmPath, exec)
 }
