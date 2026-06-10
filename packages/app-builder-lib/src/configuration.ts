@@ -656,13 +656,13 @@ export interface ToolsetConfig {
    * Available versions:
    * | Version | FPM version | Notes |
    * |---------|------------|-------|
-   * | `"1.0.0"` | 1.17.0 (Ruby 3.4.3) | Current default |
+   * | `"2.1.4"` | 1.17.0 (Ruby 3.4.3) | Current default |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=fpm
    *
-   * @default "1.0.0"
+   * @default "2.2.1"
    */
-  readonly fpm?: "1.0.0" | ToolsetCustom | null
+  readonly fpm?: "2.2.1" | ToolsetCustom | null
 
   /**
    * Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build

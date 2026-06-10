@@ -1,6 +1,8 @@
 import { Arch, asArray, exec, getArchSuffix, log, serializeToYaml, stripSensitiveEnvVars, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
 import { deepAssign, Nullish } from "builder-util-runtime"
 
+import { objectToArgs } from "builder-util-runtime"
+import _fsExtra from "fs-extra"
 import { mkdir, readFile } from "fs/promises"
 import * as path from "path"
 import { smarten } from "../../appInfo.js"
@@ -10,15 +12,13 @@ import { LinuxPackager } from "../../linuxPackager.js"
 import { DebOptions, LinuxTargetSpecificOptions } from "../../options/linuxOptions.js"
 import { ArtifactCreated } from "../../packagerApi.js"
 import { getAppUpdatePublishConfiguration } from "../../publish/PublishManager.js"
-import { objectToArgs } from "builder-util-runtime"
+import { getFpmPath, getLinuxToolsPath } from "../../toolsets/linux.js"
 import { computeEnv } from "../../util/bundledTool.js"
+import { isFpmDebug } from "../../util/flags.js"
 import { hashFile } from "../../util/hash.js"
 import { isMacOsSierra } from "../../util/mac/macosVersion.js"
 import { getTemplatePath } from "../../util/pathManager.js"
 import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper.js"
-import { getFpmPath, getLinuxToolsPath } from "../../toolsets/linux.js"
-import { isFpmDebug } from "../../util/flags.js"
-import _fsExtra from "fs-extra"
 const { copyFile, outputFile, stat } = _fsExtra
 
 interface FpmOptions {
