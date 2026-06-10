@@ -87,7 +87,20 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.info.config
   }
 
-  readonly platformSpecificBuildOptions: DC
+  protected readonly platformSpecificBuildOptions: DC
+
+  /** Platform-level build options (e.g. `config.mac`, `config.win`, `config.linux`). */
+  get platformOptions(): DC {
+    return this.platformSpecificBuildOptions
+  }
+
+  /**
+   * Merge platform-level options with target-specific config under `key`.
+   * Replaces the manual `deepAssign({}, packager.platformSpecificBuildOptions, config.X)` pattern.
+   */
+  getOptionsForTarget<T>(key: string): T {
+    return deepAssign({}, this.platformSpecificBuildOptions, (this.config as any)[key] ?? {}) as T
+  }
 
   get resourceList(): Promise<Array<string>> {
     return this._resourceList.value

@@ -70,7 +70,7 @@ async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
 
 async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOptions) {
   const { packager, appOutDir } = options
-  const { config, platformSpecificBuildOptions, platform } = packager
+  const { config, platform } = packager
 
   const getLocalesConfig = () => {
     if (platform === Platform.MAC) {
@@ -79,7 +79,7 @@ async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOption
     return { dirs: [path.join(packager.getResourcesDir(appOutDir), "..", "locales")], langFileExt: ".pak" }
   }
 
-  const wantedLanguages = asArray(platformSpecificBuildOptions.electronLanguages || config.electronLanguages)
+  const wantedLanguages = asArray(packager.platformOptions.electronLanguages || config.electronLanguages)
     .map(it => it.trim().toLowerCase())
     .filter(it => it.length > 0)
   if (!wantedLanguages.length) {

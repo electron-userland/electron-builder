@@ -109,7 +109,7 @@ export class LinuxTargetHelper {
     // duplicate them under core24/core18/etc. Per-core options always win for conflicts.
     // linux.compression is a CompressionLevel ("store"/"normal"/"maximum"); snap compression is an
     // algorithm ("xz"/"lzo"). Map the level to the nearest algorithm; per-core options override.
-    const { compression: linuxCompression, ...linuxOptions } = this.packager.platformSpecificBuildOptions
+    const { compression: linuxCompression, ...linuxOptions } = this.packager.platformOptions
     const snapLinuxOptions = { ...linuxOptions, compression: mapLinuxCompressionToSnap(linuxCompression) }
 
     if (snapcraft != null) {
@@ -181,9 +181,10 @@ export class LinuxTargetHelper {
   // must be name without spaces and other special characters, but not product name used
   private async computeDesktopIcons(): Promise<Array<IconInfo>> {
     const packager = this.packager
-    const { platformSpecificBuildOptions, config } = packager
+    const { config } = packager
+    const platformOptions = packager.platformOptions
 
-    const sources = [platformSpecificBuildOptions.icon, config.mac?.icon ?? config.icon].filter(str => !!str) as string[]
+    const sources = [platformOptions.icon, config.mac?.icon ?? config.icon].filter(str => !!str) as string[]
 
     // If no explicit sources are defined, fallback to buildResources directory, then default framework icon
     let fallbackSources = [...asArray(packager.getDefaultFrameworkIcon())]
@@ -227,7 +228,7 @@ export class LinuxTargetHelper {
   }
 
   getDesktopFileName(fallback: string = this.packager.executableName): string {
-    if (!this.packager.platformSpecificBuildOptions.syncDesktopName) {
+    if (!this.packager.platformOptions.syncDesktopName) {
       return fallback
     }
     const trimmedDesktopName = this.packager.metadata.desktopName?.trim()
@@ -324,7 +325,7 @@ export class LinuxTargetHelper {
       }
     }
 
-    for (const protocol of asArray(packager.config.protocols).concat(asArray(packager.platformSpecificBuildOptions.protocols))) {
+    for (const protocol of asArray(packager.config.protocols).concat(asArray(packager.platformOptions.protocols))) {
       for (const scheme of asArray(protocol.schemes)) {
         mimeTypes.push(`x-scheme-handler/${scheme}`)
       }

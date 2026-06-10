@@ -64,14 +64,14 @@ interface CertInfo {
 }
 
 export class WindowsSignToolManager implements SignManager {
-  private readonly platformSpecificBuildOptions: WindowsConfiguration
+  private readonly platformOptions: WindowsConfiguration
 
   constructor(private readonly packager: WinPackager) {
-    this.platformSpecificBuildOptions = packager.platformSpecificBuildOptions
+    this.platformOptions = packager.platformOptions
   }
 
   readonly computedPublisherName = new Lazy<Array<string> | null>(async () => {
-    const publisherName = this.platformSpecificBuildOptions.signtoolOptions?.publisherName
+    const publisherName = this.platformOptions.signtoolOptions?.publisherName
     if (publisherName === null) {
       return null
     } else if (publisherName != null) {
@@ -107,7 +107,7 @@ export class WindowsSignToolManager implements SignManager {
   )
 
   readonly cscInfo = new MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>(
-    () => this.platformSpecificBuildOptions,
+    () => this.platformOptions,
     platformSpecificBuildOptions => {
       const subjectName = platformSpecificBuildOptions.signtoolOptions?.certificateSubjectName
       const shaType = platformSpecificBuildOptions.signtoolOptions?.certificateSha1

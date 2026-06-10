@@ -13,7 +13,7 @@ import { WineVmManager } from "app-builder-lib/internal"
 
 export default class SquirrelWindowsTarget extends Target {
   //tslint:disable-next-line:no-object-literal-type-assertion
-  readonly options: SquirrelWindowsOptions = { ...this.packager.platformSpecificBuildOptions, ...this.packager.config.squirrelWindows } as SquirrelWindowsOptions
+  readonly options: SquirrelWindowsOptions = this.packager.getOptionsForTarget<SquirrelWindowsOptions>("squirrelWindows")
 
   isAsyncSupported = false
 
