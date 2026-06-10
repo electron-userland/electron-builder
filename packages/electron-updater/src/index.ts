@@ -21,6 +21,7 @@ export { PrivateGitHubProvider } from "./providers/PrivateGitHubProvider.js"
 export { ProviderRuntimeOptions } from "./providers/Provider.js"
 export { RpmUpdater } from "./RpmUpdater.js"
 export { AppUpdater }
+export { NoOpLogger } from "./AppUpdater.js"
 
 export { Provider } from "./providers/Provider.js"
 
