@@ -1,5 +1,5 @@
 ---
-"app-builder-lib": patch
+"app-builder-lib": major
 "electron-builder-squirrel-windows": patch
 ---
 

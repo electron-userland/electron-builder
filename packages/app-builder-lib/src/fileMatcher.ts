@@ -131,12 +131,11 @@ export function getMainFileMatchers(
   platformPackager: PlatformPackager<any>,
   outDir: string
 ): Array<FileMatcher> {
-  const packager = platformPackager.info
-  const buildResourceDir = path.resolve(packager.projectDir, packager.buildResourcesDir)
+  const buildResourceDir = path.resolve(platformPackager.projectDir, platformPackager.buildResourcesDir)
 
-  let matchers = packager.isPrepackedAppAsar
+  let matchers = platformPackager.isPrepackedAppAsar
     ? null
-    : getFileMatchers(packager.config, "files", destination, {
+    : getFileMatchers(platformPackager.config, "files", destination, {
         macroExpander,
         customBuildOptions: platformSpecificBuildOptions,
         globalOutDir: outDir,
@@ -183,7 +182,7 @@ export function getMainFileMatchers(
     customFirstPatterns.push(`!${relativeBuildResourceDir}{,/**/*}`)
   }
 
-  const relativeOutDir = matcher.normalizePattern(path.relative(packager.projectDir, outDir))
+  const relativeOutDir = matcher.normalizePattern(path.relative(platformPackager.projectDir, outDir))
   if (!relativeOutDir.startsWith(".")) {
     customFirstPatterns.push(`!${relativeOutDir}{,/**/*}`)
   }
@@ -198,7 +197,7 @@ export function getMainFileMatchers(
   }
   patterns.splice(insertIndex, 0, ...customFirstPatterns)
 
-  patterns.push(`!**/*.{${excludedExts}${packager.config.includePdb === true ? "" : ",pdb"}}`)
+  patterns.push(`!**/*.{${excludedExts}${platformPackager.config.includePdb === true ? "" : ",pdb"}}`)
   patterns.push("!**/._*")
   patterns.push("!**/electron-builder.{yaml,yml,json,json5,toml,ts}")
   patterns.push(`!**/{${excludedNames}}`)
@@ -210,7 +209,7 @@ export function getMainFileMatchers(
   patterns.push("!.editorconfig")
   patterns.push("!.yarnrc.yml")
 
-  const debugLogger = packager.debugLogger
+  const debugLogger = platformPackager.debugLogger
   if (debugLogger.isEnabled) {
     //tslint:disable-next-line:no-invalid-template-strings
     debugLogger.add(`${macroExpander("${arch}")}.firstOrDefaultFilePatterns`, patterns)

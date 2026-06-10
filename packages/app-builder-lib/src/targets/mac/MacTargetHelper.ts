@@ -174,7 +174,7 @@ export class MacTargetHelper {
     MacTargetHelper.assertSafePathForCommandUsage(artifactName, "artifact name")
     const artifactPath = path.resolve(outDir, artifactName)
     await this.packager.doFlat(appPath, artifactPath, masInstallerIdentity, keychainFile)
-    await this.packager.info.emitArtifactBuildCompleted({
+    await this.packager.emitArtifactBuildCompleted({
       file: artifactPath,
       target: null,
       arch: Arch.x64,
@@ -194,7 +194,7 @@ export class MacTargetHelper {
         }
         const p = `entitlements.${entitlementsSuffix}.plist`
         if (resourceList.includes(p)) {
-          return path.join(this.packager.info.buildResourcesDir, p)
+          return path.join(this.packager.buildResourcesDir, p)
         } else {
           return getTemplatePath("entitlements.mac.plist")
         }
@@ -209,7 +209,7 @@ export class MacTargetHelper {
       }
       const p = `entitlements.${entitlementsSuffix}.inherit.plist`
       if (resourceList.includes(p)) {
-        return path.join(this.packager.info.buildResourcesDir, p)
+        return path.join(this.packager.buildResourcesDir, p)
       } else {
         return getTemplatePath("entitlements.mac.plist")
       }

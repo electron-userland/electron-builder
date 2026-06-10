@@ -16,13 +16,16 @@ import {
   sanitizeDirPath,
   statOrNull,
 } from "builder-util"
-import { deepAssign, Nullish } from "builder-util-runtime"
+import { CancellationToken, deepAssign, Nullish } from "builder-util-runtime"
 import { readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import { Minimatch } from "minimatch"
 import * as path from "path"
 import * as fs from "fs/promises"
 import * as os from "os"
+import type { TmpDir } from "temp-file"
+import type { Metadata } from "./options/metadata.js"
+import type { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi.js"
 import { AppInfo } from "./appInfo.js"
 import { checkFileInArchive } from "./asar/asarFileChecker.js"
 import { AsarPackager } from "./asar/asarUtil.js"
@@ -31,7 +34,7 @@ import { FuseOptionsV1 } from "./configuration.js"
 import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers, getNodeModuleFileMatcher } from "./fileMatcher.js"
 import { createTransformer } from "./fileTransformer.js"
 import { Framework, isElectronBased } from "./Framework.js"
-import { Platform } from "./core.js"
+import { Platform, SourceRepositoryInfo } from "./core.js"
 // Type-only barrel import: keeping these erased avoids a runtime cycle
 // (index.ts → linuxPackager.ts → platformPackager.ts) that breaks ESM class init.
 import type {
@@ -95,6 +98,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   readonly appInfo: AppInfo
 
   protected constructor(
+    /** @deprecated Access specific properties via the getters on PlatformPackager instead. Will become protected in a future major release. */
     readonly info: Packager,
     readonly platform: Platform
   ) {
@@ -113,6 +117,78 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   get debugLogger(): DebugLogger {
     return this.info.debugLogger
+  }
+
+  get tempDirManager(): TmpDir {
+    return this.info.tempDirManager
+  }
+
+  get metadata(): Metadata {
+    return this.info.metadata
+  }
+
+  get framework(): Framework {
+    return this.info.framework
+  }
+
+  get cancellationToken(): CancellationToken {
+    return this.info.cancellationToken
+  }
+
+  get repositoryInfo(): Promise<SourceRepositoryInfo | null> {
+    return this.info.repositoryInfo
+  }
+
+  get relativeBuildResourcesDirname(): string {
+    return this.info.relativeBuildResourcesDirname
+  }
+
+  get stageDirPathCustomizer(): (target: Target, packager: PlatformPackager<any>, arch: Arch) => string {
+    return this.info.stageDirPathCustomizer
+  }
+
+  get areNodeModulesHandledExternally(): boolean {
+    return this.info.areNodeModulesHandledExternally
+  }
+
+  get isPrepackedAppAsar(): boolean {
+    return this.info.isPrepackedAppAsar
+  }
+
+  get appDir(): string {
+    return this.info.appDir
+  }
+
+  getWorkspaceRoot(): Promise<string> {
+    return this.info.getWorkspaceRoot()
+  }
+
+  get nodePackageName(): string {
+    return this.info.nodePackageName
+  }
+
+  getPackageManager(): Promise<import("./node-module-collector/index.js").PM> {
+    return this.info.getPackageManager()
+  }
+
+  emitArtifactBuildStarted(event: ArtifactBuildStarted, logFields?: any): Promise<void> {
+    return this.info.emitArtifactBuildStarted(event, logFields)
+  }
+
+  emitArtifactBuildCompleted(event: ArtifactCreated): Promise<void> {
+    return this.info.emitArtifactBuildCompleted(event)
+  }
+
+  emitArtifactCreated(event: ArtifactCreated): Promise<void> {
+    return this.info.emitArtifactCreated(event)
+  }
+
+  emitMsiProjectCreated(path: string): Promise<void> {
+    return this.info.emitMsiProjectCreated(path)
+  }
+
+  emitAppxManifestCreated(path: string): Promise<void> {
+    return this.info.emitAppxManifestCreated(path)
   }
 
   abstract get defaultTarget(): Array<string>
@@ -852,7 +928,15 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const filteredSources = sources.filter(s => !s.endsWith(".icon"))
     const filteredFallbacks = fallbackSources.filter(s => !s.endsWith(".icon"))
 
-    const result = await convertIcon({ sources: filteredSources, fallbackSources: filteredFallbacks, roots, format: outputFormat, outDir })
+    const result = await convertIcon({
+      sources: filteredSources,
+      fallbackSources: filteredFallbacks,
+      roots,
+      format: outputFormat,
+      outDir,
+      iconsToolset: this.info.config.toolsets?.icons,
+      resourcesDir: this.buildResourcesDir,
+    })
 
     if (result.error != null) {
       throw new InvalidConfigurationError(result.error, result.errorCode)

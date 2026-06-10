@@ -102,10 +102,7 @@ export class LinuxTargetHelper {
   }
 
   getSnapCore(): SnapCore<any> {
-    const { snapcraft, snap: legacySnap } = this.packager.config
-    if (snapcraft != null && legacySnap != null) {
-      log.warn("Both `snapcraft` and `snap` configurations are present. `snapcraft` takes precedence; please remove the `snap` key to silence this warning.")
-    }
+    const { snapcraft } = this.packager.config
 
     // Merge linux-level options (category, description, mimeTypes, etc.) as the base so they
     // propagate into the generated snapcraft.yaml and .desktop file without requiring users to
@@ -143,16 +140,7 @@ export class LinuxTargetHelper {
       }
     }
 
-    if (legacySnap != null) {
-      log.warn(
-        {
-          reason: "`snap` configuration is deprecated",
-          docs: "https://www.electron.build/snapcraft",
-        },
-        "please consider migrating `snap` configuration to `snapcraft.<core>` and remove `snap` configuration"
-      )
-    }
-    return new SnapCoreLegacy(this.packager, this, deepAssign({}, snapLinuxOptions, legacySnap ?? {}))
+    return new SnapCoreLegacy(this.packager, this, deepAssign({}, snapLinuxOptions, {}))
   }
 
   isElectronVersionGreaterOrEqualThan(version: string, fallback?: string): boolean {
@@ -242,7 +230,7 @@ export class LinuxTargetHelper {
     if (!this.packager.platformSpecificBuildOptions.syncDesktopName) {
       return fallback
     }
-    const trimmedDesktopName = this.packager.info.metadata.desktopName?.trim()
+    const trimmedDesktopName = this.packager.metadata.desktopName?.trim()
     if (isEmptyOrSpaces(trimmedDesktopName)) {
       return fallback
     }
@@ -289,7 +277,7 @@ export class LinuxTargetHelper {
     // https://github.com/electron-userland/electron-builder/issues/9103
     // Electron derives app_id from desktopName in package.json; StartupWMClass must match.
     // https://github.com/electron/electron/blob/9a7b73b5334f1d72c08e2d5e94106706ed751186/lib/browser/init.ts#L128-L133
-    const trimmedDesktopName = packager.info.metadata.desktopName?.trim()
+    const trimmedDesktopName = packager.metadata.desktopName?.trim()
     if (isEmptyOrSpaces(trimmedDesktopName)) {
       log.warn(
         {

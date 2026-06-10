@@ -1,5 +1,5 @@
 import { readAsarJson } from "app-builder-lib/internal"
-import { getWineToolset } from "app-builder-lib/src/toolsets/win/wine"
+import { getWineToolset } from "app-builder-lib/src/toolsets/wine"
 import type { ToolsetConfig } from "app-builder-lib/internal"
 import { walk } from "builder-util"
 import { Arch, Platform } from "electron-builder"
@@ -49,7 +49,7 @@ export async function doTest(
     return Promise.resolve()
   }
 
-  const { execPath: winePath, env: wineEnv } = await getWineToolset(toolsets.wine)
+  const { execPath: winePath, env: wineEnv } = await getWineToolset(toolsets.wine, "")
   const wine = new WineManager(winePath, wineEnv)
   await wine.prepare()
   const driveC = path.join(wine.wineDir!, "drive_c")

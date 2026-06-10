@@ -58,7 +58,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       }
 
       const selected = {
-        tmpDir: this.info.tempDirManager,
+        tmpDir: this.tempDirManager,
         cscLink,
         cscKeyPassword: this.getCscPassword(),
         cscILink: chooseNotNull(this.platformSpecificBuildOptions.cscInstallerLink, process.env.CSC_INSTALLER_LINK),

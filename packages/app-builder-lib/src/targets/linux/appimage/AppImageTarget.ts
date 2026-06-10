@@ -51,7 +51,7 @@ export default class AppImageTarget extends Target {
     const artifactName = packager.expandArtifactNamePattern(options, "AppImage", arch)
     const artifactPath = path.join(this.outDir, artifactName)
 
-    await packager.info.emitArtifactBuildStarted({
+    await packager.emitArtifactBuildStarted({
       targetPresentableName: "AppImage",
       file: artifactPath,
       arch,
@@ -84,63 +84,70 @@ export default class AppImageTarget extends Target {
     let updateInfo: BlockMapDataHolder
     try {
       const appimageTool = this.packager.config.toolsets?.appimage
-      if (appimageTool == null || appimageTool === "0.0.0") {
-        updateInfo = await buildLegacyFuse2AppImage({
-          appDir: appOutDir,
-          stageDir: stageDir.dir,
-          arch,
-          output: artifactPath,
-          options: {
-            productName: packager.appInfo.productName,
-            productFilename: packager.appInfo.productFilename,
-            executableName: packager.executableName,
-            license,
-            desktopEntry,
-            icons,
-            fileAssociations: packager.fileAssociations,
-            desktopBaseName,
-            compression: (() => {
-              const c = options.compression
-              if (c === "xz" || c === "gzip") {
-                return c
-              }
-              if (packager.compression === "maximum") {
-                return "xz"
-              }
-              return undefined // normal/store/unset/zstd → mksquashfs defaults to gzip
-            })(),
+      if (appimageTool === "0.0.0") {
+        updateInfo = await buildLegacyFuse2AppImage(
+          {
+            appDir: appOutDir,
+            stageDir: stageDir.dir,
+            arch,
+            output: artifactPath,
+            options: {
+              productName: packager.appInfo.productName,
+              productFilename: packager.appInfo.productFilename,
+              executableName: packager.executableName,
+              license,
+              desktopEntry,
+              icons,
+              fileAssociations: packager.fileAssociations,
+              desktopBaseName,
+              compression: (() => {
+                const c = options.compression
+                if (c === "xz" || c === "gzip") {
+                  return c
+                }
+                if (packager.compression === "maximum") {
+                  return "xz"
+                }
+                return undefined // normal/store/unset/zstd → mksquashfs defaults to gzip
+              })(),
+            },
           },
-        })
+          packager.buildResourcesDir
+        )
       } else {
-        updateInfo = await buildStaticRuntimeAppImage(appimageTool, {
-          appDir: appOutDir,
-          stageDir: stageDir.dir,
-          arch,
-          output: artifactPath,
-          options: {
-            productName: packager.appInfo.productName,
-            productFilename: packager.appInfo.productFilename,
-            executableName: packager.executableName,
-            license,
-            desktopEntry,
-            icons,
-            fileAssociations: packager.fileAssociations,
-            desktopBaseName,
-            compression: (() => {
-              const c = options.compression
-              if (c === "gzip" || c === "zstd") {
-                return c
-              }
-              if (c === "xz") {
-                return "zstd" // nearest equivalent; static runtime does not support xz
-              }
-              if (packager.compression === "store") {
-                return "gzip"
-              }
-              return "zstd" // maximum/normal/unset → zstd for static runtime
-            })(),
+        updateInfo = await buildStaticRuntimeAppImage(
+          appimageTool,
+          {
+            appDir: appOutDir,
+            stageDir: stageDir.dir,
+            arch,
+            output: artifactPath,
+            options: {
+              productName: packager.appInfo.productName,
+              productFilename: packager.appInfo.productFilename,
+              executableName: packager.executableName,
+              license,
+              desktopEntry,
+              icons,
+              fileAssociations: packager.fileAssociations,
+              desktopBaseName,
+              compression: (() => {
+                const c = options.compression
+                if (c === "gzip" || c === "zstd") {
+                  return c
+                }
+                if (c === "xz") {
+                  return "zstd" // nearest equivalent; static runtime does not support xz
+                }
+                if (packager.compression === "store") {
+                  return "gzip"
+                }
+                return "zstd" // maximum/normal/unset → zstd for static runtime
+              })(),
+            },
           },
-        })
+          packager.buildResourcesDir
+        )
       }
     } catch (error: any) {
       log.error({ error: error.message }, "failed to build AppImage")
@@ -149,7 +156,7 @@ export default class AppImageTarget extends Target {
       await stageDir.cleanup().catch(() => {})
     }
 
-    await packager.info.emitArtifactBuildCompleted({
+    await packager.emitArtifactBuildCompleted({
       file: artifactPath,
       safeArtifactName: packager.computeSafeArtifactName(artifactName, "AppImage", arch, false),
       target: this,

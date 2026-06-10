@@ -43,24 +43,8 @@ import asyncPool from "tiny-async-pool"
 import { determinePackageManagerEnv, PM } from "./node-module-collector/index.js"
 import _fsExtra from "fs-extra"
 const { chmod, mkdirs, outputFile } = _fsExtra
-
-async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
-  let framework = configuration.framework
-  if (framework != null) {
-    framework = framework.toLowerCase()
-  }
-
-  let nodeVersion = configuration.nodeVersion
-  if (framework === "electron" || framework == null) {
-    return await createElectronFrameworkSupport(configuration, packager)
-  }
-
-  if (nodeVersion == null || nodeVersion === "current") {
-    nodeVersion = process.versions.node
-  }
-
-  throw new InvalidConfigurationError(`Unknown framework: ${framework}`)
-}
+import { setSevenZipPath } from "./toolsets/7zip.js"
+import { getCustomToolsetPath } from "./toolsets/custom.js"
 
 type PackagerEvents = {
   artifactBuildStarted: Hook<ArtifactBuildStarted, void>
@@ -397,7 +381,7 @@ export class Packager {
     this._appInfo = new AppInfo(this, null)
     await this.addPackagerEventHandlers()
 
-    this._framework = await createFrameworkInfo(this.config, this)
+    this._framework = await createElectronFrameworkSupport(this.config, this)
 
     const commonOutDirWithoutPossibleOsMacro = path.resolve(
       this.projectDir,
@@ -478,6 +462,16 @@ export class Packager {
   }
 
   private async doBuild(): Promise<Map<Platform, Map<string, Target>>> {
+    const sevenZipConfig = this.config.toolsets?.sevenZip
+    if (typeof sevenZipConfig === "object" && sevenZipConfig != null) {
+      const toolDir = await getCustomToolsetPath(sevenZipConfig, this.buildResourcesDir)
+      const bin = path.join(toolDir, "bin", process.platform === "win32" ? "7za.exe" : "7za")
+      if (process.platform !== "win32") {
+        await chmod(bin, 0o755)
+      }
+      setSevenZipPath(bin)
+    }
+
     const taskManager = new AsyncTaskManager(this.cancellationToken)
     const syncTargetsIfAny = [] as Target[]
 

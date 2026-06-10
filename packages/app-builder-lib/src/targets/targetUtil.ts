@@ -30,7 +30,7 @@ export async function createStageDir(target: Target, packager: PlatformPackager<
 }
 
 export async function createStageDirPath(target: Target, packager: PlatformPackager<any>, arch: Arch): Promise<string> {
-  const tempDir = packager.info.stageDirPathCustomizer(target, packager, arch)
+  const tempDir = packager.stageDirPathCustomizer(target, packager, arch)
   await fs.rm(tempDir, { recursive: true, force: true })
   await fs.mkdir(tempDir, { recursive: true })
   return tempDir

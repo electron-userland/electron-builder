@@ -6,7 +6,7 @@ import * as path from "path"
 import { Target } from "../../core.js"
 import { WindowsConfiguration } from "../../options/winOptions.js"
 import AppXTarget from "../../targets/win/AppxTarget.js"
-import { getSignToolPath } from "../../toolsets/windows.js"
+import { getSignToolPath } from "../../toolsets/winCodeSign.js"
 import { ToolInfo } from "../../util/bundledTool.js"
 import { isOfflineModeEnabled } from "../../util/flags.js"
 import { resolveFunction } from "../../util/resolve.js"
@@ -139,7 +139,7 @@ export class WindowsSignToolManager implements SignManager {
       }
 
       return (
-        importCertificate(cscLink, this.packager.info.tempDirManager, this.packager.projectDir)
+        importCertificate(cscLink, this.packager.tempDirManager, this.packager.projectDir)
           // before then
           .catch((e: any) => {
             if (e instanceof InvalidConfigurationError) {
@@ -193,7 +193,7 @@ export class WindowsSignToolManager implements SignManager {
     const name = this.packager.appInfo.productName
     const site = await this.packager.appInfo.computePackageUrl()
 
-    const customSign = await resolveFunction(this.packager.appInfo.type, options.options.signtoolOptions?.sign, "sign", await this.packager.info.getWorkspaceRoot())
+    const customSign = await resolveFunction(this.packager.appInfo.type, options.options.signtoolOptions?.sign, "sign", await this.packager.getWorkspaceRoot())
 
     const cscInfo = await this.cscInfo.value
     if (cscInfo) {
@@ -275,7 +275,7 @@ export class WindowsSignToolManager implements SignManager {
     this.addCertificateArgs(args, options, vm, true)
 
     // Hash algorithm
-    const isLegacyToolset = this.packager.config.toolsets?.winCodeSign === "0.0.0" || this.packager.config.toolsets?.winCodeSign == null
+    const isLegacyToolset = this.packager.config.toolsets?.winCodeSign === "0.0.0"
     if (isLegacyToolset) {
       // Legacy || v0.0.0: Only add /fd for non-SHA1 (original behavior)
       if (options.hash !== "sha1") {
@@ -430,7 +430,7 @@ export class WindowsSignToolManager implements SignManager {
   }
 
   async getToolPath(isWin = process.platform === "win32"): Promise<ToolInfo> {
-    return getSignToolPath(this.packager.config.toolsets?.winCodeSign, isWin)
+    return getSignToolPath(this.packager.config.toolsets?.winCodeSign, isWin, this.packager.buildResourcesDir)
   }
 
   async doSign(configuration: CustomWindowsSignTaskConfiguration, packager: WinPackager) {
@@ -441,7 +441,7 @@ export class WindowsSignToolManager implements SignManager {
     let vm: VmManager
     const useVmIfNotOnWin = configuration.path.endsWith(".appx") || !("file" in configuration.cscInfo!) /* certificateSubjectName and other such options */
     const isWin = process.platform === "win32" || useVmIfNotOnWin
-    const toolInfo = await getSignToolPath(this.packager.config.toolsets?.winCodeSign, isWin)
+    const toolInfo = await getSignToolPath(this.packager.config.toolsets?.winCodeSign, isWin, this.packager.buildResourcesDir)
     const tool = toolInfo.path
     if (useVmIfNotOnWin) {
       vm = await packager.vm.value

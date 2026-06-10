@@ -37,11 +37,11 @@ export default class SnapTarget extends Target {
     super(name)
 
     const {
-      config: { snapcraft, snap },
+      config: { snapcraft },
       platformSpecificBuildOptions,
     } = packager
 
-    this.options = deepAssign({}, platformSpecificBuildOptions, snapcraft ?? snap ?? {})
+    this.options = deepAssign({}, platformSpecificBuildOptions, snapcraft ?? {})
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
@@ -50,7 +50,7 @@ export default class SnapTarget extends Target {
     const artifactName = packager.expandArtifactNamePattern(this.options, "snap", arch, "${name}_${version}_${arch}.${ext}", false)
     const artifactPath = path.join(this.outDir, artifactName)
 
-    await packager.info.emitArtifactBuildStarted({
+    await packager.emitArtifactBuildStarted({
       targetPresentableName: "snap",
       file: artifactPath,
       arch,
@@ -71,7 +71,7 @@ export default class SnapTarget extends Target {
 
     const publishConfig = this.findSnapPublishConfig(packager.config)
 
-    await packager.info.emitArtifactBuildCompleted({
+    await packager.emitArtifactBuildCompleted({
       file: artifactPath,
       safeArtifactName: packager.computeSafeArtifactName(artifactName, "snap", arch, false),
       target: this,
@@ -88,7 +88,7 @@ export default class SnapTarget extends Target {
       return fallback
     }
 
-    const snapConfig = config.snapcraft ?? config.snap
+    const snapConfig = config.snapcraft
     if (snapConfig?.publish) {
       return this.findSnapPublishConfigInPublishNode(snapConfig.publish)
     }

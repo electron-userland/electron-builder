@@ -3,7 +3,7 @@ import { PackageFileInfo } from "builder-util-runtime"
 import * as fs from "fs/promises"
 import * as path from "path"
 import * as zlib from "zlib"
-import { getNsisElevatePath } from "../../../toolsets/windows.js"
+import { getNsisElevatePath } from "../../../toolsets/nsis.js"
 import { getTemplatePath } from "../../../util/pathManager.js"
 import { NsisTarget } from "./NsisTarget.js"
 
@@ -67,7 +67,7 @@ export class CopyElevateHelper {
   private readonly copied = new Map<string, Promise<any>>()
 
   copy(appOutDir: string, target: NsisTarget): Promise<any> {
-    if (!target.packager.info.framework.isCopyElevateHelper) {
+    if (!target.packager.framework.isCopyElevateHelper) {
       return Promise.resolve()
     }
 
@@ -86,7 +86,7 @@ export class CopyElevateHelper {
       return promise
     }
 
-    promise = getNsisElevatePath(target.packager.config.toolsets?.nsis, target.options.customNsisBinary).then(elevatePath => {
+    promise = getNsisElevatePath(target.packager.config.toolsets?.nsis, target.packager.buildResourcesDir).then(elevatePath => {
       const outFile = path.join(appOutDir, "resources", "elevate.exe")
       const promise = copyFile(elevatePath, outFile, false)
       const { signAndEditExecutable, signExecutable } = target.packager.platformSpecificBuildOptions

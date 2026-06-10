@@ -231,7 +231,7 @@ export class AsarPackager {
     }
 
     // verify that the file is not a direct link or symlinked to access/copy a system file
-    await this.protectSystemAndUnsafePaths(file, await this.packager.info.getWorkspaceRoot())
+    await this.protectSystemAndUnsafePaths(file, await this.packager.getWorkspaceRoot())
 
     const baseConfig = {
       path: destination,
