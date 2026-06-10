@@ -207,63 +207,6 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0
     devDependencies:
-      '@babel/core':
-        specifier: 7.24.9
-        version: 7.24.9
-      '@babel/plugin-proposal-class-properties':
-        specifier: 7.18.6
-        version: 7.18.6(@babel/core@7.24.9)
-      '@babel/plugin-proposal-decorators':
-        specifier: 7.24.7
-        version: 7.24.7(@babel/core@7.24.9)
-      '@babel/plugin-proposal-do-expressions':
-        specifier: 7.24.7
-        version: 7.24.7(@babel/core@7.24.9)
-      '@babel/plugin-proposal-export-default-from':
-        specifier: 7.24.7
-        version: 7.24.7(@babel/core@7.24.9)
-      '@babel/plugin-proposal-export-namespace-from':
-        specifier: 7.18.9
-        version: 7.18.9(@babel/core@7.24.9)
-      '@babel/plugin-proposal-function-bind':
-        specifier: 7.24.7
-        version: 7.24.7(@babel/core@7.24.9)
-      '@babel/plugin-proposal-function-sent':
-        specifier: 7.24.7
-        version: 7.24.7(@babel/core@7.24.9)
-      '@babel/plugin-proposal-json-strings':
-        specifier: 7.18.6
-        version: 7.18.6(@babel/core@7.24.9)
-      '@babel/plugin-proposal-logical-assignment-operators':
-        specifier: 7.20.7
-        version: 7.20.7(@babel/core@7.24.9)
-      '@babel/plugin-proposal-nullish-coalescing-operator':
-        specifier: 7.18.6
-        version: 7.18.6(@babel/core@7.24.9)
-      '@babel/plugin-proposal-numeric-separator':
-        specifier: 7.18.6
-        version: 7.18.6(@babel/core@7.24.9)
-      '@babel/plugin-proposal-optional-chaining':
-        specifier: 7.21.0
-        version: 7.21.0(@babel/core@7.24.9)
-      '@babel/plugin-proposal-pipeline-operator':
-        specifier: 7.24.7
-        version: 7.24.7(@babel/core@7.24.9)
-      '@babel/plugin-proposal-throw-expressions':
-        specifier: 7.24.7
-        version: 7.24.7(@babel/core@7.24.9)
-      '@babel/plugin-syntax-dynamic-import':
-        specifier: 7.8.3
-        version: 7.8.3(@babel/core@7.24.9)
-      '@babel/plugin-syntax-import-meta':
-        specifier: 7.10.4
-        version: 7.10.4(@babel/core@7.24.9)
-      '@babel/preset-env':
-        specifier: 7.24.8
-        version: 7.24.8(@babel/core@7.24.9)
-      '@babel/preset-react':
-        specifier: 7.24.7
-        version: 7.24.7(@babel/core@7.24.9)
       '@types/debug':
         specifier: 4.1.7
         version: 4.1.7
@@ -391,6 +334,9 @@ importers:
       builder-util:
         specifier: workspace:*
         version: link:../builder-util
+      builder-util-runtime:
+        specifier: workspace:*
+        version: link:../builder-util-runtime
       fs-extra:
         specifier: ^11.3.0
         version: 11.3.0
@@ -1120,18 +1066,6 @@ packages:
     peerDependencies:
       '@babel/core': ^7.12.0
 
-  '@babel/plugin-proposal-decorators@7.24.7':
-    resolution: {integrity: sha512-RL9GR0pUG5Kc8BUWLNDm2T5OpYwSX15r98I0IkgmRQTXuELq/OynH8xtMTMvTJFjXbMWFVTKtYkTaYQsuAwQlQ==}
-    engines: {node: '>=6.9.0'}
-    peerDependencies:
-      '@babel/core': ^7.0.0-0
-
-  '@babel/plugin-proposal-do-expressions@7.24.7':
-    resolution: {integrity: sha512-M9pJwhoROof4rc4WzDdMoftv8JrtYfBVurvReacQ8lit+qUd0d71+1zUltb6/zCI7HBW4+KZbtBGmcudXw0GDQ==}
-    engines: {node: '>=6.9.0'}
-    peerDependencies:
-      '@babel/core': ^7.0.0-0
-
   '@babel/plugin-proposal-dynamic-import@7.18.6':
     resolution: {integrity: sha512-1auuwmK+Rz13SJj36R+jqFPMJWyKEDd7lLSdOj4oJK0UTgGueSAtkrCvz9ewmgyU/P941Rv2fQwZJN8s6QruXw==}
     engines: {node: '>=6.9.0'}
@@ -1139,28 +1073,10 @@ packages:
     peerDependencies:
       '@babel/core': ^7.0.0-0
 
-  '@babel/plugin-proposal-export-default-from@7.24.7':
-    resolution: {integrity: sha512-CcmFwUJ3tKhLjPdt4NP+SHMshebytF8ZTYOv5ZDpkzq2sin80Wb5vJrGt8fhPrORQCfoSa0LAxC/DW+GAC5+Hw==}
-    engines: {node: '>=6.9.0'}
-    peerDependencies:
-      '@babel/core': ^7.0.0-0
-
   '@babel/plugin-proposal-export-namespace-from@7.18.9':
     resolution: {integrity: sha512-k1NtHyOMvlDDFeb9G5PhUXuGj8m/wiwojgQVEhJ/fsVsMCpLyOP4h0uGEjYJKrRI+EVPlb5Jk+Gt9P97lOGwtA==}
     engines: {node: '>=6.9.0'}
     deprecated: This proposal has been merged to the ECMAScript standard and thus this plugin is no longer maintained. Please use @babel/plugin-transform-export-namespace-from instead.
-    peerDependencies:
-      '@babel/core': ^7.0.0-0
-
-  '@babel/plugin-proposal-function-bind@7.24.7':
-    resolution: {integrity: sha512-cq2mwxcvNAWWL+IiqiSiVhCeqTQs532Ktl3N2FMuW0bQVF/N0W6QNyywO+KkM3Yr/jwYmjeSS+yKQQUh79VOxQ==}
-    engines: {node: '>=6.9.0'}
-    peerDependencies:
-      '@babel/core': ^7.0.0-0
-
-  '@babel/plugin-proposal-function-sent@7.24.7':
-    resolution: {integrity: sha512-42Pq9d8fV5CrjygcVAA7aAEFpkAJluWWvlO7bvOMDEutxIS44COcFU61V92VBzUZvOkjIoQrPJNUtmY/d9XMgA==}
-    engines: {node: '>=6.9.0'}
     peerDependencies:
       '@babel/core': ^7.0.0-0
 
@@ -1213,12 +1129,6 @@ packages:
     peerDependencies:
       '@babel/core': ^7.0.0-0
 
-  '@babel/plugin-proposal-pipeline-operator@7.24.7':
-    resolution: {integrity: sha512-cJOSXlieT6/Yul8yEkbBRzhyf/J4jeeqUREw8HCf8nxT4DTP5FCdC0EXf+b8+vBt34IMYYvTDiC8uC91KSSLpA==}
-    engines: {node: '>=6.9.0'}
-    peerDependencies:
-      '@babel/core': ^7.0.0-0
-
   '@babel/plugin-proposal-private-methods@7.18.6':
     resolution: {integrity: sha512-nutsvktDItsNn4rpGItSNV2sz1XwS+nfU0Rg8aCx3W3NOKVzdMjJRu0O5OkgDp3ZGICSTbgRpxZoWsxoKRvbeA==}
     engines: {node: '>=6.9.0'}
@@ -1236,12 +1146,6 @@ packages:
     resolution: {integrity: sha512-0QZ8qP/3RLDVBwBFoWAwCtgcDZJVwA5LUJRZU8x2YFfKNuFq161wK3cuGrALu5yiPu+vzwTAg/sMWVNeWeNyaw==}
     engines: {node: '>=6.9.0'}
     deprecated: This proposal has been merged to the ECMAScript standard and thus this plugin is no longer maintained. Please use @babel/plugin-transform-private-property-in-object instead.
-    peerDependencies:
-      '@babel/core': ^7.0.0-0
-
-  '@babel/plugin-proposal-throw-expressions@7.24.7':
-    resolution: {integrity: sha512-Rh4WoHyWKgsxvdkEMqDEZtKuGnZw+JwicMCvcZaIjYaQ3fK+a8JZYLhgcac9dKcL47Xqf+SG3MopTx+8BACdrQ==}
-    engines: {node: '>=6.9.0'}
     peerDependencies:
       '@babel/core': ^7.0.0-0
 
@@ -1273,43 +1177,13 @@ packages:
     peerDependencies:
       '@babel/core': ^7.0.0-0
 
-  '@babel/plugin-syntax-decorators@7.25.9':
-    resolution: {integrity: sha512-ryzI0McXUPJnRCvMo4lumIKZUzhYUO/ScI+Mz4YVaTLt04DHNSjEUjKVvbzQjZFLuod/cYEc07mJWhzl6v4DPg==}
-    engines: {node: '>=6.9.0'}
-    peerDependencies:
-      '@babel/core': ^7.0.0-0
-
-  '@babel/plugin-syntax-do-expressions@7.25.9':
-    resolution: {integrity: sha512-y5t+t6kolAxz4rp923ql6jYpcXA1zvRf0x5+gqVv+I5rtRQGg3ffduPqvGkvbKM2sANfa+FTaBOgW3hZB7s3aw==}
-    engines: {node: '>=6.9.0'}
-    peerDependencies:
-      '@babel/core': ^7.0.0-0
-
   '@babel/plugin-syntax-dynamic-import@7.8.3':
     resolution: {integrity: sha512-5gdGbFon+PszYzqs83S3E5mpi7/y/8M9eC90MRTZfduQOYW76ig6SOSPNe41IG5LoP3FGBn2N0RjVDSQiS94kQ==}
     peerDependencies:
       '@babel/core': ^7.0.0-0
 
-  '@babel/plugin-syntax-export-default-from@7.25.9':
-    resolution: {integrity: sha512-9MhJ/SMTsVqsd69GyQg89lYR4o9T+oDGv5F6IsigxxqFVOyR/IflDLYP8WDI1l8fkhNGGktqkvL5qwNCtGEpgQ==}
-    engines: {node: '>=6.9.0'}
-    peerDependencies:
-      '@babel/core': ^7.0.0-0
-
   '@babel/plugin-syntax-export-namespace-from@7.8.3':
     resolution: {integrity: sha512-MXf5laXo6c1IbEbegDmzGPwGNTsHZmEy6QGznu5Sh2UCWvueywb2ee+CCE4zQiZstxU9BMoQO9i6zUFSY0Kj0Q==}
-    peerDependencies:
-      '@babel/core': ^7.0.0-0
-
-  '@babel/plugin-syntax-function-bind@7.25.9':
-    resolution: {integrity: sha512-BZL1pyoJHWZXCR7PyckN71jhRqXTOV115823tMfsokvvkrYdq1i5MFOYoNPGUyPixK1eNDsuYofHWdA5yEMZdw==}
-    engines: {node: '>=6.9.0'}
-    peerDependencies:
-      '@babel/core': ^7.0.0-0
-
-  '@babel/plugin-syntax-function-sent@7.25.9':
-    resolution: {integrity: sha512-U03YXfOvnh89U4/47Yet4T6GVK1TuKEUvH54WsLcvb9lzkRmL0h8i5ybeddzu44eAS91FgiC1X2NJaxIkpqJqw==}
-    engines: {node: '>=6.9.0'}
     peerDependencies:
       '@babel/core': ^7.0.0-0
 
@@ -1383,20 +1257,8 @@ packages:
     peerDependencies:
       '@babel/core': ^7.0.0-0
 
-  '@babel/plugin-syntax-pipeline-operator@7.26.7':
-    resolution: {integrity: sha512-6TChXGY5xmWVqMXPkUO0VbfXX4hEQJe/Mub4zQLqZWPGA3MJkhMKTg4/mJxSOP+R36EXRJcb8hluodMsu2g7hg==}
-    engines: {node: '>=6.9.0'}
-    peerDependencies:
-      '@babel/core': ^7.0.0-0
-
   '@babel/plugin-syntax-private-property-in-object@7.14.5':
     resolution: {integrity: sha512-0wVnp9dxJ72ZUJDV27ZfbSj6iHLoytYZmh3rFcxNnvsJF3ktkzLDZPy/mA17HGsaQT3/DQsWYX1f1QGWkCoVUg==}
-    engines: {node: '>=6.9.0'}
-    peerDependencies:
-      '@babel/core': ^7.0.0-0
-
-  '@babel/plugin-syntax-throw-expressions@7.25.9':
-    resolution: {integrity: sha512-lVO49hFBP/HNgPwAeiigPOUmtMWgs9yECOY7vWhCK7jbY++z3LZGpTPPdRbcTxRh1U94lGaQO35ZrkLGDaN/Nw==}
     engines: {node: '>=6.9.0'}
     peerDependencies:
       '@babel/core': ^7.0.0-0
@@ -10660,53 +10522,17 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@babel/plugin-proposal-decorators@7.24.7(@babel/core@7.24.9)':
-    dependencies:
-      '@babel/core': 7.24.9
-      '@babel/helper-create-class-features-plugin': 7.28.6(@babel/core@7.24.9)
-      '@babel/helper-plugin-utils': 7.28.6
-      '@babel/plugin-syntax-decorators': 7.25.9(@babel/core@7.24.9)
-    transitivePeerDependencies:
-      - supports-color
-
-  '@babel/plugin-proposal-do-expressions@7.24.7(@babel/core@7.24.9)':
-    dependencies:
-      '@babel/core': 7.24.9
-      '@babel/helper-plugin-utils': 7.28.6
-      '@babel/plugin-syntax-do-expressions': 7.25.9(@babel/core@7.24.9)
-
   '@babel/plugin-proposal-dynamic-import@7.18.6(@babel/core@7.24.9)':
     dependencies:
       '@babel/core': 7.24.9
       '@babel/helper-plugin-utils': 7.28.6
       '@babel/plugin-syntax-dynamic-import': 7.8.3(@babel/core@7.24.9)
 
-  '@babel/plugin-proposal-export-default-from@7.24.7(@babel/core@7.24.9)':
-    dependencies:
-      '@babel/core': 7.24.9
-      '@babel/helper-plugin-utils': 7.28.6
-      '@babel/plugin-syntax-export-default-from': 7.25.9(@babel/core@7.24.9)
-
   '@babel/plugin-proposal-export-namespace-from@7.18.9(@babel/core@7.24.9)':
     dependencies:
       '@babel/core': 7.24.9
       '@babel/helper-plugin-utils': 7.28.6
       '@babel/plugin-syntax-export-namespace-from': 7.8.3(@babel/core@7.24.9)
-
-  '@babel/plugin-proposal-function-bind@7.24.7(@babel/core@7.24.9)':
-    dependencies:
-      '@babel/core': 7.24.9
-      '@babel/helper-plugin-utils': 7.28.6
-      '@babel/plugin-syntax-function-bind': 7.25.9(@babel/core@7.24.9)
-
-  '@babel/plugin-proposal-function-sent@7.24.7(@babel/core@7.24.9)':
-    dependencies:
-      '@babel/core': 7.24.9
-      '@babel/helper-plugin-utils': 7.28.6
-      '@babel/helper-wrap-function': 7.25.9
-      '@babel/plugin-syntax-function-sent': 7.25.9(@babel/core@7.24.9)
-    transitivePeerDependencies:
-      - supports-color
 
   '@babel/plugin-proposal-json-strings@7.18.6(@babel/core@7.24.9)':
     dependencies:
@@ -10756,12 +10582,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@babel/plugin-proposal-pipeline-operator@7.24.7(@babel/core@7.24.9)':
-    dependencies:
-      '@babel/core': 7.24.9
-      '@babel/helper-plugin-utils': 7.28.6
-      '@babel/plugin-syntax-pipeline-operator': 7.26.7(@babel/core@7.24.9)
-
   '@babel/plugin-proposal-private-methods@7.18.6(@babel/core@7.24.9)':
     dependencies:
       '@babel/core': 7.24.9
@@ -10787,12 +10607,6 @@ snapshots:
       '@babel/plugin-syntax-private-property-in-object': 7.14.5(@babel/core@7.24.9)
     transitivePeerDependencies:
       - supports-color
-
-  '@babel/plugin-proposal-throw-expressions@7.24.7(@babel/core@7.24.9)':
-    dependencies:
-      '@babel/core': 7.24.9
-      '@babel/helper-plugin-utils': 7.28.6
-      '@babel/plugin-syntax-throw-expressions': 7.25.9(@babel/core@7.24.9)
 
   '@babel/plugin-proposal-unicode-property-regex@7.18.6(@babel/core@7.24.9)':
     dependencies:
@@ -10820,16 +10634,6 @@ snapshots:
       '@babel/core': 7.24.9
       '@babel/helper-plugin-utils': 7.28.6
 
-  '@babel/plugin-syntax-decorators@7.25.9(@babel/core@7.24.9)':
-    dependencies:
-      '@babel/core': 7.24.9
-      '@babel/helper-plugin-utils': 7.28.6
-
-  '@babel/plugin-syntax-do-expressions@7.25.9(@babel/core@7.24.9)':
-    dependencies:
-      '@babel/core': 7.24.9
-      '@babel/helper-plugin-utils': 7.28.6
-
   '@babel/plugin-syntax-dynamic-import@7.8.3(@babel/core@7.24.9)':
     dependencies:
       '@babel/core': 7.24.9
@@ -10840,22 +10644,7 @@ snapshots:
       '@babel/core': 7.29.0
       '@babel/helper-plugin-utils': 7.28.6
 
-  '@babel/plugin-syntax-export-default-from@7.25.9(@babel/core@7.24.9)':
-    dependencies:
-      '@babel/core': 7.24.9
-      '@babel/helper-plugin-utils': 7.28.6
-
   '@babel/plugin-syntax-export-namespace-from@7.8.3(@babel/core@7.24.9)':
-    dependencies:
-      '@babel/core': 7.24.9
-      '@babel/helper-plugin-utils': 7.28.6
-
-  '@babel/plugin-syntax-function-bind@7.25.9(@babel/core@7.24.9)':
-    dependencies:
-      '@babel/core': 7.24.9
-      '@babel/helper-plugin-utils': 7.28.6
-
-  '@babel/plugin-syntax-function-sent@7.25.9(@babel/core@7.24.9)':
     dependencies:
       '@babel/core': 7.24.9
       '@babel/helper-plugin-utils': 7.28.6
@@ -10935,17 +10724,7 @@ snapshots:
       '@babel/core': 7.24.9
       '@babel/helper-plugin-utils': 7.28.6
 
-  '@babel/plugin-syntax-pipeline-operator@7.26.7(@babel/core@7.24.9)':
-    dependencies:
-      '@babel/core': 7.24.9
-      '@babel/helper-plugin-utils': 7.28.6
-
   '@babel/plugin-syntax-private-property-in-object@7.14.5(@babel/core@7.24.9)':
-    dependencies:
-      '@babel/core': 7.24.9
-      '@babel/helper-plugin-utils': 7.28.6
-
-  '@babel/plugin-syntax-throw-expressions@7.25.9(@babel/core@7.24.9)':
     dependencies:
       '@babel/core': 7.24.9
       '@babel/helper-plugin-utils': 7.28.6
