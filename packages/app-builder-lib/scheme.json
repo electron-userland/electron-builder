@@ -8310,7 +8310,7 @@
             }
           ],
           "default": "2.2.1",
-          "description": "Version of the FPM bundle used to build Linux packages (`.deb`, `.rpm`, `.pacman`, etc.)\non macOS and Linux hosts.\n\nAvailable versions:\n| Version | FPM version | Notes |\n|---------|------------|-------|\n| `\"2.1.4\"` | 1.17.0 (Ruby 3.4.3) | Current default |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=fpm"
+          "description": "Version of the FPM bundle used to build Linux packages (`.deb`, `.rpm`, `.pacman`, etc.)\non macOS and Linux hosts.\n\nAvailable versions:\n| Version | FPM version | Notes |\n|---------|------------|-------|\n| `\"2.2.1\"` | 1.17.0 (Ruby 3.4.3) | Current default |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=fpm"
         },
         "icons": {
           "anyOf": [
@@ -8405,18 +8405,15 @@
               "$ref": "#/definitions/ToolsetCustom"
             },
             {
-              "enum": [
-                "0.0.0",
-                "1.0.1"
-              ],
+              "const": "0.0.0",
               "type": "string"
             },
             {
               "type": "null"
             }
           ],
-          "default": "1.0.1",
-          "description": "Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on\nnon-Windows hosts (macOS and Linux).\n\nWine is only required when building Windows targets on a non-Windows machine. On Windows,\nthis setting has no effect.\n\nAvailable versions:\n| Version | Wine version | Platform support | Notes |\n|---------|-------------|-----------------|-------|\n| `\"0.0.0\"` | 4.0.1 | macOS only | Legacy portable bundle (pre-v27 default) |\n| `\"1.0.1\"` | 11.0 | macOS + Linux | Unified bundle; ia32 via WoW64 (default) |\n\nOn Linux with `\"0.0.0\"`, the system `wine` binary is used instead of a bundled one.\nSet `USE_SYSTEM_WINE=true` to force system Wine regardless of this setting.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=wine"
+          "default": "0.0.0",
+          "description": "Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on\nnon-Windows hosts (macOS and Linux).\n\nWine is only required when building Windows targets on a non-Windows machine. On Windows,\nthis setting has no effect.\n\nAvailable versions:\n| Version | Wine version | Platform support | Notes |\n|---------|-------------|-----------------|-------|\n| `\"0.0.0\"` | 4.0.1 | macOS only | Legacy portable bundle (pre-v27 default) |\n\nOn Linux with `\"0.0.0\"`, the system `wine` binary is used instead of a bundled one.\nSet `USE_SYSTEM_WINE=true` to force system Wine regardless of this setting.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=wine"
         }
       },
       "type": "object"
