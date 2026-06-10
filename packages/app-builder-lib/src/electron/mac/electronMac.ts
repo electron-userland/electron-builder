@@ -1,4 +1,4 @@
-import { asArray, copyOrLinkFile, getPlatformIconFileName, InvalidConfigurationError, log, unlinkIfExists } from "builder-util"
+import { asArray, copyOrLinkFile, getPlatformIconFileName, InvalidConfigurationError, unlinkIfExists } from "builder-util"
 import { rename, utimes } from "fs/promises"
 import * as path from "path"
 import * as fs from "fs"
@@ -100,17 +100,12 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
    * the bundleIdentifier for continuity.
    */
 
-  const oldHelperBundleId = (buildMetadata as any)["helper-bundle-id"]
-  if (oldHelperBundleId != null) {
-    log.warn("build.helper-bundle-id is deprecated, please set as build.mac.helperBundleId")
-  }
-
   const defaultAppId = packager.platformOptions.appId
   const cfBundleIdentifier = filterCFBundleIdentifier((isMas ? packager.config.mas?.appId : defaultAppId) || defaultAppId || appInfo.macBundleIdentifier)
 
   const defaultHelperId = packager.platformOptions.helperBundleId
   const helperBundleIdentifier = filterCFBundleIdentifier(
-    (isMas ? packager.config.mas?.helperBundleId : defaultHelperId) || defaultHelperId || oldHelperBundleId || `${cfBundleIdentifier}.helper`
+    (isMas ? packager.config.mas?.helperBundleId : defaultHelperId) || defaultHelperId || `${cfBundleIdentifier}.helper`
   )
 
   appPlist.CFBundleIdentifier = cfBundleIdentifier

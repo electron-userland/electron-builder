@@ -317,11 +317,6 @@ function checkConflictingOptions(options: any) {
     }
   }
 
-  if ("noMsi" in options) {
-    log.warn(`noMsi is deprecated, please specify as "msi": true if you want to create an MSI installer`)
-    options.msi = !options.noMsi
-  }
-
   const msi = options.msi
   if (msi != null && typeof msi !== "boolean") {
     throw new InvalidConfigurationError(`msi expected to be boolean value, but string '"${msi}"' was specified`)

@@ -222,24 +222,6 @@ function getDefaultConfig(): Configuration {
 const schemeDataPromise = new Lazy(() => readJson(path.join(import.meta.dirname, "..", "..", "..", "scheme.json")))
 
 export async function validateConfiguration(config: Configuration, debugLogger: DebugLogger) {
-  const extraMetadata = config.extraMetadata
-  if (extraMetadata != null) {
-    if (extraMetadata.build != null) {
-      throw new InvalidConfigurationError(`--em.build is deprecated, please specify as -c"`)
-    }
-    if (extraMetadata.directories != null) {
-      throw new InvalidConfigurationError(`--em.directories is deprecated, please specify as -c.directories"`)
-    }
-  }
-
-  const oldConfig: any = config
-  if (oldConfig.npmSkipBuildFromSource === false) {
-    throw new InvalidConfigurationError(`npmSkipBuildFromSource is deprecated, please use buildDependenciesFromSource"`)
-  }
-  if (oldConfig.appImage != null && oldConfig.appImage.systemIntegration != null) {
-    throw new InvalidConfigurationError(`appImage.systemIntegration is deprecated, https://github.com/TheAssassin/AppImageLauncher is used for desktop integration"`)
-  }
-
   validateSchema(await schemeDataPromise.value, config, {
     name: `electron-builder ${PACKAGE_VERSION}`,
     postFormatter: (formattedError, error): string => {

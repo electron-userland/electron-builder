@@ -24,7 +24,7 @@ export abstract class SnapCore<T> {
   abstract buildSnap(params: { snap: SnapcraftYAML; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<void>
 }
 
-/** Snap build target — merges `snapcraft` (preferred) and legacy `snap` config, then delegates to the appropriate `SnapCore` strategy. */
+/** Snap build target — reads `snapcraft` config and delegates to the appropriate `SnapCore` strategy. */
 export default class SnapTarget extends Target {
   readonly options: SnapcraftOptions
 
