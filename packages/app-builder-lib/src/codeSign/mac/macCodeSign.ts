@@ -1,6 +1,5 @@
 import type { SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { copyFile, exec, Fields, InvalidConfigurationError, isEmptyOrSpaces, isPullRequest, log, Logger, retry, TmpDir, unlinkIfExists } from "builder-util"
-import { dynamicImport } from "../../util/dynamicImport.js"
 import { Nullish } from "builder-util-runtime"
 import { createHash, randomBytes } from "crypto"
 import { rename } from "fs/promises"
@@ -8,6 +7,7 @@ import { Lazy } from "lazy-val"
 import { homedir, tmpdir } from "os"
 import * as path from "path"
 import { getTempName } from "temp-file"
+import { dynamicImport } from "../../util/dynamicImport.js"
 import { isAutoDiscoveryCodeSignIdentity, isCscForPullRequest, isTravis } from "../../util/flags.js"
 import { importCertificate } from "../codesign.js"
 
@@ -185,12 +185,11 @@ export async function createKeychain({ tmpDir, cscLink, cscKeyPassword, cscILink
     securityCommands.push(["list-keychains", "-d", "user", "-s", keychainFile].concat(list))
   }
 
-  await Promise.all([
-    // we do not clear downloaded files - will be removed on tmpDir cleanup automatically. not a security issue since in any case data is available as env variables and protected by password.
-    ...certLinks.map((link, i) => importCertificate(link, tmpDir, currentDir).then(it => (certPaths[i] = it))),
-    // queue each security command
-    securityCommands.reduce((promise, cmd) => promise.then(() => exec("/usr/bin/security", cmd)), new Promise(resolve => resolve(null))),
-  ])
+  // Import all certs in parallel, then run security commands sequentially.
+  await Promise.all(certLinks.map((link, i) => importCertificate(link, tmpDir, currentDir).then(it => (certPaths[i] = it))))
+  for (const cmd of securityCommands) {
+    await exec("/usr/bin/security", cmd)
+  }
   const cscPasswords: Array<string> = [cscKeyPassword]
   if (cscIKeyPassword != null) {
     cscPasswords.push(cscIKeyPassword)
