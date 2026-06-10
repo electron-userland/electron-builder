@@ -1,11 +1,7 @@
 import { afterEach, beforeEach, describe, test, vi } from "vitest"
-<<<<<<< HEAD
 import { NodeModulesCollector } from "app-builder-lib/src/node-module-collector/nodeModulesCollector"
 import { LogMessageByKey } from "app-builder-lib/src/node-module-collector/moduleManager"
 import { PM } from "app-builder-lib/internal"
-=======
-import { LogMessageByKey, NodeModulesCollector, PM } from "app-builder-lib/internal"
->>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
 import * as childProcess from "child_process"
 import * as nodeFs from "node:fs"
 import { EventEmitter } from "events"

@@ -1,22 +1,8 @@
-<<<<<<< HEAD
 import { Lazy } from "lazy-val"
 import { LogMessageByKey, type Package } from "./moduleManager.js"
 import { NodeModulesCollector } from "./nodeModulesCollector.js"
 import { getPackageManagerCommand, PM } from "./packageManager.js"
 import { PnpmDependency } from "./types.js"
-=======
-import { isEmptyOrSpaces, log } from "builder-util"
-import * as path from "path"
-<<<<<<< HEAD
-import { NodeModulesCollector } from "./nodeModulesCollector.js.js"
-import { PM } from "./packageManager.js.js"
-import { PackageJson, PnpmDependency } from "./types.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { NodeModulesCollector } from "./nodeModulesCollector.js"
-import { PM } from "./packageManager.js"
-import { PackageJson, PnpmDependency } from "./types.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependency, PnpmDependency> {
   public readonly installOptions = {

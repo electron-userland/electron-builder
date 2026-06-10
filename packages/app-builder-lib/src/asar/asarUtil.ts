@@ -1,43 +1,13 @@
-<<<<<<< HEAD
 import type { AsarStreamType, AsarDirectory } from "@electron/asar"
 import { exists, Filter, FilterStats, isEmptyOrSpaces, log } from "builder-util"
-<<<<<<< HEAD
 import { dynamicImport } from "../util/dynamicImport.js"
 import fs from "fs-extra"
 
-=======
-import { createPackageFromStreams, AsarStreamType, AsarDirectory } from "@electron/asar"
-import { log } from "builder-util"
-import { exists, Filter } from "builder-util"
-import * as fs from "fs-extra"
-import { readlink } from "fs-extra"
->>>>>>> c92b22265 (tmp save for .js extension migration)
-=======
-import * as fs from "fs/promises"
-import fsExtra from "fs-extra"
-import * as os from "os"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as path from "path"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { AsarOptions } from "../options/PlatformSpecificBuildOptions.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier.js"
 import { detectUnpackedDirs } from "./unpackDetector.js"
-<<<<<<< HEAD
-=======
-import { AsarOptions } from "../options/PlatformSpecificBuildOptions"
-import { PlatformPackager } from "../platformPackager"
-import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier"
-=======
-import { AsarOptions } from "../options/PlatformSpecificBuildOptions.js"
-import { PlatformPackager } from "../platformPackager.js"
-import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier.js"
->>>>>>> d26567f58 (tmp save)
-import { detectUnpackedDirs } from "./unpackDetector.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
->>>>>>> c92b22265 (tmp save for .js extension migration)
 import { Readable } from "stream"
 import * as os from "os"
 const { readlink } = fs
@@ -229,7 +199,7 @@ export class AsarPackager {
   private async processFileOrSymlink(options: {
     file: string
     destination: string
-    stat: fsExtra.Stats
+    stat: fs.Stats
     fileSet: ResolvedFileSet
     transformedData: string | Buffer | undefined
     isUnpacked: (dir: string, file?: string, stat?: FilterStats) => boolean
@@ -265,7 +235,7 @@ export class AsarPackager {
 
     const baseConfig = {
       path: destination,
-      streamGenerator: () => fsExtra.createReadStream(file),
+      streamGenerator: () => fs.createReadStream(file),
       unpacked,
       stat,
     }
@@ -276,7 +246,7 @@ export class AsarPackager {
     }
 
     // Handle symlinks - make relative to source location
-    let link = await fsExtra.readlink(file)
+    let link = await readlink(file)
     if (path.isAbsolute(link)) {
       link = path.relative(path.dirname(file), link)
     }

@@ -1,20 +1,6 @@
-<<<<<<< HEAD
 import { BlockMap } from "builder-util-runtime"
-<<<<<<< HEAD
 import fsExtra from "fs-extra"
-=======
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { DifferentialDownloader } from "./DifferentialDownloader.js"
-=======
-import { BlockMap } from "builder-util-runtime/out/blockMapApi"
-import { close, fstat, open, read } from "fs-extra"
-<<<<<<< HEAD
-import { DifferentialDownloader } from "./DifferentialDownloader.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { DifferentialDownloader } from "./DifferentialDownloader.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
 import { inflateRawSync } from "zlib"
 
 export class FileWithEmbeddedBlockMapDifferentialDownloader extends DifferentialDownloader {

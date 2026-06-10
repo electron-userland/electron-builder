@@ -1,35 +1,13 @@
-<<<<<<< HEAD
 import { DmgOptions, MacPackager, Target } from "app-builder-lib"
 import { createBlockmap, findIdentity, isSignAllowed } from "app-builder-lib/internal"
 import { Arch, exec, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces } from "builder-util"
 import { sanitizeFileName } from "builder-util/internal"
 import { release as getOsRelease } from "os"
 import * as path from "path"
-<<<<<<< HEAD
 import type { DmgBuildLicenseConfig } from "./dmgLicense.js"
 import { addLicenseToDmg } from "./dmgLicense.js"
 import { computeBackground, customizeDmg } from "./dmgUtil.js"
 import { hdiUtil } from "./hdiuil.js"
-=======
-import { addLicenseToDmg } from "./dmgLicense.js.js"
-import { computeBackground, customizeDmg } from "./dmgUtil.js.js"
-import { hdiUtil } from "./hdiuil.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { DmgOptions, Target } from "app-builder-lib"
-import { findIdentity, isSignAllowed } from "app-builder-lib"
-import { MacPackager } from "app-builder-lib"
-import { createBlockmap } from "app-builder-lib"
-import { Arch, exec, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces } from "builder-util"
-import { sanitizeFileName } from "builder-util"
-import { release as getOsRelease } from "os"
-import * as path from "path"
-import { addLicenseToDmg } from "./dmgLicense.js"
-import { computeBackground, customizeDmg } from "./dmgUtil.js"
-import { hdiUtil } from "./hdiuil.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
-
-export { attachAndExecute, getDmgTemplatePath } from "./dmgUtil.js"
 
 export interface DmgBuildConfig {
   title: string

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import { expandMacro } from "app-builder-lib/internal"
-=======
-import { expandMacro } from "app-builder-lib"
->>>>>>> fb7cff668 (esm complete on tests as well?)
 
 const appInfoStub: any = {
   sanitizedProductName: "1",

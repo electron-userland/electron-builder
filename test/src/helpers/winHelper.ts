@@ -1,17 +1,9 @@
-<<<<<<< HEAD
 import { readAsarJson } from "app-builder-lib/internal"
 import { getWineToolset } from "app-builder-lib/src/toolsets/wine"
 import type { ToolsetConfig } from "app-builder-lib/internal"
-=======
-import { readAsarJson } from "app-builder-lib"
->>>>>>> fb7cff668 (esm complete on tests as well?)
 import { walk } from "builder-util"
 import { Arch, Platform } from "electron-builder"
-<<<<<<< HEAD
 import fsExtra from "fs-extra"
-=======
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"

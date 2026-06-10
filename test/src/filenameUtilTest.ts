@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import { getCompleteExtname } from "builder-util/internal"
-=======
-import { getCompleteExtname } from "builder-util"
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 // [inputFilename, expectedExtname]
 const tests = [

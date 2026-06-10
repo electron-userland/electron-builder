@@ -1,19 +1,10 @@
 import { Configuration, Platform } from "app-builder-lib"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { PM } from "app-builder-lib/internal"
-=======
-import { PM } from "app-builder-lib"
->>>>>>> fb7cff668 (esm complete on tests as well?)
 import { exists } from "builder-util"
-=======
-import { PM } from "app-builder-lib/internal"
-import { exists } from "builder-util/src/util"
->>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
 import path from "path"
-import { assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
-import { ELECTRON_VERSION } from "./helpers/testConfig.js"
-import { verifySmartUnpack } from "./helpers/verifySmartUnpack.js"
+import { assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
+import { ELECTRON_VERSION } from "./helpers/testConfig"
+import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 
 const packageConfig = (data: any) => {
   data.name = "@packageManagers/test-app-yarn-workspace"

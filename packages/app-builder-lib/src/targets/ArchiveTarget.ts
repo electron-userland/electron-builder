@@ -1,27 +1,10 @@
 import { Arch, defaultArchFromString } from "builder-util"
 import * as path from "path"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { Platform, Target, TargetSpecificOptions } from "../core.js"
 import { copyFiles, getFileMatchers } from "../fileMatcher.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { archive, tar } from "./archive.js"
 import { appendBlockmap, createBlockmap } from "./differentialUpdateInfoBuilder.js"
-<<<<<<< HEAD
-=======
-import { Platform, Target, TargetSpecificOptions } from "../core"
-import { copyFiles, getFileMatchers } from "../fileMatcher"
-import { PlatformPackager } from "../platformPackager"
-=======
-import { Platform, Target, TargetSpecificOptions } from "../core.js"
-import { copyFiles, getFileMatchers } from "../fileMatcher.js"
-import { PlatformPackager } from "../platformPackager.js"
->>>>>>> d26567f58 (tmp save)
-import { archive, tar } from "./archive.js.js"
-import { appendBlockmap, createBlockmap } from "./differentialUpdateInfoBuilder.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export class ArchiveTarget extends Target {
   readonly options: TargetSpecificOptions
@@ -33,11 +16,7 @@ export class ArchiveTarget extends Target {
     private readonly isWriteUpdateInfo = false
   ) {
     super(name)
-<<<<<<< HEAD
     this.options = (this.packager.config as any)[this.name]
-=======
-    this.options  = (this.packager.config as any)[this.name]
->>>>>>> c92b22265 (tmp save for .js extension migration)
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
@@ -93,7 +72,6 @@ export class ArchiveTarget extends Target {
         const archiveOptions = {
           compression: packager.compression,
           withoutDir,
-          preserveSymlinks: isMac,
         }
         await archive(format, artifactPath, dirToArchive, archiveOptions)
 

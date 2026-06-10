@@ -1,41 +1,16 @@
-import { createRequire } from "node:module"
 import { checkBuildRequestOptions } from "app-builder-lib"
-<<<<<<< HEAD
 import { doMergeConfigs } from "app-builder-lib/internal"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { configureBuildCommand, createYargs, normalizeOptions } from "electron-builder/src/builder"
-=======
-import { doMergeConfigs } from "app-builder-lib"
-import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
-import { createYargs } from "electron-builder"
->>>>>>> fb7cff668 (esm complete on tests as well?)
 import { promises as fs } from "fs"
-<<<<<<< HEAD
 import fsExtra from "fs-extra"
-=======
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as path from "path"
 import { app, appTwo, appTwoThrows, assertPack, getFixtureDir, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester.js"
 import { ELECTRON_VERSION } from "./helpers/testConfig.js"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack.js"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { PM } from "app-builder-lib/internal"
-=======
-import { PM } from "app-builder-lib/src/node-module-collector/packageManager"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 test.ifLinux("cli", ({ expect }) => {
-=======
-import { PM } from "app-builder-lib"
-
-const require = createRequire(import.meta.url)
-
-test.ifLinux("cli", ({ expect }) => {
-  // because these methods are internal
-  const { configureBuildCommand, normalizeOptions } = require("electron-builder/out/builder.js")
->>>>>>> fb7cff668 (esm complete on tests as well?)
   const yargs = createYargs()
   configureBuildCommand(yargs)
 

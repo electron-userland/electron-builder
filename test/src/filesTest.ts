@@ -1,20 +1,9 @@
 import { TmpDir, archFromString, copyDir } from "builder-util"
 import { DIR_TARGET, Platform } from "electron-builder"
-<<<<<<< HEAD
 import fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
-<<<<<<< HEAD
 import statMode from "stat-mode"
-=======
-import { Mode, RWX } from "stat-mode"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import * as fsExtra from "fs-extra"
-import * as fs from "fs/promises"
-import * as path from "path"
-import statMode from "stat-mode"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { assertThat } from "./helpers/fileAssert.js"
 import { app, appThrows, assertPack, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
 import { ExpectStatic } from "vitest"
@@ -111,12 +100,8 @@ test.ifNotWindows("map resources", ({ expect }) =>
       },
     },
     {
-<<<<<<< HEAD
       projectDirCreated: projectDir =>
         Promise.all([fsExtra.outputFile(path.join(projectDir, "foo", "old"), "data"), fsExtra.outputFile(path.join(projectDir, "license.txt"), "data")]),
-=======
-      projectDirCreated: projectDir => Promise.all([fsExtra.outputFile(path.join(projectDir, "foo", "old"), "data"), fsExtra.outputFile(path.join(projectDir, "license.txt"), "data")]),
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
       packed: context => {
         const resources = context.getResources(Platform.LINUX)
         return Promise.all([

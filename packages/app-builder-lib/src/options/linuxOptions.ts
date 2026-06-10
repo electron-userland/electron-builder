@@ -1,9 +1,5 @@
-<<<<<<< HEAD
 import { TargetConfigType, TargetSpecificOptions } from "../core.js"
 import { PlatformSpecificBuildOptions } from "./PlatformSpecificBuildOptions.js"
-=======
-import { PlatformSpecificBuildOptions, TargetConfigType, TargetSpecificOptions } from "../index.js"
->>>>>>> d26567f58 (tmp save)
 
 /**
  * Example Spec: https://specifications.freedesktop.org/desktop-entry-spec/latest/example.html

@@ -3,11 +3,7 @@ import { deepAssign } from "builder-util-runtime"
 import { TmpDir } from "temp-file"
 import { assertPack, modifyPackageJson } from "./helpers/packTester.js"
 
-<<<<<<< HEAD
 const options = { timeout: 30 * 60 * 1000 }
-=======
-const options = { timeout: 20 * 60 * 1000 }
->>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
 
 const winTargets = Platform.WINDOWS.createTarget([DIR_TARGET, "nsis"], Arch.x64, Arch.arm64)
 const macTargets = Platform.MAC.createTarget([DIR_TARGET, "zip", "mas"], Arch.arm64, Arch.x64)

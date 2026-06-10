@@ -2,12 +2,8 @@ import { afterEach, describe, test, vi } from "vitest"
 import * as fse from "fs-extra"
 import * as os from "os"
 import * as path from "path"
-<<<<<<< HEAD
 import { TraversalNodeModulesCollector } from "app-builder-lib/internal"
 import { LogMessageByKey } from "app-builder-lib/src/node-module-collector/moduleManager"
-=======
-import { LogMessageByKey, TraversalNodeModulesCollector } from "app-builder-lib/internal"
->>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
 import type { TmpDir } from "builder-util"
 
 // ---------------------------------------------------------------------------

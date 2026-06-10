@@ -1,38 +1,17 @@
 import { createRequire } from "node:module"
 import { AllPublishOptions, newError, safeStringifyJson } from "builder-util-runtime"
-<<<<<<< HEAD
 
 const require = createRequire(import.meta.url)
 import fsExtra from "fs-extra"
-=======
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { createReadStream } from "fs"
 import * as path from "path"
 import { createServer, IncomingMessage, Server, ServerResponse } from "http"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { AppAdapter } from "./AppAdapter.js"
 import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater.js"
 import { ResolvedUpdateFileInfo } from "./types.js"
 import { UpdateDownloadedEvent } from "./types.js"
 import { findFile } from "./providers/Provider.js"
 type AutoUpdater = Electron.AutoUpdater
-=======
-import { AppAdapter } from "./AppAdapter.js.js"
-import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater.js.js"
-import { ResolvedUpdateFileInfo } from "./main.js.js"
-import { UpdateDownloadedEvent } from "./types.js.js"
-import { findFile } from "./providers/Provider.js.js"
-=======
-import { AppAdapter } from "./AppAdapter.js"
-import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater.js"
-import { ResolvedUpdateFileInfo } from "./types.js"
-import { UpdateDownloadedEvent } from "./types.js"
-import { findFile } from "./providers/Provider.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
-import AutoUpdater = Electron.AutoUpdater
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 import { execFileSync } from "child_process"
 import { randomBytes } from "crypto"
 

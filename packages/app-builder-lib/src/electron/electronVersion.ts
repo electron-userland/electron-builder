@@ -1,33 +1,13 @@
 import { httpExecutor, InvalidConfigurationError, log } from "builder-util"
 import { parseXml } from "builder-util-runtime"
-<<<<<<< HEAD
 import fsExtra from "fs-extra"
-=======
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import * as semver from "semver"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { Configuration } from "../configuration.js"
 import { getConfig } from "../util/config/config.js"
 import { orNullIfFileNotExist } from "../util/config/load.js"
 import { getProjectRootPath } from "./search-module.js"
-<<<<<<< HEAD
-=======
-import { Configuration } from "../configuration"
-import { getConfig } from "../util/config/config"
-import { orNullIfFileNotExist } from "../util/config/load"
-=======
-import { Configuration } from "../configuration.js"
-import { getConfig } from "../util/config/config.js"
-import { orNullIfFileNotExist } from "../util/config/load.js"
->>>>>>> d26567f58 (tmp save)
-import { getProjectRootPath } from "./search-module.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export type MetadataValue = Lazy<Record<string, any> | null>
 

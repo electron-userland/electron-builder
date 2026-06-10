@@ -1,24 +1,10 @@
 import { Arch, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
-<<<<<<< HEAD
 import { configureRequestOptions, HttpExecutor, parseJson, safeStringifyJson } from "builder-util-runtime"
 import { KeygenOptions } from "builder-util-runtime"
 import { getCompleteExtname } from "builder-util/internal"
 import { ClientRequest, RequestOptions } from "http"
-<<<<<<< HEAD
 import { PublishContext } from "./index.js"
 import { HttpPublisher } from "./httpPublisher.js"
-=======
-import { PublishContext } from "./"
-import { HttpPublisher } from "./httpPublisher.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { configureRequestOptions, HttpExecutor, parseJson } from "builder-util-runtime"
-import { KeygenOptions } from "builder-util-runtime"
-import { getCompleteExtname } from "builder-util/internal"
-import { ClientRequest, RequestOptions } from "http"
-import { PublishContext } from "./index.js"
-import { HttpPublisher } from "./httpPublisher.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 type RecursivePartial<T> = {
   [P in keyof T]?: RecursivePartial<T[P]>

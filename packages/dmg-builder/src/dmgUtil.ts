@@ -1,34 +1,15 @@
-<<<<<<< HEAD
 import { DmgContent, DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
 import { downloadBuilderToolset, withToolsetLock } from "app-builder-lib/internal"
 import { exec, executeFinally, exists, InvalidConfigurationError, isEmptyOrSpaces, log, TmpDir } from "builder-util"
 import { sleep } from "builder-util-runtime"
 import { stat } from "fs/promises"
 
-=======
-import { DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
-import { downloadArtifact } from "app-builder-lib/internal"
-import { exec, executeFinally, exists, isEmptyOrSpaces, TmpDir } from "builder-util"
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as path from "path"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { DmgBuildConfig } from "./dmg.js"
 import type { DmgBuildLicenseConfig } from "./dmgLicense.js"
 import { hdiUtil, hdiUtilWithStdin, hdiutilTransientExitCodes } from "./hdiuil.js"
 import _fsExtra from "fs-extra"
 const { writeFile } = _fsExtra
-=======
-import { hdiUtil, hdiutilTransientExitCodes } from "./hdiuil.js.js"
-import { writeFile } from "fs-extra"
-import { DmgBuildConfig } from "./dmg.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { hdiUtil, hdiutilTransientExitCodes } from "./hdiuil.js"
-import { writeFile } from "fs-extra"
-import { DmgBuildConfig } from "./dmg.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export { DmgTarget } from "./dmg.js"
 
@@ -227,7 +208,7 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
   }
 
   const settingsFile = await packager.getTempFile(".json")
-  await fsExtra.writeFile(settingsFile, JSON.stringify(settings, null, 2))
+  await writeFile(settingsFile, JSON.stringify(settings, null, 2))
 
   const dmgbuild = await getDmgVendorPath()
   await withToolsetLock(() =>

@@ -1,23 +1,14 @@
 import { BitbucketOptions, GenericServerOptions, GithubOptions, GitlabOptions, KeygenOptions, S3Options, SpacesOptions } from "builder-util-runtime"
 import { BitbucketPublisher } from "electron-publish"
 import { UpdateCheckResult } from "electron-updater"
-<<<<<<< HEAD
 import fsExtra from "fs-extra"
-=======
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { tmpdir } from "os"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert.js"
 import { removeUnstableProperties } from "../helpers/packTester.js"
 import { createNsisUpdater, trackEvents, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 import { ExpectStatic } from "vitest"
-<<<<<<< HEAD
 import { GitLabProvider, GitHubProvider } from "electron-updater"
-=======
-import { GitLabProvider } from "electron-updater"
-import { GitHubProvider } from "electron-updater"
->>>>>>> fb7cff668 (esm complete on tests as well?)
 
 const config = { retry: 3 }
 

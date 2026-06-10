@@ -1,33 +1,14 @@
 import { AllPublishOptions, newError } from "builder-util-runtime"
 import { execFileSync } from "child_process"
-<<<<<<< HEAD
 import fsExtra from "fs-extra"
-=======
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { unlinkSync } from "fs"
 import * as path from "path"
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> c92b22265 (tmp save for .js extension migration)
 import { DownloadUpdateOptions } from "./AppUpdater.js"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader.js"
 import { findFile, Provider } from "./providers/Provider.js"
 import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo } from "./types.js"
-<<<<<<< HEAD
-=======
-import { DownloadUpdateOptions } from "./AppUpdater.js.js"
-import { BaseUpdater, InstallOptions } from "./BaseUpdater.js.js"
-import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js.js"
-import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader.js.js"
-import { findFile, Provider } from "./providers/Provider.js.js"
-import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo } from "./types.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export class AppImageUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: any) {

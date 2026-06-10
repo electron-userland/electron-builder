@@ -1,27 +1,11 @@
 import { InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { isElectronBuilderAllowedAsProductionDependency } from "./flags.js"
 import { Nullish } from "builder-util-runtime"
-<<<<<<< HEAD
 import fsExtra from "fs-extra"
-=======
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as path from "path"
 import * as semver from "semver"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { Metadata } from "../options/metadata.js"
 import { normalizePackageData } from "./normalizePackageData.js"
-<<<<<<< HEAD
-=======
-import { Metadata } from "../options/metadata"
-=======
-import { Metadata } from "../options/metadata.js"
->>>>>>> d26567f58 (tmp save)
-import { normalizePackageData } from "./normalizePackageData.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 /** @internal */
 export async function readPackageJson(file: string): Promise<any> {
@@ -128,11 +112,7 @@ function checkDependencies(dependencies: Record<string, string> | Nullish, error
     for (const prefix of prefixes) {
       if (updaterVersion.startsWith(prefix)) {
         const normalized = path.normalize(updaterVersion.substring(prefix.length))
-<<<<<<< HEAD
         const packageJsonPath = path.isAbsolute(normalized) ? normalized : path.resolve(process.cwd(), normalized)
-=======
-        const packageJsonPath = path.isAbsolute(normalized) ? normalized : path.resolve(__dirname, normalized)
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
         const json = fsExtra.readJsonSync(path.join(packageJsonPath, "package.json"))
         updaterVersion = json.version
         break

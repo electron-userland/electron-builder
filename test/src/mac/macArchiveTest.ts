@@ -1,11 +1,7 @@
 import { Arch, exec } from "builder-util"
 import { parseXml } from "builder-util-runtime"
 import { Platform } from "electron-builder"
-<<<<<<< HEAD
 import fsExtra from "fs-extra"
-=======
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as fs from "fs/promises"
 import * as path from "path"
 import pathSorter from "path-sort"

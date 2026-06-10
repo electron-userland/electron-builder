@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import { utils } from "electron-updater/internal"
-=======
-import { utils } from "electron-updater"
->>>>>>> fb7cff668 (esm complete on tests as well?)
 import { URL } from "url"
 
 test("newUrlFromBase", ({ expect }) => {

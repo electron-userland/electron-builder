@@ -1,22 +1,10 @@
-<<<<<<< HEAD
-=======
-import * as fs from "fs"
-import * as path from "path"
-import { ElectronPlatformName } from "./ElectronFramework.js"
-
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 import { log } from "builder-util"
-<<<<<<< HEAD
 import fs from "fs-extra"
 import * as path from "path"
 import { Platform } from "../core.js"
 import { PrepareApplicationStageDirectoryOptions } from "../Framework.js"
 import { downloadElectronArtifact } from "../util/electronGet.js"
 import { ElectronBrandingOptions } from "./ElectronFramework.js"
-=======
-import { getBin } from "../binDownload.js"
-import { PrepareApplicationStageDirectoryOptions } from "../Framework.js"
->>>>>>> d26567f58 (tmp save)
 
 export class FFMPEGInjector {
   constructor(

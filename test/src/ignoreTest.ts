@@ -1,21 +1,9 @@
 import { DIR_TARGET, Platform, archFromString } from "electron-builder"
-<<<<<<< HEAD
 import fsExtra from "fs-extra"
-=======
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert.js"
 import { app, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { PM } from "app-builder-lib/internal"
-=======
-import { PM } from "app-builder-lib/out/node-module-collector/packageManager"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { PM } from "app-builder-lib"
->>>>>>> fb7cff668 (esm complete on tests as well?)
 
 const currentProcessTarget = Platform.LINUX.createTarget(DIR_TARGET, archFromString(process.arch))
 

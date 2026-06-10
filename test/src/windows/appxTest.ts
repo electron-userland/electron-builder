@@ -1,9 +1,5 @@
 import { Arch, Platform } from "electron-builder"
-<<<<<<< HEAD
 import fsExtra from "fs-extra"
-=======
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { mkdir } from "fs/promises"
 import * as path from "path"
 import { app, appThrows, copyTestAsset } from "../helpers/packTester.js"

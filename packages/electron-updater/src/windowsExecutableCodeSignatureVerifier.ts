@@ -1,15 +1,7 @@
 import { parseDn } from "builder-util-runtime"
 import { execFile, execFileSync, ExecFileOptions } from "child_process"
 import * as os from "os"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { Logger } from "./types.js"
-=======
-import { Logger } from "./types.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { Logger } from "./types.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
 import * as path from "path"
 
 function preparePowerShellExec(command: string, timeout?: number) {

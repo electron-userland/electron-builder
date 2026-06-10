@@ -1,74 +1,31 @@
-<<<<<<< HEAD
 import { PublishManager } from "app-builder-lib"
 import { verifyAsarFileTree as _verifyAsarFileTree } from "./asarVerifier"
 import { AsarIntegrity, computeArchToTargetNamesMap, getLinuxToolsMacToolset, parsePlistFile, PlistObject } from "app-builder-lib/internal"
 import { addValue, copyDir, exec, executeFinally, exists, FileCopier, log, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, deepAssign, UpdateFileInfo } from "builder-util-runtime"
-=======
-import AdmZip from "adm-zip"
-import { AsarIntegrity, computeArchToTargetNamesMap, computeDefaultAppDirectory, createLazyProductionDeps, detectPackageManager, getCollectorByPackageManager, getLinuxToolsPath, installDependencies, parsePlistFile, PlistObject, PM, PublishManager, readAsar } from "app-builder-lib"
-import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, log, USE_HARD_LINKS, walk } from "builder-util"
-import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
-import { execSync } from "child_process"
->>>>>>> fb7cff668 (esm complete on tests as well?)
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
-import { PublishPolicy } from "electron-publish"
-<<<<<<< HEAD
 import { convertVersion } from "electron-winstaller"
+import { PublishPolicy } from "electron-publish"
 import { copyFile, emptyDir, mkdir, writeJson } from "fs-extra"
-=======
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import * as fs from "fs/promises"
 import { realpath as realpathCb } from "fs"
 import { load } from "js-yaml"
 import * as path from "path"
 import pathSorter from "path-sort"
 import { NtExecutable, NtExecutableResource } from "resedit"
-import sanitizeFileName from "sanitize-filename"
 import { TmpDir } from "temp-file"
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
 import { getCollectorByPackageManager, PM } from "app-builder-lib/internal"
 import { promisify } from "util"
-<<<<<<< HEAD
 import { MAC_CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
-=======
-import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData.js"
-import { assertThat } from "./fileAssert.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 import AdmZip from "adm-zip"
 // @ts-ignore
 import sanitizeFileName from "sanitize-filename"
 import type { ExpectStatic } from "vitest"
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
 import { computeDefaultAppDirectory, installDependencies } from "app-builder-lib/internal"
 import { ELECTRON_VERSION } from "./testConfig"
-=======
-import { computeDefaultAppDirectory } from "app-builder-lib/out/util/config/config"
-import { installDependencies } from "app-builder-lib/out/util/yarn"
-import { ELECTRON_VERSION } from "./testConfig.js"
-import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 import { execSync } from "child_process"
-<<<<<<< HEAD
 import { detectPackageManager } from "app-builder-lib/src/node-module-collector/packageManager"
-=======
-import { promisify } from "util"
-import type { ExpectStatic } from "vitest"
-import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData.js"
-import { assertThat } from "./fileAssert.js"
-import { ELECTRON_VERSION } from "./testConfig.js"
->>>>>>> fb7cff668 (esm complete on tests as well?)
-=======
-import { detectPackageManager } from "app-builder-lib/internal"
->>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
 
 const PACKAGE_MANAGER_VERSION_MAP = {
   [PM.NPM]: { cli: "npm", version: "9.8.1" },
@@ -214,7 +171,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
   // `/var` → `/private/var`) and churn unrelated path-sensitive tests.
   const dir = process.platform === "win32" ? await realpathNative(rawDir).catch(() => rawDir) : rawDir
   if (customTmpDir != null) {
-    await fsExtra.emptyDir(dir)
+    await emptyDir(dir)
     log.info({ customTmpDir }, "custom temp dir used")
   }
 
@@ -248,17 +205,8 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
     (async () => {
       const packageManagerOverride = checkOptions.packageManager
       await modifyPackageJson(projectDir, data => {
-<<<<<<< HEAD
         if (data.packageManager == null || packageManagerOverride) {
           data.packageManager = getPackageManagerWithVersion(packageManagerOverride || PM.NPM).prepareEntry
-=======
-        if (
-          data.packageManager == null &&
-          // these will block `npm list` with "Unsupported package manager specification (bun@1.3.2)"
-          ![PM.BUN, PM.TRAVERSAL].includes(packageManagerOverride)
-        ) {
-          data.packageManager = getPackageManagerWithVersion(packageManagerOverride).prepareEntry
->>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
         }
       })
 
@@ -310,7 +258,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       const shouldUpdateLockfiles = process.env.UPDATE_LOCKFILE_FIXTURES === "true" && !!checkOptions.storeDepsLockfileSnapshot
       // check for lockfile fixture so we can use `--frozen-lockfile`
       if ((await exists(testFixtureLockfile)) && !shouldUpdateLockfiles) {
-        await fsExtra.copyFile(testFixtureLockfile, destLockfile)
+        await copyFile(testFixtureLockfile, destLockfile)
         lockfileFixtureApplied = true
       }
 
@@ -345,13 +293,9 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       if (shouldUpdateLockfiles) {
         const fixtureDir = path.dirname(testFixtureLockfile)
         if (!(await exists(fixtureDir))) {
-<<<<<<< HEAD
           await mkdir(fixtureDir, { recursive: true })
-=======
-          await fsExtra.mkdir(fixtureDir)
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
         }
-        await fsExtra.copyFile(destLockfile, testFixtureLockfile)
+        await copyFile(destLockfile, testFixtureLockfile)
       }
 
       if (packagerOptions.projectDir != null) {
@@ -862,7 +806,7 @@ export async function modifyPackageJson(projectDir: string, task: (data: any) =>
   await fs.unlink(file)
 
   await fs.writeFile(path.join(projectDir, ".yarnrc.yml"), "nodeLinker: node-modules")
-  return await fsExtra.writeJson(file, data, { spaces: 2 })
+  return await writeJson(file, data, { spaces: 2 })
 }
 
 export function platform(platform: Platform): PackagerOptions {

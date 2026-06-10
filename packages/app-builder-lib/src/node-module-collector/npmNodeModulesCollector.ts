@@ -1,27 +1,7 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { LogMessageByKey } from "./moduleManager.js"
 import { NodeModulesCollector } from "./nodeModulesCollector.js"
 import { PM } from "./packageManager.js"
 import { NpmDependency } from "./types.js"
-=======
-import { log } from "builder-util"
-import * as path from "path"
-<<<<<<< HEAD
-import { NodeModulesCollector } from "./nodeModulesCollector.js.js"
-import { PM } from "./packageManager.js.js"
-import { NpmDependency, PackageJson } from "./types.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { NodeModulesCollector } from "./nodeModulesCollector.js"
-import { PM } from "./packageManager.js"
-import { NpmDependency, PackageJson } from "./types.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
-=======
-import { NodeModulesCollector } from "./nodeModulesCollector.js"
-import { PM } from "./packageManager.js"
-import { NpmDependency } from "./types.js"
->>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
 
 export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency, string> {
   public readonly installOptions = {
@@ -30,11 +10,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
   }
 
   protected getArgs(): string[] {
-<<<<<<< HEAD
     return ["list", "-a", "--include", "prod", "--include", "optional", "--omit", "dev", "--json", "--long", "--silent", "--loglevel=error"]
-=======
-    return ["list", "-a", "--include", "prod", "--include", "optional", "--omit", "dev", "--json", "--long", "--silent"]
->>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
   }
 
   protected async collectAllDependencies(tree: NpmDependency) {
@@ -102,14 +78,6 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
 
   // `npm list` provides explicit list of deps in _dependencies
   protected isProdDependency(packageName: string, tree: NpmDependency) {
-<<<<<<< HEAD
     return tree._dependencies?.[packageName] != null
-=======
-    return tree._dependencies?.[packageName] != null // || super.isProdDependency(packageName, tree)
-  }
-
-  protected async parseDependenciesTree(jsonBlob: string): Promise<NpmDependency> {
-    return Promise.resolve(JSON.parse(jsonBlob))
->>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
   }
 }

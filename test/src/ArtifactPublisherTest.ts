@@ -1,9 +1,5 @@
 import { Platform } from "app-builder-lib"
-<<<<<<< HEAD
 import { createPublisher } from "app-builder-lib/internal"
-=======
-import { createPublisher } from "app-builder-lib"
->>>>>>> fb7cff668 (esm complete on tests as well?)
 import { Arch } from "builder-util"
 import { BitbucketOptions, CancellationToken, HttpError, KeygenOptions, S3Options, SpacesOptions } from "builder-util-runtime"
 import { publishArtifactsWithOptions } from "electron-builder"

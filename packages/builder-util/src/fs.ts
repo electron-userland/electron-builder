@@ -1,27 +1,13 @@
 import { Nullish } from "builder-util-runtime"
 import { Stats } from "fs"
-<<<<<<< HEAD
 import fsExtra from "fs-extra"
-=======
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { access, chmod, link, lstat, mkdir, readdir, readlink, stat, symlink, unlink, writeFile } from "fs/promises"
 import { platform } from "os"
 import * as path from "path"
 import statMode from "stat-mode"
 import asyncPool from "tiny-async-pool"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { log } from "./log.js"
 import { orIfFileNotExist, orNullIfFileNotExist } from "./promise.js"
-=======
-import { log } from "./log.js.js"
-import { orIfFileNotExist, orNullIfFileNotExist } from "./promise.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { log } from "./log.js"
-import { orIfFileNotExist, orNullIfFileNotExist } from "./promise.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export const MAX_FILE_REQUESTS = 8
 

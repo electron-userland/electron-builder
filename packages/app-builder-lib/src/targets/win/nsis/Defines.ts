@@ -1,12 +1,4 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { PortableOptions } from "./nsisOptions.js"
-=======
-import { PortableOptions } from "./nsisOptions.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { PortableOptions } from "./nsisOptions.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
 /**
  * Parameters declared as environment variables in NSIS scripts.
  * The documentation vaguely explains "All other electron-builder specific flags (e.g. ONE_CLICK) are still defined."

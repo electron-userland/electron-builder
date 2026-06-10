@@ -6,39 +6,20 @@ import _debug from "debug"
 import { dump } from "js-yaml"
 import * as path from "path"
 import { install as installSourceMap } from "source-map-support"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { debug, log } from "./log.js"
 import { exists } from "./fs.js"
 import _fsExtra from "fs-extra"
 const { mkdir } = _fsExtra
 import { isEmptyOrSpaces } from "./stringUtil.js"
-=======
-import { getPath7za } from "./7za.js.js"
-import { debug, log } from "./log.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { getPath7za } from "./7za.js"
-import { debug, log } from "./log.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 export { isEmptyOrSpaces } from "./stringUtil.js"
-=======
-export { getCompleteExtname, sanitizeFileName } from "./filename"
->>>>>>> c92b22265 (tmp save for .js extension migration)
-=======
-export { getCompleteExtname, sanitizeFileName } from "./filename.js"
->>>>>>> fb7cff668 (esm complete on tests as well?)
 export { safeStringifyJson, retry } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
 export * from "./arch.js"
-<<<<<<< HEAD
 export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames, getArchSuffix, toLinuxArchString } from "./arch.js"
 export { AsyncTaskManager } from "./asyncTaskManager.js"
 export { DebugLogger } from "./DebugLogger.js"
@@ -47,14 +28,6 @@ export { buildGotProxyAgent, httpExecutor, NodeHttpExecutor } from "./nodeHttpEx
 export * from "./promise.js"
 export * from "./envUtil.js"
 export { parseValidEnvVarUrl } from "./envUtil.js"
-=======
-export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames, getArchSuffix, toLinuxArchString } from "./arch"
-export { AsyncTaskManager } from "./asyncTaskManager"
-export { DebugLogger } from "./DebugLogger"
-export * from "./log"
-export { httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor"
-export * from "./promise"
->>>>>>> d26567f58 (tmp save)
 
 export { asArray, deepAssign, isValidKey } from "builder-util-runtime"
 export * from "./fs.js"

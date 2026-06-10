@@ -1,17 +1,5 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { CompressionLevel, Publish, TargetConfiguration, TargetSpecificOptions } from "../core.js"
 import { FileAssociation } from "./FileAssociation.js"
-<<<<<<< HEAD
-=======
-import { CompressionLevel, Publish, TargetConfiguration, TargetSpecificOptions } from "../core"
-=======
-import { CompressionLevel, Publish, TargetConfiguration, TargetSpecificOptions } from "../core.js"
->>>>>>> d26567f58 (tmp save)
-import { FileAssociation } from "./FileAssociation.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export interface FileSet {
   /**

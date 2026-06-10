@@ -4,16 +4,10 @@ import { Arch, copyFile, exec } from "builder-util"
 import { Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
-<<<<<<< HEAD
 import { assertThat } from "../helpers/fileAssert.js"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester.js"
 import { beforeAll } from "vitest"
 import type { attachAndExecute as aAndE, getDmgTemplatePath as dmgTemplate } from "dmg-builder"
-=======
-import { assertThat } from "../helpers/fileAssert"
-import { app, assertPack, copyTestAsset } from "../helpers/packTester"
-import { attachAndExecute, getDmgTemplatePath } from "dmg-builder"
->>>>>>> fb7cff668 (esm complete on tests as well?)
 
 const dmgTarget = Platform.MAC.createTarget("dmg", Arch.x64)
 const defaultTarget = Platform.MAC.createTarget(undefined, Arch.x64)

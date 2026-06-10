@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import { parsePlistFile, PlistObject } from "app-builder-lib/internal"
-=======
-import { parsePlistFile, PlistObject } from "app-builder-lib"
->>>>>>> fb7cff668 (esm complete on tests as well?)
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"

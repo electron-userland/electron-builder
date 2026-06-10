@@ -16,20 +16,12 @@ import {
 import { randomBytes } from "crypto"
 import { release } from "os"
 import { EventEmitter } from "events"
-<<<<<<< HEAD
 import fsExtra from "fs-extra"
-=======
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { OutgoingHttpHeaders } from "http"
 import { load } from "js-yaml"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, lt as isVersionLessThan, parse as parseVersion, prerelease as getVersionPreleaseComponents, SemVer } from "semver"
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> c92b22265 (tmp save for .js extension migration)
 import { AppAdapter } from "./AppAdapter.js"
 import { createTempUpdateFile, DownloadedUpdateHelper } from "./DownloadedUpdateHelper.js"
 import { ElectronAppAdapter } from "./ElectronAppAdapter.js"
@@ -37,42 +29,14 @@ import { ElectronHttpExecutor, getNetSession, LoginCallback } from "./electronHt
 import { GenericProvider } from "./providers/GenericProvider.js"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory.js"
 import { Provider, ProviderPlatform } from "./providers/Provider.js"
-<<<<<<< HEAD
-=======
-import { AppAdapter } from "./AppAdapter.js.js"
-import { createTempUpdateFile, DownloadedUpdateHelper } from "./DownloadedUpdateHelper.js.js"
-import { ElectronAppAdapter } from "./ElectronAppAdapter.js.js"
-import { ElectronHttpExecutor, getNetSession, LoginCallback } from "./electronHttpExecutor.js.js"
-import { GenericProvider } from "./providers/GenericProvider.js.js"
-import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory.js.js"
-import { Provider, ProviderPlatform } from "./providers/Provider.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
->>>>>>> c92b22265 (tmp save for .js extension migration)
 import type { TypedEmitter } from "tiny-typed-emitter"
 type Session = Electron.Session
 import type { AuthInfo } from "electron"
 import { gunzipSync, gzipSync } from "zlib"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader.js"
 import { DOWNLOAD_PROGRESS, Logger, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./types.js"
 import { VerifyUpdateSupport } from "./index.js"
-
-const require = createRequire(import.meta.url)
-=======
-import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js.js"
-import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader.js.js"
-import { DOWNLOAD_PROGRESS, Logger, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./types.js.js"
-import { VerifyUpdateSupport } from "./main.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
-import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader.js"
-import { DOWNLOAD_PROGRESS, Logger, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./types.js"
-import { VerifyUpdateSupport } from "./main.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 const require = createRequire(import.meta.url)
 

@@ -1,20 +1,8 @@
 import { log } from "builder-util"
 import { Lazy } from "lazy-val"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { NpmNodeModulesCollector } from "./npmNodeModulesCollector.js"
 import { PM } from "./packageManager.js"
 import { NpmDependency } from "./types.js"
-=======
-import { NpmNodeModulesCollector } from "./npmNodeModulesCollector.js.js"
-import { PM } from "./packageManager.js.js"
-import { NpmDependency } from "./types.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { NpmNodeModulesCollector } from "./npmNodeModulesCollector.js"
-import { PM } from "./packageManager.js"
-import { NpmDependency } from "./types.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 type YarnSetupInfo = {
   yarnVersion: string | null
@@ -48,11 +36,7 @@ export class YarnBerryNodeModulesCollector extends NpmNodeModulesCollector {
   }
 
   protected isProdDependency(packageName: string, tree: NpmDependency): boolean {
-<<<<<<< HEAD
     return super.isProdDependency(packageName, tree) || tree.dependencies?.[packageName] != null || tree.optionalDependencies?.[packageName] != null
-=======
-    return super.isProdDependency(packageName, tree) || tree.dependencies?.[packageName] != null || tree.optionalDependencies?.[packageName] == null
->>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
   }
 
   private async detectYarnSetup(rootDir: string): Promise<YarnSetupInfo> {

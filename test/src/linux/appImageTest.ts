@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import { Platform } from "app-builder-lib"
-=======
-import { Platform } from "app-builder-lib/src"
->>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
 import { copyMimeTypes, validateCriticalPathString } from "app-builder-lib/internal"
 import { Arch, InvalidConfigurationError, TmpDir } from "builder-util"
 import { execSync, spawnSync } from "child_process"

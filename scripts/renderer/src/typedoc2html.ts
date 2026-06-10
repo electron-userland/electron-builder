@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import fsExtra from "fs-extra"
-=======
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { rm } from "fs/promises"
 import * as path from "path"
 import * as process from "process"

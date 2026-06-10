@@ -1,35 +1,5 @@
 import { asArray, InvalidConfigurationError, log, retry } from "builder-util"
 import { MemoLazy, parseDn } from "builder-util-runtime"
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-import { rename } from "fs-extra"
-=======
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
-import { Lazy } from "lazy-val"
-import * as os from "os"
-import * as path from "path"
-import { getBin } from "../binDownload.js"
-import { Target } from "../core.js"
-import { WindowsConfiguration } from "../options/winOptions.js"
-import AppXTarget from "../targets/AppxTarget.js"
-import { executeAppBuilderAsJson } from "../util/appBuilder.js"
-import { computeToolEnv, ToolInfo } from "../util/bundledTool.js"
-import { isUseSystemSigncode } from "../util/flags.js"
-import { resolveFunction } from "../util/resolve.js"
-import { VmManager } from "../vm/vm.js"
-import { WinPackager } from "../winPackager.js"
-<<<<<<< HEAD
-import { importCertificate } from "./codesign.js.js"
-import { SignManager } from "./signManager.js.js"
-import { WindowsSignOptions } from "./windowsCodeSign.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { importCertificate } from "./codesign.js"
-import { SignManager } from "./signManager.js"
-import { WindowsSignOptions } from "./windowsCodeSign.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -266,7 +236,7 @@ export class WindowsSignToolManager implements SignManager {
       )
       isNest = true
       if (taskConfiguration.resultOutputPath != null) {
-        await fsExtra.rename(taskConfiguration.resultOutputPath, options.path)
+        await rename(taskConfiguration.resultOutputPath, options.path)
       }
     }
 

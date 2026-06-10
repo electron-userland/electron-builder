@@ -3,23 +3,11 @@ import { Nullish } from "builder-util-runtime"
 import { mkdir } from "fs/promises"
 import { Minimatch } from "minimatch"
 import * as path from "path"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import type { Configuration } from "./configuration.js"
 import type { Packager } from "./packager.js"
 import { FileSet, PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions.js"
 import { PlatformPackager } from "./platformPackager.js"
 import { createFilter, hasMagic } from "./util/filter.js"
-=======
-import { Configuration, FileSet, Packager, PlatformSpecificBuildOptions } from "./index.js.js"
-import { PlatformPackager } from "./platformPackager.js.js"
-import { createFilter, hasMagic } from "./util/filter.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { Configuration, FileSet, Packager, PlatformSpecificBuildOptions } from "./index.js"
-import { PlatformPackager } from "./platformPackager.js"
-import { createFilter, hasMagic } from "./util/filter.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 // https://github.com/electron-userland/electron-builder/issues/733
 const minimatchOptions = { dot: true }

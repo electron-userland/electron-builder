@@ -1,19 +1,6 @@
 import { PlatformPackager } from "app-builder-lib"
-<<<<<<< HEAD
 import { getLicenseFiles } from "app-builder-lib/internal"
 import { InvalidConfigurationError } from "builder-util"
-=======
-import { getLicenseFiles } from "app-builder-lib/out/util/license"
-import { log } from "builder-util"
-import { dmgLicenseFromJSON } from "dmg-license"
-import fsExtra from "fs-extra"
-import { load } from "js-yaml"
-<<<<<<< HEAD
-import { getLicenseButtonsFile } from "./licenseButtons.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { getLicenseButtonsFile } from "./licenseButtons.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 import { CORE_SCHEMA, load } from "js-yaml"
 import { getLicenseButtonsFile } from "./licenseButtons.js"
@@ -92,32 +79,9 @@ async function buildConventionLicenseConfig(packager: PlatformPackager<any>): Pr
 
   const licenses: Record<string, string> = {}
   for (const file of licenseFiles) {
-<<<<<<< HEAD
     if (licenses[file.langWithRegion] != null) {
       throw new InvalidConfigurationError(
         `Multiple license files found for language "${file.langWithRegion}": "${licenses[file.langWithRegion]}" and "${file.file}". Only one license file per language is supported.`
-=======
-    jsonFile.body.push({
-      file: file.file,
-      lang: file.langWithRegion.replace("_", "-"),
-    })
-  }
-
-  for (const button of licenseButtonFiles) {
-    const filepath = button.file
-    const label = filepath.endsWith(".yml") ? load(await fsExtra.readFile(filepath, "utf-8")) : await fsExtra.readJson(filepath)
-    if (label.description) {
-      // to support original button file format
-      label.message = label.description
-      delete label.description
-    }
-    jsonFile.labels.push(
-      Object.assign(
-        {
-          lang: button.langWithRegion.replace("_", "-"),
-        },
-        label
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
       )
     }
     licenses[file.langWithRegion] = file.file

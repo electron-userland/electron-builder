@@ -1,14 +1,6 @@
 import { exec, ExtraSpawnOptions, spawn } from "builder-util"
 import { ExecFileOptions, SpawnOptions } from "child_process"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { VmManager } from "./vm.js"
-=======
-import { VmManager } from "./vm.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { VmManager } from "./vm.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export class MonoVmManager extends VmManager {
   constructor() {

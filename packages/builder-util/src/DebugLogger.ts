@@ -1,22 +1,7 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { serializeToYaml } from "./util.js"
 import { mapToObject } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
 const { outputFile } = _fsExtra
-=======
-import { outputFile } from "fs-extra"
-<<<<<<< HEAD
-import { serializeToYaml } from "./util.js.js"
-import { mapToObject } from "./mapper.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-=======
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
-import { serializeToYaml } from "./util.js"
-import { mapToObject } from "./mapper.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export class DebugLogger {
   readonly data = new Map<string, any>()
@@ -56,7 +41,7 @@ export class DebugLogger {
     const data = mapToObject(this.data)
     // toml and json doesn't correctly output multiline string as multiline
     if (this.isEnabled && Object.keys(data).length > 0) {
-      return fsExtra.outputFile(file, serializeToYaml(data))
+      return outputFile(file, serializeToYaml(data))
     } else {
       return Promise.resolve()
     }

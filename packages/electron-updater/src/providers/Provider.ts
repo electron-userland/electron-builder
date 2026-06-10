@@ -5,12 +5,7 @@ import { URL } from "url"
 import { ElectronHttpExecutor } from "../electronHttpExecutor.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
 import { newUrlFromBase } from "../util.js"
-<<<<<<< HEAD
 import escapeRegExp from "lodash.escaperegexp"
-=======
-// @ts-ignore
-import * as escapeRegExp from "lodash.escaperegexp"
->>>>>>> d26567f58 (tmp save)
 
 export type ProviderPlatform = "darwin" | "linux" | "win32"
 

@@ -1,48 +1,19 @@
-<<<<<<< HEAD
 import { createRequire } from "node:module"
 import { DebugLogger, InvalidConfigurationError, log, safeStringifyJson, statOrNull } from "builder-util"
 
 const _requireResolve = createRequire(import.meta.url).resolve
 import { deepAssign, Nullish } from "builder-util-runtime"
 
-=======
-import { DebugLogger, deepAssign, InvalidConfigurationError, log, safeStringifyJson, statOrNull } from "builder-util"
-import { Nullish } from "builder-util-runtime"
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 import { Lazy } from "lazy-val"
 import * as path from "path"
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> d26567f58 (tmp save)
 import { Configuration } from "../../configuration.js"
 import { FileSet } from "../../options/PlatformSpecificBuildOptions.js"
 import { reactCra } from "../../presets/rectCra.js"
 import { PACKAGE_VERSION } from "../../version.js"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load.js"
-<<<<<<< HEAD
 import { validateSchema } from "./schemaValidator.js"
 import _fsExtra from "fs-extra"
 const { readJson } = _fsExtra
-=======
-import { Configuration } from "../../configuration"
-import { FileSet } from "../../options/PlatformSpecificBuildOptions"
-import { reactCra } from "../../presets/rectCra"
-import { PACKAGE_VERSION } from "../../version"
-=======
->>>>>>> d26567f58 (tmp save)
-import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load.js.js"
-=======
-import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
-const validateSchema = require("@develar/schema-utils")
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import validateSchema from "@develar/schema-utils"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 
 // https://github.com/electron-userland/electron-builder/issues/1847
 function mergePublish(config: Configuration, configFromOptions: Configuration) {
@@ -71,7 +42,7 @@ export async function getConfig(
   projectDir: string,
   configPath: string | null,
   configFromOptions: Configuration | Nullish,
-  packageMetadata: Lazy<Record<string, any> | null> = new Lazy(() => orNullIfFileNotExist(fsExtra.readJson(path.join(projectDir, "package.json"))))
+  packageMetadata: Lazy<Record<string, any> | null> = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))
 ): Promise<Configuration> {
   const configRequest: ReadConfigRequest = { packageKey: "build", configFilename: "electron-builder", projectDir, packageMetadata }
   const configAndEffectiveFile = await _getConfig<Configuration>(configRequest, configPath)
@@ -91,7 +62,7 @@ export async function getConfig(
     if ((dependencies != null && "react-scripts" in dependencies) || (devDependencies != null && "react-scripts" in devDependencies)) {
       config.extends = "react-cra"
     } else if (devDependencies != null && "electron-webpack" in devDependencies) {
-      let file = "electron-webpack/src/electron-builder.js"
+      let file = "electron-webpack/out/electron-builder.js"
       try {
         file = _requireResolve(file)
       } catch (_ignore) {
@@ -248,11 +219,7 @@ function getDefaultConfig(): Configuration {
   }
 }
 
-<<<<<<< HEAD
 const schemeDataPromise = new Lazy(() => readJson(path.join(import.meta.dirname, "..", "..", "..", "scheme.json")))
-=======
-const schemeDataPromise = new Lazy(() => fsExtra.readJson(path.join(__dirname, "..", "..", "..", "scheme.json")))
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 
 export async function validateConfiguration(config: Configuration, debugLogger: DebugLogger) {
   validateSchema(await schemeDataPromise.value, config, {

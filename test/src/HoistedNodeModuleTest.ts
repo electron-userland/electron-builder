@@ -1,31 +1,12 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { PM } from "app-builder-lib/internal"
-=======
-import { PM } from "app-builder-lib"
->>>>>>> fb7cff668 (esm complete on tests as well?)
 import { spawn } from "builder-util"
-=======
-import { PM } from "app-builder-lib/internal"
-import { spawn } from "builder-util/src/util"
->>>>>>> 53d8ac2ae (use `/internal` import instead of deep imports)
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as path from "path"
-<<<<<<< HEAD
 import { appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
-<<<<<<< HEAD
 import { copy, mkdir, outputFile, readJson, rm, symlink, writeJson } from "fs-extra"
 import { assertThat } from "./helpers/fileAssert"
 import { dump } from "js-yaml"
-=======
-import { appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester.js"
-import { ELECTRON_VERSION } from "./helpers/testConfig.js"
-import { execSync } from "child_process"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import * as fsExtra from "fs-extra"
->>>>>>> 8a2e4e97f (tmp save. migrating fs-extra to namespace import)
 
 describe("node_module collectors", () => {
   test("yarn workspace", ({ expect }) =>
@@ -131,16 +112,16 @@ describe("node_module collectors", () => {
             }
           })
 
-          await fsExtra.mkdir(path.join(projectDir, "app"))
-          await fsExtra.copy(path.join(projectDir, "index.html"), path.join(projectDir, "app", "index.html"))
-          await fsExtra.copy(path.join(projectDir, "index.js"), path.join(projectDir, "app", "index.js"))
+          await mkdir(path.join(projectDir, "app"))
+          await copy(path.join(projectDir, "index.html"), path.join(projectDir, "app", "index.html"))
+          await copy(path.join(projectDir, "index.js"), path.join(projectDir, "app", "index.js"))
 
           // delete package.json devDependencies
-          const packageJson = await fsExtra.readJson(path.join(projectDir, "package.json"))
+          const packageJson = await readJson(path.join(projectDir, "package.json"))
           delete packageJson.devDependencies
           delete packageJson.build
           delete packageJson.scripts
-          await fsExtra.writeJson(path.join(projectDir, "app", "package.json"), packageJson)
+          await writeJson(path.join(projectDir, "app", "package.json"), packageJson)
 
           await spawn("yarn", ["install"], {
             cwd: projectDir,
@@ -186,17 +167,17 @@ describe("node_module collectors", () => {
             stdio: "ignore",
           })
 
-          await fsExtra.mkdir(path.join(projectDir, "app"))
-          await fsExtra.rm(path.join(projectDir, "app", "node_modules"), { recursive: true, force: true })
-          await fsExtra.copy(path.join(projectDir, "index.html"), path.join(projectDir, "app", "index.html"))
-          await fsExtra.copy(path.join(projectDir, "index.js"), path.join(projectDir, "app", "index.js"))
+          await mkdir(path.join(projectDir, "app"))
+          await rm(path.join(projectDir, "app", "node_modules"), { recursive: true, force: true })
+          await copy(path.join(projectDir, "index.html"), path.join(projectDir, "app", "index.html"))
+          await copy(path.join(projectDir, "index.js"), path.join(projectDir, "app", "index.js"))
 
           // delete package.json devDependencies
-          const packageJson = await fsExtra.readJson(path.join(projectDir, "package.json"))
+          const packageJson = await readJson(path.join(projectDir, "package.json"))
           delete packageJson.devDependencies
           delete packageJson.build
           delete packageJson.scripts
-          await fsExtra.writeJson(path.join(projectDir, "app", "package.json"), packageJson)
+          await writeJson(path.join(projectDir, "app", "package.json"), packageJson)
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
       }
@@ -247,7 +228,7 @@ describe("node_module collectors", () => {
       {
         packageManager: PM.YARN,
         projectDirCreated: async projectDir => {
-          await fsExtra.symlink(invalidPath, path.join(projectDir, "app", "badlink"))
+          await symlink(invalidPath, path.join(projectDir, "app", "badlink"))
         },
       },
       error => {
@@ -422,7 +403,7 @@ describe("node_module collectors", () => {
         storeDepsLockfileSnapshot: true,
         packageManager: PM.YARN,
         projectDirCreated: async projectDir => {
-          await fsExtra.outputFile(path.join(projectDir, "node_modules", "foo", "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}`)
+          await outputFile(path.join(projectDir, "node_modules", "foo", "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}`)
           await modifyPackageJson(projectDir, data => {
             data.dependencies = {
               debug: "3.1.0",
@@ -577,7 +558,7 @@ describe("node_module collectors", () => {
                 dayjs: "1.11.13",
               }
             }),
-            fsExtra.outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted"),
+            outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted"),
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
@@ -600,7 +581,7 @@ describe("node_module collectors", () => {
                 dayjs: "1.11.13",
               }
             }),
-            fsExtra.outputFile(path.join(projectDir, ".npmrc"), "shamefully-hoist=true"),
+            outputFile(path.join(projectDir, ".npmrc"), "shamefully-hoist=true"),
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
@@ -623,7 +604,7 @@ describe("node_module collectors", () => {
                 dayjs: "1.11.13",
               }
             }),
-            fsExtra.outputFile(path.join(projectDir, ".npmrc"), "public-hoist-pattern=*"),
+            outputFile(path.join(projectDir, ".npmrc"), "public-hoist-pattern=*"),
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),

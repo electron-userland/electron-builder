@@ -1,20 +1,10 @@
 import { AllPublishOptions } from "builder-util-runtime"
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { AppAdapter } from "./AppAdapter.js"
 import { BaseUpdater } from "./BaseUpdater.js"
 
 // Matches safe package manager names: alphanumeric, hyphens, underscores only.
 // Rejects names with shell metacharacters that could cause command injection.
 const SAFE_PM_REGEX = /^[a-zA-Z0-9_-]+$/
-=======
-import { AppAdapter } from "./AppAdapter.js.js"
-import { BaseUpdater } from "./BaseUpdater.js.js"
->>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
-=======
-import { AppAdapter } from "./AppAdapter.js"
-import { BaseUpdater } from "./BaseUpdater.js"
->>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export abstract class LinuxUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
