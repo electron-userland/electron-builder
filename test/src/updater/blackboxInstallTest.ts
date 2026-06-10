@@ -93,7 +93,7 @@ async function runInstallTest(context: TestContext, target: ConstructorParameter
 
     const config = deepAssign<Configuration>(
       {
-        npmRebuild: true,
+        nativeModules: { npmRebuild: true },
         productName: "TestApp",
         executableName: "TestApp",
         appId: "com.test.app",

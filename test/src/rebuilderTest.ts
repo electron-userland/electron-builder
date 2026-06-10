@@ -23,7 +23,7 @@ const packageConfig = (data: any) => {
 
 const extraFile = "./node_modules/better-sqlite3-multiple-ciphers/build/Release/better_sqlite3.node"
 const config: Configuration = {
-  npmRebuild: true,
+  nativeModules: { npmRebuild: true },
   asarUnpack: ["**/better_sqlite3.node"],
 }
 

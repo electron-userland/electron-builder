@@ -63,7 +63,7 @@ export async function doBuild(
         config: Object.assign(
           deepAssign<Configuration>(
             {
-              npmRebuild: true,
+              nativeModules: { npmRebuild: true },
               productName: "TestApp",
               executableName: "TestApp",
               appId: "com.test.app",
