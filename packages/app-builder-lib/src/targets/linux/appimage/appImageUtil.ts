@@ -2,7 +2,7 @@ import { Arch, copyDir, copyFile, exec, exists, InvalidConfigurationError, log }
 import fs from "fs-extra"
 import * as path from "path"
 import { FileAssociation } from "../../../options/FileAssociation.js"
-import { getAppImageTools } from "../../../toolsets/linux.js"
+import { getAppImageTools } from "../../../toolsets/appimage.js"
 import { copyIcons, copyMimeTypes } from "./appLauncher.js"
 import { appendBlockmap } from "../../differentialUpdateInfoBuilder.js"
 import { BlockMapDataHolder } from "builder-util-runtime"
@@ -83,7 +83,7 @@ export async function buildStaticRuntimeAppImage(appimageToolVersion: ToolsetCon
   }
 }
 
-export async function buildLegacyFuse2AppImage(opts: AppImageBuilderOptions): Promise<BlockMapDataHolder> {
+export async function buildLegacyFuse2AppImage(opts: AppImageBuilderOptions, resourcesDir: string): Promise<BlockMapDataHolder> {
   const { stageDir, output, appDir, options, arch } = opts
 
   try {
@@ -91,7 +91,7 @@ export async function buildLegacyFuse2AppImage(opts: AppImageBuilderOptions): Pr
 
     await writeAppLauncherAndRelatedFiles(opts)
 
-    const { runtime, mksquashfs, runtimeLibraries } = await getAppImageTools("0.0.0", arch, "")
+    const { runtime, mksquashfs, runtimeLibraries } = await getAppImageTools("0.0.0", arch, resourcesDir)
     // Mirror the app-builder-lib Go implementation: bundle lib/<arch> into usr/lib for x64 and ia32.
     // arm targets don't have a dedicated lib dir in the FUSE2 toolset.
     if (arch === Arch.x64 || arch === Arch.ia32) {

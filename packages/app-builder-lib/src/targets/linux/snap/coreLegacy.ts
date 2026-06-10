@@ -1,18 +1,18 @@
 import { replaceDefault as _replaceDefault, Arch, copyDir, exec, log, serializeToYaml, toLinuxArchString, validateShellEmbeddable } from "builder-util"
 import { asArray, deepAssign, isValidKey, Nullish } from "builder-util-runtime"
-import { chmod, copyFile, mkdir, readdir, rename, rm, writeFile } from "fs/promises"
 import _fsExtra from "fs-extra"
-const { outputFile, readFile } = _fsExtra
+import { chmod, copyFile, mkdir, readdir, rename, rm, writeFile } from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
 import { PlugDescriptor, SnapOptions } from "../../../options/SnapOptions.js"
-import { getAppImageTools } from "../../../toolsets/linux.js"
+import { getAppImageTools } from "../../../toolsets/appimage.js"
 import { downloadBuilderToolset } from "../../../util/electronGet.js"
+import { isSnapDestructiveMode } from "../../../util/flags.js"
 import { getTemplatePath } from "../../../util/pathManager.js"
 import { SnapCore } from "./SnapTarget.js"
 import { SnapcraftYAML } from "./snapcraft.js"
 import { DEFAULT_STAGE_PACKAGES } from "./snapcraftBuilder.js"
-import { isSnapDestructiveMode } from "../../../util/flags.js"
+const { outputFile, readFile } = _fsExtra
 
 // Snap template release info from electron-userland/electron-builder-binaries
 const SNAP_TEMPLATES = {
@@ -290,7 +290,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
       await exec("chmod", ["-R", "g-s", dir]).catch(err => log.warn({ error: err.message }, "chmod g-s failed"))
     }
 
-    const mksquashfsPath = await getMksquashfsPath(snapArch)
+    const { mksquashfs } = await getAppImageTools("0.0.0", snapArch, this.packager.buildResourcesDir)
 
     // Collect top-level entries from each dir as individual path args (mirrors Go ReadDirContentTo)
     const mksquashfsArgs: string[] = [
@@ -308,7 +308,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
       "-all-root",
     ]
 
-    await exec(mksquashfsPath, mksquashfsArgs, { cwd: stageDir })
+    await exec(mksquashfs, mksquashfsArgs, { cwd: stageDir })
   }
 
   private async buildWithoutTemplate(opts: { appOutDir: string; stageDir: string; artifactPath: string; hooksDir: string | null; extraAppArgs: string[] }): Promise<void> {
@@ -421,15 +421,6 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
         throw new Error(`Unsupported arch ${arch}`)
     }
   }
-}
-
-async function getMksquashfsPath(arch: Arch): Promise<string> {
-  const envPath = process.env.MKSQUASHFS_PATH
-  if (envPath) {
-    return envPath
-  }
-  const { mksquashfs } = await getAppImageTools("0.0.0", arch, "")
-  return mksquashfs
 }
 
 async function readDirPaths(dir: string, filter?: (name: string) => boolean): Promise<string[]> {

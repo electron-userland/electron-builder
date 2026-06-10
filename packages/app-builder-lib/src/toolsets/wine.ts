@@ -1,9 +1,9 @@
-import { exists, InvalidConfigurationError, resolveEnvToolsetPath, sanitizeDirPath } from "builder-util"
+import { exists, InvalidConfigurationError, sanitizeDirPath } from "builder-util"
 import * as path from "path"
-import { ToolsetConfig } from "../../configuration.js"
-import { downloadBuilderToolset } from "../../util/electronGet.js"
-import { isUseSystemWine } from "../../util/flags.js"
-import { getCustomToolsetPath } from "../custom.js"
+import { ToolsetConfig } from "../configuration.js"
+import { downloadBuilderToolset } from "../util/electronGet.js"
+import { isUseSystemWine } from "../util/flags.js"
+import { getCustomToolsetPath } from "./custom.js"
 
 const wineToolsChecksums: Record<string, Record<string, string>> = {
   "0.0.0": {
@@ -21,22 +21,6 @@ export async function getWineToolset(wine: ToolsetConfig["wine"], resourcesDir: 
   }
 
   const defaultEnv = { WINEDEBUG: "-all,err+all", WINEDLLOVERRIDES: "winemenubuilder.exe=d" }
-
-  const envPath = await resolveEnvToolsetPath("ELECTRON_BUILDER_WINE_TOOLSET_DIR", "directory")
-  if (envPath != null) {
-    // Probe for the wine binary: modern bundles ship bin/wine; legacy bundles (e.g. wine-4.0.1-mac) ship bin/wine64.
-    const wineExecSubPath = (await exists(path.join(envPath, "bin", "wine"))) ? "bin/wine" : "bin/wine64"
-    const { execPath, winePrefix, wineLibPath } = await createWineEnvironment(envPath, wineExecSubPath)
-    return {
-      execPath,
-      env: {
-        ...defaultEnv,
-        WINEPREFIX: winePrefix,
-        DYLD_FALLBACK_LIBRARY_PATH: [wineLibPath, process.env.DYLD_FALLBACK_LIBRARY_PATH].filter(Boolean).join(path.delimiter),
-        LD_LIBRARY_PATH: [wineLibPath, process.env.LD_LIBRARY_PATH].filter(Boolean).join(path.delimiter),
-      },
-    }
-  }
 
   const useSystemWine = isUseSystemWine()
   // null → modern default "1.0.1"

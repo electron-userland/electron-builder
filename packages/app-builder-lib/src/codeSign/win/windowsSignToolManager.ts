@@ -1,22 +1,21 @@
 import { asArray, InvalidConfigurationError, log, retry } from "builder-util"
 import { MemoLazy, parseDn } from "builder-util-runtime"
-
+import _fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../../core.js"
 import { WindowsConfiguration } from "../../options/winOptions.js"
 import AppXTarget from "../../targets/win/AppxTarget.js"
-import { getSignToolPath } from "../../toolsets/windows.js"
+import { getSignToolPath } from "../../toolsets/winCodeSign.js"
 import { ToolInfo } from "../../util/bundledTool.js"
+import { isOfflineModeEnabled } from "../../util/flags.js"
 import { resolveFunction } from "../../util/resolve.js"
-import { readCertInfo } from "../certInfo.js"
 import { VmManager } from "../../vm/vm.js"
 import { WinPackager } from "../../winPackager.js"
+import { readCertInfo } from "../certInfo.js"
 import { importCertificate } from "../codesign.js"
 import { SignManager } from "../signManager.js"
 import { WindowsSignOptions } from "./windowsCodeSign.js"
-import _fsExtra from "fs-extra"
-import { isOfflineModeEnabled } from "../../util/flags.js"
 const { rename } = _fsExtra
 
 export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration, packager?: WinPackager) => Promise<any>

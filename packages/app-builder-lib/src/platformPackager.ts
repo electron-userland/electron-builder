@@ -191,7 +191,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.info.emitAppxManifestCreated(path)
   }
 
-
   abstract get defaultTarget(): Array<string>
 
   // eslint-disable-next-line
@@ -929,7 +928,15 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const filteredSources = sources.filter(s => !s.endsWith(".icon"))
     const filteredFallbacks = fallbackSources.filter(s => !s.endsWith(".icon"))
 
-    const result = await convertIcon({ sources: filteredSources, fallbackSources: filteredFallbacks, roots, format: outputFormat, outDir })
+    const result = await convertIcon({
+      sources: filteredSources,
+      fallbackSources: filteredFallbacks,
+      roots,
+      format: outputFormat,
+      outDir,
+      iconsToolset: this.info.config.toolsets?.icons,
+      resourcesDir: this.buildResourcesDir,
+    })
 
     if (result.error != null) {
       throw new InvalidConfigurationError(result.error, result.errorCode)

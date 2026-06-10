@@ -600,6 +600,7 @@ export async function downloadElectronArtifact(options: ArtifactDownloadOptions)
  * Supports various npm config formats and falls back to GitHub.
  */
 export function getBinariesMirrorUrl(githubOrgRepo: string): string {
+  const allowHttp = process.env["ELECTRON_BUILDER_DANGEROUSLY_ALLOW_HTTP"] === "true"
   for (const envVar of [
     "NPM_CONFIG_ELECTRON_BUILDER_BINARIES_MIRROR",
     "npm_config_electron_builder_binaries_mirror",
