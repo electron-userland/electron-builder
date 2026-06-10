@@ -9003,10 +9003,10 @@
     "electronDownload": {
       "anyOf": [
         {
-          "$ref": "#/definitions/ElectronGetOptions"
+          "$ref": "#/definitions/ElectronDownloadOptions"
         },
         {
-          "$ref": "#/definitions/ElectronDownloadOptions"
+          "$ref": "#/definitions/ElectronGetOptions"
         },
         {
           "type": "null"

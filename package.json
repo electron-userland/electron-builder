@@ -27,7 +27,7 @@
     "docker-push": "bash docker/push.sh",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -t electron-builder@ --pkg packages/electron-builder/package.json && git add CHANGELOG.md",
     "generate:changeset": "pnpm changeset",
-    "generate:schema": "typescript-json-schema packages/app-builder-lib/tsconfig-scheme.json Configuration --out packages/app-builder-lib/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --required --ignoreErrors && node ./scripts/fix-schema.js",
+    "generate:schema": "typescript-json-schema packages/app-builder-lib/tsconfig-scheme.json Configuration --out packages/app-builder-lib/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --required && node ./scripts/fix-schema.js",
     "generate:all": "pnpm generate:schema && pnpm prettier",
     "docs:prebuild": "docker build -t docs-dockerfile -f website/dockerfile .",
     "docs:build": "pnpm compile && docker run --rm -v ${PWD}:/app -w /app/website -v $(pwd)/node-modules-docker-web:/app/node_modules docs-dockerfile sh -c 'pnpm install --frozen-lockfile && pnpm build'",
