@@ -34,7 +34,18 @@ export function parseValidEnvVarUrl(envVarName: string, allowHttp: boolean = fal
   if (url == null || url === "") {
     return null
   }
-  validateSecuredUrl(url, allowHttp)
+  try {
+    validateSecuredUrl(url, allowHttp)
+  } catch (e) {
+    if (e instanceof Error) {
+      if (e.message.startsWith("Not a valid URL:")) {
+        throw new Error(`${envVarName} is not a valid URL`)
+      }
+      // Re-throw https/protocol errors with env var name instead of URL
+      throw new Error(e.message.replace(url, envVarName))
+    }
+    throw e
+  }
   return url
 }
 

@@ -3,7 +3,7 @@ import type { ToolsetCustom } from "app-builder-lib/internal"
 import * as os from "os"
 import * as path from "path"
 import { mkdir, rm, writeFile } from "fs/promises"
-import { getWineToolset } from "app-builder-lib/src/toolsets/win/wine"
+import { getWineToolset } from "app-builder-lib/src/toolsets/wine"
 
 // Unit tests for wine env merging via ToolsetCustom with a file:// directory path.
 // A minimal fake wine directory is created in /tmp for each test.
