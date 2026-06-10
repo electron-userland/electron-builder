@@ -436,10 +436,7 @@ async function writeConfigFile(tmpDir: TmpDir, templatePath: string, options: an
       throw new Error(`Macro ${p1} is not defined`)
     }
   }
-  const config = (await readFile(templatePath, "utf8")).replace(/\${([a-zA-Z]+)}/g, replacer).replace(/<%=([a-zA-Z]+)%>/g, (match, p1) => {
-    log.warn("<%= varName %> is deprecated, please use ${varName} instead")
-    return replacer(match, p1.trim())
-  })
+  const config = (await readFile(templatePath, "utf8")).replace(/\${([a-zA-Z]+)}/g, replacer)
 
   const outputPath = await tmpDir.getTempFile({ suffix: path.basename(templatePath, ".tpl") })
   await outputFile(outputPath, config)

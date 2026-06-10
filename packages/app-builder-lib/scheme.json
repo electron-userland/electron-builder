@@ -1741,7 +1741,7 @@
           "description": "Any custom request headers"
         },
         "tagNamePrefix": {
-          "description": "If defined, sets the prefix of the tag name that comes before the semver number.\ne.g. \"v\" in \"v1.2.3\" or \"test\" of \"test1.2.3\".\nOverrides `vPrefixedTagName`",
+          "description": "If defined, sets the prefix of the tag name that comes before the semver number.\ne.g. \"v\" in \"v1.2.3\" or \"test\" of \"test1.2.3\".",
           "type": "string"
         },
         "timeout": {
@@ -1764,7 +1764,7 @@
             "null",
             "string"
           ]
-        }
+        },
       },
       "required": [
         "provider"
@@ -1862,6 +1862,11 @@
           ],
           "default": "project_upload",
           "description": "Upload target method. Can be \"project_upload\" for GitLab project uploads or \"generic_package\" for GitLab generic packages."
+        },
+        "vPrefixedTagName": {
+          "default": true,
+          "description": "Whether to use `v`-prefixed tag name.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -7949,7 +7954,7 @@
     },
     "ToolsetConfig": {
       "additionalProperties": false,
-      "description": "Version pins (or custom bundle overrides) for the binary toolsets that electron-builder\ndownloads and caches locally.\n\nEach toolset is a versioned archive hosted at\n[electron-userland/electron-builder-binaries](https://github.com/electron-userland/electron-builder-binaries/releases).\nOmitting a property (or setting it to `null`) selects the modern default for that toolset.\nSetting a property to `\"0.0.0\"` forces the legacy bundle — useful only for diagnosing\nregressions introduced by newer toolset bundles.\n\nTo supply your own bundle, set the property to a {@link ToolsetCustom} object with a `url`\n(https:// or file://) and a `checksum` for verification. The bundle must mirror the expected\ndirectory layout of the corresponding built-in bundle; see the build scripts at\nhttps://github.com/electron-userland/electron-builder-binaries/tree/master/packages.",
+      "description": "Version pins and custom bundle overrides for the binary toolsets that electron-builder\ndownloads and caches locally.\n\nEach toolset is a versioned archive hosted at\n[electron-userland/electron-builder-binaries](https://github.com/electron-userland/electron-builder-binaries/releases).\nOmitting a property (or setting it to `null`) selects the modern default for that toolset.\nSetting a property to `\"0.0.0\"` forces the legacy bundle — useful only for diagnosing\nregressions introduced by newer toolset bundles.\n\nTo supply your own bundle, set the property to a {@link ToolsetCustom} object with a `url`\n(https:// or file://) and a `checksum` for verification. The bundle must mirror the expected\ndirectory layout of the corresponding built-in bundle; see the build scripts at\nhttps://github.com/electron-userland/electron-builder-binaries/tree/master/packages.",
       "properties": {
         "appimage": {
           "anyOf": [
@@ -7959,6 +7964,7 @@
             {
               "enum": [
                 "0.0.0",
+                "1.0.2",
                 "1.0.3"
               ],
               "type": "string"
@@ -7968,7 +7974,7 @@
             }
           ],
           "default": "1.0.3",
-          "description": "Version of the AppImage toolset bundle used for building `.AppImage` files.\n\nThe bundle ships:\n- **`mksquashfs`** — creates the SquashFS filesystem embedded in the AppImage.\n- **`desktop-file-validate`** — validates the generated `.desktop` entry.\n- **AppImage runtime** — the self-executing stub that mounts the SquashFS at launch.\n\nAvailable versions:\n| Version | Runtime date | Notes |\n|---------|-------------|-------|\n| `\"0.0.0\"` | Legacy | FUSE2-based AppImage runtime (pre-v27 default) |\n| `\"1.0.3\"` | 20251108 | Static-runtime (FUSE3-compatible); recommended (default) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage"
+          "description": "Version of the AppImage toolset bundle used for building `.AppImage` files.\n\nThe bundle ships:\n- **`mksquashfs`** — creates the SquashFS filesystem embedded in the AppImage.\n- **`desktop-file-validate`** — validates the generated `.desktop` entry.\n- **AppImage runtime** — the self-executing stub that mounts the SquashFS at launch.\n\nAvailable versions:\n| Version | Runtime date | Notes |\n|---------|-------------|-------|\n| `\"0.0.0\"` | Legacy | FUSE2-based AppImage runtime (pre-v27 default) |\n| `\"1.0.2\"` | 20251108 | Static-runtime (FUSE3-compatible); same archive, earlier checksum |\n| `\"1.0.3\"` | 20251108 | Static-runtime (FUSE3-compatible); recommended (default) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage"
         },
         "fpm": {
           "anyOf": [

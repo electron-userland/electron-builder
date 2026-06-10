@@ -111,8 +111,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   readonly appInfo: AppInfo
 
   protected constructor(
-    /** @deprecated Access specific properties via the getters on PlatformPackager instead. Will become protected in a future major release. */
-    readonly info: Packager,
+    protected readonly info: Packager,
     readonly platform: Platform
   ) {
     this.platformSpecificBuildOptions = PlatformPackager.normalizePlatformSpecificBuildOptions((this.config as any)[platform.buildConfigurationKey])
@@ -642,18 +641,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return null
     }
 
-    function errorMessage(name: string) {
-      return `${name} is deprecated is deprecated and not supported — please use asarUnpack`
-    }
-
-    const buildMetadata = this.config as any
-    if (buildMetadata["asar-unpack"] != null) {
-      throw new Error(errorMessage("asar-unpack"))
-    }
-    if (buildMetadata["asar-unpack-dir"] != null) {
-      throw new Error(errorMessage("asar-unpack-dir"))
-    }
-
     const platformSpecific = customBuildOptions.asar
     const result = platformSpecific == null ? this.config.asar : platformSpecific
     if (result === false) {
@@ -674,11 +661,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return {}
     }
 
-    for (const name of ["unpackDir", "unpack"]) {
-      if ((result as any)[name] != null) {
-        throw new Error(errorMessage(`asar.${name}`))
-      }
-    }
     return deepAssign({}, result)
   }
 

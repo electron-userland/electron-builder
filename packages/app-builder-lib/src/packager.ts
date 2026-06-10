@@ -179,13 +179,6 @@ export class Packager {
     options: PackagerOptions,
     readonly cancellationToken = new CancellationToken()
   ) {
-    if ("devMetadata" in options) {
-      throw new InvalidConfigurationError("devMetadata in the options is deprecated, please use config instead")
-    }
-    if ("extraMetadata" in options) {
-      throw new InvalidConfigurationError("extraMetadata in the options is deprecated, please use config.extraMetadata instead")
-    }
-
     const targets = options.targets || new Map<Platform, Map<Arch, Array<string>>>()
     if (options.targets == null) {
       options.targets = targets
