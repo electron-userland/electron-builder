@@ -45,21 +45,7 @@ import _fsExtra from "fs-extra"
 const { chmod, mkdirs, outputFile } = _fsExtra
 
 async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
-  let framework = configuration.framework
-  if (framework != null) {
-    framework = framework.toLowerCase()
-  }
-
-  let nodeVersion = configuration.nodeVersion
-  if (framework === "electron" || framework == null) {
-    return await createElectronFrameworkSupport(configuration, packager)
-  }
-
-  if (nodeVersion == null || nodeVersion === "current") {
-    nodeVersion = process.versions.node
-  }
-
-  throw new InvalidConfigurationError(`Unknown framework: ${framework}`)
+  return createElectronFrameworkSupport(configuration, packager)
 }
 
 type PackagerEvents = {

@@ -9,7 +9,7 @@ import { MsiOptions } from "./options/MsiOptions.js"
 import { MsiWrappedOptions } from "./options/MsiWrappedOptions.js"
 import { PkgOptions } from "./options/pkgOptions.js"
 import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions.js"
-import { SnapcraftOptions } from "./options/SnapOptions.js"
+import { SnapcraftOptions, SnapOptions } from "./options/SnapOptions.js"
 import { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions.js"
 import { WindowsConfiguration } from "./options/winOptions.js"
 import { BuildResult } from "./packager.js"
@@ -212,6 +212,13 @@ export interface CommonConfiguration {
    * @see {@link SnapcraftOptions}
    */
   readonly snapcraft?: SnapcraftOptions | null
+  /**
+   * Flat snap configuration targeting core22 and older snap bases.
+   *
+   * @deprecated Use `snapcraft` instead — it supersedes `snap` when both are present and supports
+   * all snap bases including core24. `snap` will be removed in a future major release.
+   */
+  readonly snap?: SnapOptions | null
   /**
    * AppImage options.
    *
@@ -597,7 +604,7 @@ export interface ToolsetConfig {
    *
    * @default "1.0.3"
    */
-  readonly appimage?: "0.0.0" | "1.0.3" | ToolsetCustom | null
+  readonly appimage?: "0.0.0" | "1.0.2" | "1.0.3" | ToolsetCustom | null
 
   /**
    * Version of the NSIS toolset bundle used to compile Windows installers.

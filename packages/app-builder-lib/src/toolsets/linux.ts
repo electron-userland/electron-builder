@@ -1,4 +1,4 @@
-import { Arch, exists, resolveEnvToolsetPath, use } from "builder-util"
+import { Arch, exists } from "builder-util"
 import * as path from "path"
 import { ToolsetConfig } from "../configuration.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
@@ -31,9 +31,9 @@ const linuxToolsMacChecksums = {
   "linux-tools-mac-darwin-x86_64.tar.gz": "7ee26dfbd0d2a4c2c83b55a9416a30cc84876eef01c6497ca49bb016a190c726",
 } as const
 
-export async function getLinuxToolsPath(toolset: ToolsetConfig["linuxToolsMac"], resourcesDir: string): Promise<string> {
+export async function getLinuxToolsPath(toolset?: ToolsetConfig["linuxToolsMac"], resourcesDir?: string): Promise<string> {
   if (typeof toolset === "object" && toolset != null) {
-    return getCustomToolsetPath(toolset, resourcesDir)
+    return getCustomToolsetPath(toolset, resourcesDir ?? "")
   }
   const arch = process.arch === "arm64" ? "arm64" : "x86_64"
   const filename: keyof typeof linuxToolsMacChecksums = `linux-tools-mac-darwin-${arch}.tar.gz`
@@ -45,7 +45,7 @@ export async function getLinuxToolsPath(toolset: ToolsetConfig["linuxToolsMac"],
   })
 }
 
-export async function getLinuxToolsMacToolset(toolset: ToolsetConfig["linuxToolsMac"], resourcesDir: string) {
+export async function getLinuxToolsMacToolset(toolset?: ToolsetConfig["linuxToolsMac"], resourcesDir?: string) {
   const linuxToolsPath = await getLinuxToolsPath(toolset, resourcesDir)
   const bin = (pkg: string) => path.join(linuxToolsPath, "bin", pkg)
   return {
