@@ -9,6 +9,9 @@ test.ifNotWindows("snap", ({ expect }) =>
         name: "sep",
       },
       productName: "Sep",
+      snapcraft: {
+        base: "core20",
+      },
       electronFuses: {
         runAsNode: true,
         enableCookieEncryption: true,
@@ -31,6 +34,9 @@ test.ifNotWindows("arm", ({ expect }) =>
         name: "sep",
       },
       productName: "Sep",
+      snapcraft: {
+        base: "core20",
+      },
     },
   })
 )
@@ -325,7 +331,7 @@ test.ifNotWindows("default base", ({ expect }) =>
     },
     effectiveOptionComputed: async ({ snap }) => {
       expect(snap).toMatchSnapshot()
-      expect(snap.base).toBe("core20")
+      expect(snap.base).toBe("core24")
       return Promise.resolve(true)
     },
   })
