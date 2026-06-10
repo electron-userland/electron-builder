@@ -204,7 +204,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.info.emitAppxManifestCreated(path)
   }
 
-
   abstract get defaultTarget(): Array<string>
 
   // eslint-disable-next-line

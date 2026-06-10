@@ -423,4 +423,3 @@ describe("validateShellEmbeddable", () => {
     })
   })
 })
-

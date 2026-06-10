@@ -38,6 +38,7 @@ const workspaceSourceAliases = [
   sourceAlias("electron-updater/internal", "electron-updater/src/indexInternal.ts"),
   sourceAlias("electron-updater", "electron-updater/src/index.ts"),
   sourceAlias("dmg-builder", "dmg-builder/src/dmgUtil.ts"),
+  sourceAlias("dmg-builder/internal", "dmg-builder/src/indexInternal.ts"),
   sourceAlias("electron-builder-squirrel-windows", "electron-builder-squirrel-windows/src/SquirrelWindowsTarget.ts"),
   sourceAlias("electron-builder/internal", "electron-builder/src/indexInternal.ts"),
   sourceAlias("electron-builder", "electron-builder/src/index.ts"),
