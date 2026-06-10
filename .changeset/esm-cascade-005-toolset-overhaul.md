@@ -1,5 +1,6 @@
 ---
 "app-builder-lib": major
+"builder-util": major
 ---
 
-chore(refactor): add `ToolsetCustom` support instead of `process.env` overrides, split toolset modules, and cleanup `PlatformPackager` API
+feat(toolsets)!: introduce `ToolsetCustom` for user-supplied bundles; remove env-var toolset overrides; split toolset modules into single-purpose files; deprecate `PlatformPackager.info`

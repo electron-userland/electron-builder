@@ -1,8 +1,4 @@
-import * as path from "path"
 import { isEmptyOrSpaces } from "./stringUtil.js"
-import { log } from "./log.js"
-import { exists } from "./fs.js"
-import { stat } from "fs/promises"
 
 /**
  * Validates that a value is safe to embed in a double-quoted shell string.
@@ -29,27 +25,6 @@ export function resolveEnvShellValue(envVarName: string): string | null {
     throw new Error(`${envVarName} contains shell-unsafe characters: ${trimmed}`)
   }
   return trimmed
-}
-
-export async function resolveEnvToolsetPath(envVarKey: string, expectedType: "directory" | "file"): Promise<string | null> {
-  const value = resolveEnvShellValue(envVarKey)
-  if (value == null) {
-    return null
-  }
-  if (!path.isAbsolute(value)) {
-    throw new Error(`${envVarKey} must be an absolute path: ${value}`)
-  }
-  const p = path.resolve(value)
-  if (!(await exists(p))) {
-    throw new Error(`${envVarKey} path does not exist: ${p}`)
-  }
-  const targetStat = await stat(p)
-  const targetType = targetStat.isDirectory() ? "directory" : targetStat.isFile() ? "file" : "unknown"
-  if (targetType !== expectedType) {
-    throw new Error(`${envVarKey} path must be a ${expectedType}, but got ${targetType}: ${p}`)
-  }
-  log.info({ [envVarKey]: p }, `resolved ${envVarKey} from environment variable`)
-  return p
 }
 
 const LOCALHOST_HOSTNAMES = new Set(["localhost", "127.0.0.1", "[::1]"])

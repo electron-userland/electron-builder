@@ -1,4 +1,4 @@
-import { Arch, resolveEnvToolsetPath } from "builder-util"
+import { Arch } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import * as os from "os"
 import * as path from "path"
@@ -58,11 +58,6 @@ export async function getSignToolPath(winCodeSign: ToolsetConfig["winCodeSign"] 
     return { path: "osslsigncode" }
   }
 
-  const signToolPath = await resolveEnvToolsetPath("SIGNTOOL_PATH", "file")
-  if (signToolPath != null) {
-    return { path: signToolPath }
-  }
-
   if (isWin) {
     // windows kits are always the target arch; signtool can be used by either arch.
     const signtoolArch: Arch = process.arch === "x64" ? Arch.x64 : process.arch === "arm64" ? Arch.arm64 : Arch.ia32
@@ -74,11 +69,6 @@ export async function getSignToolPath(winCodeSign: ToolsetConfig["winCodeSign"] 
 }
 
 export async function getWindowsKitsBundle({ winCodeSign, arch, resourcesDir = "" }: { winCodeSign: ToolsetConfig["winCodeSign"] | Nullish; arch: Arch; resourcesDir?: string }) {
-  const kitPath = await resolveEnvToolsetPath("ELECTRON_BUILDER_WINDOWS_KITS_PATH", "directory")
-  if (kitPath != null) {
-    return { kit: kitPath, appxAssets: kitPath }
-  }
-
   if (typeof winCodeSign === "object" && winCodeSign != null) {
     const vendorPath = await getCustomToolsetPath(winCodeSign, resourcesDir)
     return { kit: path.resolve(vendorPath, arch === Arch.ia32 ? "x86" : Arch[arch]), appxAssets: vendorPath }
@@ -114,10 +104,6 @@ async function getWindowsSignToolExe({ winCodeSign, arch, resourcesDir = "" }: {
 }
 
 async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish, resourcesDir = "") {
-  const osslSigncodePath = await resolveEnvToolsetPath("ELECTRON_BUILDER_OSSL_SIGNCODE_PATH", "file")
-  if (osslSigncodePath != null) {
-    return { path: osslSigncodePath }
-  }
   if (process.platform === "win32" || isUseSystemOsslSigncode()) {
     return { path: "osslsigncode" }
   }
@@ -156,11 +142,6 @@ export async function getRceditBundle(winCodeSign: ToolsetConfig["winCodeSign"] 
   const ia32 = "rcedit-ia32.exe"
   const x86 = "rcedit-x86.exe"
   const x64 = "rcedit-x64.exe"
-  const rcedit = await resolveEnvToolsetPath("ELECTRON_BUILDER_RCEDIT_PATH", "directory")
-  if (rcedit != null) {
-    const overridePath = rcedit
-    return { x86: path.resolve(overridePath, x86), x64: path.resolve(overridePath, x64) }
-  }
   if (typeof winCodeSign === "object" && winCodeSign != null) {
     const vendorPath = await getCustomToolsetPath(winCodeSign, resourcesDir)
     return { x86: path.resolve(vendorPath, x86), x64: path.resolve(vendorPath, x64) }

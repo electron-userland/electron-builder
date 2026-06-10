@@ -679,6 +679,38 @@ export interface ToolsetConfig {
    * @default "1.0.0"
    */
   readonly linuxToolsMac?: "1.0.0" | ToolsetCustom | null
+
+  /**
+   * Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.
+   *
+   * Set to a {@link ToolsetCustom} object to supply your own 7za binary.
+   * The `url` must point to a directory (or a `.tar.gz`/`.zip` archive of one) that contains
+   * `bin/7za` (macOS/Linux) or `bin/7za.exe` (Windows).
+   *
+   * **Bootstrap constraint:** the custom bundle itself must be a `.tar.gz` or `.zip` archive
+   * (or a bare `file://` directory). `.7z` and `.tar.xz` archives cannot be used here because
+   * extracting them requires 7za — a circular dependency.
+   *
+   * @default "1.0.0"
+   */
+  readonly sevenZip?: "1.0.0" | ToolsetCustom | null
+
+  /**
+   * Version of the icons-conversion bundle used to convert source images to `.icns`, `.ico`,
+   * and PNG icon sets.
+   *
+   * Set to a {@link ToolsetCustom} object to supply your own icons bundle directory.
+   *
+   * Available versions:
+   * | Version | Notes |
+   * |---------|-------|
+   * | `"1.1.0"` | Current default |
+   *
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=icons
+   *
+   * @default "1.1.0"
+   */
+  readonly icons?: "1.1.0" | ToolsetCustom | null
 }
 
 /**

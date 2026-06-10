@@ -1,4 +1,4 @@
-import { exists, resolveEnvToolsetPath } from "builder-util"
+import { exists } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import * as path from "path"
 import { ToolsetConfig } from "../configuration.js"
@@ -67,20 +67,6 @@ export async function getMakeNsisPath(nsis: ToolsetConfig["nsis"] | Nullish, res
     return { path: path.resolve(bundlePath, process.platform === "win32" ? "makensis.cmd" : "makensis") }
   }
 
-  const overridePath = await resolveEnvToolsetPath("ELECTRON_BUILDER_NSIS_DIR", "directory")
-  if (overridePath != null) {
-    // we have to search both to maintain backward compatibility
-    let potentialBundle: ToolInfo = legacyBundle(overridePath)
-    if (await exists(potentialBundle.path)) {
-      return potentialBundle
-    }
-    potentialBundle = entrypointBundle(overridePath)
-    if (await exists(potentialBundle.path)) {
-      return potentialBundle
-    }
-    throw new Error(`${path.basename(potentialBundle.path)} executable not found in ELECTRON_BUILDER_NSIS_DIR: ${overridePath}`)
-  }
-
   const bundlePath = await getNsisBundlePath(nsis, resourcesDir)
   if ((nsis ?? "1.2.1") === "0.0.0") {
     return legacyBundle(bundlePath)
@@ -105,10 +91,6 @@ export async function getNsisPluginsPath(nsis: ToolsetConfig["nsis"] | Nullish, 
     }
     throw new Error(`Plugins directory not found in NSIS bundle at: ${bundlePath}. Expected one of: ${potentialPaths.join(", ")}`)
   }
-  const overridePath = await resolveEnvToolsetPath("ELECTRON_BUILDER_NSIS_RESOURCES_DIR", "directory")
-  if (overridePath != null) {
-    return resolvePluginsDir(overridePath)
-  }
   if ((nsis ?? "1.2.1") === "0.0.0") {
     return path.resolve(await getLegacyNsisResourcesBin(), "plugins")
   }
@@ -122,10 +104,6 @@ export async function getNsisElevatePath(nsis: ToolsetConfig["nsis"] | Nullish, 
       return p
     }
     throw new Error(`elevate.exe not found in NSIS bundle at: ${dir}. Expected path: ${p}`)
-  }
-  const overridePath = await resolveEnvToolsetPath("ELECTRON_BUILDER_NSIS_DIR", "directory")
-  if (overridePath != null) {
-    return resolveElevate(overridePath)
   }
   return resolveElevate(await getNsisBundlePath(nsis, resourcesDir))
 }

@@ -85,32 +85,35 @@ export default class AppImageTarget extends Target {
     try {
       const appimageTool = this.packager.config.toolsets?.appimage
       if (appimageTool === "0.0.0") {
-        updateInfo = await buildLegacyFuse2AppImage({
-          appDir: appOutDir,
-          stageDir: stageDir.dir,
-          arch,
-          output: artifactPath,
-          options: {
-            productName: packager.appInfo.productName,
-            productFilename: packager.appInfo.productFilename,
-            executableName: packager.executableName,
-            license,
-            desktopEntry,
-            icons,
-            fileAssociations: packager.fileAssociations,
-            desktopBaseName,
-            compression: (() => {
-              const c = options.compression
-              if (c === "xz" || c === "gzip") {
-                return c
-              }
-              if (packager.compression === "maximum") {
-                return "xz"
-              }
-              return undefined // normal/store/unset/zstd → mksquashfs defaults to gzip
-            })(),
+        updateInfo = await buildLegacyFuse2AppImage(
+          {
+            appDir: appOutDir,
+            stageDir: stageDir.dir,
+            arch,
+            output: artifactPath,
+            options: {
+              productName: packager.appInfo.productName,
+              productFilename: packager.appInfo.productFilename,
+              executableName: packager.executableName,
+              license,
+              desktopEntry,
+              icons,
+              fileAssociations: packager.fileAssociations,
+              desktopBaseName,
+              compression: (() => {
+                const c = options.compression
+                if (c === "xz" || c === "gzip") {
+                  return c
+                }
+                if (packager.compression === "maximum") {
+                  return "xz"
+                }
+                return undefined // normal/store/unset/zstd → mksquashfs defaults to gzip
+              })(),
+            },
           },
-        }, packager.buildResourcesDir)
+          packager.buildResourcesDir
+        )
       } else {
         updateInfo = await buildStaticRuntimeAppImage(
           appimageTool,
