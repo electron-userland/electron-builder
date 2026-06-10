@@ -270,7 +270,13 @@ export async function getNsisPluginsPath(nsis: ToolsetConfig["nsis"] | Nullish, 
     return resolveCustomBundle(overridePath, "ELECTRON_BUILDER_NSIS_RESOURCES_DIR")
   }
   if (customNsisResources) {
-    const bundle = await getBinFromCustomLoc("nsis-resources", customNsisResources.version, customNsisResources.url, customNsisResources.checksum)
+    const nsisResourcesFile = customNsisResources.url.substring(customNsisResources.url.lastIndexOf("/") + 1)
+    const bundle = await downloadBuilderToolset({
+      releaseName: `nsis-resources-${customNsisResources.version}`,
+      filenameWithExt: nsisResourcesFile,
+      checksums: { [nsisResourcesFile]: customNsisResources.checksum },
+      overrideUrl: customNsisResources.url.substring(0, customNsisResources.url.lastIndexOf("/")),
+    })
     return resolveCustomBundle(bundle, "CUSTOM_NSIS_RESOURCES")
   }
   if (nsis === "0.0.0" || nsis == null) {
