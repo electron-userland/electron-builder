@@ -23,13 +23,7 @@ export async function getWineToolset(wine: ToolsetConfig["wine"], resourcesDir: 
   const defaultEnv = { WINEDEBUG: "-all,err+all", WINEDLLOVERRIDES: "winemenubuilder.exe=d" }
 
   const useSystemWine = isUseSystemWine()
-  // null → modern default "1.0.1"
-  const isLegacy = (wine ?? "1.0.1") === "0.0.0"
-  const isLegacyOnLinux = isLegacy && process.platform === "linux"
-
-  if (useSystemWine || isLegacyOnLinux) {
-    return { execPath: "wine", env: defaultEnv }
-  }
+  const isLegacy = wine === "0.0.0"
 
   let toolsetPath: string
   let execSubPath: string
@@ -38,8 +32,7 @@ export async function getWineToolset(wine: ToolsetConfig["wine"], resourcesDir: 
     toolsetPath = await getCustomToolsetPath(wine, resourcesDir)
     // Custom bundles: probe for the wine binary location
     execSubPath = (await exists(path.join(toolsetPath, "bin", "wine"))) ? "bin/wine" : "bin/wine64"
-  } else {
-    const resolved = wine ?? "1.0.1"
+  } else if (process.platform === "darwin" || !useSystemWine) {
     if (isLegacy) {
       toolsetPath = await downloadBuilderToolset({
         releaseName: "wine-4.0.1-mac",
@@ -49,6 +42,7 @@ export async function getWineToolset(wine: ToolsetConfig["wine"], resourcesDir: 
       })
       execSubPath = path.join("bin", "wine64")
     } else {
+      const resolved = wine ?? "0.0.0"
       const filenameWithExt = process.platform === "darwin" ? "wine-11.0-darwin-x86_64.tar.xz" : "wine-11.0-linux-x86_64.tar.xz"
       toolsetPath = await downloadBuilderToolset({
         releaseName: `wine@${resolved}`,
@@ -58,6 +52,8 @@ export async function getWineToolset(wine: ToolsetConfig["wine"], resourcesDir: 
       })
       execSubPath = path.join("bin", "wine")
     }
+  } else {
+    return { execPath: "wine", env: defaultEnv }
   }
 
   const { execPath, winePrefix, wineLibPath } = await createWineEnvironment(toolsetPath, execSubPath)
