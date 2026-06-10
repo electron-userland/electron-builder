@@ -10,7 +10,7 @@ import MsiTarget from "./MsiTarget.js"
 const ELECTRON_MSI_WRAPPED_NS_UUID = UUID.parse("467f7bb2-a83c-442f-b776-394d316e8e53")
 
 export default class MsiWrappedTarget extends MsiTarget {
-  readonly options: MsiWrappedOptions = this.packager.getOptionsForTarget<MsiWrappedOptions>("msiWrapped")
+  readonly options: MsiWrappedOptions
 
   /** @private */
   private readonly archs: Map<Arch, string> = new Map()
@@ -21,6 +21,7 @@ export default class MsiWrappedTarget extends MsiTarget {
   ) {
     // must be synchronous so it can run after nsis
     super(packager, outDir, "msiWrapped", false)
+    this.options = packager.getOptionsForTarget<MsiWrappedOptions>("msiWrapped")
   }
 
   private get productId(): string {

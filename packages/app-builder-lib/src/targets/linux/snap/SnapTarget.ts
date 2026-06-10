@@ -36,8 +36,7 @@ export default class SnapTarget extends Target {
   ) {
     super(name)
 
-    const { snapcraft } = packager.config
-    this.options = packager.getOptionsForTarget<SnapcraftOptions | SnapOptions>(snapcraft != null ? "snapcraft" : "snap")
+    this.options = packager.getOptionsForTarget<SnapcraftOptions>("snapcraft")
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
