@@ -582,12 +582,12 @@ export class Packager {
 
     const frameworkInfo = { version: this.framework.version, useCustomDist: true }
     const config = this.config
-    if (config.nodeGypRebuild === true) {
+    if (config.nativeModules?.nodeGypRebuild === true) {
       await nodeGypRebuild(platform.nodeName, Arch[arch], frameworkInfo)
     }
 
-    if (config.npmRebuild === false) {
-      log.info({ reason: "npmRebuild is set to false" }, "skipped dependencies rebuild")
+    if (config.nativeModules?.npmRebuild === false) {
+      log.info({ reason: "nativeModules.npmRebuild is set to false" }, "skipped dependencies rebuild")
       return
     }
 
@@ -607,8 +607,8 @@ export class Packager {
       }
     }
 
-    if (config.buildDependenciesFromSource === true && platform.nodeName !== process.platform) {
-      log.info({ reason: "platform is different and buildDependenciesFromSource is set to true" }, "skipped dependencies rebuild")
+    if (config.nativeModules?.buildDependenciesFromSource === true && platform.nodeName !== process.platform) {
+      log.info({ reason: "platform is different and nativeModules.buildDependenciesFromSource is set to true" }, "skipped dependencies rebuild")
     } else {
       await installOrRebuild(
         config,

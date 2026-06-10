@@ -66,7 +66,7 @@ const record = {
   type: "object",
 }
 o = schema.definitions.SnapOptions24.properties.environment.anyOf[0] = record
-o = schema.definitions.SnapOptions.properties.environment.anyOf[0] = record
+o = schema.definitions.SnapOptionsLegacy.properties.environment.anyOf[0] = record
 
 o = schema.properties["$schema"] = {
   description: "JSON Schema for this document.",

@@ -321,7 +321,7 @@ test.ifNotWindows("beforeBuild", ({ expect }) => {
     {
       targets: createTargets([Platform.LINUX, Platform.MAC], DIR_TARGET),
       config: {
-        npmRebuild: true,
+        nativeModules: { npmRebuild: true },
         beforeBuild: async () => {
           called++
           return Promise.resolve()
@@ -347,7 +347,7 @@ test.ifNotWindows("win smart unpack", ({ expect }) => {
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
       config: {
-        npmRebuild: true,
+        nativeModules: { npmRebuild: true },
         onNodeModuleFile: file => {
           const name = toSystemIndependentPath(path.relative(p, file))
           if (!name.startsWith(".") && !name.endsWith(".dll") && name.includes(".")) {
@@ -424,7 +424,7 @@ test.ifNotWindows("posix smart unpack", ({ expect }) =>
         // https://github.com/electron-userland/electron-builder/issues/3273
         // tslint:disable-next-line:no-invalid-template-strings
         copyright: "Copyright © 2018 ${author}",
-        npmRebuild: true,
+        nativeModules: { npmRebuild: true },
         onNodeModuleFile: filePath => {
           // Force include this directory in the package
           return filePath.includes("node_modules/three/examples")

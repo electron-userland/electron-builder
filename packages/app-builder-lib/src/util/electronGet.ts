@@ -261,7 +261,9 @@ async function downloadArtifactToFile(config: Parameters<typeof get.downloadArti
     .digest("hex")
     .slice(0, 20)
   const artifactLockPath = path.join(os.tmpdir(), `eb-dl-${artifactLockKey}.lock`)
-  // This lock is taken when the artifact is not yet in @electron/get's download cache. 100 retries
+  // This lock is taken even for cache hits (the cache-hit check lives inside @electron/get), so under
+  // heavy concurrency many builds serialize here. 30 retries (~137s of backoff) is too few — waiters
+  // were exhausting it and failing with ELOCKED while the holder fetched a large artifact. 100 retries
   // matches the other toolset locks; stale (10min) + proper-lockfile's update heartbeat keep a live
   // downloader's lock fresh so the longer wait never falsely steals an in-progress download.
   const releaseArtifactLock = await lockfile.lock(artifactLockPath, {
@@ -311,15 +313,8 @@ async function downloadArtifactToFile(config: Parameters<typeof get.downloadArti
         retries: 3,
         interval: 2000,
         backoff: 2000,
-        shouldRetry: (e: any) => {
-          if (e instanceof HttpError) {
-            return e.isServerError()
-          }
-          if (typeof e?.response?.statusCode === "number") {
-            return e.response.statusCode >= 500
-          }
-          return typeof e?.code === "string" && ["ENOTFOUND", "ETIMEDOUT", "ECONNRESET", "EPIPE", "ENOENT"].includes(e.code)
-        },
+        shouldRetry: (e: any) =>
+          e instanceof HttpError ? e.isServerError() : typeof e?.code === "string" && ["ENOTFOUND", "ETIMEDOUT", "ECONNRESET", "EPIPE", "ENOENT"].includes(e.code),
       })
     } catch (err) {
       if (typeof (err as any)?.message === "string" && (err as any).message.includes("dest already exists")) {
@@ -551,12 +546,12 @@ export async function downloadBuilderToolset(options: {
 }): Promise<string> {
   const { releaseName, filenameWithExt, checksums, githubOrgRepo = "electron-userland/electron-builder-binaries", overrideUrl } = options
 
-  if (/[/\\]|\.\./.test(filenameWithExt)) {
+  if (/[/\\]|^\.\./.test(filenameWithExt) || filenameWithExt.includes("..")) {
     throw new Error(`downloadBuilderToolset: unsafe filenameWithExt "${filenameWithExt}" — must be a plain filename with no path separators or traversal sequences`)
   }
 
   const baseUrl = getBinariesMirrorUrl(githubOrgRepo)
-  const fullUrl = overrideUrl ? `${overrideUrl}/${filenameWithExt}` : `${baseUrl}${releaseName}/${filenameWithExt}`
+  const fullUrl = resolveBuilderBinaryUrl(releaseName, filenameWithExt, baseUrl, overrideUrl)
   const suffix = hashUrlSafe(fullUrl, 5)
   const folderName = `${filenameWithExt.replace(/\.(tar\.gz|tgz|tar\.xz|txz|zip|7z)$/, "")}-${suffix}`
   const extractDir = path.join(getCacheDirectory({ allowEnvVarOverride: true }), releaseName, folderName)

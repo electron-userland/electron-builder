@@ -125,7 +125,7 @@ export class LinuxTargetHelper {
             }
             log.warn(null, "electron 4 and higher is highly recommended for Snap with core18/core20/core22")
           }
-          return new SnapCoreLegacy(this.packager, this, deepAssign({}, snapLinuxOptions, { base: core, ...options }))
+          return new SnapCoreLegacy(this.packager, this, deepAssign({ base: core }, snapLinuxOptions, options))
         case "core24":
           if (!this.isElectronVersionGreaterOrEqualThan("28.0.0")) {
             if (!this.isElectronVersionGreaterOrEqualThan("25.0.0")) {
@@ -139,8 +139,7 @@ export class LinuxTargetHelper {
           return new SnapCoreCustom(this.packager, this, snapcraft.custom || {})
       }
     }
-
-    return new SnapCoreLegacy(this.packager, this, deepAssign({}, snapLinuxOptions, {}))
+    return new SnapCoreLegacy(this.packager, this, deepAssign({ base: "core20" as const }, snapLinuxOptions, {}))
   }
 
   isElectronVersionGreaterOrEqualThan(version: string, fallback?: string): boolean {

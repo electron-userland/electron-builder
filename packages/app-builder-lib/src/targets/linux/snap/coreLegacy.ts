@@ -4,7 +4,7 @@ import _fsExtra from "fs-extra"
 import { chmod, copyFile, mkdir, readdir, rename, rm, writeFile } from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
-import { PlugDescriptor, SnapOptions } from "../../../options/SnapOptions.js"
+import { PlugDescriptor, SnapOptionsLegacy } from "../../../options/SnapOptions.js"
 import { getAppImageTools } from "../../../toolsets/appimage.js"
 import { downloadBuilderToolset } from "../../../util/electronGet.js"
 import { isSnapDestructiveMode } from "../../../util/flags.js"
@@ -30,7 +30,7 @@ const SNAP_TEMPLATES = {
 
 // Handles core18/core20/core22 snaps via mksquashfs (template) or snapcraft CLI (no-template).
 // See: https://github.com/develar/app-builder/blob/master/pkg/package-format/snap
-export class SnapCoreLegacy extends SnapCore<SnapOptions> {
+export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18" | "core20" | "core22" }> {
   private isUseTemplateApp = false
 
   defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]

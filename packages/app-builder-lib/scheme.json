@@ -4208,6 +4208,44 @@
       },
       "type": "object"
     },
+    "NativeModulesConfig": {
+      "additionalProperties": false,
+      "description": "Configuration for native Node.js module installation and rebuilding.\n\nAll options that control how electron-builder handles native modules — from forcing source\nbuilds at install time through to the `@electron/rebuild` compilation mode.",
+      "properties": {
+        "buildDependenciesFromSource": {
+          "default": false,
+          "description": "Whether to pass `--build-from-source` to the package manager when installing native\ndependencies, forcing them to compile from source rather than using pre-built binaries.\n\nUseful when pre-built binaries are not available for the target platform/arch combination,\nor when you need to ensure native modules are compiled against the exact Electron ABI.",
+          "type": "boolean"
+        },
+        "nodeGypRebuild": {
+          "default": false,
+          "description": "Whether to run `node-gyp rebuild` with Electron headers before packaging.\n\nThis is a low-level escape hatch for cases where the standard `@electron/rebuild` path\n(controlled by {@link npmRebuild}) is insufficient. Most projects should leave this `false`\nand rely on `@electron/rebuild` instead.\n\nWhen `true`, electron-builder runs `node-gyp rebuild` with the correct `npm_config_*`\nenvironment variables set for the target Electron version and architecture before the\nnormal rebuild step.",
+          "type": "boolean"
+        },
+        "npmRebuild": {
+          "default": true,
+          "description": "Whether to rebuild native Node.js modules for the target Electron version and architecture\nbefore packaging.\n\nWhen `true` (the default), electron-builder runs `@electron/rebuild` against the app's\n`node_modules` directory to ensure all native modules are compiled against the correct Electron\nABI. Set to `false` to skip this step entirely — useful when native modules are pre-built\nelsewhere in your pipeline or when the app has no native dependencies.\n\nThe compilation mode (`sequential` vs `parallel`) is controlled by {@link rebuildMode}.",
+          "type": "boolean"
+        },
+        "rebuildMode": {
+          "anyOf": [
+            {
+              "enum": [
+                "parallel",
+                "sequential"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "sequential",
+          "description": "Compilation mode for `@electron/rebuild`.\n\n- `\"sequential\"` — rebuilds native modules one at a time. Safer in memory-constrained\n  environments and produces cleaner log output.\n- `\"parallel\"` — rebuilds all native modules concurrently. Faster on machines with many cores\n  and plentiful memory, but may exhaust resources on CI agents with limited RAM."
+        }
+      },
+      "type": "object"
+    },
     "NsisOptions": {
       "additionalProperties": false,
       "properties": {
@@ -6474,362 +6512,6 @@
       "description": "Maps a named slot to its attribute object.\n`null` uses snapd defaults for that interface.",
       "type": "object"
     },
-    "SnapOptions": {
-      "additionalProperties": false,
-      "description": "Flat snap options. Used via the `snap` key in your build config.",
-      "properties": {
-        "after": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Names of snapcraft parts that must be built before the app part.\nDefaults to `[\"desktop-gtk2\"]`.\n\nUse `\"default\"` to keep the default and add extras:\n`[\"default\", \"my-helper-part\"]`."
-        },
-        "allowNativeWayland": {
-          "description": "Allow the snap to run with native Wayland support (`--ozone-platform=wayland`).\nDefaults to `false` for Electron < 38 (legacy behaviour); `true` for Electron ≥ 38.\nSet explicitly to override the version-based default.",
-          "type": [
-            "null",
-            "boolean"
-          ]
-        },
-        "appPartStage": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Filesets controlling which files from the app part are staged into the snap.\nSupports individual files, directories, globs, globstars, and exclusions (prefix `!`).\nSee [Snapcraft filesets](https://snapcraft.io/docs/snapcraft-filesets).\nWhen not set, the snap template's default stage list is used for legacy bases (core18/core20/core22)."
-        },
-        "artifactName": {
-          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "assumes": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "[Snapd features](https://snapcraft.io/docs/snapcraft-yaml-reference#assumes) that must\nbe present on the host before the snap can be installed."
-        },
-        "autoStart": {
-          "default": false,
-          "description": "Whether the snap should automatically start on login.",
-          "type": "boolean"
-        },
-        "base": {
-          "description": "The snap base to use as the execution environment.\nExamples: `core18`, `core20`, `core22`.\n\nFor new projects, use the `snapcraft` key with `base: \"core24\"` instead of\nthis legacy interface.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "buildPackages": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Debian packages required at **build** time (installed inside the build environment)."
-        },
-        "category": {
-          "description": "The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "compression": {
-          "anyOf": [
-            {
-              "enum": [
-                "lzo",
-                "xz"
-              ],
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Compression algorithm for the snap SquashFS image.\n- `xz` — smaller file, slower decompression (good for distribution).\n- `lzo` — larger file, faster decompression (good for development iteration).\nOmit to use snapcraft's default (`xz`).\n\nWhen not set, `linux.compression` is mapped automatically:\n`\"store\"` → `\"lzo\"`, `\"maximum\"` → `\"xz\"`, `\"normal\"` → snapcraft default.\nExplicitly setting this field always overrides the mapped value."
-        },
-        "confinement": {
-          "anyOf": [
-            {
-              "enum": [
-                "classic",
-                "devmode",
-                "strict"
-              ],
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": "strict",
-          "description": "The type of [snap confinement](https://snapcraft.io/docs/reference/confinement).\n- `strict` — recommended; the snap runs in a fully isolated sandbox.\n- `devmode` — sandbox violations are logged but not enforced; for development only.\n- `classic` — no confinement; equivalent to a traditionally packaged application.\n  Requires Snap Store approval before publishing."
-        },
-        "description": {
-          "description": "As [description](https://www.electron.build/configuration#description) from application package.json, but allows you to specify different for Linux.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "desktop": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/LinuxDesktopFile"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
-        },
-        "environment": {
-          "anyOf": [
-            {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Environment variables injected into the snap's runtime environment.\nMerged with the electron-builder default `{ TMPDIR: \"$XDG_RUNTIME_DIR\" }`.\nUser-supplied values take precedence."
-        },
-        "executableArgs": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "The executable parameters. Pass to executableName"
-        },
-        "grade": {
-          "anyOf": [
-            {
-              "enum": [
-                "devel",
-                "stable"
-              ],
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": "stable",
-          "description": "The quality grade of the snap.\n- `stable` — suitable for all channels, including `stable` and `candidate`.\n- `devel` — development snapshot; cannot be promoted to `stable` or `candidate`."
-        },
-        "hooks": {
-          "default": "build/snap-hooks",
-          "description": "Directory containing [snap hooks](https://snapcraft.io/docs/snap-hooks), relative to\nthe build resources directory (`build/`).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "layout": {
-          "anyOf": [
-            {
-              "typeof": "function"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "[Snap layouts](https://snapcraft.io/docs/snap-layouts) — bind-mount or symlink host paths\ninto the snap's namespace, making libraries or config at `/usr`, `/var`, `/etc`, etc.\naccessible inside the confined environment."
-        },
-        "mimeTypes": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing."
-        },
-        "plugs": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/PlugDescriptor"
-            },
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/PlugDescriptor"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "[Plugs](https://snapcraft.io/docs/reference/interfaces) (consumed interfaces) to declare\nfor the app entry point.\nDefaults to `[\"desktop\", \"desktop-legacy\", \"home\", \"x11\", \"wayland\", \"unity7\",\n\"browser-support\", \"network\", \"gsettings\", \"audio-playback\", \"pulseaudio\", \"opengl\"]`.\n\nUse `\"default\"` in the list to keep the defaults and append extras:\n`[\"default\", \"camera\"]` adds `camera` to the standard set.\n\nTo configure plug attributes (e.g. `allow-sandbox` for Chromium's internal sandbox),\nuse a descriptor object:\n```json\n[\n  { \"browser-sandbox\": { \"interface\": \"browser-support\", \"allow-sandbox\": true } },\n  \"another-simple-plug-name\"\n]\n```"
-        },
-        "publish": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/GithubOptions"
-            },
-            {
-              "$ref": "#/definitions/GitlabOptions"
-            },
-            {
-              "$ref": "#/definitions/S3Options"
-            },
-            {
-              "$ref": "#/definitions/SpacesOptions"
-            },
-            {
-              "$ref": "#/definitions/GenericServerOptions"
-            },
-            {
-              "$ref": "#/definitions/CustomPublishOptions"
-            },
-            {
-              "$ref": "#/definitions/KeygenOptions"
-            },
-            {
-              "$ref": "#/definitions/SnapStoreOptions"
-            },
-            {
-              "$ref": "#/definitions/BitbucketOptions"
-            },
-            {
-              "items": {
-                "$ref": "#/definitions/AllPublishOptions"
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ]
-        },
-        "slots": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/SlotDescriptor"
-            },
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/SlotDescriptor"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "[Slots](https://snapcraft.io/docs/reference/interfaces) (provided interfaces) to declare\nfor the app.\n\nTo expose an MPRIS player under the Chromium bus name (required for strict confinement):\n```json\n[{ \"mpris\": { \"name\": \"chromium\" } }]\n```\nChromium [hard-codes](https://source.chromium.org/chromium/chromium/src/+/master:components/system_media_controls/linux/system_media_controls_linux.cc;l=51;bpv=0;bpt=1)\nthe bus name `chromium`, so the slot name must match for snapd to\n[allow it](https://forum.snapcraft.io/t/unable-to-use-mpris-interface/15360/7)."
-        },
-        "stagePackages": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Ubuntu packages to **stage** alongside the app (equivalent to `depends` for deb).\nDefaults to `[\"libnspr4\", \"libnss3\", \"libxss1\", \"libappindicator3-1\", \"libsecret-1-0\"]`.\n\nUse the `\"default\"` keyword to extend the default list:\n`[\"default\", \"my-extra-lib\"]` appends `my-extra-lib` to the defaults."
-        },
-        "summary": {
-          "description": "A short summary of the snap (max 78 characters).\nDefaults to [productName](./configuration.md#productName).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "synopsis": {
-          "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "title": {
-          "description": "Display title for the snap (may contain uppercase letters and spaces).\nDefaults to `productName`.\nSee [snap format](https://snapcraft.io/docs/snap-format).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "useTemplateApp": {
-          "description": "Whether to use the pre-built Electron snap template for faster builds.\nWhen `true`, electron-builder delegates snap assembly to the upstream Electron snap\ntemplate rather than running a full snapcraft build, significantly reducing build time.\nDefaults to `true` when `stagePackages` is not customised.\nOnly applicable to x64 and armv7l builds.",
-          "type": "boolean"
-        }
-      },
-      "type": "object"
-    },
     "SnapOptions24": {
       "additionalProperties": false,
       "description": "**[Beta]** Options for building a core24 snap. This interface does not extend the legacy\n`SnapBaseOptions` — it uses the snapcraft CLI directly.\n\nFields inherited from {@link CommonLinuxOptions} (`description`, `category`, `mimeTypes`,\n`executableArgs`, `desktop`, `synopsis`) are automatically populated from the root `linux.*`\nconfiguration. You do not need to duplicate them here; values set directly on this interface\ntake precedence over the cascaded `linux.*` values.",
@@ -7382,7 +7064,10 @@
         "environment": {
           "anyOf": [
             {
-              "typeof": "function"
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
             },
             {
               "type": "null"
@@ -9210,11 +8895,6 @@
       ],
       "description": "Called immediately before electron-builder begins packing the app for each platform/arch\ncombination.\n\nUse this hook to perform last-minute modifications to source files or build resources before\nthey are read by the packager.\n\nReceives a {@link BeforePackContext}."
     },
-    "buildDependenciesFromSource": {
-      "default": false,
-      "description": "Whether to pass `--build-from-source` to the package manager when installing native\ndependencies, forcing them to compile from source rather than using pre-built binaries.\n\nUseful when pre-built binaries are not available for the target platform/arch combination,\nor when you need to ensure native modules are compiled against the exact Electron ABI.",
-      "type": "boolean"
-    },
     "buildNumber": {
       "description": "The build number.\n\nMaps to the `--iteration` flag for FPM-based Linux targets and is appended to the version\nstring in `CFBundleVersion` (macOS) and `FileVersion` (Windows) when {@link buildVersion} is\nnot set explicitly.\n\nIf not set, falls back to the first defined environment variable among:\n`BUILD_NUMBER`, `TRAVIS_BUILD_NUMBER`, `APPVEYOR_BUILD_NUMBER`, `CIRCLE_BUILD_NUM`,\n`BUILD_BUILDNUMBER`, `CI_PIPELINE_IID`.",
       "type": [
@@ -9657,26 +9337,16 @@
       ],
       "description": "MSI-wrapped NSIS installer options.\n\nWraps the standard NSIS installer inside an MSI package so that it can be deployed via\nGroup Policy or other MSI-only channels while preserving the NSIS installer UX."
     },
-    "nativeRebuilder": {
+    "nativeModules": {
       "anyOf": [
         {
-          "enum": [
-            "parallel",
-            "sequential"
-          ],
-          "type": "string"
+          "$ref": "#/definitions/NativeModulesConfig"
         },
         {
           "type": "null"
         }
       ],
-      "default": "sequential",
-      "description": "Compilation mode for `@electron/rebuild`.\n\n- `\"sequential\"` — rebuilds native modules one at a time. Safer in memory-constrained\n  environments and produces cleaner log output.\n- `\"parallel\"` — rebuilds all native modules concurrently. Faster on machines with many cores\n  and plentiful memory, but may exhaust resources on CI agents with limited RAM."
-    },
-    "nodeGypRebuild": {
-      "default": false,
-      "description": "Whether to run `node-gyp rebuild` with Electron headers before packaging.\n\nThis is a low-level escape hatch for cases where the standard `@electron/rebuild` path\n(controlled by {@link npmRebuild}) is insufficient. Most projects should leave this `false`\nand rely on `@electron/rebuild` instead.\n\nWhen `true`, electron-builder runs `node-gyp rebuild` with the correct `npm_config_*`\nenvironment variables set for the target Electron version and architecture before the\nnormal rebuild step.",
-      "type": "boolean"
+      "description": "Configuration for native Node.js module installation and rebuilding.\n\nGroups all options that control how electron-builder handles native modules — from forcing\nsource builds during install through to the `@electron/rebuild` compilation mode."
     },
     "npmArgs": {
       "anyOf": [
@@ -9693,12 +9363,7 @@
           ]
         }
       ],
-      "description": "Additional command-line arguments appended to the package manager's `install` command when\nelectron-builder installs app dependencies (i.e., when `node_modules` is missing and a fresh\ninstall is required).\n\nThese arguments are appended **only** during the install phase, not during the rebuild phase.\nTo influence `@electron/rebuild` directly, see {@link nativeRebuilder}."
-    },
-    "npmRebuild": {
-      "default": true,
-      "description": "Whether to rebuild native Node.js modules for the target Electron version and architecture\nbefore packaging.\n\nWhen `true` (the default), electron-builder runs `@electron/rebuild` against the app's\n`node_modules` directory to ensure all native modules are compiled against the correct Electron\nABI. Set to `false` to skip this step entirely — useful when native modules are pre-built\nelsewhere in your pipeline or when the app has no native dependencies.\n\nThe compilation mode (`sequential` vs `parallel`) is controlled by {@link nativeRebuilder}.",
-      "type": "boolean"
+      "description": "Additional command-line arguments appended to the package manager's `install` command when\nelectron-builder installs app dependencies (i.e., when `node_modules` is missing and a fresh\ninstall is required).\n\nThese arguments are appended **only** during the install phase, not during the rebuild phase.\nTo influence `@electron/rebuild` directly, see {@link NativeModulesConfig.rebuildMode}."
     },
     "nsis": {
       "anyOf": [
@@ -9869,17 +9534,6 @@
         }
       ],
       "description": "RPM package options.\n\nTargets Fedora, Red Hat Enterprise Linux, SUSE, and RPM-based distributions.\nProduces a `.rpm` archive installable via `rpm -i` or `dnf install ./package.rpm`."
-    },
-    "snap": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/SnapOptions"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "description": "Flat snap configuration targeting core22 and older snap bases."
     },
     "snapcraft": {
       "anyOf": [

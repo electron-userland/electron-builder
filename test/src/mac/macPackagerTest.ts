@@ -133,8 +133,7 @@ describe("macPackager", { sequential: true }, () => {
       {
         targets: Platform.MAC.createTarget("zip", Arch.universal),
         config: {
-          npmRebuild: true,
-          nativeRebuilder: "sequential",
+          nativeModules: { npmRebuild: true, rebuildMode: "sequential" },
           files: ["!**/*.stamp", "!**/*.Makefile"],
         },
       },
