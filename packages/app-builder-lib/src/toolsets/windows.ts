@@ -93,7 +93,7 @@ export async function getWindowsKitsBundle({ winCodeSign, arch, resourcesDir = "
     return { kit: path.resolve(vendorPath, "windows-10", arch === Arch.arm64 ? "x64" : Arch[arch]), appxAssets: vendorPath }
   }
   const file = "windows-kits-bundle-10_0_26100_0.zip"
-  const vendorPath = await _getWindowsToolsBin(winCodeSign as Exclude<CodeSignVersionKey, "0.0.0">, file)
+  const vendorPath = await _getWindowsToolsBin(winCodeSign, file)
   return { kit: path.resolve(vendorPath, arch === Arch.ia32 ? "x86" : Arch[arch]), appxAssets: vendorPath }
 }
 
@@ -151,7 +151,7 @@ async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] |
     }
     return "win-codesign-darwin-x86_64.zip"
   })()
-  const vendorPath = await _getWindowsToolsBin(winCodeSign as Exclude<CodeSignVersionKey, "0.0.0">, file)
+  const vendorPath = await _getWindowsToolsBin(winCodeSign, file)
   return { path: path.resolve(vendorPath, "osslsigncode") }
 }
 
