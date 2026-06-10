@@ -650,7 +650,7 @@ export interface ToolsetConfig {
    * |---------|-------------|-----------------|-------|
    * | `"0.0.0"` | 4.0.1 | macOS only | Legacy portable bundle (pre-v27 default) |
    *
-   * On Linux with `"0.0.0"`, the system `wine` binary is used instead of a bundled one.
+   * On Linux, the system `wine` binary is used instead of a bundled one.
    * Set `USE_SYSTEM_WINE=true` to force system Wine regardless of this setting.
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=wine

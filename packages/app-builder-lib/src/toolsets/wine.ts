@@ -22,8 +22,15 @@ export async function getWineToolset(wine: ToolsetConfig["wine"], resourcesDir: 
 
   const defaultEnv = { WINEDEBUG: "-all,err+all", WINEDLLOVERRIDES: "winemenubuilder.exe=d" }
 
+  // null / undefined / "0.0.0" all mean "default wine" — always use system wine on Linux
+  // and use the legacy macOS bundle on darwin.  Only an explicit ToolsetCustom object
+  // (or a future non-legacy string version) triggers a bundle download.
   const useSystemWine = isUseSystemWine()
-  const isLegacy = wine === "0.0.0"
+  const isDefault = wine == null || wine === "0.0.0"
+
+  if (useSystemWine || (isDefault && process.platform === "linux")) {
+    return { execPath: "wine", env: defaultEnv }
+  }
 
   let toolsetPath: string
   let execSubPath: string
@@ -32,28 +39,15 @@ export async function getWineToolset(wine: ToolsetConfig["wine"], resourcesDir: 
     toolsetPath = await getCustomToolsetPath(wine, resourcesDir)
     // Custom bundles: probe for the wine binary location
     execSubPath = (await exists(path.join(toolsetPath, "bin", "wine"))) ? "bin/wine" : "bin/wine64"
-  } else if (process.platform === "darwin" || !useSystemWine) {
-    if (isLegacy) {
-      toolsetPath = await downloadBuilderToolset({
-        releaseName: "wine-4.0.1-mac",
-        filenameWithExt: "wine-4.0.1-mac.7z",
-        checksums: wineToolsChecksums["0.0.0"],
-        githubOrgRepo: "electron-userland/electron-builder-binaries",
-      })
-      execSubPath = path.join("bin", "wine64")
-    } else {
-      const resolved = wine ?? "0.0.0"
-      const filenameWithExt = process.platform === "darwin" ? "wine-11.0-darwin-x86_64.tar.xz" : "wine-11.0-linux-x86_64.tar.xz"
-      toolsetPath = await downloadBuilderToolset({
-        releaseName: `wine@${resolved}`,
-        filenameWithExt,
-        checksums: wineToolsChecksums[resolved],
-        githubOrgRepo: "electron-userland/electron-builder-binaries",
-      })
-      execSubPath = path.join("bin", "wine")
-    }
   } else {
-    return { execPath: "wine", env: defaultEnv }
+    // isDefault on macOS → download the legacy wine-4.0.1-mac bundle
+    toolsetPath = await downloadBuilderToolset({
+      releaseName: "wine-4.0.1-mac",
+      filenameWithExt: "wine-4.0.1-mac.7z",
+      checksums: wineToolsChecksums["0.0.0"],
+      githubOrgRepo: "electron-userland/electron-builder-binaries",
+    })
+    execSubPath = path.join("bin", "wine64")
   }
 
   const { execPath, winePrefix, wineLibPath } = await createWineEnvironment(toolsetPath, execSubPath)
