@@ -394,4 +394,3 @@ describe("spawnAndWriteWithOutput", () => {
     await expect(promise).rejects.toThrow(/timed out/i)
   })
 })
-
