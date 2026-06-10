@@ -46,6 +46,7 @@ import { WinPackager } from "../winPackager.js"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js"
 import { resolveModule } from "../util/resolve.js"
 import { parseUrl } from "../util/pathManager.js"
+import { isPublishForPullRequest } from "../util/flags.js"
 
 const publishForPrWarning =
   "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
@@ -85,7 +86,7 @@ export class PublishManager implements PublishContext {
 
     this.taskManager = new AsyncTaskManager(cancellationToken)
 
-    const forcePublishForPr = process.env.PUBLISH_FOR_PULL_REQUEST === "true"
+    const forcePublishForPr = isPublishForPullRequest()
     if (!isPullRequest() || forcePublishForPr) {
       if (publishOptions.publish === undefined) {
         if (process.env.npm_lifecycle_event === "release") {

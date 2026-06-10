@@ -3,4 +3,4 @@
 "electron-builder-squirrel-windows": patch
 ---
 
-Dead code removal: delete ProtonFramework, LibUiFramework, and binDownload.ts; consolidate all binary downloads into `downloadBuilderToolset`.
+chore(refactor): delete ProtonFramework, LibUiFramework, and binDownload.ts; consolidate all binary downloads into `downloadBuilderToolset`.

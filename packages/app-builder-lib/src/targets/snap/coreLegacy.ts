@@ -1,4 +1,4 @@
-import { replaceDefault as _replaceDefault, Arch, copyDir, exec, log, serializeToYaml, toLinuxArchString } from "builder-util"
+import { replaceDefault as _replaceDefault, Arch, copyDir, exec, log, serializeToYaml, toLinuxArchString, validateShellEmbeddable } from "builder-util"
 import { asArray, deepAssign, isValidKey, Nullish } from "builder-util-runtime"
 import { chmod, copyFile, mkdir, readdir, rename, rm, writeFile } from "fs/promises"
 import _fsExtra from "fs-extra"
@@ -12,6 +12,7 @@ import { getTemplatePath } from "../../util/pathManager.js"
 import { SnapCore } from "./SnapTarget.js"
 import { SnapcraftYAML } from "./snapcraft.js"
 import { DEFAULT_STAGE_PACKAGES } from "./snapcraftBuilder.js"
+import { isSnapDestructiveMode } from "../../util/flags.js"
 
 // Snap template release info from electron-userland/electron-builder-binaries
 const SNAP_TEMPLATES = {
@@ -329,7 +330,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
     await copyDir(appOutDir, path.join(stageDir, "app"))
 
     // Run snapcraft (legacy `snap` subcommand)
-    const isDestructiveMode = process.env.SNAP_DESTRUCTIVE_MODE === "true"
+    const isDestructiveMode = isSnapDestructiveMode()
     const snapOutputName = "out.snap"
     const snapArgs = ["snap", "--output", isDestructiveMode ? artifactPath : snapOutputName]
     if (isDestructiveMode) {
@@ -460,14 +461,6 @@ export function shellQuote(arg: string): string {
  * The only difference between template and no-template is the app executable prefix:
  * template apps are at $SNAP/<name>; no-template apps are at $SNAP/app/<name>.
  */
-function validateShellEmbeddable(value: string, fieldName: string): void {
-  if (/[$`"\\\n]/.test(value)) {
-    throw new Error(
-      `${fieldName} contains characters that are not safe in shell scripts: ${JSON.stringify(value)}. ` + `Avoid $, backtick, double-quote, backslash, and newline characters.`
-    )
-  }
-}
-
 export function buildCommandShContent(opts: { isTemplate: boolean; executableName: string; extraAppArgs: string[] }): string {
   const { isTemplate, executableName, extraAppArgs } = opts
   validateShellEmbeddable(executableName, "executableName")

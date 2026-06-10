@@ -2,6 +2,7 @@ import { exists, InvalidConfigurationError, resolveEnvToolsetPath, sanitizeDirPa
 import * as path from "path"
 import { ToolsetConfig } from "../configuration.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
+import { isUseSystemWine } from "../util/flags.js"
 
 const wineToolsChecksums: Record<Exclude<ToolsetConfig["wine"], null | undefined>, Record<string, string>> = {
   "0.0.0": {
@@ -37,7 +38,7 @@ export async function getWineToolset(wine: ToolsetConfig["wine"]): Promise<{ exe
     }
   }
 
-  const useSystemWine = process.env.USE_SYSTEM_WINE === "true"
+  const useSystemWine = isUseSystemWine()
   const isLegacy = wine === "0.0.0" || wine == null
   const isLegacyOnLinux = isLegacy && process.platform === "linux"
 

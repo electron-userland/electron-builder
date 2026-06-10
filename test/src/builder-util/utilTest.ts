@@ -1,7 +1,7 @@
 import { parseValidEnvVarUrl } from "builder-util/internal"
-import { resolveEnvShellValue } from "builder-util/src/envUtil"
+import { resolveEnvShellValue, validateShellEmbeddable } from "builder-util/src/envUtil"
 import { removePassword, filterSensitiveEnv, spawnAndWriteWithOutput, ExecError } from "builder-util"
-import { afterEach, vi } from "vitest"
+import { afterEach, expect, vi } from "vitest"
 
 const testValue = "secretValue"
 const testQuoted = "secret with spaces"
@@ -392,5 +392,34 @@ describe("spawnAndWriteWithOutput", () => {
     const promise = spawnAndWriteWithOutput(process.execPath, ["-e", script], "")
     vi.advanceTimersByTime(4 * 60 * 1000 + 100)
     await expect(promise).rejects.toThrow(/timed out/i)
+  })
+})
+
+describe("validateShellEmbeddable", () => {
+  describe("safe values pass", () => {
+    test.each([
+      ["index.js", "package.json main"],
+      ["src/main.js", "package.json main"],
+      ["dist/app.js", "package.json main"],
+      ["my-app.js", "package.json main"],
+      ["app_main.js", "package.json main"],
+      ["", "empty string"],
+    ])("allows %j", (value, field) => {
+      expect(() => validateShellEmbeddable(value, field)).not.toThrow()
+    })
+  })
+
+  describe("shell metacharacters are rejected", () => {
+    test.each([
+      ["index.js$(evil)", "$"],
+      ["index.js`evil`", "backtick"],
+      ['index.js"evil"', "double-quote"],
+      ["index.js\\evil", "backslash"],
+      ["index.js\nevil", "newline"],
+      ["$(rm -rf /)", "command substitution"],
+      ["`id`", "backtick substitution"],
+    ])("rejects %j (contains %s)", value => {
+      expect(() => validateShellEmbeddable(value, "test field")).toThrow()
+    })
   })
 })
