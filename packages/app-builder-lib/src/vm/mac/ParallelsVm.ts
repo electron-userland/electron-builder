@@ -91,8 +91,12 @@ export class ParallelsVmManager extends VmManager {
           /* best-effort */
         }
       }
-      process.once("SIGTERM", suspendAsync)
-      process.once("SIGINT", suspendAsync)
+      process.once("SIGTERM", () => {
+        void suspendAsync()
+      })
+      process.once("SIGINT", () => {
+        void suspendAsync()
+      })
       process.once("exit", suspendSync)
     }
     await exec("prlctl", ["start", vmId])
