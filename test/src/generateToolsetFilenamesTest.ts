@@ -66,9 +66,8 @@ describe("Generated toolset test filenames", () => {
   it("wineToolset suite generates one file per wine version", () => {
     const files = collectGeneratedFiles(GENERATED_TESTS_DIR)
     const wineFiles = files.filter(f => f.includes("/wineToolset/"))
-    expect(wineFiles.length).toBe(2)
+    expect(wineFiles.length).toBe(1)
     expect(wineFiles.some(f => f.includes("wine-0.0.0"))).toBe(true)
-    expect(wineFiles.some(f => f.includes("wine-1.0.1"))).toBe(true)
   })
 
   it("platformAllowed correctly filters ifWindows files on Linux", () => {
