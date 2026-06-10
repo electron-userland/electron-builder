@@ -15,6 +15,7 @@ node-modules*
 *.tsbuildinfo
 
 out/
+dist/
 
 site/
 

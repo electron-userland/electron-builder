@@ -105,7 +105,17 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
       return
     }
 
-    const dicer = new DataSplitter(out, options, partIndexToTaskIndex, m[1] || m[2], partIndexToLength, resolve, grandTotalBytes, differentialDownloader.options.onProgress, differentialDownloader.logger)
+    const dicer = new DataSplitter(
+      out,
+      options,
+      partIndexToTaskIndex,
+      m[1] || m[2],
+      partIndexToLength,
+      resolve,
+      grandTotalBytes,
+      differentialDownloader.options.onProgress,
+      differentialDownloader.logger
+    )
     dicer.on("error", reject)
     response.pipe(dicer)
 
