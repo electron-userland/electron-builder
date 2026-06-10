@@ -597,14 +597,13 @@ export interface ToolsetConfig {
    * | Version | Runtime date | Notes |
    * |---------|-------------|-------|
    * | `"0.0.0"` | Legacy | FUSE2-based AppImage runtime (pre-v27 default) |
-   * | `"1.0.2"` | 20251108 | Static-runtime (FUSE3-compatible); same archive, earlier checksum |
    * | `"1.0.3"` | 20251108 | Static-runtime (FUSE3-compatible); recommended (default) |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage
    *
    * @default "1.0.3"
    */
-  readonly appimage?: "0.0.0" | "1.0.2" | "1.0.3" | ToolsetCustom | null
+  readonly appimage?: "0.0.0" | "1.0.3" | ToolsetCustom | null
 
   /**
    * Version of the NSIS toolset bundle used to compile Windows installers.
@@ -718,9 +717,10 @@ export interface ToolsetCustom {
 
   /**
    * SHA checksum of the custom toolset bundle for verification.
-   * Required for remote (`https://`) URLs; used as a cache key for local archives.
+   * Required for remote (`https://`) URLs and local archive files (`file://`).
+   * Not needed for bare directory paths — the directory is used as-is with no caching.
    */
-  readonly checksum: string
+  readonly checksum?: string
 
   /**
    * Optional version label used in the local cache directory name.
