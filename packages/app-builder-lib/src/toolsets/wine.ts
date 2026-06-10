@@ -21,7 +21,6 @@ export async function getWineToolset(wine: ToolsetConfig["wine"]): Promise<{ exe
 
   const defaultEnv = { WINEDEBUG: "-all,err+all", WINEDLLOVERRIDES: "winemenubuilder.exe=d" }
 
-<<<<<<< HEAD
   const envPath = await resolveEnvToolsetPath("ELECTRON_BUILDER_WINE_TOOLSET_DIR", "directory")
   if (envPath != null) {
     // Probe for the wine binary: modern bundles ship bin/wine; legacy bundles (e.g. wine-4.0.1-mac) ship bin/wine64.

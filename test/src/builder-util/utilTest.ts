@@ -1,7 +1,7 @@
 import { parseValidEnvVarUrl } from "builder-util/internal"
 import { resolveEnvShellValue, validateShellEmbeddable } from "builder-util/src/envUtil"
 import { removePassword, filterSensitiveEnv, spawnAndWriteWithOutput, ExecError } from "builder-util"
-import { afterEach, vi } from "vitest"
+import { afterEach, expect, vi } from "vitest"
 
 const testValue = "secretValue"
 const testQuoted = "secret with spaces"
