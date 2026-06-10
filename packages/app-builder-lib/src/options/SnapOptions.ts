@@ -12,6 +12,7 @@ export interface SnapcraftOptions extends TargetSpecificOptions {
    * (`core18`, `core20`, `core22`, `core24`, `custom`) is active.
    *
    * Only one core may be selected per build target.
+   * @default "core24"
    */
   readonly base: "core18" | "core20" | "core22" | "core24" | "custom"
 
@@ -57,9 +58,6 @@ export interface SnapcraftOptions extends TargetSpecificOptions {
    */
   readonly custom?: SnapOptionsCustom | null
 }
-// Internal alias used by the core18/20/22 backward-compat fields in SnapcraftOptions.
-// Not tagged @deprecated itself to avoid cascading TS6385 hints onto those properties.
-export type SnapOptionsLegacy = Omit<SnapOptions, "base">
 
 export interface SnapOptionsCustom {
   /**
@@ -70,28 +68,7 @@ export interface SnapOptionsCustom {
   readonly yaml?: string | SnapcraftYAML | null
 }
 
-/**
- * Flat snap options. Used via the `snap` key in your build config.
- *
- * @deprecated Prefer the `snapcraft` key with an explicit `base` field (e.g.
- * `{ "snapcraft": { "base": "core24", "core24": { ... } } }`). The flat `snap`
- * interface is maintained for backward compatibility and targets `core22` and
- * older snap bases only.
- *
- * Fields inherited from {@link CommonLinuxOptions} (e.g. `description`, `category`,
- * `mimeTypes`, `executableArgs`) are automatically populated from `linux.*` configuration
- * and do not need to be repeated here. Per-core values take precedence when both are set.
- */
-export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
-  /**
-   * The snap base to use as the execution environment.
-   * Examples: `core18`, `core20`, `core22`.
-   *
-   * For new projects, use the `snapcraft` key with `base: "core24"` instead of
-   * this legacy interface.
-   */
-  readonly base?: string | null
-
+export interface SnapOptionsLegacy extends CommonLinuxOptions, TargetSpecificOptions {
   /**
    * Whether to use the pre-built Electron snap template for faster builds.
    * When `true`, electron-builder delegates snap assembly to the upstream Electron snap

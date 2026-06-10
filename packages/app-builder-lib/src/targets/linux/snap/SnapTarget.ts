@@ -4,7 +4,7 @@ import * as path from "path"
 import { Configuration } from "../../../configuration.js"
 import { Publish, Target } from "../../../core.js"
 import { LinuxPackager } from "../../../linuxPackager.js"
-import { SnapcraftOptions, SnapOptions } from "../../../options/SnapOptions.js"
+import { SnapcraftOptions } from "../../../options/SnapOptions.js"
 import { LinuxTargetHelper } from "../LinuxTargetHelper.js"
 import { createStageDirPath } from "../../targetUtil.js"
 import { SnapcraftYAML } from "./snapcraft.js"
@@ -26,7 +26,7 @@ export abstract class SnapCore<T> {
 
 /** Snap build target — merges `snapcraft` (preferred) and legacy `snap` config, then delegates to the appropriate `SnapCore` strategy. */
 export default class SnapTarget extends Target {
-  readonly options: SnapcraftOptions | SnapOptions
+  readonly options: SnapcraftOptions
 
   constructor(
     name: string,
@@ -41,7 +41,7 @@ export default class SnapTarget extends Target {
       platformSpecificBuildOptions,
     } = packager
 
-    this.options = deepAssign({}, platformSpecificBuildOptions, snapcraft ?? {})
+    this.options = deepAssign({ base: "core24" }, platformSpecificBuildOptions, snapcraft ?? {})
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
