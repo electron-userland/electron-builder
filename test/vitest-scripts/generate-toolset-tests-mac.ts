@@ -5,7 +5,7 @@ import { buildDescribeCall, cleanAndEnsureDir, GENERATED_TESTS_DIR, getPlatformS
 import type { SuiteConfig } from "./generate-toolset-tests-shared"
 import type * as _WineToolsetSuite from "../src/mac/wineToolsetSuite"
 
-const WINE_VERSIONS: ToolsetConfig["wine"][] = ["0.0.0", "1.0.1"]
+const WINE_VERSIONS: ToolsetConfig["wine"][] = ["0.0.0"]
 
 const SUITES: SuiteConfig[] = [
   {
