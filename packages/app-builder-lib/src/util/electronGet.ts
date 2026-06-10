@@ -501,8 +501,7 @@ export async function download(url: string, output: string, checksum?: string | 
 function validateBinaryCustomDir(envVarName: string, value: string): string {
   if (value.includes("://") || value.includes("..") || value.startsWith("/")) {
     throw new Error(
-      `${envVarName} must be a safe relative path component (e.g. "v1.0.0-custom"). ` +
-        `Values containing "://", "..", or a leading "/" are not allowed. Got: "${value}"`
+      `${envVarName} must be a safe relative path component (e.g. "v1.0.0-custom"). ` + `Values containing "://", "..", or a leading "/" are not allowed. Got: "${value}"`
     )
   }
   return value
