@@ -41,7 +41,7 @@ export async function getFpmPath(toolset: ToolsetConfig["fpm"], resourcesDir: st
 
   const filename = getKey()
   const fpmPath = await downloadBuilderToolset({
-    releaseName: `fpm@${toolset ?? "1.0.0"}`,
+    releaseName: `fpm@${toolset ?? "2.2.1"}`,
     filenameWithExt: filename,
     checksums: fpmChecksums,
     githubOrgRepo: "electron-userland/electron-builder-binaries",

@@ -597,13 +597,14 @@ export interface ToolsetConfig {
    * | Version | Runtime date | Notes |
    * |---------|-------------|-------|
    * | `"0.0.0"` | Legacy | FUSE2-based AppImage runtime (pre-v27 default) |
+   * | `"1.0.2"` | 20251108 | Static-runtime (FUSE3-compatible) |
    * | `"1.0.3"` | 20251108 | Static-runtime (FUSE3-compatible); recommended (default) |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage
    *
    * @default "1.0.3"
    */
-  readonly appimage?: "0.0.0" | "1.0.3" | ToolsetCustom | null
+  readonly appimage?: "0.0.0" | "1.0.2" | "1.0.3" | ToolsetCustom | null
 
   /**
    * Version of the NSIS toolset bundle used to compile Windows installers.
