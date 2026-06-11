@@ -1,13 +1,13 @@
 import { MemoLazy, Nullish } from "builder-util-runtime"
 import { Lazy } from "lazy-val"
-import { Target } from "../core"
-import { WindowsConfiguration } from "../options/winOptions"
-import type { WinPackager } from "../winPackager"
-import { HsmSignManager } from "./hsmSignManager"
-import { Pkcs11SignManager } from "./pkcs11SignManager"
-import { CertificateFromStoreInfo, FileCodeSigningInfo, SigntoolSignManager } from "./signtoolBaseSignManager"
-import { WindowsSignAzureManager } from "./windowsSignAzureManager"
-import { WindowsSignOptions } from "./windowsCodeSign"
+import { Target } from "../core.js"
+import { WindowsConfiguration } from "../options/winOptions.js"
+import type { WinPackager } from "../winPackager.js"
+import { HsmSignManager } from "./hsmSignManager.js"
+import { Pkcs11SignManager } from "./pkcs11SignManager.js"
+import { CertificateFromStoreInfo, FileCodeSigningInfo, SigntoolSignManager } from "./signtoolBaseSignManager.js"
+import { WindowsSignAzureManager } from "./win/windowsSignAzureManager.js"
+import { WindowsSignOptions } from "./win/windowsCodeSign.js"
 
 export interface SignManager {
   readonly computedPublisherName: Lazy<Array<string> | null>
@@ -18,7 +18,7 @@ export interface SignManager {
 }
 
 export function createSignManager(packager: WinPackager): SignManager {
-  switch (packager.platformSpecificBuildOptions.signing?.type) {
+  switch (packager.platformOptions.signing?.type) {
     case "azure":
       return new WindowsSignAzureManager(packager)
     case "hsm":

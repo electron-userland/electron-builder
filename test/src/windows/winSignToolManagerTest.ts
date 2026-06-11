@@ -6,7 +6,7 @@ import { readCertInfoFromX509 } from "app-builder-lib/out/codeSign/certInfo"
 import { mkdtemp, rm, writeFile } from "fs/promises"
 import { tmpdir } from "os"
 import * as path from "path"
-import { afterEach, beforeEach, describe, expect, test } from "vitest"
+import { describe, expect, test } from "vitest"
 
 function makeManager(winCodeSign?: string): SigntoolSignManager {
   const manager = Object.create(SigntoolSignManager.prototype) as SigntoolSignManager

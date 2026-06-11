@@ -2,9 +2,9 @@ import { exec, ExtraSpawnOptions } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { ExecFileOptions, SpawnOptions } from "child_process"
 import * as path from "path"
-import { ToolsetConfig } from "../configuration"
-import { getWineToolset } from "../toolsets/wine"
-import { VmManager } from "./vm"
+import { ToolsetConfig } from "../configuration.js"
+import { getWineToolset } from "../toolsets/wine.js"
+import { VmManager } from "./vm.js"
 
 type WineOptions = {
   file: string
@@ -14,7 +14,10 @@ type WineOptions = {
 }
 
 export class WineVmManager extends VmManager {
-  constructor(private readonly wineToolset: ToolsetConfig["wine"]) {
+  constructor(
+    private readonly wineToolset: ToolsetConfig["wine"],
+    private readonly buildResourcesDir: string
+  ) {
     super()
   }
 
@@ -39,7 +42,7 @@ export class WineVmManager extends VmManager {
     if (process.platform === "win32") {
       return exec(target, appArgs, options)
     }
-    const { execPath: wineExe, env: wineEnv } = await getWineToolset(toolset)
+    const { execPath: wineExe, env: wineEnv } = await getWineToolset(toolset, this.buildResourcesDir)
     // Preserve the base process environment (PATH, HOME, TMPDIR, etc.) so Wine and child
     // tools start correctly. Wine env vars override the base; caller options.env wins last.
     return exec(wineExe, [target, ...appArgs], { ...options, env: { ...process.env, ...wineEnv, ...options.env } })

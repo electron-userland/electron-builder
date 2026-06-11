@@ -1,8 +1,8 @@
 import { InvalidConfigurationError } from "builder-util"
 import { MemoLazy } from "builder-util-runtime"
-import { WindowsConfiguration, WindowsPkcs11SigningConfig } from "../options/winOptions"
-import { VmManager } from "../vm/vm"
-import type { WinPackager } from "../winPackager"
+import { WindowsConfiguration, WindowsPkcs11SigningConfig } from "../options/winOptions.js"
+import { VmManager } from "../vm/vm.js"
+import type { WinPackager } from "../winPackager.js"
 import {
   CustomWindowsSign,
   CertificateFromStoreInfo,
@@ -10,14 +10,14 @@ import {
   getSigntoolFamilyConfig,
   SigntoolBaseSignManager,
   WindowsSignTaskConfiguration,
-} from "./signtoolBaseSignManager"
+} from "./signtoolBaseSignManager.js"
 
 export class Pkcs11SignManager extends SigntoolBaseSignManager {
   private readonly signingConfig: WindowsPkcs11SigningConfig
 
   constructor(packager: WinPackager) {
     super(packager)
-    const signing = packager.platformSpecificBuildOptions.signing
+    const signing = packager.platformOptions.signing
     if (signing?.type !== "pkcs11") {
       throw new Error(`Pkcs11SignManager requires signing.type = "pkcs11", got: ${signing?.type}`)
     }

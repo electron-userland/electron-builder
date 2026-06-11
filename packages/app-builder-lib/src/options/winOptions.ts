@@ -1,5 +1,6 @@
-import { CustomWindowsSign } from "../codeSign/windowsSignToolManager"
-import { PlatformSpecificBuildOptions, TargetConfigType } from "../index"
+import { CustomWindowsSign } from "../codeSign/win/windowsSignToolManager.js"
+import { TargetConfigType } from "../core.js"
+import { PlatformSpecificBuildOptions } from "./PlatformSpecificBuildOptions.js"
 
 export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   /**

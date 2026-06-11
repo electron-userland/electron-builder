@@ -1,8 +1,7 @@
 import { parseDn } from "builder-util-runtime"
 import { ToolInfo, WinPackager, WindowsSignToolManager } from "app-builder-lib"
 import { WindowsSigntoolSigningConfig } from "app-builder-lib/out/options/winOptions"
-import { CustomWindowsSign } from "app-builder-lib/out/codeSign/windowsSignToolManager"
-import { Configuration, ToolsetConfig } from "app-builder-lib/out/configuration"
+import { Configuration, CustomWindowsSign, ToolsetConfig } from "app-builder-lib/internal"
 import { AsyncTaskManager } from "builder-util"
 import { Arch, DIR_TARGET, Platform, Target } from "electron-builder"
 import { Packager } from "electron-builder"
@@ -86,7 +85,7 @@ for (const winCodeSign of winCodeSignVersions) {
           targets: Platform.WINDOWS.createTarget(DIR_TARGET),
           config: {
             publish: "never",
-            asarUnpack: ["assets"],
+            asar: { unpack: ["assets"] },
             toolsets: {
               winCodeSign,
             },

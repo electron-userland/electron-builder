@@ -2,7 +2,7 @@
   "$schema": "https://typedoc.org/schema.json",
   "includeVersion": true,
   "entryPoints": [
-    "src/main.ts"
+    "src/index.ts"
   ],
   "validation": {
     "notExported": false,

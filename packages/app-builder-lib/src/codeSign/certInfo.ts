@@ -2,8 +2,10 @@ import { createDecipheriv, createHash } from "crypto"
 import * as asn1js from "asn1js"
 import * as pkijs from "pkijs"
 import { Crypto as PeculiarCrypto } from "@peculiar/webcrypto"
-import { readFile } from "fs-extra"
+
 import { log } from "builder-util"
+import _fsExtra from "fs-extra"
+const { readFile } = _fsExtra
 
 // OID for codeSigning extended key usage
 const CODE_SIGNING_OID = "1.3.6.1.5.5.7.3.3"

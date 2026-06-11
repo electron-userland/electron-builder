@@ -1,5 +1,5 @@
 import { Arch, Platform } from "electron-builder"
-import { app, assertPack, snapTarget } from "../helpers/packTester"
+import { app, assertPack, snapTarget } from "../helpers/packTester.js"
 
 test.ifNotWindows("snap", ({ expect }) =>
   app(expect, {
@@ -44,12 +44,15 @@ test.ifNotWindows("default stagePackages", async ({ expect }) => {
           name: "sep",
         },
         productName: "Sep",
-        snap: {
-          stagePackages: p,
-          plugs: p,
-          confinement: "classic",
-          // otherwise "parts" will be removed
-          useTemplateApp: false,
+        snapcraft: {
+          base: "core20",
+          core20: {
+            stagePackages: p,
+            plugs: p,
+            confinement: "classic",
+            // otherwise "parts" will be removed
+            useTemplateApp: false,
+          },
         },
       },
       effectiveOptionComputed: async ({ snap, args }) => {
@@ -70,8 +73,11 @@ test.ifNotWindows("classic confinement", ({ expect }) =>
         name: "cl-co-app",
       },
       productName: "Snap Electron App (classic confinement)",
-      snap: {
-        confinement: "classic",
+      snapcraft: {
+        base: "core20",
+        core20: {
+          confinement: "classic",
+        },
       },
     },
   })
@@ -85,10 +91,13 @@ test.ifNotWindows("buildPackages", async ({ expect }) => {
         name: "sep",
       },
       productName: "Sep",
-      snap: {
-        buildPackages: ["foo1", "default", "foo2"],
-        // otherwise "parts" will be removed
-        useTemplateApp: false,
+      snapcraft: {
+        base: "core20",
+        core20: {
+          buildPackages: ["foo1", "default", "foo2"],
+          // otherwise "parts" will be removed
+          useTemplateApp: false,
+        },
       },
     },
     effectiveOptionComputed: async ({ snap }) => {
@@ -121,10 +130,13 @@ test.ifNotWindows("plugs option", async ({ expect }) => {
     await assertPack(expect, "test-app-one", {
       targets: snapTarget,
       config: {
-        snap: {
-          plugs: p,
-          // otherwise "parts" will be removed
-          useTemplateApp: false,
+        snapcraft: {
+          base: "core20",
+          core20: {
+            plugs: p,
+            // otherwise "parts" will be removed
+            useTemplateApp: false,
+          },
         },
       },
       effectiveOptionComputed: async ({ snap, args }) => {
@@ -157,8 +169,11 @@ test.ifNotWindows("slots option", async ({ expect }) => {
           name: "sep",
         },
         productName: "Sep",
-        snap: {
-          slots,
+        snapcraft: {
+          base: "core20",
+          core20: {
+            slots,
+          },
         },
       },
       effectiveOptionComputed: async ({ snap }) => {
@@ -177,9 +192,12 @@ test.ifNotWindows("custom env", ({ expect }) =>
         name: "sep",
       },
       productName: "Sep",
-      snap: {
-        environment: {
-          FOO: "bar",
+      snapcraft: {
+        base: "core20",
+        core20: {
+          environment: {
+            FOO: "bar",
+          },
         },
       },
     },
@@ -198,8 +216,11 @@ test.ifNotWindows("custom after, no desktop", ({ expect }) =>
         name: "sep",
       },
       productName: "Sep",
-      snap: {
-        after: ["bar"],
+      snapcraft: {
+        base: "core20",
+        core20: {
+          after: ["bar"],
+        },
       },
     },
     effectiveOptionComputed: async ({ snap }) => {
@@ -217,8 +238,11 @@ test.ifNotWindows("no desktop plugs", ({ expect }) =>
         name: "sep",
       },
       productName: "Sep",
-      snap: {
-        plugs: ["foo", "bar"],
+      snapcraft: {
+        base: "core20",
+        core20: {
+          plugs: ["foo", "bar"],
+        },
       },
     },
     effectiveOptionComputed: async ({ snap, args }) => {
@@ -237,8 +261,11 @@ test.ifNotWindows("auto start", ({ expect }) =>
         name: "sep",
       },
       productName: "Sep",
-      snap: {
-        autoStart: true,
+      snapcraft: {
+        base: "core20",
+        core20: {
+          autoStart: true,
+        },
       },
     },
     effectiveOptionComputed: async ({ snap }) => {
@@ -273,9 +300,12 @@ test.ifNotWindows("compression option", ({ expect }) =>
         name: "sep",
       },
       productName: "Sep",
-      snap: {
-        useTemplateApp: false,
-        compression: "xz",
+      snapcraft: {
+        base: "core20",
+        core20: {
+          useTemplateApp: false,
+          compression: "xz",
+        },
       },
     },
     effectiveOptionComputed: async ({ snap, args }) => {
@@ -306,7 +336,7 @@ test.ifNotWindows("base option", ({ expect }) =>
     targets: snapTarget,
     config: {
       productName: "Sep",
-      snap: {
+      snapcraft: {
         base: "core22",
       },
     },
@@ -322,9 +352,12 @@ test.ifNotWindows("use template app", ({ expect }) =>
   app(expect, {
     targets: snapTarget,
     config: {
-      snap: {
-        useTemplateApp: true,
-        compression: "xz",
+      snapcraft: {
+        base: "core20",
+        core20: {
+          useTemplateApp: true,
+          compression: "xz",
+        },
       },
     },
     effectiveOptionComputed: async ({ snap, args }) => {

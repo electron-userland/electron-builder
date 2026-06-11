@@ -1,5 +1,5 @@
-import { PM } from "app-builder-lib/out/node-module-collector"
-import { spawn } from "builder-util/out/util"
+import { PM } from "app-builder-lib/internal"
+import { spawn } from "builder-util"
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as path from "path"
 import { appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
@@ -62,7 +62,7 @@ describe("node_module collectors", () => {
         targets: linuxDirTarget,
         projectDir: "packages/test-app",
         config: {
-          asarUnpack: ["**/node_modules/ms/**/*"],
+          asar: { unpack: ["**/node_modules/ms/**/*"] },
         },
       },
       {
@@ -218,7 +218,6 @@ describe("node_module collectors", () => {
       targets: Platform.current().createTarget("dir", Arch.x64),
       projectDir: "app",
       config: {
-        asar: true,
         electronVersion: ELECTRON_VERSION,
       },
     }

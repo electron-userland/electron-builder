@@ -1,20 +1,21 @@
 import { asArray, InvalidConfigurationError, log, retry } from "builder-util"
 import { MemoLazy, parseDn } from "builder-util-runtime"
-import { rename } from "fs-extra"
+import _fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { Target } from "../core"
-import { WindowsConfiguration, WindowsHsmSigningConfig, WindowsSigntoolFamilyConfig, WindowsSigntoolSigningConfig } from "../options/winOptions"
-import AppXTarget from "../targets/AppxTarget"
-import { getSignToolPath } from "../toolsets/windows"
-import { ToolInfo } from "../util/bundledTool"
-import { resolveFunction } from "../util/resolve"
-import { readCertInfo, readCertInfoFromX509 } from "./certInfo"
-import { VmManager } from "../vm/vm"
-import type { WinPackager } from "../winPackager"
-import { importCertificate } from "./codesign"
-import type { SignManager } from "./signManager"
-import { WindowsSignOptions } from "./windowsCodeSign"
+import { Target } from "../core.js"
+import { WindowsConfiguration, WindowsHsmSigningConfig, WindowsSigntoolFamilyConfig, WindowsSigntoolSigningConfig } from "../options/winOptions.js"
+import AppXTarget from "../targets/win/AppxTarget.js"
+import { getSignToolPath } from "../toolsets/winCodeSign.js"
+import { ToolInfo } from "../util/bundledTool.js"
+import { resolveFunction } from "../util/resolve.js"
+import { readCertInfo, readCertInfoFromX509 } from "./certInfo.js"
+import { VmManager } from "../vm/vm.js"
+import type { WinPackager } from "../winPackager.js"
+import { importCertificate } from "./codesign.js"
+import type { SignManager } from "./signManager.js"
+import { WindowsSignOptions } from "./win/windowsCodeSign.js"
+const { rename } = _fsExtra
 
 export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration, packager?: WinPackager) => Promise<any>
 
@@ -73,7 +74,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
   protected readonly platformSpecificBuildOptions: WindowsConfiguration
 
   constructor(protected readonly packager: WinPackager) {
-    this.platformSpecificBuildOptions = packager.platformSpecificBuildOptions
+    this.platformSpecificBuildOptions = packager.platformOptions
   }
 
   readonly computedPublisherName = new Lazy<Array<string> | null>(async () => {
@@ -162,7 +163,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
           return Promise.resolve(null)
         }
 
-        return importCertificate(cscLink, this.packager.info.tempDirManager, this.packager.projectDir)
+        return importCertificate(cscLink, this.packager.tempDirManager, this.packager.projectDir)
           .catch((e: any) => {
             if (e instanceof InvalidConfigurationError) {
               throw new InvalidConfigurationError(`Env WIN_CSC_LINK is not correct, cannot resolve: ${e.message}`)
@@ -224,7 +225,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
     const name = this.packager.appInfo.productName
     const site = await this.packager.appInfo.computePackageUrl()
 
-    const customSign = await resolveFunction(this.packager.appInfo.type, signing?.sign, "sign", await this.packager.info.getWorkspaceRoot())
+    const customSign = await resolveFunction(this.packager.appInfo.type, signing?.sign, "sign", await this.packager.getWorkspaceRoot())
 
     const cscInfo = await this.cscInfo.value
 
@@ -394,7 +395,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
   }
 
   async getToolPath(isWin = process.platform === "win32"): Promise<ToolInfo> {
-    return getSignToolPath(this.packager.config.toolsets?.winCodeSign, isWin)
+    return getSignToolPath(this.packager.config.toolsets?.winCodeSign, isWin, this.packager.buildResourcesDir)
   }
 
   async doSign(configuration: CustomWindowsSignTaskConfiguration, packager: WinPackager) {
@@ -407,7 +408,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
     const cscInfo = configuration.cscInfo
     const useVmIfNotOnWin = configuration.path.endsWith(".appx") || (cscInfo != null && !("file" in cscInfo))
     const isWin = process.platform === "win32" || useVmIfNotOnWin
-    const toolInfo = await getSignToolPath(this.packager.config.toolsets?.winCodeSign, isWin)
+    const toolInfo = await getSignToolPath(this.packager.config.toolsets?.winCodeSign, isWin, this.packager.buildResourcesDir)
     const tool = toolInfo.path
     if (useVmIfNotOnWin) {
       vm = await packager.vm.value

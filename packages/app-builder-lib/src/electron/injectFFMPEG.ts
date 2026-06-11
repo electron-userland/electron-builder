@@ -1,10 +1,10 @@
 import { log } from "builder-util"
-import * as fs from "fs-extra"
+import fs from "fs-extra"
 import * as path from "path"
-import { Platform } from "../core"
-import { PrepareApplicationStageDirectoryOptions } from "../Framework"
-import { downloadElectronArtifact } from "../util/electronGet"
-import { ElectronBrandingOptions } from "./ElectronFramework"
+import { Platform } from "../core.js"
+import { PrepareApplicationStageDirectoryOptions } from "../Framework.js"
+import { downloadElectronArtifact } from "../util/electronGet.js"
+import { ElectronBrandingOptions } from "./ElectronFramework.js"
 
 export class FFMPEGInjector {
   constructor(

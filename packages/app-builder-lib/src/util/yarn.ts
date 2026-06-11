@@ -1,14 +1,17 @@
 import { asArray, log, retry, spawn, stripSensitiveEnvVars } from "builder-util"
-import { pathExists } from "fs-extra"
+import { isNpmNoBinLinks } from "./flags.js"
+
 import { homedir } from "os"
 import * as path from "path"
-import { Configuration } from "../configuration"
-import { PM, getPackageManagerCommand } from "../node-module-collector"
-import { detectPackageManager } from "../node-module-collector/packageManager"
-import { rebuild as remoteRebuild } from "./rebuild"
+import { Configuration } from "../configuration.js"
+import { PM, getPackageManagerCommand } from "../node-module-collector/index.js"
+import { detectPackageManager } from "../node-module-collector/packageManager.js"
+import { rebuild as remoteRebuild } from "./rebuild.js"
 import * as which from "which"
 import type { RebuildOptions as ElectronRebuildOptions } from "@electron/rebuild"
 import { Nullish } from "builder-util-runtime"
+import _fsExtra from "fs-extra"
+const { pathExists } = _fsExtra
 
 export async function installOrRebuild(
   config: Configuration,
@@ -18,7 +21,7 @@ export async function installOrRebuild(
   env: NodeJS.ProcessEnv
 ) {
   const effectiveOptions: RebuildOptions = {
-    buildFromSource: config.buildDependenciesFromSource === true,
+    buildFromSource: config.nativeModules?.buildDependenciesFromSource === true,
     additionalArgs: asArray(config.npmArgs),
     ...options,
   }
@@ -103,7 +106,7 @@ export async function installDependencies(
   if (pm === PM.YARN) {
     execArgs.push("--prefer-offline")
   } else if (pm === PM.YARN_BERRY) {
-    if (process.env.NPM_NO_BIN_LINKS === "true") {
+    if (isNpmNoBinLinks()) {
       execArgs.push("--no-bin-links")
     }
   }
@@ -191,8 +194,7 @@ export async function rebuild(config: Configuration, { appDir, projectDir, works
   }
   log.info(logInfo, "executing @electron/rebuild")
 
-  // "legacy" previously used the app-builder-bin Go binary; it now maps to sequential @electron/rebuild.
-  const mode = config.nativeRebuilder === "legacy" || !config.nativeRebuilder ? "sequential" : config.nativeRebuilder
+  const mode = config.nativeModules?.rebuildMode ?? "sequential"
   const rebuildOptions: ElectronRebuildOptions = {
     buildPath: appDir,
     electronVersion,

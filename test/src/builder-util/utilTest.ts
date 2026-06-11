@@ -1,6 +1,7 @@
-import { parseValidEnvVarUrl, resolveEnvShellValue } from "builder-util/out/envUtil"
+import { parseValidEnvVarUrl } from "builder-util/internal"
+import { resolveEnvShellValue, validateShellEmbeddable } from "builder-util/src/envUtil"
 import { removePassword, filterSensitiveEnv, spawnAndWriteWithOutput, ExecError } from "builder-util"
-import { afterEach, vi } from "vitest"
+import { afterEach, expect, vi } from "vitest"
 
 const testValue = "secretValue"
 const testQuoted = "secret with spaces"
@@ -69,7 +70,7 @@ describe("validateEnvVarUrl", () => {
     expect(() => parseValidEnvVarUrl(VAR)).toThrow(`${VAR} is not a valid URL`)
   })
 
-  test("throws when protocol is http (non-https)", ({ expect }) => {
+  test("throws when protocol is http for external host (default allowHttp=false)", ({ expect }) => {
     vi.stubEnv(VAR, "http://example.com/")
     expect(() => parseValidEnvVarUrl(VAR)).toThrow(`${VAR} must use https://`)
   })
@@ -87,6 +88,26 @@ describe("validateEnvVarUrl", () => {
   test("returns the URL string unchanged when it has a path and query", ({ expect }) => {
     vi.stubEnv(VAR, "https://mirror.example.com/path?q=1")
     expect(parseValidEnvVarUrl(VAR)).toBe("https://mirror.example.com/path?q=1")
+  })
+
+  test("allows http for localhost by default (local dev exemption)", ({ expect }) => {
+    vi.stubEnv(VAR, "http://localhost:8080/mirror/")
+    expect(parseValidEnvVarUrl(VAR)).toBe("http://localhost:8080/mirror/")
+  })
+
+  test("allows http for 127.0.0.1 by default (loopback exemption)", ({ expect }) => {
+    vi.stubEnv(VAR, "http://127.0.0.1:3000/")
+    expect(parseValidEnvVarUrl(VAR)).toBe("http://127.0.0.1:3000/")
+  })
+
+  test("allows http for [::1] by default (IPv6 loopback exemption)", ({ expect }) => {
+    vi.stubEnv(VAR, "http://[::1]:9000/")
+    expect(parseValidEnvVarUrl(VAR)).toBe("http://[::1]:9000/")
+  })
+
+  test("allows http for external host when allowHttp=true (air-gapped opt-in)", ({ expect }) => {
+    vi.stubEnv(VAR, "http://internal-mirror.corp.example/")
+    expect(parseValidEnvVarUrl(VAR, true)).toBe("http://internal-mirror.corp.example/")
   })
 })
 
@@ -371,5 +392,34 @@ describe("spawnAndWriteWithOutput", () => {
     const promise = spawnAndWriteWithOutput(process.execPath, ["-e", script], "")
     vi.advanceTimersByTime(4 * 60 * 1000 + 100)
     await expect(promise).rejects.toThrow(/timed out/i)
+  })
+})
+
+describe("validateShellEmbeddable", () => {
+  describe("safe values pass", () => {
+    test.each([
+      ["index.js", "package.json main"],
+      ["src/main.js", "package.json main"],
+      ["dist/app.js", "package.json main"],
+      ["my-app.js", "package.json main"],
+      ["app_main.js", "package.json main"],
+      ["", "empty string"],
+    ])("allows %j", (value, field) => {
+      expect(() => validateShellEmbeddable(value, field)).not.toThrow()
+    })
+  })
+
+  describe("shell metacharacters are rejected", () => {
+    test.each([
+      ["index.js$(evil)", "$"],
+      ["index.js`evil`", "backtick"],
+      ['index.js"evil"', "double-quote"],
+      ["index.js\\evil", "backslash"],
+      ["index.js\nevil", "newline"],
+      ["$(rm -rf /)", "command substitution"],
+      ["`id`", "backtick substitution"],
+    ])("rejects %j (contains %s)", value => {
+      expect(() => validateShellEmbeddable(value, "test field")).toThrow()
+    })
   })
 })

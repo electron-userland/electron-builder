@@ -1,10 +1,10 @@
 import { CancellationToken, UpdateInfo } from "builder-util-runtime"
-import { Provider, ProviderRuntimeOptions } from "electron-updater/src/providers/Provider"
-import { ResolvedUpdateFileInfo } from "electron-updater/src/types"
+import { Provider, ProviderRuntimeOptions } from "electron-updater"
+import type { ResolvedUpdateFileInfo } from "electron-updater/src/types"
 import { OutgoingHttpHeaders } from "http"
 import { URL } from "url"
 import { MockInstance, afterEach, beforeEach, vi } from "vitest"
-import { httpExecutor } from "../helpers/updaterTestUtil"
+import { httpExecutor } from "../helpers/updaterTestUtil.js"
 
 let requestSpy: MockInstance
 

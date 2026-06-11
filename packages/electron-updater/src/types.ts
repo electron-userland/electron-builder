@@ -1,7 +1,7 @@
 import { CancellationToken, PackageFileInfo, ProgressInfo, UpdateFileInfo, UpdateInfo } from "builder-util-runtime"
 import { EventEmitter } from "events"
 import { URL } from "url"
-import { LoginCallback } from "./electronHttpExecutor"
+import { LoginCallback } from "./electronHttpExecutor.js"
 
 export { CancellationToken, PackageFileInfo, ProgressInfo, UpdateFileInfo, UpdateInfo }
 
@@ -41,17 +41,8 @@ export class UpdaterSignal {
   }
 }
 
-const isLogEvent = false
-
 export function addHandler(emitter: EventEmitter, event: UpdaterEvents, handler: (...args: Array<any>) => void): void {
-  if (isLogEvent) {
-    emitter.on(event, (...args: Array<any>) => {
-      console.log("%s %s", event, args)
-      handler(...args)
-    })
-  } else {
-    emitter.on(event, handler)
-  }
+  emitter.on(event, handler)
 }
 
 export interface UpdateCheckResult {

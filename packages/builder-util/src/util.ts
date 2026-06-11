@@ -1,38 +1,39 @@
 import { Nullish, safeStringifyJson, isValidKey, isSensitiveFieldName, hashSensitiveValue } from "builder-util-runtime"
-import * as chalk from "chalk"
+import chalk from "chalk"
 import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_process"
 import { spawn as _spawn } from "cross-spawn"
 import _debug from "debug"
 import { dump } from "js-yaml"
 import * as path from "path"
 import { install as installSourceMap } from "source-map-support"
-import { debug, log } from "./log"
-import { exists } from "./fs"
-import { mkdir } from "fs-extra"
-import { isEmptyOrSpaces } from "./stringUtil"
+import { debug, log } from "./log.js"
+import { exists } from "./fs.js"
+import _fsExtra from "fs-extra"
+const { mkdir } = _fsExtra
+import { isEmptyOrSpaces } from "./stringUtil.js"
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
 }
 
-export { isEmptyOrSpaces } from "./stringUtil"
+export { isEmptyOrSpaces } from "./stringUtil.js"
 export { safeStringifyJson, retry } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
-export * from "./arch"
-export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames, getArchSuffix, toLinuxArchString } from "./arch"
-export { AsyncTaskManager } from "./asyncTaskManager"
-export { DebugLogger } from "./DebugLogger"
-export * from "./log"
-export { buildGotProxyAgent, httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor"
-export * from "./promise"
-export * from "./envUtil"
-export { parseValidEnvVarUrl } from "./envUtil"
+export * from "./arch.js"
+export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames, getArchSuffix, toLinuxArchString } from "./arch.js"
+export { AsyncTaskManager } from "./asyncTaskManager.js"
+export { DebugLogger } from "./DebugLogger.js"
+export * from "./log.js"
+export { buildGotProxyAgent, httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor.js"
+export * from "./promise.js"
+export * from "./envUtil.js"
+export { parseValidEnvVarUrl } from "./envUtil.js"
 
 export { asArray, deepAssign, isValidKey } from "builder-util-runtime"
-export * from "./fs"
+export * from "./fs.js"
 
-export { generateKsuid } from "./ksuid"
-export { loadCscLink, decodeCscLinkBase64, resolveCscLinkPath } from "./cscLink"
+export { generateKsuid } from "./ksuid.js"
+export { loadCscLink, decodeCscLinkBase64, resolveCscLinkPath } from "./cscLink.js"
 
 export const debug7z = _debug("electron-builder:7z")
 
@@ -188,8 +189,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
             message += `\n${chalk.red(removePassword(stderr.toString()))}`
           }
 
-          // TODO: switch to ECMA Script 2026 Error class with `cause` property to return stack trace
-          reject(new ExecError(file, (error as any).code, message, "", `${error.code || ExecError.code}`))
+          reject(new ExecError(file, (error as any).code, message, "", `${error.code || ExecError.code}`, { cause: error }))
         }
       }
     )
@@ -376,9 +376,10 @@ export class ExecError extends Error {
     readonly exitCode: number,
     out: string,
     errorOut: string,
-    code = ExecError.code
+    code = ExecError.code,
+    options?: { cause?: unknown }
   ) {
-    super(`${command} process failed ${code}${formatOut(String(exitCode), "Exit code")}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`)
+    super(`${command} process failed ${code}${formatOut(String(exitCode), "Exit code")}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`, options)
     ;(this as NodeJS.ErrnoException).code = code
   }
 }

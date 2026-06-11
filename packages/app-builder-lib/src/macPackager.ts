@@ -1,5 +1,8 @@
+import { createRequire } from "node:module"
 import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
-import { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
+import type { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
+
+const _require = createRequire(import.meta.url)
 import {
   Arch,
   AsyncTaskManager,
@@ -20,21 +23,21 @@ import * as fs from "fs/promises"
 import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { AppInfo } from "./appInfo"
-import { CodeSigningInfo, createKeychain, CreateKeychainOptions, isSignAllowed, removeKeychain, sign } from "./codeSign/macCodeSign"
-import { DIR_TARGET, Platform, Target } from "./core"
-import { AfterPackContext, ElectronPlatformName } from "./index"
-import { MacTargetHelper, PlatformType } from "./mac/MacTargetHelper"
-import { MacConfiguration, MasConfiguration } from "./options/macOptions"
-import { Packager } from "./packager"
-import { chooseNotNull, DoPackOptions, PlatformPackager } from "./platformPackager"
-import { ArchiveTarget } from "./targets/ArchiveTarget"
-import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
-import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
-import { dynamicImport } from "./util/dynamicImport"
-import { isMacOsHighSierra } from "./util/macosVersion"
-import { expandMacro as doExpandMacro } from "./util/macroExpander"
-import { resolveFunction } from "./util/resolve"
+import { AppInfo } from "./appInfo.js"
+import { CodeSigningInfo, createKeychain, CreateKeychainOptions, isSignAllowed, removeKeychain, sign } from "./codeSign/mac/macCodeSign.js"
+import { DIR_TARGET, Platform, Target } from "./core.js"
+import { AfterPackContext, ElectronPlatformName } from "./index.js"
+import { MacTargetHelper, PlatformType } from "./targets/mac/MacTargetHelper.js"
+import { MacConfiguration, MasConfiguration } from "./options/macOptions.js"
+import { Packager } from "./packager.js"
+import { chooseNotNull, DoPackOptions, PlatformPackager } from "./platformPackager.js"
+import { ArchiveTarget } from "./targets/ArchiveTarget.js"
+import { PkgTarget, prepareProductBuildArgs } from "./targets/mac/pkg.js"
+import { createCommonTarget, NoOpTarget } from "./targets/targetFactory.js"
+import { dynamicImport } from "./util/dynamicImport.js"
+import { isMacOsHighSierra } from "./util/mac/macosVersion.js"
+import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
+import { resolveFunction } from "./util/resolve.js"
 
 export type CustomMacSignOptions = SignOptions
 export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>
@@ -55,7 +58,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       }
 
       const selected = {
-        tmpDir: this.info.tempDirManager,
+        tmpDir: this.tempDirManager,
         cscLink,
         cscKeyPassword: this.getCscPassword(),
         cscILink: chooseNotNull(this.platformSpecificBuildOptions.cscInstallerLink, process.env.CSC_INSTALLER_LINK),
@@ -156,8 +159,10 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
           break
 
         case "dmg": {
-          const { DmgTarget } = require("dmg-builder")
-          mapper(name, outDir => new DmgTarget(this, outDir))
+          mapper(name, outDir => {
+            const { DmgTarget } = _require("dmg-builder")
+            return new DmgTarget(this, outDir)
+          })
           break
         }
 

@@ -4,7 +4,7 @@ import { expect } from "vitest"
 
 const WORKSPACE_ROOT = path.resolve(__dirname, "../../")
 
-const helper = require("../../packages/app-builder-lib/helpers/dynamic-import") as {
+const helper = require("../../packages/app-builder-lib/helpers/dynamic-import.cjs") as {
   dynamicImport(modulePath: string): Promise<any>
   dynamicImportMaybe(modulePath: string): Promise<any>
 }
