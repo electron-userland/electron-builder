@@ -1764,7 +1764,7 @@
             "null",
             "string"
           ]
-        },
+        }
       },
       "required": [
         "provider"
