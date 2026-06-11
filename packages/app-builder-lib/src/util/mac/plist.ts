@@ -1,4 +1,4 @@
-import * as plist_1 from "plist"
+import plist_1 from "plist"
 import * as fs from "fs/promises"
 
 type PlistValue = string | number | boolean | Date | PlistObject | PlistValue[]
