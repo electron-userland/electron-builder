@@ -1,12 +1,8 @@
 import { afterEach, describe, test, vi } from "vitest"
 
-vi.mock("which", () => {
-  const syncFn = vi.fn()
-  // packageManager.ts uses `import which from "which"` (default import), so the mock
-  // must expose `default: { sync }`. We also keep `sync` as a named export so that
-  // `import("which").then(m => m.sync)` in freshImport() picks up the same function.
-  return { default: { sync: syncFn }, sync: syncFn }
-})
+// `which` is CJS-only and the production code imports it as a default import (`import which from "which"`),
+// so the mock must expose `sync` on a `default` export rather than as a top-level namespace member.
+vi.mock("which", () => ({ default: { sync: vi.fn() } }))
 
 const originalPlatform = process.platform
 
@@ -24,7 +20,7 @@ async function freshImport() {
   const whichMod = await import("which")
   const { PM } = await import("app-builder-lib/internal")
   const { getPackageManagerCommand } = await import("app-builder-lib/src/node-module-collector/packageManager")
-  return { getPackageManagerCommand, PM, whichSync: vi.mocked(whichMod.sync) }
+  return { getPackageManagerCommand, PM, whichSync: vi.mocked(whichMod.default.sync) }
 }
 
 describe.sequential("getPackageManagerCommand", () => {
