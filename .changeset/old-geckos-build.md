@@ -1,5 +1,7 @@
 ---
 "builder-util-runtime": patch
+"app-builder-lib": patch
+"electron-publish": patch
 ---
 
-fix: resolve import of `sax` npm package
+fix: resolve runtime ESM/CJS interop for namespace imports of CJS-only packages (`sax`, `which`, `mime`)
