@@ -1234,10 +1234,6 @@
           "$ref": "#/definitions/Record<string,string>",
           "description": "Provides checksums for the artifact as strings.\nCan be used if you already know the checksums of the Electron artifact\nyou are downloading and want to skip the checksum file download\nwithout skipping the checksum validation.\n\nThis should be an object whose keys are the file names of the artifacts and\nthe values are their respective SHA256 checksums."
         },
-        "force": {
-          "description": "Whether to download an artifact regardless of whether it's in the cache directory.",
-          "type": "boolean"
-        },
         "unsafelyDisableChecksums": {
           "description": "When set to `true`, disables checking that the artifact download completed successfully\nwith the correct payload.",
           "type": "boolean"
