@@ -6,6 +6,8 @@ import { Platform } from "app-builder-lib"
 import { Arch } from "builder-util"
 import { load as yamlLoad } from "js-yaml"
 import { vi } from "vitest"
+import { generateUpdateSigningKeypair } from "builder-util"
+import { verifyManifestSignature } from "builder-util-runtime"
 
 const basePublishConfig = { provider: "s3", bucket: "test-bucket" } as const
 
@@ -221,6 +223,28 @@ test("emitArtifactCreated is called once per unique yml file", async ({ expect }
     await writeUpdateInfoFiles(tasks, mockPackager as any)
     // latest.yml (universal + x64 merged) + beta.yml = 2 writes
     expect(mockPackager.emitArtifactCreated).toHaveBeenCalledTimes(2)
+  })
+})
+
+// ── A1: update manifest signing ──────────────────────────────────────────────
+
+test("manifest is signed when a signing key is configured, and the signature verifies", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+    const task = makeTask(dir, "App-1.0.0.exe", "sha-universal", null)
+    const packager = { ...makePackager(), config: { updateManifest: { signingKey: privateKeyPem } } }
+    await writeUpdateInfoFiles([task], packager as any)
+    const yml = await readYml(path.join(dir, "latest.yml"))
+    expect(yml.signature).toBeDefined()
+    expect(verifyManifestSignature(yml, publicKeyPem)).toBe(true)
+  })
+})
+
+test("no signature field is written when no signing key is configured", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    await writeUpdateInfoFiles([makeTask(dir, "App-1.0.0.exe", "sha", null)], makePackager() as any)
+    const yml = await readYml(path.join(dir, "latest.yml"))
+    expect(yml.signature).toBeUndefined()
   })
 })
 

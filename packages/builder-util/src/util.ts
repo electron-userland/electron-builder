@@ -34,6 +34,7 @@ export * from "./fs.js"
 
 export { generateKsuid } from "./ksuid.js"
 export { loadCscLink, decodeCscLinkBase64, resolveCscLinkPath } from "./cscLink.js"
+export { signUpdateManifest, parsePrivateKey, derivePublicKeyPem, loadUpdateSigningKey, generateUpdateSigningKeypair } from "./updateManifestSigner.js"
 
 export const debug7z = _debug("electron-builder:7z")
 

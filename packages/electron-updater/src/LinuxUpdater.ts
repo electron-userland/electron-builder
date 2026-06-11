@@ -7,6 +7,20 @@ import { BaseUpdater } from "./BaseUpdater.js"
 const SAFE_PM_REGEX = /^[a-zA-Z0-9_-]+$/
 
 export abstract class LinuxUpdater extends BaseUpdater {
+  /**
+   * Require the OS package manager to verify the package's own (distro/GPG) signature during install.
+   *
+   * When `false` (current default), unsigned packages are accepted via `--allow-unauthenticated` /
+   * `--nogpgcheck` / `--allow-unsigned-rpm` and a warning is logged. electron-updater still verifies the
+   * artifact's sha512 against the update manifest (which can itself be Ed25519-signed — see
+   * `updateManifestPublicKey`), so integrity is enforced even without distro signatures.
+   *
+   * When `true`, those bypass flags are omitted so the package manager enforces its own signature policy.
+   *
+   * @default false
+   */
+  requireSignedLinuxPackages = false
+
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
   }

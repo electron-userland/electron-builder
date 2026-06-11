@@ -1,5 +1,5 @@
 import asyncPool from "tiny-async-pool"
-import { Arch, log, safeStringifyJson, serializeToYaml } from "builder-util"
+import { Arch, log, loadUpdateSigningKey, parsePrivateKey, safeStringifyJson, serializeToYaml, signUpdateManifest } from "builder-util"
 import { GenericServerOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -219,6 +219,17 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
   }
 
   const releaseDate = new Date().toISOString()
+
+  // Resolve the Ed25519 signing key once per run. When present, every manifest gets a `signature`
+  // field that electron-updater verifies before downloading. Resolved here (after all multi-arch/zip
+  // file merges) so the signed `files` array is final.
+  const updateManifestConfig = packager.config?.updateManifest
+  const signingKeyPem = loadUpdateSigningKey(updateManifestConfig ?? undefined)
+  const signingKey = signingKeyPem == null ? null : parsePrivateKey(signingKeyPem)
+  if (signingKey != null) {
+    log.info(null, "signing update manifests with Ed25519 key")
+  }
+
   const concurrency = 4
   await asyncPool<UpdateInfoFileTask, void>(concurrency, Array.from(updateChannelFileToInfo.values()), async task => {
     const publishConfig = task.publishConfiguration
@@ -235,6 +246,12 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
 
     if (task.info.releaseDate == null) {
       task.info.releaseDate = releaseDate
+    }
+
+    // Sign last: `signature` must cover the final version/files/stagingPercentage. releaseDate is
+    // excluded from the signed payload, so setting it above does not affect the signature.
+    if (signingKey != null) {
+      task.info.signature = signUpdateManifest(task.info, signingKey)
     }
 
     const fileContent = Buffer.from(serializeToYaml(task.info, false, true))

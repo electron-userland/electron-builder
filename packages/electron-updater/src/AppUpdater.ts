@@ -12,6 +12,7 @@ import {
   ProgressInfo,
   BlockMap,
   retry,
+  verifyManifestSignature,
 } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { release } from "os"
@@ -165,6 +166,18 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     this._channel = value
     this.allowDowngrade = true
   }
+
+  /**
+   * The Ed25519 public key (PEM or base64 SPKI) used to verify the signed update manifest before
+   * downloading. When set, overrides the `updateManifestPublicKey` value embedded in `app-update.yml`.
+   *
+   * When a key is available (here or in config) the manifest signature is enforced and a download will
+   * not start unless verification succeeds. When no key is available, verification is skipped (opt-in)
+   * and a one-time warning is logged.
+   */
+  updateManifestPublicKey: string | null = null
+
+  private manifestVerificationWarned = false
 
   /**
    *  The request headers.
@@ -490,10 +503,58 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const client = await this.clientPromise
     const stagingUserId = await this.stagingUserIdPromise.value
     client.setRequestHeaders(this.computeFinalHeaders({ "x-user-staging-id": stagingUserId }))
+    const info = await client.getLatestVersion()
+    await this.verifyManifestSignature(info)
     return {
-      info: await client.getLatestVersion(),
+      info,
       provider: client,
     }
+  }
+
+  /**
+   * Verifies the Ed25519 signature embedded in the update manifest against the configured public key.
+   * Provider-agnostic: runs for every provider since it operates on the resolved `UpdateInfo`.
+   *
+   * - No public key configured → verification skipped (opt-in phase), warns once.
+   * - Public key configured, manifest unsigned → throws ERR_UPDATER_MANIFEST_NOT_SIGNED.
+   * - Public key configured, signature invalid → throws ERR_UPDATER_MANIFEST_SIGNATURE_INVALID.
+   *
+   * A throw here propagates before any download starts (fail-closed).
+   */
+  private async verifyManifestSignature(info: UpdateInfo): Promise<void> {
+    let publicKey = this.updateManifestPublicKey
+    if (publicKey == null) {
+      try {
+        publicKey = (await this.configOnDisk.value)?.updateManifestPublicKey ?? null
+      } catch (e: any) {
+        // app-update.yml is read elsewhere too; a missing/unreadable config here just means "no key"
+        if (e.code !== "ENOENT") {
+          this._logger.warn(`Cannot read updateManifestPublicKey from update config: ${e.message || e}`)
+        }
+        publicKey = null
+      }
+    }
+
+    if (publicKey == null) {
+      if (!this.manifestVerificationWarned) {
+        this.manifestVerificationWarned = true
+        this._logger.warn("update manifest signature verification is disabled. Configure updateManifestPublicKey (and sign manifests at build time) to enable it.")
+      }
+      return
+    }
+
+    if (info.signature == null || info.signature.length === 0) {
+      throw newError(`Update manifest for version ${info.version} is not signed, but updateManifestPublicKey is configured. Refusing to update.`, "ERR_UPDATER_MANIFEST_NOT_SIGNED")
+    }
+
+    if (!verifyManifestSignature(info, publicKey)) {
+      throw newError(
+        `Update manifest signature verification failed for version ${info.version}. The update metadata may have been tampered with. Refusing to update.`,
+        "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID"
+      )
+    }
+
+    this._logger.info(`Update manifest signature verified for version ${info.version}`)
   }
 
   private createProviderRuntimeOptions() {

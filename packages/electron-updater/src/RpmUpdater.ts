@@ -38,7 +38,7 @@ export class RpmUpdater extends LinuxUpdater {
     const priorityList = ["zypper", "dnf", "yum", "rpm"]
     const packageManager = this.detectPackageManager(priorityList)
     try {
-      RpmUpdater.installWithCommandRunner(packageManager as any, installerPath, this.runCommandWithSudoIfNeeded.bind(this), this._logger)
+      RpmUpdater.installWithCommandRunner(packageManager as any, installerPath, this.runCommandWithSudoIfNeeded.bind(this), this._logger, this.requireSignedLinuxPackages)
     } catch (error: any) {
       this.dispatchError(error)
       return false
@@ -49,19 +49,59 @@ export class RpmUpdater extends LinuxUpdater {
     return true
   }
 
-  static installWithCommandRunner(packageManager: "zypper" | "dnf" | "yum" | "rpm", installerPath: string, commandRunner: (commandWithArgs: string[]) => void, logger: Logger) {
+  static installWithCommandRunner(
+    packageManager: "zypper" | "dnf" | "yum" | "rpm",
+    installerPath: string,
+    commandRunner: (commandWithArgs: string[]) => void,
+    logger: Logger,
+    requireSigned = false
+  ) {
+    const warnUnsigned = (flag: string) => {
+      if (!requireSigned) {
+        logger.warn(
+          `installing .rpm without distro signature verification (${flag}). Artifact integrity is still checked via the update manifest sha512. Set requireSignedLinuxPackages=true to enforce distro signatures.`
+        )
+      } else {
+        logger.info("requireSignedLinuxPackages is enabled — the package manager will enforce RPM signature verification")
+      }
+    }
     if (packageManager === "zypper") {
-      return commandRunner(["zypper", "--non-interactive", "--no-refresh", "install", "--allow-unsigned-rpm", "-f", installerPath])
+      const args = ["zypper", "--non-interactive", "--no-refresh", "install"]
+      if (!requireSigned) {
+        warnUnsigned("--allow-unsigned-rpm")
+        args.push("--allow-unsigned-rpm")
+      }
+      args.push("-f", installerPath)
+      return commandRunner(args)
     }
     if (packageManager === "dnf") {
-      return commandRunner(["dnf", "install", "--nogpgcheck", "-y", installerPath])
+      const args = ["dnf", "install"]
+      if (!requireSigned) {
+        warnUnsigned("--nogpgcheck")
+        args.push("--nogpgcheck")
+      }
+      args.push("-y", installerPath)
+      return commandRunner(args)
     }
     if (packageManager === "yum") {
-      return commandRunner(["yum", "install", "--nogpgcheck", "-y", installerPath])
+      const args = ["yum", "install"]
+      if (!requireSigned) {
+        warnUnsigned("--nogpgcheck")
+        args.push("--nogpgcheck")
+      }
+      args.push("-y", installerPath)
+      return commandRunner(args)
     }
     if (packageManager === "rpm") {
       logger.warn("Installing with rpm only (no dependency resolution).")
-      return commandRunner(["rpm", "-Uvh", "--replacepkgs", "--replacefiles", "--nodeps", installerPath])
+      // --nodeps is about dependency resolution, not signatures; rpm still checks the package signature
+      // when a matching GPG key is imported. Keep replace flags; only drop --nodeps when signatures are required.
+      const args = ["rpm", "-Uvh", "--replacepkgs", "--replacefiles"]
+      if (!requireSigned) {
+        args.push("--nodeps")
+      }
+      args.push(installerPath)
+      return commandRunner(args)
     }
     throw new Error(`Package manager ${packageManager} not supported`)
   }
