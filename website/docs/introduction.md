@@ -118,11 +118,19 @@ This instructs Yarn to use node-modules instead of PnP.
 
 ## Quick Setup Guide
 
-[electron-webpack-quick-start](https://github.com/electron-userland/electron-webpack-quick-start) is a recommended way to create a new Electron application.
+[electron-quick-start](https://github.com/electron/electron-quick-start) is the official minimal starter for a new Electron application.
 
-1. Specify the standard fields in the application `package.json` — `name`, `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors).
+1. Clone the starter and add electron-builder:
+    ```bash
+    git clone https://github.com/electron/electron-quick-start
+    cd electron-quick-start
+    npm install
+    npm install electron-builder --save-dev
+    ```
 
-2. Specify the [build](https://www.electron.build/docs/configuration) configuration in the `package.json` as follows:
+2. Specify the standard fields in the application `package.json` — `name`, `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors).
+
+3. Specify the [build](https://www.electron.build/docs/configuration) configuration in the `package.json` as follows:
     ```json
     "build": {
       "appId": "your.id",
@@ -134,9 +142,9 @@ This instructs Yarn to use node-modules instead of PnP.
    See [all options](https://www.electron.build/docs/configuration). Option [files](https://www.electron.build/docs/contents#files) to indicate which files should be packed in the final application, including the entry file, maybe required.
    You can also use separate configuration files, such as `js`, `ts`, `yml`, and `json`/`json5`. See [read-config-file](https://www.npmjs.com/package/read-config-file) for supported extensions. [JS Example for programmatic API](https://www.electron.build/docs/programmatic-usage)
 
-3. Add [icons](https://www.electron.build/docs/features/icons).
+4. Add [icons](https://www.electron.build/docs/features/icons).
 
-4. Add the [scripts](https://docs.npmjs.com/cli/run-script) key to the development `package.json`:
+5. Add the [scripts](https://docs.npmjs.com/cli/run-script) key to the development `package.json`:
     ```json
     "scripts": {
       "app:dir": "electron-builder --dir",
@@ -147,7 +155,7 @@ This instructs Yarn to use node-modules instead of PnP.
 
     To ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps"` to your `package.json`.
 
-5. If you have native addons of your own that are part of the application (not as a dependency), set [nodeGypRebuild](https://www.electron.build/docs/configuration) to `true`.
+6. If you have native addons of your own that are part of the application (not as a dependency), set [nodeGypRebuild](https://www.electron.build/docs/configuration) to `true`.
 
 Please note that everything is packaged into an asar archive [by default](https://www.electron.build/docs/configuration).
 
@@ -208,6 +216,8 @@ PowerShell uses different syntax to set environment variables.
 $env:DEBUG = "electron-builder"
 ```
 :::
+
+If you've identified a bug and want to report it, use [electron/minimal-repro](https://github.com/electron/minimal-repro) to create a minimal reproduction case. Attaching one to your issue significantly speeds up diagnosis.
 
 ## Donate
 
