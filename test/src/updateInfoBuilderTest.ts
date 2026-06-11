@@ -230,7 +230,7 @@ function makePlatformPackager(): any {
   return {
     appInfo: { version: "1.0.0" },
     platform: Platform.WINDOWS,
-    platformSpecificBuildOptions: { releaseInfo: undefined, electronUpdaterCompatibility: ">=2.16", generateUpdatesFilesForAllChannels: undefined },
+    platformOptions: { releaseInfo: undefined, electronUpdaterCompatibility: ">=2.16", generateUpdatesFilesForAllChannels: undefined },
     config: { releaseInfo: undefined, generateUpdatesFilesForAllChannels: undefined },
     info: {},
     getResource: () => Promise.resolve(null),
