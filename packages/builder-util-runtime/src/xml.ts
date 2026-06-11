@@ -1,4 +1,4 @@
-import * as sax from "sax"
+import sax from "sax"
 import { newError } from "./error.js"
 
 export class XElement {
