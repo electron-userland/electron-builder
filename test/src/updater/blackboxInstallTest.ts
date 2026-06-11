@@ -138,11 +138,7 @@ async function runInstallTest(context: TestContext, target: ConstructorParameter
           await move(ctx.outDir, artifactsDir)
         },
         projectDirCreated: async (projectDir, _tmpDir, runtimeEnv) => {
-          // pnpm 11 no longer reads `node-linker` from .npmrc — it moved to `nodeLinker` in
-          // pnpm-workspace.yaml. Without a hoisted layout the app's node_modules is an isolated
-          // virtual store (symlinks into .pnpm), which breaks bundling of the transitive deps of
-          // link: packages (e.g. fs-extra's universalify), and the packaged app crashes at runtime.
-          await outputFile(path.join(projectDir, "pnpm-workspace.yaml"), "nodeLinker: hoisted\n")
+          await outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted")
 
           await modifyPackageJson(
             projectDir,
@@ -178,7 +174,13 @@ async function runInstallTest(context: TestContext, target: ConstructorParameter
             },
             false
           )
-          await spawn("pnpm", ["install"], { cwd: projectDir, env: runtimeEnv })
+          // pnpm 11 no longer reads `node-linker` from .npmrc (it moved to `nodeLinker` in
+          // pnpm-workspace.yaml, but writing that file would make the project a workspace root and
+          // break collector detection). Force the hoisted layout via the install-time config flag,
+          // which works on both pnpm 10 and 11. Without it pnpm 11 produces an isolated virtual
+          // store (symlinks into .pnpm) where the transitive deps of link: packages — e.g.
+          // fs-extra's `universalify` — get dropped during bundling and the app crashes at runtime.
+          await spawn("pnpm", ["install", "--config.node-linker=hoisted"], { cwd: projectDir, env: runtimeEnv })
         },
       }
     )
