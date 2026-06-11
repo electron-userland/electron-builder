@@ -30,7 +30,7 @@ import { AppInfo } from "./appInfo.js"
 import { checkFileInArchive } from "./asar/asarFileChecker.js"
 import { AsarPackager } from "./asar/asarUtil.js"
 import { AsarIntegrity, computeData } from "./asar/integrity.js"
-import { FuseOptionsV1 } from "./configuration.js"
+import { FuseOptionsV1 } from "./options/FuseOptionsV1.js"
 import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers, getNodeModuleFileMatcher } from "./fileMatcher.js"
 import { createTransformer } from "./fileTransformer.js"
 import { Framework, isElectronBased } from "./Framework.js"
@@ -486,6 +486,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
     if (fuses.grantFileProtocolExtraPrivileges != null) {
       config[FuseV1Options.GrantFileProtocolExtraPrivileges] = fuses.grantFileProtocolExtraPrivileges
+    }
+    if (fuses.wasmTrapHandlers != null) {
+      config[FuseV1Options.WasmTrapHandlers] = fuses.wasmTrapHandlers
     }
     return config
   }

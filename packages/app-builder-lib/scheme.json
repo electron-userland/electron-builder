@@ -1560,7 +1560,7 @@
           "type": "boolean"
         },
         "enableEmbeddedAsarIntegrityValidation": {
-          "description": "Enables ASAR integrity validation — Electron verifies the embedded SHA-256 hash of\n`app.asar` before loading it.\n\nPlatform support:\n- macOS: Electron ≥ 16.0.0\n- Windows: Electron ≥ 30.0.0\n\nFor this fuse to be meaningful, `asar.disableIntegrity` must **not** be\n`true` (otherwise the hash is not embedded).\n\nSee the [ASAR Integrity guide](https://www.electronjs.org/docs/latest/tutorial/asar-integrity).",
+          "description": "Enables ASAR integrity validation — Electron verifies the embedded SHA-256 hash of\n`app.asar` before loading it.\n\nPlatform support:\n- macOS: Electron ≥ 16.0.0\n- Windows: Electron ≥ 30.0.0\n\nFor this fuse to be meaningful, `asar.disableIntegrity` must **not** be\n`true` (otherwise the hash is not embedded).",
           "type": "boolean"
         },
         "enableNodeCliInspectArguments": {
@@ -1584,11 +1584,15 @@
           "type": "boolean"
         },
         "resetAdHocDarwinSignature": {
-          "description": "Re-applies the ad-hoc codesignature on macOS after fuses are flipped.\n\nelectron-builder already re-signs the app after flipping fuses, so this flag is\ngenerally not needed and exists only as a compatibility shim for edge cases.\n\nSee [`@electron/fuses` — Apple Silicon](https://github.com/electron/fuses?tab=readme-ov-file#apple-silicon).",
+          "description": "Re-applies the ad-hoc codesignature on macOS after fuses are flipped.\n\nelectron-builder already re-signs the app after flipping fuses, so this flag is\ngenerally not needed and exists only as a compatibility shim for edge cases.",
           "type": "boolean"
         },
         "runAsNode": {
           "description": "Controls whether the `ELECTRON_RUN_AS_NODE` environment variable is respected.\n\nWhen `true` (the Electron default), setting `ELECTRON_RUN_AS_NODE=1` in the environment\nmakes Electron behave like a plain Node.js process, bypassing the app entirely. Disable\nthis fuse in production apps to prevent that escape path.\n\n**Note:** Disabling this fuse also breaks `process.fork()` in the main process because\nit relies on `ELECTRON_RUN_AS_NODE` internally. Use\n[Utility Processes](https://www.electronjs.org/docs/latest/api/utility-process) as a\nreplacement.",
+          "type": "boolean"
+        },
+        "wasmTrapHandlers": {
+          "description": "Enables V8 signal-based trap handlers for out-of-bounds WebAssembly memory accesses.\n\nWhen enabled, Electron uses OS signals (e.g. `SIGSEGV` on Linux/macOS) to catch Wasm\nOOB accesses at the hardware level rather than inserting explicit bounds checks in JIT'd\ncode. This improves Wasm performance and is enabled by default in Electron.\n\nDisable only if the host environment restricts signal handlers (e.g. certain sandboxing\nconfigurations) and you observe crashes in Wasm-heavy workloads.",
           "type": "boolean"
         }
       },
