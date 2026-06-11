@@ -112,7 +112,11 @@ export async function doBuild(
         packed,
         packageManager: PM.PNPM,
         projectDirCreated: async (projectDir, _tmpDir, runtimeEnv) => {
-          await outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted")
+          // pnpm 11 no longer reads `node-linker` from .npmrc — it moved to `nodeLinker` in
+          // pnpm-workspace.yaml. Without a hoisted layout the app's node_modules is an isolated
+          // virtual store (symlinks into .pnpm), which breaks bundling of the transitive deps of
+          // link: packages (e.g. fs-extra's universalify), and the packaged app crashes at runtime.
+          await outputFile(path.join(projectDir, "pnpm-workspace.yaml"), "nodeLinker: hoisted\n")
 
           await modifyPackageJson(
             projectDir,
