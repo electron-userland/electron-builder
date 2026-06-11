@@ -104,9 +104,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   const cfBundleIdentifier = filterCFBundleIdentifier((isMas ? packager.config.mas?.appId : defaultAppId) || defaultAppId || appInfo.macBundleIdentifier)
 
   const defaultHelperId = packager.platformOptions.helperBundleId
-  const helperBundleIdentifier = filterCFBundleIdentifier(
-    (isMas ? packager.config.mas?.helperBundleId : defaultHelperId) || defaultHelperId || `${cfBundleIdentifier}.helper`
-  )
+  const helperBundleIdentifier = filterCFBundleIdentifier((isMas ? packager.config.mas?.helperBundleId : defaultHelperId) || defaultHelperId || `${cfBundleIdentifier}.helper`)
 
   appPlist.CFBundleIdentifier = cfBundleIdentifier
 
