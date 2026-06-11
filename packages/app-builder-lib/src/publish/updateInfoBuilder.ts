@@ -223,7 +223,9 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
   // Resolve the Ed25519 signing key once per run. When present, every manifest gets a `signature`
   // field that electron-updater verifies before downloading. Resolved here (after all multi-arch/zip
   // file merges) so the signed `files` array is final.
-  const updateManifestConfig = packager.config?.updateManifest
+  // Platform-specific options take precedence, mirroring the public-key resolution in PublishManager.
+  const firstTaskPackager = updateInfoFileTasks[0]?.packager
+  const updateManifestConfig = firstTaskPackager?.platformOptions?.updateManifest ?? packager.config?.updateManifest
   const signingKeyPem = loadUpdateSigningKey(updateManifestConfig ?? undefined)
   const signingKey = signingKeyPem == null ? null : parsePrivateKey(signingKeyPem)
   if (signingKey != null) {

@@ -56,14 +56,13 @@ export class RpmUpdater extends LinuxUpdater {
     logger: Logger,
     requireSigned = false
   ) {
+    if (requireSigned) {
+      logger.info("requireSignedLinuxPackages is enabled — the package manager will enforce RPM signature verification")
+    }
     const warnUnsigned = (flag: string) => {
-      if (!requireSigned) {
-        logger.warn(
-          `installing .rpm without distro signature verification (${flag}). Artifact integrity is still checked via the update manifest sha512. Set requireSignedLinuxPackages=true to enforce distro signatures.`
-        )
-      } else {
-        logger.info("requireSignedLinuxPackages is enabled — the package manager will enforce RPM signature verification")
-      }
+      logger.warn(
+        `installing .rpm without distro signature verification (${flag}). Artifact integrity is still checked via the update manifest sha512. Set requireSignedLinuxPackages=true to enforce distro signatures.`
+      )
     }
     if (packageManager === "zypper") {
       const args = ["zypper", "--non-interactive", "--no-refresh", "install"]
