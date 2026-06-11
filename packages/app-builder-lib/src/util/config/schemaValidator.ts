@@ -45,7 +45,7 @@ export function validateSchema(schema: unknown, data: unknown, config: Validatio
   const guidance = [
     `Please check the documentation to ensure that your configuration matches the expected schema: https://www.electron.build/configuration`,
     `If you recently upgraded electron-builder to v27, please run \`electron-builder migrate-schema\` to automatically update your configuration.`,
-    `Check the release notes for breaking changes: https://www.electron.build/docs/migration/v26-to-v27`
+    `Check the release notes for breaking changes: https://www.electron.build/docs/migration/v26-to-v27`,
   ]
   throw new Error(`${header}\n${formatted.join("\n")}\n${guidance.join("\n")}`)
 }
