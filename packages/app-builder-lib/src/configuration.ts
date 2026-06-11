@@ -458,29 +458,6 @@ export interface Configuration extends CommonConfiguration, PlatformSpecificBuil
    * `dependencies`. Set `extends: null` to opt out of automatic preset detection.
    */
   extends?: Array<string> | string | null
-
-  /**
-   * Whether to skip the ASAR package integrity sanity check.
-   *
-   * Set to `true` only when using a custom Electron fork that implements its own encrypted or
-   * non-standard ASAR integrity validation that is not compatible with electron-builder's default
-   * check. Standard builds should leave this `false`.
-   *
-   * @default false
-   */
-  readonly disableSanityCheckAsar?: boolean
-
-  /**
-   * Whether to skip computing the ASAR integrity hash.
-   *
-   * Normally electron-builder computes and embeds a SHA-256 hash of `app.asar` so that Electron
-   * can verify it at startup (when the `embeddedAsarIntegrityValidation` fuse is enabled). Set to
-   * `true` only for custom Electron forks with encrypted ASAR support where the header is not
-   * readable by standard tools.
-   *
-   * @default false
-   */
-  readonly disableAsarIntegrity?: boolean
 }
 
 /**
@@ -1031,7 +1008,7 @@ export interface FuseOptionsV1 {
    * - macOS: Electron ≥ 16.0.0
    * - Windows: Electron ≥ 30.0.0
    *
-   * For this fuse to be meaningful, {@link Configuration.disableAsarIntegrity} must **not** be
+   * For this fuse to be meaningful, `asar.disableIntegrity` must **not** be
    * `true` (otherwise the hash is not embedded).
    *
    * See the [ASAR Integrity guide](https://www.electronjs.org/docs/latest/tutorial/asar-integrity).

@@ -7,7 +7,7 @@ describe("migrateConfig — no-op cases", () => {
       appId: "com.example.app",
       productName: "My App",
       nativeModules: { npmRebuild: true, rebuildMode: "sequential" },
-      asarUnpack: ["**/*.node"],
+      asar: { unpack: ["**/*.node"] },
     }
     const result = migrateConfig(input)
     expect(result.modified).toBe(false)
@@ -114,44 +114,48 @@ describe("migrateConfig — nativeModules grouping", () => {
 })
 
 describe("migrateConfig — asar legacy keys", () => {
-  test("renames asar-unpack → asarUnpack", () => {
+  test("renames asar-unpack → asar.unpack", () => {
     const result = migrateConfig({ "asar-unpack": "**/*.node" })
     expect("asar-unpack" in result.migrated).toBe(false)
-    expect(result.migrated.asarUnpack).toBe("**/*.node")
+    expect("asarUnpack" in result.migrated).toBe(false)
+    expect(result.migrated.asar?.unpack).toBe("**/*.node")
   })
 
-  test("renames asar-unpack-dir → asarUnpack", () => {
+  test("renames asar-unpack-dir → asar.unpack", () => {
     const result = migrateConfig({ "asar-unpack-dir": "resources/**" })
     expect("asar-unpack-dir" in result.migrated).toBe(false)
-    expect(result.migrated.asarUnpack).toBe("resources/**")
+    expect("asarUnpack" in result.migrated).toBe(false)
+    expect(result.migrated.asar?.unpack).toBe("resources/**")
   })
 
-  test("merges asar-unpack and asar-unpack-dir into array", () => {
+  test("merges asar-unpack and asar-unpack-dir into asar.unpack array", () => {
     const result = migrateConfig({ "asar-unpack": "**/*.node", "asar-unpack-dir": "resources/**" })
-    expect(result.migrated.asarUnpack).toEqual(["**/*.node", "resources/**"])
+    expect("asarUnpack" in result.migrated).toBe(false)
+    expect(result.migrated.asar?.unpack).toEqual(["**/*.node", "resources/**"])
   })
 
-  test("moves asar.unpack → asarUnpack and removes empty asar", () => {
+  test("moves legacy asar.unpack to asar.unpack (round-trip idempotent)", () => {
     const result = migrateConfig({ asar: { unpack: "**/*.node" } })
-    expect(result.migrated.asarUnpack).toBe("**/*.node")
-    expect("asar" in result.migrated).toBe(false)
+    expect("asarUnpack" in result.migrated).toBe(false)
+    expect(result.migrated.asar?.unpack).toBe("**/*.node")
   })
 
-  test("moves asar.unpackDir → asarUnpack", () => {
+  test("moves asar.unpackDir → asar.unpack", () => {
     const result = migrateConfig({ asar: { unpackDir: "resources/**" } })
-    expect(result.migrated.asarUnpack).toBe("resources/**")
-    expect("asar" in result.migrated).toBe(false)
+    expect("asarUnpack" in result.migrated).toBe(false)
+    expect(result.migrated.asar?.unpack).toBe("resources/**")
   })
 
-  test("preserves other asar fields when removing unpack", () => {
+  test("preserves other asar fields when moving unpack", () => {
     const result = migrateConfig({ asar: { unpack: "**/*.node", smartUnpack: true } })
-    expect(result.migrated.asarUnpack).toBe("**/*.node")
-    expect(result.migrated.asar).toEqual({ smartUnpack: true })
+    expect("asarUnpack" in result.migrated).toBe(false)
+    expect(result.migrated.asar).toEqual({ smartUnpack: true, unpack: "**/*.node" })
   })
 
-  test("merges with existing asarUnpack array", () => {
+  test("merges legacy asar-unpack with existing asarUnpack into asar.unpack", () => {
     const result = migrateConfig({ "asar-unpack": "**/*.node", asarUnpack: ["existing/**"] })
-    expect(result.migrated.asarUnpack).toEqual(["existing/**", "**/*.node"])
+    expect("asarUnpack" in result.migrated).toBe(false)
+    expect(result.migrated.asar?.unpack).toEqual(["existing/**", "**/*.node"])
   })
 })
 
@@ -365,10 +369,77 @@ describe("migrateConfig — full migration (multiple changes at once)", () => {
       npmRebuild: true,
       rebuildMode: "sequential",
     })
-    expect(result.migrated.asarUnpack).toEqual(["**/*.node", "resources/**"])
+    expect("asarUnpack" in result.migrated).toBe(false)
+    expect(result.migrated.asar?.unpack).toEqual(["**/*.node", "resources/**"])
     expect("appImage" in result.migrated).toBe(false)
     expect(result.migrated.publish).toEqual({ provider: "github", tagNamePrefix: "" })
     expect(result.modified).toBe(true)
+  })
+})
+
+describe("migrateConfig — asar consolidation", () => {
+  test("moves root-level asarUnpack → asar.unpack", () => {
+    const result = migrateConfig({ asarUnpack: "**/*.node" })
+    expect("asarUnpack" in result.migrated).toBe(false)
+    expect(result.migrated.asar).toEqual({ unpack: "**/*.node" })
+    expect(result.changes.some(c => c.key === "asarUnpack")).toBe(true)
+  })
+
+  test("merges asarUnpack into existing asar object", () => {
+    const result = migrateConfig({ asar: { smartUnpack: false }, asarUnpack: "**/*.node" })
+    expect("asarUnpack" in result.migrated).toBe(false)
+    expect(result.migrated.asar).toEqual({ smartUnpack: false, unpack: "**/*.node" })
+  })
+
+  test("moves disableSanityCheckAsar → asar.disableSanityCheck", () => {
+    const result = migrateConfig({ disableSanityCheckAsar: true })
+    expect("disableSanityCheckAsar" in result.migrated).toBe(false)
+    expect(result.migrated.asar).toEqual({ disableSanityCheck: true })
+    expect(result.changes.some(c => c.key === "disableSanityCheckAsar")).toBe(true)
+  })
+
+  test("moves disableAsarIntegrity → asar.disableIntegrity", () => {
+    const result = migrateConfig({ disableAsarIntegrity: true })
+    expect("disableAsarIntegrity" in result.migrated).toBe(false)
+    expect(result.migrated.asar).toEqual({ disableIntegrity: true })
+    expect(result.changes.some(c => c.key === "disableAsarIntegrity")).toBe(true)
+  })
+
+  test("replaces asar: true with absent asar key when no sub-fields", () => {
+    const result = migrateConfig({ asar: true })
+    expect("asar" in result.migrated).toBe(false)
+    expect(result.changes.some(c => c.key === "asar")).toBe(true)
+  })
+
+  test("replaces asar: true with asar object when sub-fields are present", () => {
+    const result = migrateConfig({ asar: true, asarUnpack: "**/*.node" })
+    expect("asarUnpack" in result.migrated).toBe(false)
+    expect(result.migrated.asar).toEqual({ unpack: "**/*.node" })
+  })
+
+  test("skips consolidation when asar: false", () => {
+    const result = migrateConfig({ asar: false, asarUnpack: "**/*.node", disableSanityCheckAsar: true })
+    expect(result.migrated.asar).toBe(false)
+    expect("asarUnpack" in result.migrated).toBe(true)
+    expect("disableSanityCheckAsar" in result.migrated).toBe(true)
+  })
+
+  test("consolidates all three properties together", () => {
+    const result = migrateConfig({
+      asar: { ordering: "order.txt" },
+      asarUnpack: "**/*.node",
+      disableSanityCheckAsar: true,
+      disableAsarIntegrity: true,
+    })
+    expect("asarUnpack" in result.migrated).toBe(false)
+    expect("disableSanityCheckAsar" in result.migrated).toBe(false)
+    expect("disableAsarIntegrity" in result.migrated).toBe(false)
+    expect(result.migrated.asar).toEqual({
+      ordering: "order.txt",
+      unpack: "**/*.node",
+      disableSanityCheck: true,
+      disableIntegrity: true,
+    })
   })
 })
 

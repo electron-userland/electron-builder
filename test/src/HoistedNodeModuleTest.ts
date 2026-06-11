@@ -62,7 +62,7 @@ describe("node_module collectors", () => {
         targets: linuxDirTarget,
         projectDir: "packages/test-app",
         config: {
-          asarUnpack: ["**/node_modules/ms/**/*"],
+          asar: { unpack: ["**/node_modules/ms/**/*"] },
         },
       },
       {

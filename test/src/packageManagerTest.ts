@@ -468,7 +468,7 @@ describe("Package Managers", () => {
             targets: linuxDirTarget,
             config: {
               files: ["**/*"],
-              asarUnpack: ["**/node_modules/foo/**/*"],
+              asar: { unpack: ["**/node_modules/foo/**/*"] },
             },
           },
           {

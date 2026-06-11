@@ -81,7 +81,7 @@ for (const winCodeSign of winCodeSignVersions) {
           targets: Platform.WINDOWS.createTarget(DIR_TARGET),
           config: {
             publish: "never",
-            asarUnpack: ["assets"],
+            asar: { unpack: ["assets"] },
             toolsets: {
               winCodeSign,
             },
