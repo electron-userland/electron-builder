@@ -13,7 +13,6 @@ export class SpacesPublisher extends BaseS3Publisher {
     super(context, info)
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   static checkAndResolveOptions(options: SpacesOptions, channelFromAppVersion: string | null, _errorIfCannot: boolean) {
     if (options.name == null) {
       throw new InvalidConfigurationError(`Please specify "name" for "spaces" publish provider (see https://www.electron.build/publish#spacesoptions)`)

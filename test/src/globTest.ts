@@ -33,7 +33,7 @@ test.ifNotWindows("unpackDir one", ({ expect }) =>
     {
       targets: linuxDirTarget,
       config: {
-        asarUnpack: ["assets", "b2", "do-not-unpack-dir/file.json"],
+        asar: { unpack: ["assets", "b2", "do-not-unpack-dir/file.json"] },
       },
     },
     {
@@ -63,7 +63,7 @@ test.ifNotWindows("unpackDir", ({ expect }) => {
     {
       targets: linuxDirTarget,
       config: {
-        asarUnpack: ["assets", "b2", "do-not-unpack-dir/file.json"],
+        asar: { unpack: ["assets", "b2", "do-not-unpack-dir/file.json"] },
       },
     },
     {
@@ -80,7 +80,7 @@ test.ifNotWindows("asarUnpack and files ignore", ({ expect }) => {
     {
       targets: linuxDirTarget,
       config: {
-        asarUnpack: ["!**/ffprobe-static/bin/darwin/x64/ffprobe"],
+        asar: { unpack: ["!**/ffprobe-static/bin/darwin/x64/ffprobe"] },
       },
     },
     {
@@ -229,7 +229,7 @@ test.ifNotWindows("asarUnpack node_modules", ({ expect }) => {
     {
       targets: linuxDirTarget,
       config: {
-        asarUnpack: "node_modules",
+        asar: { unpack: "node_modules" },
       },
     },
     {

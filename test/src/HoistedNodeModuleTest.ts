@@ -62,7 +62,7 @@ describe("node_module collectors", () => {
         targets: linuxDirTarget,
         projectDir: "packages/test-app",
         config: {
-          asarUnpack: ["**/node_modules/ms/**/*"],
+          asar: { unpack: ["**/node_modules/ms/**/*"] },
         },
       },
       {
@@ -218,7 +218,6 @@ describe("node_module collectors", () => {
       targets: Platform.current().createTarget("dir", Arch.x64),
       projectDir: "app",
       config: {
-        asar: true,
         electronVersion: ELECTRON_VERSION,
       },
     }

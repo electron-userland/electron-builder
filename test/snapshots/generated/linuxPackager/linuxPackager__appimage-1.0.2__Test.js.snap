@@ -50,7 +50,8 @@ exports[`LinuxPackager > AppImage - deprecated systemIntegration 1`] = `
        * Found? Check that the option in the appropriate place. e.g. "title" only in the "dmg", not in the root.
 
 Please check the documentation to ensure that your configuration matches the expected schema: https://www.electron.build/configuration
-If you recently upgraded electron-builder to v27, please check the release notes for breaking changes: https://www.electron.build/docs/migration/v26-to-v27"
+If you recently upgraded electron-builder to v27, please run \`electron-builder migrate-schema\` to automatically update your configuration.
+Check the release notes for breaking changes: https://www.electron.build/docs/migration/v26-to-v27"
 `;
 
 exports[`LinuxPackager > AppImage - desktopName sets StartupWMClass 1`] = `

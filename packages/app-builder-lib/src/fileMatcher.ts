@@ -283,7 +283,7 @@ export interface GetFileMatchersOptions {
 
 export function getFileMatchers(
   config: Configuration,
-  name: "files" | "extraFiles" | "extraResources" | "asarUnpack" | "extraDistFiles",
+  name: "files" | "extraFiles" | "extraResources" | "extraDistFiles",
   defaultDestination: string,
   options: GetFileMatchersOptions
 ): Array<FileMatcher> | null {
@@ -305,8 +305,6 @@ export function getFileMatchers(
       if (typeof pattern === "string") {
         // use normalize to transform ./foo to foo
         defaultMatcher.addPattern(pattern)
-      } else if (name === "asarUnpack") {
-        throw new Error(`Advanced file copying not supported for "${name}"`)
       } else {
         const from = pattern.from == null ? options.defaultSrc : path.resolve(options.defaultSrc, pattern.from)
         const to = pattern.to == null ? defaultDestination : path.resolve(defaultDestination, pattern.to)
