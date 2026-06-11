@@ -1,8 +1,10 @@
+import _fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
+import * as path from "path"
 import { LogMessageByKey, type Package } from "./moduleManager.js"
 import { NodeModulesCollector } from "./nodeModulesCollector.js"
 import { getPackageManagerCommand, PM } from "./packageManager.js"
-import { PnpmDependency } from "./types.js"
+import type { PackageJson, PnpmDependency } from "./types.js"
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependency, PnpmDependency> {
   public readonly installOptions = {
@@ -118,7 +120,23 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     const all = packageJson ? { ...packageJson.dependencies, ...packageJson.optionalDependencies } : { ...tree.dependencies, ...tree.optionalDependencies }
     const optional = packageJson ? { ...packageJson.optionalDependencies } : {}
 
-    const deps = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
+    const deps: Record<string, PnpmDependency> = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
+
+    // pnpm --prod omits sub-deps for link: packages (and synthetic entries derived from them).
+    // For any dep declared in the package.json (all) that pnpm left out of the tree, recover
+    // the resolved entry from allDependencies so it lands in the production graph.
+    for (const depName of Object.keys(all)) {
+      if (!deps[depName]) {
+        for (const [id, dep] of this.allDependencies.entries()) {
+          const { name } = this.parseNameVersion(id)
+          if (name === depName) {
+            deps[depName] = dep
+            break
+          }
+        }
+      }
+    }
+
     this.productionGraph[dependencyId] = { dependencies: [] }
     const depPromises = Object.entries(deps).map(async ([packageName, dependency]) => {
       // First check if it's in production dependencies
@@ -153,30 +171,93 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     for (const root of this.allWorkspacePackages) {
       await this.collectDepsRecursively(root)
     }
+    // pnpm --prod omits link: packages from its JSON output entirely; pick them up from the
+    // app's package.json so their transitive deps are included in allDependencies.
+    await this.collectOmittedLinkPackages()
+  }
+
+  /**
+   * Visit a single dependency node, adding it and its transitive deps to allDependencies.
+   *
+   * For packages that pnpm list did NOT expand (link: packages and the synthetic entries
+   * derived from them), the tree has empty dependencies/optionalDependencies. In that case
+   * we fall back to the on-disk package.json to discover transitive deps, resolving each one
+   * from the package's own node_modules first (where pnpm placed them).
+   */
+  private async visitDep(key: string, value: PnpmDependency): Promise<void> {
+    if ((value?.dedupedDependenciesCount ?? 0) > 0) {
+      return
+    }
+    const id = `${key}@${value.version}`
+    // The pnpm list output can include the same `name@version` thousands of times across a
+    // deep workspace; without this guard we re-resolve and re-recurse each occurrence.
+    if (this.collectedDeps.has(id)) {
+      return
+    }
+    this.collectedDeps.add(id)
+    const pkg = await this.locateFromDepOrRoot(key, value.path, value.version)
+    this.allDependencies.set(id, { ...value, path: pkg?.packageDir ?? value.path })
+
+    const treeDepsCount = Object.keys({ ...(value.dependencies || {}), ...(value.optionalDependencies || {}) }).length
+    if (treeDepsCount === 0 && pkg?.packageJson) {
+      // pnpm list omits sub-deps for link: packages and for synthetic entries we create when
+      // traversing their transitive deps. Use the package.json to discover what to include.
+      const pkgDeps = { ...(pkg.packageJson.dependencies || {}), ...(pkg.packageJson.optionalDependencies || {}) }
+      for (const depName of Object.keys(pkgDeps)) {
+        const resolved = await this.locateFromDepOrRoot(depName, pkg.packageDir, undefined)
+        if (!resolved) {
+          continue
+        }
+        await this.visitDep(depName, {
+          from: depName,
+          name: depName,
+          version: resolved.packageJson.version,
+          path: resolved.packageDir,
+          dependencies: {},
+          optionalDependencies: {},
+        } as unknown as PnpmDependency)
+      }
+    } else {
+      await this.collectDepsRecursively(value)
+    }
   }
 
   private async collectDepsRecursively(tree: PnpmDependency): Promise<void> {
-    const visit = async (key: string, value: PnpmDependency) => {
-      if ((value?.dedupedDependenciesCount ?? 0) > 0) {
-        return
-      }
-      const id = `${key}@${value.version}`
-      // The pnpm list output can include the same `name@version` thousands of times across a
-      // deep workspace; without this guard we re-resolve and re-recurse each occurrence.
-      if (this.collectedDeps.has(id)) {
-        return
-      }
-      this.collectedDeps.add(id)
-      const pkg = await this.locateFromDepOrRoot(key, value.path, value.version)
-      this.allDependencies.set(id, { ...value, path: pkg?.packageDir ?? value.path })
-      await this.collectDepsRecursively(value)
-    }
-
     for (const [key, value] of Object.entries(tree.dependencies || {})) {
-      await visit(key, value)
+      await this.visitDep(key, value)
     }
     for (const [key, value] of Object.entries(tree.optionalDependencies || {})) {
-      await visit(key, value)
+      await this.visitDep(key, value)
+    }
+  }
+
+  /**
+   * pnpm excludes link: packages from `pnpm list --prod` output. Read the app's package.json
+   * directly to find any link: deps that were silently omitted and visit them so their
+   * transitive deps end up in allDependencies.
+   */
+  private async collectOmittedLinkPackages(): Promise<void> {
+    const appPkgJson = (await _fsExtra.readJson(path.join(this.rootDir, "package.json")).catch(() => null)) as PackageJson | null
+    if (!appPkgJson) {
+      return
+    }
+    const allDeps = { ...(appPkgJson.dependencies || {}), ...(appPkgJson.optionalDependencies || {}) }
+    for (const [name, version] of Object.entries(allDeps)) {
+      if (typeof version !== "string" || !version.startsWith("link:")) {
+        continue
+      }
+      const resolved = await this.locateFromDepOrRoot(name, this.rootDir, undefined)
+      if (!resolved) {
+        continue
+      }
+      await this.visitDep(name, {
+        from: name,
+        name,
+        version: resolved.packageJson.version,
+        path: resolved.packageDir,
+        dependencies: {},
+        optionalDependencies: {},
+      } as unknown as PnpmDependency)
     }
   }
 
