@@ -1,6 +1,5 @@
 import { createRequire } from "node:module"
-import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
-import type { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
+import { SignOptions } from "@electron/osx-sign"
 
 const _require = createRequire(import.meta.url)
 import {
@@ -24,7 +23,7 @@ import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { AppInfo } from "./appInfo.js"
-import { CodeSigningInfo, createKeychain, CreateKeychainOptions, isSignAllowed, removeKeychain, sign } from "./codeSign/mac/macCodeSign.js"
+import { CodeSigningInfo, createKeychain, CreateKeychainOptions, Identity, isSignAllowed, removeKeychain, sign } from "./codeSign/mac/macCodeSign.js"
 import { DIR_TARGET, Platform, Target } from "./core.js"
 import { AfterPackContext, ElectronPlatformName } from "./index.js"
 import { MacTargetHelper, PlatformType } from "./targets/mac/MacTargetHelper.js"
@@ -34,7 +33,6 @@ import { chooseNotNull, DoPackOptions, PlatformPackager } from "./platformPackag
 import { ArchiveTarget } from "./targets/ArchiveTarget.js"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/mac/pkg.js"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory.js"
-import { dynamicImport } from "./util/dynamicImport.js"
 import { isMacOsHighSierra } from "./util/mac/macosVersion.js"
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
 import { resolveFunction } from "./util/resolve.js"
@@ -253,7 +251,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
         await fs.copyFile(sourceCatalogPath, targetCatalogPath)
       }
 
-      const { makeUniversalApp } = await dynamicImport<typeof import("@electron/universal")>("@electron/universal")
+      const { makeUniversalApp } = await import("@electron/universal")
       await makeUniversalApp({
         x64AppPath: path.join(safeX64AppOutDir, appFile),
         arm64AppPath: path.join(safeArm64AppOutPath, appFile),

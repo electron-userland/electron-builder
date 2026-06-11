@@ -3,11 +3,14 @@ import {
   ElectronDownloadCacheMode,
   ElectronDownloadRequest,
   ElectronDownloadRequestOptions,
+  ElectronGenericArtifactDetails,
   ElectronPlatformArtifactDetails,
-  GotDownloaderOptions,
+  ElectronPlatformArtifactDetailsWithDefaults,
+  FetchDownloaderOptions,
   MirrorOptions,
 } from "@electron/get"
-import { buildGotProxyAgent, exec, exists, log, PADDING, parseValidEnvVarUrl, sanitizeDirPath, to7zaOutputSwitch } from "builder-util"
+import { exec, exists, log, PADDING, parseValidEnvVarUrl, sanitizeDirPath, to7zaOutputSwitch } from "builder-util"
+import { Agent } from "undici"
 import { getPath7za } from "../toolsets/7zip.js"
 import { MultiProgress } from "electron-publish"
 import { createReadStream, createWriteStream } from "fs"
@@ -23,6 +26,8 @@ import { HttpError, retry, sleep } from "builder-util-runtime"
 import { ElectronPlatformName } from "../electron/ElectronFramework.js"
 import { CacheState, cleanupCacheDirectory, computeCacheMetadata, readCacheStateFile, validateCacheDirectory, writeCacheState } from "./cacheState.js"
 import type { ProgressBar } from "electron-publish"
+
+type DownloadArtifactOptions = ElectronPlatformArtifactDetailsWithDefaults | ElectronGenericArtifactDetails
 
 export type ElectronGetOptions = Omit<
   ElectronPlatformArtifactDetails,
@@ -252,7 +257,15 @@ export async function extractArchive(file: string, dir: string) {
   }
 }
 
-async function downloadArtifactToFile(config: Parameters<typeof get.downloadArtifact>[0], label: string): Promise<string> {
+let proxyInitialized = false
+function initializeProxyOnce(): void {
+  if (!proxyInitialized) {
+    get.initializeProxy()
+    proxyInitialized = true
+  }
+}
+
+async function downloadArtifactToFile(config: DownloadArtifactOptions, label: string): Promise<string> {
   // Serialize concurrent downloads of the same artifact across vitest workers to prevent @electron/get's
   // non-atomic putFileInCache (remove + move) from racing with a concurrent reader.
   const artifactLockKey = crypto
@@ -274,10 +287,13 @@ async function downloadArtifactToFile(config: Parameters<typeof get.downloadArti
   let lastLoggedMilestone = -1
   const state: { bar: ProgressBar | undefined } = { bar: undefined }
 
-  const downloadOptions: GotDownloaderOptions = {
-    timeout: { request: 10 * 60 * 1000 }, // prevent indefinite hang on stalled connections
+  // @electron/get v5 downloads via fetch, whose proxy support comes from undici's global dispatcher.
+  // initializeProxy() wires that up from HTTP(S)_PROXY/NO_PROXY env vars (replaces the got proxy agent).
+  initializeProxyOnce()
+
+  const downloadOptions: FetchDownloaderOptions = {
+    signal: AbortSignal.timeout(10 * 60 * 1000), // prevent indefinite hang on stalled connections
     ...config.downloadOptions,
-    agent: config.downloadOptions?.agent ?? buildGotProxyAgent(),
     getProgressCallback: info => {
       // @electron/get passes downloadOptions (including this callback) to its internal
       // SHASUMS256.txt validation download. That file is tiny (<1 MB) and fires at 100%
@@ -383,7 +399,7 @@ async function persistToArchiveCache(sourcePath: string, archiveCachePath: strin
  * progress bar, extraction (.zip or .tar.gz), and completion marker.
  * Both public download functions delegate here after building their respective configs.
  */
-async function downloadAndExtract(config: Parameters<typeof get.downloadArtifact>[0], extractDir: string, label: string, archiveCachePath?: string): Promise<string> {
+async function downloadAndExtract(config: DownloadArtifactOptions, extractDir: string, label: string, archiveCachePath?: string): Promise<string> {
   await fs.mkdir(extractDir, { recursive: true })
 
   // Pre-lock fast path: only short-circuit for a definitively complete and valid cache.
@@ -620,7 +636,8 @@ function buildElectronArtifactConfig(options: ArtifactDownloadOptions): Electron
           customDir: customDir || undefined,
           customFilename: customFilename || undefined,
         },
-        ...(strictSSL === false ? { downloadOptions: { https: { rejectUnauthorized: false } } } : {}),
+        // fetch/undici equivalent of got's `https.rejectUnauthorized: false`: a per-download dispatcher that skips TLS verification.
+        ...(strictSSL === false ? { downloadOptions: { dispatcher: new Agent({ connect: { rejectUnauthorized: false } }) } } : {}),
       }
       if (overridePlatform != null) {
         artifactConfig.platform = overridePlatform

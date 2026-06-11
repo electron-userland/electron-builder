@@ -1,11 +1,9 @@
-import type { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
-import type { PerFileSignOptions, SigningDistributionType, SignOptions } from "@electron/osx-sign/dist/cjs/types"
-import type { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
+import type { NotarizeOptions, NotaryToolKeychainCredentials } from "@electron/notarize"
+import type { PerFileSignOptions, SigningDistributionType, SignOptions } from "@electron/osx-sign"
 import { Arch, InvalidConfigurationError, log, statOrNull } from "builder-util"
-import { dynamicImport } from "../../util/dynamicImport.js"
 import { Nullish } from "builder-util-runtime"
 import * as path from "path"
-import { CertType, findIdentity, reportError } from "../../codeSign/mac/macCodeSign.js"
+import { CertType, findIdentity, Identity, reportError } from "../../codeSign/mac/macCodeSign.js"
 import type { MacPackager } from "../../macPackager.js"
 import { MacConfiguration, MasConfiguration } from "../../options/macOptions.js"
 import { getTemplatePath } from "../../util/pathManager.js"
@@ -57,8 +55,7 @@ export class MacTargetHelper {
               "to prevent app launch failures due to library validation. See https://electron.build/code-signing for details."
           )
         }
-        const { Identity: IdentityClass } = await dynamicImport<{ Identity: new (name: string, hash?: string) => Identity }>("@electron/osx-sign/dist/cjs/util-identities")
-        identity = new IdentityClass("-", undefined)
+        identity = new Identity("-", undefined)
       } else if (noIdentity) {
         await reportError(isMas, certificateTypes, qualifier, keychainFile, this.packager.forceCodeSigning)
         return null
@@ -267,8 +264,7 @@ export class MacTargetHelper {
     }
   }
 
-  static getNotarizeOptions(appPath: string): NotarizeOptionsNotaryTool | undefined {
-    const tool = "notarytool"
+  static getNotarizeOptions(appPath: string): NotarizeOptions | undefined {
     const teamId = process.env.APPLE_TEAM_ID
     const appleId = process.env.APPLE_ID
     const appleIdPassword = process.env.APPLE_APP_SPECIFIC_PASSWORD
@@ -283,7 +279,7 @@ export class MacTargetHelper {
       if (!teamId) {
         throw new InvalidConfigurationError(`APPLE_TEAM_ID env var needs to be set`)
       }
-      return { tool, appPath, appleId, appleIdPassword, teamId }
+      return { appPath, appleId, appleIdPassword, teamId }
     }
 
     const appleApiKey = process.env.APPLE_API_KEY
@@ -293,7 +289,7 @@ export class MacTargetHelper {
       if (!appleApiKey || !appleApiKeyId || !appleApiIssuer) {
         throw new InvalidConfigurationError(`Env vars APPLE_API_KEY, APPLE_API_KEY_ID and APPLE_API_ISSUER need to be set`)
       }
-      return { tool, appPath, appleApiKey, appleApiKeyId, appleApiIssuer }
+      return { appPath, appleApiKey, appleApiKeyId, appleApiIssuer }
     }
 
     const keychain = process.env.APPLE_KEYCHAIN
@@ -303,7 +299,7 @@ export class MacTargetHelper {
       if (keychain) {
         args = { ...args, keychain }
       }
-      return { tool, appPath, ...args }
+      return { appPath, ...args }
     }
 
     return undefined
@@ -320,7 +316,7 @@ export class MacTargetHelper {
       log.warn({ reason: "`notarize` options were unable to be generated" }, "skipped macOS notarization")
       return
     }
-    const { notarize } = await dynamicImport<typeof import("@electron/notarize")>("@electron/notarize")
+    const { notarize } = await import("@electron/notarize")
     await notarize(options)
     log.info(null, "notarization successful")
   }
