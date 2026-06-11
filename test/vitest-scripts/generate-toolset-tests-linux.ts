@@ -1,6 +1,6 @@
 import * as fs from "fs"
 import * as path from "path"
-import type { ToolsetConfig } from "app-builder-lib/src/configuration"
+import type { ToolsetConfig } from "app-builder-lib/internal"
 import { buildDescribeCall, cleanAndEnsureDir, GENERATED_TESTS_DIR, getPlatformSuffix, namedFn, resolveImportPath, TEST_SRC_DIR } from "./generate-toolset-tests-shared"
 import type { SuiteConfig } from "./generate-toolset-tests-shared"
 import type * as _LinuxPackagerSuite from "../src/linux/linuxPackagerTestSuite"

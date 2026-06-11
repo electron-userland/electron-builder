@@ -1,20 +1,20 @@
 import asyncPool from "tiny-async-pool"
 import { Arch, log, safeStringifyJson, serializeToYaml } from "builder-util"
 import { GenericServerOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
-import { outputFile, outputJson, readFile } from "fs-extra"
+import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import * as semver from "semver"
-import { Platform } from "../core"
-import { ReleaseInfo } from "../options/PlatformSpecificBuildOptions"
-import { Packager } from "../packager"
-import { ArtifactCreated } from "../packagerApi"
-import { PlatformPackager } from "../platformPackager"
-import { hashFile } from "../util/hash"
-import { computeDownloadUrl, getPublishConfigsForUpdateInfo } from "./PublishManager"
+import { Platform } from "../core.js"
+import { ReleaseInfo } from "../options/PlatformSpecificBuildOptions.js"
+import { Packager } from "../packager.js"
+import { ArtifactCreated } from "../packagerApi.js"
+import { PlatformPackager } from "../platformPackager.js"
+import { hashFile } from "../util/hash.js"
+import { computeDownloadUrl, getPublishConfigsForUpdateInfo } from "./PublishManager.js"
 
 async function getReleaseInfo(packager: PlatformPackager<any>) {
-  const releaseInfo: ReleaseInfo = { ...(packager.platformSpecificBuildOptions.releaseInfo || packager.config.releaseInfo) }
+  const releaseInfo: ReleaseInfo = { ...(packager.platformOptions.releaseInfo || packager.config.releaseInfo) }
   if (releaseInfo.releaseNotes == null) {
     const releaseNotesFile = await packager.getResource(
       releaseInfo.releaseNotesFile,
@@ -23,7 +23,7 @@ async function getReleaseInfo(packager: PlatformPackager<any>) {
       `release-notes-${packager.platform.nodeName}.md`,
       "release-notes.md"
     )
-    const releaseNotes = releaseNotesFile == null ? null : await readFile(releaseNotesFile, "utf-8")
+    const releaseNotes = releaseNotesFile == null ? null : await fsExtra.readFile(releaseNotesFile, "utf-8")
     // to avoid undefined in the file, check for null
     if (releaseNotes != null) {
       releaseInfo.releaseNotes = releaseNotes
@@ -34,7 +34,7 @@ async function getReleaseInfo(packager: PlatformPackager<any>) {
 }
 
 function isGenerateUpdatesFilesForAllChannels(packager: PlatformPackager<any>) {
-  const value = packager.platformSpecificBuildOptions.generateUpdatesFilesForAllChannels
+  const value = packager.platformOptions.generateUpdatesFilesForAllChannels
   return value == null ? packager.config.generateUpdatesFilesForAllChannels : value
 }
 
@@ -82,7 +82,7 @@ export interface UpdateInfoFileTask {
   readonly arch?: Arch | null
 }
 
-function computeIsisElectronUpdater1xCompatibility(updaterCompatibility: string | null, publishConfiguration: PublishConfiguration, packager: Packager) {
+function checkUpdaterCompatibility(updaterCompatibility: string | null, publishConfiguration: PublishConfiguration, packager: PlatformPackager<any>) {
   if (updaterCompatibility != null) {
     return semver.satisfies("1.0.0", updaterCompatibility)
   }
@@ -110,14 +110,14 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
   const createdFiles = new Set<string>()
   const sharedInfo = await createUpdateInfo(version, event, await getReleaseInfo(packager))
   const tasks: Array<UpdateInfoFileTask> = []
-  const electronUpdaterCompatibility = packager.platformSpecificBuildOptions.electronUpdaterCompatibility || packager.config.electronUpdaterCompatibility || ">=2.15"
+  const electronUpdaterCompatibility = packager.platformOptions.electronUpdaterCompatibility || packager.config.electronUpdaterCompatibility || ">=2.15"
   for (const publishConfiguration of publishConfigs) {
     let dir = outDir
     if (publishConfigs.length > 1 && publishConfiguration !== publishConfigs[0]) {
       dir = path.join(outDir, publishConfiguration.provider)
     }
 
-    let isElectronUpdater1xCompatibility = computeIsisElectronUpdater1xCompatibility(electronUpdaterCompatibility, publishConfiguration, packager.info)
+    let isElectronUpdater1xCompatibility = checkUpdaterCompatibility(electronUpdaterCompatibility, publishConfiguration, packager)
 
     let info = sharedInfo
     // noinspection JSDeprecatedSymbols
@@ -238,7 +238,7 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
     }
 
     const fileContent = Buffer.from(serializeToYaml(task.info, false, true))
-    await outputFile(task.file, fileContent)
+    await fsExtra.outputFile(task.file, fileContent)
     await packager.emitArtifactCreated({
       file: task.file,
       fileContent,
@@ -264,7 +264,7 @@ async function writeOldMacInfo(
   const updateInfoFile = isGitHub && outDir === dir ? path.join(dir, "github", `${channel}-mac.json`) : path.join(dir, `${channel}-mac.json`)
   if (!createdFiles.has(updateInfoFile)) {
     createdFiles.add(updateInfoFile)
-    await outputJson(
+    await fsExtra.outputJson(
       updateInfoFile,
       {
         version,
@@ -274,7 +274,7 @@ async function writeOldMacInfo(
       { spaces: 2 }
     )
 
-    await packager.info.emitArtifactCreated({
+    await packager.emitArtifactCreated({
       file: updateInfoFile,
       arch: null,
       packager,

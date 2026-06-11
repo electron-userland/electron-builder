@@ -1,8 +1,8 @@
 import { AppImageOptions, Configuration, DebOptions, PacmanOptions, RpmOptions, Target, ToolsetConfig } from "app-builder-lib"
-import { PM } from "app-builder-lib/out/node-module-collector"
+import { PM } from "app-builder-lib/internal"
 import { Arch, Platform } from "electron-builder"
 import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
-import { archFromString, log, spawn, TmpDir } from "builder-util/out/util"
+import { archFromString, log, spawn, TmpDir } from "builder-util"
 import { deepAssign, GenericServerOptions } from "builder-util-runtime"
 import { execSync } from "child_process"
 import { move, outputFile, readJsonSync } from "fs-extra"
@@ -93,7 +93,7 @@ async function runInstallTest(context: TestContext, target: ConstructorParameter
 
     const config = deepAssign<Configuration>(
       {
-        npmRebuild: true,
+        nativeModules: { npmRebuild: true },
         productName: "TestApp",
         executableName: "TestApp",
         appId: "com.test.app",

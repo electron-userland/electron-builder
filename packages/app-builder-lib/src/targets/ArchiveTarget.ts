@@ -1,13 +1,13 @@
 import { Arch, defaultArchFromString } from "builder-util"
 import * as path from "path"
-import { Platform, Target, TargetSpecificOptions } from "../core"
-import { copyFiles, getFileMatchers } from "../fileMatcher"
-import { PlatformPackager } from "../platformPackager"
-import { archive, tar } from "./archive"
-import { appendBlockmap, createBlockmap } from "./differentialUpdateInfoBuilder"
+import { Platform, Target, TargetSpecificOptions } from "../core.js"
+import { copyFiles, getFileMatchers } from "../fileMatcher.js"
+import { PlatformPackager } from "../platformPackager.js"
+import { archive, tar } from "./archive.js"
+import { appendBlockmap, createBlockmap } from "./differentialUpdateInfoBuilder.js"
 
 export class ArchiveTarget extends Target {
-  readonly options: TargetSpecificOptions = (this.packager.config as any)[this.name]
+  readonly options: TargetSpecificOptions
 
   constructor(
     name: string,
@@ -16,6 +16,7 @@ export class ArchiveTarget extends Target {
     private readonly isWriteUpdateInfo = false
   ) {
     super(name)
+    this.options = (this.packager.config as any)[this.name]
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
@@ -24,7 +25,7 @@ export class ArchiveTarget extends Target {
     const format = this.name
 
     let defaultPattern: string
-    const defaultArch: Arch = defaultArchFromString(packager.platformSpecificBuildOptions.defaultArch)
+    const defaultArch: Arch = defaultArchFromString(packager.platformOptions.defaultArch)
     if (packager.platform === Platform.LINUX) {
       // tslint:disable-next-line:no-invalid-template-strings
       defaultPattern = "${name}-${version}" + (arch === defaultArch ? "" : "-${arch}") + ".${ext}"
@@ -37,25 +38,29 @@ export class ArchiveTarget extends Target {
       const artifactName = packager.expandArtifactNamePattern(this.options, format, arch, defaultPattern, false)
       const artifactPath = path.join(this.outDir, artifactName)
 
-      await packager.info.emitArtifactBuildStarted({
+      await packager.emitArtifactBuildStarted({
         targetPresentableName: `${isMac ? "macOS " : ""}${format}`,
         file: artifactPath,
         arch,
       })
       let updateInfo: any = null
       if (format.startsWith("tar.")) {
-        await tar({ compression: packager.compression, format, outFile: artifactPath, dirToArchive: appOutDir, isMacApp: isMac, tempDirManager: packager.info.tempDirManager })
+        await tar({
+          compression: packager.compression,
+          format,
+          outFile: artifactPath,
+          dirToArchive: appOutDir,
+          isMacApp: isMac,
+          tempDirManager: packager.tempDirManager,
+          linuxToolsMac: packager.config.toolsets?.linuxToolsMac,
+          buildResourcesDir: packager.buildResourcesDir,
+        })
       } else {
         let withoutDir = !isMac
         let dirToArchive = appOutDir
         if (isMac) {
           dirToArchive = path.dirname(appOutDir)
-          const fileMatchers = getFileMatchers(
-            packager.config,
-            "extraDistFiles",
-            dirToArchive,
-            packager.createGetFileMatchersOptions(this.outDir, arch, packager.platformSpecificBuildOptions)
-          )
+          const fileMatchers = getFileMatchers(packager.config, "extraDistFiles", dirToArchive, packager.createGetFileMatchersOptions(this.outDir, arch, packager.platformOptions))
           if (fileMatchers == null) {
             dirToArchive = appOutDir
           } else {
@@ -80,7 +85,7 @@ export class ArchiveTarget extends Target {
         }
       }
 
-      await packager.info.emitArtifactBuildCompleted({
+      await packager.emitArtifactBuildCompleted({
         updateInfo,
         file: artifactPath,
         // tslint:disable-next-line:no-invalid-template-strings
@@ -89,7 +94,7 @@ export class ArchiveTarget extends Target {
           format,
           arch,
           false,
-          packager.platformSpecificBuildOptions.defaultArch,
+          packager.platformOptions.defaultArch,
           defaultPattern.replace("${productName}", "${name}")
         ),
         target: this,

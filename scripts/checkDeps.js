@@ -13,6 +13,9 @@ const knownUnusedDevDependencies = new Set([
   "@typescript-eslint/parser",
   "eslint-config-prettier",
   "eslint-plugin-prettier",
+  // Used in test/vitest-scripts/ (test dir is ignored by depcheck) or via pnpm workspace scripts
+  "vitest",
+  "tsx",
 ])
 const knownMissedDependencies = new Set(["babel-core", "babel-preset-env", "babel-preset-stage-0", "babel-preset-react"])
 
@@ -27,7 +30,7 @@ async function check(projectDir, devPackageData) {
    * @type {Results}
    */
   const result = await new Promise(resolve => {
-    depCheck(projectDir, { ignoreDirs: ["out", "test", "pages", "typings", "docker", "certs", "templates", "vendor"] }, resolve)
+    depCheck(projectDir, { ignoreDirs: ["out", "dist", "test", "pages", "typings", "docker", "certs", "templates", "vendor"] }, resolve)
   })
 
   let unusedDependencies = result.dependencies
@@ -47,7 +50,7 @@ async function check(projectDir, devPackageData) {
 
   let unusedDevDependencies = result.devDependencies.filter(it => !it.startsWith("@types/") && !knownUnusedDevDependencies.has(it))
   if (packageName === "electron-builder") {
-    unusedDevDependencies = unusedDevDependencies.filter(it => ["is-ci", "vitest"].indexOf(it) < 0)
+    unusedDevDependencies = unusedDevDependencies.filter(it => it !== "vitest")
   }
   if (packageName === "dmg-builder") {
     unusedDevDependencies = unusedDevDependencies.filter(it => it !== "temp-file")
@@ -58,7 +61,7 @@ async function check(projectDir, devPackageData) {
   }
 
   delete result.missing.electron
-  const toml = result.missing.toml
+const toml = result.missing.toml
   if (toml != null && toml.length === 1 && toml[0].endsWith("config.js")) {
     delete result.missing.toml
   }

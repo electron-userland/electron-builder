@@ -1,4 +1,4 @@
-import { getArchSuffix } from "builder-util/out/util"
+import { getArchSuffix } from "builder-util"
 import { Arch } from "electron-builder"
 import path from "path"
 

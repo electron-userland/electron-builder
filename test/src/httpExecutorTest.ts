@@ -1,12 +1,7 @@
 import { expect, test, describe } from "vitest"
-import {
-  HttpExecutor,
-  safeStringifyJson,
-  addSensitiveRedirectHeader,
-  addSensitiveFieldPattern,
-  isSensitiveFieldName,
-  hashSensitiveValue,
-} from "builder-util-runtime/src/httpExecutor"
+import { HttpExecutor } from "builder-util-runtime"
+import { hashSensitiveValue, safeStringifyJson } from "builder-util-runtime/internal"
+import { addSensitiveFieldPattern, addSensitiveRedirectHeader, isSensitiveFieldName } from "builder-util-runtime/src/httpExecutor"
 import { RequestOptions } from "http"
 
 describe("HttpExecutor.prepareRedirectUrlOptions", () => {
@@ -513,7 +508,6 @@ describe("HttpExecutor.prepareRedirectUrlOptions", () => {
   })
 })
 
-// @ts-ignore
 describe("HttpExecutor.isCrossOriginRedirect", () => {
   const testCases: Array<{ name: string; url1: string; url2: string; expected: boolean }> = [
     {

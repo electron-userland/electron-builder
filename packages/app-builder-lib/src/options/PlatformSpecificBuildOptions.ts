@@ -1,5 +1,5 @@
-import { CompressionLevel, Publish, TargetConfiguration, TargetSpecificOptions } from "../core"
-import { FileAssociation } from "./FileAssociation"
+import { CompressionLevel, Publish, TargetConfiguration, TargetSpecificOptions } from "../core.js"
+import { FileAssociation } from "./FileAssociation.js"
 
 export interface FileSet {
   /**
@@ -38,6 +38,35 @@ export interface AsarOptions {
    * See the [asar documentation](https://github.com/electron/asar) for details.
    */
   ordering?: string | null
+
+  /**
+   * A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](#directories),
+   * which specifies which files to unpack when creating the asar archive.
+   */
+  unpack?: Array<string> | string | null
+
+  /**
+   * Whether to skip the ASAR package integrity sanity check.
+   *
+   * Set to `true` only when using a custom Electron fork that implements its own encrypted or
+   * non-standard ASAR integrity validation that is not compatible with electron-builder's default
+   * check. Standard builds should leave this `false`.
+   *
+   * @default false
+   */
+  disableSanityCheck?: boolean
+
+  /**
+   * Whether to skip computing the ASAR integrity hash.
+   *
+   * Normally electron-builder computes and embeds a SHA-256 hash of `app.asar` so that Electron
+   * can verify it at startup (when the `embeddedAsarIntegrityValidation` fuse is enabled). Set to
+   * `true` only for custom Electron forks with encrypted ASAR support where the header is not
+   * readable by standard tools.
+   *
+   * @default false
+   */
+  disableIntegrity?: boolean
 }
 
 export interface FilesBuildOptions {
@@ -133,15 +162,10 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
   /**
    * Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).
    *
-   * Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#asarUnpack) - please file an issue if this doesn't work.
+   * Node modules that must be unpacked will be detected automatically. Use {@link AsarOptions.unpack} to specify additional files to unpack.
    * @default true
    */
-  readonly asar?: AsarOptions | boolean | null
-
-  /**
-   * A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive.
-   */
-  readonly asarUnpack?: Array<string> | string | null
+  readonly asar?: AsarOptions | false | null
 
   /** @private */
   readonly icon?: string | null

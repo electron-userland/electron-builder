@@ -4,18 +4,39 @@ import * as http from "http"
 import * as net from "net"
 import * as os from "os"
 import * as path from "path"
-import { afterAll, afterEach, beforeAll, vi } from "vitest"
+import * as tar from "tar"
+import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest"
 import {
   ArtifactDownloadOptions,
+  CacheState,
   ElectronDownloadOptions,
   ElectronGetOptions,
   downloadBuilderToolset,
   downloadElectronArtifact,
   getCacheDirectory,
   getBinariesMirrorUrl,
-} from "app-builder-lib/out/util/electronGet"
-import { CacheState } from "app-builder-lib/out/util/cacheState"
+} from "app-builder-lib/internal"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
+
+// ─── Test helpers ─────────────────────────────────────────────────────────────
+
+/**
+ * Creates a minimal tar.gz with a nested directory so tar.extract({ strip: 1 }) works.
+ * Entry layout: inner/<name> — strip:1 extracts <name> directly into the target dir.
+ */
+async function createMinimalTarGz(archivePath: string, files: Record<string, string>): Promise<void> {
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "eb-test-tar-"))
+  try {
+    const innerDir = path.join(tmpDir, "inner")
+    await fs.mkdir(innerDir)
+    for (const [name, content] of Object.entries(files)) {
+      await fs.writeFile(path.join(innerDir, name), content)
+    }
+    await tar.create({ gzip: true, file: archivePath, cwd: tmpDir }, ["inner"])
+  } finally {
+    await fs.rm(tmpDir, { recursive: true, force: true })
+  }
+}
 
 // ─── getCacheDirectory ────────────────────────────────────────────────────────
 
@@ -301,6 +322,108 @@ describe("downloadBuilderToolset", { sequential: true }, () => {
     expect(resolvedUrl).not.toContain("cdn.npmmirror.com/binaries/electron")
 
     spy.mockRestore()
+  })
+})
+
+// ─── downloadBuilderToolset: filenameWithExt validation ──────────────────────
+
+describe("downloadBuilderToolset: filenameWithExt validation", () => {
+  const cases: Array<[string, string]> = [
+    ["Unix path separator", "subdir/evil.tar.gz"],
+    ["Windows path separator", "subdir\\evil.tar.gz"],
+    ["dotdot traversal", "../etc/passwd"],
+    ["dotdot embedded", "foo/../bar.tar.gz"],
+  ]
+  for (const [label, filenameWithExt] of cases) {
+    test(`rejects unsafe filenameWithExt: ${label}`, async ({ expect }) => {
+      await expect(downloadBuilderToolset({ releaseName: "x", filenameWithExt })).rejects.toThrow(/unsafe filenameWithExt/)
+    })
+  }
+})
+
+// ─── Toolset archive cache (no network) ──────────────────────────────────────
+
+describe("toolset archive cache", () => {
+  let freshCache: string
+
+  beforeEach(async () => {
+    freshCache = await fs.mkdtemp(path.join(os.tmpdir(), "eb-archive-cache-test-"))
+    vi.stubEnv("ELECTRON_BUILDER_CACHE", freshCache)
+  })
+
+  afterEach(async () => {
+    vi.restoreAllMocks()
+    vi.unstubAllEnvs()
+    await fs.rm(freshCache, { recursive: true, force: true })
+  })
+
+  test("uses pre-existing archive and does not call downloadArtifact", async ({ expect }) => {
+    const releaseName = "cache-test@0.1"
+    const fileName = "cache-artifact.tar.gz"
+    // Seed the predictable archive cache path
+    const archiveCachePath = path.join(freshCache, releaseName, fileName)
+    await fs.mkdir(path.dirname(archiveCachePath), { recursive: true })
+    await createMinimalTarGz(archiveCachePath, { sentinel: "ok" })
+
+    const spy = vi.spyOn(get, "downloadArtifact").mockImplementation(() => {
+      throw new Error("downloadArtifact must not be called — archive is already cached")
+    })
+
+    const result = await downloadBuilderToolset({ releaseName, filenameWithExt: fileName })
+
+    expect(spy).not.toHaveBeenCalled()
+    const entries = await fs.readdir(result)
+    expect(entries).toContain("sentinel")
+  })
+
+  test("re-downloads and replaces archive when checksum does not match", async ({ expect }) => {
+    const releaseName = "checksum-test@0.1"
+    const fileName = "bad-checksum.tar.gz"
+    const archiveCachePath = path.join(freshCache, releaseName, fileName)
+    await fs.mkdir(path.dirname(archiveCachePath), { recursive: true })
+    // Write a corrupt (wrong-checksum) archive
+    await fs.writeFile(archiveCachePath, "corrupt data")
+
+    let downloadArtifactCalled = false
+    vi.spyOn(get, "downloadArtifact").mockImplementation(() => {
+      downloadArtifactCalled = true
+      throw new Error("expected-download-attempt")
+    })
+
+    const correctSha256 = "0000000000000000000000000000000000000000000000000000000000000000"
+    await expect(downloadBuilderToolset({ releaseName, filenameWithExt: fileName, checksums: { [fileName]: correctSha256 } })).rejects.toThrow("expected-download-attempt")
+
+    expect(downloadArtifactCalled).toBe(true)
+  })
+
+  test("persists downloaded archive to cache so subsequent builds skip the download", async ({ expect }) => {
+    const releaseName = "persist-test@0.1"
+    const fileName = "persist-artifact.tar.gz"
+    const archiveCachePath = path.join(freshCache, releaseName, fileName)
+
+    // First call: downloadArtifact returns a real archive
+    const networkArchive = path.join(freshCache, "fake-network-download.tar.gz")
+    await createMinimalTarGz(networkArchive, { "network-file": "content" })
+    let callCount = 0
+    vi.spyOn(get, "downloadArtifact").mockImplementation(() => {
+      callCount++
+      return Promise.resolve(networkArchive)
+    })
+
+    await downloadBuilderToolset({ releaseName, filenameWithExt: fileName })
+    expect(callCount).toBe(1)
+    // Archive must have been persisted
+    await expect(fs.access(archiveCachePath)).resolves.toBeUndefined()
+
+    // Second call: archive is cached — downloadArtifact must not be called
+    vi.restoreAllMocks()
+    vi.spyOn(get, "downloadArtifact").mockImplementation(() => {
+      throw new Error("downloadArtifact must not be called on second build")
+    })
+
+    const result2 = await downloadBuilderToolset({ releaseName, filenameWithExt: fileName })
+    const entries = await fs.readdir(result2)
+    expect(entries).toContain("network-file")
   })
 })
 

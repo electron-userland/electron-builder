@@ -1,15 +1,13 @@
-import { DmgOptions, Target } from "app-builder-lib"
-import { findIdentity, isSignAllowed } from "app-builder-lib/out/codeSign/macCodeSign"
-import { MacPackager } from "app-builder-lib/out/macPackager"
-import { createBlockmap } from "app-builder-lib/out/targets/differentialUpdateInfoBuilder"
+import { DmgOptions, MacPackager, Target } from "app-builder-lib"
+import { createBlockmap, findIdentity, isSignAllowed } from "app-builder-lib/internal"
 import { Arch, exec, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces } from "builder-util"
-import { sanitizeFileName } from "builder-util/out/filename"
+import { sanitizeFileName } from "builder-util/internal"
 import { release as getOsRelease } from "os"
 import * as path from "path"
-import type { DmgBuildLicenseConfig } from "./dmgLicense"
-import { addLicenseToDmg } from "./dmgLicense"
-import { computeBackground, customizeDmg } from "./dmgUtil"
-import { hdiUtil } from "./hdiuil"
+import type { DmgBuildLicenseConfig } from "./dmgLicense.js"
+import { addLicenseToDmg } from "./dmgLicense.js"
+import { computeBackground, customizeDmg } from "./dmgUtil.js"
+import { hdiUtil } from "./hdiuil.js"
 
 export interface DmgBuildConfig {
   title: string
@@ -64,12 +62,12 @@ export class DmgTarget extends Target {
       this.options,
       "dmg",
       arch,
-      "${productName}-" + (packager.platformSpecificBuildOptions.bundleShortVersion || "${version}") + "-${arch}.${ext}",
+      "${productName}-" + (packager.platformOptions.bundleShortVersion || "${version}") + "-${arch}.${ext}",
       true,
-      packager.platformSpecificBuildOptions.defaultArch
+      packager.platformOptions.defaultArch
     )
     const artifactPath = path.join(this.outDir, artifactName)
-    await packager.info.emitArtifactBuildStarted({
+    await packager.emitArtifactBuildStarted({
       targetPresentableName: "DMG",
       file: artifactPath,
       arch,
@@ -99,7 +97,7 @@ export class DmgTarget extends Target {
 
     const safeArtifactName = packager.computeSafeArtifactName(artifactName, "dmg")
     const updateInfo = this.options.writeUpdateInfo === false ? null : await createBlockmap(artifactPath, this, packager, safeArtifactName)
-    await packager.info.emitArtifactBuildCompleted({
+    await packager.emitArtifactBuildCompleted({
       file: artifactPath,
       safeArtifactName,
       target: this,
@@ -116,7 +114,7 @@ export class DmgTarget extends Target {
     }
 
     const packager = this.packager
-    const qualifier = packager.platformSpecificBuildOptions.identity
+    const qualifier = packager.platformOptions.identity
     // explicitly disabled if set to null
     if (qualifier === null) {
       // macPackager already somehow handle this situation, so, here just return
@@ -143,8 +141,8 @@ export class DmgTarget extends Target {
 
   computeVolumeName(arch: Arch, custom?: string | null): string {
     const appInfo = this.packager.appInfo
-    const shortVersion = this.packager.platformSpecificBuildOptions.bundleShortVersion || appInfo.version
-    const archString = getArchSuffix(arch, this.packager.platformSpecificBuildOptions.defaultArch)
+    const shortVersion = this.packager.platformOptions.bundleShortVersion || appInfo.version
+    const archString = getArchSuffix(arch, this.packager.platformOptions.defaultArch)
 
     if (custom == null) {
       return `${appInfo.productFilename} ${shortVersion}${archString}`

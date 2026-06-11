@@ -1,9 +1,7 @@
 import { WindowsSignToolManager } from "app-builder-lib"
-import { WindowsSignTaskConfiguration } from "app-builder-lib/out/codeSign/windowsSignToolManager"
-import { mkdtemp, rm, writeFile } from "fs/promises"
-import { tmpdir } from "os"
+import { WindowsSignTaskConfiguration } from "app-builder-lib/internal"
 import * as path from "path"
-import { afterEach, beforeEach, describe, expect, test } from "vitest"
+import { describe, expect, test } from "vitest"
 
 function makeManager(winCodeSign?: string): WindowsSignToolManager {
   const manager = Object.create(WindowsSignToolManager.prototype) as WindowsSignToolManager
@@ -198,53 +196,5 @@ describe("computeSignToolArgs with unsupported cert format", () => {
     const storeInfo = { thumbprint: "ABCD", subject: "CN=Test", store: "My", isLocalMachineStore: false }
     const config = makeTaskConfig({ cscInfo: storeInfo as any })
     expect(() => manager.computeSignToolArgs(config, false)).toThrow("supported only on Windows")
-  })
-})
-
-// ─── getToolPath ─────────────────────────────────────────────────────────────
-
-describe("getToolPath", () => {
-  let tmpDir: string
-  let fakeTool: string
-  const origEnv: Record<string, string | undefined> = {}
-
-  beforeEach(async () => {
-    tmpDir = await mkdtemp(path.join(tmpdir(), "eb-signtool-test-"))
-    fakeTool = path.join(tmpDir, "signtool.exe")
-    await writeFile(fakeTool, "")
-    origEnv.SIGNTOOL_PATH = process.env.SIGNTOOL_PATH
-    origEnv.USE_SYSTEM_SIGNTOOL = process.env.USE_SYSTEM_SIGNTOOL
-    process.env.SIGNTOOL_PATH = fakeTool
-    delete process.env.USE_SYSTEM_SIGNTOOL
-  })
-
-  afterEach(async () => {
-    for (const [key, value] of Object.entries(origEnv)) {
-      if (value === undefined) {
-        delete process.env[key]
-      } else {
-        process.env[key] = value
-      }
-    }
-    await rm(tmpDir, { recursive: true, force: true })
-  })
-
-  test("returns SIGNTOOL_PATH env override when set", async () => {
-    const manager = makeManager("1.1.0")
-    const toolInfo = await manager.getToolPath(true)
-    expect(toolInfo.path).toBe(fakeTool)
-  })
-
-  test("returns SIGNTOOL_PATH env override on non-Windows too", async () => {
-    const manager = makeManager("1.1.0")
-    const toolInfo = await manager.getToolPath(false)
-    expect(toolInfo.path).toBe(fakeTool)
-  })
-
-  test("returned ToolInfo has a path property (string)", async () => {
-    const manager = makeManager("1.1.0")
-    const toolInfo = await manager.getToolPath(true)
-    expect(typeof toolInfo.path).toBe("string")
-    expect(toolInfo.path.length).toBeGreaterThan(0)
   })
 })

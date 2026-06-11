@@ -1,5 +1,87 @@
 # app-builder-lib
 
+## 27.0.0-alpha.0
+
+### Major Changes
+
+- Fix: disable implicit publishing by default _[`#9476`](https://github.com/electron-userland/electron-builder/pull/9476) [`5c9c503`](https://github.com/electron-userland/electron-builder/commit/5c9c503f912e6423a57ab5b89234dff9cf9133ed) [@biw](https://github.com/biw)_
+
+  BREAKING CHANGE: Publishing no longer happens automatically based on CI environment, git tags, or npm lifecycle events. You must now explicitly request publishing using the `--publish` CLI flag (e.g., `--publish always`, `--publish onTag`) or by setting the `publish` option in your configuration.
+
+  This addresses security and usability concerns where unexpected auto-publishing could accidentally expose secrets or publish unfinished work.
+
+- Chore(refactor): consolidate ASAR config under `asar?: AsarOptions | false | null` (BREAKING) _[`#9878`](https://github.com/electron-userland/electron-builder/pull/9878) [`81f4ab5`](https://github.com/electron-userland/electron-builder/commit/81f4ab56ed21fee1f913f0cb88aa2ba8f05b77fd) [@mmaietta](https://github.com/mmaietta)_
+- Chore(refactor): delete ProtonFramework, LibUiFramework, and binDownload.ts; consolidate all binary downloads into `downloadBuilderToolset`. _[`#9868`](https://github.com/electron-userland/electron-builder/pull/9868) [`f1f654e`](https://github.com/electron-userland/electron-builder/commit/f1f654ebe677db8b8933ec2eab25fcb19978c52f) [@mmaietta](https://github.com/mmaietta)_
+- Feat(toolsets)!: introduce `ToolsetCustom` for user-supplied bundles; remove env-var toolset overrides; split toolset modules into single-purpose files; deprecate `PlatformPackager.info` _[`#9871`](https://github.com/electron-userland/electron-builder/pull/9871) [`02a8042`](https://github.com/electron-userland/electron-builder/commit/02a80426840cda286840f25d28f1ecfce99885db) [@mmaietta](https://github.com/mmaietta)_
+- Chore(refactor): group native-module rebuild options under `nativeModules` sub-key (BREAKING) _[`#9872`](https://github.com/electron-userland/electron-builder/pull/9872) [`cd06931`](https://github.com/electron-userland/electron-builder/commit/cd06931c7c6a8b2a9d2e28ab16c3ea45cb2526b4) [@mmaietta](https://github.com/mmaietta)_
+- Chore(refactor): remove deprecated `snap` config property and all remaining deprecated APIs. Hard-deletes 14 deprecated features accumulated across the codebase. No migration shims remain. (BREAKING) _[`#9873`](https://github.com/electron-userland/electron-builder/pull/9873) [`9d755c6`](https://github.com/electron-userland/electron-builder/commit/9d755c68f845d169c9b68963c9711d2e75b4800b) [@mmaietta](https://github.com/mmaietta)_
+- Feat!: migrate to native ESM, require Node.js >=22.12.0, remove electron-compile _[`#9544`](https://github.com/electron-userland/electron-builder/pull/9544) [`a5121de`](https://github.com/electron-userland/electron-builder/commit/a5121de49582eaa8870d4c05e6ae55eff160a592) [@mmaietta](https://github.com/mmaietta)_
+
+### Minor Changes
+
+- Refactor(targets,vm,codeSign,electron,util): reorganize platform-specific files into subdirectories _[`#9870`](https://github.com/electron-userland/electron-builder/pull/9870) [`62ae0b9`](https://github.com/electron-userland/electron-builder/commit/62ae0b9d7f6da34ac8811da241a8181d7661c88e) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Chore: Code quality modernization: adopt native Node.js APIs and modern TypeScript patterns across the codebase. _[`#9867`](https://github.com/electron-userland/electron-builder/pull/9867) [`f8feadb`](https://github.com/electron-userland/electron-builder/commit/f8feadb0c39934565197d69248274fd62173a94e) [@mmaietta](https://github.com/mmaietta)_
+- Chore(refactor): Extract `validateShellEmbeddable` to `builder-util/envUtil`; consolidate all boolean env-var flags into `flags.ts`. _[`#9869`](https://github.com/electron-userland/electron-builder/pull/9869) [`e59504d`](https://github.com/electron-userland/electron-builder/commit/e59504d122c245c08f70218badce057655c1c022) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`f8feadb`](https://github.com/electron-userland/electron-builder/commit/f8feadb0c39934565197d69248274fd62173a94e) [`f1f654e`](https://github.com/electron-userland/electron-builder/commit/f1f654ebe677db8b8933ec2eab25fcb19978c52f) [`e59504d`](https://github.com/electron-userland/electron-builder/commit/e59504d122c245c08f70218badce057655c1c022) [`02a8042`](https://github.com/electron-userland/electron-builder/commit/02a80426840cda286840f25d28f1ecfce99885db) [`9d755c6`](https://github.com/electron-userland/electron-builder/commit/9d755c68f845d169c9b68963c9711d2e75b4800b) [`a5121de`](https://github.com/electron-userland/electron-builder/commit/a5121de49582eaa8870d4c05e6ae55eff160a592)
+
+</small>
+
+- `builder-util@27.0.0-alpha.0`
+- `builder-util-runtime@10.0.0-alpha.0`
+- `electron-builder-squirrel-windows@27.0.0-alpha.0`
+- `electron-publish@27.0.0-alpha.0`
+- `dmg-builder@27.0.0-alpha.0`
+
+</details>
+
+## 26.15.3
+
+### Patch Changes
+
+- Fix(download): persist toolset archives in a predictable cache path so repeated builds and offline environments skip the @electron/get network round-trip _[`#9861`](https://github.com/electron-userland/electron-builder/pull/9861) [`9097daf`](https://github.com/electron-userland/electron-builder/commit/9097daff78f7f9450dc7e06f6e7eea94ed1394aa) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 4 dependencies</summary>
+
+<small>
+
+[`818a89f`](https://github.com/electron-userland/electron-builder/commit/818a89f4c3087ed53498d781bf0bb1ca4807d03d) [`35bfdeb`](https://github.com/electron-userland/electron-builder/commit/35bfdebe47f412c3bf14bc5d1b9d833bfa1ec7d4)
+
+</small>
+
+- `electron-publish@26.15.3`
+- `builder-util@26.15.3`
+- `dmg-builder@26.15.3`
+- `electron-builder-squirrel-windows@26.15.3`
+
+</details>
+
+## 26.15.2
+
+### Patch Changes
+
+- Fix(mac): use native `zip` for macOS zip target to preserve `.framework` symlinks and fix Squirrel.Mac auto-update validation _[`#9847`](https://github.com/electron-userland/electron-builder/pull/9847) [`e25f967`](https://github.com/electron-userland/electron-builder/commit/e25f9674d594524c2d0348c8fae456527391c9ca) [@mmaietta](https://github.com/mmaietta)_
+- Fix(icons): replace png2icons with wasm-vips Lanczos3 resampling for high-quality icon conversion _[`#9851`](https://github.com/electron-userland/electron-builder/pull/9851) [`f5ae163`](https://github.com/electron-userland/electron-builder/commit/f5ae1632a7d30db34660786c81d39fca773e9467) [@mmaietta](https://github.com/mmaietta)_
+- Fix: retry package install on transient network errors _[`#9850`](https://github.com/electron-userland/electron-builder/pull/9850) [`3951024`](https://github.com/electron-userland/electron-builder/commit/3951024641788af4a18f407074106b2a4196fc1f) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@26.15.2`
+- `electron-builder-squirrel-windows@26.15.2`
+
+</details>
+
 ## 26.15.1
 
 ### Patch Changes

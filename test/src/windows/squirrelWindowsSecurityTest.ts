@@ -1,4 +1,4 @@
-import SquirrelWindowsTarget from "electron-builder-squirrel-windows/out/SquirrelWindowsTarget"
+import SquirrelWindowsTarget from "electron-builder-squirrel-windows/src/SquirrelWindowsTarget"
 import { mkdtemp, realpath, rm } from "fs/promises"
 import { tmpdir } from "os"
 import * as path from "path"

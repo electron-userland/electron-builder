@@ -2,13 +2,15 @@
 title: "Programmatic Usage"
 ---
 
+:::note
+**Node.js >=22.12.0 required.** electron-builder v27 ships as native ESM. CJS `require()` continues to work on Node >=22.12 via Node's stable `require(esm)` support.
+:::
+
+The example below uses ESM syntax (recommended). A CJS equivalent is shown at the bottom.
+
 ```javascript
-"use strict"
+import { build, Platform } from "electron-builder"
 
-const builder = require("electron-builder")
-const Platform = builder.Platform
-
-// Let's get that intellisense working
 /**
 * @type {import('electron-builder').Configuration}
 * @see https://www.electron.build/configuration
@@ -113,14 +115,21 @@ const options = {
 };
 
 // Promise is returned
-builder.build({
+const result = await build({
   targets: Platform.MAC.createTarget(),
   config: options
 })
-.then((result) => {
-  console.log(JSON.stringify(result))
+console.log(JSON.stringify(result))
+```
+
+**CJS equivalent (Node >=22.12.0):**
+```javascript
+const { build, Platform } = require("electron-builder")
+
+build({
+  targets: Platform.MAC.createTarget(),
+  config: { /* options */ },
 })
-.catch((error) => {
-  console.error(error)
-})
+  .then((result) => console.log(JSON.stringify(result)))
+  .catch((error) => console.error(error))
 ```

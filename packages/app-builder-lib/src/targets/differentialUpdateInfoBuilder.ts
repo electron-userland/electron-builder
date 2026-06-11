@@ -1,10 +1,10 @@
 import { log } from "builder-util"
 import { BlockMapDataHolder, PackageFileInfo } from "builder-util-runtime"
 import * as path from "path"
-import { Target } from "../core"
-import { PlatformPackager } from "../platformPackager"
-import { ArchiveOptions } from "./archive"
-import { buildBlockMap } from "./blockmap/blockmap"
+import { Target } from "../core.js"
+import { PlatformPackager } from "../platformPackager.js"
+import { ArchiveOptions } from "./archive.js"
+import { buildBlockMap } from "./blockmap/blockmap.js"
 
 export const BLOCK_MAP_FILE_SUFFIX = ".blockmap"
 
@@ -71,7 +71,7 @@ export async function createBlockmap(file: string, target: Target, packager: Pla
   const blockMapFile = `${file}${BLOCK_MAP_FILE_SUFFIX}`
   log.info({ blockMapFile: log.filePath(blockMapFile) }, "building block map")
   const updateInfo = await buildBlockMap(file, "gzip", blockMapFile)
-  await packager.info.emitArtifactBuildCompleted({
+  await packager.emitArtifactBuildCompleted({
     file: blockMapFile,
     safeArtifactName: safeArtifactName == null ? null : `${safeArtifactName}${BLOCK_MAP_FILE_SUFFIX}`,
     target,

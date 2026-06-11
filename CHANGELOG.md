@@ -1,3 +1,39 @@
+# [27.0.0-alpha.0](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.3...electron-builder@27.0.0-alpha.0) (2026-06-11)
+
+
+### Bug Fixes
+
+* disable implicit publishing by default (BREAKING) ([#9476](https://github.com/electron-userland/electron-builder/issues/9476)) ([5c9c503](https://github.com/electron-userland/electron-builder/commit/5c9c503f912e6423a57ab5b89234dff9cf9133ed))
+
+
+### Features
+
+* **cli:** add `migrate-schema` command for v26 → v27 config migration; `PlatformPackager` move to `protected` ([#9873](https://github.com/electron-userland/electron-builder/issues/9873)) ([9d755c6](https://github.com/electron-userland/electron-builder/commit/9d755c68f845d169c9b68963c9711d2e75b4800b))
+
+
+
+## [26.15.3](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.2...electron-builder@26.15.3) (2026-06-09)
+
+
+### Bug Fixes
+
+* add `ELECTRON_BUILDER_BINARIES_ALLOW_HTTP` opt-in for parsing env vars targeting non-localhost HTTP ([#9856](https://github.com/electron-userland/electron-builder/issues/9856)) ([35bfdeb](https://github.com/electron-userland/electron-builder/commit/35bfdebe47f412c3bf14bc5d1b9d833bfa1ec7d4))
+* **download:** persist toolset archives in a predictable cache path ([#9861](https://github.com/electron-userland/electron-builder/issues/9861)) ([9097daf](https://github.com/electron-userland/electron-builder/commit/9097daff78f7f9450dc7e06f6e7eea94ed1394aa))
+* **publish:** set `x-amz-content-sha256: UNSIGNED-PAYLOAD` before SigV4 signing ([#9863](https://github.com/electron-userland/electron-builder/issues/9863)) ([818a89f](https://github.com/electron-userland/electron-builder/commit/818a89f4c3087ed53498d781bf0bb1ca4807d03d))
+
+
+
+## [26.15.2](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.1...electron-builder@26.15.2) (2026-06-07)
+
+
+### Bug Fixes
+
+* **icons:** replace png2icons with wasm-vips Lanczos3 resampling for high-quality icon conversion ([#9851](https://github.com/electron-userland/electron-builder/issues/9851)) ([f5ae163](https://github.com/electron-userland/electron-builder/commit/f5ae1632a7d30db34660786c81d39fca773e9467))
+* **mac:** use native `zip` for macOS zip target to preserve `.framework` symlinks ([#9847](https://github.com/electron-userland/electron-builder/issues/9847)) ([e25f967](https://github.com/electron-userland/electron-builder/commit/e25f9674d594524c2d0348c8fae456527391c9ca))
+* retry package install on transient network errors ([#9850](https://github.com/electron-userland/electron-builder/issues/9850)) ([3951024](https://github.com/electron-userland/electron-builder/commit/3951024641788af4a18f407074106b2a4196fc1f))
+
+
+
 ## [26.15.1](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.0...electron-builder@26.15.1) (2026-06-06)
 
 

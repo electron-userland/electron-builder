@@ -4,7 +4,7 @@ import * as os from "os"
 import * as path from "path"
 import * as zlib from "zlib"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
-import { buildBlockMap } from "app-builder-lib/out/targets/blockmap/blockmap"
+import { buildBlockMap } from "app-builder-lib/src/targets/blockmap/blockmap.js"
 
 let tmpDir: string
 
@@ -132,9 +132,11 @@ describe("buildBlockMap", () => {
 
   it("chunk checksums match BLAKE2b-18 of chunk content", async () => {
     const blake2bPath = require.resolve("@noble/hashes/blake2.js", {
-      paths: [require.resolve("app-builder-lib/out/targets/blockmap/blockmap")],
+      // Resolve relative to app-builder-lib's blockmap directory so we get the same
+      // @noble/hashes instance that blockmap.ts uses (package-scoped installation).
+      paths: [path.resolve(__dirname, "../../packages/app-builder-lib/src/targets/blockmap")],
     })
-    const { blake2b } = require(blake2bPath) as typeof import("@noble/hashes/blake2")
+    const { blake2b } = require(blake2bPath) as typeof import("@noble/hashes/blake2.js")
     const data = makeTestData(50_000)
     const inFile = path.join(tmpDir, "checksum.bin")
     const outFile = path.join(tmpDir, "checksum.blockmap")
