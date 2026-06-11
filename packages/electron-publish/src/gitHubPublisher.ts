@@ -2,7 +2,7 @@ import { Arch, Fields, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces,
 import { configureRequestOptions, GithubOptions, hashSensitiveValue, HttpError, parseJson, githubTagPrefix } from "builder-util-runtime"
 import { ClientRequest } from "http"
 import { Lazy } from "lazy-val"
-import * as mime from "mime"
+import mime from "mime"
 import { parse as parseUrl, UrlWithStringQuery } from "url"
 import { HttpPublisher } from "./httpPublisher.js"
 import { PublishContext, PublishOptions } from "./index.js"
