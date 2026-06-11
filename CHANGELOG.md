@@ -1,3 +1,12 @@
+# [27.0.0-alpha.1](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.0...electron-builder@27.0.0-alpha.1) (2026-06-11)
+
+
+### Bug Fixes
+
+* resolve `plist` and `chromium-pickle-js` import ([#9880](https://github.com/electron-userland/electron-builder/issues/9880)) ([b79c2b2](https://github.com/electron-userland/electron-builder/commit/b79c2b2af3ac65f3d51da7b5045ad803d58565e0))
+
+
+
 # [27.0.0-alpha.0](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.3...electron-builder@27.0.0-alpha.0) (2026-06-11)
 
 
