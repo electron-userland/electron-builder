@@ -1,9 +1,9 @@
 import { Arch, Platform } from "electron-builder"
-import { copyFile, writeFile } from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
-import { assertThat } from "../helpers/fileAssert"
-import { app, assertPack, copyTestAsset, EXTENDED_TIMEOUT, modifyPackageJson } from "../helpers/packTester"
-import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper"
+import { assertThat } from "../helpers/fileAssert.js"
+import { app, assertPack, copyTestAsset, EXTENDED_TIMEOUT, modifyPackageJson } from "../helpers/packTester.js"
+import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper.js"
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"], Arch.x64)
 
@@ -98,10 +98,10 @@ test("multi language license", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
     {
       projectDirCreated: projectDir => {
         return Promise.all([
-          writeFile(path.join(projectDir, "build", "license_en.txt"), "Hi"),
-          writeFile(path.join(projectDir, "build", "license_ru.txt"), "Привет"),
-          writeFile(path.join(projectDir, "build", "license_ko.txt"), "Привет"),
-          writeFile(path.join(projectDir, "build", "license_fi.txt"), "Привет"),
+          fsExtra.writeFile(path.join(projectDir, "build", "license_en.txt"), "Hi"),
+          fsExtra.writeFile(path.join(projectDir, "build", "license_ru.txt"), "Привет"),
+          fsExtra.writeFile(path.join(projectDir, "build", "license_ko.txt"), "Привет"),
+          fsExtra.writeFile(path.join(projectDir, "build", "license_fi.txt"), "Привет"),
         ])
       },
     }
@@ -124,14 +124,14 @@ test("html license", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
     {
       projectDirCreated: projectDir => {
         return Promise.all([
-          writeFile(path.join(projectDir, "build", "license.html"), '<html><body><p>Hi <a href="https://google.com" target="_blank">google</a></p></body></html>'),
+          fsExtra.writeFile(path.join(projectDir, "build", "license.html"), '<html><body><p>Hi <a href="https://google.com" target="_blank">google</a></p></body></html>'),
         ])
       },
     }
   )
 )
 
-test.ifDevOrWinCi("createDesktopShortcut always", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+test("createDesktopShortcut always", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(expect, {
     targets: Platform.WINDOWS.createTarget("nsis", Arch.x64),
     config: {
@@ -143,7 +143,7 @@ test.ifDevOrWinCi("createDesktopShortcut always", { timeout: EXTENDED_TIMEOUT },
   })
 )
 
-test.ifDevOrLinuxCi("perMachine, no run after finish", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+test.ifNotWindows("perMachine, no run after finish", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(
     expect,
     {
@@ -209,7 +209,7 @@ test.skip("installerHeaderIcon", { timeout: EXTENDED_TIMEOUT }, ({ expect }) => 
   )
 })
 
-test.ifDevOrLinuxCi("custom include", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+test.ifNotWindows("custom include", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(
     expect,
     { targets: nsisTarget },
@@ -239,13 +239,13 @@ test.skip("big file pack", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
     },
     {
       projectDirCreated: async projectDir => {
-        await copyFile("/Volumes/Pegasus/15.02.18.m4v", path.join(projectDir, "foo/bar/video.mov"))
+        await fsExtra.copyFile("/Volumes/Pegasus/15.02.18.m4v", path.join(projectDir, "foo/bar/video.mov"))
       },
     }
   )
 )
 
-test.ifDevOrLinuxCi("custom script", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+test.ifNotWindows("custom script", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(
     expect,
     { targets: nsisTarget },
@@ -318,7 +318,7 @@ test("string menuCategory", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   )
 )
 
-test.ifDevOrLinuxCi("file associations per user", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+test.ifNotWindows("file associations per user", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(expect, {
     targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
     config: {

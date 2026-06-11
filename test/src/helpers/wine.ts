@@ -1,5 +1,5 @@
 import { exec, safeStringifyJson, unlinkIfExists } from "builder-util"
-import { emptyDir } from "fs-extra"
+import fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import { homedir } from "os"
 import * as path from "path"
@@ -12,6 +12,11 @@ export class WineManager {
   private env: any
 
   userDir: string | null = null
+
+  constructor(
+    private readonly winePath: string = "wine",
+    private readonly toolsetEnv: Record<string, string> = {}
+  ) {}
 
   async prepare() {
     if (this.env != null) {
@@ -33,19 +38,21 @@ export class WineManager {
   }
 
   exec(...args: Array<string>) {
-    return exec("wine", args, { env: this.env })
+    return exec(this.winePath, args, { env: this.env })
   }
 
   async prepareWine(wineDir: string) {
-    await emptyDir(wineDir)
+    await fsExtra.emptyDir(wineDir)
     //noinspection SpellCheckingInspection
     const env = {
       ...process.env,
+      ...this.toolsetEnv,
       WINEDLLOVERRIDES: "winemenubuilder.exe=d",
       WINEPREFIX: wineDir,
     }
 
-    await exec("wineboot", ["--init"], { env })
+    const wineboot = path.join(path.dirname(this.winePath), "wineboot")
+    await exec(wineboot, ["--init"], { env })
 
     // regedit often doesn't modify correctly
     let systemReg = await fs.readFile(path.join(wineDir, "system.reg"), "utf8")

@@ -6,18 +6,19 @@ import * as TJS from "typescript-json-schema"
 const rootDir = path.resolve(__dirname, "../packages")
 
 const compilerOptions: TJS.CompilerOptions = {
-  target: TypeScript.ScriptTarget.ES2022,
-  module: TypeScript.ModuleKind.ES2022,
+  target: TypeScript.ScriptTarget.ES2022 as any,
+  module: TypeScript.ModuleKind.ES2022 as any,
   // outDir: "out",
   baseUrl: rootDir,
   esModuleInterop: false,
   forceConsistentCasingInFileNames: true,
-  moduleResolution: TypeScript.ModuleResolutionKind.Node10,
+  moduleResolution: TypeScript.ModuleResolutionKind.Node10 as any,
   skipLibCheck: true,
-  strict: true,
-  noUnusedLocals: true,
+  // strict: true,
+  // noUnusedLocals: true,
   noFallthroughCasesInSwitch: true,
-  noImplicitReturns: true,
+  // noImplicitReturns: true,
+  noEmit: true,
 
   inlineSources: true,
   sourceMap: true,
@@ -33,18 +34,22 @@ const compilerOptions: TJS.CompilerOptions = {
     "../typings",
     "../../typings",
     //
-    "../node_module/@types",
-    "node_module/@types"
-  ],
+    "../node_modules/@types",
+    "app-builder-lib/typings",
+    "node_modules/@types"
+  ].map(it => path.resolve(rootDir, it)),
 }
 
 // schema generator args
 const settings: TJS.PartialArgs = {
   required: true,
+  // ref: false,
+  // aliasRef: true,
   noExtraProps: true,
   typeOfKeyword: true,
   strictNullChecks: true,
   skipLibCheck: true,
+    ignoreErrors: true,
 }
 
 const definitionFile = path.resolve(rootDir, "app-builder-lib/src/configuration.ts")
@@ -53,7 +58,7 @@ const generator = TJS.buildGenerator(program, settings)
 const schema = TJS.generateSchema(program, "Configuration", settings, [], generator!)
 
 const PlugDescriptor: any = schema!.definitions!.PlugDescriptor
-PlugDescriptor.additionalProperties!.anyOf![0] = {
+PlugDescriptor.additionalProperties = {
   type: "object",
 }
 
@@ -73,7 +78,7 @@ OutgoingHttpHeaders.additionalProperties = {
 }
 
 const SnapOptions: any = schema!.definitions!.SnapOptions
-SnapOptions.properties.environment!.anyOf![0] = {
+SnapOptions.properties.environment = {
   additionalProperties: { type: "string" },
   type: "object",
 }

@@ -1,0 +1,42 @@
+{
+  "entryPoints": ["../packages/*"],
+  "entryPointStrategy": "packages",
+  "tsconfig": "../tsconfig-typedoc.json",
+  "skipErrorChecking": true,
+  "out": "./docs/api",
+  "plugin": ["typedoc-plugin-markdown"],
+  "entryFileName": "index",
+  "readme": "none",
+  "excludeExternals": true,
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeNotDocumented": false,
+  "includeVersion": true,
+  "disableSources": true,
+  "cleanOutputDir": false,
+  "flattenOutputFiles": true,
+  "hideGroupHeadings": true,
+  "hidePageTitle": false,
+  "hidePageHeader": true,
+  "useHTMLEncodedBrackets": true,
+  "preserveAnchorCasing": false,
+  "visibilityFilters": {
+    "protected": false,
+    "private": false,
+    "inherited": false,
+    "external": false
+  },
+  "tableColumnSettings": {
+    "hideDefaults": false,
+    "hideInherited": false,
+    "hideModifiers": true,
+    "hideOverrides": true,
+    "hideSources": true,
+    "hideValues": false,
+    "leftAlignHeaders": false
+  },
+  "validation": {
+    "notExported": false,
+    "invalidLink": false
+  }
+}

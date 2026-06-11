@@ -154,6 +154,83 @@ exports[`web installer 1`] = `
 }
 `;
 
+exports[`web installer, appPackageUrl is complete URL (no arch paths appended) 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-x64.nsis.7z",
+    },
+  ],
+}
+`;
+
+exports[`web installer, appPackageUrl with trailing slash is used verbatim 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-x64.nsis.7z",
+    },
+  ],
+}
+`;
+
+exports[`web installer, auto-computed URL from GitHub sets APP_PACKAGE_URL_IS_INCOMPLETE 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-x64.nsis.7z",
+    },
+  ],
+}
+`;
+
+exports[`web installer, auto-computed URL from S3 sets APP_PACKAGE_URL_IS_INCOMPLETE 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-x64.nsis.7z",
+    },
+  ],
+}
+`;
+
+exports[`web installer, auto-computed URL from generic provider sets APP_PACKAGE_URL_IS_INCOMPLETE 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-x64.nsis.7z",
+    },
+  ],
+}
+`;
+
+exports[`web installer, multiple publish configs — first one is used 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-x64.nsis.7z",
+    },
+  ],
+}
+`;
+
+exports[`web installer, nsisWeb.publish overrides global publish config 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-x64.nsis.7z",
+    },
+  ],
+}
+`;
+
 exports[`web installer, safe name on github 1`] = `
 {
   "win": [
@@ -199,6 +276,17 @@ exports[`web installer, safe name on github 1`] = `
         "sha512": "@sha512",
         "version": "1.1.0",
       },
+    },
+  ],
+}
+`;
+
+exports[`web installer, win.publish used when nsisWeb.publish is absent 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-x64.nsis.7z",
     },
   ],
 }

@@ -2,14 +2,15 @@ import { Arch, Fields, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces,
 import { createReadStream } from "fs"
 import { stat } from "fs/promises"
 import { readFile } from "fs/promises"
-import { configureRequestOptions, GitlabOptions, GitlabReleaseInfo, parseJson, HttpError } from "builder-util-runtime"
+import { configureRequestOptions, GitlabOptions, GitlabReleaseInfo, hashSensitiveValue, parseJson, HttpError } from "builder-util-runtime"
 import { ClientRequest } from "http"
 import { Lazy } from "lazy-val"
 import * as mime from "mime"
-import * as FormData from "form-data"
+import FormData from "form-data"
 import { URL } from "url"
-import { HttpPublisher } from "./httpPublisher"
-import { PublishContext } from "./index"
+import { HttpPublisher } from "./httpPublisher.js"
+import { PublishContext } from "./index.js"
+import { trimStringWithWarn } from "./util.js"
 
 type RequestProcessor = (request: ClientRequest, reject: (error: Error) => void) => void
 
@@ -29,7 +30,9 @@ export class GitlabPublisher extends HttpPublisher {
   constructor(
     context: PublishContext,
     private readonly info: GitlabOptions,
-    private readonly version: string
+    private readonly version: string,
+    private readonly releaseBody?: string | null,
+    private readonly releaseName?: string | null
   ) {
     super(context, true)
 
@@ -43,7 +46,7 @@ export class GitlabPublisher extends HttpPublisher {
       token = token.trim()
 
       if (!isTokenCharValid(token)) {
-        throw new InvalidConfigurationError(`GitLab Personal Access Token (${JSON.stringify(token)}) contains invalid characters, please check env "GITLAB_TOKEN"`)
+        throw new InvalidConfigurationError(`GitLab Personal Access Token ${hashSensitiveValue(token)} contains invalid characters, please check env "GITLAB_TOKEN"`)
       }
     }
 
@@ -114,12 +117,16 @@ export class GitlabPublisher extends HttpPublisher {
   }
 
   private async createRelease(): Promise<GitlabReleaseInfo> {
-    const releaseName = this.info.vPrefixedTagName === false ? this.version : `v${this.version}`
+    const defaultName = this.info.vPrefixedTagName === false ? this.version : `v${this.version}`
+    const releaseName = this.releaseName || defaultName
     const branchName = await this.getDefaultBranch()
+
+    const description = this.releaseBody ? trimStringWithWarn(this.releaseBody, 100000, "release body exceeds GitLab limit, truncating") : `Release ${releaseName}`
+
     const releaseData = {
       tag_name: this.tag,
       name: releaseName,
-      description: `Release ${releaseName}`,
+      description,
       ref: branchName,
     }
 

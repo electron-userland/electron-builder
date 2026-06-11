@@ -1,15 +1,14 @@
 import { BitbucketOptions, GenericServerOptions, GithubOptions, GitlabOptions, KeygenOptions, S3Options, SpacesOptions } from "builder-util-runtime"
 import { BitbucketPublisher } from "electron-publish"
 import { UpdateCheckResult } from "electron-updater"
-import { outputFile } from "fs-extra"
+import fsExtra from "fs-extra"
 import { tmpdir } from "os"
 import * as path from "path"
-import { assertThat } from "../helpers/fileAssert"
-import { removeUnstableProperties } from "../helpers/packTester"
-import { createNsisUpdater, trackEvents, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { assertThat } from "../helpers/fileAssert.js"
+import { removeUnstableProperties } from "../helpers/packTester.js"
+import { createNsisUpdater, trackEvents, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 import { ExpectStatic } from "vitest"
-import { GitLabProvider } from "electron-updater/src/providers/GitLabProvider"
-import { GitHubProvider } from "electron-updater/src/providers/GitHubProvider"
+import { GitLabProvider, GitHubProvider } from "electron-updater"
 
 const config = { retry: 3 }
 
@@ -237,7 +236,7 @@ test.skip("DigitalOcean Spaces", config, async ({ expect }) => {
   await validateDownload(expect, updater)
 })
 
-test.ifNotCiWin.skip("sha512 mismatch error event", config, async ({ expect }) => {
+test.skip("sha512 mismatch error event", config, async ({ expect }) => {
   const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
     provider: "generic",
@@ -360,6 +359,8 @@ test("test error", config, async ({ expect }) => {
   expect(actualEvents).toMatchSnapshot()
 })
 
+// TestNodeHttpExecutor.download() buffers the full response before writing — onProgress is never
+// called, so progressEvents is always empty. Requires a streaming executor to work correctly.
 test.skip("test download progress", config, async ({ expect }) => {
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({
@@ -443,7 +444,7 @@ test.ifWindows("test custom signature verifier", config, async ({ expect }) => {
     repo: "__test_nsis_release",
     publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
   })
-  updater.verifyUpdateCodeSignature = (publisherName: string[], path: string) => {
+  updater.verifyUpdateCodeSignature = (_publisherName: string[], _path: string) => {
     return Promise.resolve(null)
   }
   await validateDownload(expect, updater)
@@ -457,7 +458,7 @@ test.ifWindows("test custom signature verifier - signing error message", config,
     repo: "__test_nsis_release",
     publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
   })
-  updater.verifyUpdateCodeSignature = (publisherName: string[], path: string) => {
+  updater.verifyUpdateCodeSignature = (_publisherName: string[], _path: string) => {
     return Promise.resolve("signature verification failed")
   }
   const actualEvents = trackEvents(updater)
@@ -471,7 +472,7 @@ test.ifWindows("test custom signature verifier - signing error message", config,
 // disable for now
 test("90 staging percentage", config, async ({ expect }) => {
   const userIdFile = path.join(tmpdir(), "electron-updater-test", "userData", ".updaterId")
-  await outputFile(userIdFile, "1wa70172-80f8-5cc4-8131-28f5e0edd2a1")
+  await fsExtra.outputFile(userIdFile, "1wa70172-80f8-5cc4-8131-28f5e0edd2a1")
 
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig<S3Options>({
@@ -485,7 +486,7 @@ test("90 staging percentage", config, async ({ expect }) => {
 
 test("1 staging percentage", config, async ({ expect }) => {
   const userIdFile = path.join(tmpdir(), "electron-updater-test", "userData", ".updaterId")
-  await outputFile(userIdFile, "12a70172-80f8-5cc4-8131-28f5e0edd2a1")
+  await fsExtra.outputFile(userIdFile, "12a70172-80f8-5cc4-8131-28f5e0edd2a1")
 
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({
@@ -535,7 +536,10 @@ test("test download and install", config, async ({ expect }) => {
   await validateDownload(expect, updater)
 })
 
-test.ifWindows.skip("test downloaded installer", config, async ({ expect }) => {
+// before-quit-for-update is emitted via require("electron").autoUpdater.emit(...) inside setImmediate
+// in BaseUpdater.quitAndInstall — it fires on the native Electron autoUpdater object, not on the
+// updater instance, and only after install() returns true (which spawns a .exe on Linux/macOS and fails).
+test.skip("test downloaded installer", config, async ({ expect }) => {
   const updater = await createNsisUpdater("1.0.1")
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
     provider: "github",
@@ -544,8 +548,12 @@ test.ifWindows.skip("test downloaded installer", config, async ({ expect }) => {
   })
 
   const actualEvents = trackEvents(updater)
+  let beforeQuitFired = false
+  ;(updater as any).addListener("before-quit-for-update", () => {
+    beforeQuitFired = true
+  })
   await validateDownload(expect, updater)
-  // expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
+  expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
   updater.quitAndInstall(true, false)
-  expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded", "before-quit-for-update"])
+  expect(beforeQuitFired).toBe(true)
 })

@@ -1,3 +1,5 @@
+import { expect } from "vitest"
+
 // test custom windows sign using path to file
 export default async function (configuration) {
   const info = configuration.cscInfo

@@ -1,14 +1,14 @@
 import { TmpDir, archFromString, copyDir } from "builder-util"
 import { DIR_TARGET, Platform } from "electron-builder"
-import { outputFile } from "fs-extra"
+import fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { Mode, RWX } from "stat-mode"
-import { assertThat } from "./helpers/fileAssert"
-import { app, appThrows, assertPack, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
+import statMode from "stat-mode"
+import { assertThat } from "./helpers/fileAssert.js"
+import { app, appThrows, assertPack, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
 import { ExpectStatic } from "vitest"
 
-test.ifDevOrLinuxCi("expand not defined env", ({ expect }) =>
+test.ifNotWindows("expand not defined env", ({ expect }) =>
   appThrows(expect, {
     targets: linuxDirTarget,
     config: {
@@ -21,7 +21,7 @@ test.ifDevOrLinuxCi("expand not defined env", ({ expect }) =>
 
 process.env.__NOT_BAR__ = "!**/bar"
 
-test.ifDevOrLinuxCi("files", ({ expect }) =>
+test.ifNotWindows("files", ({ expect }) =>
   app(
     expect,
     {
@@ -35,10 +35,10 @@ test.ifDevOrLinuxCi("files", ({ expect }) =>
     {
       projectDirCreated: projectDir =>
         Promise.all([
-          outputFile(path.join(projectDir, "ignoreMe", "foo"), "data"),
-          outputFile(path.join(projectDir, "ignoreEmptyDir", "bar"), "data"),
-          outputFile(path.join(projectDir, "test.h"), "test that"),
-          outputFile(path.join(projectDir, "dist/electron/foo.js"), "data"),
+          fsExtra.outputFile(path.join(projectDir, "ignoreMe", "foo"), "data"),
+          fsExtra.outputFile(path.join(projectDir, "ignoreEmptyDir", "bar"), "data"),
+          fsExtra.outputFile(path.join(projectDir, "test.h"), "test that"),
+          fsExtra.outputFile(path.join(projectDir, "dist/electron/foo.js"), "data"),
         ]),
       packed: context => {
         const resources = path.join(context.getResources(Platform.LINUX), "app")
@@ -48,7 +48,7 @@ test.ifDevOrLinuxCi("files", ({ expect }) =>
   )
 )
 
-test.ifDevOrLinuxCi("files.from asar", ({ expect }) =>
+test.ifNotWindows("files.from asar", ({ expect }) =>
   app(
     expect,
     {
@@ -100,7 +100,8 @@ test.ifNotWindows("map resources", ({ expect }) =>
       },
     },
     {
-      projectDirCreated: projectDir => Promise.all([outputFile(path.join(projectDir, "foo", "old"), "data"), outputFile(path.join(projectDir, "license.txt"), "data")]),
+      projectDirCreated: projectDir =>
+        Promise.all([fsExtra.outputFile(path.join(projectDir, "foo", "old"), "data"), fsExtra.outputFile(path.join(projectDir, "license.txt"), "data")]),
       packed: context => {
         const resources = context.getResources(Platform.LINUX)
         return Promise.all([
@@ -132,13 +133,13 @@ async function doExtraResourcesTest(expect: ExpectStatic, platform: Platform) {
     {
       projectDirCreated: async projectDir => {
         return Promise.all([
-          outputFile(path.resolve(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
-          outputFile(path.resolve(projectDir, "bar/hello.txt"), "data"),
-          outputFile(path.resolve(projectDir, "dir-relative/f.txt"), "data"),
-          outputFile(path.resolve(projectDir, `bar/${process.arch}.txt`), "data"),
-          outputFile(path.resolve(projectDir, `${osName}/${process.arch}.txt`), "data"),
-          outputFile(path.resolve(projectDir, "platformSpecificR"), "platformSpecificR"),
-          outputFile(path.resolve(projectDir, "ignoreMe.txt"), "ignoreMe"),
+          fsExtra.outputFile(path.resolve(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
+          fsExtra.outputFile(path.resolve(projectDir, "bar/hello.txt"), "data"),
+          fsExtra.outputFile(path.resolve(projectDir, "dir-relative/f.txt"), "data"),
+          fsExtra.outputFile(path.resolve(projectDir, `bar/${process.arch}.txt`), "data"),
+          fsExtra.outputFile(path.resolve(projectDir, `${osName}/${process.arch}.txt`), "data"),
+          fsExtra.outputFile(path.resolve(projectDir, "platformSpecificR"), "platformSpecificR"),
+          fsExtra.outputFile(path.resolve(projectDir, "ignoreMe.txt"), "ignoreMe"),
         ])
       },
       packed: async context => {
@@ -158,15 +159,14 @@ async function doExtraResourcesTest(expect: ExpectStatic, platform: Platform) {
   )
 }
 
-test.ifDevOrLinuxCi("extraResources on Linux", ({ expect }) => doExtraResourcesTest(expect, Platform.LINUX))
+test.ifNotWindows("extraResources on Linux", ({ expect }) => doExtraResourcesTest(expect, Platform.LINUX))
 
-// Squirrel.Windows is not supported on macOS anymore (32-bit)
-// Skipped due to bug in rimraf on Windows: `at fixWinEPERM (../node_modules/.pnpm/fs-extra@8.1.0/node_modules/fs-extra/lib/remove/rimraf.js:117:5)`
-test.ifLinux("extraResources on Windows", ({ expect }) => doExtraResourcesTest(expect, Platform.WINDOWS))
+// wine arm64 currently throws a native crash when running the test, so we skip on arm64 for now
+test.ifLinux.ifEnv(process.arch !== "arm64")("extraResources on Windows", ({ expect }) => doExtraResourcesTest(expect, Platform.WINDOWS))
 
 test.ifMac("extraResources on macOS", ({ expect }) => doExtraResourcesTest(expect, Platform.MAC))
 
-test.ifNotWindows.ifNotCiWin("extraResources - two-package", ({ expect }) => {
+test.ifNotWindows("extraResources - two-package", ({ expect }) => {
   const platform = Platform.LINUX
   const osName = platform.buildConfigurationKey
 
@@ -189,14 +189,14 @@ test.ifNotWindows.ifNotCiWin("extraResources - two-package", ({ expect }) => {
     {
       projectDirCreated: projectDir => {
         return Promise.all([
-          outputFile(path.join(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
-          outputFile(path.join(projectDir, "bar/hello.txt"), "data", { mode: 0o400 }),
-          outputFile(path.join(projectDir, `bar/${process.arch}.txt`), "data"),
-          outputFile(path.join(projectDir, `${osName}/${process.arch}.txt`), "data"),
-          outputFile(path.join(projectDir, "platformSpecificR"), "platformSpecificR"),
-          outputFile(path.join(projectDir, "ignoreMe.txt"), "ignoreMe"),
-          outputFile(path.join(projectDir, "executable"), "executable", { mode: 0o755 }),
-          outputFile(path.join(projectDir, "executableOnlyOwner"), "executable", { mode: 0o740 }),
+          fsExtra.outputFile(path.join(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
+          fsExtra.outputFile(path.join(projectDir, "bar/hello.txt"), "data", { mode: 0o400 }),
+          fsExtra.outputFile(path.join(projectDir, `bar/${process.arch}.txt`), "data"),
+          fsExtra.outputFile(path.join(projectDir, `${osName}/${process.arch}.txt`), "data"),
+          fsExtra.outputFile(path.join(projectDir, "platformSpecificR"), "platformSpecificR"),
+          fsExtra.outputFile(path.join(projectDir, "ignoreMe.txt"), "ignoreMe"),
+          fsExtra.outputFile(path.join(projectDir, "executable"), "executable", { mode: 0o755 }),
+          fsExtra.outputFile(path.join(projectDir, "executableOnlyOwner"), "executable", { mode: 0o740 }),
         ])
       },
       packed: async context => {
@@ -232,12 +232,12 @@ test.ifNotWindows.ifNotCiWin("extraResources - two-package", ({ expect }) => {
 
 // https://github.com/electron-userland/electron-builder/pull/998
 // copyDir walks to a symlink referencing a file that has not yet been copied by postponing the linking step until after the full walk is complete
-test.ifNotWindows("postpone symlink", async ({ expect }) => {
+test.ifNotWindows("postpone symlink", async () => {
   const tmpDir = new TmpDir("files-test")
   const source = await tmpDir.getTempDir()
   const aSourceFile = path.join(source, "z", "Z")
   const bSourceFileLink = path.join(source, "B")
-  await outputFile(aSourceFile, "test")
+  await fsExtra.outputFile(aSourceFile, "test")
   await fs.symlink(aSourceFile, bSourceFileLink)
 
   const dest = await tmpDir.getTempDir()
@@ -247,15 +247,15 @@ test.ifNotWindows("postpone symlink", async ({ expect }) => {
 })
 
 async function allCan(file: string, execute: boolean) {
-  const mode = new Mode(await fs.stat(file))
+  const mode = new statMode.Mode(await fs.stat(file))
 
-  function checkExecute(value: RWX) {
+  function checkExecute(value: statMode.RWX) {
     if (value.execute !== execute) {
       throw new Error(`${file} is ${execute ? "not " : ""}executable`)
     }
   }
 
-  function checkRead(value: RWX) {
+  function checkRead(value: statMode.RWX) {
     if (!value.read) {
       throw new Error(`${file} is not readable`)
     }

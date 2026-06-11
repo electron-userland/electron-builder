@@ -1,21 +1,21 @@
 import { Platform } from "app-builder-lib"
-import { readAsar } from "app-builder-lib/out/asar/asar"
-import { PM } from "app-builder-lib/out/node-module-collector/packageManager"
-import { outputFile } from "fs-extra"
+import { readAsar } from "app-builder-lib/internal"
+import { PM } from "app-builder-lib/internal"
+import fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { ExpectStatic } from "vitest"
-import { assertThat } from "./helpers/fileAssert"
-import { app, appThrows, assertPack, linuxDirTarget, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester"
-import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
+import { assertThat } from "./helpers/fileAssert.js"
+import { app, appThrows, assertPack, linuxDirTarget, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester.js"
+import { verifySmartUnpack } from "./helpers/verifySmartUnpack.js"
 
 async function createFiles(appDir: string) {
   await Promise.all([
-    outputFile(path.join(appDir, "assets", "file1"), "data"),
-    outputFile(path.join(appDir, "assets", "file2"), "data"),
-    outputFile(path.join(appDir, "assets", "subdir", "file3"), "data"),
-    outputFile(path.join(appDir, "b2", "file"), "data"),
-    outputFile(path.join(appDir, "do-not-unpack-dir", "file.json"), "{}").then(() => fs.writeFile(path.join(appDir, "do-not-unpack-dir", "must-be-not-unpacked"), "{}")),
+    fsExtra.outputFile(path.join(appDir, "assets", "file1"), "data"),
+    fsExtra.outputFile(path.join(appDir, "assets", "file2"), "data"),
+    fsExtra.outputFile(path.join(appDir, "assets", "subdir", "file3"), "data"),
+    fsExtra.outputFile(path.join(appDir, "b2", "file"), "data"),
+    fsExtra.outputFile(path.join(appDir, "do-not-unpack-dir", "file.json"), "{}").then(() => fs.writeFile(path.join(appDir, "do-not-unpack-dir", "must-be-not-unpacked"), "{}")),
   ])
 
   const dir = path.join(appDir, "do-not-unpack-dir", "dir-2", "dir-3", "dir-3")
@@ -27,7 +27,7 @@ async function createFiles(appDir: string) {
   await fs.symlink(path.join(appDir, "assets", "subdir", "file3"), path.join(appDir, "file-symlink3")) // symlink down
 }
 
-test.ifNotWindows.ifDevOrLinuxCi("unpackDir one", ({ expect }) =>
+test.ifNotWindows("unpackDir one", ({ expect }) =>
   app(
     expect,
     {
@@ -56,7 +56,7 @@ async function assertDirs(expect: ExpectStatic, context: PackedContext) {
   await verifyAsarFileTree(expect, resourceDir)
 }
 
-test.ifNotWindows.ifDevOrLinuxCi("unpackDir", ({ expect }) => {
+test.ifNotWindows("unpackDir", ({ expect }) => {
   return assertPack(
     expect,
     "test-app",
@@ -73,7 +73,7 @@ test.ifNotWindows.ifDevOrLinuxCi("unpackDir", ({ expect }) => {
   )
 })
 
-test.ifDevOrLinuxCi("asarUnpack and files ignore", ({ expect }) => {
+test.ifNotWindows("asarUnpack and files ignore", ({ expect }) => {
   return assertPack(
     expect,
     "test-app",
@@ -84,7 +84,7 @@ test.ifDevOrLinuxCi("asarUnpack and files ignore", ({ expect }) => {
       },
     },
     {
-      projectDirCreated: projectDir => outputFile(path.join(projectDir, "test/ffprobe-static/bin/darwin/x64/ffprobe"), "data"),
+      projectDirCreated: projectDir => fsExtra.outputFile(path.join(projectDir, "test/ffprobe-static/bin/darwin/x64/ffprobe"), "data"),
       packed: async context => {
         const resourceDir = context.getResources(Platform.LINUX)
         await Promise.all([assertThat(expect, path.join(resourceDir, "app.asar.unpacked", "test/ffprobe-static/bin/darwin/x64/ffprobe")).doesNotExist()])
@@ -123,7 +123,7 @@ test.skip("outside link", ({ expect }) =>
     {
       projectDirCreated: async (projectDir, tmpDir) => {
         const tempDir = await tmpDir.getTempDir()
-        await outputFile(path.join(tempDir, "foo"), "data")
+        await fsExtra.outputFile(path.join(tempDir, "foo"), "data")
         await fs.symlink(tempDir, path.join(projectDir, "o-dir"))
       },
     },
@@ -163,7 +163,7 @@ test.ifNotWindows("symlinks everywhere with static framework", ({ expect }) =>
 )
 
 // https://github.com/electron-userland/electron-builder/issues/611
-test.ifDevOrLinuxCi("failed peer dep", ({ expect }) => {
+test.ifNotWindows("failed peer dep", ({ expect }) => {
   return assertPack(
     expect,
     "test-app-one",
@@ -192,7 +192,7 @@ test.ifDevOrLinuxCi("failed peer dep", ({ expect }) => {
   )
 })
 
-test.ifDevOrLinuxCi("ignore node_modules", ({ expect }) => {
+test.ifNotWindows("ignore node_modules", ({ expect }) => {
   return assertPack(
     expect,
     "test-app-one",
@@ -222,7 +222,7 @@ test.ifDevOrLinuxCi("ignore node_modules", ({ expect }) => {
   )
 })
 
-test.ifDevOrLinuxCi("asarUnpack node_modules", ({ expect }) => {
+test.ifNotWindows("asarUnpack node_modules", ({ expect }) => {
   return assertPack(
     expect,
     "test-app-one",

@@ -1,17 +1,28 @@
-import { ExtraSpawnOptions } from "builder-util"
+import { exec, ExtraSpawnOptions } from "builder-util"
+import { Nullish } from "builder-util-runtime"
 import { ExecFileOptions, SpawnOptions } from "child_process"
 import * as path from "path"
-import { execWine } from "../wine"
-import { VmManager } from "./vm"
+import { ToolsetConfig } from "../configuration.js"
+import { getWineToolset } from "../toolsets/wine.js"
+import { VmManager } from "./vm.js"
+
+type WineOptions = {
+  file: string
+  appArgs?: Array<string>
+  options?: ExecFileOptions
+  toolset: ToolsetConfig["wine"] | Nullish
+}
 
 export class WineVmManager extends VmManager {
-  constructor() {
+  constructor(
+    private readonly wineToolset: ToolsetConfig["wine"],
+    private readonly buildResourcesDir: string
+  ) {
     super()
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  exec(file: string, args: Array<string>, options?: ExecFileOptions, isLogOutIfDebug = true): Promise<string> {
-    return execWine(file, null, args, options)
+  exec(file: string, args: Array<string>, options?: ExecFileOptions, _isLogOutIfDebug = true): Promise<string> {
+    return this.execWine({ file, appArgs: args, options, toolset: this.wineToolset })
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -21,5 +32,19 @@ export class WineVmManager extends VmManager {
 
   toVmFile(file: string): string {
     return path.win32.join("Z:", file)
+  }
+
+  private async execWine({ file: target, appArgs = [], options = {}, toolset }: WineOptions): Promise<string> {
+    if (options.timeout == null) {
+      // 2 minutes
+      options.timeout = 120 * 1000
+    }
+    if (process.platform === "win32") {
+      return exec(target, appArgs, options)
+    }
+    const { execPath: wineExe, env: wineEnv } = await getWineToolset(toolset, this.buildResourcesDir)
+    // Preserve the base process environment (PATH, HOME, TMPDIR, etc.) so Wine and child
+    // tools start correctly. Wine env vars override the base; caller options.env wins last.
+    return exec(wineExe, [target, ...appArgs], { ...options, env: { ...process.env, ...wineEnv, ...options.env } })
   }
 }

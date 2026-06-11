@@ -1,5 +1,5 @@
 import { OutgoingHttpHeaders } from "http"
-import { Nullish } from "."
+import { Nullish } from "./index.js"
 
 export type PublishProvider = "github" | "gitlab" | "s3" | "spaces" | "generic" | "custom" | "snapStore" | "keygen" | "bitbucket"
 
@@ -96,16 +96,9 @@ export interface GithubOptions extends PublishConfiguration {
   readonly owner?: string | null
 
   /**
-   * Whether to use `v`-prefixed tag name.
-   * @default true
-   * @deprecated please use #tagNamePrefix instead.
-   */
-  readonly vPrefixedTagName?: boolean
-
-  /**
    * If defined, sets the prefix of the tag name that comes before the semver number.
    * e.g. "v" in "v1.2.3" or "test" of "test1.2.3".
-   * Overrides `vPrefixedTagName`
+   * @default "v"
    */
   readonly tagNamePrefix?: string
 
@@ -122,12 +115,12 @@ export interface GithubOptions extends PublishConfiguration {
   readonly protocol?: "https" | "http" | null
 
   /**
-   * The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](./auto-update.md#appupdatersetfeedurloptions).
+   * The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](https://www.electron.build/auto-update#appupdatersetfeedurloptions).
    */
   readonly token?: string | null
 
   /**
-   * Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](./auto-update.md#private-github-update-repo).
+   * Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](https://www.electron.build/auto-update#private-github-update-repo).
    */
   readonly private?: boolean | null
 
@@ -152,13 +145,7 @@ export function githubUrl(options: GithubOptions, defaultHost = "github.com") {
 }
 
 export function githubTagPrefix(options: GithubOptions) {
-  if (options.tagNamePrefix) {
-    return options.tagNamePrefix
-  }
-  if (options.vPrefixedTagName ?? true) {
-    return "v"
-  }
-  return ""
+  return options.tagNamePrefix ?? "v"
 }
 
 /**
@@ -210,7 +197,7 @@ export interface GitlabOptions extends PublishConfiguration {
 
 /**
  * Generic (any HTTP(S) server) options.
- * In all publish options [File Macros](./file-patterns.md#file-macros) are supported.
+ * In all publish options [File Macros](https://www.electron.build/file-patterns#file-macros) are supported.
  */
 export interface GenericServerOptions extends PublishConfiguration {
   /**

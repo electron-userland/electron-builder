@@ -1,14 +1,17 @@
+import { createRequire } from "node:module"
 import { AllPublishOptions, newError, safeStringifyJson } from "builder-util-runtime"
-import { pathExistsSync, stat, copyFile } from "fs-extra"
+
+const require = createRequire(import.meta.url)
+import fsExtra from "fs-extra"
 import { createReadStream } from "fs"
 import * as path from "path"
 import { createServer, IncomingMessage, Server, ServerResponse } from "http"
-import { AppAdapter } from "./AppAdapter"
-import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater"
-import { ResolvedUpdateFileInfo } from "./main"
-import { UpdateDownloadedEvent } from "./types"
-import { findFile } from "./providers/Provider"
-import AutoUpdater = Electron.AutoUpdater
+import { AppAdapter } from "./AppAdapter.js"
+import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater.js"
+import { ResolvedUpdateFileInfo } from "./types.js"
+import { UpdateDownloadedEvent } from "./types.js"
+import { findFile } from "./providers/Provider.js"
+type AutoUpdater = Electron.AutoUpdater
 import { execFileSync } from "child_process"
 import { randomBytes } from "crypto"
 
@@ -30,6 +33,17 @@ export class MacUpdater extends AppUpdater {
       this.squirrelDownloadedUpdate = true
       this.debug("nativeUpdater.update-downloaded")
     })
+  }
+
+  /** Filters update files to the appropriate architecture.
+   * On arm64 Macs (including Rosetta), arm64 files are preferred when available.
+   * On x64 Macs, arm64 files are excluded. */
+  protected static filterFilesForArch(files: ResolvedUpdateFileInfo[], isArm64Mac: boolean): ResolvedUpdateFileInfo[] {
+    const isArm64File = (file: ResolvedUpdateFileInfo) => file.url.pathname.includes("arm64") || file.info.url?.includes("arm64")
+    if (isArm64Mac && files.some(isArm64File)) {
+      return files.filter(file => isArm64Mac === isArm64File(file))
+    }
+    return files.filter(file => !isArm64File(file))
   }
 
   private debug(message: string): void {
@@ -80,12 +94,7 @@ export class MacUpdater extends AppUpdater {
     isArm64Mac = isArm64Mac || process.arch === "arm64" || isRosetta
 
     // allow arm64 macs to install universal or rosetta2(x64) - https://github.com/electron-userland/electron-builder/pull/5524
-    const isArm64 = (file: ResolvedUpdateFileInfo) => file.url.pathname.includes("arm64") || file.info.url?.includes("arm64")
-    if (isArm64Mac && files.some(isArm64)) {
-      files = files.filter(file => isArm64Mac === isArm64(file))
-    } else {
-      files = files.filter(file => !isArm64(file))
-    }
+    files = MacUpdater.filterFilesForArch(files, isArm64Mac)
 
     const zipFileInfo = findFile(files, "zip", ["pkg", "dmg"])
 
@@ -103,7 +112,7 @@ export class MacUpdater extends AppUpdater {
       task: async (destinationFile, downloadOptions) => {
         const cachedUpdateFilePath = path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_MAC_APP_ZIP_FILE_NAME)
         const canDifferentialDownload = () => {
-          if (!pathExistsSync(cachedUpdateFilePath)) {
+          if (!fsExtra.pathExistsSync(cachedUpdateFilePath)) {
             log.info("Unable to locate previous update.zip for differential download (is this first install?), falling back to full download")
             return false
           }
@@ -122,7 +131,7 @@ export class MacUpdater extends AppUpdater {
         if (!downloadUpdateOptions.disableDifferentialDownload) {
           try {
             const cachedUpdateFilePath = path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_MAC_APP_ZIP_FILE_NAME)
-            await copyFile(event.downloadedFile, cachedUpdateFilePath)
+            await fsExtra.copyFile(event.downloadedFile, cachedUpdateFilePath)
           } catch (error: any) {
             this._logger.warn(`Unable to copy file for caching for future differential downloads: ${error.message}`)
           }
@@ -134,7 +143,7 @@ export class MacUpdater extends AppUpdater {
 
   private async updateDownloaded(zipFileInfo: ResolvedUpdateFileInfo, event: UpdateDownloadedEvent): Promise<Array<string>> {
     const downloadedFile = event.downloadedFile
-    const updateFileSize = zipFileInfo.info.size ?? (await stat(downloadedFile)).size
+    const updateFileSize = zipFileInfo.info.size ?? (await fsExtra.stat(downloadedFile)).size
 
     const log = this._logger
     const logContext = `fileToProxy=${zipFileInfo.url.href}`

@@ -29,19 +29,22 @@ import {
   SpacesPublisher,
   UploadTask,
 } from "electron-publish"
-import { MultiProgress } from "electron-publish/out/multiProgress"
+import { MultiProgress } from "electron-publish/internal"
 import { writeFile } from "fs/promises"
 import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
-import * as url from "url"
-import { AppInfo, ArtifactCreated, Configuration, Platform, PlatformSpecificBuildOptions, Target, TargetSpecificOptions } from "../index"
-import { Packager } from "../packager"
-import { PlatformPackager } from "../platformPackager"
-import { expandMacro } from "../util/macroExpander"
-import { WinPackager } from "../winPackager"
-import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder"
-import { resolveModule } from "../util/resolve"
-import { parseUrl } from "../util/pathManager"
+import { AppInfo } from "../appInfo.js"
+import { Configuration } from "../configuration.js"
+import { Platform, Target, TargetSpecificOptions } from "../core.js"
+import { ArtifactCreated } from "../packagerApi.js"
+import { PlatformSpecificBuildOptions } from "../options/PlatformSpecificBuildOptions.js"
+import { Packager } from "../packager.js"
+import { PlatformPackager } from "../platformPackager.js"
+import { WinPackager } from "../winPackager.js"
+import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js"
+import { resolveModule } from "../util/resolve.js"
+import { parseUrl } from "../util/pathManager.js"
+import { isPublishForPullRequest } from "../util/flags.js"
 
 const publishForPrWarning =
   "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
@@ -81,7 +84,7 @@ export class PublishManager implements PublishContext {
 
     this.taskManager = new AsyncTaskManager(cancellationToken)
 
-    const forcePublishForPr = process.env.PUBLISH_FOR_PULL_REQUEST === "true"
+    const forcePublishForPr = isPublishForPullRequest()
     if (!isPullRequest() || forcePublishForPr) {
       const publishPolicy = publishOptions.publish
       this.isPublish = publishPolicy != null && publishOptions.publish !== "never" && (publishPolicy !== "onTag" || getCiTag() != null)
@@ -135,7 +138,7 @@ export class PublishManager implements PublishContext {
 
   async getGlobalPublishConfigurations(): Promise<Array<PublishConfiguration> | null> {
     const publishers = this.packager.config.publish
-    return await resolvePublishConfigurations(publishers, null, this.packager, null, true)
+    return await resolvePublishConfigurations(publishers, null, null, true, this.packager)
   }
 
   async scheduleUpload(publishConfig: PublishConfiguration, event: UploadTask, appInfo: AppInfo): Promise<void> {
@@ -278,10 +281,10 @@ export async function getPublishConfigsForUpdateInfo(
     log.debug(null, "getPublishConfigsForUpdateInfo: no publishConfigs, detect using repository info")
     // https://github.com/electron-userland/electron-builder/issues/925#issuecomment-261732378
     // default publish config is github, file should be generated regardless of publish state (user can test installer locally or manage the release process manually)
-    const repositoryInfo = await packager.info.repositoryInfo
+    const repositoryInfo = await packager.repositoryInfo
     debug(`getPublishConfigsForUpdateInfo: ${safeStringifyJson(repositoryInfo)}`)
     if (repositoryInfo != null && repositoryInfo.type === "github") {
-      const resolvedPublishConfig = await getResolvedPublishConfig(packager, packager.info, { provider: repositoryInfo.type }, arch, false)
+      const resolvedPublishConfig = await getResolvedPublishConfig(packager, { provider: repositoryInfo.type }, arch, false)
       if (resolvedPublishConfig != null) {
         debug(`getPublishConfigsForUpdateInfo: resolve to publish config ${safeStringifyJson(resolvedPublishConfig)}`)
         return [resolvedPublishConfig]
@@ -289,6 +292,26 @@ export async function getPublishConfigsForUpdateInfo(
     }
   }
   return publishConfigs
+}
+
+async function resolveReleaseBody(packager: Packager): Promise<string | null> {
+  const releaseInfo = packager.config.releaseInfo
+  if (releaseInfo?.releaseNotes) {
+    return releaseInfo.releaseNotes
+  }
+  if (releaseInfo?.releaseNotesFile) {
+    try {
+      return await readFile(path.resolve(packager.projectDir, releaseInfo.releaseNotesFile), "utf-8")
+    } catch (e: any) {
+      log.warn({ file: releaseInfo.releaseNotesFile, error: e.message }, "cannot read release notes file")
+      return null
+    }
+  }
+  try {
+    return await readFile(path.resolve(packager.projectDir, "release-notes.md"), "utf-8")
+  } catch {
+    return null
+  }
 }
 
 export async function createPublisher(
@@ -304,17 +327,23 @@ export async function createPublisher(
 
   const provider = publishConfig.provider
   switch (provider) {
-    case "github":
-      return new GitHubPublisher(context, publishConfig as GithubOptions, version, options)
+    case "github": {
+      const releaseBody = await resolveReleaseBody(packager)
+      const releaseName = packager.config.releaseInfo?.releaseName ?? null
+      return new GitHubPublisher(context, publishConfig as GithubOptions, version, options, releaseBody, releaseName)
+    }
 
-    case "gitlab":
-      return new GitlabPublisher(context, publishConfig as GitlabOptions, version)
+    case "gitlab": {
+      const releaseBody = await resolveReleaseBody(packager)
+      const releaseName = packager.config.releaseInfo?.releaseName ?? null
+      return new GitlabPublisher(context, publishConfig as GitlabOptions, version, releaseBody, releaseName)
+    }
 
     case "keygen":
       return new KeygenPublisher(context, publishConfig as KeygenOptions, version)
 
     case "snapStore":
-      return new SnapStorePublisher(context, publishConfig as SnapStoreOptions)
+      return new SnapStorePublisher(context, publishConfig as SnapStoreOptions, { cscLink: packager.config.snapcraft?.cscLink, resourcesDir: packager.buildResourcesDir })
 
     case "generic":
       return null
@@ -326,7 +355,7 @@ export async function createPublisher(
   }
 }
 
-async function requireProviderClass(provider: string, packager: Packager): Promise<any | null> {
+async function requireProviderClass(provider: string, packager: { buildResourcesDir: string; appInfo: AppInfo }): Promise<any | null> {
   switch (provider) {
     case "github":
       return GitHubPublisher
@@ -378,7 +407,9 @@ export function computeDownloadUrl(publishConfiguration: PublishConfiguration, f
     }
 
     const baseUrl = parseUrl(baseUrlString)
-    return url.format({ ...baseUrl, pathname: path.posix.resolve(baseUrl?.pathname || "/", encodeURI(fileName)) })
+    const u = new URL(baseUrl?.href ?? baseUrlString)
+    u.pathname = path.posix.resolve(u.pathname || "/", encodeURI(fileName))
+    return u.href
   }
 
   let baseUrl
@@ -414,7 +445,7 @@ export async function getPublishConfigs(
 
   // check build.win (platform)
   if (publishers == null) {
-    publishers = platformPackager.platformSpecificBuildOptions.publish
+    publishers = platformPackager.platformOptions.publish
     if (publishers === null) {
       return null
     }
@@ -426,15 +457,15 @@ export async function getPublishConfigs(
       return null
     }
   }
-  return await resolvePublishConfigurations(publishers, platformPackager, platformPackager.info, arch, errorIfCannot)
+  return await resolvePublishConfigurations(publishers, platformPackager, arch, errorIfCannot)
 }
 
 async function resolvePublishConfigurations(
   publishers: any,
   platformPackager: PlatformPackager<any> | null,
-  packager: Packager,
   arch: Arch | null,
-  errorIfCannot: boolean
+  errorIfCannot: boolean,
+  fallbackPackager?: Packager
 ): Promise<Array<PublishConfiguration> | null> {
   if (publishers == null) {
     let serviceName: PublishProvider | null = null
@@ -454,7 +485,7 @@ async function resolvePublishConfigurations(
 
     if (serviceName != null) {
       log.debug(null, `detect ${serviceName} as publish provider`)
-      return [(await getResolvedPublishConfig(platformPackager, packager, { provider: serviceName }, arch, errorIfCannot))!]
+      return [(await getResolvedPublishConfig(platformPackager, { provider: serviceName }, arch, errorIfCannot, fallbackPackager))!]
     }
   }
 
@@ -464,7 +495,7 @@ async function resolvePublishConfigurations(
 
   debug(`Explicit publish provider: ${safeStringifyJson(publishers)}`)
   return (await Promise.all(
-    asArray(publishers).map(it => getResolvedPublishConfig(platformPackager, packager, typeof it === "string" ? { provider: it } : it, arch, errorIfCannot))
+    asArray(publishers).map(it => getResolvedPublishConfig(platformPackager, typeof it === "string" ? { provider: it } : it, arch, errorIfCannot, fallbackPackager))
   )) as PublishConfiguration[]
 }
 
@@ -475,12 +506,12 @@ function isSuitableWindowsTarget(target: Target) {
   return target.name === "nsis" || target.name.startsWith("nsis-")
 }
 
-function expandPublishConfig(options: any, platformPackager: PlatformPackager<any> | null, packager: Packager, arch: Arch | null): void {
+function expandPublishConfig(options: any, platformPackager: PlatformPackager<any> | null, arch: Arch | null): void {
   for (const name of Object.keys(options)) {
     const value = options[name]
     if (typeof value === "string") {
       const archValue = arch == null ? null : Arch[arch]
-      const expanded = platformPackager == null ? expandMacro(value, archValue, packager.appInfo) : platformPackager.expandMacro(value, archValue)
+      const expanded = platformPackager == null ? value : platformPackager.expandMacro(value, archValue)
       if (expanded !== value) {
         options[name] = expanded
       }
@@ -495,20 +526,18 @@ function isDetectUpdateChannel(platformSpecificConfiguration: PlatformSpecificBu
 
 async function getResolvedPublishConfig(
   platformPackager: PlatformPackager<any> | null,
-  packager: Packager,
   options: PublishConfiguration,
   arch: Arch | null,
-  errorIfCannot: boolean
+  errorIfCannot: boolean,
+  fallbackPackager?: Packager
 ): Promise<PublishConfiguration | GithubOptions | BitbucketOptions | GitlabOptions | null> {
   options = { ...options }
-  expandPublishConfig(options, platformPackager, packager, arch)
+  expandPublishConfig(options, platformPackager, arch)
 
+  const ctx = platformPackager ?? fallbackPackager!
   let channelFromAppVersion: string | null = null
-  if (
-    (options as GenericServerOptions).channel == null &&
-    isDetectUpdateChannel(platformPackager == null ? null : platformPackager.platformSpecificBuildOptions, packager.config)
-  ) {
-    channelFromAppVersion = packager.appInfo.channel
+  if ((options as GenericServerOptions).channel == null && isDetectUpdateChannel(platformPackager == null ? null : platformPackager.platformOptions, ctx.config)) {
+    channelFromAppVersion = ctx.appInfo.channel
   }
 
   const provider = options.provider
@@ -524,7 +553,7 @@ async function getResolvedPublishConfig(
     return options
   }
 
-  const providerClass = await requireProviderClass(options.provider, packager)
+  const providerClass = await requireProviderClass(options.provider, ctx)
   if (providerClass != null && providerClass.checkAndResolveOptions != null) {
     await providerClass.checkAndResolveOptions(options, channelFromAppVersion, errorIfCannot)
     return options
@@ -555,7 +584,7 @@ async function getResolvedPublishConfig(
   }
 
   async function getInfo() {
-    const info = await packager.repositoryInfo
+    const info = await ctx.repositoryInfo
     if (info != null) {
       return info
     }

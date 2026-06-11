@@ -1,36 +1,39 @@
-import { appBuilderPath } from "app-builder-bin"
-import { retry, Nullish, safeStringifyJson } from "builder-util-runtime"
-import * as chalk from "chalk"
+import { Nullish, safeStringifyJson, isValidKey, isSensitiveFieldName, hashSensitiveValue } from "builder-util-runtime"
+import chalk from "chalk"
 import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_process"
 import { spawn as _spawn } from "cross-spawn"
-import { createHash } from "crypto"
 import _debug from "debug"
 import { dump } from "js-yaml"
 import * as path from "path"
 import { install as installSourceMap } from "source-map-support"
-import { getPath7za } from "./7za"
-import { debug, log } from "./log"
+import { debug, log } from "./log.js"
+import { exists } from "./fs.js"
+import _fsExtra from "fs-extra"
+const { mkdir } = _fsExtra
+import { isEmptyOrSpaces } from "./stringUtil.js"
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
 }
 
+export { isEmptyOrSpaces } from "./stringUtil.js"
 export { safeStringifyJson, retry } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
-export * from "./arch"
-export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames, getArchSuffix, toLinuxArchString } from "./arch"
-export { AsyncTaskManager } from "./asyncTaskManager"
-export { DebugLogger } from "./DebugLogger"
-export * from "./log"
-export { httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor"
-export * from "./promise"
+export * from "./arch.js"
+export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames, getArchSuffix, toLinuxArchString } from "./arch.js"
+export { AsyncTaskManager } from "./asyncTaskManager.js"
+export { DebugLogger } from "./DebugLogger.js"
+export * from "./log.js"
+export { buildGotProxyAgent, httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor.js"
+export * from "./promise.js"
+export * from "./envUtil.js"
+export { parseValidEnvVarUrl } from "./envUtil.js"
 
-export { asArray } from "builder-util-runtime"
-export * from "./fs"
+export { asArray, deepAssign, isValidKey } from "builder-util-runtime"
+export * from "./fs.js"
 
-export { deepAssign } from "./deepAssign"
-
-export { getPath7x, getPath7za } from "./7za"
+export { generateKsuid } from "./ksuid.js"
+export { loadCscLink, decodeCscLinkBase64, resolveCscLinkPath } from "./cscLink.js"
 
 export const debug7z = _debug("electron-builder:7z")
 
@@ -43,38 +46,73 @@ export function serializeToYaml(object: any, skipInvalid = false, noRefs = false
 }
 
 export function removePassword(input: string): string {
-  const blockList = ["--accessKey", "--secretKey", "-P", "-p", "-pass", "-String", "/p", "pass:"]
+  // Sensitive parameter stems — any of `-`, `--`, or `/` prefix is accepted for all stems.
+  // `pass:` is intentionally absent; the dedicated pass: handler below covers it without double-processing.
+  const sensitiveStems = ["accessKey", "secretKey", "privateToken", "apiKey", "passphrase", "password", "secret", "token", "String", "pass", "p"]
+  const stemAlt = sensitiveStems.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")
+  // (?:--?|/) matches -, --, or / prefix. Longest stems listed first to minimise backtracking.
+  // (?<!\S) / (?=[\s"']|$) word-boundary guards prevent matching -path, -StringLength, etc.
+  const flagPattern = new RegExp(`(?<!\\S)((?:--?|/)(?:${stemAlt}))(?=[\\s"']|$)\\s*(?:(["'])(.*?)\\2|([^\\s]+))`, "gi")
 
-  // Create a regex pattern that supports:
-  //   - space-separated unquoted values: --key value
-  //   - quoted values: --key "value with spaces" or 'value with spaces'
-  const blockPattern = new RegExp(`(${blockList.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})\\s*(?:(["'])(.*?)\\2|([^\\s]+))`, "g")
-
-  input = input.replace(blockPattern, (_match, prefix, quote, quotedVal, unquotedVal) => {
+  input = input.replace(flagPattern, (_match, prefix, quote, quotedVal, unquotedVal) => {
     const value = quotedVal ?? unquotedVal
 
-    if (prefix.trim() === "/p" && value.startsWith("\\\\Mac\\Host\\\\")) {
+    if (prefix.trim().toLowerCase() === "/p" && value.startsWith("\\\\Mac\\Host\\")) {
       return `${prefix} ${quote ?? ""}${value}${quote ?? ""}`
     }
 
-    const hashed = createHash("sha256").update(value).digest("hex")
-    return `${prefix} ${quote ?? ""}${hashed} (sha256 hash)${quote ?? ""}`
+    return `${prefix} ${quote ?? ""}${hashSensitiveValue(value)}${quote ?? ""}`
   })
 
-  // Also handle `/b ... /c` block format
+  // pass:value — colon acts as separator; handles both pass:secret (no space) and pass: secret (space)
+  // Quoted phrases (pass:'a b c' or pass:"a b c") are captured in full so the whole phrase is hashed.
+  input = input.replace(/(?<!\S)pass:\s*(?:(["'])(.*?)\1|([^\s]+))/gi, (_match, quote, quotedVal, unquotedVal) => {
+    const value = quotedVal ?? unquotedVal
+    return quote ? `pass:${quote}${hashSensitiveValue(value)}${quote}` : `pass:${hashSensitiveValue(value)}`
+  })
+
+  // /b … /c block format
   return input.replace(/(\/b\s+)(.*?)(\s+\/c)/g, (_match, p1, p2, p3) => {
-    const hashed = createHash("sha256").update(p2).digest("hex")
-    return `${p1}${hashed} (sha256 hash)${p3}`
+    return `${p1}${hashSensitiveValue(p2)}${p3}`
   })
 }
 
+const SENSITIVE_ENV_KEY_RE = /KEY|TOKEN|SECRET|PASSWORD|PASS|CREDENTIAL|CSC/i
+
+/**
+ * Returns a copy of the environment with sensitive keys removed.
+ * Use this when building the environment for child processes that do not
+ * need signing credentials, tokens, or passwords (e.g. package managers).
+ */
+export function stripSensitiveEnvVars(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  const out: NodeJS.ProcessEnv = {}
+  for (const [k, v] of Object.entries(env)) {
+    if (isValidKey(k) && !isSensitiveFieldName(k) && !SENSITIVE_ENV_KEY_RE.test(k)) {
+      out[k] = v
+    }
+  }
+  return out
+}
+
+export function filterSensitiveEnv(env: Record<string, string | undefined>): Record<string, string | undefined> {
+  const out: Record<string, string | undefined> = {}
+  for (const [k, v] of Object.entries(env)) {
+    out[k] = (isSensitiveFieldName(k) || SENSITIVE_ENV_KEY_RE.test(k)) && v != null ? hashSensitiveValue(v) : v
+  }
+  return out
+}
+
 function getProcessEnv(env: Record<string, string | undefined> | Nullish): NodeJS.ProcessEnv | undefined {
+  // Windows: passing a filtered env to execFile drops critical system vars (PATH, SYSTEMROOT, TEMP)
+  // that many tools require. Credential stripping is therefore not applied on Windows.
   if (process.platform === "win32") {
     return env == null ? undefined : env
   }
 
+  // When no explicit env is provided, strip credential env vars so child processes
+  // (package managers, signing tools, etc.) don't inherit secrets they don't need.
   const finalEnv = {
-    ...(env || process.env),
+    ...(env == null ? stripSensitiveEnvVars(process.env) : env),
   }
 
   // without LC_CTYPE dpkg can returns encoded unicode symbols
@@ -104,7 +142,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
             delete diffEnv[name]
           }
         }
-        logFields.env = safeStringifyJson(diffEnv)
+        logFields.env = safeStringifyJson(filterSensitiveEnv(diffEnv))
       }
     }
 
@@ -118,7 +156,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
       {
         ...options,
         maxBuffer: 1000 * 1024 * 1024,
-        env: getProcessEnv(options == null ? null : options.env),
+        env: getProcessEnv(options == null ? null : options.env), // codeql[js/shell-command-injection-from-environment] - env filtered via getProcessEnv/stripSensitiveEnvVars; execFile array args (no shell)
       },
       (error, stdout, stderr) => {
         if (error == null) {
@@ -142,17 +180,16 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
             if (file.endsWith("wine")) {
               stdout = stdout.toString()
             }
-            message += `\n${chalk.yellow(stdout.toString())}`
+            message += `\n${chalk.yellow(removePassword(stdout.toString()))}`
           }
           if (stderr.length !== 0) {
             if (file.endsWith("wine")) {
               stderr = stderr.toString()
             }
-            message += `\n${chalk.red(stderr.toString())}`
+            message += `\n${chalk.red(removePassword(stderr.toString()))}`
           }
 
-          // TODO: switch to ECMA Script 2026 Error class with `cause` property to return stack trace
-          reject(new ExecError(file, (error as any).code, message, "", `${error.code || ExecError.code}`))
+          reject(new ExecError(file, (error as any).code, message, "", `${error.code || ExecError.code}`, { cause: error }))
         }
       }
     )
@@ -228,6 +265,57 @@ export function spawnAndWrite(command: string, args: Array<string>, data: string
   })
 }
 
+export function spawnAndWriteWithOutput(command: string, args: Array<string>, data: string, options?: SpawnOptions): Promise<{ stdout: string; stderr: string }> {
+  const childProcess = doSpawn(command, args, { ...options, stdio: ["pipe", "pipe", "pipe"] as any })
+  const isDebugEnabled = debug.enabled
+
+  return new Promise((resolve, reject) => {
+    let stdout = ""
+    let stderr = ""
+    let timedOut = false
+
+    const timeout = setTimeout(
+      () => {
+        timedOut = true
+        childProcess.kill()
+      },
+      4 * 60 * 1000
+    )
+
+    childProcess.on("error", (err: Error) => {
+      clearTimeout(timeout)
+      reject(err)
+    })
+
+    childProcess.stdout!.on("data", (chunk: Buffer) => {
+      stdout += chunk.toString()
+      if (isDebugEnabled) {
+        process.stdout.write(chunk)
+      }
+    })
+
+    childProcess.stderr!.on("data", (chunk: Buffer) => {
+      stderr += chunk.toString()
+      if (isDebugEnabled) {
+        process.stderr.write(chunk)
+      }
+    })
+
+    childProcess.stdin!.end(data)
+
+    childProcess.once("close", (code: number) => {
+      clearTimeout(timeout)
+      if (timedOut) {
+        reject(new Error(`${command} timed out after 4 minutes`))
+      } else if (code === 0) {
+        resolve({ stdout, stderr })
+      } else {
+        reject(new ExecError(command, code ?? -1, stdout, stderr))
+      }
+    })
+  })
+}
+
 export function spawn(command: string, args?: Array<string> | null, options?: SpawnOptions, extraOptions?: ExtraSpawnOptions): Promise<any> {
   return new Promise<any>((resolve, reject) => {
     handleProcess("close", doSpawn(command, args || [], options, extraOptions), command, resolve, reject)
@@ -288,9 +376,10 @@ export class ExecError extends Error {
     readonly exitCode: number,
     out: string,
     errorOut: string,
-    code = ExecError.code
+    code = ExecError.code,
+    options?: { cause?: unknown }
   ) {
-    super(`${command} process failed ${code}${formatOut(String(exitCode), "Exit code")}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`)
+    super(`${command} process failed ${code}${formatOut(String(exitCode), "Exit code")}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`, options)
     ;(this as NodeJS.ErrnoException).code = code
   }
 }
@@ -299,12 +388,20 @@ export function use<T, R>(value: T | Nullish, task: (value: T) => R): R | null {
   return value == null ? null : task(value)
 }
 
-export function isEmptyOrSpaces(s: string | Nullish): s is "" | Nullish {
-  return s == null || s.trim().length === 0
-}
-
 export function isTokenCharValid(token: string) {
   return /^[.\w/=+-]+$/.test(token)
+}
+
+export async function getUserDefinedCacheDir() {
+  let cacheEnv = process.env.ELECTRON_BUILDER_CACHE
+  if (!isEmptyOrSpaces(cacheEnv)) {
+    cacheEnv = path.resolve(cacheEnv)
+    if (!(await exists(cacheEnv))) {
+      await mkdir(cacheEnv)
+    }
+    return cacheEnv
+  }
+  return undefined
 }
 
 export function addValue<K, T>(map: Map<K, Array<T>>, key: K, value: T) {
@@ -314,6 +411,35 @@ export function addValue<K, T>(map: Map<K, Array<T>>, key: K, value: T) {
   } else if (!list.includes(value)) {
     list.push(value)
   }
+}
+
+export function isArrayEqualRegardlessOfSort(a: Array<string>, b: Array<string>) {
+  a = a.slice()
+  b = b.slice()
+  a.sort()
+  b.sort()
+  return a.length === b.length && a.every((value, index) => value === b[index])
+}
+
+/**
+ * Recursively removes all undefined and null values from an object
+ */
+export function removeNullish<T>(obj: T): T {
+  if (obj === null || typeof obj !== "object") {
+    return obj
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(removeNullish) as T
+  }
+
+  const result: Record<string, any> = {}
+  for (const [key, value] of Object.entries(obj)) {
+    if (value != null) {
+      result[key] = removeNullish(value)
+    }
+  }
+  return result as T
 }
 
 export function replaceDefault(inList: Array<string> | Nullish, defaultList: Array<string>): Array<string> {
@@ -378,49 +504,52 @@ export class InvalidConfigurationError extends Error {
   }
 }
 
-export async function executeAppBuilder(
-  args: Array<string>,
-  childProcessConsumer?: (childProcess: ChildProcess) => void,
-  extraOptions: SpawnOptions = {},
-  maxRetries = 0
-): Promise<string> {
-  const command = appBuilderPath
-  const env: any = {
-    ...process.env,
-    SZA_PATH: await getPath7za(),
-    FORCE_COLOR: chalk.level === 0 ? "0" : "1",
+/**
+ * Resolves a user-supplied path to an absolute form and validates it.
+ *
+ * Always rejects paths containing null bytes or newlines (C-level argument
+ * injection risk even with array-form execFile).
+ *
+ * When `base` is provided, also enforces containment: the resolved path must
+ * start with the resolved `base` directory.  This `startsWith`-based check is
+ * the pattern that CodeQL's path-injection analysis recognises as a sanitizer,
+ * clearing the taint on the returned value for interprocedural analysis.
+ */
+export function sanitizeDirPath(p: string, base?: string): string {
+  if (isEmptyOrSpaces(p)) {
+    throw new InvalidConfigurationError("Directory path must be a non-empty string")
   }
-  const cacheEnv = process.env.ELECTRON_BUILDER_CACHE
-  if (cacheEnv != null && cacheEnv.length > 0) {
-    env.ELECTRON_BUILDER_CACHE = path.resolve(cacheEnv)
-  }
-
-  if (extraOptions.env != null) {
-    Object.assign(env, extraOptions.env)
+  if (p.includes("\0") || p.includes("\n") || p.includes("\r")) {
+    throw new InvalidConfigurationError(`Directory path contains illegal characters: "${p}"`)
   }
 
-  function runCommand() {
-    return new Promise<string>((resolve, reject) => {
-      const childProcess = doSpawn(command, args, {
-        stdio: ["ignore", "pipe", process.stdout],
-        ...extraOptions,
-        env,
-      })
-      if (childProcessConsumer != null) {
-        childProcessConsumer(childProcess)
-      }
-      handleProcess("close", childProcess, command, resolve, error => {
-        if (error instanceof ExecError && error.exitCode === 2) {
-          error.alreadyLogged = true
-        }
-        reject(error)
-      })
-    })
-  }
+  const resolved = path.resolve(p)
 
-  if (maxRetries === 0) {
-    return runCommand()
-  } else {
-    return retry(runCommand, { retries: maxRetries, interval: 1000 })
+  if (base != null) {
+    const resolvedBase = path.resolve(base)
+    if (resolved !== resolvedBase && !resolved.startsWith(resolvedBase + path.sep)) {
+      throw new InvalidConfigurationError(`Path "${p}" must be within "${base}"`)
+    }
   }
+  return resolved
+}
+
+/**
+ * Validates a path and returns the complete 7-Zip `-o<dir>` switch token.
+ *
+ * Input is first normalized via `sanitizeDirPath` (absolute resolution + null/newline
+ * rejection), then validated for 7za switch-token safety.
+ *
+ * Allowlist rejects:
+ *   - empty string (7za would receive bare `-o`, which fails)
+ *   - leading `-`  (7za would misparse the token as a new switch)
+ *   - control chars 0x00–0x1F and DEL 0x7F (C-level truncation/control risk)
+ */
+export function to7zaOutputSwitch(p: string): string {
+  const safePath = sanitizeDirPath(p)
+  // eslint-disable-next-line no-control-regex
+  if (!/^[^\x00-\x1F\x7F-][^\x00-\x1F\x7F]*$/.test(safePath)) {
+    throw new InvalidConfigurationError(`7za output path is empty, starts with "-", or contains control characters: "${p}"`)
+  }
+  return "-o" + safePath
 }

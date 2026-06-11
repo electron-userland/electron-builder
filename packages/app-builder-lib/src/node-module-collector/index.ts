@@ -1,18 +1,18 @@
-import { CancellationToken, Nullish } from "builder-util-runtime"
+import { Nullish } from "builder-util-runtime"
 import { TmpDir } from "temp-file"
-import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
-import { detectPackageManager, getPackageManagerCommand, PM } from "./packageManager"
-import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector"
-import { NodeModuleInfo } from "./types"
-import { YarnBerryNodeModulesCollector } from "./yarnBerryNodeModulesCollector"
-import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector"
-import { BunNodeModulesCollector } from "./bunNodeModulesCollector"
+import { NpmNodeModulesCollector } from "./npmNodeModulesCollector.js"
+import { detectPackageManager, getPackageManagerCommand, PM } from "./packageManager.js"
+import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector.js"
+import { YarnBerryNodeModulesCollector } from "./yarnBerryNodeModulesCollector.js"
+import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector.js"
+import { BunNodeModulesCollector } from "./bunNodeModulesCollector.js"
 import { Lazy } from "lazy-val"
-import { spawn, log, exists } from "builder-util"
-import * as fs from "fs-extra"
+import { spawn, log, exists, isEmptyOrSpaces } from "builder-util"
+import fs from "fs-extra"
 import * as path from "path"
+import { TraversalNodeModulesCollector } from "./traversalNodeModulesCollector.js"
 
-export { getPackageManagerCommand, PM }
+export { getPackageManagerCommand, PM, PnpmNodeModulesCollector, YarnNodeModulesCollector, YarnBerryNodeModulesCollector, BunNodeModulesCollector, TraversalNodeModulesCollector }
 
 export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirManager: TmpDir) {
   switch (pm) {
@@ -26,30 +26,14 @@ export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirMan
       return new BunNodeModulesCollector(rootDir, tempDirManager)
     case PM.NPM:
       return new NpmNodeModulesCollector(rootDir, tempDirManager)
+    case PM.TRAVERSAL:
+      return new TraversalNodeModulesCollector(rootDir, tempDirManager)
   }
-}
-
-export function getNodeModules(
-  pm: PM,
-  {
-    rootDir,
-    tempDirManager,
-    cancellationToken,
-    packageName,
-  }: {
-    rootDir: string
-    tempDirManager: TmpDir
-    cancellationToken: CancellationToken
-    packageName: string
-  }
-): Promise<NodeModuleInfo[]> {
-  const collector = getCollectorByPackageManager(pm, rootDir, tempDirManager)
-  return collector.getNodeModules({ cancellationToken, packageName })
 }
 
 export const determinePackageManagerEnv = ({ projectDir, appDir, workspaceRoot }: { projectDir: string; appDir: string; workspaceRoot: string | Nullish }) =>
   new Lazy(async () => {
-    const availableDirs = [projectDir, appDir, workspaceRoot].filter((it): it is string => it != null)
+    const availableDirs = [workspaceRoot, projectDir, appDir].filter((it): it is string => !isEmptyOrSpaces(it))
     const pm = await detectPackageManager(availableDirs)
     const root = await findWorkspaceRoot(pm.pm, projectDir)
     if (root != null) {

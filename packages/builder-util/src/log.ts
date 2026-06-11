@@ -1,7 +1,7 @@
-import * as chalk from "chalk"
+import chalk from "chalk"
 import { Chalk } from "chalk"
 import _debug from "debug"
-import WritableStream = NodeJS.WritableStream
+type WritableStream = NodeJS.WritableStream
 
 let printer: ((message: string) => void) | null = null
 
@@ -15,19 +15,14 @@ export function setPrinter(value: ((message: string) => void) | null) {
   printer = value
 }
 
-export type LogLevel = "info" | "warn" | "debug" | "notice" | "error"
+export type LogLevel = "info" | "warn" | "debug" | "error"
 
 export const PADDING = 2
 
+// clean up logs since concurrent tests are impossible to track logic execution with console concurrency "noise"
+export const shouldDisableNonErrorLoggingVitest = process.env.VITEST && !debug.enabled
 export class Logger {
-  // clean up logs since concurrent tests are impossible to track logic execution with console concurrency "noise"
-  private readonly shouldDisableNonErrorLoggingVitest = process.env.VITEST && !this.isDebugEnabled
-
-  constructor(protected readonly stream: WritableStream) {
-    if (this.shouldDisableNonErrorLoggingVitest) {
-      this.log(`non-error logging is silenced during VITEST workflow when DEBUG=electron-builder flag is not set`)
-    }
-  }
+  constructor(protected readonly stream: WritableStream) {}
 
   messageTransformer: (message: string, level: LogLevel) => string = it => it
 
@@ -68,10 +63,10 @@ export class Logger {
   }
 
   private _doLog(message: string | Error, fields: Fields | null, level: LogLevel) {
-    if (this.shouldDisableNonErrorLoggingVitest) {
+    if (shouldDisableNonErrorLoggingVitest) {
       if (
         [
-          // "warn", // is actually a bit too noisy
+          // "warn", // is sometimes a bit too noisy
           "error",
         ].includes(level)
       ) {

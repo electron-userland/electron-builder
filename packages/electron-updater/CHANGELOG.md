@@ -1,5 +1,124 @@
 ## 4.3.0
 
+## 6.8.9
+
+### Patch Changes
+
+- Fix: holistic field detection for sha256 hash redaction _[`#9834`](https://github.com/electron-userland/electron-builder/pull/9834) [`22a7532`](https://github.com/electron-userland/electron-builder/commit/22a7532bd01b9fb42cff7c58d599c7ad683569fe) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`198c10c`](https://github.com/electron-userland/electron-builder/commit/198c10c9693d1244bac80cb11af6b75ad363e5a0) [`22a7532`](https://github.com/electron-userland/electron-builder/commit/22a7532bd01b9fb42cff7c58d599c7ad683569fe)
+
+</small>
+
+- `builder-util-runtime@9.7.0`
+
+</details>
+
+## 6.8.8
+
+### Patch Changes
+
+- Fix(updater): ensure full changelog includes only release notes up to the latest release _[`#9573`](https://github.com/electron-userland/electron-builder/pull/9573) [`ac45083`](https://github.com/electron-userland/electron-builder/commit/ac450835015b18720c5bc5de0221b4c770d0fac2) [@AbdulrhmanGoni](https://github.com/AbdulrhmanGoni)_
+- Fix: harden the auto-update flow relative paths in PATH, path traversals, and environment variable intercepts _[`#9796`](https://github.com/electron-userland/electron-builder/pull/9796) [`2dc409f`](https://github.com/electron-userland/electron-builder/commit/2dc409f1e4ab1c82795ad731a50beb1296315730) [@mmaietta](https://github.com/mmaietta)_
+- Chore: extracting helper function to add coverage in MacUpdater test suite _[`#9794`](https://github.com/electron-userland/electron-builder/pull/9794) [`d664ed0`](https://github.com/electron-userland/electron-builder/commit/d664ed0968e6c4010688eebe97babcfe5e43bd51) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`59efef1`](https://github.com/electron-userland/electron-builder/commit/59efef1a8b81ed1ead4e8004043726d2b49cf81f)
+
+</small>
+
+- `builder-util-runtime@9.6.3`
+
+</details>
+
+## 6.8.7
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`d6a5aee`](https://github.com/electron-userland/electron-builder/commit/d6a5aee821138449dc0c082606da6a1bf5ba0798) [`4866737`](https://github.com/electron-userland/electron-builder/commit/4866737e4fe1f0cca210d318b9ce440f8e978a63)
+
+</small>
+
+- `builder-util-runtime@9.6.2`
+
+</details>
+
+## 6.8.6
+
+### Patch Changes
+
+- Chore(docs): documentation updates and docusaurus migration _[`#9744`](https://github.com/electron-userland/electron-builder/pull/9744) [`d846315`](https://github.com/electron-userland/electron-builder/commit/d84631587d816a1aa0bff57680bab0f865d7a84f) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`d846315`](https://github.com/electron-userland/electron-builder/commit/d84631587d816a1aa0bff57680bab0f865d7a84f)
+
+</small>
+
+- `builder-util-runtime@9.6.1`
+
+</details>
+
+## 6.8.5
+
+### Patch Changes
+
+- Fix: GitLab auth token differs between fetching channel yaml & API requests _[`#9703`](https://github.com/electron-userland/electron-builder/pull/9703) [`4bcf68a`](https://github.com/electron-userland/electron-builder/commit/4bcf68abc957faae827ca50fa5c1bed3ddf7c956) [@mmaietta](https://github.com/mmaietta)_
+- Fix(electron-updater): filter draft releases in PrivateGitHubProvider.getLatestVersionInfo _[`#9694`](https://github.com/electron-userland/electron-builder/pull/9694) [`a5d8ab9`](https://github.com/electron-userland/electron-builder/commit/a5d8ab9436dd7db0c58a08cf9594e47613c4fc8e) [@copilot-swe-agent](https://github.com/apps/copilot-swe-agent)_
+
+## 6.8.4
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`b7df0bc`](https://github.com/electron-userland/electron-builder/commit/b7df0bcef5790814fd6df187346dcec625dc681e)
+
+</small>
+
+- `builder-util-runtime@9.6.0`
+
+</details>
+
+## 6.8.3
+
+### Patch Changes
+
+- Chore: Remove console logs for autoupdate checks _[`#9561`](https://github.com/electron-userland/electron-builder/pull/9561) [`9c67fd3`](https://github.com/electron-userland/electron-builder/commit/9c67fd31ce982d11c82aae71263ba1f0055a77cc) [@Kilian](https://github.com/Kilian)_
+
+## 6.8.2
+
+### Patch Changes
+
+- Fix(updater): ignore releases with non-semver tags when collecting full changelog _[`#9550`](https://github.com/electron-userland/electron-builder/pull/9550) [`8aee1e6`](https://github.com/electron-userland/electron-builder/commit/8aee1e6944afae05a60d2a392743a78f818ee6de) [@AbdulrhmanGoni](https://github.com/AbdulrhmanGoni)_
+
+## 6.8.1
+
+### Patch Changes
+
+- Chore: running `eslint --fix` on more files _[`#9502`](https://github.com/electron-userland/electron-builder/pull/9502) [`6c20eeb`](https://github.com/electron-userland/electron-builder/commit/6c20eeb1cf9fd10980cde3c9ce0602fa6b7c6972) [@mmaietta](https://github.com/mmaietta)_
+
+## 6.8.0
+
+### Minor Changes
+
+- Emit download-progress events when downloading with multiple range differential downloader _[`#9448`](https://github.com/electron-userland/electron-builder/pull/9448) [`3533a3e`](https://github.com/electron-userland/electron-builder/commit/3533a3eb5af01416db3ecac703d6da031b05e615) [@eliotschu](https://github.com/eliotschu)_
+
 ## 6.7.3
 
 ### Patch Changes

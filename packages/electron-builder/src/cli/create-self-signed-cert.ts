@@ -1,7 +1,7 @@
-import { getSignVendorPath } from "app-builder-lib/out/codeSign/windowsSignToolManager"
-import { exec, log, spawn, TmpDir, unlinkIfExists } from "builder-util"
-import { sanitizeFileName } from "builder-util/out/filename"
-import * as chalk from "chalk"
+import { getWindowsKitsBundle } from "app-builder-lib/internal"
+import { archFromString, exec, log, spawn, TmpDir, unlinkIfExists } from "builder-util"
+import { sanitizeFileName } from "builder-util/internal"
+import chalk from "chalk"
 import { mkdir } from "fs/promises"
 import * as path from "path"
 
@@ -17,7 +17,7 @@ export async function createSelfSignedCert(publisher: string) {
 
   try {
     await mkdir(path.dirname(tempPrefix), { recursive: true })
-    const vendorPath = path.join(await getSignVendorPath(), "windows-10", process.arch)
+    const vendorPath = (await getWindowsKitsBundle({ winCodeSign: null, arch: archFromString(process.arch), resourcesDir: "" })).kit
     await exec(path.join(vendorPath, "makecert.exe"), ["-r", "-h", "0", "-n", `CN=${quoteString(publisher)}`, "-eku", "1.3.6.1.5.5.7.3.3", "-pe", "-sv", pvk, cer])
 
     const pfx = path.join(targetDir, `${sanitizeFileName(publisher)}.pfx`)
@@ -33,7 +33,7 @@ export async function createSelfSignedCert(publisher: string) {
   }
 }
 
-function quoteString(s: string): string {
+export function quoteString(s: string): string {
   if (!s.includes(",") && !s.includes('"')) {
     return s
   }

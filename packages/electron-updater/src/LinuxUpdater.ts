@@ -1,6 +1,10 @@
 import { AllPublishOptions } from "builder-util-runtime"
-import { AppAdapter } from "./AppAdapter"
-import { BaseUpdater } from "./BaseUpdater"
+import { AppAdapter } from "./AppAdapter.js"
+import { BaseUpdater } from "./BaseUpdater.js"
+
+// Matches safe package manager names: alphanumeric, hyphens, underscores only.
+// Rejects names with shell metacharacters that could cause command injection.
+const SAFE_PM_REGEX = /^[a-zA-Z0-9_-]+$/
 
 export abstract class LinuxUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
@@ -15,10 +19,19 @@ export abstract class LinuxUpdater extends BaseUpdater {
   }
 
   /**
-   * Sanitizies the installer path for using with command line tools.
+   * Sanitizes the installer path for use with shell:true spawn calls.
+   * Backslash-escapes metacharacters that have special meaning in POSIX shell.
+   * Note: paths containing single-quotes (') are not supported.
    */
   protected get installerPath(): string | null {
-    return super.installerPath?.replace(/\\/g, "\\\\").replace(/ /g, "\\ ") ?? null
+    const raw = super.installerPath
+    if (raw == null) {
+      return null
+    }
+    return raw
+      .replace(/\\/g, "\\\\") // must come first
+      .replace(/([`$!" ;|&()<>])/g, "\\$1")
+      .replace(/[\n\r]/g, "")
   }
 
   protected runCommandWithSudoIfNeeded(commandWithArgs: string[]) {
@@ -28,7 +41,9 @@ export abstract class LinuxUpdater extends BaseUpdater {
     }
 
     const { name } = this.app
-    const installComment = `"${name} would like to update"`
+    // Strip characters that could break shell quoting in the sudo dialog comment string
+    const safeName = name.replace(/["`$\\!\n\r;|&<>(){}*?[\]#~]/g, "")
+    const installComment = `"${safeName} would like to update"`
     const sudo = this.sudoWithArgs(installComment)
     this._logger.info(`Running as non-root user, using sudo to install: ${sudo}`)
     let wrapper = `"`
@@ -81,18 +96,25 @@ export abstract class LinuxUpdater extends BaseUpdater {
    * @returns The detected package manager command or "unknown" if none are found.
    */
   protected detectPackageManager(pms: string[]): string {
+    let availablePMs = pms
     const pmOverride = process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER?.trim()
     if (pmOverride) {
-      return pmOverride
+      if (!SAFE_PM_REGEX.test(pmOverride)) {
+        this._logger.warn(`ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER "${pmOverride}" contains unsafe characters. Ignoring override.`)
+      } else {
+        availablePMs = [pmOverride]
+      }
     }
     // Check for the package manager in the order of priority
-    for (const pm of pms) {
+    for (const pm of availablePMs) {
       if (this.hasCommand(pm)) {
         return pm
       }
     }
-    // return the first package manager in the list if none are found, this will throw upstream for proper logging
-    this._logger.warn(`No package manager found in the list: ${pms.join(", ")}. Defaulting to the first one: ${pms[0]}`)
-    return pms[0]
+    // return the first/default package manager in the original list if none are found, this will throw upstream for proper logging
+    const searchList = pmOverride ? `ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER override "${pmOverride}", ` : ""
+    const defaultPM = pms[0]
+    this._logger.warn(`No package manager found in the list: ${searchList}${pms.join(", ")}. Utilizing default: ${defaultPM}`)
+    return defaultPM
   }
 }

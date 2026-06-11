@@ -40,24 +40,6 @@ exports[`mac concurrent 1`] = `
   "mac": [
     {
       "arch": "x64",
-      "file": "Test Concurrent-1.1.0-x64.dmg",
-      "safeArtifactName": "Test-Concurrent-1.1.0-x64.dmg",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "arm64",
-      "file": "Test Concurrent-1.1.0-arm64.dmg",
-      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.dmg",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "x64",
       "file": "Test Concurrent-1.1.0-x64.zip",
       "safeArtifactName": "Test-Concurrent-1.1.0-x64.zip",
       "updateInfo": {
@@ -75,24 +57,8 @@ exports[`mac concurrent 1`] = `
       },
     },
     {
-      "file": "Test Concurrent-1.1.0-arm64.dmg.blockmap",
-      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.dmg.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
       "file": "Test Concurrent-1.1.0-arm64.zip.blockmap",
       "safeArtifactName": "Test Concurrent-1.1.0-arm64.zip.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "Test Concurrent-1.1.0-x64.dmg.blockmap",
-      "safeArtifactName": "Test-Concurrent-1.1.0-x64.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -131,6 +97,7 @@ exports[`mac concurrent 2`] = `
     "MallocNanoZone": "0",
   },
   "NSAppTransportSecurity": {},
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -161,6 +128,7 @@ exports[`mac concurrent 3`] = `
     "MallocNanoZone": "0",
   },
   "NSAppTransportSecurity": {},
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -197,24 +165,6 @@ exports[`mac/win/linux concurrent 1`] = `
   "mac": [
     {
       "arch": "x64",
-      "file": "Test Concurrent-1.1.0-x64.dmg",
-      "safeArtifactName": "Test-Concurrent-1.1.0-x64.dmg",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "arm64",
-      "file": "Test Concurrent-1.1.0-arm64.dmg",
-      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.dmg",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "x64",
       "file": "Test Concurrent-1.1.0-x64.zip",
       "safeArtifactName": "Test-Concurrent-1.1.0-x64.zip",
       "updateInfo": {
@@ -232,24 +182,8 @@ exports[`mac/win/linux concurrent 1`] = `
       },
     },
     {
-      "file": "Test Concurrent-1.1.0-arm64.dmg.blockmap",
-      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.dmg.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
       "file": "Test Concurrent-1.1.0-arm64.zip.blockmap",
       "safeArtifactName": "Test Concurrent-1.1.0-arm64.zip.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "Test Concurrent-1.1.0-x64.dmg.blockmap",
-      "safeArtifactName": "Test-Concurrent-1.1.0-x64.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -340,6 +274,7 @@ exports[`mac/win/linux concurrent 2`] = `
     "MallocNanoZone": "0",
   },
   "NSAppTransportSecurity": {},
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -370,6 +305,7 @@ exports[`mac/win/linux concurrent 3`] = `
     "MallocNanoZone": "0",
   },
   "NSAppTransportSecurity": {},
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
@@ -694,6 +630,8 @@ exports[`win concurrent - all targets 2`] = `
   "lib/net45/chrome_100_percent.pak",
   "lib/net45/chrome_200_percent.pak",
   "lib/net45/d3dcompiler_47.dll",
+  "lib/net45/dxcompiler.dll",
+  "lib/net45/dxil.dll",
   "lib/net45/ffmpeg.dll",
   "lib/net45/icudtl.dat",
   "lib/net45/libEGL.dll",
@@ -730,6 +668,8 @@ exports[`win concurrent - all targets 3`] = `
   "lib/net45/chrome_100_percent.pak",
   "lib/net45/chrome_200_percent.pak",
   "lib/net45/d3dcompiler_47.dll",
+  "lib/net45/dxcompiler.dll",
+  "lib/net45/dxil.dll",
   "lib/net45/ffmpeg.dll",
   "lib/net45/icudtl.dat",
   "lib/net45/libEGL.dll",

@@ -1,7 +1,7 @@
 import { addValue, Arch, archFromString, ArchType, asArray } from "builder-util"
-import { DEFAULT_TARGET, DIR_TARGET, Platform, Target, TargetConfiguration } from "../core"
-import { PlatformPackager } from "../platformPackager"
-import { ArchiveTarget } from "./ArchiveTarget"
+import { DEFAULT_TARGET, DIR_TARGET, Platform, Target, TargetConfiguration } from "../core.js"
+import { PlatformPackager } from "../platformPackager.js"
+import { ArchiveTarget } from "./ArchiveTarget.js"
 
 const archiveTargets = new Set(["zip", "7z", "tar.xz", "tar.lz", "tar.gz", "tar.bz2"])
 
@@ -15,7 +15,7 @@ export function computeArchToTargetNamesMap(raw: Map<Arch, Array<string>>, platf
 
   const defaultArchs: Array<ArchType> = raw.size === 0 ? [process.arch as ArchType] : Array.from(raw.keys()).map(it => Arch[it] as ArchType)
   const result = new Map(raw)
-  for (const target of asArray(platformPackager.platformSpecificBuildOptions.target).map<TargetConfiguration>(it => (typeof it === "string" ? { target: it } : it))) {
+  for (const target of asArray(platformPackager.platformOptions.target).map<TargetConfiguration>(it => (typeof it === "string" ? { target: it } : it))) {
     let name = target.target
     let archs = target.arch
     const suffixPos = name.lastIndexOf(":")

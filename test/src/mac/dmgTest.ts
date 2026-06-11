@@ -1,27 +1,38 @@
+// import { describe, test } from "../../vitest-scripts/vitest-setup"
 import { PlatformPackager } from "app-builder-lib"
 import { Arch, copyFile, exec } from "builder-util"
 import { Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { assertThat } from "../helpers/fileAssert"
-import { app, assertPack, copyTestAsset } from "../helpers/packTester"
-import { attachAndExecute, getDmgTemplatePath } from "dmg-builder/out/dmgUtil"
+import { assertThat } from "../helpers/fileAssert.js"
+import { app, assertPack, copyTestAsset } from "../helpers/packTester.js"
+import { beforeAll } from "vitest"
+import type { attachAndExecute as aAndE, getDmgTemplatePath as dmgTemplate } from "dmg-builder"
 
 const dmgTarget = Platform.MAC.createTarget("dmg", Arch.x64)
 const defaultTarget = Platform.MAC.createTarget(undefined, Arch.x64)
 
-describe("dmg", { concurrent: true }, () => {
-  test.ifMac("dmg", ({ expect }) =>
+describe.heavy.ifMac("dmg", { sequential: true }, () => {
+  let attachAndExecute: typeof aAndE
+  let getDmgTemplatePath: typeof dmgTemplate
+
+  beforeAll(async () => {
+    // import at runtime to avoid issues on non-macOS platforms
+    const { attachAndExecute: a, getDmgTemplatePath: d } = await import("dmg-builder")
+    attachAndExecute = a
+    getDmgTemplatePath = d
+  })
+
+  test("dmg", ({ expect }) =>
     app(expect, {
       targets: dmgTarget,
       config: {
         productName: "Default-Dmg",
         publish: null,
       },
-    })
-  )
+    }))
 
-  test.ifMac("no build directory", ({ expect }) =>
+  test("no build directory", ({ expect }) =>
     app(
       expect,
       {
@@ -42,6 +53,8 @@ describe("dmg", { concurrent: true }, () => {
           const volumePath = it.volumePath
           await assertThat(expect, path.join(volumePath, ".background.tiff")).isFile()
           await assertThat(expect, path.join(volumePath, "Applications")).isSymbolicLink()
+          const entries = await fs.readdir(volumePath)
+          expect(entries.find(e => e.endsWith(".app"))).toBeTruthy()
           expect(
             it.specification.contents.map((c: any) => ({
               ...c,
@@ -54,10 +67,9 @@ describe("dmg", { concurrent: true }, () => {
       {
         projectDirCreated: projectDir => fs.rm(path.join(projectDir, "build"), { recursive: true, force: true }),
       }
-    )
-  )
+    ))
 
-  test.ifMac("background color", ({ expect }) =>
+  test("background color", ({ expect }) =>
     app(expect, {
       targets: dmgTarget,
       config: {
@@ -77,12 +89,99 @@ describe("dmg", { concurrent: true }, () => {
         }
         delete it.specification.icon
         expect(it.specification).toMatchSnapshot()
+        const entries = await fs.readdir(it.volumePath)
+        expect(entries.find(e => e.endsWith(".app"))).toBeTruthy()
         return Promise.resolve(false)
       },
-    })
-  )
+    }))
 
-  test.ifMac("custom background - new way", ({ expect }) => {
+  test("explicit size - HFS+", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: dmgTarget,
+        config: {
+          productName: "ExplicitSizeHFS",
+          publish: null,
+          dmg: {
+            size: "500m",
+            shrink: false,
+            filesystem: "HFS+",
+            writeUpdateInfo: false,
+            title: "Explicit Size HFS",
+          },
+        },
+        effectiveOptionComputed: async it => {
+          if (!("volumePath" in it)) {
+            return false
+          }
+          expect(it.specification.size).toEqual("500m")
+          expect(it.specification.shrink).toEqual(false)
+          expect(it.specification.filesystem).toEqual("HFS+")
+          const entries = await fs.readdir(it.volumePath)
+          expect(entries.find(e => e.endsWith(".app"))).toBeTruthy()
+          return Promise.resolve(false)
+        },
+      },
+      {
+        packed: context => {
+          return attachAndExecute(path.join(context.outDir, "ExplicitSizeHFS-1.1.0.dmg"), false, true, async volumePath => {
+            const stats = await fs.statfs(volumePath)
+            const totalBytes = stats.bsize * stats.blocks
+            // 500m = 524,288,000 bytes; HFS+ metadata overhead is small (~2–5 MB)
+            const minBytes = 490 * 1024 * 1024
+            const maxBytes = 540 * 1024 * 1024
+            expect(totalBytes).toBeGreaterThan(minBytes)
+            expect(totalBytes).toBeLessThan(maxBytes)
+          })
+        },
+      }
+    ))
+
+  test("explicit size - APFS", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: dmgTarget,
+        config: {
+          productName: "ExplicitSizeAPFS",
+          publish: null,
+          dmg: {
+            size: "500m",
+            shrink: false,
+            filesystem: "APFS",
+            writeUpdateInfo: false,
+            title: "Explicit Size APFS",
+          },
+        },
+        effectiveOptionComputed: async it => {
+          if (!("volumePath" in it)) {
+            return false
+          }
+          expect(it.specification.size).toEqual("500m")
+          expect(it.specification.shrink).toEqual(false)
+          expect(it.specification.filesystem).toEqual("APFS")
+          const entries = await fs.readdir(it.volumePath)
+          expect(entries.find(e => e.endsWith(".app"))).toBeTruthy()
+          return Promise.resolve(false)
+        },
+      },
+      {
+        packed: context => {
+          return attachAndExecute(path.join(context.outDir, "ExplicitSizeAPFS-1.1.0.dmg"), false, true, async volumePath => {
+            const stats = await fs.statfs(volumePath)
+            const totalBytes = stats.bsize * stats.blocks
+            // 500m = 524,288,000 bytes; APFS metadata overhead may be slightly larger
+            const minBytes = 490 * 1024 * 1024
+            const maxBytes = 560 * 1024 * 1024
+            expect(totalBytes).toBeGreaterThan(minBytes)
+            expect(totalBytes).toBeLessThan(maxBytes)
+          })
+        },
+      }
+    ))
+
+  test("custom background - new way", ({ expect }) => {
     const customBackground = "customBackground.png"
     return assertPack(
       expect,
@@ -113,6 +212,8 @@ describe("dmg", { concurrent: true }, () => {
             return false
           }
           await assertThat(expect, path.join(it.volumePath, ".VolumeIcon.icns")).isFile()
+          const entries = await fs.readdir(it.volumePath)
+          expect(entries.find(e => e.endsWith(".app"))).toBeTruthy()
           return Promise.resolve(true)
         },
       },
@@ -128,7 +229,7 @@ describe("dmg", { concurrent: true }, () => {
     )
   })
 
-  test.ifMac("retina background as 2 png", ({ expect }) => {
+  test("retina background as 2 png", ({ expect }) => {
     return assertPack(
       expect,
       "test-app-one",
@@ -139,6 +240,7 @@ describe("dmg", { concurrent: true }, () => {
           publish: null,
           dmg: {
             title: "Retina Background",
+            badgeIcon: "foo.icns",
           },
         },
         effectiveOptionComputed: async it => {
@@ -150,6 +252,7 @@ describe("dmg", { concurrent: true }, () => {
         projectDirCreated: async projectDir => {
           const resourceDir = path.join(projectDir, "build")
           await copyFile(path.join(getDmgTemplatePath(), "background.tiff"), path.join(resourceDir, "background.tiff"))
+          await copyFile(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "foo.icns"))
 
           async function extractPng(index: number, suffix: string) {
             await exec("tiffutil", ["-extract", index.toString(), path.join(getDmgTemplatePath(), "background.tiff")], {
@@ -168,7 +271,7 @@ describe("dmg", { concurrent: true }, () => {
     )
   })
 
-  test.ifMac.skip("no Applications link", ({ expect }) => {
+  test.skip("no Applications link", ({ expect }) => {
     return assertPack(expect, "test-app-one", {
       targets: defaultTarget,
       config: {
@@ -208,7 +311,7 @@ describe("dmg", { concurrent: true }, () => {
     })
   })
 
-  test.ifMac("unset dmg icon", ({ expect }) =>
+  test("unset dmg icon", ({ expect }) =>
     app(
       expect,
       {
@@ -224,7 +327,7 @@ describe("dmg", { concurrent: true }, () => {
       },
       {
         packed: context => {
-          return attachAndExecute(path.join(context.outDir, "No_Volume_Icon-1.1.0.dmg"), false, () => {
+          return attachAndExecute(path.join(context.outDir, "No_Volume_Icon-1.1.0.dmg"), false, true, () => {
             return Promise.all([
               assertThat(expect, path.join("/Volumes/No_Volume_Icon 1.1.0/.background.tiff")).isFile(),
               assertThat(expect, path.join("/Volumes/No_Volume_Icon 1.1.0/.VolumeIcon.icns")).doesNotExist(),
@@ -232,11 +335,10 @@ describe("dmg", { concurrent: true }, () => {
           })
         },
       }
-    )
-  )
+    ))
 
   // test also "only dmg"
-  test.ifMac("no background", ({ expect }) =>
+  test("no background", ({ expect }) =>
     app(
       expect,
       {
@@ -253,16 +355,62 @@ describe("dmg", { concurrent: true }, () => {
       },
       {
         packed: context => {
-          return attachAndExecute(path.join(context.outDir, "No-Background-1.1.0.dmg"), false, () => {
+          return attachAndExecute(path.join(context.outDir, "No-Background-1.1.0.dmg"), false, true, () => {
             return assertThat(expect, path.join("/Volumes/No-Background 1.1.0/.background.tiff")).doesNotExist()
           })
         },
       }
-    )
-  )
+    ))
+
+  // Verifies the full dmgbuild + mac_alias pipeline end-to-end: builds a DMG with a background
+  // image (which exercises alias.to_bytes() / uuid in mac_alias), then simulates what a user
+  // does — mounts, copies the .app out, verifies the bundle is intact — and immediately removes
+  // the copy to keep disk usage minimal.
+  test("app is copyable from mounted dmg and bundle structure is intact", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: dmgTarget,
+        config: {
+          productName: "DmgCopyTest",
+          publish: null,
+          dmg: {
+            title: "DmgCopyTest",
+          },
+        },
+      },
+      {
+        packed: async context => {
+          const dmgPath = path.join(context.outDir, "DmgCopyTest-1.1.0.dmg")
+          const tmpCopy = await context.tmpDir.createTempDir({ prefix: "dmg-copy-" })
+          try {
+            await attachAndExecute(dmgPath, false, true, async volumePath => {
+              const entries = await fs.readdir(volumePath)
+              const appName = entries.find(e => e.endsWith(".app"))
+              expect(appName).toBeTruthy()
+              // cp -Rf mirrors what Finder does when a user drags the app out of the DMG
+              await exec("cp", ["-Rf", path.join(volumePath, appName!), tmpCopy])
+            })
+
+            const copiedApp = path.join(tmpCopy, "DmgCopyTest.app")
+            await assertThat(expect, copiedApp).isDirectory()
+            await assertThat(expect, path.join(copiedApp, "Contents", "MacOS")).isDirectory()
+            await assertThat(expect, path.join(copiedApp, "Contents", "Info.plist")).isFile()
+
+            // Main executable must exist and have its execute bit set
+            const macosEntries = await fs.readdir(path.join(copiedApp, "Contents", "MacOS"))
+            expect(macosEntries.length).toBeGreaterThan(0)
+            const exeStat = await fs.stat(path.join(copiedApp, "Contents", "MacOS", macosEntries[0]))
+            expect(exeStat.mode & 0o111).toBeGreaterThan(0)
+          } finally {
+            await fs.rm(tmpCopy, { recursive: true, force: true })
+          }
+        },
+      }
+    ))
 
   // test also darkModeSupport
-  test.ifMac("bundleShortVersion", ({ expect }) =>
+  test("bundleShortVersion", ({ expect }) =>
     app(expect, {
       targets: dmgTarget,
       config: {
@@ -277,10 +425,9 @@ describe("dmg", { concurrent: true }, () => {
           title: "bundleShortVersion",
         },
       },
-    })
-  )
+    }))
 
-  test.ifMac("disable dmg icon (light), bundleVersion", ({ expect }) => {
+  test("disable dmg icon (light), bundleVersion", ({ expect }) => {
     return assertPack(expect, "test-app-one", {
       targets: defaultTarget,
       config: {
@@ -314,7 +461,7 @@ describe("dmg", { concurrent: true }, () => {
     },
   })
 
-  test.ifMac("multi language license", ({ expect }) =>
+  test("multi language license", ({ expect }) =>
     app(expect, packagerOptions(1), {
       projectDirCreated: projectDir => {
         return Promise.all([
@@ -323,45 +470,42 @@ describe("dmg", { concurrent: true }, () => {
           fs.writeFile(path.join(projectDir, "build", "license_ja.txt"), "こんにちは"),
         ])
       },
-    })
-  )
+    }))
 
-  test.ifMac("license ja", ({ expect }) =>
+  test("license ja", ({ expect }) =>
     app(expect, packagerOptions(2), {
       projectDirCreated: projectDir => {
         return fs.writeFile(path.join(projectDir, "build", "license_ja.txt"), "こんにちは".repeat(12))
       },
-    })
-  )
+    }))
 
-  test.ifMac("license en", ({ expect }) =>
+  test("license en", ({ expect }) =>
     app(expect, packagerOptions(3), {
       projectDirCreated: projectDir => {
         return copyTestAsset("license_en.txt", path.join(projectDir, "build", "license_en.txt"))
       },
-    })
-  )
+    }))
 
-  test.ifMac("license rtf", ({ expect }) =>
+  test("license rtf", ({ expect }) =>
     app(expect, packagerOptions(4), {
       projectDirCreated: projectDir => {
         return copyTestAsset("license_de.rtf", path.join(projectDir, "build", "license_de.rtf"))
       },
-    })
-  )
+    }))
 
-  test.ifMac("license buttons config", ({ expect }) =>
+  test("license buttons config", ({ expect }) =>
     app(
       expect,
       {
         ...packagerOptions(5),
         effectiveOptionComputed: async it => {
-          if ("licenseData" in it) {
-            // Clean `file` path from the data because the path is dynamic at runtime
-            it.licenseData.body.forEach((license: any) => {
-              delete license.file
-            })
-            expect(it.licenseData).toMatchSnapshot()
+          if ("licenseData" in it && it.licenseData != null) {
+            // Strip dynamic file paths before snapshotting
+            const data = {
+              ...it.licenseData,
+              licenses: Object.fromEntries(Object.keys(it.licenseData.licenses).map((lang: string) => [lang, "<<path>>"])),
+            }
+            expect(data).toMatchSnapshot()
           }
           return Promise.resolve(false)
         },
@@ -379,6 +523,5 @@ describe("dmg", { concurrent: true }, () => {
             copyTestAsset("licenseButtons_ko.json", path.join(projectDir, "build", "licenseButtons_ko.json")),
           ]),
       }
-    )
-  )
+    ))
 })

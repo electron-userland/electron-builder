@@ -1,23 +1,21 @@
 import { checkBuildRequestOptions } from "app-builder-lib"
-import { doMergeConfigs } from "app-builder-lib/out/util/config/config"
+import { doMergeConfigs } from "app-builder-lib/internal"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
-import { createYargs } from "electron-builder/out/builder"
+import { configureBuildCommand, createYargs, normalizeOptions } from "electron-builder/src/builder"
 import { promises as fs } from "fs"
-import { outputFile, outputJson } from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
-import { app, appTwo, appTwoThrows, assertPack, getFixtureDir, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
-import { ELECTRON_VERSION } from "./helpers/testConfig"
-import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
-import { PM } from "app-builder-lib/src/node-module-collector/packageManager"
+import { app, appTwo, appTwoThrows, assertPack, getFixtureDir, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester.js"
+import { ELECTRON_VERSION } from "./helpers/testConfig.js"
+import { verifySmartUnpack } from "./helpers/verifySmartUnpack.js"
+import { PM } from "app-builder-lib/internal"
 
 test.ifLinux("cli", ({ expect }) => {
-  // because these methods are internal
-  const { configureBuildCommand, normalizeOptions } = require("electron-builder/out/builder")
   const yargs = createYargs()
   configureBuildCommand(yargs)
 
   function parse(input: string): any {
-    const options = normalizeOptions(yargs.parse(input))
+    const options = normalizeOptions(yargs.parse(input) as any)
     checkBuildRequestOptions(options)
     return options
   }
@@ -148,7 +146,7 @@ test("relative index", ({ expect }) =>
     }
   ))
 
-it.ifDevOrLinuxCi("electron version from electron-prebuilt dependency", ({ expect }) =>
+it.ifNotWindows("electron version from electron-prebuilt dependency", ({ expect }) =>
   app(
     expect,
     {
@@ -161,7 +159,7 @@ it.ifDevOrLinuxCi("electron version from electron-prebuilt dependency", ({ expec
           data.devDependencies = {}
         })
         return () =>
-          outputJson(path.join(projectDir, "node_modules", "electron-prebuilt", "package.json"), {
+          fsExtra.outputJson(path.join(projectDir, "node_modules", "electron-prebuilt", "package.json"), {
             version: ELECTRON_VERSION,
           })
       },
@@ -169,7 +167,7 @@ it.ifDevOrLinuxCi("electron version from electron-prebuilt dependency", ({ expec
   )
 )
 
-test.ifDevOrLinuxCi("electron version from electron dependency", ({ expect }) =>
+test.ifNotWindows("electron version from electron dependency", ({ expect }) =>
   app(
     expect,
     {
@@ -182,7 +180,7 @@ test.ifDevOrLinuxCi("electron version from electron dependency", ({ expect }) =>
           data.devDependencies = {}
         })
         return () =>
-          outputJson(path.join(projectDir, "node_modules", "electron", "package.json"), {
+          fsExtra.outputJson(path.join(projectDir, "node_modules", "electron", "package.json"), {
             version: ELECTRON_VERSION,
           })
       },
@@ -190,7 +188,7 @@ test.ifDevOrLinuxCi("electron version from electron dependency", ({ expect }) =>
   )
 )
 
-test.ifDevOrLinuxCi("electron version from build", ({ expect }) =>
+test.ifNotWindows("electron version from build", ({ expect }) =>
   app(
     expect,
     {
@@ -217,7 +215,7 @@ test("www as default dir", ({ expect }) =>
     }
   ))
 
-test.ifLinuxOrDevMac("hooks as functions", ({ expect }) => {
+test.ifNotWindows("hooks as functions", ({ expect }) => {
   let artifactBuildStartedCalled = 0
   let artifactBuildCompletedCalled = 0
   let beforePackCalled = 0
@@ -263,7 +261,7 @@ test.ifLinuxOrDevMac("hooks as functions", ({ expect }) => {
   )
 })
 
-test.ifLinuxOrDevMac("hooks as file - cjs", async ({ expect }) => {
+test.ifNotWindows("hooks as file - cjs", async ({ expect }) => {
   const hookScript = path.join(getFixtureDir(), "build-hook.cjs")
   return assertPack(expect, "test-app-one", {
     targets: createTargets([Platform.LINUX, Platform.MAC], "zip", "x64"),
@@ -277,7 +275,7 @@ test.ifLinuxOrDevMac("hooks as file - cjs", async ({ expect }) => {
   })
 })
 
-test.ifLinuxOrDevMac("hooks as file - mjs exported functions", async ({ expect }) => {
+test.ifNotWindows("hooks as file - mjs exported functions", async ({ expect }) => {
   const hookScript = path.join(getFixtureDir(), "build-hook.mjs")
   return assertPack(expect, "test-app-one", {
     targets: createTargets([Platform.LINUX, Platform.MAC], "zip", "x64"),
@@ -315,7 +313,7 @@ test.ifWindows("afterSign", ({ expect }) => {
   )
 })
 
-test.ifLinuxOrDevMac("beforeBuild", ({ expect }) => {
+test.ifNotWindows("beforeBuild", ({ expect }) => {
   let called = 0
   return assertPack(
     expect,
@@ -323,7 +321,7 @@ test.ifLinuxOrDevMac("beforeBuild", ({ expect }) => {
     {
       targets: createTargets([Platform.LINUX, Platform.MAC], DIR_TARGET),
       config: {
-        npmRebuild: true,
+        nativeModules: { npmRebuild: true },
         beforeBuild: async () => {
           called++
           return Promise.resolve()
@@ -340,7 +338,7 @@ test.ifLinuxOrDevMac("beforeBuild", ({ expect }) => {
 })
 
 // https://github.com/electron-userland/electron-builder/issues/1738
-test.ifDevOrLinuxCi("win smart unpack", ({ expect }) => {
+test.ifNotWindows("win smart unpack", ({ expect }) => {
   // test onNodeModuleFile hook
   const nodeModuleFiles: Array<string> = []
   let p = ""
@@ -349,7 +347,7 @@ test.ifDevOrLinuxCi("win smart unpack", ({ expect }) => {
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
       config: {
-        npmRebuild: true,
+        nativeModules: { npmRebuild: true },
         onNodeModuleFile: file => {
           const name = toSystemIndependentPath(path.relative(p, file))
           if (!name.startsWith(".") && !name.endsWith(".dll") && name.includes(".")) {
@@ -399,8 +397,8 @@ test("smart unpack local module with dll file", ({ expect }) => {
       projectDirCreated: async (projectDir, tmpDir) => {
         const tmpPath = await tmpDir.getTempDir()
         const localPath = path.join(tmpPath, "foo")
-        await outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}`)
-        await outputFile(path.join(localPath, "test.dll"), `test`)
+        await fsExtra.outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}`)
+        await fsExtra.outputFile(path.join(localPath, "test.dll"), `test`)
         await modifyPackageJson(projectDir, data => {
           data.dependencies = {
             debug: "3.1.0",
@@ -426,7 +424,7 @@ test.ifNotWindows("posix smart unpack", ({ expect }) =>
         // https://github.com/electron-userland/electron-builder/issues/3273
         // tslint:disable-next-line:no-invalid-template-strings
         copyright: "Copyright © 2018 ${author}",
-        npmRebuild: true,
+        nativeModules: { npmRebuild: true },
         onNodeModuleFile: filePath => {
           // Force include this directory in the package
           return filePath.includes("node_modules/three/examples")

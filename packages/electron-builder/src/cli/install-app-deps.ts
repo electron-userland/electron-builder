@@ -1,17 +1,23 @@
 #! /usr/bin/env node
 
-import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
-import { computeDefaultAppDirectory, getConfig } from "app-builder-lib/out/util/config/config"
-import { orNullIfFileNotExist } from "app-builder-lib/out/util/config/load"
-import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
-import { installOrRebuild } from "app-builder-lib/out/util/yarn"
-import { PACKAGE_VERSION } from "app-builder-lib/out/version"
-import { determinePackageManagerEnv } from "app-builder-lib/out/node-module-collector"
+import {
+  computeDefaultAppDirectory,
+  determinePackageManagerEnv,
+  getConfig,
+  getElectronVersion,
+  installOrRebuild,
+  orNullIfFileNotExist,
+  PACKAGE_VERSION,
+} from "app-builder-lib/internal"
 import { getArchCliNames, log, printErrorAndExit } from "builder-util"
-import { readJson } from "fs-extra"
+
 import { Lazy } from "lazy-val"
 import * as path from "path"
+import { fileURLToPath } from "node:url"
+import { hideBin } from "yargs/helpers"
 import * as yargs from "yargs"
+import _fsExtra from "fs-extra"
+const { readJson } = _fsExtra
 
 /** @internal */
 export function configureInstallAppDepsCommand(yargs: yargs.Argv): yargs.Argv {
@@ -63,7 +69,6 @@ export async function installAppDeps(args: any) {
       frameworkInfo: { version, useCustomDist: true },
       platform: args.platform,
       arch: args.arch,
-      productionDeps: createLazyProductionDeps(appDir, null, false),
     },
     appDir !== projectDir,
     {}
@@ -71,10 +76,12 @@ export async function installAppDeps(args: any) {
 }
 
 function main() {
-  return installAppDeps(configureInstallAppDepsCommand(yargs).argv)
+  const factory = (yargs as any).default ?? yargs
+  const instance = typeof factory?.parserConfiguration === "function" ? factory : factory(hideBin(process.argv))
+  return installAppDeps(configureInstallAppDepsCommand(instance as unknown as yargs.Argv).argv)
 }
 
-if (require.main === module) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   log.warn("please use as subcommand: electron-builder install-app-deps")
   main().catch(printErrorAndExit)
 }

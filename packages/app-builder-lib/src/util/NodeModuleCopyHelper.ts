@@ -1,13 +1,13 @@
 import { FilterStats, MAX_FILE_REQUESTS } from "builder-util"
 import { realpathSync } from "fs"
-import { lstat, lstatSync, readdir } from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
-import { excludedNames, FileMatcher } from "../fileMatcher"
-import { Packager } from "../packager"
-import { FileCopyHelper } from "./AppFileWalker"
-import { NodeModuleInfo } from "./packageDependencies"
-import { resolveFunction } from "./resolve"
+import { excludedNames, FileMatcher } from "../fileMatcher.js"
+import { PlatformPackager } from "../platformPackager.js"
+import { FileCopyHelper } from "./AppFileWalker.js"
+import { NodeModuleInfo } from "../node-module-collector/types.js"
+import { resolveFunction } from "./resolve.js"
 
 const excludedFiles = new Set(
   [
@@ -45,7 +45,7 @@ const topLevelExcludedFiles = new Set([
 
 /** @internal */
 export class NodeModuleCopyHelper extends FileCopyHelper {
-  constructor(matcher: FileMatcher, packager: Packager) {
+  constructor(matcher: FileMatcher, packager: PlatformPackager<any>) {
     super(matcher, matcher.isEmpty() ? null : matcher.createFilter(), packager)
   }
 
@@ -53,7 +53,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
     const filter = this.filter
     const metadata = this.metadata
 
-    const onNodeModuleFile = await resolveFunction(this.packager.appInfo.type, this.packager.config.onNodeModuleFile, "onNodeModuleFile")
+    const onNodeModuleFile = await resolveFunction(this.packager.appInfo.type, this.packager.config.onNodeModuleFile, "onNodeModuleFile", await this.packager.getWorkspaceRoot())
 
     const result: Array<string | undefined> = []
     const queue: Array<string> = []
@@ -69,7 +69,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
     while (queue.length > 0) {
       const dirPath = queue.pop()!
 
-      const childNames = await readdir(dirPath)
+      const childNames = await fsExtra.readdir(dirPath)
       childNames.sort()
 
       const isTopLevel = dirPath === depPath
@@ -85,7 +85,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
         }
 
         // check if filematcher matches the files array as more important than the default excluded files.
-        const fileMatched = filter != null && filter(dirPath, lstatSync(dirPath))
+        const fileMatched = filter != null && filter(dirPath, fsExtra.lstatSync(dirPath))
         if (!fileMatched || !forceIncluded || !!this.packager.config.disableDefaultIgnoredFiles) {
           for (const ext of nodeModuleExcludedExts) {
             if (name.endsWith(ext)) {
@@ -111,7 +111,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
           }
         }
 
-        return lstat(filePath).then((stat: FilterStats) => {
+        return fsExtra.lstat(filePath).then((stat: FilterStats) => {
           stat.moduleName = moduleName
           stat.moduleRootPath = destination
           stat.moduleFullFilePath = path.join(destination, path.relative(depPath, filePath))

@@ -1,11 +1,11 @@
 import { CancellationToken, GitlabOptions, HttpError, newError, UpdateFileInfo, UpdateInfo, GitlabReleaseInfo, GitlabReleaseAsset } from "builder-util-runtime"
+import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { URL } from "url"
-// @ts-ignore
-import * as escapeRegExp from "lodash.escaperegexp"
-import { AppUpdater } from "../AppUpdater"
-import { ResolvedUpdateFileInfo } from "../types"
-import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util"
-import { getFileList, parseUpdateInfo, Provider, ProviderRuntimeOptions } from "./Provider"
+import escapeRegExp from "lodash.escaperegexp"
+import { AppUpdater } from "../AppUpdater.js"
+import { ResolvedUpdateFileInfo } from "../types.js"
+import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util.js"
+import { getFileList, parseUpdateInfo, Provider, ProviderRuntimeOptions } from "./Provider.js"
 
 interface GitlabUpdateInfo extends UpdateInfo {
   tag: string
@@ -52,6 +52,12 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
     this.baseApiUrl = newBaseUrl(`https://${host}/api/v4`)
   }
 
+  protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): RequestOptions {
+    const result = super.createRequestOptions(url, headers)
+    ;(result as any).redirect = "manual"
+    return result
+  }
+
   private get channel(): string {
     const result = this.updater.channel || this.options.channel
     return result == null ? this.getDefaultChannelName() : this.getCustomChannelName(result)
@@ -63,18 +69,30 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
     // Get latest release from GitLab API using the permalink/latest endpoint
     const latestReleaseUrl = newUrlFromBase(`projects/${this.options.projectId}/releases/permalink/latest`, this.baseApiUrl)
 
-    let latestRelease: GitlabReleaseInfo
+    const header = { Accept: "application/json", ...this.setAuthHeaderForToken(this.options.token || null) }
+    let releaseResponse: string | null
     try {
-      const header = { "Content-Type": "application/json", ...this.setAuthHeaderForToken(this.options.token || null) }
-      const releaseResponse = await this.httpRequest(latestReleaseUrl, header, cancellationToken)
-
-      if (!releaseResponse) {
-        throw newError("No latest release found", "ERR_UPDATER_NO_PUBLISHED_VERSIONS")
-      }
-
-      latestRelease = JSON.parse(releaseResponse)
+      releaseResponse = await this.httpRequest(latestReleaseUrl, header, cancellationToken)
     } catch (e: any) {
       throw newError(`Unable to find latest release on GitLab (${latestReleaseUrl}): ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
+    }
+
+    if (!releaseResponse) {
+      throw newError("No published releases on GitLab", "ERR_UPDATER_NO_PUBLISHED_VERSIONS")
+    }
+
+    let latestRelease: GitlabReleaseInfo
+    try {
+      latestRelease = JSON.parse(releaseResponse)
+    } catch (e: any) {
+      throw newError(
+        `Unable to parse latest release response from GitLab (${latestReleaseUrl}): response was not valid JSON: ${e.stack || e.message}`,
+        "ERR_UPDATER_LATEST_VERSION_NOT_FOUND"
+      )
+    }
+
+    if (latestRelease.upcoming_release) {
+      throw newError("Latest GitLab release is scheduled but not yet published", "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
     }
 
     const tag = latestRelease.tag_name
@@ -95,7 +113,8 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
       }
 
       channelFileUrl = new URL(channelAsset.direct_asset_url)
-      const headers = this.options.token ? { "PRIVATE-TOKEN": this.options.token } : undefined
+      const authHeaders = this.setAuthHeaderForToken(this.options.token || null)
+      const headers = Object.keys(authHeaders).length ? authHeaders : undefined
 
       try {
         const result = await this.httpRequest(channelFileUrl, headers, cancellationToken)
@@ -138,15 +157,9 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
       result.releaseNotes = latestRelease.description || null
     }
 
-    // Create assets map from GitLab release assets
-    const assetsMap = new Map<string, string>()
-    for (const asset of latestRelease.assets.links) {
-      assetsMap.set(this.normalizeFilename(asset.name), asset.direct_asset_url)
-    }
-
     const gitlabUpdateInfo = {
       tag: tag,
-      assets: assetsMap,
+      assets: this.convertAssetsToMap(latestRelease.assets),
       ...result,
     }
 
@@ -193,7 +206,7 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
       const releaseUrl = newUrlFromBase(`projects/${this.options.projectId}/releases/${encodeURIComponent(releaseId)}`, this.baseApiUrl)
 
       try {
-        const header = { "Content-Type": "application/json", ...this.setAuthHeaderForToken(this.options.token || null) }
+        const header = { Accept: "application/json", ...this.setAuthHeaderForToken(this.options.token || null) }
         const releaseResponse = await this.httpRequest(releaseUrl, header, cancellationToken)
 
         if (releaseResponse) {

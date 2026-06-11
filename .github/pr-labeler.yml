@@ -1,52 +1,32 @@
-app-builder-lib:
+  app-builder-lib:
   - changed-files:
     - any-glob-to-any-file:
       - packages/app-builder-lib/**/*
-builder-util:
+  builder-util:
   - changed-files:
     - any-glob-to-any-file:
       - packages/builder-util/**/*
+  builder-util-runtime:
+  - changed-files:
+    - any-glob-to-any-file:
       - packages/builder-util-runtime/**/*
-dmg-builder:
+  dmg-builder:
   - changed-files:
     - any-glob-to-any-file:
       - packages/dmg-builder/**/*
-mac:
+  electron-builder:
   - changed-files:
     - any-glob-to-any-file:
-      - packages/dmg-builder/**/*
-      - '**/mac*.ts'
-linux:
-  - changed-files:
-    - any-glob-to-any-file:
-      - '**/linux*.ts'
-windows:
-  - changed-files:
-    - any-glob-to-any-file:
-      - '**/win*.ts'
-squirrel.windows:
+      - packages/electron-builder/**/*
+  electron-builder-squirrel-windows:
   - changed-files:
     - any-glob-to-any-file:
       - packages/electron-builder-squirrel-windows/**/*
-appimage:
-  - changed-files:
-    - any-glob-to-any-file:
-      - packages/electron-forge-maker-appimage/**/*
-nsis:
-  - changed-files:
-    - any-glob-to-any-file:
-      - packages/app-builder-lib/src/targets/nsis/*
-      - packages/electron-forge-maker-nsis/**/*
-      - packages/electron-forge-maker-nsis-web/**/*
-snap:
-  - changed-files:
-    - any-glob-to-any-file:
-      - packages/electron-forge-maker-snap/**/*
-electron-publish:
+  electron-publish:
   - changed-files:
     - any-glob-to-any-file:
       - packages/electron-publish/**/*
-electron-updater:
+  electron-updater:
   - changed-files:
     - any-glob-to-any-file:
       - packages/electron-updater/**/*

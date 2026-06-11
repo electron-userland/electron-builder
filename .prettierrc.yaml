@@ -4,3 +4,4 @@ arrowParens: avoid
 trailingComma: es5
 printWidth: 180
 quoteProps: as-needed
+endOfLine: lf

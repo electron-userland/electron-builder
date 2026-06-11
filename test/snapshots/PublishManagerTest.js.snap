@@ -123,6 +123,23 @@ exports[`generic, github and spaces 1`] = `
 {
   "mac": [
     {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-mac.zip",
+      "safeArtifactName": "TestApp-1.1.0-mac.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
       "file": "alpha-mac.yml",
       "fileContent": {
         "files": [
@@ -234,23 +251,6 @@ exports[`generic, github and spaces 1`] = `
         "version": "1.1.0",
       },
     },
-    {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0-mac.zip",
-      "safeArtifactName": "TestApp-1.1.0-mac.zip",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "Test App ßW-1.1.0-mac.zip.blockmap",
-      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
   ],
 }
 `;
@@ -294,9 +294,11 @@ exports[`generic, github and spaces 2`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -340,38 +342,6 @@ exports[`mac artifactName  1`] = `
 {
   "mac": [
     {
-      "file": "latest-mac.yml",
-      "fileContent": {
-        "files": [
-          {
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "Test App ßW_1.1.0_mac.zip",
-          },
-        ],
-        "path": "Test App ßW_1.1.0_mac.zip",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.1.0",
-      },
-    },
-    {
-      "file": "latest-mac.yml",
-      "fileContent": {
-        "files": [
-          {
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "Test App ßW_1.1.0_mac.zip",
-          },
-        ],
-        "path": "Test App ßW_1.1.0_mac.zip",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.1.0",
-      },
-    },
-    {
       "arch": "x64",
       "file": "Test App ßW_1.1.0_mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
@@ -388,6 +358,38 @@ exports[`mac artifactName  1`] = `
         "size": "@size",
       },
     },
+    {
+      "file": "latest-mac.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW_1.1.0_mac.zip",
+          },
+        ],
+        "path": "Test App ßW_1.1.0_mac.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.1.0",
+      },
+    },
+    {
+      "file": "latest-mac.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW_1.1.0_mac.zip",
+          },
+        ],
+        "path": "Test App ßW_1.1.0_mac.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.1.0",
+      },
+    },
   ],
 }
 `;
@@ -402,8 +404,16 @@ exports[`mac artifactName  2`] = `
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSRequiresNativeExecution": true,
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
   "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": {
@@ -423,7 +433,10 @@ exports[`mac artifactName  2`] = `
       },
     },
   },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -439,22 +452,6 @@ exports[`os macro 1`] = `
   ],
   "mac": [
     {
-      "file": "latest-mac.yml",
-      "fileContent": {
-        "files": [
-          {
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "Test App ßW-1.1.0-mac.zip",
-          },
-        ],
-        "path": "Test App ßW-1.1.0-mac.zip",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.1.0",
-      },
-    },
-    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
@@ -469,6 +466,22 @@ exports[`os macro 1`] = `
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
+      },
+    },
+    {
+      "file": "latest-mac.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.1.0-mac.zip",
+          },
+        ],
+        "path": "Test App ßW-1.1.0-mac.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.1.0",
       },
     },
   ],
@@ -514,9 +527,11 @@ exports[`os macro 2`] = `
       },
     },
   },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }

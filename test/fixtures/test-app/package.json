@@ -1,10 +1,10 @@
 {
   "private": true,
   "build": {
-    "electronVersion": "35.7.5",
+    "electronVersion": "39.8.5",
     "appId": "org.electron-builder.testApp",
     "compression": "store",
-    "npmRebuild": false,
+    "nativeModules": { "npmRebuild": false },
     "mac": {
       "category": "your.app.category.type"
     },

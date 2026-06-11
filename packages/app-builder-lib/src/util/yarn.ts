@@ -1,17 +1,17 @@
-import { asArray, log, spawn } from "builder-util"
-import { pathExists } from "fs-extra"
-import { Lazy } from "lazy-val"
+import { asArray, log, retry, spawn, stripSensitiveEnvVars } from "builder-util"
+import { isNpmNoBinLinks } from "./flags.js"
+
 import { homedir } from "os"
 import * as path from "path"
-import { Configuration } from "../configuration"
-import { executeAppBuilderAndWriteJson } from "./appBuilder"
-import { PM, getPackageManagerCommand } from "../node-module-collector"
-import { detectPackageManager } from "../node-module-collector/packageManager"
-import { NodeModuleDirInfo } from "./packageDependencies"
-import { rebuild as remoteRebuild } from "./rebuild"
+import { Configuration } from "../configuration.js"
+import { PM, getPackageManagerCommand } from "../node-module-collector/index.js"
+import { detectPackageManager } from "../node-module-collector/packageManager.js"
+import { rebuild as remoteRebuild } from "./rebuild.js"
 import * as which from "which"
-import { RebuildOptions as ElectronRebuildOptions } from "@electron/rebuild"
+import type { RebuildOptions as ElectronRebuildOptions } from "@electron/rebuild"
 import { Nullish } from "builder-util-runtime"
+import _fsExtra from "fs-extra"
+const { pathExists } = _fsExtra
 
 export async function installOrRebuild(
   config: Configuration,
@@ -21,14 +21,15 @@ export async function installOrRebuild(
   env: NodeJS.ProcessEnv
 ) {
   const effectiveOptions: RebuildOptions = {
-    buildFromSource: config.buildDependenciesFromSource === true,
+    buildFromSource: config.nativeModules?.buildDependenciesFromSource === true,
     additionalArgs: asArray(config.npmArgs),
     ...options,
   }
   let isDependenciesInstalled = false
 
+  const dirsToCheck = [...new Set([projectDir, appDir, workspaceRoot].filter((d): d is string => !!d))]
   for (const fileOrDir of ["node_modules", ".pnp.js"]) {
-    if ((await pathExists(path.join(projectDir, fileOrDir))) || (await pathExists(path.join(appDir, fileOrDir)))) {
+    if ((await Promise.all(dirsToCheck.map(d => pathExists(path.join(d, fileOrDir))))).some(Boolean)) {
       isDependenciesInstalled = true
 
       break
@@ -54,7 +55,7 @@ function getElectronGypCacheDir() {
 export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.Platform, arch: string, buildFromSource: boolean) {
   const npmConfigArch = arch === "armv7l" ? "arm" : arch
   const common: any = {
-    ...process.env,
+    ...stripSensitiveEnvVars(process.env),
     npm_config_arch: npmConfigArch,
     npm_config_target_arch: npmConfigArch,
     npm_config_platform: platform,
@@ -105,7 +106,7 @@ export async function installDependencies(
   if (pm === PM.YARN) {
     execArgs.push("--prefer-offline")
   } else if (pm === PM.YARN_BERRY) {
-    if (process.env.NPM_NO_BIN_LINKS === "true") {
+    if (isNpmNoBinLinks()) {
       execArgs.push("--no-bin-links")
     }
   }
@@ -116,11 +117,20 @@ export async function installDependencies(
     execArgs.push(...additionalArgs)
   }
 
-  await spawn(execPath, execArgs, {
-    cwd: appDir,
-    env: {
-      ...getGypEnv(options.frameworkInfo, platform, arch, options.buildFromSource === true),
-      ...env,
+  const spawnEnv = {
+    ...getGypEnv(options.frameworkInfo, platform, arch, options.buildFromSource === true),
+    ...env,
+  }
+  await retry(() => spawn(execPath, execArgs, { cwd: appDir, env: spawnEnv }), {
+    retries: 3,
+    interval: 1000,
+    backoff: 2000,
+    shouldRetry: (e: any) => {
+      const isTransient = /ENOTFOUND|ECONNRESET|ETIMEDOUT|EAI_AGAIN|ECONNREFUSED/.test(e?.message ?? "")
+      if (isTransient) {
+        log.warn({ error: String(e?.message).split("\n")[0] }, "transient network error during package install, retrying")
+      }
+      return isTransient
     },
   })
 
@@ -149,7 +159,6 @@ export async function nodeGypRebuild(platform: NodeJS.Platform, arch: string, fr
 }
 export interface RebuildOptions {
   frameworkInfo: DesktopFrameworkInfo
-  productionDeps: Lazy<Array<NodeModuleDirInfo>>
 
   platform?: NodeJS.Platform
   arch?: string
@@ -171,20 +180,6 @@ export async function rebuild(config: Configuration, { appDir, projectDir, works
   const platform = options.platform || process.platform
   const arch = options.arch || process.arch
 
-  if (config.nativeRebuilder === "legacy") {
-    const configuration = {
-      platform,
-      arch,
-      buildFromSource,
-      dependencies: await options.productionDeps.value,
-      nodeExecPath: process.execPath,
-      additionalArgs: options.additionalArgs,
-      execPath: process.env.npm_execpath || process.env.NPM_CLI_JS,
-    }
-    const env = getGypEnv(options.frameworkInfo, platform, arch, buildFromSource)
-    return executeAppBuilderAndWriteJson(["rebuild-node-modules"], configuration, { env, cwd: appDir })
-  }
-
   const {
     frameworkInfo: { version: electronVersion },
   } = options
@@ -199,6 +194,7 @@ export async function rebuild(config: Configuration, { appDir, projectDir, works
   }
   log.info(logInfo, "executing @electron/rebuild")
 
+  const mode = config.nativeModules?.rebuildMode ?? "sequential"
   const rebuildOptions: ElectronRebuildOptions = {
     buildPath: appDir,
     electronVersion,
@@ -206,7 +202,7 @@ export async function rebuild(config: Configuration, { appDir, projectDir, works
     platform,
     buildFromSource,
     projectRootPath,
-    mode: config.nativeRebuilder || "sequential",
+    mode,
     disablePreGypCopy: true,
   }
   return remoteRebuild(rebuildOptions)

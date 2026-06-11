@@ -1,45 +1,92 @@
-import { getBinFromUrl } from "app-builder-lib/out/binDownload"
+import { afterEach, describe, expect, test, vi } from "vitest"
+import { downloadBuilderToolset, resolveBuilderBinaryUrl } from "app-builder-lib/internal"
 
-test("download binary from Github", async ({ expect }) => {
-  const bin = await getBinFromUrl(
-    "linux-tools-mac-10.12.3",
-    "linux-tools-mac-10.12.3.7z",
-    "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw=="
-  )
-  expect(bin).toBeTruthy()
+const BASE_URL = "https://github.com/electron-userland/electron-builder-binaries/releases/download/"
+
+afterEach(() => {
+  vi.unstubAllEnvs()
 })
 
-test("download binary from Mirror with custom dir", async ({ expect }) => {
-  process.env.ELECTRON_BUILDER_BINARIES_MIRROR = "https://github.com/electron-userland/electron-builder-binaries/releases/download/"
-  process.env.ELECTRON_BUILDER_BINARIES_CUSTOM_DIR = "linux-tools-mac-10.12.3"
-  const bin = await getBinFromUrl(
-    "linux-tools-mac-10.12.3",
-    "linux-tools-mac-10.12.3.7z",
-    "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw=="
-  )
-  delete process.env.ELECTRON_BUILDER_BINARIES_MIRROR
-  delete process.env.ELECTRON_BUILDER_BINARIES_CUSTOM_DIR
-  expect(bin).toBeTruthy()
+// sequence.concurrent is enabled globally; describe.sequential opts this suite
+// back to serial execution so env-var stubs don't bleed between tests.
+describe.sequential("resolveBuilderBinaryUrl", () => {
+  describe("default URL (no env vars)", () => {
+    test("builds the standard GitHub release URL", () => {
+      const url = resolveBuilderBinaryUrl("nsis-3.0.4.1", "nsis-3.0.4.1.7z", BASE_URL)
+      expect(url).toBe(`${BASE_URL}nsis-3.0.4.1/nsis-3.0.4.1.7z`)
+    })
+
+    test("uses caller-supplied overrideUrl when no env vars are set", () => {
+      const url = resolveBuilderBinaryUrl("nsis-3.0.4.1", "nsis-3.0.4.1.7z", BASE_URL, "https://override.example.com/custom-path")
+      expect(url).toBe("https://override.example.com/custom-path/nsis-3.0.4.1.7z")
+    })
+  })
+
+  describe("ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL", () => {
+    test("overrides the full URL directory", () => {
+      vi.stubEnv("ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL", "https://override.example.com/custom-path")
+      const url = resolveBuilderBinaryUrl("nsis-3.0.4.1", "nsis-3.0.4.1.7z", BASE_URL)
+      expect(url).toBe("https://override.example.com/custom-path/nsis-3.0.4.1.7z")
+    })
+
+    test("env override takes precedence over caller-supplied overrideUrl", () => {
+      vi.stubEnv("ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL", "https://env.example.com/path")
+      const url = resolveBuilderBinaryUrl("nsis-3.0.4.1", "nsis-3.0.4.1.7z", BASE_URL, "https://caller.example.com/path")
+      expect(url).toBe("https://env.example.com/path/nsis-3.0.4.1.7z")
+    })
+
+    test("throws when the value is not a valid URL", () => {
+      vi.stubEnv("ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL", "not-a-url")
+      expect(() => resolveBuilderBinaryUrl("nsis-3.0.4.1", "nsis-3.0.4.1.7z", BASE_URL)).toThrow(/not a valid URL/)
+    })
+
+    test("throws when the value uses http:// instead of https://", () => {
+      vi.stubEnv("ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL", "http://insecure.example.com/")
+      expect(() => resolveBuilderBinaryUrl("nsis-3.0.4.1", "nsis-3.0.4.1.7z", BASE_URL)).toThrow(/must use https/)
+    })
+  })
+
+  describe("ELECTRON_BUILDER_BINARIES_CUSTOM_DIR", () => {
+    test("replaces the releaseName segment in the URL", () => {
+      vi.stubEnv("ELECTRON_BUILDER_BINARIES_CUSTOM_DIR", "my-custom-dir")
+      const url = resolveBuilderBinaryUrl("nsis-3.0.4.1", "nsis-3.0.4.1.7z", BASE_URL)
+      expect(url).toBe(`${BASE_URL}my-custom-dir/nsis-3.0.4.1.7z`)
+    })
+
+    test("NPM_CONFIG_ELECTRON_BUILDER_BINARIES_CUSTOM_DIR is respected", () => {
+      vi.stubEnv("NPM_CONFIG_ELECTRON_BUILDER_BINARIES_CUSTOM_DIR", "npm-cfg-dir")
+      const url = resolveBuilderBinaryUrl("nsis-3.0.4.1", "nsis-3.0.4.1.7z", BASE_URL)
+      expect(url).toBe(`${BASE_URL}npm-cfg-dir/nsis-3.0.4.1.7z`)
+    })
+
+    describe("rejects unsafe custom dir values", () => {
+      test.each([
+        ["contains ://", "http://evil.com/dir"],
+        ["contains ..", "../../etc"],
+        ["starts with /", "/absolute/path"],
+      ])("%s", (_label, value) => {
+        vi.stubEnv("ELECTRON_BUILDER_BINARIES_CUSTOM_DIR", value)
+        expect(() => resolveBuilderBinaryUrl("nsis-3.0.4.1", "nsis-3.0.4.1.7z", BASE_URL)).toThrow()
+      })
+    })
+  })
 })
 
-test("download binary from Mirror", async ({ expect }) => {
-  process.env.ELECTRON_BUILDER_BINARIES_MIRROR = "https://github.com/electron-userland/electron-builder-binaries/releases/download/"
-  const bin = await getBinFromUrl(
-    "linux-tools-mac-10.12.3",
-    "linux-tools-mac-10.12.3.7z",
-    "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw=="
-  )
-  delete process.env.ELECTRON_BUILDER_BINARIES_MIRROR
-  expect(bin).toBeTruthy()
-})
-
-test("download binary from Mirror with Url override", async ({ expect }) => {
-  process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL = "https://github.com/electron-userland/electron-builder-binaries/releases/download/linux-tools-mac-10.12.3"
-  const bin = await getBinFromUrl(
-    "linux-tools-mac-10.12.3",
-    "linux-tools-mac-10.12.3.7z",
-    "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw=="
-  )
-  delete process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL
-  expect(bin).toBeTruthy()
+describe.sequential("downloadBuilderToolset", () => {
+  describe("rejects unsafe filenameWithExt before any download attempt", () => {
+    test.each([
+      ["Unix path separator", "a/b.7z"],
+      ["Windows path separator", "a\\b.7z"],
+      ["leading traversal", "../evil.7z"],
+      ["embedded traversal", "foo/../bar.7z"],
+    ])("%s", async (_label, filename) => {
+      await expect(
+        downloadBuilderToolset({
+          releaseName: "some-release",
+          filenameWithExt: filename,
+          checksums: { [filename]: "fakechecksum" },
+        })
+      ).rejects.toThrow(/unsafe filenameWithExt/)
+    })
+  })
 })

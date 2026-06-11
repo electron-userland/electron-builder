@@ -1,13 +1,13 @@
 import { httpExecutor, InvalidConfigurationError, log } from "builder-util"
 import { parseXml } from "builder-util-runtime"
-import { readJson } from "fs-extra"
+import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import * as semver from "semver"
-import { Configuration } from "../configuration"
-import { getConfig } from "../util/config/config"
-import { orNullIfFileNotExist } from "../util/config/load"
-import { getProjectRootPath } from "./search-module"
+import { Configuration } from "../configuration.js"
+import { getConfig } from "../util/config/config.js"
+import { orNullIfFileNotExist } from "../util/config/load.js"
+import { getProjectRootPath } from "./search-module.js"
 
 export type MetadataValue = Lazy<Record<string, any> | null>
 
@@ -26,7 +26,7 @@ export async function getElectronVersion(projectDir: string, config?: Configurat
 export async function getElectronVersionFromInstalled(projectDir: string): Promise<string | null> {
   for (const name of electronPackages) {
     try {
-      return (await readJson(path.join(projectDir, "node_modules", name, "package.json"))).version
+      return (await fsExtra.readJson(path.join(projectDir, "node_modules", name, "package.json"))).version
     } catch (e: any) {
       if (e.code !== "ENOENT") {
         log.warn({ name, error: e }, `cannot read electron version package.json`)
@@ -39,7 +39,7 @@ export async function getElectronVersionFromInstalled(projectDir: string): Promi
 export async function getElectronPackage(projectDir: string) {
   for (const name of electronPackages) {
     try {
-      return await readJson(path.join(projectDir, "node_modules", name, "package.json"))
+      return await fsExtra.readJson(path.join(projectDir, "node_modules", name, "package.json"))
     } catch (e: any) {
       if (e.code !== "ENOENT") {
         log.warn({ name, error: e }, `cannot find electron in package.json`)
@@ -59,7 +59,7 @@ export async function computeElectronVersion(projectDir: string): Promise<string
   const potentialRootDirs = [projectDir, await getProjectRootPath(projectDir)]
   let dependency: NameAndVersion | null = null
   for (const dir of potentialRootDirs) {
-    const metadata = await orNullIfFileNotExist(readJson(path.join(dir, "package.json")))
+    const metadata = await orNullIfFileNotExist(fsExtra.readJson(path.join(dir, "package.json")))
     dependency = metadata ? findFromPackageMetadata(metadata) : null
     if (dependency) {
       break
@@ -100,14 +100,25 @@ export async function computeElectronVersion(projectDir: string): Promise<string
     throw new InvalidConfigurationError(`Cannot find electron dependency to get electron version in the '${path.join(projectDir, "package.json")}'`)
   }
   const version = dependency?.version
-  if (version == null || !/^\d/.test(version)) {
-    const versionMessage = version == null ? "" : ` and version ("${version}") is not fixed in project`
+  if (version == null) {
     throw new InvalidConfigurationError(
-      `Cannot compute electron version from installed node modules - none of the possible electron modules are installed${versionMessage}.\nSee https://github.com/electron-userland/electron-builder/issues/3984#issuecomment-504968246`
+      `Cannot compute electron version from installed node modules - none of the possible electron modules are installed.\nSee https://github.com/electron-userland/electron-builder/issues/3984#issuecomment-504968246`
     )
   }
 
-  return semver.coerce(version)!.format()
+  const pinnedVersion = semver.valid(version)
+  if (pinnedVersion === null) {
+    log.error(
+      { version },
+      `Electron version "${version}" is a range, not a fixed version. electron-builder requires an exact version because it downloads platform-specific binaries for a specific release — a range cannot be resolved without electron installed in node_modules. ` +
+        `Pin the version in package.json (e.g. "15.3.0" instead of "^15.3.0") or set "electronVersion" explicitly in your electron-builder config.`
+    )
+    throw new InvalidConfigurationError(
+      `Cannot compute electron version from installed node modules - version ("${version}") is not fixed in project.\nSee https://github.com/electron-userland/electron-builder/issues/3984#issuecomment-504968246`
+    )
+  }
+
+  return pinnedVersion
 }
 
 interface NameAndVersion {

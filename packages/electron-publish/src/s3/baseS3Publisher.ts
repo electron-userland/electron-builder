@@ -1,24 +1,40 @@
-import { executeAppBuilder, log } from "builder-util"
+import { log } from "builder-util"
 import { BaseS3Options } from "builder-util-runtime"
 import { mkdir, symlink } from "fs/promises"
 import * as path from "path"
-import { PublishContext, UploadTask } from ".."
-import { Publisher } from "../publisher"
+import { PublishContext, UploadTask } from "../index.js"
+import { Publisher } from "../publisher.js"
+import type { AwsCredentials } from "./awsCredentials.js"
+import { getS3ContentType, startS3PutObject } from "./s3UploadHelper.js"
+
+export interface S3UploadConfig {
+  region: string
+  endpoint?: string
+  forcePathStyle?: boolean
+  credentials?: AwsCredentials
+}
+
+export interface S3UploadExtraParams {
+  acl?: string
+  storageClass?: string
+  serverSideEncryption?: string
+}
 
 export abstract class BaseS3Publisher extends Publisher {
   protected constructor(
     context: PublishContext,
-    private options: BaseS3Options
+    private readonly options: BaseS3Options
   ) {
     super(context)
   }
 
   protected abstract getBucketName(): string
 
-  protected configureS3Options(args: Array<string>) {
-    // if explicitly set to null, do not add
-    if (this.options.acl !== null) {
-      args.push("--acl", this.options.acl || "public-read")
+  public abstract getS3UploadConfig(): S3UploadConfig
+
+  public getUploadExtraParams(): S3UploadExtraParams {
+    return {
+      acl: this.options.acl !== null ? (this.options.acl ?? "public-read") : undefined,
     }
   }
 
@@ -26,36 +42,33 @@ export abstract class BaseS3Publisher extends Publisher {
   async upload(task: UploadTask): Promise<any> {
     const fileName = path.basename(task.file)
     const cancellationToken = this.context.cancellationToken
-
-    const target = (this.options.path == null ? "" : `${this.options.path}/`) + fileName
-
-    const args = ["publish-s3", "--bucket", this.getBucketName(), "--key", target, "--file", task.file]
-    this.configureS3Options(args)
+    const key = (this.options.path == null ? "" : `${this.options.path}/`) + fileName
 
     if (process.env.__TEST_S3_PUBLISHER__ != null) {
-      const testFile = path.join(process.env.__TEST_S3_PUBLISHER__, target)
+      const testFile = path.join(process.env.__TEST_S3_PUBLISHER__, key)
       await mkdir(path.dirname(testFile), { recursive: true })
       await symlink(task.file, testFile)
       return
     }
 
-    // https://github.com/aws/aws-sdk-go/issues/279
     this.createProgressBar(fileName, -1)
-    // if (progressBar != null) {
-    //   const callback = new ProgressCallback(progressBar)
-    //   uploader.on("progress", () => {
-    //     if (!cancellationToken.cancelled) {
-    //       callback.update(uploader.loaded, uploader.contentLength)
-    //     }
-    //   })
-    // }
+
+    const config = this.getS3UploadConfig()
+    const extraParams = this.getUploadExtraParams()
 
     return await cancellationToken.createPromise((resolve, reject, onCancel) => {
-      executeAppBuilder(args, process => {
-        onCancel(() => {
-          process.kill("SIGINT")
-        })
+      const { req, done } = startS3PutObject({
+        bucket: this.getBucketName(),
+        key,
+        file: task.file,
+        contentType: getS3ContentType(task.file),
+        ...config,
+        ...extraParams,
       })
+
+      onCancel(() => req.destroy())
+
+      done
         .then(() => {
           try {
             log.debug({ provider: this.providerName, file: fileName, bucket: this.getBucketName() }, "uploaded")

@@ -1,23 +1,19 @@
 import { AsyncTaskManager, FileCopier, FileTransformer, isEmptyOrSpaces, Link, log, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
 import { Stats } from "fs"
-import { ensureSymlink } from "fs-extra"
+import fsExtra from "fs-extra"
 import { mkdir, readlink } from "fs/promises"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
-import { isLibOrExe } from "../asar/unpackDetector"
-import { Platform } from "../core"
-import { excludedExts, FileMatcher } from "../fileMatcher"
-import { createElectronCompilerHost, NODE_MODULES_PATTERN } from "../fileTransformer"
-import { Packager } from "../packager"
-import { PlatformPackager } from "../platformPackager"
-import { AppFileWalker } from "./AppFileWalker"
-import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper"
-import { NodeModuleInfo } from "./packageDependencies"
-import { getNodeModules } from "../node-module-collector"
-
-const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
-/** @internal */
-export const ELECTRON_COMPILE_SHIM_FILENAME = "__shim.js"
+import { isLibOrExe } from "../asar/unpackDetector.js"
+import { Platform } from "../core.js"
+import { excludedExts, FileMatcher } from "../fileMatcher.js"
+import { getCollectorByPackageManager, PM } from "../node-module-collector/index.js"
+import { LogMessageByKey, logMessageLevelByKey, ModuleManager } from "../node-module-collector/moduleManager.js"
+import { Packager } from "../packager.js"
+import { PlatformPackager } from "../platformPackager.js"
+import { AppFileWalker } from "./AppFileWalker.js"
+import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper.js"
+import { NodeModuleInfo } from "../node-module-collector/types.js"
 
 export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
   if (file === fileSet.src) {
@@ -73,7 +69,7 @@ export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager,
     await taskManager.awaitTasks()
   }
 
-  await asyncPool(MAX_FILE_REQUESTS, links, it => ensureSymlink(it.link, it.file))
+  await asyncPool(MAX_FILE_REQUESTS, links, it => fsExtra.ensureSymlink(it.link, it.file))
 }
 
 // os path separator is used
@@ -125,17 +121,11 @@ export async function transformFiles(transformer: FileTransformer, fileSet: Reso
   await asyncPool(MAX_FILE_REQUESTS, filesPromise, promise => promise)
 }
 
-export async function computeFileSets(
-  matchers: Array<FileMatcher>,
-  transformer: FileTransformer | null,
-  platformPackager: PlatformPackager<any>,
-  isElectronCompile: boolean
-): Promise<Array<ResolvedFileSet>> {
+export async function computeFileSets(matchers: Array<FileMatcher>, transformer: FileTransformer | null, platformPackager: PlatformPackager<any>): Promise<Array<ResolvedFileSet>> {
   const fileSets: Array<ResolvedFileSet> = []
-  const packager = platformPackager.info
 
   for (const matcher of matchers) {
-    const fileWalker = new AppFileWalker(matcher, packager)
+    const fileWalker = new AppFileWalker(matcher, platformPackager)
 
     const fromStat = await statOrNull(matcher.from)
     if (fromStat == null) {
@@ -148,10 +138,6 @@ export async function computeFileSets(
     fileSets.push(validateFileSet({ src: matcher.from, files, metadata, destination: matcher.to }))
   }
 
-  if (isElectronCompile) {
-    // cache files should be first (better IO)
-    fileSets.unshift(await compileUsingElectronCompile(fileSets[0], packager))
-  }
   return fileSets
 }
 
@@ -178,31 +164,7 @@ function validateFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
 
 /** @internal */
 export async function computeNodeModuleFileSets(platformPackager: PlatformPackager<any>, mainMatcher: FileMatcher): Promise<Array<ResolvedFileSet>> {
-  const packager = platformPackager.info
-  const { tempDirManager, cancellationToken, appDir, projectDir } = packager
-
-  let deps: Array<NodeModuleInfo> = []
-  const searchDirectories = Array.from(new Set([appDir, projectDir, await packager.getWorkspaceRoot()])).filter((it): it is string => !isEmptyOrSpaces(it))
-  for (const dir of searchDirectories) {
-    if (cancellationToken.cancelled) {
-      throw new Error("user cancelled")
-    }
-
-    const dirDeps = await getNodeModules(await packager.getPackageManager(), { rootDir: dir, tempDirManager, cancellationToken, packageName: packager.metadata.name! })
-    if (dirDeps.length > 0) {
-      log.debug({ dir, nodeModules: dirDeps }, "collected node modules")
-      deps = dirDeps
-      break
-    }
-    const attempt = searchDirectories.indexOf(dir)
-    if (attempt < searchDirectories.length - 1) {
-      log.info({ searchDir: dir, attempt }, "no node modules found in collection, trying next search directory")
-    }
-  }
-  if (deps.length === 0) {
-    log.warn({ searchDirectories: searchDirectories.map(it => log.filePath(it)) }, "no node modules returned while searching directories")
-    return []
-  }
+  const deps = await collectNodeModulesWithLogging(platformPackager)
 
   const nodeModuleExcludedExts = getNodeModuleExcludedExts(platformPackager)
   // serial execution because copyNodeModules is concurrent and so, no need to increase queue/pressure
@@ -213,7 +175,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   const collectNodeModules = async (dep: NodeModuleInfo, destination: string) => {
     const source = dep.dir
     const matcher = new FileMatcher(source, destination, mainMatcher.macroExpander, mainMatcher.patterns)
-    const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
+    const copier = new NodeModuleCopyHelper(matcher, platformPackager)
     const files = await copier.collectNodeModules(dep, nodeModuleExcludedExts, path.relative(mainMatcher.to, destination))
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
 
@@ -233,53 +195,41 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   return result
 }
 
-async function compileUsingElectronCompile(mainFileSet: ResolvedFileSet, packager: Packager): Promise<ResolvedFileSet> {
-  log.info("compiling using electron-compile")
+async function collectNodeModulesWithLogging(platformPackager: PlatformPackager<any>) {
+  const { tempDirManager, appDir, projectDir } = platformPackager
 
-  const electronCompileCache = await packager.tempDirManager.getTempDir({ prefix: "electron-compile-cache" })
-  const cacheDir = path.join(electronCompileCache, ".cache")
-  // clear and create cache dir
-  await mkdir(cacheDir, { recursive: true })
-  const compilerHost = await createElectronCompilerHost(mainFileSet.src, cacheDir)
-  const nextSlashIndex = mainFileSet.src.length + 1
-  // pre-compute electron-compile to cache dir - we need to process only subdirectories, not direct files of app dir
-  const filesPromise: Promise<any>[] = mainFileSet.files.map(file => {
-    if (
-      file.includes(NODE_MODULES_PATTERN) ||
-      file.includes(BOWER_COMPONENTS_PATTERN) ||
-      !file.includes(path.sep, nextSlashIndex) || // ignore not root files
-      !mainFileSet.metadata.get(file)!.isFile()
-    ) {
-      return
-    }
-    return compilerHost.compile(file)
-  })
-  await asyncPool(MAX_FILE_REQUESTS, filesPromise, promise => promise)
-  await compilerHost.saveConfiguration()
+  let deps: { nodeModules: NodeModuleInfo[]; logSummary: ModuleManager["logSummary"] } | undefined = undefined
 
-  const metadata = new Map<string, Stats>()
-  const cacheFiles = await walk(cacheDir, file => !file.startsWith("."), {
-    consume: (file, fileStat) => {
-      if (fileStat.isFile()) {
-        metadata.set(file, fileStat)
+  const searchDirectories = Array.from(new Set([appDir, projectDir, await platformPackager.getWorkspaceRoot()])).filter((it): it is string => isEmptyOrSpaces(it) === false)
+  const pmApproaches = [await platformPackager.getPackageManager(), PM.TRAVERSAL]
+  for (const pm of pmApproaches) {
+    for (const dir of searchDirectories) {
+      log.info({ pm, searchDir: dir }, "searching for node modules")
+      const collector = getCollectorByPackageManager(pm, dir, tempDirManager)
+      deps = await collector.getNodeModules({ packageName: platformPackager.nodePackageName })
+      if (deps.nodeModules.length > 0) {
+        break
       }
-      return null
-    },
-  })
-
-  // add shim
-  const shimPath = `${mainFileSet.src}${path.sep}${ELECTRON_COMPILE_SHIM_FILENAME}`
-  mainFileSet.files.push(shimPath)
-  mainFileSet.metadata.set(shimPath, { isFile: () => true, isDirectory: () => false, isSymbolicLink: () => false } as any)
-  if (mainFileSet.transformedFiles == null) {
-    mainFileSet.transformedFiles = new Map()
+      const attempt = searchDirectories.indexOf(dir)
+      if (attempt < searchDirectories.length - 1) {
+        log.info({ searchDir: dir, attempt }, "no node modules found in collection, trying next search directory")
+      }
+    }
+    if (deps?.nodeModules?.length) {
+      log.debug({ pm, nodeModules: deps.nodeModules }, "collected node modules")
+      break
+    }
   }
-  mainFileSet.transformedFiles.set(
-    mainFileSet.files.length - 1,
-    `
-'use strict';
-require('electron-compile').init(__dirname, require('path').resolve(__dirname, '${packager.metadata.main || "index"}'), true);
-`
-  )
-  return { src: electronCompileCache, files: cacheFiles, metadata, destination: mainFileSet.destination }
+  if (!deps?.nodeModules?.length) {
+    log.warn({ searchDirectories: searchDirectories.map(it => log.filePath(it)) }, "no node modules returned while searching directories")
+    return []
+  }
+
+  const summary = Object.entries(deps.logSummary ?? {}).filter(([, dependencies]) => Array.isArray(dependencies) && dependencies.length > 0)
+  for (const [errorMessage, dependencies] of summary) {
+    const logLevel = logMessageLevelByKey[errorMessage as LogMessageByKey] || "debug"
+    log[logLevel]({ dependencies }, errorMessage)
+  }
+
+  return deps.nodeModules
 }

@@ -2,8 +2,8 @@ import { Arch } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { GitlabPublisher, PublishContext } from "electron-publish"
 import { afterAll, beforeEach, describe, expect, test } from "vitest"
-import { GitlabTestFixtures } from "./GitlabTestFixtures"
-import { GitlabTestHelper } from "./GitlabTestHelper"
+import { GitlabTestFixtures } from "./GitlabTestFixtures.js"
+import { GitlabTestHelper } from "./GitlabTestHelper.js"
 
 /**
  * GitLab Publisher Integration Tests
@@ -71,7 +71,7 @@ async function cleanupExistingReleases(): Promise<void> {
   }
 }
 
-describe.sequential("GitLab Publisher - Integration Tests", () => {
+describe.runIf(process.env.GITLAB_TOKEN != null)("GitLab Publisher - Integration Tests", { sequential: true }, () => {
   let publishContext: PublishContext
   let gitlabHelper: GitlabTestHelper
   let testId: string

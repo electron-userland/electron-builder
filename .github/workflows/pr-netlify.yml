@@ -19,12 +19,12 @@ jobs:
 
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Install deps and audit
         uses: ./.github/actions/pnpm
 
-      - name: Build typdoc site
+      - name: Build docusaurus site
         run: pnpm docs:all
 
       # Sets the branch name as environment variable
@@ -37,7 +37,7 @@ jobs:
           install_command: "echo Skipping installing the dependencies"
           build_command: "echo Skipping building the web files"
           debug: true
-          build_directory: "site"
+          build_directory: "website/build"
           monorepo_package: "electron-builder"
 
       # Creates a status check with link to preview

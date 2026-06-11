@@ -1,5 +1,5 @@
 // copy from https://github.com/yarnpkg/berry/blob/master/packages/yarnpkg-nm/tests/hoist.test.ts
-import { hoist, HoisterTree, HoisterResult, HoisterDependencyKind } from "app-builder-lib/out/node-module-collector/hoist"
+import { hoist, HoisterTree, HoisterResult, HoisterDependencyKind } from "app-builder-lib/internal"
 import { expect } from "vitest"
 
 const toTree = (obj: any, key: string = `.`, nodes = new Map()): HoisterTree => {
@@ -29,12 +29,16 @@ const getTreeHeight = (tree: HoisterResult): number => {
   const seen = new Set<HoisterResult>()
 
   const visitNode = (node: HoisterResult) => {
-    if (seen.has(node)) return
+    if (seen.has(node)) {
+      return
+    }
     seen.add(node)
 
     height += 1
     maxHeight = Math.max(height, maxHeight)
-    for (const dep of node.dependencies) visitNode(dep)
+    for (const dep of node.dependencies) {
+      visitNode(dep)
+    }
     height -= 1
   }
 
