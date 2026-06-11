@@ -407,6 +407,16 @@
     "AsarOptions": {
       "additionalProperties": false,
       "properties": {
+        "disableIntegrity": {
+          "default": false,
+          "description": "Whether to skip computing the ASAR integrity hash.\n\nNormally electron-builder computes and embeds a SHA-256 hash of `app.asar` so that Electron\ncan verify it at startup (when the `embeddedAsarIntegrityValidation` fuse is enabled). Set to\n`true` only for custom Electron forks with encrypted ASAR support where the header is not\nreadable by standard tools.",
+          "type": "boolean"
+        },
+        "disableSanityCheck": {
+          "default": false,
+          "description": "Whether to skip the ASAR package integrity sanity check.\n\nSet to `true` only when using a custom Electron fork that implements its own encrypted or\nnon-standard ASAR integrity validation that is not compatible with electron-builder's default\ncheck. Standard builds should leave this `false`.",
+          "type": "boolean"
+        },
         "ordering": {
           "description": "Path to a file containing the order in which files should be packed into the asar archive.\nEach line of the file is a relative path from the app directory. Files listed first are\npacked first, which can improve app startup time by front-loading frequently accessed modules.\nSee the [asar documentation](https://github.com/electron/asar) for details.",
           "type": [
@@ -418,6 +428,23 @@
           "default": true,
           "description": "Whether to automatically unpack executables files.",
           "type": "boolean"
+        },
+        "unpack": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](#directories),\nwhich specifies which files to unpack when creating the asar archive."
         }
       },
       "type": "object"
@@ -1537,7 +1564,7 @@
           "type": "boolean"
         },
         "enableEmbeddedAsarIntegrityValidation": {
-          "description": "Enables ASAR integrity validation — Electron verifies the embedded SHA-256 hash of\n`app.asar` before loading it.\n\nPlatform support:\n- macOS: Electron ≥ 16.0.0\n- Windows: Electron ≥ 30.0.0\n\nFor this fuse to be meaningful, {@link Configuration.disableAsarIntegrity} must **not** be\n`true` (otherwise the hash is not embedded).\n\nSee the [ASAR Integrity guide](https://www.electronjs.org/docs/latest/tutorial/asar-integrity).",
+          "description": "Enables ASAR integrity validation — Electron verifies the embedded SHA-256 hash of\n`app.asar` before loading it.\n\nPlatform support:\n- macOS: Electron ≥ 16.0.0\n- Windows: Electron ≥ 30.0.0\n\nFor this fuse to be meaningful, `asar.disableIntegrity` must **not** be\n`true` (otherwise the hash is not embedded).\n\nSee the [ASAR Integrity guide](https://www.electronjs.org/docs/latest/tutorial/asar-integrity).",
           "type": "boolean"
         },
         "enableNodeCliInspectArguments": {
@@ -1991,31 +2018,15 @@
               "$ref": "#/definitions/AsarOptions"
             },
             {
-              "type": [
-                "null",
-                "boolean"
-              ]
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
             }
           ],
           "default": true,
-          "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#asarUnpack) - please file an issue if this doesn't work."
-        },
-        "asarUnpack": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
+          "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules that must be unpacked will be detected automatically. Use {@link AsarOptions.unpack} to specify additional files to unpack."
         },
         "category": {
           "description": "The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).",
@@ -2660,31 +2671,15 @@
               "$ref": "#/definitions/AsarOptions"
             },
             {
-              "type": [
-                "null",
-                "boolean"
-              ]
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
             }
           ],
           "default": true,
-          "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#asarUnpack) - please file an issue if this doesn't work."
-        },
-        "asarUnpack": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
+          "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules that must be unpacked will be detected automatically. Use {@link AsarOptions.unpack} to specify additional files to unpack."
         },
         "binaries": {
           "anyOf": [
@@ -3298,31 +3293,15 @@
               "$ref": "#/definitions/AsarOptions"
             },
             {
-              "type": [
-                "null",
-                "boolean"
-              ]
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
             }
           ],
           "default": true,
-          "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#asarUnpack) - please file an issue if this doesn't work."
-        },
-        "asarUnpack": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
+          "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules that must be unpacked will be detected automatically. Use {@link AsarOptions.unpack} to specify additional files to unpack."
         },
         "binaries": {
           "anyOf": [
@@ -8193,31 +8172,15 @@
               "$ref": "#/definitions/AsarOptions"
             },
             {
-              "type": [
-                "null",
-                "boolean"
-              ]
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
             }
           ],
           "default": true,
-          "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#asarUnpack) - please file an issue if this doesn't work."
-        },
-        "asarUnpack": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
+          "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules that must be unpacked will be detected automatically. Use {@link AsarOptions.unpack} to specify additional files to unpack."
         },
         "azureSignOptions": {
           "anyOf": [
@@ -8837,31 +8800,15 @@
           "$ref": "#/definitions/AsarOptions"
         },
         {
-          "type": [
-            "null",
-            "boolean"
-          ]
+          "const": false,
+          "type": "boolean"
+        },
+        {
+          "type": "null"
         }
       ],
       "default": true,
-      "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#asarUnpack) - please file an issue if this doesn't work."
-    },
-    "asarUnpack": {
-      "anyOf": [
-        {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        {
-          "type": [
-            "null",
-            "string"
-          ]
-        }
-      ],
-      "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
+      "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules that must be unpacked will be detected automatically. Use {@link AsarOptions.unpack} to specify additional files to unpack."
     },
     "beforeBuild": {
       "anyOf": [
@@ -8984,11 +8931,6 @@
       ],
       "description": "Overrides for input/output directory paths used during the build."
     },
-    "disableAsarIntegrity": {
-      "default": false,
-      "description": "Whether to skip computing the ASAR integrity hash.\n\nNormally electron-builder computes and embeds a SHA-256 hash of `app.asar` so that Electron\ncan verify it at startup (when the `embeddedAsarIntegrityValidation` fuse is enabled). Set to\n`true` only for custom Electron forks with encrypted ASAR support where the header is not\nreadable by standard tools.",
-      "type": "boolean"
-    },
     "disableDefaultIgnoredFiles": {
       "default": false,
       "description": "Whether to exclude all default ignored files(https://www.electron.build/contents#files) and options. Defaults to `false`.",
@@ -8996,11 +8938,6 @@
         "null",
         "boolean"
       ]
-    },
-    "disableSanityCheckAsar": {
-      "default": false,
-      "description": "Whether to skip the ASAR package integrity sanity check.\n\nSet to `true` only when using a custom Electron fork that implements its own encrypted or\nnon-standard ASAR integrity validation that is not compatible with electron-builder's default\ncheck. Standard builds should leave this `false`.",
-      "type": "boolean"
     },
     "dmg": {
       "anyOf": [

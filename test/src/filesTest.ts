@@ -54,7 +54,6 @@ test.ifNotWindows("files.from asar", ({ expect }) =>
     {
       targets: linuxDirTarget,
       config: {
-        asar: true,
         files: [
           {
             from: ".",
@@ -178,7 +177,6 @@ test.ifNotWindows("extraResources - two-package", ({ expect }) => {
       // to check NuGet package
       targets: platform.createTarget(DIR_TARGET),
       config: {
-        asar: true,
         extraResources: ["foo", "bar/hello.txt", "bar/${arch}.txt", "${os}/${arch}.txt", "executable*"],
         [osName]: {
           extraResources: ["platformSpecificR"],

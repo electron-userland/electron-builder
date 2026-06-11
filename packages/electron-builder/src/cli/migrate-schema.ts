@@ -86,14 +86,12 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
       changes.push({ key: old, description: `renamed ${old} → asarUnpack` })
     }
   }
-  // Nested asar.unpack / asar.unpackDir
+  // Nested asar.unpackDir (legacy pre-v26; asar.unpack is now the canonical location, handled in step 11)
   if (c.asar != null && typeof c.asar === "object") {
-    for (const nested of ["unpack", "unpackDir"] as const) {
-      if (nested in c.asar) {
-        c.asarUnpack = mergeAsarUnpack(c.asarUnpack, c.asar[nested])
-        delete c.asar[nested]
-        changes.push({ key: `asar.${nested}`, description: `moved asar.${nested} → asarUnpack` })
-      }
+    if ("unpackDir" in c.asar) {
+      c.asarUnpack = mergeAsarUnpack(c.asarUnpack, c.asar.unpackDir)
+      delete c.asar.unpackDir
+      changes.push({ key: "asar.unpackDir", description: "moved asar.unpackDir → asarUnpack" })
     }
     if (Object.keys(c.asar).length === 0) {
       delete c.asar
@@ -146,7 +144,39 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
     changes.push({ key: "squirrelWindows.noMsi", description: "replaced squirrelWindows.noMsi → squirrelWindows.msi (inverted boolean)" })
   }
 
-  // ── 11. azureSignOptions: index-signature extra keys → additionalMetadata ─
+  // ── 11. asar consolidation ───────────────────────────────────────────────
+  // Move root-level asarUnpack / disableSanityCheckAsar / disableAsarIntegrity
+  // into the asar object. Skip entirely when asar === false (all would be no-ops).
+  if (c.asar !== false) {
+    const asarSub: Record<string, any> = typeof c.asar === "object" && c.asar != null ? { ...c.asar } : {}
+    if ("asarUnpack" in c) {
+      asarSub.unpack = mergeAsarUnpack(asarSub.unpack, c.asarUnpack)
+      delete c.asarUnpack
+      changes.push({ key: "asarUnpack", description: "moved asarUnpack → asar.unpack" })
+    }
+    if ("disableSanityCheckAsar" in c) {
+      asarSub.disableSanityCheck = c.disableSanityCheckAsar
+      delete c.disableSanityCheckAsar
+      changes.push({ key: "disableSanityCheckAsar", description: "moved disableSanityCheckAsar → asar.disableSanityCheck" })
+    }
+    if ("disableAsarIntegrity" in c) {
+      asarSub.disableIntegrity = c.disableAsarIntegrity
+      delete c.disableAsarIntegrity
+      changes.push({ key: "disableAsarIntegrity", description: "moved disableAsarIntegrity → asar.disableIntegrity" })
+    }
+    if (c.asar === true) {
+      if (Object.keys(asarSub).length > 0) {
+        c.asar = asarSub
+      } else {
+        delete c.asar
+      }
+      changes.push({ key: "asar", description: "replaced asar: true with asar object (true is no longer a valid value)" })
+    } else if (Object.keys(asarSub).length > 0) {
+      c.asar = asarSub
+    }
+  }
+
+  // ── 12. azureSignOptions: index-signature extra keys → additionalMetadata ─
   if (c.win?.azureSignOptions != null) {
     const azure: Record<string, any> = c.win.azureSignOptions
     const extra: Record<string, string> = {}
@@ -457,7 +487,10 @@ function printManualSteps() {
     "• Remove framework, nodeVersion, launchUiVersion",
     "• Rename npmSkipBuildFromSource → buildDependenciesFromSource",
     "• Move buildDependenciesFromSource, nodeGypRebuild, npmRebuild, nativeRebuilder into nativeModules (rename nativeRebuilder → rebuildMode)",
-    "• Rename asar-unpack / asar-unpack-dir / asar.unpack / asar.unpackDir → asarUnpack",
+    "• Rename asar-unpack / asar-unpack-dir / asar.unpack / asar.unpackDir → asarUnpack; then move asarUnpack → asar.unpack",
+    "• Move disableSanityCheckAsar → asar.disableSanityCheck",
+    "• Move disableAsarIntegrity → asar.disableIntegrity",
+    "• Replace asar: true with an asar object (e.g. asar: {})",
     "• Remove appImage.systemIntegration",
     "• Rename snap → snapcraft; nest options under a base-named sub-key (default base: core20)",
     "• Replace vPrefixedTagName with tagNamePrefix on GitHub publish entries",

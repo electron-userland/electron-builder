@@ -406,7 +406,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       const resourcesRelativePath = this.platform === Platform.MAC ? "Resources" : isElectronBased(framework) ? "resources" : ""
 
       let asarIntegrity: AsarIntegrity | null = null
-      if (!(asarOptions == null || options?.disableAsarIntegrity || this.config.disableAsarIntegrity)) {
+      if (!(asarOptions == null || options?.disableAsarIntegrity || asarOptions.disableIntegrity)) {
         asarIntegrity = await computeData({ resourcesPath, resourcesRelativePath, resourcesDestinationPath: this.getResourcesDir(appOutDir), extraResourceMatchers })
       }
 
@@ -437,7 +437,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const isAsar = asarOptions != null
-    await this.sanityCheckPackage(appOutDir, isAsar, framework, !!this.config.disableSanityCheckAsar)
+    await this.sanityCheckPackage(appOutDir, isAsar, framework, !!asarOptions?.disableSanityCheck)
 
     if (!options?.disableFuses) {
       await this.doAddElectronFuses(packContext)
@@ -603,13 +603,16 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         await taskManager.awaitTasks()
       })
     } else {
-      const unpackPattern = getFileMatchers(config, "asarUnpack", defaultDestination, {
-        macroExpander,
-        customBuildOptions: platformSpecificBuildOptions,
-        globalOutDir: packContext.outDir,
-        defaultSrc: appDir,
-      })
-      const fileMatcher = unpackPattern == null ? null : unpackPattern[0]
+      const unpackPatterns = asarOptions.unpack
+      let fileMatcher: FileMatcher | null = null
+      if (unpackPatterns != null) {
+        fileMatcher = new FileMatcher(appDir, defaultDestination, macroExpander)
+        const pats = Array.isArray(unpackPatterns) ? unpackPatterns : [unpackPatterns]
+        pats.forEach(p => fileMatcher!.addPattern(p))
+        if (fileMatcher.isEmpty()) {
+          fileMatcher = null
+        }
+      }
       taskManager.addTask(
         _computeFileSets(mainMatchers).then(async fileSets => {
           for (const fileSet of fileSets) {
@@ -649,7 +652,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       if (appAsarStat == null || !appAsarStat.isFile()) {
         log.warn(
           {
-            solution: "enable asar and use asarUnpack to unpack files that must be externally available",
+            solution: "enable asar and use asar.unpack to unpack files that must be externally available",
           },
           "asar usage is disabled — this is strongly not recommended"
         )
@@ -657,7 +660,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return null
     }
 
-    if (result == null || result === true) {
+    if (result == null || (result as unknown) === true) {
       return {}
     }
 
