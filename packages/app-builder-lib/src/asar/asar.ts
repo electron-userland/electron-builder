@@ -1,4 +1,4 @@
-import * as chromiumPickleJs from "chromium-pickle-js"
+import chromiumPickleJs from "chromium-pickle-js"
 import fsExtra from "fs-extra"
 import * as path from "path"
 
