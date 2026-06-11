@@ -30,7 +30,7 @@ import {
   UploadTask,
 } from "electron-publish"
 import { MultiProgress } from "electron-publish/internal"
-import { writeFile } from "fs/promises"
+import { readFile, writeFile } from "fs/promises"
 import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
 import { AppInfo } from "../appInfo.js"
