@@ -18,7 +18,9 @@ const WORKSPACE_ROOT = path.resolve(__dirname, "../../")
 const PACKAGES_DIR = path.join(WORKSPACE_ROOT, "packages")
 
 const NODE_BUILTINS = new Set(
-  "assert async_hooks buffer child_process constants crypto dns events fs http https module net os path perf_hooks process querystring readline stream string_decoder timers tls tty url util v8 vm worker_threads zlib".split(" ")
+  "assert async_hooks buffer child_process constants crypto dns events fs http https module net os path perf_hooks process querystring readline stream string_decoder timers tls tty url util v8 vm worker_threads zlib".split(
+    " "
+  )
 )
 const isExternal = (specifier: string) => !specifier.startsWith(".") && !specifier.startsWith("node:") && !NODE_BUILTINS.has(specifier.split("/")[0])
 

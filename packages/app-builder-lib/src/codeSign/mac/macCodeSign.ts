@@ -1,4 +1,4 @@
-import type { SignOptions } from "@electron/osx-sign/dist/cjs/types"
+import type { SignOptions } from "@electron/osx-sign/dist/cjs/types.js"
 import { copyFile, exec, Fields, InvalidConfigurationError, isEmptyOrSpaces, isPullRequest, log, Logger, retry, TmpDir, unlinkIfExists } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { createHash, randomBytes } from "crypto"
@@ -318,7 +318,7 @@ async function parseIdentity(line: string): Promise<Identity> {
   const firstQuoteIndex = line.indexOf('"')
   const name = line.substring(firstQuoteIndex + 1, line.lastIndexOf('"'))
   const hash = line.substring(0, firstQuoteIndex - 1)
-  const { Identity: IdentityClass } = await dynamicImport<{ Identity: new (name: string, hash?: string) => Identity }>("@electron/osx-sign/dist/cjs/util-identities")
+  const { Identity: IdentityClass } = await dynamicImport<{ Identity: new (name: string, hash?: string) => Identity }>("@electron/osx-sign/dist/cjs/util-identities.js")
   return new IdentityClass(name, hash)
 }
 
