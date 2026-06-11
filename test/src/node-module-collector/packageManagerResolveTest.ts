@@ -1,6 +1,12 @@
 import { afterEach, describe, test, vi } from "vitest"
 
-vi.mock("which", () => ({ sync: vi.fn() }))
+vi.mock("which", () => {
+  const syncFn = vi.fn()
+  // packageManager.ts uses `import which from "which"` (default import), so the mock
+  // must expose `default: { sync }`. We also keep `sync` as a named export so that
+  // `import("which").then(m => m.sync)` in freshImport() picks up the same function.
+  return { default: { sync: syncFn }, sync: syncFn }
+})
 
 const originalPlatform = process.platform
 
