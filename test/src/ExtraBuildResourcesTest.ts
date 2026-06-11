@@ -211,7 +211,7 @@ test.ifNotWindows("electronDist as callback function for path to local electron 
       electronDist: async context => {
         const { platformName, arch, version, packager } = context
 
-        const cacheDir = await packager.info.tempDirManager.createTempDir({ prefix: "electronDistCache" })
+        const cacheDir = await packager.tempDirManager.createTempDir({ prefix: "electronDistCache" })
         const zipFile = await downloadArtifact({
           artifactName: "electron",
           platform: platformName,
@@ -263,7 +263,7 @@ test.ifNotWindows("electronDist as callback function for path to locally unzippe
           const fileName = `electron-v${version}-${platformName}-${arch}.zip`
           const electronUrl = `https://github.com/electron/electron/releases/download/v${version}/${fileName}`
 
-          const tempDir = await packager.info.tempDirManager.createTempDir({ prefix: "electronDistUnzip" })
+          const tempDir = await packager.tempDirManager.createTempDir({ prefix: "electronDistUnzip" })
           const electronPath = path.join(tempDir, "electron-dist")
 
           const directory = await unzipper.Open.url(require("request"), electronUrl)

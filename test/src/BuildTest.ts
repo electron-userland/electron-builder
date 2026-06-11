@@ -39,9 +39,11 @@ test.ifLinux("cli", ({ expect }) => {
   expect(parse("--prepackaged someDir -w --x64")).toMatchSnapshot()
   expect(parse("--project someDir -w --x64")).toMatchSnapshot()
 
-  expect(parse("-c.compress=store -c.asar -c ./config.json")).toMatchObject({
+  expect(parse("-c.compress=store -c.asar.unpack -c ./config.json")).toMatchObject({
     config: {
-      asar: true,
+      asar: {
+        unpack: true,
+      },
       compress: "store",
       extends: "./config.json",
     },

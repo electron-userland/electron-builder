@@ -218,7 +218,6 @@ describe("node_module collectors", () => {
       targets: Platform.current().createTarget("dir", Arch.x64),
       projectDir: "app",
       config: {
-        asar: true,
         electronVersion: ELECTRON_VERSION,
       },
     }
