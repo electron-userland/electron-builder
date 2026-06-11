@@ -12,8 +12,7 @@ import { Options as SquirrelOptions, createWindowsInstaller, convertVersion } fr
 import { WineVmManager } from "app-builder-lib/internal"
 
 export default class SquirrelWindowsTarget extends Target {
-  //tslint:disable-next-line:no-object-literal-type-assertion
-  readonly options: SquirrelWindowsOptions = { ...this.packager.platformSpecificBuildOptions, ...this.packager.config.squirrelWindows } as SquirrelWindowsOptions
+  readonly options: SquirrelWindowsOptions
 
   isAsyncSupported = false
 
@@ -22,6 +21,7 @@ export default class SquirrelWindowsTarget extends Target {
     readonly outDir: string
   ) {
     super("squirrel")
+    this.options = packager.getOptionsForTarget<SquirrelWindowsOptions>("squirrelWindows")
   }
 
   private async prepareSignedVendorDirectory(): Promise<string> {
@@ -315,11 +315,6 @@ function checkConflictingOptions(options: any) {
     if (name in options) {
       throw new InvalidConfigurationError(`Option ${name} is ignored, do not specify it.`)
     }
-  }
-
-  if ("noMsi" in options) {
-    log.warn(`noMsi is deprecated, please specify as "msi": true if you want to create an MSI installer`)
-    options.msi = !options.noMsi
   }
 
   const msi = options.msi

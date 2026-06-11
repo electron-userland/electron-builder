@@ -1,4 +1,4 @@
-import { asArray, copyOrLinkFile, getPlatformIconFileName, InvalidConfigurationError, log, unlinkIfExists } from "builder-util"
+import { asArray, copyOrLinkFile, getPlatformIconFileName, InvalidConfigurationError, unlinkIfExists } from "builder-util"
 import { rename, utimes } from "fs/promises"
 import * as path from "path"
 import * as fs from "fs"
@@ -100,18 +100,11 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
    * the bundleIdentifier for continuity.
    */
 
-  const oldHelperBundleId = (buildMetadata as any)["helper-bundle-id"]
-  if (oldHelperBundleId != null) {
-    log.warn("build.helper-bundle-id is deprecated, please set as build.mac.helperBundleId")
-  }
-
-  const defaultAppId = packager.platformSpecificBuildOptions.appId
+  const defaultAppId = packager.platformOptions.appId
   const cfBundleIdentifier = filterCFBundleIdentifier((isMas ? packager.config.mas?.appId : defaultAppId) || defaultAppId || appInfo.macBundleIdentifier)
 
-  const defaultHelperId = packager.platformSpecificBuildOptions.helperBundleId
-  const helperBundleIdentifier = filterCFBundleIdentifier(
-    (isMas ? packager.config.mas?.helperBundleId : defaultHelperId) || defaultHelperId || oldHelperBundleId || `${cfBundleIdentifier}.helper`
-  )
+  const defaultHelperId = packager.platformOptions.helperBundleId
+  const helperBundleIdentifier = filterCFBundleIdentifier((isMas ? packager.config.mas?.helperBundleId : defaultHelperId) || defaultHelperId || `${cfBundleIdentifier}.helper`)
 
   appPlist.CFBundleIdentifier = cfBundleIdentifier
 
@@ -148,19 +141,19 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   }
 
   if (helperRendererPlist != null) {
-    configureHelper(helperRendererPlist, "(Renderer)", packager.platformSpecificBuildOptions.helperRendererBundleId)
+    configureHelper(helperRendererPlist, "(Renderer)", packager.platformOptions.helperRendererBundleId)
   }
   if (helperPluginPlist != null) {
-    configureHelper(helperPluginPlist, "(Plugin)", packager.platformSpecificBuildOptions.helperPluginBundleId)
+    configureHelper(helperPluginPlist, "(Plugin)", packager.platformOptions.helperPluginBundleId)
   }
   if (helperGPUPlist != null) {
-    configureHelper(helperGPUPlist, "(GPU)", packager.platformSpecificBuildOptions.helperGPUBundleId)
+    configureHelper(helperGPUPlist, "(GPU)", packager.platformOptions.helperGPUBundleId)
   }
   if (helperEHPlist != null) {
-    configureHelper(helperEHPlist, "EH", packager.platformSpecificBuildOptions.helperEHBundleId)
+    configureHelper(helperEHPlist, "EH", packager.platformOptions.helperEHBundleId)
   }
   if (helperNPPlist != null) {
-    configureHelper(helperNPPlist, "NP", packager.platformSpecificBuildOptions.helperNPBundleId)
+    configureHelper(helperNPPlist, "NP", packager.platformOptions.helperNPBundleId)
   }
   if (helperLoginPlist != null) {
     helperLoginPlist.CFBundleExecutable = `${appFilename} Login Helper`
@@ -170,7 +163,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     helperLoginPlist.CFBundleVersion = appPlist.CFBundleVersion
   }
 
-  const protocols = asArray(buildMetadata.protocols).concat(asArray(packager.platformSpecificBuildOptions.protocols))
+  const protocols = asArray(buildMetadata.protocols).concat(asArray(packager.platformOptions.protocols))
   if (protocols.length > 0) {
     appPlist.CFBundleURLTypes = protocols.map(protocol => {
       const schemes = asArray(protocol.schemes)

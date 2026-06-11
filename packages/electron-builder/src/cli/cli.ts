@@ -8,6 +8,7 @@ import { clearCache } from "./clear-cache.js"
 import { wrap } from "./cli-util.js"
 import { createSelfSignedCert } from "./create-self-signed-cert.js"
 import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps.js"
+import { configureMigrateSchemaCommand, migrateSchema } from "./migrate-schema.js"
 import { start } from "./start.js"
 
 // tslint:disable:no-unused-expression
@@ -42,6 +43,7 @@ void createYargs()
     yargs => yargs,
     wrap(() => clearCache())
   )
+  .command("migrate-schema", "Migrate build config from v26 to v27 format", configureMigrateSchemaCommand, wrap(migrateSchema))
   .help()
   .epilog(`See ${chalk.underline("https://electron.build")} for more documentation.`)
   .strict()

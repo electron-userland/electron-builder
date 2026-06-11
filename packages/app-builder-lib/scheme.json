@@ -1741,7 +1741,8 @@
           "description": "Any custom request headers"
         },
         "tagNamePrefix": {
-          "description": "If defined, sets the prefix of the tag name that comes before the semver number.\ne.g. \"v\" in \"v1.2.3\" or \"test\" of \"test1.2.3\".\nOverrides `vPrefixedTagName`",
+          "default": "v",
+          "description": "If defined, sets the prefix of the tag name that comes before the semver number.\ne.g. \"v\" in \"v1.2.3\" or \"test\" of \"test1.2.3\".",
           "type": "string"
         },
         "timeout": {
@@ -1764,11 +1765,6 @@
             "null",
             "string"
           ]
-        },
-        "vPrefixedTagName": {
-          "default": true,
-          "description": "Whether to use `v`-prefixed tag name.",
-          "type": "boolean"
         }
       },
       "required": [

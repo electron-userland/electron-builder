@@ -46,10 +46,6 @@ export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPa
     }
   }
 
-  if ((metadata as any).directories != null) {
-    errors.push(`"directories" in the root is deprecated, please specify in the "build"`)
-  }
-
   checkNotEmpty("name", metadata.name)
 
   if (isEmptyOrSpaces(metadata.description)) {

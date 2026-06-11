@@ -517,7 +517,7 @@ async function packAndCheck(
   c: for (const [platform, archToType] of packagerOptions.targets!) {
     for (const [arch, targets] of computeArchToTargetNamesMap(
       archToType,
-      { platformSpecificBuildOptions: (packagerOptions as any)[platform.buildConfigurationKey] || {}, defaultTarget: [] } as any,
+      { platformOptions: (packagerOptions as any)[platform.buildConfigurationKey] || {}, defaultTarget: [] } as any,
       platform
     )) {
       if (targets.length === 1 && targets[0] === DIR_TARGET) {

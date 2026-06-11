@@ -462,7 +462,7 @@ export async function getPublishConfigs(
 
   // check build.win (platform)
   if (publishers == null) {
-    publishers = platformPackager.platformSpecificBuildOptions.publish
+    publishers = platformPackager.platformOptions.publish
     if (publishers === null) {
       return null
     }
@@ -553,7 +553,7 @@ async function getResolvedPublishConfig(
 
   const ctx = platformPackager ?? fallbackPackager!
   let channelFromAppVersion: string | null = null
-  if ((options as GenericServerOptions).channel == null && isDetectUpdateChannel(platformPackager == null ? null : platformPackager.platformSpecificBuildOptions, ctx.config)) {
+  if ((options as GenericServerOptions).channel == null && isDetectUpdateChannel(platformPackager == null ? null : platformPackager.platformOptions, ctx.config)) {
     channelFromAppVersion = ctx.appInfo.channel
   }
 

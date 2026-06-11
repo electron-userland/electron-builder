@@ -1,5 +1,5 @@
 import { Arch, log } from "builder-util"
-import { deepAssign, SnapStoreOptions } from "builder-util-runtime"
+import { SnapStoreOptions } from "builder-util-runtime"
 import * as path from "path"
 import { Configuration } from "../../../configuration.js"
 import { Publish, Target } from "../../../core.js"
@@ -24,7 +24,7 @@ export abstract class SnapCore<T> {
   abstract buildSnap(params: { snap: SnapcraftYAML; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<void>
 }
 
-/** Snap build target — merges `snapcraft` (preferred) and legacy `snap` config, then delegates to the appropriate `SnapCore` strategy. */
+/** Snap build target — reads `snapcraft` config and delegates to the appropriate `SnapCore` strategy. */
 export default class SnapTarget extends Target {
   readonly options: SnapcraftOptions
 
@@ -36,12 +36,7 @@ export default class SnapTarget extends Target {
   ) {
     super(name)
 
-    const {
-      config: { snapcraft },
-      platformSpecificBuildOptions,
-    } = packager
-
-    this.options = deepAssign({}, platformSpecificBuildOptions, snapcraft ?? {}) as SnapcraftOptions
+    this.options = packager.getOptionsForTarget<SnapcraftOptions>("snapcraft")
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {

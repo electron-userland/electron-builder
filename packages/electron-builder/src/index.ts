@@ -34,7 +34,6 @@ export {
   ReleaseInfo,
   ElectronBrandingOptions,
   ElectronDownloadOptions,
-  SnapcraftOptions,
   CommonWindowsInstallerConfiguration,
   FileAssociation,
   MsiOptions,

@@ -1,5 +1,5 @@
 import { Arch, asArray, log, walk } from "builder-util"
-import { deepAssign, UUID } from "builder-util-runtime"
+import { UUID } from "builder-util-runtime"
 import { createHash } from "crypto"
 import * as ejs from "ejs"
 import { readFile, writeFile } from "fs/promises"
@@ -24,7 +24,7 @@ const ROOT_DIR_ID = "APPLICATIONFOLDER"
 export default class MsiTarget extends Target {
   protected readonly vm = process.platform === "win32" ? new VmManager() : new WineVmManager(this.packager.config.toolsets?.wine, this.packager.buildResourcesDir)
 
-  readonly options: MsiOptions = deepAssign(this.packager.platformSpecificBuildOptions, this.packager.config.msi)
+  readonly options: MsiOptions = this.packager.getOptionsForTarget<MsiOptions>("msi")
 
   constructor(
     protected readonly packager: WinPackager,

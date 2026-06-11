@@ -25,7 +25,7 @@ export class ArchiveTarget extends Target {
     const format = this.name
 
     let defaultPattern: string
-    const defaultArch: Arch = defaultArchFromString(packager.platformSpecificBuildOptions.defaultArch)
+    const defaultArch: Arch = defaultArchFromString(packager.platformOptions.defaultArch)
     if (packager.platform === Platform.LINUX) {
       // tslint:disable-next-line:no-invalid-template-strings
       defaultPattern = "${name}-${version}" + (arch === defaultArch ? "" : "-${arch}") + ".${ext}"
@@ -60,12 +60,7 @@ export class ArchiveTarget extends Target {
         let dirToArchive = appOutDir
         if (isMac) {
           dirToArchive = path.dirname(appOutDir)
-          const fileMatchers = getFileMatchers(
-            packager.config,
-            "extraDistFiles",
-            dirToArchive,
-            packager.createGetFileMatchersOptions(this.outDir, arch, packager.platformSpecificBuildOptions)
-          )
+          const fileMatchers = getFileMatchers(packager.config, "extraDistFiles", dirToArchive, packager.createGetFileMatchersOptions(this.outDir, arch, packager.platformOptions))
           if (fileMatchers == null) {
             dirToArchive = appOutDir
           } else {
@@ -99,7 +94,7 @@ export class ArchiveTarget extends Target {
           format,
           arch,
           false,
-          packager.platformSpecificBuildOptions.defaultArch,
+          packager.platformOptions.defaultArch,
           defaultPattern.replace("${productName}", "${name}")
         ),
         target: this,

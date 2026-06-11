@@ -1,5 +1,5 @@
 import { Arch, asArray, copyOrLinkFile, InvalidConfigurationError, log, walk } from "builder-util"
-import { deepAssign, Nullish } from "builder-util-runtime"
+import { Nullish } from "builder-util-runtime"
 
 import * as path from "path"
 import { AppXOptions } from "../../index.js"
@@ -50,7 +50,7 @@ const restrictedApplicationIdValues = [
 const DEFAULT_RESOURCE_LANG = "en-US"
 
 export default class AppXTarget extends Target {
-  readonly options: AppXOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, this.packager.config.appx)
+  readonly options: AppXOptions = this.packager.getOptionsForTarget<AppXOptions>("appx")
 
   isAsyncSupported = false
 
@@ -358,9 +358,9 @@ export default class AppXTarget extends Target {
   }
 
   private async getExtensions(executable: string, displayName: string): Promise<string> {
-    const uriSchemes = asArray(this.packager.config.protocols).concat(asArray(this.packager.platformSpecificBuildOptions.protocols))
+    const uriSchemes = asArray(this.packager.config.protocols).concat(asArray(this.packager.platformOptions.protocols))
 
-    const fileAssociations = asArray(this.packager.config.fileAssociations).concat(asArray(this.packager.platformSpecificBuildOptions.fileAssociations))
+    const fileAssociations = asArray(this.packager.config.fileAssociations).concat(asArray(this.packager.platformOptions.fileAssociations))
 
     let isAddAutoLaunchExtension = this.options.addAutoLaunchExtension
     if (isAddAutoLaunchExtension === undefined) {

@@ -8,10 +8,10 @@ import { WindowsSignOptions } from "./windowsCodeSign.js"
 import { CertificateFromStoreInfo, FileCodeSigningInfo } from "./windowsSignToolManager.js"
 
 export class WindowsSignAzureManager implements SignManager {
-  private readonly platformSpecificBuildOptions: WindowsConfiguration
+  private readonly platformOptions: WindowsConfiguration
 
   readonly computedPublisherName = new Lazy<Array<string> | null>(() => {
-    const publisherName = this.platformSpecificBuildOptions.azureSignOptions?.publisherName
+    const publisherName = this.platformOptions.azureSignOptions?.publisherName
     if (publisherName === null) {
       return Promise.resolve(null)
     } else if (publisherName != null) {
@@ -24,7 +24,7 @@ export class WindowsSignAzureManager implements SignManager {
   })
 
   constructor(private readonly packager: WinPackager) {
-    this.platformSpecificBuildOptions = packager.platformSpecificBuildOptions
+    this.platformOptions = packager.platformOptions
   }
 
   async initialize() {
@@ -46,10 +46,10 @@ export class WindowsSignAzureManager implements SignManager {
   }
 
   computePublisherName(): Promise<string> {
-    return Promise.resolve(this.packager.platformSpecificBuildOptions.azureSignOptions!.publisherName)
+    return Promise.resolve(this.packager.platformOptions.azureSignOptions!.publisherName)
   }
   readonly cscInfo = new MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>(
-    () => this.packager.platformSpecificBuildOptions,
+    () => this.packager.platformOptions,
     _selected => Promise.resolve(null)
   )
   // prerequisite: requires `initializeProviderModules` to already have been executed

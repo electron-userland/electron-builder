@@ -3,7 +3,7 @@ slug: /
 title: "electron-builder"
 ---
 
-# electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg?label=latest)](https://www.npmjs.com/package/electron-builder) [![downloads per month](https://img.shields.io/npm/dm/electron-builder.svg)](https://yarn.pm/electron-builder) [![donate](https://img.shields.io/badge/donate-donorbox-brightgreen.svg)](https://www.electron.build/donate)
+# electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg?label=latest)](https://www.npmjs.com/package/electron-builder) [![downloads per month](https://img.shields.io/npm/dm/electron-builder.svg)](https://yarn.pm/electron-builder)
 A complete solution to package and build a ready for distribution [Electron](https://electronjs.org), [Proton Native](https://proton-native.js.org/) app for macOS, Windows and Linux with “auto update” support out of the box. 📦
 
 Always looking for community contributions! 👀 Setting up a [dev environment](https://github.com/electron-userland/electron-builder/blob/master/CONTRIBUTING.md) is easy to do 🪩
@@ -100,7 +100,7 @@ See the full documentation on [electron.build](https://www.electron.build).
 
 ## Requirements
 
-- **Node.js >=22.12.0** — required for stable ESM/CJS interop. See the [v26 to v27 migration guide](./migration/v26-to-v27) if upgrading from v26.
+**Node.js >=22.12.0** is required. Upgrading from v26? See the **[v26 to v27 migration guide](./MIGRATION.md)** (also at [electron.build/docs/migration/v26-to-v27](https://www.electron.build/docs/migration/v26-to-v27)).
 
 ## Installation
 ```
@@ -172,10 +172,9 @@ await build({
 // CommonJS — also works on Node >=22.12.0
 const { build, Platform } = require("electron-builder")
 
-build({
-  targets: Platform.MAC.createTarget(),
-  config: {},
-}).then(() => { /* done */ }).catch(console.error)
+build({ targets: Platform.MAC.createTarget(), config: {} })
+  .then(() => { /* done */ })
+  .catch(console.error)
 ```
 
 ## Community Boilerplates
@@ -212,4 +211,4 @@ $env:DEBUG = "electron-builder"
 
 ## Donate
 
-We do this open source work in our free time. If you'd like us to invest more time on it, please [donate](https://www.electron.build/docs/donate).
+This open source work is accomplished during free time. If you'd like to have more time invested in it, please consider [donating](https://www.electron.build/docs/donate).
