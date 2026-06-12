@@ -3,24 +3,24 @@ import { MemoLazy, parseDn } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { Target } from "../core.js"
+import { Target } from "../../core.js"
 import {
   resolveWindowsSigningConfiguration,
   WindowsConfiguration,
   WindowsHsmSigningConfig,
   WindowsSigntoolFamilyConfig,
   WindowsSigntoolSigningConfig,
-} from "../options/winOptions.js"
-import AppXTarget from "../targets/win/AppxTarget.js"
-import { getSignToolPath } from "../toolsets/winCodeSign.js"
-import { ToolInfo } from "../util/bundledTool.js"
-import { resolveFunction } from "../util/resolve.js"
-import { readCertInfo, readCertInfoFromX509 } from "./certInfo.js"
-import { VmManager } from "../vm/vm.js"
-import type { WinPackager } from "../winPackager.js"
-import { importCertificate } from "./codesign.js"
+} from "../../options/winOptions.js"
+import AppXTarget from "../../targets/win/AppxTarget.js"
+import { getSignToolPath } from "../../toolsets/winCodeSign.js"
+import { ToolInfo } from "../../util/bundledTool.js"
+import { resolveFunction } from "../../util/resolve.js"
+import { readCertInfo, readCertInfoFromX509 } from "../certInfo.js"
+import { VmManager } from "../../vm/vm.js"
+import type { WinPackager } from "../../winPackager.js"
+import { importCertificate } from "../codesign.js"
 import type { SignManager } from "./signManager.js"
-import { WindowsSignOptions } from "./win/windowsCodeSign.js"
+import { WindowsSignOptions } from "./windowsCodeSign.js"
 const { rename } = _fsExtra
 
 export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration, packager?: WinPackager) => Promise<any>

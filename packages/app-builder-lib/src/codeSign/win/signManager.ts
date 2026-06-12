@@ -1,13 +1,13 @@
 import { MemoLazy, Nullish } from "builder-util-runtime"
 import { Lazy } from "lazy-val"
-import { Target } from "../core.js"
-import { resolveWindowsSigningConfiguration, WindowsConfiguration } from "../options/winOptions.js"
-import type { WinPackager } from "../winPackager.js"
+import { Target } from "../../core.js"
+import { resolveWindowsSigningConfiguration, WindowsConfiguration } from "../../options/winOptions.js"
+import type { WinPackager } from "../../winPackager.js"
 import { HsmSignManager } from "./hsmSignManager.js"
 import { Pkcs11SignManager } from "./pkcs11SignManager.js"
 import { CertificateFromStoreInfo, FileCodeSigningInfo, SigntoolSignManager } from "./signtoolBaseSignManager.js"
-import { WindowsSignAzureManager } from "./win/windowsSignAzureManager.js"
-import { WindowsSignOptions } from "./win/windowsCodeSign.js"
+import { WindowsSignAzureManager } from "./windowsSignAzureManager.js"
+import { WindowsSignOptions } from "./windowsCodeSign.js"
 
 export interface SignManager {
   readonly computedPublisherName: Lazy<Array<string> | null>

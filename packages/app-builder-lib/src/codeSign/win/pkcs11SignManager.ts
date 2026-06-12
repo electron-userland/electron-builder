@@ -1,8 +1,8 @@
 import { InvalidConfigurationError } from "builder-util"
 import { MemoLazy } from "builder-util-runtime"
-import { resolveWindowsSigningConfiguration, WindowsConfiguration, WindowsPkcs11SigningConfig } from "../options/winOptions.js"
-import { VmManager } from "../vm/vm.js"
-import type { WinPackager } from "../winPackager.js"
+import { resolveWindowsSigningConfiguration, WindowsConfiguration, WindowsPkcs11SigningConfig } from "../../options/winOptions.js"
+import { VmManager } from "../../vm/vm.js"
+import type { WinPackager } from "../../winPackager.js"
 import {
   CustomWindowsSign,
   CertificateFromStoreInfo,

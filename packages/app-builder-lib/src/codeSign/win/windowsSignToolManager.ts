@@ -10,4 +10,4 @@ export {
   SigntoolSignManager as WindowsSignToolManager,
   WindowsSignTaskConfiguration,
   WindowsSignToolOptions,
-} from "../signtoolBaseSignManager.js"
+} from "./signtoolBaseSignManager.js"

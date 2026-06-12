@@ -81,9 +81,9 @@ export {
   WindowsSignTaskConfiguration,
   WindowsSignToolManager,
 } from "./codeSign/win/windowsSignToolManager.js"
-export { HsmSignManager } from "./codeSign/hsmSignManager.js"
-export { Pkcs11SignManager } from "./codeSign/pkcs11SignManager.js"
-export { SigntoolSignManager } from "./codeSign/signtoolBaseSignManager.js"
+export { HsmSignManager } from "./codeSign/win/hsmSignManager.js"
+export { Pkcs11SignManager } from "./codeSign/win/pkcs11SignManager.js"
+export { SigntoolSignManager } from "./codeSign/win/signtoolBaseSignManager.js"
 export { ToolInfo } from "./util/bundledTool.js"
 export { ForgeOptions, buildForge } from "./forge-maker.js"
 export { Framework, PrepareApplicationStageDirectoryOptions } from "./Framework.js"

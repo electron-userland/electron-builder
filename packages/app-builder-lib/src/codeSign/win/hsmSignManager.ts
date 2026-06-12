@@ -1,7 +1,7 @@
 import { InvalidConfigurationError } from "builder-util"
-import { resolveWindowsSigningConfiguration, WindowsHsmSigningConfig } from "../options/winOptions.js"
-import { VmManager } from "../vm/vm.js"
-import type { WinPackager } from "../winPackager.js"
+import { resolveWindowsSigningConfiguration, WindowsHsmSigningConfig } from "../../options/winOptions.js"
+import { VmManager } from "../../vm/vm.js"
+import type { WinPackager } from "../../winPackager.js"
 import { CustomWindowsSign, getSigntoolFamilyConfig, SigntoolBaseSignManager, WindowsSignTaskConfiguration } from "./signtoolBaseSignManager.js"
 
 export class HsmSignManager extends SigntoolBaseSignManager {
