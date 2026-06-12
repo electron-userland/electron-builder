@@ -137,6 +137,10 @@ export interface WindowsSigntoolSigningConfig extends WindowsSigningSharedOption
 
 // ─── Signing mode: hsm (Hardware Security Module via signtool /csp /kc) ──────
 
+/**
+ * @beta HSM signing is available in v27 as a beta feature. The interface is stable but
+ * real-hardware test coverage is limited.
+ */
 export interface WindowsHsmSigningConfig extends WindowsSigningSharedOptions {
   readonly type: "hsm"
 
@@ -177,6 +181,10 @@ export interface WindowsHsmSigningConfig extends WindowsSigningSharedOptions {
 
 // ─── Signing mode: pkcs11 (cross-platform PKCS#11 via osslsigncode) ──────────
 
+/**
+ * @beta PKCS#11 signing is available in v27 as a beta feature. The interface is stable but
+ * real-hardware test coverage is limited.
+ */
 export interface WindowsPkcs11SigningConfig extends WindowsSigningSharedOptions {
   readonly type: "pkcs11"
 
@@ -209,6 +217,11 @@ export interface WindowsPkcs11SigningConfig extends WindowsSigningSharedOptions 
 
 // ─── Signing mode: azure (Azure Trusted Signing) ──────────────────────────────
 
+/**
+ * @beta The `signtool /dlib` Azure Trusted Signing integration introduced in v27 is a beta
+ * feature. The legacy PowerShell fallback (triggered when `toolsets.winCodeSign` is unset or
+ * `"0.0.0"`) remains supported for migration.
+ */
 export interface WindowsAzureSigningConfig {
   readonly type: "azure"
 

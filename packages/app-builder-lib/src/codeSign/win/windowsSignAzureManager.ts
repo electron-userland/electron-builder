@@ -105,7 +105,10 @@ export class WindowsSignAzureManager implements SignManager {
     const { signing } = this
     const winCodeSign = this.packager.config.toolsets!.winCodeSign!
 
-    const arch = process.arch === "x64" ? Arch.x64 : process.arch === "arm64" ? Arch.arm64 : Arch.ia32
+    // The ATS payload (dlib + its dependency closure) ships x64/x86 only; the bundle's arm64
+    // dir has no dlib. On arm64 hosts use the x64 signtool + dlib — x64 signtool runs under
+    // Windows-on-ARM emulation natively, and under x64 Wine on macOS/Linux.
+    const arch = process.arch === "ia32" ? Arch.ia32 : Arch.x64
     const { kit: kitDir } = await getWindowsKitsBundle({ winCodeSign, arch })
     const signtoolPath = path.resolve(kitDir, "signtool.exe")
     const dlibPath = path.resolve(kitDir, "Azure.CodeSigning.Dlib.dll")

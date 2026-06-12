@@ -22,6 +22,17 @@ export class Pkcs11SignManager extends SigntoolBaseSignManager {
       throw new Error(`Pkcs11SignManager requires signing.type = "pkcs11", got: ${signing?.type}`)
     }
     this.signingConfig = signing
+
+    // publisherName == null means "auto-discover", but for PKCS#11 without a certificateFile
+    // the cert lives inside the hardware token and cannot be read at build time. The result would be
+    // a null publisherName in app-update.yml, silently disabling updater signature verification.
+    if (signing.publisherName == null && !signing.certificateFile) {
+      throw new InvalidConfigurationError(
+        "PKCS#11 signing requires either `win.sign.publisherName` or `win.sign.certificateFile` to be set. " +
+          "Without one of these the publisher name cannot be determined at build time, and auto-updater signature verification will be silently skipped. " +
+          "Set publisherName to the CN from your signing certificate, or provide certificateFile pointing to a certificate chain file (.crt / .cer)."
+      )
+    }
   }
 
   // PKCS#11: key and cert are in the hardware token; cert file is optional (chain only).

@@ -1,12 +1,20 @@
-import { HsmSignManager } from "app-builder-lib/src/codeSign/hsmSignManager"
-import { Pkcs11SignManager } from "app-builder-lib/src/codeSign/pkcs11SignManager"
-import { SigntoolSignManager } from "app-builder-lib/src/codeSign/signtoolBaseSignManager"
-import { WindowsSignTaskConfiguration } from "app-builder-lib/src/codeSign/signtoolBaseSignManager"
+import { HsmSignManager } from "app-builder-lib/src/codeSign/win/hsmSignManager"
+import { Pkcs11SignManager } from "app-builder-lib/src/codeSign/win/pkcs11SignManager"
+import { SigntoolSignManager } from "app-builder-lib/src/codeSign/win/signtoolBaseSignManager"
+import { WindowsSignTaskConfiguration } from "app-builder-lib/src/codeSign/win/signtoolBaseSignManager"
 import { readCertInfoFromX509 } from "app-builder-lib/src/codeSign/certInfo"
+import { WindowsSignAzureManager } from "app-builder-lib/src/codeSign/win/windowsSignAzureManager"
+import { getWindowsKitsBundle } from "app-builder-lib/src/toolsets/winCodeSign"
+import { Arch } from "builder-util"
 import { mkdtemp, rm, writeFile } from "fs/promises"
 import { tmpdir } from "os"
 import * as path from "path"
-import { afterEach, beforeEach, describe, expect, test } from "vitest"
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
+
+vi.mock("app-builder-lib/src/toolsets/winCodeSign", async importOriginal => {
+  const actual = await importOriginal<typeof import("app-builder-lib/src/toolsets/winCodeSign")>()
+  return { ...actual, getWindowsKitsBundle: vi.fn() }
+})
 
 function makeManager(winCodeSign?: string): SigntoolSignManager {
   const manager = Object.create(SigntoolSignManager.prototype) as SigntoolSignManager
@@ -682,5 +690,75 @@ o4qne60TB3wolLhOJqQ3uJLPvOmFI5oMnEAmhP0JlwFSBj3SiYoHScLuNP2YQXB+
     const badFile = path.join(tmpDir, "bad.crt")
     await writeFile(badFile, "this is not a certificate")
     await expect(readCertInfoFromX509(badFile)).rejects.toThrow(/could not be parsed|invalid/)
+  })
+})
+
+// ─── WindowsSignAzureManager: dlib kit arch selection ─────────────────────────
+// The ATS payload (Azure.CodeSigning.Dlib.dll + deps) ships x64/x86 only — the
+// bundle's arm64 dir has no dlib, so arm64 hosts must resolve the x64 kit.
+
+describe("WindowsSignAzureManager signFileWithDlib arch selection", () => {
+  let tmpDir: string
+  const originalArch = process.arch
+
+  beforeEach(async () => {
+    tmpDir = await mkdtemp(path.join(tmpdir(), "eb-azure-dlib-test-"))
+    vi.mocked(getWindowsKitsBundle).mockImplementation(async ({ arch }) => ({
+      kit: path.join("/mock-kits", arch === Arch.ia32 ? "x86" : Arch[arch]),
+      appxAssets: "/mock-kits",
+    }))
+  })
+
+  afterEach(async () => {
+    Object.defineProperty(process, "arch", { value: originalArch })
+    vi.mocked(getWindowsKitsBundle).mockReset()
+    await rm(tmpDir, { recursive: true, force: true })
+  })
+
+  function makeAzureManager(execSpy: ReturnType<typeof vi.fn>): WindowsSignAzureManager {
+    const manager = Object.create(WindowsSignAzureManager.prototype) as WindowsSignAzureManager
+    ;(manager as any).packager = {
+      config: { toolsets: { winCodeSign: "1.1.0" } },
+      getTempFile: (ext: string) => Promise.resolve(path.join(tmpDir, `metadata${ext}`)),
+    }
+    ;(manager as any).signing = {
+      type: "azure",
+      publisherName: "CN=Test",
+      endpoint: "https://weu.codesigning.azure.net/",
+      certificateProfileName: "profile",
+      codeSigningAccountName: "account",
+    }
+    ;(manager as any).vm = { toVmFile: (f: string) => f, exec: execSpy }
+    return manager
+  }
+
+  async function signedToolPaths(arch: NodeJS.Architecture): Promise<{ signtool: string; dlib: string }> {
+    Object.defineProperty(process, "arch", { value: arch })
+    const exec = vi.fn().mockResolvedValue(undefined)
+    const manager = makeAzureManager(exec)
+    await manager.signFile({ path: path.join(tmpDir, "app.exe"), options: {} as any })
+    const [signtool, args] = exec.mock.calls[0]
+    const dlib = args[args.indexOf("/dlib") + 1]
+    return { signtool, dlib }
+  }
+
+  test("arm64 host falls back to the x64 kit (no arm64 dlib exists)", async () => {
+    const { signtool, dlib } = await signedToolPaths("arm64")
+    expect(signtool).toBe(path.join("/mock-kits", "x64", "signtool.exe"))
+    expect(dlib).toBe(path.join("/mock-kits", "x64", "Azure.CodeSigning.Dlib.dll"))
+    expect(vi.mocked(getWindowsKitsBundle)).toHaveBeenCalledWith(expect.objectContaining({ arch: Arch.x64 }))
+  })
+
+  test("x64 host uses the x64 kit", async () => {
+    const { signtool, dlib } = await signedToolPaths("x64")
+    expect(signtool).toBe(path.join("/mock-kits", "x64", "signtool.exe"))
+    expect(dlib).toBe(path.join("/mock-kits", "x64", "Azure.CodeSigning.Dlib.dll"))
+  })
+
+  test("ia32 host uses the x86 kit", async () => {
+    const { signtool, dlib } = await signedToolPaths("ia32")
+    expect(signtool).toBe(path.join("/mock-kits", "x86", "signtool.exe"))
+    expect(dlib).toBe(path.join("/mock-kits", "x86", "Azure.CodeSigning.Dlib.dll"))
+    expect(vi.mocked(getWindowsKitsBundle)).toHaveBeenCalledWith(expect.objectContaining({ arch: Arch.ia32 }))
   })
 })
