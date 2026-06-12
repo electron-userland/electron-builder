@@ -1175,10 +1175,6 @@
           "$ref": "#/definitions/Record<string,string>",
           "description": "Provides checksums for the artifact as strings.\nCan be used if you already know the checksums of the Electron artifact\nyou are downloading and want to skip the checksum file download\nwithout skipping the checksum validation.\n\nThis should be an object whose keys are the file names of the artifacts and\nthe values are their respective SHA256 checksums."
         },
-        "unsafelyDisableChecksums": {
-          "description": "When set to `true`, disables checking that the artifact download completed successfully\nwith the correct payload.",
-          "type": "boolean"
-        },
         "mirrorOptions": {
           "type": "object",
           "additionalProperties": false,
@@ -1197,6 +1193,10 @@
               "description": "A custom function (serialised) to resolve the full asset URL."
             }
           }
+        },
+        "unsafelyDisableChecksums": {
+          "description": "When set to `true`, disables checking that the artifact download completed successfully\nwith the correct payload.",
+          "type": "boolean"
         }
       },
       "type": "object"
@@ -2100,11 +2100,10 @@
               "$ref": "#/definitions/AsarOptions"
             },
             {
-              "const": false,
-              "type": "boolean"
-            },
-            {
-              "type": "null"
+              "type": [
+                "null",
+                "boolean"
+              ]
             }
           ],
           "default": true,
@@ -2739,11 +2738,10 @@
               "$ref": "#/definitions/AsarOptions"
             },
             {
-              "const": false,
-              "type": "boolean"
-            },
-            {
-              "type": "null"
+              "type": [
+                "null",
+                "boolean"
+              ]
             }
           ],
           "default": true,
@@ -3191,8 +3189,7 @@
         "universal": {
           "anyOf": [
             {
-              "$ref": "#/definitions/ElectronUniversalOptions",
-              "description": "Options forwarded to `@electron/universal`'s `makeUniversalApp`.\nElectron-builder fills in the app paths and `force`; everything else is configurable here\nand auto-tracks upstream additions to `MakeUniversalOpts`."
+              "$ref": "#/definitions/ElectronUniversalOptions"
             },
             {
               "type": "null"
@@ -3227,11 +3224,10 @@
               "$ref": "#/definitions/AsarOptions"
             },
             {
-              "const": false,
-              "type": "boolean"
-            },
-            {
-              "type": "null"
+              "type": [
+                "null",
+                "boolean"
+              ]
             }
           ],
           "default": true,
@@ -3679,8 +3675,7 @@
         "universal": {
           "anyOf": [
             {
-              "$ref": "#/definitions/ElectronUniversalOptions",
-              "description": "Options forwarded to `@electron/universal`'s `makeUniversalApp`.\nElectron-builder fills in the app paths and `force`; everything else is configurable here\nand auto-tracks upstream additions to `MakeUniversalOpts`."
+              "$ref": "#/definitions/ElectronUniversalOptions"
             },
             {
               "type": "null"
@@ -4728,6 +4723,24 @@
           "default": true,
           "description": "If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings.",
           "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "Omit<MirrorOptions,\"customFilename\"|\"customDir\"|\"customVersion\">": {
+      "additionalProperties": false,
+      "properties": {
+        "mirror": {
+          "description": "The base URL of the mirror to download from.\ne.g https://github.com/electron/electron/releases/download",
+          "type": "string"
+        },
+        "nightlyMirror": {
+          "description": "The mirror URL for [`electron-nightly`](https://npmjs.com/package/electron-nightly),\nwhich lives in a separate npm package.",
+          "type": "string"
+        },
+        "resolveAssetURL": {
+          "description": "A function allowing customization of the url returned\nfrom getArtifactRemoteURL().",
+          "typeof": "function"
         }
       },
       "type": "object"
@@ -7986,11 +7999,10 @@
               "$ref": "#/definitions/AsarOptions"
             },
             {
-              "const": false,
-              "type": "boolean"
-            },
-            {
-              "type": "null"
+              "type": [
+                "null",
+                "boolean"
+              ]
             }
           ],
           "default": true,
@@ -8614,11 +8626,10 @@
           "$ref": "#/definitions/AsarOptions"
         },
         {
-          "const": false,
-          "type": "boolean"
-        },
-        {
-          "type": "null"
+          "type": [
+            "null",
+            "boolean"
+          ]
         }
       ],
       "default": true,

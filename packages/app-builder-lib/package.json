@@ -60,7 +60,7 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
-    "@electron/asar": "4.2.0",
+    "@electron/asar": "4.1.1",
     "@electron/fuses": "^2.1.1",
     "@electron/get": "^5.0.0",
     "@electron/notarize": "3.1.1",
