@@ -40,24 +40,34 @@ runs:
           electron-builder-binaries-${{ runner.os }}-
 
     - name: Compute Vitest smart cache ref
+      id: compute-cache-ref
       run: |
-        PR_NUM="${{ github.event.pull_request.number }}"
-        if [ -n "$PR_NUM" ]; then
-          echo "VITEST_CACHE_REF=PR-${PR_NUM}" >> "$GITHUB_ENV"
+        if [ -n "${PR_NUM}" ]; then
+          echo "value=PR-${PR_NUM}" >> "$GITHUB_OUTPUT"
         else
-          echo "VITEST_CACHE_REF=${{ github.ref_name }}" >> "$GITHUB_ENV"
+          echo "value=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
         fi
       shell: bash
+      env:
+        PR_NUM: ${{ github.event.pull_request.number }}
 
     - name: Restore Vitest Smart Cache
       run: pnpm ci:test:fetch-cache
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
+        VITEST_CACHE_REF: ${{ steps.compute-cache-ref.outputs.value }}
 
     - name: Set up Vitest smart cache reset flag
-      run: echo "RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}" >> $GITHUB_ENV
+      run: |
+        if [ "${INPUTS_RESET_VITEST_SMART_CACHE}" = "true" ]; then
+          echo "RESET_VITEST_SHARD_CACHE=true" >> "$GITHUB_ENV"
+        else
+          echo "RESET_VITEST_SHARD_CACHE=false" >> "$GITHUB_ENV"
+        fi
       shell: bash
+      env:
+        INPUTS_RESET_VITEST_SMART_CACHE: ${{ inputs.reset-vitest-smart-cache }}
 
 ## Usage
 # - name: Setup Tests
