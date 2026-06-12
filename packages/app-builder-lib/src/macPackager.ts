@@ -1,6 +1,5 @@
 import { createRequire } from "node:module"
-import type { SignOptions } from "@electron/osx-sign/dist/cjs/types.js"
-import type { Identity } from "@electron/osx-sign/dist/cjs/util-identities.js"
+import type { SignOptions } from "@electron/osx-sign"
 
 const _require = createRequire(import.meta.url)
 import {
@@ -24,28 +23,31 @@ import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { AppInfo } from "./appInfo.js"
-import { CodeSigningInfo, createKeychain, CreateKeychainOptions, isSignAllowed, removeKeychain, sign } from "./codeSign/mac/macCodeSign.js"
+import { CodeSigningInfo, createKeychain, CreateKeychainOptions, Identity, isSignAllowed, removeKeychain, sign } from "./codeSign/mac/macCodeSign.js"
 import { DIR_TARGET, Platform, Target } from "./core.js"
 import { AfterPackContext, ElectronPlatformName } from "./index.js"
 import { MacTargetHelper, PlatformType } from "./targets/mac/MacTargetHelper.js"
-import { MacConfiguration, MasConfiguration } from "./options/macOptions.js"
+import { ElectronSignOptions, MacConfiguration, MasConfiguration } from "./options/macOptions.js"
 import { Packager } from "./packager.js"
 import { chooseNotNull, DoPackOptions, PlatformPackager } from "./platformPackager.js"
 import { ArchiveTarget } from "./targets/ArchiveTarget.js"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/mac/pkg.js"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory.js"
-import { dynamicImport } from "./util/dynamicImport.js"
 import { isMacOsHighSierra } from "./util/mac/macosVersion.js"
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
 import { resolveFunction } from "./util/resolve.js"
+import { makeUniversalApp } from "@electron/universal"
 
 export type CustomMacSignOptions = SignOptions
 export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>
 
+function isElectronSignOptions(sign: MacConfiguration["sign"]): sign is ElectronSignOptions {
+  return typeof sign === "object" && sign !== null
+}
+
 interface PlatformConfig {
   type: PlatformType
   config: MacConfiguration | MasConfiguration
-  isDevelopment: boolean
   platformName: ElectronPlatformName
 }
 
@@ -85,10 +87,6 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
 
   private _iconPath = new Lazy(() => this.getOrConvertIcon("icns"))
 
-  // Set/cleared in doPack so applyCommonInfo can read the per-pack platformSpecificBuildOptions
-  // (the framework call chain doesn't thread it through to applyCommonInfo). Fixes #8909.
-  private _activePackConfig: MacConfiguration | MasConfiguration | null = null
-
   readonly helper = new MacTargetHelper(this)
 
   constructor(info: Packager) {
@@ -102,35 +100,31 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
   /**
    * Get the merged configuration for a specific platform type
    */
-  private getPlatformConfig(platformType: PlatformType): PlatformConfig {
+  getPlatformConfig(platformType: PlatformType): PlatformConfig {
     let config: MacConfiguration | MasConfiguration
-    let isDevelopment = false
     let platformName: ElectronPlatformName
 
     switch (platformType) {
       case "mas":
         config = deepAssign({}, this.platformSpecificBuildOptions, this.config.mas)
-        isDevelopment = false
         platformName = "mas"
         break
 
       case "mas-dev":
-        config = deepAssign({}, this.platformSpecificBuildOptions, this.config.mas, this.config.masDev, {
-          type: "development",
-        })
-        isDevelopment = true
+        // `mas-dev` cascades mac → mas → masDev. The development/distribution distinction is no longer
+        // carried as a config field; it is derived from `platformType` wherever signing happens.
+        config = deepAssign({}, this.platformSpecificBuildOptions, this.config.mas, this.config.masDev)
         platformName = "mas"
         break
 
       case "mac":
       default:
         config = this.platformSpecificBuildOptions
-        isDevelopment = false
         platformName = this.platform.nodeName as ElectronPlatformName
         break
     }
 
-    return { type: platformType, config, isDevelopment, platformName }
+    return { type: platformType, config, platformName }
   }
 
   expandArch(pattern: string, arch?: Arch | null): string[] {
@@ -186,110 +180,96 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     if (config.arch === Arch.universal) {
       return this.doUniversalPack(config)
     }
-    // Bridge the per-pack platformSpecificBuildOptions to applyCommonInfo, which is called deep in the
-    // framework stack (doPack → beforeCopyExtraFiles → createMacApp → applyCommonInfo) without it.
-    this._activePackConfig = config.platformSpecificBuildOptions
-    try {
-      return await super.doPack(config)
-    } finally {
-      this._activePackConfig = null
-    }
+    return await super.doPack(config)
   }
 
   /**
    * Handle universal build packing
    */
   private async doUniversalPack(config: DoPackOptions<MacConfiguration>): Promise<void> {
-    this._activePackConfig = config.platformSpecificBuildOptions
-    try {
-      const { outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets } = config
+    const { outDir, appOutDir, platformName, platformType, arch, platformSpecificBuildOptions, targets } = config
 
-      const outDirName = (arch: Arch) => `${appOutDir}-${Arch[arch]}-temp`
-      const options = {
-        ...config,
-        options: {
-          sign: false,
-          disableAsarIntegrity: true,
-          disableFuses: true,
-        },
-      }
+    const outDirName = (arch: Arch) => `${appOutDir}-${Arch[arch]}-temp`
+    const options = {
+      ...config,
+      options: {
+        sign: false,
+        disableAsarIntegrity: true,
+        disableFuses: true,
+      },
+    }
 
-      const x64Arch = Arch.x64
-      const x64AppOutDir = outDirName(x64Arch)
-      await super.doPack({ ...options, appOutDir: x64AppOutDir, arch: x64Arch })
+    const x64Arch = Arch.x64
+    const x64AppOutDir = outDirName(x64Arch)
+    await super.doPack({ ...options, appOutDir: x64AppOutDir, arch: x64Arch })
 
-      if (this.info.cancellationToken.cancelled) {
-        return
-      }
+    if (this.info.cancellationToken.cancelled) {
+      return
+    }
 
-      const arm64Arch = Arch.arm64
-      const arm64AppOutPath = outDirName(arm64Arch)
-      await super.doPack({ ...options, appOutDir: arm64AppOutPath, arch: arm64Arch })
+    const arm64Arch = Arch.arm64
+    const arm64AppOutPath = outDirName(arm64Arch)
+    await super.doPack({ ...options, appOutDir: arm64AppOutPath, arch: arm64Arch })
 
-      if (this.info.cancellationToken.cancelled) {
-        return
-      }
+    if (this.info.cancellationToken.cancelled) {
+      return
+    }
 
-      const framework = this.info.framework
-      log.info(
-        {
-          platform: platformName,
-          arch: Arch[arch],
-          [`${framework.name}`]: framework.version,
-          appOutDir: log.filePath(appOutDir),
-        },
-        `packaging`
-      )
-      const appFile = `${this.appInfo.productFilename}.app`
+    const framework = this.info.framework
+    log.info(
+      {
+        platform: platformName,
+        arch: Arch[arch],
+        [`${framework.name}`]: framework.version,
+        appOutDir: log.filePath(appOutDir),
+      },
+      `packaging`
+    )
+    const appFile = `${this.appInfo.productFilename}.app`
 
-      // Make sure the Assets.car file is the same for both architectures
-      const safeX64AppOutDir = sanitizeDirPath(x64AppOutDir)
-      const safeArm64AppOutPath = sanitizeDirPath(arm64AppOutPath)
-      const safeAppOutDir = sanitizeDirPath(appOutDir)
+    // Make sure the Assets.car file is the same for both architectures
+    const safeX64AppOutDir = sanitizeDirPath(x64AppOutDir)
+    const safeArm64AppOutPath = sanitizeDirPath(arm64AppOutPath)
+    const safeAppOutDir = sanitizeDirPath(appOutDir)
 
-      const sourceCatalogPath = path.join(safeX64AppOutDir, appFile, "Contents/Resources/Assets.car")
-      if (await exists(sourceCatalogPath)) {
-        const targetCatalogPath = path.join(safeArm64AppOutPath, appFile, "Contents/Resources/Assets.car")
-        await fs.copyFile(sourceCatalogPath, targetCatalogPath)
-      }
+    const sourceCatalogPath = path.join(safeX64AppOutDir, appFile, "Contents/Resources/Assets.car")
+    if (await exists(sourceCatalogPath)) {
+      const targetCatalogPath = path.join(safeArm64AppOutPath, appFile, "Contents/Resources/Assets.car")
+      await fs.copyFile(sourceCatalogPath, targetCatalogPath)
+    }
 
-      const { makeUniversalApp } = await dynamicImport<typeof import("@electron/universal")>("@electron/universal")
-      await makeUniversalApp({
-        x64AppPath: path.join(safeX64AppOutDir, appFile),
-        arm64AppPath: path.join(safeArm64AppOutPath, appFile),
-        outAppPath: path.join(safeAppOutDir, appFile),
-        force: true,
-        mergeASARs: platformSpecificBuildOptions.mergeASARs ?? true, // must be ?? to allow false
-        singleArchFiles: platformSpecificBuildOptions.singleArchFiles || undefined,
-        x64ArchFiles: platformSpecificBuildOptions.x64ArchFiles || undefined,
-      })
-      await fs.rm(x64AppOutDir, { recursive: true, force: true })
-      await fs.rm(arm64AppOutPath, { recursive: true, force: true })
+    const universalOpts = platformSpecificBuildOptions.universal
+    await makeUniversalApp({
+      ...universalOpts,
+      x64AppPath: path.join(safeX64AppOutDir, appFile),
+      arm64AppPath: path.join(safeArm64AppOutPath, appFile),
+      outAppPath: path.join(safeAppOutDir, appFile),
+      force: true,
+    })
+    await fs.rm(x64AppOutDir, { recursive: true, force: true })
+    await fs.rm(arm64AppOutPath, { recursive: true, force: true })
 
-      // Give users a final opportunity to perform things on the combined universal package before signing
-      const packContext: AfterPackContext = {
-        appOutDir,
-        outDir,
-        arch,
-        targets,
-        packager: this,
-        electronPlatformName: platformName,
-      }
-      await this.info.emitAfterPack(packContext)
+    // Give users a final opportunity to perform things on the combined universal package before signing
+    const packContext: AfterPackContext = {
+      appOutDir,
+      outDir,
+      arch,
+      targets,
+      packager: this,
+      electronPlatformName: platformName,
+    }
+    await this.info.emitAfterPack(packContext)
 
-      if (this.info.cancellationToken.cancelled) {
-        return
-      }
+    if (this.info.cancellationToken.cancelled) {
+      return
+    }
 
-      await this.doAddElectronFuses(packContext)
+    await this.doAddElectronFuses(packContext)
 
-      // Mirror the base-class guard: skip signing when the caller explicitly set sign:false
-      // (e.g. packMasTargets passes sign:false so that signMas() is the sole signing step).
-      if (config.options?.sign ?? true) {
-        await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
-      }
-    } finally {
-      this._activePackConfig = null
+    // Mirror the base-class guard: skip signing when the caller explicitly set sign:false
+    // (e.g. packMasTargets passes sign:false so that signMas() is the sole signing step).
+    if (config.options?.sign ?? true) {
+      await this.doSignAfterPack(outDir, appOutDir, platformName, platformType, arch, platformSpecificBuildOptions, targets)
     }
   }
 
@@ -325,21 +305,23 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
         throw new InvalidConfigurationError(`Invalid target output directory: ${targetOutDir}`)
       }
 
-      if (prepackaged == null) {
+      let appPath: string = path.join(targetOutDir, `${this.appInfo.productFilename}.app`)
+      if (prepackaged != null) {
+        appPath = prepackaged
+      } else {
         await this.doPack({
           outDir: resolvedOutDir,
           appOutDir: targetOutDir,
           platformName: platformConfig.platformName,
+          platformType: platformConfig.type,
           arch,
           platformSpecificBuildOptions: platformConfig.config,
           targets: [target],
           options: { sign: false },
         })
         MacTargetHelper.assertSafePathForCommandUsage(this.appInfo.productFilename, "product filename")
-        await this.signMas(path.resolve(targetOutDir, `${path.basename(this.appInfo.productFilename)}.app`), targetOutDir, platformConfig, arch)
-      } else {
-        await this.signMas(prepackaged, targetOutDir, platformConfig, arch)
       }
+      await this.signMas(appPath, targetOutDir, arch, platformType)
     }
   }
 
@@ -352,6 +334,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
         outDir,
         appOutDir: path.dirname(appPath),
         platformName: platformConfig.platformName,
+        platformType: platformConfig.type,
         arch,
         platformSpecificBuildOptions: platformConfig.config,
         targets,
@@ -361,32 +344,42 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     this.packageInDistributableFormat(appPath, arch, targets, taskManager)
   }
 
-  private async signMas(appPath: string, outDir: string, platformConfig: PlatformConfig, arch: Arch): Promise<boolean> {
-    const signed = await this.sign(appPath, outDir, platformConfig.config as MasConfiguration, arch, true)
+  private async signMas(appPath: string, outDir: string, arch: Arch, targetPlatform: PlatformType): Promise<boolean> {
+    const signed = await this.sign(appPath, outDir, arch, targetPlatform)
     return signed
   }
 
   /**
    * Main signing method with platform awareness
    */
-  private async sign(appPath: string, outDir: string | null, options: MasConfiguration | MacConfiguration | null, arch: Arch, isMas: boolean = false): Promise<boolean> {
+  private async sign(appPath: string, outDir: string | null, arch: Arch, targetPlatform: PlatformType): Promise<boolean> {
     if (!isSignAllowed()) {
       return false
     }
 
-    const config = options ?? this.platformSpecificBuildOptions
-    const qualifier = config.identity
+    // getPlatformConfig cascades mac → mas → masDev, so all fields are already merged for this flavor.
+    const platformConfig = this.getPlatformConfig(targetPlatform).config
+    const config = platformConfig.sign
 
+    // sign: null → user explicitly disabled signing
+    if (config === null) {
+      return this.helper.handleNullIdentity()
+    }
+
+    const signOpts = isElectronSignOptions(config) ? config : undefined
+    // identity: null → explicit skip; undefined → auto-discover
+    const qualifier = platformConfig.identity
     if (qualifier === null) {
       return this.helper.handleNullIdentity()
     }
 
     const keychainFile = (await this.codeSigningInfo.value).keychainFile
-    const explicitType = config.type
-    const type = explicitType || "distribution"
-    const isDevelopment = type === "development"
+    // `config` is a custom fn/string module path when it's non-null and not an options object
+    const hasCustomSign = config != null && !signOpts
+    const isMas = MacTargetHelper.isMasTarget(targetPlatform)
+    const isDevelopment = MacTargetHelper.isMasDevelopment(targetPlatform)
 
-    const identity = await this.helper.findSigningIdentity(isMas, isDevelopment, qualifier, keychainFile, config)
+    const identity = await this.helper.findSigningIdentity(targetPlatform, qualifier, keychainFile, hasCustomSign, signOpts)
 
     if (!identity) {
       return false
@@ -396,12 +389,12 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       throw new InvalidConfigurationError("macOS High Sierra 10.13.6 is required to sign")
     }
 
-    const signOptions = await this.helper.buildSignOptions(appPath, identity, type, isMas, config, keychainFile, arch)
+    const signOptions = await this.helper.buildSignOptions(appPath, identity, signOpts, keychainFile, arch, targetPlatform)
     await this.doSign(signOptions, config, identity)
 
     // Handle MAS installer creation
     if (isMas && !isDevelopment && outDir) {
-      await this.helper.createMasInstaller(appPath, outDir, config as MasConfiguration, keychainFile, isDevelopment, arch)
+      await this.helper.createMasInstaller(appPath, outDir, this.getPlatformConfig(targetPlatform).config as MasConfiguration, keychainFile, targetPlatform, arch, qualifier)
     }
 
     // Handle notarization for non-MAS builds
@@ -413,8 +406,11 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
   }
 
   //noinspection JSMethodCanBeStatic
-  protected async doSign(opts: SignOptions, customSignOptions: MacConfiguration | MasConfiguration, identity: Identity | null): Promise<void> {
-    const customSign = await resolveFunction(this.appInfo.type, customSignOptions.sign, "sign", await this.info.getWorkspaceRoot())
+  protected async doSign(opts: SignOptions, signConfig: MacConfiguration["sign"], identity: Identity | null): Promise<void> {
+    // Resolve a custom signer only when signConfig is a function or string module path.
+    // ElectronSignOptions objects and undefined use @electron/osx-sign directly.
+    const customSign =
+      signConfig == null || isElectronSignOptions(signConfig) ? null : await resolveFunction(this.appInfo.type, signConfig, "sign", await this.info.getWorkspaceRoot())
 
     const { app, platform, type, provisioningProfile } = opts
     log.info(
@@ -454,7 +450,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
   }
 
   // todo fileAssociations
-  async applyCommonInfo(appPlist: any, contentsPath: string) {
+  async applyCommonInfo(appPlist: any, contentsPath: string, cascadedOptions: MacConfiguration | MasConfiguration): Promise<void> {
     const appInfo = this.appInfo
     const appFilename = appInfo.productFilename
 
@@ -505,9 +501,9 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       appPlist.LSMinimumSystemVersion = minimumSystemVersion
     }
 
-    const activeOpts = this._activePackConfig ?? this.platformSpecificBuildOptions
-    appPlist.CFBundleShortVersionString = activeOpts.bundleShortVersion || appInfo.version
-    appPlist.CFBundleVersion = activeOpts.bundleVersion || appInfo.buildVersion
+    // const activeOpts = this.getPlatformConfig(distType).config
+    appPlist.CFBundleShortVersionString = cascadedOptions.bundleShortVersion || appInfo.version
+    appPlist.CFBundleVersion = cascadedOptions.bundleVersion || appInfo.buildVersion
 
     use(this.platformSpecificBuildOptions.category || (this.config as any).category, it => (appPlist.LSApplicationCategoryType = it))
     appPlist.NSHumanReadableCopyright = appInfo.copyright
@@ -527,9 +523,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     }
   }
 
-  protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<boolean> {
-    const isMas = packContext.electronPlatformName === "mas"
-    const activeConfig = this._activePackConfig ?? this.platformSpecificBuildOptions
+  protected async signApp(packContext: AfterPackContext, isAsar: boolean, platformType?: PlatformType): Promise<boolean> {
+    const targetPlatform: PlatformType = platformType ?? (packContext.electronPlatformName === "mas" ? "mas" : "mac")
     const readDirectoryAndSign = async (sourceDirectory: string, directories: string[], shouldSign: (file: string) => boolean): Promise<boolean> => {
       const normalizedSourceDirectory = path.resolve(sourceDirectory)
       MacTargetHelper.assertSafePathForCommandUsage(normalizedSourceDirectory, "application output directory")
@@ -542,7 +537,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
             }
             const signTarget = path.resolve(normalizedSourceDirectory, entryName)
             const safeSignTarget = sanitizeDirPath(signTarget, normalizedSourceDirectory)
-            await this.sign(safeSignTarget, null, isMas ? activeConfig : null, packContext.arch, isMas)
+            await this.sign(safeSignTarget, null, packContext.arch, targetPlatform)
           }
         })
       )

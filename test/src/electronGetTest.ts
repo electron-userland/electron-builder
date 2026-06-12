@@ -488,7 +488,7 @@ describe("downloadElectronArtifact", { sequential: true }, () => {
       platformName: electronPlatform,
       arch: electronArch,
       version: ELECTRON_VERSION,
-      electronDownload: legacyOptions,
+      options: legacyOptions,
     }
 
     const result = await downloadElectronArtifact(options)
@@ -504,7 +504,7 @@ describe("downloadElectronArtifact", { sequential: true }, () => {
       platformName: electronPlatform,
       arch: electronArch,
       version: ELECTRON_VERSION,
-      electronDownload: { isVerifyChecksum: false } satisfies ElectronDownloadOptions,
+      options: { isVerifyChecksum: false } satisfies ElectronDownloadOptions,
     }
 
     const result = await downloadElectronArtifact(options)
@@ -521,7 +521,7 @@ describe("downloadElectronArtifact", { sequential: true }, () => {
       platformName: electronPlatform,
       arch: electronArch,
       version: ELECTRON_VERSION,
-      electronDownload: {
+      options: {
         mirror: "https://github.com/electron/electron/releases/download/",
         customDir: `v${ELECTRON_VERSION}`,
       } satisfies ElectronDownloadOptions,
@@ -546,7 +546,7 @@ describe("downloadElectronArtifact", { sequential: true }, () => {
       platformName: electronPlatform,
       arch: electronArch,
       version: ELECTRON_VERSION,
-      electronDownload: {
+      options: {
         unsafelyDisableChecksums: false, // same behaviour as default; key presence triggers ElectronGetOptions path
       } satisfies ElectronGetOptions,
     }

@@ -27,7 +27,7 @@ export { buildBlockMap } from "./targets/blockmap/blockmap.js"
 export { createBlockmap } from "./targets/differentialUpdateInfoBuilder.js"
 export { validateCriticalPathString } from "./targets/linux/appimage/appImageUtil.js"
 export { copyMimeTypes } from "./targets/linux/appimage/appLauncher.js"
-export { MacTargetHelper } from "./targets/mac/MacTargetHelper.js"
+export { MacTargetHelper, type PlatformType } from "./targets/mac/MacTargetHelper.js"
 export { computeArchToTargetNamesMap } from "./targets/targetFactory.js"
 export type { Defines } from "./targets/win/nsis/Defines.js"
 export { nsisEscapeString, NsisScriptGenerator } from "./targets/win/nsis/nsisScriptGenerator.js"
@@ -43,7 +43,6 @@ export {
   download,
   downloadBuilderToolset,
   downloadElectronArtifact,
-  ElectronDownloadOptions,
   ElectronGetOptions,
   getBinariesMirrorUrl,
   getCacheDirectory,

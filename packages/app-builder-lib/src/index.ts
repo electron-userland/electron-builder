@@ -14,7 +14,6 @@ export {
   BeforePackContext,
   CommonConfiguration,
   Configuration,
-  FuseOptionsV1,
   Hook,
   Hooks,
   MetadataDirectories,
@@ -34,7 +33,6 @@ export {
   TargetSpecificOptions,
 } from "./core.js"
 export { ElectronBrandingOptions, ElectronPlatformName } from "./electron/ElectronFramework.js"
-export { ElectronDownloadOptions } from "./util/electronGet.js"
 export { AppXOptions } from "./options/AppXOptions.js"
 export { CommonWindowsInstallerConfiguration } from "./options/CommonWindowsInstallerConfiguration.js"
 export { FileAssociation } from "./options/FileAssociation.js"
@@ -59,9 +57,10 @@ export { PlugDescriptor, SlotDescriptor, SnapcraftOptions } from "./options/Snap
 export { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions.js"
 export { WindowsAzureSigningConfiguration, WindowsConfiguration, WindowsSigntoolConfiguration } from "./options/winOptions.js"
 export { BuildResult, Packager } from "./packager.js"
+export { ElectronGetOptions } from "./util/electronGet.js"
 export { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi.js"
 export { CommonNsisOptions, CustomNsisBinary, NsisOptions, NsisWebOptions, PortableOptions } from "./targets/win/nsis/nsisOptions.js"
-
+export { FuseOptionsV1 } from "./options/FuseOptionsV1.js"
 export { CancellationToken, ProgressInfo } from "builder-util-runtime"
 export { PublishOptions, UploadTask } from "electron-publish"
 export { WindowsSignOptions } from "./codeSign/win/windowsCodeSign.js"

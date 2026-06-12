@@ -8,6 +8,7 @@ import { MacPackager } from "../../macPackager.js"
 import { normalizeExt } from "../../platformPackager.js"
 import { savePlistFile, parsePlistFile, PlistObject, PlistValue } from "../../util/mac/plist.js"
 import { createBrandingOpts } from "../ElectronFramework.js"
+import { MacTargetHelper, PlatformType } from "../../targets/mac/MacTargetHelper.js"
 
 function doRename(basePath: string, oldName: string, newName: string) {
   return rename(path.join(basePath, oldName), path.join(basePath, newName))
@@ -49,7 +50,7 @@ function getAvailableHelperSuffixes(
 }
 
 /** @internal */
-export async function createMacApp(packager: MacPackager, appOutDir: string, asarIntegrity: AsarIntegrity | null, isMas: boolean) {
+export async function createMacApp(packager: MacPackager, appOutDir: string, asarIntegrity: AsarIntegrity | null, targetPlatform: PlatformType) {
   const appInfo = packager.appInfo
   // Electon uses the application name (CFBundleName) to resolve helper apps
   // https://github.com/electron/electron/blob/main/shell/app/electron_main_delegate_mac.mm
@@ -100,18 +101,18 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
    * the bundleIdentifier for continuity.
    */
 
-  const defaultAppId = packager.platformOptions.appId
-  const cfBundleIdentifier = filterCFBundleIdentifier((isMas ? packager.config.mas?.appId : defaultAppId) || defaultAppId || appInfo.macBundleIdentifier)
-
-  const defaultHelperId = packager.platformOptions.helperBundleId
-  const helperBundleIdentifier = filterCFBundleIdentifier((isMas ? packager.config.mas?.helperBundleId : defaultHelperId) || defaultHelperId || `${cfBundleIdentifier}.helper`)
+  // `targetPlatform` is the authoritative 3-way flavor, so the cascaded config (incl. masDev overrides) is correct for mas-dev too.
+  const cascadedOptions = packager.getPlatformConfig(targetPlatform).config
+  const cfBundleIdentifier = filterCFBundleIdentifier(cascadedOptions?.appId || appInfo.macBundleIdentifier)
+  const helperBundleIdentifier = filterCFBundleIdentifier(cascadedOptions?.helperBundleId || `${cfBundleIdentifier}.helper`)
 
   appPlist.CFBundleIdentifier = cfBundleIdentifier
 
-  await packager.applyCommonInfo(appPlist, contentsPath)
+  await packager.applyCommonInfo(appPlist, contentsPath, cascadedOptions)
 
-  // required for electron-updater proxy
-  if (!isMas) {
+  // required for electron-updater proxy. Both mas and mas-dev are sandboxed App Store flavors, so skip ATS for either.
+  const isMasFlavor = MacTargetHelper.isMasTarget(targetPlatform)
+  if (!isMasFlavor) {
     configureLocalhostAts(appPlist)
   }
 
