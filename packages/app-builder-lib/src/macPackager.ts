@@ -1,6 +1,6 @@
 import { createRequire } from "node:module"
-import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
-import type { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
+import type { SignOptions } from "@electron/osx-sign/dist/cjs/types.js"
+import type { Identity } from "@electron/osx-sign/dist/cjs/util-identities.js"
 
 const _require = createRequire(import.meta.url)
 import {
