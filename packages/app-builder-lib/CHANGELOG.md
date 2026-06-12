@@ -1,5 +1,44 @@
 # app-builder-lib
 
+## 27.0.0-alpha.2
+
+### Patch Changes
+
+- Fix: resolve runtime ESM/CJS interop for namespace imports of CJS-only packages (`sax`, `which`, `mime`) _[`#9884`](https://github.com/electron-userland/electron-builder/pull/9884) [`7674e60`](https://github.com/electron-userland/electron-builder/commit/7674e6092645df5c7ae0a31530446efe449cd3d6) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`7674e60`](https://github.com/electron-userland/electron-builder/commit/7674e6092645df5c7ae0a31530446efe449cd3d6)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.1`
+- `electron-publish@27.0.0-alpha.2`
+- `builder-util@27.0.0-alpha.2`
+- `dmg-builder@27.0.0-alpha.2`
+- `electron-builder-squirrel-windows@27.0.0-alpha.2`
+
+</details>
+
+## 27.0.0-alpha.1
+
+### Patch Changes
+
+- Fix: resolve `plist` and `chromium-pickle-js` imports. Add additional messaging to `migrate-schema` stdout _[`#9880`](https://github.com/electron-userland/electron-builder/pull/9880) [`b79c2b2`](https://github.com/electron-userland/electron-builder/commit/b79c2b2af3ac65f3d51da7b5045ad803d58565e0) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@27.0.0-alpha.1`
+- `electron-builder-squirrel-windows@27.0.0-alpha.1`
+
+</details>
+
 ## 27.0.0-alpha.0
 
 ### Major Changes
