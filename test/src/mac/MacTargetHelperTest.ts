@@ -133,7 +133,6 @@ describe("MacTargetHelper", () => {
       process.env.APPLE_TEAM_ID = "TEAM123"
 
       expect(MacTargetHelper.getNotarizeOptions("/My.app")).toMatchObject({
-        tool: "notarytool",
         appPath: "/My.app",
         appleId: "dev@example.com",
         appleIdPassword: "xxxx-yyyy",
@@ -163,7 +162,6 @@ describe("MacTargetHelper", () => {
       process.env.APPLE_API_ISSUER = "issuer-uuid"
 
       expect(MacTargetHelper.getNotarizeOptions("/My.app")).toMatchObject({
-        tool: "notarytool",
         appPath: "/My.app",
         appleApiKey: "/path/to/key.p8",
         appleApiKeyId: "KEYID123",
@@ -180,7 +178,6 @@ describe("MacTargetHelper", () => {
       process.env.APPLE_KEYCHAIN_PROFILE = "my-profile"
 
       expect(MacTargetHelper.getNotarizeOptions("/My.app")).toMatchObject({
-        tool: "notarytool",
         appPath: "/My.app",
         keychainProfile: "my-profile",
       })
@@ -191,7 +188,6 @@ describe("MacTargetHelper", () => {
       process.env.APPLE_KEYCHAIN = "/path/to/keychain.keychain"
 
       expect(MacTargetHelper.getNotarizeOptions("/My.app")).toMatchObject({
-        tool: "notarytool",
         keychainProfile: "my-profile",
         keychain: "/path/to/keychain.keychain",
       })
