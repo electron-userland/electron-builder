@@ -1,6 +1,10 @@
 {
   "extends": "../tsconfig-base.json",
   "compilerOptions": {
+    // Test code runs under vitest (Vite/esbuild), a bundler — not Node's native ESM loader — so model
+    // it with bundler resolution rather than the inherited nodenext (which is for the shipped packages).
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "noEmit": true,
     "skipLibCheck": true,
     "paths": {

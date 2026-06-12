@@ -1,4 +1,4 @@
-import Ajv, { ErrorObject, ValidateFunction } from "ajv"
+import { Ajv, ErrorObject, ValidateFunction } from "ajv"
 
 export type PostFormatter = (formattedError: string, error: ErrorObject) => string
 
