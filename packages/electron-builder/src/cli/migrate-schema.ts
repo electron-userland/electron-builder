@@ -360,6 +360,10 @@ async function findAndLoadConfig(projectDir: string, explicitConfigPath?: string
 }
 
 function parseConfig(text: string, format: ConfigFormat): Record<string, any> {
+  if (format === "js") {
+    // Programmatic configs (JS/TS/MJS/CJS) can't be parsed; migrateSchema will bail with manual steps
+    return {}
+  }
   if (format === "yaml") {
     const yaml = _require("js-yaml") as { load(text: string): unknown }
     return yaml.load(text) as Record<string, any>
@@ -483,6 +487,7 @@ export async function migrateSchema(args: any): Promise<void> {
 
 function printManualSteps() {
   const steps = [
+    "",
     "• Remove electronCompile",
     "• Remove framework, nodeVersion, launchUiVersion",
     "• Rename npmSkipBuildFromSource → buildDependenciesFromSource",
@@ -490,14 +495,17 @@ function printManualSteps() {
     "• Rename asar-unpack / asar-unpack-dir / asar.unpack / asar.unpackDir → asarUnpack; then move asarUnpack → asar.unpack",
     "• Move disableSanityCheckAsar → asar.disableSanityCheck",
     "• Move disableAsarIntegrity → asar.disableIntegrity",
-    "• Replace asar: true with an asar object (e.g. asar: {})",
+    "• Replace asar: true with an asar object (e.g. asar: {} or omit entirely - asar is enabled by default)",
     "• Remove appImage.systemIntegration",
     "• Rename snap → snapcraft; nest options under a base-named sub-key (default base: core20)",
-    "• Replace vPrefixedTagName with tagNamePrefix on GitHub publish entries",
-    "• Move extra keys in win.azureSignOptions into an additionalMetadata object",
+    "• Replace vPrefixedTagName with tagNamePrefix on GitHub publish entries ('v' is the default prefix - just like before - but can now be customized with tagNamePrefix)",
+    "• Move extra keys in win.azureSignOptions into an 'additionalMetadata' object",
     "• Move helper-bundle-id → mac.helperBundleId",
     "• Replace squirrelWindows.noMsi with squirrelWindows.msi (inverted)",
     "• Move root-level package.json directories → build.directories",
+    "",
+    "• For programmatic configs (JS/TS/MJS/CJS), apply the above changes manually to your config object",
+    "• For additional guidance, check the migration guide: https://www.electron.build/docs/migration/v26-to-v27",
   ]
   for (const step of steps) {
     process.stdout.write(`  ${step}\n`)

@@ -1,7 +1,7 @@
 {
   "name": "app-builder-lib",
   "description": "electron-builder lib",
-  "version": "27.0.0-alpha.0",
+  "version": "27.0.0-alpha.2",
   "type": "module",
   "main": "./dist/index.js",
   "exports": {
@@ -119,8 +119,8 @@
     "toml": "^3.0.0"
   },
   "peerDependencies": {
-    "dmg-builder": "27.0.0-alpha.0",
-    "electron-builder-squirrel-windows": "27.0.0-alpha.0"
+    "dmg-builder": "27.0.0-alpha.2",
+    "electron-builder-squirrel-windows": "27.0.0-alpha.2"
   },
   "//": "electron-builder-squirrel-windows and dmg-builder added as dev dep for tests (as otherwise `require` doesn't work using Yarn 2)",
   "types": "./dist/index.d.ts",

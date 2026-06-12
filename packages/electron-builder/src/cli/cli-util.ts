@@ -14,7 +14,11 @@ export async function checkIsOutdated(): Promise<void> {
   if (pkg.version === "0.0.0-semantic-release") {
     return
   }
-  const { default: UpdateNotifier } = await import("simple-update-notifier")
+  // simple-update-notifier is CJS with `export { fn as default }`; under nodenext a dynamic import
+  // types `.default` as the namespace wrapper rather than the function, so assert the real shape.
+  const { default: UpdateNotifier } = (await import("simple-update-notifier")) as unknown as {
+    default: (args: { pkg: { name: string; version: string } }) => Promise<void>
+  }
   await UpdateNotifier({ pkg })
 }
 

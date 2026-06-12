@@ -4,7 +4,7 @@ import { spawn } from "builder-util"
 import * as fs from "fs/promises"
 import * as os from "node:os"
 import * as path from "node:path"
-import * as plist from "plist"
+import plist from "plist"
 import * as semver from "semver"
 
 export interface AssetCatalogResult {

@@ -1,7 +1,7 @@
 import * as asar from "@electron/asar"
 
 // @electron/asar v4 no longer exports its filesystem entry types from the package root, so derive them from `statFile`'s return type.
-type FilesystemEntry = ReturnType<(typeof import("@electron/asar"))["statFile"]>
+type FilesystemEntry = ReturnType<typeof asar.statFile>
 type FilesystemFileEntry = Extract<FilesystemEntry, { size: number }>
 
 export function checkFileInArchive(asarFile: string, relativeFile: string, messagePrefix: string): FilesystemEntry {
