@@ -2666,11 +2666,6 @@ packages:
     engines: {node: '>=22.12.0'}
     hasBin: true
 
-  '@electron/asar@4.2.0':
-    resolution: {integrity: sha512-npW1NW5yy8EB9XY/vEw9sUdgmq0sJEhmSBb6bqyFOAw1CSkrhvAvO6QWlW8CdIMo8VN1lkdF345l/MeW0LrY0Q==}
-    engines: {node: '>=22.12.0'}
-    hasBin: true
-
   '@electron/fuses@2.1.2':
     resolution: {integrity: sha512-x083OSf4xO9CKUKmJFYW+Egua9y/v2XOCcCIuWnM4RlpMj8xHwKICezlVN6vZyI2cZTr/ysZXRU5AKtYPJivBQ==}
     engines: {node: '>=22.12.0'}
@@ -13586,12 +13581,6 @@ snapshots:
       minimatch: 10.2.5
       plist: 3.1.0
 
-  '@electron/asar@4.2.0':
-    dependencies:
-      commander: 13.1.0
-      glob: 13.0.6
-      minimatch: 10.2.5
-
   '@electron/fuses@2.1.2': {}
 
   '@electron/get@2.0.3':
@@ -13675,7 +13664,7 @@ snapshots:
 
   '@electron/universal@3.0.4':
     dependencies:
-      '@electron/asar': 4.2.0
+      '@electron/asar': 4.1.1
       debug: 4.4.3
       plist: 3.1.0
     transitivePeerDependencies:
@@ -17936,7 +17925,7 @@ snapshots:
 
   history@4.10.1:
     dependencies:
-      '@babel/runtime': 7.29.7
+      '@babel/runtime': 7.27.0
       loose-envify: 1.4.0
       resolve-pathname: 3.0.0
       tiny-invariant: 1.3.3
