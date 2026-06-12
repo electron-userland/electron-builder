@@ -704,8 +704,8 @@ describe("WindowsSignAzureManager signFileWithDlib arch selection", () => {
   beforeEach(async () => {
     tmpDir = await mkdtemp(path.join(tmpdir(), "eb-azure-dlib-test-"))
     vi.mocked(getWindowsKitsBundle).mockImplementation(async ({ arch }) => ({
-      kit: path.join("/mock-kits", arch === Arch.ia32 ? "x86" : Arch[arch]),
-      appxAssets: "/mock-kits",
+      kit: path.resolve("/mock-kits", arch === Arch.ia32 ? "x86" : Arch[arch]),
+      appxAssets: path.resolve("/mock-kits"),
     }))
   })
 
@@ -744,21 +744,21 @@ describe("WindowsSignAzureManager signFileWithDlib arch selection", () => {
 
   test("arm64 host falls back to the x64 kit (no arm64 dlib exists)", async () => {
     const { signtool, dlib } = await signedToolPaths("arm64")
-    expect(signtool).toBe(path.join("/mock-kits", "x64", "signtool.exe"))
-    expect(dlib).toBe(path.join("/mock-kits", "x64", "Azure.CodeSigning.Dlib.dll"))
+    expect(signtool).toBe(path.resolve("/mock-kits", "x64", "signtool.exe"))
+    expect(dlib).toBe(path.resolve("/mock-kits", "x64", "Azure.CodeSigning.Dlib.dll"))
     expect(vi.mocked(getWindowsKitsBundle)).toHaveBeenCalledWith(expect.objectContaining({ arch: Arch.x64 }))
   })
 
   test("x64 host uses the x64 kit", async () => {
     const { signtool, dlib } = await signedToolPaths("x64")
-    expect(signtool).toBe(path.join("/mock-kits", "x64", "signtool.exe"))
-    expect(dlib).toBe(path.join("/mock-kits", "x64", "Azure.CodeSigning.Dlib.dll"))
+    expect(signtool).toBe(path.resolve("/mock-kits", "x64", "signtool.exe"))
+    expect(dlib).toBe(path.resolve("/mock-kits", "x64", "Azure.CodeSigning.Dlib.dll"))
   })
 
   test("ia32 host uses the x86 kit", async () => {
     const { signtool, dlib } = await signedToolPaths("ia32")
-    expect(signtool).toBe(path.join("/mock-kits", "x86", "signtool.exe"))
-    expect(dlib).toBe(path.join("/mock-kits", "x86", "Azure.CodeSigning.Dlib.dll"))
+    expect(signtool).toBe(path.resolve("/mock-kits", "x86", "signtool.exe"))
+    expect(dlib).toBe(path.resolve("/mock-kits", "x86", "Azure.CodeSigning.Dlib.dll"))
     expect(vi.mocked(getWindowsKitsBundle)).toHaveBeenCalledWith(expect.objectContaining({ arch: Arch.ia32 }))
   })
 })

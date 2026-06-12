@@ -11,7 +11,9 @@ import { WinPackager } from "../../winPackager.js"
 import { SignManager } from "./signManager.js"
 import { WindowsSignOptions } from "./windowsCodeSign.js"
 import { CertificateFromStoreInfo, FileCodeSigningInfo } from "./windowsSignToolManager.js"
+import semver from "semver"
 
+const minimumWinCodeSignVersionForDlib = "1.2.0"
 export class WindowsSignAzureManager implements SignManager {
   private readonly signing: WindowsAzureSigningConfig
 
@@ -37,8 +39,12 @@ export class WindowsSignAzureManager implements SignManager {
   }
 
   private isLegacyMode(): boolean {
-    const wcs = this.packager.config.toolsets?.winCodeSign
-    return wcs == null || wcs === "0.0.0"
+    const { winCodeSign: wcs = null } = this.packager.config.toolsets ?? {}
+    if (typeof wcs === "string" && semver.gte(wcs, minimumWinCodeSignVersionForDlib)) {
+      return false
+    }
+    // assume custom toolsets (non-null) have a modern Azure signing implementation; the legacy PowerShell fallback is only for the built-in toolset with old versions.
+    return wcs == null
   }
 
   async initialize(): Promise<void> {
@@ -48,8 +54,8 @@ export class WindowsSignAzureManager implements SignManager {
 
     log.warn(
       null,
-      "Azure Trusted Signing: falling back to legacy PowerShell (Invoke-TrustedSigning) because toolsets.winCodeSign is not set to 1.x. " +
-        'Set `toolsets.winCodeSign: "1.1.0"` in your electron-builder config to use the faster signtool /dlib integration.'
+      `Azure Trusted Signing: falling back to legacy PowerShell (Invoke-TrustedSigning) because toolsets.winCodeSign is not set to >=${minimumWinCodeSignVersionForDlib}. ` +
+        `Set \`toolsets.winCodeSign: "${minimumWinCodeSignVersionForDlib}"\` in your electron-builder config to use the faster signtool /dlib integration.`
     )
 
     const vm = await this.packager.vm.value
