@@ -5054,7 +5054,69 @@ exports[`linux install > compression: maximum > rpm - compression: maximum - com
 }
 `;
 
+exports[`linux install > compression: maximum > rpm - compression: maximum - compressor: gzip 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "path": "TestApp.rpm",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
 exports[`linux install > compression: maximum > rpm - compression: maximum - compressor: xz 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "path": "TestApp.rpm",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux install > compression: maximum > rpm - compression: maximum - compressor: xzmt 1`] = `
 {
   "linux": [
     {
@@ -5645,7 +5707,69 @@ exports[`linux install > compression: normal > rpm - compression: normal - compr
 }
 `;
 
+exports[`linux install > compression: normal > rpm - compression: normal - compressor: gzip 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "path": "TestApp.rpm",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
 exports[`linux install > compression: normal > rpm - compression: normal - compressor: xz 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "path": "TestApp.rpm",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux install > compression: normal > rpm - compression: normal - compressor: xzmt 1`] = `
 {
   "linux": [
     {
@@ -6236,7 +6360,69 @@ exports[`linux install > compression: store > rpm - compression: store - compres
 }
 `;
 
+exports[`linux install > compression: store > rpm - compression: store - compressor: gzip 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "path": "TestApp.rpm",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
 exports[`linux install > compression: store > rpm - compression: store - compressor: xz 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "path": "TestApp.rpm",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux install > compression: store > rpm - compression: store - compressor: xzmt 1`] = `
 {
   "linux": [
     {

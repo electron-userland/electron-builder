@@ -80,6 +80,22 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     // land at `<root>/node_modules/A/node_modules/B` — downward BFS is needed to find them.
     const skipDownwardSearch = !(await this.isHoisted.value)
     const promise = (async (): Promise<Package | null> => {
+      // Phase 1: find a version that SATISFIES requiredRange, trying the dep's own location
+      // first, then the workspace root. The root pass forces downward BFS on so that a
+      // version-conflicted copy nested at `<root>/node_modules/A/node_modules/B` is found even
+      // when the flat-store heuristic would otherwise skip it. Crucially, neither pass accepts
+      // an out-of-range override here — so a wrong-version copy reachable via upward search from
+      // `parentPath` (e.g. a hoisted top-level dep) can't shadow the correct nested copy under
+      // root. Without this, a package that pnpm deduped to a peer's node_modules resolves its
+      // transitive deps to the wrong hoisted version (see jsonfile under two fs-extra majors).
+      const satisfying =
+        (parentPath ? await this.cache.locatePackageVersion({ pkgName, parentDir: parentPath, requiredRange, skipDownwardSearch, skipOverrideFallback: true }) : null) ??
+        (await this.cache.locatePackageVersion({ pkgName, parentDir: this.rootDir, requiredRange, skipDownwardSearch: false, skipOverrideFallback: true }))
+      if (satisfying) {
+        return satisfying
+      }
+      // Phase 2: no version satisfies requiredRange (package-manager override, or no range
+      // given). Fall back to the original dep-then-root order, now allowing override versions.
       const fromDep = parentPath ? await this.cache.locatePackageVersion({ pkgName, parentDir: parentPath, requiredRange, skipDownwardSearch }) : null
       if (fromDep) {
         return fromDep
@@ -185,9 +201,6 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
    * from the package's own node_modules first (where pnpm placed them).
    */
   private async visitDep(key: string, value: PnpmDependency): Promise<void> {
-    if ((value?.dedupedDependenciesCount ?? 0) > 0) {
-      return
-    }
     const id = `${key}@${value.version}`
     // The pnpm list output can include the same `name@version` thousands of times across a
     // deep workspace; without this guard we re-resolve and re-recurse each occurrence.
@@ -196,15 +209,18 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     }
     this.collectedDeps.add(id)
     const pkg = await this.locateFromDepOrRoot(key, value.path, value.version)
-    this.allDependencies.set(id, { ...value, path: pkg?.packageDir ?? value.path })
+    const resolvedPath = pkg?.packageDir ?? value.path
+    this.allDependencies.set(id, { ...value, path: resolvedPath })
 
     const treeDepsCount = Object.keys({ ...(value.dependencies || {}), ...(value.optionalDependencies || {}) }).length
     if (treeDepsCount === 0 && pkg?.packageJson) {
-      // pnpm list omits sub-deps for link: packages and for synthetic entries we create when
-      // traversing their transitive deps. Use the package.json to discover what to include.
-      const pkgDeps = { ...(pkg.packageJson.dependencies || {}), ...(pkg.packageJson.optionalDependencies || {}) }
-      for (const depName of Object.keys(pkgDeps)) {
-        const resolved = await this.locateFromDepOrRoot(depName, pkg.packageDir, undefined)
+      // pnpm list omits sub-deps for link: packages and for entries where the reported path
+      // doesn't expand transitive deps (e.g. a link: package's nested dep). Use the on-disk
+      // package.json to discover what to include, and pass the declared version range so that
+      // resolution skips wrong-version hoisted packages and finds the correct nested copy.
+      const pkgDepsDecl = { ...(pkg.packageJson.dependencies || {}), ...(pkg.packageJson.optionalDependencies || {}) }
+      for (const [depName, depRange] of Object.entries(pkgDepsDecl)) {
+        const resolved = await this.locateFromDepOrRoot(depName, pkg.packageDir, typeof depRange === "string" ? depRange : undefined)
         if (!resolved) {
           continue
         }

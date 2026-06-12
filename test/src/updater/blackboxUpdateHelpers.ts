@@ -112,7 +112,9 @@ export async function doBuild(
         packed,
         packageManager: PM.PNPM,
         projectDirCreated: async (projectDir, _tmpDir, runtimeEnv) => {
-          await outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted")
+          // Write .npmrc to app/ — installDependencies runs pnpm with cwd=appDir, so pnpm 10
+          // reads this file and uses hoisted layout for the main install.
+          await outputFile(path.join(projectDir, "app", ".npmrc"), "node-linker=hoisted")
 
           await modifyPackageJson(
             projectDir,
@@ -148,13 +150,11 @@ export async function doBuild(
             },
             false
           )
-          // pnpm 11 no longer reads `node-linker` from .npmrc (it moved to `nodeLinker` in
-          // pnpm-workspace.yaml, but writing that file would make the project a workspace root and
-          // break collector detection). Force the hoisted layout via the install-time config flag,
-          // which works on both pnpm 10 and 11. Without it pnpm 11 produces an isolated virtual
-          // store (symlinks into .pnpm) where the transitive deps of link: packages — e.g.
-          // fs-extra's `universalify` — get dropped during bundling and the app crashes at runtime.
-          await spawn("pnpm", ["install", "--config.node-linker=hoisted"], { cwd: projectDir, stdio: "inherit", env: runtimeEnv })
+          // Return a post-install hook so the explicit flag runs AFTER installDependencies.
+          // pnpm 11 ignores node-linker from .npmrc; the CLI flag here handles that case.
+          return async () => {
+            await spawn("pnpm", ["install", "--config.node-linker=hoisted"], { cwd: path.join(projectDir, "app"), stdio: "inherit", env: runtimeEnv })
+          }
         },
       }
     )
