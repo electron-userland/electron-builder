@@ -174,7 +174,12 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     }
 
     const packageName = tree.name || tree.from
-    const { packageJson } = (await this.locateFromDepOrRoot(packageName, tree.path, tree.version)) || {}
+    const { packageJson: locatedJson } = (await this.locateFromDepOrRoot(packageName, tree.path, tree.version)) || {}
+    // Fallback: the app root package is never installed inside a node_modules directory, so
+    // the name-based lookup above returns null. Reading directly from tree.path ensures that
+    // link: dependencies — which some pnpm versions omit from `pnpm list --prod` output —
+    // still appear in `all` and therefore reach the production graph.
+    const packageJson = locatedJson ?? (tree.path ? ((await _fsExtra.readJson(path.join(tree.path, "package.json")).catch(() => null)) as PackageJson | null) : null)
 
     const all = packageJson ? { ...packageJson.dependencies, ...packageJson.optionalDependencies } : { ...tree.dependencies, ...tree.optionalDependencies }
     const optional = packageJson ? { ...packageJson.optionalDependencies } : {}
