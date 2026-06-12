@@ -29,7 +29,7 @@ describe.ifEnv(process.platform === "darwin" && process.env.CSC_KEY_PASSWORD != 
           mac: {
             target: ["mas"],
           },
-          mas: entitlementsConfig,
+          mas: { sign: entitlementsConfig },
         },
       }),
       {
@@ -55,7 +55,7 @@ describe.ifEnv(process.platform === "darwin" && process.env.CSC_KEY_PASSWORD != 
         targets,
         platformPackagerFactory: (packager, _platform) => (platformPackager = new CheckingMacPackager(packager)),
         config: {
-          mac: entitlementsConfig,
+          mac: { sign: entitlementsConfig },
         },
       }),
       {

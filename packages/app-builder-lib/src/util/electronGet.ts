@@ -226,9 +226,17 @@ export async function extractArchive(file: string, dir: string) {
 let proxyInitialized = false
 function initializeProxyOnce(): void {
   if (!proxyInitialized) {
-    get.initializeProxy()
+    reinitializeProxy()
     proxyInitialized = true
   }
+}
+
+/**
+ * Forces undici's global proxy dispatcher to re-read the current HTTP(S)_PROXY / NO_PROXY env vars,
+ * bypassing the once-guard in initializeProxyOnce(). Exported for integration testing only.
+ */
+export function reinitializeProxy(): void {
+  get.initializeProxy()
 }
 
 async function downloadArtifactToFile(config: ElectronArtifactDetails, label: string): Promise<string> {
