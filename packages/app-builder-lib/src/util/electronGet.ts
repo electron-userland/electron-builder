@@ -265,6 +265,15 @@ function initializeProxyOnce(): void {
   }
 }
 
+/**
+ * Forces undici's global proxy dispatcher to re-read the current HTTP(S)_PROXY / NO_PROXY env vars,
+ * bypassing the once-guard in initializeProxyOnce(). Exported for integration testing only.
+ * @internal
+ */
+export function reinitializeProxy(): void {
+  get.initializeProxy()
+}
+
 async function downloadArtifactToFile(config: DownloadArtifactOptions, label: string): Promise<string> {
   // Serialize concurrent downloads of the same artifact across vitest workers to prevent @electron/get's
   // non-atomic putFileInCache (remove + move) from racing with a concurrent reader.

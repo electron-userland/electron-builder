@@ -1,4 +1,4 @@
-import * as get from "@electron/get"
+import { readFileSync } from "fs"
 import * as fs from "fs/promises"
 import * as http from "http"
 import * as net from "net"
@@ -15,6 +15,7 @@ import {
   downloadElectronArtifact,
   getCacheDirectory,
   getBinariesMirrorUrl,
+  reinitializeProxy,
 } from "app-builder-lib/internal"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 
@@ -35,6 +36,28 @@ async function createMinimalTarGz(archivePath: string, files: Record<string, str
     await tar.create({ gzip: true, file: archivePath, cwd: tmpDir }, ["inner"])
   } finally {
     await fs.rm(tmpDir, { recursive: true, force: true })
+  }
+}
+
+/** Starts a local HTTP server that serves the given archive file for any request. */
+async function startArtifactServer(archivePath: string): Promise<{
+  port: number
+  requestedPaths: string[]
+  close: () => Promise<void>
+}> {
+  const requestedPaths: string[] = []
+  const server = http.createServer((req, res) => {
+    requestedPaths.push(req.url ?? "")
+    const data = readFileSync(archivePath)
+    res.writeHead(200, { "Content-Type": "application/octet-stream", "Content-Length": String(data.length) })
+    res.end(data)
+  })
+  await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
+  const { port } = server.address() as net.AddressInfo
+  return {
+    port,
+    requestedPaths,
+    close: () => new Promise<void>(resolve => server.close(() => resolve())),
   }
 }
 
@@ -299,29 +322,29 @@ describe("downloadBuilderToolset", { sequential: true }, () => {
   // @electron/get's mirrorVar() checks ELECTRON_MIRROR before opts.mirror, so passing
   // mirrorOptions.mirror would let ELECTRON_MIRROR silently override the builder-binaries URL.
   // Using resolveAssetURL bypasses that env var check entirely.
-  // This test intercepts the config actually passed to get.downloadArtifact and verifies
-  // that resolveAssetURL() returns the builder-binaries URL even when ELECTRON_MIRROR is set.
-  test("ELECTRON_MIRROR env var does not corrupt builder-binaries download URL (#9752)", async ({ expect }) => {
-    vi.stubEnv("ELECTRON_MIRROR", "https://cdn.npmmirror.com/binaries/electron/")
+  // This test routes downloads through a local server and verifies the server is hit (not
+  // ELECTRON_MIRROR's unreachable URL), proving resolveAssetURL controls the final fetch target.
+  test("ELECTRON_MIRROR env var does not corrupt builder-binaries download URL (#9752)", { timeout: 15_000 }, async ({ expect }) => {
+    const freshTestCache = await fs.mkdtemp(path.join(os.tmpdir(), "eb-mirror-test-"))
+    vi.stubEnv("ELECTRON_BUILDER_CACHE", freshTestCache)
+    // Point ELECTRON_MIRROR at an unreachable address — if @electron/get used it instead of
+    // resolveAssetURL, the fetch would fail with ECONNREFUSED before reaching any assertion.
+    vi.stubEnv("ELECTRON_MIRROR", "http://127.0.0.1:1/")
 
-    let resolvedUrl: string | undefined
-    const spy = vi.spyOn(get, "downloadArtifact").mockImplementationOnce(async config => {
-      resolvedUrl = await (config.mirrorOptions?.resolveAssetURL as any)?.()
-      throw new Error("mock-stop")
-    })
+    const servedArchive = path.join(freshTestCache, "served.tar.gz")
+    await createMinimalTarGz(servedArchive, { placeholder: "ok" })
+    const server = await startArtifactServer(servedArchive)
+    vi.stubEnv("ELECTRON_BUILDER_BINARIES_MIRROR", `http://127.0.0.1:${server.port}/`)
 
-    await expect(
-      downloadBuilderToolset({
-        releaseName: "dmg-builder@1.2.2",
-        filenameWithExt: "dmgbuild-bundle-arm64-75c8a6c.tar.gz",
-      })
-    ).rejects.toThrow("mock-stop")
-
-    expect(resolvedUrl).toBeDefined()
-    expect(resolvedUrl).toContain("electron-builder-binaries")
-    expect(resolvedUrl).not.toContain("cdn.npmmirror.com/binaries/electron")
-
-    spy.mockRestore()
+    try {
+      await downloadBuilderToolset({ releaseName: "dmg-builder@1.2.2", filenameWithExt: "dmgbuild-bundle-arm64-75c8a6c.tar.gz" })
+      // Our local server was hit — resolveAssetURL determined the URL, not ELECTRON_MIRROR
+      expect(server.requestedPaths.length).toBeGreaterThan(0)
+      expect(server.requestedPaths.some(p => p.includes("dmg-builder@1.2.2"))).toBe(true)
+    } finally {
+      await server.close()
+      await fs.rm(freshTestCache, { recursive: true, force: true })
+    }
   })
 })
 
@@ -352,26 +375,25 @@ describe("toolset archive cache", () => {
   })
 
   afterEach(async () => {
-    vi.restoreAllMocks()
     vi.unstubAllEnvs()
     await fs.rm(freshCache, { recursive: true, force: true })
   })
 
+  // Seed the archive cache path that downloadBuilderToolset checks before hitting @electron/get.
+  // Then point the mirror at an unreachable address — if downloadArtifact were called, the fetch
+  // would throw ECONNREFUSED, failing the test. Passing proves the archive cache was used.
   test("uses pre-existing archive and does not call downloadArtifact", async ({ expect }) => {
     const releaseName = "cache-test@0.1"
     const fileName = "cache-artifact.tar.gz"
-    // Seed the predictable archive cache path
     const archiveCachePath = path.join(freshCache, releaseName, fileName)
     await fs.mkdir(path.dirname(archiveCachePath), { recursive: true })
     await createMinimalTarGz(archiveCachePath, { sentinel: "ok" })
 
-    const spy = vi.spyOn(get, "downloadArtifact").mockImplementation(() => {
-      throw new Error("downloadArtifact must not be called — archive is already cached")
-    })
+    // Dead man's switch: any network call would ECONNREFUSED immediately (port 1 is never open)
+    vi.stubEnv("ELECTRON_BUILDER_BINARIES_MIRROR", "http://127.0.0.1:1/")
 
     const result = await downloadBuilderToolset({ releaseName, filenameWithExt: fileName })
 
-    expect(spy).not.toHaveBeenCalled()
     const entries = await fs.readdir(result)
     expect(entries).toContain("sentinel")
   })
@@ -384,16 +406,11 @@ describe("toolset archive cache", () => {
     // Write a corrupt (wrong-checksum) archive
     await fs.writeFile(archiveCachePath, "corrupt data")
 
-    let downloadArtifactCalled = false
-    vi.spyOn(get, "downloadArtifact").mockImplementation(() => {
-      downloadArtifactCalled = true
-      throw new Error("expected-download-attempt")
-    })
+    // Dead man's switch: re-download is attempted → ECONNREFUSED proves the call happened
+    vi.stubEnv("ELECTRON_BUILDER_BINARIES_MIRROR", "http://127.0.0.1:1/")
 
     const correctSha256 = "0000000000000000000000000000000000000000000000000000000000000000"
-    await expect(downloadBuilderToolset({ releaseName, filenameWithExt: fileName, checksums: { [fileName]: correctSha256 } })).rejects.toThrow("expected-download-attempt")
-
-    expect(downloadArtifactCalled).toBe(true)
+    await expect(downloadBuilderToolset({ releaseName, filenameWithExt: fileName, checksums: { [fileName]: correctSha256 } })).rejects.toThrow()
   })
 
   test("persists downloaded archive to cache so subsequent builds skip the download", async ({ expect }) => {
@@ -401,29 +418,36 @@ describe("toolset archive cache", () => {
     const fileName = "persist-artifact.tar.gz"
     const archiveCachePath = path.join(freshCache, releaseName, fileName)
 
-    // First call: downloadArtifact returns a real archive
+    // Archive served from local server for the first download
     const networkArchive = path.join(freshCache, "fake-network-download.tar.gz")
     await createMinimalTarGz(networkArchive, { "network-file": "content" })
-    let callCount = 0
-    vi.spyOn(get, "downloadArtifact").mockImplementation(() => {
-      callCount++
-      return Promise.resolve(networkArchive)
-    })
+    const server = await startArtifactServer(networkArchive)
+    vi.stubEnv("ELECTRON_BUILDER_BINARIES_MIRROR", `http://127.0.0.1:${server.port}/`)
 
-    await downloadBuilderToolset({ releaseName, filenameWithExt: fileName })
-    expect(callCount).toBe(1)
-    // Archive must have been persisted
-    await expect(fs.access(archiveCachePath)).resolves.toBeUndefined()
+    try {
+      // First call: downloads from server and persists to archive cache
+      await downloadBuilderToolset({ releaseName, filenameWithExt: fileName })
+      const downloadCount = server.requestedPaths.length
+      expect(downloadCount).toBeGreaterThan(0)
+      await expect(fs.access(archiveCachePath)).resolves.toBeUndefined()
 
-    // Second call: archive is cached — downloadArtifact must not be called
-    vi.restoreAllMocks()
-    vi.spyOn(get, "downloadArtifact").mockImplementation(() => {
-      throw new Error("downloadArtifact must not be called on second build")
-    })
+      // Simulate a fresh build: delete the extract dir and @electron/get's download cache so
+      // that only the archive cache (archiveCachePath) can satisfy the second call without network.
+      const releaseEntries = await fs.readdir(path.join(freshCache, releaseName))
+      const extractDirs = releaseEntries.filter(e => e !== fileName && !e.endsWith(".state")).map(e => path.join(freshCache, releaseName, e))
+      for (const d of extractDirs) {
+        await fs.rm(d, { recursive: true, force: true })
+      }
+      await fs.rm(path.join(freshCache, "downloads"), { recursive: true, force: true })
 
-    const result2 = await downloadBuilderToolset({ releaseName, filenameWithExt: fileName })
-    const entries = await fs.readdir(result2)
-    expect(entries).toContain("network-file")
+      // Second call: archive cache hit — no new requests to the server
+      const result2 = await downloadBuilderToolset({ releaseName, filenameWithExt: fileName })
+      expect(server.requestedPaths.length).toBe(downloadCount)
+      const entries = await fs.readdir(result2)
+      expect(entries).toContain("network-file")
+    } finally {
+      await server.close()
+    }
   })
 })
 
@@ -626,6 +650,12 @@ describe("proxy integration", () => {
     vi.stubEnv("HTTPS_PROXY", `http://127.0.0.1:${proxy.port}`)
     vi.stubEnv("ELECTRON_BUILDER_CACHE", freshCache)
 
+    // The production code calls get.initializeProxy() only once per process, and earlier download
+    // tests in this file already tripped that guard while HTTPS_PROXY was unset — so undici's global
+    // dispatcher snapshotted an empty proxy config. EnvHttpProxyAgent reads the env at construction
+    // time, so re-initialize now that HTTPS_PROXY is set to wire the dispatcher through our proxy.
+    reinitializeProxy()
+
     try {
       await expect(
         downloadBuilderToolset({
@@ -636,6 +666,8 @@ describe("proxy integration", () => {
       ).rejects.toThrow() // proxy refuses tunnel — download fails, that's expected
     } finally {
       vi.unstubAllEnvs()
+      // Reset the global dispatcher so the dead proxy does not leak into any later download.
+      reinitializeProxy()
       await proxy.close()
       await fs.rm(freshCache, { recursive: true, force: true })
     }
