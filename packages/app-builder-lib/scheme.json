@@ -8459,15 +8459,29 @@
           "default": "asInvoker",
           "description": "The [security level](https://msdn.microsoft.com/en-us/library/6ad1fshk.aspx#Anchor_9) at which the application requests to be executed.\nCannot be specified per target, allowed only in the `win`."
         },
-        "signAndEditExecutable": {
-          "default": true,
-          "description": "Whether to sign and add metadata to executable via [`resedit`](https://www.npmjs.com/package/resedit).\nMetadata includes information about the app name/description/version, publisher, copyright, etc.\nThis property also is responsible for adding the app icon and setting execution level.\nSet to `false` only if you need to fully disable resedit-based resource editing.\nTo skip only code signing while keeping resource editing, use `signExecutable: false` instead.",
-          "type": "boolean"
-        },
-        "signExecutable": {
-          "default": true,
-          "description": "Whether to sign Windows executables and any additional files matched by `signExts`.\nSet to `false` to skip Windows code signing while still editing executable resources\n(icon, metadata, etc. via [`resedit`](https://www.npmjs.com/package/resedit)).\nThis option is not limited to the main executable edit/sign flow and can also affect\nsigning of Windows installers or other artifacts that use the standard signing path.",
-          "type": "boolean"
+        "sign": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/WindowsSigntoolSigningConfig"
+            },
+            {
+              "$ref": "#/definitions/WindowsHsmSigningConfig"
+            },
+            {
+              "$ref": "#/definitions/WindowsPkcs11SigningConfig"
+            },
+            {
+              "$ref": "#/definitions/WindowsAzureSigningConfig"
+            },
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Code signing configuration. Set to `false` or `null` to disable Windows code signing\n(executable resources such as the icon and metadata are still edited). Leave unset to\nsign using credentials discovered from the environment (e.g. `WIN_CSC_LINK`). Otherwise\nprovide exactly one of the following signing modes:\n\n- `{ type: \"signtool\", ... }` — Sign with a local certificate file (.pfx/.p12) or a\n  certificate from the Windows certificate store.\n- `{ type: \"hsm\", ... }` — Sign using a Hardware Security Module (HSM) or FIPS-compliant\n  hardware token via signtool's `/csp` (cryptographic service provider) and `/kc` (key\n  container) flags. Requires `toolsets.winCodeSign: \"1.x\"`. Windows-only.\n- `{ type: \"pkcs11\", ... }` — Sign using a PKCS#11 hardware token via osslsigncode.\n  Available on macOS and Linux CI without a Windows VM.\n- `{ type: \"azure\", ... }` — Sign via Azure Trusted Signing (cloud service). Requires\n  Azure Entra ID environment variables for authentication."
         },
         "signExts": {
           "anyOf": [
@@ -8483,26 +8497,6 @@
           ],
           "default": null,
           "description": "Explicit file name/extensions (`str.endsWith`) to also sign. Advanced option.\nSupports negative patterns, e.g. example that excludes `.appx` files: `[\"somefilename\", \".dll\", \"!.appx\"]`."
-        },
-        "signing": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/WindowsSigntoolSigningConfig"
-            },
-            {
-              "$ref": "#/definitions/WindowsHsmSigningConfig"
-            },
-            {
-              "$ref": "#/definitions/WindowsPkcs11SigningConfig"
-            },
-            {
-              "$ref": "#/definitions/WindowsAzureSigningConfig"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Code signing configuration. Provide exactly one of the following signing modes:\n\n- `{ type: \"signtool\", ... }` — Sign with a local certificate file (.pfx/.p12) or a\n  certificate from the Windows certificate store.\n- `{ type: \"hsm\", ... }` — Sign using a Hardware Security Module (HSM) or FIPS-compliant\n  hardware token via signtool's `/csp` (cryptographic service provider) and `/kc` (key\n  container) flags. Requires `toolsets.winCodeSign: \"1.x\"`. Windows-only.\n- `{ type: \"pkcs11\", ... }` — Sign using a PKCS#11 hardware token via osslsigncode.\n  Available on macOS and Linux CI without a Windows VM.\n- `{ type: \"azure\", ... }` — Sign via Azure Trusted Signing (cloud service). Requires\n  Azure Entra ID environment variables for authentication."
         },
         "target": {
           "anyOf": [

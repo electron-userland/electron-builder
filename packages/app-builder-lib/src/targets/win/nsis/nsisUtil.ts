@@ -3,6 +3,7 @@ import { PackageFileInfo } from "builder-util-runtime"
 import * as fs from "fs/promises"
 import * as path from "path"
 import * as zlib from "zlib"
+import { isWindowsSigningDisabled } from "../../../options/winOptions.js"
 import { getNsisElevatePath } from "../../../toolsets/nsis.js"
 import { getTemplatePath } from "../../../util/pathManager.js"
 import { NsisTarget } from "./NsisTarget.js"
@@ -89,8 +90,7 @@ export class CopyElevateHelper {
     promise = getNsisElevatePath(target.packager.config.toolsets?.nsis, target.packager.buildResourcesDir).then(elevatePath => {
       const outFile = path.join(appOutDir, "resources", "elevate.exe")
       const promise = copyFile(elevatePath, outFile, false)
-      const { signAndEditExecutable, signExecutable } = target.packager.platformOptions
-      if (signAndEditExecutable !== false && signExecutable !== false) {
+      if (!isWindowsSigningDisabled(target.packager.platformOptions)) {
         return promise.then(() => target.packager.signIf(outFile))
       }
       return promise

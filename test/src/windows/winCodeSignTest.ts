@@ -1,6 +1,6 @@
 import { parseDn } from "builder-util-runtime"
 import { ToolInfo, WinPackager, WindowsSignToolManager } from "app-builder-lib"
-import { WindowsSigntoolSigningConfig } from "app-builder-lib/out/options/winOptions"
+import { WindowsSigntoolSigningConfig } from "app-builder-lib/src/options/winOptions"
 import { Configuration, CustomWindowsSign, ToolsetConfig } from "app-builder-lib/internal"
 import { AsyncTaskManager } from "builder-util"
 import { Arch, DIR_TARGET, Platform, Target } from "electron-builder"
@@ -24,7 +24,7 @@ const baseSigningConfig: WindowsSigntoolSigningConfig = {
 const signtoolBaseConfig: Configuration = {
   toolsets: { winCodeSign: "1.1.0" },
   win: {
-    signing: baseSigningConfig,
+    sign: baseSigningConfig,
   },
 }
 
@@ -125,7 +125,7 @@ for (const winCodeSign of winCodeSignVersions) {
             winCodeSign,
           },
           win: {
-            signing: {
+            sign: {
               type: "signtool" as const,
               certificatePassword: "pass",
               certificateFile: "secretFile",
@@ -162,7 +162,7 @@ for (const winCodeSign of winCodeSignVersions) {
             toolsets: { winCodeSign },
             win: {
               forceCodeSigning: true,
-              signing: {
+              sign: {
                 type: "signtool" as const,
                 certificatePassword: "pass",
                 certificateFile: "secretFile",
@@ -197,7 +197,7 @@ for (const winCodeSign of winCodeSignVersions) {
             win: {
               // to be sure that sign code will be executed
               forceCodeSigning: true,
-              signing: {
+              sign: {
                 type: "signtool" as const,
                 sign: async () => {
                   called = true
@@ -254,7 +254,7 @@ for (const winCodeSign of winCodeSignVersions) {
               winCodeSign,
             },
             win: {
-              signing: {
+              sign: {
                 type: "azure" as const,
                 publisherName: "test",
                 endpoint: "https://weu.codesigning.azure.net/",
@@ -305,7 +305,7 @@ describe("signing queue", () => {
         platformPackagerFactory: (info, _platform) => new PackagerClass(info),
         config: {
           ...signtoolBaseConfig,
-          win: { signing: { ...baseSigningConfig, sign } },
+          win: { sign: { ...baseSigningConfig, sign } },
         },
       })
 
@@ -339,7 +339,7 @@ describe("signing queue", () => {
         platformPackagerFactory: (info, _platform) => new PackagerClass(info),
         config: {
           ...signtoolBaseConfig,
-          win: { signing: { ...baseSigningConfig, sign } },
+          win: { sign: { ...baseSigningConfig, sign } },
         },
       })
 
@@ -375,7 +375,7 @@ describe("signing queue", () => {
         config: {
           ...signtoolBaseConfig,
           win: {
-            signing: { ...baseSigningConfig, sign },
+            sign: { ...baseSigningConfig, sign },
             forceCodeSigning: true,
           },
         },
@@ -402,7 +402,7 @@ describe("signing queue", () => {
           config: {
             ...signtoolBaseConfig,
             win: {
-              signing: { ...baseSigningConfig, sign },
+              sign: { ...baseSigningConfig, sign },
               forceCodeSigning: true,
             },
           },
@@ -411,5 +411,36 @@ describe("signing queue", () => {
         error => expect(error.message).toContain("transient signing error")
       )
     })
+  })
+})
+
+describe("sign: false (signing disabled)", () => {
+  test("signIf skips every file even when a cert is discoverable via env", async ({ expect }) => {
+    const signResults: boolean[] = []
+
+    class SignDisabledTestPackager extends WinPackager {
+      async pack(outDir: string, _arch: Arch, _targets: Array<Target>, _taskManager: AsyncTaskManager): Promise<void> {
+        for (const f of ["file1.exe", "file2.exe", "file3.exe"].map(n => path.join(outDir, n))) {
+          signResults.push(await this.signIf(f))
+        }
+      }
+
+      packageInDistributableFormat(_appOutDir: string, _arch: Arch, _targets: Array<Target>, _taskManager: AsyncTaskManager): void {}
+    }
+
+    await app(
+      expect,
+      {
+        targets: Platform.WINDOWS.createTarget(DIR_TARGET),
+        platformPackagerFactory: (info, _platform) => new SignDisabledTestPackager(info),
+        config: {
+          win: { sign: false },
+        },
+      },
+      // signedWin sets WIN_CSC_LINK, so a cert is discoverable — sign: false must still short-circuit
+      { signedWin: true }
+    )
+
+    expect(signResults).toEqual([false, false, false])
   })
 })

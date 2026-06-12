@@ -1,9 +1,9 @@
 import { Arch, InvalidConfigurationError, log } from "builder-util"
 import { asArray, MemoLazy } from "builder-util-runtime"
-import { writeJson } from "fs-extra"
+import _fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { WindowsAzureSigningConfig, WindowsConfiguration } from "../../options/winOptions.js"
+import { resolveWindowsSigningConfiguration, WindowsAzureSigningConfig, WindowsConfiguration } from "../../options/winOptions.js"
 import { getWindowsKitsBundle } from "../../toolsets/winCodeSign.js"
 import { VmManager } from "../../vm/vm.js"
 import { WineVmManager } from "../../vm/WineVm.js"
@@ -29,7 +29,7 @@ export class WindowsSignAzureManager implements SignManager {
   })
 
   constructor(private readonly packager: WinPackager) {
-    const signing = packager.platformOptions.signing
+    const signing = resolveWindowsSigningConfiguration(packager.platformOptions)
     if (signing?.type !== "azure") {
       throw new Error(`WindowsSignAzureManager requires signing.type = "azure", got: ${signing?.type}`)
     }
@@ -67,7 +67,7 @@ export class WindowsSignAzureManager implements SignManager {
 
     // Temp file registered with packager's TmpDir — cleaned up automatically after build.
     const metadataPath = await this.packager.getTempFile(".json")
-    await writeJson(metadataPath, {
+    await _fsExtra.writeJson(metadataPath, {
       Endpoint: signing.endpoint,
       CodeSigningAccountName: signing.codeSigningAccountName,
       CertificateProfileName: signing.certificateProfileName,

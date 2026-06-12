@@ -1,7 +1,7 @@
 import { MemoLazy, Nullish } from "builder-util-runtime"
 import { Lazy } from "lazy-val"
 import { Target } from "../core.js"
-import { WindowsConfiguration } from "../options/winOptions.js"
+import { resolveWindowsSigningConfiguration, WindowsConfiguration } from "../options/winOptions.js"
 import type { WinPackager } from "../winPackager.js"
 import { HsmSignManager } from "./hsmSignManager.js"
 import { Pkcs11SignManager } from "./pkcs11SignManager.js"
@@ -18,7 +18,7 @@ export interface SignManager {
 }
 
 export function createSignManager(packager: WinPackager): SignManager {
-  switch (packager.platformOptions.signing?.type) {
+  switch (resolveWindowsSigningConfiguration(packager.platformOptions)?.type) {
     case "azure":
       return new WindowsSignAzureManager(packager)
     case "hsm":

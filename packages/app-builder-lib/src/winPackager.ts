@@ -12,7 +12,7 @@ import { signWindows, WindowsSignOptions } from "./codeSign/win/windowsCodeSign.
 import { FileCodeSigningInfo } from "./codeSign/signtoolBaseSignManager.js"
 import { AfterPackContext } from "./configuration.js"
 import { DIR_TARGET, Platform, Target } from "./core.js"
-import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOptions.js"
+import { isWindowsSigningDisabled, RequestedExecutionLevel, resolveWindowsSigningConfiguration, WindowsConfiguration } from "./options/winOptions.js"
 import { Packager } from "./packager.js"
 import { chooseNotNull, PlatformPackager } from "./platformPackager.js"
 import AppXTarget from "./targets/win/AppxTarget.js"
@@ -115,7 +115,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   }
 
   doGetCscPassword(): string | Nullish {
-    const signing = this.platformSpecificBuildOptions.signing
+    const signing = resolveWindowsSigningConfiguration(this.platformSpecificBuildOptions)
     const certPassword = signing?.type === "signtool" ? signing.certificatePassword : null
     return chooseNotNull(chooseNotNull(certPassword, process.env.WIN_CSC_KEY_PASSWORD), super.doGetCscPassword())
   }
@@ -126,8 +126,8 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       log.info(logFields, "file signing skipped via signExts configuration")
       return false
     }
-    if (this.platformSpecificBuildOptions.signExecutable === false) {
-      log.info(logFields, "file signing skipped via signExecutable configuration")
+    if (isWindowsSigningDisabled(this.platformSpecificBuildOptions)) {
+      log.info(logFields, "file signing skipped via `sign: false` configuration")
       return false
     }
 
@@ -206,7 +206,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       hash.update(config.electronVersion || "no electronVersion")
       hash.update(JSON.stringify(this.platformSpecificBuildOptions))
       hash.update(JSON.stringify(opts))
-      const signingConfig = this.platformSpecificBuildOptions.signing
+      const signingConfig = resolveWindowsSigningConfiguration(this.platformSpecificBuildOptions)
       const certSha1 = signingConfig?.type === "signtool" || signingConfig?.type === "hsm" ? signingConfig.certificateSha1 : null
       const subjectName = signingConfig?.type === "signtool" || signingConfig?.type === "hsm" ? signingConfig.certificateSubjectName : null
       hash.update(certSha1 || "no certificateSha1")
@@ -256,7 +256,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   }
 
   protected createTransformerForExtraFiles(packContext: AfterPackContext): FileTransformer | null {
-    if (this.platformSpecificBuildOptions.signAndEditExecutable === false || this.platformSpecificBuildOptions.signExecutable === false) {
+    if (isWindowsSigningDisabled(this.platformSpecificBuildOptions)) {
       return null
     }
 
@@ -273,18 +273,9 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
   protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<boolean> {
     const exeFileName = `${this.appInfo.productFilename}.exe`
-    const signingDisabled = this.platformSpecificBuildOptions.signExecutable === false || this.platformSpecificBuildOptions.signAndEditExecutable === false
+    const signingDisabled = isWindowsSigningDisabled(this.platformSpecificBuildOptions)
     if (signingDisabled && this.forceCodeSigning) {
-      throw new InvalidConfigurationError(
-        "Signing is disabled (`signExecutable: false` or `signAndEditExecutable: false`) but `forceCodeSigning` is enabled. Remove one of these options."
-      )
-    }
-    if (this.platformSpecificBuildOptions.signAndEditExecutable === false) {
-      log.info(
-        { exe: log.filePath(path.join(packContext.appOutDir, exeFileName)) },
-        "executable resource editing and code signing skipped — signAndEditExecutable is false. To skip only code signing while keeping icon and metadata applied, use signExecutable: false instead."
-      )
-      return false
+      throw new InvalidConfigurationError("Signing is disabled (`sign: false`) but `forceCodeSigning` is enabled. Remove one of these options.")
     }
 
     const files = await readdir(packContext.appOutDir)
@@ -302,7 +293,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       }
     }
 
-    if (!isAsar || this.platformSpecificBuildOptions.signExecutable === false) {
+    if (!isAsar || signingDisabled) {
       return true
     }
 

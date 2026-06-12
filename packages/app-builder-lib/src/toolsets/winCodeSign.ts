@@ -5,7 +5,6 @@ import * as path from "path"
 import { ToolsetConfig } from "../configuration.js"
 import { ToolInfo, computeToolEnv } from "../util/bundledTool.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
-import { isUseSystemOsslSigncode, isUseSystemSigncode } from "../util/flags.js"
 import { getCustomToolsetPath } from "./custom.js"
 
 function getLegacyWinCodeSignBin(): Promise<string> {
@@ -54,10 +53,6 @@ function _getWindowsToolsBin<V extends CodeSignVersionKey>(winCodeSign: V, file:
 }
 
 export async function getSignToolPath(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish, isWin: boolean, resourcesDir: string): Promise<ToolInfo> {
-  if (isUseSystemSigncode()) {
-    return { path: "osslsigncode" }
-  }
-
   if (isWin) {
     // windows kits are always the target arch; signtool can be used by either arch.
     const signtoolArch: Arch = process.arch === "x64" ? Arch.x64 : process.arch === "arm64" ? Arch.arm64 : Arch.ia32
@@ -104,7 +99,7 @@ async function getWindowsSignToolExe({ winCodeSign, arch, resourcesDir = "" }: {
 }
 
 async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish, resourcesDir = "") {
-  if (process.platform === "win32" || isUseSystemOsslSigncode()) {
+  if (process.platform === "win32") {
     return { path: "osslsigncode" }
   }
 

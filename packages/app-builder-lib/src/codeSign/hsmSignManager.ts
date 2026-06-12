@@ -1,5 +1,5 @@
 import { InvalidConfigurationError } from "builder-util"
-import { WindowsHsmSigningConfig } from "../options/winOptions.js"
+import { resolveWindowsSigningConfiguration, WindowsHsmSigningConfig } from "../options/winOptions.js"
 import { VmManager } from "../vm/vm.js"
 import type { WinPackager } from "../winPackager.js"
 import { CustomWindowsSign, getSigntoolFamilyConfig, SigntoolBaseSignManager, WindowsSignTaskConfiguration } from "./signtoolBaseSignManager.js"
@@ -7,7 +7,7 @@ import { CustomWindowsSign, getSigntoolFamilyConfig, SigntoolBaseSignManager, Wi
 export class HsmSignManager extends SigntoolBaseSignManager {
   constructor(packager: WinPackager) {
     super(packager)
-    if (packager.platformOptions.signing?.type !== "hsm") {
+    if (resolveWindowsSigningConfiguration(packager.platformOptions)?.type !== "hsm") {
       throw new Error(`HsmSignManager requires signing.type = "hsm"`)
     }
   }

@@ -1,12 +1,12 @@
-import { HsmSignManager } from "app-builder-lib/out/codeSign/hsmSignManager"
-import { Pkcs11SignManager } from "app-builder-lib/out/codeSign/pkcs11SignManager"
-import { SigntoolSignManager } from "app-builder-lib/out/codeSign/signtoolBaseSignManager"
-import { WindowsSignTaskConfiguration } from "app-builder-lib/out/codeSign/signtoolBaseSignManager"
-import { readCertInfoFromX509 } from "app-builder-lib/out/codeSign/certInfo"
+import { HsmSignManager } from "app-builder-lib/src/codeSign/hsmSignManager"
+import { Pkcs11SignManager } from "app-builder-lib/src/codeSign/pkcs11SignManager"
+import { SigntoolSignManager } from "app-builder-lib/src/codeSign/signtoolBaseSignManager"
+import { WindowsSignTaskConfiguration } from "app-builder-lib/src/codeSign/signtoolBaseSignManager"
+import { readCertInfoFromX509 } from "app-builder-lib/src/codeSign/certInfo"
 import { mkdtemp, rm, writeFile } from "fs/promises"
 import { tmpdir } from "os"
 import * as path from "path"
-import { describe, expect, test } from "vitest"
+import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 function makeManager(winCodeSign?: string): SigntoolSignManager {
   const manager = Object.create(SigntoolSignManager.prototype) as SigntoolSignManager
@@ -32,7 +32,7 @@ function makePkcs11Manager(winCodeSign?: string, getCscPassword?: () => string |
 function makeTaskConfig(overrides: Partial<WindowsSignTaskConfiguration> = {}): WindowsSignTaskConfiguration {
   return {
     path: "/app/dist/file.exe",
-    options: { signing: { type: "signtool" } } as any,
+    options: { sign: { type: "signtool" } } as any,
     name: "My App",
     site: "https://example.com",
     cscInfo: { file: "/certs/cert.pfx", password: "s3cr3t" },
@@ -222,44 +222,10 @@ describe("computeSignToolArgs with unsupported cert format", () => {
 // ─── getToolPath ─────────────────────────────────────────────────────────────
 
 describe("getToolPath", () => {
-  let tmpDir: string
-  let fakeTool: string
-  const origEnv: Record<string, string | undefined> = {}
-
-  beforeEach(async () => {
-    tmpDir = await mkdtemp(path.join(tmpdir(), "eb-signtool-test-"))
-    fakeTool = path.join(tmpDir, "signtool.exe")
-    await writeFile(fakeTool, "")
-    origEnv.SIGNTOOL_PATH = process.env.SIGNTOOL_PATH
-    origEnv.USE_SYSTEM_SIGNTOOL = process.env.USE_SYSTEM_SIGNTOOL
-    process.env.SIGNTOOL_PATH = fakeTool
-    delete process.env.USE_SYSTEM_SIGNTOOL
-  })
-
-  afterEach(async () => {
-    for (const [key, value] of Object.entries(origEnv)) {
-      if (value === undefined) {
-        delete process.env[key]
-      } else {
-        process.env[key] = value
-      }
-    }
-    await rm(tmpDir, { recursive: true, force: true })
-  })
-
-  test("returns SIGNTOOL_PATH env override when set", async () => {
-    const manager = makeManager("1.1.0")
-    const toolInfo = await manager.getToolPath(true)
-    expect(toolInfo.path).toBe(fakeTool)
-  })
-
-  test("returns SIGNTOOL_PATH env override on non-Windows too", async () => {
-    const manager = makeManager("1.1.0")
-    const toolInfo = await manager.getToolPath(false)
-    expect(toolInfo.path).toBe(fakeTool)
-  })
-
-  test("returned ToolInfo has a path property (string)", async () => {
+  // Tool resolution always flows through the toolset (getSignToolPath). There is intentionally no
+  // env-var override (e.g. SIGNTOOL_PATH / USE_SYSTEM_SIGNCODE): a user-provided tool must be supplied
+  // via a checksum-validated `toolsets.winCodeSign` ToolsetCustom for security.
+  test("returns a ToolInfo with a non-empty string path", async () => {
     const manager = makeManager("1.1.0")
     const toolInfo = await manager.getToolPath(true)
     expect(typeof toolInfo.path).toBe("string")
@@ -271,7 +237,7 @@ describe("getToolPath", () => {
 
 describe("computeSignToolArgs — HSM (isWin=true, modern toolset)", () => {
   const hsmOptions = {
-    signing: {
+    sign: {
       type: "hsm" as const,
       cryptoServiceProvider: "Google Cloud KMS Provider",
       keyContainer: "projects/proj/locations/us/keyRings/ring/cryptoKeys/key/cryptoKeyVersions/1",
@@ -354,7 +320,7 @@ describe("computeSignToolArgs — HSM (isWin=true, modern toolset)", () => {
 
 describe("HSM validation errors", () => {
   const hsmOptions = {
-    signing: {
+    sign: {
       type: "hsm" as const,
       cryptoServiceProvider: "Google Cloud KMS Provider",
       keyContainer: "my-key-container",
@@ -384,7 +350,7 @@ describe("HSM validation errors", () => {
   test(".crt file without HSM mode → throws pkcs12 error", () => {
     const manager = makeManager("1.1.0")
     const config = makeTaskConfig({
-      options: { signing: { type: "signtool" as const } } as any,
+      options: { sign: { type: "signtool" as const } } as any,
       cscInfo: { file: "/certs/cert.crt", password: null },
     })
     expect(() => manager.computeSignToolArgs(config, true)).toThrow(/pkcs12/)
@@ -395,7 +361,7 @@ describe("HSM validation errors", () => {
 
 describe("computeSignToolArgs — PKCS#11 (isWin=false)", () => {
   const pkcs11Options = {
-    signing: {
+    sign: {
       type: "pkcs11" as const,
       pkcs11Module: "/usr/lib/opensc-pkcs11.so",
       pkcs11KeyUri: "pkcs11:token=MyToken;object=MyKey;type=private",
@@ -427,7 +393,7 @@ describe("computeSignToolArgs — PKCS#11 (isWin=false)", () => {
     const manager = makePkcs11Manager("1.1.0")
     // as any: testing runtime JSON-config validation (bypasses TypeScript's required-field check)
     const config = makeTaskConfig({
-      options: { signing: { type: "pkcs11" as const, pkcs11Module: "/usr/lib/opensc-pkcs11.so" } } as any,
+      options: { sign: { type: "pkcs11" as const, pkcs11Module: "/usr/lib/opensc-pkcs11.so" } } as any,
     })
     expect(() => manager.computeSignToolArgs(config, false)).toThrow(/pkcs11Module and pkcs11KeyUri must both be set/)
   })
@@ -436,7 +402,7 @@ describe("computeSignToolArgs — PKCS#11 (isWin=false)", () => {
     const manager = makePkcs11Manager("1.1.0")
     // as any: testing runtime JSON-config validation (bypasses TypeScript's required-field check)
     const config = makeTaskConfig({
-      options: { signing: { type: "pkcs11" as const, pkcs11KeyUri: "pkcs11:token=X;object=Y;type=private" } } as any,
+      options: { sign: { type: "pkcs11" as const, pkcs11KeyUri: "pkcs11:token=X;object=Y;type=private" } } as any,
     })
     expect(() => manager.computeSignToolArgs(config, false)).toThrow(/pkcs11Module and pkcs11KeyUri must both be set/)
   })
@@ -444,7 +410,7 @@ describe("computeSignToolArgs — PKCS#11 (isWin=false)", () => {
   test("HSM csp/kc on non-Windows → throws Windows-only error (via HsmSignManager)", () => {
     const manager = makeHsmManager("1.1.0")
     const config = makeTaskConfig({
-      options: { signing: { type: "hsm" as const, cryptoServiceProvider: "Google Cloud KMS Provider", keyContainer: "my-key" } } as any,
+      options: { sign: { type: "hsm" as const, cryptoServiceProvider: "Google Cloud KMS Provider", keyContainer: "my-key" } } as any,
     })
     expect(() => manager.computeSignToolArgs(config, false)).toThrow(/only supported on Windows/)
   })
@@ -469,7 +435,7 @@ describe("PKCS#11 timestamp flags", () => {
 
   test("sha256 → uses -ts (RFC 3161)", () => {
     const manager = makePkcs11Manager()
-    const config = makeTaskConfig({ options: { signing: pkcs11Base } as any, hash: "sha256" })
+    const config = makeTaskConfig({ options: { sign: pkcs11Base } as any, hash: "sha256" })
     const args = manager.computeSignToolArgs(config, false)
     expect(args).toContain("-ts")
     expect(args).not.toContain("-t")
@@ -477,7 +443,7 @@ describe("PKCS#11 timestamp flags", () => {
 
   test("sha1 → uses -t (HTTP Authenticode)", () => {
     const manager = makePkcs11Manager()
-    const config = makeTaskConfig({ options: { signing: pkcs11Base } as any, hash: "sha1" })
+    const config = makeTaskConfig({ options: { sign: pkcs11Base } as any, hash: "sha1" })
     const args = manager.computeSignToolArgs(config, false)
     expect(args).toContain("-t")
     expect(args).not.toContain("-ts")
@@ -485,14 +451,14 @@ describe("PKCS#11 timestamp flags", () => {
 
   test("sha256 nested → uses -ts", () => {
     const manager = makePkcs11Manager()
-    const config = makeTaskConfig({ options: { signing: pkcs11Base } as any, hash: "sha256", isNest: true })
+    const config = makeTaskConfig({ options: { sign: pkcs11Base } as any, hash: "sha256", isNest: true })
     const args = manager.computeSignToolArgs(config, false)
     expect(args).toContain("-ts")
   })
 
   test("sha1 nested → uses -ts (nested always RFC 3161)", () => {
     const manager = makePkcs11Manager()
-    const config = makeTaskConfig({ options: { signing: pkcs11Base } as any, hash: "sha1", isNest: true })
+    const config = makeTaskConfig({ options: { sign: pkcs11Base } as any, hash: "sha1", isNest: true })
     const args = manager.computeSignToolArgs(config, false)
     expect(args).toContain("-ts")
     expect(args).not.toContain("-t")
@@ -501,7 +467,7 @@ describe("PKCS#11 timestamp flags", () => {
   test("custom rfc3161TimeStampServer is used for -ts", () => {
     const manager = makePkcs11Manager()
     const config = makeTaskConfig({
-      options: { signing: { ...pkcs11Base, rfc3161TimeStampServer: "http://my-ts.example.com" } } as any,
+      options: { sign: { ...pkcs11Base, rfc3161TimeStampServer: "http://my-ts.example.com" } } as any,
       hash: "sha256",
     })
     const args = manager.computeSignToolArgs(config, false)
@@ -512,7 +478,7 @@ describe("PKCS#11 timestamp flags", () => {
   test("custom timeStampServer is used for -t", () => {
     const manager = makePkcs11Manager()
     const config = makeTaskConfig({
-      options: { signing: { ...pkcs11Base, timeStampServer: "http://old-ts.example.com" } } as any,
+      options: { sign: { ...pkcs11Base, timeStampServer: "http://old-ts.example.com" } } as any,
       hash: "sha1",
     })
     const args = manager.computeSignToolArgs(config, false)
@@ -525,7 +491,7 @@ describe("PKCS#11 timestamp flags", () => {
     process.env.ELECTRON_BUILDER_OFFLINE = "true"
     try {
       const manager = makePkcs11Manager()
-      const config = makeTaskConfig({ options: { signing: pkcs11Base } as any, hash: "sha256" })
+      const config = makeTaskConfig({ options: { sign: pkcs11Base } as any, hash: "sha256" })
       const args = manager.computeSignToolArgs(config, false)
       expect(args).not.toContain("-ts")
       expect(args).not.toContain("-t")
@@ -551,7 +517,7 @@ describe("PKCS#11 certificateFile passed as -certs to osslsigncode", () => {
   test("certificateFile set → -certs present with correct path", () => {
     const manager = makePkcs11Manager()
     const config = makeTaskConfig({
-      options: { signing: { ...pkcs11Base, certificateFile: "/certs/chain.pem" } } as any,
+      options: { sign: { ...pkcs11Base, certificateFile: "/certs/chain.pem" } } as any,
       cscInfo: { file: "/certs/chain.pem", password: null },
     })
     const args = manager.computeSignToolArgs(config, false)
@@ -562,7 +528,7 @@ describe("PKCS#11 certificateFile passed as -certs to osslsigncode", () => {
 
   test("no certificateFile → no -certs arg", () => {
     const manager = makePkcs11Manager()
-    const config = makeTaskConfig({ options: { signing: pkcs11Base } as any, cscInfo: null })
+    const config = makeTaskConfig({ options: { sign: pkcs11Base } as any, cscInfo: null })
     const args = manager.computeSignToolArgs(config, false)
     expect(args).not.toContain("-certs")
   })
@@ -570,7 +536,7 @@ describe("PKCS#11 certificateFile passed as -certs to osslsigncode", () => {
   test("-certs appears between -key and -h", () => {
     const manager = makePkcs11Manager()
     const config = makeTaskConfig({
-      options: { signing: { ...pkcs11Base, certificateFile: "/certs/chain.crt" } } as any,
+      options: { sign: { ...pkcs11Base, certificateFile: "/certs/chain.crt" } } as any,
       cscInfo: { file: "/certs/chain.crt", password: null },
     })
     const args = manager.computeSignToolArgs(config, false)
@@ -586,7 +552,7 @@ describe("PKCS#11 certificateFile passed as -certs to osslsigncode", () => {
 
 describe("PKCS#11 PIN via env var (no cert file)", () => {
   const pkcs11Options = {
-    signing: {
+    sign: {
       type: "pkcs11" as const,
       pkcs11Module: "/usr/lib/opensc-pkcs11.so",
       pkcs11KeyUri: "pkcs11:token=MyToken;object=MyKey;type=private",

@@ -1,5 +1,5 @@
 import { log, retry } from "builder-util"
-import { WindowsConfiguration } from "../../options/winOptions.js"
+import { resolveWindowsSigningConfiguration, WindowsConfiguration } from "../../options/winOptions.js"
 import { WinPackager } from "../../winPackager.js"
 
 export interface WindowsSignOptions {
@@ -8,7 +8,7 @@ export interface WindowsSignOptions {
 }
 
 export async function signWindows(options: WindowsSignOptions, packager: WinPackager): Promise<boolean> {
-  const signing = options.options.signing
+  const signing = resolveWindowsSigningConfiguration(options.options)
   if (signing?.type === "azure") {
     log.info({ path: log.filePath(options.path) }, "signing with Azure Trusted Signing")
   } else if (signing?.type === "hsm") {

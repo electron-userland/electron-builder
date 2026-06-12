@@ -4,7 +4,13 @@ import _fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../core.js"
-import { WindowsConfiguration, WindowsHsmSigningConfig, WindowsSigntoolFamilyConfig, WindowsSigntoolSigningConfig } from "../options/winOptions.js"
+import {
+  resolveWindowsSigningConfiguration,
+  WindowsConfiguration,
+  WindowsHsmSigningConfig,
+  WindowsSigntoolFamilyConfig,
+  WindowsSigntoolSigningConfig,
+} from "../options/winOptions.js"
 import AppXTarget from "../targets/win/AppxTarget.js"
 import { getSignToolPath } from "../toolsets/winCodeSign.js"
 import { ToolInfo } from "../util/bundledTool.js"
@@ -61,9 +67,9 @@ interface CertInfo {
   PSParentPath: string
 }
 
-/** Extracts the non-Azure signing config from WindowsConfiguration, or null for Azure/unset. */
+/** Extracts the non-Azure signing config from WindowsConfiguration, or null for Azure/unset/disabled. */
 export function getSigntoolFamilyConfig(config: WindowsConfiguration): WindowsSigntoolFamilyConfig | null {
-  const s = config.signing
+  const s = resolveWindowsSigningConfiguration(config)
   if (s == null || s.type === "azure") {
     return null
   }
@@ -125,19 +131,19 @@ export abstract class SigntoolBaseSignManager implements SignManager {
     () => this.platformSpecificBuildOptions,
     platformSpecificBuildOptions => {
       const signing = getSigntoolFamilyConfig(platformSpecificBuildOptions)
-      if (signing == null) {
-        return Promise.resolve(null)
-      }
+      // signtool is the implicit default when win.sign is unset, so an absent config still
+      // honours the WIN_CSC_LINK/cscLink fallback below (hsm/pkcs11 set signing.type explicitly).
+      const isSigntool = signing == null || signing.type === "signtool"
 
       // signtool + hsm: store-based cert takes priority
-      const subjectName = (signing as WindowsSigntoolSigningConfig | WindowsHsmSigningConfig).certificateSubjectName
-      const shaType = (signing as WindowsSigntoolSigningConfig | WindowsHsmSigningConfig).certificateSha1
+      const subjectName = (signing as WindowsSigntoolSigningConfig | WindowsHsmSigningConfig | null)?.certificateSubjectName
+      const shaType = (signing as WindowsSigntoolSigningConfig | WindowsHsmSigningConfig | null)?.certificateSha1
       if (subjectName != null || shaType != null) {
         return this.packager.vm.value
           .then(vm => this.getCertificateFromStoreInfo(platformSpecificBuildOptions, vm))
           .catch((e: any) => {
             // https://github.com/electron-userland/electron-builder/pull/2397
-            if (signing.sign == null) {
+            if (signing?.sign == null) {
               throw e
             } else {
               log.debug({ error: e }, "getCertificateFromStoreInfo error")
@@ -146,18 +152,18 @@ export abstract class SigntoolBaseSignManager implements SignManager {
           })
       }
 
-      const certificateFile = signing.certificateFile
+      const certificateFile = signing?.certificateFile
       if (certificateFile != null) {
         // Only signtool mode uses a password (HSM private key lives in the HSM, not the cert file)
-        const certificatePassword = signing.type === "signtool" ? this.packager.getCscPassword() : null
+        const certificatePassword = isSigntool ? this.packager.getCscPassword() : null
         return Promise.resolve({
           file: certificateFile,
           password: certificatePassword == null ? null : certificatePassword.trim(),
         })
       }
 
-      // WIN_CSC_LINK env var fallback: only for signtool mode
-      if (signing.type === "signtool") {
+      // WIN_CSC_LINK env var fallback: only for signtool mode (including the implicit default)
+      if (isSigntool) {
         const cscLink = this.packager.getCscLink("WIN_CSC_LINK")
         if (cscLink == null || cscLink === "") {
           return Promise.resolve(null)

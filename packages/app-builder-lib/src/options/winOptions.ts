@@ -25,7 +25,10 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   readonly legalTrademarks?: string | null
 
   /**
-   * Code signing configuration. Provide exactly one of the following signing modes:
+   * Code signing configuration. Set to `false` or `null` to disable Windows code signing
+   * (executable resources such as the icon and metadata are still edited). Leave unset to
+   * sign using credentials discovered from the environment (e.g. `WIN_CSC_LINK`). Otherwise
+   * provide exactly one of the following signing modes:
    *
    * - `{ type: "signtool", ... }` — Sign with a local certificate file (.pfx/.p12) or a
    *   certificate from the Windows certificate store.
@@ -37,7 +40,7 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
    * - `{ type: "azure", ... }` — Sign via Azure Trusted Signing (cloud service). Requires
    *   Azure Entra ID environment variables for authentication.
    */
-  readonly signing?: WindowsSigningConfiguration | null
+  readonly sign?: WindowsSigningConfiguration | false | null
 
   /**
    * Whether to verify the signature of an available update before installation.
@@ -53,26 +56,6 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
    * @default asInvoker
    */
   readonly requestedExecutionLevel?: RequestedExecutionLevel | null
-
-  /**
-   * Whether to sign and add metadata to executable via [`resedit`](https://www.npmjs.com/package/resedit).
-   * Metadata includes information about the app name/description/version, publisher, copyright, etc.
-   * This property also is responsible for adding the app icon and setting execution level.
-   * Set to `false` only if you need to fully disable resedit-based resource editing.
-   * To skip only code signing while keeping resource editing, use `signExecutable: false` instead.
-   * @default true
-   */
-  readonly signAndEditExecutable?: boolean
-
-  /**
-   * Whether to sign Windows executables and any additional files matched by `signExts`.
-   * Set to `false` to skip Windows code signing while still editing executable resources
-   * (icon, metadata, etc. via [`resedit`](https://www.npmjs.com/package/resedit)).
-   * This option is not limited to the main executable edit/sign flow and can also affect
-   * signing of Windows installers or other artifacts that use the standard signing path.
-   * @default true
-   */
-  readonly signExecutable?: boolean
 
   /**
    * Explicit file name/extensions (`str.endsWith`) to also sign. Advanced option.
@@ -285,3 +268,17 @@ export type WindowsSigningConfiguration = WindowsSigntoolSigningConfig | Windows
 
 /** Signing modes that use signtool.exe or osslsigncode (not Azure). */
 export type WindowsSigntoolFamilyConfig = WindowsSigntoolSigningConfig | WindowsHsmSigningConfig | WindowsPkcs11SigningConfig
+
+/**
+ * Resolves the active signing configuration object. `false`, `null`, and unset all mean
+ * "no explicit signing config object" (env-based discovery still applies when unset).
+ */
+export function resolveWindowsSigningConfiguration(config: WindowsConfiguration): WindowsSigningConfiguration | null {
+  const { sign } = config
+  return sign == null || sign === false ? null : sign
+}
+
+/** Whether Windows code signing has been explicitly disabled via `sign: false | null`. */
+export function isWindowsSigningDisabled(config: WindowsConfiguration): boolean {
+  return config.sign === false || config.sign === null
+}
