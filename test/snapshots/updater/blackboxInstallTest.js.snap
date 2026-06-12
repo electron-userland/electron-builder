@@ -4565,6 +4565,7 @@ exports[`linux install > compression: maximum > deb - compression: maximum - com
   "/opt/TestApp/resources/app.asar.unpacked/node_modules/",
   "/usr/share/icons/hicolor/128x128/",
   "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/24x24/",
   "/usr/share/icons/hicolor/256x256/",
   "/usr/share/icons/hicolor/32x32/",
   "/usr/share/icons/hicolor/48x48/",
@@ -4577,6 +4578,8 @@ exports[`linux install > compression: maximum > deb - compression: maximum - com
   "/usr/share/icons/hicolor/128x128/apps/TestApp.png",
   "/usr/share/icons/hicolor/16x16/apps/",
   "/usr/share/icons/hicolor/16x16/apps/TestApp.png",
+  "/usr/share/icons/hicolor/24x24/apps/",
+  "/usr/share/icons/hicolor/24x24/apps/TestApp.png",
   "/usr/share/icons/hicolor/256x256/apps/",
   "/usr/share/icons/hicolor/256x256/apps/TestApp.png",
   "/usr/share/icons/hicolor/32x32/apps/",
@@ -4700,6 +4703,7 @@ exports[`linux install > compression: maximum > deb - compression: maximum - com
   "/opt/TestApp/resources/app.asar.unpacked/node_modules/",
   "/usr/share/icons/hicolor/128x128/",
   "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/24x24/",
   "/usr/share/icons/hicolor/256x256/",
   "/usr/share/icons/hicolor/32x32/",
   "/usr/share/icons/hicolor/48x48/",
@@ -4712,6 +4716,8 @@ exports[`linux install > compression: maximum > deb - compression: maximum - com
   "/usr/share/icons/hicolor/128x128/apps/TestApp.png",
   "/usr/share/icons/hicolor/16x16/apps/",
   "/usr/share/icons/hicolor/16x16/apps/TestApp.png",
+  "/usr/share/icons/hicolor/24x24/apps/",
+  "/usr/share/icons/hicolor/24x24/apps/TestApp.png",
   "/usr/share/icons/hicolor/256x256/apps/",
   "/usr/share/icons/hicolor/256x256/apps/TestApp.png",
   "/usr/share/icons/hicolor/32x32/apps/",
@@ -4835,6 +4841,7 @@ exports[`linux install > compression: maximum > deb - compression: maximum - com
   "/opt/TestApp/resources/app.asar.unpacked/node_modules/",
   "/usr/share/icons/hicolor/128x128/",
   "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/24x24/",
   "/usr/share/icons/hicolor/256x256/",
   "/usr/share/icons/hicolor/32x32/",
   "/usr/share/icons/hicolor/48x48/",
@@ -4847,6 +4854,8 @@ exports[`linux install > compression: maximum > deb - compression: maximum - com
   "/usr/share/icons/hicolor/128x128/apps/TestApp.png",
   "/usr/share/icons/hicolor/16x16/apps/",
   "/usr/share/icons/hicolor/16x16/apps/TestApp.png",
+  "/usr/share/icons/hicolor/24x24/apps/",
+  "/usr/share/icons/hicolor/24x24/apps/TestApp.png",
   "/usr/share/icons/hicolor/256x256/apps/",
   "/usr/share/icons/hicolor/256x256/apps/TestApp.png",
   "/usr/share/icons/hicolor/32x32/apps/",
@@ -4898,6 +4907,144 @@ exports[`linux install > compression: maximum > deb - compression: maximum - com
 exports[`linux install > compression: maximum > deb - compression: maximum - compressor: xz 4`] = `"Test Application (test quite “ #378)"`;
 
 exports[`linux install > compression: maximum > deb - compression: maximum - compressor: xz 5`] = `"xz"`;
+
+exports[`linux install > compression: maximum > deb - compression: maximum - compressor: zst 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.deb",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.deb",
+          },
+        ],
+        "path": "TestApp.deb",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux install > compression: maximum > deb - compression: maximum - compressor: zst 2`] = `
+[
+  "/",
+  "/opt/",
+  "/usr/",
+  "/opt/TestApp/",
+  "/opt/TestApp/chrome-sandbox",
+  "/opt/TestApp/chrome_100_percent.pak",
+  "/opt/TestApp/chrome_200_percent.pak",
+  "/opt/TestApp/chrome_crashpad_handler",
+  "/opt/TestApp/icudtl.dat",
+  "/opt/TestApp/libEGL.so",
+  "/opt/TestApp/libffmpeg.so",
+  "/opt/TestApp/libGLESv2.so",
+  "/opt/TestApp/libvk_swiftshader.so",
+  "/opt/TestApp/libvulkan.so.1",
+  "/opt/TestApp/LICENSE.electron.txt",
+  "/opt/TestApp/LICENSES.chromium.html",
+  "/opt/TestApp/resources.pak",
+  "/opt/TestApp/snapshot_blob.bin",
+  "/opt/TestApp/TestApp",
+  "/opt/TestApp/v8_context_snapshot.bin",
+  "/opt/TestApp/vk_swiftshader_icd.json",
+  "/usr/share/",
+  "/opt/TestApp/resources/",
+  "/opt/TestApp/resources/app-update.yml",
+  "/opt/TestApp/resources/app.asar",
+  "/opt/TestApp/resources/apparmor-profile",
+  "/opt/TestApp/resources/package-type",
+  "/usr/share/applications/",
+  "/usr/share/applications/TestApp.desktop",
+  "/usr/share/doc/",
+  "/usr/share/icons/",
+  "/opt/TestApp/resources/app.asar.unpacked/",
+  "/usr/share/doc/testapp/",
+  "/usr/share/doc/testapp/changelog.gz",
+  "/usr/share/icons/hicolor/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/",
+  "/usr/share/icons/hicolor/128x128/",
+  "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/24x24/",
+  "/usr/share/icons/hicolor/256x256/",
+  "/usr/share/icons/hicolor/32x32/",
+  "/usr/share/icons/hicolor/48x48/",
+  "/usr/share/icons/hicolor/512x512/",
+  "/usr/share/icons/hicolor/64x64/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/LICENSE",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/package.json",
+  "/usr/share/icons/hicolor/128x128/apps/",
+  "/usr/share/icons/hicolor/128x128/apps/TestApp.png",
+  "/usr/share/icons/hicolor/16x16/apps/",
+  "/usr/share/icons/hicolor/16x16/apps/TestApp.png",
+  "/usr/share/icons/hicolor/24x24/apps/",
+  "/usr/share/icons/hicolor/24x24/apps/TestApp.png",
+  "/usr/share/icons/hicolor/256x256/apps/",
+  "/usr/share/icons/hicolor/256x256/apps/TestApp.png",
+  "/usr/share/icons/hicolor/32x32/apps/",
+  "/usr/share/icons/hicolor/32x32/apps/TestApp.png",
+  "/usr/share/icons/hicolor/48x48/apps/",
+  "/usr/share/icons/hicolor/48x48/apps/TestApp.png",
+  "/usr/share/icons/hicolor/512x512/apps/",
+  "/usr/share/icons/hicolor/512x512/apps/TestApp.png",
+  "/usr/share/icons/hicolor/64x64/apps/",
+  "/usr/share/icons/hicolor/64x64/apps/TestApp.png",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/common-sqlite.gypi",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/extract.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/sqlite-autoconf-3440200.tar.gz",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/sqlite3.gyp",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/sqlite3-binding.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/sqlite3.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/trace.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/async.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/backup.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/database.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/gcc-preinclude.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/macros.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/statement.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/threading.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/Release/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/Release/node_sqlite3.node",
+]
+`;
+
+exports[`linux install > compression: maximum > deb - compression: maximum - compressor: zst 3`] = `
+{
+  "Architecture": "amd64",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
+  "Homepage": "http://foo.example.com",
+  "License": "MIT",
+  "Maintainer": "Foo Bar <foo@example.com>",
+  "Package": "testapp",
+  "Priority": "optional",
+  "Recommends": "libappindicator3-1",
+  "Section": "default",
+  "Vendor": "Foo Bar <foo@example.com>",
+}
+`;
+
+exports[`linux install > compression: maximum > deb - compression: maximum - compressor: zst 4`] = `"Test Application (test quite “ #378)"`;
+
+exports[`linux install > compression: maximum > deb - compression: maximum - compressor: zst 5`] = `"zst"`;
 
 exports[`linux install > compression: maximum > pacman - compression: maximum - compressor: bzip2 1`] = `
 {
@@ -5218,6 +5365,7 @@ exports[`linux install > compression: normal > deb - compression: normal - compr
   "/opt/TestApp/resources/app.asar.unpacked/node_modules/",
   "/usr/share/icons/hicolor/128x128/",
   "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/24x24/",
   "/usr/share/icons/hicolor/256x256/",
   "/usr/share/icons/hicolor/32x32/",
   "/usr/share/icons/hicolor/48x48/",
@@ -5230,6 +5378,8 @@ exports[`linux install > compression: normal > deb - compression: normal - compr
   "/usr/share/icons/hicolor/128x128/apps/TestApp.png",
   "/usr/share/icons/hicolor/16x16/apps/",
   "/usr/share/icons/hicolor/16x16/apps/TestApp.png",
+  "/usr/share/icons/hicolor/24x24/apps/",
+  "/usr/share/icons/hicolor/24x24/apps/TestApp.png",
   "/usr/share/icons/hicolor/256x256/apps/",
   "/usr/share/icons/hicolor/256x256/apps/TestApp.png",
   "/usr/share/icons/hicolor/32x32/apps/",
@@ -5353,6 +5503,7 @@ exports[`linux install > compression: normal > deb - compression: normal - compr
   "/opt/TestApp/resources/app.asar.unpacked/node_modules/",
   "/usr/share/icons/hicolor/128x128/",
   "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/24x24/",
   "/usr/share/icons/hicolor/256x256/",
   "/usr/share/icons/hicolor/32x32/",
   "/usr/share/icons/hicolor/48x48/",
@@ -5365,6 +5516,8 @@ exports[`linux install > compression: normal > deb - compression: normal - compr
   "/usr/share/icons/hicolor/128x128/apps/TestApp.png",
   "/usr/share/icons/hicolor/16x16/apps/",
   "/usr/share/icons/hicolor/16x16/apps/TestApp.png",
+  "/usr/share/icons/hicolor/24x24/apps/",
+  "/usr/share/icons/hicolor/24x24/apps/TestApp.png",
   "/usr/share/icons/hicolor/256x256/apps/",
   "/usr/share/icons/hicolor/256x256/apps/TestApp.png",
   "/usr/share/icons/hicolor/32x32/apps/",
@@ -5488,6 +5641,7 @@ exports[`linux install > compression: normal > deb - compression: normal - compr
   "/opt/TestApp/resources/app.asar.unpacked/node_modules/",
   "/usr/share/icons/hicolor/128x128/",
   "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/24x24/",
   "/usr/share/icons/hicolor/256x256/",
   "/usr/share/icons/hicolor/32x32/",
   "/usr/share/icons/hicolor/48x48/",
@@ -5500,6 +5654,8 @@ exports[`linux install > compression: normal > deb - compression: normal - compr
   "/usr/share/icons/hicolor/128x128/apps/TestApp.png",
   "/usr/share/icons/hicolor/16x16/apps/",
   "/usr/share/icons/hicolor/16x16/apps/TestApp.png",
+  "/usr/share/icons/hicolor/24x24/apps/",
+  "/usr/share/icons/hicolor/24x24/apps/TestApp.png",
   "/usr/share/icons/hicolor/256x256/apps/",
   "/usr/share/icons/hicolor/256x256/apps/TestApp.png",
   "/usr/share/icons/hicolor/32x32/apps/",
@@ -5551,6 +5707,144 @@ exports[`linux install > compression: normal > deb - compression: normal - compr
 exports[`linux install > compression: normal > deb - compression: normal - compressor: xz 4`] = `"Test Application (test quite “ #378)"`;
 
 exports[`linux install > compression: normal > deb - compression: normal - compressor: xz 5`] = `"xz"`;
+
+exports[`linux install > compression: normal > deb - compression: normal - compressor: zst 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.deb",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.deb",
+          },
+        ],
+        "path": "TestApp.deb",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux install > compression: normal > deb - compression: normal - compressor: zst 2`] = `
+[
+  "/",
+  "/opt/",
+  "/usr/",
+  "/opt/TestApp/",
+  "/opt/TestApp/chrome-sandbox",
+  "/opt/TestApp/chrome_100_percent.pak",
+  "/opt/TestApp/chrome_200_percent.pak",
+  "/opt/TestApp/chrome_crashpad_handler",
+  "/opt/TestApp/icudtl.dat",
+  "/opt/TestApp/libEGL.so",
+  "/opt/TestApp/libffmpeg.so",
+  "/opt/TestApp/libGLESv2.so",
+  "/opt/TestApp/libvk_swiftshader.so",
+  "/opt/TestApp/libvulkan.so.1",
+  "/opt/TestApp/LICENSE.electron.txt",
+  "/opt/TestApp/LICENSES.chromium.html",
+  "/opt/TestApp/resources.pak",
+  "/opt/TestApp/snapshot_blob.bin",
+  "/opt/TestApp/TestApp",
+  "/opt/TestApp/v8_context_snapshot.bin",
+  "/opt/TestApp/vk_swiftshader_icd.json",
+  "/usr/share/",
+  "/opt/TestApp/resources/",
+  "/opt/TestApp/resources/app-update.yml",
+  "/opt/TestApp/resources/app.asar",
+  "/opt/TestApp/resources/apparmor-profile",
+  "/opt/TestApp/resources/package-type",
+  "/usr/share/applications/",
+  "/usr/share/applications/TestApp.desktop",
+  "/usr/share/doc/",
+  "/usr/share/icons/",
+  "/opt/TestApp/resources/app.asar.unpacked/",
+  "/usr/share/doc/testapp/",
+  "/usr/share/doc/testapp/changelog.gz",
+  "/usr/share/icons/hicolor/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/",
+  "/usr/share/icons/hicolor/128x128/",
+  "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/24x24/",
+  "/usr/share/icons/hicolor/256x256/",
+  "/usr/share/icons/hicolor/32x32/",
+  "/usr/share/icons/hicolor/48x48/",
+  "/usr/share/icons/hicolor/512x512/",
+  "/usr/share/icons/hicolor/64x64/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/LICENSE",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/package.json",
+  "/usr/share/icons/hicolor/128x128/apps/",
+  "/usr/share/icons/hicolor/128x128/apps/TestApp.png",
+  "/usr/share/icons/hicolor/16x16/apps/",
+  "/usr/share/icons/hicolor/16x16/apps/TestApp.png",
+  "/usr/share/icons/hicolor/24x24/apps/",
+  "/usr/share/icons/hicolor/24x24/apps/TestApp.png",
+  "/usr/share/icons/hicolor/256x256/apps/",
+  "/usr/share/icons/hicolor/256x256/apps/TestApp.png",
+  "/usr/share/icons/hicolor/32x32/apps/",
+  "/usr/share/icons/hicolor/32x32/apps/TestApp.png",
+  "/usr/share/icons/hicolor/48x48/apps/",
+  "/usr/share/icons/hicolor/48x48/apps/TestApp.png",
+  "/usr/share/icons/hicolor/512x512/apps/",
+  "/usr/share/icons/hicolor/512x512/apps/TestApp.png",
+  "/usr/share/icons/hicolor/64x64/apps/",
+  "/usr/share/icons/hicolor/64x64/apps/TestApp.png",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/common-sqlite.gypi",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/extract.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/sqlite-autoconf-3440200.tar.gz",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/sqlite3.gyp",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/sqlite3-binding.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/sqlite3.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/trace.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/async.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/backup.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/database.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/gcc-preinclude.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/macros.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/statement.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/threading.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/Release/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/Release/node_sqlite3.node",
+]
+`;
+
+exports[`linux install > compression: normal > deb - compression: normal - compressor: zst 3`] = `
+{
+  "Architecture": "amd64",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
+  "Homepage": "http://foo.example.com",
+  "License": "MIT",
+  "Maintainer": "Foo Bar <foo@example.com>",
+  "Package": "testapp",
+  "Priority": "optional",
+  "Recommends": "libappindicator3-1",
+  "Section": "default",
+  "Vendor": "Foo Bar <foo@example.com>",
+}
+`;
+
+exports[`linux install > compression: normal > deb - compression: normal - compressor: zst 4`] = `"Test Application (test quite “ #378)"`;
+
+exports[`linux install > compression: normal > deb - compression: normal - compressor: zst 5`] = `"zst"`;
 
 exports[`linux install > compression: normal > pacman - compression: normal - compressor: bzip2 1`] = `
 {
@@ -5871,6 +6165,7 @@ exports[`linux install > compression: store > deb - compression: store - compres
   "/opt/TestApp/resources/app.asar.unpacked/node_modules/",
   "/usr/share/icons/hicolor/128x128/",
   "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/24x24/",
   "/usr/share/icons/hicolor/256x256/",
   "/usr/share/icons/hicolor/32x32/",
   "/usr/share/icons/hicolor/48x48/",
@@ -5883,6 +6178,8 @@ exports[`linux install > compression: store > deb - compression: store - compres
   "/usr/share/icons/hicolor/128x128/apps/TestApp.png",
   "/usr/share/icons/hicolor/16x16/apps/",
   "/usr/share/icons/hicolor/16x16/apps/TestApp.png",
+  "/usr/share/icons/hicolor/24x24/apps/",
+  "/usr/share/icons/hicolor/24x24/apps/TestApp.png",
   "/usr/share/icons/hicolor/256x256/apps/",
   "/usr/share/icons/hicolor/256x256/apps/TestApp.png",
   "/usr/share/icons/hicolor/32x32/apps/",
@@ -6006,6 +6303,7 @@ exports[`linux install > compression: store > deb - compression: store - compres
   "/opt/TestApp/resources/app.asar.unpacked/node_modules/",
   "/usr/share/icons/hicolor/128x128/",
   "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/24x24/",
   "/usr/share/icons/hicolor/256x256/",
   "/usr/share/icons/hicolor/32x32/",
   "/usr/share/icons/hicolor/48x48/",
@@ -6018,6 +6316,8 @@ exports[`linux install > compression: store > deb - compression: store - compres
   "/usr/share/icons/hicolor/128x128/apps/TestApp.png",
   "/usr/share/icons/hicolor/16x16/apps/",
   "/usr/share/icons/hicolor/16x16/apps/TestApp.png",
+  "/usr/share/icons/hicolor/24x24/apps/",
+  "/usr/share/icons/hicolor/24x24/apps/TestApp.png",
   "/usr/share/icons/hicolor/256x256/apps/",
   "/usr/share/icons/hicolor/256x256/apps/TestApp.png",
   "/usr/share/icons/hicolor/32x32/apps/",
@@ -6141,6 +6441,7 @@ exports[`linux install > compression: store > deb - compression: store - compres
   "/opt/TestApp/resources/app.asar.unpacked/node_modules/",
   "/usr/share/icons/hicolor/128x128/",
   "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/24x24/",
   "/usr/share/icons/hicolor/256x256/",
   "/usr/share/icons/hicolor/32x32/",
   "/usr/share/icons/hicolor/48x48/",
@@ -6153,6 +6454,8 @@ exports[`linux install > compression: store > deb - compression: store - compres
   "/usr/share/icons/hicolor/128x128/apps/TestApp.png",
   "/usr/share/icons/hicolor/16x16/apps/",
   "/usr/share/icons/hicolor/16x16/apps/TestApp.png",
+  "/usr/share/icons/hicolor/24x24/apps/",
+  "/usr/share/icons/hicolor/24x24/apps/TestApp.png",
   "/usr/share/icons/hicolor/256x256/apps/",
   "/usr/share/icons/hicolor/256x256/apps/TestApp.png",
   "/usr/share/icons/hicolor/32x32/apps/",
@@ -6204,6 +6507,144 @@ exports[`linux install > compression: store > deb - compression: store - compres
 exports[`linux install > compression: store > deb - compression: store - compressor: xz 4`] = `"Test Application (test quite “ #378)"`;
 
 exports[`linux install > compression: store > deb - compression: store - compressor: xz 5`] = `"xz"`;
+
+exports[`linux install > compression: store > deb - compression: store - compressor: zst 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.deb",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.deb",
+          },
+        ],
+        "path": "TestApp.deb",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux install > compression: store > deb - compression: store - compressor: zst 2`] = `
+[
+  "/",
+  "/opt/",
+  "/usr/",
+  "/opt/TestApp/",
+  "/opt/TestApp/chrome-sandbox",
+  "/opt/TestApp/chrome_100_percent.pak",
+  "/opt/TestApp/chrome_200_percent.pak",
+  "/opt/TestApp/chrome_crashpad_handler",
+  "/opt/TestApp/icudtl.dat",
+  "/opt/TestApp/libEGL.so",
+  "/opt/TestApp/libffmpeg.so",
+  "/opt/TestApp/libGLESv2.so",
+  "/opt/TestApp/libvk_swiftshader.so",
+  "/opt/TestApp/libvulkan.so.1",
+  "/opt/TestApp/LICENSE.electron.txt",
+  "/opt/TestApp/LICENSES.chromium.html",
+  "/opt/TestApp/resources.pak",
+  "/opt/TestApp/snapshot_blob.bin",
+  "/opt/TestApp/TestApp",
+  "/opt/TestApp/v8_context_snapshot.bin",
+  "/opt/TestApp/vk_swiftshader_icd.json",
+  "/usr/share/",
+  "/opt/TestApp/resources/",
+  "/opt/TestApp/resources/app-update.yml",
+  "/opt/TestApp/resources/app.asar",
+  "/opt/TestApp/resources/apparmor-profile",
+  "/opt/TestApp/resources/package-type",
+  "/usr/share/applications/",
+  "/usr/share/applications/TestApp.desktop",
+  "/usr/share/doc/",
+  "/usr/share/icons/",
+  "/opt/TestApp/resources/app.asar.unpacked/",
+  "/usr/share/doc/testapp/",
+  "/usr/share/doc/testapp/changelog.gz",
+  "/usr/share/icons/hicolor/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/",
+  "/usr/share/icons/hicolor/128x128/",
+  "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/24x24/",
+  "/usr/share/icons/hicolor/256x256/",
+  "/usr/share/icons/hicolor/32x32/",
+  "/usr/share/icons/hicolor/48x48/",
+  "/usr/share/icons/hicolor/512x512/",
+  "/usr/share/icons/hicolor/64x64/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/LICENSE",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/package.json",
+  "/usr/share/icons/hicolor/128x128/apps/",
+  "/usr/share/icons/hicolor/128x128/apps/TestApp.png",
+  "/usr/share/icons/hicolor/16x16/apps/",
+  "/usr/share/icons/hicolor/16x16/apps/TestApp.png",
+  "/usr/share/icons/hicolor/24x24/apps/",
+  "/usr/share/icons/hicolor/24x24/apps/TestApp.png",
+  "/usr/share/icons/hicolor/256x256/apps/",
+  "/usr/share/icons/hicolor/256x256/apps/TestApp.png",
+  "/usr/share/icons/hicolor/32x32/apps/",
+  "/usr/share/icons/hicolor/32x32/apps/TestApp.png",
+  "/usr/share/icons/hicolor/48x48/apps/",
+  "/usr/share/icons/hicolor/48x48/apps/TestApp.png",
+  "/usr/share/icons/hicolor/512x512/apps/",
+  "/usr/share/icons/hicolor/512x512/apps/TestApp.png",
+  "/usr/share/icons/hicolor/64x64/apps/",
+  "/usr/share/icons/hicolor/64x64/apps/TestApp.png",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/common-sqlite.gypi",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/extract.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/sqlite-autoconf-3440200.tar.gz",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/sqlite3.gyp",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/sqlite3-binding.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/sqlite3.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/trace.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/async.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/backup.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/database.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/gcc-preinclude.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/macros.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/statement.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/threading.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/Release/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/Release/node_sqlite3.node",
+]
+`;
+
+exports[`linux install > compression: store > deb - compression: store - compressor: zst 3`] = `
+{
+  "Architecture": "amd64",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
+  "Homepage": "http://foo.example.com",
+  "License": "MIT",
+  "Maintainer": "Foo Bar <foo@example.com>",
+  "Package": "testapp",
+  "Priority": "optional",
+  "Recommends": "libappindicator3-1",
+  "Section": "default",
+  "Vendor": "Foo Bar <foo@example.com>",
+}
+`;
+
+exports[`linux install > compression: store > deb - compression: store - compressor: zst 4`] = `"Test Application (test quite “ #378)"`;
+
+exports[`linux install > compression: store > deb - compression: store - compressor: zst 5`] = `"zst"`;
 
 exports[`linux install > compression: store > pacman - compression: store - compressor: bzip2 1`] = `
 {

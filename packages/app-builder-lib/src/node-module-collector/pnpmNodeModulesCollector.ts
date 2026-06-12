@@ -24,6 +24,46 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
   })
 
   /**
+   * Detect pnpm's installed layout from the on-disk structure rather than `pnpm config list`.
+   * pnpm 11 no longer echoes `node-linker` (from `.npmrc`) in `config list`, so the base-class
+   * config-parsing detection silently reports "not hoisted" for a hoisted install, which would
+   * disable the downward search needed to find version-conflicted nested deps.
+   *
+   * In the default isolated store every regular top-level package resolves — through a symlink
+   * on POSIX, a junction on Windows — into `node_modules/.pnpm/<name>@<ver>/node_modules/<name>`.
+   * In a hoisted layout the same package is a real directory directly under `node_modules`.
+   * `realpath` transparently follows both symlinks and junctions, so a layout is isolated iff
+   * *any* top-level package's real path routes through `.pnpm`. We scan rather than sample the
+   * first entry because `link:` packages resolve to their source (never under `.pnpm`) and could
+   * otherwise mask an isolated store.
+   */
+  protected override isHoisted = new Lazy<boolean>(async () => {
+    const nmDir = path.join(this.rootDir, "node_modules")
+    const entries = await _fsExtra.readdir(nmDir).catch(() => [] as string[])
+    let sawPackage = false
+    for (const name of entries) {
+      if (name.startsWith(".")) {
+        continue // .pnpm, .bin, .modules.yaml
+      }
+      const entryPath = path.join(nmDir, name)
+      // A scoped dir (@scope) is not a package itself; descend to its packages.
+      const candidates = name.startsWith("@") ? (await _fsExtra.readdir(entryPath).catch(() => [] as string[])).map(s => path.join(entryPath, s)) : [entryPath]
+      for (const candidate of candidates) {
+        const real = await _fsExtra.realpath(candidate).catch(() => null)
+        if (real == null) {
+          continue
+        }
+        sawPackage = true
+        if (real.split(path.sep).includes(".pnpm")) {
+          return false // isolated store: a package routes through the virtual store
+        }
+      }
+    }
+    // Packages exist and none route through `.pnpm` → hoisted. No packages → flat default.
+    return sawPackage
+  })
+
+  /**
    * Memo for `locateFromDepOrRoot`, keyed by `name@version`. pnpm's content-addressed virtual
    * store guarantees that any given `name@version` resolves to a single location on disk, so
    * once we've resolved a package we can short-circuit every subsequent lookup. This is the
@@ -81,16 +121,19 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     const skipDownwardSearch = !(await this.isHoisted.value)
     const promise = (async (): Promise<Package | null> => {
       // Phase 1: find a version that SATISFIES requiredRange, trying the dep's own location
-      // first, then the workspace root. The root pass forces downward BFS on so that a
-      // version-conflicted copy nested at `<root>/node_modules/A/node_modules/B` is found even
-      // when the flat-store heuristic would otherwise skip it. Crucially, neither pass accepts
-      // an out-of-range override here — so a wrong-version copy reachable via upward search from
-      // `parentPath` (e.g. a hoisted top-level dep) can't shadow the correct nested copy under
-      // root. Without this, a package that pnpm deduped to a peer's node_modules resolves its
-      // transitive deps to the wrong hoisted version (see jsonfile under two fs-extra majors).
+      // first, then the workspace root. Crucially, neither pass accepts an out-of-range override
+      // here — so a wrong-version copy reachable via upward search from `parentPath` (e.g. a
+      // hoisted top-level dep) can't shadow the correct nested copy under root. Without this, a
+      // package that pnpm deduped to a peer's node_modules resolves its transitive deps to the
+      // wrong hoisted version (see jsonfile under two fs-extra majors). The root pass uses the
+      // same `skipDownwardSearch` as everywhere else: in a hoisted layout it is already false, so
+      // the nested `<root>/node_modules/A/node_modules/B` copy is found via BFS; in the flat
+      // `.pnpm` virtual store it stays true (forcing it on there would burn thousands of
+      // readdir/lstat calls — and on Windows, where pnpm uses junctions that `lstat` reports as
+      // directories, the BFS walks the entire store and resolves the wrong paths).
       const satisfying =
         (parentPath ? await this.cache.locatePackageVersion({ pkgName, parentDir: parentPath, requiredRange, skipDownwardSearch, skipOverrideFallback: true }) : null) ??
-        (await this.cache.locatePackageVersion({ pkgName, parentDir: this.rootDir, requiredRange, skipDownwardSearch: false, skipOverrideFallback: true }))
+        (await this.cache.locatePackageVersion({ pkgName, parentDir: this.rootDir, requiredRange, skipDownwardSearch, skipOverrideFallback: true }))
       if (satisfying) {
         return satisfying
       }
