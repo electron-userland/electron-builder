@@ -133,8 +133,7 @@ describe("macPackager", { sequential: true }, () => {
       {
         targets: Platform.MAC.createTarget("zip", Arch.universal),
         config: {
-          npmRebuild: true,
-          nativeRebuilder: "sequential",
+          nativeModules: { npmRebuild: true, rebuildMode: "sequential" },
           files: ["!**/*.stamp", "!**/*.Makefile"],
         },
       },
@@ -226,13 +225,14 @@ describe("macPackager", { sequential: true }, () => {
         targets: Platform.MAC.createTarget(DIR_TARGET, Arch.x64),
         config: {
           mac: { notarize: false },
-          disableAsarIntegrity: true,
+          asar: { disableIntegrity: true },
         },
       },
       {
         signed: false,
-        checkMacApp: async (_appDir, info) => {
+        checkMacApp: (_appDir, info) => {
           expect(info.ElectronAsarIntegrity).toBeUndefined()
+          return Promise.resolve()
         },
       }
     )

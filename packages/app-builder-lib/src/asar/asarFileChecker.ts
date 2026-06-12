@@ -1,5 +1,5 @@
-import type { FilesystemEntry, FilesystemFileEntry } from "@electron/asar/lib/filesystem"
-import { dynamicImport } from "../util/dynamicImport"
+import type { FilesystemEntry, FilesystemFileEntry } from "@electron/asar/lib/filesystem.js"
+import { dynamicImport } from "../util/dynamicImport.js"
 
 export async function checkFileInArchive(asarFile: string, relativeFile: string, messagePrefix: string): Promise<FilesystemEntry> {
   const asar = await dynamicImport<typeof import("@electron/asar")>("@electron/asar")

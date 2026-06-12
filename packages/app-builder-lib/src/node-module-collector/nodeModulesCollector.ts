@@ -1,13 +1,13 @@
 import { exists, log, retry, stripSensitiveEnvVars, TmpDir } from "builder-util"
 import * as childProcess from "child_process"
-import * as fs from "fs-extra"
-import { createWriteStream } from "fs-extra"
+import { createWriteStream } from "node:fs"
+import _fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { hoist, type HoisterResult, type HoisterTree } from "./hoist"
-import { LogMessageByKey, ModuleManager } from "./moduleManager"
-import { getPackageManagerCommand, PM } from "./packageManager"
-import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types"
+import { hoist, type HoisterResult, type HoisterTree } from "./hoist.js"
+import { LogMessageByKey, ModuleManager } from "./moduleManager.js"
+import { getPackageManagerCommand, PM } from "./packageManager.js"
+import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types.js"
 
 export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDepType, OptionalDepType>, OptionalDepType> {
   private readonly nodeModules: NodeModuleInfo[] = []
@@ -96,7 +96,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return retry(
       async () => {
         await this.streamCollectorCommandToFile(command, args, this.rootDir, tempOutputFile)
-        const shellOutput = await fs.readFile(tempOutputFile, { encoding: "utf8" })
+        const shellOutput = await _fsExtra.readFile(tempOutputFile, { encoding: "utf8" })
         const result = await Promise.resolve(this.parseDependenciesTree(shellOutput))
         return result
       },
@@ -112,7 +112,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
             return true
           }
 
-          const fileContent = await fs.readFile(tempOutputFile, { encoding: "utf8" })
+          const fileContent = await _fsExtra.readFile(tempOutputFile, { encoding: "utf8" })
           fields.fileContentLength = fileContent.length.toString()
 
           if (fileContent.trim().length === 0) {
@@ -130,7 +130,8 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
             fields.content = fileContent
           }
 
-          if (error.message?.includes("Unexpected end of JSON input")) {
+          // Both indicate truncated/polluted PM output (a transient that re-running the command clears).
+          if (error.message?.includes("Unexpected end of JSON input") || error.message?.includes("No JSON content found in output")) {
             log.debug(fields, "JSON parse error in dependency tree, retrying")
             return true
           }
@@ -331,7 +332,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     const file = await this.tempDirManager.getTempFile({ prefix: "exec-", suffix: ".txt" })
     try {
       await this.streamCollectorCommandToFile(command, args, cwd, file)
-      const result = await fs.readFile(file, { encoding: "utf8" })
+      const result = await _fsExtra.readFile(file, { encoding: "utf8" })
       return { stdout: result?.trim(), stderr: undefined }
     } catch (error: any) {
       log.debug({ error: error.message }, "failed to execute command")
@@ -379,16 +380,46 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       })
 
       let stderr = ""
+      // The process can close before all piped stdout has been flushed to disk. Resolving on the
+      // child's "close" alone races the write stream and lets the caller read a TRUNCATED file
+      // (manifesting as "No JSON content found in output"). Gate the settle on BOTH the child exit
+      // (for the code/stderr) and the write stream's "finish" (all bytes flushed).
+      let exitCode: number | null = null
+      let childClosed = false
+      let streamFinished = false
+      let settled = false
+
+      // `pipe` ends `outStream` when stdout EOFs, which triggers its "finish" once flushed.
       child.stdout.pipe(outStream)
       child.stderr.on("data", chunk => {
         stderr += chunk.toString()
       })
-      child.on("error", err => {
-        reject(new Error(`Node module collector spawn (${command} ${JSON.stringify(args)}) failed: ${err.message}`))
-      })
 
-      child.on("close", code => {
-        outStream.close()
+      const fail = (err: Error) => {
+        if (settled) {
+          return
+        }
+        settled = true
+        // Best-effort cleanup: stop the child and close the stream so we don't
+        // waste CPU writing to a broken fd after rejection.
+        try {
+          child.kill()
+        } catch {
+          // ignore
+        }
+        try {
+          outStream.destroy()
+        } catch {
+          // ignore
+        }
+        reject(err)
+      }
+
+      const settle = () => {
+        if (settled || !childClosed || !streamFinished) {
+          return
+        }
+        const code = exitCode
         // https://github.com/npm/npm/issues/17624
         const shouldIgnore = code === 1 && "npm" === execName.toLowerCase() && args.includes("list")
         if (shouldIgnore) {
@@ -404,8 +435,23 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
             this.cache.logSummary[LogMessageByKey.PKG_COLLECTOR_OUTPUT].push(stderr)
           }
         }
+        settled = true
         const shouldResolve = code === 0 || shouldIgnore
         return shouldResolve ? resolve() : reject(new Error(`Node module collector process exited with code ${code}:\n${stderr}`))
+      }
+
+      outStream.on("error", err => fail(new Error(`Node module collector failed writing output (${command}): ${err.message}`)))
+      outStream.on("finish", () => {
+        streamFinished = true
+        settle()
+      })
+      child.on("error", err => {
+        fail(new Error(`Node module collector spawn (${command} ${JSON.stringify(args)}) failed: ${err.message}`))
+      })
+      child.on("close", code => {
+        exitCode = code
+        childClosed = true
+        settle()
       })
     })
   }

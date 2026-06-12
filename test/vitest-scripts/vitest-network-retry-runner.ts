@@ -1,7 +1,6 @@
-import { getFn, setFn } from "vitest/suite"
-import { VitestTestRunner } from "vitest/runners"
+import { TestRunner } from "vitest"
 
-const NETWORK_PATTERNS = [/ENOTFOUND/, /ETIMEDOUT/, /ECONNRESET/, /fetch failed/, /getaddrinfo/]
+const NETWORK_PATTERNS = [/ENOTFOUND/, /ETIMEDOUT/, /ECONNRESET/, /fetch failed/, /getaddrinfo/, /Response code 5[0-9][0-9]/, /The batch file cannot be found/]
 
 const MAX_NETWORK_RETRIES = 2
 const RETRY_BASE_DELAY_MS = 2000
@@ -11,16 +10,17 @@ function isNetworkError(error: unknown): boolean {
   return NETWORK_PATTERNS.some(p => p.test(message))
 }
 
-export default class NetworkRetryRunner extends VitestTestRunner {
+export default class NetworkRetryRunner extends TestRunner {
   override async onBeforeRunTask(test: any): Promise<void> {
     await super.onBeforeRunTask(test)
 
-    const originalFn = getFn(test)
+    const originalFn = TestRunner.getTestFn(test)
     if (!originalFn) {
       return
     }
 
-    setFn(test, async () => {
+    // vitest 4 types setTestFn as a 1-arg getter (typeof getFn) but the setter form is still valid at runtime
+    ;(TestRunner.setTestFn as unknown as (task: any, fn: () => Promise<void>) => void)(test, async () => {
       for (let attempt = 0; attempt <= MAX_NETWORK_RETRIES; attempt++) {
         try {
           await originalFn()

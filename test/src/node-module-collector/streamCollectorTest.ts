@@ -1,17 +1,24 @@
 import { afterEach, beforeEach, describe, test, vi } from "vitest"
 import { NodeModulesCollector } from "app-builder-lib/src/node-module-collector/nodeModulesCollector"
 import { LogMessageByKey } from "app-builder-lib/src/node-module-collector/moduleManager"
-import { PM } from "app-builder-lib/src/node-module-collector/packageManager"
+import { PM } from "app-builder-lib/internal"
 import * as childProcess from "child_process"
-import * as fsExtra from "fs-extra"
+import * as nodeFs from "node:fs"
+import { EventEmitter } from "events"
 import type { TmpDir } from "builder-util"
+import * as os from "os"
+import * as path from "path"
+import { randomBytes } from "crypto"
+import { existsSync, unlinkSync } from "fs"
 
-vi.mock("child_process", () => ({ spawn: vi.fn() }))
-vi.mock("fs-extra", async () => ({
-  ...(await vi.importActual("fs-extra")),
-  createWriteStream: vi.fn(() => ({ close: vi.fn() })),
-  writeFile: vi.fn().mockResolvedValue(undefined),
-}))
+vi.mock("child_process", async importOriginal => {
+  const actual = await importOriginal<typeof import("child_process")>()
+  return { ...actual, spawn: vi.fn() }
+})
+vi.mock("node:fs", async () => {
+  const actual = await vi.importActual<typeof import("node:fs")>("node:fs")
+  return { ...actual, createWriteStream: vi.fn() }
+})
 
 class TestCollector extends NodeModulesCollector<any, any> {
   readonly installOptions = { manager: PM.NPM, lockfile: "package-lock.json" }
@@ -30,7 +37,7 @@ class TestCollector extends NodeModulesCollector<any, any> {
 }
 
 const TMP_FILE = "C:\\Temp\\pnpm-deadbeef.tmp"
-const OUTPUT_FILE = "/tmp/output.json"
+let OUTPUT_FILE: string
 
 const originalPlatform = process.platform
 
@@ -53,6 +60,7 @@ function setPlatform(p: NodeJS.Platform) {
 let collector: TestCollector
 let closeCb: ((code: number) => void) | undefined
 let stderrDataCb: ((chunk: string) => void) | undefined
+let mockOutStream: EventEmitter
 
 async function waitForCloseCb() {
   for (let i = 0; i < 50 && closeCb === undefined; i++) {
@@ -64,10 +72,22 @@ async function waitForCloseCb() {
 }
 
 beforeEach(() => {
+  OUTPUT_FILE = path.join(os.tmpdir(), `output-${randomBytes(4).toString("hex")}.json`)
   closeCb = undefined
   stderrDataCb = undefined
+
+  // A real EventEmitter so outStream.on("finish"/"error", cb) and outStream.emit(...) work.
+  // pipe() is mocked to auto-emit "finish" after a microtask, matching what a real writable
+  // stream does when the readable source ends.
+  mockOutStream = new EventEmitter()
+  vi.mocked(nodeFs.createWriteStream).mockReturnValue(mockOutStream as any)
+
   const mockChild = {
-    stdout: { pipe: vi.fn() },
+    stdout: {
+      pipe: vi.fn((dest: EventEmitter) => {
+        void Promise.resolve().then(() => dest.emit("finish"))
+      }),
+    },
     stderr: {
       on: vi.fn((ev: string, cb: (chunk: string) => void) => {
         if (ev === "data") {
@@ -80,6 +100,7 @@ beforeEach(() => {
         closeCb = cb
       }
     }),
+    kill: vi.fn(),
   }
   vi.mocked(childProcess.spawn).mockReturnValue(mockChild as any)
   const mockTmpDir = { getTempFile: vi.fn().mockResolvedValue(TMP_FILE) } as unknown as TmpDir
@@ -89,9 +110,12 @@ beforeEach(() => {
 afterEach(() => {
   Object.defineProperty(process, "platform", { value: originalPlatform, configurable: true })
   vi.clearAllMocks()
+  if (existsSync(OUTPUT_FILE)) {
+    unlinkSync(OUTPUT_FILE)
+  }
 })
 
-describe.sequential("streamCollectorCommandToFile", () => {
+describe("streamCollectorCommandToFile", () => {
   describe("Windows PowerShell -EncodedCommand wrapping", () => {
     test(".cmd file: spawn receives powershell.exe with -EncodedCommand", async ({ expect }) => {
       setPlatform("win32")
@@ -105,8 +129,6 @@ describe.sequential("streamCollectorCommandToFile", () => {
       const script = decodeEncodedCommand(args as string[])
       expect(script).toContain("& 'C:\\nodejs\\npm.cmd' 'list'")
       expect(script).toContain("exit $LASTEXITCODE")
-      // No temporary .bat file is created anymore.
-      expect(vi.mocked(fsExtra.writeFile)).not.toHaveBeenCalled()
     })
 
     test("path with spaces: single-quoted, no shell escaping required", async ({ expect }) => {
@@ -184,7 +206,6 @@ describe.sequential("streamCollectorCommandToFile", () => {
       const [spawnCmd, spawnArgs] = vi.mocked(childProcess.spawn).mock.calls[0]
       expect(spawnCmd).toBe(cmd)
       expect(spawnArgs).toEqual(["list", "--json"])
-      expect(vi.mocked(fsExtra.writeFile)).not.toHaveBeenCalled()
     })
   })
 
@@ -246,6 +267,47 @@ describe.sequential("streamCollectorCommandToFile", () => {
       closeCb!(1)
       await p
       expect(collector.logSummary[LogMessageByKey.PKG_COLLECTOR_OUTPUT]).toHaveLength(0)
+    })
+  })
+
+  describe("write stream error handling", () => {
+    test("outStream error event rejects the promise before child closes", async ({ expect }) => {
+      const p = collector.streamCollectorCommandToFile("npm", ["list", "--json"], "/cwd", OUTPUT_FILE)
+      await waitForCloseCb()
+      mockOutStream.emit("error", new Error("ENOSPC: no space left on device"))
+      await expect(p).rejects.toThrow("ENOSPC: no space left on device")
+    })
+
+    test("outStream error: child.kill() is called to stop the orphaned process", async ({ expect }) => {
+      const p = collector.streamCollectorCommandToFile("pnpm", ["list"], "/cwd", OUTPUT_FILE)
+      await waitForCloseCb()
+      const mockChild = vi.mocked(childProcess.spawn).mock.results[0].value
+      mockOutStream.emit("error", new Error("ENOSPC"))
+      await expect(p).rejects.toThrow()
+      expect(mockChild.kill).toHaveBeenCalledOnce()
+    })
+
+    test("outStream error: stream.destroy() is called to close the broken fd", async ({ expect }) => {
+      // Attach a spy to the destroy method after the stream is created inside streamCollectorCommandToFile.
+      // We stub createWriteStream to return an extended mock that has a destroy spy.
+      const destroySpy = vi.fn()
+      const extendedStream = Object.assign(mockOutStream, { destroy: destroySpy })
+      vi.mocked(nodeFs.createWriteStream).mockReturnValueOnce(extendedStream as any)
+
+      const p = collector.streamCollectorCommandToFile("pnpm", ["list"], "/cwd", OUTPUT_FILE)
+      await waitForCloseCb()
+      extendedStream.emit("error", new Error("ENOSPC"))
+      await expect(p).rejects.toThrow()
+      expect(destroySpy).toHaveBeenCalledOnce()
+    })
+
+    test("outStream error: second error after settle is ignored (no double-reject)", async ({ expect }) => {
+      const p = collector.streamCollectorCommandToFile("npm", ["list", "--json"], "/cwd", OUTPUT_FILE)
+      await waitForCloseCb()
+      mockOutStream.emit("error", new Error("first error"))
+      // Emitting a second error must not throw an unhandled rejection
+      mockOutStream.emit("error", new Error("second error"))
+      await expect(p).rejects.toThrow("first error")
     })
   })
 })

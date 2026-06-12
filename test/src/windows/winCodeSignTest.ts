@@ -1,7 +1,6 @@
 import { parseDn } from "builder-util-runtime"
 import { ToolInfo, WinPackager, WindowsSignToolManager } from "app-builder-lib"
-import { CustomWindowsSign } from "app-builder-lib/out/codeSign/windowsSignToolManager"
-import { Configuration, ToolsetConfig } from "app-builder-lib/out/configuration"
+import { Configuration, CustomWindowsSign, ToolsetConfig } from "app-builder-lib/internal"
 import { AsyncTaskManager } from "builder-util"
 import { Arch, DIR_TARGET, Platform, Target } from "electron-builder"
 import { Packager } from "electron-builder"
@@ -82,7 +81,7 @@ for (const winCodeSign of winCodeSignVersions) {
           targets: Platform.WINDOWS.createTarget(DIR_TARGET),
           config: {
             publish: "never",
-            asarUnpack: ["assets"],
+            asar: { unpack: ["assets"] },
             toolsets: {
               winCodeSign,
             },
@@ -168,10 +167,11 @@ for (const winCodeSign of winCodeSignVersions) {
           },
         },
         {
-          packed: async () => {
+          packed: () => {
             expect(capturedToolInfo).not.toBeNull()
             expect(typeof capturedToolInfo!.path).toBe("string")
             expect(capturedToolInfo!.path.length).toBeGreaterThan(0)
+            return Promise.resolve()
           },
         }
       )
@@ -201,7 +201,7 @@ for (const winCodeSign of winCodeSignVersions) {
           },
         },
         {
-          packed: async () => {
+          packed: () => {
             expect(called).toBe(true)
             return Promise.resolve()
           },

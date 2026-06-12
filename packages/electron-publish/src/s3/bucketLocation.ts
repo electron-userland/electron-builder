@@ -1,6 +1,7 @@
-import { sign } from "aws4"
+import _aws4 from "aws4"
+const { sign } = _aws4
 import { request } from "https"
-import { resolveAwsCredentials } from "./awsCredentials"
+import { resolveAwsCredentials } from "./awsCredentials.js"
 
 /**
  * Resolves the AWS region for a bucket via the S3 GetBucketLocation API (SigV4-signed).

@@ -1,13 +1,13 @@
 import { Nullish } from "builder-util-runtime"
 import { Stats } from "fs"
-import { copyFile as _nodeCopyFile } from "fs-extra"
+import fsExtra from "fs-extra"
 import { access, chmod, link, lstat, mkdir, readdir, readlink, stat, symlink, unlink, writeFile } from "fs/promises"
 import { platform } from "os"
 import * as path from "path"
-import { Mode } from "stat-mode"
+import statMode from "stat-mode"
 import asyncPool from "tiny-async-pool"
-import { log } from "./log"
-import { orIfFileNotExist, orNullIfFileNotExist } from "./promise"
+import { log } from "./log.js"
+import { orIfFileNotExist, orNullIfFileNotExist } from "./promise.js"
 
 export const MAX_FILE_REQUESTS = 8
 
@@ -170,7 +170,7 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
 
   if (stats != null) {
     const originalModeNumber = stats.mode
-    const mode = new Mode(stats)
+    const mode = new statMode.Mode(stats)
     if (mode.owner.execute) {
       mode.group.execute = true
       mode.others.execute = true
@@ -184,7 +184,7 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
 
     if (originalModeNumber !== stats.mode) {
       if (log.isDebugEnabled) {
-        const oldMode = new Mode({ mode: originalModeNumber })
+        const oldMode = new statMode.Mode({ mode: originalModeNumber })
         log.debug({ file: dest, oldMode, mode }, "permissions fixed from")
       }
 
@@ -215,7 +215,7 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
 }
 
 function doCopyFile(src: string, dest: string, stats: Stats | Nullish): Promise<any> {
-  const promise = _nodeCopyFile(src, dest)
+  const promise = fsExtra.copyFile(src, dest)
   if (stats == null) {
     return promise
   }

@@ -1,13 +1,15 @@
-import { readAsarJson } from "app-builder-lib/out/asar/asar"
+import { readAsarJson } from "app-builder-lib/internal"
+import { getWineToolset } from "app-builder-lib/src/toolsets/wine"
+import type { ToolsetConfig } from "app-builder-lib/internal"
 import { walk } from "builder-util"
 import { Arch, Platform } from "electron-builder"
-import { outputFile } from "fs-extra"
+import fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
-import { assertThat } from "./fileAssert"
-import { PackedContext } from "./packTester"
-import { diff, WineManager } from "./wine"
+import { assertThat } from "./fileAssert.js"
+import { PackedContext } from "./packTester.js"
+import { diff, WineManager } from "./wine.js"
 import { ExpectStatic } from "vitest"
 
 export async function expectUpdateMetadata(expect: ExpectStatic, context: PackedContext, arch: Arch = Arch.ia32, requireCodeSign: boolean = false): Promise<void> {
@@ -36,13 +38,19 @@ export async function doTest(
   productFilename = "TestApp Setup",
   name = "TestApp",
   menuCategory: string | null = null,
-  packElevateHelper = true
+  packElevateHelper = true,
+  toolsets?: ToolsetConfig
 ) {
-  if (process.env.DO_WINE !== "true") {
+  // Running the built installer for verification is done under wine, which only exists on non-Windows
+  // hosts (getWineToolset throws on win32). On Windows we cannot sandbox the install via wine, and we
+  // must not execute the real installer against the host machine, so skip this verification step.
+  // The build itself is still validated by the other assertions in the `packed` callback.
+  if (process.platform === "win32" || toolsets?.wine == null || toolsets.wine === "0.0.0") {
     return Promise.resolve()
   }
 
-  const wine = new WineManager()
+  const { execPath: winePath, env: wineEnv } = await getWineToolset(toolsets.wine, "")
+  const wine = new WineManager(winePath, wineEnv)
   await wine.prepare()
   const driveC = path.join(wine.wineDir!, "drive_c")
   const driveCWindows = path.join(wine.wineDir!, "drive_c", "windows")
@@ -91,7 +99,7 @@ export async function doTest(
 
   // run installer again to test uninstall
   const appDataFile = path.join(wine.userDir!, "Application Data", name, "doNotDeleteMe")
-  await outputFile(appDataFile, "app data must be not removed")
+  await fsExtra.outputFile(appDataFile, "app data must be not removed")
   fsBefore = await listFiles()
   await wine.exec(path.join(outDir, `${productFilename} Setup 1.1.0.exe`), "/S")
   fsAfter = await listFiles()

@@ -1,13 +1,13 @@
-import { readAsarJson } from "app-builder-lib/out/asar/asar"
+import { readAsarJson } from "app-builder-lib/internal"
 import { Platform } from "electron-builder"
-import { coerceTypes } from "electron-builder/out/builder"
-import { readJson } from "fs-extra"
+import { coerceTypes, configureBuildCommand, createYargs, normalizeOptions } from "electron-builder/src/builder"
+import fsExtra from "fs-extra"
 import * as path from "path"
-import { assertThat } from "./helpers/fileAssert"
-import { app, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
+import { assertThat } from "./helpers/fileAssert.js"
+import { app, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
 import { ExpectStatic } from "vitest"
 
-function createExtraMetadataTest(expect: ExpectStatic, asar: boolean) {
+function createExtraMetadataTest(expect: ExpectStatic, asar: false | null) {
   return app(
     expect,
     {
@@ -44,20 +44,18 @@ function createExtraMetadataTest(expect: ExpectStatic, asar: boolean) {
         if (asar) {
           expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "package.json")).toMatchSnapshot()
         } else {
-          expect(await readJson(path.join(context.getResources(Platform.LINUX), "app", "package.json"))).toMatchSnapshot()
+          expect(await fsExtra.readJson(path.join(context.getResources(Platform.LINUX), "app", "package.json"))).toMatchSnapshot()
         }
       },
     }
   )
 }
 
-test("extra metadata", ({ expect }) => createExtraMetadataTest(expect, true))
+test("extra metadata", ({ expect }) => createExtraMetadataTest(expect, null))
 test("extra metadata (no asar)", ({ expect }) => createExtraMetadataTest(expect, false))
 
 test("cli", ({ expect }) => {
-  // because these methods are internal
-  const { configureBuildCommand, normalizeOptions } = require("electron-builder/out/builder")
-  const yargs = require("yargs")
+  const yargs = createYargs()
     .strict()
     .fail((message: string, error: Error | null) => {
       throw error || new Error(message)
@@ -65,7 +63,7 @@ test("cli", ({ expect }) => {
   configureBuildCommand(yargs)
 
   function parse(input: string): any {
-    return normalizeOptions(yargs.parse(input.split(" ")))
+    return normalizeOptions(yargs.parse(input.split(" ")) as any)
   }
 
   function parseExtraMetadata(input: string) {

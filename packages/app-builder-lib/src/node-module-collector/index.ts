@@ -1,18 +1,18 @@
 import { Nullish } from "builder-util-runtime"
 import { TmpDir } from "temp-file"
-import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
-import { detectPackageManager, getPackageManagerCommand, PM } from "./packageManager"
-import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector"
-import { YarnBerryNodeModulesCollector } from "./yarnBerryNodeModulesCollector"
-import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector"
-import { BunNodeModulesCollector } from "./bunNodeModulesCollector"
+import { NpmNodeModulesCollector } from "./npmNodeModulesCollector.js"
+import { detectPackageManager, getPackageManagerCommand, PM } from "./packageManager.js"
+import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector.js"
+import { YarnBerryNodeModulesCollector } from "./yarnBerryNodeModulesCollector.js"
+import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector.js"
+import { BunNodeModulesCollector } from "./bunNodeModulesCollector.js"
 import { Lazy } from "lazy-val"
 import { spawn, log, exists, isEmptyOrSpaces } from "builder-util"
-import * as fs from "fs-extra"
+import fs from "fs-extra"
 import * as path from "path"
-import { TraversalNodeModulesCollector } from "./traversalNodeModulesCollector"
+import { TraversalNodeModulesCollector } from "./traversalNodeModulesCollector.js"
 
-export { getPackageManagerCommand, PM }
+export { getPackageManagerCommand, PM, PnpmNodeModulesCollector, YarnNodeModulesCollector, YarnBerryNodeModulesCollector, BunNodeModulesCollector, TraversalNodeModulesCollector }
 
 export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirManager: TmpDir) {
   switch (pm) {

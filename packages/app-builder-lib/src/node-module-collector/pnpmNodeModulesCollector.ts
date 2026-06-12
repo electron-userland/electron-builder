@@ -1,8 +1,8 @@
 import { Lazy } from "lazy-val"
-import { LogMessageByKey, type Package } from "./moduleManager"
-import { NodeModulesCollector } from "./nodeModulesCollector"
-import { getPackageManagerCommand, PM } from "./packageManager"
-import { PnpmDependency } from "./types"
+import { LogMessageByKey, type Package } from "./moduleManager.js"
+import { NodeModulesCollector } from "./nodeModulesCollector.js"
+import { getPackageManagerCommand, PM } from "./packageManager.js"
+import { PnpmDependency } from "./types.js"
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependency, PnpmDependency> {
   public readonly installOptions = {

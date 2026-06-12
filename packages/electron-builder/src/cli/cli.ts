@@ -1,15 +1,15 @@
 #! /usr/bin/env node
 
-import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
-import { nodeGypRebuild } from "app-builder-lib/out/util/yarn"
-import * as chalk from "chalk"
-import { build, configureBuildCommand, createYargs } from "../builder"
-import { configurePublishCommand, publish } from "../publish"
-import { clearCache } from "./clear-cache"
-import { wrap } from "./cli-util"
-import { createSelfSignedCert } from "./create-self-signed-cert"
-import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps"
-import { start } from "./start"
+import { getElectronVersion, nodeGypRebuild } from "app-builder-lib/internal"
+import chalk from "chalk"
+import { build, configureBuildCommand, createYargs } from "../builder.js"
+import { configurePublishCommand, publish } from "../publish.js"
+import { clearCache } from "./clear-cache.js"
+import { wrap } from "./cli-util.js"
+import { createSelfSignedCert } from "./create-self-signed-cert.js"
+import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps.js"
+import { configureMigrateSchemaCommand, migrateSchema } from "./migrate-schema.js"
+import { start } from "./start.js"
 
 // tslint:disable:no-unused-expression
 void createYargs()
@@ -43,6 +43,7 @@ void createYargs()
     yargs => yargs,
     wrap(() => clearCache())
   )
+  .command("migrate-schema", "Migrate build config from v26 to v27 format", configureMigrateSchemaCommand, wrap(migrateSchema))
   .help()
   .epilog(`See ${chalk.underline("https://electron.build")} for more documentation.`)
   .strict()

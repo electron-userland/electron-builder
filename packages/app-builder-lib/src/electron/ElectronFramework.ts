@@ -1,33 +1,21 @@
-import {
-  asArray,
-  copyDir,
-  DO_NOT_USE_HARD_LINKS,
-  exec,
-  getPath7za,
-  isEmptyOrSpaces,
-  log,
-  MAX_FILE_REQUESTS,
-  sanitizeDirPath,
-  statOrNull,
-  to7zaOutputSwitch,
-  unlinkIfExists,
-} from "builder-util"
-import { emptyDir, readdir, rename, rm } from "fs-extra"
+import { asArray, copyDir, DO_NOT_USE_HARD_LINKS, isEmptyOrSpaces, log, MAX_FILE_REQUESTS, statOrNull, unlinkIfExists } from "builder-util"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
-import { Configuration } from "../configuration"
-import { BeforeCopyExtraFilesOptions, Framework, PrepareApplicationStageDirectoryOptions } from "../Framework"
-import { Packager, Platform } from "../index"
-import { LinuxPackager } from "../linuxPackager"
-import { MacPackager } from "../macPackager"
-import { getTemplatePath } from "../util/pathManager"
-import { resolveFunction } from "../util/resolve"
-import { downloadElectronArtifactZip, ElectronDownloadOptions, ElectronGetOptions, extractArchive } from "../util/electronGet"
+import { Configuration } from "../configuration.js"
+import { BeforeCopyExtraFilesOptions, Framework, PrepareApplicationStageDirectoryOptions } from "../Framework.js"
+import { Packager, Platform } from "../index.js"
+import { LinuxPackager } from "../linuxPackager.js"
+import { MacPackager } from "../macPackager.js"
+import { getTemplatePath } from "../util/pathManager.js"
+import { resolveFunction } from "../util/resolve.js"
+import { downloadElectronArtifactZip, ElectronDownloadOptions, ElectronGetOptions, extractArchive } from "../util/electronGet.js"
 export { ElectronDownloadOptions }
-import { createMacApp } from "./electronMac"
-import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
-import { addWinAsarIntegrity } from "./electronWin"
-import { FFMPEGInjector } from "./injectFFMPEG"
+import { createMacApp } from "./mac/electronMac.js"
+import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion.js"
+import { addWinAsarIntegrity } from "./win/electronWin.js"
+import { FFMPEGInjector } from "./injectFFMPEG.js"
+import _fsExtra from "fs-extra"
+const { emptyDir, readdir, rename, rm } = _fsExtra
 
 export type ElectronPlatformName = "darwin" | "linux" | "win32" | "mas"
 
@@ -82,7 +70,7 @@ async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
 
 async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOptions) {
   const { packager, appOutDir } = options
-  const { config, platformSpecificBuildOptions, platform } = packager
+  const { config, platform } = packager
 
   const getLocalesConfig = () => {
     if (platform === Platform.MAC) {
@@ -91,7 +79,7 @@ async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOption
     return { dirs: [path.join(packager.getResourcesDir(appOutDir), "..", "locales")], langFileExt: ".pak" }
   }
 
-  const wantedLanguages = asArray(platformSpecificBuildOptions.electronLanguages || config.electronLanguages)
+  const wantedLanguages = asArray(packager.platformOptions.electronLanguages || config.electronLanguages)
     .map(it => it.trim().toLowerCase())
     .filter(it => it.length > 0)
   if (!wantedLanguages.length) {
@@ -197,7 +185,7 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
 /**
  * Unpacks a custom or default Electron distribution into the app output directory.
  */
-async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, downloadOptions: ElectronDownloadOptions, distMacOsAppName: string): Promise<boolean> {
+async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, downloadOptions: ElectronDownloadOptions, _distMacOsAppName: string): Promise<boolean> {
   async function selectElectron(filepath: string) {
     const resolvedDist = path.isAbsolute(filepath) ? filepath : path.resolve(packager.projectDir, filepath)
 
@@ -210,11 +198,7 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, d
 
     if (resolvedDist.endsWith(".zip")) {
       log.info({ zipFile: resolvedDist }, "using custom electronDist zip file")
-      await emptyDir(appOutDir)
-      const safeZipPath = sanitizeDirPath(resolvedDist)
-      const safeAppOutDir = sanitizeDirPath(appOutDir)
-      const outputSwitch = to7zaOutputSwitch(safeAppOutDir)
-      await exec(await getPath7za(), ["x", "-bd", safeZipPath, outputSwitch, "-y"])
+      await extractArchive(resolvedDist, appOutDir)
       return false // do not clean up after unpacking, it's a custom bundle and we should respect its configuration/contents as required
     }
 
@@ -252,7 +236,7 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, d
 
   let resolvedDist: string | null = null
   try {
-    const electronDistHook: any = await resolveFunction(packager.appInfo.type, electronDist, "electronDist", await packager.info.getWorkspaceRoot())
+    const electronDistHook: any = await resolveFunction(packager.appInfo.type, electronDist, "electronDist", await packager.getWorkspaceRoot())
     resolvedDist = typeof electronDistHook === "function" ? await Promise.resolve(electronDistHook(prepareOptions)) : electronDistHook
   } catch (error: any) {
     log.warn({ error }, "Failed to resolve electronDist, using default unpack logic")

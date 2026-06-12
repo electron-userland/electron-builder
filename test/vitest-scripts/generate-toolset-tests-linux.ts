@@ -1,7 +1,7 @@
 import * as fs from "fs"
 import * as path from "path"
-import type { ToolsetConfig } from "app-builder-lib/src/configuration"
-import { buildDescribeCall, cleanAndEnsureDir, GENERATED_TESTS_DIR, namedFn, resolveImportPath, TEST_SRC_DIR } from "./generate-toolset-tests-shared"
+import type { ToolsetConfig } from "app-builder-lib/internal"
+import { buildDescribeCall, cleanAndEnsureDir, GENERATED_TESTS_DIR, getPlatformSuffix, namedFn, resolveImportPath, TEST_SRC_DIR } from "./generate-toolset-tests-shared"
 import type { SuiteConfig } from "./generate-toolset-tests-shared"
 import type * as _LinuxPackagerSuite from "../src/linux/linuxPackagerTestSuite"
 import type * as _BlackboxLinuxSuite from "../src/updater/blackboxUpdateLinuxSuite"
@@ -55,8 +55,9 @@ export function generateLinuxToolsetTests(): void {
   for (const suite of SUITES) {
     const generatedDir = path.resolve(GENERATED_TESTS_DIR, suite.name)
     cleanAndEnsureDir(generatedDir)
+    const platformSuffix = getPlatformSuffix(suite.describeConfig.chain)
     for (const version of APPIMAGE_VERSIONS) {
-      const filename = `${suite.name}__appimage-${version}__Test.ts`
+      const filename = `${suite.name}__appimage-${version}${platformSuffix}Test.ts`
       fs.writeFileSync(path.join(generatedDir, filename), renderFile(suite, version), "utf8")
     }
   }

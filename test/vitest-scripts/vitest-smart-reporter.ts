@@ -1,7 +1,7 @@
 import * as path from "path"
 import type { Reporter, TestCase, TestModule } from "vitest/node"
-import { FileStats, loadCache, saveCache, TestStats } from "./cache"
-import { UNSTABLE_FAIL_RATIO, SupportedPlatforms } from "./smart-config"
+import { FileStats, loadCache, saveCache, TestStats } from "./cache.js"
+import { UNSTABLE_FAIL_RATIO, SupportedPlatforms } from "./smart-config.js"
 
 const defaultStat: TestStats = {
   platformRuns: {
@@ -40,13 +40,13 @@ export default class SmarterReporter implements Reporter {
   }
 
   onTestCaseReady(test: TestCase) {
-    const id = `${path.relative(TEST_SRC_ROOT, test.module.moduleId)}::${test.fullName}`
+    const id = `${path.relative(TEST_SRC_ROOT, test.module.moduleId).split(path.sep).join("/")}::${test.fullName}`
     this.inProgressTests.set(id, Date.now())
     process.stdout.write(`\n[test ready] 🏃 ${test.fullName}\n`)
   }
 
   onTestCaseResult(test: TestCase) {
-    const id = `${path.relative(TEST_SRC_ROOT, test.module.moduleId)}::${test.fullName}`
+    const id = `${path.relative(TEST_SRC_ROOT, test.module.moduleId).split(path.sep).join("/")}::${test.fullName}`
     this.inProgressTests.delete(id)
     const dur = test.diagnostic()?.duration ?? 0
     const testResult = test.result().state
@@ -64,7 +64,6 @@ export default class SmarterReporter implements Reporter {
     })()
     process.stdout.write(`\n${status} ${id} (${Math.round(dur / 1000)}s)\n`)
 
-    // Access meta through the test task
     const meta = (test as any).meta || {}
 
     const prev: TestStats = this.cache.tests[id] ?? { ...defaultStat }
@@ -94,7 +93,7 @@ export default class SmarterReporter implements Reporter {
       heavy: isHeavy,
     }
 
-    const file = path.relative(TEST_SRC_ROOT, test.module.moduleId)
+    const file = path.relative(TEST_SRC_ROOT, test.module.moduleId).split(path.sep).join("/")
     this.fileDurations.set(file, (this.fileDurations.get(file) ?? 0) + dur)
     if (testResult === "failed") {
       this.fileFails.set(file, (this.fileFails.get(file) ?? 0) + 1)
@@ -105,7 +104,7 @@ export default class SmarterReporter implements Reporter {
   }
 
   onTestModuleEnd(mod: TestModule) {
-    const file = path.relative(TEST_SRC_ROOT, mod.moduleId)
+    const file = path.relative(TEST_SRC_ROOT, mod.moduleId).split(path.sep).join("/")
     const dur = this.fileDurations.get(file) ?? 0
     const fails = this.fileFails.get(file) ?? 0
     const hasHeavy = this.fileHasHeavy.get(file) ?? false

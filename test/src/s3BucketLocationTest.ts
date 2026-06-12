@@ -30,7 +30,7 @@ function mockHttpResponse(statusCode: number, body: string): void {
       setImmediate(() => {
         const res = new EventEmitter() as any
         res.statusCode = statusCode
-        ;(callback as Function)(res)
+        ;(callback as (res: unknown) => void)(res)
         setImmediate(() => {
           res.emit("data", body)
           res.emit("end")
@@ -186,6 +186,9 @@ describe("resolveAwsCredentials", () => {
   })
 
   it("returns env-var credentials when AWS_ACCESS_KEY_ID is set", async () => {
+    // Use the specific awsCredentials module path so vi.importActual bypasses the mock for
+    // exactly that file — going via "electron-publish/internal" would still return the mock
+    // because internal re-exports from the already-mocked awsCredentials.ts.
     const { resolveAwsCredentials: realResolve } = await vi.importActual<typeof import("electron-publish/src/s3/awsCredentials")>("electron-publish/src/s3/awsCredentials")
     vi.stubEnv("AWS_ACCESS_KEY_ID", "AKIAENV")
     vi.stubEnv("AWS_SECRET_ACCESS_KEY", "env-secret")
