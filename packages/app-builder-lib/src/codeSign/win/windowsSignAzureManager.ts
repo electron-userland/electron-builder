@@ -1,4 +1,4 @@
-import { Arch, InvalidConfigurationError, log } from "builder-util"
+import { Arch, log } from "builder-util"
 import { asArray, MemoLazy } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -36,8 +36,31 @@ export class WindowsSignAzureManager implements SignManager {
     this.signing = signing
   }
 
+  private isLegacyMode(): boolean {
+    const wcs = this.packager.config.toolsets?.winCodeSign
+    return wcs == null || wcs === "0.0.0"
+  }
+
   async initialize(): Promise<void> {
-    // No-op: Azure.CodeSigning.Dlib.dll is bundled in the winCodeSign 1.x toolset.
+    if (!this.isLegacyMode()) {
+      return
+    }
+
+    log.warn(
+      null,
+      "Azure Trusted Signing: falling back to legacy PowerShell (Invoke-TrustedSigning) because toolsets.winCodeSign is not set to 1.x. " +
+        'Set `toolsets.winCodeSign: "1.1.0"` in your electron-builder config to use the faster signtool /dlib integration.'
+    )
+
+    const vm = await this.packager.vm.value
+    const ps = await vm.powershellCommand.value
+    log.info(null, "installing required module (TrustedSigning) with scope CurrentUser")
+    try {
+      await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope CurrentUser"])
+    } catch (error: any) {
+      log.debug({ message: error.message || error.stack }, "unable to install PackageProvider NuGet — may already be present")
+    }
+    await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", "Install-Module -Name TrustedSigning -MinimumVersion 0.5.0 -Force -Repository PSGallery -Scope CurrentUser"])
   }
 
   computePublisherName(): Promise<string> {
@@ -50,22 +73,43 @@ export class WindowsSignAzureManager implements SignManager {
   )
 
   async signFile(options: WindowsSignOptions): Promise<boolean> {
-    const { signing } = this
+    return this.isLegacyMode() ? this.signFileLegacy(options) : this.signFileWithDlib(options)
+  }
 
-    const winCodeSign = this.packager.config.toolsets?.winCodeSign
-    if (winCodeSign == null || winCodeSign === "0.0.0") {
-      throw new InvalidConfigurationError(
-        'Azure Trusted Signing requires winCodeSign toolset 1.x or later. Set toolsets.winCodeSign to "1.0.0" or "1.1.0" in your electron-builder configuration.'
-      )
+  private async signFileLegacy(options: WindowsSignOptions): Promise<boolean> {
+    const { signing } = this
+    const vm = await this.packager.vm.value
+    const ps = await vm.powershellCommand.value
+
+    const params: Record<string, string | undefined> = {
+      Endpoint: signing.endpoint,
+      CertificateProfileName: signing.certificateProfileName,
+      CodeSigningAccountName: signing.codeSigningAccountName,
+      TimestampRfc3161: signing.timestampRfc3161 ?? "http://timestamp.acs.microsoft.com",
+      TimestampDigest: signing.timestampDigest ?? "SHA256",
+      FileDigest: signing.fileDigest ?? "SHA256",
+      ...signing.additionalMetadata,
+      Files: vm.toVmFile(options.path),
     }
 
-    // Resolve signtool.exe and Azure.CodeSigning.Dlib.dll from the Windows Kits bundle.
+    const paramsString = Object.entries(params)
+      .filter(([, value]) => value != null)
+      .map(([field, value]) => `-${field} '${String(value).replace(/'/g, "''")}'`)
+      .join(" ")
+
+    await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", `Invoke-TrustedSigning ${paramsString}`])
+    return true
+  }
+
+  private async signFileWithDlib(options: WindowsSignOptions): Promise<boolean> {
+    const { signing } = this
+    const winCodeSign = this.packager.config.toolsets!.winCodeSign!
+
     const arch = process.arch === "x64" ? Arch.x64 : process.arch === "arm64" ? Arch.arm64 : Arch.ia32
     const { kit: kitDir } = await getWindowsKitsBundle({ winCodeSign, arch })
     const signtoolPath = path.resolve(kitDir, "signtool.exe")
     const dlibPath = path.resolve(kitDir, "Azure.CodeSigning.Dlib.dll")
 
-    // Temp file registered with packager's TmpDir — cleaned up automatically after build.
     const metadataPath = await this.packager.getTempFile(".json")
     await _fsExtra.writeJson(metadataPath, {
       Endpoint: signing.endpoint,
