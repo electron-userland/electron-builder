@@ -1205,6 +1205,20 @@
       "additionalProperties": false,
       "description": "Signing options passed to `@electron/osx-sign`. Electron-builder owns the fields it must control\nitself — `app`, `keychain`, `platform`, `version`, `optionsForFile`, and `type` (derived from the\nbuild flavor: `mas-dev` → `development`, otherwise `distribution`) — and forwards everything else.\n\nAdditionally exposes a small set of per-file convenience fields that electron-builder maps\ninternally through `optionsForFile`.",
       "properties": {
+        "additionalArguments": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Extra arguments passed to each `codesign` invocation."
+        },
         "batchCodesignCalls": {
           "description": "Combine all files with identical CLI arguments in a single `codesign` call instead of running\n`codesign` once for each of those files. This minimizes the number of child processes that need\nto be spawned and reduces the time it takes to sign all files.",
           "type": "boolean"
@@ -1215,6 +1229,38 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "entitlements": {
+          "description": "Path to the main app entitlements file.\nFalls back to `build/entitlements.mac.plist` if it exists, then to `@electron/osx-sign`'s\nbuilt-in defaults.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "entitlementsInherit": {
+          "description": "Path to child entitlements inherited by embedded frameworks and bundles.\nFalls back to `build/entitlements.mac.inherit.plist` if it exists.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "entitlementsLoginHelper": {
+          "description": "Path to entitlements for the Login Helper.\nRequired when using App Sandbox, because the Login Helper cannot inherit entitlements.\nDefaults to the value of `entitlements`.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "hardenedRuntime": {
+          "description": "Whether to enable [Hardened Runtime](https://developer.apple.com/documentation/security/hardened_runtime).\n\nHardened Runtime is a prerequisite for notarization (mandatory on macOS 10.15+).\nDefaults to `true` for `darwin` builds and `false` for `mas-dev`.",
+          "type": "boolean"
+        },
+        "identity": {
+          "description": "The signing identity (certificate name or SHA-1 hash). Applies to both app signing and DMG signing.\nPrefer the environment variables `CSC_LINK` / `CSC_NAME` over hardcoding this value.\n\n- **Not set** (default): electron-builder searches the keychain for a valid certificate.\n- **`null`**: skip signing entirely.\n- **`\"-\"`**: ad-hoc signing (requires disabling library validation — see `hardenedRuntime`).",
+          "type": [
+            "null",
+            "string"
+          ]
         },
         "identityValidation": {
           "description": "Flag to enable/disable validation for the signing identity.\nIf enabled, the {@link SignOptions.identityidentity} provided\nwill be validated in the {@link BaseSignOptions.keychainkeychain} specified.",
@@ -1249,14 +1295,29 @@
           "description": "Path to a provisioning profile, which can be used to grant restricted entitlements to your app.\n\nSee [Apple Documentation](https://developer.apple.com/documentation/technotes/tn3125-inside-code-signing-provisioning-profiles) for more details.",
           "type": "string"
         },
+        "requirements": {
+          "description": "Path to a [requirements file](https://developer.apple.com/library/mac/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html).\nNot applicable for MAS.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "strictVerify": {
           "description": "Flag to enable/disable the `--strict` flag when verifying the signed application bundle.\nAlso supports string values to specify which strict restrictions to use, see codesign man page for supported values.",
           "type": [
             "string",
             "boolean"
           ]
+        },
+        "timestamp": {
+          "description": "URL of the timestamp authority server. Passed per-file to `codesign --timestamp=<url>`.",
+          "type": [
+            "null",
+            "string"
+          ]
         }
-      }
+      },
+      "type": "object"
     },
     "ElectronUniversalOptions": {
       "additionalProperties": false,
@@ -2981,13 +3042,6 @@
             "string"
           ]
         },
-        "identity": {
-          "description": "The signing identity (certificate name or SHA-1 hash). Applies to both app signing and DMG signing.\nPrefer the environment variables `CSC_LINK` / `CSC_NAME` over hardcoding this value.\n\n- **Not set** (default): electron-builder searches the keychain for a valid certificate.\n- **`null`**: skip signing entirely.\n- **`\"-\"`**: ad-hoc signing (requires disabling library validation — see `mac.sign.hardenedRuntime`).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
         "minimumSystemVersion": {
           "description": "The minimum version of macOS required for the app to run. Corresponds to `LSMinimumSystemVersion`.",
           "type": [
@@ -3064,8 +3118,7 @@
         "sign": {
           "anyOf": [
             {
-              "$ref": "#/definitions/ElectronSignOptions",
-              "description": "Signing options passed to `@electron/osx-sign`. Electron-builder owns the fields it must control\nitself — `app`, `keychain`, `platform`, `version`, `optionsForFile`, and `type` (derived from the\nbuild flavor: `mas-dev` → `development`, otherwise `distribution`) — and forwards everything else.\n\nAdditionally exposes a small set of per-file convenience fields that electron-builder maps\ninternally through `optionsForFile`."
+              "$ref": "#/definitions/ElectronSignOptions"
             },
             {
               "typeof": "function"
@@ -3077,7 +3130,7 @@
               ]
             }
           ],
-          "description": "Codesigning configuration.\n\n- **Not set** (default): electron-builder auto-discovers a valid certificate in the keychain. If none is found, signing is skipped.\n- **`null`**: skip signing entirely.\n- **`string`**: path or module ID of a file that exports a {@link CustomMacSign} function.\n- **{@link CustomMacSign}**: inline custom signing function (JS/TS config only).\n- **{@link ElectronSignOptions}**: options forwarded directly to `@electron/osx-sign`."
+          "description": "Codesigning configuration. The signing certificate is selected via `sign.identity` (or the\n`CSC_LINK` / `CSC_NAME` environment variables).\n\n- **Not set** (default): electron-builder auto-discovers a valid certificate in the keychain. If none is found, signing is skipped.\n- **`null`**: skip signing entirely.\n- **`string`**: path or module ID of a file that exports a {@link CustomMacSign} function.\n- **{@link CustomMacSign}**: inline custom signing function (JS/TS config only).\n- **{@link ElectronSignOptions}**: options forwarded directly to `@electron/osx-sign`."
         },
         "target": {
           "anyOf": [
@@ -3477,13 +3530,6 @@
             "string"
           ]
         },
-        "identity": {
-          "description": "The signing identity (certificate name or SHA-1 hash). Applies to both app signing and DMG signing.\nPrefer the environment variables `CSC_LINK` / `CSC_NAME` over hardcoding this value.\n\n- **Not set** (default): electron-builder searches the keychain for a valid certificate.\n- **`null`**: skip signing entirely.\n- **`\"-\"`**: ad-hoc signing (requires disabling library validation — see `mac.sign.hardenedRuntime`).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
         "minimumSystemVersion": {
           "description": "The minimum version of macOS required for the app to run. Corresponds to `LSMinimumSystemVersion`.",
           "type": [
@@ -3560,8 +3606,7 @@
         "sign": {
           "anyOf": [
             {
-              "$ref": "#/definitions/ElectronSignOptions",
-              "description": "Signing options passed to `@electron/osx-sign`. Electron-builder owns the fields it must control\nitself — `app`, `keychain`, `platform`, `version`, `optionsForFile`, and `type` (derived from the\nbuild flavor: `mas-dev` → `development`, otherwise `distribution`) — and forwards everything else.\n\nAdditionally exposes a small set of per-file convenience fields that electron-builder maps\ninternally through `optionsForFile`."
+              "$ref": "#/definitions/ElectronSignOptions"
             },
             {
               "typeof": "function"
@@ -3573,7 +3618,7 @@
               ]
             }
           ],
-          "description": "Codesigning configuration.\n\n- **Not set** (default): electron-builder auto-discovers a valid certificate in the keychain. If none is found, signing is skipped.\n- **`null`**: skip signing entirely.\n- **`string`**: path or module ID of a file that exports a {@link CustomMacSign} function.\n- **{@link CustomMacSign}**: inline custom signing function (JS/TS config only).\n- **{@link ElectronSignOptions}**: options forwarded directly to `@electron/osx-sign`."
+          "description": "Codesigning configuration. The signing certificate is selected via `sign.identity` (or the\n`CSC_LINK` / `CSC_NAME` environment variables).\n\n- **Not set** (default): electron-builder auto-discovers a valid certificate in the keychain. If none is found, signing is skipped.\n- **`null`**: skip signing entirely.\n- **`string`**: path or module ID of a file that exports a {@link CustomMacSign} function.\n- **{@link CustomMacSign}**: inline custom signing function (JS/TS config only).\n- **{@link ElectronSignOptions}**: options forwarded directly to `@electron/osx-sign`."
         },
         "target": {
           "anyOf": [

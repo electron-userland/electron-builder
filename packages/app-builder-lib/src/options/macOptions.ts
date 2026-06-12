@@ -23,7 +23,16 @@ export type ElectronUniversalOptions = Omit<MakeUniversalOpts, "x64AppPath" | "a
  *
  * @see https://packages.electronjs.org/osx-sign
  */
-export type ElectronSignOptions = Omit<OnlySignOptions, "optionsForFile" | "version" | "type"> & {
+export interface ElectronSignOptions extends Omit<OnlySignOptions, "optionsForFile" | "version" | "type"> {
+  /**
+   * The signing identity (certificate name or SHA-1 hash). Applies to both app signing and DMG signing.
+   * Prefer the environment variables `CSC_LINK` / `CSC_NAME` over hardcoding this value.
+   *
+   * - **Not set** (default): electron-builder searches the keychain for a valid certificate.
+   * - **`null`**: skip signing entirely.
+   * - **`"-"`**: ad-hoc signing (requires disabling library validation — see `hardenedRuntime`).
+   */
+  readonly identity?: string | null
   /**
    * Path to the main app entitlements file.
    * Falls back to `build/entitlements.mac.plist` if it exists, then to `@electron/osx-sign`'s
@@ -166,17 +175,8 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly extraDistFiles?: Array<string> | string | null
 
   /**
-   * The signing identity (certificate name or SHA-1 hash). Applies to both app signing and DMG signing.
-   * Prefer the environment variables `CSC_LINK` / `CSC_NAME` over hardcoding this value.
-   *
-   * - **Not set** (default): electron-builder searches the keychain for a valid certificate.
-   * - **`null`**: skip signing entirely.
-   * - **`"-"`**: ad-hoc signing (requires disabling library validation — see `mac.sign.hardenedRuntime`).
-   */
-  readonly identity?: string | null
-
-  /**
-   * Codesigning configuration.
+   * Codesigning configuration. The signing certificate is selected via `sign.identity` (or the
+   * `CSC_LINK` / `CSC_NAME` environment variables).
    *
    * - **Not set** (default): electron-builder auto-discovers a valid certificate in the keychain. If none is found, signing is skipped.
    * - **`null`**: skip signing entirely.

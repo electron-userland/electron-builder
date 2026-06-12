@@ -153,9 +153,12 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
       coerceTypes(config.extraMetadata)
     }
 
-    // ability to disable code sign using -c.mac.identity=null
+    // mac.sign / mac.universal are nested option bags holding booleans and the signing identity
+    // (e.g. sign.identity, sign.hardenedRuntime, universal.mergeASARs). coerceValue recurses into the
+    // objects (so `-c.mac.sign.identity=null` disables code signing) and also handles `-c.mac.sign=null`.
     if (config.mac != null) {
-      coerceValue(config.mac, "identity")
+      coerceValue(config.mac, "sign")
+      coerceValue(config.mac, "universal")
     }
 
     // fix Boolean type by coerceTypes

@@ -357,9 +357,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       return false
     }
 
-    // getPlatformConfig cascades mac → mas → masDev, so all fields are already merged for this flavor.
-    const platformConfig = this.getPlatformConfig(targetPlatform).config
-    const config = platformConfig.sign
+    // getPlatformConfig cascades mac → mas → masDev, so `sign` (and `sign.identity`) is already merged for this flavor.
+    const config = this.getPlatformConfig(targetPlatform).config.sign
 
     // sign: null → user explicitly disabled signing
     if (config === null) {
@@ -367,8 +366,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     }
 
     const signOpts = isElectronSignOptions(config) ? config : undefined
-    // identity: null → explicit skip; undefined → auto-discover
-    const qualifier = platformConfig.identity
+    // sign.identity: null → explicit skip; undefined → auto-discover
+    const qualifier = signOpts?.identity
     if (qualifier === null) {
       return this.helper.handleNullIdentity()
     }

@@ -78,10 +78,10 @@ test.ifNotWindows("files", () => {
 
 test.ifNotWindows("null string as null", async ({ expect }) => {
   const yargs = configureBuildCommand(createYargs())
-  const options = normalizeOptions(yargs.parse(["-c.mac.identity=null", "--config.mac.sign.hardenedRuntime=false"]) as CliOptions)
+  const options = normalizeOptions(yargs.parse(["-c.mac.sign.identity=null", "--config.mac.sign.hardenedRuntime=false"]) as CliOptions)
   const config = options.config as Configuration
   await validateConfiguration(config, new DebugLogger())
-  expect(config.mac!.identity).toBeNull()
+  expect((config.mac!.sign as ElectronSignOptions).identity).toBeNull()
   expect((config.mac!.sign as ElectronSignOptions).hardenedRuntime).toBe(false)
 })
 
