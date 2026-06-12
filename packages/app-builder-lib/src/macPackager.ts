@@ -240,6 +240,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
 
     const universalOpts = platformSpecificBuildOptions.universal
     await makeUniversalApp({
+      mergeASARs: true, // preserve electron-builder v2 default; user can override via mac.universal.mergeASARs
       ...universalOpts,
       x64AppPath: path.join(safeX64AppOutDir, appFile),
       arm64AppPath: path.join(safeArm64AppOutPath, appFile),

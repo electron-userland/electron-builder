@@ -223,17 +223,14 @@ export class MacTargetHelper {
 
     const requirements = isMas || customSignOptions?.requirements == null ? undefined : await this.packager.getResource(customSignOptions.requirements)
 
-    // harden by default for mac builds. Only harden mas builds if explicitly true (backward compatibility)
-    const hardenedRuntime = isMas ? customSignOptions?.hardenedRuntime === true : customSignOptions?.hardenedRuntime !== false
-
     return (filePath: string): PerFileSignOptions => {
       const entitlements = getEntitlements(filePath)
       return {
         entitlements: entitlements || undefined,
-        hardenedRuntime: hardenedRuntime ?? undefined,
+        hardenedRuntime: MacTargetHelper.isHardenedRuntimeEnabledForSigning(targetPlatform, customSignOptions?.hardenedRuntime) ?? undefined,
         timestamp: customSignOptions?.timestamp || undefined,
         requirements: requirements || undefined,
-        additionalArguments: customSignOptions?.additionalArguments || [],
+        additionalArguments: customSignOptions?.additionalArguments || undefined,
       }
     }
   }
@@ -258,11 +255,12 @@ export class MacTargetHelper {
   }
 
   static getPlatformTypeFromTarget(targetName: string): PlatformType {
-    if (targetName === "mas") {
-      return "mas"
-    }
-    if (targetName === "mas-dev") {
+    // must check for mas-dev first
+    if (MacTargetHelper.isMasDevelopment(targetName)) {
       return "mas-dev"
+    }
+    if (MacTargetHelper.isMasTarget(targetName)) {
+      return "mas"
     }
     return "mac"
   }
