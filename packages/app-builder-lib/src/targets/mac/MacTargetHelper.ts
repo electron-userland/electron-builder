@@ -1,6 +1,6 @@
-import type { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
-import type { PerFileSignOptions, SigningDistributionType, SignOptions } from "@electron/osx-sign/dist/cjs/types"
-import type { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
+import type { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types.js"
+import type { PerFileSignOptions, SigningDistributionType, SignOptions } from "@electron/osx-sign/dist/cjs/types.js"
+import type { Identity } from "@electron/osx-sign/dist/cjs/util-identities.js"
 import { Arch, InvalidConfigurationError, log, statOrNull } from "builder-util"
 import { dynamicImport } from "../../util/dynamicImport.js"
 import { Nullish } from "builder-util-runtime"
@@ -57,7 +57,7 @@ export class MacTargetHelper {
               "to prevent app launch failures due to library validation. See https://electron.build/code-signing for details."
           )
         }
-        const { Identity: IdentityClass } = await dynamicImport<{ Identity: new (name: string, hash?: string) => Identity }>("@electron/osx-sign/dist/cjs/util-identities")
+        const { Identity: IdentityClass } = await dynamicImport<{ Identity: new (name: string, hash?: string) => Identity }>("@electron/osx-sign/dist/cjs/util-identities.js")
         identity = new IdentityClass("-", undefined)
       } else if (noIdentity) {
         await reportError(isMas, certificateTypes, qualifier, keychainFile, this.packager.forceCodeSigning)

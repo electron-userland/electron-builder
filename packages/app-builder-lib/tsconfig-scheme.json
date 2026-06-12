@@ -1,6 +1,14 @@
 {
     "extends": "../tsconfig-base.json",
     "compilerOptions": {
+        // Schema generation only: typescript-json-schema uses the type printer to name
+        // definitions. Under nodenext resolution the printer emits absolute, machine-specific
+        // `import("/abs/path",{assert:{"resolution-mode":"import"}}).Name` keys, which are
+        // non-deterministic and break fix-schema.js. bundler resolution yields stable short
+        // names. This does not affect the build (tsconfig.build.json) or type-checking
+        // (tsconfig.json), both of which stay on nodenext.
+        "module": "esnext",
+        "moduleResolution": "bundler",
         "outDir": "out",
         "rootDir": "src",
     },
