@@ -11,7 +11,8 @@ import type { MakeUniversalOpts } from "@electron/universal"
  *
  * @see https://github.com/electron/universal
  */
-export type ElectronUniversalOptions = Omit<MakeUniversalOpts, "x64AppPath" | "arm64AppPath" | "outAppPath" | "force">
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface ElectronUniversalOptions extends Omit<MakeUniversalOpts, "x64AppPath" | "arm64AppPath" | "outAppPath" | "force"> {}
 
 /**
  * Signing options passed to `@electron/osx-sign`. Electron-builder owns the fields it must control

@@ -47,7 +47,7 @@ export {
   PacmanOptions,
   RpmOptions,
 } from "./options/linuxOptions.js"
-export type { DmgContent, DmgOptions, DmgWindow, MacConfiguration, MacOsTargetName, MasConfiguration } from "./options/macOptions.js"
+export type { DmgContent, DmgOptions, DmgWindow, ElectronSignOptions, ElectronUniversalOptions, MacConfiguration, MacOsTargetName, MasConfiguration } from "./options/macOptions.js"
 export { AuthorMetadata, Metadata, RepositoryInfo } from "./options/metadata.js"
 export { MsiOptions } from "./options/MsiOptions.js"
 export { MsiWrappedOptions } from "./options/MsiWrappedOptions.js"

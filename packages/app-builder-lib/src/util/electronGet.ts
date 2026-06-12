@@ -24,7 +24,7 @@ import * as unzipper from "unzipper"
 import { getPath7za } from "../toolsets/7zip.js"
 import { CacheState, cleanupCacheDirectory, computeCacheMetadata, readCacheStateFile, validateCacheDirectory, writeCacheState } from "./cacheState.js"
 
-export type ElectronGetOptions = Omit<
+export interface ElectronGetOptions extends Omit<
   ElectronPlatformArtifactDetails,
   | "platform"
   | "arch"
@@ -38,8 +38,8 @@ export type ElectronGetOptions = Omit<
   | "cacheRoot"
   | "downloadOptions"
   | "isGeneric"
-  | "mirrorOptions" // to be added below
-> & {
+  | "mirrorOptions"
+> {
   mirrorOptions?: Omit<MirrorOptions, "customDir" | "customFilename" | "customVersion">
 }
 
