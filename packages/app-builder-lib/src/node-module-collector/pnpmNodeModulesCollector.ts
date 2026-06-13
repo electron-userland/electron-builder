@@ -310,7 +310,13 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       if (typeof version !== "string" || !version.startsWith("link:")) {
         continue
       }
-      const resolved = await this.locateFromDepOrRoot(name, this.rootDir, undefined)
+      // Resolve the link: target path directly — bypasses potentially broken cross-drive
+      // Windows junctions (C:→D:) that locateFromDepOrRoot would traverse through
+      // node_modules and silently fail on (readJson returns null via .catch).
+      const linkRelPath = version.slice("link:".length)
+      const linkTarget = path.isAbsolute(linkRelPath) ? linkRelPath : path.resolve(this.rootDir, linkRelPath)
+      const directPkg = (await _fsExtra.readJson(path.join(linkTarget, "package.json")).catch(() => null)) as PackageJson | null
+      const resolved = directPkg ? { packageDir: linkTarget, packageJson: directPkg } : await this.locateFromDepOrRoot(name, this.rootDir, undefined)
       if (!resolved) {
         continue
       }
