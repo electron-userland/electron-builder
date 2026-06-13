@@ -3,6 +3,7 @@ import { asArray, MemoLazy } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
+import { Target } from "../../core.js"
 import { resolveWindowsSigningConfiguration, WindowsAzureSigningConfig, WindowsConfiguration } from "../../options/winOptions.js"
 import { getWindowsKitsBundle } from "../../toolsets/winCodeSign.js"
 import { VmManager } from "../../vm/vm.js"
@@ -40,10 +41,10 @@ export class WindowsSignAzureManager implements SignManager {
 
   private isLegacyMode(): boolean {
     const { winCodeSign: wcs = null } = this.packager.config.toolsets ?? {}
-    if (typeof wcs === "string" && semver.gte(wcs, minimumWinCodeSignVersionForDlib)) {
-      return false
+    if (typeof wcs === "string") {
+      return semver.lt(wcs, minimumWinCodeSignVersionForDlib)
     }
-    // assume custom toolsets (non-null) have a modern Azure signing implementation; the legacy PowerShell fallback is only for the built-in toolset with old versions.
+    // null = built-in toolset not configured → legacy; ToolsetCustom object = user-managed → not legacy
     return wcs == null
   }
 
@@ -52,10 +53,9 @@ export class WindowsSignAzureManager implements SignManager {
       return
     }
 
-    log.warn(
-      null,
-      `Azure Trusted Signing: falling back to legacy PowerShell (Invoke-TrustedSigning) because toolsets.winCodeSign is not set to >=${minimumWinCodeSignVersionForDlib}. ` +
-        `Set \`toolsets.winCodeSign: "${minimumWinCodeSignVersionForDlib}"\` in your electron-builder config to use the faster signtool /dlib integration.`
+    log.info(
+      { guidance: `set toolsets.winCodeSign to at least "${minimumWinCodeSignVersionForDlib}" for faster signtool /dlib integration` },
+      `Azure Trusted Signing: falling back to legacy PowerShell (Invoke-TrustedSigning).`
     )
 
     const vm = await this.packager.vm.value
@@ -69,8 +69,8 @@ export class WindowsSignAzureManager implements SignManager {
     await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", "Install-Module -Name TrustedSigning -MinimumVersion 0.5.0 -Force -Repository PSGallery -Scope CurrentUser"])
   }
 
-  computePublisherName(): Promise<string> {
-    return Promise.resolve(this.signing.publisherName)
+  computePublisherName(_target: Target, publisherName: string): Promise<string> {
+    return Promise.resolve(this.signing.publisherName ?? publisherName)
   }
 
   readonly cscInfo = new MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>(
@@ -115,7 +115,7 @@ export class WindowsSignAzureManager implements SignManager {
     // dir has no dlib. On arm64 hosts use the x64 signtool + dlib — x64 signtool runs under
     // Windows-on-ARM emulation natively, and under x64 Wine on macOS/Linux.
     const arch = process.arch === "ia32" ? Arch.ia32 : Arch.x64
-    const { kit: kitDir } = await getWindowsKitsBundle({ winCodeSign, arch })
+    const { kit: kitDir } = await getWindowsKitsBundle({ winCodeSign, arch, resourcesDir: this.packager.buildResourcesDir })
     const signtoolPath = path.resolve(kitDir, "signtool.exe")
     const dlibPath = path.resolve(kitDir, "Azure.CodeSigning.Dlib.dll")
 

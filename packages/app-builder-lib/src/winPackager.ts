@@ -127,7 +127,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       return false
     }
     if (isWindowsSigningDisabled(this.platformSpecificBuildOptions)) {
-      log.info(logFields, "file signing skipped via `sign: false` configuration")
+      log.info(logFields, "file signing disabled (`sign: false` or `sign: null`)")
       return false
     }
 
