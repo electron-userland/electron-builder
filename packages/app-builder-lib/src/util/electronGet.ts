@@ -580,6 +580,13 @@ export async function downloadBuilderToolset(options: {
 function buildElectronArtifactConfig(artifactOptions: ArtifactDownloadOptions): ElectronPlatformArtifactDetails {
   const { options, arch, version, platformName: platform, artifactName, cacheDir: cacheRoot } = artifactOptions
 
+  if (options?.unsafelyDisableChecksums) {
+    log.warn(
+      { artifactName },
+      "electronGet.unsafelyDisableChecksums is enabled — downloaded artifacts will NOT be verified.txt; a compromised mirror can serve malicious binaries undetected"
+    )
+  }
+
   const artifactConfig: ElectronPlatformArtifactDetails = { ...options, cacheRoot, platform, arch, version, artifactName, cacheMode: resolveCacheMode() }
   return artifactConfig
 }

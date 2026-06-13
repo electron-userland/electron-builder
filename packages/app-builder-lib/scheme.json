@@ -1328,7 +1328,8 @@
           "type": "string"
         },
         "mergeASARs": {
-          "description": "Merge x64 and arm64 ASARs into one.",
+          "default": true,
+          "description": "Whether to merge x64 and arm64 ASARs into one.",
           "type": "boolean"
         },
         "singleArchFiles": {
