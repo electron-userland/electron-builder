@@ -1,4 +1,4 @@
-import { Arch, log, sanitizeDirPath } from "builder-util"
+import { Arch, isEmptyOrSpaces, log, sanitizeDirPath } from "builder-util"
 import { asArray, MemoLazy } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -22,14 +22,16 @@ export class WindowsSignAzureManager implements SignManager {
   private readonly vm: VmManager = process.platform === "win32" ? new VmManager() : new WineVmManager(this.packager.config.toolsets?.wine, this.packager.buildResourcesDir)
 
   readonly computedPublisherName = new Lazy<Array<string> | null>(() => {
-    const { publisherName } = this.signing
-    if (publisherName === null) {
-      return Promise.resolve(null)
-    } else if (publisherName != null) {
-      return Promise.resolve(asArray(publisherName))
-    }
-    return Promise.resolve(null)
+    return Promise.resolve(asArray(this.publisherName))
   })
+
+  private get publisherName(): string {
+    const result = this.signing.publisherName
+    if (isEmptyOrSpaces(result)) {
+      throw new Error("Azure Trusted Signing requires 'publisherName' in win.sign config (no local certificate to derive it from)")
+    }
+    return result
+  }
 
   constructor(private readonly packager: WinPackager) {
     const signing = resolveWindowsSigningConfiguration(packager.platformOptions)
@@ -72,11 +74,7 @@ export class WindowsSignAzureManager implements SignManager {
   }
 
   computePublisherName(_target: Target, publisherName: string | null): Promise<string> {
-    const result = this.signing.publisherName ?? publisherName
-    if (result == null) {
-      throw new Error("Azure Trusted Signing requires 'publisherName' in win.sign config (no local certificate to derive it from)")
-    }
-    return Promise.resolve(result)
+    return Promise.resolve(this.publisherName ?? publisherName)
   }
 
   readonly cscInfo = new MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>(
