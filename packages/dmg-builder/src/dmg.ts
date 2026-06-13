@@ -114,10 +114,13 @@ export class DmgTarget extends Target {
     }
 
     const packager = this.packager
-    const qualifier = packager.platformOptions.identity
-    // explicitly disabled if set to null
+    const signConfig = packager.platformOptions.sign
+    // explicitly disabled if `sign` (or its identity) is set to null — macPackager already handles this, so just return
+    if (signConfig === null) {
+      return
+    }
+    const qualifier = typeof signConfig === "object" ? signConfig.identity : undefined
     if (qualifier === null) {
-      // macPackager already somehow handle this situation, so, here just return
       return
     }
 

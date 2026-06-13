@@ -443,6 +443,78 @@ describe("migrateConfig — asar consolidation", () => {
   })
 })
 
+describe("migrateConfig — mac signing consolidation", () => {
+  test("moves identity and signing fields into mac.sign", () => {
+    const result = migrateConfig({ mac: { identity: "Developer ID Application: X", hardenedRuntime: true, entitlements: "build/e.plist" } })
+    expect("identity" in result.migrated.mac).toBe(false)
+    expect("hardenedRuntime" in result.migrated.mac).toBe(false)
+    expect(result.migrated.mac.sign).toEqual({ identity: "Developer ID Application: X", hardenedRuntime: true, entitlements: "build/e.plist" })
+    expect(result.changes.some(c => c.key === "mac.identity")).toBe(true)
+  })
+
+  test("renames signIgnore → sign.ignore", () => {
+    const result = migrateConfig({ mac: { signIgnore: ["foo", "bar"] } })
+    expect("signIgnore" in result.migrated.mac).toBe(false)
+    expect(result.migrated.mac.sign).toEqual({ ignore: ["foo", "bar"] })
+  })
+
+  test("preserves mac.identity: null as sign.identity: null (skip signing)", () => {
+    const result = migrateConfig({ mac: { identity: null } })
+    expect(result.migrated.mac.sign).toEqual({ identity: null })
+  })
+
+  test("applies to mas and masDev too", () => {
+    const result = migrateConfig({ mas: { entitlements: "mas.plist" }, masDev: { hardenedRuntime: false } })
+    expect(result.migrated.mas.sign).toEqual({ entitlements: "mas.plist" })
+    expect(result.migrated.masDev.sign).toEqual({ hardenedRuntime: false })
+  })
+
+  test("warns and does not clobber a custom-signer string sign", () => {
+    const result = migrateConfig({ mac: { sign: "./customSign.js", identity: "X" } })
+    expect(result.migrated.mac.sign).toBe("./customSign.js")
+    expect("identity" in result.migrated.mac).toBe(true) // left for manual resolution
+    expect(result.warnings.some(w => w.includes("custom signing"))).toBe(true)
+  })
+
+  test("drops a bare sign: null so it does not flip to skip-signing", () => {
+    const result = migrateConfig({ mac: { sign: null, target: "dmg" } })
+    expect("sign" in result.migrated.mac).toBe(false)
+    expect(result.changes.some(c => c.key === "mac.sign")).toBe(true)
+  })
+
+  test("does not touch a config that already uses sign object", () => {
+    const result = migrateConfig({ mac: { sign: { identity: "X", hardenedRuntime: true } } })
+    expect(result.migrated.mac.sign).toEqual({ identity: "X", hardenedRuntime: true })
+    expect(result.changes.filter(c => c.key.startsWith("mac.")).length).toBe(0)
+  })
+})
+
+describe("migrateConfig — mac universal consolidation", () => {
+  test("moves mergeASARs / singleArchFiles / x64ArchFiles into mac.universal", () => {
+    const result = migrateConfig({ mac: { mergeASARs: true, singleArchFiles: "*.node", x64ArchFiles: "bin/*" } })
+    expect("mergeASARs" in result.migrated.mac).toBe(false)
+    expect(result.migrated.mac.universal).toEqual({ mergeASARs: true, singleArchFiles: "*.node", x64ArchFiles: "bin/*" })
+  })
+})
+
+describe("migrateConfig — electronDownload → electronGet", () => {
+  test("renames and maps mirror → mirrorOptions.mirror", () => {
+    const result = migrateConfig({ electronDownload: { mirror: "https://m.example/" } })
+    expect("electronDownload" in result.migrated).toBe(false)
+    expect(result.migrated.electronGet).toEqual({ mirrorOptions: { mirror: "https://m.example/" } })
+  })
+
+  test("maps isVerifyChecksum: false → unsafelyDisableChecksums: true", () => {
+    const result = migrateConfig({ electronDownload: { isVerifyChecksum: false } })
+    expect(result.migrated.electronGet).toEqual({ unsafelyDisableChecksums: true })
+  })
+
+  test("warns about dropped fields with no v5 equivalent", () => {
+    const result = migrateConfig({ electronDownload: { cache: "/c", customDir: "v1", strictSSL: false } })
+    expect(result.warnings.some(w => w.includes("cache") && w.includes("customDir"))).toBe(true)
+  })
+})
+
 describe("migrateConfig — does not mutate input", () => {
   test("original config is not modified", () => {
     const input = { electronCompile: true, buildDependenciesFromSource: true }

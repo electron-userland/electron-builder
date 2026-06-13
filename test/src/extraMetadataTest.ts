@@ -7,7 +7,7 @@ import { assertThat } from "./helpers/fileAssert.js"
 import { app, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
 import { ExpectStatic } from "vitest"
 
-function createExtraMetadataTest(expect: ExpectStatic, asar: false | null) {
+function createExtraMetadataTest(expect: ExpectStatic, asar: boolean) {
   return app(
     expect,
     {
@@ -51,7 +51,7 @@ function createExtraMetadataTest(expect: ExpectStatic, asar: false | null) {
   )
 }
 
-test("extra metadata", ({ expect }) => createExtraMetadataTest(expect, null))
+test("extra metadata", ({ expect }) => createExtraMetadataTest(expect, true))
 test("extra metadata (no asar)", ({ expect }) => createExtraMetadataTest(expect, false))
 
 test("cli", ({ expect }) => {

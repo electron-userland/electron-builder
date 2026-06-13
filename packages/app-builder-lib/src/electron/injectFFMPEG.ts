@@ -39,14 +39,14 @@ export class FFMPEGInjector {
 
     const {
       packager: {
-        config: { electronDownload },
+        config: { electronGet: electronDownload },
       },
       platformName,
       arch,
     } = this.options
 
     return downloadElectronArtifact({
-      electronDownload,
+      options: electronDownload,
       artifactName: "ffmpeg",
       platformName,
       arch,

@@ -21,7 +21,7 @@ describe("macPackager", { sequential: true }, () => {
           mac: {
             electronUpdaterCompatibility: ">=2.16",
             electronLanguages: ["bn", "en"],
-            timestamp: undefined,
+            sign: { timestamp: undefined },
             notarize: false,
           },
           dmg: {

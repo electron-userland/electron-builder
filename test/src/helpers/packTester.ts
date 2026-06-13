@@ -154,7 +154,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
     configuration.cscLink = WIN_CSC_LINK
     configuration.cscKeyPassword = ""
   } else if (configuration.cscLink == null) {
-    packagerOptions = deepAssign({}, packagerOptions, { config: { mac: { identity: null } } })
+    packagerOptions = deepAssign({}, packagerOptions, { config: { mac: { sign: { identity: null } } } })
   }
 
   let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
