@@ -5,6 +5,7 @@ import { LogMessageByKey, type Package } from "./moduleManager.js"
 import { NodeModulesCollector } from "./nodeModulesCollector.js"
 import { getPackageManagerCommand, PM } from "./packageManager.js"
 import type { PackageJson, PnpmDependency } from "./types.js"
+import { isValidKey } from "builder-util"
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependency, PnpmDependency> {
   public readonly installOptions = {
@@ -78,6 +79,10 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
    */
   private readonly collectedDeps: Set<string> = new Set()
 
+  /** Reverse index of `allDependencies` keyed by package name (without version). Built once on
+   *  first access inside `extractProductionDependencyGraph`, after `allDependencies` is settled. */
+  private _allDepsByName: Map<string, PnpmDependency> | null = null
+
   /**
    * Returns the workspace packages to iterate over, gated by detected pnpm version:
    * - pnpm v11+: multi-entry workspace output → return the full parsed array
@@ -92,6 +97,19 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
 
   protected getArgs(): string[] {
     return ["list", "--prod", "--json", "--depth", "Infinity", "--silent", "--loglevel=error"]
+  }
+
+  private getAllDepsByName(): Map<string, PnpmDependency> {
+    if (!this._allDepsByName) {
+      this._allDepsByName = new Map()
+      for (const [id, dep] of this.allDependencies.entries()) {
+        const { name } = this.parseNameVersion(id)
+        if (!this._allDepsByName.has(name)) {
+          this._allDepsByName.set(name, dep)
+        }
+      }
+    }
+    return this._allDepsByName
   }
 
   /**
@@ -189,14 +207,12 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     // pnpm --prod omits sub-deps for link: packages (and synthetic entries derived from them).
     // For any dep declared in the package.json (all) that pnpm left out of the tree, recover
     // the resolved entry from allDependencies so it lands in the production graph.
+    const byName = this.getAllDepsByName()
     for (const depName of Object.keys(all)) {
       if (!deps[depName]) {
-        for (const [id, dep] of this.allDependencies.entries()) {
-          const { name } = this.parseNameVersion(id)
-          if (name === depName) {
-            deps[depName] = dep
-            break
-          }
+        const dep = byName.get(depName)
+        if (dep && isValidKey(depName)) {
+          deps[depName] = dep
         }
       }
     }
@@ -302,8 +318,8 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     // located package.json; fall back to the link target's own package.json when the junction
     // could not be resolved (again, the cross-drive case).
     const pkg = located ?? (linkTarget != null ? await this.readPackageJsonAt(linkTarget) : null)
-    const treeDepsCount = Object.keys({ ...(value.dependencies || {}), ...(value.optionalDependencies || {}) }).length
-    if (treeDepsCount === 0 && pkg?.packageJson) {
+    const hasTreeDeps = Object.keys(value.dependencies ?? {}).length > 0 || Object.keys(value.optionalDependencies ?? {}).length > 0
+    if (!hasTreeDeps && pkg?.packageJson) {
       // pnpm list omits sub-deps for link: packages and for entries where the reported path
       // doesn't expand transitive deps (e.g. a link: package's nested dep). Use the on-disk
       // package.json to discover what to include, and pass the declared version range so that
