@@ -241,6 +241,39 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
   }
 
   /**
+   * Resolve a `link:` dependency to its real on-disk source directory — never the `node_modules`
+   * junction pnpm creates for it. Returns null for non-link deps.
+   *
+   * Why this matters: resolving a link: dep through `node_modules` (locateFromDepOrRoot) yields the
+   * junction, which CI cannot read across drives. CI checks out the repo on `D:` but installs the
+   * app under `C:\…\Temp`, so the junction is a cross-volume link that `realpath`/`stat` fail on,
+   * silently dropping the package from the asar. The link target is a plain directory that reads
+   * fine from any drive, so we resolve straight to it.
+   */
+  private resolveLinkTarget(value: PnpmDependency): string | null {
+    const version = value.version
+    if (typeof version !== "string" || !version.startsWith("link:")) {
+      return null
+    }
+    const spec = version.slice("link:".length)
+    // A cross-drive link cannot be expressed relative, so pnpm reports it as an absolute path —
+    // use it directly. Otherwise prefer pnpm's already-resolved absolute `path` (the source dir,
+    // never the junction), falling back to resolving the relative spec against the workspace root.
+    if (path.isAbsolute(spec)) {
+      return path.normalize(spec)
+    }
+    if (value.path && path.isAbsolute(value.path)) {
+      return path.normalize(value.path)
+    }
+    return path.resolve(this.rootDir, spec)
+  }
+
+  private async readPackageJsonAt(dir: string): Promise<Package | null> {
+    const packageJson = (await _fsExtra.readJson(path.join(dir, "package.json")).catch(() => null)) as PackageJson | null
+    return packageJson ? { packageDir: dir, packageJson } : null
+  }
+
+  /**
    * Visit a single dependency node, adding it and its transitive deps to allDependencies.
    *
    * For packages that pnpm list did NOT expand (link: packages and the synthetic entries
@@ -256,10 +289,19 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       return
     }
     this.collectedDeps.add(id)
-    const pkg = await this.locateFromDepOrRoot(key, value.path, value.version)
-    const resolvedPath = pkg?.packageDir ?? value.path
+
+    const located = await this.locateFromDepOrRoot(key, value.path, value.version)
+    // For a link: dep, store the real source dir (the link target) rather than the located path,
+    // which is the node_modules junction. Across drives that junction is unreadable (see
+    // resolveLinkTarget), so storing it makes the package vanish from the asar.
+    const linkTarget = this.resolveLinkTarget(value)
+    const resolvedPath = linkTarget ?? located?.packageDir ?? value.path
     this.allDependencies.set(id, { ...value, path: resolvedPath })
 
+    // For transitive-dep discovery of entries pnpm did not expand (link: packages), use the
+    // located package.json; fall back to the link target's own package.json when the junction
+    // could not be resolved (again, the cross-drive case).
+    const pkg = located ?? (linkTarget != null ? await this.readPackageJsonAt(linkTarget) : null)
     const treeDepsCount = Object.keys({ ...(value.dependencies || {}), ...(value.optionalDependencies || {}) }).length
     if (treeDepsCount === 0 && pkg?.packageJson) {
       // pnpm list omits sub-deps for link: packages and for entries where the reported path
