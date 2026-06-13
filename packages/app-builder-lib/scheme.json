@@ -7954,7 +7954,7 @@
             }
           ],
           "default": "1.0.3",
-          "description": "Version of the AppImage toolset bundle used for building `.AppImage` files.\n\nThe bundle ships:\n- **`mksquashfs`** — creates the SquashFS filesystem embedded in the AppImage.\n- **`desktop-file-validate`** — validates the generated `.desktop` entry.\n- **AppImage runtime** — the self-executing stub that mounts the SquashFS at launch.\n\nAvailable versions:\n| Version | Runtime date | Notes |\n|---------|-------------|-------|\n| `\"0.0.0\"` | Legacy | FUSE2-based AppImage runtime (pre-v27 default) |\n| `\"1.0.2\"` | 20251108 | Static-runtime (FUSE3-compatible) |\n| `\"1.0.3\"` | 20251108 | Static-runtime (FUSE3-compatible); recommended (default) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage"
+          "description": "Version of the AppImage toolset bundle used for building `.AppImage` files.\n\nThe bundle ships:\n- **`mksquashfs`** — creates the SquashFS filesystem embedded in the AppImage.\n- **`desktop-file-validate`** — validates the generated `.desktop` entry.\n- **AppImage runtime** — the self-executing stub that mounts the SquashFS at launch.\n\nAvailable versions:\n| Version | Runtime date | Notes |\n|---------|-------------|-------|\n| `\"0.0.0\"` | Legacy | FUSE2-based AppImage runtime (pre-v27 default) |\n| `\"1.0.2\"` | 20251108 | Static-runtime (FUSE3-compatible) |\n| `\"1.0.3\"` | 20251108 | Static-runtime (FUSE3-compatible); recommended (default) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/appimage/CHANGELOG.md"
         },
         "fpm": {
           "anyOf": [
@@ -7970,7 +7970,7 @@
             }
           ],
           "default": "2.2.1",
-          "description": "Version of the FPM bundle used to build Linux packages (`.deb`, `.rpm`, `.pacman`, etc.)\non macOS and Linux hosts.\n\nAvailable versions:\n| Version | FPM version | Notes |\n|---------|------------|-------|\n| `\"2.2.1\"` | 1.17.0 (Ruby 3.4.3) | Current default |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=fpm"
+          "description": "Version of the FPM bundle used to build Linux packages (`.deb`, `.rpm`, `.pacman`, etc.)\non macOS and Linux hosts.\n\nAvailable versions:\n| Version | FPM version | Notes |\n|---------|------------|-------|\n| `\"2.2.1\"` | 1.17.0 (Ruby 3.4.3) | Current default |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/fpm/CHANGELOG.md"
         },
         "icons": {
           "anyOf": [
@@ -7986,7 +7986,7 @@
             }
           ],
           "default": "1.1.0",
-          "description": "Version of the icons-conversion bundle used to convert source images to `.icns`, `.ico`,\nand PNG icon sets.\n\nSet to a {@link ToolsetCustom} object to supply your own icons bundle directory.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.1.0\"` | Current default |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=icons"
+          "description": "Version of the icons-conversion bundle used to convert source images to `.icns`, `.ico`,\nand PNG icon sets.\n\nSet to a {@link ToolsetCustom} object to supply your own icons bundle directory.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.1.0\"` | Current default |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/icons/CHANGELOG.md"
         },
         "linuxToolsMac": {
           "anyOf": [
@@ -8002,7 +8002,7 @@
             }
           ],
           "default": "1.0.0",
-          "description": "Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build\nLinux targets on macOS hosts.\n\nThe bundle ships macOS-native builds of `ar`, `lzip`, and `gtar` (GNU tar).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.0.0\"` | Current default |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=linux-tools-mac"
+          "description": "Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build\nLinux targets on macOS hosts.\n\nThe bundle ships macOS-native builds of `ar`, `lzip`, and `gtar` (GNU tar).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.0.0\"` | Current default |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/linux-tools-mac/CHANGELOG.md"
         },
         "nsis": {
           "anyOf": [
@@ -8021,7 +8021,7 @@
             }
           ],
           "default": "1.2.1",
-          "description": "Version of the NSIS toolset bundle used to compile Windows installers.\n\nThe bundle ships:\n- **`makensis`** — the NSIS compiler invoked to build `.nsi` scripts into `.exe` installers.\n- **NSIS plugins** — the plugin DLLs (`NsisMultiUser`, `UAC`, `StdUtils`, etc.) referenced by\n  electron-builder's default installer scripts.\n- **`elevate.exe`** — UAC elevation helper included in NSIS installers.\n\nAvailable versions:\n| Version | `makensis` version | Notes |\n|---------|------------------|-------|\n| `\"0.0.0\"` | 3.0.4.1 | Legacy split bundle — `nsis` + `nsis-resources` archives (pre-v27 default) |\n| `\"1.2.1\"` | 3.12 | Unified bundle — single archive, entrypoint scripts auto-set `NSISDIR` (default) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=nsis"
+          "description": "Version of the NSIS toolset bundle used to compile Windows installers.\n\nThe bundle ships:\n- **`makensis`** — the NSIS compiler invoked to build `.nsi` scripts into `.exe` installers.\n- **NSIS plugins** — the plugin DLLs (`NsisMultiUser`, `UAC`, `StdUtils`, etc.) referenced by\n  electron-builder's default installer scripts.\n- **`elevate.exe`** — UAC elevation helper included in NSIS installers.\n\nAvailable versions:\n| Version | `makensis` version | Notes |\n|---------|------------------|-------|\n| `\"0.0.0\"` | 3.0.4.1 | Legacy split bundle — `nsis` + `nsis-resources` archives (pre-v27 default) |\n| `\"1.2.1\"` | 3.12 | Unified bundle — single archive, entrypoint scripts auto-set `NSISDIR` (default) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/nsis/CHANGELOG.md"
         },
         "sevenZip": {
           "anyOf": [
@@ -8048,7 +8048,10 @@
               "enum": [
                 "0.0.0",
                 "1.0.0",
-                "1.1.0"
+                "1.1.0",
+                "1.1.1",
+                "1.2.1",
+                "1.3.0"
               ],
               "type": "string"
             },
@@ -8057,7 +8060,7 @@
             }
           ],
           "default": "1.1.0",
-          "description": "Version of the `win-codesign` bundle used for Windows code signing and resource editing.\n\nThe bundle ships:\n- **`signtool.exe`** (Windows) / **`osslsigncode`** (macOS & Linux) — used to sign `.exe`,\n  `.dll`, and `.msix` artifacts.\n- **`rcedit`** — used to embed version metadata and icons into `.exe` files.\n- **Windows Kits** (`10.0.26100.0`) — used by AppX/MSIX packaging (`makeappx`, `signtool`).\n\nAvailable versions:\n| Version | Contents |\n|---------|----------|\n| `\"0.0.0\"` | Legacy bundle — `winCodeSign-2.6.0` (pre-v27 default) |\n| `\"1.0.0\"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.0.0 |\n| `\"1.1.0\"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.1.0 (default) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=win-codesign"
+          "description": "Version of the `win-codesign` bundle used for Windows code signing and resource editing.\n\nThe bundle ships:\n- **`signtool.exe`** (Windows) / **`osslsigncode`** (macOS & Linux) — used to sign `.exe`,\n  `.dll`, and `.msix` artifacts.\n- **`rcedit`** — used to embed version metadata and icons into `.exe` files.\n- **Windows Kits** (`10.0.26100.0`) — used by AppX/MSIX packaging (`makeappx`, `signtool`).\n\nAvailable versions:\n| Version | Contents |\n|---------|----------|\n| `\"0.0.0\"` | Legacy bundle — `winCodeSign-2.6.0` (pre-v27 default) |\n| `\"1.0.0\"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.0.0 |\n| `\"1.1.0\"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.1.0 |\n| `\"1.1.1\"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.1.1 |\n| `\"1.2.1\"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.2.1 |\n| `\"1.3.0\"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.3.0 + separate ATS dlib bundle + .NET 8 runtime (required for Azure Trusted Signing `signtool /dlib`) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/win-codesign/CHANGELOG.md"
         },
         "wine": {
           "anyOf": [
@@ -8073,7 +8076,7 @@
             }
           ],
           "default": "0.0.0",
-          "description": "Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on\nnon-Windows hosts (macOS and Linux).\n\nWine is only required when building Windows targets on a non-Windows machine. On Windows,\nthis setting has no effect.\n\nAvailable versions:\n| Version | Wine version | Platform support | Notes |\n|---------|-------------|-----------------|-------|\n| `\"0.0.0\"` | 4.0.1 | macOS only | Legacy portable bundle (pre-v27 default) |\n\nOn Linux, the system `wine` binary is used instead of a bundled one.\nSet `USE_SYSTEM_WINE=true` to force system Wine regardless of this setting.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=wine"
+          "description": "Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on\nnon-Windows hosts (macOS and Linux).\n\nWine is only required when building Windows targets on a non-Windows machine. On Windows,\nthis setting has no effect.\n\nAvailable versions:\n| Version | Wine version | Platform support | Notes |\n|---------|-------------|-----------------|-------|\n| `\"0.0.0\"` | 4.0.1 | macOS only | Legacy portable bundle (pre-v27 default) |\n\nOn Linux, the system `wine` binary is used instead of a bundled one.\nSet `USE_SYSTEM_WINE=true` to force system Wine regardless of this setting.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md"
         }
       },
       "type": "object"

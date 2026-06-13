@@ -167,6 +167,30 @@ async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] |
   return { path: path.resolve(vendorPath, "osslsigncode") }
 }
 
+export async function getAtsBundleDir(winCodeSign: string): Promise<string> {
+  const checksum = (wincodesignChecksums as Record<string, Record<string, string>>)[winCodeSign]?.["ats-bundle-1_0_95.zip"]
+  if (!checksum) {
+    throw new Error(`winCodeSign version "${winCodeSign}" does not include an ATS bundle (requires >= 1.3.0)`)
+  }
+  return downloadBuilderToolset({
+    releaseName: `win-codesign@${winCodeSign}`,
+    filenameWithExt: "ats-bundle-1_0_95.zip",
+    checksums: { "ats-bundle-1_0_95.zip": checksum },
+  })
+}
+
+export async function getDotnetRuntimeDir(winCodeSign: string): Promise<string> {
+  const checksum = (wincodesignChecksums as Record<string, Record<string, string>>)[winCodeSign]?.["dotnet-runtime-win-x64-8_0_28.zip"]
+  if (!checksum) {
+    throw new Error(`winCodeSign version "${winCodeSign}" does not include a .NET runtime bundle (requires >= 1.3.0)`)
+  }
+  return downloadBuilderToolset({
+    releaseName: `win-codesign@${winCodeSign}`,
+    filenameWithExt: "dotnet-runtime-win-x64-8_0_28.zip",
+    checksums: { "dotnet-runtime-win-x64-8_0_28.zip": checksum },
+  })
+}
+
 export async function getRceditBundle(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish, resourcesDir = "") {
   const ia32 = "rcedit-ia32.exe"
   const x86 = "rcedit-x86.exe"

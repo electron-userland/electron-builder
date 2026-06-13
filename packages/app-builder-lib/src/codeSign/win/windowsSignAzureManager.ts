@@ -5,7 +5,7 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../../core.js"
 import { resolveWindowsSigningConfiguration, WindowsAzureSigningConfig, WindowsConfiguration } from "../../options/winOptions.js"
-import { getWindowsKitsBundle } from "../../toolsets/winCodeSign.js"
+import { getAtsBundleDir, getDotnetRuntimeDir, getWindowsKitsBundle } from "../../toolsets/winCodeSign.js"
 import { VmManager } from "../../vm/vm.js"
 import { WineVmManager } from "../../vm/WineVm.js"
 import { WinPackager } from "../../winPackager.js"
@@ -14,7 +14,7 @@ import { WindowsSignOptions } from "./windowsCodeSign.js"
 import { CertificateFromStoreInfo, FileCodeSigningInfo } from "./windowsSignToolManager.js"
 import semver from "semver"
 
-const minimumWinCodeSignVersionForDlib = "1.2.0"
+const minimumWinCodeSignVersionForDlib = "1.3.0"
 export class WindowsSignAzureManager implements SignManager {
   private readonly signing: WindowsAzureSigningConfig
 
@@ -117,7 +117,21 @@ export class WindowsSignAzureManager implements SignManager {
     const arch = process.arch === "ia32" ? Arch.ia32 : Arch.x64
     const { kit: kitDir } = await getWindowsKitsBundle({ winCodeSign, arch, resourcesDir: this.packager.buildResourcesDir })
     const signtoolPath = path.resolve(kitDir, "signtool.exe")
-    const dlibPath = path.resolve(kitDir, "Azure.CodeSigning.Dlib.dll")
+
+    let dlibPath: string
+    let dotnetRootPath: string | null = null
+
+    if (typeof winCodeSign === "string") {
+      // 1.3.0+: dlib ships in a separate ats-bundle with its full native dependency closure
+      // (Ijwhost.dll, VC++ runtime, etc.). The .NET 8 framework is in a separate dotnet-runtime
+      // bundle; DOTNET_ROOT tells Ijwhost where to find hostfxr.dll → shared framework.
+      const atsBundleDir = await getAtsBundleDir(winCodeSign)
+      dlibPath = path.resolve(atsBundleDir, arch === Arch.ia32 ? "x86" : "x64", "Azure.CodeSigning.Dlib.dll")
+      dotnetRootPath = await getDotnetRuntimeDir(winCodeSign)
+    } else {
+      // Custom toolset: user provides the dlib alongside signtool in the kit dir.
+      dlibPath = path.resolve(kitDir, "Azure.CodeSigning.Dlib.dll")
+    }
 
     const metadataPath = await this.packager.getTempFile(".json")
     await _fsExtra.writeJson(metadataPath, {
@@ -152,7 +166,11 @@ export class WindowsSignAzureManager implements SignManager {
       "signing with Azure Trusted Signing (signtool /dlib)"
     )
 
-    await this.vm.exec(signtoolPath, args)
+    // DOTNET_ROOT: Ijwhost.dll (shipped in the ats-bundle) reads this env var to locate
+    // hostfxr.dll. On Wine, toVmFile converts the host path to a Z:\ path that Wine resolves
+    // back to the same location on the host filesystem.
+    const execOptions = dotnetRootPath != null ? { env: { DOTNET_ROOT: this.vm.toVmFile(dotnetRootPath) } } : undefined
+    await this.vm.exec(signtoolPath, args, execOptions)
     return true
   }
 }
