@@ -1,3 +1,35 @@
+# [27.0.0-alpha.2](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.1...electron-builder@27.0.0-alpha.2) (2026-06-11)
+
+
+### Bug Fixes
+
+* resolve runtime ESM/CJS interop for namespace imports of CJS-only packages (`sax`, `which`, `mime`) ([#9884](https://github.com/electron-userland/electron-builder/issues/9884)) ([7674e60](https://github.com/electron-userland/electron-builder/commit/7674e6092645df5c7ae0a31530446efe449cd3d6))
+
+
+
+# [27.0.0-alpha.1](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.0...electron-builder@27.0.0-alpha.1) (2026-06-11)
+
+
+### Bug Fixes
+
+* resolve `plist` and `chromium-pickle-js` import ([#9880](https://github.com/electron-userland/electron-builder/issues/9880)) ([b79c2b2](https://github.com/electron-userland/electron-builder/commit/b79c2b2af3ac65f3d51da7b5045ad803d58565e0))
+
+
+
+# [27.0.0-alpha.0](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.3...electron-builder@27.0.0-alpha.0) (2026-06-11)
+
+
+### Bug Fixes
+
+* disable implicit publishing by default (BREAKING) ([#9476](https://github.com/electron-userland/electron-builder/issues/9476)) ([5c9c503](https://github.com/electron-userland/electron-builder/commit/5c9c503f912e6423a57ab5b89234dff9cf9133ed))
+
+
+### Features
+
+* **cli:** add `migrate-schema` command for v26 → v27 config migration; `PlatformPackager` move to `protected` ([#9873](https://github.com/electron-userland/electron-builder/issues/9873)) ([9d755c6](https://github.com/electron-userland/electron-builder/commit/9d755c68f845d169c9b68963c9711d2e75b4800b))
+
+
+
 ## [26.15.3](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.2...electron-builder@26.15.3) (2026-06-09)
 
 

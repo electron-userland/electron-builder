@@ -1,6 +1,6 @@
 {
   "name": "electron-publish",
-  "version": "26.15.3",
+  "version": "27.0.0-alpha.2",
   "type": "module",
   "main": "./dist/index.js",
   "exports": {

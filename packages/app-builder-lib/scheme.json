@@ -407,6 +407,16 @@
     "AsarOptions": {
       "additionalProperties": false,
       "properties": {
+        "disableIntegrity": {
+          "default": false,
+          "description": "Whether to skip computing the ASAR integrity hash.\n\nNormally electron-builder computes and embeds a SHA-256 hash of `app.asar` so that Electron\ncan verify it at startup (when the `embeddedAsarIntegrityValidation` fuse is enabled). Set to\n`true` only for custom Electron forks with encrypted ASAR support where the header is not\nreadable by standard tools.",
+          "type": "boolean"
+        },
+        "disableSanityCheck": {
+          "default": false,
+          "description": "Whether to skip the ASAR package integrity sanity check.\n\nSet to `true` only when using a custom Electron fork that implements its own encrypted or\nnon-standard ASAR integrity validation that is not compatible with electron-builder's default\ncheck. Standard builds should leave this `false`.",
+          "type": "boolean"
+        },
         "ordering": {
           "description": "Path to a file containing the order in which files should be packed into the asar archive.\nEach line of the file is a relative path from the app directory. Files listed first are\npacked first, which can improve app startup time by front-loading frequently accessed modules.\nSee the [asar documentation](https://github.com/electron/asar) for details.",
           "type": [
@@ -418,6 +428,23 @@
           "default": true,
           "description": "Whether to automatically unpack executables files.",
           "type": "boolean"
+        },
+        "unpack": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](#directories),\nwhich specifies which files to unpack when creating the asar archive."
         }
       },
       "type": "object"
@@ -507,10 +534,11 @@
     },
     "Concurrency": {
       "additionalProperties": false,
+      "description": "Configuration for experimental concurrent builds.",
       "properties": {
         "jobs": {
           "default": 1,
-          "description": "The maximum number of concurrent jobs to run.",
+          "description": "Maximum number of platform/architecture builds to run in parallel.\n\nSet to `1` to disable concurrency (sequential builds, the safe default). Higher values\nreduce wall-clock time on multi-platform builds at the cost of increased memory and CPU\nusage. Ensure that your {@link Hooks} and build resources are safe to execute concurrently\nbefore raising this limit.",
           "type": "number"
         }
       },
@@ -1140,79 +1168,12 @@
       },
       "type": "object"
     },
-    "ElectronDownloadOptions": {
-      "additionalProperties": false,
-      "properties": {
-        "arch": {
-          "type": "string"
-        },
-        "cache": {
-          "description": "The [cache location](https://github.com/electron-userland/electron-download#cache-location).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "customDir": {
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "customFilename": {
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "isVerifyChecksum": {
-          "type": "boolean"
-        },
-        "mirror": {
-          "description": "The mirror.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "platform": {
-          "enum": [
-            "darwin",
-            "linux",
-            "mas",
-            "win32"
-          ],
-          "type": "string"
-        },
-        "strictSSL": {
-          "type": "boolean"
-        },
-        "version": {
-          "type": "string"
-        },
-        "checksums": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        }
-      },
-      "type": "object"
-    },
     "ElectronGetOptions": {
       "additionalProperties": false,
       "properties": {
         "checksums": {
           "$ref": "#/definitions/Record<string,string>",
           "description": "Provides checksums for the artifact as strings.\nCan be used if you already know the checksums of the Electron artifact\nyou are downloading and want to skip the checksum file download\nwithout skipping the checksum validation.\n\nThis should be an object whose keys are the file names of the artifacts and\nthe values are their respective SHA256 checksums."
-        },
-        "force": {
-          "description": "Whether to download an artifact regardless of whether it's in the cache directory.",
-          "type": "boolean"
-        },
-        "unsafelyDisableChecksums": {
-          "description": "When set to `true`, disables checking that the artifact download completed successfully\nwith the correct payload.",
-          "type": "boolean"
         },
         "mirrorOptions": {
           "type": "object",
@@ -1232,6 +1193,152 @@
               "description": "A custom function (serialised) to resolve the full asset URL."
             }
           }
+        },
+        "unsafelyDisableChecksums": {
+          "description": "When set to `true`, disables checking that the artifact download completed successfully\nwith the correct payload.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "ElectronSignOptions": {
+      "additionalProperties": false,
+      "description": "Signing options passed to `@electron/osx-sign`. Electron-builder owns the fields it must control\nitself — `app`, `keychain`, `platform`, `version`, `optionsForFile`, and `type` (derived from the\nbuild flavor: `mas-dev` → `development`, otherwise `distribution`) — and forwards everything else.\n\nAdditionally exposes a small set of per-file convenience fields that electron-builder maps\ninternally through `optionsForFile`.",
+      "properties": {
+        "additionalArguments": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Extra arguments passed to each `codesign` invocation."
+        },
+        "batchCodesignCalls": {
+          "description": "Combine all files with identical CLI arguments in a single `codesign` call instead of running\n`codesign` once for each of those files. This minimizes the number of child processes that need\nto be spawned and reduces the time it takes to sign all files.",
+          "type": "boolean"
+        },
+        "binaries": {
+          "description": "Array of paths to additional binaries that will be signed along with built-ins of Electron.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "entitlements": {
+          "description": "Path to the main app entitlements file.\nFalls back to `build/entitlements.mac.plist` if it exists, then to `@electron/osx-sign`'s\nbuilt-in defaults.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "entitlementsInherit": {
+          "description": "Path to child entitlements inherited by embedded frameworks and bundles.\nFalls back to `build/entitlements.mac.inherit.plist` if it exists.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "entitlementsLoginHelper": {
+          "description": "Path to entitlements for the Login Helper.\nRequired when using App Sandbox, because the Login Helper cannot inherit entitlements.\nDefaults to the value of `entitlements`.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "hardenedRuntime": {
+          "description": "Whether to enable [Hardened Runtime](https://developer.apple.com/documentation/security/hardened_runtime).\n\nHardened Runtime is a prerequisite for notarization (mandatory on macOS 10.15+).\nDefaults to `true` for `darwin` builds and `false` for `mas-dev`.",
+          "type": "boolean"
+        },
+        "identity": {
+          "description": "The signing identity (certificate name or SHA-1 hash). Applies to both app signing and DMG signing.\nPrefer the environment variables `CSC_LINK` / `CSC_NAME` over hardcoding this value.\n\n- **Not set** (default): electron-builder searches the keychain for a valid certificate.\n- **`null`**: skip signing entirely.\n- **`\"-\"`**: ad-hoc signing (requires disabling library validation — see `hardenedRuntime`).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "identityValidation": {
+          "description": "Flag to enable/disable validation for the signing identity.\nIf enabled, the {@link SignOptions.identityidentity} provided\nwill be validated in the {@link BaseSignOptions.keychainkeychain} specified.",
+          "type": "boolean"
+        },
+        "ignore": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "typeof": "function"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Defines files that will be skipped during the code signing process.\nThis property accepts a regex, function or an array of regexes and functions.\nElements of other types are treated as `RegExp`.\n\nFile paths matching a regex or returning a `true` value from a function will be ignored."
+        },
+        "preAutoEntitlements": {
+          "description": "Flag to enable/disable entitlements automation tasks necessary for code signing most Electron apps.\n* Adds [`com.apple.security.application-groups`](https://developer.apple.com/documentation/bundleresources/entitlements/com_apple_security_application-groups) to the entitlements file\n* Fills in the `ElectronTeamID` property in `Info.plist` with the provisioning profile's Team Identifier or by parsing the identity name.",
+          "type": "boolean"
+        },
+        "preEmbedProvisioningProfile": {
+          "description": "Flag to enable/disable the embedding of a provisioning profile into the app's `Contents` folder.\nWill use the profile from {@link OnlySignOptions.provisioningProfile} if provided. Otherwise, it\nsearches for a `.provisionprofile` file in the current working directory.",
+          "type": "boolean"
+        },
+        "provisioningProfile": {
+          "description": "Path to a provisioning profile, which can be used to grant restricted entitlements to your app.\n\nSee [Apple Documentation](https://developer.apple.com/documentation/technotes/tn3125-inside-code-signing-provisioning-profiles) for more details.",
+          "type": "string"
+        },
+        "requirements": {
+          "description": "Path to a [requirements file](https://developer.apple.com/library/mac/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html).\nNot applicable for MAS.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "strictVerify": {
+          "description": "Flag to enable/disable the `--strict` flag when verifying the signed application bundle.\nAlso supports string values to specify which strict restrictions to use, see codesign man page for supported values.",
+          "type": [
+            "string",
+            "boolean"
+          ]
+        },
+        "timestamp": {
+          "description": "URL of the timestamp authority server. Passed per-file to `codesign --timestamp=<url>`.",
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "ElectronUniversalOptions": {
+      "additionalProperties": false,
+      "description": "Options forwarded to `@electron/universal`'s `makeUniversalApp`.\nElectron-builder fills in the app paths and `force`; everything else is configurable here\nand auto-tracks upstream additions to `MakeUniversalOpts`.",
+      "properties": {
+        "infoPlistsToIgnore": {
+          "description": "A {@link https://github.com/isaacs/minimatch?tab=readme-ov-file#features minimatch} pattern of `Info.plist`\npaths that should not receive an injected `ElectronAsarIntegrity` value.\n\nUse this if your application contains another bundle that's already signed.",
+          "type": "string"
+        },
+        "mergeASARs": {
+          "default": true,
+          "description": "Whether to merge x64 and arm64 ASARs into one.",
+          "type": "boolean"
+        },
+        "singleArchFiles": {
+          "description": "If {@link MakeUniversalOpts.mergeASARs} is enabled, this property provides a\n{@link https://github.com/isaacs/minimatch?tab=readme-ov-file#features minimatch}\npattern of paths that are allowed to be present in one of the ASAR files, but not in the other.",
+          "type": "string"
+        },
+        "x64ArchFiles": {
+          "description": "A {@link https://github.com/isaacs/minimatch?tab=readme-ov-file#features minimatch}\npattern of binaries that are expected to be the same x64 binary in both\n\nUse this if your application contains binaries that have already been merged into a universal file\nusing the `lipo` tool.",
+          "type": "string"
         }
       },
       "type": "object"
@@ -1529,42 +1636,46 @@
     },
     "FuseOptionsV1": {
       "additionalProperties": false,
-      "description": "All options come from [@electron/fuses](https://github.com/electron/fuses)\nRef: https://raw.githubusercontent.com/electron/electron/refs/heads/main/docs/tutorial/fuses.md",
+      "description": "Feature flags (\"fuses\") baked into the Electron binary at build time.\n\nAll options map 1:1 to the flags documented by\n[`@electron/fuses`](https://github.com/electron/fuses) and the upstream\n[Electron fuses guide](https://www.electronjs.org/docs/latest/tutorial/fuses).\n\nelectron-builder flips fuses after packaging and **before** signing so that the final\ncode signature covers the modified binary. On Apple Silicon, the ad-hoc signature is\nre-applied automatically after flipping fuses.",
       "properties": {
         "enableCookieEncryption": {
-          "description": "The cookieEncryption fuse toggles whether the cookie store on disk is encrypted using OS level cryptography keys.  By default the sqlite database that Chromium uses to store cookies stores the values in plaintext.  If you wish to ensure your apps cookies are encrypted in the same way Chrome does then you should enable this fuse.  Please note it is a one-way transition, if you enable this fuse existing unencrypted cookies will be encrypted-on-write but if you then disable the fuse again your cookie store will effectively be corrupt and useless.  Most apps can safely enable this fuse.",
+          "description": "Controls whether the Chromium cookie store is encrypted using OS-level cryptography keys.\n\nWhen enabled, cookies are stored encrypted on disk (the same mechanism Chrome uses).\n**This is a one-way transition**: existing unencrypted cookies are re-encrypted on write, but\ndisabling the fuse afterwards will leave the cookie database unreadable.\n\nMost production apps can safely enable this fuse.",
           "type": "boolean"
         },
         "enableEmbeddedAsarIntegrityValidation": {
-          "description": "The embeddedAsarIntegrityValidation fuse toggles an experimental feature on macOS that validates the content of the `app.asar` file when it is loaded.  This feature is designed to have a minimal performance impact but may marginally slow down file reads from inside the `app.asar` archive.\nCurrently, ASAR integrity checking is supported on:\n\n - macOS as of electron>=16.0.0\n - Windows as of electron>=30.0.0\n\nFor more information on how to use asar integrity validation please read the [Asar Integrity](https://github.com/electron/electron/blob/main/docs/tutorial/asar-integrity.md) documentation.",
+          "description": "Enables ASAR integrity validation — Electron verifies the embedded SHA-256 hash of\n`app.asar` before loading it.\n\nPlatform support:\n- macOS: Electron ≥ 16.0.0\n- Windows: Electron ≥ 30.0.0\n\nFor this fuse to be meaningful, `asar.disableIntegrity` must **not** be\n`true` (otherwise the hash is not embedded).",
           "type": "boolean"
         },
         "enableNodeCliInspectArguments": {
-          "description": "The nodeCliInspect fuse toggles whether the `--inspect`, `--inspect-brk`, etc. flags are respected or not.  When disabled it also ensures that `SIGUSR1` signal does not initialize the main process inspector.  Most apps can safely disable this fuse.",
+          "description": "Controls whether the `--inspect`, `--inspect-brk`, and related Node.js debugger flags are\nhonoured.\n\nWhen disabled, `SIGUSR1` no longer opens the V8 inspector in the main process either.\nMost production apps can safely disable this fuse.",
           "type": "boolean"
         },
         "enableNodeOptionsEnvironmentVariable": {
-          "description": "The nodeOptions fuse toggles whether the [`NODE_OPTIONS`](https://nodejs.org/api/cli.html#node_optionsoptions)  and [`NODE_EXTRA_CA_CERTS`](https://github.com/nodejs/node/blob/main/doc/api/cli.md#node_extra_ca_certsfile) environment variables are respected.  The `NODE_OPTIONS` environment variable can be used to pass all kinds of custom options to the Node.js runtime and isn't typically used by apps in production.  Most apps can safely disable this fuse.",
+          "description": "Controls whether the [`NODE_OPTIONS`](https://nodejs.org/api/cli.html#node_optionsoptions)\nand `NODE_EXTRA_CA_CERTS` environment variables are respected.\n\n`NODE_OPTIONS` allows injecting arbitrary Node.js runtime flags (e.g. `--require`) and is\nrarely needed in production. Most apps can safely disable this fuse.",
           "type": "boolean"
         },
         "grantFileProtocolExtraPrivileges": {
-          "description": "The grantFileProtocolExtraPrivileges fuse changes whether pages loaded from the `file://` protocol are given privileges beyond what they would receive in a traditional web browser.  This behavior was core to Electron apps in original versions of Electron but is no longer required as apps should be [serving local files from custom protocols](https://github.com/electron/electron/blob/main/docs/tutorial/security.md#18-avoid-usage-of-the-file-protocol-and-prefer-usage-of-custom-protocols) now instead.  If you aren't serving pages from `file://` you should disable this fuse.\nThe extra privileges granted to the `file://` protocol by this fuse are incompletely documented below:\n\n - `file://` protocol pages can use `fetch` to load other assets over `file://`\n - `file://` protocol pages can use service workers\n - `file://` protocol pages have universal access granted to child frames also running on `file://` protocols regardless of sandbox settings",
+          "description": "Controls whether pages loaded from the `file://` protocol receive elevated privileges\nbeyond what a standard web browser would grant.\n\nThese extra privileges include `fetch` to other `file://` URLs, service workers, and\nuniversal frame access for child frames also on `file://`. This behaviour pre-dates modern\nElectron security best practices.\n\nDisable this fuse if your app does not load content directly from `file://` (i.e. you use\na [custom protocol](https://www.electronjs.org/docs/latest/tutorial/security#18-avoid-usage-of-the-file-protocol-and-prefer-usage-of-custom-protocols)).",
           "type": "boolean"
         },
         "loadBrowserProcessSpecificV8Snapshot": {
-          "description": "The loadBrowserProcessSpecificV8Snapshot fuse changes which V8 snapshot file is used for the browser process.  By default Electron's processes will all use the same V8 snapshot file.  When this fuse is enabled the browser process uses the file called `browser_v8_context_snapshot.bin` for its V8 snapshot. The other processes will use the V8 snapshot file that they normally do.",
+          "description": "When enabled, the browser (main) process uses a separate V8 snapshot file\n(`browser_v8_context_snapshot.bin`) instead of the shared one.\n\nThis is only useful when you ship a custom V8 snapshot for the main process that differs\nfrom the renderer snapshot. Standard apps do not need this.",
           "type": "boolean"
         },
         "onlyLoadAppFromAsar": {
-          "description": "The onlyLoadAppFromAsar fuse changes the search system that Electron uses to locate your app code.  By default Electron will search in the following order `app.asar` -> `app` -> `default_app.asar`.  When this fuse is enabled the search order becomes a single entry `app.asar` thus ensuring that when combined with the `embeddedAsarIntegrityValidation` fuse it is impossible to load non-validated code.",
+          "description": "When enabled, Electron searches for the app exclusively in `app.asar`, skipping the `app`\ndirectory and `default_app.asar` fallbacks.\n\nCombined with `enableEmbeddedAsarIntegrityValidation`, this makes it impossible to side-load\nunverified code by replacing `app.asar` with an unarchived `app/` directory.",
           "type": "boolean"
         },
         "resetAdHocDarwinSignature": {
-          "description": "Resets the app signature, specifically used for macOS.\nNote: This should be unneeded since electron-builder signs the app directly after flipping the fuses.\nRef: https://github.com/electron/fuses?tab=readme-ov-file#apple-silicon",
+          "description": "Re-applies the ad-hoc codesignature on macOS after fuses are flipped.\n\nelectron-builder already re-signs the app after flipping fuses, so this flag is\ngenerally not needed and exists only as a compatibility shim for edge cases.",
           "type": "boolean"
         },
         "runAsNode": {
-          "description": "The runAsNode fuse toggles whether the `ELECTRON_RUN_AS_NODE` environment variable is respected or not.  Please note that if this fuse is disabled then `process.fork` in the main process will not function as expected as it depends on this environment variable to function. Instead, we recommend that you use [Utility Processes](https://github.com/electron/electron/blob/main/docs/api/utility-process.md), which work for many use cases where you need a standalone Node.js process (like a Sqlite server process or similar scenarios).",
+          "description": "Controls whether the `ELECTRON_RUN_AS_NODE` environment variable is respected.\n\nWhen `true` (the Electron default), setting `ELECTRON_RUN_AS_NODE=1` in the environment\nmakes Electron behave like a plain Node.js process, bypassing the app entirely. Disable\nthis fuse in production apps to prevent that escape path.\n\n**Note:** Disabling this fuse also breaks `process.fork()` in the main process because\nit relies on `ELECTRON_RUN_AS_NODE` internally. Use\n[Utility Processes](https://www.electronjs.org/docs/latest/api/utility-process) as a\nreplacement.",
+          "type": "boolean"
+        },
+        "wasmTrapHandlers": {
+          "description": "Enables V8 signal-based trap handlers for out-of-bounds WebAssembly memory accesses.\n\nWhen enabled, Electron uses OS signals (e.g. `SIGSEGV` on Linux/macOS) to catch Wasm\nOOB accesses at the hardware level rather than inserting explicit bounds checks in JIT'd\ncode. This improves Wasm performance and is enabled by default in Electron.\n\nDisable only if the host environment restricts signal handlers (e.g. certain sandboxing\nconfigurations) and you observe crashes in Wasm-heavy workloads.",
           "type": "boolean"
         }
       },
@@ -1740,7 +1851,8 @@
           "description": "Any custom request headers"
         },
         "tagNamePrefix": {
-          "description": "If defined, sets the prefix of the tag name that comes before the semver number.\ne.g. \"v\" in \"v1.2.3\" or \"test\" of \"test1.2.3\".\nOverrides `vPrefixedTagName`",
+          "default": "v",
+          "description": "If defined, sets the prefix of the tag name that comes before the semver number.\ne.g. \"v\" in \"v1.2.3\" or \"test\" of \"test1.2.3\".",
           "type": "string"
         },
         "timeout": {
@@ -1763,11 +1875,6 @@
             "null",
             "string"
           ]
-        },
-        "vPrefixedTagName": {
-          "default": true,
-          "description": "Whether to use `v`-prefixed tag name.",
-          "type": "boolean"
         }
       },
       "required": [
@@ -2001,24 +2108,7 @@
             }
           ],
           "default": true,
-          "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#asarUnpack) - please file an issue if this doesn't work."
-        },
-        "asarUnpack": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
+          "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules that must be unpacked will be detected automatically. Use {@link AsarOptions.unpack} to specify additional files to unpack."
         },
         "category": {
           "description": "The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).",
@@ -2628,20 +2718,6 @@
     "MacConfiguration": {
       "additionalProperties": false,
       "properties": {
-        "additionalArguments": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Array of strings specifying additional arguments to pass to the `codesign` command used to sign a specific file.\n\nSome subresources that you may include in your Electron app may need to be signed with --deep, this is not typically safe to apply to the entire Electron app and therefore should be applied to just your file.\nUsage Example: `['--deep']`"
-        },
         "appId": {
           "default": "com.electron.${name}",
           "description": "The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as\n[Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.",
@@ -2670,38 +2746,7 @@
             }
           ],
           "default": true,
-          "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#asarUnpack) - please file an issue if this doesn't work."
-        },
-        "asarUnpack": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
-        },
-        "binaries": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Paths of any extra binaries that need to be signed."
+          "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules that must be unpacked will be detected automatically. Use {@link AsarOptions.unpack} to specify additional files to unpack."
         },
         "bundleShortVersion": {
           "description": "The `CFBundleShortVersionString`. Do not use it unless you need to.",
@@ -2803,27 +2848,6 @@
         },
         "electronUpdaterCompatibility": {
           "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "entitlements": {
-          "description": "The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set).\nMAS entitlements is specified in the [mas](https://www.electron.build/mas).\nSee [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.\nBe aware that your app may crash if the right entitlements are not set like `com.apple.security.cs.allow-jit` for example on arm64 builds with Electron 20+.\nSee [Signing and Notarizing macOS Builds from the Electron documentation](https://www.electronjs.org/docs/latest/tutorial/code-signing#signing--notarizing-macos-builds) for more information.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "entitlementsInherit": {
-          "description": "The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mac.inherit.plist` will be used if exists (it is a recommended way to set).\nSee [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.\n\nThis option only applies when signing with `entitlements` provided.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "entitlementsLoginHelper": {
-          "description": "Path to login helper entitlement file.\nWhen using App Sandbox, the the `com.apple.security.inherit` key that is normally in the inherited entitlements cannot be inherited since the login helper is a standalone executable.\nDefaults to the value provided for `entitlements`. This option only applies when signing with `entitlements` provided.",
           "type": [
             "null",
             "string"
@@ -2956,19 +2980,9 @@
           "description": "Whether to fail if app will be not code signed.",
           "type": "boolean"
         },
-        "gatekeeperAssess": {
-          "default": false,
-          "description": "Whether to let `@electron/osx-sign` validate the signing or not.",
-          "type": "boolean"
-        },
         "generateUpdatesFilesForAllChannels": {
           "default": false,
           "description": "Please see [Building and Releasing using Channels](https://github.com/electron-userland/electron-builder/issues/1182#issuecomment-324947139).",
-          "type": "boolean"
-        },
-        "hardenedRuntime": {
-          "default": true,
-          "description": "Whether your app has to be signed with hardened runtime.\n\nWhen using ad-hoc signing (`identity: \"-\"`), hardened runtime enforces library validation which\nwill reject pre-signed Electron frameworks that carry a different Team ID. To resolve this either\nset `hardenedRuntime: false` or add the\n[`com.apple.security.cs.disable-library-validation`](https://developer.apple.com/documentation/BundleResources/Entitlements/com.apple.security.cs.disable-library-validation)\nentitlement to your entitlements file.",
           "type": "boolean"
         },
         "helperBundleId": {
@@ -3027,18 +3041,6 @@
             "string"
           ]
         },
-        "identity": {
-          "description": "The signing identity (certificate name) to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://www.electron.build/code-signing) instead of specifying this option.\nMAS installer identity is specified in the [mas](https://www.electron.build/mas).\n\n- **Not set** (default): electron-builder searches the keychain for a valid signing certificate. If none is found, signing is skipped for all architectures — there is no automatic ad-hoc fallback.\n- **`null`**: skip signing entirely.\n- **`\"-\"`**: opt in to ad-hoc signing explicitly. Note that `hardenedRuntime: true` (the default) combined with ad-hoc signing requires\n  the [`com.apple.security.cs.disable-library-validation`](https://developer.apple.com/documentation/BundleResources/Entitlements/com.apple.security.cs.disable-library-validation)\n  entitlement to prevent app launch failures; otherwise set `hardenedRuntime: false`.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "mergeASARs": {
-          "default": true,
-          "description": "Whether to merge ASAR files for different architectures or not.\n\nThis option has no effect unless building for \"universal\" arch.",
-          "type": "boolean"
-        },
         "minimumSystemVersion": {
           "description": "The minimum version of macOS required for the app to run. Corresponds to `LSMinimumSystemVersion`.",
           "type": [
@@ -3048,11 +3050,6 @@
         },
         "notarize": {
           "description": "Whether to disable electron-builder's [@electron/notarize](https://github.com/electron/notarize) integration.\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n\n1. `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
-          "type": "boolean"
-        },
-        "preAutoEntitlements": {
-          "default": true,
-          "description": "Whether to enable entitlements automation from `@electron/osx-sign`.",
           "type": "boolean"
         },
         "protocols": {
@@ -3068,13 +3065,6 @@
             }
           ],
           "description": "The URL protocol schemes."
-        },
-        "provisioningProfile": {
-          "description": "The path to the provisioning profile to use when signing, absolute or relative to the app root.",
-          "type": [
-            "null",
-            "string"
-          ]
         },
         "publish": {
           "anyOf": [
@@ -3124,15 +3114,11 @@
           "$ref": "#/definitions/ReleaseInfo",
           "description": "The release info. Intended for command line usage:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```"
         },
-        "requirements": {
-          "description": "Path of [requirements file](https://developer.apple.com/library/mac/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html) used in signing. Not applicable for MAS.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
         "sign": {
           "anyOf": [
+            {
+              "$ref": "#/definitions/ElectronSignOptions"
+            },
             {
               "typeof": "function"
             },
@@ -3143,36 +3129,7 @@
               ]
             }
           ],
-          "description": "The custom function (or path to file or module id) to sign an app bundle."
-        },
-        "signIgnore": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "Regex or an array of regex's that signal skipping signing a file."
-        },
-        "singleArchFiles": {
-          "description": "Minimatch pattern of paths that are allowed to be present in one of the\nASAR files, but not in the other.\n\nThis option has no effect unless building for \"universal\" arch and applies\nonly if `mergeASARs` is `true`.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "strictVerify": {
-          "default": true,
-          "description": "Whether to let `@electron/osx-sign` verify the contents or not.",
-          "type": "boolean"
+          "description": "Codesigning configuration. The signing certificate is selected via `sign.identity` (or the\n`CSC_LINK` / `CSC_NAME` environment variables).\n\n- **Not set** (default): electron-builder auto-discovers a valid certificate in the keychain. If none is found, signing is skipped.\n- **`null`**: skip signing entirely.\n- **`string`**: path or module ID of a file that exports a {@link CustomMacSign} function.\n- **{@link CustomMacSign}**: inline custom signing function (JS/TS config only).\n- **{@link ElectronSignOptions}**: options forwarded directly to `@electron/osx-sign`."
         },
         "target": {
           "anyOf": [
@@ -3230,35 +3187,16 @@
           "default": "default (dmg and zip for Squirrel.Mac)",
           "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\nNote: Squirrel.Mac auto update mechanism requires both `dmg` and `zip` to be enabled, even when only `dmg` is used. Disabling `zip` will break auto update in `dmg` packages."
         },
-        "timestamp": {
-          "description": "Specify the URL of the timestamp authority server",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "type": {
+        "universal": {
           "anyOf": [
             {
-              "enum": [
-                "development",
-                "distribution"
-              ],
-              "type": "string"
+              "$ref": "#/definitions/ElectronUniversalOptions"
             },
             {
               "type": "null"
             }
           ],
-          "default": "distribution",
-          "description": "Whether to sign app for development or for distribution."
-        },
-        "x64ArchFiles": {
-          "description": "Minimatch pattern of paths that are allowed to be x64 binaries in both\nASAR files\n\nThis option has no effect unless building for \"universal\" arch and applies\nonly if `mergeASARs` is `true`.",
-          "type": [
-            "null",
-            "string"
-          ]
+          "description": "Options forwarded to `@electron/universal` when building a universal (multi-arch) app.\nHas no effect unless the target arch is `universal`."
         }
       },
       "type": "object"
@@ -3266,20 +3204,6 @@
     "MasConfiguration": {
       "additionalProperties": false,
       "properties": {
-        "additionalArguments": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Array of strings specifying additional arguments to pass to the `codesign` command used to sign a specific file.\n\nSome subresources that you may include in your Electron app may need to be signed with --deep, this is not typically safe to apply to the entire Electron app and therefore should be applied to just your file.\nUsage Example: `['--deep']`"
-        },
         "appId": {
           "default": "com.electron.${name}",
           "description": "The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as\n[Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.",
@@ -3308,38 +3232,7 @@
             }
           ],
           "default": true,
-          "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#asarUnpack) - please file an issue if this doesn't work."
-        },
-        "asarUnpack": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
-        },
-        "binaries": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Paths of any extra binaries that need to be signed."
+          "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules that must be unpacked will be detected automatically. Use {@link AsarOptions.unpack} to specify additional files to unpack."
         },
         "bundleShortVersion": {
           "description": "The `CFBundleShortVersionString`. Do not use it unless you need to.",
@@ -3441,27 +3334,6 @@
         },
         "electronUpdaterCompatibility": {
           "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "entitlements": {
-          "description": "The path to entitlements file for signing the app. `build/entitlements.mas.plist` will be used if exists (it is a recommended way to set).\nSee [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.\nBe aware that your app may crash if the right entitlements are not set like `com.apple.security.cs.allow-jit` for example on arm64 builds with Electron 20+.\nSee [Signing and Notarizing macOS Builds from the Electron documentation](https://www.electronjs.org/docs/latest/tutorial/code-signing#signing--notarizing-macos-builds) for more information.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "entitlementsInherit": {
-          "description": "The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mas.inherit.plist` will be used if exists (it is a recommended way to set).\nSee [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "entitlementsLoginHelper": {
-          "description": "Path to login helper entitlement file.\nWhen using App Sandbox, the the `com.apple.security.inherit` key that is normally in the inherited entitlements cannot be inherited since the login helper is a standalone executable.\nDefaults to the value provided for `entitlements`. This option only applies when signing with `entitlements` provided.",
           "type": [
             "null",
             "string"
@@ -3594,19 +3466,9 @@
           "description": "Whether to fail if app will be not code signed.",
           "type": "boolean"
         },
-        "gatekeeperAssess": {
-          "default": false,
-          "description": "Whether to let `@electron/osx-sign` validate the signing or not.",
-          "type": "boolean"
-        },
         "generateUpdatesFilesForAllChannels": {
           "default": false,
           "description": "Please see [Building and Releasing using Channels](https://github.com/electron-userland/electron-builder/issues/1182#issuecomment-324947139).",
-          "type": "boolean"
-        },
-        "hardenedRuntime": {
-          "default": true,
-          "description": "Whether your app has to be signed with hardened runtime.\n\nWhen using ad-hoc signing (`identity: \"-\"`), hardened runtime enforces library validation which\nwill reject pre-signed Electron frameworks that carry a different Team ID. To resolve this either\nset `hardenedRuntime: false` or add the\n[`com.apple.security.cs.disable-library-validation`](https://developer.apple.com/documentation/BundleResources/Entitlements/com.apple.security.cs.disable-library-validation)\nentitlement to your entitlements file.",
           "type": "boolean"
         },
         "helperBundleId": {
@@ -3665,18 +3527,6 @@
             "string"
           ]
         },
-        "identity": {
-          "description": "The signing identity (certificate name) to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://www.electron.build/code-signing) instead of specifying this option.\nMAS installer identity is specified in the [mas](https://www.electron.build/mas).\n\n- **Not set** (default): electron-builder searches the keychain for a valid signing certificate. If none is found, signing is skipped for all architectures — there is no automatic ad-hoc fallback.\n- **`null`**: skip signing entirely.\n- **`\"-\"`**: opt in to ad-hoc signing explicitly. Note that `hardenedRuntime: true` (the default) combined with ad-hoc signing requires\n  the [`com.apple.security.cs.disable-library-validation`](https://developer.apple.com/documentation/BundleResources/Entitlements/com.apple.security.cs.disable-library-validation)\n  entitlement to prevent app launch failures; otherwise set `hardenedRuntime: false`.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "mergeASARs": {
-          "default": true,
-          "description": "Whether to merge ASAR files for different architectures or not.\n\nThis option has no effect unless building for \"universal\" arch.",
-          "type": "boolean"
-        },
         "minimumSystemVersion": {
           "description": "The minimum version of macOS required for the app to run. Corresponds to `LSMinimumSystemVersion`.",
           "type": [
@@ -3686,11 +3536,6 @@
         },
         "notarize": {
           "description": "Whether to disable electron-builder's [@electron/notarize](https://github.com/electron/notarize) integration.\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n\n1. `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
-          "type": "boolean"
-        },
-        "preAutoEntitlements": {
-          "default": true,
-          "description": "Whether to enable entitlements automation from `@electron/osx-sign`.",
           "type": "boolean"
         },
         "protocols": {
@@ -3706,13 +3551,6 @@
             }
           ],
           "description": "The URL protocol schemes."
-        },
-        "provisioningProfile": {
-          "description": "The path to the provisioning profile to use when signing, absolute or relative to the app root.",
-          "type": [
-            "null",
-            "string"
-          ]
         },
         "publish": {
           "anyOf": [
@@ -3762,15 +3600,11 @@
           "$ref": "#/definitions/ReleaseInfo",
           "description": "The release info. Intended for command line usage:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```"
         },
-        "requirements": {
-          "description": "Path of [requirements file](https://developer.apple.com/library/mac/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html) used in signing. Not applicable for MAS.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
         "sign": {
           "anyOf": [
+            {
+              "$ref": "#/definitions/ElectronSignOptions"
+            },
             {
               "typeof": "function"
             },
@@ -3781,36 +3615,7 @@
               ]
             }
           ],
-          "description": "The custom function (or path to file or module id) to sign an app bundle."
-        },
-        "signIgnore": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "Regex or an array of regex's that signal skipping signing a file."
-        },
-        "singleArchFiles": {
-          "description": "Minimatch pattern of paths that are allowed to be present in one of the\nASAR files, but not in the other.\n\nThis option has no effect unless building for \"universal\" arch and applies\nonly if `mergeASARs` is `true`.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "strictVerify": {
-          "default": true,
-          "description": "Whether to let `@electron/osx-sign` verify the contents or not.",
-          "type": "boolean"
+          "description": "Codesigning configuration. The signing certificate is selected via `sign.identity` (or the\n`CSC_LINK` / `CSC_NAME` environment variables).\n\n- **Not set** (default): electron-builder auto-discovers a valid certificate in the keychain. If none is found, signing is skipped.\n- **`null`**: skip signing entirely.\n- **`string`**: path or module ID of a file that exports a {@link CustomMacSign} function.\n- **{@link CustomMacSign}**: inline custom signing function (JS/TS config only).\n- **{@link ElectronSignOptions}**: options forwarded directly to `@electron/osx-sign`."
         },
         "target": {
           "anyOf": [
@@ -3868,44 +3673,26 @@
           "default": "default (dmg and zip for Squirrel.Mac)",
           "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\nNote: Squirrel.Mac auto update mechanism requires both `dmg` and `zip` to be enabled, even when only `dmg` is used. Disabling `zip` will break auto update in `dmg` packages."
         },
-        "timestamp": {
-          "description": "Specify the URL of the timestamp authority server",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "type": {
+        "universal": {
           "anyOf": [
             {
-              "enum": [
-                "development",
-                "distribution"
-              ],
-              "type": "string"
+              "$ref": "#/definitions/ElectronUniversalOptions"
             },
             {
               "type": "null"
             }
           ],
-          "default": "distribution",
-          "description": "Whether to sign app for development or for distribution."
-        },
-        "x64ArchFiles": {
-          "description": "Minimatch pattern of paths that are allowed to be x64 binaries in both\nASAR files\n\nThis option has no effect unless building for \"universal\" arch and applies\nonly if `mergeASARs` is `true`.",
-          "type": [
-            "null",
-            "string"
-          ]
+          "description": "Options forwarded to `@electron/universal` when building a universal (multi-arch) app.\nHas no effect unless the target arch is `universal`."
         }
       },
       "type": "object"
     },
     "MetadataDirectories": {
       "additionalProperties": false,
+      "description": "Overrides for the input and output directories used during the build.",
       "properties": {
         "app": {
-          "description": "The application directory (containing the application package.json), defaults to `app`, `www` or working directory.",
+          "description": "The directory that contains the application's `package.json` and source code.\n\nDefaults to `app`, then `www`, then the project root. Set this when your packagable app\nlives in a subdirectory (common in monorepos or when using a separate frontend build step).",
           "type": [
             "null",
             "string"
@@ -3913,7 +3700,7 @@
         },
         "buildResources": {
           "default": "build",
-          "description": "The path to build resources.\n\nPlease note — build resources are not packed into the app. If you need to use some files, e.g. as tray icon, please include required files explicitly: `\"files\": [\"**\\/*\", \"build/icon.*\"]`",
+          "description": "The directory that contains static build resources (icons, background images, license files,\ncustom NSIS scripts, etc.) that electron-builder reads during packaging.\n\n**Build resources are not copied into the packaged app.** If you need runtime access to a\nfile (e.g. a tray icon), include it explicitly via the `files` option:\n```json\n{ \"files\": [\"**\\/*\", \"build/icon.*\"] }\n```",
           "type": [
             "null",
             "string"
@@ -3921,7 +3708,7 @@
         },
         "output": {
           "default": "dist",
-          "description": "The output directory. [File macros](https://www.electron.build/file-patterns#file-macros) are supported.",
+          "description": "The directory where electron-builder writes its output (installers, zip archives, etc.).\n\n[File macros](https://www.electron.build/file-patterns#file-macros) are supported, e.g.\n`\"dist/${os}-${arch}\"` to separate outputs by platform and architecture.",
           "type": [
             "null",
             "string"
@@ -4202,6 +3989,44 @@
             "null",
             "string"
           ]
+        }
+      },
+      "type": "object"
+    },
+    "NativeModulesConfig": {
+      "additionalProperties": false,
+      "description": "Configuration for native Node.js module installation and rebuilding.\n\nAll options that control how electron-builder handles native modules — from forcing source\nbuilds at install time through to the `@electron/rebuild` compilation mode.",
+      "properties": {
+        "buildDependenciesFromSource": {
+          "default": false,
+          "description": "Whether to pass `--build-from-source` to the package manager when installing native\ndependencies, forcing them to compile from source rather than using pre-built binaries.\n\nUseful when pre-built binaries are not available for the target platform/arch combination,\nor when you need to ensure native modules are compiled against the exact Electron ABI.",
+          "type": "boolean"
+        },
+        "nodeGypRebuild": {
+          "default": false,
+          "description": "Whether to run `node-gyp rebuild` with Electron headers before packaging.\n\nThis is a low-level escape hatch for cases where the standard `@electron/rebuild` path\n(controlled by {@link npmRebuild}) is insufficient. Most projects should leave this `false`\nand rely on `@electron/rebuild` instead.\n\nWhen `true`, electron-builder runs `node-gyp rebuild` with the correct `npm_config_*`\nenvironment variables set for the target Electron version and architecture before the\nnormal rebuild step.",
+          "type": "boolean"
+        },
+        "npmRebuild": {
+          "default": true,
+          "description": "Whether to rebuild native Node.js modules for the target Electron version and architecture\nbefore packaging.\n\nWhen `true` (the default), electron-builder runs `@electron/rebuild` against the app's\n`node_modules` directory to ensure all native modules are compiled against the correct Electron\nABI. Set to `false` to skip this step entirely — useful when native modules are pre-built\nelsewhere in your pipeline or when the app has no native dependencies.\n\nThe compilation mode (`sequential` vs `parallel`) is controlled by {@link rebuildMode}.",
+          "type": "boolean"
+        },
+        "rebuildMode": {
+          "anyOf": [
+            {
+              "enum": [
+                "parallel",
+                "sequential"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "sequential",
+          "description": "Compilation mode for `@electron/rebuild`.\n\n- `\"sequential\"` — rebuilds native modules one at a time. Safer in memory-constrained\n  environments and produces cleaner log output.\n- `\"parallel\"` — rebuilds all native modules concurrently. Faster on machines with many cores\n  and plentiful memory, but may exhaust resources on CI agents with limited RAM."
         }
       },
       "type": "object"
@@ -4899,6 +4724,24 @@
           "default": true,
           "description": "If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings.",
           "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "Omit<MirrorOptions,\"customFilename\"|\"customDir\"|\"customVersion\">": {
+      "additionalProperties": false,
+      "properties": {
+        "mirror": {
+          "description": "The base URL of the mirror to download from.\ne.g https://github.com/electron/electron/releases/download",
+          "type": "string"
+        },
+        "nightlyMirror": {
+          "description": "The mirror URL for [`electron-nightly`](https://npmjs.com/package/electron-nightly),\nwhich lives in a separate npm package.",
+          "type": "string"
+        },
+        "resolveAssetURL": {
+          "description": "A function allowing customization of the url returned\nfrom getArtifactRemoteURL().",
+          "typeof": "function"
         }
       },
       "type": "object"
@@ -6472,362 +6315,6 @@
       "description": "Maps a named slot to its attribute object.\n`null` uses snapd defaults for that interface.",
       "type": "object"
     },
-    "SnapOptions": {
-      "additionalProperties": false,
-      "description": "Flat snap options. Used via the `snap` key in your build config.",
-      "properties": {
-        "after": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Names of snapcraft parts that must be built before the app part.\nDefaults to `[\"desktop-gtk2\"]`.\n\nUse `\"default\"` to keep the default and add extras:\n`[\"default\", \"my-helper-part\"]`."
-        },
-        "allowNativeWayland": {
-          "description": "Allow the snap to run with native Wayland support (`--ozone-platform=wayland`).\nDefaults to `false` for Electron < 38 (legacy behaviour); `true` for Electron ≥ 38.\nSet explicitly to override the version-based default.",
-          "type": [
-            "null",
-            "boolean"
-          ]
-        },
-        "appPartStage": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Filesets controlling which files from the app part are staged into the snap.\nSupports individual files, directories, globs, globstars, and exclusions (prefix `!`).\nSee [Snapcraft filesets](https://snapcraft.io/docs/snapcraft-filesets).\nWhen not set, the snap template's default stage list is used for legacy bases (core18/core20/core22)."
-        },
-        "artifactName": {
-          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "assumes": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "[Snapd features](https://snapcraft.io/docs/snapcraft-yaml-reference#assumes) that must\nbe present on the host before the snap can be installed."
-        },
-        "autoStart": {
-          "default": false,
-          "description": "Whether the snap should automatically start on login.",
-          "type": "boolean"
-        },
-        "base": {
-          "description": "The snap base to use as the execution environment.\nExamples: `core18`, `core20`, `core22`.\n\nFor new projects, use the `snapcraft` key with `base: \"core24\"` instead of\nthis legacy interface.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "buildPackages": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Debian packages required at **build** time (installed inside the build environment)."
-        },
-        "category": {
-          "description": "The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "compression": {
-          "anyOf": [
-            {
-              "enum": [
-                "lzo",
-                "xz"
-              ],
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Compression algorithm for the snap SquashFS image.\n- `xz` — smaller file, slower decompression (good for distribution).\n- `lzo` — larger file, faster decompression (good for development iteration).\nOmit to use snapcraft's default (`xz`).\n\nWhen not set, `linux.compression` is mapped automatically:\n`\"store\"` → `\"lzo\"`, `\"maximum\"` → `\"xz\"`, `\"normal\"` → snapcraft default.\nExplicitly setting this field always overrides the mapped value."
-        },
-        "confinement": {
-          "anyOf": [
-            {
-              "enum": [
-                "classic",
-                "devmode",
-                "strict"
-              ],
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": "strict",
-          "description": "The type of [snap confinement](https://snapcraft.io/docs/reference/confinement).\n- `strict` — recommended; the snap runs in a fully isolated sandbox.\n- `devmode` — sandbox violations are logged but not enforced; for development only.\n- `classic` — no confinement; equivalent to a traditionally packaged application.\n  Requires Snap Store approval before publishing."
-        },
-        "description": {
-          "description": "As [description](https://www.electron.build/configuration#description) from application package.json, but allows you to specify different for Linux.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "desktop": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/LinuxDesktopFile"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
-        },
-        "environment": {
-          "anyOf": [
-            {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Environment variables injected into the snap's runtime environment.\nMerged with the electron-builder default `{ TMPDIR: \"$XDG_RUNTIME_DIR\" }`.\nUser-supplied values take precedence."
-        },
-        "executableArgs": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "The executable parameters. Pass to executableName"
-        },
-        "grade": {
-          "anyOf": [
-            {
-              "enum": [
-                "devel",
-                "stable"
-              ],
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": "stable",
-          "description": "The quality grade of the snap.\n- `stable` — suitable for all channels, including `stable` and `candidate`.\n- `devel` — development snapshot; cannot be promoted to `stable` or `candidate`."
-        },
-        "hooks": {
-          "default": "build/snap-hooks",
-          "description": "Directory containing [snap hooks](https://snapcraft.io/docs/snap-hooks), relative to\nthe build resources directory (`build/`).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "layout": {
-          "anyOf": [
-            {
-              "typeof": "function"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "[Snap layouts](https://snapcraft.io/docs/snap-layouts) — bind-mount or symlink host paths\ninto the snap's namespace, making libraries or config at `/usr`, `/var`, `/etc`, etc.\naccessible inside the confined environment."
-        },
-        "mimeTypes": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing."
-        },
-        "plugs": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/PlugDescriptor"
-            },
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/PlugDescriptor"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "[Plugs](https://snapcraft.io/docs/reference/interfaces) (consumed interfaces) to declare\nfor the app entry point.\nDefaults to `[\"desktop\", \"desktop-legacy\", \"home\", \"x11\", \"wayland\", \"unity7\",\n\"browser-support\", \"network\", \"gsettings\", \"audio-playback\", \"pulseaudio\", \"opengl\"]`.\n\nUse `\"default\"` in the list to keep the defaults and append extras:\n`[\"default\", \"camera\"]` adds `camera` to the standard set.\n\nTo configure plug attributes (e.g. `allow-sandbox` for Chromium's internal sandbox),\nuse a descriptor object:\n```json\n[\n  { \"browser-sandbox\": { \"interface\": \"browser-support\", \"allow-sandbox\": true } },\n  \"another-simple-plug-name\"\n]\n```"
-        },
-        "publish": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/GithubOptions"
-            },
-            {
-              "$ref": "#/definitions/GitlabOptions"
-            },
-            {
-              "$ref": "#/definitions/S3Options"
-            },
-            {
-              "$ref": "#/definitions/SpacesOptions"
-            },
-            {
-              "$ref": "#/definitions/GenericServerOptions"
-            },
-            {
-              "$ref": "#/definitions/CustomPublishOptions"
-            },
-            {
-              "$ref": "#/definitions/KeygenOptions"
-            },
-            {
-              "$ref": "#/definitions/SnapStoreOptions"
-            },
-            {
-              "$ref": "#/definitions/BitbucketOptions"
-            },
-            {
-              "items": {
-                "$ref": "#/definitions/AllPublishOptions"
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ]
-        },
-        "slots": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/SlotDescriptor"
-            },
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/SlotDescriptor"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "[Slots](https://snapcraft.io/docs/reference/interfaces) (provided interfaces) to declare\nfor the app.\n\nTo expose an MPRIS player under the Chromium bus name (required for strict confinement):\n```json\n[{ \"mpris\": { \"name\": \"chromium\" } }]\n```\nChromium [hard-codes](https://source.chromium.org/chromium/chromium/src/+/master:components/system_media_controls/linux/system_media_controls_linux.cc;l=51;bpv=0;bpt=1)\nthe bus name `chromium`, so the slot name must match for snapd to\n[allow it](https://forum.snapcraft.io/t/unable-to-use-mpris-interface/15360/7)."
-        },
-        "stagePackages": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Ubuntu packages to **stage** alongside the app (equivalent to `depends` for deb).\nDefaults to `[\"libnspr4\", \"libnss3\", \"libxss1\", \"libappindicator3-1\", \"libsecret-1-0\"]`.\n\nUse the `\"default\"` keyword to extend the default list:\n`[\"default\", \"my-extra-lib\"]` appends `my-extra-lib` to the defaults."
-        },
-        "summary": {
-          "description": "A short summary of the snap (max 78 characters).\nDefaults to [productName](./configuration.md#productName).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "synopsis": {
-          "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "title": {
-          "description": "Display title for the snap (may contain uppercase letters and spaces).\nDefaults to `productName`.\nSee [snap format](https://snapcraft.io/docs/snap-format).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "useTemplateApp": {
-          "description": "Whether to use the pre-built Electron snap template for faster builds.\nWhen `true`, electron-builder delegates snap assembly to the upstream Electron snap\ntemplate rather than running a full snapcraft build, significantly reducing build time.\nDefaults to `true` when `stagePackages` is not customised.\nOnly applicable to x64 and armv7l builds.",
-          "type": "boolean"
-        }
-      },
-      "type": "object"
-    },
     "SnapOptions24": {
       "additionalProperties": false,
       "description": "**[Beta]** Options for building a core24 snap. This interface does not extend the legacy\n`SnapBaseOptions` — it uses the snapcraft CLI directly.\n\nFields inherited from {@link CommonLinuxOptions} (`description`, `category`, `mimeTypes`,\n`executableArgs`, `desktop`, `synopsis`) are automatically populated from the root `linux.*`\nconfiguration. You do not need to duplicate them here; values set directly on this interface\ntake precedence over the cascaded `linux.*` values.",
@@ -7380,7 +6867,10 @@
         "environment": {
           "anyOf": [
             {
-              "typeof": "function"
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
             },
             {
               "type": "null"
@@ -8272,10 +7762,13 @@
     },
     "ToolsetConfig": {
       "additionalProperties": false,
-      "description": "Configuration of toolsets utilized by electron-builder",
+      "description": "Version pins and custom bundle overrides for the binary toolsets that electron-builder\ndownloads and caches locally.\n\nEach toolset is a versioned archive hosted at\n[electron-userland/electron-builder-binaries](https://github.com/electron-userland/electron-builder-binaries/releases).\nOmitting a property (or setting it to `null`) selects the modern default for that toolset.\nSetting a property to `\"0.0.0\"` forces the legacy bundle — useful only for diagnosing\nregressions introduced by newer toolset bundles.\n\nTo supply your own bundle, set the property to a {@link ToolsetCustom} object with a `url`\n(https:// or file://) and a `checksum` for verification. The bundle must mirror the expected\ndirectory layout of the corresponding built-in bundle; see the build scripts at\nhttps://github.com/electron-userland/electron-builder-binaries/tree/master/packages.",
       "properties": {
         "appimage": {
           "anyOf": [
+            {
+              "$ref": "#/definitions/ToolsetCustom"
+            },
             {
               "enum": [
                 "0.0.0",
@@ -8288,11 +7781,62 @@
               "type": "null"
             }
           ],
-          "default": "0.0.0",
-          "description": "`appimage` bundle version to use for Appimage packaging and runtime.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage&expanded=true\n0.0.0 - legacy toolset (appimage)\n\nBetas:\n1.0.2 - Runtime 20251108\n1.0.3 - Runtime 20251108 (Resolves GH issue #9598)"
+          "default": "1.0.3",
+          "description": "Version of the AppImage toolset bundle used for building `.AppImage` files.\n\nThe bundle ships:\n- **`mksquashfs`** — creates the SquashFS filesystem embedded in the AppImage.\n- **`desktop-file-validate`** — validates the generated `.desktop` entry.\n- **AppImage runtime** — the self-executing stub that mounts the SquashFS at launch.\n\nAvailable versions:\n| Version | Runtime date | Notes |\n|---------|-------------|-------|\n| `\"0.0.0\"` | Legacy | FUSE2-based AppImage runtime (pre-v27 default) |\n| `\"1.0.2\"` | 20251108 | Static-runtime (FUSE3-compatible) |\n| `\"1.0.3\"` | 20251108 | Static-runtime (FUSE3-compatible); recommended (default) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage"
+        },
+        "fpm": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ToolsetCustom"
+            },
+            {
+              "const": "2.2.1",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "2.2.1",
+          "description": "Version of the FPM bundle used to build Linux packages (`.deb`, `.rpm`, `.pacman`, etc.)\non macOS and Linux hosts.\n\nAvailable versions:\n| Version | FPM version | Notes |\n|---------|------------|-------|\n| `\"2.2.1\"` | 1.17.0 (Ruby 3.4.3) | Current default |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=fpm"
+        },
+        "icons": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ToolsetCustom"
+            },
+            {
+              "const": "1.1.0",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "1.1.0",
+          "description": "Version of the icons-conversion bundle used to convert source images to `.icns`, `.ico`,\nand PNG icon sets.\n\nSet to a {@link ToolsetCustom} object to supply your own icons bundle directory.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.1.0\"` | Current default |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=icons"
+        },
+        "linuxToolsMac": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ToolsetCustom"
+            },
+            {
+              "const": "1.0.0",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "1.0.0",
+          "description": "Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build\nLinux targets on macOS hosts.\n\nThe bundle ships macOS-native builds of `ar`, `lzip`, and `gtar` (GNU tar).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.0.0\"` | Current default |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=linux-tools-mac"
         },
         "nsis": {
           "anyOf": [
+            {
+              "$ref": "#/definitions/ToolsetCustom"
+            },
             {
               "enum": [
                 "0.0.0",
@@ -8304,11 +7848,30 @@
               "type": "null"
             }
           ],
-          "default": "0.0.0",
-          "description": "`nsis` bundle version to use for NSIS installer compilation.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=nsis&expanded=true\n0.0.0 - legacy toolset (nsis-3.0.4.1 + nsis-resources-3.4.1)\n\nBetas:\n1.2.1 - unified bundle (makensis 3.12 + plugins in one archive, entrypoint scripts auto-set NSISDIR)"
+          "default": "1.2.1",
+          "description": "Version of the NSIS toolset bundle used to compile Windows installers.\n\nThe bundle ships:\n- **`makensis`** — the NSIS compiler invoked to build `.nsi` scripts into `.exe` installers.\n- **NSIS plugins** — the plugin DLLs (`NsisMultiUser`, `UAC`, `StdUtils`, etc.) referenced by\n  electron-builder's default installer scripts.\n- **`elevate.exe`** — UAC elevation helper included in NSIS installers.\n\nAvailable versions:\n| Version | `makensis` version | Notes |\n|---------|------------------|-------|\n| `\"0.0.0\"` | 3.0.4.1 | Legacy split bundle — `nsis` + `nsis-resources` archives (pre-v27 default) |\n| `\"1.2.1\"` | 3.12 | Unified bundle — single archive, entrypoint scripts auto-set `NSISDIR` (default) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=nsis"
+        },
+        "sevenZip": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ToolsetCustom"
+            },
+            {
+              "const": "1.0.0",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "1.0.0",
+          "description": "Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.\n\nSet to a {@link ToolsetCustom} object to supply your own 7za binary.\nThe `url` must point to a directory (or a `.tar.gz`/`.zip` archive of one) that contains\n`bin/7za` (macOS/Linux) or `bin/7za.exe` (Windows).\n\n**Bootstrap constraint:** the custom bundle itself must be a `.tar.gz` or `.zip` archive\n(or a bare `file://` directory). `.7z` and `.tar.xz` archives cannot be used here because\nextracting them requires 7za — a circular dependency."
         },
         "winCodeSign": {
           "anyOf": [
+            {
+              "$ref": "#/definitions/ToolsetCustom"
+            },
             {
               "enum": [
                 "0.0.0",
@@ -8321,16 +7884,16 @@
               "type": "null"
             }
           ],
-          "default": "0.0.0",
-          "description": "`win-codesign` version to use for signing Windows artifacts.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=win-codesign&expanded=true\n\nStable:\nv0.0.0 (winCodeSign)\n\nBeta:\nWindows Kits 10.0.26100.0\nv1.0.0, v1.1.0"
+          "default": "1.1.0",
+          "description": "Version of the `win-codesign` bundle used for Windows code signing and resource editing.\n\nThe bundle ships:\n- **`signtool.exe`** (Windows) / **`osslsigncode`** (macOS & Linux) — used to sign `.exe`,\n  `.dll`, and `.msix` artifacts.\n- **`rcedit`** — used to embed version metadata and icons into `.exe` files.\n- **Windows Kits** (`10.0.26100.0`) — used by AppX/MSIX packaging (`makeappx`, `signtool`).\n\nAvailable versions:\n| Version | Contents |\n|---------|----------|\n| `\"0.0.0\"` | Legacy bundle — `winCodeSign-2.6.0` (pre-v27 default) |\n| `\"1.0.0\"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.0.0 |\n| `\"1.1.0\"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.1.0 (default) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=win-codesign"
         },
         "wine": {
           "anyOf": [
             {
-              "enum": [
-                "0.0.0",
-                "1.0.1"
-              ],
+              "$ref": "#/definitions/ToolsetCustom"
+            },
+            {
+              "const": "0.0.0",
               "type": "string"
             },
             {
@@ -8338,9 +7901,31 @@
             }
           ],
           "default": "0.0.0",
-          "description": "`wine` bundle version to use for running Windows tools on non-Windows platforms.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=wine&expanded=true\n0.0.0 - legacy toolset (wine 4.0.1 portable; mac-only support)\n\nBeta:\n1.0.1 - Wine 11 bundle (unified wine binary, ia32 via WoW64)"
+          "description": "Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on\nnon-Windows hosts (macOS and Linux).\n\nWine is only required when building Windows targets on a non-Windows machine. On Windows,\nthis setting has no effect.\n\nAvailable versions:\n| Version | Wine version | Platform support | Notes |\n|---------|-------------|-----------------|-------|\n| `\"0.0.0\"` | 4.0.1 | macOS only | Legacy portable bundle (pre-v27 default) |\n\nOn Linux, the system `wine` binary is used instead of a bundled one.\nSet `USE_SYSTEM_WINE=true` to force system Wine regardless of this setting.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=wine"
         }
       },
+      "type": "object"
+    },
+    "ToolsetCustom": {
+      "additionalProperties": false,
+      "description": "A custom toolset bundle supplied by the user in place of a built-in versioned bundle.\n\nThe bundle must mirror the expected directory layout of the corresponding built-in bundle.\nSee the build scripts at\nhttps://github.com/electron-userland/electron-builder-binaries/tree/master/packages.\n\nFile formats supported for `url` archives: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`.",
+      "properties": {
+        "checksum": {
+          "description": "SHA checksum of the custom toolset bundle for verification.\nRequired for remote (`https://`) URLs and local archive files (`file://`).\nNot needed for bare directory paths — the directory is used as-is with no caching.",
+          "type": "string"
+        },
+        "url": {
+          "description": "The `https://` URL or `file://` path to load the custom toolset bundle from.\n\n- `https://` — downloaded and cached locally; the archive is extracted before use.\n- `file:///absolute/path` — used directly; relative paths must be within the project resources dir.\n\nArchives (`.zip`, `.7z`, `.tar.gz`, `.tar.xz`) are extracted automatically.\nA bare directory path (no archive) is used as-is.",
+          "type": "string"
+        },
+        "version": {
+          "description": "Optional version label used in the local cache directory name.\nFalls back to the first 8 characters of `checksum` when omitted.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "url"
+      ],
       "type": "object"
     },
     "WindowsAzureSigningConfiguration": {
@@ -8422,24 +8007,7 @@
             }
           ],
           "default": true,
-          "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#asarUnpack) - please file an issue if this doesn't work."
-        },
-        "asarUnpack": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
+          "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules that must be unpacked will be detected automatically. Use {@link AsarOptions.unpack} to specify additional files to unpack."
         },
         "azureSignOptions": {
           "anyOf": [
@@ -8905,6 +8473,7 @@
       "type": "object"
     }
   },
+  "description": "The root build configuration object passed to electron-builder.\n\nExtends {@link CommonConfiguration} with top-level Electron-specific options, configuration\ninheritance/presets, and all per-platform build hooks.",
   "properties": {
     "afterAllArtifactBuild": {
       "anyOf": [
@@ -8918,7 +8487,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run after all artifacts are built.\nReceives a {@link BuildResult}. May return an array of additional file paths to publish.\n\nFor file/module setup, see {@link beforePack}."
+      "description": "Called after **all** artifacts across all platforms/architectures have been built.\n\nMay return an array of additional file paths that should be treated as publish targets\n(i.e. uploaded to the configured publisher).\n\nReceives a {@link BuildResult}."
     },
     "afterExtract": {
       "anyOf": [
@@ -8932,7 +8501,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run after the prebuilt Electron binary has been extracted to the output directory.\nReceives an {@link AfterExtractContext}. For file/module setup, see {@link beforePack}."
+      "description": "Called after the prebuilt Electron binary has been extracted to the staging directory but\nbefore the app files have been copied into it.\n\nUse this hook to patch or augment the Electron binary itself (e.g. rename helper processes,\ninject native libraries) before the app payload is laid down on top.\n\nReceives an {@link AfterExtractContext}."
     },
     "afterPack": {
       "anyOf": [
@@ -8946,7 +8515,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run after pack but before pack into distributable format and sign.\nReceives an {@link AfterPackContext}. For file/module setup, see {@link beforePack}."
+      "description": "Called after the app files have been copied into the staging directory (and ASAR created if\napplicable) but **before** signing and before the output archive/installer is built.\n\nUse this hook to post-process the staged app bundle (e.g. strip debug symbols, inject\nplatform-specific resources).\n\nReceives an {@link AfterPackContext}."
     },
     "afterSign": {
       "anyOf": [
@@ -8960,7 +8529,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run after pack and sign but before pack into distributable format.\nReceives an {@link AfterPackContext}. For file/module setup, see {@link beforePack}."
+      "description": "Called after code signing but **before** the signed app is packed into the final\ndistributable format (e.g. before `dmg` is created from the signed `.app`).\n\nUse this hook to perform post-sign validation or to add signed resources that are not part of\nthe main app bundle.\n\nReceives an {@link AfterPackContext}."
     },
     "apk": {
       "anyOf": [
@@ -8971,11 +8540,11 @@
           "type": "null"
         }
       ],
-      "description": "Alpine Linux APK package options. Produces an `.apk` archive installable via `apk add`."
+      "description": "Alpine Linux APK package options.\n\nProduces an `.apk` archive installable via `apk add --allow-untrusted ./package.apk`."
     },
     "appId": {
       "default": "com.electron.${name}",
-      "description": "The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as\n[Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.",
+      "description": "The application identifier.\n\nUsed as [`CFBundleIdentifier`](https://developer.apple.com/documentation/bundleresources/information_property_list/cfbundleidentifier)\non macOS and as the\n[Application User Model ID](https://learn.microsoft.com/en-us/windows/win32/shell/appids)\non Windows (NSIS target only; Squirrel.Windows does not support custom Application User Model IDs).\n\nIt is strongly recommended to set an explicit, reverse-DNS-style identifier (e.g. `\"com.example.myapp\"`)\nrather than relying on the generated default.",
       "type": [
         "null",
         "string"
@@ -8990,7 +8559,7 @@
           "type": "null"
         }
       ],
-      "description": "AppImage options. AppImage is a portable application format that bundles the app\nand its dependencies into a single self-contained executable that runs on most\nLinux distributions without installation."
+      "description": "AppImage options.\n\nAppImage is a portable application format that bundles the app and its runtime dependencies\ninto a single self-contained executable that runs on most Linux distributions without\ninstallation. The produced `.AppImage` file is executable after `chmod +x`."
     },
     "appx": {
       "anyOf": [
@@ -9001,7 +8570,7 @@
           "type": "null"
         }
       ],
-      "description": "Windows Store (AppX) package options."
+      "description": "Windows Store (MSIX/AppX) package options.\n\nProduces a `.appx` or `.msix` package suitable for distribution through the Microsoft Store or\nside-loading."
     },
     "appxManifestCreated": {
       "anyOf": [
@@ -9015,7 +8584,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run after Appx manifest created on disk - not packed into .appx package yet."
+      "description": "Called after the AppX/MSIX manifest XML has been written to the staging directory but before\n`makeappx` packages it.\n\nThe hook receives the path to the manifest file as a string. Use it to inject custom manifest\nextensions (capabilities, protocol handlers, etc.) not exposed through {@link AppXOptions}."
     },
     "artifactBuildCompleted": {
       "anyOf": [
@@ -9029,7 +8598,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run when an individual artifact build completes.\nReceives an {@link ArtifactCreated}. For file/module setup, see {@link beforePack}."
+      "description": "Called when an individual artifact has been successfully built and written to disk.\n\nUse this hook to collect artifact paths, upload to custom destinations, or trigger\npost-processing steps.\n\nReceives an {@link ArtifactCreated}."
     },
     "artifactBuildStarted": {
       "anyOf": [
@@ -9043,7 +8612,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run when an individual artifact build starts.\nReceives an {@link ArtifactBuildStarted}. For file/module setup, see {@link beforePack}."
+      "description": "Called when an individual artifact build starts (e.g. just before a `.dmg` or `.exe` is\nwritten to disk).\n\nReceives an {@link ArtifactBuildStarted}."
     },
     "artifactName": {
       "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
@@ -9065,24 +8634,7 @@
         }
       ],
       "default": true,
-      "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#asarUnpack) - please file an issue if this doesn't work."
-    },
-    "asarUnpack": {
-      "anyOf": [
-        {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        {
-          "type": [
-            "null",
-            "string"
-          ]
-        }
-      ],
-      "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
+      "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules that must be unpacked will be detected automatically. Use {@link AsarOptions.unpack} to specify additional files to unpack."
     },
     "beforeBuild": {
       "anyOf": [
@@ -9096,7 +8648,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Resolving to `false` will skip dependencies install or rebuild.\n\nIf provided and `node_modules` are missing, it will not invoke production dependencies check."
+      "description": "Called before dependencies are installed or native modules are rebuilt.\n\nReturn `false` (or a `Promise` that resolves to `false`) to skip the install/rebuild step\nentirely — useful when you manage `node_modules` externally (e.g. in a CI pipeline that\nrestores them from cache). When not set, electron-builder proceeds with the normal\ninstall/rebuild flow.\n\nIf this hook is provided and `node_modules` is missing, electron-builder will not perform\nthe production-dependencies check.\n\nReceives a {@link BeforeBuildContext}."
     },
     "beforePack": {
       "anyOf": [
@@ -9110,22 +8662,17 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run before pack.\nReceives a {@link BeforePackContext}.\n\nCan be specified inline as a function in JavaScript configs:\n```js\n// electron-builder.config.js\nmodule.exports = {\n  beforePack: async (context) => {\n    // your code\n  }\n}\n```\n\nOr as a path to a module that exports the function as its default export:\n```json\n{ \"build\": { \"beforePack\": \"./myBeforePackHook.js\" } }\n```\n```js\n// myBeforePackHook.js\nexports.default = async function(context) {\n  // your custom code\n}\n```"
-    },
-    "buildDependenciesFromSource": {
-      "default": false,
-      "description": "Whether to build the application native dependencies from source.",
-      "type": "boolean"
+      "description": "Called immediately before electron-builder begins packing the app for each platform/arch\ncombination.\n\nUse this hook to perform last-minute modifications to source files or build resources before\nthey are read by the packager.\n\nReceives a {@link BeforePackContext}."
     },
     "buildNumber": {
-      "description": "The build number. Maps to the `--iteration` flag for builds using FPM on Linux.\nIf not defined, then it will fallback to `BUILD_NUMBER` or `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_BUILDNUMBER` or `CI_PIPELINE_IID` env.",
+      "description": "The build number.\n\nMaps to the `--iteration` flag for FPM-based Linux targets and is appended to the version\nstring in `CFBundleVersion` (macOS) and `FileVersion` (Windows) when {@link buildVersion} is\nnot set explicitly.\n\nIf not set, falls back to the first defined environment variable among:\n`BUILD_NUMBER`, `TRAVIS_BUILD_NUMBER`, `APPVEYOR_BUILD_NUMBER`, `CIRCLE_BUILD_NUM`,\n`BUILD_BUILDNUMBER`, `CI_PIPELINE_IID`.",
       "type": [
         "null",
         "string"
       ]
     },
     "buildVersion": {
-      "description": "The build version. Maps to the `CFBundleVersion` on macOS, and `FileVersion` metadata property on Windows. Defaults to the `version`.\nIf `buildVersion` is not defined and `buildNumber` (or one of the `buildNumber` envs) is defined, it will be used as a build version (`version.buildNumber`).",
+      "description": "The full build version string.\n\nMaps to `CFBundleVersion` on macOS and the `FileVersion` metadata field on Windows.\nDefaults to the `version` field from `package.json`.\n\nIf `buildVersion` is not set but {@link buildNumber} is defined (or resolved from an\nenvironment variable), the effective build version becomes `${version}.${buildNumber}`.",
       "type": [
         "null",
         "string"
@@ -9157,11 +8704,11 @@
           "type": "null"
         }
       ],
-      "description": "[Experimental] Configuration for concurrent builds."
+      "description": "Configuration for experimental concurrent (multi-platform / multi-arch) builds.\n\nWhen `jobs > 1`, electron-builder runs up to `jobs` platform builds in parallel. This is an\nexperimental feature — use with caution and verify that your hook functions and build resources\nare safe to execute concurrently."
     },
     "copyright": {
-      "default": "Copyright © year ${author}",
-      "description": "The human-readable copyright line for the app.",
+      "default": "Copyright © ${year} ${author}",
+      "description": "The copyright string embedded in the built artifacts.\n\nAppears in the Windows `LegalCopyright` version-info field and the macOS `NSHumanReadableCopyright`\nInfo.plist key.",
       "type": [
         "null",
         "string"
@@ -9188,7 +8735,7 @@
           "type": "null"
         }
       ],
-      "description": "Debian package options. Targets Debian, Ubuntu, and Debian-based distributions.\nProduces a `.deb` archive installable via `dpkg -i` or `apt install`."
+      "description": "Debian package options.\n\nTargets Debian, Ubuntu, and Debian-based distributions. Produces a `.deb` archive\ninstallable via `dpkg -i` or `apt install ./package.deb`."
     },
     "defaultArch": {
       "description": "The default architecture to build for when no `--arch` flag is specified.\nDefaults to the current machine's architecture.",
@@ -9208,12 +8755,7 @@
           "type": "null"
         }
       ],
-      "description": "Directories for build resources"
-    },
-    "disableAsarIntegrity": {
-      "default": false,
-      "description": "Whether to skip ASAR integrity hash computation. Useful for custom electron forks with encrypted ASAR support where the header is not readable by standard tools.",
-      "type": "boolean"
+      "description": "Overrides for input/output directory paths used during the build."
     },
     "disableDefaultIgnoredFiles": {
       "default": false,
@@ -9222,11 +8764,6 @@
         "null",
         "boolean"
       ]
-    },
-    "disableSanityCheckAsar": {
-      "default": false,
-      "description": "Whether to disable sanity check asar package (useful for custom electron forks that implement their own encrypted integrity validation)",
-      "type": "boolean"
     },
     "dmg": {
       "anyOf": [
@@ -9237,15 +8774,15 @@
           "type": "null"
         }
       ],
-      "description": "macOS DMG options."
+      "description": "macOS DMG disk image options (background image, window position, icon layout, licence, etc.)."
     },
     "downloadAlternateFFmpeg": {
-      "description": "Whether to download the alternate FFmpeg library from Electron's release assets and replace the default FFmpeg library prior to signing",
+      "description": "Whether to download the FFmpeg library variant from Electron's release assets and replace the\ndefault (proprietary codec) FFmpeg library before signing.\n\nThe alternate FFmpeg is compiled without proprietary codec support (H.264, AAC, etc.) and is\nrequired for distributing on certain platforms (e.g., Linux distributions that prohibit\nproprietary codecs). Enabling this swaps the bundled `ffmpeg` dynamic library before the app\nis signed.",
       "type": "boolean"
     },
     "electronBranding": {
       "$ref": "#/definitions/ElectronBrandingOptions",
-      "description": "The branding used by Electron's distributables. This is needed if a fork has modified Electron's BRANDING.json file."
+      "description": "Electron branding overrides.\n\nRequired only when packaging a custom Electron fork that ships a modified `BRANDING.json`\n(e.g., a fork that renames the `Electron Helper` process or the `Electron Framework`).\nStandard Electron builds do not need this."
     },
     "electronDist": {
       "anyOf": [
@@ -9259,21 +8796,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run when staging the electron artifact environment.\nReturns the path to custom Electron build (e.g. `~/electron/out/R`) or folder of electron zips.\n\nZip files must follow the pattern `electron-v${version}-${platformName}-${arch}.zip`, otherwise it will be assumed to be an unpacked Electron app directory"
-    },
-    "electronDownload": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/ElectronDownloadOptions"
-        },
-        {
-          "$ref": "#/definitions/ElectronGetOptions"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "description": "The [electron-download](https://github.com/electron-userland/electron-download#usage) options. (legacy)\nAlternatively, you can use [electron/get](https://github.com/electron/get#usage) options."
+      "description": "Override the source of the Electron distribution to stage.\n\nShould return the path to either:\n- A **directory** containing a pre-built, unpacked Electron app (e.g. `~/electron/out/R`).\n- A **directory** containing Electron zip archives following the naming convention\n  `electron-v${version}-${platformName}-${arch}.zip`.\n\nWhen not set, electron-builder downloads the official Electron release from GitHub (or the\nmirror configured via `electronDownload`).\n\nReceives a {@link PrepareApplicationStageDirectoryOptions}."
     },
     "electronFuses": {
       "anyOf": [
@@ -9284,7 +8807,18 @@
           "type": "null"
         }
       ],
-      "description": "Options to pass to `@electron/fuses`\nRef: https://github.com/electron/fuses"
+      "description": "Options forwarded to [`@electron/fuses`](https://github.com/electron/fuses) to flip Electron\nfeature flags in the binary.\n\nFuses are compile-time-like flags baked into the Electron binary that cannot be changed at\nruntime. Flipping them is the approved mechanism for hardening Electron apps (e.g., disabling\n`ELECTRON_RUN_AS_NODE`, enabling ASAR integrity, etc.).\n\nelectron-builder flips fuses after packaging but before signing so that the final signature\ncovers the modified binary."
+    },
+    "electronGet": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ElectronGetOptions"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Options forwarded to [`@electron/get`](https://github.com/electron/get) when downloading the\nElectron distribution to package."
     },
     "electronLanguages": {
       "anyOf": [
@@ -9308,7 +8842,7 @@
       ]
     },
     "electronVersion": {
-      "description": "The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency.",
+      "description": "The Electron version to package against.\n\nDefaults to the version of the `electron` (or `electron-prebuilt`) dependency declared in\n`package.json`. Set this explicitly only when the installed Electron version is not the one\nyou want to package against (e.g., in monorepos where the Electron dependency lives in a\ndifferent workspace).",
       "type": [
         "null",
         "string"
@@ -9336,7 +8870,7 @@
           ]
         }
       ],
-      "description": "The name of a built-in configuration preset (currently, only `react-cra` is supported) or any number of paths to config files (relative to project dir).\n\nThe latter allows to mixin a config from multiple other configs, as if you `Object.assign` them, but properly combine `files` glob patterns.\n\nIf `react-scripts` in the app dependencies, `react-cra` will be set automatically. Set to `null` to disable automatic detection."
+      "description": "One or more configuration presets or file paths to merge into this configuration.\n\nAccepts a string or array of strings, each of which is either:\n- A built-in preset name (`\"react-cra\"` is the only currently supported value).\n- A path to a JS/JSON config file relative to the project directory.\n\nConfigs are merged left-to-right using a deep-assign strategy that properly combines `files`\nglob patterns rather than replacing them.\n\nThe `react-cra` preset is applied automatically when `react-scripts` is found in\n`dependencies`. Set `extends: null` to opt out of automatic preset detection."
     },
     "extraFiles": {
       "anyOf": [
@@ -9366,7 +8900,7 @@
       "description": "The same as [extraResources](#extraresources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux and Windows)."
     },
     "extraMetadata": {
-      "description": "Inject properties to `package.json`."
+      "description": "Additional properties to deep-merge into the app's `package.json` at build time.\n\nUseful for injecting build-time metadata (e.g., a git commit hash or CI build URL) that\nshould be readable at runtime via `require('./package.json')` or `import.meta.url`."
     },
     "extraResources": {
       "anyOf": [
@@ -9445,19 +8979,12 @@
           "type": "null"
         }
       ],
-      "description": "Flatpak options. Flatpak is a sandboxed application distribution format for Linux\nthat runs in a controlled environment and is distributed via [Flathub](https://flathub.org/)\nor other Flatpak repositories."
+      "description": "Flatpak options.\n\nFlatpak is a sandboxed application distribution format for Linux distributed via\n[Flathub](https://flathub.org/) or self-hosted OSTree repositories."
     },
     "forceCodeSigning": {
       "default": false,
-      "description": "Whether to fail if the application is not signed (to prevent unsigned app if code signing configuration is not correct).",
+      "description": "Whether to throw an error and abort the build if the app could not be code-signed.\n\nSet to `true` in release pipelines to catch missing or misconfigured signing credentials\nbefore producing unsigned artifacts. When `false` (the default), missing signing credentials\nproduce a warning and the build continues unsigned.",
       "type": "boolean"
-    },
-    "framework": {
-      "description": "The framework name. One of `electron`, `proton`, `libui`. Defaults to `electron`.",
-      "type": [
-        "null",
-        "string"
-      ]
     },
     "freebsd": {
       "anyOf": [
@@ -9468,7 +8995,7 @@
           "type": "null"
         }
       ],
-      "description": "FreeBSD package options. Produces a `.pkg` archive for the FreeBSD `pkg` package manager."
+      "description": "FreeBSD `pkg` package options.\n\nProduces a `.pkg` archive for the FreeBSD package manager."
     },
     "generateUpdatesFilesForAllChannels": {
       "default": false,
@@ -9483,16 +9010,8 @@
     },
     "includePdb": {
       "default": false,
-      "description": "Whether to include PDB files.",
+      "description": "Whether to include `.pdb` (Program Database) symbol files in the output.\n\nPDB files enable Windows crash-dump analysis but significantly increase artifact size. Enable\nfor internal builds where you want symbol information; disable for public distribution.",
       "type": "boolean"
-    },
-    "launchUiVersion": {
-      "description": "*libui-based frameworks only* The version of LaunchUI you are packaging for. Applicable for Windows only. Defaults to version suitable for used framework version.",
-      "type": [
-        "null",
-        "string",
-        "boolean"
-      ]
     },
     "linux": {
       "anyOf": [
@@ -9514,7 +9033,7 @@
           "type": "null"
         }
       ],
-      "description": "Options related to how build macOS targets."
+      "description": "macOS-specific build options (signing, entitlements, notarization, target categories, etc.)."
     },
     "mas": {
       "anyOf": [
@@ -9525,7 +9044,7 @@
           "type": "null"
         }
       ],
-      "description": "MAS (Mac Application Store) options."
+      "description": "macOS App Store (MAS) submission options."
     },
     "masDev": {
       "anyOf": [
@@ -9536,7 +9055,7 @@
           "type": "null"
         }
       ],
-      "description": "MAS (Mac Application Store) development options (`mas-dev` target)."
+      "description": "macOS App Store development-signing options (`mas-dev` target).\nUsed for local testing of MAS builds without submitting to the store."
     },
     "msi": {
       "anyOf": [
@@ -9547,7 +9066,7 @@
           "type": "null"
         }
       ],
-      "description": "MSI package options."
+      "description": "WiX-based MSI installer options.\n\nProduces a traditional `.msi` package built with the WiX Toolset. Best for enterprise\ndeployments that require MSI-based installation policies."
     },
     "msiProjectCreated": {
       "anyOf": [
@@ -9561,7 +9080,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run after MSI project created on disk - not packed into .msi package yet."
+      "description": "Called after the WiX MSI project XML has been written to a temporary directory but before\n`candle.exe` / `light.exe` compile it into a `.msi` package.\n\nThe hook receives the path to the project directory as a string. Use it to patch the generated\n`.wxs` files for customizations not exposed through electron-builder's options."
     },
     "msiWrapped": {
       "anyOf": [
@@ -9572,36 +9091,18 @@
           "type": "null"
         }
       ],
-      "description": "MSI-wrapped installer options."
+      "description": "MSI-wrapped NSIS installer options.\n\nWraps the standard NSIS installer inside an MSI package so that it can be deployed via\nGroup Policy or other MSI-only channels while preserving the NSIS installer UX."
     },
-    "nativeRebuilder": {
+    "nativeModules": {
       "anyOf": [
         {
-          "enum": [
-            "legacy",
-            "parallel",
-            "sequential"
-          ],
-          "type": "string"
+          "$ref": "#/definitions/NativeModulesConfig"
         },
         {
           "type": "null"
         }
       ],
-      "default": "sequential",
-      "description": "Use `legacy` app-builder binary for installing native dependencies, or `@electron/rebuild` in `sequential` or `parallel` compilation modes."
-    },
-    "nodeGypRebuild": {
-      "default": false,
-      "description": "Whether to execute `node-gyp rebuild` before starting to package the app.\n\nDon't [use](https://github.com/electron-userland/electron-builder/issues/683#issuecomment-241214075) [npm](http://electron.atom.io/docs/tutorial/using-native-node-modules/#using-npm) (neither `.npmrc`) for configuring electron headers. Use `electron-builder node-gyp-rebuild` instead.",
-      "type": "boolean"
-    },
-    "nodeVersion": {
-      "description": "*libui-based frameworks only* The version of NodeJS you are packaging for.\nYou can set it to `current` to set the Node.js version that you use to run.",
-      "type": [
-        "null",
-        "string"
-      ]
+      "description": "Configuration for native Node.js module installation and rebuilding.\n\nGroups all options that control how electron-builder handles native modules — from forcing\nsource builds during install through to the `@electron/rebuild` compilation mode."
     },
     "npmArgs": {
       "anyOf": [
@@ -9618,12 +9119,7 @@
           ]
         }
       ],
-      "description": "Additional command line arguments to use when installing app native deps."
-    },
-    "npmRebuild": {
-      "default": true,
-      "description": "Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies before starting to package the app.",
-      "type": "boolean"
+      "description": "Additional command-line arguments appended to the package manager's `install` command when\nelectron-builder installs app dependencies (i.e., when `node_modules` is missing and a fresh\ninstall is required).\n\nThese arguments are appended **only** during the install phase, not during the rebuild phase.\nTo influence `@electron/rebuild` directly, see {@link NativeModulesConfig.rebuildMode}."
     },
     "nsis": {
       "anyOf": [
@@ -9634,7 +9130,7 @@
           "type": "null"
         }
       ],
-      "description": "NSIS installer options."
+      "description": "NSIS one-click installer options.\n\nNSIS (Nullsoft Scriptable Install System) is the default Windows installer format produced by\nelectron-builder. It generates a lightweight, self-extracting `.exe` installer."
     },
     "nsisWeb": {
       "anyOf": [
@@ -9645,7 +9141,7 @@
           "type": "null"
         }
       ],
-      "description": "NSIS web installer options (downloads app package at install time)."
+      "description": "NSIS web installer options.\n\nLike the standard NSIS installer but the app payload is downloaded from a remote URL at install\ntime rather than bundled into the `.exe`. Useful for very large apps or staged rollouts."
     },
     "onNodeModuleFile": {
       "anyOf": [
@@ -9659,7 +9155,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be [run on each node module](#onnodemodulefile) file. Returning `true`/`false` will determine whether to force include or to use the default copier logic"
+      "description": "Called for every file inside each `node_modules` package directory as electron-builder\ndecides whether to include it in the packaged app.\n\nReturn `true` to force-include the file regardless of the default exclusion rules.\nReturn `false` or `undefined` to let electron-builder apply its normal filtering logic.\n\nReceives the absolute path of the file as a string."
     },
     "p5p": {
       "anyOf": [
@@ -9670,7 +9166,7 @@
           "type": "null"
         }
       ],
-      "description": "Solaris IPS package options. Produces a `.p5p` archive for the Solaris Image Packaging\nSystem (`pkg`)."
+      "description": "Solaris IPS package options.\n\nProduces a `.p5p` archive for the Solaris Image Packaging System (`pkg`)."
     },
     "pacman": {
       "anyOf": [
@@ -9681,7 +9177,7 @@
           "type": "null"
         }
       ],
-      "description": "Pacman package options. Targets Arch Linux and Arch-based distributions\n(Manjaro, EndeavourOS, etc.). Produces a `.pacman` archive installable via `pacman -U`."
+      "description": "Pacman package options.\n\nTargets Arch Linux and Arch-based distributions (Manjaro, EndeavourOS, etc.).\nProduces a `.pacman` archive installable via `pacman -U ./package.pacman`."
     },
     "pkg": {
       "anyOf": [
@@ -9692,7 +9188,7 @@
           "type": "null"
         }
       ],
-      "description": "macOS PKG options."
+      "description": "macOS PKG flat-package installer options."
     },
     "portable": {
       "anyOf": [
@@ -9703,10 +9199,10 @@
           "type": "null"
         }
       ],
-      "description": "Portable executable options (no installation required)."
+      "description": "Portable executable options.\n\nProduces a single `.exe` that requires no installation — it extracts and runs directly."
     },
     "productName": {
-      "description": "As [name](#metadata), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name).\nIf not specified inside of the `build` configuration, `productName` property defined at the top level of `package.json` is used. If not specified at the top level of `package.json`, [name property](https://docs.npmjs.com/files/package.json#name) is used.",
+      "description": "The human-readable product name displayed in installers, the macOS dock, and the Windows\nApps & Features list.\n\nUnlike the `name` field in `package.json`, this value may contain spaces and other characters\nthat are not allowed in npm package names.\n\nResolution order:\n1. `productName` inside the `build` configuration block.\n2. `productName` at the top level of `package.json`.\n3. `name` at the top level of `package.json`.",
       "type": [
         "null",
         "string"
@@ -9776,12 +9272,12 @@
     },
     "removePackageKeywords": {
       "default": true,
-      "description": "Whether to remove `keywords` field from `package.json` files.",
+      "description": "Whether to remove the `keywords` field from bundled `package.json` files.\n\nThe `keywords` array is only meaningful for package registry discoverability and has no\nruntime value inside a packaged Electron app. Removing it marginally reduces artifact size.",
       "type": "boolean"
     },
     "removePackageScripts": {
       "default": true,
-      "description": "Whether to remove `scripts` field from `package.json` files.",
+      "description": "Whether to remove the `scripts` field from bundled `package.json` files.\n\nLifecycle scripts (`preinstall`, `postinstall`, etc.) have no meaning inside a packaged\nElectron app and can trigger unintended behaviour if any tooling inspects the bundled\n`package.json`. Removing them reduces artifact size and prevents accidental execution.",
       "type": "boolean"
     },
     "rpm": {
@@ -9793,18 +9289,7 @@
           "type": "null"
         }
       ],
-      "description": "RPM package options. Targets Fedora, Red Hat Enterprise Linux, SUSE, and related\ndistributions. Produces a `.rpm` archive installable via `rpm` or `dnf`."
-    },
-    "snap": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/SnapOptions"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "description": "Flat snap configuration targeting core22 and older snap bases."
+      "description": "RPM package options.\n\nTargets Fedora, Red Hat Enterprise Linux, SUSE, and RPM-based distributions.\nProduces a `.rpm` archive installable via `rpm -i` or `dnf install ./package.rpm`."
     },
     "snapcraft": {
       "anyOf": [
@@ -9815,7 +9300,7 @@
           "type": "null"
         }
       ],
-      "description": "Snapcraft configuration. Prefer this over the deprecated `snap` field.\n\nSelects the snapcraft base and provides per-core options:\n- `base: \"core18\" | \"core20\" | \"core22\"` — legacy builds; accepts the same options as `snap`\n- `base: \"core24\"` — modern builds with the GNOME extension (recommended for new apps, requires Electron 25+)\n- `base: \"custom\"` — pass an existing `snapcraft.yaml` through unchanged; no plugs, extensions,\n  or desktop files are injected\n\nWhen both `snapcraft` and `snap` are set, `snapcraft` takes precedence."
+      "description": "Snapcraft configuration.\n\nSelects the snapcraft base and provides per-core options:\n- `base: \"core18\" | \"core20\" | \"core22\"` — legacy bases; still functional but not recommended\n  for new apps.\n- `base: \"core24\"` — modern base with the GNOME extension (recommended, requires Electron 25+).\n- `base: \"custom\"` — pass an existing `snapcraft.yaml` through unchanged; no plugs, extensions,\n  or desktop files are injected."
     },
     "squirrelWindows": {
       "anyOf": [
@@ -9826,7 +9311,7 @@
           "type": "null"
         }
       ],
-      "description": "Squirrel.Windows installer options. Requires the `electron-builder-squirrel-windows` dependency."
+      "description": "Squirrel.Windows auto-update installer options.\n\nRequires the `electron-builder-squirrel-windows` optional dependency."
     },
     "target": {
       "anyOf": [
@@ -9864,7 +9349,7 @@
           "type": "null"
         }
       ],
-      "description": "Configuration of toolsets utilized by electron-builder"
+      "description": "Pinned versions of the binary toolsets electron-builder downloads and uses internally.\n\nEach property selects a specific release of the corresponding tool bundle. Set a property to\n`\"0.0.0\"` to force the legacy bundle (pre-v27 behaviour). Leave a property unset (or set to\n`null`) to use the modern default for that toolset."
     },
     "win": {
       "anyOf": [
@@ -9875,7 +9360,7 @@
           "type": "null"
         }
       ],
-      "description": "Options related to how build Windows targets."
+      "description": "Windows-specific build options (signing, NSIS, icon, file associations, etc.)."
     },
     "$schema": {
       "description": "JSON Schema for this document.",

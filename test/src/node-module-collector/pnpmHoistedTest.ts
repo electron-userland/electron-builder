@@ -3,6 +3,8 @@ import * as fse from "fs-extra"
 import * as os from "os"
 import * as path from "path"
 import { ModuleManager } from "app-builder-lib/src/node-module-collector/moduleManager"
+import { PnpmNodeModulesCollector } from "app-builder-lib/internal"
+import { TmpDir } from "temp-file"
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -84,6 +86,62 @@ describe("PnpmNodeModulesCollector hoisted mode", () => {
     const lines = Object.fromEntries(configLines.split("\n").map(line => line.split("=").map(s => s.trim())))
     expect(lines["node-linker"]).toBeUndefined()
     expect(lines["node-linker"] === "hoisted").toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Tests: PnpmNodeModulesCollector.isHoisted detects layout from on-disk structure
+// (pnpm 11 stopped echoing node-linker in `config list`, so detection is realpath-based)
+// ---------------------------------------------------------------------------
+
+describe("PnpmNodeModulesCollector.isHoisted (on-disk layout detection)", () => {
+  let root = ""
+  afterEach(async () => {
+    if (root) {
+      await fse.rm(root, { recursive: true, force: true })
+    }
+  })
+
+  const makeCollector = (rootDir: string): any => new (PnpmNodeModulesCollector as any)(rootDir, new TmpDir("test"))
+
+  // Mirror pnpm's isolated store: the real package lives under node_modules/.pnpm/<id>/node_modules,
+  // and the top-level entry is a link (junction on Windows, symlink on POSIX) pointing at it.
+  async function addIsolatedPackage(rootDir: string, name: string, version: string) {
+    const real = path.join(rootDir, "node_modules", ".pnpm", `${name}@${version}`, "node_modules", name)
+    await fse.ensureDir(real)
+    await fse.writeJson(path.join(real, "package.json"), { name, version })
+    await fse.ensureSymlink(real, path.join(rootDir, "node_modules", name), "junction")
+  }
+
+  test("returns false for the isolated .pnpm store (top-level package routes through .pnpm)", async ({ expect }) => {
+    root = await fse.mkdtemp(path.join(os.tmpdir(), "eb-ishoisted-iso-"))
+    await addIsolatedPackage(root, "fs-extra", "11.3.5")
+    expect(await makeCollector(root).isHoisted.value).toBe(false)
+  })
+
+  test("returns true for a hoisted layout (top-level package is a real directory)", async ({ expect }) => {
+    root = await fse.mkdtemp(path.join(os.tmpdir(), "eb-ishoisted-ho-"))
+    const dir = path.join(root, "node_modules", "fs-extra")
+    await fse.ensureDir(dir)
+    await fse.writeJson(path.join(dir, "package.json"), { name: "fs-extra", version: "11.3.5" })
+    expect(await makeCollector(root).isHoisted.value).toBe(true)
+  })
+
+  test("ignores link: packages (which resolve outside .pnpm) and still detects the isolated store", async ({ expect }) => {
+    root = await fse.mkdtemp(path.join(os.tmpdir(), "eb-ishoisted-link-"))
+    // a link: dep resolves to a source dir outside node_modules — never under .pnpm
+    const linkSrc = path.join(root, "packages", "my-linked")
+    await fse.ensureDir(linkSrc)
+    await fse.writeJson(path.join(linkSrc, "package.json"), { name: "my-linked", version: "1.0.0" })
+    await fse.ensureSymlink(linkSrc, path.join(root, "node_modules", "my-linked"), "junction")
+    // a regular dep routes through .pnpm — the scan must keep going past the link to find it
+    await addIsolatedPackage(root, "fs-extra", "11.3.5")
+    expect(await makeCollector(root).isHoisted.value).toBe(false)
+  })
+
+  test("returns false when node_modules is empty or missing (flat default)", async ({ expect }) => {
+    root = await fse.mkdtemp(path.join(os.tmpdir(), "eb-ishoisted-empty-"))
+    expect(await makeCollector(root).isHoisted.value).toBe(false)
   })
 })
 

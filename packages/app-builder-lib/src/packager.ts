@@ -43,24 +43,8 @@ import asyncPool from "tiny-async-pool"
 import { determinePackageManagerEnv, PM } from "./node-module-collector/index.js"
 import _fsExtra from "fs-extra"
 const { chmod, mkdirs, outputFile } = _fsExtra
-
-async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
-  let framework = configuration.framework
-  if (framework != null) {
-    framework = framework.toLowerCase()
-  }
-
-  let nodeVersion = configuration.nodeVersion
-  if (framework === "electron" || framework == null) {
-    return await createElectronFrameworkSupport(configuration, packager)
-  }
-
-  if (nodeVersion == null || nodeVersion === "current") {
-    nodeVersion = process.versions.node
-  }
-
-  throw new InvalidConfigurationError(`Unknown framework: ${framework}`)
-}
+import { setSevenZipPath } from "./toolsets/7zip.js"
+import { getCustomToolsetPath } from "./toolsets/custom.js"
 
 type PackagerEvents = {
   artifactBuildStarted: Hook<ArtifactBuildStarted, void>
@@ -193,13 +177,6 @@ export class Packager {
     options: PackagerOptions,
     readonly cancellationToken = new CancellationToken()
   ) {
-    if ("devMetadata" in options) {
-      throw new InvalidConfigurationError("devMetadata in the options is deprecated, please use config instead")
-    }
-    if ("extraMetadata" in options) {
-      throw new InvalidConfigurationError("extraMetadata in the options is deprecated, please use config.extraMetadata instead")
-    }
-
     const targets = options.targets || new Map<Platform, Map<Arch, Array<string>>>()
     if (options.targets == null) {
       options.targets = targets
@@ -397,7 +374,7 @@ export class Packager {
     this._appInfo = new AppInfo(this, null)
     await this.addPackagerEventHandlers()
 
-    this._framework = await createFrameworkInfo(this.config, this)
+    this._framework = await createElectronFrameworkSupport(this.config, this)
 
     const commonOutDirWithoutPossibleOsMacro = path.resolve(
       this.projectDir,
@@ -478,6 +455,16 @@ export class Packager {
   }
 
   private async doBuild(): Promise<Map<Platform, Map<string, Target>>> {
+    const sevenZipConfig = this.config.toolsets?.sevenZip
+    if (typeof sevenZipConfig === "object" && sevenZipConfig != null) {
+      const toolDir = await getCustomToolsetPath(sevenZipConfig, this.buildResourcesDir)
+      const bin = path.join(toolDir, "bin", process.platform === "win32" ? "7za.exe" : "7za")
+      if (process.platform !== "win32") {
+        await chmod(bin, 0o755)
+      }
+      setSevenZipPath(bin)
+    }
+
     const taskManager = new AsyncTaskManager(this.cancellationToken)
     const syncTargetsIfAny = [] as Target[]
 
@@ -588,12 +575,12 @@ export class Packager {
 
     const frameworkInfo = { version: this.framework.version, useCustomDist: true }
     const config = this.config
-    if (config.nodeGypRebuild === true) {
+    if (config.nativeModules?.nodeGypRebuild === true) {
       await nodeGypRebuild(platform.nodeName, Arch[arch], frameworkInfo)
     }
 
-    if (config.npmRebuild === false) {
-      log.info({ reason: "npmRebuild is set to false" }, "skipped dependencies rebuild")
+    if (config.nativeModules?.npmRebuild === false) {
+      log.info({ reason: "nativeModules.npmRebuild is set to false" }, "skipped dependencies rebuild")
       return
     }
 
@@ -613,8 +600,8 @@ export class Packager {
       }
     }
 
-    if (config.buildDependenciesFromSource === true && platform.nodeName !== process.platform) {
-      log.info({ reason: "platform is different and buildDependenciesFromSource is set to true" }, "skipped dependencies rebuild")
+    if (config.nativeModules?.buildDependenciesFromSource === true && platform.nodeName !== process.platform) {
+      log.info({ reason: "platform is different and nativeModules.buildDependenciesFromSource is set to true" }, "skipped dependencies rebuild")
     } else {
       await installOrRebuild(
         config,

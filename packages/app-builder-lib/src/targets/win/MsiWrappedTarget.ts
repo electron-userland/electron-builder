@@ -1,5 +1,5 @@
 import { Arch, exists, InvalidConfigurationError } from "builder-util"
-import { deepAssign, UUID } from "builder-util-runtime"
+import { UUID } from "builder-util-runtime"
 import * as path from "path"
 import { MsiWrappedOptions } from "../../options/MsiWrappedOptions.js"
 import { TargetConfiguration } from "../../core.js"
@@ -10,7 +10,7 @@ import MsiTarget from "./MsiTarget.js"
 const ELECTRON_MSI_WRAPPED_NS_UUID = UUID.parse("467f7bb2-a83c-442f-b776-394d316e8e53")
 
 export default class MsiWrappedTarget extends MsiTarget {
-  readonly options: MsiWrappedOptions = deepAssign(this.packager.platformSpecificBuildOptions, this.packager.config.msiWrapped)
+  readonly options: MsiWrappedOptions
 
   /** @private */
   private readonly archs: Map<Arch, string> = new Map()
@@ -21,6 +21,7 @@ export default class MsiWrappedTarget extends MsiTarget {
   ) {
     // must be synchronous so it can run after nsis
     super(packager, outDir, "msiWrapped", false)
+    this.options = packager.getOptionsForTarget<MsiWrappedOptions>("msiWrapped")
   }
 
   private get productId(): string {
@@ -84,7 +85,7 @@ export default class MsiWrappedTarget extends MsiTarget {
   private getExeSourcePath(arch: Arch) {
     const packager = this.packager
     // in this case, we want .exe, this way we can wrap the existing package if it exists
-    const artifactName = packager.expandArtifactNamePattern(this.options, "exe", arch, this.installerFilenamePattern, false, this.packager.platformSpecificBuildOptions.defaultArch)
+    const artifactName = packager.expandArtifactNamePattern(this.options, "exe", arch, this.installerFilenamePattern, false, this.packager.platformOptions.defaultArch)
     const artifactPath = path.join(this.outDir, artifactName)
 
     return artifactPath

@@ -18,5 +18,19 @@
     "@electron-builder/test": "0.0.0",
     "@electron-builder/website": "0.0.0"
   },
-  "changesets": []
+  "changesets": [
+    "disable-implicit-publish",
+    "eighty-bottles-tell",
+    "esm-cascade-001-code-quality",
+    "esm-cascade-002-dead-code",
+    "esm-cascade-003-flags",
+    "esm-cascade-004-reorganization",
+    "esm-cascade-005-toolset-overhaul",
+    "esm-cascade-006-native-modules-config",
+    "esm-cascade-007-migrate-schema-cli",
+    "esm-cascade-008-remove-snap-property",
+    "old-geckos-build",
+    "small-times-scream",
+    "tender-moose-knock"
+  ]
 }

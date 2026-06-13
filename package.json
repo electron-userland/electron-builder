@@ -6,7 +6,7 @@
     "//": "do not wrap into single quotes - windows doesn't unwrap arg in this case",
     "compile": "pnpm ci:test:generate && tsc --build tsconfig.build.json --force",
     "compile:watch": "tsc --build tsconfig.build.json --watch",
-    "typecheck": "tsc --build",
+    "typecheck": "tsc --noEmit --build",
     "typecheck:test": "tsc --noEmit -p test/tsconfig.json",
     "lint": "eslint packages test/src --ext .ts,.js",
     "lint-deps": "node ./scripts/checkDeps.js",

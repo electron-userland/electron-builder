@@ -360,7 +360,7 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
             config: {
               electronVersion: ELECTRON_VERSION,
               compression: "store",
-              npmRebuild: false,
+              nativeModules: { npmRebuild: false },
             },
           })
 

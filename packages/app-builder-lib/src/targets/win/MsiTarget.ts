@@ -1,5 +1,5 @@
 import { Arch, asArray, log, walk } from "builder-util"
-import { deepAssign, UUID } from "builder-util-runtime"
+import { UUID } from "builder-util-runtime"
 import { createHash } from "crypto"
 import * as ejs from "ejs"
 import { readFile, writeFile } from "fs/promises"
@@ -13,7 +13,7 @@ import { downloadBuilderToolset } from "../../util/electronGet.js"
 import { getTemplatePath } from "../../util/pathManager.js"
 import { withToolsetLock } from "../../util/toolsetLock.js"
 import { VmManager } from "../../vm/vm.js"
-import { WineVmManager } from "../../vm/win/WineVm.js"
+import { WineVmManager } from "../../vm/WineVm.js"
 import { WinPackager } from "../../winPackager.js"
 import { createStageDir, getWindowsInstallationDirName } from "../targetUtil.js"
 
@@ -22,9 +22,9 @@ const ROOT_DIR_ID = "APPLICATIONFOLDER"
 
 // WiX doesn't support Mono, so, dontnet462 is required to be installed for wine (preinstalled in our bundled wine)
 export default class MsiTarget extends Target {
-  protected readonly vm = process.platform === "win32" ? new VmManager() : new WineVmManager(this.packager.config.toolsets?.wine)
+  protected readonly vm = process.platform === "win32" ? new VmManager() : new WineVmManager(this.packager.config.toolsets?.wine, this.packager.buildResourcesDir)
 
-  readonly options: MsiOptions = deepAssign(this.packager.platformSpecificBuildOptions, this.packager.config.msi)
+  readonly options: MsiOptions = this.packager.getOptionsForTarget<MsiOptions>("msi")
 
   constructor(
     protected readonly packager: WinPackager,
@@ -63,7 +63,7 @@ export default class MsiTarget extends Target {
     const packager = this.packager
     const artifactName = packager.expandArtifactBeautyNamePattern(this.options, "msi", arch)
     const artifactPath = path.join(this.outDir, artifactName)
-    await packager.info.emitArtifactBuildStarted({
+    await packager.emitArtifactBuildStarted({
       targetPresentableName: "MSI",
       file: artifactPath,
       arch,
@@ -84,7 +84,7 @@ export default class MsiTarget extends Target {
     const objectFiles = ["project.wixobj"]
     await writeFile(projectFile, await this.writeManifest(appOutDir, wixArch, commonOptions))
 
-    await packager.info.emitMsiProjectCreated(projectFile)
+    await packager.emitMsiProjectCreated(projectFile)
 
     // noinspection SpellCheckingInspection
     const vendorPath = await downloadBuilderToolset({
@@ -107,7 +107,7 @@ export default class MsiTarget extends Target {
 
     await packager.signIf(artifactPath)
 
-    await packager.info.emitArtifactBuildCompleted({
+    await packager.emitArtifactBuildCompleted({
       file: artifactPath,
       packager,
       arch,

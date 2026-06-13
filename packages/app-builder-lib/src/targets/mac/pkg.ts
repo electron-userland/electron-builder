@@ -1,5 +1,5 @@
 import { Arch, debug, exec, statOrNull, use } from "builder-util"
-import { Nullish } from "builder-util-runtime"
+import { deepAssign, Nullish } from "builder-util-runtime"
 import { readdirSync } from "fs"
 import { readFile, unlink, writeFile } from "fs/promises"
 import * as path from "path"
@@ -47,12 +47,14 @@ export class PkgTarget extends Target {
     readonly outDir: string
   ) {
     super("pkg")
-    this.options = {
-      allowAnywhere: true,
-      allowCurrentUserHome: true,
-      allowRootDirectory: true,
-      ...this.packager.config.pkg,
-    }
+    this.options = deepAssign(
+      {
+        allowAnywhere: true,
+        allowCurrentUserHome: true,
+        allowRootDirectory: true,
+      },
+      packager.getOptionsForTarget<PkgOptions>("pkg")
+    )
   }
 
   async build(appPath: string, arch: Arch): Promise<any> {
@@ -64,7 +66,7 @@ export class PkgTarget extends Target {
     const artifactName = packager.expandArtifactNamePattern(options, "pkg", arch)
     const artifactPath = path.join(this.outDir, artifactName)
 
-    await packager.info.emitArtifactBuildStarted({
+    await packager.emitArtifactBuildStarted({
       targetPresentableName: "pkg",
       file: artifactPath,
       arch,
@@ -82,7 +84,7 @@ export class PkgTarget extends Target {
     const componentPropertyListFile = path.join(appOutDir, `${filterCFBundleIdentifier(appInfo.id)}.plist`)
     const identity = (
       await Promise.all([
-        findIdentity(certType, options.identity || packager.platformSpecificBuildOptions.identity, keychainFile),
+        findIdentity(certType, options.identity, keychainFile),
         this.customizeDistributionConfiguration(distInfoFile, appPath, extraPackages, arch),
         this.buildComponentPackage(appPath, componentPropertyListFile, innerPackageFile),
       ])
@@ -104,7 +106,7 @@ export class PkgTarget extends Target {
     })
     await Promise.all([unlink(innerPackageFile), unlink(distInfoFile)])
     await packager.helper.notarizeIfProvided(artifactPath)
-    await packager.info.emitArtifactBuildCompleted({
+    await packager.emitArtifactBuildCompleted({
       file: artifactPath,
       target: this,
       arch,
@@ -118,7 +120,7 @@ export class PkgTarget extends Target {
     if (extraPkgsDir == null) {
       return null
     }
-    const packagePath = path.join(this.packager.info.buildResourcesDir, extraPkgsDir)
+    const packagePath = path.join(this.packager.buildResourcesDir, extraPkgsDir)
     let files: Array<string>
     try {
       files = readdirSync(packagePath)
@@ -149,12 +151,12 @@ export class PkgTarget extends Target {
     requirements.arch = archToAppleArchitectures(arch)
 
     // Set minimum OS version - productbuild will generate allowed-os-versions in distribution XML
-    const minimumSystemVersion = this.packager.platformSpecificBuildOptions.minimumSystemVersion
+    const minimumSystemVersion = this.packager.platformOptions.minimumSystemVersion
     if (minimumSystemVersion != null) {
       requirements.os = [minimumSystemVersion]
     }
 
-    const requirementsPlistFile = await this.packager.info.tempDirManager.getTempFile({ suffix: ".plist", prefix: "productbuild-requirements" })
+    const requirementsPlistFile = await this.packager.tempDirManager.getTempFile({ suffix: ".plist", prefix: "productbuild-requirements" })
     await savePlistFile(requirementsPlistFile, requirements)
 
     const args = ["--synthesize", "--product", requirementsPlistFile, "--component", appPath]
@@ -261,7 +263,7 @@ export class PkgTarget extends Target {
     const pkgVersion = await resolvePkgBuildVersion(appPath, this.packager.appInfo.version)
     args.push("--version", pkgVersion)
 
-    const scriptsDir = resolveScriptsDir(this.packager.info.buildResourcesDir, options.scripts)
+    const scriptsDir = resolveScriptsDir(this.packager.buildResourcesDir, options.scripts)
     if (scriptsDir && (await statOrNull(scriptsDir))?.isDirectory()) {
       const dirContents = readdirSync(scriptsDir)
       dirContents.forEach(name => {

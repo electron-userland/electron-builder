@@ -63,7 +63,7 @@ export async function doBuild(
         config: Object.assign(
           deepAssign<Configuration>(
             {
-              npmRebuild: true,
+              nativeModules: { npmRebuild: true },
               productName: "TestApp",
               executableName: "TestApp",
               appId: "com.test.app",
@@ -112,7 +112,9 @@ export async function doBuild(
         packed,
         packageManager: PM.PNPM,
         projectDirCreated: async (projectDir, _tmpDir, runtimeEnv) => {
-          await outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted")
+          // Write .npmrc to app/ — installDependencies runs pnpm with cwd=appDir, so pnpm 10
+          // reads this file and uses hoisted layout for the main install.
+          await outputFile(path.join(projectDir, "app", ".npmrc"), "node-linker=hoisted")
 
           await modifyPackageJson(
             projectDir,
@@ -148,7 +150,11 @@ export async function doBuild(
             },
             false
           )
-          await spawn("pnpm", ["install"], { cwd: projectDir, stdio: "inherit", env: runtimeEnv })
+          // Return a post-install hook so the explicit flag runs AFTER installDependencies.
+          // pnpm 11 ignores node-linker from .npmrc; the CLI flag here handles that case.
+          return async () => {
+            await spawn("pnpm", ["install", "--config.node-linker=hoisted"], { cwd: path.join(projectDir, "app"), stdio: "inherit", env: runtimeEnv })
+          }
         },
       }
     )

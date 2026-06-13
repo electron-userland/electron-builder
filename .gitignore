@@ -35,3 +35,7 @@ yalc.lock
 
 # Ignore the generated documentation file (copy-pasted from README.md)
 website/docs/introduction.md
+
+test/vitest-scripts/_vitest-smart-cache.json
+/test-run-logs
+temp

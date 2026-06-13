@@ -1,4 +1,5 @@
-import type { SignOptions } from "@electron/osx-sign/dist/cjs/types"
+import type { SignOptions } from "@electron/osx-sign"
+import { sign as _sign } from "@electron/osx-sign"
 import { copyFile, exec, Fields, InvalidConfigurationError, isEmptyOrSpaces, isPullRequest, log, Logger, retry, TmpDir, unlinkIfExists } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { createHash, randomBytes } from "crypto"
@@ -7,7 +8,6 @@ import { Lazy } from "lazy-val"
 import { homedir, tmpdir } from "os"
 import * as path from "path"
 import { getTempName } from "temp-file"
-import { dynamicImport } from "../../util/dynamicImport.js"
 import { isAutoDiscoveryCodeSignIdentity, isCscForPullRequest, isTravis } from "../../util/flags.js"
 import { importCertificate } from "../codesign.js"
 
@@ -213,8 +213,7 @@ async function importCerts(keychainFile: string, paths: Array<string>, keyPasswo
 }
 
 export async function sign(opts: SignOptions): Promise<void> {
-  const { signAsync } = await dynamicImport<typeof import("@electron/osx-sign")>("@electron/osx-sign")
-  return retry(() => signAsync(opts), {
+  return retry(() => _sign(opts), {
     retries: 3,
     interval: 5000,
     backoff: 5000,
@@ -279,7 +278,7 @@ async function _findIdentity(type: CertType, qualifier?: string | null, keychain
     }
 
     if (line.includes(namePrefix)) {
-      return await parseIdentity(line)
+      return parseIdentity(line)
     }
   }
 
@@ -301,25 +300,25 @@ async function _findIdentity(type: CertType, qualifier?: string | null, keychain
         }
       }
 
-      return await parseIdentity(line)
+      return parseIdentity(line)
     }
   }
   return null
 }
 
-export declare class Identity {
-  readonly name: string
-  readonly hash?: string
-
-  constructor(name: string, hash?: string)
+// @electron/osx-sign v2 no longer exposes its `Identity` class via the package's public exports, so we own this lightweight equivalent.
+export class Identity {
+  constructor(
+    readonly name: string,
+    readonly hash?: string
+  ) {}
 }
 
-async function parseIdentity(line: string): Promise<Identity> {
+function parseIdentity(line: string): Identity {
   const firstQuoteIndex = line.indexOf('"')
   const name = line.substring(firstQuoteIndex + 1, line.lastIndexOf('"'))
   const hash = line.substring(0, firstQuoteIndex - 1)
-  const { Identity: IdentityClass } = await dynamicImport<{ Identity: new (name: string, hash?: string) => Identity }>("@electron/osx-sign/dist/cjs/util-identities")
-  return new IdentityClass(name, hash)
+  return new Identity(name, hash)
 }
 
 export function findIdentity(certType: CertType, qualifier?: string | null, keychain?: string | null): Promise<Identity | null> {

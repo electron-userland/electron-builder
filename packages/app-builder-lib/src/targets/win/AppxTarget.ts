@@ -1,9 +1,9 @@
 import { Arch, asArray, copyOrLinkFile, InvalidConfigurationError, log, walk } from "builder-util"
-import { deepAssign, Nullish } from "builder-util-runtime"
+import { Nullish } from "builder-util-runtime"
 
 import * as path from "path"
 import { AppXOptions } from "../../index.js"
-import { getWindowsKitsBundle, isOldWin6 } from "../../toolsets/windows.js"
+import { getWindowsKitsBundle, isOldWin6 } from "../../toolsets/winCodeSign.js"
 import { Target } from "../../core.js"
 import { getTemplatePath } from "../../util/pathManager.js"
 import { VmManager } from "../../vm/vm.js"
@@ -50,7 +50,7 @@ const restrictedApplicationIdValues = [
 const DEFAULT_RESOURCE_LANG = "en-US"
 
 export default class AppXTarget extends Target {
-  readonly options: AppXOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, this.packager.config.appx)
+  readonly options: AppXOptions = this.packager.getOptionsForTarget<AppXOptions>("appx")
 
   isAsyncSupported = false
 
@@ -70,13 +70,13 @@ export default class AppXTarget extends Target {
     const packager = this.packager
     const artifactName = packager.expandArtifactBeautyNamePattern(this.options, "appx", arch)
     const artifactPath = path.join(this.outDir, artifactName)
-    await packager.info.emitArtifactBuildStarted({
+    await packager.emitArtifactBuildStarted({
       targetPresentableName: "AppX",
       file: artifactPath,
       arch,
     })
 
-    const vendorPath = await getWindowsKitsBundle({ winCodeSign: this.packager.config.toolsets?.winCodeSign, arch: arch })
+    const vendorPath = await getWindowsKitsBundle({ winCodeSign: this.packager.config.toolsets?.winCodeSign, arch: arch, resourcesDir: this.packager.buildResourcesDir })
     const vm = await packager.vm.value
 
     const stageDir = await createStageDir(this, packager, arch)
@@ -107,7 +107,7 @@ export default class AppXTarget extends Target {
     const manifestFile = stageDir.getTempFile("AppxManifest.xml")
     await this.writeManifest(manifestFile, arch, await this.computePublisherName(), userAssets)
 
-    await packager.info.emitAppxManifestCreated(manifestFile)
+    await packager.emitAppxManifestCreated(manifestFile)
     mappingList.push(assetInfo.mappings)
     mappingList.push([`"${vm.toVmFile(manifestFile)}" "AppxManifest.xml"`])
 
@@ -155,7 +155,7 @@ export default class AppXTarget extends Target {
 
       await stageDir.cleanup()
 
-      await packager.info.emitArtifactBuildCompleted({
+      await packager.emitArtifactBuildCompleted({
         file: artifactPath,
         packager,
         arch,
@@ -358,13 +358,13 @@ export default class AppXTarget extends Target {
   }
 
   private async getExtensions(executable: string, displayName: string): Promise<string> {
-    const uriSchemes = asArray(this.packager.config.protocols).concat(asArray(this.packager.platformSpecificBuildOptions.protocols))
+    const uriSchemes = asArray(this.packager.config.protocols).concat(asArray(this.packager.platformOptions.protocols))
 
-    const fileAssociations = asArray(this.packager.config.fileAssociations).concat(asArray(this.packager.platformSpecificBuildOptions.fileAssociations))
+    const fileAssociations = asArray(this.packager.config.fileAssociations).concat(asArray(this.packager.platformOptions.fileAssociations))
 
     let isAddAutoLaunchExtension = this.options.addAutoLaunchExtension
     if (isAddAutoLaunchExtension === undefined) {
-      const deps = this.packager.info.metadata.dependencies
+      const deps = this.packager.metadata.dependencies
       isAddAutoLaunchExtension = deps != null && deps["electron-winstore-auto-launch"] != null
     }
 
@@ -406,7 +406,7 @@ export default class AppXTarget extends Target {
     }
 
     if (this.options.customExtensionsPath !== undefined) {
-      const extensionsPath = path.resolve(this.packager.info.appDir, this.options.customExtensionsPath)
+      const extensionsPath = path.resolve(this.packager.appDir, this.options.customExtensionsPath)
       extensions += await readFile(extensionsPath, "utf8")
     }
 

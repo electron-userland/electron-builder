@@ -1,5 +1,5 @@
 import { Arch, asArray, exec, getArchSuffix, log, serializeToYaml, stripSensitiveEnvVars, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
-import { deepAssign, Nullish } from "builder-util-runtime"
+import { Nullish } from "builder-util-runtime"
 
 import { objectToArgs } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
@@ -12,7 +12,8 @@ import { LinuxPackager } from "../../linuxPackager.js"
 import { DebOptions, LinuxTargetSpecificOptions } from "../../options/linuxOptions.js"
 import { ArtifactCreated } from "../../packagerApi.js"
 import { getAppUpdatePublishConfiguration } from "../../publish/PublishManager.js"
-import { getFpmPath, getLinuxToolsPath } from "../../toolsets/linux.js"
+import { getFpmPath } from "../../toolsets/fpm.js"
+import { getLinuxToolsPath } from "../../toolsets/linuxToolsMac.js"
 import { computeEnv } from "../../util/bundledTool.js"
 import { isFpmDebug } from "../../util/flags.js"
 import { hashFile } from "../../util/hash.js"
@@ -35,7 +36,7 @@ interface ScriptFiles {
 }
 
 export default class FpmTarget extends Target {
-  readonly options: LinuxTargetSpecificOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, (this.packager.config as any)[this.name])
+  readonly options: LinuxTargetSpecificOptions = this.packager.getOptionsForTarget<LinuxTargetSpecificOptions>(this.name)
 
   private readonly scriptFiles: Promise<ScriptFiles>
 
@@ -76,7 +77,7 @@ export default class FpmTarget extends Target {
       executable: bashSingleQuoteEscape(packager.executableName),
       sanitizedProductName: bashSingleQuoteEscape(packager.appInfo.sanitizedProductName),
       productFilename: packager.appInfo.productFilename,
-      ...packager.platformSpecificBuildOptions,
+      ...packager.platformOptions,
     }
 
     // The AppArmor profile template uses these values inside double-quoted
@@ -85,7 +86,7 @@ export default class FpmTarget extends Target {
       executable: packager.executableName,
       sanitizedProductName: packager.appInfo.sanitizedProductName,
       productFilename: packager.appInfo.productFilename,
-      ...packager.platformSpecificBuildOptions,
+      ...packager.platformOptions,
     }
 
     function getResource(value: string | Nullish, defaultFile: string) {
@@ -96,9 +97,9 @@ export default class FpmTarget extends Target {
     }
 
     return {
-      afterInstall: await writeConfigFile(packager.info.tempDirManager, getResource(this.options.afterInstall, "after-install.tpl"), bashTemplateOptions),
-      afterRemove: await writeConfigFile(packager.info.tempDirManager, getResource(this.options.afterRemove, "after-remove.tpl"), bashTemplateOptions),
-      appArmor: await writeConfigFile(packager.info.tempDirManager, getResource(this.options.appArmorProfile, "apparmor-profile.tpl"), appArmorTemplateOptions),
+      afterInstall: await writeConfigFile(packager.tempDirManager, getResource(this.options.afterInstall, "after-install.tpl"), bashTemplateOptions),
+      afterRemove: await writeConfigFile(packager.tempDirManager, getResource(this.options.afterRemove, "after-remove.tpl"), bashTemplateOptions),
+      appArmor: await writeConfigFile(packager.tempDirManager, getResource(this.options.appArmorProfile, "apparmor-profile.tpl"), appArmorTemplateOptions),
     }
   }
 
@@ -117,7 +118,7 @@ export default class FpmTarget extends Target {
     const options = this.options
     let author = options.maintainer
     if (author == null) {
-      const a = packager.info.metadata.author
+      const a = packager.metadata.author
       if (a == null || a.email == null) {
         errors.push(errorMessages.authorEmailIsMissed)
       } else {
@@ -155,7 +156,7 @@ export default class FpmTarget extends Target {
     const artifactName = packager.expandArtifactNamePattern(this.options, target, arch, nameFormat, !isUseArchIfX64)
     const artifactPath = path.join(this.outDir, artifactName)
 
-    await packager.info.emitArtifactBuildStarted({
+    await packager.emitArtifactBuildStarted({
       targetPresentableName: target,
       file: artifactPath,
       arch,
@@ -250,7 +251,7 @@ export default class FpmTarget extends Target {
       }
     }
 
-    use(packager.info.metadata.license, it => args.push("--license", it))
+    use(packager.metadata.license, it => args.push("--license", it))
     use(appInfo.buildNumber, it =>
       args.push(
         "--iteration",
@@ -288,7 +289,7 @@ export default class FpmTarget extends Target {
     // rpmbuild wants directory rpm with some default config files. Even if we can use dylibbundler, path to such config files are not changed (we need to replace in the binary)
     // so, for now, brew install rpm is still required.
     if (target !== "rpm" && (await isMacOsSierra())) {
-      const linuxToolsPath = await getLinuxToolsPath()
+      const linuxToolsPath = await getLinuxToolsPath(packager.config.toolsets?.linuxToolsMac, packager.buildResourcesDir)
       Object.assign(env, {
         PATH: computeEnv(process.env.PATH, [path.join(linuxToolsPath, "bin")]),
         DYLD_LIBRARY_PATH: computeEnv(process.env.DYLD_LIBRARY_PATH, [path.join(linuxToolsPath, "lib")]),
@@ -314,7 +315,7 @@ export default class FpmTarget extends Target {
         },
       }
     }
-    await packager.info.emitArtifactBuildCompleted(info)
+    await packager.emitArtifactBuildCompleted(info)
   }
 
   private async executeFpm(target: string, fpmConfiguration: FpmConfiguration, env: any) {
@@ -335,7 +336,7 @@ export default class FpmTarget extends Target {
     fpmArgs.push(...this.configureTargetSpecificOptions(target, fpmConfiguration.compression ?? defaultCompression))
     fpmArgs.push(...fpmConfiguration.args)
 
-    const fpmPath = await getFpmPath()
+    const fpmPath = await getFpmPath(this.packager.config.toolsets?.fpm, this.packager.buildResourcesDir)
 
     await exec(fpmPath, fpmArgs, { env }).catch(e => {
       if (e.message.includes("Need executable 'rpmbuild' to convert dir to rpm")) {
@@ -436,10 +437,7 @@ async function writeConfigFile(tmpDir: TmpDir, templatePath: string, options: an
       throw new Error(`Macro ${p1} is not defined`)
     }
   }
-  const config = (await readFile(templatePath, "utf8")).replace(/\${([a-zA-Z]+)}/g, replacer).replace(/<%=([a-zA-Z]+)%>/g, (match, p1) => {
-    log.warn("<%= varName %> is deprecated, please use ${varName} instead")
-    return replacer(match, p1.trim())
-  })
+  const config = (await readFile(templatePath, "utf8")).replace(/\${([a-zA-Z]+)}/g, replacer)
 
   const outputPath = await tmpDir.getTempFile({ suffix: path.basename(templatePath, ".tpl") })
   await outputFile(outputPath, config)

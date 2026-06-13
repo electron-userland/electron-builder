@@ -123,10 +123,9 @@ export async function transformFiles(transformer: FileTransformer, fileSet: Reso
 
 export async function computeFileSets(matchers: Array<FileMatcher>, transformer: FileTransformer | null, platformPackager: PlatformPackager<any>): Promise<Array<ResolvedFileSet>> {
   const fileSets: Array<ResolvedFileSet> = []
-  const packager = platformPackager.info
 
   for (const matcher of matchers) {
-    const fileWalker = new AppFileWalker(matcher, packager)
+    const fileWalker = new AppFileWalker(matcher, platformPackager)
 
     const fromStat = await statOrNull(matcher.from)
     if (fromStat == null) {
@@ -176,7 +175,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   const collectNodeModules = async (dep: NodeModuleInfo, destination: string) => {
     const source = dep.dir
     const matcher = new FileMatcher(source, destination, mainMatcher.macroExpander, mainMatcher.patterns)
-    const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
+    const copier = new NodeModuleCopyHelper(matcher, platformPackager)
     const files = await copier.collectNodeModules(dep, nodeModuleExcludedExts, path.relative(mainMatcher.to, destination))
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
 
@@ -197,18 +196,17 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
 }
 
 async function collectNodeModulesWithLogging(platformPackager: PlatformPackager<any>) {
-  const packager = platformPackager.info
-  const { tempDirManager, appDir, projectDir } = packager
+  const { tempDirManager, appDir, projectDir } = platformPackager
 
   let deps: { nodeModules: NodeModuleInfo[]; logSummary: ModuleManager["logSummary"] } | undefined = undefined
 
-  const searchDirectories = Array.from(new Set([appDir, projectDir, await packager.getWorkspaceRoot()])).filter((it): it is string => isEmptyOrSpaces(it) === false)
-  const pmApproaches = [await packager.getPackageManager(), PM.TRAVERSAL]
+  const searchDirectories = Array.from(new Set([appDir, projectDir, await platformPackager.getWorkspaceRoot()])).filter((it): it is string => isEmptyOrSpaces(it) === false)
+  const pmApproaches = [await platformPackager.getPackageManager(), PM.TRAVERSAL]
   for (const pm of pmApproaches) {
     for (const dir of searchDirectories) {
       log.info({ pm, searchDir: dir }, "searching for node modules")
       const collector = getCollectorByPackageManager(pm, dir, tempDirManager)
-      deps = await collector.getNodeModules({ packageName: packager.nodePackageName })
+      deps = await collector.getNodeModules({ packageName: platformPackager.nodePackageName })
       if (deps.nodeModules.length > 0) {
         break
       }

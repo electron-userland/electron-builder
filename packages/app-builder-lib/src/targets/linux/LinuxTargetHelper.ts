@@ -102,17 +102,14 @@ export class LinuxTargetHelper {
   }
 
   getSnapCore(): SnapCore<any> {
-    const { snapcraft, snap: legacySnap } = this.packager.config
-    if (snapcraft != null && legacySnap != null) {
-      log.warn("Both `snapcraft` and `snap` configurations are present. `snapcraft` takes precedence; please remove the `snap` key to silence this warning.")
-    }
+    const { snapcraft } = this.packager.config
 
     // Merge linux-level options (category, description, mimeTypes, etc.) as the base so they
     // propagate into the generated snapcraft.yaml and .desktop file without requiring users to
     // duplicate them under core24/core18/etc. Per-core options always win for conflicts.
     // linux.compression is a CompressionLevel ("store"/"normal"/"maximum"); snap compression is an
     // algorithm ("xz"/"lzo"). Map the level to the nearest algorithm; per-core options override.
-    const { compression: linuxCompression, ...linuxOptions } = this.packager.platformSpecificBuildOptions
+    const { compression: linuxCompression, ...linuxOptions } = this.packager.platformOptions
     const snapLinuxOptions = { ...linuxOptions, compression: mapLinuxCompressionToSnap(linuxCompression) }
 
     if (snapcraft != null) {
@@ -128,7 +125,7 @@ export class LinuxTargetHelper {
             }
             log.warn(null, "electron 4 and higher is highly recommended for Snap with core18/core20/core22")
           }
-          return new SnapCoreLegacy(this.packager, this, deepAssign({}, snapLinuxOptions, { base: core, ...options }))
+          return new SnapCoreLegacy(this.packager, this, deepAssign({ base: core }, snapLinuxOptions, options))
         case "core24":
           if (!this.isElectronVersionGreaterOrEqualThan("28.0.0")) {
             if (!this.isElectronVersionGreaterOrEqualThan("25.0.0")) {
@@ -142,17 +139,7 @@ export class LinuxTargetHelper {
           return new SnapCoreCustom(this.packager, this, snapcraft.custom || {})
       }
     }
-
-    if (legacySnap != null) {
-      log.warn(
-        {
-          reason: "`snap` configuration is deprecated",
-          docs: "https://www.electron.build/snapcraft",
-        },
-        "please consider migrating `snap` configuration to `snapcraft.<core>` and remove `snap` configuration"
-      )
-    }
-    return new SnapCoreLegacy(this.packager, this, deepAssign({}, snapLinuxOptions, legacySnap ?? {}))
+    return new SnapCoreLegacy(this.packager, this, deepAssign({ base: "core20" as const }, snapLinuxOptions, {}))
   }
 
   isElectronVersionGreaterOrEqualThan(version: string, fallback?: string): boolean {
@@ -193,9 +180,10 @@ export class LinuxTargetHelper {
   // must be name without spaces and other special characters, but not product name used
   private async computeDesktopIcons(): Promise<Array<IconInfo>> {
     const packager = this.packager
-    const { platformSpecificBuildOptions, config } = packager
+    const { config } = packager
+    const platformOptions = packager.platformOptions
 
-    const sources = [platformSpecificBuildOptions.icon, config.mac?.icon ?? config.icon].filter(str => !!str) as string[]
+    const sources = [platformOptions.icon, config.mac?.icon ?? config.icon].filter(str => !!str) as string[]
 
     // If no explicit sources are defined, fallback to buildResources directory, then default framework icon
     let fallbackSources = [...asArray(packager.getDefaultFrameworkIcon())]
@@ -239,10 +227,10 @@ export class LinuxTargetHelper {
   }
 
   getDesktopFileName(fallback: string = this.packager.executableName): string {
-    if (!this.packager.platformSpecificBuildOptions.syncDesktopName) {
+    if (!this.packager.platformOptions.syncDesktopName) {
       return fallback
     }
-    const trimmedDesktopName = this.packager.info.metadata.desktopName?.trim()
+    const trimmedDesktopName = this.packager.metadata.desktopName?.trim()
     if (isEmptyOrSpaces(trimmedDesktopName)) {
       return fallback
     }
@@ -289,7 +277,7 @@ export class LinuxTargetHelper {
     // https://github.com/electron-userland/electron-builder/issues/9103
     // Electron derives app_id from desktopName in package.json; StartupWMClass must match.
     // https://github.com/electron/electron/blob/9a7b73b5334f1d72c08e2d5e94106706ed751186/lib/browser/init.ts#L128-L133
-    const trimmedDesktopName = packager.info.metadata.desktopName?.trim()
+    const trimmedDesktopName = packager.metadata.desktopName?.trim()
     if (isEmptyOrSpaces(trimmedDesktopName)) {
       log.warn(
         {
@@ -336,7 +324,7 @@ export class LinuxTargetHelper {
       }
     }
 
-    for (const protocol of asArray(packager.config.protocols).concat(asArray(packager.platformSpecificBuildOptions.protocols))) {
+    for (const protocol of asArray(packager.config.protocols).concat(asArray(packager.platformOptions.protocols))) {
       for (const scheme of asArray(protocol.schemes)) {
         mimeTypes.push(`x-scheme-handler/${scheme}`)
       }

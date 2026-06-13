@@ -1,10 +1,10 @@
 import { Arch, log } from "builder-util"
-import { deepAssign, SnapStoreOptions } from "builder-util-runtime"
+import { SnapStoreOptions } from "builder-util-runtime"
 import * as path from "path"
 import { Configuration } from "../../../configuration.js"
 import { Publish, Target } from "../../../core.js"
 import { LinuxPackager } from "../../../linuxPackager.js"
-import { SnapcraftOptions, SnapOptions } from "../../../options/SnapOptions.js"
+import { SnapcraftOptions } from "../../../options/SnapOptions.js"
 import { LinuxTargetHelper } from "../LinuxTargetHelper.js"
 import { createStageDirPath } from "../../targetUtil.js"
 import { SnapcraftYAML } from "./snapcraft.js"
@@ -24,9 +24,9 @@ export abstract class SnapCore<T> {
   abstract buildSnap(params: { snap: SnapcraftYAML; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<void>
 }
 
-/** Snap build target — merges `snapcraft` (preferred) and legacy `snap` config, then delegates to the appropriate `SnapCore` strategy. */
+/** Snap build target — reads `snapcraft` config and delegates to the appropriate `SnapCore` strategy. */
 export default class SnapTarget extends Target {
-  readonly options: SnapcraftOptions | SnapOptions
+  readonly options: SnapcraftOptions
 
   constructor(
     name: string,
@@ -36,12 +36,7 @@ export default class SnapTarget extends Target {
   ) {
     super(name)
 
-    const {
-      config: { snapcraft, snap },
-      platformSpecificBuildOptions,
-    } = packager
-
-    this.options = deepAssign({}, platformSpecificBuildOptions, snapcraft ?? snap ?? {})
+    this.options = packager.getOptionsForTarget<SnapcraftOptions>("snapcraft")
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
@@ -50,7 +45,7 @@ export default class SnapTarget extends Target {
     const artifactName = packager.expandArtifactNamePattern(this.options, "snap", arch, "${name}_${version}_${arch}.${ext}", false)
     const artifactPath = path.join(this.outDir, artifactName)
 
-    await packager.info.emitArtifactBuildStarted({
+    await packager.emitArtifactBuildStarted({
       targetPresentableName: "snap",
       file: artifactPath,
       arch,
@@ -71,7 +66,7 @@ export default class SnapTarget extends Target {
 
     const publishConfig = this.findSnapPublishConfig(packager.config)
 
-    await packager.info.emitArtifactBuildCompleted({
+    await packager.emitArtifactBuildCompleted({
       file: artifactPath,
       safeArtifactName: packager.computeSafeArtifactName(artifactName, "snap", arch, false),
       target: this,
@@ -88,7 +83,7 @@ export default class SnapTarget extends Target {
       return fallback
     }
 
-    const snapConfig = config.snapcraft ?? config.snap
+    const snapConfig = config.snapcraft
     if (snapConfig?.publish) {
       return this.findSnapPublishConfigInPublishNode(snapConfig.publish)
     }
