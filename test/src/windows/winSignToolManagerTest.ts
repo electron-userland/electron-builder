@@ -718,7 +718,7 @@ describe("WindowsSignAzureManager signFileWithDlib arch selection", () => {
   function makeAzureManager(execSpy: ReturnType<typeof vi.fn>): WindowsSignAzureManager {
     const manager = Object.create(WindowsSignAzureManager.prototype) as WindowsSignAzureManager
     ;(manager as any).packager = {
-      config: { toolsets: { winCodeSign: "1.1.0" } },
+      config: { toolsets: { winCodeSign: "1.2.0" } },
       getTempFile: (ext: string) => Promise.resolve(path.join(tmpDir, `metadata${ext}`)),
     }
     ;(manager as any).signing = {
