@@ -23,12 +23,15 @@ site/
 
 coverage
 test/src/generated/
-/test/test-report.xml
+test/test-report.xml
 _vitest-smart-cache.json
+test/vitest-scripts/_vitest-smart-cache.json
+/test-run-logs
 
 /.yalc/
 yalc.lock
 
 .claude
-test/vitest-scripts/_vitest-smart-cache.json
-/test-run-logs
+
+# Ignore the generated documentation file (copy-pasted from README.md)
+website/docs/introduction.md
