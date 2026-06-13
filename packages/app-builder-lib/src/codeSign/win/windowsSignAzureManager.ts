@@ -89,6 +89,18 @@ export class WindowsSignAzureManager implements SignManager {
     const vm = await this.packager.vm.value
     const ps = await vm.powershellCommand.value
 
+    // Validate additionalMetadata keys before embedding as PS parameter names.
+    // Keys flow directly into `-${field} '...'` in the command string; a key
+    // containing semicolons or quotes would be PowerShell injection.
+    const PS_PARAM_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/
+    for (const key of Object.keys(signing.additionalMetadata ?? {})) {
+      if (!PS_PARAM_NAME.test(key)) {
+        throw new Error(
+          `additionalMetadata key "${key}" is not a valid PowerShell parameter name. Keys must match /^[A-Za-z_][A-Za-z0-9_]*$/ (e.g. "ExcludeCredentials", "CorrelationId").`
+        )
+      }
+    }
+
     const params: Record<string, string | undefined> = {
       Endpoint: signing.endpoint,
       CertificateProfileName: signing.certificateProfileName,
@@ -118,7 +130,9 @@ export class WindowsSignAzureManager implements SignManager {
     // Windows-on-ARM emulation natively, and under x64 Wine on macOS/Linux.
     const arch = process.arch === "ia32" ? Arch.ia32 : Arch.x64
     const { kit: kitDir } = await getWindowsKitsBundle({ winCodeSign, arch, resourcesDir: this.packager.buildResourcesDir })
-    const safeKitDir = sanitizeDirPath(kitDir)
+    // For custom toolsets the kit lives within buildResourcesDir; enforce that constraint.
+    // For versioned/cached bundles no base constraint is needed (paths are in the tool cache).
+    const safeKitDir = sanitizeDirPath(kitDir, typeof winCodeSign === "object" ? this.packager.buildResourcesDir : undefined)
     const signtoolPath = path.join(safeKitDir, "signtool.exe")
 
     let dlibPath: string

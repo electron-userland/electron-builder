@@ -99,7 +99,7 @@ export async function getSignToolPath(winCodeSign: ToolsetConfig["winCodeSign"] 
 
 export async function getWindowsKitsBundle({ winCodeSign, arch, resourcesDir = "" }: { winCodeSign: ToolsetConfig["winCodeSign"] | Nullish; arch: Arch; resourcesDir?: string }) {
   if (typeof winCodeSign === "object" && winCodeSign != null) {
-    const vendorPath = sanitizeDirPath(await getCustomToolsetPath(winCodeSign, resourcesDir))
+    const vendorPath = sanitizeDirPath(await getCustomToolsetPath(winCodeSign, resourcesDir), resourcesDir || undefined)
     return { kit: path.join(vendorPath, arch === Arch.ia32 ? "x86" : Arch[arch]), appxAssets: vendorPath }
   }
 
@@ -139,7 +139,7 @@ async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] |
   }
 
   if (typeof winCodeSign === "object" && winCodeSign != null) {
-    const vendorPath = sanitizeDirPath(await getCustomToolsetPath(winCodeSign, resourcesDir))
+    const vendorPath = sanitizeDirPath(await getCustomToolsetPath(winCodeSign, resourcesDir), resourcesDir || undefined)
     return { path: path.join(vendorPath, "osslsigncode") }
   }
 
@@ -198,7 +198,7 @@ export async function getRceditBundle(winCodeSign: ToolsetConfig["winCodeSign"] 
   const x86 = "rcedit-x86.exe"
   const x64 = "rcedit-x64.exe"
   if (typeof winCodeSign === "object" && winCodeSign != null) {
-    const vendorPath = sanitizeDirPath(await getCustomToolsetPath(winCodeSign, resourcesDir))
+    const vendorPath = sanitizeDirPath(await getCustomToolsetPath(winCodeSign, resourcesDir), resourcesDir || undefined)
     return { x86: path.join(vendorPath, x86), x64: path.join(vendorPath, x64) }
   }
   if (winCodeSign === "0.0.0" || winCodeSign == null) {
