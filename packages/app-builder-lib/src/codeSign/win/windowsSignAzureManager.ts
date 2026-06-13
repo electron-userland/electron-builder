@@ -1,4 +1,4 @@
-import { Arch, log } from "builder-util"
+import { Arch, log, sanitizeDirPath } from "builder-util"
 import { asArray, MemoLazy } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -53,9 +53,11 @@ export class WindowsSignAzureManager implements SignManager {
       return
     }
 
+    const { winCodeSign: wcs = null } = this.packager.config.toolsets ?? {}
+    const reason = typeof wcs === "string" ? `toolsets.winCodeSign "${wcs}" is below the minimum "${minimumWinCodeSignVersionForDlib}"` : `toolsets.winCodeSign is not set`
     log.info(
-      { guidance: `set toolsets.winCodeSign to at least "${minimumWinCodeSignVersionForDlib}" for faster signtool /dlib integration` },
-      `Azure Trusted Signing: falling back to legacy PowerShell (Invoke-TrustedSigning).`
+      { reason, guidance: `set toolsets.winCodeSign to "${minimumWinCodeSignVersionForDlib}" to use the faster signtool /dlib integration` },
+      `Azure Trusted Signing: falling back to legacy PowerShell (Invoke-TrustedSigning)`
     )
 
     const vm = await this.packager.vm.value
@@ -116,7 +118,8 @@ export class WindowsSignAzureManager implements SignManager {
     // Windows-on-ARM emulation natively, and under x64 Wine on macOS/Linux.
     const arch = process.arch === "ia32" ? Arch.ia32 : Arch.x64
     const { kit: kitDir } = await getWindowsKitsBundle({ winCodeSign, arch, resourcesDir: this.packager.buildResourcesDir })
-    const signtoolPath = path.resolve(kitDir, "signtool.exe")
+    const safeKitDir = sanitizeDirPath(kitDir)
+    const signtoolPath = path.join(safeKitDir, "signtool.exe")
 
     let dlibPath: string
     let dotnetRootPath: string | null = null
@@ -125,12 +128,12 @@ export class WindowsSignAzureManager implements SignManager {
       // 1.3.0+: dlib ships in a separate ats-bundle with its full native dependency closure
       // (Ijwhost.dll, VC++ runtime, etc.). The .NET 8 framework is in a separate dotnet-runtime
       // bundle; DOTNET_ROOT tells Ijwhost where to find hostfxr.dll → shared framework.
-      const atsBundleDir = await getAtsBundleDir(winCodeSign)
-      dlibPath = path.resolve(atsBundleDir, arch === Arch.ia32 ? "x86" : "x64", "Azure.CodeSigning.Dlib.dll")
-      dotnetRootPath = await getDotnetRuntimeDir(winCodeSign)
+      const safeAtsDir = sanitizeDirPath(await getAtsBundleDir(winCodeSign))
+      dlibPath = path.join(safeAtsDir, arch === Arch.ia32 ? "x86" : "x64", "Azure.CodeSigning.Dlib.dll")
+      dotnetRootPath = sanitizeDirPath(await getDotnetRuntimeDir(winCodeSign))
     } else {
       // Custom toolset: user provides the dlib alongside signtool in the kit dir.
-      dlibPath = path.resolve(kitDir, "Azure.CodeSigning.Dlib.dll")
+      dlibPath = path.join(safeKitDir, "Azure.CodeSigning.Dlib.dll")
     }
 
     const metadataPath = await this.packager.getTempFile(".json")

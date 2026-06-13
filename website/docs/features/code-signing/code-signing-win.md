@@ -264,7 +264,7 @@ Then configure `win.sign` and pin the `winCodeSign` toolset (required for the `/
     }
   },
   "toolsets": {
-    "winCodeSign": "1.2.0"
+    "winCodeSign": "1.3.0"
   }
 }
 ```
@@ -299,12 +299,12 @@ Use `additionalMetadata` to pass extra fields verbatim into `metadata.json`. Thi
 
 ### Legacy PowerShell fallback
 
-If `toolsets.winCodeSign` is unset or below `"1.2.0"`, electron-builder automatically falls back to the v26 PowerShell `Invoke-TrustedSigning` integration and emits a deprecation warning. This fallback will be removed in a future release. To upgrade, add `"toolsets": { "winCodeSign": "1.2.0" }` to your config.
+If `toolsets.winCodeSign` is unset or below `"1.3.0"`, electron-builder automatically falls back to the v26 PowerShell `Invoke-TrustedSigning` integration and emits a deprecation warning. This fallback will be removed in a future release. To upgrade, add `"toolsets": { "winCodeSign": "1.3.0" }` to your config.
 
 ### Caveats
 
-- The `Azure.CodeSigning.Dlib.dll` ships in the `winCodeSign` bundle starting from `1.2.0`. Setting `toolsets.winCodeSign: "1.2.0"` (or higher) is required for the new integration.
-- The DLib is a framework-dependent .NET assembly: the **.NET 8 runtime (or later)** must be installed on the signing machine. On macOS/Linux, the *Windows* .NET runtime must be installed inside the Wine prefix (wine-mono is not sufficient).
+- The `ats-bundle` (containing `Azure.CodeSigning.Dlib.dll` and its native dependency closure) and the `dotnet-runtime` bundle ship separately starting from `winCodeSign "1.3.0"`. Setting `toolsets.winCodeSign: "1.3.0"` (or higher) is required for the new integration; they are downloaded automatically on first use.
+- The DLib is a mixed-mode .NET 8 assembly: electron-builder automatically downloads and provides the **.NET 8 runtime** via the separate `dotnet-runtime` bundle — no manual runtime installation is required.
 - The DLib authenticates using the Azure environment variables at signing time — credentials are not embedded in config.
 - Network connectivity to the Azure endpoint is required during the build. Rate limits or outages will fail the build.
 
