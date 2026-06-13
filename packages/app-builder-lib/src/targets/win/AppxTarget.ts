@@ -195,7 +195,7 @@ export default class AppXTarget extends Target {
   private async computePublisherName() {
     const signtoolManager = await this.packager.signingManager.value
     // https://github.com/electron-userland/electron-builder/issues/2108#issuecomment-333200711
-    return signtoolManager.computePublisherName(this, this.options.publisher ?? "CN=ms")
+    return signtoolManager.computePublisherName(this, this.options.publisher ?? null)
   }
 
   private async writeManifest(outFile: string, arch: Arch, publisher: string, userAssets: Array<string>) {

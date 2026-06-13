@@ -12,7 +12,7 @@ import { WindowsSignOptions } from "./windowsCodeSign.js"
 export interface SignManager {
   readonly computedPublisherName: Lazy<Array<string> | null>
   readonly cscInfo: MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>
-  computePublisherName(target: Target, publisherName: string): Promise<string>
+  computePublisherName(target: Target, publisherName: string | null): Promise<string>
   initialize(): Promise<void>
   signFile(options: WindowsSignOptions): Promise<boolean>
 }

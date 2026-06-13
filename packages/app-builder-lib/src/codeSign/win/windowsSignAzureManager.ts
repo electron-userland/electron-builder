@@ -71,8 +71,12 @@ export class WindowsSignAzureManager implements SignManager {
     await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", "Install-Module -Name TrustedSigning -MinimumVersion 0.5.0 -Force -Repository PSGallery -Scope CurrentUser"])
   }
 
-  computePublisherName(_target: Target, publisherName: string): Promise<string> {
-    return Promise.resolve(this.signing.publisherName ?? publisherName)
+  computePublisherName(_target: Target, publisherName: string | null): Promise<string> {
+    const result = this.signing.publisherName ?? publisherName
+    if (result == null) {
+      throw new Error("Azure Trusted Signing requires 'publisherName' in win.sign config (no local certificate to derive it from)")
+    }
+    return Promise.resolve(result)
   }
 
   readonly cscInfo = new MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>(

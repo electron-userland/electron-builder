@@ -751,7 +751,7 @@ describe("WindowsSignAzureManager signFileWithDlib arch selection", () => {
     const { signtool, dlib, dotnetRoot } = await signedInfo("arm64")
     expect(signtool).toBe(path.resolve("/mock-kits", "x64", "signtool.exe"))
     expect(dlib).toBe(path.resolve("/mock-ats-bundle", "x64", "Azure.CodeSigning.Dlib.dll"))
-    expect(dotnetRoot).toBe("/mock-dotnet-runtime")
+    expect(dotnetRoot).toBe(path.resolve("/mock-dotnet-runtime"))
     expect(vi.mocked(getWindowsKitsBundle)).toHaveBeenCalledWith(expect.objectContaining({ arch: Arch.x64 }))
   })
 
@@ -759,19 +759,19 @@ describe("WindowsSignAzureManager signFileWithDlib arch selection", () => {
     const { signtool, dlib, dotnetRoot } = await signedInfo("x64")
     expect(signtool).toBe(path.resolve("/mock-kits", "x64", "signtool.exe"))
     expect(dlib).toBe(path.resolve("/mock-ats-bundle", "x64", "Azure.CodeSigning.Dlib.dll"))
-    expect(dotnetRoot).toBe("/mock-dotnet-runtime")
+    expect(dotnetRoot).toBe(path.resolve("/mock-dotnet-runtime"))
   })
 
   test("ia32 host uses the x86 ats-bundle", async () => {
     const { signtool, dlib, dotnetRoot } = await signedInfo("ia32")
     expect(signtool).toBe(path.resolve("/mock-kits", "x86", "signtool.exe"))
     expect(dlib).toBe(path.resolve("/mock-ats-bundle", "x86", "Azure.CodeSigning.Dlib.dll"))
-    expect(dotnetRoot).toBe("/mock-dotnet-runtime")
+    expect(dotnetRoot).toBe(path.resolve("/mock-dotnet-runtime"))
     expect(vi.mocked(getWindowsKitsBundle)).toHaveBeenCalledWith(expect.objectContaining({ arch: Arch.ia32 }))
   })
 
-  test("Wine: DOTNET_ROOT is converted to a Z:\\ path via toVmFile", async () => {
-    // Simulate WineVmManager.toVmFile which prepends Z: using win32 path joining.
+  test.skipIf(process.platform === "win32")("Wine: DOTNET_ROOT is converted to a Z:\\ path via toVmFile", async () => {
+    // Wine is only used on macOS/Linux; on Windows signtool runs natively, no Z: conversion happens.
     const wineToVmFile = (f: string) => path.win32.join("Z:", f)
     const { dotnetRoot } = await signedInfo("x64", wineToVmFile)
     expect(dotnetRoot).toBe(path.win32.join("Z:", "/mock-dotnet-runtime"))

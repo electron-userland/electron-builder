@@ -192,14 +192,18 @@ export abstract class SigntoolBaseSignManager implements SignManager {
   }
 
   // https://github.com/electron-userland/electron-builder/issues/2108#issuecomment-333200711
-  async computePublisherName(target: Target, publisherName: string) {
+  async computePublisherName(target: Target, publisherName: string | null) {
     if (target instanceof AppXTarget && (await this.cscInfo.value) == null) {
       log.info({ reason: "Windows Store only build" }, "AppX is not signed")
-      return publisherName || "CN=ms"
+      return publisherName ?? "CN=ms"
     }
 
+    // When a signing cert is available, the cert's subject MUST be used so the APPX package
+    // Publisher attribute matches the certificate — any mismatch causes SignerSign to fail with
+    // ERROR_BAD_FORMAT. Only honour a user-supplied publisherName if it was explicitly configured
+    // (non-null); otherwise derive from the certificate.
     const certInfo = await this.lazyCertInfo.value
-    const publisher = publisherName || (certInfo == null ? null : certInfo.bloodyMicrosoftSubjectDn)
+    const publisher = publisherName ?? certInfo?.bloodyMicrosoftSubjectDn ?? null
     if (publisher == null) {
       throw new Error("Internal error: cannot compute subject using certificate info")
     }
