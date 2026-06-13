@@ -1,4 +1,4 @@
-import { Arch } from "builder-util"
+import { Arch, sanitizeDirPath } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import * as os from "os"
 import * as path from "path"
@@ -99,18 +99,18 @@ export async function getSignToolPath(winCodeSign: ToolsetConfig["winCodeSign"] 
 
 export async function getWindowsKitsBundle({ winCodeSign, arch, resourcesDir = "" }: { winCodeSign: ToolsetConfig["winCodeSign"] | Nullish; arch: Arch; resourcesDir?: string }) {
   if (typeof winCodeSign === "object" && winCodeSign != null) {
-    const vendorPath = await getCustomToolsetPath(winCodeSign, resourcesDir)
-    return { kit: path.resolve(vendorPath, arch === Arch.ia32 ? "x86" : Arch[arch]), appxAssets: vendorPath }
+    const vendorPath = sanitizeDirPath(await getCustomToolsetPath(winCodeSign, resourcesDir))
+    return { kit: path.join(vendorPath, arch === Arch.ia32 ? "x86" : Arch[arch]), appxAssets: vendorPath }
   }
 
   const useLegacy = winCodeSign == null || winCodeSign === "0.0.0"
   if (useLegacy) {
-    const vendorPath = await getLegacyWinCodeSignBin()
-    return { kit: path.resolve(vendorPath, "windows-10", arch === Arch.arm64 ? "x64" : Arch[arch]), appxAssets: vendorPath }
+    const vendorPath = sanitizeDirPath(await getLegacyWinCodeSignBin())
+    return { kit: path.join(vendorPath, "windows-10", arch === Arch.arm64 ? "x64" : Arch[arch]), appxAssets: vendorPath }
   }
   const file = "windows-kits-bundle-10_0_26100_0.zip"
-  const vendorPath = await _getWindowsToolsBin(winCodeSign, file)
-  return { kit: path.resolve(vendorPath, arch === Arch.ia32 ? "x86" : Arch[arch]), appxAssets: vendorPath }
+  const vendorPath = sanitizeDirPath(await _getWindowsToolsBin(winCodeSign, file))
+  return { kit: path.join(vendorPath, arch === Arch.ia32 ? "x86" : Arch[arch]), appxAssets: vendorPath }
 }
 
 export function isOldWin6() {
@@ -121,15 +121,16 @@ export function isOldWin6() {
 async function getWindowsSignToolExe({ winCodeSign, arch, resourcesDir = "" }: { winCodeSign: ToolsetConfig["winCodeSign"] | Nullish; arch: Arch; resourcesDir?: string }) {
   if (winCodeSign === "0.0.0" || winCodeSign == null) {
     // use modern signtool on Windows Server 2012 R2 to be able to sign AppX
-    const vendorPath = await getLegacyWinCodeSignBin()
+    const vendorPath = sanitizeDirPath(await getLegacyWinCodeSignBin())
     if (isOldWin6()) {
-      return path.resolve(vendorPath, "windows-6", "signtool.exe")
+      return path.join(vendorPath, "windows-6", "signtool.exe")
     } else {
-      return path.resolve(vendorPath, "windows-10", process.arch === "ia32" ? "ia32" : "x64", "signtool.exe")
+      return path.join(vendorPath, "windows-10", process.arch === "ia32" ? "ia32" : "x64", "signtool.exe")
     }
   }
-  const vendorPath = await getWindowsKitsBundle({ winCodeSign, arch, resourcesDir })
-  return path.resolve(vendorPath.kit, "signtool.exe")
+  // kit is already sanitized by getWindowsKitsBundle
+  const { kit } = await getWindowsKitsBundle({ winCodeSign, arch, resourcesDir })
+  return path.join(kit, "signtool.exe")
 }
 
 async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish, resourcesDir = "") {
@@ -138,14 +139,15 @@ async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] |
   }
 
   if (typeof winCodeSign === "object" && winCodeSign != null) {
-    const vendorPath = await getCustomToolsetPath(winCodeSign, resourcesDir)
-    return { path: path.resolve(vendorPath, "osslsigncode") }
+    const vendorPath = sanitizeDirPath(await getCustomToolsetPath(winCodeSign, resourcesDir))
+    return { path: path.join(vendorPath, "osslsigncode") }
   }
 
   if (winCodeSign === "0.0.0" || winCodeSign == null) {
-    const vendorBase = path.resolve(await getLegacyWinCodeSignBin(), process.platform)
-    const vendorPath = process.platform === "darwin" ? path.resolve(vendorBase, "10.12") : vendorBase
-    return { path: path.resolve(vendorPath, "osslsigncode"), env: process.platform === "darwin" ? computeToolEnv([path.resolve(vendorPath, "lib")]) : undefined }
+    const legacyBase = sanitizeDirPath(await getLegacyWinCodeSignBin())
+    const vendorBase = path.join(legacyBase, process.platform)
+    const vendorPath = process.platform === "darwin" ? path.join(vendorBase, "10.12") : vendorBase
+    return { path: path.join(vendorPath, "osslsigncode"), env: process.platform === "darwin" ? computeToolEnv([path.join(vendorPath, "lib")]) : undefined }
   }
 
   const file = (() => {
@@ -163,8 +165,8 @@ async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] |
     }
     return "win-codesign-darwin-x86_64.zip"
   })()
-  const vendorPath = await _getWindowsToolsBin(winCodeSign, file)
-  return { path: path.resolve(vendorPath, "osslsigncode") }
+  const vendorPath = sanitizeDirPath(await _getWindowsToolsBin(winCodeSign, file))
+  return { path: path.join(vendorPath, "osslsigncode") }
 }
 
 export async function getAtsBundleDir(winCodeSign: string): Promise<string> {
@@ -196,14 +198,14 @@ export async function getRceditBundle(winCodeSign: ToolsetConfig["winCodeSign"] 
   const x86 = "rcedit-x86.exe"
   const x64 = "rcedit-x64.exe"
   if (typeof winCodeSign === "object" && winCodeSign != null) {
-    const vendorPath = await getCustomToolsetPath(winCodeSign, resourcesDir)
-    return { x86: path.resolve(vendorPath, x86), x64: path.resolve(vendorPath, x64) }
+    const vendorPath = sanitizeDirPath(await getCustomToolsetPath(winCodeSign, resourcesDir))
+    return { x86: path.join(vendorPath, x86), x64: path.join(vendorPath, x64) }
   }
   if (winCodeSign === "0.0.0" || winCodeSign == null) {
-    const vendorPath = await getLegacyWinCodeSignBin()
-    return { x86: path.resolve(vendorPath, ia32), x64: path.resolve(vendorPath, x64) }
+    const vendorPath = sanitizeDirPath(await getLegacyWinCodeSignBin())
+    return { x86: path.join(vendorPath, ia32), x64: path.join(vendorPath, x64) }
   }
   const file = "rcedit-windows-2_0_0.zip"
-  const vendorPath = await _getWindowsToolsBin(winCodeSign, file)
-  return { x86: path.resolve(vendorPath, x86), x64: path.resolve(vendorPath, x64) }
+  const vendorPath = sanitizeDirPath(await _getWindowsToolsBin(winCodeSign, file))
+  return { x86: path.join(vendorPath, x86), x64: path.join(vendorPath, x64) }
 }
