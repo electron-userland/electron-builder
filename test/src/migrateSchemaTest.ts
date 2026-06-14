@@ -300,8 +300,31 @@ describe("migrateConfig — GitHub vPrefixedTagName", () => {
   })
 })
 
-describe("migrateConfig — win.azureSignOptions additionalMetadata", () => {
-  test("moves extra index-signature keys into additionalMetadata", () => {
+describe("migrateConfig — win.sign unification", () => {
+  test("moves win.azureSignOptions into win.sign: { type: 'azure' }", () => {
+    const result = migrateConfig({
+      win: {
+        azureSignOptions: {
+          endpoint: "https://weu.codesigning.azure.net/",
+          codeSigningAccountName: "my-account",
+          certificateProfileName: "my-profile",
+          publisherName: "CN=My Company",
+        },
+      },
+    })
+    expect(result.migrated.win.azureSignOptions).toBeUndefined()
+    expect(result.migrated.win.sign).toEqual({
+      type: "azure",
+      endpoint: "https://weu.codesigning.azure.net/",
+      codeSigningAccountName: "my-account",
+      certificateProfileName: "my-profile",
+      publisherName: "CN=My Company",
+    })
+    expect(result.changes.some(c => c.key === "win.azureSignOptions")).toBe(true)
+    expect(result.modified).toBe(true)
+  })
+
+  test("moves extra azure index-signature keys into additionalMetadata", () => {
     const result = migrateConfig({
       win: {
         azureSignOptions: {
@@ -314,31 +337,77 @@ describe("migrateConfig — win.azureSignOptions additionalMetadata", () => {
         },
       },
     })
-    expect(result.migrated.win.azureSignOptions).toEqual({
-      endpoint: "https://weu.codesigning.azure.net/",
-      codeSigningAccountName: "my-account",
-      certificateProfileName: "my-profile",
-      publisherName: "CN=My Company",
+    expect(result.migrated.win.sign).toMatchObject({
+      type: "azure",
       additionalMetadata: {
         ExcludeCredentials: "ManagedIdentityCredential",
         CorrelationId: "my-build-id",
       },
     })
-    expect(result.changes.some(c => c.key === "win.azureSignOptions")).toBe(true)
+    expect("ExcludeCredentials" in result.migrated.win.sign).toBe(false)
   })
 
-  test("no-op when azureSignOptions has only known fields", () => {
+  test("moves win.signtoolOptions into win.sign: { type: 'signtool' }", () => {
     const result = migrateConfig({
       win: {
-        azureSignOptions: {
-          endpoint: "https://weu.codesigning.azure.net/",
-          codeSigningAccountName: "my-account",
-          certificateProfileName: "my-profile",
-          publisherName: "CN=My Company",
+        signtoolOptions: {
+          certificateFile: "C:\\certs\\my.pfx",
+          certificatePassword: "secret",
+          signingHashAlgorithms: ["sha256"],
         },
       },
     })
-    expect(result.changes.some(c => c.key === "win.azureSignOptions")).toBe(false)
+    expect(result.migrated.win.signtoolOptions).toBeUndefined()
+    expect(result.migrated.win.sign).toEqual({
+      type: "signtool",
+      certificateFile: "C:\\certs\\my.pfx",
+      certificatePassword: "secret",
+      signingHashAlgorithms: ["sha256"],
+    })
+    expect(result.changes.some(c => c.key === "win.signtoolOptions")).toBe(true)
+    expect(result.modified).toBe(true)
+  })
+
+  test("replaces win.signExecutable: false with win.sign: false", () => {
+    const result = migrateConfig({ win: { signExecutable: false } })
+    expect(result.migrated.win.signExecutable).toBeUndefined()
+    expect(result.migrated.win.sign).toBe(false)
+    expect(result.changes.some(c => c.key === "win.signExecutable")).toBe(true)
+  })
+
+  test("removes win.signExecutable: true (no-op value)", () => {
+    const result = migrateConfig({ win: { signExecutable: true } })
+    expect(result.migrated.win.signExecutable).toBeUndefined()
+    expect("sign" in result.migrated.win).toBe(false)
+    expect(result.changes.some(c => c.key === "win.signExecutable")).toBe(true)
+  })
+
+  test("removes win.signAndEditExecutable: true (no-op value)", () => {
+    const result = migrateConfig({ win: { signAndEditExecutable: true } })
+    expect(result.migrated.win.signAndEditExecutable).toBeUndefined()
+    expect(result.changes.some(c => c.key === "win.signAndEditExecutable")).toBe(true)
+  })
+
+  test("warns when win.signAndEditExecutable is false (no equivalent in v27)", () => {
+    const result = migrateConfig({ win: { signAndEditExecutable: false } })
+    expect(result.migrated.win.signAndEditExecutable).toBeUndefined()
+    expect(result.warnings.some(w => w.includes("signAndEditExecutable"))).toBe(true)
+  })
+
+  test("warns when both azureSignOptions and signtoolOptions are present", () => {
+    const result = migrateConfig({
+      win: {
+        azureSignOptions: { endpoint: "https://weu.codesigning.azure.net/", codeSigningAccountName: "a", certificateProfileName: "p", publisherName: "CN=Me" },
+        signtoolOptions: { certificateFile: "my.pfx" },
+      },
+    })
+    expect(result.warnings.some(w => w.includes("signtoolOptions"))).toBe(true)
+    expect(result.migrated.win.sign?.type).toBe("azure")
+    expect(result.migrated.win.signtoolOptions).toBeUndefined()
+  })
+
+  test("no-op when win.sign is already set and azureSignOptions is absent", () => {
+    const result = migrateConfig({ win: { sign: { type: "azure", endpoint: "https://e", codeSigningAccountName: "a", certificateProfileName: "p", publisherName: "CN=Me" } } })
     expect(result.modified).toBe(false)
   })
 })
