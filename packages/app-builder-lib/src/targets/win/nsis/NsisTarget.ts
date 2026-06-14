@@ -3,7 +3,6 @@ import {
   asArray,
   AsyncTaskManager,
   spawnAndWriteWithOutput,
-  exists,
   generateKsuid,
   getArchSuffix,
   getPlatformIconFileName,
@@ -22,7 +21,6 @@ import { Target } from "../../../core.js"
 import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../../options/CommonWindowsInstallerConfiguration.js"
 import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt } from "../../../platformPackager.js"
 import { hashFile } from "../../../util/hash.js"
-import { isMacOsCatalina } from "../../../util/mac/macosVersion.js"
 import { time } from "../../../util/timer.js"
 import { WineVmManager } from "../../../vm/WineVm.js"
 import { WinPackager } from "../../../winPackager.js"
@@ -36,7 +34,7 @@ import { computeLicensePage } from "./nsisLicense.js"
 import { NsisOptions, PortableOptions } from "./nsisOptions.js"
 import { NsisScriptGenerator, nsisEscapeString } from "./nsisScriptGenerator.js"
 import { getMakeNsisPath, getNsisPluginsPath } from "../../../toolsets/nsis.js"
-import { AppPackageHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil.js"
+import { AppPackageHelper, nsisTemplatesDir } from "./nsisUtil.js"
 import { checkMakensisOutput, verifyInstallerSize } from "./nsisValidation.js"
 import _fsExtra from "fs-extra"
 const { readFile, stat, unlink } = _fsExtra
@@ -433,26 +431,8 @@ export class NsisTarget extends Target {
     await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(script, false, archs)))
 
     // http://forums.winamp.com/showthread.php?p=3078545
-    // TODO: remove workaround when wine is fully upgraded to 11
-    if (isMacOsCatalina()) {
-      try {
-        await UninstallerReader.exec(installerPath, uninstallerPath)
-      } catch (error: any) {
-        log.warn(`packager.vm is used: ${error.message}`)
-
-        const vm = await packager.vm.value
-        await vm.exec(installerPath, [])
-        // Parallels VM can exit after command execution, but NSIS continue to be running
-        let i = 0
-        while (!(await exists(uninstallerPath)) && i++ < 100) {
-          // noinspection JSUnusedLocalSymbols
-          await sleep(300)
-        }
-      }
-    } else {
-      const wineVm = new WineVmManager(packager.config.toolsets?.wine, packager.buildResourcesDir)
-      await wineVm.exec(installerPath, [], { env: { __COMPAT_LAYER: "RunAsInvoker" } })
-    }
+    const wineVm = new WineVmManager(packager.config.toolsets?.wine, packager.buildResourcesDir)
+    await wineVm.exec(installerPath, [], { env: { __COMPAT_LAYER: "RunAsInvoker" } })
     await packager.signIf(uninstallerPath)
 
     delete defines.BUILD_UNINSTALLER

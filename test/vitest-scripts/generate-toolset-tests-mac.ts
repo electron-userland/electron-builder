@@ -1,11 +1,18 @@
 import * as fs from "fs"
 import * as path from "path"
 import type { ToolsetConfig } from "app-builder-lib/internal"
-import { buildDescribeCall, cleanAndEnsureDir, GENERATED_TESTS_DIR, getPlatformSuffix, namedFn, resolveImportPath, TEST_SRC_DIR } from "./generate-toolset-tests-shared"
+import {
+  buildDescribeCall,
+  cleanAndEnsureDir,
+  GENERATED_TESTS_DIR,
+  getPlatformSuffix,
+  namedFn,
+  resolveImportPath,
+  TEST_SRC_DIR,
+  WINE_VERSIONS,
+} from "./generate-toolset-tests-shared"
 import type { SuiteConfig } from "./generate-toolset-tests-shared"
 import type * as _WineToolsetSuite from "../src/mac/wineToolsetSuite"
-
-const WINE_VERSIONS: ToolsetConfig["wine"][] = ["0.0.0"]
 
 const SUITES: SuiteConfig[] = [
   {

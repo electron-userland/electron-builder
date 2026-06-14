@@ -7,15 +7,15 @@ export function registerWineToolsetTests(toolsets: ToolsetConfig): void {
   const { wine } = toolsets
   const isLegacy = wine === "0.0.0"
 
-  describe.ifEnv(process.platform !== "win32" && isLegacy)(`getWineToolset [wine=${wine}]`, () => {
+  describe.ifEnv(process.platform !== "win32")(`getWineToolset [wine=${wine}]`, () => {
     test(`getWineToolset resolves path [wine=${wine}]`, async ({ expect }) => {
       const result = await getWineToolset(wine, "")
       expect(result.execPath).toBeTruthy()
-      if (process.platform === "linux") {
-        // Linux always uses system wine for default/legacy versions — execPath is "wine", not absolute.
+      if (isLegacy && process.platform === "linux") {
+        // 0.0.0 on Linux has no bundle — falls back to host wine binary.
         expect(result.execPath).toBe("wine")
       } else {
-        // macOS: legacy bundle (0.0.0 → wine-4.0.1-mac) is downloaded; path is absolute.
+        // All other cases (any version on macOS, 1.0.1 on Linux) download a bundle → absolute path.
         expect(path.isAbsolute(result.execPath)).toBe(true)
         expect(await exists(result.execPath)).toBe(true)
       }
