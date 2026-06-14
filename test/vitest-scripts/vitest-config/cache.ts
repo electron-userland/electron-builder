@@ -1,8 +1,8 @@
 import * as fs from "fs"
 import * as path from "path"
-import { CACHE_FILE, SupportedPlatforms } from "./smart-config"
 import { TestSpecification } from "vitest/node"
-import { TEST_SRC_ROOT } from "./vitest-smart-reporter"
+import { CACHE_FILE, SupportedPlatforms } from "./smart-config.js"
+import { TEST_SRC_ROOT } from "./vitest-smart-reporter.js"
 
 export interface TestStats {
   platformRuns?: Record<

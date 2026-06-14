@@ -1,6 +1,5 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env tsx
 
-import { spawnSync } from "child_process"
 import * as fs from "fs"
 import * as path from "path"
 import { generateTests } from "./generate-tests.js"
@@ -20,7 +19,7 @@ interface SuiteMetadata {
 
 // ─── Platform filter ─────────────────────────────────────────────────────────
 
-const PLATFORM_GATE_KEYS = new Set(["ifMac", "ifNotMac", "ifWindows", "ifNotWindows", "ifLinux", "ifNotLinux"])
+const PLATFORM_GATE_KEYS = new Set(["ifMac", "ifNotMac", "ifWindows", "ifNotWindows", "ifLinux", "ifNotLinux", "ifWindowsOrWine"])
 
 function suiteRunsOnTarget(chain: string[] | undefined, target: Target): boolean {
   if (target === "any") {
@@ -48,6 +47,11 @@ function suiteRunsOnTarget(chain: string[] | undefined, target: Target): boolean
     }
     if (key === "ifNotLinux") {
       return target !== "linux"
+    }
+    // Wine-based Windows tooling: runs natively on Windows and via Wine on Linux.
+    // Excluded on macOS (Catalina+ blocks 32-bit Wine).
+    if (key === "ifWindowsOrWine") {
+      return target === "windows" || target === "linux"
     }
     return true
   })
@@ -125,7 +129,7 @@ function parseArgs(): { command: string; target: Target | undefined; updateSnaps
   const command = args[0]
 
   if (!VALID_COMMANDS.includes(command)) {
-    console.error(`Usage:\n` + `  ts-node refresh-tests.ts <start|print> --target <linux|mac|windows|any> [--update-snapshots]\n` + `  ts-node refresh-tests.ts clean`)
+    console.error(`Usage:\n` + `  tsx refresh-tests.ts <start|print> --target <linux|mac|windows|any> [--update-snapshots]\n` + `  tsx refresh-tests.ts clean`)
     process.exit(1)
   }
 
@@ -133,7 +137,8 @@ function parseArgs(): { command: string; target: Target | undefined; updateSnaps
     return { command, target: undefined, updateSnapshots: false }
   }
 
-  const targetIdx = args.indexOf("--target")
+  // Use lastIndexOf so a CLI-supplied --target overrides the default in the pnpm script definition.
+  const targetIdx = args.lastIndexOf("--target")
   const targetArg = targetIdx >= 0 ? args[targetIdx + 1] : undefined
   if (!targetArg || !VALID_TARGETS.includes(targetArg as Target)) {
     console.error(`--target must be one of: ${VALID_TARGETS.join(", ")}`)
@@ -192,14 +197,19 @@ function main(): void {
 
   console.log(`\nStarting vitest with TEST_FILES=${testFilesPattern}${updateSnapshots ? " (updating snapshots)" : ""}\n`)
 
-  // Invoke ts-node's bin script directly via the current node binary. Spawning the bare `ts-node`
-  // command fails on Windows (spawnSync can't launch the `.cmd`/`.ps1` shim → ENOENT), and using
-  // `shell: true` both depends on PATH and triggers the DEP0190 args-with-shell deprecation warning.
-  const tsNodeBin = require.resolve("ts-node/dist/bin")
-  const result = spawnSync(process.execPath, [tsNodeBin, path.join(__dirname, "run-vitest.ts")], { env, stdio: "inherit" })
-  if (result.status !== 0) {
-    process.exit(result.status ?? 1)
-  }
+  // Instead of spawning the run-vitest.ts CLI, directly import and invoke it. This avoids all the issues with cross-platform process spawning and argument passing, and tsx's CJS bin can be imported without issue in ESM.
+  import("./run-vitest.js")
+    .then(module => {
+      const runVitest = module.default
+      if (typeof runVitest !== "function") {
+        throw new Error("run-vitest module does not export a default function")
+      }
+      return runVitest()
+    })
+    .catch(err => {
+      console.error("Error starting vitest:", err)
+      process.exit(1)
+    })
 }
 
 main()

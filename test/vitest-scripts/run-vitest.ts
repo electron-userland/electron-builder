@@ -3,11 +3,11 @@
 import { isCI } from "ci-info"
 import * as path from "path"
 import { startVitest } from "vitest/node"
-import { getAllTestFiles } from "./vitest-config/file-discovery"
-import { generateTests } from "./generate-tests"
-import { buildWeightedFiles, computeShardCount, splitIntoShards } from "./vitest-config/shard-builder"
-import { SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN } from "./vitest-config/smart-config"
-import SmartSequencer from "./vitest-config/vitest-smart-sequencer"
+import { getAllTestFiles } from "./vitest-config/file-discovery.js"
+import { generateTests } from "./generate-tests.js"
+import { buildWeightedFiles, computeShardCount, splitIntoShards } from "./vitest-config/shard-builder.js"
+import { SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN } from "./vitest-config/smart-config.js"
+import SmartSequencer from "./vitest-config/vitest-smart-sequencer.js"
 
 const PACKAGES_DIR = path.join(__dirname, "..", "..", "packages")
 const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
@@ -156,4 +156,7 @@ async function main() {
     })
 }
 
-void main()
+if (require.main === module) {
+  void main()
+}
+export default main
