@@ -39,7 +39,7 @@ export const skippedTests =
     // None currently, but this is where we would add any test that is currently unstable in the CI environment and needs to be excluded from smart sharding until it can be fixed.
   ]
 export const skipPerOSTests: Record<SupportedPlatforms, string[]> = {
-  darwin: ["fpmTest", "macUpdaterTest", "blackboxUpdateTest"],
+  darwin: ["fpmTest"],
   linux: [],
   win32: [],
 }
