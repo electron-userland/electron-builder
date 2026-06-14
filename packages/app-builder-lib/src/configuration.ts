@@ -564,13 +564,16 @@ export interface ToolsetConfig {
    * |---------|----------|
    * | `"0.0.0"` | Legacy bundle — `winCodeSign-2.6.0` (pre-v27 default) |
    * | `"1.0.0"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.0.0 |
-   * | `"1.1.0"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.1.0 (default) |
+   * | `"1.1.0"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.1.0 |
+   * | `"1.1.1"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.1.1 |
+   * | `"1.2.1"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.2.1 |
+   * | `"1.3.0"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.3.0 + separate ATS dlib bundle + .NET 8 runtime (required for Azure Trusted Signing `signtool /dlib`) |
    *
-   * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=win-codesign
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/win-codesign/CHANGELOG.md
    *
    * @default "1.1.0"
    */
-  readonly winCodeSign?: "0.0.0" | "1.0.0" | "1.1.0" | ToolsetCustom | null
+  readonly winCodeSign?: "0.0.0" | "1.0.0" | "1.1.0" | "1.1.1" | "1.2.1" | "1.3.0" | ToolsetCustom | null
 
   /**
    * Version of the AppImage toolset bundle used for building `.AppImage` files.
@@ -587,7 +590,7 @@ export interface ToolsetConfig {
    * | `"1.0.2"` | 20251108 | Static-runtime (FUSE3-compatible) |
    * | `"1.0.3"` | 20251108 | Static-runtime (FUSE3-compatible); recommended (default) |
    *
-   * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/appimage/CHANGELOG.md
    *
    * @default "1.0.3"
    */
@@ -608,7 +611,7 @@ export interface ToolsetConfig {
    * | `"0.0.0"` | 3.0.4.1 | Legacy split bundle — `nsis` + `nsis-resources` archives (pre-v27 default) |
    * | `"1.2.1"` | 3.12 | Unified bundle — single archive, entrypoint scripts auto-set `NSISDIR` (default) |
    *
-   * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=nsis
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/nsis/CHANGELOG.md
    *
    * @default "1.2.1"
    */
@@ -629,7 +632,7 @@ export interface ToolsetConfig {
    * On Linux, the system `wine` binary is used instead of a bundled one.
    * Set `USE_SYSTEM_WINE=true` to force system Wine regardless of this setting.
    *
-   * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=wine
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md
    *
    * @default "0.0.0"
    */
@@ -644,7 +647,7 @@ export interface ToolsetConfig {
    * |---------|------------|-------|
    * | `"2.2.1"` | 1.17.0 (Ruby 3.4.3) | Current default |
    *
-   * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=fpm
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/fpm/CHANGELOG.md
    *
    * @default "2.2.1"
    */
@@ -661,7 +664,7 @@ export interface ToolsetConfig {
    * |---------|-------|
    * | `"1.0.0"` | Current default |
    *
-   * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=linux-tools-mac
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/linux-tools-mac/CHANGELOG.md
    *
    * @default "1.0.0"
    */
@@ -693,7 +696,7 @@ export interface ToolsetConfig {
    * |---------|-------|
    * | `"1.1.0"` | Current default |
    *
-   * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=icons
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/icons/CHANGELOG.md
    *
    * @default "1.1.0"
    */

@@ -26,7 +26,7 @@ function createBuildResourcesTest(expect: ExpectStatic, packagerOptions: Package
           app: ".",
         },
         win: {
-          signAndEditExecutable: false,
+          sign: false,
         },
         nsis: {
           differentialPackage: false,

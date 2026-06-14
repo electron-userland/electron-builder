@@ -12,8 +12,9 @@ import type * as _SquirrelWindowsSuite from "../src/windows/squirrelWindowsTestS
 import type * as _AppxSuite from "../src/windows/appxTestSuite"
 import type * as _DifferentialWinSuite from "../src/updater/differentialUpdateWinSuite"
 import type * as _BlackboxWinSuite from "../src/updater/blackboxUpdateWinSuite"
+import type * as _WinCodeSignSuite from "../src/windows/winCodeSignTestSuite"
 
-const WIN_CODE_SIGN_VERSIONS: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0"]
+const WIN_CODE_SIGN_VERSIONS: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0", "1.2.1", "1.3.0"]
 const NSIS_VERSIONS: ToolsetConfig["nsis"][] = ["0.0.0", "1.2.1"]
 
 interface WindowsSuiteConfig extends SuiteConfig {
@@ -70,7 +71,7 @@ const SUITES: WindowsSuiteConfig[] = [
     registerFn: namedFn("registerAppxTests" satisfies keyof typeof _AppxSuite),
     importPath: "windows/appxTestSuite",
     describeConfig: { name: "AppX", chain: ["ifWindows"] },
-    winCodeSignVersions: ["1.0.0", "1.1.0"],
+    winCodeSignVersions: ["1.0.0", "1.1.0", "1.2.1", "1.3.0"],
   },
   {
     name: "differentialWin",
@@ -87,6 +88,13 @@ const SUITES: WindowsSuiteConfig[] = [
     describeConfig: { name: "blackboxWin" },
     describeOptions: { sequential: true, retry: 1 },
     nsisVersions: NSIS_VERSIONS,
+  },
+  {
+    name: "winCodeSign",
+    registerFn: namedFn("registerWinCodeSignTests" satisfies keyof typeof _WinCodeSignSuite),
+    importPath: "windows/winCodeSignTestSuite",
+    describeConfig: { name: "winCodeSign" },
+    describeOptions: { sequential: true },
   },
 ]
 

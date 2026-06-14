@@ -7782,7 +7782,7 @@
             }
           ],
           "default": "1.0.3",
-          "description": "Version of the AppImage toolset bundle used for building `.AppImage` files.\n\nThe bundle ships:\n- **`mksquashfs`** — creates the SquashFS filesystem embedded in the AppImage.\n- **`desktop-file-validate`** — validates the generated `.desktop` entry.\n- **AppImage runtime** — the self-executing stub that mounts the SquashFS at launch.\n\nAvailable versions:\n| Version | Runtime date | Notes |\n|---------|-------------|-------|\n| `\"0.0.0\"` | Legacy | FUSE2-based AppImage runtime (pre-v27 default) |\n| `\"1.0.2\"` | 20251108 | Static-runtime (FUSE3-compatible) |\n| `\"1.0.3\"` | 20251108 | Static-runtime (FUSE3-compatible); recommended (default) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage"
+          "description": "Version of the AppImage toolset bundle used for building `.AppImage` files.\n\nThe bundle ships:\n- **`mksquashfs`** — creates the SquashFS filesystem embedded in the AppImage.\n- **`desktop-file-validate`** — validates the generated `.desktop` entry.\n- **AppImage runtime** — the self-executing stub that mounts the SquashFS at launch.\n\nAvailable versions:\n| Version | Runtime date | Notes |\n|---------|-------------|-------|\n| `\"0.0.0\"` | Legacy | FUSE2-based AppImage runtime (pre-v27 default) |\n| `\"1.0.2\"` | 20251108 | Static-runtime (FUSE3-compatible) |\n| `\"1.0.3\"` | 20251108 | Static-runtime (FUSE3-compatible); recommended (default) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/appimage/CHANGELOG.md"
         },
         "fpm": {
           "anyOf": [
@@ -7798,7 +7798,7 @@
             }
           ],
           "default": "2.2.1",
-          "description": "Version of the FPM bundle used to build Linux packages (`.deb`, `.rpm`, `.pacman`, etc.)\non macOS and Linux hosts.\n\nAvailable versions:\n| Version | FPM version | Notes |\n|---------|------------|-------|\n| `\"2.2.1\"` | 1.17.0 (Ruby 3.4.3) | Current default |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=fpm"
+          "description": "Version of the FPM bundle used to build Linux packages (`.deb`, `.rpm`, `.pacman`, etc.)\non macOS and Linux hosts.\n\nAvailable versions:\n| Version | FPM version | Notes |\n|---------|------------|-------|\n| `\"2.2.1\"` | 1.17.0 (Ruby 3.4.3) | Current default |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/fpm/CHANGELOG.md"
         },
         "icons": {
           "anyOf": [
@@ -7814,7 +7814,7 @@
             }
           ],
           "default": "1.1.0",
-          "description": "Version of the icons-conversion bundle used to convert source images to `.icns`, `.ico`,\nand PNG icon sets.\n\nSet to a {@link ToolsetCustom} object to supply your own icons bundle directory.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.1.0\"` | Current default |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=icons"
+          "description": "Version of the icons-conversion bundle used to convert source images to `.icns`, `.ico`,\nand PNG icon sets.\n\nSet to a {@link ToolsetCustom} object to supply your own icons bundle directory.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.1.0\"` | Current default |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/icons/CHANGELOG.md"
         },
         "linuxToolsMac": {
           "anyOf": [
@@ -7830,7 +7830,7 @@
             }
           ],
           "default": "1.0.0",
-          "description": "Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build\nLinux targets on macOS hosts.\n\nThe bundle ships macOS-native builds of `ar`, `lzip`, and `gtar` (GNU tar).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.0.0\"` | Current default |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=linux-tools-mac"
+          "description": "Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build\nLinux targets on macOS hosts.\n\nThe bundle ships macOS-native builds of `ar`, `lzip`, and `gtar` (GNU tar).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.0.0\"` | Current default |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/linux-tools-mac/CHANGELOG.md"
         },
         "nsis": {
           "anyOf": [
@@ -7849,7 +7849,7 @@
             }
           ],
           "default": "1.2.1",
-          "description": "Version of the NSIS toolset bundle used to compile Windows installers.\n\nThe bundle ships:\n- **`makensis`** — the NSIS compiler invoked to build `.nsi` scripts into `.exe` installers.\n- **NSIS plugins** — the plugin DLLs (`NsisMultiUser`, `UAC`, `StdUtils`, etc.) referenced by\n  electron-builder's default installer scripts.\n- **`elevate.exe`** — UAC elevation helper included in NSIS installers.\n\nAvailable versions:\n| Version | `makensis` version | Notes |\n|---------|------------------|-------|\n| `\"0.0.0\"` | 3.0.4.1 | Legacy split bundle — `nsis` + `nsis-resources` archives (pre-v27 default) |\n| `\"1.2.1\"` | 3.12 | Unified bundle — single archive, entrypoint scripts auto-set `NSISDIR` (default) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=nsis"
+          "description": "Version of the NSIS toolset bundle used to compile Windows installers.\n\nThe bundle ships:\n- **`makensis`** — the NSIS compiler invoked to build `.nsi` scripts into `.exe` installers.\n- **NSIS plugins** — the plugin DLLs (`NsisMultiUser`, `UAC`, `StdUtils`, etc.) referenced by\n  electron-builder's default installer scripts.\n- **`elevate.exe`** — UAC elevation helper included in NSIS installers.\n\nAvailable versions:\n| Version | `makensis` version | Notes |\n|---------|------------------|-------|\n| `\"0.0.0\"` | 3.0.4.1 | Legacy split bundle — `nsis` + `nsis-resources` archives (pre-v27 default) |\n| `\"1.2.1\"` | 3.12 | Unified bundle — single archive, entrypoint scripts auto-set `NSISDIR` (default) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/nsis/CHANGELOG.md"
         },
         "sevenZip": {
           "anyOf": [
@@ -7876,7 +7876,10 @@
               "enum": [
                 "0.0.0",
                 "1.0.0",
-                "1.1.0"
+                "1.1.0",
+                "1.1.1",
+                "1.2.1",
+                "1.3.0"
               ],
               "type": "string"
             },
@@ -7885,7 +7888,7 @@
             }
           ],
           "default": "1.1.0",
-          "description": "Version of the `win-codesign` bundle used for Windows code signing and resource editing.\n\nThe bundle ships:\n- **`signtool.exe`** (Windows) / **`osslsigncode`** (macOS & Linux) — used to sign `.exe`,\n  `.dll`, and `.msix` artifacts.\n- **`rcedit`** — used to embed version metadata and icons into `.exe` files.\n- **Windows Kits** (`10.0.26100.0`) — used by AppX/MSIX packaging (`makeappx`, `signtool`).\n\nAvailable versions:\n| Version | Contents |\n|---------|----------|\n| `\"0.0.0\"` | Legacy bundle — `winCodeSign-2.6.0` (pre-v27 default) |\n| `\"1.0.0\"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.0.0 |\n| `\"1.1.0\"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.1.0 (default) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=win-codesign"
+          "description": "Version of the `win-codesign` bundle used for Windows code signing and resource editing.\n\nThe bundle ships:\n- **`signtool.exe`** (Windows) / **`osslsigncode`** (macOS & Linux) — used to sign `.exe`,\n  `.dll`, and `.msix` artifacts.\n- **`rcedit`** — used to embed version metadata and icons into `.exe` files.\n- **Windows Kits** (`10.0.26100.0`) — used by AppX/MSIX packaging (`makeappx`, `signtool`).\n\nAvailable versions:\n| Version | Contents |\n|---------|----------|\n| `\"0.0.0\"` | Legacy bundle — `winCodeSign-2.6.0` (pre-v27 default) |\n| `\"1.0.0\"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.0.0 |\n| `\"1.1.0\"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.1.0 |\n| `\"1.1.1\"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.1.1 |\n| `\"1.2.1\"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.2.1 |\n| `\"1.3.0\"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.3.0 + separate ATS dlib bundle + .NET 8 runtime (required for Azure Trusted Signing `signtool /dlib`) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/win-codesign/CHANGELOG.md"
         },
         "wine": {
           "anyOf": [
@@ -7901,7 +7904,7 @@
             }
           ],
           "default": "0.0.0",
-          "description": "Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on\nnon-Windows hosts (macOS and Linux).\n\nWine is only required when building Windows targets on a non-Windows machine. On Windows,\nthis setting has no effect.\n\nAvailable versions:\n| Version | Wine version | Platform support | Notes |\n|---------|-------------|-----------------|-------|\n| `\"0.0.0\"` | 4.0.1 | macOS only | Legacy portable bundle (pre-v27 default) |\n\nOn Linux, the system `wine` binary is used instead of a bundled one.\nSet `USE_SYSTEM_WINE=true` to force system Wine regardless of this setting.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/releases?q=wine"
+          "description": "Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on\nnon-Windows hosts (macOS and Linux).\n\nWine is only required when building Windows targets on a non-Windows machine. On Windows,\nthis setting has no effect.\n\nAvailable versions:\n| Version | Wine version | Platform support | Notes |\n|---------|-------------|-----------------|-------|\n| `\"0.0.0\"` | 4.0.1 | macOS only | Legacy portable bundle (pre-v27 default) |\n\nOn Linux, the system `wine` binary is used instead of a bundled one.\nSet `USE_SYSTEM_WINE=true` to force system Wine regardless of this setting.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md"
         }
       },
       "type": "object"
@@ -7928,29 +7931,28 @@
       ],
       "type": "object"
     },
-    "WindowsAzureSigningConfiguration": {
-      "additionalProperties": {
-        "type": [
-          "null",
-          "string"
-        ]
-      },
+    "WindowsAzureSigningConfig": {
+      "additionalProperties": false,
       "properties": {
+        "additionalMetadata": {
+          "$ref": "#/definitions/Record<string,string>",
+          "description": "Additional fields to include verbatim in the `metadata.json` file passed to\n`Azure.CodeSigning.Dlib.dll` via `signtool /dmdf`. Use this for DLib-specific options\nnot covered by the typed fields above (e.g. `ExcludeCredentials`, `CorrelationId`)."
+        },
         "certificateProfileName": {
-          "description": "The Certificate Profile name. Translates to field: CertificateProfileName",
+          "description": "The Certificate Profile name. Translates to field: CertificateProfileName.",
           "type": "string"
         },
         "codeSigningAccountName": {
-          "description": "The Code Signing Signing Account name. Translates to field: CodeSigningAccountName",
+          "description": "The Code Signing Account name. Translates to field: CodeSigningAccountName.",
           "type": "string"
         },
         "endpoint": {
-          "description": "The Trusted Signing Account endpoint. The URI value must have a URI that aligns to the\nregion your Trusted Signing Account and Certificate Profile you are specifying were created\nin during the setup of these resources.\n\nTranslates to field: Endpoint\n\nRequires one of environment variable configurations for authenticating to Microsoft Entra ID per [Microsoft's documentation](https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition)",
+          "description": "The Trusted Signing Account endpoint. The URI value must align to the region your Trusted\nSigning Account and Certificate Profile were created in.\n\nRequires Azure Entra ID environment variables per\n[Microsoft's documentation](https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition).",
           "type": "string"
         },
         "fileDigest": {
           "default": "SHA256",
-          "description": "The File Digest for signing each file. Translates to field: FileDigest",
+          "description": "The file digest algorithm. Translates to field: FileDigest.",
           "type": "string"
         },
         "publisherName": {
@@ -7959,12 +7961,16 @@
         },
         "timestampDigest": {
           "default": "SHA256",
-          "description": "The Timestamp Digest. Translates to field: TimestampDigest",
+          "description": "The timestamp digest algorithm. Translates to field: TimestampDigest.",
           "type": "string"
         },
         "timestampRfc3161": {
           "default": "http://timestamp.acs.microsoft.com",
-          "description": "The Timestamp rfc3161 server. Translates to field: TimestampRfc3161",
+          "description": "The RFC3161 timestamp server. Translates to field: TimestampRfc3161.",
+          "type": "string"
+        },
+        "type": {
+          "const": "azure",
           "type": "string"
         }
       },
@@ -7972,7 +7978,8 @@
         "certificateProfileName",
         "codeSigningAccountName",
         "endpoint",
-        "publisherName"
+        "publisherName",
+        "type"
       ],
       "type": "object"
     },
@@ -8008,17 +8015,6 @@
           ],
           "default": true,
           "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules that must be unpacked will be detected automatically. Use {@link AsarOptions.unpack} to specify additional files to unpack."
-        },
-        "azureSignOptions": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/WindowsAzureSigningConfiguration"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Options for usage of Azure Trusted Signing service\nCannot be used in conjunction with `signtoolOptions`, signing will default to Azure Trusted Signing"
         },
         "compression": {
           "anyOf": [
@@ -8293,15 +8289,29 @@
           "default": "asInvoker",
           "description": "The [security level](https://msdn.microsoft.com/en-us/library/6ad1fshk.aspx#Anchor_9) at which the application requests to be executed.\nCannot be specified per target, allowed only in the `win`."
         },
-        "signAndEditExecutable": {
-          "default": true,
-          "description": "Whether to sign and add metadata to executable via [`resedit`](https://www.npmjs.com/package/resedit).\nMetadata includes information about the app name/description/version, publisher, copyright, etc.\nThis property also is responsible for adding the app icon and setting execution level.\nSet to `false` only if you need to fully disable resedit-based resource editing.\nTo skip only code signing while keeping resource editing, use `signExecutable: false` instead.",
-          "type": "boolean"
-        },
-        "signExecutable": {
-          "default": true,
-          "description": "Whether to sign Windows executables and any additional files matched by `signExts`.\nSet to `false` to skip Windows code signing while still editing executable resources\n(icon, metadata, etc. via [`resedit`](https://www.npmjs.com/package/resedit)).\nThis option is not limited to the main executable edit/sign flow and can also affect\nsigning of Windows installers or other artifacts that use the standard signing path.",
-          "type": "boolean"
+        "sign": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/WindowsSigntoolSigningConfig"
+            },
+            {
+              "$ref": "#/definitions/WindowsHsmSigningConfig"
+            },
+            {
+              "$ref": "#/definitions/WindowsPkcs11SigningConfig"
+            },
+            {
+              "$ref": "#/definitions/WindowsAzureSigningConfig"
+            },
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Code signing configuration. Set to `false` or `null` to disable Windows code signing\n(executable resources such as the icon and metadata are still edited). Leave unset to\nsign using credentials discovered from the environment (e.g. `WIN_CSC_LINK`). Otherwise\nprovide exactly one of the following signing modes:\n\n- `{ type: \"signtool\", ... }` — Sign with a local certificate file (.pfx/.p12) or a\n  certificate from the Windows certificate store.\n- `{ type: \"hsm\", ... }` — Sign using a Hardware Security Module (HSM) or FIPS-compliant\n  hardware token via signtool's `/csp` (cryptographic service provider) and `/kc` (key\n  container) flags. Requires `toolsets.winCodeSign: \"1.x\"`. Windows-only.\n- `{ type: \"pkcs11\", ... }` — Sign using a PKCS#11 hardware token via osslsigncode.\n  Available on macOS and Linux CI without a Windows VM.\n- `{ type: \"azure\", ... }` — Sign via Azure Trusted Signing (cloud service). Requires\n  Azure Entra ID environment variables for authentication."
         },
         "signExts": {
           "anyOf": [
@@ -8317,17 +8327,6 @@
           ],
           "default": null,
           "description": "Explicit file name/extensions (`str.endsWith`) to also sign. Advanced option.\nSupports negative patterns, e.g. example that excludes `.appx` files: `[\"somefilename\", \".dll\", \"!.appx\"]`."
-        },
-        "signtoolOptions": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/WindowsSigntoolConfiguration"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Options for usage with signtool.exe\nCannot be used in conjunction with `azureSignOptions`, signing will default to Azure Trusted Signing"
         },
         "target": {
           "anyOf": [
@@ -8365,7 +8364,7 @@
       },
       "type": "object"
     },
-    "WindowsSigntoolConfiguration": {
+    "WindowsHsmSigningConfig": {
       "additionalProperties": false,
       "properties": {
         "additionalCertificateFile": {
@@ -8376,28 +8375,248 @@
           ]
         },
         "certificateFile": {
-          "description": "The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason.\nPlease see [Code Signing](https://www.electron.build/code-signing).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "certificatePassword": {
-          "description": "The password to the certificate provided in `certificateFile`. Please use it only if you cannot use env variable `CSC_KEY_PASSWORD` (`WIN_CSC_KEY_PASSWORD`) for some reason.\nPlease see [Code Signing](https://www.electron.build/code-signing).",
+          "description": "Path to the certificate file containing the public certificate chain (.crt / .cer / .pfx).\nThe private key is NOT read from this file — it is provided by the HSM via `cryptoServiceProvider`.",
           "type": [
             "null",
             "string"
           ]
         },
         "certificateSha1": {
-          "description": "The SHA1 hash of the signing certificate. The SHA1 hash is commonly specified when multiple certificates satisfy the criteria specified by the remaining switches. Works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).",
+          "description": "The SHA1 thumbprint of the certificate in the Windows certificate store.",
           "type": [
             "null",
             "string"
           ]
         },
         "certificateSubjectName": {
-          "description": "The name of the subject of the signing certificate, which is often labeled with the field name `issued to`. Required only for EV Code Signing and works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).",
+          "description": "The subject name of the certificate in the Windows certificate store.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "cryptoServiceProvider": {
+          "description": "The name of the cryptographic service provider (CSP) that holds the private key.\nMaps to signtool's `/csp` flag. Examples:\n- Google Cloud KMS: `\"Google Cloud KMS Provider\"`\n- Smart card / FIPS token: `\"Microsoft Base Smart Card Crypto Provider\"`\n\nRequires `toolsets.winCodeSign: \"1.x\"`. Windows-only — use `type: \"pkcs11\"` on macOS/Linux.",
+          "type": "string"
+        },
+        "keyContainer": {
+          "description": "The key container name within the CSP. Maps to signtool's `/kc` flag.\n\nExample for Google Cloud KMS:\n`\"projects/PROJECT_ID/locations/LOCATION/keyRings/KEY_RING/cryptoKeys/KEY_NAME/cryptoKeyVersions/1\"`",
+          "type": "string"
+        },
+        "publisherName": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "[The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided.\nDefaults to common name from your code signing certificate."
+        },
+        "rfc3161TimeStampServer": {
+          "default": "http://timestamp.digicert.com",
+          "description": "The URL of the RFC 3161 time stamp server.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "sign": {
+          "anyOf": [
+            {
+              "typeof": "function"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "The custom function (or path to file or module id) to sign Windows executables."
+        },
+        "signingHashAlgorithms": {
+          "anyOf": [
+            {
+              "items": {
+                "enum": [
+                  "sha1",
+                  "sha256"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "['sha1', 'sha256']",
+          "description": "Array of signing algorithms used. For AppX `sha256` is always used."
+        },
+        "timeStampServer": {
+          "default": "http://timestamp.digicert.com",
+          "description": "The URL of the time stamp server.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "type": {
+          "const": "hsm",
+          "type": "string"
+        }
+      },
+      "required": [
+        "cryptoServiceProvider",
+        "keyContainer",
+        "type"
+      ],
+      "type": "object"
+    },
+    "WindowsPkcs11SigningConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "additionalCertificateFile": {
+          "description": "The path to an additional certificate file you want to add to the signature block.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "certificateFile": {
+          "description": "Optional path to a certificate chain file to accompany the PKCS#11 key.\nIf omitted the certificate embedded in the token is used.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "pkcs11KeyUri": {
+          "description": "RFC 7512 PKCS#11 URI identifying the private key within the module.\nMaps to osslsigncode's `-key` parameter.\n\nExample: `\"pkcs11:token=MyToken;object=MyKey;type=private\"`\n\nMust be paired with `pkcs11Module`.",
+          "type": "string"
+        },
+        "pkcs11Module": {
+          "description": "Path to the PKCS#11 shared library (`.so` on Linux, `.dylib` on macOS).\nThe library must be installed separately — electron-builder does not bundle it.\n\nExample: `\"/usr/lib/x86_64-linux-gnu/opensc-pkcs11.so\"`\n\nMust be paired with `pkcs11KeyUri`.",
+          "type": "string"
+        },
+        "publisherName": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "[The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided.\nDefaults to common name from your code signing certificate."
+        },
+        "rfc3161TimeStampServer": {
+          "default": "http://timestamp.digicert.com",
+          "description": "The URL of the RFC 3161 time stamp server.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "sign": {
+          "anyOf": [
+            {
+              "typeof": "function"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "The custom function (or path to file or module id) to sign Windows executables."
+        },
+        "signingHashAlgorithms": {
+          "anyOf": [
+            {
+              "items": {
+                "enum": [
+                  "sha1",
+                  "sha256"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "['sha1', 'sha256']",
+          "description": "Array of signing algorithms used. For AppX `sha256` is always used."
+        },
+        "timeStampServer": {
+          "default": "http://timestamp.digicert.com",
+          "description": "The URL of the time stamp server.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "type": {
+          "const": "pkcs11",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pkcs11KeyUri",
+        "pkcs11Module",
+        "type"
+      ],
+      "type": "object"
+    },
+    "WindowsSigntoolSigningConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "additionalCertificateFile": {
+          "description": "The path to an additional certificate file you want to add to the signature block.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "certificateFile": {
+          "description": "The path to the *.pfx or *.p12 certificate file. Prefer the `WIN_CSC_LINK` environment\nvariable when possible. See [Code Signing](https://www.electron.build/code-signing).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "certificatePassword": {
+          "description": "The password to the certificate provided in `certificateFile`. Prefer the\n`WIN_CSC_KEY_PASSWORD` environment variable when possible.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "certificateSha1": {
+          "description": "The SHA1 hash of the signing certificate. Works only on Windows (or macOS with Parallels Desktop).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "certificateSubjectName": {
+          "description": "The name of the subject of the signing certificate. Required for EV Code Signing.\nWorks only on Windows (or macOS with Parallels Desktop).",
           "type": [
             "null",
             "string"
@@ -8440,7 +8659,7 @@
               ]
             }
           ],
-          "description": "The custom function (or path to file or module id) to sign Windows executables"
+          "description": "The custom function (or path to file or module id) to sign Windows executables."
         },
         "signingHashAlgorithms": {
           "anyOf": [
@@ -8468,8 +8687,15 @@
             "null",
             "string"
           ]
+        },
+        "type": {
+          "const": "signtool",
+          "type": "string"
         }
       },
+      "required": [
+        "type"
+      ],
       "type": "object"
     }
   },

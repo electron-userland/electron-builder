@@ -55,7 +55,15 @@ export { BackgroundAlignment, BackgroundScaling, PkgBackgroundOptions, PkgOption
 export { AsarOptions, FileSet, FilesBuildOptions, PlatformSpecificBuildOptions, Protocol, ReleaseInfo } from "./options/PlatformSpecificBuildOptions.js"
 export { PlugDescriptor, SlotDescriptor, SnapcraftOptions } from "./options/SnapOptions.js"
 export { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions.js"
-export { WindowsAzureSigningConfiguration, WindowsConfiguration, WindowsSigntoolConfiguration } from "./options/winOptions.js"
+export {
+  WindowsAzureSigningConfig,
+  WindowsConfiguration,
+  WindowsHsmSigningConfig,
+  WindowsPkcs11SigningConfig,
+  WindowsSigningConfiguration,
+  WindowsSigntoolFamilyConfig,
+  WindowsSigntoolSigningConfig,
+} from "./options/winOptions.js"
 export { BuildResult, Packager } from "./packager.js"
 export { ElectronGetOptions } from "./util/electronGet.js"
 export { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi.js"
@@ -72,6 +80,9 @@ export {
   WindowsSignTaskConfiguration,
   WindowsSignToolManager,
 } from "./codeSign/win/windowsSignToolManager.js"
+export { HsmSignManager } from "./codeSign/win/hsmSignManager.js"
+export { Pkcs11SignManager } from "./codeSign/win/pkcs11SignManager.js"
+export { SigntoolSignManager } from "./codeSign/win/signtoolBaseSignManager.js"
 export { ToolInfo } from "./util/bundledTool.js"
 export { ForgeOptions, buildForge } from "./forge-maker.js"
 export { Framework, PrepareApplicationStageDirectoryOptions } from "./Framework.js"

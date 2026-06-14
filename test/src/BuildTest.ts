@@ -357,7 +357,7 @@ test.ifNotWindows("win smart unpack", ({ expect }) => {
           }
         },
         win: {
-          signAndEditExecutable: false, // setting `true` will fail on arm64 macs, even within docker container since rcedit doesn't work within wine on arm64
+          sign: false,
         },
       },
     },
