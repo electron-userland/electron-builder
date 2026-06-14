@@ -6,13 +6,6 @@ export function isAutoDiscoveryCodeSignIdentity() {
   return process.env.CSC_IDENTITY_AUTO_DISCOVERY !== "false"
 }
 
-// Allow signing with an untrusted self-signed identity (e.g. local dev signing without an Apple Developer
-// membership). Off by default; when enabled, identity discovery also considers certificates that are not
-// trusted by the system. For development/testing only — such artifacts cannot be notarized or distributed.
-export function isAllowSelfSignedIdentity() {
-  return isEnvTrue(process.env.CSC_ALLOW_SELF_SIGNED)
-}
-
 export function isCscForPullRequest() {
   return isEnvTrue(process.env.CSC_FOR_PULL_REQUEST)
 }

@@ -16,7 +16,7 @@ test.ifNotWindows("tar.gz", ({ expect }) => createMacTargetTest(expect, ["tar.gz
 
 // test.ifNotWindows("tar.xz", createTargetTest(["tar.xz"], ["Test App ßW-1.1.0-mac.tar.xz"]))
 
-const it = process.env.CSC_KEY_PASSWORD == null ? test.skip : test.ifMac
+const it = test.ifMac
 
 it("pkg", ({ expect }) => createMacTargetTest(expect, ["pkg"]))
 

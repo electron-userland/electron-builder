@@ -1,5 +1,3 @@
-export const MAC_CSC_LINK = process.env.MAC_CSC_LINK as string
-
 // Generated with `electron-builder create-self-signed-cert -p <publisher name>`
 // noinspection SpellCheckingInspection
 export const WIN_CSC_LINK =

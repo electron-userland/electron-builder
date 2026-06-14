@@ -17,8 +17,8 @@ const PASSWORD = "eb-self-signed"
 
 /**
  * Generates an ephemeral, untrusted self-signed macOS code-signing identity (no Apple Developer membership
- * required) and returns it as a base64 PKCS#12. Intended for local/CI signing tests in combination with
- * `CSC_ALLOW_SELF_SIGNED=true`. The produced artifacts are NOT trusted/notarizable.
+ * required) and returns it as a base64 PKCS#12. Intended solely for electron-builder's own signing tests.
+ * The produced artifacts are NOT trusted/notarizable.
  *
  * @param certPrefix one of the Apple certificate prefixes without the trailing colon, e.g. `Developer ID Application`.
  */

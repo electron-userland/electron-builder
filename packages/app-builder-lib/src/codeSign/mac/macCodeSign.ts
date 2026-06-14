@@ -8,7 +8,7 @@ import { Lazy } from "lazy-val"
 import { homedir, tmpdir } from "os"
 import * as path from "path"
 import { getTempName } from "temp-file"
-import { isAllowSelfSignedIdentity, isAutoDiscoveryCodeSignIdentity, isCscForPullRequest, isTravis } from "../../util/flags.js"
+import { isAutoDiscoveryCodeSignIdentity, isCscForPullRequest, isTravis } from "../../util/flags.js"
 import { importCertificate } from "../codesign.js"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
@@ -222,7 +222,16 @@ export async function sign(opts: SignOptions): Promise<void> {
 
 export let findIdentityRawResult: Promise<Array<string>> | null = null
 
-let selfSignedIdentityWarningShown = false
+// Discovery of untrusted self-signed identities is OFF in production, and there is intentionally NO env var
+// or build-config option to enable it: an untrusted identity must never be silently accepted in a real
+// build. This in-process flag exists solely as a seam for electron-builder's own signing tests, which
+// provision an ephemeral self-signed cert and flip it via setAllowUntrustedSelfSignedIdentityForTesting().
+let allowUntrustedSelfSignedIdentity = false
+
+/** @internal Test-only. Enables discovery of untrusted self-signed code-signing identities. Never use in production. */
+export function setAllowUntrustedSelfSignedIdentityForTesting(value: boolean): void {
+  allowUntrustedSelfSignedIdentity = value
+}
 
 async function getValidIdentities(keychain?: string | null): Promise<Array<string>> {
   function addKeychain(args: Array<string>) {
@@ -253,17 +262,9 @@ async function getValidIdentities(keychain?: string | null): Promise<Array<strin
       exec("/usr/bin/security", addKeychain(["find-identity", "-v", "-p", "codesigning"])).then(it => it.trim().split("\n")),
     ]
 
-    // Also accept untrusted self-signed identities (e.g. local dev signing without an Apple Developer
-    // membership). `find-identity` without `-v` lists them; trusted identities discovered above still take
-    // precedence because they appear first and duplicates are de-duped below.
-    if (isAllowSelfSignedIdentity()) {
-      if (!selfSignedIdentityWarningShown) {
-        selfSignedIdentityWarningShown = true
-        log.warn(
-          null,
-          "CSC_ALLOW_SELF_SIGNED is enabled — untrusted self-signed identities will be accepted for code signing (development/testing only; such artifacts cannot be notarized or distributed)"
-        )
-      }
+    // Test-only seam: also accept untrusted self-signed identities. `find-identity` without `-v` lists them;
+    // trusted identities discovered above still take precedence (they appear first and dupes are de-duped).
+    if (allowUntrustedSelfSignedIdentity) {
       commands.push(exec("/usr/bin/security", addKeychain(["find-identity"])).then(it => it.trim().split("\n")))
     }
 

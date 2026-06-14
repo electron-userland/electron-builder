@@ -1,7 +1,7 @@
 export { AsarFilesystem, readAsar, readAsarJson } from "./asar/asar.js"
 export { AsarIntegrity } from "./asar/integrity.js"
 export { _testingOnly, readCertInfo } from "./codeSign/certInfo.js"
-export { createKeychain, findIdentity, isSignAllowed, removeKeychain } from "./codeSign/mac/macCodeSign.js"
+export { createKeychain, findIdentity, isSignAllowed, removeKeychain, setAllowUntrustedSelfSignedIdentityForTesting } from "./codeSign/mac/macCodeSign.js"
 export type { Identity } from "./codeSign/mac/macCodeSign.js"
 export { CustomWindowsSign, WindowsSignTaskConfiguration } from "./codeSign/win/windowsSignToolManager.js"
 export { Configuration, ToolsetConfig, ToolsetCustom } from "./configuration.js"

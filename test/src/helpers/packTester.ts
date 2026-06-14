@@ -14,9 +14,9 @@ import * as path from "path"
 import pathSorter from "path-sort"
 import { NtExecutable, NtExecutableResource } from "resedit"
 import { TmpDir } from "temp-file"
-import { getCollectorByPackageManager, PM } from "app-builder-lib/internal"
+import { getCollectorByPackageManager, PM, setAllowUntrustedSelfSignedIdentityForTesting } from "app-builder-lib/internal"
 import { promisify } from "util"
-import { MAC_CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
+import { WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
 import AdmZip from "adm-zip"
 // @ts-ignore
@@ -26,6 +26,8 @@ import { computeDefaultAppDirectory, installDependencies } from "app-builder-lib
 import { ELECTRON_VERSION } from "./testConfig"
 import { execSync } from "child_process"
 import { detectPackageManager } from "app-builder-lib/src/node-module-collector/packageManager"
+import { Lazy } from "lazy-val"
+import { createSelfSignedMacIdentity, SelfSignedMacIdentity } from "./macSelfSignedIdentity"
 
 const PACKAGE_MANAGER_VERSION_MAP = {
   [PM.NPM]: { cli: "npm", version: "9.8.1" },
@@ -148,7 +150,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
   }
 
   if (checkOptions.signed) {
-    packagerOptions = signed(packagerOptions)
+    packagerOptions = await signed(packagerOptions)
   }
   if (checkOptions.signedWin) {
     configuration.cscLink = WIN_CSC_LINK
@@ -815,15 +817,49 @@ export function platform(platform: Platform): PackagerOptions {
   }
 }
 
-export function signed(packagerOptions: PackagerOptions): PackagerOptions {
-  if (process.env.CSC_KEY_PASSWORD == null) {
-    log.warn({ reason: "CSC_KEY_PASSWORD is not defined" }, "macOS code signing is not tested")
-  } else {
-    if (packagerOptions.config == null) {
-      ;(packagerOptions as any).config = {}
-    }
-    ;(packagerOptions.config as any).cscLink = MAC_CSC_LINK
+// Single source of the macOS signing identity for tests, resolved once per worker. If a real cert is
+// provided via env (e.g. a CI secret: MAC_CSC_LINK + CSC_KEY_PASSWORD) it is used as-is; otherwise an
+// ephemeral, untrusted self-signed identity is generated and electron-builder's test-only seam
+// (setAllowUntrustedSelfSignedIdentityForTesting) is flipped on so discovery accepts it — there is no env
+// var or build-config option that can do this in a real build. The credentials are injected into each
+// build's config by signed(), deliberately NOT placed in the global process env.
+const signingCredentialsInfo = new Lazy<SelfSignedMacIdentity>(async () => {
+  const cscLink = process.env.MAC_CSC_LINK
+  const cscKeyPassword = process.env.CSC_KEY_PASSWORD
+  if (cscLink != null && cscKeyPassword != null) {
+    log.info({ reason: "MAC_CSC_LINK is defined" }, "using provided macOS code-signing identity")
+    return { commonName: "provided", p12Base64: cscLink, password: cscKeyPassword }
   }
+  const tmpDir = new TmpDir("mac-signing")
+  try {
+    // Only an application identity: `codesign` accepts an untrusted self-signed cert, but `productbuild`
+    // (pkg installer signing) requires a system-trusted identity and rejects self-signed ones, so a self-
+    // signed pkg installer stays unsigned (the app inside is still codesigned).
+    const application = await createSelfSignedMacIdentity("Developer ID Application", tmpDir)
+    setAllowUntrustedSelfSignedIdentityForTesting(true)
+    log.info("provisioned ephemeral self-signed Developer ID Application identity for code-signing tests")
+    return application
+  } finally {
+    await tmpDir.cleanup()
+  }
+})
+
+/** Resolves the macOS signing identity used by the tests (real env cert if provided, else ephemeral self-signed). */
+export function getMacSigningIdentity(): Promise<SelfSignedMacIdentity> {
+  return signingCredentialsInfo.value
+}
+
+export async function signed(packagerOptions: PackagerOptions): Promise<PackagerOptions> {
+  if (process.platform !== "darwin") {
+    // codesign only runs on macOS; off-darwin the build is left unsigned (mac signing tests are .ifMac-gated).
+    return packagerOptions
+  }
+  const { p12Base64, password } = await getMacSigningIdentity()
+  if (packagerOptions.config == null) {
+    ;(packagerOptions as any).config = {}
+  }
+  ;(packagerOptions.config as any).cscLink = p12Base64
+  ;(packagerOptions.config as any).cscKeyPassword = password
   return packagerOptions
 }
 
