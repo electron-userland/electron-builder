@@ -274,8 +274,6 @@ jobs:
         env:
           VITEST_SHARD_INDEX: ${{ matrix.shard }}
           VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
-          MAC_CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
-          # CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
 
       - name: Upload smart cache artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

@@ -102,6 +102,7 @@ async function main() {
       // Allow test metadata
       includeTaskLocation: true,
       setupFiles: [__dirname + "/vitest-setup.ts", __dirname + "/vitest-heavy-mutex.ts"],
+      globalSetup: [__dirname + "/mac-signing-setup.ts"],
       include: [`test/src/**/${includeGlob}.ts`],
 
       printConsoleTrace: true,

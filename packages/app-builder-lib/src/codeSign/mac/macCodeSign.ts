@@ -8,7 +8,7 @@ import { Lazy } from "lazy-val"
 import { homedir, tmpdir } from "os"
 import * as path from "path"
 import { getTempName } from "temp-file"
-import { isAutoDiscoveryCodeSignIdentity, isCscForPullRequest, isTravis } from "../../util/flags.js"
+import { isAllowSelfSignedIdentity, isAutoDiscoveryCodeSignIdentity, isCscForPullRequest, isTravis } from "../../util/flags.js"
 import { importCertificate } from "../codesign.js"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
@@ -107,7 +107,7 @@ const bundledCertKeychainAdded = new Lazy<void>(async () => {
   const keychainPath = path.join(cacheDir, "electron-builder-root-certs.keychain")
   const results = await Promise.all<any>([
     listUserKeychains(),
-    copyFile(path.join(import.meta.dirname, "..", "..", "certs", "root_certs.keychain"), tmpKeychainPath).then(() => rename(tmpKeychainPath, keychainPath)),
+    copyFile(path.join(import.meta.dirname, "..", "..", "..", "certs", "root_certs.keychain"), tmpKeychainPath).then(() => rename(tmpKeychainPath, keychainPath)),
   ])
   const list = results[0]
   if (!list.includes(keychainPath)) {
@@ -222,6 +222,8 @@ export async function sign(opts: SignOptions): Promise<void> {
 
 export let findIdentityRawResult: Promise<Array<string>> | null = null
 
+let selfSignedIdentityWarningShown = false
+
 async function getValidIdentities(keychain?: string | null): Promise<Array<string>> {
   function addKeychain(args: Array<string>) {
     if (keychain != null) {
@@ -234,7 +236,7 @@ async function getValidIdentities(keychain?: string | null): Promise<Array<strin
   if (result == null || keychain != null) {
     // https://github.com/electron-userland/electron-builder/issues/481
     // https://github.com/electron-userland/electron-builder/issues/535
-    result = Promise.all<Array<string>>([
+    const commands = [
       exec("/usr/bin/security", addKeychain(["find-identity", "-v"])).then(it =>
         it
           .trim()
@@ -249,11 +251,34 @@ async function getValidIdentities(keychain?: string | null): Promise<Array<strin
           })
       ),
       exec("/usr/bin/security", addKeychain(["find-identity", "-v", "-p", "codesigning"])).then(it => it.trim().split("\n")),
-    ]).then(it => {
-      const array = it[0]
-        .concat(it[1])
+    ]
+
+    // Also accept untrusted self-signed identities (e.g. local dev signing without an Apple Developer
+    // membership). `find-identity` without `-v` lists them; trusted identities discovered above still take
+    // precedence because they appear first and duplicates are de-duped below.
+    if (isAllowSelfSignedIdentity()) {
+      if (!selfSignedIdentityWarningShown) {
+        selfSignedIdentityWarningShown = true
+        log.warn(
+          null,
+          "CSC_ALLOW_SELF_SIGNED is enabled — untrusted self-signed identities will be accepted for code signing (development/testing only; such artifacts cannot be notarized or distributed)"
+        )
+      }
+      commands.push(exec("/usr/bin/security", addKeychain(["find-identity"])).then(it => it.trim().split("\n")))
+    }
+
+    result = Promise.all<Array<string>>(commands).then(it => {
+      const array = it
+        .flat()
         .filter(
-          it => !it.includes("(Missing required extension)") && !it.includes("valid identities found") && !it.includes("iPhone ") && !it.includes("com.apple.idms.appleid.prd.")
+          it =>
+            !it.includes("(Missing required extension)") &&
+            !it.includes("identities found") &&
+            !it.includes("Policy: X.509 Basic") &&
+            !it.includes("Matching identities") &&
+            !it.includes("Valid identities only") &&
+            !it.includes("iPhone ") &&
+            !it.includes("com.apple.idms.appleid.prd.")
         )
         // remove 1)
         .map(it => it.substring(it.indexOf(")") + 1).trim())

@@ -4,9 +4,14 @@ import { CheckingMacPackager } from "../helpers/CheckingPackager.js"
 import { assertPack, createMacTargetTest, signed } from "../helpers/packTester.js"
 
 describe.ifEnv(process.platform === "darwin" && process.env.CSC_KEY_PASSWORD != null)("mas", () => {
-  test("mas", ({ expect }) => createMacTargetTest(expect, ["mas"]))
-  test.ifMac("dev", ({ expect }) => createMacTargetTest(expect, ["mas-dev"]))
-  test.ifMac("mas and 7z", ({ expect }) => createMacTargetTest(expect, ["mas", "7z"]))
+  // MAS pack+sign requires Apple-issued identities ("Apple Distribution" / "3rd Party Mac Developer …") and
+  // a provisioning profile, which a self-signed identity cannot satisfy — so skip these when running with
+  // the ephemeral self-signed flow (CSC_ALLOW_SELF_SIGNED). The entitlement-resolution tests below use
+  // CheckingMacPackager (no real signing) and still run.
+  const masSignTest = process.env.CSC_ALLOW_SELF_SIGNED === "true" ? test.skip : test.ifMac
+  masSignTest("mas", ({ expect }) => createMacTargetTest(expect, ["mas"]))
+  masSignTest("dev", ({ expect }) => createMacTargetTest(expect, ["mas-dev"]))
+  masSignTest("mas and 7z", ({ expect }) => createMacTargetTest(expect, ["mas", "7z"]))
 
   const entitlement = (fileName: string) => path.join("build", fileName)
   const entitlementsConfig = {
