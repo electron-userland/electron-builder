@@ -1,4 +1,4 @@
-import Ajv, { ErrorObject, ValidateFunction } from "ajv"
+import { Ajv, ErrorObject, ValidateFunction } from "ajv"
 
 export type PostFormatter = (formattedError: string, error: ErrorObject) => string
 
@@ -42,7 +42,12 @@ export function validateSchema(schema: unknown, data: unknown, config: Validatio
   })
 
   const header = `Invalid configuration object. ${name} has been initialized using a configuration object that does not match the API schema.`
-  throw new Error(`${header}\n${formatted.join("\n")}`)
+  const guidance = [
+    `Please check the documentation to ensure that your configuration matches the expected schema: https://www.electron.build/configuration`,
+    `If you recently upgraded electron-builder to v27, please run \`electron-builder migrate-schema\` to automatically update your configuration.`,
+    `Check the release notes for breaking changes: https://www.electron.build/docs/migration/v26-to-v27`,
+  ]
+  throw new Error(`${header}\n${formatted.join("\n")}\n${guidance.join("\n")}`)
 }
 
 /**
@@ -74,9 +79,16 @@ function filterRelevantErrors(errors: ErrorObject[]): ErrorObject[] {
 
   const result: ErrorObject[] = []
   for (const [path, group] of byPath) {
-    // When multiple branch-failures share the same path, prefer the anyOf
-    // parent error (one concise "should be one of these" message).
     if (group.length > 1) {
+      // additionalProperties errors are the most actionable ("has unknown
+      // property X") — prefer them over anyOf-parent collapse or type noise.
+      const additionalProps = group.filter(e => e.keyword === "additionalProperties")
+      if (additionalProps.length > 0) {
+        result.push(...additionalProps)
+        continue
+      }
+      // For other multi-error groups, prefer the anyOf parent (one concise
+      // "should be one of these" message).
       const parent = errors.find(e => e.instancePath === path && compositeKeywords.has(e.keyword))
       if (parent != null) {
         result.push(parent)

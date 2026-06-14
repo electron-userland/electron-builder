@@ -1,7 +1,8 @@
-import { Arch, exists, resolveEnvToolsetPath, use } from "builder-util"
+import { Arch } from "builder-util"
 import * as path from "path"
-import { ToolsetConfig } from "../configuration"
-import { downloadBuilderToolset } from "../util/electronGet"
+import { ToolsetConfig } from "../configuration.js"
+import { downloadBuilderToolset } from "../util/electronGet.js"
+import { getCustomToolsetPath } from "./custom.js"
 
 export const appimageChecksums = {
   "0.0.0": {
@@ -15,7 +16,7 @@ export const appimageChecksums = {
   },
 } as const
 
-export async function getAppImageTools(appimageToolVersion: ToolsetConfig["appimage"], targetArch: Arch) {
+export async function getAppImageTools(toolset: ToolsetConfig["appimage"], targetArch: Arch, resourcesDir: string) {
   const runtimeArch = targetArch === Arch.armv7l ? "arm32" : targetArch === Arch.arm64 ? "arm64" : targetArch === Arch.ia32 ? "ia32" : "x64"
 
   // Static-runtime layout: tools at root, runtimes/ subdir, lib/{arch}/ subdir
@@ -34,7 +35,6 @@ export async function getAppImageTools(appimageToolVersion: ToolsetConfig["appim
     // Runtime files live at root; armv7l target uses "armv7l" filename, not the internal "arm32" alias
     const runtimeSuffix = targetArch === Arch.armv7l ? "armv7l" : runtimeArch
     // FUSE2 tree only ships lib/ia32 and lib/x64; arm targets fall back to x64 here
-    // but buildLegacyFuse2AppImage only copies runtimeLibraries for x64/ia32.
     const libArch = targetArch === Arch.ia32 ? "ia32" : "x64"
     return {
       mksquashfs: path.resolve(artifactPath, toolRoot, "mksquashfs"),
@@ -44,35 +44,32 @@ export async function getAppImageTools(appimageToolVersion: ToolsetConfig["appim
     }
   }
 
-  const isFuse2 = appimageToolVersion === "0.0.0" || appimageToolVersion == null
+  // null → modern default "1.0.3"
+  const isFuse2 = (toolset ?? "1.0.3") === "0.0.0"
 
-  const download = async () => {
-    if (isFuse2) {
-      const filenameWithExt = "appimage-12.0.1.7z"
-      const artifactPath = await downloadBuilderToolset({
-        releaseName: "appimage-12.0.1",
-        filenameWithExt,
-        checksums: { [filenameWithExt]: appimageChecksums["0.0.0"][filenameWithExt] },
-        githubOrgRepo: "electron-userland/electron-builder-binaries",
-      })
-      return getFuse2Paths(artifactPath)
-    }
-
-    const filenameWithExt = "appimage-tools-runtime-20251108.tar.gz"
+  if (isFuse2) {
+    const filenameWithExt = "appimage-12.0.1.7z"
     const artifactPath = await downloadBuilderToolset({
-      releaseName: `appimage@${appimageToolVersion}`,
+      releaseName: "appimage-12.0.1",
       filenameWithExt,
-      checksums: { [filenameWithExt]: appimageChecksums[appimageToolVersion][filenameWithExt] },
+      checksums: { [filenameWithExt]: appimageChecksums["0.0.0"][filenameWithExt] },
       githubOrgRepo: "electron-userland/electron-builder-binaries",
     })
-    return getPaths(artifactPath)
+    return getFuse2Paths(artifactPath)
   }
 
-  const artifact = use(await resolveEnvToolsetPath("APPIMAGE_TOOLS_PATH", "directory"), it => (isFuse2 ? getFuse2Paths(it) : getPaths(it))) ?? (await download())
-  for (const entry of Object.entries(artifact)) {
-    if (!(await exists(entry[1]))) {
-      throw new Error(`AppImage tool ${entry[0]} not found at path: ${entry[1]}`)
-    }
+  if (typeof toolset === "object" && toolset != null) {
+    const vendorPath = await getCustomToolsetPath(toolset, resourcesDir)
+    return getPaths(vendorPath)
   }
-  return artifact
+
+  const effectiveVersion = (toolset ?? "1.0.3") as "1.0.2" | "1.0.3"
+  const filenameWithExt = "appimage-tools-runtime-20251108.tar.gz"
+  const artifactPath = await downloadBuilderToolset({
+    releaseName: `appimage@${effectiveVersion}`,
+    filenameWithExt,
+    checksums: { [filenameWithExt]: appimageChecksums[effectiveVersion][filenameWithExt] },
+    githubOrgRepo: "electron-userland/electron-builder-binaries",
+  })
+  return getPaths(artifactPath)
 }

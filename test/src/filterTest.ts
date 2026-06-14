@@ -1,5 +1,5 @@
 import { FilterStats } from "builder-util"
-import { FileMatcher, getFileMatchers, GetFileMatchersOptions } from "app-builder-lib/out/fileMatcher"
+import { FileMatcher, getFileMatchers, GetFileMatchersOptions } from "app-builder-lib/internal"
 import * as path from "path"
 
 // ---------------------------------------------------------------------------
@@ -241,7 +241,7 @@ describe("FileMatcher – computeParsedPatterns: auto-expand bare directory name
 
 describe("FileMatcher – createFilter with excludePatterns", () => {
   test("excludePatterns exclude matched files but not directories", ({ expect }) => {
-    const { Minimatch } = require("app-builder-lib/node_modules/minimatch")
+    const { Minimatch } = require("minimatch")
     const m = new FileMatcher("/app", "/out", noMacro, ["**/*"])
     m.excludePatterns = [new Minimatch("**/*.map", { dot: true })]
     const filter = m.createFilter()
@@ -309,12 +309,6 @@ describe("getFileMatchers – string patterns in config.files", () => {
     const result = getFileMatchers({} as any, "files", "/out", customOpts)
     expect(result).not.toBeNull()
     expect(result![0].patterns).toContain("extra/**")
-  })
-
-  test("asarUnpack with object pattern throws", ({ expect }) => {
-    expect(() => getFileMatchers({ asarUnpack: [{ from: ".", filter: ["*.node"] }] } as any, "asarUnpack", "/out", opts)).toThrow(
-      'Advanced file copying not supported for "asarUnpack"'
-    )
   })
 
   test("extraDistFiles skips config[name] and only reads customBuildOptions", ({ expect }) => {

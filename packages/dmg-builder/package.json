@@ -1,30 +1,51 @@
 {
-	"name": "dmg-builder",
-	"version": "26.15.0",
-	"main": "out/dmgUtil.js",
-	"author": "Vladimir Krivosheev",
-	"license": "MIT",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/electron-userland/electron-builder.git",
-		"directory": "packages/dmg-builder"
-	},
-	"bugs": "https://github.com/electron-userland/electron-builder/issues",
-	"homepage": "https://github.com/electron-userland/electron-builder",
-	"files": [
-		"out",
-		"templates"
-	],
-	"dependencies": {
-		"app-builder-lib": "workspace:*",
-		"builder-util": "workspace:*",
-		"fs-extra": "^10.1.0",
-		"js-yaml": "^4.1.0"
-	},
-	"devDependencies": {
-		"@types/fs-extra": "9.0.13",
-		"@types/js-yaml": "4.0.3",
-		"temp-file": "3.4.0"
-	},
-	"typings": "./out/dmg.d.ts"
+  "name": "dmg-builder",
+  "version": "27.0.0-alpha.2",
+  "type": "module",
+  "main": "./dist/dmgUtil.js",
+  "exports": {
+    ".": {
+      "types": "./dist/dmgUtil.d.ts",
+      "import": "./dist/dmgUtil.js",
+      "require": "./dist/dmgUtil.js"
+    },
+    "./internal": {
+      "types": "./dist/indexInternal.d.ts",
+      "import": "./dist/indexInternal.js",
+      "require": "./dist/indexInternal.js"
+    }
+  },
+  "author": "Vladimir Krivosheev",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/electron-userland/electron-builder.git",
+    "directory": "packages/dmg-builder"
+  },
+  "bugs": "https://github.com/electron-userland/electron-builder/issues",
+  "homepage": "https://github.com/electron-userland/electron-builder",
+  "files": [
+    "dist",
+    "templates"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json --force",
+    "watch": "tsc --build tsconfig.build.json --watch"
+  },
+  "dependencies": {
+    "app-builder-lib": "workspace:*",
+    "builder-util": "workspace:*",
+    "builder-util-runtime": "workspace:*",
+    "fs-extra": "^11.3.0",
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "9.0.13",
+    "@types/js-yaml": "4.0.3",
+    "temp-file": "3.4.0"
+  },
+  "types": "./dist/dmgUtil.d.ts"
 }

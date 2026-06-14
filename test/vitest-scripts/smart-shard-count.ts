@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env tsx
 
 import { getAllTestFiles } from "./vitest-config/file-discovery"
 import { buildWeightedFiles, computeShardCount, splitIntoShards, WeightedFile } from "./vitest-config/shard-builder"

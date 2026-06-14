@@ -67,10 +67,10 @@ jobs:
     uses: ./.github/workflows/docker-build.yml
 
   # -------------------------
-  # Shard Planning (unified job outputting map for all platforms)
+  # Linting + Shard Planning (unified job outputting map for all platforms)
   # -------------------------
 
-  shard-plan:
+  validate-and-shard:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     outputs:
@@ -86,6 +86,12 @@ jobs:
           cache-key: v-39.8.5-linux-electron
           cache-path: ~/.cache/electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
+
+      - name: Validate files
+        run: pnpm ci:validate
+
+      - name: Lint files
+        run: pnpm lint
 
       - name: Output shard plan
         run: pnpm ci:test:count
@@ -117,7 +123,7 @@ jobs:
 
   test-linux:
     name: Test Linux (Shard ${{ matrix.shard }})
-    needs: [check-if-docker-build, run-docker-build, shard-plan]
+    needs: [check-if-docker-build, run-docker-build, validate-and-shard]
     if: |
       always() &&
       needs.check-if-docker-build.result == 'success' &&
@@ -125,7 +131,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: ${{ fromJson(needs.shard-plan.outputs.linux) }}
+        shard: ${{ fromJson(needs.validate-and-shard.outputs.linux) }}
         include:
           - platform: linux
             runner: ubuntu-latest
@@ -150,7 +156,7 @@ jobs:
 
       - name: Download test-runner if exists
         if: needs.run-docker-build.result == 'success'
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
           path: ${{ runner.temp }}
@@ -177,7 +183,7 @@ jobs:
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
 
       - name: Upload smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: vitest-smart-cache-${{ matrix.platform }}-${{ matrix.shard }}
@@ -187,11 +193,11 @@ jobs:
 
   test-windows:
     name: Test Windows (Shard ${{ matrix.shard }})
-    needs: shard-plan
+    needs: validate-and-shard
     strategy:
       fail-fast: false
       matrix:
-        shard: ${{ fromJson(needs.shard-plan.outputs.windows) }}
+        shard: ${{ fromJson(needs.validate-and-shard.outputs.windows) }}
         include:
           - platform: windows
             runner: windows-latest
@@ -226,7 +232,7 @@ jobs:
           VITEST_SMART_CACHE_FILE: ${{ github.workspace }}\test\vitest-scripts\_vitest-smart-cache.json
 
       - name: Upload smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: vitest-smart-cache-${{ matrix.platform }}-${{ matrix.shard }}
@@ -236,11 +242,11 @@ jobs:
 
   test-macos:
     name: Test macOS (Shard ${{ matrix.shard }})
-    needs: shard-plan
+    needs: validate-and-shard
     strategy:
       fail-fast: false
       matrix:
-        shard: ${{ fromJson(needs.shard-plan.outputs.macos) }}
+        shard: ${{ fromJson(needs.validate-and-shard.outputs.macos) }}
         include:
           - platform: macos
             runner: macos-26
@@ -272,7 +278,7 @@ jobs:
           # CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
 
       - name: Upload smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: vitest-smart-cache-${{ matrix.platform }}-${{ matrix.shard }}
@@ -315,7 +321,7 @@ jobs:
 
       - name: Download test-runner if exists
         if: needs.run-docker-build.result == 'success'
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
           path: ${{ runner.temp }}
@@ -348,7 +354,7 @@ jobs:
           ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}"
 
       - name: Upload smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: vitest-smart-cache-updater
@@ -411,7 +417,7 @@ jobs:
           RESET_VITEST_SHARD_CACHE: ${{ inputs.reset-vitest-smart-cache }}
 
       - name: Upload smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: vitest-smart-cache-snap-${{ matrix.core }}
@@ -475,7 +481,7 @@ jobs:
             -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}
 
       - name: Upload smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: vitest-smart-cache-e2e-${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST }}
@@ -498,77 +504,14 @@ jobs:
       - uses: ./.github/actions/pnpm
 
       - name: Download all smart cache artifacts
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           pattern: vitest-smart-cache-*
           path: smart-cache-artifacts
         continue-on-error: true
 
       - name: Merge cache files
-        run: |
-          mkdir -p merged-cache
-
-          # Create merge script
-          cat > merge-caches.js << 'EOF'
-          const fs = require('fs');
-          const path = require('path');
-
-          const artifactsDir = 'smart-cache-artifacts';
-          const outputFile = 'merged-cache/_vitest-smart-cache.json';
-          const repoCommittedCache = 'test/vitest-scripts/_vitest-smart-cache.json';
-
-          let mergedCache = {};
-          let filesProcessed = 0;
-
-          // Start with repo-committed cache as base (if it exists)
-          if (fs.existsSync(repoCommittedCache)) {
-            console.log('Loading base cache from repo-committed file');
-            try {
-              mergedCache = JSON.parse(fs.readFileSync(repoCommittedCache, 'utf8'));
-              console.log(`Base cache has ${Object.keys(mergedCache).length} entries`);
-            } catch (err) {
-              console.error('Error reading repo-committed cache:', err.message);
-            }
-          }
-
-          // Check if artifacts directory exists
-          if (!fs.existsSync(artifactsDir)) {
-            console.log('No smart cache artifacts found to merge, using base cache only');
-            fs.writeFileSync(outputFile, JSON.stringify(mergedCache, null, 2));
-            process.exit(0);
-          }
-
-          // Read all cache files from test runs
-          const platforms = fs.readdirSync(artifactsDir);
-
-          platforms.forEach(platform => {
-            const cacheFile = path.join(artifactsDir, platform, '_vitest-smart-cache.json');
-            if (fs.existsSync(cacheFile)) {
-              console.log(`Reading cache from ${platform}`);
-              try {
-                const cache = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
-                filesProcessed++;
-
-                // Deep-merge top-level objects so all shards' new timing data is preserved
-                Object.keys(cache).forEach(key => {
-                  if (mergedCache[key] && typeof mergedCache[key] === 'object' && !Array.isArray(mergedCache[key])) {
-                    mergedCache[key] = { ...mergedCache[key], ...cache[key] };
-                  } else {
-                    mergedCache[key] = cache[key];
-                  }
-                });
-              } catch (err) {
-                console.error(`Error reading cache from ${platform}:`, err.message);
-              }
-            }
-          });
-
-          console.log(`Processed ${filesProcessed} cache files from test runs`);
-          console.log(`Final merged cache has ${Object.keys(mergedCache).length} entries`);
-          fs.writeFileSync(outputFile, JSON.stringify(mergedCache, null, 2));
-          EOF
-
-          node merge-caches.js
+        run: pnpm ci:test:merge-cache
 
       - name: Delete individual cache artifacts
         uses: geekyeggo/delete-artifact@f275313e70c08f6120db482d7a6b98377786765b # v5.1.0
@@ -592,7 +535,7 @@ jobs:
           fi
 
       - name: Upload vitest smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: vitest-smart-cache-${{ env.VITEST_CACHE_REF }}

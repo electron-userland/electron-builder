@@ -16,7 +16,7 @@ function makeMockPackager(resourceFiles: string[], buildResourcesDir: string) {
     debugLogger: { add: () => undefined },
     // Minimal getResource: returns the path if it's an existing absolute path,
     // else resolves relative to buildResourcesDir
-    getResource: async (custom: string | null | undefined) => {
+    getResource: (custom: string | null | undefined) => {
       if (custom == null) {
         return null
       }

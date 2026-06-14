@@ -1,7 +1,7 @@
 import * as fs from "fs"
 import * as path from "path"
 import { CACHE_FILE, SupportedPlatforms } from "./smart-config"
-import { TestSpecification } from "vitest/dist/node"
+import { TestSpecification } from "vitest/node"
 import { TEST_SRC_ROOT } from "./vitest-smart-reporter"
 
 export interface TestStats {
@@ -87,7 +87,7 @@ export function saveCache(cache: SmartCache) {
 }
 
 export function getFileStats(cache: SmartCache, f: TestSpecification) {
-  const file = path.relative(TEST_SRC_ROOT, f.moduleId)
+  const file = path.relative(TEST_SRC_ROOT, f.moduleId).split(path.sep).join("/")
   const stat = cache.files[file]
   return { stat, file }
 }

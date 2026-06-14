@@ -1,6 +1,7 @@
-import { resolveEnvToolsetPath } from "builder-util"
 import * as path from "path"
-import { downloadBuilderToolset } from "../util/electronGet"
+import { ToolsetConfig } from "../configuration.js"
+import { downloadBuilderToolset } from "../util/electronGet.js"
+import { getCustomToolsetPath } from "./custom.js"
 
 // no legacy toolset as macos arm64 BSD gtar/ar/lzip are not compatible with linux targets, so we always use newer toolset on macos for linux archives
 const linuxToolsMacChecksums = {
@@ -8,26 +9,22 @@ const linuxToolsMacChecksums = {
   "linux-tools-mac-darwin-x86_64.tar.gz": "7ee26dfbd0d2a4c2c83b55a9416a30cc84876eef01c6497ca49bb016a190c726",
 } as const
 
-export async function getLinuxToolsPath(): Promise<string> {
-  const envPath = await resolveEnvToolsetPath("LINUX_TOOLS_MAC_PATH", "directory")
-  if (envPath != null) {
-    return envPath
+export async function getLinuxToolsPath(toolset?: ToolsetConfig["linuxToolsMac"], resourcesDir?: string): Promise<string> {
+  if (typeof toolset === "object" && toolset != null) {
+    return getCustomToolsetPath(toolset, resourcesDir ?? "")
   }
   const arch = process.arch === "arm64" ? "arm64" : "x86_64"
-  const toolsetVersion = "1.0.0"
   const filename: keyof typeof linuxToolsMacChecksums = `linux-tools-mac-darwin-${arch}.tar.gz`
-  return await downloadBuilderToolset({
-    releaseName: `linux-tools-mac@${toolsetVersion}`,
+  return downloadBuilderToolset({
+    releaseName: `linux-tools-mac@${toolset ?? "1.0.0"}`,
     filenameWithExt: filename,
-    checksums: {
-      [filename]: linuxToolsMacChecksums[filename],
-    },
+    checksums: linuxToolsMacChecksums,
     githubOrgRepo: "electron-userland/electron-builder-binaries",
   })
 }
 
-export async function getLinuxToolsMacToolset() {
-  const linuxToolsPath = await getLinuxToolsPath()
+export async function getLinuxToolsMacToolset(toolset?: ToolsetConfig["linuxToolsMac"], resourcesDir?: string) {
+  const linuxToolsPath = await getLinuxToolsPath(toolset, resourcesDir)
   const bin = (pkg: string) => path.join(linuxToolsPath, "bin", pkg)
   return {
     ar: bin("ar"),

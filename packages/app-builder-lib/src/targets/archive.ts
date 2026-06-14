@@ -1,12 +1,14 @@
 import { debug7z, exec, exists, log, statOrNull, unlinkIfExists } from "builder-util"
-import { move } from "fs-extra"
 import * as path from "path"
 import { create } from "tar"
-import { TarOptionsWithAliasesAsync } from "tar/dist/commonjs/options"
+import type { TarOptionsWithAliasesAsync } from "tar"
 import { TmpDir } from "temp-file"
-import { CompressionLevel } from "../core"
-import { getPath7za } from "../toolsets/7zip"
-import { getLinuxToolsMacToolset } from "../toolsets/linuxToolsMac"
+import { CompressionLevel } from "../core.js"
+import { getLinuxToolsMacToolset } from "../toolsets/linuxToolsMac.js"
+import { ToolsetConfig } from "../configuration.js"
+import { getPath7za } from "../toolsets/7zip.js"
+import _fsExtra from "fs-extra"
+const { move } = _fsExtra
 
 const ALLOWED_7Z_FILTERS = new Set(["BCJ", "BCJ2", "ARM", "ARMT", "IA64", "PPC", "SPARC", "DELTA"])
 
@@ -23,10 +25,12 @@ type TarConfig = {
   dirToArchive: string
   isMacApp: boolean
   tempDirManager: TmpDir
+  linuxToolsMac: ToolsetConfig["linuxToolsMac"]
+  buildResourcesDir: string
 }
 
 /** @internal */
-export async function tar({ compression, format, outFile, dirToArchive, isMacApp, tempDirManager }: TarConfig): Promise<void> {
+export async function tar({ compression, format, outFile, dirToArchive, isMacApp, tempDirManager, linuxToolsMac, buildResourcesDir }: TarConfig): Promise<void> {
   const tarFile = await tempDirManager.getTempFile({ suffix: ".tar" })
   const tarArgs: TarOptionsWithAliasesAsync = {
     file: tarFile,
@@ -48,7 +52,7 @@ export async function tar({ compression, format, outFile, dirToArchive, isMacApp
   ])
 
   if (format === "tar.lz") {
-    const lzipPath = process.platform === "darwin" ? (await getLinuxToolsMacToolset()).lzip : "lzip"
+    const lzipPath = process.platform === "darwin" ? (await getLinuxToolsMacToolset(linuxToolsMac, buildResourcesDir)).lzip : "lzip"
     await exec(lzipPath, [compression === "store" ? "-1" : "-9", "--keep" /* keep (don't delete) input files */, tarFile])
     // lzip creates the output file in the same directory as the input with a .lz suffix
     await move(`${tarFile}.lz`, outFile)
@@ -86,6 +90,12 @@ export interface ArchiveOptions {
   method?: "Copy" | "LZMA" | "Deflate" | "DEFAULT"
 
   isRegularFile?: boolean
+
+  /**
+   * Use native macOS `zip` to preserve symlinks. Required for .framework bundles.
+   * @default false
+   */
+  preserveSymlinks?: boolean
 }
 
 export function compute7zCompressArgs(format: string, options: ArchiveOptions = {}) {
@@ -162,11 +172,11 @@ export async function archive(format: string, outFile: string, dirToArchive: str
     return outFile
   }
 
-  let use7z = true
-  if (process.platform === "darwin" && format === "zip" && dirToArchive.normalize("NFC") !== dirToArchive) {
-    log.warn({ reason: "7z doesn't support NFD-normalized filenames" }, `using zip`)
-    use7z = false
-  }
+  // On macOS, use native `zip` when symlink preservation is required (e.g. .framework bundles).
+  // 7zip dereferences symlinks, corrupting .framework structure and breaking codesign.
+  // Only opt in via preserveSymlinks — Windows zip targets built on macOS still use 7z
+  // so that the UTF-8 bit (-mcu) is set correctly in the zip header.
+  const use7z = !(process.platform === "darwin" && format === "zip" && options.preserveSymlinks)
 
   if (use7z) {
     const args = compute7zCompressArgs(format, options)
@@ -191,7 +201,7 @@ export async function archive(format: string, outFile: string, dirToArchive: str
       }
     }
   } else {
-    // NFD fallback: macOS native zip handles NFD-normalized Unicode paths correctly
+    // macOS native zip: -y preserves symlinks (required for .framework bundles)
     const args = ["-q", "-r", "-y"]
     if (debug7z.enabled) {
       args.push("-v")
@@ -205,6 +215,9 @@ export async function archive(format: string, outFile: string, dirToArchive: str
     args.push(outFile, options.withoutDir ? "." : path.basename(dirToArchive))
     if (options.excluded != null) {
       for (const mask of options.excluded) {
+        if (mask.includes("..")) {
+          throw new Error(`Excluded archive pattern contains path traversal sequence: "${mask}"`)
+        }
         args.push(`-x${mask}`)
       }
     }

@@ -1,12 +1,12 @@
-import { createTempUpdateFile, DownloadedUpdateHelper } from "electron-updater/out/DownloadedUpdateHelper"
+import { createTempUpdateFile, DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
 import { outputFile, outputJson, pathExists } from "fs-extra"
 import { mkdtemp, rm } from "fs/promises"
 import { tmpdir } from "os"
 import * as path from "path"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
-import type { Logger } from "electron-updater/out/types"
+import type { Logger } from "electron-updater/src/types"
 import type { UpdateInfo } from "builder-util-runtime"
-import type { ResolvedUpdateFileInfo } from "electron-updater/out/types"
+import type { ResolvedUpdateFileInfo } from "electron-updater/src/types"
 
 function makeLogger(): Logger & { infos: string[]; warns: string[] } {
   const infos: string[] = []

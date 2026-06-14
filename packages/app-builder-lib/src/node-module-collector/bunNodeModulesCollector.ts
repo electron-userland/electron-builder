@@ -1,7 +1,7 @@
 import { log } from "builder-util"
-import { PM } from "./packageManager"
-import { TraversedDependency } from "./types"
-import { TraversalNodeModulesCollector } from "./traversalNodeModulesCollector"
+import { PM } from "./packageManager.js"
+import { TraversedDependency } from "./types.js"
+import { TraversalNodeModulesCollector } from "./traversalNodeModulesCollector.js"
 
 export class BunNodeModulesCollector extends TraversalNodeModulesCollector {
   public readonly installOptions = { manager: PM.BUN, lockfile: "bun.lock" }

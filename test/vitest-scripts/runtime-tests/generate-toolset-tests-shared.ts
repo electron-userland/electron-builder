@@ -9,6 +9,29 @@ export const SNAPSHOTS_GEN_DIR = path.resolve(TEST_SRC_DIR, "snapshots", "genera
 
 export type SuiteChainKey = keyof ConditionalChainProps<never>
 
+/**
+ * Returns the platform filename suffix for a generated test file based on its describe chain.
+ *
+ * `platformAllowed()` in file-discovery.ts gates files by ".win.", ".linux.", or ".mac." in their
+ * path. Without these markers, a Windows-only generated test would appear in the Linux shard plan
+ * (and vice versa) and permanently show "unknown" timing because it never actually runs there.
+ *
+ * Examples:
+ *   ["ifWindows"]        → ".win."   → foo.win.Test.ts  (excluded from Linux / macOS plans)
+ *   ["ifLinux"]          → ".linux." → foo.linux.Test.ts (excluded from Windows / macOS plans)
+ *   ["ifMac"]            → ".mac."   → foo.mac.Test.ts
+ *   ["ifNotWindows"]     → "__"      → foo__Test.ts (runs on Linux + macOS; no marker needed)
+ *   ["heavy", "ifLinux"] → ".linux." → foo.linux.Test.ts
+ *   undefined / []       → "__"      → foo__Test.ts (cross-platform)
+ */
+export function getPlatformSuffix(chain?: SuiteChainKey[]): string {
+  if (!chain) return "__"
+  if (chain.includes("ifWindows")) return ".win."
+  if (chain.includes("ifLinux")) return ".linux."
+  if (chain.includes("ifMac")) return ".mac."
+  return "__"
+}
+
 export interface DescribeConfig {
   readonly name: string
   readonly chain?: SuiteChainKey[]

@@ -1,39 +1,39 @@
-import { Nullish, safeStringifyJson, isValidKey } from "builder-util-runtime"
-import * as chalk from "chalk"
+import { Nullish, safeStringifyJson, isValidKey, isSensitiveFieldName, hashSensitiveValue } from "builder-util-runtime"
+import chalk from "chalk"
 import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_process"
 import { spawn as _spawn } from "cross-spawn"
-import { createHash } from "crypto"
 import _debug from "debug"
 import { dump } from "js-yaml"
 import * as path from "path"
 import { install as installSourceMap } from "source-map-support"
-import { debug, log } from "./log"
-import { exists } from "./fs"
-import { mkdir } from "fs-extra"
-import { isEmptyOrSpaces } from "./stringUtil"
+import { debug, log } from "./log.js"
+import { exists } from "./fs.js"
+import _fsExtra from "fs-extra"
+const { mkdir } = _fsExtra
+import { isEmptyOrSpaces } from "./stringUtil.js"
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
 }
 
-export { isEmptyOrSpaces } from "./stringUtil"
+export { isEmptyOrSpaces } from "./stringUtil.js"
 export { safeStringifyJson, retry } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
-export * from "./arch"
-export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames, getArchSuffix, toLinuxArchString } from "./arch"
-export { AsyncTaskManager } from "./asyncTaskManager"
-export { DebugLogger } from "./DebugLogger"
-export * from "./log"
-export { buildGotProxyAgent, httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor"
-export * from "./promise"
-export * from "./envUtil"
-export { parseValidEnvVarUrl } from "./envUtil"
+export * from "./arch.js"
+export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames, getArchSuffix, toLinuxArchString } from "./arch.js"
+export { AsyncTaskManager } from "./asyncTaskManager.js"
+export { DebugLogger } from "./DebugLogger.js"
+export * from "./log.js"
+export { buildGotProxyAgent, httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor.js"
+export * from "./promise.js"
+export * from "./envUtil.js"
+export { parseValidEnvVarUrl } from "./envUtil.js"
 
 export { asArray, deepAssign, isValidKey } from "builder-util-runtime"
-export * from "./fs"
+export * from "./fs.js"
 
-export { generateKsuid } from "./ksuid"
-export { loadCscLink, decodeCscLinkBase64, resolveCscLinkPath } from "./cscLink"
+export { generateKsuid } from "./ksuid.js"
+export { loadCscLink, decodeCscLinkBase64, resolveCscLinkPath } from "./cscLink.js"
 
 export const debug7z = _debug("electron-builder:7z")
 
@@ -48,7 +48,7 @@ export function serializeToYaml(object: any, skipInvalid = false, noRefs = false
 export function removePassword(input: string): string {
   // Sensitive parameter stems — any of `-`, `--`, or `/` prefix is accepted for all stems.
   // `pass:` is intentionally absent; the dedicated pass: handler below covers it without double-processing.
-  const sensitiveStems = ["accessKey", "secretKey", "passphrase", "password", "secret", "token", "String", "pass", "p"]
+  const sensitiveStems = ["accessKey", "secretKey", "privateToken", "apiKey", "passphrase", "password", "secret", "token", "String", "pass", "p"]
   const stemAlt = sensitiveStems.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")
   // (?:--?|/) matches -, --, or / prefix. Longest stems listed first to minimise backtracking.
   // (?<!\S) / (?=[\s"']|$) word-boundary guards prevent matching -path, -StringLength, etc.
@@ -61,22 +61,19 @@ export function removePassword(input: string): string {
       return `${prefix} ${quote ?? ""}${value}${quote ?? ""}`
     }
 
-    const hashed = createHash("sha256").update(value).digest("hex")
-    return `${prefix} ${quote ?? ""}${hashed} (sha256 hash)${quote ?? ""}`
+    return `${prefix} ${quote ?? ""}${hashSensitiveValue(value)}${quote ?? ""}`
   })
 
   // pass:value — colon acts as separator; handles both pass:secret (no space) and pass: secret (space)
   // Quoted phrases (pass:'a b c' or pass:"a b c") are captured in full so the whole phrase is hashed.
   input = input.replace(/(?<!\S)pass:\s*(?:(["'])(.*?)\1|([^\s]+))/gi, (_match, quote, quotedVal, unquotedVal) => {
     const value = quotedVal ?? unquotedVal
-    const hashed = createHash("sha256").update(value).digest("hex")
-    return quote ? `pass:${quote}${hashed} (sha256 hash)${quote}` : `pass:${hashed} (sha256 hash)`
+    return quote ? `pass:${quote}${hashSensitiveValue(value)}${quote}` : `pass:${hashSensitiveValue(value)}`
   })
 
   // /b … /c block format
   return input.replace(/(\/b\s+)(.*?)(\s+\/c)/g, (_match, p1, p2, p3) => {
-    const hashed = createHash("sha256").update(p2).digest("hex")
-    return `${p1}${hashed} (sha256 hash)${p3}`
+    return `${p1}${hashSensitiveValue(p2)}${p3}`
   })
 }
 
@@ -90,7 +87,7 @@ const SENSITIVE_ENV_KEY_RE = /KEY|TOKEN|SECRET|PASSWORD|PASS|CREDENTIAL|CSC/i
 export function stripSensitiveEnvVars(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   const out: NodeJS.ProcessEnv = {}
   for (const [k, v] of Object.entries(env)) {
-    if (isValidKey(k) && !SENSITIVE_ENV_KEY_RE.test(k)) {
+    if (isValidKey(k) && !isSensitiveFieldName(k) && !SENSITIVE_ENV_KEY_RE.test(k)) {
       out[k] = v
     }
   }
@@ -100,7 +97,7 @@ export function stripSensitiveEnvVars(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv
 export function filterSensitiveEnv(env: Record<string, string | undefined>): Record<string, string | undefined> {
   const out: Record<string, string | undefined> = {}
   for (const [k, v] of Object.entries(env)) {
-    out[k] = SENSITIVE_ENV_KEY_RE.test(k) && v != null ? `${createHash("sha256").update(v).digest("hex")} (sha256 hash)` : v
+    out[k] = (isSensitiveFieldName(k) || SENSITIVE_ENV_KEY_RE.test(k)) && v != null ? hashSensitiveValue(v) : v
   }
   return out
 }
@@ -183,17 +180,16 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
             if (file.endsWith("wine")) {
               stdout = stdout.toString()
             }
-            message += `\n${chalk.yellow(stdout.toString())}`
+            message += `\n${chalk.yellow(removePassword(stdout.toString()))}`
           }
           if (stderr.length !== 0) {
             if (file.endsWith("wine")) {
               stderr = stderr.toString()
             }
-            message += `\n${chalk.red(stderr.toString())}`
+            message += `\n${chalk.red(removePassword(stderr.toString()))}`
           }
 
-          // TODO: switch to ECMA Script 2026 Error class with `cause` property to return stack trace
-          reject(new ExecError(file, (error as any).code, message, "", `${error.code || ExecError.code}`))
+          reject(new ExecError(file, (error as any).code, message, "", `${error.code || ExecError.code}`, { cause: error }))
         }
       }
     )
@@ -380,9 +376,10 @@ export class ExecError extends Error {
     readonly exitCode: number,
     out: string,
     errorOut: string,
-    code = ExecError.code
+    code = ExecError.code,
+    options?: { cause?: unknown }
   ) {
-    super(`${command} process failed ${code}${formatOut(String(exitCode), "Exit code")}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`)
+    super(`${command} process failed ${code}${formatOut(String(exitCode), "Exit code")}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`, options)
     ;(this as NodeJS.ErrnoException).code = code
   }
 }

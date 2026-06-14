@@ -1,14 +1,14 @@
 import { AllPublishOptions, newError } from "builder-util-runtime"
 import { execFileSync } from "child_process"
-import { chmod } from "fs-extra"
+import fsExtra from "fs-extra"
 import { unlinkSync } from "fs"
 import * as path from "path"
-import { DownloadUpdateOptions } from "./AppUpdater"
-import { BaseUpdater, InstallOptions } from "./BaseUpdater"
-import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader"
-import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
-import { findFile, Provider } from "./providers/Provider"
-import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo } from "./types"
+import { DownloadUpdateOptions } from "./AppUpdater.js"
+import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
+import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
+import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader.js"
+import { findFile, Provider } from "./providers/Provider.js"
+import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo } from "./types.js"
 
 export class AppImageUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: any) {
@@ -45,7 +45,7 @@ export class AppImageUpdater extends BaseUpdater {
           await this.httpExecutor.download(fileInfo.url, updateFile, downloadOptions)
         }
 
-        await chmod(updateFile, 0o755)
+        await fsExtra.chmod(updateFile, 0o755)
       },
     })
   }

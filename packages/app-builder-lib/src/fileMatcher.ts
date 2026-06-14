@@ -3,9 +3,11 @@ import { Nullish } from "builder-util-runtime"
 import { mkdir } from "fs/promises"
 import { Minimatch } from "minimatch"
 import * as path from "path"
-import { Configuration, FileSet, Packager, PlatformSpecificBuildOptions } from "./index"
-import { PlatformPackager } from "./platformPackager"
-import { createFilter, hasMagic } from "./util/filter"
+import type { Configuration } from "./configuration.js"
+import type { Packager } from "./packager.js"
+import { FileSet, PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions.js"
+import { PlatformPackager } from "./platformPackager.js"
+import { createFilter, hasMagic } from "./util/filter.js"
 
 // https://github.com/electron-userland/electron-builder/issues/733
 const minimatchOptions = { dot: true }
@@ -127,15 +129,13 @@ export function getMainFileMatchers(
   macroExpander: (pattern: string) => string,
   platformSpecificBuildOptions: PlatformSpecificBuildOptions,
   platformPackager: PlatformPackager<any>,
-  outDir: string,
-  isElectronCompile: boolean
+  outDir: string
 ): Array<FileMatcher> {
-  const packager = platformPackager.info
-  const buildResourceDir = path.resolve(packager.projectDir, packager.buildResourcesDir)
+  const buildResourceDir = path.resolve(platformPackager.projectDir, platformPackager.buildResourcesDir)
 
-  let matchers = packager.isPrepackedAppAsar
+  let matchers = platformPackager.isPrepackedAppAsar
     ? null
-    : getFileMatchers(packager.config, "files", destination, {
+    : getFileMatchers(platformPackager.config, "files", destination, {
         macroExpander,
         customBuildOptions: platformSpecificBuildOptions,
         globalOutDir: outDir,
@@ -182,7 +182,7 @@ export function getMainFileMatchers(
     customFirstPatterns.push(`!${relativeBuildResourceDir}{,/**/*}`)
   }
 
-  const relativeOutDir = matcher.normalizePattern(path.relative(packager.projectDir, outDir))
+  const relativeOutDir = matcher.normalizePattern(path.relative(platformPackager.projectDir, outDir))
   if (!relativeOutDir.startsWith(".")) {
     customFirstPatterns.push(`!${relativeOutDir}{,/**/*}`)
   }
@@ -197,14 +197,11 @@ export function getMainFileMatchers(
   }
   patterns.splice(insertIndex, 0, ...customFirstPatterns)
 
-  patterns.push(`!**/*.{${excludedExts}${packager.config.includePdb === true ? "" : ",pdb"}}`)
+  patterns.push(`!**/*.{${excludedExts}${platformPackager.config.includePdb === true ? "" : ",pdb"}}`)
   patterns.push("!**/._*")
   patterns.push("!**/electron-builder.{yaml,yml,json,json5,toml,ts}")
   patterns.push(`!**/{${excludedNames}}`)
 
-  if (isElectronCompile) {
-    patterns.push("!.cache{,/**/*}")
-  }
   patterns.push("!.yarn{,/**/*}")
 
   // https://github.com/electron-userland/electron-builder/issues/1969
@@ -212,7 +209,7 @@ export function getMainFileMatchers(
   patterns.push("!.editorconfig")
   patterns.push("!.yarnrc.yml")
 
-  const debugLogger = packager.debugLogger
+  const debugLogger = platformPackager.debugLogger
   if (debugLogger.isEnabled) {
     //tslint:disable-next-line:no-invalid-template-strings
     debugLogger.add(`${macroExpander("${arch}")}.firstOrDefaultFilePatterns`, patterns)
@@ -286,7 +283,7 @@ export interface GetFileMatchersOptions {
 
 export function getFileMatchers(
   config: Configuration,
-  name: "files" | "extraFiles" | "extraResources" | "asarUnpack" | "extraDistFiles",
+  name: "files" | "extraFiles" | "extraResources" | "extraDistFiles",
   defaultDestination: string,
   options: GetFileMatchersOptions
 ): Array<FileMatcher> | null {
@@ -308,8 +305,6 @@ export function getFileMatchers(
       if (typeof pattern === "string") {
         // use normalize to transform ./foo to foo
         defaultMatcher.addPattern(pattern)
-      } else if (name === "asarUnpack") {
-        throw new Error(`Advanced file copying not supported for "${name}"`)
       } else {
         const from = pattern.from == null ? options.defaultSrc : path.resolve(options.defaultSrc, pattern.from)
         const to = pattern.to == null ? defaultDestination : path.resolve(defaultDestination, pattern.to)

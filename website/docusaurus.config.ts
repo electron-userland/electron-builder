@@ -123,11 +123,12 @@ const config: Config = {
           label: "Features",
           position: "left",
           items: [
+            { type: "doc", docId: "features/build-lifecycle", label: "Build Lifecycle" },
+            { type: "doc", docId: "features/hooks", label: "Hooks" },
+            { type: "doc", docId: "features/icons-and-images", label: "Icons & Images" },
             { type: "doc", docId: "features/auto-update", label: "Auto Update" },
             { type: "doc", docId: "features/code-signing/code-signing", label: "Code Signing" },
             { type: "doc", docId: "features/multi-platform-build", label: "Multi Platform Build" },
-            { type: "doc", docId: "features/hooks", label: "Hooks" },
-            { type: "doc", docId: "features/icons-and-images", label: "Icons" },
             { type: "doc", docId: "features/github-actions", label: "GitHub Actions" },
             { type: "doc", docId: "features/electron-forge", label: "Electron Forge" },
           ],
@@ -169,6 +170,13 @@ const config: Config = {
         },
 
         {
+          type: "docSidebar",
+          sidebarId: "migrationSidebar",
+          position: "left",
+          label: "Migration",
+        },
+
+        {
           href: "https://github.com/electron-userland/electron-builder",
           label: "GitHub",
           position: "right",
@@ -197,12 +205,8 @@ const config: Config = {
           title: "Donate",
           items: [
             {
-              label: "Sponsor on GitHub",
-              href: "https://github.com/sponsors/electron-userland",
-            },
-            {
-              label: "Donorbox",
-              href: "https://donorbox.org/electron-builder",
+              label: "Donate",
+              href: "https://www.electron.build/docs/donate",
             },
           ],
         },

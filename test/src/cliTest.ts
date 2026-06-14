@@ -1,10 +1,16 @@
+import { spawnSync } from "child_process"
+import * as path from "path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import yargs from "yargs"
 
 // ─── Module mocks (hoisted by vitest above all imports) ───────────────────────
 
-vi.mock("app-builder-lib/out/util/electronGet", () => ({
+// getCacheDirectory (clear-cache) and loadEnv (cli-util) are the only `app-builder-lib/internal`
+// exports exercised here. Stub just those — a full mock keeps the heavy app-builder-lib module
+// graph (and its circular class hierarchy) from loading for these isolated CLI unit tests.
+vi.mock("app-builder-lib/internal", () => ({
   getCacheDirectory: vi.fn().mockReturnValue("/home/user/.cache/electron-builder"),
+  loadEnv: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock("fs/promises", async () => {
@@ -16,7 +22,7 @@ vi.mock("fs/promises", async () => {
   }
 })
 
-vi.mock("readline/promises", () => ({
+vi.mock("node:readline/promises", () => ({
   createInterface: vi.fn(() => ({
     question: vi.fn().mockResolvedValue("y"),
     close: vi.fn(),
@@ -32,15 +38,11 @@ vi.mock("builder-util", async () => {
   }
 })
 
-vi.mock("app-builder-lib/out/util/config/load", () => ({
-  loadEnv: vi.fn().mockResolvedValue(undefined),
-}))
-
 // ─── Imports ──────────────────────────────────────────────────────────────────
 
 import { access, rm } from "fs/promises"
-import { createInterface } from "readline/promises"
-import { getCacheDirectory } from "app-builder-lib/out/util/electronGet"
+import { createInterface } from "node:readline/promises"
+import { getCacheDirectory } from "app-builder-lib/internal"
 import { ExecError, InvalidConfigurationError, log } from "builder-util"
 // Relative imports bypass project-reference declaration files, which strip @internal exports
 import { clearCache } from "../../packages/electron-builder/src/cli/clear-cache"
@@ -52,158 +54,154 @@ import { configureInstallAppDepsCommand } from "../../packages/electron-builder/
 // @ts-ignore — configurePublishCommand is @internal; CLI tsc strips it from declarations
 import { configurePublishCommand } from "../../packages/electron-builder/src/publish"
 
-// ─── clearCache + wrap (sequential) ──────────────────────────────────────────
-// Both suites assert on the shared module-level `log` mock created by vi.mock("builder-util").
-// sequence.concurrent is enabled globally; a single describe.sequential wrapper prevents
-// clearCache and wrap tests from running concurrently and corrupting each other's mock state.
-describe.sequential("clearCache and wrap", () => {
-  describe("clearCache", () => {
-    beforeEach(() => {
-      vi.mocked(getCacheDirectory).mockReturnValue("/home/user/.cache/electron-builder")
-      vi.mocked(access).mockResolvedValue(undefined as any)
-      vi.mocked(rm).mockResolvedValue(undefined as any)
+// ─── clearCache ───────────────────────────────────────────────────────────────
+
+describe("clearCache", () => {
+  beforeEach(() => {
+    vi.mocked(getCacheDirectory).mockReturnValue("/home/user/.cache/electron-builder")
+    vi.mocked(access).mockResolvedValue(undefined as any)
+    vi.mocked(rm).mockResolvedValue(undefined as any)
+    vi.mocked(createInterface).mockReturnValue({
+      question: vi.fn().mockResolvedValue("y"),
+      close: vi.fn(),
+    } as any)
+  })
+
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("calls getCacheDirectory with isAvoidSystemOnWindows=false, allowEnvVarOverride=false", async () => {
+    await clearCache()
+    expect(getCacheDirectory).toHaveBeenCalledWith({ isAvoidSystemOnWindows: false, allowEnvVarOverride: false })
+  })
+
+  test("deletes cache dir when it exists and user confirms", async () => {
+    await clearCache()
+    expect(rm).toHaveBeenCalledWith("/home/user/.cache/electron-builder", { recursive: true })
+    expect(vi.mocked(log).info).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: expect.any(String) }), "cache cleared")
+  })
+
+  test("checks both existence and write permission before prompting", async () => {
+    await clearCache()
+    expect(access).toHaveBeenCalledWith("/home/user/.cache/electron-builder", expect.any(Number))
+  })
+
+  test("does not delete and logs when cache dir does not exist", async () => {
+    vi.mocked(access).mockRejectedValue(Object.assign(new Error("ENOENT"), { code: "ENOENT" }))
+    await clearCache()
+    expect(rm).not.toHaveBeenCalled()
+    expect(vi.mocked(log).info).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: expect.any(String) }), "cache directory does not exist, nothing to clear")
+  })
+
+  test("does not delete when cache dir is not writable and logs error", async () => {
+    vi.mocked(access).mockRejectedValue(Object.assign(new Error("EACCES"), { code: "EACCES" }))
+    await clearCache()
+    expect(rm).not.toHaveBeenCalled()
+    expect(vi.mocked(log).error).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: expect.any(String) }), "cache directory is not writable")
+  })
+
+  test("propagates error thrown by rm", async () => {
+    vi.mocked(rm).mockRejectedValue(new Error("rm failed"))
+    await expect(clearCache()).rejects.toThrow("rm failed")
+  })
+
+  test("aborts and logs error when cache dir resolves to filesystem root", async () => {
+    vi.mocked(getCacheDirectory).mockReturnValue("/")
+    await clearCache()
+    expect(rm).not.toHaveBeenCalled()
+    expect(vi.mocked(log).error).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: "/" }), expect.stringContaining("filesystem root"))
+  })
+
+  test("closes readline interface even when user aborts", async () => {
+    const closeSpy = vi.fn()
+    vi.mocked(createInterface).mockReturnValue({
+      question: vi.fn().mockResolvedValue("n"),
+      close: closeSpy,
+    } as any)
+    await clearCache()
+    expect(closeSpy).toHaveBeenCalled()
+  })
+
+  for (const answer of ["y", "Y", "yes", "Yes", "YES", "  y  "]) {
+    test(`proceeds when user answers "${answer}"`, async () => {
       vi.mocked(createInterface).mockReturnValue({
-        question: vi.fn().mockResolvedValue("y"),
+        question: vi.fn().mockResolvedValue(answer),
         close: vi.fn(),
       } as any)
-    })
-
-    afterEach(() => {
-      vi.clearAllMocks()
-    })
-
-    test("calls getCacheDirectory with isAvoidSystemOnWindows=false, allowEnvVarOverride=false", async () => {
       await clearCache()
-      expect(getCacheDirectory).toHaveBeenCalledWith({ isAvoidSystemOnWindows: false, allowEnvVarOverride: false })
+      expect(rm).toHaveBeenCalled()
     })
+  }
 
-    test("deletes cache dir when it exists and user confirms", async () => {
-      await clearCache()
-      expect(rm).toHaveBeenCalledWith("/home/user/.cache/electron-builder", { recursive: true })
-      expect(log.info).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: expect.any(String) }), "cache cleared")
-    })
-
-    test("checks both existence and write permission before prompting", async () => {
-      await clearCache()
-      expect(access).toHaveBeenCalledWith("/home/user/.cache/electron-builder", expect.any(Number))
-    })
-
-    test("does not delete and logs when cache dir does not exist", async () => {
-      vi.mocked(access).mockRejectedValue(Object.assign(new Error("ENOENT"), { code: "ENOENT" }))
-      await clearCache()
-      expect(rm).not.toHaveBeenCalled()
-      expect(log.info).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: expect.any(String) }), "cache directory does not exist, nothing to clear")
-    })
-
-    test("does not delete when cache dir is not writable and logs error", async () => {
-      vi.mocked(access).mockRejectedValue(Object.assign(new Error("EACCES"), { code: "EACCES" }))
-      await clearCache()
-      expect(rm).not.toHaveBeenCalled()
-      expect(log.error).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: expect.any(String) }), "cache directory is not writable")
-    })
-
-    test("propagates error thrown by rm", async () => {
-      vi.mocked(rm).mockRejectedValue(new Error("rm failed"))
-      await expect(clearCache()).rejects.toThrow("rm failed")
-    })
-
-    test("aborts and logs error when cache dir resolves to filesystem root", async () => {
-      vi.mocked(getCacheDirectory).mockReturnValue("/")
-      await clearCache()
-      expect(rm).not.toHaveBeenCalled()
-      expect(log.error).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: "/" }), expect.stringContaining("filesystem root"))
-    })
-
-    test("closes readline interface even when user aborts", async () => {
-      const closeSpy = vi.fn()
+  for (const answer of ["n", "N", "no", "", "   ", "maybe"]) {
+    test(`aborts when user answers "${answer}"`, async () => {
       vi.mocked(createInterface).mockReturnValue({
-        question: vi.fn().mockResolvedValue("n"),
-        close: closeSpy,
+        question: vi.fn().mockResolvedValue(answer),
+        close: vi.fn(),
       } as any)
       await clearCache()
-      expect(closeSpy).toHaveBeenCalled()
+      expect(rm).not.toHaveBeenCalled()
+      expect(vi.mocked(log).info).toHaveBeenCalledWith(null, "aborted")
     })
+  }
+})
 
-    for (const answer of ["y", "Y", "yes", "Yes", "YES", "  y  "]) {
-      test(`proceeds when user answers "${answer}"`, async () => {
-        vi.mocked(createInterface).mockReturnValue({
-          question: vi.fn().mockResolvedValue(answer),
-          close: vi.fn(),
-        } as any)
-        await clearCache()
-        expect(rm).toHaveBeenCalled()
-      })
-    }
+// ─── wrap ─────────────────────────────────────────────────────────────────────
 
-    for (const answer of ["n", "N", "no", "", "   ", "maybe"]) {
-      test(`aborts when user answers "${answer}"`, async () => {
-        vi.mocked(createInterface).mockReturnValue({
-          question: vi.fn().mockResolvedValue(answer),
-          close: vi.fn(),
-        } as any)
-        await clearCache()
-        expect(rm).not.toHaveBeenCalled()
-        expect(log.info).toHaveBeenCalledWith(null, "aborted")
-      })
-    }
+describe("wrap", () => {
+  const savedExitCode = process.exitCode
+
+  beforeEach(() => {
+    process.env.NO_UPDATE_NOTIFIER = "1"
+    process.exitCode = undefined as any
   })
 
-  // ─── wrap ─────────────────────────────────────────────────────────────────────
-
-  describe("wrap", () => {
-    const savedExitCode = process.exitCode
-
-    beforeEach(() => {
-      process.env.NO_UPDATE_NOTIFIER = "1"
-      process.exitCode = undefined as any
-    })
-
-    afterEach(() => {
-      delete process.env.NO_UPDATE_NOTIFIER
-      process.exitCode = savedExitCode as any
-      vi.clearAllMocks()
-    })
-
-    test("invokes task with the provided args", async () => {
-      const task = vi.fn().mockResolvedValue("result")
-      await wrap(task)({ foo: "bar" })
-      expect(task).toHaveBeenCalledWith({ foo: "bar" })
-      expect(process.exitCode).toBeUndefined()
-    })
-
-    test("sets exitCode=1 and logs message only for InvalidConfigurationError", async () => {
-      const task = vi.fn().mockRejectedValue(new InvalidConfigurationError("bad config"))
-      await wrap(task)({})
-      expect(process.exitCode).toBe(1)
-      expect(log.error).toHaveBeenCalledWith(null, "bad config")
-    })
-
-    test("sets exitCode=1 but does not re-log ExecError when alreadyLogged=true", async () => {
-      const err = new ExecError("cmd", 1, "", "")
-      err.alreadyLogged = true
-      const task = vi.fn().mockRejectedValue(err)
-      await wrap(task)({})
-      expect(process.exitCode).toBe(1)
-      expect(log.error).not.toHaveBeenCalled()
-    })
-
-    test("logs ExecError with stack trace when alreadyLogged=false", async () => {
-      const err = new ExecError("cmd", 1, "out", "err output")
-      const task = vi.fn().mockRejectedValue(err)
-      await wrap(task)({})
-      expect(process.exitCode).toBe(1)
-      expect(log.error).toHaveBeenCalledWith(expect.objectContaining({ stackTrace: expect.any(String) }), expect.any(String))
-    })
-
-    test("logs stack trace for generic errors", async () => {
-      const err = new Error("something went wrong")
-      const task = vi.fn().mockRejectedValue(err)
-      await wrap(task)({})
-      expect(process.exitCode).toBe(1)
-      expect(log.error).toHaveBeenCalledWith(expect.objectContaining({ stackTrace: expect.any(String) }), "something went wrong")
-    })
+  afterEach(() => {
+    delete process.env.NO_UPDATE_NOTIFIER
+    process.exitCode = savedExitCode as any
+    vi.clearAllMocks()
   })
-}) // end describe.sequential("clearCache and wrap")
+
+  test("invokes task with the provided args", async () => {
+    const task = vi.fn().mockResolvedValue("result")
+    await wrap(task)({ foo: "bar" })
+    expect(task).toHaveBeenCalledWith({ foo: "bar" })
+    expect(process.exitCode).toBeUndefined()
+  })
+
+  test("sets exitCode=1 and logs message only for InvalidConfigurationError", async () => {
+    const task = vi.fn().mockRejectedValue(new InvalidConfigurationError("bad config"))
+    await wrap(task)({})
+    expect(process.exitCode).toBe(1)
+    expect(vi.mocked(log).error).toHaveBeenCalledWith(null, "bad config")
+  })
+
+  test("sets exitCode=1 but does not re-log ExecError when alreadyLogged=true", async () => {
+    const err = new ExecError("cmd", 1, "", "")
+    err.alreadyLogged = true
+    const task = vi.fn().mockRejectedValue(err)
+    await wrap(task)({})
+    expect(process.exitCode).toBe(1)
+    expect(vi.mocked(log).error).not.toHaveBeenCalled()
+  })
+
+  test("logs ExecError with stack trace when alreadyLogged=false", async () => {
+    const err = new ExecError("cmd", 1, "out", "err output")
+    const task = vi.fn().mockRejectedValue(err)
+    await wrap(task)({})
+    expect(process.exitCode).toBe(1)
+    expect(vi.mocked(log).error).toHaveBeenCalledWith(expect.objectContaining({ stackTrace: expect.any(String) }), expect.any(String))
+  })
+
+  test("logs stack trace for generic errors", async () => {
+    const err = new Error("something went wrong")
+    const task = vi.fn().mockRejectedValue(err)
+    await wrap(task)({})
+    expect(process.exitCode).toBe(1)
+    expect(vi.mocked(log).error).toHaveBeenCalledWith(expect.objectContaining({ stackTrace: expect.any(String) }), "something went wrong")
+  })
+})
 
 // ─── quoteString ─────────────────────────────────────────────────────────────
 
@@ -298,6 +296,41 @@ describe("configureInstallAppDepsCommand", () => {
     configureInstallAppDepsCommand(instance)
     const parsed = instance.parseSync(["--arch", "x64"])
     expect(parsed.arch).toBe("x64")
+  })
+})
+
+// ─── CLI entry-point ESM smoke tests ─────────────────────────────────────────
+
+const REPO_ROOT = path.resolve(__dirname, "../../")
+const CLI_JS = path.join(REPO_ROOT, "packages/electron-builder/cli.js")
+const INSTALL_APP_DEPS_JS = path.join(REPO_ROOT, "packages/electron-builder/install-app-deps.js")
+
+describe("CLI entry points (ESM)", () => {
+  test("cli.js --help exits 0 without ERR_MODULE_NOT_FOUND", () => {
+    const result = spawnSync(process.execPath, [CLI_JS, "--help"], { encoding: "utf8" })
+    expect(result.stderr ?? "").not.toContain("ERR_MODULE_NOT_FOUND")
+    expect(result.status).toBe(0)
+  })
+
+  test("cli.js --help prints known subcommands", () => {
+    const result = spawnSync(process.execPath, [CLI_JS, "--help"], { encoding: "utf8" })
+    const out = result.stdout ?? ""
+    expect(out).toContain("build")
+    expect(out).toContain("install-app-deps")
+    expect(out).toContain("publish")
+  })
+
+  test("install-app-deps.js exits 0 without ERR_MODULE_NOT_FOUND", () => {
+    // run with --help to avoid actually executing an install
+    const result = spawnSync(process.execPath, [INSTALL_APP_DEPS_JS, "--help"], { encoding: "utf8" })
+    expect(result.stderr ?? "").not.toContain("ERR_MODULE_NOT_FOUND")
+    expect(result.status).toBe(0)
+  })
+
+  test("cli.js --version exits 0", () => {
+    const result = spawnSync(process.execPath, [CLI_JS, "--version"], { encoding: "utf8" })
+    expect(result.stderr ?? "").not.toContain("ERR_MODULE_NOT_FOUND")
+    expect(result.status).toBe(0)
   })
 })
 
