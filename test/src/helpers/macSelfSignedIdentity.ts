@@ -60,7 +60,7 @@ extendedKeyUsage = critical,codeSigning
   return { commonName, p12Base64, password: PASSWORD }
 }
 
-export async function isOpenSsl3OrNewer(): Promise<boolean> {
+async function isOpenSsl3OrNewer(): Promise<boolean> {
   const version = await exec("openssl", ["version"])
   const match = /^OpenSSL (\d+)\./.exec(version.trim())
   return match != null && Number(match[1]) >= 3
