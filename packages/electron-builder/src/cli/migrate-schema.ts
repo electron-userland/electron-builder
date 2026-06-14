@@ -257,8 +257,8 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
         if (hasAzure && hasSigntool) {
           warnings.push(
             "Both win.azureSignOptions and win.signtoolOptions are set. " +
-              "Migrating to win.sign: { type: 'azure', … } (Azure took priority in v26). " +
-              "Remove win.signtoolOptions manually if Azure is your intended signing mode."
+              "win.signtoolOptions will be dropped and win.azureSignOptions will be migrated to win.sign: { type: 'azure', … } (Azure took priority in v26). " +
+              "Verify the migrated win.sign block is correct for your project."
           )
           delete win.signtoolOptions
         }
@@ -283,12 +283,12 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
             })
           }
 
-          win.sign = { type: "azure", ...azure }
+          win.sign = { ...azure, type: "azure" }
           changes.push({ key: "win.azureSignOptions", description: 'moved win.azureSignOptions → win.sign: { type: "azure", … }' })
         } else {
           const signtool: Record<string, any> = { ...win.signtoolOptions }
           delete win.signtoolOptions
-          win.sign = { type: "signtool", ...signtool }
+          win.sign = { ...signtool, type: "signtool" }
           changes.push({ key: "win.signtoolOptions", description: 'moved win.signtoolOptions → win.sign: { type: "signtool", … }' })
         }
       }
