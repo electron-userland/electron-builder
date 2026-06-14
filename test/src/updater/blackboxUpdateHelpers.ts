@@ -1,7 +1,7 @@
 import { ToolsetConfig } from "app-builder-lib"
 import { getWindowsVm, ParallelsVmManager, PM, VmManager } from "app-builder-lib/internal"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
-import { archFromString, deepAssign, DebugLogger, exec, log, serializeToYaml, spawn, TmpDir } from "builder-util"
+import { archFromString, deepAssign, DebugLogger, log, serializeToYaml, spawn, TmpDir } from "builder-util"
 import { Arch, Configuration, Platform } from "electron-builder"
 import { copy, existsSync, move, outputFile, readJsonSync, remove } from "fs-extra"
 import { homedir } from "os"
@@ -277,28 +277,6 @@ export async function runTestWithinServer(doTest: (rootDirectory: string, update
   )
 }
 
-// Electron/Chromium stores the app's cookie/safeStorage encryption key in the macOS login keychain as a
-// generic-password item named "<app name> Safe Storage" (the fixture sets name=testapp + enableCookieEncryption).
-// That item's ACL is pinned to the app's code-signing identity when first created. Because each test session
-// provisions a *fresh* ephemeral signing cert, an item left behind by a previous run is pinned to a now-stale
-// signature, so macOS pops an "access login keychain" prompt when this run's app reads it. Deleting any stale
-// item before launch lets this run's app recreate it under its own (matching) signature — no prompt. The delete
-// is headless and prompt-free: it removes the item without ever decrypting the stored secret.
-const TEST_APP_KEYCHAIN_SERVICE = "testapp Safe Storage" // matches extraMetadata.name in buildApp()
-async function purgeStaleSafeStorageKeychainItem(): Promise<void> {
-  if (process.platform !== "darwin") {
-    return
-  }
-  // delete-generic-password removes a single match; loop until none remain (a run can leave more than one).
-  for (let i = 0; i < 10; i++) {
-    try {
-      await exec("/usr/bin/security", ["delete-generic-password", "-s", TEST_APP_KEYCHAIN_SERVICE])
-    } catch {
-      break // no more matching items
-    }
-  }
-}
-
 export async function runTest(
   context: TestContext,
   target: string,
@@ -332,10 +310,6 @@ export async function runTest(
   if (!vm && !existsSync(appPath)) {
     throw new Error(`App not found: ${appPath}`)
   }
-
-  // Clear any stale "<app> Safe Storage" login-keychain item from a previous session's signing cert so the
-  // launched app recreates it under this session's identity instead of triggering a keychain-access prompt.
-  await purgeStaleSafeStorageKeychainItem()
 
   let queuedError: Error | null = null
   try {

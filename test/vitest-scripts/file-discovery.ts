@@ -39,11 +39,7 @@ function collectTests(dir: string, platform: TargetPlatform = "current", out: st
 
   for (const name of fs.readdirSync(dir)) {
     const isOverrideMatch = testOverride?.some(toMatch => name.includes(toMatch)) ?? false
-    if (
-      [".ts.map", ".js.map", ".d.ts", ".snap"].some(ext => name.endsWith(ext)) ||
-      ["node_modules", "out"].includes(name) ||
-      (!isOverrideMatch && isSkippedTest(name, platform))
-    ) {
+    if ([".ts.map", ".js.map", ".d.ts", ".snap"].some(ext => name.endsWith(ext)) || ["node_modules", "out"].includes(name) || (!isOverrideMatch && isSkippedTest(name, platform))) {
       continue
     }
 
