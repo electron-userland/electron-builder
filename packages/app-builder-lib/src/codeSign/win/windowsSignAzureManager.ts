@@ -119,7 +119,12 @@ export class WindowsSignAzureManager implements SignManager {
       .map(([field, value]) => `-${field} '${String(value).replace(/'/g, "''")}'`)
       .join(" ")
 
-    await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", `Invoke-TrustedSigning ${paramsString}`])
+    // Use -EncodedCommand (Base64 UTF-16LE) so the command string is opaque to any
+    // intermediate shell or argument parser — no cmd.exe / ConHost escaping needed.
+    // PowerShell still parses the decoded string, so PS-level single-quote escaping above is retained.
+    const psCommand = `Invoke-TrustedSigning ${paramsString}`
+    const encodedCommand = Buffer.from(psCommand, "utf16le").toString("base64")
+    await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-EncodedCommand", encodedCommand])
     return true
   }
 
