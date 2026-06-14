@@ -558,7 +558,9 @@ describe("PKCS#11 certificateFile passed as -certs to osslsigncode", () => {
 
 // ─── PKCS#11 PIN via env vars ─────────────────────────────────────────────────
 
-describe("PKCS#11 PIN via env var (no cert file)", () => {
+// sequence.concurrent is enabled globally; tests mutate process.env.WIN_CSC_KEY_PASSWORD
+// and process.env.CSC_KEY_PASSWORD directly — sequential execution prevents bleed.
+describe.sequential("PKCS#11 PIN via env var (no cert file)", () => {
   const pkcs11Options = {
     sign: {
       type: "pkcs11" as const,
@@ -698,7 +700,10 @@ o4qne60TB3wolLhOJqQ3uJLPvOmFI5oMnEAmhP0JlwFSBj3SiYoHScLuNP2YQXB+
 // the x64 kit. From v1.3.0 the dlib lives in a separate ats-bundle (not the
 // kits bundle) and the .NET runtime root is injected via DOTNET_ROOT.
 
-describe("WindowsSignAzureManager signFileWithDlib arch selection", () => {
+// sequence.concurrent is enabled globally; beforeEach mutates vi.mocked() and
+// afterEach calls Object.defineProperty(process, "arch", …) — sequential execution
+// prevents concurrent tests from seeing each other's mock state.
+describe.sequential("WindowsSignAzureManager signFileWithDlib arch selection", () => {
   let tmpDir: string
   const originalArch = process.arch
 

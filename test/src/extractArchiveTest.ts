@@ -4,15 +4,8 @@ import * as os from "os"
 import * as path from "path"
 import { afterEach, beforeEach, describe, test, vi } from "vitest"
 
-let tmpDir: string
-
-beforeEach(async () => {
-  tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "eb-extract-test-"))
-})
-
-afterEach(async () => {
+afterEach(() => {
   vi.restoreAllMocks()
-  await fs.rm(tmpDir, { recursive: true, force: true })
 })
 
 // Minimal CRC32 implementation needed for non-empty ZIP entries.
@@ -120,9 +113,17 @@ function buildZipWithSymlinkEntry(linkName: string, target: string): Buffer {
   return Buffer.concat([lfh, content, cdh, eocd])
 }
 
-// sequence.concurrent is enabled globally; wrapping here prevents the module-level
-// tmpDir variable (set in beforeEach) from being overwritten by concurrent tests.
+// sequence.concurrent is enabled globally; tmpDir is local to this describe so
+// concurrent sibling describes cannot overwrite it.
 describe.sequential("extractArchive ZIP security guards", () => {
+  let tmpDir: string
+  beforeEach(async () => {
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "eb-extract-test-"))
+  })
+  afterEach(async () => {
+    await fs.rm(tmpDir, { recursive: true, force: true })
+  })
+
   test("blocks a path traversal entry (../escape.txt)", async ({ expect }) => {
     const zipPath = path.join(tmpDir, "traversal.zip")
     await fs.writeFile(zipPath, buildZipWithFileEntry("../escape.txt"))
@@ -205,7 +206,17 @@ describe("isSafeExtractPath", () => {
 
 // ─── moveDirAtomic ────────────────────────────────────────────────────────────
 
-describe("moveDirAtomic", () => {
+// sequence.concurrent is enabled globally; tmpDir is local so concurrent sibling
+// describes cannot overwrite it mid-test.
+describe.sequential("moveDirAtomic", () => {
+  let tmpDir: string
+  beforeEach(async () => {
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "eb-extract-test-"))
+  })
+  afterEach(async () => {
+    await fs.rm(tmpDir, { recursive: true, force: true })
+  })
+
   test("moves a directory with files to the destination", async ({ expect }) => {
     const src = path.join(tmpDir, "src")
     const dest = path.join(tmpDir, "dest")

@@ -6,16 +6,6 @@ import * as zlib from "zlib"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { buildBlockMap } from "app-builder-lib/src/targets/blockmap/blockmap.js"
 
-let tmpDir: string
-
-beforeEach(async () => {
-  tmpDir = await mkdtemp(path.join(os.tmpdir(), "blockmap-test-"))
-})
-
-afterEach(async () => {
-  await rm(tmpDir, { recursive: true, force: true })
-})
-
 function sha512(data: Buffer): string {
   return createHash("sha512").update(data).digest("base64")
 }
@@ -31,7 +21,16 @@ function makeTestData(size: number, seed = 12345): Buffer {
   return buf
 }
 
-describe("buildBlockMap", () => {
+// sequence.concurrent is enabled globally; both describe blocks share a tmpDir
+// that must not be overwritten by a sibling describe's beforeEach mid-test.
+describe.sequential("buildBlockMap", () => {
+  let tmpDir: string
+  beforeEach(async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), "blockmap-test-"))
+  })
+  afterEach(async () => {
+    await rm(tmpDir, { recursive: true, force: true })
+  })
   it("file output mode: returns correct sha512 and size for small file", async () => {
     const data = Buffer.from("hello world. ".repeat(1024))
     const inFile = path.join(tmpDir, "test.bin")
@@ -207,7 +206,16 @@ describe("buildBlockMap", () => {
 //   • sha512 in append mode — covers the appended compressed bytes, which
 //     differ between implementations for the same reason.
 
-describe("buildBlockMap — JS snapshots and binary golden-output", () => {
+// sequence.concurrent is enabled globally; snapshot tests must not run concurrently — vitest
+// assigns snapshot indices in call order, and concurrent calls produce index mismatches.
+describe.sequential("buildBlockMap — JS snapshots and binary golden-output", () => {
+  let tmpDir: string
+  beforeEach(async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), "blockmap-test-"))
+  })
+  afterEach(async () => {
+    await rm(tmpDir, { recursive: true, force: true })
+  })
   it("single-chunk file (< MIN): sizes, checksums and sha512 are snapshotted", async () => {
     const data = Buffer.from("hello world. ".repeat(1024)) // 13 312 bytes < RABIN_MIN
     const inFile = path.join(tmpDir, "single.bin")

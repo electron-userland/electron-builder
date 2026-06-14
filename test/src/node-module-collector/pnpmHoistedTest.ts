@@ -96,7 +96,9 @@ describe.sequential("PnpmNodeModulesCollector hoisted mode", () => {
 // (pnpm 11 stopped echoing node-linker in `config list`, so detection is realpath-based)
 // ---------------------------------------------------------------------------
 
-describe("PnpmNodeModulesCollector.isHoisted (on-disk layout detection)", () => {
+// sequence.concurrent is enabled globally; each test sets the shared `root` variable
+// in its body — sequential execution prevents concurrent overwrites.
+describe.sequential("PnpmNodeModulesCollector.isHoisted (on-disk layout detection)", () => {
   let root = ""
   afterEach(async () => {
     if (root) {
