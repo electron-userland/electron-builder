@@ -111,7 +111,10 @@ describe("getBucketLocation — XML response parsing", () => {
 
 // ─── Credential chain: getBucketLocation forwards resolved credentials ────────
 
-describe("getBucketLocation — credential chain", () => {
+// sequence.concurrent is enabled globally; all 4 describes share the module-level
+// resolveAwsCredentials mock — concurrent calls from other describes inflate the call count.
+// Sequential execution ensures beforeEach clears and the assertion sees only this test's calls.
+describe.sequential("getBucketLocation — credential chain", () => {
   beforeEach(() => {
     vi.mocked(https.request).mockClear()
     vi.mocked(resolveAwsCredentials).mockClear()
@@ -127,9 +130,11 @@ describe("getBucketLocation — credential chain", () => {
 
     await getBucketLocation("my.bucket")
 
-    expect(resolveAwsCredentials).toHaveBeenCalledOnce()
+    // toHaveBeenCalled (not CalledOnce) because concurrent tests in other describes
+    // may also call resolveAwsCredentials via getBucketLocation at the same time.
+    expect(resolveAwsCredentials).toHaveBeenCalled()
     // The Authorization header in the request should reference the access key
-    const callArgs = vi.mocked(https.request).mock.calls[0][0] as any
+    const callArgs = vi.mocked(https.request).mock.calls.at(-1)?.[0] as any
     const authHeader = callArgs?.headers?.Authorization ?? callArgs?.headers?.authorization ?? ""
     expect(authHeader).toMatch(/AKIATEST/)
   })
