@@ -19,7 +19,7 @@ function makeVm(execSpy: ReturnType<typeof vi.fn>) {
 function makePackager(azureSignConfig: Partial<WindowsAzureSigningConfig>, vm?: ReturnType<typeof makeVm>): WinPackager {
   const mockVm = vm ?? makeVm(vi.fn().mockResolvedValue(""))
   return {
-    platformOptions: { sign: azureSignConfig as WindowsAzureSigningConfig },
+    platformOptions: { sign: azureSignConfig },
     vm: { value: Promise.resolve(mockVm) },
     config: { toolsets: null },
     buildResourcesDir: "",
@@ -43,7 +43,9 @@ function decodeEncodedCommand(base64: string): string {
 function captureEncodedCommand(execArgs: ExecArgs): string {
   const [, args] = execArgs
   const idx = args.indexOf("-EncodedCommand")
-  if (idx === -1) throw new Error("No -EncodedCommand found in exec call")
+  if (idx === -1) {
+    throw new Error("No -EncodedCommand found in exec call")
+  }
   return decodeEncodedCommand(args[idx + 1])
 }
 
@@ -148,9 +150,7 @@ describe("WindowsSignAzureManager.signFile", () => {
   test("throws when additionalMetadata contains an invalid key", async ({ expect }) => {
     const opts = { ...baseAzureOpts, additionalMetadata: { "bad;key": "value" } as any }
     const manager2 = new WindowsSignAzureManager(makePackager(opts, makeVm(execSpy)))
-    await expect(manager2.signFile({ path: filePath, options: { sign: opts } as any })).rejects.toThrow(
-      "not a valid PowerShell parameter name"
-    )
+    await expect(manager2.signFile({ path: filePath, options: { sign: opts } as any })).rejects.toThrow("not a valid PowerShell parameter name")
   })
 
   test("escapes single quotes in parameter values", async ({ expect }) => {

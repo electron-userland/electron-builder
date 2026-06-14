@@ -24,7 +24,17 @@ export interface MigrationResult {
 
 // Azure Trusted Signing typed fields in v27 (everything else is an extra key → additionalMetadata).
 // "type" is included so it is not mistakenly moved to additionalMetadata if already present.
-const AZURE_KNOWN_FIELDS = new Set(["type", "endpoint", "codeSigningAccountName", "certificateProfileName", "publisherName", "fileDigest", "timestampRfc3161", "timestampDigest", "additionalMetadata"])
+const AZURE_KNOWN_FIELDS = new Set([
+  "type",
+  "endpoint",
+  "codeSigningAccountName",
+  "certificateProfileName",
+  "publisherName",
+  "fileDigest",
+  "timestampRfc3161",
+  "timestampDigest",
+  "additionalMetadata",
+])
 
 // macOS signing fields that moved from the platform root into the `sign` (ElectronSignOptions) bag.
 // `signIgnore` is renamed to `sign.ignore` separately (the @electron/osx-sign canonical name).
@@ -213,8 +223,8 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
       if (val === false) {
         warnings.push(
           "win.signAndEditExecutable: false was used to skip both resource editing and signing. " +
-          "In v27, resource editing always runs. To skip signing only, set win.sign: false. " +
-          "There is no v27 equivalent that also skips resource editing — apply resources manually if needed."
+            "In v27, resource editing always runs. To skip signing only, set win.sign: false. " +
+            "There is no v27 equivalent that also skips resource editing — apply resources manually if needed."
         )
       } else {
         changes.push({ key: "win.signAndEditExecutable", description: "removed win.signAndEditExecutable (resource editing always runs in v27; was the default)" })
@@ -240,15 +250,15 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
       if (signAlreadySet) {
         warnings.push(
           "win.sign is already set alongside " +
-          (hasAzure ? "win.azureSignOptions" : "win.signtoolOptions") +
-          ". Remove the legacy key manually after verifying win.sign is correct."
+            (hasAzure ? "win.azureSignOptions" : "win.signtoolOptions") +
+            ". Remove the legacy key manually after verifying win.sign is correct."
         )
       } else {
         if (hasAzure && hasSigntool) {
           warnings.push(
             "Both win.azureSignOptions and win.signtoolOptions are set. " +
-            "Migrating to win.sign: { type: 'azure', … } (Azure took priority in v26). " +
-            "Remove win.signtoolOptions manually if Azure is your intended signing mode."
+              "Migrating to win.sign: { type: 'azure', … } (Azure took priority in v26). " +
+              "Remove win.signtoolOptions manually if Azure is your intended signing mode."
           )
           delete win.signtoolOptions
         }
@@ -274,12 +284,12 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
           }
 
           win.sign = { type: "azure", ...azure }
-          changes.push({ key: "win.azureSignOptions", description: "moved win.azureSignOptions → win.sign: { type: \"azure\", … }" })
+          changes.push({ key: "win.azureSignOptions", description: 'moved win.azureSignOptions → win.sign: { type: "azure", … }' })
         } else {
           const signtool: Record<string, any> = { ...win.signtoolOptions }
           delete win.signtoolOptions
           win.sign = { type: "signtool", ...signtool }
-          changes.push({ key: "win.signtoolOptions", description: "moved win.signtoolOptions → win.sign: { type: \"signtool\", … }" })
+          changes.push({ key: "win.signtoolOptions", description: 'moved win.signtoolOptions → win.sign: { type: "signtool", … }' })
         }
       }
     }
