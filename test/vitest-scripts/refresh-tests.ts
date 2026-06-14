@@ -3,11 +3,11 @@
 import { spawnSync } from "child_process"
 import * as fs from "fs"
 import * as path from "path"
-import { generateTests } from "./generate-tests"
-import { GENERATED_TESTS_DIR, SNAPSHOTS_GEN_DIR } from "./runtime-tests/generate-toolset-tests-shared"
-import { LINUX_SUITE_METADATA } from "./runtime-tests/generate-toolset-tests-linux"
-import { MAC_SUITE_METADATA } from "./runtime-tests/generate-toolset-tests-mac"
-import { WINDOWS_SUITE_METADATA } from "./runtime-tests/generate-toolset-tests-windows"
+import { generateTests } from "./generate-tests.js"
+import { GENERATED_TESTS_DIR, SNAPSHOTS_GEN_DIR } from "./runtime-tests/generate-toolset-tests-shared.js"
+import { LINUX_SUITE_METADATA } from "./runtime-tests/generate-toolset-tests-linux.js"
+import { MAC_SUITE_METADATA } from "./runtime-tests/generate-toolset-tests-mac.js"
+import { WINDOWS_SUITE_METADATA } from "./runtime-tests/generate-toolset-tests-windows.js"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

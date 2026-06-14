@@ -58,7 +58,9 @@ const includeGlob = `(${testPatterns.join("|")}|${testPatterns.map(t => `${t}*Te
 console.log("TEST_FILES pattern", includeGlob)
 
 async function main() {
-  generateTests()
+  if (!process.env.SKIP_GENERATE) {
+    generateTests()
+  }
 
   const files = getAllTestFiles()
   const currentPlatform = process.platform as SupportedPlatforms
@@ -114,7 +116,7 @@ async function main() {
       fileParallelism: false,
       sequence: {
         sequencer: SmartSequencer,
-        concurrent: process.env.TEST_SEQUENTIAL === "false",
+        concurrent: true,
       },
 
       slowTestThreshold: 2 * 60 * 1000,

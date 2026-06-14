@@ -71,6 +71,7 @@ export default class MsiTarget extends Target {
 
     const stageDir = await createStageDir(this, packager, arch)
     const vm = this.vm
+
     const commonOptions = getEffectiveOptions(this.options, this.packager)
 
     // wix 4.0.0.5512.2 doesn't support the arm64 architecture so default to x64 when building for arm64.
