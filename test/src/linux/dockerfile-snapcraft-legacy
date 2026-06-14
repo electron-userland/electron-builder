@@ -56,7 +56,7 @@ ENV XDG_RUNTIME_DIR=/run/user/0
 
 WORKDIR /project
 
-# Clear any ENTRYPOINT from the upstream rock so the project's test-linux
+# Clear any ENTRYPOINT from the upstream rock so the project's test:linux
 # script (docker run … /bin/bash -c "…") works without --entrypoint overrides.
 ENTRYPOINT []
 CMD ["/bin/bash"]

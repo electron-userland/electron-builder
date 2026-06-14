@@ -24,7 +24,9 @@ async function buildTempTree(packages: Record<string, { name: string; version: s
 // Tests: skipDownwardSearch reflects hoisted mode
 // ---------------------------------------------------------------------------
 
-describe("PnpmNodeModulesCollector hoisted mode", () => {
+// sequence.concurrent is enabled globally; `root` is shared across tests in this
+// describe block — sequential execution prevents concurrent tests from overwriting it.
+describe.sequential("PnpmNodeModulesCollector hoisted mode", () => {
   let root = ""
   afterEach(async () => {
     if (root) {
@@ -149,7 +151,9 @@ describe("PnpmNodeModulesCollector.isHoisted (on-disk layout detection)", () => 
 // Tests: end-to-end nested dependency resolution
 // ---------------------------------------------------------------------------
 
-describe("nested dependency resolution (hoisted layout simulation)", () => {
+// sequence.concurrent is enabled globally; describe.sequential prevents shared `root` from being
+// overwritten by concurrently-running tests before assertions complete.
+describe.sequential("nested dependency resolution (hoisted layout simulation)", () => {
   let root = ""
   afterEach(async () => {
     if (root) {

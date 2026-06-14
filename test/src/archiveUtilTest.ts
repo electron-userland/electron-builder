@@ -27,7 +27,9 @@ async function makeSrcDir(files: Record<string, string> = { "hello.txt": "hello 
 
 // ─── compute7zCompressArgs ───────────────────────────────────────────────────
 
-describe("compute7zCompressArgs", () => {
+// sequence.concurrent is enabled globally; vi.stubEnv calls in some tests would
+// bleed into adjacent concurrent tests. Sequential execution prevents that.
+describe.sequential("compute7zCompressArgs", () => {
   test("7z default compression adds -mx=9", ({ expect }) => {
     const args = compute7zCompressArgs("7z", {})
     expect(args).toContain("-mx=9")

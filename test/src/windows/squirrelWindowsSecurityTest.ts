@@ -33,7 +33,9 @@ describe("SquirrelWindowsTarget.assertShellSafePath", () => {
   })
 })
 
-describe("SquirrelWindowsTarget.ensurePathInside", () => {
+// `sequential`: these tests share a `base` temp dir reassigned in `beforeEach`; under the global
+// sequence.concurrent a sibling test's `beforeEach` would clobber `base` mid-assertion.
+describe("SquirrelWindowsTarget.ensurePathInside", { sequential: true }, () => {
   let t: any
   let base: string
 

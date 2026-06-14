@@ -51,7 +51,9 @@ async function writeJson(dir: string, name: string, obj: object) {
 
 // ─── Suite ──────────────────────────────────────────────────────────────────
 
-describe("addLicenseToDmg", () => {
+// sequence.concurrent is enabled globally; describe.sequential prevents concurrent tests from
+// overwriting the shared tmpDir variable set in beforeEach.
+describe.sequential("addLicenseToDmg", () => {
   let tmpDir: string
 
   beforeEach(async () => {
