@@ -108,12 +108,14 @@ function resolveCacheMode(): ElectronDownloadCacheMode {
  * @internal exported for unit testing
  */
 export function isSafeExtractPath(destPath: string, dir: string): boolean {
+  const normalizedDest = path.resolve(destPath)
+  const normalizedDir = path.resolve(dir)
   if (process.platform === "win32") {
-    const d = destPath.toLowerCase()
-    const b = dir.toLowerCase()
+    const d = normalizedDest.toLowerCase()
+    const b = normalizedDir.toLowerCase()
     return d.startsWith(b + path.sep) || d === b
   }
-  return destPath.startsWith(dir + path.sep) || destPath === dir
+  return normalizedDest.startsWith(normalizedDir + path.sep) || normalizedDest === normalizedDir
 }
 
 async function extractZipStreaming(file: string, dir: string): Promise<void> {

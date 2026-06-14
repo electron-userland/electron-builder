@@ -11,8 +11,8 @@ beforeEach(async () => {
 })
 
 afterEach(async () => {
-  await fs.rm(tmpDir, { recursive: true, force: true })
   vi.restoreAllMocks()
+  await fs.rm(tmpDir, { recursive: true, force: true })
 })
 
 // Minimal CRC32 implementation needed for non-empty ZIP entries.
@@ -220,7 +220,7 @@ describe("moveDirAtomic", () => {
     await expect(fs.access(src)).rejects.toMatchObject({ code: "ENOENT" })
   })
 
-  test("overwrites an existing destination directory", async ({ expect }) => {
+  test("moves when destination was pre-removed before the call", async ({ expect }) => {
     const src = path.join(tmpDir, "src")
     const dest = path.join(tmpDir, "dest")
     await fs.mkdir(src)
