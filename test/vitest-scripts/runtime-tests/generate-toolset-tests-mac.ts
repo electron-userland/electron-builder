@@ -1,7 +1,7 @@
 import * as fs from "fs"
 import * as path from "path"
-import type { ToolsetConfig } from "app-builder-lib/src/configuration"
-import { buildDescribeCall, cleanAndEnsureDir, GENERATED_TESTS_DIR, namedFn, resolveImportPath, TEST_SRC_DIR } from "./generate-toolset-tests-shared"
+import type { ToolsetConfig } from "app-builder-lib/internal"
+import { buildDescribeCall, cleanAndEnsureDir, GENERATED_TESTS_DIR, getPlatformSuffix, namedFn, resolveImportPath, TEST_SRC_DIR } from "./generate-toolset-tests-shared"
 import type { SuiteConfig } from "./generate-toolset-tests-shared"
 import { WINE_VERSIONS } from "./generate-toolset-versions"
 import type * as _WineToolsetSuite from "../../src/mac/wineToolsetSuite"
@@ -11,7 +11,9 @@ const SUITES: SuiteConfig[] = [
     name: "wineToolset",
     registerFn: namedFn("registerWineToolsetTests" satisfies keyof typeof _WineToolsetSuite),
     importPath: "mac/wineToolsetSuite",
-    describeConfig: { name: "WineToolset", chain: ["ifMac"] },
+    // ifNotWindows: wine runs on macOS and Linux; the suite itself also uses describe.ifNotWindows.
+    // Suffix "__" (no platform marker) means discovered everywhere; Windows skips via the inner guard.
+    describeConfig: { name: "wine", chain: ["ifNotWindows"] },
   },
 ]
 
@@ -40,8 +42,9 @@ export function generateMacToolsetTests(): void {
   for (const suite of SUITES) {
     const generatedDir = path.resolve(GENERATED_TESTS_DIR, suite.name)
     cleanAndEnsureDir(generatedDir)
+    const platformSuffix = getPlatformSuffix(suite.describeConfig.chain)
     for (const version of WINE_VERSIONS) {
-      const filename = `${suite.name}__wine-${version}__Test.ts`
+      const filename = `${suite.name}__wine-${version}${platformSuffix}Test.ts`
       fs.writeFileSync(path.join(generatedDir, filename), renderFile(suite, version), "utf8")
     }
   }

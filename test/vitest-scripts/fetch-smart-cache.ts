@@ -15,7 +15,7 @@
 import { execSync, spawnSync } from "child_process"
 import * as fs from "fs"
 import * as path from "path"
-import { CACHE_FILE } from "./smart-config"
+import { CACHE_FILE } from "./vitest-config/smart-config"
 
 const REPO = "electron-userland/electron-builder"
 

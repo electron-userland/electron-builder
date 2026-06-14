@@ -3,11 +3,11 @@
 import { isCI } from "ci-info"
 import * as path from "path"
 import { startVitest } from "vitest/node"
-import { getAllTestFiles } from "./file-discovery"
+import { getAllTestFiles } from "./vitest-config/file-discovery"
 import { generateTests } from "./generate-tests"
-import { buildWeightedFiles, computeShardCount, splitIntoShards } from "./shard-builder"
-import { SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN } from "./smart-config"
-import SmartSequencer from "./vitest-smart-sequencer"
+import { buildWeightedFiles, computeShardCount, splitIntoShards } from "./vitest-config/shard-builder"
+import { SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN } from "./vitest-config/smart-config"
+import SmartSequencer from "./vitest-config/vitest-smart-sequencer"
 
 const PACKAGES_DIR = path.join(__dirname, "..", "..", "packages")
 const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
@@ -101,12 +101,12 @@ async function main() {
 
       // Allow test metadata
       includeTaskLocation: true,
-      setupFiles: [__dirname + "/vitest-setup.ts", __dirname + "/vitest-heavy-mutex.ts"],
+      setupFiles: [__dirname + "/vitest-config/vitest-setup.ts", __dirname + "/vitest-config/vitest-heavy-mutex.ts"],
       include: [`test/src/**/${includeGlob}.ts`],
 
       printConsoleTrace: true,
-      runner: __dirname + "/vitest-network-retry-runner.ts",
-      reporters: ["default", __dirname + "/vitest-smart-reporter.ts"],
+      runner: __dirname + "/vitest-config/vitest-network-retry-runner.ts",
+      reporters: ["default", __dirname + "/vitest-config/vitest-smart-reporter.ts"],
 
       // 2 on Windows (heavy MSI/Squirrel builds saturate the vitest main-thread RPC at 3); 3 elsewhere
       maxWorkers: process.platform === "win32" ? 2 : 3,
