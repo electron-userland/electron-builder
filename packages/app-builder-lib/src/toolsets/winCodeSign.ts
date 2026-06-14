@@ -115,8 +115,12 @@ export async function getWindowsKitsBundle({ winCodeSign, arch, resourcesDir = "
 
 export function getWinCodesignPlatformFile(): string {
   if (process.platform === "linux") {
-    if (process.arch === "x64") return "win-codesign-linux-amd64.zip"
-    if (process.arch === "arm64") return "win-codesign-linux-arm64.zip"
+    if (process.arch === "x64") {
+      return "win-codesign-linux-amd64.zip"
+    }
+    if (process.arch === "arm64") {
+      return "win-codesign-linux-arm64.zip"
+    }
     return "win-codesign-linux-i386.zip"
   }
   if (process.platform === "win32") {
