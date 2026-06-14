@@ -15,7 +15,8 @@ const stubApp: AppAdapter = {
   onQuit: () => {},
 }
 
-describe("LinuxUpdater unit tests", () => {
+// sequence.concurrent is enabled globally; nested tests mutate process.env and vi mocks — sequential prevents bleed.
+describe.sequential("LinuxUpdater unit tests", () => {
   let updater: DebUpdater
 
   beforeEach(() => {

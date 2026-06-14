@@ -8,16 +8,6 @@ import { buildSourceCandidates, convertIcon, getPngSize } from "app-builder-lib/
 const FIXTURES = path.join(__dirname, "../fixtures")
 const TEST_APP_ICONS = path.join(FIXTURES, "test-app-one/build")
 
-let tmpDir: string
-
-beforeEach(async () => {
-  tmpDir = await mkdtemp(path.join(os.tmpdir(), "icon-test-"))
-})
-
-afterEach(async () => {
-  await rm(tmpDir, { recursive: true, force: true })
-})
-
 const CRC_TABLE = (() => {
   const t = new Uint32Array(256)
   for (let i = 0; i < 256; i++) {
@@ -102,7 +92,15 @@ function parseIcns(data: Buffer): Map<string, Buffer> {
 
 // ─── ICNS output ─────────────────────────────────────────────────────────────
 
-describe("convertIcon – ICNS output", () => {
+describe.sequential("convertIcon – ICNS output", () => {
+  let tmpDir: string
+  beforeEach(async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), "icon-test-"))
+  })
+  afterEach(async () => {
+    await rm(tmpDir, { recursive: true, force: true })
+  })
+
   it("converts a 512×512 PNG to a valid ICNS file", async () => {
     const srcFile = path.join(tmpDir, "icon.png")
     await writePng(512, srcFile)
@@ -193,7 +191,15 @@ describe("convertIcon – ICNS output", () => {
 
 // ─── ICO output ───────────────────────────────────────────────────────────────
 
-describe("convertIcon – ICO output", () => {
+describe.sequential("convertIcon – ICO output", () => {
+  let tmpDir: string
+  beforeEach(async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), "icon-test-"))
+  })
+  afterEach(async () => {
+    await rm(tmpDir, { recursive: true, force: true })
+  })
+
   it("converts a 512×512 PNG to a valid ICO file", async () => {
     const srcFile = path.join(tmpDir, "icon.png")
     await writePng(512, srcFile)
@@ -284,7 +290,15 @@ describe("convertIcon – ICO output", () => {
 
 // ─── set output (Linux) ───────────────────────────────────────────────────────
 
-describe("convertIcon – set output (Linux)", () => {
+describe.sequential("convertIcon – set output (Linux)", () => {
+  let tmpDir: string
+  beforeEach(async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), "icon-test-"))
+  })
+  afterEach(async () => {
+    await rm(tmpDir, { recursive: true, force: true })
+  })
+
   it("returns source PNG directly for set format (matches Go behavior)", async () => {
     const srcFile = path.join(tmpDir, "icon.png")
     await writePng(512, srcFile)
@@ -370,7 +384,15 @@ describe("convertIcon – set output (Linux)", () => {
 
 // ─── File resolution ──────────────────────────────────────────────────────────
 
-describe("convertIcon – file resolution", () => {
+describe.sequential("convertIcon – file resolution", () => {
+  let tmpDir: string
+  beforeEach(async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), "icon-test-"))
+  })
+  afterEach(async () => {
+    await rm(tmpDir, { recursive: true, force: true })
+  })
+
   it("resolves icon by name from roots directory", async () => {
     const buildDir = path.join(tmpDir, "build")
     await mkdir(buildDir, { recursive: true })
@@ -407,7 +429,15 @@ describe("convertIcon – file resolution", () => {
 
 // ─── Directory filename filtering ─────────────────────────────────────────────
 
-describe("convertIcon – collectIconsFromDir filename filtering", () => {
+describe.sequential("convertIcon – collectIconsFromDir filename filtering", () => {
+  let tmpDir: string
+  beforeEach(async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), "icon-test-"))
+  })
+  afterEach(async () => {
+    await rm(tmpDir, { recursive: true, force: true })
+  })
+
   it("only picks up files with a pure-digit basename (anchored regex)", async () => {
     const iconsDir = path.join(tmpDir, "icons")
     await mkdir(iconsDir, { recursive: true })
@@ -516,7 +546,15 @@ describe("buildSourceCandidates", () => {
 
 // ─── getPngSize unit tests ────────────────────────────────────────────────────
 
-describe("getPngSize", () => {
+describe.sequential("getPngSize", () => {
+  let tmpDir: string
+  beforeEach(async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), "icon-test-"))
+  })
+  afterEach(async () => {
+    await rm(tmpDir, { recursive: true, force: true })
+  })
+
   it("reads correct dimensions from a well-formed PNG", async () => {
     const file = path.join(tmpDir, "test.png")
     await writePng(128, file)
@@ -546,7 +584,15 @@ describe("getPngSize", () => {
 
 // ─── convertIcon edge cases ───────────────────────────────────────────────────
 
-describe("convertIcon – edge cases", () => {
+describe.sequential("convertIcon – edge cases", () => {
+  let tmpDir: string
+  beforeEach(async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), "icon-test-"))
+  })
+  afterEach(async () => {
+    await rm(tmpDir, { recursive: true, force: true })
+  })
+
   it("resolves source by absolute path, ignoring roots", async () => {
     const srcFile = path.join(tmpDir, "abs.png")
     await writePng(512, srcFile)

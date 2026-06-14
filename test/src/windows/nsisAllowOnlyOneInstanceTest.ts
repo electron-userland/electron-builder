@@ -8,7 +8,8 @@ const uninstallerPath = path.join(__dirname, "../../../packages/app-builder-lib/
 let templateContent: string
 let findProcessMacro: string
 
-describe("allowOnlyOneInstallerInstance.nsh", () => {
+// sequence.concurrent is enabled globally; module-level beforeAll sets shared variables and a snapshot test is present — sequential prevents races.
+describe.sequential("allowOnlyOneInstallerInstance.nsh", () => {
   beforeAll(async () => {
     templateContent = await fs.readFile(templatePath, "utf8")
 
@@ -94,7 +95,8 @@ describe("allowOnlyOneInstallerInstance.nsh", () => {
   })
 })
 
-describe("uninstaller.nsh — atomicRMDir", () => {
+// sequence.concurrent is enabled globally; snapshot test present — sequential prevents snapshot-index races.
+describe.sequential("uninstaller.nsh — atomicRMDir", () => {
   let uninstallerContent: string
 
   beforeAll(async () => {

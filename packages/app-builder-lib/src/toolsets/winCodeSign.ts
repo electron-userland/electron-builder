@@ -113,6 +113,18 @@ export async function getWindowsKitsBundle({ winCodeSign, arch, resourcesDir = "
   return { kit: path.join(vendorPath, arch === Arch.ia32 ? "x86" : Arch[arch]), appxAssets: vendorPath }
 }
 
+export function getWinCodesignPlatformFile(): string {
+  if (process.platform === "linux") {
+    if (process.arch === "x64") return "win-codesign-linux-amd64.zip"
+    if (process.arch === "arm64") return "win-codesign-linux-arm64.zip"
+    return "win-codesign-linux-i386.zip"
+  }
+  if (process.platform === "win32") {
+    return process.arch === "arm64" ? "win-codesign-windows-arm64.zip" : "win-codesign-windows-x64.zip"
+  }
+  return process.arch === "arm64" ? "win-codesign-darwin-arm64.zip" : "win-codesign-darwin-x86_64.zip"
+}
+
 export function isOldWin6() {
   const winVersion = os.release()
   return winVersion.startsWith("6.") && !winVersion.startsWith("6.3")

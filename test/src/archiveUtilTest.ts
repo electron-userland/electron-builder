@@ -4,18 +4,7 @@ import * as os from "os"
 import * as path from "path"
 import { afterEach, beforeEach, vi } from "vitest"
 
-let tmpDir: string
-
-beforeEach(async () => {
-  tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "eb-archive-test-"))
-})
-
-afterEach(async () => {
-  await fs.rm(tmpDir, { recursive: true, force: true })
-  vi.unstubAllEnvs()
-})
-
-async function makeSrcDir(files: Record<string, string> = { "hello.txt": "hello world", "sub/nested.txt": "nested" }): Promise<string> {
+async function makeSrcDir(tmpDir: string, files: Record<string, string> = { "hello.txt": "hello world", "sub/nested.txt": "nested" }): Promise<string> {
   const src = path.join(tmpDir, "src")
   for (const [rel, content] of Object.entries(files)) {
     const abs = path.join(src, rel)
@@ -30,6 +19,10 @@ async function makeSrcDir(files: Record<string, string> = { "hello.txt": "hello 
 // sequence.concurrent is enabled globally; vi.stubEnv calls in some tests would
 // bleed into adjacent concurrent tests. Sequential execution prevents that.
 describe.sequential("compute7zCompressArgs", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
   test("7z default compression adds -mx=9", ({ expect }) => {
     const args = compute7zCompressArgs("7z", {})
     expect(args).toContain("-mx=9")
@@ -149,14 +142,23 @@ describe.sequential("compute7zCompressArgs", () => {
 
 // ─── archive() — path-level guards (no binary needed) ───────────────────────
 
-describe("archive() guards", () => {
+// sequence.concurrent is enabled globally; tests share module-level tmpDir — per-describe lifecycle + sequential prevents races.
+describe.sequential("archive() guards", () => {
+  let tmpDir: string
+  beforeEach(async () => {
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "eb-archive-test-"))
+  })
+  afterEach(async () => {
+    await fs.rm(tmpDir, { recursive: true, force: true })
+  })
+
   test("excluded pattern with '..' throws", async ({ expect }) => {
-    const src = await makeSrcDir()
+    const src = await makeSrcDir(tmpDir)
     await expect(archive("zip", path.join(tmpDir, "out.zip"), src, { excluded: ["../secret"] })).rejects.toThrow("path traversal sequence")
   })
 
   test.ifNotWindows("skips archiving when output is newer than source dir", async ({ expect }) => {
-    const src = await makeSrcDir()
+    const src = await makeSrcDir(tmpDir)
     const outFile = path.join(tmpDir, "cached.zip")
     await fs.writeFile(outFile, "sentinel")
     const future = new Date(Date.now() + 60_000)
@@ -170,7 +172,16 @@ describe("archive() guards", () => {
 
 // ─── archive() — macOS zip symlink preservation ──────────────────────────────
 
-describe.runIf(process.platform === "darwin")("archive() macOS zip symlink preservation", () => {
+// sequence.concurrent is enabled globally; concurrent zip() calls get SIGTERMed — sequential + per-describe lifecycle prevents process interference.
+describe.runIf(process.platform === "darwin")("archive() macOS zip symlink preservation", { sequential: true }, () => {
+  let tmpDir: string
+  beforeEach(async () => {
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "eb-archive-test-"))
+  })
+  afterEach(async () => {
+    await fs.rm(tmpDir, { recursive: true, force: true })
+  })
+
   test("zip archive preserves symlinks (not dereferenced)", async ({ expect }) => {
     const src = path.join(tmpDir, "src")
     await fs.mkdir(src, { recursive: true })
@@ -195,7 +206,7 @@ describe.runIf(process.platform === "darwin")("archive() macOS zip symlink prese
   })
 
   test("excluded pattern with '..' throws in native zip path", async ({ expect }) => {
-    const src = await makeSrcDir()
+    const src = await makeSrcDir(tmpDir)
     await expect(archive("zip", path.join(tmpDir, "out.zip"), src, { excluded: ["../secret"], preserveSymlinks: true })).rejects.toThrow("path traversal sequence")
   })
 })

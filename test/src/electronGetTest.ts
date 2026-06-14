@@ -365,7 +365,8 @@ describe("downloadBuilderToolset: filenameWithExt validation", () => {
 
 // ─── Toolset archive cache (no network) ──────────────────────────────────────
 
-describe("toolset archive cache", () => {
+// sequence.concurrent is enabled globally; describe-level freshCache set in beforeEach — sequential prevents overwrite races.
+describe.sequential("toolset archive cache", () => {
   let freshCache: string
 
   beforeEach(async () => {

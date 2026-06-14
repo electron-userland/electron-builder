@@ -56,7 +56,8 @@ import { configurePublishCommand } from "../../packages/electron-builder/src/pub
 
 // ─── clearCache ───────────────────────────────────────────────────────────────
 
-describe("clearCache", () => {
+// sequence.concurrent is enabled globally; tests change vi mock implementations — sequential prevents bleed.
+describe.sequential("clearCache", () => {
   beforeEach(() => {
     vi.mocked(getCacheDirectory).mockReturnValue("/home/user/.cache/electron-builder")
     vi.mocked(access).mockResolvedValue(undefined as any)
@@ -149,7 +150,8 @@ describe("clearCache", () => {
 
 // ─── wrap ─────────────────────────────────────────────────────────────────────
 
-describe("wrap", () => {
+// sequence.concurrent is enabled globally; tests set process.exitCode and env vars — sequential prevents bleed.
+describe.sequential("wrap", () => {
   const savedExitCode = process.exitCode
 
   beforeEach(() => {

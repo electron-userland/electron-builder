@@ -2,8 +2,8 @@ import * as fs from "fs"
 import * as path from "path"
 import { describe, it, expect, beforeAll } from "vitest"
 import { generateTests } from "../vitest-scripts/generate-tests"
-import { GENERATED_TESTS_DIR } from "../vitest-scripts/generate-toolset-tests-shared"
-import { platformAllowed } from "../vitest-scripts/file-discovery"
+import { GENERATED_TESTS_DIR } from "../vitest-scripts/runtime-tests/generate-toolset-tests-shared"
+import { platformAllowed } from "../vitest-scripts/vitest-config/file-discovery"
 
 // Collect all generated test filenames recursively
 function collectGeneratedFiles(dir: string): string[] {

@@ -71,7 +71,8 @@ describe("WindowsSignAzureManager.computedPublisherName", () => {
 
 // ─── signFile ─────────────────────────────────────────────────────────────────
 
-describe("WindowsSignAzureManager.signFile", () => {
+// sequence.concurrent is enabled globally; describe-level execSpy/manager set in beforeEach — sequential prevents overwrite races.
+describe.sequential("WindowsSignAzureManager.signFile", () => {
   let execSpy: ReturnType<typeof vi.fn>
   let manager: WindowsSignAzureManager
   const filePath = "C:\\builds\\app\\my-app.exe"

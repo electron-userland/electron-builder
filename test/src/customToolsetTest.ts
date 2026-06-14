@@ -22,7 +22,8 @@ afterEach(async () => {
   await Promise.all([rm(FAKE_DIR, { recursive: true, force: true }), rm(FAKE_DIR_2, { recursive: true, force: true })])
 })
 
-describe("getCustomToolsetPath memoization", () => {
+// sequence.concurrent is enabled globally; tests share module-level clearCustomToolsetCache() + fixed dir paths — sequential prevents cache races.
+describe.sequential("getCustomToolsetPath memoization", () => {
   test("returns same Promise for identical args", ({ expect }) => {
     const toolset = dirToolset()
     const p1 = getCustomToolsetPath(toolset, "")
