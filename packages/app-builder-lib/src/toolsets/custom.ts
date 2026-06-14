@@ -45,21 +45,41 @@ function resolveFilePath(url: string, resourcesDir: string): string {
   return path.isAbsolute(p) ? sanitizeDirPath(p) : sanitizeDirPath(p, resourcesDir)
 }
 
-export async function getCustomToolsetPath(custom: ToolsetCustom, resourcesDir: string): Promise<string> {
+const _customToolsetCache = new Map<string, Promise<string>>()
+
+export function clearCustomToolsetCache(): void {
+  _customToolsetCache.clear()
+}
+
+export function getCustomToolsetPath(custom: ToolsetCustom, resourcesDir: string): Promise<string> {
+  const key = JSON.stringify({ url: custom.url, checksum: custom.checksum ?? "", resourcesDir })
+  let cached = _customToolsetCache.get(key)
+  if (cached == null) {
+    cached = _resolveCustomToolsetPath(custom, resourcesDir)
+    _customToolsetCache.set(key, cached)
+  }
+  return cached
+}
+
+async function _resolveCustomToolsetPath(custom: ToolsetCustom, resourcesDir: string): Promise<string> {
   const { type, toolset } = await validateCustomToolset(custom, resourcesDir)
 
-  if (type !== "directory" && !toolset.checksum) {
+  if (type === "directory") {
+    return resolveFilePath(toolset.url, resourcesDir)
+  }
+
+  if (!toolset.checksum) {
     throw new Error(`ToolsetCustom.checksum is required for ${type} toolsets (url: ${toolset.url})`)
   }
 
-  const binaryVersion = toolset.version ?? toolset.checksum!.substring(0, 8)
+  const binaryVersion = toolset.version ?? toolset.checksum.substring(0, 8)
   const releaseName = `${binaryVersion}-${hashUrlSafe(toolset.url)}`
 
   if (type === "url") {
     return downloadBuilderToolset({
       releaseName: releaseName,
       filenameWithExt: path.basename(toolset.url),
-      checksums: { [path.basename(toolset.url)]: toolset.checksum! },
+      checksums: { [path.basename(toolset.url)]: toolset.checksum },
       overrideUrl: toolset.url,
     })
   } else if (type === "file") {
@@ -74,11 +94,9 @@ export async function getCustomToolsetPath(custom: ToolsetCustom, resourcesDir: 
     }
     await extractArchive(resolveFilePath(toolset.url, resourcesDir), toolsetTarget)
     return toolsetTarget
-  } else if (type === "directory") {
-    return resolveFilePath(toolset.url, resourcesDir)
-  } else {
-    throw new Error(`Unsupported custom toolset type: ${type}`)
   }
+
+  throw new Error(`Unsupported custom toolset type: ${type}`)
 }
 
 export function hashUrlSafe(input: string, length = 6): string {

@@ -376,7 +376,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       const child = childProcess.spawn(spawnCommand, spawnArgs, {
         cwd,
         // Package manager invocations do not need signing/publishing credentials.
-        env: { COREPACK_ENABLE_STRICT: "0", ...stripSensitiveEnvVars(process.env) },
+        env: { ...stripSensitiveEnvVars(process.env), COREPACK_ENABLE_STRICT: "0" },
       })
 
       let stderr = ""

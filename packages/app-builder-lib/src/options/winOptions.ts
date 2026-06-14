@@ -1,4 +1,3 @@
-import { Nullish } from "builder-util-runtime"
 import { CustomWindowsSign } from "../codeSign/win/windowsSignToolManager.js"
 import { TargetConfigType } from "../core.js"
 import { PlatformSpecificBuildOptions } from "./PlatformSpecificBuildOptions.js"
@@ -26,16 +25,22 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   readonly legalTrademarks?: string | null
 
   /**
-   * Options for usage with signtool.exe
-   * Cannot be used in conjunction with `azureSignOptions`, signing will default to Azure Trusted Signing
+   * Code signing configuration. Set to `false` or `null` to disable Windows code signing
+   * (executable resources such as the icon and metadata are still edited). Leave unset to
+   * sign using credentials discovered from the environment (e.g. `WIN_CSC_LINK`). Otherwise
+   * provide exactly one of the following signing modes:
+   *
+   * - `{ type: "signtool", ... }` — Sign with a local certificate file (.pfx/.p12) or a
+   *   certificate from the Windows certificate store.
+   * - `{ type: "hsm", ... }` — Sign using a Hardware Security Module (HSM) or FIPS-compliant
+   *   hardware token via signtool's `/csp` (cryptographic service provider) and `/kc` (key
+   *   container) flags. Requires `toolsets.winCodeSign: "1.x"`. Windows-only.
+   * - `{ type: "pkcs11", ... }` — Sign using a PKCS#11 hardware token via osslsigncode.
+   *   Available on macOS and Linux CI without a Windows VM.
+   * - `{ type: "azure", ... }` — Sign via Azure Trusted Signing (cloud service). Requires
+   *   Azure Entra ID environment variables for authentication.
    */
-  readonly signtoolOptions?: WindowsSigntoolConfiguration | null
-
-  /**
-   * Options for usage of Azure Trusted Signing service
-   * Cannot be used in conjunction with `signtoolOptions`, signing will default to Azure Trusted Signing
-   */
-  readonly azureSignOptions?: WindowsAzureSigningConfiguration | null
+  readonly sign?: WindowsSigningConfiguration | false | null
 
   /**
    * Whether to verify the signature of an available update before installation.
@@ -53,26 +58,6 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   readonly requestedExecutionLevel?: RequestedExecutionLevel | null
 
   /**
-   * Whether to sign and add metadata to executable via [`resedit`](https://www.npmjs.com/package/resedit).
-   * Metadata includes information about the app name/description/version, publisher, copyright, etc.
-   * This property also is responsible for adding the app icon and setting execution level.
-   * Set to `false` only if you need to fully disable resedit-based resource editing.
-   * To skip only code signing while keeping resource editing, use `signExecutable: false` instead.
-   * @default true
-   */
-  readonly signAndEditExecutable?: boolean
-
-  /**
-   * Whether to sign Windows executables and any additional files matched by `signExts`.
-   * Set to `false` to skip Windows code signing while still editing executable resources
-   * (icon, metadata, etc. via [`resedit`](https://www.npmjs.com/package/resedit)).
-   * This option is not limited to the main executable edit/sign flow and can also affect
-   * signing of Windows installers or other artifacts that use the standard signing path.
-   * @default true
-   */
-  readonly signExecutable?: boolean
-
-  /**
    * Explicit file name/extensions (`str.endsWith`) to also sign. Advanced option.
    * Supports negative patterns, e.g. example that excludes `.appx` files: `["somefilename", ".dll", "!.appx"]`.
    * @see https://github.com/electron-userland/electron-builder/issues/7329
@@ -83,44 +68,20 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
 
 export type RequestedExecutionLevel = "asInvoker" | "highestAvailable" | "requireAdministrator"
 
-export interface WindowsSigntoolConfiguration {
+// ─── Shared base for signtool-family signing modes ───────────────────────────
+
+interface WindowsSigningSharedOptions {
   /**
-   * The custom function (or path to file or module id) to sign Windows executables
+   * [The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided.
+   * Defaults to common name from your code signing certificate.
    */
-  readonly sign?: CustomWindowsSign | string | null
+  readonly publisherName?: string | Array<string> | null
 
   /**
    * Array of signing algorithms used. For AppX `sha256` is always used.
    * @default ['sha1', 'sha256']
    */
   readonly signingHashAlgorithms?: Array<"sha1" | "sha256"> | null
-
-  /**
-   * The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason.
-   * Please see [Code Signing](https://www.electron.build/code-signing).
-   */
-  readonly certificateFile?: string | null
-
-  /**
-   * The password to the certificate provided in `certificateFile`. Please use it only if you cannot use env variable `CSC_KEY_PASSWORD` (`WIN_CSC_KEY_PASSWORD`) for some reason.
-   * Please see [Code Signing](https://www.electron.build/code-signing).
-   */
-  readonly certificatePassword?: string | null
-
-  /**
-   * The name of the subject of the signing certificate, which is often labeled with the field name `issued to`. Required only for EV Code Signing and works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).
-   */
-  readonly certificateSubjectName?: string | null
-
-  /**
-   * The SHA1 hash of the signing certificate. The SHA1 hash is commonly specified when multiple certificates satisfy the criteria specified by the remaining switches. Works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).
-   */
-  readonly certificateSha1?: string | null
-
-  /**
-   * The path to an additional certificate file you want to add to the signature block.
-   */
-  readonly additionalCertificateFile?: string | null
 
   /**
    * The URL of the RFC 3161 time stamp server.
@@ -135,54 +96,202 @@ export interface WindowsSigntoolConfiguration {
   readonly timeStampServer?: string | null
 
   /**
-   * [The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided.
-   * Defaults to common name from your code signing certificate.
+   * The path to an additional certificate file you want to add to the signature block.
    */
-  readonly publisherName?: string | Array<string> | null
+  readonly additionalCertificateFile?: string | null
+
+  /**
+   * The custom function (or path to file or module id) to sign Windows executables.
+   */
+  readonly sign?: CustomWindowsSign | string | null
 }
 
-// https://learn.microsoft.com/en-us/azure/trusted-signing/how-to-signing-integrations
-export interface WindowsAzureSigningConfiguration {
+// ─── Signing mode: signtool (file or Windows certificate store) ──────────────
+
+export interface WindowsSigntoolSigningConfig extends WindowsSigningSharedOptions {
+  readonly type: "signtool"
+
+  /**
+   * The path to the *.pfx or *.p12 certificate file. Prefer the `WIN_CSC_LINK` environment
+   * variable when possible. See [Code Signing](https://www.electron.build/code-signing).
+   */
+  readonly certificateFile?: string | null
+
+  /**
+   * The password to the certificate provided in `certificateFile`. Prefer the
+   * `WIN_CSC_KEY_PASSWORD` environment variable when possible.
+   */
+  readonly certificatePassword?: string | null
+
+  /**
+   * The name of the subject of the signing certificate. Required for EV Code Signing.
+   * Works only on Windows (or macOS with Parallels Desktop).
+   */
+  readonly certificateSubjectName?: string | null
+
+  /**
+   * The SHA1 hash of the signing certificate. Works only on Windows (or macOS with Parallels Desktop).
+   */
+  readonly certificateSha1?: string | null
+}
+
+// ─── Signing mode: hsm (Hardware Security Module via signtool /csp /kc) ──────
+
+/**
+ * @beta HSM signing is available in v27 as a beta feature. The interface is stable but
+ * real-hardware test coverage is limited.
+ */
+export interface WindowsHsmSigningConfig extends WindowsSigningSharedOptions {
+  readonly type: "hsm"
+
+  /**
+   * The name of the cryptographic service provider (CSP) that holds the private key.
+   * Maps to signtool's `/csp` flag. Examples:
+   * - Google Cloud KMS: `"Google Cloud KMS Provider"`
+   * - Smart card / FIPS token: `"Microsoft Base Smart Card Crypto Provider"`
+   *
+   * Requires `toolsets.winCodeSign: "1.x"`. Windows-only — use `type: "pkcs11"` on macOS/Linux.
+   */
+  readonly cryptoServiceProvider: string
+
+  /**
+   * The key container name within the CSP. Maps to signtool's `/kc` flag.
+   *
+   * Example for Google Cloud KMS:
+   * `"projects/PROJECT_ID/locations/LOCATION/keyRings/KEY_RING/cryptoKeys/KEY_NAME/cryptoKeyVersions/1"`
+   */
+  readonly keyContainer: string
+
+  /**
+   * Path to the certificate file containing the public certificate chain (.crt / .cer / .pfx).
+   * The private key is NOT read from this file — it is provided by the HSM via `cryptoServiceProvider`.
+   */
+  readonly certificateFile?: string | null
+
+  /**
+   * The SHA1 thumbprint of the certificate in the Windows certificate store.
+   */
+  readonly certificateSha1?: string | null
+
+  /**
+   * The subject name of the certificate in the Windows certificate store.
+   */
+  readonly certificateSubjectName?: string | null
+}
+
+// ─── Signing mode: pkcs11 (cross-platform PKCS#11 via osslsigncode) ──────────
+
+/**
+ * @beta PKCS#11 signing is available in v27 as a beta feature. The interface is stable but
+ * real-hardware test coverage is limited.
+ */
+export interface WindowsPkcs11SigningConfig extends WindowsSigningSharedOptions {
+  readonly type: "pkcs11"
+
+  /**
+   * Path to the PKCS#11 shared library (`.so` on Linux, `.dylib` on macOS).
+   * The library must be installed separately — electron-builder does not bundle it.
+   *
+   * Example: `"/usr/lib/x86_64-linux-gnu/opensc-pkcs11.so"`
+   *
+   * Must be paired with `pkcs11KeyUri`.
+   */
+  readonly pkcs11Module: string
+
+  /**
+   * RFC 7512 PKCS#11 URI identifying the private key within the module.
+   * Maps to osslsigncode's `-key` parameter.
+   *
+   * Example: `"pkcs11:token=MyToken;object=MyKey;type=private"`
+   *
+   * Must be paired with `pkcs11Module`.
+   */
+  readonly pkcs11KeyUri: string
+
+  /**
+   * Optional path to a certificate chain file to accompany the PKCS#11 key.
+   * If omitted the certificate embedded in the token is used.
+   */
+  readonly certificateFile?: string | null
+}
+
+// ─── Signing mode: azure (Azure Trusted Signing) ──────────────────────────────
+
+/**
+ * @beta The `signtool /dlib` Azure Trusted Signing integration introduced in v27 is a beta
+ * feature. The legacy PowerShell fallback (triggered when `toolsets.winCodeSign` is unset or
+ * `"0.0.0"`) remains supported for migration.
+ */
+export interface WindowsAzureSigningConfig {
+  readonly type: "azure"
+
   /**
    * [The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided.
    */
   readonly publisherName: string
+
   /**
-   * The Trusted Signing Account endpoint. The URI value must have a URI that aligns to the
-   * region your Trusted Signing Account and Certificate Profile you are specifying were created
-   * in during the setup of these resources.
+   * The Trusted Signing Account endpoint. The URI value must align to the region your Trusted
+   * Signing Account and Certificate Profile were created in.
    *
-   * Translates to field: Endpoint
-   *
-   * Requires one of environment variable configurations for authenticating to Microsoft Entra ID per [Microsoft's documentation](https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition)
+   * Requires Azure Entra ID environment variables per
+   * [Microsoft's documentation](https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition).
    */
   readonly endpoint: string
+
   /**
-   * The Certificate Profile name. Translates to field: CertificateProfileName
+   * The Certificate Profile name. Translates to field: CertificateProfileName.
    */
   readonly certificateProfileName: string
+
   /**
-   * The Code Signing Signing Account name. Translates to field: CodeSigningAccountName
+   * The Code Signing Account name. Translates to field: CodeSigningAccountName.
    */
   readonly codeSigningAccountName: string
+
   /**
-   * The File Digest for signing each file. Translates to field: FileDigest
+   * The file digest algorithm. Translates to field: FileDigest.
    * @default SHA256
    */
   readonly fileDigest?: string
+
   /**
-   * The Timestamp rfc3161 server. Translates to field: TimestampRfc3161
+   * The RFC3161 timestamp server. Translates to field: TimestampRfc3161.
    * @default http://timestamp.acs.microsoft.com
    */
   readonly timestampRfc3161?: string
+
   /**
-   * The Timestamp Digest. Translates to field: TimestampDigest
+   * The timestamp digest algorithm. Translates to field: TimestampDigest.
    * @default SHA256
    */
   readonly timestampDigest?: string
+
   /**
-   * Allow other CLI parameters (verbatim case-sensitive) to `Invoke-TrustedSigning`
-   * Note: Key-Value pairs with `undefined`/`null` value are filtered out of the command.
+   * Additional fields to include verbatim in the `metadata.json` file passed to
+   * `Azure.CodeSigning.Dlib.dll` via `signtool /dmdf`. Use this for DLib-specific options
+   * not covered by the typed fields above (e.g. `ExcludeCredentials`, `CorrelationId`).
    */
-  [k: string]: string | Nullish
+  readonly additionalMetadata?: Record<string, string>
+}
+
+// ─── Discriminated union ──────────────────────────────────────────────────────
+
+export type WindowsSigningConfiguration = WindowsSigntoolSigningConfig | WindowsHsmSigningConfig | WindowsPkcs11SigningConfig | WindowsAzureSigningConfig
+
+/** Signing modes that use signtool.exe or osslsigncode (not Azure). */
+export type WindowsSigntoolFamilyConfig = WindowsSigntoolSigningConfig | WindowsHsmSigningConfig | WindowsPkcs11SigningConfig
+
+/**
+ * Resolves the active signing configuration object. `false`, `null`, and unset all mean
+ * "no explicit signing config object" (env-based discovery still applies when unset).
+ */
+export function resolveWindowsSigningConfiguration(config: WindowsConfiguration): WindowsSigningConfiguration | null {
+  const { sign } = config
+  return sign == null || sign === false ? null : sign
+}
+
+/** Whether Windows code signing has been explicitly disabled via `sign: false | null`. */
+export function isWindowsSigningDisabled(config: WindowsConfiguration): boolean {
+  return config.sign === false || config.sign === null
 }

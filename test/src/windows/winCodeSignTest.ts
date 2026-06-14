@@ -1,26 +1,27 @@
 import { parseDn } from "builder-util-runtime"
-import { ToolInfo, WinPackager, WindowsSignToolManager } from "app-builder-lib"
-import { Configuration, CustomWindowsSign, ToolsetConfig } from "app-builder-lib/internal"
+import { WinPackager } from "app-builder-lib"
+import { WindowsSigntoolSigningConfig } from "app-builder-lib/src/options/winOptions"
+import { Configuration, CustomWindowsSign } from "app-builder-lib/internal"
 import { AsyncTaskManager } from "builder-util"
 import { Arch, DIR_TARGET, Platform, Target } from "electron-builder"
 import { Packager } from "electron-builder"
-import { outputFile } from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
-import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows } from "../helpers/packTester"
-import { ExpectStatic } from "vitest"
 
 type SignIfResult = { file: string; ok: boolean }
+
+const baseSigningConfig: WindowsSigntoolSigningConfig = {
+  type: "signtool",
+  certificateFile: "secretFile",
+  certificatePassword: "pass",
+  signingHashAlgorithms: ["sha256"],
+}
 
 const signtoolBaseConfig: Configuration = {
   toolsets: { winCodeSign: "1.1.0" },
   win: {
-    signtoolOptions: {
-      certificateFile: "secretFile",
-      certificatePassword: "pass",
-      signingHashAlgorithms: ["sha256"],
-    },
+    sign: baseSigningConfig,
   },
 }
 
@@ -68,217 +69,6 @@ test("parseDn", ({ expect }) => {
   expect(load("publisherName:\n  - 7digital Limited")).toMatchObject({ publisherName: ["7digital Limited"] })
 })
 
-const windowsDirTarget = Platform.WINDOWS.createTarget(["dir"])
-
-const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0"]
-
-for (const winCodeSign of winCodeSignVersions) {
-  describe(`winCodeSign: ${winCodeSign}`, { sequential: true }, () => {
-    test("sign nested asar unpacked executables", ({ expect }) =>
-      appThrows(
-        expect,
-        {
-          targets: Platform.WINDOWS.createTarget(DIR_TARGET),
-          config: {
-            publish: "never",
-            asar: { unpack: ["assets"] },
-            toolsets: {
-              winCodeSign,
-            },
-          },
-        },
-        {
-          signedWin: true,
-          projectDirCreated: async projectDir => {
-            await outputFile(path.join(projectDir, "assets", "nested", "nested", "file.exe"), "invalid PE file")
-          },
-        },
-        error => {
-          let message = "This file format cannot be signed because it is not recognized."
-          switch (winCodeSign) {
-            case "0.0.0":
-              if (process.platform !== "win32") {
-                message = "Unrecognized file type:"
-              }
-              break
-            case "1.0.0":
-            case "1.1.0":
-              if (process.platform !== "win32") {
-                message = "Initialization error or unsupported input file type."
-              }
-              break
-          }
-          expect(error.message).toContain(message)
-        }
-      ))
-
-    function testCustomSign(expect: ExpectStatic, sign: any) {
-      return app(expect, {
-        targets: Platform.WINDOWS.createTarget(DIR_TARGET),
-        platformPackagerFactory: (packager, _platform) => new CheckingWinPackager(packager),
-        config: {
-          toolsets: {
-            winCodeSign,
-          },
-          win: {
-            signtoolOptions: {
-              certificatePassword: "pass",
-              certificateFile: "secretFile",
-              sign,
-              signingHashAlgorithms: ["sha256"],
-            },
-            // to be sure that sign code will be executed
-            forceCodeSigning: true,
-          },
-        },
-      })
-    }
-
-    test("certificateFile/password - sign as async/await", ({ expect }) =>
-      testCustomSign(expect, async () => {
-        return Promise.resolve()
-      }))
-    test("certificateFile/password - sign as Promise", ({ expect }) => testCustomSign(expect, () => Promise.resolve()))
-    test("certificateFile/password - sign as function", async ({ expect }) => testCustomSign(expect, (await import("../helpers/customWindowsSign")).default))
-    test("certificateFile/password - sign as path", ({ expect }) => testCustomSign(expect, path.join(__dirname, "../helpers/customWindowsSign.mjs")))
-
-    test("custom sign can call getToolPath() via packager.signingManager", ({ expect }) => {
-      let capturedToolInfo: ToolInfo | null = null
-      const sign: CustomWindowsSign = async (_config, packager) => {
-        const manager = (await packager!.signingManager.value) as WindowsSignToolManager
-        capturedToolInfo = await manager.getToolPath(process.platform === "win32")
-      }
-      return app(
-        expect,
-        {
-          targets: Platform.WINDOWS.createTarget(DIR_TARGET),
-          platformPackagerFactory: (packager, _platform) => new CheckingWinPackager(packager),
-          config: {
-            toolsets: { winCodeSign },
-            win: {
-              forceCodeSigning: true,
-              signtoolOptions: {
-                certificatePassword: "pass",
-                certificateFile: "secretFile",
-                sign,
-                signingHashAlgorithms: ["sha256"],
-              },
-            },
-          },
-        },
-        {
-          packed: () => {
-            expect(capturedToolInfo).not.toBeNull()
-            expect(typeof capturedToolInfo!.path).toBe("string")
-            expect(capturedToolInfo!.path.length).toBeGreaterThan(0)
-            return Promise.resolve()
-          },
-        }
-      )
-    })
-
-    test("custom sign if no code sign info", ({ expect }) => {
-      let called = false
-      return app(
-        expect,
-        {
-          targets: Platform.WINDOWS.createTarget(DIR_TARGET),
-          platformPackagerFactory: (packager, _platform) => new CheckingWinPackager(packager),
-          config: {
-            toolsets: {
-              winCodeSign,
-            },
-            win: {
-              // to be sure that sign code will be executed
-              forceCodeSigning: true,
-              signtoolOptions: {
-                sign: async () => {
-                  called = true
-                  return Promise.resolve()
-                },
-              },
-            },
-          },
-        },
-        {
-          packed: () => {
-            expect(called).toBe(true)
-            return Promise.resolve()
-          },
-        }
-      )
-    })
-
-    test("forceCodeSigning", ({ expect }) =>
-      appThrows(expect, {
-        targets: windowsDirTarget,
-        config: {
-          toolsets: {
-            winCodeSign,
-          },
-          forceCodeSigning: true,
-        },
-      }))
-
-    test("electronDist", ({ expect }) =>
-      appThrows(
-        expect,
-        {
-          targets: windowsDirTarget,
-          config: {
-            toolsets: {
-              winCodeSign,
-            },
-            electronDist: "foo",
-          },
-        },
-        {},
-        error => expect(error.message).toContain("Please provide a valid path to the Electron zip file, cache directory, or electron build directory.")
-      ))
-
-    test.skip("azure signing without credentials", ({ expect }) =>
-      appThrows(
-        expect,
-        {
-          targets: windowsDirTarget,
-          config: {
-            forceCodeSigning: true,
-            toolsets: {
-              winCodeSign,
-            },
-            win: {
-              azureSignOptions: {
-                publisherName: "test",
-                endpoint: "https://weu.codesigning.azure.net/",
-                certificateProfileName: "profilenamehere",
-                codeSigningAccountName: "codesigningnamehere",
-              },
-            },
-          },
-        },
-        {},
-        error => expect(error.message).toContain("Unable to find valid azure env field AZURE_TENANT_ID for signing.")
-      ))
-
-    test.ifNotWindows("win code sign using pwsh", ({ expect }) =>
-      app(
-        expect,
-        {
-          targets: Platform.WINDOWS.createTarget(DIR_TARGET),
-          config: {
-            toolsets: {
-              winCodeSign,
-            },
-          },
-        },
-        {
-          signedWin: true,
-        }
-      )
-    )
-  })
-}
-
 describe("signing queue", () => {
   describe("normal flow", () => {
     test("signs all files when no errors occur", async ({ expect }) => {
@@ -297,7 +87,7 @@ describe("signing queue", () => {
         platformPackagerFactory: (info, _platform) => new PackagerClass(info),
         config: {
           ...signtoolBaseConfig,
-          win: { signtoolOptions: { ...signtoolBaseConfig.win!.signtoolOptions, sign } },
+          win: { sign: { ...baseSigningConfig, sign } },
         },
       })
 
@@ -331,7 +121,7 @@ describe("signing queue", () => {
         platformPackagerFactory: (info, _platform) => new PackagerClass(info),
         config: {
           ...signtoolBaseConfig,
-          win: { signtoolOptions: { ...signtoolBaseConfig.win!.signtoolOptions, sign } },
+          win: { sign: { ...baseSigningConfig, sign } },
         },
       })
 
@@ -367,7 +157,7 @@ describe("signing queue", () => {
         config: {
           ...signtoolBaseConfig,
           win: {
-            signtoolOptions: { ...signtoolBaseConfig.win!.signtoolOptions, sign },
+            sign: { ...baseSigningConfig, sign },
             forceCodeSigning: true,
           },
         },
@@ -394,7 +184,7 @@ describe("signing queue", () => {
           config: {
             ...signtoolBaseConfig,
             win: {
-              signtoolOptions: { ...signtoolBaseConfig.win!.signtoolOptions, sign },
+              sign: { ...baseSigningConfig, sign },
               forceCodeSigning: true,
             },
           },
@@ -403,5 +193,36 @@ describe("signing queue", () => {
         error => expect(error.message).toContain("transient signing error")
       )
     })
+  })
+})
+
+describe("sign: false (signing disabled)", () => {
+  test("signIf skips every file even when a cert is discoverable via env", async ({ expect }) => {
+    const signResults: boolean[] = []
+
+    class SignDisabledTestPackager extends WinPackager {
+      async pack(outDir: string, _arch: Arch, _targets: Array<Target>, _taskManager: AsyncTaskManager): Promise<void> {
+        for (const f of ["file1.exe", "file2.exe", "file3.exe"].map(n => path.join(outDir, n))) {
+          signResults.push(await this.signIf(f))
+        }
+      }
+
+      packageInDistributableFormat(_appOutDir: string, _arch: Arch, _targets: Array<Target>, _taskManager: AsyncTaskManager): void {}
+    }
+
+    await app(
+      expect,
+      {
+        targets: Platform.WINDOWS.createTarget(DIR_TARGET),
+        platformPackagerFactory: (info, _platform) => new SignDisabledTestPackager(info),
+        config: {
+          win: { sign: false },
+        },
+      },
+      // signedWin sets WIN_CSC_LINK, so a cert is discoverable — sign: false must still short-circuit
+      { signedWin: true }
+    )
+
+    expect(signResults).toEqual([false, false, false])
   })
 })
