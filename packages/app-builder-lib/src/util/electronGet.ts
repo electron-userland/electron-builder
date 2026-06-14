@@ -190,7 +190,7 @@ export async function moveDirAtomic(src: string, dest: string): Promise<void> {
       backoff: 250,
       shouldRetry: (err: any) => {
         if (TRANSIENT_RENAME_CODES.has(err.code ?? "")) {
-          log.warn({ src, dest, code: err.code }, "directory rename failed, retrying")
+          log.warn({ src: log.filePath(src), dest: log.filePath(dest), code: err.code }, "directory rename failed, retrying")
           return true
         }
         return false
@@ -199,15 +199,17 @@ export async function moveDirAtomic(src: string, dest: string): Promise<void> {
     return
   } catch (err: any) {
     lastErr = err
-    if (!TRANSIENT_RENAME_CODES.has(err.code ?? "")) throw err
+    if (!TRANSIENT_RENAME_CODES.has(err.code ?? "")) {
+      throw err
+    }
   }
   // All rename retries exhausted on a transient error — fall back to copy + delete
-  log.warn({ src, dest }, "directory rename failed repeatedly; falling back to copy+delete")
+  log.warn({ src: log.filePath(src), dest: log.filePath(dest) }, "directory rename failed repeatedly; falling back to copy+delete")
   try {
     await fs.cp(src, dest, { recursive: true })
     await fs.rm(src, { recursive: true, force: true })
-  } catch {
-    throw lastErr
+  } catch (err: any) {
+    throw new Error(`Failed to move directory from ${src} to ${dest}: ${err.message}${lastErr ? `; last rename error: ${lastErr.message}` : ""}`)
   }
 }
 
@@ -265,7 +267,7 @@ export async function extractArchive(file: string, dir: string) {
         // Check if extraction actually failed or just had benign warnings
         const files = await fs.readdir(tmpDir)
         if (files.length === 0) {
-          log.warn({ file, tmpDir, error: e.message }, "7z extraction produced no output")
+          log.warn({ file: log.filePath(file), tmpDir: log.filePath(tmpDir), error: e.message }, "7z extraction produced no output")
           throw new Error(`7z extraction failed for ${file}: ${e.message}`)
         }
         // If files were extracted despite the error, log and continue
