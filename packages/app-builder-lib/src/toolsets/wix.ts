@@ -1,6 +1,5 @@
-import { resolveEnvToolsetPath } from "builder-util"
 import { Nullish } from "builder-util-runtime"
-import { downloadBuilderToolset } from "../util/electronGet"
+import { downloadBuilderToolset } from "../util/electronGet.js"
 
 export const wixChecksums = {
   "0.0.0": {
@@ -12,10 +11,6 @@ export const wixChecksums = {
 } as const
 
 export async function getWixBin(wix: keyof typeof wixChecksums | Nullish): Promise<string> {
-  const overridePath = await resolveEnvToolsetPath("ELECTRON_BUILDER_WIX_DIR", "directory")
-  if (overridePath != null) {
-    return overridePath
-  }
   if (wix === "0.0.0" || wix == null) {
     return downloadBuilderToolset({
       releaseName: `wix-4.0.0.5512.2`,
