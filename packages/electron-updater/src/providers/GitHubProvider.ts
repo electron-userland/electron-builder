@@ -66,7 +66,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
 
     const feed = parseXml(feedXml)
     // noinspection TypeScriptValidateJSTypes
-    let latestRelease = feed.element("entry", false, `No published versions on GitHub`)
+    let latestRelease: XElement | null = null
     let tag: string | null = null
     try {
       if (this.updater.allowPrerelease) {
@@ -74,9 +74,25 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
 
         if (currentChannel === null) {
           // allowPrerelease=true with no explicit channel and stable current version:
-          // pick the first entry from the Atom feed, which may be a prerelease
-          // noinspection TypeScriptValidateJSTypes
-          tag = hrefRegExp.exec(latestRelease.element("link").attribute("href"))![1]
+          // pick the newest release available whether it is a pre-release or a stable release.
+          let newestRelease = null
+          for (const entry of feed.getElements("entry")) {
+            // noinspection TypeScriptValidateJSTypes
+            const releaseTag = hrefRegExp.exec(entry.element("link").attribute("href"))?.[1]
+
+            if (!releaseTag || !semver.valid(releaseTag)) continue
+
+            if (semver.gt(this.updater.currentVersion, releaseTag)) continue
+
+            if (!newestRelease || semver.gt(releaseTag, newestRelease)) {
+              newestRelease = releaseTag
+              latestRelease = entry
+            }
+          }
+
+          if (newestRelease) {
+            tag = newestRelease
+          }
         } else {
           for (const element of feed.getElements("entry")) {
             // noinspection TypeScriptValidateJSTypes
@@ -133,7 +149,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
       throw newError(`Cannot parse releases feed: ${e.stack || e.message},\nXML:\n${feedXml}`, "ERR_UPDATER_INVALID_RELEASE_FEED")
     }
 
-    if (tag == null) {
+    if (tag == null || latestRelease == null) {
       throw newError(`No published versions on GitHub`, "ERR_UPDATER_NO_PUBLISHED_VERSIONS")
     }
 
