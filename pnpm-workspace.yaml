@@ -47,4 +47,5 @@ overrides:
   qs: '>=6.15.2 <7' # GHSA-q8mj-m7cp-5q26 (med)
   uuid: '>=11.1.1 <12' # GHSA-w5hq-g745-h8pq (med)
   'ws@8': '>=8.20.1 <9' # GHSA-58qx-3vcg-4xpx (med); 7.x is not in the vulnerable range
+  webpack-dev-server: '>=5.2.4 <6' # GHSA-79cf-xcqc-c78w (med)
 packageImportMethod: copy

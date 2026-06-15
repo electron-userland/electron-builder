@@ -27,6 +27,7 @@ overrides:
   qs: '>=6.15.2 <7'
   uuid: '>=11.1.1 <12'
   ws@8: '>=8.20.1 <9'
+  webpack-dev-server: '>=5.2.4 <6'
 
 patchedDependencies:
   '@changesets/assemble-release-plan@6.0.9': ef56f57067dfcc594f40d9afc7278abe38cecf1c04230936e447a60e0d58a46e
@@ -9645,8 +9646,8 @@ packages:
       webpack:
         optional: true
 
-  webpack-dev-server@5.2.3:
-    resolution: {integrity: sha512-9Gyu2F7+bg4Vv+pjbovuYDhHX+mqdqITykfzdM9UyKqKHlsE5aAjRhR+oOEfXW5vBeu8tarzlJFIZva4ZjAdrQ==}
+  webpack-dev-server@5.2.4:
+    resolution: {integrity: sha512-GqDPGZN9bRqKBTkp4aWkobDDHMsrXKoGSdOH56smIri8qR0JG8gfL8/v/f/OZR3/OKXjG8uwJbFVhKm/FNU/UA==}
     engines: {node: '>= 18.12.0'}
     hasBin: true
     peerDependencies:
@@ -12436,7 +12437,7 @@ snapshots:
       update-notifier: 6.0.2
       webpack: 5.106.2(@swc/core@1.15.33)(postcss@8.5.14)
       webpack-bundle-analyzer: 4.10.2
-      webpack-dev-server: 5.2.3(tslib@2.8.1)(webpack@5.106.2(@swc/core@1.15.33)(postcss@8.5.14))
+      webpack-dev-server: 5.2.4(tslib@2.8.1)(webpack@5.106.2(@swc/core@1.15.33)(postcss@8.5.14))
       webpack-merge: 6.0.1
     optionalDependencies:
       '@docusaurus/faster': 3.10.1(@docusaurus/types@3.10.1(@swc/core@1.15.33)(postcss@8.5.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(postcss@8.5.14)
@@ -21490,7 +21491,7 @@ snapshots:
     transitivePeerDependencies:
       - tslib
 
-  webpack-dev-server@5.2.3(tslib@2.8.1)(webpack@5.106.2(@swc/core@1.15.33)(postcss@8.5.14)):
+  webpack-dev-server@5.2.4(tslib@2.8.1)(webpack@5.106.2(@swc/core@1.15.33)(postcss@8.5.14)):
     dependencies:
       '@types/bonjour': 3.5.13
       '@types/connect-history-api-fallback': 1.5.4
