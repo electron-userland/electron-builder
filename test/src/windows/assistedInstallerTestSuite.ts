@@ -174,7 +174,9 @@ export function registerAssistedInstallerTests(toolsets: ToolsetConfig): void {
     }))
 
   // test release notes also
-  test("allowToChangeInstallationDirectory", ({ expect }) =>
+  // wine.exec runs the installer 3× (install, reinstall, uninstall) which can
+  // exceed the default 600 s global timeout on slower CI runners.
+  test("allowToChangeInstallationDirectory", { timeout: 20 * 60 * 1000 }, ({ expect }) =>
     app(
       expect,
       {
@@ -201,8 +203,9 @@ export function registerAssistedInstallerTests(toolsets: ToolsetConfig): void {
         packed: async context => {
           await expectUpdateMetadata(expect, context, Arch.x64)
           await checkHelpers(expect, context.getResources(Platform.WINDOWS), true)
-          await doTest(expect, context.outDir, false)
+          await doTest(expect, context.outDir, false, "Test Custom Installation Dir", "test-custom-inst-dir", null, true, toolsets)
         },
       }
-    ))
+    )
+  )
 }

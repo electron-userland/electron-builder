@@ -30,7 +30,7 @@ beforeEach(() => {
   vi.mocked(spawn).mockResolvedValue(undefined)
 })
 
-describe("SnapStorePublisher", () => {
+describe("SnapStorePublisher", { sequential: true }, () => {
   describe("Identity", () => {
     test("providerName is snapStore", ({ expect }) => {
       expect(makePublisher().providerName).toBe("snapStore")

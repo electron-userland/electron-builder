@@ -33,7 +33,7 @@ describe("SquirrelWindowsTarget.assertShellSafePath", () => {
   })
 })
 
-describe("SquirrelWindowsTarget.ensurePathInside", () => {
+describe("SquirrelWindowsTarget.ensurePathInside", { sequential: true }, () => {
   let t: any
   let base: string
 

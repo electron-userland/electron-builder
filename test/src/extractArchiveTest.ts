@@ -4,15 +4,8 @@ import * as os from "os"
 import * as path from "path"
 import { afterEach, beforeEach, describe, test, vi } from "vitest"
 
-let tmpDir: string
-
-beforeEach(async () => {
-  tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "eb-extract-test-"))
-})
-
-afterEach(async () => {
+afterEach(() => {
   vi.restoreAllMocks()
-  await fs.rm(tmpDir, { recursive: true, force: true })
 })
 
 // Minimal CRC32 implementation needed for non-empty ZIP entries.
@@ -120,7 +113,15 @@ function buildZipWithSymlinkEntry(linkName: string, target: string): Buffer {
   return Buffer.concat([lfh, content, cdh, eocd])
 }
 
-describe("extractArchive ZIP security guards", () => {
+describe("extractArchive ZIP security guards", { sequential: true }, () => {
+  let tmpDir: string
+  beforeEach(async () => {
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "eb-extract-test-"))
+  })
+  afterEach(async () => {
+    await fs.rm(tmpDir, { recursive: true, force: true })
+  })
+
   test("blocks a path traversal entry (../escape.txt)", async ({ expect }) => {
     const zipPath = path.join(tmpDir, "traversal.zip")
     await fs.writeFile(zipPath, buildZipWithFileEntry("../escape.txt"))
@@ -203,7 +204,15 @@ describe("isSafeExtractPath", () => {
 
 // ─── moveDirAtomic ────────────────────────────────────────────────────────────
 
-describe("moveDirAtomic", () => {
+describe("moveDirAtomic", { sequential: true }, () => {
+  let tmpDir: string
+  beforeEach(async () => {
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "eb-extract-test-"))
+  })
+  afterEach(async () => {
+    await fs.rm(tmpDir, { recursive: true, force: true })
+  })
+
   test("moves a directory with files to the destination", async ({ expect }) => {
     const src = path.join(tmpDir, "src")
     const dest = path.join(tmpDir, "dest")
