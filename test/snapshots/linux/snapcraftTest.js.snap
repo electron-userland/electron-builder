@@ -1787,11 +1787,22 @@ exports[`snapcraft > core24 Multipass real build > core24 useMultipass full buil
 }
 `;
 
+exports[`snapcraft > core24 command always points at the launcher script and keeps it at the snap root 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
 exports[`snapcraft > core24 custom plugs with default expansion 1`] = `
 {
   "apps": {
     "testapp": {
-      "command": "app/testapp --no-sandbox",
+      "command": "command.sh",
       "desktop": "meta/gui/testapp.desktop",
       "extensions": [
         "gnome",
@@ -1868,7 +1879,7 @@ exports[`snapcraft > core24 default (gnome extension) 1`] = `
 {
   "apps": {
     "testapp": {
-      "command": "app/testapp",
+      "command": "command.sh",
       "desktop": "meta/gui/testapp.desktop",
       "extensions": [
         "gnome",
@@ -1938,17 +1949,6 @@ exports[`snapcraft > core24 default (gnome extension) 2`] = `
 }
 `;
 
-exports[`snapcraft > core24 executableArgs with forbidden chars use a launcher script 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
-    },
-  ],
-}
-`;
-
 exports[`snapcraft > core24 gnome extension throws in destructive-mode 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
 
 exports[`snapcraft > core24 keeps chrome-sandbox when browser-support sandbox is allowed 1`] = `
@@ -1966,7 +1966,7 @@ exports[`snapcraft > core24 no gnome extension 1`] = `
 {
   "apps": {
     "testapp": {
-      "command": "app/testapp",
+      "command": "command.sh",
       "desktop": "meta/gui/testapp.desktop",
       "plugs": [
         "desktop",
@@ -2080,17 +2080,6 @@ exports[`snapcraft > core24 no gnome extension 2`] = `
     {
       "arch": "x64",
       "file": "TestApp_1.1.0_amd64.snap",
-    },
-  ],
-}
-`;
-
-exports[`snapcraft > core24 plain executableArgs stay inline (no launcher) 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "sep_1.1.0_amd64.snap",
     },
   ],
 }
