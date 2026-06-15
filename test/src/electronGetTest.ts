@@ -365,7 +365,7 @@ describe("downloadBuilderToolset: filenameWithExt validation", () => {
 
 // ─── Toolset archive cache (no network) ──────────────────────────────────────
 
-describe("toolset archive cache", () => {
+describe("toolset archive cache", { sequential: true }, () => {
   let freshCache: string
 
   beforeEach(async () => {
@@ -459,10 +459,6 @@ const electronArch = process.arch === "arm64" ? "arm64" : "x64"
 // Expected ffmpeg library filename by platform
 const ffmpegLibName = electronPlatform === "darwin" ? "libffmpeg.dylib" : electronPlatform === "linux" ? "libffmpeg.so" : "ffmpeg.dll"
 
-// sequential: tests that download the same GitHub artifact (same URL → same @electron/get cache key)
-// must not run concurrently. @electron/get's putFileInCache has no internal locking; concurrent moves
-// to the same cache path produce "dest already exists." from fs-extra. Sequential order ensures the
-// first test populates the cache, and subsequent tests get a cache hit.
 describe("downloadElectronArtifact", { sequential: true }, () => {
   test("downloads and extracts electron ffmpeg zip for current platform", DOWNLOAD_TIMEOUT, async ({ expect }) => {
     const options: ArtifactDownloadOptions = {

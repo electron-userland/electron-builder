@@ -1,5 +1,5 @@
 import { test as baseTest, describe as baseDescribe, expect } from "vitest"
-import { ConditionalSuiteAPI, ConditionalTestAPI } from "../typings/vitest.js"
+import { ConditionalSuiteAPI, ConditionalTestAPI } from "../typings/vitest.d.ts"
 
 // EPIPE is normal when a CI pipe closes before all output is flushed; suppress it.
 for (const stream of [process.stdout, process.stderr] as NodeJS.WriteStream[]) {
@@ -74,6 +74,10 @@ function createChainable(baseFn: any, meta: Meta = {}, shouldSkip = false): any 
 
   add("ifLinux", { platform: "linux" }, !isLinux)
   add("ifNotLinux", { platformNot: "linux" }, isLinux)
+
+  // Run where wine-based Windows tooling works: native Windows and Linux (wine).
+  // Skip on macOS — Catalina+ blocks 32-bit Wine and CI runners have no wine/VM available.
+  add("ifWindowsOrWine", { platform: "win-or-wine" }, isMac)
 
   wrapped.ifEnv = (envKey: boolean | string | undefined) => {
     let condition = false

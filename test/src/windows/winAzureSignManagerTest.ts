@@ -71,7 +71,7 @@ describe("WindowsSignAzureManager.computedPublisherName", () => {
 
 // ─── signFile ─────────────────────────────────────────────────────────────────
 
-describe("WindowsSignAzureManager.signFile", () => {
+describe("WindowsSignAzureManager.signFile", { sequential: true }, () => {
   let execSpy: ReturnType<typeof vi.fn>
   let manager: WindowsSignAzureManager
   const filePath = "C:\\builds\\app\\my-app.exe"
