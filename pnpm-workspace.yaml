@@ -48,4 +48,5 @@ overrides:
   uuid: '>=11.1.1 <12' # GHSA-w5hq-g745-h8pq (med)
   'ws@8': '>=8.20.1 <9' # GHSA-58qx-3vcg-4xpx (med); 7.x is not in the vulnerable range
   webpack-dev-server: '>=5.2.4 <6' # GHSA-79cf-xcqc-c78w (med)
+  mermaid: '>=11.15.0 <12' # GHSA-87f9-hvmw-gh4p, -6m6c-36f7-fhxh, -ghcm-xqfw-q4vr, -xcj9-5m2h-648r (med)
 packageImportMethod: copy
