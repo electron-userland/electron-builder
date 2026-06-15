@@ -130,9 +130,11 @@ async function main() {
           .replace(/\.[tj]s$/, `.js${snapshotExtension}`)
           // Wine-variant test files share snapshots with the non-wine variants — the wine
           // dimension is an execution detail (run via Wine vs natively), not a content
-          // dimension.  Strip it before computing the snapshot path so both variants resolve
-          // to the same .snap file.
-          .replace(/__wine-[^_.]+/, "")
+          // dimension.  Strip the `__wine-X.Y.Z` segment before computing the snapshot path so
+          // both variants resolve to the same .snap file. Match the dotted version digits
+          // precisely so we neither stop at the first dot (`[^_.]+` → leaves `.Y.Z`) nor greedily
+          // consume the trailing `.win` separator on `__wine-0.0.0.win.Test.ts` (`[\d.]+`).
+          .replace(/__wine-\d+(?:\.\d+)*/, "")
           .replace("/src/", "/snapshots/")
           .replace("\\src\\", "\\snapshots\\")
         // These suites assert the packed asar file tree across every package manager. The tree

@@ -28,7 +28,12 @@ const packageConfig = (data: any, version: string) => {
   return data
 }
 
-describe("Package Managers", () => {
+// sequence.concurrent is enabled globally, but every test here spawns a real package-manager
+// install (yarn/pnpm/npm/bun) into a temp project dir. Running them concurrently overwhelms the
+// runner and, on Windows, leaves package-manager subprocesses holding handles on the temp dir so
+// teardown fails with `EPERM: operation not permitted, rmdir`. Sequential restores the pre-PR
+// behavior (one heavy install at a time) and removes the file-lock contention.
+describe.sequential("Package Managers", () => {
   test("yarn", ({ expect }) =>
     assertPack(
       expect,
