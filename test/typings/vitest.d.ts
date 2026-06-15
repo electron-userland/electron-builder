@@ -13,6 +13,7 @@ export interface ConditionalChainProps<T> {
   readonly ifMac: T
   readonly ifWindows: T
   readonly ifLinux: T
+  readonly ifWindowsOrWine: T
   readonly ifNotMac: T
   readonly ifNotWindows: T
   readonly ifNotLinux: T
