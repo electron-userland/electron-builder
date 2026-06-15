@@ -259,52 +259,30 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
       effectiveOptionComputed: async ({ snap }) => {
         delete snap.platforms // arch-specific: varies by host; tested separately via armhf tests
         expect(snap).toMatchSnapshot()
-        // --ozone-platform=x11 contains "=", which snapd forbids in apps.<name>.command, so the
-        // command is redirected to a launcher script that passes the flag through instead.
+        // core24 always routes the command through the launcher script; forceX11's --ozone-platform=x11
+        // flag (which contains "=", forbidden inline by snapd) is passed through it.
         expect(snap.apps?.[appName]?.command).toBe("command.sh")
         return Promise.resolve(true)
       },
     })
   })
 
-  test("core24 executableArgs with forbidden chars use a launcher script", ({ expect }) => {
+  test("core24 command always points at the launcher script and keeps it at the snap root", ({ expect }) => {
     const appName = "sep"
     return app(expect, {
       targets: snapTarget,
       config: {
         extraMetadata: { name: appName },
         productName: "Sep",
-        snapcraft: {
-          base: "core24",
-          // --js-flags="..." contains both `=` and `"`, forbidden in apps.<name>.command.
-          core24: { executableArgs: ['--js-flags="--max-old-space-size=4096"'] },
-        },
+        // --js-flags="..." contains both `=` and `"`, which snapd forbids inline — passed via the launcher.
+        snapcraft: { base: "core24", core24: { executableArgs: ['--js-flags="--max-old-space-size=4096"'] } },
       },
       effectiveOptionComputed: async ({ snap }) => {
         delete snap.platforms
-        // command is redirected to the launcher script rather than embedding the forbidden args inline
         expect(snap.apps?.[appName]?.command).toBe("command.sh")
         // the launcher must live at the snap root, never organized under app/
         const organize = snap.parts?.[appName]?.organize as Record<string, string> | undefined
         expect(organize?.["command.sh"]).toBeUndefined()
-        return Promise.resolve(true)
-      },
-    })
-  })
-
-  test("core24 plain executableArgs stay inline (no launcher)", ({ expect }) => {
-    const appName = "sep"
-    return app(expect, {
-      targets: snapTarget,
-      config: {
-        extraMetadata: { name: appName },
-        productName: "Sep",
-        // --disable-gpu has no forbidden characters, so it stays in the command verbatim
-        snapcraft: { base: "core24", core24: { executableArgs: ["--disable-gpu"] } },
-      },
-      effectiveOptionComputed: async ({ snap }) => {
-        delete snap.platforms
-        expect(snap.apps?.[appName]?.command).toBe("app/sep --disable-gpu")
         return Promise.resolve(true)
       },
     })
@@ -322,7 +300,7 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
       },
       effectiveOptionComputed: async ({ snap }) => {
         delete snap.platforms
-        expect(snap.apps?.[appName]?.command).toBe("app/sep --no-sandbox")
+        expect(snap.apps?.[appName]?.command).toBe("command.sh")
         const organize = snap.parts?.[appName]?.organize as Record<string, string> | undefined
         expect(organize?.["chrome-sandbox"]).toBeUndefined()
         return Promise.resolve(true)
@@ -342,7 +320,7 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
       },
       effectiveOptionComputed: async ({ snap }) => {
         delete snap.platforms
-        expect(snap.apps?.[appName]?.command).toBe("app/sep")
+        expect(snap.apps?.[appName]?.command).toBe("command.sh")
         const organize = snap.parts?.[appName]?.organize as Record<string, string> | undefined
         expect(organize?.["chrome-sandbox"]).toBe("app/chrome-sandbox")
         return Promise.resolve(true)

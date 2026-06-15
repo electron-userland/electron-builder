@@ -6,7 +6,7 @@ import * as yaml from "js-yaml"
 import * as path from "path"
 import { PlugDescriptor, SlotDescriptor, SnapOptions24 } from "../../../options/SnapOptions.js"
 import { SnapCore } from "./SnapTarget.js"
-import { buildSnapCommandLauncherScript, resolveSnapCommand } from "./snapCommand.js"
+import { buildSnapCommandLauncherScript } from "./snapCommand.js"
 import { App, Part, SnapcraftYAML } from "./snapcraft.js"
 import { buildSnap, DEFAULT_STAGE_PACKAGES, SNAPCRAFT_YAML_OPTIONS } from "./snapcraftBuilder.js"
 const { chmod, copy, mkdir, readdir, remove, writeFile } = _fsExtra
@@ -33,8 +33,8 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
   // getSnapCore() returns a fresh SnapCore24 per arch build, so this per-instance state is
   // never shared across builds.
   private removeChromeSandbox = false
-  // Non-null when the app command was redirected to a launcher script; holds the args to embed.
-  private commandLauncherArgs: string[] | null = null
+  // Args embedded into the generated launcher script (executableArgs + forceX11/no-sandbox flags).
+  private commandArgs: string[] = []
 
   async createDescriptor(arch: Arch): Promise<SnapcraftYAML> {
     return await this.mapSnapOptionsToSnapcraftYAML(arch)
@@ -91,13 +91,11 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       await remove(path.join(appDir, CHROME_SANDBOX))
     }
 
-    // Write the launcher script when the command was redirected to one (see resolveSnapCommand).
+    // Write the launcher script the command always points at (see SNAP_COMMAND_LAUNCHER).
     // It lands at the snap root ($SNAP/command.sh) — it is intentionally not added to `organize`.
-    if (this.commandLauncherArgs != null) {
-      const launcherPath = path.join(appDir, SNAP_COMMAND_LAUNCHER)
-      await writeFile(launcherPath, buildSnapCommandLauncherScript({ execName: this.packager.executableName, args: this.commandLauncherArgs }), { mode: 0o755 })
-      await chmod(launcherPath, 0o755)
-    }
+    const launcherPath = path.join(appDir, SNAP_COMMAND_LAUNCHER)
+    await writeFile(launcherPath, buildSnapCommandLauncherScript({ execName: this.packager.executableName, args: this.commandArgs }), { mode: 0o755 })
+    await chmod(launcherPath, 0o755)
 
     // Auto-generate `organize` mapping for the app part so top-level helper
     // binaries and resources are placed under `app/` inside the snap. Update
@@ -106,7 +104,10 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       const appPart = snap.parts[snap.name]
       if (appPart) {
         const entries = (await readdir(appOutDir)).sort()
-        const organize: Record<string, string> = (appPart.organize as Record<string, string>) || {}
+        // Null-prototype map: entry names come from the filesystem, so a top-level file named
+        // "__proto__" / "constructor" / "toString" must not read inherited keys (which would make
+        // the membership check below skip it) or interact with Object.prototype on assignment.
+        const organize: Record<string, string> = Object.assign(Object.create(null), appPart.organize)
         for (const entry of entries) {
           if (!entry) {
             continue
@@ -119,7 +120,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
           // Never organize the launcher under app/. It must stay at the snap root ($SNAP/command.sh)
           // to match apps.<name>.command. This matters when appOutDir === appDir, where readdir
           // would otherwise pick up the launcher we just wrote.
-          if (this.commandLauncherArgs != null && entry === SNAP_COMMAND_LAUNCHER) {
+          if (entry === SNAP_COMMAND_LAUNCHER) {
             continue
           }
           if (organize[entry]) {
@@ -283,16 +284,15 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     // With --no-sandbox the setuid chrome-sandbox helper is unused; strip it from the snap.
     this.removeChromeSandbox = noSandbox
 
-    // snapd forbids characters such as `=` and quotes in `apps.<name>.command`. When the resolved
-    // args contain them (e.g. --ozone-platform=x11, or --js-flags="..."), redirect the command to a
-    // generated launcher script instead of failing the build.
-    const resolvedCommand = resolveSnapCommand({ execName: this.packager.executableName, args: extraArgs, launcherScriptName: SNAP_COMMAND_LAUNCHER })
-    this.commandLauncherArgs = resolvedCommand.launcherArgs
+    // The command always points at a generated launcher script (written in buildSnap). This keeps a
+    // single uniform command path and sidesteps snapd's character/word-splitting rules for the
+    // command field (e.g. --ozone-platform=x11, --js-flags="...").
+    this.commandArgs = extraArgs
 
     // Create the app configuration
     const desktopBaseName = this.helper.getDesktopFileName(appName)
     const app: App = {
-      command: resolvedCommand.command,
+      command: SNAP_COMMAND_LAUNCHER,
       "command-chain": undefined, // explicitly undefined so removeNullish strips it; extensions supply their own command-chain
       plugs: appPlugs,
       slots: appSlots,
