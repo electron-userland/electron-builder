@@ -1,4 +1,5 @@
-import { archive, compute7zCompressArgs } from "app-builder-lib/src/targets/archive"
+import { archive, compute7zCompressArgs, shouldPreserveSymlinks } from "app-builder-lib/src/targets/archive"
+import { Platform } from "app-builder-lib/src/core"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { afterEach, beforeEach, vi } from "vitest"
@@ -163,9 +164,27 @@ describe("archive() guards", { sequential: true }, () => {
   })
 })
 
-// ─── archive() — macOS symlink preservation ──────────────────────────────────
+// ─── shouldPreserveSymlinks — target platform → -snl policy ──────────────────
+// Regression guard for #9846 and its Linux follow-up: keyed on the target platform (not the build
+// host), so a Linux distributable built on a Windows machine still preserves symlinks, and a Windows
+// distributable built on macOS/Linux still dereferences. Catches narrowing the policy back to mac-only.
 
-describe.runIf(process.platform === "darwin")("archive() macOS symlink preservation", { sequential: true }, () => {
+describe("shouldPreserveSymlinks", () => {
+  test("preserves symlinks for macOS and Linux targets", ({ expect }) => {
+    expect(shouldPreserveSymlinks(Platform.MAC)).toBe(true)
+    expect(shouldPreserveSymlinks(Platform.LINUX)).toBe(true)
+  })
+
+  test("dereferences symlinks for Windows targets", ({ expect }) => {
+    expect(shouldPreserveSymlinks(Platform.WINDOWS)).toBe(false)
+  })
+})
+
+// ─── archive() — symlink preservation (non-Windows hosts) ────────────────────
+// Runs on macOS and Linux: both are non-Windows archive targets that pass -snl (see ArchiveTarget).
+// Windows is excluded — symlink restore there needs elevated privileges and the target dereferences.
+
+describe.runIf(process.platform !== "win32")("archive() symlink preservation", { sequential: true }, () => {
   let tmpDir: string
   beforeEach(async context => {
     tmpDir = await context.tmpDir.createTempDir()

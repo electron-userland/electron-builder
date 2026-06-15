@@ -3,7 +3,7 @@ import * as path from "path"
 import { create } from "tar"
 import type { TarOptionsWithAliasesAsync } from "tar"
 import { TmpDir } from "temp-file"
-import { CompressionLevel } from "../core.js"
+import { CompressionLevel, Platform } from "../core.js"
 import { getLinuxToolsMacToolset } from "../toolsets/linuxToolsMac.js"
 import { ToolsetConfig } from "../configuration.js"
 import { getPath7za } from "../toolsets/7zip.js"
@@ -99,6 +99,16 @@ export interface ArchiveOptions {
   preserveSymlinks?: boolean
 }
 
+/**
+ * Whether archives for the given target platform should preserve symlinks (i.e. pass `-snl`).
+ * Non-Windows targets preserve them: macOS `.framework` bundles need them for codesigning (#9846)
+ * and Linux bundles may legitimately contain them. Windows dereferences because restoring symlinks
+ * there requires elevated privileges. Keyed on the target platform, not the build host.
+ */
+export function shouldPreserveSymlinks(platform: Platform): boolean {
+  return platform !== Platform.WINDOWS
+}
+
 export function compute7zCompressArgs(format: string, options: ArchiveOptions = {}) {
   let storeOnly = options.compression === "store"
   const args = debug7zArgs("a")
@@ -186,7 +196,7 @@ export async function archive(format: string, outFile: string, dirToArchive: str
     // Modern 7-Zip (24.09) dereferences symlinks by default; the 7-Zip 16.02 bundled before
     // 26.15 stored them as links. Without -snl, a macOS .framework `Versions/Current` extracts
     // as a real directory → codesign "bundle format is ambiguous" → breaks Squirrel.Mac
-    // auto-update. Applies to both zip and 7z mac targets. See #9846.
+    // auto-update (#9846). Callers enable it for all non-Windows targets (see ArchiveTarget).
     if (options.preserveSymlinks) {
       args.push("-snl")
     }
