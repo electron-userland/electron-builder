@@ -54,7 +54,7 @@ function makePeBuffer(opts: { withVersionInfo?: boolean; langs?: number[]; withM
   return Buffer.from(exe.generate())
 }
 
-describe("editWindowsResources", () => {
+describe("editWindowsResources", { sequential: true }, () => {
   let tmpDir: string
 
   beforeEach(async () => {

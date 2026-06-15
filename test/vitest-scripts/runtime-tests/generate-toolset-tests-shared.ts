@@ -1,13 +1,11 @@
 import * as fs from "fs-extra"
 import * as path from "path"
 import type { TestOptions } from "vitest"
-import type { ToolsetConfig } from "app-builder-lib/internal"
-import type { ConditionalChainProps } from "../typings/vitest"
+import type { ConditionalChainProps } from "../../typings/vitest"
 
-export const WINE_VERSIONS: ToolsetConfig["wine"][] = ["0.0.0", "1.0.1"]
-
-export const TEST_SRC_DIR = path.resolve(__dirname, "../src")
+export const TEST_SRC_DIR = path.resolve(__dirname, "../../src")
 export const GENERATED_TESTS_DIR = path.resolve(TEST_SRC_DIR, "generated")
+export const SNAPSHOTS_GEN_DIR = path.resolve(TEST_SRC_DIR, "snapshots", "generated")
 
 export type SuiteChainKey = keyof ConditionalChainProps<never>
 

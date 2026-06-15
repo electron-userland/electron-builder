@@ -2,8 +2,8 @@ import * as fs from "fs"
 import * as path from "path"
 import { describe, it, expect, beforeAll } from "vitest"
 import { generateTests } from "../vitest-scripts/generate-tests"
-import { GENERATED_TESTS_DIR } from "../vitest-scripts/generate-toolset-tests-shared"
-import { platformAllowed } from "../vitest-scripts/file-discovery"
+import { GENERATED_TESTS_DIR } from "../vitest-scripts/runtime-tests/generate-toolset-tests-shared"
+import { platformAllowed } from "../vitest-scripts/vitest-config/file-discovery"
 
 // Collect all generated test filenames recursively
 function collectGeneratedFiles(dir: string): string[] {
@@ -26,7 +26,7 @@ describe("Generated toolset test filenames", () => {
 
   it("files for ifWindows suites have .win. marker", () => {
     const files = collectGeneratedFiles(GENERATED_TESTS_DIR)
-    const winOnlySuites = ["portable", "assistedInstaller", "msi", "msiWrapped", "squirrelWindows", "appx", "differentialWin"]
+    const winOnlySuites = ["portable", "msi", "msiWrapped", "squirrelWindows", "appx", "differentialWin"]
     for (const suite of winOnlySuites) {
       const suiteFiles = files.filter(f => f.includes(`/${suite}/`))
       expect(suiteFiles.length, `${suite} should have generated files`).toBeGreaterThan(0)
@@ -50,7 +50,9 @@ describe("Generated toolset test filenames", () => {
 
   it("cross-platform suites have no platform marker", () => {
     const files = collectGeneratedFiles(GENERATED_TESTS_DIR)
-    const universalSuites = ["linuxPackager", "winPackager", "blackboxWin", "wineToolset", "nsisWine"]
+    // No platform marker → discovered everywhere. winPackager/assistedInstaller use ifWindowsOrWine
+    // (native on Windows, via Wine on Linux); linuxPackager/wineToolset/nsisWine use ifNotWindows.
+    const universalSuites = ["linuxPackager", "winPackager", "blackboxWin", "wineToolset", "assistedInstaller", "nsisWine"]
     for (const suite of universalSuites) {
       const suiteFiles = files.filter(f => f.includes(`/${suite}/`))
       expect(suiteFiles.length, `${suite} should have generated files`).toBeGreaterThan(0)

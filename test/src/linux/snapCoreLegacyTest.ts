@@ -4,7 +4,7 @@ import { buildCommandShContent, shellQuote } from "app-builder-lib/src/targets/l
 // Pure unit tests for module-level helpers exported from coreLegacy.ts.
 // Full snap build flows are exercised by snapTest.ts.
 
-describe.sequential("snapCoreLegacy helpers", () => {
+describe("snapCoreLegacy helpers", { sequential: true }, () => {
   describe("buildCommandShContent", () => {
     test("template build: desktop scripts sourced from $SNAP root", ({ expect }) => {
       const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [] })

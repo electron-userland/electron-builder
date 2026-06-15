@@ -36,7 +36,7 @@ async function runCollector(rootDir: string, packageName: string) {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("TraversalNodeModulesCollector", () => {
+describe("TraversalNodeModulesCollector", { sequential: true }, () => {
   let root = ""
   afterEach(async () => {
     if (root) {

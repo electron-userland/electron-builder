@@ -1,31 +1,27 @@
 import * as fs from "fs"
 import * as path from "path"
-import type { ToolsetConfig } from "app-builder-lib/internal"
-import {
-  buildDescribeCall,
-  cleanAndEnsureDir,
-  GENERATED_TESTS_DIR,
-  getPlatformSuffix,
-  namedFn,
-  resolveImportPath,
-  TEST_SRC_DIR,
-  WINE_VERSIONS,
-} from "./generate-toolset-tests-shared"
-import type { SuiteConfig } from "./generate-toolset-tests-shared"
-import type * as _WineToolsetSuite from "../src/mac/wineToolsetSuite"
-import type * as _NsisWineSuite from "../src/windows/nsisWineTestSuite"
+import type { ToolsetConfig } from "app-builder-lib"
+import { buildDescribeCall, cleanAndEnsureDir, GENERATED_TESTS_DIR, getPlatformSuffix, namedFn, resolveImportPath, TEST_SRC_DIR } from "./generate-toolset-tests-shared.js"
+import type { SuiteConfig } from "./generate-toolset-tests-shared.js"
+import { WINE_VERSIONS } from "./generate-toolset-versions.js"
+import type * as _WineToolsetSuite from "../../src/mac/wineToolsetSuite.js"
+import type * as _NsisWineSuite from "../../src/windows/nsisWineTestSuite.js"
 
 const SUITES: SuiteConfig[] = [
   {
     name: "wineToolset",
     registerFn: namedFn("registerWineToolsetTests" satisfies keyof typeof _WineToolsetSuite),
     importPath: "mac/wineToolsetSuite",
+    // ifNotWindows: wine runs on macOS and Linux; the suite itself also uses describe.ifNotWindows.
+    // Suffix "__" (no platform marker) means discovered everywhere; Windows skips via the inner guard.
     describeConfig: { name: "wine", chain: ["ifNotWindows"] },
   },
   {
     name: "nsisWine",
     registerFn: namedFn("registerNsisWineTests" satisfies keyof typeof _NsisWineSuite),
     importPath: "windows/nsisWineTestSuite",
+    // NsisTarget build + WineVmManager coverage against the bundled wine toolset, per WINE_VERSIONS.
+    // ifNotWindows + inner guards (suite skips 0.0.0 and the broken Linux bundle); emitted cross-platform.
     describeConfig: { name: "nsisWine", chain: ["ifNotWindows"] },
   },
 ]
@@ -48,6 +44,8 @@ import { ${fnName} } from "${importPath}"
 ${body}
 `
 }
+
+export const MAC_SUITE_METADATA = SUITES.map(s => ({ name: s.name, chain: s.describeConfig.chain }))
 
 export function generateMacToolsetTests(): void {
   for (const suite of SUITES) {

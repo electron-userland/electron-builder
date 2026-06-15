@@ -24,7 +24,7 @@ async function buildTempTree(packages: Record<string, { name: string; version: s
 // Tests: skipDownwardSearch reflects hoisted mode
 // ---------------------------------------------------------------------------
 
-describe("PnpmNodeModulesCollector hoisted mode", () => {
+describe("PnpmNodeModulesCollector hoisted mode", { sequential: true }, () => {
   let root = ""
   afterEach(async () => {
     if (root) {
@@ -94,7 +94,7 @@ describe("PnpmNodeModulesCollector hoisted mode", () => {
 // (pnpm 11 stopped echoing node-linker in `config list`, so detection is realpath-based)
 // ---------------------------------------------------------------------------
 
-describe("PnpmNodeModulesCollector.isHoisted (on-disk layout detection)", () => {
+describe("PnpmNodeModulesCollector.isHoisted (on-disk layout detection)", { sequential: true }, () => {
   let root = ""
   afterEach(async () => {
     if (root) {
@@ -149,7 +149,7 @@ describe("PnpmNodeModulesCollector.isHoisted (on-disk layout detection)", () => 
 // Tests: end-to-end nested dependency resolution
 // ---------------------------------------------------------------------------
 
-describe("nested dependency resolution (hoisted layout simulation)", () => {
+describe("nested dependency resolution (hoisted layout simulation)", { sequential: true }, () => {
   let root = ""
   afterEach(async () => {
     if (root) {
