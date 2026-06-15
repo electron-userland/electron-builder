@@ -51,7 +51,7 @@ async function writeJson(dir: string, name: string, obj: object) {
 
 // ─── Suite ──────────────────────────────────────────────────────────────────
 
-describe("addLicenseToDmg", () => {
+describe("addLicenseToDmg", { sequential: true }, () => {
   let tmpDir: string
 
   beforeEach(async () => {

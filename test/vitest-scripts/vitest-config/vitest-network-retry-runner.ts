@@ -1,6 +1,24 @@
 import { TestRunner } from "vitest"
 
-const NETWORK_PATTERNS = [/ENOTFOUND/, /ETIMEDOUT/, /ECONNRESET/, /fetch failed/, /getaddrinfo/, /Response code 5[0-9][0-9]/, /The batch file cannot be found/]
+// EPIPE is normal when a CI pipe closes before all output is flushed; suppress it.
+for (const stream of [process.stdout, process.stderr] as NodeJS.WriteStream[]) {
+  stream.on("error", (err: NodeJS.ErrnoException) => {
+    if (err.code !== "EPIPE") {
+      throw err
+    }
+  })
+}
+
+const NETWORK_PATTERNS = [
+  /ENOTFOUND/,
+  /ETIMEDOUT/,
+  /ECONNRESET/,
+  /fetch failed/,
+  /getaddrinfo/,
+  /Response code 5[0-9][0-9]/,
+  /The batch file cannot be found/,
+  /[Rr]equest timed out/,
+]
 
 const MAX_NETWORK_RETRIES = 2
 const RETRY_BASE_DELAY_MS = 2000

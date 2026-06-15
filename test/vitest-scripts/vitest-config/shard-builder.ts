@@ -1,5 +1,5 @@
-import { loadCache } from "./cache"
-import { DEFAULT_FILE_MS, SAFEGUARD_MAX_SHARDS, SupportedPlatforms, TARGET_MS, TargetPlatform, TEST_ROOT } from "./smart-config"
+import { loadCache } from "./cache.js"
+import { DEFAULT_FILE_MS, SAFEGUARD_MAX_SHARDS, SupportedPlatforms, TARGET_MS, TargetPlatform, TEST_ROOT } from "./smart-config.js"
 
 export interface WeightedFile {
   filename: string

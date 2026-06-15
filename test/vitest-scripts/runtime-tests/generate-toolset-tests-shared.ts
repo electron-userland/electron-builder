@@ -1,10 +1,11 @@
 import * as fs from "fs-extra"
 import * as path from "path"
 import type { TestOptions } from "vitest"
-import type { ConditionalChainProps } from "../typings/vitest"
+import type { ConditionalChainProps } from "../../typings/vitest"
 
-export const TEST_SRC_DIR = path.resolve(__dirname, "../src")
+export const TEST_SRC_DIR = path.resolve(__dirname, "../../src")
 export const GENERATED_TESTS_DIR = path.resolve(TEST_SRC_DIR, "generated")
+export const SNAPSHOTS_GEN_DIR = path.resolve(TEST_SRC_DIR, "snapshots", "generated")
 
 export type SuiteChainKey = keyof ConditionalChainProps<never>
 
@@ -24,10 +25,18 @@ export type SuiteChainKey = keyof ConditionalChainProps<never>
  *   undefined / []       → "__"      → foo__Test.ts (cross-platform)
  */
 export function getPlatformSuffix(chain?: SuiteChainKey[]): string {
-  if (!chain) return "__"
-  if (chain.includes("ifWindows")) return ".win."
-  if (chain.includes("ifLinux")) return ".linux."
-  if (chain.includes("ifMac")) return ".mac."
+  if (!chain) {
+    return "__"
+  }
+  if (chain.includes("ifWindows")) {
+    return ".win."
+  }
+  if (chain.includes("ifLinux")) {
+    return ".linux."
+  }
+  if (chain.includes("ifMac")) {
+    return ".mac."
+  }
   return "__"
 }
 

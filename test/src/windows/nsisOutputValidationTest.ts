@@ -46,7 +46,7 @@ describe("checkMakensisOutput", () => {
 
 // ─── verifyInstallerSize ────────────────────────────────────────────────────
 
-describe("verifyInstallerSize", () => {
+describe("verifyInstallerSize", { sequential: true }, () => {
   let tmpDir: string
 
   beforeEach(async () => {

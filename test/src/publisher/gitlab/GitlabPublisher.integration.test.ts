@@ -103,7 +103,7 @@ describe.runIf(process.env.GITLAB_TOKEN != null)("GitLab Publisher - Integration
     )
   }
 
-  describe.sequential("Authentication", () => {
+  describe("Authentication", { sequential: true }, () => {
     test("should reject invalid token", async () => {
       const publisher = new GitlabPublisher(
         publishContext,
@@ -122,7 +122,7 @@ describe.runIf(process.env.GITLAB_TOKEN != null)("GitLab Publisher - Integration
     }, 15000)
   })
 
-  describe.sequential("File Upload", () => {
+  describe("File Upload", { sequential: true }, () => {
     test.skipIf(!process.env.GITLAB_TOKEN)(
       "should upload via project_upload, create release and link assets",
       async () => {
