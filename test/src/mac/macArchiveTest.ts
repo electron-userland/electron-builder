@@ -30,7 +30,7 @@ test.ifMac("empty installLocation", ({ expect }) =>
       },
     },
     {
-      signed: false,
+      signedMac: false,
       projectDirCreated: projectDir => {
         return Promise.all([copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt"))])
       },
@@ -50,7 +50,7 @@ test.ifMac("extraDistFiles", ({ expect }) =>
       },
     },
     {
-      signed: false,
+      signedMac: false,
       projectDirCreated: projectDir => {
         return Promise.all([fsExtra.outputFile(path.join(projectDir, "extra.txt"), "test")])
       },
@@ -73,7 +73,7 @@ test.ifMac("pkg extended configuration", ({ expect }) =>
       },
     },
     {
-      signed: false,
+      signedMac: false,
       packed: async context => {
         const pkgPath = path.join(context.outDir, "Test App ßW-1.1.0.pkg")
         const unpackedDir = path.join(context.outDir, "pkg-unpacked")
@@ -113,7 +113,7 @@ test.ifMac("pkg scripts", ({ expect }) =>
       targets: Platform.MAC.createTarget("pkg", Arch.x64),
     },
     {
-      signed: false,
+      signedMac: false,
       projectDirCreated: async projectDir => {
         await fs.symlink(path.join(getFixtureDir(), "pkg-scripts"), path.join(projectDir, "build", "pkg-scripts"))
       },
@@ -156,7 +156,7 @@ test.ifMac("pkg hostArchitectures for arm64", ({ expect }) =>
       targets: Platform.MAC.createTarget("pkg", Arch.arm64),
     },
     {
-      signed: false,
+      signedMac: false,
       packed: async context => {
         const pkgPath = path.join(context.outDir, "Test App ßW-1.1.0-arm64.pkg")
         const unpackedDir = path.join(context.outDir, "pkg-unpacked")
@@ -176,7 +176,7 @@ test.ifMac("pkg hostArchitectures for x64", ({ expect }) =>
       targets: Platform.MAC.createTarget("pkg", Arch.x64),
     },
     {
-      signed: false,
+      signedMac: false,
       packed: async context => {
         const pkgPath = path.join(context.outDir, "Test App ßW-1.1.0.pkg")
         const unpackedDir = path.join(context.outDir, "pkg-unpacked")
@@ -201,7 +201,7 @@ test.ifMac("pkg minimumSystemVersion adds volume-check", ({ expect }) =>
       },
     },
     {
-      signed: false,
+      signedMac: false,
       packed: async context => {
         const pkgPath = path.join(context.outDir, "Test App ßW-1.1.0-arm64.pkg")
         const unpackedDir = path.join(context.outDir, "pkg-unpacked")
@@ -228,7 +228,7 @@ test.ifMac("pkg extra packages", async ({ expect }) => {
       },
     },
     {
-      signed: false,
+      signedMac: false,
       projectDirCreated: async projectDir => {
         const extraPackagesDir = path.join(projectDir, extraPackages)
         await fs.mkdir(extraPackagesDir)

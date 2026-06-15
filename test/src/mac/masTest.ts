@@ -38,7 +38,7 @@ describe.ifMac("mas", () => {
         },
       },
       {
-        signed: true,
+        signedMac: true,
         checkMacApp(appDir, _info) {
           const appEntitlements = (filePath: string) => platformPackager!.effectiveSignOptions?.optionsForFile?.(filePath)
           expect(appEntitlements(appDir)?.entitlements).toBe(entitlementsConfig.entitlements)
@@ -65,7 +65,7 @@ describe.ifMac("mas", () => {
         },
       },
       {
-        signed: true,
+        signedMac: true,
         checkMacApp(appDir, _info) {
           const appEntitlements = (filePath: string) => platformPackager!.effectiveSignOptions?.optionsForFile?.(filePath)
           expect(appEntitlements(appDir)?.entitlements).toBe(entitlementsConfig.entitlements)
@@ -89,7 +89,7 @@ describe.ifMac("mas", () => {
         platformPackagerFactory: (packager, _platform) => (platformPackager = new CheckingMacPackager(packager)),
       },
       {
-        signed: true,
+        signedMac: true,
         checkMacApp(appDir, _info) {
           const appEntitlements = (filePath: string) => platformPackager!.effectiveSignOptions?.optionsForFile?.(filePath)
           expect(appEntitlements(appDir)?.entitlements).toBe(entitlementsConfig.entitlements)

@@ -107,7 +107,7 @@ export async function doBuild(
       },
       {
         storeDepsLockfileSnapshot: false,
-        signed: !isWindows,
+        signedMac: !isWindows,
         signedWin: isWindows,
         packed,
         packageManager: PM.PNPM,

@@ -3,28 +3,26 @@ import { outputFile } from "fs-extra"
 import { readFile } from "fs/promises"
 import * as path from "path"
 
-export interface SelfSignedMacIdentity {
+export interface SelfSignedIdentity {
   /** Full certificate common name, e.g. `Developer ID Application: EB Test (TEAMID1234)`. */
   commonName: string
-  /** base64-encoded PKCS#12, suitable for `CSC_LINK` / `MAC_CSC_LINK`. */
+  /** base64-encoded PKCS#12, suitable for `CSC_LINK` / `MAC_CSC_LINK` / `WIN_CSC_LINK`. */
   p12Base64: string
   /** Password protecting the PKCS#12 and its private key. */
   password: string
 }
 
-const TEAM_ID = "TEAMID1234"
 const PASSWORD = "eb-self-signed"
 
 /**
- * Generates an ephemeral, untrusted self-signed macOS code-signing identity (no Apple Developer membership
- * required) and returns it as a base64 PKCS#12. Intended solely for electron-builder's own signing tests.
- * The produced artifacts are NOT trusted/notarizable.
+ * Generates an ephemeral, untrusted self-signed code-signing identity (no developer membership required) and
+ * returns it as a base64 PKCS#12. Intended solely for electron-builder's own signing tests. The produced
+ * artifacts are NOT trusted/notarizable.
  *
- * @param certPrefix one of the Apple certificate prefixes without the trailing colon, e.g. `Developer ID Application`.
+ * @param commonName the full certificate common name (CN), e.g. `Developer ID Application: EB Test (TEAMID1234)`.
  */
-export async function createSelfSignedMacIdentity(certPrefix: string, tmpDir: TmpDir): Promise<SelfSignedMacIdentity> {
-  const commonName = `${certPrefix}: EB Test (${TEAM_ID})`
-  const dir = await tmpDir.getTempDir({ prefix: "self-signed-mac" })
+export async function createSelfSignedCodeSigningIdentity(commonName: string, tmpDir: TmpDir): Promise<SelfSignedIdentity> {
+  const dir = await tmpDir.getTempDir({ prefix: "self-signed-identity" })
   const keyPath = path.join(dir, "key.pem")
   const certPath = path.join(dir, "cert.pem")
   const p12Path = path.join(dir, "cert.p12")

@@ -1,7 +1,8 @@
-import { createKeychain, findIdentity, removeKeychain, setAllowUntrustedSelfSignedIdentityForTesting } from "app-builder-lib/internal"
+import { createKeychain, findIdentity, removeKeychain } from "app-builder-lib/internal"
+import { setAllowUntrustedSelfSignedIdentityForTesting } from "app-builder-lib/src/codeSign/mac/macCodeSign"
 import { TmpDir } from "builder-util"
 import { afterEach } from "vitest"
-import { createSelfSignedMacIdentity } from "../helpers/macSelfSignedIdentity.js"
+import { createSelfSignedCodeSigningIdentity } from "../helpers/selfSignedIdentity.js"
 
 // Verifies the untrusted self-signed identity seam: electron-builder's identity discovery ignores an
 // untrusted self-signed certificate by default, and accepts it only when the in-process test-only seam is
@@ -17,7 +18,7 @@ describe.ifMac("self-signed identity discovery", { sequential: true }, () => {
   })
 
   async function importSelfSignedKeychain() {
-    const identity = await createSelfSignedMacIdentity("Developer ID Application", tmpDir)
+    const identity = await createSelfSignedCodeSigningIdentity(`Developer ID Application: ${qualifier}`, tmpDir)
     const { keychainFile } = await createKeychain({
       tmpDir,
       cscLink: identity.p12Base64,
