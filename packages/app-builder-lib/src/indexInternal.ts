@@ -44,6 +44,7 @@ export {
   downloadBuilderToolset,
   downloadElectronArtifact,
   ElectronGetOptions,
+  ensureDir,
   getBinariesMirrorUrl,
   getCacheDirectory,
   isSafeExtractPath,

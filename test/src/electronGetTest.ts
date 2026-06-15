@@ -12,6 +12,7 @@ import {
   ElectronGetOptions,
   downloadBuilderToolset,
   downloadElectronArtifact,
+  ensureDir,
   getCacheDirectory,
   getBinariesMirrorUrl,
   reinitializeProxy,
@@ -59,6 +60,54 @@ async function startArtifactServer(archivePath: string): Promise<{
     close: () => new Promise<void>(resolve => server.close(() => resolve())),
   }
 }
+
+// ─── ensureDir: concurrent-recursive-mkdir hardening ─────────────────────────
+
+const codeError = (code: string) => Object.assign(new Error(`${code}: simulated`), { code })
+
+describe("ensureDir", () => {
+  test("creates the directory (recursive) on the happy path", async ({ expect }) => {
+    const base = await fs.mkdtemp(path.join(os.tmpdir(), "eb-ensuredir-"))
+    try {
+      const nested = path.join(base, "a", "b", "c")
+      await ensureDir(nested)
+      expect((await fs.stat(nested)).isDirectory()).toBe(true)
+    } finally {
+      await fs.rm(base, { recursive: true, force: true })
+    }
+  })
+
+  test("retries through the spurious ENOENT thrown by concurrent recursive mkdir", async ({ expect }) => {
+    // nodejs/node#27293: a peer is mid-creating a shared ancestor, so the first two recursive
+    // mkdir calls fail with ENOENT before the tree settles and the third succeeds.
+    const mkdir = vi.fn().mockRejectedValueOnce(codeError("ENOENT")).mockRejectedValueOnce(codeError("ENOENT")).mockResolvedValueOnce(undefined)
+    await expect(ensureDir("/cold/cache/path", 8, mkdir)).resolves.toBeUndefined()
+    expect(mkdir).toHaveBeenCalledTimes(3)
+  })
+
+  test("treats a spurious EEXIST as success when the path is already a directory", async ({ expect }) => {
+    const base = await fs.mkdtemp(path.join(os.tmpdir(), "eb-ensuredir-"))
+    try {
+      // The dir genuinely exists (real fs.stat → directory); the race makes mkdir throw EEXIST.
+      const mkdir = vi.fn().mockRejectedValue(codeError("EEXIST"))
+      await expect(ensureDir(base, 8, mkdir)).resolves.toBeUndefined()
+    } finally {
+      await fs.rm(base, { recursive: true, force: true })
+    }
+  })
+
+  test("gives up after maxAttempts so a persistent ENOENT is not masked forever", async ({ expect }) => {
+    const mkdir = vi.fn().mockRejectedValue(codeError("ENOENT"))
+    await expect(ensureDir("/persistently/missing", 2, mkdir)).rejects.toThrow("ENOENT")
+    expect(mkdir).toHaveBeenCalledTimes(3) // initial attempt + 2 retries
+  })
+
+  test("does not retry on a non-transient error (e.g. EACCES)", async ({ expect }) => {
+    const mkdir = vi.fn().mockRejectedValue(codeError("EACCES"))
+    await expect(ensureDir("/no/permission", 8, mkdir)).rejects.toThrow("EACCES")
+    expect(mkdir).toHaveBeenCalledTimes(1)
+  })
+})
 
 // ─── getCacheDirectory ────────────────────────────────────────────────────────
 
@@ -444,6 +493,38 @@ describe("toolset archive cache", () => {
       expect(server.requestedPaths.length).toBe(downloadCount)
       const entries = await fs.readdir(result2)
       expect(entries).toContain("network-file")
+    } finally {
+      await server.close()
+    }
+  })
+
+  // Regression: concurrent builds requesting the SAME toolset (e.g. rpm x64 + rpm armv7l both
+  // needing fpm) resolve to the same extractDir and contend on one lock. Before the fix the
+  // unlocked pre-lock fs.mkdir(extractDir) raced a lock-holder's fs.rm(extractDir) cleanup and
+  // threw `ENOENT: ... mkdir '<cache>/<release>/<artifact>-<hash>'`. All callers must now resolve,
+  // and the lock must serialize them down to a single network download (also covering the
+  // cross-worker case, where an in-process promise cache could not help).
+  test("concurrent downloads of the same artifact all resolve and dedupe to one download", async ({ expect }) => {
+    const releaseName = "concurrent-test@0.1"
+    const fileName = "concurrent-artifact.tar.gz"
+
+    const networkArchive = path.join(freshCache, "concurrent-network-download.tar.gz")
+    await createMinimalTarGz(networkArchive, { sentinel: "ok" })
+    const server = await startArtifactServer(networkArchive)
+    vi.stubEnv("ELECTRON_BUILDER_BINARIES_MIRROR", `http://127.0.0.1:${server.port}/`)
+
+    try {
+      const results = await Promise.all(Array.from({ length: 12 }, () => downloadBuilderToolset({ releaseName, filenameWithExt: fileName })))
+
+      // Every caller resolved (no ENOENT race) to the same valid extract dir
+      for (const result of results) {
+        const entries = await fs.readdir(result)
+        expect(entries).toContain("sentinel")
+      }
+      expect(new Set(results).size).toBe(1)
+
+      // The lock serialized the work: the winner downloaded once; the rest hit the completed cache.
+      expect(server.requestedPaths.length).toBe(1)
     } finally {
       await server.close()
     }

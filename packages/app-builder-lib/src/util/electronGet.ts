@@ -442,15 +442,56 @@ async function persistToArchiveCache(sourcePath: string, archiveCachePath: strin
 }
 
 /**
+ * Recursive mkdir hardened against the long-standing Node concurrency bug where two processes
+ * building overlapping directory trees at the same time spuriously throw ENOENT (a peer is
+ * mid-creating a shared ancestor) or EEXIST (a peer just created this dir) — nodejs/node#27293,
+ * #31481. It is rare on local filesystems but routine on Docker overlayfs, which is where CI builds
+ * run and where this surfaced as a flaky `ENOENT … mkdir '<cache>/<release>/<artifact>-<hash>'`
+ * whenever concurrent builds/targets (e.g. rpm x64 + rpm armv7l, or two test workers) first
+ * populated a cold toolset cache. proper-lockfile serializes the *download/extract*, but the cache
+ * dir is created around the lock, so the mkdir itself must tolerate the race. Both error codes are
+ * transient: retry with a short backoff; by the next attempt the peer has finished.
+ *
+ * @internal exported for unit testing — `mkdir` is injectable only so tests can deterministically
+ * drive the race; production callers always use the default fs.mkdir.
+ */
+export async function ensureDir(dir: string, maxAttempts = 8, mkdir: (p: string, opts: { recursive: true }) => Promise<unknown> = fs.mkdir): Promise<void> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      await mkdir(dir, { recursive: true })
+      return
+    } catch (e: any) {
+      if (e.code === "EEXIST") {
+        // recursive mkdir is normally idempotent; a spurious EEXIST from the race is fine as long
+        // as the path really is a directory now — otherwise it's a genuine file-in-the-way error.
+        if ((await fs.stat(dir).catch(() => null))?.isDirectory()) {
+          return
+        }
+        throw e
+      }
+      if (e.code !== "ENOENT" || attempt >= maxAttempts) {
+        throw e
+      }
+      await sleep(50 * (attempt + 1))
+    }
+  }
+}
+
+/**
  * Core download + extract engine. Handles lockfile, cache-hit short-circuit,
  * progress bar, extraction (.zip or .tar.gz), and completion marker.
  * Both public download functions delegate here after building their respective configs.
  */
 async function downloadAndExtract(config: ElectronArtifactDetails, extractDir: string, label: string, archiveCachePath?: string): Promise<string> {
-  await fs.mkdir(extractDir, { recursive: true })
+  // Create only the PARENT dir (e.g. <cache>/fpm@2.2.1), never extractDir itself, before locking.
+  // The parent is stable — cleanup only ever removes extractDir and its .state/.tmp/.lock siblings —
+  // so extractDir's whole lifecycle (mkdir, rm, re-mkdir) stays inside the lock. ensureDir absorbs
+  // the concurrent-recursive-mkdir ENOENT/EEXIST race while peers populate the cold cache tree.
+  await ensureDir(path.dirname(extractDir))
 
-  // Pre-lock fast path: only short-circuit for a definitively complete and valid cache.
-  // Do NOT clean up here — concurrent processes could race to delete under each other.
+  // Pre-lock fast path: read-only short-circuit for a definitively complete and valid cache.
+  // Safe unlocked — the cache-state helpers return null/false for a missing or half-written dir,
+  // so a racing read only ever falls through to take the lock. Do NOT mutate the dir here.
   const stateData = await readCacheStateFile(extractDir)
   if (stateData?.state === CacheState.complete) {
     const isValid = await validateCacheDirectory(extractDir, stateData.fileCount)
@@ -466,6 +507,13 @@ async function downloadAndExtract(config: ElectronArtifactDetails, extractDir: s
   // patience of withToolsetLock. proper-lockfile's update heartbeat keeps a live holder's lock fresh,
   // so increasing waiter retries never falsely steals an in-progress extraction.
   const release = await lockfile.lock(extractDir, {
+    // realpath:false so proper-lockfile creates <extractDir>.lock in the (already-created) parent
+    // WITHOUT calling fs.realpath(extractDir) first — which would throw ENOENT now that extractDir
+    // is created lazily inside the lock. This filesystem lock serializes peers both across worker
+    // processes AND within a single process (a second lock() for the same path retries until the
+    // first releases), so no in-process promise cache is needed — and one wouldn't help across the
+    // separate test worker processes anyway.
+    realpath: false,
     retries: { retries: 100, minTimeout: 1000, maxTimeout: 5000 },
     stale: 120000,
   })
@@ -486,7 +534,7 @@ async function downloadAndExtract(config: ElectronArtifactDetails, extractDir: s
 
     // Cleanup inside the lock — skip lock files since we currently hold them
     await cleanupCacheDirectory(extractDir, { skipLockFiles: true })
-    await fs.mkdir(extractDir, { recursive: true })
+    await ensureDir(extractDir)
 
     // Check electron-builder's own archive cache before touching @electron/get.
     // The cache lives alongside the extract dir: <cacheDir>/<releaseName>/<filename>.
