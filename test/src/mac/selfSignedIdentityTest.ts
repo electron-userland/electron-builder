@@ -9,15 +9,13 @@ import { createSelfSignedCodeSigningIdentity } from "../helpers/selfSignedIdenti
 // enabled. There is intentionally no env var or build-config option to enable it in production. No keychain
 // trust / sudo is required.
 describe.ifMac("self-signed identity discovery", { sequential: true }, () => {
-  const tmpDir = new TmpDir("self-signed-identity-test")
   const qualifier = "EB Test (TEAMID1234)"
 
   afterEach(() => {
     setAllowUntrustedSelfSignedIdentityForTesting(false)
-    return tmpDir.cleanup()
   })
 
-  async function importSelfSignedKeychain() {
+  async function importSelfSignedKeychain(tmpDir: TmpDir) {
     // legacy SHA1/3DES p12 — required for Apple's `security import` (used by createKeychain below).
     const identity = await createSelfSignedCodeSigningIdentity(`Developer ID Application: ${qualifier}`, tmpDir, { legacy: true })
     const { keychainFile } = await createKeychain({
@@ -29,9 +27,9 @@ describe.ifMac("self-signed identity discovery", { sequential: true }, () => {
     return { identity, keychainFile: keychainFile! }
   }
 
-  test("untrusted self-signed identity is ignored by default", async ({ expect }) => {
+  test("untrusted self-signed identity is ignored by default", async ({ expect, tmpDir }) => {
     setAllowUntrustedSelfSignedIdentityForTesting(false)
-    const { keychainFile } = await importSelfSignedKeychain()
+    const { keychainFile } = await importSelfSignedKeychain(tmpDir)
     try {
       const found = await findIdentity("Developer ID Application", qualifier, keychainFile)
       expect(found).toBeNull()
@@ -40,9 +38,9 @@ describe.ifMac("self-signed identity discovery", { sequential: true }, () => {
     }
   })
 
-  test("untrusted self-signed identity is found when the test seam is enabled", async ({ expect }) => {
+  test("untrusted self-signed identity is found when the test seam is enabled", async ({ expect, tmpDir }) => {
     setAllowUntrustedSelfSignedIdentityForTesting(true)
-    const { identity, keychainFile } = await importSelfSignedKeychain()
+    const { identity, keychainFile } = await importSelfSignedKeychain(tmpDir)
     try {
       const found = await findIdentity("Developer ID Application", qualifier, keychainFile)
       expect(found).not.toBeNull()

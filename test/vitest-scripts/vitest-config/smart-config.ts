@@ -1,4 +1,4 @@
-  import * as path from "path"
+import * as path from "path"
 
 export type TargetPlatform = "darwin" | "win32" | "linux" | "current"
 export type SupportedPlatforms = Exclude<TargetPlatform, "current">
