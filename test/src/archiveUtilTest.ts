@@ -167,9 +167,9 @@ describe("archive() guards", { sequential: true }, () => {
   })
 })
 
-// ─── archive() — macOS zip symlink preservation ──────────────────────────────
+// ─── archive() — macOS symlink preservation ──────────────────────────────────
 
-describe.runIf(process.platform === "darwin")("archive() macOS zip symlink preservation", { sequential: true }, () => {
+describe.runIf(process.platform === "darwin")("archive() macOS symlink preservation", { sequential: true }, () => {
   let tmpDir: string
   beforeEach(async () => {
     tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "eb-archive-test-"))
@@ -201,7 +201,33 @@ describe.runIf(process.platform === "darwin")("archive() macOS zip symlink prese
     expect(target).toBe("real.txt")
   })
 
-  test("excluded pattern with '..' throws in native zip path", async ({ expect }) => {
+  // Regression for #9846: the 7z target must also preserve symlinks (-snl). Modern 7-Zip
+  // dereferences them by default, which corrupts .framework bundles and breaks codesign.
+  test("7z archive preserves symlinks (not dereferenced)", async ({ expect }) => {
+    const src = path.join(tmpDir, "src7z")
+    await fs.mkdir(src, { recursive: true })
+    await fs.writeFile(path.join(src, "real.txt"), "content")
+    await fs.symlink("real.txt", path.join(src, "link.txt"))
+
+    const outFile = path.join(tmpDir, "out.7z")
+    await archive("7z", outFile, src, { withoutDir: true, preserveSymlinks: true })
+
+    // Extract with the same 7za toolset binary and verify the symlink survived
+    const extractDir = path.join(tmpDir, "extracted7z")
+    await fs.mkdir(extractDir, { recursive: true })
+    const { getPath7za } = await import("app-builder-lib/src/toolsets/7zip")
+    const { exec: cpExec } = await import("child_process")
+    const { promisify } = await import("util")
+    const execAsync = promisify(cpExec)
+    await execAsync(`"${await getPath7za()}" x -o"${extractDir}" "${outFile}"`)
+
+    const linkStat = await fs.lstat(path.join(extractDir, "link.txt"))
+    expect(linkStat.isSymbolicLink()).toBe(true)
+    const target = await fs.readlink(path.join(extractDir, "link.txt"))
+    expect(target).toBe("real.txt")
+  })
+
+  test("excluded pattern with '..' throws when preserveSymlinks is set", async ({ expect }) => {
     const src = await makeSrcDir(tmpDir)
     await expect(archive("zip", path.join(tmpDir, "out.zip"), src, { excluded: ["../secret"], preserveSymlinks: true })).rejects.toThrow("path traversal sequence")
   })
