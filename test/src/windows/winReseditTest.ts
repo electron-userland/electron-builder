@@ -1,9 +1,8 @@
 import { ResourceEditOptions, editWindowsResources } from "app-builder-lib/internal"
 import * as fs from "fs/promises"
-import * as os from "os"
 import path from "path"
 import { NtExecutable, NtExecutableResource, Resource } from "resedit"
-import { afterEach, beforeEach } from "vitest"
+import { beforeEach } from "vitest"
 
 const FIXTURE_ICO = path.join(__dirname, "../../fixtures/test-app/build/icon.ico")
 
@@ -57,12 +56,8 @@ function makePeBuffer(opts: { withVersionInfo?: boolean; langs?: number[]; withM
 describe("editWindowsResources", { sequential: true }, () => {
   let tmpDir: string
 
-  beforeEach(async () => {
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "eb-resedit-test-"))
-  })
-
-  afterEach(async () => {
-    await fs.rm(tmpDir, { recursive: true, force: true })
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
   })
 
   async function writePe(buf: Buffer): Promise<string> {

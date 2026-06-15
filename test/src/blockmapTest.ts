@@ -1,9 +1,8 @@
 import { createHash } from "crypto"
-import { mkdtemp, readFile, rm, writeFile } from "fs/promises"
-import * as os from "os"
+import { readFile, writeFile } from "fs/promises"
 import * as path from "path"
 import * as zlib from "zlib"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it } from "vitest"
 import { buildBlockMap } from "app-builder-lib/src/targets/blockmap/blockmap.js"
 
 function sha512(data: Buffer): string {
@@ -23,11 +22,8 @@ function makeTestData(size: number, seed = 12345): Buffer {
 
 describe("buildBlockMap", { sequential: true }, () => {
   let tmpDir: string
-  beforeEach(async () => {
-    tmpDir = await mkdtemp(path.join(os.tmpdir(), "blockmap-test-"))
-  })
-  afterEach(async () => {
-    await rm(tmpDir, { recursive: true, force: true })
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
   })
   it("file output mode: returns correct sha512 and size for small file", async () => {
     const data = Buffer.from("hello world. ".repeat(1024))
@@ -206,11 +202,8 @@ describe("buildBlockMap", { sequential: true }, () => {
 
 describe("buildBlockMap — JS snapshots and binary golden-output", { sequential: true }, () => {
   let tmpDir: string
-  beforeEach(async () => {
-    tmpDir = await mkdtemp(path.join(os.tmpdir(), "blockmap-test-"))
-  })
-  afterEach(async () => {
-    await rm(tmpDir, { recursive: true, force: true })
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
   })
   it("single-chunk file (< MIN): sizes, checksums and sha512 are snapshotted", async () => {
     const data = Buffer.from("hello world. ".repeat(1024)) // 13 312 bytes < RABIN_MIN

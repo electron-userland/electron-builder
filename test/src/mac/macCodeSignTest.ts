@@ -1,21 +1,16 @@
 import { createKeychain, removeKeychain } from "app-builder-lib/internal"
-import { removePassword, TmpDir } from "builder-util"
+import { removePassword } from "builder-util"
 import { getMacSigningIdentity } from "../helpers/packTester.js"
-import { afterEach } from "vitest"
 
 describe.ifMac("macos keychain", { sequential: true }, () => {
-  const tmpDir = new TmpDir("mac-code-sign-test")
-
-  afterEach(() => tmpDir.cleanup())
-
-  test("create keychain", async ({ expect }) => {
+  test("create keychain", async ({ expect, tmpDir }) => {
     const { p12Base64, password } = await getMacSigningIdentity()
     const result = await createKeychain({ tmpDir, cscLink: p12Base64, cscKeyPassword: password, currentDir: process.cwd() })
     expect(result.keychainFile).not.toEqual("")
     await removeKeychain(result.keychainFile!)
   })
 
-  test("create keychain with installers", async ({ expect }) => {
+  test("create keychain with installers", async ({ expect, tmpDir }) => {
     const { p12Base64, password } = await getMacSigningIdentity()
     const result = await createKeychain({ tmpDir, cscLink: p12Base64, cscKeyPassword: password, currentDir: process.cwd() })
     expect(result.keychainFile).not.toEqual("")

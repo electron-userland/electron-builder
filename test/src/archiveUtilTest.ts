@@ -1,6 +1,5 @@
 import { archive, compute7zCompressArgs } from "app-builder-lib/src/targets/archive"
 import * as fs from "fs/promises"
-import * as os from "os"
 import * as path from "path"
 import { afterEach, beforeEach, vi } from "vitest"
 
@@ -142,11 +141,8 @@ describe("compute7zCompressArgs", { sequential: true }, () => {
 
 describe("archive() guards", { sequential: true }, () => {
   let tmpDir: string
-  beforeEach(async () => {
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "eb-archive-test-"))
-  })
-  afterEach(async () => {
-    await fs.rm(tmpDir, { recursive: true, force: true })
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
   })
 
   test("excluded pattern with '..' throws", async ({ expect }) => {
@@ -171,11 +167,8 @@ describe("archive() guards", { sequential: true }, () => {
 
 describe.runIf(process.platform === "darwin")("archive() macOS symlink preservation", { sequential: true }, () => {
   let tmpDir: string
-  beforeEach(async () => {
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "eb-archive-test-"))
-  })
-  afterEach(async () => {
-    await fs.rm(tmpDir, { recursive: true, force: true })
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
   })
 
   test("zip archive preserves symlinks (not dereferenced)", async ({ expect }) => {
