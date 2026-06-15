@@ -50,4 +50,6 @@ overrides:
   webpack-dev-server: '>=5.2.4 <6' # GHSA-79cf-xcqc-c78w (med)
   mermaid: '>=11.15.0 <12' # GHSA-87f9-hvmw-gh4p, -6m6c-36f7-fhxh, -ghcm-xqfw-q4vr, -xcj9-5m2h-648r (med)
   postcss: '>=8.5.10 <9' # GHSA-qx2v-qp2m-jg93 (med)
+  'picomatch@2': '>=2.3.2 <3' # GHSA-3v7f-55p6-f55p (med)
+  'picomatch@4': '>=4.0.4 <5' # GHSA-3v7f-55p6-f55p (med)
 packageImportMethod: copy
