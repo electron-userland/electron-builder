@@ -27,16 +27,13 @@ export async function getWineToolset(wine: ToolsetConfig["wine"], resourcesDir: 
   let execSubPath: string
 
   if (typeof wine === "object" && wine != null) {
+    // Custom toolset — honored on every platform (never overridden by the Linux host-wine fallback below).
     toolsetPath = await getCustomToolsetPath(wine, resourcesDir)
     execSubPath = (await exists(path.join(toolsetPath, "bin", "wine"))) ? "bin/wine" : "bin/wine64"
-  }
-
-  // Legacy pin. Linux has no 0.0.0 bundle → fall back to host wine binary.
-  if (process.platform === "linux") {
+  } else if (process.platform === "linux") {
+    // Linux ships no portable bundle for string/null configs → fall back to the host wine binary.
     return { execPath: "wine", env: defaultEnv }
-  }
-
-  if (wine === "0.0.0") {
+  } else if (wine === "0.0.0") {
     toolsetPath = await downloadBuilderToolset({
       releaseName: "wine-4.0.1-mac",
       filenameWithExt: "wine-4.0.1-mac.7z",
