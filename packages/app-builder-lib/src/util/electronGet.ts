@@ -583,7 +583,9 @@ export async function downloadBuilderToolset(options: {
   const fullUrl = resolveBuilderBinaryUrl(releaseName, filenameWithExt, baseUrl, overrideUrl)
   const suffix = hashUrlSafe(fullUrl, 5)
   const folderName = `${filenameWithExt.replace(/\.(tar\.gz|tgz|tar\.xz|txz|zip|7z)$/, "")}-${suffix}`
-  const extractDir = path.join(getCacheDirectory({ allowEnvVarOverride: true }), releaseName, folderName)
+  // releaseName is library input; enforce cache-dir containment (rejects traversal, clears taint into shell extraction)
+  const cacheDir = getCacheDirectory({ allowEnvVarOverride: true })
+  const extractDir = sanitizeDirPath(path.join(cacheDir, releaseName, folderName), cacheDir)
 
   // Use resolveAssetURL so @electron/get's ELECTRON_MIRROR env var check cannot override
   // the builder-binaries URL we've already resolved (see getArtifactRemoteURL in @electron/get).
@@ -594,7 +596,7 @@ export async function downloadBuilderToolset(options: {
   // Predictable archive cache: <cacheDir>/<releaseName>/<filename>, next to the extract dir.
   // downloadAndExtract checks here before touching @electron/get and persists the archive here
   // after every successful download, so subsequent builds never need a network round-trip.
-  const archiveCachePath = path.join(getCacheDirectory({ allowEnvVarOverride: true }), releaseName, filenameWithExt)
+  const archiveCachePath = sanitizeDirPath(path.join(cacheDir, releaseName, filenameWithExt), cacheDir)
 
   const config: ElectronDownloadRequest & ElectronDownloadRequestOptions & { isGeneric: true } = {
     version: "9.9.9", // must be >1.3.2 to bypass @electron/get validation shortcut
