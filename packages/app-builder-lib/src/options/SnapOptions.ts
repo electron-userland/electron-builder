@@ -29,6 +29,7 @@ export interface SnapcraftOptions extends TargetSpecificOptions {
    * Generate with: `snapcraft export-login - | base64 -w0`
    */
   readonly cscLink?: string
+
   /**
    * Configuration for a core18 build. Only active when `base` is `"core18"`.
    */
@@ -41,15 +42,18 @@ export interface SnapcraftOptions extends TargetSpecificOptions {
    * Configuration for a core22 build. Only active when `base` is `"core22"`.
    */
   readonly core22?: SnapOptionsLegacy | null
+
   /**
-   * Options for building a core24 snap. Uses the snapcraft CLI directly.
+   * **[Beta]** Options for building a core24 snap. Uses the snapcraft CLI directly.
    * Inherits desktop-entry fields from `CommonLinuxOptions` and publish config from `TargetSpecificOptions`.
+   * @beta
    */
   readonly core24?: SnapOptions24 | null
   /**
-   * Pass-through custom snap configuration. electron-builder will read the
+   * **[Beta]** Pass-through custom snap configuration. electron-builder will read the
    * snapcraft.yaml at `yamlPath` and use it verbatim — no plugs, extensions,
    * organize mappings, or desktop files are injected.
+   * @beta
    */
   readonly custom?: SnapOptionsCustom | null
 }
