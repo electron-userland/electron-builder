@@ -16,7 +16,7 @@ import { NtExecutable, NtExecutableResource } from "resedit"
 import { TmpDir } from "temp-file"
 import { getCollectorByPackageManager, PM } from "app-builder-lib/internal"
 import { promisify } from "util"
-import { MAC_CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
+import { macSigningCredentialsInfo, winSigningCredentialsInfo } from "./codeSignData"
 import { assertThat } from "./fileAssert"
 import AdmZip from "adm-zip"
 // @ts-ignore
@@ -26,6 +26,7 @@ import { computeDefaultAppDirectory, installDependencies } from "app-builder-lib
 import { ELECTRON_VERSION } from "./testConfig"
 import { execSync } from "child_process"
 import { detectPackageManager } from "app-builder-lib/src/node-module-collector/packageManager"
+import { SelfSignedIdentity } from "./selfSignedIdentity"
 
 const PACKAGE_MANAGER_VERSION_MAP = {
   [PM.NPM]: { cli: "npm", version: "9.8.1" },
@@ -101,7 +102,7 @@ export interface AssertPackOptions {
 
   readonly packageManager?: PM
   readonly useTempDir?: boolean
-  readonly signed?: boolean
+  readonly signedMac?: boolean
   readonly signedWin?: boolean
 
   readonly storeDepsLockfileSnapshot?: boolean
@@ -144,17 +145,16 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
   let configuration = packagerOptions.config as Configuration
   if (configuration == null) {
     configuration = {}
-    ;(packagerOptions as any).config = configuration
+      ; (packagerOptions as any).config = configuration
   }
 
-  if (checkOptions.signed) {
-    packagerOptions = signed(packagerOptions)
+  if (checkOptions.signedMac) {
+    packagerOptions = await signed(packagerOptions, 'mac')
+  } else if (process.env.CSC_LINK == null && process.platform === "darwin") {
+    packagerOptions = deepAssign({}, packagerOptions, { config: { mac: { sign: { identity: null } } } })
   }
   if (checkOptions.signedWin) {
-    configuration.cscLink = WIN_CSC_LINK
-    configuration.cscKeyPassword = ""
-  } else if (configuration.cscLink == null) {
-    packagerOptions = deepAssign({}, packagerOptions, { config: { mac: { sign: { identity: null } } } })
+    packagerOptions = await signed(packagerOptions, 'win')
   }
 
   let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
@@ -445,7 +445,7 @@ async function packAndCheck(
 ): Promise<{ packager: Packager; outDir: string }> {
   const cancellationToken = new CancellationToken()
   const packager = new Packager(packagerOptions, cancellationToken)
-  ;(packager as any).runtimeEnvironmentVariables = runtimeEnv
+    ; (packager as any).runtimeEnvironmentVariables = runtimeEnv
   const publishManager = new PublishManager(packager, { publish: "publish" in checkOptions ? checkOptions.publish : "never" })
 
   const artifacts: Map<Platform, Array<ArtifactCreated>> = new Map()
@@ -628,7 +628,7 @@ async function checkMacResult(expect: ExpectStatic, packager: Packager, packager
 
   if (checksumData != null) {
     for (const name of Object.keys(checksumData)) {
-      ;(checksumData as Record<string, any>)[name] = { algorithm: "SHA256", hash: "hash" }
+      ; (checksumData as Record<string, any>)[name] = { algorithm: "SHA256", hash: "hash" }
     }
     snapshot.ElectronAsarIntegrity = checksumData
   }
@@ -691,7 +691,7 @@ async function checkWindowsResult(expect: ExpectStatic, packager: Packager, chec
   }
   if (hasTarget("squirrel")) {
     return checkSquirrelResult()
-  } else if (hasTarget("zip") && !(checkOptions.signed || checkOptions.signedWin)) {
+  } else if (hasTarget("zip") && !(checkOptions.signedMac || checkOptions.signedWin)) {
     return checkZipResult()
   }
 }
@@ -815,16 +815,42 @@ export function platform(platform: Platform): PackagerOptions {
   }
 }
 
-export function signed(packagerOptions: PackagerOptions): PackagerOptions {
-  if (process.env.CSC_KEY_PASSWORD == null) {
-    log.warn({ reason: "CSC_KEY_PASSWORD is not defined" }, "macOS code signing is not tested")
-  } else {
-    if (packagerOptions.config == null) {
-      ;(packagerOptions as any).config = {}
-    }
-    ;(packagerOptions.config as any).cscLink = MAC_CSC_LINK
+/** Resolves the macOS signing identity used by the tests (real env cert if provided, else ephemeral self-signed). */
+export async function getMacSigningIdentity(): Promise<SelfSignedIdentity> {
+  const cscLink = process.env.CSC_LINK
+  const cscKeyPassword = process.env.CSC_KEY_PASSWORD
+  if (cscLink != null && cscKeyPassword != null) {
+    log.info({ reason: "CSC_LINK is defined" }, "using provided macOS code-signing identity")
+    return { commonName: "provided", p12Base64: cscLink, password: cscKeyPassword }
   }
-  return packagerOptions
+  return await macSigningCredentialsInfo.value
+}
+
+export async function getWindowsSigningIdentity(): Promise<SelfSignedIdentity> {
+  const cscLink = process.env.CSC_LINK || process.env.WIN_CSC_LINK
+  const cscKeyPassword = process.env.CSC_KEY_PASSWORD || process.env.WIN_CSC_KEY_PASSWORD
+  if (cscLink != null && cscKeyPassword != null) {
+    log.info({ reason: cscLink != null ? "CSC_LINK is defined" : "WIN_CSC_LINK is defined" }, "using provided Windows code-signing identity")
+    return { commonName: "provided", p12Base64: cscLink, password: cscKeyPassword }
+  }
+  return await winSigningCredentialsInfo.value
+}
+
+async function signed(packagerOptions: PackagerOptions, platform: 'win' | 'mac'): Promise<PackagerOptions> {
+  if (platform === 'mac' && process.platform !== "darwin") {
+    // codesign only runs on macOS; off-darwin the build is left unsigned (mac signing tests are .ifMac-gated).
+    // Also avoids generating a self-signed identity (and spawning openssl) where it isn't available — e.g. the
+    // minimal Linux package-manager updater containers that have no openssl on PATH.
+    return packagerOptions
+  }
+  // electron-builder skips macOS code signing on pull-request CI builds (isSignAllowed → isPullRequest, a
+  // security guard for forked PRs). GitHub sets GITHUB_BASE_REF on pull_request events, so without this the
+  // app comes out unsigned and the signing assertions fail with "code object is not signed at all". These are
+  // our own builds with an ephemeral identity, so opt back into signing for the test.
+  process.env.CSC_FOR_PULL_REQUEST = "true"
+  const { p12Base64, password } = platform === 'mac' ? await getMacSigningIdentity() : await getWindowsSigningIdentity()
+  const options = deepAssign<PackagerOptions>({}, packagerOptions, { config: { cscLink: p12Base64, cscKeyPassword: password } })
+  return options
 }
 
 export function createMacTargetTest(expect: ExpectStatic, target: Array<MacOsTargetName>, config?: Configuration, isSigned = true) {
@@ -844,7 +870,7 @@ export function createMacTargetTest(expect: ExpectStatic, target: Array<MacOsTar
       },
     },
     {
-      signed: isSigned,
+      signedMac: isSigned,
       packed: async context => {
         if (!target.includes("tar.gz")) {
           return

@@ -106,7 +106,7 @@ async function runInstallTest(context: TestContext, target: ConstructorParameter
         electronUpdaterCompatibility: "1.1",
         electronFuses: {
           runAsNode: false,
-          enableCookieEncryption: true,
+          enableCookieEncryption: false, // don't enable cookie encryption for testing because it adds an additional decryption step to the update process which requires user interaction to unlock the keychain on macOS and can cause timeouts in CI, especially on older macOS versions with slower crypto performance
           enableNodeOptionsEnvironmentVariable: false,
           enableNodeCliInspectArguments: false,
           enableEmbeddedAsarIntegrityValidation: true,

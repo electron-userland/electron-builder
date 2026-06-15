@@ -1,4 +1,5 @@
-import { extractArchive, isSafeExtractPath, moveDirAtomic } from "app-builder-lib/src/util/electronGet"
+import { moveDirAtomic } from "builder-util"
+import { extractArchive, isSafeExtractPath } from "app-builder-lib/src/util/electronGet"
 import * as fs from "fs/promises"
 import * as os from "os"
 import * as path from "path"

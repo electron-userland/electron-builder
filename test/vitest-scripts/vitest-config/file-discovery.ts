@@ -38,7 +38,8 @@ function collectTests(dir: string, platform: TargetPlatform = "current", out: st
   }
 
   for (const name of fs.readdirSync(dir)) {
-    if ([".ts.map", ".js.map", ".d.ts", ".snap"].some(ext => name.endsWith(ext)) || ["node_modules", "out"].includes(name) || isSkippedTest(name, platform)) {
+    const isOverrideMatch = testOverride?.some(toMatch => name.includes(toMatch)) ?? false
+    if ([".ts.map", ".js.map", ".d.ts", ".snap"].some(ext => name.endsWith(ext)) || ["node_modules", "out"].includes(name) || (!isOverrideMatch && isSkippedTest(name, platform))) {
       continue
     }
 
@@ -47,9 +48,7 @@ function collectTests(dir: string, platform: TargetPlatform = "current", out: st
     if (!name.startsWith(".") && fs.statSync(full).isDirectory()) {
       collectTests(full, platform, out)
     } else {
-      if (testOverride && testOverride.some(toMatch => name.includes(toMatch))) {
-        out.push(normalizePath(full))
-      } else if (name.endsWith("Test.ts") || name.endsWith("test.ts")) {
+      if (isOverrideMatch || name.endsWith("Test.ts") || name.endsWith("test.ts")) {
         out.push(normalizePath(full))
       }
     }

@@ -219,7 +219,7 @@ describe("sign: false (signing disabled)", () => {
           win: { sign: false },
         },
       },
-      // signedWin sets WIN_CSC_LINK, so a cert is discoverable — sign: false must still short-circuit
+      // signedWin injects a self-signed cert, so a cert is discoverable — sign: false must still short-circuit
       { signedWin: true }
     )
 
