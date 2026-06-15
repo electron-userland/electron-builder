@@ -107,7 +107,7 @@ const bundledCertKeychainAdded = new Lazy<void>(async () => {
   const keychainPath = path.join(cacheDir, "electron-builder-root-certs.keychain")
   const results = await Promise.all<any>([
     listUserKeychains(),
-    copyFile(path.join(import.meta.dirname, "..", "..", "certs", "root_certs.keychain"), tmpKeychainPath).then(() => rename(tmpKeychainPath, keychainPath)),
+    copyFile(path.join(import.meta.dirname, "..", "..", "..", "certs", "root_certs.keychain"), tmpKeychainPath).then(() => rename(tmpKeychainPath, keychainPath)),
   ])
   const list = results[0]
   if (!list.includes(keychainPath)) {
@@ -222,6 +222,17 @@ export async function sign(opts: SignOptions): Promise<void> {
 
 export let findIdentityRawResult: Promise<Array<string>> | null = null
 
+// Discovery of untrusted self-signed identities is OFF in production, and there is intentionally NO env var
+// or build-config option to enable it: an untrusted identity must never be silently accepted in a real
+// build. This in-process flag exists solely as a seam for electron-builder's own signing tests, which
+// provision an ephemeral self-signed cert and flip it via setAllowUntrustedSelfSignedIdentityForTesting().
+let allowUntrustedSelfSignedIdentity = false
+
+/** @internal Test-only. Enables discovery of untrusted self-signed code-signing identities. Never use in production. */
+export function setAllowUntrustedSelfSignedIdentityForTesting(value: boolean): void {
+  allowUntrustedSelfSignedIdentity = value
+}
+
 async function getValidIdentities(keychain?: string | null): Promise<Array<string>> {
   function addKeychain(args: Array<string>) {
     if (keychain != null) {
@@ -234,7 +245,7 @@ async function getValidIdentities(keychain?: string | null): Promise<Array<strin
   if (result == null || keychain != null) {
     // https://github.com/electron-userland/electron-builder/issues/481
     // https://github.com/electron-userland/electron-builder/issues/535
-    result = Promise.all<Array<string>>([
+    const commands = [
       exec("/usr/bin/security", addKeychain(["find-identity", "-v"])).then(it =>
         it
           .trim()
@@ -249,11 +260,26 @@ async function getValidIdentities(keychain?: string | null): Promise<Array<strin
           })
       ),
       exec("/usr/bin/security", addKeychain(["find-identity", "-v", "-p", "codesigning"])).then(it => it.trim().split("\n")),
-    ]).then(it => {
-      const array = it[0]
-        .concat(it[1])
+    ]
+
+    // Test-only seam: also accept untrusted self-signed identities. `find-identity` without `-v` lists them;
+    // trusted identities discovered above still take precedence (they appear first and dupes are de-duped).
+    if (allowUntrustedSelfSignedIdentity) {
+      commands.push(exec("/usr/bin/security", addKeychain(["find-identity"])).then(it => it.trim().split("\n")))
+    }
+
+    result = Promise.all<Array<string>>(commands).then(it => {
+      const array = it
+        .flat()
         .filter(
-          it => !it.includes("(Missing required extension)") && !it.includes("valid identities found") && !it.includes("iPhone ") && !it.includes("com.apple.idms.appleid.prd.")
+          it =>
+            !it.includes("(Missing required extension)") &&
+            !it.includes("identities found") &&
+            !it.includes("Policy: X.509 Basic") &&
+            !it.includes("Matching identities") &&
+            !it.includes("Valid identities only") &&
+            !it.includes("iPhone ") &&
+            !it.includes("com.apple.idms.appleid.prd.")
         )
         // remove 1)
         .map(it => it.substring(it.indexOf(")") + 1).trim())
