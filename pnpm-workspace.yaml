@@ -17,6 +17,7 @@ minimumReleaseAge: 10080
 minimumReleaseAgeExclude:
   - esbuild # GHSA-gv7w-rqvm-qjhr: only patched in 0.28.1 (published <7d ago)
   - '@esbuild/*' # platform binaries released in lockstep with esbuild 0.28.1
+  - joi # GHSA-q7cg-457f-vx79: only patched in 17.13.4 (published <7d ago)
 patchedDependencies:
   '@changesets/cli@2.29.7': patches/@changesets__cli@2.29.7.patch
   '@changesets/assemble-release-plan@6.0.9': patches/@changesets__assemble-release-plan@6.0.9.patch
@@ -42,4 +43,5 @@ overrides:
   'minimatch@9': '>=9.0.7 <10'
   'js-yaml@3': '>=3.14.2 <4' # GHSA-mh29-5h37-fv8m (med)
   'js-yaml@4': '>=4.2.0 <5' # GHSA-h67p-54hq-rp68 (med)
+  joi: '>=17.13.4 <18' # GHSA-q7cg-457f-vx79 (med)
 packageImportMethod: copy
