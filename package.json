@@ -10,7 +10,7 @@
     "typecheck:test": "tsc --noEmit -p test/tsconfig.json",
     "lint": "eslint packages test/src --ext .ts,.js",
     "lint-deps": "node ./scripts/checkDeps.js",
-    "pretest": "pnpm lint-deps && pnpm lint",
+    "pretest": "pnpm lint-deps && pnpm lint && pnpm typecheck && pnpm typecheck:test",
     "prettier": "prettier 'packages/**/*.{ts,js}' 'website/{docs,scripts,src}/**/*.{ts,js}' 'test/{vitest-scripts,src}/**/*.ts' --write",
     "///": "Please see https://github.com/electron-userland/electron-builder/blob/master/CONTRIBUTING.md#run-test-using-cli how to run particular test instead full (and very slow) run",
     "test:all": "pnpm compile && pnpm pretest && pnpm ci:test",
