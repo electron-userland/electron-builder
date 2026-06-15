@@ -16,9 +16,7 @@ test.ifNotWindows("tar.gz", ({ expect }) => createMacTargetTest(expect, ["tar.gz
 
 // test.ifNotWindows("tar.xz", createTargetTest(["tar.xz"], ["Test App ßW-1.1.0-mac.tar.xz"]))
 
-const it = test.ifMac
-
-it("pkg", ({ expect }) => createMacTargetTest(expect, ["pkg"]))
+test.ifMac("pkg", ({ expect }) => createMacTargetTest(expect, ["pkg"]))
 
 test.ifMac("empty installLocation", ({ expect }) =>
   app(

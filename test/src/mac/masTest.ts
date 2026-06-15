@@ -1,7 +1,7 @@
 import { Arch, Platform } from "electron-builder"
 import * as path from "path"
 import { CheckingMacPackager } from "../helpers/CheckingPackager.js"
-import { assertPack, createMacTargetTest, signed } from "../helpers/packTester.js"
+import { assertPack, createMacTargetTest } from "../helpers/packTester.js"
 
 describe.ifMac("mas", () => {
   // MAS pack+sign requires Apple-issued identities ("Apple Distribution" / "3rd Party Mac Developer …") and
@@ -27,7 +27,7 @@ describe.ifMac("mas", () => {
     return assertPack(
       expect,
       "test-app-one",
-      await signed({
+      {
         targets,
         platformPackagerFactory: (packager, _platform) => (platformPackager = new CheckingMacPackager(packager)),
         config: {
@@ -36,8 +36,9 @@ describe.ifMac("mas", () => {
           },
           mas: { sign: entitlementsConfig },
         },
-      }),
+      },
       {
+        signed: true,
         checkMacApp(appDir, _info) {
           const appEntitlements = (filePath: string) => platformPackager!.effectiveSignOptions?.optionsForFile?.(filePath)
           expect(appEntitlements(appDir)?.entitlements).toBe(entitlementsConfig.entitlements)
@@ -56,14 +57,15 @@ describe.ifMac("mas", () => {
     return assertPack(
       expect,
       "test-app-one",
-      await signed({
+      {
         targets,
         platformPackagerFactory: (packager, _platform) => (platformPackager = new CheckingMacPackager(packager)),
         config: {
           mac: { sign: entitlementsConfig },
         },
-      }),
+      },
       {
+        signed: true,
         checkMacApp(appDir, _info) {
           const appEntitlements = (filePath: string) => platformPackager!.effectiveSignOptions?.optionsForFile?.(filePath)
           expect(appEntitlements(appDir)?.entitlements).toBe(entitlementsConfig.entitlements)
@@ -82,11 +84,12 @@ describe.ifMac("mas", () => {
     return assertPack(
       expect,
       "test-app-one",
-      await signed({
+      {
         targets,
         platformPackagerFactory: (packager, _platform) => (platformPackager = new CheckingMacPackager(packager)),
-      }),
+      },
       {
+        signed: true,
         checkMacApp(appDir, _info) {
           const appEntitlements = (filePath: string) => platformPackager!.effectiveSignOptions?.optionsForFile?.(filePath)
           expect(appEntitlements(appDir)?.entitlements).toBe(entitlementsConfig.entitlements)
