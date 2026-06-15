@@ -7,7 +7,7 @@
     "compile": "pnpm ci:test:generate && tsc --build tsconfig.build.json --force",
     "compile:watch": "tsc --build tsconfig.build.json --watch",
     "typecheck": "tsc --build tsconfig.build.json --noEmit ",
-    "typecheck:test": "tsc --noEmit -p test/tsconfig.json",
+    "typecheck:test": "pnpm ci:test:generate && tsc --noEmit -p test/tsconfig.json",
     "lint": "eslint packages test/src --ext .ts,.js",
     "lint-deps": "node ./scripts/checkDeps.js",
     "pretest": "pnpm lint-deps && pnpm lint && pnpm typecheck && pnpm typecheck:test",
