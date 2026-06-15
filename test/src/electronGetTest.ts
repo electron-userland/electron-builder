@@ -5,6 +5,7 @@ import * as net from "net"
 import * as os from "os"
 import * as path from "path"
 import * as tar from "tar"
+import { TmpDir } from "temp-file"
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest"
 import {
   ArtifactDownloadOptions,
@@ -25,16 +26,17 @@ import { ELECTRON_VERSION } from "./helpers/testConfig"
  * Entry layout: inner/<name> — strip:1 extracts <name> directly into the target dir.
  */
 async function createMinimalTarGz(archivePath: string, files: Record<string, string>): Promise<void> {
-  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "eb-test-tar-"))
+  const tmpDir = new TmpDir("eb-test-tar")
   try {
-    const innerDir = path.join(tmpDir, "inner")
+    const dir = await tmpDir.createTempDir()
+    const innerDir = path.join(dir, "inner")
     await fs.mkdir(innerDir)
     for (const [name, content] of Object.entries(files)) {
       await fs.writeFile(path.join(innerDir, name), content)
     }
-    await tar.create({ gzip: true, file: archivePath, cwd: tmpDir }, ["inner"])
+    await tar.create({ gzip: true, file: archivePath, cwd: dir }, ["inner"])
   } finally {
-    await fs.rm(tmpDir, { recursive: true, force: true })
+    await tmpDir.cleanup()
   }
 }
 
@@ -225,15 +227,16 @@ describe("getBinariesMirrorUrl", () => {
 
 // ─── Shared temp cache dir for functional tests ───────────────────────────────
 
+const sharedCacheTmpDir = new TmpDir("eb-electronGet-test")
 let testCacheDir: string
 
 beforeAll(async () => {
-  testCacheDir = await fs.mkdtemp(path.join(os.tmpdir(), "eb-electronGet-test-"))
+  testCacheDir = await sharedCacheTmpDir.createTempDir()
   process.env.ELECTRON_BUILDER_CACHE = testCacheDir
 })
 
 afterAll(async () => {
-  await fs.rm(testCacheDir, { recursive: true, force: true })
+  await sharedCacheTmpDir.cleanup()
 })
 
 // ─── downloadArtifact: generic artifacts (.tar.gz) ───────────────────────────
@@ -323,8 +326,8 @@ describe("downloadBuilderToolset", { sequential: true }, () => {
   // Using resolveAssetURL bypasses that env var check entirely.
   // This test routes downloads through a local server and verifies the server is hit (not
   // ELECTRON_MIRROR's unreachable URL), proving resolveAssetURL controls the final fetch target.
-  test("ELECTRON_MIRROR env var does not corrupt builder-binaries download URL (#9752)", { timeout: 15_000 }, async ({ expect }) => {
-    const freshTestCache = await fs.mkdtemp(path.join(os.tmpdir(), "eb-mirror-test-"))
+  test("ELECTRON_MIRROR env var does not corrupt builder-binaries download URL (#9752)", { timeout: 15_000 }, async ({ expect, tmpDir }) => {
+    const freshTestCache = await tmpDir.createTempDir()
     vi.stubEnv("ELECTRON_BUILDER_CACHE", freshTestCache)
     // Point ELECTRON_MIRROR at an unreachable address — if @electron/get used it instead of
     // resolveAssetURL, the fetch would fail with ECONNREFUSED before reaching any assertion.
@@ -342,7 +345,6 @@ describe("downloadBuilderToolset", { sequential: true }, () => {
       expect(server.requestedPaths.some(p => p.includes("dmg-builder@1.2.2"))).toBe(true)
     } finally {
       await server.close()
-      await fs.rm(freshTestCache, { recursive: true, force: true })
     }
   })
 })
@@ -368,14 +370,13 @@ describe("downloadBuilderToolset: filenameWithExt validation", () => {
 describe("toolset archive cache", { sequential: true }, () => {
   let freshCache: string
 
-  beforeEach(async () => {
-    freshCache = await fs.mkdtemp(path.join(os.tmpdir(), "eb-archive-cache-test-"))
+  beforeEach(async context => {
+    freshCache = await context.tmpDir.createTempDir()
     vi.stubEnv("ELECTRON_BUILDER_CACHE", freshCache)
   })
 
-  afterEach(async () => {
+  afterEach(() => {
     vi.unstubAllEnvs()
-    await fs.rm(freshCache, { recursive: true, force: true })
   })
 
   // Seed the archive cache path that downloadBuilderToolset checks before hitting @electron/get.
@@ -643,9 +644,9 @@ async function startRecordingProxy() {
 }
 
 describe("proxy integration", () => {
-  test("routes download requests through HTTPS_PROXY when set", { timeout: 15_000 }, async ({ expect }) => {
+  test("routes download requests through HTTPS_PROXY when set", { timeout: 15_000 }, async ({ expect, tmpDir }) => {
     const proxy = await startRecordingProxy()
-    const freshCache = await fs.mkdtemp(path.join(os.tmpdir(), "eb-proxy-integration-"))
+    const freshCache = await tmpDir.createTempDir()
     vi.stubEnv("HTTPS_PROXY", `http://127.0.0.1:${proxy.port}`)
     vi.stubEnv("ELECTRON_BUILDER_CACHE", freshCache)
 
