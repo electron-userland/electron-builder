@@ -44,11 +44,9 @@ export {
   downloadBuilderToolset,
   downloadElectronArtifact,
   ElectronGetOptions,
-  ensureDir,
   getBinariesMirrorUrl,
   getCacheDirectory,
   isSafeExtractPath,
-  moveDirAtomic,
   reinitializeProxy,
   resolveBuilderBinaryUrl,
 } from "./util/electronGet.js"

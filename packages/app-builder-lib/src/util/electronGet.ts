@@ -8,7 +8,7 @@ import {
   FetchDownloaderOptions,
   MirrorOptions,
 } from "@electron/get"
-import { exec, exists, log, PADDING, parseValidEnvVarUrl, sanitizeDirPath, to7zaOutputSwitch } from "builder-util"
+import { exec, exists, log, PADDING, parseValidEnvVarUrl, sanitizeDirPath, to7zaOutputSwitch, ensureDir, moveDirAtomic } from "builder-util"
 import { HttpError, retry, sleep } from "builder-util-runtime"
 import * as crypto from "crypto"
 import type { ProgressBar } from "electron-publish"
@@ -166,52 +166,6 @@ async function extractZipStreaming(file: string, dir: string): Promise<void> {
     }
   } finally {
     readStream.destroy()
-  }
-}
-
-const TRANSIENT_RENAME_CODES = new Set(["ENOENT", "EPERM", "EBUSY", "EXDEV"])
-
-/**
- * @internal exported for unit testing
- *
- * Atomically moves `src` to `dest` by rename, retrying on transient Windows errors (ENOENT,
- * EPERM, EBUSY) before falling back to a copy+delete when all retries are exhausted.
- *
- * On Windows Docker / Windows Server containers, MoveFileEx can spuriously return
- * ERROR_FILE_NOT_FOUND (ENOENT) or a sharing-violation even when both paths are valid.
- * Retrying with back-off resolves the majority of these transient failures; the copy+delete
- * fallback handles the rare case where the rename keeps failing (e.g. cross-device move).
- */
-export async function moveDirAtomic(src: string, dest: string): Promise<void> {
-  // 4 retries → 5 total attempts; interval+backoff*attempt gives 250/500/750/1000 ms delays.
-  let lastErr: (Error & { code?: string }) | undefined
-  try {
-    await retry(() => fs.rename(src, dest), {
-      retries: 4,
-      interval: 250,
-      backoff: 250,
-      shouldRetry: (err: any) => {
-        if (TRANSIENT_RENAME_CODES.has(err.code ?? "")) {
-          log.warn({ src: log.filePath(src), dest: log.filePath(dest), code: err.code }, "directory rename failed, retrying")
-          return true
-        }
-        return false
-      },
-    })
-    return
-  } catch (err: any) {
-    lastErr = err
-    if (!TRANSIENT_RENAME_CODES.has(err.code ?? "")) {
-      throw err
-    }
-  }
-  // All rename retries exhausted on a transient error — fall back to copy + delete
-  log.warn({ src: log.filePath(src), dest: log.filePath(dest) }, "directory rename failed repeatedly; falling back to copy+delete")
-  try {
-    await fs.cp(src, dest, { recursive: true })
-    await fs.rm(src, { recursive: true, force: true })
-  } catch (err: any) {
-    throw new Error(`Failed to move directory from ${src} to ${dest}: ${err.message}${lastErr ? `; last rename error: ${lastErr.message}` : ""}`)
   }
 }
 
@@ -438,42 +392,6 @@ async function persistToArchiveCache(sourcePath: string, archiveCachePath: strin
     await fs.copyFile(sourcePath, archiveCachePath)
   } catch (err) {
     log.warn({ err, archiveCachePath }, "failed to persist archive to cache — will re-download next time")
-  }
-}
-
-/**
- * Recursive mkdir hardened against the long-standing Node concurrency bug where two processes
- * building overlapping directory trees at the same time spuriously throw ENOENT (a peer is
- * mid-creating a shared ancestor) or EEXIST (a peer just created this dir) — nodejs/node#27293,
- * #31481. It is rare on local filesystems but routine on Docker overlayfs, which is where CI builds
- * run and where this surfaced as a flaky `ENOENT … mkdir '<cache>/<release>/<artifact>-<hash>'`
- * whenever concurrent builds/targets (e.g. rpm x64 + rpm armv7l, or two test workers) first
- * populated a cold toolset cache. proper-lockfile serializes the *download/extract*, but the cache
- * dir is created around the lock, so the mkdir itself must tolerate the race. Both error codes are
- * transient: retry with a short backoff; by the next attempt the peer has finished.
- *
- * @internal exported for unit testing — `mkdir` is injectable only so tests can deterministically
- * drive the race; production callers always use the default fs.mkdir.
- */
-export async function ensureDir(dir: string, maxAttempts = 8, mkdir: (p: string, opts: { recursive: true }) => Promise<unknown> = fs.mkdir): Promise<void> {
-  for (let attempt = 0; ; attempt++) {
-    try {
-      await mkdir(dir, { recursive: true })
-      return
-    } catch (e: any) {
-      if (e.code === "EEXIST") {
-        // recursive mkdir is normally idempotent; a spurious EEXIST from the race is fine as long
-        // as the path really is a directory now — otherwise it's a genuine file-in-the-way error.
-        if ((await fs.stat(dir).catch(() => null))?.isDirectory()) {
-          return
-        }
-        throw e
-      }
-      if (e.code !== "ENOENT" || attempt >= maxAttempts) {
-        throw e
-      }
-      await sleep(50 * (attempt + 1))
-    }
   }
 }
 
