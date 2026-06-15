@@ -6,9 +6,16 @@ import * as yaml from "js-yaml"
 import * as path from "path"
 import { PlugDescriptor, SlotDescriptor, SnapOptions24 } from "../../../options/SnapOptions.js"
 import { SnapCore } from "./SnapTarget.js"
+import { buildSnapCommandLauncherScript, resolveSnapCommand } from "./snapCommand.js"
 import { App, Part, SnapcraftYAML } from "./snapcraft.js"
 import { buildSnap, DEFAULT_STAGE_PACKAGES, SNAPCRAFT_YAML_OPTIONS } from "./snapcraftBuilder.js"
-const { copy, mkdir, readdir, writeFile } = _fsExtra
+const { chmod, copy, mkdir, readdir, remove, writeFile } = _fsExtra
+
+// Electron's setuid sandbox helper. Removed from the staged app when the snap runs with
+// `--no-sandbox` (snap confinement supplies its own sandbox via the browser-support interface).
+const CHROME_SANDBOX = "chrome-sandbox"
+// Launcher script name used when the app command cannot be expressed inline (see resolveSnapCommand).
+const SNAP_COMMAND_LAUNCHER = "command.sh"
 
 /** Snap build strategy for core24 — generates a native snapcraft.yaml and invokes the snapcraft CLI. */
 export class SnapCore24 extends SnapCore<SnapOptions24> {
@@ -21,6 +28,13 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
   // - Desktop files in meta/gui/ are used for menu integration
   readonly configRelativePath = "snap"
   readonly guiRelativePath = path.join(this.configRelativePath, "gui")
+
+  // Computed in createDescriptor (mapSnapOptionsToSnapcraftYAML) and consumed in buildSnap.
+  // getSnapCore() returns a fresh SnapCore24 per arch build, so this per-instance state is
+  // never shared across builds.
+  private removeChromeSandbox = false
+  // Non-null when the app command was redirected to a launcher script; holds the args to embed.
+  private commandLauncherArgs: string[] | null = null
 
   async createDescriptor(arch: Arch): Promise<SnapcraftYAML> {
     return await this.mapSnapOptionsToSnapcraftYAML(arch)
@@ -71,6 +85,20 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       await copyDir(appOutDir, appDir)
     }
 
+    // Drop the setuid chrome-sandbox helper before snapcraft stages the app — it is unusable under
+    // strict confinement when launching with --no-sandbox (mirrors SnapCoreLegacy).
+    if (this.removeChromeSandbox) {
+      await remove(path.join(appDir, CHROME_SANDBOX))
+    }
+
+    // Write the launcher script when the command was redirected to one (see resolveSnapCommand).
+    // It lands at the snap root ($SNAP/command.sh) — it is intentionally not added to `organize`.
+    if (this.commandLauncherArgs != null) {
+      const launcherPath = path.join(appDir, SNAP_COMMAND_LAUNCHER)
+      await writeFile(launcherPath, buildSnapCommandLauncherScript({ execName: this.packager.executableName, args: this.commandLauncherArgs }), { mode: 0o755 })
+      await chmod(launcherPath, 0o755)
+    }
+
     // Auto-generate `organize` mapping for the app part so top-level helper
     // binaries and resources are placed under `app/` inside the snap. Update
     // the already-written `snapcraft.yaml` so the build sees the mapping.
@@ -81,6 +109,11 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
         const organize: Record<string, string> = (appPart.organize as Record<string, string>) || {}
         for (const entry of entries) {
           if (!entry) {
+            continue
+          }
+          // Skip files no longer present in the staged app dir (e.g. removed chrome-sandbox) so
+          // snapcraft doesn't fail trying to organize a missing source.
+          if (this.removeChromeSandbox && entry === CHROME_SANDBOX) {
             continue
           }
           if (organize[entry]) {
@@ -237,17 +270,23 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
         extraArgs.push("--ozone-platform=x11")
       }
     }
-    if (this.helper.isElectronVersionGreaterOrEqualThan("5.0.0") && !this.isBrowserSandboxAllowed(rootPlugs)) {
-      if (!extraArgs.includes("--no-sandbox")) {
-        extraArgs.push("--no-sandbox")
-      }
+    const noSandbox = this.helper.isElectronVersionGreaterOrEqualThan("5.0.0") && !this.isBrowserSandboxAllowed(rootPlugs)
+    if (noSandbox && !extraArgs.includes("--no-sandbox")) {
+      extraArgs.push("--no-sandbox")
     }
-    const commandSuffix = extraArgs.length > 0 ? ` ${extraArgs.join(" ")}` : ""
+    // With --no-sandbox the setuid chrome-sandbox helper is unused; strip it from the snap.
+    this.removeChromeSandbox = noSandbox
+
+    // snapd forbids characters such as `=` and quotes in `apps.<name>.command`. When the resolved
+    // args contain them (e.g. --ozone-platform=x11, or --js-flags="..."), redirect the command to a
+    // generated launcher script instead of failing the build.
+    const resolvedCommand = resolveSnapCommand({ execName: this.packager.executableName, args: extraArgs, launcherScriptName: SNAP_COMMAND_LAUNCHER })
+    this.commandLauncherArgs = resolvedCommand.launcherArgs
 
     // Create the app configuration
     const desktopBaseName = this.helper.getDesktopFileName(appName)
     const app: App = {
-      command: `app/${this.packager.executableName}${commandSuffix}`,
+      command: resolvedCommand.command,
       "command-chain": undefined, // explicitly undefined so removeNullish strips it; extensions supply their own command-chain
       plugs: appPlugs,
       slots: appSlots,

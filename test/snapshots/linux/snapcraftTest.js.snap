@@ -1765,6 +1765,28 @@ exports[`snapcraft > core22: per-core description overrides linux.description 1`
 }
 `;
 
+exports[`snapcraft > core24 Multipass real build > core24 useMultipass full build 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24 Multipass real build > core24 useMultipass full build with launcher script + no-sandbox 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
 exports[`snapcraft > core24 custom plugs with default expansion 1`] = `
 {
   "apps": {
@@ -1804,7 +1826,6 @@ exports[`snapcraft > core24 custom plugs with default expansion 1`] = `
       "organize": {
         "LICENSE.electron.txt": "app/LICENSE.electron.txt",
         "LICENSES.chromium.html": "app/LICENSES.chromium.html",
-        "chrome-sandbox": "app/chrome-sandbox",
         "chrome_100_percent.pak": "app/chrome_100_percent.pak",
         "chrome_200_percent.pak": "app/chrome_200_percent.pak",
         "chrome_crashpad_handler": "app/chrome_crashpad_handler",
@@ -1917,7 +1938,29 @@ exports[`snapcraft > core24 default (gnome extension) 2`] = `
 }
 `;
 
+exports[`snapcraft > core24 executableArgs with forbidden chars use a launcher script 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
 exports[`snapcraft > core24 gnome extension throws in destructive-mode 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
+
+exports[`snapcraft > core24 keeps chrome-sandbox when browser-support sandbox is allowed 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
 
 exports[`snapcraft > core24 no gnome extension 1`] = `
 {
@@ -2042,12 +2085,34 @@ exports[`snapcraft > core24 no gnome extension 2`] = `
 }
 `;
 
+exports[`snapcraft > core24 plain executableArgs stay inline (no launcher) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
 exports[`snapcraft > core24 remoteBuild build mode 1`] = `
 {
   "linux": [
     {
       "arch": "x64",
       "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24 removes chrome-sandbox when launching with --no-sandbox 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
     },
   ],
 }
@@ -2079,7 +2144,7 @@ exports[`snapcraft > core24 wayland disabled 1`] = `
 {
   "apps": {
     "sep": {
-      "command": "app/sep --ozone-platform=x11",
+      "command": "command.sh",
       "desktop": "meta/gui/sep.desktop",
       "extensions": [
         "gnome",

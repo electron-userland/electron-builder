@@ -259,7 +259,89 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
       effectiveOptionComputed: async ({ snap }) => {
         delete snap.platforms // arch-specific: varies by host; tested separately via armhf tests
         expect(snap).toMatchSnapshot()
-        expect(snap.apps?.[appName]?.command).toContain("--ozone-platform=x11")
+        // --ozone-platform=x11 contains "=", which snapd forbids in apps.<name>.command, so the
+        // command is redirected to a launcher script that passes the flag through instead.
+        expect(snap.apps?.[appName]?.command).toBe("command.sh")
+        return Promise.resolve(true)
+      },
+    })
+  })
+
+  test("core24 executableArgs with forbidden chars use a launcher script", ({ expect }) => {
+    const appName = "sep"
+    return app(expect, {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: appName },
+        productName: "Sep",
+        snapcraft: {
+          base: "core24",
+          // --js-flags="..." contains both `=` and `"`, forbidden in apps.<name>.command.
+          core24: { executableArgs: ['--js-flags="--max-old-space-size=4096"'] },
+        },
+      },
+      effectiveOptionComputed: async ({ snap }) => {
+        delete snap.platforms
+        // command is redirected to the launcher script rather than embedding the forbidden args inline
+        expect(snap.apps?.[appName]?.command).toBe("command.sh")
+        return Promise.resolve(true)
+      },
+    })
+  })
+
+  test("core24 plain executableArgs stay inline (no launcher)", ({ expect }) => {
+    const appName = "sep"
+    return app(expect, {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: appName },
+        productName: "Sep",
+        // --disable-gpu has no forbidden characters, so it stays in the command verbatim
+        snapcraft: { base: "core24", core24: { executableArgs: ["--disable-gpu"] } },
+      },
+      effectiveOptionComputed: async ({ snap }) => {
+        delete snap.platforms
+        expect(snap.apps?.[appName]?.command).toBe("app/sep --disable-gpu")
+        return Promise.resolve(true)
+      },
+    })
+  })
+
+  test("core24 removes chrome-sandbox when launching with --no-sandbox", ({ expect }) => {
+    const appName = "sep"
+    return app(expect, {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: appName },
+        productName: "Sep",
+        // custom string plugs => no browser-support allow-sandbox => --no-sandbox is injected
+        snapcraft: { base: "core24", core24: { plugs: ["network"] } },
+      },
+      effectiveOptionComputed: async ({ snap }) => {
+        delete snap.platforms
+        expect(snap.apps?.[appName]?.command).toBe("app/sep --no-sandbox")
+        const organize = snap.parts?.[appName]?.organize as Record<string, string> | undefined
+        expect(organize?.["chrome-sandbox"]).toBeUndefined()
+        return Promise.resolve(true)
+      },
+    })
+  })
+
+  test("core24 keeps chrome-sandbox when browser-support sandbox is allowed", ({ expect }) => {
+    const appName = "sep"
+    return app(expect, {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: appName },
+        productName: "Sep",
+        // default config injects browser-support with allow-sandbox:true => no --no-sandbox
+        snapcraft: { base: "core24" },
+      },
+      effectiveOptionComputed: async ({ snap }) => {
+        delete snap.platforms
+        expect(snap.apps?.[appName]?.command).toBe("app/sep")
+        const organize = snap.parts?.[appName]?.organize as Record<string, string> | undefined
+        expect(organize?.["chrome-sandbox"]).toBe("app/chrome-sandbox")
         return Promise.resolve(true)
       },
     })
@@ -659,6 +741,22 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
           snapcraft: {
             base: "core24",
             core24: { useMultipass: true },
+          },
+        },
+      })
+    })
+
+    // End-to-end check that snapcraft accepts the generated launcher-script command and the
+    // chrome-sandbox removal: forceX11 produces a "=" arg (forbidden inline) and the custom
+    // string plugs force --no-sandbox (which strips chrome-sandbox).
+    test("core24 useMultipass full build with launcher script + no-sandbox", async ({ expect }) => {
+      await app(expect, {
+        targets: snapTarget,
+        config: {
+          productName: "Sep",
+          snapcraft: {
+            base: "core24",
+            core24: { useMultipass: true, forceX11: true, plugs: ["network"] },
           },
         },
       })
