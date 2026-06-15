@@ -12,7 +12,7 @@ const defaultStat: TestStats = {
   heavy: false,
 }
 
-export const TEST_SRC_ROOT = path.resolve(__dirname, "../src")
+export const TEST_SRC_ROOT = path.resolve(__dirname, "../../src")
 
 const shouldResetSnapshot = process.env.RESET_VITEST_SHARD_CACHE === "true"
 

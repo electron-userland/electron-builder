@@ -106,7 +106,7 @@ describe("MacTargetHelper", () => {
     })
   })
 
-  describe("getNotarizeOptions", () => {
+  describe("getNotarizeOptions", { sequential: true }, () => {
     const envKeys = [
       "APPLE_ID",
       "APPLE_APP_SPECIFIC_PASSWORD",
