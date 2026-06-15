@@ -41,7 +41,7 @@ export async function runIconsTool({ inputFile, outputFormat, outDir, iconsTools
   const safeOutDir = sanitizeDirPath(outDir)
 
   const toolsetPath = await getIconsToolsetPath(iconsToolset, resourcesDir)
-  const scriptPath = path.resolve(toolsetPath, "icon-tool.js")
+  const scriptPath = sanitizeDirPath(path.resolve(toolsetPath, "icon-tool.js"), toolsetPath)
   if (!(await exists(scriptPath))) {
     throw new InvalidConfigurationError(`Icons tool not found at expected path: ${scriptPath}`)
   }
