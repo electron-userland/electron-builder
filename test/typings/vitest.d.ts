@@ -46,6 +46,10 @@ export declare const skip: ConditionalSkipAPI
 export declare const expect: ExpectStatic
 
 declare module "vitest" {
+  interface TestContext {
+    /** Per-test temp directory, auto-created and cleaned up by the `tmpDir` fixture in vitest-setup.ts. */
+    tmpDir: import("temp-file").TmpDir
+  }
   interface TestOptions {
     meta?: {
       platform?: "mac" | "win" | "linux"

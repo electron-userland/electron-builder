@@ -251,19 +251,14 @@ describe("SnapStorePublisher", { sequential: true }, () => {
       await expect(makePublisher(undefined, emptyBase64).upload(makeTask())).rejects.toThrow(/empty/)
     })
 
-    test("absolute file path → reads file and injects credentials", async ({ expect }) => {
-      const { writeFile, mkdtemp, rm } = await import("fs/promises")
-      const { tmpdir } = await import("os")
-      const dir = await mkdtemp(`${tmpdir()}/snap-csc-test-`)
+    test("absolute file path → reads file and injects credentials", async ({ expect, tmpDir }) => {
+      const { writeFile } = await import("fs/promises")
+      const dir = await tmpDir.createTempDir()
       const file = `${dir}/creds.txt`
-      try {
-        await writeFile(file, CREDS, "utf8")
-        await makePublisher(undefined, file).upload(makeTask())
-        const spawnEnv = vi.mocked(spawn).mock.calls[0][2] as any
-        expect(spawnEnv.env.SNAPCRAFT_STORE_CREDENTIALS).toBe(CREDS)
-      } finally {
-        await rm(dir, { recursive: true })
-      }
+      await writeFile(file, CREDS, "utf8")
+      await makePublisher(undefined, file).upload(makeTask())
+      const spawnEnv = vi.mocked(spawn).mock.calls[0][2] as any
+      expect(spawnEnv.env.SNAPCRAFT_STORE_CREDENTIALS).toBe(CREDS)
     })
   })
 

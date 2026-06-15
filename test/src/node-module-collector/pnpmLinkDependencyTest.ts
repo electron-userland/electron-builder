@@ -1,4 +1,4 @@
-import { describe, test, afterEach } from "vitest"
+import { describe, test } from "vitest"
 import * as fse from "fs-extra"
 import * as os from "os"
 import * as path from "path"
@@ -56,11 +56,6 @@ describe("PnpmNodeModulesCollector.resolveLinkTarget", () => {
 
 describe("PnpmNodeModulesCollector link: dependency bundling", () => {
   let root = ""
-  afterEach(async () => {
-    if (root) {
-      await fse.rm(root, { recursive: true, force: true }).catch(() => {})
-    }
-  })
 
   function flattenNames(deps: any[]): string[] {
     const names = new Set<string>()
@@ -77,8 +72,8 @@ describe("PnpmNodeModulesCollector link: dependency bundling", () => {
     return [...names].sort()
   }
 
-  test("bundles a link: package and its transitive deps, resolved to the real source dir", async ({ expect }) => {
-    root = await fse.mkdtemp(path.join(os.tmpdir(), "eb-link-dep-"))
+  test("bundles a link: package and its transitive deps, resolved to the real source dir", async ({ expect, tmpDir }) => {
+    root = await tmpDir.createTempDir()
     const appDir = path.join(root, "app")
     await fse.ensureDir(appDir)
 

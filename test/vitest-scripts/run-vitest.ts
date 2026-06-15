@@ -103,7 +103,7 @@ async function main() {
 
       // Allow test metadata
       includeTaskLocation: true,
-      setupFiles: [__dirname + "/vitest-config/vitest-setup.ts", __dirname + "/vitest-config/vitest-heavy-mutex.ts"],
+      setupFiles: [__dirname + "/vitest-config/vitest-setup.ts", __dirname + "/vitest-config/vitest-heavy-mutex.ts", __dirname + "/vitest-config/vitest-tmpdir.ts"],
       include: [`test/src/**/${includeGlob}.ts`],
 
       runner: __dirname + "/vitest-config/vitest-network-retry-runner.ts",

@@ -116,11 +116,8 @@ function buildZipWithSymlinkEntry(linkName: string, target: string): Buffer {
 
 describe("extractArchive ZIP security guards", { sequential: true }, () => {
   let tmpDir: string
-  beforeEach(async () => {
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "eb-extract-test-"))
-  })
-  afterEach(async () => {
-    await fs.rm(tmpDir, { recursive: true, force: true })
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
   })
 
   test("blocks a path traversal entry (../escape.txt)", async ({ expect }) => {
@@ -207,11 +204,8 @@ describe("isSafeExtractPath", () => {
 
 describe("moveDirAtomic", { sequential: true }, () => {
   let tmpDir: string
-  beforeEach(async () => {
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "eb-extract-test-"))
-  })
-  afterEach(async () => {
-    await fs.rm(tmpDir, { recursive: true, force: true })
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
   })
 
   test("moves a directory with files to the destination", async ({ expect }) => {

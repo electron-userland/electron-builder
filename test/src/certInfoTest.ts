@@ -1,10 +1,9 @@
-import * as os from "os"
 import * as path from "path"
 import { execSync } from "child_process"
 import { writeFileSync, readFileSync } from "fs"
-import { mkdtemp } from "fs/promises"
+import { TmpDir } from "temp-file"
 import { afterAll, beforeAll, describe, it, expect } from "vitest"
-import { writeFile, remove } from "fs-extra"
+import { writeFile } from "fs-extra"
 import { readCertInfo, _testingOnly } from "app-builder-lib/internal"
 
 const { pkcs12PbeDeriveKey, pkcs12PasswordToUtf16, rc2CbcDecrypt, MAX_PKCS12_PBE_ITERATIONS } = _testingOnly
@@ -17,6 +16,7 @@ const itLegacyPbe = it.skipIf(!legacyPbeSupported)
 
 // ─── Test fixture paths ───────────────────────────────────────────────────────
 
+const sharedTmpDir = new TmpDir("certinfo-test")
 let tmpDir: string
 let FULL_SUBJECT_PFX: string
 let CN_ONLY_PFX: string
@@ -103,7 +103,7 @@ function genLegacyPbePfx(subj: string, password: string, certpbe: string, name: 
 }
 
 beforeAll(async () => {
-  tmpDir = await mkdtemp(path.join(os.tmpdir(), "certinfo-test-"))
+  tmpDir = await sharedTmpDir.createTempDir()
 
   FULL_SUBJECT_PFX = genSigningPfx("/CN=Test Publisher/O=Test Org/L=San Francisco/ST=California/C=US", "testpassword", "full")
   CN_ONLY_PFX = genSigningPfx("/CN=My Company Inc.", "pw", "cn")
@@ -130,9 +130,7 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-  if (tmpDir) {
-    await remove(tmpDir).catch(() => null)
-  }
+  await sharedTmpDir.cleanup()
 })
 
 // ─── Unit tests ───────────────────────────────────────────────────────────────
