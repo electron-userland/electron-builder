@@ -110,10 +110,9 @@ async function main() {
       runner: __dirname + "/vitest-config/vitest-network-retry-runner.ts",
       reporters: ["default", __dirname + "/vitest-config/vitest-smart-reporter.ts"],
 
-      // 2 on Windows (heavy MSI/Squirrel builds saturate the vitest main-thread RPC at 3); 3 elsewhere
-      maxWorkers: process.platform === "win32" ? 2 : 3,
+      maxWorkers: "20%",
 
-      fileParallelism: false,
+      fileParallelism: true,
       sequence: {
         sequencer: SmartSequencer,
         concurrent: true,
