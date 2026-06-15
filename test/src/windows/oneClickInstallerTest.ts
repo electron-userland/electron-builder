@@ -1,12 +1,9 @@
 import { Arch, Platform } from "electron-builder"
 import fsExtra from "fs-extra"
 import * as path from "path"
-import type { ToolsetConfig } from "app-builder-lib/internal"
 import { assertThat } from "../helpers/fileAssert.js"
 import { app, assertPack, copyTestAsset, EXTENDED_TIMEOUT, modifyPackageJson } from "../helpers/packTester.js"
 import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper.js"
-
-const WINE_VERSIONS: ToolsetConfig["wine"][] = ["0.0.0", "1.0.1"]
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"], Arch.x64)
 
@@ -147,52 +144,49 @@ test("createDesktopShortcut always", { timeout: EXTENDED_TIMEOUT }, ({ expect })
   })
 )
 
-for (const wine of WINE_VERSIONS) {
-  test.ifNotWindows(`perMachine, no run after finish [wine=${wine}]`, { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
-    app(
-      expect,
-      {
-        targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
-        config: {
-          // wine creates incorrect file names and registry entries for unicode, so, we use ASCII
-          productName: "TestApp",
-          fileAssociations: [
-            {
-              ext: "foo",
-              name: "Test Foo",
-            },
-          ],
-          nsis: {
-            perMachine: true,
-            runAfterFinish: false,
+test.ifNotWindows("perMachine, no run after finish", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
+      config: {
+        // wine creates incorrect file names and registry entries for unicode, so, we use ASCII
+        productName: "TestApp",
+        fileAssociations: [
+          {
+            ext: "foo",
+            name: "Test Foo",
           },
-          publish: {
-            provider: "generic",
-            // tslint:disable:no-invalid-template-strings
-            url: "https://develar.s3.amazonaws.com/test/${os}/${arch}",
-          },
-          win: {
-            electronUpdaterCompatibility: ">=2.16",
-          },
-          toolsets: { wine },
+        ],
+        nsis: {
+          perMachine: true,
+          runAfterFinish: false,
+        },
+        publish: {
+          provider: "generic",
+          // tslint:disable:no-invalid-template-strings
+          url: "https://develar.s3.amazonaws.com/test/${os}/${arch}",
+        },
+        win: {
+          electronUpdaterCompatibility: ">=2.16",
         },
       },
-      {
-        projectDirCreated: projectDir => {
-          return Promise.all([
-            copyTestAsset("headerIcon.ico", path.join(projectDir, "build", "foo test space.ico")),
-            copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt")),
-          ])
-        },
-        packed: async context => {
-          await expectUpdateMetadata(expect, context)
-          await checkHelpers(expect, context.getResources(Platform.WINDOWS, Arch.ia32), true)
-          await doTest(expect, context.outDir, false, undefined, undefined, null, true, { wine })
-        },
-      }
-    )
+    },
+    {
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          copyTestAsset("headerIcon.ico", path.join(projectDir, "build", "foo test space.ico")),
+          copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt")),
+        ])
+      },
+      packed: async context => {
+        await expectUpdateMetadata(expect, context)
+        await checkHelpers(expect, context.getResources(Platform.WINDOWS, Arch.ia32), true)
+        await doTest(expect, context.outDir, false)
+      },
+    }
   )
-}
+)
 
 test.skip("installerHeaderIcon", { timeout: EXTENDED_TIMEOUT }, ({ expect }) => {
   let headerIconPath: string | null = null
@@ -263,73 +257,67 @@ test.ifNotWindows("custom script", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =
   )
 )
 
-for (const wine of WINE_VERSIONS) {
-  test(`menuCategory [wine=${wine}]`, { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
-    app(
-      expect,
-      {
-        targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
-        config: {
-          extraMetadata: {
-            name: "test-menu-category",
-            productName: "Test Menu Category",
-          },
-          publish: null,
-          nsis: {
-            oneClick: false,
-            menuCategory: true,
-            artifactName: "${productName} CustomName ${version}.${ext}",
-          },
-          toolsets: { wine },
+test("menuCategory", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
+      config: {
+        extraMetadata: {
+          name: "test-menu-category",
+          productName: "Test Menu Category",
+        },
+        publish: null,
+        nsis: {
+          oneClick: false,
+          menuCategory: true,
+          artifactName: "${productName} CustomName ${version}.${ext}",
         },
       },
-      {
-        projectDirCreated: projectDir =>
-          modifyPackageJson(projectDir, data => {
-            data.name = "test-menu-category"
-          }),
-        packed: context => {
-          return doTest(expect, context.outDir, false, "Test Menu Category", "test-menu-category", "Foo Bar", true, { wine })
-        },
-      }
-    )
+    },
+    {
+      projectDirCreated: projectDir =>
+        modifyPackageJson(projectDir, data => {
+          data.name = "test-menu-category"
+        }),
+      packed: context => {
+        return doTest(expect, context.outDir, false, "Test Menu Category", "test-menu-category", "Foo Bar")
+      },
+    }
   )
-}
+)
 
-for (const wine of WINE_VERSIONS) {
-  test(`string menuCategory [wine=${wine}]`, { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
-    app(
-      expect,
-      {
-        targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
-        config: {
-          extraMetadata: {
-            name: "test-menu-category",
-            productName: "Test Menu Category '",
-          },
-          publish: null,
-          nsis: {
-            oneClick: false,
-            runAfterFinish: false,
-            menuCategory: "Foo/Bar",
-            // tslint:disable-next-line:no-invalid-template-strings
-            artifactName: "${productName} CustomName ${version}.${ext}",
-          },
-          toolsets: { wine },
+test("string menuCategory", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
+      config: {
+        extraMetadata: {
+          name: "test-menu-category",
+          productName: "Test Menu Category '",
+        },
+        publish: null,
+        nsis: {
+          oneClick: false,
+          runAfterFinish: false,
+          menuCategory: "Foo/Bar",
+          // tslint:disable-next-line:no-invalid-template-strings
+          artifactName: "${productName} CustomName ${version}.${ext}",
         },
       },
-      {
-        projectDirCreated: projectDir =>
-          modifyPackageJson(projectDir, data => {
-            data.name = "test-menu-category"
-          }),
-        packed: async context => {
-          await doTest(expect, context.outDir, false, "Test Menu Category", "test-menu-category", "Foo Bar", true, { wine })
-        },
-      }
-    )
+    },
+    {
+      projectDirCreated: projectDir =>
+        modifyPackageJson(projectDir, data => {
+          data.name = "test-menu-category"
+        }),
+      packed: async context => {
+        await doTest(expect, context.outDir, false, "Test Menu Category", "test-menu-category", "Foo Bar")
+      },
+    }
   )
-}
+)
 
 test.ifNotWindows("file associations per user", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(expect, {

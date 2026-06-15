@@ -27,10 +27,18 @@ export type SuiteChainKey = keyof ConditionalChainProps<never>
  *   undefined / []       → "__"      → foo__Test.ts (cross-platform)
  */
 export function getPlatformSuffix(chain?: SuiteChainKey[]): string {
-  if (!chain) return "__"
-  if (chain.includes("ifWindows")) return ".win."
-  if (chain.includes("ifLinux")) return ".linux."
-  if (chain.includes("ifMac")) return ".mac."
+  if (!chain) {
+    return "__"
+  }
+  if (chain.includes("ifWindows")) {
+    return ".win."
+  }
+  if (chain.includes("ifLinux")) {
+    return ".linux."
+  }
+  if (chain.includes("ifMac")) {
+    return ".mac."
+  }
   return "__"
 }
 
