@@ -284,6 +284,9 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
         delete snap.platforms
         // command is redirected to the launcher script rather than embedding the forbidden args inline
         expect(snap.apps?.[appName]?.command).toBe("command.sh")
+        // the launcher must live at the snap root, never organized under app/
+        const organize = snap.parts?.[appName]?.organize as Record<string, string> | undefined
+        expect(organize?.["command.sh"]).toBeUndefined()
         return Promise.resolve(true)
       },
     })

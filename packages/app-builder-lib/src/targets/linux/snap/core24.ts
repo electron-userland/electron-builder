@@ -116,6 +116,12 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
           if (this.removeChromeSandbox && entry === CHROME_SANDBOX) {
             continue
           }
+          // Never organize the launcher under app/. It must stay at the snap root ($SNAP/command.sh)
+          // to match apps.<name>.command. This matters when appOutDir === appDir, where readdir
+          // would otherwise pick up the launcher we just wrote.
+          if (this.commandLauncherArgs != null && entry === SNAP_COMMAND_LAUNCHER) {
+            continue
+          }
           if (organize[entry]) {
             continue
           }
