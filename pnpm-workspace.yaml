@@ -53,4 +53,5 @@ overrides:
   'picomatch@2': '>=2.3.2 <3' # GHSA-3v7f-55p6-f55p (med)
   'picomatch@4': '>=4.0.4 <5' # GHSA-3v7f-55p6-f55p (med)
   mdast-util-to-hast: '>=13.2.1 <14' # GHSA-4fh9-h7wg-q85m (med)
+  '@conventional-changelog/git-client': '>=2.0.0 <3' # GHSA-vh25-5764-9wcr (med)
 packageImportMethod: copy
