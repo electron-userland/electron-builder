@@ -110,7 +110,7 @@ async function main() {
       runner: __dirname + "/vitest-config/vitest-network-retry-runner.ts",
       reporters: ["default", __dirname + "/vitest-config/vitest-smart-reporter.ts"],
 
-      maxWorkers: "20%",
+      maxWorkers: "40%",
 
       fileParallelism: true,
       sequence: {
