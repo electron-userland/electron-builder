@@ -29,11 +29,14 @@ export async function getWineToolset(wine: ToolsetConfig["wine"], resourcesDir: 
   if (typeof wine === "object" && wine != null) {
     toolsetPath = await getCustomToolsetPath(wine, resourcesDir)
     execSubPath = (await exists(path.join(toolsetPath, "bin", "wine"))) ? "bin/wine" : "bin/wine64"
-  } else if (wine === "0.0.0") {
-    // Legacy pin. Linux has no 0.0.0 bundle → fall back to host wine binary.
-    if (process.platform === "linux") {
-      return { execPath: "wine", env: defaultEnv }
-    }
+  }
+
+  // Legacy pin. Linux has no 0.0.0 bundle → fall back to host wine binary.
+  if (process.platform === "linux") {
+    return { execPath: "wine", env: defaultEnv }
+  }
+
+  if (wine === "0.0.0") {
     toolsetPath = await downloadBuilderToolset({
       releaseName: "wine-4.0.1-mac",
       filenameWithExt: "wine-4.0.1-mac.7z",
@@ -42,10 +45,6 @@ export async function getWineToolset(wine: ToolsetConfig["wine"], resourcesDir: 
     })
     execSubPath = path.join("bin", "wine64")
   } else {
-    // null/undefined on Linux: no bundled default — CI/Docker environments have system wine.
-    if (process.platform === "linux" && wine == null) {
-      return { execPath: "wine", env: defaultEnv }
-    }
     // "1.0.1" (or null on macOS) → bundled wine@1.0.1 (arm64 macOS via Rosetta).
     const file = process.platform === "darwin" ? "wine-11.0-darwin-x86_64.tar.xz" : "wine-11.0-linux-x86_64.tar.xz"
     toolsetPath = await downloadBuilderToolset({
