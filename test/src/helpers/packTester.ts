@@ -145,16 +145,16 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
   let configuration = packagerOptions.config as Configuration
   if (configuration == null) {
     configuration = {}
-      ; (packagerOptions as any).config = configuration
+    ;(packagerOptions as any).config = configuration
   }
 
   if (checkOptions.signedMac) {
-    packagerOptions = await signed(packagerOptions, 'mac')
+    packagerOptions = await signed(packagerOptions, "mac")
   } else if (process.env.CSC_LINK == null && process.platform === "darwin") {
     packagerOptions = deepAssign({}, packagerOptions, { config: { mac: { sign: { identity: null } } } })
   }
   if (checkOptions.signedWin) {
-    packagerOptions = await signed(packagerOptions, 'win')
+    packagerOptions = await signed(packagerOptions, "win")
   }
 
   let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
@@ -445,7 +445,7 @@ async function packAndCheck(
 ): Promise<{ packager: Packager; outDir: string }> {
   const cancellationToken = new CancellationToken()
   const packager = new Packager(packagerOptions, cancellationToken)
-    ; (packager as any).runtimeEnvironmentVariables = runtimeEnv
+  ;(packager as any).runtimeEnvironmentVariables = runtimeEnv
   const publishManager = new PublishManager(packager, { publish: "publish" in checkOptions ? checkOptions.publish : "never" })
 
   const artifacts: Map<Platform, Array<ArtifactCreated>> = new Map()
@@ -628,7 +628,7 @@ async function checkMacResult(expect: ExpectStatic, packager: Packager, packager
 
   if (checksumData != null) {
     for (const name of Object.keys(checksumData)) {
-      ; (checksumData as Record<string, any>)[name] = { algorithm: "SHA256", hash: "hash" }
+      ;(checksumData as Record<string, any>)[name] = { algorithm: "SHA256", hash: "hash" }
     }
     snapshot.ElectronAsarIntegrity = checksumData
   }
@@ -836,8 +836,8 @@ export async function getWindowsSigningIdentity(): Promise<SelfSignedIdentity> {
   return await winSigningCredentialsInfo.value
 }
 
-async function signed(packagerOptions: PackagerOptions, platform: 'win' | 'mac'): Promise<PackagerOptions> {
-  if (platform === 'mac' && process.platform !== "darwin") {
+async function signed(packagerOptions: PackagerOptions, platform: "win" | "mac"): Promise<PackagerOptions> {
+  if (platform === "mac" && process.platform !== "darwin") {
     // codesign only runs on macOS; off-darwin the build is left unsigned (mac signing tests are .ifMac-gated).
     // Also avoids generating a self-signed identity (and spawning openssl) where it isn't available — e.g. the
     // minimal Linux package-manager updater containers that have no openssl on PATH.
@@ -848,7 +848,7 @@ async function signed(packagerOptions: PackagerOptions, platform: 'win' | 'mac')
   // app comes out unsigned and the signing assertions fail with "code object is not signed at all". These are
   // our own builds with an ephemeral identity, so opt back into signing for the test.
   process.env.CSC_FOR_PULL_REQUEST = "true"
-  const { p12Base64, password } = platform === 'mac' ? await getMacSigningIdentity() : await getWindowsSigningIdentity()
+  const { p12Base64, password } = platform === "mac" ? await getMacSigningIdentity() : await getWindowsSigningIdentity()
   const options = deepAssign<PackagerOptions>({}, packagerOptions, { config: { cscLink: p12Base64, cscKeyPassword: password } })
   return options
 }

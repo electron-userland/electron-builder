@@ -1,5 +1,4 @@
 import * as nodeFs from "fs/promises"
-import * as os from "os"
 import * as path from "path"
 import { afterEach, beforeEach, describe, test, vi } from "vitest"
 import { log } from "builder-util"
@@ -22,16 +21,15 @@ function rangeErrorMessage(version: string): string {
 describe("getElectronVersion (version resolution from package.json)", { sequential: true }, () => {
   let tmpDir: string
 
-  beforeEach(async () => {
-    tmpDir = await nodeFs.mkdtemp(path.join(os.tmpdir(), "electron-version-test-"))
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
     // Spy on the shared log singleton so the same instance used by electronVersion.ts is intercepted.
     vi.spyOn(log, "error").mockImplementation(() => {})
     vi.spyOn(log, "info").mockImplementation(() => {})
     vi.spyOn(log, "warn").mockImplementation(() => {})
   })
 
-  afterEach(async () => {
-    await nodeFs.rm(tmpDir, { recursive: true, force: true })
+  afterEach(() => {
     vi.restoreAllMocks()
   })
 
