@@ -106,7 +106,6 @@ async function main() {
       setupFiles: [__dirname + "/vitest-config/vitest-setup.ts", __dirname + "/vitest-config/vitest-heavy-mutex.ts"],
       include: [`test/src/**/${includeGlob}.ts`],
 
-      printConsoleTrace: true,
       runner: __dirname + "/vitest-config/vitest-network-retry-runner.ts",
       reporters: ["default", __dirname + "/vitest-config/vitest-smart-reporter.ts"],
 
