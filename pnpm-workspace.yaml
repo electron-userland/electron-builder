@@ -40,4 +40,6 @@ overrides:
   'minimatch@5': '>=5.1.8 <6'
   'minimatch@7': '>=7.4.8 <8'
   'minimatch@9': '>=9.0.7 <10'
+  'js-yaml@3': '>=3.14.2 <4' # GHSA-mh29-5h37-fv8m (med)
+  'js-yaml@4': '>=4.2.0 <5' # GHSA-h67p-54hq-rp68 (med)
 packageImportMethod: copy
