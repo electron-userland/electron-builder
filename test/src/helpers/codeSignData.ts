@@ -1,4 +1,4 @@
-import { setAllowUntrustedSelfSignedIdentityForTesting } from "app-builder-lib/internal"
+import { setAllowUntrustedSelfSignedIdentityForTesting } from "app-builder-lib/src/codeSign/mac/macCodeSign"
 import { log } from "builder-util"
 import { Lazy } from "lazy-val"
 import { TmpDir } from "temp-file"
