@@ -1,4 +1,4 @@
-import { DebugLogger, ExtraSpawnOptions, exec, log, spawn } from "builder-util"
+import { DebugLogger, ExtraSpawnOptions, exec, log, sanitizeDirPath, spawn } from "builder-util"
 import { ExecFileOptions, SpawnOptions, execFileSync } from "child_process"
 import { VmManager } from "./vm.js"
 
@@ -121,7 +121,18 @@ export function macPathToParallelsWindows(file: string) {
   if (file.startsWith("C:\\")) {
     return file
   }
-  return "\\\\Mac\\Host\\" + file.replace(/\//g, "\\")
+  if (!file.startsWith("/")) {
+    throw new Error(`Invalid path for Parallels VM execution: "${file}"`)
+  }
+  // file is an absolute macOS host path; sanitizeDirPath rejects null/newline (arg-injection) and leaves it otherwise unchanged
+  const hostPath = sanitizeDirPath(file).replace(/\//g, "\\")
+  const uncPath = "\\\\Mac\\Host\\" + hostPath
+  // Reject characters/control bytes that can change command/tool argument semantics.
+  // eslint-disable-next-line no-control-regex
+  if (/[\x00-\x1F\x7F"*?<>|]/.test(uncPath)) {
+    throw new Error(`Invalid path for Parallels VM execution: "${file}"`)
+  }
+  return uncPath
 }
 
 export interface ParallelsVm {
