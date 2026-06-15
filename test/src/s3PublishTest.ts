@@ -169,8 +169,7 @@ describe("S3Publisher — getUploadExtraParams", () => {
 
 // ─── SpacesPublisher — getS3UploadConfig ─────────────────────────────────────
 
-// sequence.concurrent is enabled globally; individual tests delete env vars — sequential prevents bleed.
-describe.sequential("SpacesPublisher — getS3UploadConfig", () => {
+describe("SpacesPublisher — getS3UploadConfig", { sequential: true }, () => {
   const savedEnv: Record<string, string | undefined> = {}
 
   beforeEach(() => {
@@ -218,8 +217,7 @@ describe.sequential("SpacesPublisher — getS3UploadConfig", () => {
 
 // ─── Upload — key construction and request params ────────────────────────────
 
-// sequence.concurrent is enabled globally; describe-level tmpDir/testFile set in beforeEach — sequential prevents overwrite races.
-describe.sequential("BaseS3Publisher.upload — key construction and S3 request", () => {
+describe("BaseS3Publisher.upload — key construction and S3 request", { sequential: true }, () => {
   let tmpDir: string
   let testFile: string
 
@@ -362,8 +360,7 @@ describe.sequential("BaseS3Publisher.upload — key construction and S3 request"
 
 // ─── Upload — test mode bypass ────────────────────────────────────────────────
 
-// sequence.concurrent is enabled globally; describe-level testPublisherDir/srcDir/srcFile set in beforeEach — sequential prevents overwrite races.
-describe.sequential("BaseS3Publisher.upload — __TEST_S3_PUBLISHER__ bypass", () => {
+describe("BaseS3Publisher.upload — __TEST_S3_PUBLISHER__ bypass", { sequential: true }, () => {
   let testPublisherDir: string
   let srcDir: string
   let srcFile: string
@@ -399,8 +396,7 @@ describe.sequential("BaseS3Publisher.upload — __TEST_S3_PUBLISHER__ bypass", (
 
 // ─── Parity contract: Go binary publish-s3 flag → TS header/URL mapping ──────
 
-// sequence.concurrent is enabled globally; describe-level tmpDir/testFile set in beforeEach — sequential prevents overwrite races.
-describe.sequential("publish-s3 parity — Go binary flag mapping to HTTP request", () => {
+describe("publish-s3 parity — Go binary flag mapping to HTTP request", { sequential: true }, () => {
   // The Go binary accepted:
   //   --acl         → x-amz-acl header
   //   --storageClass → x-amz-storage-class header

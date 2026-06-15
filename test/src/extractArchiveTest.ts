@@ -113,9 +113,7 @@ function buildZipWithSymlinkEntry(linkName: string, target: string): Buffer {
   return Buffer.concat([lfh, content, cdh, eocd])
 }
 
-// sequence.concurrent is enabled globally; tmpDir is local to this describe so
-// concurrent sibling describes cannot overwrite it.
-describe.sequential("extractArchive ZIP security guards", () => {
+describe("extractArchive ZIP security guards", { sequential: true }, () => {
   let tmpDir: string
   beforeEach(async () => {
     tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "eb-extract-test-"))
@@ -206,9 +204,7 @@ describe("isSafeExtractPath", () => {
 
 // ─── moveDirAtomic ────────────────────────────────────────────────────────────
 
-// sequence.concurrent is enabled globally; tmpDir is local so concurrent sibling
-// describes cannot overwrite it mid-test.
-describe.sequential("moveDirAtomic", () => {
+describe("moveDirAtomic", { sequential: true }, () => {
   let tmpDir: string
   beforeEach(async () => {
     tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "eb-extract-test-"))

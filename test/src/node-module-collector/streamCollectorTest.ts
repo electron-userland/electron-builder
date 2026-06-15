@@ -115,8 +115,7 @@ afterEach(() => {
   }
 })
 
-// sequence.concurrent is enabled globally; tests call setPlatform() and share module-level collector/closeCb — sequential prevents bleed.
-describe.sequential("streamCollectorCommandToFile", () => {
+describe("streamCollectorCommandToFile", { sequential: true }, () => {
   describe("Windows PowerShell -EncodedCommand wrapping", () => {
     test(".cmd file: spawn receives powershell.exe with -EncodedCommand", async ({ expect }) => {
       setPlatform("win32")

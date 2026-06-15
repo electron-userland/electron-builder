@@ -58,9 +58,7 @@ const packageManagerMap: {
   },
 }
 
-// sequence.concurrent is enabled globally; individual tests set
-// process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER — sequential execution prevents bleed.
-describe.sequential("LinuxUpdater.detectPackageManager", () => {
+describe("LinuxUpdater.detectPackageManager", { sequential: true }, () => {
   afterEach(() => {
     delete process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER
   })

@@ -31,9 +31,7 @@ function makeUpdateInfo(version = "1.0.1"): UpdateInfo {
   return { version, files: [], path: "", sha512: "", releaseDate: "" }
 }
 
-// sequence.concurrent is enabled globally; these describe blocks use shared closure
-// variables (cacheDir, helper, log) set in beforeEach and must not run concurrently.
-describe.sequential("downloadedUpdateHelper", () => {
+describe("downloadedUpdateHelper", { sequential: true }, () => {
   describe("DownloadedUpdateHelper.getValidCachedUpdateFile", () => {
     let cacheDir: string
     let helper: DownloadedUpdateHelper
@@ -179,4 +177,4 @@ describe.sequential("downloadedUpdateHelper", () => {
       expect(result).toBeNull()
     })
   })
-}) // end describe.sequential("downloadedUpdateHelper")
+})

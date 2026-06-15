@@ -19,9 +19,7 @@ function rangeErrorMessage(version: string): string {
   return `Cannot compute electron version from installed node modules - version ("${version}") is not fixed in project.\nSee https://github.com/electron-userland/electron-builder/issues/3984#issuecomment-504968246`
 }
 
-// sequence.concurrent is enabled globally; describe.sequential prevents concurrent tests from
-// overwriting the shared `tmpDir` and from accumulating/clearing vi.spyOn(log) state mid-test.
-describe.sequential("getElectronVersion (version resolution from package.json)", () => {
+describe("getElectronVersion (version resolution from package.json)", { sequential: true }, () => {
   let tmpDir: string
 
   beforeEach(async () => {

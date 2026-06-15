@@ -81,8 +81,7 @@ describe("ModuleManager.locatePackageVersion", () => {
     })
   })
 
-  // sequence.concurrent enabled globally; shared `root` variable requires sequential execution.
-  describe.sequential("upward (hoisted) resolution", () => {
+  describe("upward (hoisted) resolution", { sequential: true }, () => {
     let root = ""
     afterEach(async () => {
       if (root) {
@@ -108,7 +107,7 @@ describe("ModuleManager.locatePackageVersion", () => {
     })
   })
 
-  describe.sequential("override fallback (two-pass search)", () => {
+  describe("override fallback (two-pass search)", { sequential: true }, () => {
     let root = ""
     afterEach(async () => {
       if (root) {
@@ -194,8 +193,7 @@ describe("ModuleManager.locatePackageVersion", () => {
   })
 })
 
-// sequence.concurrent enabled globally; shared `root` variable requires sequential execution.
-describe.sequential("ModuleManager downward search", () => {
+describe("ModuleManager downward search", { sequential: true }, () => {
   let root = ""
   afterEach(async () => {
     if (root) {
@@ -288,8 +286,7 @@ describe.sequential("ModuleManager downward search", () => {
   })
 })
 
-// sequence.concurrent enabled globally; shared `root` variable requires sequential execution.
-describe.sequential("ModuleManager.semverSatisfies (via locatePackageVersion)", () => {
+describe("ModuleManager.semverSatisfies (via locatePackageVersion)", { sequential: true }, () => {
   let root = ""
   afterEach(async () => {
     if (root) {

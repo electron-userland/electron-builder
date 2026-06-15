@@ -92,7 +92,7 @@ function parseIcns(data: Buffer): Map<string, Buffer> {
 
 // ─── ICNS output ─────────────────────────────────────────────────────────────
 
-describe.sequential("convertIcon – ICNS output", () => {
+describe("convertIcon – ICNS output", { sequential: true }, () => {
   let tmpDir: string
   beforeEach(async () => {
     tmpDir = await mkdtemp(path.join(os.tmpdir(), "icon-test-"))
@@ -191,7 +191,7 @@ describe.sequential("convertIcon – ICNS output", () => {
 
 // ─── ICO output ───────────────────────────────────────────────────────────────
 
-describe.sequential("convertIcon – ICO output", () => {
+describe("convertIcon – ICO output", { sequential: true }, () => {
   let tmpDir: string
   beforeEach(async () => {
     tmpDir = await mkdtemp(path.join(os.tmpdir(), "icon-test-"))
@@ -290,7 +290,7 @@ describe.sequential("convertIcon – ICO output", () => {
 
 // ─── set output (Linux) ───────────────────────────────────────────────────────
 
-describe.sequential("convertIcon – set output (Linux)", () => {
+describe("convertIcon – set output (Linux)", { sequential: true }, () => {
   let tmpDir: string
   beforeEach(async () => {
     tmpDir = await mkdtemp(path.join(os.tmpdir(), "icon-test-"))
@@ -384,7 +384,7 @@ describe.sequential("convertIcon – set output (Linux)", () => {
 
 // ─── File resolution ──────────────────────────────────────────────────────────
 
-describe.sequential("convertIcon – file resolution", () => {
+describe("convertIcon – file resolution", { sequential: true }, () => {
   let tmpDir: string
   beforeEach(async () => {
     tmpDir = await mkdtemp(path.join(os.tmpdir(), "icon-test-"))
@@ -429,7 +429,7 @@ describe.sequential("convertIcon – file resolution", () => {
 
 // ─── Directory filename filtering ─────────────────────────────────────────────
 
-describe.sequential("convertIcon – collectIconsFromDir filename filtering", () => {
+describe("convertIcon – collectIconsFromDir filename filtering", { sequential: true }, () => {
   let tmpDir: string
   beforeEach(async () => {
     tmpDir = await mkdtemp(path.join(os.tmpdir(), "icon-test-"))
@@ -546,7 +546,7 @@ describe("buildSourceCandidates", () => {
 
 // ─── getPngSize unit tests ────────────────────────────────────────────────────
 
-describe.sequential("getPngSize", () => {
+describe("getPngSize", { sequential: true }, () => {
   let tmpDir: string
   beforeEach(async () => {
     tmpDir = await mkdtemp(path.join(os.tmpdir(), "icon-test-"))
@@ -584,7 +584,7 @@ describe.sequential("getPngSize", () => {
 
 // ─── convertIcon edge cases ───────────────────────────────────────────────────
 
-describe.sequential("convertIcon – edge cases", () => {
+describe("convertIcon – edge cases", { sequential: true }, () => {
   let tmpDir: string
   beforeEach(async () => {
     tmpDir = await mkdtemp(path.join(os.tmpdir(), "icon-test-"))

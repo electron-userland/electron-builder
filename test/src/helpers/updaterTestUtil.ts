@@ -72,7 +72,7 @@ export const httpExecutor: TestNodeHttpExecutor = new TestNodeHttpExecutor()
 /**
  * Creates a fresh per-test mock for httpExecutor.request.
  * Use this instead of vi.spyOn(httpExecutor, "request") to avoid shared-state
- * race conditions when tests run concurrently (sequence.concurrent: true).
+ * race conditions when tests run concurrently.
  *
  * Inject the result into each updater via:
  *   (updater as any).httpExecutor = { request: requestSpy }

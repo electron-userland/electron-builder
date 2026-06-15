@@ -24,9 +24,7 @@ async function buildTempTree(packages: Record<string, { name: string; version: s
 // Tests: skipDownwardSearch reflects hoisted mode
 // ---------------------------------------------------------------------------
 
-// sequence.concurrent is enabled globally; `root` is shared across tests in this
-// describe block — sequential execution prevents concurrent tests from overwriting it.
-describe.sequential("PnpmNodeModulesCollector hoisted mode", () => {
+describe("PnpmNodeModulesCollector hoisted mode", { sequential: true }, () => {
   let root = ""
   afterEach(async () => {
     if (root) {
@@ -96,9 +94,7 @@ describe.sequential("PnpmNodeModulesCollector hoisted mode", () => {
 // (pnpm 11 stopped echoing node-linker in `config list`, so detection is realpath-based)
 // ---------------------------------------------------------------------------
 
-// sequence.concurrent is enabled globally; each test sets the shared `root` variable
-// in its body — sequential execution prevents concurrent overwrites.
-describe.sequential("PnpmNodeModulesCollector.isHoisted (on-disk layout detection)", () => {
+describe("PnpmNodeModulesCollector.isHoisted (on-disk layout detection)", { sequential: true }, () => {
   let root = ""
   afterEach(async () => {
     if (root) {
@@ -153,9 +149,7 @@ describe.sequential("PnpmNodeModulesCollector.isHoisted (on-disk layout detectio
 // Tests: end-to-end nested dependency resolution
 // ---------------------------------------------------------------------------
 
-// sequence.concurrent is enabled globally; describe.sequential prevents shared `root` from being
-// overwritten by concurrently-running tests before assertions complete.
-describe.sequential("nested dependency resolution (hoisted layout simulation)", () => {
+describe("nested dependency resolution (hoisted layout simulation)", { sequential: true }, () => {
   let root = ""
   afterEach(async () => {
     if (root) {

@@ -16,9 +16,7 @@ async function makeSrcDir(tmpDir: string, files: Record<string, string> = { "hel
 
 // ─── compute7zCompressArgs ───────────────────────────────────────────────────
 
-// sequence.concurrent is enabled globally; vi.stubEnv calls in some tests would
-// bleed into adjacent concurrent tests. Sequential execution prevents that.
-describe.sequential("compute7zCompressArgs", () => {
+describe("compute7zCompressArgs", { sequential: true }, () => {
   afterEach(() => {
     vi.unstubAllEnvs()
   })
@@ -142,8 +140,7 @@ describe.sequential("compute7zCompressArgs", () => {
 
 // ─── archive() — path-level guards (no binary needed) ───────────────────────
 
-// sequence.concurrent is enabled globally; tests share module-level tmpDir — per-describe lifecycle + sequential prevents races.
-describe.sequential("archive() guards", () => {
+describe("archive() guards", { sequential: true }, () => {
   let tmpDir: string
   beforeEach(async () => {
     tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "eb-archive-test-"))
@@ -172,7 +169,6 @@ describe.sequential("archive() guards", () => {
 
 // ─── archive() — macOS zip symlink preservation ──────────────────────────────
 
-// sequence.concurrent is enabled globally; concurrent zip() calls get SIGTERMed — sequential + per-describe lifecycle prevents process interference.
 describe.runIf(process.platform === "darwin")("archive() macOS zip symlink preservation", { sequential: true }, () => {
   let tmpDir: string
   beforeEach(async () => {

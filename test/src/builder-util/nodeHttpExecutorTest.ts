@@ -3,8 +3,7 @@ import { afterEach, beforeEach, vi } from "vitest"
 
 const PROXY_VARS = ["HTTPS_PROXY", "https_proxy", "HTTP_PROXY", "http_proxy"] as const
 
-// sequence.concurrent is enabled globally; tests set proxy env vars — sequential prevents bleed.
-describe.sequential("buildGotProxyAgent", () => {
+describe("buildGotProxyAgent", { sequential: true }, () => {
   beforeEach(() => {
     for (const key of PROXY_VARS) {
       delete process.env[key]
@@ -126,8 +125,7 @@ describe.sequential("buildGotProxyAgent", () => {
   })
 })
 
-// sequence.concurrent is enabled globally; tests set proxy env vars — sequential prevents bleed.
-describe.sequential("NodeHttpExecutor.createRequest", () => {
+describe("NodeHttpExecutor.createRequest", { sequential: true }, () => {
   let executor: NodeHttpExecutor
 
   beforeEach(() => {

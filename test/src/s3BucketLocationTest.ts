@@ -111,10 +111,7 @@ describe("getBucketLocation — XML response parsing", () => {
 
 // ─── Credential chain: getBucketLocation forwards resolved credentials ────────
 
-// sequence.concurrent is enabled globally; all 4 describes share the module-level
-// resolveAwsCredentials mock — concurrent calls from other describes inflate the call count.
-// Sequential execution ensures beforeEach clears and the assertion sees only this test's calls.
-describe.sequential("getBucketLocation — credential chain", () => {
+describe("getBucketLocation — credential chain", { sequential: true }, () => {
   beforeEach(() => {
     vi.mocked(https.request).mockClear()
     vi.mocked(resolveAwsCredentials).mockClear()

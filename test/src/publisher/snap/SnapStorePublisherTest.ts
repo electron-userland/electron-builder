@@ -30,9 +30,7 @@ beforeEach(() => {
   vi.mocked(spawn).mockResolvedValue(undefined)
 })
 
-// sequence.concurrent is enabled globally; describe.sequential prevents concurrent tests from
-// contaminating the shared vi.mocked(exec) return value and process.platform mutation.
-describe.sequential("SnapStorePublisher", () => {
+describe("SnapStorePublisher", { sequential: true }, () => {
   describe("Identity", () => {
     test("providerName is snapStore", ({ expect }) => {
       expect(makePublisher().providerName).toBe("snapStore")

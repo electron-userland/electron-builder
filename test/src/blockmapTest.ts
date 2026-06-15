@@ -21,9 +21,7 @@ function makeTestData(size: number, seed = 12345): Buffer {
   return buf
 }
 
-// sequence.concurrent is enabled globally; both describe blocks share a tmpDir
-// that must not be overwritten by a sibling describe's beforeEach mid-test.
-describe.sequential("buildBlockMap", () => {
+describe("buildBlockMap", { sequential: true }, () => {
   let tmpDir: string
   beforeEach(async () => {
     tmpDir = await mkdtemp(path.join(os.tmpdir(), "blockmap-test-"))
@@ -206,9 +204,7 @@ describe.sequential("buildBlockMap", () => {
 //   • sha512 in append mode — covers the appended compressed bytes, which
 //     differ between implementations for the same reason.
 
-// sequence.concurrent is enabled globally; snapshot tests must not run concurrently — vitest
-// assigns snapshot indices in call order, and concurrent calls produce index mismatches.
-describe.sequential("buildBlockMap — JS snapshots and binary golden-output", () => {
+describe("buildBlockMap — JS snapshots and binary golden-output", { sequential: true }, () => {
   let tmpDir: string
   beforeEach(async () => {
     tmpDir = await mkdtemp(path.join(os.tmpdir(), "blockmap-test-"))
