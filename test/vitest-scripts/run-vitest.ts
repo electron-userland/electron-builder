@@ -128,6 +128,11 @@ async function main() {
       resolveSnapshotPath: (testPath, snapshotExtension) => {
         const snapshotPath = testPath
           .replace(/\.[tj]s$/, `.js${snapshotExtension}`)
+          // Wine-variant test files share snapshots with the non-wine variants — the wine
+          // dimension is an execution detail (run via Wine vs natively), not a content
+          // dimension.  Strip it before computing the snapshot path so both variants resolve
+          // to the same .snap file.
+          .replace(/__wine-[^_.]+/, "")
           .replace("/src/", "/snapshots/")
           .replace("\\src\\", "\\snapshots\\")
         // These suites assert the packed asar file tree across every package manager. The tree
