@@ -9,6 +9,12 @@ import { readCertInfo, _testingOnly } from "app-builder-lib/internal"
 
 const { pkcs12PbeDeriveKey, pkcs12PasswordToUtf16, rc2CbcDecrypt, MAX_PKCS12_PBE_ITERATIONS } = _testingOnly
 
+// Generating legacy-PBE PKCS#12 (3DES / RC2-40) needs OpenSSL's `legacy` provider. The GitHub Windows runner's
+// OpenSSL build does not ship it, so the few tests that read such fixtures are skipped there — the pure-TS
+// decryptors they exercise are platform-independent and fully covered on Linux/macOS.
+const legacyPbeSupported = process.platform !== "win32"
+const itLegacyPbe = it.skipIf(!legacyPbeSupported)
+
 // ─── Test fixture paths ───────────────────────────────────────────────────────
 
 let tmpDir: string
@@ -106,16 +112,21 @@ beforeAll(async () => {
   SPECIAL_PFX = genSigningPfx("/CN=Publisher, Inc. \\+ Partners/C=US", "pw", "special")
   MULTI_CERT_PFX = genMultiCertPfx("multicertpw", "multicert")
 
-  // Legacy 3DES PFX (cert + key bags encrypted with pbeWithSHAAnd3KeyTripleDESCBC), empty password — exercises
-  // the pure-TS legacy PBE decryptor and the empty-password code path.
-  LEGACY_3DES_PFX = genLegacyPbePfx("/CN=Legacy 3DES Signer", "", "PBE-SHA1-3DES", "legacy3des")
-  // RC2-40 PFX (cert bags encrypted with pbeWithSHAAnd40BitRC2CBC, OID 1.2.840.113549.1.12.1.6). Node.js /
-  // OpenSSL 3 moved RC2 to the legacy provider (not loaded by default), so our pure-TS RFC 2268 path is used.
-  RC2_40_PFX = genLegacyPbePfx("/CN=RC2 Test Signer", "testrc2", "PBE-SHA1-RC2-40", "rc2-40")
+  // Legacy-PBE fixtures require OpenSSL's `legacy` provider, which the GitHub Windows runner's OpenSSL does not
+  // ship (`unable to load provider legacy`). The schemes they exercise feed the pure-TS PBE decryptors, which
+  // are platform-independent and fully covered on Linux/macOS, so we only generate them where openssl can.
+  if (legacyPbeSupported) {
+    // Legacy 3DES PFX (pbeWithSHAAnd3KeyTripleDESCBC), empty password — exercises the legacy PBE decryptor and
+    // the empty-password code path.
+    LEGACY_3DES_PFX = genLegacyPbePfx("/CN=Legacy 3DES Signer", "", "PBE-SHA1-3DES", "legacy3des")
+    // RC2-40 PFX (pbeWithSHAAnd40BitRC2CBC, OID 1.2.840.113549.1.12.1.6) — drives the pure-TS RFC 2268 path,
+    // since Node.js / OpenSSL 3 moved RC2 to the legacy provider (not loaded by default).
+    RC2_40_PFX = genLegacyPbePfx("/CN=RC2 Test Signer", "testrc2", "PBE-SHA1-RC2-40", "rc2-40")
+  }
 
-  // Truncated PFX: first 50 bytes of a real PFX (incomplete ASN.1 structure)
+  // Truncated PFX: first 50 bytes of a (modern) real PFX — incomplete ASN.1; works on all platforms.
   TRUNCATED_PFX = path.join(tmpDir, "truncated.pfx")
-  writeFileSync(TRUNCATED_PFX, readFileSync(LEGACY_3DES_PFX).subarray(0, 50))
+  writeFileSync(TRUNCATED_PFX, readFileSync(FULL_SUBJECT_PFX).subarray(0, 50))
 })
 
 afterAll(async () => {
@@ -141,7 +152,7 @@ describe("readCertInfo — happy path", () => {
     expect(result.bloodyMicrosoftSubjectDn).toBe("CN=My Company Inc.")
   })
 
-  it("handles the legacy 3DES test certificate (empty password)", async () => {
+  itLegacyPbe("handles the legacy 3DES test certificate (empty password)", async () => {
     const result = await readCertInfo(LEGACY_3DES_PFX, "")
     expect(result.commonName).toBe("Legacy 3DES Signer")
     expect(result.bloodyMicrosoftSubjectDn).toBe("CN=Legacy 3DES Signer")
@@ -325,7 +336,7 @@ describe("readCertInfo — multiple certificates in PFX", () => {
 // ─── readCertInfo — legacy PBE error path ────────────────────────────────────
 
 describe("readCertInfo — legacy PBE wrong password", () => {
-  it("throws 'password incorrect' for the legacy pbeWithSHAAnd3KeyTripleDESCBC encrypted cert", async () => {
+  itLegacyPbe("throws 'password incorrect' for the legacy pbeWithSHAAnd3KeyTripleDESCBC encrypted cert", async () => {
     // The legacy cert uses pbeWithSHAAnd3KeyTripleDESCBC. Wrong password must be caught
     // by MAC verification before the decryption path is even reached.
     await expect(readCertInfo(LEGACY_3DES_PFX, "definitelyWrongPassword")).rejects.toThrow("password incorrect")
@@ -414,7 +425,7 @@ describe("rc2CbcDecrypt — known-answer tests", () => {
 // ─── readCertInfo — RC2-40 encrypted PFX ─────────────────────────────────────
 
 describe("readCertInfo — pbeWithSHAAnd40BitRC2CBC (OID 1.2.840.113549.1.12.1.6)", () => {
-  it("extracts certificate info from a PFX whose cert bags are encrypted with RC2-40", async () => {
+  itLegacyPbe("extracts certificate info from a PFX whose cert bags are encrypted with RC2-40", async () => {
     // RC2_40_PFX is generated at runtime via genLegacyPbePfx (-certpbe PBE-SHA1-RC2-40).
     // It exercises the pure-TS RFC 2268 RC2-CBC path that was added because
     // Node.js / OpenSSL 3 no longer support RC2 in the default crypto provider.
@@ -423,7 +434,7 @@ describe("readCertInfo — pbeWithSHAAnd40BitRC2CBC (OID 1.2.840.113549.1.12.1.6
     expect(result.bloodyMicrosoftSubjectDn).toBe("CN=RC2 Test Signer")
   })
 
-  it("throws 'password incorrect' for the RC2-40 PFX with a wrong password", async () => {
+  itLegacyPbe("throws 'password incorrect' for the RC2-40 PFX with a wrong password", async () => {
     await expect(readCertInfo(RC2_40_PFX, "wrongpassword")).rejects.toThrow("password incorrect")
   })
 })

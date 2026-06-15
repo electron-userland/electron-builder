@@ -843,6 +843,11 @@ async function signed(packagerOptions: PackagerOptions, platform: 'win' | 'mac')
     // minimal Linux package-manager updater containers that have no openssl on PATH.
     return packagerOptions
   }
+  // electron-builder skips macOS code signing on pull-request CI builds (isSignAllowed → isPullRequest, a
+  // security guard for forked PRs). GitHub sets GITHUB_BASE_REF on pull_request events, so without this the
+  // app comes out unsigned and the signing assertions fail with "code object is not signed at all". These are
+  // our own builds with an ephemeral identity, so opt back into signing for the test.
+  process.env.CSC_FOR_PULL_REQUEST = "true"
   const { p12Base64, password } = platform === 'mac' ? await getMacSigningIdentity() : await getWindowsSigningIdentity()
   const options = deepAssign<PackagerOptions>({}, packagerOptions, { config: { cscLink: p12Base64, cscKeyPassword: password } })
   return options
