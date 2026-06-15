@@ -121,6 +121,9 @@ export function macPathToParallelsWindows(file: string) {
   if (file.startsWith("C:\\")) {
     return file
   }
+  if (!file.startsWith("/")) {
+    throw new Error(`Invalid path for Parallels VM execution: "${file}"`)
+  }
   // file is an absolute macOS host path; sanitizeDirPath rejects null/newline (arg-injection) and leaves it otherwise unchanged
   const hostPath = sanitizeDirPath(file).replace(/\//g, "\\")
   const uncPath = "\\\\Mac\\Host\\" + hostPath
