@@ -20,7 +20,7 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-describe.sequential("getPath7za memoization", () => {
+describe("getPath7za memoization", { sequential: true }, () => {
   test("returns the resolved path on success", async ({ expect }) => {
     vi.mocked(downloadBuilderToolset).mockResolvedValueOnce("/fake/tooldir")
     const { getPath7za } = await freshImport()
@@ -55,7 +55,7 @@ describe.sequential("getPath7za memoization", () => {
   })
 })
 
-describe.sequential("setSevenZipPath override", () => {
+describe("setSevenZipPath override", { sequential: true }, () => {
   test("returns the custom path without downloading", async ({ expect }) => {
     const downloadMock = vi.mocked(downloadBuilderToolset)
     const { getPath7za, setSevenZipPath } = await freshImport()
