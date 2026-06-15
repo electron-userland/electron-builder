@@ -15,6 +15,7 @@ overrides:
   fast-xml-builder: '>=1.1.7 <2'
   '@xmldom/xmldom': '>=0.8.13 <0.9'
   vite: '>=6.4.2 <7'
+  lodash: '>=4.18.0 <5'
 
 patchedDependencies:
   '@changesets/assemble-release-plan@6.0.9': ef56f57067dfcc594f40d9afc7278abe38cecf1c04230936e447a60e0d58a46e
@@ -7138,8 +7139,8 @@ packages:
   lodash.uniq@4.5.0:
     resolution: {integrity: sha512-xfBaXQd9ryd9dlSDvnvI0lvxfLJlYAZzXomUYzLKtUeOQvOP5piqAWuGtrhWeqaXK9hhoM/iyJc5AV+XfsX3HQ==}
 
-  lodash@4.17.21:
-    resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
+  lodash@4.18.1:
+    resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
 
   longest-streak@3.1.0:
     resolution: {integrity: sha512-9Ri+o0JYgehTaVBBDoMqIl8GXtbWg711O3srftcHhZ0dqnETqLaoIK0x17fUw9rFSlK/0NlsKe0Ahhyl5pXE2g==}
@@ -12471,7 +12472,7 @@ snapshots:
       html-tags: 3.3.1
       html-webpack-plugin: 5.6.7(@rspack/core@1.7.11)(webpack@5.106.2(@swc/core@1.15.33)(lightningcss@1.32.0)(postcss@8.5.14))
       leven: 3.1.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       open: 8.4.2
       p-map: 4.0.0
       prompts: 2.4.2
@@ -12633,7 +12634,7 @@ snapshots:
       '@docusaurus/utils-validation': 3.10.1(@swc/core@1.15.33)(lightningcss@1.32.0)(postcss@8.5.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       eta: 2.2.0
       fs-extra: 11.3.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
       tslib: 2.8.1
@@ -12676,7 +12677,7 @@ snapshots:
       combine-promises: 1.2.0
       feed: 4.2.2
       fs-extra: 11.3.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
       schema-dts: 1.1.5
@@ -12724,7 +12725,7 @@ snapshots:
       combine-promises: 1.2.0
       fs-extra: 11.3.0
       js-yaml: 4.1.1
-      lodash: 4.17.21
+      lodash: 4.18.1
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
       schema-dts: 1.1.5
@@ -13098,7 +13099,7 @@ snapshots:
       clsx: 2.1.1
       copy-text-to-clipboard: 3.2.2
       infima: 0.2.0-alpha.45
-      lodash: 4.17.21
+      lodash: 4.18.1
       nprogress: 0.2.0
       postcss: 8.5.14
       prism-react-renderer: 2.4.1(react@19.2.6)
@@ -13217,7 +13218,7 @@ snapshots:
       clsx: 2.1.1
       eta: 2.2.0
       fs-extra: 11.3.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
       tslib: 2.8.1
@@ -13368,7 +13369,7 @@ snapshots:
       fs-extra: 11.3.0
       joi: 17.13.3
       js-yaml: 4.1.1
-      lodash: 4.17.21
+      lodash: 4.18.1
       tslib: 2.8.1
     transitivePeerDependencies:
       - '@minify-html/node'
@@ -13402,7 +13403,7 @@ snapshots:
       gray-matter: 4.0.3
       jiti: 1.21.7
       js-yaml: 4.1.1
-      lodash: 4.17.21
+      lodash: 4.18.1
       micromatch: 4.0.8
       p-queue: 6.6.2
       prompts: 2.4.2
@@ -13443,7 +13444,7 @@ snapshots:
       gray-matter: 4.0.3
       jiti: 1.21.7
       js-yaml: 4.1.1
-      lodash: 4.17.21
+      lodash: 4.18.1
       micromatch: 4.0.8
       p-queue: 6.6.2
       prompts: 2.4.2
@@ -14016,7 +14017,7 @@ snapshots:
     dependencies:
       debug: 4.4.3
       fs-extra: 9.1.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       tmp-promise: 3.0.3
     transitivePeerDependencies:
       - supports-color
@@ -16767,7 +16768,7 @@ snapshots:
       is-core-module: 2.16.1
       js-yaml: 3.14.1
       json5: 2.2.3
-      lodash: 4.17.21
+      lodash: 4.18.1
       minimatch: 3.1.5
       multimatch: 5.0.0
       please-upgrade-node: 3.2.0
@@ -16797,7 +16798,7 @@ snapshots:
       is-core-module: 2.16.1
       js-yaml: 3.14.1
       json5: 2.2.3
-      lodash: 4.17.21
+      lodash: 4.18.1
       minimatch: 7.4.6
       multimatch: 5.0.0
       please-upgrade-node: 3.2.0
@@ -16944,7 +16945,7 @@ snapshots:
       '@electron/asar': 3.4.1
       debug: 4.4.3
       fs-extra: 7.0.1
-      lodash: 4.17.21
+      lodash: 4.18.1
       temp: 0.9.4
     optionalDependencies:
       '@electron/windows-sign': 1.2.1
@@ -17872,7 +17873,7 @@ snapshots:
     dependencies:
       '@types/html-minifier-terser': 6.1.0
       html-minifier-terser: 6.1.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       pretty-error: 4.0.0
       tapable: 2.3.3
     optionalDependencies:
@@ -18456,7 +18457,7 @@ snapshots:
 
   lodash.uniq@4.5.0: {}
 
-  lodash@4.17.21: {}
+  lodash@4.18.1: {}
 
   longest-streak@3.1.0: {}
 
@@ -20155,7 +20156,7 @@ snapshots:
 
   pretty-error@4.0.0:
     dependencies:
-      lodash: 4.17.21
+      lodash: 4.18.1
       renderkid: 3.0.0
 
   pretty-format@29.7.0:
@@ -20249,7 +20250,7 @@ snapshots:
   query-ast@1.0.5:
     dependencies:
       invariant: 2.2.4
-      lodash: 4.17.21
+      lodash: 4.18.1
 
   queue-microtask@1.2.3: {}
 
@@ -20546,7 +20547,7 @@ snapshots:
       css-select: 4.3.0
       dom-converter: 0.2.0
       htmlparser2: 6.1.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       strip-ansi: 6.0.1
 
   require-directory@2.1.1: {}
@@ -20716,7 +20717,7 @@ snapshots:
   scss-parser@1.0.6:
     dependencies:
       invariant: 2.2.4
-      lodash: 4.17.21
+      lodash: 4.18.1
 
   search-insights@2.17.3: {}
 
