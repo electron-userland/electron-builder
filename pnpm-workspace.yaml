@@ -44,4 +44,5 @@ overrides:
   'js-yaml@3': '>=3.14.2 <4' # GHSA-mh29-5h37-fv8m (med)
   'js-yaml@4': '>=4.2.0 <5' # GHSA-h67p-54hq-rp68 (med)
   joi: '>=17.13.4 <18' # GHSA-q7cg-457f-vx79 (med)
+  qs: '>=6.15.2 <7' # GHSA-q8mj-m7cp-5q26 (med)
 packageImportMethod: copy
