@@ -42,7 +42,11 @@ export async function getWineToolset(wine: ToolsetConfig["wine"], resourcesDir: 
     })
     execSubPath = path.join("bin", "wine64")
   } else {
-    // Default (null/undefined) and explicit "1.0.1" → bundled wine@1.0.1 (arm64 macOS via Rosetta).
+    // null/undefined on Linux: no bundled default — CI/Docker environments have system wine.
+    if (process.platform === "linux" && wine == null) {
+      return { execPath: "wine", env: defaultEnv }
+    }
+    // "1.0.1" (or null on macOS) → bundled wine@1.0.1 (arm64 macOS via Rosetta).
     const file = process.platform === "darwin" ? "wine-11.0-darwin-x86_64.tar.xz" : "wine-11.0-linux-x86_64.tar.xz"
     toolsetPath = await downloadBuilderToolset({
       releaseName: "wine@1.0.1",

@@ -41,9 +41,11 @@ export async function doTest(
   packElevateHelper = true,
   toolsets?: ToolsetConfig
 ) {
-  // Install verification runs the produced .exe under wine, which is only available on non-Windows.
-  // wine="0.0.0" is the legacy pin that uses host wine on Linux (flaky) — skip it too.
-  if (process.platform === "win32" || toolsets?.wine == null || toolsets.wine === "0.0.0") {
+  // Install verification runs the produced .exe under wine.
+  // Skip on macOS: wine-11.0-darwin-x86_64 SIGSEGVs running PE files on arm64 (Apple Silicon CI).
+  // Skip on Linux: use null toolsets instead; null defaults to host wine in Docker environments.
+  // wine="0.0.0" is the legacy macOS-only bundle — skip it too.
+  if (process.platform === "win32" || process.platform === "darwin" || toolsets?.wine == null || toolsets.wine === "0.0.0") {
     return Promise.resolve()
   }
 
