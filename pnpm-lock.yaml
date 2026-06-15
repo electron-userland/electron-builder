@@ -25,6 +25,7 @@ overrides:
   js-yaml@4: '>=4.2.0 <5'
   joi: '>=17.13.4 <18'
   qs: '>=6.15.2 <7'
+  uuid: '>=11.1.1 <12'
 
 patchedDependencies:
   '@changesets/assemble-release-plan@6.0.9': ef56f57067dfcc594f40d9afc7278abe38cecf1c04230936e447a60e0d58a46e
@@ -9482,11 +9483,6 @@ packages:
 
   uuid@11.1.1:
     resolution: {integrity: sha512-vIYxrBCC/N/K+Js3qSN88go7kIfNPssr/hHCesKCQNAjmgvYS2oqr69kIufEG+O4+PfezOH4EbIeHCfFov8ZgQ==}
-    hasBin: true
-
-  uuid@8.3.2:
-    resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
-    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   v8-compile-cache-lib@3.0.1:
@@ -20784,7 +20780,7 @@ snapshots:
   sockjs@0.3.24:
     dependencies:
       faye-websocket: 0.11.4
-      uuid: 8.3.2
+      uuid: 11.1.1
       websocket-driver: 0.7.4
 
   sort-css-media-queries@2.2.0: {}
@@ -21346,8 +21342,6 @@ snapshots:
   utils-merge@1.0.1: {}
 
   uuid@11.1.1: {}
-
-  uuid@8.3.2: {}
 
   v8-compile-cache-lib@3.0.1: {}
 
