@@ -13,7 +13,7 @@ export function registerBlackboxLinuxTests(toolset: Required<Pick<ToolsetConfig,
     })
 
     // only works on x64, so this will fail on arm64 macs due to arch mismatch
-    test.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true" && process.arch === "x64")("AppImage - x64", async (context: TestContext) => {
+    test.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true" && process.arch === "x64")("AppImage - x64", optionsForFlakyE2E, async (context: TestContext) => {
       await runTest(context, "AppImage", "appimage", Arch.x64, { appimage })
     })
   })

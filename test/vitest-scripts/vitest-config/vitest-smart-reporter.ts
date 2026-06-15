@@ -1,7 +1,7 @@
 import * as path from "path"
 import type { Reporter, TestCase, TestModule } from "vitest/node"
 import { FileStats, loadCache, saveCache, TestStats } from "./cache.js"
-import { UNSTABLE_FAIL_RATIO, SupportedPlatforms } from "./smart-config.js"
+import { UNSTABLE_FAIL_RATIO, SupportedPlatforms, SMART_REPORTER_VERBOSE } from "./smart-config.js"
 
 const defaultStat: TestStats = {
   platformRuns: {
@@ -28,6 +28,9 @@ export default class SmarterReporter implements Reporter {
   currentPlatform = process.platform as SupportedPlatforms
 
   onInit() {
+    if (!SMART_REPORTER_VERBOSE) {
+      return
+    }
     this.heartbeatTimer = setInterval(() => {
       const now = Date.now()
       const running = [...this.inProgressTests.entries()]
@@ -42,7 +45,9 @@ export default class SmarterReporter implements Reporter {
   onTestCaseReady(test: TestCase) {
     const id = `${path.relative(TEST_SRC_ROOT, test.module.moduleId).split(path.sep).join("/")}::${test.fullName}`
     this.inProgressTests.set(id, Date.now())
-    process.stdout.write(`\n[test ready] 🏃 ${test.fullName}\n`)
+    if (SMART_REPORTER_VERBOSE) {
+      process.stdout.write(`\n[test ready] 🏃 ${test.fullName}\n`)
+    }
   }
 
   onTestCaseResult(test: TestCase) {
@@ -50,19 +55,21 @@ export default class SmarterReporter implements Reporter {
     this.inProgressTests.delete(id)
     const dur = test.diagnostic()?.duration ?? 0
     const testResult = test.result().state
-    const status = (() => {
-      switch (testResult) {
-        case "passed":
-          return "✅"
-        case "failed":
-          return "❌"
-        case "skipped":
-          return "⏭️"
-        default:
-          return "❔"
-      }
-    })()
-    process.stdout.write(`\n${status} ${id} (${Math.round(dur / 1000)}s)\n`)
+    if (SMART_REPORTER_VERBOSE) {
+      const status = (() => {
+        switch (testResult) {
+          case "passed":
+            return "✅"
+          case "failed":
+            return "❌"
+          case "skipped":
+            return "⏭️"
+          default:
+            return "❔"
+        }
+      })()
+      process.stdout.write(`\n${status} ${id} (${Math.round(dur / 1000)}s)\n`)
+    }
 
     const meta = (test as any).meta || {}
 
