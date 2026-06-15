@@ -80,9 +80,13 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
             // noinspection TypeScriptValidateJSTypes
             const releaseTag = hrefRegExp.exec(entry.element("link").attribute("href"))?.[1]
 
-            if (!releaseTag || !semver.valid(releaseTag)) continue
+            if (!releaseTag || !semver.valid(releaseTag)) {
+              continue
+            }
 
-            if (semver.gt(this.updater.currentVersion, releaseTag)) continue
+            if (semver.gt(this.updater.currentVersion, releaseTag)) {
+              continue
+            }
 
             if (!newestRelease || semver.gt(releaseTag, newestRelease)) {
               newestRelease = releaseTag
