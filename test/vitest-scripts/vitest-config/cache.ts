@@ -1,8 +1,16 @@
 import * as fs from "fs"
 import * as path from "path"
 import { TestSpecification } from "vitest/node"
-import { CACHE_FILE, SupportedPlatforms } from "./smart-config.js"
+import { CACHE_FILE, SMART_REPORTER_VERBOSE, SupportedPlatforms } from "./smart-config.js"
 import { TEST_SRC_ROOT } from "./vitest-smart-reporter.js"
+
+// Informational cache chatter is opt-in (see SMART_REPORTER_VERBOSE); real errors below
+// still use console.error unconditionally.
+const logv = (...args: unknown[]) => {
+  if (SMART_REPORTER_VERBOSE) {
+    console.log(...args)
+  }
+}
 
 export interface TestStats {
   platformRuns?: Record<
@@ -37,7 +45,7 @@ interface SmartCache {
 export function loadCache(): SmartCache {
   // Check if file exists BEFORE trying to read it
   if (!fs.existsSync(CACHE_FILE)) {
-    console.log(`[loadCache] Cache file does not exist, starting fresh`)
+    logv(`[loadCache] Cache file does not exist, starting fresh`)
     return { tests: {}, files: {} }
   }
 
@@ -47,7 +55,7 @@ export function loadCache(): SmartCache {
 
     const testCount = Object.keys(cache.tests || {}).length
     const fileCount = Object.keys(cache.files || {}).length
-    console.log(`[loadCache] ✓ Loaded cache - Tests: ${testCount}, Files: ${fileCount}`)
+    logv(`[loadCache] ✓ Loaded cache - Tests: ${testCount}, Files: ${fileCount}`)
 
     return cache
   } catch (err: any) {
@@ -61,13 +69,13 @@ export function saveCache(cache: SmartCache) {
   const testCount = Object.keys(cache.tests || {}).length
   const fileCount = Object.keys(cache.files || {}).length
 
-  console.log(`[saveCache] Saving cache - Tests: ${testCount}, Files: ${fileCount}`)
-  console.log(`[saveCache] Target: ${CACHE_FILE}`)
+  logv(`[saveCache] Saving cache - Tests: ${testCount}, Files: ${fileCount}`)
+  logv(`[saveCache] Target: ${CACHE_FILE}`)
 
   // Ensure directory exists
   const dir = path.dirname(CACHE_FILE)
   if (!fs.existsSync(dir)) {
-    console.log(`[saveCache] Creating directory: ${dir}`)
+    logv(`[saveCache] Creating directory: ${dir}`)
     fs.mkdirSync(dir, { recursive: true })
   }
 
@@ -79,7 +87,7 @@ export function saveCache(cache: SmartCache) {
     fs.writeFileSync(tempFile, content, "utf8")
     fs.renameSync(tempFile, CACHE_FILE)
 
-    console.log(`[saveCache] ✓ Cache saved successfully (${(content.length / 1024).toFixed(2)} KB)`)
+    logv(`[saveCache] ✓ Cache saved successfully (${(content.length / 1024).toFixed(2)} KB)`)
   } catch (err: any) {
     console.error(`[saveCache] ✗ Error saving cache:`, err.message)
     throw err

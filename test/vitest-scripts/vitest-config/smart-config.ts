@@ -1,4 +1,4 @@
-import * as path from "path"
+  import * as path from "path"
 
 export type TargetPlatform = "darwin" | "win32" | "linux" | "current"
 export type SupportedPlatforms = Exclude<TargetPlatform, "current">
@@ -7,6 +7,13 @@ export const TEST_ROOT = "test/src"
 export const TEST_FILES_PATTERN = process.env.TEST_FILES?.trim() || "*Test,*test"
 
 export const CACHE_FILE = process.env.VITEST_SMART_CACHE_FILE || path.resolve(__dirname, "_vitest-smart-cache.json")
+
+// The smart reporter, cache, and sequencer are data-collection plumbing. Their per-test
+// progress lines, in-progress heartbeat, cache load/save chatter, and plan dump duplicate
+// vitest's default reporter and interleave with its output (especially failure summaries),
+// so they're silent by default. Set SMART_REPORTER_VERBOSE=true to restore them for local
+// debugging. Cache-collection and sorting still run regardless of this flag.
+export const SMART_REPORTER_VERBOSE = process.env.SMART_REPORTER_VERBOSE !== "false" && !process.env.CI
 
 export const DEFAULT_FILE_MS = 2 * 60 * 1000
 export const DEFAULT_TARGET_MS = 20 * 60 * 1000
