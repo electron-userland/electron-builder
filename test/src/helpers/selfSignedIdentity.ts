@@ -14,6 +14,22 @@ export interface SelfSignedIdentity {
 
 const PASSWORD = "eb-self-signed"
 
+export interface SelfSignedIdentityOptions {
+  /**
+   * Force the legacy SHA1/3DES PKCS#12 scheme. Required ONLY for macOS `security import`, which cannot read
+   * PKCS#12 files produced with OpenSSL 3.x's default (stronger) algorithms. Leave `false` for everything
+   * else (Windows' own openssl can't even emit them with `-legacy`). Default: `false` (modern PBES2/AES).
+   */
+  legacy?: boolean
+  /**
+   * Password protecting the PKCS#12. Default `eb-self-signed`. Pass `""` for the Windows identity: osslsigncode
+   * attempts an empty-password read of the p12 first and, when stdin is not a TTY (vitest/CI), falls back to a
+   * blocking console prompt that fails (`open_console ttyget`) for a *non-empty* password. An empty password
+   * sidesteps the prompt entirely — which is why the previously committed `WIN_CSC_LINK` blob used one too.
+   */
+  password?: string
+}
+
 /**
  * Generates an ephemeral, untrusted self-signed code-signing identity (no developer membership required) and
  * returns it as a base64 PKCS#12. Intended solely for electron-builder's own signing tests. The produced
@@ -21,7 +37,8 @@ const PASSWORD = "eb-self-signed"
  *
  * @param commonName the full certificate common name (CN), e.g. `Developer ID Application: EB Test (TEAMID1234)`.
  */
-export async function createSelfSignedCodeSigningIdentity(commonName: string, tmpDir: TmpDir): Promise<SelfSignedIdentity> {
+export async function createSelfSignedCodeSigningIdentity(commonName: string, tmpDir: TmpDir, options: SelfSignedIdentityOptions = {}): Promise<SelfSignedIdentity> {
+  const password = options.password ?? PASSWORD
   const dir = await tmpDir.getTempDir({ prefix: "self-signed-identity" })
   const keyPath = path.join(dir, "key.pem")
   const certPath = path.join(dir, "cert.pem")
@@ -46,16 +63,16 @@ extendedKeyUsage = critical,codeSigning
   await exec("openssl", ["req", "-x509", "-newkey", "rsa:2048", "-keyout", keyPath, "-out", certPath, "-days", "3650", "-nodes", "-config", configPath])
 
   // Apple's `security import` cannot read PKCS#12 files produced with OpenSSL 3.x's default (stronger)
-  // algorithms, so force the legacy SHA1/3DES scheme. LibreSSL (the system `openssl`) already produces a
-  // compatible file and does not understand `-legacy`, so only pass it for OpenSSL >= 3.
-  const p12Args = ["pkcs12", "-export", "-inkey", keyPath, "-in", certPath, "-out", p12Path, "-passout", `pass:${PASSWORD}`, "-name", commonName]
-  if (await isOpenSsl3OrNewer()) {
+  // algorithms, so the macOS identity forces the legacy SHA1/3DES scheme. LibreSSL (the system `openssl`)
+  // already produces a compatible file and does not understand `-legacy`, so only pass it for OpenSSL >= 3.
+  const p12Args = ["pkcs12", "-export", "-inkey", keyPath, "-in", certPath, "-out", p12Path, "-passout", `pass:${password}`, "-name", commonName]
+  if (options.legacy && (await isOpenSsl3OrNewer())) {
     p12Args.push("-legacy", "-certpbe", "PBE-SHA1-3DES", "-keypbe", "PBE-SHA1-3DES", "-macalg", "sha1")
   }
   await exec("openssl", p12Args)
 
   const p12Base64 = (await readFile(p12Path)).toString("base64")
-  return { commonName, p12Base64, password: PASSWORD }
+  return { commonName, p12Base64, password }
 }
 
 async function isOpenSsl3OrNewer(): Promise<boolean> {

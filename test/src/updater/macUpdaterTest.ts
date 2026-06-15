@@ -7,6 +7,9 @@ import { mockForNodeRequire } from "vitest-mock-commonjs"
 
 class TestNativeUpdater extends EventEmitter {
   private updateUrl: string | null = null
+  // Squirrel.Mac sends the headers from setFeedURL (incl. the Basic auth the proxy server requires) with
+  // every request — mirror that here so the mock can authenticate against MacUpdater's local proxy.
+  private headers: Record<string, string> = {}
 
   // noinspection JSMethodCanBeStatic
   checkForUpdates() {
@@ -17,14 +20,15 @@ class TestNativeUpdater extends EventEmitter {
   }
 
   private async download() {
-    const data = JSON.parse((await httpExecutor.request(configureRequestOptionsFromUrl(this.updateUrl!, {})))!)
-    await httpExecutor.request(configureRequestOptionsFromUrl(data.url, {}))
+    const data = JSON.parse((await httpExecutor.request(configureRequestOptionsFromUrl(this.updateUrl!, { headers: this.headers })))!)
+    await httpExecutor.request(configureRequestOptionsFromUrl(data.url, { headers: this.headers }))
   }
 
   // noinspection JSMethodCanBeStatic
   setFeedURL(updateUrl: any) {
     // console.log("TestNativeUpdater.setFeedURL " + updateUrl)
     this.updateUrl = updateUrl.url
+    this.headers = updateUrl.headers ?? {}
   }
 }
 

@@ -18,7 +18,8 @@ describe.ifMac("self-signed identity discovery", { sequential: true }, () => {
   })
 
   async function importSelfSignedKeychain() {
-    const identity = await createSelfSignedCodeSigningIdentity(`Developer ID Application: ${qualifier}`, tmpDir)
+    // legacy SHA1/3DES p12 — required for Apple's `security import` (used by createKeychain below).
+    const identity = await createSelfSignedCodeSigningIdentity(`Developer ID Application: ${qualifier}`, tmpDir, { legacy: true })
     const { keychainFile } = await createKeychain({
       tmpDir,
       cscLink: identity.p12Base64,

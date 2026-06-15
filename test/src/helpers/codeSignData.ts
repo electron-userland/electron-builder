@@ -13,7 +13,9 @@ const TEAM_ID = "TEAMID1234"
 export const winSigningCredentialsInfo = new Lazy<SelfSignedIdentity>(async () => {
   const tmpDir = new TmpDir("win-signing")
   try {
-    const identity = await createSelfSignedCodeSigningIdentity(PUBLISHER, tmpDir)
+    // Modern PBES2/AES p12 with an EMPTY password: osslsigncode/signtool reject legacy 3DES bags, and an
+    // empty password avoids osslsigncode's no-TTY console-prompt fallback (see SelfSignedIdentityOptions).
+    const identity = await createSelfSignedCodeSigningIdentity(PUBLISHER, tmpDir, { password: "" })
     log.info("provisioned ephemeral self-signed Windows identity for code-signing tests")
     return identity
   } finally {
@@ -33,7 +35,8 @@ export const macSigningCredentialsInfo = new Lazy<SelfSignedIdentity>(async () =
     // Only an application identity: `codesign` accepts an untrusted self-signed cert, but `productbuild`
     // (pkg installer signing) requires a system-trusted identity and rejects self-signed ones, so a self-
     // signed pkg installer stays unsigned (the app inside is still codesigned).
-    const application = await createSelfSignedCodeSigningIdentity(`${certPrefix}: EB Test (${TEAM_ID})`, tmpDir)
+    // legacy SHA1/3DES PKCS#12 — required for Apple's `security import` (rejects OpenSSL 3 defaults).
+    const application = await createSelfSignedCodeSigningIdentity(`${certPrefix}: EB Test (${TEAM_ID})`, tmpDir, { legacy: true })
     setAllowUntrustedSelfSignedIdentityForTesting(true)
     log.info("provisioned ephemeral self-signed Developer ID Application identity for code-signing tests")
     return application

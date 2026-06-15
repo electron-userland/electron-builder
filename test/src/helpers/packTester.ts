@@ -837,6 +837,12 @@ export async function getWindowsSigningIdentity(): Promise<SelfSignedIdentity> {
 }
 
 async function signed(packagerOptions: PackagerOptions, platform: 'win' | 'mac'): Promise<PackagerOptions> {
+  if (platform === 'mac' && process.platform !== "darwin") {
+    // codesign only runs on macOS; off-darwin the build is left unsigned (mac signing tests are .ifMac-gated).
+    // Also avoids generating a self-signed identity (and spawning openssl) where it isn't available — e.g. the
+    // minimal Linux package-manager updater containers that have no openssl on PATH.
+    return packagerOptions
+  }
   const { p12Base64, password } = platform === 'mac' ? await getMacSigningIdentity() : await getWindowsSigningIdentity()
   const options = deepAssign<PackagerOptions>({}, packagerOptions, { config: { cscLink: p12Base64, cscKeyPassword: password } })
   return options
