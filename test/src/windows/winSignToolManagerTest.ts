@@ -6,8 +6,7 @@ import { readCertInfoFromX509 } from "app-builder-lib/src/codeSign/certInfo"
 import { WindowsSignAzureManager } from "app-builder-lib/src/codeSign/win/windowsSignAzureManager"
 import { getAtsBundleDir, getDotnetRuntimeDir, getWindowsKitsBundle } from "app-builder-lib/src/toolsets/winCodeSign"
 import { Arch } from "builder-util"
-import { mkdtemp, rm, writeFile } from "fs/promises"
-import { tmpdir } from "os"
+import { writeFile } from "fs/promises"
 import * as path from "path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
@@ -660,12 +659,8 @@ describe("addCertificateArgs throws InvalidConfigurationError for bad cert exten
 describe("readCertInfoFromX509", () => {
   let tmpDir: string
 
-  beforeEach(async () => {
-    tmpDir = await mkdtemp(path.join(tmpdir(), "eb-x509-test-"))
-  })
-
-  afterEach(async () => {
-    await rm(tmpDir, { recursive: true, force: true })
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
   })
 
   test("parses a self-signed PEM certificate and extracts CN", async () => {
@@ -702,8 +697,8 @@ describe("WindowsSignAzureManager signFileWithDlib arch selection", { sequential
   let tmpDir: string
   const originalArch = process.arch
 
-  beforeEach(async () => {
-    tmpDir = await mkdtemp(path.join(tmpdir(), "eb-azure-dlib-test-"))
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
     vi.mocked(getWindowsKitsBundle).mockImplementation(async ({ arch }) => ({
       kit: path.resolve("/mock-kits", arch === Arch.ia32 ? "x86" : Arch[arch]),
       appxAssets: path.resolve("/mock-kits"),
@@ -712,12 +707,11 @@ describe("WindowsSignAzureManager signFileWithDlib arch selection", { sequential
     vi.mocked(getDotnetRuntimeDir).mockResolvedValue("/mock-dotnet-runtime")
   })
 
-  afterEach(async () => {
+  afterEach(() => {
     Object.defineProperty(process, "arch", { value: originalArch })
     vi.mocked(getWindowsKitsBundle).mockReset()
     vi.mocked(getAtsBundleDir).mockReset()
     vi.mocked(getDotnetRuntimeDir).mockReset()
-    await rm(tmpDir, { recursive: true, force: true })
   })
 
   function makeAzureManager(execSpy: ReturnType<typeof vi.fn>, toVmFile = (f: string) => f): WindowsSignAzureManager {
