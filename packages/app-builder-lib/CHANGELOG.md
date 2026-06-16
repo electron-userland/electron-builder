@@ -1,5 +1,41 @@
 # app-builder-lib
 
+## 27.0.0-alpha.3
+
+### Major Changes
+
+- Feat(win): Multi-mode Windows code signing under a unified `win.sign` key [HSM, PKCS#11, Azure Trusted Signing, Signtool] (BREAKING) _[`#9855`](https://github.com/electron-userland/electron-builder/pull/9855) [`a07139b`](https://github.com/electron-userland/electron-builder/commit/a07139b09030327aca597673dcbefd95690a5a18) [@mmaietta](https://github.com/mmaietta)_
+- Feat: add updated wine 11.0 to toolsets config; `USE_SYSTEM_WINE` process.env override removed - use `CustomToolset` instead _[`#9898`](https://github.com/electron-userland/electron-builder/pull/9898) [`b832369`](https://github.com/electron-userland/electron-builder/commit/b83236991f50bd40db59ea754e64d86f55a96a92) [@mmaietta](https://github.com/mmaietta)_
+- Chore: modernize macOS build config API and upgrade all `electron/____` dep updates _[`#9889`](https://github.com/electron-userland/electron-builder/pull/9889) [`4d4ba45`](https://github.com/electron-userland/electron-builder/commit/4d4ba45d334a0696df92fb71af8a4b168e7d491e) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Fix: add retry-tolerant `ensureDir` to address recurring flaky `ENOENT … mkdir '<cache>/fpm@2.2.1/…'` during concurrent toolset downloads _[`#9899`](https://github.com/electron-userland/electron-builder/pull/9899) [`ef61dd5`](https://github.com/electron-userland/electron-builder/commit/ef61dd5f47ab0b203e76c506394bf4bc1ee9bf00) [@mmaietta](https://github.com/mmaietta)_
+- Fix: resolve ENOENT on electron zip extraction in Windows Docker _[`#9891`](https://github.com/electron-userland/electron-builder/pull/9891) [`319535a`](https://github.com/electron-userland/electron-builder/commit/319535ada44839149539593f1b1138dc2c5eb2c5) [@mmaietta](https://github.com/mmaietta)_
+- Chore(test): generate ephemeral self-signed macOS code-signing for CI tests _[`#9896`](https://github.com/electron-userland/electron-builder/pull/9896) [`6cdd01d`](https://github.com/electron-userland/electron-builder/commit/6cdd01d4c73eccc18a481c63c2531fd17e276238) [@mmaietta](https://github.com/mmaietta)_
+- Chore: harden Windows Azure signing PowerShell invocation and add Windows signing migration notes _[`#9892`](https://github.com/electron-userland/electron-builder/pull/9892) [`6623f4e`](https://github.com/electron-userland/electron-builder/commit/6623f4e018b8f08840d99b70e809081f21706cbc) [@mmaietta](https://github.com/mmaietta)_
+- Fix(pnpm-collector): bundle transitive deps of `link:` packages _[`#9875`](https://github.com/electron-userland/electron-builder/pull/9875) [`091ab71`](https://github.com/electron-userland/electron-builder/commit/091ab710fc842441e513c7fbb88e6a9c1e77cc77) [@mmaietta](https://github.com/mmaietta)_
+- Fix: Resolves open CodeQL code-scanning alerts (8 of 14) by fixing two real ReDoS vulnerabilities and clearing path-injection taint _[`#9900`](https://github.com/electron-userland/electron-builder/pull/9900) [`c976bc4`](https://github.com/electron-userland/electron-builder/commit/c976bc42e166d388e5fc38f7bf4dd20c87464de5) [@mmaietta](https://github.com/mmaietta)_
+- Fix: preserve symlinks in `zip` and `7z` archive targets on macOS and Linux via 7za `-snl` (Windows still dereferences). Restores pre-26.15 behavior after the bundled 7-Zip upgrade, which began dereferencing by default — corrupting macOS `.framework` bundles (codesign "bundle format is ambiguous", breaking Squirrel.Mac auto-update) and duplicating Linux symlink content. _[`#9902`](https://github.com/electron-userland/electron-builder/pull/9902) [`a6479f3`](https://github.com/electron-userland/electron-builder/commit/a6479f374ecfae5801b343357f286b263133f547) [@mmaietta](https://github.com/mmaietta)_
+- Fix(snap): core24 now runs the app through a generated launcher script, so `executableArgs`/`forceX11` flags containing `=` or quotes build correctly, and the unused `chrome-sandbox` helper is removed automatically when launching with `--no-sandbox` _[`#9897`](https://github.com/electron-userland/electron-builder/pull/9897) [`75bb4c6`](https://github.com/electron-userland/electron-builder/commit/75bb4c6ee911219900d9a303a11c7f5cb3ad9ed0) [@mmaietta](https://github.com/mmaietta)_
+- Fix: declare the missing `electron-publish` dependency on `electron-builder`, and switch type-checking to `nodenext` module resolution so the compiler models Node's real ESM loader _[`#9885`](https://github.com/electron-userland/electron-builder/pull/9885) [`96e47b5`](https://github.com/electron-userland/electron-builder/commit/96e47b5b89b76c719b1c06cfdd62a9a17376484e) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`ef61dd5`](https://github.com/electron-userland/electron-builder/commit/ef61dd5f47ab0b203e76c506394bf4bc1ee9bf00) [`594cfa1`](https://github.com/electron-userland/electron-builder/commit/594cfa1ded3ab4bcb46eac1720b9f9930ed1fbb5) [`96e47b5`](https://github.com/electron-userland/electron-builder/commit/96e47b5b89b76c719b1c06cfdd62a9a17376484e) [`4d4ba45`](https://github.com/electron-userland/electron-builder/commit/4d4ba45d334a0696df92fb71af8a4b168e7d491e)
+
+</small>
+
+- `builder-util@27.0.0-alpha.3`
+- `electron-builder-squirrel-windows@27.0.0-alpha.3`
+- `builder-util-runtime@10.0.0-alpha.2`
+- `electron-publish@27.0.0-alpha.3`
+- `dmg-builder@27.0.0-alpha.3`
+
+</details>
+
 ## 27.0.0-alpha.2
 
 ### Patch Changes
