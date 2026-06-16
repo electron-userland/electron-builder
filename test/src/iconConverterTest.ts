@@ -1,8 +1,7 @@
 import { deflateSync } from "zlib"
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "fs/promises"
-import * as os from "os"
+import { mkdir, readFile, writeFile } from "fs/promises"
 import * as path from "path"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it } from "vitest"
 import { buildSourceCandidates, convertIcon, getPngSize } from "app-builder-lib/internal"
 
 const FIXTURES = path.join(__dirname, "../fixtures")
@@ -94,11 +93,8 @@ function parseIcns(data: Buffer): Map<string, Buffer> {
 
 describe("convertIcon – ICNS output", { sequential: true }, () => {
   let tmpDir: string
-  beforeEach(async () => {
-    tmpDir = await mkdtemp(path.join(os.tmpdir(), "icon-test-"))
-  })
-  afterEach(async () => {
-    await rm(tmpDir, { recursive: true, force: true })
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
   })
 
   it("converts a 512×512 PNG to a valid ICNS file", async () => {
@@ -193,11 +189,8 @@ describe("convertIcon – ICNS output", { sequential: true }, () => {
 
 describe("convertIcon – ICO output", { sequential: true }, () => {
   let tmpDir: string
-  beforeEach(async () => {
-    tmpDir = await mkdtemp(path.join(os.tmpdir(), "icon-test-"))
-  })
-  afterEach(async () => {
-    await rm(tmpDir, { recursive: true, force: true })
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
   })
 
   it("converts a 512×512 PNG to a valid ICO file", async () => {
@@ -292,11 +285,8 @@ describe("convertIcon – ICO output", { sequential: true }, () => {
 
 describe("convertIcon – set output (Linux)", { sequential: true }, () => {
   let tmpDir: string
-  beforeEach(async () => {
-    tmpDir = await mkdtemp(path.join(os.tmpdir(), "icon-test-"))
-  })
-  afterEach(async () => {
-    await rm(tmpDir, { recursive: true, force: true })
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
   })
 
   it("returns source PNG directly for set format (matches Go behavior)", async () => {
@@ -386,11 +376,8 @@ describe("convertIcon – set output (Linux)", { sequential: true }, () => {
 
 describe("convertIcon – file resolution", { sequential: true }, () => {
   let tmpDir: string
-  beforeEach(async () => {
-    tmpDir = await mkdtemp(path.join(os.tmpdir(), "icon-test-"))
-  })
-  afterEach(async () => {
-    await rm(tmpDir, { recursive: true, force: true })
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
   })
 
   it("resolves icon by name from roots directory", async () => {
@@ -431,11 +418,8 @@ describe("convertIcon – file resolution", { sequential: true }, () => {
 
 describe("convertIcon – collectIconsFromDir filename filtering", { sequential: true }, () => {
   let tmpDir: string
-  beforeEach(async () => {
-    tmpDir = await mkdtemp(path.join(os.tmpdir(), "icon-test-"))
-  })
-  afterEach(async () => {
-    await rm(tmpDir, { recursive: true, force: true })
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
   })
 
   it("only picks up files with a pure-digit basename (anchored regex)", async () => {
@@ -548,11 +532,8 @@ describe("buildSourceCandidates", () => {
 
 describe("getPngSize", { sequential: true }, () => {
   let tmpDir: string
-  beforeEach(async () => {
-    tmpDir = await mkdtemp(path.join(os.tmpdir(), "icon-test-"))
-  })
-  afterEach(async () => {
-    await rm(tmpDir, { recursive: true, force: true })
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
   })
 
   it("reads correct dimensions from a well-formed PNG", async () => {
@@ -586,11 +567,8 @@ describe("getPngSize", { sequential: true }, () => {
 
 describe("convertIcon – edge cases", { sequential: true }, () => {
   let tmpDir: string
-  beforeEach(async () => {
-    tmpDir = await mkdtemp(path.join(os.tmpdir(), "icon-test-"))
-  })
-  afterEach(async () => {
-    await rm(tmpDir, { recursive: true, force: true })
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
   })
 
   it("resolves source by absolute path, ignoring roots", async () => {

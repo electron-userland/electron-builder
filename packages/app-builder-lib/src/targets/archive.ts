@@ -3,7 +3,7 @@ import * as path from "path"
 import { create } from "tar"
 import type { TarOptionsWithAliasesAsync } from "tar"
 import { TmpDir } from "temp-file"
-import { CompressionLevel } from "../core.js"
+import { CompressionLevel, Platform } from "../core.js"
 import { getLinuxToolsMacToolset } from "../toolsets/linuxToolsMac.js"
 import { ToolsetConfig } from "../configuration.js"
 import { getPath7za } from "../toolsets/7zip.js"
@@ -92,10 +92,21 @@ export interface ArchiveOptions {
   isRegularFile?: boolean
 
   /**
-   * Use native macOS `zip` to preserve symlinks. Required for .framework bundles.
+   * Preserve symlinks (e.g. macOS .framework `Versions/Current`) instead of dereferencing them.
+   * Passes `-snl` to 7za — modern 7-Zip derefs by default, which breaks bundle codesigning. See #9846.
    * @default false
    */
   preserveSymlinks?: boolean
+}
+
+/**
+ * Whether archives for the given target platform should preserve symlinks (i.e. pass `-snl`).
+ * Non-Windows targets preserve them: macOS `.framework` bundles need them for codesigning (#9846)
+ * and Linux bundles may legitimately contain them. Windows dereferences because restoring symlinks
+ * there requires elevated privileges. Keyed on the target platform, not the build host.
+ */
+export function shouldPreserveSymlinks(platform: Platform): boolean {
+  return platform !== Platform.WINDOWS
 }
 
 export function compute7zCompressArgs(format: string, options: ArchiveOptions = {}) {
@@ -172,14 +183,23 @@ export async function archive(format: string, outFile: string, dirToArchive: str
     return outFile
   }
 
-  // On macOS, use native `zip` when symlink preservation is required (e.g. .framework bundles).
-  // 7zip dereferences symlinks, corrupting .framework structure and breaking codesign.
-  // Only opt in via preserveSymlinks — Windows zip targets built on macOS still use 7z
-  // so that the UTF-8 bit (-mcu) is set correctly in the zip header.
-  const use7z = !(process.platform === "darwin" && format === "zip" && options.preserveSymlinks)
+  // Use 7za for all formats (matches pre-26.15 behavior). Native macOS `zip` is only a
+  // fallback for NFD-normalized filenames, which 7za mangles.
+  let use7z = true
+  if (process.platform === "darwin" && format === "zip" && dirToArchive.normalize("NFC") !== dirToArchive) {
+    log.warn({ reason: "7z doesn't support NFD-normalized filenames" }, `using zip`)
+    use7z = false
+  }
 
   if (use7z) {
     const args = compute7zCompressArgs(format, options)
+    // Modern 7-Zip (24.09) dereferences symlinks by default; the 7-Zip 16.02 bundled before
+    // 26.15 stored them as links. Without -snl, a macOS .framework `Versions/Current` extracts
+    // as a real directory → codesign "bundle format is ambiguous" → breaks Squirrel.Mac
+    // auto-update (#9846). Callers enable it for all non-Windows targets (see ArchiveTarget).
+    if (options.preserveSymlinks) {
+      args.push("-snl")
+    }
     await unlinkIfExists(outFile)
     args.push(outFile, options.withoutDir ? "." : path.basename(dirToArchive))
     if (options.excluded != null) {
@@ -201,7 +221,7 @@ export async function archive(format: string, outFile: string, dirToArchive: str
       }
     }
   } else {
-    // macOS native zip: -y preserves symlinks (required for .framework bundles)
+    // macOS native zip (NFD fallback): -y preserves symlinks
     const args = ["-q", "-r", "-y"]
     if (debug7z.enabled) {
       args.push("-v")
