@@ -52,10 +52,6 @@ export function isUseSystemFpm() {
   return isEnvTrue(process.env.USE_SYSTEM_FPM)
 }
 
-export function isUseSystemWine() {
-  return isEnvTrue(process.env.USE_SYSTEM_WINE)
-}
-
 export function isFpmDebug() {
   return isEnvTrue(process.env.FPM_DEBUG)
 }
