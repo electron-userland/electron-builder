@@ -531,7 +531,10 @@ jobs:
           if [ -n "$PR_NUM" ]; then
             echo "VITEST_CACHE_REF=PR-${PR_NUM}" >> "$GITHUB_ENV"
           else
-            echo "VITEST_CACHE_REF=${{ github.ref_name }}" >> "$GITHUB_ENV"
+            # Artifact names cannot contain "/", so sanitize slashes in branch
+            # names like "release/v26" -> "release-v26" (keep in sync with detectRef in fetch-smart-cache.ts).
+            REF_NAME="${{ github.ref_name }}"
+            echo "VITEST_CACHE_REF=${REF_NAME//\//-}" >> "$GITHUB_ENV"
           fi
 
       - name: Upload vitest smart cache artifact
