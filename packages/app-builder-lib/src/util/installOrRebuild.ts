@@ -4,7 +4,7 @@ import { isNpmNoBinLinks } from "./flags.js"
 import { homedir } from "os"
 import * as path from "path"
 import { Configuration } from "../configuration.js"
-import { PM, getPackageManagerCommand } from "../node-module-collector/index.js"
+import { PM, getPackageManagerCommand, buildPowerShellEncodedArgs } from "../node-module-collector/index.js"
 import { detectPackageManager } from "../node-module-collector/packageManager.js"
 import { rebuild as remoteRebuild } from "./rebuild.js"
 import which from "which"
@@ -87,6 +87,51 @@ export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.
   }
 }
 
+/**
+ * Selects the command + args used to spawn a dependency install.
+ *
+ * On Windows the package manager resolves to a `.cmd`/`.CMD` shim (npm.CMD, pnpm.cmd, yarn.cmd).
+ * Spawning that directly hands it to cross-spawn, which wraps it in `cmd.exe /d /s /c "<shim> install"`.
+ * cmd.exe re-opens the batch file between commands; under CI load (Windows Defender scan locks, an
+ * 8.3/temp `cwd`, heavy parallel I/O) that re-open intermittently fails with "The batch file cannot be
+ * found." *after* the install already completed — a spurious exit code, not a missing file.
+ *
+ * Route the invocation through `powershell.exe -EncodedCommand` instead — the same hardened spawn path
+ * the node-module collector already uses (`buildPowerShellEncodedArgs`). This keeps the `.cmd` shim out
+ * of cross-spawn's `cmd.exe` wrapper, matches the collector for security/deprecation parity (no
+ * DEP0190, CVE-2024-27980-safe), and re-emits the package manager's own exit code via
+ * `exit $LASTEXITCODE` so real install failures still propagate. (PowerShell still delegates `.cmd`
+ * execution to cmd.exe internally, so this is paired with a guarded retry in `shouldRetry` below for
+ * any residual race.)
+ */
+export function getInstallSpawnInvocation(execPath: string, execArgs: Array<string>): [string, Array<string>] {
+  if (process.platform === "win32") {
+    return ["powershell.exe", buildPowerShellEncodedArgs(execPath, execArgs)]
+  }
+  return [execPath, execArgs]
+}
+
+/**
+ * Whether a failed dependency-install spawn should be retried. Everything not matched here fails fast —
+ * a genuine install error (E404, ERESOLVE, EACCES, …) must surface immediately, not after 3 backoff
+ * retries. Two transient classes are retriable:
+ *   - Network blips while fetching from the registry.
+ *   - The Windows-only cmd.exe "The batch file cannot be found." race (see getInstallSpawnInvocation).
+ *     Routing install through PowerShell makes this rare, but PowerShell still ultimately runs the
+ *     `.cmd` shim via cmd.exe, so this guarded retry remains as the safety net. The install is
+ *     idempotent (a no-op once node_modules is up to date), so re-running is safe. Guarded to win32 so
+ *     the narrow message match can't affect other platforms.
+ */
+export function isRetriableInstallError(message: string): boolean {
+  if (/ENOTFOUND|ECONNRESET|ETIMEDOUT|EAI_AGAIN|ECONNREFUSED/.test(message)) {
+    return true
+  }
+  if (process.platform === "win32" && /The batch file cannot be found/i.test(message)) {
+    return true
+  }
+  return false
+}
+
 export async function installDependencies(
   config: Configuration,
   { appDir, projectDir, workspaceRoot }: DirectoryPaths,
@@ -121,16 +166,18 @@ export async function installDependencies(
     ...getGypEnv(options.frameworkInfo, platform, arch, options.buildFromSource === true),
     ...env,
   }
-  await retry(() => spawn(execPath, execArgs, { cwd: appDir, env: spawnEnv }), {
+  const [spawnCommand, spawnArgs] = getInstallSpawnInvocation(execPath, execArgs)
+  await retry(() => spawn(spawnCommand, spawnArgs, { cwd: appDir, env: spawnEnv }), {
     retries: 3,
     interval: 1000,
     backoff: 2000,
     shouldRetry: (e: any) => {
-      const isTransient = /ENOTFOUND|ECONNRESET|ETIMEDOUT|EAI_AGAIN|ECONNREFUSED/.test(e?.message ?? "")
-      if (isTransient) {
-        log.warn({ error: String(e?.message).split("\n")[0] }, "transient network error during package install, retrying")
+      const message = e?.message ?? ""
+      const retriable = isRetriableInstallError(message)
+      if (retriable) {
+        log.warn({ error: String(message).split("\n")[0] }, "transient error during package install, retrying")
       }
-      return isTransient
+      return retriable
     },
   })
 
