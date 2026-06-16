@@ -81,11 +81,11 @@ To fix this, set `desktopName` in `package.json`:
 
 ```json title="package.json"
 {
-  "desktopName": "com.example.MyApp.desktop"
+  "desktopName": "com.example.MyApp"
 }
 ```
 
-electron-builder installs the `.desktop` file as `com.example.MyApp.desktop` (the `desktopName` minus the `.desktop` suffix) and sets `StartupWMClass=com.example.MyApp` — both matching Electron's `app_id`. When `desktopName` is absent, the filename falls back to `executableName`.
+electron-builder installs the `.desktop` file as `${desktopName}.desktop` (here `com.example.MyApp.desktop`) and sets `StartupWMClass=com.example.MyApp`, both matching Electron's `app_id`. A trailing `.desktop` in `desktopName` is tolerated (stripped before the filename is composed), so configs written for earlier versions keep working. When `desktopName` is absent, the filename falls back to `executableName`.
 
 :::note[Changed in v27]
 The installed `.desktop` filename is now always derived from `desktopName`. The `linux.syncDesktopName` flag that previously gated this behaviour has been removed — see the [v26 → v27 migration guide](./migration/v26-to-v27.md#linuxsyncdesktopname-removed-always-synced).
