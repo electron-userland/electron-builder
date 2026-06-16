@@ -1,6 +1,6 @@
-import { DebugLogger, ExtraSpawnOptions, exec, log, spawn } from "builder-util"
+import { DebugLogger, ExtraSpawnOptions, exec, log, sanitizeDirPath, spawn } from "builder-util"
 import { ExecFileOptions, SpawnOptions, execFileSync } from "child_process"
-import { VmManager } from "./vm"
+import { VmManager } from "./vm.js"
 
 /** @internal */
 export async function parseVmList(debugLogger: DebugLogger) {
@@ -79,14 +79,25 @@ export class ParallelsVmManager extends VmManager {
 
     if (!this.isExitHookAdded) {
       this.isExitHookAdded = true
-      require("async-exit-hook")((callback: (() => void) | null) => {
-        const stopArgs = ["suspend", vmId]
-        if (callback == null) {
+      const stopArgs = ["suspend", vmId]
+      // Suspend the VM on normal exit and on termination signals.
+      // SIGTERM/SIGINT use async exec(); the synchronous 'exit' fallback fires
+      // after all async callbacks have already resolved, so execFileSync is safe.
+      const suspendAsync = () => exec("prlctl", stopArgs).catch(() => {})
+      const suspendSync = () => {
+        try {
           execFileSync("prlctl", stopArgs)
-        } else {
-          exec("prlctl", stopArgs).then(callback).catch(callback)
+        } catch {
+          /* best-effort */
         }
+      }
+      process.once("SIGTERM", () => {
+        void suspendAsync()
       })
+      process.once("SIGINT", () => {
+        void suspendAsync()
+      })
+      process.once("exit", suspendSync)
     }
     await exec("prlctl", ["start", vmId])
   }
@@ -110,7 +121,18 @@ export function macPathToParallelsWindows(file: string) {
   if (file.startsWith("C:\\")) {
     return file
   }
-  return "\\\\Mac\\Host\\" + file.replace(/\//g, "\\")
+  if (!file.startsWith("/")) {
+    throw new Error(`Invalid path for Parallels VM execution: "${file}"`)
+  }
+  // file is an absolute macOS host path; sanitizeDirPath rejects null/newline (arg-injection) and leaves it otherwise unchanged
+  const hostPath = sanitizeDirPath(file).replace(/\//g, "\\")
+  const uncPath = "\\\\Mac\\Host\\" + hostPath
+  // Reject characters/control bytes that can change command/tool argument semantics.
+  // eslint-disable-next-line no-control-regex
+  if (/[\x00-\x1F\x7F"*?<>|]/.test(uncPath)) {
+    throw new Error(`Invalid path for Parallels VM execution: "${file}"`)
+  }
+  return uncPath
 }
 
 export interface ParallelsVm {

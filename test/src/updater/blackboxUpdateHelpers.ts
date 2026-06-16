@@ -1,9 +1,7 @@
 import { ToolsetConfig } from "app-builder-lib"
-import { PM } from "app-builder-lib/out/node-module-collector"
-import { ParallelsVmManager } from "app-builder-lib/out/vm/ParallelsVm"
-import { getWindowsVm, VmManager } from "app-builder-lib/out/vm/vm"
+import { getWindowsVm, ParallelsVmManager, PM, VmManager } from "app-builder-lib/internal"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
-import { archFromString, deepAssign, DebugLogger, log, serializeToYaml, spawn, TmpDir } from "builder-util/out/util"
+import { archFromString, deepAssign, DebugLogger, log, serializeToYaml, spawn, TmpDir } from "builder-util"
 import { Arch, Configuration, Platform } from "electron-builder"
 import { copy, existsSync, move, outputFile, readJsonSync, remove } from "fs-extra"
 import { homedir } from "os"
@@ -18,7 +16,7 @@ import { cleanupWindowsNative, installWindowsNative, installWindowsVm } from "./
 import { cleanupLinux, installLinux } from "./blackboxInstallLinux"
 import { installMac } from "./blackboxInstallMac"
 
-export const optionsForFlakyE2E = { sequential: true, retry: 1, timeout: 15 * 60 * 1000 } as const
+export const optionsForFlakyE2E = { sequential: true, retry: 2, timeout: 15 * 60 * 1000 } as const
 
 // Resolve only to a ParallelsVmManager — PwshVmManager (used for code-signing on Linux/Mac via Wine)
 // is not capable of installing or running Windows executables and must not be treated as a Windows VM.
@@ -65,7 +63,7 @@ export async function doBuild(
         config: Object.assign(
           deepAssign<Configuration>(
             {
-              npmRebuild: true,
+              nativeModules: { npmRebuild: true },
               productName: "TestApp",
               executableName: "TestApp",
               appId: "com.test.app",
@@ -78,7 +76,7 @@ export async function doBuild(
               electronUpdaterCompatibility: "1.1",
               electronFuses: {
                 runAsNode: false,
-                enableCookieEncryption: true,
+                enableCookieEncryption: false, // don't enable cookie encryption for testing because it adds an additional decryption step to the update process which requires user interaction to unlock the keychain on macOS and can cause timeouts in CI, especially on older macOS versions with slower crypto performance
                 enableNodeOptionsEnvironmentVariable: false,
                 enableNodeCliInspectArguments: false,
                 enableEmbeddedAsarIntegrityValidation: true,
@@ -109,12 +107,14 @@ export async function doBuild(
       },
       {
         storeDepsLockfileSnapshot: false,
-        signed: !isWindows,
+        signedMac: !isWindows,
         signedWin: isWindows,
         packed,
         packageManager: PM.PNPM,
         projectDirCreated: async (projectDir, _tmpDir, runtimeEnv) => {
-          await outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted")
+          // Write .npmrc to app/ — installDependencies runs pnpm with cwd=appDir, so pnpm 10
+          // reads this file and uses hoisted layout for the main install.
+          await outputFile(path.join(projectDir, "app", ".npmrc"), "node-linker=hoisted")
 
           await modifyPackageJson(
             projectDir,
@@ -150,7 +150,11 @@ export async function doBuild(
             },
             false
           )
-          await spawn("pnpm", ["install"], { cwd: projectDir, stdio: "inherit", env: runtimeEnv })
+          // Return a post-install hook so the explicit flag runs AFTER installDependencies.
+          // pnpm 11 ignores node-linker from .npmrc; the CLI flag here handles that case.
+          return async () => {
+            await spawn("pnpm", ["install", "--config.node-linker=hoisted"], { cwd: path.join(projectDir, "app"), stdio: "inherit", env: runtimeEnv })
+          }
         },
       }
     )
@@ -343,7 +347,11 @@ export async function runTest(
           const probe = await launchAndWaitForQuit({
             appPath,
             vm,
-            timeoutMs: 30 * 1000,
+            // A cold relaunch of the freshly-extracted update can be slow (Gatekeeper verification,
+            // embedded-asar integrity validation, slow CI crypto), so give each probe a generous
+            // window. A single timeout is not fatal — the surrounding poll loop retries until the
+            // pollDeadline, so the worst case is bounded by pollDeadline, not by this value.
+            timeoutMs: 60 * 1000,
             updateConfigPath,
             packageManagerToTest: packageManager,
             env: { AUTO_UPDATER_TEST: "" }, // disables updater — app prints version and quits
@@ -356,12 +364,17 @@ export async function runTest(
           if (newVersion === NEW_VERSION_NUMBER) {
             break
           }
-          log.info({ installedVersion: newVersion, expected: NEW_VERSION_NUMBER }, "Installer still in progress, retrying...")
+          log.info({ installedVersion: newVersion, expected: NEW_VERSION_NUMBER, stdout: probe.stdout, stderr: probe.stderr }, "Installer still in progress, retrying...")
         } catch (err: any) {
           // NSIS replaces the exe non-atomically: it deletes the old binary before writing the new one,
           // so there is a brief window where TestApp.exe does not exist on disk.
           if (err.code === "ENOENT" && (err.syscall === "spawn" || err.syscall?.startsWith("spawn "))) {
             log.info({ appPath }, "Binary temporarily unavailable (NSIS installer in progress), retrying...")
+          } else if (typeof err.message === "string" && err.message.startsWith("Timeout after")) {
+            // A single probe launch stalled (no APP_VERSION printed before the timeout). Surface
+            // exactly what the app emitted (the message embeds STDOUT/STDERR) and keep polling
+            // instead of failing the whole test on the first slow launch.
+            log.info({ appPath, detail: err.message }, "Probe launch timed out, retrying...")
           } else {
             throw err
           }

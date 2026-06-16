@@ -1,4 +1,4 @@
-import { validateSchema } from "app-builder-lib/out/util/config/schemaValidator"
+import { validateSchema } from "app-builder-lib/internal"
 import { describe, expect, it } from "vitest"
 
 const simpleSchema = {
@@ -176,7 +176,7 @@ describe("validateSchema - postFormatter", () => {
         { name: "x", nested: { value: "ok", extra: 1 } },
         {
           postFormatter: (msg, error) => {
-            capturedPath = (error as any).instancePath
+            capturedPath = error.instancePath
             return msg
           },
         }

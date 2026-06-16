@@ -1,4 +1,4 @@
-# electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg?label=latest)](https://www.npmjs.com/package/electron-builder) [![downloads per month](https://img.shields.io/npm/dm/electron-builder.svg)](https://yarn.pm/electron-builder) [![donate](https://img.shields.io/badge/donate-donorbox-brightgreen.svg)](https://www.electron.build/donate)
+# electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg?label=latest)](https://www.npmjs.com/package/electron-builder) [![downloads per month](https://img.shields.io/npm/dm/electron-builder.svg)](https://yarn.pm/electron-builder)
 A complete solution to package and build a ready for distribution [Electron](https://electronjs.org), [Proton Native](https://proton-native.js.org/) app for macOS, Windows and Linux with “auto update” support out of the box. 📦
 
 Always looking for community contributions! 👀 Setting up a [dev environment](https://github.com/electron-userland/electron-builder/blob/master/CONTRIBUTING.md) is easy to do 🪩
@@ -10,7 +10,7 @@ Always looking for community contributions! 👀 Setting up a [dev environment](
       <td>
          <a href="https://workflowy.com">
             <div>
-               <img src="https://workflowy.com/media/i/icon-28x28.png" alt="WorkFlowy" title="WorkFlowy" style="height: 50px;" height="50"/>
+               <img src="website/static/sponsor-logos/Workflowy.png" alt="WorkFlowy" title="WorkFlowy" style="height: 75px;" height="75"/>
             </div>
             Notes, Tasks, Projects.<br>All in a Single Place.
          </a>
@@ -22,7 +22,7 @@ Always looking for community contributions! 👀 Setting up a [dev environment](
          <br>
          <a href="https://tidepool.org">
             <div>
-               <img src="https://www.electron.build/sponsor-logos/Tidepool_Logo_Light.svg" alt="Tidepool" title="Tidepool" style="height: 75px;" height="75" />
+               <img src="website/static/sponsor-logos/Tidepool_Logo_Light.svg" alt="Tidepool" title="Tidepool" style="height: 75px;" height="75" />
             </div>
             Your gateway to understanding your diabetes data
          </a>
@@ -93,6 +93,16 @@ See the full documentation on [electron.build](https://www.electron.build).
 | “I found a bug or I have a question”   | [Open an issue](https://github.com/electron-userland/electron-builder/issues/new) |
 | “I want to support development”        | [Donate](https://www.electron.build/docs/donate)                                       |
 
+## Requirements
+
+**Node.js >=22.12.0** is required for v27.
+
+> **Upgrading from v26?** Run the automated migration command first — it rewrites your static config in place:
+> ```bash
+> electron-builder migrate-schema
+> ```
+> Full details: **[v26 → v27 migration guide](./MIGRATION.md)** · [electron.build/docs/migration/v26-to-v27](https://www.electron.build/docs/migration/v26-to-v27)
+
 ## Installation
 ```
 yarn add electron-builder --dev
@@ -109,11 +119,19 @@ This instructs Yarn to use node-modules instead of PnP.
 
 ## Quick Setup Guide
 
-[electron-webpack-quick-start](https://github.com/electron-userland/electron-webpack-quick-start) is a recommended way to create a new Electron application.
+[electron-quick-start](https://github.com/electron/electron-quick-start) is the official minimal starter for a new Electron application.
 
-1. Specify the standard fields in the application `package.json` — `name`, `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors).
+1. Clone the starter and add electron-builder:
+    ```bash
+    git clone https://github.com/electron/electron-quick-start
+    cd electron-quick-start
+    npm install
+    npm install electron-builder --save-dev
+    ```
 
-2. Specify the [build](https://www.electron.build/docs/configuration) configuration in the `package.json` as follows:
+2. Specify the standard fields in the application `package.json` — `name`, `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors).
+
+3. Specify the [build](https://www.electron.build/docs/configuration) configuration in the `package.json` as follows:
     ```json
     "build": {
       "appId": "your.id",
@@ -125,9 +143,9 @@ This instructs Yarn to use node-modules instead of PnP.
    See [all options](https://www.electron.build/docs/configuration). Option [files](https://www.electron.build/docs/contents#files) to indicate which files should be packed in the final application, including the entry file, maybe required.
    You can also use separate configuration files, such as `js`, `ts`, `yml`, and `json`/`json5`. See [read-config-file](https://www.npmjs.com/package/read-config-file) for supported extensions. [JS Example for programmatic API](https://www.electron.build/docs/programmatic-usage)
 
-3. Add [icons](https://www.electron.build/docs/features/icons).
+4. Add [icons](https://www.electron.build/docs/features/icons).
 
-4. Add the [scripts](https://docs.npmjs.com/cli/run-script) key to the development `package.json`:
+5. Add the [scripts](https://docs.npmjs.com/cli/run-script) key to the development `package.json`:
     ```json
     "scripts": {
       "app:dir": "electron-builder --dir",
@@ -138,35 +156,34 @@ This instructs Yarn to use node-modules instead of PnP.
 
     To ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps"` to your `package.json`.
 
-5. If you have native addons of your own that are part of the application (not as a dependency), set [nodeGypRebuild](https://www.electron.build/docs/configuration) to `true`.
+6. If you have native addons of your own that are part of the application (not as a dependency), set [nodeGypRebuild](https://www.electron.build/docs/configuration) to `true`.
 
 Please note that everything is packaged into an asar archive [by default](https://www.electron.build/docs/configuration).
 
 For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](https://www.electron.build/docs/features/code-signing/code-signing#where-to-buy-code-signing-certificate).
 
 ## Programmatic Usage
-See `node_modules/electron-builder/out/index.d.ts`. Typings for TypeScript are provided and also can be found [here](https://www.electron.build/docs/api/index).
+TypeScript types are provided and can be found [here](https://www.electron.build/docs/api/index). See the full [programmatic usage guide](https://www.electron.build/docs/programmatic-usage).
 
-Code snippet provided below is also shown "in action" [here](https://www.electron.build/docs/programmatic-usage) as well.
 ```js
-"use strict"
+// ESM (recommended)
+import { build, Platform } from "electron-builder"
 
-const builder = require("electron-builder")
-const Platform = builder.Platform
-
-// Promise is returned
-builder.build({
+await build({
   targets: Platform.MAC.createTarget(),
   config: {
-   "//": "build options, see https://www.electron.build/"
+    // build options — see https://www.electron.build/
   }
 })
-  .then(() => {
-    // handle result
-  })
-  .catch((error) => {
-    // handle error
-  })
+```
+
+```js
+// CommonJS — also works on Node >=22.12.0
+const { build, Platform } = require("electron-builder")
+
+build({ targets: Platform.MAC.createTarget(), config: {} })
+  .then(() => { /* done */ })
+  .catch(console.error)
 ```
 
 ## Community Boilerplates
@@ -201,6 +218,8 @@ $env:DEBUG = "electron-builder"
 ```
 :::
 
+If you've identified a bug and want to report it, use [electron/minimal-repro](https://github.com/electron/minimal-repro) to create a minimal reproduction case. Attaching one to your issue significantly speeds up diagnosis.
+
 ## Donate
 
-We do this open source work in our free time. If you'd like us to invest more time on it, please [donate](https://www.electron.build/docs/donate).
+This open source work is accomplished during free time. If you'd like to have more time invested in it, please consider [donating](https://www.electron.build/docs/donate).

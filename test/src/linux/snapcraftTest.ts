@@ -259,7 +259,70 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
       effectiveOptionComputed: async ({ snap }) => {
         delete snap.platforms // arch-specific: varies by host; tested separately via armhf tests
         expect(snap).toMatchSnapshot()
-        expect(snap.apps?.[appName]?.command).toContain("--ozone-platform=x11")
+        // core24 always routes the command through the launcher script; forceX11's --ozone-platform=x11
+        // flag (which contains "=", forbidden inline by snapd) is passed through it.
+        expect(snap.apps?.[appName]?.command).toBe("command.sh")
+        return Promise.resolve(true)
+      },
+    })
+  })
+
+  test("core24 command always points at the launcher script and keeps it at the snap root", ({ expect }) => {
+    const appName = "sep"
+    return app(expect, {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: appName },
+        productName: "Sep",
+        // --js-flags="..." contains both `=` and `"`, which snapd forbids inline — passed via the launcher.
+        snapcraft: { base: "core24", core24: { executableArgs: ['--js-flags="--max-old-space-size=4096"'] } },
+      },
+      effectiveOptionComputed: async ({ snap }) => {
+        delete snap.platforms
+        expect(snap.apps?.[appName]?.command).toBe("command.sh")
+        // the launcher must live at the snap root, never organized under app/
+        const organize = snap.parts?.[appName]?.organize as Record<string, string> | undefined
+        expect(organize?.["command.sh"]).toBeUndefined()
+        return Promise.resolve(true)
+      },
+    })
+  })
+
+  test("core24 removes chrome-sandbox when launching with --no-sandbox", ({ expect }) => {
+    const appName = "sep"
+    return app(expect, {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: appName },
+        productName: "Sep",
+        // custom string plugs => no browser-support allow-sandbox => --no-sandbox is injected
+        snapcraft: { base: "core24", core24: { plugs: ["network"] } },
+      },
+      effectiveOptionComputed: async ({ snap }) => {
+        delete snap.platforms
+        expect(snap.apps?.[appName]?.command).toBe("command.sh")
+        const organize = snap.parts?.[appName]?.organize as Record<string, string> | undefined
+        expect(organize?.["chrome-sandbox"]).toBeUndefined()
+        return Promise.resolve(true)
+      },
+    })
+  })
+
+  test("core24 keeps chrome-sandbox when browser-support sandbox is allowed", ({ expect }) => {
+    const appName = "sep"
+    return app(expect, {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: appName },
+        productName: "Sep",
+        // default config injects browser-support with allow-sandbox:true => no --no-sandbox
+        snapcraft: { base: "core24" },
+      },
+      effectiveOptionComputed: async ({ snap }) => {
+        delete snap.platforms
+        expect(snap.apps?.[appName]?.command).toBe("command.sh")
+        const organize = snap.parts?.[appName]?.organize as Record<string, string> | undefined
+        expect(organize?.["chrome-sandbox"]).toBe("app/chrome-sandbox")
         return Promise.resolve(true)
       },
     })
@@ -675,6 +738,22 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
           snapcraft: {
             base: "core24",
             core24: { useMultipass: true },
+          },
+        },
+      })
+    })
+
+    // End-to-end check that snapcraft accepts the generated launcher-script command and the
+    // chrome-sandbox removal: forceX11 produces a "=" arg (forbidden inline) and the custom
+    // string plugs force --no-sandbox (which strips chrome-sandbox).
+    test("core24 useMultipass full build with launcher script + no-sandbox", async ({ expect }) => {
+      await app(expect, {
+        targets: snapTarget,
+        config: {
+          productName: "Sep",
+          snapcraft: {
+            base: "core24",
+            core24: { useMultipass: true, forceX11: true, plugs: ["network"] },
           },
         },
       })

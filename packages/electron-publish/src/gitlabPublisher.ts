@@ -5,12 +5,12 @@ import { readFile } from "fs/promises"
 import { configureRequestOptions, GitlabOptions, GitlabReleaseInfo, hashSensitiveValue, parseJson, HttpError } from "builder-util-runtime"
 import { ClientRequest } from "http"
 import { Lazy } from "lazy-val"
-import * as mime from "mime"
-import * as FormData from "form-data"
+import mime from "mime"
+import FormData from "form-data"
 import { URL } from "url"
-import { HttpPublisher } from "./httpPublisher"
-import { PublishContext } from "./index"
-import { trimStringWithWarn } from "./util"
+import { HttpPublisher } from "./httpPublisher.js"
+import { PublishContext } from "./index.js"
+import { trimStringWithWarn } from "./util.js"
 
 type RequestProcessor = (request: ClientRequest, reject: (error: Error) => void) => void
 

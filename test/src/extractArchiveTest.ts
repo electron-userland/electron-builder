@@ -1,17 +1,12 @@
-import { extractArchive } from "app-builder-lib/src/util/electronGet"
+import { moveDirAtomic } from "builder-util"
+import { extractArchive, isSafeExtractPath } from "app-builder-lib/src/util/electronGet"
 import * as fs from "fs/promises"
 import * as os from "os"
 import * as path from "path"
-import { afterEach, beforeEach, describe, test } from "vitest"
+import { afterEach, beforeEach, describe, test, vi } from "vitest"
 
-let tmpDir: string
-
-beforeEach(async () => {
-  tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "eb-extract-test-"))
-})
-
-afterEach(async () => {
-  await fs.rm(tmpDir, { recursive: true, force: true })
+afterEach(() => {
+  vi.restoreAllMocks()
 })
 
 // Minimal CRC32 implementation needed for non-empty ZIP entries.
@@ -119,7 +114,12 @@ function buildZipWithSymlinkEntry(linkName: string, target: string): Buffer {
   return Buffer.concat([lfh, content, cdh, eocd])
 }
 
-describe("extractArchive ZIP security guards", () => {
+describe("extractArchive ZIP security guards", { sequential: true }, () => {
+  let tmpDir: string
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
+  })
+
   test("blocks a path traversal entry (../escape.txt)", async ({ expect }) => {
     const zipPath = path.join(tmpDir, "traversal.zip")
     await fs.writeFile(zipPath, buildZipWithFileEntry("../escape.txt"))
@@ -139,5 +139,115 @@ describe("extractArchive ZIP security guards", () => {
     await fs.writeFile(zipPath, buildZipWithSymlinkEntry("link.txt", "../../outside"))
     const extractDir = path.join(tmpDir, "out")
     await expect(extractArchive(zipPath, extractDir)).rejects.toThrow("Symlink target escapes extraction dir")
+  })
+
+  test("extracts a valid zip entry to the correct destination", async ({ expect }) => {
+    const content = Buffer.from("hello world")
+    const zipPath = path.join(tmpDir, "valid.zip")
+    await fs.writeFile(zipPath, buildZipWithFileEntry("hello.txt", content))
+    const extractDir = path.join(tmpDir, "out")
+    await extractArchive(zipPath, extractDir)
+    const result = await fs.readFile(path.join(extractDir, "hello.txt"))
+    expect(result.toString()).toBe("hello world")
+  })
+})
+
+// ─── isSafeExtractPath ────────────────────────────────────────────────────────
+
+describe("isSafeExtractPath", () => {
+  const sep = path.sep
+
+  test("allows a direct child of dir", ({ expect }) => {
+    const dir = path.join(os.tmpdir(), "base")
+    expect(isSafeExtractPath(path.join(dir, "file.txt"), dir)).toBe(true)
+  })
+
+  test("allows a nested child of dir", ({ expect }) => {
+    const dir = path.join(os.tmpdir(), "base")
+    expect(isSafeExtractPath(path.join(dir, "sub", "file.txt"), dir)).toBe(true)
+  })
+
+  test("blocks a sibling of dir (same-length prefix attack)", ({ expect }) => {
+    const dir = path.join(os.tmpdir(), "base")
+    // e.g. /tmp/base-evil — starts with /tmp/base but is not inside it
+    const sibling = dir + "-evil" + sep + "file.txt"
+    expect(isSafeExtractPath(sibling, dir)).toBe(false)
+  })
+
+  test("allows destPath === dir (directory entry)", ({ expect }) => {
+    const dir = path.join(os.tmpdir(), "base")
+    expect(isSafeExtractPath(dir, dir)).toBe(true)
+  })
+
+  test("blocks a path traversal that escapes via ..", ({ expect }) => {
+    const dir = path.join(os.tmpdir(), "base")
+    // path.resolve would have already normalised the .. away, giving a path outside dir
+    const escaped = path.resolve(dir, "..", "outside", "file.txt")
+    expect(isSafeExtractPath(escaped, dir)).toBe(false)
+  })
+
+  // Windows case-insensitivity: simulate by checking with uppercase dir on win32.
+  // On non-Windows platforms the check remains case-sensitive (by design).
+  test("is case-insensitive on win32, case-sensitive on posix", ({ expect }) => {
+    if (process.platform === "win32") {
+      const dir = "C:\\builds\\dist\\win-unpacked.tmp"
+      expect(isSafeExtractPath("C:\\Builds\\Dist\\Win-Unpacked.tmp\\electron.exe", dir)).toBe(true)
+    } else {
+      const dir = "/tmp/base"
+      // On POSIX, different case is a genuinely different path — must not be treated as safe
+      expect(isSafeExtractPath("/tmp/BASE/file.txt", dir)).toBe(false)
+    }
+  })
+})
+
+// ─── moveDirAtomic ────────────────────────────────────────────────────────────
+
+describe("moveDirAtomic", { sequential: true }, () => {
+  let tmpDir: string
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
+  })
+
+  test("moves a directory with files to the destination", async ({ expect }) => {
+    const src = path.join(tmpDir, "src")
+    const dest = path.join(tmpDir, "dest")
+    await fs.mkdir(src)
+    await fs.writeFile(path.join(src, "file.txt"), "content")
+
+    await moveDirAtomic(src, dest)
+
+    const destStat = await fs.stat(dest)
+    expect(destStat.isDirectory()).toBe(true)
+    const content = await fs.readFile(path.join(dest, "file.txt"), "utf-8")
+    expect(content).toBe("content")
+    // source must be gone
+    await expect(fs.access(src)).rejects.toMatchObject({ code: "ENOENT" })
+  })
+
+  test("moves when destination was pre-removed before the call", async ({ expect }) => {
+    const src = path.join(tmpDir, "src")
+    const dest = path.join(tmpDir, "dest")
+    await fs.mkdir(src)
+    await fs.writeFile(path.join(src, "new.txt"), "new")
+    await fs.mkdir(dest)
+    await fs.writeFile(path.join(dest, "old.txt"), "old")
+
+    // Rename on most systems will fail when dest already exists as a directory;
+    // moveDirAtomic is expected to be called after fs.rm(dest) in extractArchive.
+    // But if dest was already removed, this should work fine.
+    await fs.rm(dest, { recursive: true, force: true })
+    await moveDirAtomic(src, dest)
+
+    const files = await fs.readdir(dest)
+    expect(files).toContain("new.txt")
+    expect(files).not.toContain("old.txt")
+  })
+
+  test("throws when source does not exist", async ({ expect }) => {
+    const src = path.join(tmpDir, "nonexistent")
+    const dest = path.join(tmpDir, "dest")
+    // Should throw (and not loop forever). We don't care about the exact code since
+    // multiple retries produce the same error class.
+    await expect(moveDirAtomic(src, dest)).rejects.toThrow()
   })
 })

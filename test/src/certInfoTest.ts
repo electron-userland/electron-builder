@@ -1,22 +1,27 @@
-import * as os from "os"
 import * as path from "path"
 import { execSync } from "child_process"
-import { writeFileSync } from "fs"
-import { mkdtemp } from "fs/promises"
+import { writeFileSync, readFileSync } from "fs"
+import { TmpDir } from "temp-file"
 import { afterAll, beforeAll, describe, it, expect } from "vitest"
-import { writeFile, remove } from "fs-extra"
-import { readCertInfo, _testingOnly } from "app-builder-lib/src/codeSign/certInfo"
+import { writeFile } from "fs-extra"
+import { readCertInfo, _testingOnly } from "app-builder-lib/internal"
 
 const { pkcs12PbeDeriveKey, pkcs12PasswordToUtf16, rc2CbcDecrypt, MAX_PKCS12_PBE_ITERATIONS } = _testingOnly
-import { WIN_CSC_LINK } from "./helpers/codeSignData"
+
+// Generating legacy-PBE PKCS#12 (3DES / RC2-40) needs OpenSSL's `legacy` provider. The GitHub Windows runner's
+// OpenSSL build does not ship it, so the few tests that read such fixtures are skipped there — the pure-TS
+// decryptors they exercise are platform-independent and fully covered on Linux/macOS.
+const legacyPbeSupported = process.platform !== "win32"
+const itLegacyPbe = it.skipIf(!legacyPbeSupported)
 
 // ─── Test fixture paths ───────────────────────────────────────────────────────
 
+const sharedTmpDir = new TmpDir("certinfo-test")
 let tmpDir: string
 let FULL_SUBJECT_PFX: string
 let CN_ONLY_PFX: string
 let NO_EKU_PFX: string
-let WIN_CSC_PFX: string
+let LEGACY_3DES_PFX: string
 let OU_PFX: string
 let SPECIAL_PFX: string
 let MULTI_CERT_PFX: string
@@ -76,8 +81,29 @@ function genMultiCertPfx(password: string, name: string): string {
   return pfx
 }
 
+// Generates a PFX whose cert/key bags are encrypted with a legacy pkcs-12PbeIds scheme (e.g. 3DES, RC2-40),
+// exercising app-builder-lib's pure-TS PBE decryptors. OpenSSL 3 requires -legacy + explicit alg flags (and
+// -macalg sha1 for the legacy MAC) to emit these; LibreSSL / OpenSSL 1.x emit them via -certpbe/-keypbe alone.
+function genLegacyPbePfx(subj: string, password: string, certpbe: string, name: string): string {
+  const key = path.join(tmpDir, `${name}.key`)
+  const crt = path.join(tmpDir, `${name}.crt`)
+  const pfx = path.join(tmpDir, `${name}.pfx`)
+  const version = execSync("openssl version", { stdio: ["pipe", "pipe", "pipe"] })
+    .toString()
+    .trim()
+  const major = /^OpenSSL (\d+)\./.exec(version)
+  const isOpenSsl3 = major != null && Number(major[1]) >= 3
+  const pbeFlags = isOpenSsl3 ? `-legacy -certpbe ${certpbe} -keypbe PBE-SHA1-3DES -macalg sha1` : `-certpbe ${certpbe} -keypbe PBE-SHA1-3DES`
+  execSync(
+    `openssl req -x509 -newkey rsa:1024 -keyout "${key}" -out "${crt}" -sha256 -days 7300 -nodes -subj "${subj}" -addext "extendedKeyUsage=codeSigning" -addext "basicConstraints=CA:false"`,
+    { stdio: "pipe" }
+  )
+  execSync(`openssl pkcs12 -export -out "${pfx}" -inkey "${key}" -in "${crt}" -passout "pass:${password}" ${pbeFlags}`, { stdio: "pipe" })
+  return pfx
+}
+
 beforeAll(async () => {
-  tmpDir = await mkdtemp(path.join(os.tmpdir(), "certinfo-test-"))
+  tmpDir = await sharedTmpDir.createTempDir()
 
   FULL_SUBJECT_PFX = genSigningPfx("/CN=Test Publisher/O=Test Org/L=San Francisco/ST=California/C=US", "testpassword", "full")
   CN_ONLY_PFX = genSigningPfx("/CN=My Company Inc.", "pw", "cn")
@@ -86,33 +112,25 @@ beforeAll(async () => {
   SPECIAL_PFX = genSigningPfx("/CN=Publisher, Inc. \\+ Partners/C=US", "pw", "special")
   MULTI_CERT_PFX = genMultiCertPfx("multicertpw", "multicert")
 
-  WIN_CSC_PFX = path.join(tmpDir, "wincsc.pfx")
-  TRUNCATED_PFX = path.join(tmpDir, "truncated.pfx")
-  RC2_40_PFX = path.join(tmpDir, "rc2-40.pfx")
+  // Legacy-PBE fixtures require OpenSSL's `legacy` provider, which the GitHub Windows runner's OpenSSL does not
+  // ship (`unable to load provider legacy`). The schemes they exercise feed the pure-TS PBE decryptors, which
+  // are platform-independent and fully covered on Linux/macOS, so we only generate them where openssl can.
+  if (legacyPbeSupported) {
+    // Legacy 3DES PFX (pbeWithSHAAnd3KeyTripleDESCBC), empty password — exercises the legacy PBE decryptor and
+    // the empty-password code path.
+    LEGACY_3DES_PFX = genLegacyPbePfx("/CN=Legacy 3DES Signer", "", "PBE-SHA1-3DES", "legacy3des")
+    // RC2-40 PFX (pbeWithSHAAnd40BitRC2CBC, OID 1.2.840.113549.1.12.1.6) — drives the pure-TS RFC 2268 path,
+    // since Node.js / OpenSSL 3 moved RC2 to the legacy provider (not loaded by default).
+    RC2_40_PFX = genLegacyPbePfx("/CN=RC2 Test Signer", "testrc2", "PBE-SHA1-RC2-40", "rc2-40")
+  }
 
-  await Promise.all([
-    writeFile(WIN_CSC_PFX, Buffer.from(WIN_CSC_LINK.replace("data:application/x-pkcs12;base64,", ""), "base64")),
-    // Truncated PFX: first 50 bytes of WIN_CSC_LINK (incomplete ASN.1 structure)
-    writeFile(TRUNCATED_PFX, Buffer.from(WIN_CSC_LINK.replace("data:application/x-pkcs12;base64,", ""), "base64").subarray(0, 50)),
-    // RC2-40 PFX: generated with `openssl pkcs12 -certpbe PBE-SHA1-RC2-40 -keypbe PBE-SHA1-3DES -legacy`
-    // Certificates are encrypted with pbeWithSHAAnd40BitRC2CBC (OID 1.2.840.113549.1.12.1.6),
-    // which is the format used by Windows and OpenSSL ≤1.x for PKCS#12 cert bag encryption.
-    // Node.js 22 / OpenSSL 3 moved RC2 to the legacy provider (not loaded by default), so our
-    // pure-TypeScript RFC 2268 implementation is exercised here.
-    writeFile(
-      RC2_40_PFX,
-      Buffer.from(
-        "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",
-        "base64"
-      )
-    ),
-  ])
+  // Truncated PFX: first 50 bytes of a (modern) real PFX — incomplete ASN.1; works on all platforms.
+  TRUNCATED_PFX = path.join(tmpDir, "truncated.pfx")
+  writeFileSync(TRUNCATED_PFX, readFileSync(FULL_SUBJECT_PFX).subarray(0, 50))
 })
 
 afterAll(async () => {
-  if (tmpDir) {
-    await remove(tmpDir).catch(() => null)
-  }
+  await sharedTmpDir.cleanup()
 })
 
 // ─── Unit tests ───────────────────────────────────────────────────────────────
@@ -132,10 +150,10 @@ describe("readCertInfo — happy path", () => {
     expect(result.bloodyMicrosoftSubjectDn).toBe("CN=My Company Inc.")
   })
 
-  it("handles the existing WIN_CSC_LINK test certificate (empty password)", async () => {
-    const result = await readCertInfo(WIN_CSC_PFX, "")
-    expect(result.commonName).toBe("test-ci-cert")
-    expect(result.bloodyMicrosoftSubjectDn).toBe("CN=test-ci-cert")
+  itLegacyPbe("handles the legacy 3DES test certificate (empty password)", async () => {
+    const result = await readCertInfo(LEGACY_3DES_PFX, "")
+    expect(result.commonName).toBe("Legacy 3DES Signer")
+    expect(result.bloodyMicrosoftSubjectDn).toBe("CN=Legacy 3DES Signer")
   })
 })
 
@@ -205,7 +223,7 @@ describe("pkcs12PasswordToUtf16 encoding", () => {
 
 describe("pkcs12PbeDeriveKey key derivation", () => {
   // Reference vectors computed from the implementation and cross-checked by verifying
-  // that WIN_CSC_LINK (encrypted with pbeWithSHAAnd3KeyTripleDESCBC) decrypts correctly.
+  // that the legacy cert (encrypted with pbeWithSHAAnd3KeyTripleDESCBC) decrypts correctly.
 
   const SALT_A = Buffer.from([0x0a, 0x58, 0xcf, 0x64, 0x53, 0x0d, 0x82, 0x3f])
   const PWD_SMEG = pkcs12PasswordToUtf16("smeg")
@@ -316,10 +334,10 @@ describe("readCertInfo — multiple certificates in PFX", () => {
 // ─── readCertInfo — legacy PBE error path ────────────────────────────────────
 
 describe("readCertInfo — legacy PBE wrong password", () => {
-  it("throws 'password incorrect' for the legacy pbeWithSHAAnd3KeyTripleDESCBC encrypted WIN_CSC_LINK cert", async () => {
-    // WIN_CSC_LINK uses pbeWithSHAAnd3KeyTripleDESCBC. Wrong password must be caught
+  itLegacyPbe("throws 'password incorrect' for the legacy pbeWithSHAAnd3KeyTripleDESCBC encrypted cert", async () => {
+    // The legacy cert uses pbeWithSHAAnd3KeyTripleDESCBC. Wrong password must be caught
     // by MAC verification before the decryption path is even reached.
-    await expect(readCertInfo(WIN_CSC_PFX, "definitelyWrongPassword")).rejects.toThrow("password incorrect")
+    await expect(readCertInfo(LEGACY_3DES_PFX, "definitelyWrongPassword")).rejects.toThrow("password incorrect")
   })
 })
 
@@ -405,17 +423,16 @@ describe("rc2CbcDecrypt — known-answer tests", () => {
 // ─── readCertInfo — RC2-40 encrypted PFX ─────────────────────────────────────
 
 describe("readCertInfo — pbeWithSHAAnd40BitRC2CBC (OID 1.2.840.113549.1.12.1.6)", () => {
-  it("extracts certificate info from a PFX whose cert bags are encrypted with RC2-40", async () => {
-    // This PFX was generated with:
-    //   openssl pkcs12 -export -certpbe PBE-SHA1-RC2-40 -keypbe PBE-SHA1-3DES -legacy
+  itLegacyPbe("extracts certificate info from a PFX whose cert bags are encrypted with RC2-40", async () => {
+    // RC2_40_PFX is generated at runtime via genLegacyPbePfx (-certpbe PBE-SHA1-RC2-40).
     // It exercises the pure-TS RFC 2268 RC2-CBC path that was added because
-    // Node.js 22 / OpenSSL 3 no longer support RC2 in the default crypto provider.
+    // Node.js / OpenSSL 3 no longer support RC2 in the default crypto provider.
     const result = await readCertInfo(RC2_40_PFX, "testrc2")
     expect(result.commonName).toBe("RC2 Test Signer")
     expect(result.bloodyMicrosoftSubjectDn).toBe("CN=RC2 Test Signer")
   })
 
-  it("throws 'password incorrect' for the RC2-40 PFX with a wrong password", async () => {
+  itLegacyPbe("throws 'password incorrect' for the RC2-40 PFX with a wrong password", async () => {
     await expect(readCertInfo(RC2_40_PFX, "wrongpassword")).rejects.toThrow("password incorrect")
   })
 })

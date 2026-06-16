@@ -2,10 +2,10 @@ import { log } from "builder-util"
 import { BaseS3Options } from "builder-util-runtime"
 import { mkdir, symlink } from "fs/promises"
 import * as path from "path"
-import { PublishContext, UploadTask } from ".."
-import { Publisher } from "../publisher"
-import type { AwsCredentials } from "./awsCredentials"
-import { getS3ContentType, startS3PutObject } from "./s3UploadHelper"
+import { PublishContext, UploadTask } from "../index.js"
+import { Publisher } from "../publisher.js"
+import type { AwsCredentials } from "./awsCredentials.js"
+import { getS3ContentType, startS3PutObject } from "./s3UploadHelper.js"
 
 export interface S3UploadConfig {
   region: string
