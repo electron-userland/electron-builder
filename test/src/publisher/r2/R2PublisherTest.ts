@@ -126,6 +126,44 @@ describe("R2Publisher.checkAndResolveOptions", () => {
     })
   })
 
+  /**
+   * Security: publicUrl is baked into app-update.yml and consumed by electron-updater on
+   * end-user machines. A plaintext-http or malformed value would downgrade update transport
+   * (MITM exposure) for every client. Unlike s3/spaces the host is operator-supplied, so it
+   * must be validated at build time. [CF-PUBLIC]
+   */
+  describe("publicUrl validation (security: end-user download transport)", () => {
+    test("accepts a valid https custom-domain publicUrl", async () => {
+      const opts = R2TestFixtures.createOptions({ publicUrl: R2TestFixtures.PUBLIC_URLS.customDomain })
+      await expect(R2Publisher.checkAndResolveOptions(opts, null, true)).resolves.toBeUndefined()
+    })
+
+    test("accepts a valid https r2.dev publicUrl", async () => {
+      const opts = R2TestFixtures.createOptions({ publicUrl: R2TestFixtures.PUBLIC_URLS.r2dev })
+      await expect(R2Publisher.checkAndResolveOptions(opts, null, true)).resolves.toBeUndefined()
+    })
+
+    test("accepts a null/omitted publicUrl (falls back to S3 API endpoint)", async () => {
+      const opts = R2TestFixtures.createOptions({ publicUrl: null })
+      await expect(R2Publisher.checkAndResolveOptions(opts, null, true)).resolves.toBeUndefined()
+    })
+
+    test("rejects a plaintext http publicUrl (transport downgrade)", () => {
+      const opts = R2TestFixtures.createOptions({ publicUrl: "http://releases.example.com" })
+      expect(() => R2Publisher.checkAndResolveOptions(opts, null, true)).toThrow(/https/)
+    })
+
+    test("rejects a malformed publicUrl", () => {
+      const opts = R2TestFixtures.createOptions({ publicUrl: "not a url" })
+      expect(() => R2Publisher.checkAndResolveOptions(opts, null, true)).toThrow(/valid URL/)
+    })
+
+    test("rejects a non-http(s) scheme publicUrl (e.g. file://)", () => {
+      const opts = R2TestFixtures.createOptions({ publicUrl: "file:///etc/passwd" })
+      expect(() => R2Publisher.checkAndResolveOptions(opts, null, true)).toThrow(/https/)
+    })
+  })
+
   describe("channel propagation", () => {
     test("copies channelFromAppVersion into options.channel when options.channel is null", async () => {
       const opts = R2TestFixtures.createOptions({ channel: null })

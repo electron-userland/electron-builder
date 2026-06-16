@@ -35,6 +35,29 @@ export class R2Publisher extends BaseS3Publisher {
       )
     }
 
+    // `publicUrl` is baked into app-update.yml and used by electron-updater on end-user machines
+    // to download update metadata and binaries. Validate it here so a misconfigured (or injected)
+    // value fails at build time rather than silently downgrading update transport for end users.
+    // Unlike s3/spaces — whose download host is always an https URL synthesised by electron-builder —
+    // R2's publicUrl is operator-supplied free text, so it must be checked explicitly.
+    if (!isEmptyOrSpaces(options.publicUrl)) {
+      let parsed: URL
+      try {
+        parsed = new URL(options.publicUrl)
+      } catch {
+        throw new InvalidConfigurationError(
+          `"publicUrl" for "r2" publish provider must be a valid URL (found: "${options.publicUrl}"). ` +
+            `Use your bucket's custom domain or r2.dev subdomain (see https://developers.cloudflare.com/r2/buckets/public-buckets/).`
+        )
+      }
+      if (parsed.protocol !== "https:") {
+        throw new InvalidConfigurationError(
+          `"publicUrl" for "r2" publish provider must use https (found: "${options.publicUrl}"). ` +
+            `electron-updater downloads updates from this URL on end-user machines; plaintext http is not allowed.`
+        )
+      }
+    }
+
     if (options.channel == null && channelFromAppVersion != null) {
       options.channel = channelFromAppVersion
     }
