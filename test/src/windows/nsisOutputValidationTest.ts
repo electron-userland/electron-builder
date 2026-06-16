@@ -1,7 +1,6 @@
 import { promises as fsp } from "fs"
-import * as os from "os"
 import * as path from "path"
-import { afterEach, beforeEach } from "vitest"
+import { beforeEach } from "vitest"
 import { checkMakensisOutput, verifyInstallerSize } from "app-builder-lib/internal"
 import type { Defines } from "app-builder-lib/internal"
 
@@ -46,15 +45,11 @@ describe("checkMakensisOutput", () => {
 
 // ─── verifyInstallerSize ────────────────────────────────────────────────────
 
-describe("verifyInstallerSize", () => {
+describe("verifyInstallerSize", { sequential: true }, () => {
   let tmpDir: string
 
-  beforeEach(async () => {
-    tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), "eb-nsis-test-"))
-  })
-
-  afterEach(async () => {
-    await fsp.rm(tmpDir, { recursive: true, force: true })
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
   })
 
   async function writeFile(name: string, size: number): Promise<string> {

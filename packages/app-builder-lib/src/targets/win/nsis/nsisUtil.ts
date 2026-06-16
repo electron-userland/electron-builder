@@ -3,6 +3,7 @@ import { PackageFileInfo } from "builder-util-runtime"
 import * as fs from "fs/promises"
 import * as path from "path"
 import * as zlib from "zlib"
+import { isWindowsSigningDisabled } from "../../../options/winOptions.js"
 import { getNsisElevatePath } from "../../../toolsets/nsis.js"
 import { getPath7za } from "../../../toolsets/7zip.js"
 import { getTemplatePath } from "../../../util/pathManager.js"
@@ -100,8 +101,7 @@ export class CopyElevateHelper {
     const stagedElevate = path.join(resourcesDir, "elevate.exe")
     await copyFile(elevatePath, stagedElevate, false)
 
-    const { signAndEditExecutable, signExecutable } = target.packager.platformOptions
-    if (signAndEditExecutable !== false && signExecutable !== false) {
+    if (!isWindowsSigningDisabled(target.packager.platformOptions)) {
       await target.packager.signIf(stagedElevate)
     }
 

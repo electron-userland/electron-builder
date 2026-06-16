@@ -6,10 +6,6 @@ import * as childProcess from "child_process"
 import * as nodeFs from "node:fs"
 import { EventEmitter } from "events"
 import type { TmpDir } from "builder-util"
-import * as os from "os"
-import * as path from "path"
-import { randomBytes } from "crypto"
-import { existsSync, unlinkSync } from "fs"
 
 vi.mock("child_process", async importOriginal => {
   const actual = await importOriginal<typeof import("child_process")>()
@@ -71,8 +67,8 @@ async function waitForCloseCb() {
   }
 }
 
-beforeEach(() => {
-  OUTPUT_FILE = path.join(os.tmpdir(), `output-${randomBytes(4).toString("hex")}.json`)
+beforeEach(async context => {
+  OUTPUT_FILE = await context.tmpDir.getTempFile({ suffix: ".json" })
   closeCb = undefined
   stderrDataCb = undefined
 
@@ -110,12 +106,9 @@ beforeEach(() => {
 afterEach(() => {
   Object.defineProperty(process, "platform", { value: originalPlatform, configurable: true })
   vi.clearAllMocks()
-  if (existsSync(OUTPUT_FILE)) {
-    unlinkSync(OUTPUT_FILE)
-  }
 })
 
-describe("streamCollectorCommandToFile", () => {
+describe("streamCollectorCommandToFile", { sequential: true }, () => {
   describe("Windows PowerShell -EncodedCommand wrapping", () => {
     test(".cmd file: spawn receives powershell.exe with -EncodedCommand", async ({ expect }) => {
       setPlatform("win32")

@@ -165,7 +165,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
    * Node modules that must be unpacked will be detected automatically. Use {@link AsarOptions.unpack} to specify additional files to unpack.
    * @default true
    */
-  readonly asar?: AsarOptions | false | null
+  readonly asar?: AsarOptions | boolean | null
 
   /** @private */
   readonly icon?: string | null

@@ -1,6 +1,86 @@
 import { TargetConfiguration, TargetSpecificOptions } from "../core.js"
 import { PlatformSpecificBuildOptions } from "./PlatformSpecificBuildOptions.js"
 import { CustomMacSign } from "../macPackager.js"
+import type { OnlySignOptions } from "@electron/osx-sign"
+import type { MakeUniversalOpts } from "@electron/universal"
+
+/**
+ * Options forwarded to `@electron/universal`'s `makeUniversalApp`.
+ * Electron-builder fills in the app paths and `force`; everything else is configurable here
+ * and auto-tracks upstream additions to `MakeUniversalOpts`.
+ *
+ * @see https://github.com/electron/universal
+ */
+export interface ElectronUniversalOptions extends Omit<MakeUniversalOpts, "x64AppPath" | "arm64AppPath" | "outAppPath" | "force"> {
+  /**
+   * Whether to merge x64 and arm64 ASARs into one.
+   *
+   * @default true
+   */
+  mergeASARs?: boolean
+}
+
+/**
+ * Signing options passed to `@electron/osx-sign`. Electron-builder owns the fields it must control
+ * itself — `app`, `keychain`, `platform`, `version`, `optionsForFile`, and `type` (derived from the
+ * build flavor: `mas-dev` → `development`, otherwise `distribution`) — and forwards everything else.
+ *
+ * Additionally exposes a small set of per-file convenience fields that electron-builder maps
+ * internally through `optionsForFile`.
+ *
+ * @see https://packages.electronjs.org/osx-sign
+ */
+export interface ElectronSignOptions extends Omit<OnlySignOptions, "optionsForFile" | "version" | "type"> {
+  /**
+   * The signing identity (certificate name or SHA-1 hash). Applies to both app signing and DMG signing.
+   * Prefer the environment variables `CSC_LINK` / `CSC_NAME` over hardcoding this value.
+   *
+   * - **Not set** (default): electron-builder searches the keychain for a valid certificate.
+   * - **`null`**: skip signing entirely.
+   * - **`"-"`**: ad-hoc signing (requires disabling library validation — see `hardenedRuntime`).
+   */
+  readonly identity?: string | null
+  /**
+   * Path to the main app entitlements file.
+   * Falls back to `build/entitlements.mac.plist` if it exists, then to `@electron/osx-sign`'s
+   * built-in defaults.
+   */
+  readonly entitlements?: string | null
+  /**
+   * Path to child entitlements inherited by embedded frameworks and bundles.
+   * Falls back to `build/entitlements.mac.inherit.plist` if it exists.
+   */
+  readonly entitlementsInherit?: string | null
+  /**
+   * Path to entitlements for the Login Helper.
+   * Required when using App Sandbox, because the Login Helper cannot inherit entitlements.
+   * Defaults to the value of `entitlements`.
+   */
+  readonly entitlementsLoginHelper?: string | null
+  /**
+   * Whether to enable [Hardened Runtime](https://developer.apple.com/documentation/security/hardened_runtime).
+   *
+   * Hardened Runtime is a prerequisite for notarization (mandatory on macOS 10.15+).
+   * Defaults to `true` for `darwin` builds and `false` for `mas-dev`.
+   *
+   * @see https://github.com/electron/fuses
+   */
+  readonly hardenedRuntime?: boolean
+  /**
+   * Path to a [requirements file](https://developer.apple.com/library/mac/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html).
+   * Not applicable for MAS.
+   */
+  readonly requirements?: string | null
+  /**
+   * URL of the timestamp authority server. Passed per-file to `codesign --timestamp=<url>`.
+   */
+  readonly timestamp?: string | null
+  /**
+   * Extra arguments passed to each `codesign` invocation.
+   * @example ["--deep"]
+   */
+  readonly additionalArguments?: Array<string> | null
+}
 
 export type MacOsTargetName = "default" | "dmg" | "mas" | "mas-dev" | "pkg" | "7z" | "zip" | "tar.xz" | "tar.lz" | "tar.gz" | "tar.bz2" | "dir"
 
@@ -22,53 +102,12 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly target?: Array<MacOsTargetName | TargetConfiguration> | MacOsTargetName | TargetConfiguration | null
 
   /**
-   * The signing identity (certificate name) to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://www.electron.build/code-signing) instead of specifying this option.
-   * MAS installer identity is specified in the [mas](https://www.electron.build/mas).
-   *
-   * - **Not set** (default): electron-builder searches the keychain for a valid signing certificate. If none is found, signing is skipped for all architectures — there is no automatic ad-hoc fallback.
-   * - **`null`**: skip signing entirely.
-   * - **`"-"`**: opt in to ad-hoc signing explicitly. Note that `hardenedRuntime: true` (the default) combined with ad-hoc signing requires
-   *   the [`com.apple.security.cs.disable-library-validation`](https://developer.apple.com/documentation/BundleResources/Entitlements/com.apple.security.cs.disable-library-validation)
-   *   entitlement to prevent app launch failures; otherwise set `hardenedRuntime: false`.
-   */
-  readonly identity?: string | null
-
-  /**
    * The path to application icon.
    * Accepts `.icns` (legacy) or `.icon` (Icon Composer asset).
    * If a `.icon` asset is provided, it will be preferred and compiled to an asset catalog.
    * @default build/icon.icns
    */
   readonly icon?: string | null
-
-  /**
-   * The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set).
-   * MAS entitlements is specified in the [mas](https://www.electron.build/mas).
-   * See [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.
-   * Be aware that your app may crash if the right entitlements are not set like `com.apple.security.cs.allow-jit` for example on arm64 builds with Electron 20+.
-   * See [Signing and Notarizing macOS Builds from the Electron documentation](https://www.electronjs.org/docs/latest/tutorial/code-signing#signing--notarizing-macos-builds) for more information.
-   */
-  readonly entitlements?: string | null
-
-  /**
-   * The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mac.inherit.plist` will be used if exists (it is a recommended way to set).
-   * See [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.
-   *
-   * This option only applies when signing with `entitlements` provided.
-   */
-  readonly entitlementsInherit?: string | null
-
-  /**
-   * Path to login helper entitlement file.
-   * When using App Sandbox, the the `com.apple.security.inherit` key that is normally in the inherited entitlements cannot be inherited since the login helper is a standalone executable.
-   * Defaults to the value provided for `entitlements`. This option only applies when signing with `entitlements` provided.
-   */
-  readonly entitlementsLoginHelper?: string | null
-
-  /**
-   * The path to the provisioning profile to use when signing, absolute or relative to the app root.
-   */
-  readonly provisioningProfile?: string | null
 
   /**
    * The `CFBundleVersion`. Do not use it unless [you need to](https://github.com/electron-userland/electron-builder/issues/565#issuecomment-230678643).
@@ -123,30 +162,14 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly helperNPBundleId?: string | null
 
   /**
-   * Whether to sign app for development or for distribution.
-   * @default distribution
-   */
-  readonly type?: "distribution" | "development" | null
-
-  /**
    * The extra entries for `Info.plist`.
    */
   readonly extendInfo?: any
 
   /**
-   * Paths of any extra binaries that need to be signed.
-   */
-  readonly binaries?: Array<string> | null
-
-  /**
    * The minimum version of macOS required for the app to run. Corresponds to `LSMinimumSystemVersion`.
    */
   readonly minimumSystemVersion?: string | null
-
-  /**
-   * Path of [requirements file](https://developer.apple.com/library/mac/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html) used in signing. Not applicable for MAS.
-   */
-  readonly requirements?: string | null
 
   /** @private */
   readonly cscInstallerLink?: string | null
@@ -159,83 +182,28 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly extraDistFiles?: Array<string> | string | null
 
   /**
-   * Whether your app has to be signed with hardened runtime.
+   * Codesigning configuration. The signing certificate is selected via `sign.identity` (or the
+   * `CSC_LINK` / `CSC_NAME` environment variables).
    *
-   * When using ad-hoc signing (`identity: "-"`), hardened runtime enforces library validation which
-   * will reject pre-signed Electron frameworks that carry a different Team ID. To resolve this either
-   * set `hardenedRuntime: false` or add the
-   * [`com.apple.security.cs.disable-library-validation`](https://developer.apple.com/documentation/BundleResources/Entitlements/com.apple.security.cs.disable-library-validation)
-   * entitlement to your entitlements file.
-   * @default true
-   */
-  readonly hardenedRuntime?: boolean
-
-  /**
-   * Whether to let `@electron/osx-sign` validate the signing or not.
-   * @default false
-   */
-  readonly gatekeeperAssess?: boolean
-
-  /**
-   * Whether to let `@electron/osx-sign` verify the contents or not.
-   * @default true
-   */
-  readonly strictVerify?: boolean
-
-  /**
-   * Whether to enable entitlements automation from `@electron/osx-sign`.
-   * @default true
-   */
-  readonly preAutoEntitlements?: boolean
-
-  /**
-   * Regex or an array of regex's that signal skipping signing a file.
-   */
-  readonly signIgnore?: Array<string> | string | null
-
-  /**
-   * The custom function (or path to file or module id) to sign an app bundle.
-   */
-  readonly sign?: CustomMacSign | string | null
-
-  /**
-   * Specify the URL of the timestamp authority server
-   */
-  readonly timestamp?: string | null
-
-  /**
-   * Whether to merge ASAR files for different architectures or not.
+   * - **Not set** (default): electron-builder auto-discovers a valid certificate in the keychain. If none is found, signing is skipped.
+   * - **`null`**: skip signing entirely.
+   * - **`string`**: path or module ID of a file that exports a {@link CustomMacSign} function.
+   * - **{@link CustomMacSign}**: inline custom signing function (JS/TS config only).
+   * - **{@link ElectronSignOptions}**: options forwarded directly to `@electron/osx-sign`.
    *
-   * This option has no effect unless building for "universal" arch.
-   * @default true
+   * @see {@link ElectronSignOptions}
+   * @see https://www.electron.build/code-signing
    */
-  readonly mergeASARs?: boolean
+  readonly sign?: CustomMacSign | ElectronSignOptions | string | null
 
   /**
-   * Minimatch pattern of paths that are allowed to be present in one of the
-   * ASAR files, but not in the other.
+   * Options forwarded to `@electron/universal` when building a universal (multi-arch) app.
+   * Has no effect unless the target arch is `universal`.
    *
-   * This option has no effect unless building for "universal" arch and applies
-   * only if `mergeASARs` is `true`.
+   * @see {@link ElectronUniversalOptions}
+   * @see https://github.com/electron/universal
    */
-  readonly singleArchFiles?: string | null
-
-  /**
-   * Minimatch pattern of paths that are allowed to be x64 binaries in both
-   * ASAR files
-   *
-   * This option has no effect unless building for "universal" arch and applies
-   * only if `mergeASARs` is `true`.
-   */
-  readonly x64ArchFiles?: string | null
-
-  /**
-   * Array of strings specifying additional arguments to pass to the `codesign` command used to sign a specific file.
-   *
-   * Some subresources that you may include in your Electron app may need to be signed with --deep, this is not typically safe to apply to the entire Electron app and therefore should be applied to just your file.
-   * Usage Example: `['--deep']`
-   */
-  readonly additionalArguments?: Array<string> | null
+  readonly universal?: ElectronUniversalOptions | null
 
   /**
    * Whether to disable electron-builder's [@electron/notarize](https://github.com/electron/notarize) integration.
@@ -431,23 +399,5 @@ export interface DmgContent {
   path?: string
 }
 
-export interface MasConfiguration extends MacConfiguration {
-  /**
-   * The path to entitlements file for signing the app. `build/entitlements.mas.plist` will be used if exists (it is a recommended way to set).
-   * See [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.
-   * Be aware that your app may crash if the right entitlements are not set like `com.apple.security.cs.allow-jit` for example on arm64 builds with Electron 20+.
-   * See [Signing and Notarizing macOS Builds from the Electron documentation](https://www.electronjs.org/docs/latest/tutorial/code-signing#signing--notarizing-macos-builds) for more information.
-   */
-  readonly entitlements?: string | null
-
-  /**
-   * The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mas.inherit.plist` will be used if exists (it is a recommended way to set).
-   * See [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.
-   */
-  readonly entitlementsInherit?: string | null
-
-  /**
-   * Paths of any extra binaries that need to be signed.
-   */
-  readonly binaries?: Array<string> | null
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface MasConfiguration extends MacConfiguration {}

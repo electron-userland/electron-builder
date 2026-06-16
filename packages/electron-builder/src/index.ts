@@ -33,7 +33,7 @@ export {
   Protocol,
   ReleaseInfo,
   ElectronBrandingOptions,
-  ElectronDownloadOptions,
+  ElectronGetOptions,
   CommonWindowsInstallerConfiguration,
   FileAssociation,
   MsiOptions,

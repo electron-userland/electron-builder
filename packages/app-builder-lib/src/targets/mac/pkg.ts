@@ -1,5 +1,5 @@
 import { Arch, debug, exec, statOrNull, use } from "builder-util"
-import { Nullish } from "builder-util-runtime"
+import { deepAssign, Nullish } from "builder-util-runtime"
 import { readdirSync } from "fs"
 import { readFile, unlink, writeFile } from "fs/promises"
 import * as path from "path"
@@ -47,12 +47,14 @@ export class PkgTarget extends Target {
     readonly outDir: string
   ) {
     super("pkg")
-    this.options = {
-      allowAnywhere: true,
-      allowCurrentUserHome: true,
-      allowRootDirectory: true,
-      ...this.packager.config.pkg,
-    }
+    this.options = deepAssign(
+      {
+        allowAnywhere: true,
+        allowCurrentUserHome: true,
+        allowRootDirectory: true,
+      },
+      packager.getOptionsForTarget<PkgOptions>("pkg")
+    )
   }
 
   async build(appPath: string, arch: Arch): Promise<any> {
@@ -82,7 +84,7 @@ export class PkgTarget extends Target {
     const componentPropertyListFile = path.join(appOutDir, `${filterCFBundleIdentifier(appInfo.id)}.plist`)
     const identity = (
       await Promise.all([
-        findIdentity(certType, options.identity || packager.platformOptions.identity, keychainFile),
+        findIdentity(certType, options.identity, keychainFile),
         this.customizeDistributionConfiguration(distInfoFile, appPath, extraPackages, arch),
         this.buildComponentPackage(appPath, componentPropertyListFile, innerPackageFile),
       ])
