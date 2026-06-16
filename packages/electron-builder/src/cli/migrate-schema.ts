@@ -140,6 +140,21 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
     }
   }
 
+  // ── 6.5. electronUpdaterCompatibility removed (now auto-detected) ────────
+  // The old option gated whether legacy update.yml fields (path, sha512, sha2,
+  // <channel>-mac.json) were written. v27 reads dependencies["electron-updater"]
+  // from package.json instead — ranges with a min < 4.0.0 still get the legacy
+  // fields, everything else gets the modern files[]-only format.
+  for (const target of [c, c.mac, c.win, c.linux]) {
+    if (target != null && "electronUpdaterCompatibility" in target) {
+      delete target.electronUpdaterCompatibility
+      changes.push({
+        key: "electronUpdaterCompatibility",
+        description: "removed electronUpdaterCompatibility (auto-detected from dependencies['electron-updater'] in v27)",
+      })
+    }
+  }
+
   // ── 7. GithubOptions.vPrefixedTagName → tagNamePrefix ─────────────────────
   if (c.publish != null) {
     migratePublishEntries(c, "publish", changes)
@@ -715,6 +730,7 @@ function printManualSteps() {
     "• Move disableAsarIntegrity → asar.disableIntegrity",
     "• Replace asar: true with an asar object (e.g. asar: {} or omit entirely - asar is enabled by default)",
     "• Remove appImage.systemIntegration",
+    "• Remove electronUpdaterCompatibility (auto-detected from dependencies['electron-updater'])",
     "• Rename snap → snapcraft; nest options under a base-named sub-key (default base: core20)",
     "• Replace vPrefixedTagName with tagNamePrefix on GitHub publish entries ('v' is the default prefix - just like before - but can now be customized with tagNamePrefix)",
     "• Move win.signtoolOptions → win.sign: { type: 'signtool', ...fields }",

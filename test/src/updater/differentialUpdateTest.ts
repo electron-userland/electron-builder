@@ -15,11 +15,7 @@ async function testMac(expect: ExpectStatic, arch: Arch) {
   const outDirs: Array<string> = []
   const tmpDir = new TmpDir("differential-updater-test")
   try {
-    await doBuild(expect, outDirs, Platform.MAC.createTarget(["zip"], arch), tmpDir, null, {
-      mac: {
-        electronUpdaterCompatibility: ">=2.17.0",
-      },
-    })
+    await doBuild(expect, outDirs, Platform.MAC.createTarget(["zip"], arch), tmpDir, null, {})
 
     // move to new dir so that localhost server can read both blockmaps
     const oldDir = outDirs[0]

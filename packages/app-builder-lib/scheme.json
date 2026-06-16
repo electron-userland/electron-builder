@@ -2195,13 +2195,6 @@
           ],
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
-        "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
         "executableArgs": {
           "anyOf": [
             {
@@ -2846,13 +2839,6 @@
           ],
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
-        "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
         "executableName": {
           "description": "The executable name. Defaults to `productName`\nNote: Except for Linux, where this would constitute a breaking change in previous behavior and lead to both invalid executable names and Desktop files. Ref comments in: https://github.com/electron-userland/electron-builder/pull/9068",
           "type": [
@@ -3331,13 +3317,6 @@
             }
           ],
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
-        },
-        "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
-          "type": [
-            "null",
-            "string"
-          ]
         },
         "executableName": {
           "description": "The executable name. Defaults to `productName`\nNote: Except for Linux, where this would constitute a breaking change in previous behavior and lead to both invalid executable names and Desktop files. Ref comments in: https://github.com/electron-userland/electron-builder/pull/9068",
@@ -8079,13 +8058,6 @@
           ],
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
-        "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
         "executableName": {
           "description": "The executable name. Defaults to `productName`\nNote: Except for Linux, where this would constitute a breaking change in previous behavior and lead to both invalid executable names and Desktop files. Ref comments in: https://github.com/electron-userland/electron-builder/pull/9068",
           "type": [
@@ -9062,13 +9034,6 @@
         }
       ],
       "description": "The electron locales to keep. By default, all Electron locales used as-is."
-    },
-    "electronUpdaterCompatibility": {
-      "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
-      "type": [
-        "null",
-        "string"
-      ]
     },
     "electronVersion": {
       "description": "The Electron version to package against.\n\nDefaults to the version of the `electron` (or `electron-prebuilt`) dependency declared in\n`package.json`. Set this explicitly only when the installed Electron version is not the one\nyou want to package against (e.g., in monorepos where the Electron dependency lives in a\ndifferent workspace).",

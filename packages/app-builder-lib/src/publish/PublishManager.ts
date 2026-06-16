@@ -477,10 +477,6 @@ async function resolvePublishConfigurations(
       serviceName = "keygen"
     } else if (!isEmptyOrSpaces(process.env.BITBUCKET_TOKEN)) {
       serviceName = "bitbucket"
-    } else if (!isEmptyOrSpaces(process.env.BT_TOKEN)) {
-      throw new Error(
-        "Bintray has been sunset and is no longer supported by electron-builder. Ref: https://jfrog.com/blog/into-the-sunset-bintray-jcenter-gocenter-and-chartcenter/"
-      )
     }
 
     if (serviceName != null) {

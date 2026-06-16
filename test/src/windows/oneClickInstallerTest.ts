@@ -167,9 +167,6 @@ test.ifNotWindows("perMachine, no run after finish", { timeout: EXTENDED_TIMEOUT
           // tslint:disable:no-invalid-template-strings
           url: "https://develar.s3.amazonaws.com/test/${os}/${arch}",
         },
-        win: {
-          electronUpdaterCompatibility: ">=2.16",
-        },
       },
     },
     {

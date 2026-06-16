@@ -173,6 +173,33 @@ describe("migrateConfig — appImage.systemIntegration", () => {
   })
 })
 
+describe("migrateConfig — electronUpdaterCompatibility", () => {
+  test("removes electronUpdaterCompatibility from root", () => {
+    const result = migrateConfig({ electronUpdaterCompatibility: ">=2.16", appId: "com.x" })
+    expect("electronUpdaterCompatibility" in result.migrated).toBe(false)
+    expect(result.migrated).toEqual({ appId: "com.x" })
+    expect(result.changes.some(c => c.key === "electronUpdaterCompatibility")).toBe(true)
+  })
+
+  test("removes electronUpdaterCompatibility from per-platform configs", () => {
+    const result = migrateConfig({
+      mac: { electronUpdaterCompatibility: ">=2.16", category: "tools" },
+      win: { electronUpdaterCompatibility: "1.1" },
+      linux: { electronUpdaterCompatibility: ">=2.17" },
+    })
+    expect("electronUpdaterCompatibility" in result.migrated.mac).toBe(false)
+    expect("electronUpdaterCompatibility" in result.migrated.win).toBe(false)
+    expect("electronUpdaterCompatibility" in result.migrated.linux).toBe(false)
+    expect(result.migrated.mac).toEqual({ category: "tools" })
+    expect(result.changes.filter(c => c.key === "electronUpdaterCompatibility")).toHaveLength(3)
+  })
+
+  test("is a no-op when electronUpdaterCompatibility is absent", () => {
+    const result = migrateConfig({ appId: "com.x" })
+    expect(result.changes.some(c => c.key === "electronUpdaterCompatibility")).toBe(false)
+  })
+})
+
 describe("migrateConfig — snap → snapcraft", () => {
   test("nests options under the explicit base and removes snap", () => {
     const result = migrateConfig({ snap: { summary: "My App", confinement: "strict", base: "core22" } })

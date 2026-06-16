@@ -41,9 +41,6 @@ test.ifNotWindows("generic, github and spaces", ({ expect }) =>
     targets: Platform.MAC.createTarget("zip", Arch.x64),
     config: {
       generateUpdatesFilesForAllChannels: true,
-      mac: {
-        electronUpdaterCompatibility: ">=2.16",
-      },
       publish: [genericPublisher("https://example.com/downloads"), githubPublisher("foo/foo"), spacesPublisher()],
     },
   })
@@ -53,9 +50,6 @@ test.ifNotWindows("github and spaces (publishAutoUpdate)", ({ expect }) =>
   app(expect, {
     targets: Platform.LINUX.createTarget("AppImage", Arch.x64),
     config: {
-      mac: {
-        electronUpdaterCompatibility: ">=2.16",
-      },
       publish: [githubPublisher("foo/foo"), spacesPublisher(false)],
     },
   })
@@ -69,9 +63,6 @@ test.ifEnv(process.env.KEYGEN_TOKEN)("mac artifactName ", ({ expect }) =>
       config: {
         // tslint:disable-next-line:no-invalid-template-strings
         artifactName: "${productName}_${version}_${os}.${ext}",
-        mac: {
-          electronUpdaterCompatibility: ">=2.16",
-        },
         publish: [spacesPublisher(), keygenPublisher()],
       },
     },

@@ -191,11 +191,6 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
   readonly forceCodeSigning?: boolean
 
   /**
-   * The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.
-   */
-  readonly electronUpdaterCompatibility?: string | null
-
-  /**
    * Publisher configuration. See [Auto Update](https://www.electron.build/publish) for more information.
    */
   publish?: Publish

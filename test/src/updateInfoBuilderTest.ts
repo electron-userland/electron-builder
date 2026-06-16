@@ -225,12 +225,13 @@ test("emitArtifactCreated is called once per unique yml file", async ({ expect }
 
 // ── createUpdateInfoTasks unit tests ─────────────────────────────────────────
 
-function makePlatformPackager(): any {
+function makePlatformPackager(metadata: { dependencies?: Record<string, string> } = {}): any {
   return {
     appInfo: { version: "1.0.0" },
     platform: Platform.WINDOWS,
-    platformOptions: { releaseInfo: undefined, electronUpdaterCompatibility: ">=2.16", generateUpdatesFilesForAllChannels: undefined },
+    platformOptions: { releaseInfo: undefined, generateUpdatesFilesForAllChannels: undefined },
     config: { releaseInfo: undefined, generateUpdatesFilesForAllChannels: undefined },
+    metadata,
     info: {},
     getResource: () => Promise.resolve(null),
   }
@@ -258,7 +259,7 @@ test("createUpdateInfoTasks sets arch null for universal installer", async ({ ex
   })
 })
 
-test("createUpdateInfoTasks GitHub provider overrides url and path with safeArtifactName", async ({ expect }) => {
+test("createUpdateInfoTasks GitHub provider overrides url with safeArtifactName (modern: no top-level path)", async ({ expect }) => {
   await withTmpDir(async dir => {
     const artifactFile = path.join(dir, "App-1.0.0.exe")
     await fsp.writeFile(artifactFile, "fake")
@@ -272,7 +273,93 @@ test("createUpdateInfoTasks GitHub provider overrides url and path with safeArti
     const tasks = await createUpdateInfoTasks(event, [{ provider: "github", repo: "owner/repo" }] as any)
     expect(tasks).toHaveLength(1)
     expect(tasks[0].info.files[0].url).toBe("app-1.0.0.exe")
+    expect((tasks[0].info as any).path).toBeUndefined()
+  })
+})
+
+test("createUpdateInfoTasks GitHub provider sets legacy path when electron-updater < 4.0", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App-1.0.0.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    const event: any = {
+      file: artifactFile,
+      arch: null,
+      safeArtifactName: "app-1.0.0.exe",
+      packager: makePlatformPackager({ dependencies: { "electron-updater": "^3.2.0" } }),
+      target: { outDir: dir },
+    }
+    const tasks = await createUpdateInfoTasks(event, [{ provider: "github", repo: "owner/repo" }] as any)
+    expect(tasks).toHaveLength(1)
+    expect(tasks[0].info.files[0].url).toBe("app-1.0.0.exe")
     expect((tasks[0].info as any).path).toBe("app-1.0.0.exe")
+  })
+})
+
+// ── Legacy updater compat detection ──────────────────────────────────────────
+
+test("createUpdateInfoTasks: no electron-updater dep → modern yml only (no path/sha512 at top level)", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App-1.0.0.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    const event: any = { file: artifactFile, arch: null, packager: makePlatformPackager(), target: { outDir: dir } }
+    const tasks = await createUpdateInfoTasks(event, [{ provider: "s3", bucket: "test" }] as any)
+    expect(tasks).toHaveLength(1)
+    expect(tasks[0].info.files[0].url).toBe("App-1.0.0.exe")
+    expect((tasks[0].info as any).path).toBeUndefined()
+    expect((tasks[0].info as any).sha512).toBeUndefined()
+    expect((tasks[0].info as any).sha2).toBeUndefined()
+  })
+})
+
+test("createUpdateInfoTasks: electron-updater >= 4.0 → modern yml only", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App-1.0.0.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    const event: any = {
+      file: artifactFile,
+      arch: null,
+      packager: makePlatformPackager({ dependencies: { "electron-updater": "^6.3.0" } }),
+      target: { outDir: dir },
+    }
+    const tasks = await createUpdateInfoTasks(event, [{ provider: "s3", bucket: "test" }] as any)
+    expect(tasks).toHaveLength(1)
+    expect((tasks[0].info as any).path).toBeUndefined()
+    expect((tasks[0].info as any).sha512).toBeUndefined()
+    expect((tasks[0].info as any).sha2).toBeUndefined()
+  })
+})
+
+test("createUpdateInfoTasks: electron-updater < 4.0 → legacy fields written (Windows gets sha2 too)", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App-1.0.0.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    const event: any = {
+      file: artifactFile,
+      arch: null,
+      packager: makePlatformPackager({ dependencies: { "electron-updater": "~3.0.0" } }),
+      target: { outDir: dir },
+    }
+    const tasks = await createUpdateInfoTasks(event, [{ provider: "s3", bucket: "test" }] as any)
+    expect(tasks).toHaveLength(1)
+    expect((tasks[0].info as any).path).toBe("App-1.0.0.exe")
+    expect((tasks[0].info as any).sha512).toBeDefined()
+    expect((tasks[0].info as any).sha2).toBeDefined()
+  })
+})
+
+test("createUpdateInfoTasks: unparseable electron-updater range → modern yml only (no crash)", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App-1.0.0.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    const event: any = {
+      file: artifactFile,
+      arch: null,
+      packager: makePlatformPackager({ dependencies: { "electron-updater": "totally not a semver range" } }),
+      target: { outDir: dir },
+    }
+    const tasks = await createUpdateInfoTasks(event, [{ provider: "s3", bucket: "test" }] as any)
+    expect(tasks).toHaveLength(1)
+    expect((tasks[0].info as any).path).toBeUndefined()
   })
 })
 

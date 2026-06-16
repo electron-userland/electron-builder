@@ -518,7 +518,6 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       this.emit("update-not-available", updateInfo)
       return {
         isUpdateAvailable: false,
-        versionInfo: updateInfo,
         updateInfo,
       }
     }
@@ -530,7 +529,6 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     //noinspection ES6MissingAwait
     return {
       isUpdateAvailable: true,
-      versionInfo: updateInfo,
       updateInfo,
       cancellationToken,
       downloadPromise: this.autoDownload ? this.downloadUpdate(cancellationToken) : null,

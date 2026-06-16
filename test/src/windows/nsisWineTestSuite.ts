@@ -52,7 +52,6 @@ export function registerNsisWineTests(toolsets: ToolsetConfig): void {
             // tslint:disable-next-line:no-invalid-template-strings
             url: "https://develar.s3.amazonaws.com/test/${os}/${arch}",
           },
-          win: { electronUpdaterCompatibility: ">=2.16" },
           toolsets,
         },
       },

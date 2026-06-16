@@ -19,7 +19,6 @@ describe("macPackager", { sequential: true }, () => {
           },
           downloadAlternateFFmpeg: true,
           mac: {
-            electronUpdaterCompatibility: ">=2.16",
             electronLanguages: ["bn", "en"],
             sign: { timestamp: undefined },
             notarize: false,
