@@ -1,6 +1,5 @@
 import { afterEach, beforeEach } from "vitest"
 import type { ToolsetCustom } from "app-builder-lib/internal"
-import * as os from "os"
 import * as path from "path"
 import { mkdir, rm, writeFile } from "fs/promises"
 import { getWineToolset } from "app-builder-lib/src/toolsets/wine"
@@ -8,7 +7,7 @@ import { getWineToolset } from "app-builder-lib/src/toolsets/wine"
 // Unit tests for wine env merging via ToolsetCustom with a file:// directory path.
 // A minimal fake wine directory is created in /tmp for each test.
 
-const FAKE_WINE_DIR = path.join(os.tmpdir(), "wine-env-unit-test")
+let FAKE_WINE_DIR = ""
 
 function fakeToolset(): ToolsetCustom {
   return { url: `file://${FAKE_WINE_DIR}`, checksum: "test" }
@@ -25,10 +24,11 @@ async function setupFakeWineDir(): Promise<void> {
 const ENV_KEYS = ["DYLD_FALLBACK_LIBRARY_PATH", "LD_LIBRARY_PATH", "USE_SYSTEM_WINE"]
 const SAVED_ENV: Record<string, string | undefined> = {}
 
-beforeEach(async () => {
+beforeEach(async context => {
   for (const k of ENV_KEYS) {
     SAVED_ENV[k] = process.env[k]
   }
+  FAKE_WINE_DIR = await context.tmpDir.createTempDir()
   await setupFakeWineDir()
   delete process.env.USE_SYSTEM_WINE
 })
@@ -41,7 +41,6 @@ afterEach(async () => {
       process.env[k] = SAVED_ENV[k]
     }
   }
-  await rm(FAKE_WINE_DIR, { recursive: true, force: true })
 })
 
 describe.ifNotWindows("getWineToolset — ToolsetCustom file:// directory env merging", { sequential: true }, () => {

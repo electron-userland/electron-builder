@@ -1,66 +1,65 @@
 import { afterEach, beforeEach } from "vitest"
-import * as path from "path"
-import * as os from "os"
-import { mkdir, rm } from "fs/promises"
 import { clearCustomToolsetCache, getCustomToolsetPath } from "app-builder-lib/src/toolsets/custom"
 import type { ToolsetCustom } from "app-builder-lib/internal"
 
-const FAKE_DIR = path.join(os.tmpdir(), "custom-toolset-memo-test")
-const FAKE_DIR_2 = path.join(os.tmpdir(), "custom-toolset-memo-test-2")
-
-function dirToolset(dir = FAKE_DIR): ToolsetCustom {
+function dirToolset(dir: string): ToolsetCustom {
   return { url: `file://${dir}` }
 }
 
-beforeEach(async () => {
+beforeEach(() => {
   clearCustomToolsetCache()
-  await Promise.all([mkdir(FAKE_DIR, { recursive: true }), mkdir(FAKE_DIR_2, { recursive: true })])
 })
 
-afterEach(async () => {
+afterEach(() => {
   clearCustomToolsetCache()
-  await Promise.all([rm(FAKE_DIR, { recursive: true, force: true }), rm(FAKE_DIR_2, { recursive: true, force: true })])
 })
 
 describe("getCustomToolsetPath memoization", { sequential: true }, () => {
-  test("returns same Promise for identical args", ({ expect }) => {
-    const toolset = dirToolset()
+  test("returns same Promise for identical args", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.getTempDir()
+    const toolset = dirToolset(dir)
     const p1 = getCustomToolsetPath(toolset, "")
     const p2 = getCustomToolsetPath(toolset, "")
     expect(p1).toBe(p2)
   })
 
-  test("concurrent calls resolve to the same path", async ({ expect }) => {
-    const toolset = dirToolset()
+  test("concurrent calls resolve to the same path", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.getTempDir()
+    const toolset = dirToolset(dir)
     const [r1, r2, r3] = await Promise.all([getCustomToolsetPath(toolset, ""), getCustomToolsetPath(toolset, ""), getCustomToolsetPath(toolset, "")])
     expect(r1).toBe(r2)
     expect(r2).toBe(r3)
-    expect(r1).toBe(FAKE_DIR)
+    expect(r1).toBe(dir)
   })
 
-  test("different url produces different cache entry", ({ expect }) => {
-    const p1 = getCustomToolsetPath(dirToolset(FAKE_DIR), "")
-    const p2 = getCustomToolsetPath(dirToolset(FAKE_DIR_2), "")
+  test("different url produces different cache entry", async ({ expect, tmpDir }) => {
+    const dir1 = await tmpDir.getTempDir()
+    const dir2 = await tmpDir.getTempDir()
+    const p1 = getCustomToolsetPath(dirToolset(dir1), "")
+    const p2 = getCustomToolsetPath(dirToolset(dir2), "")
     expect(p1).not.toBe(p2)
   })
 
-  test("different resourcesDir produces different cache entry", ({ expect }) => {
-    const toolset = dirToolset()
+  test("different resourcesDir produces different cache entry", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.getTempDir()
+    const toolset = dirToolset(dir)
     const p1 = getCustomToolsetPath(toolset, "")
     const p2 = getCustomToolsetPath(toolset, "/some/other/resources")
     expect(p1).not.toBe(p2)
   })
 
-  test("clearCustomToolsetCache forces re-resolution", ({ expect }) => {
-    const toolset = dirToolset()
+  test("clearCustomToolsetCache forces re-resolution", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.getTempDir()
+    const toolset = dirToolset(dir)
     const p1 = getCustomToolsetPath(toolset, "")
     clearCustomToolsetCache()
     const p2 = getCustomToolsetPath(toolset, "")
     expect(p1).not.toBe(p2)
   })
 
-  test("directory type resolves to the directory path", async ({ expect }) => {
-    const result = await getCustomToolsetPath(dirToolset(), "")
-    expect(result).toBe(FAKE_DIR)
+  test("directory type resolves to the directory path", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.getTempDir()
+    const result = await getCustomToolsetPath(dirToolset(dir), "")
+    expect(result).toBe(dir)
   })
 })
