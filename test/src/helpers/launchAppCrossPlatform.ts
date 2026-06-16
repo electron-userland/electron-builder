@@ -1,4 +1,4 @@
-import type { VmManager } from "app-builder-lib/out/vm/vm"
+import type { VmManager } from "app-builder-lib/internal"
 import { ChildProcess, execSync, spawn, StdioOptions } from "child_process"
 import { createHash, randomUUID } from "crypto"
 import * as fs from "fs"

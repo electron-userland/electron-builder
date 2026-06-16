@@ -1,10 +1,9 @@
 import { afterEach, describe, test, vi } from "vitest"
 import * as fse from "fs-extra"
-import * as os from "os"
 import * as path from "path"
-import { TraversalNodeModulesCollector } from "app-builder-lib/src/node-module-collector/traversalNodeModulesCollector"
+import { TraversalNodeModulesCollector } from "app-builder-lib/internal"
 import { LogMessageByKey } from "app-builder-lib/src/node-module-collector/moduleManager"
-import type { TmpDir } from "builder-util"
+import { TmpDir } from "builder-util"
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -17,8 +16,10 @@ const mockTmpDir = { getTempFile: vi.fn(), getTempDir: vi.fn() } as unknown as T
  * Writes a package tree under a fresh temp directory.
  * Keys are relative paths to package.json files; values are the JSON contents.
  */
+const projectTmpDir = new TmpDir("eb-traversal-test")
+
 async function buildPackageTree(packages: Record<string, object>): Promise<string> {
-  const root = await fse.mkdtemp(path.join(os.tmpdir(), "eb-traversal-test-"))
+  const root = await projectTmpDir.createTempDir()
   for (const [rel, json] of Object.entries(packages)) {
     const abs = path.join(root, rel)
     await fse.ensureDir(path.dirname(abs))
@@ -36,7 +37,7 @@ async function runCollector(rootDir: string, packageName: string) {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("TraversalNodeModulesCollector", () => {
+describe("TraversalNodeModulesCollector", { sequential: true }, () => {
   let root = ""
   afterEach(async () => {
     if (root) {

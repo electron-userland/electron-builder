@@ -1,20 +1,9 @@
 import { createHash } from "crypto"
-import { mkdtemp, readFile, rm, writeFile } from "fs/promises"
-import * as os from "os"
+import { readFile, writeFile } from "fs/promises"
 import * as path from "path"
 import * as zlib from "zlib"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
-import { buildBlockMap } from "app-builder-lib/out/targets/blockmap/blockmap"
-
-let tmpDir: string
-
-beforeEach(async () => {
-  tmpDir = await mkdtemp(path.join(os.tmpdir(), "blockmap-test-"))
-})
-
-afterEach(async () => {
-  await rm(tmpDir, { recursive: true, force: true })
-})
+import { beforeEach, describe, expect, it } from "vitest"
+import { buildBlockMap } from "app-builder-lib/src/targets/blockmap/blockmap.js"
 
 function sha512(data: Buffer): string {
   return createHash("sha512").update(data).digest("base64")
@@ -31,7 +20,11 @@ function makeTestData(size: number, seed = 12345): Buffer {
   return buf
 }
 
-describe("buildBlockMap", () => {
+describe("buildBlockMap", { sequential: true }, () => {
+  let tmpDir: string
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
+  })
   it("file output mode: returns correct sha512 and size for small file", async () => {
     const data = Buffer.from("hello world. ".repeat(1024))
     const inFile = path.join(tmpDir, "test.bin")
@@ -132,9 +125,11 @@ describe("buildBlockMap", () => {
 
   it("chunk checksums match BLAKE2b-18 of chunk content", async () => {
     const blake2bPath = require.resolve("@noble/hashes/blake2.js", {
-      paths: [require.resolve("app-builder-lib/out/targets/blockmap/blockmap")],
+      // Resolve relative to app-builder-lib's blockmap directory so we get the same
+      // @noble/hashes instance that blockmap.ts uses (package-scoped installation).
+      paths: [path.resolve(__dirname, "../../packages/app-builder-lib/src/targets/blockmap")],
     })
-    const { blake2b } = require(blake2bPath) as typeof import("@noble/hashes/blake2")
+    const { blake2b } = require(blake2bPath) as typeof import("@noble/hashes/blake2.js")
     const data = makeTestData(50_000)
     const inFile = path.join(tmpDir, "checksum.bin")
     const outFile = path.join(tmpDir, "checksum.blockmap")
@@ -205,7 +200,11 @@ describe("buildBlockMap", () => {
 //   • sha512 in append mode — covers the appended compressed bytes, which
 //     differ between implementations for the same reason.
 
-describe("buildBlockMap — JS snapshots and binary golden-output", () => {
+describe("buildBlockMap — JS snapshots and binary golden-output", { sequential: true }, () => {
+  let tmpDir: string
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
+  })
   it("single-chunk file (< MIN): sizes, checksums and sha512 are snapshotted", async () => {
     const data = Buffer.from("hello world. ".repeat(1024)) // 13 312 bytes < RABIN_MIN
     const inFile = path.join(tmpDir, "single.bin")

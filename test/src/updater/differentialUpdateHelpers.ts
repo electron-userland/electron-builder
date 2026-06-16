@@ -12,7 +12,7 @@ import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, tuneTestUpdater, writeUpdateCon
 import { mockForNodeRequire } from "vitest-mock-commonjs"
 import { ExpectStatic } from "vitest"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform"
-import { ToolsetConfig } from "app-builder-lib/src/configuration"
+import { ToolsetConfig } from "app-builder-lib/internal"
 
 export async function doBuild(
   expect: ExpectStatic,

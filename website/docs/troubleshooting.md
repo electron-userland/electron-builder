@@ -136,6 +136,14 @@ asarUnpack:
 **Out-of-memory error during packaging**
 : Large apps can exhaust memory during ASAR creation. Set `NODE_OPTIONS=--max-old-space-size=4096` before running electron-builder.
 
+**Build fails in an offline / air-gapped environment**
+: electron-builder downloads build toolsets (e.g. WinCodeSign, AppImage tools) the first time they are needed, then caches the archive at `<ELECTRON_BUILDER_CACHE>/<releaseName>/<filename>`. On every subsequent build it reads from that cache and makes no network request.
+
+For a first-time setup in a fully air-gapped environment, run the build once on a machine with internet access so the cache is populated, then copy the entire `ELECTRON_BUILDER_CACHE` directory to the air-gapped machine. Point both machines at the same directory with `ELECTRON_BUILDER_CACHE=/path/to/shared/cache`.
+
+**"Downloading" progress appears for an artifact that should be cached**
+: The toolset archive cache lives inside `ELECTRON_BUILDER_CACHE` (default: `~/Library/Caches/electron-builder` on macOS, `%LOCALAPPDATA%/electron-builder/Cache` on Windows, `~/.cache/electron-builder` on Linux). If this directory is cleared or not persisted between builds (common on ephemeral CI runners), the archive is re-downloaded. Persist the cache directory across CI runs to avoid repeated downloads.
+
 ---
 
 ## Linux-Specific
@@ -231,3 +239,4 @@ docker run --rm -ti \
 - Run `DEBUG=electron-builder electron-builder build 2>&1 | tee build.log` to capture full debug output
 - Search [GitHub Issues](https://github.com/electron-userland/electron-builder/issues)
 - Check the [Discussions](https://github.com/electron-userland/electron-builder/discussions)
+- When filing a bug report, use [electron/minimal-repro](https://github.com/electron/minimal-repro) to create a minimal reproduction case — issues with a repro get resolved significantly faster

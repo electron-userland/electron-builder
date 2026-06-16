@@ -4,7 +4,7 @@ import { expect } from "vitest"
 
 const WORKSPACE_ROOT = path.resolve(__dirname, "../../")
 
-const helper = require("../../packages/app-builder-lib/helpers/dynamic-import") as {
+const helper = require("../../packages/app-builder-lib/helpers/dynamic-import.cjs") as {
   dynamicImport(modulePath: string): Promise<any>
   dynamicImportMaybe(modulePath: string): Promise<any>
 }
@@ -13,20 +13,20 @@ describe("dynamicImport", () => {
   test("imports a package root specifier", async () => {
     const mod = await helper.dynamicImport("@electron/osx-sign")
     expect(mod).toBeDefined()
-    expect(typeof mod.signAsync).toBe("function")
+    expect(typeof mod.sign).toBe("function")
   })
 
   test("imports a package subpath specifier (no .js extension)", async () => {
     // This is the scenario reported in issue #9816 — pnpm fails without .js
-    const mod = await helper.dynamicImport("@electron/osx-sign/dist/cjs/util-identities")
+    const mod = await helper.dynamicImport("semver/functions/valid")
     expect(mod).toBeDefined()
-    expect(typeof mod.Identity).toBe("function")
+    expect(typeof mod.default).toBe("function")
   })
 
   test("imports a package subpath specifier (with .js extension)", async () => {
-    const mod = await helper.dynamicImport("@electron/osx-sign/dist/cjs/util-identities.js")
+    const mod = await helper.dynamicImport("semver/functions/valid.js")
     expect(mod).toBeDefined()
-    expect(typeof mod.Identity).toBe("function")
+    expect(typeof mod.default).toBe("function")
   })
 
   test("imports an absolute file path", async () => {
@@ -55,9 +55,9 @@ describe("dynamicImport", () => {
 
 describe("dynamicImportMaybe", () => {
   test("loads a CJS-compatible package via require", async () => {
-    const mod = await helper.dynamicImportMaybe("@electron/osx-sign")
+    const mod = await helper.dynamicImportMaybe("semver")
     expect(mod).toBeDefined()
-    expect(typeof mod.signAsync).toBe("function")
+    expect(typeof mod.valid).toBe("function")
   })
 
   test("rejects with combined error message for a nonexistent module", async () => {

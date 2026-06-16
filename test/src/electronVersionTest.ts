@@ -1,12 +1,11 @@
 import * as nodeFs from "fs/promises"
-import * as os from "os"
 import * as path from "path"
 import { afterEach, beforeEach, describe, test, vi } from "vitest"
 import { log } from "builder-util"
 
 // getElectronVersion is the public entry point; passing an explicit config with no
 // electronVersion bypasses getConfig and falls through to computeElectronVersion.
-import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
+import { getElectronVersion } from "app-builder-lib/internal"
 
 function rangeLogMessage(version: string): string {
   return (
@@ -19,19 +18,18 @@ function rangeErrorMessage(version: string): string {
   return `Cannot compute electron version from installed node modules - version ("${version}") is not fixed in project.\nSee https://github.com/electron-userland/electron-builder/issues/3984#issuecomment-504968246`
 }
 
-describe("getElectronVersion (version resolution from package.json)", () => {
+describe("getElectronVersion (version resolution from package.json)", { sequential: true }, () => {
   let tmpDir: string
 
-  beforeEach(async () => {
-    tmpDir = await nodeFs.mkdtemp(path.join(os.tmpdir(), "electron-version-test-"))
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
     // Spy on the shared log singleton so the same instance used by electronVersion.ts is intercepted.
     vi.spyOn(log, "error").mockImplementation(() => {})
     vi.spyOn(log, "info").mockImplementation(() => {})
     vi.spyOn(log, "warn").mockImplementation(() => {})
   })
 
-  afterEach(async () => {
-    await nodeFs.rm(tmpDir, { recursive: true, force: true })
+  afterEach(() => {
     vi.restoreAllMocks()
   })
 

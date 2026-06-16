@@ -2,12 +2,12 @@ import { Arch, Fields, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces,
 import { configureRequestOptions, GithubOptions, hashSensitiveValue, HttpError, parseJson, githubTagPrefix } from "builder-util-runtime"
 import { ClientRequest } from "http"
 import { Lazy } from "lazy-val"
-import * as mime from "mime"
+import mime from "mime"
 import { parse as parseUrl, UrlWithStringQuery } from "url"
-import { HttpPublisher } from "./httpPublisher"
-import { PublishContext, PublishOptions } from "./index"
-import { getCiTag } from "./publisher"
-import { trimStringWithWarn } from "./util"
+import { HttpPublisher } from "./httpPublisher.js"
+import { PublishContext, PublishOptions } from "./index.js"
+import { getCiTag } from "./publisher.js"
+import { trimStringWithWarn } from "./util.js"
 
 export interface Release {
   id: number

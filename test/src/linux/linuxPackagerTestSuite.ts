@@ -6,7 +6,7 @@ import * as path from "path"
 import { assertThat, readAppImageCompression } from "../helpers/fileAssert"
 import { app, appThrows, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
-import { ToolsetConfig } from "app-builder-lib/src"
+import { ToolsetConfig } from "app-builder-lib/internal"
 
 const appImageTarget = Platform.LINUX.createTarget("appimage", Arch.x64)
 
@@ -360,7 +360,7 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
             config: {
               electronVersion: ELECTRON_VERSION,
               compression: "store",
-              npmRebuild: false,
+              nativeModules: { npmRebuild: false },
             },
           })
 
