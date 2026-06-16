@@ -51,6 +51,22 @@ describe("nsisEscapeString", () => {
     expect(nsisEscapeString("${INSTDIR}\\price $9.99")).toBe("${INSTDIR}\\price $$9.99")
   })
 
+  test("preserves $(...) LangString references unchanged", ({ expect }) => {
+    expect(nsisEscapeString("$(customSN)")).toBe("$(customSN)")
+  })
+
+  test("preserves $(...) LangString references mixed with text", ({ expect }) => {
+    expect(nsisEscapeString("My App $(customSN) Setup")).toBe("My App $(customSN) Setup")
+  })
+
+  test("leaves both ${...} and $(...) references intact while escaping bare $", ({ expect }) => {
+    expect(nsisEscapeString("${DEFINE} $(LangStr) costs $5")).toBe("${DEFINE} $(LangStr) costs $$5")
+  })
+
+  test("escapes bare $ followed by a space before a paren-like token", ({ expect }) => {
+    expect(nsisEscapeString("$ (not a ref)")).toBe("$$ (not a ref)")
+  })
+
   test("escapes multiple consecutive dollar signs", ({ expect }) => {
     expect(nsisEscapeString("$$")).toBe("$$$$")
   })

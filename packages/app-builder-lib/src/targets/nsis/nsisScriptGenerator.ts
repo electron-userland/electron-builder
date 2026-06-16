@@ -48,7 +48,7 @@ export class NsisScriptGenerator {
 export function nsisEscapeString(s: string): string {
   const escaped = s
     .replace(/\r\n|\r|\n/g, " ") // newlines break NSIS string literals
-    .replace(/\$(?!\{)/g, "$$$$") // bare $ → $$ (prevents NSIS variable expansion); ${...} references are left intact
+    .replace(/\$(?![{(])/g, "$$$$") // bare $ → $$ (prevents NSIS variable expansion); ${...} define and $(...) LangString references are left intact
     .replace(/"/g, '$\\"') // " → $\" (NSIS escape for double-quote)
   if (escaped !== s) {
     log.debug({ original: s, final: escaped }, "nsis was escaped")
