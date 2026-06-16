@@ -162,6 +162,7 @@ function getElectronWrapperScript(executableName: string, executableArgs: string
   // Single-quote each arg so embedded characters (spaces, =, quotes) are passed literally,
   // consistent with the other Linux launcher entrypoints.
   const stringifiedExecutableArgs = (executableArgs ?? []).map(shellQuote).join(" ")
+  if (useWaylandFlags) {
     return `#!/bin/sh
 
 export TMPDIR="$XDG_RUNTIME_DIR/app/$FLATPAK_ID"

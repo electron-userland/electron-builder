@@ -15,6 +15,8 @@ interface Options {
   productName: string
   productFilename: string
   executableName: string
+  /** Arguments injected into the AppRun launcher (the .desktop Exec key stays `AppRun %U`). */
+  executableArgs?: ReadonlyArray<string>
   desktopEntry: string
   icons: IconInfo[]
   license?: string | null
@@ -165,7 +167,7 @@ export function validateCriticalPathString(str: string, fieldName: string): void
 async function writeAppLauncherAndRelatedFiles(opts: AppImageBuilderOptions): Promise<void> {
   const {
     stageDir,
-    options: { license, executableName, productFilename, productName, desktopEntry, desktopBaseName },
+    options: { license, executableName, executableArgs, productFilename, productName, desktopEntry, desktopBaseName },
   } = opts
 
   // executableName and productFilename are embedded directly into double-quoted bash strings
@@ -182,6 +184,7 @@ async function writeAppLauncherAndRelatedFiles(opts: AppImageBuilderOptions): Pr
   const templateConfig: AppRunScriptBase = {
     DesktopFileName: desktopFileName,
     ExecutableName: executableName,
+    ExecutableArgs: executableArgs,
     ProductName: productName,
     ProductFilename: productFilename,
     ResourceName: `appimagekit-${executableName}`,
