@@ -54,6 +54,38 @@ If you recently upgraded electron-builder to v27, please run \`electron-builder 
 Check the release notes for breaking changes: https://www.electron.build/docs/migration/v26-to-v27"
 `;
 
+exports[`LinuxPackager > AppImage - desktopName drives installed filename (reverse-DNS) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Signal-1.1.0.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`LinuxPackager > AppImage - desktopName drives installed filename 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Signal-1.1.0.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
 exports[`LinuxPackager > AppImage - desktopName sets StartupWMClass 1`] = `
 "[Desktop Entry]
 Name=Signal
@@ -175,6 +207,22 @@ exports[`LinuxPackager > AppImage - explicit zstd compression override 1`] = `
 }
 `;
 
+exports[`LinuxPackager > AppImage - missing desktopName falls back to executableName 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Signal-1.1.0.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
 exports[`LinuxPackager > AppImage - no desktopName falls back to productName for StartupWMClass 1`] = `
 "[Desktop Entry]
 Name=My App
@@ -233,54 +281,6 @@ exports[`LinuxPackager > AppImage - store compression maps to gzip 1`] = `
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.1.0",
-      },
-    },
-  ],
-}
-`;
-
-exports[`LinuxPackager > AppImage - syncDesktopName true without desktopName falls back to executableName 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Signal-1.1.0.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
-}
-`;
-
-exports[`LinuxPackager > AppImage - syncDesktopName uses desktopName for installed filename 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Signal-1.1.0.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
-}
-`;
-
-exports[`LinuxPackager > AppImage - syncDesktopName without flag keeps executableName 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Signal-1.1.0.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
       },
     },
   ],
