@@ -239,6 +239,34 @@ test("manifest is signed when a signing key is configured, and the signature ver
   })
 })
 
+test("manifest is signed from platform-specific updateManifest (task.packager.platformOptions) even when config has none", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+    // signing key configured only in platform-specific options (e.g. `linux.updateManifest`), not in root config
+    const task = { ...makeTask(dir, "App-1.0.0.exe", "sha-universal", null), packager: { platformOptions: { updateManifest: { signingKey: privateKeyPem } } } as any }
+    await writeUpdateInfoFiles([task], makePackager() as any)
+    const yml = await readYml(path.join(dir, "latest.yml"))
+    expect(yml.signature).toBeDefined()
+    expect(verifyManifestSignature(yml, publicKeyPem)).toBe(true)
+  })
+})
+
+test("per-task signing: only the task whose platformOptions configures a key is signed", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const { privateKeyPem } = generateUpdateSigningKeypair()
+    // two distinct yml files: linux configures signing, mac does not
+    const linuxTask = {
+      ...makeTask(dir, "App-1.0.0.AppImage", "sha-linux", null),
+      file: path.join(dir, "latest-linux.yml"),
+      packager: { platformOptions: { updateManifest: { signingKey: privateKeyPem } } } as any,
+    }
+    const macTask = { ...makeTask(dir, "App-1.0.0.zip", "sha-mac", null), file: path.join(dir, "latest-mac.yml"), packager: {} as any }
+    await writeUpdateInfoFiles([linuxTask, macTask], makePackager() as any)
+    expect((await readYml(path.join(dir, "latest-linux.yml"))).signature).toBeDefined()
+    expect((await readYml(path.join(dir, "latest-mac.yml"))).signature).toBeUndefined()
+  })
+})
+
 test("no signature field is written when no signing key is configured", async ({ expect }) => {
   await withTmpDir(async dir => {
     await writeUpdateInfoFiles([makeTask(dir, "App-1.0.0.exe", "sha", null)], makePackager() as any)
