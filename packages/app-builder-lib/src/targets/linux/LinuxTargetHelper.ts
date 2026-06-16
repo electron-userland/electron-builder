@@ -37,39 +37,21 @@ function desktopStringEscape(value: string): string {
 }
 
 /**
- * Characters that require an Exec argument to be double-quoted per the
- * freedesktop Desktop Entry Specification.  Plain alphanumeric args and
- * field codes must NOT be wrapped in quotes.
+ * Quote a command / path token for the freedesktop Exec key.
+ *
+ * Every Linux target launches through a launcher entrypoint, so the Exec key only ever holds a
+ * single command (the launcher path) plus field codes — never user-supplied `executableArgs`.
+ * Plain paths made up of portable characters are emitted as-is; anything else is wrapped in
+ * double quotes. The spec requires the reserved characters `"`, backtick, `$` and `\` to be
+ * backslash-escaped inside the quotes, so they are escaped here to keep the Exec token valid.
  *
  * @see https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#exec-variables
  */
-const EXEC_RESERVED_RE = /[\s"'`\\<>~|&;$*?#()]/
-
-/**
- * Quote a single argument for use in a .desktop file Exec key.
- *
- * Field codes (`%f`, `%u`, `%F`, `%U`, etc.) MUST be left unquoted — the
- * desktop launcher only expands them in unquoted token positions.  Wrapping
- * them in `"…"` causes the launcher to treat them as literal strings, which
- * breaks file-association / drag-and-drop functionality.
- *
- * For all other arguments, double-quoting is used when the argument contains
- * any character that would be misinterpreted by the launcher without quoting
- * (spaces, shell metacharacters, etc.).  Safe plain-word args are passed
- * through unchanged to keep the Exec line readable.
- *
- * @see https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#exec-variables
- */
-function desktopExecArgEscape(arg: string): string {
-  // Field codes (%f, %u, %F, %U, %i, %c, %k, …) must never be quoted.
-  if (/^%[a-zA-Z]$/.test(arg)) {
-    return arg
+export function quoteDesktopExecPath(value: string): string {
+  if (/^[/0-9A-Za-z._-]+$/.test(value)) {
+    return value
   }
-  // Only quote when the arg actually contains characters that need it.
-  if (EXEC_RESERVED_RE.test(arg)) {
-    return `"${arg.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`
-  }
-  return arg
+  return '"' + value.replace(/["$`\\]/g, "\\$&") + '"'
 }
 
 function mapLinuxCompressionToSnap(level: CompressionLevel | null | undefined): "xz" | "lzo" | undefined {
@@ -276,23 +258,10 @@ export class LinuxTargetHelper {
     const packager = this.packager
     const appInfo = packager.appInfo
 
-    const executableArgs = targetSpecificOptions.executableArgs
     if (exec == null) {
-      exec = `${installPrefix}/${appInfo.sanitizedProductName}/${packager.executableName}`
-      if (!/^[/0-9A-Za-z._-]+$/.test(exec)) {
-        exec = `"${exec}"`
-      }
-      if (executableArgs) {
-        exec += " "
-        // Each arg is double-quoted per the freedesktop Exec key spec so that
-        // spaces, $, ;, & and other reserved characters are not misinterpreted.
-        exec += executableArgs.map(desktopExecArgEscape).join(" ")
-      }
-      // https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#exec-variables
-      const execCodes = ["%f", "%u", "%F", "%U"]
-      if (executableArgs == null || executableArgs.findIndex(arg => execCodes.includes(arg)) === -1) {
-        exec += " %U"
-      }
+      // Fallback only — targets pass an explicit launcher entrypoint as `exec`. `executableArgs`
+      // are injected into that launcher, never into the Exec key (see launcherScript.ts).
+      exec = `${quoteDesktopExecPath(`${installPrefix}/${appInfo.sanitizedProductName}/${packager.executableName}`)} %U`
     }
 
     // StartupWMClass must match Electron's app_id (derived from desktopName) for window

@@ -23,6 +23,11 @@ export default class AppImageTarget extends Target {
 
   private readonly desktopEntry: Lazy<string>
 
+  // executableArgs are injected into the AppRun launcher, so the .desktop Exec key is just `AppRun %U`
+  // (consistent with the other Linux targets). AppRun also auto-adds --no-sandbox when user namespaces
+  // are unavailable, so it is only defaulted here for the legacy FUSE2 (0.0.0) runtime.
+  private readonly launcherArgs: string[]
+
   constructor(
     _ignored: string,
     private readonly packager: LinuxPackager,
@@ -31,15 +36,15 @@ export default class AppImageTarget extends Target {
   ) {
     super("appImage")
 
-    this.desktopEntry = new Lazy<string>(() => {
-      const appimageTool = packager.config.toolsets?.appimage
-      const defaultArgs = appimageTool == null || appimageTool === "0.0.0" ? ["--no-sandbox"] : []
-      const args = this.options.executableArgs ?? defaultArgs
-      const exec = [APP_RUN_ENTRYPOINT, ...args, "%U"].join(" ")
-      return helper.computeDesktopEntry(this.options, exec, {
+    const appimageTool = packager.config.toolsets?.appimage
+    const defaultArgs = appimageTool == null || appimageTool === "0.0.0" ? ["--no-sandbox"] : []
+    this.launcherArgs = this.options.executableArgs ?? defaultArgs
+
+    this.desktopEntry = new Lazy<string>(() =>
+      helper.computeDesktopEntry(this.options, `${APP_RUN_ENTRYPOINT} %U`, {
         "X-AppImage-Version": `${packager.appInfo.buildVersion}`,
       })
-    })
+    )
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
@@ -95,6 +100,7 @@ export default class AppImageTarget extends Target {
               productName: packager.appInfo.productName,
               productFilename: packager.appInfo.productFilename,
               executableName: packager.executableName,
+              executableArgs: this.launcherArgs,
               license,
               desktopEntry,
               icons,
@@ -126,6 +132,7 @@ export default class AppImageTarget extends Target {
               productName: packager.appInfo.productName,
               productFilename: packager.appInfo.productFilename,
               executableName: packager.executableName,
+              executableArgs: this.launcherArgs,
               license,
               desktopEntry,
               icons,
