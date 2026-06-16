@@ -27,4 +27,5 @@ overrides:
   # --- Dependabot transitive-dependency security overrides ---
   shell-quote: '>=1.8.4 <2' # GHSA-w7jw-789q-3m8p (critical)
   esbuild: '>=0.28.1 <0.29' # GHSA-gv7w-rqvm-qjhr (high), GHSA-g7r4-m6w7-qqqr (low)
+  tmp: '>=0.2.6 <0.3' # GHSA-ph9p-34f9-6g65 (high), GHSA-52f5-9888-hmc6 (low)
 packageImportMethod: copy
