@@ -1,5 +1,25 @@
 # app-builder-lib
 
+## 26.15.4
+
+### Patch Changes
+
+- Fix: resolve ENOENT on electron zip extraction in Windows Docker _[`#9921`](https://github.com/electron-userland/electron-builder/pull/9921) [`9a10c44`](https://github.com/electron-userland/electron-builder/commit/9a10c44c4e65aa854729fb98c91c07d34ec75b70) [@mmaietta](https://github.com/mmaietta)_
+- Fix(linux): write `executableArgs` verbatim into the `.desktop` Exec line so packaged apps (deb/rpm) still appear in the application menu _[`#9918`](https://github.com/electron-userland/electron-builder/pull/9918) [`5d8b8f8`](https://github.com/electron-userland/electron-builder/commit/5d8b8f881e0ab268f8f3ef31805f5ee0af5456a0) [@mmaietta](https://github.com/mmaietta)_
+- Fix: preserve symlinks in `zip` and `7z` archive targets on macOS and Linux via 7za `-snl` (Windows still dereferences). Restores pre-26.15 behavior after the bundled 7-Zip upgrade, which began dereferencing by default — corrupting macOS `.framework` bundles (codesign "bundle format is ambiguous", breaking Squirrel.Mac auto-update) and duplicating Linux symlink content. _[`#9921`](https://github.com/electron-userland/electron-builder/pull/9921) [`9a10c44`](https://github.com/electron-userland/electron-builder/commit/9a10c44c4e65aa854729fb98c91c07d34ec75b70) [@mmaietta](https://github.com/mmaietta)_
+- Fix(nsis): preserve `$(...)` LangString references in escaped NSIS define values (e.g. `shortcutName: "$(customSN)"`) _[`#9917`](https://github.com/electron-userland/electron-builder/pull/9917) [`7dd41f5`](https://github.com/electron-userland/electron-builder/commit/7dd41f5e62ec2f99e1bade871d372393be5a556b) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@26.15.4`
+- `electron-builder-squirrel-windows@26.15.4`
+
+</details>
+
 ## 26.15.3
 
 ### Patch Changes

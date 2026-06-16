@@ -1,3 +1,13 @@
+## [26.15.4](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.3...electron-builder@26.15.4) (2026-06-16)
+
+
+### Bug Fixes
+
+* **linux:** write `executableArgs` verbatim into the `.desktop` Exec ([#9918](https://github.com/electron-userland/electron-builder/issues/9918)) ([5d8b8f8](https://github.com/electron-userland/electron-builder/commit/5d8b8f881e0ab268f8f3ef31805f5ee0af5456a0))
+* **nsis:** preserve `$(...)` LangString references in escaped NSIS define values ([#9917](https://github.com/electron-userland/electron-builder/issues/9917)) ([7dd41f5](https://github.com/electron-userland/electron-builder/commit/7dd41f5e62ec2f99e1bade871d372393be5a556b))
+
+
+
 ## [26.15.3](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.2...electron-builder@26.15.3) (2026-06-09)
 
 
