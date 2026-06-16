@@ -16,7 +16,7 @@ afterEach(() => {
 
 describe("getCustomToolsetPath memoization", { sequential: true }, () => {
   test("returns same Promise for identical args", async ({ expect, tmpDir }) => {
-    const dir = await tmpDir.getTempDir()
+    const dir = await tmpDir.createTempDir()
     const toolset = dirToolset(dir)
     const p1 = getCustomToolsetPath(toolset, "")
     const p2 = getCustomToolsetPath(toolset, "")
@@ -24,7 +24,7 @@ describe("getCustomToolsetPath memoization", { sequential: true }, () => {
   })
 
   test("concurrent calls resolve to the same path", async ({ expect, tmpDir }) => {
-    const dir = await tmpDir.getTempDir()
+    const dir = await tmpDir.createTempDir()
     const toolset = dirToolset(dir)
     const [r1, r2, r3] = await Promise.all([getCustomToolsetPath(toolset, ""), getCustomToolsetPath(toolset, ""), getCustomToolsetPath(toolset, "")])
     expect(r1).toBe(r2)
@@ -33,15 +33,15 @@ describe("getCustomToolsetPath memoization", { sequential: true }, () => {
   })
 
   test("different url produces different cache entry", async ({ expect, tmpDir }) => {
-    const dir1 = await tmpDir.getTempDir()
-    const dir2 = await tmpDir.getTempDir()
+    const dir1 = await tmpDir.createTempDir()
+    const dir2 = await tmpDir.createTempDir()
     const p1 = getCustomToolsetPath(dirToolset(dir1), "")
     const p2 = getCustomToolsetPath(dirToolset(dir2), "")
     expect(p1).not.toBe(p2)
   })
 
   test("different resourcesDir produces different cache entry", async ({ expect, tmpDir }) => {
-    const dir = await tmpDir.getTempDir()
+    const dir = await tmpDir.createTempDir()
     const toolset = dirToolset(dir)
     const p1 = getCustomToolsetPath(toolset, "")
     const p2 = getCustomToolsetPath(toolset, "/some/other/resources")
@@ -49,7 +49,7 @@ describe("getCustomToolsetPath memoization", { sequential: true }, () => {
   })
 
   test("clearCustomToolsetCache forces re-resolution", async ({ expect, tmpDir }) => {
-    const dir = await tmpDir.getTempDir()
+    const dir = await tmpDir.createTempDir()
     const toolset = dirToolset(dir)
     const p1 = getCustomToolsetPath(toolset, "")
     clearCustomToolsetCache()
@@ -58,7 +58,7 @@ describe("getCustomToolsetPath memoization", { sequential: true }, () => {
   })
 
   test("directory type resolves to the directory path", async ({ expect, tmpDir }) => {
-    const dir = await tmpDir.getTempDir()
+    const dir = await tmpDir.createTempDir()
     const result = await getCustomToolsetPath(dirToolset(dir), "")
     expect(result).toBe(dir)
   })
