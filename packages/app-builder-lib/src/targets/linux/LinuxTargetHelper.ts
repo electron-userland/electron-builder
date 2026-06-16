@@ -226,13 +226,30 @@ export class LinuxTargetHelper {
     return file
   }
 
-  getDesktopFileName(fallback: string = this.packager.executableName): string {
-    if (!this.packager.platformOptions.syncDesktopName) {
-      return fallback
-    }
+  // Emit the "desktopName not set" warning at most once per build, even though both
+  // getDesktopFileName() and computeDesktopEntry() resolve the desktop name.
+  private desktopNameWarningEmitted = false
+
+  // https://github.com/electron-userland/electron-builder/issues/9103
+  // Electron derives app_id / WM_CLASS from desktopName in package.json; the installed
+  // .desktop filename and StartupWMClass must match it for window association to work.
+  // https://github.com/electron/electron/blob/9a7b73b5334f1d72c08e2d5e94106706ed751186/lib/browser/init.ts#L128-L133
+  // Returns the validated base name (desktopName minus the .desktop suffix), or null when
+  // desktopName is unset — callers apply their own fallback (filename vs WM_CLASS).
+  private resolveDesktopName(): string | null {
     const trimmedDesktopName = this.packager.metadata.desktopName?.trim()
     if (isEmptyOrSpaces(trimmedDesktopName)) {
-      return fallback
+      if (!this.desktopNameWarningEmitted) {
+        this.desktopNameWarningEmitted = true
+        log.warn(
+          {
+            reason: "desktopName is not set in package.json",
+            docs: "https://www.electron.build/docs/linux/#window-association-desktopname",
+          },
+          'Electron derives the app_id / WM_CLASS used for Linux window association from desktopName. Without it, desktop environments may not link the running window to its launcher entry (taskbar grouping, dock icon, etc.). Set desktopName to a reverse-DNS identifier in package.json, e.g. "com.myapp.MyApp".'
+        )
+      }
+      return null
     }
     const basename = trimmedDesktopName.replace(/\.desktop$/, "")
     // Guard against path traversal: desktopName flows into filesystem paths
@@ -241,6 +258,10 @@ export class LinuxTargetHelper {
       throw new InvalidConfigurationError(`desktopName "${trimmedDesktopName}" produces an invalid .desktop filename — remove any path separators or NUL characters`)
     }
     return basename
+  }
+
+  getDesktopFileName(fallback: string = this.packager.executableName): string {
+    return this.resolveDesktopName() ?? fallback
   }
 
   computeDesktopEntry(targetSpecificOptions: CommonLinuxOptions, exec?: string, extra?: Record<string, string>): Promise<string> {
@@ -274,20 +295,10 @@ export class LinuxTargetHelper {
       }
     }
 
-    // https://github.com/electron-userland/electron-builder/issues/9103
-    // Electron derives app_id from desktopName in package.json; StartupWMClass must match.
-    // https://github.com/electron/electron/blob/9a7b73b5334f1d72c08e2d5e94106706ed751186/lib/browser/init.ts#L128-L133
-    const trimmedDesktopName = packager.metadata.desktopName?.trim()
-    if (isEmptyOrSpaces(trimmedDesktopName)) {
-      log.warn(
-        {
-          reason: "desktopName is not set in package.json",
-          docs: "https://www.electron.build/linux#window-association-desktopname--syncdesktopname",
-        },
-        "electron uses desktopName as app_id / WM_CLASS for window association. Without it desktop environments may not link running windows to this .desktop entry. Set desktopName in package.json and linux.syncDesktopName: true to fix."
-      )
-    }
-    const wmClass = !isEmptyOrSpaces(trimmedDesktopName) ? trimmedDesktopName.replace(/\.desktop$/, "") : appInfo.productName
+    // StartupWMClass must match Electron's app_id (derived from desktopName) for window
+    // association; resolveDesktopName() handles the shared warning and validation.
+    // Falls back to productName for apps that don't set desktopName.
+    const wmClass = this.resolveDesktopName() ?? appInfo.productName
 
     const desktopMeta = deepAssign<any>(
       {
