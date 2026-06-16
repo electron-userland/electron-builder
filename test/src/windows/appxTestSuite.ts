@@ -192,10 +192,8 @@ export function registerAppxTests(toolsets: ToolsetConfig): void {
         },
         appxManifestCreated: async filepath => {
           const fileContent = await readFile(filepath, "utf-8")
-          expect(fileContent).toContain('<DisplayName>&lt;&amp;&gt;&quot;&apos;</DisplayName>')
+          expect(fileContent).toContain("<DisplayName>&lt;&amp;&gt;&quot;&apos;</DisplayName>")
         },
       },
     }))
-
 }
-

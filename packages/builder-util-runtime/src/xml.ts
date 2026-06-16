@@ -120,4 +120,3 @@ export function parseXml(data: string): XElement {
   parser.write(data)
   return rootElement!
 }
-
