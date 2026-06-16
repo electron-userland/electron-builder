@@ -129,6 +129,23 @@ exports[`LinuxPackager > AppImage - desktopName without .desktop suffix is used 
 }
 `;
 
+exports[`LinuxPackager > AppImage - executableArgs are written verbatim into the Exec line 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0.AppImage",
+      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
 exports[`LinuxPackager > AppImage - explicit zstd compression override 1`] = `
 {
   "linux": [
