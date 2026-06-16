@@ -1,8 +1,9 @@
-import { validateConfiguration } from "app-builder-lib/out/util/config/config"
+import { validateConfiguration } from "app-builder-lib/internal"
 import { Arch, DebugLogger } from "builder-util"
-import { Configuration, Platform } from "electron-builder"
-import { CliOptions, configureBuildCommand, createYargs, normalizeOptions } from "electron-builder/out/builder"
-import { app, appThrows, linuxDirTarget } from "./helpers/packTester"
+import { CliOptions, Configuration, Platform } from "electron-builder"
+import { configureBuildCommand, createYargs, normalizeOptions } from "electron-builder/src/builder"
+import { app, appThrows, linuxDirTarget } from "./helpers/packTester.js"
+import { ElectronSignOptions } from "app-builder-lib/src/options/macOptions.js"
 
 test.ifNotWindows("validation", ({ expect }) =>
   appThrows(
@@ -77,11 +78,11 @@ test.ifNotWindows("files", () => {
 
 test.ifNotWindows("null string as null", async ({ expect }) => {
   const yargs = configureBuildCommand(createYargs())
-  const options = normalizeOptions(yargs.parse(["-c.mac.identity=null", "--config.mac.hardenedRuntime=false"]) as CliOptions)
+  const options = normalizeOptions(yargs.parse(["-c.mac.sign.identity=null", "--config.mac.sign.hardenedRuntime=false"]) as CliOptions)
   const config = options.config as Configuration
   await validateConfiguration(config, new DebugLogger())
-  expect(config.mac!.identity).toBeNull()
-  expect(config.mac!.hardenedRuntime).toBe(false)
+  expect((config.mac!.sign as ElectronSignOptions).identity).toBeNull()
+  expect((config.mac!.sign as ElectronSignOptions).hardenedRuntime).toBe(false)
 })
 
 test.ifNotWindows("unknown mac property reports correct path", ({ expect }) =>

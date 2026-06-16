@@ -1,17 +1,19 @@
-import { DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
-import { downloadBuilderToolset } from "app-builder-lib/out/util/electronGet"
-import { withToolsetLock } from "app-builder-lib/out/util/toolsetLock"
+import { DmgContent, DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
+import { downloadBuilderToolset, withToolsetLock } from "app-builder-lib/internal"
 import { exec, executeFinally, exists, InvalidConfigurationError, isEmptyOrSpaces, log, TmpDir } from "builder-util"
+import { sleep } from "builder-util-runtime"
 import { stat } from "fs/promises"
-import { writeFile } from "fs-extra"
+
 import * as path from "path"
-import { DmgBuildConfig } from "./dmg"
-import type { DmgBuildLicenseConfig } from "./dmgLicense"
-import { hdiUtil, hdiUtilWithStdin, hdiutilTransientExitCodes } from "./hdiuil"
+import { DmgBuildConfig } from "./dmg.js"
+import type { DmgBuildLicenseConfig } from "./dmgLicense.js"
+import { hdiUtil, hdiUtilWithStdin, hdiutilTransientExitCodes } from "./hdiuil.js"
+import _fsExtra from "fs-extra"
+const { writeFile } = _fsExtra
 
-export { DmgTarget } from "./dmg"
+export { DmgTarget } from "./dmg.js"
 
-const root = path.join(__dirname, "..")
+const root = path.join(import.meta.dirname, "..")
 
 export function getDmgTemplatePath() {
   return path.join(root, "templates")
@@ -90,7 +92,7 @@ export async function detach(name: string, alwaysForce: boolean) {
   return hdiUtil(["detach", "-quiet", name]).catch(async e => {
     if (hdiutilTransientExitCodes.has(e.code) || alwaysForce) {
       // Delay then force unmount with verbose output
-      await new Promise(resolve => setTimeout(resolve, 3000))
+      await sleep(3000)
       return hdiUtil(["detach", "-force", name])
     }
     throw e
@@ -146,7 +148,7 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
     size: specification.size,
     shrink: specification.shrink,
     contents:
-      specification.contents?.map(c => ({
+      specification.contents?.map((c: DmgContent) => ({
         path: c.path || appPath, // path is required, when ommitted, appPath is used (backward compatibility
         x: c.x,
         y: c.y,
@@ -183,7 +185,7 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
       }
     }
   } else {
-    settings.background = specification.background == null ? null : await transformBackgroundFileIfNeed(specification.background, packager.info.tempDirManager)
+    settings.background = specification.background == null ? null : await transformBackgroundFileIfNeed(specification.background, packager.tempDirManager)
   }
 
   if (!isEmptyOrSpaces(settings.background)) {
@@ -191,7 +193,7 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
     settings.window = { position: { x: 400, y: Math.round((1440 - size.height) / 2) }, size, ...settings.window }
   }
 
-  const workspaceRoot = await packager.info.getWorkspaceRoot()
+  const workspaceRoot = await packager.getWorkspaceRoot()
   for (const item of settings.contents ?? []) {
     if (item.type === "file" && item.path && path.isAbsolute(item.path)) {
       if (!item.path.startsWith(workspaceRoot + path.sep) && item.path !== appPath) {

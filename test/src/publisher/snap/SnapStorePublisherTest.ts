@@ -1,6 +1,6 @@
 import { exec, spawn } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
-import { SnapStoreOptions } from "builder-util-runtime/out/publishOptions"
+import { SnapStoreOptions } from "builder-util-runtime/internal"
 import { PublishContext, UploadTask } from "electron-publish"
 import { beforeEach, describe, test, vi } from "vitest"
 // Import from source so Vitest's vi.mock intercepts builder-util in the same module graph
@@ -30,7 +30,7 @@ beforeEach(() => {
   vi.mocked(spawn).mockResolvedValue(undefined)
 })
 
-describe("SnapStorePublisher", () => {
+describe("SnapStorePublisher", { sequential: true }, () => {
   describe("Identity", () => {
     test("providerName is snapStore", ({ expect }) => {
       expect(makePublisher().providerName).toBe("snapStore")
@@ -251,19 +251,14 @@ describe("SnapStorePublisher", () => {
       await expect(makePublisher(undefined, emptyBase64).upload(makeTask())).rejects.toThrow(/empty/)
     })
 
-    test("absolute file path → reads file and injects credentials", async ({ expect }) => {
-      const { writeFile, mkdtemp, rm } = await import("fs/promises")
-      const { tmpdir } = await import("os")
-      const dir = await mkdtemp(`${tmpdir()}/snap-csc-test-`)
+    test("absolute file path → reads file and injects credentials", async ({ expect, tmpDir }) => {
+      const { writeFile } = await import("fs/promises")
+      const dir = await tmpDir.createTempDir()
       const file = `${dir}/creds.txt`
-      try {
-        await writeFile(file, CREDS, "utf8")
-        await makePublisher(undefined, file).upload(makeTask())
-        const spawnEnv = vi.mocked(spawn).mock.calls[0][2] as any
-        expect(spawnEnv.env.SNAPCRAFT_STORE_CREDENTIALS).toBe(CREDS)
-      } finally {
-        await rm(dir, { recursive: true })
-      }
+      await writeFile(file, CREDS, "utf8")
+      await makePublisher(undefined, file).upload(makeTask())
+      const spawnEnv = vi.mocked(spawn).mock.calls[0][2] as any
+      expect(spawnEnv.env.SNAPCRAFT_STORE_CREDENTIALS).toBe(CREDS)
     })
   })
 

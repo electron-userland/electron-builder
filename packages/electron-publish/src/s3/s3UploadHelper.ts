@@ -1,10 +1,11 @@
-import { sign } from "aws4"
+import _aws4 from "aws4"
+const { sign } = _aws4
 import * as fs from "fs"
 import * as http from "http"
 import * as https from "https"
-import * as mime from "mime"
+import mime from "mime"
 import * as path from "path"
-import type { AwsCredentials } from "./awsCredentials"
+import type { AwsCredentials } from "./awsCredentials.js"
 
 export interface S3PutObjectParams {
   bucket: string

@@ -1,4 +1,4 @@
-import { NsisScriptGenerator, nsisEscapeString } from "app-builder-lib/src/targets/nsis/nsisScriptGenerator"
+import { NsisScriptGenerator, nsisEscapeString } from "app-builder-lib/internal"
 
 describe("NsisScriptGenerator.file", () => {
   test("preserves $INSTDIR variable in output name without escaping", ({ expect }) => {

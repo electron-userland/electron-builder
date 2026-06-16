@@ -1,18 +1,11 @@
-import { afterEach, beforeEach } from "vitest"
-import * as os from "os"
+import { beforeEach } from "vitest"
 import * as path from "path"
-import { mkdir, rm, writeFile } from "fs/promises"
-import { prepareProductBuildArgs, resolvePkgBuildVersion, resolveScriptsDir } from "app-builder-lib/out/targets/pkg"
+import { mkdir, writeFile } from "fs/promises"
+import { prepareProductBuildArgs, resolvePkgBuildVersion, resolveScriptsDir } from "app-builder-lib/src/targets/mac/pkg"
 
 // Only run these tests on macOS since they rely on macOS-specific filesystem structure and conventions.
 // The functions being tested are also only relevant in the context of building macOS pkg installers.
 describe.ifMac("mac pkg", () => {
-  async function makeTempDir(): Promise<string> {
-    const dir = path.join(os.tmpdir(), `eb-pkg-unit-${Date.now()}`)
-    await mkdir(dir, { recursive: true })
-    return dir
-  }
-
   function plistXml(data: Record<string, string | number | boolean>): string {
     const entries = Object.entries(data)
       .map(([key, value]) => {
@@ -38,12 +31,8 @@ ${entries}
   describe("resolvePkgBuildVersion", () => {
     let tmpDir: string
 
-    beforeEach(async () => {
-      tmpDir = await makeTempDir()
-    })
-
-    afterEach(async () => {
-      await rm(tmpDir, { recursive: true, force: true })
+    beforeEach(async context => {
+      tmpDir = await context.tmpDir.createTempDir()
     })
 
     test("returns CFBundleShortVersionString from Info.plist when present", async ({ expect }) => {

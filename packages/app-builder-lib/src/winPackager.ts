@@ -1,32 +1,34 @@
 import { Arch, CopyFileTransformer, exists, FileTransformer, InvalidConfigurationError, log, walk } from "builder-util"
+import { createRequire } from "node:module"
 import { Nullish } from "builder-util-runtime"
 import { isCI } from "ci-info"
 import { createHash } from "crypto"
 import { readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { readAsarHeader } from "./asar/asar"
-import { SignManager } from "./codeSign/signManager"
-import { signWindows, WindowsSignOptions } from "./codeSign/windowsCodeSign"
-import { WindowsSignAzureManager } from "./codeSign/windowsSignAzureManager"
-import { FileCodeSigningInfo, WindowsSignToolManager } from "./codeSign/windowsSignToolManager"
-import { AfterPackContext } from "./configuration"
-import { DIR_TARGET, Platform, Target } from "./core"
-import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOptions"
-import { Packager } from "./packager"
-import { chooseNotNull, PlatformPackager } from "./platformPackager"
-import AppXTarget from "./targets/AppxTarget"
-import MsiTarget from "./targets/MsiTarget"
-import MsiWrappedTarget from "./targets/MsiWrappedTarget"
-import { NsisTarget } from "./targets/nsis/NsisTarget"
-import { AppPackageHelper, CopyElevateHelper } from "./targets/nsis/nsisUtil"
-import { WebInstallerTarget } from "./targets/nsis/WebInstallerTarget"
-import { createCommonTarget } from "./targets/targetFactory"
-import { BuildCacheManager, digest } from "./util/cacheManager"
-import { isBuildCacheEnabled } from "./util/flags"
-import { editWindowsResources, ResourceEditOptions } from "./util/resEdit"
-import { time } from "./util/timer"
-import { getWindowsVm, VmManager } from "./vm/vm"
+import { readAsarHeader } from "./asar/asar.js"
+import { createSignManager } from "./codeSign/win/signManager.js"
+import { signWindows, WindowsSignOptions } from "./codeSign/win/windowsCodeSign.js"
+import { FileCodeSigningInfo } from "./codeSign/win/signtoolBaseSignManager.js"
+import { AfterPackContext } from "./configuration.js"
+import { DIR_TARGET, Platform, Target } from "./core.js"
+import { isWindowsSigningDisabled, RequestedExecutionLevel, resolveWindowsSigningConfiguration, WindowsConfiguration } from "./options/winOptions.js"
+import { Packager } from "./packager.js"
+import { chooseNotNull, PlatformPackager } from "./platformPackager.js"
+import AppXTarget from "./targets/win/AppxTarget.js"
+import MsiTarget from "./targets/win/MsiTarget.js"
+import MsiWrappedTarget from "./targets/win/MsiWrappedTarget.js"
+import { NsisTarget } from "./targets/win/nsis/NsisTarget.js"
+import { AppPackageHelper, CopyElevateHelper } from "./targets/win/nsis/nsisUtil.js"
+import { WebInstallerTarget } from "./targets/win/nsis/WebInstallerTarget.js"
+import { createCommonTarget } from "./targets/targetFactory.js"
+import { BuildCacheManager, digest } from "./util/cacheManager.js"
+import { isBuildCacheEnabled } from "./util/flags.js"
+import { editWindowsResources, ResourceEditOptions } from "./util/win/resEdit.js"
+import { time } from "./util/timer.js"
+import { getWindowsVm, VmManager } from "./vm/vm.js"
+
+const _require = createRequire(import.meta.url)
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))
@@ -34,12 +36,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   readonly vm = new Lazy<VmManager>(() => (process.platform === "win32" ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger)))
 
   readonly signingManager = new Lazy(async () => {
-    let manager: SignManager
-    if (this.platformSpecificBuildOptions.azureSignOptions != null) {
-      manager = new WindowsSignAzureManager(this)
-    } else {
-      manager = new WindowsSignToolManager(this)
-    }
+    const manager = createSignManager(this)
     await manager.initialize()
     return manager
   })
@@ -89,19 +86,19 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
           switch (name) {
             case "squirrel":
               try {
-                return require("electron-builder-squirrel-windows").default
+                return _require("electron-builder-squirrel-windows").default
               } catch (e: any) {
                 throw new InvalidConfigurationError(`Module electron-builder-squirrel-windows must be installed in addition to build Squirrel.Windows: ${e.stack || e}`)
               }
 
             case "appx":
-              return require("./targets/AppxTarget").default
+              return AppXTarget
 
             case "msi":
-              return require("./targets/MsiTarget").default
+              return MsiTarget
 
             case "msiwrapped":
-              return require("./targets/MsiWrappedTarget").default
+              return MsiWrappedTarget
 
             default:
               return null
@@ -118,7 +115,9 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   }
 
   doGetCscPassword(): string | Nullish {
-    return chooseNotNull(chooseNotNull(this.platformSpecificBuildOptions.signtoolOptions?.certificatePassword, process.env.WIN_CSC_KEY_PASSWORD), super.doGetCscPassword())
+    const signing = resolveWindowsSigningConfiguration(this.platformSpecificBuildOptions)
+    const certPassword = signing?.type === "signtool" ? signing.certificatePassword : null
+    return chooseNotNull(chooseNotNull(certPassword, process.env.WIN_CSC_KEY_PASSWORD), super.doGetCscPassword())
   }
 
   async signIf(file: string): Promise<boolean> {
@@ -127,8 +126,8 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       log.info(logFields, "file signing skipped via signExts configuration")
       return false
     }
-    if (this.platformSpecificBuildOptions.signExecutable === false) {
-      log.info(logFields, "file signing skipped via signExecutable configuration")
+    if (isWindowsSigningDisabled(this.platformSpecificBuildOptions)) {
+      log.info(logFields, "file signing disabled (`sign: false` or `sign: null`)")
       return false
     }
 
@@ -207,8 +206,11 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       hash.update(config.electronVersion || "no electronVersion")
       hash.update(JSON.stringify(this.platformSpecificBuildOptions))
       hash.update(JSON.stringify(opts))
-      hash.update(this.platformSpecificBuildOptions.signtoolOptions?.certificateSha1 || "no certificateSha1")
-      hash.update(this.platformSpecificBuildOptions.signtoolOptions?.certificateSubjectName || "no subjectName")
+      const signingConfig = resolveWindowsSigningConfiguration(this.platformSpecificBuildOptions)
+      const certSha1 = signingConfig?.type === "signtool" || signingConfig?.type === "hsm" ? signingConfig.certificateSha1 : null
+      const subjectName = signingConfig?.type === "signtool" || signingConfig?.type === "hsm" ? signingConfig.certificateSubjectName : null
+      hash.update(certSha1 || "no certificateSha1")
+      hash.update(subjectName || "no subjectName")
 
       const asar = path.resolve(this.getResourcesDir(outDir), "app.asar")
       if (await exists(asar)) {
@@ -254,7 +256,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   }
 
   protected createTransformerForExtraFiles(packContext: AfterPackContext): FileTransformer | null {
-    if (this.platformSpecificBuildOptions.signAndEditExecutable === false || this.platformSpecificBuildOptions.signExecutable === false) {
+    if (isWindowsSigningDisabled(this.platformSpecificBuildOptions)) {
       return null
     }
 
@@ -271,18 +273,9 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
   protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<boolean> {
     const exeFileName = `${this.appInfo.productFilename}.exe`
-    const signingDisabled = this.platformSpecificBuildOptions.signExecutable === false || this.platformSpecificBuildOptions.signAndEditExecutable === false
+    const signingDisabled = isWindowsSigningDisabled(this.platformSpecificBuildOptions)
     if (signingDisabled && this.forceCodeSigning) {
-      throw new InvalidConfigurationError(
-        "Signing is disabled (`signExecutable: false` or `signAndEditExecutable: false`) but `forceCodeSigning` is enabled. Remove one of these options."
-      )
-    }
-    if (this.platformSpecificBuildOptions.signAndEditExecutable === false) {
-      log.info(
-        { exe: log.filePath(path.join(packContext.appOutDir, exeFileName)) },
-        "executable resource editing and code signing skipped — signAndEditExecutable is false. To skip only code signing while keeping icon and metadata applied, use signExecutable: false instead."
-      )
-      return false
+      throw new InvalidConfigurationError("Signing is disabled (`sign: false`) but `forceCodeSigning` is enabled. Remove one of these options.")
     }
 
     const files = await readdir(packContext.appOutDir)
@@ -300,7 +293,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       }
     }
 
-    if (!isAsar || this.platformSpecificBuildOptions.signExecutable === false) {
+    if (!isAsar || signingDisabled) {
       return true
     }
 

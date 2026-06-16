@@ -1,5 +1,4 @@
 import { EventEmitter } from "events"
-import * as os from "os"
 import * as path from "path"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -17,8 +16,8 @@ import { Arch } from "builder-util"
 import { CancellationToken, S3Options, SpacesOptions } from "builder-util-runtime"
 import { PublishContext, UploadTask } from "electron-publish"
 import { resolveAwsCredentials } from "electron-publish/src/s3/awsCredentials"
-import { S3Publisher } from "electron-publish/src/s3/s3Publisher"
-import { SpacesPublisher } from "electron-publish/src/s3/spacesPublisher"
+import { S3Publisher } from "electron-publish/internal"
+import { SpacesPublisher } from "electron-publish/internal"
 import { getS3ContentType } from "electron-publish/src/s3/s3UploadHelper"
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -65,6 +64,7 @@ function mockSuccessfulUpload(): { capturedOpts: () => any } {
       const res = new EventEmitter() as any
       res.statusCode = 200
       res.resume = vi.fn()
+      ;(callback as (arg: unknown) => void)(res)
       ;(callback as (res: unknown) => void)(res)
       setImmediate(() => res.emit("end"))
     })
@@ -168,7 +168,7 @@ describe("S3Publisher — getUploadExtraParams", () => {
 
 // ─── SpacesPublisher — getS3UploadConfig ─────────────────────────────────────
 
-describe("SpacesPublisher — getS3UploadConfig", () => {
+describe("SpacesPublisher — getS3UploadConfig", { sequential: true }, () => {
   const savedEnv: Record<string, string | undefined> = {}
 
   beforeEach(() => {
@@ -216,23 +216,21 @@ describe("SpacesPublisher — getS3UploadConfig", () => {
 
 // ─── Upload — key construction and request params ────────────────────────────
 
-describe("BaseS3Publisher.upload — key construction and S3 request", () => {
+describe("BaseS3Publisher.upload — key construction and S3 request", { sequential: true }, () => {
   let tmpDir: string
   let testFile: string
 
-  beforeEach(async () => {
+  beforeEach(async context => {
     vi.mocked(https.request).mockClear()
-    const { mkdtemp, writeFile } = await import("fs/promises")
-    tmpDir = await mkdtemp(path.join(os.tmpdir(), "s3-upload-test-"))
+    const { writeFile } = await import("fs/promises")
+    tmpDir = await context.tmpDir.createTempDir()
     testFile = path.join(tmpDir, "MyApp-1.0.0.exe")
     await writeFile(testFile, "fake exe content")
     delete process.env.__TEST_S3_PUBLISHER__
   })
 
-  afterEach(async () => {
+  afterEach(() => {
     delete process.env.__TEST_S3_PUBLISHER__
-    const { rm } = await import("fs/promises")
-    await rm(tmpDir, { recursive: true, force: true })
     vi.clearAllMocks()
   })
 
@@ -359,27 +357,24 @@ describe("BaseS3Publisher.upload — key construction and S3 request", () => {
 
 // ─── Upload — test mode bypass ────────────────────────────────────────────────
 
-describe("BaseS3Publisher.upload — __TEST_S3_PUBLISHER__ bypass", () => {
+describe("BaseS3Publisher.upload — __TEST_S3_PUBLISHER__ bypass", { sequential: true }, () => {
   let testPublisherDir: string
   let srcDir: string
   let srcFile: string
 
-  beforeEach(async () => {
+  beforeEach(async context => {
     vi.mocked(https.request).mockClear()
-    const { mkdtemp, writeFile } = await import("fs/promises")
+    const { writeFile } = await import("fs/promises")
     // Keep source file and destination dir separate so symlink(src, dest) doesn't collide
-    testPublisherDir = await mkdtemp(path.join(os.tmpdir(), "s3-test-publisher-"))
-    srcDir = await mkdtemp(path.join(os.tmpdir(), "s3-src-"))
+    testPublisherDir = await context.tmpDir.createTempDir()
+    srcDir = await context.tmpDir.createTempDir()
     srcFile = path.join(srcDir, "source.exe")
     await writeFile(srcFile, "fake content")
     process.env.__TEST_S3_PUBLISHER__ = testPublisherDir
   })
 
-  afterEach(async () => {
+  afterEach(() => {
     delete process.env.__TEST_S3_PUBLISHER__
-    const { rm } = await import("fs/promises")
-    await rm(testPublisherDir, { recursive: true, force: true })
-    await rm(srcDir, { recursive: true, force: true })
     vi.clearAllMocks()
   })
 
@@ -395,7 +390,7 @@ describe("BaseS3Publisher.upload — __TEST_S3_PUBLISHER__ bypass", () => {
 
 // ─── Parity contract: Go binary publish-s3 flag → TS header/URL mapping ──────
 
-describe("publish-s3 parity — Go binary flag mapping to HTTP request", () => {
+describe("publish-s3 parity — Go binary flag mapping to HTTP request", { sequential: true }, () => {
   // The Go binary accepted:
   //   --acl         → x-amz-acl header
   //   --storageClass → x-amz-storage-class header
@@ -410,18 +405,16 @@ describe("publish-s3 parity — Go binary flag mapping to HTTP request", () => {
   let tmpDir: string
   let testFile: string
 
-  beforeEach(async () => {
+  beforeEach(async context => {
     vi.mocked(https.request).mockClear()
-    const { mkdtemp, writeFile } = await import("fs/promises")
-    tmpDir = await mkdtemp(path.join(os.tmpdir(), "s3-parity-test-"))
+    const { writeFile } = await import("fs/promises")
+    tmpDir = await context.tmpDir.createTempDir()
     testFile = path.join(tmpDir, "TestApp-1.0.0-setup.exe")
     await writeFile(testFile, "x")
     delete process.env.__TEST_S3_PUBLISHER__
   })
 
-  afterEach(async () => {
-    const { rm } = await import("fs/promises")
-    await rm(tmpDir, { recursive: true, force: true })
+  afterEach(() => {
     vi.clearAllMocks()
   })
 

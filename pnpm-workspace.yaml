@@ -16,7 +16,10 @@ minimumReleaseAge: 10080
 patchedDependencies:
   '@changesets/cli@2.29.7': patches/@changesets__cli@2.29.7.patch
   '@changesets/assemble-release-plan@6.0.9': patches/@changesets__assemble-release-plan@6.0.9.patch
+  estree-walker@3.0.3: patches/estree-walker@3.0.3.patch
 overrides:
   flatted: '>=3.4.2'
   handlebars: '>=4.7.9'
+  # --- Dependabot transitive-dependency security overrides ---
+  shell-quote: '>=1.8.4 <2' # GHSA-w7jw-789q-3m8p (critical)
 packageImportMethod: copy

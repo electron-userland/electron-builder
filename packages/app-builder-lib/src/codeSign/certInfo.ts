@@ -2,8 +2,10 @@ import { createDecipheriv, createHash } from "crypto"
 import * as asn1js from "asn1js"
 import * as pkijs from "pkijs"
 import { Crypto as PeculiarCrypto } from "@peculiar/webcrypto"
-import { readFile } from "fs-extra"
+
 import { log } from "builder-util"
+import _fsExtra from "fs-extra"
+const { readFile } = _fsExtra
 
 // OID for codeSigning extended key usage
 const CODE_SIGNING_OID = "1.3.6.1.5.5.7.3.3"
@@ -496,6 +498,59 @@ export async function readCertInfo(file: string, password: string): Promise<{ co
   // POSTALCODE, and SERIALNUMBER (present in EV code-signing certs) are handled correctly.
   // Unknown OIDs fall back to the bare OID string as the type name.
   const bloodyMicrosoftSubjectDn = signingCert.subject.typesAndValues
+    .map(a => {
+      const typeName = ATTRIBUTE_TYPE_NAMES[a.type] ?? a.type
+      return `${typeName}=${escapeDnValue(String(a.value.valueBlock.value))}`
+    })
+    .join(",")
+
+  return { commonName, bloodyMicrosoftSubjectDn }
+}
+
+/**
+ * Reads certificate info from a plain X.509 certificate file (.crt / .cer).
+ * Accepts both PEM (base64 with -----BEGIN CERTIFICATE----- headers) and DER (raw binary) encoding.
+ *
+ * Unlike `readCertInfo`, this does not require a password and does not parse PKCS#12.
+ * Used when HSM mode supplies a public-cert-only file alongside /csp + /kc or pkcs11Module.
+ *
+ * Returns `null` when the publisher name cannot be determined (e.g. no CN attribute), so
+ * callers should fall back to requiring an explicit `publisherName` in that case.
+ */
+export async function readCertInfoFromX509(file: string): Promise<{ commonName: string; bloodyMicrosoftSubjectDn: string } | null> {
+  const raw = await readFile(file)
+
+  // Support PEM (ASCII armor) and DER (raw binary) encoding.
+  let derBytes: Buffer
+  const pemContent = raw.toString("ascii")
+  if (pemContent.includes("-----BEGIN CERTIFICATE-----")) {
+    const b64 = pemContent
+      .replace(/-----BEGIN CERTIFICATE-----/g, "")
+      .replace(/-----END CERTIFICATE-----/g, "")
+      .replace(/\s+/g, "")
+    derBytes = Buffer.from(b64, "base64")
+  } else {
+    derBytes = raw
+  }
+
+  let cert: pkijs.Certificate
+  try {
+    const asn1Result = asn1js.fromBER(toArrayBuffer(derBytes))
+    if (asn1Result.offset === -1) {
+      throw new Error("offset -1: invalid BER encoding")
+    }
+    cert = new pkijs.Certificate({ schema: asn1Result.result })
+  } catch (err) {
+    throw new Error(`X.509 certificate file "${file}" could not be parsed: ${err instanceof Error ? err.message : String(err)}`)
+  }
+
+  const cnAttr = cert.subject.typesAndValues.find(a => a.type === "2.5.4.3")
+  if (cnAttr == null) {
+    return null
+  }
+  const commonName = String(cnAttr.value.valueBlock.value)
+
+  const bloodyMicrosoftSubjectDn = cert.subject.typesAndValues
     .map(a => {
       const typeName = ATTRIBUTE_TYPE_NAMES[a.type] ?? a.type
       return `${typeName}=${escapeDnValue(String(a.value.valueBlock.value))}`

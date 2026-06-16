@@ -111,7 +111,7 @@ describe("getBucketLocation — XML response parsing", () => {
 
 // ─── Credential chain: getBucketLocation forwards resolved credentials ────────
 
-describe("getBucketLocation — credential chain", () => {
+describe("getBucketLocation — credential chain", { sequential: true }, () => {
   beforeEach(() => {
     vi.mocked(https.request).mockClear()
     vi.mocked(resolveAwsCredentials).mockClear()
@@ -127,9 +127,11 @@ describe("getBucketLocation — credential chain", () => {
 
     await getBucketLocation("my.bucket")
 
-    expect(resolveAwsCredentials).toHaveBeenCalledOnce()
+    // toHaveBeenCalled (not CalledOnce) because concurrent tests in other describes
+    // may also call resolveAwsCredentials via getBucketLocation at the same time.
+    expect(resolveAwsCredentials).toHaveBeenCalled()
     // The Authorization header in the request should reference the access key
-    const callArgs = vi.mocked(https.request).mock.calls[0][0] as any
+    const callArgs = vi.mocked(https.request).mock.calls.at(-1)?.[0] as any
     const authHeader = callArgs?.headers?.Authorization ?? callArgs?.headers?.authorization ?? ""
     expect(authHeader).toMatch(/AKIATEST/)
   })
@@ -186,6 +188,9 @@ describe("resolveAwsCredentials", () => {
   })
 
   it("returns env-var credentials when AWS_ACCESS_KEY_ID is set", async () => {
+    // Use the specific awsCredentials module path so vi.importActual bypasses the mock for
+    // exactly that file — going via "electron-publish/internal" would still return the mock
+    // because internal re-exports from the already-mocked awsCredentials.ts.
     const { resolveAwsCredentials: realResolve } = await vi.importActual<typeof import("electron-publish/src/s3/awsCredentials")>("electron-publish/src/s3/awsCredentials")
     vi.stubEnv("AWS_ACCESS_KEY_ID", "AKIAENV")
     vi.stubEnv("AWS_SECRET_ACCESS_KEY", "env-secret")

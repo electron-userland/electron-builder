@@ -239,3 +239,4 @@ docker run --rm -ti \
 - Run `DEBUG=electron-builder electron-builder build 2>&1 | tee build.log` to capture full debug output
 - Search [GitHub Issues](https://github.com/electron-userland/electron-builder/issues)
 - Check the [Discussions](https://github.com/electron-userland/electron-builder/discussions)
+- When filing a bug report, use [electron/minimal-repro](https://github.com/electron/minimal-repro) to create a minimal reproduction case — issues with a repro get resolved significantly faster
