@@ -227,11 +227,15 @@ export class LinuxTargetHelper {
   }
 
   getDesktopFileName(fallback: string = this.packager.executableName): string {
-    if (!this.packager.platformOptions.syncDesktopName) {
-      return fallback
-    }
     const trimmedDesktopName = this.packager.metadata.desktopName?.trim()
     if (isEmptyOrSpaces(trimmedDesktopName)) {
+      log.warn(
+        {
+          reason: "desktopName is not set in package.json",
+          docs: "https://www.electron.build/docs/linux/#window-association-desktopname--syncdesktopname",
+        },
+        "desktopName is used to generate the .desktop filename and app_id for window association. Set desktopName in package.json to fix."
+      )
       return fallback
     }
     const basename = trimmedDesktopName.replace(/\.desktop$/, "")
@@ -282,9 +286,9 @@ export class LinuxTargetHelper {
       log.warn(
         {
           reason: "desktopName is not set in package.json",
-          docs: "https://www.electron.build/linux#window-association-desktopname--syncdesktopname",
+          docs: "https://www.electron.build/linux#window-association-desktopname",
         },
-        "electron uses desktopName as app_id / WM_CLASS for window association. Without it desktop environments may not link running windows to this .desktop entry. Set desktopName in package.json and linux.syncDesktopName: true to fix."
+        "electron uses desktopName as app_id / WM_CLASS for window association. Without it desktop environments may not link running windows to this .desktop entry. Set desktopName in package.json to fix."
       )
     }
     const wmClass = !isEmptyOrSpaces(trimmedDesktopName) ? trimmedDesktopName.replace(/\.desktop$/, "") : appInfo.productName
