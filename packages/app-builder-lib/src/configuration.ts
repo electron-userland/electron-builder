@@ -627,14 +627,14 @@ export interface ToolsetConfig {
    * Available versions:
    * | Version | Wine version | Platform support | Notes |
    * |---------|-------------|-----------------|-------|
-   * | `"0.0.0"` | 4.0.1 | macOS only | Legacy portable bundle; on Linux falls back to host `wine` |
-   * | `"1.0.1"` | 11.0 | macOS + Linux (+ arm64 macOS via Rosetta) | Bundled build; default since v27 |
+   * | `"0.0.0"` | 4.0.1 | macOS | Legacy portable bundle (default) |
+   * | `"1.0.1"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |
    *
    * To use a custom Wine binary, use a `ToolsetCustom` object.
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md
    *
-   * @default "1.0.1"
+   * @default "0.0.0"
    */
   readonly wine?: "0.0.0" | "1.0.1" | ToolsetCustom | null
 
