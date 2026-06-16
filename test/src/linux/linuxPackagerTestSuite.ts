@@ -239,6 +239,27 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
       }
     ))
 
+  test("AppImage - executableArgs are written verbatim into the Exec line", ({ expect }) =>
+    // https://github.com/electron-userland/electron-builder/issues/9914
+    app(expect, {
+      targets: appImageTarget,
+      config: {
+        toolsets,
+        publish: null,
+        linux: {
+          executableArgs: ['--js-flags="--max-old-space-size=12288"'],
+        },
+      },
+      effectiveOptionComputed: async it => {
+        const content: string = it.desktop
+        const execLine = content.split("\n").find(line => line.startsWith("Exec="))
+        expect(execLine).toContain('--js-flags="--max-old-space-size=12288"')
+        // must NOT wrap the whole arg in outer quotes with escaped inner quotes
+        expect(execLine).not.toContain('"--js-flags=\\"')
+        return Promise.resolve(false)
+      },
+    }))
+
   test("icons from ICNS (mac)", ({ expect }) =>
     app(
       expect,

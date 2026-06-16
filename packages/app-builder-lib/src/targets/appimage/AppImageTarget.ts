@@ -7,7 +7,7 @@ import { LinuxPackager } from "../../linuxPackager"
 import { AppImageOptions } from "../../options/linuxOptions"
 import { getAppUpdatePublishConfiguration } from "../../publish/PublishManager"
 import { getNotLocalizedLicenseFile } from "../../util/license"
-import { LinuxTargetHelper } from "../LinuxTargetHelper"
+import { buildExecArgs, LinuxTargetHelper } from "../LinuxTargetHelper"
 import { createStageDir } from "../targetUtil"
 import { buildLegacyFuse2AppImage, buildStaticRuntimeAppImage } from "./appImageUtil"
 import { BlockMapDataHolder, deepAssign } from "builder-util-runtime"
@@ -33,7 +33,7 @@ export default class AppImageTarget extends Target {
       const appimageTool = packager.config.toolsets?.appimage
       const defaultArgs = appimageTool == null || appimageTool === "0.0.0" ? ["--no-sandbox"] : []
       const args = this.options.executableArgs ?? defaultArgs
-      const exec = [APP_RUN_ENTRYPOINT, ...args, "%U"].join(" ")
+      const exec = [APP_RUN_ENTRYPOINT, buildExecArgs(args), "%U"].filter(Boolean).join(" ")
       return helper.computeDesktopEntry(this.options, exec, {
         "X-AppImage-Version": `${packager.appInfo.buildVersion}`,
       })

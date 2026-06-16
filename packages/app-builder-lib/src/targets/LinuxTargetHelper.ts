@@ -35,39 +35,18 @@ function desktopStringEscape(value: string): string {
 }
 
 /**
- * Characters that require an Exec argument to be double-quoted per the
- * freedesktop Desktop Entry Specification.  Plain alphanumeric args and
- * field codes must NOT be wrapped in quotes.
+ * Build the argument portion of a .desktop Exec line.
+ *
+ * executableArgs are written verbatim — matching AppImage and the behavior that
+ * shipped for years — so an arg like `--js-flags="--max-old-space-size=12288"`
+ * reaches the launcher exactly as the developer specified. Only carriage-return
+ * and newline characters are removed: the Exec key is a single line, and an
+ * embedded line break would split it into additional .desktop entries.
  *
  * @see https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#exec-variables
  */
-const EXEC_RESERVED_RE = /[\s"'`\\<>~|&;$*?#()]/
-
-/**
- * Quote a single argument for use in a .desktop file Exec key.
- *
- * Field codes (`%f`, `%u`, `%F`, `%U`, etc.) MUST be left unquoted — the
- * desktop launcher only expands them in unquoted token positions.  Wrapping
- * them in `"…"` causes the launcher to treat them as literal strings, which
- * breaks file-association / drag-and-drop functionality.
- *
- * For all other arguments, double-quoting is used when the argument contains
- * any character that would be misinterpreted by the launcher without quoting
- * (spaces, shell metacharacters, etc.).  Safe plain-word args are passed
- * through unchanged to keep the Exec line readable.
- *
- * @see https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#exec-variables
- */
-function desktopExecArgEscape(arg: string): string {
-  // Field codes (%f, %u, %F, %U, %i, %c, %k, …) must never be quoted.
-  if (/^%[a-zA-Z]$/.test(arg)) {
-    return arg
-  }
-  // Only quote when the arg actually contains characters that need it.
-  if (EXEC_RESERVED_RE.test(arg)) {
-    return `"${arg.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`
-  }
-  return arg
+export function buildExecArgs(executableArgs: ReadonlyArray<string>): string {
+  return executableArgs.map(arg => arg.replace(/[\r\n]+/g, "")).join(" ")
 }
 
 function mapLinuxCompressionToSnap(level: CompressionLevel | null | undefined): "xz" | "lzo" | undefined {
@@ -271,11 +250,8 @@ export class LinuxTargetHelper {
       if (!/^[/0-9A-Za-z._-]+$/.test(exec)) {
         exec = `"${exec}"`
       }
-      if (executableArgs) {
-        exec += " "
-        // Each arg is double-quoted per the freedesktop Exec key spec so that
-        // spaces, $, ;, & and other reserved characters are not misinterpreted.
-        exec += executableArgs.map(desktopExecArgEscape).join(" ")
+      if (executableArgs && executableArgs.length > 0) {
+        exec += " " + buildExecArgs(executableArgs)
       }
       // https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#exec-variables
       const execCodes = ["%f", "%u", "%F", "%U"]
