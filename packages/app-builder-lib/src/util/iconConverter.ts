@@ -1,6 +1,7 @@
 import { mkdir, readFile, readdir, rename, stat } from "fs/promises"
 import * as path from "path"
-import { runIconsTool } from "../toolsets/icons"
+import { ToolsetConfig } from "../configuration.js"
+import { runIconsTool } from "../toolsets/icons.js"
 
 class IconConversionError extends Error {
   constructor(
@@ -34,17 +35,19 @@ type IconConversionConfig = {
   roots: string[]
   format: IconFormat
   outDir: string
+  iconsToolset: ToolsetConfig["icons"]
+  resourcesDir: string
 }
 
-export async function convertIcon({ sources, fallbackSources, roots, format, outDir }: IconConversionConfig): Promise<IconConvertResult> {
+export async function convertIcon({ sources, fallbackSources, roots, format, outDir, iconsToolset, resourcesDir }: IconConversionConfig): Promise<IconConvertResult> {
   const candidates = buildSourceCandidates(sources, format)
 
-  let icons = await doConvertIcon(candidates, roots, format, outDir)
+  let icons = await doConvertIcon({ candidates, roots, format, outDir, iconsToolset, resourcesDir })
 
   let isFallback = false
   if (icons == null) {
     const fallbackCandidates = buildSourceCandidates(fallbackSources, format)
-    icons = await doConvertIcon(fallbackCandidates, roots, format, outDir)
+    icons = await doConvertIcon({ candidates: fallbackCandidates, roots, format, outDir, iconsToolset, resourcesDir })
     isFallback = true
   }
 
@@ -125,14 +128,14 @@ async function collectCliOutput(outDir: string, format: IconFormat, sourceMaxSiz
 
 // ─── File resolution (matches go fileResolver.go + icon-converter.go) ────────
 
-function imageHasExtension(name: string, format: string): boolean {
+function imageHasExtension({ name, format }: { name: string; format: string }): boolean {
   return name.endsWith("." + format) || name.endsWith(".png") || name.endsWith(".ico") || name.endsWith(".svg") || name.endsWith(".icns")
 }
 
 export function buildSourceCandidates(sources: string[], format: IconFormat): string[] {
   const result: string[] = []
   for (const src of sources) {
-    if (imageHasExtension(src, format)) {
+    if (imageHasExtension({ name: src, format })) {
       result.push(src)
     } else {
       if (format !== "set") {
@@ -167,7 +170,7 @@ export function buildSourceCandidates(sources: string[], format: IconFormat): st
   return [...new Set(result)]
 }
 
-async function resolveSourceFile(candidates: string[], roots: string[]): Promise<{ resolved: string; isDir: boolean } | null> {
+async function resolveSourceFile({ candidates, roots }: { candidates: string[]; roots: string[] }): Promise<{ resolved: string; isDir: boolean } | null> {
   for (const candidate of candidates) {
     const absPath = path.isAbsolute(candidate) ? path.normalize(candidate) : null
     const searchPaths = absPath ? [absPath] : roots.map(r => path.join(r, candidate))
@@ -217,8 +220,22 @@ async function collectIconsFromDir(dir: string): Promise<{ icons: IconInfo[]; fa
 
 // ─── Main conversion logic ───────────────────────────────────────────────────
 
-async function doConvertIcon(candidates: string[], roots: string[], format: IconFormat, outDir: string): Promise<IconInfo[] | null> {
-  const found = await resolveSourceFile(candidates, roots)
+async function doConvertIcon({
+  candidates,
+  roots,
+  format,
+  outDir,
+  iconsToolset,
+  resourcesDir,
+}: {
+  candidates: string[]
+  roots: string[]
+  format: IconFormat
+  outDir: string
+  iconsToolset: ToolsetConfig["icons"]
+  resourcesDir: string
+}): Promise<IconInfo[] | null> {
+  const found = await resolveSourceFile({ candidates, roots })
   if (!found) {
     return null
   }
@@ -261,7 +278,7 @@ async function doConvertIcon(candidates: string[], roots: string[], format: Icon
         return icons
       }
       if (fallbackFile) {
-        return doConvertSingleFile(fallbackFile, format, outDir)
+        return doConvertSingleFile({ sourceFile: fallbackFile, format, outDir, iconsToolset, resourcesDir })
       }
       return null
     }
@@ -270,12 +287,12 @@ async function doConvertIcon(candidates: string[], roots: string[], format: Icon
       // Use largest available PNG from the directory as CLI input
       const maxIcon = icons[icons.length - 1]
       await mkdir(outDir, { recursive: true })
-      await runIconsTool({ inputFile: maxIcon.file, outputFormat: format, outDir })
+      await runIconsTool({ inputFile: maxIcon.file, outputFormat: format, outDir, iconsToolset, resourcesDir })
       return collectCliOutput(outDir, format, maxIcon.size)
     }
 
     if (fallbackFile) {
-      return doConvertSingleFile(fallbackFile, format, outDir)
+      return doConvertSingleFile({ sourceFile: fallbackFile, format, outDir, iconsToolset, resourcesDir })
     }
     return null
   }
@@ -283,14 +300,26 @@ async function doConvertIcon(candidates: string[], roots: string[], format: Icon
   // Single file: ICNS → ico or set — pass ICNS directly to CLI (CLI handles extraction)
   if (resolved.endsWith(".icns") && format !== "icns") {
     await mkdir(outDir, { recursive: true })
-    await runIconsTool({ inputFile: resolved, outputFormat: format, outDir })
+    await runIconsTool({ inputFile: resolved, outputFormat: format, outDir, iconsToolset, resourcesDir })
     return collectCliOutput(outDir, format)
   }
 
-  return doConvertSingleFile(resolved, format, outDir)
+  return doConvertSingleFile({ sourceFile: resolved, format, outDir, iconsToolset, resourcesDir })
 }
 
-async function doConvertSingleFile(sourceFile: string, format: IconFormat, outDir: string): Promise<IconInfo[] | null> {
+async function doConvertSingleFile({
+  sourceFile,
+  format,
+  outDir,
+  iconsToolset,
+  resourcesDir,
+}: {
+  sourceFile: string
+  format: IconFormat
+  outDir: string
+  iconsToolset: ToolsetConfig["icons"]
+  resourcesDir: string
+}): Promise<IconInfo[] | null> {
   const ext = path.extname(sourceFile).toLowerCase()
   let maxSize: number
 
@@ -309,6 +338,6 @@ async function doConvertSingleFile(sourceFile: string, format: IconFormat, outDi
   }
 
   await mkdir(outDir, { recursive: true })
-  await runIconsTool({ inputFile: sourceFile, outputFormat: format, outDir })
+  await runIconsTool({ inputFile: sourceFile, outputFormat: format, outDir, iconsToolset, resourcesDir })
   return collectCliOutput(outDir, format, maxSize)
 }

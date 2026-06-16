@@ -1,5 +1,79 @@
 ## 4.3.0
 
+## 7.0.0-alpha.2
+
+### Patch Changes
+
+- Fix: declare the missing `electron-publish` dependency on `electron-builder`, and switch type-checking to `nodenext` module resolution so the compiler models Node's real ESM loader _[`#9885`](https://github.com/electron-userland/electron-builder/pull/9885) [`96e47b5`](https://github.com/electron-userland/electron-builder/commit/96e47b5b89b76c719b1c06cfdd62a9a17376484e) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`96e47b5`](https://github.com/electron-userland/electron-builder/commit/96e47b5b89b76c719b1c06cfdd62a9a17376484e)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.2`
+
+</details>
+
+## 7.0.0-alpha.1
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`7674e60`](https://github.com/electron-userland/electron-builder/commit/7674e6092645df5c7ae0a31530446efe449cd3d6)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.1`
+
+</details>
+
+## 7.0.0-alpha.0
+
+### Major Changes
+
+- Feat!: migrate to native ESM, require Node.js >=22.12.0, remove electron-compile _[`#9544`](https://github.com/electron-userland/electron-builder/pull/9544) [`a5121de`](https://github.com/electron-userland/electron-builder/commit/a5121de49582eaa8870d4c05e6ae55eff160a592) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Chore: Code quality modernization: adopt native Node.js APIs and modern TypeScript patterns across the codebase. _[`#9867`](https://github.com/electron-userland/electron-builder/pull/9867) [`f8feadb`](https://github.com/electron-userland/electron-builder/commit/f8feadb0c39934565197d69248274fd62173a94e) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`f8feadb`](https://github.com/electron-userland/electron-builder/commit/f8feadb0c39934565197d69248274fd62173a94e) [`9d755c6`](https://github.com/electron-userland/electron-builder/commit/9d755c68f845d169c9b68963c9711d2e75b4800b) [`a5121de`](https://github.com/electron-userland/electron-builder/commit/a5121de49582eaa8870d4c05e6ae55eff160a592)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.0`
+
+</details>
+
+## 6.8.9
+
+### Patch Changes
+
+- Fix: holistic field detection for sha256 hash redaction _[`#9834`](https://github.com/electron-userland/electron-builder/pull/9834) [`22a7532`](https://github.com/electron-userland/electron-builder/commit/22a7532bd01b9fb42cff7c58d599c7ad683569fe) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`198c10c`](https://github.com/electron-userland/electron-builder/commit/198c10c9693d1244bac80cb11af6b75ad363e5a0) [`22a7532`](https://github.com/electron-userland/electron-builder/commit/22a7532bd01b9fb42cff7c58d599c7ad683569fe)
+
+</small>
+
+- `builder-util-runtime@9.7.0`
+
+</details>
+
 ## 6.8.8
 
 ### Patch Changes

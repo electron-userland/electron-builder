@@ -1,13 +1,13 @@
 import { Arch, Fields, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isTokenCharValid, log } from "builder-util"
-import { configureRequestOptions, GithubOptions, HttpError, parseJson, githubTagPrefix } from "builder-util-runtime"
+import { configureRequestOptions, GithubOptions, hashSensitiveValue, HttpError, parseJson, githubTagPrefix } from "builder-util-runtime"
 import { ClientRequest } from "http"
 import { Lazy } from "lazy-val"
-import * as mime from "mime"
+import mime from "mime"
 import { parse as parseUrl, UrlWithStringQuery } from "url"
-import { HttpPublisher } from "./httpPublisher"
-import { PublishContext, PublishOptions } from "./index"
-import { getCiTag } from "./publisher"
-import { trimStringWithWarn } from "./util"
+import { HttpPublisher } from "./httpPublisher.js"
+import { PublishContext, PublishOptions } from "./index.js"
+import { getCiTag } from "./publisher.js"
+import { trimStringWithWarn } from "./util.js"
 
 export interface Release {
   id: number
@@ -58,7 +58,7 @@ export class GitHubPublisher extends HttpPublisher {
       token = token.trim()
 
       if (!isTokenCharValid(token)) {
-        throw new InvalidConfigurationError(`GitHub Personal Access Token (${JSON.stringify(token)}) contains invalid characters, please check env "GH_TOKEN"`)
+        throw new InvalidConfigurationError(`GitHub Personal Access Token ${hashSensitiveValue(token)} contains invalid characters, please check env "GH_TOKEN"`)
       }
     }
 

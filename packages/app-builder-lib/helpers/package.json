@@ -1,0 +1,6 @@
+{
+  "name": "@electron-builder/app-builder-lib-helpers",
+  "version": "0.0.0",
+  "private": true,
+  "type": "commonjs"
+}

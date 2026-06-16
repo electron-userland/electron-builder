@@ -1,7 +1,7 @@
 import { InvalidConfigurationError, isEmptyOrSpaces } from "builder-util"
 import { R2Options } from "builder-util-runtime"
-import { PublishContext } from ".."
-import { BaseS3Publisher } from "./baseS3Publisher"
+import { PublishContext } from "../index.js"
+import { BaseS3Publisher, S3UploadConfig, S3UploadExtraParams } from "./baseS3Publisher.js"
 
 /**
  * Publishes to [Cloudflare R2](https://developers.cloudflare.com/r2/).
@@ -19,8 +19,7 @@ export class R2Publisher extends BaseS3Publisher {
     super(context, info)
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  static checkAndResolveOptions(options: R2Options, channelFromAppVersion: string | null, errorIfCannot: boolean) {
+  static checkAndResolveOptions(options: R2Options, channelFromAppVersion: string | null, _errorIfCannot: boolean) {
     if (isEmptyOrSpaces(options.bucket)) {
       throw new InvalidConfigurationError(`Please specify "bucket" for "r2" publish provider (see https://www.electron.build/publish#r2options)`)
     }
@@ -46,15 +45,7 @@ export class R2Publisher extends BaseS3Publisher {
     return this.info.bucket
   }
 
-  protected configureS3Options(args: Array<string>): void {
-    // R2 does not support S3 ACLs — skip the parent's default "public-read" ACL argument.
-    // Bucket-level public access is configured separately in the Cloudflare dashboard.
-    //
-    // Pass the bare hostname (no protocol), consistent with SpacesPublisher, so that
-    // app-builder can normalise the scheme itself.
-    args.push("--endpoint", `${this.info.accountId}.r2.cloudflarestorage.com`)
-    args.push("--region", "auto")
-
+  public getS3UploadConfig(): S3UploadConfig {
     const accessKey = process.env.CF_R2_ACCESS_KEY_ID
     const secretKey = process.env.CF_R2_SECRET_ACCESS_KEY
     if (isEmptyOrSpaces(accessKey)) {
@@ -63,7 +54,19 @@ export class R2Publisher extends BaseS3Publisher {
     if (isEmptyOrSpaces(secretKey)) {
       throw new InvalidConfigurationError("Please set env CF_R2_SECRET_ACCESS_KEY (see https://developers.cloudflare.com/r2/api/s3/tokens/)")
     }
-    args.push("--accessKey", accessKey)
-    args.push("--secretKey", secretKey)
+    return {
+      // R2 has no per-region buckets; the S3-compatible API always expects region "auto".
+      region: "auto",
+      endpoint: `https://${this.info.accountId}.r2.cloudflarestorage.com`,
+      credentials: { accessKeyId: accessKey, secretAccessKey: secretKey },
+    }
+  }
+
+  public getUploadExtraParams(): S3UploadExtraParams {
+    // R2 does not support S3 ACLs — never send the parent's default "public-read" ACL header.
+    // Bucket-level public access is configured separately in the Cloudflare dashboard.
+    return {
+      acl: undefined,
+    }
   }
 }

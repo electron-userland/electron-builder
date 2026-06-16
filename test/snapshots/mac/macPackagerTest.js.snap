@@ -1116,7 +1116,6 @@ exports[`macPackager > yarn two package.json w/ native module 2`] = `
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
 `;
-
 exports[`macPackager > yarn two package.json w/ native module 3`] = `
 {
   "files": {

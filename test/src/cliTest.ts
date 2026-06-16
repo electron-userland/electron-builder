@@ -1,10 +1,16 @@
+import { spawnSync } from "child_process"
+import * as path from "path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import yargs from "yargs"
 
 // ─── Module mocks (hoisted by vitest above all imports) ───────────────────────
 
-vi.mock("app-builder-lib/out/util/electronGet", () => ({
+// getCacheDirectory (clear-cache) and loadEnv (cli-util) are the only `app-builder-lib/internal`
+// exports exercised here. Stub just those — a full mock keeps the heavy app-builder-lib module
+// graph (and its circular class hierarchy) from loading for these isolated CLI unit tests.
+vi.mock("app-builder-lib/internal", () => ({
   getCacheDirectory: vi.fn().mockReturnValue("/home/user/.cache/electron-builder"),
+  loadEnv: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock("fs/promises", async () => {
@@ -16,7 +22,7 @@ vi.mock("fs/promises", async () => {
   }
 })
 
-vi.mock("readline/promises", () => ({
+vi.mock("node:readline/promises", () => ({
   createInterface: vi.fn(() => ({
     question: vi.fn().mockResolvedValue("y"),
     close: vi.fn(),
@@ -32,15 +38,11 @@ vi.mock("builder-util", async () => {
   }
 })
 
-vi.mock("app-builder-lib/out/util/config/load", () => ({
-  loadEnv: vi.fn().mockResolvedValue(undefined),
-}))
-
 // ─── Imports ──────────────────────────────────────────────────────────────────
 
 import { access, rm } from "fs/promises"
-import { createInterface } from "readline/promises"
-import { getCacheDirectory } from "app-builder-lib/out/util/electronGet"
+import { createInterface } from "node:readline/promises"
+import { getCacheDirectory } from "app-builder-lib/internal"
 import { ExecError, InvalidConfigurationError, log } from "builder-util"
 // Relative imports bypass project-reference declaration files, which strip @internal exports
 import { clearCache } from "../../packages/electron-builder/src/cli/clear-cache"
@@ -54,7 +56,7 @@ import { configurePublishCommand } from "../../packages/electron-builder/src/pub
 
 // ─── clearCache ───────────────────────────────────────────────────────────────
 
-describe("clearCache", () => {
+describe("clearCache", { sequential: true }, () => {
   beforeEach(() => {
     vi.mocked(getCacheDirectory).mockReturnValue("/home/user/.cache/electron-builder")
     vi.mocked(access).mockResolvedValue(undefined as any)
@@ -77,7 +79,7 @@ describe("clearCache", () => {
   test("deletes cache dir when it exists and user confirms", async () => {
     await clearCache()
     expect(rm).toHaveBeenCalledWith("/home/user/.cache/electron-builder", { recursive: true })
-    expect(log.info).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: expect.any(String) }), "cache cleared")
+    expect(vi.mocked(log).info).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: expect.any(String) }), "cache cleared")
   })
 
   test("checks both existence and write permission before prompting", async () => {
@@ -89,14 +91,14 @@ describe("clearCache", () => {
     vi.mocked(access).mockRejectedValue(Object.assign(new Error("ENOENT"), { code: "ENOENT" }))
     await clearCache()
     expect(rm).not.toHaveBeenCalled()
-    expect(log.info).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: expect.any(String) }), "cache directory does not exist, nothing to clear")
+    expect(vi.mocked(log).info).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: expect.any(String) }), "cache directory does not exist, nothing to clear")
   })
 
   test("does not delete when cache dir is not writable and logs error", async () => {
     vi.mocked(access).mockRejectedValue(Object.assign(new Error("EACCES"), { code: "EACCES" }))
     await clearCache()
     expect(rm).not.toHaveBeenCalled()
-    expect(log.error).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: expect.any(String) }), "cache directory is not writable")
+    expect(vi.mocked(log).error).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: expect.any(String) }), "cache directory is not writable")
   })
 
   test("propagates error thrown by rm", async () => {
@@ -108,7 +110,7 @@ describe("clearCache", () => {
     vi.mocked(getCacheDirectory).mockReturnValue("/")
     await clearCache()
     expect(rm).not.toHaveBeenCalled()
-    expect(log.error).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: "/" }), expect.stringContaining("filesystem root"))
+    expect(vi.mocked(log).error).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: "/" }), expect.stringContaining("filesystem root"))
   })
 
   test("closes readline interface even when user aborts", async () => {
@@ -140,14 +142,14 @@ describe("clearCache", () => {
       } as any)
       await clearCache()
       expect(rm).not.toHaveBeenCalled()
-      expect(log.info).toHaveBeenCalledWith(null, "aborted")
+      expect(vi.mocked(log).info).toHaveBeenCalledWith(null, "aborted")
     })
   }
 })
 
 // ─── wrap ─────────────────────────────────────────────────────────────────────
 
-describe("wrap", () => {
+describe("wrap", { sequential: true }, () => {
   const savedExitCode = process.exitCode
 
   beforeEach(() => {
@@ -172,7 +174,7 @@ describe("wrap", () => {
     const task = vi.fn().mockRejectedValue(new InvalidConfigurationError("bad config"))
     await wrap(task)({})
     expect(process.exitCode).toBe(1)
-    expect(log.error).toHaveBeenCalledWith(null, "bad config")
+    expect(vi.mocked(log).error).toHaveBeenCalledWith(null, "bad config")
   })
 
   test("sets exitCode=1 but does not re-log ExecError when alreadyLogged=true", async () => {
@@ -181,7 +183,7 @@ describe("wrap", () => {
     const task = vi.fn().mockRejectedValue(err)
     await wrap(task)({})
     expect(process.exitCode).toBe(1)
-    expect(log.error).not.toHaveBeenCalled()
+    expect(vi.mocked(log).error).not.toHaveBeenCalled()
   })
 
   test("logs ExecError with stack trace when alreadyLogged=false", async () => {
@@ -189,7 +191,7 @@ describe("wrap", () => {
     const task = vi.fn().mockRejectedValue(err)
     await wrap(task)({})
     expect(process.exitCode).toBe(1)
-    expect(log.error).toHaveBeenCalledWith(expect.objectContaining({ stackTrace: expect.any(String) }), expect.any(String))
+    expect(vi.mocked(log).error).toHaveBeenCalledWith(expect.objectContaining({ stackTrace: expect.any(String) }), expect.any(String))
   })
 
   test("logs stack trace for generic errors", async () => {
@@ -197,7 +199,7 @@ describe("wrap", () => {
     const task = vi.fn().mockRejectedValue(err)
     await wrap(task)({})
     expect(process.exitCode).toBe(1)
-    expect(log.error).toHaveBeenCalledWith(expect.objectContaining({ stackTrace: expect.any(String) }), "something went wrong")
+    expect(vi.mocked(log).error).toHaveBeenCalledWith(expect.objectContaining({ stackTrace: expect.any(String) }), "something went wrong")
   })
 })
 
@@ -294,6 +296,41 @@ describe("configureInstallAppDepsCommand", () => {
     configureInstallAppDepsCommand(instance)
     const parsed = instance.parseSync(["--arch", "x64"])
     expect(parsed.arch).toBe("x64")
+  })
+})
+
+// ─── CLI entry-point ESM smoke tests ─────────────────────────────────────────
+
+const REPO_ROOT = path.resolve(__dirname, "../../")
+const CLI_JS = path.join(REPO_ROOT, "packages/electron-builder/cli.js")
+const INSTALL_APP_DEPS_JS = path.join(REPO_ROOT, "packages/electron-builder/install-app-deps.js")
+
+describe("CLI entry points (ESM)", () => {
+  test("cli.js --help exits 0 without ERR_MODULE_NOT_FOUND", () => {
+    const result = spawnSync(process.execPath, [CLI_JS, "--help"], { encoding: "utf8" })
+    expect(result.stderr ?? "").not.toContain("ERR_MODULE_NOT_FOUND")
+    expect(result.status).toBe(0)
+  })
+
+  test("cli.js --help prints known subcommands", () => {
+    const result = spawnSync(process.execPath, [CLI_JS, "--help"], { encoding: "utf8" })
+    const out = result.stdout ?? ""
+    expect(out).toContain("build")
+    expect(out).toContain("install-app-deps")
+    expect(out).toContain("publish")
+  })
+
+  test("install-app-deps.js exits 0 without ERR_MODULE_NOT_FOUND", () => {
+    // run with --help to avoid actually executing an install
+    const result = spawnSync(process.execPath, [INSTALL_APP_DEPS_JS, "--help"], { encoding: "utf8" })
+    expect(result.stderr ?? "").not.toContain("ERR_MODULE_NOT_FOUND")
+    expect(result.status).toBe(0)
+  })
+
+  test("cli.js --version exits 0", () => {
+    const result = spawnSync(process.execPath, [CLI_JS, "--version"], { encoding: "utf8" })
+    expect(result.stderr ?? "").not.toContain("ERR_MODULE_NOT_FOUND")
+    expect(result.status).toBe(0)
   })
 })
 

@@ -82,7 +82,8 @@ export function registerAppxTests(toolsets: ToolsetConfig): void {
       config: {
         toolsets,
         win: {
-          signtoolOptions: {
+          sign: {
+            type: "signtool" as const,
             certificateSubjectName: "Foo",
           },
         },

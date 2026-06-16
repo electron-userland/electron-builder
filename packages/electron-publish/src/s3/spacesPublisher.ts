@@ -1,7 +1,7 @@
 import { InvalidConfigurationError, isEmptyOrSpaces } from "builder-util"
 import { SpacesOptions } from "builder-util-runtime"
-import { PublishContext } from "../"
-import { BaseS3Publisher, S3UploadConfig } from "./baseS3Publisher"
+import { PublishContext } from "../index.js"
+import { BaseS3Publisher, S3UploadConfig } from "./baseS3Publisher.js"
 
 export class SpacesPublisher extends BaseS3Publisher {
   readonly providerName = "spaces"
@@ -13,8 +13,7 @@ export class SpacesPublisher extends BaseS3Publisher {
     super(context, info)
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  static checkAndResolveOptions(options: SpacesOptions, channelFromAppVersion: string | null, errorIfCannot: boolean) {
+  static checkAndResolveOptions(options: SpacesOptions, channelFromAppVersion: string | null, _errorIfCannot: boolean) {
     if (options.name == null) {
       throw new InvalidConfigurationError(`Please specify "name" for "spaces" publish provider (see https://www.electron.build/publish#spacesoptions)`)
     }
@@ -44,7 +43,7 @@ export class SpacesPublisher extends BaseS3Publisher {
     return {
       region: this.info.region,
       endpoint: `https://${this.info.region}.digitaloceanspaces.com`,
-      credentials: { accessKeyId: accessKey!, secretAccessKey: secretKey! },
+      credentials: { accessKeyId: accessKey, secretAccessKey: secretKey },
     }
   }
 }

@@ -1,26 +1,10 @@
-// archive() is @internal and stripped from type declarations by stripInternal:true.
-// Import as namespace then cast to any so vitest's TypeScript transform still resolves
-// the real source exports while TypeScript type-checking is satisfied.
-import * as archiveModule from "app-builder-lib/src/targets/archive"
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const { archive, compute7zCompressArgs } = archiveModule as any
+import { archive, compute7zCompressArgs, shouldPreserveSymlinks } from "app-builder-lib/src/targets/archive"
+import { Platform } from "app-builder-lib/src/core"
 import * as fs from "fs/promises"
-import * as os from "os"
 import * as path from "path"
 import { afterEach, beforeEach, vi } from "vitest"
 
-let tmpDir: string
-
-beforeEach(async () => {
-  tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "eb-archive-test-"))
-})
-
-afterEach(async () => {
-  await fs.rm(tmpDir, { recursive: true, force: true })
-  vi.unstubAllEnvs()
-})
-
-async function makeSrcDir(files: Record<string, string> = { "hello.txt": "hello world", "sub/nested.txt": "nested" }): Promise<string> {
+async function makeSrcDir(tmpDir: string, files: Record<string, string> = { "hello.txt": "hello world", "sub/nested.txt": "nested" }): Promise<string> {
   const src = path.join(tmpDir, "src")
   for (const [rel, content] of Object.entries(files)) {
     const abs = path.join(src, rel)
@@ -32,7 +16,11 @@ async function makeSrcDir(files: Record<string, string> = { "hello.txt": "hello 
 
 // ─── compute7zCompressArgs ───────────────────────────────────────────────────
 
-describe("compute7zCompressArgs", () => {
+describe("compute7zCompressArgs", { sequential: true }, () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
   test("7z default compression adds -mx=9", ({ expect }) => {
     const args = compute7zCompressArgs("7z", {})
     expect(args).toContain("-mx=9")
@@ -152,14 +140,19 @@ describe("compute7zCompressArgs", () => {
 
 // ─── archive() — path-level guards (no binary needed) ───────────────────────
 
-describe("archive() guards", () => {
-  test("excluded pattern with '..' throws before reaching 7za", async ({ expect }) => {
-    const src = await makeSrcDir()
+describe("archive() guards", { sequential: true }, () => {
+  let tmpDir: string
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
+  })
+
+  test("excluded pattern with '..' throws", async ({ expect }) => {
+    const src = await makeSrcDir(tmpDir)
     await expect(archive("zip", path.join(tmpDir, "out.zip"), src, { excluded: ["../secret"] })).rejects.toThrow("path traversal sequence")
   })
 
   test.ifNotWindows("skips archiving when output is newer than source dir", async ({ expect }) => {
-    const src = await makeSrcDir()
+    const src = await makeSrcDir(tmpDir)
     const outFile = path.join(tmpDir, "cached.zip")
     await fs.writeFile(outFile, "sentinel")
     const future = new Date(Date.now() + 60_000)
@@ -168,5 +161,86 @@ describe("archive() guards", () => {
     const result = await archive("zip", outFile, src)
     expect(result).toBe(outFile)
     expect(await fs.readFile(outFile, "utf8")).toBe("sentinel")
+  })
+})
+
+// ─── shouldPreserveSymlinks — target platform → -snl policy ──────────────────
+// Regression guard for #9846 and its Linux follow-up: keyed on the target platform (not the build
+// host), so a Linux distributable built on a Windows machine still preserves symlinks, and a Windows
+// distributable built on macOS/Linux still dereferences. Catches narrowing the policy back to mac-only.
+
+describe("shouldPreserveSymlinks", () => {
+  test("preserves symlinks for macOS and Linux targets", ({ expect }) => {
+    expect(shouldPreserveSymlinks(Platform.MAC)).toBe(true)
+    expect(shouldPreserveSymlinks(Platform.LINUX)).toBe(true)
+  })
+
+  test("dereferences symlinks for Windows targets", ({ expect }) => {
+    expect(shouldPreserveSymlinks(Platform.WINDOWS)).toBe(false)
+  })
+})
+
+// ─── archive() — symlink preservation (non-Windows hosts) ────────────────────
+// Runs on macOS and Linux: both are non-Windows archive targets that pass -snl (see ArchiveTarget).
+// Windows is excluded — symlink restore there needs elevated privileges and the target dereferences.
+
+describe.runIf(process.platform !== "win32")("archive() symlink preservation", { sequential: true }, () => {
+  let tmpDir: string
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
+  })
+
+  test("zip archive preserves symlinks (not dereferenced)", async ({ expect }) => {
+    const src = path.join(tmpDir, "src")
+    await fs.mkdir(src, { recursive: true })
+    await fs.writeFile(path.join(src, "real.txt"), "content")
+    await fs.symlink("real.txt", path.join(src, "link.txt"))
+
+    const outFile = path.join(tmpDir, "out.zip")
+    await archive("zip", outFile, src, { withoutDir: true, preserveSymlinks: true })
+
+    // Extract and verify symlink is preserved
+    const extractDir = path.join(tmpDir, "extracted")
+    await fs.mkdir(extractDir, { recursive: true })
+    const { exec: cpExec } = await import("child_process")
+    const { promisify } = await import("util")
+    const execAsync = promisify(cpExec)
+    await execAsync(`unzip -q "${outFile}" -d "${extractDir}"`)
+
+    const linkStat = await fs.lstat(path.join(extractDir, "link.txt"))
+    expect(linkStat.isSymbolicLink()).toBe(true)
+    const target = await fs.readlink(path.join(extractDir, "link.txt"))
+    expect(target).toBe("real.txt")
+  })
+
+  // Regression for #9846: the 7z target must also preserve symlinks (-snl). Modern 7-Zip
+  // dereferences them by default, which corrupts .framework bundles and breaks codesign.
+  test("7z archive preserves symlinks (not dereferenced)", async ({ expect }) => {
+    const src = path.join(tmpDir, "src7z")
+    await fs.mkdir(src, { recursive: true })
+    await fs.writeFile(path.join(src, "real.txt"), "content")
+    await fs.symlink("real.txt", path.join(src, "link.txt"))
+
+    const outFile = path.join(tmpDir, "out.7z")
+    await archive("7z", outFile, src, { withoutDir: true, preserveSymlinks: true })
+
+    // Extract with the same 7za toolset binary and verify the symlink survived
+    const extractDir = path.join(tmpDir, "extracted7z")
+    await fs.mkdir(extractDir, { recursive: true })
+    const { getPath7za } = await import("app-builder-lib/src/toolsets/7zip")
+    const { exec: cpExec } = await import("child_process")
+    const { promisify } = await import("util")
+    const execAsync = promisify(cpExec)
+    await execAsync(`"${await getPath7za()}" x -o"${extractDir}" "${outFile}"`)
+
+    const linkStat = await fs.lstat(path.join(extractDir, "link.txt"))
+    expect(linkStat.isSymbolicLink()).toBe(true)
+    const target = await fs.readlink(path.join(extractDir, "link.txt"))
+    expect(target).toBe("real.txt")
+  })
+
+  test("excluded pattern with '..' throws when preserveSymlinks is set", async ({ expect }) => {
+    const src = await makeSrcDir(tmpDir)
+    await expect(archive("zip", path.join(tmpDir, "out.zip"), src, { excluded: ["../secret"], preserveSymlinks: true })).rejects.toThrow("path traversal sequence")
   })
 })

@@ -7,6 +7,9 @@ Note that when using a generic server, you have to upload the built application 
 Travis and AppVeyor support publishing artifacts. But it requires additional configuration for each CI and you need to configure what to publish.
 `electron-builder` makes publishing dead simple.
 
+!!! important "Publishing Must Be Explicitly Requested"
+    Publishing is not performed automatically. You must explicitly request publishing using the `--publish` CLI flag (e.g., `--publish always`, `--publish onTag`, `--publish onTagOrDraft`) or by setting the `publish` option in your configuration.
+
 If `GH_TOKEN` or `GITHUB_TOKEN` is defined — defaults to `[{provider: "github"}]`.
 
 If `KEYGEN_TOKEN` is defined and `GH_TOKEN` or `GITHUB_TOKEN` is not — defaults to `[{provider: "keygen"}]`.

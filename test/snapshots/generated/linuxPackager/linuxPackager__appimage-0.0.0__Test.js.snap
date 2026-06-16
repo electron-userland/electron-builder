@@ -40,7 +40,19 @@ exports[`LinuxPackager > AppImage - default icon, custom executable and custom d
 }
 `;
 
-exports[`LinuxPackager > AppImage - deprecated systemIntegration 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
+exports[`LinuxPackager > AppImage - deprecated systemIntegration 1`] = `
+"Invalid configuration object. electron-builder <appVersion> has been initialized using a configuration object that does not match the API schema.
+ - configuration.appImage has an unknown property 'systemIntegration'
+     How to fix:
+     1. Open https://www.electron.build/appimage
+     2. Search the option name on the page (or type in into Search to find across the docs).
+       * Not found? The option was deprecated or not exists (check spelling).
+       * Found? Check that the option in the appropriate place. e.g. "title" only in the "dmg", not in the root.
+
+Please check the documentation to ensure that your configuration matches the expected schema: https://www.electron.build/configuration
+If you recently upgraded electron-builder to v27, please run \`electron-builder migrate-schema\` to automatically update your configuration.
+Check the release notes for breaking changes: https://www.electron.build/docs/migration/v26-to-v27"
+`;
 
 exports[`LinuxPackager > AppImage - desktopName sets StartupWMClass 1`] = `
 "[Desktop Entry]
@@ -221,6 +233,54 @@ exports[`LinuxPackager > AppImage - store compression maps to gzip 1`] = `
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.1.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`LinuxPackager > AppImage - syncDesktopName true without desktopName falls back to executableName 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Signal-1.1.0.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`LinuxPackager > AppImage - syncDesktopName uses desktopName for installed filename 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Signal-1.1.0.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`LinuxPackager > AppImage - syncDesktopName without flag keeps executableName 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Signal-1.1.0.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
       },
     },
   ],

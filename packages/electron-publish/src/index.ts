@@ -1,29 +1,29 @@
 import { Arch } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
-import { MultiProgress } from "./multiProgress"
+import { MultiProgress } from "./multiProgress.js"
 
 export { MultiProgress }
-export { ProgressBar } from "./progress"
+export { ProgressBar } from "./progress.js"
 
-export { BitbucketPublisher } from "./bitbucketPublisher"
-export { GitHubPublisher } from "./gitHubPublisher"
-export { GitlabPublisher } from "./gitlabPublisher"
-export { KeygenPublisher } from "./keygenPublisher"
-export { S3Publisher } from "./s3/s3Publisher"
-export { SpacesPublisher } from "./s3/spacesPublisher"
-export { R2Publisher } from "./s3/r2Publisher"
-export { SnapStorePublisher, resolveSnapCredentials } from "./snapStorePublisher"
+export { BitbucketPublisher } from "./bitbucketPublisher.js"
+export { GitHubPublisher } from "./gitHubPublisher.js"
+export { GitlabPublisher } from "./gitlabPublisher.js"
+export { KeygenPublisher } from "./keygenPublisher.js"
+export { S3Publisher } from "./s3/s3Publisher.js"
+export { SpacesPublisher } from "./s3/spacesPublisher.js"
+export { R2Publisher } from "./s3/r2Publisher.js"
+export { SnapStorePublisher, resolveSnapCredentials } from "./snapStorePublisher.js"
 
 export type PublishPolicy = "onTag" | "onTagOrDraft" | "always" | "never"
 
-export { ProgressCallback } from "./progress"
+export { ProgressCallback } from "./progress.js"
 
 export interface PublishOptions {
   publish?: PublishPolicy | null
 }
 
-export { HttpPublisher } from "./httpPublisher"
-export { getCiTag, Publisher } from "./publisher"
+export { HttpPublisher } from "./httpPublisher.js"
+export { getCiTag, Publisher } from "./publisher.js"
 
 export interface PublishContext {
   readonly cancellationToken: CancellationToken

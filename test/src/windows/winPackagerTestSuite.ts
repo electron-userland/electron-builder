@@ -1,4 +1,4 @@
-import { ToolsetConfig } from "app-builder-lib/src/configuration"
+import { ToolsetConfig } from "app-builder-lib/internal"
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
@@ -73,7 +73,7 @@ export function registerWinPackagerTests(toolsets: ToolsetConfig): void {
         },
       },
       {
-        signed: false,
+        signedMac: false,
         projectDirCreated: async projectDir => {
           await fs.mkdir(path.join(projectDir, "build", "subdir"))
           await fs.copyFile(path.join(projectDir, "build", "extraAsar.asar"), path.join(projectDir, "build", "subdir", "extraAsar2.asar"))
@@ -184,13 +184,13 @@ export function registerWinPackagerTests(toolsets: ToolsetConfig): void {
     )
   })
 
-  test("signExecutable: false — rcedit still edits exe resources", ({ expect }) =>
+  test("sign: false — resedit still edits exe resources", ({ expect }) =>
     app(
       expect,
       {
         targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
         config: {
-          win: { signExecutable: false },
+          win: { sign: false },
           toolsets,
         },
       },
@@ -206,39 +206,14 @@ export function registerWinPackagerTests(toolsets: ToolsetConfig): void {
       }
     ))
 
-  test("signExecutable: false — signing skipped even with cert", ({ expect }) =>
-    app(
-      expect,
-      {
-        targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
-        config: {
-          win: {
-            signExecutable: false,
-            signtoolOptions: {
-              sign: () => {
-                throw new Error("sign must not be called when signExecutable is false")
-              },
-            },
-          },
-          toolsets,
-        },
-      },
-      {
-        signedWin: true,
-        packed: async context => {
-          await validatePeResources(context, expect)
-        },
-      }
-    ))
-
-  test("signExecutable: false — throws when combined with forceCodeSigning", ({ expect }) =>
+  test("sign: false — throws when combined with forceCodeSigning", ({ expect }) =>
     appThrows(
       expect,
       {
         targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
         config: {
           forceCodeSigning: true,
-          win: { signExecutable: false },
+          win: { sign: false },
           toolsets,
         },
       },
@@ -246,63 +221,13 @@ export function registerWinPackagerTests(toolsets: ToolsetConfig): void {
       error => expect(error.message).toContain("`forceCodeSigning` is enabled")
     ))
 
-  test("signAndEditExecutable: false — throws when combined with forceCodeSigning", ({ expect }) =>
-    appThrows(
-      expect,
-      {
-        targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
-        config: {
-          forceCodeSigning: true,
-          win: { signAndEditExecutable: false },
-          toolsets,
-        },
-      },
-      {},
-      error => expect(error.message).toContain("`forceCodeSigning` is enabled")
-    ))
-
-  test("signAndEditExecutable: false — backward compat disables both editing and signing", ({ expect }) =>
-    app(
-      expect,
-      {
-        targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
-        config: {
-          win: { signAndEditExecutable: false },
-          toolsets,
-        },
-      },
-      {
-        packed: async context => {
-          const appDir = context.getContent(Platform.WINDOWS, Arch.x64)
-          const expectedExe = `${context.packager.appInfo.productFilename}.exe`
-          const buffer = await fs.readFile(path.join(appDir, expectedExe))
-          const res = NtExecutableResource.from(NtExecutable.from(buffer))
-          const versionInfoList = Resource.VersionInfo.fromEntries(res.entries)
-          expect(versionInfoList.length).toBeGreaterThan(0)
-
-          const langs = versionInfoList[0].getAllLanguagesForStringValues()
-          expect(langs.length).toBeGreaterThan(0)
-
-          const strings = versionInfoList[0].getStringValues(langs[0])
-          expect(strings["ProductName"]).not.toBe(context.packager.appInfo.productName)
-        },
-      }
-    ))
-
-  test("signExecutable: false — NSIS installer and elevate.exe not signed", ({ expect }) =>
+  test("sign: false — NSIS installer and elevate.exe not signed even when a cert is discoverable", ({ expect }) =>
     app(
       expect,
       {
         targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64),
         config: {
-          win: {
-            signExecutable: false,
-            signtoolOptions: {
-              sign: () => {
-                throw new Error("sign must not be called when signExecutable is false")
-              },
-            },
-          },
+          win: { sign: false },
           toolsets,
         },
       },

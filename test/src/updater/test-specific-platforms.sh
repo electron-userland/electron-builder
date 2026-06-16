@@ -41,7 +41,7 @@ do_run() {
 
   ELECTRON_CACHE_PATH="$ELECTRON_CACHE_PATH" \
     ELECTRON_BUILDER_CACHE_PATH="$ELECTRON_BUILDER_CACHE_PATH" \
-    TEST_RUNNER_IMAGE_TAG="$tag" pnpm test-linux
+    TEST_RUNNER_IMAGE_TAG="$tag" pnpm test:linux
 }
 
 run_archlinux() {

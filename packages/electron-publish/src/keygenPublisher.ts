@@ -1,10 +1,10 @@
 import { Arch, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
-import { configureRequestOptions, HttpExecutor, parseJson } from "builder-util-runtime"
-import { KeygenOptions } from "builder-util-runtime/out/publishOptions"
-import { getCompleteExtname } from "builder-util/out/filename"
+import { configureRequestOptions, HttpExecutor, parseJson, safeStringifyJson } from "builder-util-runtime"
+import { KeygenOptions } from "builder-util-runtime"
+import { getCompleteExtname } from "builder-util/internal"
 import { ClientRequest, RequestOptions } from "http"
-import { PublishContext } from "./"
-import { HttpPublisher } from "./httpPublisher"
+import { PublishContext } from "./index.js"
+import { HttpPublisher } from "./httpPublisher.js"
 
 type RecursivePartial<T> = {
   [P in keyof T]?: RecursivePartial<T[P]>
@@ -179,7 +179,7 @@ export class KeygenPublisher extends HttpPublisher {
       },
     }
 
-    log.debug({ data: JSON.stringify(data) }, "Keygen create artifact")
+    log.debug({ data: safeStringifyJson(data) }, "Keygen create artifact")
 
     return parseJson(httpExecutor.request(configureRequestOptions(upload, this.auth, "POST"), this.context.cancellationToken, { data }))
   }
@@ -251,7 +251,7 @@ export class KeygenPublisher extends HttpPublisher {
       },
     }
 
-    log.debug({ data: JSON.stringify(data) }, "Keygen create release")
+    log.debug({ data: safeStringifyJson(data) }, "Keygen create release")
 
     return parseJson(httpExecutor.request(configureRequestOptions(req, this.auth, "POST"), this.context.cancellationToken, { data }))
   }

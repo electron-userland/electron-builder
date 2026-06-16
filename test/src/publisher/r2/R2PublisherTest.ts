@@ -12,6 +12,7 @@
  *   [CF-ACCT-ID]     https://developers.cloudflare.com/fundamentals/setup/find-account-and-zone-ids/
  */
 
+import { createPublisher } from "app-builder-lib/internal"
 import { CancellationToken, getS3LikeProviderBaseUrl, R2Options } from "builder-util-runtime"
 import { R2Publisher, PublishContext } from "electron-publish"
 import { beforeEach, expect } from "vitest"
@@ -26,14 +27,12 @@ function makeContext(): PublishContext {
 }
 
 // ---------------------------------------------------------------------------
-// Helper: call the protected configureS3Options and capture the args array
+// Helper: resolve the S3 upload config under known credentials, restoring env after.
 // ---------------------------------------------------------------------------
-function captureArgs(publisher: R2Publisher, envSetup?: () => { restore(): void }): string[] {
+function resolveUploadConfig(publisher: R2Publisher, envSetup?: () => { restore(): void }): ReturnType<R2Publisher["getS3UploadConfig"]> {
   const env = envSetup ? envSetup() : R2TestFixtures.setupCredentials()
   try {
-    const args: string[] = []
-    ;(publisher as any).configureS3Options(args)
-    return args
+    return publisher.getS3UploadConfig()
   } finally {
     env.restore()
   }
@@ -149,10 +148,10 @@ describe("R2Publisher.checkAndResolveOptions", () => {
 })
 
 // ============================================================================
-// R2Publisher — configureS3Options (S3 arg construction)
+// R2Publisher — getS3UploadConfig (native S3 SDK upload config)
 // ============================================================================
 
-describe("R2Publisher.configureS3Options", () => {
+describe("R2Publisher.getS3UploadConfig", () => {
   let ctx: PublishContext
 
   beforeEach(() => {
@@ -161,41 +160,35 @@ describe("R2Publisher.configureS3Options", () => {
 
   /**
    * [CF-S3-API] Endpoint format: https://<accountId>.r2.cloudflarestorage.com
-   * The upload endpoint is the S3-compatible API endpoint.  The protocol is
-   * NOT included in the --endpoint arg because app-builder normalises it (as
-   * evidenced by SpacesPublisher, which has always passed a bare hostname).
+   * The upload endpoint is the S3-compatible API endpoint. The native uploader
+   * (s3UploadHelper) builds a path-style request from this full URL, so the
+   * scheme (https://) must be included.
    */
   describe("endpoint — [CF-S3-API]", () => {
-    test("passes --endpoint as bare hostname (no https:// prefix)", () => {
+    test("endpoint is a fully-qualified https URL", () => {
       const publisher = new R2Publisher(ctx, R2TestFixtures.createOptions())
-      const args = captureArgs(publisher)
-      const endpointIdx = args.indexOf("--endpoint")
-      expect(endpointIdx).toBeGreaterThanOrEqual(0)
-      const endpointValue = args[endpointIdx + 1]
-      expect(endpointValue).not.toMatch(/^https?:\/\//)
+      const config = resolveUploadConfig(publisher)
+      expect(config.endpoint).toMatch(/^https:\/\//)
     })
 
-    test("endpoint hostname contains the configured accountId", () => {
+    test("endpoint contains the configured accountId", () => {
       const accountId = R2TestFixtures.ACCOUNT_IDS.valid
       const publisher = new R2Publisher(ctx, R2TestFixtures.createOptions({ accountId }))
-      const args = captureArgs(publisher)
-      const endpointValue = args[args.indexOf("--endpoint") + 1]
-      expect(endpointValue).toContain(accountId)
+      const config = resolveUploadConfig(publisher)
+      expect(config.endpoint).toContain(accountId)
     })
 
-    test("endpoint hostname ends with .r2.cloudflarestorage.com", () => {
+    test("endpoint host ends with .r2.cloudflarestorage.com", () => {
       const publisher = new R2Publisher(ctx, R2TestFixtures.createOptions())
-      const args = captureArgs(publisher)
-      const endpointValue = args[args.indexOf("--endpoint") + 1]
-      expect(endpointValue).toMatch(/\.r2\.cloudflarestorage\.com$/)
+      const config = resolveUploadConfig(publisher)
+      expect(new URL(config.endpoint!).hostname).toMatch(/\.r2\.cloudflarestorage\.com$/)
     })
 
-    test("full endpoint is <accountId>.r2.cloudflarestorage.com", () => {
+    test("full endpoint is https://<accountId>.r2.cloudflarestorage.com", () => {
       const accountId = R2TestFixtures.ACCOUNT_IDS.valid
       const publisher = new R2Publisher(ctx, R2TestFixtures.createOptions({ accountId }))
-      const args = captureArgs(publisher)
-      const endpointValue = args[args.indexOf("--endpoint") + 1]
-      expect(endpointValue).toBe(`${accountId}.r2.cloudflarestorage.com`)
+      const config = resolveUploadConfig(publisher)
+      expect(config.endpoint).toBe(`https://${accountId}.r2.cloudflarestorage.com`)
     })
   })
 
@@ -205,36 +198,10 @@ describe("R2Publisher.configureS3Options", () => {
    * Using any other region value will cause Cloudflare to reject the request.
    */
   describe("region — [CF-S3-API]", () => {
-    test("passes --region auto", () => {
+    test("region is 'auto'", () => {
       const publisher = new R2Publisher(ctx, R2TestFixtures.createOptions())
-      const args = captureArgs(publisher)
-      const regionIdx = args.indexOf("--region")
-      expect(regionIdx).toBeGreaterThanOrEqual(0)
-      expect(args[regionIdx + 1]).toBe("auto")
-    })
-  })
-
-  /**
-   * [CF-S3-API] "Unsupported S3 features" explicitly lists "ACL controls and
-   * permissions" as absent from R2.  Sending an --acl arg causes Cloudflare
-   * to return a NotImplemented error.  The publisher must NOT call
-   * super.configureS3Options(), which would inject --acl public-read.
-   * Reference: https://developers.cloudflare.com/r2/api/s3/api/#unsupported-s3-features
-   */
-  describe("ACL omission — [CF-S3-API]", () => {
-    test("does not pass an --acl argument (R2 does not support S3 ACLs)", () => {
-      const publisher = new R2Publisher(ctx, R2TestFixtures.createOptions())
-      const args = captureArgs(publisher)
-      expect(args).not.toContain("--acl")
-    })
-
-    test("does not pass --acl even when BaseS3Options.acl is omitted from config", () => {
-      const opts = R2TestFixtures.createOptions()
-      // R2Options.acl is typed as `never`, but even if someone passes an
-      // object literal without the override, no --acl arg should appear.
-      const publisher = new R2Publisher(ctx, opts)
-      const args = captureArgs(publisher)
-      expect(args).not.toContain("--acl")
+      const config = resolveUploadConfig(publisher)
+      expect(config.region).toBe("auto")
     })
   })
 
@@ -247,18 +214,32 @@ describe("R2Publisher.configureS3Options", () => {
   describe("credentials — [CF-S3-TOKENS]", () => {
     test("reads access key from CF_R2_ACCESS_KEY_ID env var", () => {
       const publisher = new R2Publisher(ctx, R2TestFixtures.createOptions())
-      const args = captureArgs(publisher)
-      const keyIdx = args.indexOf("--accessKey")
-      expect(keyIdx).toBeGreaterThanOrEqual(0)
-      expect(args[keyIdx + 1]).toBe(R2TestFixtures.CREDENTIALS.accessKey)
+      const config = resolveUploadConfig(publisher)
+      expect(config.credentials?.accessKeyId).toBe(R2TestFixtures.CREDENTIALS.accessKey)
     })
 
     test("reads secret key from CF_R2_SECRET_ACCESS_KEY env var", () => {
       const publisher = new R2Publisher(ctx, R2TestFixtures.createOptions())
-      const args = captureArgs(publisher)
-      const secretIdx = args.indexOf("--secretKey")
-      expect(secretIdx).toBeGreaterThanOrEqual(0)
-      expect(args[secretIdx + 1]).toBe(R2TestFixtures.CREDENTIALS.secretKey)
+      const config = resolveUploadConfig(publisher)
+      expect(config.credentials?.secretAccessKey).toBe(R2TestFixtures.CREDENTIALS.secretKey)
+    })
+
+    test("does not fall back to AWS_* credentials (R2 uses CF_R2_* only)", () => {
+      const publisher = new R2Publisher(ctx, R2TestFixtures.createOptions())
+      const env = R2TestFixtures.setupCredentials()
+      const savedAws = process.env.AWS_ACCESS_KEY_ID
+      process.env.AWS_ACCESS_KEY_ID = "aws-should-not-be-used"
+      try {
+        const config = publisher.getS3UploadConfig()
+        expect(config.credentials?.accessKeyId).toBe(R2TestFixtures.CREDENTIALS.accessKey)
+      } finally {
+        if (savedAws === undefined) {
+          delete process.env.AWS_ACCESS_KEY_ID
+        } else {
+          process.env.AWS_ACCESS_KEY_ID = savedAws
+        }
+        env.restore()
+      }
     })
 
     test("throws a clear error when CF_R2_ACCESS_KEY_ID is absent", () => {
@@ -266,10 +247,7 @@ describe("R2Publisher.configureS3Options", () => {
       const env = R2TestFixtures.setupCredentials()
       delete process.env.CF_R2_ACCESS_KEY_ID
       try {
-        expect(() => {
-          const args: string[] = []
-          ;(publisher as any).configureS3Options(args)
-        }).toThrow(/CF_R2_ACCESS_KEY_ID/)
+        expect(() => publisher.getS3UploadConfig()).toThrow(/CF_R2_ACCESS_KEY_ID/)
       } finally {
         env.restore()
       }
@@ -280,10 +258,7 @@ describe("R2Publisher.configureS3Options", () => {
       const env = R2TestFixtures.setupCredentials()
       delete process.env.CF_R2_SECRET_ACCESS_KEY
       try {
-        expect(() => {
-          const args: string[] = []
-          ;(publisher as any).configureS3Options(args)
-        }).toThrow(/CF_R2_SECRET_ACCESS_KEY/)
+        expect(() => publisher.getS3UploadConfig()).toThrow(/CF_R2_SECRET_ACCESS_KEY/)
       } finally {
         env.restore()
       }
@@ -293,10 +268,7 @@ describe("R2Publisher.configureS3Options", () => {
       const publisher = new R2Publisher(ctx, R2TestFixtures.createOptions())
       const env = R2TestFixtures.setupCredentials("", R2TestFixtures.CREDENTIALS.secretKey)
       try {
-        expect(() => {
-          const args: string[] = []
-          ;(publisher as any).configureS3Options(args)
-        }).toThrow(/CF_R2_ACCESS_KEY_ID/)
+        expect(() => publisher.getS3UploadConfig()).toThrow(/CF_R2_ACCESS_KEY_ID/)
       } finally {
         env.restore()
       }
@@ -306,10 +278,7 @@ describe("R2Publisher.configureS3Options", () => {
       const publisher = new R2Publisher(ctx, R2TestFixtures.createOptions())
       const env = R2TestFixtures.setupCredentials(R2TestFixtures.CREDENTIALS.accessKey, "")
       try {
-        expect(() => {
-          const args: string[] = []
-          ;(publisher as any).configureS3Options(args)
-        }).toThrow(/CF_R2_SECRET_ACCESS_KEY/)
+        expect(() => publisher.getS3UploadConfig()).toThrow(/CF_R2_SECRET_ACCESS_KEY/)
       } finally {
         env.restore()
       }
@@ -320,22 +289,50 @@ describe("R2Publisher.configureS3Options", () => {
       const env = R2TestFixtures.setupCredentials()
       delete process.env.CF_R2_ACCESS_KEY_ID
       try {
-        expect(() => {
-          const args: string[] = []
-          ;(publisher as any).configureS3Options(args)
-        }).toThrow(/developers\.cloudflare\.com/)
+        expect(() => publisher.getS3UploadConfig()).toThrow(/developers\.cloudflare\.com/)
       } finally {
         env.restore()
       }
     })
   })
+})
 
-  describe("full args shape", () => {
-    test("args contain --endpoint, --region, --accessKey, --secretKey in that order", () => {
+// ============================================================================
+// R2Publisher — getUploadExtraParams (ACL handling)
+// ============================================================================
+
+describe("R2Publisher.getUploadExtraParams", () => {
+  let ctx: PublishContext
+
+  beforeEach(() => {
+    ctx = makeContext()
+  })
+
+  /**
+   * [CF-S3-API] "Unsupported S3 features" explicitly lists "ACL controls and
+   * permissions" as absent from R2. Sending an x-amz-acl header causes Cloudflare
+   * to return a NotImplemented error. The publisher must override the parent's
+   * default "public-read" ACL so no ACL header is emitted.
+   * Reference: https://developers.cloudflare.com/r2/api/s3/api/#unsupported-s3-features
+   */
+  describe("ACL omission — [CF-S3-API]", () => {
+    test("acl is undefined (R2 does not support S3 ACLs)", () => {
       const publisher = new R2Publisher(ctx, R2TestFixtures.createOptions())
-      const args = captureArgs(publisher)
-      const keys = args.filter(a => a.startsWith("--"))
-      expect(keys).toEqual(["--endpoint", "--region", "--accessKey", "--secretKey"])
+      const params = publisher.getUploadExtraParams()
+      expect(params.acl).toBeUndefined()
+    })
+
+    test("does not inherit the parent's default public-read ACL", () => {
+      const publisher = new R2Publisher(ctx, R2TestFixtures.createOptions())
+      const params = publisher.getUploadExtraParams()
+      expect(params.acl).not.toBe("public-read")
+    })
+
+    test("emits no storageClass or serverSideEncryption (R2-unsupported)", () => {
+      const publisher = new R2Publisher(ctx, R2TestFixtures.createOptions())
+      const params = publisher.getUploadExtraParams()
+      expect(params.storageClass).toBeUndefined()
+      expect(params.serverSideEncryption).toBeUndefined()
     })
   })
 })
@@ -476,7 +473,6 @@ describe("r2Url (via getS3LikeProviderBaseUrl)", () => {
 test.ifEnv(process.env.CF_R2_ACCESS_KEY_ID != null && process.env.CF_R2_SECRET_ACCESS_KEY != null && process.env.CF_R2_BUCKET != null && process.env.CF_R2_ACCOUNT_ID != null)(
   "R2 live upload smoke test",
   async () => {
-    const { createPublisher } = await import("app-builder-lib/out/publish/PublishManager")
     const publishContext = makeContext()
     const options: R2Options = {
       provider: "r2",

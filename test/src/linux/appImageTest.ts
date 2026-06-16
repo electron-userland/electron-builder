@@ -1,19 +1,11 @@
-import { Platform } from "app-builder-lib/src"
-import { validateCriticalPathString } from "app-builder-lib/src/targets/appimage/appImageUtil"
-import { copyMimeTypes } from "app-builder-lib/src/targets/appimage/appLauncher"
-import { Arch, InvalidConfigurationError, TmpDir } from "builder-util"
+import { Platform } from "app-builder-lib"
+import { copyMimeTypes, validateCriticalPathString } from "app-builder-lib/internal"
+import { Arch, InvalidConfigurationError } from "builder-util"
 import { execSync, spawnSync } from "child_process"
 import * as fs from "fs-extra"
 import * as path from "path"
-import { afterAll } from "vitest"
 import { assertPack } from "../helpers/packTester"
 import { verifyAsarFileTree } from "../helpers/asarVerifier"
-
-const tmpDir = new TmpDir("appimage-env-test")
-
-afterAll(async () => {
-  await tmpDir.cleanup()
-})
 
 describe("validateCriticalPathString", () => {
   test("rejects double quotes", ({ expect }) => {
@@ -60,7 +52,7 @@ describe("validateCriticalPathString", () => {
 describe("copyMimeTypes - invalid extension handling", () => {
   const valid = { mimeType: "application/x-test", ext: "txt" }
   const invalid = { mimeType: "application/x-test", ext: "my ext" }
-  test("skips extension containing a space", async ({ expect }) => {
+  test("skips extension containing a space", async ({ expect, tmpDir }) => {
     const dir = await tmpDir.getTempDir({ prefix: "mime-types-test" })
     const result = await copyMimeTypes(dir, {
       fileAssociations: [invalid, valid],
@@ -72,7 +64,7 @@ describe("copyMimeTypes - invalid extension handling", () => {
     expect(xml).not.toContain('<glob pattern="*.my ext"/>')
   })
 
-  test("includes valid alphanumeric extensions in the XML glob", async ({ expect }) => {
+  test("includes valid alphanumeric extensions in the XML glob", async ({ expect, tmpDir }) => {
     const dir = await tmpDir.getTempDir({ prefix: "mime-types-test" })
     const result = await copyMimeTypes(dir, {
       fileAssociations: [valid],
@@ -86,7 +78,7 @@ describe("copyMimeTypes - invalid extension handling", () => {
 })
 
 describe.heavy.ifLinux("AppImage", () => {
-  test.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true")("AppRun entrypoint", async ({ expect }) => {
+  test.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true")("AppRun entrypoint", async ({ expect, tmpDir }) => {
     await assertPack(
       expect,
       "test-app",

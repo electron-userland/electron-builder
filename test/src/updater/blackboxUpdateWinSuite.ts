@@ -1,12 +1,12 @@
 import { ToolsetConfig } from "app-builder-lib"
-import { ParallelsVmManager } from "app-builder-lib/out/vm/ParallelsVm"
+import { ParallelsVmManager } from "app-builder-lib/internal"
 import { copyFileSync, unlinkSync } from "fs"
 import { tmpdir } from "os"
 import { Arch, Configuration } from "electron-builder"
 import { spawn as nodeSpawn } from "child_process"
 import * as path from "path"
 import { TestContext } from "vitest"
-import { deepAssign, TmpDir } from "builder-util/out/util"
+import { deepAssign, TmpDir } from "builder-util"
 import { ApplicationUpdatePaths, doBuild, optionsForFlakyE2E, runTest, windowsVmPromise } from "./blackboxUpdateHelpers"
 import { installWindowsVm } from "./blackboxInstallWindows"
 
@@ -15,7 +15,8 @@ import { installWindowsVm } from "./blackboxInstallWindows"
 // reproduce issue #6865: the NSIS installer must not show the "app cannot be closed" dialog
 // when a process with a *similar but different* name is running.
 async function spawnSiblingProcess(vm: ParallelsVmManager | undefined, appExeName: string): Promise<{ cleanup: () => Promise<void>; assertAlive: () => Promise<void> }> {
-  const siblingName = appExeName.replace(/\.exe$/i, "-helper.exe")
+  const uniqueId = Math.random().toString(36).slice(2, 8)
+  const siblingName = appExeName.replace(/\.exe$/i, `-helper-${uniqueId}.exe`)
   // Process name without extension, used by Stop-Process / Get-Process
   const siblingBaseName = siblingName.replace(/\.exe$/i, "")
 
@@ -84,7 +85,7 @@ async function spawnSiblingProcess(vm: ParallelsVmManager | undefined, appExeNam
   }
 }
 
-export function registerBlackboxWinTests(toolsets: Required<Pick<ToolsetConfig, "winCodeSign" | "nsis">>): void {
+export function registerBlackboxWinTests(toolsets: Required<Pick<ToolsetConfig, "winCodeSign" | "nsis" | "wine">>): void {
   describe.heavy("windows", optionsForFlakyE2E, () => {
     test("nsis", optionsForFlakyE2E, async (context: TestContext) => {
       const vm = await windowsVmPromise

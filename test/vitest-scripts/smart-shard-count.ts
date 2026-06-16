@@ -1,10 +1,10 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env tsx
 
-import { getAllTestFiles } from "./file-discovery"
-import { buildWeightedFiles, computeShardCount, splitIntoShards, WeightedFile } from "./shard-builder"
-import { TargetPlatform } from "./smart-config"
-import { generateTests } from "./generate-tests"
-import { formatDuration } from "./vitest-smart-sequencer"
+import { getAllTestFiles } from "./vitest-config/file-discovery.js"
+import { buildWeightedFiles, computeShardCount, splitIntoShards, WeightedFile } from "./vitest-config/shard-builder.js"
+import { TargetPlatform } from "./vitest-config/smart-config.js"
+import { generateTests } from "./generate-tests.js"
+import { formatDuration } from "./vitest-config/vitest-smart-sequencer.js"
 
 function printPlatformPlan(platform: string, shards: WeightedFile[][]): void {
   const platformTotal = shards.flat().reduce((s, f) => s + f.weight, 0)

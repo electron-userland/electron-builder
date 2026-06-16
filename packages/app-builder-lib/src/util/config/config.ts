@@ -1,14 +1,19 @@
+import { createRequire } from "node:module"
 import { DebugLogger, InvalidConfigurationError, log, safeStringifyJson, statOrNull } from "builder-util"
+
+const _requireResolve = createRequire(import.meta.url).resolve
 import { deepAssign, Nullish } from "builder-util-runtime"
-import { readJson } from "fs-extra"
+
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { Configuration } from "../../configuration"
-import { FileSet } from "../../options/PlatformSpecificBuildOptions"
-import { reactCra } from "../../presets/rectCra"
-import { PACKAGE_VERSION } from "../../version"
-import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load"
-import { validateSchema } from "./schemaValidator"
+import { Configuration } from "../../configuration.js"
+import { FileSet } from "../../options/PlatformSpecificBuildOptions.js"
+import { reactCra } from "../../presets/rectCra.js"
+import { PACKAGE_VERSION } from "../../version.js"
+import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load.js"
+import { validateSchema } from "./schemaValidator.js"
+import _fsExtra from "fs-extra"
+const { readJson } = _fsExtra
 
 // https://github.com/electron-userland/electron-builder/issues/1847
 function mergePublish(config: Configuration, configFromOptions: Configuration) {
@@ -59,9 +64,9 @@ export async function getConfig(
     } else if (devDependencies != null && "electron-webpack" in devDependencies) {
       let file = "electron-webpack/out/electron-builder.js"
       try {
-        file = require.resolve(file)
+        file = _requireResolve(file)
       } catch (_ignore) {
-        file = require.resolve("electron-webpack/electron-builder.yml")
+        file = _requireResolve("electron-webpack/electron-builder.yml")
       }
       config.extends = `file:${file}`
     }
@@ -214,27 +219,9 @@ function getDefaultConfig(): Configuration {
   }
 }
 
-const schemeDataPromise = new Lazy(() => readJson(path.join(__dirname, "..", "..", "..", "scheme.json")))
+const schemeDataPromise = new Lazy(() => readJson(path.join(import.meta.dirname, "..", "..", "..", "scheme.json")))
 
 export async function validateConfiguration(config: Configuration, debugLogger: DebugLogger) {
-  const extraMetadata = config.extraMetadata
-  if (extraMetadata != null) {
-    if (extraMetadata.build != null) {
-      throw new InvalidConfigurationError(`--em.build is deprecated, please specify as -c"`)
-    }
-    if (extraMetadata.directories != null) {
-      throw new InvalidConfigurationError(`--em.directories is deprecated, please specify as -c.directories"`)
-    }
-  }
-
-  const oldConfig: any = config
-  if (oldConfig.npmSkipBuildFromSource === false) {
-    throw new InvalidConfigurationError(`npmSkipBuildFromSource is deprecated, please use buildDependenciesFromSource"`)
-  }
-  if (oldConfig.appImage != null && oldConfig.appImage.systemIntegration != null) {
-    throw new InvalidConfigurationError(`appImage.systemIntegration is deprecated, https://github.com/TheAssassin/AppImageLauncher is used for desktop integration"`)
-  }
-
   validateSchema(await schemeDataPromise.value, config, {
     name: `electron-builder ${PACKAGE_VERSION}`,
     postFormatter: (formattedError, error): string => {
