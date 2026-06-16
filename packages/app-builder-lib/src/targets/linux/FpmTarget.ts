@@ -1,9 +1,9 @@
-import { Arch, asArray, exec, getArchSuffix, log, serializeToYaml, stripSensitiveEnvVars, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
+import { Arch, asArray, exec, getArchSuffix, log, serializeToYaml, stripSensitiveEnvVars, TmpDir, toLinuxArchString, unlinkIfExists, use, validateShellEmbeddable } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 
 import { objectToArgs } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
-import { mkdir, readFile } from "fs/promises"
+import { chmod, mkdir, readFile } from "fs/promises"
 import * as path from "path"
 import { smarten } from "../../appInfo.js"
 import { Target } from "../../core.js"
@@ -19,7 +19,8 @@ import { isFpmDebug } from "../../util/flags.js"
 import { hashFile } from "../../util/hash.js"
 import { isMacOsSierra } from "../../util/mac/macosVersion.js"
 import { getTemplatePath } from "../../util/pathManager.js"
-import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper.js"
+import { buildLauncherScript } from "./launcherScript.js"
+import { installPrefix, LinuxTargetHelper, quoteDesktopExecPath } from "./LinuxTargetHelper.js"
 const { copyFile, outputFile, stat } = _fsExtra
 
 interface FpmOptions {
@@ -275,7 +276,12 @@ export default class FpmTarget extends Target {
       args.push(`${mimeTypeFilePath}=/usr/share/mime/packages/${packager.executableName}.xml`)
     }
 
-    const desktopFilePath = await this.helper.writeDesktopEntry(this.options)
+    // Launch through a launcher entrypoint so executableArgs are injected in one place and the
+    // .desktop Exec key stays a plain command path (consistent with the other Linux targets).
+    const launcher = await this.createLauncherScript()
+    args.push(`${launcher.tempPath}=${launcher.installPath}`)
+
+    const desktopFilePath = await this.helper.writeDesktopEntry(this.options, `${quoteDesktopExecPath(launcher.installPath)} %U`)
     args.push(`${desktopFilePath}=/usr/share/applications/${this.helper.getDesktopFileName()}.desktop`)
 
     if (packager.packagerOptions.effectiveOptionComputed != null && (await packager.packagerOptions.effectiveOptionComputed([args, desktopFilePath]))) {
@@ -316,6 +322,25 @@ export default class FpmTarget extends Target {
       }
     }
     await packager.emitArtifactBuildCompleted(info)
+  }
+
+  /**
+   * Generate the launcher entrypoint script installed alongside the app binary. The launcher execs
+   * the real binary with the configured `executableArgs` (single-quoted) and forwards `"$@"` so the
+   * desktop launcher's field-code expansions (e.g. opened files/URLs) still reach the app.
+   */
+  private async createLauncherScript(): Promise<{ installPath: string; tempPath: string }> {
+    const { appInfo, executableName } = this.packager
+    validateShellEmbeddable(executableName, "executableName")
+    validateShellEmbeddable(appInfo.sanitizedProductName, "sanitizedProductName")
+
+    const appDir = `${installPrefix}/${appInfo.sanitizedProductName}`
+    const content = buildLauncherScript({ command: [`"${appDir}/${executableName}"`], args: this.options.executableArgs ?? [] })
+
+    const tempPath = await this.packager.tempDirManager.getTempFile({ suffix: "-launcher.sh" })
+    await outputFile(tempPath, content, { mode: 0o755 })
+    await chmod(tempPath, 0o755)
+    return { installPath: `${appDir}/${executableName}-launcher`, tempPath }
   }
 
   private async executeFpm(target: string, fpmConfiguration: FpmConfiguration, env: any) {
