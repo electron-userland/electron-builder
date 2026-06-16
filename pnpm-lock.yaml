@@ -7,6 +7,7 @@ settings:
 overrides:
   flatted: '>=3.4.2'
   handlebars: '>=4.7.9'
+  shell-quote: '>=1.8.4 <2'
 
 patchedDependencies:
   '@changesets/assemble-release-plan@6.0.9': ef56f57067dfcc594f40d9afc7278abe38cecf1c04230936e447a60e0d58a46e
@@ -8996,8 +8997,8 @@ packages:
     resolution: {integrity: sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==}
     engines: {node: '>=8'}
 
-  shell-quote@1.8.3:
-    resolution: {integrity: sha512-ObmnIF4hXNg1BqhnHmgbDETF8dLPCggZWBjkQfhZpbszZnYur5DUljTcCHii5LC3J5E0yeO/1LIMyH+UvHQgyw==}
+  shell-quote@1.8.4:
+    resolution: {integrity: sha512-VsC6n6vz1ihYYyZZwX7YZSF5l5x36ca17OC+a69h94YqB7X6XLwf+5MOgynYir2SLFUbl8gIYvBo8K8RoNQ6bQ==}
     engines: {node: '>= 0.4'}
 
   side-channel-list@1.0.1:
@@ -18448,7 +18449,7 @@ snapshots:
   launch-editor@2.13.2:
     dependencies:
       picocolors: 1.1.1
-      shell-quote: 1.8.3
+      shell-quote: 1.8.4
 
   layout-base@1.0.2: {}
 
@@ -20774,7 +20775,7 @@ snapshots:
 
   shebang-regex@3.0.0: {}
 
-  shell-quote@1.8.3: {}
+  shell-quote@1.8.4: {}
 
   side-channel-list@1.0.1:
     dependencies:
