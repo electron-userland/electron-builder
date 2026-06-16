@@ -22,8 +22,41 @@ export interface MigrationResult {
 
 // ─── Pure migration logic ─────────────────────────────────────────────────────
 
-// Azure Trusted Signing fields that are typed in v27
-const AZURE_KNOWN_FIELDS = new Set(["type", "endpoint", "codeSigningAccountName", "certificateProfileName", "publisherName", "fileDigest", "timestampRfc3161", "timestampDigest"])
+// Azure Trusted Signing typed fields in v27 (everything else is an extra key → additionalMetadata).
+// "type" is included so it is not mistakenly moved to additionalMetadata if already present.
+const AZURE_KNOWN_FIELDS = new Set([
+  "type",
+  "endpoint",
+  "codeSigningAccountName",
+  "certificateProfileName",
+  "publisherName",
+  "fileDigest",
+  "timestampRfc3161",
+  "timestampDigest",
+  "additionalMetadata",
+])
+
+// macOS signing fields that moved from the platform root into the `sign` (ElectronSignOptions) bag.
+// `signIgnore` is renamed to `sign.ignore` separately (the @electron/osx-sign canonical name).
+const MAC_SIGN_FIELDS = [
+  "identity",
+  "entitlements",
+  "entitlementsInherit",
+  "entitlementsLoginHelper",
+  "provisioningProfile",
+  "type",
+  "binaries",
+  "requirements",
+  "hardenedRuntime",
+  "gatekeeperAssess",
+  "strictVerify",
+  "preAutoEntitlements",
+  "timestamp",
+  "additionalArguments",
+] as const
+
+// Universal-build fields that moved from the platform root into the `universal` (ElectronUniversalOptions) bag.
+const MAC_UNIVERSAL_FIELDS = ["mergeASARs", "singleArchFiles", "x64ArchFiles"] as const
 
 /**
  * Applies all v26→v27 config transformations to a parsed config object.
@@ -86,14 +119,12 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
       changes.push({ key: old, description: `renamed ${old} → asarUnpack` })
     }
   }
-  // Nested asar.unpack / asar.unpackDir
+  // Nested asar.unpackDir (legacy pre-v26; asar.unpack is now the canonical location, handled in step 11)
   if (c.asar != null && typeof c.asar === "object") {
-    for (const nested of ["unpack", "unpackDir"] as const) {
-      if (nested in c.asar) {
-        c.asarUnpack = mergeAsarUnpack(c.asarUnpack, c.asar[nested])
-        delete c.asar[nested]
-        changes.push({ key: `asar.${nested}`, description: `moved asar.${nested} → asarUnpack` })
-      }
+    if ("unpackDir" in c.asar) {
+      c.asarUnpack = mergeAsarUnpack(c.asarUnpack, c.asar.unpackDir)
+      delete c.asar.unpackDir
+      changes.push({ key: "asar.unpackDir", description: "moved asar.unpackDir → asarUnpack" })
     }
     if (Object.keys(c.asar).length === 0) {
       delete c.asar
@@ -146,26 +177,243 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
     changes.push({ key: "squirrelWindows.noMsi", description: "replaced squirrelWindows.noMsi → squirrelWindows.msi (inverted boolean)" })
   }
 
-  // ── 11. azureSignOptions: index-signature extra keys → additionalMetadata ─
-  if (c.win?.azureSignOptions != null) {
-    const azure: Record<string, any> = c.win.azureSignOptions
-    const extra: Record<string, string> = {}
-    for (const [k, v] of Object.entries(azure)) {
-      if (!AZURE_KNOWN_FIELDS.has(k) && typeof v === "string") {
-        extra[k] = v
-        delete azure[k]
-      }
+  // ── 11. asar consolidation ───────────────────────────────────────────────
+  // Move root-level asarUnpack / disableSanityCheckAsar / disableAsarIntegrity
+  // into the asar object. Skip entirely when asar === false (all would be no-ops).
+  if (c.asar !== false) {
+    const asarSub: Record<string, any> = typeof c.asar === "object" && c.asar != null ? { ...c.asar } : {}
+    if ("asarUnpack" in c) {
+      asarSub.unpack = mergeAsarUnpack(asarSub.unpack, c.asarUnpack)
+      delete c.asarUnpack
+      changes.push({ key: "asarUnpack", description: "moved asarUnpack → asar.unpack" })
     }
-    if (Object.keys(extra).length > 0) {
-      azure.additionalMetadata = { ...(azure.additionalMetadata ?? {}), ...extra }
-      changes.push({
-        key: "win.azureSignOptions",
-        description: `moved extra keys [${Object.keys(extra).join(", ")}] into win.azureSignOptions.additionalMetadata`,
-      })
+    if ("disableSanityCheckAsar" in c) {
+      asarSub.disableSanityCheck = c.disableSanityCheckAsar
+      delete c.disableSanityCheckAsar
+      changes.push({ key: "disableSanityCheckAsar", description: "moved disableSanityCheckAsar → asar.disableSanityCheck" })
+    }
+    if ("disableAsarIntegrity" in c) {
+      asarSub.disableIntegrity = c.disableAsarIntegrity
+      delete c.disableAsarIntegrity
+      changes.push({ key: "disableAsarIntegrity", description: "moved disableAsarIntegrity → asar.disableIntegrity" })
+    }
+    if (c.asar === true) {
+      if (Object.keys(asarSub).length > 0) {
+        c.asar = asarSub
+      } else {
+        delete c.asar
+      }
+      changes.push({ key: "asar", description: "replaced asar: true with asar object (true is no longer a valid value)" })
+    } else if (Object.keys(asarSub).length > 0) {
+      c.asar = asarSub
     }
   }
 
+  // ── 12. win.sign unification ───────────────────────────────────────────────
+  // win.signtoolOptions → win.sign: { type: "signtool", … }
+  // win.azureSignOptions → win.sign: { type: "azure", … }  (extra keys → additionalMetadata)
+  // win.signAndEditExecutable / win.signExecutable removed
+  if (c.win != null && typeof c.win === "object") {
+    const win: Record<string, any> = c.win
+
+    // Remove defunct flags — signAndEditExecutable/signExecutable no longer exist in v27.
+    if ("signAndEditExecutable" in win) {
+      const val = win.signAndEditExecutable
+      delete win.signAndEditExecutable
+      if (val === false) {
+        warnings.push(
+          "win.signAndEditExecutable: false was used to skip both resource editing and signing. " +
+            "In v27, resource editing always runs. To skip signing only, set win.sign: false. " +
+            "There is no v27 equivalent that also skips resource editing — apply resources manually if needed."
+        )
+      } else {
+        changes.push({ key: "win.signAndEditExecutable", description: "removed win.signAndEditExecutable (resource editing always runs in v27; was the default)" })
+      }
+    }
+    if ("signExecutable" in win) {
+      const val = win.signExecutable
+      delete win.signExecutable
+      if (val === false && !("sign" in win)) {
+        win.sign = false
+        changes.push({ key: "win.signExecutable", description: "replaced win.signExecutable: false with win.sign: false (disables signing; resource editing still runs)" })
+      } else {
+        changes.push({ key: "win.signExecutable", description: "removed win.signExecutable (signing is enabled by default when credentials are available)" })
+      }
+    }
+
+    const hasAzure = win.azureSignOptions != null
+    const hasSigntool = win.signtoolOptions != null
+
+    if (hasAzure || hasSigntool) {
+      const signAlreadySet = "sign" in win && win.sign !== null && win.sign !== undefined
+
+      if (signAlreadySet) {
+        warnings.push(
+          "win.sign is already set alongside " +
+            (hasAzure ? "win.azureSignOptions" : "win.signtoolOptions") +
+            ". Remove the legacy key manually after verifying win.sign is correct."
+        )
+      } else {
+        if (hasAzure && hasSigntool) {
+          warnings.push(
+            "Both win.azureSignOptions and win.signtoolOptions are set. " +
+              "win.signtoolOptions will be dropped and win.azureSignOptions will be migrated to win.sign: { type: 'azure', … } (Azure took priority in v26). " +
+              "Verify the migrated win.sign block is correct for your project."
+          )
+          delete win.signtoolOptions
+        }
+
+        if (hasAzure) {
+          const azure: Record<string, any> = { ...win.azureSignOptions }
+          delete win.azureSignOptions
+
+          // Move extra (untyped) keys into additionalMetadata
+          const extra: Record<string, string> = {}
+          for (const [k, v] of Object.entries(azure)) {
+            if (!AZURE_KNOWN_FIELDS.has(k) && typeof v === "string") {
+              extra[k] = v
+              delete azure[k]
+            }
+          }
+          if (Object.keys(extra).length > 0) {
+            azure.additionalMetadata = { ...(azure.additionalMetadata ?? {}), ...extra }
+            changes.push({
+              key: "win.azureSignOptions",
+              description: `moved extra keys [${Object.keys(extra).join(", ")}] into win.sign.additionalMetadata`,
+            })
+          }
+
+          win.sign = { ...azure, type: "azure" }
+          changes.push({ key: "win.azureSignOptions", description: 'moved win.azureSignOptions → win.sign: { type: "azure", … }' })
+        } else {
+          const signtool: Record<string, any> = { ...win.signtoolOptions }
+          delete win.signtoolOptions
+          win.sign = { ...signtool, type: "signtool" }
+          changes.push({ key: "win.signtoolOptions", description: 'moved win.signtoolOptions → win.sign: { type: "signtool", … }' })
+        }
+      }
+    }
+  }
+
+  // ── 13. mac/mas/masDev signing + universal consolidation ──────────────────
+  // Signing fields (incl. identity) move into `sign`; mergeASARs/singleArchFiles/x64ArchFiles into `universal`.
+  for (const platform of ["mac", "mas", "masDev"] as const) {
+    if (c[platform] != null && typeof c[platform] === "object") {
+      migrateMacSigning(c[platform], platform, changes, warnings)
+      migrateMacUniversal(c[platform], platform, changes)
+    }
+  }
+
+  // ── 14. electronDownload → electronGet ────────────────────────────────────
+  if ("electronDownload" in c) {
+    migrateElectronDownload(c, changes, warnings)
+  }
+
   return { migrated: c, changes, warnings, modified: changes.length > 0 || warnings.length > 0 }
+}
+
+/**
+ * Moves macOS signing fields from a platform config (mac/mas/masDev) into the `sign` bag and
+ * renames `signIgnore` → `sign.ignore`. In v26 `sign` was only a custom-signer (string path / module id),
+ * so a non-object `sign` cannot absorb these options — that case is warned about, not clobbered.
+ * A bare `sign: null` (v26 "no custom signer") is dropped so it does not flip to v27's "skip signing".
+ */
+function migrateMacSigning(platform: Record<string, any>, name: string, changes: MigrationChange[], warnings: string[]) {
+  const present = MAC_SIGN_FIELDS.filter(f => f in platform)
+  const hasSignIgnore = "signIgnore" in platform
+  const existingSign = platform.sign
+  const signIsCustom = typeof existingSign === "string" || typeof existingSign === "function"
+
+  if (present.length === 0 && !hasSignIgnore) {
+    // Only thing to fix is a semantically-flipped bare null
+    if (existingSign === null) {
+      delete platform.sign
+      changes.push({ key: `${name}.sign`, description: `removed ${name}.sign: null (v26 "no custom signer" = v27 default; sign: null now means skip signing)` })
+    }
+    return
+  }
+
+  if (signIsCustom) {
+    const fields = [...present, ...(hasSignIgnore ? ["signIgnore"] : [])].join(", ")
+    warnings.push(
+      `${name}.sign is a custom signing function/path, which cannot hold options. Move [${fields}] into an ElectronSignOptions object manually, or keep the custom signer and drop them.`
+    )
+    return
+  }
+
+  // existingSign is null/undefined or already an object → build the merged options bag
+  const signObj: Record<string, any> = existingSign != null && typeof existingSign === "object" ? { ...existingSign } : {}
+  for (const f of present) {
+    signObj[f] = platform[f]
+    delete platform[f]
+    changes.push({ key: `${name}.${f}`, description: `moved ${name}.${f} → ${name}.sign.${f}` })
+  }
+  if (hasSignIgnore) {
+    signObj.ignore = platform.signIgnore
+    delete platform.signIgnore
+    changes.push({ key: `${name}.signIgnore`, description: `renamed ${name}.signIgnore → ${name}.sign.ignore` })
+  }
+  platform.sign = signObj
+}
+
+/** Moves universal-build fields from a platform config into the `universal` bag. */
+function migrateMacUniversal(platform: Record<string, any>, name: string, changes: MigrationChange[]) {
+  const present = MAC_UNIVERSAL_FIELDS.filter(f => f in platform)
+  if (present.length === 0) {
+    return
+  }
+  const universalObj: Record<string, any> = platform.universal != null && typeof platform.universal === "object" ? { ...platform.universal } : {}
+  for (const f of present) {
+    universalObj[f] = platform[f]
+    delete platform[f]
+    changes.push({ key: `${name}.${f}`, description: `moved ${name}.${f} → ${name}.universal.${f}` })
+  }
+  platform.universal = universalObj
+}
+
+// electronDownload fields with no equivalent in the v27 ElectronGetOptions (@electron/get v5) shape.
+const ELECTRON_DOWNLOAD_DROPPED = ["cache", "customDir", "customFilename", "strictSSL", "platform", "arch", "version"] as const
+
+/**
+ * Renames `electronDownload` → `electronGet` and reshapes it to ElectronGetOptions.
+ * `mirror` → `mirrorOptions.mirror`, `isVerifyChecksum: false` → `unsafelyDisableChecksums: true`.
+ * Fields with no v5 equivalent are dropped with a warning.
+ */
+function migrateElectronDownload(c: Record<string, any>, changes: MigrationChange[], warnings: string[]) {
+  const old = c.electronDownload
+  delete c.electronDownload
+
+  if (old == null || typeof old !== "object") {
+    changes.push({ key: "electronDownload", description: "renamed electronDownload → electronGet" })
+    if (old != null) {
+      c.electronGet = old
+    }
+    return
+  }
+
+  const next: Record<string, any> = { ...(c.electronGet ?? {}) }
+  if ("mirror" in old && old.mirror != null) {
+    next.mirrorOptions = { ...(next.mirrorOptions ?? {}), mirror: old.mirror }
+  }
+  if (old.isVerifyChecksum === false) {
+    next.unsafelyDisableChecksums = true
+  }
+  // Carry over any already-valid ElectronGetOptions fields (mirrorOptions, unsafelyDisableChecksums, force, etc.)
+  for (const [k, v] of Object.entries(old)) {
+    if (k !== "mirror" && k !== "isVerifyChecksum" && !ELECTRON_DOWNLOAD_DROPPED.includes(k as any)) {
+      next[k] = v
+    }
+  }
+
+  const dropped = ELECTRON_DOWNLOAD_DROPPED.filter(k => k in old)
+  if (dropped.length > 0) {
+    warnings.push(
+      `electronGet (formerly electronDownload) dropped [${dropped.join(", ")}] — these have no equivalent in @electron/get v5. Set a mirror via electronGet.mirrorOptions if needed.`
+    )
+  }
+
+  c.electronGet = next
+  changes.push({ key: "electronDownload", description: "renamed electronDownload → electronGet (mirror → mirrorOptions.mirror; isVerifyChecksum → unsafelyDisableChecksums)" })
 }
 
 function mergeAsarUnpack(existing: string | string[] | undefined, incoming: string | string[]): string | string[] {
@@ -330,6 +578,10 @@ async function findAndLoadConfig(projectDir: string, explicitConfigPath?: string
 }
 
 function parseConfig(text: string, format: ConfigFormat): Record<string, any> {
+  if (format === "js") {
+    // Programmatic configs (JS/TS/MJS/CJS) can't be parsed; migrateSchema will bail with manual steps
+    return {}
+  }
   if (format === "yaml") {
     const yaml = _require("js-yaml") as { load(text: string): unknown }
     return yaml.load(text) as Record<string, any>
@@ -453,18 +705,30 @@ export async function migrateSchema(args: any): Promise<void> {
 
 function printManualSteps() {
   const steps = [
+    "",
     "• Remove electronCompile",
     "• Remove framework, nodeVersion, launchUiVersion",
     "• Rename npmSkipBuildFromSource → buildDependenciesFromSource",
     "• Move buildDependenciesFromSource, nodeGypRebuild, npmRebuild, nativeRebuilder into nativeModules (rename nativeRebuilder → rebuildMode)",
-    "• Rename asar-unpack / asar-unpack-dir / asar.unpack / asar.unpackDir → asarUnpack",
+    "• Rename asar-unpack / asar-unpack-dir / asar.unpack / asar.unpackDir → asarUnpack; then move asarUnpack → asar.unpack",
+    "• Move disableSanityCheckAsar → asar.disableSanityCheck",
+    "• Move disableAsarIntegrity → asar.disableIntegrity",
+    "• Replace asar: true with an asar object (e.g. asar: {} or omit entirely - asar is enabled by default)",
     "• Remove appImage.systemIntegration",
     "• Rename snap → snapcraft; nest options under a base-named sub-key (default base: core20)",
-    "• Replace vPrefixedTagName with tagNamePrefix on GitHub publish entries",
-    "• Move extra keys in win.azureSignOptions into an additionalMetadata object",
+    "• Replace vPrefixedTagName with tagNamePrefix on GitHub publish entries ('v' is the default prefix - just like before - but can now be customized with tagNamePrefix)",
+    "• Move win.signtoolOptions → win.sign: { type: 'signtool', ...fields }",
+    "• Move win.azureSignOptions → win.sign: { type: 'azure', ...fields }; move untyped extra keys into win.sign.additionalMetadata",
+    "• Remove win.signAndEditExecutable (resource editing always runs in v27); replace win.signExecutable: false with win.sign: false",
     "• Move helper-bundle-id → mac.helperBundleId",
     "• Replace squirrelWindows.noMsi with squirrelWindows.msi (inverted)",
+    "• Move mac/mas/masDev signing fields (identity, entitlements, hardenedRuntime, type, requirements, timestamp, binaries, gatekeeperAssess, strictVerify, preAutoEntitlements, provisioningProfile, additionalArguments) into the `sign` object; rename signIgnore → sign.ignore",
+    "• Move mac/mas/masDev mergeASARs / singleArchFiles / x64ArchFiles into the `universal` object",
+    "• Rename electronDownload → electronGet (mirror → mirrorOptions.mirror; isVerifyChecksum:false → unsafelyDisableChecksums:true)",
     "• Move root-level package.json directories → build.directories",
+    "",
+    "• For programmatic configs (JS/TS/MJS/CJS), apply the above changes manually to your config object",
+    "• For additional guidance, check the migration guide: https://www.electron.build/docs/migration/v26-to-v27",
   ]
   for (const step of steps) {
     process.stdout.write(`  ${step}\n`)

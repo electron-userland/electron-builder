@@ -2,7 +2,7 @@ import { AppImageOptions, Configuration, DebOptions, PacmanOptions, RpmOptions, 
 import { PM } from "app-builder-lib/internal"
 import { Arch, Platform } from "electron-builder"
 import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
-import { archFromString, log, spawn, TmpDir } from "builder-util"
+import { archFromString, log, spawn } from "builder-util"
 import { deepAssign, GenericServerOptions } from "builder-util-runtime"
 import { execSync } from "child_process"
 import { move, outputFile, readJsonSync } from "fs-extra"
@@ -85,177 +85,178 @@ describe.heavy.ifLinux("linux install", optionsForInstall, () => {
 })
 
 async function runInstallTest(context: TestContext, target: ConstructorParameters<typeof Target>[0], arch: Arch, extraConfig: Configuration): Promise<void> {
-  const { expect } = context
-  const tmpDir = new TmpDir("blackbox-install-test")
+  const { expect, tmpDir } = context
 
-  try {
-    let artifactsDir: string | undefined
+  let artifactsDir: string | undefined
 
-    const config = deepAssign<Configuration>(
-      {
-        nativeModules: { npmRebuild: true },
-        productName: "TestApp",
-        executableName: "TestApp",
-        appId: "com.test.app",
-        artifactName: "${productName}.${ext}",
-        electronLanguages: ["en"],
-        extraMetadata: {
-          name: "testapp",
-          version: OLD_VERSION_NUMBER,
-        },
-        electronUpdaterCompatibility: "1.1",
-        electronFuses: {
-          runAsNode: false,
-          enableCookieEncryption: true,
-          enableNodeOptionsEnvironmentVariable: false,
-          enableNodeCliInspectArguments: false,
-          enableEmbeddedAsarIntegrityValidation: true,
-          onlyLoadAppFromAsar: true,
-          loadBrowserProcessSpecificV8Snapshot: false,
-          grantFileProtocolExtraPrivileges: false,
-        },
-        publish: {
-          provider: "s3",
-          bucket: "develar",
-          path: "test",
-        },
-        files: ["**/*", "../**/node_modules/**", "!path/**"],
+  const config = deepAssign<Configuration>(
+    {
+      nativeModules: { npmRebuild: true },
+      productName: "TestApp",
+      executableName: "TestApp",
+      appId: "com.test.app",
+      artifactName: "${productName}.${ext}",
+      electronLanguages: ["en"],
+      extraMetadata: {
+        name: "testapp",
+        version: OLD_VERSION_NUMBER,
       },
-      extraConfig
-    )
-    await assertPack(
-      expect,
-      "test-app",
-      {
-        targets: Platform.LINUX.createTarget(target, arch),
-        config,
+      electronUpdaterCompatibility: "1.1",
+      electronFuses: {
+        runAsNode: false,
+        enableCookieEncryption: false, // don't enable cookie encryption for testing because it adds an additional decryption step to the update process which requires user interaction to unlock the keychain on macOS and can cause timeouts in CI, especially on older macOS versions with slower crypto performance
+        enableNodeOptionsEnvironmentVariable: false,
+        enableNodeCliInspectArguments: false,
+        enableEmbeddedAsarIntegrityValidation: true,
+        onlyLoadAppFromAsar: true,
+        loadBrowserProcessSpecificV8Snapshot: false,
+        grantFileProtocolExtraPrivileges: false,
       },
-      {
-        storeDepsLockfileSnapshot: false,
-        packageManager: PM.PNPM,
-        packed: async (ctx: PackedContext) => {
-          artifactsDir = await tmpDir.getTempDir({ prefix: "artifacts" })
-          await move(ctx.outDir, artifactsDir)
-        },
-        projectDirCreated: async (projectDir, _tmpDir, runtimeEnv) => {
-          await outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted")
-
-          await modifyPackageJson(
-            projectDir,
-            data => {
-              data.devDependencies = {
-                electron: ELECTRON_VERSION,
-                "node-addon-api": "^8",
-              }
-              const ebPackagePath = (pkg: string) => path.resolve(__dirname, "../../../packages", pkg)
-              const updaterPath = ebPackagePath("electron-updater")
-              const utilPath = ebPackagePath("builder-util-runtime")
-              data.dependencies = {
-                ...data.dependencies,
-                sqlite3: "5.1.7",
-                "@electron/remote": "2.1.3",
-                "electron-updater": `link:${updaterPath}`,
-                ...readJsonSync(path.join(updaterPath, "package.json")).dependencies,
-                "builder-util-runtime": `link:${utilPath}`,
-                ...readJsonSync(path.join(utilPath, "package.json")).dependencies,
-              }
-            },
-            true
-          )
-          await modifyPackageJson(
-            projectDir,
-            data => {
-              data.pnpm = {
-                supportedArchitectures: {
-                  os: ["current"],
-                  cpu: ["x64", "arm64"],
-                },
-              }
-            },
-            false
-          )
-          await spawn("pnpm", ["install"], { cwd: projectDir, env: runtimeEnv })
-        },
-      }
-    )
-
-    if (!artifactsDir) {
-      throw new Error("Build did not produce an artifacts directory")
-    }
-
-    let appPath: string
-
-    if (target === "appImage") {
-      const artifactPath = path.join(artifactsDir, "TestApp.AppImage")
-
-      // Verify the compression header in the squashfs superblock matches the configured value
-      const actualCompression = await readAppImageCompression(artifactPath)
-      expect(actualCompression).toMatchSnapshot()
-
-      appPath = artifactPath
-    } else if (target === "deb") {
-      const debPath = path.join(artifactsDir, "TestApp.deb")
-      const actualCompression = await readDebCompression(debPath)
-      expect(actualCompression).toMatchSnapshot()
-      DebUpdater.installWithCommandRunner(
-        "dpkg",
-        debPath,
-        commandWithArgs => {
-          execSync(commandWithArgs.join(" "), { stdio: "inherit" })
-        },
-        console
-      )
-      appPath = "/opt/TestApp/TestApp"
-    } else if (target === "rpm") {
-      RpmUpdater.installWithCommandRunner(
-        "zypper",
-        path.join(artifactsDir, "TestApp.rpm"),
-        commandWithArgs => {
-          execSync(commandWithArgs.join(" "), { stdio: "inherit" })
-        },
-        console
-      )
-      appPath = "/opt/TestApp/TestApp"
-    } else if (target === "pacman") {
-      PacmanUpdater.installWithCommandRunner(
-        path.join(artifactsDir, "TestApp.pacman"),
-        commandWithArgs => {
-          execSync(commandWithArgs.join(" "), { stdio: "inherit" })
-        },
-        console
-      )
-      appPath = "/opt/TestApp/TestApp"
-    } else {
-      throw new Error(`Unsupported install test target: ${target}`)
-    }
-
-    // A dummy update config is required by launchAndWaitForQuit even when the updater is disabled.
-    // AUTO_UPDATER_TEST="" makes the test app print its version and exit immediately.
-    const updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: "http://localhost:0" })
-
-    const appimageToolset = (extraConfig as any).toolsets?.appimage
-    // FUSE2 AppImages require /dev/fuse to mount their squashfs, which isn't available in standard
-    // Docker containers. APPIMAGE_EXTRACT_AND_RUN=1 tells the legacy runtime to extract and run
-    // without FUSE, avoiding the "Syntax error" shell-fallback failure.
-    const isLegacyToolset = appimageToolset == null || appimageToolset === "0.0.0"
-    const result = await launchAndWaitForQuit({
-      appPath,
-      timeoutMs: 2 * 60 * 1000,
-      updateConfigPath,
-      packageManagerToTest: "",
-      env: {
-        AUTO_UPDATER_TEST: "",
-        ...(isLegacyToolset ? { APPIMAGE_EXTRACT_AND_RUN: "1" } : {}),
+      publish: {
+        provider: "s3",
+        bucket: "develar",
+        path: "test",
       },
-      waitForExit: true,
-    })
+      files: ["**/*", "../**/node_modules/**", "!path/**"],
+    },
+    extraConfig
+  )
+  await assertPack(
+    expect,
+    "test-app",
+    {
+      targets: Platform.LINUX.createTarget(target, arch),
+      config,
+    },
+    {
+      storeDepsLockfileSnapshot: false,
+      packageManager: PM.PNPM,
+      packed: async (ctx: PackedContext) => {
+        artifactsDir = await tmpDir.getTempDir({ prefix: "artifacts" })
+        await move(ctx.outDir, artifactsDir)
+      },
+      projectDirCreated: async (projectDir, _tmpDir, runtimeEnv) => {
+        // Write .npmrc to app/ — installDependencies runs pnpm with cwd=appDir, so pnpm 10
+        // reads this file and uses hoisted layout for the main install.
+        await outputFile(path.join(projectDir, "app", ".npmrc"), "node-linker=hoisted")
 
-    log.info({ version: result.version, compression: config[target]?.compression ?? config.compression, target }, "Install test launch completed")
-    if (result.version == null) {
-      throw new Error("App did not report version after launch")
+        await modifyPackageJson(
+          projectDir,
+          data => {
+            data.devDependencies = {
+              electron: ELECTRON_VERSION,
+              "node-addon-api": "^8",
+            }
+            const ebPackagePath = (pkg: string) => path.resolve(__dirname, "../../../packages", pkg)
+            const updaterPath = ebPackagePath("electron-updater")
+            const utilPath = ebPackagePath("builder-util-runtime")
+            data.dependencies = {
+              ...data.dependencies,
+              sqlite3: "5.1.7",
+              "@electron/remote": "2.1.3",
+              "electron-updater": `link:${updaterPath}`,
+              ...readJsonSync(path.join(updaterPath, "package.json")).dependencies,
+              "builder-util-runtime": `link:${utilPath}`,
+              ...readJsonSync(path.join(utilPath, "package.json")).dependencies,
+            }
+          },
+          true
+        )
+        await modifyPackageJson(
+          projectDir,
+          data => {
+            data.pnpm = {
+              supportedArchitectures: {
+                os: ["current"],
+                cpu: ["x64", "arm64"],
+              },
+            }
+          },
+          false
+        )
+        // Return a post-install hook so the explicit flag runs AFTER installDependencies.
+        // pnpm 11 ignores node-linker from .npmrc; the CLI flag here handles that case.
+        return async () => {
+          await spawn("pnpm", ["install", "--config.node-linker=hoisted"], { cwd: path.join(projectDir, "app"), env: runtimeEnv })
+        }
+      },
     }
-    expect(result.version).toMatch(OLD_VERSION_NUMBER)
-  } finally {
-    await tmpDir.cleanup()
+  )
+
+  if (!artifactsDir) {
+    throw new Error("Build did not produce an artifacts directory")
   }
+
+  let appPath: string
+
+  if (target === "appImage") {
+    const artifactPath = path.join(artifactsDir, "TestApp.AppImage")
+
+    // Verify the compression header in the squashfs superblock matches the configured value
+    const actualCompression = await readAppImageCompression(artifactPath)
+    expect(actualCompression).toMatchSnapshot()
+
+    appPath = artifactPath
+  } else if (target === "deb") {
+    const debPath = path.join(artifactsDir, "TestApp.deb")
+    const actualCompression = await readDebCompression(debPath)
+    expect(actualCompression).toMatchSnapshot()
+    DebUpdater.installWithCommandRunner(
+      "dpkg",
+      debPath,
+      commandWithArgs => {
+        execSync(commandWithArgs.join(" "), { stdio: "inherit" })
+      },
+      console
+    )
+    appPath = "/opt/TestApp/TestApp"
+  } else if (target === "rpm") {
+    RpmUpdater.installWithCommandRunner(
+      "zypper",
+      path.join(artifactsDir, "TestApp.rpm"),
+      commandWithArgs => {
+        execSync(commandWithArgs.join(" "), { stdio: "inherit" })
+      },
+      console
+    )
+    appPath = "/opt/TestApp/TestApp"
+  } else if (target === "pacman") {
+    PacmanUpdater.installWithCommandRunner(
+      path.join(artifactsDir, "TestApp.pacman"),
+      commandWithArgs => {
+        execSync(commandWithArgs.join(" "), { stdio: "inherit" })
+      },
+      console
+    )
+    appPath = "/opt/TestApp/TestApp"
+  } else {
+    throw new Error(`Unsupported install test target: ${target}`)
+  }
+
+  // A dummy update config is required by launchAndWaitForQuit even when the updater is disabled.
+  // AUTO_UPDATER_TEST="" makes the test app print its version and exit immediately.
+  const updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: "http://localhost:0" })
+
+  const appimageToolset = (extraConfig as any).toolsets?.appimage
+  // FUSE2 AppImages require /dev/fuse to mount their squashfs, which isn't available in standard
+  // Docker containers. APPIMAGE_EXTRACT_AND_RUN=1 tells the legacy runtime to extract and run
+  // without FUSE, avoiding the "Syntax error" shell-fallback failure.
+  const isLegacyToolset = appimageToolset == null || appimageToolset === "0.0.0"
+  const result = await launchAndWaitForQuit({
+    appPath,
+    timeoutMs: 2 * 60 * 1000,
+    updateConfigPath,
+    packageManagerToTest: "",
+    env: {
+      AUTO_UPDATER_TEST: "",
+      ...(isLegacyToolset ? { APPIMAGE_EXTRACT_AND_RUN: "1" } : {}),
+    },
+    waitForExit: true,
+  })
+
+  log.info({ version: result.version, compression: config[target]?.compression ?? config.compression, target }, "Install test launch completed")
+  if (result.version == null) {
+    throw new Error("App did not report version after launch")
+  }
+  expect(result.version).toMatch(OLD_VERSION_NUMBER)
 }

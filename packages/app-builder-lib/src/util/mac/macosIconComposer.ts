@@ -1,10 +1,9 @@
 // Adapted from https://github.com/electron/packager/pull/1806
 
-import { spawn } from "builder-util"
+import { spawn, TmpDir } from "builder-util"
 import * as fs from "fs/promises"
-import * as os from "node:os"
 import * as path from "node:path"
-import * as plist from "plist"
+import plist from "plist"
 import * as semver from "semver"
 
 export interface AssetCatalogResult {
@@ -51,66 +50,51 @@ async function checkActoolVersion(tmpDir: string) {
  * @param inputPath The path to the `.icon` file
  * @returns The asset catalog and extra assets
  */
-export async function generateAssetCatalogForIcon(inputPath: string): Promise<AssetCatalogResult> {
-  const tmpDir = await fs.mkdtemp(path.resolve(os.tmpdir(), "icon-compile-"))
-  const cleanup = async () => {
-    await fs.rm(tmpDir, {
-      recursive: true,
-      force: true,
-    })
-  }
+export async function generateAssetCatalogForIcon(tmpDir: TmpDir, inputPath: string): Promise<AssetCatalogResult> {
+  const tmpDirPath = await tmpDir.createTempDir({ prefix: "macos-icon-composer" })
 
-  try {
-    await checkActoolVersion(tmpDir)
-  } catch (error) {
-    await cleanup()
-    throw error
-  }
+  await checkActoolVersion(tmpDirPath)
 
-  const iconPath = path.resolve(tmpDir, "Icon.icon")
-  const outputPath = path.resolve(tmpDir, "out")
+  const iconPath = path.resolve(tmpDirPath, "Icon.icon")
+  const outputPath = path.resolve(tmpDirPath, "out")
 
-  try {
-    await fs.cp(inputPath, iconPath, {
-      recursive: true,
-    })
+  await fs.cp(inputPath, iconPath, {
+    recursive: true,
+  })
 
-    await fs.mkdir(outputPath, {
-      recursive: true,
-    })
+  await fs.mkdir(outputPath, {
+    recursive: true,
+  })
 
-    await spawn("actool", [
-      iconPath,
-      "--compile",
-      outputPath,
-      "--output-format",
-      "human-readable-text",
-      "--notices",
-      "--warnings",
-      "--output-partial-info-plist",
-      path.resolve(outputPath, "assetcatalog_generated_info.plist"),
-      "--app-icon",
-      "Icon",
-      "--include-all-app-icons",
-      "--accent-color",
-      "AccentColor",
-      "--enable-on-demand-resources",
-      "NO",
-      "--development-region",
-      "en",
-      "--target-device",
-      "mac",
-      "--minimum-deployment-target",
-      "26.0",
-      "--platform",
-      "macosx",
-    ])
+  await spawn("actool", [
+    iconPath,
+    "--compile",
+    outputPath,
+    "--output-format",
+    "human-readable-text",
+    "--notices",
+    "--warnings",
+    "--output-partial-info-plist",
+    path.resolve(outputPath, "assetcatalog_generated_info.plist"),
+    "--app-icon",
+    "Icon",
+    "--include-all-app-icons",
+    "--accent-color",
+    "AccentColor",
+    "--enable-on-demand-resources",
+    "NO",
+    "--development-region",
+    "en",
+    "--target-device",
+    "mac",
+    "--minimum-deployment-target",
+    "26.0",
+    "--platform",
+    "macosx",
+  ])
 
-    const assetCatalog = await fs.readFile(path.resolve(outputPath, "Assets.car"))
-    const icnsFile = await fs.readFile(path.resolve(outputPath, "Icon.icns"))
+  const assetCatalog = await fs.readFile(path.resolve(outputPath, "Assets.car"))
+  const icnsFile = await fs.readFile(path.resolve(outputPath, "Icon.icns"))
 
-    return { assetCatalog, icnsFile }
-  } finally {
-    await cleanup()
-  }
+  return { assetCatalog, icnsFile }
 }

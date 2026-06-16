@@ -13,6 +13,7 @@ export interface ConditionalChainProps<T> {
   readonly ifMac: T
   readonly ifWindows: T
   readonly ifLinux: T
+  readonly ifWindowsOrWine: T
   readonly ifNotMac: T
   readonly ifNotWindows: T
   readonly ifNotLinux: T
@@ -45,6 +46,10 @@ export declare const skip: ConditionalSkipAPI
 export declare const expect: ExpectStatic
 
 declare module "vitest" {
+  interface TestContext {
+    /** Per-test temp directory, auto-created and cleaned up by the `tmpDir` fixture in vitest-setup.ts. */
+    tmpDir: import("temp-file").TmpDir
+  }
   interface TestOptions {
     meta?: {
       platform?: "mac" | "win" | "linux"

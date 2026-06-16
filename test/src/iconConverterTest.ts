@@ -1,22 +1,11 @@
 import { deflateSync } from "zlib"
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "fs/promises"
-import * as os from "os"
+import { mkdir, readFile, writeFile } from "fs/promises"
 import * as path from "path"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it } from "vitest"
 import { buildSourceCandidates, convertIcon, getPngSize } from "app-builder-lib/internal"
 
 const FIXTURES = path.join(__dirname, "../fixtures")
 const TEST_APP_ICONS = path.join(FIXTURES, "test-app-one/build")
-
-let tmpDir: string
-
-beforeEach(async () => {
-  tmpDir = await mkdtemp(path.join(os.tmpdir(), "icon-test-"))
-})
-
-afterEach(async () => {
-  await rm(tmpDir, { recursive: true, force: true })
-})
 
 const CRC_TABLE = (() => {
   const t = new Uint32Array(256)
@@ -102,7 +91,12 @@ function parseIcns(data: Buffer): Map<string, Buffer> {
 
 // ─── ICNS output ─────────────────────────────────────────────────────────────
 
-describe("convertIcon – ICNS output", () => {
+describe("convertIcon – ICNS output", { sequential: true }, () => {
+  let tmpDir: string
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
+  })
+
   it("converts a 512×512 PNG to a valid ICNS file", async () => {
     const srcFile = path.join(tmpDir, "icon.png")
     await writePng(512, srcFile)
@@ -193,7 +187,12 @@ describe("convertIcon – ICNS output", () => {
 
 // ─── ICO output ───────────────────────────────────────────────────────────────
 
-describe("convertIcon – ICO output", () => {
+describe("convertIcon – ICO output", { sequential: true }, () => {
+  let tmpDir: string
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
+  })
+
   it("converts a 512×512 PNG to a valid ICO file", async () => {
     const srcFile = path.join(tmpDir, "icon.png")
     await writePng(512, srcFile)
@@ -284,7 +283,12 @@ describe("convertIcon – ICO output", () => {
 
 // ─── set output (Linux) ───────────────────────────────────────────────────────
 
-describe("convertIcon – set output (Linux)", () => {
+describe("convertIcon – set output (Linux)", { sequential: true }, () => {
+  let tmpDir: string
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
+  })
+
   it("returns source PNG directly for set format (matches Go behavior)", async () => {
     const srcFile = path.join(tmpDir, "icon.png")
     await writePng(512, srcFile)
@@ -370,7 +374,12 @@ describe("convertIcon – set output (Linux)", () => {
 
 // ─── File resolution ──────────────────────────────────────────────────────────
 
-describe("convertIcon – file resolution", () => {
+describe("convertIcon – file resolution", { sequential: true }, () => {
+  let tmpDir: string
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
+  })
+
   it("resolves icon by name from roots directory", async () => {
     const buildDir = path.join(tmpDir, "build")
     await mkdir(buildDir, { recursive: true })
@@ -407,7 +416,12 @@ describe("convertIcon – file resolution", () => {
 
 // ─── Directory filename filtering ─────────────────────────────────────────────
 
-describe("convertIcon – collectIconsFromDir filename filtering", () => {
+describe("convertIcon – collectIconsFromDir filename filtering", { sequential: true }, () => {
+  let tmpDir: string
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
+  })
+
   it("only picks up files with a pure-digit basename (anchored regex)", async () => {
     const iconsDir = path.join(tmpDir, "icons")
     await mkdir(iconsDir, { recursive: true })
@@ -516,7 +530,12 @@ describe("buildSourceCandidates", () => {
 
 // ─── getPngSize unit tests ────────────────────────────────────────────────────
 
-describe("getPngSize", () => {
+describe("getPngSize", { sequential: true }, () => {
+  let tmpDir: string
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
+  })
+
   it("reads correct dimensions from a well-formed PNG", async () => {
     const file = path.join(tmpDir, "test.png")
     await writePng(128, file)
@@ -546,7 +565,12 @@ describe("getPngSize", () => {
 
 // ─── convertIcon edge cases ───────────────────────────────────────────────────
 
-describe("convertIcon – edge cases", () => {
+describe("convertIcon – edge cases", { sequential: true }, () => {
+  let tmpDir: string
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
+  })
+
   it("resolves source by absolute path, ignoring roots", async () => {
     const srcFile = path.join(tmpDir, "abs.png")
     await writePng(512, srcFile)

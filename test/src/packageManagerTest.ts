@@ -28,7 +28,7 @@ const packageConfig = (data: any, version: string) => {
   return data
 }
 
-describe("Package Managers", () => {
+describe("Package Managers", { sequential: true }, () => {
   test("yarn", ({ expect }) =>
     assertPack(
       expect,
@@ -468,7 +468,7 @@ describe("Package Managers", () => {
             targets: linuxDirTarget,
             config: {
               files: ["**/*"],
-              asarUnpack: ["**/node_modules/foo/**/*"],
+              asar: { unpack: ["**/node_modules/foo/**/*"] },
             },
           },
           {

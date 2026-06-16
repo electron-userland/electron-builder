@@ -1,13 +1,11 @@
-import type { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
-import type { PerFileSignOptions, SigningDistributionType, SignOptions } from "@electron/osx-sign/dist/cjs/types"
-import type { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
+import { notarize, type NotarizeOptions, type NotaryToolKeychainCredentials } from "@electron/notarize"
+import type { PerFileSignOptions, SigningDistributionType, SignOptions } from "@electron/osx-sign"
 import { Arch, InvalidConfigurationError, log, statOrNull } from "builder-util"
-import { dynamicImport } from "../../util/dynamicImport.js"
 import { Nullish } from "builder-util-runtime"
 import * as path from "path"
-import { CertType, findIdentity, reportError } from "../../codeSign/mac/macCodeSign.js"
+import { CertType, findIdentity, Identity, reportError } from "../../codeSign/mac/macCodeSign.js"
 import type { MacPackager } from "../../macPackager.js"
-import { MacConfiguration, MasConfiguration } from "../../options/macOptions.js"
+import { ElectronSignOptions, MasConfiguration } from "../../options/macOptions.js"
 import { getTemplatePath } from "../../util/pathManager.js"
 
 export type PlatformType = "mas" | "mas-dev" | "mac"
@@ -24,13 +22,14 @@ export class MacTargetHelper {
   }
 
   async findSigningIdentity(
-    isMas: boolean,
-    isDevelopment: boolean,
+    targetPlatform: PlatformType,
     qualifier: string | undefined,
     keychainFile: string | Nullish,
-    config: MacConfiguration | MasConfiguration
+    hasCustomSign: boolean,
+    signOpts: ElectronSignOptions | null | undefined
   ): Promise<Identity | null> {
-    const certificateTypes = MacTargetHelper.getCertificateTypes(isMas, isDevelopment)
+    const isMas = MacTargetHelper.isMasTarget(targetPlatform)
+    const certificateTypes = MacTargetHelper.getCertificateTypes(targetPlatform)
 
     let identity: Identity | null = null
     for (const certificateType of certificateTypes) {
@@ -41,24 +40,16 @@ export class MacTargetHelper {
     }
 
     if (identity == null) {
-      if (!isMas && !isDevelopment && config.type !== "distribution") {
-        identity = await findIdentity("Mac Developer", qualifier, keychainFile)
-        if (identity != null) {
-          log.warn("Mac Developer is used to sign app — it is only for development and testing, not for production")
-        }
-      }
-
-      const noIdentity = !config.sign && identity == null
+      const noIdentity = !hasCustomSign
       if (qualifier === "-") {
-        if (MacTargetHelper.isHardenedRuntimeEnabledForSigning(isMas, config)) {
+        if (MacTargetHelper.isHardenedRuntimeEnabledForSigning(targetPlatform, signOpts?.hardenedRuntime)) {
           log.warn(
             null,
             "ad-hoc signing with hardenedRuntime enabled requires the com.apple.security.cs.disable-library-validation entitlement " +
               "to prevent app launch failures due to library validation. See https://electron.build/code-signing for details."
           )
         }
-        const { Identity: IdentityClass } = await dynamicImport<{ Identity: new (name: string, hash?: string) => Identity }>("@electron/osx-sign/dist/cjs/util-identities")
-        identity = new IdentityClass("-", undefined)
+        identity = new Identity("-", undefined)
       } else if (noIdentity) {
         await reportError(isMas, certificateTypes, qualifier, keychainFile, this.packager.forceCodeSigning)
         return null
@@ -71,33 +62,16 @@ export class MacTargetHelper {
   async buildSignOptions(
     appPath: string,
     identity: Identity,
-    type: SigningDistributionType,
-    isMas: boolean,
-    config: MacConfiguration | MasConfiguration,
+    config: ElectronSignOptions | null | undefined,
     keychainFile: string | Nullish,
-    arch: Arch
+    arch: Arch,
+    targetPlatform: PlatformType
   ): Promise<SignOptions> {
-    let filter = config.signIgnore
-    if (Array.isArray(filter)) {
-      if (filter.length == 0) {
-        filter = null
-      }
-    } else if (filter != null) {
-      filter = filter.length === 0 ? null : [filter]
-    }
+    const isMas = MacTargetHelper.isMasTarget(targetPlatform)
+    // `type` is derived from the build flavor, never from user config: mas-dev → development, otherwise distribution.
+    const type: SigningDistributionType = MacTargetHelper.isMasDevelopment(targetPlatform) ? "development" : "distribution"
 
-    const filterRe =
-      filter == null
-        ? null
-        : filter.map(it => {
-            try {
-              return new RegExp(it)
-            } catch (e: any) {
-              throw new InvalidConfigurationError(`Invalid regex filter pattern: ${it}. ${e.message}`)
-            }
-          })
-
-    let binaries = config.binaries || undefined
+    let binaries = config?.binaries || undefined
     if (binaries) {
       // Accept absolute paths for external binaries, else resolve relative paths from the artifact's app Contents path.
       binaries = (
@@ -118,6 +92,26 @@ export class MacTargetHelper {
       log.info({ binaries, arch: arch == null ? null : Arch[arch] }, "signing additional user-defined binaries for arch")
     }
 
+    let filter = config?.ignore
+    if (Array.isArray(filter)) {
+      if (filter.length == 0) {
+        filter = undefined
+      }
+    } else if (typeof filter === "string") {
+      filter = filter.length === 0 ? undefined : [filter]
+    }
+
+    const filterRe =
+      typeof filter === "function"
+        ? null
+        : filter?.map(it => {
+            try {
+              return new RegExp(it)
+            } catch (e: any) {
+              throw new InvalidConfigurationError(`Invalid regex filter pattern: ${it}. ${e.message}`)
+            }
+          })
+
     return {
       identityValidation: false,
       // https://github.com/electron-userland/electron-builder/issues/1699
@@ -129,6 +123,9 @@ export class MacTargetHelper {
               return true
             }
           }
+        }
+        if (typeof filter === "function" && filter(file)) {
+          return true
         }
         return (
           file.endsWith(".kext") ||
@@ -151,16 +148,24 @@ export class MacTargetHelper {
       keychain: keychainFile || undefined,
       binaries,
       // https://github.com/electron-userland/electron-builder/issues/1480
-      strictVerify: config.strictVerify,
-      preAutoEntitlements: config.preAutoEntitlements,
-      optionsForFile: await this.getOptionsForFile(appPath, isMas, config),
-      provisioningProfile: config.provisioningProfile || undefined,
+      strictVerify: config?.strictVerify,
+      preAutoEntitlements: config?.preAutoEntitlements,
+      optionsForFile: await this.getOptionsForFile(appPath, targetPlatform, config),
+      provisioningProfile: config?.provisioningProfile || undefined,
     }
   }
 
-  async createMasInstaller(appPath: string, outDir: string, masOptions: MasConfiguration, keychainFile: string | Nullish, isDevelopment: boolean, arch: Arch): Promise<void> {
-    const certType = isDevelopment ? "Mac Developer" : "3rd Party Mac Developer Installer"
-    const masInstallerIdentity = await findIdentity(certType, masOptions.identity, keychainFile)
+  async createMasInstaller(
+    appPath: string,
+    outDir: string,
+    masOptions: MasConfiguration,
+    keychainFile: string | Nullish,
+    targetPlatform: PlatformType,
+    arch: Arch,
+    identityQualifier?: string | null
+  ): Promise<void> {
+    const certType = MacTargetHelper.isMasDevelopment(targetPlatform) ? "Mac Developer" : "3rd Party Mac Developer Installer"
+    const masInstallerIdentity = await findIdentity(certType, identityQualifier, keychainFile)
 
     if (masInstallerIdentity == null) {
       throw new InvalidConfigurationError(`Cannot find valid "${certType}" identity to sign MAS installer, please see https://electron.build/code-signing`)
@@ -183,13 +188,14 @@ export class MacTargetHelper {
     })
   }
 
-  async getOptionsForFile(appPath: string, isMas: boolean, customSignOptions: MacConfiguration | MasConfiguration): Promise<(filePath: string) => PerFileSignOptions> {
+  async getOptionsForFile(appPath: string, targetPlatform: PlatformType, customSignOptions: ElectronSignOptions | Nullish): Promise<(filePath: string) => PerFileSignOptions> {
+    const isMas = MacTargetHelper.isMasTarget(targetPlatform)
     const resourceList = await this.packager.resourceList
     const entitlementsSuffix = isMas ? "mas" : "mac"
 
     const getEntitlements = (filePath: string) => {
       if (filePath === appPath) {
-        if (customSignOptions.entitlements) {
+        if (customSignOptions?.entitlements) {
           return customSignOptions.entitlements
         }
         const p = `entitlements.${entitlementsSuffix}.plist`
@@ -201,10 +207,10 @@ export class MacTargetHelper {
       }
 
       if (filePath.includes("Library/LoginItems")) {
-        return customSignOptions.entitlementsLoginHelper
+        return customSignOptions?.entitlementsLoginHelper
       }
 
-      if (customSignOptions.entitlementsInherit) {
+      if (customSignOptions?.entitlementsInherit) {
         return customSignOptions.entitlementsInherit
       }
       const p = `entitlements.${entitlementsSuffix}.inherit.plist`
@@ -215,40 +221,46 @@ export class MacTargetHelper {
       }
     }
 
-    const requirements = isMas || this.packager.platformOptions.requirements == null ? undefined : await this.packager.getResource(this.packager.platformOptions.requirements)
-
-    // harden by default for mac builds. Only harden mas builds if explicitly true (backward compatibility)
-    const hardenedRuntime = isMas ? customSignOptions.hardenedRuntime === true : customSignOptions.hardenedRuntime !== false
+    const requirements = isMas || customSignOptions?.requirements == null ? undefined : await this.packager.getResource(customSignOptions.requirements)
 
     return (filePath: string): PerFileSignOptions => {
       const entitlements = getEntitlements(filePath)
       return {
         entitlements: entitlements || undefined,
-        hardenedRuntime: hardenedRuntime ?? undefined,
-        timestamp: customSignOptions.timestamp || undefined,
+        hardenedRuntime: MacTargetHelper.isHardenedRuntimeEnabledForSigning(targetPlatform, customSignOptions?.hardenedRuntime) ?? undefined,
+        timestamp: customSignOptions?.timestamp || undefined,
         requirements: requirements || undefined,
-        additionalArguments: customSignOptions.additionalArguments || [],
+        additionalArguments: customSignOptions?.additionalArguments || undefined,
       }
     }
   }
 
-  static getCertificateTypes(isMas: boolean, isDevelopment: boolean): CertType[] {
-    if (isDevelopment) {
-      return isMas ? ["Mac Developer", "Apple Development"] : ["Mac Developer", "Developer ID Application"]
+  static getCertificateTypes(targetPlatform: PlatformType): CertType[] {
+    switch (targetPlatform) {
+      case "mas-dev":
+        return ["Mac Developer", "Apple Development"]
+      case "mas":
+        return ["Apple Distribution", "3rd Party Mac Developer Application"]
+      default:
+        return ["Developer ID Application"]
     }
-    return isMas ? ["Apple Distribution", "3rd Party Mac Developer Application"] : ["Developer ID Application"]
   }
 
   static isMasTarget(targetName: string): boolean {
     return targetName === "mas" || targetName === "mas-dev"
   }
 
+  static isMasDevelopment(targetName: string): boolean {
+    return targetName === "mas-dev"
+  }
+
   static getPlatformTypeFromTarget(targetName: string): PlatformType {
-    if (targetName === "mas") {
-      return "mas"
-    }
-    if (targetName === "mas-dev") {
+    // must check for mas-dev first
+    if (MacTargetHelper.isMasDevelopment(targetName)) {
       return "mas-dev"
+    }
+    if (MacTargetHelper.isMasTarget(targetName)) {
+      return "mas"
     }
     return "mac"
   }
@@ -257,8 +269,8 @@ export class MacTargetHelper {
    * Returns true when hardened runtime will be active for signing.
    * For non-MAS builds it defaults to on; for MAS it defaults to off.
    */
-  static isHardenedRuntimeEnabledForSigning(isMas: boolean, config: Pick<MacConfiguration | MasConfiguration, "hardenedRuntime">): boolean {
-    return isMas ? config.hardenedRuntime === true : config.hardenedRuntime !== false
+  static isHardenedRuntimeEnabledForSigning(targetPlatform: PlatformType, hardenedRuntime: boolean | null | undefined): boolean {
+    return MacTargetHelper.isMasTarget(targetPlatform) ? hardenedRuntime === true : hardenedRuntime !== false
   }
 
   static assertSafePathForCommandUsage(pathValue: string, description: string): void {
@@ -267,8 +279,7 @@ export class MacTargetHelper {
     }
   }
 
-  static getNotarizeOptions(appPath: string): NotarizeOptionsNotaryTool | undefined {
-    const tool = "notarytool"
+  static getNotarizeOptions(appPath: string): NotarizeOptions | undefined {
     const teamId = process.env.APPLE_TEAM_ID
     const appleId = process.env.APPLE_ID
     const appleIdPassword = process.env.APPLE_APP_SPECIFIC_PASSWORD
@@ -283,7 +294,7 @@ export class MacTargetHelper {
       if (!teamId) {
         throw new InvalidConfigurationError(`APPLE_TEAM_ID env var needs to be set`)
       }
-      return { tool, appPath, appleId, appleIdPassword, teamId }
+      return { appPath, appleId, appleIdPassword, teamId }
     }
 
     const appleApiKey = process.env.APPLE_API_KEY
@@ -293,7 +304,7 @@ export class MacTargetHelper {
       if (!appleApiKey || !appleApiKeyId || !appleApiIssuer) {
         throw new InvalidConfigurationError(`Env vars APPLE_API_KEY, APPLE_API_KEY_ID and APPLE_API_ISSUER need to be set`)
       }
-      return { tool, appPath, appleApiKey, appleApiKeyId, appleApiIssuer }
+      return { appPath, appleApiKey, appleApiKeyId, appleApiIssuer }
     }
 
     const keychain = process.env.APPLE_KEYCHAIN
@@ -303,7 +314,7 @@ export class MacTargetHelper {
       if (keychain) {
         args = { ...args, keychain }
       }
-      return { tool, appPath, ...args }
+      return { appPath, ...args }
     }
 
     return undefined
@@ -320,7 +331,6 @@ export class MacTargetHelper {
       log.warn({ reason: "`notarize` options were unable to be generated" }, "skipped macOS notarization")
       return
     }
-    const { notarize } = await dynamicImport<typeof import("@electron/notarize")>("@electron/notarize")
     await notarize(options)
     log.info(null, "notarization successful")
   }

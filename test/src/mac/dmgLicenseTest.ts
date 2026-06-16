@@ -1,6 +1,5 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest"
+import { beforeEach, describe, expect, test } from "vitest"
 import * as fs from "fs/promises"
-import * as os from "os"
 import * as path from "path"
 import { statSync } from "fs"
 
@@ -51,15 +50,11 @@ async function writeJson(dir: string, name: string, obj: object) {
 
 // ─── Suite ──────────────────────────────────────────────────────────────────
 
-describe("addLicenseToDmg", () => {
+describe("addLicenseToDmg", { sequential: true }, () => {
   let tmpDir: string
 
-  beforeEach(async () => {
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "dmg-license-test-"))
-  })
-
-  afterEach(async () => {
-    await fs.rm(tmpDir, { recursive: true, force: true })
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir()
   })
 
   test("returns null when no license files are present", async () => {

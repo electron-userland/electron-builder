@@ -1,7 +1,7 @@
 import { exists, log } from "builder-util"
 import fs from "fs-extra"
 import * as path from "path"
-import * as which from "which"
+import which from "which"
 
 export enum PM {
   PNPM = "pnpm",

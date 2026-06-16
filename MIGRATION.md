@@ -17,7 +17,7 @@ electron-builder migrate-schema           # apply changes
 electron-builder migrate-schema --dry-run # preview only
 ```
 
-It handles **every config-level breaking change** automatically: `electronCompile`, `framework`/`nodeVersion`/`launchUiVersion`, the `nativeModules` grouping, legacy `asar` keys, `appImage.systemIntegration`, `vPrefixedTagName`, `win.azureSignOptions` extras, `snap` → `snapcraft`, `helper-bundle-id`, `squirrelWindows.noMsi`, and root-level `directories`. Programmatic configs (`.js`/`.ts`/`.cjs`/`.mjs`) and TOML are detected and printed as manual steps instead.
+It handles **every config-level breaking change** automatically: `electronCompile`, `framework`/`nodeVersion`/`launchUiVersion`, the `nativeModules` grouping, ASAR consolidation (`asarUnpack` → `asar.unpack`, `disableSanityCheckAsar` → `asar.disableSanityCheck`, `disableAsarIntegrity` → `asar.disableIntegrity`, legacy `asar-unpack`/`asar.unpackDir` keys), macOS signing consolidation (`mac.identity`/`entitlements`/`hardenedRuntime`/etc. → `mac.sign.*`, `signIgnore` → `sign.ignore`), `mac.universal` consolidation (`mergeASARs`/`singleArchFiles`/`x64ArchFiles` → `mac.universal.*`), `electronDownload` → `electronGet`, `appImage.systemIntegration`, `vPrefixedTagName`, `win.azureSignOptions` extras, `snap` → `snapcraft`, `helper-bundle-id`, `squirrelWindows.noMsi`, and root-level `directories`. Programmatic configs (`.js`/`.ts`/`.cjs`/`.mjs`) and TOML are detected and printed as manual steps instead.
 
 ### Breaking changes at a glance
 
@@ -28,7 +28,10 @@ It handles **every config-level breaking change** automatically: `electronCompil
 | `electronCompile` removed | ✓ | Remove from config; migrate to a modern bundler |
 | `framework`, `nodeVersion`, `launchUiVersion` removed | ✓ | Removed automatically (Electron is the only framework) |
 | Native-module options grouped under `nativeModules` | ✓ | `nativeRebuilder` → `rebuildMode`; `npmSkipBuildFromSource` → `buildDependenciesFromSource` |
-| Legacy `asar-unpack` / `asar.unpack*` keys removed | ✓ | Replaced by `asarUnpack` |
+| Legacy `asar-unpack` / `asar.unpack*` keys consolidated | ✓ | All ASAR config moved under `asar` object: `asar.unpack`, `asar.disableSanityCheck`, `asar.disableIntegrity` |
+| macOS signing fields consolidated under `mac.sign` | ✓ | `identity`, `entitlements`, `hardenedRuntime`, `type`, etc. → `mac.sign.*`; `signIgnore` → `sign.ignore` (also `mas`/`masDev`) |
+| `mac.universal` consolidation | ✓ | `mergeASARs`, `singleArchFiles`, `x64ArchFiles` → `mac.universal.*` |
+| `electronDownload` → `electronGet` | ✓ | Renamed; `mirror` → `mirrorOptions.mirror`, `isVerifyChecksum` → `unsafelyDisableChecksums` |
 | `appImage.systemIntegration` removed | ✓ | Removed automatically |
 | `GithubOptions.vPrefixedTagName` removed | ✓ | Replaced by `tagNamePrefix` |
 | `win.azureSignOptions` index-signature keys | ✓ | Moved into `additionalMetadata` |

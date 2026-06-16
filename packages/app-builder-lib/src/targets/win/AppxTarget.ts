@@ -1,4 +1,4 @@
-import { Arch, asArray, copyOrLinkFile, InvalidConfigurationError, log, walk } from "builder-util"
+import { Arch, asArray, copyOrLinkFile, InvalidConfigurationError, log, sanitizeDirPath, walk } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 
 import * as path from "path"
@@ -182,7 +182,7 @@ export default class AppXTarget extends Target {
 
     for (const defaultAsset of Object.keys(vendorAssetsForDefaultAssets)) {
       if (userAssets.length === 0 || !isDefaultAssetIncluded(userAssets, defaultAsset)) {
-        const file = path.join(vendorPath, "appxAssets", vendorAssetsForDefaultAssets[defaultAsset])
+        const file = sanitizeDirPath(path.join(vendorPath, "appxAssets", vendorAssetsForDefaultAssets[defaultAsset]), vendorPath)
         mappings.push(`"${vm.toVmFile(file)}" "assets\\${defaultAsset}"`)
         allAssets.push(file)
       }
@@ -192,10 +192,10 @@ export default class AppXTarget extends Target {
     return { userAssets, mappings, allAssets }
   }
 
-  // https://github.com/electron-userland/electron-builder/issues/2108#issuecomment-333200711
   private async computePublisherName() {
     const signtoolManager = await this.packager.signingManager.value
-    return signtoolManager.computePublisherName(this, this.options.publisher)
+    // https://github.com/electron-userland/electron-builder/issues/2108#issuecomment-333200711
+    return signtoolManager.computePublisherName(this, this.options.publisher ?? null)
   }
 
   private async writeManifest(outFile: string, arch: Arch, publisher: string, userAssets: Array<string>) {

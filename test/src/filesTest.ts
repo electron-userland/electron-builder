@@ -1,4 +1,4 @@
-import { TmpDir, archFromString, copyDir } from "builder-util"
+import { archFromString, copyDir } from "builder-util"
 import { DIR_TARGET, Platform } from "electron-builder"
 import fsExtra from "fs-extra"
 import * as fs from "fs/promises"
@@ -54,7 +54,6 @@ test.ifNotWindows("files.from asar", ({ expect }) =>
     {
       targets: linuxDirTarget,
       config: {
-        asar: true,
         files: [
           {
             from: ".",
@@ -178,7 +177,6 @@ test.ifNotWindows("extraResources - two-package", ({ expect }) => {
       // to check NuGet package
       targets: platform.createTarget(DIR_TARGET),
       config: {
-        asar: true,
         extraResources: ["foo", "bar/hello.txt", "bar/${arch}.txt", "${os}/${arch}.txt", "executable*"],
         [osName]: {
           extraResources: ["platformSpecificR"],
@@ -232,8 +230,7 @@ test.ifNotWindows("extraResources - two-package", ({ expect }) => {
 
 // https://github.com/electron-userland/electron-builder/pull/998
 // copyDir walks to a symlink referencing a file that has not yet been copied by postponing the linking step until after the full walk is complete
-test.ifNotWindows("postpone symlink", async () => {
-  const tmpDir = new TmpDir("files-test")
+test.ifNotWindows("postpone symlink", async ({ tmpDir }) => {
   const source = await tmpDir.getTempDir()
   const aSourceFile = path.join(source, "z", "Z")
   const bSourceFileLink = path.join(source, "B")
@@ -242,8 +239,6 @@ test.ifNotWindows("postpone symlink", async () => {
 
   const dest = await tmpDir.getTempDir()
   await copyDir(source, dest)
-
-  await tmpDir.cleanup()
 })
 
 async function allCan(file: string, execute: boolean) {

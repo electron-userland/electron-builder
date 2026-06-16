@@ -7,7 +7,7 @@ describe("migrateConfig — no-op cases", () => {
       appId: "com.example.app",
       productName: "My App",
       nativeModules: { npmRebuild: true, rebuildMode: "sequential" },
-      asarUnpack: ["**/*.node"],
+      asar: { unpack: ["**/*.node"] },
     }
     const result = migrateConfig(input)
     expect(result.modified).toBe(false)
@@ -114,44 +114,48 @@ describe("migrateConfig — nativeModules grouping", () => {
 })
 
 describe("migrateConfig — asar legacy keys", () => {
-  test("renames asar-unpack → asarUnpack", () => {
+  test("renames asar-unpack → asar.unpack", () => {
     const result = migrateConfig({ "asar-unpack": "**/*.node" })
     expect("asar-unpack" in result.migrated).toBe(false)
-    expect(result.migrated.asarUnpack).toBe("**/*.node")
+    expect("asarUnpack" in result.migrated).toBe(false)
+    expect(result.migrated.asar?.unpack).toBe("**/*.node")
   })
 
-  test("renames asar-unpack-dir → asarUnpack", () => {
+  test("renames asar-unpack-dir → asar.unpack", () => {
     const result = migrateConfig({ "asar-unpack-dir": "resources/**" })
     expect("asar-unpack-dir" in result.migrated).toBe(false)
-    expect(result.migrated.asarUnpack).toBe("resources/**")
+    expect("asarUnpack" in result.migrated).toBe(false)
+    expect(result.migrated.asar?.unpack).toBe("resources/**")
   })
 
-  test("merges asar-unpack and asar-unpack-dir into array", () => {
+  test("merges asar-unpack and asar-unpack-dir into asar.unpack array", () => {
     const result = migrateConfig({ "asar-unpack": "**/*.node", "asar-unpack-dir": "resources/**" })
-    expect(result.migrated.asarUnpack).toEqual(["**/*.node", "resources/**"])
+    expect("asarUnpack" in result.migrated).toBe(false)
+    expect(result.migrated.asar?.unpack).toEqual(["**/*.node", "resources/**"])
   })
 
-  test("moves asar.unpack → asarUnpack and removes empty asar", () => {
+  test("moves legacy asar.unpack to asar.unpack (round-trip idempotent)", () => {
     const result = migrateConfig({ asar: { unpack: "**/*.node" } })
-    expect(result.migrated.asarUnpack).toBe("**/*.node")
-    expect("asar" in result.migrated).toBe(false)
+    expect("asarUnpack" in result.migrated).toBe(false)
+    expect(result.migrated.asar?.unpack).toBe("**/*.node")
   })
 
-  test("moves asar.unpackDir → asarUnpack", () => {
+  test("moves asar.unpackDir → asar.unpack", () => {
     const result = migrateConfig({ asar: { unpackDir: "resources/**" } })
-    expect(result.migrated.asarUnpack).toBe("resources/**")
-    expect("asar" in result.migrated).toBe(false)
+    expect("asarUnpack" in result.migrated).toBe(false)
+    expect(result.migrated.asar?.unpack).toBe("resources/**")
   })
 
-  test("preserves other asar fields when removing unpack", () => {
+  test("preserves other asar fields when moving unpack", () => {
     const result = migrateConfig({ asar: { unpack: "**/*.node", smartUnpack: true } })
-    expect(result.migrated.asarUnpack).toBe("**/*.node")
-    expect(result.migrated.asar).toEqual({ smartUnpack: true })
+    expect("asarUnpack" in result.migrated).toBe(false)
+    expect(result.migrated.asar).toEqual({ smartUnpack: true, unpack: "**/*.node" })
   })
 
-  test("merges with existing asarUnpack array", () => {
+  test("merges legacy asar-unpack with existing asarUnpack into asar.unpack", () => {
     const result = migrateConfig({ "asar-unpack": "**/*.node", asarUnpack: ["existing/**"] })
-    expect(result.migrated.asarUnpack).toEqual(["existing/**", "**/*.node"])
+    expect("asarUnpack" in result.migrated).toBe(false)
+    expect(result.migrated.asar?.unpack).toEqual(["existing/**", "**/*.node"])
   })
 })
 
@@ -296,8 +300,31 @@ describe("migrateConfig — GitHub vPrefixedTagName", () => {
   })
 })
 
-describe("migrateConfig — win.azureSignOptions additionalMetadata", () => {
-  test("moves extra index-signature keys into additionalMetadata", () => {
+describe("migrateConfig — win.sign unification", () => {
+  test("moves win.azureSignOptions into win.sign: { type: 'azure' }", () => {
+    const result = migrateConfig({
+      win: {
+        azureSignOptions: {
+          endpoint: "https://weu.codesigning.azure.net/",
+          codeSigningAccountName: "my-account",
+          certificateProfileName: "my-profile",
+          publisherName: "CN=My Company",
+        },
+      },
+    })
+    expect(result.migrated.win.azureSignOptions).toBeUndefined()
+    expect(result.migrated.win.sign).toEqual({
+      type: "azure",
+      endpoint: "https://weu.codesigning.azure.net/",
+      codeSigningAccountName: "my-account",
+      certificateProfileName: "my-profile",
+      publisherName: "CN=My Company",
+    })
+    expect(result.changes.some(c => c.key === "win.azureSignOptions")).toBe(true)
+    expect(result.modified).toBe(true)
+  })
+
+  test("moves extra azure index-signature keys into additionalMetadata", () => {
     const result = migrateConfig({
       win: {
         azureSignOptions: {
@@ -310,31 +337,77 @@ describe("migrateConfig — win.azureSignOptions additionalMetadata", () => {
         },
       },
     })
-    expect(result.migrated.win.azureSignOptions).toEqual({
-      endpoint: "https://weu.codesigning.azure.net/",
-      codeSigningAccountName: "my-account",
-      certificateProfileName: "my-profile",
-      publisherName: "CN=My Company",
+    expect(result.migrated.win.sign).toMatchObject({
+      type: "azure",
       additionalMetadata: {
         ExcludeCredentials: "ManagedIdentityCredential",
         CorrelationId: "my-build-id",
       },
     })
-    expect(result.changes.some(c => c.key === "win.azureSignOptions")).toBe(true)
+    expect("ExcludeCredentials" in result.migrated.win.sign).toBe(false)
   })
 
-  test("no-op when azureSignOptions has only known fields", () => {
+  test("moves win.signtoolOptions into win.sign: { type: 'signtool' }", () => {
     const result = migrateConfig({
       win: {
-        azureSignOptions: {
-          endpoint: "https://weu.codesigning.azure.net/",
-          codeSigningAccountName: "my-account",
-          certificateProfileName: "my-profile",
-          publisherName: "CN=My Company",
+        signtoolOptions: {
+          certificateFile: "C:\\certs\\my.pfx",
+          certificatePassword: "secret",
+          signingHashAlgorithms: ["sha256"],
         },
       },
     })
-    expect(result.changes.some(c => c.key === "win.azureSignOptions")).toBe(false)
+    expect(result.migrated.win.signtoolOptions).toBeUndefined()
+    expect(result.migrated.win.sign).toEqual({
+      type: "signtool",
+      certificateFile: "C:\\certs\\my.pfx",
+      certificatePassword: "secret",
+      signingHashAlgorithms: ["sha256"],
+    })
+    expect(result.changes.some(c => c.key === "win.signtoolOptions")).toBe(true)
+    expect(result.modified).toBe(true)
+  })
+
+  test("replaces win.signExecutable: false with win.sign: false", () => {
+    const result = migrateConfig({ win: { signExecutable: false } })
+    expect(result.migrated.win.signExecutable).toBeUndefined()
+    expect(result.migrated.win.sign).toBe(false)
+    expect(result.changes.some(c => c.key === "win.signExecutable")).toBe(true)
+  })
+
+  test("removes win.signExecutable: true (no-op value)", () => {
+    const result = migrateConfig({ win: { signExecutable: true } })
+    expect(result.migrated.win.signExecutable).toBeUndefined()
+    expect("sign" in result.migrated.win).toBe(false)
+    expect(result.changes.some(c => c.key === "win.signExecutable")).toBe(true)
+  })
+
+  test("removes win.signAndEditExecutable: true (no-op value)", () => {
+    const result = migrateConfig({ win: { signAndEditExecutable: true } })
+    expect(result.migrated.win.signAndEditExecutable).toBeUndefined()
+    expect(result.changes.some(c => c.key === "win.signAndEditExecutable")).toBe(true)
+  })
+
+  test("warns when win.signAndEditExecutable is false (no equivalent in v27)", () => {
+    const result = migrateConfig({ win: { signAndEditExecutable: false } })
+    expect(result.migrated.win.signAndEditExecutable).toBeUndefined()
+    expect(result.warnings.some(w => w.includes("signAndEditExecutable"))).toBe(true)
+  })
+
+  test("warns when both azureSignOptions and signtoolOptions are present", () => {
+    const result = migrateConfig({
+      win: {
+        azureSignOptions: { endpoint: "https://weu.codesigning.azure.net/", codeSigningAccountName: "a", certificateProfileName: "p", publisherName: "CN=Me" },
+        signtoolOptions: { certificateFile: "my.pfx" },
+      },
+    })
+    expect(result.warnings.some(w => w.includes("signtoolOptions"))).toBe(true)
+    expect(result.migrated.win.sign?.type).toBe("azure")
+    expect(result.migrated.win.signtoolOptions).toBeUndefined()
+  })
+
+  test("no-op when win.sign is already set and azureSignOptions is absent", () => {
+    const result = migrateConfig({ win: { sign: { type: "azure", endpoint: "https://e", codeSigningAccountName: "a", certificateProfileName: "p", publisherName: "CN=Me" } } })
     expect(result.modified).toBe(false)
   })
 })
@@ -365,10 +438,149 @@ describe("migrateConfig — full migration (multiple changes at once)", () => {
       npmRebuild: true,
       rebuildMode: "sequential",
     })
-    expect(result.migrated.asarUnpack).toEqual(["**/*.node", "resources/**"])
+    expect("asarUnpack" in result.migrated).toBe(false)
+    expect(result.migrated.asar?.unpack).toEqual(["**/*.node", "resources/**"])
     expect("appImage" in result.migrated).toBe(false)
     expect(result.migrated.publish).toEqual({ provider: "github", tagNamePrefix: "" })
     expect(result.modified).toBe(true)
+  })
+})
+
+describe("migrateConfig — asar consolidation", () => {
+  test("moves root-level asarUnpack → asar.unpack", () => {
+    const result = migrateConfig({ asarUnpack: "**/*.node" })
+    expect("asarUnpack" in result.migrated).toBe(false)
+    expect(result.migrated.asar).toEqual({ unpack: "**/*.node" })
+    expect(result.changes.some(c => c.key === "asarUnpack")).toBe(true)
+  })
+
+  test("merges asarUnpack into existing asar object", () => {
+    const result = migrateConfig({ asar: { smartUnpack: false }, asarUnpack: "**/*.node" })
+    expect("asarUnpack" in result.migrated).toBe(false)
+    expect(result.migrated.asar).toEqual({ smartUnpack: false, unpack: "**/*.node" })
+  })
+
+  test("moves disableSanityCheckAsar → asar.disableSanityCheck", () => {
+    const result = migrateConfig({ disableSanityCheckAsar: true })
+    expect("disableSanityCheckAsar" in result.migrated).toBe(false)
+    expect(result.migrated.asar).toEqual({ disableSanityCheck: true })
+    expect(result.changes.some(c => c.key === "disableSanityCheckAsar")).toBe(true)
+  })
+
+  test("moves disableAsarIntegrity → asar.disableIntegrity", () => {
+    const result = migrateConfig({ disableAsarIntegrity: true })
+    expect("disableAsarIntegrity" in result.migrated).toBe(false)
+    expect(result.migrated.asar).toEqual({ disableIntegrity: true })
+    expect(result.changes.some(c => c.key === "disableAsarIntegrity")).toBe(true)
+  })
+
+  test("replaces asar: true with absent asar key when no sub-fields", () => {
+    const result = migrateConfig({ asar: true })
+    expect("asar" in result.migrated).toBe(false)
+    expect(result.changes.some(c => c.key === "asar")).toBe(true)
+  })
+
+  test("replaces asar: true with asar object when sub-fields are present", () => {
+    const result = migrateConfig({ asar: true, asarUnpack: "**/*.node" })
+    expect("asarUnpack" in result.migrated).toBe(false)
+    expect(result.migrated.asar).toEqual({ unpack: "**/*.node" })
+  })
+
+  test("skips consolidation when asar: false", () => {
+    const result = migrateConfig({ asar: false, asarUnpack: "**/*.node", disableSanityCheckAsar: true })
+    expect(result.migrated.asar).toBe(false)
+    expect("asarUnpack" in result.migrated).toBe(true)
+    expect("disableSanityCheckAsar" in result.migrated).toBe(true)
+  })
+
+  test("consolidates all three properties together", () => {
+    const result = migrateConfig({
+      asar: { ordering: "order.txt" },
+      asarUnpack: "**/*.node",
+      disableSanityCheckAsar: true,
+      disableAsarIntegrity: true,
+    })
+    expect("asarUnpack" in result.migrated).toBe(false)
+    expect("disableSanityCheckAsar" in result.migrated).toBe(false)
+    expect("disableAsarIntegrity" in result.migrated).toBe(false)
+    expect(result.migrated.asar).toEqual({
+      ordering: "order.txt",
+      unpack: "**/*.node",
+      disableSanityCheck: true,
+      disableIntegrity: true,
+    })
+  })
+})
+
+describe("migrateConfig — mac signing consolidation", () => {
+  test("moves identity and signing fields into mac.sign", () => {
+    const result = migrateConfig({ mac: { identity: "Developer ID Application: X", hardenedRuntime: true, entitlements: "build/e.plist" } })
+    expect("identity" in result.migrated.mac).toBe(false)
+    expect("hardenedRuntime" in result.migrated.mac).toBe(false)
+    expect(result.migrated.mac.sign).toEqual({ identity: "Developer ID Application: X", hardenedRuntime: true, entitlements: "build/e.plist" })
+    expect(result.changes.some(c => c.key === "mac.identity")).toBe(true)
+  })
+
+  test("renames signIgnore → sign.ignore", () => {
+    const result = migrateConfig({ mac: { signIgnore: ["foo", "bar"] } })
+    expect("signIgnore" in result.migrated.mac).toBe(false)
+    expect(result.migrated.mac.sign).toEqual({ ignore: ["foo", "bar"] })
+  })
+
+  test("preserves mac.identity: null as sign.identity: null (skip signing)", () => {
+    const result = migrateConfig({ mac: { identity: null } })
+    expect(result.migrated.mac.sign).toEqual({ identity: null })
+  })
+
+  test("applies to mas and masDev too", () => {
+    const result = migrateConfig({ mas: { entitlements: "mas.plist" }, masDev: { hardenedRuntime: false } })
+    expect(result.migrated.mas.sign).toEqual({ entitlements: "mas.plist" })
+    expect(result.migrated.masDev.sign).toEqual({ hardenedRuntime: false })
+  })
+
+  test("warns and does not clobber a custom-signer string sign", () => {
+    const result = migrateConfig({ mac: { sign: "./customSign.js", identity: "X" } })
+    expect(result.migrated.mac.sign).toBe("./customSign.js")
+    expect("identity" in result.migrated.mac).toBe(true) // left for manual resolution
+    expect(result.warnings.some(w => w.includes("custom signing"))).toBe(true)
+  })
+
+  test("drops a bare sign: null so it does not flip to skip-signing", () => {
+    const result = migrateConfig({ mac: { sign: null, target: "dmg" } })
+    expect("sign" in result.migrated.mac).toBe(false)
+    expect(result.changes.some(c => c.key === "mac.sign")).toBe(true)
+  })
+
+  test("does not touch a config that already uses sign object", () => {
+    const result = migrateConfig({ mac: { sign: { identity: "X", hardenedRuntime: true } } })
+    expect(result.migrated.mac.sign).toEqual({ identity: "X", hardenedRuntime: true })
+    expect(result.changes.filter(c => c.key.startsWith("mac.")).length).toBe(0)
+  })
+})
+
+describe("migrateConfig — mac universal consolidation", () => {
+  test("moves mergeASARs / singleArchFiles / x64ArchFiles into mac.universal", () => {
+    const result = migrateConfig({ mac: { mergeASARs: true, singleArchFiles: "*.node", x64ArchFiles: "bin/*" } })
+    expect("mergeASARs" in result.migrated.mac).toBe(false)
+    expect(result.migrated.mac.universal).toEqual({ mergeASARs: true, singleArchFiles: "*.node", x64ArchFiles: "bin/*" })
+  })
+})
+
+describe("migrateConfig — electronDownload → electronGet", () => {
+  test("renames and maps mirror → mirrorOptions.mirror", () => {
+    const result = migrateConfig({ electronDownload: { mirror: "https://m.example/" } })
+    expect("electronDownload" in result.migrated).toBe(false)
+    expect(result.migrated.electronGet).toEqual({ mirrorOptions: { mirror: "https://m.example/" } })
+  })
+
+  test("maps isVerifyChecksum: false → unsafelyDisableChecksums: true", () => {
+    const result = migrateConfig({ electronDownload: { isVerifyChecksum: false } })
+    expect(result.migrated.electronGet).toEqual({ unsafelyDisableChecksums: true })
+  })
+
+  test("warns about dropped fields with no v5 equivalent", () => {
+    const result = migrateConfig({ electronDownload: { cache: "/c", customDir: "v1", strictSSL: false } })
+    expect(result.warnings.some(w => w.includes("cache") && w.includes("customDir"))).toBe(true)
   })
 })
 

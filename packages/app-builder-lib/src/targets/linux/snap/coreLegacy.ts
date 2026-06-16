@@ -10,9 +10,13 @@ import { downloadBuilderToolset } from "../../../util/electronGet.js"
 import { isSnapDestructiveMode } from "../../../util/flags.js"
 import { getTemplatePath } from "../../../util/pathManager.js"
 import { SnapCore } from "./SnapTarget.js"
+import { shellQuote } from "./snapCommand.js"
 import { SnapcraftYAML } from "./snapcraft.js"
 import { DEFAULT_STAGE_PACKAGES } from "./snapcraftBuilder.js"
 const { outputFile, readFile } = _fsExtra
+
+// Re-exported for backwards compatibility with existing imports/tests.
+export { shellQuote }
 
 // Snap template release info from electron-userland/electron-builder-binaries
 const SNAP_TEMPLATES = {
@@ -432,11 +436,6 @@ async function readDirPaths(dir: string, filter?: (name: string) => boolean): Pr
     }
   }
   return result
-}
-
-/** Single-quote a shell argument, escaping any embedded single quotes. */
-export function shellQuote(arg: string): string {
-  return "'" + arg.replace(/'/g, "'\\''") + "'"
 }
 
 /**

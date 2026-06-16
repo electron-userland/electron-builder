@@ -8,7 +8,7 @@ const uninstallerPath = path.join(__dirname, "../../../packages/app-builder-lib/
 let templateContent: string
 let findProcessMacro: string
 
-describe("allowOnlyOneInstallerInstance.nsh", () => {
+describe("allowOnlyOneInstallerInstance.nsh", { sequential: true }, () => {
   beforeAll(async () => {
     templateContent = await fs.readFile(templatePath, "utf8")
 
@@ -94,7 +94,7 @@ describe("allowOnlyOneInstallerInstance.nsh", () => {
   })
 })
 
-describe("uninstaller.nsh — atomicRMDir", () => {
+describe("uninstaller.nsh — atomicRMDir", { sequential: true }, () => {
   let uninstallerContent: string
 
   beforeAll(async () => {

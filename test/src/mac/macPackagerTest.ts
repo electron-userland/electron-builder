@@ -21,7 +21,7 @@ describe("macPackager", { sequential: true }, () => {
           mac: {
             electronUpdaterCompatibility: ">=2.16",
             electronLanguages: ["bn", "en"],
-            timestamp: undefined,
+            sign: { timestamp: undefined },
             notarize: false,
           },
           dmg: {
@@ -42,7 +42,7 @@ describe("macPackager", { sequential: true }, () => {
         },
       },
       {
-        signed: true,
+        signedMac: true,
         checkMacApp: async appDir => {
           const resources = await fs.readdir(path.join(appDir, "Contents", "Resources"))
           expect(resources.filter(it => !it.startsWith(".")).sort()).toMatchSnapshot()
@@ -112,7 +112,7 @@ describe("macPackager", { sequential: true }, () => {
         },
       },
       {
-        signed: false,
+        signedMac: false,
         projectDirCreated: projectDir =>
           Promise.all([
             copyOrLinkFile(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "build", "foo.icns")),
@@ -138,7 +138,7 @@ describe("macPackager", { sequential: true }, () => {
         },
       },
       {
-        signed: false,
+        signedMac: false,
         packed: async context => await verifySmartUnpack(expect, context.getResources(Platform.MAC, Arch.universal)),
       }
     )
@@ -155,7 +155,7 @@ describe("macPackager", { sequential: true }, () => {
         },
       },
       {
-        signed: false,
+        signedMac: false,
         projectDirCreated: async projectDir => {
           await fs.writeFile(path.join(projectDir, "extraTestFile.txt"), "test")
           await modifyPackageJson(projectDir, data => {
@@ -206,7 +206,7 @@ describe("macPackager", { sequential: true }, () => {
         },
       },
       {
-        signed: true,
+        signedMac: true,
         projectDirCreated: async projectDir => {
           await fs.mkdir(path.join(projectDir, "build", "subdir"))
           await fs.copyFile(path.join(projectDir, "build", "extraAsar.asar"), path.join(projectDir, "build", "subdir", "extraAsar2.asar"))
@@ -225,11 +225,11 @@ describe("macPackager", { sequential: true }, () => {
         targets: Platform.MAC.createTarget(DIR_TARGET, Arch.x64),
         config: {
           mac: { notarize: false },
-          disableAsarIntegrity: true,
+          asar: { disableIntegrity: true },
         },
       },
       {
-        signed: false,
+        signedMac: false,
         checkMacApp: (_appDir, info) => {
           expect(info.ElectronAsarIntegrity).toBeUndefined()
           return Promise.resolve()
@@ -252,7 +252,7 @@ describe("macPackager", { sequential: true }, () => {
         },
       },
       {
-        signed: false,
+        signedMac: false,
         checkMacApp: async appDir => {
           const plistPath = path.join(appDir, "Contents", "Info.plist")
           const bundleVersion = (await exec("/usr/libexec/PlistBuddy", ["-c", "Print CFBundleVersion", plistPath])).trim()
@@ -279,7 +279,7 @@ describe("macPackager", { sequential: true }, () => {
         },
       },
       {
-        signed: false,
+        signedMac: false,
         checkMacApp: async appDir => {
           const plistPath = path.join(appDir, "Contents", "Info.plist")
           const bundleVersion = (await exec("/usr/libexec/PlistBuddy", ["-c", "Print CFBundleVersion", plistPath])).trim()

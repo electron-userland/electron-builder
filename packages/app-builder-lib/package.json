@@ -1,7 +1,7 @@
 {
   "name": "app-builder-lib",
   "description": "electron-builder lib",
-  "version": "26.15.3",
+  "version": "27.0.0-alpha.3",
   "type": "module",
   "main": "./dist/index.js",
   "exports": {
@@ -60,13 +60,13 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
-    "@electron/asar": "3.4.1",
-    "@electron/fuses": "^1.8.0",
-    "@electron/get": "^3.0.0",
-    "@electron/notarize": "2.5.0",
-    "@electron/osx-sign": "1.3.3",
+    "@electron/asar": "4.1.1",
+    "@electron/fuses": "^2.1.1",
+    "@electron/get": "^5.0.0",
+    "@electron/notarize": "3.1.1",
+    "@electron/osx-sign": "2.4.0",
     "@electron/rebuild": "^4.0.4",
-    "@electron/universal": "2.0.3",
+    "@electron/universal": "3.0.4",
     "@malept/flatpak-bundler": "^0.4.0",
     "@noble/hashes": "^2.2.0",
     "@peculiar/webcrypto": "^1.7.1",
@@ -98,6 +98,7 @@
     "tar": "^7.5.7",
     "temp-file": "^3.4.0",
     "tiny-async-pool": "1.3.0",
+    "undici": "^7.27.1",
     "unzipper": "^0.12.3",
     "which": "^5.0.0"
   },
@@ -118,8 +119,8 @@
     "toml": "^3.0.0"
   },
   "peerDependencies": {
-    "dmg-builder": "*",
-    "electron-builder-squirrel-windows": "*"
+    "dmg-builder": "workspace:*",
+    "electron-builder-squirrel-windows": "workspace:*"
   },
   "//": "electron-builder-squirrel-windows and dmg-builder added as dev dep for tests (as otherwise `require` doesn't work using Yarn 2)",
   "types": "./dist/index.d.ts",

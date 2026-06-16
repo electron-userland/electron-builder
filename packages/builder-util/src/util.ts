@@ -12,7 +12,11 @@ import _fsExtra from "fs-extra"
 const { mkdir } = _fsExtra
 import { isEmptyOrSpaces } from "./stringUtil.js"
 
-if (process.env.JEST_WORKER_ID == null) {
+// Vitest install their own source-map-aware stack-trace handling. Letting
+// source-map-support also override Error.prepareStackTrace clobbers the test runner's
+// remapping and yields wrong file:line frames (it resolves transpiled positions instead of
+// the runner's in-memory source maps). Only install in the shipped runtime, not under tests.
+if (process.env.VITEST == null) {
   installSourceMap()
 }
 

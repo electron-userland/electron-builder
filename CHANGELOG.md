@@ -1,3 +1,57 @@
+# [27.0.0-alpha.3](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.2...electron-builder@27.0.0-alpha.3) (2026-06-16)
+
+
+### Bug Fixes
+
+* **mac:** preserve `.framework` symlinks in both `zip` and `7z` targets via 7za `-snl` ([#9902](https://github.com/electron-userland/electron-builder/issues/9902)) ([a6479f3](https://github.com/electron-userland/electron-builder/commit/a6479f374ecfae5801b343357f286b263133f547))
+* **pnpm-collector:** bundle transitive deps of `link:` packages ([#9875](https://github.com/electron-userland/electron-builder/issues/9875)) ([091ab71](https://github.com/electron-userland/electron-builder/commit/091ab710fc842441e513c7fbb88e6a9c1e77cc77))
+* resolve (8 of 14) open CodeQL code-scanning alerts ([#9900](https://github.com/electron-userland/electron-builder/issues/9900)) ([c976bc4](https://github.com/electron-userland/electron-builder/commit/c976bc42e166d388e5fc38f7bf4dd20c87464de5))
+* resolve ENOENT on electron zip extraction in Windows Docker + harden Azure signing command encoding ([#9891](https://github.com/electron-userland/electron-builder/issues/9891)) ([319535a](https://github.com/electron-userland/electron-builder/commit/319535ada44839149539593f1b1138dc2c5eb2c5))
+* resolve flaky `ENOENT … mkdir '<cache>/fpm@2.2.1/…'` during concurrent toolset downloads ([#9899](https://github.com/electron-userland/electron-builder/issues/9899)) ([ef61dd5](https://github.com/electron-userland/electron-builder/commit/ef61dd5f47ab0b203e76c506394bf4bc1ee9bf00))
+* **snap:** `core24`: launcher-script commands & automatic `chrome-sandbox` cleanup ([#9897](https://github.com/electron-userland/electron-builder/issues/9897)) ([75bb4c6](https://github.com/electron-userland/electron-builder/commit/75bb4c6ee911219900d9a303a11c7f5cb3ad9ed0))
+* Switch type-checking to `nodenext` + fix the ESM/CJS interop bugs it surfaces ([#9885](https://github.com/electron-userland/electron-builder/issues/9885)) ([96e47b5](https://github.com/electron-userland/electron-builder/commit/96e47b5b89b76c719b1c06cfdd62a9a17376484e))
+
+
+### Features
+
+* add updated wine 11.0 to toolsets config ([#9898](https://github.com/electron-userland/electron-builder/issues/9898)) ([b832369](https://github.com/electron-userland/electron-builder/commit/b83236991f50bd40db59ea754e64d86f55a96a92))
+* consolidate macOS build config API and upgrade all `electron/____` dep packages (BREAKING) ([#9889](https://github.com/electron-userland/electron-builder/issues/9889)) ([4d4ba45](https://github.com/electron-userland/electron-builder/commit/4d4ba45d334a0696df92fb71af8a4b168e7d491e))
+* **win:** Multi-mode Windows code signing under a unified `win.sign` key [HSM, PKCS[#11](https://github.com/electron-userland/electron-builder/issues/11), Azure Trusted Signing, Signtool] (BREAKING) ([#9855](https://github.com/electron-userland/electron-builder/issues/9855)) ([a07139b](https://github.com/electron-userland/electron-builder/commit/a07139b09030327aca597673dcbefd95690a5a18))
+
+
+
+# [27.0.0-alpha.2](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.1...electron-builder@27.0.0-alpha.2) (2026-06-11)
+
+
+### Bug Fixes
+
+* resolve runtime ESM/CJS interop for namespace imports of CJS-only packages (`sax`, `which`, `mime`) ([#9884](https://github.com/electron-userland/electron-builder/issues/9884)) ([7674e60](https://github.com/electron-userland/electron-builder/commit/7674e6092645df5c7ae0a31530446efe449cd3d6))
+
+
+
+# [27.0.0-alpha.1](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.0...electron-builder@27.0.0-alpha.1) (2026-06-11)
+
+
+### Bug Fixes
+
+* resolve `plist` and `chromium-pickle-js` import ([#9880](https://github.com/electron-userland/electron-builder/issues/9880)) ([b79c2b2](https://github.com/electron-userland/electron-builder/commit/b79c2b2af3ac65f3d51da7b5045ad803d58565e0))
+
+
+
+# [27.0.0-alpha.0](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.3...electron-builder@27.0.0-alpha.0) (2026-06-11)
+
+
+### Bug Fixes
+
+* disable implicit publishing by default (BREAKING) ([#9476](https://github.com/electron-userland/electron-builder/issues/9476)) ([5c9c503](https://github.com/electron-userland/electron-builder/commit/5c9c503f912e6423a57ab5b89234dff9cf9133ed))
+
+
+### Features
+
+* **cli:** add `migrate-schema` command for v26 → v27 config migration; `PlatformPackager` move to `protected` ([#9873](https://github.com/electron-userland/electron-builder/issues/9873)) ([9d755c6](https://github.com/electron-userland/electron-builder/commit/9d755c68f845d169c9b68963c9711d2e75b4800b))
+
+
+
 ## [26.15.3](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.2...electron-builder@26.15.3) (2026-06-09)
 
 

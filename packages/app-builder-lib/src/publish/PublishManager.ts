@@ -44,7 +44,6 @@ import {
 } from "electron-publish"
 import { MultiProgress } from "electron-publish/internal"
 import { readFile, writeFile } from "fs/promises"
-import { isCI } from "ci-info"
 import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
 import { AppInfo } from "../appInfo.js"
@@ -100,22 +99,6 @@ export class PublishManager implements PublishContext {
 
     const forcePublishForPr = isPublishForPullRequest()
     if (!isPullRequest() || forcePublishForPr) {
-      if (publishOptions.publish === undefined) {
-        if (process.env.npm_lifecycle_event === "release") {
-          log.warn("Implicit publishing triggered by npm lifecycle event 'release'. This behavior will be disabled in electron-builder v27. Please use --publish explicitly.")
-          publishOptions.publish = "always"
-        } else {
-          const tag = getCiTag()
-          if (tag != null) {
-            log.warn({ tag }, "Implicit publishing triggered by git tag. This behavior will be disabled in electron-builder v27. Please use --publish explicitly.")
-            publishOptions.publish = "onTag"
-          } else if (isCI) {
-            log.warn("Implicit publishing triggered by CI detection. This behavior will be disabled in electron-builder v27. Please use --publish explicitly.")
-            publishOptions.publish = "onTagOrDraft"
-          }
-        }
-      }
-
       const publishPolicy = publishOptions.publish
       this.isPublish = publishPolicy != null && publishOptions.publish !== "never" && (publishPolicy !== "onTag" || getCiTag() != null)
       if (this.isPublish && forcePublishForPr) {

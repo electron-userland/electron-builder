@@ -39,9 +39,11 @@ test.ifLinux("cli", ({ expect }) => {
   expect(parse("--prepackaged someDir -w --x64")).toMatchSnapshot()
   expect(parse("--project someDir -w --x64")).toMatchSnapshot()
 
-  expect(parse("-c.compress=store -c.asar -c ./config.json")).toMatchObject({
+  expect(parse("-c.compress=store -c.asar.unpack -c ./config.json")).toMatchObject({
     config: {
-      asar: true,
+      asar: {
+        unpack: true,
+      },
       compress: "store",
       extends: "./config.json",
     },
@@ -355,7 +357,7 @@ test.ifNotWindows("win smart unpack", ({ expect }) => {
           }
         },
         win: {
-          signAndEditExecutable: false, // setting `true` will fail on arm64 macs, even within docker container since rcedit doesn't work within wine on arm64
+          sign: false,
         },
       },
     },

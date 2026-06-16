@@ -311,12 +311,6 @@ describe("getFileMatchers – string patterns in config.files", () => {
     expect(result![0].patterns).toContain("extra/**")
   })
 
-  test("asarUnpack with object pattern throws", ({ expect }) => {
-    expect(() => getFileMatchers({ asarUnpack: [{ from: ".", filter: ["*.node"] }] } as any, "asarUnpack", "/out", opts)).toThrow(
-      'Advanced file copying not supported for "asarUnpack"'
-    )
-  })
-
   test("extraDistFiles skips config[name] and only reads customBuildOptions", ({ expect }) => {
     const customOpts = { ...opts, customBuildOptions: { extraDistFiles: ["installer.nsis"] } as any }
     // config.extraDistFiles is ignored for extraDistFiles

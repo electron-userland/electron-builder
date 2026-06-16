@@ -20,4 +20,6 @@ patchedDependencies:
 overrides:
   flatted: '>=3.4.2'
   handlebars: '>=4.7.9'
+  # --- Dependabot transitive-dependency security overrides ---
+  shell-quote: '>=1.8.4 <2' # GHSA-w7jw-789q-3m8p (critical)
 packageImportMethod: copy

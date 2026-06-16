@@ -22,7 +22,6 @@ import { Lazy } from "lazy-val"
 import { Minimatch } from "minimatch"
 import * as path from "path"
 import * as fs from "fs/promises"
-import * as os from "os"
 import type { TmpDir } from "temp-file"
 import type { Metadata } from "./options/metadata.js"
 import type { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi.js"
@@ -30,7 +29,7 @@ import { AppInfo } from "./appInfo.js"
 import { checkFileInArchive } from "./asar/asarFileChecker.js"
 import { AsarPackager } from "./asar/asarUtil.js"
 import { AsarIntegrity, computeData } from "./asar/integrity.js"
-import { FuseOptionsV1 } from "./configuration.js"
+import { FuseOptionsV1 } from "./options/FuseOptionsV1.js"
 import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers, getNodeModuleFileMatcher } from "./fileMatcher.js"
 import { createTransformer } from "./fileTransformer.js"
 import { Framework, isElectronBased } from "./Framework.js"
@@ -51,6 +50,7 @@ import type {
   Target,
   TargetSpecificOptions,
 } from "./index.js"
+import type { PlatformType } from "./targets/mac/MacTargetHelper.js"
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, transformFiles } from "./util/appFileCopier.js"
 import { convertIcon, IconFormat, IconInfo } from "./util/iconConverter.js"
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
@@ -60,6 +60,8 @@ export type DoPackOptions<DC extends PlatformSpecificBuildOptions> = {
   outDir: string
   appOutDir: string
   platformName: ElectronPlatformName
+  // macOS-only: authoritative 3-way build flavor; `platformName` collapses mas/mas-dev to "mas".
+  platformType?: PlatformType
   arch: Arch
   platformSpecificBuildOptions: DC
   targets: Array<Target>
@@ -316,7 +318,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     // Due to node-gyp rewriting GYP_MSVS_VERSION when reused across the same session, we must reset the env var: https://github.com/electron-userland/electron-builder/issues/7256
     delete process.env.GYP_MSVS_VERSION
 
-    const { outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets, options } = packOptions
+    const { outDir, appOutDir, platformName, platformType, arch, platformSpecificBuildOptions, targets, options } = packOptions
 
     await this.info.emitBeforePack({
       appOutDir,
@@ -406,7 +408,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       const resourcesRelativePath = this.platform === Platform.MAC ? "Resources" : isElectronBased(framework) ? "resources" : ""
 
       let asarIntegrity: AsarIntegrity | null = null
-      if (!(asarOptions == null || options?.disableAsarIntegrity || this.config.disableAsarIntegrity)) {
+      if (!(asarOptions == null || options?.disableAsarIntegrity || asarOptions.disableIntegrity)) {
         asarIntegrity = await computeData({ resourcesPath, resourcesRelativePath, resourcesDestinationPath: this.getResourcesDir(appOutDir), extraResourceMatchers })
       }
 
@@ -415,6 +417,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         appOutDir,
         asarIntegrity,
         platformName,
+        platformType,
       })
     }
 
@@ -437,13 +440,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const isAsar = asarOptions != null
-    await this.sanityCheckPackage(appOutDir, isAsar, framework, !!this.config.disableSanityCheckAsar)
+    await this.sanityCheckPackage(appOutDir, isAsar, framework, !!asarOptions?.disableSanityCheck)
 
     if (!options?.disableFuses) {
       await this.doAddElectronFuses(packContext)
     }
     if (options?.sign ?? true) {
-      await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
+      await this.doSignAfterPack(outDir, appOutDir, platformName, platformType, arch, platformSpecificBuildOptions, targets)
     }
   }
 
@@ -487,6 +490,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (fuses.grantFileProtocolExtraPrivileges != null) {
       config[FuseV1Options.GrantFileProtocolExtraPrivileges] = fuses.grantFileProtocolExtraPrivileges
     }
+    if (fuses.wasmTrapHandlers != null) {
+      config[FuseV1Options.WasmTrapHandlers] = fuses.wasmTrapHandlers
+    }
     return config
   }
 
@@ -520,7 +526,15 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return flipFuses(electronBinaryPath, fuses)
   }
 
-  protected async doSignAfterPack(outDir: string, appOutDir: string, platformName: ElectronPlatformName, arch: Arch, platformSpecificBuildOptions: DC, targets: Array<Target>) {
+  protected async doSignAfterPack(
+    outDir: string,
+    appOutDir: string,
+    platformName: ElectronPlatformName,
+    platformType: PlatformType | undefined,
+    arch: Arch,
+    platformSpecificBuildOptions: DC,
+    targets: Array<Target>
+  ) {
     const asarOptions = await this.computeAsarOptions(platformSpecificBuildOptions)
     const isAsar = asarOptions != null
     const packContext = {
@@ -531,7 +545,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       packager: this,
       electronPlatformName: platformName,
     }
-    const didSign = await this.signApp(packContext, isAsar)
+    const didSign = await this.signApp(packContext, isAsar, platformType)
     if (didSign) {
       await this.info.emitAfterSign(packContext)
     } else if (this.info.filterPackagerEventListeners("afterSign", "user").length) {
@@ -603,13 +617,16 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         await taskManager.awaitTasks()
       })
     } else {
-      const unpackPattern = getFileMatchers(config, "asarUnpack", defaultDestination, {
-        macroExpander,
-        customBuildOptions: platformSpecificBuildOptions,
-        globalOutDir: packContext.outDir,
-        defaultSrc: appDir,
-      })
-      const fileMatcher = unpackPattern == null ? null : unpackPattern[0]
+      const unpackPatterns = asarOptions.unpack
+      let fileMatcher: FileMatcher | null = null
+      if (unpackPatterns != null) {
+        fileMatcher = new FileMatcher(appDir, defaultDestination, macroExpander)
+        const pats = Array.isArray(unpackPatterns) ? unpackPatterns : [unpackPatterns]
+        pats.forEach(p => fileMatcher!.addPattern(p))
+        if (fileMatcher.isEmpty()) {
+          fileMatcher = null
+        }
+      }
       taskManager.addTask(
         _computeFileSets(mainMatchers).then(async fileSets => {
           for (const fileSet of fileSets) {
@@ -628,7 +645,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected signApp(packContext: AfterPackContext, isAsar: boolean): Promise<boolean> {
+  protected signApp(packContext: AfterPackContext, isAsar: boolean, _platformType?: PlatformType): Promise<boolean> {
     return Promise.resolve(false)
   }
 
@@ -649,7 +666,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       if (appAsarStat == null || !appAsarStat.isFile()) {
         log.warn(
           {
-            solution: "enable asar and use asarUnpack to unpack files that must be externally available",
+            solution: "enable asar and use asar.unpack to unpack files that must be externally available",
           },
           "asar usage is disabled — this is strongly not recommended"
         )
@@ -657,7 +674,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return null
     }
 
-    if (result == null || result === true) {
+    if (result == null || (result as unknown) === true) {
       return {}
     }
 
@@ -696,7 +713,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
     const relativeFile = path.relative(this.info.appDir, path.resolve(this.info.appDir, file))
     if (isAsar) {
-      await checkFileInArchive(path.join(resourcesDir, "app.asar"), relativeFile, messagePrefix)
+      checkFileInArchive(path.join(resourcesDir, "app.asar"), relativeFile, messagePrefix)
       return
     }
 
@@ -716,7 +733,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       const asarPath = path.join(...pathSplit.slice(0, partWithAsarIndex + 1))
       let mainPath = pathSplit.length > partWithAsarIndex + 1 ? path.join.apply(pathSplit.slice(partWithAsarIndex + 1)) : ""
       mainPath += path.join(mainPath, pathParsed.base)
-      await checkFileInArchive(path.join(resourcesDir, "app", asarPath), mainPath, messagePrefix)
+      checkFileInArchive(path.join(resourcesDir, "app", asarPath), mainPath, messagePrefix)
     } else {
       const fullPath = path.join(resourcesDir, "app", relativeFile)
       const outStat = await statOrNull(fullPath)
@@ -856,7 +873,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return cachedPromise
     }
 
-    const promise = generateAssetCatalogForIcon(iconPath)
+    const promise = generateAssetCatalogForIcon(this.tempDirManager, iconPath)
     this.assetCatalogResults.set(iconPath, promise)
     return promise
   }
@@ -872,7 +889,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       const { icnsFile } = await this.generateAssetCatalogData(iconPath)
 
       // Generate icns file
-      const tempDir = await fs.mkdtemp(path.resolve(os.tmpdir(), "icon-compile-"))
+      const tempDir = await this.tempDirManager.createTempDir({ prefix: "icns-from-icon" })
       const tempIcnsPath = path.resolve(tempDir, "Icon.icns")
       await fs.writeFile(tempIcnsPath, icnsFile)
 
