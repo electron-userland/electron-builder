@@ -103,17 +103,15 @@ async function main() {
 
       // Allow test metadata
       includeTaskLocation: true,
-      setupFiles: [__dirname + "/vitest-config/vitest-setup.ts", __dirname + "/vitest-config/vitest-heavy-mutex.ts"],
+      setupFiles: [__dirname + "/vitest-config/vitest-setup.ts", __dirname + "/vitest-config/vitest-heavy-mutex.ts", __dirname + "/vitest-config/vitest-tmpdir.ts"],
       include: [`test/src/**/${includeGlob}.ts`],
 
-      printConsoleTrace: true,
       runner: __dirname + "/vitest-config/vitest-network-retry-runner.ts",
       reporters: ["default", __dirname + "/vitest-config/vitest-smart-reporter.ts"],
 
-      // 2 on Windows (heavy MSI/Squirrel builds saturate the vitest main-thread RPC at 3); 3 elsewhere
-      maxWorkers: process.platform === "win32" ? 2 : 3,
+      maxWorkers: "40%",
 
-      fileParallelism: false,
+      fileParallelism: true,
       sequence: {
         sequencer: SmartSequencer,
         concurrent: true,

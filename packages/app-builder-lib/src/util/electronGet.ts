@@ -8,7 +8,7 @@ import {
   FetchDownloaderOptions,
   MirrorOptions,
 } from "@electron/get"
-import { exec, exists, log, PADDING, parseValidEnvVarUrl, sanitizeDirPath, to7zaOutputSwitch } from "builder-util"
+import { exec, exists, log, PADDING, parseValidEnvVarUrl, sanitizeDirPath, to7zaOutputSwitch, ensureDir, moveDirAtomic } from "builder-util"
 import { HttpError, retry, sleep } from "builder-util-runtime"
 import * as crypto from "crypto"
 import type { ProgressBar } from "electron-publish"
@@ -166,52 +166,6 @@ async function extractZipStreaming(file: string, dir: string): Promise<void> {
     }
   } finally {
     readStream.destroy()
-  }
-}
-
-const TRANSIENT_RENAME_CODES = new Set(["ENOENT", "EPERM", "EBUSY", "EXDEV"])
-
-/**
- * @internal exported for unit testing
- *
- * Atomically moves `src` to `dest` by rename, retrying on transient Windows errors (ENOENT,
- * EPERM, EBUSY) before falling back to a copy+delete when all retries are exhausted.
- *
- * On Windows Docker / Windows Server containers, MoveFileEx can spuriously return
- * ERROR_FILE_NOT_FOUND (ENOENT) or a sharing-violation even when both paths are valid.
- * Retrying with back-off resolves the majority of these transient failures; the copy+delete
- * fallback handles the rare case where the rename keeps failing (e.g. cross-device move).
- */
-export async function moveDirAtomic(src: string, dest: string): Promise<void> {
-  // 4 retries → 5 total attempts; interval+backoff*attempt gives 250/500/750/1000 ms delays.
-  let lastErr: (Error & { code?: string }) | undefined
-  try {
-    await retry(() => fs.rename(src, dest), {
-      retries: 4,
-      interval: 250,
-      backoff: 250,
-      shouldRetry: (err: any) => {
-        if (TRANSIENT_RENAME_CODES.has(err.code ?? "")) {
-          log.warn({ src: log.filePath(src), dest: log.filePath(dest), code: err.code }, "directory rename failed, retrying")
-          return true
-        }
-        return false
-      },
-    })
-    return
-  } catch (err: any) {
-    lastErr = err
-    if (!TRANSIENT_RENAME_CODES.has(err.code ?? "")) {
-      throw err
-    }
-  }
-  // All rename retries exhausted on a transient error — fall back to copy + delete
-  log.warn({ src: log.filePath(src), dest: log.filePath(dest) }, "directory rename failed repeatedly; falling back to copy+delete")
-  try {
-    await fs.cp(src, dest, { recursive: true })
-    await fs.rm(src, { recursive: true, force: true })
-  } catch (err: any) {
-    throw new Error(`Failed to move directory from ${src} to ${dest}: ${err.message}${lastErr ? `; last rename error: ${lastErr.message}` : ""}`)
   }
 }
 
@@ -447,10 +401,15 @@ async function persistToArchiveCache(sourcePath: string, archiveCachePath: strin
  * Both public download functions delegate here after building their respective configs.
  */
 async function downloadAndExtract(config: ElectronArtifactDetails, extractDir: string, label: string, archiveCachePath?: string): Promise<string> {
-  await fs.mkdir(extractDir, { recursive: true })
+  // Create only the PARENT dir (e.g. <cache>/fpm@2.2.1), never extractDir itself, before locking.
+  // The parent is stable — cleanup only ever removes extractDir and its .state/.tmp/.lock siblings —
+  // so extractDir's whole lifecycle (mkdir, rm, re-mkdir) stays inside the lock. ensureDir absorbs
+  // the concurrent-recursive-mkdir ENOENT/EEXIST race while peers populate the cold cache tree.
+  await ensureDir(path.dirname(extractDir))
 
-  // Pre-lock fast path: only short-circuit for a definitively complete and valid cache.
-  // Do NOT clean up here — concurrent processes could race to delete under each other.
+  // Pre-lock fast path: read-only short-circuit for a definitively complete and valid cache.
+  // Safe unlocked — the cache-state helpers return null/false for a missing or half-written dir,
+  // so a racing read only ever falls through to take the lock. Do NOT mutate the dir here.
   const stateData = await readCacheStateFile(extractDir)
   if (stateData?.state === CacheState.complete) {
     const isValid = await validateCacheDirectory(extractDir, stateData.fileCount)
@@ -466,6 +425,13 @@ async function downloadAndExtract(config: ElectronArtifactDetails, extractDir: s
   // patience of withToolsetLock. proper-lockfile's update heartbeat keeps a live holder's lock fresh,
   // so increasing waiter retries never falsely steals an in-progress extraction.
   const release = await lockfile.lock(extractDir, {
+    // realpath:false so proper-lockfile creates <extractDir>.lock in the (already-created) parent
+    // WITHOUT calling fs.realpath(extractDir) first — which would throw ENOENT now that extractDir
+    // is created lazily inside the lock. This filesystem lock serializes peers both across worker
+    // processes AND within a single process (a second lock() for the same path retries until the
+    // first releases), so no in-process promise cache is needed — and one wouldn't help across the
+    // separate test worker processes anyway.
+    realpath: false,
     retries: { retries: 100, minTimeout: 1000, maxTimeout: 5000 },
     stale: 120000,
   })
@@ -486,7 +452,7 @@ async function downloadAndExtract(config: ElectronArtifactDetails, extractDir: s
 
     // Cleanup inside the lock — skip lock files since we currently hold them
     await cleanupCacheDirectory(extractDir, { skipLockFiles: true })
-    await fs.mkdir(extractDir, { recursive: true })
+    await ensureDir(extractDir)
 
     // Check electron-builder's own archive cache before touching @electron/get.
     // The cache lives alongside the extract dir: <cacheDir>/<releaseName>/<filename>.
@@ -617,7 +583,9 @@ export async function downloadBuilderToolset(options: {
   const fullUrl = resolveBuilderBinaryUrl(releaseName, filenameWithExt, baseUrl, overrideUrl)
   const suffix = hashUrlSafe(fullUrl, 5)
   const folderName = `${filenameWithExt.replace(/\.(tar\.gz|tgz|tar\.xz|txz|zip|7z)$/, "")}-${suffix}`
-  const extractDir = path.join(getCacheDirectory({ allowEnvVarOverride: true }), releaseName, folderName)
+  // releaseName is library input; enforce cache-dir containment (rejects traversal, clears taint into shell extraction)
+  const cacheDir = getCacheDirectory({ allowEnvVarOverride: true })
+  const extractDir = sanitizeDirPath(path.join(cacheDir, releaseName, folderName), cacheDir)
 
   // Use resolveAssetURL so @electron/get's ELECTRON_MIRROR env var check cannot override
   // the builder-binaries URL we've already resolved (see getArtifactRemoteURL in @electron/get).
@@ -628,7 +596,7 @@ export async function downloadBuilderToolset(options: {
   // Predictable archive cache: <cacheDir>/<releaseName>/<filename>, next to the extract dir.
   // downloadAndExtract checks here before touching @electron/get and persists the archive here
   // after every successful download, so subsequent builds never need a network round-trip.
-  const archiveCachePath = path.join(getCacheDirectory({ allowEnvVarOverride: true }), releaseName, filenameWithExt)
+  const archiveCachePath = sanitizeDirPath(path.join(cacheDir, releaseName, filenameWithExt), cacheDir)
 
   const config: ElectronDownloadRequest & ElectronDownloadRequestOptions & { isGeneric: true } = {
     version: "9.9.9", // must be >1.3.2 to bypass @electron/get validation shortcut

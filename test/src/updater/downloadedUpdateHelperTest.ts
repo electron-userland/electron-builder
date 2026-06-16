@@ -1,9 +1,7 @@
 import { createTempUpdateFile, DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
 import { outputFile, outputJson, pathExists } from "fs-extra"
-import { mkdtemp, rm } from "fs/promises"
-import { tmpdir } from "os"
 import * as path from "path"
-import { afterEach, beforeEach, describe, expect, test } from "vitest"
+import { beforeEach, describe, expect, test } from "vitest"
 import type { Logger } from "electron-updater/src/types"
 import type { UpdateInfo } from "builder-util-runtime"
 import type { ResolvedUpdateFileInfo } from "electron-updater/src/types"
@@ -37,13 +35,11 @@ describe("downloadedUpdateHelper", { sequential: true }, () => {
     let helper: DownloadedUpdateHelper
     let log: ReturnType<typeof makeLogger>
 
-    beforeEach(async () => {
-      cacheDir = await mkdtemp(path.join(tmpdir(), "eb-duh-test-"))
+    beforeEach(async context => {
+      cacheDir = await context.tmpDir.createTempDir()
       helper = new DownloadedUpdateHelper(cacheDir)
       log = makeLogger()
     })
-
-    afterEach(() => rm(cacheDir, { recursive: true, force: true }).catch(() => {}))
 
     test("returns null when update-info.json does not exist", async () => {
       const result = await (helper as any).getValidCachedUpdateFile(makeFileInfo("sha512abc"), log)
@@ -103,12 +99,10 @@ describe("downloadedUpdateHelper", { sequential: true }, () => {
     let cacheDir: string
     let log: ReturnType<typeof makeLogger>
 
-    beforeEach(async () => {
-      cacheDir = await mkdtemp(path.join(tmpdir(), "eb-tmp-test-"))
+    beforeEach(async context => {
+      cacheDir = await context.tmpDir.createTempDir()
       log = makeLogger()
     })
-
-    afterEach(() => rm(cacheDir, { recursive: true, force: true }).catch(() => {}))
 
     test("returns the path directly when no existing file blocks it", async () => {
       const result = await createTempUpdateFile("update.exe", cacheDir, log)
@@ -140,13 +134,11 @@ describe("downloadedUpdateHelper", { sequential: true }, () => {
     let helper: DownloadedUpdateHelper
     let log: ReturnType<typeof makeLogger>
 
-    beforeEach(async () => {
-      cacheDir = await mkdtemp(path.join(tmpdir(), "eb-validate-test-"))
+    beforeEach(async context => {
+      cacheDir = await context.tmpDir.createTempDir()
       helper = new DownloadedUpdateHelper(cacheDir)
       log = makeLogger()
     })
-
-    afterEach(() => rm(cacheDir, { recursive: true, force: true }).catch(() => {}))
 
     test("returns null when no cache exists", async () => {
       const fileInfo = makeFileInfo("sha512abc")
