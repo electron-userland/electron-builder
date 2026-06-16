@@ -33,6 +33,13 @@ function ghJson(endpoint: string): any {
   }
 }
 
+// Artifact names cannot contain "/", so branch names like "release/v26" are
+// uploaded as "release-v26". Mirror that sanitization here (keep in sync with
+// the "Compute Vitest smart cache ref" steps in the CI workflows).
+function sanitizeRef(ref: string): string {
+  return ref.replace(/\//g, "-")
+}
+
 function detectRef(): string {
   // Check for open PR for the current branch
   try {
@@ -90,7 +97,7 @@ function main() {
   }
   if (!ref) ref = detectRef()
 
-  const cacheName = `vitest-smart-cache-${ref}`
+  const cacheName = `vitest-smart-cache-${sanitizeRef(ref)}`
   const fallbackName = "vitest-smart-cache-master"
   const dest = CACHE_FILE
 
