@@ -42,12 +42,16 @@ function desktopStringEscape(value: string): string {
  * Every Linux target launches through a launcher entrypoint, so the Exec key only ever holds a
  * single command (the launcher path) plus field codes — never user-supplied `executableArgs`.
  * Plain paths made up of portable characters are emitted as-is; anything else is wrapped in
- * double quotes so spaces and reserved characters in the install path are not misinterpreted.
+ * double quotes. The spec requires the reserved characters `"`, backtick, `$` and `\` to be
+ * backslash-escaped inside the quotes, so they are escaped here to keep the Exec token valid.
  *
  * @see https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#exec-variables
  */
 export function quoteDesktopExecPath(value: string): string {
-  return /^[/0-9A-Za-z._-]+$/.test(value) ? value : `"${value}"`
+  if (/^[/0-9A-Za-z._-]+$/.test(value)) {
+    return value
+  }
+  return '"' + value.replace(/["$`\\]/g, "\\$&") + '"'
 }
 
 function mapLinuxCompressionToSnap(level: CompressionLevel | null | undefined): "xz" | "lzo" | undefined {

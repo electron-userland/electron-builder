@@ -1,17 +1,4 @@
-import {
-  Arch,
-  asArray,
-  exec,
-  getArchSuffix,
-  log,
-  serializeToYaml,
-  stripSensitiveEnvVars,
-  TmpDir,
-  toLinuxArchString,
-  unlinkIfExists,
-  use,
-  validateShellEmbeddable,
-} from "builder-util"
+import { Arch, asArray, exec, getArchSuffix, log, serializeToYaml, stripSensitiveEnvVars, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 
 import { objectToArgs } from "builder-util-runtime"
@@ -32,7 +19,7 @@ import { isFpmDebug } from "../../util/flags.js"
 import { hashFile } from "../../util/hash.js"
 import { isMacOsSierra } from "../../util/mac/macosVersion.js"
 import { getTemplatePath } from "../../util/pathManager.js"
-import { buildLauncherScript } from "./launcherScript.js"
+import { buildLauncherScript, shellQuote } from "./launcherScript.js"
 import { installPrefix, LinuxTargetHelper, quoteDesktopExecPath } from "./LinuxTargetHelper.js"
 const { copyFile, outputFile, stat } = _fsExtra
 
@@ -344,11 +331,11 @@ export default class FpmTarget extends Target {
    */
   private async createLauncherScript(): Promise<{ installPath: string; tempPath: string }> {
     const { appInfo, executableName } = this.packager
-    validateShellEmbeddable(executableName, "executableName")
-    validateShellEmbeddable(appInfo.sanitizedProductName, "sanitizedProductName")
-
     const appDir = `${installPrefix}/${appInfo.sanitizedProductName}`
-    const content = buildLauncherScript({ command: [`"${appDir}/${executableName}"`], args: this.options.executableArgs ?? [] })
+    // The launcher path is fully resolved (no shell variables to expand), so single-quote the whole
+    // token. This passes any embedded character literally and avoids restricting otherwise-valid
+    // executable/product names (e.g. those containing `$` or backtick).
+    const content = buildLauncherScript({ command: [shellQuote(`${appDir}/${executableName}`)], args: this.options.executableArgs ?? [] })
 
     const tempPath = await this.packager.tempDirManager.getTempFile({ suffix: "-launcher.sh" })
     await outputFile(tempPath, content, { mode: 0o755 })
