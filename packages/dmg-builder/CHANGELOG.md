@@ -1,5 +1,29 @@
 # dmg-builder
 
+## 27.0.0-alpha.3
+
+### Major Changes
+
+- Chore: modernize macOS build config API and upgrade all `electron/____` dep updates _[`#9889`](https://github.com/electron-userland/electron-builder/pull/9889) [`4d4ba45`](https://github.com/electron-userland/electron-builder/commit/4d4ba45d334a0696df92fb71af8a4b168e7d491e) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Fix: declare the missing `electron-publish` dependency on `electron-builder`, and switch type-checking to `nodenext` module resolution so the compiler models Node's real ESM loader _[`#9885`](https://github.com/electron-userland/electron-builder/pull/9885) [`96e47b5`](https://github.com/electron-userland/electron-builder/commit/96e47b5b89b76c719b1c06cfdd62a9a17376484e) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 3 dependencies</summary>
+
+<small>
+
+[`ef61dd5`](https://github.com/electron-userland/electron-builder/commit/ef61dd5f47ab0b203e76c506394bf4bc1ee9bf00) [`a07139b`](https://github.com/electron-userland/electron-builder/commit/a07139b09030327aca597673dcbefd95690a5a18) [`319535a`](https://github.com/electron-userland/electron-builder/commit/319535ada44839149539593f1b1138dc2c5eb2c5) [`594cfa1`](https://github.com/electron-userland/electron-builder/commit/594cfa1ded3ab4bcb46eac1720b9f9930ed1fbb5) [`6cdd01d`](https://github.com/electron-userland/electron-builder/commit/6cdd01d4c73eccc18a481c63c2531fd17e276238) [`b832369`](https://github.com/electron-userland/electron-builder/commit/b83236991f50bd40db59ea754e64d86f55a96a92) [`6623f4e`](https://github.com/electron-userland/electron-builder/commit/6623f4e018b8f08840d99b70e809081f21706cbc) [`091ab71`](https://github.com/electron-userland/electron-builder/commit/091ab710fc842441e513c7fbb88e6a9c1e77cc77) [`c976bc4`](https://github.com/electron-userland/electron-builder/commit/c976bc42e166d388e5fc38f7bf4dd20c87464de5) [`a6479f3`](https://github.com/electron-userland/electron-builder/commit/a6479f374ecfae5801b343357f286b263133f547) [`75bb4c6`](https://github.com/electron-userland/electron-builder/commit/75bb4c6ee911219900d9a303a11c7f5cb3ad9ed0) [`96e47b5`](https://github.com/electron-userland/electron-builder/commit/96e47b5b89b76c719b1c06cfdd62a9a17376484e) [`4d4ba45`](https://github.com/electron-userland/electron-builder/commit/4d4ba45d334a0696df92fb71af8a4b168e7d491e)
+
+</small>
+
+- `app-builder-lib@27.0.0-alpha.3`
+- `builder-util@27.0.0-alpha.3`
+- `builder-util-runtime@10.0.0-alpha.2`
+
+</details>
+
 ## 27.0.0-alpha.2
 
 ### Patch Changes

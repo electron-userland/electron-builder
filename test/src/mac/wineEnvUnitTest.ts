@@ -21,7 +21,7 @@ async function setupFakeWineDir(): Promise<void> {
   await writeFile(path.join(FAKE_WINE_DIR, "bin", "wine"), "#!/bin/sh\necho fake wine", { mode: 0o755 })
 }
 
-const ENV_KEYS = ["DYLD_FALLBACK_LIBRARY_PATH", "LD_LIBRARY_PATH", "USE_SYSTEM_WINE"]
+const ENV_KEYS = ["DYLD_FALLBACK_LIBRARY_PATH", "LD_LIBRARY_PATH"]
 const SAVED_ENV: Record<string, string | undefined> = {}
 
 beforeEach(async context => {
@@ -30,7 +30,6 @@ beforeEach(async context => {
   }
   FAKE_WINE_DIR = await context.tmpDir.createTempDir()
   await setupFakeWineDir()
-  delete process.env.USE_SYSTEM_WINE
 })
 
 afterEach(async () => {
