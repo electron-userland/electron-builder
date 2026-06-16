@@ -627,16 +627,16 @@ export interface ToolsetConfig {
    * Available versions:
    * | Version | Wine version | Platform support | Notes |
    * |---------|-------------|-----------------|-------|
-   * | `"0.0.0"` | 4.0.1 | macOS only | Legacy portable bundle (pre-v27 default) |
+   * | `"0.0.0"` | 4.0.1 | macOS | Legacy portable bundle (default) |
+   * | `"1.0.1"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |
    *
-   * On Linux, the system `wine` binary is used instead of a bundled one.
-   * Set `USE_SYSTEM_WINE=true` to force system Wine regardless of this setting.
+   * To use a custom Wine binary, use a `ToolsetCustom` object.
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md
    *
    * @default "0.0.0"
    */
-  readonly wine?: "0.0.0" | ToolsetCustom | null
+  readonly wine?: "0.0.0" | "1.0.1" | ToolsetCustom | null
 
   /**
    * Version of the FPM bundle used to build Linux packages (`.deb`, `.rpm`, `.pacman`, etc.)
