@@ -3,7 +3,7 @@ import * as path from "path"
 import { Platform, Target, TargetSpecificOptions } from "../core"
 import { copyFiles, getFileMatchers } from "../fileMatcher"
 import { PlatformPackager } from "../platformPackager"
-import { archive, tar } from "./archive"
+import { archive, shouldPreserveSymlinks, tar } from "./archive"
 import { appendBlockmap, createBlockmap } from "./differentialUpdateInfoBuilder"
 
 export class ArchiveTarget extends Target {
@@ -67,7 +67,7 @@ export class ArchiveTarget extends Target {
         const archiveOptions = {
           compression: packager.compression,
           withoutDir,
-          preserveSymlinks: isMac,
+          preserveSymlinks: shouldPreserveSymlinks(packager.platform),
         }
         await archive(format, artifactPath, dirToArchive, archiveOptions)
 
