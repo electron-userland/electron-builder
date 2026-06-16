@@ -15,6 +15,7 @@ import AppXTarget from "../../targets/win/AppxTarget.js"
 import { getSignToolPath } from "../../toolsets/winCodeSign.js"
 import { ToolInfo } from "../../util/bundledTool.js"
 import { resolveFunction } from "../../util/resolve.js"
+import { withSigntoolLock } from "../../util/toolsetLock.js"
 import { readCertInfo, readCertInfoFromX509 } from "../certInfo.js"
 import { VmManager } from "../../vm/vm.js"
 import type { WinPackager } from "../../winPackager.js"
@@ -428,7 +429,10 @@ export abstract class SigntoolBaseSignManager implements SignManager {
       args = configuration.computeSignToolArgs(isWin)
     }
 
-    await retry(() => vm.exec(tool, args, { timeout, env: { ...process.env, ...(toolInfo.env || {}) } }), {
+    // signtool.exe (`/f`) is not safe to run concurrently — it races on the shared per-user crypto store.
+    // Serialize real-Windows signtool invocations across processes; osslsigncode (`!isWin`) is file-isolated.
+    const execSign = () => vm.exec(tool, args, { timeout, env: { ...process.env, ...(toolInfo.env || {}) } })
+    await retry(() => (isWin ? withSigntoolLock(execSign) : execSign()), {
       retries: 2,
       interval: 15000,
       backoff: 10000,
@@ -436,7 +440,10 @@ export abstract class SigntoolBaseSignManager implements SignManager {
         if (
           e.message.includes("The file is being used by another process") ||
           e.message.includes("The specified timestamp server either could not be reached") ||
-          e.message.includes("No certificates were found that met all the given criteria.")
+          e.message.includes("No certificates were found that met all the given criteria.") ||
+          // Transient failure of SignerSignEx after cert selection, typically a concurrent-signtool race
+          // on the per-user crypto store; the cross-process lock above makes this rare, retry covers the rest.
+          e.message.includes("An error occurred while attempting to load the signing certificate")
         ) {
           log.warn(`Attempt to code sign failed, another attempt will be made in 15 seconds: ${e.message}`)
           return true
