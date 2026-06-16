@@ -131,6 +131,22 @@ function resolveCacheMode(): ElectronDownloadCacheMode {
   return ElectronDownloadCacheMode.ReadWrite
 }
 
+/**
+ * Returns true when `destPath` is safely contained within `dir` (direct child or deeper).
+ * On Windows the filesystem is case-insensitive so the comparison is normalised to lowercase.
+ * @internal exported for unit testing
+ */
+export function isSafeExtractPath(destPath: string, dir: string): boolean {
+  const normalizedDest = path.resolve(destPath)
+  const normalizedDir = path.resolve(dir)
+  if (process.platform === "win32") {
+    const d = normalizedDest.toLowerCase()
+    const b = normalizedDir.toLowerCase()
+    return d.startsWith(b + path.sep) || d === b
+  }
+  return normalizedDest.startsWith(normalizedDir + path.sep) || normalizedDest === normalizedDir
+}
+
 async function extractZipStreaming(file: string, dir: string): Promise<void> {
   // Pass 1: read central directory once to collect Unix modes (one seek to EOF)
   const zipDir = await unzipper.Open.file(file)
@@ -143,35 +159,88 @@ async function extractZipStreaming(file: string, dir: string): Promise<void> {
   }
   const isSymlink = (mode: number) => (mode & 0o170000) === 0o120000
 
-  // Pass 2: stream from byte 0 — no per-entry seeks, no Docker hang
-  const entries = createReadStream(file).pipe(unzipper.Parse({ forceStream: true }))
-  for await (const entry of entries as AsyncIterable<unzipper.Entry>) {
-    const destPath = path.resolve(dir, entry.path)
-    if (!destPath.startsWith(dir + path.sep) && destPath !== dir) {
-      throw new Error(`Path traversal blocked: ${entry.path}`)
+  // Pass 2: stream from byte 0 — no per-entry seeks, no Docker hang.
+  // Destroy the read stream in a finally block so the file handle is always released,
+  // including when the loop exits early due to a thrown error.
+  const readStream = createReadStream(file)
+  try {
+    const entries = readStream.pipe(unzipper.Parse({ forceStream: true }))
+    for await (const entry of entries as AsyncIterable<unzipper.Entry>) {
+      const destPath = path.resolve(dir, entry.path)
+      if (!isSafeExtractPath(destPath, dir)) {
+        throw new Error(`Path traversal blocked: ${entry.path}`)
+      }
+      const mode = entryModes.get(entry.path) ?? 0
+      if (mode > 0 && isSymlink(mode)) {
+        const target = (await entry.buffer()).toString()
+        if (path.isAbsolute(target)) {
+          throw new Error(`Absolute symlink target blocked: ${target}`)
+        }
+        const resolvedTarget = path.resolve(path.dirname(destPath), target)
+        if (!isSafeExtractPath(resolvedTarget, dir)) {
+          throw new Error(`Symlink target escapes extraction dir: ${target}`)
+        }
+        await fs.mkdir(path.dirname(destPath), { recursive: true })
+        await fs.symlink(target, destPath)
+      } else if (entry.type === "Directory") {
+        await fs.mkdir(destPath, { recursive: true })
+        entry.autodrain()
+      } else {
+        await fs.mkdir(path.dirname(destPath), { recursive: true })
+        await pipeline(entry, createWriteStream(destPath))
+        if (mode > 0) {
+          await fs.chmod(destPath, mode & 0o7777)
+        }
+      }
     }
-    const mode = entryModes.get(entry.path) ?? 0
-    if (mode > 0 && isSymlink(mode)) {
-      const target = (await entry.buffer()).toString()
-      if (path.isAbsolute(target)) {
-        throw new Error(`Absolute symlink target blocked: ${target}`)
-      }
-      const resolvedTarget = path.resolve(path.dirname(destPath), target)
-      if (!resolvedTarget.startsWith(dir + path.sep) && resolvedTarget !== dir) {
-        throw new Error(`Symlink target escapes extraction dir: ${target}`)
-      }
-      await fs.mkdir(path.dirname(destPath), { recursive: true })
-      await fs.symlink(target, destPath)
-    } else if (entry.type === "Directory") {
-      await fs.mkdir(destPath, { recursive: true })
-      entry.autodrain()
-    } else {
-      await fs.mkdir(path.dirname(destPath), { recursive: true })
-      await pipeline(entry, createWriteStream(destPath))
-      if (mode > 0) {
-        await fs.chmod(destPath, mode & 0o7777)
-      }
+  } finally {
+    readStream.destroy()
+  }
+}
+
+const TRANSIENT_RENAME_CODES = new Set(["ENOENT", "EPERM", "EBUSY", "EXDEV"])
+
+/**
+ * @internal exported for unit testing
+ *
+ * Atomically moves `src` to `dest` by rename, retrying on transient Windows errors (ENOENT,
+ * EPERM, EBUSY) before falling back to a copy+delete when all retries are exhausted.
+ *
+ * On Windows Docker / Windows Server containers, MoveFileEx can spuriously return
+ * ERROR_FILE_NOT_FOUND (ENOENT) or a sharing-violation even when both paths are valid.
+ * Retrying with back-off resolves the majority of these transient failures; the copy+delete
+ * fallback handles the rare case where the rename keeps failing (e.g. cross-device move).
+ */
+export async function moveDirAtomic(src: string, dest: string): Promise<void> {
+  // 4 retries → 5 total attempts; interval+backoff*attempt gives 250/500/750/1000 ms delays.
+  let lastErr: (Error & { code?: string }) | undefined
+  try {
+    await retry(() => fs.rename(src, dest), {
+      retries: 4,
+      interval: 250,
+      backoff: 250,
+      shouldRetry: (err: any) => {
+        if (TRANSIENT_RENAME_CODES.has(err.code ?? "")) {
+          log.warn({ src: log.filePath(src), dest: log.filePath(dest), code: err.code }, "directory rename failed, retrying")
+          return true
+        }
+        return false
+      },
+    })
+    return
+  } catch (err: any) {
+    lastErr = err
+    if (!TRANSIENT_RENAME_CODES.has(err.code ?? "")) {
+      throw err
     }
+  }
+  // All rename retries exhausted on a transient error — fall back to copy + delete
+  log.warn({ src: log.filePath(src), dest: log.filePath(dest) }, "directory rename failed repeatedly; falling back to copy+delete")
+  try {
+    await fs.cp(src, dest, { recursive: true })
+    await fs.rm(src, { recursive: true, force: true })
+  } catch (err: any) {
+    throw new Error(`Failed to move directory from ${src} to ${dest}: ${err.message}${lastErr ? `; last rename error: ${lastErr.message}` : ""}`)
   }
 }
 
@@ -229,7 +298,7 @@ export async function extractArchive(file: string, dir: string) {
         // Check if extraction actually failed or just had benign warnings
         const files = await fs.readdir(tmpDir)
         if (files.length === 0) {
-          log.warn({ file, tmpDir, error: e.message }, "7z extraction produced no output")
+          log.warn({ file: log.filePath(file), tmpDir: log.filePath(tmpDir), error: e.message }, "7z extraction produced no output")
           throw new Error(`7z extraction failed for ${file}: ${e.message}`)
         }
         // If files were extracted despite the error, log and continue
@@ -246,7 +315,7 @@ export async function extractArchive(file: string, dir: string) {
     }
 
     await fs.rm(dir, { recursive: true, force: true })
-    await fs.rename(tmpDir, dir)
+    await moveDirAtomic(tmpDir, dir)
   } finally {
     await release().catch(err => log.warn({ err }, "failed to release lockfile"))
   }
