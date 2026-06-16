@@ -4,7 +4,7 @@ import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_pro
 import { spawn as _spawn } from "cross-spawn"
 import _debug from "debug"
 import { dump } from "js-yaml"
-import * as path from "path"
+import path from "path"
 import { install as installSourceMap } from "source-map-support"
 import { debug, log } from "./log.js"
 import { exists } from "./fs.js"

@@ -1,7 +1,7 @@
 import { Arch, asArray, copyOrLinkFile, InvalidConfigurationError, log, sanitizeDirPath, walk, escapeForXml } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 
-import * as path from "path"
+import path from "path"
 import { AppXOptions } from "../../index.js"
 import { getWindowsKitsBundle, isOldWin6 } from "../../toolsets/winCodeSign.js"
 import { Target } from "../../core.js"
