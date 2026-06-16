@@ -50,8 +50,9 @@ describe("Generated toolset test filenames", () => {
 
   it("cross-platform suites have no platform marker", () => {
     const files = collectGeneratedFiles(GENERATED_TESTS_DIR)
-    // These suites use ifWindowsOrWine chain → no platform marker (run natively on Windows; via Wine on macOS/Linux)
-    const universalSuites = ["linuxPackager", "winPackager", "blackboxWin", "wineToolset", "assistedInstaller"]
+    // No platform marker → discovered everywhere. winPackager/assistedInstaller use ifWindowsOrWine
+    // (native on Windows, via Wine on Linux); linuxPackager/wineToolset/nsisWine use ifNotWindows.
+    const universalSuites = ["linuxPackager", "winPackager", "blackboxWin", "wineToolset", "assistedInstaller", "nsisWine"]
     for (const suite of universalSuites) {
       const suiteFiles = files.filter(f => f.includes(`/${suite}/`))
       expect(suiteFiles.length, `${suite} should have generated files`).toBeGreaterThan(0)
@@ -66,8 +67,17 @@ describe("Generated toolset test filenames", () => {
   it("wineToolset suite generates one file per wine version", () => {
     const files = collectGeneratedFiles(GENERATED_TESTS_DIR)
     const wineFiles = files.filter(f => f.includes("/wineToolset/"))
-    expect(wineFiles.length).toBe(1)
+    expect(wineFiles.length).toBe(2)
     expect(wineFiles.some(f => f.includes("wine-0.0.0"))).toBe(true)
+    expect(wineFiles.some(f => f.includes("wine-1.0.1"))).toBe(true)
+  })
+
+  it("nsisWine suite generates one file per wine version", () => {
+    const files = collectGeneratedFiles(GENERATED_TESTS_DIR)
+    const nsisWineFiles = files.filter(f => f.includes("/nsisWine/"))
+    expect(nsisWineFiles.length).toBe(2)
+    expect(nsisWineFiles.some(f => f.includes("wine-0.0.0"))).toBe(true)
+    expect(nsisWineFiles.some(f => f.includes("wine-1.0.1"))).toBe(true)
   })
 
   it("platformAllowed correctly filters ifWindows files on Linux", () => {

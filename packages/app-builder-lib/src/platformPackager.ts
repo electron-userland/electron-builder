@@ -22,7 +22,6 @@ import { Lazy } from "lazy-val"
 import { Minimatch } from "minimatch"
 import * as path from "path"
 import * as fs from "fs/promises"
-import * as os from "os"
 import type { TmpDir } from "temp-file"
 import type { Metadata } from "./options/metadata.js"
 import type { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi.js"
@@ -874,7 +873,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return cachedPromise
     }
 
-    const promise = generateAssetCatalogForIcon(iconPath)
+    const promise = generateAssetCatalogForIcon(this.tempDirManager, iconPath)
     this.assetCatalogResults.set(iconPath, promise)
     return promise
   }
@@ -890,7 +889,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       const { icnsFile } = await this.generateAssetCatalogData(iconPath)
 
       // Generate icns file
-      const tempDir = await fs.mkdtemp(path.resolve(os.tmpdir(), "icon-compile-"))
+      const tempDir = await this.tempDirManager.createTempDir({ prefix: "icns-from-icon" })
       const tempIcnsPath = path.resolve(tempDir, "Icon.icns")
       await fs.writeFile(tempIcnsPath, icnsFile)
 
