@@ -1,4 +1,5 @@
 import { exists, InvalidConfigurationError, sanitizeDirPath } from "builder-util"
+import { Nullish } from "builder-util-runtime"
 import * as path from "path"
 import { ToolsetConfig } from "../configuration.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
@@ -16,7 +17,7 @@ const wineToolsChecksums: Record<string, Record<string, string>> = {
   },
 }
 
-export async function getWineToolset(wine: ToolsetConfig["wine"], resourcesDir: string): Promise<{ execPath: string; env: Record<string, string> }> {
+export async function getWineToolset(wine: ToolsetConfig["wine"] | Nullish, resourcesDir: string): Promise<{ execPath: string; env: Record<string, string> }> {
   if (process.platform === "win32") {
     throw new InvalidConfigurationError(`Wine toolset is not supported on Windows, but got: ${wine}`)
   }
@@ -33,9 +34,18 @@ export async function getWineToolset(wine: ToolsetConfig["wine"], resourcesDir: 
   } else if (process.platform === "linux") {
     // Linux ships no portable bundle for string/null configs → fall back to the host wine binary.
     return { execPath: "wine", env: defaultEnv }
-  } else if (wine === "1.0.1") {
-    // Explicit opt-in to the bundled wine@1.0.1 (wine 11; arm64 macOS via Rosetta).
-    // Not the default yet — request it explicitly via `toolsets.wine = "1.0.1"`.
+  } else if (wine === "0.0.0") {
+    // Explicit opt-in to the legacy wine-4.0.1-mac bundle (pre-v27).
+    toolsetPath = await downloadBuilderToolset({
+      releaseName: "wine-4.0.1-mac",
+      filenameWithExt: "wine-4.0.1-mac.7z",
+      checksums: wineToolsChecksums["0.0.0"],
+      githubOrgRepo,
+    })
+    execSubPath = path.join("bin", "wine64")
+  } else {
+    // Default (null / undefined / "latest") and explicit "1.0.1" → bundled wine@1.0.1
+    // (wine 11; arm64 macOS via Rosetta).
     const file = process.platform === "darwin" ? "wine-11.0-darwin-x86_64.tar.xz" : "wine-11.0-linux-x86_64.tar.xz"
     toolsetPath = await downloadBuilderToolset({
       releaseName: "wine@1.0.1",
@@ -44,15 +54,6 @@ export async function getWineToolset(wine: ToolsetConfig["wine"], resourcesDir: 
       githubOrgRepo,
     })
     execSubPath = (await exists(path.join(toolsetPath, "bin", "wine"))) ? "bin/wine" : "bin/wine64"
-  } else {
-    // Default (null / undefined) and "0.0.0" → legacy wine-4.0.1-mac bundle.
-    toolsetPath = await downloadBuilderToolset({
-      releaseName: "wine-4.0.1-mac",
-      filenameWithExt: "wine-4.0.1-mac.7z",
-      checksums: wineToolsChecksums["0.0.0"],
-      githubOrgRepo,
-    })
-    execSubPath = path.join("bin", "wine64")
   }
 
   const { execPath, winePrefix, wineLibPath } = await createWineEnvironment(toolsetPath, execSubPath)

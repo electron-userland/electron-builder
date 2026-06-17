@@ -8,11 +8,11 @@ export const appimageChecksums = {
   "0.0.0": {
     "appimage-12.0.1.7z": "d12ff7eb8f1d1ec4652ca5237a7fbdca33acc0c758045636feca62dc6ecb8ec4",
   },
-  "1.0.2": {
-    "appimage-tools-runtime-20251108.tar.gz": "a784a8c26331ec2e945c23d6bdb14af5c9df27f5939825d84b8709c61dc81eb0",
-  },
   "1.0.3": {
     "appimage-tools-runtime-20251108.tar.gz": "84021a78ee214ae6fd33a2d62a92ba25542dd10bc86bf117a9b2d0bba44e7665",
+  },
+  "1.1.0": {
+    "appimage-tools-runtime-20251108.tar.gz": "098182ab8d3bb93db8a23691671f665ff92316249ace850aec63b9d010ec7fe0",
   },
 } as const
 
@@ -44,8 +44,8 @@ export async function getAppImageTools(toolset: ToolsetConfig["appimage"], targe
     }
   }
 
-  // null → modern default "1.0.3"
-  const isFuse2 = (toolset ?? "1.0.3") === "0.0.0"
+  // Only the explicit legacy pin selects the FUSE2 runtime; unset / null / "latest" → newest.
+  const isFuse2 = toolset === "0.0.0"
 
   if (isFuse2) {
     const filenameWithExt = "appimage-12.0.1.7z"
@@ -63,7 +63,8 @@ export async function getAppImageTools(toolset: ToolsetConfig["appimage"], targe
     return getPaths(vendorPath)
   }
 
-  const effectiveVersion = (toolset ?? "1.0.3") as "1.0.2" | "1.0.3"
+  // Unset / null / "latest" → newest ("1.1.0"); only an explicit "1.0.3" pin stays on 1.0.3.
+  const effectiveVersion: "1.0.3" | "1.1.0" = toolset === "1.0.3" ? "1.0.3" : "1.1.0"
   const filenameWithExt = "appimage-tools-runtime-20251108.tar.gz"
   const artifactPath = await downloadBuilderToolset({
     releaseName: `appimage@${effectiveVersion}`,

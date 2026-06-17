@@ -5,6 +5,7 @@ import { ToolsetConfig } from "../configuration.js"
 import { ToolInfo } from "../util/bundledTool.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
 import { getCustomToolsetPath } from "./custom.js"
+import { resolveToolsetVersion } from "./version.js"
 import _fsExtra from "fs-extra"
 const { stat } = _fsExtra
 
@@ -35,11 +36,11 @@ export const nsisChecksums = {
   },
 } as const
 
-async function getNsisBundlePath(nsis: ToolsetConfig["nsis"], resourcesDir: string): Promise<string> {
+async function getNsisBundlePath(nsis: ToolsetConfig["nsis"] | Nullish, resourcesDir: string): Promise<string> {
   if (typeof nsis === "object" && nsis != null) {
     return getCustomToolsetPath(nsis, resourcesDir)
   }
-  const resolved = nsis ?? "1.2.1"
+  const resolved = resolveToolsetVersion(nsis, "1.2.1")
   if (resolved === "0.0.0") {
     return getLegacyNsisBin()
   }

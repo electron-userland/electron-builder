@@ -2,6 +2,7 @@ import * as path from "path"
 import { ToolsetConfig } from "../configuration.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
 import { getCustomToolsetPath } from "./custom.js"
+import { resolveToolsetVersion } from "./version.js"
 
 // no legacy toolset as macos arm64 BSD gtar/ar/lzip are not compatible with linux targets, so we always use newer toolset on macos for linux archives
 const linuxToolsMacChecksums = {
@@ -16,7 +17,7 @@ export async function getLinuxToolsPath(toolset?: ToolsetConfig["linuxToolsMac"]
   const arch = process.arch === "arm64" ? "arm64" : "x86_64"
   const filename: keyof typeof linuxToolsMacChecksums = `linux-tools-mac-darwin-${arch}.tar.gz`
   return downloadBuilderToolset({
-    releaseName: `linux-tools-mac@${toolset ?? "1.0.0"}`,
+    releaseName: `linux-tools-mac@${resolveToolsetVersion(toolset, "1.0.0")}`,
     filenameWithExt: filename,
     checksums: linuxToolsMacChecksums,
     githubOrgRepo: "electron-userland/electron-builder-binaries",

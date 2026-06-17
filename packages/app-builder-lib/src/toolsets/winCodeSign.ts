@@ -6,6 +6,10 @@ import { ToolsetConfig } from "../configuration.js"
 import { ToolInfo, computeToolEnv } from "../util/bundledTool.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
 import { getCustomToolsetPath } from "./custom.js"
+import { resolveToolsetVersion } from "./version.js"
+
+// Newest win-codesign bundle — selected when the config is unset / null / "latest".
+const WIN_CODESIGN_LATEST = "1.3.0"
 
 function getLegacyWinCodeSignBin(): Promise<string> {
   return downloadBuilderToolset({
@@ -103,13 +107,13 @@ export async function getWindowsKitsBundle({ winCodeSign, arch, resourcesDir = "
     return { kit: path.join(vendorPath, arch === Arch.ia32 ? "x86" : Arch[arch]), appxAssets: vendorPath }
   }
 
-  const useLegacy = winCodeSign == null || winCodeSign === "0.0.0"
-  if (useLegacy) {
+  const version = resolveToolsetVersion(winCodeSign, WIN_CODESIGN_LATEST)
+  if (version === "0.0.0") {
     const vendorPath = sanitizeDirPath(await getLegacyWinCodeSignBin())
     return { kit: path.join(vendorPath, "windows-10", arch === Arch.arm64 ? "x64" : Arch[arch]), appxAssets: vendorPath }
   }
   const file = "windows-kits-bundle-10_0_26100_0.zip"
-  const vendorPath = sanitizeDirPath(await _getWindowsToolsBin(winCodeSign, file))
+  const vendorPath = sanitizeDirPath(await _getWindowsToolsBin(version, file))
   return { kit: path.join(vendorPath, arch === Arch.ia32 ? "x86" : Arch[arch]), appxAssets: vendorPath }
 }
 
@@ -119,7 +123,7 @@ export function isOldWin6() {
 }
 
 async function getWindowsSignToolExe({ winCodeSign, arch, resourcesDir = "" }: { winCodeSign: ToolsetConfig["winCodeSign"] | Nullish; arch: Arch; resourcesDir?: string }) {
-  if (winCodeSign === "0.0.0" || winCodeSign == null) {
+  if (typeof winCodeSign !== "object" && resolveToolsetVersion(winCodeSign, WIN_CODESIGN_LATEST) === "0.0.0") {
     // use modern signtool on Windows Server 2012 R2 to be able to sign AppX
     const vendorPath = sanitizeDirPath(await getLegacyWinCodeSignBin())
     if (isOldWin6()) {
@@ -143,7 +147,8 @@ async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] |
     return { path: path.join(vendorPath, "osslsigncode") }
   }
 
-  if (winCodeSign === "0.0.0" || winCodeSign == null) {
+  const version = resolveToolsetVersion(winCodeSign, WIN_CODESIGN_LATEST)
+  if (version === "0.0.0") {
     const legacyBase = sanitizeDirPath(await getLegacyWinCodeSignBin())
     const vendorBase = path.join(legacyBase, process.platform)
     const vendorPath = process.platform === "darwin" ? path.join(vendorBase, "10.12") : vendorBase
@@ -165,29 +170,31 @@ async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] |
     }
     return "win-codesign-darwin-x86_64.zip"
   })()
-  const vendorPath = sanitizeDirPath(await _getWindowsToolsBin(winCodeSign, file))
+  const vendorPath = sanitizeDirPath(await _getWindowsToolsBin(version, file))
   return { path: path.join(vendorPath, "osslsigncode") }
 }
 
 export async function getAtsBundleDir(winCodeSign: string): Promise<string> {
-  const checksum = (wincodesignChecksums as Record<string, Record<string, string>>)[winCodeSign]?.["ats-bundle-1_0_95.zip"]
+  const version = winCodeSign === "latest" ? WIN_CODESIGN_LATEST : winCodeSign
+  const checksum = (wincodesignChecksums as Record<string, Record<string, string>>)[version]?.["ats-bundle-1_0_95.zip"]
   if (!checksum) {
-    throw new Error(`winCodeSign version "${winCodeSign}" does not include an ATS bundle (requires >= 1.3.0)`)
+    throw new Error(`winCodeSign version "${version}" does not include an ATS bundle (requires >= 1.3.0)`)
   }
   return downloadBuilderToolset({
-    releaseName: `win-codesign@${winCodeSign}`,
+    releaseName: `win-codesign@${version}`,
     filenameWithExt: "ats-bundle-1_0_95.zip",
     checksums: { "ats-bundle-1_0_95.zip": checksum },
   })
 }
 
 export async function getDotnetRuntimeDir(winCodeSign: string): Promise<string> {
-  const checksum = (wincodesignChecksums as Record<string, Record<string, string>>)[winCodeSign]?.["dotnet-runtime-win-x64-8_0_28.zip"]
+  const version = winCodeSign === "latest" ? WIN_CODESIGN_LATEST : winCodeSign
+  const checksum = (wincodesignChecksums as Record<string, Record<string, string>>)[version]?.["dotnet-runtime-win-x64-8_0_28.zip"]
   if (!checksum) {
-    throw new Error(`winCodeSign version "${winCodeSign}" does not include a .NET runtime bundle (requires >= 1.3.0)`)
+    throw new Error(`winCodeSign version "${version}" does not include a .NET runtime bundle (requires >= 1.3.0)`)
   }
   return downloadBuilderToolset({
-    releaseName: `win-codesign@${winCodeSign}`,
+    releaseName: `win-codesign@${version}`,
     filenameWithExt: "dotnet-runtime-win-x64-8_0_28.zip",
     checksums: { "dotnet-runtime-win-x64-8_0_28.zip": checksum },
   })
@@ -201,11 +208,12 @@ export async function getRceditBundle(winCodeSign: ToolsetConfig["winCodeSign"] 
     const vendorPath = sanitizeDirPath(await getCustomToolsetPath(winCodeSign, resourcesDir), resourcesDir || undefined)
     return { x86: path.join(vendorPath, x86), x64: path.join(vendorPath, x64) }
   }
-  if (winCodeSign === "0.0.0" || winCodeSign == null) {
+  const version = resolveToolsetVersion(winCodeSign, WIN_CODESIGN_LATEST)
+  if (version === "0.0.0") {
     const vendorPath = sanitizeDirPath(await getLegacyWinCodeSignBin())
     return { x86: path.join(vendorPath, ia32), x64: path.join(vendorPath, x64) }
   }
   const file = "rcedit-windows-2_0_0.zip"
-  const vendorPath = sanitizeDirPath(await _getWindowsToolsBin(winCodeSign, file))
+  const vendorPath = sanitizeDirPath(await _getWindowsToolsBin(version, file))
   return { x86: path.join(vendorPath, x86), x64: path.join(vendorPath, x64) }
 }

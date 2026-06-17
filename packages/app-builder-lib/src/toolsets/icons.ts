@@ -4,6 +4,7 @@ import { ToolsetConfig } from "../configuration.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
 import { withIconsLock } from "../util/toolsetLock.js"
 import { getCustomToolsetPath } from "./custom.js"
+import { resolveToolsetVersion } from "./version.js"
 
 const iconsToolsChecksums = {
   "1.1.0": {
@@ -21,7 +22,7 @@ export async function getIconsToolsetPath(icons: ToolsetConfig["icons"], resourc
   if (typeof icons === "object" && icons != null) {
     return getCustomToolsetPath(icons, resourcesDir)
   }
-  const version = icons ?? "1.2.1"
+  const version = resolveToolsetVersion(icons, "1.2.1")
   return downloadBuilderToolset({
     releaseName: `icons@${version}`,
     filenameWithExt: "icons-bundle.tar.gz",

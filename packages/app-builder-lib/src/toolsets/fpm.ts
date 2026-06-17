@@ -3,6 +3,7 @@ import { ToolsetConfig } from "../configuration.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
 import { isUseSystemFpm } from "../util/flags.js"
 import { getCustomToolsetPath } from "./custom.js"
+import { resolveToolsetVersion } from "./version.js"
 
 const fpmChecksums = {
   "2.2.1": {
@@ -42,7 +43,7 @@ export async function getFpmPath(toolset: ToolsetConfig["fpm"], resourcesDir: st
   }
 
   const filename = getKey()
-  const version = toolset ?? "2.2.1"
+  const version = resolveToolsetVersion(toolset, "2.2.1")
   const fpmPath = await downloadBuilderToolset({
     releaseName: `fpm@${version}`,
     filenameWithExt: filename,
