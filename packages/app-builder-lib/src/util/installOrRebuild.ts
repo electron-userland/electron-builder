@@ -1,4 +1,4 @@
-import { asArray, log, retry, spawn, stripSensitiveEnvVars } from "builder-util"
+import { asArray, log, retry, spawn, stripSensitiveEnvVars, TmpDir } from "builder-util"
 import { isNpmNoBinLinks } from "./flags.js"
 
 import { homedir } from "os"
@@ -6,12 +6,13 @@ import * as path from "path"
 import { Configuration } from "../configuration.js"
 import { PM, getPackageManagerCommand } from "../node-module-collector/index.js"
 import { detectPackageManager } from "../node-module-collector/packageManager.js"
+import { streamSpawnToFile } from "./streamSpawnToFile.js"
 import { rebuild as remoteRebuild } from "./rebuild.js"
 import which from "which"
 import type { RebuildOptions as ElectronRebuildOptions } from "@electron/rebuild"
 import { Nullish } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
-const { pathExists } = _fsExtra
+const { pathExists, readFile } = _fsExtra
 
 export async function installOrRebuild(
   config: Configuration,
@@ -144,20 +145,49 @@ export async function installDependencies(
   const spawnEnv = {
     ...getGypEnv(options.frameworkInfo, platform, arch, options.buildFromSource === true),
     ...env,
+    // Silence corepack's activation/download chatter so a `pnpm install` doesn't flood the build log;
+    // strict=0 so the app's `packageManager` pin can't abort the install, download prompt/notice off.
+    COREPACK_ENABLE_STRICT: "0",
+    COREPACK_ENABLE_DOWNLOAD_PROMPT: "0",
   }
-  await retry(() => spawn(execPath, execArgs, { cwd: appDir, env: spawnEnv }), {
-    retries: 3,
-    interval: 1000,
-    backoff: 2000,
-    shouldRetry: (e: any) => {
-      const message = e?.message ?? ""
-      const retriable = isRetriableInstallError(message)
-      if (retriable) {
-        log.warn({ error: String(message).split("\n")[0] }, "transient error during package install, retrying")
+
+  const tmpDir = new TmpDir("install-dependencies")
+  try {
+    await retry(
+      async () => {
+        // Stream install output to a file instead of inheriting/buffering it: corepack and the package
+        // managers are extremely chatty, so the common (success) path stays quiet and only surfaces the
+        // log on failure. On Windows streamSpawnToFile routes through powershell.exe -EncodedCommand
+        // rather than cmd.exe, which also sidesteps the spurious ".cmd" shim "batch file cannot be
+        // found." re-open race that previously forced the win32 retry guard below.
+        const outputFile = await tmpDir.getTempFile({ prefix: "install-", suffix: ".log" })
+        const { code, stderr } = await streamSpawnToFile(execPath, execArgs, appDir, outputFile, spawnEnv)
+        if (code !== 0) {
+          const stdout = await readFile(outputFile, "utf8").catch(() => "")
+          throw new Error(`Package install (${execPath} ${execArgs.join(" ")}) exited with code ${code}:\n${stdout}\n${stderr}`)
+        }
+        if (log.isDebugEnabled) {
+          const stdout = await readFile(outputFile, "utf8").catch(() => "")
+          log.debug({ stdout, stderr }, "installed dependencies")
+        }
+      },
+      {
+        retries: 3,
+        interval: 1000,
+        backoff: 2000,
+        shouldRetry: (e: any) => {
+          const message = e?.message ?? ""
+          const retriable = isRetriableInstallError(message)
+          if (retriable) {
+            log.warn({ error: String(message).split("\n")[0] }, "transient error during package install, retrying")
+          }
+          return retriable
+        },
       }
-      return retriable
-    },
-  })
+    )
+  } finally {
+    await tmpDir.cleanup()
+  }
 
   // Some native dependencies no longer use `install` hook for building their native module, (yarn 3+ removed implicit link of `install` and `rebuild` steps)
   // https://github.com/electron-userland/electron-builder/issues/8024

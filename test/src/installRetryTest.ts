@@ -1,5 +1,5 @@
 import { afterEach, describe, test } from "vitest"
-import { isRetriableInstallError } from "app-builder-lib/src/util/yarn"
+import { isRetriableInstallError } from "app-builder-lib/src/util/installOrRebuild.js"
 
 // isRetriableInstallError reads process.platform at call time, so we toggle it per test rather than
 // re-importing the module.

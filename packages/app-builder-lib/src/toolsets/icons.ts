@@ -2,6 +2,7 @@ import { exec, exists, InvalidConfigurationError, sanitizeDirPath } from "builde
 import * as path from "path"
 import { ToolsetConfig } from "../configuration.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
+import { withIconsLock } from "../util/toolsetLock.js"
 import { getCustomToolsetPath } from "./custom.js"
 
 const iconsToolsChecksums = {
@@ -45,5 +46,7 @@ export async function runIconsTool({ inputFile, outputFormat, outDir, iconsTools
   if (!(await exists(scriptPath))) {
     throw new InvalidConfigurationError(`Icons tool not found at expected path: ${scriptPath}`)
   }
-  await exec(process.execPath, [scriptPath, `--input=${safeInput}`, `--format=${outputFormat}`, `--out=${safeOutDir}`], { shell: false })
+  // Serialize icon-tool spawns across processes: each reserves a large WebAssembly.Memory, and
+  // running many in parallel (e.g. across vitest workers) exhausts memory. See withIconsLock.
+  await withIconsLock(() => exec(process.execPath, [scriptPath, `--input=${safeInput}`, `--format=${outputFormat}`, `--out=${safeOutDir}`], { shell: false }))
 }
