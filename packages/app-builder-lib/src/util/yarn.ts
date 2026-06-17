@@ -87,6 +87,30 @@ export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.
   }
 }
 
+/**
+ * Whether a failed dependency-install spawn should be retried. Everything not matched here fails fast —
+ * a genuine install error (E404, ERESOLVE, EACCES, …) must surface immediately, not after 3 backoff
+ * retries. Two transient classes are retriable:
+ *   - Network blips while fetching from the registry.
+ *   - A Windows-only cmd.exe race: cross-spawn invokes the package manager's `.cmd`/`.CMD` shim via
+ *     `cmd.exe /d /s /c`, and cmd.exe re-opens the batch file between commands. Under CI load (Defender
+ *     scan locks, an 8.3/temp cwd, heavy parallel I/O) that re-open intermittently fails with
+ *     "The batch file cannot be found." *after* the package manager has already finished — a spurious
+ *     exit code, not a missing file. The install is idempotent (a no-op once node_modules is up to
+ *     date), so re-running is safe. Guarded to win32 so the narrow message match can't affect other
+ *     platforms. (Durable fix: stop routing install through cmd.exe, mirroring the collector's
+ *     powershell.exe -EncodedCommand spawn — tracked separately.)
+ */
+export function isRetriableInstallError(message: string): boolean {
+  if (/ENOTFOUND|ECONNRESET|ETIMEDOUT|EAI_AGAIN|ECONNREFUSED/.test(message)) {
+    return true
+  }
+  if (process.platform === "win32" && /The batch file cannot be found/i.test(message)) {
+    return true
+  }
+  return false
+}
+
 export async function installDependencies(
   config: Configuration,
   { appDir, projectDir, workspaceRoot }: DirectoryPaths,
@@ -126,11 +150,12 @@ export async function installDependencies(
     interval: 1000,
     backoff: 2000,
     shouldRetry: (e: any) => {
-      const isTransient = /ENOTFOUND|ECONNRESET|ETIMEDOUT|EAI_AGAIN|ECONNREFUSED/.test(e?.message ?? "")
-      if (isTransient) {
-        log.warn({ error: String(e?.message).split("\n")[0] }, "transient network error during package install, retrying")
+      const message = e?.message ?? ""
+      const retriable = isRetriableInstallError(message)
+      if (retriable) {
+        log.warn({ error: String(message).split("\n")[0] }, "transient error during package install, retrying")
       }
-      return isTransient
+      return retriable
     },
   })
 
