@@ -3,7 +3,7 @@
 exports[`LinuxPackager > AppImage - default icon, custom executable and custom desktop 1`] = `
 "[Desktop Entry]
 Name=Test App ßW
-Exec=AppRun --no-sandbox %U
+Exec=AppRun %U
 Terminal=true
 Type=Application
 Icon=Foo
@@ -89,7 +89,7 @@ exports[`LinuxPackager > AppImage - desktopName drives installed filename 1`] = 
 exports[`LinuxPackager > AppImage - desktopName sets StartupWMClass 1`] = `
 "[Desktop Entry]
 Name=Signal
-Exec=AppRun --no-sandbox %U
+Exec=AppRun %U
 Terminal=false
 Type=Application
 Icon=testapp
@@ -118,7 +118,7 @@ exports[`LinuxPackager > AppImage - desktopName sets StartupWMClass 2`] = `
 exports[`LinuxPackager > AppImage - desktopName with surrounding whitespace is trimmed for StartupWMClass 1`] = `
 "[Desktop Entry]
 Name=Signal
-Exec=AppRun --no-sandbox %U
+Exec=AppRun %U
 Terminal=false
 Type=Application
 Icon=testapp
@@ -147,7 +147,7 @@ exports[`LinuxPackager > AppImage - desktopName with surrounding whitespace is t
 exports[`LinuxPackager > AppImage - desktopName without .desktop suffix is used as-is for StartupWMClass 1`] = `
 "[Desktop Entry]
 Name=MyApp
-Exec=AppRun --no-sandbox %U
+Exec=AppRun %U
 Terminal=false
 Type=Application
 Icon=testapp
@@ -226,7 +226,7 @@ exports[`LinuxPackager > AppImage - missing desktopName falls back to executable
 exports[`LinuxPackager > AppImage - no desktopName falls back to productName for StartupWMClass 1`] = `
 "[Desktop Entry]
 Name=My App
-Exec=AppRun --no-sandbox %U
+Exec=AppRun %U
 Terminal=false
 Type=Application
 Icon=testapp

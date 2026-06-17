@@ -2,7 +2,7 @@ import { archive, compute7zCompressArgs, shouldPreserveSymlinks } from "app-buil
 import { Platform } from "app-builder-lib/src/core"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { afterEach, beforeEach, vi } from "vitest"
+import { afterEach, vi } from "vitest"
 
 async function makeSrcDir(tmpDir: string, files: Record<string, string> = { "hello.txt": "hello world", "sub/nested.txt": "nested" }): Promise<string> {
   const src = path.join(tmpDir, "src")
@@ -140,20 +140,17 @@ describe("compute7zCompressArgs", { sequential: true }, () => {
 
 // ─── archive() — path-level guards (no binary needed) ───────────────────────
 
-describe("archive() guards", { sequential: true }, () => {
-  let tmpDir: string
-  beforeEach(async context => {
-    tmpDir = await context.tmpDir.createTempDir()
+describe("archive() guards", () => {
+  test("excluded pattern with '..' throws", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const src = await makeSrcDir(tmpDirPath)
+    await expect(archive("zip", path.join(tmpDirPath, "out.zip"), src, { excluded: ["../secret"] })).rejects.toThrow("path traversal sequence")
   })
 
-  test("excluded pattern with '..' throws", async ({ expect }) => {
-    const src = await makeSrcDir(tmpDir)
-    await expect(archive("zip", path.join(tmpDir, "out.zip"), src, { excluded: ["../secret"] })).rejects.toThrow("path traversal sequence")
-  })
-
-  test.ifNotWindows("skips archiving when output is newer than source dir", async ({ expect }) => {
-    const src = await makeSrcDir(tmpDir)
-    const outFile = path.join(tmpDir, "cached.zip")
+  test.ifNotWindows("skips archiving when output is newer than source dir", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const src = await makeSrcDir(tmpDirPath)
+    const outFile = path.join(tmpDirPath, "cached.zip")
     await fs.writeFile(outFile, "sentinel")
     const future = new Date(Date.now() + 60_000)
     await fs.utimes(outFile, future, future)
@@ -184,23 +181,19 @@ describe("shouldPreserveSymlinks", () => {
 // Runs on macOS and Linux: both are non-Windows archive targets that pass -snl (see ArchiveTarget).
 // Windows is excluded — symlink restore there needs elevated privileges and the target dereferences.
 
-describe.runIf(process.platform !== "win32")("archive() symlink preservation", { sequential: true }, () => {
-  let tmpDir: string
-  beforeEach(async context => {
-    tmpDir = await context.tmpDir.createTempDir()
-  })
-
-  test("zip archive preserves symlinks (not dereferenced)", async ({ expect }) => {
-    const src = path.join(tmpDir, "src")
+describe.runIf(process.platform !== "win32")("archive() symlink preservation", () => {
+  test("zip archive preserves symlinks (not dereferenced)", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const src = path.join(tmpDirPath, "src")
     await fs.mkdir(src, { recursive: true })
     await fs.writeFile(path.join(src, "real.txt"), "content")
     await fs.symlink("real.txt", path.join(src, "link.txt"))
 
-    const outFile = path.join(tmpDir, "out.zip")
+    const outFile = path.join(tmpDirPath, "out.zip")
     await archive("zip", outFile, src, { withoutDir: true, preserveSymlinks: true })
 
     // Extract and verify symlink is preserved
-    const extractDir = path.join(tmpDir, "extracted")
+    const extractDir = path.join(tmpDirPath, "extracted")
     await fs.mkdir(extractDir, { recursive: true })
     const { exec: cpExec } = await import("child_process")
     const { promisify } = await import("util")
@@ -215,17 +208,18 @@ describe.runIf(process.platform !== "win32")("archive() symlink preservation", {
 
   // Regression for #9846: the 7z target must also preserve symlinks (-snl). Modern 7-Zip
   // dereferences them by default, which corrupts .framework bundles and breaks codesign.
-  test("7z archive preserves symlinks (not dereferenced)", async ({ expect }) => {
-    const src = path.join(tmpDir, "src7z")
+  test("7z archive preserves symlinks (not dereferenced)", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const src = path.join(tmpDirPath, "src7z")
     await fs.mkdir(src, { recursive: true })
     await fs.writeFile(path.join(src, "real.txt"), "content")
     await fs.symlink("real.txt", path.join(src, "link.txt"))
 
-    const outFile = path.join(tmpDir, "out.7z")
+    const outFile = path.join(tmpDirPath, "out.7z")
     await archive("7z", outFile, src, { withoutDir: true, preserveSymlinks: true })
 
     // Extract with the same 7za toolset binary and verify the symlink survived
-    const extractDir = path.join(tmpDir, "extracted7z")
+    const extractDir = path.join(tmpDirPath, "extracted7z")
     await fs.mkdir(extractDir, { recursive: true })
     const { getPath7za } = await import("app-builder-lib/src/toolsets/7zip")
     const { exec: cpExec } = await import("child_process")
@@ -239,8 +233,9 @@ describe.runIf(process.platform !== "win32")("archive() symlink preservation", {
     expect(target).toBe("real.txt")
   })
 
-  test("excluded pattern with '..' throws when preserveSymlinks is set", async ({ expect }) => {
-    const src = await makeSrcDir(tmpDir)
-    await expect(archive("zip", path.join(tmpDir, "out.zip"), src, { excluded: ["../secret"], preserveSymlinks: true })).rejects.toThrow("path traversal sequence")
+  test("excluded pattern with '..' throws when preserveSymlinks is set", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const src = await makeSrcDir(tmpDirPath)
+    await expect(archive("zip", path.join(tmpDirPath, "out.zip"), src, { excluded: ["../secret"], preserveSymlinks: true })).rejects.toThrow("path traversal sequence")
   })
 })
