@@ -1,4 +1,15 @@
-import { validateShellEmbeddable } from "builder-util"
+/**
+ * Validates that a value is safe to embed in a double-quoted shell string.
+ * Rejects characters that would be interpreted as shell metacharacters inside `"..."`:
+ * `$`, backtick, `"`, `\`, and newlines.
+ */
+export function validateShellEmbeddable(value: string, fieldName: string): void {
+  if (/[$`"\\\n]/.test(value)) {
+    throw new Error(
+      `${fieldName} contains characters that are not safe in shell scripts: ${JSON.stringify(value)}. ` + `Avoid $, backtick, double-quote, backslash, and newline characters.`
+    )
+  }
+}
 
 // snapd restricts the value of `apps.<app-name>.command` to alphanumeric characters, spaces, and
 // `/ . _ # : $ -`, and splits it on whitespace. Rather than encode those rules per-arg, core24

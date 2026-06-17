@@ -62,16 +62,3 @@ export function parseValidEnvVarUrl(envVarName: string, allowHttp: boolean = fal
   }
   return url
 }
-
-/**
- * Validates that a value is safe to embed in a double-quoted shell string.
- * Rejects characters that would be interpreted as shell metacharacters inside `"..."`:
- * `$`, backtick, `"`, `\`, and newlines.
- */
-export function validateShellEmbeddable(value: string, fieldName: string): void {
-  if (/[$`"\\\n]/.test(value)) {
-    throw new Error(
-      `${fieldName} contains characters that are not safe in shell scripts: ${JSON.stringify(value)}. ` + `Avoid $, backtick, double-quote, backslash, and newline characters.`
-    )
-  }
-}
