@@ -1,0 +1,47 @@
+# yaml-language-server: $schema=https://agent-box.sh/schema/agentbox.schema.json
+#
+# electron-builder monorepo
+#
+# This is a CLI/library project (the electron-builder tool + sibling packages),
+# not a web app — so there is no long-running web service to autostart and no
+# `expose:` block. The supervisor exists here to keep dependency install and
+# the initial TypeScript compile deterministic across new boxes / checkpoint
+# restores.
+#
+# What's declared:
+#   - install: pnpm install via corepack (matches packageManager pin in
+#     package.json, currently pnpm@11.1.0). run_once: true so warm boots skip
+#     the reinstall — node_modules lives under /workspace and is captured by
+#     `agentbox checkpoint`.
+#   - compile: `pnpm compile`, which also runs `pnpm ci:test:generate` (the
+#     test suite is generated, so compile is a prerequisite for running tests
+#     per CLAUDE.md). Gated on the install task.
+#
+# Notes / non-obvious bits:
+#   - Node 24 + corepack are already in the base image; we only need to enable
+#     corepack so the pinned pnpm version is shimmed onto PATH on first run.
+#   - There is no DB / cache / docs server declared. `pnpm docs:dev` exists
+#     but it's heavy (full Docusaurus build) and unrelated to the core dev
+#     loop, so we don't autostart it; run it manually if needed.
+
+tasks:
+  # Idempotent dependency install. node_modules persists under /workspace
+  # (writable layer, captured by `agentbox checkpoint`), so this is a no-op
+  # on warm boots once the supervisor's run_once marker is set. To force a
+  # reinstall: `agentbox-ctl run-task install --force`, or edit this command
+  # (changing the command invalidates the hash and re-runs).
+  install:
+    command: |
+      set -e
+      corepack enable >/dev/null 2>&1 || true
+      pnpm install --frozen-lockfile
+    run_once: true
+
+  # First compile after install. Also generates the test files
+  # (`pnpm ci:test:generate`), which is required before `pnpm ci:test` will
+  # run anything useful. Re-runs on every box stop/start so any source edits
+  # made off-supervisor land in dist/. tsc --build is incremental, so warm
+  # re-runs are cheap.
+  compile:
+    command: pnpm compile
+    needs: [install]
