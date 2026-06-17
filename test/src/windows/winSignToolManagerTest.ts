@@ -657,13 +657,8 @@ describe("addCertificateArgs throws InvalidConfigurationError for bad cert exten
 // ─── readCertInfoFromX509 ─────────────────────────────────────────────────────
 
 describe("readCertInfoFromX509", () => {
-  let tmpDir: string
-
-  beforeEach(async context => {
-    tmpDir = await context.tmpDir.createTempDir()
-  })
-
-  test("parses a self-signed PEM certificate and extracts CN", async () => {
+  test("parses a self-signed PEM certificate and extracts CN", async ({ tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
     // Minimal self-signed cert for CN=Test Signer, O=Test Org
     // Generated with: openssl req -x509 -newkey rsa:2048 -keyout /dev/null -out cert.pem
     // -subj "/CN=Test Signer/O=Test Org" -days 1 -nodes 2>/dev/null
@@ -674,15 +669,16 @@ b2NhbGhvc3QwHhcNMjUwMTAxMDAwMDAwWhcNMjYwMTAxMDAwMDAwWjAUMRIwEAYD
 VQQDDAlsb2NhbGhvc3QwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC7
 o4qne60TB3wolLhOJqQ3uJLPvOmFI5oMnEAmhP0JlwFSBj3SiYoHScLuNP2YQXB+
 -----END CERTIFICATE-----`
-    const certFile = path.join(tmpDir, "cert.pem")
+    const certFile = path.join(tmpDirPath, "cert.pem")
     await writeFile(certFile, pem)
     // Invalid DER content in PEM will throw — we just confirm the function is callable
     // and throws the right error shape for a malformed cert
     await expect(readCertInfoFromX509(certFile)).rejects.toThrow(/could not be parsed|invalid/)
   })
 
-  test("throws descriptive error for non-certificate file", async () => {
-    const badFile = path.join(tmpDir, "bad.crt")
+  test("throws descriptive error for non-certificate file", async ({ tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const badFile = path.join(tmpDirPath, "bad.crt")
     await writeFile(badFile, "this is not a certificate")
     await expect(readCertInfoFromX509(badFile)).rejects.toThrow(/could not be parsed|invalid/)
   })
@@ -694,11 +690,9 @@ o4qne60TB3wolLhOJqQ3uJLPvOmFI5oMnEAmhP0JlwFSBj3SiYoHScLuNP2YQXB+
 // kits bundle) and the .NET runtime root is injected via DOTNET_ROOT.
 
 describe("WindowsSignAzureManager signFileWithDlib arch selection", { sequential: true }, () => {
-  let tmpDir: string
   const originalArch = process.arch
 
-  beforeEach(async context => {
-    tmpDir = await context.tmpDir.createTempDir()
+  beforeEach(async () => {
     vi.mocked(getWindowsKitsBundle).mockImplementation(async ({ arch }) => ({
       kit: path.resolve("/mock-kits", arch === Arch.ia32 ? "x86" : Arch[arch]),
       appxAssets: path.resolve("/mock-kits"),
@@ -714,7 +708,7 @@ describe("WindowsSignAzureManager signFileWithDlib arch selection", { sequential
     vi.mocked(getDotnetRuntimeDir).mockReset()
   })
 
-  function makeAzureManager(execSpy: ReturnType<typeof vi.fn>, toVmFile = (f: string) => f): WindowsSignAzureManager {
+  function makeAzureManager(tmpDir: string, execSpy: ReturnType<typeof vi.fn>, toVmFile = (f: string) => f): WindowsSignAzureManager {
     const manager = Object.create(WindowsSignAzureManager.prototype) as WindowsSignAzureManager
     ;(manager as any).packager = {
       config: { toolsets: { winCodeSign: "1.3.0" } },
@@ -731,43 +725,47 @@ describe("WindowsSignAzureManager signFileWithDlib arch selection", { sequential
     return manager
   }
 
-  async function signedInfo(arch: NodeJS.Architecture, toVmFile = (f: string) => f): Promise<{ signtool: string; dlib: string; dotnetRoot: string | undefined }> {
+  async function signedInfo(tmpDir: string, arch: NodeJS.Architecture, toVmFile = (f: string) => f): Promise<{ signtool: string; dlib: string; dotnetRoot: string | undefined }> {
     Object.defineProperty(process, "arch", { value: arch })
     const exec = vi.fn().mockResolvedValue(undefined)
-    const manager = makeAzureManager(exec, toVmFile)
+    const manager = makeAzureManager(tmpDir, exec, toVmFile)
     await manager.signFile({ path: path.join(tmpDir, "app.exe"), options: {} as any })
     const [signtool, args, execOptions] = exec.mock.calls[0]
     const dlib = args[args.indexOf("/dlib") + 1]
     return { signtool, dlib, dotnetRoot: execOptions?.env?.DOTNET_ROOT }
   }
 
-  test("arm64 host falls back to the x64 ats-bundle (no arm64 dlib exists)", async () => {
-    const { signtool, dlib, dotnetRoot } = await signedInfo("arm64")
+  test("arm64 host falls back to the x64 ats-bundle (no arm64 dlib exists)", async ({ tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const { signtool, dlib, dotnetRoot } = await signedInfo(tmpDirPath, "arm64")
     expect(signtool).toBe(path.resolve("/mock-kits", "x64", "signtool.exe"))
     expect(dlib).toBe(path.resolve("/mock-ats-bundle", "x64", "Azure.CodeSigning.Dlib.dll"))
     expect(dotnetRoot).toBe(path.resolve("/mock-dotnet-runtime"))
     expect(vi.mocked(getWindowsKitsBundle)).toHaveBeenCalledWith(expect.objectContaining({ arch: Arch.x64 }))
   })
 
-  test("x64 host uses the x64 ats-bundle", async () => {
-    const { signtool, dlib, dotnetRoot } = await signedInfo("x64")
+  test("x64 host uses the x64 ats-bundle", async ({ tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const { signtool, dlib, dotnetRoot } = await signedInfo(tmpDirPath, "x64")
     expect(signtool).toBe(path.resolve("/mock-kits", "x64", "signtool.exe"))
     expect(dlib).toBe(path.resolve("/mock-ats-bundle", "x64", "Azure.CodeSigning.Dlib.dll"))
     expect(dotnetRoot).toBe(path.resolve("/mock-dotnet-runtime"))
   })
 
-  test("ia32 host uses the x86 ats-bundle", async () => {
-    const { signtool, dlib, dotnetRoot } = await signedInfo("ia32")
+  test("ia32 host uses the x86 ats-bundle", async ({ tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const { signtool, dlib, dotnetRoot } = await signedInfo(tmpDirPath, "ia32")
     expect(signtool).toBe(path.resolve("/mock-kits", "x86", "signtool.exe"))
     expect(dlib).toBe(path.resolve("/mock-ats-bundle", "x86", "Azure.CodeSigning.Dlib.dll"))
     expect(dotnetRoot).toBe(path.resolve("/mock-dotnet-runtime"))
     expect(vi.mocked(getWindowsKitsBundle)).toHaveBeenCalledWith(expect.objectContaining({ arch: Arch.ia32 }))
   })
 
-  test.skipIf(process.platform === "win32")("Wine: DOTNET_ROOT is converted to a Z:\\ path via toVmFile", async () => {
+  test.skipIf(process.platform === "win32")("Wine: DOTNET_ROOT is converted to a Z:\\ path via toVmFile", async ({ tmpDir }) => {
     // Wine is only used on macOS/Linux; on Windows signtool runs natively, no Z: conversion happens.
     const wineToVmFile = (f: string) => path.win32.join("Z:", f)
-    const { dotnetRoot } = await signedInfo("x64", wineToVmFile)
+    const tmpDirPath = await tmpDir.createTempDir()
+    const { dotnetRoot } = await signedInfo(tmpDirPath, "x64", wineToVmFile)
     expect(dotnetRoot).toBe(path.win32.join("Z:", "/mock-dotnet-runtime"))
   })
 })
