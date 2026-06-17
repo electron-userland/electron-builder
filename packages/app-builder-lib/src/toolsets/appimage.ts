@@ -4,6 +4,9 @@ import { ToolsetConfig } from "../configuration.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
 import { getCustomToolsetPath } from "./custom.js"
 
+// Newest AppImage bundle — selected when the config is unset / null / "latest".
+const APPIMAGE_LATEST = "1.1.0"
+
 export const appimageChecksums = {
   "0.0.0": {
     "appimage-12.0.1.7z": "d12ff7eb8f1d1ec4652ca5237a7fbdca33acc0c758045636feca62dc6ecb8ec4",
@@ -64,7 +67,7 @@ export async function getAppImageTools(toolset: ToolsetConfig["appimage"], targe
   }
 
   // Unset / null / "latest" → newest ("1.1.0"); only an explicit "1.0.3" pin stays on 1.0.3.
-  const effectiveVersion: "1.0.3" | "1.1.0" = toolset === "1.0.3" ? "1.0.3" : "1.1.0"
+  const effectiveVersion: "1.0.3" | typeof APPIMAGE_LATEST = toolset === "1.0.3" ? "1.0.3" : APPIMAGE_LATEST
   const filenameWithExt = "appimage-tools-runtime-20251108.tar.gz"
   const artifactPath = await downloadBuilderToolset({
     releaseName: `appimage@${effectiveVersion}`,

@@ -7,6 +7,9 @@ import { getCustomToolsetPath } from "./custom.js"
 
 const githubOrgRepo = "electron-userland/electron-builder-binaries"
 
+// Newest wine bundle — selected when the config is unset / null / "latest".
+const WINE_LATEST = "1.0.1"
+
 const wineToolsChecksums: Record<string, Record<string, string>> = {
   "0.0.0": {
     "wine-4.0.1-mac.7z": "1baac808a67975b68b9226beea7b64ad0acc3e598a4b45c25bb5d2ae8cac655e",
@@ -48,9 +51,9 @@ export async function getWineToolset(wine: ToolsetConfig["wine"] | Nullish, reso
     // (wine 11; arm64 macOS via Rosetta).
     const file = process.platform === "darwin" ? "wine-11.0-darwin-x86_64.tar.xz" : "wine-11.0-linux-x86_64.tar.xz"
     toolsetPath = await downloadBuilderToolset({
-      releaseName: "wine@1.0.1",
+      releaseName: `wine@${WINE_LATEST}`,
       filenameWithExt: file,
-      checksums: wineToolsChecksums["1.0.1"],
+      checksums: wineToolsChecksums[WINE_LATEST],
       githubOrgRepo,
     })
     execSubPath = (await exists(path.join(toolsetPath, "bin", "wine"))) ? "bin/wine" : "bin/wine64"

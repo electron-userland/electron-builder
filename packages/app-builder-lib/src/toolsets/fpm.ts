@@ -5,6 +5,9 @@ import { isUseSystemFpm } from "../util/flags.js"
 import { getCustomToolsetPath } from "./custom.js"
 import { resolveToolsetVersion } from "./version.js"
 
+// Newest FPM bundle — selected when the config is unset / null / "latest".
+const FPM_LATEST = "2.2.1"
+
 const fpmChecksums = {
   "2.2.1": {
     "fpm-1.17.0-ruby-3.4.3-linux-amd64.7z": "2ef73acbcbfd26503369cb3a9b0345aa7fae251d69130537ee6ff47b402f828e",
@@ -43,7 +46,7 @@ export async function getFpmPath(toolset: ToolsetConfig["fpm"], resourcesDir: st
   }
 
   const filename = getKey()
-  const version = resolveToolsetVersion(toolset, "2.2.1")
+  const version = resolveToolsetVersion(toolset, FPM_LATEST)
   const fpmPath = await downloadBuilderToolset({
     releaseName: `fpm@${version}`,
     filenameWithExt: filename,
