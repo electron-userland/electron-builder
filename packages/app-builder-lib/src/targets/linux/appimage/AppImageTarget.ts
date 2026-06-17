@@ -37,7 +37,8 @@ export default class AppImageTarget extends Target {
     super("appImage")
 
     const appimageTool = packager.config.toolsets?.appimage
-    const defaultArgs = appimageTool == null || appimageTool === "0.0.0" ? ["--no-sandbox"] : []
+    // --no-sandbox is only needed by the FUSE2 legacy runtime; unset / "latest" → static runtime, no flag.
+    const defaultArgs = appimageTool === "0.0.0" ? ["--no-sandbox"] : []
     this.launcherArgs = this.options.executableArgs ?? defaultArgs
 
     this.desktopEntry = new Lazy<string>(() =>

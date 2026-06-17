@@ -16,7 +16,7 @@ import { OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUti
 
 const optionsForInstall: TestOptions = { sequential: true, retry: 0, timeout: EXTENDED_TIMEOUT }
 
-const STANDARD_COMPRESSIONS: Configuration["compression"][] = ["store", "normal", "maximum"]
+const STANDARD_COMPRESSIONS: NonNullable<Configuration["compression"]>[] = ["store", "normal", "maximum"]
 const APPIMAGE_COMPRESSIONS: AppImageOptions["compression"][] = ["xz", "gzip", "zstd"]
 const LEGACY_COMPRESSIONS: AppImageOptions["compression"][] = ["xz", "gzip", "zstd"]
 // xz/lzo = forwarded as --compression to FUSE2; zstd/null = flag omitted → mksquashfs defaults to gzip (or xz when compression="maximum")
@@ -40,7 +40,8 @@ describe.heavy.ifLinux("linux install", optionsForInstall, () => {
             await runInstallTest(context, "appImage", archFromString(arch), { toolsets: { appimage: "0.0.0" }, compression, appImage: { compression: legacyCompression } })
           })
         }
-        for (const appimage of ["1.0.2", "1.0.3"] as ToolsetConfig["appimage"][]) {
+        const toolsetAppImage: ToolsetConfig["appimage"][] = ["1.1.0", "1.0.3"]
+        for (const appimage of toolsetAppImage) {
           for (const appImageCompression of APPIMAGE_COMPRESSIONS) {
             test.ifEnv(arch === process.arch)(`${arch} - toolset: ${appimage} - compression: ${compression} - compressor: ${appImageCompression}`, async context => {
               await runInstallTest(context, "appImage", archFromString(arch), { toolsets: { appimage }, compression, appImage: { compression: appImageCompression } })
@@ -237,7 +238,7 @@ async function runInstallTest(context: TestContext, target: ConstructorParameter
   // AUTO_UPDATER_TEST="" makes the test app print its version and exit immediately.
   const updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: "http://localhost:0" })
 
-  const appimageToolset = (extraConfig as any).toolsets?.appimage
+  const appimageToolset = extraConfig.toolsets?.appimage
   // FUSE2 AppImages require /dev/fuse to mount their squashfs, which isn't available in standard
   // Docker containers. APPIMAGE_EXTRACT_AND_RUN=1 tells the legacy runtime to extract and run
   // without FUSE, avoiding the "Syntax error" shell-fallback failure.
