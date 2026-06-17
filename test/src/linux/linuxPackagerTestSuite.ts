@@ -493,7 +493,7 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
       {}
     ))
 
-  test("AppImage - syncDesktopName uses desktopName for installed filename", ({ expect }) =>
+  test("AppImage - desktopName drives installed filename", ({ expect }) =>
     app(
       expect,
       {
@@ -501,7 +501,6 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
         config: {
           toolsets,
           productName: "Signal",
-          linux: { syncDesktopName: true },
         },
         effectiveOptionComputed: async it => {
           expect(it.desktopFileName).toBe("signal.desktop")
@@ -516,7 +515,7 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
       }
     ))
 
-  test("AppImage - syncDesktopName without flag keeps executableName", ({ expect }) =>
+  test("AppImage - desktopName drives installed filename (reverse-DNS)", ({ expect }) =>
     app(
       expect,
       {
@@ -526,7 +525,7 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
           productName: "Signal",
         },
         effectiveOptionComputed: async it => {
-          expect(it.desktopFileName).toBe("testapp.desktop")
+          expect(it.desktopFileName).toBe("com.example.Signal.desktop")
           return Promise.resolve(false)
         },
       },
@@ -538,7 +537,7 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
       }
     ))
 
-  test("AppImage - syncDesktopName true without desktopName falls back to executableName", ({ expect }) =>
+  test("AppImage - missing desktopName falls back to executableName", ({ expect }) =>
     app(
       expect,
       {
@@ -546,7 +545,6 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
         config: {
           toolsets,
           productName: "Signal",
-          linux: { syncDesktopName: true },
         },
         effectiveOptionComputed: async it => {
           expect(it.desktopFileName).toBe("testapp.desktop")
@@ -571,14 +569,13 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
       },
     }))
 
-  test("AppImage - syncDesktopName rejects path traversal in desktopName", ({ expect }) =>
+  test("AppImage - desktopName rejects path traversal", ({ expect }) =>
     appThrows(
       expect,
       {
         targets: appImageTarget,
         config: {
           toolsets,
-          linux: { syncDesktopName: true },
         },
       },
       {
@@ -590,14 +587,13 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
       err => expect(err.message).toContain("produces an invalid .desktop filename")
     ))
 
-  test("AppImage - syncDesktopName rejects absolute path in desktopName", ({ expect }) =>
+  test("AppImage - desktopName rejects absolute path", ({ expect }) =>
     appThrows(
       expect,
       {
         targets: appImageTarget,
         config: {
           toolsets,
-          linux: { syncDesktopName: true },
         },
       },
       {
@@ -609,14 +605,13 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
       err => expect(err.message).toContain("produces an invalid .desktop filename")
     ))
 
-  test("AppImage - syncDesktopName rejects backslash in desktopName", ({ expect }) =>
+  test("AppImage - desktopName rejects backslash", ({ expect }) =>
     appThrows(
       expect,
       {
         targets: appImageTarget,
         config: {
           toolsets,
-          linux: { syncDesktopName: true },
         },
       },
       {

@@ -4,6 +4,7 @@ import * as path from "path"
 import { FileAssociation } from "../../../options/FileAssociation.js"
 import { getAppImageTools } from "../../../toolsets/appimage.js"
 import { copyIcons, copyMimeTypes } from "./appLauncher.js"
+import { shellQuote } from "../launcherScript.js"
 import { appendBlockmap } from "../../differentialUpdateInfoBuilder.js"
 import { BlockMapDataHolder } from "builder-util-runtime"
 import { APP_RUN_ENTRYPOINT } from "./AppImageTarget.js"
@@ -14,6 +15,8 @@ interface Options {
   productName: string
   productFilename: string
   executableName: string
+  /** Arguments injected into the AppRun launcher (the .desktop Exec key stays `AppRun %U`). */
+  executableArgs?: ReadonlyArray<string>
   desktopEntry: string
   icons: IconInfo[]
   license?: string | null
@@ -164,7 +167,7 @@ export function validateCriticalPathString(str: string, fieldName: string): void
 async function writeAppLauncherAndRelatedFiles(opts: AppImageBuilderOptions): Promise<void> {
   const {
     stageDir,
-    options: { license, executableName, productFilename, productName, desktopEntry, desktopBaseName },
+    options: { license, executableName, executableArgs, productFilename, productName, desktopEntry, desktopBaseName },
   } = opts
 
   // executableName and productFilename are embedded directly into double-quoted bash strings
@@ -181,6 +184,7 @@ async function writeAppLauncherAndRelatedFiles(opts: AppImageBuilderOptions): Pr
   const templateConfig: AppRunScriptBase = {
     DesktopFileName: desktopFileName,
     ExecutableName: executableName,
+    ExecutableArgs: executableArgs,
     ProductName: productName,
     ProductFilename: productFilename,
     ResourceName: `appimagekit-${executableName}`,
@@ -231,6 +235,8 @@ export type AppRunScriptBase = {
   ProductName: string
   ResourceName: string
   MimeTypeFile?: string
+  /** Arguments injected into the launcher, so the .desktop Exec key stays `AppRun %U`. */
+  ExecutableArgs?: ReadonlyArray<string>
 }
 
 export type AppRunScriptWithEula = AppRunScriptBase & {
@@ -246,6 +252,9 @@ function hasEula(config: AppRunScript): config is AppRunScriptWithEula {
 
 export function generateAppRunScript(config: AppRunScript): string {
   const eulaEnabled = hasEula(config)
+  // executableArgs are baked into the launcher (single-quoted) rather than the .desktop Exec key,
+  // consistent with the other Linux targets. "$@" still forwards launch-time arguments.
+  const executableArgsLiteral = (config.ExecutableArgs ?? []).map(shellQuote).join(" ")
 
   return `#!/usr/bin/env bash
 set -e
@@ -277,6 +286,8 @@ export LD_LIBRARY_PATH="\${APPDIR}/usr/lib\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PAT
 export GSETTINGS_SCHEMA_DIR="\${APPDIR}/usr/share/glib-2.0/schemas\${GSETTINGS_SCHEMA_DIR:+:\${GSETTINGS_SCHEMA_DIR}}"
 
 BIN="$APPDIR/${config.ExecutableName}"
+# Configured executableArgs, applied ahead of any launch-time arguments.
+EXECUTABLE_ARGS=(${executableArgsLiteral})
 
 if [ -z "$APPIMAGE_EXIT_AFTER_INSTALL" ] ; then
   trap atexit EXIT
@@ -285,7 +296,7 @@ fi
 isEulaAccepted=1
 
 HAVE_NO_SANDBOX=0
-for arg in "\${args[@]}" ; do
+for arg in "\${EXECUTABLE_ARGS[@]}" "\${args[@]}" ; do
   if [ "$arg" = --no-sandbox ] ; then
     HAVE_NO_SANDBOX=1
     break
@@ -310,9 +321,9 @@ atexit()
 {
   if [ $isEulaAccepted == 1 ] ; then
     if [ $NUMBER_OF_ARGS -eq 0 ] ; then
-      exec "$BIN" "\${NO_SANDBOX[@]}"
+      exec "$BIN" "\${NO_SANDBOX[@]}" "\${EXECUTABLE_ARGS[@]}"
     else
-      exec "$BIN" "\${NO_SANDBOX[@]}" "\${args[@]}"
+      exec "$BIN" "\${NO_SANDBOX[@]}" "\${EXECUTABLE_ARGS[@]}" "\${args[@]}"
     fi
   fi
 }

@@ -2,7 +2,7 @@ import { createHash } from "crypto"
 import { readFile, writeFile } from "fs/promises"
 import * as path from "path"
 import * as zlib from "zlib"
-import { beforeEach, describe, expect, it } from "vitest"
+import { describe, it } from "vitest"
 import { buildBlockMap } from "app-builder-lib/src/targets/blockmap/blockmap.js"
 
 function sha512(data: Buffer): string {
@@ -20,15 +20,12 @@ function makeTestData(size: number, seed = 12345): Buffer {
   return buf
 }
 
-describe("buildBlockMap", { sequential: true }, () => {
-  let tmpDir: string
-  beforeEach(async context => {
-    tmpDir = await context.tmpDir.createTempDir()
-  })
-  it("file output mode: returns correct sha512 and size for small file", async () => {
+describe("buildBlockMap", () => {
+  it("file output mode: returns correct sha512 and size for small file", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
     const data = Buffer.from("hello world. ".repeat(1024))
-    const inFile = path.join(tmpDir, "test.bin")
-    const outFile = path.join(tmpDir, "test.blockmap")
+    const inFile = path.join(tmpDirPath, "test.bin")
+    const outFile = path.join(tmpDirPath, "test.blockmap")
     await writeFile(inFile, data)
 
     const result = await buildBlockMap(inFile, "gzip", outFile)
@@ -48,9 +45,10 @@ describe("buildBlockMap", { sequential: true }, () => {
     expect(json.files[0].checksums).toHaveLength(json.files[0].sizes.length)
   })
 
-  it("append mode: appended data is readable and sha512 covers full file", async () => {
+  it("append mode: appended data is readable and sha512 covers full file", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
     const data = Buffer.from("hello world. ".repeat(1024))
-    const inFile = path.join(tmpDir, "test.bin")
+    const inFile = path.join(tmpDirPath, "test.bin")
     await writeFile(inFile, data)
 
     const result = await buildBlockMap(inFile, "deflate")
@@ -72,10 +70,11 @@ describe("buildBlockMap", { sequential: true }, () => {
     expect(json.files[0].sizes.reduce((a: number, b: number) => a + b, 0)).toBe(data.length)
   })
 
-  it("chunk sizes sum to file size", async () => {
+  it("chunk sizes sum to file size", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
     const data = makeTestData(200_000)
-    const inFile = path.join(tmpDir, "big.bin")
-    const outFile = path.join(tmpDir, "big.blockmap")
+    const inFile = path.join(tmpDirPath, "big.bin")
+    const outFile = path.join(tmpDirPath, "big.blockmap")
     await writeFile(inFile, data)
 
     await buildBlockMap(inFile, "gzip", outFile)
@@ -86,10 +85,11 @@ describe("buildBlockMap", { sequential: true }, () => {
     expect(total).toBe(data.length)
   })
 
-  it("chunk sizes respect min/max boundaries", async () => {
+  it("chunk sizes respect min/max boundaries", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
     const data = makeTestData(500_000)
-    const inFile = path.join(tmpDir, "large.bin")
-    const outFile = path.join(tmpDir, "large.blockmap")
+    const inFile = path.join(tmpDirPath, "large.bin")
+    const outFile = path.join(tmpDirPath, "large.blockmap")
     await writeFile(inFile, data)
 
     await buildBlockMap(inFile, "gzip", outFile)
@@ -107,12 +107,13 @@ describe("buildBlockMap", { sequential: true }, () => {
     expect(sizes[sizes.length - 1]).toBeGreaterThan(0)
   })
 
-  it("identical data produces identical checksums", async () => {
+  it("identical data produces identical checksums", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
     const data = makeTestData(100_000)
-    const file1 = path.join(tmpDir, "a.bin")
-    const file2 = path.join(tmpDir, "b.bin")
-    const out1 = path.join(tmpDir, "a.blockmap")
-    const out2 = path.join(tmpDir, "b.blockmap")
+    const file1 = path.join(tmpDirPath, "a.bin")
+    const file2 = path.join(tmpDirPath, "b.bin")
+    const out1 = path.join(tmpDirPath, "a.blockmap")
+    const out2 = path.join(tmpDirPath, "b.blockmap")
     await Promise.all([writeFile(file1, data), writeFile(file2, data)])
 
     await Promise.all([buildBlockMap(file1, "gzip", out1), buildBlockMap(file2, "gzip", out2)])
@@ -123,7 +124,8 @@ describe("buildBlockMap", { sequential: true }, () => {
     expect(j1.files[0].sizes).toEqual(j2.files[0].sizes)
   })
 
-  it("chunk checksums match BLAKE2b-18 of chunk content", async () => {
+  it("chunk checksums match BLAKE2b-18 of chunk content", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
     const blake2bPath = require.resolve("@noble/hashes/blake2.js", {
       // Resolve relative to app-builder-lib's blockmap directory so we get the same
       // @noble/hashes instance that blockmap.ts uses (package-scoped installation).
@@ -131,8 +133,8 @@ describe("buildBlockMap", { sequential: true }, () => {
     })
     const { blake2b } = require(blake2bPath) as typeof import("@noble/hashes/blake2.js")
     const data = makeTestData(50_000)
-    const inFile = path.join(tmpDir, "checksum.bin")
-    const outFile = path.join(tmpDir, "checksum.blockmap")
+    const inFile = path.join(tmpDirPath, "checksum.bin")
+    const outFile = path.join(tmpDirPath, "checksum.blockmap")
     await writeFile(inFile, data)
 
     await buildBlockMap(inFile, "gzip", outFile)
@@ -150,13 +152,14 @@ describe("buildBlockMap", { sequential: true }, () => {
     }
   })
 
-  it("matches Go binary output: chunk boundaries for known test data", async () => {
+  it("matches Go binary output: chunk boundaries for known test data", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
     // Verified against app-builder binary: 200KB random data (LCG seed 12345)
     // produces specific chunk sizes with this Rabin configuration.
     // Run against the binary first if chunk boundaries change.
     const data = makeTestData(200_000)
-    const inFile = path.join(tmpDir, "boundary.bin")
-    const outFile = path.join(tmpDir, "boundary.blockmap")
+    const inFile = path.join(tmpDirPath, "boundary.bin")
+    const outFile = path.join(tmpDirPath, "boundary.blockmap")
     await writeFile(inFile, data)
 
     const result = await buildBlockMap(inFile, "gzip", outFile)
@@ -169,10 +172,11 @@ describe("buildBlockMap", { sequential: true }, () => {
     expect(json.files[0].sizes.length).toBeGreaterThan(5)
   })
 
-  it("file smaller than MIN is a single chunk", async () => {
+  it("file smaller than MIN is a single chunk", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
     const data = Buffer.allocUnsafe(4096).fill(0xab)
-    const inFile = path.join(tmpDir, "small.bin")
-    const outFile = path.join(tmpDir, "small.blockmap")
+    const inFile = path.join(tmpDirPath, "small.bin")
+    const outFile = path.join(tmpDirPath, "small.blockmap")
     await writeFile(inFile, data)
 
     await buildBlockMap(inFile, "gzip", outFile)
@@ -200,15 +204,12 @@ describe("buildBlockMap", { sequential: true }, () => {
 //   • sha512 in append mode — covers the appended compressed bytes, which
 //     differ between implementations for the same reason.
 
-describe("buildBlockMap — JS snapshots and binary golden-output", { sequential: true }, () => {
-  let tmpDir: string
-  beforeEach(async context => {
-    tmpDir = await context.tmpDir.createTempDir()
-  })
-  it("single-chunk file (< MIN): sizes, checksums and sha512 are snapshotted", async () => {
+describe("buildBlockMap — JS snapshots and binary golden-output", () => {
+  it("single-chunk file (< MIN): sizes, checksums and sha512 are snapshotted", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
     const data = Buffer.from("hello world. ".repeat(1024)) // 13 312 bytes < RABIN_MIN
-    const inFile = path.join(tmpDir, "single.bin")
-    const jsOut = path.join(tmpDir, "single-js.blockmap")
+    const inFile = path.join(tmpDirPath, "single.bin")
+    const jsOut = path.join(tmpDirPath, "single-js.blockmap")
     await writeFile(inFile, data)
 
     const jsResult = await buildBlockMap(inFile, "gzip", jsOut)
@@ -223,10 +224,11 @@ describe("buildBlockMap — JS snapshots and binary golden-output", { sequential
     expect(js.files[0].offset).toBe(0)
   })
 
-  it("multi-chunk random data (200 KB, seed 12345): sizes and checksums are snapshotted", async () => {
+  it("multi-chunk random data (200 KB, seed 12345): sizes and checksums are snapshotted", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
     const data = makeTestData(200_000)
-    const inFile = path.join(tmpDir, "multi200k.bin")
-    const jsOut = path.join(tmpDir, "multi200k-js.blockmap")
+    const inFile = path.join(tmpDirPath, "multi200k.bin")
+    const jsOut = path.join(tmpDirPath, "multi200k-js.blockmap")
     await writeFile(inFile, data)
 
     await buildBlockMap(inFile, "gzip", jsOut)
@@ -238,10 +240,11 @@ describe("buildBlockMap — JS snapshots and binary golden-output", { sequential
     expect(js.files[0].sizes.length).toBeGreaterThan(1)
   })
 
-  it("multi-chunk random data (500 KB, seed 99999): sizes and checksums are snapshotted", async () => {
+  it("multi-chunk random data (500 KB, seed 99999): sizes and checksums are snapshotted", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
     const data = makeTestData(500_000, 99999)
-    const inFile = path.join(tmpDir, "multi500k.bin")
-    const jsOut = path.join(tmpDir, "multi500k-js.blockmap")
+    const inFile = path.join(tmpDirPath, "multi500k.bin")
+    const jsOut = path.join(tmpDirPath, "multi500k-js.blockmap")
     await writeFile(inFile, data)
 
     await buildBlockMap(inFile, "gzip", jsOut)
@@ -251,10 +254,11 @@ describe("buildBlockMap — JS snapshots and binary golden-output", { sequential
     expect(js.files[0].checksums).toMatchSnapshot()
   })
 
-  it("uniformly-zero buffer (100 KB): every interior chunk hits MAX=32768", async () => {
+  it("uniformly-zero buffer (100 KB): every interior chunk hits MAX=32768", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
     const data = Buffer.alloc(100_000, 0x00)
-    const inFile = path.join(tmpDir, "zeros.bin")
-    const jsOut = path.join(tmpDir, "zeros-js.blockmap")
+    const inFile = path.join(tmpDirPath, "zeros.bin")
+    const jsOut = path.join(tmpDirPath, "zeros-js.blockmap")
     await writeFile(inFile, data)
 
     await buildBlockMap(inFile, "gzip", jsOut)
@@ -268,10 +272,11 @@ describe("buildBlockMap — JS snapshots and binary golden-output", { sequential
     }
   })
 
-  it("uniformly-filled buffer (150 KB, 0xFF): sizes and checksums are snapshotted", async () => {
+  it("uniformly-filled buffer (150 KB, 0xFF): sizes and checksums are snapshotted", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
     const data = Buffer.alloc(150_000, 0xff)
-    const inFile = path.join(tmpDir, "ff.bin")
-    const jsOut = path.join(tmpDir, "ff-js.blockmap")
+    const inFile = path.join(tmpDirPath, "ff.bin")
+    const jsOut = path.join(tmpDirPath, "ff-js.blockmap")
     await writeFile(inFile, data)
 
     await buildBlockMap(inFile, "gzip", jsOut)
@@ -281,9 +286,10 @@ describe("buildBlockMap — JS snapshots and binary golden-output", { sequential
     expect(js.files[0].checksums).toMatchSnapshot()
   })
 
-  it("append mode (deflate, 80 KB): embedded blockmap content is snapshotted", async () => {
+  it("append mode (deflate, 80 KB): embedded blockmap content is snapshotted", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
     const data = makeTestData(80_000, 42)
-    const jsFile = path.join(tmpDir, "append-js.bin")
+    const jsFile = path.join(tmpDirPath, "append-js.bin")
     await writeFile(jsFile, data)
 
     const jsMeta = await buildBlockMap(jsFile, "deflate")
@@ -298,10 +304,11 @@ describe("buildBlockMap — JS snapshots and binary golden-output", { sequential
     expect(jsMeta.sha512).toBe(sha512(jsFull))
   })
 
-  it("file-output sha512: returns SHA-512 of the original unmodified file", async () => {
+  it("file-output sha512: returns SHA-512 of the original unmodified file", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
     const data = makeTestData(300_000, 7777)
-    const inFile = path.join(tmpDir, "sha-check.bin")
-    const jsOut = path.join(tmpDir, "sha-check-js.blockmap")
+    const inFile = path.join(tmpDirPath, "sha-check.bin")
+    const jsOut = path.join(tmpDirPath, "sha-check-js.blockmap")
     await writeFile(inFile, data)
     const expected = sha512(data)
 
