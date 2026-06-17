@@ -340,12 +340,14 @@ describe("HSM validation errors", () => {
     expect(() => manager.computeSignToolArgs(config, true)).toThrow(/winCodeSign toolset 1\.x/)
   })
 
-  test("null toolset (legacy default) + HSM → throws toolset error", () => {
+  test("null toolset (modern default) + HSM → succeeds (resolves to newest bundle)", () => {
     const manager = makeHsmManager(undefined)
-    // null toolset behaves as legacy
+    // unset / null toolset now resolves to the newest bundle (modern), so HSM is supported.
     ;(manager as any).packager = { config: { toolsets: {} } }
     const config = makeTaskConfig({ options: hsmOptions })
-    expect(() => manager.computeSignToolArgs(config, true)).toThrow(/winCodeSign toolset 1\.x/)
+    const args = manager.computeSignToolArgs(config, true)
+    expect(args).toContain("/csp")
+    expect(args).toContain("/kc")
   })
 
   test("non-Windows (isWin=false) + HSM → throws Windows-only error", () => {
