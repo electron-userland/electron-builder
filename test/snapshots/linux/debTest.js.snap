@@ -36,6 +36,7 @@ exports[`deb > arm 2`] = `
   "/opt/Test App ßW/resources.pak",
   "/opt/Test App ßW/snapshot_blob.bin",
   "/opt/Test App ßW/testapp",
+  "/opt/Test App ßW/testapp-launcher",
   "/opt/Test App ßW/v8_context_snapshot.bin",
   "/opt/Test App ßW/vk_swiftshader_icd.json",
   "/usr/share/",
@@ -111,6 +112,7 @@ exports[`deb > arm 5`] = `
   "/opt/Test App ßW/resources.pak",
   "/opt/Test App ßW/snapshot_blob.bin",
   "/opt/Test App ßW/testapp",
+  "/opt/Test App ßW/testapp-launcher",
   "/opt/Test App ßW/v8_context_snapshot.bin",
   "/opt/Test App ßW/vk_swiftshader_icd.json",
   "/usr/share/",
@@ -183,6 +185,7 @@ exports[`deb > custom depends 2`] = `
   "/usr/",
   "/opt/Test App ßW/",
   "/opt/Test App ßW/Boo",
+  "/opt/Test App ßW/Boo-launcher",
   "/opt/Test App ßW/chrome-sandbox",
   "/opt/Test App ßW/chrome_100_percent.pak",
   "/opt/Test App ßW/chrome_200_percent.pak",
@@ -283,6 +286,7 @@ exports[`deb > deb 2`] = `
   "/opt/Test App ßW/resources.pak",
   "/opt/Test App ßW/snapshot_blob.bin",
   "/opt/Test App ßW/testapp",
+  "/opt/Test App ßW/testapp-launcher",
   "/opt/Test App ßW/v8_context_snapshot.bin",
   "/opt/Test App ßW/vk_swiftshader_icd.json",
   "/usr/share/",
@@ -369,6 +373,7 @@ exports[`deb > deb file associations 2`] = `
   "/opt/Test App ßW/resources.pak",
   "/opt/Test App ßW/snapshot_blob.bin",
   "/opt/Test App ßW/testapp",
+  "/opt/Test App ßW/testapp-launcher",
   "/opt/Test App ßW/v8_context_snapshot.bin",
   "/opt/Test App ßW/vk_swiftshader_icd.json",
   "/usr/share/",
@@ -455,6 +460,7 @@ exports[`deb > executable path in postinst script 2`] = `
   "/usr/",
   "/opt/foo/",
   "/opt/foo/Boo",
+  "/opt/foo/Boo-launcher",
   "/opt/foo/chrome-sandbox",
   "/opt/foo/chrome_100_percent.pak",
   "/opt/foo/chrome_200_percent.pak",
@@ -601,6 +607,7 @@ exports[`deb > executable path in postrm script 2`] = `
   "/usr/",
   "/opt/foo/",
   "/opt/foo/Boo",
+  "/opt/foo/Boo-launcher",
   "/opt/foo/chrome-sandbox",
   "/opt/foo/chrome_100_percent.pak",
   "/opt/foo/chrome_200_percent.pak",
@@ -702,7 +709,7 @@ fi"
 exports[`deb > no quotes for safe exec name 1`] = `
 "[Desktop Entry]
 Name=foo
-Exec=/opt/foo/Boo %U
+Exec=/opt/foo/Boo-launcher %U
 Terminal=false
 Type=Application
 Icon=Boo
@@ -730,6 +737,7 @@ exports[`deb > no quotes for safe exec name 3`] = `
   "/usr/",
   "/opt/foo/",
   "/opt/foo/Boo",
+  "/opt/foo/Boo-launcher",
   "/opt/foo/chrome-sandbox",
   "/opt/foo/chrome_100_percent.pak",
   "/opt/foo/chrome_200_percent.pak",
@@ -816,6 +824,7 @@ exports[`deb > top-level exec name 2`] = `
   "/usr/",
   "/opt/foo/",
   "/opt/foo/Boo",
+  "/opt/foo/Boo-launcher",
   "/opt/foo/chrome-sandbox",
   "/opt/foo/chrome_100_percent.pak",
   "/opt/foo/chrome_200_percent.pak",

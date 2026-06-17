@@ -7,6 +7,7 @@ import { LinuxPackager } from "../../linuxPackager.js"
 import { FlatpakOptions } from "../../options/linuxOptions.js"
 import { getNotLocalizedLicenseFile } from "../../util/license.js"
 import { LinuxTargetHelper } from "./LinuxTargetHelper.js"
+import { shellQuote } from "./launcherScript.js"
 import { createStageDir, StageDir } from "../targetUtil.js"
 import { Nullish } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
@@ -158,7 +159,9 @@ const flatpakBuilderDefaults: Omit<FlatpakManifest, "id" | "command"> = {
 }
 
 function getElectronWrapperScript(executableName: string, executableArgs: string[] | Nullish, useWaylandFlags: boolean): string {
-  const stringifiedExecutableArgs = executableArgs?.join(" ") || ""
+  // Single-quote each arg so embedded characters (spaces, =, quotes) are passed literally,
+  // consistent with the other Linux launcher entrypoints.
+  const stringifiedExecutableArgs = (executableArgs ?? []).map(shellQuote).join(" ")
   if (useWaylandFlags) {
     return `#!/bin/sh
 

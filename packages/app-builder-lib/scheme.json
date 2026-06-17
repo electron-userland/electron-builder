@@ -2463,11 +2463,6 @@
           "$ref": "#/definitions/ReleaseInfo",
           "description": "The release info. Intended for command line usage:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```"
         },
-        "syncDesktopName": {
-          "default": false,
-          "description": "When `true`, the installed `.desktop` filename is derived from `desktopName` in `package.json`\n(minus the `.desktop` suffix) so that it matches `StartupWMClass` and Electron's `app_id`.\nFalls back to `executableName` when `desktopName` is absent.",
-          "type": "boolean"
-        },
         "synopsis": {
           "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
           "type": [

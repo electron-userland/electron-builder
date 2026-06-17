@@ -694,13 +694,13 @@ export interface ToolsetConfig {
    * Available versions:
    * | Version | Notes |
    * |---------|-------|
-   * | `"1.1.0"` | Current default |
+   * | `"1.2.1"` | Current default |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/icons/CHANGELOG.md
    *
-   * @default "1.1.0"
+   * @default "1.2.1"
    */
-  readonly icons?: "1.1.0" | ToolsetCustom | null
+  readonly icons?: "1.2.1" | ToolsetCustom | null
 }
 
 /**

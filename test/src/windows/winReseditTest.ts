@@ -2,7 +2,7 @@ import { ResourceEditOptions, editWindowsResources } from "app-builder-lib/inter
 import * as fs from "fs/promises"
 import path from "path"
 import { NtExecutable, NtExecutableResource, Resource } from "resedit"
-import { beforeEach } from "vitest"
+import { TmpDir } from "temp-file"
 
 const FIXTURE_ICO = path.join(__dirname, "../../fixtures/test-app/build/icon.ico")
 
@@ -53,15 +53,10 @@ function makePeBuffer(opts: { withVersionInfo?: boolean; langs?: number[]; withM
   return Buffer.from(exe.generate())
 }
 
-describe("editWindowsResources", { sequential: true }, () => {
-  let tmpDir: string
-
-  beforeEach(async context => {
-    tmpDir = await context.tmpDir.createTempDir()
-  })
-
-  async function writePe(buf: Buffer): Promise<string> {
-    const file = path.join(tmpDir, `test-${Date.now()}.exe`)
+describe("editWindowsResources", () => {
+  async function writePe(tmpDir: TmpDir, buf: Buffer): Promise<string> {
+    const dir = await tmpDir.createTempDir()
+    const file = path.join(dir, `test-${Date.now()}.exe`)
     await fs.writeFile(file, buf)
     return file
   }
@@ -72,73 +67,73 @@ describe("editWindowsResources", { sequential: true }, () => {
     productVersion: "2.0.0.0",
   }
 
-  test("updates version strings on exe with existing version info", async ({ expect }) => {
-    const file = await writePe(makePeBuffer())
+  test("updates version strings on exe with existing version info", async ({ expect, tmpDir }) => {
+    const file = await writePe(tmpDir, makePeBuffer())
     await editWindowsResources({ ...baseOpts, file })
     expect(readPeSnapshot(await fs.readFile(file))).toMatchSnapshot()
   })
 
-  test("creates version info from scratch when none exists (mirrors rcedit)", async ({ expect }) => {
-    const file = await writePe(makePeBuffer({ withVersionInfo: false }))
+  test("creates version info from scratch when none exists (mirrors rcedit)", async ({ expect, tmpDir }) => {
+    const file = await writePe(tmpDir, makePeBuffer({ withVersionInfo: false }))
     await editWindowsResources({ ...baseOpts, file })
     expect(readPeSnapshot(await fs.readFile(file))).toMatchSnapshot()
   })
 
-  test("uses first language when multiple exist (mirrors rcedit)", async ({ expect }) => {
-    const file = await writePe(makePeBuffer({ langs: [0x0409, 0x0407] }))
+  test("uses first language when multiple exist (mirrors rcedit)", async ({ expect, tmpDir }) => {
+    const file = await writePe(tmpDir, makePeBuffer({ langs: [0x0409, 0x0407] }))
     await expect(editWindowsResources({ ...baseOpts, file })).resolves.toBeUndefined()
     expect(readPeSnapshot(await fs.readFile(file))).toMatchSnapshot()
   })
 
-  test("warns and skips when RT_MANIFEST is missing", async ({ expect }) => {
-    const file = await writePe(makePeBuffer({ withManifest: false }))
+  test("warns and skips when RT_MANIFEST is missing", async ({ expect, tmpDir }) => {
+    const file = await writePe(tmpDir, makePeBuffer({ withManifest: false }))
     await expect(editWindowsResources({ ...baseOpts, file, requestedExecutionLevel: "requireAdministrator" })).resolves.toBeUndefined()
     expect(readPeSnapshot(await fs.readFile(file))).toMatchSnapshot()
   })
 
-  test("warns when requestedExecutionLevel node is absent from manifest xml", async ({ expect }) => {
+  test("warns when requestedExecutionLevel node is absent from manifest xml", async ({ expect, tmpDir }) => {
     const noLevelXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0"></assembly>`
-    const file = await writePe(makePeBuffer({ withManifest: true, manifestXml: noLevelXml }))
+    const file = await writePe(tmpDir, makePeBuffer({ withManifest: true, manifestXml: noLevelXml }))
     await editWindowsResources({ ...baseOpts, file, requestedExecutionLevel: "requireAdministrator" })
     expect(readPeSnapshot(await fs.readFile(file))).toMatchSnapshot()
   })
 
-  test("patches requestedExecutionLevel in manifest", async ({ expect }) => {
-    const file = await writePe(makePeBuffer({ withManifest: true }))
+  test("patches requestedExecutionLevel in manifest", async ({ expect, tmpDir }) => {
+    const file = await writePe(tmpDir, makePeBuffer({ withManifest: true }))
     await editWindowsResources({ ...baseOpts, file, requestedExecutionLevel: "requireAdministrator" })
     expect(readPeSnapshot(await fs.readFile(file))).toMatchSnapshot()
   })
 
-  test("does not touch manifest when requestedExecutionLevel is asInvoker", async ({ expect }) => {
-    const file = await writePe(makePeBuffer({ withManifest: true }))
+  test("does not touch manifest when requestedExecutionLevel is asInvoker", async ({ expect, tmpDir }) => {
+    const file = await writePe(tmpDir, makePeBuffer({ withManifest: true }))
     await editWindowsResources({ ...baseOpts, file, requestedExecutionLevel: "asInvoker" })
     expect(readPeSnapshot(await fs.readFile(file))).toMatchSnapshot()
   })
 
-  test("does not touch manifest when requestedExecutionLevel is omitted", async ({ expect }) => {
-    const file = await writePe(makePeBuffer({ withManifest: true }))
+  test("does not touch manifest when requestedExecutionLevel is omitted", async ({ expect, tmpDir }) => {
+    const file = await writePe(tmpDir, makePeBuffer({ withManifest: true }))
     await editWindowsResources({ ...baseOpts, file })
     expect(readPeSnapshot(await fs.readFile(file))).toMatchSnapshot()
   })
 
-  test("adds icon resources when iconPath is provided", async ({ expect }) => {
-    const file = await writePe(makePeBuffer())
+  test("adds icon resources when iconPath is provided", async ({ expect, tmpDir }) => {
+    const file = await writePe(tmpDir, makePeBuffer())
     await editWindowsResources({ ...baseOpts, file, iconPath: FIXTURE_ICO })
     const res = NtExecutableResource.from(NtExecutable.from(await fs.readFile(file)))
     expect(res.entries.some(e => e.type === 3)).toBe(true)
     expect(res.entries.some(e => e.type === 14)).toBe(true)
   })
 
-  test("does not add icon resources when iconPath is omitted", async ({ expect }) => {
-    const file = await writePe(makePeBuffer())
+  test("does not add icon resources when iconPath is omitted", async ({ expect, tmpDir }) => {
+    const file = await writePe(tmpDir, makePeBuffer())
     await editWindowsResources({ ...baseOpts, file })
     const res = NtExecutableResource.from(NtExecutable.from(await fs.readFile(file)))
     expect(res.entries.some(e => e.type === 3)).toBe(false)
     expect(res.entries.some(e => e.type === 14)).toBe(false)
   })
 
-  test("replaces existing icon when iconPath is provided", async ({ expect }) => {
-    const file = await writePe(makePeBuffer())
+  test("replaces existing icon when iconPath is provided", async ({ expect, tmpDir }) => {
+    const file = await writePe(tmpDir, makePeBuffer())
     await editWindowsResources({ ...baseOpts, file, iconPath: FIXTURE_ICO })
     const resAfterFirst = NtExecutableResource.from(NtExecutable.from(await fs.readFile(file)))
     const groupCountAfterFirst = resAfterFirst.entries.filter(e => e.type === 14).length
