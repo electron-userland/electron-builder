@@ -1,7 +1,7 @@
 import { deflateSync } from "zlib"
 import { mkdir, readFile, writeFile } from "fs/promises"
 import * as path from "path"
-import { describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it } from "vitest"
 import { buildSourceCandidates, convertIcon, getPngSize } from "app-builder-lib/internal"
 
 const FIXTURES = path.join(__dirname, "../fixtures")
@@ -89,549 +89,554 @@ function parseIcns(data: Buffer): Map<string, Buffer> {
   return entries
 }
 
-// ─── ICNS output ─────────────────────────────────────────────────────────────
+describe("icon converter", { sequential: true }, () => {
+  // ─── ICNS output ─────────────────────────────────────────────────────────────
 
-describe("convertIcon – ICNS output", () => {
-  it("converts a 512×512 PNG to a valid ICNS file", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const srcFile = path.join(tmpDirPath, "icon.png")
-    await writePng(512, srcFile)
-    const outDir = path.join(tmpDirPath, "out")
-
-    const result = await convertIcon({ sources: [srcFile], fallbackSources: [], roots: [tmpDirPath], format: "icns", outDir, iconsToolset: null, resourcesDir: tmpDirPath })
-
-    expect(result.error).toBeUndefined()
-    expect(result.icons).toHaveLength(1)
-    const data = await readFile(result.icons[0].file)
-
-    expect(data.toString("ascii", 0, 4)).toBe("icns")
-    expect(data.readUInt32BE(4)).toBe(data.length)
-
-    // Verify the ICNS has multiple entries (png2icons generates all standard sizes)
-    const entries = parseIcns(data)
-    expect(entries.size).toBeGreaterThan(0)
-  })
-
-  it("converts icon directory with named-size PNGs to ICNS", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const iconsDir = path.join(TEST_APP_ICONS, "icons")
-    const outDir = path.join(tmpDirPath, "out")
-
-    const result = await convertIcon({ sources: [iconsDir], fallbackSources: [], roots: [], format: "icns", outDir, iconsToolset: null, resourcesDir: tmpDirPath })
-
-    expect(result.error).toBeUndefined()
-    expect(result.icons).toHaveLength(1)
-    const data = await readFile(result.icons[0].file)
-    expect(data.toString("ascii", 0, 4)).toBe("icns")
-    expect(data.readUInt32BE(4)).toBe(data.length)
-  })
-
-  it("rejects a source PNG smaller than 512px with an error", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const srcFile = path.join(tmpDirPath, "small.png")
-    await writePng(128, srcFile)
-    const outDir = path.join(tmpDirPath, "out")
-
-    await expect(
-      convertIcon({ sources: [srcFile], fallbackSources: [], roots: [tmpDirPath], format: "icns", outDir, iconsToolset: null, resourcesDir: tmpDirPath })
-    ).rejects.toThrow(/must be at least 512/)
-  })
-
-  it("returns isFallback=true and uses fallback sources when primary is missing", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const fallbackFile = path.join(tmpDirPath, "fallback.png")
-    await writePng(512, fallbackFile)
-    const outDir = path.join(tmpDirPath, "out")
-
-    const result = await convertIcon({
-      sources: ["nonexistent.png"],
-      fallbackSources: [fallbackFile],
-      roots: [tmpDirPath],
-      format: "icns",
-      outDir,
-      iconsToolset: null,
-      resourcesDir: tmpDirPath,
+  describe("ICNS output", { sequential: true }, () => {
+    let tmpDir: string
+    beforeEach(async context => {
+      tmpDir = await context.tmpDir.createTempDir()
     })
 
-    expect(result.error).toBeUndefined()
-    expect(result.isFallback).toBe(true)
-    expect(result.icons.length).toBeGreaterThan(0)
-  })
-
-  it("returns an existing ICNS file directly without conversion", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const icnsFile = path.join(TEST_APP_ICONS, "icon.icns")
-    const outDir = path.join(tmpDirPath, "out")
-
-    const result = await convertIcon({ sources: [icnsFile], fallbackSources: [], roots: [], format: "icns", outDir, iconsToolset: null, resourcesDir: tmpDirPath })
-
-    expect(result.error).toBeUndefined()
-    expect(result.icons).toHaveLength(1)
-    expect(result.icons[0].file).toBe(icnsFile)
-    expect(result.icons[0].size).toBe(0)
-  })
-
-  it("converts SVG source to ICNS", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const svgFile = path.join(tmpDirPath, "icon.svg")
-    await writeFile(svgFile, '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024"><rect width="1024" height="1024" fill="#6496C8"/></svg>')
-    const outDir = path.join(tmpDirPath, "out")
-
-    const result = await convertIcon({ sources: [svgFile], fallbackSources: [], roots: [], format: "icns", outDir, iconsToolset: null, resourcesDir: tmpDirPath })
-
-    expect(result.error).toBeUndefined()
-    expect(result.icons).toHaveLength(1)
-    const data = await readFile(result.icons[0].file)
-    expect(data.toString("ascii", 0, 4)).toBe("icns")
-  })
-})
-
-// ─── ICO output ───────────────────────────────────────────────────────────────
-
-describe("convertIcon – ICO output", () => {
-  it("converts a 512×512 PNG to a valid ICO file", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const srcFile = path.join(tmpDirPath, "icon.png")
-    await writePng(512, srcFile)
-    const outDir = path.join(tmpDirPath, "out")
-
-    const result = await convertIcon({ sources: [srcFile], fallbackSources: [], roots: [tmpDirPath], format: "ico", outDir, iconsToolset: null, resourcesDir: tmpDirPath })
-
-    expect(result.error).toBeUndefined()
-    expect(result.icons).toHaveLength(1)
-    const data = await readFile(result.icons[0].file)
-
-    // ICO magic
-    expect(data[0]).toBe(0)
-    expect(data[1]).toBe(0)
-    expect(data[2]).toBe(1)
-    expect(data[3]).toBe(0)
-    // png2icons produces a multi-image ICO — at least one entry
-    expect(data.readUInt16LE(4)).toBeGreaterThan(0)
-  })
-
-  it("output ICO has max dimension of 256×256 regardless of source size", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const srcFile = path.join(tmpDirPath, "icon.png")
-    await writePng(1024, srcFile)
-    const outDir = path.join(tmpDirPath, "out")
-
-    const result = await convertIcon({ sources: [srcFile], fallbackSources: [], roots: [tmpDirPath], format: "ico", outDir, iconsToolset: null, resourcesDir: tmpDirPath })
-
-    expect(result.error).toBeUndefined()
-    // size is read back from ICO header; png2icons caps at 256
-    expect(result.icons[0].size).toBeLessThanOrEqual(256)
-  })
-
-  it("rejects source smaller than 256px", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const srcFile = path.join(tmpDirPath, "tiny.png")
-    await writePng(64, srcFile)
-    const outDir = path.join(tmpDirPath, "out")
-
-    await expect(
-      convertIcon({ sources: [srcFile], fallbackSources: [], roots: [tmpDirPath], format: "ico", outDir, iconsToolset: null, resourcesDir: tmpDirPath })
-    ).rejects.toThrow(/must be at least 256/)
-  })
-
-  it("returns an existing ICO file directly and parses its max dimension", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const icoFile = path.join(TEST_APP_ICONS, "icon.ico")
-    const outDir = path.join(tmpDirPath, "out")
-
-    const result = await convertIcon({ sources: [icoFile], fallbackSources: [], roots: [], format: "ico", outDir, iconsToolset: null, resourcesDir: tmpDirPath })
-
-    expect(result.error).toBeUndefined()
-    expect(result.icons).toHaveLength(1)
-    expect(result.icons[0].file).toBe(icoFile)
-    expect(result.icons[0].size).toBeGreaterThanOrEqual(256)
-  })
-
-  it("rejects an ICO file whose largest image is below 256px", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const tooSmallIco = path.join(TEST_APP_ICONS, "incorrect.ico")
-    const outDir = path.join(tmpDirPath, "out")
-
-    const err = await convertIcon({ sources: [tooSmallIco], fallbackSources: [], roots: [], format: "ico", outDir, iconsToolset: null, resourcesDir: tmpDirPath }).catch(e => e)
-    expect(err).toBeInstanceOf(Error)
-    expect((err as NodeJS.ErrnoException).code).toBe("ERR_ICON_TOO_SMALL")
-  })
-
-  it("rejects a file with an invalid ICO magic with ERR_ICON_UNKNOWN_FORMAT", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const badIco = path.join(tmpDirPath, "bad.ico")
-    await writeFile(badIco, makePng(256)) // PNG magic, not ICO magic
-    const outDir = path.join(tmpDirPath, "out")
-
-    const err = await convertIcon({ sources: [badIco], fallbackSources: [], roots: [], format: "ico", outDir, iconsToolset: null, resourcesDir: tmpDirPath }).catch(e => e)
-    expect(err).toBeInstanceOf(Error)
-    expect((err as NodeJS.ErrnoException).code).toBe("ERR_ICON_UNKNOWN_FORMAT")
-  })
-
-  it("converts SVG source to ICO", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const svgFile = path.join(tmpDirPath, "icon.svg")
-    await writeFile(svgFile, '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024"><rect width="1024" height="1024" fill="#6496C8"/></svg>')
-    const outDir = path.join(tmpDirPath, "out")
-
-    const result = await convertIcon({ sources: [svgFile], fallbackSources: [], roots: [], format: "ico", outDir, iconsToolset: null, resourcesDir: tmpDirPath })
-
-    expect(result.error).toBeUndefined()
-    expect(result.icons).toHaveLength(1)
-    const data = await readFile(result.icons[0].file)
-    expect(data[0]).toBe(0)
-    expect(data[2]).toBe(1)
-  })
-})
-
-// ─── set output (Linux) ───────────────────────────────────────────────────────
-
-describe("convertIcon – set output (Linux)", () => {
-  it("returns source PNG directly for set format (matches Go behavior)", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const srcFile = path.join(tmpDirPath, "icon.png")
-    await writePng(512, srcFile)
-    const outDir = path.join(tmpDirPath, "out")
-
-    const result = await convertIcon({ sources: [srcFile], fallbackSources: [], roots: [tmpDirPath], format: "set", outDir, iconsToolset: null, resourcesDir: tmpDirPath })
-
-    expect(result.error).toBeUndefined()
-    expect(result.icons).toHaveLength(1)
-    expect(result.icons[0].file).toBe(srcFile)
-    expect(result.icons[0].size).toBe(512)
-  })
-
-  it("uses pre-existing sized PNGs from a directory", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const iconsDir = path.join(TEST_APP_ICONS, "icons")
-    const outDir = path.join(tmpDirPath, "out")
-
-    const result = await convertIcon({ sources: [iconsDir], fallbackSources: [], roots: [], format: "set", outDir, iconsToolset: null, resourcesDir: tmpDirPath })
-
-    expect(result.error).toBeUndefined()
-    expect(result.icons.length).toBeGreaterThan(0)
-    for (const icon of result.icons) {
-      expect(icon.size).toBeGreaterThan(0)
-    }
-    const sizes = result.icons.map(i => i.size)
-    expect(sizes).toContain(256)
-    expect(sizes).toContain(512)
-  })
-
-  it("returns an SVG source as-is for set format with size 1024", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const svgFile = path.join(tmpDirPath, "icon.svg")
-    await writeFile(svgFile, '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024"><rect width="1024" height="1024"/></svg>')
-    const outDir = path.join(tmpDirPath, "out")
-
-    const result = await convertIcon({ sources: [svgFile], fallbackSources: [], roots: [], format: "set", outDir, iconsToolset: null, resourcesDir: tmpDirPath })
-
-    expect(result.error).toBeUndefined()
-    expect(result.icons).toHaveLength(1)
-    expect(result.icons[0].file).toBe(svgFile)
-    expect(result.icons[0].size).toBe(1024)
-  })
-
-  it("converts ICNS source to a set of sized PNGs named icon_NxN.png", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const icnsFile = path.join(TEST_APP_ICONS, "icon.icns")
-    const outDir = path.join(tmpDirPath, "out")
-
-    const result = await convertIcon({ sources: [icnsFile], fallbackSources: [], roots: [], format: "set", outDir, iconsToolset: null, resourcesDir: tmpDirPath })
-
-    expect(result.error).toBeUndefined()
-    expect(result.icons.length).toBeGreaterThan(1)
-    for (const icon of result.icons) {
-      expect(icon.size).toBeGreaterThan(0)
-      expect(path.basename(icon.file)).toMatch(/^icon_\d+x\d+\.png$/)
-    }
-    // Icons must be sorted smallest-first
-    const sizes = result.icons.map(i => i.size)
-    for (let i = 1; i < sizes.length; i++) {
-      expect(sizes[i]).toBeGreaterThanOrEqual(sizes[i - 1])
-    }
-  })
-
-  it("generates a set from a single PNG with standard sizes", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    // Use the directory fallback path (icon.png in a directory)
-    const iconsDir = path.join(tmpDirPath, "icons")
-    await mkdir(iconsDir, { recursive: true })
-    await writePng(512, path.join(iconsDir, "icon.png"))
-    const outDir = path.join(tmpDirPath, "out")
-
-    const result = await convertIcon({ sources: [iconsDir], fallbackSources: [], roots: [], format: "set", outDir, iconsToolset: null, resourcesDir: tmpDirPath })
-
-    expect(result.error).toBeUndefined()
-    expect(result.icons.length).toBeGreaterThan(1)
-    // All output files should be named icon_NxN.png
-    for (const icon of result.icons) {
-      expect(path.basename(icon.file)).toMatch(/^icon_\d+x\d+\.png$/)
-    }
-    // Should include 16px through at least 256px
-    const sizes = result.icons.map(i => i.size)
-    expect(sizes).toContain(16)
-    expect(sizes).toContain(256)
-  })
-})
-
-// ─── File resolution ──────────────────────────────────────────────────────────
-
-describe("convertIcon – file resolution", () => {
-  it("resolves icon by name from roots directory", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const buildDir = path.join(tmpDirPath, "build")
-    await mkdir(buildDir, { recursive: true })
-    await writePng(512, path.join(buildDir, "icon.png"))
-    const outDir = path.join(tmpDirPath, "out")
-
-    const result = await convertIcon({ sources: ["icon"], fallbackSources: [], roots: [buildDir], format: "icns", outDir, iconsToolset: null, resourcesDir: tmpDirPath })
-
-    expect(result.error).toBeUndefined()
-    expect(result.icons.length).toBeGreaterThan(0)
-  })
-
-  it("auto-discovers icon.svg from build dir when no extension specified", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const buildDir = path.join(tmpDirPath, "build")
-    await mkdir(buildDir, { recursive: true })
-    await writeFile(path.join(buildDir, "icon.svg"), '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024"><rect width="1024" height="1024" fill="#6496C8"/></svg>')
-    const outDir = path.join(tmpDirPath, "out")
-
-    // Source has no extension — should fall through to icon.svg candidate
-    const result = await convertIcon({ sources: ["icon"], fallbackSources: [], roots: [buildDir], format: "icns", outDir, iconsToolset: null, resourcesDir: tmpDirPath })
-
-    expect(result.error).toBeUndefined()
-    expect(result.icons.length).toBeGreaterThan(0)
-    const data = await readFile(result.icons[0].file)
-    expect(data.toString("ascii", 0, 4)).toBe("icns")
-  })
-
-  it("returns empty icons when no source found and no fallback", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const outDir = path.join(tmpDirPath, "out")
-    const result = await convertIcon({ sources: [], fallbackSources: [], roots: [tmpDirPath], format: "icns", outDir, iconsToolset: null, resourcesDir: tmpDirPath })
-    expect(result.icons).toHaveLength(0)
-  })
-})
-
-// ─── Directory filename filtering ─────────────────────────────────────────────
-
-describe("convertIcon – collectIconsFromDir filename filtering", () => {
-  it("only picks up files with a pure-digit basename (anchored regex)", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const iconsDir = path.join(tmpDirPath, "icons")
-    await mkdir(iconsDir, { recursive: true })
-
-    await writePng(512, path.join(iconsDir, "512.png"))
-    await writePng(256, path.join(iconsDir, "256x256.png"))
-    await writePng(128, path.join(iconsDir, "app2.png")) // invalid
-    await writePng(64, path.join(iconsDir, "icon-v2.png")) // invalid
-    await writePng(32, path.join(iconsDir, "512backup.png")) // invalid
-
-    const outDir = path.join(tmpDirPath, "out")
-    const result = await convertIcon({ sources: [iconsDir], fallbackSources: [], roots: [], format: "set", outDir, iconsToolset: null, resourcesDir: tmpDirPath })
-
-    expect(result.error).toBeUndefined()
-    const sizes = result.icons.map(i => i.size)
-    expect(sizes).toContain(512)
-    expect(sizes).toContain(256)
-    expect(result.icons).toHaveLength(2)
-  })
-
-  it("ignores icon.png fallback when numbered PNGs exist", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const iconsDir = path.join(tmpDirPath, "icons2")
-    await mkdir(iconsDir, { recursive: true })
-
-    await writePng(512, path.join(iconsDir, "512.png"))
-    await writePng(256, path.join(iconsDir, "icon.png")) // fallback — ignored when numbered PNGs found
-    await writeFile(path.join(iconsDir, "README.txt"), "not an image")
-
-    const outDir = path.join(tmpDirPath, "out")
-    const result = await convertIcon({ sources: [iconsDir], fallbackSources: [], roots: [], format: "set", outDir, iconsToolset: null, resourcesDir: tmpDirPath })
-
-    expect(result.error).toBeUndefined()
-    const sizes = result.icons.map(i => i.size)
-    expect(sizes).toContain(512)
-    expect(sizes).not.toContain(256)
-  })
-
-  it("returns empty result for a directory with no icons and no fallback", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const emptyDir = path.join(tmpDirPath, "empty-icons")
-    await mkdir(emptyDir, { recursive: true })
-    await writeFile(path.join(emptyDir, "README.txt"), "no icons here")
-    const outDir = path.join(tmpDirPath, "out")
-
-    const result = await convertIcon({ sources: [emptyDir], fallbackSources: [], roots: [], format: "set", outDir, iconsToolset: null, resourcesDir: tmpDirPath })
-
-    expect(result.error).toBeUndefined()
-    expect(result.icons).toHaveLength(0)
-  })
-})
-
-// ─── buildSourceCandidates unit tests ────────────────────────────────────────
-
-describe("buildSourceCandidates", () => {
-  it("returns source unchanged when it already has the target format extension", () => {
-    const candidates = buildSourceCandidates(["icon.icns"], "icns")
-    expect(candidates[0]).toBe("icon.icns")
-    // Should not duplicate the source with extra extensions
-    const icnsCount = candidates.filter(c => c === "icon.icns").length
-    expect(icnsCount).toBe(1)
-  })
-
-  it("expands a bare name into format-specific and fallback candidates for icns", () => {
-    const candidates = buildSourceCandidates(["icon"], "icns")
-    expect(candidates).toContain("icon.icns")
-    expect(candidates).toContain("icon.png")
-    expect(candidates).toContain("icon.svg")
-    // No ico fallback when format is icns
-    expect(candidates).not.toContain("icon.ico")
-  })
-
-  it("expands a bare name into format-specific and fallback candidates for ico", () => {
-    const candidates = buildSourceCandidates(["icon"], "ico")
-    expect(candidates).toContain("icon.ico")
-    expect(candidates).toContain("icon.png")
-    expect(candidates).toContain("icon.icns")
-  })
-
-  it("does not add a .set extension for set format", () => {
-    const candidates = buildSourceCandidates(["icon"], "set")
-    expect(candidates.some(c => c.endsWith(".set"))).toBe(false)
-    expect(candidates).toContain("icon.png")
-    expect(candidates).toContain("icon.svg")
-  })
-
-  it("always appends fallback directory candidates icons and icon", () => {
-    const candidates = buildSourceCandidates([], "icns")
-    expect(candidates).toContain("icons")
-    expect(candidates).toContain("icon")
-  })
-
-  it("preserves absolute paths with extension unchanged", () => {
-    const abs = "/abs/path/icon.png"
-    const candidates = buildSourceCandidates([abs], "ico")
-    expect(candidates).toContain(abs)
-  })
-
-  it("returns no duplicates when source matches a fallback name", () => {
-    const candidates = buildSourceCandidates(["icon.png"], "set")
-    const seen = new Set<string>()
-    for (const c of candidates) {
-      expect(seen.has(c)).toBe(false)
-      seen.add(c)
-    }
-  })
-})
-
-// ─── getPngSize unit tests ────────────────────────────────────────────────────
-
-describe("getPngSize", () => {
-  it("reads correct dimensions from a well-formed PNG", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const file = path.join(tmpDirPath, "test.png")
-    await writePng(128, file)
-    const { width, height } = await getPngSize(file)
-    expect(width).toBe(128)
-    expect(height).toBe(128)
-  })
-
-  it("returns {0,0} for a file shorter than 24 bytes", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const file = path.join(tmpDirPath, "short.png")
-    await writeFile(file, Buffer.alloc(10))
-    const { width, height } = await getPngSize(file)
-    expect(width).toBe(0)
-    expect(height).toBe(0)
-  })
-
-  it("returns {0,0} for a non-PNG file with enough bytes", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const file = path.join(tmpDirPath, "fake.png")
-    await writeFile(file, Buffer.alloc(24, 0xff)) // no PNG signature
-    // width/height at bytes 16-23 will be all 0xFF — non-zero but invalid
-    const { width, height } = await getPngSize(file)
-    // We just verify the function returns a numeric pair without throwing
-    expect(typeof width).toBe("number")
-    expect(typeof height).toBe("number")
-  })
-})
-
-// ─── convertIcon edge cases ───────────────────────────────────────────────────
-
-describe("convertIcon – edge cases", () => {
-  it("resolves source by absolute path, ignoring roots", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const srcFile = path.join(tmpDirPath, "abs.png")
-    await writePng(512, srcFile)
-    const outDir = path.join(tmpDirPath, "out")
-
-    // Pass absolute path — resolveSourceFile should skip root joining
-    const result = await convertIcon({ sources: [srcFile], fallbackSources: [], roots: ["/nonexistent"], format: "icns", outDir, iconsToolset: null, resourcesDir: tmpDirPath })
-
-    expect(result.error).toBeUndefined()
-    expect(result.icons.length).toBeGreaterThan(0)
-  })
-
-  it("uses fallback when primary source list is empty", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const fallbackFile = path.join(tmpDirPath, "fb.png")
-    await writePng(512, fallbackFile)
-    const outDir = path.join(tmpDirPath, "out")
-
-    const result = await convertIcon({ sources: [], fallbackSources: [fallbackFile], roots: [], format: "icns", outDir, iconsToolset: null, resourcesDir: tmpDirPath })
-
-    expect(result.error).toBeUndefined()
-    expect(result.isFallback).toBe(true)
-    expect(result.icons.length).toBeGreaterThan(0)
-  })
-
-  it("returns empty icons when both primary and fallback resolve to nothing", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const outDir = path.join(tmpDirPath, "out")
-    const result = await convertIcon({
-      sources: ["nonexistent"],
-      fallbackSources: ["also-nonexistent"],
-      roots: [tmpDirPath],
-      format: "ico",
-      outDir,
-      iconsToolset: null,
-      resourcesDir: tmpDirPath,
+    it("converts a 512×512 PNG to a valid ICNS file", async () => {
+      const srcFile = path.join(tmpDir, "icon.png")
+      await writePng(512, srcFile)
+      const outDir = path.join(tmpDir, "out")
+
+      const result = await convertIcon({ sources: [srcFile], fallbackSources: [], roots: [tmpDir], format: "icns", outDir, iconsToolset: null, resourcesDir: tmpDir })
+
+      expect(result.error).toBeUndefined()
+      expect(result.icons).toHaveLength(1)
+      const data = await readFile(result.icons[0].file)
+
+      expect(data.toString("ascii", 0, 4)).toBe("icns")
+      expect(data.readUInt32BE(4)).toBe(data.length)
+
+      // Verify the ICNS has multiple entries (png2icons generates all standard sizes)
+      const entries = parseIcns(data)
+      expect(entries.size).toBeGreaterThan(0)
     })
 
-    expect(result.error).toBeUndefined()
-    expect(result.icons).toHaveLength(0)
+    it("converts icon directory with named-size PNGs to ICNS", async () => {
+      const iconsDir = path.join(TEST_APP_ICONS, "icons")
+      const outDir = path.join(tmpDir, "out")
+
+      const result = await convertIcon({ sources: [iconsDir], fallbackSources: [], roots: [], format: "icns", outDir, iconsToolset: null, resourcesDir: tmpDir })
+
+      expect(result.error).toBeUndefined()
+      expect(result.icons).toHaveLength(1)
+      const data = await readFile(result.icons[0].file)
+      expect(data.toString("ascii", 0, 4)).toBe("icns")
+      expect(data.readUInt32BE(4)).toBe(data.length)
+    })
+
+    it("rejects a source PNG smaller than 512px with an error", async () => {
+      const srcFile = path.join(tmpDir, "small.png")
+      await writePng(128, srcFile)
+      const outDir = path.join(tmpDir, "out")
+
+      await expect(convertIcon({ sources: [srcFile], fallbackSources: [], roots: [tmpDir], format: "icns", outDir, iconsToolset: null, resourcesDir: tmpDir })).rejects.toThrow(
+        /must be at least 512/
+      )
+    })
+
+    it("returns isFallback=true and uses fallback sources when primary is missing", async () => {
+      const fallbackFile = path.join(tmpDir, "fallback.png")
+      await writePng(512, fallbackFile)
+      const outDir = path.join(tmpDir, "out")
+
+      const result = await convertIcon({
+        sources: ["nonexistent.png"],
+        fallbackSources: [fallbackFile],
+        roots: [tmpDir],
+        format: "icns",
+        outDir,
+        iconsToolset: null,
+        resourcesDir: tmpDir,
+      })
+
+      expect(result.error).toBeUndefined()
+      expect(result.isFallback).toBe(true)
+      expect(result.icons.length).toBeGreaterThan(0)
+    })
+
+    it("returns an existing ICNS file directly without conversion", async () => {
+      const icnsFile = path.join(TEST_APP_ICONS, "icon.icns")
+      const outDir = path.join(tmpDir, "out")
+
+      const result = await convertIcon({ sources: [icnsFile], fallbackSources: [], roots: [], format: "icns", outDir, iconsToolset: null, resourcesDir: tmpDir })
+
+      expect(result.error).toBeUndefined()
+      expect(result.icons).toHaveLength(1)
+      expect(result.icons[0].file).toBe(icnsFile)
+      expect(result.icons[0].size).toBe(0)
+    })
+
+    it("converts SVG source to ICNS", async () => {
+      const svgFile = path.join(tmpDir, "icon.svg")
+      await writeFile(svgFile, '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024"><rect width="1024" height="1024" fill="#6496C8"/></svg>')
+      const outDir = path.join(tmpDir, "out")
+
+      const result = await convertIcon({ sources: [svgFile], fallbackSources: [], roots: [], format: "icns", outDir, iconsToolset: null, resourcesDir: tmpDir })
+
+      expect(result.error).toBeUndefined()
+      expect(result.icons).toHaveLength(1)
+      const data = await readFile(result.icons[0].file)
+      expect(data.toString("ascii", 0, 4)).toBe("icns")
+    })
   })
 
-  it("directory with only icon.png for non-set format: uses fallback file via CLI", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const iconsDir = path.join(tmpDirPath, "dir-fallback")
-    await mkdir(iconsDir, { recursive: true })
-    await writePng(512, path.join(iconsDir, "icon.png"))
-    const outDir = path.join(tmpDirPath, "out")
+  // ─── ICO output ───────────────────────────────────────────────────────────────
 
-    const result = await convertIcon({ sources: [iconsDir], fallbackSources: [], roots: [], format: "icns", outDir, iconsToolset: null, resourcesDir: tmpDirPath })
+  describe("ICO output", { sequential: true }, () => {
+    let tmpDir: string
+    beforeEach(async context => {
+      tmpDir = await context.tmpDir.createTempDir()
+    })
 
-    expect(result.error).toBeUndefined()
-    expect(result.icons.length).toBeGreaterThan(0)
-    const data = await readFile(result.icons[0].file)
-    expect(data.toString("ascii", 0, 4)).toBe("icns")
+    it("converts a 512×512 PNG to a valid ICO file", async () => {
+      const srcFile = path.join(tmpDir, "icon.png")
+      await writePng(512, srcFile)
+      const outDir = path.join(tmpDir, "out")
+
+      const result = await convertIcon({ sources: [srcFile], fallbackSources: [], roots: [tmpDir], format: "ico", outDir, iconsToolset: null, resourcesDir: tmpDir })
+
+      expect(result.error).toBeUndefined()
+      expect(result.icons).toHaveLength(1)
+      const data = await readFile(result.icons[0].file)
+
+      // ICO magic
+      expect(data[0]).toBe(0)
+      expect(data[1]).toBe(0)
+      expect(data[2]).toBe(1)
+      expect(data[3]).toBe(0)
+      // png2icons produces a multi-image ICO — at least one entry
+      expect(data.readUInt16LE(4)).toBeGreaterThan(0)
+    })
+
+    it("output ICO has max dimension of 256×256 regardless of source size", async () => {
+      const srcFile = path.join(tmpDir, "icon.png")
+      await writePng(1024, srcFile)
+      const outDir = path.join(tmpDir, "out")
+
+      const result = await convertIcon({ sources: [srcFile], fallbackSources: [], roots: [tmpDir], format: "ico", outDir, iconsToolset: null, resourcesDir: tmpDir })
+
+      expect(result.error).toBeUndefined()
+      // size is read back from ICO header; png2icons caps at 256
+      expect(result.icons[0].size).toBeLessThanOrEqual(256)
+    })
+
+    it("rejects source smaller than 256px", async () => {
+      const srcFile = path.join(tmpDir, "tiny.png")
+      await writePng(64, srcFile)
+      const outDir = path.join(tmpDir, "out")
+
+      await expect(convertIcon({ sources: [srcFile], fallbackSources: [], roots: [tmpDir], format: "ico", outDir, iconsToolset: null, resourcesDir: tmpDir })).rejects.toThrow(
+        /must be at least 256/
+      )
+    })
+
+    it("returns an existing ICO file directly and parses its max dimension", async () => {
+      const icoFile = path.join(TEST_APP_ICONS, "icon.ico")
+      const outDir = path.join(tmpDir, "out")
+
+      const result = await convertIcon({ sources: [icoFile], fallbackSources: [], roots: [], format: "ico", outDir, iconsToolset: null, resourcesDir: tmpDir })
+
+      expect(result.error).toBeUndefined()
+      expect(result.icons).toHaveLength(1)
+      expect(result.icons[0].file).toBe(icoFile)
+      expect(result.icons[0].size).toBeGreaterThanOrEqual(256)
+    })
+
+    it("rejects an ICO file whose largest image is below 256px", async () => {
+      const tooSmallIco = path.join(TEST_APP_ICONS, "incorrect.ico")
+      const outDir = path.join(tmpDir, "out")
+
+      const err = await convertIcon({ sources: [tooSmallIco], fallbackSources: [], roots: [], format: "ico", outDir, iconsToolset: null, resourcesDir: tmpDir }).catch(e => e)
+      expect(err).toBeInstanceOf(Error)
+      expect((err as NodeJS.ErrnoException).code).toBe("ERR_ICON_TOO_SMALL")
+    })
+
+    it("rejects a file with an invalid ICO magic with ERR_ICON_UNKNOWN_FORMAT", async () => {
+      const badIco = path.join(tmpDir, "bad.ico")
+      await writeFile(badIco, makePng(256)) // PNG magic, not ICO magic
+      const outDir = path.join(tmpDir, "out")
+
+      const err = await convertIcon({ sources: [badIco], fallbackSources: [], roots: [], format: "ico", outDir, iconsToolset: null, resourcesDir: tmpDir }).catch(e => e)
+      expect(err).toBeInstanceOf(Error)
+      expect((err as NodeJS.ErrnoException).code).toBe("ERR_ICON_UNKNOWN_FORMAT")
+    })
+
+    it("converts SVG source to ICO", async () => {
+      const svgFile = path.join(tmpDir, "icon.svg")
+      await writeFile(svgFile, '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024"><rect width="1024" height="1024" fill="#6496C8"/></svg>')
+      const outDir = path.join(tmpDir, "out")
+
+      const result = await convertIcon({ sources: [svgFile], fallbackSources: [], roots: [], format: "ico", outDir, iconsToolset: null, resourcesDir: tmpDir })
+
+      expect(result.error).toBeUndefined()
+      expect(result.icons).toHaveLength(1)
+      const data = await readFile(result.icons[0].file)
+      expect(data[0]).toBe(0)
+      expect(data[2]).toBe(1)
+    })
   })
 
-  it("set format: source PNG with extension returns its actual pixel dimensions", async ({ tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const srcFile = path.join(tmpDirPath, "256.png")
-    await writePng(256, srcFile)
-    const outDir = path.join(tmpDirPath, "out")
+  // ─── set output (Linux) ───────────────────────────────────────────────────────
 
-    const result = await convertIcon({ sources: [srcFile], fallbackSources: [], roots: [], format: "set", outDir, iconsToolset: null, resourcesDir: tmpDirPath })
+  describe("set output (Linux)", { sequential: true }, () => {
+    let tmpDir: string
+    beforeEach(async context => {
+      tmpDir = await context.tmpDir.createTempDir()
+    })
 
-    expect(result.error).toBeUndefined()
-    expect(result.icons).toHaveLength(1)
-    expect(result.icons[0].size).toBe(256)
-    expect(result.icons[0].file).toBe(srcFile)
+    it("returns source PNG directly for set format (matches Go behavior)", async () => {
+      const srcFile = path.join(tmpDir, "icon.png")
+      await writePng(512, srcFile)
+      const outDir = path.join(tmpDir, "out")
+
+      const result = await convertIcon({ sources: [srcFile], fallbackSources: [], roots: [tmpDir], format: "set", outDir, iconsToolset: null, resourcesDir: tmpDir })
+
+      expect(result.error).toBeUndefined()
+      expect(result.icons).toHaveLength(1)
+      expect(result.icons[0].file).toBe(srcFile)
+      expect(result.icons[0].size).toBe(512)
+    })
+
+    it("uses pre-existing sized PNGs from a directory", async () => {
+      const iconsDir = path.join(TEST_APP_ICONS, "icons")
+      const outDir = path.join(tmpDir, "out")
+
+      const result = await convertIcon({ sources: [iconsDir], fallbackSources: [], roots: [], format: "set", outDir, iconsToolset: null, resourcesDir: tmpDir })
+
+      expect(result.error).toBeUndefined()
+      expect(result.icons.length).toBeGreaterThan(0)
+      for (const icon of result.icons) {
+        expect(icon.size).toBeGreaterThan(0)
+      }
+      const sizes = result.icons.map(i => i.size)
+      expect(sizes).toContain(256)
+      expect(sizes).toContain(512)
+    })
+
+    it("returns an SVG source as-is for set format with size 1024", async () => {
+      const svgFile = path.join(tmpDir, "icon.svg")
+      await writeFile(svgFile, '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024"><rect width="1024" height="1024"/></svg>')
+      const outDir = path.join(tmpDir, "out")
+
+      const result = await convertIcon({ sources: [svgFile], fallbackSources: [], roots: [], format: "set", outDir, iconsToolset: null, resourcesDir: tmpDir })
+
+      expect(result.error).toBeUndefined()
+      expect(result.icons).toHaveLength(1)
+      expect(result.icons[0].file).toBe(svgFile)
+      expect(result.icons[0].size).toBe(1024)
+    })
+
+    it("converts ICNS source to a set of sized PNGs named icon_NxN.png", async () => {
+      const icnsFile = path.join(TEST_APP_ICONS, "icon.icns")
+      const outDir = path.join(tmpDir, "out")
+
+      const result = await convertIcon({ sources: [icnsFile], fallbackSources: [], roots: [], format: "set", outDir, iconsToolset: null, resourcesDir: tmpDir })
+
+      expect(result.error).toBeUndefined()
+      expect(result.icons.length).toBeGreaterThan(1)
+      for (const icon of result.icons) {
+        expect(icon.size).toBeGreaterThan(0)
+        expect(path.basename(icon.file)).toMatch(/^icon_\d+x\d+\.png$/)
+      }
+      // Icons must be sorted smallest-first
+      const sizes = result.icons.map(i => i.size)
+      for (let i = 1; i < sizes.length; i++) {
+        expect(sizes[i]).toBeGreaterThanOrEqual(sizes[i - 1])
+      }
+    })
+
+    it("generates a set from a single PNG with standard sizes", async () => {
+      // Use the directory fallback path (icon.png in a directory)
+      const iconsDir = path.join(tmpDir, "icons")
+      await mkdir(iconsDir, { recursive: true })
+      await writePng(512, path.join(iconsDir, "icon.png"))
+      const outDir = path.join(tmpDir, "out")
+
+      const result = await convertIcon({ sources: [iconsDir], fallbackSources: [], roots: [], format: "set", outDir, iconsToolset: null, resourcesDir: tmpDir })
+
+      expect(result.error).toBeUndefined()
+      expect(result.icons.length).toBeGreaterThan(1)
+      // All output files should be named icon_NxN.png
+      for (const icon of result.icons) {
+        expect(path.basename(icon.file)).toMatch(/^icon_\d+x\d+\.png$/)
+      }
+      // Should include 16px through at least 256px
+      const sizes = result.icons.map(i => i.size)
+      expect(sizes).toContain(16)
+      expect(sizes).toContain(256)
+    })
+  })
+
+  // ─── File resolution ──────────────────────────────────────────────────────────
+
+  describe("file resolution", { sequential: true }, () => {
+    let tmpDir: string
+    beforeEach(async context => {
+      tmpDir = await context.tmpDir.createTempDir()
+    })
+
+    it("resolves icon by name from roots directory", async () => {
+      const buildDir = path.join(tmpDir, "build")
+      await mkdir(buildDir, { recursive: true })
+      await writePng(512, path.join(buildDir, "icon.png"))
+      const outDir = path.join(tmpDir, "out")
+
+      const result = await convertIcon({ sources: ["icon"], fallbackSources: [], roots: [buildDir], format: "icns", outDir, iconsToolset: null, resourcesDir: tmpDir })
+
+      expect(result.error).toBeUndefined()
+      expect(result.icons.length).toBeGreaterThan(0)
+    })
+
+    it("auto-discovers icon.svg from build dir when no extension specified", async () => {
+      const buildDir = path.join(tmpDir, "build")
+      await mkdir(buildDir, { recursive: true })
+      await writeFile(path.join(buildDir, "icon.svg"), '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024"><rect width="1024" height="1024" fill="#6496C8"/></svg>')
+      const outDir = path.join(tmpDir, "out")
+
+      // Source has no extension — should fall through to icon.svg candidate
+      const result = await convertIcon({ sources: ["icon"], fallbackSources: [], roots: [buildDir], format: "icns", outDir, iconsToolset: null, resourcesDir: tmpDir })
+
+      expect(result.error).toBeUndefined()
+      expect(result.icons.length).toBeGreaterThan(0)
+      const data = await readFile(result.icons[0].file)
+      expect(data.toString("ascii", 0, 4)).toBe("icns")
+    })
+
+    it("returns empty icons when no source found and no fallback", async () => {
+      const outDir = path.join(tmpDir, "out")
+      const result = await convertIcon({ sources: [], fallbackSources: [], roots: [tmpDir], format: "icns", outDir, iconsToolset: null, resourcesDir: tmpDir })
+      expect(result.icons).toHaveLength(0)
+    })
+  })
+
+  // ─── Directory filename filtering ─────────────────────────────────────────────
+
+  describe("collectIconsFromDir filename filtering", { sequential: true }, () => {
+    let tmpDir: string
+    beforeEach(async context => {
+      tmpDir = await context.tmpDir.createTempDir()
+    })
+
+    it("only picks up files with a pure-digit basename (anchored regex)", async () => {
+      const iconsDir = path.join(tmpDir, "icons")
+      await mkdir(iconsDir, { recursive: true })
+
+      await writePng(512, path.join(iconsDir, "512.png"))
+      await writePng(256, path.join(iconsDir, "256x256.png"))
+      await writePng(128, path.join(iconsDir, "app2.png")) // invalid
+      await writePng(64, path.join(iconsDir, "icon-v2.png")) // invalid
+      await writePng(32, path.join(iconsDir, "512backup.png")) // invalid
+
+      const outDir = path.join(tmpDir, "out")
+      const result = await convertIcon({ sources: [iconsDir], fallbackSources: [], roots: [], format: "set", outDir, iconsToolset: null, resourcesDir: tmpDir })
+
+      expect(result.error).toBeUndefined()
+      const sizes = result.icons.map(i => i.size)
+      expect(sizes).toContain(512)
+      expect(sizes).toContain(256)
+      expect(result.icons).toHaveLength(2)
+    })
+
+    it("ignores icon.png fallback when numbered PNGs exist", async () => {
+      const iconsDir = path.join(tmpDir, "icons2")
+      await mkdir(iconsDir, { recursive: true })
+
+      await writePng(512, path.join(iconsDir, "512.png"))
+      await writePng(256, path.join(iconsDir, "icon.png")) // fallback — ignored when numbered PNGs found
+      await writeFile(path.join(iconsDir, "README.txt"), "not an image")
+
+      const outDir = path.join(tmpDir, "out")
+      const result = await convertIcon({ sources: [iconsDir], fallbackSources: [], roots: [], format: "set", outDir, iconsToolset: null, resourcesDir: tmpDir })
+
+      expect(result.error).toBeUndefined()
+      const sizes = result.icons.map(i => i.size)
+      expect(sizes).toContain(512)
+      expect(sizes).not.toContain(256)
+    })
+
+    it("returns empty result for a directory with no icons and no fallback", async () => {
+      const emptyDir = path.join(tmpDir, "empty-icons")
+      await mkdir(emptyDir, { recursive: true })
+      await writeFile(path.join(emptyDir, "README.txt"), "no icons here")
+      const outDir = path.join(tmpDir, "out")
+
+      const result = await convertIcon({ sources: [emptyDir], fallbackSources: [], roots: [], format: "set", outDir, iconsToolset: null, resourcesDir: tmpDir })
+
+      expect(result.error).toBeUndefined()
+      expect(result.icons).toHaveLength(0)
+    })
+  })
+
+  // ─── buildSourceCandidates unit tests ────────────────────────────────────────
+
+  describe("buildSourceCandidates", () => {
+    it("returns source unchanged when it already has the target format extension", () => {
+      const candidates = buildSourceCandidates(["icon.icns"], "icns")
+      expect(candidates[0]).toBe("icon.icns")
+      // Should not duplicate the source with extra extensions
+      const icnsCount = candidates.filter(c => c === "icon.icns").length
+      expect(icnsCount).toBe(1)
+    })
+
+    it("expands a bare name into format-specific and fallback candidates for icns", () => {
+      const candidates = buildSourceCandidates(["icon"], "icns")
+      expect(candidates).toContain("icon.icns")
+      expect(candidates).toContain("icon.png")
+      expect(candidates).toContain("icon.svg")
+      // No ico fallback when format is icns
+      expect(candidates).not.toContain("icon.ico")
+    })
+
+    it("expands a bare name into format-specific and fallback candidates for ico", () => {
+      const candidates = buildSourceCandidates(["icon"], "ico")
+      expect(candidates).toContain("icon.ico")
+      expect(candidates).toContain("icon.png")
+      expect(candidates).toContain("icon.icns")
+    })
+
+    it("does not add a .set extension for set format", () => {
+      const candidates = buildSourceCandidates(["icon"], "set")
+      expect(candidates.some(c => c.endsWith(".set"))).toBe(false)
+      expect(candidates).toContain("icon.png")
+      expect(candidates).toContain("icon.svg")
+    })
+
+    it("always appends fallback directory candidates icons and icon", () => {
+      const candidates = buildSourceCandidates([], "icns")
+      expect(candidates).toContain("icons")
+      expect(candidates).toContain("icon")
+    })
+
+    it("preserves absolute paths with extension unchanged", () => {
+      const abs = "/abs/path/icon.png"
+      const candidates = buildSourceCandidates([abs], "ico")
+      expect(candidates).toContain(abs)
+    })
+
+    it("returns no duplicates when source matches a fallback name", () => {
+      const candidates = buildSourceCandidates(["icon.png"], "set")
+      const seen = new Set<string>()
+      for (const c of candidates) {
+        expect(seen.has(c)).toBe(false)
+        seen.add(c)
+      }
+    })
+  })
+
+  // ─── getPngSize unit tests ────────────────────────────────────────────────────
+
+  describe("getPngSize", { sequential: true }, () => {
+    let tmpDir: string
+    beforeEach(async context => {
+      tmpDir = await context.tmpDir.createTempDir()
+    })
+
+    it("reads correct dimensions from a well-formed PNG", async () => {
+      const file = path.join(tmpDir, "test.png")
+      await writePng(128, file)
+      const { width, height } = await getPngSize(file)
+      expect(width).toBe(128)
+      expect(height).toBe(128)
+    })
+
+    it("returns {0,0} for a file shorter than 24 bytes", async () => {
+      const file = path.join(tmpDir, "short.png")
+      await writeFile(file, Buffer.alloc(10))
+      const { width, height } = await getPngSize(file)
+      expect(width).toBe(0)
+      expect(height).toBe(0)
+    })
+
+    it("returns {0,0} for a non-PNG file with enough bytes", async () => {
+      const file = path.join(tmpDir, "fake.png")
+      await writeFile(file, Buffer.alloc(24, 0xff)) // no PNG signature
+      // width/height at bytes 16-23 will be all 0xFF — non-zero but invalid
+      const { width, height } = await getPngSize(file)
+      // We just verify the function returns a numeric pair without throwing
+      expect(typeof width).toBe("number")
+      expect(typeof height).toBe("number")
+    })
+  })
+
+  // ─── convertIcon edge cases ───────────────────────────────────────────────────
+
+  describe("edge cases", { sequential: true }, () => {
+    let tmpDir: string
+    beforeEach(async context => {
+      tmpDir = await context.tmpDir.createTempDir()
+    })
+
+    it("resolves source by absolute path, ignoring roots", async () => {
+      const srcFile = path.join(tmpDir, "abs.png")
+      await writePng(512, srcFile)
+      const outDir = path.join(tmpDir, "out")
+
+      // Pass absolute path — resolveSourceFile should skip root joining
+      const result = await convertIcon({ sources: [srcFile], fallbackSources: [], roots: ["/nonexistent"], format: "icns", outDir, iconsToolset: null, resourcesDir: tmpDir })
+
+      expect(result.error).toBeUndefined()
+      expect(result.icons.length).toBeGreaterThan(0)
+    })
+
+    it("uses fallback when primary source list is empty", async () => {
+      const fallbackFile = path.join(tmpDir, "fb.png")
+      await writePng(512, fallbackFile)
+      const outDir = path.join(tmpDir, "out")
+
+      const result = await convertIcon({ sources: [], fallbackSources: [fallbackFile], roots: [], format: "icns", outDir, iconsToolset: null, resourcesDir: tmpDir })
+
+      expect(result.error).toBeUndefined()
+      expect(result.isFallback).toBe(true)
+      expect(result.icons.length).toBeGreaterThan(0)
+    })
+
+    it("returns empty icons when both primary and fallback resolve to nothing", async () => {
+      const outDir = path.join(tmpDir, "out")
+      const result = await convertIcon({
+        sources: ["nonexistent"],
+        fallbackSources: ["also-nonexistent"],
+        roots: [tmpDir],
+        format: "ico",
+        outDir,
+        iconsToolset: null,
+        resourcesDir: tmpDir,
+      })
+
+      expect(result.error).toBeUndefined()
+      expect(result.icons).toHaveLength(0)
+    })
+
+    it("directory with only icon.png for non-set format: uses fallback file via CLI", async () => {
+      const iconsDir = path.join(tmpDir, "dir-fallback")
+      await mkdir(iconsDir, { recursive: true })
+      await writePng(512, path.join(iconsDir, "icon.png"))
+      const outDir = path.join(tmpDir, "out")
+
+      const result = await convertIcon({ sources: [iconsDir], fallbackSources: [], roots: [], format: "icns", outDir, iconsToolset: null, resourcesDir: tmpDir })
+
+      expect(result.error).toBeUndefined()
+      expect(result.icons.length).toBeGreaterThan(0)
+      const data = await readFile(result.icons[0].file)
+      expect(data.toString("ascii", 0, 4)).toBe("icns")
+    })
+
+    it("set format: source PNG with extension returns its actual pixel dimensions", async () => {
+      const srcFile = path.join(tmpDir, "256.png")
+      await writePng(256, srcFile)
+      const outDir = path.join(tmpDir, "out")
+
+      const result = await convertIcon({ sources: [srcFile], fallbackSources: [], roots: [], format: "set", outDir, iconsToolset: null, resourcesDir: tmpDir })
+
+      expect(result.error).toBeUndefined()
+      expect(result.icons).toHaveLength(1)
+      expect(result.icons[0].size).toBe(256)
+      expect(result.icons[0].file).toBe(srcFile)
+    })
   })
 })
