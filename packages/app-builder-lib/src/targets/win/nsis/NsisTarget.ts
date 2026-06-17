@@ -632,9 +632,9 @@ export class NsisTarget extends Target {
         //      would terminate the current script line and let whatever follows
         //      be parsed as a new preprocessor directive (e.g. !system, !include).
         //   2. bare $ → escaped to $$; unescaped $ in a define value would cause
-        //      NSIS to expand an unintended variable reference.  ${...} references
-        //      are left intact so NSIS compile-time defines like ${NSISDIR} still
-        //      expand correctly.
+        //      NSIS to expand an unintended variable reference.  ${...} define
+        //      references (e.g. ${NSISDIR}) and $(...) LangString references
+        //      (e.g. $(customSN)) are left intact so they still expand correctly.
         //   3. " chars   → escaped to $\"; an unescaped " would break out of
         //      double-quoted NSIS string literals where ${DEFINE} is expanded.
         args.push(`-D${name}=${nsisEscapeString(String(value))}`)
