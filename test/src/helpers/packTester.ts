@@ -1,7 +1,7 @@
 import { PublishManager } from "app-builder-lib"
 import { verifyAsarFileTree as _verifyAsarFileTree } from "./asarVerifier"
 import { AsarIntegrity, computeArchToTargetNamesMap, getLinuxToolsMacToolset, parsePlistFile, PlistObject } from "app-builder-lib/internal"
-import { addValue, copyDir, exec, executeFinally, exists, FileCopier, log, USE_HARD_LINKS, walk } from "builder-util"
+import { addValue, copyDir, exec, executeFinally, exists, FileCopier, log, retry, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, deepAssign, UpdateFileInfo } from "builder-util-runtime"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { convertVersion } from "electron-winstaller"
@@ -244,7 +244,19 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
           log.warn({ message: err.message }, "⚠️ corepack enable failed (possibly already enabled)")
         }
         try {
-          execSync(`corepack prepare ${prepareEntry} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: ["ignore", "ignore", "ignore"] })
+          await retry(async () => execSync(`corepack prepare ${prepareEntry} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: ["ignore", "ignore", "pipe"] }), {
+            retries: 3,
+            interval: 1000,
+            backoff: 2000,
+            shouldRetry: (e: any) => {
+              const detail = `${e?.message ?? ""}\n${String(e?.stderr ?? "")}`
+              const isTransient = /ENOTFOUND|ECONNRESET|ETIMEDOUT|EAI_AGAIN|ECONNREFUSED|repo\.yarnpkg\.com|Corepack is about to download|performing the request/i.test(detail)
+              if (isTransient) {
+                log.warn({ error: detail.split("\n")[0] }, "transient corepack download error, retrying")
+              }
+              return isTransient
+            },
+          })
         } catch (err: any) {
           log.warn({ message: err.message }, "⚠️ corepack prepare failed")
         }
