@@ -110,6 +110,14 @@ jobs:
               echo "::error::Symlink points to wrong target: $LINK_TARGET (expected: $CONFIG_FILE)"
               exit 1
             fi
+
+            # Swapping the tracked config.json for a symlink dirties the working
+            # tree, which makes `pnpm publish -r` abort with ERR_PNPM_GIT_UNCLEAN.
+            # Hide ONLY this intentional, branch-local change from git so pnpm's
+            # publish git-checks stay enabled — any *other* accidental change to
+            # the tree still blocks the publish.
+            git update-index --skip-worktree .changeset/config.json
+            echo "Marked .changeset/config.json as skip-worktree (excluded from pnpm git-checks)"
           else
             echo "Using default config: $CONFIG_PATH (no symlink needed)"
           fi
