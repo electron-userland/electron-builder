@@ -3,7 +3,7 @@ import { extractArchive, isSafeExtractPath } from "app-builder-lib/src/util/elec
 import * as fs from "fs/promises"
 import * as os from "os"
 import * as path from "path"
-import { afterEach, beforeEach, describe, test, vi } from "vitest"
+import { afterEach, describe, test, vi } from "vitest"
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -114,38 +114,37 @@ function buildZipWithSymlinkEntry(linkName: string, target: string): Buffer {
   return Buffer.concat([lfh, content, cdh, eocd])
 }
 
-describe("extractArchive ZIP security guards", { sequential: true }, () => {
-  let tmpDir: string
-  beforeEach(async context => {
-    tmpDir = await context.tmpDir.createTempDir()
-  })
-
-  test("blocks a path traversal entry (../escape.txt)", async ({ expect }) => {
-    const zipPath = path.join(tmpDir, "traversal.zip")
+describe("extractArchive ZIP security guards", () => {
+  test("blocks a path traversal entry (../escape.txt)", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const zipPath = path.join(tmpDirPath, "traversal.zip")
     await fs.writeFile(zipPath, buildZipWithFileEntry("../escape.txt"))
-    const extractDir = path.join(tmpDir, "out")
+    const extractDir = path.join(tmpDirPath, "out")
     await expect(extractArchive(zipPath, extractDir)).rejects.toThrow("Path traversal blocked")
   })
 
-  test("blocks an absolute symlink target", async ({ expect }) => {
-    const zipPath = path.join(tmpDir, "abs-symlink.zip")
+  test("blocks an absolute symlink target", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const zipPath = path.join(tmpDirPath, "abs-symlink.zip")
     await fs.writeFile(zipPath, buildZipWithSymlinkEntry("link.txt", "/etc/passwd"))
-    const extractDir = path.join(tmpDir, "out")
+    const extractDir = path.join(tmpDirPath, "out")
     await expect(extractArchive(zipPath, extractDir)).rejects.toThrow("Absolute symlink target blocked")
   })
 
-  test("blocks a relative symlink that escapes the extraction directory", async ({ expect }) => {
-    const zipPath = path.join(tmpDir, "rel-symlink.zip")
+  test("blocks a relative symlink that escapes the extraction directory", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const zipPath = path.join(tmpDirPath, "rel-symlink.zip")
     await fs.writeFile(zipPath, buildZipWithSymlinkEntry("link.txt", "../../outside"))
-    const extractDir = path.join(tmpDir, "out")
+    const extractDir = path.join(tmpDirPath, "out")
     await expect(extractArchive(zipPath, extractDir)).rejects.toThrow("Symlink target escapes extraction dir")
   })
 
-  test("extracts a valid zip entry to the correct destination", async ({ expect }) => {
+  test("extracts a valid zip entry to the correct destination", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
     const content = Buffer.from("hello world")
-    const zipPath = path.join(tmpDir, "valid.zip")
+    const zipPath = path.join(tmpDirPath, "valid.zip")
     await fs.writeFile(zipPath, buildZipWithFileEntry("hello.txt", content))
-    const extractDir = path.join(tmpDir, "out")
+    const extractDir = path.join(tmpDirPath, "out")
     await extractArchive(zipPath, extractDir)
     const result = await fs.readFile(path.join(extractDir, "hello.txt"))
     expect(result.toString()).toBe("hello world")
@@ -202,15 +201,11 @@ describe("isSafeExtractPath", () => {
 
 // ─── moveDirAtomic ────────────────────────────────────────────────────────────
 
-describe("moveDirAtomic", { sequential: true }, () => {
-  let tmpDir: string
-  beforeEach(async context => {
-    tmpDir = await context.tmpDir.createTempDir()
-  })
-
-  test("moves a directory with files to the destination", async ({ expect }) => {
-    const src = path.join(tmpDir, "src")
-    const dest = path.join(tmpDir, "dest")
+describe("moveDirAtomic", () => {
+  test("moves a directory with files to the destination", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const src = path.join(tmpDirPath, "src")
+    const dest = path.join(tmpDirPath, "dest")
     await fs.mkdir(src)
     await fs.writeFile(path.join(src, "file.txt"), "content")
 
@@ -224,9 +219,10 @@ describe("moveDirAtomic", { sequential: true }, () => {
     await expect(fs.access(src)).rejects.toMatchObject({ code: "ENOENT" })
   })
 
-  test("moves when destination was pre-removed before the call", async ({ expect }) => {
-    const src = path.join(tmpDir, "src")
-    const dest = path.join(tmpDir, "dest")
+  test("moves when destination was pre-removed before the call", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const src = path.join(tmpDirPath, "src")
+    const dest = path.join(tmpDirPath, "dest")
     await fs.mkdir(src)
     await fs.writeFile(path.join(src, "new.txt"), "new")
     await fs.mkdir(dest)
@@ -243,9 +239,10 @@ describe("moveDirAtomic", { sequential: true }, () => {
     expect(files).not.toContain("old.txt")
   })
 
-  test("throws when source does not exist", async ({ expect }) => {
-    const src = path.join(tmpDir, "nonexistent")
-    const dest = path.join(tmpDir, "dest")
+  test("throws when source does not exist", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const src = path.join(tmpDirPath, "nonexistent")
+    const dest = path.join(tmpDirPath, "dest")
     // Should throw (and not loop forever). We don't care about the exact code since
     // multiple retries produce the same error class.
     await expect(moveDirAtomic(src, dest)).rejects.toThrow()
