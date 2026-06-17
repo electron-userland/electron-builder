@@ -1,17 +1,21 @@
 import { replaceDefault as _replaceDefault, Arch, copyDir, exec, log, serializeToYaml, toLinuxArchString } from "builder-util"
 import { asArray, deepAssign, isValidKey, Nullish } from "builder-util-runtime"
-import { chmod, copyFile, mkdir, readdir, rename, rm, writeFile } from "fs/promises"
 import { outputFile, readFile } from "fs-extra"
+import { chmod, copyFile, mkdir, readdir, rename, rm, writeFile } from "fs/promises"
+import { load } from "js-yaml"
 import * as path from "path"
+import { validateShellEmbeddable } from "../../frameworks/LibUiFramework"
 import { PlugDescriptor, SnapOptions } from "../../options/SnapOptions"
 import { getAppImageTools } from "../../toolsets/linux"
 import { downloadBuilderToolset } from "../../util/electronGet"
 import { getTemplatePath } from "../../util/pathManager"
-import { validateShellEmbeddable } from "../../frameworks/LibUiFramework"
 import { SnapCore } from "./SnapTarget"
+import { shellQuote } from "./snapCommand.js"
 import { SnapcraftYAML } from "./snapcraft"
 import { DEFAULT_STAGE_PACKAGES } from "./snapcraftBuilder"
-import { load } from "js-yaml"
+
+// Re-exported for backwards compatibility with existing imports/tests.
+export { shellQuote }
 
 // Snap template release info from electron-userland/electron-builder-binaries
 const SNAP_TEMPLATES = {
@@ -440,11 +444,6 @@ async function readDirPaths(dir: string, filter?: (name: string) => boolean): Pr
     }
   }
   return result
-}
-
-/** Single-quote a shell argument, escaping any embedded single quotes. */
-export function shellQuote(arg: string): string {
-  return "'" + arg.replace(/'/g, "'\\''") + "'"
 }
 
 /**
