@@ -1,4 +1,4 @@
-import { Nullish, safeStringifyJson, isValidKey, isSensitiveFieldName, hashSensitiveValue } from "builder-util-runtime"
+import { Nullish, retry, safeStringifyJson, isValidKey, isSensitiveFieldName, hashSensitiveValue } from "builder-util-runtime"
 import chalk from "chalk"
 import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_process"
 import { spawn as _spawn } from "cross-spawn"
@@ -128,6 +128,17 @@ function getProcessEnv(env: Record<string, string | undefined> | Nullish): NodeJ
   return finalEnv
 }
 
+// Spurious process-launch failures seen under heavy concurrent builds on Windows: the OS fails to
+// start a freshly-extracted/copied executable (e.g. makeappx.exe from the win-codesign kit) while it
+// is still locked by AV or a peer build. These are launch failures — the process never ran — so
+// retrying is side-effect-free. A non-zero *exit* code is not a spawn failure and is never retried.
+const TRANSIENT_SPAWN_CODES = new Set(["UNKNOWN", "ETXTBSY", "EBUSY", "EAGAIN"])
+
+function isTransientSpawnError(error: any): boolean {
+  const cause = error?.cause ?? error
+  return typeof cause?.syscall === "string" && cause.syscall.startsWith("spawn") && TRANSIENT_SPAWN_CODES.has(cause.code)
+}
+
 export function exec(file: string, args?: Array<string> | null, options?: ExecFileOptions, isLogOutIfDebug = true): Promise<string> {
   if (log.isDebugEnabled) {
     const logFields: any = {
@@ -153,50 +164,64 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
     log.debug(logFields, "executing")
   }
 
-  return new Promise<string>((resolve, reject) => {
-    execFile(
-      file,
-      args,
-      {
-        ...options,
-        maxBuffer: 1000 * 1024 * 1024,
-        env: getProcessEnv(options == null ? null : options.env), // codeql[js/shell-command-injection-from-environment] - env filtered via getProcessEnv/stripSensitiveEnvVars; execFile array args (no shell)
-      },
-      (error, stdout, stderr) => {
-        if (error == null) {
-          if (isLogOutIfDebug && log.isDebugEnabled) {
-            const logFields: any = {
-              file,
+  const attempt = () =>
+    new Promise<string>((resolve, reject) => {
+      execFile(
+        file,
+        args,
+        {
+          ...options,
+          maxBuffer: 1000 * 1024 * 1024,
+          env: getProcessEnv(options == null ? null : options.env), // codeql[js/shell-command-injection-from-environment] - env filtered via getProcessEnv/stripSensitiveEnvVars; execFile array args (no shell)
+        },
+        (error, stdout, stderr) => {
+          if (error == null) {
+            if (isLogOutIfDebug && log.isDebugEnabled) {
+              const logFields: any = {
+                file,
+              }
+              if (stdout.length > 0) {
+                logFields.stdout = stdout
+              }
+              if (stderr.length > 0) {
+                logFields.stderr = stderr
+              }
+
+              log.debug(logFields, "executed")
             }
-            if (stdout.length > 0) {
-              logFields.stdout = stdout
+            resolve(stdout.toString())
+          } else {
+            let message = chalk.red(removePassword(`Exit code: ${(error as any).code}. ${error.message}`))
+            if (stdout.length !== 0) {
+              if (file.endsWith("wine")) {
+                stdout = stdout.toString()
+              }
+              message += `\n${chalk.yellow(removePassword(stdout.toString()))}`
             }
-            if (stderr.length > 0) {
-              logFields.stderr = stderr
+            if (stderr.length !== 0) {
+              if (file.endsWith("wine")) {
+                stderr = stderr.toString()
+              }
+              message += `\n${chalk.red(removePassword(stderr.toString()))}`
             }
 
-            log.debug(logFields, "executed")
+            reject(new ExecError(file, (error as any).code, message, "", `${error.code || ExecError.code}`, { cause: error }))
           }
-          resolve(stdout.toString())
-        } else {
-          let message = chalk.red(removePassword(`Exit code: ${(error as any).code}. ${error.message}`))
-          if (stdout.length !== 0) {
-            if (file.endsWith("wine")) {
-              stdout = stdout.toString()
-            }
-            message += `\n${chalk.yellow(removePassword(stdout.toString()))}`
-          }
-          if (stderr.length !== 0) {
-            if (file.endsWith("wine")) {
-              stderr = stderr.toString()
-            }
-            message += `\n${chalk.red(removePassword(stderr.toString()))}`
-          }
-
-          reject(new ExecError(file, (error as any).code, message, "", `${error.code || ExecError.code}`, { cause: error }))
         }
+      )
+    })
+
+  return retry(attempt, {
+    retries: 2,
+    interval: 1000,
+    backoff: 1000,
+    shouldRetry: (error: any) => {
+      if (isTransientSpawnError(error)) {
+        log.warn({ file, code: (error?.cause ?? error)?.code }, "process failed to spawn (transient OS/AV lock), retrying")
+        return true
       }
-    )
+      return false
+    },
   })
 }
 
