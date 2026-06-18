@@ -45,9 +45,10 @@ export {
   downloadElectronArtifact,
   ElectronGetOptions,
   getBinariesMirrorUrl,
-  getCacheDirectory,
   isSafeExtractPath,
   reinitializeProxy,
+  cacheDirectoryOverrideAllowed,
+  cacheDirectoryLocked,
   resolveBuilderBinaryUrl,
 } from "./util/electronGet.js"
 export { buildSourceCandidates, convertIcon, getPngSize } from "./util/iconConverter.js"

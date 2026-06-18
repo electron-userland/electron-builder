@@ -5,7 +5,6 @@ import { WindowsSignTaskConfiguration } from "app-builder-lib/src/codeSign/win/s
 import { readCertInfoFromX509 } from "app-builder-lib/src/codeSign/certInfo"
 import { WindowsSignAzureManager } from "app-builder-lib/src/codeSign/win/windowsSignAzureManager"
 import { getAtsBundleDir, getDotnetRuntimeDir, getWindowsKitsBundle } from "app-builder-lib/src/toolsets/winCodeSign"
-import { Arch } from "builder-util"
 import { writeFile } from "fs/promises"
 import * as path from "path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
@@ -696,7 +695,8 @@ describe("WindowsSignAzureManager signFileWithDlib arch selection", { sequential
 
   beforeEach(async () => {
     vi.mocked(getWindowsKitsBundle).mockImplementation(async () => ({
-      kit: path.resolve("/mock-kits", process.arch === "ia32" ? "x86" : process.arch),
+      // Kit tools are always x64 (x86 on 32-bit hosts), never arm64 — x64 runs on arm64 via emulation.
+      kit: path.resolve("/mock-kits", process.arch === "ia32" ? "x86" : "x64"),
       appxAssets: path.resolve("/mock-kits"),
     }))
     vi.mocked(getAtsBundleDir).mockResolvedValue("/mock-ats-bundle")
@@ -743,7 +743,6 @@ describe("WindowsSignAzureManager signFileWithDlib arch selection", { sequential
     expect(signtool).toBe(path.resolve("/mock-kits", "x64", "signtool.exe"))
     expect(dlib).toBe(path.resolve("/mock-ats-bundle", "x64", "Azure.CodeSigning.Dlib.dll"))
     expect(dotnetRoot).toBe(path.resolve("/mock-dotnet-runtime"))
-    expect(vi.mocked(getWindowsKitsBundle)).toHaveBeenCalledWith(expect.objectContaining({ arch: Arch.x64 }))
   })
 
   test("x64 host uses the x64 ats-bundle", async ({ tmpDir }) => {
@@ -760,7 +759,6 @@ describe("WindowsSignAzureManager signFileWithDlib arch selection", { sequential
     expect(signtool).toBe(path.resolve("/mock-kits", "x86", "signtool.exe"))
     expect(dlib).toBe(path.resolve("/mock-ats-bundle", "x86", "Azure.CodeSigning.Dlib.dll"))
     expect(dotnetRoot).toBe(path.resolve("/mock-dotnet-runtime"))
-    expect(vi.mocked(getWindowsKitsBundle)).toHaveBeenCalledWith(expect.objectContaining({ arch: Arch.ia32 }))
   })
 
   test.skipIf(process.platform === "win32")("Wine: DOTNET_ROOT is converted to a Z:\\ path via toVmFile", async ({ tmpDir }) => {

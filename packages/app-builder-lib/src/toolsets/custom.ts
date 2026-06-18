@@ -8,7 +8,7 @@ import { pipeline } from "stream/promises"
 import * as tar from "tar"
 import * as unzipper from "unzipper"
 import { ToolsetCustom } from "../configuration.js"
-import { downloadBuilderToolset, getCacheDirectory } from "../util/electronGet.js"
+import { cacheDirectoryOverrideAllowed, downloadBuilderToolset } from "../util/electronGet.js"
 import { getPath7za } from "./7zip.js"
 
 async function validateCustomToolset(custom: ToolsetCustom, resourcesDir?: string) {
@@ -83,7 +83,7 @@ async function _resolveCustomToolsetPath(custom: ToolsetCustom, resourcesDir?: s
       overrideUrl: toolset.url,
     })
   } else if (type === "file") {
-    const cacheDir = getCacheDirectory({ isAvoidSystemOnWindows: true, allowEnvVarOverride: true })
+    const cacheDir = await cacheDirectoryOverrideAllowed.value
     const customToolsetDir = path.join(cacheDir, "custom-toolsets")
     await mkdir(customToolsetDir, { recursive: true })
 

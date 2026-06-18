@@ -1,15 +1,13 @@
-import { Nullish, retry, safeStringifyJson, isValidKey, isSensitiveFieldName, hashSensitiveValue } from "builder-util-runtime"
+import { hashSensitiveValue, isSensitiveFieldName, isValidKey, Nullish, retry, safeStringifyJson } from "builder-util-runtime"
 import chalk from "chalk"
 import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_process"
 import { spawn as _spawn } from "cross-spawn"
 import _debug from "debug"
+import _fsExtra from "fs-extra"
 import { dump } from "js-yaml"
 import * as path from "path"
 import { install as installSourceMap } from "source-map-support"
 import { debug, log } from "./log.js"
-import { exists } from "./fs.js"
-import _fsExtra from "fs-extra"
-const { mkdir } = _fsExtra
 import { isEmptyOrSpaces } from "./stringUtil.js"
 
 // Vitest install their own source-map-aware stack-trace handling. Letting
@@ -20,24 +18,24 @@ if (process.env.VITEST == null) {
   installSourceMap()
 }
 
-export { isEmptyOrSpaces } from "./stringUtil.js"
-export { safeStringifyJson, retry } from "builder-util-runtime"
+export { retry, safeStringifyJson } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
 export * from "./arch.js"
 export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames, getArchSuffix, toLinuxArchString } from "./arch.js"
 export { AsyncTaskManager } from "./asyncTaskManager.js"
 export { DebugLogger } from "./DebugLogger.js"
+export * from "./envUtil.js"
+export { parseValidEnvVarUrl } from "./envUtil.js"
 export * from "./log.js"
 export { buildGotProxyAgent, httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor.js"
 export * from "./promise.js"
-export * from "./envUtil.js"
-export { parseValidEnvVarUrl } from "./envUtil.js"
+export { isEmptyOrSpaces } from "./stringUtil.js"
 
 export { asArray, deepAssign, isValidKey } from "builder-util-runtime"
 export * from "./fs.js"
 
+export { decodeCscLinkBase64, loadCscLink, resolveCscLinkPath } from "./cscLink.js"
 export { generateKsuid } from "./ksuid.js"
-export { loadCscLink, decodeCscLinkBase64, resolveCscLinkPath } from "./cscLink.js"
 
 export const debug7z = _debug("electron-builder:7z")
 
@@ -419,18 +417,6 @@ export function use<T, R>(value: T | Nullish, task: (value: T) => R): R | null {
 
 export function isTokenCharValid(token: string) {
   return /^[.\w/=+-]+$/.test(token)
-}
-
-export async function getUserDefinedCacheDir() {
-  let cacheEnv = process.env.ELECTRON_BUILDER_CACHE
-  if (!isEmptyOrSpaces(cacheEnv)) {
-    cacheEnv = path.resolve(cacheEnv)
-    if (!(await exists(cacheEnv))) {
-      await mkdir(cacheEnv)
-    }
-    return cacheEnv
-  }
-  return undefined
 }
 
 export function addValue<K, T>(map: Map<K, Array<T>>, key: K, value: T) {

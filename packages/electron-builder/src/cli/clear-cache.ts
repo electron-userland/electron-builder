@@ -1,11 +1,11 @@
-import { getCacheDirectory } from "app-builder-lib/internal"
+import { cacheDirectoryLocked } from "app-builder-lib/internal"
 import { log } from "builder-util"
 import { access, constants, rm } from "fs/promises"
 import { createInterface } from "node:readline/promises"
 import * as path from "path"
 
 export async function clearCache(): Promise<void> {
-  const cacheDir = getCacheDirectory({ isAvoidSystemOnWindows: false, allowEnvVarOverride: false })
+  const cacheDir = await cacheDirectoryLocked.value
 
   if (cacheDir === path.parse(cacheDir).root) {
     log.error({ cacheDir }, "cache directory resolves to a filesystem root — aborting")

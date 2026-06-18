@@ -102,15 +102,14 @@ export async function getSignToolPath(winCodeSign: ToolsetConfig["winCodeSign"] 
 /**
  * Resolve the Windows Kits bundle paths.
  *
- * The `kit` subdirectory is selected by a host-runnable arch — the arch of the machine/Wine that will
- * execute `signtool.exe` / `makeappx.exe` / `makepri.exe`, NOT the artifact's target arch. Those are
- * host tools: an arm64 kit binary cannot run on an x64 host (it fails with `spawn UNKNOWN`). Callers
- * should derive `arch` from `process.arch` (see `getSignToolPath`, `AppXTarget.build`); the requested
- * arch is additionally clamped via {@link toHostRunnableKitArch} as a backstop.
+ * The `kit` subdirectory holds HOST executables (`signtool.exe` / `makeappx.exe` / `makepri.exe`), so
+ * it is always the x64 kit (x86 on 32-bit hosts) — never arm64. x64 binaries run on x64 hosts natively
+ * and on arm64 Windows via emulation, whereas an arm64 binary cannot run on an x64 host and fails with
+ * `spawn UNKNOWN`. The artifact's target arch is irrelevant here.
  * `appxAssets` is arch-independent (the bundle root).
  */
 export async function getWindowsKitsBundle({ winCodeSign, resourcesDir }: { winCodeSign: ToolsetConfig["winCodeSign"] | Nullish; resourcesDir?: string }) {
-  const kitArch = process.arch === "ia32" ? "x86" : process.arch === "arm64" ? "arm64" : "x64"
+  const kitArch = process.arch === "ia32" ? "x86" : "x64"
   if (typeof winCodeSign === "object" && winCodeSign != null) {
     const vendorPath = sanitizeDirPath(await getCustomToolsetPath(winCodeSign, resourcesDir), resourcesDir || undefined)
     return { kit: path.join(vendorPath, kitArch), appxAssets: vendorPath }
