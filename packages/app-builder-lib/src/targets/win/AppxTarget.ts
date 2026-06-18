@@ -76,7 +76,13 @@ export default class AppXTarget extends Target {
       arch,
     })
 
-    const vendorPath = await getWindowsKitsBundle({ winCodeSign: this.packager.config.toolsets?.winCodeSign, arch: arch, resourcesDir: this.packager.buildResourcesDir })
+    // makeappx.exe / makepri.exe from the Windows Kits bundle are HOST tools — they must match the
+    // machine (or Wine) that runs them, NOT the artifact's target arch. An x64 kit binary runs on an
+    // x64 host and on an arm64 host (x64-on-arm64 emulation) and under the x64 Wine bundle on
+    // macOS/Linux; an arm64 binary, however, cannot run on an x64 host and fails with `spawn UNKNOWN`.
+    // So select the kit by the executing arch, never by `arch` (the target being packaged).
+    const kitArch: Arch = process.platform !== "win32" ? Arch.x64 : process.arch === "arm64" ? Arch.arm64 : process.arch === "ia32" ? Arch.ia32 : Arch.x64
+    const vendorPath = await getWindowsKitsBundle({ winCodeSign: this.packager.config.toolsets?.winCodeSign, arch: kitArch, resourcesDir: this.packager.buildResourcesDir })
     const vm = await packager.vm.value
 
     const stageDir = await createStageDir(this, packager, arch)
