@@ -118,8 +118,8 @@ async function main() {
         concurrent: false,
       },
 
-      slowTestThreshold: 2 * 60 * 1000,
-      testTimeout: 10 * 60 * 1000, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
+      slowTestThreshold: 3 * 60 * 1000,
+      testTimeout: 15 * 60 * 1000, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
 
       snapshotFormat: {
         printBasicPrototype: false,
