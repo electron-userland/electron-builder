@@ -136,7 +136,7 @@ export class WindowsSignAzureManager implements SignManager {
     // dir has no dlib. On arm64 hosts use the x64 signtool + dlib — x64 signtool runs under
     // Windows-on-ARM emulation natively, and under x64 Wine on macOS/Linux.
     const arch = process.arch === "ia32" ? Arch.ia32 : Arch.x64
-    const { kit: kitDir } = await getWindowsKitsBundle({ winCodeSign, arch, resourcesDir: this.packager.buildResourcesDir })
+    const { kit: kitDir } = await getWindowsKitsBundle({ winCodeSign, resourcesDir: this.packager.buildResourcesDir })
     // For custom toolsets the kit lives within buildResourcesDir; enforce that constraint.
     // For versioned/cached bundles no base constraint is needed (paths are in the tool cache).
     const safeKitDir = sanitizeDirPath(kitDir, typeof winCodeSign === "object" ? this.packager.buildResourcesDir : undefined)
