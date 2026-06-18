@@ -34,6 +34,7 @@ import { ArchiveTarget } from "./targets/ArchiveTarget.js"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/mac/pkg.js"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory.js"
 import { isMacOsHighSierra } from "./util/mac/macosVersion.js"
+import { buildSingleArchFilesPattern, collectSingleArchPackageNames } from "./util/archCompatibility.js"
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
 import { resolveFunction } from "./util/resolve.js"
 import { makeUniversalApp } from "@electron/universal"
@@ -239,9 +240,19 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     }
 
     const universalOpts = platformSpecificBuildOptions.universal
+
+    // Platform-specific (single-arch) node modules — e.g. `@esbuild/darwin-arm64` — cannot be merged into
+    // a universal Mach-O. The per-arch collection filter leaves each in only its native slice, so tell
+    // `@electron/universal` to treat them as single-arch (otherwise it aborts on the arch mismatch).
+    const singleArchFiles = await this.computeSingleArchFiles(
+      [safeX64AppOutDir, safeArm64AppOutPath].map(d => path.join(d, appFile)),
+      universalOpts?.singleArchFiles ?? undefined
+    )
+
     await makeUniversalApp({
       mergeASARs: true, // preserve electron-builder v2 default; user can override via mac.universal.mergeASARs
       ...universalOpts,
+      singleArchFiles,
       x64AppPath: path.join(safeX64AppOutDir, appFile),
       arm64AppPath: path.join(safeArm64AppOutPath, appFile),
       outAppPath: path.join(safeAppOutDir, appFile),
@@ -272,6 +283,24 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     if (config.options?.sign ?? true) {
       await this.doSignAfterPack(outDir, appOutDir, platformName, platformType, arch, platformSpecificBuildOptions, targets)
     }
+  }
+
+  /**
+   * Builds the `singleArchFiles` glob passed to `@electron/universal` by scanning both packed slices for
+   * single-architecture (platform-specific) node modules. Merges any user-provided `mac.universal.singleArchFiles`.
+   */
+  private async computeSingleArchFiles(appPaths: string[], userPattern: string | undefined): Promise<string | undefined> {
+    const names = new Set<string>()
+    for (const appPath of appPaths) {
+      await collectSingleArchPackageNames(path.join(appPath, "Contents", "Resources", "app.asar.unpacked", "node_modules"), names)
+    }
+    if (names.size > 0) {
+      log.warn(
+        { modules: Array.from(names).sort().join(", ") },
+        "detected single-architecture (platform-specific) node modules in the universal build — treating them as single-arch. Move build-only tools (e.g. esbuild) to `devDependencies` or exclude them via `files` to omit them entirely."
+      )
+    }
+    return buildSingleArchFilesPattern(names, userPattern)
   }
 
   async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<void> {

@@ -585,7 +585,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return computeFileSets(matchers, this.info.isPrepackedAppAsar ? null : transformer, this).then(async result => {
         if (!this.info.isPrepackedAppAsar && !this.info.areNodeModulesHandledExternally) {
           const moduleFileMatcher = getNodeModuleFileMatcher(appDir, defaultDestination, macroExpander, platformSpecificBuildOptions, this.info)
-          result = result.concat(await computeNodeModuleFileSets(this, moduleFileMatcher))
+          result = result.concat(await computeNodeModuleFileSets(this, moduleFileMatcher, packContext.arch))
         }
         return result.filter(it => it.files.length > 0)
       })
