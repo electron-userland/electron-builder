@@ -48,7 +48,7 @@ export {
   isSafeExtractPath,
   reinitializeProxy,
   cacheDirectoryOverrideAllowed,
-  cacheDirectoryLocked,
+  getCacheDirectoryInternal,
   resolveBuilderBinaryUrl,
 } from "./util/electronGet.js"
 export { buildSourceCandidates, convertIcon, getPngSize } from "./util/iconConverter.js"

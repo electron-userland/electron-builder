@@ -1,11 +1,13 @@
-import { cacheDirectoryLocked } from "app-builder-lib/internal"
+import { getCacheDirectoryInternal } from "app-builder-lib/internal"
 import { log } from "builder-util"
 import { access, constants, rm } from "fs/promises"
 import { createInterface } from "node:readline/promises"
 import * as path from "path"
 
 export async function clearCache(): Promise<void> {
-  const cacheDir = await cacheDirectoryLocked.value
+  // Clear the real default cache (ignore the ELECTRON_BUILDER_CACHE override, and don't avoid the
+  // Windows system path) so `clear-cache` targets the same dir builds actually populate.
+  const cacheDir = await getCacheDirectoryInternal({ isAvoidSystemOnWindows: false, allowEnvVarOverride: false })
 
   if (cacheDir === path.parse(cacheDir).root) {
     log.error({ cacheDir }, "cache directory resolves to a filesystem root — aborting")

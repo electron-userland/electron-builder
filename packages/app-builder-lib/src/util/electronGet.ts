@@ -23,7 +23,6 @@ import * as tar from "tar"
 import * as unzipper from "unzipper"
 import { getPath7za } from "../toolsets/7zip.js"
 import { CacheState, cleanupCacheDirectory, computeCacheMetadata, readCacheStateFile, validateCacheDirectory, writeCacheState } from "./cacheState.js"
-import { Lazy } from "lazy-val"
 
 export interface ElectronGetOptions extends Omit<
   ElectronPlatformArtifactDetails,
@@ -75,7 +74,6 @@ export const cacheDirectoryOverrideAllowed = new MemoLazy<string | undefined, st
     return dir
   }
 )
-export const cacheDirectoryLocked = new Lazy<string>(() => getCacheDirectoryInternal({ isAvoidSystemOnWindows: true, allowEnvVarOverride: false }))
 // Exposed for testing; not intended for public use. Pure path resolution (no I/O) — use the memoized
 // const's above when you need the directory to exist on disk. Kept async for a stable Promise-returning
 // contract across all call sites.

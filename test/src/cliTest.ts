@@ -42,7 +42,9 @@ vi.mock("builder-util", async () => {
 
 import { access, rm } from "fs/promises"
 import { createInterface } from "node:readline/promises"
-import { getCacheDirectoryInternal } from "app-builder-lib/src/util/electronGet.js"
+// Import from the same specifier that is mocked above (and that clear-cache imports), so vi.mocked()
+// returns the mock instance rather than the real function.
+import { getCacheDirectoryInternal } from "app-builder-lib/internal"
 import { ExecError, InvalidConfigurationError, log } from "builder-util"
 // Relative imports bypass project-reference declaration files, which strip @internal exports
 import { clearCache } from "../../packages/electron-builder/src/cli/clear-cache"
