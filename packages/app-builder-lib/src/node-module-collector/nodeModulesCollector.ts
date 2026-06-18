@@ -7,6 +7,13 @@ import { LogMessageByKey, ModuleManager } from "./moduleManager.js"
 import { getPackageManagerCommand, PM } from "./packageManager.js"
 import { streamSpawnToFile } from "../util/streamSpawnToFile.js"
 import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types.js"
+import { isPackageCompatible } from "../util/archCompatibility.js"
+
+/** Target arch/platform used to drop `cpu`/`os`-incompatible packages while collecting. */
+export interface ArchFilter {
+  cpu: string | null
+  os: string
+}
 
 export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDepType, OptionalDepType>, OptionalDepType> {
   private readonly nodeModules: NodeModuleInfo[] = []
@@ -46,7 +53,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * 5. Hoisting the dependencies to their final locations
    * 6. Resolving and returning module information
    */
-  public async getNodeModules({ packageName }: { packageName: string }): Promise<{
+  public async getNodeModules({ packageName, archFilter }: { packageName: string; archFilter?: ArchFilter }): Promise<{
     nodeModules: NodeModuleInfo[]
     logSummary: ModuleManager["logSummary"]
   }> {
@@ -60,7 +67,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       check: log.isDebugEnabled,
     })
 
-    await this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
+    await this._getNodeModules(hoisterResult.dependencies, this.nodeModules, archFilter)
 
     log.debug({ packageName, depCount: this.nodeModules.length }, "node modules collection complete")
 
@@ -284,7 +291,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return node
   }
 
-  private async _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[]) {
+  private async _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[], archFilter?: ArchFilter) {
     if (dependencies.size === 0) {
       return
     }
@@ -307,15 +314,30 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         continue
       }
 
+      const dir = await this.cache.realPath[p]
+
+      // Drop packages whose declared `cpu`/`os` is incompatible with the target arch/platform (and their
+      // subtree). npm/pnpm install only the host's platform-specific optional packages, so without this an
+      // arm64-only binary (e.g. `@esbuild/darwin-arm64`) would be bundled into the x64 build too — and into
+      // both slices of a universal build, which `@electron/universal` then refuses to merge. Reuses the
+      // memoized `package.json` cache populated during collection.
+      if (archFilter != null) {
+        const pkgJson = await this.cache.json[path.join(dir, "package.json")]
+        if (pkgJson != null && !isPackageCompatible(pkgJson, archFilter.cpu, archFilter.os)) {
+          this.cache.logSummary[LogMessageByKey.PKG_INCOMPATIBLE_PLATFORM].push(key)
+          continue
+        }
+      }
+
       const node: NodeModuleInfo = {
         name: d.name,
         version: reference,
-        dir: await this.cache.realPath[p],
+        dir,
       }
       result.push(node)
       if (d.dependencies.size > 0) {
         node.dependencies = []
-        await this._getNodeModules(d.dependencies, node.dependencies)
+        await this._getNodeModules(d.dependencies, node.dependencies, archFilter)
       }
     }
     result.sort((a, b) => a.name.localeCompare(b.name))
