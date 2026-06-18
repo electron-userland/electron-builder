@@ -52,7 +52,7 @@ export type ArtifactDownloadOptions = {
   cacheDir?: string
 }
 
-function hashUrlSafe(input: string, length = 6): string {
+export function hashUrlSafe(input: string, length = 6): string {
   let hash = 5381
   for (let i = 0; i < input.length; i++) {
     hash = ((hash << 5) + hash) ^ input.charCodeAt(i)
@@ -185,7 +185,9 @@ async function extractZipStreaming(file: string, dir: string): Promise<void> {
   }
 }
 
-export async function extractArchive(file: string, dir: string) {
+export async function extractArchive(archive: string, dir: string) {
+  const file = sanitizeDirPath(archive)
+
   const tmpDir = `${dir}.tmp`
   await fs.mkdir(tmpDir, { recursive: true })
 
