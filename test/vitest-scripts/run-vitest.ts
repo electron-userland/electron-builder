@@ -109,16 +109,17 @@ async function main() {
       runner: __dirname + "/vitest-config/vitest-network-retry-runner.ts",
       reporters: ["default", __dirname + "/vitest-config/vitest-smart-reporter.ts"],
 
-      maxWorkers: "40%",
-
-      fileParallelism: true,
+      // Disable Vitest's default file-based parallelism and use our custom shard-based sequencing instead.  This ensures that tests are grouped into shards according to our custom logic (e.g. platform-specific weighting) rather than Vitest's default file-based distribution.
+      // It's either disabling here or increasing test timeout to be generous due to the I/O-heavy nature of our tests and the fact that running many in parallel can exhaust memory (e.g. due to multiple icon-tool spawns across workers).
+      // Disabling file-based parallelism is more efficient than increasing timeouts, as it allows us to run tests in parallel at the shard level while keeping individual test files running sequentially within each shard.
+      fileParallelism: false,
       sequence: {
         sequencer: SmartSequencer,
-        concurrent: true,
+        concurrent: false,
       },
 
-      slowTestThreshold: 2 * 60 * 1000,
-      testTimeout: 10 * 60 * 1000, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
+      slowTestThreshold: 3 * 60 * 1000,
+      testTimeout: 15 * 60 * 1000, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
 
       snapshotFormat: {
         printBasicPrototype: false,

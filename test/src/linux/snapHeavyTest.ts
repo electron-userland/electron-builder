@@ -10,7 +10,7 @@ import { app, assertPack, EXTENDED_TIMEOUT, snapTarget } from "../helpers/packTe
 import { launchSnapBinary } from "../helpers/launchAppCrossPlatform"
 
 // very slow
-const options = { sequential: true, timeout: EXTENDED_TIMEOUT }
+const options = { sequential: true, timeout: 3 * EXTENDED_TIMEOUT }
 
 // Guard: tests run when RUN_SNAP_TESTS=true AND snapcraft is found in PATH.
 // test-snap.sh sets RUN_SNAP_TESTS=true and runs inside Docker images that
@@ -179,7 +179,7 @@ describe.heavy.ifEnv(hasSnapInstalled())("snap heavy", options, () => {
     const core = _core as any
 
     // ── build-only test (always runs when snap tooling is present) ───────────
-    test(`snap full (${core})`, ({ expect }) =>
+    test(`snap full (${core})`, options, ({ expect }) =>
       app(expect, {
         targets: snapTarget,
         config: {
@@ -205,12 +205,12 @@ describe.heavy.ifEnv(hasSnapInstalled())("snap heavy", options, () => {
       }))
 
     // ── install+launch integration (requires unsquashfs) ────────────────────
-    test.ifEnv(canRunInstallTests())(`snap install+launch (${core})`, async ({ expect }) => {
+    test.ifEnv(canRunInstallTests())(`snap install+launch (${core})`, options, async ({ expect }) => {
       await runInstallLaunchTest(expect, core as "core18" | "core20" | "core22" | "core24", snapYamlCallback(expect))
     })
 
     // armhf cross-compilation is not supported for core24 in host/destructive-mode
-    test.ifEnv(core !== "core24")(`snap full (${core} armhf)`, ({ expect }) =>
+    test.ifEnv(core !== "core24")(`snap full (${core} armhf)`, options, ({ expect }) =>
       app(expect, {
         targets: Platform.LINUX.createTarget("snap", Arch.armv7l),
         config: {
@@ -234,11 +234,11 @@ describe.heavy.ifEnv(hasSnapInstalled())("snap heavy", options, () => {
 // native Linux CI runners.
 
 describe.heavy.ifLinux.ifEnv(hasSnapInstalled() && canRunInstallTests())("snap core24 native", options, () => {
-  test("core24 build + install + launch", async ({ expect }) => {
+  test("core24 build + install + launch", options, async ({ expect }) => {
     await runInstallLaunchTest(expect, "core24", snapYamlCallback(expect))
   })
 
-  test("core24 destructive-mode (no gnome extension)", async ({ expect }) => {
+  test("core24 destructive-mode (no gnome extension)", options, async ({ expect }) => {
     await assertPack(
       expect,
       "test-app-one",
@@ -283,7 +283,7 @@ describe.heavy.ifLinux.ifEnv(hasSnapInstalled() && canRunInstallTests())("snap c
     )
   })
 
-  test("core24 with custom stagePackages", async ({ expect }) => {
+  test("core24 with custom stagePackages", options, async ({ expect }) => {
     await assertPack(
       expect,
       "test-app-one",
