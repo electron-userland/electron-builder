@@ -3,7 +3,7 @@ import * as path from "path"
 import { downloadBuilderToolset } from "../util/electronGet"
 
 const iconsToolsChecksums = {
-  "icons-bundle.tar.gz": "2241c9501aa5ddd19317956449f50a1bc311df2c34058aae9bf8bfe62081eaec",
+  "icons-bundle.tar.gz": "193241afc7c81ab165fa0af15ef0af88f796eb69e8e5bb4249a49310d8be242a",
 } as const
 
 export async function getIconsToolsetPath(): Promise<string> {
@@ -12,7 +12,7 @@ export async function getIconsToolsetPath(): Promise<string> {
     return envPath
   }
   return downloadBuilderToolset({
-    releaseName: "icons@1.1.0",
+    releaseName: "icons@1.2.1",
     filenameWithExt: "icons-bundle.tar.gz",
     checksums: iconsToolsChecksums,
     githubOrgRepo: "electron-userland/electron-builder-binaries",
