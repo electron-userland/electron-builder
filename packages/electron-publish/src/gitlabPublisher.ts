@@ -36,9 +36,9 @@ export class GitlabPublisher extends HttpPublisher {
   ) {
     super(context, true)
 
-    let token = info.token || null
-    if (isEmptyOrSpaces(token)) {
-      token = process.env.GITLAB_TOKEN || null
+    let token = info.token
+    if (isEmptyOrSpaces(token) || process.env.GITLAB_RELEASE_TOKEN) {
+      token =  process.env.GITLAB_RELEASE_TOKEN ?  process.env.GITLAB_RELEASE_TOKEN : process.env.GITLAB_TOKEN || null
       if (isEmptyOrSpaces(token)) {
         throw new InvalidConfigurationError(`GitLab Personal Access Token is not set, neither programmatically, nor using env "GITLAB_TOKEN"`)
       }
