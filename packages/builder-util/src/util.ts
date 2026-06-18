@@ -3,7 +3,6 @@ import chalk from "chalk"
 import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_process"
 import { spawn as _spawn } from "cross-spawn"
 import _debug from "debug"
-import _fsExtra from "fs-extra"
 import { dump } from "js-yaml"
 import path from "path"
 import { install as installSourceMap } from "source-map-support"
@@ -18,8 +17,7 @@ if (process.env.VITEST == null) {
   installSourceMap()
 }
 
-export { isEmptyOrSpaces, escapeForXml } from "./stringUtil.js"
-export { safeStringifyJson, retry } from "builder-util-runtime"
+export { retry, safeStringifyJson } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
 export * from "./arch.js"
 export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames, getArchSuffix, toLinuxArchString } from "./arch.js"
@@ -30,7 +28,7 @@ export { parseValidEnvVarUrl } from "./envUtil.js"
 export * from "./log.js"
 export { buildGotProxyAgent, httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor.js"
 export * from "./promise.js"
-export { isEmptyOrSpaces } from "./stringUtil.js"
+export { escapeForXml, isEmptyOrSpaces } from "./stringUtil.js"
 
 export { asArray, deepAssign, isValidKey } from "builder-util-runtime"
 export * from "./fs.js"
