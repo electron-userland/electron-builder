@@ -401,7 +401,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y squashfs-tools xvfb
-          sudo snap install snapcraft --classic
+          # Pin to the 8.x track: snapcraft 9.0.0 (latest/stable) intermittently hangs while
+          # apt-fetching destructive-mode stagePackages, causing the core24 test to time out.
+          sudo snap install snapcraft --classic --channel=8.x/stable
 
       - name: Test snap core24 native (install + launch)
         if: matrix.core == 'core24'
