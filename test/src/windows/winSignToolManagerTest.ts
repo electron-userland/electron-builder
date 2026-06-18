@@ -695,8 +695,8 @@ describe("WindowsSignAzureManager signFileWithDlib arch selection", { sequential
   const originalArch = process.arch
 
   beforeEach(async () => {
-    vi.mocked(getWindowsKitsBundle).mockImplementation(async ({ arch }) => ({
-      kit: path.resolve("/mock-kits", arch === Arch.ia32 ? "x86" : Arch[arch]),
+    vi.mocked(getWindowsKitsBundle).mockImplementation(async () => ({
+      kit: path.resolve("/mock-kits", process.arch === "ia32" ? "x86" : process.arch),
       appxAssets: path.resolve("/mock-kits"),
     }))
     vi.mocked(getAtsBundleDir).mockResolvedValue("/mock-ats-bundle")

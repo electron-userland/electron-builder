@@ -11,7 +11,7 @@ import { ToolsetCustom } from "../configuration.js"
 import { downloadBuilderToolset, getCacheDirectory } from "../util/electronGet.js"
 import { getPath7za } from "./7zip.js"
 
-async function validateCustomToolset(custom: ToolsetCustom, resourcesDir: string) {
+async function validateCustomToolset(custom: ToolsetCustom, resourcesDir?: string) {
   const url = custom.url.trim()
   try {
     const parsed = validateSecuredUrl(url)
@@ -24,7 +24,7 @@ async function validateCustomToolset(custom: ToolsetCustom, resourcesDir: string
   }
   if (url.startsWith("file://")) {
     const p = url.slice("file://".length)
-    const isWithinResources = path.normalize(p).startsWith(path.normalize(resourcesDir + path.sep))
+    const isWithinResources = resourcesDir ? path.normalize(p).startsWith(path.normalize(resourcesDir + path.sep)) : false
     const isValid = path.isAbsolute(p) || isWithinResources
     const type =
       isValid &&
@@ -40,7 +40,7 @@ async function validateCustomToolset(custom: ToolsetCustom, resourcesDir: string
 }
 
 // Strip the file:// prefix and sanitize the path against resourcesDir (relative paths must be within it)
-function resolveFilePath(url: string, resourcesDir: string): string {
+function resolveFilePath(url: string, resourcesDir?: string): string {
   const p = url.startsWith("file://") ? url.slice("file://".length) : url
   return path.isAbsolute(p) ? sanitizeDirPath(p) : sanitizeDirPath(p, resourcesDir)
 }
@@ -51,7 +51,7 @@ export function clearCustomToolsetCache(): void {
   _customToolsetCache.clear()
 }
 
-export function getCustomToolsetPath(custom: ToolsetCustom, resourcesDir: string): Promise<string> {
+export function getCustomToolsetPath(custom: ToolsetCustom, resourcesDir?: string): Promise<string> {
   const key = JSON.stringify({ url: custom.url, checksum: custom.checksum ?? "", resourcesDir })
   let cached = _customToolsetCache.get(key)
   if (cached == null) {
@@ -61,7 +61,7 @@ export function getCustomToolsetPath(custom: ToolsetCustom, resourcesDir: string
   return cached
 }
 
-async function _resolveCustomToolsetPath(custom: ToolsetCustom, resourcesDir: string): Promise<string> {
+async function _resolveCustomToolsetPath(custom: ToolsetCustom, resourcesDir?: string): Promise<string> {
   const { type, toolset } = await validateCustomToolset(custom, resourcesDir)
 
   if (type === "directory") {

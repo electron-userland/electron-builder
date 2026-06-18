@@ -1,4 +1,4 @@
-import { Arch, sanitizeDirPath } from "builder-util"
+import { sanitizeDirPath } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import * as os from "os"
 import * as path from "path"
@@ -100,23 +100,6 @@ export async function getSignToolPath(winCodeSign: ToolsetConfig["winCodeSign"] 
 }
 
 /**
- * Clamp the requested kit arch to one that can actually execute on this build host.
- *
- * The Windows Kits tools (`signtool.exe` / `makeappx.exe` / `makepri.exe`) are HOST executables. Only
- * a native Windows-on-ARM host can run the arm64 kit binaries; an x64/x86 host — and the x64 Wine
- * bundle used on macOS/Linux — cannot, and a cross-arch launch fails with `spawn UNKNOWN`. x64 runs
- * everywhere (incl. arm64 via emulation), so an arm64 request on a non-arm64 host falls back to x64.
- *
- * This is a no-op for every current caller (they already derive the arch from `process.arch`); it
- * exists as a backstop so a future caller passing the artifact's target arch can't reintroduce the
- * cross-arch spawn bug.
- */
-export function toHostRunnableKitArch(arch: Arch, hostPlatform: NodeJS.Platform = process.platform, hostArch: string = process.arch): Arch {
-  const hostCanRunArm64 = hostPlatform === "win32" && hostArch === "arm64"
-  return arch === Arch.arm64 && !hostCanRunArm64 ? Arch.x64 : arch
-}
-
-/**
  * Resolve the Windows Kits bundle paths.
  *
  * The `kit` subdirectory is selected by a host-runnable arch — the arch of the machine/Wine that will
@@ -126,7 +109,7 @@ export function toHostRunnableKitArch(arch: Arch, hostPlatform: NodeJS.Platform 
  * arch is additionally clamped via {@link toHostRunnableKitArch} as a backstop.
  * `appxAssets` is arch-independent (the bundle root).
  */
-export async function getWindowsKitsBundle({ winCodeSign,   resourcesDir = "" }: { winCodeSign: ToolsetConfig["winCodeSign"] | Nullish;   resourcesDir?: string }) {
+export async function getWindowsKitsBundle({ winCodeSign, resourcesDir }: { winCodeSign: ToolsetConfig["winCodeSign"] | Nullish; resourcesDir?: string }) {
   const kitArch = process.arch === "ia32" ? "x86" : process.arch === "arm64" ? "arm64" : "x64"
   if (typeof winCodeSign === "object" && winCodeSign != null) {
     const vendorPath = sanitizeDirPath(await getCustomToolsetPath(winCodeSign, resourcesDir), resourcesDir || undefined)
