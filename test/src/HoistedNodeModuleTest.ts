@@ -109,11 +109,19 @@ describe("node_module collectors", () => {
             }
           }),
         packed: async context => {
+          const resourceDir = context.getResources(Platform.MAC, Arch.universal)
           // The universal app was produced (the merge no longer aborts) and esbuild's JS package is bundled.
-          const asarFs = await readAsar(path.join(context.getResources(Platform.MAC, Arch.universal), "app.asar"))
+          const asarFs = await readAsar(path.join(resourceDir, "app.asar"))
           expect(await asarFs.readJson(`node_modules${path.sep}esbuild${path.sep}package.json`)).toMatchObject({ name: "esbuild" })
 
-          await verifyAsarFileTree(expect, context.getResources(Platform.MAC, Arch.universal))
+          // npm installs only the *host* arch's platform binary, so the universal app carries that single-arch
+          // binary through the merge (and not the other arch's, which was never on disk). Deriving the expected
+          // arch from `process.arch` keeps this deterministic across arm64 and x64 CI runners.
+          const esbuildScope = path.join(resourceDir, "app.asar.unpacked", "node_modules", "@esbuild")
+          const hostArch = process.arch === "x64" ? "x64" : "arm64"
+          const otherArch = hostArch === "x64" ? "arm64" : "x64"
+          await assertThat(expect, path.join(esbuildScope, `darwin-${hostArch}`, "bin", "esbuild")).isFile()
+          await assertThat(expect, path.join(esbuildScope, `darwin-${otherArch}`)).doesNotExist()
         },
       }
     )
