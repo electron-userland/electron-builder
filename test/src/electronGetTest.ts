@@ -71,12 +71,12 @@ describe("getCacheDirectory", () => {
 
   test("returns ELECTRON_BUILDER_CACHE when set", async ({ expect }) => {
     vi.stubEnv("ELECTRON_BUILDER_CACHE", "/custom/cache")
-    expect(await getCacheDirectoryInternal({ allowEnvVarOverride: true })).toBe("/custom/cache")
+    expect(await getCacheDirectoryInternal({ allowEnvVarOverride: true })).toBe(path.resolve("/custom/cache"))
   })
 
   test("trims whitespace from ELECTRON_BUILDER_CACHE", async ({ expect }) => {
     vi.stubEnv("ELECTRON_BUILDER_CACHE", "  /padded/path  ")
-    expect(await getCacheDirectoryInternal({ allowEnvVarOverride: true })).toBe("/padded/path")
+    expect(await getCacheDirectoryInternal({ allowEnvVarOverride: true })).toBe(path.resolve("/padded/path"))
   })
 
   test("returns platform-appropriate default when env var is absent", async ({ expect }) => {
