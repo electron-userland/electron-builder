@@ -1,7 +1,7 @@
-import { Arch, asArray, copyOrLinkFile, ensureNotBusy, InvalidConfigurationError, log, sanitizeDirPath, walk } from "builder-util"
+import { Arch, asArray, copyOrLinkFile, ensureNotBusy, InvalidConfigurationError, log, sanitizeDirPath, walk, escapeForXml } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 
-import * as path from "path"
+import path from "path"
 import { AppXOptions } from "../../index.js"
 import { getWindowsKitsBundle, isOldWin6 } from "../../toolsets/winCodeSign.js"
 import { Target } from "../../core.js"
@@ -223,14 +223,14 @@ export default class AppXTarget extends Target {
     const manifest = manifestFileContent.replace(/\${([a-zA-Z0-9]+)}/g, (match, p1): string => {
       switch (p1) {
         case "publisher":
-          return publisher
+          return escapeForXml(publisher)
 
         case "publisherDisplayName": {
           const name = options.publisherDisplayName || appInfo.companyName
           if (name == null) {
             throw new InvalidConfigurationError(`Please specify "author" in the application package.json — it is required because "appx.publisherDisplayName" is not set.`)
           }
-          return name
+          return escapeForXml(name)
         }
 
         case "version":
@@ -295,10 +295,10 @@ export default class AppXTarget extends Target {
           return executable
 
         case "displayName":
-          return displayName
+          return escapeForXml(displayName)
 
         case "description":
-          return appInfo.description || appInfo.productName
+          return escapeForXml(appInfo.description || appInfo.productName)
 
         case "backgroundColor":
           return options.backgroundColor || "#464646"

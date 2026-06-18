@@ -5,7 +5,7 @@ import { spawn as _spawn } from "cross-spawn"
 import _debug from "debug"
 import _fsExtra from "fs-extra"
 import { dump } from "js-yaml"
-import * as path from "path"
+import path from "path"
 import { install as installSourceMap } from "source-map-support"
 import { debug, log } from "./log.js"
 import { isEmptyOrSpaces } from "./stringUtil.js"
@@ -18,7 +18,8 @@ if (process.env.VITEST == null) {
   installSourceMap()
 }
 
-export { retry, safeStringifyJson } from "builder-util-runtime"
+export { isEmptyOrSpaces, escapeForXml } from "./stringUtil.js"
+export { safeStringifyJson, retry } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
 export * from "./arch.js"
 export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames, getArchSuffix, toLinuxArchString } from "./arch.js"
