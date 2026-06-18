@@ -1,4 +1,4 @@
-import { Arch, asArray, copyOrLinkFile, InvalidConfigurationError, log, sanitizeDirPath, walk } from "builder-util"
+import { Arch, asArray, copyOrLinkFile, ensureNotBusy, InvalidConfigurationError, log, sanitizeDirPath, walk } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 
 import * as path from "path"
@@ -113,12 +113,15 @@ export default class AppXTarget extends Target {
 
     if (isScaledAssetsProvided(userAssets)) {
       const outFile = vm.toVmFile(stageDir.getTempFile("resources.pri"))
-      const makePriPath = vm.toVmFile(path.join(vendorPath.kit, "makepri.exe"))
+      const makePriExe = path.join(vendorPath.kit, "makepri.exe")
+      const makePriPath = vm.toVmFile(makePriExe)
 
       const assetRoot = stageDir.getTempFile("appx/assets")
       await emptyDir(assetRoot)
       await Promise.all(assetInfo.allAssets.map(it => copyOrLinkFile(it, path.join(assetRoot, path.basename(it)))))
 
+      // Wait out any transient AV/share lock on the freshly-extracted kit binary (see ensureNotBusy).
+      await ensureNotBusy(makePriExe)
       await vm.exec(makePriPath, [
         "new",
         "/Overwrite",
@@ -150,7 +153,12 @@ export default class AppXTarget extends Target {
       makeAppXArgs.push(...this.options.makeappxArgs)
     }
     this.buildQueueManager.add(async () => {
-      await vm.exec(vm.toVmFile(path.join(vendorPath.kit, "makeappx.exe")), makeAppXArgs)
+      const makeAppxExe = path.join(vendorPath.kit, "makeappx.exe")
+      // The kit binary is often freshly extracted to a cold cache; on Windows an AV scanner can hold a
+      // deny-write lock on it just long enough that CreateProcess fails with `spawn UNKNOWN`. Wait for
+      // the lock to clear before spawning. See ensureNotBusy.
+      await ensureNotBusy(makeAppxExe)
+      await vm.exec(vm.toVmFile(makeAppxExe), makeAppXArgs)
       await packager.signIf(artifactPath)
 
       await stageDir.cleanup()
