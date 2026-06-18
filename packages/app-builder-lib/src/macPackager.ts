@@ -316,7 +316,9 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
 
     log.warn(
       { packages: Array.from(packageNames).sort().join(", ") || "(none)", files: machOFiles.sort().join(", ") || "(none)" },
-      "detected single-architecture binaries in the universal build — treating them as single-arch. Move build-only tools (e.g. esbuild) to `devDependencies` or exclude them via `files` to omit them entirely."
+      "Universal build contains single-architecture binaries; they are copied as-is per slice (not lipo-merged), so each is only usable on architectures whose platform package was installed on this build host. " +
+        "If these are build-only tools (e.g. esbuild), move them to `devDependencies` or exclude them via `files` to omit them entirely. " +
+        "If they are needed at runtime, install every target architecture's variant so the universal app works on both Intel and Apple Silicon (pnpm/yarn: `supportedArchitectures`; npm: `--cpu`/`--os`)."
     )
     return buildSingleArchFilesPattern(patterns, userPattern)
   }

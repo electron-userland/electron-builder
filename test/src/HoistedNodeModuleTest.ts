@@ -127,6 +127,37 @@ describe("node_module collectors", () => {
     )
   )
 
+  // Companion to the test above: when the project opts into installing *both* macOS arch variants
+  // (here via pnpm `supportedArchitectures`), the symmetric universal slices carry both single-arch
+  // binaries into the final app — so a runtime dependency resolves correctly on Intel AND Apple Silicon.
+  test.ifMac("mac universal build bundles both arch variants when both are installed (pnpm supportedArchitectures)", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-hoisted",
+      {
+        targets: Platform.MAC.createTarget(DIR_TARGET, Arch.universal),
+      },
+      {
+        signedMac: false,
+        packageManager: PM.PNPM,
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              esbuild: "0.21.5",
+            }
+            // Force pnpm to install the platform packages for BOTH macOS arches, not just the build host's.
+            data.pnpm = { supportedArchitectures: { os: ["darwin"], cpu: ["x64", "arm64"] } }
+          }),
+        packed: async context => {
+          const esbuildScope = path.join(context.getResources(Platform.MAC, Arch.universal), "app.asar.unpacked", "node_modules", "@esbuild")
+          // Both arch variants are present, so esbuild's runtime resolution works on either architecture.
+          await assertThat(expect, path.join(esbuildScope, "darwin-x64", "bin", "esbuild")).isFile()
+          await assertThat(expect, path.join(esbuildScope, "darwin-arm64", "bin", "esbuild")).isFile()
+        },
+      }
+    )
+  )
+
   test("yarn two package.json", ({ expect }) =>
     assertPack(
       expect,

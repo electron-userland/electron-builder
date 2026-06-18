@@ -1011,6 +1011,12 @@ exports[`node_module collectors > conflict versions 2`] = `
 }
 `;
 
+exports[`node_module collectors > mac universal build bundles both arch variants when both are installed (pnpm supportedArchitectures) 1`] = `
+{
+  "mac": [],
+}
+`;
+
 exports[`node_module collectors > mac universal build with a single-arch platform-specific optional dependency (esbuild) 1`] = `
 {
   "mac": [],
