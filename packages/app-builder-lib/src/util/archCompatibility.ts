@@ -1,5 +1,6 @@
 import { Arch } from "builder-util"
-import { readdir, readFile } from "fs/promises"
+import { createHash } from "crypto"
+import { open, readdir, readFile } from "fs/promises"
 import * as path from "path"
 
 /**
@@ -137,15 +138,78 @@ async function inspectPackageDir(packageDir: string, names: Set<string>): Promis
   await collectSingleArchPackageNames(path.join(packageDir, "node_modules"), names)
 }
 
+// Single-arch (non-fat) Mach-O magics, read big-endian from the first 4 bytes. The fat/universal magics
+// (`0xcafebabe`/`0xbebafeca`) are intentionally excluded — those are already-merged binaries that lipo handles.
+const SINGLE_ARCH_MACHO_MAGICS = new Set([0xfeedface, 0xfeedfacf, 0xcefaedfe, 0xcffaedfe])
+
+async function isSingleArchMachO(file: string): Promise<boolean> {
+  let fh
+  try {
+    fh = await open(file, "r")
+    const buf = Buffer.alloc(4)
+    const { bytesRead } = await fh.read(buf, 0, 4, 0)
+    return bytesRead === 4 && SINGLE_ARCH_MACHO_MAGICS.has(buf.readUInt32BE(0))
+  } catch {
+    return false // missing/unreadable file
+  } finally {
+    await fh?.close()
+  }
+}
+
+async function sha256(file: string): Promise<string> {
+  return createHash("sha256")
+    .update(await readFile(file))
+    .digest("hex")
+}
+
+async function walkFiles(dir: string, onFile: (absolutePath: string) => Promise<void>): Promise<void> {
+  let entries
+  try {
+    entries = await readdir(dir, { withFileTypes: true })
+  } catch {
+    return // directory does not exist or is unreadable
+  }
+  for (const entry of entries) {
+    const p = path.join(dir, entry.name)
+    if (entry.isDirectory()) {
+      await walkFiles(p, onFile)
+    } else if (entry.isFile()) {
+      await onFile(p)
+    }
+  }
+}
+
 /**
- * Builds a single minimatch pattern (as consumed by `@electron/universal`'s `singleArchFiles`) covering the
- * given single-arch package names, merged with any user-provided pattern. Returns `userPattern` when no names.
+ * Finds single-arch Mach-O files that are byte-identical in BOTH universal slices — the exact case
+ * `@electron/universal` aborts on (`x64Sha === arm64Sha` for a non-fat Mach-O). This catches host binaries
+ * placed in packages that declare no `cpu`/`os`, e.g. esbuild's install script overwriting `esbuild/bin/esbuild`
+ * with the platform binary. Per-arch binaries (different SHA, e.g. rebuilt `.node` addons) are left for lipo.
+ * Returns paths relative to `unpackedDirA`, posix-normalized for matching by `@electron/universal`.
  */
-export function buildSingleArchFilesPattern(names: Iterable<string>, userPattern: string | undefined): string | undefined {
-  const sorted = Array.from(new Set(names)).sort()
+export async function collectIdenticalSingleArchMachOFiles(unpackedDirA: string, unpackedDirB: string): Promise<string[]> {
+  const result: string[] = []
+  await walkFiles(unpackedDirA, async fileA => {
+    if (!(await isSingleArchMachO(fileA))) {
+      return
+    }
+    const rel = path.relative(unpackedDirA, fileA)
+    const fileB = path.join(unpackedDirB, rel)
+    if ((await isSingleArchMachO(fileB)) && (await sha256(fileA)) === (await sha256(fileB))) {
+      result.push(rel.split(path.sep).join("/"))
+    }
+  })
+  return result
+}
+
+/**
+ * Combines the given minimatch patterns (as consumed by `@electron/universal`'s `singleArchFiles`) into a
+ * single pattern, merged with any user-provided pattern. Returns `userPattern` (possibly undefined) when empty.
+ */
+export function buildSingleArchFilesPattern(patterns: Iterable<string>, userPattern: string | undefined): string | undefined {
+  const sorted = Array.from(new Set(patterns)).sort()
   if (sorted.length === 0) {
     return userPattern
   }
-  const detected = sorted.length === 1 ? `**/${sorted[0]}/**` : `**/{${sorted.join(",")}}/**`
+  const detected = sorted.length === 1 ? sorted[0] : `{${sorted.join(",")}}`
   return userPattern ? `{${userPattern},${detected}}` : detected
 }

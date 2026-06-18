@@ -1,5 +1,12 @@
 import { Arch } from "builder-util"
-import { archToNodeCpu, buildSingleArchFilesPattern, collectSingleArchPackageNames, isPackageCompatible, isSingleArchPackage } from "app-builder-lib/src/util/archCompatibility"
+import {
+  archToNodeCpu,
+  buildSingleArchFilesPattern,
+  collectIdenticalSingleArchMachOFiles,
+  collectSingleArchPackageNames,
+  isPackageCompatible,
+  isSingleArchPackage,
+} from "app-builder-lib/src/util/archCompatibility"
 import { mkdir, mkdtemp, rm, writeFile } from "fs/promises"
 import { tmpdir } from "os"
 import * as path from "path"
@@ -109,37 +116,94 @@ describe("collectSingleArchPackageNames", () => {
 describe("buildSingleArchFilesPattern", () => {
   // mirrors @electron/universal's matchGlob (node's path.matchesGlob), relative to app.asar.unpacked
   const matches = (pattern: string | undefined, file: string) => pattern != null && path.matchesGlob(file, pattern)
-  const esbuildFile = "node_modules/@esbuild/darwin-arm64/bin/esbuild"
+  // patterns as produced by computeSingleArchFiles: whole-package globs + exact Mach-O file paths
+  const esbuildPkgPattern = "**/@esbuild/darwin-arm64/**"
+  const esbuildBinFile = "node_modules/esbuild/bin/esbuild"
+  const esbuildPkgFile = "node_modules/@esbuild/darwin-arm64/bin/esbuild"
+  const swcPkgPattern = "**/@swc/core-darwin-arm64/**"
   const swcFile = "node_modules/foo/node_modules/@swc/core-darwin-arm64/swc.darwin-arm64.node"
   const plainFile = "node_modules/lodash/index.js"
 
-  test("no names returns the user pattern unchanged (undefined when none)", ({ expect }) => {
+  test("no patterns returns the user pattern unchanged (undefined when none)", ({ expect }) => {
     expect(buildSingleArchFilesPattern([], undefined)).toBeUndefined()
     expect(buildSingleArchFilesPattern([], "custom/**")).toBe("custom/**")
   })
 
-  test("single package pattern matches that package anywhere, not others", ({ expect }) => {
-    const pattern = buildSingleArchFilesPattern(["@esbuild/darwin-arm64"], undefined)
-    expect(matches(pattern, esbuildFile)).toBe(true)
+  test("a single pattern is returned as-is", ({ expect }) => {
+    const pattern = buildSingleArchFilesPattern([esbuildPkgPattern], undefined)
+    expect(matches(pattern, esbuildPkgFile)).toBe(true)
     expect(matches(pattern, swcFile)).toBe(false)
     expect(matches(pattern, plainFile)).toBe(false)
   })
 
-  test("multiple packages are combined into one brace pattern", ({ expect }) => {
-    const pattern = buildSingleArchFilesPattern(["@esbuild/darwin-arm64", "@swc/core-darwin-arm64"], undefined)
-    expect(matches(pattern, esbuildFile)).toBe(true)
+  test("combines a package glob and an exact Mach-O file path into one pattern", ({ expect }) => {
+    const pattern = buildSingleArchFilesPattern([esbuildPkgPattern, esbuildBinFile], undefined)
+    expect(matches(pattern, esbuildPkgFile)).toBe(true) // covered by package glob
+    expect(matches(pattern, esbuildBinFile)).toBe(true) // covered by exact file path
+    expect(matches(pattern, plainFile)).toBe(false)
+  })
+
+  test("combines multiple package globs", ({ expect }) => {
+    const pattern = buildSingleArchFilesPattern([esbuildPkgPattern, swcPkgPattern], undefined)
+    expect(matches(pattern, esbuildPkgFile)).toBe(true)
     expect(matches(pattern, swcFile)).toBe(true)
     expect(matches(pattern, plainFile)).toBe(false)
   })
 
   test("merges with a user-provided pattern (both still match)", ({ expect }) => {
-    const pattern = buildSingleArchFilesPattern(["@esbuild/darwin-arm64"], "node_modules/custom-tool/**")
-    expect(matches(pattern, esbuildFile)).toBe(true)
+    const pattern = buildSingleArchFilesPattern([esbuildPkgPattern], "node_modules/custom-tool/**")
+    expect(matches(pattern, esbuildPkgFile)).toBe(true)
     expect(matches(pattern, "node_modules/custom-tool/bin/run")).toBe(true)
     expect(matches(pattern, plainFile)).toBe(false)
   })
 
-  test("dedups and sorts names", ({ expect }) => {
-    expect(buildSingleArchFilesPattern(["b", "a", "b"], undefined)).toBe("**/{a,b}/**")
+  test("dedups and sorts patterns", ({ expect }) => {
+    expect(buildSingleArchFilesPattern(["b/**", "a/**", "b/**"], undefined)).toBe("{a/**,b/**}")
+  })
+})
+
+describe("collectIdenticalSingleArchMachOFiles", () => {
+  // 64-bit Mach-O on disk starts with the little-endian magic CF FA ED FE; fat/universal starts with CA FE BA BE.
+  const machoBytes = (suffix: string) => Buffer.concat([Buffer.from([0xcf, 0xfa, 0xed, 0xfe]), Buffer.from(suffix)])
+  const fatBytes = Buffer.from([0xca, 0xfe, 0xba, 0xbe, 0x00, 0x00, 0x00, 0x02])
+
+  async function writeFileTree(root: string, files: Record<string, Buffer | string>) {
+    for (const [rel, content] of Object.entries(files)) {
+      const abs = path.join(root, rel)
+      await mkdir(path.dirname(abs), { recursive: true })
+      await writeFile(abs, content)
+    }
+  }
+
+  test("flags single-arch Mach-O files identical in both slices; ignores per-arch, fat, and non-Mach-O", async ({ expect }) => {
+    const base = await mkdtemp(path.join(tmpdir(), "eb-macho-"))
+    try {
+      const x64 = path.join(base, "x64")
+      const arm64 = path.join(base, "arm64")
+      // identical host binary in both slices (the esbuild/bin/esbuild case) -> flagged
+      await writeFileTree(x64, { "node_modules/esbuild/bin/esbuild": machoBytes("HOST") })
+      await writeFileTree(arm64, { "node_modules/esbuild/bin/esbuild": machoBytes("HOST") })
+      // per-arch native addon (different content) -> NOT flagged (lipo-mergeable)
+      await writeFileTree(x64, { "node_modules/native/build/Release/a.node": machoBytes("X64") })
+      await writeFileTree(arm64, { "node_modules/native/build/Release/a.node": machoBytes("ARM64") })
+      // fat/universal binary identical in both -> NOT flagged (already universal)
+      await writeFileTree(x64, { "node_modules/fat/bin/tool": fatBytes })
+      await writeFileTree(arm64, { "node_modules/fat/bin/tool": fatBytes })
+      // plain JS identical in both -> NOT flagged (not Mach-O)
+      await writeFileTree(x64, { "node_modules/lodash/index.js": "module.exports = {}" })
+      await writeFileTree(arm64, { "node_modules/lodash/index.js": "module.exports = {}" })
+      // single-arch Mach-O present only in one slice -> NOT flagged here (handled by the package scan)
+      await writeFileTree(arm64, { "node_modules/@esbuild/darwin-arm64/bin/esbuild": machoBytes("ARM") })
+
+      const flagged = await collectIdenticalSingleArchMachOFiles(x64, arm64)
+      expect(flagged).toEqual(["node_modules/esbuild/bin/esbuild"])
+    } finally {
+      await rm(base, { recursive: true, force: true })
+    }
+  })
+
+  test("returns empty when a slice directory does not exist", async ({ expect }) => {
+    const flagged = await collectIdenticalSingleArchMachOFiles(path.join(tmpdir(), "missing-eb-a"), path.join(tmpdir(), "missing-eb-b"))
+    expect(flagged).toEqual([])
   })
 })

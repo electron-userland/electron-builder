@@ -69,6 +69,10 @@ export type DoPackOptions<DC extends PlatformSpecificBuildOptions> = {
     sign?: boolean
     disableAsarIntegrity?: boolean
     disableFuses?: boolean
+    // Universal slices set this: keep platform-mismatched node modules so both slices stay symmetric.
+    // Per-slice `cpu`/`os` filtering would leave packages in only one slice, which `@electron/universal`
+    // refuses to merge. Single-arch binaries are instead reconciled via `singleArchFiles` after both packs.
+    disableArchFilter?: boolean
   }
 }
 
@@ -397,7 +401,17 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
           ? path.join(appOutDir, "resources")
           : appOutDir
     const taskManager = new AsyncTaskManager(this.info.cancellationToken)
-    this.copyAppFiles(taskManager, asarOptions, resourcesPath, path.join(resourcesPath, "app"), packContext, platformSpecificBuildOptions, excludePatterns, macroExpander)
+    this.copyAppFiles(
+      taskManager,
+      asarOptions,
+      resourcesPath,
+      path.join(resourcesPath, "app"),
+      packContext,
+      platformSpecificBuildOptions,
+      excludePatterns,
+      macroExpander,
+      options?.disableArchFilter ?? false
+    )
     await taskManager.awaitTasks()
 
     if (this.info.cancellationToken.cancelled) {
@@ -566,7 +580,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     packContext: AfterPackContext,
     platformSpecificBuildOptions: DC,
     excludePatterns: Array<Minimatch>,
-    macroExpander: (it: string) => string
+    macroExpander: (it: string) => string,
+    disableArchFilter: boolean
   ) {
     const appDir = this.info.appDir
     const config = this.config
@@ -585,7 +600,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return computeFileSets(matchers, this.info.isPrepackedAppAsar ? null : transformer, this).then(async result => {
         if (!this.info.isPrepackedAppAsar && !this.info.areNodeModulesHandledExternally) {
           const moduleFileMatcher = getNodeModuleFileMatcher(appDir, defaultDestination, macroExpander, platformSpecificBuildOptions, this.info)
-          result = result.concat(await computeNodeModuleFileSets(this, moduleFileMatcher, packContext.arch))
+          result = result.concat(await computeNodeModuleFileSets(this, moduleFileMatcher, packContext.arch, !disableArchFilter))
         }
         return result.filter(it => it.files.length > 0)
       })

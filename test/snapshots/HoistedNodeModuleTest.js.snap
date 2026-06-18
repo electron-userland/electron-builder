@@ -1011,6 +1011,87 @@ exports[`node_module collectors > conflict versions 2`] = `
 }
 `;
 
+exports[`node_module collectors > mac universal build with a single-arch platform-specific optional dependency (esbuild) 1`] = `
+{
+  "mac": [],
+}
+`;
+
+exports[`node_module collectors > mac universal build with a single-arch platform-specific optional dependency (esbuild) 2`] = `
+{
+  "files": {
+    "index.html": {
+      "offset": 0,
+      "size": 380,
+    },
+    "index.js": {
+      "offset": 380,
+      "size": 620,
+    },
+    "node_modules": {
+      "files": {
+        "@esbuild": {
+          "files": {
+            "darwin-arm64": {
+              "files": {
+                "bin": {
+                  "files": {
+                    "esbuild": {
+                      "size": 9859430,
+                      "unpacked": true,
+                    },
+                  },
+                },
+                "package.json": {
+                  "size": 390,
+                  "unpacked": true,
+                },
+              },
+            },
+          },
+        },
+        "esbuild": {
+          "files": {
+            "LICENSE.md": {
+              "size": 1070,
+              "unpacked": true,
+            },
+            "bin": {
+              "files": {
+                "esbuild": {
+                  "size": 9859430,
+                  "unpacked": true,
+                },
+              },
+            },
+            "install.js": {
+              "size": 10950,
+              "unpacked": true,
+            },
+            "lib": {
+              "files": {
+                "main.js": {
+                  "size": 87660,
+                  "unpacked": true,
+                },
+              },
+            },
+            "package.json": {
+              "size": 1290,
+              "unpacked": true,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": 1000,
+      "size": 360,
+    },
+  },
+}
+`;
+
 exports[`node_module collectors > npm electron-clear-data 1`] = `
 {
   "win": [],

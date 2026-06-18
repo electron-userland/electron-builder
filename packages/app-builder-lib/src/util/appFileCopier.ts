@@ -164,8 +164,13 @@ function validateFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
 }
 
 /** @internal */
-export async function computeNodeModuleFileSets(platformPackager: PlatformPackager<any>, mainMatcher: FileMatcher, arch: Arch): Promise<Array<ResolvedFileSet>> {
-  const deps = await collectNodeModulesWithLogging(platformPackager, arch)
+export async function computeNodeModuleFileSets(
+  platformPackager: PlatformPackager<any>,
+  mainMatcher: FileMatcher,
+  arch: Arch,
+  applyArchFilter = true
+): Promise<Array<ResolvedFileSet>> {
+  const deps = await collectNodeModulesWithLogging(platformPackager, applyArchFilter ? arch : null)
 
   const nodeModuleExcludedExts = getNodeModuleExcludedExts(platformPackager)
   // serial execution because copyNodeModules is concurrent and so, no need to increase queue/pressure
@@ -196,14 +201,15 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   return result
 }
 
-async function collectNodeModulesWithLogging(platformPackager: PlatformPackager<any>, arch: Arch) {
+async function collectNodeModulesWithLogging(platformPackager: PlatformPackager<any>, arch: Arch | null) {
   const { tempDirManager, appDir, projectDir } = platformPackager
 
   let deps: { nodeModules: NodeModuleInfo[]; logSummary: ModuleManager["logSummary"] } | undefined = undefined
 
   // Drop packages whose `package.json` `cpu`/`os` is incompatible with the target arch/platform while
   // collecting (e.g. exclude `@esbuild/darwin-arm64` from the x64 slice). See NodeModulesCollector.
-  const archFilter = { cpu: archToNodeCpu(arch), os: platformPackager.platform.nodeName }
+  // `null` arch (universal slices) disables the filter so both slices stay symmetric for the merge.
+  const archFilter = arch == null ? undefined : { cpu: archToNodeCpu(arch), os: platformPackager.platform.nodeName }
 
   const searchDirectories = Array.from(new Set([appDir, projectDir, await platformPackager.getWorkspaceRoot()])).filter((it): it is string => isEmptyOrSpaces(it) === false)
   const pmApproaches = [await platformPackager.getPackageManager(), PM.TRAVERSAL]
