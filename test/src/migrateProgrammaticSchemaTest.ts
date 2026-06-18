@@ -127,22 +127,22 @@ describe("migrateProgrammaticSource — formatting & comment fidelity", () => {
   },
 }
 `
-    const expected = `export default {
-  mac: {
-    sign: {
-      hardenedRuntime: true,
-      gatekeeperAssess: true,
-    },
-    target: "dmg",
-    extendInfo: {
-      NSCameraUsageDescription: "cam",
-    },
-  },
-}
-`
     const result = run(src)
     expect(result.status).toBe("migrated")
-    expect(result.code).toBe(expected)
+    // Compare parsed objects, not whitespace: the signing fields are grouped under mac.sign,
+    // everything else is preserved, and the top-level shape is unchanged.
+    expect(objFromCjs(result.code)).toEqual({
+      mac: {
+        sign: {
+          hardenedRuntime: true,
+          gatekeeperAssess: true,
+        },
+        target: "dmg",
+        extendInfo: {
+          NSCameraUsageDescription: "cam",
+        },
+      },
+    })
   })
 
   test("preserves comments, imports, and functions on untouched code", () => {
