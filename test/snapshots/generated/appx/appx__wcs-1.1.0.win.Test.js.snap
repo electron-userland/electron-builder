@@ -182,6 +182,18 @@ exports[`AppX > languages and not signed (windows store only) 1`] = `
 }
 `;
 
+exports[`AppX > special chars in appx properties 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+  ],
+}
+`;
+
 exports[`AppX > valid capabilities (windows store only) 1`] = `
 {
   "win": [
