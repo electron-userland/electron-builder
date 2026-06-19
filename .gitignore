@@ -22,6 +22,13 @@ site/
 .pnpm-store/
 
 coverage
+# Vitest per-shard reports + merged report outputs (test-summary.ts / merge-reports.ts)
+test-results/
+.vitest-reports/
+report-artifacts/
+html-report/
+merged-coverage/
+merged-test-report.json
 test/src/generated/
 test/test-report.xml
 _vitest-smart-cache.json
