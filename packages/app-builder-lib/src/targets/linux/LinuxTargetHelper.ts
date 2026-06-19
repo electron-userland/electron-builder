@@ -37,39 +37,21 @@ function desktopStringEscape(value: string): string {
 }
 
 /**
- * Characters that require an Exec argument to be double-quoted per the
- * freedesktop Desktop Entry Specification.  Plain alphanumeric args and
- * field codes must NOT be wrapped in quotes.
+ * Quote a command / path token for the freedesktop Exec key.
+ *
+ * Every Linux target launches through a launcher entrypoint, so the Exec key only ever holds a
+ * single command (the launcher path) plus field codes — never user-supplied `executableArgs`.
+ * Plain paths made up of portable characters are emitted as-is; anything else is wrapped in
+ * double quotes. The spec requires the reserved characters `"`, backtick, `$` and `\` to be
+ * backslash-escaped inside the quotes, so they are escaped here to keep the Exec token valid.
  *
  * @see https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#exec-variables
  */
-const EXEC_RESERVED_RE = /[\s"'`\\<>~|&;$*?#()]/
-
-/**
- * Quote a single argument for use in a .desktop file Exec key.
- *
- * Field codes (`%f`, `%u`, `%F`, `%U`, etc.) MUST be left unquoted — the
- * desktop launcher only expands them in unquoted token positions.  Wrapping
- * them in `"…"` causes the launcher to treat them as literal strings, which
- * breaks file-association / drag-and-drop functionality.
- *
- * For all other arguments, double-quoting is used when the argument contains
- * any character that would be misinterpreted by the launcher without quoting
- * (spaces, shell metacharacters, etc.).  Safe plain-word args are passed
- * through unchanged to keep the Exec line readable.
- *
- * @see https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#exec-variables
- */
-function desktopExecArgEscape(arg: string): string {
-  // Field codes (%f, %u, %F, %U, %i, %c, %k, …) must never be quoted.
-  if (/^%[a-zA-Z]$/.test(arg)) {
-    return arg
+export function quoteDesktopExecPath(value: string): string {
+  if (/^[/0-9A-Za-z._-]+$/.test(value)) {
+    return value
   }
-  // Only quote when the arg actually contains characters that need it.
-  if (EXEC_RESERVED_RE.test(arg)) {
-    return `"${arg.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`
-  }
-  return arg
+  return '"' + value.replace(/["$`\\]/g, "\\$&") + '"'
 }
 
 function mapLinuxCompressionToSnap(level: CompressionLevel | null | undefined): "xz" | "lzo" | undefined {
@@ -226,13 +208,30 @@ export class LinuxTargetHelper {
     return file
   }
 
-  getDesktopFileName(fallback: string = this.packager.executableName): string {
-    if (!this.packager.platformOptions.syncDesktopName) {
-      return fallback
-    }
+  // Emit the "desktopName not set" warning at most once per build, even though both
+  // getDesktopFileName() and computeDesktopEntry() resolve the desktop name.
+  private desktopNameWarningEmitted = false
+
+  // https://github.com/electron-userland/electron-builder/issues/9103
+  // Electron derives app_id / WM_CLASS from desktopName in package.json; the installed
+  // .desktop filename and StartupWMClass must match it for window association to work.
+  // https://github.com/electron/electron/blob/9a7b73b5334f1d72c08e2d5e94106706ed751186/lib/browser/init.ts#L128-L133
+  // Returns the validated base name (desktopName minus the .desktop suffix), or null when
+  // desktopName is unset — callers apply their own fallback (filename vs WM_CLASS).
+  private resolveDesktopName(): string | null {
     const trimmedDesktopName = this.packager.metadata.desktopName?.trim()
     if (isEmptyOrSpaces(trimmedDesktopName)) {
-      return fallback
+      if (!this.desktopNameWarningEmitted) {
+        this.desktopNameWarningEmitted = true
+        log.warn(
+          {
+            reason: "desktopName is not set in package.json",
+            docs: "https://www.electron.build/docs/linux/#window-association-desktopname",
+          },
+          'Electron derives the app_id / WM_CLASS used for Linux window association from desktopName. Without it, desktop environments may not link the running window to its launcher entry (taskbar grouping, dock icon, etc.). Set desktopName to a reverse-DNS identifier in package.json, e.g. "com.myapp.MyApp".'
+        )
+      }
+      return null
     }
     const basename = trimmedDesktopName.replace(/\.desktop$/, "")
     // Guard against path traversal: desktopName flows into filesystem paths
@@ -241,6 +240,10 @@ export class LinuxTargetHelper {
       throw new InvalidConfigurationError(`desktopName "${trimmedDesktopName}" produces an invalid .desktop filename — remove any path separators or NUL characters`)
     }
     return basename
+  }
+
+  getDesktopFileName(fallback: string = this.packager.executableName): string {
+    return this.resolveDesktopName() ?? fallback
   }
 
   computeDesktopEntry(targetSpecificOptions: CommonLinuxOptions, exec?: string, extra?: Record<string, string>): Promise<string> {
@@ -255,39 +258,16 @@ export class LinuxTargetHelper {
     const packager = this.packager
     const appInfo = packager.appInfo
 
-    const executableArgs = targetSpecificOptions.executableArgs
     if (exec == null) {
-      exec = `${installPrefix}/${appInfo.sanitizedProductName}/${packager.executableName}`
-      if (!/^[/0-9A-Za-z._-]+$/.test(exec)) {
-        exec = `"${exec}"`
-      }
-      if (executableArgs) {
-        exec += " "
-        // Each arg is double-quoted per the freedesktop Exec key spec so that
-        // spaces, $, ;, & and other reserved characters are not misinterpreted.
-        exec += executableArgs.map(desktopExecArgEscape).join(" ")
-      }
-      // https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#exec-variables
-      const execCodes = ["%f", "%u", "%F", "%U"]
-      if (executableArgs == null || executableArgs.findIndex(arg => execCodes.includes(arg)) === -1) {
-        exec += " %U"
-      }
+      // Fallback only — targets pass an explicit launcher entrypoint as `exec`. `executableArgs`
+      // are injected into that launcher, never into the Exec key (see launcherScript.ts).
+      exec = `${quoteDesktopExecPath(`${installPrefix}/${appInfo.sanitizedProductName}/${packager.executableName}`)} %U`
     }
 
-    // https://github.com/electron-userland/electron-builder/issues/9103
-    // Electron derives app_id from desktopName in package.json; StartupWMClass must match.
-    // https://github.com/electron/electron/blob/9a7b73b5334f1d72c08e2d5e94106706ed751186/lib/browser/init.ts#L128-L133
-    const trimmedDesktopName = packager.metadata.desktopName?.trim()
-    if (isEmptyOrSpaces(trimmedDesktopName)) {
-      log.warn(
-        {
-          reason: "desktopName is not set in package.json",
-          docs: "https://www.electron.build/linux#window-association-desktopname--syncdesktopname",
-        },
-        "electron uses desktopName as app_id / WM_CLASS for window association. Without it desktop environments may not link running windows to this .desktop entry. Set desktopName in package.json and linux.syncDesktopName: true to fix."
-      )
-    }
-    const wmClass = !isEmptyOrSpaces(trimmedDesktopName) ? trimmedDesktopName.replace(/\.desktop$/, "") : appInfo.productName
+    // StartupWMClass must match Electron's app_id (derived from desktopName) for window
+    // association; resolveDesktopName() handles the shared warning and validation.
+    // Falls back to productName for apps that don't set desktopName.
+    const wmClass = this.resolveDesktopName() ?? appInfo.productName
 
     const desktopMeta = deepAssign<any>(
       {

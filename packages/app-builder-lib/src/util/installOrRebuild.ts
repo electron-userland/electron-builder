@@ -1,4 +1,4 @@
-import { asArray, log, retry, spawn, stripSensitiveEnvVars } from "builder-util"
+import { asArray, log, retry, spawn, stripSensitiveEnvVars, TmpDir } from "builder-util"
 import { isNpmNoBinLinks } from "./flags.js"
 
 import { homedir } from "os"
@@ -6,12 +6,13 @@ import * as path from "path"
 import { Configuration } from "../configuration.js"
 import { PM, getPackageManagerCommand } from "../node-module-collector/index.js"
 import { detectPackageManager } from "../node-module-collector/packageManager.js"
+import { streamSpawnToFile } from "./streamSpawnToFile.js"
 import { rebuild as remoteRebuild } from "./rebuild.js"
 import which from "which"
 import type { RebuildOptions as ElectronRebuildOptions } from "@electron/rebuild"
 import { Nullish } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
-const { pathExists } = _fsExtra
+const { pathExists, readFile } = _fsExtra
 
 export async function installOrRebuild(
   config: Configuration,
@@ -87,6 +88,30 @@ export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.
   }
 }
 
+/**
+ * Whether a failed dependency-install spawn should be retried. Everything not matched here fails fast —
+ * a genuine install error (E404, ERESOLVE, EACCES, …) must surface immediately, not after 3 backoff
+ * retries. Two transient classes are retriable:
+ *   - Network blips while fetching from the registry.
+ *   - A Windows-only cmd.exe race: cross-spawn invokes the package manager's `.cmd`/`.CMD` shim via
+ *     `cmd.exe /d /s /c`, and cmd.exe re-opens the batch file between commands. Under CI load (Defender
+ *     scan locks, an 8.3/temp cwd, heavy parallel I/O) that re-open intermittently fails with
+ *     "The batch file cannot be found." *after* the package manager has already finished — a spurious
+ *     exit code, not a missing file. The install is idempotent (a no-op once node_modules is up to
+ *     date), so re-running is safe. Guarded to win32 so the narrow message match can't affect other
+ *     platforms. (Durable fix: stop routing install through cmd.exe, mirroring the collector's
+ *     powershell.exe -EncodedCommand spawn — tracked separately.)
+ */
+export function isRetriableInstallError(message: string): boolean {
+  if (/ENOTFOUND|ECONNRESET|ETIMEDOUT|EAI_AGAIN|ECONNREFUSED/.test(message)) {
+    return true
+  }
+  if (process.platform === "win32" && /The batch file cannot be found/i.test(message)) {
+    return true
+  }
+  return false
+}
+
 export async function installDependencies(
   config: Configuration,
   { appDir, projectDir, workspaceRoot }: DirectoryPaths,
@@ -120,19 +145,49 @@ export async function installDependencies(
   const spawnEnv = {
     ...getGypEnv(options.frameworkInfo, platform, arch, options.buildFromSource === true),
     ...env,
+    // Silence corepack's activation/download chatter so a `pnpm install` doesn't flood the build log;
+    // strict=0 so the app's `packageManager` pin can't abort the install, download prompt/notice off.
+    COREPACK_ENABLE_STRICT: "0",
+    COREPACK_ENABLE_DOWNLOAD_PROMPT: "0",
   }
-  await retry(() => spawn(execPath, execArgs, { cwd: appDir, env: spawnEnv }), {
-    retries: 3,
-    interval: 1000,
-    backoff: 2000,
-    shouldRetry: (e: any) => {
-      const isTransient = /ENOTFOUND|ECONNRESET|ETIMEDOUT|EAI_AGAIN|ECONNREFUSED/.test(e?.message ?? "")
-      if (isTransient) {
-        log.warn({ error: String(e?.message).split("\n")[0] }, "transient network error during package install, retrying")
+
+  const tmpDir = new TmpDir("install-dependencies")
+  try {
+    await retry(
+      async () => {
+        // Stream install output to a file instead of inheriting/buffering it: corepack and the package
+        // managers are extremely chatty, so the common (success) path stays quiet and only surfaces the
+        // log on failure. On Windows streamSpawnToFile routes through powershell.exe -EncodedCommand
+        // rather than cmd.exe, which also sidesteps the spurious ".cmd" shim "batch file cannot be
+        // found." re-open race that previously forced the win32 retry guard below.
+        const outputFile = await tmpDir.getTempFile({ prefix: "install-", suffix: ".log" })
+        const { code, stderr } = await streamSpawnToFile(execPath, execArgs, appDir, outputFile, spawnEnv)
+        if (code !== 0) {
+          const stdout = await readFile(outputFile, "utf8").catch(() => "")
+          throw new Error(`Package install (${execPath} ${execArgs.join(" ")}) exited with code ${code}:\n${stdout}\n${stderr}`)
+        }
+        if (log.isDebugEnabled) {
+          const stdout = await readFile(outputFile, "utf8").catch(() => "")
+          log.debug({ stdout, stderr }, "installed dependencies")
+        }
+      },
+      {
+        retries: 3,
+        interval: 1000,
+        backoff: 2000,
+        shouldRetry: (e: any) => {
+          const message = e?.message ?? ""
+          const retriable = isRetriableInstallError(message)
+          if (retriable) {
+            log.warn({ error: String(message).split("\n")[0] }, "transient error during package install, retrying")
+          }
+          return retriable
+        },
       }
-      return isTransient
-    },
-  })
+    )
+  } finally {
+    await tmpDir.cleanup()
+  }
 
   // Some native dependencies no longer use `install` hook for building their native module, (yarn 3+ removed implicit link of `install` and `rebuild` steps)
   // https://github.com/electron-userland/electron-builder/issues/8024

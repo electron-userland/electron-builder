@@ -1,4 +1,5 @@
 import { validateShellEmbeddable } from "builder-util"
+import { buildLauncherScript, shellQuote } from "../launcherScript.js"
 
 // snapd restricts the value of `apps.<app-name>.command` to alphanumeric characters, spaces, and
 // `/ . _ # : $ -`, and splits it on whitespace. Rather than encode those rules per-arg, core24
@@ -6,10 +7,8 @@ import { validateShellEmbeddable } from "builder-util"
 // sidesteps the character restrictions entirely and keeps a single, uniform command path.
 // See: https://documentation.ubuntu.com/snapcraft/stable/reference/snapcraft-yaml/#apps.%3Capp-name%3E.command
 
-/** Single-quote a shell argument, escaping any embedded single quotes. */
-export function shellQuote(arg: string): string {
-  return "'" + arg.replace(/'/g, "'\\''") + "'"
-}
+// Re-exported for backwards compatibility with existing imports/tests.
+export { shellQuote }
 
 /**
  * Builds the contents of the launcher script that execs `$SNAP/app/<execName>` with the given args.
@@ -20,10 +19,5 @@ export function shellQuote(arg: string): string {
 export function buildSnapCommandLauncherScript(opts: { execName: string; args: string[] }): string {
   const { execName, args } = opts
   validateShellEmbeddable(execName, "executableName")
-  let content = `#!/bin/sh\nexec "$SNAP/app/${execName}"`
-  if (args.length > 0) {
-    content += " " + args.map(shellQuote).join(" ")
-  }
-  content += ' "$@"\n'
-  return content
+  return buildLauncherScript({ command: [`"$SNAP/app/${execName}"`], args })
 }

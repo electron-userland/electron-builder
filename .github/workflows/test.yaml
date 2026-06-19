@@ -401,7 +401,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y squashfs-tools xvfb
-          sudo snap install snapcraft --classic
+          # Pin to the 8.x track: snapcraft 9.0.0 (latest/stable) intermittently hangs while
+          # apt-fetching destructive-mode stagePackages, causing the core24 test to time out.
+          sudo snap install snapcraft --classic --channel=8.x/stable
 
       - name: Test snap core24 native (install + launch)
         if: matrix.core == 'core24'
@@ -529,7 +531,10 @@ jobs:
           if [ -n "$PR_NUM" ]; then
             echo "VITEST_CACHE_REF=PR-${PR_NUM}" >> "$GITHUB_ENV"
           else
-            echo "VITEST_CACHE_REF=${{ github.ref_name }}" >> "$GITHUB_ENV"
+            # Artifact names cannot contain "/", so sanitize slashes in branch
+            # names like "release/v26" -> "release-v26" (keep in sync with detectRef in fetch-smart-cache.ts).
+            REF_NAME="${{ github.ref_name }}"
+            echo "VITEST_CACHE_REF=${REF_NAME//\//-}" >> "$GITHUB_ENV"
           fi
 
       - name: Upload vitest smart cache artifact

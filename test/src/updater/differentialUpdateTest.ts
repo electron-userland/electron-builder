@@ -33,9 +33,9 @@ async function testMac(expect: ExpectStatic, arch: Arch) {
   }
 }
 
-test.ifMac("Mac Intel", ({ expect }) => testMac(expect, Arch.x64))
+test.ifMac("Mac Intel", { timeout: EXTENDED_TIMEOUT }, ({ expect }) => testMac(expect, Arch.x64))
 // builds 2 archs, so double the timeout?
 test.ifMac("Mac universal", { timeout: 2 * EXTENDED_TIMEOUT }, ({ expect }) => testMac(expect, Arch.universal))
 
 // only run on arm64 macs, otherwise of course no files can be found to be updated to (due to arch mismatch)
-test.ifMac.ifEnv(process.arch === "arm64")("Mac arm64", ({ expect }) => testMac(expect, Arch.arm64))
+test.ifMac.ifEnv(process.arch === "arm64")("Mac arm64", { timeout: EXTENDED_TIMEOUT }, ({ expect }) => testMac(expect, Arch.arm64))
