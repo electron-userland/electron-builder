@@ -1,23 +1,21 @@
 import { checkBuildRequestOptions } from "app-builder-lib"
-import { doMergeConfigs } from "app-builder-lib/out/util/config/config"
+import { doMergeConfigs } from "app-builder-lib/internal"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
-import { createYargs } from "electron-builder/out/builder"
+import { configureBuildCommand, createYargs, normalizeOptions } from "electron-builder/src/builder"
 import { promises as fs } from "fs"
-import { outputFile, outputJson } from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
-import { app, appTwo, appTwoThrows, assertPack, getFixtureDir, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
-import { ELECTRON_VERSION } from "./helpers/testConfig"
-import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
-import { PM } from "app-builder-lib/out/node-module-collector/packageManager"
+import { app, appTwo, appTwoThrows, assertPack, getFixtureDir, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester.js"
+import { ELECTRON_VERSION } from "./helpers/testConfig.js"
+import { verifySmartUnpack } from "./helpers/verifySmartUnpack.js"
+import { PM } from "app-builder-lib/internal"
 
 test.ifLinux("cli", ({ expect }) => {
-  // because these methods are internal
-  const { configureBuildCommand, normalizeOptions } = require("electron-builder/out/builder")
   const yargs = createYargs()
   configureBuildCommand(yargs)
 
   function parse(input: string): any {
-    const options = normalizeOptions(yargs.parse(input))
+    const options = normalizeOptions(yargs.parse(input) as any)
     checkBuildRequestOptions(options)
     return options
   }
@@ -41,9 +39,11 @@ test.ifLinux("cli", ({ expect }) => {
   expect(parse("--prepackaged someDir -w --x64")).toMatchSnapshot()
   expect(parse("--project someDir -w --x64")).toMatchSnapshot()
 
-  expect(parse("-c.compress=store -c.asar -c ./config.json")).toMatchObject({
+  expect(parse("-c.compress=store -c.asar.unpack -c ./config.json")).toMatchObject({
     config: {
-      asar: true,
+      asar: {
+        unpack: true,
+      },
       compress: "store",
       extends: "./config.json",
     },
@@ -161,7 +161,7 @@ it.ifNotWindows("electron version from electron-prebuilt dependency", ({ expect 
           data.devDependencies = {}
         })
         return () =>
-          outputJson(path.join(projectDir, "node_modules", "electron-prebuilt", "package.json"), {
+          fsExtra.outputJson(path.join(projectDir, "node_modules", "electron-prebuilt", "package.json"), {
             version: ELECTRON_VERSION,
           })
       },
@@ -182,7 +182,7 @@ test.ifNotWindows("electron version from electron dependency", ({ expect }) =>
           data.devDependencies = {}
         })
         return () =>
-          outputJson(path.join(projectDir, "node_modules", "electron", "package.json"), {
+          fsExtra.outputJson(path.join(projectDir, "node_modules", "electron", "package.json"), {
             version: ELECTRON_VERSION,
           })
       },
@@ -323,7 +323,7 @@ test.ifNotWindows("beforeBuild", ({ expect }) => {
     {
       targets: createTargets([Platform.LINUX, Platform.MAC], DIR_TARGET),
       config: {
-        npmRebuild: true,
+        nativeModules: { npmRebuild: true },
         beforeBuild: async () => {
           called++
           return Promise.resolve()
@@ -349,7 +349,7 @@ test.ifNotWindows("win smart unpack", ({ expect }) => {
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
       config: {
-        npmRebuild: true,
+        nativeModules: { npmRebuild: true },
         onNodeModuleFile: file => {
           const name = toSystemIndependentPath(path.relative(p, file))
           if (!name.startsWith(".") && !name.endsWith(".dll") && name.includes(".")) {
@@ -357,7 +357,7 @@ test.ifNotWindows("win smart unpack", ({ expect }) => {
           }
         },
         win: {
-          signAndEditExecutable: false, // setting `true` will fail on arm64 macs, even within docker container since rcedit doesn't work within wine on arm64
+          sign: false,
         },
       },
     },
@@ -399,8 +399,8 @@ test("smart unpack local module with dll file", ({ expect }) => {
       projectDirCreated: async (projectDir, tmpDir) => {
         const tmpPath = await tmpDir.getTempDir()
         const localPath = path.join(tmpPath, "foo")
-        await outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}`)
-        await outputFile(path.join(localPath, "test.dll"), `test`)
+        await fsExtra.outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}`)
+        await fsExtra.outputFile(path.join(localPath, "test.dll"), `test`)
         await modifyPackageJson(projectDir, data => {
           data.dependencies = {
             debug: "3.1.0",
@@ -426,7 +426,7 @@ test.ifNotWindows("posix smart unpack", ({ expect }) =>
         // https://github.com/electron-userland/electron-builder/issues/3273
         // tslint:disable-next-line:no-invalid-template-strings
         copyright: "Copyright © 2018 ${author}",
-        npmRebuild: true,
+        nativeModules: { npmRebuild: true },
         onNodeModuleFile: filePath => {
           // Force include this directory in the package
           return filePath.includes("node_modules/three/examples")

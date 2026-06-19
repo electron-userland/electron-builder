@@ -1,43 +1,40 @@
-import { appBuilderPath } from "app-builder-bin"
-import { retry, Nullish, safeStringifyJson, isValidKey, deepAssign } from "builder-util-runtime"
-import * as chalk from "chalk"
+import { hashSensitiveValue, isSensitiveFieldName, isValidKey, Nullish, retry, safeStringifyJson } from "builder-util-runtime"
+import chalk from "chalk"
 import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_process"
 import { spawn as _spawn } from "cross-spawn"
-import { createHash } from "crypto"
 import _debug from "debug"
 import { dump } from "js-yaml"
-import * as path from "path"
+import path from "path"
 import { install as installSourceMap } from "source-map-support"
-import { getPath7za } from "./7za"
-import { debug, log } from "./log"
-import { exists } from "./fs"
-import { mkdir } from "fs-extra"
-import { isEmptyOrSpaces } from "./stringUtil"
+import { debug, log } from "./log.js"
+import { isEmptyOrSpaces } from "./stringUtil.js"
 
-if (process.env.JEST_WORKER_ID == null) {
+// Vitest install their own source-map-aware stack-trace handling. Letting
+// source-map-support also override Error.prepareStackTrace clobbers the test runner's
+// remapping and yields wrong file:line frames (it resolves transpiled positions instead of
+// the runner's in-memory source maps). Only install in the shipped runtime, not under tests.
+if (process.env.VITEST == null) {
   installSourceMap()
 }
 
-export { isEmptyOrSpaces } from "./stringUtil"
-export { safeStringifyJson, retry } from "builder-util-runtime"
+export { retry, safeStringifyJson } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
-export * from "./arch"
-export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames, getArchSuffix, toLinuxArchString } from "./arch"
-export { AsyncTaskManager } from "./asyncTaskManager"
-export { DebugLogger } from "./DebugLogger"
-export * from "./log"
-export { buildGotProxyAgent, httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor"
-export * from "./promise"
-export * from "./envUtil"
-export { parseValidEnvVarUrl } from "./envUtil"
+export * from "./arch.js"
+export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames, getArchSuffix, toLinuxArchString } from "./arch.js"
+export { AsyncTaskManager } from "./asyncTaskManager.js"
+export { DebugLogger } from "./DebugLogger.js"
+export * from "./envUtil.js"
+export { parseValidEnvVarUrl } from "./envUtil.js"
+export * from "./log.js"
+export { buildGotProxyAgent, httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor.js"
+export * from "./promise.js"
+export { escapeForXml, isEmptyOrSpaces } from "./stringUtil.js"
 
 export { asArray, deepAssign, isValidKey } from "builder-util-runtime"
-export * from "./fs"
+export * from "./fs.js"
 
-export { generateKsuid } from "./ksuid"
-export { loadCscLink, decodeCscLinkBase64, resolveCscLinkPath } from "./cscLink"
-
-export { getPath7x, getPath7za } from "./7za"
+export { decodeCscLinkBase64, loadCscLink, resolveCscLinkPath } from "./cscLink.js"
+export { generateKsuid } from "./ksuid.js"
 
 export const debug7z = _debug("electron-builder:7z")
 
@@ -52,7 +49,7 @@ export function serializeToYaml(object: any, skipInvalid = false, noRefs = false
 export function removePassword(input: string): string {
   // Sensitive parameter stems — any of `-`, `--`, or `/` prefix is accepted for all stems.
   // `pass:` is intentionally absent; the dedicated pass: handler below covers it without double-processing.
-  const sensitiveStems = ["accessKey", "secretKey", "passphrase", "password", "secret", "token", "String", "pass", "p"]
+  const sensitiveStems = ["accessKey", "secretKey", "privateToken", "apiKey", "passphrase", "password", "secret", "token", "String", "pass", "p"]
   const stemAlt = sensitiveStems.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")
   // (?:--?|/) matches -, --, or / prefix. Longest stems listed first to minimise backtracking.
   // (?<!\S) / (?=[\s"']|$) word-boundary guards prevent matching -path, -StringLength, etc.
@@ -65,22 +62,19 @@ export function removePassword(input: string): string {
       return `${prefix} ${quote ?? ""}${value}${quote ?? ""}`
     }
 
-    const hashed = createHash("sha256").update(value).digest("hex")
-    return `${prefix} ${quote ?? ""}${hashed} (sha256 hash)${quote ?? ""}`
+    return `${prefix} ${quote ?? ""}${hashSensitiveValue(value)}${quote ?? ""}`
   })
 
   // pass:value — colon acts as separator; handles both pass:secret (no space) and pass: secret (space)
   // Quoted phrases (pass:'a b c' or pass:"a b c") are captured in full so the whole phrase is hashed.
   input = input.replace(/(?<!\S)pass:\s*(?:(["'])(.*?)\1|([^\s]+))/gi, (_match, quote, quotedVal, unquotedVal) => {
     const value = quotedVal ?? unquotedVal
-    const hashed = createHash("sha256").update(value).digest("hex")
-    return quote ? `pass:${quote}${hashed} (sha256 hash)${quote}` : `pass:${hashed} (sha256 hash)`
+    return quote ? `pass:${quote}${hashSensitiveValue(value)}${quote}` : `pass:${hashSensitiveValue(value)}`
   })
 
   // /b … /c block format
   return input.replace(/(\/b\s+)(.*?)(\s+\/c)/g, (_match, p1, p2, p3) => {
-    const hashed = createHash("sha256").update(p2).digest("hex")
-    return `${p1}${hashed} (sha256 hash)${p3}`
+    return `${p1}${hashSensitiveValue(p2)}${p3}`
   })
 }
 
@@ -94,7 +88,7 @@ const SENSITIVE_ENV_KEY_RE = /KEY|TOKEN|SECRET|PASSWORD|PASS|CREDENTIAL|CSC/i
 export function stripSensitiveEnvVars(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   const out: NodeJS.ProcessEnv = {}
   for (const [k, v] of Object.entries(env)) {
-    if (isValidKey(k) && !SENSITIVE_ENV_KEY_RE.test(k)) {
+    if (isValidKey(k) && !isSensitiveFieldName(k) && !SENSITIVE_ENV_KEY_RE.test(k)) {
       out[k] = v
     }
   }
@@ -104,7 +98,7 @@ export function stripSensitiveEnvVars(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv
 export function filterSensitiveEnv(env: Record<string, string | undefined>): Record<string, string | undefined> {
   const out: Record<string, string | undefined> = {}
   for (const [k, v] of Object.entries(env)) {
-    out[k] = SENSITIVE_ENV_KEY_RE.test(k) && v != null ? `${createHash("sha256").update(v).digest("hex")} (sha256 hash)` : v
+    out[k] = (isSensitiveFieldName(k) || SENSITIVE_ENV_KEY_RE.test(k)) && v != null ? hashSensitiveValue(v) : v
   }
   return out
 }
@@ -129,6 +123,17 @@ function getProcessEnv(env: Record<string, string | undefined> | Nullish): NodeJ
   finalEnv.LC_CTYPE = locale
   finalEnv.LC_ALL = locale
   return finalEnv
+}
+
+// Spurious process-launch failures seen under heavy concurrent builds on Windows: the OS fails to
+// start a freshly-extracted/copied executable (e.g. makeappx.exe from the win-codesign kit) while it
+// is still locked by AV or a peer build. These are launch failures — the process never ran — so
+// retrying is side-effect-free. A non-zero *exit* code is not a spawn failure and is never retried.
+const TRANSIENT_SPAWN_CODES = new Set(["UNKNOWN", "ETXTBSY", "EBUSY", "EAGAIN"])
+
+function isTransientSpawnError(error: any): boolean {
+  const cause = error?.cause ?? error
+  return typeof cause?.syscall === "string" && cause.syscall.startsWith("spawn") && TRANSIENT_SPAWN_CODES.has(cause.code)
 }
 
 export function exec(file: string, args?: Array<string> | null, options?: ExecFileOptions, isLogOutIfDebug = true): Promise<string> {
@@ -156,51 +161,64 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
     log.debug(logFields, "executing")
   }
 
-  return new Promise<string>((resolve, reject) => {
-    execFile(
-      file,
-      args,
-      {
-        ...options,
-        maxBuffer: 1000 * 1024 * 1024,
-        env: getProcessEnv(options == null ? null : options.env), // codeql[js/shell-command-injection-from-environment] - env filtered via getProcessEnv/stripSensitiveEnvVars; execFile array args (no shell)
-      },
-      (error, stdout, stderr) => {
-        if (error == null) {
-          if (isLogOutIfDebug && log.isDebugEnabled) {
-            const logFields: any = {
-              file,
+  const attempt = () =>
+    new Promise<string>((resolve, reject) => {
+      execFile(
+        file,
+        args,
+        {
+          ...options,
+          maxBuffer: 1000 * 1024 * 1024,
+          env: getProcessEnv(options == null ? null : options.env), // codeql[js/shell-command-injection-from-environment] - env filtered via getProcessEnv/stripSensitiveEnvVars; execFile array args (no shell)
+        },
+        (error, stdout, stderr) => {
+          if (error == null) {
+            if (isLogOutIfDebug && log.isDebugEnabled) {
+              const logFields: any = {
+                file,
+              }
+              if (stdout.length > 0) {
+                logFields.stdout = stdout
+              }
+              if (stderr.length > 0) {
+                logFields.stderr = stderr
+              }
+
+              log.debug(logFields, "executed")
             }
-            if (stdout.length > 0) {
-              logFields.stdout = stdout
+            resolve(stdout.toString())
+          } else {
+            let message = chalk.red(removePassword(`Exit code: ${(error as any).code}. ${error.message}`))
+            if (stdout.length !== 0) {
+              if (file.endsWith("wine")) {
+                stdout = stdout.toString()
+              }
+              message += `\n${chalk.yellow(removePassword(stdout.toString()))}`
             }
-            if (stderr.length > 0) {
-              logFields.stderr = stderr
+            if (stderr.length !== 0) {
+              if (file.endsWith("wine")) {
+                stderr = stderr.toString()
+              }
+              message += `\n${chalk.red(removePassword(stderr.toString()))}`
             }
 
-            log.debug(logFields, "executed")
+            reject(new ExecError(file, (error as any).code, message, "", `${error.code || ExecError.code}`, { cause: error }))
           }
-          resolve(stdout.toString())
-        } else {
-          let message = chalk.red(removePassword(`Exit code: ${(error as any).code}. ${error.message}`))
-          if (stdout.length !== 0) {
-            if (file.endsWith("wine")) {
-              stdout = stdout.toString()
-            }
-            message += `\n${chalk.yellow(stdout.toString())}`
-          }
-          if (stderr.length !== 0) {
-            if (file.endsWith("wine")) {
-              stderr = stderr.toString()
-            }
-            message += `\n${chalk.red(stderr.toString())}`
-          }
-
-          // TODO: switch to ECMA Script 2026 Error class with `cause` property to return stack trace
-          reject(new ExecError(file, (error as any).code, message, "", `${error.code || ExecError.code}`))
         }
+      )
+    })
+
+  return retry(attempt, {
+    retries: 2,
+    interval: 1000,
+    backoff: 1000,
+    shouldRetry: (error: any) => {
+      if (isTransientSpawnError(error)) {
+        log.warn({ file, code: (error?.cause ?? error)?.code }, "process failed to spawn (transient OS/AV lock), retrying")
+        return true
       }
-    )
+      return false
+    },
   })
 }
 
@@ -273,6 +291,57 @@ export function spawnAndWrite(command: string, args: Array<string>, data: string
   })
 }
 
+export function spawnAndWriteWithOutput(command: string, args: Array<string>, data: string, options?: SpawnOptions): Promise<{ stdout: string; stderr: string }> {
+  const childProcess = doSpawn(command, args, { ...options, stdio: ["pipe", "pipe", "pipe"] as any })
+  const isDebugEnabled = debug.enabled
+
+  return new Promise((resolve, reject) => {
+    let stdout = ""
+    let stderr = ""
+    let timedOut = false
+
+    const timeout = setTimeout(
+      () => {
+        timedOut = true
+        childProcess.kill()
+      },
+      4 * 60 * 1000
+    )
+
+    childProcess.on("error", (err: Error) => {
+      clearTimeout(timeout)
+      reject(err)
+    })
+
+    childProcess.stdout!.on("data", (chunk: Buffer) => {
+      stdout += chunk.toString()
+      if (isDebugEnabled) {
+        process.stdout.write(chunk)
+      }
+    })
+
+    childProcess.stderr!.on("data", (chunk: Buffer) => {
+      stderr += chunk.toString()
+      if (isDebugEnabled) {
+        process.stderr.write(chunk)
+      }
+    })
+
+    childProcess.stdin!.end(data)
+
+    childProcess.once("close", (code: number) => {
+      clearTimeout(timeout)
+      if (timedOut) {
+        reject(new Error(`${command} timed out after 4 minutes`))
+      } else if (code === 0) {
+        resolve({ stdout, stderr })
+      } else {
+        reject(new ExecError(command, code ?? -1, stdout, stderr))
+      }
+    })
+  })
+}
+
 export function spawn(command: string, args?: Array<string> | null, options?: SpawnOptions, extraOptions?: ExtraSpawnOptions): Promise<any> {
   return new Promise<any>((resolve, reject) => {
     handleProcess("close", doSpawn(command, args || [], options, extraOptions), command, resolve, reject)
@@ -333,9 +402,10 @@ export class ExecError extends Error {
     readonly exitCode: number,
     out: string,
     errorOut: string,
-    code = ExecError.code
+    code = ExecError.code,
+    options?: { cause?: unknown }
   ) {
-    super(`${command} process failed ${code}${formatOut(String(exitCode), "Exit code")}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`)
+    super(`${command} process failed ${code}${formatOut(String(exitCode), "Exit code")}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`, options)
     ;(this as NodeJS.ErrnoException).code = code
   }
 }
@@ -346,18 +416,6 @@ export function use<T, R>(value: T | Nullish, task: (value: T) => R): R | null {
 
 export function isTokenCharValid(token: string) {
   return /^[.\w/=+-]+$/.test(token)
-}
-
-export async function getUserDefinedCacheDir() {
-  let cacheEnv = process.env.ELECTRON_BUILDER_CACHE
-  if (!isEmptyOrSpaces(cacheEnv)) {
-    cacheEnv = path.resolve(cacheEnv)
-    if (!(await exists(cacheEnv))) {
-      await mkdir(cacheEnv)
-    }
-    return cacheEnv
-  }
-  return undefined
 }
 
 export function addValue<K, T>(map: Map<K, Array<T>>, key: K, value: T) {
@@ -508,51 +566,4 @@ export function to7zaOutputSwitch(p: string): string {
     throw new InvalidConfigurationError(`7za output path is empty, starts with "-", or contains control characters: "${p}"`)
   }
   return "-o" + safePath
-}
-
-export async function executeAppBuilder(
-  args: Array<string>,
-  childProcessConsumer?: (childProcess: ChildProcess) => void,
-  extraOptions: SpawnOptions = {},
-  maxRetries = 0
-): Promise<string> {
-  const command = appBuilderPath
-  const env: any = {
-    ...process.env, // codeql[js/shell-command-constructed-from-input] - app-builder is a trusted internal binary; requires full env including GITHUB_TOKEN for authenticated tool downloads
-    SZA_PATH: await getPath7za(),
-    FORCE_COLOR: chalk.level === 0 ? "0" : "1",
-  }
-  const cacheEnv = process.env.ELECTRON_BUILDER_CACHE
-  if (cacheEnv != null && cacheEnv.length > 0) {
-    env.ELECTRON_BUILDER_CACHE = path.resolve(cacheEnv)
-  }
-
-  if (extraOptions.env != null) {
-    deepAssign(env, extraOptions.env)
-  }
-
-  function runCommand() {
-    return new Promise<string>((resolve, reject) => {
-      const childProcess = doSpawn(command, args, {
-        stdio: ["ignore", "pipe", process.env.VITEST ? "pipe" : process.stdout],
-        ...extraOptions,
-        env,
-      })
-      if (childProcessConsumer != null) {
-        childProcessConsumer(childProcess)
-      }
-      handleProcess("close", childProcess, command, resolve, error => {
-        if (error instanceof ExecError && error.exitCode === 2) {
-          error.alreadyLogged = true
-        }
-        reject(error)
-      })
-    })
-  }
-
-  if (maxRetries === 0) {
-    return runCommand()
-  } else {
-    return retry(runCommand, { retries: maxRetries, interval: 1000 })
-  }
 }

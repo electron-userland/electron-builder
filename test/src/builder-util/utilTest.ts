@@ -1,6 +1,7 @@
-import { removePassword, filterSensitiveEnv } from "builder-util"
-import { parseValidEnvVarUrl } from "builder-util/out/envUtil"
-import { afterEach, vi } from "vitest"
+import { parseValidEnvVarUrl } from "builder-util/internal"
+import { resolveEnvShellValue, validateShellEmbeddable } from "builder-util/src/envUtil"
+import { removePassword, filterSensitiveEnv, spawnAndWriteWithOutput, ExecError } from "builder-util"
+import { afterEach, expect, vi } from "vitest"
 
 const testValue = "secretValue"
 const testQuoted = "secret with spaces"
@@ -69,7 +70,7 @@ describe("validateEnvVarUrl", () => {
     expect(() => parseValidEnvVarUrl(VAR)).toThrow(`${VAR} is not a valid URL`)
   })
 
-  test("throws when protocol is http (non-https)", ({ expect }) => {
+  test("throws when protocol is http for external host (default allowHttp=false)", ({ expect }) => {
     vi.stubEnv(VAR, "http://example.com/")
     expect(() => parseValidEnvVarUrl(VAR)).toThrow(`${VAR} must use https://`)
   })
@@ -87,6 +88,26 @@ describe("validateEnvVarUrl", () => {
   test("returns the URL string unchanged when it has a path and query", ({ expect }) => {
     vi.stubEnv(VAR, "https://mirror.example.com/path?q=1")
     expect(parseValidEnvVarUrl(VAR)).toBe("https://mirror.example.com/path?q=1")
+  })
+
+  test("allows http for localhost by default (local dev exemption)", ({ expect }) => {
+    vi.stubEnv(VAR, "http://localhost:8080/mirror/")
+    expect(parseValidEnvVarUrl(VAR)).toBe("http://localhost:8080/mirror/")
+  })
+
+  test("allows http for 127.0.0.1 by default (loopback exemption)", ({ expect }) => {
+    vi.stubEnv(VAR, "http://127.0.0.1:3000/")
+    expect(parseValidEnvVarUrl(VAR)).toBe("http://127.0.0.1:3000/")
+  })
+
+  test("allows http for [::1] by default (IPv6 loopback exemption)", ({ expect }) => {
+    vi.stubEnv(VAR, "http://[::1]:9000/")
+    expect(parseValidEnvVarUrl(VAR)).toBe("http://[::1]:9000/")
+  })
+
+  test("allows http for external host when allowHttp=true (air-gapped opt-in)", ({ expect }) => {
+    vi.stubEnv(VAR, "http://internal-mirror.corp.example/")
+    expect(parseValidEnvVarUrl(VAR, true)).toBe("http://internal-mirror.corp.example/")
   })
 })
 
@@ -260,5 +281,145 @@ describe("removePassword: multiple keys in one string", () => {
     const output = removePassword(input)
 
     expect(output).toMatchSnapshot()
+  })
+})
+
+describe("resolveEnvShellValue", () => {
+  const VAR = "TEST_RESOLVE_ENV_SHELL_VAR"
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test("returns null when env var is not set", ({ expect }) => {
+    delete process.env[VAR]
+    expect(resolveEnvShellValue(VAR)).toBeNull()
+  })
+
+  test("returns null when env var is empty string", ({ expect }) => {
+    vi.stubEnv(VAR, "")
+    expect(resolveEnvShellValue(VAR)).toBeNull()
+  })
+
+  test("returns null when env var is whitespace only", ({ expect }) => {
+    vi.stubEnv(VAR, "   ")
+    expect(resolveEnvShellValue(VAR)).toBeNull()
+  })
+
+  test("returns the value trimmed of surrounding whitespace", ({ expect }) => {
+    vi.stubEnv(VAR, "  /some/path  ")
+    expect(resolveEnvShellValue(VAR)).toBe("/some/path")
+  })
+
+  const UNSAFE_CHARS = [";", "&", "|", "`", "$", "<", ">", '"', "'"]
+  for (const ch of UNSAFE_CHARS) {
+    test(`throws on shell-unsafe character: ${ch}`, ({ expect }) => {
+      vi.stubEnv(VAR, `/some/path${ch}foo`)
+      expect(() => resolveEnvShellValue(VAR)).toThrow(`${VAR} contains shell-unsafe characters`)
+    })
+  }
+
+  test.skipIf(process.platform === "win32")("throws on backslash on non-Windows platforms", ({ expect }) => {
+    vi.stubEnv(VAR, "/some/path\\foo")
+    expect(() => resolveEnvShellValue(VAR)).toThrow(`${VAR} contains shell-unsafe characters`)
+  })
+
+  test.skipIf(process.platform !== "win32")("allows backslash on Windows (native path separator)", ({ expect }) => {
+    vi.stubEnv(VAR, "C:\\some\\path")
+    expect(resolveEnvShellValue(VAR)).toBe("C:\\some\\path")
+  })
+})
+// ─── spawnAndWriteWithOutput ────────────────────────────────────────────────
+
+describe("spawnAndWriteWithOutput", () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  test("resolves with captured stdout and stderr", async ({ expect }) => {
+    const script = `
+      let buf = ""
+      process.stdin.on("data", d => { buf += d })
+      process.stdin.on("end", () => {
+        process.stdout.write("out:" + buf)
+        process.stderr.write("err:" + buf)
+      })
+    `
+    const { stdout, stderr } = await spawnAndWriteWithOutput(process.execPath, ["-e", script], "hello")
+    expect(stdout).toBe("out:hello")
+    expect(stderr).toBe("err:hello")
+  })
+
+  test("resolves with empty stdout and stderr when process emits nothing", async ({ expect }) => {
+    const { stdout, stderr } = await spawnAndWriteWithOutput(process.execPath, ["-e", ""], "")
+    expect(stdout).toBe("")
+    expect(stderr).toBe("")
+  })
+
+  test("rejects with ExecError on non-zero exit code", async ({ expect }) => {
+    const script = `process.stdout.write("some output"); process.exit(1)`
+    await expect(spawnAndWriteWithOutput(process.execPath, ["-e", script], "")).rejects.toBeInstanceOf(ExecError)
+  })
+
+  test("ExecError includes stdout and stderr from failed process", async ({ expect }) => {
+    const script = `process.stdout.write("stdoutval"); process.stderr.write("stderrval"); process.exit(2)`
+    let caught: unknown
+    try {
+      await spawnAndWriteWithOutput(process.execPath, ["-e", script], "")
+    } catch (e) {
+      caught = e
+    }
+    expect(caught).toBeInstanceOf(ExecError)
+    const err = caught as ExecError
+    expect(err.exitCode).toBe(2)
+    expect(err.message).toContain("stdoutval")
+    expect(err.message).toContain("stderrval")
+  })
+
+  test("writes data to stdin and reads it back", async ({ expect }) => {
+    const script = `
+      let buf = ""
+      process.stdin.on("data", d => { buf += d })
+      process.stdin.on("end", () => process.stdout.write(buf.toUpperCase()))
+    `
+    const { stdout } = await spawnAndWriteWithOutput(process.execPath, ["-e", script], "hello world")
+    expect(stdout).toBe("HELLO WORLD")
+  })
+
+  test("rejects with a timeout error when process does not finish within 4 minutes", async ({ expect }) => {
+    vi.useFakeTimers()
+    const script = `setInterval(() => {}, 999999)`
+    const promise = spawnAndWriteWithOutput(process.execPath, ["-e", script], "")
+    vi.advanceTimersByTime(4 * 60 * 1000 + 100)
+    await expect(promise).rejects.toThrow(/timed out/i)
+  })
+})
+
+describe("validateShellEmbeddable", () => {
+  describe("safe values pass", () => {
+    test.each([
+      ["index.js", "package.json main"],
+      ["src/main.js", "package.json main"],
+      ["dist/app.js", "package.json main"],
+      ["my-app.js", "package.json main"],
+      ["app_main.js", "package.json main"],
+      ["", "empty string"],
+    ])("allows %j", (value, field) => {
+      expect(() => validateShellEmbeddable(value, field)).not.toThrow()
+    })
+  })
+
+  describe("shell metacharacters are rejected", () => {
+    test.each([
+      ["index.js$(evil)", "$"],
+      ["index.js`evil`", "backtick"],
+      ['index.js"evil"', "double-quote"],
+      ["index.js\\evil", "backslash"],
+      ["index.js\nevil", "newline"],
+      ["$(rm -rf /)", "command substitution"],
+      ["`id`", "backtick substitution"],
+    ])("rejects %j (contains %s)", value => {
+      expect(() => validateShellEmbeddable(value, "test field")).toThrow()
+    })
   })
 })

@@ -1,14 +1,19 @@
 import { exists, log, retry, stripSensitiveEnvVars, TmpDir } from "builder-util"
-import * as childProcess from "child_process"
-import { randomBytes } from "crypto"
-import * as fs from "fs-extra"
-import { createWriteStream } from "fs-extra"
+import _fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { hoist, type HoisterResult, type HoisterTree } from "./hoist"
-import { LogMessageByKey, ModuleManager } from "./moduleManager"
-import { getPackageManagerCommand, PM } from "./packageManager"
-import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types"
+import { hoist, type HoisterResult, type HoisterTree } from "./hoist.js"
+import { LogMessageByKey, ModuleManager } from "./moduleManager.js"
+import { getPackageManagerCommand, PM } from "./packageManager.js"
+import { streamSpawnToFile } from "../util/streamSpawnToFile.js"
+import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types.js"
+import { isPackageCompatible } from "../util/archCompatibility.js"
+
+/** Target arch/platform used to drop `cpu`/`os`-incompatible packages while collecting. */
+export interface ArchFilter {
+  cpu: string | null
+  os: string
+}
 
 export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDepType, OptionalDepType>, OptionalDepType> {
   private readonly nodeModules: NodeModuleInfo[] = []
@@ -21,7 +26,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     const command = getPackageManagerCommand(manager)
     const config = (await this.asyncExec(command, ["config", "list"])).stdout
     if (config == null) {
-      log.debug({ manager }, "unable to determine if node_modules are hoisted: no config output. falling back to hoisted mode")
+      log.debug({ manager }, "unable to determine node-linker setting; assuming non-hoisted (virtual store) layout")
       return false
     }
     const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
@@ -48,7 +53,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * 5. Hoisting the dependencies to their final locations
    * 6. Resolving and returning module information
    */
-  public async getNodeModules({ packageName }: { packageName: string }): Promise<{
+  public async getNodeModules({ packageName, archFilter }: { packageName: string; archFilter?: ArchFilter }): Promise<{
     nodeModules: NodeModuleInfo[]
     logSummary: ModuleManager["logSummary"]
   }> {
@@ -62,7 +67,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       check: log.isDebugEnabled,
     })
 
-    await this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
+    await this._getNodeModules(hoisterResult.dependencies, this.nodeModules, archFilter)
 
     log.debug({ packageName, depCount: this.nodeModules.length }, "node modules collection complete")
 
@@ -97,7 +102,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return retry(
       async () => {
         await this.streamCollectorCommandToFile(command, args, this.rootDir, tempOutputFile)
-        const shellOutput = await fs.readFile(tempOutputFile, { encoding: "utf8" })
+        const shellOutput = await _fsExtra.readFile(tempOutputFile, { encoding: "utf8" })
         const result = await Promise.resolve(this.parseDependenciesTree(shellOutput))
         return result
       },
@@ -113,7 +118,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
             return true
           }
 
-          const fileContent = await fs.readFile(tempOutputFile, { encoding: "utf8" })
+          const fileContent = await _fsExtra.readFile(tempOutputFile, { encoding: "utf8" })
           fields.fileContentLength = fileContent.length.toString()
 
           if (fileContent.trim().length === 0) {
@@ -131,7 +136,8 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
             fields.content = fileContent
           }
 
-          if (error.message?.includes("Unexpected end of JSON input")) {
+          // Both indicate truncated/polluted PM output (a transient that re-running the command clears).
+          if (error.message?.includes("Unexpected end of JSON input") || error.message?.includes("No JSON content found in output")) {
             log.debug(fields, "JSON parse error in dependency tree, retrying")
             return true
           }
@@ -285,7 +291,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return node
   }
 
-  private async _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[]) {
+  private async _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[], archFilter?: ArchFilter) {
     if (dependencies.size === 0) {
       return
     }
@@ -308,15 +314,30 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         continue
       }
 
+      const dir = await this.cache.realPath[p]
+
+      // Drop packages whose declared `cpu`/`os` is incompatible with the target arch/platform (and their
+      // subtree). npm/pnpm install only the host's platform-specific optional packages, so without this an
+      // arm64-only binary (e.g. `@esbuild/darwin-arm64`) would be bundled into the x64 build too — and into
+      // both slices of a universal build, which `@electron/universal` then refuses to merge. Reuses the
+      // memoized `package.json` cache populated during collection.
+      if (archFilter != null) {
+        const pkgJson = await this.cache.json[path.join(dir, "package.json")]
+        if (pkgJson != null && !isPackageCompatible(pkgJson, archFilter.cpu, archFilter.os)) {
+          this.cache.logSummary[LogMessageByKey.PKG_INCOMPATIBLE_PLATFORM].push(key)
+          continue
+        }
+      }
+
       const node: NodeModuleInfo = {
         name: d.name,
         version: reference,
-        dir: await this.cache.realPath[p],
+        dir,
       }
       result.push(node)
       if (d.dependencies.size > 0) {
         node.dependencies = []
-        await this._getNodeModules(d.dependencies, node.dependencies)
+        await this._getNodeModules(d.dependencies, node.dependencies, archFilter)
       }
     }
     result.sort((a, b) => a.name.localeCompare(b.name))
@@ -332,7 +353,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     const file = await this.tempDirManager.getTempFile({ prefix: "exec-", suffix: ".txt" })
     try {
       await this.streamCollectorCommandToFile(command, args, cwd, file)
-      const result = await fs.readFile(file, { encoding: "utf8" })
+      const result = await _fsExtra.readFile(file, { encoding: "utf8" })
       return { stdout: result?.trim(), stderr: undefined }
     } catch (error: any) {
       log.debug({ error: error.message }, "failed to execute command")
@@ -341,94 +362,51 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   }
 
   /**
-   * Executes a command and streams its output to a file.
+   * Executes a package-manager command and streams its stdout to a file.
    *
-   * Spawns a child process to execute the specified command with arguments, capturing stdout
-   * to a file. Handles Windows-specific quirks by wrapping .cmd files in a temporary .bat file
-   * when necessary. Enables corepack strict mode by default but allows process.env overrides.
-   *
-   * Special handling for `npm list` exit code 1, which is expected in certain scenarios.
+   * Delegates the spawn/stream/flush mechanics (including the Windows `powershell.exe -EncodedCommand`
+   * wrapping) to {@link streamSpawnToFile}, and layers on the collector-specific interpretation of the
+   * result: corepack is silenced for these invocations, `npm list` exit code 1 is tolerated, and any
+   * stderr is surfaced as a collector warning only when the exit code is genuinely unexpected.
    *
    * @param command - The command to execute
    * @param args - Array of command-line arguments
    * @param cwd - The working directory to execute the command in
    * @param tempOutputFile - The path to the temporary file where stdout will be written
    * @returns Promise that resolves when the command completes successfully or rejects if it fails
-   * @throws {Error} If the child process spawn fails or exits with a non-zero code
+   * @throws {Error} If the child process spawn fails or exits with a non-zero, unexpected code
    */
   protected async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
+    // Derive execName from the original command so the npm-list shouldIgnore check below keys off the
+    // real invocation (e.g. "npm"), not the "powershell" wrapper streamSpawnToFile uses on Windows.
     const execName = path.basename(command, path.extname(command))
-    const ext = path.extname(command).toLowerCase()
-    // Wrap .cmd files in a .bat file for correct cmd.exe execution.
-    // Also wrap any Windows executable path that contains spaces (e.g. extensionless shims
-    // from tools like Volta installed at "C:\Program Files\Volta\") to ensure the path is
-    // quoted correctly when passed to `spawn(..., { shell: true })`.
-    const isWindowsScriptFile = process.platform === "win32" && (ext === ".cmd" || command.includes(" "))
-    if (isWindowsScriptFile) {
-      // We need to wrap it in a .bat file to ensure it runs correctly with cmd.exe
-      // This is necessary because some files (like .cmd) are not directly executable in the same way as .bat files.
-      // We create a temporary .bat file that calls the script-like file with the provided arguments. The .bat file will be executed by cmd.exe.
-      // Note: This is a workaround for Windows command execution quirks when using `shell: true`
-      const tempBatFile = await this.tempDirManager.getTempFile({
-        prefix: execName + "-" + randomBytes(8).toString("hex"),
-        suffix: ".bat",
-      })
-      const escapedCommand = command.replace(/"/g, `""`)
-      const batScript = `@echo off\r\n"${escapedCommand}" %*\r\n` // <-- CRLF required for .bat
-      await fs.writeFile(tempBatFile, batScript, { encoding: "utf8", mode: 0o600 })
-      command = "cmd.exe"
-      args = ["/c", `"${tempBatFile}"`, ...args]
+
+    const { code, stderr } = await streamSpawnToFile(command, args, cwd, tempOutputFile, {
+      // Package manager invocations do not need signing/publishing credentials. Silence corepack:
+      // strict=0 so a project's `packageManager` pin can't abort our read-only queries, and the
+      // download prompt/notice off so corepack doesn't flood stdout/stderr with activation chatter.
+      ...stripSensitiveEnvVars(process.env),
+      COREPACK_ENABLE_STRICT: "0",
+      COREPACK_ENABLE_DOWNLOAD_PROMPT: "0",
+    })
+
+    // https://github.com/npm/npm/issues/17624
+    const shouldIgnore = code === 1 && "npm" === execName.toLowerCase() && args.includes("list")
+    if (shouldIgnore) {
+      log.debug(null, "`npm list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details.")
     }
-
-    const isWindows = process.platform === "win32"
-
-    // shell: true is required on Windows — see https://github.com/electron-userland/electron-builder/issues/9488
-    // On non-Windows, shell:false means args are passed directly to the process with no shell
-    // interpretation, so the metacharacter guard is only necessary on Windows.
-    if (isWindows) {
-      // Guard against cmd.exe metacharacters. Parentheses are intentionally excluded because they
-      // appear in legitimate Windows paths (e.g. "C:\Program Files (x86)").
-      const SHELL_INJECTION_RE = /[;&|`${}[\]<>!%^]/
-      for (const arg of args) {
-        if (SHELL_INJECTION_RE.test(arg)) {
-          throw new Error(`Refusing to spawn "${command}": argument "${arg}" contains shell metacharacters. Possible injection attempt.`)
-        }
+    if (stderr.length > 0) {
+      log.debug({ stderr }, "note: there was node module collector output on stderr")
+      // Only surface stderr as a user-visible warning when the exit code itself is unexpected.
+      // When shouldIgnore is true (npm list exit code 1) the stderr is an anticipated side
+      // effect of package-manager features like yarn resolutions or npm overrides that cause
+      // npm to report ELSPROBLEMS for aliased packages it considers "invalid".
+      if (!shouldIgnore) {
+        this.cache.logSummary[LogMessageByKey.PKG_COLLECTOR_OUTPUT].push(stderr)
       }
     }
-
-    await new Promise<void>((resolve, reject) => {
-      const outStream = createWriteStream(tempOutputFile)
-
-      const child = childProcess.spawn(command, args, {
-        cwd,
-        // Package manager invocations do not need signing/publishing credentials.
-        env: { COREPACK_ENABLE_STRICT: "0", ...stripSensitiveEnvVars(process.env) },
-        shell: isWindows, // shell: true is required on Windows — see https://github.com/electron-userland/electron-builder/issues/9488
-      })
-
-      let stderr = ""
-      child.stdout.pipe(outStream)
-      child.stderr.on("data", chunk => {
-        stderr += chunk.toString()
-      })
-      child.on("error", err => {
-        reject(new Error(`Node module collector spawn (${command} ${JSON.stringify(args)}) failed: ${err.message}`))
-      })
-
-      child.on("close", code => {
-        outStream.close()
-        // https://github.com/npm/npm/issues/17624
-        const shouldIgnore = code === 1 && "npm" === execName.toLowerCase() && args.includes("list")
-        if (shouldIgnore) {
-          log.debug(null, "`npm list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details.")
-        }
-        if (stderr.length > 0) {
-          log.debug({ stderr }, "note: there was node module collector output on stderr")
-          this.cache.logSummary[LogMessageByKey.PKG_COLLECTOR_OUTPUT].push(stderr)
-        }
-        const shouldResolve = code === 0 || shouldIgnore
-        return shouldResolve ? resolve() : reject(new Error(`Node module collector process exited with code ${code}:\n${stderr}`))
-      })
-    })
+    if (code !== 0 && !shouldIgnore) {
+      throw new Error(`Node module collector process exited with code ${code}:\n${stderr}`)
+    }
   }
 }

@@ -1,8 +1,9 @@
 import { newError } from "builder-util-runtime"
+import { Logger } from "../types.js"
 import { createReadStream } from "fs"
 import { Writable } from "stream"
-import { Operation, OperationKind } from "./downloadPlanBuilder"
-import { ProgressInfo } from "./ProgressDifferentialDownloadCallbackTransform"
+import { Operation, OperationKind } from "./downloadPlanBuilder.js"
+import { ProgressInfo } from "./ProgressDifferentialDownloadCallbackTransform.js"
 
 const DOUBLE_CRLF = Buffer.from("\r\n\r\n")
 
@@ -27,11 +28,14 @@ export function copyData(task: Operation, out: Writable, oldFileFd: number, reje
     // end is inclusive
     end: task.end - 1,
   })
+  const onOutError = (err: Error): void => reject(err)
   readStream.on("error", reject)
-  readStream.once("end", resolve)
-  readStream.pipe(out, {
-    end: false,
+  readStream.once("end", () => {
+    out.removeListener("error", onOutError)
+    resolve()
   })
+  out.once("error", onOutError)
+  readStream.pipe(out, { end: false })
 }
 
 export class DataSplitter extends Writable {
@@ -58,7 +62,8 @@ export class DataSplitter extends Writable {
     private readonly partIndexToLength: Array<number>,
     private readonly finishHandler: () => any,
     private readonly grandTotalBytes: number,
-    private readonly onProgress?: (info: ProgressInfo) => any
+    private readonly onProgress?: (info: ProgressInfo) => any,
+    private readonly logger?: Logger
   ) {
     super()
 
@@ -74,7 +79,7 @@ export class DataSplitter extends Writable {
   // noinspection JSUnusedGlobalSymbols
   _write(data: Buffer, encoding: string, callback: (error?: Error) => void): void {
     if (this.isFinished) {
-      console.error(`Trailing ignored data: ${data.length} bytes`)
+      this.logger?.error?.(`Trailing ignored data: ${data.length} bytes`)
       return
     }
 

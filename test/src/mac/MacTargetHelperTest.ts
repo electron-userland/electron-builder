@@ -1,17 +1,16 @@
 import { afterEach, expect } from "vitest"
-import { MacTargetHelper } from "app-builder-lib/out/mac/MacTargetHelper"
+import { MacTargetHelper, type PlatformType } from "app-builder-lib/internal"
 
 describe("MacTargetHelper", () => {
   describe("getCertificateTypes", () => {
-    const cases: [boolean, boolean, string[]][] = [
-      [true, false, ["Apple Distribution", "3rd Party Mac Developer Application"]],
-      [true, true, ["Mac Developer", "Apple Development"]],
-      [false, false, ["Developer ID Application"]],
-      [false, true, ["Mac Developer", "Developer ID Application"]],
+    const cases: [PlatformType, string[]][] = [
+      ["mas", ["Apple Distribution", "3rd Party Mac Developer Application"]],
+      ["mas-dev", ["Mac Developer", "Apple Development"]],
+      ["mac", ["Developer ID Application"]],
     ]
 
-    test.each(cases)("isMas=%s isDevelopment=%s", (isMas, isDevelopment, expected) => {
-      expect(MacTargetHelper.getCertificateTypes(isMas, isDevelopment)).toEqual(expected)
+    test.each(cases)("%s", (targetPlatform, expected) => {
+      expect(MacTargetHelper.getCertificateTypes(targetPlatform)).toEqual(expected)
     })
   })
 
@@ -80,19 +79,34 @@ describe("MacTargetHelper", () => {
     }
 
     test("throws when forceCodeSigning is true", () => {
-      expect(() => makeHelper(true).handleNullIdentity(false)).toThrow("identity explicitly is set to null")
+      expect(() => makeHelper(true).handleNullIdentity()).toThrow("identity explicitly is set to null")
     })
 
     test("returns false when forceCodeSigning is false", () => {
-      expect(makeHelper(false).handleNullIdentity(false)).toBe(false)
-    })
-
-    test("returns false with fallBackToAdhoc=true", () => {
-      expect(makeHelper(false).handleNullIdentity(true)).toBe(false)
+      expect(makeHelper(false).handleNullIdentity()).toBe(false)
     })
   })
 
-  describe("getNotarizeOptions", () => {
+  describe("isHardenedRuntimeEnabledForSigning", () => {
+    const cases: [PlatformType, boolean | undefined, boolean][] = [
+      // non-MAS: defaults to true
+      ["mac", undefined, true],
+      ["mac", true, true],
+      ["mac", false, false],
+      // MAS (and mas-dev): defaults to false
+      ["mas", undefined, false],
+      ["mas", false, false],
+      ["mas", true, true],
+      ["mas-dev", undefined, false],
+      ["mas-dev", true, true],
+    ]
+
+    test.each(cases)("targetPlatform=%s hardenedRuntime=%s => %s", (targetPlatform, hardenedRuntime, expected) => {
+      expect(MacTargetHelper.isHardenedRuntimeEnabledForSigning(targetPlatform, hardenedRuntime)).toBe(expected)
+    })
+  })
+
+  describe("getNotarizeOptions", { sequential: true }, () => {
     const envKeys = [
       "APPLE_ID",
       "APPLE_APP_SPECIFIC_PASSWORD",
@@ -120,7 +134,6 @@ describe("MacTargetHelper", () => {
       process.env.APPLE_TEAM_ID = "TEAM123"
 
       expect(MacTargetHelper.getNotarizeOptions("/My.app")).toMatchObject({
-        tool: "notarytool",
         appPath: "/My.app",
         appleId: "dev@example.com",
         appleIdPassword: "xxxx-yyyy",
@@ -150,7 +163,6 @@ describe("MacTargetHelper", () => {
       process.env.APPLE_API_ISSUER = "issuer-uuid"
 
       expect(MacTargetHelper.getNotarizeOptions("/My.app")).toMatchObject({
-        tool: "notarytool",
         appPath: "/My.app",
         appleApiKey: "/path/to/key.p8",
         appleApiKeyId: "KEYID123",
@@ -167,7 +179,6 @@ describe("MacTargetHelper", () => {
       process.env.APPLE_KEYCHAIN_PROFILE = "my-profile"
 
       expect(MacTargetHelper.getNotarizeOptions("/My.app")).toMatchObject({
-        tool: "notarytool",
         appPath: "/My.app",
         keychainProfile: "my-profile",
       })
@@ -178,7 +189,6 @@ describe("MacTargetHelper", () => {
       process.env.APPLE_KEYCHAIN = "/path/to/keychain.keychain"
 
       expect(MacTargetHelper.getNotarizeOptions("/My.app")).toMatchObject({
-        tool: "notarytool",
         keychainProfile: "my-profile",
         keychain: "/path/to/keychain.keychain",
       })

@@ -39,29 +39,27 @@ runs:
         restore-keys: |
           electron-builder-binaries-${{ runner.os }}-
 
+    - name: Compute Vitest smart cache ref
+      run: |
+        PR_NUM="${{ github.event.pull_request.number }}"
+        if [ -n "$PR_NUM" ]; then
+          echo "VITEST_CACHE_REF=PR-${PR_NUM}" >> "$GITHUB_ENV"
+        else
+          # Artifact names cannot contain "/", so sanitize slashes in branch
+          # names like "release/v26" -> "release-v26" (keep in sync with detectRef in fetch-smart-cache.ts).
+          REF_NAME="${{ github.ref_name }}"
+          echo "VITEST_CACHE_REF=${REF_NAME//\//-}" >> "$GITHUB_ENV"
+        fi
+      shell: bash
+
     - name: Restore Vitest Smart Cache
-      id: cache-restore
-      uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
-      with:
-        path: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
-        key: vitest-smart-cache-${{ github.ref_name }}-${{ github.sha }}
-        restore-keys: |
-          vitest-smart-cache-${{ github.ref_name }}-
-          vitest-smart-cache-master-
+      run: pnpm ci:test:fetch-cache
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
 
     - name: Set up Vitest smart cache reset flag
       run: echo "RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}" >> $GITHUB_ENV
-      shell: bash
-
-    - name: Log cache status
-      run: |
-        if [ "${{ steps.cache-restore.outputs.cache-hit }}" == "true" ]; then
-          echo "✓ Restored smart cache from previous run"
-        elif [ -f "${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json" ]; then
-          echo "✓ Using repo-committed smart cache file"
-        else
-          echo "ℹ No smart cache available (will be created after test run)"
-        fi
       shell: bash
 
 ## Usage

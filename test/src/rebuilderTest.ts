@@ -1,6 +1,6 @@
 import { Configuration, Platform } from "app-builder-lib"
-import { PM } from "app-builder-lib/out/node-module-collector"
-import { exists } from "builder-util/out/util"
+import { PM } from "app-builder-lib/internal"
+import { exists } from "builder-util"
 import path from "path"
 import { assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
@@ -23,8 +23,8 @@ const packageConfig = (data: any) => {
 
 const extraFile = "./node_modules/better-sqlite3-multiple-ciphers/build/Release/better_sqlite3.node"
 const config: Configuration = {
-  npmRebuild: true,
-  asarUnpack: ["**/better_sqlite3.node"],
+  nativeModules: { npmRebuild: true },
+  asar: { unpack: ["**/better_sqlite3.node"] },
 }
 
 describe.ifLinux("Rebuilder Test", () => {

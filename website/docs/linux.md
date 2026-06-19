@@ -71,6 +71,30 @@ linux:
 
 Standard freedesktop.org category values include: `AudioVideo`, `Audio`, `Video`, `Development`, `Education`, `Game`, `Graphics`, `Network`, `Office`, `Science`, `Settings`, `System`, `Utility`.
 
+## Window Association (`desktopName`)
+
+Electron derives its [`app_id`](https://github.com/electron/electron/blob/main/lib/browser/init.ts) — which becomes the window's `WM_CLASS` — from the `desktopName` field in your root `package.json`. Desktop environments (GNOME, KDE, etc.) use `WM_CLASS` to match a running window to its `.desktop` entry for taskbar grouping, dock badges, and launcher highlighting.
+
+**Without `desktopName` set, this association can break**: the fallback `WM_CLASS` may not match the installed `.desktop` filename, so the DE treats the running app as an unknown window.
+
+To fix this, set `desktopName` in `package.json`:
+
+```json title="package.json"
+{
+  "desktopName": "com.example.MyApp"
+}
+```
+
+electron-builder installs the `.desktop` file as `${desktopName}.desktop` (here `com.example.MyApp.desktop`) and sets `StartupWMClass=com.example.MyApp`, both matching Electron's `app_id`. A trailing `.desktop` in `desktopName` is tolerated (stripped before the filename is composed), so configs written for earlier versions keep working. When `desktopName` is absent, the filename falls back to `executableName`.
+
+:::note[Changed in v27]
+The installed `.desktop` filename is now always derived from `desktopName`. The `linux.syncDesktopName` flag that previously gated this behaviour has been removed — see the [v26 → v27 migration guide](./migration/v26-to-v27.md#linuxsyncdesktopname-removed-always-synced).
+:::
+
+:::warning[`desktopName` is required for reliable window association]
+If `desktopName` is absent, electron-builder will log a warning at build time. Without it, desktop environments on GNOME, KDE, and others may not correctly link the running application window to its launcher entry.
+:::
+
 See the [freedesktop.org specification](https://specifications.freedesktop.org/desktop-entry-spec/latest/example.html) for all valid keys.
 
 ## Icon Configuration

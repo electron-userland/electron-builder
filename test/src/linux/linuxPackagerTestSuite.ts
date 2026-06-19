@@ -6,7 +6,7 @@ import * as path from "path"
 import { assertThat, readAppImageCompression } from "../helpers/fileAssert"
 import { app, appThrows, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
-import { ToolsetConfig } from "app-builder-lib/src"
+import { ToolsetConfig } from "app-builder-lib/internal"
 
 const appImageTarget = Platform.LINUX.createTarget("appimage", Arch.x64)
 
@@ -360,7 +360,7 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
             config: {
               electronVersion: ELECTRON_VERSION,
               compression: "store",
-              npmRebuild: false,
+              nativeModules: { npmRebuild: false },
             },
           })
 
@@ -493,6 +493,67 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
       {}
     ))
 
+  test("AppImage - desktopName drives installed filename", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+          productName: "Signal",
+        },
+        effectiveOptionComputed: async it => {
+          expect(it.desktopFileName).toBe("signal.desktop")
+          return Promise.resolve(false)
+        },
+      },
+      {
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.desktopName = "signal.desktop"
+          }),
+      }
+    ))
+
+  test("AppImage - desktopName drives installed filename (reverse-DNS)", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+          productName: "Signal",
+        },
+        effectiveOptionComputed: async it => {
+          expect(it.desktopFileName).toBe("com.example.Signal.desktop")
+          return Promise.resolve(false)
+        },
+      },
+      {
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.desktopName = "com.example.Signal.desktop"
+          }),
+      }
+    ))
+
+  test("AppImage - missing desktopName falls back to executableName", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+          productName: "Signal",
+        },
+        effectiveOptionComputed: async it => {
+          expect(it.desktopFileName).toBe("testapp.desktop")
+          return Promise.resolve(false)
+        },
+      },
+      {}
+    ))
+
   test("forbid desktop.Exec", ({ expect }) =>
     appThrows(expect, {
       targets: appImageTarget,
@@ -507,4 +568,58 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
         },
       },
     }))
+
+  test("AppImage - desktopName rejects path traversal", ({ expect }) =>
+    appThrows(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+        },
+      },
+      {
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.desktopName = "../evil.desktop"
+          }),
+      },
+      err => expect(err.message).toContain("produces an invalid .desktop filename")
+    ))
+
+  test("AppImage - desktopName rejects absolute path", ({ expect }) =>
+    appThrows(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+        },
+      },
+      {
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.desktopName = "/etc/passwd.desktop"
+          }),
+      },
+      err => expect(err.message).toContain("produces an invalid .desktop filename")
+    ))
+
+  test("AppImage - desktopName rejects backslash", ({ expect }) =>
+    appThrows(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+        },
+      },
+      {
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.desktopName = "evil\\path.desktop"
+          }),
+      },
+      err => expect(err.message).toContain("produces an invalid .desktop filename")
+    ))
 }

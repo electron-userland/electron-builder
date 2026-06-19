@@ -68,8 +68,9 @@ const sidebars: SidebarsConfig = {
   ],
 
   featuresSidebar: [
+    { type: "doc", id: "features/build-lifecycle", label: "Build Lifecycle" },
     { type: "doc", id: "features/hooks", label: "Hooks" },
-    { type: "doc", id: "features/icons", label: "Icons" },
+    { type: "doc", id: "features/icons-and-images", label: "Icons & Images" },
     { type: "doc", id: "features/auto-update", label: "Auto Update" },
     {
       type: "category",
@@ -84,6 +85,10 @@ const sidebars: SidebarsConfig = {
     { type: "doc", id: "features/multi-platform-build", label: "Multi Platform Build" },
     { type: "doc", id: "features/github-actions", label: "GitHub Actions" },
     { type: "doc", id: "features/electron-forge", label: "Electron Forge" },
+  ],
+
+  migrationSidebar: [
+    { type: "doc", id: "migration/v26-to-v27", label: "v26 → v27" },
   ],
 
   tutorialsSidebar: [

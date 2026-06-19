@@ -13,7 +13,7 @@
   "build": {
     "appId": "org.electron-builder.testApp2",
     "compression": "store",
-    "npmRebuild": true,
+    "nativeModules": { "npmRebuild": true },
     "directories": {
       "app": "app"
     },

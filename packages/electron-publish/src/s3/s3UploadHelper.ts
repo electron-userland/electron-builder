@@ -1,10 +1,11 @@
-import { sign } from "aws4"
+import _aws4 from "aws4"
+const { sign } = _aws4
 import * as fs from "fs"
 import * as http from "http"
 import * as https from "https"
-import * as mime from "mime"
+import mime from "mime"
 import * as path from "path"
-import type { AwsCredentials } from "./awsCredentials"
+import type { AwsCredentials } from "./awsCredentials.js"
 
 export interface S3PutObjectParams {
   bucket: string
@@ -54,10 +55,19 @@ export function startS3PutObject(params: S3PutObjectParams): { req: http.ClientR
   const headers: Record<string, string> = {
     "Content-Type": params.contentType,
     "Content-Length": String(stat.size),
+    // Declare the payload as unsigned so aws4 signs over this literal string
+    // rather than defaulting to SHA256("") — which would not match the streamed body.
+    "x-amz-content-sha256": "UNSIGNED-PAYLOAD",
   }
-  if (params.acl != null) headers["x-amz-acl"] = params.acl
-  if (params.storageClass != null) headers["x-amz-storage-class"] = params.storageClass
-  if (params.serverSideEncryption != null) headers["x-amz-server-side-encryption"] = params.serverSideEncryption
+  if (params.acl != null) {
+    headers["x-amz-acl"] = params.acl
+  }
+  if (params.storageClass != null) {
+    headers["x-amz-storage-class"] = params.storageClass
+  }
+  if (params.serverSideEncryption != null) {
+    headers["x-amz-server-side-encryption"] = params.serverSideEncryption
+  }
 
   const signed = sign(
     {
