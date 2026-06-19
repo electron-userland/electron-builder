@@ -7801,15 +7801,15 @@
               "$ref": "#/definitions/ToolsetCustom"
             },
             {
-              "const": "1.1.0",
+              "const": "1.2.1",
               "type": "string"
             },
             {
               "type": "null"
             }
           ],
-          "default": "1.1.0",
-          "description": "Version of the icons-conversion bundle used to convert source images to `.icns`, `.ico`,\nand PNG icon sets.\n\nSet to a {@link ToolsetCustom} object to supply your own icons bundle directory.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.1.0\"` | Current default |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/icons/CHANGELOG.md"
+          "default": "1.2.1",
+          "description": "Version of the icons-conversion bundle used to convert source images to `.icns`, `.ico`,\nand PNG icon sets.\n\nSet to a {@link ToolsetCustom} object to supply your own icons bundle directory.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.2.1\"` | Current default |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/icons/CHANGELOG.md"
         },
         "linuxToolsMac": {
           "anyOf": [
