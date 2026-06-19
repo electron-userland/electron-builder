@@ -78,7 +78,6 @@
     "dmg-builder": "workspace:*",
     "electron-publish": "workspace:*",
     "fs-extra": "^11.3.0",
-    "lazy-val": "^1.0.5",
     "simple-update-notifier": "2.0.0",
     "yargs": "^17.6.2"
   },

@@ -1,5 +1,4 @@
-
-import { exec, InvalidConfigurationError, isEmptyOrSpaces, log, spawn, stripSensitiveEnvVars } from "builder-util"
+import { Arch, exec, InvalidConfigurationError, isEmptyOrSpaces, log, spawn, stripSensitiveEnvVars } from "builder-util"
 import { randomUUID } from "crypto"
 import { resolveSnapCredentials } from "electron-publish"
 
