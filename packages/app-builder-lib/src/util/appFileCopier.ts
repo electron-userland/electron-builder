@@ -274,7 +274,7 @@ export async function resolveFirstMatchingCollection(options: {
         log.debug({ pm, searchDir: dir, depCount: deps.nodeModules.length }, "collected node modules")
         return deps
       }
-      log.info({ pm, searchDir: dir }, "collected node modules do not match the target package, trying next approach")
+      log.info({ pm, searchDir: dir }, "collected node modules do not match the target package, trying next search directory/approach")
       fallback ??= deps
     }
   }
