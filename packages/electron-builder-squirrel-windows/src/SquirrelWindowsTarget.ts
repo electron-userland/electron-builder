@@ -218,7 +218,7 @@ export default class SquirrelWindowsTarget extends Target {
     // https://github.com/electron/windows-installer/blob/main/script/select-7z-arch.js
     // Even if we're cross-compiling for a different arch like arm64,
     // we still need to use the 7-Zip executable for the host arch
-    const resolvedArch = os.arch
+    const resolvedArch = os.arch()
     fs.copyFileSync(path.join(vendorDirectory, `7z-${resolvedArch}.exe`), path.join(vendorDirectory, "7z.exe"))
     fs.copyFileSync(path.join(vendorDirectory, `7z-${resolvedArch}.dll`), path.join(vendorDirectory, "7z.dll"))
   }

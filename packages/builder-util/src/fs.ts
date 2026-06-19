@@ -1,4 +1,4 @@
-import { Nullish, retry } from "builder-util-runtime"
+import { Nullish, retry, sleep } from "builder-util-runtime"
 import { Stats } from "fs"
 import * as fs from "fs/promises"
 import fsExtra from "fs-extra"
@@ -431,4 +431,39 @@ export async function ensureDir(dir: string, maxAttempts = 8, mkdir: (p: string,
       shouldRetry: (e: any) => e.code === "ENOENT",
     }
   )
+}
+
+/**
+ * Wait until `file` can be opened for writing, retrying while it is locked.
+ *
+ * On Windows a file that was just extracted, copied, or written is frequently held by an antivirus
+ * scanner or a peer build with a deny-write share mode; an `fs.open(file, "r+")` against it fails with
+ * `EBUSY` (a sharing violation). Trying to *spawn* or overwrite the file during that window fails too —
+ * e.g. `CreateProcess` on a freshly-extracted `makeappx.exe` surfaces as `spawn UNKNOWN`. Waiting for
+ * the lock to clear first avoids that whole class of transient failure under heavy concurrent builds.
+ *
+ * Only `EBUSY` is treated as transient. Any other open error (read-only file, ENOENT, perms) is taken
+ * to mean "not lock-contended" — we return and let the caller perform its real operation and surface
+ * the genuine error itself. Bounded by `maxAttempts` so it can never hang a build indefinitely.
+ */
+type FileOpener = (file: string, flags: string) => Promise<{ close(): Promise<void> }>
+
+export async function ensureNotBusy(file: string, intervalMs = 2000, maxAttempts = 60, open: FileOpener = fs.open as FileOpener): Promise<void> {
+  for (let attempt = 0, warned = false; attempt < maxAttempts; attempt++) {
+    try {
+      const handle = await open(file, "r+")
+      await handle.close()
+      return
+    } catch (error: any) {
+      if (error.code !== "EBUSY") {
+        return
+      }
+      if (!warned) {
+        warned = true
+        log.info({ file: log.filePath(file) }, "file is locked for writing (maybe by a virus scanner) => waiting for unlock...")
+      }
+      await sleep(intervalMs)
+    }
+  }
+  log.warn({ file: log.filePath(file) }, "file still reported as locked after waiting; proceeding anyway")
 }
