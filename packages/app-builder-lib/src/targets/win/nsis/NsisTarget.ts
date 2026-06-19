@@ -124,11 +124,13 @@ export class NsisTarget extends Target {
     await archive(format, archiveFile, appOutDir, isBuildDifferentialAware ? configureDifferentialAwareArchiveOptions(archiveOptions) : archiveOptions)
     timer.end()
 
-    // Inject elevate.exe into the archive via a temp staging dir so that appOutDir is never
-    // modified. Keeping appOutDir clean eliminates the race condition where concurrent targets
-    // (Squirrel, ZIP, etc.) that package appOutDir pick up elevate.exe non-deterministically.
+    // Inject elevate.exe into the archive via a temp staging dir, never by mutating appOutDir
+    // during packaging. The copy into win-unpacked is deferred until all targets finish, so
+    // concurrent targets (Squirrel, ZIP, etc.) never pick up elevate.exe non-deterministically.
+    // `archiveOptions` was mutated in place by configureDifferentialAwareArchiveOptions above
+    // (when differential-aware), so it already reflects the effective compression settings.
     if (elevateHelper) {
-      await elevateHelper.addToArchive(archiveFile, this, appOutDir)
+      await elevateHelper.addToArchive(archiveFile, this, format, archiveOptions, appOutDir)
     }
 
     if (isBuildDifferentialAware && this.isWebInstaller) {

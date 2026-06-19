@@ -141,6 +141,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.info.tempDirManager
   }
 
+  addBuildFinalizeTask(task: () => Promise<void>): void {
+    this.info.addBuildFinalizeTask(task)
+  }
+
   get metadata(): Metadata {
     return this.info.metadata
   }

@@ -7,6 +7,7 @@ import { isWindowsSigningDisabled } from "../../../options/winOptions.js"
 import { getNsisElevatePath } from "../../../toolsets/nsis.js"
 import { getPath7za } from "../../../toolsets/7zip.js"
 import { getTemplatePath } from "../../../util/pathManager.js"
+import { ArchiveOptions, compute7zCompressArgs } from "../../archive.js"
 import { NsisTarget } from "./NsisTarget.js"
 
 export const nsisTemplatesDir = getTemplatePath("nsis")
@@ -64,8 +65,11 @@ export class AppPackageHelper {
 
 export class CopyElevateHelper {
   // Cached path resolution — shared across all arches since the source never changes per build.
-  // appOutDir is never mutated, eliminating the race with concurrent Squirrel/ZIP/etc. packaging.
   private elevatePath: Promise<string | null> | null = null
+
+  // appOutDirs whose win-unpacked copy of elevate.exe has already been deferred, so the same
+  // directory isn't queued twice when multiple NSIS targets (e.g. nsis + nsis-web) share an arch.
+  private readonly stagedUnpackedCopies = new Set<string>()
 
   private resolve(target: NsisTarget): Promise<string | null> {
     if (!target.packager.framework.isCopyElevateHelper) {
@@ -89,7 +93,11 @@ export class CopyElevateHelper {
     return this.elevatePath
   }
 
-  async addToArchive(archiveFile: string, target: NsisTarget, appOutDir: string): Promise<void> {
+  // Injects elevate.exe directly into the already-built NSIS archive via a temp staging dir, and
+  // defers copying it into win-unpacked until every target has finished reading the shared
+  // appOutDir. This keeps elevate.exe in the dir-target output while guaranteeing concurrent
+  // targets (Squirrel, ZIP, appx, …) never capture it mid-build (fixes the #9852 race).
+  async addToArchive(archiveFile: string, target: NsisTarget, format: string, archiveOptions: ArchiveOptions, appOutDir: string): Promise<void> {
     const elevatePath = await this.resolve(target)
     if (!elevatePath) {
       return
@@ -105,13 +113,20 @@ export class CopyElevateHelper {
       await target.packager.signIf(stagedElevate)
     }
 
-    await exec(await getPath7za(), ["a", archiveFile, "resources/elevate.exe"], { cwd: stagingDir }, debug7z.enabled)
+    // Reuse the parent archive's compression args so the appended entry is consistent with the
+    // rest of the archive (notably `store` and differential-aware builds, where bare `7za a`
+    // defaults — solid on, -mx=9, NTFS timestamps — would diverge from the original entries).
+    const args = compute7zCompressArgs(format, archiveOptions)
+    args.push(archiveFile, "resources/elevate.exe")
+    await exec(await getPath7za(), args, { cwd: stagingDir }, debug7z.enabled)
 
-    // Write the (possibly signed) binary into appOutDir so the dir-target output
-    // (win-unpacked/) also contains elevate.exe. This happens after both the NSIS
-    // archive and concurrent target archives (Squirrel, zip, etc.) have already
-    // captured appOutDir, so they are not affected.
-    await copyFile(stagedElevate, path.join(appOutDir, "resources", "elevate.exe"), false)
+    // Defer the win-unpacked copy: it must land after every concurrent target has packaged
+    // appOutDir, so it is never captured by Squirrel/zip/etc. The staged (and possibly signed)
+    // binary lives in tempDirManager, which is cleaned up only after the build finishes.
+    if (!this.stagedUnpackedCopies.has(appOutDir)) {
+      this.stagedUnpackedCopies.add(appOutDir)
+      target.packager.addBuildFinalizeTask(() => copyFile(stagedElevate, path.join(appOutDir, "resources", "elevate.exe"), false))
+    }
   }
 }
 
