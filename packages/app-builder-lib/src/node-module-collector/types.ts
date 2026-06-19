@@ -6,6 +6,9 @@ export type PackageJson = {
   peerDependencies?: Record<string, string>
   optionalDependencies?: Record<string, string>
   workspaces?: string[] | { packages: string[] }
+  // npm platform constraints (e.g. `@esbuild/darwin-arm64` declares `cpu: ["arm64"], os: ["darwin"]`)
+  os?: string | string[]
+  cpu?: string | string[]
 }
 
 export interface NodeModuleInfo {

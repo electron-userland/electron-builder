@@ -1,4 +1,4 @@
-import { AsyncTaskManager, FileCopier, FileTransformer, isEmptyOrSpaces, Link, log, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
+import { Arch, AsyncTaskManager, FileCopier, FileTransformer, isEmptyOrSpaces, Link, log, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
 import { Stats } from "fs"
 import fsExtra from "fs-extra"
 import { mkdir, readlink } from "fs/promises"
@@ -14,6 +14,7 @@ import { PlatformPackager } from "../platformPackager.js"
 import { AppFileWalker } from "./AppFileWalker.js"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper.js"
 import { NodeModuleInfo } from "../node-module-collector/types.js"
+import { archToNodeCpu } from "./archCompatibility.js"
 
 export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
   if (file === fileSet.src) {
@@ -163,8 +164,13 @@ function validateFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
 }
 
 /** @internal */
-export async function computeNodeModuleFileSets(platformPackager: PlatformPackager<any>, mainMatcher: FileMatcher): Promise<Array<ResolvedFileSet>> {
-  const deps = await collectNodeModulesWithLogging(platformPackager)
+export async function computeNodeModuleFileSets(
+  platformPackager: PlatformPackager<any>,
+  mainMatcher: FileMatcher,
+  arch: Arch,
+  applyArchFilter = true
+): Promise<Array<ResolvedFileSet>> {
+  const deps = await collectNodeModulesWithLogging(platformPackager, applyArchFilter ? arch : null)
 
   const nodeModuleExcludedExts = getNodeModuleExcludedExts(platformPackager)
   // serial execution because copyNodeModules is concurrent and so, no need to increase queue/pressure
@@ -195,10 +201,15 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   return result
 }
 
-async function collectNodeModulesWithLogging(platformPackager: PlatformPackager<any>) {
+async function collectNodeModulesWithLogging(platformPackager: PlatformPackager<any>, arch: Arch | null) {
   const { tempDirManager, appDir, projectDir } = platformPackager
 
   let deps: { nodeModules: NodeModuleInfo[]; logSummary: ModuleManager["logSummary"] } | undefined = undefined
+
+  // Drop packages whose `package.json` `cpu`/`os` is incompatible with the target arch/platform while
+  // collecting (e.g. exclude `@esbuild/darwin-arm64` from the x64 slice). See NodeModulesCollector.
+  // `null` arch (universal slices) disables the filter so both slices stay symmetric for the merge.
+  const archFilter = arch == null ? undefined : { cpu: archToNodeCpu(arch), os: platformPackager.platform.nodeName }
 
   const searchDirectories = Array.from(new Set([appDir, projectDir, await platformPackager.getWorkspaceRoot()])).filter((it): it is string => isEmptyOrSpaces(it) === false)
   const pmApproaches = [await platformPackager.getPackageManager(), PM.TRAVERSAL]
@@ -206,7 +217,7 @@ async function collectNodeModulesWithLogging(platformPackager: PlatformPackager<
     for (const dir of searchDirectories) {
       log.info({ pm, searchDir: dir }, "searching for node modules")
       const collector = getCollectorByPackageManager(pm, dir, tempDirManager)
-      deps = await collector.getNodeModules({ packageName: platformPackager.nodePackageName })
+      deps = await collector.getNodeModules({ packageName: platformPackager.nodePackageName, archFilter })
       if (deps.nodeModules.length > 0) {
         break
       }

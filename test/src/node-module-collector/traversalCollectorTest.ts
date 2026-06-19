@@ -28,9 +28,9 @@ async function buildPackageTree(packages: Record<string, object>): Promise<strin
   return root
 }
 
-async function runCollector(rootDir: string, packageName: string) {
+async function runCollector(rootDir: string, packageName: string, archFilter?: { cpu: string | null; os: string }) {
   const collector = new TraversalNodeModulesCollector(rootDir, mockTmpDir)
-  return collector.getNodeModules({ packageName })
+  return collector.getNodeModules({ packageName, archFilter })
 }
 
 // ---------------------------------------------------------------------------
@@ -221,6 +221,78 @@ describe("TraversalNodeModulesCollector", { sequential: true }, () => {
       expect(names).toContain("pkg-b")
       expect(names).toContain("shared-dep")
       expect(names).toContain("other-dep")
+    })
+  })
+
+  describe("platform (cpu/os) filtering", () => {
+    const tree = {
+      "package.json": {
+        name: "my-app",
+        version: "1.0.0",
+        dependencies: {
+          lodash: "^1.0.0",
+          "@esbuild/darwin-arm64": "^1.0.0",
+          "@esbuild/darwin-x64": "^1.0.0",
+        },
+      },
+      "node_modules/lodash/package.json": { name: "lodash", version: "1.0.0" }, // plain JS
+      "node_modules/@esbuild/darwin-arm64/package.json": { name: "@esbuild/darwin-arm64", version: "1.0.0", cpu: ["arm64"], os: ["darwin"] },
+      "node_modules/@esbuild/darwin-x64/package.json": { name: "@esbuild/darwin-x64", version: "1.0.0", cpu: ["x64"], os: ["darwin"] },
+    }
+
+    test("drops cpu-mismatched packages for the x64 slice, keeps the matching one and plain deps", async ({ expect }) => {
+      root = await buildPackageTree(tree)
+      const { nodeModules, logSummary } = await runCollector(root, "my-app", { cpu: "x64", os: "darwin" })
+      const names = nodeModules.map(m => m.name)
+      expect(names).toContain("lodash")
+      expect(names).toContain("@esbuild/darwin-x64")
+      expect(names).not.toContain("@esbuild/darwin-arm64")
+      expect(logSummary[LogMessageByKey.PKG_INCOMPATIBLE_PLATFORM]).toEqual(["@esbuild/darwin-arm64@1.0.0"])
+    })
+
+    test("drops the other variant for the arm64 slice", async ({ expect }) => {
+      root = await buildPackageTree(tree)
+      const { nodeModules } = await runCollector(root, "my-app", { cpu: "arm64", os: "darwin" })
+      const names = nodeModules.map(m => m.name)
+      expect(names).toContain("@esbuild/darwin-arm64")
+      expect(names).not.toContain("@esbuild/darwin-x64")
+    })
+
+    test("no archFilter keeps every package (back-compat for other callers)", async ({ expect }) => {
+      root = await buildPackageTree(tree)
+      const { nodeModules } = await runCollector(root, "my-app")
+      const names = nodeModules.map(m => m.name)
+      expect(names).toContain("@esbuild/darwin-arm64")
+      expect(names).toContain("@esbuild/darwin-x64")
+    })
+
+    test("null cpu (universal) applies no cpu filtering", async ({ expect }) => {
+      root = await buildPackageTree(tree)
+      const { nodeModules } = await runCollector(root, "my-app", { cpu: null, os: "darwin" })
+      const names = nodeModules.map(m => m.name)
+      expect(names).toContain("@esbuild/darwin-arm64")
+      expect(names).toContain("@esbuild/darwin-x64")
+    })
+
+    test("os mismatch drops a package even when cpu is unconstrained", async ({ expect }) => {
+      root = await buildPackageTree({
+        "package.json": { name: "my-app", version: "1.0.0", dependencies: { fsevents: "^1.0.0" } },
+        "node_modules/fsevents/package.json": { name: "fsevents", version: "1.0.0", os: ["darwin"] },
+      })
+      const linux = await runCollector(root, "my-app", { cpu: "x64", os: "linux" })
+      expect(linux.nodeModules.map(m => m.name)).not.toContain("fsevents")
+    })
+
+    test("drops a nested incompatible transitive dependency", async ({ expect }) => {
+      root = await buildPackageTree({
+        "package.json": { name: "my-app", version: "1.0.0", dependencies: { parent: "^1.0.0" } },
+        "node_modules/parent/package.json": { name: "parent", version: "1.0.0", dependencies: { "@swc/core-darwin-arm64": "^1.0.0" } },
+        "node_modules/@swc/core-darwin-arm64/package.json": { name: "@swc/core-darwin-arm64", version: "1.0.0", cpu: ["arm64"], os: ["darwin"] },
+      })
+      const { nodeModules } = await runCollector(root, "my-app", { cpu: "x64", os: "darwin" })
+      const names = nodeModules.map(m => m.name)
+      expect(names).toContain("parent")
+      expect(names).not.toContain("@swc/core-darwin-arm64")
     })
   })
 

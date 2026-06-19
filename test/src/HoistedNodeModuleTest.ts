@@ -1,4 +1,4 @@
-import { PM } from "app-builder-lib/internal"
+import { PM, readAsar } from "app-builder-lib/internal"
 import { spawn } from "builder-util"
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as path from "path"
@@ -83,6 +83,77 @@ describe("node_module collectors", () => {
         storeDepsLockfileSnapshot: true,
         packageManager: PM.YARN,
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      }
+    )
+  )
+
+  // https://github.com/electron-userland/electron-builder/issues/9865
+  // esbuild pulls a single-arch darwin binary (`@esbuild/darwin-arm64` or `@esbuild/darwin-x64`) via its
+  // optionalDependencies; npm installs only the host's variant. Before the collector's `cpu`/`os` filter, that
+  // single-arch binary was copied identically into BOTH universal slices and `@electron/universal` aborted with
+  // `Detected file "…@esbuild/…/bin/esbuild" that's the same in both x64 and arm64 builds`. The build should now
+  // succeed: the binary is filtered out of the mismatched slice and reported as `singleArchFiles` for the merge.
+  test.ifMac("mac universal build with a single-arch platform-specific optional dependency (esbuild)", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-hoisted",
+      {
+        targets: Platform.MAC.createTarget(DIR_TARGET, Arch.universal),
+      },
+      {
+        signedMac: false,
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              esbuild: "0.21.5",
+            }
+          }),
+        packed: async context => {
+          const resourceDir = context.getResources(Platform.MAC, Arch.universal)
+          // The universal app was produced (the merge no longer aborts) and esbuild's JS package is bundled.
+          const asarFs = await readAsar(path.join(resourceDir, "app.asar"))
+          expect(await asarFs.readJson(`node_modules${path.sep}esbuild${path.sep}package.json`)).toMatchObject({ name: "esbuild" })
+
+          // npm installs only the *host* arch's platform binary, so the universal app carries that single-arch
+          // binary through the merge (and not the other arch's, which was never on disk). Deriving the expected
+          // arch from `process.arch` keeps this deterministic across arm64 and x64 CI runners.
+          const esbuildScope = path.join(resourceDir, "app.asar.unpacked", "node_modules", "@esbuild")
+          const hostArch = process.arch === "x64" ? "x64" : "arm64"
+          const otherArch = hostArch === "x64" ? "arm64" : "x64"
+          await assertThat(expect, path.join(esbuildScope, `darwin-${hostArch}`, "bin", "esbuild")).isFile()
+          await assertThat(expect, path.join(esbuildScope, `darwin-${otherArch}`)).doesNotExist()
+        },
+      }
+    )
+  )
+
+  // Companion to the test above: when the project opts into installing *both* macOS arch variants
+  // (here via pnpm `supportedArchitectures`), the symmetric universal slices carry both single-arch
+  // binaries into the final app — so a runtime dependency resolves correctly on Intel AND Apple Silicon.
+  test.ifMac("mac universal build bundles both arch variants when both are installed (pnpm supportedArchitectures)", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-hoisted",
+      {
+        targets: Platform.MAC.createTarget(DIR_TARGET, Arch.universal),
+      },
+      {
+        signedMac: false,
+        packageManager: PM.PNPM,
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              esbuild: "0.21.5",
+            }
+            // Force pnpm to install the platform packages for BOTH macOS arches, not just the build host's.
+            data.pnpm = { supportedArchitectures: { os: ["darwin"], cpu: ["x64", "arm64"] } }
+          }),
+        packed: async context => {
+          const esbuildScope = path.join(context.getResources(Platform.MAC, Arch.universal), "app.asar.unpacked", "node_modules", "@esbuild")
+          // Both arch variants are present, so esbuild's runtime resolution works on either architecture.
+          await assertThat(expect, path.join(esbuildScope, "darwin-x64", "bin", "esbuild")).isFile()
+          await assertThat(expect, path.join(esbuildScope, "darwin-arm64", "bin", "esbuild")).isFile()
+        },
       }
     )
   )
