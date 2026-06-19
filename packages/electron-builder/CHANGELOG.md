@@ -1,5 +1,31 @@
 # electron-builder
 
+## 27.0.0-alpha.4
+
+### Minor Changes
+
+- Feat(cli): `migrate-schema` now auto-migrates programmatic JS/TS configs _[`#9941`](https://github.com/electron-userland/electron-builder/pull/9941) [`2a1c06f`](https://github.com/electron-userland/electron-builder/commit/2a1c06fa6319e3abea381f6b9e359d59a8191649) [@mmaietta](https://github.com/mmaietta)_
+
+  `electron-builder migrate-schema` previously printed manual steps for programmatic configs (`.js`/`.cjs`/`.mjs`/`.ts`). It now rewrites them in place via an AST-located text codemod that applies the same v26→v27 transforms as static configs while preserving comments, imports, functions, and formatting. Falls back to manual steps when `typescript` is not installed or the config cannot be statically reduced to a single object literal (dynamic function bodies, spreads, computed keys).
+
+### Patch Changes
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`fae5232`](https://github.com/electron-userland/electron-builder/commit/fae52329c636d3640c68ba4db5db013ccfa42bc2) [`b84a1f4`](https://github.com/electron-userland/electron-builder/commit/b84a1f40116287d852da4a5d7307c59b600effba) [`a82943a`](https://github.com/electron-userland/electron-builder/commit/a82943ace5737252c7f62d2c6b5f7c679d753a60) [`d21a771`](https://github.com/electron-userland/electron-builder/commit/d21a77117e4836cf8ef93b78210b67c86f053d6a) [`6a0f35a`](https://github.com/electron-userland/electron-builder/commit/6a0f35aa1e58a0c37794d1646927a1a881098913) [`344d156`](https://github.com/electron-userland/electron-builder/commit/344d156dd01c3427569b3cd1a37f43b8a5ff5990) [`9faa8c8`](https://github.com/electron-userland/electron-builder/commit/9faa8c8198f5e612d54ebcdd0904a74b338afb33) [`449e8d4`](https://github.com/electron-userland/electron-builder/commit/449e8d4da781af2550684809bbac3f4acafcc92e) [`d22a6f7`](https://github.com/electron-userland/electron-builder/commit/d22a6f72dd8ddc1e945cc70719adfc373f605118) [`deafee9`](https://github.com/electron-userland/electron-builder/commit/deafee9fe5f7bccbf52e73cd0c6085e767f921ce)
+
+</small>
+
+- `app-builder-lib@27.0.0-alpha.4`
+- `builder-util-runtime@10.0.0-alpha.3`
+- `builder-util@27.0.0-alpha.4`
+- `dmg-builder@27.0.0-alpha.4`
+- `electron-publish@27.0.0-alpha.4`
+
+</details>
+
 ## 27.0.0-alpha.3
 
 ### Major Changes

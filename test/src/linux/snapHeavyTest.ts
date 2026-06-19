@@ -202,7 +202,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snap heavy", options, () => {
           },
         },
         effectiveOptionComputed: snapYamlCallback(expect),
-      }))
+      })
+    )
 
     // ── install+launch integration (requires unsquashfs) ────────────────────
     test.ifEnv(canRunInstallTests())(`snap install+launch (${core})`, options, async ({ expect }) => {
