@@ -1,15 +1,12 @@
-import { Nullish, safeStringifyJson, isValidKey, isSensitiveFieldName, hashSensitiveValue } from "builder-util-runtime"
+import { hashSensitiveValue, isSensitiveFieldName, isValidKey, Nullish, retry, safeStringifyJson } from "builder-util-runtime"
 import chalk from "chalk"
 import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_process"
 import { spawn as _spawn } from "cross-spawn"
 import _debug from "debug"
 import { dump } from "js-yaml"
-import * as path from "path"
+import path from "path"
 import { install as installSourceMap } from "source-map-support"
 import { debug, log } from "./log.js"
-import { exists } from "./fs.js"
-import _fsExtra from "fs-extra"
-const { mkdir } = _fsExtra
 import { isEmptyOrSpaces } from "./stringUtil.js"
 
 // Vitest install their own source-map-aware stack-trace handling. Letting
@@ -20,24 +17,24 @@ if (process.env.VITEST == null) {
   installSourceMap()
 }
 
-export { isEmptyOrSpaces } from "./stringUtil.js"
-export { safeStringifyJson, retry } from "builder-util-runtime"
+export { retry, safeStringifyJson } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
 export * from "./arch.js"
 export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames, getArchSuffix, toLinuxArchString } from "./arch.js"
 export { AsyncTaskManager } from "./asyncTaskManager.js"
 export { DebugLogger } from "./DebugLogger.js"
+export * from "./envUtil.js"
+export { parseValidEnvVarUrl } from "./envUtil.js"
 export * from "./log.js"
 export { buildGotProxyAgent, httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor.js"
 export * from "./promise.js"
-export * from "./envUtil.js"
-export { parseValidEnvVarUrl } from "./envUtil.js"
+export { escapeForXml, isEmptyOrSpaces } from "./stringUtil.js"
 
 export { asArray, deepAssign, isValidKey } from "builder-util-runtime"
 export * from "./fs.js"
 
+export { decodeCscLinkBase64, loadCscLink, resolveCscLinkPath } from "./cscLink.js"
 export { generateKsuid } from "./ksuid.js"
-export { loadCscLink, decodeCscLinkBase64, resolveCscLinkPath } from "./cscLink.js"
 
 export const debug7z = _debug("electron-builder:7z")
 
@@ -128,6 +125,17 @@ function getProcessEnv(env: Record<string, string | undefined> | Nullish): NodeJ
   return finalEnv
 }
 
+// Spurious process-launch failures seen under heavy concurrent builds on Windows: the OS fails to
+// start a freshly-extracted/copied executable (e.g. makeappx.exe from the win-codesign kit) while it
+// is still locked by AV or a peer build. These are launch failures — the process never ran — so
+// retrying is side-effect-free. A non-zero *exit* code is not a spawn failure and is never retried.
+const TRANSIENT_SPAWN_CODES = new Set(["UNKNOWN", "ETXTBSY", "EBUSY", "EAGAIN"])
+
+function isTransientSpawnError(error: any): boolean {
+  const cause = error?.cause ?? error
+  return typeof cause?.syscall === "string" && cause.syscall.startsWith("spawn") && TRANSIENT_SPAWN_CODES.has(cause.code)
+}
+
 export function exec(file: string, args?: Array<string> | null, options?: ExecFileOptions, isLogOutIfDebug = true): Promise<string> {
   if (log.isDebugEnabled) {
     const logFields: any = {
@@ -153,50 +161,64 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
     log.debug(logFields, "executing")
   }
 
-  return new Promise<string>((resolve, reject) => {
-    execFile(
-      file,
-      args,
-      {
-        ...options,
-        maxBuffer: 1000 * 1024 * 1024,
-        env: getProcessEnv(options == null ? null : options.env), // codeql[js/shell-command-injection-from-environment] - env filtered via getProcessEnv/stripSensitiveEnvVars; execFile array args (no shell)
-      },
-      (error, stdout, stderr) => {
-        if (error == null) {
-          if (isLogOutIfDebug && log.isDebugEnabled) {
-            const logFields: any = {
-              file,
+  const attempt = () =>
+    new Promise<string>((resolve, reject) => {
+      execFile(
+        file,
+        args,
+        {
+          ...options,
+          maxBuffer: 1000 * 1024 * 1024,
+          env: getProcessEnv(options == null ? null : options.env), // codeql[js/shell-command-injection-from-environment] - env filtered via getProcessEnv/stripSensitiveEnvVars; execFile array args (no shell)
+        },
+        (error, stdout, stderr) => {
+          if (error == null) {
+            if (isLogOutIfDebug && log.isDebugEnabled) {
+              const logFields: any = {
+                file,
+              }
+              if (stdout.length > 0) {
+                logFields.stdout = stdout
+              }
+              if (stderr.length > 0) {
+                logFields.stderr = stderr
+              }
+
+              log.debug(logFields, "executed")
             }
-            if (stdout.length > 0) {
-              logFields.stdout = stdout
+            resolve(stdout.toString())
+          } else {
+            let message = chalk.red(removePassword(`Exit code: ${(error as any).code}. ${error.message}`))
+            if (stdout.length !== 0) {
+              if (file.endsWith("wine")) {
+                stdout = stdout.toString()
+              }
+              message += `\n${chalk.yellow(removePassword(stdout.toString()))}`
             }
-            if (stderr.length > 0) {
-              logFields.stderr = stderr
+            if (stderr.length !== 0) {
+              if (file.endsWith("wine")) {
+                stderr = stderr.toString()
+              }
+              message += `\n${chalk.red(removePassword(stderr.toString()))}`
             }
 
-            log.debug(logFields, "executed")
+            reject(new ExecError(file, (error as any).code, message, "", `${error.code || ExecError.code}`, { cause: error }))
           }
-          resolve(stdout.toString())
-        } else {
-          let message = chalk.red(removePassword(`Exit code: ${(error as any).code}. ${error.message}`))
-          if (stdout.length !== 0) {
-            if (file.endsWith("wine")) {
-              stdout = stdout.toString()
-            }
-            message += `\n${chalk.yellow(removePassword(stdout.toString()))}`
-          }
-          if (stderr.length !== 0) {
-            if (file.endsWith("wine")) {
-              stderr = stderr.toString()
-            }
-            message += `\n${chalk.red(removePassword(stderr.toString()))}`
-          }
-
-          reject(new ExecError(file, (error as any).code, message, "", `${error.code || ExecError.code}`, { cause: error }))
         }
+      )
+    })
+
+  return retry(attempt, {
+    retries: 2,
+    interval: 1000,
+    backoff: 1000,
+    shouldRetry: (error: any) => {
+      if (isTransientSpawnError(error)) {
+        log.warn({ file, code: (error?.cause ?? error)?.code }, "process failed to spawn (transient OS/AV lock), retrying")
+        return true
       }
-    )
+      return false
+    },
   })
 }
 
@@ -394,18 +416,6 @@ export function use<T, R>(value: T | Nullish, task: (value: T) => R): R | null {
 
 export function isTokenCharValid(token: string) {
   return /^[.\w/=+-]+$/.test(token)
-}
-
-export async function getUserDefinedCacheDir() {
-  let cacheEnv = process.env.ELECTRON_BUILDER_CACHE
-  if (!isEmptyOrSpaces(cacheEnv)) {
-    cacheEnv = path.resolve(cacheEnv)
-    if (!(await exists(cacheEnv))) {
-      await mkdir(cacheEnv)
-    }
-    return cacheEnv
-  }
-  return undefined
 }
 
 export function addValue<K, T>(map: Map<K, Array<T>>, key: K, value: T) {

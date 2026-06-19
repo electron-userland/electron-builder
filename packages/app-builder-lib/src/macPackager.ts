@@ -34,6 +34,7 @@ import { ArchiveTarget } from "./targets/ArchiveTarget.js"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/mac/pkg.js"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory.js"
 import { isMacOsHighSierra } from "./util/mac/macosVersion.js"
+import { buildSingleArchFilesPattern, collectIdenticalSingleArchMachOFiles, collectSingleArchPackageNames } from "./util/archCompatibility.js"
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
 import { resolveFunction } from "./util/resolve.js"
 import { makeUniversalApp } from "@electron/universal"
@@ -196,6 +197,9 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
         sign: false,
         disableAsarIntegrity: true,
         disableFuses: true,
+        // Keep both slices symmetric: don't drop platform-mismatched modules per-arch (that asymmetry breaks
+        // the universal merge). Single-arch binaries are reconciled below via `computeSingleArchFiles`.
+        disableArchFilter: true,
       },
     }
 
@@ -239,9 +243,23 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     }
 
     const universalOpts = platformSpecificBuildOptions.universal
+
+    // Single-arch binaries that can't be merged into a universal Mach-O. Two sources:
+    //  1. `cpu`/`os`-declared platform packages (e.g. `@esbuild/darwin-arm64`), which the collection filter
+    //     confines to their native slice — mark the whole package so unique non-binary siblings don't trip the merge.
+    //  2. Host binaries identical in both slices inside packages that declare no `cpu`/`os` (e.g. esbuild's
+    //     install script overwriting `esbuild/bin/esbuild` with the platform binary) — mark the file.
+    // Both are reported to `@electron/universal` via `singleArchFiles`; otherwise it aborts on the arch mismatch.
+    const singleArchFiles = await this.computeSingleArchFiles(
+      path.join(safeX64AppOutDir, appFile),
+      path.join(safeArm64AppOutPath, appFile),
+      universalOpts?.singleArchFiles ?? undefined
+    )
+
     await makeUniversalApp({
       mergeASARs: true, // preserve electron-builder v2 default; user can override via mac.universal.mergeASARs
       ...universalOpts,
+      singleArchFiles,
       x64AppPath: path.join(safeX64AppOutDir, appFile),
       arm64AppPath: path.join(safeArm64AppOutPath, appFile),
       outAppPath: path.join(safeAppOutDir, appFile),
@@ -272,6 +290,37 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     if (config.options?.sign ?? true) {
       await this.doSignAfterPack(outDir, appOutDir, platformName, platformType, arch, platformSpecificBuildOptions, targets)
     }
+  }
+
+  /**
+   * Builds the `singleArchFiles` glob passed to `@electron/universal` by scanning both packed slices for
+   * single-architecture binaries that can't be lipo-merged. Merges any user-provided `mac.universal.singleArchFiles`.
+   */
+  private async computeSingleArchFiles(x64AppPath: string, arm64AppPath: string, userPattern: string | undefined): Promise<string | undefined> {
+    const unpacked = (appPath: string) => path.join(appPath, "Contents", "Resources", "app.asar.unpacked")
+    const x64Unpacked = unpacked(x64AppPath)
+    const arm64Unpacked = unpacked(arm64AppPath)
+
+    // (1) `cpu`/`os`-declared platform packages confined to one slice — mark the whole package.
+    const packageNames = new Set<string>()
+    await collectSingleArchPackageNames(path.join(x64Unpacked, "node_modules"), packageNames)
+    await collectSingleArchPackageNames(path.join(arm64Unpacked, "node_modules"), packageNames)
+
+    // (2) undeclared host binaries identical in both slices (e.g. `esbuild/bin/esbuild`) — mark the file.
+    const machOFiles = await collectIdenticalSingleArchMachOFiles(x64Unpacked, arm64Unpacked)
+
+    const patterns = [...Array.from(packageNames).map(name => `**/${name}/**`), ...machOFiles]
+    if (patterns.length === 0) {
+      return userPattern
+    }
+
+    log.warn(
+      { packages: Array.from(packageNames).sort().join(", ") || "(none)", files: machOFiles.sort().join(", ") || "(none)" },
+      "Universal build contains single-architecture binaries; they are copied as-is per slice (not lipo-merged), so each is only usable on architectures whose platform package was installed on this build host. " +
+        "If these are build-only tools (e.g. esbuild), move them to `devDependencies` or exclude them via `files` to omit them entirely. " +
+        "If they are needed at runtime, install every target architecture's variant so the universal app works on both Intel and Apple Silicon (pnpm/yarn: `supportedArchitectures`; npm: `--cpu`/`--os`)."
+    )
+    return buildSingleArchFilesPattern(patterns, userPattern)
   }
 
   async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<void> {

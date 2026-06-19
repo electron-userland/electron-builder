@@ -6,6 +6,7 @@ import * as path from "path"
 
 const TOOLSET_LOCK_FILE = path.join(os.tmpdir(), ".electron-builder-toolset.lock")
 const SIGNTOOL_LOCK_FILE = path.join(os.tmpdir(), ".electron-builder-signtool.lock")
+const ICONS_LOCK_FILE = path.join(os.tmpdir(), ".electron-builder-icons.lock")
 
 async function withLock<T>(lockFile: string, task: () => Promise<T>): Promise<T> {
   await writeFile(lockFile, "", { flag: "a" })
@@ -34,4 +35,15 @@ export function withToolsetLock<T>(task: () => Promise<T>): Promise<T> {
 // serializes signtool invocations. No-op overhead for real single builds, which are already serial.
 export function withSigntoolLock<T>(task: () => Promise<T>): Promise<T> {
   return withLock(SIGNTOOL_LOCK_FILE, task)
+}
+
+// The icons toolset CLI (icon-tool.js) converts via a WebAssembly-backed image pipeline, and each
+// invocation reserves a large `WebAssembly.Memory`. A single build converting one icon is fine, but
+// parallel builds — most acutely the test harness running many packagers across forked vitest workers
+// on one machine — spawn enough concurrent icon-tool processes to exhaust memory, failing with
+// "WebAssembly.Memory(): could not allocate memory". A cross-process lock (separate from the toolset
+// lock so it does not serialize against MSI/Squirrel/DMG builds) caps icon conversion at one at a
+// time. No-op overhead for real single builds, which are already serial.
+export function withIconsLock<T>(task: () => Promise<T>): Promise<T> {
+  return withLock(ICONS_LOCK_FILE, task)
 }

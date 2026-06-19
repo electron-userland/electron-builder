@@ -261,15 +261,21 @@ export interface RemoteBuildOptions {
   launchpadUsername?: string
 
   /**
-   * Target architecture for the remote build. Accepts a single snapcraft arch string
-   * (e.g. `"amd64"`, `"arm64"`, `"armhf"`).
+   * Target architecture (or architectures) for the remote build.
    *
-   * To build for multiple architectures, configure electron-builder's top-level `arch` option
-   * (e.g. `arch: ["x64", "arm64"]`) — each arch spawns a separate remote-build job on Launchpad,
-   * keeping the one-build-per-artifact contract intact.
+   * - **Single string** (e.g. `"amd64"`): one Launchpad job, one output snap.
+   * - **Array** (e.g. `["amd64", "arm64"]`): one Launchpad job that builds all listed
+   *   architectures and downloads each resulting snap. All produced snaps are emitted as
+   *   separate build artifacts.
+   *
+   * Using an array here is mutually exclusive with setting `arch: ["x64", "arm64"]` at the
+   * electron-builder top level — the top-level `arch` option spawns a separate remote-build
+   * job per architecture, which would duplicate work.
+   *
    * @example "amd64"
+   * @example ["amd64", "arm64"]
    */
-  buildFor?: string
+  buildFor?: string | string[]
 
   /**
    * Suppress the Launchpad public-upload consent prompt by automatically accepting it.

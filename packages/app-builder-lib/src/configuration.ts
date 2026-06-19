@@ -535,18 +535,12 @@ export type BeforePackContext = PackContext
 export type AfterExtractContext = PackContext
 
 /**
- * Version pins and custom bundle overrides for the binary toolsets that electron-builder
- * downloads and caches locally.
+ * Version pins and custom bundle overrides for the binary toolsets that electron-builder downloads and caches locally.
  *
- * Each toolset is a versioned archive hosted at
- * [electron-userland/electron-builder-binaries](https://github.com/electron-userland/electron-builder-binaries/releases).
- * Omitting a property (or setting it to `null`) selects the modern default for that toolset.
- * Setting a property to `"0.0.0"` forces the legacy bundle — useful only for diagnosing
- * regressions introduced by newer toolset bundles.
+ * Each toolset is a versioned archive hosted at [electron-userland/electron-builder-binaries](https://github.com/electron-userland/electron-builder-binaries/releases).
+ * Omitting a property (or setting it to `latest`) selects the modern default for that toolset.
  *
- * To supply your own bundle, set the property to a {@link ToolsetCustom} object with a `url`
- * (https:// or file://) and a `checksum` for verification. The bundle must mirror the expected
- * directory layout of the corresponding built-in bundle; see the build scripts at
+ * To supply your own bundle, set the property to a {@link ToolsetCustom} object with a `url` (https:// or file://) and a `checksum` for verification. The bundle must mirror the expected directory layout of the corresponding built-in bundle; see the build scripts at
  * https://github.com/electron-userland/electron-builder-binaries/tree/master/packages.
  */
 export interface ToolsetConfig {
@@ -556,24 +550,23 @@ export interface ToolsetConfig {
    * The bundle ships:
    * - **`signtool.exe`** (Windows) / **`osslsigncode`** (macOS & Linux) — used to sign `.exe`,
    *   `.dll`, and `.msix` artifacts.
-   * - **`rcedit`** — used to embed version metadata and icons into `.exe` files.
-   * - **Windows Kits** (`10.0.26100.0`) — used by AppX/MSIX packaging (`makeappx`, `signtool`).
+   * - **`rcedit`** — embeds version metadata and icons into `.exe` files (legacy usage, migrated to npm `resedit` package).
+   * - **Windows Kits** — used by AppX/MSIX packaging (`makeappx`, `signtool`).
    *
    * Available versions:
-   * | Version | Contents |
-   * |---------|----------|
-   * | `"0.0.0"` | Legacy bundle — `winCodeSign-2.6.0` (pre-v27 default) |
-   * | `"1.0.0"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.0.0 |
-   * | `"1.1.0"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.1.0 |
-   * | `"1.1.1"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.1.1 |
-   * | `"1.2.1"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.2.1 |
-   * | `"1.3.0"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.3.0 + separate ATS dlib bundle + .NET 8 runtime (required for Azure Trusted Signing `signtool /dlib`) |
+   * | Version | Notes |
+   * |---------|-------|
+   * | `"0.0.0"` | Legacy bundle — `winCodeSign-2.6.0` (pre-v27) |
+   * | `"1.0.0"` | Windows Kits 10.0.26100.0, `osslsigncode` v2.9 |
+   * | `"1.1.1"` | Updates `osslsigncode` to v2.11 |
+   * | `"1.2.1"` | Adds native `osslsigncode` arm64 |
+   * | `"1.3.0"` | Includes support for Azure Trusted Signing `signtool` via dlib and .NET 8 runtime |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/win-codesign/CHANGELOG.md
    *
-   * @default "1.1.0"
+   * @default "latest"
    */
-  readonly winCodeSign?: "0.0.0" | "1.0.0" | "1.1.0" | "1.1.1" | "1.2.1" | "1.3.0" | ToolsetCustom | null
+  readonly winCodeSign?: "0.0.0" | "1.0.0" | "1.1.0" | "1.1.1" | "1.2.1" | "1.3.0" | ToolsetCustom | "latest"
 
   /**
    * Version of the AppImage toolset bundle used for building `.AppImage` files.
@@ -586,15 +579,15 @@ export interface ToolsetConfig {
    * Available versions:
    * | Version | Runtime date | Notes |
    * |---------|-------------|-------|
-   * | `"0.0.0"` | Legacy | FUSE2-based AppImage runtime (pre-v27 default) |
-   * | `"1.0.2"` | 20251108 | Static-runtime (FUSE3-compatible) |
-   * | `"1.0.3"` | 20251108 | Static-runtime (FUSE3-compatible); recommended (default) |
+   * | `"0.0.0"` | Legacy | FUSE2-based AppImage runtime (pre-v27) |
+   * | `"1.0.3"` | 20251108 | Introduces static AppImage runtime |
+   * | `"1.1.0"` | 20251108 | Adds `unsquashfs` support |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/appimage/CHANGELOG.md
    *
-   * @default "1.0.3"
+   * @default "latest"
    */
-  readonly appimage?: "0.0.0" | "1.0.2" | "1.0.3" | ToolsetCustom | null
+  readonly appimage?: "0.0.0" | "1.0.3" | "1.1.0" | ToolsetCustom | "latest"
 
   /**
    * Version of the NSIS toolset bundle used to compile Windows installers.
@@ -608,14 +601,14 @@ export interface ToolsetConfig {
    * Available versions:
    * | Version | `makensis` version | Notes |
    * |---------|------------------|-------|
-   * | `"0.0.0"` | 3.0.4.1 | Legacy split bundle — `nsis` + `nsis-resources` archives (pre-v27 default) |
-   * | `"1.2.1"` | 3.12 | Unified bundle — single archive, entrypoint scripts auto-set `NSISDIR` (default) |
+   * | `"0.0.0"` | 3.0.4.1 | Legacy split bundle — `nsis` + `nsis-resources` archives (pre-v27) |
+   * | `"1.2.1"` | 3.12 | Unified bundle — single archive, entrypoint scripts auto-set `NSISDIR` |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/nsis/CHANGELOG.md
    *
-   * @default "1.2.1"
+   * @default "latest"
    */
-  readonly nsis?: "0.0.0" | "1.2.1" | ToolsetCustom | null
+  readonly nsis?: "0.0.0" | "1.2.1" | ToolsetCustom | "latest"
 
   /**
    * Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on
@@ -627,16 +620,16 @@ export interface ToolsetConfig {
    * Available versions:
    * | Version | Wine version | Platform support | Notes |
    * |---------|-------------|-----------------|-------|
-   * | `"0.0.0"` | 4.0.1 | macOS | Legacy portable bundle (default) |
+   * | `"0.0.0"` | 4.0.1 | macOS | Legacy portable bundle (pre-v27) |
    * | `"1.0.1"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |
    *
    * To use a custom Wine binary, use a `ToolsetCustom` object.
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md
    *
-   * @default "0.0.0"
+   * @default "latest"
    */
-  readonly wine?: "0.0.0" | "1.0.1" | ToolsetCustom | null
+  readonly wine?: "0.0.0" | "1.0.1" | ToolsetCustom | "latest"
 
   /**
    * Version of the FPM bundle used to build Linux packages (`.deb`, `.rpm`, `.pacman`, etc.)
@@ -649,9 +642,9 @@ export interface ToolsetConfig {
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/fpm/CHANGELOG.md
    *
-   * @default "2.2.1"
+   * @default "latest"
    */
-  readonly fpm?: "2.2.1" | ToolsetCustom | null
+  readonly fpm?: "2.2.1" | ToolsetCustom | "latest"
 
   /**
    * Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build
@@ -662,13 +655,13 @@ export interface ToolsetConfig {
    * Available versions:
    * | Version | Notes |
    * |---------|-------|
-   * | `"1.0.0"` | Current default |
+   * | `"1.0.0"` | gnu-tar, lzip, makedepend, glib, libgsf, libtool, pcre, gettext, binutils |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/linux-tools-mac/CHANGELOG.md
    *
-   * @default "1.0.0"
+   * @default "latest"
    */
-  readonly linuxToolsMac?: "1.0.0" | ToolsetCustom | null
+  readonly linuxToolsMac?: "1.0.0" | ToolsetCustom | "latest"
 
   /**
    * Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.
@@ -681,9 +674,9 @@ export interface ToolsetConfig {
    * (or a bare `file://` directory). `.7z` and `.tar.xz` archives cannot be used here because
    * extracting them requires 7za — a circular dependency.
    *
-   * @default "1.0.0"
+   * @default "latest"
    */
-  readonly sevenZip?: "1.0.0" | ToolsetCustom | null
+  readonly sevenZip?: "1.0.0" | ToolsetCustom | "latest"
 
   /**
    * Version of the icons-conversion bundle used to convert source images to `.icns`, `.ico`,
@@ -694,13 +687,13 @@ export interface ToolsetConfig {
    * Available versions:
    * | Version | Notes |
    * |---------|-------|
-   * | `"1.1.0"` | Current default |
+   * | `"1.2.1"` | `wasm-vips` + `@resvg/resvg-wasm` |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/icons/CHANGELOG.md
    *
-   * @default "1.1.0"
+   * @default "latest"
    */
-  readonly icons?: "1.1.0" | ToolsetCustom | null
+  readonly icons?: "1.2.1" | ToolsetCustom | "latest"
 }
 
 /**
