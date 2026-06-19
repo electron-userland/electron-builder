@@ -31,6 +31,7 @@ export { MacTargetHelper, type PlatformType } from "./targets/mac/MacTargetHelpe
 export { computeArchToTargetNamesMap } from "./targets/targetFactory.js"
 export type { Defines } from "./targets/win/nsis/Defines.js"
 export { nsisEscapeString, NsisScriptGenerator } from "./targets/win/nsis/nsisScriptGenerator.js"
+export { ProgIdMaker } from "./targets/win/nsis/progId.js"
 export { checkMakensisOutput, verifyInstallerSize } from "./targets/win/nsis/nsisValidation.js"
 export { getLinuxToolsMacToolset, getLinuxToolsPath } from "./toolsets/linuxToolsMac.js"
 export { getWindowsKitsBundle } from "./toolsets/winCodeSign.js"

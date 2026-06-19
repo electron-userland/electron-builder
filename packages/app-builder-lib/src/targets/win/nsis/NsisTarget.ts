@@ -35,6 +35,7 @@ import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } fr
 import { computeLicensePage } from "./nsisLicense.js"
 import { NsisOptions, PortableOptions } from "./nsisOptions.js"
 import { NsisScriptGenerator, nsisEscapeString } from "./nsisScriptGenerator.js"
+import { ELECTRON_BUILDER_NS_UUID, ProgIdMaker } from "./progId.js"
 import { getMakeNsisPath, getNsisPluginsPath } from "../../../toolsets/nsis.js"
 import { AppPackageHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil.js"
 import { checkMakensisOutput, verifyInstallerSize } from "./nsisValidation.js"
@@ -42,9 +43,6 @@ import _fsExtra from "fs-extra"
 const { readFile, stat, unlink } = _fsExtra
 
 const debug = _debug("electron-builder:nsis")
-
-// noinspection SpellCheckingInspection
-const ELECTRON_BUILDER_NS_UUID = UUID.parse("50e065bc-3134-11e6-9bab-38c9862bdaf3")
 
 const USE_NSIS_BUILT_IN_COMPRESSOR = false
 
@@ -833,38 +831,5 @@ async function createPackageFileInfo(file: string): Promise<PackageFileInfo> {
     path: file,
     size: (await stat(file)).size,
     sha512: await hashFile(file),
-  }
-}
-
-class ProgIdMaker {
-  private readonly program: string
-  private readonly uuid: Buffer
-
-  constructor(guid: string, productFilename: string) {
-    const uuidString = UUID.check(guid) ? guid : UUID.v5(guid, ELECTRON_BUILDER_NS_UUID)
-    this.uuid = UUID.parse(uuidString)
-
-    let program = this.sanitize(productFilename)
-    const minProgramLength = 6
-    if (program.length < minProgramLength) {
-      program = this.sanitize(guid)
-    }
-    if (program.length < minProgramLength) {
-      program = this.sanitize(`App${uuidString}`)
-    } else if (program.match(/^\d/)) {
-      program = `App${program}`
-    }
-
-    this.program = program.slice(0, 19)
-  }
-
-  progId(nameOrExt: string): string {
-    const componentPrefix = this.sanitize(nameOrExt).slice(0, 31 - this.program.length)
-    const componentUuid = this.sanitize(UUID.v5(nameOrExt, this.uuid))
-    return `${this.program}.${componentPrefix}${componentUuid}`.slice(0, 39)
-  }
-
-  private sanitize(value: string) {
-    return value.replace(/[^A-Za-z0-9]/g, "")
   }
 }
