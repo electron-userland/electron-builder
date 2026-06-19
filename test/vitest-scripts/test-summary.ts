@@ -121,9 +121,11 @@ function firstErrorLine(msgs?: string[]): string {
   return line.trim()
 }
 
-// Markdown table cells cannot contain raw "|" or newlines.
+// Markdown table cells cannot contain raw "|" or newlines. Escape backslashes FIRST so an input
+// backslash can't combine with a subsequently-inserted escape (e.g. avoid turning "\" + "|" into a
+// single "\|" escape) — see CodeQL "incomplete string escaping".
 function md(cell: string): string {
-  return cell.replace(/\|/g, "\\|").replace(/\r?\n/g, " ").trim()
+  return cell.replace(/\\/g, "\\\\").replace(/\|/g, "\\|").replace(/\r?\n/g, " ").trim()
 }
 
 function truncate(s: string, n: number): string {

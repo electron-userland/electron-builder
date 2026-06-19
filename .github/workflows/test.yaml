@@ -29,7 +29,7 @@ on:
         description: "Collect v8 code coverage during the run and publish a merged coverage report (adds per-shard overhead; off by default)"
         required: false
         type: boolean
-        default: false
+        default: true
 
 # concurrency:
 # group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
