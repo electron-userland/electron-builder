@@ -210,32 +210,93 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   return result
 }
 
+type CollectedNodeModules = { nodeModules: NodeModuleInfo[]; logSummary: ModuleManager["logSummary"] }
+
+/** Runs a single package-manager collector against a single directory. */
+type CollectorRunner = (pm: PM, dir: string) => Promise<CollectedNodeModules>
+
+// `workspace:`/`file:`/`link:`/`portal:` dependencies are symlinked into place rather than
+// installed as standalone, hoistable packages, so they may legitimately be absent from a
+// collected tree and cannot be used to validate it.
+const LOCAL_DEPENDENCY_SPEC = /^(?:workspace|file|link|portal):/
+
+/**
+ * Determines whether a collected module tree actually describes the package being built.
+ *
+ * A package-manager `list` invocation can resolve to the wrong project root — most notably when
+ * electron-builder is run from a workspace sub-package whose dependencies are hoisted to the
+ * workspace root. In that case the collector returns a non-empty but unrelated tree. Accepting it
+ * would suppress the manual-traversal fallback that resolves the correct modules, so we need to
+ * tell a matching collection from a mismatched one.
+ *
+ * A collection matches when at least one of the package's declared external (registry-installed,
+ * non-`workspace:`/`file:`/`link:`/`portal:`) production dependencies is present at the top level —
+ * those direct dependencies are always hoisted to the top level of a correct collection. When the
+ * package declares no external production dependencies there is nothing to validate against, so any
+ * non-empty collection is accepted.
+ */
+export function collectionMatchesAppDependencies(nodeModules: NodeModuleInfo[], dependencies: Record<string, string> | undefined): boolean {
+  const requiredExternalDeps = Object.entries(dependencies ?? {})
+    .filter(([, spec]) => !LOCAL_DEPENDENCY_SPEC.test(spec))
+    .map(([name]) => name)
+  if (requiredExternalDeps.length === 0) {
+    return true
+  }
+  const collected = new Set(nodeModules.map(it => it.name))
+  return requiredExternalDeps.some(name => collected.has(name))
+}
+
+/**
+ * Walks the candidate (package-manager, directory) combinations and returns the first collection
+ * that both contains modules and matches the package being built (see
+ * {@link collectionMatchesAppDependencies}). A non-empty collection that does NOT match — e.g. a
+ * workspace-root tree returned for a sub-package — is retained only as a last-resort fallback so a
+ * later approach (notably {@link PM.TRAVERSAL}) can supply the correct modules.
+ */
+export async function resolveFirstMatchingCollection(options: {
+  pmApproaches: PM[]
+  searchDirectories: string[]
+  dependencies: Record<string, string> | undefined
+  run: CollectorRunner
+}): Promise<CollectedNodeModules | undefined> {
+  const { pmApproaches, searchDirectories, dependencies, run } = options
+  let fallback: CollectedNodeModules | undefined
+
+  for (const pm of pmApproaches) {
+    for (const dir of searchDirectories) {
+      log.info({ pm, searchDir: dir }, "searching for node modules")
+      const deps = await run(pm, dir)
+      if (deps.nodeModules.length === 0) {
+        log.info({ pm, searchDir: dir }, "no node modules found in collection, trying next search directory")
+        continue
+      }
+      if (collectionMatchesAppDependencies(deps.nodeModules, dependencies)) {
+        log.debug({ pm, searchDir: dir, depCount: deps.nodeModules.length }, "collected node modules")
+        return deps
+      }
+      log.info({ pm, searchDir: dir }, "collected node modules do not match the target package, trying next approach")
+      fallback ??= deps
+    }
+  }
+  return fallback
+}
+
 async function collectNodeModulesWithLogging(platformPackager: PlatformPackager<any>) {
   const packager = platformPackager.info
   const { tempDirManager, appDir, projectDir } = packager
 
-  let deps: { nodeModules: NodeModuleInfo[]; logSummary: ModuleManager["logSummary"] } | undefined = undefined
-
   const searchDirectories = Array.from(new Set([appDir, projectDir, await packager.getWorkspaceRoot()])).filter((it): it is string => isEmptyOrSpaces(it) === false)
   const pmApproaches = [await packager.getPackageManager(), PM.TRAVERSAL]
-  for (const pm of pmApproaches) {
-    for (const dir of searchDirectories) {
-      log.info({ pm, searchDir: dir }, "searching for node modules")
-      const collector = getCollectorByPackageManager(pm, dir, tempDirManager)
-      deps = await collector.getNodeModules({ packageName: packager.nodePackageName })
-      if (deps.nodeModules.length > 0) {
-        break
-      }
-      const attempt = searchDirectories.indexOf(dir)
-      if (attempt < searchDirectories.length - 1) {
-        log.info({ searchDir: dir, attempt }, "no node modules found in collection, trying next search directory")
-      }
-    }
-    if (deps?.nodeModules?.length) {
-      log.debug({ pm, nodeModules: deps.nodeModules }, "collected node modules")
-      break
-    }
-  }
+
+  // Validate against the as-declared (pre-extraMetadata) production dependencies so a configured
+  // `extraMetadata.dependencies` entry that isn't installed cannot reject a correct collection.
+  const deps = await resolveFirstMatchingCollection({
+    pmApproaches,
+    searchDirectories,
+    dependencies: packager.originalMetadata.dependencies,
+    run: (pm, dir) => getCollectorByPackageManager(pm, dir, tempDirManager).getNodeModules({ packageName: packager.nodePackageName }),
+  })
+
   if (!deps?.nodeModules?.length) {
     log.warn({ searchDirectories: searchDirectories.map(it => log.filePath(it)) }, "no node modules returned while searching directories")
     return []
