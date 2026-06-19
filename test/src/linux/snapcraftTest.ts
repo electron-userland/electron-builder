@@ -400,6 +400,22 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
       },
     }))
 
+  test("core24 remoteBuild: buildFor array is forwarded correctly", ({ expect }) =>
+    app(expect, {
+      targets: snapTarget,
+      config: {
+        productName: "Sep",
+        snapcraft: {
+          base: "core24",
+          core24: { remoteBuild: { enabled: true, acceptPublicUpload: true, buildFor: ["amd64", "arm64"] } },
+        },
+      },
+      effectiveOptionComputed: async ({ remoteBuild }) => {
+        expect(remoteBuild?.buildFor).toEqual(["amd64", "arm64"])
+        return Promise.resolve(true)
+      },
+    }))
+
   test("custom snap yamlPath pass-through", async ({ expect }) => {
     await assertPack(
       expect,

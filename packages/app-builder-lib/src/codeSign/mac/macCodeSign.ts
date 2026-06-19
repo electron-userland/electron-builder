@@ -5,11 +5,12 @@ import { Nullish } from "builder-util-runtime"
 import { createHash, randomBytes } from "crypto"
 import { rename } from "fs/promises"
 import { Lazy } from "lazy-val"
-import { homedir, tmpdir } from "os"
+import { tmpdir } from "os"
 import * as path from "path"
 import { getTempName } from "temp-file"
 import { isAutoDiscoveryCodeSignIdentity, isCscForPullRequest, isTravis } from "../../util/flags.js"
 import { importCertificate } from "../codesign.js"
+import { cacheDirectoryOverrideAllowed } from "../../util/electronGet.js"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 
@@ -102,7 +103,7 @@ export async function reportError(isMas: boolean, certificateTypes: CertType[], 
 // https://github.com/electron-userland/electron-builder/issues/398
 const bundledCertKeychainAdded = new Lazy<void>(async () => {
   // copy to temp and then atomic rename to final path
-  const cacheDir = getCacheDirectory()
+  const cacheDir = await cacheDirectoryOverrideAllowed.value
   const tmpKeychainPath = path.join(cacheDir, getTempName("electron-builder-root-certs"))
   const keychainPath = path.join(cacheDir, "electron-builder-root-certs.keychain")
   const results = await Promise.all<any>([
@@ -114,11 +115,6 @@ const bundledCertKeychainAdded = new Lazy<void>(async () => {
     await exec("/usr/bin/security", ["list-keychains", "-d", "user", "-s", keychainPath].concat(list))
   }
 })
-
-function getCacheDirectory(): string {
-  const env = process.env.ELECTRON_BUILDER_CACHE
-  return isEmptyOrSpaces(env) ? path.join(homedir(), "Library", "Caches", "electron-builder") : path.resolve(env)
-}
 
 function listUserKeychains(): Promise<Array<string>> {
   return exec("/usr/bin/security", ["list-keychains", "-d", "user"]).then(it =>

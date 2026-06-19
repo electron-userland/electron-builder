@@ -16,12 +16,15 @@ function makeVm(execSpy: ReturnType<typeof vi.fn>) {
   }
 }
 
-function makePackager(azureSignConfig: Partial<WindowsAzureSigningConfig>, vm?: ReturnType<typeof makeVm>): WinPackager {
+// Default to a pre-1.3.0 winCodeSign pin so signFile() exercises the legacy PowerShell
+// (Invoke-TrustedSigning) path. The modern default (unset / null / "latest" → newest bundle →
+// signtool /dlib) is covered in winSignToolManagerTest's "signFileWithDlib" suite.
+function makePackager(azureSignConfig: Partial<WindowsAzureSigningConfig>, vm?: ReturnType<typeof makeVm>, toolsets: any = { winCodeSign: "1.2.1" }): WinPackager {
   const mockVm = vm ?? makeVm(vi.fn().mockResolvedValue(""))
   return {
     platformOptions: { sign: azureSignConfig },
     vm: { value: Promise.resolve(mockVm) },
-    config: { toolsets: null },
+    config: { toolsets },
     buildResourcesDir: "",
   } as unknown as WinPackager
 }

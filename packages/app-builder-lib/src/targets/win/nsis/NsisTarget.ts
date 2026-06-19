@@ -2,6 +2,7 @@ import {
   Arch,
   asArray,
   AsyncTaskManager,
+  ensureNotBusy,
   exists,
   spawnAndWriteWithOutput,
   generateKsuid,
@@ -15,7 +16,6 @@ import {
 } from "builder-util"
 import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, deepAssign, PackageFileInfo, sleep, UUID } from "builder-util-runtime"
 import _debug from "debug"
-import * as fs from "fs"
 
 import * as path from "path"
 import { Target } from "../../../core.js"
@@ -830,37 +830,6 @@ async function generateForPreCompressed(preCompressedFileExtensions: Array<strin
     }
     scriptGenerator.macro(`customFiles_${Arch[arch]}`, macro)
   }
-}
-
-async function ensureNotBusy(outFile: string): Promise<void> {
-  function isBusy(wasBusyBefore: boolean): Promise<boolean> {
-    return new Promise((resolve, reject) => {
-      fs.open(outFile, "r+", (error, fd) => {
-        try {
-          if (error != null && error.code === "EBUSY") {
-            if (!wasBusyBefore) {
-              log.info({}, "output file is locked for writing (maybe by virus scanner) => waiting for unlock...")
-            }
-            resolve(false)
-          } else if (fd == null) {
-            resolve(true)
-          } else {
-            fs.close(fd, () => resolve(true))
-          }
-        } catch (error: any) {
-          reject(error)
-        }
-      })
-    }).then(result => {
-      if (result) {
-        return true
-      } else {
-        return sleep(2000).then(() => isBusy(true))
-      }
-    })
-  }
-
-  await isBusy(false)
 }
 
 async function createPackageFileInfo(file: string): Promise<PackageFileInfo> {
