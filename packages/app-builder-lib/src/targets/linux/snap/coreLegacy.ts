@@ -190,7 +190,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
     return snap
   }
 
-  async buildSnap(props: { snap: any; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<void> {
+  async buildSnap(props: { snap: any; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<string[]> {
     const { snap, appOutDir, stageDir, snapArch, artifactPath } = props
 
     // Build the args array for effectiveOptionComputed compatibility — tests inspect this.
@@ -250,7 +250,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
     }
 
     if (this.packager.packagerOptions.effectiveOptionComputed != null && (await this.packager.packagerOptions.effectiveOptionComputed({ snap, desktopFile, args }))) {
-      return
+      return [artifactPath]
     }
 
     await outputFile(path.join(snapMetaDir, this.isUseTemplateApp ? "snap.yaml" : "snapcraft.yaml"), serializeToYaml(snap))
@@ -267,6 +267,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
     } else {
       await this.buildWithoutTemplate({ appOutDir, stageDir, artifactPath, hooksDir, extraAppArgs })
     }
+    return [artifactPath]
   }
 
   private async buildWithTemplate(opts: {

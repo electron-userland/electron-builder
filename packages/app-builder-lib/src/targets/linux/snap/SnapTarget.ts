@@ -1,4 +1,5 @@
 import { Arch, log } from "builder-util"
+import { snapArchStringToArch } from "./snapcraftBuilder.js"
 import { SnapStoreOptions } from "builder-util-runtime"
 import * as path from "path"
 import { Configuration } from "../../../configuration.js"
@@ -21,7 +22,7 @@ export abstract class SnapCore<T> {
 
   abstract createDescriptor(arch: Arch): Promise<SnapcraftYAML>
   // snapArch is passed through to subclasses; SnapCoreLegacy forwards it to app-builder as --arch.
-  abstract buildSnap(params: { snap: SnapcraftYAML; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<void>
+  abstract buildSnap(params: { snap: SnapcraftYAML; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<string[]>
 }
 
 /** Snap build target — reads `snapcraft` config and delegates to the appropriate `SnapCore` strategy. */
@@ -56,7 +57,7 @@ export default class SnapTarget extends Target {
     const snap = await core.createDescriptor(arch)
     log.debug({ snap }, "snapcraft.yaml descriptor created")
 
-    await core.buildSnap({
+    const allArtifactPaths = await core.buildSnap({
       snap,
       appOutDir,
       stageDir: await createStageDirPath(this, packager, arch),
@@ -74,6 +75,29 @@ export default class SnapTarget extends Target {
       packager,
       publishConfig,
     })
+
+    // Emit additional artifacts produced by a multi-arch remote-build invocation.
+    for (const extraPath of allArtifactPaths) {
+      if (extraPath === artifactPath) {
+        continue
+      }
+      const snapArch =
+        path
+          .basename(extraPath)
+          .replace(/\.snap$/, "")
+          .split("_")
+          .pop() ?? "amd64"
+      const extraArch = snapArchStringToArch(snapArch)
+      const extraArtifactName = path.basename(extraPath)
+      await packager.emitArtifactBuildCompleted({
+        file: extraPath,
+        safeArtifactName: packager.computeSafeArtifactName(extraArtifactName, "snap", extraArch, false),
+        target: this,
+        arch: extraArch,
+        packager,
+        publishConfig,
+      })
+    }
   }
 
   protected findSnapPublishConfig(config?: Configuration): SnapStoreOptions | null {

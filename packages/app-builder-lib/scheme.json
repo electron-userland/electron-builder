@@ -5905,8 +5905,18 @@
           "type": "boolean"
         },
         "buildFor": {
-          "description": "Target architecture for the remote build. Accepts a single snapcraft arch string\n(e.g. `\"amd64\"`, `\"arm64\"`, `\"armhf\"`).\n\nTo build for multiple architectures, configure electron-builder's top-level `arch` option\n(e.g. `arch: [\"x64\", \"arm64\"]`) — each arch spawns a separate remote-build job on Launchpad,\nkeeping the one-build-per-artifact contract intact.",
-          "type": "string"
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Target architecture (or architectures) for the remote build.\n\n- **Single string** (e.g. `\"amd64\"`): one Launchpad job, one output snap.\n- **Array** (e.g. `[\"amd64\", \"arm64\"]`): one Launchpad job that builds all listed\n  architectures and downloads each resulting snap. All produced snaps are emitted as\n  separate build artifacts.\n\nUsing an array here is mutually exclusive with setting `arch: [\"x64\", \"arm64\"]` at the\nelectron-builder top level — the top-level `arch` option spawns a separate remote-build\njob per architecture, which would duplicate work."
         },
         "enabled": {
           "description": "Whether to enable remote build on Launchpad. Must be set explicitly to `true` to opt in.",
