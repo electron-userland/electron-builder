@@ -166,9 +166,9 @@ describe("iconConverter", { sequential: true }, () => {
       await writePng(128, srcFile)
       const outDir = path.join(tmpDirPath, "out")
 
-      await expect(
-        convertIcon({ sources: [srcFile], fallbackSources: [], roots: [tmpDirPath], format: "icns", outDir, iconsToolset, resourcesDir: tmpDirPath })
-      ).rejects.toThrow(/must be at least 512/)
+      await expect(convertIcon({ sources: [srcFile], fallbackSources: [], roots: [tmpDirPath], format: "icns", outDir, iconsToolset, resourcesDir: tmpDirPath })).rejects.toThrow(
+        /must be at least 512/
+      )
     })
 
     it("returns isFallback=true and uses fallback sources when primary is missing", async ({ tmpDir }) => {
@@ -263,9 +263,9 @@ describe("iconConverter", { sequential: true }, () => {
       await writePng(64, srcFile)
       const outDir = path.join(tmpDirPath, "out")
 
-      await expect(
-        convertIcon({ sources: [srcFile], fallbackSources: [], roots: [tmpDirPath], format: "ico", outDir, iconsToolset, resourcesDir: tmpDirPath })
-      ).rejects.toThrow(/must be at least 256/)
+      await expect(convertIcon({ sources: [srcFile], fallbackSources: [], roots: [tmpDirPath], format: "ico", outDir, iconsToolset, resourcesDir: tmpDirPath })).rejects.toThrow(
+        /must be at least 256/
+      )
     })
 
     it("returns an existing ICO file directly and parses its max dimension", async ({ tmpDir }) => {

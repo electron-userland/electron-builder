@@ -1,5 +1,48 @@
 # app-builder-lib
 
+## 27.0.0-alpha.4
+
+### Major Changes
+
+- Feat: Remove `linux.syncDesktopName` — always sync the installed `.desktop` filename _[`#9908`](https://github.com/electron-userland/electron-builder/pull/9908) [`fae5232`](https://github.com/electron-userland/electron-builder/commit/fae52329c636d3640c68ba4db5db013ccfa42bc2) [@mmaietta](https://github.com/mmaietta)_
+
+### Minor Changes
+
+- Feat(linux): launch every Linux target (deb/rpm, AppImage, snap, flatpak) through a unified launcher entrypoint so `executableArgs` are applied consistently and the generated `.desktop` Exec key stays a plain command _[`#9922`](https://github.com/electron-userland/electron-builder/pull/9922) [`6a0f35a`](https://github.com/electron-userland/electron-builder/commit/6a0f35aa1e58a0c37794d1646927a1a881098913) [@mmaietta](https://github.com/mmaietta)_
+- Introduce xml escaping for publisher, publisherDisplayName, displayName, description in appxmanifest.xml to avoid issues with xml preserverd characters _[`#9853`](https://github.com/electron-userland/electron-builder/pull/9853) [`deafee9`](https://github.com/electron-userland/electron-builder/commit/deafee9fe5f7bccbf52e73cd0c6085e767f921ce) [@regnete](https://github.com/regnete)_
+
+### Patch Changes
+
+- Fix(mac): resolve universal build failure with platform-specific single-arch dependencies (e.g. esbuild, `@esbuild/darwin-arm64`) _[`#9942`](https://github.com/electron-userland/electron-builder/pull/9942) [`b84a1f4`](https://github.com/electron-userland/electron-builder/commit/b84a1f40116287d852da4a5d7307c59b600effba) [@mmaietta](https://github.com/mmaietta)_
+
+  Node modules are now filtered by their `package.json` `cpu`/`os` constraints against the target arch/platform, so host-installed single-arch binaries are no longer copied into mismatched single-arch builds. For `universal` macOS builds, both slices are kept symmetric and any single-arch binary that can't be lipo-merged — including host binaries inside packages that declare no `cpu`/`os` (such as esbuild's `bin/esbuild`) — is automatically reported to `@electron/universal` via `singleArchFiles` (merged with `mac.universal.singleArchFiles`), with a warning listing them. This fixes builds aborting with `Detected file "…" that's the same in both x64 and arm64 builds and not covered by the x64ArchFiles rule` (#9865, #9399).
+
+- Chore: migrate usages of mkdtemp to utilize TmpDir to unify temp directory usage _[`#9907`](https://github.com/electron-userland/electron-builder/pull/9907) [`a82943a`](https://github.com/electron-userland/electron-builder/commit/a82943ace5737252c7f62d2c6b5f7c679d753a60) [@mmaietta](https://github.com/mmaietta)_
+- Feat(nsis): add Hebrew (he) translations for one-click and assisted installer messages _[`#9927`](https://github.com/electron-userland/electron-builder/pull/9927) [`d21a771`](https://github.com/electron-userland/electron-builder/commit/d21a77117e4836cf8ef93b78210b67c86f053d6a) [@kdroidFilter](https://github.com/kdroidFilter)_
+
+  Also add `he_IL` to `bundledLanguages` so Hebrew strings actually reach the built installer (fixes a pre-existing bug where Hebrew was never included in the default multi-language set).
+
+- Fix(nsis): preserve `$(...)` LangString references in escaped NSIS define values (e.g. `shortcutName: "$(customSN)"`) _[`#9934`](https://github.com/electron-userland/electron-builder/pull/9934) [`344d156`](https://github.com/electron-userland/electron-builder/commit/344d156dd01c3427569b3cd1a37f43b8a5ff5990) [@mmaietta](https://github.com/mmaietta)_
+- Fix(win): retry the spurious "The batch file cannot be found." cmd.exe race during dependency install (idempotent, win32-guarded — real install failures still fail fast) _[`#9929`](https://github.com/electron-userland/electron-builder/pull/9929) [`9faa8c8`](https://github.com/electron-userland/electron-builder/commit/9faa8c8198f5e612d54ebcdd0904a74b338afb33) [@mmaietta](https://github.com/mmaietta)_
+- Fix(win): serialize concurrent signtool invocations to avoid intermittent "An error occurred while attempting to load the signing certificate" _[`#9920`](https://github.com/electron-userland/electron-builder/pull/9920) [`449e8d4`](https://github.com/electron-userland/electron-builder/commit/449e8d4da781af2550684809bbac3f4acafcc92e) [@mmaietta](https://github.com/mmaietta)_
+- Fix: resolve failure modes surfaced on the Windows test shards (corepack log noise, icon-conversion memory exhaustion, and an associated signtool failure), plus a small structural cleanup of the install/collector code _[`#9935`](https://github.com/electron-userland/electron-builder/pull/9935) [`d22a6f7`](https://github.com/electron-userland/electron-builder/commit/d22a6f72dd8ddc1e945cc70719adfc373f605118) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`deafee9`](https://github.com/electron-userland/electron-builder/commit/deafee9fe5f7bccbf52e73cd0c6085e767f921ce)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.3`
+- `builder-util@27.0.0-alpha.4`
+- `dmg-builder@27.0.0-alpha.4`
+- `electron-builder-squirrel-windows@27.0.0-alpha.4`
+- `electron-publish@27.0.0-alpha.4`
+
+</details>
+
 ## 27.0.0-alpha.3
 
 ### Major Changes

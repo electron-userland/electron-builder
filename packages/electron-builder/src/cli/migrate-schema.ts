@@ -1,8 +1,9 @@
 import { createRequire } from "node:module"
-import { log } from "builder-util"
+import { log, orNullIfFileNotExist } from "builder-util"
 import { promises as fs } from "fs"
 import * as path from "path"
 import type { Argv } from "yargs"
+import { loadTypeScript, migrateProgrammaticSource } from "./migrate-schema-programmatic.js"
 
 const _require = createRequire(import.meta.url)
 
@@ -24,7 +25,7 @@ export interface MigrationResult {
 
 // Azure Trusted Signing typed fields in v27 (everything else is an extra key → additionalMetadata).
 // "type" is included so it is not mistakenly moved to additionalMetadata if already present.
-const AZURE_KNOWN_FIELDS = new Set([
+export const AZURE_KNOWN_FIELDS = new Set([
   "type",
   "endpoint",
   "codeSigningAccountName",
@@ -38,7 +39,7 @@ const AZURE_KNOWN_FIELDS = new Set([
 
 // macOS signing fields that moved from the platform root into the `sign` (ElectronSignOptions) bag.
 // `signIgnore` is renamed to `sign.ignore` separately (the @electron/osx-sign canonical name).
-const MAC_SIGN_FIELDS = [
+export const MAC_SIGN_FIELDS = [
   "identity",
   "entitlements",
   "entitlementsInherit",
@@ -56,7 +57,7 @@ const MAC_SIGN_FIELDS = [
 ] as const
 
 // Universal-build fields that moved from the platform root into the `universal` (ElectronUniversalOptions) bag.
-const MAC_UNIVERSAL_FIELDS = ["mergeASARs", "singleArchFiles", "x64ArchFiles"] as const
+export const MAC_UNIVERSAL_FIELDS = ["mergeASARs", "singleArchFiles", "x64ArchFiles"] as const
 
 /**
  * Applies all v26→v27 config transformations to a parsed config object.
@@ -372,7 +373,7 @@ function migrateMacUniversal(platform: Record<string, any>, name: string, change
 }
 
 // electronDownload fields with no equivalent in the v27 ElectronGetOptions (@electron/get v5) shape.
-const ELECTRON_DOWNLOAD_DROPPED = ["cache", "customDir", "customFilename", "strictSSL", "platform", "arch", "version"] as const
+export const ELECTRON_DOWNLOAD_DROPPED = ["cache", "customDir", "customFilename", "strictSSL", "platform", "arch", "version"] as const
 
 /**
  * Renames `electronDownload` → `electronGet` and reshapes it to ElectronGetOptions.
@@ -445,7 +446,7 @@ function migratePublishEntries(parent: Record<string, any>, key: string, changes
 
 // snap bases recognized by the v27 snapcraft config. "custom" uses an inline/path yaml
 // and must be moved verbatim rather than nested under a per-base sub-key.
-const SNAP_BASES = new Set(["core18", "core20", "core22", "core24", "custom"])
+export const SNAP_BASES = new Set(["core18", "core20", "core22", "core24", "custom"])
 
 /**
  * Migrates the removed flat `snap` config into the v27 `snapcraft` shape:
@@ -598,7 +599,7 @@ function parseConfig(text: string, format: ConfigFormat): Record<string, any> {
 }
 
 async function readFileSafe(p: string): Promise<string | null> {
-  return fs.readFile(p, "utf8").catch(e => (e.code === "ENOENT" || e.code === "ENOTDIR" ? null : Promise.reject(e)))
+  return orNullIfFileNotExist(fs.readFile(p, "utf8"))
 }
 
 async function writeBackConfig(found: FoundConfig, migrated: Record<string, any>, projectDir: string): Promise<string> {
@@ -655,10 +656,9 @@ export async function migrateSchema(args: any): Promise<void> {
   const location = found.isPackageJson ? 'package.json ("build" key)' : path.relative(projectDir, found.configFile!)
   log.info({ file: location }, "loaded config")
 
-  // Programmatic formats can't be auto-rewritten
+  // Programmatic formats (JS/TS) are rewritten surgically via an AST-located text codemod.
   if (found.format === "js") {
-    log.warn({ file: location }, "programmatic config cannot be auto-migrated; apply these changes manually:")
-    printManualSteps()
+    await migrateProgrammaticConfigFile(found, location, dryRun)
     return
   }
 
@@ -701,6 +701,45 @@ export async function migrateSchema(args: any): Promise<void> {
   if (found.format === "json5") {
     log.warn(null, "JSON5 was re-serialized as JSON — comments were not preserved")
   }
+}
+
+async function migrateProgrammaticConfigFile(found: FoundConfig, location: string, dryRun: boolean): Promise<void> {
+  if (loadTypeScript() == null) {
+    log.warn(
+      { file: location },
+      "auto-migration of programmatic configs requires the 'typescript' package, which was not found. Install it (e.g. `npm i -D typescript`) or apply these changes manually:"
+    )
+    printManualSteps()
+    return
+  }
+
+  const result = migrateProgrammaticSource(found.rawText, found.configFile!)
+
+  if (result.status === "unsupported") {
+    log.warn({ file: location, reason: result.unsupportedReason }, "this programmatic config could not be auto-migrated; apply these changes manually:")
+    printManualSteps()
+    return
+  }
+
+  if (result.status === "no-op") {
+    log.info(null, "config is already up to date — no changes needed")
+    return
+  }
+
+  for (const change of result.changes) {
+    log.info({ key: change.key }, change.description)
+  }
+  for (const warning of result.warnings) {
+    log.warn(null, warning)
+  }
+
+  if (dryRun) {
+    log.info(null, "dry run — no files written")
+    return
+  }
+
+  await fs.writeFile(found.configFile!, result.code, "utf8")
+  log.info({ file: location }, "wrote migrated config")
 }
 
 function printManualSteps() {

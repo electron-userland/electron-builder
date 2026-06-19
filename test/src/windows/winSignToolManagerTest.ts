@@ -5,7 +5,6 @@ import { WindowsSignTaskConfiguration } from "app-builder-lib/src/codeSign/win/s
 import { readCertInfoFromX509 } from "app-builder-lib/src/codeSign/certInfo"
 import { WindowsSignAzureManager } from "app-builder-lib/src/codeSign/win/windowsSignAzureManager"
 import { getAtsBundleDir, getDotnetRuntimeDir, getWindowsKitsBundle } from "app-builder-lib/src/toolsets/winCodeSign"
-import { Arch } from "builder-util"
 import { writeFile } from "fs/promises"
 import * as path from "path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
@@ -340,12 +339,14 @@ describe("HSM validation errors", () => {
     expect(() => manager.computeSignToolArgs(config, true)).toThrow(/winCodeSign toolset 1\.x/)
   })
 
-  test("null toolset (legacy default) + HSM → throws toolset error", () => {
+  test("null toolset (modern default) + HSM → succeeds (resolves to newest bundle)", () => {
     const manager = makeHsmManager(undefined)
-    // null toolset behaves as legacy
+    // unset / null toolset now resolves to the newest bundle (modern), so HSM is supported.
     ;(manager as any).packager = { config: { toolsets: {} } }
     const config = makeTaskConfig({ options: hsmOptions })
-    expect(() => manager.computeSignToolArgs(config, true)).toThrow(/winCodeSign toolset 1\.x/)
+    const args = manager.computeSignToolArgs(config, true)
+    expect(args).toContain("/csp")
+    expect(args).toContain("/kc")
   })
 
   test("non-Windows (isWin=false) + HSM → throws Windows-only error", () => {
@@ -693,8 +694,9 @@ describe("WindowsSignAzureManager signFileWithDlib arch selection", { sequential
   const originalArch = process.arch
 
   beforeEach(async () => {
-    vi.mocked(getWindowsKitsBundle).mockImplementation(async ({ arch }) => ({
-      kit: path.resolve("/mock-kits", arch === Arch.ia32 ? "x86" : Arch[arch]),
+    vi.mocked(getWindowsKitsBundle).mockImplementation(async () => ({
+      // Kit tools are always x64 (x86 on 32-bit hosts), never arm64 — x64 runs on arm64 via emulation.
+      kit: path.resolve("/mock-kits", process.arch === "ia32" ? "x86" : "x64"),
       appxAssets: path.resolve("/mock-kits"),
     }))
     vi.mocked(getAtsBundleDir).mockResolvedValue("/mock-ats-bundle")
@@ -708,10 +710,10 @@ describe("WindowsSignAzureManager signFileWithDlib arch selection", { sequential
     vi.mocked(getDotnetRuntimeDir).mockReset()
   })
 
-  function makeAzureManager(tmpDir: string, execSpy: ReturnType<typeof vi.fn>, toVmFile = (f: string) => f): WindowsSignAzureManager {
+  function makeAzureManager(tmpDir: string, execSpy: ReturnType<typeof vi.fn>, toVmFile = (f: string) => f, toolsets: any = { winCodeSign: "1.3.0" }): WindowsSignAzureManager {
     const manager = Object.create(WindowsSignAzureManager.prototype) as WindowsSignAzureManager
     ;(manager as any).packager = {
-      config: { toolsets: { winCodeSign: "1.3.0" } },
+      config: { toolsets },
       getTempFile: (ext: string) => Promise.resolve(path.join(tmpDir, `metadata${ext}`)),
     }
     ;(manager as any).signing = {
@@ -725,14 +727,36 @@ describe("WindowsSignAzureManager signFileWithDlib arch selection", { sequential
     return manager
   }
 
-  async function signedInfo(tmpDir: string, arch: NodeJS.Architecture, toVmFile = (f: string) => f): Promise<{ signtool: string; dlib: string; dotnetRoot: string | undefined }> {
+  async function signedInfo(
+    tmpDir: string,
+    arch: NodeJS.Architecture,
+    toVmFile = (f: string) => f,
+    toolsets: any = { winCodeSign: "1.3.0" }
+  ): Promise<{ signtool: string; dlib: string; dotnetRoot: string | undefined }> {
     Object.defineProperty(process, "arch", { value: arch })
     const exec = vi.fn().mockResolvedValue(undefined)
-    const manager = makeAzureManager(tmpDir, exec, toVmFile)
+    const manager = makeAzureManager(tmpDir, exec, toVmFile, toolsets)
     await manager.signFile({ path: path.join(tmpDir, "app.exe"), options: {} as any })
     const [signtool, args, execOptions] = exec.mock.calls[0]
     const dlib = args[args.indexOf("/dlib") + 1]
     return { signtool, dlib, dotnetRoot: execOptions?.env?.DOTNET_ROOT }
+  }
+
+  // The modern default: an unset / null / "latest" winCodeSign resolves to the newest bundle
+  // (>= 1.3.0), which ships the ATS dlib + .NET payload — so Azure Trusted Signing uses the fast
+  // signtool /dlib path WITHOUT requiring an explicit "1.3.0" pin.
+  for (const [label, toolsets] of [
+    ["toolsets absent", {}],
+    ["winCodeSign null", { winCodeSign: null }],
+    ['winCodeSign "latest"', { winCodeSign: "latest" }],
+  ] as const) {
+    test(`modern default (${label}) activates the dlib path on an x64 host`, async ({ tmpDir }) => {
+      const tmpDirPath = await tmpDir.createTempDir()
+      const { signtool, dlib, dotnetRoot } = await signedInfo(tmpDirPath, "x64", f => f, toolsets)
+      expect(signtool).toBe(path.resolve("/mock-kits", "x64", "signtool.exe"))
+      expect(dlib).toBe(path.resolve("/mock-ats-bundle", "x64", "Azure.CodeSigning.Dlib.dll"))
+      expect(dotnetRoot).toBe(path.resolve("/mock-dotnet-runtime"))
+    })
   }
 
   test("arm64 host falls back to the x64 ats-bundle (no arm64 dlib exists)", async ({ tmpDir }) => {
@@ -741,7 +765,6 @@ describe("WindowsSignAzureManager signFileWithDlib arch selection", { sequential
     expect(signtool).toBe(path.resolve("/mock-kits", "x64", "signtool.exe"))
     expect(dlib).toBe(path.resolve("/mock-ats-bundle", "x64", "Azure.CodeSigning.Dlib.dll"))
     expect(dotnetRoot).toBe(path.resolve("/mock-dotnet-runtime"))
-    expect(vi.mocked(getWindowsKitsBundle)).toHaveBeenCalledWith(expect.objectContaining({ arch: Arch.x64 }))
   })
 
   test("x64 host uses the x64 ats-bundle", async ({ tmpDir }) => {
@@ -758,7 +781,6 @@ describe("WindowsSignAzureManager signFileWithDlib arch selection", { sequential
     expect(signtool).toBe(path.resolve("/mock-kits", "x86", "signtool.exe"))
     expect(dlib).toBe(path.resolve("/mock-ats-bundle", "x86", "Azure.CodeSigning.Dlib.dll"))
     expect(dotnetRoot).toBe(path.resolve("/mock-dotnet-runtime"))
-    expect(vi.mocked(getWindowsKitsBundle)).toHaveBeenCalledWith(expect.objectContaining({ arch: Arch.ia32 }))
   })
 
   test.skipIf(process.platform === "win32")("Wine: DOTNET_ROOT is converted to a Z:\\ path via toVmFile", async ({ tmpDir }) => {

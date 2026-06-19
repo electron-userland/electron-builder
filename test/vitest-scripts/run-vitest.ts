@@ -91,6 +91,42 @@ async function main() {
   console.log(`\n=== Shard ${index + 1} of ${shardCount} ===`)
   console.log(`Scanned Files: ${selectedFiles.length}`)
 
+  // Per-run report id — unique across every shard/job so artifacts never collide. The pid keeps the
+  // two ci:test invocations that share a single runner (snap core24: docker pass + native pass)
+  // distinct. Encodes platform + shard so the merge job can group results without extra metadata.
+  // Written under cwd (the repo root, and the docker `-v $(pwd):/project` mount), so reports emitted
+  // inside the container surface on the host for artifact upload — same path contract as the cache.
+  // NB: the blob dir is deliberately NOT vitest's default `.vitest-reports` — actions/upload-artifact
+  // excludes dot-directories (include-hidden-files defaults to false), which would silently drop every
+  // blob from the uploaded report artifact. A non-hidden dir is included normally.
+  const reportId = `${currentPlatform}-shard${index}-pid${process.pid}`
+  const reporters: any[] = [
+    "default",
+    __dirname + "/vitest-config/vitest-smart-reporter.ts",
+    ["json", { outputFile: `test-results/results-${reportId}.json` }],
+    ["blob", { outputFile: `vitest-blobs/blob-${reportId}.json` }],
+  ]
+
+  // Opt-in v8 coverage (VITEST_COVERAGE=true, set by the collect-coverage workflow input). Each shard
+  // writes a raw coverage map; the merge job combines them into one downloadable report. Spread in
+  // only when enabled — passing `coverage: undefined` trips vitest's config resolver.
+  const coverageOption =
+    process.env.VITEST_COVERAGE === "true"
+      ? {
+          coverage: {
+            enabled: true,
+            provider: "v8" as const,
+            // Only our own TypeScript sources (imported in-process via the workspace aliases below);
+            // work offloaded to spawned binaries is not measured. Emit the raw istanbul-shaped map per
+            // shard so the merge job can combine all shards into one report.
+            include: ["packages/*/src/**"],
+            reporter: ["json"],
+            reportsDirectory: `coverage/${reportId}`,
+            clean: true,
+          },
+        }
+      : {}
+
   return startVitest(
     "test",
     selectedFiles,
@@ -107,18 +143,20 @@ async function main() {
       include: [`test/src/**/${includeGlob}.ts`],
 
       runner: __dirname + "/vitest-config/vitest-network-retry-runner.ts",
-      reporters: ["default", __dirname + "/vitest-config/vitest-smart-reporter.ts"],
+      reporters,
+      ...coverageOption,
 
-      maxWorkers: "40%",
-
-      fileParallelism: true,
+      // Disable Vitest's default file-based parallelism and use our custom shard-based sequencing instead.  This ensures that tests are grouped into shards according to our custom logic (e.g. platform-specific weighting) rather than Vitest's default file-based distribution.
+      // It's either disabling here or increasing test timeout to be generous due to the I/O-heavy nature of our tests and the fact that running many in parallel can exhaust memory (e.g. due to multiple icon-tool spawns across workers).
+      // Disabling file-based parallelism is more efficient than increasing timeouts, as it allows us to run tests in parallel at the shard level while keeping individual test files running sequentially within each shard.
+      fileParallelism: false,
       sequence: {
         sequencer: SmartSequencer,
-        concurrent: true,
+        concurrent: false,
       },
 
-      slowTestThreshold: 2 * 60 * 1000,
-      testTimeout: 10 * 60 * 1000, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
+      slowTestThreshold: 3 * 60 * 1000,
+      testTimeout: 15 * 60 * 1000, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
 
       snapshotFormat: {
         printBasicPrototype: false,

@@ -2,6 +2,9 @@ import { chmod } from "node:fs/promises"
 import * as path from "path"
 import { downloadBuilderToolset } from "../util/electronGet.js"
 
+// Newest 7-Zip bundle — the only version published; no legacy/null-state fallback.
+const SEVEN_ZIP_LATEST = "1.0.0"
+
 const checksums = {
   "7zip-linux-ia32.tar.gz": "24a5d5bfe81506d0bfe21a812588119ae3deb757e8ba084b2339d8e899543686",
   "7zip-darwin-arm64.tar.gz": "496a341abe210aae1a25bc202ee97f6de6c76a3dc80f91d96616be05502d72c1",
@@ -73,7 +76,7 @@ async function resolve(): Promise<string> {
 
   const filename = getFilename()
   const toolDir = await downloadBuilderToolset({
-    releaseName: `7zip@1.0.0`,
+    releaseName: `7zip@${SEVEN_ZIP_LATEST}`,
     filenameWithExt: filename,
     checksums: checksums,
     githubOrgRepo: "electron-userland/electron-builder-binaries",

@@ -1,4 +1,4 @@
-import { ensureDir } from "builder-util/src/fs"
+import { ensureDir, ensureNotBusy } from "builder-util/src/fs"
 import { vi } from "vitest"
 import * as fs from "fs/promises"
 import * as path from "path"
@@ -38,5 +38,38 @@ describe("ensureDir", () => {
     const mkdir = vi.fn().mockRejectedValue(codeError("EACCES"))
     await expect(ensureDir("/no/permission", 8, mkdir)).rejects.toThrow("EACCES")
     expect(mkdir).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("ensureNotBusy", () => {
+  const handle = () => ({ close: vi.fn().mockResolvedValue(undefined) })
+
+  test("opens the file once and returns when it is not locked", async ({ expect }) => {
+    const h = handle()
+    const open = vi.fn().mockResolvedValue(h)
+    await expect(ensureNotBusy("C:/kit/makeappx.exe", 1, 60, open)).resolves.toBeUndefined()
+    expect(open).toHaveBeenCalledTimes(1)
+    expect(open).toHaveBeenCalledWith("C:/kit/makeappx.exe", "r+")
+    expect(h.close).toHaveBeenCalledTimes(1)
+  })
+
+  test("waits while the file is EBUSY-locked, then proceeds once it clears", async ({ expect }) => {
+    const h = handle()
+    const open = vi.fn().mockRejectedValueOnce(codeError("EBUSY")).mockRejectedValueOnce(codeError("EBUSY")).mockResolvedValueOnce(h)
+    await expect(ensureNotBusy("C:/kit/makeappx.exe", 1, 60, open)).resolves.toBeUndefined()
+    expect(open).toHaveBeenCalledTimes(3)
+    expect(h.close).toHaveBeenCalledTimes(1)
+  })
+
+  test("returns without waiting on a non-EBUSY open error (lets caller surface it)", async ({ expect }) => {
+    const open = vi.fn().mockRejectedValue(codeError("ENOENT"))
+    await expect(ensureNotBusy("C:/kit/missing.exe", 1, 60, open)).resolves.toBeUndefined()
+    expect(open).toHaveBeenCalledTimes(1)
+  })
+
+  test("is bounded — gives up after maxAttempts when the lock never clears", async ({ expect }) => {
+    const open = vi.fn().mockRejectedValue(codeError("EBUSY"))
+    await expect(ensureNotBusy("C:/kit/forever-locked.exe", 1, 3, open)).resolves.toBeUndefined()
+    expect(open).toHaveBeenCalledTimes(3)
   })
 })

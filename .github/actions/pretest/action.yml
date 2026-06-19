@@ -8,10 +8,13 @@ inputs:
     description: 'The path to the electron cache'
     required: true
   reset-vitest-smart-cache:
-    description: "Reset Vitest smart cache (will cause all tests to run without caching for this run, then cache will be repopulated for future runs)"
+    description: "Reset Vitest smart cache (planning shows all tests as 'unknown' and shards split evenly; cache is repopulated from this run for future runs)"
     required: false
-    type: boolean
-    default: false
+    default: "false"
+  collect-coverage:
+    description: "Collect v8 code coverage during the test run (opt-in; merged into a downloadable report by the merge job)"
+    required: false
+    default: "false"
 
 runs:
   using: 'composite'
@@ -52,7 +55,12 @@ runs:
         fi
       shell: bash
 
+    # Skip the restore entirely on a reset run: there is no point downloading the previous cache
+    # only to ignore it. Combined with the RESET_VITEST_SHARD_CACHE guard in loadCache(), this makes
+    # the shard plan show every file as "unknown" and split shards evenly. (Cache file is gitignored,
+    # so a fresh checkout has none — nothing is loaded.)
     - name: Restore Vitest Smart Cache
+      if: inputs.reset-vitest-smart-cache != 'true'
       run: pnpm ci:test:fetch-cache
       shell: bash
       env:
@@ -60,6 +68,10 @@ runs:
 
     - name: Set up Vitest smart cache reset flag
       run: echo "RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Set up Vitest coverage flag
+      run: echo "VITEST_COVERAGE=${{ inputs.collect-coverage }}" >> $GITHUB_ENV
       shell: bash
 
 ## Usage

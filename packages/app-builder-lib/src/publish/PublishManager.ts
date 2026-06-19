@@ -43,7 +43,9 @@ import {
   UploadTask,
 } from "electron-publish"
 import { MultiProgress } from "electron-publish/internal"
-import { readFile, writeFile } from "fs/promises"
+import { readFile } from "fs/promises"
+import _fsExtra from "fs-extra"
+const { outputFile } = _fsExtra
 import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
 import { AppInfo } from "../appInfo.js"
@@ -128,7 +130,7 @@ export class PublishManager implements PublishContext {
 
       const publishConfig = await getAppUpdatePublishConfiguration(packager, null, event.arch, this.isPublish)
       if (publishConfig != null) {
-        await writeFile(path.join(packager.getResourcesDir(event.appOutDir), "app-update.yml"), serializeToYaml(publishConfig))
+        await writeAppUpdateYaml(packager.getResourcesDir(event.appOutDir), publishConfig)
       }
     })
 
@@ -294,6 +296,10 @@ export async function getAppUpdatePublishConfiguration(
     }
   }
   return publishConfig
+}
+
+export async function writeAppUpdateYaml(resourcesDir: string, publishConfig: PublishConfiguration): Promise<void> {
+  await outputFile(path.join(resourcesDir, "app-update.yml"), serializeToYaml(publishConfig))
 }
 
 export async function getPublishConfigsForUpdateInfo(
