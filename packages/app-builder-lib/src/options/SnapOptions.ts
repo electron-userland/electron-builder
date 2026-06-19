@@ -44,16 +44,14 @@ export interface SnapcraftOptions extends TargetSpecificOptions {
   readonly core22?: SnapOptionsLegacy | null
 
   /**
-   * **[Beta]** Options for building a core24 snap. Uses the snapcraft CLI directly.
+   * Options for building a core24 snap. Uses the snapcraft CLI directly.
    * Inherits desktop-entry fields from `CommonLinuxOptions` and publish config from `TargetSpecificOptions`.
-   * @beta
    */
   readonly core24?: SnapOptions24 | null
   /**
-   * **[Beta]** Pass-through custom snap configuration. electron-builder will read the
+   * Pass-through custom snap configuration. electron-builder will read the
    * snapcraft.yaml at `yamlPath` and use it verbatim — no plugs, extensions,
    * organize mappings, or desktop files are injected.
-   * @beta
    */
   readonly custom?: SnapOptionsCustom | null
 }
@@ -312,15 +310,13 @@ export interface RemoteBuildOptions {
 }
 
 /**
- * **[Beta]** Options for building a core24 snap. This interface does not extend the legacy
+ * Options for building a core24 snap. This interface does not extend the legacy
  * `SnapBaseOptions` — it uses the snapcraft CLI directly.
  *
  * Fields inherited from {@link CommonLinuxOptions} (`description`, `category`, `mimeTypes`,
  * `executableArgs`, `desktop`, `synopsis`) are automatically populated from the root `linux.*`
  * configuration. You do not need to duplicate them here; values set directly on this interface
  * take precedence over the cascaded `linux.*` values.
- *
- * @beta
  */
 export interface SnapOptions24 extends CommonLinuxOptions, TargetSpecificOptions {
   // ─── Build environment (mutually exclusive) ─────────────────────────────────
