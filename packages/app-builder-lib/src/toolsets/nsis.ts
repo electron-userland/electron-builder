@@ -5,8 +5,12 @@ import { ToolsetConfig } from "../configuration.js"
 import { ToolInfo } from "../util/bundledTool.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
 import { getCustomToolsetPath } from "./custom.js"
+import { resolveToolsetVersion } from "./version.js"
 import _fsExtra from "fs-extra"
 const { stat } = _fsExtra
+
+// Newest NSIS bundle — selected when the config is unset / null / "latest".
+const NSIS_LATEST = "1.2.1"
 
 function getLegacyNsisBin(): Promise<string> {
   // Warning: Don't use v3.0.4.2 - https://github.com/electron-userland/electron-builder/issues/6334
@@ -35,11 +39,11 @@ export const nsisChecksums = {
   },
 } as const
 
-async function getNsisBundlePath(nsis: ToolsetConfig["nsis"], resourcesDir: string): Promise<string> {
+async function getNsisBundlePath(nsis: ToolsetConfig["nsis"] | Nullish, resourcesDir: string): Promise<string> {
   if (typeof nsis === "object" && nsis != null) {
     return getCustomToolsetPath(nsis, resourcesDir)
   }
-  const resolved = nsis ?? "1.2.1"
+  const resolved = resolveToolsetVersion(nsis, NSIS_LATEST)
   if (resolved === "0.0.0") {
     return getLegacyNsisBin()
   }
@@ -68,7 +72,7 @@ export async function getMakeNsisPath(nsis: ToolsetConfig["nsis"] | Nullish, res
   }
 
   const bundlePath = await getNsisBundlePath(nsis, resourcesDir)
-  if ((nsis ?? "1.2.1") === "0.0.0") {
+  if (nsis === "0.0.0") {
     return legacyBundle(bundlePath)
   }
   if (typeof nsis === "object") {
@@ -91,7 +95,7 @@ export async function getNsisPluginsPath(nsis: ToolsetConfig["nsis"] | Nullish, 
     }
     throw new Error(`Plugins directory not found in NSIS bundle at: ${bundlePath}. Expected one of: ${potentialPaths.join(", ")}`)
   }
-  if ((nsis ?? "1.2.1") === "0.0.0") {
+  if (nsis === "0.0.0") {
     return path.resolve(await getLegacyNsisResourcesBin(), "plugins")
   }
   return resolvePluginsDir(await getNsisBundlePath(nsis, resourcesDir))

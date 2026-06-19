@@ -3,6 +3,7 @@ import { log } from "builder-util"
 import { promises as fs } from "fs"
 import * as path from "path"
 import type { Argv } from "yargs"
+import { loadTypeScript, migrateProgrammaticSource } from "./migrate-schema-programmatic.js"
 
 const _require = createRequire(import.meta.url)
 
@@ -22,12 +23,23 @@ export interface MigrationResult {
 
 // ─── Pure migration logic ─────────────────────────────────────────────────────
 
-// Azure Trusted Signing fields that are typed in v27
-const AZURE_KNOWN_FIELDS = new Set(["type", "endpoint", "codeSigningAccountName", "certificateProfileName", "publisherName", "fileDigest", "timestampRfc3161", "timestampDigest"])
+// Azure Trusted Signing typed fields in v27 (everything else is an extra key → additionalMetadata).
+// "type" is included so it is not mistakenly moved to additionalMetadata if already present.
+export const AZURE_KNOWN_FIELDS = new Set([
+  "type",
+  "endpoint",
+  "codeSigningAccountName",
+  "certificateProfileName",
+  "publisherName",
+  "fileDigest",
+  "timestampRfc3161",
+  "timestampDigest",
+  "additionalMetadata",
+])
 
 // macOS signing fields that moved from the platform root into the `sign` (ElectronSignOptions) bag.
 // `signIgnore` is renamed to `sign.ignore` separately (the @electron/osx-sign canonical name).
-const MAC_SIGN_FIELDS = [
+export const MAC_SIGN_FIELDS = [
   "identity",
   "entitlements",
   "entitlementsInherit",
@@ -45,7 +57,7 @@ const MAC_SIGN_FIELDS = [
 ] as const
 
 // Universal-build fields that moved from the platform root into the `universal` (ElectronUniversalOptions) bag.
-const MAC_UNIVERSAL_FIELDS = ["mergeASARs", "singleArchFiles", "x64ArchFiles"] as const
+export const MAC_UNIVERSAL_FIELDS = ["mergeASARs", "singleArchFiles", "x64ArchFiles"] as const
 
 /**
  * Applies all v26→v27 config transformations to a parsed config object.
@@ -198,22 +210,89 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
     }
   }
 
-  // ── 12. azureSignOptions: index-signature extra keys → additionalMetadata ─
-  if (c.win?.azureSignOptions != null) {
-    const azure: Record<string, any> = c.win.azureSignOptions
-    const extra: Record<string, string> = {}
-    for (const [k, v] of Object.entries(azure)) {
-      if (!AZURE_KNOWN_FIELDS.has(k) && typeof v === "string") {
-        extra[k] = v
-        delete azure[k]
+  // ── 12. win.sign unification ───────────────────────────────────────────────
+  // win.signtoolOptions → win.sign: { type: "signtool", … }
+  // win.azureSignOptions → win.sign: { type: "azure", … }  (extra keys → additionalMetadata)
+  // win.signAndEditExecutable / win.signExecutable removed
+  if (c.win != null && typeof c.win === "object") {
+    const win: Record<string, any> = c.win
+
+    // Remove defunct flags — signAndEditExecutable/signExecutable no longer exist in v27.
+    if ("signAndEditExecutable" in win) {
+      const val = win.signAndEditExecutable
+      delete win.signAndEditExecutable
+      if (val === false) {
+        warnings.push(
+          "win.signAndEditExecutable: false was used to skip both resource editing and signing. " +
+            "In v27, resource editing always runs. To skip signing only, set win.sign: false. " +
+            "There is no v27 equivalent that also skips resource editing — apply resources manually if needed."
+        )
+      } else {
+        changes.push({ key: "win.signAndEditExecutable", description: "removed win.signAndEditExecutable (resource editing always runs in v27; was the default)" })
       }
     }
-    if (Object.keys(extra).length > 0) {
-      azure.additionalMetadata = { ...(azure.additionalMetadata ?? {}), ...extra }
-      changes.push({
-        key: "win.azureSignOptions",
-        description: `moved extra keys [${Object.keys(extra).join(", ")}] into win.azureSignOptions.additionalMetadata`,
-      })
+    if ("signExecutable" in win) {
+      const val = win.signExecutable
+      delete win.signExecutable
+      if (val === false && !("sign" in win)) {
+        win.sign = false
+        changes.push({ key: "win.signExecutable", description: "replaced win.signExecutable: false with win.sign: false (disables signing; resource editing still runs)" })
+      } else {
+        changes.push({ key: "win.signExecutable", description: "removed win.signExecutable (signing is enabled by default when credentials are available)" })
+      }
+    }
+
+    const hasAzure = win.azureSignOptions != null
+    const hasSigntool = win.signtoolOptions != null
+
+    if (hasAzure || hasSigntool) {
+      const signAlreadySet = "sign" in win && win.sign !== null && win.sign !== undefined
+
+      if (signAlreadySet) {
+        warnings.push(
+          "win.sign is already set alongside " +
+            (hasAzure ? "win.azureSignOptions" : "win.signtoolOptions") +
+            ". Remove the legacy key manually after verifying win.sign is correct."
+        )
+      } else {
+        if (hasAzure && hasSigntool) {
+          warnings.push(
+            "Both win.azureSignOptions and win.signtoolOptions are set. " +
+              "win.signtoolOptions will be dropped and win.azureSignOptions will be migrated to win.sign: { type: 'azure', … } (Azure took priority in v26). " +
+              "Verify the migrated win.sign block is correct for your project."
+          )
+          delete win.signtoolOptions
+        }
+
+        if (hasAzure) {
+          const azure: Record<string, any> = { ...win.azureSignOptions }
+          delete win.azureSignOptions
+
+          // Move extra (untyped) keys into additionalMetadata
+          const extra: Record<string, string> = {}
+          for (const [k, v] of Object.entries(azure)) {
+            if (!AZURE_KNOWN_FIELDS.has(k) && typeof v === "string") {
+              extra[k] = v
+              delete azure[k]
+            }
+          }
+          if (Object.keys(extra).length > 0) {
+            azure.additionalMetadata = { ...(azure.additionalMetadata ?? {}), ...extra }
+            changes.push({
+              key: "win.azureSignOptions",
+              description: `moved extra keys [${Object.keys(extra).join(", ")}] into win.sign.additionalMetadata`,
+            })
+          }
+
+          win.sign = { ...azure, type: "azure" }
+          changes.push({ key: "win.azureSignOptions", description: 'moved win.azureSignOptions → win.sign: { type: "azure", … }' })
+        } else {
+          const signtool: Record<string, any> = { ...win.signtoolOptions }
+          delete win.signtoolOptions
+          win.sign = { ...signtool, type: "signtool" }
+          changes.push({ key: "win.signtoolOptions", description: 'moved win.signtoolOptions → win.sign: { type: "signtool", … }' })
+        }
+      }
     }
   }
 
@@ -294,7 +373,7 @@ function migrateMacUniversal(platform: Record<string, any>, name: string, change
 }
 
 // electronDownload fields with no equivalent in the v27 ElectronGetOptions (@electron/get v5) shape.
-const ELECTRON_DOWNLOAD_DROPPED = ["cache", "customDir", "customFilename", "strictSSL", "platform", "arch", "version"] as const
+export const ELECTRON_DOWNLOAD_DROPPED = ["cache", "customDir", "customFilename", "strictSSL", "platform", "arch", "version"] as const
 
 /**
  * Renames `electronDownload` → `electronGet` and reshapes it to ElectronGetOptions.
@@ -367,7 +446,7 @@ function migratePublishEntries(parent: Record<string, any>, key: string, changes
 
 // snap bases recognized by the v27 snapcraft config. "custom" uses an inline/path yaml
 // and must be moved verbatim rather than nested under a per-base sub-key.
-const SNAP_BASES = new Set(["core18", "core20", "core22", "core24", "custom"])
+export const SNAP_BASES = new Set(["core18", "core20", "core22", "core24", "custom"])
 
 /**
  * Migrates the removed flat `snap` config into the v27 `snapcraft` shape:
@@ -577,10 +656,9 @@ export async function migrateSchema(args: any): Promise<void> {
   const location = found.isPackageJson ? 'package.json ("build" key)' : path.relative(projectDir, found.configFile!)
   log.info({ file: location }, "loaded config")
 
-  // Programmatic formats can't be auto-rewritten
+  // Programmatic formats (JS/TS) are rewritten surgically via an AST-located text codemod.
   if (found.format === "js") {
-    log.warn({ file: location }, "programmatic config cannot be auto-migrated; apply these changes manually:")
-    printManualSteps()
+    await migrateProgrammaticConfigFile(found, location, dryRun)
     return
   }
 
@@ -625,6 +703,45 @@ export async function migrateSchema(args: any): Promise<void> {
   }
 }
 
+async function migrateProgrammaticConfigFile(found: FoundConfig, location: string, dryRun: boolean): Promise<void> {
+  if (loadTypeScript() == null) {
+    log.warn(
+      { file: location },
+      "auto-migration of programmatic configs requires the 'typescript' package, which was not found. Install it (e.g. `npm i -D typescript`) or apply these changes manually:"
+    )
+    printManualSteps()
+    return
+  }
+
+  const result = migrateProgrammaticSource(found.rawText, found.configFile!)
+
+  if (result.status === "unsupported") {
+    log.warn({ file: location, reason: result.unsupportedReason }, "this programmatic config could not be auto-migrated; apply these changes manually:")
+    printManualSteps()
+    return
+  }
+
+  if (result.status === "no-op") {
+    log.info(null, "config is already up to date — no changes needed")
+    return
+  }
+
+  for (const change of result.changes) {
+    log.info({ key: change.key }, change.description)
+  }
+  for (const warning of result.warnings) {
+    log.warn(null, warning)
+  }
+
+  if (dryRun) {
+    log.info(null, "dry run — no files written")
+    return
+  }
+
+  await fs.writeFile(found.configFile!, result.code, "utf8")
+  log.info({ file: location }, "wrote migrated config")
+}
+
 function printManualSteps() {
   const steps = [
     "",
@@ -639,7 +756,9 @@ function printManualSteps() {
     "• Remove appImage.systemIntegration",
     "• Rename snap → snapcraft; nest options under a base-named sub-key (default base: core20)",
     "• Replace vPrefixedTagName with tagNamePrefix on GitHub publish entries ('v' is the default prefix - just like before - but can now be customized with tagNamePrefix)",
-    "• Move extra keys in win.azureSignOptions into an 'additionalMetadata' object",
+    "• Move win.signtoolOptions → win.sign: { type: 'signtool', ...fields }",
+    "• Move win.azureSignOptions → win.sign: { type: 'azure', ...fields }; move untyped extra keys into win.sign.additionalMetadata",
+    "• Remove win.signAndEditExecutable (resource editing always runs in v27); replace win.signExecutable: false with win.sign: false",
     "• Move helper-bundle-id → mac.helperBundleId",
     "• Replace squirrelWindows.noMsi with squirrelWindows.msi (inverted)",
     "• Move mac/mas/masDev signing fields (identity, entitlements, hardenedRuntime, type, requirements, timestamp, binaries, gatekeeperAssess, strictVerify, preAutoEntitlements, provisioningProfile, additionalArguments) into the `sign` object; rename signIgnore → sign.ignore",

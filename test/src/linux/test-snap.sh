@@ -124,7 +124,7 @@ run_pass() {
 
   TEST_RUNNER_IMAGE_TAG="$image_tag" \
     ADDITIONAL_DOCKER_ARGS="$COMMON_DOCKER_ARGS -e SNAP_TEST_CORES=$cores" \
-    pnpm test-linux \
+    pnpm test:linux \
   || { dump_snapcraft_logs "$SNAPCRAFT_LOG_DIR"; exit 1; }
 }
 

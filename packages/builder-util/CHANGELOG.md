@@ -1,5 +1,48 @@
 # builder-util
 
+## 27.0.0-alpha.4
+
+### Minor Changes
+
+- Introduce xml escaping for publisher, publisherDisplayName, displayName, description in appxmanifest.xml to avoid issues with xml preserverd characters _[`#9853`](https://github.com/electron-userland/electron-builder/pull/9853) [`deafee9`](https://github.com/electron-userland/electron-builder/commit/deafee9fe5f7bccbf52e73cd0c6085e767f921ce) [@regnete](https://github.com/regnete)_
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`deafee9`](https://github.com/electron-userland/electron-builder/commit/deafee9fe5f7bccbf52e73cd0c6085e767f921ce)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.3`
+
+</details>
+
+## 27.0.0-alpha.3
+
+### Minor Changes
+
+- Fix: add retry-tolerant `ensureDir` to address recurring flaky `ENOENT … mkdir '<cache>/fpm@2.2.1/…'` during concurrent toolset downloads _[`#9899`](https://github.com/electron-userland/electron-builder/pull/9899) [`ef61dd5`](https://github.com/electron-userland/electron-builder/commit/ef61dd5f47ab0b203e76c506394bf4bc1ee9bf00) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Chore(test): disable sourcemaps during Vitest runs _[`#9901`](https://github.com/electron-userland/electron-builder/pull/9901) [`594cfa1`](https://github.com/electron-userland/electron-builder/commit/594cfa1ded3ab4bcb46eac1720b9f9930ed1fbb5) [@mmaietta](https://github.com/mmaietta)_
+- Fix: declare the missing `electron-publish` dependency on `electron-builder`, and switch type-checking to `nodenext` module resolution so the compiler models Node's real ESM loader _[`#9885`](https://github.com/electron-userland/electron-builder/pull/9885) [`96e47b5`](https://github.com/electron-userland/electron-builder/commit/96e47b5b89b76c719b1c06cfdd62a9a17376484e) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`96e47b5`](https://github.com/electron-userland/electron-builder/commit/96e47b5b89b76c719b1c06cfdd62a9a17376484e)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.2`
+
+</details>
+
 ## 27.0.0-alpha.2
 
 ### Patch Changes

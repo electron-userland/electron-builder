@@ -14,6 +14,7 @@ export enum LogMessageByKey {
   PKG_OPTIONAL_PLATFORM_NOT_INSTALLED = "platform-specific optional dependencies not bundled — add them to your project's optionalDependencies if your app requires them (pnpm 10+ does not auto-install transitive platform binaries)",
   PKG_COLLECTOR_OUTPUT = "collector stderr output",
   PKG_VERSION_OVERRIDDEN = "dependencies resolved to a version outside the declared range (installed version accepted — likely resolved via package manager overrides)",
+  PKG_INCOMPATIBLE_PLATFORM = "excluded platform-incompatible dependencies (package.json `cpu`/`os` does not match the target arch/platform)",
 }
 export const logMessageLevelByKey: Record<LogMessageByKey, LogLevel> = {
   [LogMessageByKey.PKG_DUPLICATE_REF]: "info",
@@ -25,6 +26,7 @@ export const logMessageLevelByKey: Record<LogMessageByKey, LogLevel> = {
   [LogMessageByKey.PKG_OPTIONAL_PLATFORM_NOT_INSTALLED]: "warn",
   [LogMessageByKey.PKG_COLLECTOR_OUTPUT]: "warn",
   [LogMessageByKey.PKG_VERSION_OVERRIDDEN]: "debug",
+  [LogMessageByKey.PKG_INCOMPATIBLE_PLATFORM]: "info",
 }
 
 export type Package = { packageDir: string; packageJson: PackageJson }

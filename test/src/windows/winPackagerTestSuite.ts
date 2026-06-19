@@ -73,7 +73,7 @@ export function registerWinPackagerTests(toolsets: ToolsetConfig): void {
         },
       },
       {
-        signed: false,
+        signedMac: false,
         projectDirCreated: async projectDir => {
           await fs.mkdir(path.join(projectDir, "build", "subdir"))
           await fs.copyFile(path.join(projectDir, "build", "extraAsar.asar"), path.join(projectDir, "build", "subdir", "extraAsar2.asar"))

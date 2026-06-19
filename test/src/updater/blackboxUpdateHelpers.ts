@@ -16,7 +16,7 @@ import { cleanupWindowsNative, installWindowsNative, installWindowsVm } from "./
 import { cleanupLinux, installLinux } from "./blackboxInstallLinux"
 import { installMac } from "./blackboxInstallMac"
 
-export const optionsForFlakyE2E = { sequential: true, retry: 1, timeout: 15 * 60 * 1000 } as const
+export const optionsForFlakyE2E = { sequential: true, retry: 2, timeout: 15 * 60 * 1000 } as const
 
 // Resolve only to a ParallelsVmManager — PwshVmManager (used for code-signing on Linux/Mac via Wine)
 // is not capable of installing or running Windows executables and must not be treated as a Windows VM.
@@ -76,7 +76,7 @@ export async function doBuild(
               electronUpdaterCompatibility: "1.1",
               electronFuses: {
                 runAsNode: false,
-                enableCookieEncryption: true,
+                enableCookieEncryption: false, // don't enable cookie encryption for testing because it adds an additional decryption step to the update process which requires user interaction to unlock the keychain on macOS and can cause timeouts in CI, especially on older macOS versions with slower crypto performance
                 enableNodeOptionsEnvironmentVariable: false,
                 enableNodeCliInspectArguments: false,
                 enableEmbeddedAsarIntegrityValidation: true,
@@ -107,7 +107,7 @@ export async function doBuild(
       },
       {
         storeDepsLockfileSnapshot: false,
-        signed: !isWindows,
+        signedMac: !isWindows,
         signedWin: isWindows,
         packed,
         packageManager: PM.PNPM,
@@ -347,7 +347,11 @@ export async function runTest(
           const probe = await launchAndWaitForQuit({
             appPath,
             vm,
-            timeoutMs: 30 * 1000,
+            // A cold relaunch of the freshly-extracted update can be slow (Gatekeeper verification,
+            // embedded-asar integrity validation, slow CI crypto), so give each probe a generous
+            // window. A single timeout is not fatal — the surrounding poll loop retries until the
+            // pollDeadline, so the worst case is bounded by pollDeadline, not by this value.
+            timeoutMs: 60 * 1000,
             updateConfigPath,
             packageManagerToTest: packageManager,
             env: { AUTO_UPDATER_TEST: "" }, // disables updater — app prints version and quits
@@ -360,12 +364,17 @@ export async function runTest(
           if (newVersion === NEW_VERSION_NUMBER) {
             break
           }
-          log.info({ installedVersion: newVersion, expected: NEW_VERSION_NUMBER }, "Installer still in progress, retrying...")
+          log.info({ installedVersion: newVersion, expected: NEW_VERSION_NUMBER, stdout: probe.stdout, stderr: probe.stderr }, "Installer still in progress, retrying...")
         } catch (err: any) {
           // NSIS replaces the exe non-atomically: it deletes the old binary before writing the new one,
           // so there is a brief window where TestApp.exe does not exist on disk.
           if (err.code === "ENOENT" && (err.syscall === "spawn" || err.syscall?.startsWith("spawn "))) {
             log.info({ appPath }, "Binary temporarily unavailable (NSIS installer in progress), retrying...")
+          } else if (typeof err.message === "string" && err.message.startsWith("Timeout after")) {
+            // A single probe launch stalled (no APP_VERSION printed before the timeout). Surface
+            // exactly what the app emitted (the message embeds STDOUT/STDERR) and keep polling
+            // instead of failing the whole test on the first slow launch.
+            log.info({ appPath, detail: err.message }, "Probe launch timed out, retrying...")
           } else {
             throw err
           }

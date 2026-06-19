@@ -27,12 +27,10 @@ export async function addWinAsarIntegrity(executablePath: string, asarIntegrity:
     value,
   }))
 
-  const encoder = new TextEncoder()
-
   resource.entries.push({
     type: "INTEGRITY",
     id: "ELECTRONASAR",
-    bin: encoder.encode(JSON.stringify(integrityList)).buffer as ArrayBuffer,
+    bin: new TextEncoder().encode(JSON.stringify(integrityList)).buffer as ArrayBuffer,
     lang: languages[0].lang,
     codepage: languages[0].codepage,
   })

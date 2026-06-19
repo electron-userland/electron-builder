@@ -5,6 +5,7 @@ import * as net from "net"
 import * as os from "os"
 import * as path from "path"
 import * as tar from "tar"
+import { TmpDir } from "temp-file"
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest"
 import {
   ArtifactDownloadOptions,
@@ -12,10 +13,10 @@ import {
   ElectronGetOptions,
   downloadBuilderToolset,
   downloadElectronArtifact,
-  getCacheDirectory,
   getBinariesMirrorUrl,
   reinitializeProxy,
 } from "app-builder-lib/internal"
+import { getCacheDirectoryInternal } from "app-builder-lib/src/util/electronGet.js"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 
 // ─── Test helpers ─────────────────────────────────────────────────────────────
@@ -25,16 +26,17 @@ import { ELECTRON_VERSION } from "./helpers/testConfig"
  * Entry layout: inner/<name> — strip:1 extracts <name> directly into the target dir.
  */
 async function createMinimalTarGz(archivePath: string, files: Record<string, string>): Promise<void> {
-  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "eb-test-tar-"))
+  const tmpDir = new TmpDir("eb-test-tar")
   try {
-    const innerDir = path.join(tmpDir, "inner")
+    const dir = await tmpDir.createTempDir()
+    const innerDir = path.join(dir, "inner")
     await fs.mkdir(innerDir)
     for (const [name, content] of Object.entries(files)) {
       await fs.writeFile(path.join(innerDir, name), content)
     }
-    await tar.create({ gzip: true, file: archivePath, cwd: tmpDir }, ["inner"])
+    await tar.create({ gzip: true, file: archivePath, cwd: dir }, ["inner"])
   } finally {
-    await fs.rm(tmpDir, { recursive: true, force: true })
+    await tmpDir.cleanup()
   }
 }
 
@@ -67,19 +69,19 @@ describe("getCacheDirectory", () => {
     vi.unstubAllEnvs()
   })
 
-  test("returns ELECTRON_BUILDER_CACHE when set", ({ expect }) => {
+  test("returns ELECTRON_BUILDER_CACHE when set", async ({ expect }) => {
     vi.stubEnv("ELECTRON_BUILDER_CACHE", "/custom/cache")
-    expect(getCacheDirectory({ allowEnvVarOverride: true })).toBe("/custom/cache")
+    expect(await getCacheDirectoryInternal({ allowEnvVarOverride: true })).toBe(path.resolve("/custom/cache"))
   })
 
-  test("trims whitespace from ELECTRON_BUILDER_CACHE", ({ expect }) => {
+  test("trims whitespace from ELECTRON_BUILDER_CACHE", async ({ expect }) => {
     vi.stubEnv("ELECTRON_BUILDER_CACHE", "  /padded/path  ")
-    expect(getCacheDirectory({ allowEnvVarOverride: true })).toBe("/padded/path")
+    expect(await getCacheDirectoryInternal({ allowEnvVarOverride: true })).toBe(path.resolve("/padded/path"))
   })
 
-  test("returns platform-appropriate default when env var is absent", ({ expect }) => {
+  test("returns platform-appropriate default when env var is absent", async ({ expect }) => {
     vi.stubEnv("ELECTRON_BUILDER_CACHE", "")
-    const result = getCacheDirectory({ allowEnvVarOverride: true })
+    const result = await getCacheDirectoryInternal({ allowEnvVarOverride: true })
     expect(typeof result).toBe("string")
     expect(result.length).toBeGreaterThan(0)
     if (process.platform === "darwin") {
@@ -91,70 +93,70 @@ describe("getCacheDirectory", () => {
     }
   })
 
-  test("respects XDG_CACHE_HOME on linux", ({ expect }) => {
+  test("respects XDG_CACHE_HOME on linux", async ({ expect, skip }) => {
     if (process.platform !== "linux") {
-      expect(true).toBe(true) // skip assertion on non-linux
+      skip() // test is Linux-specific, skip on other platforms
       return
     }
     vi.stubEnv("ELECTRON_BUILDER_CACHE", "")
     vi.stubEnv("XDG_CACHE_HOME", "/xdg/cache")
-    expect(getCacheDirectory({ allowEnvVarOverride: true })).toBe("/xdg/cache/electron-builder")
+    expect(await getCacheDirectoryInternal({ allowEnvVarOverride: true })).toBe("/xdg/cache/electron-builder")
   })
 
-  test("falls back to tmpdir when LOCALAPPDATA is absent on Windows", ({ expect }) => {
+  test("falls back to tmpdir when LOCALAPPDATA is absent on Windows", async ({ expect, skip }) => {
     if (process.platform !== "win32") {
-      expect(true).toBe(true)
+      skip() // test is Windows-specific, skip on other platforms
       return
     }
     vi.stubEnv("LOCALAPPDATA", "")
-    const result = getCacheDirectory({ isAvoidSystemOnWindows: true, allowEnvVarOverride: false })
+    const result = await getCacheDirectoryInternal({ isAvoidSystemOnWindows: true, allowEnvVarOverride: false })
     expect(result).toContain(os.tmpdir())
   })
 
-  test("allowEnvVarOverride:false ignores ELECTRON_BUILDER_CACHE even when set", ({ expect }) => {
+  test("allowEnvVarOverride:false ignores ELECTRON_BUILDER_CACHE even when set", async ({ expect }) => {
     vi.stubEnv("ELECTRON_BUILDER_CACHE", "/custom/cache")
-    const result = getCacheDirectory({ allowEnvVarOverride: false })
+    const result = await getCacheDirectoryInternal({ allowEnvVarOverride: false })
     expect(result).not.toBe("/custom/cache")
     expect(result).toContain("electron-builder")
   })
 
-  test("ignores ELECTRON_BUILDER_CACHE when value has no filesystem root (relative path)", ({ expect }) => {
+  test("ignores ELECTRON_BUILDER_CACHE when value has no filesystem root (relative path)", async ({ expect }) => {
     vi.stubEnv("ELECTRON_BUILDER_CACHE", "relative/path/no-root")
-    const result = getCacheDirectory({ allowEnvVarOverride: true })
+    const result = await getCacheDirectoryInternal({ allowEnvVarOverride: true })
     expect(result).not.toBe("relative/path/no-root")
     expect(result).toContain("electron-builder")
   })
 
-  test("falls back to tmpdir when USERNAME is 'system' (isAvoidSystemOnWindows defaults to true)", ({ expect }) => {
+  test("falls back to tmpdir when USERNAME is 'system' (isAvoidSystemOnWindows defaults to true)", async ({ expect, skip }) => {
     if (process.platform !== "win32") {
-      expect(true).toBe(true)
+      skip() // test is Windows-specific, skip on other platforms
       return
     }
     vi.stubEnv("LOCALAPPDATA", "C:\\Users\\system\\AppData\\Local")
     vi.stubEnv("USERNAME", "system")
-    const result = getCacheDirectory({ allowEnvVarOverride: false })
+    const result = await getCacheDirectoryInternal({ allowEnvVarOverride: false })
     expect(result).toContain(os.tmpdir())
   })
 
-  test("falls back to tmpdir when LOCALAPPDATA path contains \\windows\\system32\\", ({ expect }) => {
+  test("falls back to tmpdir when LOCALAPPDATA path contains \\windows\\system32\\", async ({ expect, skip }) => {
     if (process.platform !== "win32") {
-      expect(true).toBe(true)
+      skip() // test is Windows-specific, skip on other platforms
       return
     }
     vi.stubEnv("LOCALAPPDATA", "C:\\Windows\\System32\\config\\systemprofile\\AppData\\Local")
     vi.stubEnv("USERNAME", "not-system")
-    const result = getCacheDirectory({ allowEnvVarOverride: false })
+    const result = await getCacheDirectoryInternal({ allowEnvVarOverride: false })
     expect(result).toContain(os.tmpdir())
   })
 
-  test("isAvoidSystemOnWindows:false does not fall back to tmpdir for USERNAME=system", ({ expect }) => {
+  test("isAvoidSystemOnWindows:false does not fall back to tmpdir for USERNAME=system", async ({ expect, skip }) => {
     if (process.platform !== "win32") {
-      expect(true).toBe(true)
+      skip() // test is Windows-specific, skip on other platforms
       return
     }
     vi.stubEnv("LOCALAPPDATA", "C:\\Users\\system\\AppData\\Local")
     vi.stubEnv("USERNAME", "system")
-    const result = getCacheDirectory({ isAvoidSystemOnWindows: false, allowEnvVarOverride: false })
+    const result = await getCacheDirectoryInternal({ isAvoidSystemOnWindows: false, allowEnvVarOverride: false })
     expect(result).not.toContain(os.tmpdir())
     expect(result).toContain("electron-builder")
   })
@@ -225,15 +227,16 @@ describe("getBinariesMirrorUrl", () => {
 
 // ─── Shared temp cache dir for functional tests ───────────────────────────────
 
+const sharedCacheTmpDir = new TmpDir("eb-electronGet-test")
 let testCacheDir: string
 
 beforeAll(async () => {
-  testCacheDir = await fs.mkdtemp(path.join(os.tmpdir(), "eb-electronGet-test-"))
+  testCacheDir = await sharedCacheTmpDir.createTempDir()
   process.env.ELECTRON_BUILDER_CACHE = testCacheDir
 })
 
 afterAll(async () => {
-  await fs.rm(testCacheDir, { recursive: true, force: true })
+  await sharedCacheTmpDir.cleanup()
 })
 
 // ─── downloadArtifact: generic artifacts (.tar.gz) ───────────────────────────
@@ -323,8 +326,8 @@ describe("downloadBuilderToolset", { sequential: true }, () => {
   // Using resolveAssetURL bypasses that env var check entirely.
   // This test routes downloads through a local server and verifies the server is hit (not
   // ELECTRON_MIRROR's unreachable URL), proving resolveAssetURL controls the final fetch target.
-  test("ELECTRON_MIRROR env var does not corrupt builder-binaries download URL (#9752)", { timeout: 15_000 }, async ({ expect }) => {
-    const freshTestCache = await fs.mkdtemp(path.join(os.tmpdir(), "eb-mirror-test-"))
+  test("ELECTRON_MIRROR env var does not corrupt builder-binaries download URL (#9752)", { timeout: 15_000 }, async ({ expect, tmpDir }) => {
+    const freshTestCache = await tmpDir.createTempDir()
     vi.stubEnv("ELECTRON_BUILDER_CACHE", freshTestCache)
     // Point ELECTRON_MIRROR at an unreachable address — if @electron/get used it instead of
     // resolveAssetURL, the fetch would fail with ECONNREFUSED before reaching any assertion.
@@ -342,7 +345,6 @@ describe("downloadBuilderToolset", { sequential: true }, () => {
       expect(server.requestedPaths.some(p => p.includes("dmg-builder@1.2.2"))).toBe(true)
     } finally {
       await server.close()
-      await fs.rm(freshTestCache, { recursive: true, force: true })
     }
   })
 })
@@ -365,17 +367,16 @@ describe("downloadBuilderToolset: filenameWithExt validation", () => {
 
 // ─── Toolset archive cache (no network) ──────────────────────────────────────
 
-describe("toolset archive cache", () => {
+describe("toolset archive cache", { sequential: true }, () => {
   let freshCache: string
 
-  beforeEach(async () => {
-    freshCache = await fs.mkdtemp(path.join(os.tmpdir(), "eb-archive-cache-test-"))
+  beforeEach(async context => {
+    freshCache = await context.tmpDir.createTempDir()
     vi.stubEnv("ELECTRON_BUILDER_CACHE", freshCache)
   })
 
-  afterEach(async () => {
+  afterEach(() => {
     vi.unstubAllEnvs()
-    await fs.rm(freshCache, { recursive: true, force: true })
   })
 
   // Seed the archive cache path that downloadBuilderToolset checks before hitting @electron/get.
@@ -448,6 +449,38 @@ describe("toolset archive cache", () => {
       await server.close()
     }
   })
+
+  // Regression: concurrent builds requesting the SAME toolset (e.g. rpm x64 + rpm armv7l both
+  // needing fpm) resolve to the same extractDir and contend on one lock. Before the fix the
+  // unlocked pre-lock fs.mkdir(extractDir) raced a lock-holder's fs.rm(extractDir) cleanup and
+  // threw `ENOENT: ... mkdir '<cache>/<release>/<artifact>-<hash>'`. All callers must now resolve,
+  // and the lock must serialize them down to a single network download (also covering the
+  // cross-worker case, where an in-process promise cache could not help).
+  test("concurrent downloads of the same artifact all resolve and dedupe to one download", async ({ expect }) => {
+    const releaseName = "concurrent-test@0.1"
+    const fileName = "concurrent-artifact.tar.gz"
+
+    const networkArchive = path.join(freshCache, "concurrent-network-download.tar.gz")
+    await createMinimalTarGz(networkArchive, { sentinel: "ok" })
+    const server = await startArtifactServer(networkArchive)
+    vi.stubEnv("ELECTRON_BUILDER_BINARIES_MIRROR", `http://127.0.0.1:${server.port}/`)
+
+    try {
+      const results = await Promise.all(Array.from({ length: 12 }, () => downloadBuilderToolset({ releaseName, filenameWithExt: fileName })))
+
+      // Every caller resolved (no ENOENT race) to the same valid extract dir
+      for (const result of results) {
+        const entries = await fs.readdir(result)
+        expect(entries).toContain("sentinel")
+      }
+      expect(new Set(results).size).toBe(1)
+
+      // The lock serialized the work: the winner downloaded once; the rest hit the completed cache.
+      expect(server.requestedPaths.length).toBe(1)
+    } finally {
+      await server.close()
+    }
+  })
 })
 
 // ─── downloadElectronArtifact: electron platform artifacts (.zip) ────────────
@@ -459,10 +492,6 @@ const electronArch = process.arch === "arm64" ? "arm64" : "x64"
 // Expected ffmpeg library filename by platform
 const ffmpegLibName = electronPlatform === "darwin" ? "libffmpeg.dylib" : electronPlatform === "linux" ? "libffmpeg.so" : "ffmpeg.dll"
 
-// sequential: tests that download the same GitHub artifact (same URL → same @electron/get cache key)
-// must not run concurrently. @electron/get's putFileInCache has no internal locking; concurrent moves
-// to the same cache path produce "dest already exists." from fs-extra. Sequential order ensures the
-// first test populates the cache, and subsequent tests get a cache hit.
 describe("downloadElectronArtifact", { sequential: true }, () => {
   test("downloads and extracts electron ffmpeg zip for current platform", DOWNLOAD_TIMEOUT, async ({ expect }) => {
     const options: ArtifactDownloadOptions = {
@@ -615,9 +644,9 @@ async function startRecordingProxy() {
 }
 
 describe("proxy integration", () => {
-  test("routes download requests through HTTPS_PROXY when set", { timeout: 15_000 }, async ({ expect }) => {
+  test("routes download requests through HTTPS_PROXY when set", { timeout: 15_000 }, async ({ expect, tmpDir }) => {
     const proxy = await startRecordingProxy()
-    const freshCache = await fs.mkdtemp(path.join(os.tmpdir(), "eb-proxy-integration-"))
+    const freshCache = await tmpDir.createTempDir()
     vi.stubEnv("HTTPS_PROXY", `http://127.0.0.1:${proxy.port}`)
     vi.stubEnv("ELECTRON_BUILDER_CACHE", freshCache)
 

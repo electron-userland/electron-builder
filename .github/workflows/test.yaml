@@ -47,7 +47,7 @@ jobs:
         with: { fetch-depth: 0 }
 
       - name: Determine if Dockerfiles changed
-        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         id: changes
         with:
           filters: |
@@ -177,9 +177,9 @@ jobs:
       - name: Run shard in docker
         run: |
           echo $TEST_RUNNER_IMAGE_TAG
-          pnpm test-linux
+          pnpm test:linux
         env:
-          ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SHARD_INDEX=${{ matrix.shard }} -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}"
+          ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SHARD_INDEX=${{ matrix.shard }} -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/vitest-config/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}"
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
 
       - name: Upload smart cache artifact
@@ -187,7 +187,7 @@ jobs:
         if: always()
         with:
           name: vitest-smart-cache-${{ matrix.platform }}-${{ matrix.shard }}
-          path: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
+          path: ${{ github.workspace }}/test/vitest-scripts/vitest-config/_vitest-smart-cache.json
           retention-days: 1
           if-no-files-found: error
 
@@ -229,14 +229,14 @@ jobs:
         env:
           CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
           VITEST_SHARD_INDEX: ${{ matrix.shard }}
-          VITEST_SMART_CACHE_FILE: ${{ github.workspace }}\test\vitest-scripts\_vitest-smart-cache.json
+          VITEST_SMART_CACHE_FILE: ${{ github.workspace }}\test\vitest-scripts\vitest-config\_vitest-smart-cache.json
 
       - name: Upload smart cache artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: vitest-smart-cache-${{ matrix.platform }}-${{ matrix.shard }}
-          path: ${{ github.workspace }}\test\vitest-scripts\_vitest-smart-cache.json
+          path: ${{ github.workspace }}\test\vitest-scripts\vitest-config\_vitest-smart-cache.json
           retention-days: 1
           if-no-files-found: error
 
@@ -273,16 +273,14 @@ jobs:
         run: pnpm ci:test
         env:
           VITEST_SHARD_INDEX: ${{ matrix.shard }}
-          VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
-          MAC_CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
-          # CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/vitest-config/_vitest-smart-cache.json
 
       - name: Upload smart cache artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: vitest-smart-cache-${{ matrix.platform }}-${{ matrix.shard }}
-          path: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
+          path: ${{ github.workspace }}/test/vitest-scripts/vitest-config/_vitest-smart-cache.json
           retention-days: 1
           if-no-files-found: error
 
@@ -347,18 +345,18 @@ jobs:
       - name: Test
         run: |
           echo $TEST_RUNNER_IMAGE_TAG
-          pnpm test-linux
+          pnpm test:linux
         env:
           TEST_FILES: nsisUpdaterTest,PublishManagerTest,differentialUpdateTest,GitlabPublisherTest,GitlabPublisher.integration.test
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
-          ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}"
+          ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/vitest-config/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}"
 
       - name: Upload smart cache artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: vitest-smart-cache-updater
-          path: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
+          path: ${{ github.workspace }}/test/vitest-scripts/vitest-config/_vitest-smart-cache.json
           retention-days: 1
           if-no-files-found: error
 
@@ -383,7 +381,7 @@ jobs:
       - name: Test snap ${{ matrix.core }} (Docker)
         run: SNAP_CORE=${{ matrix.core }} ./test/src/linux/test-snap.sh
         env:
-          VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
+          VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/vitest-config/_vitest-smart-cache.json
           RESET_VITEST_SHARD_CACHE: ${{ inputs.reset-vitest-smart-cache }}
 
       # Native install+launch test — core24 only; requires snapcraft + unsquashfs on the runner.
@@ -403,7 +401,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y squashfs-tools xvfb
-          sudo snap install snapcraft --classic
+          # Pin to the 8.x track: snapcraft 9.0.0 (latest/stable) intermittently hangs while
+          # apt-fetching destructive-mode stagePackages, causing the core24 test to time out.
+          sudo snap install snapcraft --classic --channel=8.x/stable
 
       - name: Test snap core24 native (install + launch)
         if: matrix.core == 'core24'
@@ -413,7 +413,7 @@ jobs:
           SNAP_TEST_CORES: core24
           SNAPCRAFT_BUILD_ENVIRONMENT: host
           RUN_SNAP_TESTS: "true"
-          VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
+          VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/vitest-config/_vitest-smart-cache.json
           RESET_VITEST_SHARD_CACHE: ${{ inputs.reset-vitest-smart-cache }}
 
       - name: Upload smart cache artifact
@@ -421,7 +421,7 @@ jobs:
         if: always()
         with:
           name: vitest-smart-cache-snap-${{ matrix.core }}
-          path: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
+          path: ${{ github.workspace }}/test/vitest-scripts/vitest-config/_vitest-smart-cache.json
           retention-days: 1
           if-no-files-found: error
 
@@ -477,7 +477,7 @@ jobs:
           ADDITIONAL_DOCKER_ARGS: >-
             -e PACKAGE_MANAGER_TO_TEST=${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST || '' }}
             -e RUN_APP_IMAGE_TEST=${{ matrix.test_config.env.RUN_APP_IMAGE_TEST || false }}
-            -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json
+            -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/vitest-config/_vitest-smart-cache.json
             -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}
 
       - name: Upload smart cache artifact
@@ -485,7 +485,7 @@ jobs:
         if: always()
         with:
           name: vitest-smart-cache-e2e-${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST }}
-          path: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
+          path: ${{ github.workspace }}/test/vitest-scripts/vitest-config/_vitest-smart-cache.json
           retention-days: 1
           if-no-files-found: error
 
@@ -522,7 +522,7 @@ jobs:
 
       - name: Copy merged cache to canonical path
         if: always()
-        run: cp merged-cache/_vitest-smart-cache.json test/vitest-scripts/_vitest-smart-cache.json
+        run: cp merged-cache/_vitest-smart-cache.json test/vitest-scripts/vitest-config/_vitest-smart-cache.json
 
       - name: Compute Vitest smart cache ref
         if: always()
@@ -531,7 +531,10 @@ jobs:
           if [ -n "$PR_NUM" ]; then
             echo "VITEST_CACHE_REF=PR-${PR_NUM}" >> "$GITHUB_ENV"
           else
-            echo "VITEST_CACHE_REF=${{ github.ref_name }}" >> "$GITHUB_ENV"
+            # Artifact names cannot contain "/", so sanitize slashes in branch
+            # names like "release/v26" -> "release-v26" (keep in sync with detectRef in fetch-smart-cache.ts).
+            REF_NAME="${{ github.ref_name }}"
+            echo "VITEST_CACHE_REF=${REF_NAME//\//-}" >> "$GITHUB_ENV"
           fi
 
       - name: Upload vitest smart cache artifact

@@ -7,9 +7,7 @@ afterEach(() => {
   vi.unstubAllEnvs()
 })
 
-// sequence.concurrent is enabled globally; describe.sequential opts this suite
-// back to serial execution so env-var stubs don't bleed between tests.
-describe.sequential("resolveBuilderBinaryUrl", () => {
+describe("resolveBuilderBinaryUrl", { sequential: true }, () => {
   describe("default URL (no env vars)", () => {
     test("builds the standard GitHub release URL", () => {
       const url = resolveBuilderBinaryUrl("nsis-3.0.4.1", "nsis-3.0.4.1.7z", BASE_URL)
@@ -72,7 +70,7 @@ describe.sequential("resolveBuilderBinaryUrl", () => {
   })
 })
 
-describe.sequential("downloadBuilderToolset", () => {
+describe("downloadBuilderToolset", { sequential: true }, () => {
   describe("rejects unsafe filenameWithExt before any download attempt", () => {
     test.each([
       ["Unix path separator", "a/b.7z"],

@@ -1,10 +1,9 @@
 import { afterEach, describe, test, vi } from "vitest"
 import * as fse from "fs-extra"
-import * as os from "os"
 import * as path from "path"
 import { TraversalNodeModulesCollector } from "app-builder-lib/internal"
 import { LogMessageByKey } from "app-builder-lib/src/node-module-collector/moduleManager"
-import type { TmpDir } from "builder-util"
+import { TmpDir } from "builder-util"
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -17,8 +16,10 @@ const mockTmpDir = { getTempFile: vi.fn(), getTempDir: vi.fn() } as unknown as T
  * Writes a package tree under a fresh temp directory.
  * Keys are relative paths to package.json files; values are the JSON contents.
  */
+const projectTmpDir = new TmpDir("eb-traversal-test")
+
 async function buildPackageTree(packages: Record<string, object>): Promise<string> {
-  const root = await fse.mkdtemp(path.join(os.tmpdir(), "eb-traversal-test-"))
+  const root = await projectTmpDir.createTempDir()
   for (const [rel, json] of Object.entries(packages)) {
     const abs = path.join(root, rel)
     await fse.ensureDir(path.dirname(abs))
@@ -27,16 +28,16 @@ async function buildPackageTree(packages: Record<string, object>): Promise<strin
   return root
 }
 
-async function runCollector(rootDir: string, packageName: string) {
+async function runCollector(rootDir: string, packageName: string, archFilter?: { cpu: string | null; os: string }) {
   const collector = new TraversalNodeModulesCollector(rootDir, mockTmpDir)
-  return collector.getNodeModules({ packageName })
+  return collector.getNodeModules({ packageName, archFilter })
 }
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("TraversalNodeModulesCollector", () => {
+describe("TraversalNodeModulesCollector", { sequential: true }, () => {
   let root = ""
   afterEach(async () => {
     if (root) {
@@ -220,6 +221,78 @@ describe("TraversalNodeModulesCollector", () => {
       expect(names).toContain("pkg-b")
       expect(names).toContain("shared-dep")
       expect(names).toContain("other-dep")
+    })
+  })
+
+  describe("platform (cpu/os) filtering", () => {
+    const tree = {
+      "package.json": {
+        name: "my-app",
+        version: "1.0.0",
+        dependencies: {
+          lodash: "^1.0.0",
+          "@esbuild/darwin-arm64": "^1.0.0",
+          "@esbuild/darwin-x64": "^1.0.0",
+        },
+      },
+      "node_modules/lodash/package.json": { name: "lodash", version: "1.0.0" }, // plain JS
+      "node_modules/@esbuild/darwin-arm64/package.json": { name: "@esbuild/darwin-arm64", version: "1.0.0", cpu: ["arm64"], os: ["darwin"] },
+      "node_modules/@esbuild/darwin-x64/package.json": { name: "@esbuild/darwin-x64", version: "1.0.0", cpu: ["x64"], os: ["darwin"] },
+    }
+
+    test("drops cpu-mismatched packages for the x64 slice, keeps the matching one and plain deps", async ({ expect }) => {
+      root = await buildPackageTree(tree)
+      const { nodeModules, logSummary } = await runCollector(root, "my-app", { cpu: "x64", os: "darwin" })
+      const names = nodeModules.map(m => m.name)
+      expect(names).toContain("lodash")
+      expect(names).toContain("@esbuild/darwin-x64")
+      expect(names).not.toContain("@esbuild/darwin-arm64")
+      expect(logSummary[LogMessageByKey.PKG_INCOMPATIBLE_PLATFORM]).toEqual(["@esbuild/darwin-arm64@1.0.0"])
+    })
+
+    test("drops the other variant for the arm64 slice", async ({ expect }) => {
+      root = await buildPackageTree(tree)
+      const { nodeModules } = await runCollector(root, "my-app", { cpu: "arm64", os: "darwin" })
+      const names = nodeModules.map(m => m.name)
+      expect(names).toContain("@esbuild/darwin-arm64")
+      expect(names).not.toContain("@esbuild/darwin-x64")
+    })
+
+    test("no archFilter keeps every package (back-compat for other callers)", async ({ expect }) => {
+      root = await buildPackageTree(tree)
+      const { nodeModules } = await runCollector(root, "my-app")
+      const names = nodeModules.map(m => m.name)
+      expect(names).toContain("@esbuild/darwin-arm64")
+      expect(names).toContain("@esbuild/darwin-x64")
+    })
+
+    test("null cpu (universal) applies no cpu filtering", async ({ expect }) => {
+      root = await buildPackageTree(tree)
+      const { nodeModules } = await runCollector(root, "my-app", { cpu: null, os: "darwin" })
+      const names = nodeModules.map(m => m.name)
+      expect(names).toContain("@esbuild/darwin-arm64")
+      expect(names).toContain("@esbuild/darwin-x64")
+    })
+
+    test("os mismatch drops a package even when cpu is unconstrained", async ({ expect }) => {
+      root = await buildPackageTree({
+        "package.json": { name: "my-app", version: "1.0.0", dependencies: { fsevents: "^1.0.0" } },
+        "node_modules/fsevents/package.json": { name: "fsevents", version: "1.0.0", os: ["darwin"] },
+      })
+      const linux = await runCollector(root, "my-app", { cpu: "x64", os: "linux" })
+      expect(linux.nodeModules.map(m => m.name)).not.toContain("fsevents")
+    })
+
+    test("drops a nested incompatible transitive dependency", async ({ expect }) => {
+      root = await buildPackageTree({
+        "package.json": { name: "my-app", version: "1.0.0", dependencies: { parent: "^1.0.0" } },
+        "node_modules/parent/package.json": { name: "parent", version: "1.0.0", dependencies: { "@swc/core-darwin-arm64": "^1.0.0" } },
+        "node_modules/@swc/core-darwin-arm64/package.json": { name: "@swc/core-darwin-arm64", version: "1.0.0", cpu: ["arm64"], os: ["darwin"] },
+      })
+      const { nodeModules } = await runCollector(root, "my-app", { cpu: "x64", os: "darwin" })
+      const names = nodeModules.map(m => m.name)
+      expect(names).toContain("parent")
+      expect(names).not.toContain("@swc/core-darwin-arm64")
     })
   })
 
