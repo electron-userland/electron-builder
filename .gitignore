@@ -24,7 +24,7 @@ site/
 coverage
 # Vitest per-shard reports + merged report outputs (test-summary.ts / merge-reports.ts)
 test-results/
-.vitest-reports/
+vitest-blobs/
 report-artifacts/
 html-report/
 merged-coverage/

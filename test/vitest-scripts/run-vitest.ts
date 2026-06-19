@@ -96,12 +96,15 @@ async function main() {
   // distinct. Encodes platform + shard so the merge job can group results without extra metadata.
   // Written under cwd (the repo root, and the docker `-v $(pwd):/project` mount), so reports emitted
   // inside the container surface on the host for artifact upload — same path contract as the cache.
+  // NB: the blob dir is deliberately NOT vitest's default `.vitest-reports` — actions/upload-artifact
+  // excludes dot-directories (include-hidden-files defaults to false), which would silently drop every
+  // blob from the uploaded report artifact. A non-hidden dir is included normally.
   const reportId = `${currentPlatform}-shard${index}-pid${process.pid}`
   const reporters: any[] = [
     "default",
     __dirname + "/vitest-config/vitest-smart-reporter.ts",
     ["json", { outputFile: `test-results/results-${reportId}.json` }],
-    ["blob", { outputFile: `.vitest-reports/blob-${reportId}.json` }],
+    ["blob", { outputFile: `vitest-blobs/blob-${reportId}.json` }],
   ]
 
   // Opt-in v8 coverage (VITEST_COVERAGE=true, set by the collect-coverage workflow input). Each shard

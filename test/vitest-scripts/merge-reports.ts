@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * Merges every shard's Vitest blob report (.vitest-reports/blob-*.json, emitted by run-vitest.ts)
+ * Merges every shard's Vitest blob report (vitest-blobs/blob-*.json, emitted by run-vitest.ts)
  * into the combined, downloadable reports the `merge-smart-cache` job uploads:
  *   - html-report/            interactive @vitest/ui test report (pass/fail across all shards)
  *   - merged-test-report.json machine-readable combined results
@@ -12,7 +12,7 @@
  * with) for the file paths and reporter resolution (@vitest/ui at the root) to line up.
  *
  * Usage:
- *   tsx test/vitest-scripts/merge-reports.ts [--reports-dir .vitest-reports]
+ *   tsx test/vitest-scripts/merge-reports.ts [--reports-dir vitest-blobs]
  */
 
 import { spawnSync } from "child_process"
@@ -20,7 +20,7 @@ import * as path from "path"
 
 function parseArgs(): { reportsDir: string } {
   const args = process.argv.slice(2)
-  let reportsDir = ".vitest-reports"
+  let reportsDir = "vitest-blobs"
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--reports-dir" && args[i + 1]) {
       reportsDir = args[++i]

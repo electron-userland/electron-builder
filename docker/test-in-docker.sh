@@ -20,12 +20,12 @@ pnpm ci:test # also generates test/src/generated at runtime
 # Restore ownership of files we wrote as root back to the host user so the host runner can clean
 # them up — and, for the snap core24 job, run its NATIVE `pnpm ci:test` pass into the same workspace —
 # in subsequent steps without EACCES. This container runs as root (snapcraft --privileged, npm i -g,
-# etc.), so test/src/generated plus the per-shard report dirs (test-results, .vitest-reports, coverage)
+# etc.), so test/src/generated plus the per-shard report dirs (test-results, vitest-blobs, coverage)
 # all land root-owned. We derive the host UID:GID from .git, which the host user creates before the
 # workspace is mounted into this container.
 HOST_OWNER=$(stat -c '%u:%g' /project/.git 2>/dev/null || echo "")
 if [ -n "$HOST_OWNER" ]; then
-  for dir in test/src/generated test-results .vitest-reports coverage; do
+  for dir in test/src/generated test-results vitest-blobs coverage; do
     if [ -e "/project/$dir" ]; then
       chown -R "$HOST_OWNER" "/project/$dir"
     fi
