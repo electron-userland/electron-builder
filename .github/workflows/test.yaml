@@ -266,6 +266,7 @@ jobs:
 
       - name: Install toolset via brew
         run: |
+          brew untap aws/tap azure/bicep
           brew install rpm
           brew install snapcraft
 
