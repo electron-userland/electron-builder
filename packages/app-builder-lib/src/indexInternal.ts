@@ -28,14 +28,14 @@ export { createBlockmap } from "./targets/differentialUpdateInfoBuilder.js"
 export { validateCriticalPathString } from "./targets/linux/appimage/appImageUtil.js"
 export { copyMimeTypes } from "./targets/linux/appimage/appLauncher.js"
 export { MacTargetHelper, type PlatformType } from "./targets/mac/MacTargetHelper.js"
-export { computeArchToTargetNamesMap } from "./targets/targetFactory.js"
+export { addTargetsForPlatform, computeArchToTargetNamesMap } from "./targets/targetFactory.js"
 export type { Defines } from "./targets/win/nsis/Defines.js"
 export { nsisEscapeString, NsisScriptGenerator } from "./targets/win/nsis/nsisScriptGenerator.js"
 export { checkMakensisOutput, verifyInstallerSize } from "./targets/win/nsis/nsisValidation.js"
 export { getLinuxToolsMacToolset, getLinuxToolsPath } from "./toolsets/linuxToolsMac.js"
 export { getWindowsKitsBundle } from "./toolsets/winCodeSign.js"
 export { CacheState } from "./util/cacheState.js"
-export { computeDefaultAppDirectory, doMergeConfigs, getConfig, validateConfiguration } from "./util/config/config.js"
+export { computeDefaultAppDirectory, createProjectMetadataLazy, doMergeConfigs, getConfig, validateConfiguration } from "./util/config/config.js"
 export { loadEnv, orNullIfFileNotExist } from "./util/config/load.js"
 export { validateSchema } from "./util/config/schemaValidator.js"
 export {
@@ -45,9 +45,10 @@ export {
   downloadElectronArtifact,
   ElectronGetOptions,
   getBinariesMirrorUrl,
-  getCacheDirectory,
   isSafeExtractPath,
   reinitializeProxy,
+  cacheDirectoryOverrideAllowed,
+  getCacheDirectoryInternal,
   resolveBuilderBinaryUrl,
 } from "./util/electronGet.js"
 export { buildSourceCandidates, convertIcon, getPngSize } from "./util/iconConverter.js"

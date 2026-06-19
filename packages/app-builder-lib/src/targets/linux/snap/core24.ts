@@ -45,7 +45,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
   }
 
   /** Writes the snapcraft.yaml, stages app files, then invokes `buildSnap()` to run the actual snapcraft build. */
-  async buildSnap(params: { snap: SnapcraftYAML; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<void> {
+  async buildSnap(params: { snap: SnapcraftYAML; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<string[]> {
     const { snap, appOutDir, stageDir, artifactPath } = params
 
     const snapDirResolved = path.resolve(stageDir, this.configRelativePath)
@@ -148,12 +148,12 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     if (this.packager.packagerOptions.effectiveOptionComputed != null) {
       const shouldSkip = await this.packager.packagerOptions.effectiveOptionComputed({ snap, ...buildMode })
       if (shouldSkip) {
-        return
+        return [artifactPath]
       }
     }
 
     const rootOptions = this.packager.config.snapcraft
-    await buildSnap({
+    const snaps = await buildSnap({
       snapcraftConfig: snap,
       artifactPath,
       stageDir,
@@ -161,6 +161,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       cscLink: rootOptions?.cscLink,
       ...buildMode,
     })
+    return snaps
   }
 
   /** Converts `SnapOptions24` into a fully resolved `SnapcraftYAML` descriptor for the given architecture. */

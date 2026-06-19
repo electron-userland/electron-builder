@@ -1,6 +1,6 @@
 # Code Signing for macOS
 
-macOS code signing is supported. If the configuration values are provided correctly in your package.json, then signing should be automatically executed.
+macOS code signing is supported and runs automatically once a valid signing identity is available — from your keychain or the `CSC_*` environment variables. electron-builder signs the app along with its nested frameworks, helpers, and any installer it produces, so Gatekeeper will allow it to run.
 
 On a macOS development machine, a valid and appropriate identity from your keychain will be automatically used. If no valid certificate is found, signing is skipped for all architectures — electron-builder does **not** apply an ad-hoc signature automatically. To opt in to ad-hoc signing explicitly, set `mac.identity` to `"-"` (see [Signing options](#signing-options) below).
 

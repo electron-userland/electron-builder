@@ -1,4 +1,4 @@
-import { Arch, asArray, exec, getArchSuffix, log, serializeToYaml, stripSensitiveEnvVars, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
+import { Arch, asArray, exec, getArchSuffix, log, stripSensitiveEnvVars, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 
 import { objectToArgs } from "builder-util-runtime"
@@ -11,7 +11,7 @@ import * as errorMessages from "../../errorMessages.js"
 import { LinuxPackager } from "../../linuxPackager.js"
 import { DebOptions, LinuxTargetSpecificOptions } from "../../options/linuxOptions.js"
 import { ArtifactCreated } from "../../packagerApi.js"
-import { getAppUpdatePublishConfiguration } from "../../publish/PublishManager.js"
+import { getAppUpdatePublishConfiguration, writeAppUpdateYaml } from "../../publish/PublishManager.js"
 import { getFpmPath } from "../../toolsets/fpm.js"
 import { getLinuxToolsPath } from "../../toolsets/linuxToolsMac.js"
 import { computeEnv } from "../../util/bundledTool.js"
@@ -175,7 +175,7 @@ export default class FpmTarget extends Target {
       : null
     if (publishConfig != null) {
       log.info({ resourceDir: log.filePath(resourceDir) }, `adding autoupdate files for: ${target}`)
-      await outputFile(path.join(resourceDir, "app-update.yml"), serializeToYaml(publishConfig))
+      await writeAppUpdateYaml(resourceDir, publishConfig)
       // Extra file needed for auto-updater to detect installation method
       await outputFile(path.join(resourceDir, "package-type"), target)
     }

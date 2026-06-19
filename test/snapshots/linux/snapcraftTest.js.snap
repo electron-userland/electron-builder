@@ -2096,6 +2096,17 @@ exports[`snapcraft > core24 remoteBuild build mode 1`] = `
 }
 `;
 
+exports[`snapcraft > core24 remoteBuild: buildFor array is forwarded correctly 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
 exports[`snapcraft > core24 removes chrome-sandbox when launching with --no-sandbox 1`] = `
 {
   "linux": [

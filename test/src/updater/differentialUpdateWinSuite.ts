@@ -7,9 +7,14 @@ import { OLD_VERSION_NUMBER, testAppCacheDirName } from "../helpers/updaterTestU
 import { NsisUpdater } from "electron-updater"
 import { ToolsetConfig } from "app-builder-lib/internal"
 import { doBuild, getTestUpdaterCacheDir, testBlockMap } from "./differentialUpdateHelpers"
+import { EXTENDED_TIMEOUT } from "../helpers/packTester"
 
 export function registerDifferentialWinTests(toolsets: ToolsetConfig): void {
-  test("web installer", async ({ expect }) => {
+  // This test builds nsis-web for BOTH x64 and arm64, for the old AND new version (4 nsis-web builds:
+  // 2 archs × 2 versions via doBuild), then runs a differential block-map apply on top — roughly 2× the
+  // work of the x64-only "nsis" test below. On loaded Windows CI runners it exceeds the default 10-min
+  // testTimeout, so it gets the same extended budget used by the other heavy dual-arch build tests.
+  test("web installer", { timeout: 2 * EXTENDED_TIMEOUT }, async ({ expect }) => {
     const outDirs: Array<string> = []
     const tmpDir = new TmpDir("differential-updater-test")
     // need to build both in order for this to run on both arm64 and x64 windows

@@ -1,5 +1,5 @@
 import { createRequire } from "node:module"
-import { log } from "builder-util"
+import { log, orNullIfFileNotExist } from "builder-util"
 import { promises as fs } from "fs"
 import * as path from "path"
 import type { Argv } from "yargs"
@@ -599,7 +599,7 @@ function parseConfig(text: string, format: ConfigFormat): Record<string, any> {
 }
 
 async function readFileSafe(p: string): Promise<string | null> {
-  return fs.readFile(p, "utf8").catch(e => (e.code === "ENOENT" || e.code === "ENOTDIR" ? null : Promise.reject(e)))
+  return orNullIfFileNotExist(fs.readFile(p, "utf8"))
 }
 
 async function writeBackConfig(found: FoundConfig, migrated: Record<string, any>, projectDir: string): Promise<string> {

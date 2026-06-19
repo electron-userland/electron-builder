@@ -299,7 +299,8 @@ export abstract class SigntoolBaseSignManager implements SignManager {
 
   protected isLegacyToolset(): boolean {
     const v = this.packager.config.toolsets?.winCodeSign
-    return v == null || v === "0.0.0"
+    // Only an explicit "0.0.0" pin is legacy; unset / null / "latest" / custom now resolve to a modern bundle.
+    return v === "0.0.0"
   }
 
   protected abstract computeWindowsSignArgs(options: WindowsSignTaskConfiguration, vm: VmManager): Array<string>
