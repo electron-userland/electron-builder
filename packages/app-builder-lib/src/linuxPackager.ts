@@ -48,9 +48,11 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
       return
     }
 
-    // Queue desktop emission alongside the archive build tasks. Errors from archive
-    // builds are collected by the task manager and cause the overall build to fail,
-    // preventing publishing even if the desktop file was written to disk first.
+    // Queue desktop emission as a build task alongside the archive build tasks. The task manager
+    // collects errors from every queued task, so a failing archive build still fails the overall
+    // build. (Note: emission runs concurrently with the archive builds — it is not ordered strictly
+    // after them — so, as with any other artifact, a desktop upload under `--publish` may start
+    // before a later archive failure aborts the build.)
     taskManager.add(async () => {
       const desktopEntryPath = path.join(outDir, `${this.executableName}.desktop`)
       if (this.emittedDesktopFiles.has(desktopEntryPath)) {

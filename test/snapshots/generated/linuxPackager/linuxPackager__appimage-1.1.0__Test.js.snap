@@ -355,7 +355,7 @@ exports[`LinuxPackager > AppImage arm, max compression 1`] = `
 }
 `;
 
-exports[`LinuxPackager > forbid desktop.Exec 1`] = `"Please specify executable name as linux.executableName instead of linux.desktop.Exec"`;
+exports[`LinuxPackager > forbid desktop.Exec 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
 
 exports[`LinuxPackager > html license 1`] = `
 {

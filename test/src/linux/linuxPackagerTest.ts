@@ -3,7 +3,7 @@ import { execFile as execFileCb } from "child_process"
 import * as fs from "fs-extra"
 import * as path from "path"
 import { promisify } from "util"
-import { app, appThrows } from "../helpers/packTester"
+import { app, appThrows, linuxDirTarget, modifyPackageJson } from "../helpers/packTester"
 
 const execFile = promisify(execFileCb)
 
@@ -97,7 +97,18 @@ describe.ifNotWindows("LinuxPackager desktop file", () => {
         expectedArtifacts: ["TestApp-1.1.0.zip", "testapp.desktop"],
         packed: async result => {
           const desktopFilePath = path.resolve(result.outDir, "testapp.desktop")
-          expect(await fs.readFile(desktopFilePath, "utf-8")).toMatchSnapshot()
+          const content = await fs.readFile(desktopFilePath, "utf-8")
+          // Pin the default-content contract explicitly so a dropped/renamed key is caught even if
+          // the snapshot is later regenerated incorrectly.
+          expect(content).toContain("[Desktop Entry]")
+          expect(content).toContain("Type=Application")
+          expect(content).toContain("Terminal=false")
+          expect(content).toContain("Icon=testapp")
+          expect(content).toMatch(/^Name=.+$/m)
+          expect(content).toMatch(/^Exec=.*testapp.* %U$/m)
+          expect(content).toMatch(/^StartupWMClass=.+$/m)
+          expect(content).toMatch(/^Categories=.+;$/m)
+          expect(content).toMatchSnapshot()
         },
       }
     ))
@@ -180,13 +191,14 @@ describe.ifNotWindows("LinuxPackager desktop file", () => {
       }
     ))
 
-  test("nested desktop config overrides global linux config", ({ expect }) =>
+  test("package-target desktop config does not trigger standalone archive emission", ({ expect }) =>
     app(
       expect,
       {
-        targets: Platform.LINUX.createTarget(["appImage", "rpm"], Arch.x64),
+        targets: Platform.LINUX.createTarget(["appImage", "zip"], Arch.x64),
         config: {
           linux: {
+            // Global archive emission is off; only the package target (AppImage) opts into a desktop file.
             desktop: null,
             executableName: "Foo",
           },
@@ -198,17 +210,16 @@ describe.ifNotWindows("LinuxPackager desktop file", () => {
               },
             },
           },
-          rpm: {
-            description: "Test Comment",
-            desktop: {
-              entry: {
-                Name: "Test App",
-              },
-            },
-          },
         },
       },
-      {}
+      {
+        packed: async result => {
+          // A per-target package desktop config (appImage.desktop) is bundled inside the AppImage and must
+          // NOT cause a standalone <exe>.desktop next to the zip — that is gated solely by linux.desktop.
+          const desktopArtifacts = (await fs.readdir(result.outDir)).filter(f => f.endsWith(".desktop"))
+          expect(desktopArtifacts).toEqual([])
+        },
+      }
     ))
 
   test("appimage nested desktop config", ({ expect }) =>
@@ -232,6 +243,12 @@ describe.ifNotWindows("LinuxPackager desktop file", () => {
       },
       {
         packed: async result => {
+          // The combined appImage + zip build must emit exactly ONE standalone desktop file (the
+          // archive's), and the AppImage bundles its own internally — its presence must neither
+          // suppress nor duplicate the standalone emission.
+          const desktopArtifacts = (await fs.readdir(result.outDir)).filter(f => f.endsWith(".desktop"))
+          expect(desktopArtifacts).toEqual(["testapp.desktop"])
+
           // zip desktop file
           const desktopFilePath = path.resolve(result.outDir, "testapp.desktop")
           expect(await fs.readFile(desktopFilePath, "utf-8")).toMatchSnapshot()
@@ -264,6 +281,236 @@ describe.ifNotWindows("LinuxPackager desktop file", () => {
 
           expect(stableContent).toMatchSnapshot()
         },
+      }
+    ))
+
+  test("dir target alone emits no standalone desktop file", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: linuxDirTarget,
+        config: {
+          linux: {
+            desktop: true,
+          },
+        },
+      },
+      {
+        packed: async result => {
+          // `dir` is not an archive target, so even with desktop:true no standalone .desktop is emitted.
+          const desktopArtifacts = (await fs.readdir(result.outDir)).filter(f => f.endsWith(".desktop"))
+          expect(desktopArtifacts).toEqual([])
+        },
+      }
+    ))
+
+  test("desktopName sets StartupWMClass but not the standalone archive filename", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: zipTarget,
+        config: {
+          linux: {
+            desktop: true,
+            executableName: "testapp",
+          },
+        },
+      },
+      {
+        // desktopName is package.json metadata, not a Configuration field.
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.desktopName = "com.example.Signal.desktop"
+          }),
+        expectedArtifacts: ["TestApp-1.1.0.zip", "testapp.desktop"],
+        packed: async result => {
+          // The standalone archive desktop filename is always <executableName>.desktop, NOT <desktopName>.
+          expect(await fs.pathExists(path.resolve(result.outDir, "com.example.Signal.desktop"))).toBe(false)
+          const content = await fs.readFile(path.resolve(result.outDir, "testapp.desktop"), "utf-8")
+          // ...but desktopName (minus the .desktop suffix) drives StartupWMClass for window association.
+          expect(content).toContain("StartupWMClass=com.example.Signal")
+        },
+      }
+    ))
+
+  test("fileAssociations and protocols contribute MimeType to the standalone archive desktop file", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: zipTarget,
+        config: {
+          linux: {
+            description: "Test Comment",
+            desktop: true,
+            mimeTypes: ["application/x-foo"],
+          },
+          fileAssociations: [
+            {
+              ext: "bar",
+              name: "Bar File",
+              mimeType: "application/x-bar",
+            },
+          ],
+          protocols: [
+            {
+              name: "MyApp",
+              schemes: ["myapp", "myapps"],
+            },
+          ],
+        },
+      },
+      {
+        expectedArtifacts: ["TestApp-1.1.0.zip", "testapp.desktop"],
+        packed: async result => {
+          const content = await fs.readFile(path.resolve(result.outDir, "testapp.desktop"), "utf-8")
+          const mimeLine = content.split("\n").find(l => l.startsWith("MimeType="))!
+          expect(mimeLine).toContain("application/x-foo")
+          expect(mimeLine).toContain("application/x-bar")
+          expect(mimeLine).toContain("x-scheme-handler/myapp")
+          expect(mimeLine).toContain("x-scheme-handler/myapps")
+          expect(mimeLine.endsWith(";")).toBe(true)
+        },
+      }
+    ))
+
+  test("desktopActions render into the standalone archive desktop file", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: zipTarget,
+        config: {
+          linux: {
+            description: "Test Comment",
+            desktop: {
+              entry: {
+                Name: "Test App",
+              },
+              desktopActions: {
+                NewWindow: {
+                  Name: "New Window",
+                  Exec: "app --new-window",
+                },
+                Empty: {},
+                Nullish: null,
+              },
+            },
+          },
+        },
+      },
+      {
+        expectedArtifacts: ["TestApp-1.1.0.zip", "testapp.desktop"],
+        packed: async result => {
+          const content = await fs.readFile(path.resolve(result.outDir, "testapp.desktop"), "utf-8")
+          expect(content).toContain("[Desktop Action NewWindow]")
+          expect(content).toContain("Name=New Window")
+          expect(content).toContain("Exec=app --new-window")
+          // Empty/null action configs are skipped.
+          expect(content).not.toContain("[Desktop Action Empty]")
+          expect(content).not.toContain("[Desktop Action Nullish]")
+          expect(content).toMatchSnapshot()
+        },
+      }
+    ))
+
+  test("standalone desktop file escapes newlines in desktop.entry overrides (no key injection)", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: zipTarget,
+        config: {
+          linux: {
+            desktop: {
+              entry: {
+                // A hostile override value must NOT inject a second Exec= line into the file.
+                GenericName: "Editor\nExec=/bin/sh -c id",
+              },
+            },
+          },
+        },
+      },
+      {
+        expectedArtifacts: ["TestApp-1.1.0.zip", "testapp.desktop"],
+        packed: async result => {
+          const content = await fs.readFile(path.resolve(result.outDir, "testapp.desktop"), "utf-8")
+          // Exactly one Exec= line — the injected one is neutralized.
+          expect(content.split("\n").filter(l => l.startsWith("Exec=")).length).toBe(1)
+          // The newline is escaped to a literal "\n" on a single GenericName line.
+          expect(content).toContain("GenericName=Editor\\nExec=/bin/sh -c id")
+          expect(content).not.toMatch(/^Exec=\/bin\/sh/m)
+        },
+      }
+    ))
+
+  test("standalone desktop file escapes newlines in protocol schemes (no key injection)", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: zipTarget,
+        config: {
+          linux: {
+            description: "Test Comment",
+            desktop: true,
+          },
+          protocols: [
+            {
+              name: "Evil",
+              schemes: ["myapp\nExec=/bin/sh -c id"],
+            },
+          ],
+        },
+      },
+      {
+        expectedArtifacts: ["TestApp-1.1.0.zip", "testapp.desktop"],
+        packed: async result => {
+          const content = await fs.readFile(path.resolve(result.outDir, "testapp.desktop"), "utf-8")
+          expect(content.split("\n").filter(l => l.startsWith("Exec=")).length).toBe(1)
+          expect(content).toContain("x-scheme-handler/myapp\\nExec=/bin/sh -c id")
+          expect(content).not.toMatch(/^Exec=\/bin\/sh/m)
+        },
+      }
+    ))
+
+  test("all archive formats emit exactly one shared standalone desktop file in a single build", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: Platform.LINUX.createTarget(["7z", "tar.xz", "tar.lz", "tar.bz2"], Arch.x64),
+        config: {
+          linux: {
+            description: "Test Comment",
+            desktop: {
+              entry: {
+                Name: "Test App",
+              },
+            },
+          },
+        },
+      },
+      {
+        // One desktop file is shared across every archive format built in the same pack (instance-level dedup).
+        expectedArtifacts: ["TestApp-1.1.0.7z", "TestApp-1.1.0.tar.xz", "TestApp-1.1.0.tar.lz", "TestApp-1.1.0.tar.bz2", "testapp.desktop"],
+        packed: async result => {
+          const content = await fs.readFile(path.resolve(result.outDir, "testapp.desktop"), "utf-8")
+          expect(content).toContain("Name=Test App")
+        },
+      }
+    ))
+
+  test("multi-arch archive build with shared output dir emits exactly one desktop file", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: Platform.LINUX.createTarget("zip", Arch.x64, Arch.arm64),
+        config: {
+          linux: {
+            desktop: true,
+          },
+        },
+      },
+      {
+        // emittedDesktopFiles dedups across the per-arch pack() calls when the output dir is shared,
+        // so exactly one testapp.desktop is emitted for both archive artifacts.
+        expectedArtifacts: ["TestApp-1.1.0.zip", "TestApp-1.1.0-arm64.zip", "testapp.desktop"],
       }
     ))
 })
