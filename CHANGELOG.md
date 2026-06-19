@@ -1,3 +1,14 @@
+## [26.15.5](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.4...electron-builder@26.15.5) (2026-06-19)
+
+
+### Bug Fixes
+
+* resolve `merge-smart-cache` CI step failures on branch names containing `/` ([#9931](https://github.com/electron-userland/electron-builder/issues/9931)) ([366cf3c](https://github.com/electron-userland/electron-builder/commit/366cf3c225b94ae2ea0481ed620d557560da81ec))
+* **snap:** core24 now runs the app through a generated launcher script ([#9937](https://github.com/electron-userland/electron-builder/issues/9937)) ([8388a59](https://github.com/electron-userland/electron-builder/commit/8388a597721e55150ca031331e89894384e22c60))
+* updating icons toolset to latest 1.2.1 for broader icns asset generation ([#9943](https://github.com/electron-userland/electron-builder/issues/9943)) ([07f01dd](https://github.com/electron-userland/electron-builder/commit/07f01dd289014c8bc2dfd75d5a9ea8708518bdd4))
+
+
+
 ## [26.15.4](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.3...electron-builder@26.15.4) (2026-06-16)
 
 

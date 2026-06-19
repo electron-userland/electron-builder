@@ -1,5 +1,23 @@
 # app-builder-lib
 
+## 26.15.5
+
+### Patch Changes
+
+- Fix: updating icons toolset to latest 1.2.1 for broader icns asset generation _[`#9943`](https://github.com/electron-userland/electron-builder/pull/9943) [`07f01dd`](https://github.com/electron-userland/electron-builder/commit/07f01dd289014c8bc2dfd75d5a9ea8708518bdd4) [@mmaietta](https://github.com/mmaietta)_
+- Fix(snap): core24 now runs the app through a generated launcher script, so `executableArgs`/`forceX11` flags containing `=` or quotes build correctly, and the unused `chrome-sandbox` helper is removed automatically when launching with `--no-sandbox` _[`#9937`](https://github.com/electron-userland/electron-builder/pull/9937) [`8388a59`](https://github.com/electron-userland/electron-builder/commit/8388a597721e55150ca031331e89894384e22c60) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@26.15.5`
+- `electron-builder-squirrel-windows@26.15.5`
+
+</details>
+
 ## 26.15.4
 
 ### Patch Changes
