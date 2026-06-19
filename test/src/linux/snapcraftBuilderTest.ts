@@ -1,6 +1,6 @@
 import { describe, test, expect } from "vitest"
 import { Arch } from "builder-util"
-import { snapArchStringToArch } from "app-builder-lib/src/targets/snap/snapcraftBuilder"
+import { snapArchStringToArch } from "app-builder-lib/src/targets/linux/snap/snapcraftBuilder"
 
 describe("snapArchStringToArch", () => {
   test.each([
