@@ -710,10 +710,10 @@ describe("WindowsSignAzureManager signFileWithDlib arch selection", { sequential
     vi.mocked(getDotnetRuntimeDir).mockReset()
   })
 
-  function makeAzureManager(tmpDir: string, execSpy: ReturnType<typeof vi.fn>, toVmFile = (f: string) => f): WindowsSignAzureManager {
+  function makeAzureManager(tmpDir: string, execSpy: ReturnType<typeof vi.fn>, toVmFile = (f: string) => f, toolsets: any = { winCodeSign: "1.3.0" }): WindowsSignAzureManager {
     const manager = Object.create(WindowsSignAzureManager.prototype) as WindowsSignAzureManager
     ;(manager as any).packager = {
-      config: { toolsets: { winCodeSign: "1.3.0" } },
+      config: { toolsets },
       getTempFile: (ext: string) => Promise.resolve(path.join(tmpDir, `metadata${ext}`)),
     }
     ;(manager as any).signing = {
@@ -727,14 +727,36 @@ describe("WindowsSignAzureManager signFileWithDlib arch selection", { sequential
     return manager
   }
 
-  async function signedInfo(tmpDir: string, arch: NodeJS.Architecture, toVmFile = (f: string) => f): Promise<{ signtool: string; dlib: string; dotnetRoot: string | undefined }> {
+  async function signedInfo(
+    tmpDir: string,
+    arch: NodeJS.Architecture,
+    toVmFile = (f: string) => f,
+    toolsets: any = { winCodeSign: "1.3.0" }
+  ): Promise<{ signtool: string; dlib: string; dotnetRoot: string | undefined }> {
     Object.defineProperty(process, "arch", { value: arch })
     const exec = vi.fn().mockResolvedValue(undefined)
-    const manager = makeAzureManager(tmpDir, exec, toVmFile)
+    const manager = makeAzureManager(tmpDir, exec, toVmFile, toolsets)
     await manager.signFile({ path: path.join(tmpDir, "app.exe"), options: {} as any })
     const [signtool, args, execOptions] = exec.mock.calls[0]
     const dlib = args[args.indexOf("/dlib") + 1]
     return { signtool, dlib, dotnetRoot: execOptions?.env?.DOTNET_ROOT }
+  }
+
+  // The modern default: an unset / null / "latest" winCodeSign resolves to the newest bundle
+  // (>= 1.3.0), which ships the ATS dlib + .NET payload — so Azure Trusted Signing uses the fast
+  // signtool /dlib path WITHOUT requiring an explicit "1.3.0" pin.
+  for (const [label, toolsets] of [
+    ["toolsets absent", {}],
+    ["winCodeSign null", { winCodeSign: null }],
+    ['winCodeSign "latest"', { winCodeSign: "latest" }],
+  ] as const) {
+    test(`modern default (${label}) activates the dlib path on an x64 host`, async ({ tmpDir }) => {
+      const tmpDirPath = await tmpDir.createTempDir()
+      const { signtool, dlib, dotnetRoot } = await signedInfo(tmpDirPath, "x64", f => f, toolsets)
+      expect(signtool).toBe(path.resolve("/mock-kits", "x64", "signtool.exe"))
+      expect(dlib).toBe(path.resolve("/mock-ats-bundle", "x64", "Azure.CodeSigning.Dlib.dll"))
+      expect(dotnetRoot).toBe(path.resolve("/mock-dotnet-runtime"))
+    })
   }
 
   test("arm64 host falls back to the x64 ats-bundle (no arm64 dlib exists)", async ({ tmpDir }) => {

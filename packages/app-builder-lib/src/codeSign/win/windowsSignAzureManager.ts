@@ -5,7 +5,8 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../../core.js"
 import { resolveWindowsSigningConfiguration, WindowsAzureSigningConfig, WindowsConfiguration } from "../../options/winOptions.js"
-import { getAtsBundleDir, getDotnetRuntimeDir, getWindowsKitsBundle } from "../../toolsets/winCodeSign.js"
+import { getAtsBundleDir, getDotnetRuntimeDir, getWindowsKitsBundle, WIN_CODESIGN_LATEST } from "../../toolsets/winCodeSign.js"
+import { resolveToolsetVersion } from "../../toolsets/version.js"
 import { VmManager } from "../../vm/vm.js"
 import { WineVmManager } from "../../vm/WineVm.js"
 import { WinPackager } from "../../winPackager.js"
@@ -42,12 +43,15 @@ export class WindowsSignAzureManager implements SignManager {
   }
 
   private isLegacyMode(): boolean {
-    const { winCodeSign: wcs = null } = this.packager.config.toolsets ?? {}
-    if (typeof wcs === "string") {
-      return semver.lt(wcs, minimumWinCodeSignVersionForDlib)
+    const wcs = this.packager.config.toolsets?.winCodeSign
+    // ToolsetCustom object = user-managed bundle (provides its own dlib alongside signtool) → not legacy.
+    if (typeof wcs === "object" && wcs != null) {
+      return false
     }
-    // null = built-in toolset not configured → legacy; ToolsetCustom object = user-managed → not legacy
-    return wcs == null
+    // Unset / null / "latest" resolve to the newest bundle, which ships the ATS dlib + .NET payload.
+    // An explicit version below 1.3.0 (e.g. "0.0.0", "1.2.1") has no dlib → legacy PowerShell.
+    const resolved = resolveToolsetVersion(wcs, WIN_CODESIGN_LATEST)
+    return semver.lt(resolved, minimumWinCodeSignVersionForDlib)
   }
 
   async initialize(): Promise<void> {
@@ -55,10 +59,12 @@ export class WindowsSignAzureManager implements SignManager {
       return
     }
 
-    const { winCodeSign: wcs = null } = this.packager.config.toolsets ?? {}
-    const reason = typeof wcs === "string" ? `toolsets.winCodeSign "${wcs}" is below the minimum "${minimumWinCodeSignVersionForDlib}"` : `toolsets.winCodeSign is not set`
+    const wcs = this.packager.config.toolsets?.winCodeSign
     log.info(
-      { reason, guidance: `set toolsets.winCodeSign to "${minimumWinCodeSignVersionForDlib}" to use the faster signtool /dlib integration` },
+      {
+        reason: `toolsets.winCodeSign "${String(wcs)}" is below the minimum "${minimumWinCodeSignVersionForDlib}"`,
+        guidance: `leave toolsets.winCodeSign unset (or set it to "${minimumWinCodeSignVersionForDlib}" / "latest") to use the faster signtool /dlib integration`,
+      },
       `Azure Trusted Signing: falling back to legacy PowerShell (Invoke-TrustedSigning)`
     )
 
@@ -130,7 +136,8 @@ export class WindowsSignAzureManager implements SignManager {
 
   private async signFileWithDlib(options: WindowsSignOptions): Promise<boolean> {
     const { signing } = this
-    const winCodeSign = this.packager.config.toolsets!.winCodeSign!
+    const winCodeSign = this.packager.config.toolsets?.winCodeSign
+    const isCustom = typeof winCodeSign === "object" && winCodeSign != null
 
     // The ATS payload (dlib + its dependency closure) ships x64/x86 only; the bundle's arm64
     // dir has no dlib. On arm64 hosts use the x64 signtool + dlib — x64 signtool runs under
@@ -139,22 +146,25 @@ export class WindowsSignAzureManager implements SignManager {
     const { kit: kitDir } = await getWindowsKitsBundle({ winCodeSign, resourcesDir: this.packager.buildResourcesDir })
     // For custom toolsets the kit lives within buildResourcesDir; enforce that constraint.
     // For versioned/cached bundles no base constraint is needed (paths are in the tool cache).
-    const safeKitDir = sanitizeDirPath(kitDir, typeof winCodeSign === "object" ? this.packager.buildResourcesDir : undefined)
+    const safeKitDir = sanitizeDirPath(kitDir, isCustom ? this.packager.buildResourcesDir : undefined)
     const signtoolPath = path.join(safeKitDir, "signtool.exe")
 
     let dlibPath: string
     let dotnetRootPath: string | null = null
 
-    if (typeof winCodeSign === "string") {
-      // 1.3.0+: dlib ships in a separate ats-bundle with its full native dependency closure
-      // (Ijwhost.dll, VC++ runtime, etc.). The .NET 8 framework is in a separate dotnet-runtime
-      // bundle; DOTNET_ROOT tells Ijwhost where to find hostfxr.dll → shared framework.
-      const safeAtsDir = sanitizeDirPath(await getAtsBundleDir(winCodeSign))
-      dlibPath = path.join(safeAtsDir, arch === Arch.ia32 ? "x86" : "x64", "Azure.CodeSigning.Dlib.dll")
-      dotnetRootPath = sanitizeDirPath(await getDotnetRuntimeDir(winCodeSign))
-    } else {
+    if (typeof winCodeSign === "object" && winCodeSign != null) {
       // Custom toolset: user provides the dlib alongside signtool in the kit dir.
       dlibPath = path.join(safeKitDir, "Azure.CodeSigning.Dlib.dll")
+    } else {
+      // Built-in bundle. Unset / null / "latest" resolve to the newest version (>= 1.3.0); an
+      // explicit >= 1.3.0 version is used as-is. The dlib ships in a separate ats-bundle with its
+      // full native dependency closure (Ijwhost.dll, VC++ runtime, etc.). The .NET 8 framework is
+      // in a separate dotnet-runtime bundle; DOTNET_ROOT tells Ijwhost where to find hostfxr.dll →
+      // shared framework.
+      const version = resolveToolsetVersion(winCodeSign, WIN_CODESIGN_LATEST)
+      const safeAtsDir = sanitizeDirPath(await getAtsBundleDir(version))
+      dlibPath = path.join(safeAtsDir, arch === Arch.ia32 ? "x86" : "x64", "Azure.CodeSigning.Dlib.dll")
+      dotnetRootPath = sanitizeDirPath(await getDotnetRuntimeDir(version))
     }
 
     const metadataPath = await this.packager.getTempFile(".json")

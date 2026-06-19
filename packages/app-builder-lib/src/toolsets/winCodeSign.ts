@@ -9,7 +9,7 @@ import { getCustomToolsetPath } from "./custom.js"
 import { resolveToolsetVersion } from "./version.js"
 
 // Newest win-codesign bundle — selected when the config is unset / null / "latest".
-const WIN_CODESIGN_LATEST = "1.3.0"
+export const WIN_CODESIGN_LATEST = "1.3.0"
 
 function getLegacyWinCodeSignBin(): Promise<string> {
   return downloadBuilderToolset({
