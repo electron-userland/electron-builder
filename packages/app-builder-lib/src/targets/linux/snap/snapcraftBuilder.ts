@@ -1,18 +1,14 @@
-import { InvalidConfigurationError, isEmptyOrSpaces, log, spawn, stripSensitiveEnvVars } from "builder-util"
-import * as childProcess from "child_process"
+import { exec, InvalidConfigurationError, isEmptyOrSpaces, log, spawn, stripSensitiveEnvVars } from "builder-util"
 import { randomUUID } from "crypto"
 import { resolveSnapCredentials } from "electron-publish"
 
 import * as path from "path"
-import * as util from "util"
 import { LinuxPackager } from "../../../linuxPackager.js"
 import { RemoteBuildOptions } from "../../../options/SnapOptions.js"
 import { SnapcraftYAML } from "./snapcraft.js"
 import { deepAssign, sleep } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
 const { copyFile, ensureDir, pathExists, readdir, remove } = _fsExtra
-
-const execAsync = util.promisify(childProcess.exec)
 
 export const SNAPCRAFT_YAML_OPTIONS = { indent: 2, lineWidth: -1, noRefs: true } as const
 export const DEFAULT_STAGE_PACKAGES: string[] = ["libnspr4", "libnss3", "libxss1", "libappindicator3-1", "libsecret-1-0"]
@@ -44,18 +40,15 @@ interface BuildSnapOptions {
  */
 async function validateSnapcraftYamlWithCLI(workDir: string): Promise<void> {
   try {
-    const { stdout } = await execAsync("snapcraft expand-extensions", {
+    const stdout = await exec("snapcraft", ["expand-extensions"], {
       cwd: workDir,
       timeout: 30000,
     })
     log.debug({ expandedYaml: stdout }, "validated extended snapcraft.yaml")
   } catch (error: any) {
-    log.error({ error: error.message, stderr: error.stderr }, "snapcraft.yaml validation failed")
-    throw new Error(
-      `Invalid snapcraft.yaml: ${error.message}\n` +
-        `Snapcraft output: ${error.stderr || error.stdout || "No output"}\n` +
-        `Run 'snapcraft expand-extensions' in ${workDir} for more details`
-    )
+    // builder-util's exec folds stdout/stderr into the ExecError message
+    log.error({ error: error.message }, "snapcraft.yaml validation failed")
+    throw new Error(`Invalid snapcraft.yaml: ${error.message}\n` + `Run 'snapcraft expand-extensions' in ${workDir} for more details`)
   }
 }
 
@@ -291,7 +284,7 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string> {
  */
 async function ensureSnapcraftInstalled(): Promise<void> {
   try {
-    const { stdout } = await execAsync("snapcraft --version")
+    const stdout = await exec("snapcraft", ["--version"])
     log.info({ version: stdout.trim() }, "snapcraft found")
   } catch (error: any) {
     log.error({ error: error.message }, "snapcraft is not installed")
@@ -336,7 +329,7 @@ async function ensureRemoteBuildAuthentication(cscLink: string | undefined, reso
 
   // 3. Interactive snapcraft session.
   try {
-    const { stdout } = await execAsync("snapcraft whoami")
+    const stdout = await exec("snapcraft", ["whoami"])
     if (stdout.includes("email:")) {
       log.debug({ account: stdout.trim() }, "already authenticated with snapcraft")
       return {}
