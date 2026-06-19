@@ -1,3 +1,27 @@
+# [27.0.0-alpha.4](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.3...electron-builder@27.0.0-alpha.4) (2026-06-18)
+
+
+### Bug Fixes
+
+* **mac:** resolve universal build failure with platform-specific single-arch dependencies ([#9942](https://github.com/electron-userland/electron-builder/issues/9942)) ([b84a1f4](https://github.com/electron-userland/electron-builder/commit/b84a1f40116287d852da4a5d7307c59b600effba))
+* **nsis:** preserve `$(...)` LangString references in escaped NSIS define values (e.g. `shortcutName: "$(customSN)"`) ([#9934](https://github.com/electron-userland/electron-builder/issues/9934)) ([344d156](https://github.com/electron-userland/electron-builder/commit/344d156dd01c3427569b3cd1a37f43b8a5ff5990))
+* resolve `merge-smart-cache` CI job failing to upload when branch name contains `/` (9932) ([a4b4d65](https://github.com/electron-userland/electron-builder/commit/a4b4d65fc5952df87363b0bb1466e24b7cf29a3e))
+* test noise and stability (icon conv toolset lock, corepack noise, signtool failure) ([#9935](https://github.com/electron-userland/electron-builder/issues/9935)) ([d22a6f7](https://github.com/electron-userland/electron-builder/commit/d22a6f72dd8ddc1e945cc70719adfc373f605118))
+* **test:** stabilize corepack warmup during CI setup via retry mechanism ([#9933](https://github.com/electron-userland/electron-builder/issues/9933)) ([2cbbb93](https://github.com/electron-userland/electron-builder/commit/2cbbb9392031e87ff91d48041bc57dbce45d1875))
+* **win:** retry the spurious "The batch file cannot be found." cmd.exe race condition ([#9929](https://github.com/electron-userland/electron-builder/issues/9929)) ([9faa8c8](https://github.com/electron-userland/electron-builder/commit/9faa8c8198f5e612d54ebcdd0904a74b338afb33))
+* **win:** serialize concurrent signtool invocations with lockfile ([#9920](https://github.com/electron-userland/electron-builder/issues/9920)) ([449e8d4](https://github.com/electron-userland/electron-builder/commit/449e8d4da781af2550684809bbac3f4acafcc92e))
+
+
+### Features
+
+* escape xml for appxmanifest; consolidate usage to `builder-util` ([#9853](https://github.com/electron-userland/electron-builder/issues/9853)) ([deafee9](https://github.com/electron-userland/electron-builder/commit/deafee9fe5f7bccbf52e73cd0c6085e767f921ce))
+* **linux:** unified `executableArgs` entrypoint for Linux targets ([#9922](https://github.com/electron-userland/electron-builder/issues/9922)) ([6a0f35a](https://github.com/electron-userland/electron-builder/commit/6a0f35aa1e58a0c37794d1646927a1a881098913))
+* **nsis:** add Hebrew (he) translations and bundle he_IL for installer messages ([#9927](https://github.com/electron-userland/electron-builder/issues/9927)) ([d21a771](https://github.com/electron-userland/electron-builder/commit/d21a77117e4836cf8ef93b78210b67c86f053d6a))
+* programmatic v26->v27 schema migrator ([#9941](https://github.com/electron-userland/electron-builder/issues/9941)) ([2a1c06f](https://github.com/electron-userland/electron-builder/commit/2a1c06fa6319e3abea381f6b9e359d59a8191649))
+* Remove `linux.syncDesktopName` — always sync the installed `.desktop` filename (BREAKING) ([#9908](https://github.com/electron-userland/electron-builder/issues/9908)) ([fae5232](https://github.com/electron-userland/electron-builder/commit/fae52329c636d3640c68ba4db5db013ccfa42bc2))
+
+
+
 # [27.0.0-alpha.3](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.2...electron-builder@27.0.0-alpha.3) (2026-06-16)
 
 

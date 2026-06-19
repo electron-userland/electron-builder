@@ -1,4 +1,4 @@
-import { asArray, copyDir, DO_NOT_USE_HARD_LINKS, isEmptyOrSpaces, log, MAX_FILE_REQUESTS, statOrNull, unlinkIfExists } from "builder-util"
+import { asArray, copyDir, DO_NOT_USE_HARD_LINKS, isEmptyOrSpaces, log, MAX_FILE_REQUESTS, sanitizeDirPath, statOrNull, unlinkIfExists } from "builder-util"
 import _fsExtra from "fs-extra"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
@@ -174,7 +174,7 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
  */
 async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, _distMacOsAppName: string): Promise<boolean> {
   async function selectElectron(filepath: string) {
-    const resolvedDist = path.isAbsolute(filepath) ? filepath : path.resolve(packager.projectDir, filepath)
+    const resolvedDist = sanitizeDirPath(path.isAbsolute(filepath) ? filepath : path.resolve(packager.projectDir, filepath))
 
     const electronDistStats = await statOrNull(resolvedDist)
     if (!electronDistStats) {

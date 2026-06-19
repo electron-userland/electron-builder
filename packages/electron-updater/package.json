@@ -1,6 +1,6 @@
 {
   "name": "electron-updater",
-  "version": "7.0.0-alpha.2",
+  "version": "7.0.0-alpha.3",
   "description": "Cross platform updater for electron applications",
   "type": "module",
   "main": "./dist/index.js",
