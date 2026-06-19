@@ -4,6 +4,13 @@ import fs from "fs-extra"
 import * as path from "path"
 import * as semver from "semver"
 
+// Tolerant package.json read for the node-module collectors: swallows ALL errors (not just ENOENT) to
+// null, since the collectors intentionally skip unreadable entries (e.g. cross-drive Windows junctions
+// whose failures are not ENOENT). Distinct from builder-util's orNullIfFileNotExist, which rethrows non-ENOENT.
+export function readJsonOrNull<T = any>(file: string): Promise<T | null> {
+  return fs.readJson(file).catch(() => null)
+}
+
 export enum LogMessageByKey {
   PKG_DUPLICATE_REF = "duplicate dependency references",
   PKG_DUPLICATE_REF_UNRESOLVED = "unresolved duplicate dependency references",
@@ -64,7 +71,7 @@ export class ModuleManager {
     this.logSummary = this.createLogSummarySyncProxy()
 
     this.exists = this.createAsyncProxy(this.existsMap, (p: string) => exists(p))
-    this.json = this.createAsyncProxy(this.jsonMap, (p: string) => fs.readJson(p).catch(() => null))
+    this.json = this.createAsyncProxy(this.jsonMap, (p: string) => readJsonOrNull(p))
     this.lstat = this.createAsyncProxy(this.lstatMap, (p: string) => fs.lstat(p).catch(() => null))
     this.packageData = this.createAsyncProxy(this.packageDataMap, (p: string) => this.locatePackageVersionFromCacheKey(p).catch(() => null))
     this.realPath = this.createAsyncProxy(this.realPathMap, async (p: string) => {

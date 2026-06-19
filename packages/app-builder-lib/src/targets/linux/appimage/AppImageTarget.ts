@@ -1,18 +1,16 @@
-import { Arch, log, serializeToYaml } from "builder-util"
+import { Arch, log } from "builder-util"
 
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../../../core.js"
 import { LinuxPackager } from "../../../linuxPackager.js"
 import { AppImageOptions } from "../../../options/linuxOptions.js"
-import { getAppUpdatePublishConfiguration } from "../../../publish/PublishManager.js"
+import { getAppUpdatePublishConfiguration, writeAppUpdateYaml } from "../../../publish/PublishManager.js"
 import { getNotLocalizedLicenseFile } from "../../../util/license.js"
 import { LinuxTargetHelper } from "../LinuxTargetHelper.js"
 import { createStageDir } from "../../targetUtil.js"
 import { buildLegacyFuse2AppImage, buildStaticRuntimeAppImage } from "./appImageUtil.js"
 import { BlockMapDataHolder } from "builder-util-runtime"
-import _fsExtra from "fs-extra"
-const { outputFile } = _fsExtra
 
 // https://unix.stackexchange.com/questions/375191/append-to-sub-directory-inside-squashfs-file
 
@@ -73,7 +71,7 @@ export default class AppImageTarget extends Target {
     ])
 
     if (publishConfig != null) {
-      await outputFile(path.join(packager.getResourcesDir(appOutDir), "app-update.yml"), serializeToYaml(publishConfig))
+      await writeAppUpdateYaml(packager.getResourcesDir(appOutDir), publishConfig)
     }
 
     // Validated once here; throws InvalidConfigurationError for path traversal / NUL.

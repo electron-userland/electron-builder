@@ -387,9 +387,6 @@ importers:
       fs-extra:
         specifier: ^11.3.0
         version: 11.3.0
-      lazy-val:
-        specifier: ^1.0.5
-        version: 1.0.5
       simple-update-notifier:
         specifier: 2.0.0
         version: 2.0.0

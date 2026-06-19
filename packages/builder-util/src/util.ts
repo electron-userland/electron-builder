@@ -518,6 +518,12 @@ export class InvalidConfigurationError extends Error {
   }
 }
 
+export function assertVersionHasNoVPrefix(version: string): void {
+  if (version.startsWith("v")) {
+    throw new InvalidConfigurationError(`Version must not start with "v": ${version}`)
+  }
+}
+
 /**
  * Resolves a user-supplied path to an absolute form and validates it.
  *
