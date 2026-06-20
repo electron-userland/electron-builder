@@ -73,6 +73,7 @@ To stay on a legacy bundle, pin the toolset to `"0.0.0"`. Because `winCodeSign` 
 | [Toolset env-var overrides removed](#toolset-env-var-overrides-removed) | — | Replace `APPIMAGE_TOOLS_PATH`, `ELECTRON_BUILDER_NSIS_DIR`, `USE_SYSTEM_WINE`, … with `toolsets.X: { url, checksum }` |
 | [`CI_BUILD_TAG` env var removed](#ci_build_tag-environment-variable) | — | Use `CI_COMMIT_TAG` |
 | [Azure Trusted Signing `/dlib` is the default](#azure-trusted-signing-signtool-dlib-is-the-default) | — | Pin `winCodeSign` below `1.3.0` only to force the legacy PowerShell path |
+| [New: `win.target: "msix"` (beta)](#new-msix-target-beta) | — | Optional, additive — the default `winCodeSign` works (only the legacy `0.0.0` bundle is rejected) |
 | [`PlatformPackager.info` & `platformSpecificBuildOptions` now `protected`](#programmatic--plugin-author-api-changes) | — | Plugin authors: hard break — `.info` no longer compiles externally; use the new pass-through getters |
 | [Linux `.desktop` `Exec` now runs a generated `*-launcher` script](#linux-launcher-entrypoint) | — | Update custom `.desktop`/AppArmor/MIME tooling that hard-codes the `Exec` command |
 | [`node_modules` arch/os-filtered on every build](#node_modules-are-now-archos-filtered-on-every-build) | — | Awareness — packages whose `cpu`/`os` mismatch the target are now excluded |
@@ -550,6 +551,18 @@ Azure Trusted Signing (`win.sign: { type: "azure" }`) uses the faster `signtool 
 ```
 
 The signer resolves the path from the `winCodeSign` value: unset / `null` / `"latest"` and any explicit version `>= 1.3.0` use `signtool /dlib`; a version below `1.3.0` (no `dlib` in the bundle) uses PowerShell. A `ToolsetCustom` object uses `dlib` from your supplied bundle.
+
+---
+
+## New: MSIX target (beta)
+
+v27 adds a beta `msix` Windows target alongside `appx`, producing `.msix`, `.msixbundle` (multi-arch), and `.msixupload` (Store) artifacts with modern manifest features that AppX cannot express — Package Integrity (`uap10`) and Windows Services (`desktop6`). It is **purely additive: no migration is required.** It works with the default `winCodeSign` toolset (only the legacy `0.0.0` bundle, which lacks the MSIX-capable Windows SDK, is rejected). MSIX builds on Windows 10+ natively or on macOS via Parallels Desktop (Linux is unsupported), and does **not** auto-update via electron-updater (updates come from the Microsoft Store or App Installer). See the [MSIX target documentation](../msix) for the full configuration surface.
+
+```yaml
+win:
+  target: msix
+# no toolsets pin needed — the default winCodeSign is MSIX-capable
+```
 
 ---
 

@@ -7,6 +7,7 @@ import { AppImageOptions, DebOptions, FlatpakOptions, LinuxConfiguration, LinuxT
 import { DmgOptions, MacConfiguration, MasConfiguration } from "./options/macOptions.js"
 import { MsiOptions } from "./options/MsiOptions.js"
 import { MsiWrappedOptions } from "./options/MsiWrappedOptions.js"
+import { MsixOptions } from "./options/MsixOptions.js"
 import { PkgOptions } from "./options/pkgOptions.js"
 import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions.js"
 import { SnapcraftOptions } from "./options/SnapOptions.js"
@@ -152,6 +153,8 @@ export interface CommonConfiguration {
    * @see {@link AppXOptions}
    */
   readonly appx?: AppXOptions | null
+  /** MSIX package options. MSIX is the modern successor to AppX with additional deployment features. */
+  readonly msix?: MsixOptions | null
   /**
    * WiX-based MSI installer options.
    *

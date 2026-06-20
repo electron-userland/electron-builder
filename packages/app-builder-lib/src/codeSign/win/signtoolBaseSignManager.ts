@@ -12,6 +12,7 @@ import {
   WindowsSigntoolSigningConfig,
 } from "../../options/winOptions.js"
 import AppXTarget from "../../targets/win/AppxTarget.js"
+import MsixTarget from "../../targets/win/MsixTarget.js"
 import { getSignToolPath } from "../../toolsets/winCodeSign.js"
 import { ToolInfo } from "../../util/bundledTool.js"
 import { resolveFunction } from "../../util/resolve.js"
@@ -194,8 +195,8 @@ export abstract class SigntoolBaseSignManager implements SignManager {
 
   // https://github.com/electron-userland/electron-builder/issues/2108#issuecomment-333200711
   async computePublisherName(target: Target, publisherName: string | null) {
-    if (target instanceof AppXTarget && (await this.cscInfo.value) == null) {
-      log.info({ reason: "Windows Store only build" }, "AppX is not signed")
+    if ((target instanceof AppXTarget || target instanceof MsixTarget) && (await this.cscInfo.value) == null) {
+      log.info({ reason: "Windows Store only build" }, "AppX/MSIX package is not signed")
       return publisherName ?? "CN=ms"
     }
 
@@ -225,7 +226,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
     // msi does not support dual-signing
     if (options.path.endsWith(".msi")) {
       hashes = [hashes != null && !hashes.includes("sha1") ? "sha256" : "sha1"]
-    } else if (options.path.endsWith(".appx")) {
+    } else if (options.path.endsWith(".appx") || options.path.endsWith(".msix") || options.path.endsWith(".msixbundle")) {
       hashes = ["sha256"]
     } else if (hashes == null) {
       hashes = ["sha1", "sha256"]

@@ -50,6 +50,7 @@ const sidebars: SidebarsConfig = {
         { type: "doc", id: "win", label: "Windows" },
         { type: "doc", id: "nsis", label: "NSIS" },
         { type: "doc", id: "appx", label: "AppX" },
+        { type: "doc", id: "msix", label: "MSIX" },
         { type: "doc", id: "msi", label: "MSI" },
         { type: "doc", id: "msi-wrapped", label: "MSI Wrapped" },
         { type: "doc", id: "squirrel-windows", label: "Squirrel Windows" },
