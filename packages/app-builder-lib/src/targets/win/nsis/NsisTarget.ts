@@ -37,7 +37,7 @@ import { NsisOptions, PortableOptions } from "./nsisOptions.js"
 import { NsisScriptGenerator, nsisEscapeString } from "./nsisScriptGenerator.js"
 import { ELECTRON_BUILDER_NS_UUID, ProgIdMaker } from "./progId.js"
 import { getMakeNsisPath, getNsisPluginsPath } from "../../../toolsets/nsis.js"
-import { AppPackageHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil.js"
+import { AppPackageHelper, CopyElevateHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil.js"
 import { checkMakensisOutput, verifyInstallerSize } from "./nsisValidation.js"
 import _fsExtra from "fs-extra"
 const { readFile, stat, unlink } = _fsExtra
@@ -104,7 +104,7 @@ export class NsisTarget extends Target {
   }
 
   /** @private */
-  async buildAppPackage(appOutDir: string, arch: Arch): Promise<PackageFileInfo> {
+  async buildAppPackage(appOutDir: string, arch: Arch, elevateHelper?: CopyElevateHelper | null): Promise<PackageFileInfo> {
     const options = this.options
     const packager = this.packager
 
@@ -121,6 +121,15 @@ export class NsisTarget extends Target {
     const timer = time(`nsis package, ${Arch[arch]}`)
     await archive(format, archiveFile, appOutDir, isBuildDifferentialAware ? configureDifferentialAwareArchiveOptions(archiveOptions) : archiveOptions)
     timer.end()
+
+    // Inject elevate.exe into the archive via a temp staging dir, never by mutating appOutDir
+    // during packaging. The copy into win-unpacked is deferred until all targets finish, so
+    // concurrent targets (Squirrel, ZIP, etc.) never pick up elevate.exe non-deterministically.
+    // `archiveOptions` was mutated in place by configureDifferentialAwareArchiveOptions above
+    // (when differential-aware), so it already reflects the effective compression settings.
+    if (elevateHelper) {
+      await elevateHelper.addToArchive(archiveFile, this, format, archiveOptions, appOutDir)
+    }
 
     if (isBuildDifferentialAware && this.isWebInstaller) {
       const data = await appendBlockmap(archiveFile)

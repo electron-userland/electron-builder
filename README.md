@@ -97,11 +97,13 @@ See the full documentation on [electron.build](https://www.electron.build).
 
 **Node.js >=22.12.0** is required for v27.
 
-> **Upgrading from v26?** Run the automated migration command first — it rewrites your static config in place:
+> **⚠️ Upgrading from v26?** v27 is a major release with breaking changes (native ESM, Node >=22.12, and removed deprecated APIs). **Read the breaking changes before upgrading:** [electron.build/docs/migration/v27-breaking-changes](https://www.electron.build/docs/migration/v27-breaking-changes)
+>
+> Then run the automated migration command — it rewrites your config in place:
 > ```bash
 > electron-builder migrate-schema
 > ```
-> Full details: **[v26 → v27 migration guide](./MIGRATION.md)** · [electron.build/docs/migration/v26-to-v27](https://www.electron.build/docs/migration/v26-to-v27)
+> Step-by-step walkthrough: **[v26 → v27 migration guide](./MIGRATION.md)** · [electron.build/docs/migration/v26-to-v27](https://www.electron.build/docs/migration/v26-to-v27)
 
 ## Installation
 ```

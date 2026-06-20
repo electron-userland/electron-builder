@@ -43,17 +43,18 @@ runs:
           electron-builder-binaries-${{ runner.os }}-
 
     - name: Compute Vitest smart cache ref
+      id: compute-cache-ref
       run: |
-        PR_NUM="${{ github.event.pull_request.number }}"
-        if [ -n "$PR_NUM" ]; then
-          echo "VITEST_CACHE_REF=PR-${PR_NUM}" >> "$GITHUB_ENV"
+        if [ -n "${PR_NUM}" ]; then
+          echo "value=PR-${PR_NUM}" >> "$GITHUB_OUTPUT"
         else
           # Artifact names cannot contain "/", so sanitize slashes in branch
           # names like "release/v26" -> "release-v26" (keep in sync with detectRef in fetch-smart-cache.ts).
-          REF_NAME="${{ github.ref_name }}"
-          echo "VITEST_CACHE_REF=${REF_NAME//\//-}" >> "$GITHUB_ENV"
+          echo "value=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
         fi
       shell: bash
+      env:
+        PR_NUM: ${{ github.event.pull_request.number }}
 
     # Skip the restore entirely on a reset run: there is no point downloading the previous cache
     # only to ignore it. Combined with the RESET_VITEST_SHARD_CACHE guard in loadCache(), this makes
@@ -65,14 +66,29 @@ runs:
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
+        VITEST_CACHE_REF: ${{ steps.compute-cache-ref.outputs.value }}
 
     - name: Set up Vitest smart cache reset flag
-      run: echo "RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}" >> $GITHUB_ENV
+      run: |
+        if [ "${INPUTS_RESET_VITEST_SMART_CACHE}" = "true" ]; then
+          echo "RESET_VITEST_SHARD_CACHE=true" >> "$GITHUB_ENV"
+        else
+          echo "RESET_VITEST_SHARD_CACHE=false" >> "$GITHUB_ENV"
+        fi
       shell: bash
+      env:
+        INPUTS_RESET_VITEST_SMART_CACHE: ${{ inputs.reset-vitest-smart-cache }}
 
     - name: Set up Vitest coverage flag
-      run: echo "VITEST_COVERAGE=${{ inputs.collect-coverage }}" >> $GITHUB_ENV
+      run: |
+        if [ "${INPUTS_COLLECT_COVERAGE}" = "true" ]; then
+          echo "VITEST_COVERAGE=true" >> "$GITHUB_ENV"
+        else
+          echo "VITEST_COVERAGE=false" >> "$GITHUB_ENV"
+        fi
       shell: bash
+      env:
+        INPUTS_COLLECT_COVERAGE: ${{ inputs.collect-coverage }}
 
 ## Usage
 # - name: Setup Tests

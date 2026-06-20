@@ -1,29 +1,47 @@
 import { Arch, Platform } from "electron-builder"
+import * as path from "path"
+import * as fs from "fs/promises"
+import { archiveContains } from "../helpers/archiveHelper"
 import { app, assertPack } from "../helpers/packTester"
 
 // tests are heavy, to distribute tests across CircleCI machines evenly, these tests were moved from oneClickInstallerTest
 
 test("web installer", ({ expect }) =>
-  app(expect, {
-    targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64, Arch.arm64),
-    config: {
-      publish: {
-        provider: "s3",
-        bucket: "develar",
-        path: "test",
-      },
-      electronFuses: {
-        runAsNode: true,
-        enableCookieEncryption: true,
-        enableNodeOptionsEnvironmentVariable: true,
-        enableNodeCliInspectArguments: true,
-        enableEmbeddedAsarIntegrityValidation: true,
-        onlyLoadAppFromAsar: true,
-        loadBrowserProcessSpecificV8Snapshot: true,
-        grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+  app(
+    expect,
+    {
+      targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64, Arch.arm64),
+      config: {
+        publish: {
+          provider: "s3",
+          bucket: "develar",
+          path: "test",
+        },
+        electronFuses: {
+          runAsNode: true,
+          enableCookieEncryption: true,
+          enableNodeOptionsEnvironmentVariable: true,
+          enableNodeCliInspectArguments: true,
+          enableEmbeddedAsarIntegrityValidation: true,
+          onlyLoadAppFromAsar: true,
+          loadBrowserProcessSpecificV8Snapshot: true,
+          grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+        },
       },
     },
-  }))
+    {
+      packed: async context => {
+        // The persistent web app package (*.nsis.7z) is the one place elevate.exe must live —
+        // it is injected straight into the archive, never via appOutDir (#9852). This is the
+        // cross-platform positive counterpart to the win-unpacked/Squirrel "absent" assertions.
+        const archives = (await fs.readdir(context.outDir, { recursive: true })).filter(f => f.endsWith(".nsis.7z"))
+        expect(archives.length, "expected at least one .nsis.7z web app package").toBeGreaterThan(0)
+        for (const rel of archives) {
+          expect(await archiveContains(path.join(context.outDir, rel), "resources/elevate.exe"), `${rel} must contain resources/elevate.exe`).toBe(true)
+        }
+      },
+    }
+  ))
 
 test("web installer (default github)", ({ expect }) =>
   app(expect, {

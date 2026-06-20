@@ -129,6 +129,15 @@ export class Packager {
 
   readonly tempDirManager = new TmpDir("packager")
 
+  // Tasks that must run after EVERY target has finished building — the only point at which the
+  // shared appOutDir can be mutated without racing a concurrent target that reads it. Used by NSIS
+  // to write elevate.exe into win-unpacked without it leaking into Squirrel/zip/etc. (see #9852).
+  private readonly buildFinalizeTasks: Array<() => Promise<void>> = []
+
+  addBuildFinalizeTask(task: () => Promise<void>): void {
+    this.buildFinalizeTasks.push(task)
+  }
+
   private _repositoryInfo = new Lazy<SourceRepositoryInfo | null>(() => getRepositoryInfo(this.projectDir, this.metadata, this.devMetadata))
 
   readonly options: PackagerOptions
@@ -521,6 +530,15 @@ export class Packager {
         break
       }
       await target.finishBuild()
+    }
+
+    // Every target has now finished reading the shared appOutDir(s), so finalize tasks may safely
+    // mutate them (e.g. NSIS copying elevate.exe into win-unpacked — see #9852).
+    for (const task of this.buildFinalizeTasks) {
+      if (this.cancellationToken.cancelled) {
+        break
+      }
+      await task()
     }
     return platformToTarget
   }
