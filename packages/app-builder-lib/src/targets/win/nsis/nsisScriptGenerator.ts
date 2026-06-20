@@ -50,6 +50,7 @@ export function nsisEscapeString(s: string): string {
     .replace(/\r\n|\r|\n/g, " ") // newlines break NSIS string literals
     .replace(/\$(?![{(])/g, "$$$$") // bare $ → $$ (prevents NSIS variable expansion); ${...} define and $(...) LangString references are left intact
     .replace(/"/g, '$\\"') // " → $\" (NSIS escape for double-quote)
+    .replace(/`/g, "$\\`") // ` → $\` (NSIS escape for backtick, which delimits strings in macro bodies such as FileAssociation.nsh)
   if (escaped !== s) {
     log.debug({ original: s, final: escaped }, "nsis was escaped")
   }
