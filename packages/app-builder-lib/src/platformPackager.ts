@@ -811,7 +811,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     defaultArch?: string
   ): string {
     const { pattern, isUserForced } = this.artifactPatternConfig(targetSpecificOptions, defaultPattern)
-    return this.computeArtifactName(pattern, ext, !isUserForced && skipDefaultArch && arch === defaultArchFromString(defaultArch) ? null : arch)
+    const name = this.computeArtifactName(pattern, ext, !isUserForced && skipDefaultArch && arch === defaultArchFromString(defaultArch) ? null : arch)
+    assertSafeArtifactName(name)
+    return name
   }
 
   artifactPatternConfig(targetSpecificOptions: TargetSpecificOptions | Nullish, defaultPattern: string | undefined) {
@@ -987,6 +989,15 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
 export function isSafeGithubName(name: string) {
   return /^[0-9A-Za-z._-]+$/.test(name)
+}
+
+// An expanded artifact name is joined to the output directory as a plain file name. Reject names that are
+// absolute, drive-prefixed, or contain a ".." segment (e.g. from an artifactName pattern or an ${author}/${env.*}
+// macro) so the artifact is always written inside the output directory.
+export function assertSafeArtifactName(name: string): void {
+  if (path.isAbsolute(name) || /^[a-zA-Z]:/.test(name) || name.split(/[/\\]/).includes("..")) {
+    throw new InvalidConfigurationError(`Artifact name "${name}" must be a relative file name without a ".." path segment`, "ERR_ELECTRON_BUILDER_INVALID_ARTIFACT_NAME")
+  }
 }
 
 export function computeSafeArtifactNameIfNeeded(suggestedName: string | null, safeNameProducer: () => string): string | null {

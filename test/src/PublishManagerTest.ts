@@ -1,6 +1,7 @@
 import { GenericServerOptions, GithubOptions, KeygenOptions, SpacesOptions } from "builder-util-runtime"
 import { Arch, createTargets, Platform } from "electron-builder"
 import fsExtra from "fs-extra"
+import { load as loadYaml } from "js-yaml"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert.js"
 import { app, checkDirContents } from "./helpers/packTester.js"
@@ -59,6 +60,35 @@ test.ifNotWindows("github and spaces (publishAutoUpdate)", ({ expect }) =>
       publish: [githubPublisher("foo/foo"), spacesPublisher(false)],
     },
   })
+)
+
+// A productName whose only "unsafe" character is a space expands to an artifact name like "My App-1.1.0.AppImage".
+// The GitHub updater reconstructs the asset name by replacing spaces with dashes, so the metadata keeps the produced
+// (spaced) name and therefore matches the file in the output directory (issue #9749).
+test.ifNotWindows("GitHub update metadata keeps the produced (spaced) name so it matches the output file", ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: Platform.LINUX.createTarget("AppImage", Arch.x64),
+      config: {
+        productName: "My App",
+        publish: githubPublisher("foo/foo"),
+      },
+    },
+    {
+      packed: async context => {
+        const updateInfo = loadYaml(await fsExtra.readFile(path.join(context.outDir, "latest-linux.yml"), "utf-8")) as {
+          path: string
+          files: Array<{ url: string }>
+        }
+        // the recorded name is the produced name, spaces preserved ...
+        expect(updateInfo.path).toContain(" ")
+        expect(updateInfo.files[0].url).toBe(updateInfo.path)
+        // ... and references the exact file present in the output directory
+        await assertThat(expect, path.join(context.outDir, updateInfo.path)).isFile()
+      },
+    }
+  )
 )
 
 test.ifEnv(process.env.KEYGEN_TOKEN)("mac artifactName ", ({ expect }) =>
