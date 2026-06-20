@@ -93,7 +93,7 @@
     "pkijs": "^3.4.0",
     "plist": "3.1.0",
     "proper-lockfile": "^4.1.2",
-    "resedit": "^1.7.0",
+    "resedit": "^3.0.2",
     "semver": "~7.7.3",
     "tar": "^7.5.7",
     "temp-file": "^3.4.0",
