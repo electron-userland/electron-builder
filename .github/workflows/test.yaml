@@ -49,7 +49,9 @@ jobs:
       force-docker-build: ${{ steps.changes.outputs.docker == 'true' || steps.changes.outputs.workflow == 'true' }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0
+          persist-credentials: false
 
       - name: Determine if Dockerfiles changed
         uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
@@ -84,6 +86,8 @@ jobs:
       macos: ${{ steps.plan.outputs.macos }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
@@ -149,6 +153,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 2
+          persist-credentials: false
 
       - name: Cleanup runner
         uses: ./.github/actions/cleanup-runner
@@ -211,6 +216,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
@@ -258,6 +265,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
@@ -300,6 +309,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Cleanup runner
         uses: ./.github/actions/cleanup-runner
@@ -368,6 +379,8 @@ jobs:
         core: [core18, core20, core22, core24]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
@@ -456,6 +469,8 @@ jobs:
     steps:
       - name: Checkout code repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
@@ -494,6 +509,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - uses: ./.github/actions/pnpm
 
@@ -582,8 +599,7 @@ jobs:
           else
             # Artifact names cannot contain "/", so sanitize slashes in branch
             # names like "release/v26" -> "release-v26" (keep in sync with detectRef in fetch-smart-cache.ts).
-            REF_NAME="${{ github.ref_name }}"
-            echo "VITEST_CACHE_REF=${REF_NAME//\//-}" >> "$GITHUB_ENV"
+            echo "VITEST_CACHE_REF=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_ENV"
           fi
 
       - name: Upload vitest smart cache artifact
