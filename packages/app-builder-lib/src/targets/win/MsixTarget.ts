@@ -1,14 +1,14 @@
 import { Arch, asArray, copyOrLinkFile, ensureNotBusy, exec, InvalidConfigurationError, log } from "builder-util"
-import { getPath7za } from "../toolsets/7zip.js"
+import { getPath7za } from "../../toolsets/7zip.js"
 import _fsExtra from "fs-extra"
 const { mkdirs, readFile, remove, writeFile } = _fsExtra
 import * as path from "path"
-import { MsixOptions } from "../options/MsixOptions.js"
-import { isLegacyWinCodeSign, isOldWin6 } from "../toolsets/winCodeSign.js"
-import { Target } from "../core.js"
-import { getTemplatePath } from "../util/pathManager.js"
-import type { VmManager } from "../vm/vm.js"
-import { WinPackager } from "../winPackager.js"
+import { MsixOptions } from "../../options/MsixOptions.js"
+import { isLegacyWinCodeSign, isOldWin6 } from "../../toolsets/winCodeSign.js"
+import { Target } from "../../core.js"
+import { getTemplatePath } from "../../util/pathManager.js"
+import type { VmManager } from "../../vm/vm.js"
+import { WinPackager } from "../../winPackager.js"
 import {
   buildAppxPackage,
   buildCapabilitiesXml,

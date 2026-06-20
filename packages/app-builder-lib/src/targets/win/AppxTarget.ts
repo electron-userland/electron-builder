@@ -18,7 +18,7 @@ import {
   resourceLanguageTag,
   splashScreenTag,
   substituteManifestMacros,
-} from "../winAppUtil.js"
+} from "./winAppUtil.js"
 import _fsExtra from "fs-extra"
 const { readFile, writeFile } = _fsExtra
 

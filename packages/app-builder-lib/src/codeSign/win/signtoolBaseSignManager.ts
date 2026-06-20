@@ -12,7 +12,7 @@ import {
   WindowsSigntoolSigningConfig,
 } from "../../options/winOptions.js"
 import AppXTarget from "../../targets/win/AppxTarget.js"
-import MsixTarget from "../../targets/MsixTarget.js"
+import MsixTarget from "../../targets/win/MsixTarget.js"
 import { getSignToolPath } from "../../toolsets/winCodeSign.js"
 import { ToolInfo } from "../../util/bundledTool.js"
 import { resolveFunction } from "../../util/resolve.js"
