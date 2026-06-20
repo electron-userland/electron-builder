@@ -71,7 +71,7 @@ For other commands please see help using `--help` arg, e.g. `./node_modules/.bin
 :::
 
 :::note[Requirements]
-electron-builder v27 requires **Node.js >=22.12.0**. See the [migration guide](./migration/v26-to-v27) if upgrading from v26.
+electron-builder v27 requires **Node.js >=22.12.0**. Upgrading from v26? Review the [v27 breaking changes](./migration/v27-breaking-changes), then follow the [migration walkthrough](./migration/v26-to-v27).
 :::
 
 Prepend `npx` to sample commands below if you run them from Terminal and not from `package.json` scripts.

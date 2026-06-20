@@ -88,7 +88,8 @@ const sidebars: SidebarsConfig = {
   ],
 
   migrationSidebar: [
-    { type: "doc", id: "migration/v26-to-v27", label: "v26 → v27" },
+    { type: "doc", id: "migration/v27-breaking-changes", label: "v27 Breaking Changes" },
+    { type: "doc", id: "migration/v26-to-v27", label: "v26 → v27 Walkthrough" },
   ],
 
   tutorialsSidebar: [
