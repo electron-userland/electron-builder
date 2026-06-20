@@ -100,12 +100,17 @@ async function main() {
   // excludes dot-directories (include-hidden-files defaults to false), which would silently drop every
   // blob from the uploaded report artifact. A non-hidden dir is included normally.
   const reportId = `${currentPlatform}-shard${index}-pid${process.pid}`
-  const reporters: any[] = [
-    "default",
-    __dirname + "/vitest-config/vitest-smart-reporter.ts",
-    ["json", { outputFile: `test-results/results-${reportId}.json` }],
-    ["blob", { outputFile: `vitest-blobs/blob-${reportId}.json` }],
-  ]
+  const reporters: any[] = ["default", __dirname + "/vitest-config/vitest-smart-reporter.ts", ["json", { outputFile: `test-results/results-${reportId}.json` }]].concat(
+    isCI
+      ? [
+          // In CI, emit a GitHub Actions annotation file so failed tests surface in the UI.  This is
+          // emitted in addition to the default reporter's console output (which also goes to the logs)
+          // and the JSON file (which is consumed by our merge script to produce the final report).
+          ["github", { outputFile: `test-results/annotations-${reportId}.txt` }],
+          ["blob", { outputFile: `vitest-blobs/blob-${reportId}.json` }],
+        ]
+      : []
+  )
 
   // Opt-in v8 coverage (VITEST_COVERAGE=true, set by the collect-coverage workflow input). Each shard
   // writes a raw coverage map; the merge job combines them into one downloadable report. Spread in
