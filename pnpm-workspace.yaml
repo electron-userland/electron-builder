@@ -32,4 +32,5 @@ overrides:
   '@babel/plugin-transform-modules-systemjs': '>=7.29.4 <8' # GHSA-fv7c-fp4j-7gwp (high)
   fast-xml-builder: '>=1.1.7 <2' # GHSA-5wm8-gmm8-39j9 (high), GHSA-45c6-75p6-83cc (med)
   '@xmldom/xmldom': '>=0.8.13 <0.9' # GHSA-2v35-w6hq-6mfw, -f6ww-3ggp-fr8h, -x6wf-f3px-wcqx, -j759-j44w-7fr8, -wh4c-j3r5-mjhp (high)
+  vite: '>=6.4.2 <7' # GHSA-p9ff-h696-f583 (high) + 7 more vite advisories (alerts #45,46,47,59,60,62,180,185)
 packageImportMethod: copy
