@@ -15,7 +15,7 @@ import {
   splashScreenTag,
   validateApplicationId,
   validateIdentityName,
-} from "app-builder-lib/src/targets/winAppUtil"
+} from "app-builder-lib/src/targets/win/winAppUtil"
 import { mkdtemp, rm, writeFile } from "fs/promises"
 import { tmpdir } from "os"
 import * as path from "path"

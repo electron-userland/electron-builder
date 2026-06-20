@@ -9,7 +9,7 @@
 import { readFileSync } from "fs"
 import * as path from "path"
 import { XMLValidator } from "fast-xml-parser"
-import { buildWindowsServicesXml, RAW_TEXT_MANIFEST_MACROS, substituteManifestMacros } from "app-builder-lib/src/targets/winAppUtil"
+import { buildWindowsServicesXml, RAW_TEXT_MANIFEST_MACROS, substituteManifestMacros } from "app-builder-lib/src/targets/win/winAppUtil"
 
 const TEMPLATES_DIR = path.join(__dirname, "../../../packages/app-builder-lib/templates")
 const MSIX_TEMPLATE = path.join(TEMPLATES_DIR, "msix", "appxmanifest.xml")
