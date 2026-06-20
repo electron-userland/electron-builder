@@ -151,8 +151,12 @@ export async function createWindowsInstaller(options: InstallerOptions): Promise
     if (setupMsi) {
       try {
         await fs.rename(path.join(outputDirectory, "Setup.msi"), path.join(outputDirectory, setupMsi))
-      } catch {
-        // Setup.msi won't exist when noMsi is true
+      } catch (e: any) {
+        // Setup.msi is absent when releasify produced no MSI; only that case is expected.
+        // Surface real failures (permissions, cross-device) instead of silently dropping the artifact.
+        if (e?.code !== "ENOENT") {
+          throw e
+        }
       }
     }
   }

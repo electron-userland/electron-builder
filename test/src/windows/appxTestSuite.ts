@@ -1,7 +1,7 @@
 import { Arch, Platform } from "electron-builder"
 import { readFile } from "fs-extra"
 import { mkdir } from "fs/promises"
-import * as path from "path"
+import path from "path"
 import { app, appThrows, copyTestAsset } from "../helpers/packTester"
 import { ToolsetConfig } from "app-builder-lib"
 
@@ -82,7 +82,8 @@ export function registerAppxTests(toolsets: ToolsetConfig): void {
       config: {
         toolsets,
         win: {
-          signtoolOptions: {
+          sign: {
+            type: "signtool" as const,
             certificateSubjectName: "Foo",
           },
         },
@@ -148,7 +149,6 @@ export function registerAppxTests(toolsets: ToolsetConfig): void {
         },
         appxManifestCreated: async filepath => {
           const fileContent = await readFile(filepath, "utf-8")
-          console.log("APPX-MANIFEST: " + fileContent)
           expect(fileContent).toContain('<rescap:Capability Name="runFullTrust"/>')
           expect(fileContent).toContain('<Capability Name="internetClient"/>')
           expect(fileContent).toContain('<uap:Capability Name="picturesLibrary"/>')
@@ -179,4 +179,21 @@ export function registerAppxTests(toolsets: ToolsetConfig): void {
         expect(error.message).toContain("invalid windows capabilities")
       }
     ))
+
+  test("special chars in appx properties", ({ expect }) =>
+    app(expect, {
+      targets: target,
+      config: {
+        toolsets,
+        cscLink: protectedCscLink,
+        cscKeyPassword: "test",
+        appx: {
+          displayName: "Test <&>\"'",
+        },
+        appxManifestCreated: async filepath => {
+          const fileContent = await readFile(filepath, "utf-8")
+          expect(fileContent).toContain("<DisplayName>Test &lt;&amp;&gt;&quot;&apos;</DisplayName>")
+        },
+      },
+    }))
 }

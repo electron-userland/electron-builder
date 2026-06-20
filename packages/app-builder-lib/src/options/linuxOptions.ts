@@ -1,4 +1,5 @@
-import { PlatformSpecificBuildOptions, TargetConfigType, TargetSpecificOptions } from "../index"
+import { TargetConfigType, TargetSpecificOptions } from "../core.js"
+import { PlatformSpecificBuildOptions } from "./PlatformSpecificBuildOptions.js"
 
 /**
  * Example Spec: https://specifications.freedesktop.org/desktop-entry-spec/latest/example.html
@@ -61,17 +62,6 @@ export interface LinuxConfiguration extends CommonLinuxOptions, PlatformSpecific
    * For user-facing category configuration use the target-specific options (e.g. {@link DebOptions}).
    */
   readonly packageCategory?: string | null
-
-  /**
-   * When `true`, the installed `.desktop` filename is derived from `desktopName` in `package.json`
-   * (minus the `.desktop` suffix) so that it matches `StartupWMClass` and Electron's `app_id`.
-   * Falls back to `executableName` when `desktopName` is absent.
-   *
-   * @default false
-   * @see https://github.com/electron-userland/electron-builder/issues/9103
-   * @remarks In v27 the default will change to `true`.
-   */
-  readonly syncDesktopName?: boolean
 }
 
 /**

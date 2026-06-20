@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { DebUpdater } from "electron-updater"
-import type { AppAdapter } from "electron-updater/out/AppAdapter"
+import type { AppAdapter } from "electron-updater/src/AppAdapter"
 
 const stubApp: AppAdapter = {
   name: "TestApp",
@@ -15,7 +15,7 @@ const stubApp: AppAdapter = {
   onQuit: () => {},
 }
 
-describe("LinuxUpdater unit tests", () => {
+describe("LinuxUpdater unit tests", { sequential: true }, () => {
   let updater: DebUpdater
 
   beforeEach(() => {

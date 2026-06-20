@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
-import SquirrelWindowsTarget from "electron-builder-squirrel-windows/out/SquirrelWindowsTarget"
+import SquirrelWindowsTarget from "electron-builder-squirrel-windows/src/SquirrelWindowsTarget"
 import { mkdtemp, readFile, rm, writeFile } from "fs/promises"
 import { arch as osArch } from "os"
 import * as path from "path"

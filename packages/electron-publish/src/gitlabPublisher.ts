@@ -1,16 +1,16 @@
-import { Arch, Fields, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, isTokenCharValid, log } from "builder-util"
+import { Arch, assertVersionHasNoVPrefix, Fields, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { createReadStream } from "fs"
 import { stat } from "fs/promises"
 import { readFile } from "fs/promises"
-import { configureRequestOptions, GitlabOptions, GitlabReleaseInfo, parseJson, HttpError } from "builder-util-runtime"
+import { configureRequestOptions, getGitlabAuthHeaders, GitlabOptions, GitlabReleaseInfo, parseJson, HttpError } from "builder-util-runtime"
 import { ClientRequest } from "http"
 import { Lazy } from "lazy-val"
-import * as mime from "mime"
-import * as FormData from "form-data"
+import mime from "mime"
+import FormData from "form-data"
 import { URL } from "url"
-import { HttpPublisher } from "./httpPublisher"
-import { PublishContext } from "./index"
-import { trimStringWithWarn } from "./util"
+import { HttpPublisher } from "./httpPublisher.js"
+import { PublishContext } from "./index.js"
+import { trimStringWithWarn, validateResolvedToken } from "./util.js"
 
 type RequestProcessor = (request: ClientRequest, reject: (error: Error) => void) => void
 
@@ -39,15 +39,7 @@ export class GitlabPublisher extends HttpPublisher {
     let token = info.token || null
     if (isEmptyOrSpaces(token)) {
       token = process.env.GITLAB_TOKEN || null
-      if (isEmptyOrSpaces(token)) {
-        throw new InvalidConfigurationError(`GitLab Personal Access Token is not set, neither programmatically, nor using env "GITLAB_TOKEN"`)
-      }
-
-      token = token.trim()
-
-      if (!isTokenCharValid(token)) {
-        throw new InvalidConfigurationError(`GitLab Personal Access Token (${JSON.stringify(token)}) contains invalid characters, please check env "GITLAB_TOKEN"`)
-      }
+      token = validateResolvedToken(token, "GitLab", "GITLAB_TOKEN")
     }
 
     this.token = token
@@ -55,9 +47,7 @@ export class GitlabPublisher extends HttpPublisher {
     this.projectId = this.resolveProjectId()
     this.baseApiPath = `https://${this.host}/api/v4`
 
-    if (version.startsWith("v")) {
-      throw new InvalidConfigurationError(`Version must not start with "v": ${version}`)
-    }
+    assertVersionHasNoVPrefix(version)
 
     // By default, we prefix the version with "v"
     this.tag = info.vPrefixedTagName === false ? version : `v${version}`
@@ -252,7 +242,7 @@ export class GitlabPublisher extends HttpPublisher {
           hostname: parsedUrl.hostname,
           port: parsedUrl.port as any,
           path: parsedUrl.pathname,
-          headers: { ...form.getHeaders(), ...this.setAuthHeaderForToken(this.token) },
+          headers: { ...form.getHeaders(), ...getGitlabAuthHeaders(this.token) },
           timeout: this.info.timeout || undefined,
         },
         null,
@@ -277,7 +267,7 @@ export class GitlabPublisher extends HttpPublisher {
           hostname: parsedUrl.hostname,
           port: parsedUrl.port as any,
           path: parsedUrl.pathname,
-          headers: { "Content-Length": dataLength, "Content-Type": mime.getType(fileName) || "application/octet-stream", ...this.setAuthHeaderForToken(this.token) },
+          headers: { "Content-Length": dataLength, "Content-Type": mime.getType(fileName) || "application/octet-stream", ...getGitlabAuthHeaders(this.token) },
           timeout: this.info.timeout || undefined,
         },
         null,
@@ -309,7 +299,7 @@ export class GitlabPublisher extends HttpPublisher {
             path: url.pathname,
             protocol: url.protocol,
             hostname: url.hostname,
-            headers: { "Content-Type": "application/json", ...this.setAuthHeaderForToken(this.token) },
+            headers: { "Content-Type": "application/json", ...getGitlabAuthHeaders(this.token) },
             timeout: this.info.timeout || undefined,
           },
           null,
@@ -319,23 +309,6 @@ export class GitlabPublisher extends HttpPublisher {
         data
       )
     )
-  }
-
-  private setAuthHeaderForToken(token: string | null): { [key: string]: string } {
-    const headers: { [key: string]: string } = {}
-
-    if (token != null) {
-      // If the token starts with "Bearer", it is an OAuth application secret
-      // Note that the original gitlab token would not start with "Bearer"
-      // it might start with "gloas-", if so user needs to add "Bearer " prefix to the token
-      if (token.startsWith("Bearer")) {
-        headers.authorization = token
-      } else {
-        headers["PRIVATE-TOKEN"] = token
-      }
-    }
-
-    return headers
   }
 
   private categorizeGitlabError(error: any): { type: string; statusCode?: number } {

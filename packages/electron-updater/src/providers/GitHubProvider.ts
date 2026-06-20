@@ -1,10 +1,10 @@
 import { CancellationToken, GithubOptions, githubUrl, HttpError, newError, parseXml, ReleaseNoteInfo, UpdateInfo, XElement } from "builder-util-runtime"
 import * as semver from "semver"
 import { URL } from "url"
-import { AppUpdater } from "../AppUpdater"
-import { ResolvedUpdateFileInfo } from "../types"
-import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util"
-import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider"
+import { AppUpdater } from "../AppUpdater.js"
+import { ResolvedUpdateFileInfo } from "../types.js"
+import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util.js"
+import { channelFileNotFoundError, parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider.js"
 
 const hrefRegExp = /\/tag\/(v?[^/]+)$/
 
@@ -148,7 +148,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
         return (await this.executor.request(requestOptions, cancellationToken))!
       } catch (e: any) {
         if (e instanceof HttpError && e.statusCode === 404) {
-          throw newError(`Cannot find ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
+          throw channelFileNotFoundError(channelFile, channelFileUrl, e)
         }
         throw e
       }

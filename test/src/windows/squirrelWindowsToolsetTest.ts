@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
-import { getSquirrelToolsetPath } from "electron-builder-squirrel-windows/out/toolset"
+import { getSquirrelToolsetPath } from "electron-builder-squirrel-windows/src/toolset"
 import { mkdtemp, rm, writeFile } from "fs/promises"
 import { tmpdir } from "os"
 import * as path from "path"

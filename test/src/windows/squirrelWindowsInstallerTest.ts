@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
-import { convertVersion, escapeXml, renderNuspecTemplate, buildAdditionalFilesXml } from "electron-builder-squirrel-windows/out/windowsInstaller"
+import { convertVersion, escapeXml, renderNuspecTemplate, buildAdditionalFilesXml } from "electron-builder-squirrel-windows/src/windowsInstaller"
 import { mkdir, mkdtemp, rm, writeFile } from "fs/promises"
 import { tmpdir } from "os"
 import * as path from "path"

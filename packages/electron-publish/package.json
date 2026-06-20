@@ -1,7 +1,20 @@
 {
   "name": "electron-publish",
-  "version": "26.14.0",
-  "main": "out/index.js",
+  "version": "27.0.0-alpha.5",
+  "type": "module",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    },
+    "./internal": {
+      "types": "./dist/indexInternal.d.ts",
+      "import": "./dist/indexInternal.js",
+      "require": "./dist/indexInternal.js"
+    }
+  },
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {
@@ -12,8 +25,15 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "files": [
-    "out"
+    "dist"
   ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json --force",
+    "watch": "tsc --build tsconfig.build.json --watch"
+  },
   "dependencies": {
     "@types/fs-extra": "^9.0.11",
     "aws4": "^1.13.2",
@@ -21,11 +41,11 @@
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.2",
     "form-data": "^4.0.5",
-    "fs-extra": "^10.1.0",
+    "fs-extra": "^11.3.0",
     "lazy-val": "^1.0.5",
     "mime": "^2.5.2"
   },
-  "typings": "./out/index.d.ts",
+  "types": "./dist/index.d.ts",
   "devDependencies": {
     "@types/aws4": "^1.11.6",
     "@types/mime": "2.0.3"

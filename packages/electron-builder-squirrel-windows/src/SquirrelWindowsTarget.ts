@@ -1,18 +1,15 @@
-import { Arch, SquirrelWindowsOptions, Target, WinPackager, getArchSuffix } from "app-builder-lib"
-import { getRceditBundle } from "app-builder-lib/out/toolsets/windows"
-import { withToolsetLock } from "app-builder-lib/out/util/toolsetLock"
-import { WineVmManager } from "app-builder-lib/out/vm/WineVm"
+import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
+import { getRceditBundle, withToolsetLock, WineVmManager } from "app-builder-lib/internal"
 import { InvalidConfigurationError, exists, isEmptyOrSpaces, log } from "builder-util"
-import { sanitizeFileName } from "builder-util/out/filename"
+import { sanitizeFileName } from "builder-util/internal"
 import * as fs from "fs"
 import * as os from "os"
 import * as path from "path"
-import { getSquirrelToolsetPath } from "./toolset"
-import { InstallerOptions, convertVersion, createWindowsInstaller } from "./windowsInstaller"
+import { getSquirrelToolsetPath, prepareNugetExe } from "./toolset.js"
+import { InstallerOptions, convertVersion, createWindowsInstaller } from "./windowsInstaller.js"
 
 export default class SquirrelWindowsTarget extends Target {
-  //tslint:disable-next-line:no-object-literal-type-assertion
-  readonly options: SquirrelWindowsOptions = { ...this.packager.platformSpecificBuildOptions, ...this.packager.config.squirrelWindows } as SquirrelWindowsOptions
+  readonly options: SquirrelWindowsOptions
 
   isAsyncSupported = false
 
@@ -21,11 +18,12 @@ export default class SquirrelWindowsTarget extends Target {
     readonly outDir: string
   ) {
     super("squirrel")
+    this.options = packager.getOptionsForTarget<SquirrelWindowsOptions>("squirrelWindows")
   }
 
   private async prepareSignedVendorDirectory(): Promise<string> {
     const customSquirrelVendorDirectory = this.options.customSquirrelVendorDir
-    const tmpVendorDirectory = await this.packager.info.tempDirManager.createTempDir({ prefix: "squirrel-windows-vendor" })
+    const tmpVendorDirectory = await this.packager.tempDirManager.createTempDir({ prefix: "squirrel-windows-vendor" })
 
     if (customSquirrelVendorDirectory && (await exists(customSquirrelVendorDirectory))) {
       await fs.promises.cp(customSquirrelVendorDirectory, tmpVendorDirectory, { recursive: true })
@@ -36,16 +34,26 @@ export default class SquirrelWindowsTarget extends Target {
 
       const squirrelToolset = await getSquirrelToolsetPath()
       await fs.promises.cp(path.join(squirrelToolset, "electron-winstaller", "vendor"), tmpVendorDirectory, { recursive: true })
-    }
 
-    // Squirrel.exe --releasify calls rcedit.exe (via setPEVersionInfoAndIcon) to embed the app
-    // icon into Setup.exe. Resolve it from the win-codesign toolset which already versions and
-    // caches it across all platforms, rather than duplicating it in the squirrel.windows bundle.
-    // Squirrel-Mono.exe (used on non-Windows) does not call rcedit, so skip on other platforms.
-    if (process.platform === "win32") {
-      const rcedit = await getRceditBundle(this.packager.config.toolsets?.winCodeSign)
-      const rceditExe = os.arch() === "ia32" ? rcedit.x86 : rcedit.x64
-      await fs.promises.copyFile(rceditExe, path.join(tmpVendorDirectory, "rcedit.exe"))
+      // TEMPORARY: the published squirrel.windows@1.1.0 bundle ships the Chocolatey shim for nuget.exe,
+      // which resolves the real binary relative to its own install path and fails once relocated to a
+      // temp vendor directory. Overwrite it with a standalone portable nuget.exe, downloaded and cached
+      // at runtime. Remove once squirrel.windows bundles the standalone exe (electron-builder-binaries#203).
+      await prepareNugetExe(tmpVendorDirectory)
+
+      // Squirrel.exe --releasify shells out to rcedit.exe (via setPEVersionInfoAndIcon) to embed the app
+      // icon into Setup.exe. The bundle does not ship rcedit, so resolve it from the win-codesign toolset,
+      // which already versions and caches it across all platforms. Squirrel-Mono.exe (used on non-Windows)
+      // does not call rcedit, so this is only needed on win32.
+      //
+      // getRceditBundle honors the user's `toolsets.winCodeSign` selection, so users retain a bypass if a
+      // newer toolset regresses: `"0.0.0"` falls back to the legacy winCodeSign-2.6.0 rcedit, a custom
+      // toolset object uses their own rcedit, and the default (unset/"latest") pulls rcedit-windows-2_0_0.
+      if (process.platform === "win32") {
+        const rcedit = await getRceditBundle(this.packager.config.toolsets?.winCodeSign, this.packager.buildResourcesDir)
+        const rceditExe = os.arch() === "ia32" ? rcedit.x86 : rcedit.x64
+        await fs.promises.copyFile(rceditExe, path.join(tmpVendorDirectory, "rcedit.exe"))
+      }
     }
 
     const files = await fs.promises.readdir(tmpVendorDirectory)
@@ -131,7 +139,7 @@ export default class SquirrelWindowsTarget extends Target {
     const writeZipToSetupExe = await this.ensurePathInside(vendorDir, path.join(vendorDir, "WriteZipToSetup.exe"), "WriteZipToSetup executable")
 
     await fs.promises.copyFile(stubExecutableSource, stubExePath)
-    const wineVm = new WineVmManager(this.packager.config.toolsets?.wine)
+    const wineVm = new WineVmManager(this.packager.config.toolsets?.wine, this.packager.buildResourcesDir)
     await wineVm.exec(writeZipToSetupExe, ["--copy-stub-resources", filePath, stubExePath])
     await this.packager.signIf(stubExePath)
     log.debug({ file: filePath }, "signing app executable")
@@ -149,7 +157,7 @@ export default class SquirrelWindowsTarget extends Target {
     const msiArtifactPath = path.join(installerOutDir, packager.expandArtifactNamePattern(this.options, "msi", arch, "${productName} Setup ${version}.${ext}"))
 
     this.buildQueueManager.add(async () => {
-      await packager.info.emitArtifactBuildStarted({
+      await packager.emitArtifactBuildStarted({
         targetPresentableName: "Squirrel.Windows",
         file: artifactPath,
         arch,
@@ -166,7 +174,7 @@ export default class SquirrelWindowsTarget extends Target {
 
       const safeArtifactName = (ext: string) => `${sanitizedName}-Setup-${version}${getArchSuffix(arch)}.${ext}`
 
-      await packager.info.emitArtifactBuildCompleted({
+      await packager.emitArtifactBuildCompleted({
         file: artifactPath,
         target: this,
         arch,
@@ -175,7 +183,7 @@ export default class SquirrelWindowsTarget extends Target {
       })
 
       if (this.options.msi) {
-        await packager.info.emitArtifactCreated({
+        await packager.emitArtifactCreated({
           file: msiArtifactPath,
           target: this,
           arch,
@@ -185,14 +193,14 @@ export default class SquirrelWindowsTarget extends Target {
       }
 
       const packagePrefix = `${this.appName}-${convertVersion(version)}-`
-      await packager.info.emitArtifactCreated({
+      await packager.emitArtifactCreated({
         file: path.join(installerOutDir, `${packagePrefix}full.nupkg`),
         target: this,
         arch,
         packager,
       })
       if (distOptions.remoteReleases != null) {
-        await packager.info.emitArtifactCreated({
+        await packager.emitArtifactCreated({
           file: path.join(installerOutDir, `${packagePrefix}delta.nupkg`),
           target: this,
           arch,
@@ -200,7 +208,7 @@ export default class SquirrelWindowsTarget extends Target {
         })
       }
 
-      await packager.info.emitArtifactCreated({
+      await packager.emitArtifactCreated({
         file: path.join(installerOutDir, "RELEASES"),
         target: this,
         arch,
@@ -237,10 +245,10 @@ export default class SquirrelWindowsTarget extends Target {
   }
 
   private async createNuspecTemplateWithProjectUrl() {
-    const templatePath = path.resolve(__dirname, "..", "template.nuspectemplate")
+    const templatePath = path.resolve(import.meta.dirname, "..", "template.nuspectemplate")
     const projectUrl = await this.packager.appInfo.computePackageUrl()
     if (projectUrl != null) {
-      const nuspecTemplate = await this.packager.info.tempDirManager.getTempFile({ prefix: "template", suffix: ".nuspectemplate" })
+      const nuspecTemplate = await this.packager.tempDirManager.getTempFile({ prefix: "template", suffix: ".nuspectemplate" })
       let templateContent = await fs.promises.readFile(templatePath, "utf8")
       const searchString = "<copyright><%- copyright %></copyright>"
       templateContent = templateContent.replace(searchString, `${searchString}\n    <projectUrl>${projectUrl}</projectUrl>`)
@@ -254,9 +262,9 @@ export default class SquirrelWindowsTarget extends Target {
     const packager = this.packager
     let iconUrl = this.options.iconUrl
     if (iconUrl == null) {
-      const info = await packager.info.repositoryInfo
+      const info = await packager.repositoryInfo
       if (info != null) {
-        iconUrl = `https://github.com/${info.user}/${info.project}/blob/master/${packager.info.relativeBuildResourcesDirname}/icon.ico?raw=true`
+        iconUrl = `https://github.com/${info.user}/${info.project}/blob/master/${packager.relativeBuildResourcesDirname}/icon.ico?raw=true`
       }
 
       if (iconUrl == null) {
@@ -271,7 +279,7 @@ export default class SquirrelWindowsTarget extends Target {
 
     let remoteReleases: string | undefined
     if (this.options.remoteReleases === true) {
-      const info = await packager.info.repositoryInfo
+      const info = await packager.repositoryInfo
       if (info == null) {
         log.warn("remoteReleases set to true, but cannot get repository info")
       } else {
@@ -312,7 +320,7 @@ export default class SquirrelWindowsTarget extends Target {
       loadingGif,
       remoteReleases,
       remoteToken: this.options.remoteToken ?? process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN,
-      createTempDir: opts => this.packager.info.tempDirManager.createTempDir(opts),
+      createTempDir: opts => this.packager.tempDirManager.createTempDir(opts),
     }
   }
 }

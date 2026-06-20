@@ -1,5 +1,299 @@
 # app-builder-lib
 
+## 27.0.0-alpha.5
+
+### Major Changes
+
+- Feat: allow including default-excluded files (e.g. Wavefront `.obj`) by adding an explicit `files` glob such as `**/*.obj` (fixes #6126). BREAKING: removed the `disableDefaultIgnoredFiles` option — `electron-builder migrate-schema` strips it automatically; re-include specific files via `files` globs instead. _[`#9954`](https://github.com/electron-userland/electron-builder/pull/9954) [`a16fb6b`](https://github.com/electron-userland/electron-builder/commit/a16fb6bfdcf0352a6b127229b8f8254847d16df1) [@mmaietta](https://github.com/mmaietta)_
+- Feat(toolsets): Adopt `"latest"` as the canonical "null"-state for every `ToolsetConfig` property, and make the toolset resolution logic resolve the unset state (`undefined` / `null` / `"latest"`) to the newest available bundle for each toolset. _[`#9939`](https://github.com/electron-userland/electron-builder/pull/9939) [`2669c2a`](https://github.com/electron-userland/electron-builder/commit/2669c2a7c7e9b6c3d8f7789362ffa5d7aac3fbf6) [@mmaietta](https://github.com/mmaietta)_
+- Feat(toolsets)!: remove `USE_SYSTEM_FPM` env override; require an explicit custom toolset on Windows _[`#9958`](https://github.com/electron-userland/electron-builder/pull/9958) [`238f0f1`](https://github.com/electron-userland/electron-builder/commit/238f0f162282c996a101ff830edc210f9f25b6dc) [@mmaietta](https://github.com/mmaietta)_
+  - Remove the `USE_SYSTEM_FPM` environment flag — the last of the `USE_SYSTEM_*` toolset overrides. To use a non-bundled fpm, configure `toolsets.fpm` with a custom toolset pointing at the directory containing the `fpm` executable, e.g. `{ url: "file:///opt/homebrew/bin" }`.
+  - A custom toolset is now honored before the platform fallback in `getFpmPath()` and `getOsslSigncodeBundle()`, so an explicit override is respected on every platform (previously it was silently ignored on Windows).
+  - On Windows with no custom toolset configured, `getFpmPath()` now throws `InvalidConfigurationError` instead of resolving a bare `fpm` from `$PATH`, closing a binary-hijack vector (`getOsslSigncodeBundle()` throws as defense-in-depth on the same path).
+
+- Fix(nsis): Generate Windows file-association ProgIDs in a unique, Microsoft-compliant format derived from the product filename and app GUID (BREAKING: custom NSIS scripts hard-coding the previous `name`/`ext` ProgID must be updated) _[`#9241`](https://github.com/electron-userland/electron-builder/pull/9241) [`25e7b44`](https://github.com/electron-userland/electron-builder/commit/25e7b446bc752d3e0b28941bcb606a891d8f2842) [@sabonerune](https://github.com/sabonerune)_
+
+### Minor Changes
+
+- Feat(snap): support multi-arch `remote-build` via `buildFor: string[]` — one Launchpad job now produces and registers multiple snap artifacts _[`#9841`](https://github.com/electron-userland/electron-builder/pull/9841) [`ff467f9`](https://github.com/electron-userland/electron-builder/commit/ff467f93fd55f43409945402cb89389896c3dc9a) [@mmaietta](https://github.com/mmaietta)_
+- Feat: promote Azure Trusted Signing and Snap Core24 out of Beta _[`#9949`](https://github.com/electron-userland/electron-builder/pull/9949) [`8f4be0a`](https://github.com/electron-userland/electron-builder/commit/8f4be0a4308f68fea4f76d6c1c2c8d0035266a87) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Fix(win): flaky `appOutDir` mutation created `elevate.exe` race condition for concurrent builds that included Squirrel target _[`#9852`](https://github.com/electron-userland/electron-builder/pull/9852) [`3cc43d2`](https://github.com/electron-userland/electron-builder/commit/3cc43d2379b314eacd96e2d948af3e1c0a74e3c9) [@mmaietta](https://github.com/mmaietta)_
+- Chore(refactor): reducing duplicate code and extracting helper functions _[`#9947`](https://github.com/electron-userland/electron-builder/pull/9947) [`8f3d9fa`](https://github.com/electron-userland/electron-builder/commit/8f3d9fa442aae342c1c5d2a4448a687de1aff8df) [@mmaietta](https://github.com/mmaietta)_
+- Docs: add a dedicated v27 breaking-changes reference page and point the invalid-config error (`schemaValidator`) and `migrate-schema` CLI output at it _[`#9955`](https://github.com/electron-userland/electron-builder/pull/9955) [`be6d996`](https://github.com/electron-userland/electron-builder/commit/be6d9963d25523d7aa74b2e532ce65cad9293d44) [@mmaietta](https://github.com/mmaietta)_
+- Docs(win): expand JSDoc for all Windows code signing options (regenerating scheme.json) and modernize the code-signing docs — correct osslsigncode vs Wine, HSM dual-signing, and the "latest" winCodeSign toolset model _[`#9949`](https://github.com/electron-userland/electron-builder/pull/9949) [`8f4be0a`](https://github.com/electron-userland/electron-builder/commit/8f4be0a4308f68fea4f76d6c1c2c8d0035266a87) [@mmaietta](https://github.com/mmaietta)_
+- Fix: bundle a workspace sub-package's production dependencies into app.asar when the package manager resolves to the workspace root _[`#9951`](https://github.com/electron-userland/electron-builder/pull/9951) [`39a5fd8`](https://github.com/electron-userland/electron-builder/commit/39a5fd874aea21f1d7e8bc4e961afe2edb8b632e) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`2669c2a`](https://github.com/electron-userland/electron-builder/commit/2669c2a7c7e9b6c3d8f7789362ffa5d7aac3fbf6) [`8f3d9fa`](https://github.com/electron-userland/electron-builder/commit/8f3d9fa442aae342c1c5d2a4448a687de1aff8df)
+
+</small>
+
+- `electron-builder-squirrel-windows@27.0.0-alpha.5`
+- `builder-util@27.0.0-alpha.5`
+- `builder-util-runtime@10.0.0-alpha.4`
+- `electron-publish@27.0.0-alpha.5`
+- `dmg-builder@27.0.0-alpha.5`
+
+</details>
+
+## 27.0.0-alpha.4
+
+### Major Changes
+
+- Feat: Remove `linux.syncDesktopName` — always sync the installed `.desktop` filename _[`#9908`](https://github.com/electron-userland/electron-builder/pull/9908) [`fae5232`](https://github.com/electron-userland/electron-builder/commit/fae52329c636d3640c68ba4db5db013ccfa42bc2) [@mmaietta](https://github.com/mmaietta)_
+
+### Minor Changes
+
+- Feat(linux): launch every Linux target (deb/rpm, AppImage, snap, flatpak) through a unified launcher entrypoint so `executableArgs` are applied consistently and the generated `.desktop` Exec key stays a plain command _[`#9922`](https://github.com/electron-userland/electron-builder/pull/9922) [`6a0f35a`](https://github.com/electron-userland/electron-builder/commit/6a0f35aa1e58a0c37794d1646927a1a881098913) [@mmaietta](https://github.com/mmaietta)_
+- Introduce xml escaping for publisher, publisherDisplayName, displayName, description in appxmanifest.xml to avoid issues with xml preserverd characters _[`#9853`](https://github.com/electron-userland/electron-builder/pull/9853) [`deafee9`](https://github.com/electron-userland/electron-builder/commit/deafee9fe5f7bccbf52e73cd0c6085e767f921ce) [@regnete](https://github.com/regnete)_
+
+### Patch Changes
+
+- Fix(mac): resolve universal build failure with platform-specific single-arch dependencies (e.g. esbuild, `@esbuild/darwin-arm64`) _[`#9942`](https://github.com/electron-userland/electron-builder/pull/9942) [`b84a1f4`](https://github.com/electron-userland/electron-builder/commit/b84a1f40116287d852da4a5d7307c59b600effba) [@mmaietta](https://github.com/mmaietta)_
+
+  Node modules are now filtered by their `package.json` `cpu`/`os` constraints against the target arch/platform, so host-installed single-arch binaries are no longer copied into mismatched single-arch builds. For `universal` macOS builds, both slices are kept symmetric and any single-arch binary that can't be lipo-merged — including host binaries inside packages that declare no `cpu`/`os` (such as esbuild's `bin/esbuild`) — is automatically reported to `@electron/universal` via `singleArchFiles` (merged with `mac.universal.singleArchFiles`), with a warning listing them. This fixes builds aborting with `Detected file "…" that's the same in both x64 and arm64 builds and not covered by the x64ArchFiles rule` (#9865, #9399).
+
+- Chore: migrate usages of mkdtemp to utilize TmpDir to unify temp directory usage _[`#9907`](https://github.com/electron-userland/electron-builder/pull/9907) [`a82943a`](https://github.com/electron-userland/electron-builder/commit/a82943ace5737252c7f62d2c6b5f7c679d753a60) [@mmaietta](https://github.com/mmaietta)_
+- Feat(nsis): add Hebrew (he) translations for one-click and assisted installer messages _[`#9927`](https://github.com/electron-userland/electron-builder/pull/9927) [`d21a771`](https://github.com/electron-userland/electron-builder/commit/d21a77117e4836cf8ef93b78210b67c86f053d6a) [@kdroidFilter](https://github.com/kdroidFilter)_
+
+  Also add `he_IL` to `bundledLanguages` so Hebrew strings actually reach the built installer (fixes a pre-existing bug where Hebrew was never included in the default multi-language set).
+
+- Fix(nsis): preserve `$(...)` LangString references in escaped NSIS define values (e.g. `shortcutName: "$(customSN)"`) _[`#9934`](https://github.com/electron-userland/electron-builder/pull/9934) [`344d156`](https://github.com/electron-userland/electron-builder/commit/344d156dd01c3427569b3cd1a37f43b8a5ff5990) [@mmaietta](https://github.com/mmaietta)_
+- Fix(win): retry the spurious "The batch file cannot be found." cmd.exe race during dependency install (idempotent, win32-guarded — real install failures still fail fast) _[`#9929`](https://github.com/electron-userland/electron-builder/pull/9929) [`9faa8c8`](https://github.com/electron-userland/electron-builder/commit/9faa8c8198f5e612d54ebcdd0904a74b338afb33) [@mmaietta](https://github.com/mmaietta)_
+- Fix(win): serialize concurrent signtool invocations to avoid intermittent "An error occurred while attempting to load the signing certificate" _[`#9920`](https://github.com/electron-userland/electron-builder/pull/9920) [`449e8d4`](https://github.com/electron-userland/electron-builder/commit/449e8d4da781af2550684809bbac3f4acafcc92e) [@mmaietta](https://github.com/mmaietta)_
+- Fix: resolve failure modes surfaced on the Windows test shards (corepack log noise, icon-conversion memory exhaustion, and an associated signtool failure), plus a small structural cleanup of the install/collector code _[`#9935`](https://github.com/electron-userland/electron-builder/pull/9935) [`d22a6f7`](https://github.com/electron-userland/electron-builder/commit/d22a6f72dd8ddc1e945cc70719adfc373f605118) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`deafee9`](https://github.com/electron-userland/electron-builder/commit/deafee9fe5f7bccbf52e73cd0c6085e767f921ce)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.3`
+- `builder-util@27.0.0-alpha.4`
+- `dmg-builder@27.0.0-alpha.4`
+- `electron-builder-squirrel-windows@27.0.0-alpha.4`
+- `electron-publish@27.0.0-alpha.4`
+
+</details>
+
+## 27.0.0-alpha.3
+
+### Major Changes
+
+- Feat(win): Multi-mode Windows code signing under a unified `win.sign` key [HSM, PKCS#11, Azure Trusted Signing, Signtool] (BREAKING) _[`#9855`](https://github.com/electron-userland/electron-builder/pull/9855) [`a07139b`](https://github.com/electron-userland/electron-builder/commit/a07139b09030327aca597673dcbefd95690a5a18) [@mmaietta](https://github.com/mmaietta)_
+- Feat: add updated wine 11.0 to toolsets config; `USE_SYSTEM_WINE` process.env override removed - use `CustomToolset` instead _[`#9898`](https://github.com/electron-userland/electron-builder/pull/9898) [`b832369`](https://github.com/electron-userland/electron-builder/commit/b83236991f50bd40db59ea754e64d86f55a96a92) [@mmaietta](https://github.com/mmaietta)_
+- Chore: modernize macOS build config API and upgrade all `electron/____` dep updates _[`#9889`](https://github.com/electron-userland/electron-builder/pull/9889) [`4d4ba45`](https://github.com/electron-userland/electron-builder/commit/4d4ba45d334a0696df92fb71af8a4b168e7d491e) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Fix: add retry-tolerant `ensureDir` to address recurring flaky `ENOENT … mkdir '<cache>/fpm@2.2.1/…'` during concurrent toolset downloads _[`#9899`](https://github.com/electron-userland/electron-builder/pull/9899) [`ef61dd5`](https://github.com/electron-userland/electron-builder/commit/ef61dd5f47ab0b203e76c506394bf4bc1ee9bf00) [@mmaietta](https://github.com/mmaietta)_
+- Fix: resolve ENOENT on electron zip extraction in Windows Docker _[`#9891`](https://github.com/electron-userland/electron-builder/pull/9891) [`319535a`](https://github.com/electron-userland/electron-builder/commit/319535ada44839149539593f1b1138dc2c5eb2c5) [@mmaietta](https://github.com/mmaietta)_
+- Chore(test): generate ephemeral self-signed macOS code-signing for CI tests _[`#9896`](https://github.com/electron-userland/electron-builder/pull/9896) [`6cdd01d`](https://github.com/electron-userland/electron-builder/commit/6cdd01d4c73eccc18a481c63c2531fd17e276238) [@mmaietta](https://github.com/mmaietta)_
+- Chore: harden Windows Azure signing PowerShell invocation and add Windows signing migration notes _[`#9892`](https://github.com/electron-userland/electron-builder/pull/9892) [`6623f4e`](https://github.com/electron-userland/electron-builder/commit/6623f4e018b8f08840d99b70e809081f21706cbc) [@mmaietta](https://github.com/mmaietta)_
+- Fix(pnpm-collector): bundle transitive deps of `link:` packages _[`#9875`](https://github.com/electron-userland/electron-builder/pull/9875) [`091ab71`](https://github.com/electron-userland/electron-builder/commit/091ab710fc842441e513c7fbb88e6a9c1e77cc77) [@mmaietta](https://github.com/mmaietta)_
+- Fix: Resolves open CodeQL code-scanning alerts (8 of 14) by fixing two real ReDoS vulnerabilities and clearing path-injection taint _[`#9900`](https://github.com/electron-userland/electron-builder/pull/9900) [`c976bc4`](https://github.com/electron-userland/electron-builder/commit/c976bc42e166d388e5fc38f7bf4dd20c87464de5) [@mmaietta](https://github.com/mmaietta)_
+- Fix: preserve symlinks in `zip` and `7z` archive targets on macOS and Linux via 7za `-snl` (Windows still dereferences). Restores pre-26.15 behavior after the bundled 7-Zip upgrade, which began dereferencing by default — corrupting macOS `.framework` bundles (codesign "bundle format is ambiguous", breaking Squirrel.Mac auto-update) and duplicating Linux symlink content. _[`#9902`](https://github.com/electron-userland/electron-builder/pull/9902) [`a6479f3`](https://github.com/electron-userland/electron-builder/commit/a6479f374ecfae5801b343357f286b263133f547) [@mmaietta](https://github.com/mmaietta)_
+- Fix(snap): core24 now runs the app through a generated launcher script, so `executableArgs`/`forceX11` flags containing `=` or quotes build correctly, and the unused `chrome-sandbox` helper is removed automatically when launching with `--no-sandbox` _[`#9897`](https://github.com/electron-userland/electron-builder/pull/9897) [`75bb4c6`](https://github.com/electron-userland/electron-builder/commit/75bb4c6ee911219900d9a303a11c7f5cb3ad9ed0) [@mmaietta](https://github.com/mmaietta)_
+- Fix: declare the missing `electron-publish` dependency on `electron-builder`, and switch type-checking to `nodenext` module resolution so the compiler models Node's real ESM loader _[`#9885`](https://github.com/electron-userland/electron-builder/pull/9885) [`96e47b5`](https://github.com/electron-userland/electron-builder/commit/96e47b5b89b76c719b1c06cfdd62a9a17376484e) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`ef61dd5`](https://github.com/electron-userland/electron-builder/commit/ef61dd5f47ab0b203e76c506394bf4bc1ee9bf00) [`594cfa1`](https://github.com/electron-userland/electron-builder/commit/594cfa1ded3ab4bcb46eac1720b9f9930ed1fbb5) [`96e47b5`](https://github.com/electron-userland/electron-builder/commit/96e47b5b89b76c719b1c06cfdd62a9a17376484e) [`4d4ba45`](https://github.com/electron-userland/electron-builder/commit/4d4ba45d334a0696df92fb71af8a4b168e7d491e)
+
+</small>
+
+- `builder-util@27.0.0-alpha.3`
+- `electron-builder-squirrel-windows@27.0.0-alpha.3`
+- `builder-util-runtime@10.0.0-alpha.2`
+- `electron-publish@27.0.0-alpha.3`
+- `dmg-builder@27.0.0-alpha.3`
+
+</details>
+
+## 27.0.0-alpha.2
+
+### Patch Changes
+
+- Fix: resolve runtime ESM/CJS interop for namespace imports of CJS-only packages (`sax`, `which`, `mime`) _[`#9884`](https://github.com/electron-userland/electron-builder/pull/9884) [`7674e60`](https://github.com/electron-userland/electron-builder/commit/7674e6092645df5c7ae0a31530446efe449cd3d6) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`7674e60`](https://github.com/electron-userland/electron-builder/commit/7674e6092645df5c7ae0a31530446efe449cd3d6)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.1`
+- `electron-publish@27.0.0-alpha.2`
+- `builder-util@27.0.0-alpha.2`
+- `dmg-builder@27.0.0-alpha.2`
+- `electron-builder-squirrel-windows@27.0.0-alpha.2`
+
+</details>
+
+## 27.0.0-alpha.1
+
+### Patch Changes
+
+- Fix: resolve `plist` and `chromium-pickle-js` imports. Add additional messaging to `migrate-schema` stdout _[`#9880`](https://github.com/electron-userland/electron-builder/pull/9880) [`b79c2b2`](https://github.com/electron-userland/electron-builder/commit/b79c2b2af3ac65f3d51da7b5045ad803d58565e0) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@27.0.0-alpha.1`
+- `electron-builder-squirrel-windows@27.0.0-alpha.1`
+
+</details>
+
+## 27.0.0-alpha.0
+
+### Major Changes
+
+- Fix: disable implicit publishing by default _[`#9476`](https://github.com/electron-userland/electron-builder/pull/9476) [`5c9c503`](https://github.com/electron-userland/electron-builder/commit/5c9c503f912e6423a57ab5b89234dff9cf9133ed) [@biw](https://github.com/biw)_
+
+  BREAKING CHANGE: Publishing no longer happens automatically based on CI environment, git tags, or npm lifecycle events. You must now explicitly request publishing using the `--publish` CLI flag (e.g., `--publish always`, `--publish onTag`) or by setting the `publish` option in your configuration.
+
+  This addresses security and usability concerns where unexpected auto-publishing could accidentally expose secrets or publish unfinished work.
+
+- Chore(refactor): consolidate ASAR config under `asar?: AsarOptions | false | null` (BREAKING) _[`#9878`](https://github.com/electron-userland/electron-builder/pull/9878) [`81f4ab5`](https://github.com/electron-userland/electron-builder/commit/81f4ab56ed21fee1f913f0cb88aa2ba8f05b77fd) [@mmaietta](https://github.com/mmaietta)_
+- Chore(refactor): delete ProtonFramework, LibUiFramework, and binDownload.ts; consolidate all binary downloads into `downloadBuilderToolset`. _[`#9868`](https://github.com/electron-userland/electron-builder/pull/9868) [`f1f654e`](https://github.com/electron-userland/electron-builder/commit/f1f654ebe677db8b8933ec2eab25fcb19978c52f) [@mmaietta](https://github.com/mmaietta)_
+- Feat(toolsets)!: introduce `ToolsetCustom` for user-supplied bundles; remove env-var toolset overrides; split toolset modules into single-purpose files; deprecate `PlatformPackager.info` _[`#9871`](https://github.com/electron-userland/electron-builder/pull/9871) [`02a8042`](https://github.com/electron-userland/electron-builder/commit/02a80426840cda286840f25d28f1ecfce99885db) [@mmaietta](https://github.com/mmaietta)_
+- Chore(refactor): group native-module rebuild options under `nativeModules` sub-key (BREAKING) _[`#9872`](https://github.com/electron-userland/electron-builder/pull/9872) [`cd06931`](https://github.com/electron-userland/electron-builder/commit/cd06931c7c6a8b2a9d2e28ab16c3ea45cb2526b4) [@mmaietta](https://github.com/mmaietta)_
+- Chore(refactor): remove deprecated `snap` config property and all remaining deprecated APIs. Hard-deletes 14 deprecated features accumulated across the codebase. No migration shims remain. (BREAKING) _[`#9873`](https://github.com/electron-userland/electron-builder/pull/9873) [`9d755c6`](https://github.com/electron-userland/electron-builder/commit/9d755c68f845d169c9b68963c9711d2e75b4800b) [@mmaietta](https://github.com/mmaietta)_
+- Feat!: migrate to native ESM, require Node.js >=22.12.0, remove electron-compile _[`#9544`](https://github.com/electron-userland/electron-builder/pull/9544) [`a5121de`](https://github.com/electron-userland/electron-builder/commit/a5121de49582eaa8870d4c05e6ae55eff160a592) [@mmaietta](https://github.com/mmaietta)_
+
+### Minor Changes
+
+- Refactor(targets,vm,codeSign,electron,util): reorganize platform-specific files into subdirectories _[`#9870`](https://github.com/electron-userland/electron-builder/pull/9870) [`62ae0b9`](https://github.com/electron-userland/electron-builder/commit/62ae0b9d7f6da34ac8811da241a8181d7661c88e) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Chore: Code quality modernization: adopt native Node.js APIs and modern TypeScript patterns across the codebase. _[`#9867`](https://github.com/electron-userland/electron-builder/pull/9867) [`f8feadb`](https://github.com/electron-userland/electron-builder/commit/f8feadb0c39934565197d69248274fd62173a94e) [@mmaietta](https://github.com/mmaietta)_
+- Chore(refactor): Extract `validateShellEmbeddable` to `builder-util/envUtil`; consolidate all boolean env-var flags into `flags.ts`. _[`#9869`](https://github.com/electron-userland/electron-builder/pull/9869) [`e59504d`](https://github.com/electron-userland/electron-builder/commit/e59504d122c245c08f70218badce057655c1c022) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`f8feadb`](https://github.com/electron-userland/electron-builder/commit/f8feadb0c39934565197d69248274fd62173a94e) [`f1f654e`](https://github.com/electron-userland/electron-builder/commit/f1f654ebe677db8b8933ec2eab25fcb19978c52f) [`e59504d`](https://github.com/electron-userland/electron-builder/commit/e59504d122c245c08f70218badce057655c1c022) [`02a8042`](https://github.com/electron-userland/electron-builder/commit/02a80426840cda286840f25d28f1ecfce99885db) [`9d755c6`](https://github.com/electron-userland/electron-builder/commit/9d755c68f845d169c9b68963c9711d2e75b4800b) [`a5121de`](https://github.com/electron-userland/electron-builder/commit/a5121de49582eaa8870d4c05e6ae55eff160a592)
+
+</small>
+
+- `builder-util@27.0.0-alpha.0`
+- `builder-util-runtime@10.0.0-alpha.0`
+- `electron-builder-squirrel-windows@27.0.0-alpha.0`
+- `electron-publish@27.0.0-alpha.0`
+- `dmg-builder@27.0.0-alpha.0`
+
+</details>
+
+## 26.15.3
+
+### Patch Changes
+
+- Fix(download): persist toolset archives in a predictable cache path so repeated builds and offline environments skip the @electron/get network round-trip _[`#9861`](https://github.com/electron-userland/electron-builder/pull/9861) [`9097daf`](https://github.com/electron-userland/electron-builder/commit/9097daff78f7f9450dc7e06f6e7eea94ed1394aa) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 4 dependencies</summary>
+
+<small>
+
+[`818a89f`](https://github.com/electron-userland/electron-builder/commit/818a89f4c3087ed53498d781bf0bb1ca4807d03d) [`35bfdeb`](https://github.com/electron-userland/electron-builder/commit/35bfdebe47f412c3bf14bc5d1b9d833bfa1ec7d4)
+
+</small>
+
+- `electron-publish@26.15.3`
+- `builder-util@26.15.3`
+- `dmg-builder@26.15.3`
+- `electron-builder-squirrel-windows@26.15.3`
+
+</details>
+
+## 26.15.2
+
+### Patch Changes
+
+- Fix(mac): use native `zip` for macOS zip target to preserve `.framework` symlinks and fix Squirrel.Mac auto-update validation _[`#9847`](https://github.com/electron-userland/electron-builder/pull/9847) [`e25f967`](https://github.com/electron-userland/electron-builder/commit/e25f9674d594524c2d0348c8fae456527391c9ca) [@mmaietta](https://github.com/mmaietta)_
+- Fix(icons): replace png2icons with wasm-vips Lanczos3 resampling for high-quality icon conversion _[`#9851`](https://github.com/electron-userland/electron-builder/pull/9851) [`f5ae163`](https://github.com/electron-userland/electron-builder/commit/f5ae1632a7d30db34660786c81d39fca773e9467) [@mmaietta](https://github.com/mmaietta)_
+- Fix: retry package install on transient network errors _[`#9850`](https://github.com/electron-userland/electron-builder/pull/9850) [`3951024`](https://github.com/electron-userland/electron-builder/commit/3951024641788af4a18f407074106b2a4196fc1f) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@26.15.2`
+- `electron-builder-squirrel-windows@26.15.2`
+
+</details>
+
+## 26.15.1
+
+### Patch Changes
+
+- Chore: `ci:validate` lint fixes, `ci:test:fetch-cache` simplification, and code cleanup _[`#9840`](https://github.com/electron-userland/electron-builder/pull/9840) [`588ff48`](https://github.com/electron-userland/electron-builder/commit/588ff4854e9c0efa13539fed14b2711a708c8c7a) [@mmaietta](https://github.com/mmaietta)_
+- Chore(deps): unpin and update `@electron/rebuild` package to latest `^4.0.4` _[`#9845`](https://github.com/electron-userland/electron-builder/pull/9845) [`db5d2f4`](https://github.com/electron-userland/electron-builder/commit/db5d2f4bfecf43dfb9f784f07f96666404487ba7) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 3 dependencies</summary>
+
+<small>
+
+[`588ff48`](https://github.com/electron-userland/electron-builder/commit/588ff4854e9c0efa13539fed14b2711a708c8c7a)
+
+</small>
+
+- `electron-publish@26.15.1`
+- `dmg-builder@26.15.1`
+- `electron-builder-squirrel-windows@26.15.1`
+
+</details>
+
+## 26.15.0
+
+### Minor Changes
+
+- Feat(linux): add `linux.syncDesktopName` opt-in flag to align installed `.desktop` filename with `desktopName` and `StartupWMClass`; will become default in v27 _[`#9832`](https://github.com/electron-userland/electron-builder/pull/9832) [`8096732`](https://github.com/electron-userland/electron-builder/commit/8096732d7270ab8f20694a9a2f3821c95c0ea153) [@mmaietta](https://github.com/mmaietta)_
+- Fix(node-module-collector): invoke package managers via PowerShell `-EncodedCommand` on Windows to eliminate shell injection vectors and the Node `DEP0190` deprecation warning _[`#9827`](https://github.com/electron-userland/electron-builder/pull/9827) [`3e3ea31`](https://github.com/electron-userland/electron-builder/commit/3e3ea319002effd7b651851490ca0a4e6bfda27d) [@mmaietta](https://github.com/mmaietta)_
+- Chore: replace app-builder-bin `node-dep-tree` and `rebuild-node-modules` with pure-TS equivalents; `nativeRebuilder: "legacy"` now routes to `@electron/rebuild` sequential mode _[`#9828`](https://github.com/electron-userland/electron-builder/pull/9828) [`198c10c`](https://github.com/electron-userland/electron-builder/commit/198c10c9693d1244bac80cb11af6b75ad363e5a0) [@mmaietta](https://github.com/mmaietta)_
+- Chore: replace app-builder-bin `proton-native` command with pure-TS equivalents; Node.js and LaunchUI binaries are now downloaded via `downloadBuilderToolset`; `config.launchUiVersion` string is now respected _[`#9829`](https://github.com/electron-userland/electron-builder/pull/9829) [`01b8ba9`](https://github.com/electron-userland/electron-builder/commit/01b8ba979d1db44543e18d07b4ad94953deb10ea) [@mmaietta](https://github.com/mmaietta)_
+- Chore: replace app-builder-bin `snap` and `wine` commands with pure-TS equivalents; `executeAppBuilder` and `app-builder-bin` package fully removed from codebase; snap templates now downloaded via `downloadBuilderToolset` with pinned checksums; Wine is downloaded automatically on macOS (legacy 4.0.1 bundle by default, Wine 11 bundle available via `toolsets.wine: "1.0.1"`); on Linux with legacy config and when `USE_SYSTEM_WINE=true`, system wine is used instead _[`#9829`](https://github.com/electron-userland/electron-builder/pull/9829) [`01b8ba9`](https://github.com/electron-userland/electron-builder/commit/01b8ba979d1db44543e18d07b4ad94953deb10ea) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Fix(mac): skip signing when no certificate found; warn on ad-hoc + hardenedRuntime _[`#9822`](https://github.com/electron-userland/electron-builder/pull/9822) [`8f0621b`](https://github.com/electron-userland/electron-builder/commit/8f0621ba9d5e8445e538fa0f6869ff0a4c8d19cb) [@mmaietta](https://github.com/mmaietta)_
+- Fix(mac/pkg): explicitly pass `--version` to pkgbuild _[`#9835`](https://github.com/electron-userland/electron-builder/pull/9835) [`2fb4078`](https://github.com/electron-userland/electron-builder/commit/2fb4078a7aabd1524121d933f41c7183c1eb8d45) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`198c10c`](https://github.com/electron-userland/electron-builder/commit/198c10c9693d1244bac80cb11af6b75ad363e5a0) [`01b8ba9`](https://github.com/electron-userland/electron-builder/commit/01b8ba979d1db44543e18d07b4ad94953deb10ea) [`22a7532`](https://github.com/electron-userland/electron-builder/commit/22a7532bd01b9fb42cff7c58d599c7ad683569fe)
+
+</small>
+
+- `builder-util-runtime@9.7.0`
+- `builder-util@26.15.0`
+- `electron-publish@26.15.0`
+- `dmg-builder@26.15.0`
+- `electron-builder-squirrel-windows@26.15.0`
+
+</details>
+
 ## 26.14.0
 
 ### Minor Changes

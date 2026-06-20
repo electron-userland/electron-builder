@@ -5,7 +5,7 @@ import type { LoadContext, Plugin } from "@docusaurus/types"
 
 function generateCliDocs(siteDir: string): void {
   const root = join(siteDir, "..")
-  const help = execSync("node packages/electron-builder/out/cli/cli.js --help", {
+  const help = execSync("node packages/electron-builder/dist/cli/cli.js --help", {
     encoding: "utf-8",
     cwd: root,
   })
@@ -23,7 +23,9 @@ function generateCliDocs(siteDir: string): void {
 function prepareDocs(siteDir: string): void {
   const root = join(siteDir, "..")
   const readme = readFileSync(join(root, "README.md"), "utf8")
-  const introduction = `---\nslug: /\ntitle: "electron-builder"\n---\n\n${readme}`
+  // Rewrite repo-relative static asset paths (valid on GitHub) to site-root paths (valid in Docusaurus)
+  const rewritten = readme.replaceAll("website/static/", "/")
+  const introduction = `---\nslug: /\ntitle: "electron-builder"\n---\n\n${rewritten}`
   writeFileSync(join(siteDir, "docs/introduction.md"), introduction)
 
   // Copy pagefind from a previous build into static/ so dev-server search works

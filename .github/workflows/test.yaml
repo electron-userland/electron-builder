@@ -25,6 +25,11 @@ on:
         required: false
         type: boolean
         default: false
+      collect-coverage:
+        description: "Collect v8 code coverage during the run and publish a merged coverage report (adds per-shard overhead; off by default)"
+        required: false
+        type: boolean
+        default: true
 
 # concurrency:
 # group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -44,10 +49,12 @@ jobs:
       force-docker-build: ${{ steps.changes.outputs.docker == 'true' || steps.changes.outputs.workflow == 'true' }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0
+          persist-credentials: false
 
       - name: Determine if Dockerfiles changed
-        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         id: changes
         with:
           filters: |
@@ -67,10 +74,10 @@ jobs:
     uses: ./.github/workflows/docker-build.yml
 
   # -------------------------
-  # Shard Planning (unified job outputting map for all platforms)
+  # Linting + Shard Planning (unified job outputting map for all platforms)
   # -------------------------
 
-  shard-plan:
+  validate-and-shard:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     outputs:
@@ -79,6 +86,8 @@ jobs:
       macos: ${{ steps.plan.outputs.macos }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
@@ -86,6 +95,13 @@ jobs:
           cache-key: v-39.8.5-linux-electron
           cache-path: ~/.cache/electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
+          collect-coverage: ${{ inputs.collect-coverage }}
+
+      - name: Validate files
+        run: pnpm ci:validate
+
+      - name: Lint files
+        run: pnpm lint
 
       - name: Output shard plan
         run: pnpm ci:test:count
@@ -117,7 +133,7 @@ jobs:
 
   test-linux:
     name: Test Linux (Shard ${{ matrix.shard }})
-    needs: [check-if-docker-build, run-docker-build, shard-plan]
+    needs: [check-if-docker-build, run-docker-build, validate-and-shard]
     if: |
       always() &&
       needs.check-if-docker-build.result == 'success' &&
@@ -125,7 +141,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: ${{ fromJson(needs.shard-plan.outputs.linux) }}
+        shard: ${{ fromJson(needs.validate-and-shard.outputs.linux) }}
         include:
           - platform: linux
             runner: ubuntu-latest
@@ -137,6 +153,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 2
+          persist-credentials: false
 
       - name: Cleanup runner
         uses: ./.github/actions/cleanup-runner
@@ -147,10 +164,11 @@ jobs:
           cache-path: ${{ matrix.cache-path }}
           cache-key: ${{ matrix.cache-key }}
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
+          collect-coverage: ${{ inputs.collect-coverage }}
 
       - name: Download test-runner if exists
         if: needs.run-docker-build.result == 'success'
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
           path: ${{ runner.temp }}
@@ -168,50 +186,27 @@ jobs:
         env:
           CSC_KEY_PASSWORD_SECRET: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
 
-      - name: Provision squirrel.windows toolset
-        run: |
-          # squirrel.windows@1.1.0 bundles the Chocolatey shim for nuget.exe which fails when
-          # relocated. Replace the shim with a standalone portable nuget.exe (CI-only download).
-          # rcedit.exe is supplied at runtime from the win-codesign toolset by SquirrelWindowsTarget.
-          TOOLSET_DIR="${{ runner.temp }}/squirrel-toolset"
-          VENDOR_DIR="$TOOLSET_DIR/electron-winstaller/vendor"
-          mkdir -p "$TOOLSET_DIR"
-          curl -fsSL -o "${{ runner.temp }}/squirrel.zip" \
-            "https://github.com/electron-userland/electron-builder-binaries/releases/download/squirrel.windows%401.1.0/squirrel.windows-2.0.1-patched.zip"
-          unzip -q "${{ runner.temp }}/squirrel.zip" -d "$TOOLSET_DIR"
-          curl -fsSL -o "$VENDOR_DIR/nuget.exe" \
-            "https://dist.nuget.org/win-x86-commandline/v6.14.0/nuget.exe"
-          echo "SQUIRREL_TOOLSET_HOST_DIR=$TOOLSET_DIR" >> "$GITHUB_ENV"
-
       - name: Run shard in docker
         run: |
           echo $TEST_RUNNER_IMAGE_TAG
-          export ADDITIONAL_DOCKER_ARGS="--env-file ${{ runner.temp }}/docker-secrets.env \
-            -e VITEST_SHARD_INDEX=${{ matrix.shard }} \
-            -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json \
-            -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }} \
-            -v ${SQUIRREL_TOOLSET_HOST_DIR}:/squirrel-toolset:ro \
-            -e ELECTRON_BUILDER_SQUIRREL_TOOLSET_DIR=/squirrel-toolset"
-          pnpm test-linux
+          pnpm test:linux
         env:
+          ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SHARD_INDEX=${{ matrix.shard }} -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/vitest-config/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }} -e VITEST_COVERAGE=${{ inputs.collect-coverage }}"
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
 
-      - name: Upload smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
+      - name: Upload test artifacts
         if: always()
+        uses: ./.github/actions/upload-test-artifacts
         with:
-          name: vitest-smart-cache-${{ matrix.platform }}-${{ matrix.shard }}
-          path: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
-          retention-days: 1
-          if-no-files-found: error
+          name: ${{ matrix.platform }}-${{ matrix.shard }}
 
   test-windows:
     name: Test Windows (Shard ${{ matrix.shard }})
-    needs: shard-plan
+    needs: validate-and-shard
     strategy:
       fail-fast: false
       matrix:
-        shard: ${{ fromJson(needs.shard-plan.outputs.windows) }}
+        shard: ${{ fromJson(needs.validate-and-shard.outputs.windows) }}
         include:
           - platform: windows
             runner: windows-latest
@@ -221,6 +216,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
@@ -228,6 +225,7 @@ jobs:
           cache-key: ${{ matrix.cache-key }}
           cache-path: ${{ matrix.cache-path }}
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
+          collect-coverage: ${{ inputs.collect-coverage }}
 
       - name: Pre-initialize NuGet IsolatedStorage
         shell: pwsh
@@ -238,45 +236,26 @@ jobs:
           # the CLR create its hashed subdirectory without error.
           New-Item -ItemType Directory -Force -Path "$env:LOCALAPPDATA\IsolatedStorage" | Out-Null
 
-      - name: Provision squirrel.windows toolset
-        shell: pwsh
-        run: |
-          # squirrel.windows@1.1.0 bundles the Chocolatey shim for nuget.exe. The shim resolves the
-          # real binary relative to its Chocolatey install path and fails when copied to a temp dir.
-          # rcedit.exe is supplied at runtime from the win-codesign toolset by SquirrelWindowsTarget.
-          $toolsetDir = "$env:RUNNER_TEMP\squirrel-toolset"
-          $zipPath    = "$env:RUNNER_TEMP\squirrel.zip"
-          Invoke-WebRequest `
-            -Uri "https://github.com/electron-userland/electron-builder-binaries/releases/download/squirrel.windows%401.1.0/squirrel.windows-2.0.1-patched.zip" `
-            -OutFile $zipPath
-          Expand-Archive -Path $zipPath -DestinationPath $toolsetDir -Force
-          $realNuget = Join-Path $env:ChocolateyInstall "lib\NuGet.CommandLine\tools\nuget.exe"
-          Copy-Item $realNuget "$toolsetDir\electron-winstaller\vendor\nuget.exe" -Force
-          "ELECTRON_BUILDER_SQUIRREL_TOOLSET_DIR=$toolsetDir" >> $env:GITHUB_ENV
-
       - name: Run shard
         run: pnpm ci:test
         env:
           CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
           VITEST_SHARD_INDEX: ${{ matrix.shard }}
-          VITEST_SMART_CACHE_FILE: ${{ github.workspace }}\test\vitest-scripts\_vitest-smart-cache.json
+          VITEST_SMART_CACHE_FILE: ${{ github.workspace }}\test\vitest-scripts\vitest-config\_vitest-smart-cache.json
 
-      - name: Upload smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
+      - name: Upload test artifacts
         if: always()
+        uses: ./.github/actions/upload-test-artifacts
         with:
-          name: vitest-smart-cache-${{ matrix.platform }}-${{ matrix.shard }}
-          path: ${{ github.workspace }}\test\vitest-scripts\_vitest-smart-cache.json
-          retention-days: 1
-          if-no-files-found: error
+          name: ${{ matrix.platform }}-${{ matrix.shard }}
 
   test-macos:
     name: Test macOS (Shard ${{ matrix.shard }})
-    needs: shard-plan
+    needs: validate-and-shard
     strategy:
       fail-fast: false
       matrix:
-        shard: ${{ fromJson(needs.shard-plan.outputs.macos) }}
+        shard: ${{ fromJson(needs.validate-and-shard.outputs.macos) }}
         include:
           - platform: macos
             runner: macos-26
@@ -286,6 +265,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
@@ -293,6 +274,12 @@ jobs:
           cache-path: ${{ matrix.cache-path }}
           cache-key: ${{ matrix.cache-key }}
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
+          collect-coverage: ${{ inputs.collect-coverage }}
+
+      - name: Silence the damn GH runner warnings (temporary until GH updates their runners to a newer macOS base toolset bundle)
+        run: |
+          brew uninstall bicep || true # Not actually a dependency, but GH runners have it preinstalled and it prints annoying warnings about missing .NET workloads
+          brew untap aws/tap azure/bicep || true
 
       - name: Install toolset via brew
         run: |
@@ -303,18 +290,13 @@ jobs:
         run: pnpm ci:test
         env:
           VITEST_SHARD_INDEX: ${{ matrix.shard }}
-          VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
-          MAC_CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
-          # CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/vitest-config/_vitest-smart-cache.json
 
-      - name: Upload smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
+      - name: Upload test artifacts
         if: always()
+        uses: ./.github/actions/upload-test-artifacts
         with:
-          name: vitest-smart-cache-${{ matrix.platform }}-${{ matrix.shard }}
-          path: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
-          retention-days: 1
-          if-no-files-found: error
+          name: ${{ matrix.platform }}-${{ matrix.shard }}
 
   # -------------------------
   # Special test jobs
@@ -332,6 +314,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Cleanup runner
         uses: ./.github/actions/cleanup-runner
@@ -342,6 +326,7 @@ jobs:
           cache-path: ~/.cache/electron
           cache-key: v-39.8.5-update-electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
+          collect-coverage: ${{ inputs.collect-coverage }}
 
       - name: Verify Docs Generation
         run: pnpm generate:all
@@ -351,7 +336,7 @@ jobs:
 
       - name: Download test-runner if exists
         if: needs.run-docker-build.result == 'success'
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
           path: ${{ runner.temp }}
@@ -377,20 +362,17 @@ jobs:
       - name: Test
         run: |
           echo $TEST_RUNNER_IMAGE_TAG
-          pnpm test-linux
+          pnpm test:linux
         env:
           TEST_FILES: nsisUpdaterTest,PublishManagerTest,differentialUpdateTest,GitlabPublisherTest,GitlabPublisher.integration.test
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
-          ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}"
+          ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/vitest-config/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }} -e VITEST_COVERAGE=${{ inputs.collect-coverage }}"
 
-      - name: Upload smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
+      - name: Upload test artifacts
         if: always()
+        uses: ./.github/actions/upload-test-artifacts
         with:
-          name: vitest-smart-cache-updater
-          path: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
-          retention-days: 1
-          if-no-files-found: error
+          name: updater
 
   test-snap:
     name: Test Snap (${{ matrix.core }})
@@ -402,6 +384,8 @@ jobs:
         core: [core18, core20, core22, core24]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
@@ -409,11 +393,12 @@ jobs:
           cache-path: ~/.cache/electron
           cache-key: v-39.8.5-native-electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
+          collect-coverage: ${{ inputs.collect-coverage }}
 
       - name: Test snap ${{ matrix.core }} (Docker)
         run: SNAP_CORE=${{ matrix.core }} ./test/src/linux/test-snap.sh
         env:
-          VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
+          VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/vitest-config/_vitest-smart-cache.json
           RESET_VITEST_SHARD_CACHE: ${{ inputs.reset-vitest-smart-cache }}
 
       # Native install+launch test — core24 only; requires snapcraft + unsquashfs on the runner.
@@ -433,7 +418,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y squashfs-tools xvfb
-          sudo snap install snapcraft --classic
+          # Pin to the 8.x track: snapcraft 9.0.0 (latest/stable) intermittently hangs while
+          # apt-fetching destructive-mode stagePackages, causing the core24 test to time out.
+          sudo snap install snapcraft --classic --channel=8.x/stable
 
       - name: Test snap core24 native (install + launch)
         if: matrix.core == 'core24'
@@ -443,17 +430,14 @@ jobs:
           SNAP_TEST_CORES: core24
           SNAPCRAFT_BUILD_ENVIRONMENT: host
           RUN_SNAP_TESTS: "true"
-          VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
+          VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/vitest-config/_vitest-smart-cache.json
           RESET_VITEST_SHARD_CACHE: ${{ inputs.reset-vitest-smart-cache }}
 
-      - name: Upload smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
+      - name: Upload test artifacts
         if: always()
+        uses: ./.github/actions/upload-test-artifacts
         with:
-          name: vitest-smart-cache-snap-${{ matrix.core }}
-          path: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
-          retention-days: 1
-          if-no-files-found: error
+          name: snap-${{ matrix.core }}
 
   test-e2e:
     name: Test e2e Auto Updater Linux
@@ -490,6 +474,8 @@ jobs:
     steps:
       - name: Checkout code repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
@@ -497,6 +483,7 @@ jobs:
           cache-path: ~/.cache/electron
           cache-key: v-39.8.5-linux-e2e-electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
+          collect-coverage: ${{ inputs.collect-coverage }}
 
       - name: docker build
         run: ./test/src/updater/test-specific-platforms.sh ${{ matrix.test_config.stem }} build
@@ -507,17 +494,14 @@ jobs:
           ADDITIONAL_DOCKER_ARGS: >-
             -e PACKAGE_MANAGER_TO_TEST=${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST || '' }}
             -e RUN_APP_IMAGE_TEST=${{ matrix.test_config.env.RUN_APP_IMAGE_TEST || false }}
-            -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json
-            -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}
+            -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/vitest-config/_vitest-smart-cache.json
+            -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }} -e VITEST_COVERAGE=${{ inputs.collect-coverage }}
 
-      - name: Upload smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
+      - name: Upload test artifacts
         if: always()
+        uses: ./.github/actions/upload-test-artifacts
         with:
-          name: vitest-smart-cache-e2e-${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST }}
-          path: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
-          retention-days: 1
-          if-no-files-found: error
+          name: e2e-${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST || matrix.test_config.stem }}
 
   # -------------------------
   # Merge Smart Cache Artifacts
@@ -527,95 +511,89 @@ jobs:
     needs: [test-linux, test-windows, test-macos, test-e2e, test-updater, test-snap]
     if: always()
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - uses: ./.github/actions/pnpm
 
       - name: Download all smart cache artifacts
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           pattern: vitest-smart-cache-*
           path: smart-cache-artifacts
         continue-on-error: true
 
       - name: Merge cache files
+        run: pnpm ci:test:merge-cache
+
+      # -------------------------
+      # Aggregate per-shard test reports → run summary + combined downloadable report
+      # -------------------------
+
+      - name: Download all test report artifacts
+        if: always()
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: vitest-report-*
+          path: report-artifacts
+        continue-on-error: true
+
+      # Per-test / per-shard / total durations + a combined list of every failed test, written to the
+      # run's Summary page (GITHUB_STEP_SUMMARY) and the console. Never fails the job — it is reporting.
+      - name: Write test summary
+        if: always()
+        continue-on-error: true
+        run: pnpm ci:test:summary --results-dir report-artifacts
+
+      - name: Gather blob reports
+        if: always()
         run: |
-          mkdir -p merged-cache
+          mkdir -p vitest-blobs
+          # Prefix each blob with its artifact name (report-artifacts/<artifact>/vitest-blobs/blob-*.json)
+          # so two shards that happen to share a blob filename (same platform+shard+pid across different
+          # runners) can't overwrite each other. vitest --merge-reports accepts arbitrary blob filenames.
+          find report-artifacts -type f -name 'blob-*.json' | while read -r f; do
+            art=$(basename "$(dirname "$(dirname "$f")")")
+            cp "$f" "vitest-blobs/${art}__$(basename "$f")"
+          done
+          echo "Collected $(ls vitest-blobs 2>/dev/null | wc -l) blob report(s)"
 
-          # Create merge script
-          cat > merge-caches.js << 'EOF'
-          const fs = require('fs');
-          const path = require('path');
+      # Combined @vitest/ui HTML report (+ merged v8 coverage when collect-coverage is on) from every
+      # shard's blob. Runs from the repo root so blob paths and reporter resolution line up.
+      - name: Merge reports into combined HTML report
+        if: always()
+        continue-on-error: true
+        run: pnpm ci:test:merge-reports
+        env:
+          VITEST_COVERAGE: ${{ inputs.collect-coverage }}
 
-          const artifactsDir = 'smart-cache-artifacts';
-          const outputFile = 'merged-cache/_vitest-smart-cache.json';
-          const repoCommittedCache = 'test/vitest-scripts/_vitest-smart-cache.json';
-
-          let mergedCache = {};
-          let filesProcessed = 0;
-
-          // Start with repo-committed cache as base (if it exists)
-          if (fs.existsSync(repoCommittedCache)) {
-            console.log('Loading base cache from repo-committed file');
-            try {
-              mergedCache = JSON.parse(fs.readFileSync(repoCommittedCache, 'utf8'));
-              console.log(`Base cache has ${Object.keys(mergedCache).length} entries`);
-            } catch (err) {
-              console.error('Error reading repo-committed cache:', err.message);
-            }
-          }
-
-          // Check if artifacts directory exists
-          if (!fs.existsSync(artifactsDir)) {
-            console.log('No smart cache artifacts found to merge, using base cache only');
-            fs.writeFileSync(outputFile, JSON.stringify(mergedCache, null, 2));
-            process.exit(0);
-          }
-
-          // Read all cache files from test runs
-          const platforms = fs.readdirSync(artifactsDir);
-
-          platforms.forEach(platform => {
-            const cacheFile = path.join(artifactsDir, platform, '_vitest-smart-cache.json');
-            if (fs.existsSync(cacheFile)) {
-              console.log(`Reading cache from ${platform}`);
-              try {
-                const cache = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
-                filesProcessed++;
-
-                // Deep-merge top-level objects so all shards' new timing data is preserved
-                Object.keys(cache).forEach(key => {
-                  if (mergedCache[key] && typeof mergedCache[key] === 'object' && !Array.isArray(mergedCache[key])) {
-                    mergedCache[key] = { ...mergedCache[key], ...cache[key] };
-                  } else {
-                    mergedCache[key] = cache[key];
-                  }
-                });
-              } catch (err) {
-                console.error(`Error reading cache from ${platform}:`, err.message);
-              }
-            }
-          });
-
-          console.log(`Processed ${filesProcessed} cache files from test runs`);
-          console.log(`Final merged cache has ${Object.keys(mergedCache).length} entries`);
-          fs.writeFileSync(outputFile, JSON.stringify(mergedCache, null, 2));
-          EOF
-
-          node merge-caches.js
+      - name: Upload combined test report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: vitest-combined-report
+          path: |
+            html-report/
+            merged-test-report.json
+            merged-coverage/
+          retention-days: 14
+          if-no-files-found: warn
 
       - name: Delete individual cache artifacts
-        uses: geekyeggo/delete-artifact@f275313e70c08f6120db482d7a6b98377786765b # v5.1.0
+        uses: geekyeggo/delete-artifact@176a747ab7e287e3ff4787bf8a148716375ca118 # v6.0.0
         with:
-          name: vitest-smart-cache-*
+          name: |
+            vitest-smart-cache-*
+            vitest-report-*
           failOnError: false
         continue-on-error: true
 
       - name: Copy merged cache to canonical path
         if: always()
-        run: cp merged-cache/_vitest-smart-cache.json test/vitest-scripts/_vitest-smart-cache.json
+        run: cp merged-cache/_vitest-smart-cache.json test/vitest-scripts/vitest-config/_vitest-smart-cache.json
 
       - name: Compute Vitest smart cache ref
         if: always()
@@ -624,11 +602,13 @@ jobs:
           if [ -n "$PR_NUM" ]; then
             echo "VITEST_CACHE_REF=PR-${PR_NUM}" >> "$GITHUB_ENV"
           else
-            echo "VITEST_CACHE_REF=${{ github.ref_name }}" >> "$GITHUB_ENV"
+            # Artifact names cannot contain "/", so sanitize slashes in branch
+            # names like "release/v26" -> "release-v26" (keep in sync with detectRef in fetch-smart-cache.ts).
+            echo "VITEST_CACHE_REF=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_ENV"
           fi
 
       - name: Upload vitest smart cache artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: vitest-smart-cache-${{ env.VITEST_CACHE_REF }}

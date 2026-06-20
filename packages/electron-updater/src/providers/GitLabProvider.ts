@@ -1,11 +1,21 @@
-import { CancellationToken, GitlabOptions, HttpError, newError, UpdateFileInfo, UpdateInfo, GitlabReleaseInfo, GitlabReleaseAsset } from "builder-util-runtime"
+import {
+  CancellationToken,
+  getGitlabAuthHeaders,
+  GitlabOptions,
+  HttpError,
+  newError,
+  UpdateFileInfo,
+  UpdateInfo,
+  GitlabReleaseInfo,
+  GitlabReleaseAsset,
+} from "builder-util-runtime"
+import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { URL } from "url"
-// @ts-ignore
-import * as escapeRegExp from "lodash.escaperegexp"
-import { AppUpdater } from "../AppUpdater"
-import { ResolvedUpdateFileInfo } from "../types"
-import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util"
-import { getFileList, parseUpdateInfo, Provider, ProviderRuntimeOptions } from "./Provider"
+import escapeRegExp from "lodash.escaperegexp"
+import { AppUpdater } from "../AppUpdater.js"
+import { ResolvedUpdateFileInfo } from "../types.js"
+import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util.js"
+import { channelFileNotFoundError, getFileList, parseUpdateInfo, Provider, ProviderRuntimeOptions } from "./Provider.js"
 
 interface GitlabUpdateInfo extends UpdateInfo {
   tag: string
@@ -52,6 +62,12 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
     this.baseApiUrl = newBaseUrl(`https://${host}/api/v4`)
   }
 
+  protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): RequestOptions {
+    const result = super.createRequestOptions(url, headers)
+    ;(result as any).redirect = "manual"
+    return result
+  }
+
   private get channel(): string {
     const result = this.updater.channel || this.options.channel
     return result == null ? this.getDefaultChannelName() : this.getCustomChannelName(result)
@@ -63,7 +79,7 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
     // Get latest release from GitLab API using the permalink/latest endpoint
     const latestReleaseUrl = newUrlFromBase(`projects/${this.options.projectId}/releases/permalink/latest`, this.baseApiUrl)
 
-    const header = { Accept: "application/json", ...this.setAuthHeaderForToken(this.options.token || null) }
+    const header = { Accept: "application/json", ...getGitlabAuthHeaders(this.options.token || null) }
     let releaseResponse: string | null
     try {
       releaseResponse = await this.httpRequest(latestReleaseUrl, header, cancellationToken)
@@ -107,7 +123,7 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
       }
 
       channelFileUrl = new URL(channelAsset.direct_asset_url)
-      const authHeaders = this.setAuthHeaderForToken(this.options.token || null)
+      const authHeaders = getGitlabAuthHeaders(this.options.token || null)
       const headers = Object.keys(authHeaders).length ? authHeaders : undefined
 
       try {
@@ -118,7 +134,7 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
         return result
       } catch (e: any) {
         if (e instanceof HttpError && e.statusCode === 404) {
-          throw newError(`Cannot find ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
+          throw channelFileNotFoundError(channelFile, channelFileUrl, e)
         }
         throw e
       }
@@ -200,7 +216,7 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
       const releaseUrl = newUrlFromBase(`projects/${this.options.projectId}/releases/${encodeURIComponent(releaseId)}`, this.baseApiUrl)
 
       try {
-        const header = { Accept: "application/json", ...this.setAuthHeaderForToken(this.options.token || null) }
+        const header = { Accept: "application/json", ...getGitlabAuthHeaders(this.options.token || null) }
         const releaseResponse = await this.httpRequest(releaseUrl, header, cancellationToken)
 
         if (releaseResponse) {
@@ -219,23 +235,6 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
 
     // If we get here, none of the release ID formats worked
     throw newError(`Unable to find release with version ${version} (tried: ${possibleReleaseIds.join(", ")}) on GitLab`, "ERR_UPDATER_RELEASE_NOT_FOUND")
-  }
-
-  private setAuthHeaderForToken(token: string | null): { [key: string]: string } {
-    const headers: { [key: string]: string } = {}
-
-    if (token != null) {
-      // If the token starts with "Bearer", it is an OAuth application secret
-      // Note that the original gitlab token would not start with "Bearer"
-      // it might start with "gloas-", if so user needs to add "Bearer " prefix to the token
-      if (token.startsWith("Bearer")) {
-        headers.authorization = token
-      } else {
-        headers["PRIVATE-TOKEN"] = token
-      }
-    }
-
-    return headers
   }
 
   /**

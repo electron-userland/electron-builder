@@ -5,6 +5,7 @@ import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, assertPack, checkDirContents, modifyPackageJson, platform } from "../helpers/packTester"
 import { verifySmartUnpack } from "../helpers/verifySmartUnpack"
+import { parsePlistFile, PlistObject } from "app-builder-lib/internal"
 
 describe("macPackager", { sequential: true }, () => {
   test.ifMac("two-package", ({ expect }) =>
@@ -21,7 +22,7 @@ describe("macPackager", { sequential: true }, () => {
           mac: {
             electronUpdaterCompatibility: ">=2.16",
             electronLanguages: ["bn", "en"],
-            timestamp: undefined,
+            sign: { timestamp: undefined },
             notarize: false,
           },
           dmg: {
@@ -42,7 +43,7 @@ describe("macPackager", { sequential: true }, () => {
         },
       },
       {
-        signed: true,
+        signedMac: true,
         checkMacApp: async appDir => {
           const resources = await fs.readdir(path.join(appDir, "Contents", "Resources"))
           expect(resources.filter(it => !it.startsWith(".")).sort()).toMatchSnapshot()
@@ -112,7 +113,7 @@ describe("macPackager", { sequential: true }, () => {
         },
       },
       {
-        signed: false,
+        signedMac: false,
         projectDirCreated: projectDir =>
           Promise.all([
             copyOrLinkFile(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "build", "foo.icns")),
@@ -133,13 +134,12 @@ describe("macPackager", { sequential: true }, () => {
       {
         targets: Platform.MAC.createTarget("zip", Arch.universal),
         config: {
-          npmRebuild: true,
-          nativeRebuilder: "sequential",
+          nativeModules: { npmRebuild: true, rebuildMode: "sequential" },
           files: ["!**/*.stamp", "!**/*.Makefile"],
         },
       },
       {
-        signed: false,
+        signedMac: false,
         packed: async context => await verifySmartUnpack(expect, context.getResources(Platform.MAC, Arch.universal)),
       }
     )
@@ -156,7 +156,7 @@ describe("macPackager", { sequential: true }, () => {
         },
       },
       {
-        signed: false,
+        signedMac: false,
         projectDirCreated: async projectDir => {
           await fs.writeFile(path.join(projectDir, "extraTestFile.txt"), "test")
           await modifyPackageJson(projectDir, data => {
@@ -207,7 +207,7 @@ describe("macPackager", { sequential: true }, () => {
         },
       },
       {
-        signed: true,
+        signedMac: true,
         projectDirCreated: async projectDir => {
           await fs.mkdir(path.join(projectDir, "build", "subdir"))
           await fs.copyFile(path.join(projectDir, "build", "extraAsar.asar"), path.join(projectDir, "build", "subdir", "extraAsar2.asar"))
@@ -226,13 +226,14 @@ describe("macPackager", { sequential: true }, () => {
         targets: Platform.MAC.createTarget(DIR_TARGET, Arch.x64),
         config: {
           mac: { notarize: false },
-          disableAsarIntegrity: true,
+          asar: { disableIntegrity: true },
         },
       },
       {
-        signed: false,
-        checkMacApp: async (_appDir, info) => {
+        signedMac: false,
+        checkMacApp: (_appDir, info) => {
           expect(info.ElectronAsarIntegrity).toBeUndefined()
+          return Promise.resolve()
         },
       }
     )
@@ -252,7 +253,7 @@ describe("macPackager", { sequential: true }, () => {
         },
       },
       {
-        signed: false,
+        signedMac: false,
         checkMacApp: async appDir => {
           const plistPath = path.join(appDir, "Contents", "Info.plist")
           const bundleVersion = (await exec("/usr/libexec/PlistBuddy", ["-c", "Print CFBundleVersion", plistPath])).trim()
@@ -279,7 +280,7 @@ describe("macPackager", { sequential: true }, () => {
         },
       },
       {
-        signed: false,
+        signedMac: false,
         checkMacApp: async appDir => {
           const plistPath = path.join(appDir, "Contents", "Info.plist")
           const bundleVersion = (await exec("/usr/libexec/PlistBuddy", ["-c", "Print CFBundleVersion", plistPath])).trim()
@@ -287,6 +288,62 @@ describe("macPackager", { sequential: true }, () => {
           expect(bundleVersion).toBe("1.1.0")
         },
       }
+    )
+  )
+
+  // Electron resolves its helper apps at runtime as `${CFBundleName} Helper.app`, so the on-disk
+  // helper bundle name and `CFBundleName` must stay identical. Product names with composed Unicode
+  // (NFC) must not be decomposed to NFD, otherwise the two diverge byte-for-byte.
+  test.ifMac("CFBundleName matches helper bundle name for a Unicode productName", ({ expect }) => {
+    const productName = "Tést Café" // composed (NFC) accents that decompose under NFD
+    return app(
+      expect,
+      {
+        targets: Platform.MAC.createTarget(DIR_TARGET, Arch.x64),
+        config: {
+          productName,
+          mac: { notarize: false },
+        },
+      },
+      {
+        signedMac: false,
+        checkMacApp: async appDir => {
+          const info = await parsePlistFile<PlistObject>(path.join(appDir, "Contents", "Info.plist"))
+          const cfBundleName = info.CFBundleName as string
+          // CFBundleName keeps the composed (NFC) form, not an NFD-decomposed one.
+          expect(cfBundleName).toBe(productName)
+          expect(cfBundleName).toBe(cfBundleName.normalize("NFC"))
+          // The original product name is still used for display.
+          expect(info.CFBundleDisplayName).toBe(productName)
+
+          // The base helper bundle directory must be byte-for-byte `${cfBundleName} Helper.app`.
+          const frameworks = await fs.readdir(path.join(appDir, "Contents", "Frameworks"))
+          const baseHelper = frameworks.filter(entry => entry.endsWith(" Helper.app"))
+          expect(baseHelper).toEqual([`${cfBundleName} Helper.app`])
+
+          // The helper executable and its plist's CFBundleExecutable must stay in lockstep with the
+          // renamed bundle, otherwise the helper process cannot launch.
+          const helperContents = path.join(appDir, "Contents", "Frameworks", `${cfBundleName} Helper.app`, "Contents")
+          await assertThat(expect, path.join(helperContents, "MacOS", `${cfBundleName} Helper`)).isFile()
+          const helperInfo = await parsePlistFile<PlistObject>(path.join(helperContents, "Info.plist"))
+          expect(helperInfo.CFBundleExecutable).toBe(`${cfBundleName} Helper`)
+        },
+      }
+    )
+  })
+
+  test.ifMac("rejects a productName containing a path separator", ({ expect }) =>
+    appThrows(
+      expect,
+      {
+        targets: Platform.MAC.createTarget(DIR_TARGET, Arch.x64),
+        config: {
+          productName: "Bad/Name",
+          mac: { notarize: false },
+        },
+      },
+      {},
+      error => expect(error.message).toContain("is not a valid macOS app bundle name")
     )
   )
 })

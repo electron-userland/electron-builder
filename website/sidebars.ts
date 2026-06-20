@@ -50,6 +50,7 @@ const sidebars: SidebarsConfig = {
         { type: "doc", id: "win", label: "Windows" },
         { type: "doc", id: "nsis", label: "NSIS" },
         { type: "doc", id: "appx", label: "AppX" },
+        { type: "doc", id: "msix", label: "MSIX" },
         { type: "doc", id: "msi", label: "MSI" },
         { type: "doc", id: "msi-wrapped", label: "MSI Wrapped" },
         { type: "doc", id: "squirrel-windows", label: "Squirrel Windows" },
@@ -68,6 +69,7 @@ const sidebars: SidebarsConfig = {
   ],
 
   featuresSidebar: [
+    { type: "doc", id: "features/build-lifecycle", label: "Build Lifecycle" },
     { type: "doc", id: "features/hooks", label: "Hooks" },
     { type: "doc", id: "features/icons-and-images", label: "Icons & Images" },
     { type: "doc", id: "features/auto-update", label: "Auto Update" },
@@ -84,6 +86,11 @@ const sidebars: SidebarsConfig = {
     { type: "doc", id: "features/multi-platform-build", label: "Multi Platform Build" },
     { type: "doc", id: "features/github-actions", label: "GitHub Actions" },
     { type: "doc", id: "features/electron-forge", label: "Electron Forge" },
+  ],
+
+  migrationSidebar: [
+    { type: "doc", id: "migration/v27-breaking-changes", label: "v27 Breaking Changes" },
+    { type: "doc", id: "migration/v26-to-v27", label: "v26 → v27 Walkthrough" },
   ],
 
   tutorialsSidebar: [

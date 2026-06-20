@@ -1,11 +1,11 @@
-import { TmpDir, archFromString, copyDir } from "builder-util"
+import { archFromString, copyDir } from "builder-util"
 import { DIR_TARGET, Platform } from "electron-builder"
-import { outputFile } from "fs-extra"
+import fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { Mode, RWX } from "stat-mode"
-import { assertThat } from "./helpers/fileAssert"
-import { app, appThrows, assertPack, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
+import statMode from "stat-mode"
+import { assertThat } from "./helpers/fileAssert.js"
+import { app, appThrows, assertPack, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
 import { ExpectStatic } from "vitest"
 
 test.ifNotWindows("expand not defined env", ({ expect }) =>
@@ -35,14 +35,59 @@ test.ifNotWindows("files", ({ expect }) =>
     {
       projectDirCreated: projectDir =>
         Promise.all([
-          outputFile(path.join(projectDir, "ignoreMe", "foo"), "data"),
-          outputFile(path.join(projectDir, "ignoreEmptyDir", "bar"), "data"),
-          outputFile(path.join(projectDir, "test.h"), "test that"),
-          outputFile(path.join(projectDir, "dist/electron/foo.js"), "data"),
+          fsExtra.outputFile(path.join(projectDir, "ignoreMe", "foo"), "data"),
+          fsExtra.outputFile(path.join(projectDir, "ignoreEmptyDir", "bar"), "data"),
+          fsExtra.outputFile(path.join(projectDir, "test.h"), "test that"),
+          fsExtra.outputFile(path.join(projectDir, "dist/electron/foo.js"), "data"),
         ]),
       packed: context => {
         const resources = path.join(context.getResources(Platform.LINUX), "app")
         return checkDirContents(expect, resources)
+      },
+    }
+  )
+)
+
+// https://github.com/electron-userland/electron-builder/issues/6126
+// a default-excluded extension (.obj) is shipped when the user adds an explicit re-include glob
+test.ifNotWindows("re-include default-excluded extension via files glob", ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: linuxDirTarget,
+      config: {
+        asar: false,
+        files: ["**/*", "**/*.obj"],
+      },
+    },
+    {
+      projectDirCreated: projectDir =>
+        Promise.all([fsExtra.outputFile(path.join(projectDir, "assets", "model.obj"), "obj-data"), fsExtra.outputFile(path.join(projectDir, "assets", "index.js"), "js")]),
+      packed: context => {
+        const appDir = path.join(context.getResources(Platform.LINUX), "app")
+        return Promise.all([assertThat(expect, path.join(appDir, "assets", "model.obj")).isFile(), assertThat(expect, path.join(appDir, "assets", "index.js")).isFile()])
+      },
+    }
+  )
+)
+
+// control for the test above: without an explicit re-include, the default exclusion still applies
+test.ifNotWindows("default-excluded extension stays excluded without a re-include glob", ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: linuxDirTarget,
+      config: {
+        asar: false,
+        files: ["**/*"],
+      },
+    },
+    {
+      projectDirCreated: projectDir =>
+        Promise.all([fsExtra.outputFile(path.join(projectDir, "assets", "model.obj"), "obj-data"), fsExtra.outputFile(path.join(projectDir, "assets", "index.js"), "js")]),
+      packed: context => {
+        const appDir = path.join(context.getResources(Platform.LINUX), "app")
+        return Promise.all([assertThat(expect, path.join(appDir, "assets", "model.obj")).doesNotExist(), assertThat(expect, path.join(appDir, "assets", "index.js")).isFile()])
       },
     }
   )
@@ -54,7 +99,6 @@ test.ifNotWindows("files.from asar", ({ expect }) =>
     {
       targets: linuxDirTarget,
       config: {
-        asar: true,
         files: [
           {
             from: ".",
@@ -100,7 +144,8 @@ test.ifNotWindows("map resources", ({ expect }) =>
       },
     },
     {
-      projectDirCreated: projectDir => Promise.all([outputFile(path.join(projectDir, "foo", "old"), "data"), outputFile(path.join(projectDir, "license.txt"), "data")]),
+      projectDirCreated: projectDir =>
+        Promise.all([fsExtra.outputFile(path.join(projectDir, "foo", "old"), "data"), fsExtra.outputFile(path.join(projectDir, "license.txt"), "data")]),
       packed: context => {
         const resources = context.getResources(Platform.LINUX)
         return Promise.all([
@@ -132,13 +177,13 @@ async function doExtraResourcesTest(expect: ExpectStatic, platform: Platform) {
     {
       projectDirCreated: async projectDir => {
         return Promise.all([
-          outputFile(path.resolve(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
-          outputFile(path.resolve(projectDir, "bar/hello.txt"), "data"),
-          outputFile(path.resolve(projectDir, "dir-relative/f.txt"), "data"),
-          outputFile(path.resolve(projectDir, `bar/${process.arch}.txt`), "data"),
-          outputFile(path.resolve(projectDir, `${osName}/${process.arch}.txt`), "data"),
-          outputFile(path.resolve(projectDir, "platformSpecificR"), "platformSpecificR"),
-          outputFile(path.resolve(projectDir, "ignoreMe.txt"), "ignoreMe"),
+          fsExtra.outputFile(path.resolve(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
+          fsExtra.outputFile(path.resolve(projectDir, "bar/hello.txt"), "data"),
+          fsExtra.outputFile(path.resolve(projectDir, "dir-relative/f.txt"), "data"),
+          fsExtra.outputFile(path.resolve(projectDir, `bar/${process.arch}.txt`), "data"),
+          fsExtra.outputFile(path.resolve(projectDir, `${osName}/${process.arch}.txt`), "data"),
+          fsExtra.outputFile(path.resolve(projectDir, "platformSpecificR"), "platformSpecificR"),
+          fsExtra.outputFile(path.resolve(projectDir, "ignoreMe.txt"), "ignoreMe"),
         ])
       },
       packed: async context => {
@@ -177,7 +222,6 @@ test.ifNotWindows("extraResources - two-package", ({ expect }) => {
       // to check NuGet package
       targets: platform.createTarget(DIR_TARGET),
       config: {
-        asar: true,
         extraResources: ["foo", "bar/hello.txt", "bar/${arch}.txt", "${os}/${arch}.txt", "executable*"],
         [osName]: {
           extraResources: ["platformSpecificR"],
@@ -188,14 +232,14 @@ test.ifNotWindows("extraResources - two-package", ({ expect }) => {
     {
       projectDirCreated: projectDir => {
         return Promise.all([
-          outputFile(path.join(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
-          outputFile(path.join(projectDir, "bar/hello.txt"), "data", { mode: 0o400 }),
-          outputFile(path.join(projectDir, `bar/${process.arch}.txt`), "data"),
-          outputFile(path.join(projectDir, `${osName}/${process.arch}.txt`), "data"),
-          outputFile(path.join(projectDir, "platformSpecificR"), "platformSpecificR"),
-          outputFile(path.join(projectDir, "ignoreMe.txt"), "ignoreMe"),
-          outputFile(path.join(projectDir, "executable"), "executable", { mode: 0o755 }),
-          outputFile(path.join(projectDir, "executableOnlyOwner"), "executable", { mode: 0o740 }),
+          fsExtra.outputFile(path.join(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
+          fsExtra.outputFile(path.join(projectDir, "bar/hello.txt"), "data", { mode: 0o400 }),
+          fsExtra.outputFile(path.join(projectDir, `bar/${process.arch}.txt`), "data"),
+          fsExtra.outputFile(path.join(projectDir, `${osName}/${process.arch}.txt`), "data"),
+          fsExtra.outputFile(path.join(projectDir, "platformSpecificR"), "platformSpecificR"),
+          fsExtra.outputFile(path.join(projectDir, "ignoreMe.txt"), "ignoreMe"),
+          fsExtra.outputFile(path.join(projectDir, "executable"), "executable", { mode: 0o755 }),
+          fsExtra.outputFile(path.join(projectDir, "executableOnlyOwner"), "executable", { mode: 0o740 }),
         ])
       },
       packed: async context => {
@@ -231,30 +275,27 @@ test.ifNotWindows("extraResources - two-package", ({ expect }) => {
 
 // https://github.com/electron-userland/electron-builder/pull/998
 // copyDir walks to a symlink referencing a file that has not yet been copied by postponing the linking step until after the full walk is complete
-test.ifNotWindows("postpone symlink", async () => {
-  const tmpDir = new TmpDir("files-test")
+test.ifNotWindows("postpone symlink", async ({ tmpDir }) => {
   const source = await tmpDir.getTempDir()
   const aSourceFile = path.join(source, "z", "Z")
   const bSourceFileLink = path.join(source, "B")
-  await outputFile(aSourceFile, "test")
+  await fsExtra.outputFile(aSourceFile, "test")
   await fs.symlink(aSourceFile, bSourceFileLink)
 
   const dest = await tmpDir.getTempDir()
   await copyDir(source, dest)
-
-  await tmpDir.cleanup()
 })
 
 async function allCan(file: string, execute: boolean) {
-  const mode = new Mode(await fs.stat(file))
+  const mode = new statMode.Mode(await fs.stat(file))
 
-  function checkExecute(value: RWX) {
+  function checkExecute(value: statMode.RWX) {
     if (value.execute !== execute) {
       throw new Error(`${file} is ${execute ? "not " : ""}executable`)
     }
   }
 
-  function checkRead(value: RWX) {
+  function checkRead(value: statMode.RWX) {
     if (!value.read) {
       throw new Error(`${file} is not readable`)
     }

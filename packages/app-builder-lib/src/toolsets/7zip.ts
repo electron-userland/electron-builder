@@ -1,7 +1,9 @@
-import { chmod } from "fs-extra"
+import { chmod } from "node:fs/promises"
 import * as path from "path"
-import { resolveEnvToolsetPath } from "builder-util"
-import { downloadBuilderToolset } from "../util/electronGet"
+import { downloadBuilderToolset } from "../util/electronGet.js"
+
+// Newest 7-Zip bundle — the only version published; no legacy/null-state fallback.
+const SEVEN_ZIP_LATEST = "1.0.0"
 
 const checksums = {
   "7zip-linux-ia32.tar.gz": "24a5d5bfe81506d0bfe21a812588119ae3deb757e8ba084b2339d8e899543686",
@@ -40,7 +42,18 @@ function getFilename(): keyof typeof checksums {
   throw new Error(`Unsupported platform for 7zip toolset: ${platform}/${arch}`)
 }
 
+let _customPath: string | null = null
 let _resolvedPath: Promise<string> | null = null
+
+/**
+ * Override the 7za binary path with a pre-resolved absolute path.
+ * Called by the packager when `toolsets.sevenZip` is a `ToolsetCustom` config.
+ * Resets the resolution cache so the next `getPath7za()` call uses this path.
+ */
+export function setSevenZipPath(customPath: string): void {
+  _customPath = customPath
+  _resolvedPath = null
+}
 
 /** Returns the path to the 7za executable, downloading it on first call. Resets on failure so callers can retry. */
 export function getPath7za(): Promise<string> {
@@ -54,14 +67,16 @@ export function getPath7za(): Promise<string> {
 }
 
 async function resolve(): Promise<string> {
-  const envExec = await resolveEnvToolsetPath("ELECTRON_BUILDER_7ZIP_PATH", "file")
-  if (envExec != null) {
-    return envExec
+  if (_customPath != null) {
+    if (process.platform !== "win32") {
+      await chmod(_customPath, 0o755)
+    }
+    return _customPath
   }
 
   const filename = getFilename()
   const toolDir = await downloadBuilderToolset({
-    releaseName: `7zip@1.0.0`,
+    releaseName: `7zip@${SEVEN_ZIP_LATEST}`,
     filenameWithExt: filename,
     checksums: checksums,
     githubOrgRepo: "electron-userland/electron-builder-binaries",

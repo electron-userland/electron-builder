@@ -2,14 +2,17 @@ import { DebugLogger, exec, ExtraSpawnOptions, InvalidConfigurationError, log, s
 import { ExecFileOptions, SpawnOptions } from "child_process"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { ParallelsVm } from "./ParallelsVm"
+import { ParallelsVm } from "./ParallelsVm.js"
 export class VmManager {
   get pathSep(): string {
     return path.sep
   }
 
   exec(file: string, args: Array<string>, options?: ExecFileOptions, isLogOutIfDebug = true): Promise<string> {
-    return exec(file, args, options, isLogOutIfDebug)
+    // Mirror WineVmManager: merge caller-supplied env with process.env so extra vars don't strip
+    // the base environment (PATH, SystemRoot, etc.) on native Windows.
+    const mergedOptions = options?.env != null ? { ...options, env: { ...process.env, ...options.env } } : options
+    return exec(file, args, mergedOptions, isLogOutIfDebug)
   }
 
   spawn(file: string, args: Array<string>, options?: SpawnOptions, extraOptions?: ExtraSpawnOptions): Promise<any> {
@@ -34,13 +37,13 @@ export class VmManager {
 }
 
 export async function getWindowsVm(debugLogger: DebugLogger): Promise<VmManager> {
-  const parallelsVmModule = await import("./ParallelsVm")
+  const parallelsVmModule = await import("./ParallelsVm.js")
   let vmList: ParallelsVm[] = []
   try {
     vmList = (await parallelsVmModule.parseVmList(debugLogger)).filter(it => ["win-10", "win-11"].includes(it.os))
   } catch (_error) {
     if ((await isPwshAvailable.value) && (await isWineAvailable.value)) {
-      const vmModule = await import("./PwshVm")
+      const vmModule = await import("./PwshVm.js")
       return new vmModule.PwshVmManager()
     }
   }
@@ -57,7 +60,7 @@ export async function getLinuxVm(debugLogger: DebugLogger): Promise<VmManager | 
     return undefined
   }
   try {
-    const parallelsVmModule = await import("./ParallelsVm")
+    const parallelsVmModule = await import("./ParallelsVm.js")
     const vmList = (await parallelsVmModule.parseVmList(debugLogger)).filter(it => it.os === "ubuntu")
     if (vmList.length === 0) {
       return undefined

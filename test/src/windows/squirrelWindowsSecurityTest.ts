@@ -1,8 +1,7 @@
-import SquirrelWindowsTarget from "electron-builder-squirrel-windows/out/SquirrelWindowsTarget"
-import { mkdtemp, realpath, rm } from "fs/promises"
-import { tmpdir } from "os"
+import SquirrelWindowsTarget from "electron-builder-squirrel-windows/src/SquirrelWindowsTarget"
+import { realpath } from "fs/promises"
 import * as path from "path"
-import { afterEach, beforeEach, describe, expect, test } from "vitest"
+import { beforeEach, describe, expect, test } from "vitest"
 
 describe("SquirrelWindowsTarget.assertShellSafePath", () => {
   let t: any
@@ -34,19 +33,17 @@ describe("SquirrelWindowsTarget.assertShellSafePath", () => {
   })
 })
 
-describe("SquirrelWindowsTarget.ensurePathInside", () => {
+describe("SquirrelWindowsTarget.ensurePathInside", { sequential: true }, () => {
   let t: any
   let base: string
 
-  beforeEach(async () => {
+  beforeEach(async context => {
     t = Object.create(SquirrelWindowsTarget.prototype)
-    base = await mkdtemp(path.join(tmpdir(), "eb-sec-test-"))
+    base = await context.tmpDir.createTempDir()
   })
 
-  afterEach(() => rm(base, { recursive: true, force: true }).catch(() => {}))
-
   test("accepts a path inside base", async () => {
-    // realpath is needed because on macOS mkdtemp returns /tmp/... but realpath resolves to /private/tmp/...
+    // realpath is needed because on macOS the temp dir resolves through a symlink (/tmp → /private/tmp)
     const resolvedBase = await realpath(base)
     const result = await t.ensurePathInside(base, path.join(base, "file.exe"), "file")
     expect(result).toBe(path.join(resolvedBase, "file.exe"))

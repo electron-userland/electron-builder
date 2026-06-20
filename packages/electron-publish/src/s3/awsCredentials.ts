@@ -18,7 +18,9 @@ function parseIniSection(content: string, sectionName: string): Record<string, s
     if (line.startsWith("[")) {
       const name = line.slice(1, line.indexOf("]")).trim()
       inSection = name === sectionName
-      if (inSection) found = true
+      if (inSection) {
+        found = true
+      }
     } else if (inSection && line && !line.startsWith("#") && !line.startsWith(";")) {
       const eq = line.indexOf("=")
       if (eq > 0) {
