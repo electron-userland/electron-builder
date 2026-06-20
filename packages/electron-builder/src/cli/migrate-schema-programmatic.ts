@@ -522,15 +522,13 @@ class ConfigCodemod {
         const isFalse = vPrefixed.initializer.kind === ts.SyntaxKind.FalseKeyword
         this.replaceRange(this.start(vPrefixed), vPrefixed.end, `tagNamePrefix: ${isFalse ? '""' : '"v"'}`)
         changed = true
-      } else if (provider === "gitlab") {
-        this.removeProp(vPrefixed)
-        changed = true
       }
+      // GitLab keeps vPrefixedTagName in v27 (no tagNamePrefix equivalent) — leave it untouched.
     }
     if (changed) {
       this.changes.push({
         key: `${prefix}${key}[].vPrefixedTagName`,
-        description: "replaced vPrefixedTagName with tagNamePrefix on GitHub publish entries; removed from GitLab entries",
+        description: "replaced vPrefixedTagName with tagNamePrefix on GitHub publish entries",
       })
     }
   }

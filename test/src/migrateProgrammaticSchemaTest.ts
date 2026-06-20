@@ -209,6 +209,7 @@ describe("migrateProgrammaticSource — per-rule coverage (CJS, drift-checked vs
     snapBase: `module.exports = { snap: { base: "core22", confinement: "strict" } }\n`,
     snapNoBase: `module.exports = { snap: { confinement: "strict" } }\n`,
     publishGithub: `module.exports = { publish: [{ provider: "github", vPrefixedTagName: false }] }\n`,
+    publishGithubGitlab: `module.exports = { publish: [{ provider: "github", vPrefixedTagName: false }, { provider: "gitlab", vPrefixedTagName: false }] }\n`,
     electronDownload: `module.exports = { electronDownload: { mirror: "https://m", isVerifyChecksum: false, cache: "/tmp" } }\n`,
   }
 

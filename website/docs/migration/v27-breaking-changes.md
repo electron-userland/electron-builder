@@ -61,7 +61,7 @@ To stay on a legacy bundle, pin the toolset to `"0.0.0"`. Because `winCodeSign` 
 | [`build.helper-bundle-id` removed](#buildhelper-bundle-id) | ✓ | Moved to `mac.helperBundleId` |
 | [`squirrelWindows.noMsi` removed](#squirrelwindowsnomsi) | ✓ | Replaced by `msi` (inverted) |
 | [`GithubOptions.vPrefixedTagName` removed](#githuboptions--gitlaboptions-vprefixedtagname) | ✓ | Use `tagNamePrefix` |
-| [`GitlabOptions.vPrefixedTagName` still works, but `migrate-schema` strips it](#githuboptions--gitlaboptions-vprefixedtagname) | ⚠️ | Re-add it after migrating if you rely on unprefixed GitLab tags |
+| [`GitlabOptions.vPrefixedTagName` retained](#githuboptions--gitlaboptions-vprefixedtagname) | — | None — still functional; the migrator leaves GitLab entries untouched |
 | [`devMetadata` / `extraMetadata` in `PackagerOptions` removed](#devmetadata--extrametadata-programmatic-packageroptions) | — | Use `config` / `config.extraMetadata` |
 | [Implicit `--publish` removed](#implicit---publish-removed) | — | Pass `--publish` explicitly |
 | [`--em.build` / `--em.directories` CLI flags removed](#removed-flags---embuild---emdirectories) | — | Use `-c` / `-c.directories` |
@@ -210,10 +210,8 @@ The `vPrefixedTagName` boolean on `GithubOptions` is removed. Use `tagNamePrefix
 
 To keep the default `v` prefix, simply remove `vPrefixedTagName` — `tagNamePrefix` defaults to `"v"`.
 
-:::warning[`GitlabOptions.vPrefixedTagName` — read before running the migrator]
-Only the **GitHub** field was actually removed. On **GitLab**, `vPrefixedTagName` still exists in the type, the schema, and the runtime, and continues to control the tag prefix (`vPrefixedTagName: false` → `1.2.3`; omit it → `v1.2.3`).
-
-However, `electron-builder migrate-schema` **deletes `vPrefixedTagName` from GitLab publish entries** — with no `tagNamePrefix` replacement, because GitLab has no such field. If you had `vPrefixedTagName: false`, running the migrator silently switches your GitLab tags from `1.2.3` to `v1.2.3`. **If you rely on unprefixed GitLab tags, re-add `vPrefixedTagName: false` after running `migrate-schema`** (or leave that publish entry untouched).
+:::note[`GitlabOptions.vPrefixedTagName` is **not** removed]
+Only the **GitHub** field was removed. On **GitLab**, `vPrefixedTagName` is unchanged in v27 — it still exists in the type, the schema, and the runtime, and continues to control the tag prefix (`vPrefixedTagName: false` → `1.2.3`; omit it → `v1.2.3`). It has no `tagNamePrefix` equivalent, so `migrate-schema` leaves GitLab publish entries untouched. No action is required.
 :::
 
 ### `linux.syncDesktopName` (always synced)
