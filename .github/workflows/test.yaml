@@ -264,9 +264,13 @@ jobs:
           cache-key: ${{ matrix.cache-key }}
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
 
+      - name: Silence the damn GH runner warnings (temporary until GH updates their runners to a newer macOS base toolset bundle)
+        run: |
+          brew uninstall bicep || true # Not actually a dependency, but GH runners have it preinstalled and it prints annoying warnings about missing .NET workloads
+          brew untap aws/tap azure/bicep || true
+
       - name: Install toolset via brew
         run: |
-          brew untap aws/tap azure/bicep
           brew install rpm
           brew install snapcraft
 
