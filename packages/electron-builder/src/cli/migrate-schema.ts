@@ -765,7 +765,8 @@ function printManualSteps() {
     "• Move root-level package.json directories → build.directories",
     "",
     "• For programmatic configs (JS/TS/MJS/CJS), apply the above changes manually to your config object",
-    "• For additional guidance, check the migration guide: https://www.electron.build/docs/migration/v26-to-v27",
+    "• For additional guidance, check the migration walkthrough: https://www.electron.build/docs/migration/v26-to-v27",
+    "• Full list of breaking changes: https://www.electron.build/docs/migration/v27-breaking-changes",
   ]
   for (const step of steps) {
     process.stdout.write(`  ${step}\n`)
