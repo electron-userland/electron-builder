@@ -80,8 +80,15 @@ runs:
         INPUTS_RESET_VITEST_SMART_CACHE: ${{ inputs.reset-vitest-smart-cache }}
 
     - name: Set up Vitest coverage flag
-      run: echo "VITEST_COVERAGE=${{ inputs.collect-coverage }}" >> $GITHUB_ENV
+      run: |
+        if [ "${INPUTS_COLLECT_COVERAGE}" = "true" ]; then
+          echo "VITEST_COVERAGE=true" >> "$GITHUB_ENV"
+        else
+          echo "VITEST_COVERAGE=false" >> "$GITHUB_ENV"
+        fi
       shell: bash
+      env:
+        INPUTS_COLLECT_COVERAGE: ${{ inputs.collect-coverage }}
 
 ## Usage
 # - name: Setup Tests
