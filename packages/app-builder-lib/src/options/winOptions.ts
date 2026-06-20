@@ -5,7 +5,7 @@ import { PlatformSpecificBuildOptions } from "./PlatformSpecificBuildOptions.js"
 export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   /**
    * The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable app](https://www.electron.build/nsis#portable) without installation), `appx`, `msix`, `msi`, `msi-wrapped`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
-   * AppX and MSIX packages can be built on Windows 10 or later and on macOS via Parallels Desktop.
+   * AppX and MSIX packages can be built on Windows 10 or Windows Server 2012 R2 (version 6.3+) or later, and on macOS via Parallels Desktop.
    *
    * To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
    *

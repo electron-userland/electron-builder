@@ -196,7 +196,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
   // https://github.com/electron-userland/electron-builder/issues/2108#issuecomment-333200711
   async computePublisherName(target: Target, publisherName: string | null) {
     if ((target instanceof AppXTarget || target instanceof MsixTarget) && (await this.cscInfo.value) == null) {
-      log.info({ reason: "Windows Store only build" }, "AppX is not signed")
+      log.info({ reason: "Windows Store only build" }, "AppX/MSIX package is not signed")
       return publisherName ?? "CN=ms"
     }
 

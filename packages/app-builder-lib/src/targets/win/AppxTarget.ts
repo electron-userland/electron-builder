@@ -79,7 +79,7 @@ export default class AppXTarget extends Target {
 
         case "applicationId":
           // Shared with MSIX: consistent "AppX" label, correct validation messages, and identical
-          // numeric-prefix stripping / validation logic (see appxUtil.resolvePackageApplicationId).
+          // numeric-prefix stripping / validation logic (see winAppUtil.resolvePackageApplicationId).
           return resolvePackageApplicationId(options.applicationId, options.identityName, appInfo.name, "AppX")
 
         case "identityName":

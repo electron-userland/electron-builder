@@ -42,8 +42,8 @@ This page helps you choose the right packaging format for each platform. The rig
 
 **MSIX** (`msix`) — the modern successor to AppX (beta); prefer it for new Store/MDM work.
 - Produces `.msix`, multi-architecture `.msixbundle`, and Store `.msixupload` artifacts
-- Adds modern manifest features: package integrity, Windows services, shared package containers
-- Requires the modern `winCodeSign` toolset (`1.0.0`/`1.1.0`); builds on Windows 10+ or macOS via Parallels
+- Adds modern manifest features: package integrity and Windows services
+- Requires the modern `winCodeSign` toolset (the default; only the legacy `0.0.0` bundle is rejected); builds on Windows 10 / Windows Server 2012 R2 (6.3+) or later, or macOS via Parallels
 - See [MSIX Configuration](msix.md)
 
 **MSI** (`msi`) — use for enterprise deployment via Group Policy or SCCM.
