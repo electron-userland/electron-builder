@@ -1,3 +1,23 @@
+# [27.0.0-alpha.5](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.4...electron-builder@27.0.0-alpha.5) (2026-06-20)
+
+
+### Bug Fixes
+
+* bundle a workspace sub-package's production dependencies into app.asar when the package manager resolves to the workspace root ([#9951](https://github.com/electron-userland/electron-builder/issues/9951)) ([39a5fd8](https://github.com/electron-userland/electron-builder/commit/39a5fd874aea21f1d7e8bc4e961afe2edb8b632e))
+* **migrate-schema:** stop stripping `vPrefixedTagName` from GitLab publish entries ([#9956](https://github.com/electron-userland/electron-builder/issues/9956)) ([62d206f](https://github.com/electron-userland/electron-builder/commit/62d206fa2c31aed01e5206eb0d51cac77da0f73a))
+* **nsis:** Change the ProgID to a more correct, more unique format ([#9241](https://github.com/electron-userland/electron-builder/issues/9241)) ([25e7b44](https://github.com/electron-userland/electron-builder/commit/25e7b446bc752d3e0b28941bcb606a891d8f2842))
+* **squirrel:** flaky `appOutDir` mutation creates `elevate.exe` race condition in `concurrent` builds ([#9852](https://github.com/electron-userland/electron-builder/issues/9852)) ([3cc43d2](https://github.com/electron-userland/electron-builder/commit/3cc43d2379b314eacd96e2d948af3e1c0a74e3c9))
+
+
+### Features
+
+* Allow including default-excluded files via `files` globs; remove `disableDefaultIgnoredFiles` (BREAKING) ([#9954](https://github.com/electron-userland/electron-builder/issues/9954)) ([a16fb6b](https://github.com/electron-userland/electron-builder/commit/a16fb6bfdcf0352a6b127229b8f8254847d16df1))
+* Promote and adopt `"latest"` as the canonical "null"-state for every `Toolset` (BREAKING) ([#9939](https://github.com/electron-userland/electron-builder/issues/9939)) ([2669c2a](https://github.com/electron-userland/electron-builder/commit/2669c2a7c7e9b6c3d8f7789362ffa5d7aac3fbf6))
+* promote Azure Trusted Signing and Snap Core24 out of Beta; update documentation ([#9949](https://github.com/electron-userland/electron-builder/issues/9949)) ([8f4be0a](https://github.com/electron-userland/electron-builder/commit/8f4be0a4308f68fea4f76d6c1c2c8d0035266a87))
+* **snap:** support multi-arch `remote-build` via `buildFor: string[]` — one Launchpad job now produces and registers multiple snap artifacts ([#9841](https://github.com/electron-userland/electron-builder/issues/9841)) ([ff467f9](https://github.com/electron-userland/electron-builder/commit/ff467f93fd55f43409945402cb89389896c3dc9a))
+
+
+
 # [27.0.0-alpha.4](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.3...electron-builder@27.0.0-alpha.4) (2026-06-18)
 
 

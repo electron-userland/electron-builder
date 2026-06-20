@@ -29,4 +29,7 @@ overrides:
   esbuild: '>=0.28.1 <0.29' # GHSA-gv7w-rqvm-qjhr (high), GHSA-g7r4-m6w7-qqqr (low)
   tmp: '>=0.2.6 <0.3' # GHSA-ph9p-34f9-6g65 (high), GHSA-52f5-9888-hmc6 (low)
   serialize-javascript: '>=7.0.5 <8' # GHSA-5c6j-r48x-rmvq (high), GHSA-qj8w-gfj5-8c6v (med)
+  '@babel/plugin-transform-modules-systemjs': '>=7.29.4 <8' # GHSA-fv7c-fp4j-7gwp (high)
+  fast-xml-builder: '>=1.1.7 <2' # GHSA-5wm8-gmm8-39j9 (high), GHSA-45c6-75p6-83cc (med)
+  '@xmldom/xmldom': '>=0.8.13 <0.9' # GHSA-2v35-w6hq-6mfw, -f6ww-3ggp-fr8h, -x6wf-f3px-wcqx, -j759-j44w-7fr8, -wh4c-j3r5-mjhp (high)
 packageImportMethod: copy

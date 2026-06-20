@@ -23,6 +23,7 @@ import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { AppInfo } from "./appInfo.js"
+import { assertSafeHelperName } from "./electron/mac/electronMacUtils.js"
 import { CodeSigningInfo, createKeychain, CreateKeychainOptions, Identity, isSignAllowed, removeKeychain, sign } from "./codeSign/mac/macCodeSign.js"
 import { DIR_TARGET, Platform, Target } from "./core.js"
 import { AfterPackContext, ElectronPlatformName } from "./index.js"
@@ -139,8 +140,17 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected prepareAppInfo(appInfo: AppInfo): AppInfo {
-    // codesign requires the filename to be normalized to the NFD form
-    return new AppInfo(this.info, this.platformSpecificBuildOptions.bundleVersion, this.platformSpecificBuildOptions, true)
+    const macAppInfo = new AppInfo(this.info, this.platformSpecificBuildOptions.bundleVersion, this.platformSpecificBuildOptions)
+    // Electron discovers its helper apps via `${CFBundleName} Helper.app`. We use the product name
+    // verbatim for `CFBundleName` and for the on-disk helper/app bundle names, so a name that
+    // filename sanitization would change must be rejected (otherwise the two would diverge and break
+    // helper discovery). Fail fast during setup.
+    assertSafeHelperName(macAppInfo.productName, "productName")
+    const executableName = this.platformSpecificBuildOptions.executableName ?? this.info.config.executableName
+    if (executableName != null) {
+      assertSafeHelperName(executableName, "executableName")
+    }
+    return macAppInfo
   }
 
   async getIconPath(): Promise<string | null> {
@@ -513,7 +523,9 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     const configuredIcon = this.platformSpecificBuildOptions.icon
     const isIconComposer = typeof configuredIcon === "string" && configuredIcon.toLowerCase().endsWith(".icon")
 
-    // Set the app name
+    // Set the app name. The product name is used verbatim (it is validated in `prepareAppInfo` to
+    // require no filename sanitization), so `CFBundleName` matches the on-disk helper bundle names
+    // that Electron resolves as `${CFBundleName} Helper.app`.
     appPlist.CFBundleName = appInfo.productName
     appPlist.CFBundleDisplayName = appInfo.productName
 

@@ -2,6 +2,12 @@
 
 exports[`macPackager > Build macOS on Windows is not supported 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
 
+exports[`macPackager > CFBundleName matches helper bundle name for a Unicode productName 1`] = `
+{
+  "mac": [],
+}
+`;
+
 exports[`macPackager > disableAsarIntegrity skips ASAR integrity computation 1`] = `
 {
   "mac": [],
