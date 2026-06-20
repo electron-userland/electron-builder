@@ -199,10 +199,10 @@ function collect(resultsDir: string): { tests: TestRow[]; shards: Map<string, Sh
 // the same test routed to — or re-counted on — another shard (routedSkips + dupNeverRun). The four
 // fields partition the raw rows exactly: rawSkipped === uniqueNeverRun + dupNeverRun + routedSkips.
 function computeSkipStats(tests: TestRow[]): SkipStats {
-  // Join file+name on a NUL (U+0000) delimiter, written as a unicode escape so this source stays
-  // text; a raw NUL byte makes git and editors treat the file as binary. NUL cannot appear in a
-  // file path or test title, so distinct (file, name) pairs cannot collide on one key.
-  const key = (t: TestRow) => `${t.file}\u0000${t.name}`
+  // Key each logical test by its (file, name) tuple. JSON.stringify keeps the key printable and
+  // collision-free -- unlike a plain string delimiter, where a separator char occurring inside a
+  // filename or a test title could realign two different pairs onto the same key.
+  const key = (t: TestRow) => JSON.stringify([t.file, t.name])
 
   const ranSomewhere = new Set<string>()
   for (const t of tests) {
