@@ -11,6 +11,7 @@ overrides:
   esbuild: '>=0.28.1 <0.29'
   tmp: '>=0.2.6 <0.3'
   serialize-javascript: '>=7.0.5 <8'
+  '@babel/plugin-transform-modules-systemjs': '>=7.29.4 <8'
 
 patchedDependencies:
   '@changesets/assemble-release-plan@6.0.9': ef56f57067dfcc594f40d9afc7278abe38cecf1c04230936e447a60e0d58a46e
@@ -1587,12 +1588,6 @@ packages:
 
   '@babel/plugin-transform-modules-commonjs@7.28.6':
     resolution: {integrity: sha512-jppVbf8IV9iWWwWTQIxJMAJCWBuuKx71475wHwYytrRGQ2CWiDvYlADQno3tcYpS/T2UUWFQp3nVtYfK/YBQrA==}
-    engines: {node: '>=6.9.0'}
-    peerDependencies:
-      '@babel/core': ^7.0.0-0
-
-  '@babel/plugin-transform-modules-systemjs@7.25.9':
-    resolution: {integrity: sha512-hyss7iIlH/zLHaehT+xwiymtPOpsiwIIRlCAOwBB04ta5Tt+lNItADdlXw3jAWZ96VJ2jlhl/c+PNIQPKNfvcA==}
     engines: {node: '>=6.9.0'}
     peerDependencies:
       '@babel/core': ^7.0.0-0
@@ -11034,13 +11029,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@babel/plugin-transform-modules-systemjs@7.25.9(@babel/core@7.24.9)':
+  '@babel/plugin-transform-modules-systemjs@7.29.4(@babel/core@7.24.9)':
     dependencies:
       '@babel/core': 7.24.9
       '@babel/helper-module-transforms': 7.28.6(@babel/core@7.24.9)
       '@babel/helper-plugin-utils': 7.28.6
       '@babel/helper-validator-identifier': 7.28.5
-      '@babel/traverse': 7.28.6
+      '@babel/traverse': 7.29.0
     transitivePeerDependencies:
       - supports-color
 
@@ -11505,7 +11500,7 @@ snapshots:
       '@babel/plugin-transform-member-expression-literals': 7.25.9(@babel/core@7.24.9)
       '@babel/plugin-transform-modules-amd': 7.25.9(@babel/core@7.24.9)
       '@babel/plugin-transform-modules-commonjs': 7.24.8(@babel/core@7.24.9)
-      '@babel/plugin-transform-modules-systemjs': 7.25.9(@babel/core@7.24.9)
+      '@babel/plugin-transform-modules-systemjs': 7.29.4(@babel/core@7.24.9)
       '@babel/plugin-transform-modules-umd': 7.25.9(@babel/core@7.24.9)
       '@babel/plugin-transform-named-capturing-groups-regex': 7.25.9(@babel/core@7.24.9)
       '@babel/plugin-transform-new-target': 7.25.9(@babel/core@7.24.9)
@@ -11584,7 +11579,7 @@ snapshots:
       '@babel/plugin-transform-member-expression-literals': 7.25.9(@babel/core@7.24.9)
       '@babel/plugin-transform-modules-amd': 7.25.9(@babel/core@7.24.9)
       '@babel/plugin-transform-modules-commonjs': 7.24.8(@babel/core@7.24.9)
-      '@babel/plugin-transform-modules-systemjs': 7.25.9(@babel/core@7.24.9)
+      '@babel/plugin-transform-modules-systemjs': 7.29.4(@babel/core@7.24.9)
       '@babel/plugin-transform-modules-umd': 7.25.9(@babel/core@7.24.9)
       '@babel/plugin-transform-named-capturing-groups-regex': 7.25.9(@babel/core@7.24.9)
       '@babel/plugin-transform-new-target': 7.25.9(@babel/core@7.24.9)
@@ -20211,7 +20206,7 @@ snapshots:
 
   regenerator-transform@0.15.2:
     dependencies:
-      '@babel/runtime': 7.27.0
+      '@babel/runtime': 7.29.7
 
   regexpu-core@6.2.0:
     dependencies:
