@@ -9,7 +9,7 @@
 import { readFileSync } from "fs"
 import * as path from "path"
 import { XMLValidator } from "fast-xml-parser"
-import { buildWindowsServicesXml, RAW_TEXT_MANIFEST_MACROS, substituteManifestMacros } from "app-builder-lib/src/targets/appxUtil"
+import { buildWindowsServicesXml, RAW_TEXT_MANIFEST_MACROS, substituteManifestMacros } from "app-builder-lib/src/targets/winAppUtil"
 
 const TEMPLATES_DIR = path.join(__dirname, "../../../packages/app-builder-lib/templates")
 const MSIX_TEMPLATE = path.join(TEMPLATES_DIR, "msix", "appxmanifest.xml")
@@ -192,4 +192,24 @@ test("substituteManifestMacros: only RAW_TEXT macros are escaped; validated/cons
   // applicationId is NOT in RAW_TEXT_MANIFEST_MACROS → emitted verbatim
   expect(RAW_TEXT_MANIFEST_MACROS.has("applicationId")).toBe(false)
   expect(substituteManifestMacros("${applicationId}", () => "A&B")).toBe("A&B")
+})
+
+// ─── VisualElements child ordering (schema sequence) ──────────────────────────
+
+test("MSIX VisualElements children follow the schema sequence: DefaultTile, then LockScreen, then SplashScreen", ({ expect }) => {
+  // uap:VisualElements declares its children as an ordered xs:sequence (DefaultTile?, LockScreen?,
+  // SplashScreen?). Render all three non-empty (as when a BadgeLogo asset is present) and assert order.
+  // https://learn.microsoft.com/uwp/schemas/appxpackage/uapmanifestschema/element-uap-visualelements
+  const xml = renderMsixWith({
+    defaultTile: '<uap:DefaultTile Wide310x150Logo="assets\\Wide310x150Logo.png" />',
+    lockScreen: '<uap:LockScreen Notification="badgeAndTileText" BadgeLogo="assets\\BadgeLogo.png" />',
+    splashScreen: '<uap:SplashScreen Image="assets\\SplashScreen.png" />',
+  })
+  expect(XMLValidator.validate(xml)).toBe(true)
+  const di = xml.indexOf("<uap:DefaultTile")
+  const li = xml.indexOf("<uap:LockScreen")
+  const si = xml.indexOf("<uap:SplashScreen")
+  expect(di).toBeGreaterThan(-1)
+  expect(di).toBeLessThan(li)
+  expect(li).toBeLessThan(si)
 })

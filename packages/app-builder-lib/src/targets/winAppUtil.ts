@@ -1,12 +1,17 @@
-import { asArray, escapeForXml, InvalidConfigurationError, log, sanitizeDirPath, walk } from "builder-util"
+import { Arch, asArray, copyOrLinkFile, ensureNotBusy, escapeForXml, InvalidConfigurationError, log, sanitizeDirPath, walk } from "builder-util"
 import type { MsixWindowsService } from "../options/MsixOptions.js"
 import { Nullish } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
-const { readdir, readFile } = _fsExtra
+const { emptyDir, readdir, readFile, writeFile } = _fsExtra
 import * as path from "path"
+import type { Target, TargetSpecificOptions } from "../core.js"
 import { FileAssociation } from "../options/FileAssociation.js"
 import { Protocol } from "../options/PlatformSpecificBuildOptions.js"
+import { getWindowsKitsBundle } from "../toolsets/winCodeSign.js"
+import { getTemplatePath } from "../util/pathManager.js"
 import { VmManager } from "../vm/vm.js"
+import type { WinPackager } from "../winPackager.js"
+import { createStageDir } from "./targetUtil.js"
 import { CAPABILITIES, isValidCapabilityName } from "./win/AppxCapabilities.js"
 
 export const APPX_ASSETS_DIR_NAME = "appx"
@@ -368,4 +373,149 @@ export function buildWindowsServicesXml(services: ReadonlyArray<MsixWindowsServi
         </desktop6:Extension>`
     })
     .join("")
+}
+
+/** Options shared by the AppX and MSIX targets that the build pipeline reads directly. */
+export interface AppxPackageBuildOptions extends TargetSpecificOptions {
+  readonly publisher?: string | null
+  readonly makeappxArgs?: Array<string> | null
+  readonly electronUpdaterAware?: boolean
+}
+
+export interface AppxBuildContext {
+  readonly arch: Arch
+  readonly artifactPath: string
+  readonly vendorPathKit: string
+  readonly vm: VmManager
+}
+
+export interface AppxPackageBuildConfig {
+  /** `"appx"` | `"msix"` — drives artifact naming, the safe-artifact name, and the debug-log key. */
+  readonly kind: "appx" | "msix"
+  /** Human-facing target name for build-progress events (`"AppX"` | `"MSIX"`). */
+  readonly presentableName: string
+  /** Writes the target-specific `AppxManifest.xml` (AppX and MSIX use different templates/macros). */
+  writeManifest(manifestFile: string, arch: Arch, publisher: string, userAssets: Array<string>): Promise<void>
+  /** Optional pre-flight validation (e.g. the MSIX legacy-toolset guard); a throw aborts the build. */
+  preflight?(): void | Promise<void>
+  /**
+   * Optional hook invoked synchronously (before the deferred pack task is queued) with the build
+   * context. MSIX uses it to record the per-arch artifact + VM/kit paths so `finishBuild` can assemble
+   * the `.msixbundle` / `.msixupload`.
+   */
+  onBuilt?(ctx: AppxBuildContext): void
+}
+
+/**
+ * Shared build pipeline for the AppX and MSIX targets — both pack via the Windows Kits `makeappx.exe`
+ * and differ only in the bits supplied through {@link AppxPackageBuildConfig}. It walks the app payload
+ * and assets into a `makeappx` mapping file, generates `resources.pri` when scaled assets are present,
+ * writes the manifest, then packs + signs the artifact on the target's build queue.
+ */
+export async function buildAppxPackage(
+  target: Target,
+  packager: WinPackager,
+  options: AppxPackageBuildOptions,
+  appOutDir: string,
+  arch: Arch,
+  config: AppxPackageBuildConfig
+): Promise<void> {
+  await config.preflight?.()
+
+  const artifactName = packager.expandArtifactBeautyNamePattern(options, config.kind, arch)
+  const artifactPath = path.join(target.outDir, artifactName)
+  await packager.emitArtifactBuildStarted({ targetPresentableName: config.presentableName, file: artifactPath, arch })
+
+  const vendorPath = await getWindowsKitsBundle({ winCodeSign: packager.config.toolsets?.winCodeSign, resourcesDir: packager.buildResourcesDir })
+  const vm = await packager.vm.value
+
+  config.onBuilt?.({ arch, artifactPath, vendorPathKit: vendorPath.kit, vm })
+
+  const stageDir = await createStageDir(target, packager, arch)
+
+  const mappingFile = stageDir.getTempFile("mapping.txt")
+  const makeAppXArgs = ["pack", "/o" /* overwrite the output file if it exists */, "/f", vm.toVmFile(mappingFile), "/p", vm.toVmFile(artifactPath)]
+  if (packager.compression === "store") {
+    makeAppXArgs.push("/nc")
+  }
+
+  const mappingList: Array<Array<string>> = []
+  mappingList.push(await buildAppFileMappings(vm, appOutDir))
+
+  const userAssetDir = await packager.getResource(undefined, APPX_ASSETS_DIR_NAME)
+  const assetInfo = await computeUserAssets(vm, vendorPath.appxAssets, userAssetDir)
+  const userAssets = assetInfo.userAssets
+
+  const manifestFile = stageDir.getTempFile("AppxManifest.xml")
+  // https://github.com/electron-userland/electron-builder/issues/2108#issuecomment-333200711
+  const publisher = await (await packager.signingManager.value).computePublisherName(target, options.publisher ?? null)
+  await config.writeManifest(manifestFile, arch, publisher, userAssets)
+
+  await packager.emitAppxManifestCreated(manifestFile)
+  mappingList.push(assetInfo.mappings)
+  mappingList.push([`"${vm.toVmFile(manifestFile)}" "AppxManifest.xml"`])
+
+  if (isScaledAssetsProvided(userAssets)) {
+    const outFile = vm.toVmFile(stageDir.getTempFile("resources.pri"))
+    const makePriExe = path.join(vendorPath.kit, "makepri.exe")
+    const makePriPath = vm.toVmFile(makePriExe)
+
+    const assetRoot = stageDir.getTempFile("appx/assets")
+    await emptyDir(assetRoot)
+    await Promise.all(assetInfo.allAssets.map(it => copyOrLinkFile(it, path.join(assetRoot, path.basename(it)))))
+
+    // Wait out any transient AV/share lock on the freshly-extracted kit binary (see ensureNotBusy).
+    await ensureNotBusy(makePriExe)
+    await vm.exec(makePriPath, [
+      "new",
+      "/Overwrite",
+      "/Manifest",
+      vm.toVmFile(manifestFile),
+      "/ProjectRoot",
+      vm.toVmFile(path.dirname(assetRoot)),
+      "/ConfigXml",
+      vm.toVmFile(path.join(getTemplatePath("appx"), "priconfig.xml")),
+      "/OutputFile",
+      outFile,
+    ])
+
+    // in addition to resources.pri, resources.scale-140.pri and other such files will be generated
+    for (const resourceFile of (await readdir(stageDir.dir)).filter(it => it.startsWith("resources.")).sort()) {
+      mappingList.push([`"${vm.toVmFile(stageDir.getTempFile(resourceFile))}" "${resourceFile}"`])
+    }
+    makeAppXArgs.push("/l")
+  }
+
+  let mapping = "[Files]"
+  for (const list of mappingList) {
+    mapping += "\r\n" + list.join("\r\n")
+  }
+  await writeFile(mappingFile, mapping)
+  packager.debugLogger.add(`${config.kind}.mapping`, mapping)
+
+  if (options.makeappxArgs != null) {
+    makeAppXArgs.push(...options.makeappxArgs)
+  }
+
+  target.buildQueueManager.add(async () => {
+    try {
+      const makeAppxExe = path.join(vendorPath.kit, "makeappx.exe")
+      // The kit binary is often freshly extracted to a cold cache; on Windows an AV scanner can briefly
+      // hold a deny-write lock long enough that spawning fails with `spawn UNKNOWN`. Wait for it to clear.
+      await ensureNotBusy(makeAppxExe)
+      await vm.exec(vm.toVmFile(makeAppxExe), makeAppXArgs)
+      await packager.signIf(artifactPath)
+    } finally {
+      await stageDir.cleanup()
+    }
+
+    await packager.emitArtifactBuildCompleted({
+      file: artifactPath,
+      packager,
+      arch,
+      safeArtifactName: packager.computeSafeArtifactName(artifactName, config.kind),
+      target,
+      isWriteUpdateInfo: options.electronUpdaterAware,
+    })
+  })
 }

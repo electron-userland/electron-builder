@@ -1,31 +1,27 @@
 import { Arch, asArray, copyOrLinkFile, ensureNotBusy, exec, InvalidConfigurationError, log } from "builder-util"
 import { getPath7za } from "../toolsets/7zip.js"
 import _fsExtra from "fs-extra"
-const { emptyDir, mkdirs, readdir, readFile, remove, writeFile } = _fsExtra
+const { mkdirs, readFile, remove, writeFile } = _fsExtra
 import * as path from "path"
 import { MsixOptions } from "../options/MsixOptions.js"
-import { getWindowsKitsBundle, isLegacyWinCodeSign, isOldWin6 } from "../toolsets/winCodeSign.js"
+import { isLegacyWinCodeSign, isOldWin6 } from "../toolsets/winCodeSign.js"
 import { Target } from "../core.js"
 import { getTemplatePath } from "../util/pathManager.js"
 import type { VmManager } from "../vm/vm.js"
 import { WinPackager } from "../winPackager.js"
-import { createStageDir } from "./targetUtil.js"
 import {
-  APPX_ASSETS_DIR_NAME,
-  buildAppFileMappings,
+  buildAppxPackage,
   buildCapabilitiesXml,
   buildExtensionsXml,
   buildWindowsServicesXml,
-  computeUserAssets,
   defaultTileTag,
-  isScaledAssetsProvided,
   lockScreenTag,
   resolvePackageApplicationId,
   resolvePackageIdentityName,
   resourceLanguageTag,
   splashScreenTag,
   substituteManifestMacros,
-} from "./appxUtil.js"
+} from "./winAppUtil.js"
 
 export default class MsixTarget extends Target {
   readonly options: MsixOptions = this.packager.getOptionsForTarget<MsixOptions>("msix")
@@ -47,118 +43,28 @@ export default class MsixTarget extends Target {
     }
   }
 
-  async build(appOutDir: string, arch: Arch): Promise<any> {
-    const packager = this.packager
-    const toolsetVersion = packager.config.toolsets?.winCodeSign
-    // unset / null / "latest" and any modern version pin resolve to a modern Windows Kits bundle (with the
-    // MSIX SDK); only the explicit legacy "0.0.0" (winCodeSign-2.6.0) pin lacks it. A custom { url } toolset
-    // is the user's responsibility.
-    if (isLegacyWinCodeSign(toolsetVersion)) {
-      throw new InvalidConfigurationError(
-        'MSIX packaging requires a modern Windows Kits toolset. The legacy "0.0.0" (winCodeSign-2.6.0) bundle does not include the Windows SDK version required for MSIX. ' +
-          'Use the default toolset or pin "toolsets.winCodeSign" to a modern version (e.g. "1.0.0", "1.1.0", or "1.3.0").'
-      )
-    }
-
-    const artifactName = packager.expandArtifactBeautyNamePattern(this.options, "msix", arch)
-    const artifactPath = path.join(this.outDir, artifactName)
-    await packager.emitArtifactBuildStarted({
-      targetPresentableName: "MSIX",
-      file: artifactPath,
-      arch,
-    })
-
-    const vendorPath = await getWindowsKitsBundle({ winCodeSign: toolsetVersion, resourcesDir: packager.buildResourcesDir })
-    const vm = await packager.vm.value
-
-    // Cache for use in finishBuild
-    this.vendorPathKit = vendorPath.kit
-    this.vm = vm
-
-    this.builtPackages.set(arch, artifactPath)
-
-    const stageDir = await createStageDir(this, packager, arch)
-
-    const mappingFile = stageDir.getTempFile("mapping.txt")
-    const makeAppXArgs = ["pack", "/o", "/f", vm.toVmFile(mappingFile), "/p", vm.toVmFile(artifactPath)]
-    if (packager.compression === "store") {
-      makeAppXArgs.push("/nc")
-    }
-
-    const mappingList: Array<Array<string>> = []
-    mappingList.push(await buildAppFileMappings(vm, appOutDir))
-
-    const userAssetDir = await packager.getResource(undefined, APPX_ASSETS_DIR_NAME)
-    const assetInfo = await computeUserAssets(vm, vendorPath.appxAssets, userAssetDir)
-    const userAssets = assetInfo.userAssets
-
-    const manifestFile = stageDir.getTempFile("AppxManifest.xml")
-    await this.writeManifest(manifestFile, arch, await this.computePublisherName(), userAssets)
-
-    await packager.emitAppxManifestCreated(manifestFile)
-    mappingList.push(assetInfo.mappings)
-    mappingList.push([`"${vm.toVmFile(manifestFile)}" "AppxManifest.xml"`])
-
-    if (isScaledAssetsProvided(userAssets)) {
-      const outFile = vm.toVmFile(stageDir.getTempFile("resources.pri"))
-      const makePriExe = path.join(vendorPath.kit, "makepri.exe")
-      const makePriPath = vm.toVmFile(makePriExe)
-
-      const assetRoot = stageDir.getTempFile("appx/assets")
-      await emptyDir(assetRoot)
-      await Promise.all(assetInfo.allAssets.map(it => copyOrLinkFile(it, path.join(assetRoot, path.basename(it)))))
-
-      // Wait out any transient AV/share lock on the freshly-extracted kit binary (see ensureNotBusy).
-      await ensureNotBusy(makePriExe)
-      await vm.exec(makePriPath, [
-        "new",
-        "/Overwrite",
-        "/Manifest",
-        vm.toVmFile(manifestFile),
-        "/ProjectRoot",
-        vm.toVmFile(path.dirname(assetRoot)),
-        "/ConfigXml",
-        vm.toVmFile(path.join(getTemplatePath("appx"), "priconfig.xml")),
-        "/OutputFile",
-        outFile,
-      ])
-
-      for (const resourceFile of (await readdir(stageDir.dir)).filter(it => it.startsWith("resources.")).sort()) {
-        mappingList.push([`"${vm.toVmFile(stageDir.getTempFile(resourceFile))}" "${resourceFile}"`])
-      }
-      makeAppXArgs.push("/l")
-    }
-
-    let mapping = "[Files]"
-    for (const list of mappingList) {
-      mapping += "\r\n" + list.join("\r\n")
-    }
-    await writeFile(mappingFile, mapping)
-    packager.debugLogger.add("msix.mapping", mapping)
-
-    if (this.options.makeappxArgs != null) {
-      makeAppXArgs.push(...this.options.makeappxArgs)
-    }
-
-    this.buildQueueManager.add(async () => {
-      try {
-        const makeAppxExe = path.join(vendorPath.kit, "makeappx.exe")
-        // The kit binary is often freshly extracted to a cold cache; on Windows an AV scanner can briefly
-        // hold a deny-write lock long enough that spawning fails. Wait for it to clear (see ensureNotBusy).
-        await ensureNotBusy(makeAppxExe)
-        await vm.exec(vm.toVmFile(makeAppxExe), makeAppXArgs)
-        await packager.signIf(artifactPath)
-      } finally {
-        await stageDir.cleanup()
-      }
-      await packager.emitArtifactBuildCompleted({
-        file: artifactPath,
-        packager,
-        arch,
-        safeArtifactName: packager.computeSafeArtifactName(artifactName, "msix"),
-        target: this,
-        isWriteUpdateInfo: this.options.electronUpdaterAware,
-      })
+  build(appOutDir: string, arch: Arch): Promise<any> {
+    return buildAppxPackage(this, this.packager, this.options, appOutDir, arch, {
+      kind: "msix",
+      presentableName: "MSIX",
+      preflight: () => {
+        // unset / null / "latest" and any modern version pin resolve to a modern Windows Kits bundle (with
+        // the MSIX SDK); only the explicit legacy "0.0.0" (winCodeSign-2.6.0) pin lacks it. A custom { url }
+        // toolset is the user's responsibility.
+        if (isLegacyWinCodeSign(this.packager.config.toolsets?.winCodeSign)) {
+          throw new InvalidConfigurationError(
+            'MSIX packaging requires a modern Windows Kits toolset. The legacy "0.0.0" (winCodeSign-2.6.0) bundle does not include the Windows SDK version required for MSIX. ' +
+              'Use the default toolset or pin "toolsets.winCodeSign" to a modern version (e.g. "1.0.0", "1.1.0", or "1.3.0").'
+          )
+        }
+      },
+      writeManifest: (manifestFile, a, publisher, userAssets) => this.writeManifest(manifestFile, a, publisher, userAssets),
+      // Record per-arch context so finishBuild can assemble the .msixbundle / .msixupload.
+      onBuilt: ({ arch: builtArch, artifactPath, vendorPathKit, vm }) => {
+        this.builtPackages.set(builtArch, artifactPath)
+        this.vendorPathKit = vendorPathKit
+        this.vm = vm
+      },
     })
   }
 
@@ -241,11 +147,6 @@ export default class MsixTarget extends Target {
       target: this,
       isWriteUpdateInfo: false,
     })
-  }
-
-  private async computePublisherName() {
-    const signtoolManager = await this.packager.signingManager.value
-    return signtoolManager.computePublisherName(this, this.options.publisher ?? null)
   }
 
   private async writeManifest(outFile: string, arch: Arch, publisher: string, userAssets: Array<string>) {
