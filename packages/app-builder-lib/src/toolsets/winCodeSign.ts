@@ -1,4 +1,4 @@
-import { sanitizeDirPath } from "builder-util"
+import { InvalidConfigurationError, sanitizeDirPath } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import * as os from "os"
 import * as path from "path"
@@ -146,13 +146,18 @@ async function getWindowsSignToolExe({ winCodeSign, resourcesDir = "" }: { winCo
 }
 
 async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish, resourcesDir = "") {
-  if (process.platform === "win32") {
-    return { path: "osslsigncode" }
-  }
-
+  // A custom toolset is an explicit user override — honored on every platform, before any platform default/fallback.
   if (typeof winCodeSign === "object" && winCodeSign != null) {
     const vendorPath = sanitizeDirPath(await getCustomToolsetPath(winCodeSign, resourcesDir), resourcesDir || undefined)
     return { path: path.join(vendorPath, "osslsigncode") }
+  }
+
+  if (process.platform === "win32") {
+    // Unreachable in normal flow: osslsigncode is only requested when the host is not Windows (Windows signs via
+    // signtool). Kept as defense-in-depth — fail loudly instead of resolving a bare `osslsigncode` from $PATH.
+    throw new InvalidConfigurationError(
+      `osslsigncode is not used on Windows (signing uses signtool). To override, configure a custom toolset: toolsets: { winCodeSign: { url: "file:///absolute/path/to/dir" } }`
+    )
   }
 
   const version = resolveToolsetVersion(winCodeSign, WIN_CODESIGN_LATEST)
