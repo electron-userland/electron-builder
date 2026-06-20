@@ -1,5 +1,11 @@
 # builder-util-runtime
 
+## 10.0.0-alpha.4
+
+### Patch Changes
+
+- Chore(refactor): reducing duplicate code and extracting helper functions _[`#9947`](https://github.com/electron-userland/electron-builder/pull/9947) [`8f3d9fa`](https://github.com/electron-userland/electron-builder/commit/8f3d9fa442aae342c1c5d2a4448a687de1aff8df) [@mmaietta](https://github.com/mmaietta)_
+
 ## 10.0.0-alpha.3
 
 ### Minor Changes

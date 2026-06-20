@@ -10367,7 +10367,7 @@ snapshots:
     dependencies:
       '@babel/core': 7.24.9
       '@babel/helper-plugin-utils': 7.28.6
-      '@babel/traverse': 7.29.0
+      '@babel/traverse': 7.28.6
     transitivePeerDependencies:
       - supports-color
 
@@ -10424,7 +10424,7 @@ snapshots:
     dependencies:
       '@babel/core': 7.24.9
       '@babel/helper-plugin-utils': 7.28.6
-      '@babel/traverse': 7.29.0
+      '@babel/traverse': 7.28.6
     transitivePeerDependencies:
       - supports-color
 
@@ -10712,7 +10712,7 @@ snapshots:
       '@babel/core': 7.24.9
       '@babel/helper-plugin-utils': 7.28.6
       '@babel/helper-remap-async-to-generator': 7.25.9(@babel/core@7.24.9)
-      '@babel/traverse': 7.29.0
+      '@babel/traverse': 7.28.6
     transitivePeerDependencies:
       - supports-color
 
@@ -20212,7 +20212,7 @@ snapshots:
 
   regenerator-transform@0.15.2:
     dependencies:
-      '@babel/runtime': 7.27.0
+      '@babel/runtime': 7.29.7
 
   regexpu-core@6.2.0:
     dependencies:
