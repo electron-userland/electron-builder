@@ -343,7 +343,7 @@ describe("macPackager", { sequential: true }, () => {
         },
       },
       {},
-      error => expect(error.message).toContain("must not contain path separators")
+      error => expect(error.message).toContain("is not a valid macOS app bundle name")
     )
   )
 })

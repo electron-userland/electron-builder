@@ -17,9 +17,10 @@ describe("electronMacUtils", () => {
     })
 
     const NUL = String.fromCharCode(0)
-    const rejected = ["a/b", "/abs/path", "../escape", "a\\b", "C:\\Windows", `a${NUL}b`]
+    // Anything filename sanitization would alter must be rejected, not just path separators.
+    const rejected = ["a/b", "/abs/path", "../escape", "a\\b", "C:\\Windows", "Foo:Bar", "Star*", 'Quote"', "Trailing.", "Trailing ", `a${NUL}b`]
     test.each(rejected)("rejects %j", name => {
-      expect(() => assertSafeHelperName(name, "productName")).toThrow(/must not contain path separators/)
+      expect(() => assertSafeHelperName(name, "productName")).toThrow(/is not a valid macOS app bundle name/)
     })
 
     test("error message includes the field name and the offending value", () => {

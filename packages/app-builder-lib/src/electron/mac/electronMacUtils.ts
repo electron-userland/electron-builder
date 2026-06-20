@@ -1,19 +1,22 @@
 import { InvalidConfigurationError } from "builder-util"
+import { sanitizeFileName } from "builder-util/internal"
 
 /**
  * At runtime Electron locates its helper apps relative to the main application name, resolving each
- * one as `${CFBundleName} Helper.app` (see `electron_main_delegate_mac.mm`). electron-builder writes
- * both `CFBundleName` and the on-disk helper bundles from the (sanitized) product name, so the two
- * are kept identical by construction.
+ * one as `${CFBundleName} Helper.app` (see `electron_main_delegate_mac.mm`). electron-builder uses
+ * the product name verbatim for both `CFBundleName` and the on-disk helper/app bundle names, so the
+ * name must be usable as a filename without modification.
  *
- * A name that contains a path separator or a null byte can never be represented as a bundle
- * directory, so it can only ever diverge from `CFBundleName` after sanitization. Reject it up front
- * with a clear error instead of silently producing a bundle whose helpers cannot be discovered.
+ * If the name would be altered by filename sanitization, the on-disk bundle (sanitized) and
+ * `CFBundleName` (verbatim) would diverge and break helper discovery. Reject such names up front with
+ * a clear error so the user can choose a valid name, rather than silently changing it for them.
  */
 export function assertSafeHelperName(name: string, field: string): void {
-  // eslint-disable-next-line no-control-regex
-  if (/[/\\\x00]/.test(name)) {
-    throw new InvalidConfigurationError(`${field} "${name}" must not contain path separators ("/", "\\") or null bytes`)
+  const sanitized = sanitizeFileName(name)
+  if (sanitized !== name) {
+    throw new InvalidConfigurationError(
+      `${field} "${name}" is not a valid macOS app bundle name (it would be sanitized to "${sanitized}"). Set a ${field} that requires no filename sanitization.`
+    )
   }
 }
 

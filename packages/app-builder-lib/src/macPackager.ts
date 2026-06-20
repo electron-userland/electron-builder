@@ -141,9 +141,10 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected prepareAppInfo(appInfo: AppInfo): AppInfo {
     const macAppInfo = new AppInfo(this.info, this.platformSpecificBuildOptions.bundleVersion, this.platformSpecificBuildOptions)
-    // Electron discovers its helper apps via `${CFBundleName} Helper.app`, and we derive both
-    // `CFBundleName` and the on-disk helper bundles from the (sanitized) product name. A name that
-    // cannot be a bundle directory would silently break helper discovery, so fail fast.
+    // Electron discovers its helper apps via `${CFBundleName} Helper.app`. We use the product name
+    // verbatim for `CFBundleName` and for the on-disk helper/app bundle names, so a name that
+    // filename sanitization would change must be rejected (otherwise the two would diverge and break
+    // helper discovery). Fail fast during setup.
     assertSafeHelperName(macAppInfo.productName, "productName")
     const executableName = this.platformSpecificBuildOptions.executableName ?? this.info.config.executableName
     if (executableName != null) {
@@ -522,10 +523,10 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     const configuredIcon = this.platformSpecificBuildOptions.icon
     const isIconComposer = typeof configuredIcon === "string" && configuredIcon.toLowerCase().endsWith(".icon")
 
-    // Set the app name. `CFBundleName` must match the on-disk helper bundle names (Electron resolves
-    // helpers as `${CFBundleName} Helper.app`), so it uses the sanitized product name. `CFBundleDisplayName`
-    // keeps the original product name for user-facing display.
-    appPlist.CFBundleName = appInfo.sanitizedProductName
+    // Set the app name. The product name is used verbatim (it is validated in `prepareAppInfo` to
+    // require no filename sanitization), so `CFBundleName` matches the on-disk helper bundle names
+    // that Electron resolves as `${CFBundleName} Helper.app`.
+    appPlist.CFBundleName = appInfo.productName
     appPlist.CFBundleDisplayName = appInfo.productName
 
     // Bundle legacy `icns` format - this should also run when `.icon` is provided
