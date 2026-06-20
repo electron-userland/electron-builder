@@ -4,47 +4,24 @@ import { mkdtemp, rm, stat, writeFile } from "fs/promises"
 import { tmpdir } from "os"
 import * as path from "path"
 
-const ENV_KEY = "ELECTRON_BUILDER_SQUIRREL_TOOLSET_DIR"
-
 describe("getSquirrelToolsetPath", () => {
-  let savedEnv: string | undefined
   let tmpDir: string
 
   beforeEach(async () => {
-    savedEnv = process.env[ENV_KEY]
     tmpDir = await mkdtemp(path.join(tmpdir(), "eb-squirrel-toolset-test-"))
   })
 
-  afterEach(async () => {
-    if (savedEnv === undefined) {
-      delete process.env[ENV_KEY]
-    } else {
-      process.env[ENV_KEY] = savedEnv
-    }
-    await rm(tmpDir, { recursive: true, force: true }).catch(() => {})
+  afterEach(() => rm(tmpDir, { recursive: true, force: true }).catch(() => {}))
+
+  test("resolves a ToolsetCustom bare directory in place (no download)", async () => {
+    // A `file://` directory custom toolset is used as-is — no checksum, no network — so this is the
+    // air-gapped / local-bundle path and must resolve without touching the network.
+    const result = await getSquirrelToolsetPath({ url: `file://${tmpDir}` }, tmpDir)
+    expect(result).toBe(path.resolve(tmpDir))
   })
 
-  test("returns env var path when set to an existing directory", async () => {
-    process.env[ENV_KEY] = tmpDir
-    const result = await getSquirrelToolsetPath()
-    expect(result).toBe(tmpDir)
-  })
-
-  test("throws when env var points to a non-existent path", async () => {
-    process.env[ENV_KEY] = path.join(tmpDir, "does-not-exist")
-    await expect(getSquirrelToolsetPath()).rejects.toThrow(ENV_KEY)
-  })
-
-  test("throws when env var points to a file instead of a directory", async () => {
-    const filePath = path.join(tmpDir, "not-a-dir.txt")
-    await writeFile(filePath, "")
-    process.env[ENV_KEY] = filePath
-    await expect(getSquirrelToolsetPath()).rejects.toThrow(ENV_KEY)
-  })
-
-  test("throws when env var is a relative path", async () => {
-    process.env[ENV_KEY] = "relative/path"
-    await expect(getSquirrelToolsetPath()).rejects.toThrow(ENV_KEY)
+  test("rejects an invalid ToolsetCustom url", async () => {
+    await expect(getSquirrelToolsetPath({ url: "not-a-url" }, tmpDir)).rejects.toThrow(/Invalid custom toolset/)
   })
 })
 
@@ -59,7 +36,7 @@ describe("prepareNugetExe", () => {
 
   test("keeps an already-usable nuget.exe and performs no download", async () => {
     // A real nuget.exe is several MB; staging one larger than the shim threshold must short-circuit
-    // the download entirely (this is the offline / pre-staged-toolset path, so it must not hit network).
+    // the download entirely (this is the offline / custom-bundle path, so it must not hit network).
     const nugetExe = path.join(tmpDir, "nuget.exe")
     await writeFile(nugetExe, Buffer.alloc(2_100_000, 1))
     const before = await stat(nugetExe)

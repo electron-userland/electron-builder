@@ -24,9 +24,9 @@ export default class SquirrelWindowsTarget extends Target {
   private async prepareSignedVendorDirectory(): Promise<string> {
     const tmpVendorDirectory = await this.packager.tempDirManager.createTempDir({ prefix: "squirrel-windows-vendor" })
 
-    // The vendor toolset comes from the maintained squirrel.windows bundle. Override the bundle source
-    // (e.g. a local copy for air-gapped builds) with ELECTRON_BUILDER_SQUIRREL_TOOLSET_DIR.
-    const squirrelToolset = await getSquirrelToolsetPath()
+    // The vendor toolset comes from the maintained squirrel.windows bundle. Pin a version or supply a
+    // custom/local bundle (e.g. for air-gapped builds) via `toolsets.squirrel` (a ToolsetCustom object).
+    const squirrelToolset = await getSquirrelToolsetPath(this.packager.config.toolsets?.squirrel, this.packager.buildResourcesDir)
     await fs.promises.cp(path.join(squirrelToolset, "electron-winstaller", "vendor"), tmpVendorDirectory, { recursive: true })
 
     // TEMPORARY: the published squirrel.windows@1.1.0 bundle ships the Chocolatey shim for nuget.exe,
