@@ -145,6 +145,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.info.metadata
   }
 
+  get originalMetadata(): Metadata {
+    return this.info.originalMetadata
+  }
+
   get framework(): Framework {
     return this.info.framework
   }
