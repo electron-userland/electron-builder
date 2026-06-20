@@ -4,6 +4,13 @@ import fs from "fs-extra"
 import * as path from "path"
 import * as semver from "semver"
 
+// Tolerant package.json read for the node-module collectors: swallows ALL errors (not just ENOENT) to
+// null, since the collectors intentionally skip unreadable entries (e.g. cross-drive Windows junctions
+// whose failures are not ENOENT). Distinct from builder-util's orNullIfFileNotExist, which rethrows non-ENOENT.
+export function readJsonOrNull<T = any>(file: string): Promise<T | null> {
+  return fs.readJson(file).catch(() => null)
+}
+
 export enum LogMessageByKey {
   PKG_DUPLICATE_REF = "duplicate dependency references",
   PKG_DUPLICATE_REF_UNRESOLVED = "unresolved duplicate dependency references",
@@ -14,6 +21,7 @@ export enum LogMessageByKey {
   PKG_OPTIONAL_PLATFORM_NOT_INSTALLED = "platform-specific optional dependencies not bundled — add them to your project's optionalDependencies if your app requires them (pnpm 10+ does not auto-install transitive platform binaries)",
   PKG_COLLECTOR_OUTPUT = "collector stderr output",
   PKG_VERSION_OVERRIDDEN = "dependencies resolved to a version outside the declared range (installed version accepted — likely resolved via package manager overrides)",
+  PKG_INCOMPATIBLE_PLATFORM = "excluded platform-incompatible dependencies (package.json `cpu`/`os` does not match the target arch/platform)",
 }
 export const logMessageLevelByKey: Record<LogMessageByKey, LogLevel> = {
   [LogMessageByKey.PKG_DUPLICATE_REF]: "info",
@@ -25,6 +33,7 @@ export const logMessageLevelByKey: Record<LogMessageByKey, LogLevel> = {
   [LogMessageByKey.PKG_OPTIONAL_PLATFORM_NOT_INSTALLED]: "warn",
   [LogMessageByKey.PKG_COLLECTOR_OUTPUT]: "warn",
   [LogMessageByKey.PKG_VERSION_OVERRIDDEN]: "debug",
+  [LogMessageByKey.PKG_INCOMPATIBLE_PLATFORM]: "info",
 }
 
 export type Package = { packageDir: string; packageJson: PackageJson }
@@ -62,7 +71,7 @@ export class ModuleManager {
     this.logSummary = this.createLogSummarySyncProxy()
 
     this.exists = this.createAsyncProxy(this.existsMap, (p: string) => exists(p))
-    this.json = this.createAsyncProxy(this.jsonMap, (p: string) => fs.readJson(p).catch(() => null))
+    this.json = this.createAsyncProxy(this.jsonMap, (p: string) => readJsonOrNull(p))
     this.lstat = this.createAsyncProxy(this.lstatMap, (p: string) => fs.lstat(p).catch(() => null))
     this.packageData = this.createAsyncProxy(this.packageDataMap, (p: string) => this.locatePackageVersionFromCacheKey(p).catch(() => null))
     this.realPath = this.createAsyncProxy(this.realPathMap, async (p: string) => {
@@ -144,6 +153,7 @@ export class ModuleManager {
     pkgName,
     requiredRange,
     skipDownwardSearch = false,
+    skipOverrideFallback = false,
   }: {
     /**
      * The directory to start searching from. Typed optional because pnpm JSON output can omit
@@ -164,6 +174,12 @@ export class ModuleManager {
      * / `lstat` calls and finds nothing.
      */
     skipDownwardSearch?: boolean
+    /**
+     * When true, return null instead of falling back to an out-of-range (override) version.
+     * Callers that search several locations use this to find a range-satisfying version in any
+     * location before settling for an override version from the first location searched.
+     */
+    skipOverrideFallback?: boolean
   }): Promise<Package | null> {
     if (!parentDir || !pkgName) {
       return null
@@ -178,7 +194,7 @@ export class ModuleManager {
     // returns nothing. This handles package manager `overrides` (Bun, npm, pnpm, Yarn) that
     // resolve a transitive dependency to a version intentionally outside its declared range.
     // File-system results are already cached, so this pass costs only JS overhead.
-    if (requiredRange) {
+    if (requiredRange && !skipOverrideFallback) {
       const overrideResult = await this.searchForPackage(parentDir, pkgName, undefined, skipDownwardSearch)
       if (overrideResult) {
         log.debug(

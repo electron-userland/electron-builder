@@ -300,8 +300,31 @@ describe("migrateConfig — GitHub vPrefixedTagName", () => {
   })
 })
 
-describe("migrateConfig — win.azureSignOptions additionalMetadata", () => {
-  test("moves extra index-signature keys into additionalMetadata", () => {
+describe("migrateConfig — win.sign unification", () => {
+  test("moves win.azureSignOptions into win.sign: { type: 'azure' }", () => {
+    const result = migrateConfig({
+      win: {
+        azureSignOptions: {
+          endpoint: "https://weu.codesigning.azure.net/",
+          codeSigningAccountName: "my-account",
+          certificateProfileName: "my-profile",
+          publisherName: "CN=My Company",
+        },
+      },
+    })
+    expect(result.migrated.win.azureSignOptions).toBeUndefined()
+    expect(result.migrated.win.sign).toEqual({
+      type: "azure",
+      endpoint: "https://weu.codesigning.azure.net/",
+      codeSigningAccountName: "my-account",
+      certificateProfileName: "my-profile",
+      publisherName: "CN=My Company",
+    })
+    expect(result.changes.some(c => c.key === "win.azureSignOptions")).toBe(true)
+    expect(result.modified).toBe(true)
+  })
+
+  test("moves extra azure index-signature keys into additionalMetadata", () => {
     const result = migrateConfig({
       win: {
         azureSignOptions: {
@@ -314,31 +337,77 @@ describe("migrateConfig — win.azureSignOptions additionalMetadata", () => {
         },
       },
     })
-    expect(result.migrated.win.azureSignOptions).toEqual({
-      endpoint: "https://weu.codesigning.azure.net/",
-      codeSigningAccountName: "my-account",
-      certificateProfileName: "my-profile",
-      publisherName: "CN=My Company",
+    expect(result.migrated.win.sign).toMatchObject({
+      type: "azure",
       additionalMetadata: {
         ExcludeCredentials: "ManagedIdentityCredential",
         CorrelationId: "my-build-id",
       },
     })
-    expect(result.changes.some(c => c.key === "win.azureSignOptions")).toBe(true)
+    expect("ExcludeCredentials" in result.migrated.win.sign).toBe(false)
   })
 
-  test("no-op when azureSignOptions has only known fields", () => {
+  test("moves win.signtoolOptions into win.sign: { type: 'signtool' }", () => {
     const result = migrateConfig({
       win: {
-        azureSignOptions: {
-          endpoint: "https://weu.codesigning.azure.net/",
-          codeSigningAccountName: "my-account",
-          certificateProfileName: "my-profile",
-          publisherName: "CN=My Company",
+        signtoolOptions: {
+          certificateFile: "C:\\certs\\my.pfx",
+          certificatePassword: "secret",
+          signingHashAlgorithms: ["sha256"],
         },
       },
     })
-    expect(result.changes.some(c => c.key === "win.azureSignOptions")).toBe(false)
+    expect(result.migrated.win.signtoolOptions).toBeUndefined()
+    expect(result.migrated.win.sign).toEqual({
+      type: "signtool",
+      certificateFile: "C:\\certs\\my.pfx",
+      certificatePassword: "secret",
+      signingHashAlgorithms: ["sha256"],
+    })
+    expect(result.changes.some(c => c.key === "win.signtoolOptions")).toBe(true)
+    expect(result.modified).toBe(true)
+  })
+
+  test("replaces win.signExecutable: false with win.sign: false", () => {
+    const result = migrateConfig({ win: { signExecutable: false } })
+    expect(result.migrated.win.signExecutable).toBeUndefined()
+    expect(result.migrated.win.sign).toBe(false)
+    expect(result.changes.some(c => c.key === "win.signExecutable")).toBe(true)
+  })
+
+  test("removes win.signExecutable: true (no-op value)", () => {
+    const result = migrateConfig({ win: { signExecutable: true } })
+    expect(result.migrated.win.signExecutable).toBeUndefined()
+    expect("sign" in result.migrated.win).toBe(false)
+    expect(result.changes.some(c => c.key === "win.signExecutable")).toBe(true)
+  })
+
+  test("removes win.signAndEditExecutable: true (no-op value)", () => {
+    const result = migrateConfig({ win: { signAndEditExecutable: true } })
+    expect(result.migrated.win.signAndEditExecutable).toBeUndefined()
+    expect(result.changes.some(c => c.key === "win.signAndEditExecutable")).toBe(true)
+  })
+
+  test("warns when win.signAndEditExecutable is false (no equivalent in v27)", () => {
+    const result = migrateConfig({ win: { signAndEditExecutable: false } })
+    expect(result.migrated.win.signAndEditExecutable).toBeUndefined()
+    expect(result.warnings.some(w => w.includes("signAndEditExecutable"))).toBe(true)
+  })
+
+  test("warns when both azureSignOptions and signtoolOptions are present", () => {
+    const result = migrateConfig({
+      win: {
+        azureSignOptions: { endpoint: "https://weu.codesigning.azure.net/", codeSigningAccountName: "a", certificateProfileName: "p", publisherName: "CN=Me" },
+        signtoolOptions: { certificateFile: "my.pfx" },
+      },
+    })
+    expect(result.warnings.some(w => w.includes("signtoolOptions"))).toBe(true)
+    expect(result.migrated.win.sign?.type).toBe("azure")
+    expect(result.migrated.win.signtoolOptions).toBeUndefined()
+  })
+
+  test("no-op when win.sign is already set and azureSignOptions is absent", () => {
+    const result = migrateConfig({ win: { sign: { type: "azure", endpoint: "https://e", codeSigningAccountName: "a", certificateProfileName: "p", publisherName: "CN=Me" } } })
     expect(result.modified).toBe(false)
   })
 })
@@ -440,6 +509,78 @@ describe("migrateConfig — asar consolidation", () => {
       disableSanityCheck: true,
       disableIntegrity: true,
     })
+  })
+})
+
+describe("migrateConfig — mac signing consolidation", () => {
+  test("moves identity and signing fields into mac.sign", () => {
+    const result = migrateConfig({ mac: { identity: "Developer ID Application: X", hardenedRuntime: true, entitlements: "build/e.plist" } })
+    expect("identity" in result.migrated.mac).toBe(false)
+    expect("hardenedRuntime" in result.migrated.mac).toBe(false)
+    expect(result.migrated.mac.sign).toEqual({ identity: "Developer ID Application: X", hardenedRuntime: true, entitlements: "build/e.plist" })
+    expect(result.changes.some(c => c.key === "mac.identity")).toBe(true)
+  })
+
+  test("renames signIgnore → sign.ignore", () => {
+    const result = migrateConfig({ mac: { signIgnore: ["foo", "bar"] } })
+    expect("signIgnore" in result.migrated.mac).toBe(false)
+    expect(result.migrated.mac.sign).toEqual({ ignore: ["foo", "bar"] })
+  })
+
+  test("preserves mac.identity: null as sign.identity: null (skip signing)", () => {
+    const result = migrateConfig({ mac: { identity: null } })
+    expect(result.migrated.mac.sign).toEqual({ identity: null })
+  })
+
+  test("applies to mas and masDev too", () => {
+    const result = migrateConfig({ mas: { entitlements: "mas.plist" }, masDev: { hardenedRuntime: false } })
+    expect(result.migrated.mas.sign).toEqual({ entitlements: "mas.plist" })
+    expect(result.migrated.masDev.sign).toEqual({ hardenedRuntime: false })
+  })
+
+  test("warns and does not clobber a custom-signer string sign", () => {
+    const result = migrateConfig({ mac: { sign: "./customSign.js", identity: "X" } })
+    expect(result.migrated.mac.sign).toBe("./customSign.js")
+    expect("identity" in result.migrated.mac).toBe(true) // left for manual resolution
+    expect(result.warnings.some(w => w.includes("custom signing"))).toBe(true)
+  })
+
+  test("drops a bare sign: null so it does not flip to skip-signing", () => {
+    const result = migrateConfig({ mac: { sign: null, target: "dmg" } })
+    expect("sign" in result.migrated.mac).toBe(false)
+    expect(result.changes.some(c => c.key === "mac.sign")).toBe(true)
+  })
+
+  test("does not touch a config that already uses sign object", () => {
+    const result = migrateConfig({ mac: { sign: { identity: "X", hardenedRuntime: true } } })
+    expect(result.migrated.mac.sign).toEqual({ identity: "X", hardenedRuntime: true })
+    expect(result.changes.filter(c => c.key.startsWith("mac.")).length).toBe(0)
+  })
+})
+
+describe("migrateConfig — mac universal consolidation", () => {
+  test("moves mergeASARs / singleArchFiles / x64ArchFiles into mac.universal", () => {
+    const result = migrateConfig({ mac: { mergeASARs: true, singleArchFiles: "*.node", x64ArchFiles: "bin/*" } })
+    expect("mergeASARs" in result.migrated.mac).toBe(false)
+    expect(result.migrated.mac.universal).toEqual({ mergeASARs: true, singleArchFiles: "*.node", x64ArchFiles: "bin/*" })
+  })
+})
+
+describe("migrateConfig — electronDownload → electronGet", () => {
+  test("renames and maps mirror → mirrorOptions.mirror", () => {
+    const result = migrateConfig({ electronDownload: { mirror: "https://m.example/" } })
+    expect("electronDownload" in result.migrated).toBe(false)
+    expect(result.migrated.electronGet).toEqual({ mirrorOptions: { mirror: "https://m.example/" } })
+  })
+
+  test("maps isVerifyChecksum: false → unsafelyDisableChecksums: true", () => {
+    const result = migrateConfig({ electronDownload: { isVerifyChecksum: false } })
+    expect(result.migrated.electronGet).toEqual({ unsafelyDisableChecksums: true })
+  })
+
+  test("warns about dropped fields with no v5 equivalent", () => {
+    const result = migrateConfig({ electronDownload: { cache: "/c", customDir: "v1", strictSSL: false } })
+    expect(result.warnings.some(w => w.includes("cache") && w.includes("customDir"))).toBe(true)
   })
 })
 

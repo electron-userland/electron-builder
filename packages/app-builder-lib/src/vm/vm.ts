@@ -9,7 +9,10 @@ export class VmManager {
   }
 
   exec(file: string, args: Array<string>, options?: ExecFileOptions, isLogOutIfDebug = true): Promise<string> {
-    return exec(file, args, options, isLogOutIfDebug)
+    // Mirror WineVmManager: merge caller-supplied env with process.env so extra vars don't strip
+    // the base environment (PATH, SystemRoot, etc.) on native Windows.
+    const mergedOptions = options?.env != null ? { ...options, env: { ...process.env, ...options.env } } : options
+    return exec(file, args, mergedOptions, isLogOutIfDebug)
   }
 
   spawn(file: string, args: Array<string>, options?: SpawnOptions, extraOptions?: ExtraSpawnOptions): Promise<any> {

@@ -41,11 +41,11 @@ export async function doTest(
   packElevateHelper = true,
   toolsets?: ToolsetConfig
 ) {
-  // Running the built installer for verification is done under wine, which only exists on non-Windows
-  // hosts (getWineToolset throws on win32). On Windows we cannot sandbox the install via wine, and we
-  // must not execute the real installer against the host machine, so skip this verification step.
-  // The build itself is still validated by the other assertions in the `packed` callback.
-  if (process.platform === "win32" || toolsets?.wine == null || toolsets.wine === "0.0.0") {
+  // Install verification runs the produced .exe under wine.
+  // Skip on macOS: wine-11.0-darwin-x86_64 SIGSEGVs running PE files on arm64 (Apple Silicon CI).
+  // Skip on Linux: use null toolsets instead; null defaults to host wine in Docker environments.
+  // wine="0.0.0" is the legacy macOS-only bundle — skip it too.
+  if (process.platform === "win32" || process.platform === "darwin" || toolsets?.wine == null || toolsets.wine === "0.0.0") {
     return Promise.resolve()
   }
 

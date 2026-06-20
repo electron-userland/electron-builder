@@ -1,18 +1,10 @@
-import { afterEach, beforeEach } from "vitest"
-import * as os from "os"
 import * as path from "path"
-import { mkdir, rm, writeFile } from "fs/promises"
+import { mkdir, writeFile } from "fs/promises"
 import { prepareProductBuildArgs, resolvePkgBuildVersion, resolveScriptsDir } from "app-builder-lib/src/targets/mac/pkg"
 
 // Only run these tests on macOS since they rely on macOS-specific filesystem structure and conventions.
 // The functions being tested are also only relevant in the context of building macOS pkg installers.
 describe.ifMac("mac pkg", () => {
-  async function makeTempDir(): Promise<string> {
-    const dir = path.join(os.tmpdir(), `eb-pkg-unit-${Date.now()}`)
-    await mkdir(dir, { recursive: true })
-    return dir
-  }
-
   function plistXml(data: Record<string, string | number | boolean>): string {
     const entries = Object.entries(data)
       .map(([key, value]) => {
@@ -36,58 +28,54 @@ ${entries}
   }
 
   describe("resolvePkgBuildVersion", () => {
-    let tmpDir: string
-
-    beforeEach(async () => {
-      tmpDir = await makeTempDir()
-    })
-
-    afterEach(async () => {
-      await rm(tmpDir, { recursive: true, force: true })
-    })
-
-    test("returns CFBundleShortVersionString from Info.plist when present", async ({ expect }) => {
-      const appDir = path.join(tmpDir, "MyApp.app")
+    test("returns CFBundleShortVersionString from Info.plist when present", async ({ expect, tmpDir }) => {
+      const tmpDirPath = await tmpDir.createTempDir()
+      const appDir = path.join(tmpDirPath, "MyApp.app")
       await writeInfoPlist(appDir, { CFBundleShortVersionString: "3.2.1", CFBundleVersion: "321" })
 
       const version = await resolvePkgBuildVersion(appDir, "0.0.0")
       expect(version).toBe("3.2.1")
     })
 
-    test("falls back to provided fallback when Info.plist is missing", async ({ expect }) => {
-      const appDir = path.join(tmpDir, "NoApp.app")
+    test("falls back to provided fallback when Info.plist is missing", async ({ expect, tmpDir }) => {
+      const tmpDirPath = await tmpDir.createTempDir()
+      const appDir = path.join(tmpDirPath, "NoApp.app")
       // No Info.plist written
 
       const version = await resolvePkgBuildVersion(appDir, "1.2.3")
       expect(version).toBe("1.2.3")
     })
 
-    test("falls back when CFBundleShortVersionString key is absent from plist", async ({ expect }) => {
-      const appDir = path.join(tmpDir, "NoVersionApp.app")
+    test("falls back when CFBundleShortVersionString key is absent from plist", async ({ expect, tmpDir }) => {
+      const tmpDirPath = await tmpDir.createTempDir()
+      const appDir = path.join(tmpDirPath, "NoVersionApp.app")
       await writeInfoPlist(appDir, { CFBundleName: "Test" })
 
       const version = await resolvePkgBuildVersion(appDir, "9.9.9")
       expect(version).toBe("9.9.9")
     })
 
-    test("falls back when CFBundleShortVersionString is an empty string", async ({ expect }) => {
-      const appDir = path.join(tmpDir, "EmptyVersionApp.app")
+    test("falls back when CFBundleShortVersionString is an empty string", async ({ expect, tmpDir }) => {
+      const tmpDirPath = await tmpDir.createTempDir()
+      const appDir = path.join(tmpDirPath, "EmptyVersionApp.app")
       await writeInfoPlist(appDir, { CFBundleShortVersionString: "" })
 
       const version = await resolvePkgBuildVersion(appDir, "5.0.0")
       expect(version).toBe("5.0.0")
     })
 
-    test("prefers CFBundleShortVersionString over fallback even when CFBundleVersion also present", async ({ expect }) => {
-      const appDir = path.join(tmpDir, "BothVersionApp.app")
+    test("prefers CFBundleShortVersionString over fallback even when CFBundleVersion also present", async ({ expect, tmpDir }) => {
+      const tmpDirPath = await tmpDir.createTempDir()
+      const appDir = path.join(tmpDirPath, "BothVersionApp.app")
       await writeInfoPlist(appDir, { CFBundleShortVersionString: "2.0.0", CFBundleVersion: "2000" })
 
       const version = await resolvePkgBuildVersion(appDir, "0.0.0")
       expect(version).toBe("2.0.0")
     })
 
-    test("falls back when Info.plist contains malformed content", async ({ expect }) => {
-      const appDir = path.join(tmpDir, "BadPlistApp.app")
+    test("falls back when Info.plist contains malformed content", async ({ expect, tmpDir }) => {
+      const tmpDirPath = await tmpDir.createTempDir()
+      const appDir = path.join(tmpDirPath, "BadPlistApp.app")
       const contentsDir = path.join(appDir, "Contents")
       await mkdir(contentsDir, { recursive: true })
       await writeFile(path.join(contentsDir, "Info.plist"), "this is not a valid plist")

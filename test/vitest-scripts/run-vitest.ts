@@ -3,11 +3,11 @@
 import { isCI } from "ci-info"
 import * as path from "path"
 import { startVitest } from "vitest/node"
-import { getAllTestFiles } from "./file-discovery"
-import { generateTests } from "./generate-tests"
-import { buildWeightedFiles, computeShardCount, splitIntoShards } from "./shard-builder"
-import { SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN } from "./smart-config"
-import SmartSequencer from "./vitest-smart-sequencer"
+import { getAllTestFiles } from "./vitest-config/file-discovery.js"
+import { generateTests } from "./generate-tests.js"
+import { buildWeightedFiles, computeShardCount, splitIntoShards } from "./vitest-config/shard-builder.js"
+import { SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN } from "./vitest-config/smart-config.js"
+import SmartSequencer from "./vitest-config/vitest-smart-sequencer.js"
 
 const PACKAGES_DIR = path.join(__dirname, "..", "..", "packages")
 const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
@@ -58,7 +58,9 @@ const includeGlob = `(${testPatterns.join("|")}|${testPatterns.map(t => `${t}*Te
 console.log("TEST_FILES pattern", includeGlob)
 
 async function main() {
-  generateTests()
+  if (!process.env.SKIP_GENERATE) {
+    generateTests()
+  }
 
   const files = getAllTestFiles()
   const currentPlatform = process.platform as SupportedPlatforms
@@ -89,6 +91,42 @@ async function main() {
   console.log(`\n=== Shard ${index + 1} of ${shardCount} ===`)
   console.log(`Scanned Files: ${selectedFiles.length}`)
 
+  // Per-run report id — unique across every shard/job so artifacts never collide. The pid keeps the
+  // two ci:test invocations that share a single runner (snap core24: docker pass + native pass)
+  // distinct. Encodes platform + shard so the merge job can group results without extra metadata.
+  // Written under cwd (the repo root, and the docker `-v $(pwd):/project` mount), so reports emitted
+  // inside the container surface on the host for artifact upload — same path contract as the cache.
+  // NB: the blob dir is deliberately NOT vitest's default `.vitest-reports` — actions/upload-artifact
+  // excludes dot-directories (include-hidden-files defaults to false), which would silently drop every
+  // blob from the uploaded report artifact. A non-hidden dir is included normally.
+  const reportId = `${currentPlatform}-shard${index}-pid${process.pid}`
+  const reporters: any[] = [
+    "default",
+    __dirname + "/vitest-config/vitest-smart-reporter.ts",
+    ["json", { outputFile: `test-results/results-${reportId}.json` }],
+    ["blob", { outputFile: `vitest-blobs/blob-${reportId}.json` }],
+  ]
+
+  // Opt-in v8 coverage (VITEST_COVERAGE=true, set by the collect-coverage workflow input). Each shard
+  // writes a raw coverage map; the merge job combines them into one downloadable report. Spread in
+  // only when enabled — passing `coverage: undefined` trips vitest's config resolver.
+  const coverageOption =
+    process.env.VITEST_COVERAGE === "true"
+      ? {
+          coverage: {
+            enabled: true,
+            provider: "v8" as const,
+            // Only our own TypeScript sources (imported in-process via the workspace aliases below);
+            // work offloaded to spawned binaries is not measured. Emit the raw istanbul-shaped map per
+            // shard so the merge job can combine all shards into one report.
+            include: ["packages/*/src/**"],
+            reporter: ["json"],
+            reportsDirectory: `coverage/${reportId}`,
+            clean: true,
+          },
+        }
+      : {}
+
   return startVitest(
     "test",
     selectedFiles,
@@ -101,24 +139,24 @@ async function main() {
 
       // Allow test metadata
       includeTaskLocation: true,
-      setupFiles: [__dirname + "/vitest-setup.ts", __dirname + "/vitest-heavy-mutex.ts"],
+      setupFiles: [__dirname + "/vitest-config/vitest-setup.ts", __dirname + "/vitest-config/vitest-heavy-mutex.ts", __dirname + "/vitest-config/vitest-tmpdir.ts"],
       include: [`test/src/**/${includeGlob}.ts`],
 
-      printConsoleTrace: true,
-      runner: __dirname + "/vitest-network-retry-runner.ts",
-      reporters: ["default", __dirname + "/vitest-smart-reporter.ts"],
+      runner: __dirname + "/vitest-config/vitest-network-retry-runner.ts",
+      reporters,
+      ...coverageOption,
 
-      // 2 on Windows (heavy MSI/Squirrel builds saturate the vitest main-thread RPC at 3); 3 elsewhere
-      maxWorkers: process.platform === "win32" ? 2 : 3,
-
+      // Disable Vitest's default file-based parallelism and use our custom shard-based sequencing instead.  This ensures that tests are grouped into shards according to our custom logic (e.g. platform-specific weighting) rather than Vitest's default file-based distribution.
+      // It's either disabling here or increasing test timeout to be generous due to the I/O-heavy nature of our tests and the fact that running many in parallel can exhaust memory (e.g. due to multiple icon-tool spawns across workers).
+      // Disabling file-based parallelism is more efficient than increasing timeouts, as it allows us to run tests in parallel at the shard level while keeping individual test files running sequentially within each shard.
       fileParallelism: false,
       sequence: {
         sequencer: SmartSequencer,
-        concurrent: process.env.TEST_SEQUENTIAL === "false",
+        concurrent: false,
       },
 
-      slowTestThreshold: 2 * 60 * 1000,
-      testTimeout: 10 * 60 * 1000, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
+      slowTestThreshold: 3 * 60 * 1000,
+      testTimeout: 15 * 60 * 1000, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
 
       snapshotFormat: {
         printBasicPrototype: false,
@@ -126,6 +164,13 @@ async function main() {
       resolveSnapshotPath: (testPath, snapshotExtension) => {
         const snapshotPath = testPath
           .replace(/\.[tj]s$/, `.js${snapshotExtension}`)
+          // Wine-variant test files share snapshots with the non-wine variants — the wine
+          // dimension is an execution detail (run via Wine vs natively), not a content
+          // dimension.  Strip the `__wine-X.Y.Z` segment before computing the snapshot path so
+          // both variants resolve to the same .snap file. Match the dotted version digits
+          // precisely so we neither stop at the first dot (`[^_.]+` → leaves `.Y.Z`) nor greedily
+          // consume the trailing `.win` separator on `__wine-0.0.0.win.Test.ts` (`[\d.]+`).
+          .replace(/__wine-\d+(?:\.\d+)*/, "")
           .replace("/src/", "/snapshots/")
           .replace("\\src\\", "\\snapshots\\")
         // These suites assert the packed asar file tree across every package manager. The tree
@@ -154,4 +199,7 @@ async function main() {
     })
 }
 
-void main()
+if (require.main === module) {
+  void main()
+}
+export default main

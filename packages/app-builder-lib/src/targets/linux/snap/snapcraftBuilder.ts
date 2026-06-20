@@ -1,18 +1,14 @@
-import { InvalidConfigurationError, isEmptyOrSpaces, log, spawn, stripSensitiveEnvVars } from "builder-util"
-import * as childProcess from "child_process"
+import { Arch, exec, InvalidConfigurationError, isEmptyOrSpaces, log, spawn, stripSensitiveEnvVars } from "builder-util"
 import { randomUUID } from "crypto"
 import { resolveSnapCredentials } from "electron-publish"
 
 import * as path from "path"
-import * as util from "util"
 import { LinuxPackager } from "../../../linuxPackager.js"
 import { RemoteBuildOptions } from "../../../options/SnapOptions.js"
 import { SnapcraftYAML } from "./snapcraft.js"
 import { deepAssign, sleep } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
 const { copyFile, ensureDir, pathExists, readdir, remove } = _fsExtra
-
-const execAsync = util.promisify(childProcess.exec)
 
 export const SNAPCRAFT_YAML_OPTIONS = { indent: 2, lineWidth: -1, noRefs: true } as const
 export const DEFAULT_STAGE_PACKAGES: string[] = ["libnspr4", "libnss3", "libxss1", "libappindicator3-1", "libsecret-1-0"]
@@ -44,18 +40,15 @@ interface BuildSnapOptions {
  */
 async function validateSnapcraftYamlWithCLI(workDir: string): Promise<void> {
   try {
-    const { stdout } = await execAsync("snapcraft expand-extensions", {
+    const stdout = await exec("snapcraft", ["expand-extensions"], {
       cwd: workDir,
       timeout: 30000,
     })
     log.debug({ expandedYaml: stdout }, "validated extended snapcraft.yaml")
   } catch (error: any) {
-    log.error({ error: error.message, stderr: error.stderr }, "snapcraft.yaml validation failed")
-    throw new Error(
-      `Invalid snapcraft.yaml: ${error.message}\n` +
-        `Snapcraft output: ${error.stderr || error.stdout || "No output"}\n` +
-        `Run 'snapcraft expand-extensions' in ${workDir} for more details`
-    )
+    // builder-util's exec folds stdout/stderr into the ExecError message
+    log.error({ error: error.message }, "snapcraft.yaml validation failed")
+    throw new Error(`Invalid snapcraft.yaml: ${error.message}\n` + `Run 'snapcraft expand-extensions' in ${workDir} for more details`)
   }
 }
 
@@ -190,6 +183,27 @@ async function cleanupBuildArtifacts(workDir: string): Promise<void> {
   }
 }
 
+/**
+ * Maps a snapcraft arch string (as found in snap filenames) back to an electron-builder Arch.
+ * Used to assign the correct Arch value to extra artifacts from multi-arch remote-builds.
+ */
+export function snapArchStringToArch(snapArch: string): Arch {
+  switch (snapArch) {
+    case "amd64":
+      return Arch.x64
+    case "arm64":
+      return Arch.arm64
+    case "armhf":
+      return Arch.armv7l
+    case "i386":
+    case "i686":
+      return Arch.ia32
+    default:
+      log.warn({ snapArch }, "unrecognised snap arch in output filename, defaulting to x64")
+      return Arch.x64
+  }
+}
+
 async function copySnapToArtifactPath(workDir: string, outputBasename: string, outputFileName: string): Promise<string> {
   const snapInWorkDir = path.join(workDir, outputBasename)
   if (snapInWorkDir !== outputFileName) {
@@ -208,7 +222,7 @@ async function copySnapToArtifactPath(workDir: string, outputBasename: string, o
  * access to download stage-packages, the base image, and extensions.
  * To opt into an offline build, set `SNAPCRAFT_NO_NETWORK=1` in your environment.
  */
-export async function buildSnap(options: BuildSnapOptions): Promise<string> {
+export async function buildSnap(options: BuildSnapOptions): Promise<string[]> {
   const { SNAPCRAFT_NO_NETWORK } = process.env
   const { snapcraftConfig, artifactPath, remoteBuild, stageDir, useLXD = false, useMultipass = false, useDestructiveMode = false, cscLink } = options
 
@@ -291,7 +305,7 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string> {
  */
 async function ensureSnapcraftInstalled(): Promise<void> {
   try {
-    const { stdout } = await execAsync("snapcraft --version")
+    const stdout = await exec("snapcraft", ["--version"])
     log.info({ version: stdout.trim() }, "snapcraft found")
   } catch (error: any) {
     log.error({ error: error.message }, "snapcraft is not installed")
@@ -336,7 +350,7 @@ async function ensureRemoteBuildAuthentication(cscLink: string | undefined, reso
 
   // 3. Interactive snapcraft session.
   try {
-    const { stdout } = await execAsync("snapcraft whoami")
+    const stdout = await exec("snapcraft", ["whoami"])
     if (stdout.includes("email:")) {
       log.debug({ account: stdout.trim() }, "already authenticated with snapcraft")
       return {}
@@ -368,7 +382,7 @@ interface ExecuteSnapcraftOptions {
 /**
  * Executes the snapcraft build command
  */
-async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<string> {
+async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<string[]> {
   const { workDir, outputSnap: outputFileName, remoteBuild, useLXD, useMultipass, useDestructiveMode, isolatedEnv } = options
   let processedEnv: NodeJS.ProcessEnv = { ...stripSensitiveEnvVars(process.env), ...isolatedEnv }
 
@@ -377,7 +391,7 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
   const tmpSnap = `eb-snap-${randomUUID().replace(/-/g, "")}.snap`
 
   if (useDestructiveMode && !remoteBuild?.enabled) {
-    return await runDestructiveBuild(workDir, processedEnv, tmpSnap, outputFileName)
+    return [await runDestructiveBuild(workDir, processedEnv, tmpSnap, outputFileName)]
   }
 
   const command = "snapcraft"
@@ -417,17 +431,38 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
   })
 
   if (remoteBuild?.enabled || useLXD || useMultipass) {
-    // snapcraft names the output snap itself (e.g. <name>_<version>_<arch>.snap).
-    // Each electron-builder build invocation targets exactly one arch, so exactly one snap is expected.
+    // snapcraft names output snaps itself (e.g. <name>_<version>_<arch>.snap).
+    // For multi-arch remote-builds (buildFor array), multiple snaps land in workDir.
     const files = await readdir(workDir)
-    const builtSnap = files.find(f => f.endsWith(".snap"))
-    if (!builtSnap) {
+    const builtSnaps = files.filter(f => f.endsWith(".snap"))
+    if (builtSnaps.length === 0) {
       throw new Error(`Build succeeded but no .snap file found in ${workDir}`)
     }
-    return copySnapToArtifactPath(workDir, builtSnap, outputFileName)
+    const outDir = path.dirname(outputFileName)
+    // Extract the arch segment from the pre-computed artifact path so we can identify
+    // the primary snap by arch rather than by filename — snapcraft may name its output
+    // differently (e.g. underscores vs hyphens, different app name sanitization).
+    const primaryBase = path.basename(outputFileName)
+    const primaryArch = primaryBase
+      .replace(/\.snap$/, "")
+      .split("_")
+      .pop()!
+    const results: string[] = []
+    for (const snapFile of builtSnaps) {
+      const snapArch =
+        snapFile
+          .replace(/\.snap$/, "")
+          .split("_")
+          .pop() ?? primaryArch
+      // Primary arch: honour the pre-computed outputFileName (respects artifactName macro).
+      // Extra arches: substitute the arch segment in the primary basename to follow the same pattern.
+      const dest = snapArch === primaryArch ? outputFileName : path.join(outDir, primaryBase.replace(new RegExp(`_${primaryArch}\\.snap$`), `_${snapArch}.snap`))
+      results.push(await copySnapToArtifactPath(workDir, snapFile, dest))
+    }
+    return results
   }
 
-  return copySnapToArtifactPath(workDir, tmpSnap, outputFileName)
+  return [await copySnapToArtifactPath(workDir, tmpSnap, outputFileName)]
 }
 
 function generateRemoteBuildArgs(remoteBuild: RemoteBuildOptions, workDir: string) {
@@ -453,8 +488,9 @@ function generateRemoteBuildArgs(remoteBuild: RemoteBuildOptions, workDir: strin
   }
 
   if (remoteBuild.buildFor) {
-    args.push("--build-for", remoteBuild.buildFor)
-    log.debug({ arch: remoteBuild.buildFor }, "building for architecture")
+    const buildForStr = Array.isArray(remoteBuild.buildFor) ? remoteBuild.buildFor.join(",") : remoteBuild.buildFor
+    args.push("--build-for", buildForStr)
+    log.debug({ arch: buildForStr }, "building for architecture")
   }
 
   if (remoteBuild.recover) {

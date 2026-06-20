@@ -10,7 +10,7 @@ Always looking for community contributions! 👀 Setting up a [dev environment](
       <td>
          <a href="https://workflowy.com">
             <div>
-               <img src="https://workflowy.com/media/i/icon-28x28.png" alt="WorkFlowy" title="WorkFlowy" style="height: 50px;" height="50"/>
+               <img src="website/static/sponsor-logos/Workflowy.png" alt="WorkFlowy" title="WorkFlowy" style="height: 75px;" height="75"/>
             </div>
             Notes, Tasks, Projects.<br>All in a Single Place.
          </a>
@@ -22,7 +22,7 @@ Always looking for community contributions! 👀 Setting up a [dev environment](
          <br>
          <a href="https://tidepool.org">
             <div>
-               <img src="https://www.electron.build/sponsor-logos/Tidepool_Logo_Light.svg" alt="Tidepool" title="Tidepool" style="height: 75px;" height="75" />
+               <img src="website/static/sponsor-logos/Tidepool_Logo_Light.svg" alt="Tidepool" title="Tidepool" style="height: 75px;" height="75" />
             </div>
             Your gateway to understanding your diabetes data
          </a>

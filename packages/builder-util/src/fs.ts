@@ -1,5 +1,6 @@
-import { Nullish } from "builder-util-runtime"
+import { Nullish, retry, sleep } from "builder-util-runtime"
 import { Stats } from "fs"
+import * as fs from "fs/promises"
 import fsExtra from "fs-extra"
 import { access, chmod, link, lstat, mkdir, readdir, readlink, stat, symlink, unlink, writeFile } from "fs/promises"
 import { platform } from "os"
@@ -350,4 +351,119 @@ export const USE_HARD_LINKS = (file: string) => true
 export interface Link {
   readonly link: string
   readonly file: string
+}
+
+const TRANSIENT_RENAME_CODES = new Set(["ENOENT", "EPERM", "EBUSY", "EXDEV"])
+
+/**
+ *
+ * Atomically moves `src` to `dest` by rename, retrying on transient Windows errors (ENOENT,
+ * EPERM, EBUSY) before falling back to a copy+delete when all retries are exhausted.
+ *
+ * On Windows Docker / Windows Server containers, MoveFileEx can spuriously return
+ * ERROR_FILE_NOT_FOUND (ENOENT) or a sharing-violation even when both paths are valid.
+ * Retrying with back-off resolves the majority of these transient failures; the copy+delete
+ * fallback handles the rare case where the rename keeps failing (e.g. cross-device move).
+ */
+export async function moveDirAtomic(src: string, dest: string): Promise<void> {
+  // 4 retries → 5 total attempts; interval+backoff*attempt gives 250/500/750/1000 ms delays.
+  let lastErr: (Error & { code?: string }) | undefined
+  try {
+    await retry(() => fs.rename(src, dest), {
+      retries: 4,
+      interval: 250,
+      backoff: 250,
+      shouldRetry: (err: any) => {
+        if (TRANSIENT_RENAME_CODES.has(err.code ?? "")) {
+          log.warn({ src: log.filePath(src), dest: log.filePath(dest), code: err.code }, "directory rename failed, retrying")
+          return true
+        }
+        return false
+      },
+    })
+    return
+  } catch (err: any) {
+    lastErr = err
+    if (!TRANSIENT_RENAME_CODES.has(err.code ?? "")) {
+      throw err
+    }
+  }
+  // All rename retries exhausted on a transient error — fall back to copy + delete
+  log.warn({ src: log.filePath(src), dest: log.filePath(dest) }, "directory rename failed repeatedly; falling back to copy+delete")
+  try {
+    await fs.cp(src, dest, { recursive: true })
+    await fs.rm(src, { recursive: true, force: true })
+  } catch (err: any) {
+    throw new Error(`Failed to move directory from ${src} to ${dest}: ${err.message}${lastErr ? `; last rename error: ${lastErr.message}` : ""}`)
+  }
+}
+
+/**
+ * Recursive mkdir hardened against the long-standing Node concurrency bug where two processes
+ * building overlapping directory trees at the same time spuriously throw ENOENT (a peer is
+ * mid-creating a shared ancestor) or EEXIST (a peer just created this dir) — nodejs/node#27293,
+ * #31481. It is rare on local filesystems but routine on Docker overlayfs, which is where CI builds
+ * run and where this surfaced as a flaky `ENOENT … mkdir '<cache>/<release>/<artifact>-<hash>'`
+ * whenever concurrent builds/targets (e.g. rpm x64 + rpm armv7l, or two test workers) first
+ * populated a cold toolset cache. proper-lockfile serializes the *download/extract*, but the cache
+ * dir is created around the lock, so the mkdir itself must tolerate the race. Both error codes are
+ * transient: retry with a short backoff; by the next attempt the peer has finished.
+ */
+export async function ensureDir(dir: string, maxAttempts = 8, mkdir: (p: string, opts: { recursive: true }) => Promise<unknown> = fs.mkdir): Promise<void> {
+  // interval+backoff*attempt gives 50/100/150/… ms delays; only the transient ENOENT race is retried.
+  await retry(
+    async () => {
+      try {
+        await mkdir(dir, { recursive: true })
+      } catch (e: any) {
+        // recursive mkdir is normally idempotent; a spurious EEXIST from the race is fine as long
+        // as the path really is a directory now — otherwise it's a genuine file-in-the-way error.
+        if (e.code === "EEXIST" && (await fs.stat(dir).catch(() => null))?.isDirectory()) {
+          return
+        }
+        throw e
+      }
+    },
+    {
+      retries: maxAttempts,
+      interval: 50,
+      backoff: 50,
+      shouldRetry: (e: any) => e.code === "ENOENT",
+    }
+  )
+}
+
+/**
+ * Wait until `file` can be opened for writing, retrying while it is locked.
+ *
+ * On Windows a file that was just extracted, copied, or written is frequently held by an antivirus
+ * scanner or a peer build with a deny-write share mode; an `fs.open(file, "r+")` against it fails with
+ * `EBUSY` (a sharing violation). Trying to *spawn* or overwrite the file during that window fails too —
+ * e.g. `CreateProcess` on a freshly-extracted `makeappx.exe` surfaces as `spawn UNKNOWN`. Waiting for
+ * the lock to clear first avoids that whole class of transient failure under heavy concurrent builds.
+ *
+ * Only `EBUSY` is treated as transient. Any other open error (read-only file, ENOENT, perms) is taken
+ * to mean "not lock-contended" — we return and let the caller perform its real operation and surface
+ * the genuine error itself. Bounded by `maxAttempts` so it can never hang a build indefinitely.
+ */
+type FileOpener = (file: string, flags: string) => Promise<{ close(): Promise<void> }>
+
+export async function ensureNotBusy(file: string, intervalMs = 2000, maxAttempts = 60, open: FileOpener = fs.open as FileOpener): Promise<void> {
+  for (let attempt = 0, warned = false; attempt < maxAttempts; attempt++) {
+    try {
+      const handle = await open(file, "r+")
+      await handle.close()
+      return
+    } catch (error: any) {
+      if (error.code !== "EBUSY") {
+        return
+      }
+      if (!warned) {
+        warned = true
+        log.info({ file: log.filePath(file) }, "file is locked for writing (maybe by a virus scanner) => waiting for unlock...")
+      }
+      await sleep(intervalMs)
+    }
+  }
+  log.warn({ file: log.filePath(file) }, "file still reported as locked after waiting; proceeding anyway")
 }

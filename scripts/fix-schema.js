@@ -22,13 +22,6 @@ schema.definitions.OutgoingHttpHeaders.additionalProperties = {
   ],
 }
 
-// checksums is not in the ElectronDownloadOptions TypeScript type; it belongs to ElectronGetOptions.
-// Keep it in the schema for backward compatibility but enforce string values.
-schema.definitions.ElectronDownloadOptions.properties.checksums = {
-  type: "object",
-  additionalProperties: { type: "string" },
-}
-
 // Fix Record<string,string>: additionalProperties:false rejects every non-empty object.
 schema.definitions["Record<string,string>"] = {
   type: "object",

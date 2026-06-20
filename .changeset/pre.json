@@ -19,7 +19,13 @@
     "@electron-builder/website": "0.0.0"
   },
   "changesets": [
+    "chatty-maps-go",
+    "chatty-teeth-exist",
+    "clear-cows-joke",
+    "cool-carrots-fix",
     "disable-implicit-publish",
+    "dull-suns-dig",
+    "easy-feet-sniff",
     "eighty-bottles-tell",
     "esm-cascade-001-code-quality",
     "esm-cascade-002-dead-code",
@@ -29,8 +35,27 @@
     "esm-cascade-006-native-modules-config",
     "esm-cascade-007-migrate-schema-cli",
     "esm-cascade-008-remove-snap-property",
+    "five-boats-lose",
+    "fix-universal-single-arch-deps",
+    "free-rats-turn",
+    "funny-things-enjoy",
+    "giant-steaks-drive",
+    "he-nsis-translations",
+    "hot-pianos-taste",
+    "linux-launcher-entrypoint",
+    "mac-7z-symlink-snl",
+    "migrate-programmatic-config",
+    "moody-roses-sing",
+    "nsis-langstring-references",
     "old-geckos-build",
+    "retry-windows-batch-file-install",
+    "signtool-concurrency-lock",
     "small-times-scream",
-    "tender-moose-knock"
+    "snap-core24-launcher-command",
+    "solid-toes-like",
+    "tender-dodos-film",
+    "tender-moose-knock",
+    "tidy-rabbits-kick",
+    "warm-cameras-cross"
   ]
 }

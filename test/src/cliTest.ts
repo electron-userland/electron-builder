@@ -5,11 +5,11 @@ import yargs from "yargs"
 
 // ─── Module mocks (hoisted by vitest above all imports) ───────────────────────
 
-// getCacheDirectory (clear-cache) and loadEnv (cli-util) are the only `app-builder-lib/internal`
+// getCacheDirectoryInternal (clear-cache) and loadEnv (cli-util) are the only `app-builder-lib/internal`
 // exports exercised here. Stub just those — a full mock keeps the heavy app-builder-lib module
 // graph (and its circular class hierarchy) from loading for these isolated CLI unit tests.
 vi.mock("app-builder-lib/internal", () => ({
-  getCacheDirectory: vi.fn().mockReturnValue("/home/user/.cache/electron-builder"),
+  getCacheDirectoryInternal: vi.fn().mockReturnValue("/home/user/.cache/electron-builder"),
   loadEnv: vi.fn().mockResolvedValue(undefined),
 }))
 
@@ -42,7 +42,9 @@ vi.mock("builder-util", async () => {
 
 import { access, rm } from "fs/promises"
 import { createInterface } from "node:readline/promises"
-import { getCacheDirectory } from "app-builder-lib/internal"
+// Import from the same specifier that is mocked above (and that clear-cache imports), so vi.mocked()
+// returns the mock instance rather than the real function.
+import { getCacheDirectoryInternal } from "app-builder-lib/internal"
 import { ExecError, InvalidConfigurationError, log } from "builder-util"
 // Relative imports bypass project-reference declaration files, which strip @internal exports
 import { clearCache } from "../../packages/electron-builder/src/cli/clear-cache"
@@ -56,9 +58,9 @@ import { configurePublishCommand } from "../../packages/electron-builder/src/pub
 
 // ─── clearCache ───────────────────────────────────────────────────────────────
 
-describe("clearCache", () => {
+describe("clearCache", { sequential: true }, () => {
   beforeEach(() => {
-    vi.mocked(getCacheDirectory).mockReturnValue("/home/user/.cache/electron-builder")
+    vi.mocked(getCacheDirectoryInternal).mockReturnValue(Promise.resolve("/home/user/.cache/electron-builder"))
     vi.mocked(access).mockResolvedValue(undefined as any)
     vi.mocked(rm).mockResolvedValue(undefined as any)
     vi.mocked(createInterface).mockReturnValue({
@@ -71,9 +73,9 @@ describe("clearCache", () => {
     vi.clearAllMocks()
   })
 
-  test("calls getCacheDirectory with isAvoidSystemOnWindows=false, allowEnvVarOverride=false", async () => {
+  test("calls getCacheDirectoryInternal with isAvoidSystemOnWindows=false, allowEnvVarOverride=false", async () => {
     await clearCache()
-    expect(getCacheDirectory).toHaveBeenCalledWith({ isAvoidSystemOnWindows: false, allowEnvVarOverride: false })
+    expect(getCacheDirectoryInternal).toHaveBeenCalledWith({ isAvoidSystemOnWindows: false, allowEnvVarOverride: false })
   })
 
   test("deletes cache dir when it exists and user confirms", async () => {
@@ -107,7 +109,7 @@ describe("clearCache", () => {
   })
 
   test("aborts and logs error when cache dir resolves to filesystem root", async () => {
-    vi.mocked(getCacheDirectory).mockReturnValue("/")
+    vi.mocked(getCacheDirectoryInternal).mockReturnValue(Promise.resolve("/"))
     await clearCache()
     expect(rm).not.toHaveBeenCalled()
     expect(vi.mocked(log).error).toHaveBeenCalledWith(expect.objectContaining({ cacheDir: "/" }), expect.stringContaining("filesystem root"))
@@ -149,7 +151,7 @@ describe("clearCache", () => {
 
 // ─── wrap ─────────────────────────────────────────────────────────────────────
 
-describe("wrap", () => {
+describe("wrap", { sequential: true }, () => {
   const savedExitCode = process.exitCode
 
   beforeEach(() => {

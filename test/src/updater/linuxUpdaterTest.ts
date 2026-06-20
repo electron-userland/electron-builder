@@ -58,7 +58,7 @@ const packageManagerMap: {
   },
 }
 
-describe("LinuxUpdater.detectPackageManager", () => {
+describe("LinuxUpdater.detectPackageManager", { sequential: true }, () => {
   afterEach(() => {
     delete process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER
   })

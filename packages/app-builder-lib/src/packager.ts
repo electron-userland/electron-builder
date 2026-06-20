@@ -1,5 +1,4 @@
 import {
-  addValue,
   Arch,
   archFromString,
   AsyncTaskManager,
@@ -30,13 +29,13 @@ import { Framework } from "./Framework.js"
 import { Metadata } from "./options/metadata.js"
 import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi.js"
 import { PlatformPackager } from "./platformPackager.js"
-import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory.js"
+import { addTargetsForPlatform, computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory.js"
 import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config.js"
 import { expandMacro } from "./util/macroExpander.js"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata.js"
 import { getRepositoryInfo } from "./util/repositoryInfo.js"
 import { resolveFunction } from "./util/resolve.js"
-import { installOrRebuild, nodeGypRebuild } from "./util/yarn.js"
+import { installOrRebuild, nodeGypRebuild } from "./util/installOrRebuild.js"
 import { PACKAGE_VERSION } from "./version.js"
 import { AsyncEventEmitter, HandlerType } from "./util/asyncEventEmitter.js"
 import asyncPool from "tiny-async-pool"
@@ -188,29 +187,11 @@ export class Packager {
         return result.length === 0 && currentIfNotSpecified ? [archFromString(process.arch)] : result
       }
 
-      let archToType = targets.get(platform)
-      if (archToType == null) {
-        archToType = new Map<Arch, Array<string>>()
-        targets.set(platform, archToType)
-      }
-
-      if (types.length === 0) {
+      addTargetsForPlatform(targets, platform, types, commonArch, archToType => {
         for (const arch of commonArch(false)) {
           archToType.set(arch, [])
         }
-        return
-      }
-
-      for (const type of types) {
-        const suffixPos = type.lastIndexOf(":")
-        if (suffixPos > 0) {
-          addValue(archToType, archFromString(type.substring(suffixPos + 1)), type.substring(0, suffixPos))
-        } else {
-          for (const arch of commonArch(true)) {
-            addValue(archToType, arch, type)
-          }
-        }
-      }
+      })
     }
 
     if (options.mac != null) {

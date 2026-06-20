@@ -28,7 +28,7 @@ const packageConfig = (data: any, version: string) => {
   return data
 }
 
-describe("Package Managers", () => {
+describe("Package Managers", { sequential: true }, () => {
   test("yarn", ({ expect }) =>
     assertPack(
       expect,

@@ -30,7 +30,7 @@ export class NsisScriptGenerator {
   // without -- !!!
   flags(flags: Array<string>) {
     for (const flagName of flags) {
-      const variableName = getVarNameForFlag(flagName).replace(/[-]+(\w|$)/g, (m, p1) => p1.toUpperCase())
+      const variableName = getVarNameForFlag(flagName).replace(/-+(\w)?/g, (m, p1) => (p1 ?? "").toUpperCase())
       this.lines.push(`!macro _${variableName} _a _b _t _f
   $\{StdUtils.TestParameter} $R9 "${flagName}"
   StrCmp "$R9" "true" \`$\{_t}\` \`$\{_f}\`
@@ -48,7 +48,7 @@ export class NsisScriptGenerator {
 export function nsisEscapeString(s: string): string {
   const escaped = s
     .replace(/\r\n|\r|\n/g, " ") // newlines break NSIS string literals
-    .replace(/\$(?!\{)/g, "$$$$") // bare $ → $$ (prevents NSIS variable expansion); ${...} references are left intact
+    .replace(/\$(?![{(])/g, "$$$$") // bare $ → $$ (prevents NSIS variable expansion); ${...} define and $(...) LangString references are left intact
     .replace(/"/g, '$\\"') // " → $\" (NSIS escape for double-quote)
   if (escaped !== s) {
     log.debug({ original: s, final: escaped }, "nsis was escaped")

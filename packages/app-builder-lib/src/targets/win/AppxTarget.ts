@@ -1,7 +1,7 @@
-import { Arch, asArray, copyOrLinkFile, InvalidConfigurationError, log, walk } from "builder-util"
+import { Arch, asArray, copyOrLinkFile, ensureNotBusy, InvalidConfigurationError, log, sanitizeDirPath, walk, escapeForXml } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 
-import * as path from "path"
+import path from "path"
 import { AppXOptions } from "../../index.js"
 import { getWindowsKitsBundle, isOldWin6 } from "../../toolsets/winCodeSign.js"
 import { Target } from "../../core.js"
@@ -76,7 +76,7 @@ export default class AppXTarget extends Target {
       arch,
     })
 
-    const vendorPath = await getWindowsKitsBundle({ winCodeSign: this.packager.config.toolsets?.winCodeSign, arch: arch, resourcesDir: this.packager.buildResourcesDir })
+    const vendorPath = await getWindowsKitsBundle({ winCodeSign: this.packager.config.toolsets?.winCodeSign, resourcesDir: this.packager.buildResourcesDir })
     const vm = await packager.vm.value
 
     const stageDir = await createStageDir(this, packager, arch)
@@ -113,12 +113,15 @@ export default class AppXTarget extends Target {
 
     if (isScaledAssetsProvided(userAssets)) {
       const outFile = vm.toVmFile(stageDir.getTempFile("resources.pri"))
-      const makePriPath = vm.toVmFile(path.join(vendorPath.kit, "makepri.exe"))
+      const makePriExe = path.join(vendorPath.kit, "makepri.exe")
+      const makePriPath = vm.toVmFile(makePriExe)
 
       const assetRoot = stageDir.getTempFile("appx/assets")
       await emptyDir(assetRoot)
       await Promise.all(assetInfo.allAssets.map(it => copyOrLinkFile(it, path.join(assetRoot, path.basename(it)))))
 
+      // Wait out any transient AV/share lock on the freshly-extracted kit binary (see ensureNotBusy).
+      await ensureNotBusy(makePriExe)
       await vm.exec(makePriPath, [
         "new",
         "/Overwrite",
@@ -150,7 +153,12 @@ export default class AppXTarget extends Target {
       makeAppXArgs.push(...this.options.makeappxArgs)
     }
     this.buildQueueManager.add(async () => {
-      await vm.exec(vm.toVmFile(path.join(vendorPath.kit, "makeappx.exe")), makeAppXArgs)
+      const makeAppxExe = path.join(vendorPath.kit, "makeappx.exe")
+      // The kit binary is often freshly extracted to a cold cache; on Windows an AV scanner can hold a
+      // deny-write lock on it just long enough that CreateProcess fails with `spawn UNKNOWN`. Wait for
+      // the lock to clear before spawning. See ensureNotBusy.
+      await ensureNotBusy(makeAppxExe)
+      await vm.exec(vm.toVmFile(makeAppxExe), makeAppXArgs)
       await packager.signIf(artifactPath)
 
       await stageDir.cleanup()
@@ -182,7 +190,7 @@ export default class AppXTarget extends Target {
 
     for (const defaultAsset of Object.keys(vendorAssetsForDefaultAssets)) {
       if (userAssets.length === 0 || !isDefaultAssetIncluded(userAssets, defaultAsset)) {
-        const file = path.join(vendorPath, "appxAssets", vendorAssetsForDefaultAssets[defaultAsset])
+        const file = sanitizeDirPath(path.join(vendorPath, "appxAssets", vendorAssetsForDefaultAssets[defaultAsset]), vendorPath)
         mappings.push(`"${vm.toVmFile(file)}" "assets\\${defaultAsset}"`)
         allAssets.push(file)
       }
@@ -192,10 +200,10 @@ export default class AppXTarget extends Target {
     return { userAssets, mappings, allAssets }
   }
 
-  // https://github.com/electron-userland/electron-builder/issues/2108#issuecomment-333200711
   private async computePublisherName() {
     const signtoolManager = await this.packager.signingManager.value
-    return signtoolManager.computePublisherName(this, this.options.publisher)
+    // https://github.com/electron-userland/electron-builder/issues/2108#issuecomment-333200711
+    return signtoolManager.computePublisherName(this, this.options.publisher ?? null)
   }
 
   private async writeManifest(outFile: string, arch: Arch, publisher: string, userAssets: Array<string>) {
@@ -215,14 +223,14 @@ export default class AppXTarget extends Target {
     const manifest = manifestFileContent.replace(/\${([a-zA-Z0-9]+)}/g, (match, p1): string => {
       switch (p1) {
         case "publisher":
-          return publisher
+          return escapeForXml(publisher)
 
         case "publisherDisplayName": {
           const name = options.publisherDisplayName || appInfo.companyName
           if (name == null) {
             throw new InvalidConfigurationError(`Please specify "author" in the application package.json — it is required because "appx.publisherDisplayName" is not set.`)
           }
-          return name
+          return escapeForXml(name)
         }
 
         case "version":
@@ -287,10 +295,10 @@ export default class AppXTarget extends Target {
           return executable
 
         case "displayName":
-          return displayName
+          return escapeForXml(displayName)
 
         case "description":
-          return appInfo.description || appInfo.productName
+          return escapeForXml(appInfo.description || appInfo.productName)
 
         case "backgroundColor":
           return options.backgroundColor || "#464646"

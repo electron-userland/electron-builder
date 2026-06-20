@@ -2,20 +2,12 @@ import { isEnvTrue } from "builder-util"
 
 // ─── Code signing ─────────────────────────────────────────────────────────────
 
-export function isUseSystemSigncode() {
-  return isEnvTrue(process.env.USE_SYSTEM_SIGNCODE)
-}
-
 export function isAutoDiscoveryCodeSignIdentity() {
   return process.env.CSC_IDENTITY_AUTO_DISCOVERY !== "false"
 }
 
 export function isCscForPullRequest() {
   return isEnvTrue(process.env.CSC_FOR_PULL_REQUEST)
-}
-
-export function isUseSystemOsslSigncode() {
-  return isEnvTrue(process.env.USE_SYSTEM_OSSLSIGNCODE)
 }
 
 // ─── Build behaviour ──────────────────────────────────────────────────────────
@@ -58,10 +50,6 @@ export function isTravis() {
 
 export function isUseSystemFpm() {
   return isEnvTrue(process.env.USE_SYSTEM_FPM)
-}
-
-export function isUseSystemWine() {
-  return isEnvTrue(process.env.USE_SYSTEM_WINE)
 }
 
 export function isFpmDebug() {

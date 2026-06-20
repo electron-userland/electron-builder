@@ -16,7 +16,8 @@ import { BuildResult } from "./packager.js"
 import { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi.js"
 import { PlatformPackager } from "./platformPackager.js"
 import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/win/nsis/nsisOptions.js"
-import { ElectronDownloadOptions, ElectronGetOptions } from "./util/electronGet.js"
+import { ElectronGetOptions } from "./util/electronGet.js"
+import { FuseOptionsV1 } from "./options/FuseOptionsV1.js"
 
 // duplicate appId here because it is important
 /**
@@ -420,10 +421,8 @@ export interface Configuration extends CommonConfiguration, PlatformSpecificBuil
   /**
    * Options forwarded to [`@electron/get`](https://github.com/electron/get) when downloading the
    * Electron distribution to package.
-   *
-   * Also accepts the legacy `electron-download` shape for backward compatibility.
    */
-  readonly electronDownload?: ElectronDownloadOptions | ElectronGetOptions | null
+  readonly electronGet?: ElectronGetOptions | null
 
   /**
    * Electron branding overrides.
@@ -536,18 +535,12 @@ export type BeforePackContext = PackContext
 export type AfterExtractContext = PackContext
 
 /**
- * Version pins and custom bundle overrides for the binary toolsets that electron-builder
- * downloads and caches locally.
+ * Version pins and custom bundle overrides for the binary toolsets that electron-builder downloads and caches locally.
  *
- * Each toolset is a versioned archive hosted at
- * [electron-userland/electron-builder-binaries](https://github.com/electron-userland/electron-builder-binaries/releases).
- * Omitting a property (or setting it to `null`) selects the modern default for that toolset.
- * Setting a property to `"0.0.0"` forces the legacy bundle — useful only for diagnosing
- * regressions introduced by newer toolset bundles.
+ * Each toolset is a versioned archive hosted at [electron-userland/electron-builder-binaries](https://github.com/electron-userland/electron-builder-binaries/releases).
+ * Omitting a property (or setting it to `latest`) selects the modern default for that toolset.
  *
- * To supply your own bundle, set the property to a {@link ToolsetCustom} object with a `url`
- * (https:// or file://) and a `checksum` for verification. The bundle must mirror the expected
- * directory layout of the corresponding built-in bundle; see the build scripts at
+ * To supply your own bundle, set the property to a {@link ToolsetCustom} object with a `url` (https:// or file://) and a `checksum` for verification. The bundle must mirror the expected directory layout of the corresponding built-in bundle; see the build scripts at
  * https://github.com/electron-userland/electron-builder-binaries/tree/master/packages.
  */
 export interface ToolsetConfig {
@@ -557,21 +550,23 @@ export interface ToolsetConfig {
    * The bundle ships:
    * - **`signtool.exe`** (Windows) / **`osslsigncode`** (macOS & Linux) — used to sign `.exe`,
    *   `.dll`, and `.msix` artifacts.
-   * - **`rcedit`** — used to embed version metadata and icons into `.exe` files.
-   * - **Windows Kits** (`10.0.26100.0`) — used by AppX/MSIX packaging (`makeappx`, `signtool`).
+   * - **`rcedit`** — embeds version metadata and icons into `.exe` files (legacy usage, migrated to npm `resedit` package).
+   * - **Windows Kits** — used by AppX/MSIX packaging (`makeappx`, `signtool`).
    *
    * Available versions:
-   * | Version | Contents |
-   * |---------|----------|
-   * | `"0.0.0"` | Legacy bundle — `winCodeSign-2.6.0` (pre-v27 default) |
-   * | `"1.0.0"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.0.0 |
-   * | `"1.1.0"` | Modern bundle — Windows Kits 10.0.26100.0, `win-codesign` v1.1.0 (default) |
+   * | Version | Notes |
+   * |---------|-------|
+   * | `"0.0.0"` | Legacy bundle — `winCodeSign-2.6.0` (pre-v27) |
+   * | `"1.0.0"` | Windows Kits 10.0.26100.0, `osslsigncode` v2.9 |
+   * | `"1.1.1"` | Updates `osslsigncode` to v2.11 |
+   * | `"1.2.1"` | Adds native `osslsigncode` arm64 |
+   * | `"1.3.0"` | Includes support for Azure Trusted Signing `signtool` via dlib and .NET 8 runtime |
    *
-   * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=win-codesign
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/win-codesign/CHANGELOG.md
    *
-   * @default "1.1.0"
+   * @default "latest"
    */
-  readonly winCodeSign?: "0.0.0" | "1.0.0" | "1.1.0" | ToolsetCustom | null
+  readonly winCodeSign?: "0.0.0" | "1.0.0" | "1.1.0" | "1.1.1" | "1.2.1" | "1.3.0" | ToolsetCustom | "latest"
 
   /**
    * Version of the AppImage toolset bundle used for building `.AppImage` files.
@@ -584,15 +579,15 @@ export interface ToolsetConfig {
    * Available versions:
    * | Version | Runtime date | Notes |
    * |---------|-------------|-------|
-   * | `"0.0.0"` | Legacy | FUSE2-based AppImage runtime (pre-v27 default) |
-   * | `"1.0.2"` | 20251108 | Static-runtime (FUSE3-compatible) |
-   * | `"1.0.3"` | 20251108 | Static-runtime (FUSE3-compatible); recommended (default) |
+   * | `"0.0.0"` | Legacy | FUSE2-based AppImage runtime (pre-v27) |
+   * | `"1.0.3"` | 20251108 | Introduces static AppImage runtime |
+   * | `"1.1.0"` | 20251108 | Adds `unsquashfs` support |
    *
-   * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=appimage
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/appimage/CHANGELOG.md
    *
-   * @default "1.0.3"
+   * @default "latest"
    */
-  readonly appimage?: "0.0.0" | "1.0.2" | "1.0.3" | ToolsetCustom | null
+  readonly appimage?: "0.0.0" | "1.0.3" | "1.1.0" | ToolsetCustom | "latest"
 
   /**
    * Version of the NSIS toolset bundle used to compile Windows installers.
@@ -606,14 +601,14 @@ export interface ToolsetConfig {
    * Available versions:
    * | Version | `makensis` version | Notes |
    * |---------|------------------|-------|
-   * | `"0.0.0"` | 3.0.4.1 | Legacy split bundle — `nsis` + `nsis-resources` archives (pre-v27 default) |
-   * | `"1.2.1"` | 3.12 | Unified bundle — single archive, entrypoint scripts auto-set `NSISDIR` (default) |
+   * | `"0.0.0"` | 3.0.4.1 | Legacy split bundle — `nsis` + `nsis-resources` archives (pre-v27) |
+   * | `"1.2.1"` | 3.12 | Unified bundle — single archive, entrypoint scripts auto-set `NSISDIR` |
    *
-   * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=nsis
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/nsis/CHANGELOG.md
    *
-   * @default "1.2.1"
+   * @default "latest"
    */
-  readonly nsis?: "0.0.0" | "1.2.1" | ToolsetCustom | null
+  readonly nsis?: "0.0.0" | "1.2.1" | ToolsetCustom | "latest"
 
   /**
    * Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on
@@ -625,16 +620,16 @@ export interface ToolsetConfig {
    * Available versions:
    * | Version | Wine version | Platform support | Notes |
    * |---------|-------------|-----------------|-------|
-   * | `"0.0.0"` | 4.0.1 | macOS only | Legacy portable bundle (pre-v27 default) |
+   * | `"0.0.0"` | 4.0.1 | macOS | Legacy portable bundle (pre-v27) |
+   * | `"1.0.1"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |
    *
-   * On Linux, the system `wine` binary is used instead of a bundled one.
-   * Set `USE_SYSTEM_WINE=true` to force system Wine regardless of this setting.
+   * To use a custom Wine binary, use a `ToolsetCustom` object.
    *
-   * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=wine
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md
    *
-   * @default "0.0.0"
+   * @default "latest"
    */
-  readonly wine?: "0.0.0" | ToolsetCustom | null
+  readonly wine?: "0.0.0" | "1.0.1" | ToolsetCustom | "latest"
 
   /**
    * Version of the FPM bundle used to build Linux packages (`.deb`, `.rpm`, `.pacman`, etc.)
@@ -645,11 +640,11 @@ export interface ToolsetConfig {
    * |---------|------------|-------|
    * | `"2.2.1"` | 1.17.0 (Ruby 3.4.3) | Current default |
    *
-   * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=fpm
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/fpm/CHANGELOG.md
    *
-   * @default "2.2.1"
+   * @default "latest"
    */
-  readonly fpm?: "2.2.1" | ToolsetCustom | null
+  readonly fpm?: "2.2.1" | ToolsetCustom | "latest"
 
   /**
    * Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build
@@ -660,13 +655,13 @@ export interface ToolsetConfig {
    * Available versions:
    * | Version | Notes |
    * |---------|-------|
-   * | `"1.0.0"` | Current default |
+   * | `"1.0.0"` | gnu-tar, lzip, makedepend, glib, libgsf, libtool, pcre, gettext, binutils |
    *
-   * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=linux-tools-mac
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/linux-tools-mac/CHANGELOG.md
    *
-   * @default "1.0.0"
+   * @default "latest"
    */
-  readonly linuxToolsMac?: "1.0.0" | ToolsetCustom | null
+  readonly linuxToolsMac?: "1.0.0" | ToolsetCustom | "latest"
 
   /**
    * Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.
@@ -679,9 +674,9 @@ export interface ToolsetConfig {
    * (or a bare `file://` directory). `.7z` and `.tar.xz` archives cannot be used here because
    * extracting them requires 7za — a circular dependency.
    *
-   * @default "1.0.0"
+   * @default "latest"
    */
-  readonly sevenZip?: "1.0.0" | ToolsetCustom | null
+  readonly sevenZip?: "1.0.0" | ToolsetCustom | "latest"
 
   /**
    * Version of the icons-conversion bundle used to convert source images to `.icns`, `.ico`,
@@ -692,13 +687,13 @@ export interface ToolsetConfig {
    * Available versions:
    * | Version | Notes |
    * |---------|-------|
-   * | `"1.1.0"` | Current default |
+   * | `"1.2.1"` | `wasm-vips` + `@resvg/resvg-wasm` |
    *
-   * Releases: https://github.com/electron-userland/electron-builder-binaries/releases?q=icons
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/icons/CHANGELOG.md
    *
-   * @default "1.1.0"
+   * @default "latest"
    */
-  readonly icons?: "1.1.0" | ToolsetCustom | null
+  readonly icons?: "1.2.1" | ToolsetCustom | "latest"
 }
 
 /**
@@ -943,118 +938,6 @@ export interface MetadataDirectories {
    * lives in a subdirectory (common in monorepos or when using a separate frontend build step).
    */
   readonly app?: string | null
-}
-
-/**
- * Feature flags ("fuses") baked into the Electron binary at build time.
- *
- * All options map 1:1 to the flags documented by
- * [`@electron/fuses`](https://github.com/electron/fuses) and the upstream
- * [Electron fuses guide](https://www.electronjs.org/docs/latest/tutorial/fuses).
- *
- * electron-builder flips fuses after packaging and **before** signing so that the final
- * code signature covers the modified binary. On Apple Silicon, the ad-hoc signature is
- * re-applied automatically after flipping fuses.
- */
-export interface FuseOptionsV1 {
-  /**
-   * Controls whether the `ELECTRON_RUN_AS_NODE` environment variable is respected.
-   *
-   * When `true` (the Electron default), setting `ELECTRON_RUN_AS_NODE=1` in the environment
-   * makes Electron behave like a plain Node.js process, bypassing the app entirely. Disable
-   * this fuse in production apps to prevent that escape path.
-   *
-   * **Note:** Disabling this fuse also breaks `process.fork()` in the main process because
-   * it relies on `ELECTRON_RUN_AS_NODE` internally. Use
-   * [Utility Processes](https://www.electronjs.org/docs/latest/api/utility-process) as a
-   * replacement.
-   */
-  runAsNode?: boolean
-
-  /**
-   * Controls whether the Chromium cookie store is encrypted using OS-level cryptography keys.
-   *
-   * When enabled, cookies are stored encrypted on disk (the same mechanism Chrome uses).
-   * **This is a one-way transition**: existing unencrypted cookies are re-encrypted on write, but
-   * disabling the fuse afterwards will leave the cookie database unreadable.
-   *
-   * Most production apps can safely enable this fuse.
-   */
-  enableCookieEncryption?: boolean
-
-  /**
-   * Controls whether the [`NODE_OPTIONS`](https://nodejs.org/api/cli.html#node_optionsoptions)
-   * and `NODE_EXTRA_CA_CERTS` environment variables are respected.
-   *
-   * `NODE_OPTIONS` allows injecting arbitrary Node.js runtime flags (e.g. `--require`) and is
-   * rarely needed in production. Most apps can safely disable this fuse.
-   */
-  enableNodeOptionsEnvironmentVariable?: boolean
-
-  /**
-   * Controls whether the `--inspect`, `--inspect-brk`, and related Node.js debugger flags are
-   * honoured.
-   *
-   * When disabled, `SIGUSR1` no longer opens the V8 inspector in the main process either.
-   * Most production apps can safely disable this fuse.
-   */
-  enableNodeCliInspectArguments?: boolean
-
-  /**
-   * Enables ASAR integrity validation — Electron verifies the embedded SHA-256 hash of
-   * `app.asar` before loading it.
-   *
-   * Platform support:
-   * - macOS: Electron ≥ 16.0.0
-   * - Windows: Electron ≥ 30.0.0
-   *
-   * For this fuse to be meaningful, `asar.disableIntegrity` must **not** be
-   * `true` (otherwise the hash is not embedded).
-   *
-   * See the [ASAR Integrity guide](https://www.electronjs.org/docs/latest/tutorial/asar-integrity).
-   */
-  enableEmbeddedAsarIntegrityValidation?: boolean
-
-  /**
-   * When enabled, Electron searches for the app exclusively in `app.asar`, skipping the `app`
-   * directory and `default_app.asar` fallbacks.
-   *
-   * Combined with `enableEmbeddedAsarIntegrityValidation`, this makes it impossible to side-load
-   * unverified code by replacing `app.asar` with an unarchived `app/` directory.
-   */
-  onlyLoadAppFromAsar?: boolean
-
-  /**
-   * When enabled, the browser (main) process uses a separate V8 snapshot file
-   * (`browser_v8_context_snapshot.bin`) instead of the shared one.
-   *
-   * This is only useful when you ship a custom V8 snapshot for the main process that differs
-   * from the renderer snapshot. Standard apps do not need this.
-   */
-  loadBrowserProcessSpecificV8Snapshot?: boolean
-
-  /**
-   * Controls whether pages loaded from the `file://` protocol receive elevated privileges
-   * beyond what a standard web browser would grant.
-   *
-   * These extra privileges include `fetch` to other `file://` URLs, service workers, and
-   * universal frame access for child frames also on `file://`. This behaviour pre-dates modern
-   * Electron security best practices.
-   *
-   * Disable this fuse if your app does not load content directly from `file://` (i.e. you use
-   * a [custom protocol](https://www.electronjs.org/docs/latest/tutorial/security#18-avoid-usage-of-the-file-protocol-and-prefer-usage-of-custom-protocols)).
-   */
-  grantFileProtocolExtraPrivileges?: boolean
-
-  /**
-   * Re-applies the ad-hoc codesignature on macOS after fuses are flipped.
-   *
-   * electron-builder already re-signs the app after flipping fuses, so this flag is
-   * generally not needed and exists only as a compatibility shim for edge cases.
-   *
-   * See [`@electron/fuses` — Apple Silicon](https://github.com/electron/fuses?tab=readme-ov-file#apple-silicon).
-   */
-  resetAdHocDarwinSignature?: boolean
 }
 
 /**
