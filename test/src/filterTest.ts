@@ -481,15 +481,19 @@ describe("getDefaultIgnoredPatterns", () => {
 // ---------------------------------------------------------------------------
 
 describe("getMainFileMatchers – default exclusions respect `files` re-includes", () => {
+  // Use path.resolve so appDir matches FileMatcher.from after the constructor normalizes path
+  // separators (on Windows a literal "/app" becomes "\app", and getMainFileMatchers early-returns
+  // unless matcher.from === appDir).
+  const appDir = path.resolve("/app")
   function buildMatcherPatterns(files: Array<string>): Array<string> {
     const platformPackager = {
-      projectDir: "/app",
+      projectDir: appDir,
       buildResourcesDir: "build",
       isPrepackedAppAsar: false,
       config: { files, includePdb: false },
       debugLogger: { isEnabled: false },
     } as any
-    const matchers = getMainFileMatchers("/app", "/out", noMacro, {} as any, platformPackager, "/app/dist")
+    const matchers = getMainFileMatchers(appDir, path.resolve("/out"), noMacro, {} as any, platformPackager, path.join(appDir, "dist"))
     return matchers[0].patterns
   }
 
