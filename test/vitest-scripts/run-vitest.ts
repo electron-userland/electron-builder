@@ -102,10 +102,11 @@ async function main() {
   const reportId = `${currentPlatform}-shard${index}-pid${process.pid}`
   const reporters: any[] = [
     "default",
+    // smart sharding
     __dirname + "/vitest-config/vitest-smart-reporter.ts",
-    ["json", { outputFile: `test-results/results-${reportId}.json` }],
-    ["blob", { outputFile: `vitest-blobs/blob-${reportId}.json` }],
-  ]
+    // output report/summary for printing in Test workflow OUTPUT_SUMMARY
+    ["json", { outputFile: `test-results/results-${reportId}.json` }]
+  ].concat(process.env.VITEST_COVERAGE === "true" ? [["blob", { outputFile: `vitest-blobs/blob-${reportId}.json` }]] : [])
 
   // Opt-in v8 coverage (VITEST_COVERAGE=true, set by the collect-coverage workflow input). Each shard
   // writes a raw coverage map; the merge job combines them into one downloadable report. Spread in
