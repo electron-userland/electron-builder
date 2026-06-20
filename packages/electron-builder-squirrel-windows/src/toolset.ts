@@ -1,5 +1,5 @@
 import { download, downloadBuilderToolset } from "app-builder-lib/internal"
-import { exists, log, resolveEnvShellValue } from "builder-util"
+import { exists, log, parseValidEnvVarUrl, resolveEnvShellValue } from "builder-util"
 import { stat } from "fs/promises"
 import * as path from "path"
 
@@ -63,11 +63,37 @@ export async function getSquirrelToolsetPath(): Promise<string> {
 const NUGET_VERSION = "6.14.0"
 const NUGET_SHA256 = "92dbed160ddee0f64b901e907439e021211b428e57c089ecc12fc38dcc4bd9a5"
 const NUGET_URL = `https://dist.nuget.org/win-x86-commandline/v${NUGET_VERSION}/nuget.exe`
+// Redirect the nuget.exe download for air-gapped / mirrored builds.
+const NUGET_URL_ENV = "ELECTRON_BUILDER_SQUIRREL_NUGET_URL"
+const NUGET_SHA256_ENV = "ELECTRON_BUILDER_SQUIRREL_NUGET_SHA256"
+// A Chocolatey shim is ~0.4 MB; a real nuget.exe is several MB. Anything above this is already usable.
+const MIN_USABLE_NUGET_BYTES = 2_000_000
+
+async function isUsableNuget(file: string): Promise<boolean> {
+  try {
+    return (await stat(file)).size >= MIN_USABLE_NUGET_BYTES
+  } catch {
+    return false
+  }
+}
 
 /**
- * Downloads (and caches) a standalone portable nuget.exe and writes it into `vendorDirectory`,
- * overwriting the broken Chocolatey shim shipped in the squirrel.windows bundle.
+ * Ensures `vendorDirectory` holds a usable standalone nuget.exe. If the bundle already ships a real one
+ * (e.g. a future squirrel.windows release, or a pre-staged offline toolset dir), it is kept as-is.
+ * Otherwise a pinned NuGet.CommandLine build is downloaded and cached, replacing the broken Chocolatey
+ * shim. Air-gapped/mirrored builds can redirect the download with {@link NUGET_URL_ENV} (and
+ * {@link NUGET_SHA256_ENV} to supply a non-default build's checksum, or an empty value to skip it).
  */
 export async function prepareNugetExe(vendorDirectory: string): Promise<void> {
-  await download(NUGET_URL, path.join(vendorDirectory, "nuget.exe"), NUGET_SHA256)
+  const target = path.join(vendorDirectory, "nuget.exe")
+  if (await isUsableNuget(target)) {
+    return
+  }
+  const overrideUrl = parseValidEnvVarUrl(NUGET_URL_ENV)
+  const url = overrideUrl ?? NUGET_URL
+  // The pinned hash matches the official 6.14.0 build and any plain mirror of it. For a different
+  // build, set NUGET_SHA256_ENV to its sha256 (an empty value disables verification).
+  const shaOverride = overrideUrl != null ? process.env[NUGET_SHA256_ENV]?.trim() : undefined
+  const checksum = shaOverride !== undefined ? shaOverride || null : NUGET_SHA256
+  await download(url, target, checksum)
 }

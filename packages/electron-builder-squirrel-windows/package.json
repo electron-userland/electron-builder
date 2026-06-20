@@ -26,7 +26,8 @@
   "homepage": "https://github.com/electron-userland/electron-builder",
   "files": [
     "dist",
-    "template.nuspectemplate"
+    "template.nuspectemplate",
+    "install-spinner.gif"
   ],
   "engines": {
     "node": ">=22.12.0"

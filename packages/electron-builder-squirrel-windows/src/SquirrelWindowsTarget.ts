@@ -1,6 +1,6 @@
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
 import { getRceditBundle, withToolsetLock, WineVmManager } from "app-builder-lib/internal"
-import { InvalidConfigurationError, exists, isEmptyOrSpaces, log } from "builder-util"
+import { InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { sanitizeFileName } from "builder-util/internal"
 import * as fs from "fs"
 import * as os from "os"
@@ -22,38 +22,31 @@ export default class SquirrelWindowsTarget extends Target {
   }
 
   private async prepareSignedVendorDirectory(): Promise<string> {
-    const customSquirrelVendorDirectory = this.options.customSquirrelVendorDir
     const tmpVendorDirectory = await this.packager.tempDirManager.createTempDir({ prefix: "squirrel-windows-vendor" })
 
-    if (customSquirrelVendorDirectory && (await exists(customSquirrelVendorDirectory))) {
-      await fs.promises.cp(customSquirrelVendorDirectory, tmpVendorDirectory, { recursive: true })
-    } else {
-      if (!isEmptyOrSpaces(customSquirrelVendorDirectory)) {
-        log.warn({ customSquirrelVendorDirectory }, "unable to access custom Squirrel.Windows vendor directory, falling back to default vendor")
-      }
+    // The vendor toolset comes from the maintained squirrel.windows bundle. Override the bundle source
+    // (e.g. a local copy for air-gapped builds) with ELECTRON_BUILDER_SQUIRREL_TOOLSET_DIR.
+    const squirrelToolset = await getSquirrelToolsetPath()
+    await fs.promises.cp(path.join(squirrelToolset, "electron-winstaller", "vendor"), tmpVendorDirectory, { recursive: true })
 
-      const squirrelToolset = await getSquirrelToolsetPath()
-      await fs.promises.cp(path.join(squirrelToolset, "electron-winstaller", "vendor"), tmpVendorDirectory, { recursive: true })
+    // TEMPORARY: the published squirrel.windows@1.1.0 bundle ships the Chocolatey shim for nuget.exe,
+    // which resolves the real binary relative to its own install path and fails once relocated to a
+    // temp vendor directory. Replace it with a standalone portable nuget.exe (no-op when the bundle
+    // already ships a real one). Remove once squirrel.windows bundles it (electron-builder-binaries#203).
+    await prepareNugetExe(tmpVendorDirectory)
 
-      // TEMPORARY: the published squirrel.windows@1.1.0 bundle ships the Chocolatey shim for nuget.exe,
-      // which resolves the real binary relative to its own install path and fails once relocated to a
-      // temp vendor directory. Overwrite it with a standalone portable nuget.exe, downloaded and cached
-      // at runtime. Remove once squirrel.windows bundles the standalone exe (electron-builder-binaries#203).
-      await prepareNugetExe(tmpVendorDirectory)
-
-      // Squirrel.exe --releasify shells out to rcedit.exe (via setPEVersionInfoAndIcon) to embed the app
-      // icon into Setup.exe. The bundle does not ship rcedit, so resolve it from the win-codesign toolset,
-      // which already versions and caches it across all platforms. Squirrel-Mono.exe (used on non-Windows)
-      // does not call rcedit, so this is only needed on win32.
-      //
-      // getRceditBundle honors the user's `toolsets.winCodeSign` selection, so users retain a bypass if a
-      // newer toolset regresses: `"0.0.0"` falls back to the legacy winCodeSign-2.6.0 rcedit, a custom
-      // toolset object uses their own rcedit, and the default (unset/"latest") pulls rcedit-windows-2_0_0.
-      if (process.platform === "win32") {
-        const rcedit = await getRceditBundle(this.packager.config.toolsets?.winCodeSign, this.packager.buildResourcesDir)
-        const rceditExe = os.arch() === "ia32" ? rcedit.x86 : rcedit.x64
-        await fs.promises.copyFile(rceditExe, path.join(tmpVendorDirectory, "rcedit.exe"))
-      }
+    // Squirrel.exe --releasify shells out to rcedit.exe (via setPEVersionInfoAndIcon) to embed the app
+    // icon into Setup.exe. The bundle does not ship rcedit, so resolve it from the win-codesign toolset,
+    // which already versions and caches it across all platforms. Squirrel-Mono.exe (used on non-Windows)
+    // does not call rcedit, so this is only needed on win32.
+    //
+    // getRceditBundle honors the user's `toolsets.winCodeSign` selection, so users retain a bypass if a
+    // newer toolset regresses: `"0.0.0"` falls back to the legacy winCodeSign-2.6.0 rcedit, a custom
+    // toolset object uses their own rcedit, and the default (unset/"latest") pulls rcedit-windows-2_0_0.
+    if (process.platform === "win32") {
+      const rcedit = await getRceditBundle(this.packager.config.toolsets?.winCodeSign, this.packager.buildResourcesDir)
+      const rceditExe = os.arch() === "ia32" ? rcedit.x86 : rcedit.x64
+      await fs.promises.copyFile(rceditExe, path.join(tmpVendorDirectory, "rcedit.exe"))
     }
 
     const files = await fs.promises.readdir(tmpVendorDirectory)
@@ -290,11 +283,14 @@ export default class SquirrelWindowsTarget extends Target {
       remoteReleases = this.options.remoteReleases
     }
 
-    let loadingGif: string | undefined
+    let loadingGif: string
     if (this.options.loadingGif) {
       loadingGif = path.resolve(packager.projectDir, this.options.loadingGif)
     } else {
-      loadingGif = (await packager.getResource(undefined, "install-spinner.gif")) ?? undefined
+      // User-supplied buildResources gif wins; otherwise fall back to the bundled default spinner —
+      // parity with electron-winstaller, which always supplied resources/install-spinner.gif when none
+      // was configured (a fresh-install progress animation; never omitted).
+      loadingGif = (await packager.getResource(undefined, "install-spinner.gif")) ?? path.resolve(import.meta.dirname, "..", "install-spinner.gif")
     }
 
     const vendorDirectory = await this.prepareSignedVendorDirectory()

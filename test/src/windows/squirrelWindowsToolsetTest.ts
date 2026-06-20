@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
-import { getSquirrelToolsetPath } from "electron-builder-squirrel-windows/src/toolset"
-import { mkdtemp, rm, writeFile } from "fs/promises"
+import { getSquirrelToolsetPath, prepareNugetExe } from "electron-builder-squirrel-windows/src/toolset"
+import { mkdtemp, rm, stat, writeFile } from "fs/promises"
 import { tmpdir } from "os"
 import * as path from "path"
 
@@ -45,5 +45,29 @@ describe("getSquirrelToolsetPath", () => {
   test("throws when env var is a relative path", async () => {
     process.env[ENV_KEY] = "relative/path"
     await expect(getSquirrelToolsetPath()).rejects.toThrow(ENV_KEY)
+  })
+})
+
+describe("prepareNugetExe", () => {
+  let tmpDir: string
+
+  beforeEach(async () => {
+    tmpDir = await mkdtemp(path.join(tmpdir(), "eb-squirrel-nuget-test-"))
+  })
+
+  afterEach(() => rm(tmpDir, { recursive: true, force: true }).catch(() => {}))
+
+  test("keeps an already-usable nuget.exe and performs no download", async () => {
+    // A real nuget.exe is several MB; staging one larger than the shim threshold must short-circuit
+    // the download entirely (this is the offline / pre-staged-toolset path, so it must not hit network).
+    const nugetExe = path.join(tmpDir, "nuget.exe")
+    await writeFile(nugetExe, Buffer.alloc(2_100_000, 1))
+    const before = await stat(nugetExe)
+
+    await prepareNugetExe(tmpDir)
+
+    const after = await stat(nugetExe)
+    expect(after.size).toBe(before.size)
+    expect(after.mtimeMs).toBe(before.mtimeMs)
   })
 })
