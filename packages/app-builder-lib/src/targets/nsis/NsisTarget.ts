@@ -35,7 +35,7 @@ import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
 import { NsisScriptGenerator, nsisEscapeString } from "./nsisScriptGenerator"
 import { getMakeNsisPath, getNsisPluginsPath } from "../../toolsets/windows"
-import { AppPackageHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
+import { AppPackageHelper, CopyElevateHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
 import { checkMakensisOutput, verifyInstallerSize } from "./nsisValidation"
 import { WineVmManager } from "../../vm/WineVm"
 
@@ -104,7 +104,7 @@ export class NsisTarget extends Target {
   }
 
   /** @private */
-  async buildAppPackage(appOutDir: string, arch: Arch): Promise<PackageFileInfo> {
+  async buildAppPackage(appOutDir: string, arch: Arch, elevateHelper?: CopyElevateHelper | null): Promise<PackageFileInfo> {
     const options = this.options
     const packager = this.packager
 
@@ -126,6 +126,15 @@ export class NsisTarget extends Target {
     const timer = time(`nsis package, ${Arch[arch]}`)
     await archive(format, archiveFile, appOutDir, isBuildDifferentialAware ? configureDifferentialAwareArchiveOptions(archiveOptions) : archiveOptions)
     timer.end()
+
+    // Inject elevate.exe into the archive via a temp staging dir, never by mutating appOutDir
+    // during packaging. The copy into win-unpacked is deferred until all targets finish, so
+    // concurrent targets (Squirrel, ZIP, etc.) never pick up elevate.exe non-deterministically.
+    // `archiveOptions` was mutated in place by configureDifferentialAwareArchiveOptions above
+    // (when differential-aware), so it already reflects the effective compression settings.
+    if (elevateHelper) {
+      await elevateHelper.addToArchive(archiveFile, this, format, archiveOptions, appOutDir)
+    }
 
     if (isBuildDifferentialAware && this.isWebInstaller) {
       const data = await appendBlockmap(archiveFile)

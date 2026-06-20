@@ -113,6 +113,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.info.debugLogger
   }
 
+  addBuildFinalizeTask(task: () => Promise<void>): void {
+    this.info.addBuildFinalizeTask(task)
+  }
+
   abstract get defaultTarget(): Array<string>
 
   // eslint-disable-next-line
