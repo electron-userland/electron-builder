@@ -1,5 +1,14 @@
 import { FilterStats } from "builder-util"
-import { FileMatcher, getFileMatchers, GetFileMatchersOptions } from "app-builder-lib/internal"
+import {
+  collectExplicitReincludes,
+  DEFAULT_EXCLUDED_EXTENSIONS,
+  DEFAULT_EXCLUDED_NAMES,
+  FileMatcher,
+  getDefaultIgnoredPatterns,
+  getFileMatchers,
+  GetFileMatchersOptions,
+  getMainFileMatchers,
+} from "app-builder-lib/internal"
 import * as path from "path"
 
 // ---------------------------------------------------------------------------
@@ -318,5 +327,177 @@ describe("getFileMatchers – string patterns in config.files", () => {
     expect(result).not.toBeNull()
     expect(result![0].patterns).toContain("installer.nsis")
     expect(result![0].patterns).not.toContain("should-be-ignored.txt")
+  })
+})
+
+// ---------------------------------------------------------------------------
+// collectExplicitReincludes – which default exclusions the user opted back in
+// ---------------------------------------------------------------------------
+
+describe("collectExplicitReincludes", () => {
+  test("broad patterns opt nothing in", ({ expect }) => {
+    const { extensions, names } = collectExplicitReincludes(["**/*", "package.json", "dist/**/*"])
+    expect(extensions.size).toBe(0)
+    expect(names.size).toBe(0)
+  })
+
+  test("a basename ending in a default ext opts that ext in", ({ expect }) => {
+    const { extensions } = collectExplicitReincludes(["**/*", "**/*.obj"])
+    expect([...extensions]).toEqual(["obj"])
+  })
+
+  test("brace alternations opt each listed ext in", ({ expect }) => {
+    const { extensions } = collectExplicitReincludes(["**/*", "assets/*.{obj,o}"])
+    expect(extensions.has("obj")).toBe(true)
+    expect(extensions.has("o")).toBe(true)
+  })
+
+  test("multi-dot extensions like d.ts are matched", ({ expect }) => {
+    const { extensions } = collectExplicitReincludes(["**/*.d.ts"])
+    expect(extensions.has("d.ts")).toBe(true)
+  })
+
+  test("a path segment equal to a default name opts that name in", ({ expect }) => {
+    const { names } = collectExplicitReincludes(["**/*", "**/.github/**"])
+    expect(names.has(".github")).toBe(true)
+  })
+
+  test("names with dots (lockfiles) are matched as whole segments", ({ expect }) => {
+    const { names } = collectExplicitReincludes(["**/*", "**/yarn.lock"])
+    expect(names.has("yarn.lock")).toBe(true)
+  })
+
+  test("negated patterns never opt anything in", ({ expect }) => {
+    const { extensions, names } = collectExplicitReincludes(["!**/*.obj", "!**/.github/**"])
+    expect(extensions.size).toBe(0)
+    expect(names.size).toBe(0)
+  })
+
+  test("nested braces are expanded for opt-in detection", ({ expect }) => {
+    const { extensions } = collectExplicitReincludes(["**/*.{obj,{a,o}}"])
+    expect(extensions.has("obj")).toBe(true)
+    expect(extensions.has("a")).toBe(true)
+    expect(extensions.has("o")).toBe(true)
+
+    const { names } = collectExplicitReincludes(["**/{.github,{.husky,.idea}}/**"])
+    expect(names.has(".github")).toBe(true)
+    expect(names.has(".husky")).toBe(true)
+    expect(names.has(".idea")).toBe(true)
+  })
+
+  test("does not blow up on a pathological brace pattern (bounded expansion)", ({ expect }) => {
+    // product of alternatives across these groups is 2**20; expansion must bail to a literal, not OOM
+    const bomb = "**/" + "{a,b}".repeat(20) + ".js"
+    const { extensions, names } = collectExplicitReincludes([bomb])
+    expect(extensions.size).toBe(0)
+    expect(names.size).toBe(0)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// getDefaultIgnoredPatterns – trailing default ignore globs appended to the matcher
+// ---------------------------------------------------------------------------
+
+describe("getDefaultIgnoredPatterns", () => {
+  const extPatternOf = (patterns: Array<string>) => patterns.find(p => p.startsWith("!**/*.{"))!
+  const namePatternOf = (patterns: Array<string>) => patterns.find(p => p.startsWith("!**/{"))!
+
+  test("by default excludes obj and electron-builder.env, and appends pdb when includePdb is false", ({ expect }) => {
+    const patterns = getDefaultIgnoredPatterns([], false)
+    const extPattern = extPatternOf(patterns)
+    expect(extPattern).toContain("obj")
+    expect(extPattern).toContain("pdb")
+    expect(namePatternOf(patterns)).toContain("electron-builder.env")
+  })
+
+  test("includePdb=true omits pdb from the extension glob", ({ expect }) => {
+    expect(extPatternOf(getDefaultIgnoredPatterns([], true))).not.toContain("pdb")
+  })
+
+  test("an explicit **/*.obj re-include drops obj from the exclusion glob but keeps the others", ({ expect }) => {
+    const extPattern = extPatternOf(getDefaultIgnoredPatterns(["**/*", "**/*.obj"], false))
+    // obj as a {…} list member is gone, but `o` and `forge-meta` remain
+    expect(extPattern.split(/[{,}]/)).not.toContain("obj")
+    expect(extPattern).toContain("forge-meta")
+    expect(extPattern).toContain("o,")
+  })
+
+  test("re-including .d.ts drops only d.ts", ({ expect }) => {
+    const extPattern = extPatternOf(getDefaultIgnoredPatterns(["**/*.d.ts"], false))
+    expect(extPattern.split(/[{,}]/)).not.toContain("d.ts")
+    expect(extPattern).toContain("iml")
+  })
+
+  test("re-including a name drops it from the name glob but keeps the rest", ({ expect }) => {
+    const namePattern = namePatternOf(getDefaultIgnoredPatterns(["**/.github/**"], false))
+    expect(namePattern.split(/[{,}]/)).not.toContain(".github")
+    expect(namePattern).toContain("electron-builder.env")
+  })
+
+  test("broad **/* alone keeps every default exclusion intact", ({ expect }) => {
+    const patterns = getDefaultIgnoredPatterns(["**/*"], false)
+    expect(extPatternOf(patterns)).toContain("obj")
+    expect(namePatternOf(patterns)).toContain("electron-builder.env")
+  })
+
+  test("always appends the fixed config/editor ignores", ({ expect }) => {
+    const patterns = getDefaultIgnoredPatterns(["**/*"], false)
+    expect(patterns).toContain("!**/._*")
+    expect(patterns).toContain("!**/electron-builder.{yaml,yml,json,json5,toml,ts}")
+    expect(patterns).toContain("!.yarn{,/**/*}")
+    expect(patterns).toContain("!.editorconfig")
+    expect(patterns).toContain("!.yarnrc.yml")
+  })
+
+  test("the default (no opt-in) extension glob matches the historical hardcoded list", ({ expect }) => {
+    const expected = `!**/*.{${[...DEFAULT_EXCLUDED_EXTENSIONS, "pdb"].join(",")}}`
+    expect(extPatternOf(getDefaultIgnoredPatterns([], false))).toBe(expected)
+  })
+
+  test("the default (no opt-in) name glob matches the historical hardcoded list", ({ expect }) => {
+    expect(namePatternOf(getDefaultIgnoredPatterns([], false))).toBe(`!**/{${DEFAULT_EXCLUDED_NAMES.join(",")}}`)
+  })
+
+  test("a lone surviving extension is emitted as a literal (single-member braces don't match in minimatch)", ({ expect }) => {
+    // opt back in every default extension; only the implicit pdb should remain
+    const optInAll = DEFAULT_EXCLUDED_EXTENSIONS.map(ext => `**/*.${ext}`)
+    const patterns = getDefaultIgnoredPatterns(optInAll, false)
+    expect(patterns).toContain("!**/*.pdb")
+    expect(patterns.some(p => p.startsWith("!**/*.{"))).toBe(false)
+  })
+
+  test("a lone surviving name is emitted as a literal", ({ expect }) => {
+    const optInAllButEnv = DEFAULT_EXCLUDED_NAMES.filter(n => n !== "electron-builder.env").map(n => `**/${n}`)
+    const patterns = getDefaultIgnoredPatterns(optInAllButEnv, true)
+    expect(patterns).toContain("!**/electron-builder.env")
+    expect(patterns.some(p => p.startsWith("!**/{"))).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// getMainFileMatchers – end-to-end pattern assembly (issue #6126)
+// ---------------------------------------------------------------------------
+
+describe("getMainFileMatchers – default exclusions respect `files` re-includes", () => {
+  function buildMatcherPatterns(files: Array<string>): Array<string> {
+    const platformPackager = {
+      projectDir: "/app",
+      buildResourcesDir: "build",
+      isPrepackedAppAsar: false,
+      config: { files, includePdb: false },
+      debugLogger: { isEnabled: false },
+    } as any
+    const matchers = getMainFileMatchers("/app", "/out", noMacro, {} as any, platformPackager, "/app/dist")
+    return matchers[0].patterns
+  }
+
+  test("without an explicit include, .obj stays excluded", ({ expect }) => {
+    const extPattern = buildMatcherPatterns(["**/*"]).find(p => p.startsWith("!**/*.{"))!
+    expect(extPattern).toContain("obj")
+  })
+
+  test("with **/*.obj, the obj exclusion is dropped (issue #6126)", ({ expect }) => {
+    const extPattern = buildMatcherPatterns(["**/*", "**/*.obj"]).find(p => p.startsWith("!**/*.{"))!
+    expect(extPattern.split(/[{,}]/)).not.toContain("obj")
   })
 })

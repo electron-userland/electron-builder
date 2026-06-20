@@ -89,6 +89,24 @@ describe("migrateProgrammaticSource — locate shapes", () => {
   }
 })
 
+describe("migrateProgrammaticSource — disableDefaultIgnoredFiles", () => {
+  test("strips the root-level key, preserving surrounding properties", () => {
+    const result = run(`export default {\n  appId: "com.a.b",\n  disableDefaultIgnoredFiles: true,\n  files: ["dist/**/*"],\n}\n`)
+    expect(result.status).toBe("migrated")
+    expect(result.code).not.toContain("disableDefaultIgnoredFiles")
+    expect(result.code).toContain(`appId: "com.a.b"`)
+    expect(result.code).toContain(`files: ["dist/**/*"]`)
+    expect(result.changes.some(c => c.key === "disableDefaultIgnoredFiles")).toBe(true)
+  })
+
+  test("strips the key from a platform config object too", () => {
+    const result = run(`export default {\n  win: {\n    target: "nsis",\n    disableDefaultIgnoredFiles: true,\n  },\n}\n`)
+    expect(result.status).toBe("migrated")
+    expect(result.code).not.toContain("disableDefaultIgnoredFiles")
+    expect(result.code).toContain(`target: "nsis"`)
+  })
+})
+
 describe("migrateProgrammaticSource — unsupported shapes (bail with reason)", () => {
   test("spread is unsupported", () => {
     const result = run(`const base = {}\nexport default {\n  ...base,\n  npmRebuild: true,\n}\n`)

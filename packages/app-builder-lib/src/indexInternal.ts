@@ -7,7 +7,16 @@ export { CustomWindowsSign, WindowsSignTaskConfiguration } from "./codeSign/win/
 export { Configuration, ToolsetConfig, ToolsetCustom } from "./configuration.js"
 export { Publish } from "./core.js"
 export { getElectronVersion } from "./electron/electronVersion.js"
-export { FileMatcher, getFileMatchers, GetFileMatchersOptions } from "./fileMatcher.js"
+export {
+  collectExplicitReincludes,
+  DEFAULT_EXCLUDED_EXTENSIONS,
+  DEFAULT_EXCLUDED_NAMES,
+  FileMatcher,
+  getDefaultIgnoredPatterns,
+  getFileMatchers,
+  GetFileMatchersOptions,
+  getMainFileMatchers,
+} from "./fileMatcher.js"
 export { hoist, HoisterDependencyKind, HoisterResult, HoisterTree } from "./node-module-collector/hoist.js"
 export {
   BunNodeModulesCollector,

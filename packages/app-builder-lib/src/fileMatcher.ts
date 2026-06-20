@@ -13,17 +13,198 @@ import { createFilter, hasMagic } from "./util/filter.js"
 const minimatchOptions = { dot: true }
 
 // noinspection SpellCheckingInspection
-export const excludedNames =
-  ".git,.hg,.svn,CVS,RCS,SCCS," +
-  "__pycache__,.DS_Store,thumbs.db,.gitignore,.gitkeep,.gitattributes,.npmignore," +
-  ".idea,.vs,.flowconfig,.jshintrc,.eslintrc,.circleci," +
-  ".yarn-integrity,.yarn-metadata.json,yarn-error.log,yarn.lock,package-lock.json,npm-debug.log,pnpm-lock.yaml,bun.lock,bun.lockb," +
-  "appveyor.yml,.travis.yml,circle.yml,.nyc_output,.husky,.github,electron-builder.env"
+// File/dir names excluded by default from the packaged app. A `files` entry may opt any of these
+// back in (see collectExplicitReincludes / getDefaultIgnoredPatterns).
+export const DEFAULT_EXCLUDED_NAMES: ReadonlyArray<string> = [
+  ".git",
+  ".hg",
+  ".svn",
+  "CVS",
+  "RCS",
+  "SCCS",
+  "__pycache__",
+  ".DS_Store",
+  "thumbs.db",
+  ".gitignore",
+  ".gitkeep",
+  ".gitattributes",
+  ".npmignore",
+  ".idea",
+  ".vs",
+  ".flowconfig",
+  ".jshintrc",
+  ".eslintrc",
+  ".circleci",
+  ".yarn-integrity",
+  ".yarn-metadata.json",
+  "yarn-error.log",
+  "yarn.lock",
+  "package-lock.json",
+  "npm-debug.log",
+  "pnpm-lock.yaml",
+  "bun.lock",
+  "bun.lockb",
+  "appveyor.yml",
+  ".travis.yml",
+  "circle.yml",
+  ".nyc_output",
+  ".husky",
+  ".github",
+  "electron-builder.env",
+]
 
-export const excludedExts =
-  "iml,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,suo,xproj,cc,d.ts," +
+// File extensions (without leading dot) excluded by default from the packaged app.
+export const DEFAULT_EXCLUDED_EXTENSIONS: ReadonlyArray<string> = [
+  "iml",
+  "hprof",
+  "orig",
+  "pyc",
+  "pyo",
+  "rbc",
+  "swp",
+  "csproj",
+  "sln",
+  "suo",
+  "xproj",
+  "cc",
+  "d.ts",
   // https://github.com/electron-userland/electron-builder/issues/7512
-  "mk,a,o,obj,forge-meta"
+  "mk",
+  "a",
+  "o",
+  "obj",
+  "forge-meta",
+]
+
+// Hard cap on the number of strings a single pattern may expand to. Real opt-in patterns expand to a
+// handful (`{obj,gltf,glb}`); this bound makes the expansion provably finite so a pathological pattern
+// (e.g. nested or many large `{...}` groups whose product is huge) degrades to "treated literally"
+// rather than hanging/OOM-ing the build. minimatch performs the authoritative expansion downstream.
+const MAX_BRACE_EXPANSIONS = 64
+
+// Expands `{a,b,c}` brace alternations in a pattern, honoring nesting. Returns the value unchanged
+// when it has no braces or would expand beyond MAX_BRACE_EXPANSIONS. Used only to detect which
+// extensions/names a `files` entry references — not for matching.
+function expandBraces(value: string): Array<string> {
+  const open = value.indexOf("{")
+  if (open === -1) {
+    return [value]
+  }
+  // Find the `}` that closes the first `{`, accounting for nested braces.
+  let depth = 0
+  let close = -1
+  for (let i = open; i < value.length; i++) {
+    if (value[i] === "{") {
+      depth++
+    } else if (value[i] === "}" && --depth === 0) {
+      close = i
+      break
+    }
+  }
+  if (close === -1) {
+    return [value]
+  }
+
+  const prefix = value.slice(0, open)
+  const suffix = value.slice(close + 1)
+  const result: Array<string> = []
+  for (const alternative of splitTopLevel(value.slice(open + 1, close))) {
+    for (const expanded of expandBraces(`${prefix}${alternative}${suffix}`)) {
+      if (result.length >= MAX_BRACE_EXPANSIONS) {
+        return [value]
+      }
+      result.push(expanded)
+    }
+  }
+  return result
+}
+
+// Splits on commas that are not inside a nested brace group, so `a,{b,c}` yields ["a", "{b,c}"].
+function splitTopLevel(value: string): Array<string> {
+  const parts: Array<string> = []
+  let depth = 0
+  let start = 0
+  for (let i = 0; i < value.length; i++) {
+    const ch = value[i]
+    if (ch === "{") {
+      depth++
+    } else if (ch === "}") {
+      depth--
+    } else if (ch === "," && depth === 0) {
+      parts.push(value.slice(start, i))
+      start = i + 1
+    }
+  }
+  parts.push(value.slice(start))
+  return parts
+}
+
+/**
+ * Determines which default-excluded extensions and names a user has explicitly opted back in to via
+ * their `files` patterns, so the corresponding defaults are not re-applied.
+ *
+ * A default is treated as opted back in only when a non-negated pattern references it concretely:
+ * an extension when a pattern's basename ends with `.<ext>` (e.g. `**\/*.obj`, `assets/*.{obj,gltf}`,
+ * `**\/*.d.ts`); a name when any path segment equals it (e.g. `**\/.github/**`, `**\/yarn.lock`).
+ * Broad patterns such as `**\/*` reference nothing concrete and therefore opt nothing in.
+ */
+export function collectExplicitReincludes(patterns: ReadonlyArray<string>): { extensions: Set<string>; names: Set<string> } {
+  const segments = new Set<string>()
+  const basenames: Array<string> = []
+  for (const pattern of patterns) {
+    if (pattern.startsWith("!")) {
+      continue
+    }
+    for (const expanded of expandBraces(pattern)) {
+      const parts = expanded.split("/")
+      for (const part of parts) {
+        segments.add(part)
+      }
+      basenames.push(parts[parts.length - 1])
+    }
+  }
+
+  const extensions = new Set(DEFAULT_EXCLUDED_EXTENSIONS.filter(ext => basenames.some(name => name.endsWith(`.${ext}`))))
+  const names = new Set(DEFAULT_EXCLUDED_NAMES.filter(name => segments.has(name)))
+  return { extensions, names }
+}
+
+/**
+ * Builds the trailing list of default ignore globs appended to the main app file matcher. Extensions
+ * and names the user has explicitly re-included (see {@link collectExplicitReincludes}) are omitted,
+ * so a `files` entry like `**\/*.obj` overrides the matching built-in exclusion.
+ */
+export function getDefaultIgnoredPatterns(userPatterns: ReadonlyArray<string>, includePdb: boolean): Array<string> {
+  const reincluded = collectExplicitReincludes(userPatterns)
+
+  const extensions = DEFAULT_EXCLUDED_EXTENSIONS.filter(ext => !reincluded.extensions.has(ext))
+  if (!includePdb) {
+    extensions.push("pdb")
+  }
+  const names = DEFAULT_EXCLUDED_NAMES.filter(name => !reincluded.names.has(name))
+
+  const patterns: Array<string> = []
+  // minimatch does not expand a single-member brace (`{x}` is matched literally), so emit a bare
+  // glob when only one extension/name survives the opt-in filtering.
+  if (extensions.length === 1) {
+    patterns.push(`!**/*.${extensions[0]}`)
+  } else if (extensions.length > 1) {
+    patterns.push(`!**/*.{${extensions.join(",")}}`)
+  }
+  patterns.push("!**/._*")
+  patterns.push("!**/electron-builder.{yaml,yml,json,json5,toml,ts}")
+  if (names.length === 1) {
+    patterns.push(`!**/${names[0]}`)
+  } else if (names.length > 1) {
+    patterns.push(`!**/{${names.join(",")}}`)
+  }
+  patterns.push("!.yarn{,/**/*}")
+  // https://github.com/electron-userland/electron-builder/issues/1969
+  // exclude only for app root, use .yarnclean to clean node_modules
+  patterns.push("!.editorconfig")
+  patterns.push("!.yarnrc.yml")
+  return patterns
+}
 
 function ensureNoEndSlash(file: string): string {
   if (path.sep !== "/") {
@@ -154,6 +335,10 @@ export function getMainFileMatchers(
   // https://github.com/electron-userland/electron-builder/issues/1741#issuecomment-311111418 so, do not use inclusive patterns
   const patterns = matcher.patterns
 
+  // Snapshot the user-specified patterns before the default/auto patterns are injected so a `files`
+  // entry can opt back in to a default-excluded extension/name (see getDefaultIgnoredPatterns).
+  const userSpecifiedPatterns = patterns.slice()
+
   const customFirstPatterns: Array<string> = []
   // electron-webpack - we need to copy only package.json and node_modules from root dir (and these files are added by default), so, explicit empty array is specified
   if (!matcher.isSpecifiedAsEmptyArray && (matcher.isEmpty() || matcher.containsOnlyIgnore())) {
@@ -197,17 +382,7 @@ export function getMainFileMatchers(
   }
   patterns.splice(insertIndex, 0, ...customFirstPatterns)
 
-  patterns.push(`!**/*.{${excludedExts}${platformPackager.config.includePdb === true ? "" : ",pdb"}}`)
-  patterns.push("!**/._*")
-  patterns.push("!**/electron-builder.{yaml,yml,json,json5,toml,ts}")
-  patterns.push(`!**/{${excludedNames}}`)
-
-  patterns.push("!.yarn{,/**/*}")
-
-  // https://github.com/electron-userland/electron-builder/issues/1969
-  // exclude ony for app root, use .yarnclean to clean node_modules
-  patterns.push("!.editorconfig")
-  patterns.push("!.yarnrc.yml")
+  patterns.push(...getDefaultIgnoredPatterns(userSpecifiedPatterns, platformPackager.config.includePdb === true))
 
   const debugLogger = platformPackager.debugLogger
   if (debugLogger.isEnabled) {

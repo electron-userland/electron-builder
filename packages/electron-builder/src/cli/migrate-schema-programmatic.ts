@@ -320,6 +320,14 @@ class ConfigCodemod {
     this.indentUnit = this.detectIndentUnit(root)
     this.ruleRemoveKeys(root, ["electronCompile"], "removed electronCompile (unsupported since v27; migrate to electron-vite, esbuild, or webpack)")
     this.ruleRemoveKeys(root, ["framework", "nodeVersion", "launchUiVersion"], key => `removed ${key} (Electron is the only supported framework in v27)`)
+    const disableDefaultIgnoredFilesDesc = "removed disableDefaultIgnoredFiles (in v27, include a default-excluded file via an explicit `files` glob, e.g. `**/*.obj`)"
+    this.ruleRemoveKeys(root, ["disableDefaultIgnoredFiles"], disableDefaultIgnoredFilesDesc)
+    for (const platform of ["mac", "win", "linux"]) {
+      const p = this.getObjectProp(root, platform)
+      if (p != null) {
+        this.ruleRemoveKeys(p, ["disableDefaultIgnoredFiles"], disableDefaultIgnoredFilesDesc)
+      }
+    }
     this.ruleNativeModules(root)
     this.ruleAsar(root)
     this.ruleAppImageSystemIntegration(root)
