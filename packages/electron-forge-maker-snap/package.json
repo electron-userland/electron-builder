@@ -1,6 +1,6 @@
 {
   "name": "electron-forge-maker-snap",
-  "version": "27.0.0-alpha.4",
+  "version": "27.0.0-alpha.5",
   "type": "module",
   "main": "main.js",
   "exports": {
