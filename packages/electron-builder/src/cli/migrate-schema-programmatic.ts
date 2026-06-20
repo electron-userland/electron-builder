@@ -322,7 +322,8 @@ class ConfigCodemod {
     this.ruleRemoveKeys(root, ["framework", "nodeVersion", "launchUiVersion"], key => `removed ${key} (Electron is the only supported framework in v27)`)
     const disableDefaultIgnoredFilesDesc = "removed disableDefaultIgnoredFiles (in v27, include a default-excluded file via an explicit `files` glob, e.g. `**/*.obj`)"
     this.ruleRemoveKeys(root, ["disableDefaultIgnoredFiles"], disableDefaultIgnoredFilesDesc)
-    for (const platform of ["mac", "win", "linux"]) {
+    // mas/masDev are MacConfiguration-derived, so they accept the (now-removed) key too.
+    for (const platform of ["mac", "mas", "masDev", "win", "linux"]) {
       const p = this.getObjectProp(root, platform)
       if (p != null) {
         this.ruleRemoveKeys(p, ["disableDefaultIgnoredFiles"], disableDefaultIgnoredFilesDesc)

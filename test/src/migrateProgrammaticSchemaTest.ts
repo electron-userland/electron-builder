@@ -99,8 +99,10 @@ describe("migrateProgrammaticSource — disableDefaultIgnoredFiles", () => {
     expect(result.changes.some(c => c.key === "disableDefaultIgnoredFiles")).toBe(true)
   })
 
-  test("strips the key from a platform config object too", () => {
-    const result = run(`export default {\n  win: {\n    target: "nsis",\n    disableDefaultIgnoredFiles: true,\n  },\n}\n`)
+  test("strips the key from platform config objects too (win/mas/masDev)", () => {
+    const result = run(
+      `export default {\n  win: {\n    target: "nsis",\n    disableDefaultIgnoredFiles: true,\n  },\n  mas: {\n    disableDefaultIgnoredFiles: true,\n  },\n  masDev: {\n    disableDefaultIgnoredFiles: true,\n  },\n}\n`
+    )
     expect(result.status).toBe("migrated")
     expect(result.code).not.toContain("disableDefaultIgnoredFiles")
     expect(result.code).toContain(`target: "nsis"`)

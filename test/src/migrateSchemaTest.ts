@@ -63,12 +63,22 @@ describe("migrateConfig — disableDefaultIgnoredFiles", () => {
     expect(result.changes[0].key).toBe("disableDefaultIgnoredFiles")
   })
 
-  test("removes the key from platform configs as well", () => {
-    const result = migrateConfig({ disableDefaultIgnoredFiles: false, win: { disableDefaultIgnoredFiles: true, target: "nsis" }, mac: {} })
+  test("removes the key from every platform config (mac/mas/masDev/win/linux)", () => {
+    const result = migrateConfig({
+      disableDefaultIgnoredFiles: false,
+      mac: { disableDefaultIgnoredFiles: true },
+      mas: { disableDefaultIgnoredFiles: true },
+      masDev: { disableDefaultIgnoredFiles: true },
+      win: { disableDefaultIgnoredFiles: true, target: "nsis" },
+      linux: { disableDefaultIgnoredFiles: true },
+    })
     expect("disableDefaultIgnoredFiles" in result.migrated).toBe(false)
-    expect("disableDefaultIgnoredFiles" in result.migrated.win).toBe(false)
+    for (const platform of ["mac", "mas", "masDev", "win", "linux"]) {
+      expect("disableDefaultIgnoredFiles" in result.migrated[platform]).toBe(false)
+    }
     expect(result.migrated.win.target).toBe("nsis")
-    expect(result.changes.filter(c => c.key === "disableDefaultIgnoredFiles")).toHaveLength(2)
+    // root + 5 platforms
+    expect(result.changes.filter(c => c.key === "disableDefaultIgnoredFiles")).toHaveLength(6)
   })
 })
 

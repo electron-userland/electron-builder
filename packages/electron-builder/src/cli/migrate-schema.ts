@@ -83,7 +83,8 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
   }
 
   // ── 2b. disableDefaultIgnoredFiles removed (root + platform configs) ──────
-  for (const obj of [c, c.mac, c.win, c.linux]) {
+  // mas/masDev are MacConfiguration-derived, so they accept the (now-removed) key too.
+  for (const obj of [c, c.mac, c.mas, c.masDev, c.win, c.linux]) {
     if (obj != null && typeof obj === "object" && "disableDefaultIgnoredFiles" in obj) {
       delete obj.disableDefaultIgnoredFiles
       changes.push({
