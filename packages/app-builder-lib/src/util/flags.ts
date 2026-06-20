@@ -48,10 +48,6 @@ export function isTravis() {
 
 // ─── Platform toolset overrides ───────────────────────────────────────────────
 
-export function isUseSystemFpm() {
-  return isEnvTrue(process.env.USE_SYSTEM_FPM)
-}
-
 export function isFpmDebug() {
   return isEnvTrue(process.env.FPM_DEBUG)
 }

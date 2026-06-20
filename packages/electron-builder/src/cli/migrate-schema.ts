@@ -82,6 +82,18 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
     }
   }
 
+  // ── 2b. disableDefaultIgnoredFiles removed (root + platform configs) ──────
+  // mas/masDev are MacConfiguration-derived, so they accept the (now-removed) key too.
+  for (const obj of [c, c.mac, c.mas, c.masDev, c.win, c.linux]) {
+    if (obj != null && typeof obj === "object" && "disableDefaultIgnoredFiles" in obj) {
+      delete obj.disableDefaultIgnoredFiles
+      changes.push({
+        key: "disableDefaultIgnoredFiles",
+        description: "removed disableDefaultIgnoredFiles (in v27, include a default-excluded file via an explicit `files` glob, e.g. `**/*.obj`)",
+      })
+    }
+  }
+
   // ── 3. npmSkipBuildFromSource → buildDependenciesFromSource ───────────────
   if ("npmSkipBuildFromSource" in c) {
     // will be picked up by the nativeModules step below
@@ -434,13 +446,11 @@ function migratePublishEntries(parent: Record<string, any>, key: string, changes
       delete entry.vPrefixedTagName
       changed = true
     }
-    if (entry != null && entry.provider === "gitlab" && "vPrefixedTagName" in entry) {
-      delete entry.vPrefixedTagName
-      changed = true
-    }
+    // GitLab keeps vPrefixedTagName in v27 — it remains in the type, scheme, and runtime
+    // (gitlabPublisher honors it) and has no tagNamePrefix equivalent, so leave it untouched.
   }
   if (changed) {
-    changes.push({ key: `${key}[].vPrefixedTagName`, description: "replaced vPrefixedTagName with tagNamePrefix on GitHub publish entries; removed from GitLab entries" })
+    changes.push({ key: `${key}[].vPrefixedTagName`, description: "replaced vPrefixedTagName with tagNamePrefix on GitHub publish entries" })
   }
 }
 
@@ -767,7 +777,8 @@ function printManualSteps() {
     "• Move root-level package.json directories → build.directories",
     "",
     "• For programmatic configs (JS/TS/MJS/CJS), apply the above changes manually to your config object",
-    "• For additional guidance, check the migration guide: https://www.electron.build/docs/migration/v26-to-v27",
+    "• For additional guidance, check the migration walkthrough: https://www.electron.build/docs/migration/v26-to-v27",
+    "• Full list of breaking changes: https://www.electron.build/docs/migration/v27-breaking-changes",
   ]
   for (const step of steps) {
     process.stdout.write(`  ${step}\n`)

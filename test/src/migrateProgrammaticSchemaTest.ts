@@ -89,6 +89,26 @@ describe("migrateProgrammaticSource — locate shapes", () => {
   }
 })
 
+describe("migrateProgrammaticSource — disableDefaultIgnoredFiles", () => {
+  test("strips the root-level key, preserving surrounding properties", () => {
+    const result = run(`export default {\n  appId: "com.a.b",\n  disableDefaultIgnoredFiles: true,\n  files: ["dist/**/*"],\n}\n`)
+    expect(result.status).toBe("migrated")
+    expect(result.code).not.toContain("disableDefaultIgnoredFiles")
+    expect(result.code).toContain(`appId: "com.a.b"`)
+    expect(result.code).toContain(`files: ["dist/**/*"]`)
+    expect(result.changes.some(c => c.key === "disableDefaultIgnoredFiles")).toBe(true)
+  })
+
+  test("strips the key from platform config objects too (win/mas/masDev)", () => {
+    const result = run(
+      `export default {\n  win: {\n    target: "nsis",\n    disableDefaultIgnoredFiles: true,\n  },\n  mas: {\n    disableDefaultIgnoredFiles: true,\n  },\n  masDev: {\n    disableDefaultIgnoredFiles: true,\n  },\n}\n`
+    )
+    expect(result.status).toBe("migrated")
+    expect(result.code).not.toContain("disableDefaultIgnoredFiles")
+    expect(result.code).toContain(`target: "nsis"`)
+  })
+})
+
 describe("migrateProgrammaticSource — unsupported shapes (bail with reason)", () => {
   test("spread is unsupported", () => {
     const result = run(`const base = {}\nexport default {\n  ...base,\n  npmRebuild: true,\n}\n`)
@@ -209,6 +229,7 @@ describe("migrateProgrammaticSource — per-rule coverage (CJS, drift-checked vs
     snapBase: `module.exports = { snap: { base: "core22", confinement: "strict" } }\n`,
     snapNoBase: `module.exports = { snap: { confinement: "strict" } }\n`,
     publishGithub: `module.exports = { publish: [{ provider: "github", vPrefixedTagName: false }] }\n`,
+    publishGithubGitlab: `module.exports = { publish: [{ provider: "github", vPrefixedTagName: false }, { provider: "gitlab", vPrefixedTagName: false }] }\n`,
     electronDownload: `module.exports = { electronDownload: { mirror: "https://m", isVerifyChecksum: false, cache: "/tmp" } }\n`,
   }
 

@@ -7,7 +7,17 @@ export { CustomWindowsSign, WindowsSignTaskConfiguration } from "./codeSign/win/
 export { Configuration, ToolsetConfig, ToolsetCustom } from "./configuration.js"
 export { Publish } from "./core.js"
 export { getElectronVersion } from "./electron/electronVersion.js"
-export { FileMatcher, getFileMatchers, GetFileMatchersOptions } from "./fileMatcher.js"
+export {
+  collectExplicitReincludes,
+  DEFAULT_EXCLUDED_EXTENSIONS,
+  DEFAULT_EXCLUDED_NAMES,
+  FileMatcher,
+  getDefaultIgnoredPatterns,
+  getFileMatchers,
+  GetFileMatchersOptions,
+  getMainFileMatchers,
+  getReincludedDefaultExclusions,
+} from "./fileMatcher.js"
 export { hoist, HoisterDependencyKind, HoisterResult, HoisterTree } from "./node-module-collector/hoist.js"
 export {
   BunNodeModulesCollector,
@@ -31,6 +41,7 @@ export { MacTargetHelper, type PlatformType } from "./targets/mac/MacTargetHelpe
 export { addTargetsForPlatform, computeArchToTargetNamesMap } from "./targets/targetFactory.js"
 export type { Defines } from "./targets/win/nsis/Defines.js"
 export { nsisEscapeString, NsisScriptGenerator } from "./targets/win/nsis/nsisScriptGenerator.js"
+export { ProgIdMaker } from "./targets/win/nsis/progId.js"
 export { checkMakensisOutput, verifyInstallerSize } from "./targets/win/nsis/nsisValidation.js"
 export { getLinuxToolsMacToolset, getLinuxToolsPath } from "./toolsets/linuxToolsMac.js"
 export { getWindowsKitsBundle } from "./toolsets/winCodeSign.js"
