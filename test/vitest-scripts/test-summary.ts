@@ -1,8 +1,9 @@
 #!/usr/bin/env tsx
 /**
  * Aggregates the per-shard Vitest JSON reports (results-*.json, emitted by run-vitest.ts) into a
- * single end-of-run summary: per-test durations, per-shard durations, the grand total, and a
- * combined list of every failed test across all shards/platforms.
+ * single end-of-run summary: per-test durations, per-shard durations, the grand total, a combined
+ * list of every failed test across all shards/platforms, and a de-duplicated skip breakdown (the raw
+ * skip count multi-counts platform/PM-gated tests that load on every shard but run on only one).
  *
  * It prints a console table and — when running under GitHub Actions — appends a Markdown summary to
  * $GITHUB_STEP_SUMMARY, so failures and timings are visible on the run's summary page without having
@@ -55,6 +56,12 @@ interface ShardAgg {
   passed: number
   failed: number
   skipped: number
+}
+interface SkipStats {
+  rawSkipped: number // total skip rows across all shards (== totals.skipped)
+  uniqueNeverRun: number // distinct (file, test) that are skipped on every shard they appear on — never executed anywhere
+  routedSkips: number // skip rows whose (file, test) passed or failed on another shard (it ran, just not here)
+  dupNeverRun: number // extra skip rows of a never-run test seen on more than one shard (e.g. an env-gated test on every PM leg)
 }
 
 const TEST_ROOT_MARKER = "/test/src/"
@@ -184,6 +191,48 @@ function collect(resultsDir: string): { tests: TestRow[]; shards: Map<string, Sh
   return { tests, shards }
 }
 
+// Platform gates (.ifMac/.ifWindows/.ifLinux) and the per-package-manager e2e matrix load the same
+// test on every shard/OS/leg it is bin-packed into; it runs on the one that matches and reports
+// "skipped" on the rest. Summing the per-shard skip counts therefore multi-counts a single logical
+// test. Collapse by (file, test name) so the raw skip total splits into the parts that actually
+// matter: distinct tests that never run on any shard (uniqueNeverRun) versus skip rows that are just
+// the same test routed to — or re-counted on — another shard (routedSkips + dupNeverRun). The four
+// fields partition the raw rows exactly: rawSkipped === uniqueNeverRun + dupNeverRun + routedSkips.
+function computeSkipStats(tests: TestRow[]): SkipStats {
+  // Join file+name on a NUL (U+0000) delimiter, written as a unicode escape so this source stays
+  // text; a raw NUL byte makes git and editors treat the file as binary. NUL cannot appear in a
+  // file path or test title, so distinct (file, name) pairs cannot collide on one key.
+  const key = (t: TestRow) => `${t.file}\u0000${t.name}`
+
+  const ranSomewhere = new Set<string>()
+  for (const t of tests) {
+    if (t.status === "passed" || t.status === "failed") {
+      ranSomewhere.add(key(t))
+    }
+  }
+
+  const neverRunSeen = new Set<string>()
+  let rawSkipped = 0
+  let routedSkips = 0
+  let dupNeverRun = 0
+  for (const t of tests) {
+    if (t.status !== "skipped") {
+      continue
+    }
+    rawSkipped++
+    const k = key(t)
+    if (ranSomewhere.has(k)) {
+      routedSkips++
+    } else if (neverRunSeen.has(k)) {
+      dupNeverRun++
+    } else {
+      neverRunSeen.add(k)
+    }
+  }
+
+  return { rawSkipped, uniqueNeverRun: neverRunSeen.size, routedSkips, dupNeverRun }
+}
+
 // ── rendering ───────────────────────────────────────────────────────────────
 
 function asciiTable(headers: string[], rows: string[][]): string {
@@ -227,11 +276,26 @@ function main() {
   const failed = tests.filter(t => t.status === "failed").sort((a, b) => a.group.localeCompare(b.group) || a.file.localeCompare(b.file))
   const slowest = [...tests].sort((a, b) => b.durationMs - a.durationMs).slice(0, 25)
   const byDuration = [...tests].sort((a, b) => b.durationMs - a.durationMs)
+  const skips = computeSkipStats(tests)
 
   // ── console ──
   console.log("")
   console.log(`=== Test Summary === (${totals.total} tests across ${shardRows.length} shards)`)
   console.log(`  Passed: ${totals.passed}   Failed: ${totals.failed}   Skipped: ${totals.skipped}   Total duration: ${formatDuration(totals.durationMs)}`)
+  if (totals.skipped > 0) {
+    console.log("")
+    console.log(`  Skip breakdown (per-shard skips multi-count platform/PM-gated tests that run on only one shard):`)
+    console.log(`    ${skips.uniqueNeverRun} distinct test${skips.uniqueNeverRun === 1 ? "" : "s"} never run on any shard`)
+    console.log(`    ${skips.routedSkips} skip row${skips.routedSkips === 1 ? "" : "s"} for tests that pass/fail on another shard/OS/PM`)
+    if (skips.dupNeverRun > 0) {
+      console.log(
+        skips.dupNeverRun === 1
+          ? `    1 skip row is an extra copy of a never-run test on another shard`
+          : `    ${skips.dupNeverRun} skip rows are extra copies of those never-run tests on other shards`
+      )
+    }
+    console.log(`    = ${skips.rawSkipped} total skip rows`)
+  }
   console.log("")
   console.log("Per-shard durations:")
   console.log(
@@ -266,10 +330,30 @@ function main() {
   const parts: string[] = []
   parts.push(`## 🧪 Test Summary`)
   parts.push("")
+  const skippedBadge = totals.skipped > 0 ? `⏭️ **${totals.skipped}** skipped (**${skips.uniqueNeverRun}** unique)` : `⏭️ **0** skipped`
   parts.push(
-    `**${totals.total}** tests · ✅ **${totals.passed}** passed · ❌ **${totals.failed}** failed · ⏭️ **${totals.skipped}** skipped · ⏱️ total **${formatDuration(totals.durationMs)}** across **${shardRows.length}** shards`
+    `**${totals.total}** tests · ✅ **${totals.passed}** passed · ❌ **${totals.failed}** failed · ${skippedBadge} · ⏱️ total **${formatDuration(totals.durationMs)}** across **${shardRows.length}** shards`
   )
   parts.push("")
+
+  if (totals.skipped > 0) {
+    parts.push(`### ⏭️ Skip breakdown`)
+    parts.push("")
+    parts.push(
+      `Per-shard skips multi-count platform-gated (\`.ifMac\`/\`.ifWindows\`/\`.ifLinux\`) and per-package-manager tests that load on every shard but run on only one. The **${totals.skipped}** raw skip rows are really:`
+    )
+    parts.push("")
+    parts.push(`- **${skips.uniqueNeverRun}** distinct tests never run on any shard`)
+    parts.push(`- **${skips.routedSkips}** skip rows for tests that pass/fail on another shard/OS/PM`)
+    if (skips.dupNeverRun > 0) {
+      parts.push(
+        skips.dupNeverRun === 1
+          ? `- **1** skip row is an extra copy of a never-run test on another shard`
+          : `- **${skips.dupNeverRun}** skip rows are extra copies of those never-run tests on other shards`
+      )
+    }
+    parts.push("")
+  }
 
   if (failed.length > 0) {
     parts.push(`### ❌ Failed tests (${failed.length})`)
