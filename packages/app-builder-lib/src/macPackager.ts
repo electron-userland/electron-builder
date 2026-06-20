@@ -23,6 +23,7 @@ import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { AppInfo } from "./appInfo.js"
+import { assertSafeHelperName } from "./electron/mac/electronMacUtils.js"
 import { CodeSigningInfo, createKeychain, CreateKeychainOptions, Identity, isSignAllowed, removeKeychain, sign } from "./codeSign/mac/macCodeSign.js"
 import { DIR_TARGET, Platform, Target } from "./core.js"
 import { AfterPackContext, ElectronPlatformName } from "./index.js"
@@ -139,8 +140,16 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected prepareAppInfo(appInfo: AppInfo): AppInfo {
-    // codesign requires the filename to be normalized to the NFD form
-    return new AppInfo(this.info, this.platformSpecificBuildOptions.bundleVersion, this.platformSpecificBuildOptions, true)
+    const macAppInfo = new AppInfo(this.info, this.platformSpecificBuildOptions.bundleVersion, this.platformSpecificBuildOptions)
+    // Electron discovers its helper apps via `${CFBundleName} Helper.app`, and we derive both
+    // `CFBundleName` and the on-disk helper bundles from the (sanitized) product name. A name that
+    // cannot be a bundle directory would silently break helper discovery, so fail fast.
+    assertSafeHelperName(macAppInfo.productName, "productName")
+    const executableName = this.platformSpecificBuildOptions.executableName ?? this.info.config.executableName
+    if (executableName != null) {
+      assertSafeHelperName(executableName, "executableName")
+    }
+    return macAppInfo
   }
 
   async getIconPath(): Promise<string | null> {
@@ -513,8 +522,10 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     const configuredIcon = this.platformSpecificBuildOptions.icon
     const isIconComposer = typeof configuredIcon === "string" && configuredIcon.toLowerCase().endsWith(".icon")
 
-    // Set the app name
-    appPlist.CFBundleName = appInfo.productName
+    // Set the app name. `CFBundleName` must match the on-disk helper bundle names (Electron resolves
+    // helpers as `${CFBundleName} Helper.app`), so it uses the sanitized product name. `CFBundleDisplayName`
+    // keeps the original product name for user-facing display.
+    appPlist.CFBundleName = appInfo.sanitizedProductName
     appPlist.CFBundleDisplayName = appInfo.productName
 
     // Bundle legacy `icns` format - this should also run when `.icon` is provided
