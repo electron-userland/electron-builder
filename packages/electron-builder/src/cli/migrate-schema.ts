@@ -82,6 +82,18 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
     }
   }
 
+  // ── 2b. disableDefaultIgnoredFiles removed (root + platform configs) ──────
+  // mas/masDev are MacConfiguration-derived, so they accept the (now-removed) key too.
+  for (const obj of [c, c.mac, c.mas, c.masDev, c.win, c.linux]) {
+    if (obj != null && typeof obj === "object" && "disableDefaultIgnoredFiles" in obj) {
+      delete obj.disableDefaultIgnoredFiles
+      changes.push({
+        key: "disableDefaultIgnoredFiles",
+        description: "removed disableDefaultIgnoredFiles (in v27, include a default-excluded file via an explicit `files` glob, e.g. `**/*.obj`)",
+      })
+    }
+  }
+
   // ── 3. npmSkipBuildFromSource → buildDependenciesFromSource ───────────────
   if ("npmSkipBuildFromSource" in c) {
     // will be picked up by the nativeModules step below

@@ -1,5 +1,11 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`default-excluded extension stays excluded without a re-include glob 1`] = `
+{
+  "linux": [],
+}
+`;
+
 exports[`expand not defined env 1`] = `"ERR_ELECTRON_BUILDER_ENV_NOT_DEFINED"`;
 
 exports[`extraResources - two-package 1`] = `
@@ -111,6 +117,12 @@ exports[`files.from asar 1`] = `
 `;
 
 exports[`map resources 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`re-include default-excluded extension via files glob 1`] = `
 {
   "linux": [],
 }

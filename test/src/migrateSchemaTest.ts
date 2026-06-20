@@ -54,6 +54,34 @@ describe("migrateConfig — framework / nodeVersion / launchUiVersion", () => {
   })
 })
 
+describe("migrateConfig — disableDefaultIgnoredFiles", () => {
+  test("removes the root-level key", () => {
+    const result = migrateConfig({ disableDefaultIgnoredFiles: true, appId: "com.a.b" })
+    expect("disableDefaultIgnoredFiles" in result.migrated).toBe(false)
+    expect(result.migrated.appId).toBe("com.a.b")
+    expect(result.changes).toHaveLength(1)
+    expect(result.changes[0].key).toBe("disableDefaultIgnoredFiles")
+  })
+
+  test("removes the key from every platform config (mac/mas/masDev/win/linux)", () => {
+    const result = migrateConfig({
+      disableDefaultIgnoredFiles: false,
+      mac: { disableDefaultIgnoredFiles: true },
+      mas: { disableDefaultIgnoredFiles: true },
+      masDev: { disableDefaultIgnoredFiles: true },
+      win: { disableDefaultIgnoredFiles: true, target: "nsis" },
+      linux: { disableDefaultIgnoredFiles: true },
+    })
+    expect("disableDefaultIgnoredFiles" in result.migrated).toBe(false)
+    for (const platform of ["mac", "mas", "masDev", "win", "linux"]) {
+      expect("disableDefaultIgnoredFiles" in result.migrated[platform]).toBe(false)
+    }
+    expect(result.migrated.win.target).toBe("nsis")
+    // root + 5 platforms
+    expect(result.changes.filter(c => c.key === "disableDefaultIgnoredFiles")).toHaveLength(6)
+  })
+})
+
 describe("migrateConfig — nativeModules grouping", () => {
   test("moves buildDependenciesFromSource under nativeModules", () => {
     const result = migrateConfig({ buildDependenciesFromSource: true })

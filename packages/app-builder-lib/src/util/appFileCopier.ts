@@ -6,7 +6,7 @@ import * as path from "path"
 import asyncPool from "tiny-async-pool"
 import { isLibOrExe } from "../asar/unpackDetector.js"
 import { Platform } from "../core.js"
-import { excludedExts, FileMatcher } from "../fileMatcher.js"
+import { DEFAULT_EXCLUDED_EXTENSIONS, FileMatcher } from "../fileMatcher.js"
 import { getCollectorByPackageManager, PM } from "../node-module-collector/index.js"
 import { LogMessageByKey, logMessageLevelByKey, ModuleManager } from "../node-module-collector/moduleManager.js"
 import { Packager } from "../packager.js"
@@ -144,7 +144,7 @@ export async function computeFileSets(matchers: Array<FileMatcher>, transformer:
 
 function getNodeModuleExcludedExts(platformPackager: PlatformPackager<any>) {
   // do not exclude *.h files (https://github.com/electron-userland/electron-builder/issues/2852)
-  const result = [".o", ".obj"].concat(excludedExts.split(",").map(it => `.${it}`))
+  const result = DEFAULT_EXCLUDED_EXTENSIONS.map(it => `.${it}`)
   if (platformPackager.config.includePdb !== true) {
     result.push(".pdb")
   }

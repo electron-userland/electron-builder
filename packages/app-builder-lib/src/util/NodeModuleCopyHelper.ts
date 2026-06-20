@@ -3,7 +3,7 @@ import { realpathSync } from "fs"
 import fsExtra from "fs-extra"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
-import { excludedNames, FileMatcher } from "../fileMatcher.js"
+import { DEFAULT_EXCLUDED_NAMES, FileMatcher } from "../fileMatcher.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { FileCopyHelper } from "./AppFileWalker.js"
 import { NodeModuleInfo } from "../node-module-collector/types.js"
@@ -21,7 +21,7 @@ const excludedFiles = new Set(
     "binding.gyp",
     ".npmignore",
     "node_gyp_bins",
-  ].concat(excludedNames.split(","))
+  ].concat(DEFAULT_EXCLUDED_NAMES)
 )
 
 const topLevelExcludedFiles = new Set([
@@ -86,7 +86,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
 
         // check if filematcher matches the files array as more important than the default excluded files.
         const fileMatched = filter != null && filter(dirPath, fsExtra.lstatSync(dirPath))
-        if (!fileMatched || !forceIncluded || !!this.packager.config.disableDefaultIgnoredFiles) {
+        if (!fileMatched || !forceIncluded) {
           for (const ext of nodeModuleExcludedExts) {
             if (name.endsWith(ext)) {
               return null

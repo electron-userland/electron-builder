@@ -45,6 +45,7 @@ To stay on a legacy bundle, pin the toolset to `"0.0.0"`. Because `winCodeSign` 
 | [All packages are native ESM](#native-esm-output) | — | None — `require()` still works on Node >=22.12 |
 | [`electron-forge-maker-*` are now ESM](#electron-forge-maker--plugins) | — | None — same API, same export shape |
 | [`electronCompile` removed](#electroncompile) | ✓ | Remove from config; migrate off `electron-compile` |
+| [`disableDefaultIgnoredFiles` removed](#disabledefaultignoredfiles) | ✓ | Removed automatically; re-include specific files via a `files` glob (e.g. `**/*.obj`) |
 | [`framework` / `nodeVersion` / `launchUiVersion` removed](#framework--nodeversion--launchuiversion) | ✓ | Removed automatically (Electron is the only framework) |
 | [ProtonFramework & LibUiFramework removed](#removed-exports) | — | Migrate to an Electron-based build setup |
 | [`appImage.systemIntegration` removed](#appimagesystemintegration) | ✓ | Removed automatically |
@@ -147,6 +148,24 @@ These three fields are removed. Only Electron is supported as a target framework
   }
 }
 ```
+
+### `disableDefaultIgnoredFiles`
+
+The `disableDefaultIgnoredFiles` option has been **removed**. To include a file that is excluded by default (for example a Wavefront `.obj` 3D model, or any other default-excluded extension/name), add an explicit `files` glob that targets it — an explicit include now overrides the matching default exclusion:
+
+```json5
+{
+  "build": {
+    "disableDefaultIgnoredFiles": true,  // ← delete this line
+    "files": [
+      "**/*",
+      "**/*.obj"  // ← add a glob for the default-excluded files you want to keep
+    ]
+  }
+}
+```
+
+Broad patterns such as `**/*` still honor the defaults; only a pattern that names the extension or directory concretely opts it back in.
 
 ### `appImage.systemIntegration`
 
