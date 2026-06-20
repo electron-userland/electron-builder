@@ -20206,7 +20206,7 @@ snapshots:
 
   regenerator-transform@0.15.2:
     dependencies:
-      '@babel/runtime': 7.27.0
+      '@babel/runtime': 7.29.7
 
   regexpu-core@6.2.0:
     dependencies:
