@@ -266,12 +266,13 @@ describe("migrateConfig — GitHub vPrefixedTagName", () => {
     expect(result.migrated.publish).toEqual({ provider: "github", tagNamePrefix: "v" })
   })
 
-  test("removes vPrefixedTagName from gitlab entries", () => {
+  test("preserves vPrefixedTagName on gitlab entries (still functional in v27)", () => {
     const result = migrateConfig({
       publish: { provider: "gitlab", vPrefixedTagName: false },
     })
-    expect("vPrefixedTagName" in result.migrated.publish).toBe(false)
-    expect("tagNamePrefix" in result.migrated.publish).toBe(false)
+    // GitLab keeps vPrefixedTagName — it must not be stripped (no tagNamePrefix equivalent on GitLab),
+    // otherwise the migrator would silently flip tags from "1.2.3" to "v1.2.3".
+    expect(result.migrated.publish).toEqual({ provider: "gitlab", vPrefixedTagName: false })
   })
 
   test("handles publish as array", () => {

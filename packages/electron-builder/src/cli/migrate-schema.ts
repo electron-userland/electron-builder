@@ -434,13 +434,11 @@ function migratePublishEntries(parent: Record<string, any>, key: string, changes
       delete entry.vPrefixedTagName
       changed = true
     }
-    if (entry != null && entry.provider === "gitlab" && "vPrefixedTagName" in entry) {
-      delete entry.vPrefixedTagName
-      changed = true
-    }
+    // GitLab keeps vPrefixedTagName in v27 — it remains in the type, scheme, and runtime
+    // (gitlabPublisher honors it) and has no tagNamePrefix equivalent, so leave it untouched.
   }
   if (changed) {
-    changes.push({ key: `${key}[].vPrefixedTagName`, description: "replaced vPrefixedTagName with tagNamePrefix on GitHub publish entries; removed from GitLab entries" })
+    changes.push({ key: `${key}[].vPrefixedTagName`, description: "replaced vPrefixedTagName with tagNamePrefix on GitHub publish entries" })
   }
 }
 
