@@ -60,6 +60,11 @@ export async function getSquirrelToolsetPath(): Promise<string> {
 // relocated to a temp vendor directory. Until squirrel.windows bundles the standalone portable exe
 // (electron-builder-binaries#203), download a pinned NuGet.CommandLine build at runtime and overwrite
 // the bundled shim. The same win-x86 exe runs natively on Windows and under mono on Linux/macOS.
+//
+// TODO(remove after squirrel.windows@1.1.1): once electron-builder-binaries#203 ships the pinned
+// nuget.exe in the bundle, delete prepareNugetExe + isUsableNuget + the NUGET_* constants/env vars
+// and bump getSquirrelToolsetPath's `toolset` to that release. (isUsableNuget already makes this a
+// no-op against such a bundle, so the runtime download stops on its own once the version is bumped.)
 const NUGET_VERSION = "6.14.0"
 const NUGET_SHA256 = "92dbed160ddee0f64b901e907439e021211b428e57c089ecc12fc38dcc4bd9a5"
 const NUGET_URL = `https://dist.nuget.org/win-x86-commandline/v${NUGET_VERSION}/nuget.exe`
