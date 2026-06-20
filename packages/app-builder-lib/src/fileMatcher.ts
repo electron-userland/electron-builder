@@ -206,6 +206,16 @@ export function getDefaultIgnoredPatterns(userPatterns: ReadonlyArray<string>, i
   return patterns
 }
 
+/**
+ * Returns the default-excluded names/extensions that the given `files` patterns opt back in, formatted
+ * for display (extensions as `*.<ext>`, names verbatim). Empty when nothing default-excluded is
+ * re-included. Used to warn that files normally kept out of the package will now be included.
+ */
+export function getReincludedDefaultExclusions(patterns: ReadonlyArray<string>): Array<string> {
+  const reincluded = collectExplicitReincludes(patterns)
+  return [...[...reincluded.extensions].map(ext => `*.${ext}`), ...reincluded.names]
+}
+
 function ensureNoEndSlash(file: string): string {
   if (path.sep !== "/") {
     file = file.replace(/\//g, path.sep)
@@ -381,6 +391,12 @@ export function getMainFileMatchers(
     }
   }
   patterns.splice(insertIndex, 0, ...customFirstPatterns)
+
+  const reincludedDefaults = getReincludedDefaultExclusions(userSpecifiedPatterns)
+  if (reincludedDefaults.length > 0) {
+    // These files are kept out of the package by default; a user `files` pattern is opting them back in.
+    log.warn({ files: reincludedDefaults.join(", ") }, "`files` configuration re-includes files that are excluded by default — verify this is intentional")
+  }
 
   patterns.push(...getDefaultIgnoredPatterns(userSpecifiedPatterns, platformPackager.config.includePdb === true))
 

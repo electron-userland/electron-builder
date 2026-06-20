@@ -16,6 +16,7 @@ export {
   getFileMatchers,
   GetFileMatchersOptions,
   getMainFileMatchers,
+  getReincludedDefaultExclusions,
 } from "./fileMatcher.js"
 export { hoist, HoisterDependencyKind, HoisterResult, HoisterTree } from "./node-module-collector/hoist.js"
 export {

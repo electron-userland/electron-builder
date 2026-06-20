@@ -1,4 +1,4 @@
-import { FilterStats } from "builder-util"
+import { FilterStats, log } from "builder-util"
 import {
   collectExplicitReincludes,
   DEFAULT_EXCLUDED_EXTENSIONS,
@@ -8,8 +8,10 @@ import {
   getFileMatchers,
   GetFileMatchersOptions,
   getMainFileMatchers,
+  getReincludedDefaultExclusions,
 } from "app-builder-lib/internal"
 import * as path from "path"
+import { vi } from "vitest"
 
 // ---------------------------------------------------------------------------
 // Stat mocks
@@ -499,5 +501,50 @@ describe("getMainFileMatchers – default exclusions respect `files` re-includes
   test("with **/*.obj, the obj exclusion is dropped (issue #6126)", ({ expect }) => {
     const extPattern = buildMatcherPatterns(["**/*", "**/*.obj"]).find(p => p.startsWith("!**/*.{"))!
     expect(extPattern.split(/[{,}]/)).not.toContain("obj")
+  })
+
+  test("warns once when a default-excluded file is re-included", ({ expect }) => {
+    const warn = vi.spyOn(log, "warn").mockImplementation(() => log)
+    try {
+      buildMatcherPatterns(["**/*", "**/*.obj", "**/.github/**"])
+      expect(warn).toHaveBeenCalledTimes(1)
+      const [data, message] = warn.mock.calls[0]
+      expect((data as any).files).toContain("*.obj")
+      expect((data as any).files).toContain(".github")
+      expect(message).toMatch(/excluded by default/)
+    } finally {
+      warn.mockRestore()
+    }
+  })
+
+  test("does not warn when no default-excluded file is re-included", ({ expect }) => {
+    const warn = vi.spyOn(log, "warn").mockImplementation(() => log)
+    try {
+      buildMatcherPatterns(["**/*", "src/**/*.js"])
+      expect(warn).not.toHaveBeenCalled()
+    } finally {
+      warn.mockRestore()
+    }
+  })
+})
+
+// ---------------------------------------------------------------------------
+// getReincludedDefaultExclusions – which default exclusions a config opts back in
+// ---------------------------------------------------------------------------
+
+describe("getReincludedDefaultExclusions", () => {
+  test("formats re-included extensions as *.ext and names verbatim", ({ expect }) => {
+    const result = getReincludedDefaultExclusions(["**/*", "**/*.obj", "**/.github/**", "**/yarn.lock"])
+    expect(result).toContain("*.obj")
+    expect(result).toContain(".github")
+    expect(result).toContain("yarn.lock")
+  })
+
+  test("is empty when nothing default-excluded is re-included", ({ expect }) => {
+    expect(getReincludedDefaultExclusions(["**/*", "src/**", "assets/*.png"])).toEqual([])
+  })
+
+  test("ignores negated patterns", ({ expect }) => {
+    expect(getReincludedDefaultExclusions(["!**/*.obj", "!**/.github/**"])).toEqual([])
   })
 })
