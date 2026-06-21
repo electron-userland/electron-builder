@@ -697,6 +697,31 @@ export interface ToolsetConfig {
    * @default "latest"
    */
   readonly icons?: "1.2.1" | ToolsetCustom | "latest"
+
+  /**
+   * Version of the `squirrel.windows` bundle used to build Squirrel.Windows installers.
+   *
+   * The bundle ships the Squirrel vendor toolset under `electron-winstaller/vendor/`:
+   * - **`Squirrel.exe`** / **`Squirrel-Mono.exe`** — releasify the app into `Setup.exe` (and an optional MSI).
+   * - **`SyncReleases.exe`** — downloads prior releases to produce delta packages.
+   * - **`nuget.exe`**, **`7z`** — pack the app into a `.nupkg` and compress release assets.
+   *
+   * `rcedit.exe` is provisioned from the {@link winCodeSign} toolset at runtime, and a usable
+   * `nuget.exe` is ensured at runtime (the published bundle ships a shim that cannot be relocated).
+   *
+   * Available versions:
+   * | Version | Notes |
+   * |---------|-------|
+   * | `"1.1.0"` | Squirrel.Windows 2.0.1 (patched) |
+   *
+   * Set to a {@link ToolsetCustom} object to supply your own bundle — it must contain the
+   * `electron-winstaller/vendor/` subtree. Only used when building the `squirrelWindows` target.
+   *
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/squirrel.windows/CHANGELOG.md
+   *
+   * @default "latest"
+   */
+  readonly squirrel?: "1.1.0" | ToolsetCustom | "latest"
 }
 
 /**

@@ -7866,10 +7866,6 @@
             "string"
           ]
         },
-        "customSquirrelVendorDir": {
-          "description": "The custom squirrel vendor dir. If not specified will use the Squirrel.Windows that is shipped with electron-installer(https://github.com/electron/windows-installer/tree/main/vendor).\nAfter https://github.com/electron-userland/electron-builder-binaries/pull/56 merged, will add `electron-builder-binaries` to get the latest version of squirrel.",
-          "type": "string"
-        },
         "iconUrl": {
           "description": "A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Electron icon.\n\nPlease note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.\n\nIf you don't plan to build windows installer, you can omit it.\nIf your project repository is public on GitHub, it will be `https://github.com/${u}/${p}/blob/master/build/icon.ico?raw=true` by default.",
           "type": [
@@ -8093,6 +8089,22 @@
           ],
           "default": "latest",
           "description": "Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.\n\nSet to a {@link ToolsetCustom} object to supply your own 7za binary.\nThe `url` must point to a directory (or a `.tar.gz`/`.zip` archive of one) that contains\n`bin/7za` (macOS/Linux) or `bin/7za.exe` (Windows).\n\n**Bootstrap constraint:** the custom bundle itself must be a `.tar.gz` or `.zip` archive\n(or a bare `file://` directory). `.7z` and `.tar.xz` archives cannot be used here because\nextracting them requires 7za — a circular dependency."
+        },
+        "squirrel": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ToolsetCustom"
+            },
+            {
+              "enum": [
+                "1.1.0",
+                "latest"
+              ],
+              "type": "string"
+            }
+          ],
+          "default": "latest",
+          "description": "Version of the `squirrel.windows` bundle used to build Squirrel.Windows installers.\n\nThe bundle ships the Squirrel vendor toolset under `electron-winstaller/vendor/`:\n- **`Squirrel.exe`** / **`Squirrel-Mono.exe`** — releasify the app into `Setup.exe` (and an optional MSI).\n- **`SyncReleases.exe`** — downloads prior releases to produce delta packages.\n- **`nuget.exe`**, **`7z`** — pack the app into a `.nupkg` and compress release assets.\n\n`rcedit.exe` is provisioned from the {@link winCodeSign} toolset at runtime, and a usable\n`nuget.exe` is ensured at runtime (the published bundle ships a shim that cannot be relocated).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.1.0\"` | Squirrel.Windows 2.0.1 (patched) |\n\nSet to a {@link ToolsetCustom} object to supply your own bundle — it must contain the\n`electron-winstaller/vendor/` subtree. Only used when building the `squirrelWindows` target.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/squirrel.windows/CHANGELOG.md"
         },
         "winCodeSign": {
           "anyOf": [

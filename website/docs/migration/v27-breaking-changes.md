@@ -61,6 +61,7 @@ To stay on a legacy bundle, pin the toolset to `"0.0.0"`. Because `winCodeSign` 
 | [Root-level `directories` removed](#root-level-directories-in-packagejson) | ✓ | Move under `build.directories` |
 | [`build.helper-bundle-id` removed](#buildhelper-bundle-id) | ✓ | Moved to `mac.helperBundleId` |
 | [`squirrelWindows.noMsi` removed](#squirrelwindowsnomsi) | ✓ | Replaced by `msi` (inverted) |
+| [`squirrelWindows.customSquirrelVendorDir` removed](#squirrelwindowscustomsquirrelvendordir) | — | Supply a custom Squirrel bundle via `toolsets.squirrel` (a `ToolsetCustom` object) |
 | [`GithubOptions.vPrefixedTagName` removed](#githuboptions--gitlaboptions-vprefixedtagname) | ✓ | Use `tagNamePrefix` |
 | [`GitlabOptions.vPrefixedTagName` retained](#githuboptions--gitlaboptions-vprefixedtagname) | — | None — still functional; the migrator leaves GitLab entries untouched |
 | [`devMetadata` / `extraMetadata` in `PackagerOptions` removed](#devmetadata--extrametadata-programmatic-packageroptions) | — | Use `config` / `config.extraMetadata` |
@@ -218,6 +219,25 @@ The `noMsi` boolean is removed in favor of its inverse, `msi`.
 { "build": { "squirrelWindows": { "noMsi": true } } }   // Before
 { "build": { "squirrelWindows": { "msi": false } } }    // After
 ```
+
+### `squirrelWindows.customSquirrelVendorDir`
+
+Removed. v27 inlines the Squirrel.Windows installer logic and drops the `electron-winstaller` npm dependency (and its vendored binaries); the Squirrel vendor toolset is now fetched from the maintained `squirrel.windows` electron-builder-binaries bundle. To pin a version or supply a custom/local bundle — for example an air-gapped mirror — use the standard `toolsets.squirrel` setting instead, the same way you would pin `toolsets.nsis` or `toolsets.winCodeSign`.
+
+The shape and behaviour differ, so this is not a 1-to-1 rename:
+
+- The old `customSquirrelVendorDir` pointed at a directory **whose contents were the vendor files** (`Squirrel.exe`, `nuget.exe`, …) and was copied verbatim, bypassing all provisioning.
+- `toolsets.squirrel` accepts a version pin (`"1.1.0"` / `"latest"`) **or** a `ToolsetCustom` object whose `url` points at a bundle that **contains an `electron-winstaller/vendor/` subtree**. The bundle still goes through normal provisioning: a working `nuget.exe` is ensured (no download when your `vendor/` already ships a real, non-shim one) and, on Windows, `rcedit.exe` is supplied from the `winCodeSign` toolset.
+
+```json5
+// Before (removed):
+{ "squirrelWindows": { "customSquirrelVendorDir": "./my-vendor" } }
+// After: a custom toolset bundle whose electron-winstaller/vendor/ holds the binaries.
+// A bare file:// directory is used as-is (no checksum); a remote/archive url needs a checksum.
+{ "toolsets": { "squirrel": { "url": "file:///abs/path/to/squirrel-toolset" } } }
+```
+
+For a fully offline build, point `toolsets.squirrel` at a bundle whose `vendor/` already contains a real (multi-MB, non-shim) `nuget.exe` — the runtime nuget download is then skipped entirely.
 
 ### `GithubOptions` / `GitlabOptions` `vPrefixedTagName`
 
