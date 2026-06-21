@@ -35,19 +35,20 @@ export default class SquirrelWindowsTarget extends Target {
     // already ships a real one). Remove once squirrel.windows bundles it (electron-builder-binaries#203).
     await prepareNugetExe(tmpVendorDirectory)
 
-    // Squirrel.exe --releasify shells out to rcedit.exe (via setPEVersionInfoAndIcon) to embed the app
-    // icon into Setup.exe. The bundle does not ship rcedit, so resolve it from the win-codesign toolset,
-    // which already versions and caches it across all platforms. Squirrel-Mono.exe (used on non-Windows)
-    // does not call rcedit, so this is only needed on win32.
+    // Both Squirrel.exe and Squirrel-Mono.exe shell out to rcedit.exe (via setPEVersionInfoAndIcon)
+    // during --releasify to stamp version info and the app icon into Setup.exe, so rcedit must live in
+    // the vendor dir on every host — on non-Windows it runs under wine alongside the other Win32 vendor
+    // exes (Setup.exe, StubExecutable.exe, …). The bundle omits rcedit, so resolve it from the
+    // win-codesign toolset, which already versions and caches it across platforms.
     //
     // getRceditBundle honors the user's `toolsets.winCodeSign` selection, so users retain a bypass if a
     // newer toolset regresses: `"0.0.0"` falls back to the legacy winCodeSign-2.6.0 rcedit, a custom
     // toolset object uses their own rcedit, and the default (unset/"latest") pulls rcedit-windows-2_0_0.
-    if (process.platform === "win32") {
-      const rcedit = await getRceditBundle(this.packager.config.toolsets?.winCodeSign, this.packager.buildResourcesDir)
-      const rceditExe = os.arch() === "ia32" ? rcedit.x86 : rcedit.x64
-      await fs.promises.copyFile(rceditExe, path.join(tmpVendorDirectory, "rcedit.exe"))
-    }
+    const rcedit = await getRceditBundle(this.packager.config.toolsets?.winCodeSign, this.packager.buildResourcesDir)
+    // On non-Windows, run the 32-bit rcedit under wine (matching the Win32 vendor exes wine already runs);
+    // on Windows pick the host arch.
+    const rceditExe = process.platform !== "win32" || os.arch() === "ia32" ? rcedit.x86 : rcedit.x64
+    await fs.promises.copyFile(rceditExe, path.join(tmpVendorDirectory, "rcedit.exe"))
 
     const files = await fs.promises.readdir(tmpVendorDirectory)
     const squirrelExe = files.find(f => f === "Squirrel.exe")
