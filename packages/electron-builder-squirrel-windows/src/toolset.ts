@@ -33,6 +33,24 @@ export async function getSquirrelToolsetPath(toolset: ToolsetConfig["squirrel"],
   })
 }
 
+// Squirrel's createMsiPackage (msi: true) runs candle.exe/light.exe with `-ext WixNetFxExtension` from
+// its own vendor dir. The squirrel.windows bundle omits the WiX toolchain, so reuse the shared WiX 3.11
+// toolset (the same candle/light electron-builder's MSI target uses) and merge it into the vendor dir.
+const WIX_TOOLSET_FILE = "wix-4.0.0.5512.2.7z"
+const WIX_TOOLSET_SHA256 = "fe677fcd837b18c9b912985d91636bbd8a1e800c3b3a6a841b6f96e89624e839"
+
+/**
+ * Returns the path to the WiX 3.11 toolset directory (candle.exe, light.exe, WixNetFxExtension.dll, …).
+ * Only needed when building an MSI.
+ */
+export async function getWixToolsetPath(): Promise<string> {
+  return downloadBuilderToolset({
+    releaseName: "wix-4.0.0.5512.2",
+    filenameWithExt: WIX_TOOLSET_FILE,
+    checksums: { [WIX_TOOLSET_FILE]: WIX_TOOLSET_SHA256 },
+  })
+}
+
 // TEMPORARY: nuget.exe override. The published squirrel.windows@1.1.0 bundle ships the Chocolatey
 // shim for nuget.exe, which resolves the real binary relative to its own install path and fails once
 // relocated to a temp vendor directory. Until squirrel.windows bundles the standalone portable exe

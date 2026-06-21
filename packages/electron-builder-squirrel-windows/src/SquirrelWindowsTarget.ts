@@ -5,7 +5,7 @@ import { sanitizeFileName } from "builder-util/internal"
 import * as fs from "fs"
 import * as os from "os"
 import * as path from "path"
-import { getSquirrelToolsetPath, prepareNugetExe } from "./toolset.js"
+import { getSquirrelToolsetPath, getWixToolsetPath, prepareNugetExe } from "./toolset.js"
 import { InstallerOptions, convertVersion, createWindowsInstaller } from "./windowsInstaller.js"
 
 export default class SquirrelWindowsTarget extends Target {
@@ -49,6 +49,15 @@ export default class SquirrelWindowsTarget extends Target {
     // on Windows pick the host arch.
     const rceditExe = process.platform !== "win32" || os.arch() === "ia32" ? rcedit.x86 : rcedit.x64
     await fs.promises.copyFile(rceditExe, path.join(tmpVendorDirectory, "rcedit.exe"))
+
+    // When building an MSI, Squirrel's createMsiPackage runs candle.exe/light.exe from the vendor dir and
+    // reads template.wxs there. The bundle ships neither, so merge the shared WiX 3.11 toolset (the same
+    // candle/light electron-builder's MSI target uses) into the vendor dir, plus the Squirrel MSI template.
+    if (this.options.msi) {
+      const wixToolset = await getWixToolsetPath()
+      await fs.promises.cp(wixToolset, tmpVendorDirectory, { recursive: true })
+      await fs.promises.copyFile(path.resolve(import.meta.dirname, "..", "template.wxs"), path.join(tmpVendorDirectory, "template.wxs"))
+    }
 
     const files = await fs.promises.readdir(tmpVendorDirectory)
     const squirrelExe = files.find(f => f === "Squirrel.exe")
