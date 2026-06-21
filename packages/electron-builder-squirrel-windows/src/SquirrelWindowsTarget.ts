@@ -52,8 +52,9 @@ export default class SquirrelWindowsTarget extends Target {
     await fs.promises.copyFile(rceditExe, path.join(tmpVendorDirectory, "rcedit.exe"))
 
     // When building an MSI, Squirrel's createMsiPackage runs candle.exe/light.exe from the vendor dir and
-    // reads template.wxs there. The bundle ships neither, so merge the shared WiX 3.11 toolset (the same
-    // candle/light electron-builder's MSI target uses) into the vendor dir, plus the Squirrel MSI template.
+    // reads template.wxs there. The bundle ships neither, so merge the shared WiX toolset (the same
+    // candle/light electron-builder's MSI target uses) into the vendor dir, plus the Squirrel MSI template
+    // (authored against the v4 namespace this transitional WiX 4 requires).
     if (this.options.msi) {
       const wixToolset = await getWixToolsetPath()
       await fs.promises.cp(wixToolset, tmpVendorDirectory, { recursive: true })

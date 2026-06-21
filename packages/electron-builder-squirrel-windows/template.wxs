@@ -1,4 +1,4 @@
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension" xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
   <Product Id="*" Name="{{Title}} Deployment Tool" Language="1033" Codepage="{{Codepage}}" Version="!(bind.FileVersion.{{Id}}.exe)" UpgradeCode="{{IdAsGuid1}}" Manufacturer="{{Author}}">
 
     <Package Description="This package installs a deployment tool for {{Title}}. Not {{Title}} itself. {{Title}} is only installed if a user logs into the machine." InstallScope="perMachine" Comments="Comments" InstallerVersion="200" Compressed="yes" Platform="{{Platform}}"/>

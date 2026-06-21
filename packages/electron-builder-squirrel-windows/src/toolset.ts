@@ -34,13 +34,15 @@ export async function getSquirrelToolsetPath(toolset: ToolsetConfig["squirrel"],
 }
 
 // Squirrel's createMsiPackage (msi: true) runs candle.exe/light.exe with `-ext WixNetFxExtension` from
-// its own vendor dir. The squirrel.windows bundle omits the WiX toolchain, so reuse the shared WiX 3.11
+// its own vendor dir. The squirrel.windows bundle omits the WiX toolchain, so reuse the shared WiX
 // toolset (the same candle/light electron-builder's MSI target uses) and merge it into the vendor dir.
+// This is a transitional WiX 4 (4.0.0.5512): it accepts the v3-style element structure but requires the
+// v4 namespace, so template.wxs is authored against http://wixtoolset.org/schemas/v4/wxs.
 const WIX_TOOLSET_FILE = "wix-4.0.0.5512.2.7z"
 const WIX_TOOLSET_SHA256 = "fe677fcd837b18c9b912985d91636bbd8a1e800c3b3a6a841b6f96e89624e839"
 
 /**
- * Returns the path to the WiX 3.11 toolset directory (candle.exe, light.exe, WixNetFxExtension.dll, …).
+ * Returns the path to the WiX toolset directory (candle.exe, light.exe, WixNetFxExtension.dll, …).
  * Only needed when building an MSI.
  */
 export async function getWixToolsetPath(): Promise<string> {
