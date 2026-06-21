@@ -309,7 +309,7 @@ export default class SquirrelWindowsTarget extends Target {
       nuspecTemplate: await this.createNuspecTemplateWithProjectUrl(),
       iconUrl,
       copyright: appInfo.copyright,
-      noMsi: !this.options.msi,
+      msi: this.options.msi,
       fixUpPaths: true,
       setupExe: setupFile,
       setupMsi: this.options.msi ? setupFile.replace(".exe", ".msi") : undefined,
@@ -326,11 +326,6 @@ function normalizeSquirrelOptions(options: any) {
     if (name in options) {
       throw new InvalidConfigurationError(`Option ${name} is ignored, do not specify it.`)
     }
-  }
-
-  if ("noMsi" in options) {
-    log.warn(`noMsi is deprecated, please specify as "msi": true if you want to create an MSI installer`)
-    options.msi = !options.noMsi
   }
 
   const msi = options.msi

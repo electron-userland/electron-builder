@@ -1,4 +1,4 @@
-import { exec, log } from "builder-util"
+import { exec, exists, log } from "builder-util"
 import * as fs from "fs/promises"
 import * as path from "path"
 
@@ -50,7 +50,7 @@ export interface InstallerOptions {
   copyright?: string | null
   nuspecTemplate: string
   loadingGif?: string | null
-  noMsi?: boolean
+  msi?: boolean
   remoteReleases?: string | null
   remoteToken?: string | null
   setupExe?: string | null
@@ -69,7 +69,7 @@ export async function createWindowsInstaller(options: InstallerOptions): Promise
     exe,
     nuspecTemplate,
     loadingGif,
-    noMsi,
+    msi,
     remoteReleases,
     remoteToken,
     setupExe,
@@ -134,7 +134,7 @@ export async function createWindowsInstaller(options: InstallerOptions): Promise
   if (loadingGif) {
     releasifyArgs.push("--loadingGif", loadingGif)
   }
-  if (noMsi) {
+  if (!msi) {
     releasifyArgs.push("--no-msi")
   }
 
@@ -149,15 +149,14 @@ export async function createWindowsInstaller(options: InstallerOptions): Promise
       await fs.rename(path.join(outputDirectory, "Setup.exe"), path.join(outputDirectory, setupExe))
     }
     if (setupMsi) {
-      try {
-        await fs.rename(path.join(outputDirectory, "Setup.msi"), path.join(outputDirectory, setupMsi))
-      } catch (e: any) {
-        // Setup.msi is absent when releasify produced no MSI; only that case is expected.
-        // Surface real failures (permissions, cross-device) instead of silently dropping the artifact.
-        if (e?.code !== "ENOENT") {
-          throw e
-        }
+      // setupMsi is only set when MSI output was requested (msi: true), so releasify ran without
+      // --no-msi and Setup.msi must exist. A missing file here is a real failure, not an expected
+      // absence — surface it instead of silently dropping the artifact.
+      const setupMsiPath = path.join(outputDirectory, "Setup.msi")
+      if (!(await exists(setupMsiPath))) {
+        throw new Error(`MSI output was requested but Squirrel.Windows did not produce ${setupMsiPath}`)
       }
+      await fs.rename(setupMsiPath, path.join(outputDirectory, setupMsi))
     }
   }
 }
