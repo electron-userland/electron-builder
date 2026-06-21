@@ -45,9 +45,10 @@ export default class SquirrelWindowsTarget extends Target {
     // newer toolset regresses: `"0.0.0"` falls back to the legacy winCodeSign-2.6.0 rcedit, a custom
     // toolset object uses their own rcedit, and the default (unset/"latest") pulls rcedit-windows-2_0_0.
     const rcedit = await getRceditBundle(this.packager.config.toolsets?.winCodeSign, this.packager.buildResourcesDir)
-    // On non-Windows, run the 32-bit rcedit under wine (matching the Win32 vendor exes wine already runs);
-    // on Windows pick the host arch.
-    const rceditExe = process.platform !== "win32" || os.arch() === "ia32" ? rcedit.x86 : rcedit.x64
+    // Pick rcedit by host arch (x64 for x64/arm64, x86 only for ia32). On non-Windows it runs under wine:
+    // the 32-bit build fails on arm64 macOS even under Rosetta (which translates x64, not x86), so the x64
+    // build is required there.
+    const rceditExe = os.arch() === "ia32" ? rcedit.x86 : rcedit.x64
     await fs.promises.copyFile(rceditExe, path.join(tmpVendorDirectory, "rcedit.exe"))
 
     // When building an MSI, Squirrel's createMsiPackage runs candle.exe/light.exe from the vendor dir and
@@ -59,15 +60,17 @@ export default class SquirrelWindowsTarget extends Target {
       await fs.promises.copyFile(path.resolve(import.meta.dirname, "..", "template.wxs"), path.join(tmpVendorDirectory, "template.wxs"))
     }
 
+    // Squirrel.exe is the core updater binary the bundle always ships; a missing one means a broken
+    // vendor toolset. Fail loudly rather than skipping signing — skipping would produce a broken
+    // installer and bypass the forceCodeSigning enforcement inside signIf (its awaited promise rejects
+    // when the file can't be signed and forceCodeSigning is set).
     const files = await fs.promises.readdir(tmpVendorDirectory)
-    const squirrelExe = files.find(f => f === "Squirrel.exe")
-    if (squirrelExe) {
-      const filePath = path.join(tmpVendorDirectory, squirrelExe)
-      log.debug({ file: filePath }, "signing vendor executable")
-      await this.packager.signIf(filePath)
-    } else {
-      log.warn("Squirrel.exe not found in vendor directory, skipping signing")
+    if (!files.includes("Squirrel.exe")) {
+      throw new Error(`Squirrel.exe not found in vendor directory: ${tmpVendorDirectory}`)
     }
+    const squirrelExePath = path.join(tmpVendorDirectory, "Squirrel.exe")
+    log.debug({ file: squirrelExePath }, "signing vendor executable")
+    await this.packager.signIf(squirrelExePath)
     return tmpVendorDirectory
   }
 
