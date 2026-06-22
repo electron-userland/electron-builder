@@ -96,12 +96,11 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   /**
    * Web installer files might not have signature verification, this switch prevents to load them unless it is needed.
    *
-   * Currently false to prevent breaking the current API, but it should be changed to default true at some point that
-   * breaking changes are allowed.
+   * Defaults to `true` as of v27 (web installers are opt-in). Set to `false` only if you intentionally publish and rely on NSIS web-installer packages.
    *
-   * @default false
+   * @default true
    */
-  disableWebInstaller = false
+  disableWebInstaller = true
 
   /**
    * *NSIS only* Disable differential downloads and always perform full download of installer.
@@ -711,6 +710,11 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   protected async executeDownload(taskOptions: DownloadExecutorTask): Promise<Array<string>> {
     const fileInfo = taskOptions.fileInfo
+    if (fileInfo.info.sha512 == null && (fileInfo.info as any).sha2 != null) {
+      this._logger.warn(
+        "Update artifact is validated with a SHA-256 (sha2) checksum only. SHA-256 update checksums are deprecated; electron-builder v28 will require SHA-512 and reject SHA-256-only update metadata (fail-closed). Regenerate latest*.yml with a current electron-builder and avoid pinning electronUpdaterCompatibility to a legacy (<2.15 / 1.x) range."
+      )
+    }
     const downloadOptions: DownloadOptions = {
       headers: taskOptions.downloadUpdateOptions.requestHeaders,
       cancellationToken: taskOptions.downloadUpdateOptions.cancellationToken,

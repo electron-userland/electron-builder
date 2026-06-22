@@ -62,7 +62,7 @@ export class NsisUpdater extends BaseUpdater {
         }
         if (!isWebInstaller && !downloadUpdateOptions.disableWebInstaller) {
           this._logger.warn(
-            "disableWebInstaller is set to false, you should set it to true if you do not plan on using a web installer. This will default to true in a future version."
+            "disableWebInstaller is explicitly set to false, but no web installer is in use. As of v27 it defaults to true; set it to true (or remove the override) unless you intentionally rely on NSIS web-installer packages."
           )
         }
         if (

@@ -78,6 +78,7 @@ To stay on a legacy bundle, pin the toolset to `"0.0.0"`. Because `winCodeSign` 
 | [Linux `.desktop` `Exec` now runs a generated `*-launcher` script](#linux-launcher-entrypoint) | — | Update custom `.desktop`/AppArmor/MIME tooling that hard-codes the `Exec` command |
 | [`node_modules` arch/os-filtered on every build](#node_modules-are-now-archos-filtered-on-every-build) | — | Awareness — packages whose `cpu`/`os` mismatch the target are now excluded |
 | [DMG `filesystem` defaults to APFS](#dmg-filesystem-defaults-to-apfs) | — | Set `dmg.filesystem: "HFS+"` only if you need pre-10.13 macOS compatibility |
+| [`disableWebInstaller` defaults to `true` (electron-updater)](#disablewebinstaller-defaults-to-true) | — | Set `disableWebInstaller: false` only if you ship an NSIS web installer |
 | [Renamed type exports (`ElectronDownloadOptions`, `WindowsAzureSigningConfiguration`, …)](#removed-exports) | — | Import the new names — no compat aliases |
 | [`SnapOptions`, `ProtonFramework`, `LibUiFramework` exports removed](#removed-exports) | — | Use the `snapcraft` config shape / Electron framework |
 
@@ -614,6 +615,23 @@ The default DMG volume filesystem changed from **`HFS+`** to **`APFS`**. APFS is
 ```
 
 This is a runtime default, not a config-key rename, so `migrate-schema` does not change it.
+
+---
+
+## Auto-update (electron-updater)
+
+### `disableWebInstaller` defaults to `true`
+
+`AppUpdater.disableWebInstaller` now defaults to **`true`**. NSIS *web* installers (the small installer that downloads the full payload at install time from a manifest-supplied URL) are no longer loaded unless you opt in, because that payload may not undergo signature verification.
+
+- **If you do not use a web installer** (the common case): no action — this is the safer default.
+- **If you publish and rely on an NSIS web installer**: set `disableWebInstaller: false` explicitly, otherwise the download throws `ERR_UPDATER_WEB_INSTALLER_DISABLED`.
+
+```ts
+import { NsisUpdater } from "electron-updater"
+const updater = new NsisUpdater()
+updater.disableWebInstaller = false // only if you intentionally ship a web installer
+```
 
 ---
 
