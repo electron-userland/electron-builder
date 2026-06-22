@@ -77,6 +77,7 @@ To stay on a legacy bundle, pin the toolset to `"0.0.0"`. Because `winCodeSign` 
 | [`PlatformPackager.info` & `platformSpecificBuildOptions` now `protected`](#programmatic--plugin-author-api-changes) | — | Plugin authors: hard break — `.info` no longer compiles externally; use the new pass-through getters |
 | [Linux `.desktop` `Exec` now runs a generated `*-launcher` script](#linux-launcher-entrypoint) | — | Update custom `.desktop`/AppArmor/MIME tooling that hard-codes the `Exec` command |
 | [`node_modules` arch/os-filtered on every build](#node_modules-are-now-archos-filtered-on-every-build) | — | Awareness — packages whose `cpu`/`os` mismatch the target are now excluded |
+| [DMG `filesystem` defaults to APFS](#dmg-filesystem-defaults-to-apfs) | — | Set `dmg.filesystem: "HFS+"` only if you need pre-10.13 macOS compatibility |
 | [Renamed type exports (`ElectronDownloadOptions`, `WindowsAzureSigningConfiguration`, …)](#removed-exports) | — | Import the new names — no compat aliases |
 | [`SnapOptions`, `ProtonFramework`, `LibUiFramework` exports removed](#removed-exports) | — | Use the `snapcraft` config shape / Electron framework |
 
@@ -596,6 +597,23 @@ This makes `executableArgs` apply consistently across all Linux targets and keep
 v27 filters `node_modules` by each package's `package.json` `cpu` / `os` fields against the **target** arch and platform on **every** build (previously this effectively only mattered for `universal` macOS builds). A dependency that declares an incompatible `cpu`/`os` for the target is excluded from the packaged app, whereas v26 copied host-installed `node_modules` verbatim.
 
 **No action is required for typical projects** — this fixes universal-build failures and produces correctly-scoped output. Be aware of it only if you *intentionally* bundled a cross-arch or cross-os optional binary that is now dropped; in that rare case, include it explicitly via `extraResources` / `files`.
+
+---
+
+## macOS DMG
+
+### DMG `filesystem` defaults to APFS
+
+The default DMG volume filesystem changed from **`HFS+`** to **`APFS`**. APFS is the modern macOS filesystem and produces smaller, faster-to-mount images on current macOS.
+
+- **No action** for most projects.
+- **If you must support pre-10.13 (High Sierra) macOS**, which cannot mount APFS volumes, set the filesystem back to `HFS+` explicitly:
+
+```json5
+{ "dmg": { "filesystem": "HFS+" } }
+```
+
+This is a runtime default, not a config-key rename, so `migrate-schema` does not change it.
 
 ---
 
