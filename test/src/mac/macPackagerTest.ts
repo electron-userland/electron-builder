@@ -5,6 +5,7 @@ import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, assertPack, checkDirContents, modifyPackageJson, platform } from "../helpers/packTester"
 import { verifySmartUnpack } from "../helpers/verifySmartUnpack"
+import { parsePlistFile, PlistObject } from "app-builder-lib/internal"
 
 describe("macPackager", { sequential: true }, () => {
   test.ifMac("two-package", ({ expect }) =>
@@ -287,6 +288,62 @@ describe("macPackager", { sequential: true }, () => {
           expect(bundleVersion).toBe("1.1.0")
         },
       }
+    )
+  )
+
+  // Electron resolves its helper apps at runtime as `${CFBundleName} Helper.app`, so the on-disk
+  // helper bundle name and `CFBundleName` must stay identical. Product names with composed Unicode
+  // (NFC) must not be decomposed to NFD, otherwise the two diverge byte-for-byte.
+  test.ifMac("CFBundleName matches helper bundle name for a Unicode productName", ({ expect }) => {
+    const productName = "Tést Café" // composed (NFC) accents that decompose under NFD
+    return app(
+      expect,
+      {
+        targets: Platform.MAC.createTarget(DIR_TARGET, Arch.x64),
+        config: {
+          productName,
+          mac: { notarize: false },
+        },
+      },
+      {
+        signedMac: false,
+        checkMacApp: async appDir => {
+          const info = await parsePlistFile<PlistObject>(path.join(appDir, "Contents", "Info.plist"))
+          const cfBundleName = info.CFBundleName as string
+          // CFBundleName keeps the composed (NFC) form, not an NFD-decomposed one.
+          expect(cfBundleName).toBe(productName)
+          expect(cfBundleName).toBe(cfBundleName.normalize("NFC"))
+          // The original product name is still used for display.
+          expect(info.CFBundleDisplayName).toBe(productName)
+
+          // The base helper bundle directory must be byte-for-byte `${cfBundleName} Helper.app`.
+          const frameworks = await fs.readdir(path.join(appDir, "Contents", "Frameworks"))
+          const baseHelper = frameworks.filter(entry => entry.endsWith(" Helper.app"))
+          expect(baseHelper).toEqual([`${cfBundleName} Helper.app`])
+
+          // The helper executable and its plist's CFBundleExecutable must stay in lockstep with the
+          // renamed bundle, otherwise the helper process cannot launch.
+          const helperContents = path.join(appDir, "Contents", "Frameworks", `${cfBundleName} Helper.app`, "Contents")
+          await assertThat(expect, path.join(helperContents, "MacOS", `${cfBundleName} Helper`)).isFile()
+          const helperInfo = await parsePlistFile<PlistObject>(path.join(helperContents, "Info.plist"))
+          expect(helperInfo.CFBundleExecutable).toBe(`${cfBundleName} Helper`)
+        },
+      }
+    )
+  })
+
+  test.ifMac("rejects a productName containing a path separator", ({ expect }) =>
+    appThrows(
+      expect,
+      {
+        targets: Platform.MAC.createTarget(DIR_TARGET, Arch.x64),
+        config: {
+          productName: "Bad/Name",
+          mac: { notarize: false },
+        },
+      },
+      {},
+      error => expect(error.message).toContain("is not a valid macOS app bundle name")
     )
   )
 })

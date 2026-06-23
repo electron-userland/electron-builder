@@ -1,5 +1,27 @@
 # builder-util
 
+## 27.0.0-alpha.5
+
+### Major Changes
+
+- Feat(toolsets): Adopt `"latest"` as the canonical "null"-state for every `ToolsetConfig` property, and make the toolset resolution logic resolve the unset state (`undefined` / `null` / `"latest"`) to the newest available bundle for each toolset. _[`#9939`](https://github.com/electron-userland/electron-builder/pull/9939) [`2669c2a`](https://github.com/electron-userland/electron-builder/commit/2669c2a7c7e9b6c3d8f7789362ffa5d7aac3fbf6) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Chore(refactor): reducing duplicate code and extracting helper functions _[`#9947`](https://github.com/electron-userland/electron-builder/pull/9947) [`8f3d9fa`](https://github.com/electron-userland/electron-builder/commit/8f3d9fa442aae342c1c5d2a4448a687de1aff8df) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`8f3d9fa`](https://github.com/electron-userland/electron-builder/commit/8f3d9fa442aae342c1c5d2a4448a687de1aff8df)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.4`
+
+</details>
+
 ## 27.0.0-alpha.4
 
 ### Minor Changes

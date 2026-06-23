@@ -1,5 +1,4 @@
 import {
-  addValue,
   Arch,
   archFromString,
   AsyncTaskManager,
@@ -30,7 +29,7 @@ import { Framework } from "./Framework.js"
 import { Metadata } from "./options/metadata.js"
 import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi.js"
 import { PlatformPackager } from "./platformPackager.js"
-import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory.js"
+import { addTargetsForPlatform, computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory.js"
 import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config.js"
 import { expandMacro } from "./util/macroExpander.js"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata.js"
@@ -130,6 +129,15 @@ export class Packager {
 
   readonly tempDirManager = new TmpDir("packager")
 
+  // Tasks that must run after EVERY target has finished building — the only point at which the
+  // shared appOutDir can be mutated without racing a concurrent target that reads it. Used by NSIS
+  // to write elevate.exe into win-unpacked without it leaking into Squirrel/zip/etc. (see #9852).
+  private readonly buildFinalizeTasks: Array<() => Promise<void>> = []
+
+  addBuildFinalizeTask(task: () => Promise<void>): void {
+    this.buildFinalizeTasks.push(task)
+  }
+
   private _repositoryInfo = new Lazy<SourceRepositoryInfo | null>(() => getRepositoryInfo(this.projectDir, this.metadata, this.devMetadata))
 
   readonly options: PackagerOptions
@@ -188,29 +196,11 @@ export class Packager {
         return result.length === 0 && currentIfNotSpecified ? [archFromString(process.arch)] : result
       }
 
-      let archToType = targets.get(platform)
-      if (archToType == null) {
-        archToType = new Map<Arch, Array<string>>()
-        targets.set(platform, archToType)
-      }
-
-      if (types.length === 0) {
+      addTargetsForPlatform(targets, platform, types, commonArch, archToType => {
         for (const arch of commonArch(false)) {
           archToType.set(arch, [])
         }
-        return
-      }
-
-      for (const type of types) {
-        const suffixPos = type.lastIndexOf(":")
-        if (suffixPos > 0) {
-          addValue(archToType, archFromString(type.substring(suffixPos + 1)), type.substring(0, suffixPos))
-        } else {
-          for (const arch of commonArch(true)) {
-            addValue(archToType, arch, type)
-          }
-        }
-      }
+      })
     }
 
     if (options.mac != null) {
@@ -540,6 +530,15 @@ export class Packager {
         break
       }
       await target.finishBuild()
+    }
+
+    // Every target has now finished reading the shared appOutDir(s), so finalize tasks may safely
+    // mutate them (e.g. NSIS copying elevate.exe into win-unpacked — see #9852).
+    for (const task of this.buildFinalizeTasks) {
+      if (this.cancellationToken.cancelled) {
+        break
+      }
+      await task()
     }
     return platformToTarget
   }

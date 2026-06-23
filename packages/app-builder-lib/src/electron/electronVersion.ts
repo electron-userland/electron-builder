@@ -24,16 +24,7 @@ export async function getElectronVersion(projectDir: string, config?: Configurat
 }
 
 export async function getElectronVersionFromInstalled(projectDir: string): Promise<string | null> {
-  for (const name of electronPackages) {
-    try {
-      return (await fsExtra.readJson(path.join(projectDir, "node_modules", name, "package.json"))).version
-    } catch (e: any) {
-      if (e.code !== "ENOENT") {
-        log.warn({ name, error: e }, `cannot read electron version package.json`)
-      }
-    }
-  }
-  return null
+  return (await getElectronPackage(projectDir))?.version ?? null
 }
 
 export async function getElectronPackage(projectDir: string) {

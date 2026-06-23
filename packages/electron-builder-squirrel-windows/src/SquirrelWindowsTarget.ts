@@ -44,7 +44,6 @@ export default class SquirrelWindowsTarget extends Target {
         }),
         fs.promises.cp(path.join(path.dirname(windowInstallerPackage), "vendor"), tmpVendorDirectory, { recursive: true }),
       ])
-
       await fs.promises.cp(path.join(squirrelBin, "electron-winstaller", "vendor"), tmpVendorDirectory, { recursive: true })
     }
 

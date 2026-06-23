@@ -153,13 +153,6 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
   readonly compression?: CompressionLevel | null
 
   /**
-   * Whether to exclude all default ignored files(https://www.electron.build/contents#files) and options. Defaults to `false`.
-   *
-   * @default false
-   */
-  disableDefaultIgnoredFiles?: boolean | null
-
-  /**
    * Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).
    *
    * Node modules that must be unpacked will be detected automatically. Use {@link AsarOptions.unpack} to specify additional files to unpack.

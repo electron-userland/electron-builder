@@ -51,6 +51,7 @@ export type { DmgContent, DmgOptions, DmgWindow, ElectronSignOptions, ElectronUn
 export { AuthorMetadata, Metadata, RepositoryInfo } from "./options/metadata.js"
 export { MsiOptions } from "./options/MsiOptions.js"
 export { MsiWrappedOptions } from "./options/MsiWrappedOptions.js"
+export { MsixOptions, MsixWindowsService } from "./options/MsixOptions.js"
 export { BackgroundAlignment, BackgroundScaling, PkgBackgroundOptions, PkgOptions } from "./options/pkgOptions.js"
 export { AsarOptions, FileSet, FilesBuildOptions, PlatformSpecificBuildOptions, Protocol, ReleaseInfo } from "./options/PlatformSpecificBuildOptions.js"
 export { PlugDescriptor, SlotDescriptor, SnapcraftOptions } from "./options/SnapOptions.js"

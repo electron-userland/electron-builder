@@ -43,6 +43,15 @@ interface SmartCache {
 }
 
 export function loadCache(): SmartCache {
+  // Hard reset: when RESET_VITEST_SHARD_CACHE is set we ignore any cache on disk entirely, so
+  // shard planning (smart-shard-count.ts), shard selection (run-vitest.ts) and the reporter all
+  // start from zero timing data. Gating the fetch step in CI avoids downloading the artifact, but
+  // this guard is what guarantees a stale/leftover cache file can never leak into a reset run.
+  if (process.env.RESET_VITEST_SHARD_CACHE === "true") {
+    logv(`[loadCache] RESET_VITEST_SHARD_CACHE=true — ignoring any existing cache, starting fresh`)
+    return { tests: {}, files: {} }
+  }
+
   // Check if file exists BEFORE trying to read it
   if (!fs.existsSync(CACHE_FILE)) {
     logv(`[loadCache] Cache file does not exist, starting fresh`)

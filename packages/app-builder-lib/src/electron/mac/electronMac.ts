@@ -9,6 +9,7 @@ import { normalizeExt } from "../../platformPackager.js"
 import { savePlistFile, parsePlistFile, PlistObject, PlistValue } from "../../util/mac/plist.js"
 import { createBrandingOpts } from "../ElectronFramework.js"
 import { MacTargetHelper, PlatformType } from "../../targets/mac/MacTargetHelper.js"
+import { assertSafeHelperName, getAvailableHelperSuffixes } from "./electronMacUtils.js"
 
 function doRename(basePath: string, oldName: string, newName: string) {
   return rename(path.join(basePath, oldName), path.join(basePath, newName))
@@ -23,32 +24,6 @@ function moveHelpers(helperSuffixes: Array<string>, frameworksPath: string, appN
   )
 }
 
-function getAvailableHelperSuffixes(
-  helperEHPlist: PlistObject | null,
-  helperNPPlist: PlistObject | null,
-  helperRendererPlist: PlistObject | null,
-  helperPluginPlist: PlistObject | null,
-  helperGPUPlist: PlistObject | null
-) {
-  const result = [" Helper"]
-  if (helperEHPlist != null) {
-    result.push(" Helper EH")
-  }
-  if (helperNPPlist != null) {
-    result.push(" Helper NP")
-  }
-  if (helperRendererPlist != null) {
-    result.push(" Helper (Renderer)")
-  }
-  if (helperPluginPlist != null) {
-    result.push(" Helper (Plugin)")
-  }
-  if (helperGPUPlist != null) {
-    result.push(" Helper (GPU)")
-  }
-  return result
-}
-
 /** @internal */
 export async function createMacApp(packager: MacPackager, appOutDir: string, asarIntegrity: AsarIntegrity | null, targetPlatform: PlatformType) {
   const appInfo = packager.appInfo
@@ -57,6 +32,9 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   // https://github.com/electron-userland/electron-builder/issues/6962
   const appFilename = appInfo.sanitizedProductName
   const electronBranding = createBrandingOpts(packager.config)
+  // The branding name is the on-disk prefix of every helper bundle we read from the Electron dist,
+  // so reject values that could escape the Frameworks directory.
+  assertSafeHelperName(electronBranding.productName, "electronBranding.productName")
 
   const contentsPath = path.join(appOutDir, packager.framework.distMacOsAppName, "Contents")
   const frameworksPath = path.join(contentsPath, "Frameworks")
@@ -83,7 +61,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     throw new Error("corrupted Electron dist")
   }
 
-  // Replace the multiple parsePlistFile calls with:
+  // Parse each helper plist; variants absent from the current Electron dist resolve to null.
   const helperPlist = await safeParsePlistFile(helperPlistFilename)
   const helperEHPlist = await safeParsePlistFile(helperEHPlistFilename)
   const helperNPPlist = await safeParsePlistFile(helperNPPlistFilename)
@@ -261,7 +239,13 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   ])
 
   await moveHelpers(
-    getAvailableHelperSuffixes(helperEHPlist, helperNPPlist, helperRendererPlist, helperPluginPlist, helperGPUPlist),
+    getAvailableHelperSuffixes({
+      EH: helperEHPlist != null,
+      NP: helperNPPlist != null,
+      Renderer: helperRendererPlist != null,
+      Plugin: helperPluginPlist != null,
+      GPU: helperGPUPlist != null,
+    }),
     frameworksPath,
     appFilename,
     electronBranding.productName

@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`mac > arm64 1`] = `
+exports[`mac > mac auto-update > arm64 1`] = `
 {
   "mac": [
     {
@@ -39,7 +39,7 @@ exports[`mac > arm64 1`] = `
 }
 `;
 
-exports[`mac > arm64 2`] = `
+exports[`mac > mac auto-update > arm64 2`] = `
 {
   "CFBundleDisplayName": "TestApp",
   "CFBundleExecutable": "TestApp",
@@ -88,7 +88,7 @@ exports[`mac > arm64 2`] = `
 }
 `;
 
-exports[`mac > arm64 3`] = `
+exports[`mac > mac auto-update > arm64 3`] = `
 {
   "mac": [
     {
@@ -127,7 +127,7 @@ exports[`mac > arm64 3`] = `
 }
 `;
 
-exports[`mac > arm64 4`] = `
+exports[`mac > mac auto-update > arm64 4`] = `
 {
   "CFBundleDisplayName": "TestApp",
   "CFBundleExecutable": "TestApp",
@@ -176,7 +176,7 @@ exports[`mac > arm64 4`] = `
 }
 `;
 
-exports[`mac > universal 1`] = `
+exports[`mac > mac auto-update > universal 1`] = `
 {
   "mac": [
     {
@@ -215,7 +215,7 @@ exports[`mac > universal 1`] = `
 }
 `;
 
-exports[`mac > universal 2`] = `
+exports[`mac > mac auto-update > universal 2`] = `
 {
   "CFBundleDisplayName": "TestApp",
   "CFBundleExecutable": "TestApp",
@@ -264,7 +264,7 @@ exports[`mac > universal 2`] = `
 }
 `;
 
-exports[`mac > universal 3`] = `
+exports[`mac > mac auto-update > universal 3`] = `
 {
   "mac": [
     {
@@ -303,7 +303,7 @@ exports[`mac > universal 3`] = `
 }
 `;
 
-exports[`mac > universal 4`] = `
+exports[`mac > mac auto-update > universal 4`] = `
 {
   "CFBundleDisplayName": "TestApp",
   "CFBundleExecutable": "TestApp",
@@ -352,7 +352,7 @@ exports[`mac > universal 4`] = `
 }
 `;
 
-exports[`mac > x64 1`] = `
+exports[`mac > mac auto-update > x64 1`] = `
 {
   "mac": [
     {
@@ -391,7 +391,7 @@ exports[`mac > x64 1`] = `
 }
 `;
 
-exports[`mac > x64 2`] = `
+exports[`mac > mac auto-update > x64 2`] = `
 {
   "CFBundleDisplayName": "TestApp",
   "CFBundleExecutable": "TestApp",
@@ -440,7 +440,7 @@ exports[`mac > x64 2`] = `
 }
 `;
 
-exports[`mac > x64 3`] = `
+exports[`mac > mac auto-update > x64 3`] = `
 {
   "mac": [
     {
@@ -479,7 +479,7 @@ exports[`mac > x64 3`] = `
 }
 `;
 
-exports[`mac > x64 4`] = `
+exports[`mac > mac auto-update > x64 4`] = `
 {
   "CFBundleDisplayName": "TestApp",
   "CFBundleExecutable": "TestApp",
