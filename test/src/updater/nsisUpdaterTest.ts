@@ -7,6 +7,8 @@ import * as path from "path"
 import { assertThat } from "../helpers/fileAssert.js"
 import { removeUnstableProperties } from "../helpers/packTester.js"
 import { createNsisUpdater, trackEvents, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
+import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
+import { serializeToYaml, TmpDir } from "builder-util"
 import { ExpectStatic } from "vitest"
 import { GitLabProvider, GitHubProvider } from "electron-updater"
 
@@ -556,4 +558,118 @@ test.skip("test downloaded installer", config, async ({ expect }) => {
   expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
   updater.quitAndInstall(true, false)
   expect(beforeQuitFired).toBe(true)
+})
+
+describe("NsisUpdater — disableWebInstaller tri-state", () => {
+  // Serves a synthetic update over a local server. When `web` is true the latest.yml carries a `packages` block
+  // keyed by the test arch, so resolveFiles populates fileInfo.packageInfo → isWebInstaller. No installer/package
+  // files are served: the web + explicit-`true` branch throws before any download, and every warning branch logs
+  // synchronously before the (then-failing) download — so none of these tests depend on a valid payload.
+  async function serveUpdate(web: boolean) {
+    const tmpDir = new TmpDir("web-installer-unit")
+    const root = await tmpDir.getTempDir()
+    const sha512 = Buffer.alloc(64).toString("base64")
+    const updateInfo: any = {
+      version: "1.0.1",
+      files: [{ url: "TestApp Setup 1.0.1.exe", sha512, size: 10 }],
+      path: "TestApp Setup 1.0.1.exe",
+      sha512,
+      releaseDate: new Date(0).toISOString(),
+    }
+    if (web) {
+      updateInfo.packages = { [process.arch]: { file: "TestApp-1.0.1.nsis.7z", path: "TestApp-1.0.1.nsis.7z", sha512, size: 10 } }
+    }
+    await fsExtra.outputFile(path.join(root, "latest.yml"), serializeToYaml(updateInfo))
+    const { server, port } = await createLocalServer(root)
+    return { server, port, tmpDir }
+  }
+
+  test("explicit disableWebInstaller=true rejects a web-installer update", config, async ({ expect }) => {
+    const { server, port, tmpDir } = await serveUpdate(true)
+    try {
+      const updater = await createNsisUpdater("1.0.0")
+      updater.disableWebInstaller = true
+      updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
+      trackEvents(updater)
+
+      const updateCheckResult = await updater.checkForUpdates()
+      await expect(updateCheckResult!.downloadPromise).rejects.toThrow(/Web Installers are disabled/)
+    } finally {
+      server.close()
+      await tmpDir.cleanup()
+    }
+  })
+
+  test("unset disableWebInstaller warns about the v28 fail-closed change instead of rejecting as disabled", config, async ({ expect }) => {
+    const { server, port, tmpDir } = await serveUpdate(true)
+    try {
+      const updater = await createNsisUpdater("1.0.0")
+      // Deliberately do NOT set disableWebInstaller — exercise the v27 grace-period default (unset → warn + proceed).
+      const warnings: Array<string> = []
+      updater.logger = { info() {}, warn: (m: string) => warnings.push(m), error() {}, debug() {} }
+      updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
+      trackEvents(updater)
+
+      const updateCheckResult = await updater.checkForUpdates()
+      // The grace-period warning is logged synchronously before the download; the subsequent download may fail
+      // (no payload served), but it must never be the explicit-disabled rejection.
+      const rejection: any = await updateCheckResult!.downloadPromise!.then(
+        () => null,
+        (e: any) => e
+      )
+      expect(warnings.some(w => w.includes("v28 will fail-closed"))).toBe(true)
+      expect(rejection?.code).not.toBe("ERR_UPDATER_WEB_INSTALLER_DISABLED")
+    } finally {
+      server.close()
+      await tmpDir.cleanup()
+    }
+  })
+
+  test("unset disableWebInstaller stays silent for a regular (non-web) installer", config, async ({ expect }) => {
+    const { server, port, tmpDir } = await serveUpdate(false)
+    try {
+      const updater = await createNsisUpdater("1.0.0")
+      // unset disableWebInstaller + a non-web update → neither web-installer warning branch should fire
+      const warnings: Array<string> = []
+      updater.logger = { info() {}, warn: (m: string) => warnings.push(m), error() {}, debug() {} }
+      updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
+      trackEvents(updater)
+
+      await updater
+        .checkForUpdates()
+        .then(r => r!.downloadPromise)
+        .then(
+          () => null,
+          () => null
+        )
+      expect(warnings.some(w => w.toLowerCase().includes("web installer"))).toBe(false)
+    } finally {
+      server.close()
+      await tmpDir.cleanup()
+    }
+  })
+
+  test("explicit disableWebInstaller=false warns when a regular (non-web) installer is downloaded", config, async ({ expect }) => {
+    const { server, port, tmpDir } = await serveUpdate(false)
+    try {
+      const updater = await createNsisUpdater("1.0.0")
+      updater.disableWebInstaller = false
+      const warnings: Array<string> = []
+      updater.logger = { info() {}, warn: (m: string) => warnings.push(m), error() {}, debug() {} }
+      updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
+      trackEvents(updater)
+
+      await updater
+        .checkForUpdates()
+        .then(r => r!.downloadPromise)
+        .then(
+          () => null,
+          () => null
+        )
+      expect(warnings.some(w => w.includes("a full installer (not a web installer) was downloaded"))).toBe(true)
+    } finally {
+      server.close()
+      await tmpDir.cleanup()
+    }
+  })
 })

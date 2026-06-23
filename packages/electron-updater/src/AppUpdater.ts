@@ -93,14 +93,22 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   allowDowngrade = false
 
+  private _disableWebInstaller: boolean | undefined = undefined
+
   /**
-   * Web installer files might not have signature verification, this switch prevents to load them unless it is needed.
+   * Whether to block NSIS web-installer packages. Web installer files might not have signature verification, so they are disabled by default as of v27.
    *
-   * Defaults to `true` as of v27 (web installers are opt-in). Set to `false` only if you intentionally publish and rely on NSIS web-installer packages.
+   * v27 grace period: apps that do not explicitly set this property will warn (but still download) if a web-installer update is received. In v28 the warning becomes an error and the download is blocked (`ERR_UPDATER_WEB_INSTALLER_DISABLED`). Apps that explicitly set this to `true` throw immediately. Set it to `false` only if you intentionally publish and rely on NSIS web-installer packages.
    *
    * @default true
    */
-  disableWebInstaller = true
+  get disableWebInstaller(): boolean {
+    return this._disableWebInstaller ?? true
+  }
+
+  set disableWebInstaller(value: boolean) {
+    this._disableWebInstaller = value
+  }
 
   /**
    * *NSIS only* Disable differential downloads and always perform full download of installer.
@@ -584,7 +592,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       updateInfoAndProvider,
       requestHeaders: this.computeRequestHeaders(updateInfoAndProvider.provider),
       cancellationToken,
-      disableWebInstaller: this.disableWebInstaller,
+      disableWebInstaller: this._disableWebInstaller,
       disableDifferentialDownload: this.disableDifferentialDownload,
     })
       .catch((e: any) => {

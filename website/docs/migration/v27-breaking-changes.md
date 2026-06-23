@@ -78,7 +78,7 @@ To stay on a legacy bundle, pin the toolset to `"0.0.0"`. Because `winCodeSign` 
 | [Linux `.desktop` `Exec` now runs a generated `*-launcher` script](#linux-launcher-entrypoint) | — | Update custom `.desktop`/AppArmor/MIME tooling that hard-codes the `Exec` command |
 | [`node_modules` arch/os-filtered on every build](#node_modules-are-now-archos-filtered-on-every-build) | — | Awareness — packages whose `cpu`/`os` mismatch the target are now excluded |
 | [DMG `filesystem` defaults to APFS](#dmg-filesystem-defaults-to-apfs) | — | Set `dmg.filesystem: "HFS+"` only if you need pre-10.13 macOS compatibility |
-| [`disableWebInstaller` defaults to `true` (electron-updater)](#disablewebinstaller-defaults-to-true) | — | Set `disableWebInstaller: false` only if you ship an NSIS web installer |
+| [`disableWebInstaller` defaults to `true` (electron-updater)](#disablewebinstaller-defaults-to-true) | — | v27 warns but still downloads if you never set it; opt in with `disableWebInstaller: false` before v28 enforces it |
 | [Renamed type exports (`ElectronDownloadOptions`, `WindowsAzureSigningConfiguration`, …)](#removed-exports) | — | Import the new names — no compat aliases |
 | [`SnapOptions`, `ProtonFramework`, `LibUiFramework` exports removed](#removed-exports) | — | Use the `snapcraft` config shape / Electron framework |
 
@@ -624,14 +624,21 @@ This is a runtime default, not a config-key rename, so `migrate-schema` does not
 
 `AppUpdater.disableWebInstaller` now defaults to **`true`**. NSIS *web* installers (the small installer that downloads the full payload at install time from a manifest-supplied URL) are no longer loaded unless you opt in, because that payload may not undergo signature verification.
 
-- **If you do not use a web installer** (the common case): no action — this is the safer default.
-- **If you publish and rely on an NSIS web installer**: set `disableWebInstaller: false` explicitly, otherwise the download throws `ERR_UPDATER_WEB_INSTALLER_DISABLED`.
+v27 ships a one-major-version grace period so existing deployments are not broken without warning:
+
+- **You never set `disableWebInstaller`** (the default): if a web-installer update is received, the updater logs a warning and still downloads it in v27. In **v28** that warning becomes an error and the download is blocked (`ERR_UPDATER_WEB_INSTALLER_DISABLED`).
+- **You explicitly set `disableWebInstaller = true`**: the download throws `ERR_UPDATER_WEB_INSTALLER_DISABLED` immediately (no grace period).
+- **You do not use a web installer** (the common case): no action — this is the safer default and v28 will enforce it.
+
+If you publish and rely on an NSIS web installer, opt back in **before v28** by setting `disableWebInstaller: false` in your main process:
 
 ```ts
 import { NsisUpdater } from "electron-updater"
 const updater = new NsisUpdater()
 updater.disableWebInstaller = false // only if you intentionally ship a web installer
 ```
+
+> **Tip:** running `electron-builder migrate-schema` on a project that builds an `nsis-web` target now prints an advisory reminding you to set `autoUpdater.disableWebInstaller = false` at runtime. The advisory is informational only — it never rewrites your config (`disableWebInstaller` is an electron-updater runtime setting, not a build-config key).
 
 ---
 
