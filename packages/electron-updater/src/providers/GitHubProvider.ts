@@ -65,6 +65,11 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     ))!
 
     const feed = parseXml(feedXml)
+    const releaseEntries = feed.getElements("entry")
+    if (releaseEntries.length === 0) {
+      throw newError(`No releases in the GitHub Atom feed`, "ERR_XML_MISSED_ELEMENT")
+    }
+
     // noinspection TypeScriptValidateJSTypes
     let latestRelease: XElement | null = null
     let tag: string | null = null
