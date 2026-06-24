@@ -81,9 +81,9 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
           // allowPrerelease=true with no explicit channel and stable current version:
           // pick the newest release available whether it is a pre-release or a stable release.
           let newestRelease = null
-          for (const entry of feed.getElements("entry")) {
+          for (const releaseEntry of releaseEntries) {
             // noinspection TypeScriptValidateJSTypes
-            const releaseTag = hrefRegExp.exec(entry.element("link").attribute("href"))?.[1]
+            const releaseTag = hrefRegExp.exec(releaseEntry.element("link").attribute("href"))?.[1]
 
             if (!releaseTag || !semver.valid(releaseTag)) {
               continue
@@ -95,7 +95,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
 
             if (!newestRelease || semver.gt(releaseTag, newestRelease)) {
               newestRelease = releaseTag
-              latestRelease = entry
+              latestRelease = releaseEntry
             }
           }
 
@@ -103,9 +103,9 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
             tag = newestRelease
           }
         } else {
-          for (const element of feed.getElements("entry")) {
+          for (const releaseEntry of releaseEntries) {
             // noinspection TypeScriptValidateJSTypes
-            const hrefElement = hrefRegExp.exec(element.element("link").attribute("href"))!
+            const hrefElement = hrefRegExp.exec(releaseEntry.element("link").attribute("href"))!
 
             // If this is null then something is wrong and skip this release
             if (hrefElement === null) {
@@ -128,28 +128,28 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
 
             if (shouldFetchVersion && !isCustomChannel && !channelMismatch) {
               tag = hrefTag
-              latestRelease = element
+              latestRelease = releaseEntry
               break
             }
 
             const isNextPreRelease = hrefChannel && hrefChannel === currentChannel
             if (isNextPreRelease) {
               tag = hrefTag
-              latestRelease = element
+              latestRelease = releaseEntry
               break
             }
           }
         }
       } else {
         tag = await this.getLatestTagName(cancellationToken)
-        for (const element of feed.getElements("entry")) {
+        for (const releaseEntry of releaseEntries) {
           // noinspection TypeScriptValidateJSTypes
-          const hrefMatch = hrefRegExp.exec(element.element("link").attribute("href"))
+          const hrefMatch = hrefRegExp.exec(releaseEntry.element("link").attribute("href"))
           if (hrefMatch == null) {
             continue
           }
           if (hrefMatch[1] === tag) {
-            latestRelease = element
+            latestRelease = releaseEntry
             break
           }
         }
@@ -200,7 +200,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     }
 
     if (result.releaseNotes == null) {
-      result.releaseNotes = computeReleaseNotes(this.updater.currentVersion, this.updater.fullChangelog, feed, latestRelease)
+      result.releaseNotes = computeReleaseNotes(this.updater.currentVersion, this.updater.fullChangelog, releaseEntries, latestRelease)
     }
     return {
       tag: tag,
@@ -252,7 +252,7 @@ function getNoteValue(parent: XElement): string {
   return result === "No content." ? "" : result
 }
 
-export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangelog: boolean, feed: XElement, latestRelease: XElement): string | Array<ReleaseNoteInfo> | null {
+export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangelog: boolean, releaseEntries: XElement[], latestRelease: XElement): string | Array<ReleaseNoteInfo> | null {
   if (!isFullChangelog) {
     return getNoteValue(latestRelease)
   }
@@ -272,10 +272,10 @@ export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangel
   }
 
   const releaseNotes: Array<ReleaseNoteInfo> = []
-  for (const release of feed.getElements("entry")) {
+  for (const releaseEntry of releaseEntries) {
     let versionRelease: string
     try {
-      const match = releaseVersionRegExp.exec(release.element("link").attribute("href"))
+      const match = releaseVersionRegExp.exec(releaseEntry.element("link").attribute("href"))
       if (!match) {
         continue
       }
@@ -293,7 +293,7 @@ export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangel
     if (isGreaterThanCurrent && isLessOrEqualThanLatest) {
       releaseNotes.push({
         version: versionRelease,
-        note: getNoteValue(release),
+        note: getNoteValue(releaseEntry),
       })
     }
   }
