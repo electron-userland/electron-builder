@@ -81,13 +81,18 @@ test("allowPrerelease=false - uses /releases/latest for tag resolution", async (
   expect(secondCallPath).toContain("/releases/latest")
 })
 
-// allowPrerelease=true with stable current version: takes first feed entry directly (no getLatestTagName call)
-test("allowPrerelease=true with stable current - picks first entry from Atom feed", async ({ expect }) => {
+// allowPrerelease=true with stable current version: takes the newest available stable or prerelease version (prerelease in this case)
+test("allowPrerelease=true with stable current - picks the newest available valid release (the beta release in this case)", async ({ expect }) => {
   const requestSpy = createMockRequest()
   const updater = await createPublicUpdater(requestSpy, "0.0.1")
   updater.allowPrerelease = true
 
-  requestSpy.mockResolvedValueOnce(mockAtomFeed([{ tag: BETA_TAG, title: BETA_TAG, content: "Beta notes" }])).mockResolvedValueOnce(mockYaml(BETA_VERSION))
+  requestSpy
+    .mockResolvedValueOnce(mockAtomFeed([
+      { tag: "some-package@2.2.0", title: "Some Package v2.2.0", content: "Some Package notes" },
+      { tag: BETA_TAG, title: BETA_TAG, content: "Beta notes" },
+    ]))
+    .mockResolvedValueOnce(mockYaml(BETA_VERSION))
 
   const result = await updater.checkForUpdates()
 
@@ -95,6 +100,30 @@ test("allowPrerelease=true with stable current - picks first entry from Atom fee
   expect(requestSpy).toHaveBeenCalledTimes(2)
   expect((result?.updateInfo as any).tag).toBe(BETA_TAG)
   expect(result?.updateInfo.version).toBe(BETA_VERSION)
+})
+
+// allowPrerelease=true with stable current version: takes the newest available stable or prerelease version (stable in this case)
+test("allowPrerelease=true with stable current - picks the newest available valid release (the stable 5.1.0 release in this case)", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPublicUpdater(requestSpy, "5.0.0")
+  updater.allowPrerelease = true
+
+  const newVersion = "5.1.0"
+  const newVersionTag = `v${newVersion}`
+
+  requestSpy
+    .mockResolvedValueOnce(mockAtomFeed([
+      { tag: "some-tool@3.2.0", title: "Some Tool v3.2.0", content: "Some Tool notes" },
+      { tag: newVersionTag, title: newVersionTag, content: "New stable release notes" },
+    ]))
+    .mockResolvedValueOnce(mockYaml("5.1.0"))
+
+  const result = await updater.checkForUpdates()
+
+  // only 2 calls: feed + channel file (no getLatestTagName)
+  expect(requestSpy).toHaveBeenCalledTimes(2)
+  expect((result?.updateInfo as any).tag).toBe(newVersionTag)
+  expect(result?.updateInfo.version).toBe(newVersion)
 })
 
 // allowPrerelease=true with beta channel current: loops feed to find matching beta entry
