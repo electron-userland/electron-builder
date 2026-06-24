@@ -12,4 +12,4 @@ Supported OS:
 
 ## Credits
 
-Thanks to [Evolve Labs](https://www.evolvehq.com) for donating the npm package name.
+Thanks to Evolve Labs for donating the npm package name.
