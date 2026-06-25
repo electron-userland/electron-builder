@@ -79,8 +79,9 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
 
         if (currentChannel === null) {
           // allowPrerelease=true with no explicit channel and stable current version:
-          // pick the newest release available whether it is a pre-release or a stable release.
-          let newestRelease = null
+          // pick the newest available release (pre-release or stable) by semver, skipping
+          // non-semver tags (e.g. unrelated package releases in a monorepo). Whether the newest
+          // release is actually an update is decided later by AppUpdater.isUpdateAvailable.
           for (const releaseEntry of releaseEntries) {
             // noinspection TypeScriptValidateJSTypes
             const releaseTag = hrefRegExp.exec(releaseEntry.element("link").attribute("href"))?.[1]
@@ -89,18 +90,10 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
               continue
             }
 
-            if (semver.gt(this.updater.currentVersion, releaseTag)) {
-              continue
-            }
-
-            if (!newestRelease || semver.gt(releaseTag, newestRelease)) {
-              newestRelease = releaseTag
+            if (tag == null || semver.gt(releaseTag, tag)) {
+              tag = releaseTag
               latestRelease = releaseEntry
             }
-          }
-
-          if (newestRelease) {
-            tag = newestRelease
           }
         } else {
           for (const releaseEntry of releaseEntries) {
@@ -158,7 +151,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
       throw newError(`Cannot parse releases feed: ${e.stack || e.message},\nXML:\n${feedXml}`, "ERR_UPDATER_INVALID_RELEASE_FEED")
     }
 
-    if (tag == null || latestRelease == null) {
+    if (tag == null) {
       throw newError(`No published versions on GitHub`, "ERR_UPDATER_NO_PUBLISHED_VERSIONS")
     }
 
@@ -195,11 +188,14 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     }
 
     const result = parseUpdateInfo(rawData, channelFile, channelFileUrl)
-    if (result.releaseName == null) {
+    // latestRelease can be null in the allowPrerelease=false path when the resolved tag (from the
+    // /releases/latest API) is not present in the truncated Atom feed; the update still proceeds
+    // with the resolved tag, only the feed-derived release name/notes are omitted.
+    if (result.releaseName == null && latestRelease != null) {
       result.releaseName = latestRelease.elementValueOrEmpty("title")
     }
 
-    if (result.releaseNotes == null) {
+    if (result.releaseNotes == null && latestRelease != null) {
       result.releaseNotes = computeReleaseNotes(this.updater.currentVersion, this.updater.fullChangelog, releaseEntries, latestRelease)
     }
     return {
@@ -238,6 +234,11 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
   }
 
   private getBaseDownloadPath(tag: string, fileName: string): string {
+    // guard against path traversal: the tag is interpolated into the download URL, so a tag with
+    // a "." / ".." path segment could redirect the request outside the releases download path.
+    if (tag.split(/[/\\]/).some(segment => segment === "." || segment === "..")) {
+      throw newError(`Invalid release tag: ${tag}`, "ERR_UPDATER_INVALID_TAG")
+    }
     return `${this.basePath}/download/${tag}/${fileName}`
   }
 }
@@ -252,7 +253,12 @@ function getNoteValue(parent: XElement): string {
   return result === "No content." ? "" : result
 }
 
-export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangelog: boolean, releaseEntries: XElement[], latestRelease: XElement): string | Array<ReleaseNoteInfo> | null {
+export function computeReleaseNotes(
+  currentVersion: semver.SemVer,
+  isFullChangelog: boolean,
+  releaseEntries: XElement[],
+  latestRelease: XElement
+): string | Array<ReleaseNoteInfo> | null {
   if (!isFullChangelog) {
     return getNoteValue(latestRelease)
   }
