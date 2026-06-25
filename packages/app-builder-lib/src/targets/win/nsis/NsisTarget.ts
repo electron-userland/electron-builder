@@ -115,6 +115,11 @@ export class NsisTarget extends Target {
     const archiveOptions: ArchiveOptions = {
       withoutDir: true,
       compression: packager.compression,
+      // The install-time Nsis7z extractor only decodes plain LZMA2/Copy and single-stream BCJ — not
+      // the CPU branch converters modern 7za applies to executables (BCJ2 on x86/x64, ARM64 on
+      // arm64), which it silently skips, dropping the main exe and every native binary from the
+      // install. Pin the payload to a filter it can decode. See #9983.
+      installTimeDecodable: true,
       excluded: preCompressedFileExtensions == null ? null : preCompressedFileExtensions.map(it => `*${it}`),
     }
 
