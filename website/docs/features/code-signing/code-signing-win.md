@@ -2,7 +2,7 @@
 
 Windows code signing is supported and runs automatically once you configure a signing method — or simply provide signing credentials through environment variables. electron-builder signs every executable and installer it produces so that Windows SmartScreen and your auto-updater can verify your app's publisher and confirm it hasn't been tampered with.
 
-:::tip Dual signing
+:::tip[Dual signing]
 By default each binary is dual-signed with both SHA-1 and SHA-256 (`signingHashAlgorithms: ["sha1", "sha256"]`) so it validates on legacy as well as modern Windows. A few targets are fixed: `.msi` is single-signed and AppX/MSIX is SHA-256 only.
 :::
 
@@ -24,7 +24,7 @@ For file- or store-based signing you need a Windows code signing certificate fro
 
 Both grades work with auto-update.
 
-:::tip Signing without a Windows machine
+:::tip[Signing without a Windows machine]
 You don't need Windows to sign a Windows app. The default `signtool` method signs file-based certificates with `osslsigncode` on macOS/Linux, and the `pkcs11` and `azure` methods are designed for non-Windows CI. See also [Code Signing Windows Apps on Unix](../../tutorials/code-signing-windows-apps-on-unix.md).
 :::
 
