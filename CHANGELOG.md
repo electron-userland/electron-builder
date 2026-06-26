@@ -1,3 +1,13 @@
+## [26.15.6](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.5...electron-builder@26.15.6) (2026-06-26)
+
+
+### Bug Fixes
+
+* bundle a workspace sub-package's production dependencies into app.asar when the package manager resolves to the workspace root ([#9950](https://github.com/electron-userland/electron-builder/issues/9950)) ([4f6c311](https://github.com/electron-userland/electron-builder/commit/4f6c3115012575a713f29c4df40ac271dcf1e182))
+* **nsis:** reliably install the main executable and native binaries on x64 and arm64 ([#9989](https://github.com/electron-userland/electron-builder/issues/9989)) ([0907083](https://github.com/electron-userland/electron-builder/commit/0907083713b8157b8bc76f716171a91ce4707def))
+
+
+
 ## [26.15.5](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.4...electron-builder@26.15.5) (2026-06-19)
 
 

@@ -1,5 +1,23 @@
 # app-builder-lib
 
+## 26.15.6
+
+### Patch Changes
+
+- Fix(nsis): pack the app archive with a filter the install-time extractor can decode so the main executable and native binaries are reliably installed on x64 and arm64 (#9983) _[`#9989`](https://github.com/electron-userland/electron-builder/pull/9989) [`0907083`](https://github.com/electron-userland/electron-builder/commit/0907083713b8157b8bc76f716171a91ce4707def) [@mmaietta](https://github.com/mmaietta)_
+- Fix: bundle a workspace sub-package's production dependencies into app.asar when the package manager resolves to the workspace root _[`#9950`](https://github.com/electron-userland/electron-builder/pull/9950) [`4f6c311`](https://github.com/electron-userland/electron-builder/commit/4f6c3115012575a713f29c4df40ac271dcf1e182) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@26.15.6`
+- `electron-builder-squirrel-windows@26.15.6`
+
+</details>
+
 ## 26.15.5
 
 ### Patch Changes
