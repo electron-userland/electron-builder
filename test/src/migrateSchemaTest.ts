@@ -621,3 +621,46 @@ describe("migrateConfig — does not mutate input", () => {
     expect(input).toEqual(frozen)
   })
 })
+
+describe("migrateConfig — nsis-web advisory", () => {
+  test("win.target: 'nsis-web' (string) emits an advisory without changing the config", () => {
+    const input = { win: { target: "nsis-web" } }
+    const result = migrateConfig(input)
+    expect(result.modified).toBe(false)
+    expect(result.changes).toHaveLength(0)
+    expect(result.advisories).toHaveLength(1)
+    expect(result.advisories[0]).toMatch(/nsis-web/)
+    expect(result.advisories[0]).toMatch(/disableWebInstaller = false/)
+    expect(result.migrated).toEqual(input)
+  })
+
+  test("win.target: ['nsis', 'nsis-web'] (array) emits an advisory", () => {
+    const result = migrateConfig({ win: { target: ["nsis", "nsis-web"] } })
+    expect(result.advisories).toHaveLength(1)
+    expect(result.modified).toBe(false)
+  })
+
+  test("win.target: [{ target: 'nsis-web' }] (object form) emits an advisory", () => {
+    const result = migrateConfig({ win: { target: [{ target: "nsis-web", arch: "x64" }] } })
+    expect(result.advisories).toHaveLength(1)
+    expect(result.modified).toBe(false)
+  })
+
+  test("global top-level target: 'nsis-web' emits an advisory", () => {
+    const result = migrateConfig({ target: "nsis-web" })
+    expect(result.advisories).toHaveLength(1)
+  })
+
+  test("a non-web target produces no advisory", () => {
+    const result = migrateConfig({ win: { target: "nsis" } })
+    expect(result.advisories).toHaveLength(0)
+    expect(result.modified).toBe(false)
+  })
+
+  test("advisory coexists with real changes — modified stays true, advisory is excluded from the modified calc", () => {
+    const result = migrateConfig({ electronCompile: true, win: { target: "nsis-web" } })
+    expect(result.modified).toBe(true)
+    expect(result.changes.some(c => c.key === "electronCompile")).toBe(true)
+    expect(result.advisories).toHaveLength(1)
+  })
+})

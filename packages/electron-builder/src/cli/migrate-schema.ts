@@ -18,6 +18,8 @@ export interface MigrationResult {
   readonly migrated: Record<string, any>
   readonly changes: MigrationChange[]
   readonly warnings: string[]
+  /** Informational notices that are not config changes — they never flip `modified` or trigger a file write. */
+  readonly advisories: string[]
   readonly modified: boolean
 }
 
@@ -59,6 +61,34 @@ export const MAC_SIGN_FIELDS = [
 // Universal-build fields that moved from the platform root into the `universal` (ElectronUniversalOptions) bag.
 export const MAC_UNIVERSAL_FIELDS = ["mergeASARs", "singleArchFiles", "x64ArchFiles"] as const
 
+// Advisory surfaced (informational only — never rewrites the config) when a project builds an nsis-web target. As of v27,
+// AppUpdater.disableWebInstaller defaults to true, so the auto-updater no longer downloads web-installer packages unless the app opts in at runtime.
+export const NSIS_WEB_ADVISORY =
+  "nsis-web target detected. In v27, autoUpdater.disableWebInstaller defaults to true, so NSIS web-installer packages are not downloaded by default. " +
+  "If your app relies on nsis-web installers for auto-updates, set autoUpdater.disableWebInstaller = false in your main process (this is an electron-updater runtime setting, not a build-config key)."
+
+/** True when `target` (a string, a `{ target }` object, or an array of either) selects the nsis-web target. */
+function hasNsisWebTarget(target: any): boolean {
+  if (target == null) {
+    return false
+  }
+  if (typeof target === "string") {
+    return target === "nsis-web"
+  }
+  if (Array.isArray(target)) {
+    return target.some(hasNsisWebTarget)
+  }
+  if (typeof target === "object") {
+    return target.target === "nsis-web"
+  }
+  return false
+}
+
+/** True when the build config produces an nsis-web installer (via win.target or the global target). */
+function detectNsisWebTarget(config: Record<string, any>): boolean {
+  return hasNsisWebTarget(config.win?.target) || hasNsisWebTarget(config.target)
+}
+
 /**
  * Applies all v26→v27 config transformations to a parsed config object.
  * Pure function — no I/O, safe to call in tests.
@@ -67,6 +97,7 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
   const c: Record<string, any> = JSON.parse(JSON.stringify(raw))
   const changes: MigrationChange[] = []
   const warnings: string[] = []
+  const advisories: string[] = []
 
   // ── 1. electronCompile ────────────────────────────────────────────────────
   if ("electronCompile" in c) {
@@ -322,7 +353,12 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
     migrateElectronDownload(c, changes, warnings)
   }
 
-  return { migrated: c, changes, warnings, modified: changes.length > 0 || warnings.length > 0 }
+  // Advisory (not a config change): nsis-web builders must opt back into web installers at runtime as of v27.
+  if (detectNsisWebTarget(c)) {
+    advisories.push(NSIS_WEB_ADVISORY)
+  }
+
+  return { migrated: c, changes, warnings, advisories, modified: changes.length > 0 || warnings.length > 0 }
 }
 
 /**
@@ -676,23 +712,29 @@ export async function migrateSchema(args: any): Promise<void> {
   const isToml = found.format === "toml"
 
   const result = migrateConfig(found.parsed)
-  const { migrated, warnings } = result
+  const { migrated, warnings, advisories } = result
   const changes = [...result.changes]
   if (found.rootDirectoriesMoved) {
     changes.push({ key: "directories", description: "moved package.json root-level directories → build.directories" })
   }
   const modified = result.modified || found.rootDirectoriesMoved === true
 
-  if (!modified) {
-    log.info(null, "config is already up to date — no changes needed")
-    return
-  }
-
   for (const change of changes) {
     log.info({ key: change.key }, change.description)
   }
   for (const warning of warnings) {
     log.warn(null, warning)
+  }
+  // Advisories are informational and surface even when nothing changed; they never cause a rewrite.
+  for (const advisory of advisories) {
+    log.warn(null, advisory)
+  }
+
+  if (!modified) {
+    if (advisories.length === 0) {
+      log.info(null, "config is already up to date — no changes needed")
+    }
+    return
   }
 
   if (isToml) {
@@ -725,14 +767,24 @@ async function migrateProgrammaticConfigFile(found: FoundConfig, location: strin
 
   const result = migrateProgrammaticSource(found.rawText, found.configFile!)
 
+  const printAdvisories = () => {
+    for (const advisory of result.advisories) {
+      log.warn(null, advisory)
+    }
+  }
+
   if (result.status === "unsupported") {
     log.warn({ file: location, reason: result.unsupportedReason }, "this programmatic config could not be auto-migrated; apply these changes manually:")
     printManualSteps()
+    printAdvisories()
     return
   }
 
   if (result.status === "no-op") {
-    log.info(null, "config is already up to date — no changes needed")
+    if (result.advisories.length === 0) {
+      log.info(null, "config is already up to date — no changes needed")
+    }
+    printAdvisories()
     return
   }
 
@@ -742,6 +794,7 @@ async function migrateProgrammaticConfigFile(found: FoundConfig, location: strin
   for (const warning of result.warnings) {
     log.warn(null, warning)
   }
+  printAdvisories()
 
   if (dryRun) {
     log.info(null, "dry run — no files written")

@@ -258,3 +258,38 @@ describe("migrateProgrammaticSource — warnings", () => {
     expect(result.code).toContain("mirrorOptions")
   })
 })
+
+describe("migrateProgrammaticSource — nsis-web advisory", () => {
+  test("nsis-web-only config is a no-op but still emits the advisory (code unchanged)", () => {
+    const source = `export default {\n  win: { target: "nsis-web" },\n}\n`
+    const result = run(source)
+    expect(result.status).toBe("no-op")
+    expect(result.advisories).toHaveLength(1)
+    expect(result.advisories[0]).toMatch(/nsis-web/)
+    expect(result.advisories[0]).toMatch(/disableWebInstaller = false/)
+    expect(result.code).toBe(source)
+  })
+
+  test("advisory is emitted alongside a real migration (status 'migrated')", () => {
+    const result = run(`export default {\n  electronCompile: true,\n  win: { target: "nsis-web" },\n}\n`)
+    expect(result.status).toBe("migrated")
+    expect(result.advisories).toHaveLength(1)
+    expect(result.code).not.toContain("electronCompile")
+  })
+
+  test("array target form is detected", () => {
+    const result = run(`export default {\n  win: { target: ["nsis", "nsis-web"] },\n}\n`)
+    expect(result.advisories).toHaveLength(1)
+  })
+
+  test("object target form is detected", () => {
+    const result = run(`export default {\n  win: { target: [{ target: "nsis-web", arch: "x64" }] },\n}\n`)
+    expect(result.advisories).toHaveLength(1)
+  })
+
+  test("non-web target yields no advisory", () => {
+    const result = run(`export default {\n  win: { target: "nsis" },\n}\n`)
+    expect(result.advisories).toHaveLength(0)
+    expect(result.status).toBe("no-op")
+  })
+})
