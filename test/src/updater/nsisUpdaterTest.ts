@@ -673,3 +673,40 @@ describe("NsisUpdater — disableWebInstaller tri-state", () => {
     }
   })
 })
+
+describe("NsisUpdater — package-type pre-seeds disableWebInstaller", () => {
+  // The installer writes resources/package-type at install time; TestAppAdapter (ElectronAppAdapter) resolves
+  // appUpdateConfigPath through process.resourcesPath, so seeding the marker there matches production exactly.
+  async function withResourcesMarker(content: string | null, fn: (disableWebInstaller: boolean) => void) {
+    const tmpDir = new TmpDir("package-type-unit")
+    const root = await tmpDir.getTempDir()
+    if (content != null) {
+      await fsExtra.outputFile(path.join(root, "package-type"), content)
+    }
+    const original = Object.getOwnPropertyDescriptor(process, "resourcesPath")
+    Object.defineProperty(process, "resourcesPath", { value: root, configurable: true, writable: true })
+    try {
+      const updater = await createNsisUpdater("1.0.0")
+      fn(updater.disableWebInstaller)
+    } finally {
+      if (original == null) {
+        delete (process as any).resourcesPath
+      } else {
+        Object.defineProperty(process, "resourcesPath", original)
+      }
+      await tmpDir.cleanup()
+    }
+  }
+
+  test("nsis-web marker seeds disableWebInstaller=false", config, async ({ expect }) => {
+    await withResourcesMarker("nsis-web", disableWebInstaller => expect(disableWebInstaller).toBe(false))
+  })
+
+  test("nsis marker leaves the secure default (disableWebInstaller=true)", config, async ({ expect }) => {
+    await withResourcesMarker("nsis", disableWebInstaller => expect(disableWebInstaller).toBe(true))
+  })
+
+  test("missing marker leaves the secure default (disableWebInstaller=true)", config, async ({ expect }) => {
+    await withResourcesMarker(null, disableWebInstaller => expect(disableWebInstaller).toBe(true))
+  })
+})

@@ -105,7 +105,7 @@ async function main() {
     // smart sharding
     __dirname + "/vitest-config/vitest-smart-reporter.ts",
     // output report/summary for printing in Test workflow OUTPUT_SUMMARY
-    ["json", { outputFile: `test-results/results-${reportId}.json` }]
+    ["json", { outputFile: `test-results/results-${reportId}.json` }],
   ].concat(process.env.VITEST_COVERAGE === "true" ? [["blob", { outputFile: `vitest-blobs/blob-${reportId}.json` }]] : [])
 
   // Opt-in v8 coverage (VITEST_COVERAGE=true, set by the collect-coverage workflow input). Each shard

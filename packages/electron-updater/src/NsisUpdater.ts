@@ -24,6 +24,27 @@ export class NsisUpdater extends BaseUpdater {
 
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
+    this.seedWebInstallerDefaultFromPackageType()
+  }
+
+  // nsis-web installs self-identify via a `resources/package-type` marker written by the installer.
+  // When present, pre-seed disableWebInstaller=false so web-installer updates work without the app
+  // wiring the flag by hand. This is a default only — an explicit `autoUpdater.disableWebInstaller = …`
+  // set later by the app still wins (the setter runs after construction). A plain `nsis` marker is left
+  // untouched so the secure `?? true` default and the v27 grace-period warning stay intact.
+  private seedWebInstallerDefaultFromPackageType(): void {
+    try {
+      const resourcesPath = process.resourcesPath
+      if (!resourcesPath) {
+        return
+      }
+      const packageTypePath = path.join(resourcesPath, "package-type")
+      if (fsExtra.existsSync(packageTypePath) && fsExtra.readFileSync(packageTypePath, "utf-8").trim() === "nsis-web") {
+        this.disableWebInstaller = false
+      }
+    } catch (_ignored) {
+      // best-effort: a missing/unreadable marker just leaves the secure default in place
+    }
   }
 
   protected _verifyUpdateCodeSignature: VerifyUpdateCodeSignature = (publisherNames: Array<string>, unescapedTempUpdateFile: string) =>

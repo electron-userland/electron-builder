@@ -994,8 +994,8 @@
               "type": "null"
             }
           ],
-          "default": "HFS+",
-          "description": "The filesystem for the DMG volume (e.g. `\"APFS\"` or `\"HFS+\"`)\nThis will be changed to APFS in the next major release, so it is recommended to set it explicitly to HFS+ if you want to keep using HFS+ (e.g. for better compatibility with older macOS versions)."
+          "default": "APFS",
+          "description": "The filesystem for the DMG volume (e.g. `\"APFS\"` or `\"HFS+\"`)\nAs of v27 this defaults to APFS. Set it explicitly to `\"HFS+\"` if you need compatibility with older macOS versions (pre-10.13 High Sierra cannot mount APFS volumes)."
         },
         "format": {
           "default": "UDZO",
