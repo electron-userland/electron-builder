@@ -207,6 +207,13 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
   readonly generateUpdatesFilesForAllChannels?: boolean
 
   /**
+   * Ed25519 signing of the auto-update manifest (`latest*.yml`). When configured, each manifest is signed
+   * and electron-updater verifies the signature (against the embedded public key) before downloading an update.
+   * Prefer supplying the key via the `EP_UPDATE_SIGN_KEY` / `EP_UPDATE_SIGN_KEY_FILE` environment variables in CI.
+   */
+  readonly updateManifest?: UpdateManifestSigningOptions | null
+
+  /**
    * The release info. Intended for command line usage:
    *
    * ```
@@ -234,6 +241,25 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
    * Defaults to the current machine's architecture.
    */
   readonly defaultArch?: string
+}
+
+export interface UpdateManifestSigningOptions {
+  /**
+   * Ed25519 private key in PEM (PKCS#8) format used to sign the update manifest.
+   * Secret — prefer the `EP_UPDATE_SIGN_KEY` environment variable in CI over committing this to config.
+   */
+  readonly signingKey?: string | null
+
+  /**
+   * Path to a file containing the Ed25519 private key (PEM, PKCS#8). Alternative to `signingKey`.
+   */
+  readonly signingKeyFile?: string | null
+
+  /**
+   * The Ed25519 public key (PEM or base64 SPKI) embedded into `app-update.yml` for the updater to verify with.
+   * Optional — when omitted it is derived automatically from the configured private key.
+   */
+  readonly publicKey?: string | null
 }
 
 export interface ReleaseInfo {

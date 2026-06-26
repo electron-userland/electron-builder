@@ -1,8 +1,9 @@
 import asyncPool from "tiny-async-pool"
-import { Arch, log, safeStringifyJson, serializeToYaml } from "builder-util"
+import { Arch, log, loadUpdateSigningKey, parsePrivateKey, safeStringifyJson, serializeToYaml, signUpdateManifest } from "builder-util"
 import { GenericServerOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
+import { KeyObject } from "crypto"
 import * as path from "path"
 import * as semver from "semver"
 import { Platform } from "../core.js"
@@ -219,6 +220,33 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
   }
 
   const releaseDate = new Date().toISOString()
+
+  // Resolve the Ed25519 signing key per task so each manifest is signed iff that platform's config
+  // requires it, mirroring the per-platform public-key embedding in PublishManager. Resolving from a
+  // single (e.g. first) task would mis-sign when `updateManifest` is set only in platform-specific
+  // options (e.g. `linux.updateManifest`): the platform's `app-update.yml` would carry a public key
+  // while its `latest*.yml` stayed unsigned, making the updater fail-closed with
+  // ERR_UPDATER_MANIFEST_NOT_SIGNED. Parsed keys are cached by PEM to avoid repeated work.
+  const signingKeyCache = new Map<string, KeyObject>()
+  let loggedSigning = false
+  const resolveSigningKey = (taskPackager: PlatformPackager<any>): KeyObject | null => {
+    const updateManifestConfig = taskPackager.platformOptions?.updateManifest ?? packager.config?.updateManifest
+    const signingKeyPem = loadUpdateSigningKey(updateManifestConfig ?? undefined)
+    if (signingKeyPem == null) {
+      return null
+    }
+    if (!loggedSigning) {
+      loggedSigning = true
+      log.info(null, "signing update manifests with Ed25519 key")
+    }
+    let signingKey = signingKeyCache.get(signingKeyPem)
+    if (signingKey == null) {
+      signingKey = parsePrivateKey(signingKeyPem)
+      signingKeyCache.set(signingKeyPem, signingKey)
+    }
+    return signingKey
+  }
+
   const concurrency = 4
   await asyncPool<UpdateInfoFileTask, void>(concurrency, Array.from(updateChannelFileToInfo.values()), async task => {
     const publishConfig = task.publishConfiguration
@@ -235,6 +263,13 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
 
     if (task.info.releaseDate == null) {
       task.info.releaseDate = releaseDate
+    }
+
+    // Sign last: `signature` must cover the final version/files/stagingPercentage. releaseDate is
+    // excluded from the signed payload, so setting it above does not affect the signature.
+    const signingKey = resolveSigningKey(task.packager)
+    if (signingKey != null) {
+      task.info.signature = signUpdateManifest(task.info, signingKey)
     }
 
     const fileContent = Buffer.from(serializeToYaml(task.info, false, true))

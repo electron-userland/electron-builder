@@ -1,4 +1,17 @@
-import { Arch, asArray, AsyncTaskManager, exists, InvalidConfigurationError, isEmptyOrSpaces, isPullRequest, log, safeStringifyJson, serializeToYaml } from "builder-util"
+import {
+  Arch,
+  asArray,
+  AsyncTaskManager,
+  derivePublicKeyPem,
+  exists,
+  InvalidConfigurationError,
+  isEmptyOrSpaces,
+  isPullRequest,
+  loadUpdateSigningKey,
+  log,
+  safeStringifyJson,
+  serializeToYaml,
+} from "builder-util"
 import {
   BitbucketOptions,
   CancellationToken,
@@ -265,6 +278,21 @@ export async function getAppUpdatePublishConfiguration(
     const publisherName = winPackager.isForceCodeSigningVerification ? await (await winPackager.signingManager.value).computedPublisherName.value : undefined
     if (publisherName != null) {
       publishConfig.publisherName = publisherName
+    }
+  }
+
+  // Embed the update-manifest verification public key so the updater can verify signed manifests.
+  // Explicit publicKey wins; otherwise derive it from the configured signing private key so the
+  // user only manages one secret.
+  const updateManifestConfig = packager.platformOptions.updateManifest ?? packager.config.updateManifest
+  if (updateManifestConfig != null && publishConfig.updateManifestPublicKey == null) {
+    if (updateManifestConfig.publicKey) {
+      publishConfig.updateManifestPublicKey = updateManifestConfig.publicKey
+    } else {
+      const signingKeyPem = loadUpdateSigningKey(updateManifestConfig)
+      if (signingKeyPem != null) {
+        publishConfig.updateManifestPublicKey = derivePublicKeyPem(signingKeyPem)
+      }
     }
   }
   return publishConfig

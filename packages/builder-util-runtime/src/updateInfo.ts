@@ -79,6 +79,13 @@ export interface UpdateInfo {
    * Same with os.release() value, this is a kernel version.
    */
   readonly minimumSystemVersion?: string
+
+  /**
+   * Base64-encoded Ed25519 signature over the manifest's integrity-critical fields, populated at
+   * publish time when update manifest signing is enabled. Verified by electron-updater against the
+   * configured `updateManifestPublicKey` before any download starts. See `canonicalizeForSigning`.
+   */
+  signature?: string
 }
 
 export interface WindowsUpdateInfo extends UpdateInfo {

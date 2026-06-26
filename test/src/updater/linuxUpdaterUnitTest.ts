@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { DebUpdater } from "electron-updater"
+import { DebUpdater, RpmUpdater } from "electron-updater"
 import type { AppAdapter } from "electron-updater/src/AppAdapter"
 
 const stubApp: AppAdapter = {
@@ -155,6 +155,55 @@ describe("LinuxUpdater unit tests", { sequential: true }, () => {
     it("strips carriage return characters", () => {
       setRawPath("/tmp/update\rdeb")
       expect((updater as any).installerPath).toBe("/tmp/updatedeb")
+    })
+  })
+
+  describe("requireSignedLinuxPackages flag gating (A2)", () => {
+    const capture = () => {
+      const calls: string[][] = []
+      return { calls, runner: (cmd: string[]) => void calls.push(cmd) }
+    }
+    const logger = { info: () => {}, warn: () => {}, error: () => {}, debug: () => {} } as any
+
+    it("apt: includes --allow-unauthenticated by default and warns", () => {
+      const { calls, runner } = capture()
+      const warnSpy = vi.spyOn(logger, "warn")
+      DebUpdater.installWithCommandRunner("apt", "/tmp/u.deb", runner, logger, false)
+      expect(calls[0]).toContain("--allow-unauthenticated")
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("without distro signature verification"))
+    })
+
+    it("apt: omits --allow-unauthenticated when requireSigned is true", () => {
+      const { calls, runner } = capture()
+      DebUpdater.installWithCommandRunner("apt", "/tmp/u.deb", runner, logger, true)
+      expect(calls[0]).not.toContain("--allow-unauthenticated")
+      expect(calls[0]).toContain("/tmp/u.deb")
+    })
+
+    it("dnf: includes --nogpgcheck by default, omits it when requireSigned", () => {
+      const def = capture()
+      RpmUpdater.installWithCommandRunner("dnf", "/tmp/u.rpm", def.runner, logger, false)
+      expect(def.calls[0]).toContain("--nogpgcheck")
+
+      const signed = capture()
+      RpmUpdater.installWithCommandRunner("dnf", "/tmp/u.rpm", signed.runner, logger, true)
+      expect(signed.calls[0]).not.toContain("--nogpgcheck")
+    })
+
+    it("zypper: gates --allow-unsigned-rpm on requireSigned", () => {
+      const signed = capture()
+      RpmUpdater.installWithCommandRunner("zypper", "/tmp/u.rpm", signed.runner, logger, true)
+      expect(signed.calls[0]).not.toContain("--allow-unsigned-rpm")
+    })
+
+    it("rpm: drops --nodeps when requireSigned is true", () => {
+      const def = capture()
+      RpmUpdater.installWithCommandRunner("rpm", "/tmp/u.rpm", def.runner, logger, false)
+      expect(def.calls[0]).toContain("--nodeps")
+
+      const signed = capture()
+      RpmUpdater.installWithCommandRunner("rpm", "/tmp/u.rpm", signed.runner, logger, true)
+      expect(signed.calls[0]).not.toContain("--nodeps")
     })
   })
 

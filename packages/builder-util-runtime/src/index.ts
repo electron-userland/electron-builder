@@ -44,6 +44,7 @@ export {
 export { retry, sleep } from "./retry.js"
 export { parseDn } from "./rfc2253Parser.js"
 export { BlockMapDataHolder, PackageFileInfo, ReleaseNoteInfo, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo } from "./updateInfo.js"
+export { canonicalizeForSigning, parsePublicKey, verifyManifestSignature, UPDATE_MANIFEST_SIGNATURE_VERSION } from "./updateManifestSignature.js"
 export { UUID } from "./uuid.js"
 export { parseXml, XElement } from "./xml.js"
 export { isValidKey, mapToObject, asArray, Nullish, deepAssign, objectToArgs } from "./objects.js"

@@ -41,7 +41,7 @@ export class DebUpdater extends LinuxUpdater {
     const priorityList = ["dpkg", "apt"]
     const packageManager = this.detectPackageManager(priorityList)
     try {
-      DebUpdater.installWithCommandRunner(packageManager as any, installerPath, this.runCommandWithSudoIfNeeded.bind(this), this._logger)
+      DebUpdater.installWithCommandRunner(packageManager as any, installerPath, this.runCommandWithSudoIfNeeded.bind(this), this._logger, this.requireSignedLinuxPackages)
     } catch (error: any) {
       this.dispatchError(error)
       return false
@@ -52,7 +52,13 @@ export class DebUpdater extends LinuxUpdater {
     return true
   }
 
-  static installWithCommandRunner(packageManager: "dpkg" | "apt", installerPath: string, commandRunner: (commandWithArgs: string[]) => void, logger: Logger) {
+  static installWithCommandRunner(
+    packageManager: "dpkg" | "apt",
+    installerPath: string,
+    commandRunner: (commandWithArgs: string[]) => void,
+    logger: Logger,
+    requireSigned = false
+  ) {
     if (packageManager === "dpkg") {
       try {
         // Primary: Install unsigned .deb directly with dpkg
@@ -66,15 +72,17 @@ export class DebUpdater extends LinuxUpdater {
     } else if (packageManager === "apt") {
       // Fallback: Use apt for direct install (less safe for unsigned .deb)
       logger.warn("Using apt to install a local .deb. This may fail for unsigned packages unless properly configured.")
-      commandRunner([
-        "apt",
-        "install",
-        "-y",
-        "--allow-unauthenticated", // needed for unsigned .debs
-        "--allow-downgrades", // allow lower version installs
-        "--allow-change-held-packages",
-        installerPath,
-      ])
+      const args = ["apt", "install", "-y", "--allow-downgrades", "--allow-change-held-packages"]
+      if (requireSigned) {
+        logger.info("requireSignedLinuxPackages is enabled — apt will enforce package signature verification")
+      } else {
+        logger.warn(
+          "installing .deb without distro signature verification (--allow-unauthenticated). Artifact integrity is still checked via the update manifest sha512. Set requireSignedLinuxPackages=true to enforce distro signatures."
+        )
+        args.push("--allow-unauthenticated") // needed for unsigned .debs
+      }
+      args.push(installerPath)
+      commandRunner(args)
     } else {
       throw new Error(`Package manager ${packageManager} not supported`)
     }
