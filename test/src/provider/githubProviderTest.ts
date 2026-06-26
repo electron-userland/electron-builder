@@ -81,13 +81,20 @@ test("allowPrerelease=false - uses /releases/latest for tag resolution", async (
   expect(secondCallPath).toContain("/releases/latest")
 })
 
-// allowPrerelease=true with stable current version: takes first feed entry directly (no getLatestTagName call)
-test("allowPrerelease=true with stable current - picks first entry from Atom feed", async ({ expect }) => {
+// allowPrerelease=true with stable current version: takes the newest available stable or prerelease version (prerelease in this case)
+test("allowPrerelease=true with stable current - picks the newest available valid release (the beta release in this case)", async ({ expect }) => {
   const requestSpy = createMockRequest()
   const updater = await createPublicUpdater(requestSpy, "0.0.1")
   updater.allowPrerelease = true
 
-  requestSpy.mockResolvedValueOnce(mockAtomFeed([{ tag: BETA_TAG, title: BETA_TAG, content: "Beta notes" }])).mockResolvedValueOnce(mockYaml(BETA_VERSION))
+  requestSpy
+    .mockResolvedValueOnce(
+      mockAtomFeed([
+        { tag: "some-package@2.2.0", title: "Some Package v2.2.0", content: "Some Package notes" },
+        { tag: BETA_TAG, title: BETA_TAG, content: "Beta notes" },
+      ])
+    )
+    .mockResolvedValueOnce(mockYaml(BETA_VERSION))
 
   const result = await updater.checkForUpdates()
 
@@ -95,6 +102,32 @@ test("allowPrerelease=true with stable current - picks first entry from Atom fee
   expect(requestSpy).toHaveBeenCalledTimes(2)
   expect((result?.updateInfo as any).tag).toBe(BETA_TAG)
   expect(result?.updateInfo.version).toBe(BETA_VERSION)
+})
+
+// allowPrerelease=true with stable current version: takes the newest available stable or prerelease version (stable in this case)
+test("allowPrerelease=true with stable current - picks the newest available valid release (the stable 5.1.0 release in this case)", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPublicUpdater(requestSpy, "5.0.0")
+  updater.allowPrerelease = true
+
+  const newVersion = "5.1.0"
+  const newVersionTag = `v${newVersion}`
+
+  requestSpy
+    .mockResolvedValueOnce(
+      mockAtomFeed([
+        { tag: "some-tool@3.2.0", title: "Some Tool v3.2.0", content: "Some Tool notes" },
+        { tag: newVersionTag, title: newVersionTag, content: "New stable release notes" },
+      ])
+    )
+    .mockResolvedValueOnce(mockYaml("5.1.0"))
+
+  const result = await updater.checkForUpdates()
+
+  // only 2 calls: feed + channel file (no getLatestTagName)
+  expect(requestSpy).toHaveBeenCalledTimes(2)
+  expect((result?.updateInfo as any).tag).toBe(newVersionTag)
+  expect(result?.updateInfo.version).toBe(newVersion)
 })
 
 // allowPrerelease=true with beta channel current: loops feed to find matching beta entry
@@ -145,6 +178,90 @@ test("allowPrerelease=true - no matching channel entry throws ERR_UPDATER_NO_PUB
   requestSpy.mockResolvedValueOnce(mockAtomFeed([{ tag: "v2.0.0-nightly.1", title: "v2.0.0-nightly.1" }]))
 
   await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_NO_PUBLISHED_VERSIONS" })
+})
+
+// allowPrerelease=true, no channel: feed has only non-semver tags (e.g. monorepo package releases)
+// → no valid release to offer → ERR_UPDATER_NO_PUBLISHED_VERSIONS
+test("allowPrerelease=true with only non-semver feed entries - throws ERR_UPDATER_NO_PUBLISHED_VERSIONS", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPublicUpdater(requestSpy, "0.0.1")
+  updater.allowPrerelease = true
+
+  requestSpy.mockResolvedValueOnce(
+    mockAtomFeed([
+      { tag: "some-package@1.2.3", title: "some-package@1.2.3" },
+      { tag: "other-tool@4.5.6", title: "other-tool@4.5.6" },
+    ])
+  )
+
+  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_NO_PUBLISHED_VERSIONS" })
+})
+
+// allowPrerelease=true, no channel, stable current NEWER than every release: the newest valid release
+// is still selected and AppUpdater reports no update gracefully (no throw, no spurious downgrade offer)
+test("allowPrerelease=true with stable current newer than all releases - reports no update gracefully", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPublicUpdater(requestSpy, "2.0.0")
+  updater.allowPrerelease = true
+
+  requestSpy
+    .mockResolvedValueOnce(
+      mockAtomFeed([
+        { tag: "v1.0.0", title: "v1.0.0" },
+        { tag: BETA_TAG, title: BETA_TAG }, // newest valid release, but still older than current 2.0.0
+      ])
+    )
+    .mockResolvedValueOnce(mockYaml(BETA_VERSION))
+
+  // listen to a superset of outcomes so the assertion also proves no `error`/`update-available` fired
+  const events: Array<string> = []
+  for (const eventName of ["checking-for-update", "update-available", "update-not-available", "error"] as const) {
+    updater.addListener(eventName, () => events.push(eventName))
+  }
+
+  const result = await updater.checkForUpdates()
+  expect(result?.isUpdateAvailable).toBe(false)
+  expect((result?.updateInfo as any).tag).toBe(BETA_TAG)
+  // newest available release is older than current → AppUpdater takes the graceful no-update path
+  expect(events).toEqual(["checking-for-update", "update-not-available"])
+})
+
+// allowPrerelease=false: the latest tag (from /releases/latest) is absent from the truncated Atom feed
+// → the update still resolves using the API tag (regression for monorepos where the latest release is
+// pushed past the ~10 most recent feed entries; previously threw ERR_UPDATER_NO_PUBLISHED_VERSIONS)
+test("allowPrerelease=false - resolves update when latest tag is missing from the Atom feed", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPublicUpdater(requestSpy)
+  updater.allowPrerelease = false
+
+  requestSpy
+    .mockResolvedValueOnce(mockAtomFeed([{ tag: "other-package@9.9.9", title: "Unrelated 9.9.9" }])) // feed does NOT contain STABLE_TAG
+    .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG)) // /releases/latest returns the real latest tag
+    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+
+  // positive counterpart of the graceful path: a resolvable update must reach `update-available`, not `error`
+  const events: Array<string> = []
+  for (const eventName of ["checking-for-update", "update-available", "update-not-available", "error"] as const) {
+    updater.addListener(eventName, () => events.push(eventName))
+  }
+
+  const result = await updater.checkForUpdates()
+  const info = result?.updateInfo as UpdateInfo & { tag: string }
+  expect(info.tag).toBe(STABLE_TAG)
+  expect(info.version).toBe(STABLE_VERSION)
+  expect(events).toEqual(["checking-for-update", "update-available"])
+})
+
+// security: a path-traversal tag (e.g. from a malicious/compromised GitHub Enterprise /releases/latest
+// response) must not be interpolated into the download URL
+test("path-traversal tag - throws ERR_UPDATER_INVALID_TAG instead of building a traversing download URL", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPublicUpdater(requestSpy)
+  updater.allowPrerelease = false
+
+  requestSpy.mockResolvedValueOnce(mockAtomFeed([{ tag: STABLE_TAG, title: STABLE_TAG }])).mockResolvedValueOnce(mockReleaseJson("../../../../evil/repo/releases/download/v1.0.0"))
+
+  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_TAG" })
 })
 
 // allowPrerelease=false: channel file 404 → ERR_UPDATER_CHANNEL_FILE_NOT_FOUND (no fallback)
