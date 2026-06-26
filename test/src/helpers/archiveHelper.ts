@@ -21,3 +21,21 @@ export async function archiveContains(archivePath: string, entry: string): Promi
   const entries = await listArchiveEntries(archivePath)
   return entries.some(it => it === normalized || it.endsWith("/" + normalized))
 }
+
+// Branch/exec filters the self-vendored install-time Nsis7z decoder cannot read — every 7z filter
+// except plain LZMA2/Copy and the single-stream BCJ filter the fix pins to. An NSIS app archive
+// whose entries use any of these would have those entries silently dropped at install time (#9983).
+// `BCJ` is intentionally excluded (word boundaries keep it from matching the unrelated `BCJ2`).
+export const NON_DECODABLE_NSIS_FILTER = /\b(BCJ2|ARM64|ARMT|ARM|IA64|PPC|SPARC|DELTA)\b/
+
+// Lists the 7-Zip codec/method strings reported for the archive (the `Method = …` lines of the
+// technical listing — one per entry plus an archive-level summary). Used to assert that an NSIS app
+// package contains no CPU branch filter the install-time Nsis7z decoder can't read (#9983).
+export async function listArchiveMethods(archivePath: string): Promise<Array<string>> {
+  const stdout = await exec(await getPath7za(), ["l", "-slt", archivePath])
+  return stdout
+    .split(/\r?\n/)
+    .filter(line => line.startsWith("Method = "))
+    .map(line => line.slice("Method = ".length).trim())
+    .filter(method => method.length > 0)
+}
