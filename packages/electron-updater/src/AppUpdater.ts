@@ -93,6 +93,21 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   allowDowngrade = false
 
+  /**
+   * *Linux only.* Whether to allow installing unverified (unsigned / failing-GPG) `.deb` and `.rpm` packages during auto-update.
+   *
+   * electron-builder does not sign Linux packages, so this defaults to `true` to preserve working auto-updates: the
+   * package manager's signature/GPG checks are bypassed (`--allow-unauthenticated` for apt, `--allow-unsigned-rpm` for
+   * zypper, `--nogpgcheck` for dnf/yum), which is the historical behavior.
+   *
+   * If you sign your `.deb`/`.rpm` packages through your own pipeline and the target systems trust your keys, set this
+   * to `false` to enforce verification: a package that is not properly signed will then fail to install rather than
+   * installing as root without verification.
+   *
+   * @default true
+   */
+  allowUnverifiedLinuxPackages = true
+
   private _disableWebInstaller: boolean | undefined = undefined
 
   /**
@@ -525,7 +540,6 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       this.emit("update-not-available", updateInfo)
       return {
         isUpdateAvailable: false,
-        versionInfo: updateInfo,
         updateInfo,
       }
     }
@@ -537,7 +551,6 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     //noinspection ES6MissingAwait
     return {
       isUpdateAvailable: true,
-      versionInfo: updateInfo,
       updateInfo,
       cancellationToken,
       downloadPromise: this.autoDownload ? this.downloadUpdate(cancellationToken) : null,

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { DebUpdater } from "electron-updater"
+import { DebUpdater, RpmUpdater } from "electron-updater"
 import type { AppAdapter } from "electron-updater/src/AppAdapter"
 
 const stubApp: AppAdapter = {
@@ -195,6 +195,68 @@ describe("LinuxUpdater unit tests", { sequential: true }, () => {
       ;(updater as any).runCommandWithSudoIfNeeded(["dpkg", "-i", "/tmp/test.deb"])
       const installComment = sudoWithArgsSpy.mock.calls[0][0] as string
       expect(installComment).toContain("My App 2.0")
+    })
+  })
+})
+
+describe("Linux package signature-verification gating (A2)", () => {
+  const noopLogger = { info() {}, warn() {}, error() {}, debug() {} } as any
+
+  function capture() {
+    const calls: string[][] = []
+    return { runner: (args: string[]) => calls.push(args), calls }
+  }
+
+  it("AppUpdater defaults allowUnverifiedLinuxPackages to true (electron-builder does not sign Linux packages)", () => {
+    expect((new DebUpdater(null, stubApp) as any).allowUnverifiedLinuxPackages).toBe(true)
+  })
+
+  describe("DebUpdater apt branch", () => {
+    it("omits --allow-unauthenticated when verification is enforced (allowUnverified=false)", () => {
+      const { runner, calls } = capture()
+      DebUpdater.installWithCommandRunner("apt", "/tmp/u.deb", false, runner, noopLogger)
+      expect(calls[0]).not.toContain("--allow-unauthenticated")
+    })
+
+    it("includes --allow-unauthenticated when opted in", () => {
+      const { runner, calls } = capture()
+      DebUpdater.installWithCommandRunner("apt", "/tmp/u.deb", true, runner, noopLogger)
+      expect(calls[0]).toContain("--allow-unauthenticated")
+    })
+  })
+
+  describe("RpmUpdater", () => {
+    it("zypper omits --allow-unsigned-rpm when verification is enforced (allowUnverified=false)", () => {
+      const { runner, calls } = capture()
+      RpmUpdater.installWithCommandRunner("zypper", "/tmp/u.rpm", false, runner, noopLogger)
+      expect(calls[0]).not.toContain("--allow-unsigned-rpm")
+    })
+
+    it("zypper includes --allow-unsigned-rpm when opted in", () => {
+      const { runner, calls } = capture()
+      RpmUpdater.installWithCommandRunner("zypper", "/tmp/u.rpm", true, runner, noopLogger)
+      expect(calls[0]).toContain("--allow-unsigned-rpm")
+    })
+
+    it.each(["dnf", "yum"] as const)("%s omits --nogpgcheck when verification is enforced (allowUnverified=false)", pm => {
+      const { runner, calls } = capture()
+      RpmUpdater.installWithCommandRunner(pm, "/tmp/u.rpm", false, runner, noopLogger)
+      expect(calls[0]).not.toContain("--nogpgcheck")
+    })
+
+    it.each(["dnf", "yum"] as const)("%s includes --nogpgcheck when opted in", pm => {
+      const { runner, calls } = capture()
+      RpmUpdater.installWithCommandRunner(pm, "/tmp/u.rpm", true, runner, noopLogger)
+      expect(calls[0]).toContain("--nogpgcheck")
+    })
+
+    it("rpm fallback keeps --nodeps regardless of opt-in (dependency bypass, not signature)", () => {
+      const secure = capture()
+      RpmUpdater.installWithCommandRunner("rpm", "/tmp/u.rpm", false, secure.runner, noopLogger)
+      expect(secure.calls[0]).toContain("--nodeps")
+      const opted = capture()
+      RpmUpdater.installWithCommandRunner("rpm", "/tmp/u.rpm", true, opted.runner, noopLogger)
+      expect(opted.calls[0]).toContain("--nodeps")
     })
   })
 })
