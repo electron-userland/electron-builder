@@ -225,11 +225,11 @@ test("emitArtifactCreated is called once per unique yml file", async ({ expect }
 
 // ── createUpdateInfoTasks unit tests ─────────────────────────────────────────
 
-function makePlatformPackager(): any {
+function makePlatformPackager(electronUpdaterCompatibility = ">=2.16"): any {
   return {
     appInfo: { version: "1.0.0" },
     platform: Platform.WINDOWS,
-    platformOptions: { releaseInfo: undefined, electronUpdaterCompatibility: ">=2.16", generateUpdatesFilesForAllChannels: undefined },
+    platformOptions: { releaseInfo: undefined, electronUpdaterCompatibility, generateUpdatesFilesForAllChannels: undefined },
     config: { releaseInfo: undefined, generateUpdatesFilesForAllChannels: undefined },
     info: {},
     getResource: () => Promise.resolve(null),
@@ -258,7 +258,7 @@ test("createUpdateInfoTasks sets arch null for universal installer", async ({ ex
   })
 })
 
-test("createUpdateInfoTasks GitHub provider overrides url and path with safeArtifactName", async ({ expect }) => {
+test("createUpdateInfoTasks GitHub provider overrides files[0].url with safeArtifactName and omits legacy path under modern compatibility", async ({ expect }) => {
   await withTmpDir(async dir => {
     const artifactFile = path.join(dir, "App-1.0.0.exe")
     await fsp.writeFile(artifactFile, "fake")
@@ -272,7 +272,28 @@ test("createUpdateInfoTasks GitHub provider overrides url and path with safeArti
     const tasks = await createUpdateInfoTasks(event, [{ provider: "github", repo: "owner/repo" }] as any)
     expect(tasks).toHaveLength(1)
     expect(tasks[0].info.files[0].url).toBe("app-1.0.0.exe")
+    // default electronUpdaterCompatibility (>=2.16) targets modern clients, so no legacy top-level path is emitted
+    expect((tasks[0].info as any).path).toBeUndefined()
+  })
+})
+
+test("createUpdateInfoTasks emits legacy top-level path/sha512 when electronUpdaterCompatibility includes 1.x clients", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App-1.0.0.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    const event: any = {
+      file: artifactFile,
+      arch: null,
+      safeArtifactName: "app-1.0.0.exe",
+      packager: makePlatformPackager(">=1.0.0"),
+      target: { outDir: dir },
+    }
+    const tasks = await createUpdateInfoTasks(event, [{ provider: "github", repo: "owner/repo" }] as any)
+    expect(tasks).toHaveLength(1)
+    expect(tasks[0].info.files[0].url).toBe("app-1.0.0.exe")
+    // legacy compatibility range -> top-level path/sha512 mirror the file descriptor
     expect((tasks[0].info as any).path).toBe("app-1.0.0.exe")
+    expect((tasks[0].info as any).sha512).toBeDefined()
   })
 })
 
