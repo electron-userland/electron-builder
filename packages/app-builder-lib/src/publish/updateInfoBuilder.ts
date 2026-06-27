@@ -121,12 +121,17 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
 
     let info = sharedInfo
     // noinspection JSDeprecatedSymbols
-    if (isElectronUpdater1xCompatibility && packager.platform === Platform.WINDOWS) {
+    if (isElectronUpdater1xCompatibility) {
+      // legacy top-level path/sha512 (and Windows sha2) for electron-updater 1.x – 2.15.0; modern clients read files[]
       info = {
         ...info,
+        path: info.files[0].url,
+        sha512: info.files[0].sha512,
       }
-      // noinspection JSDeprecatedSymbols
-      ;(info as WindowsUpdateInfo).sha2 = await sha2.value
+      if (packager.platform === Platform.WINDOWS) {
+        // noinspection JSDeprecatedSymbols
+        ;(info as WindowsUpdateInfo).sha2 = await sha2.value
+      }
     }
 
     if (event.safeArtifactName != null && publishConfiguration.provider === "github") {
@@ -135,7 +140,8 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
       info = {
         ...info,
         files: newFiles,
-        path: event.safeArtifactName,
+        // legacy top-level path mirrors files[0].url; only emitted for 1.x compatibility
+        ...(isElectronUpdater1xCompatibility ? { path: event.safeArtifactName } : {}),
       }
     }
 
@@ -176,10 +182,6 @@ async function createUpdateInfo(version: string, event: ArtifactCreated, release
     version,
     // @ts-ignore
     files,
-    // @ts-ignore
-    path: url /* backward compatibility, electron-updater 1.x - electron-updater 2.15.0 */,
-    // @ts-ignore
-    sha512 /* backward compatibility, electron-updater 1.x - electron-updater 2.15.0 */,
     ...(releaseInfo as UpdateInfo),
   }
 
