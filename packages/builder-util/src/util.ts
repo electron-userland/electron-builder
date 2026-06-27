@@ -104,10 +104,14 @@ export function filterSensitiveEnv(env: Record<string, string | undefined>): Rec
 }
 
 function getProcessEnv(env: Record<string, string | undefined> | Nullish): NodeJS.ProcessEnv | undefined {
-  // Windows: passing a filtered env to execFile drops critical system vars (PATH, SYSTEMROOT, TEMP)
-  // that many tools require. Credential stripping is therefore not applied on Windows.
+  // Windows does not need the LC_* locale normalisation below, but child processes (signtool, makeappx,
+  // package managers) MUST still have credential env vars (CSC_KEY_PASSWORD, tokens, etc.) stripped before they
+  // inherit them. Signing tools receive the certificate password as an explicit CLI argument (e.g. signtool
+  // `/p <password>`), never via the environment, so stripping these keys does not break signing.
+  // stripSensitiveEnvVars only removes credential-named keys and preserves required Windows system vars
+  // (PATH, SYSTEMROOT, TEMP, etc.).
   if (process.platform === "win32") {
-    return env == null ? undefined : env
+    return stripSensitiveEnvVars(env == null ? process.env : env)
   }
 
   // When no explicit env is provided, strip credential env vars so child processes
