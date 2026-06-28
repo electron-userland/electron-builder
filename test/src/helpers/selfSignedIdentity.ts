@@ -17,7 +17,7 @@ export interface SelfSignedIdentity {
   certPem?: string
   /**
    * DER-encoded X.509 certificate, base64-encoded. Present only for generated identities (see {@link certPem}).
-   * Required by {@link installUserTrustForCertificate}.
+   * Required by {@link installAdminTrustForCertificate}.
    */
   certDerBase64?: string
   /**
@@ -31,6 +31,15 @@ export interface SelfSignedIdentity {
 export type GeneratedSelfSignedIdentity = SelfSignedIdentity & Required<Pick<SelfSignedIdentity, "certPem" | "certDerBase64" | "sha1Fingerprint">>
 
 const PASSWORD = "eb-self-signed"
+
+/**
+ * Hard timeout (ms) for the `security` trust calls. Belt-and-suspenders: the admin-domain + passwordless-sudo
+ * approach below is non-interactive, but if a runner ever lacks passwordless sudo (or `security` blocks for any
+ * other reason) we want the test to fail in ~60s instead of hanging for the full 900s vitest timeout. builder-util's
+ * `exec` forwards its options object straight to Node's `execFile`, which honours `timeout` by killing the child and
+ * rejecting once it elapses — a clean guard with no reliance on a `timeout`/`gtimeout` binary (absent on macOS).
+ */
+const SECURITY_EXEC_TIMEOUT_MS = 60_000
 
 export interface SelfSignedIdentityOptions {
   /**
@@ -92,7 +101,7 @@ extendedKeyUsage = critical,codeSigning
   const p12Base64 = (await readFile(p12Path)).toString("base64")
   const certPem = (await readFile(certPath)).toString("utf8")
 
-  // DER form + SHA-1 fingerprint, needed to key the macOS user-domain trust setting (see installUserTrustForCertificate).
+  // DER form + SHA-1 fingerprint, needed to key the macOS admin-domain trust setting (see installAdminTrustForCertificate).
   const derPath = path.join(dir, "cert.der")
   await exec("openssl", ["x509", "-inform", "PEM", "-in", certPath, "-outform", "DER", "-out", derPath])
   const certDerBase64 = (await readFile(derPath)).toString("base64")
@@ -113,34 +122,44 @@ async function fingerprintOfDerCert(derCertPath: string): Promise<string> {
 }
 
 /**
- * macOS-only. Installs a USER-domain trust setting for the given self-signed certificate so that it validates
- * as an OS-trusted code-signing identity (no `-d`/admin domain, hence no sudo). The setting is keyed on the
- * certificate's SHA-1 fingerprint and grants a `CodeSigning` trust-policy result. Ported from electron/packager's
- * test/ci/codesign/{gen-trust.js,trust.xml}.
+ * macOS-only. Installs an ADMIN-domain trust setting for the given self-signed certificate so that it validates
+ * as an OS-trusted code-signing identity. The setting is keyed on the certificate's SHA-1 fingerprint and grants
+ * a `CodeSigning` trust-policy result. Ported from electron/packager's test/ci/codesign/{gen-trust.js,trust.xml}.
  *
- * Pair every call with {@link removeUserTrustForCertificate} (typically in a `finally`) to leave the user's
- * trust store clean.
+ * The import MUST run in the admin domain (`-d`) via passwordless `sudo`: modifying USER-domain trust pops a
+ * SecurityAgent GUI auth prompt that can never be answered on a headless CI runner, so `security` blocks forever
+ * (the orphaned-process / 900s-timeout hang this replaces). The admin-domain import via passwordless `sudo` —
+ * which GitHub-hosted macOS runners provide — is fully non-interactive, exactly as electron/packager does it.
  *
- * @returns the SHA-1 fingerprint used as the trust-store key (pass it to `removeUserTrustForCertificate`).
+ * Pair every call with {@link removeAdminTrustForCertificate} (typically in a `finally`) to leave the trust
+ * store clean.
+ *
+ * @returns the SHA-1 fingerprint used as the trust-store key.
  */
-export async function installUserTrustForCertificate(identity: Required<Pick<SelfSignedIdentity, "sha1Fingerprint" | "certDerBase64">>, tmpDir: TmpDir): Promise<string> {
+export async function installAdminTrustForCertificate(identity: Required<Pick<SelfSignedIdentity, "sha1Fingerprint" | "certDerBase64">>, tmpDir: TmpDir): Promise<string> {
   const dir = await tmpDir.getTempDir({ prefix: "self-signed-trust" })
   const plistPath = path.join(dir, "trust.plist")
 
   const certDer = Buffer.from(identity.certDerBase64, "base64")
   await outputFile(plistPath, buildTrustPlist(identity.sha1Fingerprint, certDer))
-  // user domain (no `-d`): no sudo, only affects the current user's trust store.
-  await exec("/usr/bin/security", ["trust-settings-import", plistPath])
+  // admin domain (`-d`) via passwordless sudo: non-interactive, no SecurityAgent GUI prompt.
+  await exec("sudo", ["security", "trust-settings-import", "-d", plistPath], { timeout: SECURITY_EXEC_TIMEOUT_MS })
   return identity.sha1Fingerprint
 }
 
 /**
- * macOS-only. Removes the USER-domain trust setting previously installed for `fingerprint`
- * (see {@link installUserTrustForCertificate}). Safe to call even if no such setting exists.
+ * macOS-only. Removes the ADMIN-domain trust setting previously installed for `identity`
+ * (see {@link installAdminTrustForCertificate}). Safe to call even if no such setting exists.
+ *
+ * Undoes an admin-domain `trust-settings-import` with `sudo security remove-trusted-cert -d <certDerFile>`,
+ * which deletes the cert's admin-domain trust entry. The cert DER is written to a temp file in `tmpDir`.
  */
-export async function removeUserTrustForCertificate(fingerprint: string): Promise<void> {
-  // `trust-settings-remove` exits non-zero if the cert has no user trust setting; ignore that so teardown is idempotent.
-  await exec("/usr/bin/security", ["trust-settings-remove", fingerprint]).catch(() => {
+export async function removeAdminTrustForCertificate(identity: Required<Pick<SelfSignedIdentity, "certDerBase64">>, tmpDir: TmpDir): Promise<void> {
+  const dir = await tmpDir.getTempDir({ prefix: "self-signed-untrust" })
+  const certDerPath = path.join(dir, "cert.der")
+  await outputFile(certDerPath, Buffer.from(identity.certDerBase64, "base64"))
+  // `remove-trusted-cert -d` exits non-zero if the cert has no admin trust setting; ignore that so teardown is idempotent.
+  await exec("sudo", ["security", "remove-trusted-cert", "-d", certDerPath], { timeout: SECURITY_EXEC_TIMEOUT_MS }).catch(() => {
     /* nothing to remove */
   })
 }

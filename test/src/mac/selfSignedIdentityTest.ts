@@ -4,7 +4,7 @@ import { exec, TmpDir } from "builder-util"
 import { copyFile } from "fs/promises"
 import * as path from "path"
 import { afterEach } from "vitest"
-import { createSelfSignedCodeSigningIdentity, installUserTrustForCertificate, removeUserTrustForCertificate } from "../helpers/selfSignedIdentity.js"
+import { createSelfSignedCodeSigningIdentity, installAdminTrustForCertificate, removeAdminTrustForCertificate } from "../helpers/selfSignedIdentity.js"
 
 // Verifies the untrusted self-signed identity seam: electron-builder's identity discovery ignores an
 // untrusted self-signed certificate by default, and accepts it only when the in-process test-only seam is
@@ -54,10 +54,10 @@ describe.ifMac("self-signed identity discovery", { sequential: true }, () => {
   })
 })
 
-// Optional real-OS-trust path: instead of the in-process test seam, install a USER-domain trust setting (no
-// sudo) so the self-signed identity validates exactly like a real one. With it in place, `codesign` accepts the
-// identity for code signing and `security find-identity -v -p codesigning` lists it as valid. This complements,
-// rather than replaces, the untrusted-seam tests above.
+// Optional real-OS-trust path: instead of the in-process test seam, install an ADMIN-domain trust setting (via
+// passwordless sudo) so the self-signed identity validates exactly like a real one. With it in place, `codesign`
+// accepts the identity for code signing and `security find-identity -v -p codesigning` lists it as valid. This
+// complements, rather than replaces, the untrusted-seam tests above.
 describe.ifMac("self-signed identity OS trust", { sequential: true }, () => {
   const qualifier = "EB Test OS Trust (TEAMID1234)"
   const commonName = `Developer ID Application: ${qualifier}`
@@ -65,21 +65,21 @@ describe.ifMac("self-signed identity OS trust", { sequential: true }, () => {
   async function createTrustedSelfSignedKeychain(tmpDir: TmpDir) {
     // legacy SHA1/3DES p12 — required for Apple's `security import` (used by createKeychain below).
     const identity = await createSelfSignedCodeSigningIdentity(commonName, tmpDir, { legacy: true })
-    // Install user-domain trust BEFORE importing so the identity is OS-trusted once it lands in the keychain.
-    const fingerprint = await installUserTrustForCertificate(identity, tmpDir)
+    // Install admin-domain trust BEFORE importing so the identity is OS-trusted once it lands in the keychain.
+    await installAdminTrustForCertificate(identity, tmpDir)
     const { keychainFile } = await createKeychain({
       tmpDir,
       cscLink: identity.p12Base64,
       cscKeyPassword: identity.password,
       currentDir: process.cwd(),
     })
-    return { identity, fingerprint, keychainFile: keychainFile! }
+    return { identity, keychainFile: keychainFile! }
   }
 
-  test("user-domain-trusted self-signed identity is valid for code signing", async ({ expect, tmpDir }) => {
+  test("admin-domain-trusted self-signed identity is valid for code signing", async ({ expect, tmpDir }) => {
     // No in-process seam: discovery must succeed purely because the identity is OS-trusted.
     setAllowUntrustedSelfSignedIdentityForTesting(false)
-    const { identity, fingerprint, keychainFile } = await createTrustedSelfSignedKeychain(tmpDir)
+    const { identity, keychainFile } = await createTrustedSelfSignedKeychain(tmpDir)
     try {
       // electron-builder discovery finds it without the untrusted seam.
       const found = await findIdentity("Developer ID Application", qualifier, keychainFile)
@@ -101,7 +101,7 @@ describe.ifMac("self-signed identity OS trust", { sequential: true }, () => {
       await exec("/usr/bin/codesign", ["--verify", "--strict", "--verbose=2", binary])
     } finally {
       // Always tear down trust AND keychain, even on assertion failure.
-      await removeUserTrustForCertificate(fingerprint)
+      await removeAdminTrustForCertificate(identity, tmpDir)
       await removeKeychain(keychainFile)
     }
   })
