@@ -123,11 +123,12 @@ async function fingerprintOfDerCert(derCertPath: string): Promise<string> {
  *
  * @returns the SHA-1 fingerprint used as the trust-store key (pass it to `removeUserTrustForCertificate`).
  */
-export async function installUserTrustForCertificate(identity: Required<Pick<SelfSignedIdentity, "sha1Fingerprint">>, tmpDir: TmpDir): Promise<string> {
+export async function installUserTrustForCertificate(identity: Required<Pick<SelfSignedIdentity, "sha1Fingerprint" | "certDerBase64">>, tmpDir: TmpDir): Promise<string> {
   const dir = await tmpDir.getTempDir({ prefix: "self-signed-trust" })
   const plistPath = path.join(dir, "trust.plist")
 
-  await outputFile(plistPath, buildTrustPlist(identity.sha1Fingerprint))
+  const certDer = Buffer.from(identity.certDerBase64, "base64")
+  await outputFile(plistPath, buildTrustPlist(identity.sha1Fingerprint, certDer))
   // user domain (no `-d`): no sudo, only affects the current user's trust store.
   await exec("/usr/bin/security", ["trust-settings-import", plistPath])
   return identity.sha1Fingerprint
@@ -147,12 +148,15 @@ export async function removeUserTrustForCertificate(fingerprint: string): Promis
 /**
  * Builds a macOS trust-settings plist keyed on `fingerprint`, granting trust across the standard policies (the
  * `CodeSigning` entry is the one that matters here). `kSecTrustSettingsResult` 1 = "trust root". Mirrors
- * electron/packager's trust.xml. The `issuerName`/`serialNumber` hints from packager's template are omitted:
- * macOS resolves the trust entry by the certificate's SHA-1 fingerprint (the dictionary key), and `security
- * trust-settings-import` fills the issuer/serial from the matching installed certificate, so they need not be
- * pre-computed here (avoiding a brittle DER-issuer re-encode).
+ * electron/packager's trust.xml. Each per-fingerprint record carries the `issuerName`/`serialNumber` hints from
+ * packager's template, derived from the certificate's DER: `security trust-settings-import` validates structural
+ * completeness and rejects the record as corrupted when they are missing.
  */
-function buildTrustPlist(fingerprint: string): string {
+function buildTrustPlist(fingerprint: string, certDer: Buffer): string {
+  const { issuerNameDer, serialNumberDer } = parseIssuerAndSerial(certDer)
+  const issuerName = issuerNameDer.toString("base64")
+  const serialNumber = serialNumberDer.toString("base64")
+
   const policy = (allowedError: number, policyOid: string, policyName: string) =>
     `				<dict>
 					<key>kSecTrustSettingsAllowedError</key>
@@ -187,8 +191,16 @@ function buildTrustPlist(fingerprint: string): string {
 		<dict>
 			<key>${fingerprint}</key>
 			<dict>
+				<key>issuerName</key>
+				<data>
+				${issuerName}
+				</data>
 				<key>modDate</key>
 				<date>2019-01-01T00:00:00Z</date>
+				<key>serialNumber</key>
+				<data>
+				${serialNumber}
+				</data>
 				<key>trustSettings</key>
 				<array>
 ${trustSettings}
@@ -200,6 +212,49 @@ ${trustSettings}
 	</dict>
 </plist>
 `
+}
+
+/**
+ * Extracts the issuer `Name` (the full DER SEQUENCE TLV, tag+length included) and the `serialNumber` INTEGER's
+ * content octets from a DER-encoded X.509 certificate, via a minimal DER TLV walk (no extra deps). Layout:
+ * `Certificate ::= SEQ { tbsCertificate SEQ { [0] version OPTIONAL, serialNumber INTEGER, signature AlgId SEQ,
+ * issuer Name SEQ, ... } }`.
+ */
+function parseIssuerAndSerial(certDer: Buffer): { issuerNameDer: Buffer; serialNumberDer: Buffer } {
+  const readTlv = (offset: number) => {
+    const tag = certDer[offset]
+    const lenByte = certDer[offset + 1]
+    let length: number
+    let headerLen: number
+    if (lenByte < 0x80) {
+      length = lenByte
+      headerLen = 2
+    } else {
+      const numLenBytes = lenByte & 0x7f
+      length = 0
+      for (let i = 0; i < numLenBytes; i++) {
+        length = length * 256 + certDer[offset + 2 + i]
+      }
+      headerLen = 2 + numLenBytes
+    }
+    const contentStart = offset + headerLen
+    const end = contentStart + length
+    return { tag, contentStart, end }
+  }
+
+  const cert = readTlv(0) // Certificate SEQUENCE
+  const tbs = readTlv(cert.contentStart) // tbsCertificate SEQUENCE
+  let p = tbs.contentStart
+  if (certDer[p] === 0xa0) {
+    // optional [0] EXPLICIT version
+    p = readTlv(p).end
+  }
+  const serial = readTlv(p) // serialNumber INTEGER
+  const serialNumberDer = certDer.subarray(serial.contentStart, serial.end)
+  const signature = readTlv(serial.end) // signature AlgorithmIdentifier SEQUENCE
+  const issuer = readTlv(signature.end) // issuer Name SEQUENCE (whole TLV)
+  const issuerNameDer = certDer.subarray(signature.end, issuer.end)
+  return { issuerNameDer, serialNumberDer }
 }
 
 async function isOpenSsl3OrNewer(): Promise<boolean> {
