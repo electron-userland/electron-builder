@@ -77,6 +77,7 @@ To stay on a legacy bundle, pin the toolset to `"0.0.0"`. Because `winCodeSign` 
 | [`PlatformPackager.info` & `platformSpecificBuildOptions` now `protected`](#programmatic--plugin-author-api-changes) | — | Plugin authors: hard break — `.info` no longer compiles externally; use the new pass-through getters |
 | [Linux `.desktop` `Exec` now runs a generated `*-launcher` script](#linux-launcher-entrypoint) | — | Update custom `.desktop`/AppArmor/MIME tooling that hard-codes the `Exec` command |
 | [`node_modules` arch/os-filtered on every build](#node_modules-are-now-archos-filtered-on-every-build) | — | Awareness — packages whose `cpu`/`os` mismatch the target are now excluded |
+| [Redundant production `dependencies` excluded, not rejected](#redundant-production-dependencies-are-excluded-not-rejected) | — | None — `electron`/`electron-builder` are excluded from the copied `node_modules` (was a hard error); new `ignoredProductionDependencies` controls the set (add bundler-inlined deps like `react`), and the `ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY` env var is removed |
 | [DMG `filesystem` defaults to APFS](#dmg-filesystem-defaults-to-apfs) | — | Set `dmg.filesystem: "HFS+"` only if you need pre-10.13 macOS compatibility |
 | [`disableWebInstaller` defaults to `true` (electron-updater)](#disablewebinstaller-defaults-to-true) | — | v27 warns but still downloads if you never set it; opt in with `disableWebInstaller: false` before v28 enforces it |
 | [Renamed type exports (`ElectronDownloadOptions`, `WindowsAzureSigningConfiguration`, …)](#removed-exports) | — | Import the new names — no compat aliases |
@@ -598,6 +599,40 @@ This makes `executableArgs` apply consistently across all Linux targets and keep
 v27 filters `node_modules` by each package's `package.json` `cpu` / `os` fields against the **target** arch and platform on **every** build (previously this effectively only mattered for `universal` macOS builds). A dependency that declares an incompatible `cpu`/`os` for the target is excluded from the packaged app, whereas v26 copied host-installed `node_modules` verbatim.
 
 **No action is required for typical projects** — this fixes universal-build failures and produces correctly-scoped output. Be aware of it only if you *intentionally* bundled a cross-arch or cross-os optional binary that is now dropped; in that rare case, include it explicitly via `extraResources` / `files`.
+
+### Redundant production `dependencies` are excluded, not rejected
+
+In v26, listing `electron` or `electron-builder` under `dependencies` aborted the build with a hard `InvalidConfigurationError`. In v27 these packages are **excluded from the copied `node_modules`** (logged once) and the build proceeds. They stay valid production dependencies for tooling such as SBOM, license, and vulnerability tracking — electron-builder simply provides them another way (the Electron runtime is embedded separately), so a copy inside `app.asar` would be redundant.
+
+The excluded set is configurable through the new [`ignoredProductionDependencies`](../configuration.md) build option, which defaults to:
+
+```json5
+{
+  "build": {
+    "ignoredProductionDependencies": ["electron", "electron-builder"]
+  }
+}
+```
+
+Overriding the option **replaces** the default list, so keep `electron` and `electron-builder` in it unless you intend to ship them.
+
+- **Add** a name to exclude a production dependency that does not need a copy in `node_modules`. This is the common case when a bundler (Vite, webpack, esbuild, …) already inlines the package into your app code: keep it in `dependencies` so SBOM/license tooling still sees it, and add it here so a duplicate copy is not packaged.
+
+  ```json5
+  {
+    "build": {
+      "ignoredProductionDependencies": ["electron", "electron-builder", "react", "react-dom"]
+    }
+  }
+  ```
+
+- **Remove** a name to keep it in the copied `node_modules` after all (e.g. drop `"electron-builder"` from the list to ship it inside the app).
+
+Exclusion is resolved against the full pre-hoist dependency graph, so a transitive dependency required **only** by an excluded package is dropped too, while one also required by a legitimate production dependency (npm/pnpm dedupe it into a single hoisted entry) is kept.
+
+The `ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY` environment variable — previously the only way to keep `electron-builder` in `dependencies` without erroring — is **removed**. `electron-builder` is now excluded by default; if you relied on that env var to bundle it, remove `"electron-builder"` from `ignoredProductionDependencies` instead.
+
+This is a runtime behavior change, not a config-key rename, so `electron-builder migrate-schema` does not modify your config for it.
 
 ---
 

@@ -83,6 +83,15 @@ export interface ResolvedFileSet {
   transformedFiles?: Map<number, string | Buffer> | null
 }
 
+/**
+ * Production dependencies that are excluded from the copied `node_modules` by default. These are
+ * still legitimate production dependencies (for SBOM, license, and vulnerability tracking), but
+ * electron-builder already provides them another way — notably the Electron runtime, which is
+ * embedded separately — so copying them into the app would just duplicate what is already there.
+ * Users can override the set via `config.ignoredProductionDependencies`.
+ */
+export const DEFAULT_IGNORED_PRODUCTION_DEPENDENCIES: ReadonlyArray<string> = ["electron", "electron-builder"]
+
 // used only for ASAR, if no asar, file transformed on the fly
 export async function transformFiles(transformer: FileTransformer, fileSet: ResolvedFileSet): Promise<void> {
   if (transformer == null) {
@@ -201,7 +210,7 @@ export async function computeNodeModuleFileSets(
   return result
 }
 
-type CollectedNodeModules = { nodeModules: NodeModuleInfo[]; logSummary: ModuleManager["logSummary"] }
+type CollectedNodeModules = { nodeModules: NodeModuleInfo[]; logSummary: ModuleManager["logSummary"]; excludedDependencies: string[] }
 
 /** Runs a single package-manager collector against a single directory. */
 type CollectorRunner = (pm: PM, dir: string) => Promise<CollectedNodeModules>
@@ -272,7 +281,8 @@ export async function resolveFirstMatchingCollection(options: {
   return fallback
 }
 
-async function collectNodeModulesWithLogging(platformPackager: PlatformPackager<any>, arch: Arch | null) {
+/** @internal */
+export async function collectNodeModulesWithLogging(platformPackager: PlatformPackager<any>, arch: Arch | null) {
   const { tempDirManager, appDir, projectDir } = platformPackager
 
   // Drop packages whose `package.json` `cpu`/`os` is incompatible with the target arch/platform while
@@ -283,13 +293,20 @@ async function collectNodeModulesWithLogging(platformPackager: PlatformPackager<
   const searchDirectories = Array.from(new Set([appDir, projectDir, await platformPackager.getWorkspaceRoot()])).filter((it): it is string => isEmptyOrSpaces(it) === false)
   const pmApproaches = [await platformPackager.getPackageManager(), PM.TRAVERSAL]
 
+  // The default-ignored packages are excluded from the copied `node_modules` — together with any
+  // transitive dependency they alone require — because electron-builder already provides them another
+  // way (the Electron runtime is embedded separately), so copying them would be redundant. They remain
+  // valid production dependencies for tooling such as SBOM generation. See NodeModulesCollector.getNodeModules.
+  const configuredIgnored = platformPackager.config.ignoredProductionDependencies
+  const ignoredDependencies = configuredIgnored == null ? DEFAULT_IGNORED_PRODUCTION_DEPENDENCIES : configuredIgnored
+
   // Validate against the as-declared (pre-extraMetadata) production dependencies so a configured
   // `extraMetadata.dependencies` entry that isn't installed cannot reject a correct collection.
   const deps = await resolveFirstMatchingCollection({
     pmApproaches,
     searchDirectories,
     dependencies: platformPackager.originalMetadata.dependencies,
-    run: (pm, dir) => getCollectorByPackageManager(pm, dir, tempDirManager).getNodeModules({ packageName: platformPackager.nodePackageName, archFilter }),
+    run: (pm, dir) => getCollectorByPackageManager(pm, dir, tempDirManager).getNodeModules({ packageName: platformPackager.nodePackageName, archFilter, ignoredDependencies }),
   })
 
   if (!deps?.nodeModules?.length) {
@@ -301,6 +318,22 @@ async function collectNodeModulesWithLogging(platformPackager: PlatformPackager<
   for (const [errorMessage, dependencies] of summary) {
     const logLevel = logMessageLevelByKey[errorMessage as LogMessageByKey] || "debug"
     log[logLevel]({ dependencies }, errorMessage)
+  }
+
+  if (deps.excludedDependencies.length > 0) {
+    log.info({ dependencies: deps.excludedDependencies.join(", ") }, "excluded production dependencies from the app's node_modules (see ignoredProductionDependencies)")
+  }
+
+  // Tripwire: the default-ignored packages are excluded because electron-builder already provides them
+  // (e.g. the embedded Electron runtime), so a copy in `node_modules` is redundant. They only reach this
+  // point when a user has removed them from `ignoredProductionDependencies`; flag any that were copied in
+  // case it was unintentional.
+  const bundledDefaultIgnored = deps.nodeModules.filter(it => DEFAULT_IGNORED_PRODUCTION_DEPENDENCIES.includes(it.name)).map(it => it.name)
+  if (bundledDefaultIgnored.length > 0) {
+    log.warn(
+      { dependencies: bundledDefaultIgnored.join(", ") },
+      "copied dependencies into the app that electron-builder normally provides itself (e.g. the embedded Electron runtime), so this copy is usually redundant. To exclude them, add them back to ignoredProductionDependencies (or remove them from dependencies)."
+    )
   }
 
   return deps.nodeModules

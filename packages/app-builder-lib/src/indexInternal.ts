@@ -7,6 +7,7 @@ export { CustomWindowsSign, WindowsSignTaskConfiguration } from "./codeSign/win/
 export { Configuration, ToolsetConfig, ToolsetCustom } from "./configuration.js"
 export { Publish } from "./core.js"
 export { getElectronVersion } from "./electron/electronVersion.js"
+export { collectNodeModulesWithLogging, DEFAULT_IGNORED_PRODUCTION_DEPENDENCIES } from "./util/appFileCopier.js"
 export {
   collectExplicitReincludes,
   DEFAULT_EXCLUDED_EXTENSIONS,

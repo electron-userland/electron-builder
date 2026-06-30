@@ -9451,6 +9451,24 @@
         "string"
       ]
     },
+    "ignoredProductionDependencies": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": [
+        "electron",
+        "electron-builder"
+      ],
+      "description": "Names of production dependencies that are excluded from the copied `node_modules`, even if they\nare declared in the `dependencies` section of `package.json`.\n\nelectron-builder copies the resolved production dependency tree into the app. Some packages —\nnotably `electron` — are already provided another way (the Electron runtime is embedded\nseparately), so copying them would just duplicate what is already there. Such packages are\nexcluded from the copy rather than rejected: they remain valid production dependencies for\ntooling purposes (e.g. SBOM, license, and vulnerability tracking) without being shipped twice.\n\nExclusion is resolved against the full dependency graph: a transitive dependency required *only*\nby an excluded package is dropped as well, while one also required by another production\ndependency is kept.\n\nOverriding this option **replaces** the default list, so include `electron` and `electron-builder`\nunless you intend to ship them. The most common reason to override is to *add* a dependency that a\nbundler (Vite, webpack, esbuild, …) already inlines into your app code: keep it in `dependencies`\nso SBOM/license tooling still sees it, and list it here so a duplicate copy is not packaged — e.g.\n`[\"electron\", \"electron-builder\", \"react\", \"react-dom\"]`. Removing a default name keeps that\npackage in the copied `node_modules`. Each excluded package is logged once during packaging."
+    },
     "includePdb": {
       "default": false,
       "description": "Whether to include `.pdb` (Program Database) symbol files in the output.\n\nPDB files enable Windows crash-dump analysis but significantly increase artifact size. Enable\nfor internal builds where you want symbol information; disable for public distribution.",

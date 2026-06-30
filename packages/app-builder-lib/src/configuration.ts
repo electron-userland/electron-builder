@@ -288,6 +288,31 @@ export interface CommonConfiguration {
   readonly npmArgs?: Array<string> | string | null
 
   /**
+   * Names of production dependencies that are excluded from the copied `node_modules`, even if they
+   * are declared in the `dependencies` section of `package.json`.
+   *
+   * electron-builder copies the resolved production dependency tree into the app. Some packages —
+   * notably `electron` — are already provided another way (the Electron runtime is embedded
+   * separately), so copying them would just duplicate what is already there. Such packages are
+   * excluded from the copy rather than rejected: they remain valid production dependencies for
+   * tooling purposes (e.g. SBOM, license, and vulnerability tracking) without being shipped twice.
+   *
+   * Exclusion is resolved against the full dependency graph: a transitive dependency required *only*
+   * by an excluded package is dropped as well, while one also required by another production
+   * dependency is kept.
+   *
+   * Overriding this option **replaces** the default list, so include `electron` and `electron-builder`
+   * unless you intend to ship them. The most common reason to override is to *add* a dependency that a
+   * bundler (Vite, webpack, esbuild, …) already inlines into your app code: keep it in `dependencies`
+   * so SBOM/license tooling still sees it, and list it here so a duplicate copy is not packaged — e.g.
+   * `["electron", "electron-builder", "react", "react-dom"]`. Removing a default name keeps that
+   * package in the copied `node_modules`. Each excluded package is logged once during packaging.
+   *
+   * @default ["electron", "electron-builder"]
+   */
+  readonly ignoredProductionDependencies?: Array<string> | null
+
+  /**
    * Configuration for native Node.js module installation and rebuilding.
    *
    * Groups all options that control how electron-builder handles native modules — from forcing

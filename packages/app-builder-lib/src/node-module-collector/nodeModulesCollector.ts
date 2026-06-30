@@ -53,15 +53,29 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * 5. Hoisting the dependencies to their final locations
    * 6. Resolving and returning module information
    */
-  public async getNodeModules({ packageName, archFilter }: { packageName: string; archFilter?: ArchFilter }): Promise<{
+  public async getNodeModules({
+    packageName,
+    archFilter,
+    ignoredDependencies,
+  }: {
+    packageName: string
+    archFilter?: ArchFilter
+    ignoredDependencies?: ReadonlyArray<string>
+  }): Promise<{
     nodeModules: NodeModuleInfo[]
     logSummary: ModuleManager["logSummary"]
+    excludedDependencies: string[]
   }> {
     const tree: ProdDepType = await this.getDependenciesTree(this.installOptions.manager)
 
     await this.collectAllDependencies(tree, packageName)
     const realTree: ProdDepType = this.getTreeFromWorkspaces(tree, packageName)
     await this.extractProductionDependencyGraph(realTree, packageName)
+
+    // Exclude ignored production dependencies on the pre-hoist graph, where the true parent->child
+    // edges still exist, so an ignored package's exclusively-owned transitive deps are dropped too
+    // while shared (deduped) ones are kept. See excludeIgnoredFromProductionGraph.
+    const excludedDependencies = this.excludeIgnoredFromProductionGraph(this.productionGraph, packageName, ignoredDependencies ?? [])
 
     const hoisterResult: HoisterResult = hoist(this.transformToHoisterTree(this.productionGraph, packageName), {
       check: log.isDebugEnabled,
@@ -71,7 +85,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
     log.debug({ packageName, depCount: this.nodeModules.length }, "node modules collection complete")
 
-    return { nodeModules: this.nodeModules, logSummary: this.cache.logSummary }
+    return { nodeModules: this.nodeModules, logSummary: this.cache.logSummary, excludedDependencies }
   }
 
   public abstract readonly installOptions: {
@@ -264,6 +278,69 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     }
 
     return tree
+  }
+
+  /**
+   * Removes `ignoredNames` — and any package that becomes unreachable once those packages are
+   * dropped (i.e. a dependency needed *only* by an ignored package) — from the production graph
+   * in place.
+   *
+   * This runs on the pre-hoist graph, where the true parent->child edges still exist. npm/pnpm
+   * dedupe and hoist a shared transitive dependency to a single flattened entry, so the collected
+   * `NodeModuleInfo` tree can no longer tell whether such an entry is needed only by an ignored
+   * package or also by a legitimate one. Excluding here — before hoisting — drops an ignored
+   * package's *exclusive* subtree while keeping any dependency still reachable from another
+   * production dependency.
+   *
+   * @returns the distinct names of every excluded package (the ignored roots plus their exclusive subtrees), sorted.
+   */
+  private excludeIgnoredFromProductionGraph(graph: DependencyGraph, rootId: string, ignoredNames: ReadonlyArray<string>): string[] {
+    const ignored = new Set(ignoredNames)
+    if (ignored.size === 0) {
+      return []
+    }
+
+    const reachableBefore = this.collectReachableIds(graph, rootId)
+
+    for (const id of Object.keys(graph)) {
+      const deps = graph[id].dependencies
+      const kept = deps.filter(dep => !ignored.has(this.parseNameVersion(dep).name))
+      if (kept.length !== deps.length) {
+        graph[id] = { dependencies: kept }
+      }
+    }
+
+    const reachableAfter = this.collectReachableIds(graph, rootId)
+
+    const excludedNames = new Set<string>()
+    for (const id of reachableBefore) {
+      if (!reachableAfter.has(id)) {
+        excludedNames.add(this.parseNameVersion(id).name)
+      }
+    }
+    return Array.from(excludedNames).sort()
+  }
+
+  /** Set of dependency ids reachable from `rootId` by following the production graph's edges. */
+  private collectReachableIds(graph: DependencyGraph, rootId: string): Set<string> {
+    const reachable = new Set<string>()
+    const stack: string[] = [rootId]
+    while (stack.length > 0) {
+      const id = stack.pop()!
+      if (reachable.has(id)) {
+        continue
+      }
+      reachable.add(id)
+      const node = graph[id]
+      if (node != null) {
+        for (const dep of node.dependencies) {
+          if (!reachable.has(dep)) {
+            stack.push(dep)
+          }
+        }
+      }
+    }
+    return reachable
   }
 
   private transformToHoisterTree(obj: DependencyGraph, key: string, nodes: Map<string, HoisterTree> = new Map()): HoisterTree {

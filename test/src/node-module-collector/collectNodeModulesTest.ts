@@ -13,6 +13,7 @@ const makeModule = (name: string): NodeModuleInfo => ({ name, version: "1.0.0", 
 const collection = (names: string[]) => ({
   nodeModules: names.map(makeModule),
   logSummary: {} as ModuleManager["logSummary"],
+  excludedDependencies: [],
 })
 
 // The dependency tree npm reports when it resolves to the wrong project root from inside a Yarn
