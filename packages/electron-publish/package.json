@@ -39,7 +39,7 @@
     "aws4": "^1.13.2",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
-    "chalk": "^4.1.2",
+    "chalk": "^5.0.0",
     "form-data": "^4.0.5",
     "fs-extra": "^11.3.0",
     "lazy-val": "^1.0.5",

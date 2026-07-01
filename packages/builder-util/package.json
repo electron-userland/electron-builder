@@ -34,7 +34,7 @@
   "dependencies": {
     "@types/debug": "^4.1.6",
     "builder-util-runtime": "workspace:*",
-    "chalk": "^4.1.2",
+    "chalk": "^5.0.0",
     "cross-spawn": "^7.0.6",
     "debug": "^4.3.4",
     "fs-extra": "^11.3.0",
