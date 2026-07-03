@@ -299,3 +299,39 @@ test("sha512 values are preserved correctly for each file entry", async ({ expec
     expect(byUrl["App-1.0.0-arm64.exe"]).toBe("sha512-arm64-value")
   })
 })
+
+function makeAllChannelsPackager(): any {
+  return { ...makePlatformPackager(), config: { releaseInfo: undefined, generateUpdatesFilesForAllChannels: true } }
+}
+
+test("beta channel with arch suffix expands to alpha carrying the same suffix", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App-1.0.0-arm64.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    const event: any = { file: artifactFile, arch: Arch.arm64, packager: makeAllChannelsPackager(), target: { outDir: dir } }
+    const tasks = await createUpdateInfoTasks(event, [{ provider: "s3", bucket: "test", channel: "beta-arm64" }] as any)
+    const names = tasks.map(t => path.basename(t.file)).sort()
+    expect(names).toEqual(["alpha-arm64.yml", "beta-arm64.yml"])
+  })
+})
+
+test("latest channel with arch suffix expands to alpha and beta carrying the same suffix", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App-1.0.0-arm64.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    const event: any = { file: artifactFile, arch: Arch.arm64, packager: makeAllChannelsPackager(), target: { outDir: dir } }
+    const tasks = await createUpdateInfoTasks(event, [{ provider: "s3", bucket: "test", channel: "latest-arm64" }] as any)
+    const names = tasks.map(t => path.basename(t.file)).sort()
+    expect(names).toEqual(["alpha-arm64.yml", "beta-arm64.yml", "latest-arm64.yml"])
+  })
+})
+
+test("alpha channel with arch suffix does not expand", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App-1.0.0-arm64.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    const event: any = { file: artifactFile, arch: Arch.arm64, packager: makeAllChannelsPackager(), target: { outDir: dir } }
+    const tasks = await createUpdateInfoTasks(event, [{ provider: "s3", bucket: "test", channel: "alpha-arm64" }] as any)
+    expect(tasks.map(t => path.basename(t.file))).toEqual(["alpha-arm64.yml"])
+  })
+})
