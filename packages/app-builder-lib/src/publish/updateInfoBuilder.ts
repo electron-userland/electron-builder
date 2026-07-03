@@ -45,17 +45,19 @@ function isGenerateUpdatesFilesForAllChannels(packager: PlatformPackager<any>) {
  */
 function computeChannelNames(packager: PlatformPackager<any>, publishConfig: PublishConfiguration): Array<string> {
   const currentChannel: string = (publishConfig as GenericServerOptions).channel || "latest"
+  const baseChannel = ["alpha", "beta", "latest"].find(name => currentChannel === name || currentChannel.startsWith(`${name}-`)) || currentChannel
+  const suffix = currentChannel.slice(baseChannel.length)
   // for GitHub should be pre-release way be used
-  if (currentChannel === "alpha" || publishConfig.provider === "github" || !isGenerateUpdatesFilesForAllChannels(packager)) {
+  if (baseChannel === "alpha" || publishConfig.provider === "github" || !isGenerateUpdatesFilesForAllChannels(packager)) {
     return [currentChannel]
   }
 
-  switch (currentChannel) {
+  switch (baseChannel) {
     case "beta":
-      return [currentChannel, "alpha"]
+      return [currentChannel, `alpha${suffix}`]
 
     case "latest":
-      return [currentChannel, "alpha", "beta"]
+      return [currentChannel, `alpha${suffix}`, `beta${suffix}`]
 
     default:
       return [currentChannel]
