@@ -507,6 +507,16 @@ export interface R2Options extends BaseS3Options {
   readonly publicUrl?: string | null
 
   /**
+   * The jurisdiction of the R2 bucket, if the bucket was created with a jurisdictional
+   * restriction. Buckets created in a jurisdiction live on a separate endpoint —
+   * `https://<accountId>.<jurisdiction>.r2.cloudflarestorage.com` — so this must match
+   * the jurisdiction the bucket was created with. Omit for regular buckets.
+   *
+   * See https://developers.cloudflare.com/r2/reference/data-location/#jurisdictional-restrictions
+   */
+  readonly jurisdiction?: "eu" | "fedramp-moderate" | null
+
+  /**
    * R2 does not support S3 ACLs. This option is not applicable and will be ignored.
    * Configure bucket-level public access in the Cloudflare dashboard instead.
    * @deprecated
@@ -610,5 +620,8 @@ function r2Url(options: R2Options) {
   if (options.publicUrl != null && options.publicUrl.trim() !== "") {
     return appendPath(options.publicUrl.replace(/\/$/, ""), options.path)
   }
-  return appendPath(`https://${options.accountId}.r2.cloudflarestorage.com/${options.bucket}`, options.path)
+  // Jurisdictional buckets (e.g. "eu", "fedramp-moderate") live on a separate endpoint:
+  // https://<accountId>.<jurisdiction>.r2.cloudflarestorage.com
+  const jurisdiction = options.jurisdiction == null || options.jurisdiction.trim() === "" ? "" : `${options.jurisdiction.trim()}.`
+  return appendPath(`https://${options.accountId}.${jurisdiction}r2.cloudflarestorage.com/${options.bucket}`, options.path)
 }

@@ -166,6 +166,34 @@ describe("R2Publisher.checkAndResolveOptions", () => {
   })
 
   /**
+   * [CF-JURISDICTION] Buckets created with a jurisdictional restriction live on
+   * https://<accountId>.<jurisdiction>.r2.cloudflarestorage.com. The value is interpolated
+   * into the endpoint hostname, so unknown values must be rejected at build time.
+   * Reference: https://developers.cloudflare.com/r2/reference/data-location/#jurisdictional-restrictions
+   */
+  describe("jurisdiction validation — [CF-JURISDICTION]", () => {
+    test.each(["eu", "fedramp-moderate"] as const)("accepts the '%s' jurisdiction", async jurisdiction => {
+      const opts = R2TestFixtures.createOptions({ jurisdiction })
+      await expect(R2Publisher.checkAndResolveOptions(opts, null, true)).resolves.toBeUndefined()
+    })
+
+    test("accepts an omitted jurisdiction (regular bucket)", async () => {
+      const opts = R2TestFixtures.createOptions({ jurisdiction: null })
+      await expect(R2Publisher.checkAndResolveOptions(opts, null, true)).resolves.toBeUndefined()
+    })
+
+    test("rejects an unknown jurisdiction", () => {
+      const opts = R2TestFixtures.createOptions({ jurisdiction: "mars" as any })
+      expect(() => R2Publisher.checkAndResolveOptions(opts, null, true)).toThrow(/jurisdiction/)
+    })
+
+    test("rejects a jurisdiction with an injected domain suffix (security: hostname injection)", () => {
+      const opts = R2TestFixtures.createOptions({ jurisdiction: "eu.evil.com" as any })
+      expect(() => R2Publisher.checkAndResolveOptions(opts, null, true)).toThrow(/jurisdiction/)
+    })
+  })
+
+  /**
    * [CF-PUBLIC] The S3 API endpoint always requires SigV4 authentication; R2 public access is
    * exclusively r2.dev subdomains or custom domains. If app-update.yml were generated without a
    * publicUrl, electron-updater on end-user machines would hit the API endpoint unauthenticated
@@ -270,6 +298,25 @@ describe("R2Publisher.getS3UploadConfig", () => {
     test("full endpoint is https://<accountId>.r2.cloudflarestorage.com", () => {
       const accountId = R2TestFixtures.ACCOUNT_IDS.valid
       const publisher = new R2Publisher(ctx, R2TestFixtures.createOptions({ accountId }))
+      const config = resolveUploadConfig(publisher)
+      expect(config.endpoint).toBe(`https://${accountId}.r2.cloudflarestorage.com`)
+    })
+
+    /**
+     * [CF-JURISDICTION] Jurisdictional buckets are only reachable via
+     * https://<accountId>.<jurisdiction>.r2.cloudflarestorage.com
+     * Reference: https://developers.cloudflare.com/r2/reference/data-location/#jurisdictional-restrictions
+     */
+    test.each(["eu", "fedramp-moderate"] as const)("endpoint includes the '%s' jurisdiction subdomain", jurisdiction => {
+      const accountId = R2TestFixtures.ACCOUNT_IDS.valid
+      const publisher = new R2Publisher(ctx, R2TestFixtures.createOptions({ accountId, jurisdiction }))
+      const config = resolveUploadConfig(publisher)
+      expect(config.endpoint).toBe(`https://${accountId}.${jurisdiction}.r2.cloudflarestorage.com`)
+    })
+
+    test("endpoint has no jurisdiction subdomain when jurisdiction is omitted", () => {
+      const accountId = R2TestFixtures.ACCOUNT_IDS.valid
+      const publisher = new R2Publisher(ctx, R2TestFixtures.createOptions({ accountId, jurisdiction: null }))
       const config = resolveUploadConfig(publisher)
       expect(config.endpoint).toBe(`https://${accountId}.r2.cloudflarestorage.com`)
     })
@@ -529,6 +576,27 @@ describe("r2Url (via getS3LikeProviderBaseUrl)", () => {
       const accountId = R2TestFixtures.ACCOUNT_IDS.valid
       const url = getS3LikeProviderBaseUrl(R2TestFixtures.createOptions({ accountId, bucket: "my-releases", path: "beta", publicUrl: null }))
       expect(url).toBe(`https://${accountId}.r2.cloudflarestorage.com/my-releases/beta`)
+    })
+
+    /**
+     * [CF-JURISDICTION] The fallback endpoint must honour the bucket's jurisdiction —
+     * a jurisdictional bucket does not exist on the default endpoint at all.
+     */
+    test.each(["eu", "fedramp-moderate"] as const)("fallback endpoint includes the '%s' jurisdiction subdomain", jurisdiction => {
+      const accountId = R2TestFixtures.ACCOUNT_IDS.valid
+      const url = getS3LikeProviderBaseUrl(R2TestFixtures.createOptions({ accountId, bucket: "my-releases", publicUrl: null, jurisdiction }))
+      expect(url).toBe(`https://${accountId}.${jurisdiction}.r2.cloudflarestorage.com/my-releases`)
+    })
+
+    test("fallback endpoint has no jurisdiction subdomain when jurisdiction is omitted", () => {
+      const accountId = R2TestFixtures.ACCOUNT_IDS.valid
+      const url = getS3LikeProviderBaseUrl(R2TestFixtures.createOptions({ accountId, bucket: "my-releases", publicUrl: null, jurisdiction: null }))
+      expect(url).toBe(`https://${accountId}.r2.cloudflarestorage.com/my-releases`)
+    })
+
+    test("publicUrl still takes precedence over the jurisdictional endpoint", () => {
+      const url = getS3LikeProviderBaseUrl(R2TestFixtures.createOptions({ publicUrl: R2TestFixtures.PUBLIC_URLS.customDomain, jurisdiction: "eu" }))
+      expect(url).toBe(R2TestFixtures.PUBLIC_URLS.customDomain)
     })
   })
 

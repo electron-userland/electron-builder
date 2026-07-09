@@ -5882,6 +5882,21 @@
             "string"
           ]
         },
+        "jurisdiction": {
+          "anyOf": [
+            {
+              "enum": [
+                "eu",
+                "fedramp-moderate"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The jurisdiction of the R2 bucket, if the bucket was created with a jurisdictional\nrestriction. Buckets created in a jurisdiction live on a separate endpoint —\n`https://<accountId>.<jurisdiction>.r2.cloudflarestorage.com` — so this must match\nthe jurisdiction the bucket was created with. Omit for regular buckets.\n\nSee https://developers.cloudflare.com/r2/reference/data-location/#jurisdictional-restrictions"
+        },
         "path": {
           "default": "/",
           "description": "The directory path.",
