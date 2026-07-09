@@ -13,9 +13,10 @@
  */
 
 import { createPublisher } from "app-builder-lib/internal"
+import { log } from "builder-util"
 import { CancellationToken, getS3LikeProviderBaseUrl, R2Options } from "builder-util-runtime"
 import { R2Publisher, PublishContext } from "electron-publish"
-import { beforeEach, expect } from "vitest"
+import { beforeEach, expect, vi } from "vitest"
 import { R2TestFixtures } from "./R2TestFixtures"
 
 // ---------------------------------------------------------------------------
@@ -143,8 +144,8 @@ describe("R2Publisher.checkAndResolveOptions", () => {
       await expect(R2Publisher.checkAndResolveOptions(opts, null, true)).resolves.toBeUndefined()
     })
 
-    test("accepts a null/omitted publicUrl (falls back to S3 API endpoint)", async () => {
-      const opts = R2TestFixtures.createOptions({ publicUrl: null })
+    test("accepts a null/omitted publicUrl when auto-update publishing is disabled", async () => {
+      const opts = R2TestFixtures.createOptions({ publicUrl: null, publishAutoUpdate: false })
       await expect(R2Publisher.checkAndResolveOptions(opts, null, true)).resolves.toBeUndefined()
     })
 
@@ -161,6 +162,50 @@ describe("R2Publisher.checkAndResolveOptions", () => {
     test("rejects a non-http(s) scheme publicUrl (e.g. file://)", () => {
       const opts = R2TestFixtures.createOptions({ publicUrl: "file:///etc/passwd" })
       expect(() => R2Publisher.checkAndResolveOptions(opts, null, true)).toThrow(/https/)
+    })
+  })
+
+  /**
+   * [CF-PUBLIC] The S3 API endpoint always requires SigV4 authentication; R2 public access is
+   * exclusively r2.dev subdomains or custom domains. If app-update.yml were generated without a
+   * publicUrl, electron-updater on end-user machines would hit the API endpoint unauthenticated
+   * and fail with 401 at runtime — so the build must fail (or at least warn) instead.
+   */
+  describe("publicUrl requirement for auto-update — [CF-PUBLIC]", () => {
+    test("throws when publicUrl is missing and publishAutoUpdate is not false (errorIfCannot=true)", () => {
+      const opts = R2TestFixtures.createOptions({ publicUrl: null })
+      expect(() => R2Publisher.checkAndResolveOptions(opts, null, true)).toThrow(/publicUrl/)
+    })
+
+    test("throws when publicUrl is whitespace-only and publishAutoUpdate is not false (errorIfCannot=true)", () => {
+      const opts = R2TestFixtures.createOptions({ publicUrl: "   " })
+      expect(() => R2Publisher.checkAndResolveOptions(opts, null, true)).toThrow(/publicUrl/)
+    })
+
+    test("throws when publicUrl is missing and publishAutoUpdate is explicitly true (errorIfCannot=true)", () => {
+      const opts = R2TestFixtures.createOptions({ publicUrl: null, publishAutoUpdate: true })
+      expect(() => R2Publisher.checkAndResolveOptions(opts, null, true)).toThrow(/publicUrl/)
+    })
+
+    test("error message explains that R2 public access requires r2.dev or a custom domain", () => {
+      const opts = R2TestFixtures.createOptions({ publicUrl: null })
+      expect(() => R2Publisher.checkAndResolveOptions(opts, null, true)).toThrow(/r2\.dev|custom domain/)
+    })
+
+    test("warns instead of throwing when errorIfCannot=false", async () => {
+      const warnSpy = vi.spyOn(log, "warn").mockImplementation(() => {})
+      try {
+        const opts = R2TestFixtures.createOptions({ publicUrl: null })
+        await expect(R2Publisher.checkAndResolveOptions(opts, null, false)).resolves.toBeUndefined()
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/publicUrl/))
+      } finally {
+        warnSpy.mockRestore()
+      }
+    })
+
+    test("passes without publicUrl when publishAutoUpdate is false (errorIfCannot=true)", async () => {
+      const opts = R2TestFixtures.createOptions({ publicUrl: null, publishAutoUpdate: false })
+      await expect(R2Publisher.checkAndResolveOptions(opts, null, true)).resolves.toBeUndefined()
     })
   })
 
@@ -449,9 +494,13 @@ describe("r2Url (via getS3LikeProviderBaseUrl)", () => {
   /**
    * [CF-S3-API] When no publicUrl is provided the function falls back to the S3
    * API endpoint, which is:  https://<accountId>.r2.cloudflarestorage.com/<bucket>
-   * This URL requires authentication; the fallback is preserved for configurations
-   * where the operator knows the bucket's CORS / public-read policy allows
-   * unauthenticated access via the API endpoint (non-default setup).
+   * This fallback exists only for compatibility: app-update.yml files baked into
+   * already-shipped apps may lack publicUrl, and electron-updater must still resolve
+   * a URL for them rather than crash. The endpoint always requires SigV4 authentication,
+   * so requests to it will fail with 401 on R2 unless the operator fronts the bucket
+   * some other way (e.g. an authenticating proxy or CDN on a different host).
+   * New builds are prevented from reaching this state: R2Publisher.checkAndResolveOptions
+   * requires publicUrl at build time whenever publishAutoUpdate is not false.
    */
   describe("fallback to S3 API endpoint when publicUrl is absent — [CF-S3-API]", () => {
     test("returns the S3 API endpoint when publicUrl is null", () => {

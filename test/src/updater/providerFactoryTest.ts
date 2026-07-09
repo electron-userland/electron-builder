@@ -42,6 +42,10 @@ describe("createClient — r2 routing", () => {
   })
 
   test("falls back to the authenticated S3 API endpoint when publicUrl is absent", () => {
+    // Compatibility fallback: app-update.yml files from apps built before publicUrl became
+    // required at build time may lack it, and the updater must still resolve a URL for them.
+    // The S3 API endpoint always requires SigV4 authentication, so this URL will 401 on R2
+    // unless the operator fronts the bucket some other way.
     const options = r2({ publicUrl: null })
     const provider = createClient(options, updater, runtimeOptions) as any
     expect(provider.configuration.url).toBe(`https://${options.accountId}.r2.cloudflarestorage.com/${options.bucket}`)

@@ -1,4 +1,4 @@
-import { InvalidConfigurationError, isEmptyOrSpaces } from "builder-util"
+import { InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { R2Options } from "builder-util-runtime"
 import { PublishContext } from "../index.js"
 import { BaseS3Publisher, S3UploadConfig, S3UploadExtraParams } from "./baseS3Publisher.js"
@@ -19,7 +19,7 @@ export class R2Publisher extends BaseS3Publisher {
     super(context, info)
   }
 
-  static checkAndResolveOptions(options: R2Options, channelFromAppVersion: string | null, _errorIfCannot: boolean) {
+  static checkAndResolveOptions(options: R2Options, channelFromAppVersion: string | null, errorIfCannot: boolean) {
     if (isEmptyOrSpaces(options.bucket)) {
       throw new InvalidConfigurationError(`Please specify "bucket" for "r2" publish provider (see https://www.electron.build/publish#r2options)`)
     }
@@ -55,6 +55,22 @@ export class R2Publisher extends BaseS3Publisher {
           `"publicUrl" for "r2" publish provider must use https (found: "${options.publicUrl}"). ` +
             `electron-updater downloads updates from this URL on end-user machines; plaintext http is not allowed.`
         )
+      }
+    }
+
+    // Without a publicUrl the generated app-update.yml would point electron-updater at the
+    // S3 API endpoint, which on R2 always requires SigV4 authentication — end-user machines
+    // have no credentials, so every update check would fail with 401 at runtime. Catch this
+    // at build time instead of shipping a broken updater.
+    if (isEmptyOrSpaces(options.publicUrl) && options.publishAutoUpdate !== false) {
+      const message =
+        `Please specify "publicUrl" for "r2" publish provider when "publishAutoUpdate" is not disabled (see https://www.electron.build/publish#r2options). ` +
+        `R2's S3 API endpoint cannot serve unauthenticated downloads — public access requires an r2.dev subdomain or a custom domain ` +
+        `(see https://developers.cloudflare.com/r2/buckets/public-buckets/). Set "publicUrl" to that base URL, or set "publishAutoUpdate": false if the app does not auto-update.`
+      if (errorIfCannot) {
+        throw new InvalidConfigurationError(message)
+      } else {
+        log.warn(message)
       }
     }
 
