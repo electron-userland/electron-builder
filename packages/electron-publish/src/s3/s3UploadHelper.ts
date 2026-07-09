@@ -21,14 +21,15 @@ export interface S3PutObjectParams {
   credentials?: AwsCredentials
 }
 
-/**
- * Uploads a file to S3 (or S3-compatible storage) using a single PutObject request.
- * Suitable for files up to 5 GB — the S3 single-part upload limit.
- * Returns the underlying ClientRequest so callers can abort mid-flight.
- * Mirrors the behaviour of the `publish-s3` app-builder subcommand.
- */
-export function startS3PutObject(params: S3PutObjectParams): { req: http.ClientRequest; done: Promise<void> } {
-  const stat = fs.statSync(params.file)
+interface S3RequestTarget {
+  bucket: string
+  key: string
+  region: string
+  endpoint?: string
+  forcePathStyle?: boolean
+}
+
+function resolveS3Request(params: S3RequestTarget): { hostname: string; urlPath: string; isHttp: boolean } {
   const region = params.region
 
   let hostname: string
@@ -51,6 +52,19 @@ export function startS3PutObject(params: S3PutObjectParams): { req: http.ClientR
 
   // URL-encode each path segment individually so forward-slashes in keys are preserved
   const urlPath = "/" + rawPath.slice(1).split("/").map(encodeURIComponent).join("/")
+  return { hostname, urlPath, isHttp }
+}
+
+/**
+ * Uploads a file to S3 (or S3-compatible storage) using a single PutObject request.
+ * Suitable for files up to 5 GB — the S3 single-part upload limit.
+ * Returns the underlying ClientRequest so callers can abort mid-flight.
+ * Mirrors the behaviour of the `publish-s3` app-builder subcommand.
+ */
+export function startS3PutObject(params: S3PutObjectParams): { req: http.ClientRequest; done: Promise<void> } {
+  const stat = fs.statSync(params.file)
+  const region = params.region
+  const { hostname, urlPath, isHttp } = resolveS3Request(params)
 
   const headers: Record<string, string> = {
     "Content-Type": params.contentType,
@@ -124,6 +138,63 @@ export function startS3PutObject(params: S3PutObjectParams): { req: http.ClientR
   fileStream.pipe(req)
 
   return { req, done }
+}
+
+export interface S3DeleteObjectParams extends S3RequestTarget {
+  credentials?: AwsCredentials
+}
+
+/**
+ * Deletes an object from S3 (or S3-compatible storage) using a single DeleteObject request.
+ * Primarily used by credential-gated live tests to clean up uploaded artifacts.
+ */
+export function deleteS3Object(params: S3DeleteObjectParams): Promise<void> {
+  const { hostname, urlPath, isHttp } = resolveS3Request(params)
+
+  const signed = sign(
+    {
+      service: "s3",
+      region: params.region,
+      method: "DELETE",
+      host: hostname,
+      path: urlPath,
+      headers: {
+        "x-amz-content-sha256": "UNSIGNED-PAYLOAD",
+      },
+    },
+    params.credentials
+  )
+
+  const transport = isHttp ? http : https
+
+  return new Promise<void>((resolve, reject) => {
+    const req = transport.request(
+      {
+        hostname: hostname.split(":")[0],
+        port: hostname.includes(":") ? Number(hostname.split(":")[1]) : undefined,
+        path: urlPath,
+        method: "DELETE",
+        headers: signed.headers,
+      },
+      res => {
+        // S3 DeleteObject returns 204 No Content (also for keys that do not exist)
+        if (res.statusCode === 204 || res.statusCode === 200) {
+          res.resume()
+          res.on("end", () => resolve())
+        } else {
+          let body = ""
+          res.on("data", (chunk: string) => {
+            if (body.length < 4096) {
+              body += chunk
+            }
+          })
+          res.on("end", () => reject(new Error(`S3 DeleteObject failed (HTTP ${res.statusCode}): ${body.slice(0, 512)}`)))
+        }
+      }
+    )
+    req.on("error", reject)
+    req.end()
+  })
 }
 
 /**

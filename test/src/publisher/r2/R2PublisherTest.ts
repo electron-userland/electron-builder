@@ -16,6 +16,8 @@ import { createPublisher } from "app-builder-lib/internal"
 import { log } from "builder-util"
 import { CancellationToken, getS3LikeProviderBaseUrl, R2Options } from "builder-util-runtime"
 import { R2Publisher, PublishContext } from "electron-publish"
+import { deleteS3Object } from "electron-publish/src/s3/s3UploadHelper"
+import * as path from "path"
 import { beforeEach, expect, vi } from "vitest"
 import { R2TestFixtures } from "./R2TestFixtures"
 
@@ -618,24 +620,47 @@ describe("r2Url (via getS3LikeProviderBaseUrl)", () => {
  * The token must have at minimum "Object Read & Write" permission on the bucket.
  * Reference: https://developers.cloudflare.com/r2/api/s3/tokens/#permissions
  *
+ * Gated on the CF_R2_* environment variables (in CI these are repository secrets,
+ * only available on the upstream repository — the test is skipped everywhere else).
+ *
  * Run with:
  *   CF_R2_ACCESS_KEY_ID=<key> CF_R2_SECRET_ACCESS_KEY=<secret> \
  *   CF_R2_BUCKET=<bucket>    CF_R2_ACCOUNT_ID=<accountId>      \
  *   TEST_FILES=R2PublisherTest pnpm ci:test
  */
-test.ifEnv(process.env.CF_R2_ACCESS_KEY_ID != null && process.env.CF_R2_SECRET_ACCESS_KEY != null && process.env.CF_R2_BUCKET != null && process.env.CF_R2_ACCOUNT_ID != null)(
-  "R2 live upload smoke test",
-  async () => {
-    const publishContext = makeContext()
-    const options: R2Options = {
-      provider: "r2",
-      bucket: process.env.CF_R2_BUCKET!,
-      accountId: process.env.CF_R2_ACCOUNT_ID!,
-      publicUrl: process.env.CF_R2_PUBLIC_URL ?? null,
-    }
-    const publisher = await createPublisher(publishContext, "0.0.1", options, {}, {} as any)
-    await publisher!.upload({ file: R2TestFixtures.ICON_PATH, arch: 0 })
-    // Upload again to verify overwrite does not fail
-    await publisher!.upload({ file: R2TestFixtures.ICON_PATH, arch: 0 })
+// Empty strings count as absent: a CI env file may define the vars with empty values
+// when the corresponding repository secrets are not configured.
+const isSet = (value: string | undefined): boolean => value != null && value.trim() !== ""
+const liveEnv = {
+  accessKeyId: process.env.CF_R2_ACCESS_KEY_ID,
+  secretAccessKey: process.env.CF_R2_SECRET_ACCESS_KEY,
+  bucket: process.env.CF_R2_BUCKET,
+  accountId: process.env.CF_R2_ACCOUNT_ID,
+  publicUrl: process.env.CF_R2_PUBLIC_URL,
+}
+
+test.ifEnv(isSet(liveEnv.accessKeyId) && isSet(liveEnv.secretAccessKey) && isSet(liveEnv.bucket) && isSet(liveEnv.accountId))("R2 live upload smoke test", async () => {
+  const publishContext = makeContext()
+  const options: R2Options = {
+    provider: "r2",
+    bucket: liveEnv.bucket!,
+    accountId: liveEnv.accountId!,
+    publicUrl: isSet(liveEnv.publicUrl) ? liveEnv.publicUrl : null,
+    // the smoke test only exercises the upload path; no app-update.yml is generated
+    publishAutoUpdate: isSet(liveEnv.publicUrl),
   }
-)
+  const publisher = (await createPublisher(publishContext, "0.0.1", options, {}, {} as any)) as R2Publisher
+  try {
+    await publisher.upload({ file: R2TestFixtures.ICON_PATH, arch: 0 })
+    // Upload again to verify overwrite does not fail
+    await publisher.upload({ file: R2TestFixtures.ICON_PATH, arch: 0 })
+  } finally {
+    // Best-effort cleanup: remove the uploaded object so repeated CI runs do not accumulate files.
+    const config = publisher.getS3UploadConfig()
+    await deleteS3Object({
+      bucket: liveEnv.bucket!,
+      key: path.basename(R2TestFixtures.ICON_PATH),
+      ...config,
+    }).catch((error: Error) => console.warn(`R2 smoke test cleanup failed (non-fatal): ${error.message}`))
+  }
+})
