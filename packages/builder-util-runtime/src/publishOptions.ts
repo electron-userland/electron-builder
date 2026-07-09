@@ -519,7 +519,6 @@ export interface R2Options extends BaseS3Options {
   /**
    * R2 does not support S3 ACLs. This option is not applicable and will be ignored.
    * Configure bucket-level public access in the Cloudflare dashboard instead.
-   * @deprecated
    */
   readonly acl?: never
 }

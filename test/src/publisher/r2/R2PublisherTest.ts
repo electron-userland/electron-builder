@@ -374,8 +374,7 @@ describe("R2Publisher.getS3UploadConfig", () => {
 
     test("throws a clear error when CF_R2_ACCESS_KEY_ID is absent", () => {
       const publisher = new R2Publisher(ctx, R2TestFixtures.createOptions())
-      const env = R2TestFixtures.setupCredentials()
-      delete process.env.CF_R2_ACCESS_KEY_ID
+      const env = R2TestFixtures.clearCredentials()
       try {
         expect(() => publisher.getS3UploadConfig()).toThrow(/CF_R2_ACCESS_KEY_ID/)
       } finally {
@@ -416,8 +415,7 @@ describe("R2Publisher.getS3UploadConfig", () => {
 
     test("error message references the CF R2 token documentation URL", () => {
       const publisher = new R2Publisher(ctx, R2TestFixtures.createOptions())
-      const env = R2TestFixtures.setupCredentials()
-      delete process.env.CF_R2_ACCESS_KEY_ID
+      const env = R2TestFixtures.clearCredentials()
       try {
         expect(() => publisher.getS3UploadConfig()).toThrow(/developers\.cloudflare\.com/)
       } finally {

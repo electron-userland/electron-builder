@@ -138,6 +138,27 @@ export class R2TestFixtures {
 
   /** Remove both credential env vars and return a restore() function. */
   static clearCredentials() {
-    return R2TestFixtures.setupCredentials(undefined as any, undefined as any)
+    const saved = {
+      CF_R2_ACCESS_KEY_ID: process.env.CF_R2_ACCESS_KEY_ID,
+      CF_R2_SECRET_ACCESS_KEY: process.env.CF_R2_SECRET_ACCESS_KEY,
+    }
+    // Note: assigning `undefined` to a process.env key coerces it to the string "undefined" —
+    // the vars must actually be deleted.
+    delete process.env.CF_R2_ACCESS_KEY_ID
+    delete process.env.CF_R2_SECRET_ACCESS_KEY
+    return {
+      restore(): void {
+        if (saved.CF_R2_ACCESS_KEY_ID === undefined) {
+          delete process.env.CF_R2_ACCESS_KEY_ID
+        } else {
+          process.env.CF_R2_ACCESS_KEY_ID = saved.CF_R2_ACCESS_KEY_ID
+        }
+        if (saved.CF_R2_SECRET_ACCESS_KEY === undefined) {
+          delete process.env.CF_R2_SECRET_ACCESS_KEY
+        } else {
+          process.env.CF_R2_SECRET_ACCESS_KEY = saved.CF_R2_SECRET_ACCESS_KEY
+        }
+      },
+    }
   }
 }
