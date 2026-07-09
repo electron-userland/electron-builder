@@ -38,7 +38,7 @@ The `electron-updater` package offers a different functionality compared to Elec
 * Code signature validation not only on macOS, but also on Windows.
 * All required metadata files and artifacts are produced and published automatically.
 * Download progress and [staged rollouts](#staged-rollouts) supported on all platforms.
-* Different providers supported out of the box: ([GitHub Releases](https://help.github.com/articles/about-releases/), [Amazon S3](https://aws.amazon.com/s3/), [DigitalOcean Spaces](https://www.digitalocean.com/community/tutorials/an-introduction-to-digitalocean-spaces), [Keygen](https://keygen.sh/docs/api/#auto-updates-electron) and generic HTTP(s) server).
+* Different providers supported out of the box: ([GitHub Releases](https://help.github.com/articles/about-releases/), [Amazon S3](https://aws.amazon.com/s3/), [DigitalOcean Spaces](https://www.digitalocean.com/community/tutorials/an-introduction-to-digitalocean-spaces), [Cloudflare R2](https://developers.cloudflare.com/r2/), [Keygen](https://keygen.sh/docs/api/#auto-updates-electron) and generic HTTP(s) server).
 * You need only 2 lines of code to make it work.
 
 ## Quick Setup Guide

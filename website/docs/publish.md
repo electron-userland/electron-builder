@@ -155,6 +155,18 @@ Detected automatically using:
   {!./builder-util-runtime.Interface.SpacesOptions.md!}
 
 ## R2
+
+To publish to [Cloudflare R2](https://developers.cloudflare.com/r2/):
+
+1. Create an [R2 API token](https://developers.cloudflare.com/r2/api/s3/tokens/) with at least **Object Read & Write** permission on your bucket.
+2. Expose its credentials to electron-builder via the `CF_R2_ACCESS_KEY_ID` and `CF_R2_SECRET_ACCESS_KEY` environment variables.
+3. Enable [public access](https://developers.cloudflare.com/r2/buckets/public-buckets/) for the bucket via an `r2.dev` subdomain or a custom domain — R2's S3 API endpoint cannot serve unauthenticated downloads, so `electron-updater` cannot download updates from it.
+4. Set `publicUrl` to that public base URL.
+
+Auto-updating from R2 requires an `electron-updater` version that supports the `r2` provider: electron-updater >= 7.0.0 (the release line containing this feature).
+
+Note: files are uploaded with a single PUT request, and R2 limits single-PUT uploads to ~5 GiB per object.
+
   {!./builder-util-runtime.Interface.R2Options.md!}
 
 ## BYO Generic (create-your-own)
