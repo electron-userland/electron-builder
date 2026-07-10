@@ -40,12 +40,20 @@ async function createMinimalTarGz(archivePath: string, files: Record<string, str
 }
 
 /**
- * Serves a single local file over HTTP for any GET request path. Lets downloadBuilderToolset
+ * Serves a single local file over HTTP at one exact request path. Lets downloadBuilderToolset
  * exercise its full download → cache → extract pipeline without touching the network:
  * point ELECTRON_BUILDER_BINARIES_MIRROR at http://127.0.0.1:<port>/.
+ * Every other path 404s, so an unexpected download against the stubbed mirror (e.g. a toolset
+ * trying to resolve itself mid-test) fails loudly instead of silently receiving the fixture
+ * bytes and poisoning a cache or checksum.
  */
-async function startArtifactServer(filePath: string): Promise<{ port: number; close: () => Promise<void> }> {
+async function startArtifactServer(filePath: string, servedPath: string): Promise<{ port: number; close: () => Promise<void> }> {
   const server = http.createServer((req, res) => {
+    if (req.url !== servedPath) {
+      res.writeHead(404)
+      res.end()
+      return
+    }
     fs.readFile(filePath).then(
       data => {
         res.writeHead(200, { "content-type": "application/octet-stream", "content-length": data.length })
@@ -356,12 +364,17 @@ describe("downloadBuilderToolset", { sequential: true }, () => {
   // rename that busts caches poisoned by the broken extraction (the old "<name>.tar-<hash>"
   // dirs pass the cache-complete check and would otherwise never be re-extracted).
   test("toolset .tar.7z is extracted through both layers and gets a cache-busting dir name (#10002)", { timeout: 120_000 }, async ({ expect }) => {
-    // Resolve 7za before stubbing the mirror/cache env vars: extractArchive needs it, and resolving it
-    // afterwards would try to download the 7zip toolset from our fixture server (and fail its checksum).
-    // Must import from "out" — the same compiled instance extractArchive uses — so this call primes that
-    // instance's memoized path. The "src" instance is a separate module whose memo extractArchive never sees.
+    // Resolve a real 7za binary BEFORE stubbing the mirror/cache env vars, then pin it via
+    // ELECTRON_BUILDER_7ZIP_PATH for the rest of the test. Pinning matters: extractArchive calls
+    // getPath7za() through its own module instance, and under vitest the test file and the library
+    // do not reliably share one instance (src and out variants of toolsets/7zip both exist in the
+    // module graph, each with its own memoized path). Merely priming a memo here left the library-side
+    // instance cold in CI, so it re-resolved 7za AFTER the mirror was stubbed and downloaded our
+    // fixture bytes as "7zip-<platform>.tar.gz", failing the toolset checksum. The env var is read
+    // from process.env at call time by every instance, making resolution instance-agnostic.
     const { getPath7za } = await import("app-builder-lib/out/toolsets/7zip")
     const cmd7za = await getPath7za()
+    vi.stubEnv("ELECTRON_BUILDER_7ZIP_PATH", cmd7za)
 
     // Craft a fixture mirroring snap-template-electron-*.tar.7z: a 7z layer around a tar with
     // "./"-prefixed entries and a mode-755 desktop-init.sh at the root.
@@ -383,7 +396,7 @@ describe("downloadBuilderToolset", { sequential: true }, () => {
       await exec(cmd7za, ["a", "-t7z", servedArchive, innerTar])
 
       vi.stubEnv("ELECTRON_BUILDER_CACHE", freshTestCache)
-      server = await startArtifactServer(servedArchive)
+      server = await startArtifactServer(servedArchive, "/snap-template-test/snap-template-test-amd64.tar.7z")
       vi.stubEnv("ELECTRON_BUILDER_BINARIES_MIRROR", `http://127.0.0.1:${server.port}/`)
 
       const result = await downloadBuilderToolset({ releaseName: "snap-template-test", filenameWithExt: "snap-template-test-amd64.tar.7z" })
