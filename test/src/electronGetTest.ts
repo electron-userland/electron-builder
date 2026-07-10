@@ -356,9 +356,11 @@ describe("downloadBuilderToolset", { sequential: true }, () => {
   // rename that busts caches poisoned by the broken extraction (the old "<name>.tar-<hash>"
   // dirs pass the cache-complete check and would otherwise never be re-extracted).
   test("toolset .tar.7z is extracted through both layers and gets a cache-busting dir name (#10002)", { timeout: 120_000 }, async ({ expect }) => {
-    // Resolve 7za before stubbing the mirror env vars: extractArchive needs it, and resolving it
-    // afterwards would try to download the 7zip toolset from our fixture server.
-    const { getPath7za } = await import("app-builder-lib/src/toolsets/7zip")
+    // Resolve 7za before stubbing the mirror/cache env vars: extractArchive needs it, and resolving it
+    // afterwards would try to download the 7zip toolset from our fixture server (and fail its checksum).
+    // Must import from "out" — the same compiled instance extractArchive uses — so this call primes that
+    // instance's memoized path. The "src" instance is a separate module whose memo extractArchive never sees.
+    const { getPath7za } = await import("app-builder-lib/out/toolsets/7zip")
     const cmd7za = await getPath7za()
 
     // Craft a fixture mirroring snap-template-electron-*.tar.7z: a 7z layer around a tar with
