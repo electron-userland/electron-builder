@@ -53,6 +53,9 @@ export interface UpdateCheckResult {
   readonly downloadPromise?: Promise<Array<string>> | null
 
   readonly cancellationToken?: CancellationToken
+
+  /** @deprecated */
+  readonly versionInfo: UpdateInfo
 }
 
 export interface UpdateDownloadedEvent extends UpdateInfo {
