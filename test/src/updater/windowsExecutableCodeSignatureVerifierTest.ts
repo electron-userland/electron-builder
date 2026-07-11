@@ -661,7 +661,9 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     })
 
     test("full DN publisher match returns null", async () => {
-      if (!notepadSubject) return
+      if (!notepadSubject) {
+        return
+      }
       expect(await verifySignature([notepadSubject], NOTEPAD, logger)).toBeNull()
     }, 30_000)
 
@@ -673,18 +675,26 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     }, 30_000)
 
     test("CN-only match returns null and logs deprecation warning", async () => {
-      if (!notepadSubject) return
+      if (!notepadSubject) {
+        return
+      }
       const cnOnly = notepadSubject.match(/CN=([^,]+)/)?.[1]?.trim()
-      if (!cnOnly) return
+      if (!cnOnly) {
+        return
+      }
       expect(await verifySignature([cnOnly], NOTEPAD, logger)).toBeNull()
       expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining(cnOnly))
     }, 30_000)
 
     test("partial DN (subset of keys) matches when provided keys all agree", async () => {
-      if (!notepadSubject) return
+      if (!notepadSubject) {
+        return
+      }
       const cn = notepadSubject.match(/CN=[^,]+/)?.[0]
       const c = notepadSubject.match(/C=[A-Z]+/)?.[0]
-      if (!cn || !c) return
+      if (!cn || !c) {
+        return
+      }
       expect(await verifySignature([`${cn}, ${c}`], NOTEPAD, logger)).toBeNull()
     }, 30_000)
   })
