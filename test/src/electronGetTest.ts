@@ -1,3 +1,4 @@
+import { exec } from "builder-util"
 import { readFileSync } from "fs"
 import * as fs from "fs/promises"
 import * as http from "http"
@@ -343,6 +344,59 @@ describe("downloadBuilderToolset", { sequential: true }, () => {
       // Our local server was hit — resolveAssetURL determined the URL, not ELECTRON_MIRROR
       expect(server.requestedPaths.length).toBeGreaterThan(0)
       expect(server.requestedPaths.some(p => p.includes("dmg-builder@1.2.2"))).toBe(true)
+    } finally {
+      await server.close()
+    }
+  })
+
+  // Regression test for https://github.com/electron-userland/electron-builder/issues/10002
+  // Snap template toolsets ship as .tar.7z; extractArchive routed them through the plain .7z
+  // branch, leaving a single inner .tar in the toolset dir instead of the template contents,
+  // so every default-config snap built with 26.15.0-26.15.6 silently failed at launch.
+  // Also asserts the cache dir name now strips the full ".tar.7z" extension — a deliberate
+  // rename that busts caches poisoned by the broken extraction (the old "<name>.tar-<hash>"
+  // dirs pass the cache-complete check and would otherwise never be re-extracted).
+  test("toolset .tar.7z is extracted through both layers and gets a cache-busting dir name (#10002)", { timeout: 120_000 }, async ({ expect, tmpDir }) => {
+    // Resolve 7za before stubbing the mirror env vars: extractArchive needs it, and resolving it
+    // afterwards would try to download the 7zip toolset from our fixture server.
+    const { getPath7za } = await import("app-builder-lib/src/toolsets/7zip")
+    const cmd7za = await getPath7za()
+
+    // Craft a fixture mirroring snap-template-electron-*.tar.7z: a 7z layer around a tar with
+    // "./"-prefixed entries and a mode-755 desktop-init.sh at the root.
+    const fixtureDir = await tmpDir.createTempDir()
+    const contentDir = path.join(fixtureDir, "content")
+    await fs.mkdir(path.join(contentDir, "usr", "share"), { recursive: true })
+    await fs.writeFile(path.join(contentDir, "desktop-init.sh"), "#!/bin/bash\ntrue\n", { mode: 0o755 })
+    await fs.writeFile(path.join(contentDir, "usr", "share", "marker.txt"), "ok")
+    const innerTar = path.join(fixtureDir, "snap-template-test-amd64.tar")
+    // explicit "./"-prefixed entries so node-tar stores "./"-prefixed names like the real template tars
+    await tar.create(
+      { file: innerTar, cwd: contentDir },
+      (await fs.readdir(contentDir)).map(e => `./${e}`)
+    )
+    const servedArchive = path.join(fixtureDir, "snap-template-test-amd64.tar.7z")
+    await exec(cmd7za, ["a", "-t7z", servedArchive, innerTar])
+
+    const freshTestCache = await tmpDir.createTempDir()
+    vi.stubEnv("ELECTRON_BUILDER_CACHE", freshTestCache)
+    const server = await startArtifactServer(servedArchive)
+    vi.stubEnv("ELECTRON_BUILDER_BINARIES_MIRROR", `http://127.0.0.1:${server.port}/`)
+
+    try {
+      const result = await downloadBuilderToolset({ releaseName: "snap-template-test", filenameWithExt: "snap-template-test-amd64.tar.7z" })
+
+      // both layers extracted: template files at the toolset root, no stray inner .tar
+      const entries = await fs.readdir(result)
+      expect(entries).toContain("desktop-init.sh")
+      expect(entries).toContain("usr")
+      expect(entries.filter(e => e.endsWith(".tar"))).toEqual([])
+      expect(await fs.readFile(path.join(result, "usr", "share", "marker.txt"), "utf-8")).toBe("ok")
+
+      // cache-busting dir name: full ".tar.7z" stripped (26.15.x stripped only ".7z",
+      // producing "<name>.tar-<hash>" dirs that hold the broken single-tar extraction)
+      expect(path.basename(result)).toMatch(/^snap-template-test-amd64-/)
+      expect(path.basename(result)).not.toContain(".tar")
     } finally {
       await server.close()
     }
