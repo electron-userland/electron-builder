@@ -9,7 +9,8 @@ This page helps you choose the right packaging format for each platform. The rig
 | `nsis` | `.exe` installer | Consumer apps (most common) | Optional (per-user mode) | electron-updater |
 | `nsis-web` | `.exe` web installer | Apps with large assets | Optional | electron-updater |
 | `portable` | `.exe` no-install | USB drives, no-install scenarios | No | Manual |
-| `appx` | `.appx` / `.msix` | Windows Store, enterprise MDM | Managed by Store | Store only |
+| `appx` | `.appx` | Windows Store, enterprise MDM | Managed by Store | Store only |
+| `msix` | `.msix` / `.msixbundle` / `.msixupload` | Windows Store, modern deployment (successor to AppX) | Managed by Store | Store only |
 | `msi` | `.msi` | Enterprise deployment (SCCM/Intune/GPO) | Yes | Not supported via electron-updater |
 | `msi-wrapped` | `.msi` wrapping NSIS | Enterprise + existing NSIS installer | Yes | electron-updater |
 | `squirrel.windows` | `.exe` / NuGet | Legacy (not recommended) | No | Squirrel |
@@ -39,6 +40,12 @@ This page helps you choose the right packaging format for each platform. The rig
 - Code signing with a trusted certificate is required for sideloading
 - See [AppX Configuration](appx.md)
 
+**MSIX** (`msix`) — the modern successor to AppX (beta); prefer it for new Store/MDM work.
+- Produces `.msix`, multi-architecture `.msixbundle`, and Store `.msixupload` artifacts
+- Adds modern manifest features: package integrity and Windows services
+- Requires the modern `winCodeSign` toolset (the default; only the legacy `0.0.0` bundle is rejected); builds on Windows 10 / Windows Server 2012 R2 (6.3+) or later, or macOS via Parallels
+- See [MSIX Configuration](msix.md)
+
 **MSI** (`msi`) — use for enterprise deployment via Group Policy or SCCM.
 - IT departments can deploy silently across managed machines
 - Supports standard MSI command-line flags (`/quiet`, `/passive`)
@@ -54,7 +61,8 @@ This page helps you choose the right packaging format for each platform. The rig
 
 ```
 Do you need Windows Store distribution?
-  → Yes: AppX
+  → Yes, modern (recommended): MSIX
+  → Yes, legacy: AppX
 
 Do you need enterprise GPO/SCCM/Intune deployment?
   → Yes, native MSI: MSI

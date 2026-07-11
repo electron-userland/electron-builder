@@ -5,7 +5,6 @@ const path = require("path")
 const knownUnusedDevDependencies = new Set([
   "@babel/plugin-transform-modules-commonjs", // Not sure what this is used for, but keeping just in case (for now)
   "changesets-changelog-clean", // Used in package.json CI/CD logic
-  "typedoc-plugin-markdown", // Used in typedoc config
   // Eslint config doesn't get scanned by depCheck
   "@stylistic/eslint-plugin",
   "@eslint/js",
@@ -14,7 +13,13 @@ const knownUnusedDevDependencies = new Set([
   "@typescript-eslint/parser",
   "eslint-config-prettier",
   "eslint-plugin-prettier",
-  "@rollup/plugin-typescript",
+  // Used in test/vitest-scripts/ (test dir is ignored by depcheck) or via pnpm workspace scripts
+  "vitest",
+  "tsx",
+  // Used at runtime by the `vitest --merge-reports` CLI in the merge-smart-cache job (HTML reporter +
+  // coverage provider), not statically imported, so depcheck can't see them.
+  "@vitest/ui",
+  "@vitest/coverage-v8",
 ])
 const knownMissedDependencies = new Set(["babel-core", "babel-preset-env", "babel-preset-stage-0", "babel-preset-react"])
 
@@ -25,18 +30,21 @@ async function check(projectDir, devPackageData) {
   const packageName = path.basename(projectDir)
   // console.log(`Checking ${projectDir}`)
 
+  /**
+   * @type {Results}
+   */
   const result = await new Promise(resolve => {
-    depCheck(projectDir, { ignoreDirs: ["out", "test", "pages", "typings", "docker", "certs", "templates", "vendor"] }, resolve)
+    depCheck(projectDir, { ignoreDirs: ["out", "dist", "test", "pages", "typings", "docker", "certs", "templates", "vendor"] }, resolve)
   })
 
   let unusedDependencies = result.dependencies
   if (unusedDependencies.length > 0) {
-    // Check root for unused deps (which could be cloned to any folder name, so we check basename of cwd)
-    if (packageName === path.basename(process.cwd())) {
-      unusedDependencies = unusedDependencies.filter(it => it !== "dmg-license")
-    }
     if (packageName === "electron-builder") {
       unusedDependencies = unusedDependencies.filter(it => it !== "dmg-builder")
+    }
+    if (packageName === "app-builder-lib") {
+      // @electron/universal is loaded via dynamicImport() which depcheck cannot statically detect
+      unusedDependencies = unusedDependencies.filter(it => it !== "@electron/universal")
     }
     if (unusedDependencies.length > 0) {
       console.error(`${chalk.bold(packageName)} Unused dependencies: ${JSON.stringify(unusedDependencies, null, 2)}`)
@@ -45,6 +53,9 @@ async function check(projectDir, devPackageData) {
   }
 
   let unusedDevDependencies = result.devDependencies.filter(it => !it.startsWith("@types/") && !knownUnusedDevDependencies.has(it))
+  if (packageName === "electron-builder") {
+    unusedDevDependencies = unusedDevDependencies.filter(it => it !== "vitest")
+  }
   if (packageName === "dmg-builder") {
     unusedDevDependencies = unusedDevDependencies.filter(it => it !== "temp-file")
   }
@@ -54,7 +65,7 @@ async function check(projectDir, devPackageData) {
   }
 
   delete result.missing.electron
-  const toml = result.missing.toml
+const toml = result.missing.toml
   if (toml != null && toml.length === 1 && toml[0].endsWith("config.js")) {
     delete result.missing.toml
   }

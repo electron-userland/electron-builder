@@ -1,8 +1,8 @@
 import { afterEach, describe, test } from "vitest"
 import * as fse from "fs-extra"
-import * as os from "os"
 import * as path from "path"
 import { ModuleManager, LogMessageByKey } from "app-builder-lib/src/node-module-collector/moduleManager"
+import { TmpDir } from "temp-file"
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -12,8 +12,10 @@ import { ModuleManager, LogMessageByKey } from "app-builder-lib/src/node-module-
  * Writes a minimal package.json tree under a temp root and returns the root
  * path. The `packages` map is keyed by relative path from the root.
  */
+const projectTmpDir = new TmpDir("eb-mm-test")
+
 async function buildTempTree(packages: Record<string, { name: string; version: string; dependencies?: Record<string, string> }>): Promise<string> {
-  const root = await fse.mkdtemp(path.join(os.tmpdir(), "eb-mm-test-"))
+  const root = await projectTmpDir.createTempDir()
   for (const [rel, pkg] of Object.entries(packages)) {
     const absPath = path.join(root, rel)
     await fse.ensureDir(path.dirname(absPath))
@@ -81,10 +83,12 @@ describe("ModuleManager.locatePackageVersion", () => {
     })
   })
 
-  describe("upward (hoisted) resolution", () => {
+  describe("upward (hoisted) resolution", { sequential: true }, () => {
     let root = ""
     afterEach(async () => {
-      if (root) await fse.rm(root, { recursive: true, force: true })
+      if (root) {
+        await fse.rm(root, { recursive: true, force: true })
+      }
     })
 
     test("finds hoisted package that satisfies range", async ({ expect }) => {
@@ -105,10 +109,12 @@ describe("ModuleManager.locatePackageVersion", () => {
     })
   })
 
-  describe("override fallback (two-pass search)", () => {
+  describe("override fallback (two-pass search)", { sequential: true }, () => {
     let root = ""
     afterEach(async () => {
-      if (root) await fse.rm(root, { recursive: true, force: true })
+      if (root) {
+        await fse.rm(root, { recursive: true, force: true })
+      }
     })
 
     test("accepts package whose installed version is outside the declared range", async ({ expect }) => {
@@ -189,10 +195,12 @@ describe("ModuleManager.locatePackageVersion", () => {
   })
 })
 
-describe("ModuleManager downward search", () => {
+describe("ModuleManager downward search", { sequential: true }, () => {
   let root = ""
   afterEach(async () => {
-    if (root) await fse.rm(root, { recursive: true, force: true })
+    if (root) {
+      await fse.rm(root, { recursive: true, force: true })
+    }
   })
 
   test("finds package nested under another package's node_modules", async ({ expect }) => {
@@ -280,10 +288,12 @@ describe("ModuleManager downward search", () => {
   })
 })
 
-describe("ModuleManager.semverSatisfies (via locatePackageVersion)", () => {
+describe("ModuleManager.semverSatisfies (via locatePackageVersion)", { sequential: true }, () => {
   let root = ""
   afterEach(async () => {
-    if (root) await fse.rm(root, { recursive: true, force: true })
+    if (root) {
+      await fse.rm(root, { recursive: true, force: true })
+    }
   })
 
   async function locateWith(version: string, range: string): Promise<{ found: boolean; usedFallback: boolean }> {

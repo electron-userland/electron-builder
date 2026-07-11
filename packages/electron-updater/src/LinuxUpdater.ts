@@ -1,6 +1,6 @@
 import { AllPublishOptions } from "builder-util-runtime"
-import { AppAdapter } from "./AppAdapter"
-import { BaseUpdater } from "./BaseUpdater"
+import { AppAdapter } from "./AppAdapter.js"
+import { BaseUpdater } from "./BaseUpdater.js"
 
 // Matches safe package manager names: alphanumeric, hyphens, underscores only.
 // Rejects names with shell metacharacters that could cause command injection.

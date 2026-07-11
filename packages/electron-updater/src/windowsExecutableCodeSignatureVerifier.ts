@@ -1,7 +1,7 @@
 import { parseDn } from "builder-util-runtime"
 import { execFile, execFileSync, ExecFileOptions } from "child_process"
 import * as os from "os"
-import { Logger } from "./types"
+import { Logger } from "./types.js"
 import * as path from "path"
 
 function preparePowerShellExec(command: string, timeout?: number) {
@@ -48,7 +48,10 @@ function checkLiteralPath(data: any, unescapedTempUpdateFile: string, logger: Lo
       return false
     }
   } catch (error: any) {
-    logger.warn(`Unable to verify LiteralPath of update asset due to missing data.Path. Skipping this step of validation. Message: ${error.message ?? error.stack}`)
+    logger.warn(
+      `Unable to verify LiteralPath of update asset due to missing data.Path. Skipping this step of validation. Message: ${error.message ?? error.stack}. ` +
+        "This fail-open behavior is deprecated: electron-builder v28 will treat a missing/mismatched LiteralPath as a verification failure (fail-closed)."
+    )
   }
   return true
 }
@@ -140,7 +143,8 @@ function parseOut(out: string): any {
 function handleError(logger: Logger, error: Error | null, stderr: string | null, reject: (reason: any) => void): boolean {
   if (isOldWin6()) {
     logger.warn(
-      `Cannot execute Get-AuthenticodeSignature: ${error || stderr}. Ignoring signature validation due to unsupported powershell version. Please upgrade to powershell 3 or higher.`
+      `Cannot execute Get-AuthenticodeSignature: ${error || stderr}. Ignoring signature validation due to unsupported powershell version. Please upgrade to powershell 3 or higher. ` +
+        "This fail-open behavior is deprecated: electron-builder v28 will treat an unverifiable signature as a failure (fail-closed)."
     )
     return true
   }
@@ -149,7 +153,8 @@ function handleError(logger: Logger, error: Error | null, stderr: string | null,
     execFileSync(...preparePowerShellExec("ConvertTo-Json test", 10 * 1000))
   } catch (testError: any) {
     logger.warn(
-      `Cannot execute ConvertTo-Json: ${testError.message}. Ignoring signature validation due to unsupported powershell version. Please upgrade to powershell 3 or higher.`
+      `Cannot execute ConvertTo-Json: ${testError.message}. Ignoring signature validation due to unsupported powershell version. Please upgrade to powershell 3 or higher. ` +
+        "This fail-open behavior is deprecated: electron-builder v28 will treat an unverifiable signature as a failure (fail-closed)."
     )
     return true
   }

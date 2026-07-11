@@ -1,9 +1,9 @@
 import { createHttpError, safeGetHeader } from "builder-util-runtime"
 import { IncomingMessage } from "http"
 import { Writable } from "stream"
-import { copyData, DataSplitter, PartListDataTask } from "./DataSplitter"
-import { DifferentialDownloader } from "./DifferentialDownloader"
-import { Operation, OperationKind } from "./downloadPlanBuilder"
+import { copyData, DataSplitter, PartListDataTask } from "./DataSplitter.js"
+import { DifferentialDownloader } from "./DifferentialDownloader.js"
+import { Operation, OperationKind } from "./downloadPlanBuilder.js"
 
 export function executeTasksUsingMultipleRangeRequests(
   differentialDownloader: DifferentialDownloader,
@@ -105,7 +105,17 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
       return
     }
 
-    const dicer = new DataSplitter(out, options, partIndexToTaskIndex, m[1] || m[2], partIndexToLength, resolve, grandTotalBytes, differentialDownloader.options.onProgress)
+    const dicer = new DataSplitter(
+      out,
+      options,
+      partIndexToTaskIndex,
+      m[1] || m[2],
+      partIndexToLength,
+      resolve,
+      grandTotalBytes,
+      differentialDownloader.options.onProgress,
+      differentialDownloader.logger
+    )
     dicer.on("error", reject)
     response.pipe(dicer)
 

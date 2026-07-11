@@ -12,7 +12,7 @@ import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, tuneTestUpdater, writeUpdateCon
 import { mockForNodeRequire } from "vitest-mock-commonjs"
 import { ExpectStatic } from "vitest"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform"
-import { ToolsetConfig } from "app-builder-lib/src/configuration"
+import { ToolsetConfig } from "app-builder-lib/internal"
 
 export async function doBuild(
   expect: ExpectStatic,
@@ -108,7 +108,16 @@ class TestNativeUpdater extends EventEmitter {
   }
 }
 
-export async function testBlockMap(expect: ExpectStatic, oldDir: string, newDir: string, updaterClass: any, platform: Platform, arch: Arch, productFilename?: string) {
+export async function testBlockMap(
+  expect: ExpectStatic,
+  oldDir: string,
+  newDir: string,
+  updaterClass: any,
+  platform: Platform,
+  arch: Arch,
+  options: { productFilename?: string; disableWebInstaller?: boolean } = {}
+) {
+  const { productFilename, disableWebInstaller } = options
   const appUpdateConfigPath = path.join(
     `${platform.buildConfigurationKey}${getArchSuffix(arch)}${platform === Platform.MAC ? "" : "-unpacked"}`,
     platform === Platform.MAC ? `${productFilename}.app` : ""
@@ -125,6 +134,10 @@ export async function testBlockMap(expect: ExpectStatic, oldDir: string, newDir:
     server.on("error", reject)
 
     const updater = new updaterClass(null, new TestAppAdapter(OLD_VERSION_NUMBER, getTestUpdaterCacheDir(oldDir)))
+    // disableWebInstaller defaults to true as of v27; the web-installer (nsis-web) test must opt back in to download web installer packages
+    if (disableWebInstaller != null) {
+      updater.disableWebInstaller = disableWebInstaller
+    }
     updater._appUpdateConfigPath = path.join(
       oldDir,
       updaterClass === MacUpdater ? `${appUpdateConfigPath}/Contents/Resources` : `${appUpdateConfigPath}/resources`,

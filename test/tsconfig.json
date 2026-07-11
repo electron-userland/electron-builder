@@ -1,36 +1,46 @@
 {
   "extends": "../tsconfig-base.json",
   "compilerOptions": {
-    "rootDir": ".",
-    "outDir": "out",
+    // Test code runs under vitest (Vite/esbuild), a bundler — not Node's native ESM loader — so model
+    // it with bundler resolution rather than the inherited nodenext (which is for the shipped packages).
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
     "skipLibCheck": true,
-    "baseUrl": "../packages"
-  },
-  "references": [
-    {
-      "path": "../packages/builder-util"
-    },
-    {
-      "path": "../packages/builder-util-runtime"
-    },
-    {
-      "path": "../packages/electron-builder"
-    },
-    {
-      "path": "../packages/electron-publish"
-    },
-    {
-      "path": "../packages/electron-updater"
+    "paths": {
+      "builder-util": ["../packages/builder-util/src/util.ts"],
+      "builder-util/internal": ["../packages/builder-util/src/indexInternal.ts"],
+      "builder-util/src/*": ["../packages/builder-util/src/*"],
+      "builder-util-runtime": ["../packages/builder-util-runtime/src/index.ts"],
+      "builder-util-runtime/internal": ["../packages/builder-util-runtime/src/indexInternal.ts"],
+      "builder-util-runtime/src/*": ["../packages/builder-util-runtime/src/*"],
+      "app-builder-lib": ["../packages/app-builder-lib/src/index.ts"],
+      "app-builder-lib/internal": ["../packages/app-builder-lib/src/indexInternal.ts"],
+      "app-builder-lib/src/*": ["../packages/app-builder-lib/src/*"],
+      "dmg-builder": ["../packages/dmg-builder/src/dmgUtil.ts"],
+      "dmg-builder/internal": ["../packages/dmg-builder/src/indexInternal.ts"],
+      "dmg-builder/src/*": ["../packages/dmg-builder/src/*"],
+      "electron-builder": ["../packages/electron-builder/src/index.ts"],
+      "electron-builder/internal": ["../packages/electron-builder/src/indexInternal.ts"],
+      "electron-builder/src/*": ["../packages/electron-builder/src/*"],
+      "electron-publish": ["../packages/electron-publish/src/index.ts"],
+      "electron-publish/internal": ["../packages/electron-publish/src/indexInternal.ts"],
+      "electron-publish/src/*": ["../packages/electron-publish/src/*"],
+      "electron-updater": ["../packages/electron-updater/src/index.ts"],
+      "electron-updater/internal": ["../packages/electron-updater/src/indexInternal.ts"],
+      "electron-updater/src/*": ["../packages/electron-updater/src/*"],
+      "electron-builder-squirrel-windows": ["../packages/electron-builder-squirrel-windows/src/SquirrelWindowsTarget.ts"],
+      "electron-builder-squirrel-windows/internal": ["../packages/electron-builder-squirrel-windows/src/indexInternal.ts"],
+      "electron-builder-squirrel-windows/src/*": ["../packages/electron-builder-squirrel-windows/src/*"]
     }
-  ],
+  },
   "declaration": false,
   "include": [
     "../typings/*.d.ts",
     "typings/*.d.ts",
     "src/**/*.ts",
     "vitest-scripts/*.ts"
-   ],
+  ],
   "types": ["vitest/globals"],
-  "exclude": [
-  ]
+  "exclude": []
 }

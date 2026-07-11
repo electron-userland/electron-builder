@@ -1,10 +1,10 @@
 import { isEmptyOrSpaces, log } from "builder-util"
+import { sanitizeFileName } from "builder-util/internal"
 import { Nullish } from "builder-util-runtime"
-import { sanitizeFileName } from "builder-util/out/filename"
 import { prerelease } from "semver"
-import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions"
-import { Packager } from "./packager"
-import { expandMacro } from "./util/macroExpander"
+import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions.js"
+import { Packager } from "./packager.js"
+import { expandMacro } from "./util/macroExpander.js"
 
 // fpm bug - rpm build --description is not escaped, well... decided to replace quite to smart quote
 // http://leancrew.com/all-this/2010/11/smart-quotes-in-javascript/
@@ -21,7 +21,7 @@ export function smarten(s: string): string {
 }
 
 export class AppInfo {
-  readonly description = smarten(this.info.metadata.description || "")
+  readonly description: string
   readonly version: string
   readonly type: string | undefined
   readonly shortVersion: string | undefined
@@ -37,9 +37,9 @@ export class AppInfo {
   constructor(
     private readonly info: Packager,
     buildVersion: string | Nullish,
-    private readonly platformSpecificOptions: PlatformSpecificBuildOptions | null = null,
-    normalizeNfd = false
+    private readonly platformSpecificOptions: PlatformSpecificBuildOptions | null = null
   ) {
+    this.description = smarten(this.info.metadata.description || "")
     this.version = info.metadata.version!
     this.type = info.metadata.type
 
@@ -71,10 +71,10 @@ export class AppInfo {
     }
 
     this.productName = info.config.productName || info.metadata.productName || info.metadata.name!
-    this.sanitizedProductName = sanitizeFileName(this.productName, normalizeNfd)
+    this.sanitizedProductName = sanitizeFileName(this.productName)
 
     const executableName = platformSpecificOptions?.executableName ?? info.config.executableName
-    this.productFilename = executableName != null ? sanitizeFileName(executableName, normalizeNfd) : this.sanitizedProductName
+    this.productFilename = executableName != null ? sanitizeFileName(executableName) : this.sanitizedProductName
   }
 
   get channel(): string | null {

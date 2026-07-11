@@ -1,3 +1,4 @@
+import { createRequire } from "node:module"
 import {
   AllPublishOptions,
   asArray,
@@ -15,27 +16,29 @@ import {
 import { randomBytes } from "crypto"
 import { release } from "os"
 import { EventEmitter } from "events"
-import { mkdir, outputFile, readFile, rename, unlink, copyFile, pathExists } from "fs-extra"
+import fsExtra from "fs-extra"
 import { OutgoingHttpHeaders } from "http"
 import { load } from "js-yaml"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, lt as isVersionLessThan, parse as parseVersion, prerelease as getVersionPreleaseComponents, SemVer } from "semver"
-import { AppAdapter } from "./AppAdapter"
-import { createTempUpdateFile, DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
-import { ElectronAppAdapter } from "./ElectronAppAdapter"
-import { ElectronHttpExecutor, getNetSession, LoginCallback } from "./electronHttpExecutor"
-import { GenericProvider } from "./providers/GenericProvider"
-import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory"
-import { Provider, ProviderPlatform } from "./providers/Provider"
+import { AppAdapter } from "./AppAdapter.js"
+import { createTempUpdateFile, DownloadedUpdateHelper } from "./DownloadedUpdateHelper.js"
+import { ElectronAppAdapter } from "./ElectronAppAdapter.js"
+import { ElectronHttpExecutor, getNetSession, LoginCallback } from "./electronHttpExecutor.js"
+import { GenericProvider } from "./providers/GenericProvider.js"
+import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory.js"
+import { Provider, ProviderPlatform } from "./providers/Provider.js"
 import type { TypedEmitter } from "tiny-typed-emitter"
-import Session = Electron.Session
+type Session = Electron.Session
 import type { AuthInfo } from "electron"
 import { gunzipSync, gzipSync } from "zlib"
-import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader"
-import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader"
-import { DOWNLOAD_PROGRESS, Logger, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./types"
-import { VerifyUpdateSupport } from "./main"
+import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
+import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader.js"
+import { DOWNLOAD_PROGRESS, Logger, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./types.js"
+import { VerifyUpdateSupport } from "./index.js"
+
+const require = createRequire(import.meta.url)
 
 export type AppUpdaterEvents = {
   error: (error: Error, message?: string) => void
@@ -90,15 +93,22 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   allowDowngrade = false
 
+  private _disableWebInstaller: boolean | undefined = undefined
+
   /**
-   * Web installer files might not have signature verification, this switch prevents to load them unless it is needed.
+   * Whether to block NSIS web-installer packages. Web installer files might not have signature verification, so they are disabled by default as of v27.
    *
-   * Currently false to prevent breaking the current API, but it should be changed to default true at some point that
-   * breaking changes are allowed.
+   * v27 grace period: apps that do not explicitly set this property will warn (but still download) if a web-installer update is received. In v28 the warning becomes an error and the download is blocked (`ERR_UPDATER_WEB_INSTALLER_DISABLED`). Apps that explicitly set this to `true` throw immediately. Set it to `false` only if you intentionally publish and rely on NSIS web-installer packages.
    *
-   * @default false
+   * @default true
    */
-  disableWebInstaller = false
+  get disableWebInstaller(): boolean {
+    return this._disableWebInstaller ?? true
+  }
+
+  set disableWebInstaller(value: boolean) {
+    this._disableWebInstaller = value
+  }
 
   /**
    * *NSIS only* Disable differential downloads and always perform full download of installer.
@@ -582,7 +592,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       updateInfoAndProvider,
       requestHeaders: this.computeRequestHeaders(updateInfoAndProvider.provider),
       cancellationToken,
-      disableWebInstaller: this.disableWebInstaller,
+      disableWebInstaller: this._disableWebInstaller,
       disableDifferentialDownload: this.disableDifferentialDownload,
     })
       .catch((e: any) => {
@@ -622,7 +632,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     if (this._appUpdateConfigPath == null) {
       this._appUpdateConfigPath = this.app.appUpdateConfigPath
     }
-    return load(await readFile(this._appUpdateConfigPath, "utf-8"))
+    return load(await fsExtra.readFile(this._appUpdateConfigPath, "utf-8"))
   }
 
   private computeRequestHeaders(provider: Provider<any>): OutgoingHttpHeaders {
@@ -642,7 +652,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   private async getOrCreateStagingUserId(): Promise<string> {
     const file = path.join(this.app.userDataPath, ".updaterId")
     try {
-      const id = await readFile(file, "utf-8")
+      const id = await fsExtra.readFile(file, "utf-8")
       if (UUID.check(id)) {
         return id
       } else {
@@ -657,7 +667,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const id = UUID.v5(randomBytes(4096), UUID.OID)
     this._logger.info(`Generated new staging user ID: ${id}`)
     try {
-      await outputFile(file, id)
+      await fsExtra.outputFile(file, id)
     } catch (e: any) {
       this._logger.warn(`Couldn't write out staging user ID: ${e}`)
     }
@@ -708,6 +718,11 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   protected async executeDownload(taskOptions: DownloadExecutorTask): Promise<Array<string>> {
     const fileInfo = taskOptions.fileInfo
+    if (fileInfo.info.sha512 == null && (fileInfo.info as any).sha2 != null) {
+      this._logger.warn(
+        "Update artifact is validated with a SHA-256 (sha2) checksum only. SHA-256 update checksums are deprecated; electron-builder v28 will require SHA-512 and reject SHA-256-only update metadata (fail-closed). Regenerate latest*.yml with a current electron-builder and avoid pinning electronUpdaterCompatibility to a legacy (<2.15 / 1.x) range."
+      )
+    }
     const downloadOptions: DownloadOptions = {
       headers: taskOptions.downloadUpdateOptions.requestHeaders,
       cancellationToken: taskOptions.downloadUpdateOptions.cancellationToken,
@@ -737,7 +752,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     const downloadedUpdateHelper = await this.getOrCreateDownloadHelper()
     const cacheDir = downloadedUpdateHelper.cacheDirForPendingUpdate
-    await mkdir(cacheDir, { recursive: true })
+    await fsExtra.mkdir(cacheDir, { recursive: true })
     const updateFileName = getCacheUpdateFileName()
     let updateFile = path.join(cacheDir, updateFileName)
     const packageFile = packageInfo == null ? null : path.join(cacheDir, `package-${version}${path.extname(packageInfo.path) || ".7z"}`)
@@ -749,8 +764,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         downloadedFile: updateFile,
       })
       const currentBlockMapFile = path.join(cacheDir, "current.blockmap")
-      if (await pathExists(currentBlockMapFile)) {
-        await copyFile(currentBlockMapFile, path.join(downloadedUpdateHelper.cacheDir, "current.blockmap"))
+      if (await fsExtra.pathExists(currentBlockMapFile)) {
+        await fsExtra.copyFile(currentBlockMapFile, path.join(downloadedUpdateHelper.cacheDir, "current.blockmap"))
       }
       return packageFile == null ? [updateFile] : [updateFile, packageFile]
     }
@@ -766,7 +781,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       await downloadedUpdateHelper.clear().catch(() => {
         // ignore
       })
-      return await unlink(updateFile).catch(() => {
+      return await fsExtra.unlink(updateFile).catch(() => {
         // ignore
       })
     }
@@ -774,7 +789,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const tempUpdateFile = await createTempUpdateFile(`temp-${updateFileName}`, cacheDir, log)
     try {
       await taskOptions.task(tempUpdateFile, downloadOptions, packageFile, removeFileIfAny)
-      await retry(() => rename(tempUpdateFile, updateFile), {
+      await retry(() => fsExtra.rename(tempUpdateFile, updateFile), {
         retries: 60,
         interval: 500,
         shouldRetry: (error: Error) => {
@@ -851,14 +866,14 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
       const saveBlockMapToCacheDir = async (blockMapData: BlockMap, cacheDir: string) => {
         const blockMapFile = path.join(cacheDir, "current.blockmap")
-        await outputFile(blockMapFile, gzipSync(JSON.stringify(blockMapData)))
+        await fsExtra.outputFile(blockMapFile, gzipSync(JSON.stringify(blockMapData)))
       }
 
       const getBlockMapFromCacheDir = async (cacheDir: string) => {
         const blockMapFile = path.join(cacheDir, "current.blockmap")
         try {
-          if (await pathExists(blockMapFile)) {
-            return JSON.parse(gunzipSync(await readFile(blockMapFile)).toString())
+          if (await fsExtra.pathExists(blockMapFile)) {
+            return JSON.parse(gunzipSync(await fsExtra.readFile(blockMapFile)).toString())
           }
         } catch (e: any) {
           this._logger.warn(`Cannot parse blockmap "${blockMapFile}", error: ${e}`)

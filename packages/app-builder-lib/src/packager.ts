@@ -1,5 +1,4 @@
 import {
-  addValue,
   Arch,
   archFromString,
   AsyncTaskManager,
@@ -16,59 +15,35 @@ import {
   TmpDir,
 } from "builder-util"
 import { CancellationToken, deepAssign, retry } from "builder-util-runtime"
-import { chmod, mkdirs, outputFile } from "fs-extra"
+
 import { isCI } from "ci-info"
 import { Lazy } from "lazy-val"
 import { release as getOsRelease } from "os"
 import * as path from "path"
-import { AppInfo } from "./appInfo"
-import { readAsarJson } from "./asar/asar"
-import { AfterExtractContext, AfterPackContext, BeforePackContext, Configuration, Hook } from "./configuration"
-import { Platform, SourceRepositoryInfo, Target } from "./core"
-import { createElectronFrameworkSupport } from "./electron/ElectronFramework"
-import { Framework } from "./Framework"
-import { LibUiFramework } from "./frameworks/LibUiFramework"
-import { Metadata } from "./options/metadata"
-import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi"
-import { PlatformPackager } from "./platformPackager"
-import { ProtonFramework } from "./ProtonFramework"
-import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
-import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config"
-import { expandMacro } from "./util/macroExpander"
-import { createLazyProductionDeps, NodeModuleDirInfo, NodeModuleInfo } from "./util/packageDependencies"
-import { checkMetadata, readPackageJson } from "./util/packageMetadata"
-import { getRepositoryInfo } from "./util/repositoryInfo"
-import { resolveFunction } from "./util/resolve"
-import { installOrRebuild, nodeGypRebuild } from "./util/yarn"
-import { PACKAGE_VERSION } from "./version"
-import { AsyncEventEmitter, HandlerType } from "./util/asyncEventEmitter"
+import { AppInfo } from "./appInfo.js"
+import { readAsarJson } from "./asar/asar.js"
+import { AfterExtractContext, AfterPackContext, BeforePackContext, Configuration, Hook } from "./configuration.js"
+import { Platform, SourceRepositoryInfo, Target } from "./core.js"
+import { createElectronFrameworkSupport } from "./electron/ElectronFramework.js"
+import { Framework } from "./Framework.js"
+import { Metadata } from "./options/metadata.js"
+import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi.js"
+import { PlatformPackager } from "./platformPackager.js"
+import { addTargetsForPlatform, computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory.js"
+import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config.js"
+import { expandMacro } from "./util/macroExpander.js"
+import { checkMetadata, readPackageJson } from "./util/packageMetadata.js"
+import { getRepositoryInfo } from "./util/repositoryInfo.js"
+import { resolveFunction } from "./util/resolve.js"
+import { installOrRebuild, nodeGypRebuild } from "./util/installOrRebuild.js"
+import { PACKAGE_VERSION } from "./version.js"
+import { AsyncEventEmitter, HandlerType } from "./util/asyncEventEmitter.js"
 import asyncPool from "tiny-async-pool"
-import { determinePackageManagerEnv, PM } from "./node-module-collector"
-
-async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
-  let framework = configuration.framework
-  if (framework != null) {
-    framework = framework.toLowerCase()
-  }
-
-  let nodeVersion = configuration.nodeVersion
-  if (framework === "electron" || framework == null) {
-    return await createElectronFrameworkSupport(configuration, packager)
-  }
-
-  if (nodeVersion == null || nodeVersion === "current") {
-    nodeVersion = process.versions.node
-  }
-
-  const isUseLaunchUi = configuration.launchUiVersion !== false
-  if (framework === "proton" || framework === "proton-native") {
-    return new ProtonFramework(nodeVersion, packager.appInfo.productFilename, isUseLaunchUi)
-  } else if (framework === "libui") {
-    return new LibUiFramework(nodeVersion, packager.appInfo.productFilename, isUseLaunchUi)
-  } else {
-    throw new InvalidConfigurationError(`Unknown framework: ${framework}`)
-  }
-}
+import { determinePackageManagerEnv, PM } from "./node-module-collector/index.js"
+import _fsExtra from "fs-extra"
+const { chmod, mkdirs, outputFile } = _fsExtra
+import { setSevenZipPath } from "./toolsets/7zip.js"
+import { getCustomToolsetPath } from "./toolsets/custom.js"
 
 type PackagerEvents = {
   artifactBuildStarted: Hook<ArtifactBuildStarted, void>
@@ -154,6 +129,15 @@ export class Packager {
 
   readonly tempDirManager = new TmpDir("packager")
 
+  // Tasks that must run after EVERY target has finished building — the only point at which the
+  // shared appOutDir can be mutated without racing a concurrent target that reads it. Used by NSIS
+  // to write elevate.exe into win-unpacked without it leaking into Squirrel/zip/etc. (see #9852).
+  private readonly buildFinalizeTasks: Array<() => Promise<void>> = []
+
+  addBuildFinalizeTask(task: () => Promise<void>): void {
+    this.buildFinalizeTasks.push(task)
+  }
+
   private _repositoryInfo = new Lazy<SourceRepositoryInfo | null>(() => getRepositoryInfo(this.projectDir, this.metadata, this.devMetadata))
 
   readonly options: PackagerOptions
@@ -164,27 +148,7 @@ export class Packager {
     return this._repositoryInfo.value
   }
 
-  private nodeDependencyInfo = new Map<string, Lazy<Array<any>>>()
-
   private runtimeEnvironmentVariables: NodeJS.ProcessEnv = {}
-
-  getNodeDependencyInfo(platform: Platform | null, flatten: boolean = true): Lazy<Array<NodeModuleInfo | NodeModuleDirInfo>> {
-    let key = "" + flatten.toString()
-    let excludedDependencies: Array<string> | null = null
-    if (platform != null && this.framework.getExcludedDependencies != null) {
-      excludedDependencies = this.framework.getExcludedDependencies(platform)
-      if (excludedDependencies != null) {
-        key += `-${platform.name}`
-      }
-    }
-
-    let result = this.nodeDependencyInfo.get(key)
-    if (result == null) {
-      result = createLazyProductionDeps(this.appDir, excludedDependencies, flatten)
-      this.nodeDependencyInfo.set(key, result)
-    }
-    return result
-  }
 
   stageDirPathCustomizer: (target: Target, packager: PlatformPackager<any>, arch: Arch) => string = (target, packager, arch) => {
     return path.join(target.outDir, `__${target.name}-${getArtifactArchName(arch, target.name)}`)
@@ -221,13 +185,6 @@ export class Packager {
     options: PackagerOptions,
     readonly cancellationToken = new CancellationToken()
   ) {
-    if ("devMetadata" in options) {
-      throw new InvalidConfigurationError("devMetadata in the options is deprecated, please use config instead")
-    }
-    if ("extraMetadata" in options) {
-      throw new InvalidConfigurationError("extraMetadata in the options is deprecated, please use config.extraMetadata instead")
-    }
-
     const targets = options.targets || new Map<Platform, Map<Arch, Array<string>>>()
     if (options.targets == null) {
       options.targets = targets
@@ -239,29 +196,11 @@ export class Packager {
         return result.length === 0 && currentIfNotSpecified ? [archFromString(process.arch)] : result
       }
 
-      let archToType = targets.get(platform)
-      if (archToType == null) {
-        archToType = new Map<Arch, Array<string>>()
-        targets.set(platform, archToType)
-      }
-
-      if (types.length === 0) {
+      addTargetsForPlatform(targets, platform, types, commonArch, archToType => {
         for (const arch of commonArch(false)) {
           archToType.set(arch, [])
         }
-        return
-      }
-
-      for (const type of types) {
-        const suffixPos = type.lastIndexOf(":")
-        if (suffixPos > 0) {
-          addValue(archToType, archFromString(type.substring(suffixPos + 1)), type.substring(0, suffixPos))
-        } else {
-          for (const arch of commonArch(true)) {
-            addValue(archToType, arch, type)
-          }
-        }
-      }
+      })
     }
 
     if (options.mac != null) {
@@ -425,7 +364,7 @@ export class Packager {
     this._appInfo = new AppInfo(this, null)
     await this.addPackagerEventHandlers()
 
-    this._framework = await createFrameworkInfo(this.config, this)
+    this._framework = await createElectronFrameworkSupport(this.config, this)
 
     const commonOutDirWithoutPossibleOsMacro = path.resolve(
       this.projectDir,
@@ -506,6 +445,16 @@ export class Packager {
   }
 
   private async doBuild(): Promise<Map<Platform, Map<string, Target>>> {
+    const sevenZipConfig = this.config.toolsets?.sevenZip
+    if (typeof sevenZipConfig === "object" && sevenZipConfig != null) {
+      const toolDir = await getCustomToolsetPath(sevenZipConfig, this.buildResourcesDir)
+      const bin = path.join(toolDir, "bin", process.platform === "win32" ? "7za.exe" : "7za")
+      if (process.platform !== "win32") {
+        await chmod(bin, 0o755)
+      }
+      setSevenZipPath(bin)
+    }
+
     const taskManager = new AsyncTaskManager(this.cancellationToken)
     const syncTargetsIfAny = [] as Target[]
 
@@ -582,6 +531,15 @@ export class Packager {
       }
       await target.finishBuild()
     }
+
+    // Every target has now finished reading the shared appOutDir(s), so finalize tasks may safely
+    // mutate them (e.g. NSIS copying elevate.exe into win-unpacked — see #9852).
+    for (const task of this.buildFinalizeTasks) {
+      if (this.cancellationToken.cancelled) {
+        break
+      }
+      await task()
+    }
     return platformToTarget
   }
 
@@ -592,17 +550,17 @@ export class Packager {
 
     switch (platform) {
       case Platform.MAC: {
-        const helperClass = (await import("./macPackager")).MacPackager
+        const helperClass = (await import("./macPackager.js")).MacPackager
         return new helperClass(this)
       }
 
       case Platform.WINDOWS: {
-        const helperClass = (await import("./winPackager")).WinPackager
+        const helperClass = (await import("./winPackager.js")).WinPackager
         return new helperClass(this)
       }
 
       case Platform.LINUX:
-        return new (await import("./linuxPackager")).LinuxPackager(this)
+        return new (await import("./linuxPackager.js")).LinuxPackager(this)
 
       default:
         throw new Error(`Unknown platform: ${platform}`)
@@ -616,12 +574,12 @@ export class Packager {
 
     const frameworkInfo = { version: this.framework.version, useCustomDist: true }
     const config = this.config
-    if (config.nodeGypRebuild === true) {
+    if (config.nativeModules?.nodeGypRebuild === true) {
       await nodeGypRebuild(platform.nodeName, Arch[arch], frameworkInfo)
     }
 
-    if (config.npmRebuild === false) {
-      log.info({ reason: "npmRebuild is set to false" }, "skipped dependencies rebuild")
+    if (config.nativeModules?.npmRebuild === false) {
+      log.info({ reason: "nativeModules.npmRebuild is set to false" }, "skipped dependencies rebuild")
       return
     }
 
@@ -641,8 +599,8 @@ export class Packager {
       }
     }
 
-    if (config.buildDependenciesFromSource === true && platform.nodeName !== process.platform) {
-      log.info({ reason: "platform is different and buildDependenciesFromSource is set to true" }, "skipped dependencies rebuild")
+    if (config.nativeModules?.buildDependenciesFromSource === true && platform.nodeName !== process.platform) {
+      log.info({ reason: "platform is different and nativeModules.buildDependenciesFromSource is set to true" }, "skipped dependencies rebuild")
     } else {
       await installOrRebuild(
         config,
@@ -651,7 +609,6 @@ export class Packager {
           frameworkInfo,
           platform: platform.nodeName,
           arch: Arch[arch],
-          productionDeps: this.getNodeDependencyInfo(null, false) as Lazy<Array<NodeModuleDirInfo>>,
         },
         false,
         this.runtimeEnvironmentVariables

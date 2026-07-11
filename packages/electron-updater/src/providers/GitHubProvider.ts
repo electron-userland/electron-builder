@@ -1,10 +1,10 @@
 import { CancellationToken, GithubOptions, githubUrl, HttpError, newError, parseXml, ReleaseNoteInfo, UpdateInfo, XElement } from "builder-util-runtime"
 import * as semver from "semver"
 import { URL } from "url"
-import { AppUpdater } from "../AppUpdater"
-import { ResolvedUpdateFileInfo } from "../types"
-import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util"
-import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider"
+import { AppUpdater } from "../AppUpdater.js"
+import { ResolvedUpdateFileInfo } from "../types.js"
+import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util.js"
+import { channelFileNotFoundError, parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider.js"
 
 const hrefRegExp = /\/tag\/(v?[^/]+)$/
 
@@ -65,8 +65,13 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     ))!
 
     const feed = parseXml(feedXml)
+    const releaseEntries = feed.getElements("entry")
+    if (releaseEntries.length === 0) {
+      throw newError(`No releases in the GitHub Atom feed`, "ERR_XML_MISSED_ELEMENT")
+    }
+
     // noinspection TypeScriptValidateJSTypes
-    let latestRelease = feed.element("entry", false, `No published versions on GitHub`)
+    let latestRelease: XElement | null = null
     let tag: string | null = null
     try {
       if (this.updater.allowPrerelease) {
@@ -74,13 +79,26 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
 
         if (currentChannel === null) {
           // allowPrerelease=true with no explicit channel and stable current version:
-          // pick the first entry from the Atom feed, which may be a prerelease
-          // noinspection TypeScriptValidateJSTypes
-          tag = hrefRegExp.exec(latestRelease.element("link").attribute("href"))![1]
-        } else {
-          for (const element of feed.getElements("entry")) {
+          // pick the newest available release (pre-release or stable) by semver, skipping
+          // non-semver tags (e.g. unrelated package releases in a monorepo). Whether the newest
+          // release is actually an update is decided later by AppUpdater.isUpdateAvailable.
+          for (const releaseEntry of releaseEntries) {
             // noinspection TypeScriptValidateJSTypes
-            const hrefElement = hrefRegExp.exec(element.element("link").attribute("href"))!
+            const releaseTag = hrefRegExp.exec(releaseEntry.element("link").attribute("href"))?.[1]
+
+            if (!releaseTag || !semver.valid(releaseTag)) {
+              continue
+            }
+
+            if (tag == null || semver.gt(releaseTag, tag)) {
+              tag = releaseTag
+              latestRelease = releaseEntry
+            }
+          }
+        } else {
+          for (const releaseEntry of releaseEntries) {
+            // noinspection TypeScriptValidateJSTypes
+            const hrefElement = hrefRegExp.exec(releaseEntry.element("link").attribute("href"))!
 
             // If this is null then something is wrong and skip this release
             if (hrefElement === null) {
@@ -103,28 +121,28 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
 
             if (shouldFetchVersion && !isCustomChannel && !channelMismatch) {
               tag = hrefTag
-              latestRelease = element
+              latestRelease = releaseEntry
               break
             }
 
             const isNextPreRelease = hrefChannel && hrefChannel === currentChannel
             if (isNextPreRelease) {
               tag = hrefTag
-              latestRelease = element
+              latestRelease = releaseEntry
               break
             }
           }
         }
       } else {
         tag = await this.getLatestTagName(cancellationToken)
-        for (const element of feed.getElements("entry")) {
+        for (const releaseEntry of releaseEntries) {
           // noinspection TypeScriptValidateJSTypes
-          const hrefMatch = hrefRegExp.exec(element.element("link").attribute("href"))
+          const hrefMatch = hrefRegExp.exec(releaseEntry.element("link").attribute("href"))
           if (hrefMatch == null) {
             continue
           }
           if (hrefMatch[1] === tag) {
-            latestRelease = element
+            latestRelease = releaseEntry
             break
           }
         }
@@ -148,7 +166,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
         return (await this.executor.request(requestOptions, cancellationToken))!
       } catch (e: any) {
         if (e instanceof HttpError && e.statusCode === 404) {
-          throw newError(`Cannot find ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
+          throw channelFileNotFoundError(channelFile, channelFileUrl, e)
         }
         throw e
       }
@@ -170,12 +188,15 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     }
 
     const result = parseUpdateInfo(rawData, channelFile, channelFileUrl)
-    if (result.releaseName == null) {
+    // latestRelease can be null in the allowPrerelease=false path when the resolved tag (from the
+    // /releases/latest API) is not present in the truncated Atom feed; the update still proceeds
+    // with the resolved tag, only the feed-derived release name/notes are omitted.
+    if (result.releaseName == null && latestRelease != null) {
       result.releaseName = latestRelease.elementValueOrEmpty("title")
     }
 
-    if (result.releaseNotes == null) {
-      result.releaseNotes = computeReleaseNotes(this.updater.currentVersion, this.updater.fullChangelog, feed, latestRelease)
+    if (result.releaseNotes == null && latestRelease != null) {
+      result.releaseNotes = computeReleaseNotes(this.updater.currentVersion, this.updater.fullChangelog, releaseEntries, latestRelease)
     }
     return {
       tag: tag,
@@ -213,6 +234,11 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
   }
 
   private getBaseDownloadPath(tag: string, fileName: string): string {
+    // guard against path traversal: the tag is interpolated into the download URL, so a tag with
+    // a "." / ".." path segment could redirect the request outside the releases download path.
+    if (tag.split(/[/\\]/).some(segment => segment === "." || segment === "..")) {
+      throw newError(`Invalid release tag: ${tag}`, "ERR_UPDATER_INVALID_TAG")
+    }
     return `${this.basePath}/download/${tag}/${fileName}`
   }
 }
@@ -227,7 +253,12 @@ function getNoteValue(parent: XElement): string {
   return result === "No content." ? "" : result
 }
 
-export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangelog: boolean, feed: XElement, latestRelease: XElement): string | Array<ReleaseNoteInfo> | null {
+export function computeReleaseNotes(
+  currentVersion: semver.SemVer,
+  isFullChangelog: boolean,
+  releaseEntries: XElement[],
+  latestRelease: XElement
+): string | Array<ReleaseNoteInfo> | null {
   if (!isFullChangelog) {
     return getNoteValue(latestRelease)
   }
@@ -247,10 +278,10 @@ export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangel
   }
 
   const releaseNotes: Array<ReleaseNoteInfo> = []
-  for (const release of feed.getElements("entry")) {
+  for (const releaseEntry of releaseEntries) {
     let versionRelease: string
     try {
-      const match = releaseVersionRegExp.exec(release.element("link").attribute("href"))
+      const match = releaseVersionRegExp.exec(releaseEntry.element("link").attribute("href"))
       if (!match) {
         continue
       }
@@ -268,7 +299,7 @@ export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangel
     if (isGreaterThanCurrent && isLessOrEqualThanLatest) {
       releaseNotes.push({
         version: versionRelease,
-        note: getNoteValue(release),
+        note: getNoteValue(releaseEntry),
       })
     }
   }

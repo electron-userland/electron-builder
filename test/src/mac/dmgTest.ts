@@ -4,10 +4,10 @@ import { Arch, copyFile, exec } from "builder-util"
 import { Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { assertThat } from "../helpers/fileAssert"
-import { app, assertPack, copyTestAsset } from "../helpers/packTester"
+import { assertThat } from "../helpers/fileAssert.js"
+import { app, assertPack, copyTestAsset } from "../helpers/packTester.js"
 import { beforeAll } from "vitest"
-import type { attachAndExecute as aAndE, getDmgTemplatePath as dmgTemplate } from "dmg-builder/out/dmgUtil"
+import type { attachAndExecute as aAndE, getDmgTemplatePath as dmgTemplate } from "dmg-builder"
 
 const dmgTarget = Platform.MAC.createTarget("dmg", Arch.x64)
 const defaultTarget = Platform.MAC.createTarget(undefined, Arch.x64)
@@ -18,7 +18,7 @@ describe.heavy.ifMac("dmg", { sequential: true }, () => {
 
   beforeAll(async () => {
     // import at runtime to avoid issues on non-macOS platforms
-    const { attachAndExecute: a, getDmgTemplatePath: d } = await import("dmg-builder/out/dmgUtil")
+    const { attachAndExecute: a, getDmgTemplatePath: d } = await import("dmg-builder")
     attachAndExecute = a
     getDmgTemplatePath = d
   })
@@ -499,12 +499,13 @@ describe.heavy.ifMac("dmg", { sequential: true }, () => {
       {
         ...packagerOptions(5),
         effectiveOptionComputed: async it => {
-          if ("licenseData" in it) {
-            // Clean `file` path from the data because the path is dynamic at runtime
-            it.licenseData.body.forEach((license: any) => {
-              delete license.file
-            })
-            expect(it.licenseData).toMatchSnapshot()
+          if ("licenseData" in it && it.licenseData != null) {
+            // Strip dynamic file paths before snapshotting
+            const data = {
+              ...it.licenseData,
+              licenses: Object.fromEntries(Object.keys(it.licenseData.licenses).map((lang: string) => [lang, "<<path>>"])),
+            }
+            expect(data).toMatchSnapshot()
           }
           return Promise.resolve(false)
         },

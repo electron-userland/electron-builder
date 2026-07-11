@@ -1,11 +1,8 @@
-import { UpdateInfo } from "builder-util-runtime"
-import { createHash } from "crypto"
-import { createReadStream } from "fs"
-// @ts-ignore
-import * as isEqual from "lodash.isequal"
-import { ResolvedUpdateFileInfo } from "./types"
-import { Logger } from "./types"
-import { pathExists, readJson, emptyDir, outputJson, unlink } from "fs-extra"
+import { hashFile, UpdateInfo } from "builder-util-runtime"
+import isEqual from "lodash.isequal"
+import { ResolvedUpdateFileInfo } from "./types.js"
+import { Logger } from "./types.js"
+import fsExtra from "fs-extra"
 import * as path from "path"
 
 /** @private **/
@@ -39,7 +36,7 @@ export class DownloadedUpdateHelper {
     if (this.versionInfo != null && this.file === updateFile && this.fileInfo != null) {
       // update has already been downloaded from this running instance
       // check here only existence, not checksum
-      if (isEqual(this.versionInfo, updateInfo) && isEqual(this.fileInfo.info, fileInfo.info) && (await pathExists(updateFile))) {
+      if (isEqual(this.versionInfo, updateInfo) && isEqual(this.fileInfo.info, fileInfo.info) && (await fsExtra.pathExists(updateFile))) {
         return updateFile
       } else {
         return null
@@ -75,7 +72,7 @@ export class DownloadedUpdateHelper {
     }
 
     if (isSaveCache) {
-      await outputJson(this.getUpdateInfoFile(), this._downloadedFileInfo)
+      await fsExtra.outputJson(this.getUpdateInfoFile(), this._downloadedFileInfo)
     }
   }
 
@@ -90,7 +87,7 @@ export class DownloadedUpdateHelper {
   private async cleanCacheDirForPendingUpdate(): Promise<void> {
     try {
       // remove stale data
-      await emptyDir(this.cacheDirForPendingUpdate)
+      await fsExtra.emptyDir(this.cacheDirForPendingUpdate)
     } catch (_ignore) {
       // ignore
     }
@@ -104,14 +101,14 @@ export class DownloadedUpdateHelper {
   private async getValidCachedUpdateFile(fileInfo: ResolvedUpdateFileInfo, logger: Logger): Promise<string | null> {
     const updateInfoFilePath: string = this.getUpdateInfoFile()
 
-    const doesUpdateInfoFileExist = await pathExists(updateInfoFilePath)
+    const doesUpdateInfoFileExist = await fsExtra.pathExists(updateInfoFilePath)
     if (!doesUpdateInfoFileExist) {
       return null
     }
 
     let cachedInfo: CachedUpdateInfo
     try {
-      cachedInfo = await readJson(updateInfoFilePath)
+      cachedInfo = await fsExtra.readJson(updateInfoFilePath)
     } catch (error: any) {
       let message = `No cached update info available`
       if (error.code !== "ENOENT") {
@@ -138,7 +135,7 @@ export class DownloadedUpdateHelper {
     }
 
     const updateFile = path.join(this.cacheDirForPendingUpdate, cachedInfo.fileName)
-    if (!(await pathExists(updateFile))) {
+    if (!(await fsExtra.pathExists(updateFile))) {
       logger.info("Cached update file doesn't exist")
       return null
     }
@@ -164,28 +161,13 @@ interface CachedUpdateInfo {
   readonly isAdminRightsRequired: boolean
 }
 
-function hashFile(file: string, algorithm = "sha512", encoding: "base64" | "hex" = "base64", options?: any): Promise<string> {
-  return new Promise<string>((resolve, reject) => {
-    const hash = createHash(algorithm)
-    hash.on("error", reject).setEncoding(encoding)
-
-    createReadStream(file, { ...options, highWaterMark: 1024 * 1024 /* better to use more memory but hash faster */ })
-      .on("error", reject)
-      .on("end", () => {
-        hash.end()
-        resolve(hash.read() as string)
-      })
-      .pipe(hash, { end: false })
-  })
-}
-
 export async function createTempUpdateFile(name: string, cacheDir: string, log: Logger): Promise<string> {
   // https://github.com/electron-userland/electron-builder/pull/2474#issuecomment-366481912
   let nameCounter = 0
   let result = path.join(cacheDir, name)
   for (let i = 0; i < 3; i++) {
     try {
-      await unlink(result)
+      await fsExtra.unlink(result)
       return result
     } catch (e: any) {
       if (e.code === "ENOENT") {

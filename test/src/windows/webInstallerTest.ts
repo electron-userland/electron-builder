@@ -1,29 +1,65 @@
 import { Arch, Platform } from "electron-builder"
+import * as path from "path"
+import * as fs from "fs/promises"
+import { archiveContains, listArchiveEntries, listArchiveMethods, NON_DECODABLE_NSIS_FILTER } from "../helpers/archiveHelper"
 import { app, assertPack } from "../helpers/packTester"
 
 // tests are heavy, to distribute tests across CircleCI machines evenly, these tests were moved from oneClickInstallerTest
 
 test("web installer", ({ expect }) =>
-  app(expect, {
-    targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64, Arch.arm64),
-    config: {
-      publish: {
-        provider: "s3",
-        bucket: "develar",
-        path: "test",
-      },
-      electronFuses: {
-        runAsNode: true,
-        enableCookieEncryption: true,
-        enableNodeOptionsEnvironmentVariable: true,
-        enableNodeCliInspectArguments: true,
-        enableEmbeddedAsarIntegrityValidation: true,
-        onlyLoadAppFromAsar: true,
-        loadBrowserProcessSpecificV8Snapshot: true,
-        grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+  app(
+    expect,
+    {
+      targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64, Arch.arm64),
+      config: {
+        publish: {
+          provider: "s3",
+          bucket: "develar",
+          path: "test",
+        },
+        electronFuses: {
+          runAsNode: true,
+          enableCookieEncryption: true,
+          enableNodeOptionsEnvironmentVariable: true,
+          enableNodeCliInspectArguments: true,
+          enableEmbeddedAsarIntegrityValidation: true,
+          onlyLoadAppFromAsar: true,
+          loadBrowserProcessSpecificV8Snapshot: true,
+          grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+        },
       },
     },
-  }))
+    {
+      packed: async context => {
+        // The persistent web app package (*.nsis.7z) is the one place elevate.exe must live —
+        // it is injected straight into the archive, never via appOutDir (#9852). This is the
+        // cross-platform positive counterpart to the win-unpacked/Squirrel "absent" assertions.
+        const archives = (await fs.readdir(context.outDir, { recursive: true })).filter(f => f.endsWith(".nsis.7z"))
+        expect(archives.length, "expected at least one .nsis.7z web app package").toBeGreaterThan(0)
+        for (const rel of archives) {
+          const archivePath = path.join(context.outDir, rel)
+          expect(await archiveContains(archivePath, "resources/elevate.exe"), `${rel} must contain resources/elevate.exe`).toBe(true)
+
+          // #9983: the install-time Nsis7z decoder silently drops entries packed with a CPU branch
+          // filter it can't read (BCJ2 on x64, ARM64 on arm64) — the main exe and every native
+          // binary go missing. The whole payload (x64 + arm64, plus the appended elevate.exe) must
+          // use only decoder-readable codecs (plain LZMA2/Copy or the single-stream BCJ).
+          const methods = await listArchiveMethods(archivePath)
+          expect(methods.length, `${rel} should report codec methods`).toBeGreaterThan(0)
+          for (const method of methods) {
+            expect(method, `${rel} entry packed with a non-decodable branch filter: "${method}"`).not.toMatch(NON_DECODABLE_NSIS_FILTER)
+          }
+
+          // Tie "no branch filter" to the literal #9983 symptom: the payload must actually contain
+          // the main app exe (a PE that would have been the first thing silently dropped), not just
+          // the appended elevate.exe and the data files.
+          const entries = await listArchiveEntries(archivePath)
+          const appExes = entries.filter(e => e.toLowerCase().endsWith(".exe") && !e.toLowerCase().endsWith("elevate.exe"))
+          expect(appExes.length, `${rel} must contain the main app exe (PE files must not be dropped); entries: ${entries.join(", ")}`).toBeGreaterThan(0)
+        }
+      },
+    }
+  ))
 
 test("web installer (default github)", ({ expect }) =>
   app(expect, {
@@ -62,11 +98,11 @@ test("web installer, appPackageUrl is complete URL (no arch paths appended)", ({
         appPackageUrl: "https://example.com/download/latest",
       },
     },
-    effectiveOptionComputed: async it => {
+    effectiveOptionComputed: it => {
       const defines = it[0]
       expect(defines.APP_PACKAGE_URL).toEqual("https://example.com/download/latest")
       expect(defines.APP_PACKAGE_URL_IS_INCOMPLETE).toBeUndefined()
-      return true
+      return Promise.resolve(true)
     },
   }))
 
@@ -82,11 +118,11 @@ test("web installer, auto-computed URL from S3 sets APP_PACKAGE_URL_IS_INCOMPLET
         path: "releases",
       },
     },
-    effectiveOptionComputed: async it => {
+    effectiveOptionComputed: it => {
       const defines = it[0]
       expect(defines.APP_PACKAGE_URL).toBeDefined()
       expect(defines.APP_PACKAGE_URL_IS_INCOMPLETE).toBeNull()
-      return true
+      return Promise.resolve(true)
     },
   }))
 
@@ -100,11 +136,11 @@ test("web installer, auto-computed URL from GitHub sets APP_PACKAGE_URL_IS_INCOM
         repo: "bar",
       },
     },
-    effectiveOptionComputed: async it => {
+    effectiveOptionComputed: it => {
       const defines = it[0]
       expect(defines.APP_PACKAGE_URL).toMatch(/github\.com\/foo\/bar\/releases\/download/)
       expect(defines.APP_PACKAGE_URL_IS_INCOMPLETE).toBeNull()
-      return true
+      return Promise.resolve(true)
     },
   }))
 
@@ -117,11 +153,11 @@ test("web installer, auto-computed URL from generic provider sets APP_PACKAGE_UR
         url: "https://cdn.example.com/releases",
       },
     },
-    effectiveOptionComputed: async it => {
+    effectiveOptionComputed: it => {
       const defines = it[0]
       expect(defines.APP_PACKAGE_URL).toEqual("https://cdn.example.com/releases")
       expect(defines.APP_PACKAGE_URL_IS_INCOMPLETE).toBeNull()
-      return true
+      return Promise.resolve(true)
     },
   }))
 
@@ -153,12 +189,12 @@ test("web installer, nsisWeb.publish overrides global publish config", ({ expect
         },
       },
     },
-    effectiveOptionComputed: async it => {
+    effectiveOptionComputed: it => {
       const defines = it[0]
       // target-level publish wins — URL must be from the generic provider
       expect(defines.APP_PACKAGE_URL).toEqual("https://target-level.example.com")
       expect(defines.APP_PACKAGE_URL_IS_INCOMPLETE).toBeNull()
-      return true
+      return Promise.resolve(true)
     },
   }))
 
@@ -174,11 +210,11 @@ test("web installer, win.publish used when nsisWeb.publish is absent", ({ expect
         },
       },
     },
-    effectiveOptionComputed: async it => {
+    effectiveOptionComputed: it => {
       const defines = it[0]
       expect(defines.APP_PACKAGE_URL).toEqual("https://win-level.example.com")
       expect(defines.APP_PACKAGE_URL_IS_INCOMPLETE).toBeNull()
-      return true
+      return Promise.resolve(true)
     },
   }))
 
@@ -192,11 +228,11 @@ test("web installer, appPackageUrl with trailing slash is used verbatim", ({ exp
         appPackageUrl: "https://example.com/download/",
       },
     },
-    effectiveOptionComputed: async it => {
+    effectiveOptionComputed: it => {
       const defines = it[0]
       expect(defines.APP_PACKAGE_URL).toEqual("https://example.com/download/")
       expect(defines.APP_PACKAGE_URL_IS_INCOMPLETE).toBeUndefined()
-      return true
+      return Promise.resolve(true)
     },
   }))
 
@@ -210,11 +246,11 @@ test("web installer, multiple publish configs — first one is used", ({ expect 
         { provider: "s3", bucket: "second-bucket" },
       ],
     },
-    effectiveOptionComputed: async it => {
+    effectiveOptionComputed: it => {
       const defines = it[0]
       // First config (GitHub) should determine the URL.
       expect(defines.APP_PACKAGE_URL).toMatch(/github\.com\/foo\/bar\/releases\/download/)
       expect(defines.APP_PACKAGE_URL_IS_INCOMPLETE).toBeNull()
-      return true
+      return Promise.resolve(true)
     },
   }))

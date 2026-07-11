@@ -1,13 +1,19 @@
-import { debug7z, exec, exists, getPath7za, log, statOrNull, unlinkIfExists } from "builder-util"
-import { move } from "fs-extra"
+import { debug7z, exec, exists, log, statOrNull, unlinkIfExists } from "builder-util"
 import * as path from "path"
 import { create } from "tar"
+import type { TarOptionsWithAliasesAsync } from "tar"
 import { TmpDir } from "temp-file"
-import { CompressionLevel } from "../core"
-import { getLinuxToolsMacToolset } from "../toolsets/linux"
-import { TarOptionsWithAliasesAsync } from "tar/dist/commonjs/options"
+import { CompressionLevel, Platform } from "../core.js"
+import { getLinuxToolsMacToolset } from "../toolsets/linuxToolsMac.js"
+import { ToolsetConfig } from "../configuration.js"
+import { getPath7za } from "../toolsets/7zip.js"
+import _fsExtra from "fs-extra"
+const { move } = _fsExtra
 
-const ALLOWED_7Z_FILTERS = new Set(["BCJ", "BCJ2", "ARM", "ARMT", "IA64", "PPC", "SPARC", "DELTA"])
+// Values accepted by ELECTRON_BUILDER_7Z_FILTER (passed through as `-mf=<value>`). "OFF" disables the
+// branch/exec filter entirely (plain LZMA2); the rest are 7-Zip branch converters. 7za matches these
+// case-insensitively, so the value is canonicalized to uppercase before use.
+const ALLOWED_7Z_FILTERS = new Set(["OFF", "BCJ", "BCJ2", "ARM", "ARMT", "IA64", "PPC", "SPARC", "DELTA"])
 
 function validateCompressionLevel(level: string): void {
   if (!/^[0-9]$/.test(level)) {
@@ -16,16 +22,18 @@ function validateCompressionLevel(level: string): void {
 }
 
 type TarConfig = {
-  compression: CompressionLevel | any
+  compression: CompressionLevel | null | undefined
   format: string
   outFile: string
   dirToArchive: string
   isMacApp: boolean
   tempDirManager: TmpDir
+  linuxToolsMac: ToolsetConfig["linuxToolsMac"]
+  buildResourcesDir: string
 }
 
 /** @internal */
-export async function tar({ compression, format, outFile, dirToArchive, isMacApp, tempDirManager }: TarConfig): Promise<void> {
+export async function tar({ compression, format, outFile, dirToArchive, isMacApp, tempDirManager, linuxToolsMac, buildResourcesDir }: TarConfig): Promise<void> {
   const tarFile = await tempDirManager.getTempFile({ suffix: ".tar" })
   const tarArgs: TarOptionsWithAliasesAsync = {
     file: tarFile,
@@ -47,27 +55,17 @@ export async function tar({ compression, format, outFile, dirToArchive, isMacApp
   ])
 
   if (format === "tar.lz") {
-    const lzipPath = process.platform === "darwin" ? (await getLinuxToolsMacToolset()).lzip : "lzip"
+    const lzipPath = process.platform === "darwin" ? (await getLinuxToolsMacToolset(linuxToolsMac, buildResourcesDir)).lzip : "lzip"
     await exec(lzipPath, [compression === "store" ? "-1" : "-9", "--keep" /* keep (don't delete) input files */, tarFile])
-    // bloody lzip creates file in the same dir where input file with postfix `.lz`, option --output doesn't work
+    // lzip creates the output file in the same directory as the input with a .lz suffix
     await move(`${tarFile}.lz`, outFile)
     return
   }
 
-  const args = compute7zCompressArgs(format === "tar.xz" ? "xz" : format === "tar.bz2" ? "bzip2" : "gzip", {
-    isRegularFile: true,
-    method: "DEFAULT",
-    compression,
-  })
+  const compressFormat = format === "tar.xz" ? "xz" : format === "tar.bz2" ? "bzip2" : "gzip"
+  const args = compute7zCompressArgs(compressFormat, { isRegularFile: true, method: "DEFAULT", compression })
   args.push(outFile, tarFile)
-  await exec(
-    await getPath7za(),
-    args,
-    {
-      cwd: path.dirname(dirToArchive),
-    },
-    debug7z.enabled
-  )
+  await exec(await getPath7za(), args, { cwd: path.dirname(dirToArchive) }, debug7z.enabled)
 }
 
 export interface ArchiveOptions {
@@ -95,31 +93,73 @@ export interface ArchiveOptions {
   method?: "Copy" | "LZMA" | "Deflate" | "DEFAULT"
 
   isRegularFile?: boolean
+
+  /**
+   * Preserve symlinks (e.g. macOS .framework `Versions/Current`) instead of dereferencing them.
+   * Passes `-snl` to 7za — modern 7-Zip derefs by default, which breaks bundle codesigning. See #9846.
+   * @default false
+   */
+  preserveSymlinks?: boolean
+
+  /**
+   * Restrict the 7z filter to one the install-time extractor (the self-vendored Nsis7z plugin) can
+   * decode. Modern 7za (24.09) auto-applies a CPU branch converter to executable content at
+   * `-mx>=1` — `BCJ2` on x86/x64 and `ARM64` on arm64 — which that decoder silently skips, dropping
+   * every executable from the install. When set, the archive is pinned to the single-stream `BCJ`
+   * filter while compressing (decodable, and the best-ratio filter that decoder supports) and to
+   * plain `Copy` while storing. Deliberately NOT overridable by `ELECTRON_BUILDER_7Z_FILTER`, which
+   * could otherwise reintroduce an unreadable archive. Only affects the 7z format. See #9983.
+   * @default false
+   */
+  installTimeDecodable?: boolean
+}
+
+/**
+ * Whether archives for the given target platform should preserve symlinks (i.e. pass `-snl`).
+ * Non-Windows targets preserve them: macOS `.framework` bundles need them for codesigning (#9846)
+ * and Linux bundles may legitimately contain them. Windows dereferences because restoring symlinks
+ * there requires elevated privileges. Keyed on the target platform, not the build host.
+ */
+export function shouldPreserveSymlinks(platform: Platform): boolean {
+  return platform !== Platform.WINDOWS
+}
+
+/**
+ * Builds the exclude switches for the given masks, rejecting any pattern that contains a path
+ * traversal sequence. `prefix` is the tool-specific flag (`-xr!` for 7za, `-x` for native zip).
+ */
+function buildExcludeArgs(excluded: Array<string> | null | undefined, prefix: string): Array<string> {
+  if (excluded == null) {
+    return []
+  }
+  return excluded.map(mask => {
+    if (mask.includes("..")) {
+      throw new Error(`Excluded archive pattern contains path traversal sequence: "${mask}"`)
+    }
+    return `${prefix}${mask}`
+  })
 }
 
 export function compute7zCompressArgs(format: string, options: ArchiveOptions = {}) {
   let storeOnly = options.compression === "store"
   const args = debug7zArgs("a")
 
-  let isLevelSet = false
   const compressionLevel = process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL
   if (compressionLevel != null) {
     validateCompressionLevel(compressionLevel)
-    storeOnly = false
+    storeOnly = false // env var overrides "store" config
     args.push(`-mx=${compressionLevel}`)
-    isLevelSet = true
-  }
-
-  const isZip = format === "zip"
-  if (!storeOnly) {
+  } else if (storeOnly) {
+    // -mx=0 is the universal "no compression" flag across all formats (zip, 7z, gzip, xz, bzip2).
+    // -mm=Copy would only be valid for zip/7z and causes E_INVALIDARG on xz/gzip/bzip2.
+    args.push("-mx=0")
+  } else {
+    const isZip = format === "zip"
+    // ZIP uses level 7 by default; everything else (7z, gzip, xz, bzip2) uses level 9
+    args.push("-mx=" + (isZip && options.compression !== "maximum" ? "7" : "9"))
     if (isZip && options.compression === "maximum") {
       // http://superuser.com/a/742034
       args.push("-mfb=258", "-mpass=15")
-    }
-
-    if (!isLevelSet) {
-      // https://github.com/electron-userland/electron-builder/pull/3032
-      args.push("-mx=" + (!isZip || options.compression === "maximum" ? "9" : "7"))
     }
   }
 
@@ -127,10 +167,7 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
     args.push(`-md=${options.dictSize}m`)
   }
 
-  // https://sevenzip.osdn.jp/chm/cmdline/switches/method.htm#7Z
-  // https://stackoverflow.com/questions/27136783/7zip-produces-different-output-from-identical-input
-  // tc and ta are off by default, but to be sure, we explicitly set it to off
-  // disable "Stores NTFS timestamps for files: Modification time, Creation time, Last access time." to produce the same archive for the same data
+  // Disable NTFS timestamps for reproducible archives
   if (!options.isRegularFile) {
     args.push("-mtc=off")
   }
@@ -144,72 +181,39 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
       args.push("-mhc=off")
     }
 
-    // https://www.7-zip.org/7z.html
-    // Filters: BCJ, BCJ2, ARM, ARMT, IA64, PPC, SPARC, ...
-    const sevenZFilter = process.env.ELECTRON_BUILDER_7Z_FILTER
-    if (sevenZFilter) {
-      if (!ALLOWED_7Z_FILTERS.has(sevenZFilter.toUpperCase())) {
-        throw new Error(`ELECTRON_BUILDER_7Z_FILTER must be one of: ${[...ALLOWED_7Z_FILTERS].join(", ")}`)
+    // Branch/exec filter selection. installTimeDecodable archives are unpacked by the self-vendored
+    // Nsis7z extractor, whose decoder only understands plain LZMA2/Copy and the single-stream BCJ
+    // filter — not the CPU branch converters modern 7za auto-applies (BCJ2 on x86/x64, ARM64 on
+    // arm64). So pin them to BCJ while compressing (the best filter that decoder can read; Copy
+    // needs none) and do not honor ELECTRON_BUILDER_7Z_FILTER, which could reintroduce an unreadable
+    // archive. Any other 7z archive may use ELECTRON_BUILDER_7Z_FILTER, else 7za's auto-selection.
+    if (options.installTimeDecodable) {
+      if (!storeOnly) {
+        args.push("-mf=BCJ")
       }
-      args.push(`-mf=${sevenZFilter}`)
+    } else {
+      const sevenZFilter = process.env.ELECTRON_BUILDER_7Z_FILTER
+      if (sevenZFilter) {
+        const canonicalFilter = sevenZFilter.toUpperCase()
+        if (!ALLOWED_7Z_FILTERS.has(canonicalFilter)) {
+          throw new Error(`ELECTRON_BUILDER_7Z_FILTER must be one of: ${[...ALLOWED_7Z_FILTERS].join(", ")}`)
+        }
+        args.push(`-mf=${canonicalFilter}`)
+      }
     }
 
-    // args valid only for 7z
-    // -mtm=off disable "Stores last Modified timestamps for files."
     args.push("-mtm=off", "-mta=off")
   }
 
-  if (options.method != null) {
-    if (options.method !== "DEFAULT") {
-      args.push(`-mm=${options.method}`)
-    }
-  } else if (isZip || storeOnly) {
+  if (options.method != null && options.method !== "DEFAULT") {
+    args.push(`-mm=${options.method}`)
+  } else if (format === "zip") {
+    // -mm is only set explicitly for zip (Deflate/Copy) and includes the UTF-8 flag.
+    // For all other formats the codec is implicit from the output file extension.
     args.push(`-mm=${storeOnly ? "Copy" : "Deflate"}`)
-  }
-
-  if (isZip) {
-    // -mcu switch:  7-Zip uses UTF-8, if there are non-ASCII symbols.
-    // because default mode: 7-Zip uses UTF-8, if the local code page doesn't contain required symbols.
-    // but archive should be the same regardless where produced
     args.push("-mcu")
   }
-  return args
-}
 
-export function computeZipCompressArgs(options: ArchiveOptions = {}) {
-  let storeOnly = options.compression === "store"
-  // do not deref symlinks
-  const args = ["-q", "-r", "-y"]
-  if (debug7z.enabled) {
-    args.push("-v")
-  }
-
-  const compressionLevelZip = process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL
-  if (compressionLevelZip != null) {
-    validateCompressionLevel(compressionLevelZip)
-    storeOnly = false
-    args.push(`-${compressionLevelZip}`)
-  } else if (!storeOnly) {
-    // https://github.com/electron-userland/electron-builder/pull/3032
-    args.push("-" + (options.compression === "maximum" ? "9" : "7"))
-  }
-
-  if (options.dictSize != null) {
-    log.warn({ distSize: options.dictSize }, `ignoring unsupported option`)
-  }
-
-  // do not save extra file attributes (Extended Attributes on OS/2, uid/gid and file times on Unix)
-  if (!options.isRegularFile) {
-    args.push("-X")
-  }
-
-  if (options.method != null) {
-    if (options.method !== "DEFAULT") {
-      log.warn({ method: options.method }, `ignoring unsupported option`)
-    }
-  } else {
-    args.push("-Z", storeOnly ? "store" : "deflate")
-  }
   return args
 }
 
@@ -222,38 +226,52 @@ export async function archive(format: string, outFile: string, dirToArchive: str
     log.info({ reason: "Archive file is up to date", outFile }, `skipped archiving`)
     return outFile
   }
+
+  // Use 7za for all formats (matches pre-26.15 behavior). Native macOS `zip` is only a
+  // fallback for NFD-normalized filenames, which 7za mangles.
   let use7z = true
   if (process.platform === "darwin" && format === "zip" && dirToArchive.normalize("NFC") !== dirToArchive) {
     log.warn({ reason: "7z doesn't support NFD-normalized filenames" }, `using zip`)
     use7z = false
   }
-  const args = use7z ? compute7zCompressArgs(format, options) : computeZipCompressArgs(options)
-  // remove file before - 7z and zip doesn't overwrite file, but update
-  await unlinkIfExists(outFile)
 
-  args.push(outFile, options.withoutDir ? "." : path.basename(dirToArchive))
-  if (options.excluded != null) {
-    for (const mask of options.excluded) {
-      args.push(use7z ? `-xr!${mask}` : `-x${mask}`)
+  if (use7z) {
+    const args = compute7zCompressArgs(format, options)
+    // Modern 7-Zip (24.09) dereferences symlinks by default; the 7-Zip 16.02 bundled before
+    // 26.15 stored them as links. Without -snl, a macOS .framework `Versions/Current` extracts
+    // as a real directory → codesign "bundle format is ambiguous" → breaks Squirrel.Mac
+    // auto-update (#9846). Callers enable it for all non-Windows targets (see ArchiveTarget).
+    if (options.preserveSymlinks) {
+      args.push("-snl")
     }
-  }
+    await unlinkIfExists(outFile)
+    args.push(outFile, options.withoutDir ? "." : path.basename(dirToArchive))
+    args.push(...buildExcludeArgs(options.excluded, "-xr!"))
 
-  try {
-    const binary = use7z ? await getPath7za() : "zip"
-    await exec(
-      binary,
-      args,
-      {
-        cwd: options.withoutDir ? dirToArchive : path.dirname(dirToArchive),
-      },
-      debug7z.enabled
-    )
-  } catch (e: any) {
-    if (e.code === "ENOENT" && !(await exists(dirToArchive))) {
-      throw new Error(`Cannot create archive: "${dirToArchive}" doesn't exist`)
+    try {
+      await exec(await getPath7za(), args, { cwd: options.withoutDir ? dirToArchive : path.dirname(dirToArchive) }, debug7z.enabled)
+    } catch (e: any) {
+      if (e.code === "ENOENT" && !(await exists(dirToArchive))) {
+        throw new Error(`Cannot create archive: "${dirToArchive}" doesn't exist`)
+      } else {
+        throw e
+      }
+    }
+  } else {
+    // macOS native zip (NFD fallback): -y preserves symlinks
+    const args = ["-q", "-r", "-y"]
+    if (debug7z.enabled) {
+      args.push("-v")
+    }
+    if (options.compression === "store") {
+      args.push("-0")
     } else {
-      throw e
+      args.push(options.compression === "maximum" ? "-9" : "-7")
     }
+    await unlinkIfExists(outFile)
+    args.push(outFile, options.withoutDir ? "." : path.basename(dirToArchive))
+    args.push(...buildExcludeArgs(options.excluded, "-x"))
+    await exec("zip", args, { cwd: options.withoutDir ? dirToArchive : path.dirname(dirToArchive) }, debug7z.enabled)
   }
 
   return outFile

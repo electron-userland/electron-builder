@@ -1,4 +1,4 @@
-import { NsisScriptGenerator, nsisEscapeString } from "app-builder-lib/src/targets/nsis/nsisScriptGenerator"
+import { NsisScriptGenerator, nsisEscapeString } from "app-builder-lib/internal"
 
 describe("NsisScriptGenerator.file", () => {
   test("preserves $INSTDIR variable in output name without escaping", ({ expect }) => {
@@ -39,6 +39,14 @@ describe("nsisEscapeString", () => {
     expect(nsisEscapeString('say "hello"')).toBe('say $\\"hello$\\"')
   })
 
+  test("escapes backtick to prevent breaking out of backtick-delimited macro strings", ({ expect }) => {
+    expect(nsisEscapeString("a`b")).toBe("a$\\`b")
+  })
+
+  test("escapes multiple backticks", ({ expect }) => {
+    expect(nsisEscapeString("`x`")).toBe("$\\`x$\\`")
+  })
+
   test("handles combined special characters", ({ expect }) => {
     expect(nsisEscapeString('Copyright © 2024 "Acme" $Corp\r\nAll rights reserved')).toBe('Copyright © 2024 $\\"Acme$\\" $$Corp All rights reserved')
   })
@@ -49,5 +57,41 @@ describe("nsisEscapeString", () => {
 
   test("escapes bare $ but leaves ${...} references intact", ({ expect }) => {
     expect(nsisEscapeString("${INSTDIR}\\price $9.99")).toBe("${INSTDIR}\\price $$9.99")
+  })
+
+  test("preserves $(...) LangString references unchanged", ({ expect }) => {
+    expect(nsisEscapeString("$(customSN)")).toBe("$(customSN)")
+  })
+
+  test("preserves $(...) LangString references mixed with text", ({ expect }) => {
+    expect(nsisEscapeString("My App $(customSN) Setup")).toBe("My App $(customSN) Setup")
+  })
+
+  test("leaves both ${...} and $(...) references intact while escaping bare $", ({ expect }) => {
+    expect(nsisEscapeString("${DEFINE} $(LangStr) costs $5")).toBe("${DEFINE} $(LangStr) costs $$5")
+  })
+
+  test("escapes bare $ followed by a space before a paren-like token", ({ expect }) => {
+    expect(nsisEscapeString("$ (not a ref)")).toBe("$$ (not a ref)")
+  })
+
+  test("escapes multiple consecutive dollar signs", ({ expect }) => {
+    expect(nsisEscapeString("$$")).toBe("$$$$")
+  })
+
+  test("empty string is returned unchanged", ({ expect }) => {
+    expect(nsisEscapeString("")).toBe("")
+  })
+
+  test("string with only newlines becomes spaces", ({ expect }) => {
+    expect(nsisEscapeString("\n\r\n\r")).toBe("   ")
+  })
+
+  test("preserves backslash characters", ({ expect }) => {
+    expect(nsisEscapeString("C:\\Users\\name")).toBe("C:\\Users\\name")
+  })
+
+  test("escapes multiple double quotes", ({ expect }) => {
+    expect(nsisEscapeString('a"b"c')).toBe('a$\\"b$\\"c')
   })
 })

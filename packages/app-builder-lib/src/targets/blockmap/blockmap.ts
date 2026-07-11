@@ -105,7 +105,9 @@ export async function buildBlockMap(inFile: string, compressionFormat: Compressi
       hi = (nhi ^ PUSH_HI[top]) | 0
       lo = (nlo ^ PUSH_LO[top]) | 0
       // At exactly MIN: check whether the primed hash is already a boundary
-      if (chunkN === RABIN_MIN && (lo & RABIN_HASH_MASK) === RABIN_HASH_MASK) emitChunk()
+      if (chunkN === RABIN_MIN && (lo & RABIN_HASH_MASK) === RABIN_HASH_MASK) {
+        emitChunk()
+      }
       return
     }
 
@@ -121,7 +123,9 @@ export async function buildBlockMap(inFile: string, compressionFormat: Compressi
     hi = (nhi ^ PUSH_HI[top]) | 0
     lo = (nlo ^ PUSH_LO[top]) | 0
 
-    if ((lo & RABIN_HASH_MASK) === RABIN_HASH_MASK || chunkN >= RABIN_MAX) emitChunk()
+    if ((lo & RABIN_HASH_MASK) === RABIN_HASH_MASK || chunkN >= RABIN_MAX) {
+      emitChunk()
+    }
   }
 
   // Stream-read the file, feeding SHA-512 and the Rabin chunker simultaneously
@@ -132,10 +136,14 @@ export async function buildBlockMap(inFile: string, compressionFormat: Compressi
       chunk = buf
       fileHash.update(chunk)
       totalSize += chunk.length
-      for (let i = 0; i < chunk.length; i++) processByte(chunk[i])
+      for (let i = 0; i < chunk.length; i++) {
+        processByte(chunk[i])
+      }
     })
     rs.on("end", () => {
-      if (chunkN > 0) emitChunk()
+      if (chunkN > 0) {
+        emitChunk()
+      }
       resolve()
     })
     rs.on("error", reject)

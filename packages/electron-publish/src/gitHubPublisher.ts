@@ -1,13 +1,13 @@
-import { Arch, Fields, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isTokenCharValid, log } from "builder-util"
+import { Arch, assertVersionHasNoVPrefix, Fields, httpExecutor, isEmptyOrSpaces, isEnvTrue, log } from "builder-util"
 import { configureRequestOptions, GithubOptions, HttpError, parseJson, githubTagPrefix } from "builder-util-runtime"
 import { ClientRequest } from "http"
 import { Lazy } from "lazy-val"
-import * as mime from "mime"
+import mime from "mime"
 import { parse as parseUrl, UrlWithStringQuery } from "url"
-import { HttpPublisher } from "./httpPublisher"
-import { PublishContext, PublishOptions } from "./index"
-import { getCiTag } from "./publisher"
-import { trimStringWithWarn } from "./util"
+import { HttpPublisher } from "./httpPublisher.js"
+import { PublishContext, PublishOptions } from "./index.js"
+import { getCiTag } from "./publisher.js"
+import { trimStringWithWarn, validateResolvedToken } from "./util.js"
 
 export interface Release {
   id: number
@@ -51,22 +51,12 @@ export class GitHubPublisher extends HttpPublisher {
     let token = info.token
     if (isEmptyOrSpaces(token) || process.env.GITHUB_RELEASE_TOKEN) {
       token = process.env.GITHUB_RELEASE_TOKEN ? process.env.GITHUB_RELEASE_TOKEN : process.env.GH_TOKEN || process.env.GITHUB_TOKEN
-      if (isEmptyOrSpaces(token)) {
-        throw new InvalidConfigurationError(`GitHub Personal Access Token is not set, neither programmatically, nor using env "GH_TOKEN"`)
-      }
-
-      token = token.trim()
-
-      if (!isTokenCharValid(token)) {
-        throw new InvalidConfigurationError(`GitHub Personal Access Token (${JSON.stringify(token)}) contains invalid characters, please check env "GH_TOKEN"`)
-      }
+      token = validateResolvedToken(token, "GitHub", "GH_TOKEN")
     }
 
     this.token = token
 
-    if (version.startsWith("v")) {
-      throw new InvalidConfigurationError(`Version must not start with "v": ${version}`)
-    }
+    assertVersionHasNoVPrefix(version)
 
     this.tag = githubTagPrefix(info) + version
 

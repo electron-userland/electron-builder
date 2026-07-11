@@ -1,12 +1,18 @@
 import { build as _build, Configuration, DIR_TARGET, Packager, PackagerOptions, Platform } from "app-builder-lib"
-import { addValue, Arch, archFromString } from "builder-util"
+import { addTargetsForPlatform } from "app-builder-lib/internal"
+import { Arch, archFromString } from "builder-util"
 import { deepAssign } from "builder-util-runtime"
-import * as chalk from "chalk"
-import { PublishOptions } from "electron-publish"
+import chalk from "chalk"
+import type { PublishOptions } from "electron-publish"
+import { hideBin } from "yargs/helpers"
 import * as yargs from "yargs"
 
 export function createYargs(): yargs.Argv<unknown> {
-  return yargs.parserConfiguration({
+  // In ESM, yargs.default is the factory function; call it to create an instance.
+  // In CJS, yargs.default is already an Argv singleton.
+  const factory = (yargs as any).default ?? yargs
+  const instance = typeof factory?.parserConfiguration === "function" ? factory : factory(hideBin(process.argv))
+  return (instance as unknown as yargs.Argv<unknown>).parserConfiguration({
     "camel-case-expansion": false,
   })
 }
@@ -53,30 +59,12 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
       return result.length === 0 && currentIfNotSpecified ? [archFromString(process.arch)] : result
     }
 
-    let archToType = targets.get(platform)
-    if (archToType == null) {
-      archToType = new Map<Arch, Array<string>>()
-      targets.set(platform, archToType)
-    }
-
-    if (types.length === 0) {
+    addTargetsForPlatform(targets, platform, types, commonArch, archToType => {
       const defaultTargetValue = args.dir ? [DIR_TARGET] : []
       for (const arch of commonArch(args.dir === true)) {
         archToType.set(arch, defaultTargetValue)
       }
-      return
-    }
-
-    for (const type of types) {
-      const suffixPos = type.lastIndexOf(":")
-      if (suffixPos > 0) {
-        addValue(archToType, archFromString(type.substring(suffixPos + 1)), type.substring(0, suffixPos))
-      } else {
-        for (const arch of commonArch(true)) {
-          addValue(archToType, arch, type)
-        }
-      }
-    }
+    })
   }
 
   if (args.mac != null) {
@@ -148,9 +136,12 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
       coerceTypes(config.extraMetadata)
     }
 
-    // ability to disable code sign using -c.mac.identity=null
+    // mac.sign / mac.universal are nested option bags holding booleans and the signing identity
+    // (e.g. sign.identity, sign.hardenedRuntime, universal.mergeASARs). coerceValue recurses into the
+    // objects (so `-c.mac.sign.identity=null` disables code signing) and also handles `-c.mac.sign=null`.
     if (config.mac != null) {
-      coerceValue(config.mac, "identity")
+      coerceValue(config.mac, "sign")
+      coerceValue(config.mac, "universal")
     }
 
     // fix Boolean type by coerceTypes

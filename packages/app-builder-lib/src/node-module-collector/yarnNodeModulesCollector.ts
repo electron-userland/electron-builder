@@ -1,6 +1,6 @@
-import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
-import { PM } from "./packageManager"
-import { NpmDependency } from "./types"
+import { NpmNodeModulesCollector } from "./npmNodeModulesCollector.js"
+import { PM } from "./packageManager.js"
+import { NpmDependency } from "./types.js"
 
 // Yarn Classic (v1) produces a hoisted node_modules structure similar to npm.
 // Instead of parsing Yarn's custom NDJSON output, we leverage npm's list command
