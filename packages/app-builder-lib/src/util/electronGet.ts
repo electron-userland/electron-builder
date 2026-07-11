@@ -272,21 +272,24 @@ export async function extractArchive(file: string, dir: string) {
 
     if (file.endsWith(".tar.gz") || file.endsWith(".tgz")) {
       await tar.extract({ file, cwd: tmpDir, strip: 1 })
-    } else if (file.endsWith(".tar.xz") || file.endsWith(".txz")) {
-      // node-tar cannot decompress xz, so use 7za to turn the .tar.xz into a .tar, then extract that tar.
+    } else if (file.endsWith(".tar.xz") || file.endsWith(".txz") || file.endsWith(".tar.7z")) {
+      // Compressed tarballs node-tar cannot decompress itself (xz, 7z): use 7za to strip the outer
+      // compression layer into a .tar, then extract that tar.
+      // Note: the .tar.7z check MUST stay ahead of the plain .7z branch below, otherwise only the outer
+      // 7z layer is removed and the inner tar is left behind as-is (see https://github.com/electron-userland/electron-builder/issues/10002).
       const cmd7za = await getPath7za()
-      const xzOutDir = `${tmpDir}.xz`
-      await fs.rm(xzOutDir, { recursive: true, force: true })
-      await fs.mkdir(xzOutDir, { recursive: true })
+      const decompressOutDir = `${tmpDir}.decompress`
+      await fs.rm(decompressOutDir, { recursive: true, force: true })
+      await fs.mkdir(decompressOutDir, { recursive: true })
       try {
-        await exec(cmd7za, ["x", "-bd", file, to7zaOutputSwitch(sanitizeDirPath(xzOutDir)), "-y"])
-        const innerTar = (await fs.readdir(xzOutDir)).find(f => f.endsWith(".tar"))
+        await exec(cmd7za, ["x", "-bd", file, to7zaOutputSwitch(sanitizeDirPath(decompressOutDir)), "-y"])
+        const innerTar = (await fs.readdir(decompressOutDir)).find(f => f.endsWith(".tar"))
         if (innerTar == null) {
-          throw new Error(`xz decompression of ${path.basename(file)} produced no .tar archive`)
+          throw new Error(`decompression of ${path.basename(file)} produced no .tar archive`)
         }
-        await tar.extract({ file: path.join(xzOutDir, innerTar), cwd: tmpDir, strip: 1 })
+        await tar.extract({ file: path.join(decompressOutDir, innerTar), cwd: tmpDir, strip: 1 })
       } finally {
-        await fs.rm(xzOutDir, { recursive: true, force: true })
+        await fs.rm(decompressOutDir, { recursive: true, force: true })
       }
     } else if (file.endsWith(".zip")) {
       await extractZipStreaming(file, tmpDir)
@@ -562,7 +565,10 @@ export async function downloadBuilderToolset(options: {
   const baseUrl = getBinariesMirrorUrl(githubOrgRepo)
   const fullUrl = overrideUrl ? `${overrideUrl}/${filenameWithExt}` : `${baseUrl}${releaseName}/${filenameWithExt}`
   const suffix = hashUrlSafe(fullUrl, 5)
-  const folderName = `${filenameWithExt.replace(/\.(tar\.gz|tgz|tar\.xz|txz|zip|7z)$/, "")}-${suffix}`
+  // tar.7z is listed before 7z so the full extension is stripped. Deliberate side effect: this changes the
+  // extract-dir name for .tar.7z toolsets (e.g. the snap template) from "<name>.tar-<hash>" to "<name>-<hash>",
+  // which busts caches poisoned by the broken .tar.7z extraction in 26.15.0-26.15.6 (issue #10002).
+  const folderName = `${filenameWithExt.replace(/\.(tar\.gz|tgz|tar\.xz|txz|tar\.7z|zip|7z)$/, "")}-${suffix}`
   const extractDir = path.join(getCacheDirectory({ allowEnvVarOverride: true }), releaseName, folderName)
 
   // Use resolveAssetURL so @electron/get's ELECTRON_MIRROR env var check cannot override
