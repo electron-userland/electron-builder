@@ -205,7 +205,6 @@ async function runInstallTest(context: TestContext, target: ConstructorParameter
     DebUpdater.installWithCommandRunner(
       "dpkg",
       debPath,
-      true,
       commandWithArgs => {
         execSync(commandWithArgs.join(" "), { stdio: "inherit" })
       },
@@ -216,7 +215,6 @@ async function runInstallTest(context: TestContext, target: ConstructorParameter
     RpmUpdater.installWithCommandRunner(
       "zypper",
       path.join(artifactsDir, "TestApp.rpm"),
-      true,
       commandWithArgs => {
         execSync(commandWithArgs.join(" "), { stdio: "inherit" })
       },

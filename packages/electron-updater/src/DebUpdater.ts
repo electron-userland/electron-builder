@@ -41,7 +41,7 @@ export class DebUpdater extends LinuxUpdater {
     const priorityList = ["dpkg", "apt"]
     const packageManager = this.detectPackageManager(priorityList)
     try {
-      DebUpdater.installWithCommandRunner(packageManager as any, installerPath, this.allowUnverifiedLinuxPackages, this.runCommandWithSudoIfNeeded.bind(this), this._logger)
+      DebUpdater.installWithCommandRunner(packageManager as any, installerPath, this.runCommandWithSudoIfNeeded.bind(this), this._logger, this.allowUnverifiedLinuxPackages)
     } catch (error: any) {
       this.dispatchError(error)
       return false
@@ -55,13 +55,18 @@ export class DebUpdater extends LinuxUpdater {
   static installWithCommandRunner(
     packageManager: "dpkg" | "apt",
     installerPath: string,
-    allowUnverified: boolean,
     commandRunner: (commandWithArgs: string[]) => void,
-    logger: Logger
+    logger: Logger,
+    allowUnverified = true
   ) {
     if (packageManager === "dpkg") {
+      if (!allowUnverified) {
+        logger.warn(
+          "allowUnverifiedLinuxPackages=false has no effect when installing with dpkg: dpkg performs no signature verification. Enforcing .deb signature verification requires a debsig-verify/debsigs policy on the target system."
+        )
+      }
       try {
-        // Primary: Install .deb directly with dpkg (dpkg performs no signature verification regardless of this flag)
+        // Primary: Install .deb directly with dpkg (dpkg performs no signature verification regardless of allowUnverified)
         commandRunner(["dpkg", "-i", installerPath])
       } catch (error: any) {
         // Handle missing dependencies via apt-get

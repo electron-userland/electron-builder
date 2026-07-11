@@ -11,7 +11,6 @@ export function installLinux(target: string, dirPath: string): string {
     DebUpdater.installWithCommandRunner(
       "dpkg",
       path.join(dirPath, `TestApp.deb`),
-      true,
       commandWithArgs => {
         execSync(commandWithArgs.join(" "), { stdio: "inherit" })
       },
@@ -24,7 +23,6 @@ export function installLinux(target: string, dirPath: string): string {
     RpmUpdater.installWithCommandRunner(
       "zypper",
       path.join(dirPath, `TestApp.rpm`),
-      true,
       commandWithArgs => {
         execSync(commandWithArgs.join(" "), { stdio: "inherit" })
       },
