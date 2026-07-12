@@ -888,6 +888,7 @@ exports[`macPackager > two-package 3`] = `
   "app.asar",
   "bn.lproj",
   "en.lproj",
+  "en_GB.lproj",
   "icon.icns",
 ]
 `;
@@ -900,6 +901,7 @@ exports[`macPackager > two-package 4`] = `
   "chrome_100_percent.pak",
   "chrome_200_percent.pak",
   "en.lproj",
+  "en_GB.lproj",
   "icudtl.dat",
   "resources.pak",
   "v8_context_snapshot.x86_64.bin",
@@ -961,6 +963,7 @@ exports[`macPackager > two-package 6`] = `
   "app.asar",
   "bn.lproj",
   "en.lproj",
+  "en_GB.lproj",
   "icon.icns",
 ]
 `;
@@ -973,6 +976,7 @@ exports[`macPackager > two-package 7`] = `
   "chrome_100_percent.pak",
   "chrome_200_percent.pak",
   "en.lproj",
+  "en_GB.lproj",
   "icudtl.dat",
   "resources.pak",
   "v8_context_snapshot.arm64.bin",
@@ -1034,6 +1038,7 @@ exports[`macPackager > two-package 9`] = `
   "app.asar",
   "bn.lproj",
   "en.lproj",
+  "en_GB.lproj",
   "icon.icns",
 ]
 `;
@@ -1046,6 +1051,7 @@ exports[`macPackager > two-package 10`] = `
   "chrome_100_percent.pak",
   "chrome_200_percent.pak",
   "en.lproj",
+  "en_GB.lproj",
   "icudtl.dat",
   "resources.pak",
   "v8_context_snapshot.arm64.bin",
