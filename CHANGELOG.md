@@ -1,3 +1,13 @@
+## [26.15.7](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.6...electron-builder@26.15.7) (2026-07-12)
+
+
+### Bug Fixes
+
+* don't empty locales dir when electronLanguages uses bare language codes (v26 backport of [#10007](https://github.com/electron-userland/electron-builder/issues/10007)) ([#10008](https://github.com/electron-userland/electron-builder/issues/10008)) ([f5fccba](https://github.com/electron-userland/electron-builder/commit/f5fccbaef9340667630676601fe90cbcb8805095))
+* extract .tar.7z snap template archives correctly (v26 backport of [#10003](https://github.com/electron-userland/electron-builder/issues/10003)) ([#10004](https://github.com/electron-userland/electron-builder/issues/10004)) ([c4b0a2c](https://github.com/electron-userland/electron-builder/commit/c4b0a2ce72b647b5fd8efc2f0070fbc35316324c))
+
+
+
 ## [26.15.6](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.5...electron-builder@26.15.6) (2026-06-26)
 
 

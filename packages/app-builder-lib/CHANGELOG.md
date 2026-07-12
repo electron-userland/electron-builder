@@ -1,5 +1,23 @@
 # app-builder-lib
 
+## 26.15.7
+
+### Patch Changes
+
+- Fix: don't empty the locales dir when `electronLanguages` uses bare language codes (e.g. `en` now keeps `en-US.pak`), refuse to delete every locale, and warn about entries that match nothing _[`#10008`](https://github.com/electron-userland/electron-builder/pull/10008) [`f5fccba`](https://github.com/electron-userland/electron-builder/commit/f5fccbaef9340667630676601fe90cbcb8805095) [@claude](https://github.com/apps/claude)_
+- Fix: extract `.tar.7z` snap template archives through both compression layers. Since 26.15.0, default-config snap builds packed the template's inner tar as a single file instead of its contents (`desktop-init.sh` etc.), producing snaps that built successfully but failed at launch. The toolset cache directory name for `.tar.7z` archives also changes, so caches poisoned by the broken extraction are automatically re-fetched after upgrading. _[`#10004`](https://github.com/electron-userland/electron-builder/pull/10004) [`c4b0a2c`](https://github.com/electron-userland/electron-builder/commit/c4b0a2ce72b647b5fd8efc2f0070fbc35316324c) [@claude](https://github.com/apps/claude)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@26.15.7`
+- `electron-builder-squirrel-windows@26.15.7`
+
+</details>
+
 ## 26.15.6
 
 ### Patch Changes
