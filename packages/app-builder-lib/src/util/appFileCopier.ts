@@ -188,6 +188,11 @@ export async function computeNodeModuleFileSets(
   const NODE_MODULES = "node_modules"
 
   const collectNodeModules = async (dep: NodeModuleInfo, destination: string) => {
+    // Ignore excluded dependencies.
+    if (dep.excluded) {
+      return
+    }
+
     const source = dep.dir
     const matcher = new FileMatcher(source, destination, mainMatcher.macroExpander, mainMatcher.patterns)
     const copier = new NodeModuleCopyHelper(matcher, platformPackager)
@@ -210,7 +215,7 @@ export async function computeNodeModuleFileSets(
   return result
 }
 
-type CollectedNodeModules = { nodeModules: NodeModuleInfo[]; logSummary: ModuleManager["logSummary"]; excludedDependencies: string[] }
+type CollectedNodeModules = { nodeModules: NodeModuleInfo[]; logSummary: ModuleManager["logSummary"] }
 
 /** Runs a single package-manager collector against a single directory. */
 type CollectorRunner = (pm: PM, dir: string) => Promise<CollectedNodeModules>
@@ -320,20 +325,13 @@ export async function collectNodeModulesWithLogging(platformPackager: PlatformPa
     log[logLevel]({ dependencies }, errorMessage)
   }
 
-  if (deps.excludedDependencies.length > 0) {
-    log.info({ dependencies: deps.excludedDependencies.join(", ") }, "excluded production dependencies from the app's node_modules (see ignoredProductionDependencies)")
-  }
-
   // Tripwire: the default-ignored packages are excluded because electron-builder already provides them
   // (e.g. the embedded Electron runtime), so a copy in `node_modules` is redundant. They only reach this
-  // point when a user has removed them from `ignoredProductionDependencies`; flag any that were copied in
-  // case it was unintentional.
-  const bundledDefaultIgnored = deps.nodeModules.filter(it => DEFAULT_IGNORED_PRODUCTION_DEPENDENCIES.includes(it.name)).map(it => it.name)
+  // point unflagged when a user has removed them from `ignoredProductionDependencies`; record any that
+  // are therefore about to be copied (present but not marked `excluded`) so the summary below warns.
+  const bundledDefaultIgnored = deps.nodeModules.filter(it => !it.excluded && DEFAULT_IGNORED_PRODUCTION_DEPENDENCIES.includes(it.name)).map(it => it.name)
   if (bundledDefaultIgnored.length > 0) {
-    log.warn(
-      { dependencies: bundledDefaultIgnored.join(", ") },
-      "copied dependencies into the app that electron-builder normally provides itself (e.g. the embedded Electron runtime), so this copy is usually redundant. To exclude them, add them back to ignoredProductionDependencies (or remove them from dependencies)."
-    )
+    log.warn({ dependencies: bundledDefaultIgnored }, "copied dependencies that shouldn't be needed, see ignoredProductionDependencies")
   }
 
   return deps.nodeModules

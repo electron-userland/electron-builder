@@ -22,6 +22,7 @@ export enum LogMessageByKey {
   PKG_COLLECTOR_OUTPUT = "collector stderr output",
   PKG_VERSION_OVERRIDDEN = "dependencies resolved to a version outside the declared range (installed version accepted — likely resolved via package manager overrides)",
   PKG_INCOMPATIBLE_PLATFORM = "excluded platform-incompatible dependencies (package.json `cpu`/`os` does not match the target arch/platform)",
+  PKG_EXCLUDED_IGNORED = "excluded production dependencies from the app's node_modules (see ignoredProductionDependencies)",
 }
 export const logMessageLevelByKey: Record<LogMessageByKey, LogLevel> = {
   [LogMessageByKey.PKG_DUPLICATE_REF]: "info",
@@ -34,6 +35,7 @@ export const logMessageLevelByKey: Record<LogMessageByKey, LogLevel> = {
   [LogMessageByKey.PKG_COLLECTOR_OUTPUT]: "warn",
   [LogMessageByKey.PKG_VERSION_OVERRIDDEN]: "debug",
   [LogMessageByKey.PKG_INCOMPATIBLE_PLATFORM]: "info",
+  [LogMessageByKey.PKG_EXCLUDED_IGNORED]: "info",
 }
 
 export type Package = { packageDir: string; packageJson: PackageJson }

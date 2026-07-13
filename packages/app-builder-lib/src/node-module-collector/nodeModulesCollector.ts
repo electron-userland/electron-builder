@@ -64,7 +64,6 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   }): Promise<{
     nodeModules: NodeModuleInfo[]
     logSummary: ModuleManager["logSummary"]
-    excludedDependencies: string[]
   }> {
     const tree: ProdDepType = await this.getDependenciesTree(this.installOptions.manager)
 
@@ -72,10 +71,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     const realTree: ProdDepType = this.getTreeFromWorkspaces(tree, packageName)
     await this.extractProductionDependencyGraph(realTree, packageName)
 
-    // Exclude ignored production dependencies on the pre-hoist graph, where the true parent->child
-    // edges still exist, so an ignored package's exclusively-owned transitive deps are dropped too
-    // while shared (deduped) ones are kept. See excludeIgnoredFromProductionGraph.
-    const excludedDependencies = this.excludeIgnoredFromProductionGraph(this.productionGraph, packageName, ignoredDependencies ?? [])
+    this.markExcludedModules(this.productionGraph, packageName, ignoredDependencies ?? [])
 
     const hoisterResult: HoisterResult = hoist(this.transformToHoisterTree(this.productionGraph, packageName), {
       check: log.isDebugEnabled,
@@ -85,7 +81,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
     log.debug({ packageName, depCount: this.nodeModules.length }, "node modules collection complete")
 
-    return { nodeModules: this.nodeModules, logSummary: this.cache.logSummary, excludedDependencies }
+    return { nodeModules: this.nodeModules, logSummary: this.cache.logSummary }
   }
 
   public abstract readonly installOptions: {
@@ -281,48 +277,31 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   }
 
   /**
-   * Removes `ignoredNames` — and any package that becomes unreachable once those packages are
-   * dropped (i.e. a dependency needed *only* by an ignored package) — from the production graph
-   * in place.
+   * Flags which modules must be omitted from the *copied* app output for the given `ignoredNames` by
+   * setting an `excluded` marker on the pre-hoist graph nodes.
    *
-   * This runs on the pre-hoist graph, where the true parent->child edges still exist. npm/pnpm
-   * dedupe and hoist a shared transitive dependency to a single flattened entry, so the collected
-   * `NodeModuleInfo` tree can no longer tell whether such an entry is needed only by an ignored
-   * package or also by a legitimate one. Excluding here — before hoisting — drops an ignored
-   * package's *exclusive* subtree while keeping any dependency still reachable from another
-   * production dependency.
+   * Only a *top-level* production dependency (one the app itself declares) can be excluded, together
+   * with its exclusively-owned transitive subtree. A package that is merely a transitive dependency of
+   * a non-excluded production dependency is never excluded, even if its name is in `ignoredNames`:
+   * only the root's own edges to ignored names are severed, so anything still reachable through another
+   * production dependency stays reachable and is kept.
    *
-   * @returns the distinct names of every excluded package (the ignored roots plus their exclusive subtrees), sorted.
+   * Runs on the pre-hoist graph, where the true parent->child edges still exist, so a shared (deduped)
+   * transitive dependency remains reachable and is kept while an ignored package's exclusive subtree
+   * becomes unreachable and is flagged.
    */
-  private excludeIgnoredFromProductionGraph(graph: DependencyGraph, rootId: string, ignoredNames: ReadonlyArray<string>): string[] {
+  private markExcludedModules(graph: DependencyGraph, rootId: string, ignoredNames: ReadonlyArray<string>): void {
     const ignored = new Set(ignoredNames)
     if (ignored.size === 0) {
-      return []
+      return
     }
 
-    const reachableBefore = this.collectReachableIds(graph, rootId)
-
-    for (const id of Object.keys(graph)) {
-      const deps = graph[id].dependencies
-      const kept = deps.filter(dep => !ignored.has(this.parseNameVersion(dep).name))
-      if (kept.length !== deps.length) {
-        graph[id] = { dependencies: kept }
-      }
+    const rootDeps = graph[rootId]?.dependencies ?? []
+    const ignoredRootEdges = new Set(rootDeps.filter(dep => ignored.has(this.parseNameVersion(dep).name)))
+    if (ignoredRootEdges.size === 0) {
+      return
     }
 
-    const reachableAfter = this.collectReachableIds(graph, rootId)
-
-    const excludedNames = new Set<string>()
-    for (const id of reachableBefore) {
-      if (!reachableAfter.has(id)) {
-        excludedNames.add(this.parseNameVersion(id).name)
-      }
-    }
-    return Array.from(excludedNames).sort()
-  }
-
-  /** Set of dependency ids reachable from `rootId` by following the production graph's edges. */
-  private collectReachableIds(graph: DependencyGraph, rootId: string): Set<string> {
     const reachable = new Set<string>()
     const stack: string[] = [rootId]
     while (stack.length > 0) {
@@ -334,13 +313,32 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       const node = graph[id]
       if (node != null) {
         for (const dep of node.dependencies) {
+          if (id === rootId && ignoredRootEdges?.has(dep)) {
+            continue
+          }
           if (!reachable.has(dep)) {
             stack.push(dep)
           }
         }
       }
     }
-    return reachable
+    for (const id of Object.keys(graph)) {
+      if (!reachable.has(id)) {
+        graph[id].excluded = true
+      }
+    }
+
+    // Only directly-declared deps that actually ended up excluded (i.e. not still reachable via a kept
+    // dependency) are surfaced to the user; their exclusive transitive subtree is omitted from the log.
+    const topLevelExcludedNames = new Set<string>()
+    for (const dep of ignoredRootEdges) {
+      if (!reachable.has(dep)) {
+        topLevelExcludedNames.add(this.parseNameVersion(dep).name)
+      }
+    }
+    if (topLevelExcludedNames.size > 0) {
+      this.cache.logSummary[LogMessageByKey.PKG_EXCLUDED_IGNORED].push(...Array.from(topLevelExcludedNames).sort())
+    }
   }
 
   private transformToHoisterTree(obj: DependencyGraph, key: string, nodes: Map<string, HoisterTree> = new Map()): HoisterTree {
@@ -410,6 +408,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         name: d.name,
         version: reference,
         dir,
+        excluded: this.productionGraph[key]?.excluded,
       }
       result.push(node)
       if (d.dependencies.size > 0) {
