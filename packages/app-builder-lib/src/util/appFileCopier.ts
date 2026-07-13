@@ -1,4 +1,5 @@
 import { Arch, AsyncTaskManager, FileCopier, FileTransformer, isEmptyOrSpaces, Link, log, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
+import { DEFAULT_IGNORED_PRODUCTION_DEPENDENCIES } from "../configuration.js"
 import { Stats } from "fs"
 import fsExtra from "fs-extra"
 import { mkdir, readlink } from "fs/promises"
@@ -82,15 +83,6 @@ export interface ResolvedFileSet {
   metadata: Map<string, Stats>
   transformedFiles?: Map<number, string | Buffer> | null
 }
-
-/**
- * Production dependencies that are excluded from the copied `node_modules` by default. These are
- * still legitimate production dependencies (for SBOM, license, and vulnerability tracking), but
- * electron-builder already provides them another way — notably the Electron runtime, which is
- * embedded separately — so copying them into the app would just duplicate what is already there.
- * Users can override the set via `config.ignoredProductionDependencies`.
- */
-export const DEFAULT_IGNORED_PRODUCTION_DEPENDENCIES: ReadonlyArray<string> = ["electron", "electron-builder"]
 
 // used only for ASAR, if no asar, file transformed on the fly
 export async function transformFiles(transformer: FileTransformer, fileSet: ResolvedFileSet): Promise<void> {

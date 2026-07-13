@@ -20,6 +20,18 @@ import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/win/nsis
 import { ElectronGetOptions } from "./util/electronGet.js"
 import { FuseOptionsV1 } from "./options/FuseOptionsV1.js"
 
+/**
+ * Production dependencies that are excluded from the copied `node_modules` by default. These are
+ * still legitimate production dependencies (for SBOM, license, and vulnerability tracking), but
+ * electron-builder already provides them another way — notably the Electron runtime, which is
+ * embedded separately — so copying them into the app would just duplicate what is already there.
+ * Users can override the set via {@link CommonConfiguration.ignoredProductionDependencies}.
+ *
+ * Declared next to the option so the code constant, the jsdoc `@default`, and the generated
+ * `scheme.json` stay in one place; a test asserts the generated schema matches this constant.
+ */
+export const DEFAULT_IGNORED_PRODUCTION_DEPENDENCIES: ReadonlyArray<string> = ["electron", "electron-builder"]
+
 // duplicate appId here because it is important
 /**
  * Configuration options shared across all platforms.

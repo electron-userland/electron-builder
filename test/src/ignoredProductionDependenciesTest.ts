@@ -1,7 +1,7 @@
 import { afterEach, describe, test, vi } from "vitest"
 import * as fse from "fs-extra"
 import * as path from "path"
-import { collectNodeModulesWithLogging, PM, readAsar, TraversalNodeModulesCollector } from "app-builder-lib/internal"
+import { collectNodeModulesWithLogging, DEFAULT_IGNORED_PRODUCTION_DEPENDENCIES, PM, readAsar, TraversalNodeModulesCollector } from "app-builder-lib/internal"
 import { LogMessageByKey } from "app-builder-lib/src/node-module-collector/moduleManager"
 import { NpmNodeModulesCollector } from "app-builder-lib/src/node-module-collector/npmNodeModulesCollector"
 import type { NodeModuleInfo, NpmDependency } from "app-builder-lib/src/node-module-collector/types"
@@ -398,6 +398,17 @@ describe("ignoredProductionDependencies (npm collector graph ids)", { sequential
     const byAliasName = await runNpmCollector(root, makeTree(), ["custom-electron"])
     expect(flattenByName(byAliasName.nodeModules).get("custom-electron")?.excluded).toBe(true)
     expect(byAliasName.logSummary[LogMessageByKey.PKG_EXCLUDED_IGNORED] ?? []).toEqual(["custom-electron@30.0.0"])
+  })
+})
+
+describe("ignoredProductionDependencies (defaults)", () => {
+  test("generated scheme.json default stays in sync with DEFAULT_IGNORED_PRODUCTION_DEPENDENCIES", async ({ expect }) => {
+    // The jsdoc `@default` on Configuration.ignoredProductionDependencies feeds the generated
+    // scheme.json; the code reads DEFAULT_IGNORED_PRODUCTION_DEPENDENCIES. Nothing ties the two
+    // together at build time, so pin them here — if this fails, update the jsdoc `@default` (or the
+    // constant) and re-run `pnpm generate:schema`.
+    const schema = await fse.readJson(path.join(__dirname, "..", "..", "packages", "app-builder-lib", "scheme.json"))
+    expect(schema.properties.ignoredProductionDependencies.default).toEqual(DEFAULT_IGNORED_PRODUCTION_DEPENDENCIES)
   })
 })
 
