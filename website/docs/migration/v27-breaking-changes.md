@@ -77,7 +77,7 @@ To stay on a legacy bundle, pin the toolset to `"0.0.0"`. Because `winCodeSign` 
 | [`PlatformPackager.info` & `platformSpecificBuildOptions` now `protected`](#programmatic--plugin-author-api-changes) | — | Plugin authors: hard break — `.info` no longer compiles externally; use the new pass-through getters |
 | [Linux `.desktop` `Exec` now runs a generated `*-launcher` script](#linux-launcher-entrypoint) | — | Update custom `.desktop`/AppArmor/MIME tooling that hard-codes the `Exec` command |
 | [`node_modules` arch/os-filtered on every build](#node_modules-are-now-archos-filtered-on-every-build) | — | Awareness — packages whose `cpu`/`os` mismatch the target are now excluded |
-| [Redundant production `dependencies` excluded, not rejected](#redundant-production-dependencies-are-excluded-not-rejected) | — | None — `electron`/`electron-builder` are excluded from the copied `node_modules` (was a hard error); new `ignoredProductionDependencies` controls the set (add bundler-inlined deps like `react`), and the `ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY` env var is removed |
+| [Redundant production `dependencies` excluded, not rejected](#redundant-production-dependencies-are-excluded-not-rejected) | — | `electron`/`electron-builder` are excluded from the copied `node_modules` (was a hard error); tune the set via `ignoredProductionDependencies`. If you set `ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY` (removed) to bundle `electron-builder`, override the list instead; `electron-prebuilt`/`electron-rebuild` no longer error and now ship if declared — remove them from `dependencies` |
 | [DMG `filesystem` defaults to APFS](#dmg-filesystem-defaults-to-apfs) | — | Set `dmg.filesystem: "HFS+"` only if you need pre-10.13 macOS compatibility |
 | [`disableWebInstaller` defaults to `true` (electron-updater)](#disablewebinstaller-defaults-to-true) | — | v27 warns but still downloads if you never set it; opt in with `disableWebInstaller: false` before v28 enforces it |
 | [Renamed type exports (`ElectronDownloadOptions`, `WindowsAzureSigningConfiguration`, …)](#removed-exports) | — | Import the new names — no compat aliases |
@@ -628,9 +628,18 @@ Overriding the option **replaces** the default list, so keep `electron` and `ele
 
 - **Remove** a name to keep it in the copied `node_modules` after all (e.g. drop `"electron-builder"` from the list to ship it inside the app).
 
-Exclusion is resolved against the full pre-hoist dependency graph, so a transitive dependency required **only** by an excluded package is dropped too, while one also required by a legitimate production dependency (npm/pnpm dedupe it into a single hoisted entry) is kept.
+Only dependencies **your app declares directly** are eligible for exclusion. A listed name is dropped together with the transitive dependencies required **only** by it, while anything also required by a legitimate production dependency (npm/pnpm dedupe it into a single hoisted entry) is kept — and a matching name that appears solely as a transitive dependency of a kept package is never excluded. One footgun to be aware of: a kept package that `require()`s an excluded name at runtime **without declaring it** (relying on hoisting of your app's copy) will crash with `MODULE_NOT_FOUND` — declare that dependency properly in the package that needs it, or remove the name from the list. Matching is by the declared dependency name, so an npm alias (`"custom-electron": "npm:electron@^30.0.0"`) must be listed by its alias key.
 
-The `ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY` environment variable — previously the only way to keep `electron-builder` in `dependencies` without erroring — is **removed**. `electron-builder` is now excluded by default; if you relied on that env var to bundle it, remove `"electron-builder"` from `ignoredProductionDependencies` instead.
+#### `ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY` is removed — and the default flipped
+
+In v26, this (undocumented) environment variable was the only way to keep `electron-builder` in `dependencies` without erroring, and setting it meant the package **was bundled** into the app. In v27 the variable is ignored and the behavior is the opposite: `electron-builder` is in the default ignore list, so it is **silently excluded** from the copied `node_modules` (an info-level log is the only trace). If you relied on the env var to actually ship `electron-builder` inside your app, you must now override the list and drop `"electron-builder"` from it, e.g. `"ignoredProductionDependencies": ["electron"]`.
+
+#### `electron-prebuilt` / `electron-rebuild` no longer error — and are NOT excluded
+
+The v26 hard error also rejected `electron-prebuilt` and `electron-rebuild` in `dependencies`. v27 removes that guard **without** adding them to the default ignore list, so if you still declare them they now **ship inside your app** silently — `electron-prebuilt` drags a full Electron binary along. Both packages are long deprecated (`electron-prebuilt` was renamed to `electron` in 2016; `electron-rebuild` moved to `@electron/rebuild`), which is why this major release drops the special-casing instead of carrying it forward. `electron-nightly` was never guarded and is likewise not in the default list. If you use any of them:
+
+- **Preferred**: migrate — replace `electron-prebuilt` with `electron`, and `electron-rebuild` with `@electron/rebuild` in `devDependencies`.
+- Otherwise: move them to `devDependencies`, or add them to `ignoredProductionDependencies` (e.g. `["electron", "electron-builder", "electron-prebuilt", "electron-nightly"]`) if they must stay declared as production dependencies for tooling.
 
 This is a runtime behavior change, not a config-key rename, so `electron-builder migrate-schema` does not modify your config for it.
 
