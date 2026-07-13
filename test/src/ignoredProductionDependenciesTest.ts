@@ -1,10 +1,14 @@
 import { afterEach, describe, test, vi } from "vitest"
 import * as fse from "fs-extra"
 import * as path from "path"
-import { collectNodeModulesWithLogging, PM, TraversalNodeModulesCollector } from "app-builder-lib/internal"
+import { collectNodeModulesWithLogging, PM, readAsar, TraversalNodeModulesCollector } from "app-builder-lib/internal"
 import { LogMessageByKey } from "app-builder-lib/src/node-module-collector/moduleManager"
-import type { NodeModuleInfo } from "app-builder-lib/src/node-module-collector/types"
+import { NpmNodeModulesCollector } from "app-builder-lib/src/node-module-collector/npmNodeModulesCollector"
+import type { NodeModuleInfo, NpmDependency } from "app-builder-lib/src/node-module-collector/types"
 import { log, TmpDir } from "builder-util"
+import { Platform } from "electron-builder"
+import { app, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
+import { ELECTRON_VERSION } from "./helpers/testConfig"
 
 // Exercises the full collector pipeline (production graph -> exclusion marking -> hoist -> node module
 // tree) on a synthetic, flattened node_modules layout. The key correctness properties: ignored
@@ -49,9 +53,11 @@ function flattenByName(nodeModules: NodeModuleInfo[]): Map<string, NodeModuleInf
 }
 
 // Runs the full app-side collection (collectNodeModulesWithLogging) against a synthetic project,
-// capturing any `log.warn` messages so the electron-builder tripwire can be asserted.
+// capturing `log.warn`/`log.info` messages so the electron-builder tripwire and the exclusion
+// summary line can be asserted.
 async function collectWithWarnings(rootDir: string, packageName: string, dependencies: Record<string, string>, ignoredProductionDependencies?: Array<string> | null) {
   const warn = vi.spyOn(log, "warn").mockImplementation(() => log as any)
+  const info = vi.spyOn(log, "info").mockImplementation(() => log as any)
   try {
     const platformPackager = {
       tempDirManager: projectTmpDir,
@@ -65,10 +71,11 @@ async function collectWithWarnings(rootDir: string, packageName: string, depende
       getPackageManager: async () => PM.TRAVERSAL,
     } as unknown as Parameters<typeof collectNodeModulesWithLogging>[0]
     const nodeModules = await collectNodeModulesWithLogging(platformPackager, null)
-    const warnings = warn.mock.calls.map(args => ({ fields: args[0] as Record<string, any> | null, message: String(args[1] ?? "") }))
-    return { nodeModules, warnings }
+    const toEntries = (calls: Array<Array<any>>) => calls.map(args => ({ fields: args[0] as Record<string, any> | null, message: String(args[1] ?? "") }))
+    return { nodeModules, warnings: toEntries(warn.mock.calls), infos: toEntries(info.mock.calls) }
   } finally {
     warn.mockRestore()
+    info.mockRestore()
   }
 }
 
@@ -250,4 +257,174 @@ describe("ignoredProductionDependencies (collector pruning)", { sequential: true
     expect(byName.get("keep-me")?.excluded).toBeFalsy()
     expect(warnings.some(w => w.message.includes("copied dependencies that shouldn't be needed"))).toBe(false)
   })
+})
+
+// Exclusion must not defeat the collection validation introduced for issue #9945: ignored dependencies
+// stay in the collected tree (flagged `excluded`) so a correct collection is still recognized as
+// matching the app's declared dependencies, and a tree whose every dependency is ignored still counts
+// as a successful (effectively empty) collection rather than triggering the wrong-root fallback or the
+// "no node modules returned" warning.
+describe("ignoredProductionDependencies (exclusion-aware collection validation)", { sequential: true }, () => {
+  let root = ""
+  afterEach(async () => {
+    if (root) {
+      await fse.rm(root, { recursive: true, force: true })
+      root = ""
+    }
+  })
+
+  test("collects successfully when every external production dependency is ignored", async ({ expect }) => {
+    root = await buildPackageTree({
+      "package.json": {
+        name: "my-app",
+        version: "1.0.0",
+        dependencies: { electron: "^30.0.0" },
+      },
+      "node_modules/electron/package.json": { name: "electron", version: "30.0.0" },
+    })
+
+    // No explicit config -> the default ignore list applies, so ALL declared external deps are ignored.
+    const { nodeModules, warnings, infos } = await collectWithWarnings(root, "my-app", { electron: "^30.0.0" })
+    const byName = flattenByName(nodeModules)
+
+    // The ignored dependency stays in the collection as a validation marker, flagged for the copier...
+    expect(byName.get("electron")?.excluded).toBe(true)
+    // ...so the collection is accepted as-is: no spurious "empty collection" warning on a correct build...
+    expect(warnings.some(w => w.message.includes("no node modules returned"))).toBe(false)
+    // ...and the exclusion summary line still reaches the user.
+    expect(infos.some(i => i.message.includes("excluded production dependencies"))).toBe(true)
+  })
+
+  test("accepts a correct collection when the remaining declared deps are workspace-local (monorepo)", async ({ expect }) => {
+    root = await buildPackageTree({
+      "package.json": {
+        name: "my-app",
+        version: "1.0.0",
+        dependencies: { electron: "^30.0.0", "@org/shared": "workspace:*" },
+      },
+      "node_modules/electron/package.json": { name: "electron", version: "30.0.0" },
+      "node_modules/@org/shared/package.json": { name: "@org/shared", version: "1.0.0" },
+    })
+
+    // `workspace:` specs cannot validate a collection (they are symlinked, not hoisted), so `electron`
+    // is the only validation marker left — and it is ignored. Keeping it in the tree (flagged) is what
+    // lets the correct collection match instead of losing out to a wrong-root fallback tree.
+    const { nodeModules, warnings, infos } = await collectWithWarnings(root, "my-app", { electron: "^30.0.0", "@org/shared": "workspace:*" })
+    const byName = flattenByName(nodeModules)
+
+    expect(byName.get("electron")?.excluded).toBe(true)
+    expect(byName.get("@org/shared")?.excluded).toBeFalsy()
+    expect(warnings.some(w => w.message.includes("no node modules returned"))).toBe(false)
+    expect(infos.some(i => i.message.includes("collected node modules do not match"))).toBe(false)
+  })
+})
+
+// The npm collector builds its production graph from `npm list --json` output, whose graph ids are
+// keyed by the *dependency key* (the name the app declares), not the resolved package name. This suite
+// feeds the collector canned `npm list` trees to pin down how exclusion matching interacts with that id
+// format — most notably npm aliases (`"custom-electron": "npm:electron@^30.0.0"`), which are matched by
+// their alias key, never by the underlying package name.
+describe("ignoredProductionDependencies (npm collector graph ids)", { sequential: true }, () => {
+  let root = ""
+  afterEach(async () => {
+    if (root) {
+      await fse.rm(root, { recursive: true, force: true })
+      root = ""
+    }
+  })
+
+  class StubbedNpmNodeModulesCollector extends NpmNodeModulesCollector {
+    constructor(
+      rootDir: string,
+      tempDirManager: TmpDir,
+      private readonly cannedTree: NpmDependency
+    ) {
+      super(rootDir, tempDirManager)
+    }
+
+    protected override getDependenciesTree(): Promise<NpmDependency> {
+      return Promise.resolve(this.cannedTree)
+    }
+  }
+
+  const runNpmCollector = (rootDir: string, tree: NpmDependency, ignoredDependencies?: ReadonlyArray<string>) =>
+    new StubbedNpmNodeModulesCollector(rootDir, projectTmpDir as unknown as TmpDir, tree).getNodeModules({ packageName: "my-app", ignoredDependencies })
+
+  test("marks an ignored dependency excluded through the npm list graph", async ({ expect }) => {
+    root = await buildPackageTree({
+      "node_modules/electron/package.json": { name: "electron", version: "30.0.0" },
+      "node_modules/keep-me/package.json": { name: "keep-me", version: "1.0.0" },
+    })
+    const tree: NpmDependency = {
+      name: "my-app",
+      version: "1.0.0",
+      path: root,
+      _dependencies: { electron: "^30.0.0", "keep-me": "^1.0.0" },
+      dependencies: {
+        electron: { name: "electron", version: "30.0.0", path: path.join(root, "node_modules", "electron"), _dependencies: {} },
+        "keep-me": { name: "keep-me", version: "1.0.0", path: path.join(root, "node_modules", "keep-me"), _dependencies: {} },
+      },
+    }
+
+    const { nodeModules, logSummary } = await runNpmCollector(root, tree, ["electron"])
+    const byName = flattenByName(nodeModules)
+
+    expect(byName.get("electron")?.excluded).toBe(true)
+    expect(byName.get("keep-me")?.excluded).toBeFalsy()
+    expect(logSummary[LogMessageByKey.PKG_EXCLUDED_IGNORED] ?? []).toEqual(["electron"])
+  })
+
+  test("matches npm aliases by their alias key, not the underlying package name", async ({ expect }) => {
+    root = await buildPackageTree({
+      "node_modules/custom-electron/package.json": { name: "electron", version: "30.0.0" },
+    })
+    // `npm list --json` reports the alias key as the dependency key and the real package name inside.
+    const makeTree = (): NpmDependency => ({
+      name: "my-app",
+      version: "1.0.0",
+      path: root,
+      _dependencies: { "custom-electron": "npm:electron@^30.0.0" },
+      dependencies: {
+        "custom-electron": { name: "electron", version: "30.0.0", path: path.join(root, "node_modules", "custom-electron"), _dependencies: {} },
+      },
+    })
+
+    // Matching happens on the declared (alias) name, so the real package name does NOT match...
+    const byRealName = await runNpmCollector(root, makeTree(), ["electron"])
+    expect(flattenByName(byRealName.nodeModules).get("custom-electron")?.excluded).toBeFalsy()
+    expect(byRealName.logSummary[LogMessageByKey.PKG_EXCLUDED_IGNORED] ?? []).toEqual([])
+
+    // ...while the alias key itself does.
+    const byAliasName = await runNpmCollector(root, makeTree(), ["custom-electron"])
+    expect(flattenByName(byAliasName.nodeModules).get("custom-electron")?.excluded).toBe(true)
+    expect(byAliasName.logSummary[LogMessageByKey.PKG_EXCLUDED_IGNORED] ?? []).toEqual(["custom-electron"])
+  })
+})
+
+describe("ignoredProductionDependencies (pack-level)", () => {
+  test("packed app omits ignored production dependencies from node_modules", ({ expect }) =>
+    app(
+      expect,
+      { targets: linuxDirTarget },
+      {
+        projectDirCreated: (projectDir, _tmpDir, testEnv) => {
+          // electron's postinstall would download the full runtime binary; the packaged app never uses
+          // that copy (the dependency is excluded), so skip the download to keep the test lean.
+          testEnv.ELECTRON_SKIP_BINARY_DOWNLOAD = "1"
+          return modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              electron: ELECTRON_VERSION, // in the default ignore list -> must NOT be copied
+              ms: "2.1.3", // kept -> proves node_modules copying itself ran
+            }
+          })
+        },
+        packed: async context => {
+          const asarFs = await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))
+          const nodeModules = asarFs.header.files?.["node_modules"]?.files
+          // The kept dependency is bundled, while the ignored production dependency is excluded.
+          expect(Object.keys(nodeModules ?? {})).toContain("ms")
+          expect(nodeModules?.["electron"]).toBeUndefined()
+        },
+      }
+    ))
 })
