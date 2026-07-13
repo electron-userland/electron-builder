@@ -330,14 +330,17 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
     // Only directly-declared deps that actually ended up excluded (i.e. not still reachable via a kept
     // dependency) are surfaced to the user; their exclusive transitive subtree is omitted from the log.
-    const topLevelExcludedNames = new Set<string>()
+    // Report the full `name@version` graph id — like the other logSummary buckets — so the log stays
+    // truthful when another version of the same name still ships via a kept dependency (e.g. `debug@4`
+    // excluded while `debug@3` remains bundled).
+    const topLevelExcluded = new Set<string>()
     for (const dep of ignoredRootEdges) {
       if (!reachable.has(dep)) {
-        topLevelExcludedNames.add(this.parseNameVersion(dep).name)
+        topLevelExcluded.add(dep)
       }
     }
-    if (topLevelExcludedNames.size > 0) {
-      this.cache.logSummary[LogMessageByKey.PKG_EXCLUDED_IGNORED].push(...Array.from(topLevelExcludedNames).sort())
+    if (topLevelExcluded.size > 0) {
+      this.cache.logSummary[LogMessageByKey.PKG_EXCLUDED_IGNORED].push(...Array.from(topLevelExcluded).sort())
     }
   }
 

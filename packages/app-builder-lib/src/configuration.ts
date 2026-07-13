@@ -297,16 +297,25 @@ export interface CommonConfiguration {
    * excluded from the copy rather than rejected: they remain valid production dependencies for
    * tooling purposes (e.g. SBOM, license, and vulnerability tracking) without being shipped twice.
    *
-   * Exclusion is resolved against the full dependency graph: a transitive dependency required *only*
-   * by an excluded package is dropped as well, while one also required by another production
-   * dependency is kept.
+   * Only dependencies **declared by the app itself** are eligible: a listed name and the transitive
+   * dependencies required *only* by it are dropped, while anything also required by another (kept)
+   * production dependency stays bundled. A matching name that appears solely as a transitive
+   * dependency of a kept package is never excluded. Note that a kept package which `require()`s an
+   * excluded name at runtime *without declaring it* (relying on hoisting) will fail with
+   * `MODULE_NOT_FOUND` — declare such a dependency properly or remove the name from this list.
+   *
+   * Matching is by the dependency name as declared in `package.json`: an npm alias
+   * (`"custom-electron": "npm:electron@^30.0.0"`) is matched by its alias key (`custom-electron`),
+   * never by the underlying package name.
    *
    * Overriding this option **replaces** the default list, so include `electron` and `electron-builder`
    * unless you intend to ship them. The most common reason to override is to *add* a dependency that a
    * bundler (Vite, webpack, esbuild, …) already inlines into your app code: keep it in `dependencies`
    * so SBOM/license tooling still sees it, and list it here so a duplicate copy is not packaged — e.g.
    * `["electron", "electron-builder", "react", "react-dom"]`. Removing a default name keeps that
-   * package in the copied `node_modules`. Each excluded package is logged once during packaging.
+   * package in the copied `node_modules`. Setting the option to `null` (or omitting it) applies the
+   * default list; to disable exclusion entirely, set it to an empty array `[]`. Each excluded package
+   * is logged once during packaging.
    *
    * @default ["electron", "electron-builder"]
    */

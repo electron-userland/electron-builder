@@ -112,7 +112,7 @@ describe("ignoredProductionDependencies (collector pruning)", { sequential: true
     expect(byName.get("electron-only-dep")?.excluded).toBe(true)
     expect(byName.get("keep-me")?.excluded).toBeFalsy()
     // Only the top-level exclusion is surfaced to the user; the transitive subtree is not logged.
-    expect(logSummary[LogMessageByKey.PKG_EXCLUDED_IGNORED] ?? []).toEqual(["electron"])
+    expect(logSummary[LogMessageByKey.PKG_EXCLUDED_IGNORED] ?? []).toEqual(["electron@30.0.0"])
   })
 
   test("keeps a transitive dependency that is also required by a non-ignored production dependency", async ({ expect }) => {
@@ -143,7 +143,7 @@ describe("ignoredProductionDependencies (collector pruning)", { sequential: true
     // Shared with a kept dependency -> must not be flagged for exclusion.
     expect(byName.get("shared-dep")?.excluded).toBeFalsy()
     expect(byName.get("electron")?.excluded).toBe(true)
-    expect(logSummary[LogMessageByKey.PKG_EXCLUDED_IGNORED] ?? []).toEqual(["electron"])
+    expect(logSummary[LogMessageByKey.PKG_EXCLUDED_IGNORED] ?? []).toEqual(["electron@30.0.0"])
   })
 
   test("does not exclude a package that is only a transitive dependency of a non-ignored prod dep", async ({ expect }) => {
@@ -371,7 +371,7 @@ describe("ignoredProductionDependencies (npm collector graph ids)", { sequential
 
     expect(byName.get("electron")?.excluded).toBe(true)
     expect(byName.get("keep-me")?.excluded).toBeFalsy()
-    expect(logSummary[LogMessageByKey.PKG_EXCLUDED_IGNORED] ?? []).toEqual(["electron"])
+    expect(logSummary[LogMessageByKey.PKG_EXCLUDED_IGNORED] ?? []).toEqual(["electron@30.0.0"])
   })
 
   test("matches npm aliases by their alias key, not the underlying package name", async ({ expect }) => {
@@ -397,7 +397,7 @@ describe("ignoredProductionDependencies (npm collector graph ids)", { sequential
     // ...while the alias key itself does.
     const byAliasName = await runNpmCollector(root, makeTree(), ["custom-electron"])
     expect(flattenByName(byAliasName.nodeModules).get("custom-electron")?.excluded).toBe(true)
-    expect(byAliasName.logSummary[LogMessageByKey.PKG_EXCLUDED_IGNORED] ?? []).toEqual(["custom-electron"])
+    expect(byAliasName.logSummary[LogMessageByKey.PKG_EXCLUDED_IGNORED] ?? []).toEqual(["custom-electron@30.0.0"])
   })
 })
 
