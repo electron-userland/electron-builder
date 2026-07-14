@@ -49,7 +49,7 @@ export class ElectronAppAdapter implements AppAdapter {
 
   onSessionEnd(handler: () => void): void {
     // powerMonitor can only be used after the app is ready
-    void this.app.whenReady().then(() => {
+    void this.whenReady().then(() => {
       const electron = require("electron")
       // `shutdown` is only emitted on macOS and Linux
       if (process.platform !== "win32") {
