@@ -556,7 +556,7 @@ test.skip("test downloaded installer", config, async ({ expect }) => {
   })
   await validateDownload(expect, updater)
   expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
-  updater.quitAndInstall(true, false)
+  updater.quitAndInstall({ isSilent: true, isForceRunAfter: false })
   expect(beforeQuitFired).toBe(true)
 })
 

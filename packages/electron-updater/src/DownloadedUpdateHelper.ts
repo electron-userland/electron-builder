@@ -229,7 +229,7 @@ export interface CachedUpdateInfo {
   sha512: string
   readonly isAdminRightsRequired: boolean
   /**
-   * Set when the app quit with `autoInstallOnNextLaunch` enabled (or via `quitAndInstall(..., waitUntilNextLaunch)`),
+   * Set when the app quit with `autoInstallOnNextLaunch` enabled (or via `quitAndInstall({ waitUntilNextLaunch: true })`),
    * meaning the cached update should be installed on the next application launch after successful re-validation.
    */
   readonly installOnNextLaunch?: boolean

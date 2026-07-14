@@ -85,7 +85,7 @@ async function isReady() {
     })
     autoUpdater.on("update-downloaded", () => {
       console.log("Update downloaded, starting quitAndInstall")
-      autoUpdater.quitAndInstall(true, false) // must be false, do not auto-restart app as the unit tests will lose stdout piping/access
+      autoUpdater.quitAndInstall({ isSilent: true, isForceRunAfter: false }) // isForceRunAfter must be false, do not auto-restart app as the unit tests will lose stdout piping/access
       // autoUpdater.autoInstallOnAppQuit = true
       // app.quit()
     })

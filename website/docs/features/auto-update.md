@@ -141,7 +141,7 @@ electron-updater ≥ 7.0 (electron-builder v27) mitigates this in two ways:
     A single quit can also be deferred without setting the property:
 
     ```js
-    autoUpdater.quitAndInstall(/* isSilent */ true, /* isForceRunAfter */ true, /* waitUntilNextLaunch */ true)
+    autoUpdater.quitAndInstall({ isSilent: true, isForceRunAfter: true, waitUntilNextLaunch: true })
     ```
 
     You can also trigger the pending install explicitly (e.g. before opening your first window):
@@ -150,9 +150,17 @@ electron-updater ≥ 7.0 (electron-builder v27) mitigates this in two ways:
     await autoUpdater.installPendingUpdateIfAvailable()
     ```
 
-:::warning[Per-machine installations]
-The *automatic* startup install only runs for per-user installations (`isAdminRightsRequired === false` in the update info). A pending per-machine installation would show an elevation prompt at app startup, so it is skipped with a log message — call `installPendingUpdateIfAvailable()` explicitly at a moment your app controls to install it.
-:::
+### Per-target behavior
+
+The *automatic* install at startup only runs for targets that can install the pending update without an elevation/authentication prompt. Targets that always elevate to install (deb/rpm/pacman via pkexec/sudo, per-machine NSIS via UAC) skip the automatic path with a log message and keep the pending update — call `installPendingUpdateIfAvailable()` explicitly at a moment your app controls to install those.
+
+| Target | Automatic install at next launch | Explicit `installPendingUpdateIfAvailable()` |
+| --- | --- | --- |
+| NSIS (per-user) | ✓ | ✓ |
+| NSIS (per-machine, `isAdminRightsRequired`) | skipped — would show a UAC prompt at startup | ✓ (UAC prompt) |
+| AppImage | ✓ | ✓ |
+| deb / rpm / pacman | skipped — package managers always elevate (pkexec/sudo) | ✓ (auth prompt) |
+| macOS | n/a — Squirrel.Mac stages updates natively and applies them on relaunch | resolves `false` |
 
 :::note[Planned default change in v28]
 `autoInstallOnNextLaunch` is opt-in in v27 and is planned to become the **default** behavior in v28 to resolve this class of session-end corruption once and for all. macOS is unaffected: Squirrel.Mac natively stages downloaded updates and applies them on relaunch, without a killable installer process.

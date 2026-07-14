@@ -35,7 +35,7 @@ import type { AuthInfo } from "electron"
 import { gunzipSync, gzipSync } from "zlib"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader.js"
-import { DOWNLOAD_PROGRESS, Logger, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./types.js"
+import { DOWNLOAD_PROGRESS, Logger, QuitAndInstallOptions, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./types.js"
 import { VerifyUpdateSupport } from "./index.js"
 
 const require = createRequire(import.meta.url)
@@ -75,9 +75,11 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * most notably Windows terminating the detached NSIS installer during session end (log off / shutdown / restart),
    * which can leave the app uninstalled but not re-installed (see https://github.com/electron-userland/electron-builder/issues/7807).
    *
-   * The automatic install at startup is restricted to per-user installations (`isAdminRightsRequired === false`);
-   * per-machine installations must call `installPendingUpdateIfAvailable()` explicitly so the elevation prompt is
-   * shown at a moment the app controls.
+   * The automatic install at startup only runs for targets that can install without an elevation prompt: NSIS
+   * (per-user installations, `isAdminRightsRequired === false`) and AppImage. Linux package targets (deb, rpm,
+   * pacman) always elevate via pkexec/sudo to install, and NSIS per-machine installations trigger a UAC prompt, so
+   * for those the pending update is kept and `installPendingUpdateIfAvailable()` must be called explicitly at a
+   * moment the app controls.
    *
    * Opt-in in v27. This is planned to become the DEFAULT behavior in v28 to resolve this class of bug once and for all.
    * @default false
@@ -86,14 +88,15 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   /**
    * Installs an update that a previous launch marked as pending (see `autoInstallOnNextLaunch` and
-   * `quitAndInstall(isSilent, isForceRunAfter, waitUntilNextLaunch)`), then quits the app.
+   * `quitAndInstall({ waitUntilNextLaunch: true })`), then quits the app.
    *
    * The cached installer is never trusted blindly: a fresh update-info fetch is performed first and the cached file
    * is validated against it (checksum, and code signature where applicable). The pending update is only installed
    * when its version is strictly newer than the running app; otherwise the pending state is cleared.
    *
-   * Unlike the automatic startup install, an explicit call is also allowed for per-machine installations
-   * (`isAdminRightsRequired === true`).
+   * Unlike the automatic startup install, an explicit call is also allowed for targets whose install requires
+   * elevation: NSIS per-machine installations (`isAdminRightsRequired === true`) and Linux package targets
+   * (deb, rpm, pacman — installed via pkexec/sudo).
    *
    * On macOS this resolves to `false`: Squirrel.Mac already stages downloaded updates natively and applies them when
    * the app is relaunched after quit, so there is no pending-install state managed by electron-updater.
@@ -686,15 +689,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * **Note:** `autoUpdater.quitAndInstall()` will close all application windows first and only emit `before-quit` event on `app` after that.
    * This is different from the normal quit event sequence.
    *
-   * @param isSilent *windows-only* Runs the installer in silent mode. Defaults to `false`.
-   * @param isForceRunAfter Run the app after finish even on silent install. Not applicable for macOS.
-   * Ignored if `isSilent` is set to `false`(In this case you can still set `autoRunAppAfterInstall` to `false` to prevent run the app after finish).
-   * @param waitUntilNextLaunch Quit WITHOUT spawning the installer and persist the downloaded update for installation
-   * on the next application launch instead (same deferred flow as `autoInstallOnNextLaunch`, but for a single call).
-   * `isSilent`/`isForceRunAfter` are ignored when set. Not applicable for macOS (Squirrel.Mac stages updates natively).
-   * Defaults to `false`.
+   * @param options See {@link QuitAndInstallOptions}. When omitted, the installer runs non-silent and the deferred
+   * install-on-next-launch flow is not used (same behavior as before the options object was introduced).
    */
-  abstract quitAndInstall(isSilent?: boolean, isForceRunAfter?: boolean, waitUntilNextLaunch?: boolean): void
+  abstract quitAndInstall(options?: QuitAndInstallOptions): void
 
   private async loadUpdateConfig(): Promise<any> {
     if (this._appUpdateConfigPath == null) {

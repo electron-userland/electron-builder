@@ -3,7 +3,7 @@ import type { UpdateInfo } from "builder-util-runtime"
 import { outputFile, pathExists, readJson } from "fs-extra"
 import * as path from "path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
-import { DebUpdater } from "electron-updater"
+import { DebUpdater, NsisUpdater } from "electron-updater"
 import type { AppAdapter } from "electron-updater/src/AppAdapter"
 import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
 import type { Logger, ResolvedUpdateFileInfo } from "electron-updater/src/types"
@@ -194,7 +194,7 @@ describe("install on next launch", { sequential: true }, () => {
       const { updater, app, doInstall } = createUpdater()
       await seedDownloadedUpdate(helper)
 
-      updater.quitAndInstall(true, true, true)
+      updater.quitAndInstall({ isSilent: true, isForceRunAfter: true, waitUntilNextLaunch: true })
       await new Promise(resolve => setImmediate(resolve))
 
       expect(doInstall).not.toHaveBeenCalled()
@@ -204,9 +204,9 @@ describe("install on next launch", { sequential: true }, () => {
   })
 
   describe("BaseUpdater.installPendingUpdateIfAvailable", () => {
-    function createUpdater(latestUpdateInfo: UpdateInfo | null) {
+    function createUpdater(latestUpdateInfo: UpdateInfo | null, UpdaterClass: new (options: null, app: AppAdapter) => DebUpdater | NsisUpdater = DebUpdater) {
       const app = makeStubApp()
-      const updater = new DebUpdater(null, app)
+      const updater = new UpdaterClass(null, app)
       updater.logger = log
       updater.forceDevUpdateConfig = true
       ;(updater as any).downloadedUpdateHelper = helper
@@ -292,9 +292,23 @@ describe("install on next launch", { sequential: true }, () => {
       expect(errors.some(it => it.message.includes("not signed"))).toBe(true)
     })
 
+    test("automatic startup path installs a validated per-user pending update on a supporting target (NSIS)", async () => {
+      const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1" })
+      const { updater, app, doInstall } = createUpdater(seeded.updateInfo, NsisUpdater)
+      helper.markInstallOnNextLaunchSync(log)
+      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue(null)
+
+      await expect((updater as any).installPendingUpdate(true)).resolves.toBe(true)
+      await new Promise(resolve => setImmediate(resolve))
+
+      expect(doInstall).toHaveBeenCalledTimes(1)
+      expect(app.quitCalls).toBe(1)
+    })
+
     test("automatic startup path skips per-machine installs but explicit call installs them", async () => {
       const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1" })
-      const { updater, doInstall } = createUpdater(seeded.updateInfo)
+      const { updater, doInstall } = createUpdater(seeded.updateInfo, NsisUpdater)
+      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue(null)
       // simulate a per-machine install record
       await helper.setDownloadedFile(
         seeded.installerPath,
@@ -315,6 +329,21 @@ describe("install on next launch", { sequential: true }, () => {
       await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(true)
       expect(doInstall).toHaveBeenCalledTimes(1)
       expect(doInstall).toHaveBeenCalledWith(expect.objectContaining({ isAdminRightsRequired: true }))
+    })
+
+    test("automatic startup path skips targets that install via an elevating package manager (deb) but explicit call installs them", async () => {
+      const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1" })
+      const { updater, doInstall } = createUpdater(seeded.updateInfo, DebUpdater)
+      helper.markInstallOnNextLaunchSync(log)
+
+      await expect((updater as any).installPendingUpdate(true)).resolves.toBe(false)
+      expect(doInstall).not.toHaveBeenCalled()
+      expect(log.infos.some(it => it.includes("installPendingUpdateIfAvailable"))).toBe(true)
+      // marker stays so an explicit call can still install it
+      expect(await helper.getPendingInstallInfo()).toMatchObject({ installOnNextLaunch: true })
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(true)
+      expect(doInstall).toHaveBeenCalledTimes(1)
     })
   })
 })

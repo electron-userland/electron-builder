@@ -163,6 +163,12 @@ export class NsisUpdater extends BaseUpdater {
     return this.verifySignature(installerPath)
   }
 
+  // per-user NSIS installs run without an elevation prompt (per-machine installs are filtered separately via
+  // isAdminRightsRequired), so the automatic install at startup is allowed
+  protected get isAutoInstallOnNextLaunchSupported(): boolean {
+    return true
+  }
+
   protected doInstall(options: InstallOptions): boolean {
     const installerPath = this.installerPath
     if (installerPath == null) {

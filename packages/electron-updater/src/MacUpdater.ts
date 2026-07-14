@@ -8,7 +8,7 @@ import * as path from "path"
 import { createServer, IncomingMessage, Server, ServerResponse } from "http"
 import { AppAdapter } from "./AppAdapter.js"
 import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater.js"
-import { ResolvedUpdateFileInfo } from "./types.js"
+import { QuitAndInstallOptions, ResolvedUpdateFileInfo } from "./types.js"
 import { UpdateDownloadedEvent } from "./types.js"
 import { findFile } from "./providers/Provider.js"
 type AutoUpdater = Electron.AutoUpdater
@@ -272,8 +272,8 @@ export class MacUpdater extends AppUpdater {
     this.closeServerIfExists()
   }
 
-  quitAndInstall(_isSilent?: boolean, _isForceRunAfter?: boolean, waitUntilNextLaunch?: boolean): void {
-    if (waitUntilNextLaunch) {
+  quitAndInstall(options: QuitAndInstallOptions = {}): void {
+    if (options.waitUntilNextLaunch) {
       // no deferred-install state is needed on macOS: Squirrel.Mac already stages the downloaded update natively
       // (ShipIt) and applies it when the app is relaunched after a normal quit, without spawning a killable
       // detached installer process. Quitting the app is the closest equivalent behavior.

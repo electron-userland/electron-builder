@@ -5,6 +5,7 @@ import * as path from "path"
 import { gt as isVersionGreaterThan, parse as parseVersion } from "semver"
 import { AppAdapter } from "./AppAdapter.js"
 import { AppUpdater, DownloadExecutorTask } from "./AppUpdater.js"
+import { QuitAndInstallOptions } from "./types.js"
 
 const require = createRequire(import.meta.url)
 
@@ -24,7 +25,8 @@ export abstract class BaseUpdater extends AppUpdater {
     })
   }
 
-  quitAndInstall(isSilent = false, isForceRunAfter = false, waitUntilNextLaunch = false): void {
+  quitAndInstall(options: QuitAndInstallOptions = {}): void {
+    const { isSilent = false, isForceRunAfter = false, waitUntilNextLaunch = false } = options
     if (waitUntilNextLaunch) {
       this._logger.info(`Deferring install to next launch on explicit quitAndInstall (waitUntilNextLaunch)`)
       if (this.markPendingInstallOnNextLaunch()) {
@@ -49,6 +51,15 @@ export abstract class BaseUpdater extends AppUpdater {
 
   installPendingUpdateIfAvailable(): Promise<boolean> {
     return this.installPendingUpdate(false)
+  }
+
+  /**
+   * Whether this target supports the automatic `autoInstallOnNextLaunch` install at startup. Targets whose install
+   * always requires elevation (deb/rpm/pacman via pkexec/sudo) must not show an authentication prompt at app launch,
+   * so they keep the pending update for an explicit `installPendingUpdateIfAvailable()` call instead.
+   */
+  protected get isAutoInstallOnNextLaunchSupported(): boolean {
+    return false
   }
 
   protected executeDownload(taskOptions: DownloadExecutorTask): Promise<Array<string>> {
@@ -103,8 +114,9 @@ export abstract class BaseUpdater extends AppUpdater {
   /**
    * Validates a pending update marked for install on next launch and installs it. Never trusts the cached installer
    * alone: fresh update info is fetched first and the cached file is validated against it. `isAutomatic` (the
-   * `autoInstallOnNextLaunch` startup path) additionally restricts installation to per-user installs, because an
-   * unattended elevation prompt at startup is not acceptable for per-machine installs.
+   * `autoInstallOnNextLaunch` startup path) is additionally restricted to targets that can install without an
+   * elevation prompt (`isAutoInstallOnNextLaunchSupported`) and to per-user installs, because an unattended
+   * elevation prompt at startup is not acceptable.
    */
   private async installPendingUpdate(isAutomatic: boolean): Promise<boolean> {
     if (!this.isUpdaterActive()) {
@@ -117,6 +129,13 @@ export abstract class BaseUpdater extends AppUpdater {
       if (!isAutomatic) {
         this._logger.info("No update is marked for install on next launch")
       }
+      return false
+    }
+
+    if (isAutomatic && !this.isAutoInstallOnNextLaunchSupported) {
+      this._logger.info(
+        "Skipping automatic install of the pending update on launch: this target installs via the system package manager and always requires elevation (pkexec/sudo), which would show an authentication prompt at startup. Call installPendingUpdateIfAvailable() explicitly to install it at a moment the app controls."
+      )
       return false
     }
 

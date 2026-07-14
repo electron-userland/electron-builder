@@ -18,6 +18,27 @@ export interface Logger {
   debug?(message: string): void
 }
 
+export interface QuitAndInstallOptions {
+  /**
+   * *windows-only* Runs the installer in silent mode.
+   * @default false
+   */
+  isSilent?: boolean
+  /**
+   * Run the app after finish even on silent install. Not applicable for macOS.
+   * Ignored if `isSilent` is set to `false` (in this case you can still set `autoRunAppAfterInstall` to `false` to prevent running the app after install).
+   * @default false
+   */
+  isForceRunAfter?: boolean
+  /**
+   * Quit WITHOUT spawning the installer and persist the downloaded update for installation on the next application
+   * launch instead (same deferred flow as `autoInstallOnNextLaunch`, but for a single call). `isSilent` and
+   * `isForceRunAfter` are ignored when set. Not applicable for macOS (Squirrel.Mac stages updates natively).
+   * @default false
+   */
+  waitUntilNextLaunch?: boolean
+}
+
 export class UpdaterSignal {
   constructor(private emitter: EventEmitter) {}
 
