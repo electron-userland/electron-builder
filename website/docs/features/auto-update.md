@@ -122,6 +122,42 @@ export default class AppUpdater {
 }
 ```
 
+## Install on Next Launch (Windows/Linux)
+
+By default, a downloaded update is installed when the app quits: the updater spawns the installer as a detached process while the app is exiting. If the quit happens because the OS session is ending (shutdown, reboot or log off on Windows), the OS can kill that installer mid-install and leave the app in a broken, partially-uninstalled state ([#7807](https://github.com/electron-userland/electron-builder/issues/7807)).
+
+electron-updater ≥ 7.0 (electron-builder v27) mitigates this in two ways:
+
+1. **Session-end guard (always on).** When the OS signals that the session is ending, the on-quit install is skipped and a warning is logged. The downloaded update stays cached and is installed on the next regular quit. Detection is best-effort: `powerMonitor` `shutdown` on macOS/Linux, and the `BrowserWindow` `session-end` event on Windows (windowless, e.g. tray-only, apps cannot be covered on Windows).
+
+2. **Install on next launch (opt-in).** Instead of installing while quitting, persist the downloaded update and install it at the start of the *next* launch, when no session teardown can interrupt it:
+
+    ```js
+    autoUpdater.autoInstallOnNextLaunch = true
+    ```
+
+    With this enabled, any app quit records the downloaded update as pending instead of spawning the installer. On the next launch the updater fetches fresh update info from your update server, re-validates the cached installer against it (checksum, and code signature on Windows), verifies the pending version is still strictly newer than the running app, then runs the installer silently and restarts the app. If validation fails or the version is no longer newer, the pending state is cleared and the app starts normally.
+
+    A single quit can also be deferred without setting the property:
+
+    ```js
+    autoUpdater.quitAndInstall(/* isSilent */ true, /* isForceRunAfter */ true, /* waitUntilNextLaunch */ true)
+    ```
+
+    You can also trigger the pending install explicitly (e.g. before opening your first window):
+
+    ```js
+    await autoUpdater.installPendingUpdateIfAvailable()
+    ```
+
+:::warning[Per-machine installations]
+The *automatic* startup install only runs for per-user installations (`isAdminRightsRequired === false` in the update info). A pending per-machine installation would show an elevation prompt at app startup, so it is skipped with a log message — call `installPendingUpdateIfAvailable()` explicitly at a moment your app controls to install it.
+:::
+
+:::note[Planned default change in v28]
+`autoInstallOnNextLaunch` is opt-in in v27 and is planned to become the **default** behavior in v28 to resolve this class of session-end corruption once and for all. macOS is unaffected: Squirrel.Mac natively stages downloaded updates and applies them on relaunch, without a killable installer process.
+:::
+
 ## Debugging
 
 You don't need to listen to all events to understand what's wrong. Just set `logger`.
