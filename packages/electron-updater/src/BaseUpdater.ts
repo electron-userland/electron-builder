@@ -1,7 +1,8 @@
 import { createRequire } from "node:module"
-import { AllPublishOptions } from "builder-util-runtime"
+import { AllPublishOptions, newError } from "builder-util-runtime"
 import { spawn, SpawnOptions, spawnSync, StdioOptions } from "child_process"
 import * as path from "path"
+import { gt as isVersionGreaterThan, parse as parseVersion } from "semver"
 import { AppAdapter } from "./AppAdapter.js"
 import { AppUpdater, DownloadExecutorTask } from "./AppUpdater.js"
 
@@ -10,12 +11,28 @@ const require = createRequire(import.meta.url)
 export abstract class BaseUpdater extends AppUpdater {
   protected quitAndInstallCalled = false
   private quitHandlerAdded = false
+  private sessionEndHandlerAdded = false
+  private isSessionEnding = false
 
   protected constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
+    void this.app.whenReady().then(() => {
+      if (this.autoInstallOnNextLaunch) {
+        return this.installPendingUpdate(true).catch((e: any) => this._logger.warn(`Cannot install pending update on launch: ${e.message || e}`))
+      }
+      return Promise.resolve(false)
+    })
   }
 
-  quitAndInstall(isSilent = false, isForceRunAfter = false): void {
+  quitAndInstall(isSilent = false, isForceRunAfter = false, waitUntilNextLaunch = false): void {
+    if (waitUntilNextLaunch) {
+      this._logger.info(`Deferring install to next launch on explicit quitAndInstall (waitUntilNextLaunch)`)
+      if (this.markPendingInstallOnNextLaunch()) {
+        this.quitAndInstallCalled = true
+        setImmediate(() => this.app.quit())
+      }
+      return
+    }
     this._logger.info(`Install on explicit quitAndInstall`)
     // If NOT in silent mode use `autoRunAppAfterInstall` to determine whether to force run the app
     const isInstalled = this.install(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall)
@@ -28,6 +45,10 @@ export abstract class BaseUpdater extends AppUpdater {
     } else {
       this.quitAndInstallCalled = false
     }
+  }
+
+  installPendingUpdateIfAvailable(): Promise<boolean> {
+    return this.installPendingUpdate(false)
   }
 
   protected executeDownload(taskOptions: DownloadExecutorTask): Promise<Array<string>> {
@@ -79,8 +100,108 @@ export abstract class BaseUpdater extends AppUpdater {
     }
   }
 
+  /**
+   * Validates a pending update marked for install on next launch and installs it. Never trusts the cached installer
+   * alone: fresh update info is fetched first and the cached file is validated against it. `isAutomatic` (the
+   * `autoInstallOnNextLaunch` startup path) additionally restricts installation to per-user installs, because an
+   * unattended elevation prompt at startup is not acceptable for per-machine installs.
+   */
+  private async installPendingUpdate(isAutomatic: boolean): Promise<boolean> {
+    if (!this.isUpdaterActive()) {
+      return false
+    }
+
+    const downloadedUpdateHelper = await this.getOrCreateDownloadHelper()
+    const pendingInfo = await downloadedUpdateHelper.getPendingInstallInfo()
+    if (pendingInfo == null) {
+      if (!isAutomatic) {
+        this._logger.info("No update is marked for install on next launch")
+      }
+      return false
+    }
+
+    if (isAutomatic && pendingInfo.isAdminRightsRequired) {
+      this._logger.info(
+        "Skipping automatic install of the pending update on launch: it is a per-machine installation (isAdminRightsRequired is true). Call installPendingUpdateIfAvailable() explicitly to install it."
+      )
+      return false
+    }
+
+    this._logger.info("Update is marked for install on next launch, validating it against the latest update info")
+    const updateInfoAndProvider = await this.getUpdateInfoAndProvider()
+    const latestInfo = updateInfoAndProvider.info
+    const latestVersion = parseVersion(latestInfo.version)
+    // loop guard: only install when the target version is strictly newer than the running app.
+    // Version equality means the pending update was already installed successfully on a previous launch.
+    if (latestVersion == null || !isVersionGreaterThan(latestVersion, this.currentVersion)) {
+      this._logger.info(
+        `Pending update is not newer than the current version ${this.currentVersion.format()} (latest version: ${latestInfo.version}), clearing install-on-next-launch state`
+      )
+      await downloadedUpdateHelper.clearPendingInstallMarker(this._logger)
+      return false
+    }
+
+    const fileInfo = updateInfoAndProvider.provider.resolveFiles(latestInfo).find(it => it.info.sha512 === pendingInfo.sha512)
+    if (fileInfo == null) {
+      this._logger.warn(
+        `Pending update doesn't match any file of the latest update info (version ${latestInfo.version}), clearing install-on-next-launch state. The new update must be downloaded again.`
+      )
+      await downloadedUpdateHelper.clearPendingInstallMarker(this._logger)
+      return false
+    }
+
+    const installerPath = await downloadedUpdateHelper.validateCachedPendingInstall(fileInfo, this._logger)
+    if (installerPath == null) {
+      // validation already logged the reason and cleaned the pending cache
+      this._logger.warn("Pending update failed validation and will not be installed")
+      return false
+    }
+
+    const signatureVerificationStatus = await this.verifyInstallerSignatureOnLaunch(installerPath)
+    if (signatureVerificationStatus != null) {
+      await downloadedUpdateHelper.clear().catch(() => {
+        // ignore
+      })
+      this.dispatchError(newError(`Pending update ${latestInfo.version} is not signed by the application owner: ${signatureVerificationStatus}`, "ERR_UPDATER_INVALID_SIGNATURE"))
+      return false
+    }
+
+    // clear the marker before spawning the installer so a silently failing install cannot produce an endless
+    // spawn-and-quit loop on every launch
+    await downloadedUpdateHelper.clearPendingInstallMarker(this._logger)
+    this.updateInfoAndProvider = updateInfoAndProvider
+    this._logger.info(`Installing pending update ${latestInfo.version} on launch`)
+    const isInstalled = this.install(true, true)
+    if (isInstalled) {
+      setImmediate(() => this.app.quit())
+    }
+    return isInstalled
+  }
+
+  /**
+   * Re-verification of the cached installer's code signature before an install-on-next-launch is executed.
+   * Platforms without installer signature verification resolve to `null` (no error).
+   */
+  protected verifyInstallerSignatureOnLaunch(_installerPath: string): Promise<string | null> {
+    return Promise.resolve(null)
+  }
+
+  private markPendingInstallOnNextLaunch(): boolean {
+    const downloadedUpdateHelper = this.downloadedUpdateHelper
+    if (downloadedUpdateHelper == null || this.installerPath == null || downloadedUpdateHelper.downloadedFileInfo == null) {
+      this.dispatchError(new Error("No update filepath provided, can't defer install to next launch"))
+      return false
+    }
+    const isMarked = downloadedUpdateHelper.markInstallOnNextLaunchSync(this._logger)
+    if (isMarked) {
+      this._logger.info("Update is marked for install on next launch")
+    }
+    return isMarked
+  }
+
   protected addQuitHandler(): void {
-    if (this.quitHandlerAdded || !this.autoInstallOnAppQuit) {
+    this.addSessionEndHandler()
+    if (this.quitHandlerAdded || !(this.autoInstallOnAppQuit || this.autoInstallOnNextLaunch)) {
       return
     }
 
@@ -92,18 +213,44 @@ export abstract class BaseUpdater extends AppUpdater {
         return
       }
 
-      if (!this.autoInstallOnAppQuit) {
-        this._logger.info("Update will not be installed on quit because autoInstallOnAppQuit is set to false.")
-        return
-      }
-
       if (exitCode !== 0) {
         this._logger.info(`Update will be not installed on quit because application is quitting with exit code ${exitCode}`)
         return
       }
 
+      if (this.autoInstallOnNextLaunch) {
+        this._logger.info("Deferring update install to next launch because autoInstallOnNextLaunch is enabled")
+        this.markPendingInstallOnNextLaunch()
+        return
+      }
+
+      if (!this.autoInstallOnAppQuit) {
+        this._logger.info("Update will not be installed on quit because autoInstallOnAppQuit is set to false.")
+        return
+      }
+
+      if (this.isSessionEnding) {
+        this._logger.warn(
+          "Update will not be installed on quit because the OS session is ending — the OS would kill the installer before it finishes and can leave the app in a broken state (https://github.com/electron-userland/electron-builder/issues/7807). The downloaded update stays cached and will be installed on the next quit. Enable autoInstallOnNextLaunch (planned default in v28) to install it on the next launch instead."
+        )
+        return
+      }
+
       this._logger.info("Auto install update on quit")
       this.install(true, false)
+    })
+  }
+
+  private addSessionEndHandler(): void {
+    if (this.sessionEndHandlerAdded || this.app.onSessionEnd == null) {
+      return
+    }
+
+    this.sessionEndHandlerAdded = true
+
+    this.app.onSessionEnd(() => {
+      this.isSessionEnding = true
+      this._logger.info("OS session is ending (shutdown/reboot/log off), install of the downloaded update on quit will be skipped")
     })
   }
 

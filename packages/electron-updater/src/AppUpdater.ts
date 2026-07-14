@@ -66,6 +66,46 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   autoInstallOnAppQuit = true
 
   /**
+   * Whether to defer installation of a downloaded update to the next application launch instead of spawning the
+   * installer while the app is quitting. When `true`, any app quit persists an install-on-next-launch marker for the
+   * downloaded update; on the next launch the updater re-validates the cached installer against freshly fetched
+   * update info and installs it (see `installPendingUpdateIfAvailable`).
+   *
+   * This avoids the class of failures where the on-quit installer process is killed by the OS before it finishes —
+   * most notably Windows terminating the detached NSIS installer during session end (log off / shutdown / restart),
+   * which can leave the app uninstalled but not re-installed (see https://github.com/electron-userland/electron-builder/issues/7807).
+   *
+   * The automatic install at startup is restricted to per-user installations (`isAdminRightsRequired === false`);
+   * per-machine installations must call `installPendingUpdateIfAvailable()` explicitly so the elevation prompt is
+   * shown at a moment the app controls.
+   *
+   * Opt-in in v27. This is planned to become the DEFAULT behavior in v28 to resolve this class of bug once and for all.
+   * @default false
+   */
+  autoInstallOnNextLaunch = false
+
+  /**
+   * Installs an update that a previous launch marked as pending (see `autoInstallOnNextLaunch` and
+   * `quitAndInstall(isSilent, isForceRunAfter, waitUntilNextLaunch)`), then quits the app.
+   *
+   * The cached installer is never trusted blindly: a fresh update-info fetch is performed first and the cached file
+   * is validated against it (checksum, and code signature where applicable). The pending update is only installed
+   * when its version is strictly newer than the running app; otherwise the pending state is cleared.
+   *
+   * Unlike the automatic startup install, an explicit call is also allowed for per-machine installations
+   * (`isAdminRightsRequired === true`).
+   *
+   * On macOS this resolves to `false`: Squirrel.Mac already stages downloaded updates natively and applies them when
+   * the app is relaunched after quit, so there is no pending-install state managed by electron-updater.
+   *
+   * @returns `true` if a pending update was validated and its installation was initiated (the app will quit).
+   */
+  installPendingUpdateIfAvailable(): Promise<boolean> {
+    this._logger.info("installPendingUpdateIfAvailable is not supported by this updater implementation, skipping")
+    return Promise.resolve(false)
+  }
+
+  /**
    * Whether to run the app after finish install when run the installer is NOT in silent mode.
    * @default true
    */
@@ -649,8 +689,12 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * @param isSilent *windows-only* Runs the installer in silent mode. Defaults to `false`.
    * @param isForceRunAfter Run the app after finish even on silent install. Not applicable for macOS.
    * Ignored if `isSilent` is set to `false`(In this case you can still set `autoRunAppAfterInstall` to `false` to prevent run the app after finish).
+   * @param waitUntilNextLaunch Quit WITHOUT spawning the installer and persist the downloaded update for installation
+   * on the next application launch instead (same deferred flow as `autoInstallOnNextLaunch`, but for a single call).
+   * `isSilent`/`isForceRunAfter` are ignored when set. Not applicable for macOS (Squirrel.Mac stages updates natively).
+   * Defaults to `false`.
    */
-  abstract quitAndInstall(isSilent?: boolean, isForceRunAfter?: boolean): void
+  abstract quitAndInstall(isSilent?: boolean, isForceRunAfter?: boolean, waitUntilNextLaunch?: boolean): void
 
   private async loadUpdateConfig(): Promise<any> {
     if (this._appUpdateConfigPath == null) {
@@ -721,7 +765,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   _testOnlyOptions: TestOnlyUpdaterOptions | null = null
 
-  private async getOrCreateDownloadHelper(): Promise<DownloadedUpdateHelper> {
+  protected async getOrCreateDownloadHelper(): Promise<DownloadedUpdateHelper> {
     let result = this.downloadedUpdateHelper
     if (result == null) {
       const dirName = (await this.configOnDisk.value).updaterCacheDirName

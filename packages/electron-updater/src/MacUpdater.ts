@@ -272,7 +272,15 @@ export class MacUpdater extends AppUpdater {
     this.closeServerIfExists()
   }
 
-  quitAndInstall(): void {
+  quitAndInstall(_isSilent?: boolean, _isForceRunAfter?: boolean, waitUntilNextLaunch?: boolean): void {
+    if (waitUntilNextLaunch) {
+      // no deferred-install state is needed on macOS: Squirrel.Mac already stages the downloaded update natively
+      // (ShipIt) and applies it when the app is relaunched after a normal quit, without spawning a killable
+      // detached installer process. Quitting the app is the closest equivalent behavior.
+      this._logger.info("quitAndInstall called with waitUntilNextLaunch: Squirrel.Mac stages updates natively, the staged update is applied on relaunch after quit")
+      this.app.quit()
+      return
+    }
     if (this.squirrelDownloadedUpdate) {
       // update already fetched by Squirrel, it's ready to install
       this.handleUpdateDownloaded()
