@@ -79,6 +79,7 @@ To stay on a legacy bundle, pin the toolset to `"0.0.0"`. Because `winCodeSign` 
 | [`node_modules` arch/os-filtered on every build](#node_modules-are-now-archos-filtered-on-every-build) | — | Awareness — packages whose `cpu`/`os` mismatch the target are now excluded |
 | [DMG `filesystem` defaults to APFS](#dmg-filesystem-defaults-to-apfs) | — | Set `dmg.filesystem: "HFS+"` only if you need pre-10.13 macOS compatibility |
 | [`disableWebInstaller` defaults to `true` (electron-updater)](#disablewebinstaller-defaults-to-true) | — | v27 warns but still downloads if you never set it; opt in with `disableWebInstaller: false` before v28 enforces it |
+| [`latest*.yml` drops legacy top-level `path`/`sha512`](#latestyml-drops-legacy-top-level-pathsha512) | — | None for electron-updater >=2.16 (all modern clients); set `electronUpdaterCompatibility` to a legacy-inclusive range only if you still ship apps embedding electron-updater 1.x–2.15 |
 | [Renamed type exports (`ElectronDownloadOptions`, `WindowsAzureSigningConfiguration`, …)](#removed-exports) | — | Import the new names — no compat aliases |
 | [`SnapOptions`, `ProtonFramework`, `LibUiFramework` exports removed](#removed-exports) | — | Use the `snapcraft` config shape / Electron framework |
 
@@ -639,6 +640,17 @@ updater.disableWebInstaller = false // only if you intentionally ship a web inst
 ```
 
 > **Tip:** running `electron-builder migrate-schema` on a project that builds an `nsis-web` target now prints an advisory reminding you to set `autoUpdater.disableWebInstaller = false` at runtime. The advisory is informational only — it never rewrites your config (`disableWebInstaller` is an electron-updater runtime setting, not a build-config key).
+
+### `latest*.yml` drops legacy top-level `path`/`sha512`
+
+The deprecated top-level `path` and `sha512` fields are **no longer written** to the generated update-metadata files (`latest.yml` / `latest-mac.yml` / `latest-linux.yml`) by default. They were kept for electron-updater **1.x – 2.15.0**, which predate the `files[]` array (introduced in 2.16.0, released 2017). Both fields are now emitted only when `electronUpdaterCompatibility` declares a range that intersects those legacy versions — the same mechanism that already controlled the Windows `sha2` field and the legacy `latest-mac.json`. The default `electronUpdaterCompatibility` is now `>=2.16` (previously `>=2.15`), and `UpdateInfo.path` / `UpdateInfo.sha512` are now **optional** on the exported TypeScript type.
+
+- **No action** for virtually all projects: every electron-updater since 2.16.0 reads `files[]` and ignores the top-level fields. Already-published `latest*.yml` files are unaffected.
+- **If your app code reads `info.path` / `info.sha512`** (e.g. in an `update-downloaded` handler), switch to `info.files[0].url` / `info.files[0].sha512`.
+- **If external tooling parses `latest.yml`** (a custom update server or dashboard), point it at `files[]`.
+- **If you still ship apps embedding electron-updater 1.x – 2.15**, keep emitting the legacy descriptor by declaring a compatibility range that includes them, e.g. `"electronUpdaterCompatibility": ">=1.0.0"` (also settable per platform, e.g. `win.electronUpdaterCompatibility`).
+
+> Related: metadata validated only by the legacy SHA-256 `sha2` checksum is deprecated — v27 warns and **v28 will reject sha2-only metadata (fail-closed)**. Avoid pinning `electronUpdaterCompatibility` to a legacy range unless you actually ship 1.x–2.15 clients.
 
 ---
 
