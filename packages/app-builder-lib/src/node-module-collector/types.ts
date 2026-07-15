@@ -16,6 +16,7 @@ export interface NodeModuleInfo {
   version: string
   dir: string
   dependencies?: Array<NodeModuleInfo>
+  excluded?: boolean
 }
 
 export type ParsedDependencyTree = {
@@ -61,5 +62,6 @@ export type Dependencies<T, V> = {
 export interface DependencyGraph {
   [packageNameAndVersion: string]: {
     readonly dependencies: string[]
+    excluded?: boolean
   }
 }

@@ -9451,6 +9451,24 @@
         "string"
       ]
     },
+    "ignoredProductionDependencies": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": [
+        "electron",
+        "electron-builder"
+      ],
+      "description": "Names of production dependencies that are excluded from the copied `node_modules`, even if they\nare declared in the `dependencies` section of `package.json`.\n\nelectron-builder copies the resolved production dependency tree into the app. Some packages —\nnotably `electron` — are already provided another way (the Electron runtime is embedded\nseparately), so copying them would just duplicate what is already there. Such packages are\nexcluded from the copy rather than rejected: they remain valid production dependencies for\ntooling purposes (e.g. SBOM, license, and vulnerability tracking) without being shipped twice.\n\nOnly dependencies **declared by the app itself** are eligible: a listed name and the transitive\ndependencies required *only* by it are dropped, while anything also required by another (kept)\nproduction dependency stays bundled. A matching name that appears solely as a transitive\ndependency of a kept package is never excluded. Note that a kept package which `require()`s an\nexcluded name at runtime *without declaring it* (relying on hoisting) will fail with\n`MODULE_NOT_FOUND` — declare such a dependency properly or remove the name from this list.\n\nMatching is by the dependency name as declared in `package.json`: an npm alias\n(`\"custom-electron\": \"npm:electron@^30.0.0\"`) is matched by its alias key (`custom-electron`),\nnever by the underlying package name.\n\nOverriding this option **replaces** the default list, so include `electron` and `electron-builder`\nunless you intend to ship them. The most common reason to override is to *add* a dependency that a\nbundler (Vite, webpack, esbuild, …) already inlines into your app code: keep it in `dependencies`\nso SBOM/license tooling still sees it, and list it here so a duplicate copy is not packaged — e.g.\n`[\"electron\", \"electron-builder\", \"react\", \"react-dom\"]`. Removing a default name keeps that\npackage in the copied `node_modules`. Setting the option to `null` (or omitting it) applies the\ndefault list; to disable exclusion entirely, set it to an empty array `[]`. Each excluded package\nis logged once during packaging."
+    },
     "includePdb": {
       "default": false,
       "description": "Whether to include `.pdb` (Program Database) symbol files in the output.\n\nPDB files enable Windows crash-dump analysis but significantly increase artifact size. Enable\nfor internal builds where you want symbol information; disable for public distribution.",
