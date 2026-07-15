@@ -514,7 +514,7 @@ export interface R2Options extends BaseS3Options {
    *
    * See https://developers.cloudflare.com/r2/reference/data-location/#jurisdictional-restrictions
    */
-  readonly jurisdiction?: "eu" | "fedramp-moderate" | null
+  readonly jurisdiction?: "eu" | "fedramp" | null
 
   /**
    * R2 does not support S3 ACLs. This option is not applicable and will be ignored.
@@ -619,7 +619,7 @@ function r2Url(options: R2Options) {
   if (options.publicUrl != null && options.publicUrl.trim() !== "") {
     return appendPath(options.publicUrl.replace(/\/$/, ""), options.path)
   }
-  // Jurisdictional buckets (e.g. "eu", "fedramp-moderate") live on a separate endpoint:
+  // Jurisdictional buckets (e.g. "eu", "fedramp") live on a separate endpoint:
   // https://<accountId>.<jurisdiction>.r2.cloudflarestorage.com
   const jurisdiction = options.jurisdiction == null || options.jurisdiction.trim() === "" ? "" : `${options.jurisdiction.trim()}.`
   return appendPath(`https://${options.accountId}.${jurisdiction}r2.cloudflarestorage.com/${options.bucket}`, options.path)

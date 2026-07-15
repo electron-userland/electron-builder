@@ -60,9 +60,9 @@ export class R2Publisher extends BaseS3Publisher {
 
     // The schema enum already rejects unknown values for file-based configs; this guards
     // programmatic configs, since the value is interpolated into the endpoint hostname.
-    if (options.jurisdiction != null && !["eu", "fedramp-moderate"].includes(options.jurisdiction)) {
+    if (options.jurisdiction != null && !["eu", "fedramp"].includes(options.jurisdiction)) {
       throw new InvalidConfigurationError(
-        `"jurisdiction" for "r2" publish provider must be "eu" or "fedramp-moderate" (found: "${options.jurisdiction}"). ` +
+        `"jurisdiction" for "r2" publish provider must be "eu" or "fedramp" (found: "${options.jurisdiction}"). ` +
           `It must match the jurisdiction the bucket was created with (see https://developers.cloudflare.com/r2/reference/data-location/#jurisdictional-restrictions).`
       )
     }
@@ -102,7 +102,7 @@ export class R2Publisher extends BaseS3Publisher {
     if (isEmptyOrSpaces(secretKey)) {
       throw new InvalidConfigurationError("Please set env CF_R2_SECRET_ACCESS_KEY (see https://developers.cloudflare.com/r2/api/s3/tokens/)")
     }
-    // Jurisdictional buckets (e.g. "eu", "fedramp-moderate") are only reachable via
+    // Jurisdictional buckets (e.g. "eu", "fedramp") are only reachable via
     // https://<accountId>.<jurisdiction>.r2.cloudflarestorage.com
     const jurisdiction = isEmptyOrSpaces(this.info.jurisdiction) ? "" : `${this.info.jurisdiction}.`
     return {

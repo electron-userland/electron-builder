@@ -5887,7 +5887,7 @@
             {
               "enum": [
                 "eu",
-                "fedramp-moderate"
+                "fedramp"
               ],
               "type": "string"
             },

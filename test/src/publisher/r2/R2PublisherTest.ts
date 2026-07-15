@@ -174,7 +174,7 @@ describe("R2Publisher.checkAndResolveOptions", () => {
    * Reference: https://developers.cloudflare.com/r2/reference/data-location/#jurisdictional-restrictions
    */
   describe("jurisdiction validation — [CF-JURISDICTION]", () => {
-    test.each(["eu", "fedramp-moderate"] as const)("accepts the '%s' jurisdiction", async jurisdiction => {
+    test.each(["eu", "fedramp"] as const)("accepts the '%s' jurisdiction", async jurisdiction => {
       const opts = R2TestFixtures.createOptions({ jurisdiction })
       await expect(R2Publisher.checkAndResolveOptions(opts, null, true)).resolves.toBeUndefined()
     })
@@ -309,7 +309,7 @@ describe("R2Publisher.getS3UploadConfig", () => {
      * https://<accountId>.<jurisdiction>.r2.cloudflarestorage.com
      * Reference: https://developers.cloudflare.com/r2/reference/data-location/#jurisdictional-restrictions
      */
-    test.each(["eu", "fedramp-moderate"] as const)("endpoint includes the '%s' jurisdiction subdomain", jurisdiction => {
+    test.each(["eu", "fedramp"] as const)("endpoint includes the '%s' jurisdiction subdomain", jurisdiction => {
       const accountId = R2TestFixtures.ACCOUNT_IDS.valid
       const publisher = new R2Publisher(ctx, R2TestFixtures.createOptions({ accountId, jurisdiction }))
       const config = resolveUploadConfig(publisher)
@@ -582,7 +582,7 @@ describe("r2Url (via getS3LikeProviderBaseUrl)", () => {
      * [CF-JURISDICTION] The fallback endpoint must honour the bucket's jurisdiction —
      * a jurisdictional bucket does not exist on the default endpoint at all.
      */
-    test.each(["eu", "fedramp-moderate"] as const)("fallback endpoint includes the '%s' jurisdiction subdomain", jurisdiction => {
+    test.each(["eu", "fedramp"] as const)("fallback endpoint includes the '%s' jurisdiction subdomain", jurisdiction => {
       const accountId = R2TestFixtures.ACCOUNT_IDS.valid
       const url = getS3LikeProviderBaseUrl(R2TestFixtures.createOptions({ accountId, bucket: "my-releases", publicUrl: null, jurisdiction }))
       expect(url).toBe(`https://${accountId}.${jurisdiction}.r2.cloudflarestorage.com/my-releases`)
