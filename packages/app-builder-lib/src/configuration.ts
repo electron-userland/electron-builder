@@ -20,6 +20,18 @@ import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/win/nsis
 import { ElectronGetOptions } from "./util/electronGet.js"
 import { FuseOptionsV1 } from "./options/FuseOptionsV1.js"
 
+/**
+ * Production dependencies that are excluded from the copied `node_modules` by default. These are
+ * still legitimate production dependencies (for SBOM, license, and vulnerability tracking), but
+ * electron-builder already provides them another way — notably the Electron runtime, which is
+ * embedded separately — so copying them into the app would just duplicate what is already there.
+ * Users can override the set via {@link CommonConfiguration.ignoredProductionDependencies}.
+ *
+ * Declared next to the option so the code constant, the jsdoc `@default`, and the generated
+ * `scheme.json` stay in one place; a test asserts the generated schema matches this constant.
+ */
+export const DEFAULT_IGNORED_PRODUCTION_DEPENDENCIES: ReadonlyArray<string> = ["electron", "electron-builder"]
+
 // duplicate appId here because it is important
 /**
  * Configuration options shared across all platforms.
@@ -286,6 +298,40 @@ export interface CommonConfiguration {
    * ```
    */
   readonly npmArgs?: Array<string> | string | null
+
+  /**
+   * Names of production dependencies that are excluded from the copied `node_modules`, even if they
+   * are declared in the `dependencies` section of `package.json`.
+   *
+   * electron-builder copies the resolved production dependency tree into the app. Some packages —
+   * notably `electron` — are already provided another way (the Electron runtime is embedded
+   * separately), so copying them would just duplicate what is already there. Such packages are
+   * excluded from the copy rather than rejected: they remain valid production dependencies for
+   * tooling purposes (e.g. SBOM, license, and vulnerability tracking) without being shipped twice.
+   *
+   * Only dependencies **declared by the app itself** are eligible: a listed name and the transitive
+   * dependencies required *only* by it are dropped, while anything also required by another (kept)
+   * production dependency stays bundled. A matching name that appears solely as a transitive
+   * dependency of a kept package is never excluded. Note that a kept package which `require()`s an
+   * excluded name at runtime *without declaring it* (relying on hoisting) will fail with
+   * `MODULE_NOT_FOUND` — declare such a dependency properly or remove the name from this list.
+   *
+   * Matching is by the dependency name as declared in `package.json`: an npm alias
+   * (`"custom-electron": "npm:electron@^30.0.0"`) is matched by its alias key (`custom-electron`),
+   * never by the underlying package name.
+   *
+   * Overriding this option **replaces** the default list, so include `electron` and `electron-builder`
+   * unless you intend to ship them. The most common reason to override is to *add* a dependency that a
+   * bundler (Vite, webpack, esbuild, …) already inlines into your app code: keep it in `dependencies`
+   * so SBOM/license tooling still sees it, and list it here so a duplicate copy is not packaged — e.g.
+   * `["electron", "electron-builder", "react", "react-dom"]`. Removing a default name keeps that
+   * package in the copied `node_modules`. Setting the option to `null` (or omitting it) applies the
+   * default list; to disable exclusion entirely, set it to an empty array `[]`. Each excluded package
+   * is logged once during packaging.
+   *
+   * @default ["electron", "electron-builder"]
+   */
+  readonly ignoredProductionDependencies?: Array<string> | null
 
   /**
    * Configuration for native Node.js module installation and rebuilding.

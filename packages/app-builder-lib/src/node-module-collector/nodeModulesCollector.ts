@@ -53,7 +53,15 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * 5. Hoisting the dependencies to their final locations
    * 6. Resolving and returning module information
    */
-  public async getNodeModules({ packageName, archFilter }: { packageName: string; archFilter?: ArchFilter }): Promise<{
+  public async getNodeModules({
+    packageName,
+    archFilter,
+    ignoredDependencies,
+  }: {
+    packageName: string
+    archFilter?: ArchFilter
+    ignoredDependencies?: ReadonlyArray<string>
+  }): Promise<{
     nodeModules: NodeModuleInfo[]
     logSummary: ModuleManager["logSummary"]
   }> {
@@ -62,6 +70,8 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     await this.collectAllDependencies(tree, packageName)
     const realTree: ProdDepType = this.getTreeFromWorkspaces(tree, packageName)
     await this.extractProductionDependencyGraph(realTree, packageName)
+
+    this.markExcludedModules(this.productionGraph, packageName, ignoredDependencies ?? [])
 
     const hoisterResult: HoisterResult = hoist(this.transformToHoisterTree(this.productionGraph, packageName), {
       check: log.isDebugEnabled,
@@ -266,6 +276,74 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return tree
   }
 
+  /**
+   * Flags which modules must be omitted from the *copied* app output for the given `ignoredNames` by
+   * setting an `excluded` marker on the pre-hoist graph nodes.
+   *
+   * Only a *top-level* production dependency (one the app itself declares) can be excluded, together
+   * with its exclusively-owned transitive subtree. A package that is merely a transitive dependency of
+   * a non-excluded production dependency is never excluded, even if its name is in `ignoredNames`:
+   * only the root's own edges to ignored names are severed, so anything still reachable through another
+   * production dependency stays reachable and is kept.
+   *
+   * Runs on the pre-hoist graph, where the true parent->child edges still exist, so a shared (deduped)
+   * transitive dependency remains reachable and is kept while an ignored package's exclusive subtree
+   * becomes unreachable and is flagged.
+   */
+  private markExcludedModules(graph: DependencyGraph, rootId: string, ignoredNames: ReadonlyArray<string>): void {
+    const ignored = new Set(ignoredNames)
+    if (ignored.size === 0) {
+      return
+    }
+
+    const rootDeps = graph[rootId]?.dependencies ?? []
+    const ignoredRootEdges = new Set(rootDeps.filter(dep => ignored.has(this.parseNameVersion(dep).name)))
+    if (ignoredRootEdges.size === 0) {
+      return
+    }
+
+    const reachable = new Set<string>()
+    const stack: string[] = [rootId]
+    while (stack.length > 0) {
+      const id = stack.pop()!
+      if (reachable.has(id)) {
+        continue
+      }
+      reachable.add(id)
+      const node = graph[id]
+      if (node != null) {
+        for (const dep of node.dependencies) {
+          if (id === rootId && ignoredRootEdges?.has(dep)) {
+            continue
+          }
+          if (!reachable.has(dep)) {
+            stack.push(dep)
+          }
+        }
+      }
+    }
+    for (const id of Object.keys(graph)) {
+      if (!reachable.has(id)) {
+        graph[id].excluded = true
+      }
+    }
+
+    // Only directly-declared deps that actually ended up excluded (i.e. not still reachable via a kept
+    // dependency) are surfaced to the user; their exclusive transitive subtree is omitted from the log.
+    // Report the full `name@version` graph id — like the other logSummary buckets — so the log stays
+    // truthful when another version of the same name still ships via a kept dependency (e.g. `debug@4`
+    // excluded while `debug@3` remains bundled).
+    const topLevelExcluded = new Set<string>()
+    for (const dep of ignoredRootEdges) {
+      if (!reachable.has(dep)) {
+        topLevelExcluded.add(dep)
+      }
+    }
+    if (topLevelExcluded.size > 0) {
+      this.cache.logSummary[LogMessageByKey.PKG_EXCLUDED_IGNORED].push(...Array.from(topLevelExcluded).sort())
+    }
+  }
+
   private transformToHoisterTree(obj: DependencyGraph, key: string, nodes: Map<string, HoisterTree> = new Map()): HoisterTree {
     let node = nodes.get(key)
     const { name, version } = this.parseNameVersion(key)
@@ -333,6 +411,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         name: d.name,
         version: reference,
         dir,
+        excluded: this.productionGraph[key]?.excluded,
       }
       result.push(node)
       if (d.dependencies.size > 0) {

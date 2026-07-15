@@ -45,6 +45,14 @@ describe("collectionMatchesAppDependencies", () => {
     expect(collectionMatchesAppDependencies([makeModule("anything")], {})).toBe(true)
   })
 
+  test("counts a collected module flagged `excluded` (ignoredProductionDependencies) as accounting for its declared dependency", ({ expect }) => {
+    // Ignored dependencies stay in the collected tree as validation markers (flagged for the file
+    // copier). A correct collection whose only declared external dep is ignored must still match —
+    // otherwise a wrong-root fallback tree could win (see issue #9945).
+    const excludedElectron: NodeModuleInfo = { ...makeModule("electron"), excluded: true }
+    expect(collectionMatchesAppDependencies([excludedElectron], { electron: "^30.0.0" })).toBe(true)
+  })
+
   describe("local-protocol dependency specs", () => {
     for (const spec of ["workspace:*", "workspace:^1.0.0", "file:../shared", "link:../shared", "portal:../shared"]) {
       test(`ignores ${spec} specs (cannot be used to validate a hoisted collection)`, ({ expect }) => {

@@ -560,6 +560,23 @@ export function safeGetHeader(response: any, headerKey: string) {
   }
 }
 
+/**
+ * electron-builder has emitted base64-encoded sha512 values in latest*.yml since 19.x (2017); hex-encoded values
+ * are a legacy back-compat path for pre-19.x manifests or hand-rolled manifests built from raw `sha512sum` output.
+ * Detection is unambiguous: base64-encoded sha512 is always 88 characters ending in "==", so it can never match the
+ * strict 128-hex-character pattern (and a wrong pick would only fail closed with ERR_CHECKSUM_MISMATCH).
+ *
+ * Hex-encoded sha512 manifest values are deprecated and support will be removed in v28 — emit base64 instead.
+ */
+export function detectSha512Encoding(sha512: string): BinaryToTextEncoding {
+  const isLegacyHex = sha512.length === 128 && /^[0-9a-fA-F]{128}$/.test(sha512)
+  if (isLegacyHex) {
+    debug("Deprecation warning: hex-encoded sha512 detected in the update manifest. Hex support is deprecated and will be removed in v28 — emit base64 instead.")
+    return "hex"
+  }
+  return "base64"
+}
+
 function configurePipes(options: DownloadCallOptions, response: IncomingMessage) {
   if (!checkSha2(safeGetHeader(response, "X-Checksum-Sha2"), options.options.sha2, options.callback)) {
     return
@@ -575,7 +592,7 @@ function configurePipes(options: DownloadCallOptions, response: IncomingMessage)
 
   const sha512 = options.options.sha512
   if (sha512 != null) {
-    streams.push(new DigestTransform(sha512, "sha512", sha512.length === 128 && !sha512.includes("+") && !sha512.includes("Z") && !sha512.includes("=") ? "hex" : "base64"))
+    streams.push(new DigestTransform(sha512, "sha512", detectSha512Encoding(sha512)))
   } else if (options.options.sha2 != null) {
     streams.push(new DigestTransform(options.options.sha2, "sha256", "hex"))
   }

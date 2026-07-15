@@ -4,9 +4,10 @@ export { _testingOnly, readCertInfo } from "./codeSign/certInfo.js"
 export { createKeychain, findIdentity, isSignAllowed, removeKeychain } from "./codeSign/mac/macCodeSign.js"
 export type { Identity } from "./codeSign/mac/macCodeSign.js"
 export { CustomWindowsSign, WindowsSignTaskConfiguration } from "./codeSign/win/windowsSignToolManager.js"
-export { Configuration, ToolsetConfig, ToolsetCustom } from "./configuration.js"
+export { Configuration, DEFAULT_IGNORED_PRODUCTION_DEPENDENCIES, ToolsetConfig, ToolsetCustom } from "./configuration.js"
 export { Publish } from "./core.js"
 export { getElectronVersion } from "./electron/electronVersion.js"
+export { collectNodeModulesWithLogging } from "./util/appFileCopier.js"
 export {
   collectExplicitReincludes,
   DEFAULT_EXCLUDED_EXTENSIONS,

@@ -93,6 +93,30 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   allowDowngrade = false
 
+  /**
+   * *Linux only.* Whether to allow installing unverified (unsigned / failing-GPG) `.deb` and `.rpm` packages during auto-update.
+   *
+   * electron-builder does not sign Linux packages, so this defaults to `true` to preserve working auto-updates: the
+   * package manager's signature/GPG checks are bypassed where a bypass flag exists (`--allow-unauthenticated` for the
+   * apt fallback, `--allow-unsigned-rpm` for zypper, `--nogpgcheck` for dnf/yum), which is the historical behavior.
+   *
+   * What `false` enforces depends on the package manager used on the target system:
+   * - dpkg (the default for `.deb`): no effect — dpkg performs no signature verification (a warning is logged);
+   *   enforcing `.deb` signatures requires a debsig-verify/debsigs policy on the target system.
+   * - apt (`.deb` fallback): `--allow-unauthenticated` is omitted.
+   * - zypper: enforced — unsigned/untrusted packages fail to install.
+   * - dnf/yum: enforced via `--setopt=localpkg_gpgcheck=1` (local package files are not GPG-checked by default).
+   * - bare rpm (fallback): cannot be enforced via the CLI (a warning is logged); admins must configure
+   *   `%_pkgverify_level signature` on the target system.
+   *
+   * pacman and AppImage targets are not affected by this option: `pacman -U` has no per-invocation bypass flag
+   * (local-file policy is `LocalFileSigLevel` in `pacman.conf`), and AppImage updates are verified only via the
+   * update-manifest checksum.
+   *
+   * @default true
+   */
+  allowUnverifiedLinuxPackages = true
+
   private _disableWebInstaller: boolean | undefined = undefined
 
   /**
