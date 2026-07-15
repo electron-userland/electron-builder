@@ -276,6 +276,31 @@ test("createUpdateInfoTasks GitHub provider overrides url and path with safeArti
   })
 })
 
+test("createUpdateInfoTasks GitHub safeArtifactName does not leak into other providers' update info", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App 1.0.0.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    const event: any = {
+      file: artifactFile,
+      arch: null,
+      safeArtifactName: "App-1.0.0.exe",
+      packager: makePlatformPackager(),
+      target: { outDir: dir },
+    }
+    const tasks = await createUpdateInfoTasks(event, [
+      { provider: "github", repo: "owner/repo" },
+      { provider: "s3", bucket: "test" },
+    ] as any)
+
+    const githubTask = tasks.find(task => task.publishConfiguration.provider === "github")!
+    const s3Task = tasks.find(task => task.publishConfiguration.provider === "s3")!
+    // GitHub gets the safe name, but the shared info used by other providers must keep the real file name
+    expect(githubTask.info.files[0].url).toBe("App-1.0.0.exe")
+    expect(s3Task.info.files[0].url).toBe("App 1.0.0.exe")
+    expect((s3Task.info as any).path).toBe("App 1.0.0.exe")
+  })
+})
+
 test("empty tasks array is a no-op", async ({ expect }) => {
   const mockPackager = makePackager()
   await expect(writeUpdateInfoFiles([], mockPackager as any)).resolves.toBeUndefined()

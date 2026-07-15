@@ -130,7 +130,9 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
     }
 
     if (event.safeArtifactName != null && publishConfiguration.provider === "github") {
-      const newFiles = info.files.slice()
+      // copy the file entries (not just the array) — `info` is shared across publish configurations,
+      // so mutating an entry here would leak the GitHub-safe artifact name into other providers' update info
+      const newFiles = info.files.map(file => ({ ...file }))
       newFiles[0].url = event.safeArtifactName
       info = {
         ...info,
