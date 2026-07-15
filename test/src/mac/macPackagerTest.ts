@@ -191,7 +191,8 @@ describe("macPackager", { sequential: true }, () => {
     )
   )
 
-  test.ifNotMac("Build macOS on Windows is not supported", ({ expect }) => appThrows(expect, platform(Platform.MAC)))
+  // The InvalidConfigurationError guard in packager.ts only fires on win32 — Linux is allowed to cross-build macOS.
+  test.ifWindows("Build macOS on Windows is not supported", ({ expect }) => appThrows(expect, platform(Platform.MAC)))
 
   test.ifMac("multiple asar resources", ({ expect }) =>
     app(

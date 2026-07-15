@@ -4,7 +4,7 @@ exports[`snap core24 native > core24 build + install + launch 1`] = `
 {
   "apps": {
     "se-wo-template": {
-      "command": "app/se-wo-template",
+      "command": "command.sh",
       "desktop": "meta/gui/se-wo-template.desktop",
       "plugs": [
         "desktop",
@@ -84,7 +84,7 @@ exports[`snap core24 native > core24 destructive-mode (no gnome extension) 1`] =
 {
   "apps": {
     "se-wo-template": {
-      "command": "app/se-wo-template",
+      "command": "command.sh",
       "desktop": "meta/gui/se-wo-template.desktop",
       "plugs": [
         "desktop",
@@ -164,7 +164,7 @@ exports[`snap core24 native > core24 with custom stagePackages 1`] = `
 {
   "apps": {
     "se-wo-template": {
-      "command": "app/se-wo-template",
+      "command": "command.sh",
       "desktop": "meta/gui/se-wo-template.desktop",
       "plugs": [
         "desktop",
@@ -274,14 +274,14 @@ exports[`snap heavy > snap full (core18 armhf) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "armhf",
+  ],
   "base": "core18",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "se-wo-template",
-  "architectures": [
-    "armhf",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -420,14 +420,14 @@ exports[`snap heavy > snap full (core20 armhf) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "armhf",
+  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "se-wo-template",
-  "architectures": [
-    "armhf",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -566,14 +566,14 @@ exports[`snap heavy > snap full (core22 armhf) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "armhf",
+  ],
   "base": "core22",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "se-wo-template",
-  "architectures": [
-    "armhf",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -690,7 +690,7 @@ exports[`snap heavy > snap full (core24) 1`] = `
 {
   "apps": {
     "se-wo-template": {
-      "command": "app/se-wo-template",
+      "command": "command.sh",
       "desktop": "meta/gui/se-wo-template.desktop",
       "plugs": [
         "desktop",
@@ -792,14 +792,14 @@ exports[`snap heavy > snap install+launch (core18) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core18",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "se-wo-template",
-  "architectures": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -865,14 +865,14 @@ exports[`snap heavy > snap install+launch (core20) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "se-wo-template",
-  "architectures": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -938,14 +938,14 @@ exports[`snap heavy > snap install+launch (core22) 1`] = `
       ],
     },
   },
+  "architectures": [
+    "amd64",
+  ],
   "base": "core22",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "name": "se-wo-template",
-  "architectures": [
-    "amd64",
-  ],
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -989,7 +989,7 @@ exports[`snap heavy > snap install+launch (core24) 1`] = `
 {
   "apps": {
     "se-wo-template": {
-      "command": "app/se-wo-template",
+      "command": "command.sh",
       "desktop": "meta/gui/se-wo-template.desktop",
       "plugs": [
         "desktop",
