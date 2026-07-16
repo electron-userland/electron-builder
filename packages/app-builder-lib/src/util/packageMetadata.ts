@@ -118,8 +118,12 @@ function checkDependencies(dependencies: Record<string, string> | Nullish, error
       }
     }
 
+    // pnpm `catalog:` and `workspace:` specifiers cannot be resolved to a concrete version from the package.json alone, so skip validation
+    const unresolvableProtocols = ["catalog:", "workspace:"]
+    const isUnresolvableSpecifier = unresolvableProtocols.some(protocol => updaterVersion.startsWith(protocol))
+
     const requiredElectronUpdaterVersion = "4.0.0"
-    if (!versionSatisfies(updaterVersion, `>=${requiredElectronUpdaterVersion}`)) {
+    if (!isUnresolvableSpecifier && !versionSatisfies(updaterVersion, `>=${requiredElectronUpdaterVersion}`)) {
       errors.push(
         `At least electron-updater ${requiredElectronUpdaterVersion} is recommended by current electron-builder version. Please set electron-updater version to "^${requiredElectronUpdaterVersion}". Received "${updaterVersion}"`
       )
