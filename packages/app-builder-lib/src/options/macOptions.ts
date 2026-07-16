@@ -270,10 +270,10 @@ export interface DmgOptions extends TargetSpecificOptions {
   contents?: Array<DmgContent>
 
   /**
-   * The disk image format. `ULFO` (lzfse-compressed image (OS X 10.11+ only)).
+   * The disk image format. `ULFO` (lzfse-compressed image (OS X 10.11+ only)). `ULMO` (lzma-compressed image (macOS 10.15+ only)).
    * @default UDZO
    */
-  format?: "UDRW" | "UDRO" | "UDCO" | "UDZO" | "UDBZ" | "ULFO"
+  format?: "UDRW" | "UDRO" | "UDCO" | "UDZO" | "UDBZ" | "ULFO" | "ULMO"
 
   /**
    * The filesystem for the DMG volume (e.g. `"APFS"` or `"HFS+"`)
