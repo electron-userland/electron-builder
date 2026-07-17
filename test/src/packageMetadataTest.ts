@@ -55,6 +55,20 @@ describe("checkMetadata electron-updater version validation", () => {
       })
     })
 
+    test("accepts yarn berry patch: specifier resolving to a satisfying version", async () => {
+      await withProjectDir(null, projectDir => {
+        expect(() => checkDependencies({ "electron-updater": "patch:electron-updater@npm%3A6.6.2#~/.yarn/patches/electron-updater-npm-6.6.2-abc.patch" }, projectDir)).not.toThrow()
+      })
+    })
+
+    test("rejects yarn berry patch: specifier resolving to a too-old version", async () => {
+      await withProjectDir(null, projectDir => {
+        expect(() => checkDependencies({ "electron-updater": "patch:electron-updater@npm%3A3.0.0#~/.yarn/patches/electron-updater-npm-3.0.0-abc.patch" }, projectDir)).toThrow(
+          /At least electron-updater 4\.0\.0 is recommended/
+        )
+      })
+    })
+
     test("accepts semver version satisfying the minimum", async () => {
       await withProjectDir(null, projectDir => {
         expect(() => checkDependencies({ "electron-updater": "^6.2.1" }, projectDir)).not.toThrow()
