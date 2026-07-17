@@ -54,6 +54,34 @@ describe("migrateConfig — framework / nodeVersion / launchUiVersion", () => {
   })
 })
 
+describe("migrateConfig — disableDefaultIgnoredFiles", () => {
+  test("removes the root-level key", () => {
+    const result = migrateConfig({ disableDefaultIgnoredFiles: true, appId: "com.a.b" })
+    expect("disableDefaultIgnoredFiles" in result.migrated).toBe(false)
+    expect(result.migrated.appId).toBe("com.a.b")
+    expect(result.changes).toHaveLength(1)
+    expect(result.changes[0].key).toBe("disableDefaultIgnoredFiles")
+  })
+
+  test("removes the key from every platform config (mac/mas/masDev/win/linux)", () => {
+    const result = migrateConfig({
+      disableDefaultIgnoredFiles: false,
+      mac: { disableDefaultIgnoredFiles: true },
+      mas: { disableDefaultIgnoredFiles: true },
+      masDev: { disableDefaultIgnoredFiles: true },
+      win: { disableDefaultIgnoredFiles: true, target: "nsis" },
+      linux: { disableDefaultIgnoredFiles: true },
+    })
+    expect("disableDefaultIgnoredFiles" in result.migrated).toBe(false)
+    for (const platform of ["mac", "mas", "masDev", "win", "linux"]) {
+      expect("disableDefaultIgnoredFiles" in result.migrated[platform]).toBe(false)
+    }
+    expect(result.migrated.win.target).toBe("nsis")
+    // root + 5 platforms
+    expect(result.changes.filter(c => c.key === "disableDefaultIgnoredFiles")).toHaveLength(6)
+  })
+})
+
 describe("migrateConfig — nativeModules grouping", () => {
   test("moves buildDependenciesFromSource under nativeModules", () => {
     const result = migrateConfig({ buildDependenciesFromSource: true })
@@ -266,12 +294,13 @@ describe("migrateConfig — GitHub vPrefixedTagName", () => {
     expect(result.migrated.publish).toEqual({ provider: "github", tagNamePrefix: "v" })
   })
 
-  test("removes vPrefixedTagName from gitlab entries", () => {
+  test("preserves vPrefixedTagName on gitlab entries (still functional in v27)", () => {
     const result = migrateConfig({
       publish: { provider: "gitlab", vPrefixedTagName: false },
     })
-    expect("vPrefixedTagName" in result.migrated.publish).toBe(false)
-    expect("tagNamePrefix" in result.migrated.publish).toBe(false)
+    // GitLab keeps vPrefixedTagName — it must not be stripped (no tagNamePrefix equivalent on GitLab),
+    // otherwise the migrator would silently flip tags from "1.2.3" to "v1.2.3".
+    expect(result.migrated.publish).toEqual({ provider: "gitlab", vPrefixedTagName: false })
   })
 
   test("handles publish as array", () => {
@@ -590,5 +619,48 @@ describe("migrateConfig — does not mutate input", () => {
     const frozen = JSON.parse(JSON.stringify(input))
     migrateConfig(input)
     expect(input).toEqual(frozen)
+  })
+})
+
+describe("migrateConfig — nsis-web advisory", () => {
+  test("win.target: 'nsis-web' (string) emits an advisory without changing the config", () => {
+    const input = { win: { target: "nsis-web" } }
+    const result = migrateConfig(input)
+    expect(result.modified).toBe(false)
+    expect(result.changes).toHaveLength(0)
+    expect(result.advisories).toHaveLength(1)
+    expect(result.advisories[0]).toMatch(/nsis-web/)
+    expect(result.advisories[0]).toMatch(/disableWebInstaller = false/)
+    expect(result.migrated).toEqual(input)
+  })
+
+  test("win.target: ['nsis', 'nsis-web'] (array) emits an advisory", () => {
+    const result = migrateConfig({ win: { target: ["nsis", "nsis-web"] } })
+    expect(result.advisories).toHaveLength(1)
+    expect(result.modified).toBe(false)
+  })
+
+  test("win.target: [{ target: 'nsis-web' }] (object form) emits an advisory", () => {
+    const result = migrateConfig({ win: { target: [{ target: "nsis-web", arch: "x64" }] } })
+    expect(result.advisories).toHaveLength(1)
+    expect(result.modified).toBe(false)
+  })
+
+  test("global top-level target: 'nsis-web' emits an advisory", () => {
+    const result = migrateConfig({ target: "nsis-web" })
+    expect(result.advisories).toHaveLength(1)
+  })
+
+  test("a non-web target produces no advisory", () => {
+    const result = migrateConfig({ win: { target: "nsis" } })
+    expect(result.advisories).toHaveLength(0)
+    expect(result.modified).toBe(false)
+  })
+
+  test("advisory coexists with real changes — modified stays true, advisory is excluded from the modified calc", () => {
+    const result = migrateConfig({ electronCompile: true, win: { target: "nsis-web" } })
+    expect(result.modified).toBe(true)
+    expect(result.changes.some(c => c.key === "electronCompile")).toBe(true)
+    expect(result.advisories).toHaveLength(1)
   })
 })

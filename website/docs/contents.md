@@ -242,13 +242,31 @@ files:
 
 See [Two package.json Structure](tutorials/two-package-structure.md) for the full monorepo setup.
 
-## Disabling Default Ignored Files
+## Including Default-Excluded Files
+
+electron-builder excludes a set of development-only file extensions and names by default — for example
+build artifacts such as `.obj`, `.o`, `.a`, and `.d.ts`, lockfiles such as `yarn.lock` and
+`package-lock.json`, and VCS/tooling metadata such as `.git`, `.idea`, and `.github`.
+
+To ship a file that would otherwise be excluded, add an explicit `files` glob that targets it. An
+explicit include overrides the matching default exclusion:
 
 ```yaml
-disableDefaultIgnoredFiles: false    # Default: false
+files:
+  - "**/*"
+  - "**/*.obj"        # keep Wavefront .obj 3D models that are excluded by default
 ```
 
-Set to `true` to opt out of all default exclusion patterns. This includes every file in the app directory — including test files, source maps, and hidden files. Not recommended for production.
+The same applies to default-excluded names — reference the name in a pattern segment, e.g.:
+
+```yaml
+files:
+  - "**/*"
+  - "**/.github/**"   # keep the .github directory that is excluded by default
+```
+
+Only patterns that name an extension or directory concretely opt it back in; broad patterns such as
+`**/*` continue to honor the defaults.
 
 ## Troubleshooting
 

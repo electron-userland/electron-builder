@@ -9,7 +9,7 @@ import {
   MirrorOptions,
 } from "@electron/get"
 import { exec, exists, log, PADDING, parseValidEnvVarUrl, sanitizeDirPath, to7zaOutputSwitch, ensureDir, moveDirAtomic } from "builder-util"
-import { HttpError, retry, sleep } from "builder-util-runtime"
+import { HttpError, MemoLazy, retry, sleep } from "builder-util-runtime"
 import * as crypto from "crypto"
 import type { ProgressBar } from "electron-publish"
 import { MultiProgress } from "electron-publish"
@@ -52,7 +52,7 @@ export type ArtifactDownloadOptions = {
   cacheDir?: string
 }
 
-function hashUrlSafe(input: string, length = 6): string {
+export function hashUrlSafe(input: string, length = 6): string {
   let hash = 5381
   for (let i = 0; i < input.length; i++) {
     hash = ((hash << 5) + hash) ^ input.charCodeAt(i)
@@ -62,11 +62,27 @@ function hashUrlSafe(input: string, length = 6): string {
   return out.length >= length ? out.slice(0, length) : out.padStart(length, "0")
 }
 
-export function getCacheDirectory(options: { isAvoidSystemOnWindows?: boolean; allowEnvVarOverride: boolean }): string {
+// MemoLazy (not Lazy): keyed on ELECTRON_BUILDER_CACHE so the resolved cache dir is recomputed if the
+// override env var changes, while staying memoized when it doesn't (the production case). The creator
+// also ensures the resolved dir exists — that side effect lives here, at the point of use, so
+// getCacheDirectoryInternal stays a pure path resolver.
+export const cacheDirectoryOverrideAllowed = new MemoLazy<string | undefined, string>(
+  () => process.env.ELECTRON_BUILDER_CACHE?.trim(),
+  async () => {
+    const dir = await getCacheDirectoryInternal({ isAvoidSystemOnWindows: true, allowEnvVarOverride: true })
+    await ensureDir(dir)
+    return dir
+  }
+)
+// Exposed for testing; not intended for public use. Pure path resolution (no I/O) — use the memoized
+// const's above when you need the directory to exist on disk. Kept async for a stable Promise-returning
+// contract across all call sites.
+// eslint-disable-next-line @typescript-eslint/require-await
+export async function getCacheDirectoryInternal(options: { isAvoidSystemOnWindows?: boolean; allowEnvVarOverride: boolean }): Promise<string> {
   const { isAvoidSystemOnWindows = true, allowEnvVarOverride } = options
   const env = process.env.ELECTRON_BUILDER_CACHE?.trim()
   if (allowEnvVarOverride && env && path.parse(env).root) {
-    return env
+    return sanitizeDirPath(env)
   }
 
   const appName = "electron-builder"
@@ -169,7 +185,9 @@ async function extractZipStreaming(file: string, dir: string): Promise<void> {
   }
 }
 
-export async function extractArchive(file: string, dir: string) {
+export async function extractArchive(archive: string, dir: string) {
+  const file = sanitizeDirPath(archive)
+
   const tmpDir = `${dir}.tmp`
   await fs.mkdir(tmpDir, { recursive: true })
 
@@ -197,21 +215,24 @@ export async function extractArchive(file: string, dir: string) {
 
     if (file.endsWith(".tar.gz") || file.endsWith(".tgz")) {
       await tar.extract({ file, cwd: tmpDir, strip: 1 })
-    } else if (file.endsWith(".tar.xz") || file.endsWith(".txz")) {
-      // node-tar cannot decompress xz, so use 7za to turn the .tar.xz into a .tar, then extract that tar.
+    } else if (file.endsWith(".tar.xz") || file.endsWith(".txz") || file.endsWith(".tar.7z")) {
+      // Compressed tarballs node-tar cannot decompress itself (xz, 7z): use 7za to strip the outer
+      // compression layer into a .tar, then extract that tar.
+      // Note: the .tar.7z check MUST stay ahead of the plain .7z branch below, otherwise only the outer
+      // 7z layer is removed and the inner tar is left behind as-is (see https://github.com/electron-userland/electron-builder/issues/10002).
       const cmd7za = await getPath7za()
-      const xzOutDir = `${tmpDir}.xz`
-      await fs.rm(xzOutDir, { recursive: true, force: true })
-      await fs.mkdir(xzOutDir, { recursive: true })
+      const decompressOutDir = `${tmpDir}.decompress`
+      await fs.rm(decompressOutDir, { recursive: true, force: true })
+      await fs.mkdir(decompressOutDir, { recursive: true })
       try {
-        await exec(cmd7za, ["x", "-bd", file, to7zaOutputSwitch(sanitizeDirPath(xzOutDir)), "-y"])
-        const innerTar = (await fs.readdir(xzOutDir)).find(f => f.endsWith(".tar"))
+        await exec(cmd7za, ["x", "-bd", file, to7zaOutputSwitch(sanitizeDirPath(decompressOutDir)), "-y"])
+        const innerTar = (await fs.readdir(decompressOutDir)).find(f => f.endsWith(".tar"))
         if (innerTar == null) {
-          throw new Error(`xz decompression of ${path.basename(file)} produced no .tar archive`)
+          throw new Error(`decompression of ${path.basename(file)} produced no .tar archive`)
         }
-        await tar.extract({ file: path.join(xzOutDir, innerTar), cwd: tmpDir, strip: 1 })
+        await tar.extract({ file: path.join(decompressOutDir, innerTar), cwd: tmpDir, strip: 1 })
       } finally {
-        await fs.rm(xzOutDir, { recursive: true, force: true })
+        await fs.rm(decompressOutDir, { recursive: true, force: true })
       }
     } else if (file.endsWith(".zip")) {
       await extractZipStreaming(file, tmpDir)
@@ -511,7 +532,7 @@ export async function download(url: string, output: string, checksum?: string | 
     {
       version: "9.9.9",
       artifactName: filenameWithExt,
-      cacheRoot: path.resolve(getCacheDirectory({ allowEnvVarOverride: true }), "downloads"),
+      cacheRoot: path.resolve(await cacheDirectoryOverrideAllowed.value, "downloads"),
       cacheMode: resolveCacheMode(),
       ...(checksum != null ? { checksums: { [filenameWithExt]: checksum } } : { unsafelyDisableChecksums: true }),
       mirrorOptions: { resolveAssetURL: async () => Promise.resolve(url) },
@@ -582,9 +603,12 @@ export async function downloadBuilderToolset(options: {
   const baseUrl = getBinariesMirrorUrl(githubOrgRepo)
   const fullUrl = resolveBuilderBinaryUrl(releaseName, filenameWithExt, baseUrl, overrideUrl)
   const suffix = hashUrlSafe(fullUrl, 5)
-  const folderName = `${filenameWithExt.replace(/\.(tar\.gz|tgz|tar\.xz|txz|zip|7z)$/, "")}-${suffix}`
+  // tar.7z is listed before 7z so the full extension is stripped. Deliberate side effect: this changes the
+  // extract-dir name for .tar.7z toolsets (e.g. the snap template) from "<name>.tar-<hash>" to "<name>-<hash>",
+  // which busts caches poisoned by the broken .tar.7z extraction in 26.15.0-26.15.6 (issue #10002).
+  const folderName = `${filenameWithExt.replace(/\.(tar\.gz|tgz|tar\.xz|txz|tar\.7z|zip|7z)$/, "")}-${suffix}`
   // releaseName is library input; enforce cache-dir containment (rejects traversal, clears taint into shell extraction)
-  const cacheDir = getCacheDirectory({ allowEnvVarOverride: true })
+  const cacheDir = await cacheDirectoryOverrideAllowed.value
   const extractDir = sanitizeDirPath(path.join(cacheDir, releaseName, folderName), cacheDir)
 
   // Use resolveAssetURL so @electron/get's ELECTRON_MIRROR env var check cannot override
@@ -601,7 +625,7 @@ export async function downloadBuilderToolset(options: {
   const config: ElectronDownloadRequest & ElectronDownloadRequestOptions & { isGeneric: true } = {
     version: "9.9.9", // must be >1.3.2 to bypass @electron/get validation shortcut
     artifactName: filenameWithExt,
-    cacheRoot: path.resolve(getCacheDirectory({ allowEnvVarOverride: true }), "downloads"),
+    cacheRoot: path.resolve(await cacheDirectoryOverrideAllowed.value, "downloads"),
     cacheMode: resolveCacheMode(),
     ...(checksums != null ? { checksums } : { unsafelyDisableChecksums: true }),
     mirrorOptions,
@@ -643,7 +667,7 @@ export async function downloadElectronArtifact(options: ArtifactDownloadOptions)
 
   const suffix = hashUrlSafe(JSON.stringify(artifactConfig), 5)
   const folderName = `${artifactName}-v${version}-${platform}-${arch}-${suffix}`
-  const extractDir = path.join(getCacheDirectory({ allowEnvVarOverride: true }), `${artifactName}-v${version}`, folderName)
+  const extractDir = path.join(await cacheDirectoryOverrideAllowed.value, `${artifactName}-v${version}`, folderName)
 
   return downloadAndExtract(artifactConfig, extractDir, artifactName)
 }

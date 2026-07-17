@@ -1,3 +1,4 @@
+import { exec } from "builder-util"
 import { readFileSync } from "fs"
 import * as fs from "fs/promises"
 import * as http from "http"
@@ -13,10 +14,10 @@ import {
   ElectronGetOptions,
   downloadBuilderToolset,
   downloadElectronArtifact,
-  getCacheDirectory,
   getBinariesMirrorUrl,
   reinitializeProxy,
 } from "app-builder-lib/internal"
+import { getCacheDirectoryInternal } from "app-builder-lib/src/util/electronGet.js"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 
 // ─── Test helpers ─────────────────────────────────────────────────────────────
@@ -69,19 +70,19 @@ describe("getCacheDirectory", () => {
     vi.unstubAllEnvs()
   })
 
-  test("returns ELECTRON_BUILDER_CACHE when set", ({ expect }) => {
+  test("returns ELECTRON_BUILDER_CACHE when set", async ({ expect }) => {
     vi.stubEnv("ELECTRON_BUILDER_CACHE", "/custom/cache")
-    expect(getCacheDirectory({ allowEnvVarOverride: true })).toBe("/custom/cache")
+    expect(await getCacheDirectoryInternal({ allowEnvVarOverride: true })).toBe(path.resolve("/custom/cache"))
   })
 
-  test("trims whitespace from ELECTRON_BUILDER_CACHE", ({ expect }) => {
+  test("trims whitespace from ELECTRON_BUILDER_CACHE", async ({ expect }) => {
     vi.stubEnv("ELECTRON_BUILDER_CACHE", "  /padded/path  ")
-    expect(getCacheDirectory({ allowEnvVarOverride: true })).toBe("/padded/path")
+    expect(await getCacheDirectoryInternal({ allowEnvVarOverride: true })).toBe(path.resolve("/padded/path"))
   })
 
-  test("returns platform-appropriate default when env var is absent", ({ expect }) => {
+  test("returns platform-appropriate default when env var is absent", async ({ expect }) => {
     vi.stubEnv("ELECTRON_BUILDER_CACHE", "")
-    const result = getCacheDirectory({ allowEnvVarOverride: true })
+    const result = await getCacheDirectoryInternal({ allowEnvVarOverride: true })
     expect(typeof result).toBe("string")
     expect(result.length).toBeGreaterThan(0)
     if (process.platform === "darwin") {
@@ -93,72 +94,72 @@ describe("getCacheDirectory", () => {
     }
   })
 
-  test("respects XDG_CACHE_HOME on linux", context => {
+  test("respects XDG_CACHE_HOME on linux", async ({ expect, skip }) => {
     if (process.platform !== "linux") {
-      context.skip() // test is Linux-specific, skip on other platforms
+      skip() // test is Linux-specific, skip on other platforms
       return
     }
     vi.stubEnv("ELECTRON_BUILDER_CACHE", "")
     vi.stubEnv("XDG_CACHE_HOME", "/xdg/cache")
-    context.expect(getCacheDirectory({ allowEnvVarOverride: true })).toBe("/xdg/cache/electron-builder")
+    expect(await getCacheDirectoryInternal({ allowEnvVarOverride: true })).toBe("/xdg/cache/electron-builder")
   })
 
-  test("falls back to tmpdir when LOCALAPPDATA is absent on Windows", context => {
+  test("falls back to tmpdir when LOCALAPPDATA is absent on Windows", async ({ expect, skip }) => {
     if (process.platform !== "win32") {
-      context.skip() // test is Windows-specific, skip on other platforms
+      skip() // test is Windows-specific, skip on other platforms
       return
     }
     vi.stubEnv("LOCALAPPDATA", "")
-    const result = getCacheDirectory({ isAvoidSystemOnWindows: true, allowEnvVarOverride: false })
-    context.expect(result).toContain(os.tmpdir())
+    const result = await getCacheDirectoryInternal({ isAvoidSystemOnWindows: true, allowEnvVarOverride: false })
+    expect(result).toContain(os.tmpdir())
   })
 
-  test("allowEnvVarOverride:false ignores ELECTRON_BUILDER_CACHE even when set", ({ expect }) => {
+  test("allowEnvVarOverride:false ignores ELECTRON_BUILDER_CACHE even when set", async ({ expect }) => {
     vi.stubEnv("ELECTRON_BUILDER_CACHE", "/custom/cache")
-    const result = getCacheDirectory({ allowEnvVarOverride: false })
+    const result = await getCacheDirectoryInternal({ allowEnvVarOverride: false })
     expect(result).not.toBe("/custom/cache")
     expect(result).toContain("electron-builder")
   })
 
-  test("ignores ELECTRON_BUILDER_CACHE when value has no filesystem root (relative path)", ({ expect }) => {
+  test("ignores ELECTRON_BUILDER_CACHE when value has no filesystem root (relative path)", async ({ expect }) => {
     vi.stubEnv("ELECTRON_BUILDER_CACHE", "relative/path/no-root")
-    const result = getCacheDirectory({ allowEnvVarOverride: true })
+    const result = await getCacheDirectoryInternal({ allowEnvVarOverride: true })
     expect(result).not.toBe("relative/path/no-root")
     expect(result).toContain("electron-builder")
   })
 
-  test("falls back to tmpdir when USERNAME is 'system' (isAvoidSystemOnWindows defaults to true)", context => {
+  test("falls back to tmpdir when USERNAME is 'system' (isAvoidSystemOnWindows defaults to true)", async ({ expect, skip }) => {
     if (process.platform !== "win32") {
-      context.skip() // test is Windows-specific, skip on other platforms
+      skip() // test is Windows-specific, skip on other platforms
       return
     }
     vi.stubEnv("LOCALAPPDATA", "C:\\Users\\system\\AppData\\Local")
     vi.stubEnv("USERNAME", "system")
-    const result = getCacheDirectory({ allowEnvVarOverride: false })
-    context.expect(result).toContain(os.tmpdir())
+    const result = await getCacheDirectoryInternal({ allowEnvVarOverride: false })
+    expect(result).toContain(os.tmpdir())
   })
 
-  test("falls back to tmpdir when LOCALAPPDATA path contains \\windows\\system32\\", context => {
+  test("falls back to tmpdir when LOCALAPPDATA path contains \\windows\\system32\\", async ({ expect, skip }) => {
     if (process.platform !== "win32") {
-      context.skip() // test is Windows-specific, skip on other platforms
+      skip() // test is Windows-specific, skip on other platforms
       return
     }
     vi.stubEnv("LOCALAPPDATA", "C:\\Windows\\System32\\config\\systemprofile\\AppData\\Local")
     vi.stubEnv("USERNAME", "not-system")
-    const result = getCacheDirectory({ allowEnvVarOverride: false })
-    context.expect(result).toContain(os.tmpdir())
+    const result = await getCacheDirectoryInternal({ allowEnvVarOverride: false })
+    expect(result).toContain(os.tmpdir())
   })
 
-  test("isAvoidSystemOnWindows:false does not fall back to tmpdir for USERNAME=system", context => {
+  test("isAvoidSystemOnWindows:false does not fall back to tmpdir for USERNAME=system", async ({ expect, skip }) => {
     if (process.platform !== "win32") {
-      context.skip() // test is Windows-specific, skip on other platforms
+      skip() // test is Windows-specific, skip on other platforms
       return
     }
     vi.stubEnv("LOCALAPPDATA", "C:\\Users\\system\\AppData\\Local")
     vi.stubEnv("USERNAME", "system")
-    const result = getCacheDirectory({ isAvoidSystemOnWindows: false, allowEnvVarOverride: false })
-    context.expect(result).not.toContain(os.tmpdir())
-    context.expect(result).toContain("electron-builder")
+    const result = await getCacheDirectoryInternal({ isAvoidSystemOnWindows: false, allowEnvVarOverride: false })
+    expect(result).not.toContain(os.tmpdir())
+    expect(result).toContain("electron-builder")
   })
 })
 
@@ -343,6 +344,59 @@ describe("downloadBuilderToolset", { sequential: true }, () => {
       // Our local server was hit — resolveAssetURL determined the URL, not ELECTRON_MIRROR
       expect(server.requestedPaths.length).toBeGreaterThan(0)
       expect(server.requestedPaths.some(p => p.includes("dmg-builder@1.2.2"))).toBe(true)
+    } finally {
+      await server.close()
+    }
+  })
+
+  // Regression test for https://github.com/electron-userland/electron-builder/issues/10002
+  // Snap template toolsets ship as .tar.7z; extractArchive routed them through the plain .7z
+  // branch, leaving a single inner .tar in the toolset dir instead of the template contents,
+  // so every default-config snap built with 26.15.0-26.15.6 silently failed at launch.
+  // Also asserts the cache dir name now strips the full ".tar.7z" extension — a deliberate
+  // rename that busts caches poisoned by the broken extraction (the old "<name>.tar-<hash>"
+  // dirs pass the cache-complete check and would otherwise never be re-extracted).
+  test("toolset .tar.7z is extracted through both layers and gets a cache-busting dir name (#10002)", { timeout: 120_000 }, async ({ expect, tmpDir }) => {
+    // Resolve 7za before stubbing the mirror env vars: extractArchive needs it, and resolving it
+    // afterwards would try to download the 7zip toolset from our fixture server.
+    const { getPath7za } = await import("app-builder-lib/src/toolsets/7zip")
+    const cmd7za = await getPath7za()
+
+    // Craft a fixture mirroring snap-template-electron-*.tar.7z: a 7z layer around a tar with
+    // "./"-prefixed entries and a mode-755 desktop-init.sh at the root.
+    const fixtureDir = await tmpDir.createTempDir()
+    const contentDir = path.join(fixtureDir, "content")
+    await fs.mkdir(path.join(contentDir, "usr", "share"), { recursive: true })
+    await fs.writeFile(path.join(contentDir, "desktop-init.sh"), "#!/bin/bash\ntrue\n", { mode: 0o755 })
+    await fs.writeFile(path.join(contentDir, "usr", "share", "marker.txt"), "ok")
+    const innerTar = path.join(fixtureDir, "snap-template-test-amd64.tar")
+    // explicit "./"-prefixed entries so node-tar stores "./"-prefixed names like the real template tars
+    await tar.create(
+      { file: innerTar, cwd: contentDir },
+      (await fs.readdir(contentDir)).map(e => `./${e}`)
+    )
+    const servedArchive = path.join(fixtureDir, "snap-template-test-amd64.tar.7z")
+    await exec(cmd7za, ["a", "-t7z", servedArchive, innerTar])
+
+    const freshTestCache = await tmpDir.createTempDir()
+    vi.stubEnv("ELECTRON_BUILDER_CACHE", freshTestCache)
+    const server = await startArtifactServer(servedArchive)
+    vi.stubEnv("ELECTRON_BUILDER_BINARIES_MIRROR", `http://127.0.0.1:${server.port}/`)
+
+    try {
+      const result = await downloadBuilderToolset({ releaseName: "snap-template-test", filenameWithExt: "snap-template-test-amd64.tar.7z" })
+
+      // both layers extracted: template files at the toolset root, no stray inner .tar
+      const entries = await fs.readdir(result)
+      expect(entries).toContain("desktop-init.sh")
+      expect(entries).toContain("usr")
+      expect(entries.filter(e => e.endsWith(".tar"))).toEqual([])
+      expect(await fs.readFile(path.join(result, "usr", "share", "marker.txt"), "utf-8")).toBe("ok")
+
+      // cache-busting dir name: full ".tar.7z" stripped (26.15.x stripped only ".7z",
+      // producing "<name>.tar-<hash>" dirs that hold the broken single-tar extraction)
+      expect(path.basename(result)).toMatch(/^snap-template-test-amd64-/)
+      expect(path.basename(result)).not.toContain(".tar")
     } finally {
       await server.close()
     }

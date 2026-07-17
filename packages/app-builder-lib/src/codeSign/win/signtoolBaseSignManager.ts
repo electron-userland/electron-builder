@@ -12,9 +12,11 @@ import {
   WindowsSigntoolSigningConfig,
 } from "../../options/winOptions.js"
 import AppXTarget from "../../targets/win/AppxTarget.js"
+import MsixTarget from "../../targets/win/MsixTarget.js"
 import { getSignToolPath } from "../../toolsets/winCodeSign.js"
 import { ToolInfo } from "../../util/bundledTool.js"
 import { resolveFunction } from "../../util/resolve.js"
+import { withSigntoolLock } from "../../util/toolsetLock.js"
 import { readCertInfo, readCertInfoFromX509 } from "../certInfo.js"
 import { VmManager } from "../../vm/vm.js"
 import type { WinPackager } from "../../winPackager.js"
@@ -193,8 +195,8 @@ export abstract class SigntoolBaseSignManager implements SignManager {
 
   // https://github.com/electron-userland/electron-builder/issues/2108#issuecomment-333200711
   async computePublisherName(target: Target, publisherName: string | null) {
-    if (target instanceof AppXTarget && (await this.cscInfo.value) == null) {
-      log.info({ reason: "Windows Store only build" }, "AppX is not signed")
+    if ((target instanceof AppXTarget || target instanceof MsixTarget) && (await this.cscInfo.value) == null) {
+      log.info({ reason: "Windows Store only build" }, "AppX/MSIX package is not signed")
       return publisherName ?? "CN=ms"
     }
 
@@ -224,7 +226,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
     // msi does not support dual-signing
     if (options.path.endsWith(".msi")) {
       hashes = [hashes != null && !hashes.includes("sha1") ? "sha256" : "sha1"]
-    } else if (options.path.endsWith(".appx")) {
+    } else if (options.path.endsWith(".appx") || options.path.endsWith(".msix") || options.path.endsWith(".msixbundle")) {
       hashes = ["sha256"]
     } else if (hashes == null) {
       hashes = ["sha1", "sha256"]
@@ -298,7 +300,8 @@ export abstract class SigntoolBaseSignManager implements SignManager {
 
   protected isLegacyToolset(): boolean {
     const v = this.packager.config.toolsets?.winCodeSign
-    return v == null || v === "0.0.0"
+    // Only an explicit "0.0.0" pin is legacy; unset / null / "latest" / custom now resolve to a modern bundle.
+    return v === "0.0.0"
   }
 
   protected abstract computeWindowsSignArgs(options: WindowsSignTaskConfiguration, vm: VmManager): Array<string>
@@ -428,7 +431,10 @@ export abstract class SigntoolBaseSignManager implements SignManager {
       args = configuration.computeSignToolArgs(isWin)
     }
 
-    await retry(() => vm.exec(tool, args, { timeout, env: { ...process.env, ...(toolInfo.env || {}) } }), {
+    // signtool.exe (`/f`) is not safe to run concurrently — it races on the shared per-user crypto store.
+    // Serialize real-Windows signtool invocations across processes; osslsigncode (`!isWin`) is file-isolated.
+    const execSign = () => vm.exec(tool, args, { timeout, env: { ...process.env, ...(toolInfo.env || {}) } })
+    await retry(() => (isWin ? withSigntoolLock(execSign) : execSign()), {
       retries: 2,
       interval: 15000,
       backoff: 10000,
@@ -436,7 +442,10 @@ export abstract class SigntoolBaseSignManager implements SignManager {
         if (
           e.message.includes("The file is being used by another process") ||
           e.message.includes("The specified timestamp server either could not be reached") ||
-          e.message.includes("No certificates were found that met all the given criteria.")
+          e.message.includes("No certificates were found that met all the given criteria.") ||
+          // Transient failure of SignerSignEx after cert selection, typically a concurrent-signtool race
+          // on the per-user crypto store; the cross-process lock above makes this rare, retry covers the rest.
+          e.message.includes("An error occurred while attempting to load the signing certificate")
         ) {
           log.warn(`Attempt to code sign failed, another attempt will be made in 15 seconds: ${e.message}`)
           return true

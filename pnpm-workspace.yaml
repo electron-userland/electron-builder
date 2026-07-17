@@ -13,6 +13,10 @@ allowBuilds:
 
 # 10080 minutes = 7 days
 minimumReleaseAge: 10080
+# Security fixes whose only patched version is <7d old; deliberately exempted from the age gate
+minimumReleaseAgeExclude:
+  - esbuild # GHSA-gv7w-rqvm-qjhr: only patched in 0.28.1 (published <7d ago)
+  - '@esbuild/*' # platform binaries released in lockstep with esbuild 0.28.1
 patchedDependencies:
   '@changesets/cli@2.29.7': patches/@changesets__cli@2.29.7.patch
   '@changesets/assemble-release-plan@6.0.9': patches/@changesets__assemble-release-plan@6.0.9.patch
@@ -22,4 +26,12 @@ overrides:
   handlebars: '>=4.7.9'
   # --- Dependabot transitive-dependency security overrides ---
   shell-quote: '>=1.8.4 <2' # GHSA-w7jw-789q-3m8p (critical)
+  esbuild: '>=0.28.1 <0.29' # GHSA-gv7w-rqvm-qjhr (high), GHSA-g7r4-m6w7-qqqr (low)
+  tmp: '>=0.2.6 <0.3' # GHSA-ph9p-34f9-6g65 (high), GHSA-52f5-9888-hmc6 (low)
+  serialize-javascript: '>=7.0.5 <8' # GHSA-5c6j-r48x-rmvq (high), GHSA-qj8w-gfj5-8c6v (med)
+  '@babel/plugin-transform-modules-systemjs': '>=7.29.4 <8' # GHSA-fv7c-fp4j-7gwp (high)
+  fast-xml-builder: '>=1.1.7 <2' # GHSA-5wm8-gmm8-39j9 (high), GHSA-45c6-75p6-83cc (med)
+  '@xmldom/xmldom': '>=0.8.13 <0.9' # GHSA-2v35-w6hq-6mfw, -f6ww-3ggp-fr8h, -x6wf-f3px-wcqx, -j759-j44w-7fr8, -wh4c-j3r5-mjhp (high)
+  vite: '>=6.4.2 <7' # GHSA-p9ff-h696-f583 (high) + 7 more vite advisories (alerts #45,46,47,59,60,62,180,185)
+  lodash: '>=4.18.0 <5' # GHSA-r5fr-rjxr-66jc (high), GHSA-f23m-r3pf-42rh, GHSA-xxjr-mmjv-4gpg (med)
 packageImportMethod: copy

@@ -149,6 +149,23 @@ export function githubTagPrefix(options: GithubOptions) {
   return options.tagNamePrefix ?? "v"
 }
 
+export function getGitlabAuthHeaders(token: string | null): { [key: string]: string } {
+  const headers: { [key: string]: string } = {}
+
+  if (token != null) {
+    // If the token starts with "Bearer", it is an OAuth application secret
+    // Note that the original gitlab token would not start with "Bearer"
+    // it might start with "gloas-", if so user needs to add "Bearer " prefix to the token
+    if (token.startsWith("Bearer")) {
+      headers.authorization = token
+    } else {
+      headers["PRIVATE-TOKEN"] = token
+    }
+  }
+
+  return headers
+}
+
 /**
  * [GitLab](https://docs.gitlab.com/ee/user/project/releases/) options.
  *

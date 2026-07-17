@@ -277,8 +277,8 @@ export interface DmgOptions extends TargetSpecificOptions {
 
   /**
    * The filesystem for the DMG volume (e.g. `"APFS"` or `"HFS+"`)
-   * This will be changed to APFS in the next major release, so it is recommended to set it explicitly to HFS+ if you want to keep using HFS+ (e.g. for better compatibility with older macOS versions).
-   * @default HFS+
+   * As of v27 this defaults to APFS. Set it explicitly to `"HFS+"` if you need compatibility with older macOS versions (pre-10.13 High Sierra cannot mount APFS volumes).
+   * @default APFS
    */
   readonly filesystem?: "HFS+" | "APFS" | null
 

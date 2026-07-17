@@ -8,10 +8,13 @@ inputs:
     description: 'The path to the electron cache'
     required: true
   reset-vitest-smart-cache:
-    description: "Reset Vitest smart cache (will cause all tests to run without caching for this run, then cache will be repopulated for future runs)"
+    description: "Reset Vitest smart cache (planning shows all tests as 'unknown' and shards split evenly; cache is repopulated from this run for future runs)"
     required: false
-    type: boolean
-    default: false
+    default: "false"
+  collect-coverage:
+    description: "Collect v8 code coverage during the test run (opt-in; merged into a downloadable report by the merge job)"
+    required: false
+    default: "false"
 
 runs:
   using: 'composite'
@@ -24,13 +27,13 @@ runs:
       shell: bash
 
     - name: Cache Electron
-      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       with:
         path: ${{ inputs.cache-path }}
         key: ${{ inputs.cache-key }}
 
     - name: Cache electron-builder binaries
-      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       with:
         path: |
           ~/.cache/electron-builder
@@ -40,24 +43,52 @@ runs:
           electron-builder-binaries-${{ runner.os }}-
 
     - name: Compute Vitest smart cache ref
+      id: compute-cache-ref
       run: |
-        PR_NUM="${{ github.event.pull_request.number }}"
-        if [ -n "$PR_NUM" ]; then
-          echo "VITEST_CACHE_REF=PR-${PR_NUM}" >> "$GITHUB_ENV"
+        if [ -n "${PR_NUM}" ]; then
+          echo "value=PR-${PR_NUM}" >> "$GITHUB_OUTPUT"
         else
-          echo "VITEST_CACHE_REF=${{ github.ref_name }}" >> "$GITHUB_ENV"
+          # Artifact names cannot contain "/", so sanitize slashes in branch
+          # names like "release/v26" -> "release-v26" (keep in sync with detectRef in fetch-smart-cache.ts).
+          echo "value=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
         fi
       shell: bash
+      env:
+        PR_NUM: ${{ github.event.pull_request.number }}
 
+    # Skip the restore entirely on a reset run: there is no point downloading the previous cache
+    # only to ignore it. Combined with the RESET_VITEST_SHARD_CACHE guard in loadCache(), this makes
+    # the shard plan show every file as "unknown" and split shards evenly. (Cache file is gitignored,
+    # so a fresh checkout has none — nothing is loaded.)
     - name: Restore Vitest Smart Cache
+      if: inputs.reset-vitest-smart-cache != 'true'
       run: pnpm ci:test:fetch-cache
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
+        VITEST_CACHE_REF: ${{ steps.compute-cache-ref.outputs.value }}
 
     - name: Set up Vitest smart cache reset flag
-      run: echo "RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}" >> $GITHUB_ENV
+      run: |
+        if [ "${INPUTS_RESET_VITEST_SMART_CACHE}" = "true" ]; then
+          echo "RESET_VITEST_SHARD_CACHE=true" >> "$GITHUB_ENV"
+        else
+          echo "RESET_VITEST_SHARD_CACHE=false" >> "$GITHUB_ENV"
+        fi
       shell: bash
+      env:
+        INPUTS_RESET_VITEST_SMART_CACHE: ${{ inputs.reset-vitest-smart-cache }}
+
+    - name: Set up Vitest coverage flag
+      run: |
+        if [ "${INPUTS_COLLECT_COVERAGE}" = "true" ]; then
+          echo "VITEST_COVERAGE=true" >> "$GITHUB_ENV"
+        else
+          echo "VITEST_COVERAGE=false" >> "$GITHUB_ENV"
+        fi
+      shell: bash
+      env:
+        INPUTS_COLLECT_COVERAGE: ${{ inputs.collect-coverage }}
 
 ## Usage
 # - name: Setup Tests

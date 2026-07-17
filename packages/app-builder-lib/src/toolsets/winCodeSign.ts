@@ -1,4 +1,4 @@
-import { Arch, sanitizeDirPath } from "builder-util"
+import { InvalidConfigurationError, sanitizeDirPath } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import * as os from "os"
 import * as path from "path"
@@ -6,6 +6,10 @@ import { ToolsetConfig } from "../configuration.js"
 import { ToolInfo, computeToolEnv } from "../util/bundledTool.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
 import { getCustomToolsetPath } from "./custom.js"
+import { resolveToolsetVersion } from "./version.js"
+
+// Newest win-codesign bundle — selected when the config is unset / null / "latest".
+export const WIN_CODESIGN_LATEST = "1.3.0"
 
 function getLegacyWinCodeSignBin(): Promise<string> {
   return downloadBuilderToolset({
@@ -88,29 +92,37 @@ function _getWindowsToolsBin<V extends CodeSignVersionKey>(winCodeSign: V, file:
 
 export async function getSignToolPath(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish, isWin: boolean, resourcesDir: string): Promise<ToolInfo> {
   if (isWin) {
-    // windows kits are always the target arch; signtool can be used by either arch.
-    const signtoolArch: Arch = process.arch === "x64" ? Arch.x64 : process.arch === "arm64" ? Arch.arm64 : Arch.ia32
-    return { path: await getWindowsSignToolExe({ winCodeSign, arch: signtoolArch, resourcesDir }) }
+    return { path: await getWindowsSignToolExe({ winCodeSign, resourcesDir }) }
   } else {
     const vendor = await getOsslSigncodeBundle(winCodeSign, resourcesDir)
     return { path: vendor.path, env: vendor.env }
   }
 }
 
-export async function getWindowsKitsBundle({ winCodeSign, arch, resourcesDir = "" }: { winCodeSign: ToolsetConfig["winCodeSign"] | Nullish; arch: Arch; resourcesDir?: string }) {
+/**
+ * Resolve the Windows Kits bundle paths.
+ *
+ * The `kit` subdirectory holds HOST executables (`signtool.exe` / `makeappx.exe` / `makepri.exe`), so
+ * it is always the x64 kit (x86 on 32-bit hosts) — never arm64. x64 binaries run on x64 hosts natively
+ * and on arm64 Windows via emulation, whereas an arm64 binary cannot run on an x64 host and fails with
+ * `spawn UNKNOWN`. The artifact's target arch is irrelevant here.
+ * `appxAssets` is arch-independent (the bundle root).
+ */
+export async function getWindowsKitsBundle({ winCodeSign, resourcesDir }: { winCodeSign: ToolsetConfig["winCodeSign"] | Nullish; resourcesDir?: string }) {
+  const kitArch = process.arch === "ia32" ? "x86" : "x64"
   if (typeof winCodeSign === "object" && winCodeSign != null) {
     const vendorPath = sanitizeDirPath(await getCustomToolsetPath(winCodeSign, resourcesDir), resourcesDir || undefined)
-    return { kit: path.join(vendorPath, arch === Arch.ia32 ? "x86" : Arch[arch]), appxAssets: vendorPath }
+    return { kit: path.join(vendorPath, kitArch), appxAssets: vendorPath }
   }
 
-  const useLegacy = winCodeSign == null || winCodeSign === "0.0.0"
-  if (useLegacy) {
+  const version = resolveToolsetVersion(winCodeSign, WIN_CODESIGN_LATEST)
+  if (version === "0.0.0") {
     const vendorPath = sanitizeDirPath(await getLegacyWinCodeSignBin())
-    return { kit: path.join(vendorPath, "windows-10", arch === Arch.arm64 ? "x64" : Arch[arch]), appxAssets: vendorPath }
+    return { kit: path.join(vendorPath, "windows-10", kitArch), appxAssets: vendorPath }
   }
   const file = "windows-kits-bundle-10_0_26100_0.zip"
-  const vendorPath = sanitizeDirPath(await _getWindowsToolsBin(winCodeSign, file))
-  return { kit: path.join(vendorPath, arch === Arch.ia32 ? "x86" : Arch[arch]), appxAssets: vendorPath }
+  const vendorPath = sanitizeDirPath(await _getWindowsToolsBin(version, file))
+  return { kit: path.join(vendorPath, kitArch), appxAssets: vendorPath }
 }
 
 export function isOldWin6() {
@@ -118,8 +130,20 @@ export function isOldWin6() {
   return winVersion.startsWith("6.") && !winVersion.startsWith("6.3")
 }
 
-async function getWindowsSignToolExe({ winCodeSign, arch, resourcesDir = "" }: { winCodeSign: ToolsetConfig["winCodeSign"] | Nullish; arch: Arch; resourcesDir?: string }) {
-  if (winCodeSign === "0.0.0" || winCodeSign == null) {
+/**
+ * True only for the explicit legacy winCodeSign pin (`"0.0.0"` → winCodeSign-2.6.0). That bundle lacks
+ * the modern Windows Kits SDK (no MSIX-capable `makeappx`/`makepri`), so it cannot build MSIX — only the
+ * MSIX target gates on this. AppX still builds fine with the legacy bundle (it has its own legacy-bundle
+ * `signtool` handling in `getWindowsSignToolExe`). Unset / `null` / `"latest"` and any modern version pin
+ * resolve to a modern bundle; a custom `{ url, … }` toolset is the caller's responsibility and is not
+ * treated as legacy.
+ */
+export function isLegacyWinCodeSign(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish): boolean {
+  return typeof winCodeSign !== "object" && resolveToolsetVersion(winCodeSign, WIN_CODESIGN_LATEST) === "0.0.0"
+}
+
+async function getWindowsSignToolExe({ winCodeSign, resourcesDir = "" }: { winCodeSign: ToolsetConfig["winCodeSign"] | Nullish; resourcesDir?: string }) {
+  if (typeof winCodeSign !== "object" && resolveToolsetVersion(winCodeSign, WIN_CODESIGN_LATEST) === "0.0.0") {
     // use modern signtool on Windows Server 2012 R2 to be able to sign AppX
     const vendorPath = sanitizeDirPath(await getLegacyWinCodeSignBin())
     if (isOldWin6()) {
@@ -129,21 +153,27 @@ async function getWindowsSignToolExe({ winCodeSign, arch, resourcesDir = "" }: {
     }
   }
   // kit is already sanitized by getWindowsKitsBundle
-  const { kit } = await getWindowsKitsBundle({ winCodeSign, arch, resourcesDir })
+  const { kit } = await getWindowsKitsBundle({ winCodeSign, resourcesDir })
   return path.join(kit, "signtool.exe")
 }
 
 async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish, resourcesDir = "") {
-  if (process.platform === "win32") {
-    return { path: "osslsigncode" }
-  }
-
+  // A custom toolset is an explicit user override — honored on every platform, before any platform default/fallback.
   if (typeof winCodeSign === "object" && winCodeSign != null) {
     const vendorPath = sanitizeDirPath(await getCustomToolsetPath(winCodeSign, resourcesDir), resourcesDir || undefined)
     return { path: path.join(vendorPath, "osslsigncode") }
   }
 
-  if (winCodeSign === "0.0.0" || winCodeSign == null) {
+  if (process.platform === "win32") {
+    // Unreachable in normal flow: osslsigncode is only requested when the host is not Windows (Windows signs via
+    // signtool). Kept as defense-in-depth — fail loudly instead of resolving a bare `osslsigncode` from $PATH.
+    throw new InvalidConfigurationError(
+      `osslsigncode is not used on Windows (signing uses signtool). To override, configure a custom toolset: toolsets: { winCodeSign: { url: "file:///absolute/path/to/dir" } }`
+    )
+  }
+
+  const version = resolveToolsetVersion(winCodeSign, WIN_CODESIGN_LATEST)
+  if (version === "0.0.0") {
     const legacyBase = sanitizeDirPath(await getLegacyWinCodeSignBin())
     const vendorBase = path.join(legacyBase, process.platform)
     const vendorPath = process.platform === "darwin" ? path.join(vendorBase, "10.12") : vendorBase
@@ -165,29 +195,31 @@ async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] |
     }
     return "win-codesign-darwin-x86_64.zip"
   })()
-  const vendorPath = sanitizeDirPath(await _getWindowsToolsBin(winCodeSign, file))
+  const vendorPath = sanitizeDirPath(await _getWindowsToolsBin(version, file))
   return { path: path.join(vendorPath, "osslsigncode") }
 }
 
 export async function getAtsBundleDir(winCodeSign: string): Promise<string> {
-  const checksum = (wincodesignChecksums as Record<string, Record<string, string>>)[winCodeSign]?.["ats-bundle-1_0_95.zip"]
+  const version = winCodeSign === "latest" ? WIN_CODESIGN_LATEST : winCodeSign
+  const checksum = (wincodesignChecksums as Record<string, Record<string, string>>)[version]?.["ats-bundle-1_0_95.zip"]
   if (!checksum) {
-    throw new Error(`winCodeSign version "${winCodeSign}" does not include an ATS bundle (requires >= 1.3.0)`)
+    throw new Error(`winCodeSign version "${version}" does not include an ATS bundle (requires >= 1.3.0)`)
   }
   return downloadBuilderToolset({
-    releaseName: `win-codesign@${winCodeSign}`,
+    releaseName: `win-codesign@${version}`,
     filenameWithExt: "ats-bundle-1_0_95.zip",
     checksums: { "ats-bundle-1_0_95.zip": checksum },
   })
 }
 
 export async function getDotnetRuntimeDir(winCodeSign: string): Promise<string> {
-  const checksum = (wincodesignChecksums as Record<string, Record<string, string>>)[winCodeSign]?.["dotnet-runtime-win-x64-8_0_28.zip"]
+  const version = winCodeSign === "latest" ? WIN_CODESIGN_LATEST : winCodeSign
+  const checksum = (wincodesignChecksums as Record<string, Record<string, string>>)[version]?.["dotnet-runtime-win-x64-8_0_28.zip"]
   if (!checksum) {
-    throw new Error(`winCodeSign version "${winCodeSign}" does not include a .NET runtime bundle (requires >= 1.3.0)`)
+    throw new Error(`winCodeSign version "${version}" does not include a .NET runtime bundle (requires >= 1.3.0)`)
   }
   return downloadBuilderToolset({
-    releaseName: `win-codesign@${winCodeSign}`,
+    releaseName: `win-codesign@${version}`,
     filenameWithExt: "dotnet-runtime-win-x64-8_0_28.zip",
     checksums: { "dotnet-runtime-win-x64-8_0_28.zip": checksum },
   })
@@ -201,11 +233,12 @@ export async function getRceditBundle(winCodeSign: ToolsetConfig["winCodeSign"] 
     const vendorPath = sanitizeDirPath(await getCustomToolsetPath(winCodeSign, resourcesDir), resourcesDir || undefined)
     return { x86: path.join(vendorPath, x86), x64: path.join(vendorPath, x64) }
   }
-  if (winCodeSign === "0.0.0" || winCodeSign == null) {
+  const version = resolveToolsetVersion(winCodeSign, WIN_CODESIGN_LATEST)
+  if (version === "0.0.0") {
     const vendorPath = sanitizeDirPath(await getLegacyWinCodeSignBin())
     return { x86: path.join(vendorPath, ia32), x64: path.join(vendorPath, x64) }
   }
   const file = "rcedit-windows-2_0_0.zip"
-  const vendorPath = sanitizeDirPath(await _getWindowsToolsBin(winCodeSign, file))
+  const vendorPath = sanitizeDirPath(await _getWindowsToolsBin(version, file))
   return { x86: path.join(vendorPath, x86), x64: path.join(vendorPath, x64) }
 }

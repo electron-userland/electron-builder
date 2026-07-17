@@ -1,8 +1,12 @@
+import { InvalidConfigurationError } from "builder-util"
 import * as path from "path"
 import { ToolsetConfig } from "../configuration.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
-import { isUseSystemFpm } from "../util/flags.js"
 import { getCustomToolsetPath } from "./custom.js"
+import { resolveToolsetVersion } from "./version.js"
+
+// Newest FPM bundle — selected when the config is unset / null / "latest".
+const FPM_LATEST = "2.2.1"
 
 const fpmChecksums = {
   "2.2.1": {
@@ -16,13 +20,18 @@ const fpmChecksums = {
 
 export async function getFpmPath(toolset: ToolsetConfig["fpm"], resourcesDir: string) {
   const exec = "fpm"
-  if (process.platform === "win32" || isUseSystemFpm()) {
-    return exec
-  }
-
+  // A custom toolset is an explicit user override — honored on every platform, before any platform default/fallback.
   if (typeof toolset === "object" && toolset != null) {
     const vendorPath = await getCustomToolsetPath(toolset, resourcesDir)
     return path.resolve(vendorPath, exec)
+  }
+
+  if (process.platform === "win32") {
+    // No fpm binary is bundled for Windows. Rather than resolving a bare `fpm` from $PATH (a binary-hijack
+    // vector), require an explicit custom toolset pointing at the directory that contains the fpm executable.
+    throw new InvalidConfigurationError(
+      `fpm is not bundled for Windows. Configure a custom toolset pointing at the directory containing your fpm executable, e.g. toolsets: { fpm: { url: "file:///absolute/path/to/fpm/dir" } }`
+    )
   }
 
   const getKey = () => {
@@ -42,7 +51,7 @@ export async function getFpmPath(toolset: ToolsetConfig["fpm"], resourcesDir: st
   }
 
   const filename = getKey()
-  const version = toolset ?? "2.2.1"
+  const version = resolveToolsetVersion(toolset, FPM_LATEST)
   const fpmPath = await downloadBuilderToolset({
     releaseName: `fpm@${version}`,
     filenameWithExt: filename,

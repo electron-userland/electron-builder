@@ -50,6 +50,7 @@ const sidebars: SidebarsConfig = {
         { type: "doc", id: "win", label: "Windows" },
         { type: "doc", id: "nsis", label: "NSIS" },
         { type: "doc", id: "appx", label: "AppX" },
+        { type: "doc", id: "msix", label: "MSIX" },
         { type: "doc", id: "msi", label: "MSI" },
         { type: "doc", id: "msi-wrapped", label: "MSI Wrapped" },
         { type: "doc", id: "squirrel-windows", label: "Squirrel Windows" },
@@ -88,7 +89,8 @@ const sidebars: SidebarsConfig = {
   ],
 
   migrationSidebar: [
-    { type: "doc", id: "migration/v26-to-v27", label: "v26 → v27" },
+    { type: "doc", id: "migration/v27-breaking-changes", label: "v27 Breaking Changes" },
+    { type: "doc", id: "migration/v26-to-v27", label: "v26 → v27 Walkthrough" },
   ],
 
   tutorialsSidebar: [

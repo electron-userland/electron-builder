@@ -9,6 +9,7 @@ import { getAppImageTools } from "../../../toolsets/appimage.js"
 import { downloadBuilderToolset } from "../../../util/electronGet.js"
 import { isSnapDestructiveMode } from "../../../util/flags.js"
 import { getTemplatePath } from "../../../util/pathManager.js"
+import { buildLauncherScript } from "../launcherScript.js"
 import { SnapCore } from "./SnapTarget.js"
 import { shellQuote } from "./snapCommand.js"
 import { SnapcraftYAML } from "./snapcraft.js"
@@ -189,7 +190,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
     return snap
   }
 
-  async buildSnap(props: { snap: any; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<void> {
+  async buildSnap(props: { snap: any; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<string[]> {
     const { snap, appOutDir, stageDir, snapArch, artifactPath } = props
 
     // Build the args array for effectiveOptionComputed compatibility — tests inspect this.
@@ -249,7 +250,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
     }
 
     if (this.packager.packagerOptions.effectiveOptionComputed != null && (await this.packager.packagerOptions.effectiveOptionComputed({ snap, desktopFile, args }))) {
-      return
+      return [artifactPath]
     }
 
     await outputFile(path.join(snapMetaDir, this.isUseTemplateApp ? "snap.yaml" : "snapcraft.yaml"), serializeToYaml(snap))
@@ -266,6 +267,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
     } else {
       await this.buildWithoutTemplate({ appOutDir, stageDir, artifactPath, hooksDir, extraAppArgs })
     }
+    return [artifactPath]
   }
 
   private async buildWithTemplate(opts: {
@@ -455,10 +457,9 @@ export function buildCommandShContent(opts: { isTemplate: boolean; executableNam
   const { isTemplate, executableName, extraAppArgs } = opts
   validateShellEmbeddable(executableName, "executableName")
   const appPrefix = isTemplate ? "" : "app/"
-  let content = `#!/bin/bash -e\nexec "$SNAP/desktop-init.sh" "$SNAP/desktop-common.sh" "$SNAP/desktop-gnome-specific.sh" "$SNAP/${appPrefix}${executableName}"`
-  if (extraAppArgs.length > 0) {
-    content += " " + extraAppArgs.map(shellQuote).join(" ")
-  }
-  content += ' "$@"'
-  return content
+  return buildLauncherScript({
+    shebang: "#!/bin/bash -e",
+    command: ['"$SNAP/desktop-init.sh"', '"$SNAP/desktop-common.sh"', '"$SNAP/desktop-gnome-specific.sh"', `"$SNAP/${appPrefix}${executableName}"`],
+    args: extraAppArgs,
+  })
 }

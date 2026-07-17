@@ -1,5 +1,4 @@
 import { InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
-import { isElectronBuilderAllowedAsProductionDependency } from "./flags.js"
 import { Nullish } from "builder-util-runtime"
 import fsExtra from "fs-extra"
 import * as path from "path"
@@ -130,15 +129,5 @@ function checkDependencies(dependencies: Record<string, string> | Nullish, error
   const swVersion = dependencies["electron-builder-squirrel-windows"]
   if (swVersion != null && !versionSatisfies(swVersion, ">=20.32.0")) {
     errors.push(`At least electron-builder-squirrel-windows 20.32.0 is required by current electron-builder version. Please set electron-builder-squirrel-windows to "^20.32.0"`)
-  }
-
-  const deps = ["electron", "electron-prebuilt", "electron-rebuild"]
-  if (!isElectronBuilderAllowedAsProductionDependency()) {
-    deps.push("electron-builder")
-  }
-  for (const name of deps) {
-    if (name in dependencies) {
-      errors.push(`Package "${name}" is only allowed in "devDependencies". ` + `Please remove it from the "dependencies" section in your package.json.`)
-    }
   }
 }
