@@ -152,11 +152,11 @@ But it is not recommended, better to test auto-update for installed application 
 
 ## Compatibility
 
-Generated metadata files format changes from time to time, but compatibility preserved up to version 1. If you start a new project, recommended to set `electronUpdaterCompatibility` to current latest format version (`>= 2.16`).
+Since electron-builder 27 the generated `latest*.yml` targets the modern `files[]` metadata format by default and no longer includes the legacy top-level `path`/`sha512` fields, which are needed only by electron-updater 1.x – 2.15.0.
 
-The `electronUpdaterCompatibility` option sets the electron-updater compatibility semver range. Can be specified per platform.
+The `electronUpdaterCompatibility` option sets the electron-updater compatibility semver range (e.g. `>=2.16`, `>=1.0.0`). Can be specified per platform (e.g. `win.electronUpdaterCompatibility`). When the declared range intersects legacy electron-updater versions, the corresponding legacy fields are emitted in addition to `files[]`: the top-level `path`/`sha512` and the Windows `sha2` checksum for ranges intersecting `<2.16.0`, and the old `latest-mac.json` for ranges intersecting `<2.0.0`. Defaults to `>=2.16`.
 
-e.g. `>= 2.16`, `>=1.0.0`. Defaults to `>=2.15`
+Metadata format history:
 
 * `1.0.0` latest-mac.json
 * `2.15.0` path
@@ -170,8 +170,10 @@ Staged rollouts are controlled by manually editing your `latest.yml` / `latest-m
 
 ```yml
 version: 1.1.0
-path: TestApp Setup 1.1.0.exe
-sha512: Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==
+files:
+  - url: TestApp Setup 1.1.0.exe
+    sha512: Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==
+    size: 62021782
 stagingPercentage: 10
 ```
 

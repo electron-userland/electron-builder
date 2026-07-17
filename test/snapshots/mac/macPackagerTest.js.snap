@@ -594,9 +594,7 @@ exports[`macPackager > one-package 1`] = `
             "url": "Test App ßW-1.1.0.dmg",
           },
         ],
-        "path": "Test App ßW-1.1.0-mac.zip",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.1.0",
       },
     },
@@ -823,9 +821,7 @@ exports[`macPackager > two-package 1`] = `
             "url": "TestApp-1.1.0-mac-x64.zip",
           },
         ],
-        "path": "TestApp-1.1.0-mac-x64.zip",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.1.0",
       },
     },
@@ -1155,6 +1151,7 @@ exports[`macPackager > yarn two package.json w/ native module 2`] = `
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
 `;
+
 exports[`macPackager > yarn two package.json w/ native module 3`] = `
 {
   "files": {
