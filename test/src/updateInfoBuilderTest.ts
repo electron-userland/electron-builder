@@ -368,7 +368,8 @@ test("createUpdateInfoTasks GitHub safeArtifactName does not leak into other pro
       file: artifactFile,
       arch: null,
       safeArtifactName: "App-1.0.0.exe",
-      packager: makePlatformPackager(),
+      // legacy compatibility range so the top-level path is emitted too — the leak historically affected it as well
+      packager: makePlatformPackager(">=1.0.0"),
       target: { outDir: dir },
     }
     const tasks = await createUpdateInfoTasks(event, [
@@ -380,6 +381,7 @@ test("createUpdateInfoTasks GitHub safeArtifactName does not leak into other pro
     const s3Task = tasks.find(task => task.publishConfiguration.provider === "s3")!
     // GitHub gets the safe name, but the shared info used by other providers must keep the real file name
     expect(githubTask.info.files[0].url).toBe("App-1.0.0.exe")
+    expect((githubTask.info as any).path).toBe("App-1.0.0.exe")
     expect(s3Task.info.files[0].url).toBe("App 1.0.0.exe")
     expect((s3Task.info as any).path).toBe("App 1.0.0.exe")
   })

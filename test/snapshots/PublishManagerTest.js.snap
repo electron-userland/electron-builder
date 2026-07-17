@@ -145,7 +145,7 @@ exports[`generic, github and spaces 1`] = `
           {
             "sha512": "@sha512",
             "size": "@size",
-            "url": "TestApp-1.1.0-mac.zip",
+            "url": "Test App ßW-1.1.0-mac.zip",
           },
         ],
         "releaseDate": "@releaseDate",
@@ -159,7 +159,7 @@ exports[`generic, github and spaces 1`] = `
           {
             "sha512": "@sha512",
             "size": "@size",
-            "url": "TestApp-1.1.0-mac.zip",
+            "url": "Test App ßW-1.1.0-mac.zip",
           },
         ],
         "releaseDate": "@releaseDate",
@@ -173,7 +173,7 @@ exports[`generic, github and spaces 1`] = `
           {
             "sha512": "@sha512",
             "size": "@size",
-            "url": "TestApp-1.1.0-mac.zip",
+            "url": "Test App ßW-1.1.0-mac.zip",
           },
         ],
         "releaseDate": "@releaseDate",
@@ -187,7 +187,21 @@ exports[`generic, github and spaces 1`] = `
           {
             "sha512": "@sha512",
             "size": "@size",
-            "url": "TestApp-1.1.0-mac.zip",
+            "url": "Test App ßW-1.1.0-mac.zip",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.1.0",
+      },
+    },
+    {
+      "file": "latest-mac.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.1.0-mac.zip",
           },
         ],
         "releaseDate": "@releaseDate",
@@ -215,21 +229,7 @@ exports[`generic, github and spaces 1`] = `
           {
             "sha512": "@sha512",
             "size": "@size",
-            "url": "TestApp-1.1.0-mac.zip",
-          },
-        ],
-        "releaseDate": "@releaseDate",
-        "version": "1.1.0",
-      },
-    },
-    {
-      "file": "latest-mac.yml",
-      "fileContent": {
-        "files": [
-          {
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "TestApp-1.1.0-mac.zip",
+            "url": "Test App ßW-1.1.0-mac.zip",
           },
         ],
         "releaseDate": "@releaseDate",
