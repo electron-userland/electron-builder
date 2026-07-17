@@ -345,7 +345,7 @@ export class Packager {
     if (this.isTwoPackageJsonProjectLayoutUsed) {
       log.debug({ devPackageFile, appPackageFile }, "two package.json structure is used")
     }
-    checkMetadata(this.metadata, this.devMetadata, appPackageFile, devPackageFile)
+    checkMetadata(this.metadata, this.devMetadata, appPackageFile, devPackageFile, projectDir)
 
     await validateConfiguration(configuration, this.debugLogger)
 
