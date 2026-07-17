@@ -82,20 +82,6 @@ export interface UpdateInfoFileTask {
   readonly arch?: Arch | null
 }
 
-function checkUpdaterCompatibility(updaterCompatibility: string | null, publishConfiguration: PublishConfiguration, packager: PlatformPackager<any>) {
-  if (updaterCompatibility != null) {
-    return semver.satisfies("1.0.0", updaterCompatibility)
-  }
-
-  // spaces is a new publish provider, no need to keep backward compatibility
-  if (publishConfiguration.provider === "spaces") {
-    return false
-  }
-
-  const updaterVersion = packager.metadata.dependencies == null ? null : packager.metadata.dependencies["electron-updater"]
-  return updaterVersion == null || semver.lt(updaterVersion, "4.0.0")
-}
-
 export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConfigs: Array<PublishConfiguration>): Promise<Array<UpdateInfoFileTask>> {
   const packager = event.packager
   const publishConfigs = await getPublishConfigsForUpdateInfo(packager, _publishConfigs, event.arch)
@@ -110,23 +96,33 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
   const createdFiles = new Set<string>()
   const sharedInfo = await createUpdateInfo(version, event, await getReleaseInfo(packager))
   const tasks: Array<UpdateInfoFileTask> = []
-  const electronUpdaterCompatibility = packager.platformOptions.electronUpdaterCompatibility || packager.config.electronUpdaterCompatibility || ">=2.15"
+  const electronUpdaterCompatibility = packager.platformOptions.electronUpdaterCompatibility || packager.config.electronUpdaterCompatibility || ">=2.16"
+  // electron-updater < 2.16.0 predates the files[] array and reads the top-level path/sha512 (and Windows sha2) fields instead
+  // (do not pass includePrerelease — it would make the default ">=2.16" intersect "<2.16.0" at the 2.16.0-0 prerelease point)
+  const needsLegacyPathSha512 = semver.intersects(electronUpdaterCompatibility, "<2.16.0")
+  // electron-updater < 2.0.0 on macOS reads the legacy <channel>-mac.json instead of <channel>-mac.yml
+  const needsLegacyMacJsonCompatibility = semver.intersects(electronUpdaterCompatibility, "<2.0.0")
   for (const publishConfiguration of publishConfigs) {
     let dir = outDir
     if (publishConfigs.length > 1 && publishConfiguration !== publishConfigs[0]) {
       dir = path.join(outDir, publishConfiguration.provider)
     }
 
-    let isElectronUpdater1xCompatibility = checkUpdaterCompatibility(electronUpdaterCompatibility, publishConfiguration, packager)
+    let needsLegacyMacJson = needsLegacyMacJsonCompatibility
 
     let info = sharedInfo
     // noinspection JSDeprecatedSymbols
-    if (isElectronUpdater1xCompatibility && packager.platform === Platform.WINDOWS) {
+    if (needsLegacyPathSha512) {
+      // legacy top-level path/sha512 (and Windows sha2) for electron-updater 1.x – 2.15.0; modern clients read files[]
       info = {
         ...info,
+        path: info.files[0].url,
+        sha512: info.files[0].sha512,
       }
-      // noinspection JSDeprecatedSymbols
-      ;(info as WindowsUpdateInfo).sha2 = await sha2.value
+      if (packager.platform === Platform.WINDOWS) {
+        // noinspection JSDeprecatedSymbols
+        ;(info as WindowsUpdateInfo).sha2 = await sha2.value
+      }
     }
 
     if (event.safeArtifactName != null && publishConfiguration.provider === "github") {
@@ -135,14 +131,15 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
       info = {
         ...info,
         files: newFiles,
-        path: event.safeArtifactName,
+        // legacy top-level path mirrors files[0].url; only emitted for pre-2.16 compatibility
+        ...(needsLegacyPathSha512 ? { path: event.safeArtifactName } : {}),
       }
     }
 
     for (const channel of computeChannelNames(packager, publishConfiguration)) {
-      if (isMac && isElectronUpdater1xCompatibility && event.file.endsWith(".zip")) {
+      if (isMac && needsLegacyMacJson && event.file.endsWith(".zip")) {
         // write only for first channel (generateUpdatesFilesForAllChannels is a new functionality, no need to generate old mac update info file)
-        isElectronUpdater1xCompatibility = false
+        needsLegacyMacJson = false
         await writeOldMacInfo(publishConfiguration, outDir, dir, channel, createdFiles, version, packager)
       }
 
@@ -176,10 +173,6 @@ async function createUpdateInfo(version: string, event: ArtifactCreated, release
     version,
     // @ts-ignore
     files,
-    // @ts-ignore
-    path: url /* backward compatibility, electron-updater 1.x - electron-updater 2.15.0 */,
-    // @ts-ignore
-    sha512 /* backward compatibility, electron-updater 1.x - electron-updater 2.15.0 */,
     ...(releaseInfo as UpdateInfo),
   }
 

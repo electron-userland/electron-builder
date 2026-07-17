@@ -225,11 +225,11 @@ test("emitArtifactCreated is called once per unique yml file", async ({ expect }
 
 // ── createUpdateInfoTasks unit tests ─────────────────────────────────────────
 
-function makePlatformPackager(): any {
+function makePlatformPackager(electronUpdaterCompatibility = ">=2.16"): any {
   return {
     appInfo: { version: "1.0.0" },
     platform: Platform.WINDOWS,
-    platformOptions: { releaseInfo: undefined, electronUpdaterCompatibility: ">=2.16", generateUpdatesFilesForAllChannels: undefined },
+    platformOptions: { releaseInfo: undefined, electronUpdaterCompatibility, generateUpdatesFilesForAllChannels: undefined },
     config: { releaseInfo: undefined, generateUpdatesFilesForAllChannels: undefined },
     info: {},
     getResource: () => Promise.resolve(null),
@@ -258,7 +258,7 @@ test("createUpdateInfoTasks sets arch null for universal installer", async ({ ex
   })
 })
 
-test("createUpdateInfoTasks GitHub provider overrides url and path with safeArtifactName", async ({ expect }) => {
+test("createUpdateInfoTasks GitHub provider overrides files[0].url with safeArtifactName and omits legacy path under modern compatibility", async ({ expect }) => {
   await withTmpDir(async dir => {
     const artifactFile = path.join(dir, "App-1.0.0.exe")
     await fsp.writeFile(artifactFile, "fake")
@@ -272,7 +272,91 @@ test("createUpdateInfoTasks GitHub provider overrides url and path with safeArti
     const tasks = await createUpdateInfoTasks(event, [{ provider: "github", repo: "owner/repo" }] as any)
     expect(tasks).toHaveLength(1)
     expect(tasks[0].info.files[0].url).toBe("app-1.0.0.exe")
+    // default electronUpdaterCompatibility (>=2.16) targets modern clients, so no legacy top-level path is emitted
+    expect((tasks[0].info as any).path).toBeUndefined()
+  })
+})
+
+test("createUpdateInfoTasks emits legacy top-level path/sha512 when electronUpdaterCompatibility includes 1.x clients", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App-1.0.0.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    const event: any = {
+      file: artifactFile,
+      arch: null,
+      safeArtifactName: "app-1.0.0.exe",
+      packager: makePlatformPackager(">=1.0.0"),
+      target: { outDir: dir },
+    }
+    const tasks = await createUpdateInfoTasks(event, [{ provider: "github", repo: "owner/repo" }] as any)
+    expect(tasks).toHaveLength(1)
+    expect(tasks[0].info.files[0].url).toBe("app-1.0.0.exe")
+    // legacy compatibility range -> top-level path/sha512 mirror the file descriptor
     expect((tasks[0].info as any).path).toBe("app-1.0.0.exe")
+    expect((tasks[0].info as any).sha512).toBeDefined()
+  })
+})
+
+test("createUpdateInfoTasks emits legacy top-level path/sha512 when the compatibility range intersects pre-2.16 versions", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App-1.0.0.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    // ^2.0.0 intersects <2.16.0 (e.g. 2.15.0) even though it excludes 1.x
+    const event: any = { file: artifactFile, arch: null, packager: makePlatformPackager("^2.0.0"), target: { outDir: dir } }
+    const tasks = await createUpdateInfoTasks(event, [{ provider: "s3", bucket: "test" }] as any)
+    expect(tasks).toHaveLength(1)
+    expect((tasks[0].info as any).path).toBe("App-1.0.0.exe")
+    expect((tasks[0].info as any).sha512).toBe(tasks[0].info.files[0].sha512)
+    // Windows platform + legacy range -> deprecated sha2 checksum is also emitted
+    expect((tasks[0].info as any).sha2).toBeDefined()
+  })
+})
+
+function makeMacPackager(electronUpdaterCompatibility: string): any {
+  return {
+    appInfo: { version: "1.0.0" },
+    platform: Platform.MAC,
+    platformOptions: { releaseInfo: undefined, electronUpdaterCompatibility, generateUpdatesFilesForAllChannels: undefined },
+    config: { releaseInfo: undefined, generateUpdatesFilesForAllChannels: undefined },
+    info: {},
+    getResource: () => Promise.resolve(null),
+    generateName2: () => "TestApp-1.0.0-mac.zip",
+    emitArtifactCreated: vi.fn().mockResolvedValue(undefined),
+  }
+}
+
+test("createUpdateInfoTasks with >=2.15 emits legacy path/sha512 but no legacy latest-mac.json", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App-1.0.0-mac.zip")
+    await fsp.writeFile(artifactFile, "fake")
+    const event: any = { file: artifactFile, arch: null, packager: makeMacPackager(">=2.15"), target: { outDir: dir } }
+    const tasks = await createUpdateInfoTasks(event, [{ provider: "generic", url: "https://example.com/updates" }] as any)
+    expect(tasks).toHaveLength(1)
+    // >=2.15 intersects <2.16.0 -> legacy top-level path/sha512
+    expect((tasks[0].info as any).path).toBe("App-1.0.0-mac.zip")
+    expect((tasks[0].info as any).sha512).toBeDefined()
+    // but it does not intersect <2.0.0 -> no legacy latest-mac.json
+    const macJsonExists = await fsp
+      .access(path.join(dir, "latest-mac.json"))
+      .then(() => true)
+      .catch(() => false)
+    expect(macJsonExists).toBe(false)
+  })
+})
+
+test("createUpdateInfoTasks with 1.1 emits legacy path/sha512 and legacy latest-mac.json", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App-1.0.0-mac.zip")
+    await fsp.writeFile(artifactFile, "fake")
+    const event: any = { file: artifactFile, arch: null, packager: makeMacPackager("1.1"), target: { outDir: dir } }
+    const tasks = await createUpdateInfoTasks(event, [{ provider: "generic", url: "https://example.com/updates" }] as any)
+    expect(tasks).toHaveLength(1)
+    expect((tasks[0].info as any).path).toBe("App-1.0.0-mac.zip")
+    expect((tasks[0].info as any).sha512).toBeDefined()
+    // 1.1 intersects <2.0.0 -> legacy latest-mac.json is written for the first channel
+    const macJson = JSON.parse(await fsp.readFile(path.join(dir, "latest-mac.json"), "utf-8"))
+    expect(macJson.version).toBe("1.0.0")
+    expect(macJson.url).toBe("https://example.com/updates/TestApp-1.0.0-mac.zip")
   })
 })
 
