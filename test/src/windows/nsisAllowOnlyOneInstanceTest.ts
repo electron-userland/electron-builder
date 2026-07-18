@@ -18,8 +18,8 @@ describe("allowOnlyOneInstallerInstance.nsh", { sequential: true }, () => {
   })
 
   describe("FIND_PROCESS macro — PowerShell path", () => {
-    test("uses $INSTDIR path-based matching (not name-based)", () => {
-      expect(findProcessMacro).toContain("$$_.Path.StartsWith('$INSTDIR'")
+    test("uses path-based matching (not name-based)", () => {
+      expect(findProcessMacro).toContain("$$_.Path -and ($processPathFilter)")
     })
 
     test("exits with 0 when matching processes found, 1 when not", () => {
@@ -79,13 +79,38 @@ describe("allowOnlyOneInstallerInstance.nsh", { sequential: true }, () => {
       expect(checkMacro![0]).toContain("Var /GLOBAL CmdPath")
       expect(checkMacro![0]).toContain("Var /GLOBAL PowerShellPath")
     })
+
+    test("path filter matches $INSTDIR with a trailing backslash (no sibling-directory false positives)", () => {
+      const checkMacro = templateContent.match(/!macro CHECK_APP_RUNNING[\s\S]*?!macroend/)
+      expect(checkMacro).not.toBeNull()
+      expect(checkMacro![0]).toContain("$$_.Path.StartsWith('$INSTDIR\\', 'CurrentCultureIgnoreCase')")
+    })
+
+    test("path filter also covers previous per-user and per-machine install locations, installer only (#10022)", () => {
+      const checkMacro = templateContent.match(/!macro CHECK_APP_RUNNING[\s\S]*?!macroend/)
+      expect(checkMacro).not.toBeNull()
+      expect(checkMacro![0]).toContain("!insertmacro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER HKCU")
+      expect(checkMacro![0]).toContain("!insertmacro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER HKLM")
+      // the uninstaller must keep matching only its own $INSTDIR
+      expect(checkMacro![0]).toContain("!ifndef BUILD_UNINSTALLER")
+    })
+  })
+
+  describe("APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER macro", () => {
+    test("skips empty InstallLocation so an empty prefix can never match every process", () => {
+      const appendMacro = templateContent.match(/!macro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER[\s\S]*?!macroend/)
+      expect(appendMacro).not.toBeNull()
+      expect(appendMacro![0]).toContain('$R9 != ""')
+      expect(appendMacro![0]).toContain("$R9 != $INSTDIR")
+      expect(appendMacro![0]).toContain("$$_.Path.StartsWith('$R9\\', 'CurrentCultureIgnoreCase')")
+    })
   })
 
   describe("KILL_PROCESS macro", () => {
-    test("PowerShell path uses $INSTDIR path-based matching", () => {
+    test("PowerShell path uses the same path-based filter as FIND_PROCESS", () => {
       const killMacro = templateContent.match(/!macro KILL_PROCESS[\s\S]*?!macroend/)
       expect(killMacro).not.toBeNull()
-      expect(killMacro![0]).toContain("$$_.Path.StartsWith('$INSTDIR'")
+      expect(killMacro![0]).toContain("$$_.Path -and ($processPathFilter)")
     })
   })
 

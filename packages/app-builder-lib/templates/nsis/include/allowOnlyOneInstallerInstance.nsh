@@ -29,11 +29,33 @@
   launch:
 !macroend
 
+# appends "-or <path>.StartsWith(...)" to $processPathFilter for the InstallLocation stored in the given registry root (if any)
+!macro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER _ROOT_KEY
+  ReadRegStr $R9 ${_ROOT_KEY} "${INSTALL_REGISTRY_KEY}" InstallLocation
+  ${if} $R9 != ""
+  ${andIf} $R9 != $INSTDIR
+    StrCpy $processPathFilter "$processPathFilter -or $$_.Path.StartsWith('$R9\', 'CurrentCultureIgnoreCase')"
+  ${endIf}
+!macroend
+
 !macro CHECK_APP_RUNNING
   Var /GLOBAL CmdPath
   Var /GLOBAL PowerShellPath
+  Var /GLOBAL processPathFilter
   StrCpy $CmdPath "$SYSDIR\cmd.exe"
   StrCpy $PowerShellPath "$SYSDIR\WindowsPowerShell\v1.0\powershell.exe"
+  # PowerShell filter matching processes running from the installation directory
+  # (trailing backslash so that a sibling directory with the same prefix is not matched)
+  StrCpy $processPathFilter "$$_.Path.StartsWith('$INSTDIR\', 'CurrentCultureIgnoreCase')"
+  !ifndef BUILD_UNINSTALLER
+    # also match processes running from the previous per-user and per-machine installation directories,
+    # because the previous installation is uninstalled during install
+    # https://github.com/electron-userland/electron-builder/issues/10022
+    Push $R9
+    !insertmacro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER HKCU
+    !insertmacro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER HKLM
+    Pop $R9
+  !endif
   !ifmacrodef customCheckAppRunning
     !insertmacro customCheckAppRunning
   !else
@@ -63,7 +85,7 @@
 
 !macro FIND_PROCESS _FILE _RETURN
   ${if} $IsPowerShellAvailable == 0
-    nsExec::Exec `"$PowerShellPath" -C "if ((Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and $$_.Path.StartsWith('$INSTDIR', 'CurrentCultureIgnoreCase')}).Count -gt 0) { exit 0 } else { exit 1 }"`
+    nsExec::Exec `"$PowerShellPath" -C "if ((Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and ($processPathFilter)}).Count -gt 0) { exit 0 } else { exit 1 }"`
     Pop ${_RETURN}
   ${else}
     !ifdef INSTALL_MODE_PER_ALL_USERS
@@ -91,7 +113,7 @@
   ${endIf}
 
   ${if} $IsPowerShellAvailable == 0
-    nsExec::Exec `"$PowerShellPath" -C "Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and $$_.Path.StartsWith('$INSTDIR', 'CurrentCultureIgnoreCase')} | % { Stop-Process -Id $$_.ProcessId $0 }"`
+    nsExec::Exec `"$PowerShellPath" -C "Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and ($processPathFilter)} | % { Stop-Process -Id $$_.ProcessId $0 }"`
   ${else}
     !ifdef INSTALL_MODE_PER_ALL_USERS
       nsExec::Exec `taskkill /IM "${_FILE}" /FI "PID ne $pid"`
