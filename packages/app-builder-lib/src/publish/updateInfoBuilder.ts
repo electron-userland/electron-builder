@@ -125,7 +125,12 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
       }
     }
 
-    if (event.safeArtifactName != null && publishConfiguration.provider === "github") {
+    // electron-updater's GitHub provider reconstructs the asset name from the metadata by replacing spaces with
+    // dashes. So when the safe name differs from the produced file only by that substitution, keep the produced
+    // (e.g. spaced) name in the metadata — making latest.yml match the file in the output directory. When the safe
+    // name diverges further (e.g. a non-ascii product name maps to a distinct fallback), the updater cannot
+    // reconstruct it, so record the safe name as before.
+    if (event.safeArtifactName != null && publishConfiguration.provider === "github" && info.files[0].url.replace(/ /g, "-") !== event.safeArtifactName) {
       const newFiles = info.files.slice()
       newFiles[0].url = event.safeArtifactName
       info = {

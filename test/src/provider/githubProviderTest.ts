@@ -1,6 +1,6 @@
 import { GithubOptions, HttpError, UpdateInfo } from "builder-util-runtime"
 import { GitHubProvider } from "electron-updater/internal"
-import { assertDownloadNotTriggered, getProvider, mockYaml } from "../helpers/providerTestUtil.js"
+import { assertDownloadNotTriggered, getProvider, mockYaml, MOCK_SHA512 } from "../helpers/providerTestUtil.js"
 import { createMockRequest, createNsisUpdater, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 
 const MOCK_OWNER = "test-owner"
@@ -319,6 +319,37 @@ test("resolveFiles - constructs download URL with tag in path", async ({ expect 
   expect(resolvedFiles).toHaveLength(1)
   expect(resolvedFiles[0].url.href).toContain(`/releases/download/${STABLE_TAG}/`)
   expect(resolvedFiles[0].url.href).toContain(`my-app-Setup-${STABLE_VERSION}.exe`)
+})
+
+// Older update metadata can record a file name with spaces. GitHub serves release assets under a
+// space-free name, so the provider normalizes spaces to dashes when building the download URL.
+test("resolveFiles - normalizes spaces in the recorded file name to dashes in the download URL", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPublicUpdater(requestSpy)
+
+  const spacedYaml = `version: ${STABLE_VERSION}
+files:
+  - url: My App Setup ${STABLE_VERSION}.exe
+    sha512: ${MOCK_SHA512}
+    size: 12345678
+path: My App Setup ${STABLE_VERSION}.exe
+sha512: ${MOCK_SHA512}
+releaseDate: '2024-01-01T00:00:00.000Z'
+`
+
+  requestSpy
+    .mockResolvedValueOnce(mockAtomFeed([{ tag: STABLE_TAG, title: STABLE_TAG }]))
+    .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
+    .mockResolvedValueOnce(spacedYaml)
+
+  const result = await updater.checkForUpdates()
+  const provider = getProvider<GitHubProvider>(updater)
+  const updateInfo = result?.updateInfo as UpdateInfo & { tag: string }
+
+  const resolvedFiles = provider.resolveFiles(updateInfo)
+  expect(resolvedFiles).toHaveLength(1)
+  expect(resolvedFiles[0].url.href).toContain(`/releases/download/${STABLE_TAG}/My-App-Setup-${STABLE_VERSION}.exe`)
+  expect(resolvedFiles[0].url.href).not.toContain("%20")
 })
 
 // fullChangelog=true → releaseNotes is an array of ReleaseNoteInfo sorted descending

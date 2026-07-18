@@ -1,5 +1,39 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`GitHub update metadata keeps the produced (spaced) name so it matches the output file 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "My App-1.1.0.AppImage",
+      "safeArtifactName": "My-App-1.1.0.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "My App-1.1.0.AppImage",
+          },
+        ],
+        "path": "My App-1.1.0.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.1.0",
+      },
+    },
+  ],
+}
+`;
+
 exports[`custom provider 1`] = `
 {
   "linux": [

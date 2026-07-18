@@ -360,6 +360,26 @@ test("createUpdateInfoTasks with 1.1 emits legacy path/sha512 and legacy latest-
   })
 })
 
+test("createUpdateInfoTasks GitHub provider keeps the produced name when the safe name only substitutes spaces", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "My App Setup 1.0.0.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    const event: any = {
+      file: artifactFile,
+      arch: null,
+      // safe name differs from the produced file only by replacing spaces with dashes — the GitHub updater
+      // reconstructs it, so the metadata should keep the produced (spaced) name and match the output file.
+      safeArtifactName: "My-App-Setup-1.0.0.exe",
+      packager: makePlatformPackager(),
+      target: { outDir: dir },
+    }
+    const tasks = await createUpdateInfoTasks(event, [{ provider: "github", repo: "owner/repo" }] as any)
+    expect(tasks).toHaveLength(1)
+    expect(tasks[0].info.files[0].url).toBe("My App Setup 1.0.0.exe")
+    expect((tasks[0].info as any).path).toBe("My App Setup 1.0.0.exe")
+  })
+})
+
 test("empty tasks array is a no-op", async ({ expect }) => {
   const mockPackager = makePackager()
   await expect(writeUpdateInfoFiles([], mockPackager as any)).resolves.toBeUndefined()
