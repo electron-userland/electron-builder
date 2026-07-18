@@ -1011,14 +1011,15 @@
         },
         "format": {
           "default": "UDZO",
-          "description": "The disk image format. `ULFO` (lzfse-compressed image (OS X 10.11+ only)).",
+          "description": "The disk image format. `ULFO` (lzfse-compressed image (OS X 10.11+ only)). `ULMO` (lzma-compressed image (macOS 10.15+ only)).",
           "enum": [
             "UDBZ",
             "UDCO",
             "UDRO",
             "UDRW",
             "UDZO",
-            "ULFO"
+            "ULFO",
+            "ULMO"
           ],
           "type": "string"
         },

@@ -111,11 +111,12 @@ The `format` option controls the compression algorithm:
 |---|---|---|
 | `UDZO` | zlib-compressed (default) | Good balance of size and compatibility |
 | `ULFO` | LZFSE-compressed | Faster decompression, macOS 10.11+ only |
+| `ULMO` | LZMA-compressed | Best compression, slower to mount, macOS 10.15+ only |
 | `UDBZ` | bzip2-compressed | Better compression than UDZO, slower |
 | `UDRO` | Read-only, uncompressed | Largest size, fastest to open |
 | `UDRW` | Read-write | Only for development/testing |
 
-For most cases, leave `format` at the default `UDZO`. Use `ULFO` if you are targeting macOS 10.11+ and want faster mount times for large apps.
+For most cases, leave `format` at the default `UDZO`. Use `ULFO` if you are targeting macOS 10.11+ and want faster mount times for large apps. Use `ULMO` if you are targeting macOS 10.15+ and want the smallest download — it typically compresses an Electron app's DMG ~30% smaller than `UDZO`, at the cost of a few extra seconds to mount and copy at install time.
 
 ## DMG Size
 
