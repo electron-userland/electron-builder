@@ -19,6 +19,12 @@ console.log(`Process.argv: ${process.argv}`)
 
 const updateConfigPath = process.env.AUTO_UPDATER_TEST_CONFIG_PATH?.trim()
 const shouldTestAutoUpdater = !!process.env.AUTO_UPDATER_TEST?.trim() && !!updateConfigPath
+
+// Install-on-next-launch test modes. Env values are strings — compare with === "true"
+// so that e.g. "false" (a truthy string) does not enable a mode.
+const isNextLaunchQueueMode = process.env.AUTO_UPDATER_TEST_NEXT_LAUNCH === "true"
+const isAutoInstallOnNextLaunchMode = process.env.AUTO_UPDATER_TEST_AUTO_INSTALL_ON_NEXT_LAUNCH === "true"
+const isInstallPendingMode = process.env.AUTO_UPDATER_TEST_INSTALL_PENDING === "true"
 const root = path.dirname(process.execPath)
 const _appUpdateConfigPath = path.resolve(process.platform === "darwin" ? `${root}/../Resources` : `${root}/resources`, "app-update.yml")
 
@@ -76,6 +82,9 @@ async function isReady() {
       debug: () => {},
     }
     autoUpdater.autoRunAppAfterInstall = false
+    // Must be assigned synchronously after require: BaseUpdater schedules the automatic
+    // pending-install check on app.whenReady(), which has already resolved at this point.
+    autoUpdater.autoInstallOnNextLaunch = isAutoInstallOnNextLaunchMode
 
     autoUpdater.on("checking-for-update", () => {
       console.log("Checking for update...")
@@ -85,9 +94,9 @@ async function isReady() {
     })
     autoUpdater.on("update-downloaded", () => {
       console.log("Update downloaded, starting quitAndInstall")
-      autoUpdater.quitAndInstall({ isSilent: true, isForceRunAfter: false }) // isForceRunAfter must be false, do not auto-restart app as the unit tests will lose stdout piping/access
-      // autoUpdater.autoInstallOnAppQuit = true
-      // app.quit()
+      // isForceRunAfter must be false, do not auto-restart app as the unit tests will lose stdout piping/access.
+      // waitUntilNextLaunch queues the pending install and quits instead of running the installer.
+      autoUpdater.quitAndInstall({ isSilent: true, isForceRunAfter: false, waitUntilNextLaunch: isNextLaunchQueueMode })
     })
     autoUpdater.on("update-not-available", () => {
       console.log("Update not available")
@@ -97,9 +106,27 @@ async function isReady() {
       console.log("Error in auto-updater:", error)
       app.quit()
     })
-    autoUpdater.checkForUpdates().catch(err => {
-      console.log("checkForUpdates rejected (handled via error event):", err?.message)
-    })
+
+    if (isInstallPendingMode) {
+      // Explicit startup install — the only pending-install path for deb/rpm/pacman (their install elevates).
+      const isInstalled = await autoUpdater.installPendingUpdateIfAvailable()
+      console.log(`INSTALL_PENDING_RESULT: ${isInstalled}`)
+      if (!isInstalled) {
+        app.quit()
+      }
+      // when a pending update was installed, the updater quits the app itself
+    } else if (isAutoInstallOnNextLaunchMode) {
+      // The updater installs the pending update at startup on its own (autoInstallOnNextLaunch).
+      // Fallback quit so a skipped or failed automatic install cannot hang the test harness.
+      setTimeout(() => {
+        console.log("AUTO_INSTALL_ON_NEXT_LAUNCH_TIMEOUT: automatic install did not quit the app")
+        app.quit()
+      }, 90 * 1000)
+    } else {
+      autoUpdater.checkForUpdates().catch(err => {
+        console.log("checkForUpdates rejected (handled via error event):", err?.message)
+      })
+    }
   } else {
     // Not in auto-update test mode — quit immediately after printing version so polling probes are cheap
     app.quit()
