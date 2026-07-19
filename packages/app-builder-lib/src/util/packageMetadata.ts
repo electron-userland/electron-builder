@@ -107,7 +107,8 @@ function checkDependencies(dependencies: Record<string, string> | Nullish, error
     try {
       resolvedPackageJson = require.resolve("electron-updater/package.json", { paths: [projectDir] })
     } catch (_ignored) {
-      // electron-updater is not installed — fall back to the declared specifier below
+      // electron-updater is not installed (MODULE_NOT_FOUND), or the installed version's `exports` map
+      // does not expose "./package.json" (ERR_PACKAGE_PATH_NOT_EXPORTED) — fall back to the declared specifier below
     }
 
     if (resolvedPackageJson != null) {
