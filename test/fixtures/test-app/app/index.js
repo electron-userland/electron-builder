@@ -84,7 +84,7 @@ async function isReady() {
     autoUpdater.autoRunAppAfterInstall = false
     // Must be assigned synchronously after require: BaseUpdater schedules the automatic
     // pending-install check on app.whenReady(), which has already resolved at this point.
-    autoUpdater.autoInstallOnNextLaunch = isAutoInstallOnNextLaunchMode
+    autoUpdater.autoInstallEvent = isAutoInstallOnNextLaunchMode ? "onNextLaunch" : "onQuit"
 
     autoUpdater.on("checking-for-update", () => {
       console.log("Checking for update...")
@@ -116,7 +116,7 @@ async function isReady() {
       }
       // when a pending update was installed, the updater quits the app itself
     } else if (isAutoInstallOnNextLaunchMode) {
-      // The updater installs the pending update at startup on its own (autoInstallOnNextLaunch).
+      // The updater installs the pending update at startup on its own (autoInstallEvent: "onNextLaunch").
       // Fallback quit so a skipped or failed automatic install cannot hang the test harness.
       setTimeout(() => {
         console.log("AUTO_INSTALL_ON_NEXT_LAUNCH_TIMEOUT: automatic install did not quit the app")

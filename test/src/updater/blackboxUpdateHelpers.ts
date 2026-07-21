@@ -419,7 +419,7 @@ async function pollUntilNewVersionInstalled(
  *      quitAndInstall({ waitUntilNextLaunch: true }) queues it and quits WITHOUT running the installer
  *   2. probe that the installed binary still reports the old version (nothing was installed on quit)
  *   3. relaunch, installing the pending update:
- *      - "automatic": AUTO_UPDATER_TEST_AUTO_INSTALL_ON_NEXT_LAUNCH=true — autoInstallOnNextLaunch
+ *      - "automatic": AUTO_UPDATER_TEST_AUTO_INSTALL_ON_NEXT_LAUNCH=true — autoInstallEvent: "onNextLaunch"
  *        installs at startup on its own (supported by NSIS and AppImage only)
  *      - "explicit": AUTO_UPDATER_TEST_INSTALL_PENDING=true — the app calls
  *        installPendingUpdateIfAvailable() itself; the only pending-install path for deb/rpm/pacman,

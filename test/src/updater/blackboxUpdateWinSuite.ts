@@ -118,7 +118,7 @@ export function registerBlackboxWinTests(toolsets: Required<Pick<ToolsetConfig, 
     // Full install-on-next-launch cycle (#7807): the update is downloaded and queued via
     // quitAndInstall({ waitUntilNextLaunch: true }) — the app quits WITHOUT running the installer
     // (verified by probing that the old version is still installed) — then a relaunch with
-    // autoInstallOnNextLaunch enabled installs the pending update automatically at startup
+    // autoInstallEvent: "onNextLaunch" installs the pending update automatically at startup
     // (NSIS per-user installs support the automatic path) and the new version is verified.
     test("nsis - install on next launch", optionsForFlakyE2E, async (context: TestContext) => {
       const vm = await windowsVmPromise

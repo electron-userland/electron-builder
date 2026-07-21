@@ -144,10 +144,10 @@ describe("install on next launch", { sequential: true }, () => {
       return { updater, app, doInstall }
     }
 
-    test("persists the pending-install marker instead of spawning the installer when autoInstallOnNextLaunch is enabled", async () => {
+    test("persists the pending-install marker instead of spawning the installer when autoInstallEvent is 'onNextLaunch'", async () => {
       const { updater, app, doInstall } = createUpdater()
       await seedDownloadedUpdate(helper)
-      updater.autoInstallOnNextLaunch = true
+      updater.autoInstallEvent = "onNextLaunch"
 
       app.emitQuit(0)
 
@@ -155,13 +155,24 @@ describe("install on next launch", { sequential: true }, () => {
       expect(await helper.getPendingInstallInfo()).toMatchObject({ installOnNextLaunch: true })
     })
 
-    test("installs on quit as before when autoInstallOnNextLaunch is disabled", async () => {
+    test("installs on quit as before with the default autoInstallEvent ('onQuit')", async () => {
       const { app, doInstall } = createUpdater()
       await seedDownloadedUpdate(helper)
 
       app.emitQuit(0)
 
       expect(doInstall).toHaveBeenCalledTimes(1)
+      expect(await helper.getPendingInstallInfo()).toBeNull()
+    })
+
+    test("does not install on quit when autoInstallEvent is switched to 'manual' after registration", async () => {
+      const { updater, app, doInstall } = createUpdater()
+      await seedDownloadedUpdate(helper)
+      updater.autoInstallEvent = "manual"
+
+      app.emitQuit(0)
+
+      expect(doInstall).not.toHaveBeenCalled()
       expect(await helper.getPendingInstallInfo()).toBeNull()
     })
 
@@ -178,10 +189,10 @@ describe("install on next launch", { sequential: true }, () => {
       expect(await helper.getPendingInstallInfo()).toBeNull()
     })
 
-    test("persists the pending-install marker on session end when autoInstallOnNextLaunch is enabled", async () => {
+    test("persists the pending-install marker on session end when autoInstallEvent is 'onNextLaunch'", async () => {
       const { updater, app, doInstall } = createUpdater()
       await seedDownloadedUpdate(helper)
-      updater.autoInstallOnNextLaunch = true
+      updater.autoInstallEvent = "onNextLaunch"
 
       app.emitSessionEnd()
       app.emitQuit(0)

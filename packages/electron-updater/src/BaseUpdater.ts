@@ -18,7 +18,7 @@ export abstract class BaseUpdater extends AppUpdater {
   protected constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
     void this.app.whenReady().then(() => {
-      if (this.autoInstallOnNextLaunch) {
+      if (this.autoInstallEvent === "onNextLaunch") {
         return this.installPendingUpdate(true).catch((e: any) => this._logger.warn(`Cannot install pending update on launch: ${e.message || e}`))
       }
       return Promise.resolve(false)
@@ -54,7 +54,7 @@ export abstract class BaseUpdater extends AppUpdater {
   }
 
   /**
-   * Whether this target supports the automatic `autoInstallOnNextLaunch` install at startup. Targets whose install
+   * Whether this target supports the automatic `autoInstallEvent: "onNextLaunch"` install at startup. Targets whose install
    * always requires elevation (deb/rpm/pacman via pkexec/sudo) must not show an authentication prompt at app launch,
    * so they keep the pending update for an explicit `installPendingUpdateIfAvailable()` call instead.
    */
@@ -114,7 +114,7 @@ export abstract class BaseUpdater extends AppUpdater {
   /**
    * Validates a pending update marked for install on next launch and installs it. Never trusts the cached installer
    * alone: fresh update info is fetched first and the cached file is validated against it. `isAutomatic` (the
-   * `autoInstallOnNextLaunch` startup path) is additionally restricted to targets that can install without an
+   * `autoInstallEvent: "onNextLaunch"` startup path) is additionally restricted to targets that can install without an
    * elevation prompt (`isAutoInstallOnNextLaunchSupported`) and to per-user installs, because an unattended
    * elevation prompt at startup is not acceptable.
    */
@@ -200,7 +200,7 @@ export abstract class BaseUpdater extends AppUpdater {
     } else {
       // install() sets quitAndInstallCalled = true before doInstall; a failed/throwing install (e.g. AppImage's
       // sync unlink+mv) would otherwise leave it stuck true and short-circuit every later install this session,
-      // while the pending marker has already been cleared above. Reset it so autoInstallOnAppQuit / an explicit
+      // while the pending marker has already been cleared above. Reset it so autoInstallEvent: "onQuit" / an explicit
       // quitAndInstall can still install the cached update (matches the reset in quitAndInstall).
       this.quitAndInstallCalled = false
     }
@@ -230,7 +230,7 @@ export abstract class BaseUpdater extends AppUpdater {
 
   protected addQuitHandler(): void {
     this.addSessionEndHandler()
-    if (this.quitHandlerAdded || !(this.autoInstallOnAppQuit || this.autoInstallOnNextLaunch)) {
+    if (this.quitHandlerAdded || this.autoInstallEvent === "manual") {
       return
     }
 
@@ -247,20 +247,21 @@ export abstract class BaseUpdater extends AppUpdater {
         return
       }
 
-      if (this.autoInstallOnNextLaunch) {
-        this._logger.info("Deferring update install to next launch because autoInstallOnNextLaunch is enabled")
+      if (this.autoInstallEvent === "onNextLaunch") {
+        this._logger.info("Deferring update install to next launch because autoInstallEvent is 'onNextLaunch'")
         this.markPendingInstallOnNextLaunch()
         return
       }
 
-      if (!this.autoInstallOnAppQuit) {
-        this._logger.info("Update will not be installed on quit because autoInstallOnAppQuit is set to false.")
+      // autoInstallEvent may have been changed to "manual" after the quit handler was registered
+      if (this.autoInstallEvent !== "onQuit") {
+        this._logger.info("Update will not be installed on quit because autoInstallEvent is not 'onQuit'.")
         return
       }
 
       if (this.isSessionEnding) {
         this._logger.warn(
-          "Update will not be installed on quit because the OS session is ending — the OS would kill the installer before it finishes and can leave the app in a broken state (https://github.com/electron-userland/electron-builder/issues/7807). The downloaded update stays cached and will be installed on the next quit. Enable autoInstallOnNextLaunch (planned default in v28) to install it on the next launch instead."
+          "Update will not be installed on quit because the OS session is ending — the OS would kill the installer before it finishes and can leave the app in a broken state (https://github.com/electron-userland/electron-builder/issues/7807). The downloaded update stays cached and will be installed on the next quit. Set autoInstallEvent to 'onNextLaunch' (planned default in v28) to install it on the next launch instead."
         )
         return
       }

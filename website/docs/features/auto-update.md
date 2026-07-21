@@ -124,7 +124,7 @@ export default class AppUpdater {
 
 ## Install on Next Launch (Windows/Linux)
 
-By default, a downloaded update is installed when the app quits: the updater spawns the installer as a detached process while the app is exiting. If the quit happens because the OS session is ending (shutdown, reboot or log off on Windows), the OS can kill that installer mid-install and leave the app in a broken, partially-uninstalled state ([#7807](https://github.com/electron-userland/electron-builder/issues/7807)).
+When a downloaded update is automatically installed is controlled by `autoUpdater.autoInstallEvent` (`"manual" | "onQuit" | "onNextLaunch"`, default `"onQuit"`). With the default `"onQuit"`, the update is installed when the app quits: the updater spawns the installer as a detached process while the app is exiting. If the quit happens because the OS session is ending (shutdown, reboot or log off on Windows), the OS can kill that installer mid-install and leave the app in a broken, partially-uninstalled state ([#7807](https://github.com/electron-userland/electron-builder/issues/7807)).
 
 electron-updater ≥ 7.0 (electron-builder v27) mitigates this in two ways:
 
@@ -133,10 +133,12 @@ electron-updater ≥ 7.0 (electron-builder v27) mitigates this in two ways:
 2. **Install on next launch (opt-in).** Instead of installing while quitting, persist the downloaded update and install it at the start of the *next* launch, when no session teardown can interrupt it:
 
     ```js
-    autoUpdater.autoInstallOnNextLaunch = true
+    autoUpdater.autoInstallEvent = "onNextLaunch"
     ```
 
-    With this enabled, any app quit records the downloaded update as pending instead of spawning the installer. On the next launch the updater fetches fresh update info from your update server, re-validates the cached installer against it (checksum, and code signature on Windows), verifies the pending version is still an installable change (newer than the running app — or a downgrade when `allowDowngrade` is enabled), then runs the installer silently and restarts the app. If validation fails or the version is no longer an installable change, the pending state is cleared and the app starts normally.
+    With this set, any app quit records the downloaded update as pending instead of spawning the installer. On the next launch the updater fetches fresh update info from your update server, re-validates the cached installer against it (checksum, and code signature on Windows), verifies the pending version is still an installable change (newer than the running app — or a downgrade when `allowDowngrade` is enabled), then runs the installer silently and restarts the app. If validation fails or the version is no longer an installable change, the pending state is cleared and the app starts normally.
+
+    Set `autoInstallEvent = "manual"` to disable automatic installation entirely (the downloaded update stays cached until you call `quitAndInstall()` yourself).
 
     A single quit can also be deferred without setting the property:
 
@@ -163,7 +165,7 @@ The *automatic* install at startup only runs for targets that can install the pe
 | macOS | n/a — Squirrel.Mac stages updates natively and applies them on relaunch | resolves `false` |
 
 :::note[Planned default change in v28]
-`autoInstallOnNextLaunch` is opt-in in v27 and is planned to become the **default** behavior in v28 to resolve this class of session-end corruption once and for all. macOS is unaffected: Squirrel.Mac natively stages downloaded updates and applies them on relaunch, without a killable installer process.
+`autoInstallEvent` defaults to `"onQuit"` in v27; `"onNextLaunch"` is planned to become the **default** in v28 to resolve this class of session-end corruption once and for all. macOS is unaffected: Squirrel.Mac natively stages downloaded updates and applies them on relaunch, without a killable installer process (there `"onQuit"` and `"onNextLaunch"` behave identically).
 :::
 
 :::caution[Launching during an OS shutdown is a residual, best-effort-only race]

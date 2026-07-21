@@ -35,7 +35,17 @@ import type { AuthInfo } from "electron"
 import { gunzipSync, gzipSync } from "zlib"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader.js"
-import { DOWNLOAD_PROGRESS, Logger, QuitAndInstallOptions, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./types.js"
+import {
+  AutoInstallEvent,
+  DOWNLOAD_PROGRESS,
+  Logger,
+  QuitAndInstallOptions,
+  ResolvedUpdateFileInfo,
+  UPDATE_DOWNLOADED,
+  UpdateCheckResult,
+  UpdateDownloadedEvent,
+  UpdaterSignal,
+} from "./types.js"
 import { VerifyUpdateSupport } from "./index.js"
 
 const require = createRequire(import.meta.url)
@@ -60,34 +70,28 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   autoDownload = true
 
   /**
-   * Whether to automatically install a downloaded update on app quit (if `quitAndInstall` was not called before).
-   * @default true
+   * When a downloaded update is automatically installed (if `quitAndInstall` was not called before).
+   *
+   * - `"onQuit"` (default) — install on app quit by spawning the installer while the app exits.
+   * - `"onNextLaunch"` — defer the install: any app quit persists an install-on-next-launch marker for the downloaded
+   *   update; on the next launch the updater re-validates the cached installer against freshly fetched update info and
+   *   installs it (see `installPendingUpdateIfAvailable`). This avoids the class of failures where the on-quit installer
+   *   process is killed by the OS before it finishes — most notably Windows terminating the detached NSIS installer during
+   *   session end (log off / shutdown / restart), which can leave the app uninstalled but not re-installed
+   *   (see https://github.com/electron-userland/electron-builder/issues/7807). The automatic install at startup only runs
+   *   for targets that can install without an elevation prompt: NSIS (per-user, `isAdminRightsRequired === false`) and
+   *   AppImage. Linux package targets (deb, rpm, pacman) always elevate via pkexec/sudo, and NSIS per-machine installs
+   *   trigger a UAC prompt, so for those the pending update is kept and `installPendingUpdateIfAvailable()` must be called
+   *   explicitly at a moment the app controls.
+   * - `"manual"` — never auto-install; the downloaded update stays cached until an explicit `quitAndInstall()`.
+   *
+   * `"onNextLaunch"` is planned to become the DEFAULT in v28 to resolve this class of bug once and for all.
+   * @default "onQuit"
    */
-  autoInstallOnAppQuit = true
+  autoInstallEvent: AutoInstallEvent = "onQuit"
 
   /**
-   * Whether to defer installation of a downloaded update to the next application launch instead of spawning the
-   * installer while the app is quitting. When `true`, any app quit persists an install-on-next-launch marker for the
-   * downloaded update; on the next launch the updater re-validates the cached installer against freshly fetched
-   * update info and installs it (see `installPendingUpdateIfAvailable`).
-   *
-   * This avoids the class of failures where the on-quit installer process is killed by the OS before it finishes —
-   * most notably Windows terminating the detached NSIS installer during session end (log off / shutdown / restart),
-   * which can leave the app uninstalled but not re-installed (see https://github.com/electron-userland/electron-builder/issues/7807).
-   *
-   * The automatic install at startup only runs for targets that can install without an elevation prompt: NSIS
-   * (per-user installations, `isAdminRightsRequired === false`) and AppImage. Linux package targets (deb, rpm,
-   * pacman) always elevate via pkexec/sudo to install, and NSIS per-machine installations trigger a UAC prompt, so
-   * for those the pending update is kept and `installPendingUpdateIfAvailable()` must be called explicitly at a
-   * moment the app controls.
-   *
-   * Opt-in in v27. This is planned to become the DEFAULT behavior in v28 to resolve this class of bug once and for all.
-   * @default false
-   */
-  autoInstallOnNextLaunch = false
-
-  /**
-   * Installs an update that a previous launch marked as pending (see `autoInstallOnNextLaunch` and
+   * Installs an update that a previous launch marked as pending (see `autoInstallEvent: "onNextLaunch"` and
    * `quitAndInstall({ waitUntilNextLaunch: true })`), then quits the app.
    *
    * The cached installer is never trusted blindly: a fresh update-info fetch is performed first and the cached file

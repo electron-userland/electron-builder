@@ -252,7 +252,9 @@ export class MacUpdater extends AppUpdater {
         // The update has been downloaded and is ready to be served to Squirrel
         this.dispatchUpdateDownloaded(event)
 
-        if (this.autoInstallOnAppQuit) {
+        // on macOS both "onQuit" and "onNextLaunch" map to the same native behavior: Squirrel stages the update and
+        // applies it on relaunch after quit. Only "manual" leaves it unstaged until an explicit quitAndInstall().
+        if (this.autoInstallEvent !== "manual") {
           this.nativeUpdater.once("error", reject)
           // This will trigger fetching and installing the file on Squirrel side
           this.nativeUpdater.checkForUpdates()
@@ -288,10 +290,10 @@ export class MacUpdater extends AppUpdater {
       // Quit and install as soon as Squirrel get the update
       this.nativeUpdater.on("update-downloaded", () => this.handleUpdateDownloaded())
 
-      if (!this.autoInstallOnAppQuit) {
+      if (this.autoInstallEvent === "manual") {
         /**
-         * If this was not `true` previously then MacUpdater.doDownloadUpdate()
-         * would not actually initiate the downloading by electron's autoUpdater
+         * In "manual" mode MacUpdater.doDownloadUpdate() would not actually initiate the downloading by electron's
+         * autoUpdater, so kick it off now.
          */
         this.nativeUpdater.checkForUpdates()
       }
