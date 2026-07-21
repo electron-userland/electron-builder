@@ -345,5 +345,49 @@ describe("install on next launch", { sequential: true }, () => {
       await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(true)
       expect(doInstall).toHaveBeenCalledTimes(1)
     })
+
+    test("installs a pending downgrade on the deferred path when allowDowngrade is enabled", async () => {
+      const seeded = await seedDownloadedUpdate(helper, { version: "0.9.0" })
+      const { updater, app, doInstall } = createUpdater(seeded.updateInfo)
+      updater.allowDowngrade = true
+      helper.markInstallOnNextLaunchSync(log)
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(true)
+      await new Promise(resolve => setImmediate(resolve))
+
+      expect(doInstall).toHaveBeenCalledTimes(1)
+      expect(app.quitCalls).toBe(1)
+    })
+
+    test("clears a pending downgrade without installing when allowDowngrade is disabled (default)", async () => {
+      const seeded = await seedDownloadedUpdate(helper, { version: "0.9.0" })
+      const { updater, doInstall } = createUpdater(seeded.updateInfo)
+      helper.markInstallOnNextLaunchSync(log)
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
+      expect(doInstall).not.toHaveBeenCalled()
+      expect(await helper.getPendingInstallInfo()).toBeNull()
+    })
+
+    test("resets quitAndInstallCalled so a later install is not wedged when the launch-time install fails", async () => {
+      const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1" })
+      const { updater, doInstall } = createUpdater(seeded.updateInfo)
+      helper.markInstallOnNextLaunchSync(log)
+      updater.on("error", () => {})
+      // a throwing install (e.g. AppImage's sync unlink+mv on a read-only mount)
+      doInstall.mockImplementationOnce(() => {
+        throw new Error("mv: read-only file system")
+      })
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
+      // marker was cleared before the (failed) spawn and the flag must not stay latched
+      expect(await helper.getPendingInstallInfo()).toBeNull()
+      expect((updater as any).quitAndInstallCalled).toBe(false)
+
+      // not wedged: a subsequent install of the still-cached update runs to completion
+      helper.markInstallOnNextLaunchSync(log)
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(true)
+      expect(doInstall).toHaveBeenCalledTimes(2)
+    })
   })
 })

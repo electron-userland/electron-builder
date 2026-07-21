@@ -2,7 +2,7 @@ import { createRequire } from "node:module"
 import { AllPublishOptions, newError } from "builder-util-runtime"
 import { spawn, SpawnOptions, spawnSync, StdioOptions } from "child_process"
 import * as path from "path"
-import { gt as isVersionGreaterThan, parse as parseVersion } from "semver"
+import { eq as isVersionsEqual, gt as isVersionGreaterThan, parse as parseVersion } from "semver"
 import { AppAdapter } from "./AppAdapter.js"
 import { AppUpdater, DownloadExecutorTask } from "./AppUpdater.js"
 import { QuitAndInstallOptions } from "./types.js"
@@ -150,11 +150,15 @@ export abstract class BaseUpdater extends AppUpdater {
     const updateInfoAndProvider = await this.getUpdateInfoAndProvider()
     const latestInfo = updateInfoAndProvider.info
     const latestVersion = parseVersion(latestInfo.version)
-    // loop guard: only install when the target version is strictly newer than the running app.
-    // Version equality means the pending update was already installed successfully on a previous launch.
-    if (latestVersion == null || !isVersionGreaterThan(latestVersion, this.currentVersion)) {
+    // loop guard: install only a genuine version change so a silently succeeded install cannot re-trigger on every
+    // launch. Version equality means the pending update was already installed successfully on a previous launch.
+    // A downgrade is a valid target only when allowDowngrade is set — mirrors isUpdateAvailable so the deferred flow
+    // does not silently discard a downgrade the immediate install path would have applied.
+    const isInstallableChange =
+      latestVersion != null && !isVersionsEqual(latestVersion, this.currentVersion) && (isVersionGreaterThan(latestVersion, this.currentVersion) || this.allowDowngrade)
+    if (!isInstallableChange) {
       this._logger.info(
-        `Pending update is not newer than the current version ${this.currentVersion.format()} (latest version: ${latestInfo.version}), clearing install-on-next-launch state`
+        `Pending update ${latestInfo.version} is not an installable change from the current version ${this.currentVersion.format()} (allowDowngrade: ${this.allowDowngrade}), clearing install-on-next-launch state`
       )
       await downloadedUpdateHelper.clearPendingInstallMarker(this._logger)
       return false
@@ -193,6 +197,12 @@ export abstract class BaseUpdater extends AppUpdater {
     const isInstalled = this.install(true, true)
     if (isInstalled) {
       setImmediate(() => this.app.quit())
+    } else {
+      // install() sets quitAndInstallCalled = true before doInstall; a failed/throwing install (e.g. AppImage's
+      // sync unlink+mv) would otherwise leave it stuck true and short-circuit every later install this session,
+      // while the pending marker has already been cleared above. Reset it so autoInstallOnAppQuit / an explicit
+      // quitAndInstall can still install the cached update (matches the reset in quitAndInstall).
+      this.quitAndInstallCalled = false
     }
     return isInstalled
   }

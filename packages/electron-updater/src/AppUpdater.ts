@@ -92,7 +92,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    *
    * The cached installer is never trusted blindly: a fresh update-info fetch is performed first and the cached file
    * is validated against it (checksum, and code signature where applicable). The pending update is only installed
-   * when its version is strictly newer than the running app; otherwise the pending state is cleared.
+   * when its version is an installable change from the running app — newer, or older when `allowDowngrade` is set
+   * (a loop guard, mirroring `isUpdateAvailable`); otherwise the pending state is cleared.
    *
    * Unlike the automatic startup install, an explicit call is also allowed for targets whose install requires
    * elevation: NSIS per-machine installations (`isAdminRightsRequired === true`) and Linux package targets
