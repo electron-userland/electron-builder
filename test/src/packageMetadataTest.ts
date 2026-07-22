@@ -21,7 +21,7 @@ function checkDependencies(dependencies: Record<string, string>, projectDir: str
  * electron-updater is written to `<dir>/node_modules/electron-updater/package.json`,
  * merged with any `extraPackageJson` fields (e.g. an `exports` map).
  */
-async function withProjectDir<T>(installedUpdaterVersion: string | null, fn: (projectDir: string) => T, extraPackageJson: Record<string, unknown> = {}): Promise<T> {
+async function withProjectDir<T>(installedUpdaterVersion: string | null, fn: (projectDir: string) => T | Promise<T>, extraPackageJson: Record<string, unknown> = {}): Promise<T> {
   const tmpDir = new TmpDir("eb-package-metadata-test")
   try {
     const projectDir = await tmpDir.createTempDir()
@@ -40,7 +40,7 @@ async function withProjectDir<T>(installedUpdaterVersion: string | null, fn: (pr
     delete process.env.NODE_PATH
     ;(Module as any)._initPaths()
     try {
-      return fn(projectDir)
+      return await fn(projectDir)
     } finally {
       if (savedNodePath != null) {
         process.env.NODE_PATH = savedNodePath
