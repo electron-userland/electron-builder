@@ -283,12 +283,16 @@ export interface KeygenOptions extends PublishConfiguration {
  * https://bitbucket.org/
  * Define `BITBUCKET_TOKEN` environment variable.
  *
- * For converting an app password to a usable token, you can utilize this
+ * Bitbucket Cloud is [retiring app passwords](https://www.atlassian.com/blog/bitbucket/bitbucket-cloud-transitions-to-api-tokens) in favor of API tokens and access tokens. Authentication is selected by whether a `username` is provided:
+ * - With `username` — the token is sent via HTTP Basic auth. Use a Bitbucket username + [app password](https://bitbucket.org/account/settings/app-passwords), or an Atlassian account email + [API token](https://support.atlassian.com/bitbucket-cloud/docs/using-api-tokens/).
+ * - Without `username` — the token is sent as a repository/project/workspace [access token](https://support.atlassian.com/bitbucket-cloud/docs/using-access-tokens/) via Bearer auth.
+ *
+ * For the auto-updater on a private repository, pass the matching header to `autoUpdater.addAuthHeader(...)`:
 ```typescript
-convertAppPassword(owner: string, appPassword: string) {
-  const base64encodedData = Buffer.from(`${owner}:${appPassword.trim()}`).toString("base64")
-  return `Basic ${base64encodedData}`
-}
+// access token (no username)
+autoUpdater.addAuthHeader(`Bearer ${token}`)
+// app password or API token (with username)
+autoUpdater.addAuthHeader(`Basic ${Buffer.from(`${username}:${token}`).toString("base64")}`)
 ```
  */
 export interface BitbucketOptions extends PublishConfiguration {
@@ -303,12 +307,12 @@ export interface BitbucketOptions extends PublishConfiguration {
   readonly owner: string
 
   /**
-   * The [app password](https://bitbucket.org/account/settings/app-passwords) to support auto-update from private bitbucket repositories.
+   * The token to support auto-update from private bitbucket repositories. Depending on `username`, this is a Bitbucket [app password](https://bitbucket.org/account/settings/app-passwords), an Atlassian [API token](https://support.atlassian.com/bitbucket-cloud/docs/using-api-tokens/), or a repository/project/workspace [access token](https://support.atlassian.com/bitbucket-cloud/docs/using-access-tokens/).
    */
   readonly token?: string | null
 
   /**
-   * The user name to support auto-update from private bitbucket repositories.
+   * The user name to support auto-update from private bitbucket repositories. Provide a Bitbucket username (for an app password) or an Atlassian account email (for an API token) to authenticate with HTTP Basic auth. Leave unset to send `token` as a Bearer access token.
    */
   readonly username?: string | null
 

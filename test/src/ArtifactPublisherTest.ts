@@ -163,6 +163,70 @@ test.ifEnv(process.env.BITBUCKET_TOKEN)("Bitbucket upload", async ({ expect }) =
   expect(await publisher.upload({ file: iconPath, arch: Arch.x64, timeout })).toThrowError("Request timed out")
 })
 
+// Temporarily clear env vars so auth-selection unit tests are deterministic regardless of the ambient environment.
+function withoutEnv<T>(keys: Array<string>, fn: () => T): T {
+  const saved = keys.map(key => [key, process.env[key]] as const)
+  for (const key of keys) {
+    delete process.env[key]
+  }
+  try {
+    return fn()
+  } finally {
+    for (const [key, value] of saved) {
+      if (value === undefined) {
+        delete process.env[key]
+      } else {
+        process.env[key] = value
+      }
+    }
+  }
+}
+
+// With a username, the token is sent via HTTP Basic auth (Bitbucket username + app password, or Atlassian email + API token).
+test("Bitbucket auth - username selects HTTP Basic auth", ({ expect }) => {
+  const publisher = new BitbucketPublisher(publishContext, {
+    provider: "bitbucket",
+    owner: "test-owner",
+    slug: "test-repo",
+    username: "user@example.com",
+    token: "api-token-123",
+  })
+  expect((publisher as any).auth).toBe(`Basic ${Buffer.from("user@example.com:api-token-123").toString("base64")}`)
+})
+
+// Without a username, the token is treated as a repository/project/workspace access token and sent via Bearer auth (issue #9995).
+test("Bitbucket auth - no username selects Bearer auth (access token)", ({ expect }) => {
+  withoutEnv(["BITBUCKET_USERNAME"], () => {
+    const publisher = new BitbucketPublisher(publishContext, {
+      provider: "bitbucket",
+      owner: "test-owner",
+      slug: "test-repo",
+      token: "access-token-123",
+    })
+    expect((publisher as any).auth).toBe("Bearer access-token-123")
+  })
+})
+
+// A missing token is a hard configuration error.
+test("Bitbucket auth - missing token throws InvalidConfigurationError", ({ expect }) => {
+  withoutEnv(["BITBUCKET_TOKEN"], () => {
+    expect(
+      () =>
+        new BitbucketPublisher(publishContext, {
+          provider: "bitbucket",
+          owner: "test-owner",
+          slug: "test-repo",
+        })
+    ).toThrow(/Bitbucket token is not set/)
+  })
+})
+
+// The static header builders trim the token and apply the correct scheme.
+test("Bitbucket auth - convertAppPassword and convertAccessToken build the expected headers", ({ expect }) => {
+  expect(BitbucketPublisher.convertAppPassword("alice", " secret ")).toBe(`Basic ${Buffer.from("alice:secret").toString("base64")}`)
+  expect(BitbucketPublisher.convertAccessToken(" access-token-123 ")).toBe("Bearer access-token-123")
+})
+
 const mockRelease = { id: 1, tag_name: "v1.0.0", draft: true, prerelease: false, published_at: "", upload_url: "https://uploads.github.com/{?name}" }
 
 function mockGithubRequest(publisher: GitHubPublisher): { getData: () => any } {
