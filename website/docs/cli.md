@@ -54,7 +54,7 @@ Other:
 Examples:
   electron-builder -mwl                     build for macOS, Windows and Linux
   electron-builder --linux deb tar.xz       build deb and tar.xz for Linux
-  electron-builder --win --ia32             build for Windows ia32
+  electron-builder --win --arm64            build for Windows arm64
   electron-builder -c.extraMetadata.foo=ba  set package.json property `foo` to `
   r                                         bar`
   electron-builder --config.nsis.unicode=f  configure unicode options for NSIS
@@ -84,8 +84,10 @@ Prepend `npx` to sample commands below if you run them from Terminal and not fro
 `electron-builder --linux deb tar.xz`
 :::
 
-:::note[build NSIS 32-bit installer for Windows]
+:::note[build NSIS 32-bit installer for Windows (Electron <= 43 only)]
 `electron-builder --windows nsis:ia32`
+
+[Electron 44 removed Windows ia32 builds](https://github.com/electron/electron/pull/51816) — ia32 requires `electronVersion` <= 43.x (supported until the v43 series reaches end-of-life in January 2027).
 :::
 
 :::note[set package.json property `foo` to `bar`]
@@ -108,7 +110,7 @@ Without target configuration, electron-builder builds Electron app for current p
 
 Platforms and archs can be configured using [CLI args](https://github.com/electron-userland/electron-builder#cli-usage), or in the configuration.
 
-For example, if you don't want to pass `--ia32` and `--x64` flags each time, but instead build by default NSIS target for all archs for Windows:
+For example, if you don't want to pass `--x64` and `--arm64` flags each time, but instead build by default NSIS target for all archs for Windows (add `ia32` only when staying on Electron <= 43):
 
 :::note[Configuration]
 
@@ -121,7 +123,7 @@ package.json
         "target": "nsis",
         "arch": [
           "x64",
-          "ia32"
+          "arm64"
         ]
       }
     ]
@@ -146,7 +148,7 @@ win:
     - target: nsis
       arch:
         - x64
-        - ia32
+        - arm64
 mac:
   target:
     - target: dmg
@@ -162,7 +164,7 @@ module.exports = {
         "target": "nsis",
         "arch": [
           "x64",
-          "ia32"
+          "arm64"
         ]
       }
     ]

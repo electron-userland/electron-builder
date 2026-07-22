@@ -10,11 +10,15 @@ electron-builder can produce builds for multiple CPU architectures. This page co
 | macOS | arm64 | `--arm64` | Apple Silicon (M1/M2/M3/M4) |
 | macOS | universal | `--universal` | Runs natively on both Intel and Apple Silicon |
 | Windows | x64 | `--x64` | Most common desktop target |
-| Windows | ia32 | `--ia32` | 32-bit; legacy support |
+| Windows | ia32 | `--ia32` | 32-bit; legacy support. Requires `electronVersion` <= 43.x — [Electron 44 removed Windows ia32 builds](https://github.com/electron/electron/pull/51816) |
 | Windows | arm64 | `--arm64` | Windows on ARM (Surface Pro X, etc.) |
 | Linux | x64 | `--x64` | Standard 64-bit x86 Linux |
 | Linux | arm64 | `--arm64` | Raspberry Pi 4+, ARM servers, cloud instances |
-| Linux | armv7l | `--armv7l` | Raspberry Pi 3 and older, 32-bit ARM |
+| Linux | armv7l | `--armv7l` | Raspberry Pi 3 and older, 32-bit ARM. Requires `electronVersion` <= 43.x — [Electron 44 removed Linux armv7l builds](https://github.com/electron/electron/pull/51816) |
+
+:::note[32-bit support ends with Electron 43]
+Electron 44 removed Windows ia32 and Linux armv7l builds ([electron/electron#51816](https://github.com/electron/electron/pull/51816)). To keep shipping those architectures, stay on Electron <= 43.x — the v43 series is supported until its end-of-life in January 2027. electron-builder fails fast with a configuration error when such a build is requested against Electron 44+ (downgraded to a warning when a custom `electronDist` or Electron mirror is configured).
+:::
 
 ## Specifying Architecture
 
