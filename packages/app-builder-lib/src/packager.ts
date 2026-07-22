@@ -25,7 +25,8 @@ import { readAsarJson } from "./asar/asar.js"
 import { AfterExtractContext, AfterPackContext, BeforePackContext, Configuration, Hook } from "./configuration.js"
 import { Platform, SourceRepositoryInfo, Target } from "./core.js"
 import { createElectronFrameworkSupport } from "./electron/ElectronFramework.js"
-import { Framework } from "./Framework.js"
+import { assertElectronArchSupported } from "./electron/electronArchSupport.js"
+import { Framework, isElectronBased } from "./Framework.js"
 import { Metadata } from "./options/metadata.js"
 import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi.js"
 import { PlatformPackager } from "./platformPackager.js"
@@ -489,6 +490,12 @@ export class Packager {
       for (const [arch, targetNames] of computeArchToTargetNamesMap(archToType, packager, platform)) {
         if (this.cancellationToken.cancelled) {
           break
+        }
+
+        // fail fast when the requested arch has no official Electron build anymore (Electron 44 removed win32-ia32 and linux-armv7l);
+        // skipped for prepackaged apps since nothing is downloaded then
+        if (this.options.prepackaged == null && isElectronBased(this.framework)) {
+          assertElectronArchSupported(platform, arch, this.framework.version, this.config)
         }
 
         // support os and arch macro in output value
