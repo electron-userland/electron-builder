@@ -1,4 +1,6 @@
 import { afterEach, expect } from "vitest"
+import * as fs from "fs/promises"
+import * as path from "path"
 import { MacTargetHelper, type PlatformType } from "app-builder-lib/internal"
 
 describe("MacTargetHelper", () => {
@@ -103,6 +105,67 @@ describe("MacTargetHelper", () => {
 
     test.each(cases)("targetPlatform=%s hardenedRuntime=%s => %s", (targetPlatform, hardenedRuntime, expected) => {
       expect(MacTargetHelper.isHardenedRuntimeEnabledForSigning(targetPlatform, hardenedRuntime)).toBe(expected)
+    })
+  })
+
+  describe("isLibraryValidationDisabled", () => {
+    const plistWith = (body: string) => `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+${body}
+  </dict>
+</plist>
+`
+    const grantingPlist = plistWith(`    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>`)
+    const nonGrantingPlist = plistWith(`    <key>com.apple.security.cs.allow-jit</key>
+    <true/>`)
+
+    function makeHelper(resourceFiles: string[], buildResourcesDir: string): MacTargetHelper {
+      return new MacTargetHelper({ resourceList: Promise.resolve(resourceFiles), buildResourcesDir } as any)
+    }
+
+    test("returns true when the explicit entitlements file grants the key", async ({ tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      const file = path.join(dir, "custom.plist")
+      await fs.writeFile(file, grantingPlist, "utf-8")
+      await expect(makeHelper([], dir).isLibraryValidationDisabled("mac", { entitlements: file })).resolves.toBe(true)
+    })
+
+    test("returns false when the explicit entitlements file lacks the key", async ({ tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      const file = path.join(dir, "custom.plist")
+      await fs.writeFile(file, nonGrantingPlist, "utf-8")
+      await expect(makeHelper([], dir).isLibraryValidationDisabled("mac", { entitlements: file })).resolves.toBe(false)
+    })
+
+    test("returns false when the explicit entitlements file cannot be parsed", async ({ tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      const file = path.join(dir, "garbage.plist")
+      await fs.writeFile(file, "not a plist at all <<<", "utf-8")
+      await expect(makeHelper([], dir).isLibraryValidationDisabled("mac", { entitlements: file })).resolves.toBe(false)
+    })
+
+    test("returns false when the explicit entitlements file does not exist", async ({ tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      await expect(makeHelper([], dir).isLibraryValidationDisabled("mac", { entitlements: path.join(dir, "missing.plist") })).resolves.toBe(false)
+    })
+
+    test.for<[PlatformType, string]>([
+      ["mac", "entitlements.mac.plist"],
+      ["mas", "entitlements.mas.plist"],
+    ])("uses %s build-resources file %s when no explicit file is set", async ([targetPlatform, resourceName], { tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      await fs.writeFile(path.join(dir, resourceName), grantingPlist, "utf-8")
+      await expect(makeHelper([resourceName], dir).isLibraryValidationDisabled(targetPlatform, undefined)).resolves.toBe(true)
+
+      await fs.writeFile(path.join(dir, resourceName), nonGrantingPlist, "utf-8")
+      await expect(makeHelper([resourceName], dir).isLibraryValidationDisabled(targetPlatform, undefined)).resolves.toBe(false)
+    })
+
+    test("returns true for the bundled default template (it grants the key)", async () => {
+      await expect(makeHelper([], "/nonexistent").isLibraryValidationDisabled("mac", undefined)).resolves.toBe(true)
     })
   })
 

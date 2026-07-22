@@ -6,6 +6,7 @@ import * as path from "path"
 import { CertType, findIdentity, Identity, reportError } from "../../codeSign/mac/macCodeSign.js"
 import type { MacPackager } from "../../macPackager.js"
 import { ElectronSignOptions, MasConfiguration } from "../../options/macOptions.js"
+import { parsePlistFile, PlistObject } from "../../util/mac/plist.js"
 import { getTemplatePath } from "../../util/pathManager.js"
 
 export type PlatformType = "mas" | "mas-dev" | "mac"
@@ -42,7 +43,7 @@ export class MacTargetHelper {
     if (identity == null) {
       const noIdentity = !hasCustomSign
       if (qualifier === "-") {
-        if (MacTargetHelper.isHardenedRuntimeEnabledForSigning(targetPlatform, signOpts?.hardenedRuntime)) {
+        if (MacTargetHelper.isHardenedRuntimeEnabledForSigning(targetPlatform, signOpts?.hardenedRuntime) && !(await this.isLibraryValidationDisabled(targetPlatform, signOpts))) {
           log.warn(
             null,
             "ad-hoc signing with hardenedRuntime enabled requires the com.apple.security.cs.disable-library-validation entitlement " +
@@ -57,6 +58,26 @@ export class MacTargetHelper {
     }
 
     return identity
+  }
+
+  /**
+   * Resolves the effective app entitlements file — same precedence as `getOptionsForFile()` — and
+   * returns whether it grants `com.apple.security.cs.disable-library-validation`.
+   * Fails open: returns false (so callers still warn) when the file cannot be read or parsed.
+   */
+  async isLibraryValidationDisabled(targetPlatform: PlatformType, signOpts: ElectronSignOptions | Nullish): Promise<boolean> {
+    let file = signOpts?.entitlements
+    if (!file) {
+      const p = `entitlements.${MacTargetHelper.isMasTarget(targetPlatform) ? "mas" : "mac"}.plist`
+      file = (await this.packager.resourceList).includes(p) ? path.join(this.packager.buildResourcesDir, p) : getTemplatePath("entitlements.mac.plist")
+    }
+    try {
+      const entitlements = await parsePlistFile<PlistObject>(file)
+      return entitlements["com.apple.security.cs.disable-library-validation"] === true
+    } catch (e: any) {
+      log.debug({ file, error: e.message }, "cannot read entitlements to verify library validation")
+      return false
+    }
   }
 
   async buildSignOptions(
