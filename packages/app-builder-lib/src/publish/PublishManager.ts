@@ -67,7 +67,7 @@ function checkOptions(publishPolicy: any) {
 }
 
 export class PublishManager implements PublishContext {
-  private readonly nameToPublisher = new Map<string, Publisher | null>()
+  private readonly nameToPublisher = new Map<string, Promise<Publisher | null>>()
 
   private readonly taskManager: AsyncTaskManager
 
@@ -213,14 +213,21 @@ export class PublishManager implements PublishContext {
     }
   }
 
-  private async getOrCreatePublisher(publishConfig: PublishConfiguration, appInfo: AppInfo): Promise<Publisher | null> {
+  private getOrCreatePublisher(publishConfig: PublishConfiguration, appInfo: AppInfo): Promise<Publisher | null> {
     // to not include token into cache key
     const providerCacheKey = safeStringifyJson(publishConfig)
     let publisher = this.nameToPublisher.get(providerCacheKey)
     if (publisher == null) {
-      publisher = await createPublisher(this, appInfo.version, publishConfig, this.publishOptions, this.packager)
+      publisher = createPublisher(this, appInfo.version, publishConfig, this.publishOptions, this.packager).then(it => {
+        if (it != null) {
+          log.info({ publisher: it.toString() }, "publishing")
+        }
+        return it
+      })
+      // cache the pending promise synchronously — concurrent scheduleUpload calls must share one publisher (and thus one release) instead of racing to create duplicates
       this.nameToPublisher.set(providerCacheKey, publisher)
-      log.info({ publisher: publisher!.toString() }, "publishing")
+      // on failure, evict so that a subsequent call can retry (the rejection still propagates to the caller)
+      publisher.catch(() => this.nameToPublisher.delete(providerCacheKey))
     }
     return publisher
   }
