@@ -97,12 +97,33 @@ describe("allowOnlyOneInstallerInstance.nsh", { sequential: true }, () => {
   })
 
   describe("APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER macro", () => {
+    let appendMacro: string
+
+    beforeAll(() => {
+      const match = templateContent.match(/!macro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER[\s\S]*?!macroend/)
+      appendMacro = match ? match[0] : ""
+    })
+
     test("skips empty InstallLocation so an empty prefix can never match every process", () => {
-      const appendMacro = templateContent.match(/!macro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER[\s\S]*?!macroend/)
-      expect(appendMacro).not.toBeNull()
-      expect(appendMacro![0]).toContain('$R9 != ""')
-      expect(appendMacro![0]).toContain("$R9 != $INSTDIR")
-      expect(appendMacro![0]).toContain("$$_.Path.StartsWith('$R9\\', 'CurrentCultureIgnoreCase')")
+      expect(appendMacro).toContain('$R9 != ""')
+      expect(appendMacro).toContain("$R9 != $INSTDIR")
+    })
+
+    test("escapes single quotes in InstallLocation for the single-quoted PowerShell literal (no syntax break / injection)", () => {
+      // ' -> '' so a quote in the registry value cannot terminate the PowerShell string
+      expect(appendMacro).toContain(`\${WordReplace} $R9 "'" "''" "+" $R8`)
+      // the escaped value ($R8), not the raw one ($R9), is interpolated into the filter
+      expect(appendMacro).toContain("$$_.Path.StartsWith('$R8\\', 'CurrentCultureIgnoreCase')")
+      expect(appendMacro).not.toContain("StartsWith('$R9")
+    })
+
+    test("skips InstallLocation values containing a double quote (invalid in paths, would break the -Command argument)", () => {
+      expect(appendMacro).toContain(`\${WordReplace} $R9 '"' "" "+" $R8`)
+      expect(appendMacro).toContain("$R9 == $R8")
+    })
+
+    test("WordFunc.nsh is included for ${WordReplace}", () => {
+      expect(templateContent).toContain('!include "WordFunc.nsh"')
     })
   })
 

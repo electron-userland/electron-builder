@@ -2,6 +2,8 @@
     !include "nsProcess.nsh"
 !endif
 
+!include "WordFunc.nsh"
+
 !ifmacrondef customCheckAppRunning
   !include "getProcessInfo.nsh"
   Var pid
@@ -32,9 +34,18 @@
 # appends "-or <path>.StartsWith(...)" to $processPathFilter for the InstallLocation stored in the given registry root (if any)
 !macro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER _ROOT_KEY
   ReadRegStr $R9 ${_ROOT_KEY} "${INSTALL_REGISTRY_KEY}" InstallLocation
+  # $R8 = $R9 with all double quotes removed; a double quote is invalid in a Windows path
+  # and would break out of the double-quoted PowerShell -Command argument built in
+  # FIND_PROCESS/KILL_PROCESS, so any value containing one is skipped below
+  ${WordReplace} $R9 '"' "" "+" $R8
   ${if} $R9 != ""
+  ${andIf} $R9 == $R8
   ${andIf} $R9 != $INSTDIR
-    StrCpy $processPathFilter "$processPathFilter -or $$_.Path.StartsWith('$R9\', 'CurrentCultureIgnoreCase')"
+    # escape single quotes for the single-quoted PowerShell string literal, so a quote in the
+    # registry value can neither break the expression nor inject PowerShell into the
+    # (possibly elevated) installer
+    ${WordReplace} $R9 "'" "''" "+" $R8
+    StrCpy $processPathFilter "$processPathFilter -or $$_.Path.StartsWith('$R8\', 'CurrentCultureIgnoreCase')"
   ${endIf}
 !macroend
 
@@ -51,10 +62,12 @@
     # also match processes running from the previous per-user and per-machine installation directories,
     # because the previous installation is uninstalled during install
     # https://github.com/electron-userland/electron-builder/issues/10022
+    Push $R8
     Push $R9
     !insertmacro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER HKCU
     !insertmacro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER HKLM
     Pop $R9
+    Pop $R8
   !endif
   !ifmacrodef customCheckAppRunning
     !insertmacro customCheckAppRunning
