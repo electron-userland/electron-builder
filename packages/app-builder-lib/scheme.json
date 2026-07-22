@@ -4148,6 +4148,9 @@
               "$ref": "#/definitions/SpacesOptions"
             },
             {
+              "$ref": "#/definitions/R2Options"
+            },
+            {
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
