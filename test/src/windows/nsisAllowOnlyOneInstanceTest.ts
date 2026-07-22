@@ -83,7 +83,30 @@ describe("allowOnlyOneInstallerInstance.nsh", { sequential: true }, () => {
     test("path filter matches $INSTDIR with a trailing backslash (no sibling-directory false positives)", () => {
       const checkMacro = templateContent.match(/!macro CHECK_APP_RUNNING[\s\S]*?!macroend/)
       expect(checkMacro).not.toBeNull()
-      expect(checkMacro![0]).toContain("$$_.Path.StartsWith('$INSTDIR\\', 'CurrentCultureIgnoreCase')")
+      expect(checkMacro![0]).toContain("$$_.Path.StartsWith('$R8\\', 'CurrentCultureIgnoreCase')")
+    })
+
+    test("escapes single quotes in $INSTDIR for the single-quoted PowerShell literal (pre-existing since #9069)", () => {
+      const checkMacro = templateContent.match(/!macro CHECK_APP_RUNNING[\s\S]*?!macroend/)
+      expect(checkMacro).not.toBeNull()
+      // ' -> '' so a quote in the install path cannot terminate the PowerShell string
+      expect(checkMacro![0]).toContain(`\${WordReplace} $INSTDIR "'" "''" "+" $R8`)
+      // the raw $INSTDIR is never interpolated into the filter
+      expect(checkMacro![0]).not.toContain("StartsWith('$INSTDIR")
+    })
+
+    test("$INSTDIR escaping applies to the uninstaller too (outside the BUILD_UNINSTALLER guard)", () => {
+      const checkMacro = templateContent.match(/!macro CHECK_APP_RUNNING[\s\S]*?!macroend/)
+      expect(checkMacro).not.toBeNull()
+      const body = checkMacro![0]
+      const escapeIndex = body.indexOf(`\${WordReplace} $INSTDIR`)
+      const guardIndex = body.indexOf("!ifndef BUILD_UNINSTALLER")
+      expect(escapeIndex).toBeGreaterThan(-1)
+      expect(guardIndex).toBeGreaterThan(-1)
+      expect(escapeIndex).toBeLessThan(guardIndex)
+      // the scratch register is saved/restored outside the guard as well
+      expect(body.indexOf("Push $R8")).toBeLessThan(guardIndex)
+      expect(body.indexOf("Pop $R8")).toBeGreaterThan(body.indexOf("!endif"))
     })
 
     test("path filter also covers previous per-user and per-machine install locations, installer only (#10022)", () => {

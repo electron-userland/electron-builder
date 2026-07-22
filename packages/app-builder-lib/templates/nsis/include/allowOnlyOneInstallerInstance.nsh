@@ -55,20 +55,25 @@
   Var /GLOBAL processPathFilter
   StrCpy $CmdPath "$SYSDIR\cmd.exe"
   StrCpy $PowerShellPath "$SYSDIR\WindowsPowerShell\v1.0\powershell.exe"
+  Push $R8
   # PowerShell filter matching processes running from the installation directory
-  # (trailing backslash so that a sibling directory with the same prefix is not matched)
-  StrCpy $processPathFilter "$$_.Path.StartsWith('$INSTDIR\', 'CurrentCultureIgnoreCase')"
+  # (trailing backslash so that a sibling directory with the same prefix is not matched).
+  # $R8 = $INSTDIR with single quotes escaped ('') for the single-quoted PowerShell string
+  # literal, so a quote in the path can neither break the expression nor inject PowerShell;
+  # a double quote needs no handling here because it is invalid in a Windows path and NSIS
+  # never lets $INSTDIR contain one
+  ${WordReplace} $INSTDIR "'" "''" "+" $R8
+  StrCpy $processPathFilter "$$_.Path.StartsWith('$R8\', 'CurrentCultureIgnoreCase')"
   !ifndef BUILD_UNINSTALLER
     # also match processes running from the previous per-user and per-machine installation directories,
     # because the previous installation is uninstalled during install
     # https://github.com/electron-userland/electron-builder/issues/10022
-    Push $R8
     Push $R9
     !insertmacro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER HKCU
     !insertmacro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER HKLM
     Pop $R9
-    Pop $R8
   !endif
+  Pop $R8
   !ifmacrodef customCheckAppRunning
     !insertmacro customCheckAppRunning
   !else
