@@ -188,7 +188,9 @@ export function createTargets(platforms: Array<Platform>, type?: string | null, 
   const targets = new Map<Platform, Map<Arch, Array<string>>>()
   for (const platform of platforms) {
     const archs =
-      arch === "all" ? (platform === Platform.MAC ? [Arch.x64, Arch.arm64, Arch.universal] : [Arch.x64, Arch.ia32]) : [archFromString(arch == null ? process.arch : arch)]
+      // BREAKING: since Electron 44 removed Windows ia32 and Linux armv7l builds (and linux-ia32 zips ended at Electron 19),
+      // "all" expands to x64 + arm64 on non-mac platforms instead of x64 + ia32. Request ia32 explicitly to build it (Electron <= 43 only).
+      arch === "all" ? (platform === Platform.MAC ? [Arch.x64, Arch.arm64, Arch.universal] : [Arch.x64, Arch.arm64]) : [archFromString(arch == null ? process.arch : arch)]
     const archToType = new Map<Arch, Array<string>>()
     targets.set(platform, archToType)
 
@@ -285,7 +287,7 @@ export function configureBuildCommand(yargs: yargs.Argv): yargs.Argv {
     .group(["help", "version"], "Other:")
     .example("electron-builder -mwl", "build for macOS, Windows and Linux")
     .example("electron-builder --linux deb tar.xz", "build deb and tar.xz for Linux")
-    .example("electron-builder --win --ia32", "build for Windows ia32")
+    .example("electron-builder --win --arm64", "build for Windows arm64")
     .example("electron-builder -c.extraMetadata.foo=bar", "set package.json property `foo` to `bar`")
     .example("electron-builder --config.nsis.unicode=false", "configure unicode options for NSIS")
 }
