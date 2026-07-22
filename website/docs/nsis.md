@@ -13,7 +13,11 @@ Unicode enabled by default. Large strings are supported (maximum string length o
 ## 32 bit + 64 bit
 
 If you build both ia32 and x64 arch (`--x64 --ia32`), you will always get one installer. The appropriate arch will be installed automatically.
-The same applied to web installer (`nsis-web` [target](win.md#target)).
+The same applied to web installer (`nsis-web` [target](win.md#target)). The same dual-arch installer mechanism also applies to `--x64 --arm64`.
+
+:::note[ia32 requires Electron <= 43]
+[Electron 44 removed Windows ia32 builds](https://github.com/electron/electron/pull/51816) — building ia32 requires `electronVersion` <= 43.x (supported until the v43 series reaches end-of-life in January 2027).
+:::
 
 ## Web Installer
 
