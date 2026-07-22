@@ -51,6 +51,20 @@ describe("createClient — r2 routing", () => {
     expect(provider.configuration.url).toBe(`https://${options.accountId}.r2.cloudflarestorage.com/${options.bucket}`)
   })
 
+  test.each(["eu", "fedramp"] as const)("fallback S3 API endpoint includes the '%s' jurisdiction subdomain", jurisdiction => {
+    // Jurisdictional buckets only exist on https://<accountId>.<jurisdiction>.r2.cloudflarestorage.com —
+    // note the dot on BOTH sides of the jurisdiction label.
+    const options = r2({ publicUrl: null, jurisdiction })
+    const provider = createClient(options, updater, runtimeOptions) as any
+    expect(provider.configuration.url).toBe(`https://${options.accountId}.${jurisdiction}.r2.cloudflarestorage.com/${options.bucket}`)
+  })
+
+  test("fallback S3 API endpoint has no jurisdiction subdomain when jurisdiction is omitted", () => {
+    const options = r2({ publicUrl: null, jurisdiction: null })
+    const provider = createClient(options, updater, runtimeOptions) as any
+    expect(provider.configuration.url).toBe(`https://${options.accountId}.r2.cloudflarestorage.com/${options.bucket}`)
+  })
+
   test("propagates the channel", () => {
     const provider = createClient(r2({ channel: "beta" }), updater, runtimeOptions) as any
     expect(provider.configuration.channel).toBe("beta")
