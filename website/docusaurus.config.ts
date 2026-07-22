@@ -170,6 +170,13 @@ const config: Config = {
         },
 
         {
+          type: "doc",
+          docId: "migration/v27-breaking-changes",
+          position: "left",
+          label: "v27 Breaking Changes",
+        },
+
+        {
           type: "docSidebar",
           sidebarId: "migrationSidebar",
           position: "left",

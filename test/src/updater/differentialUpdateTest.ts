@@ -27,15 +27,15 @@ async function testMac(expect: ExpectStatic, arch: Arch) {
     await move(path.join(oldDir, blockmap), path.join(outDirs[1], blockmap))
     await move(path.join(oldDir, `Test App ßW-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}-mac.zip`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "update.zip"))
 
-    await testBlockMap(expect, outDirs[0], outDirs[1], MacUpdater, Platform.MAC, arch, "Test App ßW")
+    await testBlockMap(expect, outDirs[0], outDirs[1], MacUpdater, Platform.MAC, arch, { productFilename: "Test App ßW" })
   } finally {
     await tmpDir.cleanup()
   }
 }
 
-test.ifMac("Mac Intel", ({ expect }) => testMac(expect, Arch.x64))
+test.ifMac("Mac Intel", { timeout: EXTENDED_TIMEOUT }, ({ expect }) => testMac(expect, Arch.x64))
 // builds 2 archs, so double the timeout?
 test.ifMac("Mac universal", { timeout: 2 * EXTENDED_TIMEOUT }, ({ expect }) => testMac(expect, Arch.universal))
 
 // only run on arm64 macs, otherwise of course no files can be found to be updated to (due to arch mismatch)
-test.ifMac.ifEnv(process.arch === "arm64")("Mac arm64", ({ expect }) => testMac(expect, Arch.arm64))
+test.ifMac.ifEnv(process.arch === "arm64")("Mac arm64", { timeout: EXTENDED_TIMEOUT }, ({ expect }) => testMac(expect, Arch.arm64))

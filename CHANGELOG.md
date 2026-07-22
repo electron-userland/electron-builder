@@ -1,3 +1,47 @@
+# [27.0.0-alpha.5](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.4...electron-builder@27.0.0-alpha.5) (2026-06-20)
+
+
+### Bug Fixes
+
+* bundle a workspace sub-package's production dependencies into app.asar when the package manager resolves to the workspace root ([#9951](https://github.com/electron-userland/electron-builder/issues/9951)) ([39a5fd8](https://github.com/electron-userland/electron-builder/commit/39a5fd874aea21f1d7e8bc4e961afe2edb8b632e))
+* **migrate-schema:** stop stripping `vPrefixedTagName` from GitLab publish entries ([#9956](https://github.com/electron-userland/electron-builder/issues/9956)) ([62d206f](https://github.com/electron-userland/electron-builder/commit/62d206fa2c31aed01e5206eb0d51cac77da0f73a))
+* **nsis:** Change the ProgID to a more correct, more unique format ([#9241](https://github.com/electron-userland/electron-builder/issues/9241)) ([25e7b44](https://github.com/electron-userland/electron-builder/commit/25e7b446bc752d3e0b28941bcb606a891d8f2842))
+* **squirrel:** flaky `appOutDir` mutation creates `elevate.exe` race condition in `concurrent` builds ([#9852](https://github.com/electron-userland/electron-builder/issues/9852)) ([3cc43d2](https://github.com/electron-userland/electron-builder/commit/3cc43d2379b314eacd96e2d948af3e1c0a74e3c9))
+
+
+### Features
+
+* Allow including default-excluded files via `files` globs; remove `disableDefaultIgnoredFiles` (BREAKING) ([#9954](https://github.com/electron-userland/electron-builder/issues/9954)) ([a16fb6b](https://github.com/electron-userland/electron-builder/commit/a16fb6bfdcf0352a6b127229b8f8254847d16df1))
+* Promote and adopt `"latest"` as the canonical "null"-state for every `Toolset` (BREAKING) ([#9939](https://github.com/electron-userland/electron-builder/issues/9939)) ([2669c2a](https://github.com/electron-userland/electron-builder/commit/2669c2a7c7e9b6c3d8f7789362ffa5d7aac3fbf6))
+* promote Azure Trusted Signing and Snap Core24 out of Beta; update documentation ([#9949](https://github.com/electron-userland/electron-builder/issues/9949)) ([8f4be0a](https://github.com/electron-userland/electron-builder/commit/8f4be0a4308f68fea4f76d6c1c2c8d0035266a87))
+* **snap:** support multi-arch `remote-build` via `buildFor: string[]` — one Launchpad job now produces and registers multiple snap artifacts ([#9841](https://github.com/electron-userland/electron-builder/issues/9841)) ([ff467f9](https://github.com/electron-userland/electron-builder/commit/ff467f93fd55f43409945402cb89389896c3dc9a))
+
+
+
+# [27.0.0-alpha.4](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.3...electron-builder@27.0.0-alpha.4) (2026-06-18)
+
+
+### Bug Fixes
+
+* **mac:** resolve universal build failure with platform-specific single-arch dependencies ([#9942](https://github.com/electron-userland/electron-builder/issues/9942)) ([b84a1f4](https://github.com/electron-userland/electron-builder/commit/b84a1f40116287d852da4a5d7307c59b600effba))
+* **nsis:** preserve `$(...)` LangString references in escaped NSIS define values (e.g. `shortcutName: "$(customSN)"`) ([#9934](https://github.com/electron-userland/electron-builder/issues/9934)) ([344d156](https://github.com/electron-userland/electron-builder/commit/344d156dd01c3427569b3cd1a37f43b8a5ff5990))
+* resolve `merge-smart-cache` CI job failing to upload when branch name contains `/` (9932) ([a4b4d65](https://github.com/electron-userland/electron-builder/commit/a4b4d65fc5952df87363b0bb1466e24b7cf29a3e))
+* test noise and stability (icon conv toolset lock, corepack noise, signtool failure) ([#9935](https://github.com/electron-userland/electron-builder/issues/9935)) ([d22a6f7](https://github.com/electron-userland/electron-builder/commit/d22a6f72dd8ddc1e945cc70719adfc373f605118))
+* **test:** stabilize corepack warmup during CI setup via retry mechanism ([#9933](https://github.com/electron-userland/electron-builder/issues/9933)) ([2cbbb93](https://github.com/electron-userland/electron-builder/commit/2cbbb9392031e87ff91d48041bc57dbce45d1875))
+* **win:** retry the spurious "The batch file cannot be found." cmd.exe race condition ([#9929](https://github.com/electron-userland/electron-builder/issues/9929)) ([9faa8c8](https://github.com/electron-userland/electron-builder/commit/9faa8c8198f5e612d54ebcdd0904a74b338afb33))
+* **win:** serialize concurrent signtool invocations with lockfile ([#9920](https://github.com/electron-userland/electron-builder/issues/9920)) ([449e8d4](https://github.com/electron-userland/electron-builder/commit/449e8d4da781af2550684809bbac3f4acafcc92e))
+
+
+### Features
+
+* escape xml for appxmanifest; consolidate usage to `builder-util` ([#9853](https://github.com/electron-userland/electron-builder/issues/9853)) ([deafee9](https://github.com/electron-userland/electron-builder/commit/deafee9fe5f7bccbf52e73cd0c6085e767f921ce))
+* **linux:** unified `executableArgs` entrypoint for Linux targets ([#9922](https://github.com/electron-userland/electron-builder/issues/9922)) ([6a0f35a](https://github.com/electron-userland/electron-builder/commit/6a0f35aa1e58a0c37794d1646927a1a881098913))
+* **nsis:** add Hebrew (he) translations and bundle he_IL for installer messages ([#9927](https://github.com/electron-userland/electron-builder/issues/9927)) ([d21a771](https://github.com/electron-userland/electron-builder/commit/d21a77117e4836cf8ef93b78210b67c86f053d6a))
+* programmatic v26->v27 schema migrator ([#9941](https://github.com/electron-userland/electron-builder/issues/9941)) ([2a1c06f](https://github.com/electron-userland/electron-builder/commit/2a1c06fa6319e3abea381f6b9e359d59a8191649))
+* Remove `linux.syncDesktopName` — always sync the installed `.desktop` filename (BREAKING) ([#9908](https://github.com/electron-userland/electron-builder/issues/9908)) ([fae5232](https://github.com/electron-userland/electron-builder/commit/fae52329c636d3640c68ba4db5db013ccfa42bc2))
+
+
+
 # [27.0.0-alpha.3](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.2...electron-builder@27.0.0-alpha.3) (2026-06-16)
 
 

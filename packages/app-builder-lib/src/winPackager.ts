@@ -15,6 +15,7 @@ import { DIR_TARGET, Platform, Target } from "./core.js"
 import { isWindowsSigningDisabled, RequestedExecutionLevel, resolveWindowsSigningConfiguration, WindowsConfiguration } from "./options/winOptions.js"
 import { Packager } from "./packager.js"
 import { chooseNotNull, PlatformPackager } from "./platformPackager.js"
+import MsixTarget from "./targets/win/MsixTarget.js"
 import AppXTarget from "./targets/win/AppxTarget.js"
 import MsiTarget from "./targets/win/MsiTarget.js"
 import MsiWrappedTarget from "./targets/win/MsiWrappedTarget.js"
@@ -82,7 +83,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
         // package file format differs from nsis target
         mapper(name, outDir => new WebInstallerTarget(this, path.join(outDir, name), name, new AppPackageHelper(getCopyElevateHelper())))
       } else {
-        const targetClass: typeof NsisTarget | typeof AppXTarget | typeof MsiTarget | typeof MsiWrappedTarget | null = (() => {
+        const targetClass: typeof NsisTarget | typeof AppXTarget | typeof MsixTarget | typeof MsiTarget | typeof MsiWrappedTarget | null = (() => {
           switch (name) {
             case "squirrel":
               try {
@@ -99,6 +100,9 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
             case "msiwrapped":
               return MsiWrappedTarget
+
+            case "msix":
+              return MsixTarget
 
             default:
               return null

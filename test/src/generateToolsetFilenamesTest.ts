@@ -3,7 +3,9 @@ import * as path from "path"
 import { describe, it, expect, beforeAll } from "vitest"
 import { generateTests } from "../vitest-scripts/generate-tests"
 import { GENERATED_TESTS_DIR } from "../vitest-scripts/runtime-tests/generate-toolset-tests-shared"
-import { platformAllowed } from "../vitest-scripts/vitest-config/file-discovery"
+import { detectFilePlatforms, platformAllowed } from "../vitest-scripts/vitest-config/file-discovery"
+import { resolveCachedMs } from "../vitest-scripts/vitest-config/shard-builder"
+import type { FileStats } from "../vitest-scripts/vitest-config/cache"
 
 // Collect all generated test filenames recursively
 function collectGeneratedFiles(dir: string): string[] {
@@ -102,11 +104,73 @@ describe("Generated toolset test filenames", () => {
     }
   })
 
+  // A file whose only platform infix is absent but whose entire suite is runtime-gated
+  // (e.g. `describe.heavy.ifLinux(...)`) must be dropped from the other platforms' shard plans.
+  it("detectFilePlatforms gates a whole-file ifLinux suite to linux only", () => {
+    const platforms = detectFilePlatforms("test/src/updater/blackboxInstallTest.ts")
+    expect(platforms).not.toBeNull()
+    expect([...platforms!].sort()).toEqual(["linux"])
+  })
+
+  it("detectFilePlatforms gates a whole-file ifMac suite to darwin only", () => {
+    const platforms = detectFilePlatforms("test/src/mac/masTest.ts")
+    expect(platforms).not.toBeNull()
+    expect([...platforms!].sort()).toEqual(["darwin"])
+  })
+
+  // Union across top-level blocks: ifMac + ifNotWindows ⇒ runs on darwin and linux, skips win32.
+  it("detectFilePlatforms unions mixed gates and only excludes the common platform", () => {
+    const platforms = detectFilePlatforms("test/src/mac/macArchiveTest.ts")
+    expect(platforms).not.toBeNull()
+    expect([...platforms!].sort()).toEqual(["darwin", "linux"])
+  })
+
+  // A file with even one ungated top-level block must stay on every platform (no silent drop).
+  it("detectFilePlatforms returns null when a top-level block is ungated", () => {
+    expect(detectFilePlatforms("test/src/updater/baseUpdaterUnitTest.ts")).toBeNull()
+    expect(detectFilePlatforms("test/src/BuildTest.ts")).toBeNull()
+  })
+
+  it("platformAllowed drops a runtime-gated ifLinux file from non-linux shard plans", () => {
+    const file = "test/src/updater/blackboxInstallTest.ts"
+    expect(platformAllowed(file, "linux")).toBe(true)
+    expect(platformAllowed(file, "darwin")).toBe(false)
+    expect(platformAllowed(file, "win32")).toBe(false)
+  })
+
   it("all generated Test.ts files end with Test.ts (discoverable)", () => {
     const files = collectGeneratedFiles(GENERATED_TESTS_DIR)
     expect(files.length).toBeGreaterThan(0)
     for (const f of files) {
       expect(path.basename(f), `${f} must end with Test.ts`).toMatch(/Test\.ts$/)
     }
+  })
+})
+
+describe("resolveCachedMs", () => {
+  const statWith = (linux: { runs: number; avgMs: number }): FileStats => ({
+    platformRuns: {
+      win32: { runs: 0, fails: 0, avgMs: 0 },
+      darwin: { runs: 0, fails: 0, avgMs: 0 },
+      linux: { ...linux, fails: 0 },
+    },
+  })
+
+  it("keeps a genuine measured 0 ms (runs > 0) instead of treating it as unknown", () => {
+    expect(resolveCachedMs(statWith({ runs: 3, avgMs: 0 }), "linux")).toBe(0)
+  })
+
+  it("returns the measured avg when the platform has runs", () => {
+    expect(resolveCachedMs(statWith({ runs: 2, avgMs: 1234 }), "linux")).toBe(1234)
+  })
+
+  it("returns undefined when the platform has never run (runs === 0)", () => {
+    expect(resolveCachedMs(statWith({ runs: 0, avgMs: 0 }), "linux")).toBeUndefined()
+    expect(resolveCachedMs(statWith({ runs: 5, avgMs: 999 }), "win32")).toBeUndefined()
+  })
+
+  it("returns undefined for a missing stat or missing platformRuns", () => {
+    expect(resolveCachedMs(undefined, "linux")).toBeUndefined()
+    expect(resolveCachedMs({}, "linux")).toBeUndefined()
   })
 })

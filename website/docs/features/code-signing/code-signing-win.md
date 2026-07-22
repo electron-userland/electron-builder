@@ -1,23 +1,32 @@
 # Code Signing for Windows
 
-Windows code signing is supported. If the configuration values are provided correctly in your package.json, then signing should be automatically executed.
+Windows code signing is supported and runs automatically once you configure a signing method — or simply provide signing credentials through environment variables. electron-builder signs every executable and installer it produces so that Windows SmartScreen and your auto-updater can verify your app's publisher and confirm it hasn't been tampered with.
 
-:::tip
-Windows is dual code-signed (SHA1 & SHA256 hashing algorithms).
+:::tip[Dual signing]
+By default each binary is dual-signed with both SHA-1 and SHA-256 (`signingHashAlgorithms: ["sha1", "sha256"]`) so it validates on legacy as well as modern Windows. A few targets are fixed: `.msi` is single-signed and AppX/MSIX is SHA-256 only.
 :::
 
-To sign an app on Windows, there are two types of certificates:
+## Choosing a signing method
 
-* EV Code Signing Certificate
-* Code Signing Certificate
+electron-builder offers several signing backends, selected by the `type` field of `win.sign` (detailed in the table below). Pick based on where your private key lives and which OS your build runs on:
 
-Both certificates work with auto-update. The regular (and often cheaper) Code Signing Certificate shows a warning during installation that goes away once enough users installed your application and you've built up trust. The EV Certificate has more trust and thus works immediately without any warnings. However, it is not possible to export the EV Certificate as it is bound to a physical USB dongle. Thus, you can't export the certificate for signing code on a CI, such as AppVeyor.
+- **Certificate file or Windows store** (`signtool`, the default) — a `.pfx`/`.p12` file or a certificate already in the Windows certificate store. Signs with Microsoft `signtool.exe` on Windows and `osslsigncode` on macOS/Linux.
+- **Hardware Security Module / FIPS token** (`hsm`) — the key stays in hardware, accessed through a Windows cryptographic service provider. Windows only.
+- **PKCS#11 hardware token** (`pkcs11`) — a smart card, USB HSM, or network token reached through a PKCS#11 module. Runs on macOS/Linux via `osslsigncode`.
+- **Azure Trusted Signing** (`azure`) — Microsoft's cloud signing service; no local key to manage. Works on any OS.
 
-If you are using an EV Certificate, you need to provide [`certificateSubjectName`](#certificatesubjectname) in your win configuration.
+### OV vs. EV certificates
 
-If you use Windows 7, please ensure that [PowerShell](https://blogs.technet.microsoft.com/heyscriptingguy/2013/06/02/weekend-scripter-install-powershell-3-0-on-windows-7/) is updated to version 3.0.
+For file- or store-based signing you need a Windows code signing certificate from a CA (DigiCert, Sectigo, SSL.com, …). They come in two grades:
 
-If you are on Linux or Mac and you want sign a Windows app using EV Code Signing Certificate, please use [the guide for Unix systems](../../tutorials/code-signing-windows-apps-on-unix.md).
+- **OV (Organization Validation)** — the common, lower-cost option. New publishers see a SmartScreen "unknown publisher" warning during install that fades as your download reputation grows. OV certificates export to a `.pfx`, so they work in CI with the `signtool` method.
+- **EV (Extended Validation)** — earns SmartScreen reputation immediately, but its private key is bound to a hardware token and **cannot** be exported to a file. Identify an EV certificate by `certificateSubjectName` or `certificateSha1` rather than a file path, and sign with the `hsm` (Windows) or `pkcs11` (macOS/Linux) method — or switch to `azure` to avoid managing hardware at all.
+
+Both grades work with auto-update.
+
+:::tip[Signing without a Windows machine]
+You don't need Windows to sign a Windows app. The default `signtool` method signs file-based certificates with `osslsigncode` on macOS/Linux, and the `pkcs11` and `azure` methods are designed for non-Windows CI. See also [Code Signing Windows Apps on Unix](../../tutorials/code-signing-windows-apps-on-unix.md).
+:::
 
 ---
 
@@ -25,14 +34,14 @@ If you are on Linux or Mac and you want sign a Windows app using EV Code Signing
 
 All Windows code signing is configured under a single `win.sign` key using a discriminated union with an explicit `type` field:
 
-| `win.sign` value | Behavior |
-|---|---|
-| unset | Sign using credentials discovered from the environment (`WIN_CSC_LINK` / `CSC_LINK`) |
-| `{ type: "signtool", ... }` | Sign with a local `.pfx`/`.p12` certificate file or Windows cert store |
-| `{ type: "hsm", ... }` | Sign via Hardware Security Module / FIPS token (Windows only) — **Beta** |
-| `{ type: "pkcs11", ... }` | Sign via PKCS#11 hardware token using osslsigncode (macOS/Linux CI) — **Beta** |
-| `{ type: "azure", ... }` | Sign via Azure Trusted Signing cloud service — **Beta** |
-| `false` or `null` | Disable signing (resedit resource editing still runs) |
+| `win.sign` value | Behavior | Platforms |
+|---|---|---|
+| unset | Sign using credentials discovered from the environment — `WIN_CSC_LINK` / `CSC_LINK` with `WIN_CSC_KEY_PASSWORD` / `CSC_KEY_PASSWORD` | all |
+| `{ type: "signtool", ... }` | Local `.pfx`/`.p12` certificate file or Windows certificate store | Windows (`signtool.exe`) · macOS/Linux (`osslsigncode`) |
+| `{ type: "hsm", ... }` | Hardware Security Module / FIPS token via a Windows CSP — **Beta** | Windows only |
+| `{ type: "pkcs11", ... }` | PKCS#11 hardware token via `osslsigncode` — **Beta** | macOS/Linux |
+| `{ type: "azure", ... }` | Azure Trusted Signing cloud service — **Beta** | all (`signtool /dlib`, Wine on macOS/Linux) |
+| `false` or `null` | Disable signing (resedit resource editing still runs) | all |
 
 Combining `win.sign: false` with `forceCodeSigning: true` is a configuration error and fails the build.
 
@@ -40,7 +49,7 @@ Combining `win.sign: false` with `forceCodeSigning: true` is a configuration err
 
 ## Signtool Signing (`type: "signtool"`)
 
-The standard signing mode. Signs executables with a local certificate file (`.pfx`/`.p12`) or a certificate from the Windows certificate store via `signtool.exe` (Wine on macOS/Linux).
+The standard signing mode, and the default when `win.sign` is unset. Signs with a local certificate file (`.pfx`/`.p12`) or a certificate from the Windows certificate store, using Microsoft `signtool.exe` on Windows and `osslsigncode` on macOS/Linux.
 
 ### Setup
 
@@ -81,9 +90,9 @@ For EV certificates (bound to a USB dongle), identify by subject name instead:
 
 ### Execution flow
 
-1. `cscInfo` resolves the certificate from `certificateFile`, `certificateSha1`, `certificateSubjectName`, or the `WIN_CSC_LINK` env var.
-2. For each file, `signtool.exe sign` is called twice in sequence: once for SHA1, once for SHA256 (`/as` nested signature).
-3. On macOS/Linux, `signtool.exe` runs inside Wine using the `winCodeSign` toolset bundle.
+1. The certificate is resolved from `certificateFile` (or the `WIN_CSC_LINK` / `CSC_LINK` env var), or looked up in the Windows certificate store by `certificateSubjectName` / `certificateSha1`.
+2. Each file is signed once per entry in `signingHashAlgorithms` — by default SHA-1, then SHA-256 with the second signature appended as a nested signature.
+3. On Windows the signer is Microsoft `signtool.exe`; on macOS/Linux it is `osslsigncode` from the `winCodeSign` toolset bundle — no Wine or Windows VM is involved. Note: certificate-store lookups (`certificateSubjectName` / `certificateSha1`) read the Windows store and therefore require Windows (or the bundled Windows VM), whereas file-based signing works on any platform.
 
 ### Configuration reference
 
@@ -101,7 +110,7 @@ Signs using a Hardware Security Module (HSM), FIPS-compliant token, or smart car
 
 **Platform:** Windows only. For macOS/Linux CI without a Windows VM, use [`type: "pkcs11"`](#pkcs11-signing-typepkcs11--beta) instead.
 
-**Requirement:** `toolsets.winCodeSign` must be `"1.0.0"` or `"1.1.0"`. The legacy `"0.0.0"` toolset does not include the required signtool version.
+**Requirement:** a modern `winCodeSign` toolset, which is the default — you do not need to pin a version. Only an explicit legacy pin (`toolsets.winCodeSign: "0.0.0"`) is unsupported, because it predates the required signtool version.
 
 ### Setup
 
@@ -120,19 +129,18 @@ Signs using a Hardware Security Module (HSM), FIPS-compliant token, or smart car
       "keyContainer": "projects/my-project/locations/us-east1/keyRings/my-ring/cryptoKeys/my-key/cryptoKeyVersions/1",
       "certificateFile": "chain.crt"
     }
-  },
-  "toolsets": {
-    "winCodeSign": "1.1.0"
   }
 }
 ```
+
+The default `winCodeSign` toolset already supports HSM signing, so no `toolsets` pin is needed.
 
 ### Execution flow
 
 1. `signtool.exe sign` is invoked with `/csp <cryptoServiceProvider>` and `/kc <keyContainer>`.
 2. The certificate is identified via `certificateFile`, `certificateSha1`, or `certificateSubjectName`.
 3. The HSM performs the private-key operation; the resulting signature is embedded by signtool.
-4. SHA256 signing only (no SHA1 dual-sign path for HSM).
+4. By default the file is dual-signed (SHA-1, then SHA-256), the same as the `signtool` mode — the HSM performs a key operation for each pass. Set `signingHashAlgorithms: ["sha256"]` to produce a single SHA-256 signature instead.
 
 ### Caveats
 
@@ -222,7 +230,7 @@ With an optional external certificate chain file (if the token does not carry th
 ## Azure Trusted Signing (`type: "azure"`) — Beta
 
 :::warning[Beta feature]
-The `signtool /dlib` Azure Trusted Signing integration introduced in v27 is a **beta** feature. The legacy PowerShell fallback (triggered when `toolsets.winCodeSign` is unset or `"0.0.0"`) remains available during the migration window. Please [report issues](https://github.com/electron-userland/electron-builder/issues) if you encounter problems.
+The `signtool /dlib` Azure Trusted Signing integration introduced in v27 is a **beta** feature. It is the default path on current toolsets; the legacy PowerShell fallback remains available only when you explicitly pin `toolsets.winCodeSign` below `"1.3.0"` (see [Legacy PowerShell fallback](#legacy-powershell-fallback) below). Please [report issues](https://github.com/electron-userland/electron-builder/issues) if you encounter problems.
 :::
 
 Microsoft's cloud-based code signing service. No certificate file or private key is managed locally — authentication is via Azure Entra ID environment variables and signing is performed by the Azure service.
@@ -250,7 +258,7 @@ Set the required environment variables (descriptions from [Azure.Identity — En
 If you use the minimal setup with an "App registration" as described above, only `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, and `AZURE_CLIENT_SECRET` are needed.
 :::
 
-Then configure `win.sign` and pin the `winCodeSign` toolset (required for the `/dlib` integration):
+Then configure `win.sign`. The default toolset already ships the `/dlib` integration, so **no `winCodeSign` pin is required**:
 
 ```jsonc
 {
@@ -262,9 +270,6 @@ Then configure `win.sign` and pin the `winCodeSign` toolset (required for the `/
       "codeSigningAccountName": "my-trusted-signing-account",
       "certificateProfileName": "my-cert-profile"
     }
-  },
-  "toolsets": {
-    "winCodeSign": "1.3.0"
   }
 }
 ```
@@ -299,11 +304,11 @@ Use `additionalMetadata` to pass extra fields verbatim into `metadata.json`. Thi
 
 ### Legacy PowerShell fallback
 
-If `toolsets.winCodeSign` is unset or below `"1.3.0"`, electron-builder automatically falls back to the v26 PowerShell `Invoke-TrustedSigning` integration and emits a deprecation warning. This fallback will be removed in a future release. To upgrade, add `"toolsets": { "winCodeSign": "1.3.0" }` to your config.
+The default toolset (`winCodeSign` unset, `null`, or `"latest"`) resolves to the newest bundle (`1.3.0`+) and uses the modern `signtool /dlib` path. Only if you **explicitly** pin `toolsets.winCodeSign` below `"1.3.0"` (for example `"1.2.1"`, or the legacy `"0.0.0"`) does electron-builder fall back to the v26 PowerShell `Invoke-TrustedSigning` integration and emit a deprecation warning. This fallback will be removed in a future release, so avoid pinning an older toolset unless you specifically need it.
 
 ### Caveats
 
-- The `ats-bundle` (containing `Azure.CodeSigning.Dlib.dll` and its native dependency closure) and the `dotnet-runtime` bundle ship separately starting from `winCodeSign "1.3.0"`. Setting `toolsets.winCodeSign: "1.3.0"` (or higher) is required for the new integration; they are downloaded automatically on first use.
+- The `ats-bundle` (containing `Azure.CodeSigning.Dlib.dll` and its native dependency closure) and the `dotnet-runtime` bundle ship with `winCodeSign "1.3.0"` and later — which is the default. They are downloaded automatically on first use; no manual setup or toolset pin is required.
 - The DLib is a mixed-mode .NET 8 assembly: electron-builder automatically downloads and provides the **.NET 8 runtime** via the separate `dotnet-runtime` bundle — no manual runtime installation is required.
 - The DLib authenticates using the Azure environment variables at signing time — credentials are not embedded in config.
 - Network connectivity to the Azure endpoint is required during the build. Rate limits or outages will fail the build.

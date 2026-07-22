@@ -1,5 +1,63 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`linux > arch - (pacman) 1`] = `
+{
+  "linux": [
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.pacman",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.0",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp.pacman",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux > arch - (pacman) 2`] = `
+{
+  "linux": [
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.pacman",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.1",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp.pacman",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
 exports[`linux > debian - (apt) 1`] = `
 {
   "linux": [
@@ -21,9 +79,7 @@ exports[`linux > debian - (apt) 1`] = `
             "url": "TestApp.deb",
           },
         ],
-        "path": "TestApp.deb",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -52,6 +108,7 @@ exports[`linux > debian - (apt) 2`] = `
   "/opt/TestApp/resources.pak",
   "/opt/TestApp/snapshot_blob.bin",
   "/opt/TestApp/TestApp",
+  "/opt/TestApp/TestApp-launcher",
   "/opt/TestApp/v8_context_snapshot.bin",
   "/opt/TestApp/vk_swiftshader_icd.json",
   "/usr/share/",
@@ -157,9 +214,7 @@ exports[`linux > debian - (apt) 5`] = `
             "url": "TestApp.deb",
           },
         ],
-        "path": "TestApp.deb",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.1",
       },
     },
@@ -188,6 +243,7 @@ exports[`linux > debian - (apt) 6`] = `
   "/opt/TestApp/resources.pak",
   "/opt/TestApp/snapshot_blob.bin",
   "/opt/TestApp/TestApp",
+  "/opt/TestApp/TestApp-launcher",
   "/opt/TestApp/v8_context_snapshot.bin",
   "/opt/TestApp/vk_swiftshader_icd.json",
   "/usr/share/",
@@ -293,9 +349,7 @@ exports[`linux > debian - (dpkg) 1`] = `
             "url": "TestApp.deb",
           },
         ],
-        "path": "TestApp.deb",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -324,6 +378,7 @@ exports[`linux > debian - (dpkg) 2`] = `
   "/opt/TestApp/resources.pak",
   "/opt/TestApp/snapshot_blob.bin",
   "/opt/TestApp/TestApp",
+  "/opt/TestApp/TestApp-launcher",
   "/opt/TestApp/v8_context_snapshot.bin",
   "/opt/TestApp/vk_swiftshader_icd.json",
   "/usr/share/",
@@ -429,9 +484,7 @@ exports[`linux > debian - (dpkg) 5`] = `
             "url": "TestApp.deb",
           },
         ],
-        "path": "TestApp.deb",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.1",
       },
     },
@@ -460,6 +513,7 @@ exports[`linux > debian - (dpkg) 6`] = `
   "/opt/TestApp/resources.pak",
   "/opt/TestApp/snapshot_blob.bin",
   "/opt/TestApp/TestApp",
+  "/opt/TestApp/TestApp-launcher",
   "/opt/TestApp/v8_context_snapshot.bin",
   "/opt/TestApp/vk_swiftshader_icd.json",
   "/usr/share/",
@@ -565,9 +619,7 @@ exports[`linux > fedora - (dnf) 1`] = `
             "url": "TestApp.rpm",
           },
         ],
-        "path": "TestApp.rpm",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -596,9 +648,7 @@ exports[`linux > fedora - (dnf) 2`] = `
             "url": "TestApp.rpm",
           },
         ],
-        "path": "TestApp.rpm",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.1",
       },
     },
@@ -627,9 +677,7 @@ exports[`linux > fedora - (rpm) 1`] = `
             "url": "TestApp.rpm",
           },
         ],
-        "path": "TestApp.rpm",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -658,9 +706,7 @@ exports[`linux > fedora - (rpm) 2`] = `
             "url": "TestApp.rpm",
           },
         ],
-        "path": "TestApp.rpm",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.1",
       },
     },
@@ -689,9 +735,7 @@ exports[`linux > fedora - (yum) 1`] = `
             "url": "TestApp.rpm",
           },
         ],
-        "path": "TestApp.rpm",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -720,9 +764,7 @@ exports[`linux > fedora - (yum) 2`] = `
             "url": "TestApp.rpm",
           },
         ],
-        "path": "TestApp.rpm",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.1",
       },
     },
@@ -751,9 +793,7 @@ exports[`linux > fedora - (zypper) 1`] = `
             "url": "TestApp.rpm",
           },
         ],
-        "path": "TestApp.rpm",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -782,9 +822,7 @@ exports[`linux > fedora - (zypper) 2`] = `
             "url": "TestApp.rpm",
           },
         ],
-        "path": "TestApp.rpm",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.1",
       },
     },

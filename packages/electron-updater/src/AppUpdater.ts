@@ -94,14 +94,45 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   allowDowngrade = false
 
   /**
-   * Web installer files might not have signature verification, this switch prevents to load them unless it is needed.
+   * *Linux only.* Whether to allow installing unverified (unsigned / failing-GPG) `.deb` and `.rpm` packages during auto-update.
    *
-   * Currently false to prevent breaking the current API, but it should be changed to default true at some point that
-   * breaking changes are allowed.
+   * electron-builder does not sign Linux packages, so this defaults to `true` to preserve working auto-updates: the
+   * package manager's signature/GPG checks are bypassed where a bypass flag exists (`--allow-unauthenticated` for the
+   * apt fallback, `--allow-unsigned-rpm` for zypper, `--nogpgcheck` for dnf/yum), which is the historical behavior.
    *
-   * @default false
+   * What `false` enforces depends on the package manager used on the target system:
+   * - dpkg (the default for `.deb`): no effect — dpkg performs no signature verification (a warning is logged);
+   *   enforcing `.deb` signatures requires a debsig-verify/debsigs policy on the target system.
+   * - apt (`.deb` fallback): `--allow-unauthenticated` is omitted.
+   * - zypper: enforced — unsigned/untrusted packages fail to install.
+   * - dnf/yum: enforced via `--setopt=localpkg_gpgcheck=1` (local package files are not GPG-checked by default).
+   * - bare rpm (fallback): cannot be enforced via the CLI (a warning is logged); admins must configure
+   *   `%_pkgverify_level signature` on the target system.
+   *
+   * pacman and AppImage targets are not affected by this option: `pacman -U` has no per-invocation bypass flag
+   * (local-file policy is `LocalFileSigLevel` in `pacman.conf`), and AppImage updates are verified only via the
+   * update-manifest checksum.
+   *
+   * @default true
    */
-  disableWebInstaller = false
+  allowUnverifiedLinuxPackages = true
+
+  private _disableWebInstaller: boolean | undefined = undefined
+
+  /**
+   * Whether to block NSIS web-installer packages. Web installer files might not have signature verification, so they are disabled by default as of v27.
+   *
+   * v27 grace period: apps that do not explicitly set this property will warn (but still download) if a web-installer update is received. In v28 the warning becomes an error and the download is blocked (`ERR_UPDATER_WEB_INSTALLER_DISABLED`). Apps that explicitly set this to `true` throw immediately. Set it to `false` only if you intentionally publish and rely on NSIS web-installer packages.
+   *
+   * @default true
+   */
+  get disableWebInstaller(): boolean {
+    return this._disableWebInstaller ?? true
+  }
+
+  set disableWebInstaller(value: boolean) {
+    this._disableWebInstaller = value
+  }
 
   /**
    * *NSIS only* Disable differential downloads and always perform full download of installer.
@@ -585,7 +616,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       updateInfoAndProvider,
       requestHeaders: this.computeRequestHeaders(updateInfoAndProvider.provider),
       cancellationToken,
-      disableWebInstaller: this.disableWebInstaller,
+      disableWebInstaller: this._disableWebInstaller,
       disableDifferentialDownload: this.disableDifferentialDownload,
     })
       .catch((e: any) => {
@@ -711,6 +742,11 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   protected async executeDownload(taskOptions: DownloadExecutorTask): Promise<Array<string>> {
     const fileInfo = taskOptions.fileInfo
+    if (fileInfo.info.sha512 == null && (fileInfo.info as any).sha2 != null) {
+      this._logger.warn(
+        "Update artifact is validated with a SHA-256 (sha2) checksum only. SHA-256 update checksums are deprecated; electron-builder v28 will require SHA-512 and reject SHA-256-only update metadata (fail-closed). Regenerate latest*.yml with a current electron-builder and avoid pinning electronUpdaterCompatibility to a legacy (<2.15 / 1.x) range."
+      )
+    }
     const downloadOptions: DownloadOptions = {
       headers: taskOptions.downloadUpdateOptions.requestHeaders,
       cancellationToken: taskOptions.downloadUpdateOptions.cancellationToken,

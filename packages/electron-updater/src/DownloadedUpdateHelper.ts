@@ -1,6 +1,4 @@
-import { UpdateInfo } from "builder-util-runtime"
-import { createHash } from "crypto"
-import { createReadStream } from "fs"
+import { hashFile, UpdateInfo } from "builder-util-runtime"
 import isEqual from "lodash.isequal"
 import { ResolvedUpdateFileInfo } from "./types.js"
 import { Logger } from "./types.js"
@@ -161,21 +159,6 @@ interface CachedUpdateInfo {
   fileName: string
   sha512: string
   readonly isAdminRightsRequired: boolean
-}
-
-function hashFile(file: string, algorithm = "sha512", encoding: "base64" | "hex" = "base64", options?: any): Promise<string> {
-  return new Promise<string>((resolve, reject) => {
-    const hash = createHash(algorithm)
-    hash.on("error", reject).setEncoding(encoding)
-
-    createReadStream(file, { ...options, highWaterMark: 1024 * 1024 /* better to use more memory but hash faster */ })
-      .on("error", reject)
-      .on("end", () => {
-        hash.end()
-        resolve(hash.read() as string)
-      })
-      .pipe(hash, { end: false })
-  })
 }
 
 export async function createTempUpdateFile(name: string, cacheDir: string, log: Logger): Promise<string> {

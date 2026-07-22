@@ -38,11 +38,15 @@ function mergePublish(config: Configuration, configFromOptions: Configuration) {
   }
 }
 
+export function createProjectMetadataLazy(projectDir: string): Lazy<Record<string, any> | null> {
+  return new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))
+}
+
 export async function getConfig(
   projectDir: string,
   configPath: string | null,
   configFromOptions: Configuration | Nullish,
-  packageMetadata: Lazy<Record<string, any> | null> = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))
+  packageMetadata: Lazy<Record<string, any> | null> = createProjectMetadataLazy(projectDir)
 ): Promise<Configuration> {
   const configRequest: ReadConfigRequest = { packageKey: "build", configFilename: "electron-builder", projectDir, packageMetadata }
   const configAndEffectiveFile = await _getConfig<Configuration>(configRequest, configPath)

@@ -2,6 +2,7 @@ import {
   Arch,
   asArray,
   AsyncTaskManager,
+  ensureNotBusy,
   exists,
   spawnAndWriteWithOutput,
   generateKsuid,
@@ -15,7 +16,6 @@ import {
 } from "builder-util"
 import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, deepAssign, PackageFileInfo, sleep, UUID } from "builder-util-runtime"
 import _debug from "debug"
-import * as fs from "fs"
 
 import * as path from "path"
 import { Target } from "../../../core.js"
@@ -35,16 +35,14 @@ import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } fr
 import { computeLicensePage } from "./nsisLicense.js"
 import { NsisOptions, PortableOptions } from "./nsisOptions.js"
 import { NsisScriptGenerator, nsisEscapeString } from "./nsisScriptGenerator.js"
+import { ELECTRON_BUILDER_NS_UUID, ProgIdMaker } from "./progId.js"
 import { getMakeNsisPath, getNsisPluginsPath } from "../../../toolsets/nsis.js"
-import { AppPackageHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil.js"
+import { AppPackageHelper, CopyElevateHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil.js"
 import { checkMakensisOutput, verifyInstallerSize } from "./nsisValidation.js"
 import _fsExtra from "fs-extra"
 const { readFile, stat, unlink } = _fsExtra
 
 const debug = _debug("electron-builder:nsis")
-
-// noinspection SpellCheckingInspection
-const ELECTRON_BUILDER_NS_UUID = UUID.parse("50e065bc-3134-11e6-9bab-38c9862bdaf3")
 
 const USE_NSIS_BUILT_IN_COMPRESSOR = false
 
@@ -106,7 +104,7 @@ export class NsisTarget extends Target {
   }
 
   /** @private */
-  async buildAppPackage(appOutDir: string, arch: Arch): Promise<PackageFileInfo> {
+  async buildAppPackage(appOutDir: string, arch: Arch, elevateHelper?: CopyElevateHelper | null): Promise<PackageFileInfo> {
     const options = this.options
     const packager = this.packager
 
@@ -117,12 +115,26 @@ export class NsisTarget extends Target {
     const archiveOptions: ArchiveOptions = {
       withoutDir: true,
       compression: packager.compression,
+      // The install-time Nsis7z extractor only decodes plain LZMA2/Copy and single-stream BCJ — not
+      // the CPU branch converters modern 7za applies to executables (BCJ2 on x86/x64, ARM64 on
+      // arm64), which it silently skips, dropping the main exe and every native binary from the
+      // install. Pin the payload to a filter it can decode. See #9983.
+      installTimeDecodable: true,
       excluded: preCompressedFileExtensions == null ? null : preCompressedFileExtensions.map(it => `*${it}`),
     }
 
     const timer = time(`nsis package, ${Arch[arch]}`)
     await archive(format, archiveFile, appOutDir, isBuildDifferentialAware ? configureDifferentialAwareArchiveOptions(archiveOptions) : archiveOptions)
     timer.end()
+
+    // Inject elevate.exe into the archive via a temp staging dir, never by mutating appOutDir
+    // during packaging. The copy into win-unpacked is deferred until all targets finish, so
+    // concurrent targets (Squirrel, ZIP, etc.) never pick up elevate.exe non-deterministically.
+    // `archiveOptions` was mutated in place by configureDifferentialAwareArchiveOptions above
+    // (when differential-aware), so it already reflects the effective compression settings.
+    if (elevateHelper) {
+      await elevateHelper.addToArchive(archiveFile, this, format, archiveOptions, appOutDir)
+    }
 
     if (isBuildDifferentialAware && this.isWebInstaller) {
       const data = await appendBlockmap(archiveFile)
@@ -167,6 +179,10 @@ export class NsisTarget extends Target {
     }
   }
 
+  get appGuid(): string {
+    return this.options.guid || UUID.v5(this.packager.appInfo.id, ELECTRON_BUILDER_NS_UUID)
+  }
+
   private async buildInstaller(archs: Map<Arch, string>): Promise<any> {
     const primaryArch: Arch | null = archs.size === 1 ? (archs.keys().next().value ?? null) : null
     const packager = this.packager
@@ -200,11 +216,10 @@ export class NsisTarget extends Target {
       logFields
     )
 
-    const guid = options.guid || UUID.v5(appInfo.id, ELECTRON_BUILDER_NS_UUID)
-    const uninstallAppKey = guid.replace(/\\/g, " - ")
+    const uninstallAppKey = this.appGuid.replace(/\\/g, " - ")
     const defines: Defines = {
       APP_ID: appInfo.id,
-      APP_GUID: guid,
+      APP_GUID: this.appGuid,
       // Windows bug - entry in Software\Microsoft\Windows\CurrentVersion\Uninstall cannot have \ symbols (dir)
       UNINSTALL_APP_KEY: uninstallAppKey,
       PRODUCT_NAME: appInfo.productName,
@@ -221,8 +236,8 @@ export class NsisTarget extends Target {
     if (options.customNsisBinary?.debugLogging) {
       defines.ENABLE_LOGGING_ELECTRON_BUILDER = null
     }
-    if (uninstallAppKey !== guid) {
-      defines.UNINSTALL_REGISTRY_KEY_2 = `Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${guid}`
+    if (uninstallAppKey !== this.appGuid) {
+      defines.UNINSTALL_REGISTRY_KEY_2 = `Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${this.appGuid}`
     }
 
     const { homepage } = this.packager.metadata
@@ -632,9 +647,9 @@ export class NsisTarget extends Target {
         //      would terminate the current script line and let whatever follows
         //      be parsed as a new preprocessor directive (e.g. !system, !include).
         //   2. bare $ → escaped to $$; unescaped $ in a define value would cause
-        //      NSIS to expand an unintended variable reference.  ${...} references
-        //      are left intact so NSIS compile-time defines like ${NSISDIR} still
-        //      expand correctly.
+        //      NSIS to expand an unintended variable reference.  ${...} define
+        //      references (e.g. ${NSISDIR}) and $(...) LangString references
+        //      (e.g. $(customSN)) are left intact so they still expand correctly.
         //   3. " chars   → escaped to $\"; an unescaped " would break out of
         //      double-quoted NSIS string literals where ${DEFINE} is expanded.
         args.push(`-D${name}=${nsisEscapeString(String(value))}`)
@@ -761,6 +776,7 @@ export class NsisTarget extends Target {
     const fileAssociations = packager.fileAssociations
     if (fileAssociations.length !== 0) {
       scriptGenerator.include(path.join(path.join(nsisTemplatesDir, "include"), "FileAssociation.nsh"))
+      const progIdMaker = new ProgIdMaker(this.appGuid, packager.appInfo.productFilename)
       if (isInstaller) {
         const registerFileAssociationsScript = new NsisScriptGenerator()
         for (const item of fileAssociations) {
@@ -773,12 +789,13 @@ export class NsisTarget extends Target {
               registerFileAssociationsScript.file(installedIconPath, customIcon)
             }
 
+            const progID = progIdMaker.progId(item.name || ext)
             const icon = `"${installedIconPath}"`
             const commandText = `"Open with ${nsisEscapeString(packager.appInfo.productName)}"`
             const command = '"$appExe $\\"%1$\\""'
             registerFileAssociationsScript.insertMacro(
               "APP_ASSOCIATE",
-              `"${nsisEscapeString(ext)}" "${nsisEscapeString(item.name || ext)}" "${nsisEscapeString(item.description || "")}" ${icon} ${commandText} ${command}`
+              `"${nsisEscapeString(ext)}" "${progID}" "${nsisEscapeString(item.description || "")}" ${icon} ${commandText} ${command}`
             )
           }
         }
@@ -786,8 +803,8 @@ export class NsisTarget extends Target {
       } else {
         const unregisterFileAssociationsScript = new NsisScriptGenerator()
         for (const item of fileAssociations) {
-          for (const ext of asArray(item.ext)) {
-            unregisterFileAssociationsScript.insertMacro("APP_UNASSOCIATE", `"${normalizeExt(ext)}" "${item.name || ext}"`)
+          for (const ext of asArray(item.ext).map(normalizeExt)) {
+            unregisterFileAssociationsScript.insertMacro("APP_UNASSOCIATE", `"${nsisEscapeString(ext)}" "${progIdMaker.progId(item.name || ext)}"`)
           }
         }
         scriptGenerator.macro("unregisterFileAssociations", unregisterFileAssociationsScript)
@@ -821,37 +838,6 @@ async function generateForPreCompressed(preCompressedFileExtensions: Array<strin
     }
     scriptGenerator.macro(`customFiles_${Arch[arch]}`, macro)
   }
-}
-
-async function ensureNotBusy(outFile: string): Promise<void> {
-  function isBusy(wasBusyBefore: boolean): Promise<boolean> {
-    return new Promise((resolve, reject) => {
-      fs.open(outFile, "r+", (error, fd) => {
-        try {
-          if (error != null && error.code === "EBUSY") {
-            if (!wasBusyBefore) {
-              log.info({}, "output file is locked for writing (maybe by virus scanner) => waiting for unlock...")
-            }
-            resolve(false)
-          } else if (fd == null) {
-            resolve(true)
-          } else {
-            fs.close(fd, () => resolve(true))
-          }
-        } catch (error: any) {
-          reject(error)
-        }
-      })
-    }).then(result => {
-      if (result) {
-        return true
-      } else {
-        return sleep(2000).then(() => isBusy(true))
-      }
-    })
-  }
-
-  await isBusy(false)
 }
 
 async function createPackageFileInfo(file: string): Promise<PackageFileInfo> {

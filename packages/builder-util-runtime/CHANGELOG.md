@@ -1,5 +1,17 @@
 # builder-util-runtime
 
+## 10.0.0-alpha.4
+
+### Patch Changes
+
+- Chore(refactor): reducing duplicate code and extracting helper functions _[`#9947`](https://github.com/electron-userland/electron-builder/pull/9947) [`8f3d9fa`](https://github.com/electron-userland/electron-builder/commit/8f3d9fa442aae342c1c5d2a4448a687de1aff8df) [@mmaietta](https://github.com/mmaietta)_
+
+## 10.0.0-alpha.3
+
+### Minor Changes
+
+- Introduce xml escaping for publisher, publisherDisplayName, displayName, description in appxmanifest.xml to avoid issues with xml preserverd characters _[`#9853`](https://github.com/electron-userland/electron-builder/pull/9853) [`deafee9`](https://github.com/electron-userland/electron-builder/commit/deafee9fe5f7bccbf52e73cd0c6085e767f921ce) [@regnete](https://github.com/regnete)_
+
 ## 10.0.0-alpha.2
 
 ### Patch Changes

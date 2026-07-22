@@ -32,10 +32,6 @@ export function isPublishForPullRequest() {
 
 // ─── Package metadata / dependencies ─────────────────────────────────────────
 
-export function isElectronBuilderAllowedAsProductionDependency() {
-  return isEnvTrue(process.env.ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY)
-}
-
 export function isNpmNoBinLinks() {
   return isEnvTrue(process.env.NPM_NO_BIN_LINKS)
 }
@@ -47,10 +43,6 @@ export function isTravis() {
 }
 
 // ─── Platform toolset overrides ───────────────────────────────────────────────
-
-export function isUseSystemFpm() {
-  return isEnvTrue(process.env.USE_SYSTEM_FPM)
-}
 
 export function isFpmDebug() {
   return isEnvTrue(process.env.FPM_DEBUG)

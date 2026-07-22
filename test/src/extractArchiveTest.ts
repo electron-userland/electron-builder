@@ -1,9 +1,11 @@
-import { moveDirAtomic } from "builder-util"
+import { exec, moveDirAtomic } from "builder-util"
 import { extractArchive, isSafeExtractPath } from "app-builder-lib/src/util/electronGet"
+import { getPath7za } from "app-builder-lib/src/toolsets/7zip"
 import * as fs from "fs/promises"
 import * as os from "os"
 import * as path from "path"
-import { afterEach, beforeEach, describe, test, vi } from "vitest"
+import * as tar from "tar"
+import { afterEach, describe, test, vi } from "vitest"
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -114,41 +116,94 @@ function buildZipWithSymlinkEntry(linkName: string, target: string): Buffer {
   return Buffer.concat([lfh, content, cdh, eocd])
 }
 
-describe("extractArchive ZIP security guards", { sequential: true }, () => {
-  let tmpDir: string
-  beforeEach(async context => {
-    tmpDir = await context.tmpDir.createTempDir()
-  })
-
-  test("blocks a path traversal entry (../escape.txt)", async ({ expect }) => {
-    const zipPath = path.join(tmpDir, "traversal.zip")
+describe("extractArchive ZIP security guards", () => {
+  test("blocks a path traversal entry (../escape.txt)", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const zipPath = path.join(tmpDirPath, "traversal.zip")
     await fs.writeFile(zipPath, buildZipWithFileEntry("../escape.txt"))
-    const extractDir = path.join(tmpDir, "out")
+    const extractDir = path.join(tmpDirPath, "out")
     await expect(extractArchive(zipPath, extractDir)).rejects.toThrow("Path traversal blocked")
   })
 
-  test("blocks an absolute symlink target", async ({ expect }) => {
-    const zipPath = path.join(tmpDir, "abs-symlink.zip")
+  test("blocks an absolute symlink target", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const zipPath = path.join(tmpDirPath, "abs-symlink.zip")
     await fs.writeFile(zipPath, buildZipWithSymlinkEntry("link.txt", "/etc/passwd"))
-    const extractDir = path.join(tmpDir, "out")
+    const extractDir = path.join(tmpDirPath, "out")
     await expect(extractArchive(zipPath, extractDir)).rejects.toThrow("Absolute symlink target blocked")
   })
 
-  test("blocks a relative symlink that escapes the extraction directory", async ({ expect }) => {
-    const zipPath = path.join(tmpDir, "rel-symlink.zip")
+  test("blocks a relative symlink that escapes the extraction directory", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const zipPath = path.join(tmpDirPath, "rel-symlink.zip")
     await fs.writeFile(zipPath, buildZipWithSymlinkEntry("link.txt", "../../outside"))
-    const extractDir = path.join(tmpDir, "out")
+    const extractDir = path.join(tmpDirPath, "out")
     await expect(extractArchive(zipPath, extractDir)).rejects.toThrow("Symlink target escapes extraction dir")
   })
 
-  test("extracts a valid zip entry to the correct destination", async ({ expect }) => {
+  test("extracts a valid zip entry to the correct destination", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
     const content = Buffer.from("hello world")
-    const zipPath = path.join(tmpDir, "valid.zip")
+    const zipPath = path.join(tmpDirPath, "valid.zip")
     await fs.writeFile(zipPath, buildZipWithFileEntry("hello.txt", content))
-    const extractDir = path.join(tmpDir, "out")
+    const extractDir = path.join(tmpDirPath, "out")
     await extractArchive(zipPath, extractDir)
     const result = await fs.readFile(path.join(extractDir, "hello.txt"))
     expect(result.toString()).toBe("hello world")
+  })
+})
+
+// ─── extractArchive .tar.7z (snap template layout) ────────────────────────────
+
+/**
+ * Crafts a .tar.7z archive that mirrors the snap-template-electron-*.tar.7z assets from
+ * electron-builder-binaries: a 7z compression layer around a tar whose entries are all
+ * "./"-prefixed, containing a mode-755 desktop-init.sh at the root plus a nested tree.
+ */
+async function createSnapTemplateLikeTar7z(workDir: string, archiveName: string): Promise<string> {
+  const contentDir = path.join(workDir, "content")
+  await fs.mkdir(path.join(contentDir, "usr", "share"), { recursive: true })
+  await fs.writeFile(path.join(contentDir, "desktop-init.sh"), "#!/bin/bash\ntrue\n", { mode: 0o755 })
+  await fs.writeFile(path.join(contentDir, "usr", "share", "marker.txt"), "ok")
+
+  // Explicit "./"-prefixed entries make node-tar store "./"-prefixed names, matching the real
+  // template tars, so tar.extract({ strip: 1 }) is what flattens them into the extraction root.
+  const innerTar = path.join(workDir, archiveName.replace(/\.7z$/, ""))
+  const entries = (await fs.readdir(contentDir)).map(e => `./${e}`)
+  await tar.create({ file: innerTar, cwd: contentDir }, entries)
+
+  const archivePath = path.join(workDir, archiveName)
+  await exec(await getPath7za(), ["a", "-t7z", archivePath, innerTar])
+  return archivePath
+}
+
+describe("extractArchive .tar.7z", () => {
+  // Regression test for https://github.com/electron-userland/electron-builder/issues/10002:
+  // .tar.7z fell through to the plain .7z branch, so only the outer 7z layer was removed and the
+  // extraction dir contained a single inner .tar instead of the template contents. Snap builds
+  // then packed that tar as-is and the resulting snaps failed at launch (desktop-init.sh missing).
+  test("extracts both layers of a .tar.7z, not just the outer 7z", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const archivePath = await createSnapTemplateLikeTar7z(tmpDirPath, "snap-template-test-amd64.tar.7z")
+    const extractDir = path.join(tmpDirPath, "out")
+
+    await extractArchive(archivePath, extractDir)
+
+    const entries = await fs.readdir(extractDir)
+    // template contents must land at the extraction root...
+    expect(entries).toContain("desktop-init.sh")
+    expect(entries).toContain("usr")
+    // ...and the inner tar must not be left behind as a file (the 26.15.x symptom)
+    expect(entries.filter(e => e.endsWith(".tar"))).toEqual([])
+
+    expect(await fs.readFile(path.join(extractDir, "desktop-init.sh"), "utf-8")).toBe("#!/bin/bash\ntrue\n")
+    expect(await fs.readFile(path.join(extractDir, "usr", "share", "marker.txt"), "utf-8")).toBe("ok")
+
+    if (process.platform !== "win32") {
+      // the template's launch scripts must stay executable, otherwise the snap dies at startup
+      const stat = await fs.stat(path.join(extractDir, "desktop-init.sh"))
+      expect(stat.mode & 0o100).toBeTruthy()
+    }
   })
 })
 
@@ -202,15 +257,11 @@ describe("isSafeExtractPath", () => {
 
 // ─── moveDirAtomic ────────────────────────────────────────────────────────────
 
-describe("moveDirAtomic", { sequential: true }, () => {
-  let tmpDir: string
-  beforeEach(async context => {
-    tmpDir = await context.tmpDir.createTempDir()
-  })
-
-  test("moves a directory with files to the destination", async ({ expect }) => {
-    const src = path.join(tmpDir, "src")
-    const dest = path.join(tmpDir, "dest")
+describe("moveDirAtomic", () => {
+  test("moves a directory with files to the destination", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const src = path.join(tmpDirPath, "src")
+    const dest = path.join(tmpDirPath, "dest")
     await fs.mkdir(src)
     await fs.writeFile(path.join(src, "file.txt"), "content")
 
@@ -224,9 +275,10 @@ describe("moveDirAtomic", { sequential: true }, () => {
     await expect(fs.access(src)).rejects.toMatchObject({ code: "ENOENT" })
   })
 
-  test("moves when destination was pre-removed before the call", async ({ expect }) => {
-    const src = path.join(tmpDir, "src")
-    const dest = path.join(tmpDir, "dest")
+  test("moves when destination was pre-removed before the call", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const src = path.join(tmpDirPath, "src")
+    const dest = path.join(tmpDirPath, "dest")
     await fs.mkdir(src)
     await fs.writeFile(path.join(src, "new.txt"), "new")
     await fs.mkdir(dest)
@@ -243,9 +295,10 @@ describe("moveDirAtomic", { sequential: true }, () => {
     expect(files).not.toContain("old.txt")
   })
 
-  test("throws when source does not exist", async ({ expect }) => {
-    const src = path.join(tmpDir, "nonexistent")
-    const dest = path.join(tmpDir, "dest")
+  test("throws when source does not exist", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const src = path.join(tmpDirPath, "nonexistent")
+    const dest = path.join(tmpDirPath, "dest")
     // Should throw (and not loop forever). We don't care about the exact code since
     // multiple retries produce the same error class.
     await expect(moveDirAtomic(src, dest)).rejects.toThrow()

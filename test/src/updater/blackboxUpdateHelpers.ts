@@ -9,14 +9,14 @@ import path from "path"
 import { randomUUID } from "crypto"
 import { ExpectStatic, TestContext } from "vitest"
 import { createLocalServer, getParallelsHostIP, launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
-import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester"
+import { assertPack, EXTENDED_TIMEOUT, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { cleanupWindowsNative, installWindowsNative, installWindowsVm } from "./blackboxInstallWindows"
 import { cleanupLinux, installLinux } from "./blackboxInstallLinux"
 import { installMac } from "./blackboxInstallMac"
 
-export const optionsForFlakyE2E = { sequential: true, retry: 2, timeout: 15 * 60 * 1000 } as const
+export const optionsForFlakyE2E = { sequential: true, retry: 2, timeout: EXTENDED_TIMEOUT } as const
 
 // Resolve only to a ParallelsVmManager — PwshVmManager (used for code-signing on Linux/Mac via Wine)
 // is not capable of installing or running Windows executables and must not be treated as a Windows VM.
@@ -73,7 +73,7 @@ export async function doBuild(
                 name: "testapp",
                 version,
               },
-              electronUpdaterCompatibility: "1.1",
+              electronUpdaterCompatibility: ">=2.16",
               electronFuses: {
                 runAsNode: false,
                 enableCookieEncryption: false, // don't enable cookie encryption for testing because it adds an additional decryption step to the update process which requires user interaction to unlock the keychain on macOS and can cause timeouts in CI, especially on older macOS versions with slower crypto performance

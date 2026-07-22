@@ -16,6 +16,11 @@ export interface ProviderRuntimeOptions {
   executor: ElectronHttpExecutor
 }
 
+// Shared by the GitHub/GitLab/PrivateGitHub providers when a release channel file (e.g. latest.yml) 404s.
+export function channelFileNotFoundError(channelFile: string, channelFileUrl: URL | string, e: any): Error {
+  return newError(`Cannot find ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
+}
+
 export abstract class Provider<T extends UpdateInfo> {
   private requestHeaders: OutgoingHttpHeaders | null = null
   protected readonly executor: ElectronHttpExecutor

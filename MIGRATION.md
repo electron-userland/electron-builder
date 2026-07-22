@@ -6,7 +6,11 @@ v27 migrates the entire electron-builder package ecosystem to **native ES module
 
 **Most projects need only a Node.js version bump.** The `build()` API and all exported types are unchanged, and CJS `require()` continues to work on Node >=22.12 — no code changes needed unless you used `electronCompile` or one of the removed config options below.
 
-Full guide: **[https://www.electron.build/docs/migration/v26-to-v27](https://www.electron.build/docs/migration/v26-to-v27)**
+> **⚠️ Read the breaking changes before upgrading:** **[electron.build/docs/migration/v27-breaking-changes](https://www.electron.build/docs/migration/v27-breaking-changes)** — the authoritative catalogue of everything that changed.
+
+Step-by-step walkthrough: **[electron.build/docs/migration/v26-to-v27](https://www.electron.build/docs/migration/v26-to-v27)**
+
+> **Toolsets now default to `"latest"`.** In v27 every `toolsets.*` property defaults to the **newest published bundle**: an unset property, `null`, and the literal `"latest"` all resolve to the latest version for that toolset. No config change is required, but the effective defaults moved — `wine` → `1.0.1` (Wine 11.0; was 4.0.1), `winCodeSign` → `1.3.0` (was 1.1.0; adds Azure Trusted Signing `dlib` + .NET 8), `appimage` → `1.1.0` (was 1.0.3; adds `unsquashfs`); `nsis` (1.2.1), `fpm` (2.2.1), `icons` (1.2.1), `linuxToolsMac` (1.0.0), `sevenZip` (1.0.0) are unchanged. Pin a toolset to `"0.0.0"` to restore its legacy bundle. Because `winCodeSign` now defaults to `1.3.0`, Azure Trusted Signing uses the faster `signtool /dlib` path automatically — pin `winCodeSign` below `1.3.0` only to force the legacy PowerShell path. The `null` value was dropped from the `ToolsetConfig` type (still works at runtime); TypeScript configs should switch `null` → `"latest"`.
 
 ### Step 0: run the automated migrator
 
@@ -42,8 +46,8 @@ It handles **every config-level breaking change** automatically: `electronCompil
 | Implicit `--publish` removed | — | Pass `--publish` explicitly |
 | `--em.build` / `--em.directories` CLI flags removed | — | Use `-c` / `-c.directories` |
 | `PackagerOptions.devMetadata` / `extraMetadata` removed | — | Use `config` / `config.extraMetadata` |
-| Toolset env-var overrides removed | — | Use `toolsets.X: { url, checksum }` (`ToolsetCustom`) |
-| Toolset default versions bumped | — | Optionally pin to `"0.0.0"` to restore legacy bundles |
+| Toolset env-var overrides removed | — | `APPIMAGE_TOOLS_PATH`, `ELECTRON_BUILDER_NSIS_DIR`, `USE_SYSTEM_WINE`, etc. → `toolsets.X: { url, checksum }` (`ToolsetCustom`) |
+| Toolset defaults now resolve to `"latest"` (newest bundle) | — | No action; pin to `"0.0.0"` to restore a legacy bundle. Effective bumps: `wine` 4.0.1→11.0, `winCodeSign`→1.3.0, `appimage`→1.1.0 |
 | `electron-forge-maker-*` are now ESM | — | None — same API, same `export default` shape |
 
 ### 1. Update Node.js
@@ -87,4 +91,4 @@ Migrate to [electron-vite](https://electron-vite.org/), [esbuild](https://esbuil
 
 ### Full migration details
 
-See the complete, sectioned guide at [https://www.electron.build/docs/migration/v26-to-v27](https://www.electron.build/docs/migration/v26-to-v27).
+See the full **[breaking changes reference](https://www.electron.build/docs/migration/v27-breaking-changes)** and the step-by-step **[migration walkthrough](https://www.electron.build/docs/migration/v26-to-v27)**.

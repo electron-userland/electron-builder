@@ -1,5 +1,11 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`default-excluded extension stays excluded without a re-include glob 1`] = `
+{
+  "linux": [],
+}
+`;
+
 exports[`expand not defined env 1`] = `"ERR_ELECTRON_BUILDER_ENV_NOT_DEFINED"`;
 
 exports[`extraResources - two-package 1`] = `
@@ -41,6 +47,8 @@ exports[`extraResources on Windows 2`] = `
   "lib/net45/chrome_100_percent.pak",
   "lib/net45/chrome_200_percent.pak",
   "lib/net45/d3dcompiler_47.dll",
+  "lib/net45/dxcompiler.dll",
+  "lib/net45/dxil.dll",
   "lib/net45/ffmpeg.dll",
   "lib/net45/icudtl.dat",
   "lib/net45/libEGL.dll",
@@ -111,6 +119,12 @@ exports[`files.from asar 1`] = `
 `;
 
 exports[`map resources 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`re-include default-excluded extension via files glob 1`] = `
 {
   "linux": [],
 }

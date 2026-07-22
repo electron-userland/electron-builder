@@ -48,6 +48,51 @@ test.ifNotWindows("files", ({ expect }) =>
   )
 )
 
+// https://github.com/electron-userland/electron-builder/issues/6126
+// a default-excluded extension (.obj) is shipped when the user adds an explicit re-include glob
+test.ifNotWindows("re-include default-excluded extension via files glob", ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: linuxDirTarget,
+      config: {
+        asar: false,
+        files: ["**/*", "**/*.obj"],
+      },
+    },
+    {
+      projectDirCreated: projectDir =>
+        Promise.all([fsExtra.outputFile(path.join(projectDir, "assets", "model.obj"), "obj-data"), fsExtra.outputFile(path.join(projectDir, "assets", "index.js"), "js")]),
+      packed: context => {
+        const appDir = path.join(context.getResources(Platform.LINUX), "app")
+        return Promise.all([assertThat(expect, path.join(appDir, "assets", "model.obj")).isFile(), assertThat(expect, path.join(appDir, "assets", "index.js")).isFile()])
+      },
+    }
+  )
+)
+
+// control for the test above: without an explicit re-include, the default exclusion still applies
+test.ifNotWindows("default-excluded extension stays excluded without a re-include glob", ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: linuxDirTarget,
+      config: {
+        asar: false,
+        files: ["**/*"],
+      },
+    },
+    {
+      projectDirCreated: projectDir =>
+        Promise.all([fsExtra.outputFile(path.join(projectDir, "assets", "model.obj"), "obj-data"), fsExtra.outputFile(path.join(projectDir, "assets", "index.js"), "js")]),
+      packed: context => {
+        const appDir = path.join(context.getResources(Platform.LINUX), "app")
+        return Promise.all([assertThat(expect, path.join(appDir, "assets", "model.obj")).doesNotExist(), assertThat(expect, path.join(appDir, "assets", "index.js")).isFile()])
+      },
+    }
+  )
+)
+
 test.ifNotWindows("files.from asar", ({ expect }) =>
   app(
     expect,

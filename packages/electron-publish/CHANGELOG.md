@@ -1,5 +1,41 @@
 # electron-publish
 
+## 27.0.0-alpha.5
+
+### Patch Changes
+
+- Chore(refactor): reducing duplicate code and extracting helper functions _[`#9947`](https://github.com/electron-userland/electron-builder/pull/9947) [`8f3d9fa`](https://github.com/electron-userland/electron-builder/commit/8f3d9fa442aae342c1c5d2a4448a687de1aff8df) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`2669c2a`](https://github.com/electron-userland/electron-builder/commit/2669c2a7c7e9b6c3d8f7789362ffa5d7aac3fbf6) [`8f3d9fa`](https://github.com/electron-userland/electron-builder/commit/8f3d9fa442aae342c1c5d2a4448a687de1aff8df)
+
+</small>
+
+- `builder-util@27.0.0-alpha.5`
+- `builder-util-runtime@10.0.0-alpha.4`
+
+</details>
+
+## 27.0.0-alpha.4
+
+### Patch Changes
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`deafee9`](https://github.com/electron-userland/electron-builder/commit/deafee9fe5f7bccbf52e73cd0c6085e767f921ce)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.3`
+- `builder-util@27.0.0-alpha.4`
+
+</details>
+
 ## 27.0.0-alpha.3
 
 ### Patch Changes

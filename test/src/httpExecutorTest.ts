@@ -1,8 +1,11 @@
 import { expect, test, describe } from "vitest"
-import { HttpExecutor } from "builder-util-runtime"
+import { DigestTransform, HttpExecutor } from "builder-util-runtime"
 import { hashSensitiveValue, safeStringifyJson } from "builder-util-runtime/internal"
-import { addSensitiveFieldPattern, addSensitiveRedirectHeader, isSensitiveFieldName } from "builder-util-runtime/src/httpExecutor"
+import { addSensitiveFieldPattern, addSensitiveRedirectHeader, detectSha512Encoding, isSensitiveFieldName } from "builder-util-runtime/src/httpExecutor"
+import { createHash } from "crypto"
 import { RequestOptions } from "http"
+import { Readable, Writable } from "stream"
+import { pipeline } from "stream/promises"
 
 describe("HttpExecutor.prepareRedirectUrlOptions", () => {
   describe("basic functionality", () => {
@@ -789,5 +792,46 @@ describe("isSensitiveFieldName", () => {
     expect(isSensitiveFieldName("version")).toBe(false)
     expect(isSensitiveFieldName("channel")).toBe(false)
     expect(isSensitiveFieldName("provider")).toBe(false)
+  })
+})
+
+describe("detectSha512Encoding", () => {
+  const payload = Buffer.from("update-payload")
+  const hexSha512 = createHash("sha512").update(payload).digest("hex")
+  const base64Sha512 = createHash("sha512").update(payload).digest("base64")
+
+  const devNull = () =>
+    new Writable({
+      write(_chunk, _encoding, callback) {
+        callback()
+      },
+    })
+
+  test("128-hex-character value is detected as legacy hex", () => {
+    expect(hexSha512).toHaveLength(128)
+    expect(detectSha512Encoding(hexSha512)).toBe("hex")
+  })
+
+  test("base64-encoded value is detected as base64", () => {
+    expect(base64Sha512).toHaveLength(88)
+    expect(detectSha512Encoding(base64Sha512)).toBe("base64")
+  })
+
+  test("DigestTransform validates a legacy hex-encoded expected sha512", async () => {
+    const transform = new DigestTransform(hexSha512, "sha512", detectSha512Encoding(hexSha512))
+    await pipeline(Readable.from([payload]), transform, devNull())
+    expect(transform.actual).toBe(hexSha512)
+  })
+
+  test("DigestTransform validates a base64-encoded expected sha512", async () => {
+    const transform = new DigestTransform(base64Sha512, "sha512", detectSha512Encoding(base64Sha512))
+    await pipeline(Readable.from([payload]), transform, devNull())
+    expect(transform.actual).toBe(base64Sha512)
+  })
+
+  test("a wrong expected value fails closed with ERR_CHECKSUM_MISMATCH", async () => {
+    const wrong = createHash("sha512").update("other-payload").digest("base64")
+    const transform = new DigestTransform(wrong, "sha512", detectSha512Encoding(wrong))
+    await expect(pipeline(Readable.from([payload]), transform, devNull())).rejects.toThrow(/checksum mismatch/)
   })
 })

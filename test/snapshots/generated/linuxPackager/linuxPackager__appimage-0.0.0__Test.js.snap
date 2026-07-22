@@ -3,7 +3,7 @@
 exports[`LinuxPackager > AppImage - default icon, custom executable and custom desktop 1`] = `
 "[Desktop Entry]
 Name=Test App ßW
-Exec=AppRun --no-sandbox %U
+Exec=AppRun %U
 Terminal=true
 Type=Application
 Icon=Foo
@@ -51,13 +51,45 @@ exports[`LinuxPackager > AppImage - deprecated systemIntegration 1`] = `
 
 Please check the documentation to ensure that your configuration matches the expected schema: https://www.electron.build/configuration
 If you recently upgraded electron-builder to v27, please run \`electron-builder migrate-schema\` to automatically update your configuration.
-Check the release notes for breaking changes: https://www.electron.build/docs/migration/v26-to-v27"
+Check the release notes for breaking changes: https://www.electron.build/docs/migration/v27-breaking-changes"
+`;
+
+exports[`LinuxPackager > AppImage - desktopName drives installed filename (reverse-DNS) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Signal-1.1.0.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`LinuxPackager > AppImage - desktopName drives installed filename 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Signal-1.1.0.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
 `;
 
 exports[`LinuxPackager > AppImage - desktopName sets StartupWMClass 1`] = `
 "[Desktop Entry]
 Name=Signal
-Exec=AppRun --no-sandbox %U
+Exec=AppRun %U
 Terminal=false
 Type=Application
 Icon=testapp
@@ -86,7 +118,7 @@ exports[`LinuxPackager > AppImage - desktopName sets StartupWMClass 2`] = `
 exports[`LinuxPackager > AppImage - desktopName with surrounding whitespace is trimmed for StartupWMClass 1`] = `
 "[Desktop Entry]
 Name=Signal
-Exec=AppRun --no-sandbox %U
+Exec=AppRun %U
 Terminal=false
 Type=Application
 Icon=testapp
@@ -115,7 +147,7 @@ exports[`LinuxPackager > AppImage - desktopName with surrounding whitespace is t
 exports[`LinuxPackager > AppImage - desktopName without .desktop suffix is used as-is for StartupWMClass 1`] = `
 "[Desktop Entry]
 Name=MyApp
-Exec=AppRun --no-sandbox %U
+Exec=AppRun %U
 Terminal=false
 Type=Application
 Icon=testapp
@@ -165,10 +197,24 @@ exports[`LinuxPackager > AppImage - explicit zstd compression override 1`] = `
             "url": "Test App ßW-1.1.0.AppImage",
           },
         ],
-        "path": "Test App ßW-1.1.0.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.1.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`LinuxPackager > AppImage - missing desktopName falls back to executableName 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Signal-1.1.0.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
       },
     },
   ],
@@ -178,7 +224,7 @@ exports[`LinuxPackager > AppImage - explicit zstd compression override 1`] = `
 exports[`LinuxPackager > AppImage - no desktopName falls back to productName for StartupWMClass 1`] = `
 "[Desktop Entry]
 Name=My App
-Exec=AppRun --no-sandbox %U
+Exec=AppRun %U
 Terminal=false
 Type=Application
 Icon=testapp
@@ -229,58 +275,8 @@ exports[`LinuxPackager > AppImage - store compression maps to gzip 1`] = `
             "url": "Test App ßW-1.1.0.AppImage",
           },
         ],
-        "path": "Test App ßW-1.1.0.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.1.0",
-      },
-    },
-  ],
-}
-`;
-
-exports[`LinuxPackager > AppImage - syncDesktopName true without desktopName falls back to executableName 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Signal-1.1.0.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
-}
-`;
-
-exports[`LinuxPackager > AppImage - syncDesktopName uses desktopName for installed filename 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Signal-1.1.0.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
-}
-`;
-
-exports[`LinuxPackager > AppImage - syncDesktopName without flag keeps executableName 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Signal-1.1.0.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
       },
     },
   ],
@@ -311,9 +307,7 @@ exports[`LinuxPackager > AppImage 1`] = `
             "url": "Test App ßW-1.1.0.AppImage",
           },
         ],
-        "path": "Test App ßW-1.1.0.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.1.0",
       },
     },
@@ -345,9 +339,7 @@ exports[`LinuxPackager > AppImage arm, max compression 1`] = `
             "url": "Test App ßW-1.1.0-armv7l.AppImage",
           },
         ],
-        "path": "Test App ßW-1.1.0-armv7l.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.1.0",
       },
     },

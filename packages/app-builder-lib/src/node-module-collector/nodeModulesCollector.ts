@@ -1,13 +1,19 @@
 import { exists, log, retry, stripSensitiveEnvVars, TmpDir } from "builder-util"
-import * as childProcess from "child_process"
-import { createWriteStream } from "node:fs"
 import _fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { hoist, type HoisterResult, type HoisterTree } from "./hoist.js"
 import { LogMessageByKey, ModuleManager } from "./moduleManager.js"
 import { getPackageManagerCommand, PM } from "./packageManager.js"
+import { streamSpawnToFile } from "../util/streamSpawnToFile.js"
 import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types.js"
+import { isPackageCompatible } from "../util/archCompatibility.js"
+
+/** Target arch/platform used to drop `cpu`/`os`-incompatible packages while collecting. */
+export interface ArchFilter {
+  cpu: string | null
+  os: string
+}
 
 export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDepType, OptionalDepType>, OptionalDepType> {
   private readonly nodeModules: NodeModuleInfo[] = []
@@ -47,7 +53,15 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * 5. Hoisting the dependencies to their final locations
    * 6. Resolving and returning module information
    */
-  public async getNodeModules({ packageName }: { packageName: string }): Promise<{
+  public async getNodeModules({
+    packageName,
+    archFilter,
+    ignoredDependencies,
+  }: {
+    packageName: string
+    archFilter?: ArchFilter
+    ignoredDependencies?: ReadonlyArray<string>
+  }): Promise<{
     nodeModules: NodeModuleInfo[]
     logSummary: ModuleManager["logSummary"]
   }> {
@@ -57,11 +71,13 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     const realTree: ProdDepType = this.getTreeFromWorkspaces(tree, packageName)
     await this.extractProductionDependencyGraph(realTree, packageName)
 
+    this.markExcludedModules(this.productionGraph, packageName, ignoredDependencies ?? [])
+
     const hoisterResult: HoisterResult = hoist(this.transformToHoisterTree(this.productionGraph, packageName), {
       check: log.isDebugEnabled,
     })
 
-    await this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
+    await this._getNodeModules(hoisterResult.dependencies, this.nodeModules, archFilter)
 
     log.debug({ packageName, depCount: this.nodeModules.length }, "node modules collection complete")
 
@@ -260,6 +276,74 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return tree
   }
 
+  /**
+   * Flags which modules must be omitted from the *copied* app output for the given `ignoredNames` by
+   * setting an `excluded` marker on the pre-hoist graph nodes.
+   *
+   * Only a *top-level* production dependency (one the app itself declares) can be excluded, together
+   * with its exclusively-owned transitive subtree. A package that is merely a transitive dependency of
+   * a non-excluded production dependency is never excluded, even if its name is in `ignoredNames`:
+   * only the root's own edges to ignored names are severed, so anything still reachable through another
+   * production dependency stays reachable and is kept.
+   *
+   * Runs on the pre-hoist graph, where the true parent->child edges still exist, so a shared (deduped)
+   * transitive dependency remains reachable and is kept while an ignored package's exclusive subtree
+   * becomes unreachable and is flagged.
+   */
+  private markExcludedModules(graph: DependencyGraph, rootId: string, ignoredNames: ReadonlyArray<string>): void {
+    const ignored = new Set(ignoredNames)
+    if (ignored.size === 0) {
+      return
+    }
+
+    const rootDeps = graph[rootId]?.dependencies ?? []
+    const ignoredRootEdges = new Set(rootDeps.filter(dep => ignored.has(this.parseNameVersion(dep).name)))
+    if (ignoredRootEdges.size === 0) {
+      return
+    }
+
+    const reachable = new Set<string>()
+    const stack: string[] = [rootId]
+    while (stack.length > 0) {
+      const id = stack.pop()!
+      if (reachable.has(id)) {
+        continue
+      }
+      reachable.add(id)
+      const node = graph[id]
+      if (node != null) {
+        for (const dep of node.dependencies) {
+          if (id === rootId && ignoredRootEdges?.has(dep)) {
+            continue
+          }
+          if (!reachable.has(dep)) {
+            stack.push(dep)
+          }
+        }
+      }
+    }
+    for (const id of Object.keys(graph)) {
+      if (!reachable.has(id)) {
+        graph[id].excluded = true
+      }
+    }
+
+    // Only directly-declared deps that actually ended up excluded (i.e. not still reachable via a kept
+    // dependency) are surfaced to the user; their exclusive transitive subtree is omitted from the log.
+    // Report the full `name@version` graph id — like the other logSummary buckets — so the log stays
+    // truthful when another version of the same name still ships via a kept dependency (e.g. `debug@4`
+    // excluded while `debug@3` remains bundled).
+    const topLevelExcluded = new Set<string>()
+    for (const dep of ignoredRootEdges) {
+      if (!reachable.has(dep)) {
+        topLevelExcluded.add(dep)
+      }
+    }
+    if (topLevelExcluded.size > 0) {
+      this.cache.logSummary[LogMessageByKey.PKG_EXCLUDED_IGNORED].push(...Array.from(topLevelExcluded).sort())
+    }
+  }
+
   private transformToHoisterTree(obj: DependencyGraph, key: string, nodes: Map<string, HoisterTree> = new Map()): HoisterTree {
     let node = nodes.get(key)
     const { name, version } = this.parseNameVersion(key)
@@ -285,7 +369,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return node
   }
 
-  private async _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[]) {
+  private async _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[], archFilter?: ArchFilter) {
     if (dependencies.size === 0) {
       return
     }
@@ -308,15 +392,31 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         continue
       }
 
+      const dir = await this.cache.realPath[p]
+
+      // Drop packages whose declared `cpu`/`os` is incompatible with the target arch/platform (and their
+      // subtree). npm/pnpm install only the host's platform-specific optional packages, so without this an
+      // arm64-only binary (e.g. `@esbuild/darwin-arm64`) would be bundled into the x64 build too — and into
+      // both slices of a universal build, which `@electron/universal` then refuses to merge. Reuses the
+      // memoized `package.json` cache populated during collection.
+      if (archFilter != null) {
+        const pkgJson = await this.cache.json[path.join(dir, "package.json")]
+        if (pkgJson != null && !isPackageCompatible(pkgJson, archFilter.cpu, archFilter.os)) {
+          this.cache.logSummary[LogMessageByKey.PKG_INCOMPATIBLE_PLATFORM].push(key)
+          continue
+        }
+      }
+
       const node: NodeModuleInfo = {
         name: d.name,
         version: reference,
-        dir: await this.cache.realPath[p],
+        dir,
+        excluded: this.productionGraph[key]?.excluded,
       }
       result.push(node)
       if (d.dependencies.size > 0) {
         node.dependencies = []
-        await this._getNodeModules(d.dependencies, node.dependencies)
+        await this._getNodeModules(d.dependencies, node.dependencies, archFilter)
       }
     }
     result.sort((a, b) => a.name.localeCompare(b.name))
@@ -341,139 +441,51 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   }
 
   /**
-   * Executes a command and streams its output to a file.
+   * Executes a package-manager command and streams its stdout to a file.
    *
-   * Spawns a child process to execute the specified command with arguments, capturing stdout
-   * to a file. On Windows, wraps the invocation in `powershell.exe -EncodedCommand` (UTF-16LE
-   * base64) to avoid spawning `.cmd` shims directly and to eliminate shell-injection surface area.
-   * Enables corepack strict mode by default but allows process.env overrides.
-   *
-   * Special handling for `npm list` exit code 1, which is expected in certain scenarios.
+   * Delegates the spawn/stream/flush mechanics (including the Windows `powershell.exe -EncodedCommand`
+   * wrapping) to {@link streamSpawnToFile}, and layers on the collector-specific interpretation of the
+   * result: corepack is silenced for these invocations, `npm list` exit code 1 is tolerated, and any
+   * stderr is surfaced as a collector warning only when the exit code is genuinely unexpected.
    *
    * @param command - The command to execute
    * @param args - Array of command-line arguments
    * @param cwd - The working directory to execute the command in
    * @param tempOutputFile - The path to the temporary file where stdout will be written
    * @returns Promise that resolves when the command completes successfully or rejects if it fails
-   * @throws {Error} If the child process spawn fails or exits with a non-zero code
+   * @throws {Error} If the child process spawn fails or exits with a non-zero, unexpected code
    */
   protected async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
     // Derive execName from the original command so the npm-list shouldIgnore check below keys off the
-    // real invocation (e.g. "npm"), not the "powershell" wrapper we spawn on Windows.
+    // real invocation (e.g. "npm"), not the "powershell" wrapper streamSpawnToFile uses on Windows.
     const execName = path.basename(command, path.extname(command))
 
-    // On Windows the package-manager command is typically a `.cmd` shim (npm.cmd/pnpm.cmd/yarn.cmd),
-    // which Node can no longer spawn directly (CVE-2024-27980). Rather than spawn with `shell: true` —
-    // which emits the DEP0190 "args with shell" deprecation warning and forces manual metacharacter
-    // escaping — wrap the invocation in a single PowerShell `-EncodedCommand`. The base64 (UTF-16LE)
-    // payload sidesteps every shell-quoting layer, and `powershell.exe` is a real executable we spawn
-    // directly with no shell. See buildPowerShellEncodedArgs for the UTF-8 / exit-code handling.
-    const [spawnCommand, spawnArgs] = process.platform === "win32" ? (["powershell.exe", buildPowerShellEncodedArgs(command, args)] as const) : ([command, args] as const)
-
-    await new Promise<void>((resolve, reject) => {
-      const outStream = createWriteStream(tempOutputFile)
-
-      const child = childProcess.spawn(spawnCommand, spawnArgs, {
-        cwd,
-        // Package manager invocations do not need signing/publishing credentials.
-        env: { ...stripSensitiveEnvVars(process.env), COREPACK_ENABLE_STRICT: "0" },
-      })
-
-      let stderr = ""
-      // The process can close before all piped stdout has been flushed to disk. Resolving on the
-      // child's "close" alone races the write stream and lets the caller read a TRUNCATED file
-      // (manifesting as "No JSON content found in output"). Gate the settle on BOTH the child exit
-      // (for the code/stderr) and the write stream's "finish" (all bytes flushed).
-      let exitCode: number | null = null
-      let childClosed = false
-      let streamFinished = false
-      let settled = false
-
-      // `pipe` ends `outStream` when stdout EOFs, which triggers its "finish" once flushed.
-      child.stdout.pipe(outStream)
-      child.stderr.on("data", chunk => {
-        stderr += chunk.toString()
-      })
-
-      const fail = (err: Error) => {
-        if (settled) {
-          return
-        }
-        settled = true
-        // Best-effort cleanup: stop the child and close the stream so we don't
-        // waste CPU writing to a broken fd after rejection.
-        try {
-          child.kill()
-        } catch {
-          // ignore
-        }
-        try {
-          outStream.destroy()
-        } catch {
-          // ignore
-        }
-        reject(err)
-      }
-
-      const settle = () => {
-        if (settled || !childClosed || !streamFinished) {
-          return
-        }
-        const code = exitCode
-        // https://github.com/npm/npm/issues/17624
-        const shouldIgnore = code === 1 && "npm" === execName.toLowerCase() && args.includes("list")
-        if (shouldIgnore) {
-          log.debug(null, "`npm list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details.")
-        }
-        if (stderr.length > 0) {
-          log.debug({ stderr }, "note: there was node module collector output on stderr")
-          // Only surface stderr as a user-visible warning when the exit code itself is unexpected.
-          // When shouldIgnore is true (npm list exit code 1) the stderr is an anticipated side
-          // effect of package-manager features like yarn resolutions or npm overrides that cause
-          // npm to report ELSPROBLEMS for aliased packages it considers "invalid".
-          if (!shouldIgnore) {
-            this.cache.logSummary[LogMessageByKey.PKG_COLLECTOR_OUTPUT].push(stderr)
-          }
-        }
-        settled = true
-        const shouldResolve = code === 0 || shouldIgnore
-        return shouldResolve ? resolve() : reject(new Error(`Node module collector process exited with code ${code}:\n${stderr}`))
-      }
-
-      outStream.on("error", err => fail(new Error(`Node module collector failed writing output (${command}): ${err.message}`)))
-      outStream.on("finish", () => {
-        streamFinished = true
-        settle()
-      })
-      child.on("error", err => {
-        fail(new Error(`Node module collector spawn (${command} ${JSON.stringify(args)}) failed: ${err.message}`))
-      })
-      child.on("close", code => {
-        exitCode = code
-        childClosed = true
-        settle()
-      })
+    const { code, stderr } = await streamSpawnToFile(command, args, cwd, tempOutputFile, {
+      // Package manager invocations do not need signing/publishing credentials. Silence corepack:
+      // strict=0 so a project's `packageManager` pin can't abort our read-only queries, and the
+      // download prompt/notice off so corepack doesn't flood stdout/stderr with activation chatter.
+      ...stripSensitiveEnvVars(process.env),
+      COREPACK_ENABLE_STRICT: "0",
+      COREPACK_ENABLE_DOWNLOAD_PROMPT: "0",
     })
-  }
-}
 
-/**
- * Build the argv for invoking a Windows command through `powershell.exe -EncodedCommand`.
- *
- * Each token is wrapped in a PowerShell single-quoted string (with embedded single quotes doubled),
- * so no character is interpreted by a shell. The script:
- *   - pins `[Console]::OutputEncoding` to UTF-8 *without* a BOM so the JSON dependency tree is not
- *     corrupted by the console's OEM code page (and no BOM is prepended to break `JSON.parse`),
- *   - invokes the command via the call operator `&`,
- *   - re-emits the command's own exit code via `exit $LASTEXITCODE` (e.g. `npm list` returns 1 in
- *     expected scenarios, which the caller's shouldIgnore logic relies on).
- *
- * The whole script is base64-encoded as UTF-16LE per PowerShell's `-EncodedCommand` contract.
- */
-export function buildPowerShellEncodedArgs(command: string, args: string[]): string[] {
-  const psQuote = (value: string) => `'${value.replace(/'/g, "''")}'`
-  const invocation = ["&", psQuote(command), ...args.map(psQuote)].join(" ")
-  const script = `[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new($false); ${invocation}; exit $LASTEXITCODE`
-  const encoded = Buffer.from(script, "utf16le").toString("base64")
-  return ["-NoProfile", "-NonInteractive", "-EncodedCommand", encoded]
+    // https://github.com/npm/npm/issues/17624
+    const shouldIgnore = code === 1 && "npm" === execName.toLowerCase() && args.includes("list")
+    if (shouldIgnore) {
+      log.debug(null, "`npm list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details.")
+    }
+    if (stderr.length > 0) {
+      log.debug({ stderr }, "note: there was node module collector output on stderr")
+      // Only surface stderr as a user-visible warning when the exit code itself is unexpected.
+      // When shouldIgnore is true (npm list exit code 1) the stderr is an anticipated side
+      // effect of package-manager features like yarn resolutions or npm overrides that cause
+      // npm to report ELSPROBLEMS for aliased packages it considers "invalid".
+      if (!shouldIgnore) {
+        this.cache.logSummary[LogMessageByKey.PKG_COLLECTOR_OUTPUT].push(stderr)
+      }
+    }
+    if (code !== 0 && !shouldIgnore) {
+      throw new Error(`Node module collector process exited with code ${code}:\n${stderr}`)
+    }
+  }
 }
