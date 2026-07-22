@@ -1,7 +1,7 @@
 import { OutgoingHttpHeaders } from "http"
 import { Nullish } from "./index.js"
 
-export type PublishProvider = "github" | "gitlab" | "s3" | "spaces" | "generic" | "custom" | "snapStore" | "keygen" | "bitbucket"
+export type PublishProvider = "github" | "gitlab" | "s3" | "spaces" | "r2" | "generic" | "custom" | "snapStore" | "keygen" | "bitbucket"
 
 // typescript-json-schema generates only PublishConfiguration if it is specified in the list, so, it is not added here
 export type AllPublishOptions =
@@ -10,6 +10,7 @@ export type AllPublishOptions =
   | GitlabOptions
   | S3Options
   | SpacesOptions
+  | R2Options
   | GenericServerOptions
   | CustomPublishOptions
   | KeygenOptions
@@ -467,6 +468,82 @@ export interface SpacesOptions extends BaseS3Options {
   readonly region: string
 }
 
+/**
+ * [Cloudflare R2](https://developers.cloudflare.com/r2/) options.
+ * Credentials are required; define `CF_R2_ACCESS_KEY_ID` and `CF_R2_SECRET_ACCESS_KEY` environment variables
+ * with an R2 API token (see https://developers.cloudflare.com/r2/api/s3/tokens/).
+ *
+ * **Public access for auto-updates:** R2 buckets are private by default. The S3-compatible API endpoint
+ * always requires authentication, so `electron-updater` cannot download updates directly from it.
+ * You must either enable a custom domain or an r2.dev subdomain for the bucket in the Cloudflare
+ * dashboard (see https://developers.cloudflare.com/r2/buckets/public-buckets/) and then set
+ * `publicUrl` to that base URL so the updater knows where to fetch update metadata and binaries.
+ *
+ * **ACLs:** R2 does not support S3 ACLs. The `acl` option from `BaseS3Options` is intentionally
+ * excluded here. Configure public bucket access in the Cloudflare dashboard instead.
+ *
+ * Example configuration:
+ *
+```json
+{
+  "build": {
+    "publish": {
+      "provider": "r2",
+      "bucket": "my-releases",
+      "accountId": "abcdef1234567890abcdef1234567890",
+      "publicUrl": "https://pub-abcdef1234567890abcdef1234567890.r2.dev"
+    }
+  }
+}
+```
+ */
+export interface R2Options extends BaseS3Options {
+  /**
+   * The provider. Must be `r2`.
+   */
+  readonly provider: "r2"
+
+  /**
+   * The R2 bucket name.
+   */
+  readonly bucket: string
+
+  /**
+   * Your Cloudflare account ID (32-character hex string). Found on the R2 overview page
+   * in the Cloudflare dashboard. Used to construct the S3-compatible upload endpoint:
+   * `https://<accountId>.r2.cloudflarestorage.com`
+   */
+  readonly accountId: string
+
+  /**
+   * The public base URL from which `electron-updater` will download update metadata and
+   * binaries. This must be the URL of your bucket's **custom domain** or **r2.dev subdomain**
+   * (e.g. `https://pub-xxx.r2.dev` or `https://cdn.example.com`).
+   *
+   * Required when `publishAutoUpdate` is not `false`. The R2 S3 API endpoint requires
+   * authentication and cannot serve unauthenticated download requests.
+   *
+   * See https://developers.cloudflare.com/r2/buckets/public-buckets/
+   */
+  readonly publicUrl?: string | null
+
+  /**
+   * The jurisdiction of the R2 bucket, if the bucket was created with a jurisdictional
+   * restriction. Buckets created in a jurisdiction live on a separate endpoint —
+   * `https://<accountId>.<jurisdiction>.r2.cloudflarestorage.com` — so this must match
+   * the jurisdiction the bucket was created with. Omit for regular buckets.
+   *
+   * See https://developers.cloudflare.com/r2/reference/data-location/#jurisdictional-restrictions
+   */
+  readonly jurisdiction?: "eu" | "fedramp" | null
+
+  /**
+   * R2 does not support S3 ACLs. This option is not applicable and will be ignored.
+   * Configure bucket-level public access in the Cloudflare dashboard instead.
+   */
+  readonly acl?: never
+}
+
 export interface GitlabReleaseInfo {
   name: string
   tag_name: string
@@ -499,6 +576,9 @@ export function getS3LikeProviderBaseUrl(configuration: PublishConfiguration) {
   }
   if (provider === "spaces") {
     return spacesUrl(configuration as SpacesOptions)
+  }
+  if (provider === "r2") {
+    return r2Url(configuration as R2Options)
   }
   throw new Error(`Not supported provider: ${provider}`)
 }
@@ -546,4 +626,22 @@ function spacesUrl(options: SpacesOptions) {
     throw new Error(`region is missing`)
   }
   return appendPath(`https://${options.name}.${options.region}.digitaloceanspaces.com`, options.path)
+}
+
+function r2Url(options: R2Options) {
+  if (options.bucket == null || options.bucket.trim() === "") {
+    throw new Error(`bucket is missing`)
+  }
+  if (options.accountId == null || options.accountId.trim() === "") {
+    throw new Error(`accountId is missing`)
+  }
+  // Use the public URL (custom domain / r2.dev subdomain) when provided — the S3 API endpoint
+  // always requires authentication and cannot serve unauthenticated download requests.
+  if (options.publicUrl != null && options.publicUrl.trim() !== "") {
+    return appendPath(options.publicUrl.replace(/\/$/, ""), options.path)
+  }
+  // Jurisdictional buckets (e.g. "eu", "fedramp") live on a separate endpoint:
+  // https://<accountId>.<jurisdiction>.r2.cloudflarestorage.com
+  const jurisdiction = options.jurisdiction == null || options.jurisdiction.trim() === "" ? "" : `${options.jurisdiction.trim()}.`
+  return appendPath(`https://${options.accountId}.${jurisdiction}r2.cloudflarestorage.com/${options.bucket}`, options.path)
 }

@@ -53,6 +53,7 @@ export function createClient(data: PublishConfiguration | AllPublishOptions, upd
 
     case "s3":
     case "spaces":
+    case "r2":
       return new GenericProvider(
         {
           provider: "generic",

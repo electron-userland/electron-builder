@@ -1,6 +1,6 @@
 The [publish](./configuration.md#publish) key contains a set of options instructing electron-builder on how it should publish artifacts and build update info files for [auto update](./features/auto-update.md).
 
-`String | Object | Array<Object | String>` where `Object` it is [Keygen](#keygen), [Generic Server](#byo-generic-create-your-own), [GitHub](#github), [S3](#s3), [Spaces](#spaces) or [Snap Store](#snap-store) options. Order is important — first item will be used as a default auto-update server. Can be specified in the [top-level configuration](./configuration.md) or any platform- ([mac](mac.md), [linux](linux.md), [win](win.md)) or target- (e.g. [nsis](nsis.md)) specific configuration.
+`String | Object | Array<Object | String>` where `Object` it is [Keygen](#keygen), [Generic Server](#byo-generic-create-your-own), [GitHub](#github), [S3](#s3), [Spaces](#spaces), [R2](#r2) or [Snap Store](#snap-store) options. Order is important — first item will be used as a default auto-update server. Can be specified in the [top-level configuration](./configuration.md) or any platform- ([mac](mac.md), [linux](linux.md), [win](win.md)) or target- (e.g. [nsis](nsis.md)) specific configuration.
 
 Note that when using a generic server, you have to upload the built application and metadata files yourself.
 
@@ -153,6 +153,21 @@ Detected automatically using:
 
 ## Spaces
   {!./builder-util-runtime.Interface.SpacesOptions.md!}
+
+## R2
+
+To publish to [Cloudflare R2](https://developers.cloudflare.com/r2/):
+
+1. Create an [R2 API token](https://developers.cloudflare.com/r2/api/s3/tokens/) with at least **Object Read & Write** permission on your bucket.
+2. Expose its credentials to electron-builder via the `CF_R2_ACCESS_KEY_ID` and `CF_R2_SECRET_ACCESS_KEY` environment variables.
+3. Enable [public access](https://developers.cloudflare.com/r2/buckets/public-buckets/) for the bucket via an `r2.dev` subdomain or a custom domain — R2's S3 API endpoint cannot serve unauthenticated downloads, so `electron-updater` cannot download updates from it.
+4. Set `publicUrl` to that public base URL.
+
+Auto-updating from R2 requires an `electron-updater` version that supports the `r2` provider: electron-updater >= 7.0.0 (the release line containing this feature).
+
+Note: files are uploaded with a single PUT request, and R2 limits single-PUT uploads to ~5 GiB per object.
+
+  {!./builder-util-runtime.Interface.R2Options.md!}
 
 ## BYO Generic (create-your-own)
 (And maybe submit it upstream in a PR!)
