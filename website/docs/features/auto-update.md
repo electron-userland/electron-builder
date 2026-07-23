@@ -122,6 +122,58 @@ export default class AppUpdater {
 }
 ```
 
+## Install on Next Launch (Windows/Linux)
+
+When a downloaded update is automatically installed is controlled by `autoUpdater.autoInstallEvent` (`"manual" | "onQuit" | "onNextLaunch"`, default `"onQuit"`). With the default `"onQuit"`, the update is installed when the app quits: the updater spawns the installer as a detached process while the app is exiting. If the quit happens because the OS session is ending (shutdown, reboot or log off on Windows), the OS can kill that installer mid-install and leave the app in a broken, partially-uninstalled state ([#7807](https://github.com/electron-userland/electron-builder/issues/7807)).
+
+electron-updater ≥ 7.0 (electron-builder v27) mitigates this in two ways:
+
+1. **Session-end guard (always on).** When the OS signals that the session is ending, the on-quit install is skipped and a warning is logged. The downloaded update stays cached and is installed on the next regular quit. Detection is best-effort: `powerMonitor` `shutdown` on macOS/Linux, and the `BrowserWindow` `session-end` event on Windows (windowless, e.g. tray-only, apps cannot be covered on Windows).
+
+2. **Install on next launch (opt-in).** Instead of installing while quitting, persist the downloaded update and install it at the start of the *next* launch, when no session teardown can interrupt it:
+
+    ```js
+    autoUpdater.autoInstallEvent = "onNextLaunch"
+    ```
+
+    With this set, any app quit records the downloaded update as pending instead of spawning the installer. On the next launch the updater fetches fresh update info from your update server, re-validates the cached installer against it (checksum, and code signature on Windows), verifies the pending version is still an installable change (newer than the running app — or a downgrade when `allowDowngrade` is enabled), then runs the installer silently and restarts the app. If validation fails or the version is no longer an installable change, the pending state is cleared and the app starts normally.
+
+    Set `autoInstallEvent = "manual"` to disable automatic installation entirely (the downloaded update stays cached until you call `quitAndInstall()` yourself).
+
+    A single quit can also be deferred without setting the property:
+
+    ```js
+    autoUpdater.quitAndInstall({ isSilent: true, isForceRunAfter: true, waitUntilNextLaunch: true })
+    ```
+
+    You can also trigger the pending install explicitly (e.g. before opening your first window):
+
+    ```js
+    await autoUpdater.installPendingUpdateIfAvailable()
+    ```
+
+### Per-target behavior
+
+The *automatic* install at startup only runs for targets that can install the pending update without an elevation/authentication prompt. Targets that always elevate to install (deb/rpm/pacman via pkexec/sudo, per-machine NSIS via UAC) skip the automatic path with a log message and keep the pending update — call `installPendingUpdateIfAvailable()` explicitly at a moment your app controls to install those.
+
+| Target | Automatic install at next launch | Explicit `installPendingUpdateIfAvailable()` |
+| --- | --- | --- |
+| NSIS (per-user) | ✓ | ✓ |
+| NSIS (per-machine, `isAdminRightsRequired`) | skipped — would show a UAC prompt at startup | ✓ (UAC prompt) |
+| AppImage | ✓ | ✓ |
+| deb / rpm / pacman | skipped — package managers always elevate (pkexec/sudo) | ✓ (auth prompt) |
+| macOS | n/a — Squirrel.Mac stages updates natively and applies them on relaunch | resolves `false` |
+
+:::note[Planned default change in v28]
+`autoInstallEvent` defaults to `"onQuit"` in v27; `"onNextLaunch"` is planned to become the **default** in v28 to resolve this class of session-end corruption once and for all. macOS is unaffected: Squirrel.Mac natively stages downloaded updates and applies them on relaunch, without a killable installer process (there `"onQuit"` and `"onNextLaunch"` behave identically).
+:::
+
+:::caution[Launching during an OS shutdown is a residual, best-effort-only race]
+Deferring the install to the next launch moves the installer out of the session-end quit — the common [#7807](https://github.com/electron-userland/electron-builder/issues/7807) trigger — but it does not make the install itself atomic. If the user *launches* the app while the OS is already shutting down or rebooting (for example, right before a scheduled restart fires), the automatic startup install spawns the same detached NSIS/AppImage installer, and the OS can still terminate it mid-write.
+
+The session-end guard does **not** cover this launch window: it is wired into the on-quit path only, and on a fresh launch the `shutdown` / `session-end` signal generally arrives *after* the startup install has already been spawned, so it cannot reliably win the race. The probability is very low — it requires a deferred update, a launch inside the shutdown window, *and* the OS killing the installer mid-write — and macOS is immune (Squirrel.Mac swaps the app bundle atomically). The only complete fix for NSIS/AppImage is an atomic install, which is out of scope for this feature.
+:::
+
 ## Debugging
 
 You don't need to listen to all events to understand what's wrong. Just set `logger`.

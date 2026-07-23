@@ -1,5 +1,67 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`linux > appimage tool: 1.1.0 > AppImage - install on next launch - x64 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux > appimage tool: 1.1.0 > AppImage - install on next launch - x64 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
 exports[`linux > appimage tool: 1.1.0 > AppImage - x64 1`] = `
 {
   "linux": [

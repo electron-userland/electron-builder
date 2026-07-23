@@ -29,6 +29,12 @@ export interface AppAdapter {
   quit(): void
 
   onQuit(handler: (exitCode: number) => void): void
+
+  /**
+   * Best-effort notification that the OS session is ending (shutdown / reboot / log off).
+   * Optional because not every adapter (or platform) can detect it.
+   */
+  onSessionEnd?(handler: () => void): void
 }
 
 export function getAppCacheDir() {
