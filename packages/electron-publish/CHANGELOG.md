@@ -1,5 +1,30 @@
 # electron-publish
 
+## 27.0.0-alpha.6
+
+### Minor Changes
+
+- Fix(publish): authenticate Bitbucket Cloud uploads with access tokens (Bearer auth) _[`#10023`](https://github.com/electron-userland/electron-builder/pull/10023) [`6d55fad`](https://github.com/electron-userland/electron-builder/commit/6d55fadaa7bdd94fdcc323f638ed54b774f86f3a) [@mmaietta](https://github.com/mmaietta)_
+
+  Bitbucket Cloud is deprecating app passwords (https://www.atlassian.com/blog/bitbucket/bitbucket-cloud-transitions-to-api-tokens). The Bitbucket publisher now selects the auth scheme by whether a username is set: with a username it sends HTTP Basic auth (Bitbucket username + app password, or Atlassian account email + API token); without a username it sends the token as a repository/project/workspace access token via `Authorization: Bearer`. Previously a token was always sent as Basic auth using the repo owner as the username, so access tokens could not be used.
+
+- Feat: add Cloudflare R2 publish provider _[`#9773`](https://github.com/electron-userland/electron-builder/pull/9773) [`a086ef3`](https://github.com/electron-userland/electron-builder/commit/a086ef37855406d0abe418ca1beeca605608b510) [@kyletaylored](https://github.com/kyletaylored)_
+
+### Patch Changes
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`a086ef3`](https://github.com/electron-userland/electron-builder/commit/a086ef37855406d0abe418ca1beeca605608b510) [`65f0403`](https://github.com/electron-userland/electron-builder/commit/65f04035f722199c7bbd5360f7ecbf2bf352a645) [`2c10f1f`](https://github.com/electron-userland/electron-builder/commit/2c10f1fe9c409379208aa5c0a5bc102689fb5cb6)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.5`
+- `builder-util@27.0.0-alpha.6`
+
+</details>
+
 ## 27.0.0-alpha.5
 
 ### Patch Changes
