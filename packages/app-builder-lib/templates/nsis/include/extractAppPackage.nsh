@@ -82,7 +82,7 @@
     nsisunz::Unzip "$PLUGINSDIR\app-$packageArch.zip" "$INSTDIR"
     Pop $R0
     StrCmp $R0 "success" +3
-      MessageBox MB_OK|MB_ICONEXCLAMATION "$(decompressionFailed)$\n$R0"
+      MessageBox MB_OK|MB_ICONEXCLAMATION "$(decompressionFailed)$\n$R0" /SD IDOK
       Quit
   !else
     !insertmacro extractUsing7za "$PLUGINSDIR\app-$packageArch.7z"
