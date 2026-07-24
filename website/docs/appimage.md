@@ -134,42 +134,33 @@ Build requirements: Linux host (or [Docker](features/multi-platform-build.md#doc
 
 ## Toolsets
 
-electron-builder supports two generations of AppImage toolset, configured via the top-level `toolsets.appimage` option:
+The AppImage build tools are configured via the top-level [`toolsets.appimage`](./toolsets.md) option. As of v27 the default resolves to the **static, FUSE3-compatible runtime**; the legacy FUSE2 runtime is available by pinning `"0.0.0"`.
 
-| Toolset | Runtime | Status |
+| `toolsets.appimage` | Runtime | Notes |
 |---|---|---|
-| `"0.0.0"` | Legacy FUSE2 | Default (deprecated) |
-| `"1.0.2"` | Static runtime 20251108 | Beta |
-| `"1.0.3"` | Static runtime 20251108 | Beta (recommended) |
+| unset / `"latest"` → `1.1.0` | Static runtime (no host FUSE needed) | **Default in v27** |
+| `"0.0.0"` | Legacy FUSE2 | Opt-in only — requires `libfuse.so.2` on the host |
 
-### Legacy Toolset (`0.0.0`) — FUSE2
+### Default — static runtime
 
-The default toolset uses the original AppImage runtime, which relies on **FUSE2** (Filesystem in Userspace) to mount the squashfs filesystem at runtime.
+The default toolset bundles a **static AppImage runtime** that does not depend on FUSE2. The runtime is prepended directly to the squashfs filesystem and handles mounting internally, so AppImages run on modern distributions (Arch, Fedora, Ubuntu 24.04+) without installing FUSE. Its `AppRun` entry point also performs smart sandbox detection — it passes `--no-sandbox` to Electron only when unprivileged user namespaces are unavailable, rather than always.
 
-:::warning[FUSE2 is deprecated and being dropped by Linux distributions]
-FUSE2 has been unmaintained since 2017 and is increasingly unavailable on modern distributions. Many users on Arch Linux, Fedora, Ubuntu 24.04+, and other distros will encounter the error:
+:::note[v27: default `--no-sandbox` change]
+With the legacy FUSE2 runtime (`toolsets.appimage: "0.0.0"`), electron-builder injects `--no-sandbox` by default. With the default static runtime it does **not** — `AppRun` adds it only when user namespaces are unavailable. Set `executableArgs: ["--no-sandbox"]` if you need to force it.
+:::
+
+### Legacy runtime (`0.0.0`) — FUSE2
+
+Pin `toolsets: { appimage: "0.0.0" }` only if you specifically need the original FUSE2 runtime. FUSE2 has been unmaintained since 2017 and is increasingly unavailable on modern distributions, where an AppImage built with it fails to launch:
 
 ```
 dlopen(): error loading libfuse.so.2
 AppImages require FUSE to run.
 ```
 
-The modern static runtime toolset (`1.0.3`) eliminates this dependency entirely.
-:::
-
-### Modern Toolset (`1.0.3`) — Static Runtime
-
-The modern toolset bundles a **static AppImage runtime** that does not depend on FUSE2. The runtime is prepended directly to the squashfs filesystem and handles mounting internally. The `AppRun` entry point also performs smart sandbox detection — it only passes `--no-sandbox` to Electron when unprivileged user namespaces are unavailable, rather than always.
-
-:::info[Recommended for new projects]
-Use `toolsets: { appimage: "1.0.3" }` for all new projects. The static runtime eliminates the FUSE2 dependency and works on a wider range of Linux distributions. Starting in v27, this will become the default.
-:::
-
-To opt in, add to your electron-builder configuration:
-
 ```yaml
 toolsets:
-  appimage: "1.0.3"
+  appimage: "0.0.0"   # legacy FUSE2 runtime — only if you need it
 ```
 
 ## Compression
@@ -178,7 +169,7 @@ AppImage files use [squashfs](https://en.wikipedia.org/wiki/SquashFS) internally
 
 :::info[Compression support by toolset]
 - **Legacy FUSE2 (`0.0.0`)**: only `xz` can be passed explicitly (when the root `compression` is `"maximum"`). All other values use mksquashfs's default (gzip).
-- **Static runtime (`1.0.2`, `1.0.3`)**: supports `gzip` and `zstd`. The `appImage.compression` option selects the algorithm directly; `"xz"` is mapped to `"zstd"` (xz is not compiled into the static runtime binary).
+- **Static runtime (default)**: supports `gzip` and `zstd`. The `appImage.compression` option selects the algorithm directly; `"xz"` is mapped to `"zstd"` (xz is not compiled into the static runtime binary).
 :::
 
 | Algorithm | File size | Decompression speed | Notes |

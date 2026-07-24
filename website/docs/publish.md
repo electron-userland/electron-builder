@@ -20,16 +20,10 @@ If `GITHUB_RELEASE_TOKEN` is defined, it will be used instead of (`GH_TOKEN` or 
 - you could make your `GITHUB_TOKEN` "Read-only" when creating a fine-grained personal access token, and "Read and write" for the `GITHUB_RELEASE_TOKEN`.
 - "Contents" fine-grained permission was sufficient. (at time of writing - Apr 2024)
 
-:::warning[Deprecation Notice: Implicit Publishing]
-electron-builder currently auto-detects when to publish based on CI environment conditions:
+:::warning[Implicit publishing was removed in v27]
+In v26 and earlier, electron-builder auto-detected when to publish based on CI environment conditions (npm lifecycle event, a git tag in CI, etc.). **As of v27 this implicit behavior is removed** — publishing never happens unless you request it. This closes a hole where unfinished work or secrets could be published unintentionally.
 
-- Running via `npm run release` → publishes always
-- Git tag detected in CI → publishes on tag
-- CI environment detected → publishes to draft releases
-
-**This implicit publishing behavior is deprecated and will be disabled in electron-builder v27.**
-
-To prepare for this change, please explicitly specify your publish intent using the `--publish` CLI flag (e.g., `--publish always`, `--publish onTag`) or set the `publish` configuration in your `package.json` or `electron-builder.yml`.
+Explicitly specify your publish intent with the `--publish` CLI flag (e.g. `--publish always`, `--publish onTag`, `--publish onTagOrDraft`, `--publish never`) or set the `publish` option in your configuration. See [v27 Breaking Changes → implicit `--publish` removed](./migration/v27-breaking-changes.md#implicit---publish-removed).
 :::
 
 :::info[Snap store]
