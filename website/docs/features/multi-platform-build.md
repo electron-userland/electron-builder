@@ -58,6 +58,10 @@ sudo snap install multipass --beta --classic
 sudo apt-get install --no-install-recommends -y gcc-multilib g++-multilib
 ```
 
+:::warning[Electron 44 removed 32-bit Windows/Linux]
+Windows `ia32` and Linux `armv7l` builds require **`electronVersion` &lt;= 43.x** — [Electron 44 removed them](https://github.com/electron/electron/pull/51816). On Electron 44+ electron-builder fails fast with a configuration error (a warning if a custom `electronDist`/mirror is set). The v43 series is supported until January 2027. See [Build Architectures](../architecture.md#supported-architectures-by-platform).
+:::
+
 ## Docker
 
 Build Linux or Windows targets on any platform using Docker.
