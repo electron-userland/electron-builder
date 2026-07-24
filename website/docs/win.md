@@ -25,7 +25,7 @@ In v27, all Windows signing is configured through the single [`win.sign`](./conf
 ```
 
 :::note[Upgrading from v26]
-The v26 `win.signtoolOptions` / `win.azureSignOptions` keys were removed — `electron-builder migrate-schema` rewrites them to `win.sign` automatically. See [v27 Breaking Changes → Windows signing](./migration/v27-breaking-changes.md#windows-signing--winsign).
+The v26 `win.signtoolOptions` / `win.azureSignOptions` keys were removed — `electron-builder migrate-schema` rewrites them to `win.sign` automatically. See [v27 Breaking Changes → Windows signing](./migration/v27-breaking-changes.md#windows-signing-winsign).
 :::
 
 File `customSign.js` in the project root directory:

@@ -44,7 +44,7 @@ Use `WIN_CSC_LINK` / `WIN_CSC_KEY_PASSWORD` to supply a separate Windows certifi
 :::
 
 :::note[More signing variables]
-The macOS keychain/identity variables (`CSC_NAME`, `CSC_IDENTITY_AUTO_DISCOVERY`, `CSC_KEYCHAIN`) and Azure Trusted Signing variables (`AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`) are documented in the code-signing guides: [Code Signing](./features/code-signing/code-signing.md), [macOS](./features/code-signing/code-signing-mac.md), and [Windows](./features/code-signing/code-signing-win.md). In v27, `WIN_CSC_LINK` fallback applies only to `signtool` mode; `hsm`, `pkcs11`, and `azure` are configured through [`win.sign`](./migration/v27-breaking-changes.md#windows-signing--winsign).
+The macOS keychain/identity variables (`CSC_NAME`, `CSC_IDENTITY_AUTO_DISCOVERY`, `CSC_KEYCHAIN`) and Azure Trusted Signing variables (`AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`) are documented in the code-signing guides: [Code Signing](./features/code-signing/code-signing.md), [macOS](./features/code-signing/code-signing-mac.md), and [Windows](./features/code-signing/code-signing-win.md). In v27, `WIN_CSC_LINK` fallback applies only to `signtool` mode; `hsm`, `pkcs11`, and `azure` are configured through [`win.sign`](./migration/v27-breaking-changes.md#windows-signing-winsign).
 :::
 
 ## Notarization (macOS)
@@ -137,7 +137,7 @@ See [Snap → Authentication](./snap.md#authentication) for the credential resol
 
 ---
 
-## CI & release tags
+## CI and release tags
 
 electron-builder detects the release tag and repository from standard CI variables. These are normally **set by your CI provider**, not by you — the exception is `CI_COMMIT_TAG`, which you can set manually (e.g. on GitLab or self-hosted CI) to provide the tag.
 
@@ -167,7 +167,7 @@ The GitHub repository is auto-detected from `TRAVIS_REPO_SLUG`, `APPVEYOR_REPO_N
 | `USE_HARD_LINKS` | Set to `"true"` to copy files via hard links where possible (faster, less disk use). Ignored on Windows. |
 
 :::note[Electron mirror is config, not an env var]
-To download Electron from a mirror, configure [`electronGet.mirrorOptions`](./migration/v27-breaking-changes.md#electrondownload--electronget) in your build config — e.g. `electronGet: { mirrorOptions: { mirror: "https://my-mirror/" } }`. (In v26 this was `electronDownload.mirror`.) See [Configuration](./configuration.md).
+To download Electron from a mirror, configure [`electronGet.mirrorOptions`](./migration/v27-breaking-changes.md#electrondownload-electronget) in your build config — e.g. `electronGet: { mirrorOptions: { mirror: "https://my-mirror/" } }`. (In v26 this was `electronDownload.mirror`.) See [Configuration](./configuration.md).
 :::
 
 ---
@@ -192,7 +192,7 @@ These variables were removed in v27. `electron-builder migrate-schema` does **no
 
 | Removed variable | Replacement |
 |---|---|
-| `CI_BUILD_TAG` | [`CI_COMMIT_TAG`](#ci--release-tags) |
+| `CI_BUILD_TAG` | [`CI_COMMIT_TAG`](#ci-and-release-tags) |
 | `ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY` | The [`ignoredProductionDependencies`](./configuration.md) build option — see the [breaking-change note](./migration/v27-breaking-changes.md#redundant-production-dependencies-are-excluded-not-rejected). |
 
 ### Toolset overrides
@@ -213,5 +213,5 @@ The environment variables that pointed electron-builder at custom build-tool bun
 | `CUSTOM_NSIS_RESOURCES` | Alternate NSIS resources bundle. |
 | `ELECTRON_BUILDER_WINE_TOOLSET_DIR` | Wine bundle directory. |
 
-The three signing `USE_SYSTEM_*` variables have **no env-var replacement** — configure signing through [`win.sign`](./migration/v27-breaking-changes.md#windows-signing--winsign) and the `winCodeSign` toolset. For the full replacement mechanics (archive formats, checksums, `file://` directories), see [Toolset env-var overrides removed](./migration/v27-breaking-changes.md#toolset-env-var-overrides-removed).
+The three signing `USE_SYSTEM_*` variables have **no env-var replacement** — configure signing through [`win.sign`](./migration/v27-breaking-changes.md#windows-signing-winsign) and the `winCodeSign` toolset. For the full replacement mechanics (archive formats, checksums, `file://` directories), see [Toolset env-var overrides removed](./migration/v27-breaking-changes.md#toolset-env-var-overrides-removed).
 

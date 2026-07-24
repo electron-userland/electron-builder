@@ -36,7 +36,7 @@ mac:
 ```
 
 :::note[v27]
-`notarize` stays on `mac`, but the signing options (`hardenedRuntime`, `entitlements`, `entitlementsInherit`) moved under `mac.sign` in v27. See [macOS signing](../../migration/v27-breaking-changes.md#macos-signing--macsign).
+`notarize` stays on `mac`, but the signing options (`hardenedRuntime`, `entitlements`, `entitlementsInherit`) moved under `mac.sign` in v27. See [macOS signing](../../migration/v27-breaking-changes.md#macos-signing-macsign).
 :::
 
 ### Authentication — Option A: Apple ID

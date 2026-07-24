@@ -27,7 +27,7 @@ If `GITHUB_RELEASE_TOKEN` is defined, it will be used instead of (`GH_TOKEN` or 
 :::warning[Implicit publishing was removed in v27]
 In v26 and earlier, electron-builder auto-detected when to publish based on CI environment conditions (npm lifecycle event, a git tag in CI, etc.). **As of v27 this implicit behavior is removed** — publishing never happens unless you request it. This closes a hole where unfinished work or secrets could be published unintentionally.
 
-Explicitly specify your publish intent with the `--publish` CLI flag (e.g. `--publish always`, `--publish onTag`, `--publish onTagOrDraft`, `--publish never`) or set the `publish` option in your configuration. See [v27 Breaking Changes → implicit `--publish` removed](./migration/v27-breaking-changes.md#implicit---publish-removed).
+Explicitly specify your publish intent with the `--publish` CLI flag (e.g. `--publish always`, `--publish onTag`, `--publish onTagOrDraft`, `--publish never`) or set the `publish` option in your configuration. See [v27 Breaking Changes → implicit `--publish` removed](./migration/v27-breaking-changes.md#implicit-publish-removed).
 :::
 
 :::info[Snap store]

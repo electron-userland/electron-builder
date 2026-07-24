@@ -7,7 +7,7 @@ title: "What's New in v27"
 electron-builder **v27** is a major release: it moves the entire ecosystem to **native ES modules**, raises the minimum runtime to **Node.js 22.12.0**, adds several new capabilities, and quietly changes a handful of defaults. This page is the front door — a short tour of what's new, plus the silent behavior changes most likely to trip you up.
 
 :::tip[Upgrading an existing project?]
-Run `electron-builder migrate-schema` to auto-apply the config-key changes; the [table below](#new-defaults--behavior-changes-you-may-trip-over) is what it does **not** do for you. For the ordered upgrade steps, follow the [v26 → v27 walkthrough](./v26-to-v27.md); for the full catalogue of everything that changed, see [v27 Breaking Changes](./v27-breaking-changes.md).
+Run `electron-builder migrate-schema` to auto-apply the config-key changes; the [table below](#new-defaults-and-behavior-changes-you-may-trip-over) is what it does **not** do for you. For the ordered upgrade steps, follow the [v26 → v27 walkthrough](./v26-to-v27.md); for the full catalogue of everything that changed, see [v27 Breaking Changes](./v27-breaking-changes.md).
 :::
 
 ## New in v27
@@ -20,7 +20,7 @@ Run `electron-builder migrate-schema` to auto-apply the config-key changes; the 
 - **[`migrate-schema` CLI](../cli.md)** — a new command that rewrites your v26 config to v27 form in place, covering both static (`json`/`json5`/`yaml`/`package.json`) and programmatic (`.js`/`.ts`/`.cjs`/`.mjs`) configs.
 - **[Native ESM + Node.js >=22.12](./v27-breaking-changes.md#native-esm-output)** — every package now ships as native ES modules. On Node.js 22.12.0+ both `import` and CJS `require()` continue to work with no code changes.
 
-## New defaults & behavior changes you may trip over
+## New defaults and behavior changes you may trip over
 
 These are the runtime and default changes that `migrate-schema` **does not** rewrite for you — no config key changed, so the migrator can't see them. Skim the list; each row deep-links to the full explanation.
 

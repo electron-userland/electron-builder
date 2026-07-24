@@ -327,7 +327,7 @@ The `yaml` path is resolved relative to the build resources directory (`build/` 
 ## Migrating from `snap` to `snapcraft`
 
 :::tip[Automated]
-`electron-builder migrate-schema` performs this restructuring for you. If the old config has no `base`, it assumes `core20` and warns so you can confirm. See [v27 Breaking Changes → snap → snapcraft](./migration/v27-breaking-changes.md#snap--snapcraft).
+`electron-builder migrate-schema` performs this restructuring for you. If the old config has no `base`, it assumes `core20` and warns so you can confirm. See [v27 Breaking Changes → snap → snapcraft](./migration/v27-breaking-changes.md#snap-snapcraft).
 :::
 
 The removed `snap` key is equivalent to using `snapcraft` with a per-core options object. The `base` field moves to the top level of `snapcraft`, and all other fields move inside the corresponding core key.
