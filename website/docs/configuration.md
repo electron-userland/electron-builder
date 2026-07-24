@@ -2,6 +2,10 @@
 title: "Configuration"
 ---
 
+import UpgradingFromV26 from '@site/docs/partials/_upgrading-from-v26.mdx'
+
+<UpgradingFromV26 />
+
 electron-builder configuration can be defined
 
 * in the `package.json` file of your project using the `build` key on the top level:
