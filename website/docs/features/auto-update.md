@@ -316,7 +316,7 @@ Emitted on progress.
 
 #### Event: `update-downloaded`
 
-* `info` [UpdateInfo](#updateinfo) — for generic and github providers. [VersionInfo](#VersionInfo) for Bintray provider.
+* `info` [UpdateInfo](#updateinfo) — for generic and github providers.
 
 #### Event: `update-cancelled`
 

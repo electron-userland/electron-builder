@@ -130,7 +130,7 @@ Remote builds require Snapcraft Store credentials. electron-builder resolves the
 
 Credentials are injected **only into the spawned `snapcraft` subprocess** environment and are never exposed through `process.env`.
 
-This follows the same pattern as `WIN_CSC_LINK` / `CSC_LINK` for [code signing](./code-signing.md).
+This follows the same pattern as `WIN_CSC_LINK` / `CSC_LINK` for [code signing](./features/code-signing/code-signing.md).
 
 ##### CI Setup
 
