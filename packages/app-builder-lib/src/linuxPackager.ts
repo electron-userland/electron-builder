@@ -1,5 +1,6 @@
-import { Arch } from "builder-util"
+import { Arch, AsyncTaskManager } from "builder-util"
 import { sanitizeFileName } from "builder-util/internal"
+import * as path from "path"
 import { DIR_TARGET, Platform, Target } from "./core.js"
 import { LinuxConfiguration } from "./options/linuxOptions.js"
 import { Packager } from "./packager.js"
@@ -9,10 +10,12 @@ import FlatpakTarget from "./targets/linux/FlatpakTarget.js"
 import FpmTarget from "./targets/linux/FpmTarget.js"
 import { LinuxTargetHelper } from "./targets/linux/LinuxTargetHelper.js"
 import SnapTarget from "./targets/linux/snap/SnapTarget.js"
-import { createCommonTarget } from "./targets/targetFactory.js"
+import { archiveTargets, createCommonTarget } from "./targets/targetFactory.js"
 
 export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
   readonly executableName: string
+  private _helper: LinuxTargetHelper | null = null
+  private readonly emittedDesktopFiles = new Set<string>()
 
   constructor(info: Packager) {
     super(info, Platform.LINUX)
@@ -25,15 +28,52 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
     return ["snap", "appimage"]
   }
 
-  createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void {
-    let helper: LinuxTargetHelper | null
-    const getHelper = () => {
-      if (helper == null) {
-        helper = new LinuxTargetHelper(this)
-      }
-      return helper
+  getHelper(): LinuxTargetHelper {
+    if (this._helper == null) {
+      this._helper = new LinuxTargetHelper(this)
+    }
+    return this._helper
+  }
+
+  override async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<any> {
+    await super.pack(outDir, arch, targets, taskManager)
+
+    const archivesToProcess = targets.filter(t => archiveTargets.has(t.name))
+    if (archivesToProcess.length === 0) {
+      return
     }
 
+    const effectiveDesktop = this.platformSpecificBuildOptions.desktop
+    if (effectiveDesktop == null || effectiveDesktop === false) {
+      return
+    }
+
+    // Queue desktop emission as a build task alongside the archive build tasks. The task manager
+    // collects errors from every queued task, so a failing archive build still fails the overall
+    // build. (Note: emission runs concurrently with the archive builds — it is not ordered strictly
+    // after them — so, as with any other artifact, a desktop upload under `--publish` may start
+    // before a later archive failure aborts the build.)
+    taskManager.add(async () => {
+      const desktopEntryPath = path.join(outDir, `${this.executableName}.desktop`)
+      if (this.emittedDesktopFiles.has(desktopEntryPath)) {
+        return
+      }
+      this.emittedDesktopFiles.add(desktopEntryPath)
+
+      // Normalize boolean `true` to an empty LinuxDesktopFile so computeDesktopEntry
+      // can safely access .entry and .desktopActions via optional chaining.
+      const mergedOptions = { ...this.platformSpecificBuildOptions, desktop: effectiveDesktop === true ? {} : effectiveDesktop }
+      await this.getHelper().writeDesktopEntry(mergedOptions, undefined, desktopEntryPath)
+      await this.info.emitArtifactBuildCompleted({
+        file: desktopEntryPath,
+        arch,
+        target: archivesToProcess[0],
+        packager: this,
+      })
+    })
+  }
+
+  createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void {
     for (const name of targets) {
       if (name === DIR_TARGET) {
         continue
@@ -65,7 +105,7 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
           return createCommonTarget(name, outDir, this)
         }
 
-        return new targetClass(name, this, getHelper(), outDir)
+        return new targetClass(name, this, this.getHelper(), outDir)
       })
     }
   }

@@ -47,7 +47,7 @@ linux:
 
 ## Desktop File Customization
 
-All Linux targets include a `.desktop` file for application menu integration. Customize it via `linux.desktop`:
+Package-format targets (AppImage, Snap, deb, rpm, Flatpak, etc.) always bundle a `.desktop` file for application menu integration. Customize it via `linux.desktop`:
 
 ```yaml
 linux:
@@ -70,6 +70,23 @@ linux:
 ```
 
 Standard freedesktop.org category values include: `AudioVideo`, `Audio`, `Video`, `Development`, `Education`, `Game`, `Graphics`, `Network`, `Office`, `Science`, `Settings`, `System`, `Utility`.
+
+### Desktop File for Archive Targets
+
+Archive targets (`zip`, `7z`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`) do **not** include a `.desktop` file by default — an archive is just a bundle of files with no installer to register one. To emit a standalone `<executableName>.desktop` artifact next to the archive, set `linux.desktop` to a customization object or to `true` (for defaults):
+
+```yaml
+linux:
+  desktop: true                      # emit the default .desktop alongside the archive
+  # — or —
+  desktop:
+    entry:
+      Name: My Application
+```
+
+Set `linux.desktop` to `false`, `null`, or omit it to suppress the standalone file. When the same build also produces a package-format target, that target still bundles its own `.desktop` as usual.
+
+The standalone archive `.desktop` follows the installed-app convention: its `Exec` points at the `/opt/<productName>/<executableName>` install path and `Icon` is the bare executable name. If you extract the archive somewhere else, adjust `Exec`/`Icon` to match.
 
 ## Window Association (`desktopName`)
 
