@@ -197,7 +197,7 @@ Add to GitHub Secrets:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-Configure `win.azureSignOptions` in your electron-builder config. See [Windows Code Signing](./code-signing/code-signing-win.md#using-azure-trusted-signing).
+Configure `win.sign` with `type: "azure"` in your electron-builder config (this replaces the v26 `win.azureSignOptions` key). `endpoint`, `codeSigningAccountName`, `certificateProfileName`, and `publisherName` are required. See [Windows Code Signing](./code-signing/code-signing-win.md#azure-trusted-signing-type-azure--beta).
 
 ## Caching for Faster Builds
 
