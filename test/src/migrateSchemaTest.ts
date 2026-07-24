@@ -37,6 +37,29 @@ describe("migrateConfig — electronCompile", () => {
   })
 })
 
+describe("migrateConfig — linux.syncDesktopName", () => {
+  test("removes linux.syncDesktopName: true (behaviour is now the default)", () => {
+    const result = migrateConfig({ linux: { target: "deb", syncDesktopName: true } })
+    expect("syncDesktopName" in result.migrated.linux).toBe(false)
+    expect(result.migrated.linux.target).toBe("deb")
+    expect(result.changes.some(c => c.key === "linux.syncDesktopName")).toBe(true)
+    expect(result.warnings).toHaveLength(0)
+  })
+
+  test("removes linux.syncDesktopName: false and warns about the behaviour change", () => {
+    const result = migrateConfig({ linux: { syncDesktopName: false } })
+    expect("syncDesktopName" in result.migrated.linux).toBe(false)
+    expect(result.changes.some(c => c.key === "linux.syncDesktopName")).toBe(true)
+    expect(result.warnings.some(w => w.includes("syncDesktopName") && w.includes("desktopName"))).toBe(true)
+  })
+
+  test("no-op when linux config has no syncDesktopName", () => {
+    const result = migrateConfig({ linux: { target: "deb" } })
+    expect(result.modified).toBe(false)
+    expect(result.warnings).toHaveLength(0)
+  })
+})
+
 describe("migrateConfig — framework / nodeVersion / launchUiVersion", () => {
   test("removes all three when present", () => {
     const result = migrateConfig({ framework: "electron", nodeVersion: "current", launchUiVersion: "0.1.0" })

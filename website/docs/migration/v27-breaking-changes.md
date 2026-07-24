@@ -67,7 +67,7 @@ To stay on a legacy bundle, pin the toolset to `"0.0.0"`. Because `winCodeSign` 
 | [`devMetadata` / `extraMetadata` in `PackagerOptions` removed](#devmetadata--extrametadata-programmatic-packageroptions) | — | Use `config` / `config.extraMetadata` |
 | [Implicit `--publish` removed](#implicit---publish-removed) | — | Pass `--publish` explicitly |
 | [`--em.build` / `--em.directories` CLI flags removed](#removed-flags---embuild---emdirectories) | — | Use `-c` / `-c.directories` |
-| [`linux.syncDesktopName` removed](#linuxsyncdesktopname-always-synced) | — | Behaviour is always on; set `desktopName` to control the filename |
+| [`linux.syncDesktopName` removed](#linuxsyncdesktopname-always-synced) | ✓ | Removed automatically; behaviour is always on. If it was `false`, set `desktopName` to control the filename |
 | [Linux maintainer-script EJS syntax removed](#linux-maintainer-script-ejs-template-syntax) | — | Use `${var}` instead of `<%= var %>` |
 | [NSIS file-association ProgID format changed](#nsis-file-association-progid-format-changed) | — | Update custom NSIS scripts that hard-code the old ProgID |
 | [Toolset defaults resolve to `"latest"`](#toolset-defaults-resolve-to-latest-newest-bundle) | — | No action; pin to `"0.0.0"` to restore a legacy bundle |
@@ -251,7 +251,7 @@ The `linux.syncDesktopName` flag is removed. The behaviour it gated is now **alw
 { "build": { "linux": { "syncDesktopName": true } } }  // ← delete this line
 ```
 
-No replacement is needed — simply remove the flag. To control the installed filename, set (or omit) `desktopName` in your root `package.json`.
+`migrate-schema` removes the flag automatically. No replacement is needed. If you had `syncDesktopName: false` (opting out of syncing in v26), the migrator warns you: the installed filename is now always derived from `desktopName`, so set (or omit) `desktopName` to control it.
 
 **Why this changed:** Electron derives its `app_id` / `WM_CLASS` from `desktopName`, and desktop environments match a running window to its launcher entry by comparing `WM_CLASS` against the installed `.desktop` filename. When the two diverged — which is exactly what happened with `syncDesktopName: false` (the v26 default) whenever a `desktopName` was set — GNOME, KDE, and others failed to associate the window with its launcher, breaking taskbar grouping, dock icons, and launcher highlighting (see [#9103](https://github.com/electron-userland/electron-builder/issues/9103)). Removing the flag eliminates a footgun rather than removing functionality. Path-traversal/NUL validation on the resulting filename is unchanged.
 
