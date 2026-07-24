@@ -9996,7 +9996,7 @@
           "type": "null"
         }
       ],
-      "description": "Pinned versions of the binary toolsets electron-builder downloads and uses internally.\n\nEach property selects a specific release of the corresponding tool bundle. Set a property to\n`\"0.0.0\"` to force the legacy bundle (pre-v27 behaviour). Leave a property unset (or set it to\n`\"latest\"`) to use the modern default (newest bundle) for that toolset."
+      "description": "Pinned versions of the binary toolsets electron-builder downloads and uses internally.\n\nEach property selects a specific release of the corresponding tool bundle. Set a property to\n`\"0.0.0\"` to force the legacy bundle (pre-v27 behaviour). Leave a property unset (or set it to\n`\"latest\"`) to use the modern default (newest bundle) for that toolset.\n\nNote: Toolset versioning can drop intermediate releases (such as if a problem is discovered in a bundle). If you need to pin to a specific release, check the release notes for the toolset to ensure the version you specify is valid."
     },
     "win": {
       "anyOf": [

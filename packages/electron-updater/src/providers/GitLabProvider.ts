@@ -123,11 +123,6 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
       }
 
       channelFileUrl = new URL(channelAsset.direct_asset_url)
-      // SECURITY: `direct_asset_url` comes from the GitLab release JSON, which is attacker-influenceable
-      // (a release asset link created without a `filepath` echoes an arbitrary external `url`). Only forward
-      // the GitLab token when the channel-file URL is same-origin as the API host — same protocol AND host,
-      // so an off-host or http:// link cannot exfiltrate the token. Off-host assets are public downloads and
-      // need no credentials (the eventual artifact download already omits the token for the same reason).
       const authHeaders = getGitlabAuthHeaders(this.options.token || null)
       const isSameOriginAsApi = channelFileUrl.protocol === this.baseApiUrl.protocol && channelFileUrl.host === this.baseApiUrl.host
       const headers = isSameOriginAsApi && Object.keys(authHeaders).length ? authHeaders : undefined

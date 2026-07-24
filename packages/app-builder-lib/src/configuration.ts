@@ -94,6 +94,8 @@ export interface CommonConfiguration {
    * `"0.0.0"` to force the legacy bundle (pre-v27 behaviour). Leave a property unset (or set it to
    * `"latest"`) to use the modern default (newest bundle) for that toolset.
    *
+   * Note: Toolset versioning can drop intermediate releases (such as if a problem is discovered in a bundle). If you need to pin to a specific release, check the release notes for the toolset to ensure the version you specify is valid.
+   *
    * @see {@link ToolsetConfig}
    */
   readonly toolsets?: ToolsetConfig | null

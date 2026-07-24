@@ -161,7 +161,9 @@ export abstract class HttpExecutor<T extends Request> {
       })
       this.addErrorAndTimeoutHandlers(request, reject, options.timeout)
       this.addRedirectHandlers(request, options, reject, redirectCount, options => {
-        this.doApiRequest(options, cancellationToken, requestProcessor, redirectCount + 1).then(resolve).catch(reject)
+        this.doApiRequest(options, cancellationToken, requestProcessor, redirectCount + 1)
+          .then(resolve)
+          .catch(reject)
       })
       requestProcessor(request, reject)
       onCancel(() => request.abort())
@@ -224,7 +226,9 @@ Please double check that your authentication token is correct. Due to security r
         return
       }
 
-      this.doApiRequest(HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options), cancellationToken, requestProcessor, redirectCount + 1).then(resolve).catch(reject)
+      this.doApiRequest(HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options), cancellationToken, requestProcessor, redirectCount + 1)
+        .then(resolve)
+        .catch(reject)
       return
     }
 

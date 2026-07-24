@@ -860,7 +860,11 @@ describe("HttpExecutor redirect limit", () => {
 
     // expose the protected doDownload for testing
     runDownload(callback: (error: Error | null) => void): void {
-      this.doDownload({ protocol: "https:", hostname: "example.com", path: "/start" }, { responseHandler: null, onCancel: () => {}, callback, options: {} as any, destination: null }, 0)
+      this.doDownload(
+        { protocol: "https:", hostname: "example.com", path: "/start" },
+        { responseHandler: null, onCancel: () => {}, callback, options: {} as any, destination: null },
+        0
+      )
     }
   }
 
@@ -878,7 +882,9 @@ describe("HttpExecutor redirect limit", () => {
 
   test("doApiRequest rejects with a max-redirect error instead of looping forever", async () => {
     const executor = new LoopingExecutor()
-    await expect(executor.doApiRequest({ protocol: "https:", hostname: "example.com", path: "/start" }, new CancellationToken(), request => request.end())).rejects.toThrow(/Too many redirects/)
+    await expect(executor.doApiRequest({ protocol: "https:", hostname: "example.com", path: "/start" }, new CancellationToken(), request => request.end())).rejects.toThrow(
+      /Too many redirects/
+    )
     // guard is `redirectCount > maxRedirects`, allowing one extra hop before rejecting
     expect(executor.requestCount).toBe(executor["maxRedirects"] + 2)
   })
