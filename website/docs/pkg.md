@@ -26,6 +26,10 @@ Or use the `CSC_INSTALLER_LINK` and `CSC_INSTALLER_KEY_PASSWORD` environment var
 You can have both `Developer ID Application` and `Developer ID Installer` certificates. The application certificate signs the `.app` bundle, and the installer certificate signs the `.pkg` wrapper.
 :::
 
+:::note[v27: `pkg.identity` is not inherited]
+As of v27 the `.pkg` installer identity resolves from `pkg.identity` (or `CSC_INSTALLER_LINK`) **only** — it no longer falls back to the app/mac-level signing identity (the old `mac.identity` fallback is gone, since that field moved to `mac.sign.identity`). If your `.pkg` relied on inheriting the mac-level identity, set `pkg.identity` explicitly.
+:::
+
 ## Installation Location
 
 By default the app is installed to `/Applications`. Override with `installLocation`:

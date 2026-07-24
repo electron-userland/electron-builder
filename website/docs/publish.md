@@ -128,9 +128,24 @@ Detected automatically using:
 # Publishers
 
 ## Bitbucket
+
+:::note[v27: authentication mode]
+The Bitbucket publisher selects its auth scheme by whether a username is present:
+
+- **With a username** (`bitbucket.username`, or the `BITBUCKET_USERNAME` env var) → HTTP **Basic** auth. Use this for a Bitbucket **app password** or an Atlassian **API token** (the username is your Bitbucket username or Atlassian account email).
+- **Without a username** → the token is sent as `Authorization: Bearer <token>` (a repository / project / workspace **access token**). This is new in v27; previously a token was always sent as Basic auth with the repo owner as the username.
+
+If your CI sets `BITBUCKET_TOKEN` to an app password / API token **without** a username, set `BITBUCKET_USERNAME` too, or the request goes out as Bearer and fails authentication.
+:::
+
   {!./builder-util-runtime.Interface.BitbucketOptions.md!}
 
 ## Github
+
+:::note[v27: `tagNamePrefix` replaces `vPrefixedTagName`]
+The GitHub `vPrefixedTagName` boolean was removed — use `tagNamePrefix` to control the tag prefix (defaults to `"v"`; set `tagNamePrefix: ""` for no prefix). `electron-builder migrate-schema` rewrites it. (On **GitLab**, `vPrefixedTagName` is unchanged and still works.)
+:::
+
   {!./builder-util-runtime.Interface.GithubOptions.md!}
 
 ## GitLab
