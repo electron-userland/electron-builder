@@ -1,5 +1,36 @@
 # electron-builder
 
+## 27.0.0-alpha.6
+
+### Major Changes
+
+- Feat: build-time packages (`electron`, `electron-builder`) listed in `dependencies` are now excluded from the packaged app (logged once) instead of failing the build, configurable via the new `ignoredProductionDependencies` option. BREAKING: removed the `ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY` env var — `electron-builder` is excluded by default; drop a name from `ignoredProductionDependencies` to bundle it. _[`#9994`](https://github.com/electron-userland/electron-builder/pull/9994) [`0721e95`](https://github.com/electron-userland/electron-builder/commit/0721e95e844a8b09179ffc3cbdfd905e1f301f9e) [@liamcmitchell](https://github.com/liamcmitchell)_
+- Feat!: `createTargets(..., arch: "all")` now expands to x64 + arm64 on Windows and Linux instead of x64 + ia32. Electron 44 removed Windows ia32 builds, and Linux ia32 zips already ended at Electron 19, so the old expansion produced broken or impossible builds on current Electron. Request `ia32` explicitly to keep building it on Electron <= 43. _[`#10032`](https://github.com/electron-userland/electron-builder/pull/10032) [`d56ada4`](https://github.com/electron-userland/electron-builder/commit/d56ada42fc3a4317dd83b8920abac3e07d967222) [@claude](https://github.com/apps/claude)_
+
+### Minor Changes
+
+- Feat(migrate-schema): advise on `autoUpdater.disableWebInstaller` when an `nsis-web` target is detected _[`#9979`](https://github.com/electron-userland/electron-builder/pull/9979) [`7a0abca`](https://github.com/electron-userland/electron-builder/commit/7a0abca14439514fc817da609a169b9973c38864) [@mmaietta](https://github.com/mmaietta)_
+
+  `electron-builder migrate-schema` now prints an advisory when the config builds an `nsis-web` target, reminding you that `AppUpdater.disableWebInstaller` defaults to `true` as of v27 and that you must set `autoUpdater.disableWebInstaller = false` in your main process to keep downloading web installers. The advisory is informational only — it surfaces on the JSON/YAML and programmatic (JS/TS) paths and never rewrites the config (`disableWebInstaller` is an electron-updater runtime setting, not a build-config key).
+
+### Patch Changes
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`6d55fad`](https://github.com/electron-userland/electron-builder/commit/6d55fadaa7bdd94fdcc323f638ed54b774f86f3a) [`c5806fe`](https://github.com/electron-userland/electron-builder/commit/c5806fee5f4f2c4be66b50cbfaac4e6da4153db6) [`0721e95`](https://github.com/electron-userland/electron-builder/commit/0721e95e844a8b09179ffc3cbdfd905e1f301f9e) [`d94a099`](https://github.com/electron-userland/electron-builder/commit/d94a0999a5a77636319be6ce115cea8e9394ee8d) [`eacce87`](https://github.com/electron-userland/electron-builder/commit/eacce87a177bdc8de9bd6bc7dce03ca48b3149dd) [`a086ef3`](https://github.com/electron-userland/electron-builder/commit/a086ef37855406d0abe418ca1beeca605608b510) [`e5db1a0`](https://github.com/electron-userland/electron-builder/commit/e5db1a0ba2674a1c5dc81fad9aeb107d57a245b1) [`50d2296`](https://github.com/electron-userland/electron-builder/commit/50d2296e001e222723977b2ca8591a69d97d64f6) [`7a0abca`](https://github.com/electron-userland/electron-builder/commit/7a0abca14439514fc817da609a169b9973c38864) [`d56ada4`](https://github.com/electron-userland/electron-builder/commit/d56ada42fc3a4317dd83b8920abac3e07d967222) [`40ebb23`](https://github.com/electron-userland/electron-builder/commit/40ebb232810680ea661b327f5edf04ac2f0b814b) [`39df92f`](https://github.com/electron-userland/electron-builder/commit/39df92fd14d9a3788add09a3963028a48eed176e) [`d853e19`](https://github.com/electron-userland/electron-builder/commit/d853e193ff4c15ef7dec7596c771c7bff27081bf) [`eeabbcb`](https://github.com/electron-userland/electron-builder/commit/eeabbcb85e6eb519af8543af861d10bf2bb79aa3) [`e0bec44`](https://github.com/electron-userland/electron-builder/commit/e0bec44e7fb8e6449ab0462bac2671117d2aafeb) [`65f0403`](https://github.com/electron-userland/electron-builder/commit/65f04035f722199c7bbd5360f7ecbf2bf352a645) [`2c10f1f`](https://github.com/electron-userland/electron-builder/commit/2c10f1fe9c409379208aa5c0a5bc102689fb5cb6)
+
+</small>
+
+- `electron-publish@27.0.0-alpha.6`
+- `app-builder-lib@27.0.0-alpha.6`
+- `dmg-builder@27.0.0-alpha.6`
+- `builder-util-runtime@10.0.0-alpha.5`
+- `builder-util@27.0.0-alpha.6`
+
+</details>
+
 ## 27.0.0-alpha.5
 
 ### Major Changes
