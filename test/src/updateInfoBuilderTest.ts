@@ -360,6 +360,33 @@ test("createUpdateInfoTasks with 1.1 emits legacy path/sha512 and legacy latest-
   })
 })
 
+test("createUpdateInfoTasks GitHub safeArtifactName does not leak into other providers' update info", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App 1.0.0.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    const event: any = {
+      file: artifactFile,
+      arch: null,
+      safeArtifactName: "App-1.0.0.exe",
+      // legacy compatibility range so the top-level path is emitted too — the leak historically affected it as well
+      packager: makePlatformPackager(">=1.0.0"),
+      target: { outDir: dir },
+    }
+    const tasks = await createUpdateInfoTasks(event, [
+      { provider: "github", repo: "owner/repo" },
+      { provider: "s3", bucket: "test" },
+    ] as any)
+
+    const githubTask = tasks.find(task => task.publishConfiguration.provider === "github")!
+    const s3Task = tasks.find(task => task.publishConfiguration.provider === "s3")!
+    // GitHub gets the safe name, but the shared info used by other providers must keep the real file name
+    expect(githubTask.info.files[0].url).toBe("App-1.0.0.exe")
+    expect((githubTask.info as any).path).toBe("App-1.0.0.exe")
+    expect(s3Task.info.files[0].url).toBe("App 1.0.0.exe")
+    expect((s3Task.info as any).path).toBe("App 1.0.0.exe")
+  })
+})
+
 test("empty tasks array is a no-op", async ({ expect }) => {
   const mockPackager = makePackager()
   await expect(writeUpdateInfoFiles([], mockPackager as any)).resolves.toBeUndefined()
