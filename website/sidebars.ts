@@ -28,6 +28,7 @@ const sidebars: SidebarsConfig = {
     { type: "doc", id: "contents", label: "App Contents" },
     { type: "doc", id: "file-patterns", label: "File Patterns" },
     { type: "doc", id: "architecture", label: "Build Architectures" },
+    { type: "doc", id: "toolsets", label: "Toolsets" },
     { type: "doc", id: "publish", label: "Publish" },
   ],
 
