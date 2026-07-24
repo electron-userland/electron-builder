@@ -214,6 +214,35 @@ Metadata format history:
 * `2.15.0` path
 * `2.16.0` files
 
+:::warning[sha2-only metadata is deprecated]
+Update metadata validated only by the legacy SHA-256 `sha2` checksum is deprecated — v27 warns and **v28 rejects it (fail-closed)**. Avoid pinning `electronUpdaterCompatibility` to a legacy range unless you actually ship 1.x–2.15 clients.
+:::
+
+## Update security options
+
+Two `AppUpdater` settings changed or were added in v27. See the [Security & Hardening](./security.md#update-security-electron-updater) page for the full rationale.
+
+### `disableWebInstaller` (now defaults to `true`)
+
+NSIS **web** installers download their full payload at install time from a manifest-supplied URL, which may not undergo signature verification. As of v27, `AppUpdater.disableWebInstaller` defaults to **`true`**, so a web-installer update is not loaded unless you opt in.
+
+v27 ships a one-major grace period: if you never set the flag and a web-installer update is received, the updater **logs a warning and still downloads** it. In **v28** that becomes an error (`ERR_UPDATER_WEB_INSTALLER_DISABLED`). Opt back in only if you intentionally ship an `nsis-web` target:
+
+```ts
+import { NsisUpdater } from "electron-updater"
+const updater = new NsisUpdater()
+updater.disableWebInstaller = false // only if you intentionally ship a web installer
+```
+
+### `allowUnverifiedLinuxPackages` (new)
+
+`AppUpdater.allowUnverifiedLinuxPackages` (default **`true`**, preserving historical behavior) controls GPG signature enforcement when installing `.deb` / `.rpm` auto-updates. Because electron-builder does not sign Linux packages itself, the default is permissive; set it to **`false`** to enforce signature checks where the package manager supports them:
+
+```ts
+import { autoUpdater } from "electron-updater"
+autoUpdater.allowUnverifiedLinuxPackages = false
+```
+
 ## Staged Rollouts
 
 Staged rollouts allow you to distribute the latest version of your app to a subset of users that you can increase over time, similar to rollouts on platforms like Google Play.
