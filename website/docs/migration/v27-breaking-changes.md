@@ -12,7 +12,7 @@ v27 moves the entire electron-builder ecosystem to **native ES modules**, raises
 
 This page is the **canonical reference for _what_ changed** in v27. For the **_how_ — the ordered upgrade steps, the automated migrator, and the checklist** — see the [v26 → v27 migration walkthrough](./v26-to-v27).
 
-- The `build()` API, all runtime configuration options, and all exported types that survive are **unchanged**.
+- The `build()` API and the **runtime behavior** of your configuration are unchanged; configuration keys that were renamed or restructured are rewritten automatically by `migrate-schema` (see each entry below), and exported types that survive keep their shape.
 - CJS `require()` continues to work without code changes on supported Node.js versions.
 - Every **config-level** breaking change below is rewritten automatically by `electron-builder migrate-schema` (look for the **Auto** ✓ marker). Runtime, CLI, env-var, and behavior changes require manual action.
 
@@ -30,7 +30,8 @@ In v27 every `toolsets.*` property defaults to **`"latest"`** — an **unset** p
 - **`wine` → `1.0.1`** — Wine 11.0 (was Wine 4.0.1); macOS arm64 via Rosetta. Linux still uses host-installed `wine`.
 - **`winCodeSign` → `1.3.0`** — Windows Kits 10.0.26100.0, `osslsigncode` 2.11 (native arm64), and the Azure Trusted Signing `dlib` + .NET 8 payload.
 - **`appimage` → `1.1.0`** — static FUSE3-compatible runtime; adds `unsquashfs` support.
-- `nsis` (`1.2.1`), `fpm` (`2.2.1`), `icons` (`1.2.1`), `linuxToolsMac` (`1.0.0`), and `sevenZip` (`1.0.0`) are unchanged.
+- `icons` → `1.2.1` — newer `wasm-vips` / `@resvg/resvg-wasm` bundle (was `1.1.0`).
+- `nsis` (`1.2.1`), `fpm` (`2.2.1`), `linuxToolsMac` (`1.0.0`), and `sevenZip` (`1.0.0`) are unchanged.
 
 To stay on a legacy bundle, pin the toolset to `"0.0.0"`. Because `winCodeSign` now defaults to `1.3.0`, **Azure Trusted Signing uses the faster `signtool /dlib` path out of the box**. Full breakdown in [Toolsets & environment variables](#toolsets--environment-variables).
 :::
@@ -77,6 +78,9 @@ To stay on a legacy bundle, pin the toolset to `"0.0.0"`. Because `winCodeSign` 
 | [`PlatformPackager.info` & `platformSpecificBuildOptions` now `protected`](#programmatic--plugin-author-api-changes) | — | Plugin authors: hard break — `.info` no longer compiles externally; use the new pass-through getters |
 | [Linux `.desktop` `Exec` now runs a generated `*-launcher` script](#linux-launcher-entrypoint) | — | Update custom `.desktop`/AppArmor/MIME tooling that hard-codes the `Exec` command |
 | [`node_modules` arch/os-filtered on every build](#node_modules-are-now-archos-filtered-on-every-build) | — | Awareness — packages whose `cpu`/`os` mismatch the target are now excluded |
+| [`arch: "all"` now expands to x64 + arm64; 32-bit fails fast on Electron 44+](#arch-all-now-expands-to-x64-and-arm64-32-bit-fails-fast-on-electron-44) | — | `arch: "all"` drops `ia32` — request `ia32` explicitly; ia32/armv7l require `electronVersion` <= 43.x |
+| [macOS `productName`/`executableName` validated, not silently sanitized](#macos-productname-and-executablename-are-validated-not-sanitized) | — | A name needing filename sanitization now throws — pick a name that needs none |
+| [Bitbucket Cloud publishing: token without username → Bearer auth](#bitbucket-cloud-publishing-token-without-username-uses-bearer-auth) | — | Set `BITBUCKET_USERNAME` if your token is an app password / API token |
 | [Redundant production `dependencies` excluded, not rejected](#redundant-production-dependencies-are-excluded-not-rejected) | — | `electron`/`electron-builder` are excluded from the copied `node_modules` (was a hard error); tune the set via `ignoredProductionDependencies`. If you set `ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY` (removed) to bundle `electron-builder`, override the list instead; `electron-prebuilt`/`electron-rebuild` no longer error and now ship if declared — remove them from `dependencies` |
 | [DMG `filesystem` defaults to APFS](#dmg-filesystem-defaults-to-apfs) | — | Set `dmg.filesystem: "HFS+"` only if you need pre-10.13 macOS compatibility |
 | [`disableWebInstaller` defaults to `true` (electron-updater)](#disablewebinstaller-defaults-to-true) | — | v27 warns but still downloads if you never set it; opt in with `disableWebInstaller: false` before v28 enforces it |
@@ -484,6 +488,23 @@ v27 adds `electron-builder migrate-schema`, which rewrites your config to v27 fo
 
 ---
 
+## Publishing (electron-publish)
+
+### Bitbucket Cloud publishing: token without username uses Bearer auth
+
+The Bitbucket publisher now selects its authentication scheme by whether a username is present:
+
+- **Username present** (`bitbucket.username`, or the `BITBUCKET_USERNAME` env var) → HTTP **Basic** auth, as before. Use this for an **app password** or an Atlassian **API token** (the username is your Bitbucket username or Atlassian account email).
+- **No username** → the token is sent as `Authorization: Bearer <token>` (a repository / project / workspace **access token**). This is the new behavior; previously a token was always sent as Basic auth using the repository owner as the username.
+
+**Action is required only if** your CI sets `BITBUCKET_TOKEN` (or `bitbucket.token`) to an **app password / API token without a username** — those requests now go out as Bearer and will fail authentication. Set `BITBUCKET_USERNAME` (or `bitbucket.username`) so Basic auth is used. Genuine access tokens need no username.
+
+### New: Cloudflare R2 publish provider (additive)
+
+v27 adds an opt-in `provider: "r2"` publish target (Cloudflare R2, an S3-compatible object store) with matching `electron-updater` support. Credentials come from `CF_R2_ACCESS_KEY_ID` / `CF_R2_SECRET_ACCESS_KEY`; the config requires a Cloudflare `accountId`, and an **`https` `publicUrl`** (custom domain or `pub-<hash>.r2.dev`) is needed for auto-update downloads. This is purely additive — no migration action is required.
+
+---
+
 ## Toolsets & environment variables
 
 ### Toolset defaults resolve to `"latest"` (newest bundle)
@@ -497,7 +518,7 @@ In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset prope
 | `appimage` | `0.0.0` (FUSE2 runtime) | `1.1.0` | Static FUSE3-compatible runtime (runs without a host FUSE install); adds `unsquashfs` support |
 | `nsis` | `0.0.0` (NSIS 3.0.4.1, split bundle) | `1.2.1` | NSIS 3.12; unified single-archive bundle; entrypoint scripts auto-set `NSISDIR` |
 | `fpm` | `2.2.1` | `2.2.1` | Unchanged — FPM 1.17.0 / Ruby 3.4.3 |
-| `icons` | `1.2.1` | `1.2.1` | Unchanged — `wasm-vips` + `@resvg/resvg-wasm` |
+| `icons` | `1.1.0` | `1.2.1` | Newer bundle — `wasm-vips` + `@resvg/resvg-wasm` |
 | `linuxToolsMac` | `1.0.0` | `1.0.0` | Unchanged — gnu-tar, lzip, binutils, etc. (macOS → Linux archives) |
 | `sevenZip` | `1.0.0` | `1.0.0` | Unchanged — only published version |
 
@@ -525,8 +546,9 @@ This escape hatch is intended as a short-term workaround. The `"0.0.0"` alias ma
 | `USE_SYSTEM_WINE` | Forced the host-installed Wine instead of the downloaded bundle |
 | `USE_SYSTEM_SIGNCODE` | Forced the host `signtool`/`signcode` instead of the bundled `winCodeSign` toolset |
 | `USE_SYSTEM_OSSLSIGNCODE` | Forced the host `osslsigncode` instead of the bundled one |
+| `USE_SYSTEM_FPM` | Forced the host-installed `fpm` instead of the bundled FPM |
 
-The three `USE_SYSTEM_*` variables above have **no env-var replacement** — configure signing through [`win.sign`](#windows-signing--winsign) and the `winCodeSign` toolset instead. (`USE_SYSTEM_FPM` is unchanged and still works.)
+The three signing `USE_SYSTEM_*` variables (`USE_SYSTEM_WINE`, `USE_SYSTEM_SIGNCODE`, `USE_SYSTEM_OSSLSIGNCODE`) have **no env-var replacement** — configure signing through [`win.sign`](#windows-signing--winsign) and the `winCodeSign` toolset instead. `USE_SYSTEM_FPM` is now **also removed** (it was still functional in earlier v27 prereleases): supply a custom FPM via `toolsets.fpm: { url: "file:///path/to/dir" }`. On Windows there is no bundled FPM, so an FPM-based target now **requires** an explicit custom `toolsets.fpm` and otherwise throws a clear configuration error (previously it silently fell back to a host `fpm` on `PATH`).
 
 The `url` accepts an `https://` URL (downloaded and cached automatically) or a `file://` path (used as-is). The bundle must mirror the directory layout of the corresponding built-in bundle (see [electron-builder-binaries/packages](https://github.com/electron-userland/electron-builder-binaries/tree/master/packages)).
 
@@ -595,11 +617,35 @@ This makes `executableArgs` apply consistently across all Linux targets and keep
 
 **Action is required only if** you ship a custom `.desktop` override, an AppArmor/snap profile, a MIME handler, or external tooling that hard-codes the `Exec` command or assumes the executable itself is the launch target. Point those at the `*-launcher` script (or the executable, as appropriate).
 
+**AppImage `--no-sandbox` default changed.** The default `--no-sandbox` launch argument is now injected **only for the legacy FUSE2 runtime** (`toolsets.appimage: "0.0.0"`). With the default static FUSE3 runtime (unset / `"latest"` → `1.1.0`), `--no-sandbox` is no longer added automatically — `AppRun` adds it on its own only when user namespaces are unavailable. If you need the Chromium sandbox disabled unconditionally, set `executableArgs: ["--no-sandbox"]` explicitly.
+
 ### `node_modules` are now arch/os-filtered on every build
 
 v27 filters `node_modules` by each package's `package.json` `cpu` / `os` fields against the **target** arch and platform on **every** build (previously this effectively only mattered for `universal` macOS builds). A dependency that declares an incompatible `cpu`/`os` for the target is excluded from the packaged app, whereas v26 copied host-installed `node_modules` verbatim.
 
 **No action is required for typical projects** — this fixes universal-build failures and produces correctly-scoped output. Be aware of it only if you *intentionally* bundled a cross-arch or cross-os optional binary that is now dropped; in that rare case, include it explicitly via `extraResources` / `files`.
+
+### `arch: "all"` now expands to x64 and arm64; 32-bit fails fast on Electron 44+
+
+Two related architecture changes ship in v27:
+
+- **`arch: "all"` no longer includes `ia32`.** `Platform.WINDOWS.createTarget(target, Arch.all)` (and the equivalent `--arch all` / default multi-arch build) now expands to **x64 + arm64** on Windows and Linux, instead of the old **x64 + ia32**. Electron 44 removed Windows `ia32` builds, and Linux `ia32` zips already ended at Electron 19, so the old expansion produced broken or impossible builds on current Electron. **To keep building 32-bit, request `ia32` explicitly** (e.g. `Arch.ia32`, or `--ia32`).
+- **Windows `ia32` / Linux `armv7l` fail fast on Electron ≥ 44.** Requesting either of those arches against Electron `>= 44` (which [removed those builds](https://github.com/electron/electron/pull/51816)) now throws a clear `InvalidConfigurationError` **before** downloading, instead of dying on an opaque `404`. The check is downgraded to a **warning** when a custom `electronDist` or Electron mirror is configured (it may still provide 32-bit builds).
+
+```
+Error: Electron 44.0.0 does not provide Windows ia32 builds — Electron 44 removed
+Windows ia32 and Linux armv7l support. Use electronVersion <= 43.x to keep building
+for ia32 (32-bit is supported until the v43 series reaches end-of-life in January 2027),
+or drop the ia32 target.
+```
+
+**Action:** if you ship 32-bit Windows/Linux builds, either pin `electronVersion` to `43.x` or earlier (supported until January 2027) and request `ia32`/`armv7l` explicitly, or drop those targets. Projects that relied on `"all"` implicitly producing `ia32` must now list it explicitly.
+
+### macOS `productName` and `executableName` are validated, not sanitized
+
+electron-builder now **rejects** a macOS `productName` or `executableName` that would require filename sanitization, throwing an `InvalidConfigurationError` at build start (`assertSafeHelperName`). Previously such names were silently normalized/sanitized, which could make the generated `<Name> Helper.app` bundles diverge from `CFBundleName` and break Electron's helper-process discovery.
+
+**Action is required only if** a build starts failing with an "is not a valid macOS app bundle name" error — choose a `productName`/`executableName` that needs no sanitization (avoid path separators, control characters, and other characters stripped by filename sanitization).
 
 ### Redundant production `dependencies` are excluded, not rejected
 
@@ -661,6 +707,10 @@ The default DMG volume filesystem changed from **`HFS+`** to **`APFS`**. APFS is
 
 This is a runtime default, not a config-key rename, so `migrate-schema` does not change it.
 
+### New: `dmg.format: "ULMO"` (additive)
+
+v27 adds a new `dmg.format` value, **`"ULMO"`** — an LZMA-compressed disk image (macOS 10.15+ only) — alongside the existing `UDZO` / `ULFO` / `UDBZ` / … options. This is purely additive; the default format is unchanged and no migration action is required.
+
 ---
 
 ## Auto-update (electron-updater)
@@ -695,6 +745,15 @@ The deprecated top-level `path` and `sha512` fields are **no longer written** to
 - **If you still ship apps embedding electron-updater 1.x – 2.15**, keep emitting the legacy descriptor by declaring a compatibility range that includes them, e.g. `"electronUpdaterCompatibility": ">=1.0.0"` (also settable per platform, e.g. `win.electronUpdaterCompatibility`).
 
 > Related: metadata validated only by the legacy SHA-256 `sha2` checksum is deprecated — v27 warns and **v28 will reject sha2-only metadata (fail-closed)**. Avoid pinning `electronUpdaterCompatibility` to a legacy range unless you actually ship 1.x–2.15 clients.
+
+### New: `allowUnverifiedLinuxPackages` (opt-in Linux package-signature verification)
+
+`AppUpdater.allowUnverifiedLinuxPackages` is a new flag (default **`true`**, preserving historical behavior). Set it to `false` to enforce GPG signature checks when installing `.deb` / `.rpm` auto-updates on package managers that support verification. Because electron-builder does **not** sign Linux packages itself, the default remains permissive; this is additive and requires no migration action.
+
+```ts
+import { autoUpdater } from "electron-updater"
+autoUpdater.allowUnverifiedLinuxPackages = false // enforce GPG signature checks on .deb/.rpm updates
+```
 
 ---
 

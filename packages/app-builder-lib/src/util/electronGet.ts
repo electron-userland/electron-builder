@@ -635,8 +635,10 @@ export async function downloadBuilderToolset(options: {
 }
 
 /**
- * Downloads and extracts an electron platform artifact (e.g. ffmpeg) using @electron/get.
- * Deduplicates concurrent calls for the same artifact within the same process.
+ * Assembles the `@electron/get` artifact config (`ElectronPlatformArtifactDetails`) from
+ * `ArtifactDownloadOptions`: spreads the caller's options and pins `cacheRoot`/`platform`/`arch`/
+ * `version`/`artifactName` and the resolved cache mode, warning when checksum verification is
+ * disabled. Performs no I/O — callers pass the result to `downloadArtifactToFile` / `downloadAndExtract`.
  */
 function buildElectronArtifactConfig(artifactOptions: ArtifactDownloadOptions): ElectronPlatformArtifactDetails {
   const { options, arch, version, platformName: platform, artifactName, cacheDir: cacheRoot } = artifactOptions
@@ -661,6 +663,11 @@ export function downloadElectronArtifactZip(options: ArtifactDownloadOptions): P
   return downloadArtifactToFile(config, config.artifactName)
 }
 
+/**
+ * Downloads an electron platform artifact (e.g. ffmpeg) via `@electron/get` and extracts it into a
+ * content-addressed cache directory (keyed on a hash of the resolved artifact config), returning the
+ * extraction path.
+ */
 export async function downloadElectronArtifact(options: ArtifactDownloadOptions): Promise<string> {
   const { arch, version, platformName: platform, artifactName } = options
   const artifactConfig = buildElectronArtifactConfig(options)

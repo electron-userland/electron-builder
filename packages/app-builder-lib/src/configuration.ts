@@ -91,8 +91,8 @@ export interface CommonConfiguration {
    * Pinned versions of the binary toolsets electron-builder downloads and uses internally.
    *
    * Each property selects a specific release of the corresponding tool bundle. Set a property to
-   * `"0.0.0"` to force the legacy bundle (pre-v27 behaviour). Leave a property unset (or set to
-   * `null`) to use the modern default for that toolset.
+   * `"0.0.0"` to force the legacy bundle (pre-v27 behaviour). Leave a property unset (or set it to
+   * `"latest"`) to use the modern default (newest bundle) for that toolset.
    *
    * @see {@link ToolsetConfig}
    */
@@ -945,7 +945,7 @@ export interface Hooks {
    *   `electron-v${version}-${platformName}-${arch}.zip`.
    *
    * When not set, electron-builder downloads the official Electron release from GitHub (or the
-   * mirror configured via `electronDownload`).
+   * mirror configured via `electronGet`).
    *
    * Receives a {@link PrepareApplicationStageDirectoryOptions}.
    */
