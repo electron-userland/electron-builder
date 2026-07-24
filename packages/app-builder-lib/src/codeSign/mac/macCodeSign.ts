@@ -200,7 +200,7 @@ async function importCerts(keychainFile: string, paths: Array<string>, keyPasswo
 
     // https://stackoverflow.com/questions/39868578/security-codesign-in-sierra-keychain-ignores-access-control-settings-and-ui-p
     // https://github.com/electron-userland/electron-packager/issues/701#issuecomment-322315996
-    await exec("/usr/bin/security", ["set-key-partition-list", "-S", "apple-tool:,apple:", "-s", "-k", password, keychainFile])
+    await exec("/usr/bin/security", ["set-key-partition-list", "-S", "apple-tool:,apple:,codesign:", "-s", "-k", password, keychainFile])
   }
 
   return {
