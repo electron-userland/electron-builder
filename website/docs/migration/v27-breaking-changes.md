@@ -40,6 +40,10 @@ To stay on a legacy bundle, pin the toolset to `"0.0.0"`. Because `winCodeSign` 
 
 ## Breaking changes at a glance
 
+:::tip[Already ran `migrate-schema`?]
+Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the migrator can **not** apply — the new defaults and runtime behaviors you may still trip over — see **[What's New in v27 → new defaults & behavior changes](./whats-new-v27#new-defaults--behavior-changes-you-may-trip-over)**.
+:::
+
 | Change | Auto | Action required |
 |--------|:---:|----------------|
 | [Node.js >=22.12.0 required](#nodejs-22120-required) | — | Update your runtime and CI Node version |
