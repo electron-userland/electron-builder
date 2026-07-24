@@ -1,6 +1,6 @@
 {
   "name": "builder-util-runtime",
-  "version": "10.0.0-alpha.4",
+  "version": "10.0.0-alpha.5",
   "type": "module",
   "main": "./dist/index.js",
   "exports": {

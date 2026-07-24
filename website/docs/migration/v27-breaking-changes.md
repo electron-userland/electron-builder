@@ -85,6 +85,8 @@ To stay on a legacy bundle, pin the toolset to `"0.0.0"`. Because `winCodeSign` 
 | [DMG `filesystem` defaults to APFS](#dmg-filesystem-defaults-to-apfs) | — | Set `dmg.filesystem: "HFS+"` only if you need pre-10.13 macOS compatibility |
 | [`disableWebInstaller` defaults to `true` (electron-updater)](#disablewebinstaller-defaults-to-true) | — | v27 warns but still downloads if you never set it; opt in with `disableWebInstaller: false` before v28 enforces it |
 | [`latest*.yml` drops legacy top-level `path`/`sha512`](#latestyml-drops-legacy-top-level-pathsha512) | — | None for electron-updater >=2.16 (all modern clients); set `electronUpdaterCompatibility` to a legacy-inclusive range only if you still ship apps embedding electron-updater 1.x–2.15 |
+| [`quitAndInstall` takes an options object (electron-updater)](#quitandinstall-takes-an-options-object) | — | Replace positional args: `quitAndInstall(true, false)` → `quitAndInstall({ isSilent: true, isForceRunAfter: false })` |
+| [`autoInstallOnAppQuit` replaced by `autoInstallEvent` enum (electron-updater)](#autoinstallevent-replaces-autoinstallonappquit) | — | `autoInstallOnAppQuit = false` → `autoInstallEvent = "manual"`; default `"onQuit"` preserves behavior |
 | [Renamed type exports (`ElectronDownloadOptions`, `WindowsAzureSigningConfiguration`, …)](#removed-exports) | — | Import the new names — no compat aliases |
 | [`SnapOptions`, `ProtonFramework`, `LibUiFramework` exports removed](#removed-exports) | — | Use the `snapcraft` config shape / Electron framework |
 
@@ -754,6 +756,40 @@ The deprecated top-level `path` and `sha512` fields are **no longer written** to
 import { autoUpdater } from "electron-updater"
 autoUpdater.allowUnverifiedLinuxPackages = false // enforce GPG signature checks on .deb/.rpm updates
 ```
+
+### `quitAndInstall` takes an options object
+
+`AppUpdater.quitAndInstall(isSilent?, isForceRunAfter?)` replaced its positional boolean arguments with a single destructured options object. This is a **hard compile break in TypeScript** (plain JavaScript callers must update by hand — positional booleans are silently ignored):
+
+```ts
+// Before (v26)
+autoUpdater.quitAndInstall(true, false)
+
+// After (v27)
+autoUpdater.quitAndInstall({ isSilent: true, isForceRunAfter: false })
+```
+
+Defaults are unchanged (`isSilent: false`, `isForceRunAfter: false`), so `quitAndInstall()` with no arguments behaves exactly as before. The object form also carries the new v27 `waitUntilNextLaunch` flag, which defers the install to the next application launch instead of spawning the installer on quit — see [Install on Next Launch](../features/auto-update#install-on-next-launch-windowslinux).
+
+### `autoInstallEvent` replaces `autoInstallOnAppQuit`
+
+The `autoInstallOnAppQuit` boolean on `AppUpdater` is replaced by a single enum, **`autoInstallEvent: "manual" | "onQuit" | "onNextLaunch"`** (default `"onQuit"`), and is **removed** with no compat alias. A single boolean cannot represent the three states, so this is a clean replacement rather than a shim.
+
+| Before | After |
+|---|---|
+| `autoInstallOnAppQuit = true` (default) | `autoInstallEvent = "onQuit"` (default) |
+| `autoInstallOnAppQuit = false` | `autoInstallEvent = "manual"` |
+| — *(new in v27)* | `autoInstallEvent = "onNextLaunch"` |
+
+```ts
+// Before
+autoUpdater.autoInstallOnAppQuit = false
+
+// After
+autoUpdater.autoInstallEvent = "manual"
+```
+
+The default `"onQuit"` preserves prior behavior, so most apps need no change. `"onNextLaunch"` defers the install to the next launch to avoid the OS killing the installer during session end, and is planned to become the default in v28 — see [Install on Next Launch](../features/auto-update#install-on-next-launch-windowslinux).
 
 ---
 

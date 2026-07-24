@@ -7,7 +7,7 @@ import { spawn as nodeSpawn } from "child_process"
 import * as path from "path"
 import { TestContext } from "vitest"
 import { deepAssign, TmpDir } from "builder-util"
-import { ApplicationUpdatePaths, doBuild, optionsForFlakyE2E, runTest, windowsVmPromise } from "./blackboxUpdateHelpers"
+import { ApplicationUpdatePaths, doBuild, optionsForFlakyE2E, runInstallOnNextLaunchTest, runTest, windowsVmPromise } from "./blackboxUpdateHelpers"
 import { installWindowsVm } from "./blackboxInstallWindows"
 
 // Spawn a process whose IMAGE NAME contains `appExeName` (e.g. "TestApp-helper.exe" when
@@ -113,6 +113,19 @@ export function registerBlackboxWinTests(toolsets: Required<Pick<ToolsetConfig, 
       } finally {
         await cleanup()
       }
+    })
+
+    // Full install-on-next-launch cycle (#7807): the update is downloaded and queued via
+    // quitAndInstall({ waitUntilNextLaunch: true }) — the app quits WITHOUT running the installer
+    // (verified by probing that the old version is still installed) — then a relaunch with
+    // autoInstallEvent: "onNextLaunch" installs the pending update automatically at startup
+    // (NSIS per-user installs support the automatic path) and the new version is verified.
+    test("nsis - install on next launch", optionsForFlakyE2E, async (context: TestContext) => {
+      const vm = await windowsVmPromise
+      if (process.platform !== "win32" && vm == null) {
+        context.skip()
+      }
+      await runInstallOnNextLaunchTest(context, "nsis", "", Arch.x64, toolsets, "automatic")
     })
 
     // Full per-machine update cycle: install old → trigger update → verify new version.

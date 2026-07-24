@@ -157,6 +157,18 @@ export class NsisUpdater extends BaseUpdater {
     return await this._verifyUpdateCodeSignature(Array.isArray(publisherName) ? publisherName : [publisherName], tempUpdateFile)
   }
 
+  // the cached installer sat on disk since a previous launch, so its Authenticode signature is re-verified before an
+  // install-on-next-launch is executed (same check as at download time)
+  protected verifyInstallerSignatureOnLaunch(installerPath: string): Promise<string | null> {
+    return this.verifySignature(installerPath)
+  }
+
+  // per-user NSIS installs run without an elevation prompt (per-machine installs are filtered separately via
+  // isAdminRightsRequired), so the automatic install at startup is allowed
+  protected get isAutoInstallOnNextLaunchSupported(): boolean {
+    return true
+  }
+
   protected doInstall(options: InstallOptions): boolean {
     const installerPath = this.installerPath
     if (installerPath == null) {

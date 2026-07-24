@@ -1,5 +1,60 @@
 # app-builder-lib
 
+## 27.0.0-alpha.6
+
+### Major Changes
+
+- Feat(dmg): default DMG `filesystem` to APFS _[`#9978`](https://github.com/electron-userland/electron-builder/pull/9978) [`c5806fe`](https://github.com/electron-userland/electron-builder/commit/c5806fee5f4f2c4be66b50cbfaac4e6da4153db6) [@mmaietta](https://github.com/mmaietta)_
+
+  BREAKING CHANGE: The default DMG volume filesystem changed from `HFS+` to `APFS`. APFS is the modern macOS filesystem and produces smaller, faster-to-mount images on current macOS. If you must support pre-10.13 (High Sierra) macOS, which cannot mount APFS volumes, set `dmg.filesystem: "HFS+"` explicitly.
+
+- Feat: build-time packages (`electron`, `electron-builder`) listed in `dependencies` are now excluded from the packaged app (logged once) instead of failing the build, configurable via the new `ignoredProductionDependencies` option. BREAKING: removed the `ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY` env var — `electron-builder` is excluded by default; drop a name from `ignoredProductionDependencies` to bundle it. _[`#9994`](https://github.com/electron-userland/electron-builder/pull/9994) [`0721e95`](https://github.com/electron-userland/electron-builder/commit/0721e95e844a8b09179ffc3cbdfd905e1f301f9e) [@liamcmitchell](https://github.com/liamcmitchell)_
+- Fix(mac): keep `CFBundleName` and helper app bundle names consistent so Electron resolves helper apps on modern macOS _[`#9962`](https://github.com/electron-userland/electron-builder/pull/9962) [`e5db1a0`](https://github.com/electron-userland/electron-builder/commit/e5db1a0ba2674a1c5dc81fad9aeb107d57a245b1) [@mmaietta](https://github.com/mmaietta)_
+  - macOS product and executable names are no longer normalized to NFD. The `.app` bundle, the helper bundles, and `CFBundleName` now all use the product name exactly as configured, which is required for Electron's helper-app lookup (`${CFBundleName} Helper.app`).
+  - macOS builds now require `productName` and `executableName` to be usable as a bundle name without any filename sanitization. A name that would otherwise be silently altered (for example one containing `/`, `\`, `:`, `*`, control characters, or trailing dots/spaces) now fails with a clear configuration error so you can choose a valid name.
+
+- Feat(updater): gate legacy top-level manifest `path`/`sha512` behind `electronUpdaterCompatibility` _[`#9992`](https://github.com/electron-userland/electron-builder/pull/9992) [`2c10f1f`](https://github.com/electron-userland/electron-builder/commit/2c10f1fe9c409379208aa5c0a5bc102689fb5cb6) [@mmaietta](https://github.com/mmaietta)_
+
+  BREAKING CHANGE: The legacy top-level `UpdateInfo.path` / `UpdateInfo.sha512` fields are now written to `latest*.yml` only when the declared `electronUpdaterCompatibility` semver range intersects electron-updater versions `<2.16.0` (previously they were written unconditionally), mirroring how the Windows `sha2` field is gated; the legacy `latest-mac.json` is likewise emitted only when the range intersects `<2.0.0`. The default `electronUpdaterCompatibility` is now `>=2.16` (previously `>=2.15`), so none of the legacy fields are emitted by default. Both fields are now optional on the `UpdateInfo` type. Modern clients (electron-updater >=2.16) read the `files[]` array and are unaffected. If you still ship apps that embed electron-updater 1.x – 2.15, set `electronUpdaterCompatibility` to a range that includes them (e.g. `>=1.0.0`) so the legacy descriptor keeps being emitted.
+
+### Minor Changes
+
+- Feat(win): add msix target with .msixbundle and .msixupload support, MSIX-specific manifest features (Package Integrity, Windows Services), and shared winAppUtil helper module _[`#9808`](https://github.com/electron-userland/electron-builder/pull/9808) [`d94a099`](https://github.com/electron-userland/electron-builder/commit/d94a0999a5a77636319be6ce115cea8e9394ee8d) [@mmaietta](https://github.com/mmaietta)_
+- Feat(dmg): support `ULMO` (lzma-compressed) disk image format, macOS 10.15+ _[`#10018`](https://github.com/electron-userland/electron-builder/pull/10018) [`eacce87`](https://github.com/electron-userland/electron-builder/commit/eacce87a177bdc8de9bd6bc7dce03ca48b3149dd) [@yyq1025](https://github.com/yyq1025)_
+- Feat: add Cloudflare R2 publish provider _[`#9773`](https://github.com/electron-userland/electron-builder/pull/9773) [`a086ef3`](https://github.com/electron-userland/electron-builder/commit/a086ef37855406d0abe418ca1beeca605608b510) [@kyletaylored](https://github.com/kyletaylored)_
+- Feat(nsis): self-identify install method via `resources/package-type` so nsis-web installs default `disableWebInstaller` to `false` _[`#9979`](https://github.com/electron-userland/electron-builder/pull/9979) [`7a0abca`](https://github.com/electron-userland/electron-builder/commit/7a0abca14439514fc817da609a169b9973c38864) [@mmaietta](https://github.com/mmaietta)_
+
+  NSIS installers now write a `resources/package-type` marker (`nsis` or `nsis-web`) at install time, mirroring the existing Linux `package-type` mechanism. electron-updater's `NsisUpdater` reads this marker and, for `nsis-web` installs, pre-seeds `disableWebInstaller = false` so web-installer auto-updates keep working without the app wiring the flag by hand.
+
+  This is a default only: an explicit `autoUpdater.disableWebInstaller = …` set by the app still wins, and a plain `nsis` marker leaves the secure `?? true` default (and the v27 grace-period warning) untouched. The marker is written by the installer script — the only build artifact that differs between `nsis` and `nsis-web` (the app payload is byte-identical, since both targets share one app archive). Only go-forward installs carry the marker; existing deployments are unaffected.
+
+- Feat: fail fast with a clear configuration error when building Windows ia32 or Linux armv7l against Electron >= 44, which removed those builds (electron/electron#51816). Previously such builds died with an opaque 404 while downloading the Electron zip. Downgraded to a warning when a custom `electronDist` or Electron mirror is configured, since it may still provide 32-bit builds. Use `electronVersion` <= 43.x to keep building 32-bit (supported until the v43 series reaches end-of-life in January 2027). _[`#10032`](https://github.com/electron-userland/electron-builder/pull/10032) [`d56ada4`](https://github.com/electron-userland/electron-builder/commit/d56ada42fc3a4317dd83b8920abac3e07d967222) [@claude](https://github.com/apps/claude)_
+
+### Patch Changes
+
+- Fix(nsis): pack the app archive with a filter the install-time extractor can decode so the main executable and native binaries are reliably installed on x64 and arm64 (#9983) _[`#9988`](https://github.com/electron-userland/electron-builder/pull/9988) [`50d2296`](https://github.com/electron-userland/electron-builder/commit/50d2296e001e222723977b2ca8591a69d97d64f6) [@mmaietta](https://github.com/mmaietta)_
+- Fix: don't empty the locales dir when `electronLanguages` uses bare language codes (e.g. `en` now keeps `en-US.pak`), refuse to delete every locale, and warn about entries that match nothing _[`#10007`](https://github.com/electron-userland/electron-builder/pull/10007) [`40ebb23`](https://github.com/electron-userland/electron-builder/commit/40ebb232810680ea661b327f5edf04ac2f0b814b) [@claude](https://github.com/apps/claude)_
+- Fix: extract `.tar.7z` snap template archives through both compression layers. Since 26.15.0, default-config snap builds packed the template's inner tar as a single file instead of its contents (`desktop-init.sh` etc.), producing snaps that built successfully but failed at launch. The toolset cache directory name for `.tar.7z` archives also changes, so caches poisoned by the broken extraction are automatically re-fetched after upgrading. _[`#10003`](https://github.com/electron-userland/electron-builder/pull/10003) [`39df92f`](https://github.com/electron-userland/electron-builder/commit/39df92fd14d9a3788add09a3963028a48eed176e) [@claude](https://github.com/apps/claude)_
+- Fix: ship `snapcraft` type declarations so `SnapOptions.d.ts` resolves for consumers _[`#9971`](https://github.com/electron-userland/electron-builder/pull/9971) [`d853e19`](https://github.com/electron-userland/electron-builder/commit/d853e193ff4c15ef7dec7596c771c7bff27081bf) [@mmaietta](https://github.com/mmaietta)_
+- Fix: don't warn about missing com.apple.security.cs.disable-library-validation entitlement when the effective entitlements file already grants it (ad-hoc + hardened runtime builds) _[`#10029`](https://github.com/electron-userland/electron-builder/pull/10029) [`eeabbcb`](https://github.com/electron-userland/electron-builder/commit/eeabbcb85e6eb519af8543af861d10bf2bb79aa3) [@claude](https://github.com/apps/claude)_
+- Fix: cache the pending publisher promise in `PublishManager` so concurrent artifact uploads share one publisher instead of racing to create duplicate GitHub draft releases _[`#10028`](https://github.com/electron-userland/electron-builder/pull/10028) [`e0bec44`](https://github.com/electron-userland/electron-builder/commit/e0bec44e7fb8e6449ab0462bac2671117d2aafeb) [@claude](https://github.com/apps/claude)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`6d55fad`](https://github.com/electron-userland/electron-builder/commit/6d55fadaa7bdd94fdcc323f638ed54b774f86f3a) [`c5806fe`](https://github.com/electron-userland/electron-builder/commit/c5806fee5f4f2c4be66b50cbfaac4e6da4153db6) [`a086ef3`](https://github.com/electron-userland/electron-builder/commit/a086ef37855406d0abe418ca1beeca605608b510) [`65f0403`](https://github.com/electron-userland/electron-builder/commit/65f04035f722199c7bbd5360f7ecbf2bf352a645) [`2c10f1f`](https://github.com/electron-userland/electron-builder/commit/2c10f1fe9c409379208aa5c0a5bc102689fb5cb6)
+
+</small>
+
+- `electron-publish@27.0.0-alpha.6`
+- `dmg-builder@27.0.0-alpha.6`
+- `builder-util-runtime@10.0.0-alpha.5`
+- `electron-builder-squirrel-windows@27.0.0-alpha.6`
+- `builder-util@27.0.0-alpha.6`
+
+</details>
+
 ## 27.0.0-alpha.5
 
 ### Major Changes

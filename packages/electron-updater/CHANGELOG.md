@@ -1,5 +1,100 @@
 ## 4.3.0
 
+## 7.0.0-alpha.5
+
+### Major Changes
+
+- Feat(updater): default `disableWebInstaller` to `true` _[`#9979`](https://github.com/electron-userland/electron-builder/pull/9979) [`7a0abca`](https://github.com/electron-userland/electron-builder/commit/7a0abca14439514fc817da609a169b9973c38864) [@mmaietta](https://github.com/mmaietta)_
+
+  BREAKING CHANGE: `AppUpdater.disableWebInstaller` now defaults to `true`. NSIS web-installer packages are no longer loaded unless you opt in, because their payload is fetched from a manifest-supplied URL that may not undergo signature verification.
+
+  v27 ships a one-major-version grace period so existing deployments are not broken without warning:
+  - If you never set `disableWebInstaller` (the default) and a web-installer update is received, the updater logs a deprecation warning and still downloads it. In v28 this becomes an error and the download is blocked (`ERR_UPDATER_WEB_INSTALLER_DISABLED`).
+  - If you explicitly set `disableWebInstaller = true`, the download throws `ERR_UPDATER_WEB_INSTALLER_DISABLED` immediately.
+
+  If you intentionally publish and rely on an NSIS web installer, opt back in before v28 by setting `autoUpdater.disableWebInstaller = false` in your main process.
+
+- Feat(updater)!: install-on-next-launch mode, OS session-end guard, object-form `quitAndInstall`, and `autoInstallEvent` enum _[`#10011`](https://github.com/electron-userland/electron-builder/pull/10011) [`1798f6b`](https://github.com/electron-userland/electron-builder/commit/1798f6b67151777cedce4dab1a3778717c8feab0) [@claude](https://github.com/apps/claude)_
+
+  **BREAKING:** `quitAndInstall` now takes a single destructured options object instead of positional booleans, so v27 migrators discover the new deferred-install flag and can never swap arguments silently. Defaults are unchanged; there is no backward-compat shim.
+
+  ```ts
+  // Before (v26)
+  autoUpdater.quitAndInstall(true, false)
+
+  // After (v27)
+  autoUpdater.quitAndInstall({ isSilent: true, isForceRunAfter: false })
+  ```
+
+  **BREAKING:** the `autoInstallOnAppQuit` boolean is replaced by an `autoInstallEvent: "manual" | "onQuit" | "onNextLaunch"` enum (default `"onQuit"`, which preserves prior behavior). There is no compat alias — a single boolean cannot express the three states.
+
+  ```ts
+  // Before (v26)
+  autoUpdater.autoInstallOnAppQuit = false
+
+  // After (v27)
+  autoUpdater.autoInstallEvent = "manual"
+  ```
+
+  Installing an update while the app quits spawns a detached installer process; when the quit is caused by the OS session ending (shutdown/reboot/log off on Windows), the OS can kill that installer mid-install and leave the app uninstalled but not re-installed (#7807). Two mitigations, both implemented in `BaseUpdater` so NSIS, AppImage, deb, rpm and pacman targets all inherit them:
+  - **Session-end guard (always on):** when the OS session is ending, the on-quit install is skipped with a warning and the downloaded update stays cached for the next quit. Detection is best-effort: `powerMonitor` `shutdown` on macOS/Linux, `BrowserWindow` `session-end` on Windows (windowless apps cannot be covered on Windows).
+  - **`autoInstallEvent: "onNextLaunch"` (opt-in; default is `"onQuit"`):** any app quit persists the downloaded update as pending instead of spawning the installer. On the next launch the updater re-validates the cached installer against freshly fetched update info (checksum, code signature on Windows, and an installable-change version check — newer, or a downgrade when `allowDowngrade` is set — as a loop guard) and installs it silently, restarting the app. A single quit can be deferred via the new `quitAndInstall({ waitUntilNextLaunch: true })` option.
+
+  The automatic install at startup is restricted to targets that install without an elevation prompt: **NSIS (per-user installs) and AppImage only**. deb/rpm/pacman always elevate via pkexec/sudo to install — an authentication dialog at app launch is not acceptable — so they keep the pending update and log why; per-machine NSIS installs (UAC) are skipped the same way. For those targets, call the new `installPendingUpdateIfAvailable()` explicitly at a moment the app controls.
+
+  `autoInstallEvent: "onNextLaunch"` is opt-in in v27 and is planned to become the DEFAULT in v28 to resolve this class of session-end corruption once and for all. macOS is unaffected: Squirrel.Mac natively stages downloaded updates and applies them on relaunch (there `"onQuit"` and `"onNextLaunch"` behave identically).
+
+### Minor Changes
+
+- Feat: add Cloudflare R2 publish provider _[`#9773`](https://github.com/electron-userland/electron-builder/pull/9773) [`a086ef3`](https://github.com/electron-userland/electron-builder/commit/a086ef37855406d0abe418ca1beeca605608b510) [@kyletaylored](https://github.com/kyletaylored)_
+- Feat(nsis): self-identify install method via `resources/package-type` so nsis-web installs default `disableWebInstaller` to `false` _[`#9979`](https://github.com/electron-userland/electron-builder/pull/9979) [`7a0abca`](https://github.com/electron-userland/electron-builder/commit/7a0abca14439514fc817da609a169b9973c38864) [@mmaietta](https://github.com/mmaietta)_
+
+  NSIS installers now write a `resources/package-type` marker (`nsis` or `nsis-web`) at install time, mirroring the existing Linux `package-type` mechanism. electron-updater's `NsisUpdater` reads this marker and, for `nsis-web` installs, pre-seeds `disableWebInstaller = false` so web-installer auto-updates keep working without the app wiring the flag by hand.
+
+  This is a default only: an explicit `autoUpdater.disableWebInstaller = …` set by the app still wins, and a plain `nsis` marker leaves the secure `?? true` default (and the v27 grace-period warning) untouched. The marker is written by the installer script — the only build artifact that differs between `nsis` and `nsis-web` (the app payload is byte-identical, since both targets share one app archive). Only go-forward installs carry the marker; existing deployments are unaffected.
+
+- Feat(updater): add `allowUnverifiedLinuxPackages` to optionally enforce Linux package signature verification _[`#9990`](https://github.com/electron-userland/electron-builder/pull/9990) [`65f0403`](https://github.com/electron-userland/electron-builder/commit/65f04035f722199c7bbd5360f7ecbf2bf352a645) [@mmaietta](https://github.com/mmaietta)_
+
+  Adds `AppUpdater.allowUnverifiedLinuxPackages`. Because electron-builder does not sign Linux packages, this defaults to `true`, preserving the existing behavior: `.deb`/`.rpm` auto-updates install with the package manager's signature/GPG checks bypassed where a bypass flag exists (`--allow-unauthenticated` for the apt fallback, `--allow-unsigned-rpm` for zypper, `--nogpgcheck` for dnf/yum).
+
+  If you sign your Linux packages through your own pipeline and the target systems trust your keys, set `autoUpdater.allowUnverifiedLinuxPackages = false`. What this enforces depends on the package manager used on the target system:
+  - dpkg (the default for `.deb`): no effect — dpkg performs no signature verification (a warning is logged); enforcing `.deb` signatures requires a debsig-verify/debsigs policy on the target system.
+  - apt (`.deb` fallback): `--allow-unauthenticated` is omitted.
+  - zypper: enforced — unsigned/untrusted packages fail to install.
+  - dnf/yum: enforced via `--setopt=localpkg_gpgcheck=1` (local package files are not GPG-checked by default).
+  - bare rpm (fallback): cannot be enforced via the CLI (a warning is logged) — rpm verifies signatures when present but by default does not fail the install on unsigned/untrusted packages; the `rpm -Uvh ... --nodeps` fallback command is unchanged (`--nodeps` is a dependency-resolution bypass, not a signature bypass).
+
+  The new `allowUnverified` parameter on `DebUpdater.installWithCommandRunner` / `RpmUpdater.installWithCommandRunner` is a trailing optional argument (default `true`), so existing callers remain source- and runtime-compatible.
+
+### Patch Changes
+
+- Fix: Reject the differential download promise instead of crashing with an uncaughtException when the multipart range response emits a network error _[`#10021`](https://github.com/electron-userland/electron-builder/pull/10021) [`5eed26b`](https://github.com/electron-userland/electron-builder/commit/5eed26b2a9cfd06a1dbe207b25a46ce2c0b05ae9) [@claude](https://github.com/apps/claude)_
+- Fix(updater): make GitHubProvider pick the newest available release if `allowPrerelease=true` but current version is stable _[`#9895`](https://github.com/electron-userland/electron-builder/pull/9895) [`1f681e1`](https://github.com/electron-userland/electron-builder/commit/1f681e18292c318f2563d7b87cc480ee290e99e2) [@AbdulrhmanGoni](https://github.com/AbdulrhmanGoni)_
+  - `allowPrerelease=true` with no explicit channel and a stable current version now selects the newest valid semver release in the Atom feed (skipping unrelated non-semver tags such as other packages in a monorepo) instead of blindly taking the first feed entry (#9894).
+  - When every published release is older than the installed version, the updater now reports "update not available" gracefully (and honors `allowDowngrade`) instead of throwing.
+  - `allowPrerelease=false` no longer throws `ERR_UPDATER_NO_PUBLISHED_VERSIONS` when the latest release tag (from `/releases/latest`) is absent from GitHub's truncated Atom feed; it proceeds with the resolved tag.
+  - Harden the release download path against path traversal: a tag containing `.`/`..` path segments is rejected with `ERR_UPDATER_INVALID_TAG`.
+
+- Fix(updater): detect legacy hex `sha512` manifest values strictly and deprecate them for removal in v28 _[`#9990`](https://github.com/electron-userland/electron-builder/pull/9990) [`65f0403`](https://github.com/electron-userland/electron-builder/commit/65f04035f722199c7bbd5360f7ecbf2bf352a645) [@mmaietta](https://github.com/mmaietta)_
+
+  The updater previously used a fuzzy heuristic (looking for `+`, `/`, `Z`, or `=` characters) to decide whether a manifest `sha512` was hex- or base64-encoded. It now uses a strict check: a value that is exactly 128 hexadecimal characters is treated as legacy hex; anything else is decoded as base64, which is what electron-builder has emitted since 19.x (2017). The two forms cannot collide — base64-encoded sha512 is always 88 characters ending in `==` — and a wrong pick can only fail closed with a checksum mismatch.
+
+  Hex-encoded `sha512` values (from pre-19.x manifests or hand-rolled manifests built from raw `sha512sum` output) remain accepted in v27 but are deprecated: support will be removed in v28. Emit base64 instead, e.g. `sha512sum file.ext | cut -d' ' -f1 | xxd -r -p | base64 -w0`.
+
+  SHA-256 (`sha2`) update checksums are unchanged here — they remain accepted in v27 under the existing v28-removal grace period.
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`a086ef3`](https://github.com/electron-userland/electron-builder/commit/a086ef37855406d0abe418ca1beeca605608b510) [`65f0403`](https://github.com/electron-userland/electron-builder/commit/65f04035f722199c7bbd5360f7ecbf2bf352a645) [`2c10f1f`](https://github.com/electron-userland/electron-builder/commit/2c10f1fe9c409379208aa5c0a5bc102689fb5cb6)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.5`
+
+</details>
+
 ## 7.0.0-alpha.4
 
 ### Patch Changes
