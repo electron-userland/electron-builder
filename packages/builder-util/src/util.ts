@@ -76,7 +76,9 @@ export function removePasswordFromArgs(args: Array<string>): string {
     })
     .join(" ")
   // `/b <cert> /c` spans separate argv elements, so redact the block on the joined string.
-  return joined.replace(/(\/b\s+)(.*?)(\s+\/c)/g, (_match, p1, p2, p3) => `${p1}${hashSensitiveValue(p2)}${p3}`)
+  // The value is a single token (a cert thumbprint), so `\S+` — not `.*?` between two `\s+` — keeps
+  // this linear and ReDoS-safe (CodeQL: polynomial regexp on `/b ` + many spaces).
+  return joined.replace(/(\/b\s+)(\S+)(\s+\/c)/g, (_match, p1, p2, p3) => `${p1}${hashSensitiveValue(p2)}${p3}`)
 }
 
 export function removePassword(input: string): string {
@@ -101,8 +103,8 @@ export function removePassword(input: string): string {
     return quote ? `pass:${quote}${hashSensitiveValue(value)}${quote}` : `pass:${hashSensitiveValue(value)}`
   })
 
-  // /b … /c block format
-  return input.replace(/(\/b\s+)(.*?)(\s+\/c)/g, (_match, p1, p2, p3) => {
+  // /b … /c block format. `\S+` (single-token value) not `.*?` between two `\s+` — ReDoS-safe.
+  return input.replace(/(\/b\s+)(\S+)(\s+\/c)/g, (_match, p1, p2, p3) => {
     return `${p1}${hashSensitiveValue(p2)}${p3}`
   })
 }
