@@ -216,7 +216,7 @@ Function uninstallOldVersion
     IntOp $R5 $R5 + 1
 
     ${if} $R5 > 5
-      MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "$(appCannotBeClosed)" /SD IDCANCEL IDRETRY OneMoreAttempt
+      MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "$(uninstallFailed): $R0" /SD IDCANCEL IDRETRY OneMoreAttempt
       Return
     ${endIf}
 

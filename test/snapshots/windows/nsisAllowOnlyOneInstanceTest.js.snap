@@ -3,7 +3,7 @@
 exports[`allowOnlyOneInstallerInstance.nsh > snapshot of FIND_PROCESS macro 1`] = `
 "!macro FIND_PROCESS _FILE _RETURN
   \${if} $IsPowerShellAvailable == 0
-    nsExec::Exec \`"$PowerShellPath" -C "if ((Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and $$_.Path.StartsWith('$INSTDIR', 'CurrentCultureIgnoreCase')}).Count -gt 0) { exit 0 } else { exit 1 }"\`
+    nsExec::Exec \`"$PowerShellPath" -C "if ((Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and ($processPathFilter)}).Count -gt 0) { exit 0 } else { exit 1 }"\`
     Pop \${_RETURN}
   \${else}
     !ifdef INSTALL_MODE_PER_ALL_USERS
