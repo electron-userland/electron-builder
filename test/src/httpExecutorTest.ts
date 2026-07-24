@@ -1,5 +1,5 @@
 import { expect, test, describe } from "vitest"
-import { DigestTransform, HttpExecutor } from "builder-util-runtime"
+import { CancellationToken, DigestTransform, HttpExecutor } from "builder-util-runtime"
 import { hashSensitiveValue, safeStringifyJson } from "builder-util-runtime/internal"
 import { addSensitiveFieldPattern, addSensitiveRedirectHeader, detectSha512Encoding, isSensitiveFieldName } from "builder-util-runtime/src/httpExecutor"
 import { createHash } from "crypto"
@@ -833,5 +833,53 @@ describe("detectSha512Encoding", () => {
     const wrong = createHash("sha512").update("other-payload").digest("base64")
     const transform = new DigestTransform(wrong, "sha512", detectSha512Encoding(wrong))
     await expect(pipeline(Readable.from([payload]), transform, devNull())).rejects.toThrow(/checksum mismatch/)
+  })
+})
+
+describe("HttpExecutor redirect limit", () => {
+  // A minimal executor whose fake request always responds with a 302 back to the same URL — an infinite
+  // redirect loop. Before the redirect-counter fix the counter was never advanced (doApiRequest/doDownload
+  // recursed with an unchanged / post-incremented value), so this looped forever; it must now terminate
+  // with the max-redirect error after `maxRedirects` hops.
+  class LoopingExecutor extends HttpExecutor<any> {
+    requestCount = 0
+
+    createRequest(_options: RequestOptions, callback: (response: any) => void): any {
+      this.requestCount++
+      const response = {
+        statusCode: 302,
+        statusMessage: "Found",
+        headers: { location: "https://example.com/loop" },
+        on() {},
+        setEncoding() {},
+      }
+      // synchronous is fine at depth ~maxRedirects; exercises the recursion path directly
+      callback(response)
+      return { on() {}, end() {}, abort() {} }
+    }
+
+    // expose the protected doDownload for testing
+    runDownload(callback: (error: Error | null) => void): void {
+      this.doDownload({ protocol: "https:", hostname: "example.com", path: "/start" }, { responseHandler: null, onCancel: () => {}, callback, options: {} as any, destination: null }, 0)
+    }
+  }
+
+  test("doDownload terminates with a max-redirect error instead of looping forever", () => {
+    const executor = new LoopingExecutor()
+    let error: Error | null = null
+    executor.runDownload(e => {
+      error = e
+    })
+    expect(error).toBeInstanceOf(Error)
+    expect(error!.message).toMatch(/Too many redirects/)
+    // guard is `redirectCount < maxRedirects`: maxRedirects recursions + the initial request
+    expect(executor.requestCount).toBe(executor["maxRedirects"] + 1)
+  })
+
+  test("doApiRequest rejects with a max-redirect error instead of looping forever", async () => {
+    const executor = new LoopingExecutor()
+    await expect(executor.doApiRequest({ protocol: "https:", hostname: "example.com", path: "/start" }, new CancellationToken(), request => request.end())).rejects.toThrow(/Too many redirects/)
+    // guard is `redirectCount > maxRedirects`, allowing one extra hop before rejecting
+    expect(executor.requestCount).toBe(executor["maxRedirects"] + 2)
   })
 })
