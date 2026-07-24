@@ -45,6 +45,10 @@ linux:
     - --enable-features=WebContentsFocusOnResize
 ```
 
+:::note[v27: launcher entrypoint]
+Every Linux target (deb/rpm, AppImage, snap, flatpak) now launches through a generated `<executableName>-launcher` shell script rather than invoking the executable directly. `executableArgs` (and `forceX11`) are injected into that launcher, and the generated `.desktop` `Exec` key points at it (e.g. `Exec=/opt/MyApp/MyApp-launcher %U`) rather than inlining the args. This makes `executableArgs` apply consistently across all Linux targets. If you ship a custom `.desktop` override, an AppArmor/snap profile, or a MIME handler that hard-codes the `Exec` command, point it at the `*-launcher` script. See [v27 Breaking Changes → Linux launcher entrypoint](./migration/v27-breaking-changes.md#linux-launcher-entrypoint).
+:::
+
 ## Desktop File Customization
 
 All Linux targets include a `.desktop` file for application menu integration. Customize it via `linux.desktop`:
@@ -174,6 +178,10 @@ rpm:
   afterInstall: build/scripts/after-install.sh
   afterRemove: build/scripts/after-remove.sh
 ```
+
+:::note[v27: maintainer-script variable syntax]
+electron-builder interpolates variables into maintainer scripts (`afterInstall` / `afterRemove`) using shell-style `${var}`. The legacy EJS `<%= var %>` interpolation was **removed** in v27 — update any templated maintainer scripts to `${var}`. See [v27 Breaking Changes → Linux maintainer-script EJS syntax](./migration/v27-breaking-changes.md#linux-maintainer-script-ejs-template-syntax).
+:::
 
 ## Pacman Package (`pacman`)
 
