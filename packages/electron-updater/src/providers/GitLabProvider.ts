@@ -124,7 +124,8 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
 
       channelFileUrl = new URL(channelAsset.direct_asset_url)
       const authHeaders = getGitlabAuthHeaders(this.options.token || null)
-      const headers = Object.keys(authHeaders).length ? authHeaders : undefined
+      const isSameOriginAsApi = channelFileUrl.protocol === this.baseApiUrl.protocol && channelFileUrl.host === this.baseApiUrl.host
+      const headers = isSameOriginAsApi && Object.keys(authHeaders).length ? authHeaders : undefined
 
       try {
         const result = await this.httpRequest(channelFileUrl, headers, cancellationToken)

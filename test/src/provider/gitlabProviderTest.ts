@@ -162,6 +162,45 @@ test("PRIVATE-TOKEN auth - plain token sent as PRIVATE-TOKEN header", async ({ e
   expect(secondCallHeaders["authorization"]).toBeUndefined()
 })
 
+// SECURITY: a manifest-controlled off-host direct_asset_url must NOT receive the GitLab token
+test("token is not forwarded to an off-host direct_asset_url", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createGitlabUpdater(requestSpy, "0.0.1", { token: "glpat-abc123" })
+
+  const release = mockGitlabRelease(STABLE_VERSION)
+  // GitLab returns the raw external URL as direct_asset_url when an asset link has no filepath
+  release.assets.links.find(l => l.name === "latest.yml")!.direct_asset_url = "https://attacker.example/collect/latest.yml"
+
+  requestSpy.mockResolvedValueOnce(JSON.stringify(release)).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+
+  await updater.checkForUpdates()
+
+  // API request (same host as the GitLab API) still carries the token
+  expect((requestSpy.mock.calls[0][0].headers as Record<string, string>)["PRIVATE-TOKEN"]).toBe("glpat-abc123")
+
+  // channel-file request goes to the attacker host WITHOUT any auth header
+  const secondCallHeaders = (requestSpy.mock.calls[1][0].headers as Record<string, string>) ?? {}
+  expect(secondCallHeaders["PRIVATE-TOKEN"]).toBeUndefined()
+  expect(secondCallHeaders["authorization"]).toBeUndefined()
+})
+
+// SECURITY: an http:// downgrade of direct_asset_url (even on the same host) must NOT receive the token
+test("token is not forwarded when direct_asset_url downgrades to http", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createGitlabUpdater(requestSpy, "0.0.1", { token: "glpat-abc123" })
+
+  const release = mockGitlabRelease(STABLE_VERSION)
+  release.assets.links.find(l => l.name === "latest.yml")!.direct_asset_url = "http://gitlab.com/-/project/99999999/uploads/abc123/latest.yml"
+
+  requestSpy.mockResolvedValueOnce(JSON.stringify(release)).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+
+  await updater.checkForUpdates()
+
+  const secondCallHeaders = (requestSpy.mock.calls[1][0].headers as Record<string, string>) ?? {}
+  expect(secondCallHeaders["PRIVATE-TOKEN"]).toBeUndefined()
+  expect(secondCallHeaders["authorization"]).toBeUndefined()
+})
+
 // Bearer token sent as authorization header when token starts with "Bearer"
 test("Bearer auth - token starting with Bearer sent as authorization header", async ({ expect }) => {
   const requestSpy = createMockRequest()

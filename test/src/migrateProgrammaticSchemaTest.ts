@@ -89,6 +89,24 @@ describe("migrateProgrammaticSource — locate shapes", () => {
   }
 })
 
+describe("migrateProgrammaticSource — linux.syncDesktopName", () => {
+  test("removes linux.syncDesktopName: true, preserving other linux props", () => {
+    const result = run(`export default {\n  linux: {\n    target: "deb",\n    syncDesktopName: true,\n  },\n}\n`)
+    expect(result.status).toBe("migrated")
+    expect(result.code).not.toContain("syncDesktopName")
+    expect(result.code).toContain(`target: "deb"`)
+    expect(result.changes.some(c => c.key === "linux.syncDesktopName")).toBe(true)
+    expect(result.warnings).toHaveLength(0)
+  })
+
+  test("removes linux.syncDesktopName: false and warns", () => {
+    const result = run(`export default {\n  linux: {\n    syncDesktopName: false,\n  },\n}\n`)
+    expect(result.status).toBe("migrated")
+    expect(result.code).not.toContain("syncDesktopName")
+    expect(result.warnings.some(w => w.includes("syncDesktopName") && w.includes("desktopName"))).toBe(true)
+  })
+})
+
 describe("migrateProgrammaticSource — disableDefaultIgnoredFiles", () => {
   test("strips the root-level key, preserving surrounding properties", () => {
     const result = run(`export default {\n  appId: "com.a.b",\n  disableDefaultIgnoredFiles: true,\n  files: ["dist/**/*"],\n}\n`)

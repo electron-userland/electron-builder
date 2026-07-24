@@ -332,6 +332,7 @@ class ConfigCodemod {
         this.ruleRemoveKeys(p, ["disableDefaultIgnoredFiles"], disableDefaultIgnoredFilesDesc)
       }
     }
+    this.ruleSyncDesktopName(root)
     this.ruleNativeModules(root)
     this.ruleAsar(root)
     this.ruleAppImageSystemIntegration(root)
@@ -402,6 +403,31 @@ class ConfigCodemod {
         this.changes.push({ key, description: typeof description === "function" ? description(key) : description })
       }
     }
+  }
+
+  // linux.syncDesktopName was removed in v27 (desktop-name syncing is now always on). Remove the key;
+  // warn when it was explicitly false, since that changed behaviour (the installed .desktop filename now syncs).
+  private ruleSyncDesktopName(root: any): void {
+    const ts = this.ts
+    const linux = this.getObjectProp(root, "linux")
+    if (linux == null) {
+      return
+    }
+    const prop = this.getProp(linux, "syncDesktopName")
+    if (prop == null || !ts.isPropertyAssignment(prop)) {
+      return
+    }
+    if (prop.initializer.kind === ts.SyntaxKind.FalseKeyword) {
+      this.warnings.push(
+        "linux.syncDesktopName: false disabled desktop-name syncing in v26. In v27 the installed .desktop filename is always derived from `desktopName` " +
+          "(falling back to executableName). If you relied on the old filename, set `desktopName` explicitly to control it."
+      )
+    }
+    this.removeProp(prop)
+    this.changes.push({
+      key: "linux.syncDesktopName",
+      description: "removed linux.syncDesktopName (the installed .desktop filename is always synced from desktopName in v27)",
+    })
   }
 
   private ruleNativeModules(root: any): void {

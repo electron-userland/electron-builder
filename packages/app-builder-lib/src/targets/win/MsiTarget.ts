@@ -288,10 +288,10 @@ export default class MsiTarget extends Target {
         for (const item of fileAssociations) {
           const extensions = asArray(item.ext).map(normalizeExt)
           for (const ext of extensions) {
-            result += `${fileSpace}  <ProgId Id="${this.productMsiIdPrefix}.${ext}" Advertise="yes" Icon="${this.iconId}" ${
-              item.description ? `Description="${item.description}"` : ""
+            result += `${fileSpace}  <ProgId Id="${this.productMsiIdPrefix}.${escapeForXml(ext)}" Advertise="yes" Icon="${this.iconId}" ${
+              item.description ? `Description="${escapeForXml(item.description)}"` : ""
             }>\n`
-            result += `${fileSpace}    <Extension Id="${ext}" Advertise="yes">\n`
+            result += `${fileSpace}    <Extension Id="${escapeForXml(ext)}" Advertise="yes">\n`
             result += `${fileSpace}      <Verb Id="open" Command="Open with ${escapeForXml(this.packager.appInfo.productName)}" Argument="&quot;%1&quot;"/>\n`
             result += `${fileSpace}    </Extension>\n`
             result += `${fileSpace}  </ProgId>\n`
