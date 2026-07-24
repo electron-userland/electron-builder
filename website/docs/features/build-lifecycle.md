@@ -145,7 +145,7 @@ This is the main packaging phase. electron-builder:
 
 1. Computes the file set based on the `files` glob patterns (defaulting to everything except `node_modules` and dev artifacts).
 2. Filters `node_modules` — only production deps are included by default.
-3. Creates an ASAR archive if `asar: true` (the default).
+3. Creates an ASAR archive (enabled by default). In v27 the `asar: true` sentinel was removed — omit the key to keep defaults, pass an `asar: {}` object to configure it, or `asar: false` to disable.
 4. Copies `extraResources` into the platform resources directory.
 5. Copies `extraFiles` into the app root.
 
