@@ -2,6 +2,10 @@
 title: "Mac App Store"
 ---
 
+import UpgradingFromV26 from '@site/docs/partials/_upgrading-from-v26.mdx'
+
+<UpgradingFromV26 />
+
 The top-level [mas](configuration.md) key contains a set of options instructing electron-builder on how it should build the MAS (Mac Application Store) target. Inherits all [macOS options](mac.md).
 
 Use the `mas-dev` target (configured via the top-level `masDev` key) for local testing of MAS builds with a development provisioning profile.

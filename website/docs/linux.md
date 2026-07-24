@@ -2,6 +2,10 @@
 title: "Linux"
 ---
 
+import UpgradingFromV26 from '@site/docs/partials/_upgrading-from-v26.mdx'
+
+<UpgradingFromV26 />
+
 The top-level [linux](configuration.md) key contains a set of options instructing electron-builder on how it should build Linux targets. These options are applicable to any Linux target.
 
 ## Linux Target Overview

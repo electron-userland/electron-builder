@@ -2,6 +2,10 @@
 title: "macOS"
 ---
 
+import UpgradingFromV26 from '@site/docs/partials/_upgrading-from-v26.mdx'
+
+<UpgradingFromV26 />
+
 The top-level [mac](configuration.md) key contains a set of options instructing electron-builder on how it should build macOS targets. These options are applicable to any macOS target.
 
 ## macOS Target Overview
