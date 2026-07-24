@@ -51,6 +51,10 @@ mac:
       arch: universal
 ```
 
+:::note[v27: `arch: "all"` now expands to x64 + arm64]
+On Windows and Linux, `arch: "all"` (and the default multi-arch build) expands to **x64 + arm64** in v27 — it no longer includes `ia32`. Request `ia32` (or `armv7l`) explicitly if you still build 32-bit. See [What's New in v27](./migration/whats-new-v27.md).
+:::
+
 ## macOS: Universal Binaries
 
 A **universal binary** contains both x64 and arm64 slices in a single executable. It runs natively on Intel Macs and Apple Silicon without Rosetta 2 translation.
@@ -210,6 +214,10 @@ See [Multi Platform Build](features/multi-platform-build.md) for full Docker doc
 Native modules (`.node` files) are compiled for a specific architecture and cannot be used in a different architecture without recompilation.
 
 In practice, electron-builder handles this automatically during the build process when `nativeModules.npmRebuild: true` (the default; in v27 the native-module options `npmRebuild`, `nodeGypRebuild`, `buildDependenciesFromSource`, and `rebuildMode` live under `nativeModules`).
+
+:::note[v27: `node_modules` are arch/os-filtered on every build]
+v27 filters `node_modules` by each package's `package.json` `cpu` / `os` fields against the **target** arch and platform on every build (previously this effectively only mattered for `universal` macOS builds). A dependency that declares an incompatible `cpu`/`os` for the target is excluded from the packaged app. This is usually what you want; if you *intentionally* bundle a cross-arch/cross-os optional binary, include it explicitly via `extraResources` / `files`.
+:::
 
 ### Universal Binary with Native Modules
 
