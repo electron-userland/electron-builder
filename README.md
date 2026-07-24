@@ -1,5 +1,5 @@
 # electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg?label=latest)](https://www.npmjs.com/package/electron-builder) [![downloads per month](https://img.shields.io/npm/dm/electron-builder.svg)](https://yarn.pm/electron-builder)
-A complete solution to package and build a ready for distribution [Electron](https://electronjs.org), [Proton Native](https://proton-native.js.org/) app for macOS, Windows and Linux with “auto update” support out of the box. 📦
+A complete solution to package and build a ready for distribution [Electron](https://electronjs.org) app for macOS, Windows and Linux with “auto update” support out of the box. 📦
 
 Always looking for community contributions! 👀 Setting up a [dev environment](https://github.com/electron-userland/electron-builder/blob/master/CONTRIBUTING.md) is easy to do 🪩
 
@@ -97,7 +97,7 @@ See the full documentation on [electron.build](https://www.electron.build).
 
 **Node.js >=22.12.0** is required for v27.
 
-> **⚠️ Upgrading from v26?** v27 is a major release with breaking changes (native ESM, Node >=22.12, and removed deprecated APIs). **Read the breaking changes before upgrading:** [electron.build/docs/migration/v27-breaking-changes](https://www.electron.build/docs/migration/v27-breaking-changes)
+> **⚠️ Upgrading from v26?** v27 is a major release with breaking changes (native ESM, Node >=22.12, and removed deprecated APIs). Start with **[What's New in v27](https://www.electron.build/docs/migration/whats-new-v27)** for the highlights and the silent default changes, then **read the full [breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes)** before upgrading.
 >
 > Then run the automated migration command — it rewrites your config in place:
 > ```bash
