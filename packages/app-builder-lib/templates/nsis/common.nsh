@@ -50,7 +50,7 @@ Name "${PRODUCT_NAME}" "${DoubleAmpersand}"
   ${OrIf} ${IsWinME}
   ${OrIf} ${IsWinXP}
   ${OrIf} ${IsWinVista}
-    MessageBox MB_OK "$(win7Required)"
+    MessageBox MB_OK "$(win7Required)" /SD IDOK
     Quit
   ${EndIf}
 
@@ -67,7 +67,7 @@ Name "${PRODUCT_NAME}" "${DoubleAmpersand}"
         SetRegView 64
       ${Else}
         !ifndef APP_32
-          MessageBox MB_OK|MB_ICONEXCLAMATION "$(x64WinRequired)"
+          MessageBox MB_OK|MB_ICONEXCLAMATION "$(x64WinRequired)" /SD IDOK
           Quit
         !endif
       ${EndIf}
