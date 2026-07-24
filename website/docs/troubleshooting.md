@@ -152,7 +152,7 @@ For a first-time setup in a fully air-gapped environment, run the build once on 
 : The DEB, RPM, Pacman, APK, FreeBSD, and P5P targets use FPM internally. electron-builder bundles FPM — if it fails to find it, try reinstalling electron-builder or clearing `~/.cache/electron-builder`.
 
 **AppImage won't run: "FUSE not found" / "fusermount not found"**
-: The AppImage runtime requires FUSE. Install it:
+: As of v27 the default AppImage runtime is static and needs no host FUSE, so this affects only builds pinned to the legacy runtime (`toolsets.appimage: "0.0.0"`). Rebuild on the default runtime (remove the `0.0.0` pin), or install FUSE2 on the host:
 ```bash
 # Ubuntu/Debian
 sudo apt install fuse libfuse2
@@ -166,11 +166,7 @@ Or run with `--appimage-extract-and-run`:
 ```
 
 **AppImage won't run: "squashfs: FATAL ERROR aborting"**
-: Try the newer AppImage toolset:
-```yaml
-toolsets:
-  appimage: "1.0.3"
-```
+: This is a symptom of the legacy FUSE2 runtime. Remove any `toolsets.appimage: "0.0.0"` pin so the build uses the default static runtime.
 
 **Flatpak build fails: "runtime not found"**
 : Install the Flatpak runtime before building:

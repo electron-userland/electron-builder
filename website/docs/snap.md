@@ -1,12 +1,10 @@
 The top-level [`snapcraft`](#configuration) key is the recommended way to configure [Snap](https://snapcraft.io) builds. It requires an explicit `base` field and separates per-core options cleanly.
 
-The legacy [`snap`](#legacy-snap-key) key is **deprecated** — it is still supported for `core22` and older but will not receive new features. See [Migrating from `snap` to `snapcraft`](#migrating-from-snap-to-snapcraft) if you are on the old key.
+The flat `snap` config key was **removed in v27** — use `snapcraft` instead. `electron-builder migrate-schema` converts an old `snap` config to `snapcraft` automatically. See [Migrating from `snap` to `snapcraft`](#migrating-from-snap-to-snapcraft) if you are upgrading.
 
 ---
 
 ## Core 24 (Recommended)
-
-> **Beta** — core24 support is new. Please report any issues.
 
 `core24` targets Ubuntu 24.04 Noble and requires **Electron 25.0.0+** (28.0.0+ recommended). It uses snapcraft v8 (craft-application framework) and brings first-class Wayland, the GNOME extension, and Launchpad remote builds for multi-arch CI.
 
@@ -132,7 +130,7 @@ Remote builds require Snapcraft Store credentials. electron-builder resolves the
 
 Credentials are injected **only into the spawned `snapcraft` subprocess** environment and are never exposed through `process.env`.
 
-This follows the same pattern as `WIN_CSC_LINK` / `CSC_LINK` for [code signing](./code-signing.md).
+This follows the same pattern as `WIN_CSC_LINK` / `CSC_LINK` for [code signing](./features/code-signing/code-signing.md).
 
 ##### CI Setup
 
@@ -245,7 +243,7 @@ Use the `"default"` keyword to extend the defaults rather than replace them:
 
 ## Core 22
 
-`core22` targets Ubuntu 22.04 Jammy. It is the most recent **stable** (non-beta) base and is supported via the legacy `SnapCoreLegacy` implementation.
+`core22` targets Ubuntu 22.04 Jammy and is supported via the legacy `SnapCoreLegacy` implementation. (As of v27, `core24` is also stable — prefer it for new apps.)
 
 ```json
 {
@@ -328,7 +326,11 @@ The `yaml` path is resolved relative to the build resources directory (`build/` 
 
 ## Migrating from `snap` to `snapcraft`
 
-The legacy `snap` key is equivalent to using `snapcraft` with a per-core options object. The `base` field moves to the top level of `snapcraft`, and all other fields move inside the corresponding core key.
+:::tip[Automated]
+`electron-builder migrate-schema` performs this restructuring for you. If the old config has no `base`, it assumes `core20` and warns so you can confirm. See [v27 Breaking Changes → snap → snapcraft](./migration/v27-breaking-changes.md#snap-snapcraft).
+:::
+
+The removed `snap` key is equivalent to using `snapcraft` with a per-core options object. The `base` field moves to the top level of `snapcraft`, and all other fields move inside the corresponding core key.
 
 ```jsonc
 // Before — deprecated snap key

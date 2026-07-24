@@ -17,7 +17,10 @@ const sidebars: SidebarsConfig = {
     {
       type: "category",
       label: "Reference",
-      items: [{ type: "doc", id: "glossary", label: "Glossary" }],
+      items: [
+        { type: "doc", id: "environment-variables", label: "Environment Variables" },
+        { type: "doc", id: "glossary", label: "Glossary" },
+      ],
     },
 
     { type: "doc", id: "donate", label: "Donate" },
@@ -28,6 +31,7 @@ const sidebars: SidebarsConfig = {
     { type: "doc", id: "contents", label: "App Contents" },
     { type: "doc", id: "file-patterns", label: "File Patterns" },
     { type: "doc", id: "architecture", label: "Build Architectures" },
+    { type: "doc", id: "toolsets", label: "Toolsets" },
     { type: "doc", id: "publish", label: "Publish" },
   ],
 
@@ -73,6 +77,7 @@ const sidebars: SidebarsConfig = {
     { type: "doc", id: "features/hooks", label: "Hooks" },
     { type: "doc", id: "features/icons-and-images", label: "Icons & Images" },
     { type: "doc", id: "features/auto-update", label: "Auto Update" },
+    { type: "doc", id: "features/security", label: "Security & Hardening" },
     {
       type: "category",
       label: "Code Signing",
@@ -89,8 +94,9 @@ const sidebars: SidebarsConfig = {
   ],
 
   migrationSidebar: [
-    { type: "doc", id: "migration/v27-breaking-changes", label: "v27 Breaking Changes" },
+    { type: "doc", id: "migration/whats-new-v27", label: "What's New in v27" },
     { type: "doc", id: "migration/v26-to-v27", label: "v26 → v27 Walkthrough" },
+    { type: "doc", id: "migration/v27-breaking-changes", label: "v27 Breaking Changes" },
   ],
 
   tutorialsSidebar: [

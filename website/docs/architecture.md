@@ -51,6 +51,10 @@ mac:
       arch: universal
 ```
 
+:::note[v27: `arch: "all"` now expands to x64 + arm64]
+On Windows and Linux, `arch: "all"` (and the default multi-arch build) expands to **x64 + arm64** in v27 — it no longer includes `ia32`. Request `ia32` (or `armv7l`) explicitly if you still build 32-bit. See [What's New in v27](./migration/whats-new-v27.md).
+:::
+
 ## macOS: Universal Binaries
 
 A **universal binary** contains both x64 and arm64 slices in a single executable. It runs natively on Intel Macs and Apple Silicon without Rosetta 2 translation.
@@ -78,9 +82,10 @@ When building a universal binary, electron-builder must merge two ASAR archives 
 
 ```yaml
 mac:
-  mergeASARs: true        # Default: true — merge the two per-arch ASARs into one
-  singleArchFiles: ""     # Glob of files that must NOT be merged (arch-specific binaries)
-  x64ArchFiles: ""        # Glob of files that exist only in the x64 build
+  universal:                # v27: universal-build options live under mac.universal
+    mergeASARs: true        # Default: true — merge the two per-arch ASARs into one
+    singleArchFiles: ""     # Glob of files that must NOT be merged (arch-specific binaries)
+    x64ArchFiles: ""        # Glob of files that exist only in the x64 build
 ```
 
 ### Arch-Specific Native Modules
@@ -89,16 +94,18 @@ If you have native modules that differ between x64 and arm64, you must configure
 
 ```yaml
 mac:
-  mergeASARs: true
-  singleArchFiles: "node_modules/canvas/**"   # only exists in x64
+  universal:
+    mergeASARs: true
+    singleArchFiles: "node_modules/canvas/**"   # only exists in x64
 ```
 
 For modules that exist in both architectures but have different binaries:
 
 ```yaml
 mac:
-  mergeASARs: true
-  x64ArchFiles: "node_modules/my-module/build/Release/my_module.node"
+  universal:
+    mergeASARs: true
+    x64ArchFiles: "node_modules/my-module/build/Release/my_module.node"
 ```
 
 ### Verifying a Universal Binary
@@ -206,7 +213,11 @@ See [Multi Platform Build](features/multi-platform-build.md) for full Docker doc
 
 Native modules (`.node` files) are compiled for a specific architecture and cannot be used in a different architecture without recompilation.
 
-In practice, electron-builder handles this automatically during the build process when `npmRebuild: true` (the default).
+In practice, electron-builder handles this automatically during the build process when `nativeModules.npmRebuild: true` (the default; in v27 the native-module options `npmRebuild`, `nodeGypRebuild`, `buildDependenciesFromSource`, and `rebuildMode` live under `nativeModules`).
+
+:::note[v27: `node_modules` are arch/os-filtered on every build]
+v27 filters `node_modules` by each package's `package.json` `cpu` / `os` fields against the **target** arch and platform on every build (previously this effectively only mattered for `universal` macOS builds). A dependency that declares an incompatible `cpu`/`os` for the target is excluded from the packaged app. This is usually what you want; if you *intentionally* bundle a cross-arch/cross-os optional binary, include it explicitly via `extraResources` / `files`.
+:::
 
 ### Universal Binary with Native Modules
 
@@ -214,8 +225,9 @@ Building a universal macOS binary with native modules requires that each native 
 
 ```yaml
 mac:
-  mergeASARs: true
-  singleArchFiles: "node_modules/serialport/**/*.node"
+  universal:
+    mergeASARs: true
+    singleArchFiles: "node_modules/serialport/**/*.node"
 ```
 
 Or if you can compile the module for both architectures, the universal build will merge them automatically via `lipo`.
@@ -254,5 +266,5 @@ jobs:
 
 - [GitHub Actions](features/github-actions.md) — full CI/CD workflows
 - [Multi Platform Build](features/multi-platform-build.md) — Docker images and cross-compilation
-- [macOS Configuration](mac.md) — `mergeASARs`, `singleArchFiles`, `x64ArchFiles`
+- [macOS Configuration](mac.md) — `mac.universal.mergeASARs`, `mac.universal.singleArchFiles`, `mac.universal.x64ArchFiles`
 - [Target Selection](targets.md) — choosing the right target format per platform

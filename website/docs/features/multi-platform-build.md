@@ -58,6 +58,10 @@ sudo snap install multipass --beta --classic
 sudo apt-get install --no-install-recommends -y gcc-multilib g++-multilib
 ```
 
+:::warning[Electron 44 removed 32-bit Windows/Linux]
+Windows `ia32` and Linux `armv7l` builds require **`electronVersion` &lt;= 43.x** — [Electron 44 removed them](https://github.com/electron/electron/pull/51816). On Electron 44+ electron-builder fails fast with a configuration error (a warning if a custom `electronDist`/mirror is set). The v43 series is supported until January 2027. See [Build Architectures](../architecture.md#supported-architectures-by-platform).
+:::
+
 ## Docker
 
 Build Linux or Windows targets on any platform using Docker.
@@ -93,15 +97,19 @@ If you don't need to build for Windows, use `electronuserland/builder` — Wine 
 ### Provided Docker Images
 
 :::tip
-Lock your `FROM` to a specific date-tag (e.g. `builder:20-07.23`) or digest rather than `latest`, to prevent unexpected toolset upgrades.
+Lock your `FROM` to a specific date-tag (e.g. `builder:24-07.23`) or digest rather than `latest`, to prevent unexpected toolset upgrades.
+:::
+
+:::note[v27 requires Node.js &gt;=22.12]
+The images are now published in **Node.js 22 and 24** flavors (e.g. `builder:22`, `builder:24`). The old Node.js 20 tags do not satisfy v27's minimum runtime — use a `22`/`24` tag. See the [tags list](https://hub.docker.com/r/electronuserland/builder/tags).
 :::
 
 | Image | Contents |
 |---|---|
-| `electronuserland/builder` or `electronuserland/builder:20` | NodeJS 20 + Linux build dependencies. Use for Linux-only targets. |
-| `electronuserland/builder:wine` | Wine + NodeJS 20. Use for Windows targets. |
+| `electronuserland/builder` or `electronuserland/builder:24` | Node.js 24 (also available as `:22`) + Linux build dependencies. Use for Linux-only targets. |
+| `electronuserland/builder:wine` | Wine + Node.js. Use for Windows targets. |
 | `electronuserland/builder:wine-mono` | Mono for Squirrel.Windows. |
 | `electronuserland/builder:wine-chrome` | `google-chrome-stable` + `xvfb`. Use for headless Electron testing. |
 | `electronuserland/builder:base` | System dependencies only. Not meant for direct use. |
 
-Images are also tagged with a date suffix `-%m.%y` (e.g. `builder:20-07.23`) for pinning. Full build script: [build.sh](https://github.com/electron-userland/electron-builder/blob/master/docker/build.sh)
+Images are also tagged with a date suffix `-%m.%y` (e.g. `builder:24-07.23`) for pinning. Full build script: [build.sh](https://github.com/electron-userland/electron-builder/blob/master/docker/build.sh)

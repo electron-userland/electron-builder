@@ -2,6 +2,10 @@
 title: "macOS"
 ---
 
+import UpgradingFromV26 from '@site/docs/partials/_upgrading-from-v26.mdx'
+
+<UpgradingFromV26 />
+
 The top-level [mac](configuration.md) key contains a set of options instructing electron-builder on how it should build macOS targets. These options are applicable to any macOS target.
 
 ## macOS Target Overview
@@ -59,10 +63,13 @@ mac:
 - `singleArchFiles` — glob pattern for files that are single-arch and should NOT be merged (e.g., pre-built native binaries distributed only for one arch).
 - `x64ArchFiles` — glob pattern for files that are x64-only. These are kept as x64 in the universal binary rather than being fat-binary merged.
 
+In v27 these options live under `mac.universal` (a pass-through to [`@electron/universal`](https://github.com/electron/universal)) and only take effect when the target arch is `universal`:
+
 ```yaml
 mac:
-  mergeASARs: true
-  singleArchFiles: "**/*.node"   # keep native modules as separate arch files
+  universal:
+    mergeASARs: true
+    singleArchFiles: "**/*.node"   # keep native modules as separate arch files
 ```
 
 ### Recommended: Build Per-Arch on Correct Hardware
@@ -73,13 +80,18 @@ While cross-compilation is possible, the most reliable approach is to build `arm
 
 macOS apps must be signed to avoid Gatekeeper warnings. See [Code Signing](features/code-signing/code-signing.md) for full setup.
 
+:::note[v27: signing options moved under `mac.sign`]
+In v27 every macOS signing option (`identity`, `entitlements`, `hardenedRuntime`, `type`, `provisioningProfile`, `binaries`, `requirements`, `timestamp`, …) lives inside a single `mac.sign` object (`sign.identity`, `sign.hardenedRuntime`, …); `signIgnore` is now `sign.ignore`. `electron-builder migrate-schema` rewrites the old flat keys automatically. The same structure applies to `mas` and `masDev`. See [v27 Breaking Changes → macOS signing](./migration/v27-breaking-changes.md#macos-signing-macsign).
+:::
+
 ### Certificate Identity
 
-Use the `identity` option to specify the signing certificate by name:
+Use `mac.sign.identity` to specify the signing certificate by name:
 
 ```yaml
 mac:
-  identity: "Developer ID Application: My Company (TEAM1234AB)"
+  sign:
+    identity: "Developer ID Application: My Company (TEAM1234AB)"
 ```
 
 Or use environment variables — the recommended approach for CI:
@@ -89,15 +101,15 @@ export CSC_LINK=/path/to/certificate.p12
 export CSC_KEY_PASSWORD=yourpassword
 ```
 
-Set `identity: null` to skip signing entirely. Set `identity: "-"` to use an ad-hoc signature (app will only run on the machine that built it).
+Set `mac.sign.identity: null` (or `mac.sign: null`) to skip signing entirely. Set `mac.sign.identity: "-"` to use an ad-hoc signature (app will only run on the machine that built it).
 
 :::warning[Ad-hoc signing and Hardened Runtime]
-If you disable code signing, you should also disable Hardened Runtime (`hardenedRuntime: false`), as the combination of no signing and enabled Hardened Runtime may prevent the app from launching.
+If you disable code signing, you should also disable Hardened Runtime (`mac.sign.hardenedRuntime: false`), as the combination of no signing and enabled Hardened Runtime may prevent the app from launching.
 :::
 
 ### Hardened Runtime
 
-`hardenedRuntime: true` (the default) is required for notarization on macOS 10.15+. It restricts what the app can do — you may need entitlements to allow capabilities.
+`mac.sign.hardenedRuntime` is required for notarization on macOS 10.15+. It restricts what the app can do — you may need entitlements to allow capabilities. The default is `true` for standard `darwin` builds and `false` for Mac App Store builds (`mas` / `mas-dev`).
 
 ## Entitlements
 
@@ -134,6 +146,15 @@ And `build/entitlements.mac.inherit.plist` for helper processes:
   <true/>
 </dict>
 </plist>
+```
+
+electron-builder auto-detects `build/entitlements.mac.plist` and `build/entitlements.mac.inherit.plist` when present. To point at custom paths, set them under `mac.sign`:
+
+```yaml
+mac:
+  sign:
+    entitlements: build/entitlements.mac.plist
+    entitlementsInherit: build/entitlements.mac.inherit.plist
 ```
 
 Common entitlements for Electron apps:
@@ -190,14 +211,17 @@ You only need to override these if you have a specific naming requirement (e.g.,
 
 **Minimum system version:** `minimumSystemVersion` sets the `LSMinimumSystemVersion` in `Info.plist`. Electron itself has a minimum macOS version requirement — don't set this lower than Electron's requirement.
 
-**Signing additional binaries:** Use `binaries` to list paths to additional native binaries within your app bundle that need to be signed (e.g., embedded CLIs, helper tools).
+**Signing additional binaries:** Use `mac.sign.binaries` to list paths to additional native binaries within your app bundle that need to be signed (e.g., embedded CLIs, helper tools).
 
 ```yaml
 mac:
-  binaries:
-    - Contents/MacOS/my-native-helper
-    - Contents/Frameworks/MyFramework.framework/Versions/A/MyFramework
+  sign:
+    binaries:
+      - Contents/MacOS/my-native-helper
+      - Contents/Frameworks/MyFramework.framework/Versions/A/MyFramework
 ```
+
+**Product / executable name validation:** As of v27, electron-builder rejects a `productName` or `executableName` that would require filename sanitization (so the generated `<Name> Helper.app` bundles stay consistent with `CFBundleName` and Electron's helper discovery). If a build fails with an "is not a valid macOS app bundle name" error, choose a name that needs no sanitization.
 
 ## Configuration
 
