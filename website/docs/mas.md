@@ -39,8 +39,13 @@ Create provisioning profiles at [developer.apple.com](https://developer.apple.co
 
 ```yaml
 mas:
-  provisioningProfile: build/MyApp_AppStore.provisionprofile
+  sign:
+    provisioningProfile: build/MyApp_AppStore.provisionprofile
 ```
+
+:::note[v27: signing options are under `mas.sign`]
+Like `mac`, all signing options on `mas` and `masDev` moved into a `sign` object in v27 (`sign.provisioningProfile`, `sign.entitlements`, `sign.entitlementsInherit`, …). `electron-builder migrate-schema` rewrites the old flat keys. See [v27 Breaking Changes → macOS signing](./migration/v27-breaking-changes.md#macos-signing--macsign).
+:::
 
 ### App Sandbox
 
@@ -83,9 +88,10 @@ Point to these in your configuration:
 
 ```yaml
 mas:
-  entitlements: build/entitlements.mas.plist
-  entitlementsInherit: build/entitlements.mas.inherit.plist
-  provisioningProfile: build/MyApp_AppStore.provisionprofile
+  sign:
+    entitlements: build/entitlements.mas.plist
+    entitlementsInherit: build/entitlements.mas.inherit.plist
+    provisioningProfile: build/MyApp_AppStore.provisionprofile
 ```
 
 ## Common MAS Entitlements
@@ -110,9 +116,10 @@ The `mas-dev` target produces a build signed with a development certificate and 
 
 ```yaml
 masDev:
-  provisioningProfile: build/MyApp_Dev.provisionprofile
-  entitlements: build/entitlements.mas.plist
-  entitlementsInherit: build/entitlements.mas.inherit.plist
+  sign:
+    provisioningProfile: build/MyApp_Dev.provisionprofile
+    entitlements: build/entitlements.mas.plist
+    entitlementsInherit: build/entitlements.mas.inherit.plist
 ```
 
 Build the dev target:
