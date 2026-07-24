@@ -48,7 +48,7 @@ mas:
 ```
 
 :::note[v27: signing options are under `mas.sign`]
-Like `mac`, all signing options on `mas` and `masDev` moved into a `sign` object in v27 (`sign.provisioningProfile`, `sign.entitlements`, `sign.entitlementsInherit`, …). `electron-builder migrate-schema` rewrites the old flat keys. See [v27 Breaking Changes → macOS signing](./migration/v27-breaking-changes.md#macos-signing--macsign).
+Like `mac`, all signing options on `mas` and `masDev` moved into a `sign` object in v27 (`sign.provisioningProfile`, `sign.entitlements`, `sign.entitlementsInherit`, …). `electron-builder migrate-schema` rewrites the old flat keys. See [v27 Breaking Changes → macOS signing](./migration/v27-breaking-changes.md#macos-signing-macsign).
 :::
 
 ### App Sandbox

@@ -30,7 +30,7 @@ v27 is a grace period. In **v28**, an unblocked web-installer update becomes an 
 
 Two independent mechanisms protect the code inside your packaged app:
 
-- **ASAR integrity.** When your app is packaged into an `app.asar` archive (the default), electron-builder embeds integrity hashes so Electron can detect a tampered or swapped archive at runtime. It is on by default; `asar.disableIntegrity: true` disables it (not recommended). See the [ASAR options](../migration/v27-breaking-changes.md#asar-options--asar) for the v27 config shape.
+- **ASAR integrity.** When your app is packaged into an `app.asar` archive (the default), electron-builder embeds integrity hashes so Electron can detect a tampered or swapped archive at runtime. It is on by default; `asar.disableIntegrity: true` disables it (not recommended). See the [ASAR options](../migration/v27-breaking-changes.md#asar-options-asar) for the v27 config shape.
 
 - **Electron Fuses.** Fuses are "magic bits" flipped at package time — *before* code signing — that disable risky Electron features for the entire app (e.g. `runAsNode`, `enableNodeCliInspectArguments`, `enableNodeOptionsEnvironmentVariable`). Pairing `enableEmbeddedAsarIntegrityValidation` with `onlyLoadAppFromAsar` binds the app to its verified ASAR. Because the bits are flipped before signing, the OS (Gatekeeper / App Locker) is responsible for ensuring they can't be flipped back.
 
@@ -54,7 +54,7 @@ v27 **removed implicit `--publish`**. Earlier versions could auto-publish based 
 electron-builder --publish always   # explicit — required in v27
 ```
 
-**See also:** [Publish configuration](../publish.md) · [Implicit `--publish` removed](../migration/v27-breaking-changes.md#implicit---publish-removed)
+**See also:** [Publish configuration](../publish.md) · [Implicit `--publish` removed](../migration/v27-breaking-changes.md#implicit-publish-removed)
 
 ## Toolset integrity
 

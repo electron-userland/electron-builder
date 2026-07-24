@@ -81,7 +81,7 @@ While cross-compilation is possible, the most reliable approach is to build `arm
 macOS apps must be signed to avoid Gatekeeper warnings. See [Code Signing](features/code-signing/code-signing.md) for full setup.
 
 :::note[v27: signing options moved under `mac.sign`]
-In v27 every macOS signing option (`identity`, `entitlements`, `hardenedRuntime`, `type`, `provisioningProfile`, `binaries`, `requirements`, `timestamp`, …) lives inside a single `mac.sign` object (`sign.identity`, `sign.hardenedRuntime`, …); `signIgnore` is now `sign.ignore`. `electron-builder migrate-schema` rewrites the old flat keys automatically. The same structure applies to `mas` and `masDev`. See [v27 Breaking Changes → macOS signing](./migration/v27-breaking-changes.md#macos-signing--macsign).
+In v27 every macOS signing option (`identity`, `entitlements`, `hardenedRuntime`, `type`, `provisioningProfile`, `binaries`, `requirements`, `timestamp`, …) lives inside a single `mac.sign` object (`sign.identity`, `sign.hardenedRuntime`, …); `signIgnore` is now `sign.ignore`. `electron-builder migrate-schema` rewrites the old flat keys automatically. The same structure applies to `mas` and `masDev`. See [v27 Breaking Changes → macOS signing](./migration/v27-breaking-changes.md#macos-signing-macsign).
 :::
 
 ### Certificate Identity
