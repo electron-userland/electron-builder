@@ -297,6 +297,16 @@ export async function collectNodeModulesWithLogging(platformPackager: PlatformPa
   const configuredIgnored = platformPackager.config.ignoredProductionDependencies
   const ignoredDependencies = configuredIgnored == null ? DEFAULT_IGNORED_PRODUCTION_DEPENDENCIES : configuredIgnored
 
+  // An app that declares no production dependencies at all (neither as-installed nor via
+  // `extraMetadata`) has nothing to bundle. Without this guard the search would skip the app's
+  // empty `node_modules`, climb to the workspace root, and the vacuous match in
+  // `collectionMatchesAppDependencies` would accept the entire hoisted workspace tree (#10033).
+  const declaredDependencies = Object.keys({ ...platformPackager.originalMetadata.dependencies, ...platformPackager.metadata.dependencies })
+  if (declaredDependencies.length === 0) {
+    log.info(null, "app has no production dependencies, skipping node_modules bundling")
+    return []
+  }
+
   // Validate against the as-declared (pre-extraMetadata) production dependencies so a configured
   // `extraMetadata.dependencies` entry that isn't installed cannot reject a correct collection.
   const deps = await resolveFirstMatchingCollection({
