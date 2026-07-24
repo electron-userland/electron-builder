@@ -9,15 +9,20 @@ The top-level [win](./configuration.md#win) key contains a set of options instru
 ## Common Questions
 ## How do you delegate code signing?
 
-Use [sign](./api/index.md) option. Please also see [why sign.js is called 8 times](https://github.com/electron-userland/electron-builder/issues/3995).
+In v27, all Windows signing is configured through the single [`win.sign`](./configuration.md#win) discriminated union (`type: "signtool" | "hsm" | "pkcs11" | "azure"`). To delegate signing to a custom function, set the `sign` field on that union — it works for every `type`. See the [Windows Code Signing guide](./features/code-signing/code-signing-win.md) and [why sign.js is called 8 times](https://github.com/electron-userland/electron-builder/issues/3995).
 
 ```json
 "win": {
-  "signtoolOptions": {
+  "sign": {
+    "type": "signtool",
     "sign": "./customSign.js"
   }
 }
 ```
+
+:::note[Upgrading from v26]
+The v26 `win.signtoolOptions` / `win.azureSignOptions` keys were removed — `electron-builder migrate-schema` rewrites them to `win.sign` automatically. See [v27 Breaking Changes → Windows signing](./migration/v27-breaking-changes.md#windows-signing--winsign).
+:::
 
 File `customSign.js` in the project root directory:
 ```js

@@ -243,7 +243,8 @@ For a fully custom signing implementation (replacing the built-in signer):
 mac:
   sign: ./scripts/custom-sign.js
 win:
-  signtoolOptions:
+  sign:
+    type: signtool
     sign: ./scripts/custom-sign.js
 ```
 
