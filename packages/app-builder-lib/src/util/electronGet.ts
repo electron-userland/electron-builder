@@ -646,7 +646,7 @@ function buildElectronArtifactConfig(artifactOptions: ArtifactDownloadOptions): 
   if (options?.unsafelyDisableChecksums) {
     log.warn(
       { artifactName },
-      "electronGet.unsafelyDisableChecksums is enabled — downloaded artifacts will NOT be verified.txt; a compromised mirror can serve malicious binaries undetected"
+      "electronGet.unsafelyDisableChecksums is enabled — downloaded artifacts will NOT be verified; a compromised mirror can serve malicious binaries undetected"
     )
   }
 
