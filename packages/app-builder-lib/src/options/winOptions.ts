@@ -36,10 +36,11 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
    *   `https://` URL, or a base64-encoded certificate. This is the recommended setup for CI.
    * - Set to `false` or `null` to **disable** code signing entirely (executable resources such as
    *   the icon and metadata are still edited).
-   * - Set to an **object** to configure signing explicitly. The `type` field selects the signing
-   *   backend (`signtool` is the implicit default) and dispatches to a dedicated sign manager;
-   *   provide exactly one of the modes below. Each output artifact is signed individually, and by
-   *   default executables are dual-signed (see `signingHashAlgorithms`).
+   * - Set to an **object** to configure signing explicitly. The **required** `type` field selects the
+   *   signing backend (`signtool`, `hsm`, `pkcs11`, or `azure`) and dispatches to a dedicated sign
+   *   manager; provide exactly one of the modes below. When `win.sign` is left unset, the `signtool`
+   *   backend is used with env-discovered credentials. Each output artifact is signed individually,
+   *   and by default executables are dual-signed (see `signingHashAlgorithms`).
    *
    * - `{ type: "signtool", ... }` — Sign with a local certificate file (.pfx/.p12) or a
    *   certificate from the Windows certificate store. Uses Microsoft `signtool.exe` on Windows and

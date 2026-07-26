@@ -61,9 +61,7 @@ export interface ElectronSignOptions extends Omit<OnlySignOptions, "optionsForFi
    * Whether to enable [Hardened Runtime](https://developer.apple.com/documentation/security/hardened_runtime).
    *
    * Hardened Runtime is a prerequisite for notarization (mandatory on macOS 10.15+).
-   * Defaults to `true` for `darwin` builds and `false` for `mas-dev`.
-   *
-   * @see https://github.com/electron/fuses
+   * Defaults to `true` for `darwin` builds and `false` for MAS builds (`mas` and `mas-dev`).
    */
   readonly hardenedRuntime?: boolean
   /**

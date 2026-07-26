@@ -125,6 +125,24 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
     }
   }
 
+  // ── 2c. linux.syncDesktopName removed (always-on in v27) ──────────────────
+  // The flag is gone from the type; the behaviour it gated (deriving the installed .desktop filename
+  // from desktopName) is now always on. Leaving the key would fail v27 schema validation (noExtraProps).
+  if (c.linux != null && typeof c.linux === "object" && "syncDesktopName" in c.linux) {
+    const wasDisabled = c.linux.syncDesktopName === false
+    delete c.linux.syncDesktopName
+    changes.push({
+      key: "linux.syncDesktopName",
+      description: "removed linux.syncDesktopName (the installed .desktop filename is always synced from desktopName in v27)",
+    })
+    if (wasDisabled) {
+      warnings.push(
+        "linux.syncDesktopName: false disabled desktop-name syncing in v26. In v27 the installed .desktop filename is always derived from `desktopName` " +
+          "(falling back to executableName). If you relied on the old filename, set `desktopName` explicitly to control it."
+      )
+    }
+  }
+
   // ── 3. npmSkipBuildFromSource → buildDependenciesFromSource ───────────────
   if ("npmSkipBuildFromSource" in c) {
     // will be picked up by the nativeModules step below
@@ -817,6 +835,7 @@ function printManualSteps() {
     "• Move disableAsarIntegrity → asar.disableIntegrity",
     "• Replace asar: true with an asar object (e.g. asar: {} or omit entirely - asar is enabled by default)",
     "• Remove appImage.systemIntegration",
+    "• Remove linux.syncDesktopName (the installed .desktop filename is always synced from desktopName in v27)",
     "• Rename snap → snapcraft; nest options under a base-named sub-key (default base: core20)",
     "• Replace vPrefixedTagName with tagNamePrefix on GitHub publish entries ('v' is the default prefix - just like before - but can now be customized with tagNamePrefix)",
     "• Move win.signtoolOptions → win.sign: { type: 'signtool', ...fields }",
