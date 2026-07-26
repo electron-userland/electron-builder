@@ -1,6 +1,6 @@
 import { parseValidEnvVarUrl } from "builder-util/internal"
 import { resolveEnvShellValue, validateShellEmbeddable } from "builder-util/src/envUtil"
-import { removePassword, filterSensitiveEnv, spawnAndWriteWithOutput, ExecError } from "builder-util"
+import { removePassword, filterSensitiveEnv, stripSensitiveEnvVars, spawnAndWriteWithOutput, ExecError } from "builder-util"
 import { afterEach, expect, vi } from "vitest"
 
 const testValue = "secretValue"
@@ -258,6 +258,61 @@ describe("filterSensitiveEnv", () => {
     const result = filterSensitiveEnv({ GITHUB_LINK: "https://github.com", ELECTRON_CACHE: "/tmp" })
     expect(result.GITHUB_LINK).toBe("https://github.com")
     expect(result.ELECTRON_CACHE).toBe("/tmp")
+  })
+})
+
+describe("stripSensitiveEnvVars (Windows child-process env hardening, F1)", () => {
+  test("removes credential-bearing keys entirely", ({ expect }) => {
+    const secretKeys = ["CSC_KEY_PASSWORD", "WIN_CSC_KEY_PASSWORD", "CSC_LINK", "GH_TOKEN", "GITHUB_TOKEN", "AWS_SECRET_ACCESS_KEY", "API_KEY", "NODE_AUTH_TOKEN"]
+    const result = stripSensitiveEnvVars(Object.fromEntries(secretKeys.map(k => [k, "secret"])))
+    for (const key of secretKeys) {
+      expect(Object.prototype.hasOwnProperty.call(result, key)).toBe(false)
+    }
+  })
+
+  test("preserves required Windows system vars verbatim", ({ expect }) => {
+    const systemEnv: Record<string, string> = {
+      PATH: "C:\\Windows",
+      SystemRoot: "C:\\Windows",
+      TEMP: "C:\\Temp",
+      TMP: "C:\\Temp",
+      windir: "C:\\Windows",
+      COMSPEC: "C:\\Windows\\System32\\cmd.exe",
+      PATHEXT: ".COM;.EXE;.BAT",
+      PROCESSOR_ARCHITECTURE: "AMD64",
+      NUMBER_OF_PROCESSORS: "8",
+      APPDATA: "C:\\Users\\u\\AppData\\Roaming",
+      LOCALAPPDATA: "C:\\Users\\u\\AppData\\Local",
+      PROGRAMDATA: "C:\\ProgramData",
+      ProgramFiles: "C:\\Program Files",
+      "ProgramFiles(x86)": "C:\\Program Files (x86)",
+      USERPROFILE: "C:\\Users\\u",
+      USERNAME: "u",
+      COMPUTERNAME: "PC",
+      HOMEDRIVE: "C:",
+      HOMEPATH: "\\Users\\u",
+      SystemDrive: "C:",
+      ALLUSERSPROFILE: "C:\\ProgramData",
+      PSModulePath: "C:\\Program Files\\PowerShell\\Modules",
+    }
+    const result = stripSensitiveEnvVars(systemEnv)
+    for (const [key, value] of Object.entries(systemEnv)) {
+      expect(result[key]).toBe(value)
+    }
+  })
+
+  test("keeps non-sensitive app vars and drops prototype-polluting keys", ({ expect }) => {
+    const polluted = Object.fromEntries([
+      ["__proto__", "x"],
+      ["constructor", "y"],
+      ["prototype", "z"],
+      ["NODE_ENV", "production"],
+    ])
+    const result = stripSensitiveEnvVars(polluted)
+    expect(result.NODE_ENV).toBe("production")
+    for (const key of ["__proto__", "constructor", "prototype"]) {
+      expect(Object.prototype.hasOwnProperty.call(result, key)).toBe(false)
+    }
   })
 })
 
