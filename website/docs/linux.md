@@ -2,9 +2,7 @@
 title: "Linux"
 ---
 
-import UpgradingFromV26 from '@site/docs/partials/_upgrading-from-v26.mdx'
-
-<UpgradingFromV26 />
+{!./partials/_upgrading-from-v26.md!}
 
 The top-level [linux](configuration.md) key contains a set of options instructing electron-builder on how it should build Linux targets. These options are applicable to any Linux target.
 
@@ -99,7 +97,7 @@ electron-builder installs the `.desktop` file as `${desktopName}.desktop` (here 
 The installed `.desktop` filename is now always derived from `desktopName`. The `linux.syncDesktopName` flag that previously gated this behaviour has been removed — see the [v27 breaking changes](./migration/v27-breaking-changes.md#linuxsyncdesktopname-always-synced).
 :::
 
-:::warning[`desktopName` is required for reliable window association]
+:::warning[desktopName is required for reliable window association]
 If `desktopName` is absent, electron-builder will log a warning at build time. Without it, desktop environments on GNOME, KDE, and others may not correctly link the running application window to its launcher entry.
 :::
 

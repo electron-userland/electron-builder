@@ -153,7 +153,7 @@ electron-builder detects the release tag and repository from standard CI variabl
 
 The GitHub repository is auto-detected from `TRAVIS_REPO_SLUG`, `APPVEYOR_REPO_NAME`, or `CIRCLE_PROJECT_USERNAME`/`CIRCLE_PROJECT_REPONAME` (falling back to your `package.json` `repository` field or `.git/config`).
 
-:::warning[`CI_BUILD_TAG` removed in v27]
+:::warning[CI_BUILD_TAG removed in v27]
 `CI_BUILD_TAG` was **removed** — use `CI_COMMIT_TAG` instead. See [the breaking-change note](./migration/v27-breaking-changes.md#ci_build_tag-environment-variable).
 :::
 

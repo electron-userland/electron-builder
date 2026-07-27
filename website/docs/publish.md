@@ -1,6 +1,4 @@
-import UpgradingFromV26 from '@site/docs/partials/_upgrading-from-v26.mdx'
-
-<UpgradingFromV26 />
+{!./partials/_upgrading-from-v26.md!}
 
 The [publish](./configuration.md#publish) key contains a set of options instructing electron-builder on how it should publish artifacts and build update info files for [auto update](./features/auto-update.md).
 
@@ -146,7 +144,7 @@ If your CI sets `BITBUCKET_TOKEN` to an app password / API token **without** a u
 
 ## Github
 
-:::note[v27: `tagNamePrefix` replaces `vPrefixedTagName`]
+:::note[v27: tagNamePrefix replaces vPrefixedTagName]
 The GitHub `vPrefixedTagName` boolean was removed — use `tagNamePrefix` to control the tag prefix (defaults to `"v"`; set `tagNamePrefix: ""` for no prefix). `electron-builder migrate-schema` rewrites it. (On **GitLab**, `vPrefixedTagName` is unchanged and still works.)
 :::
 

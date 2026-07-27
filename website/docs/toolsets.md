@@ -119,7 +119,7 @@ A custom bundle has to match the **directory layout** of the corresponding built
 
 Archives supplied via `url` are extracted automatically. Supported formats: **`.zip`**, **`.7z`**, **`.tar.gz`**, **`.tar.xz`**. A bare directory (no archive) is used as-is.
 
-:::note[`sevenZip` exception]
+:::note[sevenZip exception]
 Because 7-Zip is the tool electron-builder uses to extract `.7z` and `.tar.xz` archives, a custom **`sevenZip`** bundle can't itself be one of those formats — that would be circular. Supply it only as a **`.tar.gz`**, **`.zip`**, or bare **`file://` directory**. (The bundle must contain `bin/7za` on macOS/Linux or `bin/7za.exe` on Windows.)
 :::
 

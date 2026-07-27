@@ -107,7 +107,7 @@ Prepend `npx` to sample commands below if you run them from Terminal and not fro
 [Electron 44 removed Windows ia32 builds](https://github.com/electron/electron/pull/51816) — ia32 requires `electronVersion` <= 43.x (supported until the v43 series reaches end-of-life in January 2027).
 :::
 
-:::note[set package.json property `foo` to `bar`]
+:::note[set package.json property foo to bar]
 `electron-builder -c.extraMetadata.foo=bar`
 :::
 

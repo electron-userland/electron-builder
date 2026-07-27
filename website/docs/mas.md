@@ -2,9 +2,7 @@
 title: "Mac App Store"
 ---
 
-import UpgradingFromV26 from '@site/docs/partials/_upgrading-from-v26.mdx'
-
-<UpgradingFromV26 />
+{!./partials/_upgrading-from-v26.md!}
 
 The top-level [mas](configuration.md) key contains a set of options instructing electron-builder on how it should build the MAS (Mac Application Store) target. Inherits all [macOS options](mac.md).
 
@@ -47,7 +45,7 @@ mas:
     provisioningProfile: build/MyApp_AppStore.provisionprofile
 ```
 
-:::note[v27: signing options are under `mas.sign`]
+:::note[v27: signing options are under mas.sign]
 Like `mac`, all signing options on `mas` and `masDev` moved into a `sign` object in v27 (`sign.provisioningProfile`, `sign.entitlements`, `sign.entitlementsInherit`, …). `electron-builder migrate-schema` rewrites the old flat keys. See [v27 Breaking Changes → macOS signing](./migration/v27-breaking-changes.md#macos-signing-macsign).
 :::
 

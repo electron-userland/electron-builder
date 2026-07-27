@@ -2,9 +2,7 @@
 title: "Configuration"
 ---
 
-import UpgradingFromV26 from '@site/docs/partials/_upgrading-from-v26.mdx'
-
-<UpgradingFromV26 />
+{!./partials/_upgrading-from-v26.md!}
 
 electron-builder configuration can be defined
 
@@ -77,7 +75,7 @@ electron-builder downloads the Electron distribution to package via [`@electron/
 }
 ```
 
-:::note[v27: renamed from `electronDownload`]
+:::note[v27: renamed from electronDownload]
 This key was `electronDownload` in v26. In v27 it is `electronGet`, reshaped to `@electron/get` v5 options: the flat `mirror` moved under `mirrorOptions.mirror`, `isVerifyChecksum: false` became `unsafelyDisableChecksums: true`, and `cache` / `customDir` / `customFilename` / `strictSSL` were dropped. `electron-builder migrate-schema` performs the rename. See [v27 Breaking Changes → electronGet](./migration/v27-breaking-changes.md#electrondownload-electronget).
 :::
 

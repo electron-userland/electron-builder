@@ -2,9 +2,7 @@
 title: "macOS"
 ---
 
-import UpgradingFromV26 from '@site/docs/partials/_upgrading-from-v26.mdx'
-
-<UpgradingFromV26 />
+{!./partials/_upgrading-from-v26.md!}
 
 The top-level [mac](configuration.md) key contains a set of options instructing electron-builder on how it should build macOS targets. These options are applicable to any macOS target.
 
@@ -80,7 +78,7 @@ While cross-compilation is possible, the most reliable approach is to build `arm
 
 macOS apps must be signed to avoid Gatekeeper warnings. See [Code Signing](features/code-signing/code-signing.md) for full setup.
 
-:::note[v27: signing options moved under `mac.sign`]
+:::note[v27: signing options moved under mac.sign]
 In v27 every macOS signing option (`identity`, `entitlements`, `hardenedRuntime`, `type`, `provisioningProfile`, `binaries`, `requirements`, `timestamp`, …) lives inside a single `mac.sign` object (`sign.identity`, `sign.hardenedRuntime`, …); `signIgnore` is now `sign.ignore`. `electron-builder migrate-schema` rewrites the old flat keys automatically. The same structure applies to `mas` and `masDev`. See [v27 Breaking Changes → macOS signing](./migration/v27-breaking-changes.md#macos-signing-macsign).
 :::
 

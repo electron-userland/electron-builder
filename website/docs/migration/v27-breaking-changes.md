@@ -24,7 +24,7 @@ electron-builder migrate-schema --dry-run  # preview only
 This handles every change marked **Auto ✓** below. See the [walkthrough](./v26-to-v27#step-1-run-the-automated-migrator) for flags and serialization caveats.
 :::
 
-:::info[Toolsets now default to the newest bundle (`"latest"`)]
+:::info[Toolsets now default to the newest bundle ("latest")]
 In v27 every `toolsets.*` property defaults to **`"latest"`** — an **unset** property, `null`, and the literal `"latest"` all resolve to the **newest published bundle** for that toolset (previously each property defaulted to a fixed pinned version). No config change is required, but the effective defaults moved:
 
 - **`wine` → `1.0.1`** — Wine 11.0 (was Wine 4.0.1); macOS arm64 via Rosetta. Linux still uses host-installed `wine`.
@@ -40,7 +40,7 @@ To stay on a legacy bundle, pin the toolset to `"0.0.0"`. Because `winCodeSign` 
 
 ## Breaking changes at a glance
 
-:::tip[Already ran `migrate-schema`?]
+:::tip[Already ran migrate-schema?]
 Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the migrator can **not** apply — the new defaults and runtime behaviors you may still trip over — see **[What's New in v27 → new defaults & behavior changes](./whats-new-v27#new-defaults-and-behavior-changes-you-may-trip-over)**.
 :::
 
@@ -244,7 +244,7 @@ The `vPrefixedTagName` boolean on `GithubOptions` is removed. Use `tagNamePrefix
 
 To keep the default `v` prefix, simply remove `vPrefixedTagName` — `tagNamePrefix` defaults to `"v"`.
 
-:::note[`GitlabOptions.vPrefixedTagName` is **not** removed]
+:::note[GitlabOptions.vPrefixedTagName is not removed]
 Only the **GitHub** field was removed. On **GitLab**, `vPrefixedTagName` is unchanged in v27 — it still exists in the type, the schema, and the runtime, and continues to control the tag prefix (`vPrefixedTagName: false` → `1.2.3`; omit it → `v1.2.3`). It has no `tagNamePrefix` equivalent, so `migrate-schema` leaves GitLab publish entries untouched. No action is required.
 :::
 

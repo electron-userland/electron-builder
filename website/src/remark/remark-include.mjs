@@ -64,6 +64,11 @@ function stampHeadingIds(nodes) {
  * is where docusaurus-plugin-typedoc places flat TypeDoc output files.
  */
 export default function remarkInclude({ docsDir } = {}) {
+  // `this` is the host unified processor. Captured so includes that contain
+  // ::: admonitions can be parsed with the processor's own parser (which knows
+  // Docusaurus's admonition syntax); a bare fromMarkdown would leave them as
+  // literal ":::tip" text.
+  const processor = this
   return function (tree, file) {
     const fileDir = path.dirname(file.path)
     const replacements = []
@@ -92,7 +97,19 @@ export default function remarkInclude({ docsDir } = {}) {
 
       const raw = fs.readFileSync(absPath, "utf-8")
       const content = stripFrontmatter(raw)
-      const parsed = fromMarkdown(content)
+      // Plain CommonMark for typedoc/API includes (no directives); for partials
+      // that use ::: admonitions, parse with the host processor so Docusaurus's
+      // admonition handling applies. fromMarkdown alone renders them as text.
+      let parsed
+      if (/^:::/m.test(content) && typeof processor?.parse === "function") {
+        try {
+          parsed = processor.parse(content)
+        } catch {
+          parsed = fromMarkdown(content)
+        }
+      } else {
+        parsed = fromMarkdown(content)
+      }
 
       stampHeadingIds(parsed.children)
       replacements.push({ parent, index, nodes: parsed.children })

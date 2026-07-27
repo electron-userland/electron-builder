@@ -145,7 +145,7 @@ The AppImage build tools are configured via the top-level [`toolsets.appimage`](
 
 The default toolset bundles a **static AppImage runtime** that does not depend on FUSE2. The runtime is prepended directly to the squashfs filesystem and handles mounting internally, so AppImages run on modern distributions (Arch, Fedora, Ubuntu 24.04+) without installing FUSE. Its `AppRun` entry point also performs smart sandbox detection — it passes `--no-sandbox` to Electron only when unprivileged user namespaces are unavailable, rather than always.
 
-:::note[v27: default `--no-sandbox` change]
+:::note[v27: default --no-sandbox change]
 With the legacy FUSE2 runtime (`toolsets.appimage: "0.0.0"`), electron-builder injects `--no-sandbox` by default. With the default static runtime it does **not** — `AppRun` adds it only when user namespaces are unavailable. Set `executableArgs: ["--no-sandbox"]` if you need to force it.
 :::
 

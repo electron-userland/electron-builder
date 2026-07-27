@@ -2,9 +2,7 @@
 title: "Windows"
 ---
 
-import UpgradingFromV26 from '@site/docs/partials/_upgrading-from-v26.mdx'
-
-<UpgradingFromV26 />
+{!./partials/_upgrading-from-v26.md!}
 
 The top-level [win](./configuration.md#win) key contains a set of options instructing electron-builder on how it should build Windows targets. These options are applicable to any Windows target.
 
