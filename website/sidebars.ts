@@ -17,6 +17,7 @@ const sidebars: SidebarsConfig = {
     {
       type: "category",
       label: "Reference",
+      collapsed: false,
       items: [
         { type: "doc", id: "environment-variables", label: "Environment Variables" },
         { type: "doc", id: "glossary", label: "Glossary" },
