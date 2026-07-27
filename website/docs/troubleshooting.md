@@ -34,7 +34,7 @@ DEBUG=electron-builder electron-builder build
 : You used an Apple Distribution / Mac App Store certificate. Notarization for direct distribution requires a Developer ID Application certificate.
 
 **"The executable does not have the Hardened Runtime enabled"**
-: Add `hardenedRuntime: true` to your `mac` config. Also ensure entitlements include `com.apple.security.cs.allow-jit`.
+: Add `hardenedRuntime: true` to your `mac.sign` config. Also ensure entitlements include `com.apple.security.cs.allow-jit`.
 
 **"Notarization failed: invalid credentials"**
 : The `APPLE_ID` / `APPLE_APP_SPECIFIC_PASSWORD` combination is wrong, or the app-specific password was revoked. Regenerate it at [appleid.apple.com](https://appleid.apple.com).
@@ -58,15 +58,16 @@ DEBUG=electron-builder electron-builder build
 ## ASAR and File Packaging
 
 **Native module crashes at runtime: "Error: Module did not self-register"**
-: The native module (`.node` file) is inside the ASAR archive, but native modules can't load from inside ASAR. Add to `asarUnpack`:
+: The native module (`.node` file) is inside the ASAR archive, but native modules can't load from inside ASAR. Add to `asar.unpack`:
 ```yaml
-asarUnpack:
-  - "node_modules/your-module/**"
-  - "**/*.node"
+asar:
+  unpack:
+    - "node_modules/your-module/**"
+    - "**/*.node"
 ```
 
 **"ENOENT: no such file or directory" at runtime**
-: A file that exists in development is missing from the packaged app. Check if it's being excluded by a `files` pattern or by the default exclusions. Build with `DEBUG=electron-builder` and look for "excluding" log lines. Also check `asarUnpack` — files inside ASAR must be accessed via `app.getAppPath()`, not via `__dirname` relative paths.
+: A file that exists in development is missing from the packaged app. Check if it's being excluded by a `files` pattern or by the default exclusions. Build with `DEBUG=electron-builder` and look for "excluding" log lines. Also check `asar.unpack` — files inside ASAR must be accessed via `app.getAppPath()`, not via `__dirname` relative paths.
 
 **App directory is too large**
 : Profile the ASAR after building:
@@ -97,11 +98,12 @@ files:
 : electron-builder automatically rebuilds native modules for the target Electron version during the build. If you see this error at runtime during development (not during a build), ensure you are running your app via `electron .` from the project root, not from a globally installed Electron binary compiled against a different version.
 
 **Native module works in development but crashes after packaging**
-: The module likely needs to be in `asarUnpack`. Some modules also need their full directory tree unpacked:
+: The module likely needs to be in `asar.unpack`. Some modules also need their full directory tree unpacked:
 ```yaml
-asarUnpack:
-  - "node_modules/better-sqlite3/**"
-  - "node_modules/sharp/**"
+asar:
+  unpack:
+    - "node_modules/better-sqlite3/**"
+    - "node_modules/sharp/**"
 ```
 
 ---

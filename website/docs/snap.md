@@ -356,15 +356,17 @@ The removed `snap` key is equivalent to using `snapcraft` with a per-core option
 }
 ```
 
-The `snap` key continues to work for `core22` and older. Omit `base` from the inner object — it lives at `snapcraft.base` now.
+For `core22` and older, place the per-core options inside the base-named sub-key (e.g. `core22`). Omit `base` from the inner object — it lives at `snapcraft.base` now.
 
 The `appPartStage` option controls which files are included from the main app part:
 
 ```yaml
-snap:
-  appPartStage:
-    - -usr/share/doc
-    - -usr/share/man
+snapcraft:
+  base: core22
+  core22:
+    appPartStage:
+      - -usr/share/doc
+      - -usr/share/man
 ```
 
 ## Publishing to the Snap Store

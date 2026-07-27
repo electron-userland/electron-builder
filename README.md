@@ -158,7 +158,7 @@ This instructs Yarn to use node-modules instead of PnP.
 
     To ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps"` to your `package.json`.
 
-6. If you have native addons of your own that are part of the application (not as a dependency), set [nodeGypRebuild](https://www.electron.build/docs/configuration) to `true`.
+6. If you have native addons of your own that are part of the application (not as a dependency), set [nativeModules.nodeGypRebuild](https://www.electron.build/docs/configuration) to `true`.
 
 Please note that everything is packaged into an asar archive [by default](https://www.electron.build/docs/configuration).
 
