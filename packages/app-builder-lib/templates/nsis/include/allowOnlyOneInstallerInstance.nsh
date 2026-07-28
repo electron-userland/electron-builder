@@ -44,14 +44,17 @@
 
 !macro IS_POWERSHELL_AVAILABLE
   Var /GLOBAL IsPowerShellAvailable ; 0 = available, 1 = not available
-  # Try running PowerShell with a simple command to check if it's available
-  nsExec::Exec `"$PowerShellPath" -C "if (Get-Command Get-CimInstance -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"`
-  Pop $0  # Return code (0 = success, other = error)
+  # Require a sentinel exit code to ensure PowerShell actually executes the command.
+  # Wine's PowerShell stub ignores the command and exits with 0.
+  nsExec::Exec `"$PowerShellPath" -C "if (Get-Command Get-CimInstance -ErrorAction SilentlyContinue) { exit 37 } else { exit 1 }"`
+  Pop $0  # Return code (37 = command executed successfully)
 
-  ${if} $0 == 0
+  ${if} $0 == 37
     # PowerShell is available, check if it's not blocked by policies
     nsExec::Exec `"$PowerShellPath" -C "if ((Get-ExecutionPolicy -Scope Process) -eq 'Restricted') { exit 1 } else { exit 0 }"`
     Pop $0
+  ${else}
+    StrCpy $0 1
   ${endIf}
 
   ${if} $0 != 0
