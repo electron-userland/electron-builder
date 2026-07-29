@@ -17,7 +17,13 @@ import {
   getBinariesMirrorUrl,
   reinitializeProxy,
 } from "app-builder-lib/internal"
-import { getCacheDirectoryInternal } from "app-builder-lib/src/util/electronGet.js"
+import {
+  buildElectronArtifactConfig,
+  defaultElectronGetCacheRoot,
+  getCacheDirectoryInternal,
+  parseChecksumFile,
+  resolveSeededChecksums,
+} from "app-builder-lib/src/util/electronGet.js"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 
 // ─── Test helpers ─────────────────────────────────────────────────────────────
@@ -534,6 +540,169 @@ describe("toolset archive cache", { sequential: true }, () => {
     } finally {
       await server.close()
     }
+  })
+})
+
+// ─── Seeded SHASUMS256 checksums (air-gapped builds, #10039) ─────────────────
+
+// Without inline checksums, @electron/get fetches SHASUMS256.txt with a hardcoded
+// cacheMode: Bypass on every build — even artifact cache hits — which breaks air-gapped
+// builds. These tests cover the seeded-SHASUMS lookup that suppresses that fetch.
+describe("seeded SHASUMS256 checksums", () => {
+  const VERSION = "35.0.0"
+  const ZIP_NAME = `electron-v${VERSION}-linux-x64.zip`
+  const ZIP_HASH = "877617029f4c0f2b24f3805a1c3554ba166fda65c4e88df9480ae7b6ffa26a22"
+  const OTHER_HASH = "0f1e2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c4b5a69788796a5b4c3d2e1f0"
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  describe("parseChecksumFile", () => {
+    test("parses binary-mode lines (<hash> *<filename>)", ({ expect }) => {
+      const parsed = parseChecksumFile(`${ZIP_HASH} *${ZIP_NAME}\n${OTHER_HASH} *electron-v${VERSION}-linux-arm64.zip\n`)
+      expect(parsed).toEqual({
+        [ZIP_NAME]: ZIP_HASH,
+        [`electron-v${VERSION}-linux-arm64.zip`]: OTHER_HASH,
+      })
+    })
+
+    test("parses text-mode lines (<hash>  <filename>)", ({ expect }) => {
+      const parsed = parseChecksumFile(`${ZIP_HASH}  ${ZIP_NAME}`)
+      expect(parsed).toEqual({ [ZIP_NAME]: ZIP_HASH })
+    })
+
+    test("handles CRLF line endings", ({ expect }) => {
+      const parsed = parseChecksumFile(`${ZIP_HASH} *${ZIP_NAME}\r\n${OTHER_HASH} *other.zip\r\n`)
+      expect(parsed[ZIP_NAME]).toBe(ZIP_HASH)
+      expect(parsed["other.zip"]).toBe(OTHER_HASH)
+    })
+
+    test("normalises uppercase hashes to lowercase", ({ expect }) => {
+      const parsed = parseChecksumFile(`${ZIP_HASH.toUpperCase()} *${ZIP_NAME}`)
+      expect(parsed[ZIP_NAME]).toBe(ZIP_HASH)
+    })
+
+    test("skips malformed lines", ({ expect }) => {
+      const content = [
+        "not a checksum line",
+        "deadbeef *too-short-hash.zip",
+        `${ZIP_HASH}`, // hash without filename
+        "",
+        `${ZIP_HASH} *${ZIP_NAME}`,
+        `zz${ZIP_HASH.slice(2)} *non-hex.zip`,
+      ].join("\n")
+      expect(parseChecksumFile(content)).toEqual({ [ZIP_NAME]: ZIP_HASH })
+    })
+
+    test("returns empty record for unusable content", ({ expect }) => {
+      expect(parseChecksumFile("complete garbage\nanother bad line\n")).toEqual({})
+    })
+  })
+
+  describe("resolveSeededChecksums", () => {
+    test("returns null when no SHASUMS file is seeded", async ({ expect, tmpDir }) => {
+      const cacheRoot = await tmpDir.createTempDir()
+      expect(await resolveSeededChecksums(cacheRoot, VERSION, ZIP_NAME)).toBeNull()
+    })
+
+    test("picks up SHASUMS256.txt-<version> at the cache root (flatpak-node-generator layout)", async ({ expect, tmpDir }) => {
+      const cacheRoot = await tmpDir.createTempDir()
+      await fs.writeFile(path.join(cacheRoot, `SHASUMS256.txt-${VERSION}`), `${ZIP_HASH} *${ZIP_NAME}\n`)
+      expect(await resolveSeededChecksums(cacheRoot, VERSION, ZIP_NAME)).toEqual({ [ZIP_NAME]: ZIP_HASH })
+    })
+
+    test("falls back to plain SHASUMS256.txt at the cache root", async ({ expect, tmpDir }) => {
+      const cacheRoot = await tmpDir.createTempDir()
+      await fs.writeFile(path.join(cacheRoot, "SHASUMS256.txt"), `${ZIP_HASH} *${ZIP_NAME}\n`)
+      expect(await resolveSeededChecksums(cacheRoot, VERSION, ZIP_NAME)).toEqual({ [ZIP_NAME]: ZIP_HASH })
+    })
+
+    test("versioned file wins over the plain file", async ({ expect, tmpDir }) => {
+      const cacheRoot = await tmpDir.createTempDir()
+      await fs.writeFile(path.join(cacheRoot, `SHASUMS256.txt-${VERSION}`), `${ZIP_HASH} *${ZIP_NAME}\n`)
+      await fs.writeFile(path.join(cacheRoot, "SHASUMS256.txt"), `${OTHER_HASH} *${ZIP_NAME}\n`)
+      expect(await resolveSeededChecksums(cacheRoot, VERSION, ZIP_NAME)).toEqual({ [ZIP_NAME]: ZIP_HASH })
+    })
+
+    test("ignores a seeded file that has no entry for the requested artifact", async ({ expect, tmpDir }) => {
+      const cacheRoot = await tmpDir.createTempDir()
+      // e.g. a stale SHASUMS for a different Electron version — must not poison the config
+      await fs.writeFile(path.join(cacheRoot, `SHASUMS256.txt-${VERSION}`), `${OTHER_HASH} *electron-v34.0.0-linux-x64.zip\n`)
+      expect(await resolveSeededChecksums(cacheRoot, VERSION, ZIP_NAME)).toBeNull()
+    })
+
+    test("falls through to the plain file when the versioned file is unusable", async ({ expect, tmpDir }) => {
+      const cacheRoot = await tmpDir.createTempDir()
+      await fs.writeFile(path.join(cacheRoot, `SHASUMS256.txt-${VERSION}`), "malformed content\n")
+      await fs.writeFile(path.join(cacheRoot, "SHASUMS256.txt"), `${ZIP_HASH} *${ZIP_NAME}\n`)
+      expect(await resolveSeededChecksums(cacheRoot, VERSION, ZIP_NAME)).toEqual({ [ZIP_NAME]: ZIP_HASH })
+    })
+  })
+
+  describe("buildElectronArtifactConfig checksum wiring", () => {
+    const baseOptions: ArtifactDownloadOptions = {
+      artifactName: "electron",
+      platformName: "linux",
+      arch: "x64",
+      version: VERSION,
+    }
+
+    test("injects seeded checksums when SHASUMS256.txt-<version> exists in the cache root", async ({ expect, tmpDir }) => {
+      const cacheDir = await tmpDir.createTempDir()
+      await fs.writeFile(path.join(cacheDir, `SHASUMS256.txt-${VERSION}`), `${ZIP_HASH} *${ZIP_NAME}\n`)
+      const config = await buildElectronArtifactConfig({ ...baseOptions, cacheDir })
+      expect(config.checksums).toEqual({ [ZIP_NAME]: ZIP_HASH })
+    })
+
+    test("leaves checksums undefined when nothing is seeded", async ({ expect, tmpDir }) => {
+      const cacheDir = await tmpDir.createTempDir()
+      const config = await buildElectronArtifactConfig({ ...baseOptions, cacheDir })
+      expect(config.checksums).toBeUndefined()
+    })
+
+    test("user-provided checksums win over the seeded file", async ({ expect, tmpDir }) => {
+      const cacheDir = await tmpDir.createTempDir()
+      await fs.writeFile(path.join(cacheDir, `SHASUMS256.txt-${VERSION}`), `${ZIP_HASH} *${ZIP_NAME}\n`)
+      const userChecksums = { [ZIP_NAME]: OTHER_HASH }
+      const config = await buildElectronArtifactConfig({ ...baseOptions, cacheDir, options: { checksums: userChecksums } })
+      expect(config.checksums).toEqual(userChecksums)
+    })
+
+    test("does not look up seeded checksums when unsafelyDisableChecksums is set", async ({ expect, tmpDir }) => {
+      const cacheDir = await tmpDir.createTempDir()
+      await fs.writeFile(path.join(cacheDir, `SHASUMS256.txt-${VERSION}`), `${ZIP_HASH} *${ZIP_NAME}\n`)
+      const config = await buildElectronArtifactConfig({ ...baseOptions, cacheDir, options: { unsafelyDisableChecksums: true } })
+      expect(config.checksums).toBeUndefined()
+    })
+
+    test("without cacheDir, the seeded file is resolved from @electron/get's default cache root", async ({ expect, skip, tmpDir }) => {
+      if (process.platform !== "linux") {
+        skip() // default root layout is asserted per-platform in the defaultElectronGetCacheRoot test
+        return
+      }
+      const xdgCache = await tmpDir.createTempDir()
+      vi.stubEnv("XDG_CACHE_HOME", xdgCache)
+      const electronCacheRoot = path.join(xdgCache, "electron")
+      await fs.mkdir(electronCacheRoot, { recursive: true })
+      await fs.writeFile(path.join(electronCacheRoot, `SHASUMS256.txt-${VERSION}`), `${ZIP_HASH} *${ZIP_NAME}\n`)
+      const config = await buildElectronArtifactConfig(baseOptions)
+      expect(config.checksums).toEqual({ [ZIP_NAME]: ZIP_HASH })
+    })
+  })
+
+  describe("defaultElectronGetCacheRoot", () => {
+    test("matches @electron/get's documented per-platform default", ({ expect }) => {
+      const result = defaultElectronGetCacheRoot()
+      if (process.platform === "darwin") {
+        expect(result).toBe(path.join(os.homedir(), "Library", "Caches", "electron"))
+      } else if (process.platform === "win32") {
+        expect(result.toLowerCase()).toContain(path.join("electron", "Cache").toLowerCase())
+      } else {
+        expect(path.basename(result)).toBe("electron")
+        expect(result).toBe(path.join(process.env.XDG_CACHE_HOME || path.join(os.homedir(), ".cache"), "electron"))
+      }
+    })
   })
 })
 
