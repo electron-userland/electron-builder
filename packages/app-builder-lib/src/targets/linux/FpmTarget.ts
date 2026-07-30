@@ -292,6 +292,16 @@ export default class FpmTarget extends Target {
       ...stripSensitiveEnvVars(process.env),
     }
 
+    // fpm compresses the deb data.tar by piping GNU tar -J, which exports only
+    // XZ_OPT=-<level> — so xz runs single-threaded regardless of the machine,
+    // while rpm already defaults to multithreaded "xzmt" (measured on one
+    // 6.4 GiB tree in one run: deb 1059s vs rpm 171s). xz parses XZ_DEFAULTS
+    // before XZ_OPT, so -T0 multithreads the deb pack at the unchanged
+    // compression level; an operator-provided XZ_DEFAULTS wins. Fixes #10045.
+    if (target === "deb" && process.env.XZ_DEFAULTS == null) {
+      (env as Record<string, string>).XZ_DEFAULTS = "-T0"
+    }
+
     // rpmbuild wants directory rpm with some default config files. Even if we can use dylibbundler, path to such config files are not changed (we need to replace in the binary)
     // so, for now, brew install rpm is still required.
     if (target !== "rpm" && (await isMacOsSierra())) {
