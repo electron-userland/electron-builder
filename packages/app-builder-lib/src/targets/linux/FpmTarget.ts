@@ -299,7 +299,7 @@ export default class FpmTarget extends Target {
     // before XZ_OPT, so -T0 multithreads the deb pack at the unchanged
     // compression level; an operator-provided XZ_DEFAULTS wins. Fixes #10045.
     if (target === "deb" && process.env.XZ_DEFAULTS == null) {
-      (env as Record<string, string>).XZ_DEFAULTS = "-T0"
+      env.XZ_DEFAULTS = "-T0"
     }
 
     // rpmbuild wants directory rpm with some default config files. Even if we can use dylibbundler, path to such config files are not changed (we need to replace in the binary)
