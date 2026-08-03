@@ -9,7 +9,7 @@ electron-builder downloads two kinds of artifacts at build time:
 
 Both can be pre-seeded so that a build runs with **no network access at all** — the pattern used by Flathub builds, locked-down CI, and other air-gapped environments. This page describes the exact on-disk contracts.
 
-:::tip Warm the cache online, then copy
+:::tip[Warm the cache online, then copy]
 The simplest approach: run one full build on an online machine with the same OS, architecture, Electron version and targets, then copy both cache directories (see below) to the offline machine. Everything on this page also works with manually seeded files.
 :::
 
@@ -100,7 +100,7 @@ Notes on the contract:
 - Archive names and versions for your electron-builder version can be read from the toolset modules in [`packages/app-builder-lib/src/toolsets`](https://github.com/electron-userland/electron-builder/tree/master/packages/app-builder-lib/src/toolsets), or captured by warming the cache once online.
 - **7-Zip bootstrap:** extracting any `.7z` toolset (fpm, NSIS, winCodeSign, the legacy FUSE2 AppImage runtime, Wine) requires the `7zip@1.0.0` toolset. Seed its `.tar.gz` archive as well (it extracts without 7-Zip), or configure `toolsets.sevenZip` with a custom local path.
 
-:::warning Cache layouts from electron-builder < 26.15 are not read
+:::warning[Cache layouts from electron-builder < 26.15 are not read]
 Older seeding conventions — extracted tool directories such as `electron-builder/appimage/appimage-12.0.1/` (the layout used by the Go-based downloader) or a flat `electron-v<version>-<platform>-<arch>.zip` at the cache root — are never probed by current versions. Re-seed using the `<toolset>@<version>/<archive>` layout above.
 :::
 
