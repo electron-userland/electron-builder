@@ -36,6 +36,10 @@ Two options are available — [include](#include) and [script](#script). `script
 
 Keep in mind — if you customize the NSIS script, you should always mention it in issue reports. And don't expect that your issue will be resolved.
 
+:::warning[v27: file-association ProgID format changed]
+NSIS installers now register each `fileAssociations` entry under a unique generated **ProgID** (`<program>.<component>`, derived from `productName` + the app GUID) instead of using the association `name`/extension verbatim, which could collide with unrelated apps. `fileAssociations` and its `name`/`ext`/`description` fields are unchanged and nothing needs migrating — **but** if your custom `include`/`script` (or external tooling) hard-codes the old ProgID (the association name or extension) to add shell verbs or registry keys, update it to the new generated value. See [v27 Breaking Changes → NSIS file-association ProgID](./migration/v27-breaking-changes.md#nsis-file-association-progid-format-changed).
+:::
+
 1. Add file `build/installer.nsh`.
 2. Define wanted macro to customise: `customHeader`, `preInit`, `customInit`, `customUnInit`, `customInstall`, `customUnInstall`, `customRemoveFiles`, `customInstallMode`, `customWelcomePage`, `customUnWelcomePage`, `customUnInstallSection`.
 

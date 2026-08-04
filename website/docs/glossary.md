@@ -7,7 +7,7 @@ Quick reference for terms used throughout the electron-builder documentation.
 ## A
 
 **Ad-hoc signing**
-: A macOS code signature that identifies the binary but isn't tied to an Apple developer identity. Used for local development on Apple Silicon. Set `mac.identity` to `"-"` to request ad-hoc signing. Unlike a proper Developer ID signature, ad-hoc signatures are not trusted by Gatekeeper for distribution.
+: A macOS code signature that identifies the binary but isn't tied to an Apple developer identity. Used for local development on Apple Silicon. Set `mac.sign.identity` to `"-"` to request ad-hoc signing. Unlike a proper Developer ID signature, ad-hoc signatures are not trusted by Gatekeeper for distribution.
 
 **AppImage**
 : A self-contained Linux application format. A single executable file that runs on any Linux distribution without installation. Users download the file, mark it executable (`chmod +x`), and run it. One of the two default Linux targets for electron-builder (along with Snap). See [AppImage](appimage.md).
@@ -16,9 +16,9 @@ Quick reference for terms used throughout the electron-builder documentation.
 : Microsoft's modern app packaging format for the Windows Store and enterprise MDM deployment. electron-builder's `appx` target produces `.appx` files. Microsoft's newer `.msix` format is functionally similar. See [AppX](appx.md).
 
 **ASAR**
-: **A**tom **S**hell **AR**chive — Electron's archive format for bundling application source files. Similar to a `tar` file but optimized for random access. Files inside ASAR are read through Electron's virtual filesystem. Native modules (`.node` files) must be excluded via `asarUnpack`.
+: **A**tom **S**hell **AR**chive — Electron's archive format for bundling application source files. Similar to a `tar` file but optimized for random access. Files inside ASAR are read through Electron's virtual filesystem. Native modules (`.node` files) must be excluded via `asar.unpack`.
 
-**asarUnpack**
+**asar.unpack**
 : A configuration option listing glob patterns for files that should be placed in `app.asar.unpacked/` rather than inside the ASAR archive. Required for native modules and large binaries that need direct filesystem access.
 
 ---
@@ -49,7 +49,7 @@ Quick reference for terms used throughout the electron-builder documentation.
 ## E
 
 **Entitlements**
-: macOS security declarations that grant your app specific capabilities. Required when Hardened Runtime is enabled. Stored in `.plist` XML files referenced by `mac.entitlements` and `mac.entitlementsInherit`. Examples: `com.apple.security.cs.allow-jit` (required by Electron), `com.apple.security.network.client` (outbound networking).
+: macOS security declarations that grant your app specific capabilities. Required when Hardened Runtime is enabled. Stored in `.plist` XML files referenced by `mac.sign.entitlements` and `mac.sign.entitlementsInherit`. Examples: `com.apple.security.cs.allow-jit` (required by Electron), `com.apple.security.network.client` (outbound networking).
 
 **EV Certificate (Extended Validation)**
 : A Windows code signing certificate with higher trust than standard OV certificates. EV certificates are physically bound to a USB security key and cannot be exported — which makes them incompatible with most CI/CD systems. SmartScreen immediately trusts EV-signed installers without requiring a reputation-building period.
@@ -82,7 +82,7 @@ Quick reference for terms used throughout the electron-builder documentation.
 ## H
 
 **Hardened Runtime**
-: A macOS security mode (`hardenedRuntime: true`) that restricts what your app can do without explicit entitlement declarations. Required for notarization. It blocks JIT compilation, unsigned library loading, and other potentially dangerous operations unless granted via entitlements.
+: A macOS security mode (`mac.sign.hardenedRuntime: true`) that restricts what your app can do without explicit entitlement declarations. Required for notarization. It blocks JIT compilation, unsigned library loading, and other potentially dangerous operations unless granted via entitlements.
 
 ---
 
@@ -143,7 +143,7 @@ Quick reference for terms used throughout the electron-builder documentation.
 : An isolation mechanism that restricts what an application can access. Flatpak and Snap use sandboxes on Linux. Mac App Store apps are sandboxed by Apple's App Sandbox framework. Sandboxed apps must declare all required permissions.
 
 **Signing Identity**
-: The name of a code signing certificate as it appears in the macOS Keychain (e.g., `Developer ID Application: My Company (ABCDE12345)`). Referenced by `CSC_NAME` or `mac.identity` in electron-builder config.
+: The name of a code signing certificate as it appears in the macOS Keychain (e.g., `Developer ID Application: My Company (ABCDE12345)`). Referenced by `CSC_NAME` or `mac.sign.identity` in electron-builder config.
 
 **SmartScreen**
 : Windows Defender's application reputation service. It warns users when they run unsigned apps or apps from publishers with low download reputation. EV certificates bypass the reputation-building period; standard OV certificates require time.

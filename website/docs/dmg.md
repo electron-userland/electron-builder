@@ -118,6 +118,24 @@ The `format` option controls the compression algorithm:
 
 For most cases, leave `format` at the default `UDZO`. Use `ULFO` if you are targeting macOS 10.11+ and want faster mount times for large apps. Use `ULMO` if you are targeting macOS 10.15+ and want the smallest download — it typically compresses an Electron app's DMG ~30% smaller than `UDZO`, at the cost of a few extra seconds to mount and copy at install time.
 
+## Volume Filesystem
+
+The `filesystem` option controls the filesystem of the DMG volume:
+
+| Value | Notes |
+|---|---|
+| `APFS` | **Default as of v27.** The modern macOS filesystem — smaller, faster-to-mount images on current macOS. Cannot be mounted on macOS **before 10.13** (High Sierra). |
+| `HFS+` | The pre-v27 default. Set this **only** if you must support pre-10.13 macOS. |
+
+```yaml
+dmg:
+  filesystem: "HFS+"   # only for pre-10.13 (High Sierra) compatibility
+```
+
+:::note[v27 default change]
+The default changed from `HFS+` to `APFS` in v27. This is a runtime default, not a config-key rename, so `migrate-schema` does not change it — set `filesystem: "HFS+"` explicitly if you need the old behavior. See [v27 Breaking Changes → DMG filesystem](./migration/v27-breaking-changes.md#dmg-filesystem-defaults-to-apfs).
+:::
+
 ## DMG Size
 
 The `size` option sets the initial filesystem size. Normally this is computed automatically — only set it if you encounter errors about insufficient space during DMG creation:

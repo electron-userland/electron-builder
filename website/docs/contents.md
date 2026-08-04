@@ -155,7 +155,7 @@ Use `extraResources` for native binaries, CLI tools, or data files that need to 
 ASAR is Electron's archive format — it bundles all app files into a single `app.asar` file for faster loading and to prevent casual file inspection.
 
 ```yaml
-asar: true    # Default: true
+asar: {}    # ASAR is enabled by default — pass an object to configure, or set asar: false to disable
 ```
 
 Set `asar: false` to disable ASAR packaging (all files are placed in the app directory directly). Useful for debugging or if you have unusual file access patterns.
@@ -167,13 +167,14 @@ Some files cannot be inside an ASAR archive:
 - Large binary assets that need random-access reads
 - Files that need to be executed directly
 
-Use `asarUnpack` to unpack specific files into `app.asar.unpacked/`:
+Use `asar.unpack` to unpack specific files into `app.asar.unpacked/`:
 
 ```yaml
-asarUnpack:
-  - "**/*.node"                   # all native modules
-  - "resources/ffmpeg"            # large binary
-  - "**/**/node_modules/sharp/**" # specific module
+asar:
+  unpack:
+    - "**/*.node"                   # all native modules
+    - "resources/ffmpeg"            # large binary
+    - "**/**/node_modules/sharp/**" # specific module
 ```
 
 Files in `app.asar.unpacked/` are accessible via the same paths as if they were in the ASAR — Electron transparently redirects reads.
@@ -185,7 +186,7 @@ asar:
   smartUnpack: true    # Default: true
 ```
 
-When enabled, electron-builder automatically detects executables and native modules and unpacks them from ASAR. You generally don't need to configure `asarUnpack` manually unless you have unusual cases.
+When enabled, electron-builder automatically detects executables and native modules and unpacks them from ASAR. You generally don't need to configure `asar.unpack` manually unless you have unusual cases.
 
 ### ASAR Ordering
 
@@ -213,8 +214,9 @@ files:
   - "!src/**"
   - "!**/*.ts"
   - "!**/*.map"
-asarUnpack:
-  - "**/*.node"
+asar:
+  unpack:
+    - "**/*.node"
 ```
 
 ### App with Large Video Assets
@@ -272,10 +274,11 @@ Only patterns that name an extension or directory concretely opt it back in; bro
 
 **File is missing from packaged app:** Check if the file is being excluded by a pattern. Run `DEBUG=electron-builder electron-builder build` to see detailed file collection output.
 
-**Native module crashes at runtime:** The module likely needs to be outside the ASAR archive. Add it to `asarUnpack`:
+**Native module crashes at runtime:** The module likely needs to be outside the ASAR archive. Add it to `asar.unpack`:
 ```yaml
-asarUnpack:
-  - "node_modules/better-sqlite3/**"
+asar:
+  unpack:
+    - "node_modules/better-sqlite3/**"
 ```
 
 **App directory is too large:** Profile what's included by examining the app bundle after building. Common culprits: source maps (`*.map`), TypeScript source files (`*.ts`), and large test fixtures.
