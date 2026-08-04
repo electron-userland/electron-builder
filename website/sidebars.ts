@@ -105,6 +105,7 @@ const sidebars: SidebarsConfig = {
     { type: "doc", id: "tutorials/code-signing-windows-apps-on-unix", label: "Code Signing Windows Apps on Unix" },
     { type: "doc", id: "tutorials/loading-app-dependencies-manually", label: "Loading App Dependencies Manually" },
     { type: "doc", id: "tutorials/macos-kernel-extensions", label: "macOS Kernel Extensions" },
+    { type: "doc", id: "tutorials/offline-air-gapped-builds", label: "Offline / Air-Gapped Builds" },
     { type: "doc", id: "tutorials/release-using-channels", label: "Release Using Channels" },
     { type: "doc", id: "tutorials/test-update-on-s3-locally", label: "Test Update on S3 Locally" },
     { type: "doc", id: "tutorials/two-package-structure", label: "Two Package Structure" },

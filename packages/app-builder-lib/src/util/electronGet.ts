@@ -380,6 +380,12 @@ async function downloadArtifactToFile(config: ElectronArtifactDetails, label: st
  * Checks electron-builder's own archive cache for a previously downloaded archive.
  * Validates the SHA-256 checksum when one is known. Returns the cached path on hit,
  * null on miss or checksum mismatch (mismatch also deletes the stale file).
+ *
+ * Air-gapped seeding contract: placing the archive at
+ * `<cacheDir>/<releaseName>/<archive>` (e.g. `$ELECTRON_BUILDER_CACHE/appimage@1.0.3/appimage-tools-runtime-20251108.tar.gz`)
+ * is sufficient for a fully offline toolset resolution — the checksum here is computed locally
+ * against the value hardcoded in the toolset module, and extraction happens locally too. No
+ * `.state` file needs to be seeded. See https://www.electron.build/tutorials/offline-air-gapped-builds.
  */
 async function resolveFromArchiveCache(archiveCachePath: string, label: string, expectedSha256: string | undefined): Promise<string | null> {
   if (!(await exists(archiveCachePath))) {
@@ -635,12 +641,92 @@ export async function downloadBuilderToolset(options: {
 }
 
 /**
+ * Mirrors @electron/get's default cache root (`env-paths("electron", { suffix: "" }).cache`).
+ * @electron/get does not export it and its package `exports` map blocks deep imports, so the
+ * (deliberately tiny) platform switch is replicated here. Must stay in sync with the
+ * `cacheRoot` default documented in @electron/get's `ElectronDownloadRequestOptions`.
+ * @internal exported for unit testing
+ */
+export function defaultElectronGetCacheRoot(): string {
+  const name = "electron"
+  const homeDir = os.homedir()
+  switch (os.platform()) {
+    case "darwin":
+      return path.join(homeDir, "Library", "Caches", name)
+    case "win32":
+      return path.join(process.env.LOCALAPPDATA || path.join(homeDir, "AppData", "Local"), name, "Cache")
+    default:
+      return path.join(process.env.XDG_CACHE_HOME || path.join(homeDir, ".cache"), name)
+  }
+}
+
+/**
+ * Parses the upstream `SHASUMS256.txt` format into the `Record<filename, sha256-hex>` shape that
+ * @electron/get accepts as inline `checksums`. Each line is `<sha256-hex> *<filename>` (binary
+ * mode) or `<sha256-hex>  <filename>` (text mode); malformed lines are ignored.
+ * @internal exported for unit testing
+ */
+export function parseChecksumFile(content: string): Record<string, string> {
+  const checksums: Record<string, string> = {}
+  for (const rawLine of content.split("\n")) {
+    const match = /^([a-fA-F0-9]{64})\s+\*?(.+)$/.exec(rawLine.trim())
+    if (match != null) {
+      checksums[match[2]] = match[1].toLowerCase()
+    }
+  }
+  return checksums
+}
+
+/**
+ * Looks for a locally seeded SHASUMS256 file at the root of the @electron/get cache and returns
+ * its contents as inline `checksums`, or null when nothing usable is seeded.
+ *
+ * Why: without inline `checksums`, @electron/get re-downloads `SHASUMS256.txt` with a hardcoded
+ * `cacheMode: Bypass` on EVERY build — even when the artifact itself is a cache hit — so a fully
+ * seeded cache still requires network access and air-gapped builds fail (#10039). Cache-seeding
+ * tools (e.g. flatpak-node-generator) already place `SHASUMS256.txt-<version>` flat at the cache
+ * root; feeding it back as inline `checksums` keeps checksum validation enabled while making it
+ * fully offline. A plain `SHASUMS256.txt` at the cache root is accepted as a manual-seeding
+ * fallback. A candidate file is only used when it actually contains an entry for the requested
+ * artifact, so a stale file for another version can never break an online build.
+ * See https://www.electron.build/tutorials/offline-air-gapped-builds for the seeding contract.
+ * @internal exported for unit testing
+ */
+export async function resolveSeededChecksums(cacheRoot: string, version: string, artifactFileName: string): Promise<Record<string, string> | null> {
+  const candidates = [path.join(cacheRoot, `SHASUMS256.txt-${version}`), path.join(cacheRoot, "SHASUMS256.txt")]
+  for (const candidate of candidates) {
+    if (!(await exists(candidate))) {
+      continue
+    }
+    let content: string
+    try {
+      content = await fs.readFile(candidate, "utf-8")
+    } catch (err: any) {
+      log.warn({ file: log.filePath(candidate), err: err.message }, "failed to read seeded SHASUMS file — ignoring it")
+      continue
+    }
+    const checksums = parseChecksumFile(content)
+    if (checksums[artifactFileName] == null) {
+      log.warn({ file: log.filePath(candidate), artifactFileName }, "seeded SHASUMS file has no entry for the requested artifact — ignoring it")
+      continue
+    }
+    log.debug({ file: log.filePath(candidate), artifactFileName }, "using locally seeded SHASUMS256 checksums — checksum validation can run offline")
+    return checksums
+  }
+  return null
+}
+
+/**
  * Assembles the `@electron/get` artifact config (`ElectronPlatformArtifactDetails`) from
  * `ArtifactDownloadOptions`: spreads the caller's options and pins `cacheRoot`/`platform`/`arch`/
  * `version`/`artifactName` and the resolved cache mode, warning when checksum verification is
- * disabled. Performs no I/O — callers pass the result to `downloadArtifactToFile` / `downloadAndExtract`.
+ * disabled. When the caller provides no `checksums` (user-provided `electronGet.checksums` always
+ * wins) and verification is not disabled, a locally seeded `SHASUMS256.txt-<version>` at the cache
+ * root is picked up as inline `checksums` so validation works offline (see resolveSeededChecksums).
+ * Callers pass the result to `downloadArtifactToFile` / `downloadAndExtract`.
+ * @internal exported for unit testing
  */
-function buildElectronArtifactConfig(artifactOptions: ArtifactDownloadOptions): ElectronPlatformArtifactDetails {
+export async function buildElectronArtifactConfig(artifactOptions: ArtifactDownloadOptions): Promise<ElectronPlatformArtifactDetails> {
   const { options, arch, version, platformName: platform, artifactName, cacheDir: cacheRoot } = artifactOptions
 
   if (options?.unsafelyDisableChecksums) {
@@ -651,6 +737,15 @@ function buildElectronArtifactConfig(artifactOptions: ArtifactDownloadOptions): 
   }
 
   const artifactConfig: ElectronPlatformArtifactDetails = { ...options, cacheRoot, platform, arch, version, artifactName, cacheMode: resolveCacheMode() }
+  if (artifactConfig.checksums == null && !artifactConfig.unsafelyDisableChecksums) {
+    // Matches @electron/get's getArtifactFileName for non-generic artifacts; `artifactSuffix` and
+    // `customFilename` cannot diverge here — both are excluded from ElectronGetOptions.
+    const artifactFileName = `${artifactName}-v${version}-${platform}-${arch}.zip`
+    const seededChecksums = await resolveSeededChecksums(cacheRoot ?? defaultElectronGetCacheRoot(), version, artifactFileName)
+    if (seededChecksums != null) {
+      artifactConfig.checksums = seededChecksums
+    }
+  }
   return artifactConfig
 }
 
@@ -658,8 +753,8 @@ function buildElectronArtifactConfig(artifactOptions: ArtifactDownloadOptions): 
  * Downloads the electron artifact zip via @electron/get (with caching) and returns the zip file path.
  * Use when you need to extract the zip yourself (e.g. directly to appOutDir to preserve empty dirs and symlinks).
  */
-export function downloadElectronArtifactZip(options: ArtifactDownloadOptions): Promise<string> {
-  const config = buildElectronArtifactConfig(options)
+export async function downloadElectronArtifactZip(options: ArtifactDownloadOptions): Promise<string> {
+  const config = await buildElectronArtifactConfig(options)
   return downloadArtifactToFile(config, config.artifactName)
 }
 
@@ -670,7 +765,7 @@ export function downloadElectronArtifactZip(options: ArtifactDownloadOptions): P
  */
 export async function downloadElectronArtifact(options: ArtifactDownloadOptions): Promise<string> {
   const { arch, version, platformName: platform, artifactName } = options
-  const artifactConfig = buildElectronArtifactConfig(options)
+  const artifactConfig = await buildElectronArtifactConfig(options)
 
   const suffix = hashUrlSafe(JSON.stringify(artifactConfig), 5)
   const folderName = `${artifactName}-v${version}-${platform}-${arch}-${suffix}`
