@@ -573,6 +573,13 @@ describe("migrateConfig — mac signing consolidation", () => {
     expect(result.changes.some(c => c.key === "mac.identity")).toBe(true)
   })
 
+  test("moves mac.type → sign.type", () => {
+    const result = migrateConfig({ mac: { type: "development" } })
+    expect("type" in result.migrated.mac).toBe(false)
+    expect(result.migrated.mac.sign).toEqual({ type: "development" })
+    expect(result.changes.some(c => c.key === "mac.type")).toBe(true)
+  })
+
   test("renames signIgnore → sign.ignore", () => {
     const result = migrateConfig({ mac: { signIgnore: ["foo", "bar"] } })
     expect("signIgnore" in result.migrated.mac).toBe(false)

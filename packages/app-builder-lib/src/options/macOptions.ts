@@ -1,7 +1,7 @@
 import { TargetConfiguration, TargetSpecificOptions } from "../core.js"
 import { PlatformSpecificBuildOptions } from "./PlatformSpecificBuildOptions.js"
 import { CustomMacSign } from "../macPackager.js"
-import type { OnlySignOptions } from "@electron/osx-sign"
+import type { OnlySignOptions, SigningDistributionType } from "@electron/osx-sign"
 import type { MakeUniversalOpts } from "@electron/universal"
 
 /**
@@ -22,15 +22,22 @@ export interface ElectronUniversalOptions extends Omit<MakeUniversalOpts, "x64Ap
 
 /**
  * Signing options passed to `@electron/osx-sign`. Electron-builder owns the fields it must control
- * itself — `app`, `keychain`, `platform`, `version`, `optionsForFile`, and `type` (derived from the
- * build flavor: `mas-dev` → `development`, otherwise `distribution`) — and forwards everything else.
+ * itself — `app`, `keychain`, `platform`, `version`, and `optionsForFile` — and forwards everything else.
  *
  * Additionally exposes a small set of per-file convenience fields that electron-builder maps
  * internally through `optionsForFile`.
  *
  * @see https://packages.electronjs.org/osx-sign
  */
-export interface ElectronSignOptions extends Omit<OnlySignOptions, "optionsForFile" | "version" | "type"> {
+export interface ElectronSignOptions extends Omit<OnlySignOptions, "optionsForFile" | "version"> {
+  /**
+   * The type of certificate to use when signing: `development` or `distribution`.
+   *
+   * Defaults to a value derived from the build flavor: `mas-dev` → `development`, otherwise `distribution`.
+   * Set it explicitly to override — e.g. `development` on a darwin build selects a development
+   * certificate and embeds a matching development provisioning profile.
+   */
+  readonly type?: SigningDistributionType
   /**
    * The signing identity (certificate name or SHA-1 hash). Applies to both app signing and DMG signing.
    * Prefer the environment variables `CSC_LINK` / `CSC_NAME` over hardcoding this value.
