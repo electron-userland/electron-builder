@@ -1,4 +1,4 @@
-import { asArray, copyDir, copyOrLinkFile, FileTransformer, Filter, log, statOrNull, USE_HARD_LINKS } from "builder-util"
+import { asArray, copyDir, copyOrLinkFile, FileTransformer, Filter, InvalidConfigurationError, log, statOrNull, USE_HARD_LINKS } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { mkdir } from "fs/promises"
 import { Minimatch } from "minimatch"
@@ -472,6 +472,42 @@ export interface GetFileMatchersOptions {
   readonly defaultSrc: string
 }
 
+// The names whose file sets are physically copied into the build output directory, so a `to` that
+// resolves outside of it writes onto the build machine itself (https://github.com/electron-userland/electron-builder/issues/1993).
+// `files` is excluded: its `to` is only used for in-package (asar) relative math.
+const VALIDATED_DESTINATION_NAMES: ReadonlyArray<string> = ["extraFiles", "extraResources", "extraDistFiles"]
+
+const FPM_MAPPING_HINT =
+  'To install a file at an absolute path inside a deb/rpm package, use the fpm file-mapping syntax instead, e.g. "deb": { "fpm": ["build/file.xml=/usr/share/metainfo/file.xml"] }.'
+
+/**
+ * Resolves a file set `to` against its default destination and validates that the result stays
+ * inside the build output directory. Throws for absolute `to` values (POSIX, Windows drive-letter,
+ * or UNC — files would be copied to that literal path on the build machine) and for relative values
+ * that escape `globalOutDir` (e.g. `../../usr/share`). Relative hops that stay inside the build
+ * output directory (e.g. `to: "../Frameworks"` from `Contents/Resources` on macOS) remain valid.
+ */
+export function resolveFileSetDestination(name: string, to: string, defaultDestination: string, globalOutDir: string): string {
+  // path.win32.isAbsolute also covers POSIX absolute paths, and treats drive-letter (C:\) and
+  // UNC (\\server\share) paths as absolute no matter which OS the build runs on
+  if (path.win32.isAbsolute(to) || path.posix.isAbsolute(to)) {
+    throw new InvalidConfigurationError(
+      `The "to" path "${to}" in "${name}" is absolute. Absolute destinations are not copied into the packaged app — they would be written to that literal path on the build machine. Use a relative path instead. ${FPM_MAPPING_HINT}`
+    )
+  }
+
+  // FileMatcher later converts all separators to path.sep, so normalize before resolving to make
+  // sure `..\\..` segments written with backslashes are seen as parent hops here too
+  const resolved = path.resolve(defaultDestination, to.replace(/[/\\]/g, path.sep))
+  const relativeToOutDir = path.relative(path.resolve(globalOutDir), resolved)
+  if (relativeToOutDir.startsWith(`..${path.sep}`) || relativeToOutDir === ".." || path.isAbsolute(relativeToOutDir)) {
+    throw new InvalidConfigurationError(
+      `The "to" path "${to}" in "${name}" resolves to "${resolved}", which is outside the build output directory "${path.resolve(globalOutDir)}". The files would be copied onto the build machine instead of into the packaged app. Use a relative path that stays within the package. ${FPM_MAPPING_HINT}`
+    )
+  }
+  return resolved
+}
+
 export function getFileMatchers(
   config: Configuration,
   name: "files" | "extraFiles" | "extraResources" | "extraDistFiles",
@@ -498,7 +534,12 @@ export function getFileMatchers(
         defaultMatcher.addPattern(pattern)
       } else {
         const from = pattern.from == null ? options.defaultSrc : path.resolve(options.defaultSrc, pattern.from)
-        const to = pattern.to == null ? defaultDestination : path.resolve(defaultDestination, pattern.to)
+        const to =
+          pattern.to == null
+            ? defaultDestination
+            : VALIDATED_DESTINATION_NAMES.includes(name)
+              ? resolveFileSetDestination(name, pattern.to, defaultDestination, options.globalOutDir)
+              : path.resolve(defaultDestination, pattern.to)
         fileMatchers.push(new FileMatcher(from, to, options.macroExpander, pattern.filter))
       }
     }
