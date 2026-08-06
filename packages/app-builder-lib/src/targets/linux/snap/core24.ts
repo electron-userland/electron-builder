@@ -193,7 +193,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     // Snap store review rejects classic-confinement snaps that declare plugs or layout, so skip
     // the generated defaults for classic (mirrors SnapCoreLegacy). Explicitly configured values
     // are kept, but warn that the store is likely to reject them.
-    const isClassic = (options.confinement || "strict") === "classic"
+    const isClassic = options.confinement === "classic"
     if (isClassic && (options.plugs != null || options.layout != null)) {
       log.warn(
         { confinement: "classic", plugs: options.plugs != null, layout: options.layout != null },
