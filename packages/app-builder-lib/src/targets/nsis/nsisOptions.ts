@@ -3,6 +3,8 @@ import { TargetSpecificOptions } from "../../core"
 
 export interface CustomNsisBinary {
   /**
+   * URL to a 7z archive containing the NSIS toolset to use.
+   * Note: do not use the `nsis-3.0.4.2` bundle — it is known to be broken (see https://github.com/electron-userland/electron-builder/issues/6334). Use `nsis-3.0.4.1` instead.
    * @default https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-3.0.4.1/nsis-3.0.4.1.7z
    */
   readonly url: string | null

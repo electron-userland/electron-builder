@@ -7,6 +7,7 @@ import * as os from "os"
 import * as path from "path"
 import * as tar from "tar"
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest"
+import * as crypto from "crypto"
 import {
   ArtifactDownloadOptions,
   ElectronDownloadOptions,
@@ -20,6 +21,10 @@ import {
   parseChecksumFile,
   resolveSeededChecksums,
 } from "app-builder-lib/out/util/electronGet"
+// parseExpectedChecksum is marked @internal, so it is stripped from the published .d.ts —
+// import the implementation directly like extractArchiveTest does for isSafeExtractPath.
+import * as electronGetInternal from "app-builder-lib/src/util/electronGet"
+const { parseExpectedChecksum } = electronGetInternal as any
 import { CacheState } from "app-builder-lib/out/util/cacheState"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 
@@ -523,6 +528,181 @@ describe("toolset archive cache", () => {
     const result2 = await downloadBuilderToolset({ releaseName, filenameWithExt: fileName })
     const entries = await fs.readdir(result2)
     expect(entries).toContain("network-file")
+  })
+})
+
+// ─── Checksum formats: sha256 hex vs base64 sha512 (#10040) ──────────────────
+
+// The historically documented customNsisBinary/customNsisResources checksums are base64-encoded
+// SHA-512, which @electron/get's sumchecker cannot parse (it only accepts SHA-256 hex).
+// downloadBuilderToolset must verify those itself instead of forwarding them.
+describe("downloadBuilderToolset checksum formats (#10040)", () => {
+  const digestOf = (data: Buffer | string, algorithm: "sha256" | "sha512", encoding: "hex" | "base64") => crypto.createHash(algorithm).update(data).digest(encoding)
+
+  let freshCache: string
+
+  beforeEach(async () => {
+    freshCache = await fs.mkdtemp(path.join(os.tmpdir(), "eb-checksum-format-test-"))
+    vi.stubEnv("ELECTRON_BUILDER_CACHE", freshCache)
+  })
+
+  afterEach(async () => {
+    vi.restoreAllMocks()
+    vi.unstubAllEnvs()
+    await fs.rm(freshCache, { recursive: true, force: true })
+  })
+
+  test("parseExpectedChecksum classifies sha256 hex, base64 sha512, and rejects everything else", ({ expect }) => {
+    const hex = "84021a78ee214ae6fd33a2d62a92ba25542dd10bc86bf117a9b2d0bba44e7665"
+    expect(parseExpectedChecksum("f", hex)).toEqual({ algorithm: "sha256", encoding: "hex", value: hex })
+
+    // the documented customNsisBinary default checksum (base64-encoded sha512)
+    const base64 = "VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q=="
+    expect(parseExpectedChecksum("f", base64)).toEqual({ algorithm: "sha512", encoding: "base64", value: base64 })
+
+    expect(() => parseExpectedChecksum("f", "not-a-checksum")).toThrow(/Unrecognized checksum format/)
+    expect(() => parseExpectedChecksum("f", "not-a-checksum")).toThrow(/Accepted formats/)
+    // sha512 hex (128 chars) is not supported either — only the two documented formats
+    expect(() => parseExpectedChecksum("f", "ab".repeat(64))).toThrow(/Unrecognized checksum format/)
+  })
+
+  test("sha256 hex checksums are passed through to @electron/get unchanged", async ({ expect }) => {
+    const fileName = "hex-passthrough.tar.gz"
+    const sha256 = "84021a78ee214ae6fd33a2d62a92ba25542dd10bc86bf117a9b2d0bba44e7665"
+    let captured: any
+    vi.spyOn(get, "downloadArtifact").mockImplementationOnce(config => {
+      captured = config
+      throw new Error("mock-stop")
+    })
+
+    await expect(downloadBuilderToolset({ releaseName: "hex-passthrough@0.1", filenameWithExt: fileName, checksums: { [fileName]: sha256 } })).rejects.toThrow("mock-stop")
+
+    expect(captured.checksums).toEqual({ [fileName]: sha256 })
+    expect(captured.unsafelyDisableChecksums).toBeUndefined()
+  })
+
+  test("base64 sha512 checksum: @electron/get validation is bypassed and the download verifies manually (#10040)", { timeout: 60_000 }, async ({ expect }) => {
+    const releaseName = "sha512-happy@0.1"
+    const fileName = "sha512-artifact.tar.gz"
+    const fixture = path.join(freshCache, "fixture.tar.gz")
+    await createMinimalTarGz(fixture, { sentinel: "sha512-ok" })
+    const sha512 = digestOf(await fs.readFile(fixture), "sha512", "base64")
+
+    const realDownloadArtifact = get.downloadArtifact
+    let captured: any
+    const spy = vi.spyOn(get, "downloadArtifact").mockImplementation(config => {
+      captured = config
+      return realDownloadArtifact(config)
+    })
+
+    const server = await startArtifactServer(fixture, `/${releaseName}/${fileName}`)
+    vi.stubEnv("ELECTRON_BUILDER_BINARIES_MIRROR", `http://127.0.0.1:${server.port}/`)
+    try {
+      const result = await downloadBuilderToolset({ releaseName, filenameWithExt: fileName, checksums: { [fileName]: sha512 } })
+      const entries = await fs.readdir(result)
+      expect(entries).toContain("sentinel")
+    } finally {
+      spy.mockRestore()
+      await server.close()
+    }
+
+    // sumchecker cannot parse base64, so the config must not forward it
+    expect(captured.checksums).toBeUndefined()
+    expect(captured.unsafelyDisableChecksums).toBe(true)
+    // the archive was verified and persisted to the archive cache
+    await expect(fs.access(path.join(freshCache, releaseName, fileName))).resolves.toBeUndefined()
+  })
+
+  test("base64 sha512 checksum mismatch: throws with expected vs actual and removes the download", { timeout: 60_000 }, async ({ expect }) => {
+    const releaseName = "sha512-mismatch@0.1"
+    const fileName = "sha512-corrupt.tar.gz"
+    const fixture = path.join(freshCache, "fixture.tar.gz")
+    await createMinimalTarGz(fixture, { sentinel: "served-bytes" })
+    const wrongSha512 = digestOf("some other content entirely", "sha512", "base64")
+    const actualSha512 = digestOf(await fs.readFile(fixture), "sha512", "base64")
+
+    const server = await startArtifactServer(fixture, `/${releaseName}/${fileName}`)
+    vi.stubEnv("ELECTRON_BUILDER_BINARIES_MIRROR", `http://127.0.0.1:${server.port}/`)
+    try {
+      const promise = downloadBuilderToolset({ releaseName, filenameWithExt: fileName, checksums: { [fileName]: wrongSha512 } })
+      await expect(promise).rejects.toThrow(/sha512 checksum mismatch/)
+      await expect(promise).rejects.toThrow(wrongSha512)
+      await expect(promise).rejects.toThrow(actualSha512)
+    } finally {
+      await server.close()
+    }
+
+    // the corrupted download must not survive anywhere in the cache:
+    // neither in @electron/get's download cache nor in the archive cache
+    const leftovers = (await fs.readdir(freshCache, { recursive: true })).filter(p => p.toString().endsWith(fileName))
+    expect(leftovers).toEqual([])
+  })
+
+  test("unrecognized checksum format fails fast without downloading", async ({ expect }) => {
+    const spy = vi.spyOn(get, "downloadArtifact").mockImplementation(() => {
+      throw new Error("downloadArtifact must not be called for an invalid checksum config")
+    })
+
+    await expect(
+      downloadBuilderToolset({ releaseName: "bad-format@0.1", filenameWithExt: "artifact.tar.gz", checksums: { "artifact.tar.gz": "clearly-not-a-checksum" } })
+    ).rejects.toThrow(/Unrecognized checksum format/)
+    expect(spy).not.toHaveBeenCalled()
+  })
+
+  test("mixed checksum formats fail fast without downloading", async ({ expect }) => {
+    const spy = vi.spyOn(get, "downloadArtifact").mockImplementation(() => {
+      throw new Error("downloadArtifact must not be called for an invalid checksum config")
+    })
+
+    await expect(
+      downloadBuilderToolset({
+        releaseName: "mixed-format@0.1",
+        filenameWithExt: "artifact.tar.gz",
+        checksums: {
+          "artifact.tar.gz": "84021a78ee214ae6fd33a2d62a92ba25542dd10bc86bf117a9b2d0bba44e7665",
+          "other.tar.gz": "VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q==",
+        },
+      })
+    ).rejects.toThrow(/mix formats/)
+    expect(spy).not.toHaveBeenCalled()
+  })
+
+  test("archive cache hit verifies with a base64 sha512 checksum (no download)", async ({ expect }) => {
+    const releaseName = "sha512-cache@0.1"
+    const fileName = "sha512-cached.tar.gz"
+    const archiveCachePath = path.join(freshCache, releaseName, fileName)
+    await fs.mkdir(path.dirname(archiveCachePath), { recursive: true })
+    await createMinimalTarGz(archiveCachePath, { sentinel: "cached-sha512" })
+    const sha512 = digestOf(await fs.readFile(archiveCachePath), "sha512", "base64")
+
+    const spy = vi.spyOn(get, "downloadArtifact").mockImplementation(() => {
+      throw new Error("downloadArtifact must not be called — archive is already cached")
+    })
+
+    const result = await downloadBuilderToolset({ releaseName, filenameWithExt: fileName, checksums: { [fileName]: sha512 } })
+    expect(spy).not.toHaveBeenCalled()
+    const entries = await fs.readdir(result)
+    expect(entries).toContain("sentinel")
+  })
+
+  test("archive cache entry failing its base64 sha512 checksum is discarded and re-downloaded", async ({ expect }) => {
+    const releaseName = "sha512-stale-cache@0.1"
+    const fileName = "sha512-stale.tar.gz"
+    const archiveCachePath = path.join(freshCache, releaseName, fileName)
+    await fs.mkdir(path.dirname(archiveCachePath), { recursive: true })
+    await fs.writeFile(archiveCachePath, "corrupt data")
+
+    let downloadArtifactCalled = false
+    vi.spyOn(get, "downloadArtifact").mockImplementation(() => {
+      downloadArtifactCalled = true
+      throw new Error("expected-download-attempt")
+    })
+
+    const sha512 = digestOf("the pristine artifact bytes", "sha512", "base64")
+    await expect(downloadBuilderToolset({ releaseName, filenameWithExt: fileName, checksums: { [fileName]: sha512 } })).rejects.toThrow("expected-download-attempt")
+    expect(downloadArtifactCalled).toBe(true)
+    // the stale cached archive was removed before the re-download attempt
+    await expect(fs.access(archiveCachePath)).rejects.toThrow()
   })
 })
 
