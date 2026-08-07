@@ -1,5 +1,24 @@
 # app-builder-lib
 
+## 26.15.8
+
+### Patch Changes
+
+- Feat: support fully offline (air-gapped) Electron downloads by picking up a locally seeded `SHASUMS256.txt-<version>` at the Electron cache root and passing it to `@electron/get` as inline checksums, suppressing the mandatory network fetch of `SHASUMS256.txt` that failed air-gapped builds even with a fully seeded cache. Also recognise a user-provided `electronDownload.checksums` so it is forwarded instead of silently dropped (#10039) _[`#10047`](https://github.com/electron-userland/electron-builder/pull/10047) [`ee1d282`](https://github.com/electron-userland/electron-builder/commit/ee1d2828600f807887135e0a5a7d01d8d5d28c30) [@claude](https://github.com/apps/claude)_
+- Fix: allow parentheses in AppImage executable, product, and license file names. Before, product names like `Zoo Design Studio (Staging)` failed AppImage builds with "productFilename contains characters that cannot be safely used in file paths" — a regression from the Go pipeline, which accepted them. After, names containing `(` and `)` build again; parentheses are legal in Linux filenames and inert inside the double-quoted bash strings of the generated AppRun launcher, while genuinely dangerous characters (`$`, backticks, quotes, slashes) remain rejected. _[`#10052`](https://github.com/electron-userland/electron-builder/pull/10052) [`12add99`](https://github.com/electron-userland/electron-builder/commit/12add992b703db522c21d14f871e8517472484b4) [@claude](https://github.com/apps/claude)_
+- Fix: accept base64-encoded SHA-512 checksums for custom toolset downloads again. `customNsisBinary`/`customNsisResources` configs using the historically documented base64 SHA-512 checksums failed on 26.15.x with `Could not parse checksum file at line 1` because the checksum was forwarded to `@electron/get`, whose sumchecker only understands SHA-256 hex. Base64 SHA-512 checksums are now verified by electron-builder itself after the download (and on archive-cache hits); SHA-256 hex checksums keep being verified by `@electron/get`. Unrecognized or mixed checksum formats now fail fast with a clear configuration error instead of a mid-download parse error. _[`#10041`](https://github.com/electron-userland/electron-builder/pull/10041) [`cc8e783`](https://github.com/electron-userland/electron-builder/commit/cc8e7833388c2e2591eb77c2ce72548a34eba9d3) [@claude](https://github.com/apps/claude)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@26.15.8`
+- `electron-builder-squirrel-windows@26.15.8`
+
+</details>
+
 ## 26.15.7
 
 ### Patch Changes
