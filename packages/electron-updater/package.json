@@ -14,7 +14,8 @@
       "types": "./dist/indexInternal.d.ts",
       "import": "./dist/indexInternal.js",
       "require": "./dist/indexInternal.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "author": "Vladimir Krivosheev",
   "license": "MIT",
