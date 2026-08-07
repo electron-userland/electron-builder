@@ -29,10 +29,15 @@ Before notarizing, you need:
 ```yaml
 mac:
   notarize: true
-  hardenedRuntime: true
-  entitlements: build/entitlements.mac.plist
-  entitlementsInherit: build/entitlements.mac.inherit.plist
+  sign:
+    hardenedRuntime: true
+    entitlements: build/entitlements.mac.plist
+    entitlementsInherit: build/entitlements.mac.inherit.plist
 ```
+
+:::note[v27]
+`notarize` stays on `mac`, but the signing options (`hardenedRuntime`, `entitlements`, `entitlementsInherit`) moved under `mac.sign` in v27. See [macOS signing](./migration/v27-breaking-changes.md#macos-signing-macsign).
+:::
 
 ### Authentication — Option A: Apple ID
 
@@ -78,7 +83,7 @@ This approach requires credentials to be pre-stored on the build machine and is 
 
 ## Hardened Runtime Requirements
 
-Notarization requires **Hardened Runtime** (`hardenedRuntime: true`). This restricts what your app process can do unless you explicitly declare entitlements.
+Notarization requires **Hardened Runtime** (`mac.sign.hardenedRuntime: true`). This restricts what your app process can do unless you explicitly declare entitlements.
 
 Electron requires at minimum:
 
@@ -195,10 +200,10 @@ codesign --verify --deep --strict --verbose=2 dist/mac/MyApp.app
 : Add the JIT entitlement to your `entitlements.mac.plist`. See the entitlements section above.
 
 **Notarization rejected: "The executable does not have the Hardened Runtime enabled"**
-: Set `hardenedRuntime: true` in your mac configuration.
+: Set `mac.sign.hardenedRuntime: true` in your mac configuration.
 
 **"Invalid Info.plist (plist or signature have wrong format)"**
-: All binaries inside the app bundle must be signed. This often happens with third-party native modules or bundled binaries. Ensure `asarUnpack` is set for any `.node` files and that all binaries are signed before creating the final distributable. Use a custom `afterSign` hook if you need to sign additional binaries.
+: All binaries inside the app bundle must be signed. This often happens with third-party native modules or bundled binaries. Ensure `asar.unpack` is set for any `.node` files and that all binaries are signed before creating the final distributable. Use a custom `afterSign` hook if you need to sign additional binaries.
 
 ## Related Pages
 

@@ -100,7 +100,7 @@ For EV certificates (bound to a USB dongle), identify by subject name instead:
 
 ---
 
-## HSM Signing (`type: "hsm"`) — Beta
+## HSM Signing (`type: "hsm"`) — Beta {#hsm-signing-type-hsm-beta}
 
 :::warning[Beta feature]
 HSM signing is available in v27 as a **beta** feature. The configuration interface is stable, but real-hardware test coverage is limited. Please [report issues](https://github.com/electron-userland/electron-builder/issues) if you encounter problems.
@@ -108,7 +108,7 @@ HSM signing is available in v27 as a **beta** feature. The configuration interfa
 
 Signs using a Hardware Security Module (HSM), FIPS-compliant token, or smart card via `signtool.exe`'s `/csp` (cryptographic service provider) and `/kc` (key container) flags. The private key never leaves the hardware; only the public certificate chain needs to be accessible to electron-builder.
 
-**Platform:** Windows only. For macOS/Linux CI without a Windows VM, use [`type: "pkcs11"`](#pkcs11-signing-typepkcs11--beta) instead.
+**Platform:** Windows only. For macOS/Linux CI without a Windows VM, use [`type: "pkcs11"`](#pkcs11-signing-typepkcs11-beta) instead.
 
 **Requirement:** a modern `winCodeSign` toolset, which is the default — you do not need to pin a version. Only an explicit legacy pin (`toolsets.winCodeSign: "0.0.0"`) is unsupported, because it predates the required signtool version.
 
@@ -154,7 +154,7 @@ The default `winCodeSign` toolset already supports HSM signing, so no `toolsets`
 
 ---
 
-## PKCS#11 Signing (`type: "pkcs11"`) — Beta
+## PKCS#11 Signing (`type: "pkcs11"`) — Beta {#pkcs11-signing-type-pkcs11-beta}
 
 :::warning[Beta feature]
 PKCS#11 signing is available in v27 as a **beta** feature. The configuration interface is stable, but real-hardware test coverage is limited. Please [report issues](https://github.com/electron-userland/electron-builder/issues) if you encounter problems.
@@ -162,7 +162,7 @@ PKCS#11 signing is available in v27 as a **beta** feature. The configuration int
 
 Signs using a PKCS#11 hardware token via `osslsigncode`. Unlike HSM signing, this works on macOS and Linux without a Windows VM, making it suitable for cloud CI environments where a physical token is accessible via network HSM or PKCS#11-over-network software.
 
-**Platform:** macOS and Linux only (uses `osslsigncode`). On Windows, use [`type: "hsm"`](#hsm-signing-typehsm--beta) instead.
+**Platform:** macOS and Linux only (uses `osslsigncode`). On Windows, use [`type: "hsm"`](#hsm-signing-typehsm-beta) instead.
 
 ### Setup
 
@@ -227,7 +227,7 @@ With an optional external certificate chain file (if the token does not carry th
 
 ---
 
-## Azure Trusted Signing (`type: "azure"`) — Beta
+## Azure Trusted Signing (`type: "azure"`) — Beta {#azure-trusted-signing-type-azure-beta}
 
 :::warning[Beta feature]
 The `signtool /dlib` Azure Trusted Signing integration introduced in v27 is a **beta** feature. It is the default path on current toolsets; the legacy PowerShell fallback remains available only when you explicitly pin `toolsets.winCodeSign` below `"1.3.0"` (see [Legacy PowerShell fallback](#legacy-powershell-fallback) below). Please [report issues](https://github.com/electron-userland/electron-builder/issues) if you encounter problems.
