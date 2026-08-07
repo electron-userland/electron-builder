@@ -362,19 +362,26 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       const deps = (obj[key] || {}).dependencies || []
       for (const dep of deps) {
         const child = this.transformToHoisterTree(obj, dep, nodes)
-        node.dependencies.add(child)
+        // a package that declares itself as a dependency (e.g. libsql) must not produce a self-edge
+        if (child !== node) {
+          node.dependencies.add(child)
+        }
       }
     }
 
     return node
   }
 
-  private async _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[], archFilter?: ArchFilter) {
+  private async _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[], archFilter?: ArchFilter, ancestors: Set<HoisterResult> = new Set()) {
     if (dependencies.size === 0) {
       return
     }
 
     for (const d of dependencies.values()) {
+      // dependency cycles (including self-references) must not recurse
+      if (ancestors.has(d)) {
+        continue
+      }
       const reference = [...d.references][0]
       const key = `${d.name}@${reference}`
       // Normalize the path to handle mixed separators from pnpm JSON output on Windows
@@ -416,7 +423,9 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       result.push(node)
       if (d.dependencies.size > 0) {
         node.dependencies = []
-        await this._getNodeModules(d.dependencies, node.dependencies, archFilter)
+        ancestors.add(d)
+        await this._getNodeModules(d.dependencies, node.dependencies, archFilter, ancestors)
+        ancestors.delete(d)
       }
     }
     result.sort((a, b) => a.name.localeCompare(b.name))
