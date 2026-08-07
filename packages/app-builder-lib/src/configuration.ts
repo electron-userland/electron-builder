@@ -472,6 +472,13 @@ export interface Configuration extends CommonConfiguration, PlatformSpecificBuil
   /**
    * Options forwarded to [`@electron/get`](https://github.com/electron/get) when downloading the
    * Electron distribution to package.
+   *
+   * `checksums` (a map of artifact file name → SHA-256 hex) makes checksum validation fully offline —
+   * without it, `@electron/get` fetches `SHASUMS256.txt` from the network on every build, even when the
+   * artifact itself is already cached. When `checksums` is not configured, electron-builder automatically
+   * picks up a locally seeded `SHASUMS256.txt-<version>` (or `SHASUMS256.txt`) file at the root of the
+   * Electron cache directory. See the
+   * [air-gapped / offline builds guide](https://www.electron.build/tutorials/offline-air-gapped-builds).
    */
   readonly electronGet?: ElectronGetOptions | null
 

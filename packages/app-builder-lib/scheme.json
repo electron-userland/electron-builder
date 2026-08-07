@@ -9433,7 +9433,7 @@
           "type": "null"
         }
       ],
-      "description": "Options forwarded to [`@electron/get`](https://github.com/electron/get) when downloading the\nElectron distribution to package."
+      "description": "Options forwarded to [`@electron/get`](https://github.com/electron/get) when downloading the\nElectron distribution to package.\n\n`checksums` (a map of artifact file name → SHA-256 hex) makes checksum validation fully offline —\nwithout it, `@electron/get` fetches `SHASUMS256.txt` from the network on every build, even when the\nartifact itself is already cached. When `checksums` is not configured, electron-builder automatically\npicks up a locally seeded `SHASUMS256.txt-<version>` (or `SHASUMS256.txt`) file at the root of the\nElectron cache directory. See the\n[air-gapped / offline builds guide](https://www.electron.build/tutorials/offline-air-gapped-builds)."
     },
     "electronLanguages": {
       "anyOf": [
