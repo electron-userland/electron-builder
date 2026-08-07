@@ -1,3 +1,18 @@
+## [26.15.8](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.7...electron-builder@26.15.8) (2026-08-07)
+
+
+### Bug Fixes
+
+* **nsis:** accept base64 SHA-512 checksums for custom NSIS toolset downloads ([#10041](https://github.com/electron-userland/electron-builder/issues/10041)) ([cc8e783](https://github.com/electron-userland/electron-builder/commit/cc8e7833388c2e2591eb77c2ce72548a34eba9d3))
+* v26 backport of [#10050](https://github.com/electron-userland/electron-builder/issues/10050) ([#10052](https://github.com/electron-userland/electron-builder/issues/10052)) ([12add99](https://github.com/electron-userland/electron-builder/commit/12add992b703db522c21d14f871e8517472484b4))
+
+
+### Features
+
+* **v26:** offline checksum validation via locally seeded SHASUMS256.txt for air-gapped builds ([#10047](https://github.com/electron-userland/electron-builder/issues/10047)) ([ee1d282](https://github.com/electron-userland/electron-builder/commit/ee1d2828600f807887135e0a5a7d01d8d5d28c30))
+
+
+
 ## [26.15.7](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.6...electron-builder@26.15.7) (2026-07-12)
 
 
