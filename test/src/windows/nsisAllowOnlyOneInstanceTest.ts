@@ -7,14 +7,32 @@ const uninstallerPath = path.join(__dirname, "../../../packages/app-builder-lib/
 
 let templateContent: string
 let findProcessMacro: string
+let powerShellAvailabilityMacro: string
 
 describe("allowOnlyOneInstallerInstance.nsh", { sequential: true }, () => {
   beforeAll(async () => {
     templateContent = await fs.readFile(templatePath, "utf8")
 
+    // Extract the PowerShell availability macro for focused probe assertions
+    const availabilityMatch = templateContent.match(/!macro IS_POWERSHELL_AVAILABLE[\s\S]*?!macroend/)
+    powerShellAvailabilityMacro = availabilityMatch ? availabilityMatch[0] : ""
+
     // Extract just the FIND_PROCESS macro body for targeted assertions
     const match = templateContent.match(/!macro FIND_PROCESS[\s\S]*?!macroend/)
     findProcessMacro = match ? match[0] : ""
+  })
+
+  describe("IS_POWERSHELL_AVAILABLE macro", () => {
+    test("requires proof that the capability probe was executed", () => {
+      expect(powerShellAvailabilityMacro).toContain("Get-Command Get-CimInstance")
+      expect(powerShellAvailabilityMacro).toContain("exit 37")
+      expect(powerShellAvailabilityMacro).toContain("${if} $0 == 37")
+      expect(powerShellAvailabilityMacro).toContain("Get-ExecutionPolicy -Scope Process")
+    })
+
+    test("marks every non-sentinel capability result as unavailable", () => {
+      expect(powerShellAvailabilityMacro).toContain("${else}\n    StrCpy $0 1\n  ${endIf}")
+    })
   })
 
   describe("FIND_PROCESS macro — PowerShell path", () => {
