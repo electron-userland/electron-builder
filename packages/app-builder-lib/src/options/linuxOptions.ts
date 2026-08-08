@@ -94,9 +94,22 @@ export interface CommonLinuxOptions {
   readonly mimeTypes?: Array<string> | null
 
   /**
-   * The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)
+   * Customize the desktop file entries.
+   * The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files).
+   *
+   * For AppImage, Snap, deb, rpm, Flatpak, and other package-format targets, the desktop file is ALWAYS
+   * generated and bundled inside the package — this option does not suppress it for those targets.
+   *
+   * For archive targets (zip, 7z, tar.xz, tar.lz, tar.gz, tar.bz2), no desktop file is emitted by default.
+   * Set to a `LinuxDesktopFile` object or `true` to emit a standalone `.desktop` artifact alongside the archive.
+   * Set to `false`, `null`, or omit to suppress. The standalone archive `.desktop` is controlled by this
+   * top-level `linux.desktop` value only (archive targets have no per-target desktop override).
+   *
+   * Note: the standalone archive `.desktop` is generated for the installed-app convention — its `Exec`
+   * points at the `/opt/<productName>/<executableName>` install path and `Icon` is the bare executable name.
+   * Consumers who extract the archive elsewhere should adjust `Exec`/`Icon` to their install location.
    */
-  readonly desktop?: LinuxDesktopFile | null
+  readonly desktop?: LinuxDesktopFile | boolean | null
 
   /**
    * The executable parameters. Pass to executableName

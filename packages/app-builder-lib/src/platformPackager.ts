@@ -540,7 +540,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     // `"executableName" in this` instead of `instanceof LinuxPackager` keeps LinuxPackager a
     // type-only import, avoiding the index.ts → linuxPackager.ts → platformPackager.ts runtime cycle.
-    const executableName = "executableName" in this ? (this as LinuxPackager).executableName : this.appInfo.productFilename
+    const executableName = "executableName" in this ? (this as unknown as LinuxPackager).executableName : this.appInfo.productFilename
     const electronBinaryPath = path.join(appOutDir, `${executableName}${ext}`)
 
     log.info({ electronPath: log.filePath(electronBinaryPath) }, "executing @electron/fuses")

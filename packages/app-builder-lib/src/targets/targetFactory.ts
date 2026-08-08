@@ -3,7 +3,7 @@ import { DEFAULT_TARGET, DIR_TARGET, Platform, Target, TargetConfiguration } fro
 import { PlatformPackager } from "../platformPackager.js"
 import { ArchiveTarget } from "./ArchiveTarget.js"
 
-const archiveTargets = new Set(["zip", "7z", "tar.xz", "tar.lz", "tar.gz", "tar.bz2"])
+export const archiveTargets = new Set(["zip", "7z", "tar.xz", "tar.lz", "tar.gz", "tar.bz2"])
 
 /**
  * Populates the per-platform arch→target map from a list of CLI/config target specs (e.g. "nsis", "deb:armv7l").
