@@ -48,7 +48,7 @@ describe("createFilter – build/app/**/* partial directory matching (test-app-b
     "build/app/**/*.html",
     "!build/dist/*-unpacked{,/**/*}",
     "package.json",
-    "!**/*.{iml,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,suo,xproj,cc,d.ts,mk,a,o,obj,forge-meta,pdb}",
+    "!**/*.{iml,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,slnx,suo,xproj,cc,d.ts,mk,a,o,obj,forge-meta,pdb}",
     "!**/._*",
     "!**/electron-builder.{yaml,yml,json,json5,toml,ts}",
   ])
