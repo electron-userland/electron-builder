@@ -1,4 +1,4 @@
-import { AsyncTaskManager, FileCopier, FileTransformer, isEmptyOrSpaces, Link, log, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
+import { AsyncTaskManager, FileCopier, FileTransformer, InvalidConfigurationError, isEmptyOrSpaces, Link, log, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
 import { Stats } from "fs"
 import { ensureSymlink } from "fs-extra"
 import { mkdir, readlink } from "fs/promises"
@@ -281,7 +281,57 @@ export async function resolveFirstMatchingCollection(options: {
   return fallback
 }
 
-async function collectNodeModulesWithLogging(platformPackager: PlatformPackager<any>) {
+/** Extracts the package name from a `name@version` log-summary entry, handling `@scope/name@version`. */
+function dependencyNameFromSummaryId(id: string): string {
+  let at: number
+  if (id.startsWith("@")) {
+    // Scoped package: the version separator is the first `@` after the scope's `/`
+    const slashIndex = id.indexOf("/")
+    if (slashIndex === -1) {
+      return id
+    }
+    at = id.indexOf("@", slashIndex + 1)
+  } else {
+    at = id.indexOf("@")
+  }
+  return at > 0 ? id.slice(0, at) : id
+}
+
+/**
+ * Enforces `failOnMissingDependencies` against the finished collection summary (issue #10058).
+ * Runs only after collection completes, so the error reports the COMPLETE set of missing
+ * production dependencies at once instead of failing on the first one.
+ *
+ * Only genuinely missing production dependencies (`PKG_NOT_FOUND` / `PKG_NOT_ON_DISK`) are fatal;
+ * missing optional dependencies (`PKG_OPTIONAL_NOT_INSTALLED` / `PKG_OPTIONAL_PLATFORM_NOT_INSTALLED`)
+ * never fail the build. When the option is a `string[]`, enforcement is enabled and the listed
+ * dependency names are exempted — matched against the package name parsed from the summary's
+ * `name@version` entries (scoped names included), with an exact-entry match accepted as well.
+ *
+ * Exported for tests (an internal-tagged export would be stripped from the declarations the test
+ * project consumes).
+ */
+export function enforceFailOnMissingDependencies(failOnMissingDependencies: boolean | Array<string> | null | undefined, logSummary: ModuleManager["logSummary"] | undefined): void {
+  if (failOnMissingDependencies !== true && !Array.isArray(failOnMissingDependencies)) {
+    return
+  }
+  const missing = new Set<string>([...(logSummary?.[LogMessageByKey.PKG_NOT_FOUND] ?? []), ...(logSummary?.[LogMessageByKey.PKG_NOT_ON_DISK] ?? [])])
+  const ignored = new Set(Array.isArray(failOnMissingDependencies) ? failOnMissingDependencies : [])
+  const fatal = Array.from(missing)
+    .filter(id => !ignored.has(dependencyNameFromSummaryId(id)) && !ignored.has(id))
+    .sort()
+  if (fatal.length === 0) {
+    return
+  }
+  throw new InvalidConfigurationError(
+    `The following production dependencies could not be resolved during node-module collection and the build is configured to fail on missing dependencies (failOnMissingDependencies):\n` +
+      fatal.map(id => `  - ${id}`).join("\n") +
+      `\nInstall the missing dependencies, add their names to the \`failOnMissingDependencies\` array to allow them to be missing, or set \`failOnMissingDependencies\` to false.`
+  )
+}
+
+/** Exported for tests (an internal-tagged export would be stripped from the declarations the test project consumes). */
+export async function collectNodeModulesWithLogging(platformPackager: PlatformPackager<any>) {
   const packager = platformPackager.info
   const { tempDirManager, appDir, projectDir } = packager
 
@@ -307,6 +357,10 @@ async function collectNodeModulesWithLogging(platformPackager: PlatformPackager<
     const logLevel = logMessageLevelByKey[errorMessage as LogMessageByKey] || "debug"
     log[logLevel]({ dependencies }, errorMessage)
   }
+
+  // Opt-in enforcement (issue #10058): collection is complete and the summary above has reached the
+  // log, so failing here reports every missing production dependency at once.
+  enforceFailOnMissingDependencies(packager.config.failOnMissingDependencies, deps.logSummary)
 
   return deps.nodeModules
 }
