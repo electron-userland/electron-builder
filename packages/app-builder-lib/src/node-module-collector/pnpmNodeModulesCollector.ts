@@ -130,7 +130,9 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       if (optional[packageName]) {
         const pkg = await this.locateFromDepOrRoot(packageName, tree.path, dependency.version)
         if (!pkg) {
-          this.logMissingDependency(`${packageName}@${dependency.version}`)
+          // Declared in `optionalDependencies`, so a miss is an expected condition (e.g. fsevents
+          // on Linux/Windows) — classify it as a missing optional dependency, not PKG_NOT_ON_DISK.
+          this.logMissingDependency(`${packageName}@${dependency.version}`, true)
           return undefined
         }
       }

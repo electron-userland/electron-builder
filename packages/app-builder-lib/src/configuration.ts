@@ -199,6 +199,28 @@ export interface CommonConfiguration {
   readonly nativeRebuilder?: "legacy" | "sequential" | "parallel" | null
 
   /**
+   * Whether a production dependency that cannot be resolved during node-module collection should
+   * fail the build instead of only being logged as a warning.
+   *
+   * By default, a dependency that node-module collection cannot resolve (`cannot find path for
+   * dependency` / `dependency not found on disk`) only produces a warning and the build "succeeds"
+   * without the package — typically breaking the packaged app at runtime with `MODULE_NOT_FOUND`.
+   *
+   * - `false` (or omitted): today's behaviour — missing dependencies are logged as warnings only.
+   * - `true`: the build fails after dependency collection completes, reporting the **complete**
+   *   list of missing production dependencies at once.
+   * - `string[]`: like `true`, but the listed dependency names are ignored — they are allowed to
+   *   be missing without failing the build. Entries match the package name of the reported
+   *   `name@version` entry (e.g. `some-native-module`, `@scope/pkg`).
+   *
+   * Missing *optional* dependencies (declared in `optionalDependencies`, e.g. `fsevents` on
+   * Linux/Windows, or platform-specific packages) never fail the build.
+   *
+   * @default false
+   */
+  readonly failOnMissingDependencies?: boolean | Array<string> | null
+
+  /**
    * The build number. Maps to the `--iteration` flag for builds using FPM on Linux.
    * If not defined, then it will fallback to `BUILD_NUMBER` or `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_BUILDNUMBER` or `CI_PIPELINE_IID` env.
    */
