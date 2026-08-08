@@ -9,6 +9,7 @@ import {
   GetFileMatchersOptions,
   getMainFileMatchers,
   getReincludedDefaultExclusions,
+  resolveFileSetDestination,
 } from "app-builder-lib/internal"
 import * as path from "path"
 import { vi } from "vitest"
@@ -396,6 +397,43 @@ describe("getFileMatchers – extraFiles/extraResources `to` destination validat
     const result = getFileMatchers({ files: [{ from: "assets", to: "resources" }] } as any, "files", "/out", opts)
     expect(result).not.toBeNull()
     expect(result![0].to).toBe(path.resolve("/out", "resources"))
+  })
+})
+
+describe("resolveFileSetDestination – per-branch behavior", () => {
+  const outDir = path.resolve("/project/dist")
+  const contentsDir = path.join(outDir, "mac", "Test.app", "Contents")
+  const resourcesDir = path.join(contentsDir, "Resources")
+
+  test("null/undefined `to` falls back to the default destination without validation", ({ expect }) => {
+    expect(resolveFileSetDestination("extraFiles", null, contentsDir, outDir)).toBe(contentsDir)
+    expect(resolveFileSetDestination("extraResources", undefined, resourcesDir, outDir)).toBe(resourcesDir)
+    expect(resolveFileSetDestination("files", null, "/out", outDir)).toBe("/out")
+  })
+
+  test("`files` set is exempt from validation and plainly resolves against the default destination", ({ expect }) => {
+    expect(resolveFileSetDestination("files", "resources", "/out", outDir)).toBe(path.resolve("/out", "resources"))
+    // even values that would throw for validated sets are resolved as-is for `files`
+    expect(resolveFileSetDestination("files", "../elsewhere", "/out", outDir)).toBe(path.resolve("/out", "../elsewhere"))
+  })
+
+  test("relative `to` on a validated set resolves inside the default destination", ({ expect }) => {
+    expect(resolveFileSetDestination("extraResources", "bin", resourcesDir, outDir)).toBe(path.join(resourcesDir, "bin"))
+  })
+
+  test("`../` hop that stays inside the build output directory is valid", ({ expect }) => {
+    expect(resolveFileSetDestination("extraResources", "../Frameworks", resourcesDir, outDir)).toBe(path.join(contentsDir, "Frameworks"))
+  })
+
+  test("absolute `to` on a validated set throws (POSIX, drive-letter, UNC)", ({ expect }) => {
+    expect(() => resolveFileSetDestination("extraFiles", "/usr/share/metainfo/x.xml", contentsDir, outDir)).toThrowError(/is absolute.*fpm/s)
+    expect(() => resolveFileSetDestination("extraFiles", "C:\\Program Files\\App", contentsDir, outDir)).toThrowError(/is absolute/)
+    expect(() => resolveFileSetDestination("extraDistFiles", "\\\\server\\share\\dir", outDir, outDir)).toThrowError(/is absolute/)
+  })
+
+  test("relative `to` escaping the build output directory throws", ({ expect }) => {
+    expect(() => resolveFileSetDestination("extraResources", "../../../../../usr/share", resourcesDir, outDir)).toThrowError(/outside the build output directory/)
+    expect(() => resolveFileSetDestination("extraFiles", "..\\..\\..\\..\\usr\\share", contentsDir, outDir)).toThrowError(/outside the build output directory/)
   })
 })
 

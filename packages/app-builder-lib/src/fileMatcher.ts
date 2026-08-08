@@ -481,13 +481,27 @@ const FPM_MAPPING_HINT =
   'To install a file at an absolute path inside a deb/rpm package, use the fpm file-mapping syntax instead, e.g. "deb": { "fpm": ["build/file.xml=/usr/share/metainfo/file.xml"] }.'
 
 /**
- * Resolves a file set `to` against its default destination and validates that the result stays
- * inside the build output directory. Throws for absolute `to` values (POSIX, Windows drive-letter,
- * or UNC — files would be copied to that literal path on the build machine) and for relative values
- * that escape `globalOutDir` (e.g. `../../usr/share`). Relative hops that stay inside the build
- * output directory (e.g. `to: "../Frameworks"` from `Contents/Resources` on macOS) remain valid.
+ * Resolves a file set `to` to the destination a FileMatcher should copy into.
+ *
+ * - A missing `to` falls back to `defaultDestination`.
+ * - For file sets that are physically copied into the build output directory
+ *   (see {@link VALIDATED_DESTINATION_NAMES}), the result is validated to stay inside it:
+ *   absolute `to` values (POSIX, Windows drive-letter, or UNC — files would be copied to that
+ *   literal path on the build machine) and relative values that escape `globalOutDir`
+ *   (e.g. `../../usr/share`) throw. Relative hops that stay inside the build output directory
+ *   (e.g. `to: "../Frameworks"` from `Contents/Resources` on macOS) remain valid.
+ * - `files` sets are exempt from validation: their `to` only participates in in-package (asar)
+ *   relative math, so it is plainly resolved against `defaultDestination`.
  */
-export function resolveFileSetDestination(name: string, to: string, defaultDestination: string, globalOutDir: string): string {
+export function resolveFileSetDestination(name: string, to: string | Nullish, defaultDestination: string, globalOutDir: string): string {
+  if (to == null) {
+    return defaultDestination
+  }
+
+  if (!VALIDATED_DESTINATION_NAMES.includes(name)) {
+    return path.resolve(defaultDestination, to)
+  }
+
   // path.win32.isAbsolute also covers POSIX absolute paths, and treats drive-letter (C:\) and
   // UNC (\\server\share) paths as absolute no matter which OS the build runs on
   if (path.win32.isAbsolute(to) || path.posix.isAbsolute(to)) {
@@ -534,12 +548,7 @@ export function getFileMatchers(
         defaultMatcher.addPattern(pattern)
       } else {
         const from = pattern.from == null ? options.defaultSrc : path.resolve(options.defaultSrc, pattern.from)
-        const to =
-          pattern.to == null
-            ? defaultDestination
-            : VALIDATED_DESTINATION_NAMES.includes(name)
-              ? resolveFileSetDestination(name, pattern.to, defaultDestination, options.globalOutDir)
-              : path.resolve(defaultDestination, pattern.to)
+        const to = resolveFileSetDestination(name, pattern.to, defaultDestination, options.globalOutDir)
         fileMatchers.push(new FileMatcher(from, to, options.macroExpander, pattern.filter))
       }
     }
