@@ -436,7 +436,6 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     // `config` is a custom fn/string module path when it's non-null and not an options object
     const hasCustomSign = config != null && !signOpts
     const isMas = MacTargetHelper.isMasTarget(targetPlatform)
-    const isDevelopment = MacTargetHelper.isMasDevelopment(targetPlatform)
 
     const identity = await this.helper.findSigningIdentity(targetPlatform, qualifier, keychainFile, hasCustomSign, signOpts)
 
@@ -451,8 +450,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     const signOptions = await this.helper.buildSignOptions(appPath, identity, signOpts, keychainFile, arch, targetPlatform)
     await this.doSign(signOptions, config, identity)
 
-    // Handle MAS installer creation
-    if (isMas && !isDevelopment && outDir) {
+    // Handle MAS installer creation (skipped for development-signed builds)
+    if (outDir && MacTargetHelper.shouldCreateMasInstaller(targetPlatform, signOpts?.type)) {
       await this.helper.createMasInstaller(appPath, outDir, this.getPlatformConfig(targetPlatform).config as MasConfiguration, keychainFile, targetPlatform, arch, qualifier)
     }
 
