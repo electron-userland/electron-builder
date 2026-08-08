@@ -18,8 +18,8 @@ describe("allowOnlyOneInstallerInstance.nsh", { sequential: true }, () => {
   })
 
   describe("FIND_PROCESS macro — PowerShell path", () => {
-    test("uses $INSTDIR path-based matching (not name-based)", () => {
-      expect(findProcessMacro).toContain("$$_.Path.StartsWith('$INSTDIR'")
+    test("uses path-based matching (not name-based)", () => {
+      expect(findProcessMacro).toContain("$$_.Path -and ($processPathFilter)")
     })
 
     test("exits with 0 when matching processes found, 1 when not", () => {
@@ -79,13 +79,82 @@ describe("allowOnlyOneInstallerInstance.nsh", { sequential: true }, () => {
       expect(checkMacro![0]).toContain("Var /GLOBAL CmdPath")
       expect(checkMacro![0]).toContain("Var /GLOBAL PowerShellPath")
     })
+
+    test("path filter matches $INSTDIR with a trailing backslash (no sibling-directory false positives)", () => {
+      const checkMacro = templateContent.match(/!macro CHECK_APP_RUNNING[\s\S]*?!macroend/)
+      expect(checkMacro).not.toBeNull()
+      expect(checkMacro![0]).toContain("$$_.Path.StartsWith('$R8\\', 'CurrentCultureIgnoreCase')")
+    })
+
+    test("escapes single quotes in $INSTDIR for the single-quoted PowerShell literal (pre-existing since #9069)", () => {
+      const checkMacro = templateContent.match(/!macro CHECK_APP_RUNNING[\s\S]*?!macroend/)
+      expect(checkMacro).not.toBeNull()
+      // ' -> '' so a quote in the install path cannot terminate the PowerShell string
+      expect(checkMacro![0]).toContain(`\${WordReplace} $INSTDIR "'" "''" "+" $R8`)
+      // the raw $INSTDIR is never interpolated into the filter
+      expect(checkMacro![0]).not.toContain("StartsWith('$INSTDIR")
+    })
+
+    test("$INSTDIR escaping applies to the uninstaller too (outside the BUILD_UNINSTALLER guard)", () => {
+      const checkMacro = templateContent.match(/!macro CHECK_APP_RUNNING[\s\S]*?!macroend/)
+      expect(checkMacro).not.toBeNull()
+      const body = checkMacro![0]
+      const escapeIndex = body.indexOf(`\${WordReplace} $INSTDIR`)
+      const guardIndex = body.indexOf("!ifndef BUILD_UNINSTALLER")
+      expect(escapeIndex).toBeGreaterThan(-1)
+      expect(guardIndex).toBeGreaterThan(-1)
+      expect(escapeIndex).toBeLessThan(guardIndex)
+      // the scratch register is saved/restored outside the guard as well
+      expect(body.indexOf("Push $R8")).toBeLessThan(guardIndex)
+      expect(body.indexOf("Pop $R8")).toBeGreaterThan(body.indexOf("!endif"))
+    })
+
+    test("path filter also covers previous per-user and per-machine install locations, installer only (#10022)", () => {
+      const checkMacro = templateContent.match(/!macro CHECK_APP_RUNNING[\s\S]*?!macroend/)
+      expect(checkMacro).not.toBeNull()
+      expect(checkMacro![0]).toContain("!insertmacro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER HKCU")
+      expect(checkMacro![0]).toContain("!insertmacro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER HKLM")
+      // the uninstaller must keep matching only its own $INSTDIR
+      expect(checkMacro![0]).toContain("!ifndef BUILD_UNINSTALLER")
+    })
+  })
+
+  describe("APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER macro", () => {
+    let appendMacro: string
+
+    beforeAll(() => {
+      const match = templateContent.match(/!macro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER[\s\S]*?!macroend/)
+      appendMacro = match ? match[0] : ""
+    })
+
+    test("skips empty InstallLocation so an empty prefix can never match every process", () => {
+      expect(appendMacro).toContain('$R9 != ""')
+      expect(appendMacro).toContain("$R9 != $INSTDIR")
+    })
+
+    test("escapes single quotes in InstallLocation for the single-quoted PowerShell literal (no syntax break / injection)", () => {
+      // ' -> '' so a quote in the registry value cannot terminate the PowerShell string
+      expect(appendMacro).toContain(`\${WordReplace} $R9 "'" "''" "+" $R8`)
+      // the escaped value ($R8), not the raw one ($R9), is interpolated into the filter
+      expect(appendMacro).toContain("$$_.Path.StartsWith('$R8\\', 'CurrentCultureIgnoreCase')")
+      expect(appendMacro).not.toContain("StartsWith('$R9")
+    })
+
+    test("skips InstallLocation values containing a double quote (invalid in paths, would break the -Command argument)", () => {
+      expect(appendMacro).toContain(`\${WordReplace} $R9 '"' "" "+" $R8`)
+      expect(appendMacro).toContain("$R9 == $R8")
+    })
+
+    test("WordFunc.nsh is included for ${WordReplace}", () => {
+      expect(templateContent).toContain('!include "WordFunc.nsh"')
+    })
   })
 
   describe("KILL_PROCESS macro", () => {
-    test("PowerShell path uses $INSTDIR path-based matching", () => {
+    test("PowerShell path uses the same path-based filter as FIND_PROCESS", () => {
       const killMacro = templateContent.match(/!macro KILL_PROCESS[\s\S]*?!macroend/)
       expect(killMacro).not.toBeNull()
-      expect(killMacro![0]).toContain("$$_.Path.StartsWith('$INSTDIR'")
+      expect(killMacro![0]).toContain("$$_.Path -and ($processPathFilter)")
     })
   })
 

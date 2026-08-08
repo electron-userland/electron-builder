@@ -2,6 +2,8 @@
     !include "nsProcess.nsh"
 !endif
 
+!include "WordFunc.nsh"
+
 !ifmacrondef customCheckAppRunning
   !include "getProcessInfo.nsh"
   Var pid
@@ -29,11 +31,49 @@
   launch:
 !macroend
 
+# appends "-or <path>.StartsWith(...)" to $processPathFilter for the InstallLocation stored in the given registry root (if any)
+!macro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER _ROOT_KEY
+  ReadRegStr $R9 ${_ROOT_KEY} "${INSTALL_REGISTRY_KEY}" InstallLocation
+  # $R8 = $R9 with all double quotes removed; a double quote is invalid in a Windows path
+  # and would break out of the double-quoted PowerShell -Command argument built in
+  # FIND_PROCESS/KILL_PROCESS, so any value containing one is skipped below
+  ${WordReplace} $R9 '"' "" "+" $R8
+  ${if} $R9 != ""
+  ${andIf} $R9 == $R8
+  ${andIf} $R9 != $INSTDIR
+    # escape single quotes for the single-quoted PowerShell string literal, so a quote in the
+    # registry value can neither break the expression nor inject PowerShell into the
+    # (possibly elevated) installer
+    ${WordReplace} $R9 "'" "''" "+" $R8
+    StrCpy $processPathFilter "$processPathFilter -or $$_.Path.StartsWith('$R8\', 'CurrentCultureIgnoreCase')"
+  ${endIf}
+!macroend
+
 !macro CHECK_APP_RUNNING
   Var /GLOBAL CmdPath
   Var /GLOBAL PowerShellPath
+  Var /GLOBAL processPathFilter
   StrCpy $CmdPath "$SYSDIR\cmd.exe"
   StrCpy $PowerShellPath "$SYSDIR\WindowsPowerShell\v1.0\powershell.exe"
+  Push $R8
+  # PowerShell filter matching processes running from the installation directory
+  # (trailing backslash so that a sibling directory with the same prefix is not matched).
+  # $R8 = $INSTDIR with single quotes escaped ('') for the single-quoted PowerShell string
+  # literal, so a quote in the path can neither break the expression nor inject PowerShell;
+  # a double quote needs no handling here because it is invalid in a Windows path and NSIS
+  # never lets $INSTDIR contain one
+  ${WordReplace} $INSTDIR "'" "''" "+" $R8
+  StrCpy $processPathFilter "$$_.Path.StartsWith('$R8\', 'CurrentCultureIgnoreCase')"
+  !ifndef BUILD_UNINSTALLER
+    # also match processes running from the previous per-user and per-machine installation directories,
+    # because the previous installation is uninstalled during install
+    # https://github.com/electron-userland/electron-builder/issues/10022
+    Push $R9
+    !insertmacro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER HKCU
+    !insertmacro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER HKLM
+    Pop $R9
+  !endif
+  Pop $R8
   !ifmacrodef customCheckAppRunning
     !insertmacro customCheckAppRunning
   !else
@@ -63,7 +103,7 @@
 
 !macro FIND_PROCESS _FILE _RETURN
   ${if} $IsPowerShellAvailable == 0
-    nsExec::Exec `"$PowerShellPath" -C "if ((Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and $$_.Path.StartsWith('$INSTDIR', 'CurrentCultureIgnoreCase')}).Count -gt 0) { exit 0 } else { exit 1 }"`
+    nsExec::Exec `"$PowerShellPath" -C "if ((Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and ($processPathFilter)}).Count -gt 0) { exit 0 } else { exit 1 }"`
     Pop ${_RETURN}
   ${else}
     !ifdef INSTALL_MODE_PER_ALL_USERS
@@ -91,7 +131,7 @@
   ${endIf}
 
   ${if} $IsPowerShellAvailable == 0
-    nsExec::Exec `"$PowerShellPath" -C "Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and $$_.Path.StartsWith('$INSTDIR', 'CurrentCultureIgnoreCase')} | % { Stop-Process -Id $$_.ProcessId $0 }"`
+    nsExec::Exec `"$PowerShellPath" -C "Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and ($processPathFilter)} | % { Stop-Process -Id $$_.ProcessId $0 }"`
   ${else}
     !ifdef INSTALL_MODE_PER_ALL_USERS
       nsExec::Exec `taskkill /IM "${_FILE}" /FI "PID ne $pid"`
